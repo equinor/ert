@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from functools import partial
-from typing import Type, cast
+from typing import Type, cast, get_args
 
 from annotated_types import Ge, Gt, Le
 from qtpy.QtCore import Qt
@@ -16,7 +16,6 @@ from qtpy.QtWidgets import (
     QLayout,
     QWidget,
 )
-from typing_extensions import get_args
 
 from ert.config.analysis_module import (
     AnalysisModule,

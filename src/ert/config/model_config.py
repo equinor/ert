@@ -3,7 +3,7 @@ from __future__ import annotations
 import logging
 import os.path
 from datetime import datetime
-from typing import List, Optional, no_type_check
+from typing import no_type_check
 
 from pydantic import field_validator
 from pydantic.dataclasses import dataclass
@@ -19,7 +19,7 @@ from .parsing import (
 logger = logging.getLogger(__name__)
 
 
-def _read_time_map(file_name: str) -> List[datetime]:
+def _read_time_map(file_name: str) -> list[datetime]:
     def str_to_datetime(date_str: str) -> datetime:
         try:
             return datetime.fromisoformat(date_str)
@@ -52,7 +52,7 @@ class ModelConfig:
     jobname_format_string: str = DEFAULT_JOBNAME_FORMAT
     eclbase_format_string: str = DEFAULT_ECLBASE_FORMAT
     gen_kw_export_name: str = DEFAULT_GEN_KW_EXPORT_NAME
-    time_map: Optional[List[datetime]] = None
+    time_map: list[datetime] | None = None
 
     @field_validator("runpath_format_string", mode="before")
     @classmethod

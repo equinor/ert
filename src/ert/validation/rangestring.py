@@ -3,14 +3,13 @@
 Index range strings occur frequently in the ert config as e.g., the index
 of active realizations. The are of the form "0, 2-4" meaning, for instance,
 that realization 0, 2, 3, and 4 are active.
-
 The ranges can overlap. The end of each range is inclusive.
 """
 
-from typing import Collection, List, Optional, Union
+from typing import Collection
 
 
-def mask_to_rangestring(mask: Collection[Union[bool, int]]) -> str:
+def mask_to_rangestring(mask: Collection[bool | int]) -> str:
     """Convert a mask (ordered collection of booleans or int) into a rangestring.
 
     >>> mask_to_rangestring([0, 1, 0, 1, 1, 1])
@@ -25,7 +24,7 @@ def mask_to_rangestring(mask: Collection[Union[bool, int]]) -> str:
     The length of the collection is not encoded in the resulting string and
     must be stored elsewhere.
     """
-    ranges: List[str] = []
+    ranges: list[str] = []
 
     def store_range(begin: int, end: int) -> None:
         if end - begin == 1:
@@ -33,7 +32,7 @@ def mask_to_rangestring(mask: Collection[Union[bool, int]]) -> str:
         else:
             ranges.append(f"{begin}-{end-1}")
 
-    start: Optional[int] = None
+    start: int | None = None
     for i, is_active in enumerate(mask):
         if is_active:
             if start is None:  # begin tracking a range
@@ -49,7 +48,7 @@ def mask_to_rangestring(mask: Collection[Union[bool, int]]) -> str:
     return ", ".join(ranges)
 
 
-def rangestring_to_mask(rangestring: str, length: int) -> List[bool]:
+def rangestring_to_mask(rangestring: str, length: int) -> list[bool]:
     """Convert a string specifying ranges of elements, and the number of elements,
     into a list of booleans. The ranges are end-inclusive.
 
@@ -88,7 +87,7 @@ def rangestring_to_mask(rangestring: str, length: int) -> List[bool]:
     return mask
 
 
-def rangestring_to_list(rangestring: str) -> List[int]:
+def rangestring_to_list(rangestring: str) -> list[int]:
     """Convert a string specifying ranges of elements, and the number of elements,
     into a list of ints. The ranges are end-inclusive.
 

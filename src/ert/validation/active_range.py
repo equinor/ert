@@ -1,14 +1,12 @@
-from typing import List, Optional, Tuple
-
 from .rangestring import mask_to_rangestring, rangestring_to_mask
 
 
 class ActiveRange:
     def __init__(
         self,
-        mask: Optional[List[bool]] = None,
-        rangestring: Optional[str] = None,
-        length: Optional[int] = None,
+        mask: list[bool] | None = None,
+        rangestring: str | None = None,
+        length: int | None = None,
     ):
         if mask is None and rangestring is None and length is None:
             raise ValueError("Supply mask or rangestring and length to IndexRange.")
@@ -27,7 +25,7 @@ class ActiveRange:
             self._mask = mask
 
     @property
-    def mask(self) -> List[bool]:
+    def mask(self) -> list[bool]:
         return list(self._mask)
 
     @property
@@ -66,7 +64,7 @@ class ActiveRange:
     @classmethod
     def validate_rangestring_vs_length(
         cls, rangestring: str, length: int
-    ) -> Tuple[str, int]:
+    ) -> tuple[str, int]:
         for realization_index in (
             rangestring.replace("-", " ").replace(",", " ").split(" ")
         ):

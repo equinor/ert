@@ -1,5 +1,5 @@
 from enum import IntEnum
-from typing import Any, List, Optional, overload
+from typing import Any, overload
 from uuid import UUID
 
 import humanize
@@ -68,7 +68,7 @@ class EnsembleModel:
         self._name = ensemble.name
         self._id = ensemble.id
         self._start_time = ensemble.started_at
-        self._children: List[RealizationModel] = []
+        self._children: list[RealizationModel] = []
 
     def add_realization(self, realization: RealizationModel) -> None:
         self._children.append(realization)
@@ -101,7 +101,7 @@ class ExperimentModel:
         self._id = experiment.id
         self._name = experiment.name
         self._experiment_type = experiment.metadata.get("ensemble_type")
-        self._children: List[EnsembleModel] = []
+        self._children: list[EnsembleModel] = []
 
     def add_ensemble(self, ensemble: EnsembleModel) -> None:
         self._children.append(ensemble)
@@ -141,7 +141,7 @@ class ExperimentModel:
 class StorageModel(QAbstractItemModel):
     def __init__(self, storage: Storage):
         super().__init__(None)
-        self._children: List[ExperimentModel] = []
+        self._children: list[ExperimentModel] = []
         self._load_storage(storage)
 
     @Slot(Storage)
@@ -170,11 +170,11 @@ class StorageModel(QAbstractItemModel):
             self._children.append(ex)
 
     @override
-    def columnCount(self, parent: Optional[QModelIndex] = None) -> int:
+    def columnCount(self, parent: QModelIndex | None = None) -> int:
         return _NUM_COLUMNS
 
     @override
-    def rowCount(self, parent: Optional[QModelIndex] = None) -> int:
+    def rowCount(self, parent: QModelIndex | None = None) -> int:
         if parent is None:
             parent = QModelIndex()
         if parent.isValid():
@@ -187,9 +187,9 @@ class StorageModel(QAbstractItemModel):
     @overload
     def parent(self, child: QModelIndex) -> QModelIndex: ...
     @overload
-    def parent(self) -> Optional[QObject]: ...
+    def parent(self) -> QObject | None: ...
     @override
-    def parent(self, child: Optional[QModelIndex] = None) -> Optional[QObject]:
+    def parent(self, child: QModelIndex | None = None) -> QObject | None:
         if child is None or not child.isValid():
             return QModelIndex()
 
@@ -222,7 +222,7 @@ class StorageModel(QAbstractItemModel):
 
     @override
     def index(
-        self, row: int, column: int, parent: Optional[QModelIndex] = None
+        self, row: int, column: int, parent: QModelIndex | None = None
     ) -> QModelIndex:
         if parent is None:
             parent = QModelIndex()

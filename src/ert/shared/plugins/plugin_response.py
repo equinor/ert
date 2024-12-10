@@ -1,9 +1,7 @@
 from __future__ import annotations
 
 from functools import wraps
-from typing import Callable, Optional, TypeVar
-
-from typing_extensions import ParamSpec
+from typing import Callable, Optional, ParamSpec, TypeVar
 
 from ert.plugins.plugin_response import PluginMetadata, PluginResponse
 

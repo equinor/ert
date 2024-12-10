@@ -4,7 +4,6 @@ import tempfile
 from multiprocessing import Process
 from pathlib import Path
 from textwrap import dedent
-from typing import List, Tuple
 
 import memray
 import numpy as np
@@ -135,7 +134,7 @@ def make_gen_data(obs: int, min_val: float = 0, max_val: float = 5) -> polars.Da
 
 
 def make_summary_data(
-    obs_keys: List[str],
+    obs_keys: list[str],
     dates,
     min_val: float = 0,
     max_val: float = 5,
@@ -166,7 +165,7 @@ def test_field_param_memory(tmpdir):
 
 
 @pytest.mark.usefixtures("set_site_config")
-def create_poly_with_field(field_dim: Tuple[int, int, int], realisations: int):
+def create_poly_with_field(field_dim: tuple[int, int, int], realisations: int):
     """
     This replicates the poly example, only it uses FIELD parameter
     """

@@ -1,7 +1,5 @@
 from functools import wraps
-from typing import Callable
-
-from typing_extensions import Any, ParamSpec
+from typing import Any, Callable, ParamSpec
 
 from .plugin_manager import (
     ErtPluginContext,

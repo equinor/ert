@@ -1,4 +1,4 @@
-from typing import TYPE_CHECKING, List, Tuple
+from typing import TYPE_CHECKING
 
 from qtpy.QtWidgets import QHBoxLayout
 
@@ -63,13 +63,13 @@ class StyleCustomizationView(CustomizationView):
             StyleCustomizationView.setObservationsColor,
         )
 
-    def getObservationsColor(self) -> Tuple[str, float]:
+    def getObservationsColor(self) -> tuple[str, float]:
         return (
             self._observs_color_box.color.name(),
             self._observs_color_box.color.alphaF(),
         )
 
-    def setObservationsColor(self, color_tuple: Tuple[str, float]) -> None:
+    def setObservationsColor(self, color_tuple: tuple[str, float]) -> None:
         self._observs_color_box.color = color_tuple  # type: ignore[assignment]
 
     @staticmethod
@@ -78,13 +78,13 @@ class StyleCustomizationView(CustomizationView):
         color_box.setToolTip(name)
         return color_box
 
-    def getColorCycle(self) -> List[Tuple[str, float]]:
+    def getColorCycle(self) -> list[tuple[str, float]]:
         return [
             (color_box.color.name(), color_box.color.alphaF())
             for color_box in self._color_boxes
         ]
 
-    def setColorCycle(self, color_cycle: List[Tuple[str, float]]) -> None:
+    def setColorCycle(self, color_cycle: list[tuple[str, float]]) -> None:
         for index, color_tuple in enumerate(color_cycle):
             if 0 <= index < len(self._color_boxes):
                 color_box = self._color_boxes[index]

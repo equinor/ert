@@ -5,7 +5,7 @@ import logging
 import shlex
 from abc import ABC, abstractmethod
 from pathlib import Path
-from typing import Dict, Iterable, List, Optional, Tuple
+from typing import Iterable
 
 from .event import Event
 
@@ -32,8 +32,8 @@ class Driver(ABC):
     """Adapter for the HPC cluster."""
 
     def __init__(self, activate_script: str = "") -> None:
-        self._event_queue: Optional[asyncio.Queue[Event]] = None
-        self._job_error_message_by_iens: Dict[int, str] = {}
+        self._event_queue: asyncio.Queue[Event] | None = None
+        self._job_error_message_by_iens: dict[int, str] = {}
         self.activate_script = activate_script
 
     @property
@@ -50,9 +50,9 @@ class Driver(ABC):
         /,
         *args: str,
         name: str = "dummy",
-        runpath: Optional[Path] = None,
-        num_cpu: Optional[int] = 1,
-        realization_memory: Optional[int] = 0,
+        runpath: Path | None = None,
+        num_cpu: int | None = 1,
+        realization_memory: int | None = 0,
     ) -> None:
         """Submit a program to execute on the cluster.
 
@@ -91,20 +91,20 @@ class Driver(ABC):
 
     @staticmethod
     async def _execute_with_retry(
-        cmd_with_args: List[str],
-        retry_on_empty_stdout: Optional[bool] = False,
+        cmd_with_args: list[str],
+        retry_on_empty_stdout: bool | None = False,
         retry_codes: Iterable[int] = (),
         accept_codes: Iterable[int] = (),
-        stdin: Optional[bytes] = None,
+        stdin: bytes | None = None,
         total_attempts: int = 1,
         retry_interval: float = 1.0,
-        driverlogger: Optional[logging.Logger] = None,
+        driverlogger: logging.Logger | None = None,
         return_on_msgs: Iterable[str] = (),
         error_on_msgs: Iterable[str] = (),
-        log_to_debug: Optional[bool] = True,
-    ) -> Tuple[bool, str]:
+        log_to_debug: bool | None = True,
+    ) -> tuple[bool, str]:
         _logger = driverlogger or logging.getLogger(__name__)
-        error_message: Optional[str] = None
+        error_message: str | None = None
 
         for i in range(total_attempts):
             try:

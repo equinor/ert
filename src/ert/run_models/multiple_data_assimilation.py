@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import logging
 from queue import SimpleQueue
-from typing import TYPE_CHECKING, List, Optional
+from typing import TYPE_CHECKING
 from uuid import UUID
 
 import numpy as np
@@ -36,12 +36,12 @@ class MultipleDataAssimilation(UpdateRunModel):
     def __init__(
         self,
         target_ensemble: str,
-        experiment_name: Optional[str],
+        experiment_name: str | None,
         restart_run: bool,
         prior_ensemble_id: str,
-        active_realizations: List[bool],
+        active_realizations: list[bool],
         minimum_required_realizations: int,
-        random_seed: Optional[int],
+        random_seed: int | None,
         weights: str,
         config: ErtConfig,
         storage: Storage,
@@ -159,7 +159,7 @@ class MultipleDataAssimilation(UpdateRunModel):
             prior = posterior
 
     @staticmethod
-    def parse_weights(weights: str) -> List[float]:
+    def parse_weights(weights: str) -> list[float]:
         """Parse weights string and scale weights such that their reciprocals sum
         to 1.0, i.e., sum(1.0 / x for x in weights) == 1.0. See for example Equation
         38 of evensen2018 - Analysis of iterative ensemble
@@ -171,7 +171,7 @@ class MultipleDataAssimilation(UpdateRunModel):
         elements = weights.split(",")
         elements = [element.strip() for element in elements if element.strip()]
 
-        result: List[float] = []
+        result: list[float] = []
         for element in elements:
             try:
                 f = float(element)
@@ -196,5 +196,5 @@ class MultipleDataAssimilation(UpdateRunModel):
         return "[Sample|restart] → [evaluate → update] for each weight"
 
     @classmethod
-    def group(cls) -> Optional[str]:
+    def group(cls) -> str | None:
         return MULTIPLE_DATA_ASSIMILATION_GROUP

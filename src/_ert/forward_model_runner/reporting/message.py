@@ -1,8 +1,9 @@
 import dataclasses
 from datetime import datetime as dt
-from typing import TYPE_CHECKING, Dict, Literal, Optional, TypedDict
+from typing import TYPE_CHECKING, Dict, Literal, Optional
 
 import psutil
+from typing_extensions import TypedDict
 
 if TYPE_CHECKING:
     from _ert.forward_model_runner.forward_model_step import ForwardModelStep

@@ -1,9 +1,8 @@
 import asyncio
 import logging
 import ssl
-from typing import Any, AnyStr, Optional, Union
+from typing import Any, AnyStr, Optional, Self, Union
 
-from typing_extensions import Self
 from websockets.asyncio.client import ClientConnection, connect
 from websockets.datastructures import Headers
 from websockets.exceptions import (

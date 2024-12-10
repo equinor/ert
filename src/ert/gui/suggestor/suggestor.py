@@ -4,7 +4,7 @@ import functools
 import logging
 import webbrowser
 from collections import defaultdict
-from typing import TYPE_CHECKING, Callable, Dict, List, Optional, Sequence
+from typing import TYPE_CHECKING, Callable, Sequence
 
 from qtpy.QtCore import Qt
 from qtpy.QtGui import QCursor
@@ -105,11 +105,11 @@ QPushButton:hover {{
 class Suggestor(QWidget):
     def __init__(
         self,
-        errors: List[ErrorInfo],
-        warnings: List[WarningInfo],
-        deprecations: List[WarningInfo],
-        continue_action: Optional[Callable[[], None]],
-        help_links: Optional[Dict[str, str]] = None,
+        errors: list[ErrorInfo],
+        warnings: list[WarningInfo],
+        deprecations: list[WarningInfo],
+        continue_action: Callable[[], None] | None,
+        help_links: dict[str, str] | None = None,
     ) -> None:
         super().__init__()
         self._continue_action = continue_action
@@ -141,7 +141,7 @@ class Suggestor(QWidget):
             self._help_panel(help_links if help_links is not None else {})
         )
 
-    def _help_panel(self, help_links: Dict[str, str]) -> QFrame:
+    def _help_panel(self, help_links: dict[str, str]) -> QFrame:
         help_button_frame = QFrame(parent=self)
         help_button_frame.setContentsMargins(0, 0, 0, 0)
         help_button_frame.setStyleSheet(
@@ -186,9 +186,9 @@ class Suggestor(QWidget):
 
     def _problem_area(
         self,
-        errors: List[ErrorInfo],
-        warnings: List[WarningInfo],
-        deprecations: List[WarningInfo],
+        errors: list[ErrorInfo],
+        warnings: list[WarningInfo],
+        deprecations: list[WarningInfo],
     ) -> QWidget:
         problem_area = QWidget(parent=self)
         problem_area.setContentsMargins(0, 0, 0, 0)
@@ -230,9 +230,9 @@ class Suggestor(QWidget):
 
     def _messages(
         self,
-        errors: List[ErrorInfo],
-        warnings: List[WarningInfo],
-        deprecations: List[WarningInfo],
+        errors: list[ErrorInfo],
+        warnings: list[WarningInfo],
+        deprecations: list[WarningInfo],
     ) -> QScrollArea:
         CARD_WIDTH = 450
         CARD_HEIGHT = 220

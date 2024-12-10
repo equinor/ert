@@ -1,9 +1,7 @@
 from __future__ import annotations
 
 import warnings
-from typing import Callable, List, Optional, Sequence, Type, Union
-
-from typing_extensions import Self
+from typing import Callable, Self, Sequence, Type
 
 from .error_info import ErrorInfo, WarningInfo
 from .types import MaybeWithContext
@@ -29,11 +27,11 @@ class ConfigWarning(UserWarning):
         temp = warnings.formatwarning
 
         def ert_formatted_warning(
-            message: Union[Warning, str],
+            message: Warning | str,
             category: Type[Warning],
             filename: str,
             lineno: int,
-            line: Union[str, None] = None,
+            line: str | None = None,
         ) -> str:
             return str(message) + "\n"
 
@@ -41,7 +39,7 @@ class ConfigWarning(UserWarning):
         warnings.warn(config_warning, stacklevel=1)
         warnings.formatwarning = temp
 
-    def __init__(self, info: Union[str, WarningInfo]):
+    def __init__(self, info: str | WarningInfo):
         if isinstance(info, str):
             super().__init__(info)
             self.info = WarningInfo(message=info)
@@ -62,10 +60,10 @@ class ConfigValidationError(ValueError):
 
     def __init__(
         self,
-        errors: Union[str, List[ErrorInfo]],
-        config_file: Optional[str] = None,
+        errors: str | list[ErrorInfo],
+        config_file: str | None = None,
     ) -> None:
-        self.errors: List[ErrorInfo] = []
+        self.errors: list[ErrorInfo] = []
         if isinstance(errors, list):
             for err in errors:
                 if isinstance(err, ErrorInfo):
@@ -80,7 +78,7 @@ class ConfigValidationError(ValueError):
         Create a single `ConfigValidationError` with some potential context
         (location in a file, line number etc.) with the given message.
         """
-        if isinstance(context, List):
+        if isinstance(context, list):
             return cls.from_info(ErrorInfo(msg).set_context_list(context))
         else:
             return cls.from_info(ErrorInfo(msg).set_context(context))
@@ -93,13 +91,13 @@ class ConfigValidationError(ValueError):
         """the configuration error messages as suitable for printing to cli"""
         return "\n".join(self.messages())
 
-    def messages(self, formatter: Callable[[ErrorInfo], str] = str) -> List[str]:
+    def messages(self, formatter: Callable[[ErrorInfo], str] = str) -> list[str]:
         """List of the configuration errors messages with context"""
         return [formatter(info) for info in sorted(self.errors)]
 
     @classmethod
     def from_collected(
-        cls, errors: Sequence[Union[ErrorInfo, ConfigValidationError]]
+        cls, errors: Sequence[ErrorInfo | ConfigValidationError]
     ) -> Self:
         """Combine a list of ConfigValidationErrors (or ErrorInfo) into one.
 

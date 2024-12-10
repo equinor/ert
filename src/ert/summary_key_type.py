@@ -2,9 +2,6 @@ from __future__ import annotations
 
 import re
 from enum import Enum, auto
-from typing import (
-    List,
-)
 
 SPECIAL_KEYWORDS = [
     "NAIMFRAC",
@@ -160,7 +157,7 @@ seg_rate_keys = [
 ]
 
 
-def _match_keyword_vector(start: int, rate_keys: List[str], keyword: str) -> bool:
+def _match_keyword_vector(start: int, rate_keys: list[str], keyword: str) -> bool:
     if len(keyword) < start:
         return False
     return any(keyword[start:].startswith(key) for key in rate_keys)

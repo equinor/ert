@@ -7,21 +7,7 @@ import shlex
 import shutil
 from dataclasses import dataclass
 from pathlib import Path
-from typing import (
-    Any,
-    Dict,
-    List,
-    Literal,
-    Mapping,
-    MutableMapping,
-    Optional,
-    Set,
-    Tuple,
-    Type,
-    Union,
-    cast,
-    get_type_hints,
-)
+from typing import Any, Literal, Mapping, MutableMapping, Type, cast, get_type_hints
 
 from .driver import Driver, FailedSubmit, create_submit_script
 from .event import Event, FinishedEvent, StartedEvent
@@ -70,10 +56,10 @@ class RunningJob:
 @dataclass(frozen=True)
 class FinishedJob:
     job_state: Literal["E", "F"]
-    returncode: Optional[int] = None
+    returncode: int | None = None
 
 
-AnyJob = Union[FinishedJob, QueuedJob, RunningJob, IgnoredJobstates]
+AnyJob = FinishedJob | QueuedJob | RunningJob | IgnoredJobstates
 
 
 _STATE_ORDER: dict[Type[AnyJob], int] = {
@@ -111,8 +97,8 @@ def _parse_jobs_dict(jobs: Mapping[str, Mapping[str, str]]) -> dict[str, AnyJob]
     return parsed_jobs_dict
 
 
-def parse_qstat(qstat_output: str) -> Dict[str, Dict[str, str]]:
-    data: Dict[str, Dict[str, str]] = {}
+def parse_qstat(qstat_output: str) -> dict[str, dict[str, str]]:
+    data: dict[str, dict[str, str]] = {}
     for line in qstat_output.splitlines():
         if line.startswith("Job id  ") or line.startswith("-" * 16):
             continue
@@ -134,17 +120,17 @@ class OpenPBSDriver(Driver):
     def __init__(
         self,
         *,
-        queue_name: Optional[str] = None,
-        project_code: Optional[str] = None,
-        keep_qsub_output: Optional[bool] = None,
-        memory_per_job: Optional[str] = None,
-        num_nodes: Optional[int] = None,
-        num_cpus_per_node: Optional[int] = None,
-        cluster_label: Optional[str] = None,
-        job_prefix: Optional[str] = None,
-        qsub_cmd: Optional[str] = None,
-        qstat_cmd: Optional[str] = None,
-        qdel_cmd: Optional[str] = None,
+        queue_name: str | None = None,
+        project_code: str | None = None,
+        keep_qsub_output: bool | None = None,
+        memory_per_job: str | None = None,
+        num_nodes: int | None = None,
+        num_cpus_per_node: int | None = None,
+        cluster_label: str | None = None,
+        job_prefix: str | None = None,
+        qsub_cmd: str | None = None,
+        qstat_cmd: str | None = None,
+        qdel_cmd: str | None = None,
         activate_script: str = "",
     ) -> None:
         super().__init__(activate_script)
@@ -153,9 +139,9 @@ class OpenPBSDriver(Driver):
         self._project_code = project_code
         self._keep_qsub_output = keep_qsub_output
         self._memory_per_job = memory_per_job
-        self._num_nodes: Optional[int] = num_nodes
-        self._num_cpus_per_node: Optional[int] = num_cpus_per_node
-        self._cluster_label: Optional[str] = cluster_label
+        self._num_nodes: int | None = num_nodes
+        self._num_cpus_per_node: int | None = num_cpus_per_node
+        self._cluster_label: str | None = cluster_label
         self._job_prefix = job_prefix
         self._max_pbs_cmd_attempts = 10
         self._sleep_time_between_cmd_retries = 2
@@ -165,11 +151,11 @@ class OpenPBSDriver(Driver):
         self._qstat_cmd = Path(qstat_cmd or shutil.which("qstat") or "qstat")
         self._qdel_cmd = Path(qdel_cmd or shutil.which("qdel") or "qdel")
 
-        self._jobs: MutableMapping[str, Tuple[int, AnyJob]] = {}
+        self._jobs: MutableMapping[str, tuple[int, AnyJob]] = {}
         self._iens2jobid: MutableMapping[int, str] = {}
-        self._non_finished_job_ids: Set[str] = set()
-        self._finished_job_ids: Set[str] = set()
-        self._finished_iens: Set[int] = set()
+        self._non_finished_job_ids: set[str] = set()
+        self._finished_job_ids: set[str] = set()
+        self._finished_iens: set[int] = set()
 
         if self._num_nodes is not None and self._num_nodes > 1:
             logger.warning(
@@ -186,10 +172,10 @@ class OpenPBSDriver(Driver):
 
     def _build_resource_string(
         self, num_cpu: int = 1, realization_memory: int = 0
-    ) -> List[str]:
-        resource_specifiers: List[str] = []
+    ) -> list[str]:
+        resource_specifiers: list[str] = []
 
-        cpu_resources: List[str] = []
+        cpu_resources: list[str] = []
         if self._num_nodes is not None:
             cpu_resources += [f"select={self._num_nodes}"]
         if self._num_cpus_per_node is not None:
@@ -229,9 +215,9 @@ class OpenPBSDriver(Driver):
         /,
         *args: str,
         name: str = "dummy",
-        runpath: Optional[Path] = None,
-        num_cpu: Optional[int] = 1,
-        realization_memory: Optional[int] = 0,
+        runpath: Path | None = None,
+        num_cpu: int | None = 1,
+        realization_memory: int | None = 0,
     ) -> None:
         if runpath is None:
             runpath = Path.cwd()
@@ -244,7 +230,7 @@ class OpenPBSDriver(Driver):
 
         script = create_submit_script(runpath, executable, args, self.activate_script)
         name_prefix = self._job_prefix or ""
-        qsub_with_args: List[str] = [
+        qsub_with_args: list[str] = [
             str(self._qsub_cmd),
             "-rn",  # Don't restart on failure
             f"-N{name_prefix}{name}",  # Set name of job
@@ -386,7 +372,7 @@ class OpenPBSDriver(Driver):
             return
 
         self._jobs[job_id] = (iens, new_state)
-        event: Optional[Event] = None
+        event: Event | None = None
         if isinstance(new_state, RunningJob):
             logger.debug(f"Realization {iens} is running")
             event = StartedEvent(iens=iens)

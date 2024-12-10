@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import logging
 from queue import SimpleQueue
-from typing import TYPE_CHECKING, List, Optional
+from typing import TYPE_CHECKING
 
 import numpy as np
 
@@ -29,9 +29,9 @@ class EnsembleSmoother(UpdateRunModel):
         self,
         target_ensemble: str,
         experiment_name: str,
-        active_realizations: List[bool],
+        active_realizations: list[bool],
         minimum_required_realizations: int,
-        random_seed: Optional[int],
+        random_seed: int | None,
         config: ErtConfig,
         storage: Storage,
         queue_config: QueueConfig,

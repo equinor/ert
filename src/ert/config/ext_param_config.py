@@ -3,7 +3,7 @@ from __future__ import annotations
 import json
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import TYPE_CHECKING, Dict, List, Mapping, MutableMapping, Tuple, Union
+from typing import TYPE_CHECKING, Mapping, MutableMapping
 
 import numpy as np
 import xarray as xr
@@ -17,9 +17,9 @@ if TYPE_CHECKING:
 
     from ert.storage import Ensemble
 
-    Number = Union[int, float]
-    DataType = Mapping[str, Union[Number, Mapping[str, Number]]]
-    MutableDataType = MutableMapping[str, Union[Number, MutableMapping[str, Number]]]
+    Number = int | float
+    DataType = Mapping[str, Number | Mapping[str, Number]]
+    MutableDataType = MutableMapping[str, Number | MutableMapping[str, Number]]
 
 
 @dataclass
@@ -31,7 +31,7 @@ class ExtParamConfig(ParameterConfig):
     If a list of strings is given, the order is preserved.
     """
 
-    input_keys: Union[List[str], Dict[str, List[str]]] = field(default_factory=list)
+    input_keys: list[str] | dict[str, list[str]] = field(default_factory=list)
     forward_init: bool = False
     output_file: str = ""
     forward_init_file: str = ""
@@ -113,8 +113,8 @@ class ExtParamConfig(ParameterConfig):
     @staticmethod
     def to_dataset(data: DataType) -> xr.Dataset:
         """Flattens data to fit inside a dataset"""
-        names: List[str] = []
-        values: List[float] = []
+        names: list[str] = []
+        values: list[float] = []
         for outer_key, outer_val in data.items():
             if isinstance(outer_val, (int, float)):
                 names.append(outer_key)
@@ -134,7 +134,7 @@ class ExtParamConfig(ParameterConfig):
     def __len__(self) -> int:
         return len(self.input_keys)
 
-    def __contains__(self, key: Union[Tuple[str, str], str]) -> bool:
+    def __contains__(self, key: tuple[str, str] | str) -> bool:
         """Check if the @key is present in the configuration
         @key can be a single string or a tuple (key, suffix)
         """
@@ -144,7 +144,7 @@ class ExtParamConfig(ParameterConfig):
         else:
             return key in self.input_keys
 
-    def __getitem__(self, index: str) -> List[str]:
+    def __getitem__(self, index: str) -> list[str]:
         """Retrieve an item from the configuration
 
         If @index is a string, assumes its a key and retrieves the suffixes

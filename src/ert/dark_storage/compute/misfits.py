@@ -1,4 +1,4 @@
-from typing import List, Mapping
+from typing import Mapping
 
 import numpy as np
 import numpy.typing as npt
@@ -9,7 +9,7 @@ def _calculate_misfit(
     obs_value: npt.NDArray[np.float64],
     response_value: npt.NDArray[np.float64],
     obs_std: npt.NDArray[np.float64],
-) -> List[float]:
+) -> list[float]:
     difference = response_value - obs_value
     misfit = (difference / obs_std) ** 2
     return (misfit * np.sign(difference)).tolist()

@@ -1,6 +1,6 @@
 import contextlib
 import logging
-from typing import Any, Callable, Dict, Iterator, List, Optional, Tuple
+from typing import Any, Callable, Iterator
 from uuid import UUID
 
 import numpy as np
@@ -15,18 +15,18 @@ from ert.storage import Ensemble, Experiment, Storage
 
 logger = logging.getLogger(__name__)
 
-response_key_to_displayed_key: Dict[str, Callable[[Tuple[Any, ...]], str]] = {
+response_key_to_displayed_key: dict[str, Callable[[tuple[Any, ...]], str]] = {
     "summary": lambda t: t[0],
     "gen_data": lambda t: f"{t[0]}@{t[1]}",
 }
 
 
-def _parse_gendata_response_key(display_key: str) -> Tuple[Any, ...]:
+def _parse_gendata_response_key(display_key: str) -> tuple[Any, ...]:
     response_key, report_step = display_key.split("@")
     return response_key, int(report_step)
 
 
-displayed_key_to_response_key: Dict[str, Callable[[str], Tuple[Any, ...]]] = {
+displayed_key_to_response_key: dict[str, Callable[[str], tuple[Any, ...]]] = {
     "summary": lambda key: (key,),
     "gen_data": _parse_gendata_response_key,
 }
@@ -35,13 +35,13 @@ displayed_key_to_response_key: Dict[str, Callable[[str], Tuple[Any, ...]]] = {
 # [ "observation_key", "response_key", *primary_key ]
 # for gen_data primary_key is ["report_step", "index"]
 # for summary it is ["time"]
-response_to_pandas_x_axis_fns: Dict[str, Callable[[Tuple[Any, ...]], Any]] = {
+response_to_pandas_x_axis_fns: dict[str, Callable[[tuple[Any, ...]], Any]] = {
     "summary": lambda t: pd.Timestamp(t[2]).isoformat(),
     "gen_data": lambda t: str(t[3]),
 }
 
 
-def ensemble_parameters(storage: Storage, ensemble_id: UUID) -> List[Dict[str, Any]]:
+def ensemble_parameters(storage: Storage, ensemble_id: UUID) -> list[dict[str, Any]]:
     param_list = []
     ensemble = storage.get_ensemble(ensemble_id)
     for config in ensemble.experiment.parameter_configuration.values():
@@ -78,7 +78,7 @@ def ensemble_parameters(storage: Storage, ensemble_id: UUID) -> List[Dict[str, A
     return param_list
 
 
-def get_response_names(ensemble: Ensemble) -> List[str]:
+def get_response_names(ensemble: Ensemble) -> list[str]:
     result = ensemble.experiment.response_type_to_response_keys["summary"]
     result.extend(sorted(gen_data_display_keys(ensemble), key=lambda k: k.lower()))
     return result
@@ -219,8 +219,8 @@ def data_for_key(
 
 
 def _get_observations(
-    experiment: Experiment, observation_keys: Optional[List[str]] = None
-) -> List[Dict[str, Any]]:
+    experiment: Experiment, observation_keys: list[str] | None = None
+) -> list[dict[str, Any]]:
     observations = []
 
     for response_type, df in experiment.observations.items():
@@ -256,19 +256,19 @@ def _get_observations(
     return observations
 
 
-def get_all_observations(experiment: Experiment) -> List[Dict[str, Any]]:
+def get_all_observations(experiment: Experiment) -> list[dict[str, Any]]:
     return _get_observations(experiment)
 
 
 def get_observations_for_obs_keys(
-    ensemble: Ensemble, observation_keys: List[str]
-) -> List[Dict[str, Any]]:
+    ensemble: Ensemble, observation_keys: list[str]
+) -> list[dict[str, Any]]:
     return _get_observations(ensemble.experiment, observation_keys)
 
 
 def get_observation_keys_for_response(
     ensemble: Ensemble, displayed_response_key: str
-) -> List[str]:
+) -> list[str]:
     """
     Get all observation keys for given response key
     """

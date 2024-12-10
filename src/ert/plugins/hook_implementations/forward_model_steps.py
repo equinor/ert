@@ -3,7 +3,7 @@ import shutil
 import subprocess
 from pathlib import Path
 from textwrap import dedent
-from typing import List, Literal, Optional, Type
+from typing import Literal, Type
 
 import yaml
 
@@ -34,7 +34,7 @@ class CarefulCopyFile(ForwardModelStepPlugin):
         )
 
     @staticmethod
-    def documentation() -> Optional[ForwardModelStepDocumentation]:
+    def documentation() -> ForwardModelStepDocumentation | None:
         return ForwardModelStepDocumentation(
             description=dedent(
                 """
@@ -72,7 +72,7 @@ class CopyDirectory(ForwardModelStepPlugin):
         )
 
     @staticmethod
-    def documentation() -> Optional[ForwardModelStepDocumentation]:
+    def documentation() -> ForwardModelStepDocumentation | None:
         return ForwardModelStepDocumentation(
             category="utility.file_system",
             description="""
@@ -106,7 +106,7 @@ class CopyFile(ForwardModelStepPlugin):
         )
 
     @staticmethod
-    def documentation() -> Optional[ForwardModelStepDocumentation]:
+    def documentation() -> ForwardModelStepDocumentation | None:
         return ForwardModelStepDocumentation(
             category="utility.file_system",
             description="""
@@ -139,7 +139,7 @@ class DeleteDirectory(ForwardModelStepPlugin):
         )
 
     @staticmethod
-    def documentation() -> Optional[ForwardModelStepDocumentation]:
+    def documentation() -> ForwardModelStepDocumentation | None:
         return ForwardModelStepDocumentation(
             category="utility.file_system",
             description="""
@@ -181,7 +181,7 @@ class DeleteFile(ForwardModelStepPlugin):
         )
 
     @staticmethod
-    def documentation() -> Optional[ForwardModelStepDocumentation]:
+    def documentation() -> ForwardModelStepDocumentation | None:
         return ForwardModelStepDocumentation(
             category="utility.file_system",
             description="""
@@ -235,7 +235,7 @@ class Eclipse100(ForwardModelStepPlugin):
             )
 
     @staticmethod
-    def documentation() -> Optional[ForwardModelStepDocumentation]:
+    def documentation() -> ForwardModelStepDocumentation | None:
         return ForwardModelStepDocumentation(
             category="simulators.reservoir",
             examples="""
@@ -292,7 +292,7 @@ class Eclipse300(ForwardModelStepPlugin):
             )
 
     @staticmethod
-    def documentation() -> Optional[ForwardModelStepDocumentation]:
+    def documentation() -> ForwardModelStepDocumentation | None:
         return ForwardModelStepDocumentation(
             category="simulators.reservoir",
             examples="""
@@ -335,7 +335,7 @@ class Flow(ForwardModelStepPlugin):
         )
 
     @staticmethod
-    def documentation() -> Optional[ForwardModelStepDocumentation]:
+    def documentation() -> ForwardModelStepDocumentation | None:
         return ForwardModelStepDocumentation(
             category="simulators.reservoir",
             examples="""
@@ -372,7 +372,7 @@ class MakeDirectory(ForwardModelStepPlugin):
         )
 
     @staticmethod
-    def documentation() -> Optional[ForwardModelStepDocumentation]:
+    def documentation() -> ForwardModelStepDocumentation | None:
         return ForwardModelStepDocumentation(
             category="utility.file_system",
             description="""
@@ -403,7 +403,7 @@ class MakeSymlink(ForwardModelStepPlugin):
         )
 
     @staticmethod
-    def documentation() -> Optional[ForwardModelStepDocumentation]:
+    def documentation() -> ForwardModelStepDocumentation | None:
         return ForwardModelStepDocumentation(
             category="utility.file_system",
             description="""
@@ -434,7 +434,7 @@ class MoveFile(ForwardModelStepPlugin):
         )
 
     @staticmethod
-    def documentation() -> Optional[ForwardModelStepDocumentation]:
+    def documentation() -> ForwardModelStepDocumentation | None:
         return ForwardModelStepDocumentation(
             category="utility.file_system",
             description="""
@@ -467,7 +467,7 @@ class MoveDirectory(ForwardModelStepPlugin):
         )
 
     @staticmethod
-    def documentation() -> Optional[ForwardModelStepDocumentation]:
+    def documentation() -> ForwardModelStepDocumentation | None:
         return ForwardModelStepDocumentation(
             category="utility.file_system",
             description="""
@@ -498,7 +498,7 @@ class Symlink(ForwardModelStepPlugin):
         )
 
     @staticmethod
-    def documentation() -> Optional[ForwardModelStepDocumentation]:
+    def documentation() -> ForwardModelStepDocumentation | None:
         return ForwardModelStepDocumentation(
             category="utility.file_system",
             description="""
@@ -539,7 +539,7 @@ class TemplateRender(ForwardModelStepPlugin):
         )
 
     @staticmethod
-    def documentation() -> Optional[ForwardModelStepDocumentation]:
+    def documentation() -> ForwardModelStepDocumentation | None:
         return ForwardModelStepDocumentation(
             category="utility.file_system",
             description="""
@@ -577,7 +577,7 @@ By invoking the :code:`FORWARD_MODEL` as such:
         )
 
 
-_UpperCaseFMSteps: List[Type[ForwardModelStepPlugin]] = [
+_UpperCaseFMSteps: list[Type[ForwardModelStepPlugin]] = [
     CarefulCopyFile,
     CopyDirectory,
     CopyFile,
@@ -606,13 +606,13 @@ def _create_lowercase_fm_step_cls_with_only_executable(
             super().__init__(name=fm_step_name, command=[executable])
 
         @staticmethod
-        def documentation() -> Optional[ForwardModelStepDocumentation]:
+        def documentation() -> ForwardModelStepDocumentation | None:
             return None
 
     return _LowerCaseFMStep
 
 
-_LowerCaseFMSteps: List[Type[ForwardModelStepPlugin]] = []
+_LowerCaseFMSteps: list[Type[ForwardModelStepPlugin]] = []
 for fm_step_subclass in _UpperCaseFMSteps:
     assert issubclass(fm_step_subclass, ForwardModelStepPlugin)
     inst = fm_step_subclass()  # type: ignore
@@ -624,11 +624,11 @@ for fm_step_subclass in _UpperCaseFMSteps:
 
 
 @plugin(name="ert")
-def installable_forward_model_steps() -> List[Type[ForwardModelStepPlugin]]:
+def installable_forward_model_steps() -> list[Type[ForwardModelStepPlugin]]:
     return [*_UpperCaseFMSteps, *_LowerCaseFMSteps]
 
 
-def _available_eclrun_versions(simulator: Literal["eclipse", "e300"]) -> List[str]:
+def _available_eclrun_versions(simulator: Literal["eclipse", "e300"]) -> list[str]:
     if shutil.which("eclrun") is None:
         return []
     pm = ErtPluginManager()

@@ -11,18 +11,7 @@ from pathlib import Path
 from tempfile import NamedTemporaryFile
 from textwrap import dedent
 from types import TracebackType
-from typing import (
-    TYPE_CHECKING,
-    Any,
-    Dict,
-    Generator,
-    List,
-    MutableSequence,
-    Optional,
-    Tuple,
-    Type,
-    Union,
-)
+from typing import Any, Generator, MutableSequence, Type
 from uuid import UUID, uuid4
 
 import polars
@@ -30,7 +19,7 @@ import xarray as xr
 from filelock import FileLock, Timeout
 from pydantic import BaseModel, Field
 
-from ert.config import ErtConfig
+from ert.config import ErtConfig, ParameterConfig, ResponseConfig
 from ert.shared import __version__
 from ert.storage.local_ensemble import LocalEnsemble
 from ert.storage.local_experiment import LocalExperiment
@@ -41,9 +30,6 @@ from ert.storage.mode import (
 )
 from ert.storage.realization_storage_state import RealizationStorageState
 
-if TYPE_CHECKING:
-    from ert.config import ParameterConfig, ResponseConfig
-
 logger = logging.getLogger(__name__)
 
 _LOCAL_STORAGE_VERSION = 9
@@ -53,7 +39,7 @@ class _Migrations(BaseModel):
     ert_version: str = __version__
     timestamp: datetime = Field(default_factory=datetime.now)
     name: str
-    version_range: Tuple[int, int]
+    version_range: tuple[int, int]
 
 
 class _Index(BaseModel):
@@ -78,7 +64,7 @@ class LocalStorage(BaseMode):
 
     def __init__(
         self,
-        path: Union[str, os.PathLike[str]],
+        path: str | os.PathLike[str],
         mode: Mode,
         *,
         ignore_migration_check: bool = False,
@@ -99,8 +85,8 @@ class LocalStorage(BaseMode):
         super().__init__(mode)
         self.path = Path(path).absolute()
 
-        self._experiments: Dict[UUID, LocalExperiment]
-        self._ensembles: Dict[UUID, LocalEnsemble]
+        self._experiments: dict[UUID, LocalExperiment]
+        self._ensembles: dict[UUID, LocalEnsemble]
         self._index: _Index
 
         try:
@@ -189,7 +175,7 @@ class LocalStorage(BaseMode):
                 return exp
         raise KeyError(f"Experiment with name '{name}' not found")
 
-    def get_ensemble(self, uuid: Union[UUID, str]) -> LocalEnsemble:
+    def get_ensemble(self, uuid: UUID | str) -> LocalEnsemble:
         """
         Retrieves an ensemble by UUID.
 
@@ -222,10 +208,10 @@ class LocalStorage(BaseMode):
         except FileNotFoundError:
             return _Index()
 
-    def _load_ensembles(self) -> Dict[UUID, LocalEnsemble]:
+    def _load_ensembles(self) -> dict[UUID, LocalEnsemble]:
         if not (self.path / "ensembles").exists():
             return {}
-        ensembles: List[LocalEnsemble] = []
+        ensembles: list[LocalEnsemble] = []
         for ensemble_path in (self.path / "ensembles").iterdir():
             try:
                 ensemble = LocalEnsemble(self, ensemble_path, self.mode)
@@ -242,7 +228,7 @@ class LocalStorage(BaseMode):
             x.id: x for x in sorted(ensembles, key=lambda x: x.started_at, reverse=True)
         }
 
-    def _load_experiments(self) -> Dict[UUID, LocalExperiment]:
+    def _load_experiments(self) -> dict[UUID, LocalExperiment]:
         experiment_ids = {ens.experiment_id for ens in self._ensembles.values()}
         return {
             exp_id: LocalExperiment(self, self._experiment_path(exp_id), self.mode)
@@ -316,11 +302,11 @@ class LocalStorage(BaseMode):
     @require_write
     def create_experiment(
         self,
-        parameters: Optional[List[ParameterConfig]] = None,
-        responses: Optional[List[ResponseConfig]] = None,
-        observations: Optional[Dict[str, polars.DataFrame]] = None,
-        simulation_arguments: Optional[Dict[Any, Any]] = None,
-        name: Optional[str] = None,
+        parameters: list[ParameterConfig] | None = None,
+        responses: list[ResponseConfig] | None = None,
+        observations: dict[str, polars.DataFrame] | None = None,
+        simulation_arguments: dict[Any, Any] | None = None,
+        name: str | None = None,
     ) -> LocalExperiment:
         """
         Creates a new experiment in the storage.
@@ -365,12 +351,12 @@ class LocalStorage(BaseMode):
     @require_write
     def create_ensemble(
         self,
-        experiment: Union[LocalExperiment, UUID],
+        experiment: LocalExperiment | UUID,
         *,
         ensemble_size: int,
         iteration: int = 0,
-        name: Optional[str] = None,
-        prior_ensemble: Union[LocalEnsemble, UUID, None] = None,
+        name: str | None = None,
+        prior_ensemble: LocalEnsemble | UUID | None = None,
     ) -> LocalEnsemble:
         """
         Creates a new ensemble in the storage.
@@ -403,7 +389,7 @@ class LocalStorage(BaseMode):
         path = self._ensemble_path(uuid)
         path.mkdir(parents=True, exist_ok=False)
 
-        prior_ensemble_id: Optional[UUID] = None
+        prior_ensemble_id: UUID | None = None
         if isinstance(prior_ensemble, UUID):
             prior_ensemble_id = prior_ensemble
         elif isinstance(prior_ensemble, LocalEnsemble):
@@ -619,10 +605,10 @@ def _storage_version(path: Path) -> int:
             raise
 
 
-_migration_ert_config: Optional[ErtConfig] = None
+_migration_ert_config: ErtConfig | None = None
 
 
-def local_storage_set_ert_config(ert_config: Optional[ErtConfig]) -> None:
+def local_storage_set_ert_config(ert_config: ErtConfig | None) -> None:
     """
     Set the ErtConfig for migration hints.
 
@@ -632,7 +618,7 @@ def local_storage_set_ert_config(ert_config: Optional[ErtConfig]) -> None:
 
     Parameters
     ----------
-    ert_config : Optional[ErtConfig]
+    ert_config : ErtConfig | None
         The ErtConfig instance to be used for migrations.
     """
 

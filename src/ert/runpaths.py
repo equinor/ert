@@ -1,5 +1,5 @@
 from pathlib import Path
-from typing import Iterable, List, Optional, Union
+from typing import Iterable
 
 from ert.substitutions import Substitutions
 
@@ -32,9 +32,9 @@ class Runpaths:
         self,
         jobname_format: str,
         runpath_format: str,
-        filename: Union[str, Path] = ".ert_runpath_list",
-        substitutions: Optional[Substitutions] = None,
-        eclbase: Optional[str] = None,
+        filename: str | Path = ".ert_runpath_list",
+        substitutions: Substitutions | None = None,
+        eclbase: str | None = None,
     ):
         self._jobname_format = jobname_format
         self.runpath_list_filename = Path(filename)
@@ -46,7 +46,7 @@ class Runpaths:
         self._substitutions["<ERT-CASE>"] = ensemble_name
         self._substitutions["<ERTCASE>"] = ensemble_name
 
-    def get_paths(self, realizations: Iterable[int], iteration: int) -> List[str]:
+    def get_paths(self, realizations: Iterable[int], iteration: int) -> list[str]:
         return [
             self._substitutions.substitute_real_iter(
                 self._runpath_format, realization, iteration
@@ -54,7 +54,7 @@ class Runpaths:
             for realization in realizations
         ]
 
-    def get_jobnames(self, realizations: Iterable[int], iteration: int) -> List[str]:
+    def get_jobnames(self, realizations: Iterable[int], iteration: int) -> list[str]:
         return [
             self._substitutions.substitute_real_iter(
                 self._jobname_format, realization, iteration
@@ -64,8 +64,8 @@ class Runpaths:
 
     def write_runpath_list(
         self,
-        iteration_numbers: List[int],
-        realization_numbers: List[int],
+        iteration_numbers: list[int],
+        realization_numbers: list[int],
     ) -> None:
         """Writes the runpath_list_file, which lists jobs and runpaths.
 

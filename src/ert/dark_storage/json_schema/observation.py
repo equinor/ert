@@ -1,4 +1,4 @@
-from typing import Any, List, Mapping, Optional
+from typing import Any, Mapping
 from uuid import UUID, uuid4
 
 from pydantic import ConfigDict, Field
@@ -8,8 +8,8 @@ from pydantic.dataclasses import dataclass
 @dataclass
 class _ObservationTransformation:
     name: str
-    active: List[bool]
-    scale: List[float]
+    active: list[bool]
+    scale: list[float]
     observation_id: UUID
 
 
@@ -26,10 +26,10 @@ class ObservationTransformationOut(_ObservationTransformation):
 @dataclass
 class _Observation:
     name: str
-    errors: List[float]
-    values: List[float]
-    x_axis: List[Any]
-    records: Optional[List[UUID]] = None
+    errors: list[float]
+    values: list[float]
+    x_axis: list[Any]
+    records: list[UUID] | None = None
 
 
 @dataclass
@@ -40,5 +40,5 @@ class ObservationIn(_Observation):
 @dataclass(config=ConfigDict(from_attributes=True))
 class ObservationOut(_Observation):
     id: UUID = Field(default_factory=uuid4)
-    transformation: Optional[ObservationTransformationOut] = None
+    transformation: ObservationTransformationOut | None = None
     userdata: Mapping[str, Any] = Field(default_factory=dict)

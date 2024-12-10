@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Iterator, List, Optional
+from typing import TYPE_CHECKING, Iterator
 
 from .plugin import Plugin
 
@@ -15,8 +15,8 @@ class PluginHandler:
     def __init__(
         self,
         notifier: ErtNotifier,
-        plugin_jobs: List[WorkflowJob],
-        parent_window: Optional[QWidget],
+        plugin_jobs: list[WorkflowJob],
+        parent_window: QWidget | None,
     ):
         self.__plugins = []
 

@@ -1,4 +1,4 @@
-from typing import Any, List, Optional, overload
+from typing import Any, overload
 
 from qtpy.QtCore import QAbstractItemModel, QModelIndex, QObject, Qt
 from qtpy.QtGui import QColor, QIcon
@@ -12,31 +12,31 @@ class DataTypeKeysListModel(QAbstractItemModel):
     HAS_OBSERVATIONS = QColor(237, 218, 116)
     GROUP_ITEM = QColor(64, 64, 64)
 
-    def __init__(self, keys: List[PlotApiKeyDefinition]):
+    def __init__(self, keys: list[PlotApiKeyDefinition]):
         QAbstractItemModel.__init__(self)
         self._keys = keys
         self.__icon = QIcon("img:star_filled.svg")
 
     @override
     def index(
-        self, row: int, column: int, parent: Optional[QModelIndex] = None
+        self, row: int, column: int, parent: QModelIndex | None = None
     ) -> QModelIndex:
         return self.createIndex(row, column)
 
     @overload
     def parent(self, child: QModelIndex) -> QModelIndex: ...
     @overload
-    def parent(self) -> Optional[QObject]: ...
+    def parent(self) -> QObject | None: ...
     @override
-    def parent(self, child: Optional[QModelIndex] = None) -> Optional[QObject]:
+    def parent(self, child: QModelIndex | None = None) -> QObject | None:
         return QModelIndex()
 
     @override
-    def rowCount(self, parent: Optional[QModelIndex] = None) -> int:
+    def rowCount(self, parent: QModelIndex | None = None) -> int:
         return len(self._keys)
 
     @override
-    def columnCount(self, parent: Optional[QModelIndex] = None) -> int:
+    def columnCount(self, parent: QModelIndex | None = None) -> int:
         return 1
 
     @override
@@ -55,7 +55,7 @@ class DataTypeKeysListModel(QAbstractItemModel):
 
         return None
 
-    def itemAt(self, index: QModelIndex) -> Optional[PlotApiKeyDefinition]:
+    def itemAt(self, index: QModelIndex) -> PlotApiKeyDefinition | None:
         assert isinstance(index, QModelIndex)
 
         if index.isValid():

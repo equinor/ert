@@ -2,7 +2,7 @@ import logging
 from collections import defaultdict
 from contextlib import ExitStack
 from datetime import datetime, timedelta
-from typing import Any, Dict, Final, List, Optional, Sequence, Union, overload
+from typing import Any, Final, Sequence, overload
 
 from qtpy.QtCore import QAbstractItemModel, QModelIndex, QObject, QSize, Qt, QVariant
 from qtpy.QtGui import QColor, QFont
@@ -71,7 +71,7 @@ _QCOLORS = {
 
 
 def _estimate_duration(
-    start_time: datetime, end_time: Optional[datetime] = None
+    start_time: datetime, end_time: datetime | None = None
 ) -> timedelta:
     if not end_time or end_time < start_time:
         end_time = datetime.now(start_time.tzinfo)
@@ -79,12 +79,12 @@ def _estimate_duration(
 
 
 class SnapshotModel(QAbstractItemModel):
-    def __init__(self, parent: Optional[QObject] = None) -> None:
+    def __init__(self, parent: QObject | None = None) -> None:
         super().__init__(parent)
         self.root: RootNode = RootNode("0")
 
     @staticmethod
-    def prerender(ensemble: EnsembleSnapshot) -> Optional[EnsembleSnapshot]:
+    def prerender(ensemble: EnsembleSnapshot) -> EnsembleSnapshot | None:
         """Pre-render some data that is required by this model. Ideally, this
         is called outside the GUI thread. This is a requirement of the model,
         so it has to be called."""
@@ -111,7 +111,7 @@ class SnapshotModel(QAbstractItemModel):
         metadata["sorted_real_ids"] = sorted(ensemble.reals.keys(), key=int)
         metadata["sorted_fm_step_ids"] = defaultdict(list)
 
-        running_fm_step_id: Dict[RealId, int] = {}
+        running_fm_step_id: dict[RealId, int] = {}
         for (real_id, fm_step_id), fm_step_snapshot in fm_step_snapshots.items():
             if fm_step_snapshot == state.FORWARD_MODEL_STATE_RUNNING:
                 running_fm_step_id[real_id] = int(fm_step_id)
@@ -155,7 +155,7 @@ class SnapshotModel(QAbstractItemModel):
         with ExitStack() as stack:
             iter_node = self.root.children[iter_]
             iter_index = self.index(iter_node.row(), 0, QModelIndex())
-            reals_changed: List[int] = []
+            reals_changed: list[int] = []
 
             for real_id, real in reals.items():
                 real_node = iter_node.children[real_id]
@@ -174,7 +174,7 @@ class SnapshotModel(QAbstractItemModel):
                 if real.get("message"):
                     data.message = real["message"]
 
-            fm_steps_changed_by_real: Dict[str, List[int]] = defaultdict(list)
+            fm_steps_changed_by_real: dict[str, list[int]] = defaultdict(list)
             for (real_id, fm_step_id), fm_step in fm_steps.items():
                 real_node = iter_node.children[real_id]
                 fm_step_node = real_node.children[fm_step_id]
@@ -275,12 +275,12 @@ class SnapshotModel(QAbstractItemModel):
         self.rowsInserted.emit(parent, snapshot_tree.row(), snapshot_tree.row())
 
     @override
-    def columnCount(self, parent: Optional[QModelIndex] = None) -> int:
+    def columnCount(self, parent: QModelIndex | None = None) -> int:
         if parent and isinstance(parent.internalPointer(), RealNode):
             return FM_STEP_COLUMN_SIZE
         return 1
 
-    def rowCount(self, parent: Optional[QModelIndex] = None) -> int:
+    def rowCount(self, parent: QModelIndex | None = None) -> int:
         if parent is None:
             parent = QModelIndex()
         parent_item = self.root if not parent.isValid() else parent.internalPointer()
@@ -293,9 +293,9 @@ class SnapshotModel(QAbstractItemModel):
     @overload
     def parent(self, child: QModelIndex) -> QModelIndex: ...
     @overload
-    def parent(self) -> Optional[QObject]: ...
+    def parent(self) -> QObject | None: ...
     @override
-    def parent(self, child: Optional[QModelIndex] = None) -> Optional[QObject]:
+    def parent(self, child: QModelIndex | None = None) -> QObject | None:
         if child is None or not child.isValid():
             return QModelIndex()
 
@@ -313,7 +313,7 @@ class SnapshotModel(QAbstractItemModel):
         if role == Qt.ItemDataRole.TextAlignmentRole:
             return Qt.AlignmentFlag.AlignCenter
 
-        node: Union[IterNode, RealNode, ForwardModelStepNode] = index.internalPointer()
+        node: IterNode | RealNode | ForwardModelStepNode = index.internalPointer()
         if role == NodeRole:
             return node
 
@@ -419,7 +419,7 @@ class SnapshotModel(QAbstractItemModel):
             data_name = FM_STEP_COLUMNS[index.column()]
             if data_name in [ids.MAX_MEMORY_USAGE]:
                 data = node.data
-                _bytes: Optional[str] = data.get(data_name)  # type: ignore
+                _bytes: str | None = data.get(data_name)  # type: ignore
                 if _bytes:
                     return byte_with_unit(float(_bytes))
 
@@ -473,7 +473,7 @@ class SnapshotModel(QAbstractItemModel):
 
     @override
     def index(
-        self, row: int, column: int, parent: Optional[QModelIndex] = None
+        self, row: int, column: int, parent: QModelIndex | None = None
     ) -> QModelIndex:
         if parent is None:
             parent = QModelIndex()

@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any, List, Tuple
+from typing import TYPE_CHECKING, Any
 
 from qtpy.QtCore import Qt
 from qtpy.QtWidgets import (
@@ -124,13 +124,13 @@ class SummaryPanel(QFrame):
         self._layout.addLayout(layout)
 
     @staticmethod
-    def _runlength_encode_list(strings: List[str]) -> List[Tuple[str, int]]:
+    def _runlength_encode_list(strings: list[str]) -> list[tuple[str, int]]:
         """Runlength encode a list of strings.
 
         Returns a list of tuples, first element is the string, and the second
         element is the count of consecutive occurences of the string at the current
         position."""
-        string_counts: List[Tuple[str, int]] = []
+        string_counts: list[tuple[str, int]] = []
         for string in strings:
             if not string_counts or string_counts[-1][0] != string:
                 string_counts.append((string, 1))

@@ -2,10 +2,9 @@
 import datetime
 import os
 import os.path
-from typing import List, Optional, Tuple, Union
+from typing import Self
 
 from lark import Discard, Lark, Token, Transformer, Tree, UnexpectedCharacters
-from typing_extensions import Self
 
 from .config_dict import ConfigDict
 from .config_errors import ConfigValidationError, ConfigWarning
@@ -74,17 +73,17 @@ class ArgumentToStringTransformer(Transformer):
     relevant python datastructures"""
 
     @staticmethod
-    def arg(rule: List[FileContextToken]) -> FileContextToken:
+    def arg(rule: list[FileContextToken]) -> FileContextToken:
         return rule[0]
 
     @staticmethod
-    def argument_value(rule: List[FileContextToken]) -> FileContextToken:
+    def argument_value(rule: list[FileContextToken]) -> FileContextToken:
         return FileContextToken.join_tokens(rule, separator="")
 
     @staticmethod
     def forward_model_arguments(
         kw_list,
-    ) -> List[Tuple[FileContextToken, FileContextToken]]:
+    ) -> list[tuple[FileContextToken, FileContextToken]]:
         args = []
         for kw_pair in kw_list:
             if kw_pair is not None:
@@ -183,7 +182,7 @@ def _tree_to_dict(
     cwd = os.path.dirname(os.path.abspath(config_file))
 
     for node in tree.children:
-        args: List[FileContextToken]
+        args: list[FileContextToken]
         kw: FileContextToken
         kw, *args = node  # type: ignore
         if kw not in schema:
@@ -232,8 +231,8 @@ def _tree_to_dict(
     return config_dict
 
 
-ArgPairList = List[Tuple[FileContextToken]]
-ParsedArgList = List[Union[FileContextToken, ArgPairList]]
+ArgPairList = list[tuple[FileContextToken]]
+ParsedArgList = list[FileContextToken | ArgPairList]
 
 
 def _substitute_args(
@@ -242,16 +241,16 @@ def _substitute_args(
     defines: Defines,
 ) -> ParsedArgList:
     def substitute_arglist_tuple(
-        tup: Tuple[FileContextToken],
-    ) -> Tuple[FileContextToken]:
+        tup: tuple[FileContextToken],
+    ) -> tuple[FileContextToken]:
         key, value = tup
         substituted_value = _substitute_token(defines, value, constraints.expand_envvar)
 
         return (key, substituted_value)
 
     def substitute_arg(
-        arg: Union[FileContextToken, List[Tuple[FileContextToken]]],
-    ) -> Union[FileContextToken, List[Tuple[FileContextToken]]]:
+        arg: FileContextToken | list[tuple[FileContextToken]],
+    ) -> FileContextToken | list[tuple[FileContextToken]]:
         if isinstance(arg, FileContextToken):
             return _substitute_token(defines, arg, constraints.expand_envvar)
 
@@ -261,7 +260,7 @@ def _substitute_args(
 
         raise ValueError(
             "Expected "
-            "Union[FileContextToken, List[Tuple[FileContextToken]]], "
+            "FileContextToken | list[tuple[FileContextToken]], "
             f"got {type(arg)}"
         )
 
@@ -313,7 +312,7 @@ def _handle_includes(
     tree: Tree[Instruction],
     defines: Defines,
     config_file: str,
-    current_included_file: Optional[IncludedFile] = None,
+    current_included_file: IncludedFile | None = None,
 ):
     if current_included_file is None:
         current_included_file = IncludedFile(included_from=None, filename=config_file)
@@ -323,7 +322,7 @@ def _handle_includes(
 
     errors = []
     for i, node in enumerate(tree.children):
-        args: List[FileContextToken]
+        args: list[FileContextToken]
         kw: FileContextToken
         kw, *args = node  # type: ignore
         if kw == "DEFINE":
@@ -334,7 +333,7 @@ def _handle_includes(
             defines.append(args)  # type: ignore
         if kw == "INCLUDE":
             if len(args) > 1:
-                superfluous_tokens: List[FileContextToken] = args[1:]
+                superfluous_tokens: list[FileContextToken] = args[1:]
                 errors.append(
                     ErrorInfo(
                         message="Keyword:INCLUDE must have exactly one argument",
@@ -449,7 +448,7 @@ def read_file(file: str) -> str:
             unknown_char = f"hex:{hex_str}"
 
         # Find the first line in the file with decode error
-        bad_byte_lines: List[int] = []
+        bad_byte_lines: list[int] = []
         with open(file, "rb") as f:
             all_lines = []
             for line in f:
@@ -491,7 +490,7 @@ def _parse_file(file: str) -> Tree[Instruction]:
 def parse(
     file: str,
     schema: SchemaItemDict,
-    pre_defines: Optional[List[Tuple[str, str]]] = None,
+    pre_defines: list[tuple[str, str]] | None = None,
 ) -> ConfigDict:
     return _transform_tree(_parse_file(file), file, schema, pre_defines)
 
@@ -500,7 +499,7 @@ def parse_contents(
     contents: str,
     schema: SchemaItemDict,
     file_name: str,
-    pre_defines: Optional[List[Tuple[str, str]]] = None,
+    pre_defines: list[tuple[str, str]] | None = None,
 ) -> ConfigDict:
     return _transform_tree(
         _parse_contents(contents, file_name), file_name, schema, pre_defines
@@ -511,7 +510,7 @@ def _transform_tree(
     tree: Tree[Instruction],
     file: str,
     schema: SchemaItemDict,
-    pre_defines: Optional[List[Tuple[str, str]]] = None,
+    pre_defines: list[tuple[str, str]] | None = None,
 ) -> ConfigDict:
     filepath = os.path.normpath(os.path.abspath(file))
     config_dir = os.path.dirname(filepath)

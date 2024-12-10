@@ -3,12 +3,9 @@ from __future__ import annotations
 import logging
 from concurrent import futures
 from concurrent.futures import Future
-from typing import TYPE_CHECKING, Any, Dict, List, Optional
+from typing import TYPE_CHECKING, Any, Optional, Self
 
-from typing_extensions import Self
-
-from ert.config import ErtScript, ExternalErtScript, Workflow, WorkflowJob
-from ert.config.ert_config import ErtConfig
+from ert.config import ErtConfig, ErtScript, ExternalErtScript, Workflow, WorkflowJob
 
 if TYPE_CHECKING:
     from ert.storage import Ensemble, Storage
@@ -23,8 +20,8 @@ class WorkflowJobRunner:
 
     def run(
         self,
-        arguments: Optional[List[Any]] = None,
-        fixtures: Optional[Dict[str, Any]] = None,
+        arguments: Optional[list[Any]] = None,
+        fixtures: Optional[dict[str, Any]] = None,
     ) -> Any:
         if arguments is None:
             arguments = []
@@ -126,7 +123,7 @@ class WorkflowRunner:
         self.__running = False
         self.__cancelled = False
         self.__current_job: Optional[WorkflowJobRunner] = None
-        self.__status: Dict[str, Dict[str, Any]] = {}
+        self.__status: dict[str, dict[str, Any]] = {}
 
     def __enter__(self) -> Self:
         self.run()
@@ -235,5 +232,5 @@ class WorkflowRunner:
     def workflowResult(self) -> Optional[bool]:
         return self.__workflow_result
 
-    def workflowReport(self) -> Dict[str, Dict[str, Any]]:
+    def workflowReport(self) -> dict[str, dict[str, Any]]:
         return self.__status

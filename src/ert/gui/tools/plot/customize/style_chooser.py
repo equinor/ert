@@ -1,4 +1,4 @@
-from typing import Iterator, List, Optional, Tuple
+from typing import Iterator
 
 from qtpy.QtWidgets import (
     QComboBox,
@@ -57,7 +57,7 @@ MARKER_OCTAGON = ("Octagon", "8")
 MARKER_HEXAGON1 = ("Hexagon 1", "h")
 MARKER_HEXAGON2 = ("Hexagon 2", "H")
 
-MARKERS: List[Tuple[str, Optional[str]]] = [
+MARKERS: list[tuple[str, str | None]] = [
     MARKER_OFF,
     MARKER_X,
     MARKER_CIRCLE,
@@ -78,7 +78,7 @@ class StyleChooser(QWidget):
         QWidget.__init__(self)
         self._style = PlotStyle("StyleChooser internal style")
 
-        self._styles: List[Tuple[str, Optional[str]]] = (
+        self._styles: list[tuple[str, str | None]] = (
             STYLES["default"]
             if line_style_set not in STYLES
             else STYLES[line_style_set]
@@ -137,7 +137,7 @@ class StyleChooser(QWidget):
         )
         self._layout = layout
 
-    def getItemSizes(self) -> Tuple[int, ...]:
+    def getItemSizes(self) -> tuple[int, ...]:
         def _iter() -> Iterator[int]:
             for i in range(4):
                 item = self._layout.itemAt(i)
@@ -193,7 +193,7 @@ class StyleChooser(QWidget):
         style.copyStyleFrom(self._style)
         return style
 
-    def createLabelLayout(self, layout: Optional[QLayout] = None) -> QLayout:
+    def createLabelLayout(self, layout: QLayout | None = None) -> QLayout:
         if layout is None:
             layout = QHBoxLayout()
 

@@ -7,7 +7,7 @@ from dataclasses import fields
 from datetime import datetime
 from pathlib import Path
 from queue import SimpleQueue
-from typing import TYPE_CHECKING, Any, Dict, List, Type
+from typing import TYPE_CHECKING, Any, Type
 
 from qtpy.QtCore import QSize, Qt, Signal
 from qtpy.QtGui import QIcon, QStandardItemModel
@@ -53,7 +53,7 @@ if TYPE_CHECKING:
 EXPERIMENT_IS_MANUAL_UPDATE_MESSAGE = "Execute Selected"
 
 
-def create_md_table(kv: Dict[str, str], output: str) -> str:
+def create_md_table(kv: dict[str, str], output: str) -> str:
     for k, v in kv.items():
         v = v.replace("_", r"\_")
         output += f"| {k} | {v} |\n"
@@ -216,7 +216,7 @@ class ExperimentPanel(QWidget):
         self.experiment_type_changed.connect(panel.experimentTypeChanged)
 
     @staticmethod
-    def getActions() -> List[QAction]:
+    def getActions() -> list[QAction]:
         return []
 
     def get_current_experiment_type(self) -> Any:

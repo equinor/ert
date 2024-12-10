@@ -1,4 +1,4 @@
-from typing import Any, List, Optional, Union
+from typing import Any
 
 from qtpy.QtCore import QSize, Qt
 from qtpy.QtGui import QColor
@@ -20,11 +20,11 @@ class CustomDialog(QDialog):
         self,
         title: str = "Title",
         description: str = "Description",
-        parent: Optional[QWidget] = None,
+        parent: QWidget | None = None,
     ) -> None:
         QDialog.__init__(self, parent)
 
-        self._option_list: List[QWidget] = []
+        self._option_list: list[QWidget] = []
 
         self.setModal(True)
         self.setWindowTitle(title)
@@ -42,7 +42,7 @@ class CustomDialog(QDialog):
         self._layout.addRow(label)
         self._layout.addRow(self.createSpace(10))
 
-        self.ok_button: Optional[QPushButton] = None
+        self.ok_button: QPushButton | None = None
 
         self.setLayout(self._layout)
 
@@ -93,7 +93,7 @@ class CustomDialog(QDialog):
 
         self._layout.addRow(f"{label}:", option_widget)
 
-    def addWidget(self, widget: Union[QWidget, QLayout, None], label: str = "") -> None:
+    def addWidget(self, widget: QWidget | QLayout | None, label: str = "") -> None:
         if not label.endswith(":"):
             label = f"{label}:"
         self._layout.addRow(label, widget)

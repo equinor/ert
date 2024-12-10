@@ -1,4 +1,4 @@
-from typing import List, Tuple, TypedDict
+from typing_extensions import TypedDict
 
 from ert.config import ErtConfig, Field, GenKwConfig, SurfaceConfig
 
@@ -12,10 +12,10 @@ class ErtSummary:
     def __init__(self, ert_config: ErtConfig):
         self.ert_config = ert_config
 
-    def getForwardModels(self) -> List[str]:
+    def getForwardModels(self) -> list[str]:
         return self.ert_config.forward_model_step_name_list()
 
-    def getParameters(self) -> Tuple[List[str], int]:
+    def getParameters(self) -> tuple[list[str], int]:
         parameters = []
         count = 0
         for (
@@ -34,8 +34,8 @@ class ErtSummary:
                     count += len(config)
         return sorted(parameters, key=lambda k: k.lower()), count
 
-    def getObservations(self) -> List[ObservationCount]:
-        counts: List[ObservationCount] = []
+    def getObservations(self) -> list[ObservationCount]:
+        counts: list[ObservationCount] = []
         for df in self.ert_config.observations.values():
             counts.extend(df.group_by("observation_key").count().to_dicts())  #  type: ignore
 

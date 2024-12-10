@@ -6,7 +6,7 @@ import os
 from datetime import datetime
 from functools import lru_cache
 from pathlib import Path
-from typing import TYPE_CHECKING, Dict, Iterable, List, Optional, Set, Tuple, Union
+from typing import TYPE_CHECKING, Iterable
 from uuid import UUID
 
 import numpy as np
@@ -37,7 +37,7 @@ class _Index(BaseModel):
     ensemble_size: int
     iteration: int
     name: str
-    prior_ensemble_id: Optional[UUID]
+    prior_ensemble_id: UUID | None
     started_at: datetime
 
 
@@ -103,7 +103,7 @@ class LocalEnsemble(BaseMode):
         experiment_id: UUID,
         iteration: int = 0,
         name: str,
-        prior_ensemble_id: Optional[UUID],
+        prior_ensemble_id: UUID | None,
     ) -> LocalEnsemble:
         """
         Create a new ensemble in local storage.
@@ -180,7 +180,7 @@ class LocalEnsemble(BaseMode):
         return self._index.iteration
 
     @property
-    def parent(self) -> Optional[UUID]:
+    def parent(self) -> UUID | None:
         return self._index.prior_ensemble_id
 
     @property
@@ -255,7 +255,7 @@ class LocalEnsemble(BaseMode):
             ]
         )
 
-    def is_initalized(self) -> List[int]:
+    def is_initalized(self) -> list[int]:
         """
         Return the realization numbers where all parameters are internalized. In
         cases where there are parameters which are read from the forward model, an
@@ -263,7 +263,7 @@ class LocalEnsemble(BaseMode):
 
         Returns
         -------
-        exists : List[int]
+        exists : list[int]
             Returns the realization numbers with parameters
         """
 
@@ -280,13 +280,13 @@ class LocalEnsemble(BaseMode):
             )
         ]
 
-    def has_data(self) -> List[int]:
+    def has_data(self) -> list[int]:
         """
         Return the realization numbers where all responses are internalized
 
         Returns
         -------
-        exists : List[int]
+        exists : list[int]
             Returns the realization numbers with responses
         """
 
@@ -297,9 +297,9 @@ class LocalEnsemble(BaseMode):
             if RealizationStorageState.RESPONSES_LOADED in ensemble_state[i]
         ]
 
-    def get_realization_list_with_responses(self) -> List[int]:
+    def get_realization_list_with_responses(self) -> list[int]:
         """
-        List of realization indices with associated responses.
+        list of realization indices with associated responses.
 
         Parameters
         ----------
@@ -309,7 +309,7 @@ class LocalEnsemble(BaseMode):
         Returns
         -------
         realizations : list of int
-            List of realization indices with associated responses.
+            list of realization indices with associated responses.
         """
 
         mask = self.get_realization_mask_with_responses()
@@ -319,7 +319,7 @@ class LocalEnsemble(BaseMode):
         self,
         realization: int,
         failure_type: RealizationStorageState,
-        message: Optional[str] = None,
+        message: str | None = None,
     ) -> None:
         """
         Record a failure for a given realization in ensemble.
@@ -368,7 +368,7 @@ class LocalEnsemble(BaseMode):
 
         return (self._realization_dir(realization) / self._error_log_name).exists()
 
-    def get_failure(self, realization: int) -> Optional[_Failure]:
+    def get_failure(self, realization: int) -> _Failure | None:
         """
         Retrieve failure information for a given realization, if any.
 
@@ -396,14 +396,14 @@ class LocalEnsemble(BaseMode):
         self.get_ensemble_state()
 
     @lru_cache  # noqa: B019
-    def get_ensemble_state(self) -> List[Set[RealizationStorageState]]:
+    def get_ensemble_state(self) -> list[set[RealizationStorageState]]:
         """
         Retrieve the state of each realization within ensemble.
 
         Returns
         -------
         states : list of RealizationStorageState
-            List of realization states.
+            list of realization states.
         """
 
         response_configs = self.experiment.response_configuration
@@ -432,7 +432,7 @@ class LocalEnsemble(BaseMode):
             )
 
         def _responses_exist_for_realization(
-            realization: int, key: Optional[str] = None
+            realization: int, key: str | None = None
         ) -> bool:
             """
             Returns true if there are responses in the experiment and they have
@@ -482,7 +482,7 @@ class LocalEnsemble(BaseMode):
                 _has_response(response) for response in non_empty_response_configs
             )
 
-        def _find_state(realization: int) -> Set[RealizationStorageState]:
+        def _find_state(realization: int) -> set[RealizationStorageState]:
             _state = set()
             if self.has_failure(realization):
                 failure = self.get_failure(realization)
@@ -520,7 +520,7 @@ class LocalEnsemble(BaseMode):
     def _load_dataset(
         self,
         group: str,
-        realizations: Union[int, np.int64, npt.NDArray[np.int_], None],
+        realizations: int | np.int64 | npt.NDArray[np.int_] | None,
     ) -> xr.Dataset:
         if isinstance(realizations, (int, np.int64)):
             return self._load_single_dataset(group, int(realizations)).isel(
@@ -539,7 +539,7 @@ class LocalEnsemble(BaseMode):
         return xr.combine_nested(datasets, concat_dim="realizations")
 
     def load_parameters(
-        self, group: str, realizations: Union[int, npt.NDArray[np.int_], None] = None
+        self, group: str, realizations: int | npt.NDArray[np.int_] | None = None
     ) -> xr.Dataset:
         """
         Load parameters for group and realizations into xarray Dataset.
@@ -578,7 +578,7 @@ class LocalEnsemble(BaseMode):
 
     def load_observation_scaling_factors(
         self,
-    ) -> Optional[polars.DataFrame]:
+    ) -> polars.DataFrame | None:
         ds_path = self.mount_point / "observation_scaling_factors.parquet"
         if ds_path.exists():
             return polars.read_parquet(ds_path)
@@ -590,7 +590,7 @@ class LocalEnsemble(BaseMode):
         self,
         cross_correlations: npt.NDArray[np.float64],
         param_group: str,
-        parameter_names: List[str],
+        parameter_names: list[str],
     ) -> None:
         data_vars = {
             param_group: xr.DataArray(
@@ -604,7 +604,7 @@ class LocalEnsemble(BaseMode):
         self._storage._to_netcdf_transaction(file_path, dataset)
 
     def load_responses(
-        self, key: str, realizations: Tuple[int, ...]
+        self, key: str, realizations: tuple[int, ...]
     ) -> polars.DataFrame:
         """Load responses for key and realizations into xarray Dataset.
 
@@ -627,7 +627,7 @@ class LocalEnsemble(BaseMode):
         return self._load_responses_lazy(key, realizations).collect()
 
     def _load_responses_lazy(
-        self, key: str, realizations: Tuple[int, ...]
+        self, key: str, realizations: tuple[int, ...]
     ) -> polars.LazyFrame:
         """Load responses for key and realizations into xarray Dataset.
 
@@ -673,8 +673,8 @@ class LocalEnsemble(BaseMode):
     @deprecated("Use load_responses")
     def load_all_summary_data(
         self,
-        keys: Optional[List[str]] = None,
-        realization_index: Optional[int] = None,
+        keys: list[str] | None = None,
+        realization_index: int | None = None,
     ) -> pd.DataFrame:
         """
         Load all summary data for realizations into pandas DataFrame.
@@ -682,7 +682,7 @@ class LocalEnsemble(BaseMode):
         Parameters
         ----------
         keys : list of str, optional
-            List of keys to load. If None, all keys are loaded.
+            list of keys to load. If None, all keys are loaded.
         realization_index : int, optional
 
         Returns
@@ -724,8 +724,8 @@ class LocalEnsemble(BaseMode):
 
     def load_all_gen_kw_data(
         self,
-        group: Optional[str] = None,
-        realization_index: Optional[int] = None,
+        group: str | None = None,
+        realization_index: int | None = None,
     ) -> pd.DataFrame:
         """Loads scalar parameters (GEN_KWs) into a pandas DataFrame
         with columns <PARAMETER_GROUP>:<PARAMETER_NAME> and
@@ -880,7 +880,7 @@ class LocalEnsemble(BaseMode):
 
     def get_parameter_state(
         self, realization: int
-    ) -> Dict[str, RealizationStorageState]:
+    ) -> dict[str, RealizationStorageState]:
         path = self._realization_dir(realization)
         return {
             e: RealizationStorageState.PARAMETERS_LOADED
@@ -891,7 +891,7 @@ class LocalEnsemble(BaseMode):
 
     def get_response_state(
         self, realization: int
-    ) -> Dict[str, RealizationStorageState]:
+    ) -> dict[str, RealizationStorageState]:
         response_configs = self.experiment.response_configuration
         path = self._realization_dir(realization)
         return {
@@ -941,7 +941,7 @@ class LocalEnsemble(BaseMode):
                 reals.sort()
                 # too much memory to do it all at once, go per realization
                 first_columns: polars.DataFrame | None = None
-                realization_columns: List[polars.DataFrame] = []
+                realization_columns: list[polars.DataFrame] = []
                 for real in reals:
                     responses = self._load_responses_lazy(
                         response_type, (real,)

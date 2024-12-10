@@ -4,7 +4,6 @@ import re
 from collections.abc import Sequence
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Dict, List, Optional, Union
 
 import pandas as pd
 
@@ -32,9 +31,9 @@ class AnalysisReportEvent(AnalysisEvent):
 
 @dataclass
 class DataSection:
-    header: List[str]
-    data: Sequence[Sequence[Union[str, float]]]
-    extra: Optional[Dict[str, str]] = None
+    header: list[str]
+    data: Sequence[Sequence[str | float]]
+    extra: dict[str, str] | None = None
 
     def __post_init__(self) -> None:
         if len(self.data) > 0 and len(self.header) != len(self.data[0]):
@@ -66,7 +65,7 @@ class AnalysisDataEvent(AnalysisEvent):
 @dataclass
 class AnalysisErrorEvent(AnalysisEvent):
     error_msg: str
-    data: Optional[DataSection] = None
+    data: DataSection | None = None
 
 
 @dataclass

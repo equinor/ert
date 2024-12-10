@@ -9,11 +9,7 @@ from typing import (
     TYPE_CHECKING,
     Any,
     Callable,
-    Dict,
     Iterable,
-    List,
-    Optional,
-    Tuple,
 )
 
 import numpy as np
@@ -45,7 +41,7 @@ def _load_realization_from_run_path(
     run_path: str,
     realization: int,
     ensemble: Ensemble,
-) -> Tuple[LoadResult, int]:
+) -> tuple[LoadResult, int]:
     result = asyncio.run(forward_model_ok(run_path, realization, 0, ensemble))
     return result, realization
 
@@ -57,7 +53,7 @@ class LibresFacade:
 
     def __init__(self, ert_config: ErtConfig, _: Any = None):
         self.config = ert_config
-        self.update_snapshots: Dict[str, SmootherSnapshot] = {}
+        self.update_snapshots: dict[str, SmootherSnapshot] = {}
         self.update_configuration = None
 
     def smoother_update(
@@ -67,9 +63,9 @@ class LibresFacade:
         run_id: str,
         observations: Iterable[str],
         parameters: Iterable[str],
-        progress_callback: Optional[Callable[[AnalysisEvent], None]] = None,
+        progress_callback: Callable[[AnalysisEvent], None] | None = None,
         global_std_scaling: float = 1.0,
-        rng: Optional[np.random.Generator] = None,
+        rng: np.random.Generator | None = None,
         misfit_process: bool = False,
     ) -> SmootherSnapshot:
         if rng is None:
@@ -93,17 +89,17 @@ class LibresFacade:
         return self.config.ens_path
 
     @property
-    def user_config_file(self) -> Optional[str]:
+    def user_config_file(self) -> str | None:
         return self.config.user_config_file
 
-    def get_field_parameters(self) -> List[str]:
+    def get_field_parameters(self) -> list[str]:
         return [
             val.name
             for val in self.config.ensemble_config.parameter_configuration
             if isinstance(val, Field)
         ]
 
-    def get_gen_kw(self) -> List[str]:
+    def get_gen_kw(self) -> list[str]:
         return self.config.ensemble_config.get_keylist_gen_kw()
 
     def get_ensemble_size(self) -> int:
@@ -121,7 +117,7 @@ class LibresFacade:
     def load_from_run_path(
         run_path_format: str,
         ensemble: Ensemble,
-        active_realizations: List[int],
+        active_realizations: list[int],
     ) -> int:
         """Returns the number of loaded realizations"""
         pool = ThreadPool(processes=8)
@@ -214,7 +210,7 @@ class LibresFacade:
         ertscript,
         storage: Storage,
         ensemble: Ensemble,
-        *args: Optional[Any],
+        *args: Any,
     ) -> Any:
         warnings.warn(
             "run_ertscript is deprecated, use the workflow runner",

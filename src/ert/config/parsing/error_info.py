@@ -1,7 +1,5 @@
 from dataclasses import dataclass
-from typing import Optional, Sequence
-
-from typing_extensions import Self
+from typing import Self, Sequence
 
 from .file_context_token import FileContextToken
 from .types import MaybeWithContext
@@ -10,16 +8,16 @@ from .types import MaybeWithContext
 @dataclass
 class ErrorInfo:
     message: str
-    filename: Optional[str] = None
-    start_pos: Optional[int] = None
-    line: Optional[int] = None
-    column: Optional[int] = None
-    end_line: Optional[int] = None
-    end_column: Optional[int] = None
-    end_pos: Optional[int] = None
+    filename: str | None = None
+    start_pos: int | None = None
+    line: int | None = None
+    column: int | None = None
+    end_line: int | None = None
+    end_column: int | None = None
+    end_pos: int | None = None
 
     @classmethod
-    def _take(cls, context: MaybeWithContext, attr: str) -> Optional[FileContextToken]:
+    def _take(cls, context: MaybeWithContext, attr: str) -> FileContextToken | None:
         if isinstance(context, FileContextToken):
             return context
         elif hasattr(context, attr):
@@ -79,7 +77,7 @@ class ErrorInfo:
     def __str__(self) -> str:
         return self.location() + self.message
 
-    def _attach_to_context(self, token: Optional[FileContextToken]) -> None:
+    def _attach_to_context(self, token: FileContextToken | None) -> None:
         if token is not None:
             self.filename = token.filename
             self.start_pos = token.start_pos

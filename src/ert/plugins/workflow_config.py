@@ -5,7 +5,7 @@ import logging
 import os
 import tempfile
 from argparse import ArgumentParser
-from typing import Any, Callable, Dict, List, Optional, Type
+from typing import Any, Callable, Type
 
 logger = logging.getLogger(__name__)
 
@@ -17,10 +17,10 @@ class WorkflowConfigs:
 
     def __init__(self) -> None:
         self._temp_dir = tempfile.mkdtemp()
-        self._workflows: List[WorkflowConfig] = []
+        self._workflows: list[WorkflowConfig] = []
 
     def add_workflow(
-        self, ert_script: Type[Any], name: Optional[str] = None
+        self, ert_script: Type[Any], name: str | None = None
     ) -> WorkflowConfig:
         """
 
@@ -32,7 +32,7 @@ class WorkflowConfigs:
         self._workflows.append(workflow)
         return workflow
 
-    def get_workflows(self) -> Dict[str, str]:
+    def get_workflows(self) -> dict[str, str]:
         configs = {}
         for workflow in self._workflows:
             if workflow.name in configs:
@@ -52,7 +52,7 @@ class WorkflowConfig:
     """
 
     def __init__(
-        self, ertscript_class: Type[Any], tmpdir: str, name: Optional[str] = None
+        self, ertscript_class: Type[Any], tmpdir: str, name: str | None = None
     ) -> None:
         """
         :param ertscript_class: Class inheriting from ErtScript
@@ -65,8 +65,8 @@ class WorkflowConfig:
         self.source_package = self._get_source_package(self.func)
         self.config_path = self._write_workflow_config(tmpdir)
         self._description = ertscript_class.__doc__ if ertscript_class.__doc__ else ""
-        self._examples: Optional[str] = None
-        self._parser: Optional[Callable[[], ArgumentParser]] = None
+        self._examples: str | None = None
+        self._parser: Callable[[], ArgumentParser] | None = None
         self._category = "other"
 
     @property
@@ -81,22 +81,22 @@ class WorkflowConfig:
         self._description = description
 
     @property
-    def examples(self) -> Optional[str]:
+    def examples(self) -> str | None:
         """
         A string of valid rst, will be added to the documentation
         """
         return self._examples
 
     @examples.setter
-    def examples(self, examples: Optional[str]) -> None:
+    def examples(self, examples: str | None) -> None:
         self._examples = examples
 
     @property
-    def parser(self) -> Optional[Callable[[], ArgumentParser]]:
+    def parser(self) -> Callable[[], ArgumentParser] | None:
         return self._parser
 
     @parser.setter
-    def parser(self, parser: Optional[Callable[[], ArgumentParser]]) -> None:
+    def parser(self, parser: Callable[[], ArgumentParser] | None) -> None:
         self._parser = parser
 
     @property
@@ -111,7 +111,7 @@ class WorkflowConfig:
         self._category = category
 
     @staticmethod
-    def _get_func_name(func: Type[Any], name: Optional[str]) -> str:
+    def _get_func_name(func: Type[Any], name: str | None) -> str:
         return name if name else func.__name__
 
     def _write_workflow_config(self, output_dir: str) -> str:

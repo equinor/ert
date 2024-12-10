@@ -6,11 +6,10 @@ import re
 import shutil
 from abc import abstractmethod
 from dataclasses import asdict, field, fields
-from typing import Any, Dict, List, Literal, Mapping, Optional, Union, no_type_check
+from typing import Annotated, Any, Literal, Mapping, Optional, no_type_check
 
 import pydantic
 from pydantic.dataclasses import dataclass
-from typing_extensions import Annotated
 
 from .parsing import (
     ConfigDict,
@@ -45,7 +44,7 @@ class QueueOptions:
     @staticmethod
     def create_queue_options(
         queue_system: QueueSystem,
-        options: Dict[str, Any],
+        options: dict[str, Any],
         is_selected_queue_system: bool,
     ) -> Optional[QueueOptions]:
         lower_case_options = {key.lower(): value for key, value in options.items()}
@@ -84,7 +83,7 @@ class QueueOptions:
 
     @property
     @abstractmethod
-    def driver_options(self) -> Dict[str, Any]:
+    def driver_options(self) -> dict[str, Any]:
         """Translate the queue options to the key-value API provided by each driver"""
 
 
@@ -93,7 +92,7 @@ class LocalQueueOptions(QueueOptions):
     name: Literal[QueueSystem.LOCAL] = QueueSystem.LOCAL
 
     @property
-    def driver_options(self) -> Dict[str, Any]:
+    def driver_options(self) -> dict[str, Any]:
         return {}
 
 
@@ -109,7 +108,7 @@ class LsfQueueOptions(QueueOptions):
     lsf_resource: Optional[str] = None
 
     @property
-    def driver_options(self) -> Dict[str, Any]:
+    def driver_options(self) -> dict[str, Any]:
         driver_dict = asdict(self)
         driver_dict.pop("name")
         driver_dict["exclude_hosts"] = driver_dict.pop("exclude_host")
@@ -138,7 +137,7 @@ class TorqueQueueOptions(QueueOptions):
     queue_query_timeout: Optional[str] = pydantic.Field(default=None, deprecated=True)
 
     @property
-    def driver_options(self) -> Dict[str, Any]:
+    def driver_options(self) -> dict[str, Any]:
         driver_dict = asdict(self)
         driver_dict.pop("name")
         driver_dict["queue_name"] = driver_dict.pop("queue")
@@ -173,7 +172,7 @@ class SlurmQueueOptions(QueueOptions):
     max_runtime: Optional[pydantic.NonNegativeFloat] = None
 
     @property
-    def driver_options(self) -> Dict[str, Any]:
+    def driver_options(self) -> dict[str, Any]:
         driver_dict = asdict(self)
         driver_dict.pop("name")
         driver_dict["sbatch_cmd"] = driver_dict.pop("sbatch")
@@ -198,7 +197,7 @@ class SlurmQueueOptions(QueueOptions):
 
 @dataclass
 class QueueMemoryStringFormat:
-    suffixes: List[str]
+    suffixes: list[str]
 
     def validate(self, mem_str_format: Optional[str]) -> bool:
         if mem_str_format is None:
@@ -218,7 +217,7 @@ queue_memory_usage_formats: Mapping[str, QueueMemoryStringFormat] = {
         suffixes=["kb", "mb", "gb", "KB", "MB", "GB"]
     ),
 }
-valid_options: Dict[str, List[str]] = {
+valid_options: dict[str, list[str]] = {
     QueueSystem.LOCAL.name: [field.name.upper() for field in fields(LocalQueueOptions)],
     QueueSystem.LSF.name: [field.name.upper() for field in fields(LsfQueueOptions)],
     QueueSystem.SLURM.name: [field.name.upper() for field in fields(SlurmQueueOptions)],
@@ -231,8 +230,8 @@ valid_options: Dict[str, List[str]] = {
 }
 
 
-def _log_duplicated_queue_options(queue_config_list: List[List[str]]) -> None:
-    processed_options: Dict[str, str] = {}
+def _log_duplicated_queue_options(queue_config_list: list[list[str]]) -> None:
+    processed_options: dict[str, str] = {}
     for queue_system, option_name, *values in queue_config_list:
         value = values[0] if values else ""
         if (
@@ -246,7 +245,7 @@ def _log_duplicated_queue_options(queue_config_list: List[List[str]]) -> None:
         processed_options[option_name] = value
 
 
-def _raise_for_defaulted_invalid_options(queue_config_list: List[List[str]]) -> None:
+def _raise_for_defaulted_invalid_options(queue_config_list: list[list[str]]) -> None:
     # Invalid options names with no values (i.e. defaulted) are not passed to
     # the validation system, thus we neeed to catch them expliclitly
     for queue_system, option_name, *_ in queue_config_list:
@@ -258,9 +257,9 @@ def _raise_for_defaulted_invalid_options(queue_config_list: List[List[str]]) -> 
 
 
 def _group_queue_options_by_queue_system(
-    queue_config_list: List[List[str]],
-) -> Dict[QueueSystemWithGeneric, Dict[str, str]]:
-    grouped: Dict[QueueSystemWithGeneric, Dict[str, str]] = {}
+    queue_config_list: list[list[str]],
+) -> dict[QueueSystemWithGeneric, dict[str, str]]:
+    grouped: dict[QueueSystemWithGeneric, dict[str, str]] = {}
     for system in QueueSystemWithGeneric:
         grouped[system] = {
             option_line[1]: option_line[2]
@@ -278,9 +277,9 @@ class QueueConfig:
     realization_memory: int = 0
     max_submit: int = 1
     queue_system: QueueSystem = QueueSystem.LOCAL
-    queue_options: Union[
-        LsfQueueOptions, TorqueQueueOptions, SlurmQueueOptions, LocalQueueOptions
-    ] = pydantic.Field(default_factory=LocalQueueOptions, discriminator="name")
+    queue_options: (
+        LsfQueueOptions | TorqueQueueOptions | SlurmQueueOptions | LocalQueueOptions
+    ) = pydantic.Field(default_factory=LocalQueueOptions, discriminator="name")
     queue_options_test_run: LocalQueueOptions = field(default_factory=LocalQueueOptions)
     stop_long_running: bool = False
 
@@ -397,7 +396,7 @@ class QueueConfig:
 
 
 def _check_num_cpu_requirement(
-    num_cpu: int, torque_options: TorqueQueueOptions, raw_queue_options: List[List[str]]
+    num_cpu: int, torque_options: TorqueQueueOptions, raw_queue_options: list[list[str]]
 ) -> None:
     flattened_raw_options = [item for line in raw_queue_options for item in line]
     if (

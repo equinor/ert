@@ -1,5 +1,3 @@
-from typing import List, Optional
-
 from .validation_status import ValidationStatus
 
 
@@ -10,8 +8,8 @@ class StringDefinition:
     def __init__(
         self,
         optional: bool = False,
-        required: Optional[List[str]] = None,
-        invalid: Optional[List[str]] = None,
+        required: list[str] | None = None,
+        invalid: list[str] | None = None,
     ) -> None:
         super().__init__()
         self.__optional = optional

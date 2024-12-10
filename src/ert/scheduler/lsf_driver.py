@@ -13,16 +13,12 @@ from dataclasses import dataclass
 from pathlib import Path
 from tempfile import NamedTemporaryFile
 from typing import (
-    Dict,
     Iterable,
-    List,
     Literal,
     Mapping,
     MutableMapping,
-    Optional,
     Sequence,
     Type,
-    Union,
     cast,
     get_args,
 )
@@ -79,9 +75,9 @@ _JOBSTATE_MAP = {
     "UNKWN": IgnoredJobstates,
 }
 
-AnyJob = Union[
-    FinishedJobSuccess, FinishedJobFailure, QueuedJob, RunningJob, IgnoredJobstates
-]
+AnyJob = (
+    FinishedJobSuccess | FinishedJobFailure | QueuedJob | RunningJob | IgnoredJobstates
+)
 
 _STATE_ORDER: dict[Type[AnyJob], int] = {
     IgnoredJobstates: -1,
@@ -119,8 +115,8 @@ class JobData:
     exec_hosts: str = "-"
 
 
-def parse_bjobs(bjobs_output: str) -> Dict[str, JobState]:
-    data: Dict[str, JobState] = {}
+def parse_bjobs(bjobs_output: str) -> dict[str, JobState]:
+    data: dict[str, JobState] = {}
     for line in bjobs_output.splitlines():
         tokens = line.split(sep="^")
         if len(tokens) == 3:
@@ -135,8 +131,8 @@ def parse_bjobs(bjobs_output: str) -> Dict[str, JobState]:
     return data
 
 
-def parse_bjobs_exec_hosts(bjobs_output: str) -> Dict[str, str]:
-    data: Dict[str, str] = {}
+def parse_bjobs_exec_hosts(bjobs_output: str) -> dict[str, str]:
+    data: dict[str, str] = {}
     for line in bjobs_output.splitlines():
         tokens = line.split(sep="^")
         if len(tokens) == 3:
@@ -213,8 +209,8 @@ def build_resource_requirement_string(
     return resource_requirement
 
 
-def parse_bhist(bhist_output: str) -> Dict[str, Dict[str, int]]:
-    data: Dict[str, Dict[str, int]] = {}
+def parse_bhist(bhist_output: str) -> dict[str, dict[str, int]]:
+    data: dict[str, dict[str, int]] = {}
     for line in bhist_output.splitlines():
         if line.startswith("Summary of time"):
             assert "in seconds" in line
@@ -256,14 +252,14 @@ def filter_job_ids_on_submission_time(
 class LsfDriver(Driver):
     def __init__(
         self,
-        queue_name: Optional[str] = None,
-        project_code: Optional[str] = None,
-        resource_requirement: Optional[str] = None,
-        exclude_hosts: Optional[str] = None,
-        bsub_cmd: Optional[str] = None,
-        bjobs_cmd: Optional[str] = None,
-        bkill_cmd: Optional[str] = None,
-        bhist_cmd: Optional[str] = None,
+        queue_name: str | None = None,
+        project_code: str | None = None,
+        resource_requirement: str | None = None,
+        exclude_hosts: str | None = None,
+        bsub_cmd: str | None = None,
+        bjobs_cmd: str | None = None,
+        bkill_cmd: str | None = None,
+        bhist_cmd: str | None = None,
         activate_script: str = "",
     ) -> None:
         super().__init__(activate_script)
@@ -288,7 +284,7 @@ class LsfDriver(Driver):
         self._poll_period = _POLL_PERIOD
 
         self._bhist_cmd = Path(bhist_cmd or shutil.which("bhist") or "bhist")
-        self._bhist_cache: Optional[Dict[str, Dict[str, int]]] = None
+        self._bhist_cache: dict[str, dict[str, int]] | None = None
         self._bhist_required_cache_age: float = 4
         self._bhist_cache_timestamp: float = time.time()
 
@@ -301,9 +297,9 @@ class LsfDriver(Driver):
         /,
         *args: str,
         name: str = "dummy",
-        runpath: Optional[Path] = None,
-        num_cpu: Optional[int] = 1,
-        realization_memory: Optional[int] = 0,
+        runpath: Path | None = None,
+        num_cpu: int | None = 1,
+        realization_memory: int | None = 0,
     ) -> None:
         if runpath is None:
             runpath = Path.cwd()
@@ -311,7 +307,7 @@ class LsfDriver(Driver):
         arg_queue_name = ["-q", self._queue_name] if self._queue_name else []
         arg_project_code = ["-P", self._project_code] if self._project_code else []
         script = create_submit_script(runpath, executable, args, self.activate_script)
-        script_path: Optional[Path] = None
+        script_path: Path | None = None
         try:
             with NamedTemporaryFile(
                 dir=runpath,
@@ -404,7 +400,7 @@ class LsfDriver(Driver):
             job_id = self._iens2jobid[iens]
 
             logger.debug(f"Killing realization {iens} with LSF-id {job_id}")
-            bkill_with_args: List[str] = [
+            bkill_with_args: list[str] = [
                 str(self._bkill_cmd),
                 "-s",
                 "SIGTERM",
@@ -508,7 +504,7 @@ class LsfDriver(Driver):
             return
 
         self._jobs[job_id].job_state = new_state
-        event: Optional[Event] = None
+        event: Event | None = None
         if isinstance(new_state, RunningJob):
             logger.debug(f"Realization {iens} is running")
             event = StartedEvent(iens=iens, exec_hosts=self._jobs[job_id].exec_hosts)
@@ -585,7 +581,7 @@ class LsfDriver(Driver):
 
     async def _poll_once_by_bhist(
         self, missing_job_ids: Iterable[str]
-    ) -> Dict[str, AnyJob]:
+    ) -> dict[str, AnyJob]:
         if time.time() - self._bhist_cache_timestamp < self._bhist_required_cache_age:
             return {}
 
@@ -604,7 +600,7 @@ class LsfDriver(Driver):
             )
             return {}
 
-        data: Dict[str, Dict[str, int]] = parse_bhist(stdout.decode())
+        data: dict[str, dict[str, int]] = parse_bhist(stdout.decode())
 
         if not self._bhist_cache:
             # Boot-strapping. We can't give any data until we have run again.
@@ -636,7 +632,7 @@ class LsfDriver(Driver):
         self._bhist_cache_timestamp = time.time()
         return _parse_jobs_dict(jobs)
 
-    def update_and_log_exec_hosts(self, bjobs_exec_hosts: Dict[str, str]) -> None:
+    def update_and_log_exec_hosts(self, bjobs_exec_hosts: dict[str, str]) -> None:
         for job_id, exec_hosts in bjobs_exec_hosts.items():
             if self._jobs[job_id].exec_hosts == "-" and exec_hosts != "-":
                 logger.info(
@@ -644,7 +640,7 @@ class LsfDriver(Driver):
                 )
                 self._jobs[job_id].exec_hosts = exec_hosts
 
-    def _build_resource_requirement_arg(self, realization_memory: int) -> List[str]:
+    def _build_resource_requirement_arg(self, realization_memory: int) -> list[str]:
         resource_requirement_string = build_resource_requirement_string(
             self._exclude_hosts,
             realization_memory,

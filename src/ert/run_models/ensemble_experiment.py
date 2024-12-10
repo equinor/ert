@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import logging
 from queue import SimpleQueue
-from typing import TYPE_CHECKING, List, Optional
+from typing import TYPE_CHECKING
 
 import numpy as np
 
@@ -32,9 +32,9 @@ class EnsembleExperiment(BaseRunModel):
         self,
         ensemble_name: str,
         experiment_name: str,
-        active_realizations: List[bool],
+        active_realizations: list[bool],
         minimum_required_realizations: int,
-        random_seed: Optional[int],
+        random_seed: int | None,
         config: ErtConfig,
         storage: Storage,
         queue_config: QueueConfig,
@@ -111,5 +111,5 @@ class EnsembleExperiment(BaseRunModel):
         return "Sample parameters → evaluate all realizations"
 
     @classmethod
-    def group(cls) -> Optional[str]:
+    def group(cls) -> str | None:
         return None
