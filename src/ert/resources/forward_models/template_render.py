@@ -2,6 +2,7 @@
 import argparse
 import json
 import os
+from typing import Any, Sequence
 
 import jinja2
 import yaml
@@ -9,7 +10,7 @@ import yaml
 DEFAULT_GEN_KW_EXPORT_NAME = "parameters"
 
 
-def load_data(filename):
+def load_data(filename: str) -> dict[str, Any]:
     """Will try to load data from @filename first as yaml, and if that fails,
     as json. If both fail, a ValueError with both of the error messages will be
     raised.
@@ -32,18 +33,18 @@ def load_data(filename):
     )
 
 
-def _load_template(template_path):
+def _load_template(template_path: str) -> jinja2.Template:
     path, filename = os.path.split(template_path)
     return jinja2.Environment(
         loader=jinja2.FileSystemLoader(path or "./")
     ).get_template(filename)
 
 
-def _generate_file_namespace(filename):
+def _generate_file_namespace(filename: str) -> str:
     return os.path.splitext(os.path.basename(filename))[0]
 
 
-def _load_input(input_files):
+def _load_input(input_files: Sequence[str]) -> dict[str, Any]:
     """
     Loads input files (JSON or YAML) and returns the content as dict.
     """
@@ -55,7 +56,9 @@ def _load_input(input_files):
     return data
 
 
-def _assert_input(input_files, template_file, output_file):
+def _assert_input(
+    input_files: Sequence[str], template_file: str, output_file: str
+) -> None:
     """
     validates input for template rendering.
     Throws ValueError if input files or template file is not found.
@@ -72,7 +75,9 @@ def _assert_input(input_files, template_file, output_file):
         raise TypeError("Expected output path to be a string")
 
 
-def render_template(input_files, template_file, output_file):
+def render_template(
+    input_files: Sequence[str], template_file: str, output_file: str
+) -> None:
     """
     Will render a jinja2 template file with the parameters given
     :param input_files: parameters as a list of JSON or YAML files
@@ -82,7 +87,7 @@ def render_template(input_files, template_file, output_file):
     if isinstance(input_files, str) and input_files:
         input_files = (input_files,)
 
-    all_input_files = ()
+    all_input_files: tuple[str, ...] = ()
 
     gen_kw_export_path = DEFAULT_GEN_KW_EXPORT_NAME + ".json"
     if os.path.isfile(gen_kw_export_path):
@@ -99,7 +104,7 @@ def render_template(input_files, template_file, output_file):
         fout.write(template.render(**data))
 
 
-def _build_argument_parser():
+def _build_argument_parser() -> argparse.ArgumentParser:
     description = """
 Loads the data from each file ("some/path/filename.xxx") in INPUT_FILES
 and exposes it as the variable "filename". It then loads the Jinja2

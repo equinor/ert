@@ -3,7 +3,7 @@ import os
 import sys
 
 
-def mkdir(path):
+def mkdir(path: str) -> None:
     if os.path.isdir(path):
         print(f"OK - directory: '{path}' already exists")
     else:

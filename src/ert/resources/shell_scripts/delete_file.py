@@ -3,7 +3,7 @@ import os
 import sys
 
 
-def delete_file(filename):
+def delete_file(filename: str) -> None:
     if os.path.exists(filename):
         if os.path.isfile(filename):
             stat_info = os.stat(filename)

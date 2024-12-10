@@ -1,12 +1,15 @@
 import json
 import os
+from typing import Sequence
 
 import pandas
 
 from ert import ErtScript, LibresFacade
+from ert.config import ErtConfig
+from ert.storage import Storage
 
 
-def loadDesignMatrix(filename) -> pandas.DataFrame:
+def loadDesignMatrix(filename: str) -> pandas.DataFrame:
     dm = pandas.read_csv(filename, delim_whitespace=True)
     dm = dm.rename(columns={dm.columns[0]: "Realization"})
     dm = dm.set_index(["Realization"])
@@ -37,11 +40,11 @@ class CSVExportJob(ErtScript):
     """
 
     @staticmethod
-    def getName():
+    def getName() -> str:
         return "CSV Export"
 
     @staticmethod
-    def getDescription():
+    def getDescription() -> str:
         return (
             "Export GenKW, design matrix, misfit data "
             "and summary data into a single CSV file."
@@ -49,10 +52,10 @@ class CSVExportJob(ErtScript):
 
     def run(
         self,
-        ert_config,
-        storage,
-        workflow_args,
-    ):
+        ert_config: ErtConfig,
+        storage: Storage,
+        workflow_args: Sequence[str],
+    ) -> str:
         output_file = workflow_args[0]
         ensemble_data_as_json = None if len(workflow_args) < 2 else workflow_args[1]
         design_matrix_path = None if len(workflow_args) < 3 else workflow_args[2]
@@ -67,6 +70,7 @@ class CSVExportJob(ErtScript):
         # Use the keys (UUIDs as strings) to get ensembles
         ensembles = []
         for ensemble_id in ensemble_data_as_dict:
+            assert self.storage is not None
             ensemble = self.storage.get_ensemble(ensemble_id)
             ensembles.append(ensemble)
 

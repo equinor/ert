@@ -3,7 +3,7 @@ import os
 import sys
 
 
-def symlink(target, link_name):
+def symlink(target: str, link_name: str) -> None:
     """Will create a symbol link 'link_name -> target'.
 
     If the @link_name already exists as a symbolic link it will be

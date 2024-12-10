@@ -4,7 +4,7 @@ import shutil
 import sys
 
 
-def careful_copy_file(src, target=None):
+def careful_copy_file(src: str, target: str | None = None) -> None:
     if target is None:
         target = os.path.basename(src)
     if os.path.exists(target):
