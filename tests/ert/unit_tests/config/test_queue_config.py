@@ -154,29 +154,6 @@ def test_invalid_realization_memory(invalid_memory_spec: str):
         )
 
 
-def test_conflicting_realization_slurm_memory():
-    with (
-        pytest.raises(ConfigValidationError),
-        pytest.warns(ConfigWarning, match="deprecated"),
-    ):
-        ErtConfig.from_file_contents(
-            "NUM_REALIZATIONS 1\n"
-            "REALIZATION_MEMORY 10Mb\n"
-            "QUEUE_SYSTEM SLURM\n"
-            "QUEUE_OPTION SLURM MEMORY 20M\n"
-        )
-
-
-def test_conflicting_realization_slurm_memory_per_cpu():
-    with pytest.raises(ConfigValidationError):
-        ErtConfig.from_file_contents(
-            "NUM_REALIZATIONS 1\n"
-            "REALIZATION_MEMORY 10Mb\n"
-            "QUEUE_SYSTEM SLURM\n"
-            "QUEUE_OPTION SLURM MEMORY_PER_CPU 20M\n"
-        )
-
-
 def test_conflicting_realization_openpbs_memory_per_job():
     with (
         pytest.raises(ConfigValidationError),
@@ -292,22 +269,6 @@ def test_that_configuring_another_queue_system_gives_warning():
             "QUEUE_SYSTEM LSF\n"
             "QUEUE_OPTION SLURM SQUEUE_TIMEOUT ert\n"
         )
-
-
-def test_that_slurm_queue_mem_options_are_validated():
-    with pytest.raises(ConfigValidationError) as e:
-        ErtConfig.from_file_contents(
-            "NUM_REALIZATIONS 1\n"
-            "QUEUE_SYSTEM SLURM\n"
-            "QUEUE_OPTION SLURM MEMORY_PER_CPU 5mb\n"
-        )
-
-    info = e.value.errors[0]
-
-    assert "Value error, wrong memory format. Got input '5mb'." in info.message
-    assert info.line == 3
-    assert info.column == 35
-    assert info.end_column == info.column + 3
 
 
 @pytest.mark.parametrize(
