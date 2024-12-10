@@ -1,39 +1,8 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1733755047973,
+  "lastUpdate": 1733816662955,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
-      {
-        "commit": {
-          "author": {
-            "email": "levje@equinor.com",
-            "name": "larsevj",
-            "username": "larsevj"
-          },
-          "committer": {
-            "email": "60844986+larsevj@users.noreply.github.com",
-            "name": "Lars Evje",
-            "username": "larsevj"
-          },
-          "distinct": true,
-          "id": "691b3e84de16d4dc0879931ee708f12dca4836fa",
-          "message": "Upgrade setup-uv v3 -> v4",
-          "timestamp": "2024-12-03T12:36:57+01:00",
-          "tree_id": "b660a2e572c6e3ab66634a62c67fea4bb7f86283",
-          "url": "https://github.com/equinor/ert/commit/691b3e84de16d4dc0879931ee708f12dca4836fa"
-        },
-        "date": 1733225926766,
-        "tool": "pytest",
-        "benches": [
-          {
-            "name": "tests/ert/performance_tests/test_analysis.py::test_and_benchmark_adaptive_localization_with_fields",
-            "value": 0.1971483820287773,
-            "unit": "iter/sec",
-            "range": "stddev: 0.02822813196409",
-            "extra": "mean: 5.072321617399996 sec\nrounds: 5"
-          }
-        ]
-      },
       {
         "commit": {
           "author": {
@@ -930,6 +899,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.03895051510979895",
             "extra": "mean: 4.621128957400003 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "ynk@equinor.com",
+            "name": "Yngve S. Kristiansen",
+            "username": "yngve-sk"
+          },
+          "committer": {
+            "email": "yngve-sk@users.noreply.github.com",
+            "name": "Yngve S. Kristiansen",
+            "username": "yngve-sk"
+          },
+          "distinct": true,
+          "id": "8e003395f1047236edfa2675279cdf16e42ef593",
+          "message": "Stop using \"cached\" testdata in test_export.py",
+          "timestamp": "2024-12-10T08:42:32+01:00",
+          "tree_id": "f9de49f0e2c763abbc8071520bfd18ab6941a190",
+          "url": "https://github.com/equinor/ert/commit/8e003395f1047236edfa2675279cdf16e42ef593"
+        },
+        "date": 1733816662019,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/ert/performance_tests/test_analysis.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 0.22015221654480238,
+            "unit": "iter/sec",
+            "range": "stddev: 0.044098889337104534",
+            "extra": "mean: 4.542311749999999 sec\nrounds: 5"
           }
         ]
       }
