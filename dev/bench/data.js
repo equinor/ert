@@ -1,39 +1,8 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1733835370646,
+  "lastUpdate": 1733863469363,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
-      {
-        "commit": {
-          "author": {
-            "email": "jholba@equinor.com",
-            "name": "Jon Holba",
-            "username": "JHolba"
-          },
-          "committer": {
-            "email": "jon.holba@gmail.com",
-            "name": "Jon Holba",
-            "username": "JHolba"
-          },
-          "distinct": true,
-          "id": "0ba06268022b87fa46649581e9a5f3bd5b5b2c19",
-          "message": "Remove backport of datetime functions\n\nThis is no longer needed as python <3.11 is not supported anymore",
-          "timestamp": "2024-12-04T13:02:52+01:00",
-          "tree_id": "be197d4e9a45e95c6d5544842c721de218fa4b7b",
-          "url": "https://github.com/equinor/ert/commit/0ba06268022b87fa46649581e9a5f3bd5b5b2c19"
-        },
-        "date": 1733313900339,
-        "tool": "pytest",
-        "benches": [
-          {
-            "name": "tests/ert/performance_tests/test_analysis.py::test_and_benchmark_adaptive_localization_with_fields",
-            "value": 0.21409340979839384,
-            "unit": "iter/sec",
-            "range": "stddev: 0.042338890828999935",
-            "extra": "mean: 4.670858392800011 sec\nrounds: 5"
-          }
-        ]
-      },
       {
         "commit": {
           "author": {
@@ -930,6 +899,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.013477091318217439",
             "extra": "mean: 4.541838249799992 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "60844986+larsevj@users.noreply.github.com",
+            "name": "Lars Evje",
+            "username": "larsevj"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "c9d43bc005ac7a77564372e3ef80a9c6ce7ab567",
+          "message": "Add pyupgrade UP rule to ruff\n\n---------\r\n\r\nCo-authored-by: Eivind Jahren <ejah@equinor.com>",
+          "timestamp": "2024-12-10T20:42:32Z",
+          "tree_id": "4ce4a43347adab0c59907dd8c59683c70757f538",
+          "url": "https://github.com/equinor/ert/commit/c9d43bc005ac7a77564372e3ef80a9c6ce7ab567"
+        },
+        "date": 1733863468744,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/ert/performance_tests/test_analysis.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 0.21071038331313507,
+            "unit": "iter/sec",
+            "range": "stddev: 0.07808106962564963",
+            "extra": "mean: 4.74585060440001 sec\nrounds: 5"
           }
         ]
       }
