@@ -3,6 +3,83 @@ import pandas as pd
 import pytest
 
 from ert.config.design_matrix import DESIGN_MATRIX_GROUP, DesignMatrix
+from ert.config.gen_kw_config import GenKwConfig, TransformFunctionDefinition
+
+
+@pytest.mark.parametrize(
+    "parameters, error_msg",
+    [
+        pytest.param(
+            {"COEFFS": ["a", "b"]},
+            "",
+            id="genkw_replaced",
+        ),
+        pytest.param(
+            {"COEFFS": ["a"]},
+            "Overlapping parameter names found in design matrix!",
+            id="ValidationErrorOverlapping",
+        ),
+        pytest.param(
+            {"COEFFS": ["aa", "bb"], "COEFFS2": ["cc", "dd"]},
+            "",
+            id="DESIGN_MATRIX_GROUP",
+        ),
+        pytest.param(
+            {"COEFFS": ["a", "b"], "COEFFS2": ["a", "b"]},
+            "Multiple overlapping groups with design matrix found in existing parameters!",
+            id="ValidationErrorMultipleGroups",
+        ),
+    ],
+)
+def test_read_and_merge_with_existing_parameters(tmp_path, parameters, error_msg):
+    extra_genkw_config = []
+    if parameters:
+        for group_name in parameters:
+            extra_genkw_config.append(
+                GenKwConfig(
+                    name=group_name,
+                    forward_init=False,
+                    template_file="",
+                    transform_function_definitions=[
+                        TransformFunctionDefinition(param, "UNIFORM", [0, 1])
+                        for param in parameters[group_name]
+                    ],
+                    output_file="kw.txt",
+                    update=True,
+                )
+            )
+
+    realizations = [0, 1, 2]
+    design_path = tmp_path / "design_matrix.xlsx"
+    design_matrix_df = pd.DataFrame(
+        {
+            "REAL": realizations,
+            "a": [1, 2, 3],
+            "b": [0, 2, 0],
+        }
+    )
+    default_sheet_df = pd.DataFrame([["a", 1], ["b", 4]])
+    with pd.ExcelWriter(design_path) as xl_write:
+        design_matrix_df.to_excel(xl_write, index=False, sheet_name="DesignSheet01")
+        default_sheet_df.to_excel(
+            xl_write, index=False, sheet_name="DefaultValues", header=False
+        )
+    design_matrix = DesignMatrix(design_path, "DesignSheet01", "DefaultValues")
+    if error_msg:
+        with pytest.raises(ValueError, match=error_msg):
+            design_matrix.merge_with_existing_parameters(extra_genkw_config)
+    elif len(parameters) == 1:
+        new_config_parameters, design_group = (
+            design_matrix.merge_with_existing_parameters(extra_genkw_config)
+        )
+        assert len(new_config_parameters) == 0
+        assert design_group.name == "COEFFS"
+    elif len(parameters) == 2:
+        new_config_parameters, design_group = (
+            design_matrix.merge_with_existing_parameters(extra_genkw_config)
+        )
+        assert len(new_config_parameters) == 2
+        assert design_group.name == DESIGN_MATRIX_GROUP
 
 
 def test_reading_design_matrix(tmp_path):
@@ -23,10 +100,8 @@ def test_reading_design_matrix(tmp_path):
             xl_write, index=False, sheet_name="DefaultValues", header=False
         )
     design_matrix = DesignMatrix(design_path, "DesignSheet01", "DefaultValues")
-    design_matrix.read_design_matrix()
     design_params = design_matrix.parameter_configuration.get(DESIGN_MATRIX_GROUP, [])
     assert all(param in design_params for param in ("a", "b", "c", "one", "d"))
-    assert design_matrix.num_realizations == 3
     assert design_matrix.active_realizations == [True, True, False, False, True]
 
 
@@ -62,9 +137,9 @@ def test_reading_design_matrix_validate_reals(tmp_path, real_column, error_msg):
         default_sheet_df.to_excel(
             xl_write, index=False, sheet_name="DefaultValues", header=False
         )
-    design_matrix = DesignMatrix(design_path, "DesignSheet01", "DefaultValues")
+
     with pytest.raises(ValueError, match=error_msg):
-        design_matrix.read_design_matrix()
+        DesignMatrix(design_path, "DesignSheet01", "DefaultValues")
 
 
 @pytest.mark.parametrize(
@@ -98,9 +173,9 @@ def test_reading_design_matrix_validate_headers(tmp_path, column_names, error_ms
         default_sheet_df.to_excel(
             xl_write, index=False, sheet_name="DefaultValues", header=False
         )
-    design_matrix = DesignMatrix(design_path, "DesignSheet01", "DefaultValues")
+
     with pytest.raises(ValueError, match=error_msg):
-        design_matrix.read_design_matrix()
+        DesignMatrix(design_path, "DesignSheet01", "DefaultValues")
 
 
 @pytest.mark.parametrize(
@@ -134,9 +209,9 @@ def test_reading_design_matrix_validate_cells(tmp_path, values, error_msg):
         default_sheet_df.to_excel(
             xl_write, index=False, sheet_name="DefaultValues", header=False
         )
-    design_matrix = DesignMatrix(design_path, "DesignSheet01", "DefaultValues")
+
     with pytest.raises(ValueError, match=error_msg):
-        design_matrix.read_design_matrix()
+        DesignMatrix(design_path, "DesignSheet01", "DefaultValues")
 
 
 @pytest.mark.parametrize(
@@ -180,9 +255,9 @@ def test_reading_default_sheet_validation(tmp_path, data, error_msg):
         default_sheet_df.to_excel(
             xl_write, index=False, sheet_name="DefaultValues", header=False
         )
-    design_matrix = DesignMatrix(design_path, "DesignSheet01", "DefaultValues")
+
     with pytest.raises(ValueError, match=error_msg):
-        design_matrix.read_design_matrix()
+        DesignMatrix(design_path, "DesignSheet01", "DefaultValues")
 
 
 def test_default_values_used(tmp_path):
@@ -202,7 +277,6 @@ def test_default_values_used(tmp_path):
             xl_write, index=False, sheet_name="DefaultValues", header=False
         )
     design_matrix = DesignMatrix(design_path, "DesignSheet01", "DefaultValues")
-    design_matrix.read_design_matrix()
     df = design_matrix.design_matrix_df
     np.testing.assert_equal(df[DESIGN_MATRIX_GROUP, "one"], np.array([1, 1, 1, 1]))
     np.testing.assert_equal(df[DESIGN_MATRIX_GROUP, "b"], np.array([0, 2, 0, 1]))

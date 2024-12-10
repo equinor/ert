@@ -117,13 +117,20 @@ def _setup_ensemble_experiment(
     args: Namespace,
     status_queue: SimpleQueue[StatusEvents],
 ) -> EnsembleExperiment:
-    active_realizations = _realizations(args, config.model_config.num_realizations)
+    active_realizations = _realizations(
+        args, config.model_config.num_realizations
+    ).tolist()
+    if (
+        config.analysis_config.design_matrix is not None
+        and config.analysis_config.design_matrix.active_realizations is not None
+    ):
+        active_realizations = config.analysis_config.design_matrix.active_realizations
     experiment_name = args.experiment_name
     assert experiment_name is not None
 
     return EnsembleExperiment(
         random_seed=config.random_seed,
-        active_realizations=active_realizations.tolist(),
+        active_realizations=active_realizations,
         ensemble_name=args.current_ensemble,
         minimum_required_realizations=config.analysis_config.minimum_required_realizations,
         experiment_name=experiment_name,
@@ -271,9 +278,9 @@ def _setup_iterative_ensemble_smoother(
         random_seed=config.random_seed,
         active_realizations=active_realizations.tolist(),
         target_ensemble=_iterative_ensemble_format(args),
-        number_of_iterations=int(args.num_iterations)
-        if args.num_iterations is not None
-        else 4,
+        number_of_iterations=(
+            int(args.num_iterations) if args.num_iterations is not None else 4
+        ),
         minimum_required_realizations=config.analysis_config.minimum_required_realizations,
         num_retries_per_iter=4,
         experiment_name=experiment_name,
