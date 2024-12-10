@@ -1,39 +1,8 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1733833768268,
+  "lastUpdate": 1733833790031,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
-      {
-        "commit": {
-          "author": {
-            "email": "ejah@equinor.com",
-            "name": "Eivind Jahren",
-            "username": "eivindjahren"
-          },
-          "committer": {
-            "email": "114403625+andreas-el@users.noreply.github.com",
-            "name": "Andreas Eknes Lie",
-            "username": "andreas-el"
-          },
-          "distinct": true,
-          "id": "11fbe8046a071ecac07efb99f134776ee039178d",
-          "message": "Fix everest doc test failing due to missing coverage",
-          "timestamp": "2024-12-04T09:58:55+01:00",
-          "tree_id": "b4f645cd904b06e00c999d1e9461bcc453495bd8",
-          "url": "https://github.com/equinor/ert/commit/11fbe8046a071ecac07efb99f134776ee039178d"
-        },
-        "date": 1733302843052,
-        "tool": "pytest",
-        "benches": [
-          {
-            "name": "tests/ert/performance_tests/test_analysis.py::test_and_benchmark_adaptive_localization_with_fields",
-            "value": 0.21174496168005535,
-            "unit": "iter/sec",
-            "range": "stddev: 0.09191409000932561",
-            "extra": "mean: 4.722662546800007 sec\nrounds: 5"
-          }
-        ]
-      },
       {
         "commit": {
           "author": {
@@ -930,6 +899,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.034685910678909984",
             "extra": "mean: 4.582701510400005 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "JONAK@equinor.com",
+            "name": "Jonathan Karlsen",
+            "username": "jonathan-eq"
+          },
+          "committer": {
+            "email": "107626001+jonathan-eq@users.noreply.github.com",
+            "name": "Jonathan Karlsen",
+            "username": "jonathan-eq"
+          },
+          "distinct": true,
+          "id": "ae944073bcd130adf03cd3d12235cee722941622",
+          "message": "Remove unused mock validate_active_realizations_count-method in tests for runmodel",
+          "timestamp": "2024-12-10T13:27:54+01:00",
+          "tree_id": "4b28eb07d72c3742c513a10a2f7a10cb40feb1d1",
+          "url": "https://github.com/equinor/ert/commit/ae944073bcd130adf03cd3d12235cee722941622"
+        },
+        "date": 1733833789077,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/ert/performance_tests/test_analysis.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 0.209538826607953,
+            "unit": "iter/sec",
+            "range": "stddev: 0.035846505022795204",
+            "extra": "mean: 4.772385224199996 sec\nrounds: 5"
           }
         ]
       }
