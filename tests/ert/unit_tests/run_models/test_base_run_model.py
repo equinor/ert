@@ -19,7 +19,6 @@ def patch_abstractmethods(monkeypatch):
 
 
 def test_base_run_model_supports_restart(minimum_case):
-    BaseRunModel.validate_active_realizations_count = MagicMock()
     brm = BaseRunModel(minimum_case, None, None, minimum_case.queue_config, [True])
     assert brm.support_restart
 
@@ -41,7 +40,6 @@ class MockJob:
     ],
 )
 def test_active_realizations(initials):
-    BaseRunModel.validate_active_realizations_count = MagicMock()
     brm = BaseRunModel(MagicMock(), None, None, None, initials)
     brm._initial_realizations_mask = initials
     assert brm.ensemble_size == len(initials)
@@ -61,7 +59,6 @@ def test_active_realizations(initials):
     ],
 )
 def test_failed_realizations(initials, completed, any_failed, failures):
-    BaseRunModel.validate_active_realizations_count = MagicMock()
     brm = BaseRunModel(MagicMock(), None, None, None, initials)
     brm._initial_realizations_mask = initials
     brm._completed_realizations_mask = completed
@@ -183,7 +180,7 @@ def test_num_cpu_is_propagated_from_config_to_ensemble(run_args):
     # Given NUM_CPU in the config file has a special value
     config = ErtConfig.from_file_contents("NUM_REALIZATIONS 2\nNUM_CPU 42")
     # Set up a BaseRunModel object from the config above:
-    BaseRunModel.validate_active_realizations_count = MagicMock()
+
     brm = BaseRunModel(
         config=config,
         storage=MagicMock(spec=Storage),

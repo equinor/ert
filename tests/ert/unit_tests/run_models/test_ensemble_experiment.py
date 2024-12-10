@@ -25,7 +25,6 @@ def test_check_if_runpath_exists(
             return [f"out/realization-{r}/iter-{iteration}" for r in realizations]
         return [f"out/realization-{r}" for r in realizations]
 
-    EnsembleExperiment.validate_active_realizations_count = MagicMock()
     EnsembleExperiment.validate_successful_realizations_count = MagicMock()
     ensemble_experiment = EnsembleExperiment(
         *[MagicMock()] * 2 + [active_mask, MagicMock(), None] + [MagicMock()] * 4
