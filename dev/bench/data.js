@@ -1,39 +1,8 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1733906821532,
+  "lastUpdate": 1733921920285,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
-      {
-        "commit": {
-          "author": {
-            "email": "ejah@equinor.com",
-            "name": "Eivind Jahren",
-            "username": "eivindjahren"
-          },
-          "committer": {
-            "email": "ejah@equinor.com",
-            "name": "Eivind Jahren",
-            "username": "eivindjahren"
-          },
-          "distinct": true,
-          "id": "a144f88a5ee5a029b2f906714f1d1e1f8f33c761",
-          "message": "Use sampled_from instead of parametrize in test\n\nThis is in order to speed up the test by sampling 100 times\ninsted of 25*100 times.",
-          "timestamp": "2024-12-05T10:59:12+01:00",
-          "tree_id": "65b40521481f024f47a778814690989590970395",
-          "url": "https://github.com/equinor/ert/commit/a144f88a5ee5a029b2f906714f1d1e1f8f33c761"
-        },
-        "date": 1733392860206,
-        "tool": "pytest",
-        "benches": [
-          {
-            "name": "tests/ert/performance_tests/test_analysis.py::test_and_benchmark_adaptive_localization_with_fields",
-            "value": 0.2153005849111255,
-            "unit": "iter/sec",
-            "range": "stddev: 0.033963081775852486",
-            "extra": "mean: 4.644669220999992 sec\nrounds: 5"
-          }
-        ]
-      },
       {
         "commit": {
           "author": {
@@ -930,6 +899,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.014318287483247165",
             "extra": "mean: 4.503107576000008 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "ynk@equinor.com",
+            "name": "Yngve S. Kristiansen",
+            "username": "yngve-sk"
+          },
+          "committer": {
+            "email": "yngve-sk@users.noreply.github.com",
+            "name": "Yngve S. Kristiansen",
+            "username": "yngve-sk"
+          },
+          "distinct": true,
+          "id": "05b33a5039bc8135ce171323b2eb6dc180230534",
+          "message": "Remove deprecated comment,\n\nref https://github.com/equinor/ert/pull/9495#discussion_r1880099231",
+          "timestamp": "2024-12-11T13:56:28+01:00",
+          "tree_id": "5eebbc49e599afe5187c4c6bcdd258111843cd15",
+          "url": "https://github.com/equinor/ert/commit/05b33a5039bc8135ce171323b2eb6dc180230534"
+        },
+        "date": 1733921919420,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/ert/performance_tests/test_analysis.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 0.2172208094816743,
+            "unit": "iter/sec",
+            "range": "stddev: 0.03218128145278603",
+            "extra": "mean: 4.60361050300001 sec\nrounds: 5"
           }
         ]
       }
