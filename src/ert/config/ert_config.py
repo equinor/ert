@@ -20,7 +20,7 @@ from typing import (
 import polars
 from pydantic import ValidationError as PydanticValidationError
 from pydantic import field_validator
-from pydantic.dataclasses import dataclass
+from pydantic.dataclasses import dataclass, rebuild_dataclass
 
 from ert.plugins import ErtPluginManager
 from ert.substitutions import Substitutions
@@ -1166,3 +1166,7 @@ def _forward_model_step_from_config_file(
         )
     except OSError as err:
         raise ConfigValidationError.with_context(str(err), config_file) from err
+
+
+# Due to circular dependency in type annotations between ErtConfig -> WorkflowJob -> ErtScript -> ErtConfig
+rebuild_dataclass(ErtConfig)
