@@ -215,7 +215,7 @@ class EnsembleEvaluator:
         raw_msg = frame.decode("utf-8")
         if raw_msg == "CONNECT":
             self._dispatchers_connected.add(dealer)
-            self._dispatchers_connected.clear()
+            self._dispatchers_empty.clear()
         elif raw_msg == "DISCONNECT":
             self._dispatchers_connected.discard(dealer)
             if not self._dispatchers_connected:
