@@ -51,7 +51,6 @@ class QueueEmitter(QObject):
             ):
                 SnapshotModel.prerender(event.snapshot)
 
-            logger.debug(f"emit {event}")
             self.new_event.emit(event)
 
             if isinstance(event, EndEvent):
