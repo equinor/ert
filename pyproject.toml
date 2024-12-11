@@ -53,7 +53,7 @@ dependencies = [
     "polars",
     "psutil",
     "pyarrow",  # extra dependency for pandas (parquet)
-    "pydantic > 2, < 2.10",
+    "pydantic > 2",
     "PyQt5",
     "python-dateutil",
     "python-multipart",  # extra dependency for fastapi
