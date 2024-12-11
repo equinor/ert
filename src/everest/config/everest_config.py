@@ -757,7 +757,7 @@ and environment variables are exposed in the form 'os.NAME', for example:
         config_path = os.path.realpath(config_path)
 
         if not os.path.isfile(config_path):
-            raise FileNotFoundError("File not found: {}".format(config_path))
+            raise FileNotFoundError(f"File not found: {config_path}")
 
         config_dict = yaml_file_to_substituted_config_dict(config_path)
         return EverestConfig.model_validate(config_dict)

@@ -305,7 +305,7 @@ class EverestRunModel(BaseRunModel):
         fm_name: str,
         error_path: str,
     ) -> None:
-        fm_id = "b_{}_r_{}_s_{}_{}".format(batch, realization, simulation, fm_name)
+        fm_id = f"b_{batch}_r_{realization}_s_{simulation}_{fm_name}"
         fm_logger = logging.getLogger("forward_models")
         with open(error_path, encoding="utf-8") as errors:
             error_str = errors.read()
@@ -339,7 +339,7 @@ class EverestRunModel(BaseRunModel):
                         ],
                     ) -> None:
                         logging.getLogger(EVEREST).debug(
-                            "Failed to remove {}, {}".format(path, sys_info)
+                            f"Failed to remove {path}, {sys_info}"
                         )
 
                     shutil.rmtree(path_to_delete, onerror=onerror)  # pylint: disable=deprecated-argument

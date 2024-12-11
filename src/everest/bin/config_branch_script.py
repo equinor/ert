@@ -58,7 +58,7 @@ def _updated_initial_guess(conf_controls, opt_controls):
 
     for control in conf_controls:
         control.pop(CK.INITIAL_GUESS, None)
-        control_name = "{}_".format(control[CK.NAME])
+        control_name = f"{control[CK.NAME]}_"
         batch_controls = {
             key.split(control_name)[-1]: val
             for key, val in opt_controls.items()
@@ -69,7 +69,7 @@ def _updated_initial_guess(conf_controls, opt_controls):
             var_index = variable.get(CK.INDEX, None)
 
             if var_index is not None:
-                opt_control_name = "{}-{}".format(variable[CK.NAME], var_index)
+                opt_control_name = f"{variable[CK.NAME]}-{var_index}"
             else:
                 opt_control_name = variable[CK.NAME]
 
@@ -94,11 +94,11 @@ def config_branch_entry(args=None):
 
     db_path = join(optimization_dir, seba_db.FILENAME)
     if not exists(db_path):
-        parser.error("Optimization source {} not found".format(db_path))
+        parser.error(f"Optimization source {db_path} not found")
 
     opt_controls = opt_controls_by_batch(optimization_dir, options.batch)
     if opt_controls is None:
-        parser.error("Batch {} not present in optimization data".format(options.batch))
+        parser.error(f"Batch {options.batch} not present in optimization data")
 
     yml_config[CK.CONTROLS] = _updated_initial_guess(
         conf_controls=yml_config[CK.CONTROLS], opt_controls=opt_controls
@@ -109,7 +109,7 @@ def config_branch_entry(args=None):
     yaml.preserve_quotes = True
     with open(options.output_config, "w", encoding="utf-8") as f:
         yaml.dump(yml_config, f)
-    print("New config file {} created.".format(options.output_config))
+    print(f"New config file {options.output_config} created.")
 
 
 if __name__ == "__main__":

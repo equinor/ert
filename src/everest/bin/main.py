@@ -72,7 +72,7 @@ def _build_args_parser():
     arg_parser.add_argument(
         "--version",
         action="version",
-        version="%(prog)s {version}".format(version=everest_version),
+        version=f"%(prog)s {everest_version}",
     )
     return arg_parser
 

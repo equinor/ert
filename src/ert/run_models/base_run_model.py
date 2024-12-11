@@ -121,7 +121,7 @@ class _LogAggregration(logging.Handler):
 @contextmanager
 def captured_logs(
     messages: MutableSequence[str], level: int = logging.ERROR
-) -> Generator[None, None, None]:
+) -> Generator[None]:
     handler = _LogAggregration(messages)
     root_logger = logging.getLogger()
     handler.setLevel(level)

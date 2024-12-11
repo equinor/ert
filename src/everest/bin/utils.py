@@ -53,7 +53,7 @@ def export_with_progress(config: EverestConfig, export_ecl=True):
 def export_to_csv(data_frame: DataFrame, export_path: str) -> None:
     os.makedirs(os.path.dirname(export_path), exist_ok=True)
     data_frame.to_csv(export_path, sep=";", index=False)
-    logging.getLogger(EVEREST).info("Data exported to {}".format(export_path))
+    logging.getLogger(EVEREST).info(f"Data exported to {export_path}")
 
 
 def handle_keyboard_interrupt(signal, frame, options):

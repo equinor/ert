@@ -174,9 +174,9 @@ def _find_open_port(host, lower, upper) -> int:
             return port
         except OSError:
             logging.getLogger("everserver").info(
-                "Port {} for host {} is taken".format(port, host)
+                f"Port {port} for host {host} is taken"
             )
-    msg = "No open port for host {} in the range {}-{}".format(host, lower, upper)
+    msg = f"No open port for host {host} in the range {lower}-{upper}"
     logging.getLogger("everserver").exception(msg)
     raise Exception(msg)
 
@@ -266,9 +266,7 @@ def main():
 
         update_everserver_status(status_path, ServerStatus.starting)
         logging.getLogger(EVEREST).info(version_info())
-        logging.getLogger(EVEREST).info(
-            "Output directory: {}".format(config.output_dir)
-        )
+        logging.getLogger(EVEREST).info(f"Output directory: {config.output_dir}")
         logging.getLogger(EVEREST).debug(str(options))
 
         authentication = _generate_authentication()
@@ -436,7 +434,7 @@ def _generate_certificate(cert_folder: str):
             x509.NameAttribute(NameOID.STATE_OR_PROVINCE_NAME, "Bergen"),
             x509.NameAttribute(NameOID.LOCALITY_NAME, "Sandsli"),
             x509.NameAttribute(NameOID.ORGANIZATION_NAME, "Equinor"),
-            x509.NameAttribute(NameOID.COMMON_NAME, "{}".format(cert_name)),
+            x509.NameAttribute(NameOID.COMMON_NAME, f"{cert_name}"),
         ]
     )
     cert = (
@@ -448,7 +446,7 @@ def _generate_certificate(cert_folder: str):
         .not_valid_before(datetime.utcnow())
         .not_valid_after(datetime.utcnow() + timedelta(days=365))  # 1 year
         .add_extension(
-            x509.SubjectAlternativeName([x509.DNSName("{}".format(cert_name))]),
+            x509.SubjectAlternativeName([x509.DNSName(f"{cert_name}")]),
             critical=False,
         )
         .sign(key, hashes.SHA256(), default_backend())
