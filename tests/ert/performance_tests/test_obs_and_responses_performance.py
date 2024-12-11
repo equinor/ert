@@ -3,7 +3,7 @@ import random
 import time
 from dataclasses import dataclass
 from textwrap import dedent
-from typing import List
+from typing import List, Optional
 
 import memray
 import numpy as np
@@ -230,8 +230,8 @@ class _UpdatePerfTestConfig:
 class _ExpectedPerformance:
     memory_limit_mb: float
     time_limit_s: float
-    last_measured_memory_mb: float | None = None  # For bookkeeping
-    last_measured_time: float | None = None  # For bookkeeping
+    last_measured_memory_mb: Optional[float] = None  # For bookkeeping
+    last_measured_time: Optional[float] = None  # For bookkeeping
 
 
 @dataclass
