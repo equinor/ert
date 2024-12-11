@@ -59,13 +59,13 @@ def _get_definitions(configuration, configpath):
 
         for key, val in ERT_CONFIG_TEMPLATES.items():
             if key in defs:
-                logging.warn(
+                logging.warning(
                     "Internal key {k} specified by user as {u}. "
                     "Overriding as {v}".format(k=key, u=defs[key], v=val)
                 )
             defs[key] = f"<{val}>"  # ert uses <GEO_ID> as format
     else:
-        logging.warn("Empty configuration file provided!")
+        logging.warning("Empty configuration file provided!")
 
     # If user didn't define a config path, we can insert it here.
     defs["configpath"] = defs.get("configpath", configpath)
