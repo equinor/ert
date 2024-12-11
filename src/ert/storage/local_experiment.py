@@ -193,7 +193,7 @@ class LocalExperiment(BaseMode):
         )
 
     @property
-    def ensembles(self) -> Generator[LocalEnsemble, None, None]:
+    def ensembles(self) -> Generator[LocalEnsemble]:
         yield from (
             ens for ens in self._storage.ensembles if ens.experiment_id == self.id
         )

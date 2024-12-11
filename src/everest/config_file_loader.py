@@ -63,7 +63,7 @@ def _get_definitions(configuration, configpath):
                     "Internal key {k} specified by user as {u}. "
                     "Overriding as {v}".format(k=key, u=defs[key], v=val)
                 )
-            defs[key] = "<{}>".format(val)  # ert uses <GEO_ID> as format
+            defs[key] = f"<{val}>"  # ert uses <GEO_ID> as format
     else:
         logging.warn("Empty configuration file provided!")
 

@@ -68,13 +68,13 @@ def _roll_dir(old_name):
     old_name = os.path.realpath(old_name)
     new_name = old_name + datetime.datetime.utcnow().strftime("__%Y-%m-%d_%H.%M.%S.%f")
     os.rename(old_name, new_name)
-    logging.getLogger(EVEREST).info("renamed {} to {}".format(old_name, new_name))
+    logging.getLogger(EVEREST).info(f"renamed {old_name} to {new_name}")
 
 
 def load_deck(fname):
     """Take a .DATA file and return an opm.io.Deck."""
     if not os.path.exists(fname):
-        raise OSError('No such data file "{}".'.format(fname))
+        raise OSError(f'No such data file "{fname}".')
 
     if not has_opm():
         raise RuntimeError("Cannot load ECL files, opm could not be imported")

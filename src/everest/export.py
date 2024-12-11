@@ -130,7 +130,7 @@ def export_metadata(config: ExportConfig | None, optimization_output_dir: str):
                 for function, gradients in opt.gradient_info.items():
                     for control, gradient_value in gradients.items():
                         md_row.update(
-                            {"gradient-{}-{}".format(function, control): gradient_value}
+                            {f"gradient-{function}-{control}": gradient_value}
                         )
             else:
                 print(

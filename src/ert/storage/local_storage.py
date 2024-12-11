@@ -190,11 +190,11 @@ class LocalStorage(BaseMode):
         return self._ensembles[uuid]
 
     @property
-    def experiments(self) -> Generator[LocalExperiment, None, None]:
+    def experiments(self) -> Generator[LocalExperiment]:
         yield from self._experiments.values()
 
     @property
-    def ensembles(self) -> Generator[LocalEnsemble, None, None]:
+    def ensembles(self) -> Generator[LocalEnsemble]:
         yield from self._ensembles.values()
 
     def _load_index(self) -> _Index:

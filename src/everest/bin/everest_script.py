@@ -101,10 +101,10 @@ async def run_everest(options):
         )
     elif server_state["status"] == ServerStatus.never_run or options.new_run:
         config_dict = options.config.to_dict()
-        logger.info("Running everest with config info\n {}".format(config_dict))
+        logger.info(f"Running everest with config info\n {config_dict}")
         for fm_job in options.config.forward_model or []:
             job_name = fm_job.split()[0]
-            logger.info("Everest forward model contains job {}".format(job_name))
+            logger.info(f"Everest forward model contains job {job_name}")
 
         makedirs_if_needed(options.config.output_dir, roll_if_exists=True)
 
@@ -123,9 +123,7 @@ async def run_everest(options):
             save_config_path = os.path.join(output_dir, config_file)
             options.config.dump(save_config_path)
         except (OSError, LookupError) as e:
-            logging.getLogger(EVEREST).error(
-                "Failed to save optimization config: {}".format(e)
-            )
+            logging.getLogger(EVEREST).error(f"Failed to save optimization config: {e}")
         await start_server(options.config, options.debug)
         print("Waiting for server ...")
         wait_for_server(options.config.output_dir, timeout=600)
@@ -139,10 +137,10 @@ async def run_everest(options):
         server_state = everserver_status(everserver_status_path)
         server_state_info = server_state["message"]
         if server_state["status"] == ServerStatus.failed:
-            logger.error("Everest run failed with: {}".format(server_state_info))
+            logger.error(f"Everest run failed with: {server_state_info}")
             raise SystemExit(server_state_info)
         if server_state_info is not None:
-            logger.info("Everest run finished with: {}".format(server_state_info))
+            logger.info(f"Everest run finished with: {server_state_info}")
             print(server_state_info)
     else:
         report_on_previous_run(

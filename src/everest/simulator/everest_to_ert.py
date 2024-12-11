@@ -90,7 +90,7 @@ def _extract_summary_keys(ever_config: EverestConfig, ert_config):
         groups = []
 
     group_keys = [
-        "{sum_key}:{gname}".format(sum_key=sum_key, gname=gname)
+        f"{sum_key}:{gname}"
         for (sum_key, gname) in itertools.product(group_sum_keys, groups)
     ]
 
@@ -109,7 +109,7 @@ def _extract_summary_keys(ever_config: EverestConfig, ert_config):
     wells = list(set(data_wells + everest_wells))
 
     well_keys = [
-        "{sum_key}:{wname}".format(sum_key=sum_key, wname=wname)
+        f"{sum_key}:{wname}"
         for (sum_key, wname) in itertools.product(well_sum_keys, wells)
     ]
 
@@ -191,9 +191,7 @@ def _fetch_everest_jobs(ever_config: EverestConfig):
     mechanisms in place."""
     assert ever_config.output_dir is not None
     job_storage = os.path.join(ever_config.output_dir, ".jobs")
-    logging.getLogger(EVEREST).debug(
-        "Creating job description files in {}".format(job_storage)
-    )
+    logging.getLogger(EVEREST).debug(f"Creating job description files in {job_storage}")
 
     if not os.path.isdir(job_storage):
         os.makedirs(job_storage)
@@ -205,7 +203,7 @@ def _fetch_everest_jobs(ever_config: EverestConfig):
         script = everest.jobs.fetch_script(default_job)
         job_spec_file = os.path.join(job_storage, "_" + default_job)
         with open(job_spec_file, "w", encoding="utf-8") as f:
-            f.write("EXECUTABLE {}".format(script))
+            f.write(f"EXECUTABLE {script}")
 
         ever_jobs.append(Job(name=default_job, source=job_spec_file))
 
@@ -287,7 +285,7 @@ def _internal_data_files(ever_config: EverestConfig):
     assert ever_config.output_dir is not None
     data_storage = os.path.join(ever_config.output_dir, ".internal_data")
     data_storage = os.path.realpath(data_storage)
-    logging.getLogger(EVEREST).debug("Storing internal data in {}".format(data_storage))
+    logging.getLogger(EVEREST).debug(f"Storing internal data in {data_storage}")
 
     if not os.path.isdir(data_storage):
         os.makedirs(data_storage)
@@ -341,7 +339,7 @@ def _is_dir_all_geo(source, ever_config: EverestConfig):
         is_dir.append(os.path.isdir(geo_source))
 
     if set(is_dir) == {True, False}:
-        msg = "Source: {} represent both files and directories".format(source)
+        msg = f"Source: {source} represent both files and directories"
         raise ValueError(msg)
 
     return is_dir[0]

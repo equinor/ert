@@ -46,7 +46,7 @@ def fetch_script(script_name):
     if script_name in _scripts:  # noqa F821
         return _scripts[script_name]  # noqa F821
     else:
-        raise KeyError("Unknown script: {}".format(script_name))
+        raise KeyError(f"Unknown script: {script_name}")
 
 
 _inject_scripts()

@@ -17,7 +17,7 @@ def _compute_recovery_factor(load_case):
 
 def _save_object_value(object_value, target_file):
     with everest.jobs.io.safe_open(target_file, "w") as f:
-        f.write("{}\n".format(object_value))
+        f.write(f"{object_value}\n")
 
 
 def recovery_factor(load_case, output_file):
