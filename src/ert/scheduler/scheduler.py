@@ -9,7 +9,6 @@ from collections import defaultdict
 from collections.abc import Iterable, MutableMapping, Sequence
 from contextlib import suppress
 from dataclasses import asdict
-from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
 import orjson
@@ -17,7 +16,6 @@ from pydantic.dataclasses import dataclass
 
 from _ert.async_utils import get_running_loop
 from _ert.events import Event, ForwardModelStepChecksum, Id, event_from_dict
-from ert.constant_filenames import CERT_FILE
 
 from .driver import Driver
 from .event import FinishedEvent, StartedEvent
@@ -35,7 +33,6 @@ class _JobsJson:
     real_id: int
     dispatch_url: str | None
     ee_token: str | None
-    ee_cert_path: str | None
     experiment_id: str | None
 
 
@@ -69,7 +66,6 @@ class Scheduler:
         submit_sleep: float = 0.0,
         ens_id: str | None = None,
         ee_uri: str | None = None,
-        ee_cert: str | None = None,
         ee_token: str | None = None,
     ) -> None:
         self.driver = driver
@@ -103,7 +99,6 @@ class Scheduler:
         self._max_running = max_running
         self._ee_uri = ee_uri
         self._ens_id = ens_id
-        self._ee_cert = ee_cert
         self._ee_token = ee_token
 
         self.checksum: dict[str, dict[str, Any]] = {}
@@ -330,22 +325,12 @@ class Scheduler:
                 job.returncode.set_result(event.returncode)
 
     def _update_jobs_json(self, iens: int, runpath: str) -> None:
-        cert_path = f"{runpath}/{CERT_FILE}"
-        try:
-            if self._ee_cert is not None:
-                Path(cert_path).write_text(self._ee_cert, encoding="utf-8")
-        except OSError as err:
-            error_msg = f"Could not write ensemble certificate: {err}"
-            self._jobs[iens].unschedule(error_msg)
-            logger.error(error_msg)
-            return
         jobs = _JobsJson(
             experiment_id=None,
             ens_id=self._ens_id,
             real_id=iens,
             dispatch_url=self._ee_uri,
             ee_token=self._ee_token,
-            ee_cert_path=cert_path if self._ee_cert is not None else None,
         )
         jobs_path = os.path.join(runpath, "jobs.json")
         try:

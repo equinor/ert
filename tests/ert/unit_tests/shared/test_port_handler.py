@@ -311,6 +311,7 @@ def test_reuse_active_close_nok_ok(unused_tcp_port):
     assert sock.fileno() != -1
 
 
+# This test is disabled because it is not clear if zmq needs it
 def test_reuse_active_live_nok_nok(unused_tcp_port):
     """
     Executive summary of this test
