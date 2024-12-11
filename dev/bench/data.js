@@ -1,39 +1,8 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1733905815888,
+  "lastUpdate": 1733906821532,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
-      {
-        "commit": {
-          "author": {
-            "email": "eide.oyvind87@gmail.com",
-            "name": "Øyvind Eide",
-            "username": "oyvindeide"
-          },
-          "committer": {
-            "email": "44577479+oyvindeide@users.noreply.github.com",
-            "name": "Øyvind Eide",
-            "username": "oyvindeide"
-          },
-          "distinct": true,
-          "id": "6c86e6aeb4e0610945156e6a845f145e0227f296",
-          "message": "Move shell jobs test",
-          "timestamp": "2024-12-05T10:33:11+01:00",
-          "tree_id": "0914236da2ed50bd3df1a6a90410f1513e99fb30",
-          "url": "https://github.com/equinor/ert/commit/6c86e6aeb4e0610945156e6a845f145e0227f296"
-        },
-        "date": 1733391302229,
-        "tool": "pytest",
-        "benches": [
-          {
-            "name": "tests/ert/performance_tests/test_analysis.py::test_and_benchmark_adaptive_localization_with_fields",
-            "value": 0.21364418028765084,
-            "unit": "iter/sec",
-            "range": "stddev: 0.031307127655364836",
-            "extra": "mean: 4.6806798044 sec\nrounds: 5"
-          }
-        ]
-      },
       {
         "commit": {
           "author": {
@@ -930,6 +899,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.012075998138562862",
             "extra": "mean: 4.5773328714 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "ynk@equinor.com",
+            "name": "Yngve S. Kristiansen",
+            "username": "yngve-sk"
+          },
+          "committer": {
+            "email": "ejah@equinor.com",
+            "name": "Eivind Jahren",
+            "username": "eivindjahren"
+          },
+          "distinct": true,
+          "id": "c9ae9b2844386c9930d70ae003e6fc30a65cbefe",
+          "message": "Increase esupdate performance test limits",
+          "timestamp": "2024-12-11T09:44:49+01:00",
+          "tree_id": "6504f3b093cd044251368b59edaeb27bc7396ab1",
+          "url": "https://github.com/equinor/ert/commit/c9ae9b2844386c9930d70ae003e6fc30a65cbefe"
+        },
+        "date": 1733906821039,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/ert/performance_tests/test_analysis.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 0.22206886758150107,
+            "unit": "iter/sec",
+            "range": "stddev: 0.014318287483247165",
+            "extra": "mean: 4.503107576000008 sec\nrounds: 5"
           }
         ]
       }
