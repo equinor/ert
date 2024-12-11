@@ -65,8 +65,6 @@ def validate_export_mock(**_):
 @patch("everest.bin.everexport_script.export_with_progress", side_effect=export_mock)
 def test_everexport_entry_run(_, cached_example):
     """Test running everexport with not flags"""
-    # NOTE: there is probably a bug concerning output folders. Everexport
-    # seems to assume that the folder where the file will be saved exists.
     config_path, config_file, _ = cached_example("math_func/config_minimal.yml")
     config = EverestConfig.load_file(Path(config_path) / config_file)
     export_file_path = config.export_path
