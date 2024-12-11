@@ -210,16 +210,16 @@ def copy_heat_equation(copy_case):
         pytest.param(0, marks=pytest.mark.xdist_group(name="snake_oil_case_storage"))
     ],
 )
-def fixture_copy_snake_oil_case_storage(shared_snake_oil_case, tmp_path, monkeypatch):
+def fixture_copy_snake_oil_case_storage(_shared_snake_oil_case, tmp_path, monkeypatch):
     monkeypatch.chdir(tmp_path)
-    shutil.copytree(shared_snake_oil_case, "test_data")
+    shutil.copytree(_shared_snake_oil_case, "test_data")
     monkeypatch.chdir("test_data")
 
 
 @pytest.fixture
-def copy_heat_equation_storage(shared_heat_equation, tmp_path, monkeypatch):
+def copy_heat_equation_storage(_shared_heat_equation, tmp_path, monkeypatch):
     monkeypatch.chdir(tmp_path)
-    shutil.copytree(shared_heat_equation, "heat_equation")
+    shutil.copytree(_shared_heat_equation, "heat_equation")
     monkeypatch.chdir("heat_equation")
 
 
