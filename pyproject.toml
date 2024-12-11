@@ -62,6 +62,7 @@ dependencies = [
     "pyarrow",  # extra dependency for pandas (parquet)
     "pydantic > 2, < 2.10",
     "PyQt5",
+    "PyQt5-sip < 12.16.0",
     "python-dateutil",
     "python-multipart",
     "pyyaml",
