@@ -3,11 +3,10 @@ from __future__ import annotations
 import asyncio
 import logging
 import uuid
-from typing import Any, AnyStr, Self
+from typing import Any, Self
 
 import zmq
 import zmq.asyncio
-from typing_extensions import Self
 
 from _ert.async_utils import new_event_loop
 
@@ -25,7 +24,7 @@ class ClientConnectionClosedOK(Exception):
 class Client:
     DEFAULT_MAX_RETRIES = 5
     DEFAULT_ACK_TIMEOUT = 5
-    _receiver_task: Optional[asyncio.Task[None]]
+    _receiver_task: asyncio.Task[None] | None
 
     def __enter__(self) -> Self:
         self.loop.run_until_complete(self.__aenter__())
@@ -103,7 +102,7 @@ class Client:
             self.term()
             raise
 
-    def send(self, message: str, retries: Optional[int] = None) -> None:
+    def send(self, message: str, retries: int | None = None) -> None:
         self.loop.run_until_complete(self._send(message, retries))
 
     async def process_message(self, msg: str) -> None:
@@ -137,7 +136,7 @@ class Client:
                         self._ack_event.wait(), timeout=self._ack_timeout
                     )
                     return
-                except asyncio.TimeoutError:
+                except TimeoutError:
                     logger.warning(
                         f"{self.dealer_id} failed to get acknowledgment on the {message}. Resending."
                     )

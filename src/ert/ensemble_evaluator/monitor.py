@@ -30,7 +30,7 @@ class EventSentinel:
 class Monitor(Client):
     _sentinel: Final = EventSentinel()
 
-    def __init__(self, ee_con_info: "EvaluatorConnectionInfo") -> None:
+    def __init__(self, ee_con_info: EvaluatorConnectionInfo) -> None:
         self._id = str(uuid.uuid1()).split("-", maxsplit=1)[0]
         self._event_queue: asyncio.Queue[Event | EventSentinel] = asyncio.Queue()
         self._receiver_timeout: float = 60.0

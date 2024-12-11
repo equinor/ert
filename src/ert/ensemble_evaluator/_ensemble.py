@@ -6,7 +6,7 @@ import traceback
 from collections.abc import Awaitable, Callable, Sequence
 from dataclasses import dataclass
 from functools import partialmethod
-from typing import Any, Awaitable, Callable, Protocol, Sequence
+from typing import Any, Protocol
 
 from _ert.events import (
     Event,

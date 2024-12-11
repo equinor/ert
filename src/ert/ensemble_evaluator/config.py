@@ -5,7 +5,7 @@ import socket
 import uuid
 import warnings
 from base64 import b64encode
-from datetime import datetime, timedelta
+from datetime import UTC, datetime, timedelta
 
 import zmq
 from cryptography import x509

@@ -55,7 +55,7 @@ class EnsembleEvaluator:
         self._events_to_send: asyncio.Queue[Event] = asyncio.Queue()
         self._manifest_queue: asyncio.Queue[Any] = asyncio.Queue()
 
-        self._ee_tasks: List[asyncio.Task[None]] = []
+        self._ee_tasks: list[asyncio.Task[None]] = []
         self._server_done: asyncio.Event = asyncio.Event()
 
         # batching section
@@ -292,7 +292,7 @@ class EnsembleEvaluator:
             await self._server_done.wait()
             try:
                 await asyncio.wait_for(self._dispatchers_empty.wait(), timeout=5)
-            except asyncio.TimeoutError:
+            except TimeoutError:
                 logger.warning(
                     "Not all dispatchers were disconnected when closing zmq server!"
                 )
@@ -304,7 +304,7 @@ class EnsembleEvaluator:
             await self._events_to_send.join()
             try:
                 await asyncio.wait_for(self._clients_empty.wait(), timeout=5)
-            except asyncio.TimeoutError:
+            except TimeoutError:
                 logger.warning(
                     "Not all clients were disconnected when closing zmq server!"
                 )
