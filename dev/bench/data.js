@@ -1,39 +1,8 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1734026506457,
+  "lastUpdate": 1734046129690,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
-      {
-        "commit": {
-          "author": {
-            "email": "oyveid@equinor.com",
-            "name": "Øyvind Eide",
-            "username": "oyvindeide"
-          },
-          "committer": {
-            "email": "44577479+oyvindeide@users.noreply.github.com",
-            "name": "Øyvind Eide",
-            "username": "oyvindeide"
-          },
-          "distinct": true,
-          "id": "aa45608cf666c28b38c32d6b339fe9ee04cf6cb9",
-          "message": "Move addition of activate script",
-          "timestamp": "2024-12-06T10:38:26+01:00",
-          "tree_id": "0e5558d1ba63b8c98d1191b1779ffa407a4459f3",
-          "url": "https://github.com/equinor/ert/commit/aa45608cf666c28b38c32d6b339fe9ee04cf6cb9"
-        },
-        "date": 1733478014035,
-        "tool": "pytest",
-        "benches": [
-          {
-            "name": "tests/ert/performance_tests/test_analysis.py::test_and_benchmark_adaptive_localization_with_fields",
-            "value": 0.21382553020849498,
-            "unit": "iter/sec",
-            "range": "stddev: 0.05113461513636054",
-            "extra": "mean: 4.67671002159999 sec\nrounds: 5"
-          }
-        ]
-      },
       {
         "commit": {
           "author": {
@@ -930,6 +899,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.01955495229463724",
             "extra": "mean: 4.588560620799996 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "jparu@equinor.com",
+            "name": "xjules",
+            "username": "xjules"
+          },
+          "committer": {
+            "email": "jparu@equinor.com",
+            "name": "Julius Parulek",
+            "username": "xjules"
+          },
+          "distinct": true,
+          "id": "4301b63377d4b73678d8ed98669396562e14c975",
+          "message": "Add run experiment with design matrix to ensemble experiment panel\n\n- Catagorical data is not treated properly yet, wherein the design\nmatrix group that contains catagorical data will automatically store all\nparameters inside this group to objects; ie, strings.\n- Prefil active realization box with realizations from design matrix\n- Use design_matrix parameters in ensemble experiment\n- add test run cli with design matrix and poly example\n- add test that save parameters internalize DataFrame parameters in the storage\n- add merge function to merge design parameters with existing parameters\n -- Raise Validation error when having multiple overlapping groups\n- Update writting to parameter.txt with categorical values",
+          "timestamp": "2024-12-13T00:26:53+01:00",
+          "tree_id": "988124ce975ca5a6c89c3ecf6f79168c8b58f900",
+          "url": "https://github.com/equinor/ert/commit/4301b63377d4b73678d8ed98669396562e14c975"
+        },
+        "date": 1734046129192,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/ert/performance_tests/test_analysis.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 0.21976842864856433,
+            "unit": "iter/sec",
+            "range": "stddev: 0.02752415245771421",
+            "extra": "mean: 4.550244118999996 sec\nrounds: 5"
           }
         ]
       }
