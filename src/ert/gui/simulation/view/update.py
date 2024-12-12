@@ -46,6 +46,7 @@ class UpdateLogTable(QTableWidget):
         self.setRowCount(len(data.data))
         self.setHorizontalHeaderLabels(data.header)
         self.setSelectionBehavior(QAbstractItemView.SelectionBehavior.SelectRows)
+        self.setEditTriggers(QAbstractItemView.NoEditTriggers)
         horizontal_header = self.horizontalHeader()
         assert horizontal_header is not None
         horizontal_header.setSectionResizeMode(QHeaderView.ResizeToContents)
