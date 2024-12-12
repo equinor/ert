@@ -1,39 +1,8 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1733991696247,
+  "lastUpdate": 1734002782754,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
-      {
-        "commit": {
-          "author": {
-            "email": "ejah@equinor.com",
-            "name": "Eivind Jahren",
-            "username": "eivindjahren"
-          },
-          "committer": {
-            "email": "ejah@equinor.com",
-            "name": "Eivind Jahren",
-            "username": "eivindjahren"
-          },
-          "distinct": true,
-          "id": "434b77391a68481e0cc6c5584b43a9e125866729",
-          "message": "Fix crash when reading num_cpu from non-ascii files",
-          "timestamp": "2024-12-05T15:10:31+01:00",
-          "tree_id": "2768c7cd0e2548e17b2772378334c9aed4ac23a4",
-          "url": "https://github.com/equinor/ert/commit/434b77391a68481e0cc6c5584b43a9e125866729"
-        },
-        "date": 1733407941702,
-        "tool": "pytest",
-        "benches": [
-          {
-            "name": "tests/ert/performance_tests/test_analysis.py::test_and_benchmark_adaptive_localization_with_fields",
-            "value": 0.2167327356963286,
-            "unit": "iter/sec",
-            "range": "stddev: 0.025162739190932745",
-            "extra": "mean: 4.6139776568 sec\nrounds: 5"
-          }
-        ]
-      },
       {
         "commit": {
           "author": {
@@ -930,6 +899,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.04076522473732182",
             "extra": "mean: 4.508179835000004 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "ynk@equinor.com",
+            "name": "Yngve S. Kristiansen",
+            "username": "yngve-sk"
+          },
+          "committer": {
+            "email": "yngve-sk@users.noreply.github.com",
+            "name": "Yngve S. Kristiansen",
+            "username": "yngve-sk"
+          },
+          "distinct": true,
+          "id": "104c326981cc4ccfe163c805ceac4b01398c9262",
+          "message": "Small logic fix in data_for_key",
+          "timestamp": "2024-12-12T12:24:35+01:00",
+          "tree_id": "d6dd86579308f60f5e7ba8446206947827d73ed7",
+          "url": "https://github.com/equinor/ert/commit/104c326981cc4ccfe163c805ceac4b01398c9262"
+        },
+        "date": 1734002782290,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/ert/performance_tests/test_analysis.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 0.22281022911173926,
+            "unit": "iter/sec",
+            "range": "stddev: 0.03272720269613646",
+            "extra": "mean: 4.488124283999997 sec\nrounds: 5"
           }
         ]
       }
