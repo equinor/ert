@@ -460,19 +460,24 @@ class EverestStorage:
         # We could select only objective values,
         # but we select all to also get the constraint values (if they exist)
         realization_objectives = polars.from_pandas(
-            results.to_dataframe("evaluations").reset_index()
+            results.to_dataframe(
+                "evaluations",
+                select=[
+                    "variables",
+                    "objectives",
+                    "constraints",
+                ],
+            ).reset_index(),
         ).drop("plan_id")
         batch_objectives = polars.from_pandas(
             results.to_dataframe(
                 "functions",
-                select=["objectives", "weighted_objective", "scaled_objectives"],
+                select=["objectives", "weighted_objective"],
             ).reset_index()
         ).drop("plan_id")
 
         batch_controls = polars.from_pandas(
-            results.to_dataframe(
-                "evaluations", select=["variables", "scaled_variables"]
-            ).reset_index()
+            results.to_dataframe("evaluations", select=["variables"]).reset_index()
         ).drop("plan_id")
 
         batch_controls = self._rename_columns(batch_controls)
@@ -481,9 +486,7 @@ class EverestStorage:
         has_scaled_controls = "scaled_control_value" in batch_controls
         batch_controls = batch_controls.pivot(
             on="control_name",
-            values=["control_value", "scaled_control_value"]
-            if has_scaled_controls
-            else ["control_value"],
+            values=["control_value"],  # , "scaled_control_value"]
             separator=":",
         )
 
@@ -491,10 +494,6 @@ class EverestStorage:
             batch_controls = batch_controls.rename(
                 {
                     **{f"control_value:{name}": name for name in control_names},
-                    **{
-                        f"scaled_control_value:{name}": f"{name}.scaled"
-                        for name in control_names
-                    },
                 }
             )
 
@@ -509,34 +508,12 @@ class EverestStorage:
 
         batch_objectives = self._rename_columns(batch_objectives)
         realization_objectives = self._rename_columns(realization_objectives)
-        objective_names = realization_objectives["objective_name"].unique().to_list()
-
-        has_scaled_objectives = (
-            "scaled_objective_value" in realization_objectives.columns
-        )
 
         batch_objectives = batch_objectives.pivot(
             on="objective_name",
-            values=["objective_value", "scaled_objective_value"]
-            if has_scaled_objectives
-            else ["objective_value"],
+            values=["objective_value"],
             separator=":",
         )
-
-        if has_scaled_objectives:
-            batch_objectives = batch_objectives.rename(
-                {
-                    **{f"objective_value:{name}": name for name in objective_names},
-                    **(
-                        {
-                            f"scaled_objective_value:{name}": f"{name}.scaled"
-                            for name in objective_names
-                        }
-                        if has_scaled_objectives
-                        else {}
-                    ),
-                }
-            )
 
         if batch_constraints is not None:
             batch_constraints = batch_constraints.rename(
@@ -544,8 +521,6 @@ class EverestStorage:
                     "nonlinear_constraint": "constraint_name",
                     "values": "constraint_value",
                     "violations": "constraint_violation",
-                    "scaled_values": "scaled_constraint_value",
-                    "scaled_violations": "scaled_constraint_violation",
                 }
             )
 
@@ -555,24 +530,14 @@ class EverestStorage:
                 on="constraint_name",
                 values=[
                     "constraint_value",
-                    "scaled_constraint_value",
                     "constraint_violation",
-                    "scaled_constraint_violation",
                 ],
                 separator=";",
             ).rename(
                 {
                     **{f"constraint_value;{name}": name for name in constraint_names},
                     **{
-                        f"scaled_constraint_value;{name}": f"{name}.scaled"
-                        for name in constraint_names
-                    },
-                    **{
                         f"constraint_violation;{name}": f"{name}.violation"
-                        for name in constraint_names
-                    },
-                    **{
-                        f"scaled_constraint_violation;{name}": f"{name}.scaled_violation"
                         for name in constraint_names
                     },
                 }
@@ -585,22 +550,10 @@ class EverestStorage:
                 "realization",
                 "constraint_name",
                 "constraint_value",
-                "scaled_constraint_value",
             ].unique(["result_id", "batch_id", "realization", "constraint_name"])
             realization_constraints = realization_constraints.pivot(
-                values=["constraint_value", "scaled_constraint_value"],
-                on="constraint_name",
-                separator=";",
-            ).rename(
-                {
-                    **{f"constraint_value;{name}": name for name in constraint_names},
-                    **{
-                        f"scaled_constraint_value;{name}": f"{name}.scaled"
-                        for name in constraint_names
-                    },
-                }
+                values=["constraint_value"], on="constraint_name"
             )
-
             realization_objectives = realization_objectives.drop(
                 [c for c in realization_objectives.columns if "constraint" in c.lower()]
             ).unique(subset=["result_id", "batch_id", "realization", "control_name"])
@@ -610,7 +563,7 @@ class EverestStorage:
 
         realization_objectives = (
             realization_objectives.drop(["control_name", "control_value"])
-            .unique(subset=["result_id", "batch_id", "realization"])
+            .unique(subset=["result_id", "batch_id", "realization", "objective_name"])
             .pivot(
                 values="objective_value",
                 index=[
@@ -632,6 +585,10 @@ class EverestStorage:
 
     @staticmethod
     def _rename_columns(df: polars.DataFrame):
+        scaled_cols = [c for c in df.columns if c.lower().startswith("scaled")]
+        if len(scaled_cols) > 0:
+            raise ValueError("Don't store scaled columns")
+
         _renames = {
             "objective": "objective_name",
             "weighted_objective": "total_objective_value",
@@ -655,6 +612,9 @@ class EverestStorage:
         perturbation_objectives = polars.from_pandas(
             results.to_dataframe("evaluations").reset_index()
         ).drop("plan_id")
+        perturbation_objectives = perturbation_objectives.drop(
+            c for c in perturbation_objectives.columns if c.lower().startswith("scaled")
+        )
 
         try:
             # ROPT_NOTE: Why is this sometimes None? How can we know if it is
@@ -666,14 +626,16 @@ class EverestStorage:
             batch_objective_gradient = None
 
         if batch_objective_gradient is not None:
+            batch_objective_gradient = batch_objective_gradient.drop(
+                c
+                for c in batch_objective_gradient.columns
+                if c.lower().startswith("scaled")
+            )
             batch_objective_gradient = self._rename_columns(batch_objective_gradient)
 
         perturbation_objectives = self._rename_columns(perturbation_objectives)
 
         if "constraint_name" in perturbation_objectives:
-            constraint_names = (
-                perturbation_objectives["constraint_name"].unique().to_list()
-            )
             perturbation_constraints = (
                 perturbation_objectives[
                     "result_id",
@@ -688,26 +650,7 @@ class EverestStorage:
                         if "constraint" in c.lower()
                     ],
                 ]
-                .pivot(
-                    on="constraint_name",
-                    values=[
-                        "perturbed_constraint_value",
-                        "scaled_perturbed_constraint_value",
-                    ],
-                    separator=";",
-                )
-                .rename(
-                    {
-                        **{
-                            f"perturbed_constraint_value;{name}": name
-                            for name in constraint_names
-                        },
-                        **{
-                            f"scaled_perturbed_constraint_value;{name}": f"{name}.scaled"
-                            for name in constraint_names
-                        },
-                    }
-                )
+                .pivot(on="constraint_name", values=["perturbed_constraint_value"])
                 .pivot(on="control_name", values="perturbed_control_value")
             )
 
@@ -733,24 +676,9 @@ class EverestStorage:
                     ]
                 ).unique()
 
-                constraint_names = (
-                    batch_constraint_gradient["constraint_name"].unique().to_list()
-                )
                 batch_constraint_gradient = batch_constraint_gradient.pivot(
                     on="constraint_name",
-                    values=["constraint_value", "scaled_constraint_value"],
-                    separator=";",
-                ).rename(
-                    {
-                        **{
-                            f"constraint_value;{name}": name
-                            for name in constraint_names
-                        },
-                        **{
-                            f"scaled_constraint_value;{name}": f"{name}.scaled"
-                            for name in constraint_names
-                        },
-                    }
+                    values=["constraint_value"],
                 )
             else:
                 batch_constraint_gradient = None
