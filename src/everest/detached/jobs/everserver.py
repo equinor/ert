@@ -398,17 +398,13 @@ def _failed_realizations_messages(shared_data):
     messages = [OPT_FAILURE_REALIZATIONS]
     failed = shared_data[SIM_PROGRESS_ENDPOINT]["status"]["failed"]
     if failed > 0:
-        # Find the set of jobs that failed. To keep the order in which they
-        # are found in the queue, use a dict as sets are not ordered.
-        failed_jobs = dict.fromkeys(
-            job["name"]
-            for queue in shared_data[SIM_PROGRESS_ENDPOINT]["progress"]
-            for job in queue
-            if job["status"] == JOB_FAILURE
-        ).keys()
-        messages.append(
-            "{} job failures caused by: {}".format(failed, ", ".join(failed_jobs))
-        )
+        # Report each unique pair of failed job name and error
+        for queue in shared_data[SIM_PROGRESS_ENDPOINT]["progress"]:
+            for job in queue:
+                if job["status"] == JOB_FAILURE:
+                    err_msg = f"{job['name']} Failed with: {job.get('error', '')}"
+                    if err_msg not in messages:
+                        messages.append(err_msg)
     return messages
 
 

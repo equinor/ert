@@ -1,6 +1,7 @@
 import json
 import os
 import ssl
+import stat
 from functools import partial
 from pathlib import Path
 from unittest.mock import patch
@@ -170,12 +171,12 @@ def test_everserver_status_running_complete(
         set_shared_status,
         progress=[
             [
-                {"name": "job1", "status": JOB_FAILURE},
-                {"name": "job1", "status": JOB_FAILURE},
+                {"name": "job1", "status": JOB_FAILURE, "error": "job 1 error 1"},
+                {"name": "job1", "status": JOB_FAILURE, "error": "job 1 error 2"},
             ],
             [
-                {"name": "job2", "status": JOB_SUCCESS},
-                {"name": "job2", "status": JOB_FAILURE},
+                {"name": "job2", "status": JOB_SUCCESS, "error": ""},
+                {"name": "job2", "status": JOB_FAILURE, "error": "job 2 error 1"},
             ],
         ],
     ),
@@ -193,7 +194,9 @@ def test_everserver_status_failed_job(
     # The server should fail and store a user-friendly message.
     assert status["status"] == ServerStatus.failed
     assert OPT_FAILURE_REALIZATIONS in status["message"]
-    assert "3 job failures caused by: job1, job2" in status["message"]
+    assert "job1 Failed with: job 1 error 1" in status["message"]
+    assert "job1 Failed with: job 1 error 2" in status["message"]
+    assert "job2 Failed with: job 2 error 1" in status["message"]
 
 
 @patch("sys.argv", ["name", "--config-file", "config_minimal.yml"])
@@ -271,3 +274,42 @@ def test_everserver_status_max_batch_num(
         filter_out_gradient=False, batches=None
     )
     assert {data.batch for data in snapshot.simulation_data} == {0}
+
+
+@patch("sys.argv", ["name", "--config-file", "config_minimal.yml"])
+@patch("everest.detached.jobs.everserver._configure_loggers")
+@patch("everest.detached.jobs.everserver._generate_authentication")
+@patch(
+    "everest.detached.jobs.everserver._generate_certificate",
+    return_value=(None, None, None),
+)
+@patch(
+    "everest.detached.jobs.everserver._find_open_port",
+    return_value=42,
+)
+@patch("everest.detached.jobs.everserver._write_hostfile")
+@patch("everest.detached.jobs.everserver._everserver_thread")
+def test_everserver_status_contains_max_runtime_failure(
+    _1, _2, _3, _4, _5, _6, change_to_tmpdir, min_config
+):
+    config_file = "config_minimal.yml"
+
+    Path("SLEEP_job").write_text("EXECUTABLE sleep", encoding="utf-8")
+    min_config["simulator"] = {"max_runtime": 2}
+    min_config["forward_model"] = ["sleep 5"]
+    min_config["install_jobs"] = [{"name": "sleep", "source": "SLEEP_job"}]
+
+    config = EverestConfig(**min_config)
+    config.dump(config_file)
+
+    everserver.main()
+    status = everserver_status(
+        ServerConfig.get_everserver_status_path(config.output_dir)
+    )
+
+    assert status["status"] == ServerStatus.failed
+    print(status["message"])
+    assert (
+        "sleep Failed with: The run is cancelled due to reaching MAX_RUNTIME"
+        in status["message"]
+    )

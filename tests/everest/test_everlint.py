@@ -13,26 +13,6 @@ from tests.everest.test_config_validation import has_error
 from tests.everest.utils import relpath
 
 
-@pytest.fixture
-def min_config():
-    yield yaml.safe_load(
-        dedent("""
-    model: {"realizations": [0]}
-    controls:
-      -
-        name: my_control
-        type: well_control
-        min: 0
-        max: 0.1
-        variables:
-          - { name: test, initial_guess: 0.1 }
-    objective_functions:
-      - {name: my_objective}
-    config_path: .
-    """)
-    )
-
-
 @pytest.mark.parametrize(
     "required_key",
     (

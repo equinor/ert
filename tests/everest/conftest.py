@@ -4,8 +4,10 @@ import tempfile
 from collections.abc import Callable, Iterator
 from copy import deepcopy
 from pathlib import Path
+from textwrap import dedent
 
 import pytest
+import yaml
 
 from ert.config import QueueSystem
 from ert.ensemble_evaluator import EvaluatorServerConfig
@@ -189,3 +191,23 @@ def cached_example(pytestconfig, evaluator_server_config_generator):
         return copied_path, config_file, optimal_result_json
 
     return run_config
+
+
+@pytest.fixture
+def min_config():
+    yield yaml.safe_load(
+        dedent("""
+    model: {"realizations": [0]}
+    controls:
+      -
+        name: my_control
+        type: well_control
+        min: 0
+        max: 0.1
+        variables:
+          - { name: test, initial_guess: 0.1 }
+    objective_functions:
+      - {name: my_objective}
+    config_path: .
+    """)
+    )
