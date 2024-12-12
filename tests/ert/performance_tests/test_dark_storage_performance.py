@@ -5,19 +5,18 @@ import os
 import time
 from asyncio import get_event_loop
 from collections.abc import Awaitable
-from datetime import datetime, timedelta
+from dataclasses import dataclass
 from typing import TypeVar
 from urllib.parse import quote
 
 import memray
 import numpy as np
 import pandas as pd
-import polars
 import pytest
 from httpx import RequestError
 from starlette.testclient import TestClient
 
-from ert.config import ErtConfig, SummaryConfig
+from ert.config import ErtConfig
 from ert.dark_storage import enkf
 from ert.dark_storage.app import app
 from ert.dark_storage.endpoints import ensembles, experiments, records
@@ -25,6 +24,11 @@ from ert.gui.tools.plot.plot_api import PlotApi
 from ert.libres_facade import LibresFacade
 from ert.services import StorageService
 from ert.storage import open_storage
+from tests.ert.performance_tests.test_obs_and_responses_performance import (
+    ExpectedPerformance,
+    StoragePerfTestConfig,
+    create_experiment_args,
+)
 
 T = TypeVar("T")
 
@@ -238,66 +242,137 @@ def api_and_snake_oil_storage(snake_oil_case_storage, monkeypatch):
     gc.collect()
 
 
-@pytest.mark.parametrize(
-    "num_reals, num_dates, num_keys, max_memory_mb",
-    [  # Tested 24.11.22 on macbook pro M1 max
-        # (xr = tested on previous ert using xarray to store responses)
-        (1, 100, 100, 1200),  # 790MiB local, xr: 791, MiB
-        (1000, 100, 100, 1500),  # 809MiB local, 879MiB linux-3.11, xr: 1107MiB
-        # (Cases below are more realistic at up to 200realizations)
-        # Not to be run these on GHA runners
-        # (2000, 100, 100, 1950),  # 1607MiB local, 1716MiB linux3.12, 1863 on linux3.11, xr: 2186MiB
-        # (2, 5803, 11787, 5500),  # 4657MiB local, xr: 10115MiB
-        # (10, 5803, 11787, 13500),  # 10036MiB local, 12803MiB mac-3.12, xr: 46715MiB
-    ],
-)
+@dataclass
+class _OpenPlotterBenchmark:
+    alias: str
+    config: StoragePerfTestConfig
+    expected_performance: ExpectedPerformance
+
+
+open_plotter_benchmarks: list[_OpenPlotterBenchmark] = [
+    _OpenPlotterBenchmark(
+        alias="small",
+        config=StoragePerfTestConfig(
+            num_parameters=1,
+            num_gen_data_keys=100,
+            num_gen_data_report_steps=2,
+            num_gen_data_index=10,
+            num_gen_data_obs=400,
+            num_summary_keys=1,
+            num_summary_timesteps=1,
+            num_summary_obs=1,
+            num_realizations=2,
+        ),
+        expected_performance=ExpectedPerformance(memory_limit_mb=1e9, time_limit_s=1e9),
+    ),
+    _OpenPlotterBenchmark(
+        alias="medium",
+        config=StoragePerfTestConfig(
+            num_parameters=1,
+            num_gen_data_keys=2000,
+            num_gen_data_report_steps=2,
+            num_gen_data_index=10,
+            num_gen_data_obs=2000,
+            num_summary_keys=1000,
+            num_summary_timesteps=200,
+            num_summary_obs=2000,
+            num_realizations=200,
+        ),
+        expected_performance=ExpectedPerformance(memory_limit_mb=1e9, time_limit_s=1e9),
+    ),
+    _OpenPlotterBenchmark(
+        alias="large",
+        config=StoragePerfTestConfig(
+            num_parameters=1,
+            num_gen_data_keys=5000,
+            num_gen_data_report_steps=2,
+            num_gen_data_index=10,
+            num_gen_data_obs=5000,
+            num_summary_keys=1000,
+            num_summary_timesteps=200,
+            num_summary_obs=2000,
+            num_realizations=200,
+        ),
+        expected_performance=ExpectedPerformance(memory_limit_mb=1e9, time_limit_s=1e9),
+    ),
+    _OpenPlotterBenchmark(
+        alias="large+",
+        config=StoragePerfTestConfig(
+            num_parameters=1,
+            num_gen_data_keys=5000,
+            num_gen_data_report_steps=2,
+            num_gen_data_index=10,
+            num_gen_data_obs=5000,
+            num_summary_keys=1000,
+            num_summary_timesteps=200,
+            num_summary_obs=5000,
+            num_realizations=200,
+        ),
+        expected_performance=ExpectedPerformance(memory_limit_mb=1e9, time_limit_s=1e9),
+    ),
+    _OpenPlotterBenchmark(
+        alias="large++",
+        config=StoragePerfTestConfig(
+            num_parameters=5000,
+            num_gen_data_keys=5000,
+            num_gen_data_report_steps=2,
+            num_gen_data_index=10,
+            num_gen_data_obs=5000,
+            num_summary_keys=17000,
+            num_summary_timesteps=200,
+            num_summary_obs=5000,
+            num_realizations=200,
+        ),
+        expected_performance=ExpectedPerformance(memory_limit_mb=1e9, time_limit_s=1e9),
+    ),
+]
+
+
+@pytest.mark.parametrize("plotter_benchmark", open_plotter_benchmarks)
 def test_plot_api_big_summary_memory_usage(
-    num_reals, num_dates, num_keys, max_memory_mb, use_tmpdir, api_and_storage
+    plotter_benchmark, use_tmpdir, api_and_storage
 ):
     api, storage = api_and_storage
+    config = plotter_benchmark.config
+    expected_performance = plotter_benchmark.expected_performance
 
-    dates = []
-
-    for i in range(num_keys):
-        dates += [datetime(2000, 1, 1) + timedelta(days=i)] * num_dates
-
-    dates_df = polars.Series(dates, dtype=polars.Datetime).dt.cast_time_unit("ms")
-
-    keys_df = polars.Series([f"K{i}" for i in range(num_keys)])
-    values_df = polars.Series(list(range(num_keys * num_dates)), dtype=polars.Float32)
-
-    big_summary = polars.DataFrame(
-        {
-            "response_key": polars.concat([keys_df] * num_dates),
-            "time": dates_df,
-            "values": values_df,
-        }
+    info = create_experiment_args(
+        num_parameters=config.num_parameters,
+        num_gen_data_keys=config.num_gen_data_keys,
+        num_gen_data_report_steps=config.num_gen_data_report_steps,
+        num_gen_data_index=config.num_gen_data_index,
+        num_gen_data_obs=config.num_gen_data_obs,
+        num_summary_keys=config.num_summary_keys,
+        num_summary_timesteps=config.num_summary_timesteps,
+        num_summary_obs=config.num_summary_obs,
     )
 
     experiment = storage.create_experiment(
-        parameters=[],
-        responses=[
-            SummaryConfig(
-                name="summary",
-                input_files=["CASE.UNSMRY", "CASE.SMSPEC"],
-                keys=keys_df,
-            )
-        ],
+        parameters=[info.gen_kw_config],
+        responses=[info.summary_config, info.gen_data_config],
+        observations={
+            "gen_data": info.gen_data_observations,
+            "summary": info.summary_observations,
+        },
     )
 
-    ensemble = experiment.create_ensemble(ensemble_size=num_reals, name="bigboi")
-    for real in range(ensemble.ensemble_size):
-        ensemble.save_response("summary", big_summary.clone(), real)
+    ens = experiment.create_ensemble(
+        ensemble_size=config.num_realizations, name="bigboi"
+    )
+
+    for real in range(config.num_realizations):
+        ens.save_response("summary", info.summary_responses.clone(), real)
+        ens.save_response("gen_data", info.gen_data_responses.clone(), real)
 
     with memray.Tracker("memray.bin", follow_fork=True, native_traces=True):
         # Initialize plotter window
-        all_keys = {k.key for k in api.all_data_type_keys()}
+        t0 = time.time()
+        _ = {k.key for k in api.all_data_type_keys()}
         all_ensembles = [e.id for e in api.get_all_ensembles()]
-        assert set(keys_df.to_list()) == set(all_keys)
 
         # call updatePlot()
         ensemble_to_data_map: dict[str, pd.DataFrame] = {}
-        sample_key = keys_df.sample(1).item()
+        sample_key = info.summary_responses["response_key"].sample(1).item()
         for ensemble in all_ensembles:
             ensemble_to_data_map[ensemble] = api.data_for_key(ensemble, sample_key)
 
@@ -309,10 +384,16 @@ def test_plot_api_big_summary_memory_usage(
             _ = data.T
             _ = data.T
 
+        time_elapsed = time.time() - t0
+
     stats = memray._memray.compute_statistics("memray.bin")
     os.remove("memray.bin")
     total_memory_usage = stats.total_memory_allocated / (1024**2)
-    assert total_memory_usage < max_memory_mb
+    assert total_memory_usage < expected_performance.memory_limit_mb
+    assert time_elapsed < expected_performance.time_limit_s
+    print(
+        f"{plotter_benchmark.alias}[{plotter_benchmark.config}] took {total_memory_usage}mb,{time_elapsed}s"
+    )
 
 
 def test_plotter_on_all_snake_oil_responses_time(api_and_snake_oil_storage):
