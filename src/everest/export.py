@@ -1,14 +1,17 @@
 import os
 import re
 from enum import StrEnum
+from pathlib import Path
 from typing import Any
 
 import pandas as pd
+import polars
 from pandas import DataFrame
 from seba_sqlite.snapshot import SebaSnapshot
 
 from ert.storage import open_storage
 from everest.config import ExportConfig
+from everest.everest_storage import EverestStorage
 from everest.strings import STORAGE_DIR
 
 
@@ -87,9 +90,12 @@ def export_metadata(config: ExportConfig | None, optimization_output_dir: str):
         filter_out_gradient=discard_gradient,
         batches=batches,
     )
+    storage = EverestStorage(Path(optimization_output_dir))
+    storage.read_from_output_dir()
 
     opt_data = snapshot.optimization_data_by_batch
     metadata = []
+
     for data in snapshot.simulation_data:
         # If export section not defined in the config file export only increased
         # merit non-gradient simulation results
@@ -137,6 +143,44 @@ def export_metadata(config: ExportConfig | None, optimization_output_dir: str):
                     f"Batch {md_row[MetaDataColumnNames.BATCH]} has no available optimization data"
                 )
         metadata.append(md_row)
+
+    # Contains information about the simulations:
+    #     batch -> the batch id
+    #     objectives  -> Dictionary mapping the objective function names to the
+    #                    objective values per simulation also contains mapping
+    #                    of the normalized and weighted normalized objective values
+    #     constraints -> Dictionary mapping the constraint function names to the
+    #                    constraint values per simulation also contains mapping of
+    #                    the normalized and weighted normalized constraint values
+    #     controls    -> Dictionary mapping the control names to their values.
+    #                    Controls generating the simulation results
+    #     sim_avg_obj -> The value of the objective function for the simulation
+    #     is_gradient -> Flag describing if the simulation is a gradient or non
+    #                    gradient simulation
+    #     realization -> The name of the realization the simulation is part of
+    #     start_time  -> The starting timpestamp for the simulation
+    #     end_time    -> The end timpstamp for the simulation
+    #     success     -> Flag describing if the simulation was successful or not (1 or 0)
+    #     realization_weight -> The weight of the realization the simulation was part of.
+    #     simulation  -> The simulation number used in libres
+
+    # WIP!
+    metadata2 = []
+    for i, batch_info in enumerate(storage.data.batches):
+        if discard_rejected and not batch_info.is_improvement:
+            continue
+
+        corresponding = metadata[i]
+        print("Yo")
+        md_row2: Dict[str, Any] = {
+            MetaDataColumnNames.BATCH: batch_info.batch_id,
+            MetaDataColumnNames.SIM_AVERAGED_OBJECTIVE: batch_info.batch_objectives.select(
+                polars.mean("total_objective_value")
+            ).item(),
+            MetaDataColumnNames.REALIZATION: None,
+        }
+        metadata2.append(md_row2)
+        assert corresponding is not None
 
     return metadata
 
