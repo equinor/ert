@@ -1,39 +1,8 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1733921920285,
+  "lastUpdate": 1733991696247,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
-      {
-        "commit": {
-          "author": {
-            "email": "JONAK@equinor.com",
-            "name": "Jonathan Karlsen",
-            "username": "jonathan-eq"
-          },
-          "committer": {
-            "email": "107626001+jonathan-eq@users.noreply.github.com",
-            "name": "Jonathan Karlsen",
-            "username": "jonathan-eq"
-          },
-          "distinct": true,
-          "id": "4e31e0bec0610e3f4a32014e9e3fdf749a8a915f",
-          "message": "Fix progress bar not updating realization count for new iterations\n\nThis commit fixes the bug introduced in 31e607b066ab79415671f83f2d57c7400c4d4e98, where the status reporting in GUI was done the same way when rerunning failed realizations, and running new iterations. This is an issue because when rerunning failed realizations, we want to show all realizations and add the finished/failed count from the previous run, while new iterations should drop the failed realizations altogether.",
-          "timestamp": "2024-12-05T14:57:40+01:00",
-          "tree_id": "6b089c914f3f221b7f1bc023a0d56d356a2c38ed",
-          "url": "https://github.com/equinor/ert/commit/4e31e0bec0610e3f4a32014e9e3fdf749a8a915f"
-        },
-        "date": 1733407175503,
-        "tool": "pytest",
-        "benches": [
-          {
-            "name": "tests/ert/performance_tests/test_analysis.py::test_and_benchmark_adaptive_localization_with_fields",
-            "value": 0.21154862888533055,
-            "unit": "iter/sec",
-            "range": "stddev: 0.03076221655735647",
-            "extra": "mean: 4.72704552739998 sec\nrounds: 5"
-          }
-        ]
-      },
       {
         "commit": {
           "author": {
@@ -930,6 +899,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.03218128145278603",
             "extra": "mean: 4.60361050300001 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "dan.sava42@gmail.com",
+            "name": "DanSava",
+            "username": "DanSava"
+          },
+          "committer": {
+            "email": "dan.sava42@gmail.com",
+            "name": "Dan Sava",
+            "username": "DanSava"
+          },
+          "distinct": true,
+          "id": "a04e2df77855edab07e947cc02d34dcde14dd173",
+          "message": "Replace usage of deprecated logging.warn with logging.warning",
+          "timestamp": "2024-12-12T17:19:37+09:00",
+          "tree_id": "5c5df4860ad457647d5b22debf651c5fdcdedfd7",
+          "url": "https://github.com/equinor/ert/commit/a04e2df77855edab07e947cc02d34dcde14dd173"
+        },
+        "date": 1733991695350,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/ert/performance_tests/test_analysis.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 0.22181901268364088,
+            "unit": "iter/sec",
+            "range": "stddev: 0.04076522473732182",
+            "extra": "mean: 4.508179835000004 sec\nrounds: 5"
           }
         ]
       }
