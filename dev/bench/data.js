@@ -1,39 +1,8 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1734004516142,
+  "lastUpdate": 1734026506457,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
-      {
-        "commit": {
-          "author": {
-            "email": "pieter.verveer@tno.nl",
-            "name": "Peter Verveer",
-            "username": "verveerpj"
-          },
-          "committer": {
-            "email": "noreply@github.com",
-            "name": "GitHub",
-            "username": "web-flow"
-          },
-          "distinct": true,
-          "id": "03903bbc50fbd911313469a10d29c4d43636917c",
-          "message": "Improve exit code detection in the slurm driver (#9440)\n\nImprove exit code detection in the slurm driver",
-          "timestamp": "2024-12-06T10:27:57+01:00",
-          "tree_id": "e21e8c5f40dffa7bee9d0754cc27584a9846b319",
-          "url": "https://github.com/equinor/ert/commit/03903bbc50fbd911313469a10d29c4d43636917c"
-        },
-        "date": 1733477386342,
-        "tool": "pytest",
-        "benches": [
-          {
-            "name": "tests/ert/performance_tests/test_analysis.py::test_and_benchmark_adaptive_localization_with_fields",
-            "value": 0.21656208453872952,
-            "unit": "iter/sec",
-            "range": "stddev: 0.028287705830547526",
-            "extra": "mean: 4.6176134761999945 sec\nrounds: 5"
-          }
-        ]
-      },
       {
         "commit": {
           "author": {
@@ -930,6 +899,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.031233707796770253",
             "extra": "mean: 4.588399813999996 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "andrli@equinor.com",
+            "name": "Andreas Eknes Lie",
+            "username": "andreas-el"
+          },
+          "committer": {
+            "email": "114403625+andreas-el@users.noreply.github.com",
+            "name": "Andreas Eknes Lie",
+            "username": "andreas-el"
+          },
+          "distinct": true,
+          "id": "d27c2d18f15f4e37d36d6da35d0ef8c963807541",
+          "message": "Set persistent cells in update table cells",
+          "timestamp": "2024-12-12T18:59:55+01:00",
+          "tree_id": "46eecaa5995baff79d1604024ea7220dda62c208",
+          "url": "https://github.com/equinor/ert/commit/d27c2d18f15f4e37d36d6da35d0ef8c963807541"
+        },
+        "date": 1734026506014,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/ert/performance_tests/test_analysis.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 0.21793326549223063,
+            "unit": "iter/sec",
+            "range": "stddev: 0.01955495229463724",
+            "extra": "mean: 4.588560620799996 sec\nrounds: 5"
           }
         ]
       }
