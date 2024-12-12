@@ -304,25 +304,27 @@ class EverestRunModel(BaseRunModel):
         realization: str,
         fm_name: str,
         error_path: str,
+        fm_running_err: str,
     ) -> None:
         fm_id = f"b_{batch}_r_{realization}_s_{simulation}_{fm_name}"
         fm_logger = logging.getLogger("forward_models")
-        with open(error_path, encoding="utf-8") as errors:
-            error_str = errors.read()
-
+        if Path(error_path).is_file():
+            error_str = Path(error_path).read_text(encoding="utf-8") or fm_running_err
+        else:
+            error_str = fm_running_err
         error_hash = hash(error_str)
         err_msg = "Batch: {} Realization: {} Simulation: {} Job: {} Failed {}".format(
-            batch, realization, simulation, fm_name, "Error: {}\n {}"
+            batch, realization, simulation, fm_name, "\n Error: {} ID:{}"
         )
 
         if error_hash not in self._fm_errors:
             error_id = len(self._fm_errors)
-            fm_logger.error(err_msg.format(error_id, error_str))
+            fm_logger.error(err_msg.format(error_str, error_id))
             self._fm_errors.update({error_hash: {"error_id": error_id, "ids": [fm_id]}})
         elif fm_id not in self._fm_errors[error_hash]["ids"]:
             self._fm_errors[error_hash]["ids"].append(fm_id)
             error_id = self._fm_errors[error_hash]["error_id"]
-            fm_logger.error(err_msg.format(error_id, ""))
+            fm_logger.error(err_msg.format("Already reported as", error_id))
 
     def _delete_runpath(self, run_args: list[RunArg]) -> None:
         logging.getLogger(EVEREST).debug("Simulation callback called")
@@ -730,6 +732,7 @@ class EverestRunModel(BaseRunModel):
                     realization=realization,
                     fm_name=fm_step.get("name", "Unknwon"),  # type: ignore
                     error_path=fm_step.get("stderr", ""),  # type: ignore
+                    fm_running_err=fm_step.get("error", ""),  # type: ignore
                 )
         jobs_progress.append(jobs)
 
