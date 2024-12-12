@@ -1,39 +1,8 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1734002782754,
+  "lastUpdate": 1734004516142,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
-      {
-        "commit": {
-          "author": {
-            "email": "eide.oyvind87@gmail.com",
-            "name": "Øyvind Eide",
-            "username": "oyvindeide"
-          },
-          "committer": {
-            "email": "44577479+oyvindeide@users.noreply.github.com",
-            "name": "Øyvind Eide",
-            "username": "oyvindeide"
-          },
-          "distinct": true,
-          "id": "b903bb03be7e401622f604442691b36e5addbde4",
-          "message": "Remove overriding of tempfile.tempdir\n\nWhen the jobs are executed on the cluster, /user/run/<userid> is not set up,\nthough XDG_RUNTIME_DIR points to it. This is not a problem for ert as it\nruns the main application locally, but is a problem for Everest where the\nmain application runs on the cluster. So the way lsf logs in to the node is the reason.",
-          "timestamp": "2024-12-05T21:13:16+01:00",
-          "tree_id": "656ff4f7053e3f065b481da16cf0864a80775c79",
-          "url": "https://github.com/equinor/ert/commit/b903bb03be7e401622f604442691b36e5addbde4"
-        },
-        "date": 1733429707584,
-        "tool": "pytest",
-        "benches": [
-          {
-            "name": "tests/ert/performance_tests/test_analysis.py::test_and_benchmark_adaptive_localization_with_fields",
-            "value": 0.21689946115874717,
-            "unit": "iter/sec",
-            "range": "stddev: 0.04384166878033591",
-            "extra": "mean: 4.610431001799986 sec\nrounds: 5"
-          }
-        ]
-      },
       {
         "commit": {
           "author": {
@@ -930,6 +899,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.03272720269613646",
             "extra": "mean: 4.488124283999997 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "JONAK@equinor.com",
+            "name": "Jonathan Karlsen",
+            "username": "jonathan-eq"
+          },
+          "committer": {
+            "email": "107626001+jonathan-eq@users.noreply.github.com",
+            "name": "Jonathan Karlsen",
+            "username": "jonathan-eq"
+          },
+          "distinct": true,
+          "id": "d875982c2c94fd55936137990e1053aa38851295",
+          "message": "Remove deprecated slurm options `MEMORY` and `MEMORY_PER_CPU`",
+          "timestamp": "2024-12-12T12:53:24+01:00",
+          "tree_id": "f923ec92785ef76ff9cfc780d1e42f553937bbcc",
+          "url": "https://github.com/equinor/ert/commit/d875982c2c94fd55936137990e1053aa38851295"
+        },
+        "date": 1734004515556,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/ert/performance_tests/test_analysis.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 0.2179409032641027,
+            "unit": "iter/sec",
+            "range": "stddev: 0.031233707796770253",
+            "extra": "mean: 4.588399813999996 sec\nrounds: 5"
           }
         ]
       }
