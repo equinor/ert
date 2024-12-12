@@ -462,11 +462,7 @@ class EverestStorage:
         realization_objectives = polars.from_pandas(
             results.to_dataframe(
                 "evaluations",
-                select=[
-                    "variables",
-                    "objectives",
-                    "constraints",
-                ],
+                select=["variables", "objectives", "constraints", "evaluation_ids"],
             ).reset_index(),
         ).drop("plan_id")
         batch_objectives = polars.from_pandas(
