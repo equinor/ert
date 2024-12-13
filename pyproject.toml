@@ -75,7 +75,7 @@ dependencies = [
 
 [project.scripts]
 ert = "ert.__main__:main"
-"job_dispatch.py" = "_ert.forward_model_runner.job_dispatch:main"
+"fm_dispatch.py" = "_ert.forward_model_runner.fm_dispatch:main"
 everest = "everest.bin.main:start_everest"
 everserver = "everest.detached.jobs.everserver:main"
 recovery_factor = "everest.jobs.scripts.recovery_factor:main"

@@ -64,8 +64,8 @@ parties also can consume the messages.
 Forward models
 ~~~~~~~~~~~~~~
 
-Currently this is done by the jobs in the forward model logging to files. These
-should probably be propagated by the :code:`job_dispatch` to the rest of the system
+Currently this is done by the forward model steps in the forward model logging to files. These
+should probably be propagated by the :code:`fm_dispatch` to the rest of the system
 via a message passing system.
 
 Workflows

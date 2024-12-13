@@ -27,7 +27,7 @@ def test_no_plugins():
 
     assert pm._site_config_lines() == [
         "-- Content below originated from ert (site_config_lines)",
-        "JOB_SCRIPT job_dispatch.py",
+        "JOB_SCRIPT fm_dispatch.py",
         "QUEUE_SYSTEM LOCAL",
         "QUEUE_OPTION LOCAL MAX_RUNNING 1",
     ]
@@ -52,11 +52,11 @@ def test_with_plugins():
 
     assert pm._site_config_lines() == [
         "-- Content below originated from ert (site_config_lines)",
-        "JOB_SCRIPT job_dispatch.py",
+        "JOB_SCRIPT fm_dispatch.py",
         "QUEUE_SYSTEM LOCAL",
         "QUEUE_OPTION LOCAL MAX_RUNNING 1",
         "-- Content below originated from dummy (site_config_lines)",
-        "JOB_SCRIPT job_dispatch_dummy.py",
+        "JOB_SCRIPT fm_dispatch_dummy.py",
         "QUEUE_OPTION LOCAL MAX_RUNNING 2",
     ]
 

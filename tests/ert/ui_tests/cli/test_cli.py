@@ -333,7 +333,7 @@ def test_that_setenv_sets_environment_variables_in_jobs(setenv_config):
 
     path = os.environ["PATH"]
 
-    # and then job_dispatch should expand the variables on the compute side
+    # and then fm_dispatch should expand the variables on the compute side
     with open("simulations/realization-0/iter-0/ECHO.stdout.0", encoding="utf-8") as f:
         lines = f.readlines()
         assert len(lines) == 4

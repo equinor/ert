@@ -110,7 +110,7 @@ def test_that_job_script_can_be_set_in_site_config(monkeypatch):
     os.chmod(my_script, st.st_mode | stat.S_IEXEC)
     test_site_config.write_text(
         dedent(f"""
-        JOB_SCRIPT job_dispatch.py
+        JOB_SCRIPT fm_dispatch.py
         JOB_SCRIPT {my_script}
         QUEUE_SYSTEM LOCAL
         """),

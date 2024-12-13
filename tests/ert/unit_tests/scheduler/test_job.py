@@ -48,7 +48,7 @@ def realization():
         max_runtime=None,
         run_arg=run_arg,
         num_cpu=1,
-        job_script=str(shutil.which("job_dispatch.py")),
+        job_script=str(shutil.which("fm_dispatch.py")),
         realization_memory=0,
     )
     return realization

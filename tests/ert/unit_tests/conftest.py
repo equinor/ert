@@ -13,7 +13,7 @@ from ert.storage import Ensemble
 def ensure_bin_in_path():
     """
     Running pytest directly without enabling a virtualenv is perfectly valid.
-    However, our tests assume that `job_dispatch.py` is in PATH which it may not be.
+    However, our tests assume that `fm_dispatch.py` is in PATH which it may not be.
     This fixture prepends the path to the current Python for tests to pass when not
     in a virtualenv.
     """

@@ -282,11 +282,11 @@ class ForwardModelStep:
             return None
 
         # If the spawned process is not in the same process group as
-        # the callee (job_dispatch), we will kill the process group
+        # the callee (fm_dispatch), we will kill the process group
         # explicitly.
         #
         # Propagating the unsuccessful Exited message will kill the
-        # callee group. See job_dispatch.py.
+        # callee group. See fm_dispatch.py.
         process_group_id = os.getpgid(proc.pid)
         this_group_id = os.getpgid(os.getpid())
         if process_group_id != this_group_id:

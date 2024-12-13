@@ -262,7 +262,7 @@ def _group_queue_options_by_queue_system(
 
 @dataclass
 class QueueConfig:
-    job_script: str = shutil.which("job_dispatch.py") or "job_dispatch.py"
+    job_script: str = shutil.which("fm_dispatch.py") or "fm_dispatch.py"
     realization_memory: int = 0
     max_submit: int = 1
     queue_system: QueueSystem = QueueSystem.LOCAL
@@ -279,7 +279,7 @@ class QueueConfig:
             config_dict.get("QUEUE_SYSTEM", QueueSystem.LOCAL)
         )
         job_script: str = config_dict.get(
-            "JOB_SCRIPT", shutil.which("job_dispatch.py") or "job_dispatch.py"
+            "JOB_SCRIPT", shutil.which("fm_dispatch.py") or "fm_dispatch.py"
         )
         realization_memory: int = _parse_realization_memory_str(
             config_dict.get(ConfigKeys.REALIZATION_MEMORY, "0b")
