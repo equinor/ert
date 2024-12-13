@@ -657,15 +657,21 @@ class LocalEnsemble(BaseMode):
             response_type = self.experiment.response_key_to_response_type[key]
             select_key = True
 
+        response_config = self.experiment.response_configuration[response_type]
+
         loaded = []
         for realization in realizations:
             input_path = self._realization_dir(realization) / f"{response_type}.parquet"
             if not input_path.exists():
                 raise KeyError(f"No response for key {key}, realization: {realization}")
-            df = polars.scan_parquet(input_path)
+            lazy_df = polars.scan_parquet(input_path)
 
             if select_key:
-                df = df.filter(polars.col("response_key") == key)
+                df = lazy_df.select(
+                    ["realization", *response_config.primary_key, key]
+                ).collect()
+            else:
+                df = lazy_df.collect()
 
             loaded.append(df)
 
@@ -703,9 +709,6 @@ class LocalEnsemble(BaseMode):
 
         except (ValueError, KeyError):
             return pd.DataFrame()
-        df_pl = df_pl.pivot(
-            on="response_key", index=["realization", "time"], sort_columns=True
-        )
         df_pl = df_pl.rename({"time": "Date", "realization": "Realization"})
 
         df_pandas = (
@@ -841,11 +844,16 @@ class LocalEnsemble(BaseMode):
         data : polars DataFrame
             polars DataFrame to save.
         """
+        response_config = self.experiment.response_configuration[response_type]
 
-        if "values" not in data.columns:
+        num_response_columns = (
+            len(data.columns)
+            - len(response_config.primary_key)
+            - (1 if "realization" in data.columns else 0)
+        )
+        if num_response_columns <= 0:
             raise ValueError(
-                f"Dataset for response group '{response_type}' "
-                f"must contain a 'values' variable"
+                f"Dataset for response type '{response_type}' must contain values for at least one response key"
             )
 
         if len(data) == 0:
@@ -869,7 +877,7 @@ class LocalEnsemble(BaseMode):
         )
 
         if not self.experiment._has_finalized_response_keys(response_type):
-            response_keys = data["response_key"].unique().to_list()
+            response_keys = data.columns[(len(response_config.primary_key) + 1) :]
             self.experiment._update_response_keys(response_type, response_keys)
 
     def calculate_std_dev_for_parameter(self, parameter_group: str) -> xr.Dataset:

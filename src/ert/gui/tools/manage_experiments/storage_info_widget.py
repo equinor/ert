@@ -261,9 +261,13 @@ class _EnsembleWidget(QWidget):
             )
 
         if not response_ds.is_empty():
-            response_ds_for_label = _filter_on_observation_label(response_ds).rename(
-                {"values": "Responses"}
-            )[["response_key", "Responses"]]
+            response_ds_for_label = (
+                _filter_on_observation_label(response_ds)
+                .rename({response_key: "Responses"})
+                .with_columns(polars.lit(response_key).alias("response_key"))[
+                    ["response_key", "Responses"]
+                ]
+            )
 
             ax.errorbar(
                 x="Observation",

@@ -137,7 +137,7 @@ def test_and_benchmark_adaptive_localization_with_fields(
                     "index": range(len(Y[:, iens])),
                     "values": Y[:, iens],
                 }
-            ),
+            ).pivot(on="response_key", index=["report_step", "index"]),
             iens,
         )
 

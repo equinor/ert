@@ -229,7 +229,7 @@ def test_plot_api_handles_urlescape(api_and_storage):
             "values": [polars.Series([1.0], dtype=polars.Float32)],
         }
     )
-    df = df.explode("values", "time")
+    df = df.explode("values", "time").pivot(on="response_key", index="time")
     ensemble.save_response(
         "summary",
         df,

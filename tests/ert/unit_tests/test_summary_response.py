@@ -59,7 +59,6 @@ def test_load_summary_response_restart_not_zero(
         )
 
         df = ensemble.load_responses("summary", (0,))
-        df = df.pivot(on="response_key", values="values")
         df = df[df.columns[:17]]
         df = df.rename({"time": "Date", "realization": "Realization"})
 
