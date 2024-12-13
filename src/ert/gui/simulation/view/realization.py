@@ -81,6 +81,10 @@ class RealizationWidget(QWidget):
     def clearSelection(self) -> None:
         self._real_view.clearSelection()
 
+    def refresh_current_selection(self) -> None:
+        selected_reals = self._real_view.selectedIndexes()
+        self._item_clicked(selected_reals[0])
+
 
 class RealizationDelegate(QStyledItemDelegate):
     def __init__(self, size: QSize, parent: QObject) -> None:

@@ -296,6 +296,9 @@ class RunDialog(QFrame):
 
     def _current_tab_changed(self, index: int) -> None:
         widget = self._tab_widget.widget(index)
+        if isinstance(widget, RealizationWidget):
+            widget.refresh_current_selection()
+
         self.fm_step_frame.setHidden(isinstance(widget, UpdateWidget))
 
     @Slot(QModelIndex, int, int)
