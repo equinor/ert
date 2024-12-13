@@ -1,39 +1,8 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1734098596248,
+  "lastUpdate": 1734100053906,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
-      {
-        "commit": {
-          "author": {
-            "email": "dan.sava42@gmail.com",
-            "name": "DanSava",
-            "username": "DanSava"
-          },
-          "committer": {
-            "email": "frodeaarstad@gmail.com",
-            "name": "Frode Aarstad",
-            "username": "frode-aarstad"
-          },
-          "distinct": true,
-          "id": "baeb4f52bbbf45a292b0ca943d700c4d485c6c5b",
-          "message": "Update everest snapshot egg-py311.csv",
-          "timestamp": "2024-12-06T18:42:55+01:00",
-          "tree_id": "586c7b283858f837abcdc0c627535b72d1accfed",
-          "url": "https://github.com/equinor/ert/commit/baeb4f52bbbf45a292b0ca943d700c4d485c6c5b"
-        },
-        "date": 1733507089070,
-        "tool": "pytest",
-        "benches": [
-          {
-            "name": "tests/ert/performance_tests/test_analysis.py::test_and_benchmark_adaptive_localization_with_fields",
-            "value": 0.21517625560161308,
-            "unit": "iter/sec",
-            "range": "stddev: 0.07914358763160681",
-            "extra": "mean: 4.647352921000004 sec\nrounds: 5"
-          }
-        ]
-      },
       {
         "commit": {
           "author": {
@@ -930,6 +899,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.036735243320427345",
             "extra": "mean: 4.6352403647999925 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "levje@equinor.com",
+            "name": "larsevj",
+            "username": "larsevj"
+          },
+          "committer": {
+            "email": "60844986+larsevj@users.noreply.github.com",
+            "name": "Lars Evje",
+            "username": "larsevj"
+          },
+          "distinct": true,
+          "id": "e564b57a42a01495234036f2d34b2e104d52a832",
+          "message": "Do not cancel ert run in gui test",
+          "timestamp": "2024-12-13T15:25:45+01:00",
+          "tree_id": "7b269284c9937f27f82377e2a51d92168e6383ad",
+          "url": "https://github.com/equinor/ert/commit/e564b57a42a01495234036f2d34b2e104d52a832"
+        },
+        "date": 1734100053421,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/ert/performance_tests/test_analysis.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 0.21813876597228984,
+            "unit": "iter/sec",
+            "range": "stddev: 0.03014409920012147",
+            "extra": "mean: 4.584237907199997 sec\nrounds: 5"
           }
         ]
       }
