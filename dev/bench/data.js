@@ -1,39 +1,8 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1734090194709,
+  "lastUpdate": 1734091418309,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
-      {
-        "commit": {
-          "author": {
-            "email": "JONAK@equinor.com",
-            "name": "Jonathan Karlsen",
-            "username": "jonathan-eq"
-          },
-          "committer": {
-            "email": "107626001+jonathan-eq@users.noreply.github.com",
-            "name": "Jonathan Karlsen",
-            "username": "jonathan-eq"
-          },
-          "distinct": true,
-          "id": "4b34fc94ceab52c8ad34e5059837b7ec26e5dcb9",
-          "message": "Delete unused `evaluate` method in ensemble_evaluator_utils",
-          "timestamp": "2024-12-06T12:34:46+01:00",
-          "tree_id": "3f250a19d7c5ac087dd71f3e56a1c1141feeaa7a",
-          "url": "https://github.com/equinor/ert/commit/4b34fc94ceab52c8ad34e5059837b7ec26e5dcb9"
-        },
-        "date": 1733484995231,
-        "tool": "pytest",
-        "benches": [
-          {
-            "name": "tests/ert/performance_tests/test_analysis.py::test_and_benchmark_adaptive_localization_with_fields",
-            "value": 0.208689645651837,
-            "unit": "iter/sec",
-            "range": "stddev: 0.05284187912160273",
-            "extra": "mean: 4.791804580799993 sec\nrounds: 5"
-          }
-        ]
-      },
       {
         "commit": {
           "author": {
@@ -930,6 +899,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.037694267637426934",
             "extra": "mean: 4.654603310399994 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "havb@equinor.com",
+            "name": "Håvard Berland",
+            "username": "berland"
+          },
+          "committer": {
+            "email": "berland@pvv.ntnu.no",
+            "name": "Håvard Berland",
+            "username": "berland"
+          },
+          "distinct": true,
+          "id": "0ca408f16c0e252b104a1ae4228702442edab0f1",
+          "message": "Fix ruff issues\n\nThese issues sneaked into main via a rebase while ruff was upgraded",
+          "timestamp": "2024-12-13T13:01:39+01:00",
+          "tree_id": "e7defd4396166d1025a6ae4bb99e84c928dda4c9",
+          "url": "https://github.com/equinor/ert/commit/0ca408f16c0e252b104a1ae4228702442edab0f1"
+        },
+        "date": 1734091417431,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/ert/performance_tests/test_analysis.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 0.21617873392737874,
+            "unit": "iter/sec",
+            "range": "stddev: 0.02639143017563111",
+            "extra": "mean: 4.625801908599999 sec\nrounds: 5"
           }
         ]
       }
