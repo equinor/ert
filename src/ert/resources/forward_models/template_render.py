@@ -2,7 +2,8 @@
 import argparse
 import json
 import os
-from typing import Any, Sequence
+from collections.abc import Sequence
+from typing import Any
 
 import jinja2
 import yaml

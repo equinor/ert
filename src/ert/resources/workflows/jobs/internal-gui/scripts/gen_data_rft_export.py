@@ -1,7 +1,8 @@
 import contextlib
 import json
 import os
-from typing import Any, Sequence
+from collections.abc import Sequence
+from typing import Any
 
 import numpy
 import pandas as pd
