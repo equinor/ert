@@ -14,6 +14,7 @@ def test_default_num_cpu():
     assert ert_config.preferred_num_cpu == 1
 
 
+@pytest.mark.usefixtures("use_tmpdir")
 def test_num_cpu_from_config_preferred():
     data_file = "dfile"
     config_num_cpu = 17
@@ -77,6 +78,7 @@ def test_reading_num_cpu_from_binary_data_file_does_not_crash(data_file_contents
         "",  # Not valid input in some reservoir simulators
     ],
 )
+@pytest.mark.usefixtures("use_tmpdir")
 def test_num_cpu_from_data_file_used_if_config_num_cpu_not_set(
     parallelsuffix, casetitle
 ):

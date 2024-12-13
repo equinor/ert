@@ -66,12 +66,6 @@ jobs:
       run: |
         pytest --cov=ert --cov=everest --cov=_ert --cov-report=xml:cov1.xml --junit-xml=junit.xml -o junit_family=legacy -n logical --show-capture=stderr -v --benchmark-disable  --dist loadgroup tests/ert/performance_tests --durations=25
 
-    - name: Test for a clean repository
-      run: |
-        # Run this before the 'Test CLI' entry below, which produces a few files that are accepted for now. Exclude the wheel.
-        git status --porcelain | sed '/ert.*.whl$\|\/block_storage$/d'
-        test -z "$(git status --porcelain | sed '/ert.*.whl$\\|\\/block_storage$/d')"
-
     - name: Upload coverage to Codecov
       id: codecov1
       uses: codecov/codecov-action@v4
@@ -109,3 +103,12 @@ jobs:
     - name: Test CLI
       run: |
         ert --help
+
+    - name: Test for a clean repository
+      run: |
+        # Remove things we have generated on purpose:
+        rm -rf .coverage
+        rm -f coverage.xml cov1.xml cov2.xml junit.xml
+        rm -f ert.*.whl
+        git status --porcelain
+        test -z "$(git status --porcelain)"
