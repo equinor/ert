@@ -1,39 +1,8 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1734094057802,
+  "lastUpdate": 1734098596248,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
-      {
-        "commit": {
-          "author": {
-            "email": "JONAK@equinor.com",
-            "name": "Jonathan Karlsen",
-            "username": "jonathan-eq"
-          },
-          "committer": {
-            "email": "107626001+jonathan-eq@users.noreply.github.com",
-            "name": "Jonathan Karlsen",
-            "username": "jonathan-eq"
-          },
-          "distinct": true,
-          "id": "90c14a927fb0e4c1de9e08a88f7599f329342a0a",
-          "message": "Improve UX for permission errors in storage\n\nThis commit:\n* Improves the error message displayed when the dark storage server does not have access to the storage path.\n* Makes the dark storage server return a response with status code 401 - unauthorized when the `get_ensemble_record` endpoint fails due to `PermissionError`.\n* Makes the failed message in `LegacyEnsemble._evaluate_inner` omit stacktrace when it failed due to PermissionError, making it shorter and more consise.",
-          "timestamp": "2024-12-06T12:51:10+01:00",
-          "tree_id": "5c8c3d177362548299096fd3e12b750c461d7570",
-          "url": "https://github.com/equinor/ert/commit/90c14a927fb0e4c1de9e08a88f7599f329342a0a"
-        },
-        "date": 1733485981654,
-        "tool": "pytest",
-        "benches": [
-          {
-            "name": "tests/ert/performance_tests/test_analysis.py::test_and_benchmark_adaptive_localization_with_fields",
-            "value": 0.2137260034404691,
-            "unit": "iter/sec",
-            "range": "stddev: 0.05363075399486037",
-            "extra": "mean: 4.678887846599997 sec\nrounds: 5"
-          }
-        ]
-      },
       {
         "commit": {
           "author": {
@@ -930,6 +899,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.08156905213378346",
             "extra": "mean: 4.595649896000003 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "ejah@equinor.com",
+            "name": "Eivind Jahren",
+            "username": "eivindjahren"
+          },
+          "committer": {
+            "email": "ejah@equinor.com",
+            "name": "Eivind Jahren",
+            "username": "eivindjahren"
+          },
+          "distinct": true,
+          "id": "5ae6ece1bfbfe9dff576d6601624474441a88c0d",
+          "message": "Add benchmarking with codspeed",
+          "timestamp": "2024-12-13T15:01:20+01:00",
+          "tree_id": "7f6bff216b05504e95ed7ca720df8ddfcb1d30d1",
+          "url": "https://github.com/equinor/ert/commit/5ae6ece1bfbfe9dff576d6601624474441a88c0d"
+        },
+        "date": 1734098595294,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/ert/performance_tests/test_analysis.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 0.2157385424052652,
+            "unit": "iter/sec",
+            "range": "stddev: 0.036735243320427345",
+            "extra": "mean: 4.6352403647999925 sec\nrounds: 5"
           }
         ]
       }
