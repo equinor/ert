@@ -258,7 +258,6 @@ class QueueConfig:
     queue_options: (
         LsfQueueOptions | TorqueQueueOptions | SlurmQueueOptions | LocalQueueOptions
     ) = pydantic.Field(default_factory=LocalQueueOptions, discriminator="name")
-    queue_options_test_run: LocalQueueOptions = field(default_factory=LocalQueueOptions)
     stop_long_running: bool = False
     max_runtime: int | None = None
     preferred_num_cpu: int = 1
@@ -311,7 +310,6 @@ class QueueConfig:
         )
 
         queue_options = all_validated_queue_options[selected_queue_system]
-        queue_options_test_run = all_validated_queue_options[QueueSystem.LOCAL]
         queue_options.add_global_queue_options(config_dict)
 
         if queue_options.project_code is None:
@@ -329,7 +327,6 @@ class QueueConfig:
             max_submit,
             selected_queue_system,
             queue_options,
-            queue_options_test_run,
             stop_long_running=bool(stop_long_running),
             max_runtime=config_dict.get(ConfigKeys.MAX_RUNTIME),
             preferred_num_cpu=preferred_num_cpu,
@@ -341,8 +338,7 @@ class QueueConfig:
             self.realization_memory,
             self.max_submit,
             QueueSystem.LOCAL,
-            self.queue_options_test_run,
-            self.queue_options_test_run,
+            LocalQueueOptions(max_running=self.max_running),
             stop_long_running=bool(self.stop_long_running),
             max_runtime=self.max_runtime,
         )
