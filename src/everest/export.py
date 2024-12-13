@@ -2,12 +2,10 @@ import os
 import re
 from enum import StrEnum
 from pathlib import Path
-from typing import Any
 
 import pandas as pd
 import polars
 from pandas import DataFrame
-from seba_sqlite.snapshot import SebaSnapshot
 
 from ert.storage import open_storage
 from everest.config import ExportConfig
@@ -61,10 +59,8 @@ def filter_data(data: DataFrame, keyword_filters: set[str]):
 
 
 def available_batches(optimization_output_dir: str) -> set[int]:
-    snapshot = SebaSnapshot(optimization_output_dir).get_snapshot(
-        filter_out_gradient=False, batches=None
-    )
-    return {data.batch for data in snapshot.simulation_data}
+    storage = EverestStorage(Path(optimization_output_dir))
+    return {b.batch_id for b in storage.data.batches}
 
 
 def export_metadata(config: ExportConfig | None, optimization_output_dir: str):
@@ -86,101 +82,132 @@ def export_metadata(config: ExportConfig | None, optimization_output_dir: str):
             discard_gradient = False
             batches = config.batches
 
-    snapshot = SebaSnapshot(optimization_output_dir).get_snapshot(
-        filter_out_gradient=discard_gradient,
-        batches=batches,
-    )
     storage = EverestStorage(Path(optimization_output_dir))
     storage.read_from_output_dir()
 
-    opt_data = snapshot.optimization_data_by_batch
     metadata = []
-
-    for data in snapshot.simulation_data:
-        # If export section not defined in the config file export only increased
-        # merit non-gradient simulation results
-        if (
-            discard_rejected
-            and data.batch in opt_data
-            and opt_data[data.batch].merit_flag != 1
-        ):
-            continue
-
-        md_row: dict[str, Any] = {
-            MetaDataColumnNames.BATCH: data.batch,
-            MetaDataColumnNames.SIM_AVERAGED_OBJECTIVE: data.sim_avg_obj,
-            MetaDataColumnNames.IS_GRADIENT: data.is_gradient,
-            MetaDataColumnNames.REALIZATION: int(data.realization),
-            MetaDataColumnNames.START_TIME: data.start_time,
-            MetaDataColumnNames.END_TIME: data.end_time,
-            MetaDataColumnNames.SUCCESS: data.success,
-            MetaDataColumnNames.REALIZATION_WEIGHT: data.realization_weight,
-            MetaDataColumnNames.SIMULATION: int(data.simulation),
-        }
-        if data.objectives:
-            md_row.update(data.objectives)
-        if data.constraints:
-            md_row.update(data.constraints)
-        if data.controls:
-            md_row.update(data.controls)
-
-        if not md_row[MetaDataColumnNames.IS_GRADIENT]:
-            if md_row[MetaDataColumnNames.BATCH] in opt_data:
-                opt = opt_data[md_row[MetaDataColumnNames.BATCH]]
-                md_row.update(
-                    {
-                        MetaDataColumnNames.REAL_AVERAGED_OBJECTIVE: opt.objective_value,
-                        MetaDataColumnNames.INCREASED_MERIT: opt.merit_flag,
-                    }
-                )
-                for function, gradients in opt.gradient_info.items():
-                    for control, gradient_value in gradients.items():
-                        md_row.update(
-                            {f"gradient-{function}-{control}": gradient_value}
-                        )
-            else:
-                print(
-                    f"Batch {md_row[MetaDataColumnNames.BATCH]} has no available optimization data"
-                )
-        metadata.append(md_row)
-
-    # Contains information about the simulations:
-    #     batch -> the batch id
-    #     objectives  -> Dictionary mapping the objective function names to the
-    #                    objective values per simulation also contains mapping
-    #                    of the normalized and weighted normalized objective values
-    #     constraints -> Dictionary mapping the constraint function names to the
-    #                    constraint values per simulation also contains mapping of
-    #                    the normalized and weighted normalized constraint values
-    #     controls    -> Dictionary mapping the control names to their values.
-    #                    Controls generating the simulation results
-    #     sim_avg_obj -> The value of the objective function for the simulation
-    #     is_gradient -> Flag describing if the simulation is a gradient or non
-    #                    gradient simulation
-    #     realization -> The name of the realization the simulation is part of
-    #     start_time  -> The starting timpestamp for the simulation
-    #     end_time    -> The end timpstamp for the simulation
-    #     success     -> Flag describing if the simulation was successful or not (1 or 0)
-    #     realization_weight -> The weight of the realization the simulation was part of.
-    #     simulation  -> The simulation number used in libres
-
-    # WIP!
-    metadata2 = []
-    for i, batch_info in enumerate(storage.data.batches):
+    for batch_info in (b for b in storage.data.batches if b.is_improvement):
         if discard_rejected and not batch_info.is_improvement:
             continue
 
-        corresponding = metadata[i]
-        print("Yo")
-        md_row2: Dict[str, Any] = {
-            MetaDataColumnNames.BATCH: batch_info.batch_id,
-            MetaDataColumnNames.SIM_AVERAGED_OBJECTIVE: batch_info.batch_objectives.select(
-                polars.mean("total_objective_value")
-            ).item(),
-            MetaDataColumnNames.REALIZATION: None,
-        }
-        metadata2.append(md_row2)
-        assert corresponding is not None
+        if batches is not None and batch_info.batch_id not in batches:
+            continue
+
+        all_control_names = storage.data.initial_values["control_name"].to_list()
+        all_objective_names = storage.data.objective_functions[
+            "objective_name"
+        ].to_list()
+        #        all_constraint_names = storage.data.nonlinear_constraints[
+        #            "constraint_name"
+        #        ].to_list()
+
+        realization_info = batch_info.realization_objectives
+
+        if batch_info.realization_constraints is not None:
+            realization_info = realization_info.join(
+                batch_info.realization_constraints,
+                on=["result_id", "batch_id", "realization", "simulation_id"],
+            )
+
+        realization_info = realization_info.join(
+            batch_info.realization_controls,
+            on=["result_id", "batch_id", "realization", "simulation_id"],
+        )
+        for real_tuple, data in realization_info.group_by("realization"):
+            realization = real_tuple[0]
+
+            objectives_dict = {}
+            objectives_gradient_dict = {}
+            for objective in storage.data.objective_functions.to_dicts():
+                weight = objective["weight"]
+                normalization = objective["normalization"]
+                objective_name = objective["objective_name"]
+                objective_value = data[objective_name].item()
+
+                objectives_dict[objective_name] = objective_value
+                objectives_dict[f"{objective_name}_norm"] = (
+                    objective_value * normalization
+                )
+                objectives_dict[f"{objective_name}_weighted_norm"] = (
+                    objective_value * weight * normalization
+                )
+
+            if not discard_gradient and batch_info.batch_objective_gradient is not None:
+                for objective_name in all_objective_names:
+                    for d in batch_info.batch_objective_gradient.select(
+                        "control_name", objective_name
+                    ).to_dicts():
+                        objectives_gradient_dict[
+                            f"gradient-{objective_name}-{d['control_name']}"
+                        ] = d[objective_name]
+
+            # Q: Seems to not be exported, why?
+            #            constraints_gradient_dict = {}
+            #            if batch_info.batch_constraint_gradient is not None:
+            #                for constraint_name in all_constraint_names:
+            #                    for d in batch_info.batch_constraint_gradient.select(
+            #                        "control_name", constraint_name
+            #                    ).to_dicts():
+            #                        constraints_gradient_dict[
+            #                            f"gradient-{constraint_name}-{d['control_name']}"
+            #                        ] = d[constraint_name]
+
+            constraints_dict = {}
+            if storage.data.nonlinear_constraints is not None:
+                for constraint in storage.data.nonlinear_constraints.to_dicts():
+                    # SEBA always just sets it to 1 for functions as a "convenience"
+                    weight = 1
+
+                    normalization = constraint["normalization"]
+                    constraint_name = constraint["constraint_name"]
+                    constraint_value = data[constraint_name].item()
+
+                    constraints_dict[constraint_name] = constraint_value
+                    constraints_dict[f"{constraint_name}_norm"] = (
+                        constraint_value * normalization
+                    )
+                    constraints_dict[f"{constraint_name}_weighted_norm"] = (
+                        constraint_value * weight * normalization
+                    )
+
+            controls_dict = {
+                control_name: data[control_name].item()
+                for control_name in all_control_names
+            }
+
+            obj_values_for_real = (
+                batch_info.realization_objectives["realization", *all_objective_names]
+                .filter(polars.col("realization").eq(realization))
+                .drop("realization")
+                .transpose()
+                .to_series()
+                .to_list()
+            )
+            total_objective_value_for_real = sum(obj_values_for_real) / len(
+                obj_values_for_real
+            )
+
+            my_stuff = {
+                MetaDataColumnNames.BATCH: batch_info.batch_id,
+                MetaDataColumnNames.SIM_AVERAGED_OBJECTIVE: total_objective_value_for_real,
+                MetaDataColumnNames.REAL_AVERAGED_OBJECTIVE: batch_info.batch_objectives[
+                    "total_objective_value"
+                ].item(),
+                MetaDataColumnNames.SIMULATION: data["simulation_id"].item(),
+                MetaDataColumnNames.IS_GRADIENT: 0,  # Q: get from everest config?
+                MetaDataColumnNames.REALIZATION: realization,
+                MetaDataColumnNames.SUCCESS: 1,  # Q: is it always 1?
+                MetaDataColumnNames.REALIZATION_WEIGHT: storage.data.realization_weights.filter(
+                    polars.col("realization") == realization
+                )["weight"].first(),
+                **objectives_dict,
+                **constraints_dict,
+                **controls_dict,
+                **objectives_gradient_dict,
+                MetaDataColumnNames.INCREASED_MERIT: batch_info.is_improvement,
+            }
+
+            metadata.append(my_stuff)
 
     return metadata
 
