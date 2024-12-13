@@ -118,7 +118,9 @@ class ErtMainWindow(QMainWindow):
         self._experiment_panel: ExperimentPanel | None = None
         self._plot_window: PlotWindow | None = None
         self._manage_experiments_panel: ManageExperimentsPanel | None = None
-        self._add_sidebar_button("Start simulation", QIcon("img:library_add.svg"))
+        self._add_sidebar_button(
+            "Start simulation", QIcon("img:library_add.svg")
+        ).click()
         plot_button = self._add_sidebar_button("Create plot", QIcon("img:timeline.svg"))
         plot_button.setToolTip("Right click to open external window")
         self._add_sidebar_button("Manage experiments", QIcon("img:build_wrench.svg"))
