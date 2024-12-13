@@ -258,10 +258,6 @@ def _get_observations(
     return observations
 
 
-def get_all_observations(experiment: Experiment) -> list[dict[str, Any]]:
-    return _get_observations(experiment)
-
-
 def get_observations_for_obs_keys(
     ensemble: Ensemble, observation_keys: list[str]
 ) -> list[dict[str, Any]]:
