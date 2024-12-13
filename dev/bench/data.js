@@ -1,39 +1,8 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1734091418309,
+  "lastUpdate": 1734094057802,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
-      {
-        "commit": {
-          "author": {
-            "email": "JONAK@equinor.com",
-            "name": "Jonathan Karlsen",
-            "username": "jonathan-eq"
-          },
-          "committer": {
-            "email": "107626001+jonathan-eq@users.noreply.github.com",
-            "name": "Jonathan Karlsen",
-            "username": "jonathan-eq"
-          },
-          "distinct": true,
-          "id": "726a273e44984d59214426751203284b10d27efe",
-          "message": "Have ModelConfig output more noticable warning when malformatted runpath\n\nThis commit makes ModelConfig emit a ConfigWarning if the input runpath does not contain `<ITER>` or `<IENS>`. This was previously only a warning in the logs, but it should be more noticable.",
-          "timestamp": "2024-12-06T12:50:39+01:00",
-          "tree_id": "9a6f2404d6a597848fafec7c30f82ba0d17c5fe1",
-          "url": "https://github.com/equinor/ert/commit/726a273e44984d59214426751203284b10d27efe"
-        },
-        "date": 1733485947918,
-        "tool": "pytest",
-        "benches": [
-          {
-            "name": "tests/ert/performance_tests/test_analysis.py::test_and_benchmark_adaptive_localization_with_fields",
-            "value": 0.21179165591509186,
-            "unit": "iter/sec",
-            "range": "stddev: 0.06572133260757662",
-            "extra": "mean: 4.7216213295999925 sec\nrounds: 5"
-          }
-        ]
-      },
       {
         "commit": {
           "author": {
@@ -930,6 +899,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.02639143017563111",
             "extra": "mean: 4.625801908599999 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "havb@equinor.com",
+            "name": "Håvard Berland",
+            "username": "berland"
+          },
+          "committer": {
+            "email": "berland@pvv.ntnu.no",
+            "name": "Håvard Berland",
+            "username": "berland"
+          },
+          "distinct": true,
+          "id": "1af592dde9dc250b17b153e928618bdb813855f4",
+          "message": "Avoid version specific sed syntax\n\nThe argument to sed prior to this change triggers something in sed version 4.6 or 4.7\n\nAlso solve contamination issues that has crept in.",
+          "timestamp": "2024-12-13T13:45:48+01:00",
+          "tree_id": "0b68fa71e0d38539ab1df814d07233670bf75096",
+          "url": "https://github.com/equinor/ert/commit/1af592dde9dc250b17b153e928618bdb813855f4"
+        },
+        "date": 1734094057335,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/ert/performance_tests/test_analysis.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 0.21759708041954798,
+            "unit": "iter/sec",
+            "range": "stddev: 0.08156905213378346",
+            "extra": "mean: 4.595649896000003 sec\nrounds: 5"
           }
         ]
       }
