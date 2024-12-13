@@ -40,8 +40,6 @@ def test_all_repo_configs():
     config_files = [fn for cdir in config_folders for fn in _get_all_files(cdir)]
     config_files = filter(is_config, config_files)
 
-    if os.environ.get("NO_PROJECT_RES", False):
-        config_files = [f for f in config_files if "examples/egg" not in f]
     try:
         get_ropt_plugin_manager().get_plugin("optimizer", "scipy/default")
     except ROptConfigError:
