@@ -14,7 +14,7 @@ import pandas as pd
 import xarray as xr
 from numpy.random import SeedSequence
 
-from ert.config.ert_config import forward_model_data_to_json
+from ert.config.ert_config import create_forward_model_json
 from ert.config.forward_model_step import ForwardModelStep
 from ert.config.model_config import ModelConfig
 from ert.substitutions import Substitutions, substitute_runpath_name
@@ -272,16 +272,15 @@ def create_run_path(
             path = run_path / "jobs.json"
             _backup_if_existing(path)
 
-            forward_model_output = forward_model_data_to_json(
-                substitutions=substitutions,
+            forward_model_output: dict[str, Any] = create_forward_model_json(
+                context=substitutions,
                 forward_model_steps=forward_model_steps,
                 user_config_file=user_config_file,
-                env_vars=env_vars,
+                env_vars={**env_vars, **context_env},
                 env_pr_fm_step=env_pr_fm_step,
                 run_id=run_arg.run_id,
                 iens=run_arg.iens,
                 itr=ensemble.iteration,
-                context_env=context_env,
             )
             with open(run_path / "jobs.json", mode="wb") as fptr:
                 fptr.write(

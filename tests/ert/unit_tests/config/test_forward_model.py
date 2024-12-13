@@ -13,7 +13,7 @@ from hypothesis import given, settings
 from ert.config import ConfigValidationError, ConfigWarning, ErtConfig
 from ert.config.ert_config import (
     _forward_model_step_from_config_file,
-    forward_model_data_to_json,
+    create_forward_model_json,
 )
 from ert.config.forward_model_step import (
     ForwardModelStepJSON,
@@ -503,11 +503,12 @@ def test_that_forward_model_substitution_does_not_warn_about_reaching_max_iterat
 
     ert_config = ErtConfig.with_plugins().from_file(test_config_file_name)
     with caplog.at_level(logging.WARNING):
-        forward_model_data_to_json(
-            substitutions=ert_config.substitutions,
+        create_forward_model_json(
+            context=ert_config.substitutions,
             forward_model_steps=ert_config.forward_model_steps,
             env_vars=ert_config.env_vars,
             user_config_file=ert_config.user_config_file,
+            run_id=None,
             iens=0,
             itr=0,
         )
@@ -721,8 +722,8 @@ def test_that_plugin_forward_models_are_installed(tmp_path):
             getattr(first_fm, a) == v
         ), f"Expected fm[{a}] to be {v} but was {getattr(first_fm,a)}"
 
-    fm_json = forward_model_data_to_json(
-        substitutions=ert_config.substitutions,
+    fm_json = create_forward_model_json(
+        context=ert_config.substitutions,
         forward_model_steps=ert_config.forward_model_steps,
         env_vars=ert_config.env_vars,
         user_config_file=ert_config.user_config_file,
@@ -776,8 +777,8 @@ def test_that_plugin_forward_model_validation_failure_propagates(tmp_path):
     with pytest.raises(
         ConfigValidationError, match="Validation failed for forward model step"
     ):
-        forward_model_data_to_json(
-            substitutions=ert_config.substitutions,
+        create_forward_model_json(
+            context=ert_config.substitutions,
             forward_model_steps=ert_config.forward_model_steps,
             env_vars=ert_config.env_vars,
             user_config_file=ert_config.user_config_file,
@@ -819,8 +820,8 @@ def test_that_plugin_forward_model_validation_accepts_valid_args(tmp_path):
 
     first_fm.validate_pre_realization_run({"argList": ["never"]})
 
-    forward_model_data_to_json(
-        substitutions=ert_config.substitutions,
+    create_forward_model_json(
+        context=ert_config.substitutions,
         forward_model_steps=ert_config.forward_model_steps,
         env_vars=ert_config.env_vars,
         user_config_file=ert_config.user_config_file,
@@ -883,8 +884,8 @@ def test_that_plugin_forward_model_raises_pre_realization_validation_error(tmp_p
         ConfigValidationError,
         match=".*This is a bad forward model step, dont use it.*",
     ):
-        forward_model_data_to_json(
-            substitutions=config.substitutions,
+        create_forward_model_json(
+            context=config.substitutions,
             forward_model_steps=config.forward_model_steps,
             env_vars=config.env_vars,
             user_config_file=config.user_config_file,
