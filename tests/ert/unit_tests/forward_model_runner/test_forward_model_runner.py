@@ -11,7 +11,7 @@ from _ert.forward_model_runner.runner import ForwardModelRunner
 from ert.config import ErtConfig, ForwardModelStep
 from ert.config.ert_config import (
     _forward_model_step_from_config_file,
-    forward_model_data_to_json,
+    create_forward_model_json,
 )
 from ert.substitutions import Substitutions
 
@@ -235,8 +235,8 @@ assert exec_env["TEST_ENV"] == "123"
     with open("jobs.json", mode="w", encoding="utf-8") as fptr:
         ert_config = ErtConfig(forward_model_steps=[forward_model])
         json.dump(
-            forward_model_data_to_json(
-                substitutions=ert_config.substitutions,
+            create_forward_model_json(
+                context=ert_config.substitutions,
                 forward_model_steps=ert_config.forward_model_steps,
                 env_vars=ert_config.env_vars,
                 user_config_file=ert_config.user_config_file,
@@ -276,8 +276,8 @@ assert os.environ["TEST_ENV"] == "123"
     with open("jobs.json", mode="w", encoding="utf-8") as fptr:
         ert_config = ErtConfig(forward_model_steps=[step])
         json.dump(
-            forward_model_data_to_json(
-                substitutions=ert_config.substitutions,
+            create_forward_model_json(
+                context=ert_config.substitutions,
                 forward_model_steps=ert_config.forward_model_steps,
                 env_vars=ert_config.env_vars,
                 user_config_file=ert_config.user_config_file,
@@ -326,8 +326,8 @@ def test_default_env_variables_available_inside_fm_step_context():
             substitutions=Substitutions({"<RUNPATH>": "./"}),
         )
         json.dump(
-            forward_model_data_to_json(
-                substitutions=ert_config.substitutions,
+            create_forward_model_json(
+                context=ert_config.substitutions,
                 forward_model_steps=ert_config.forward_model_steps,
                 env_vars=ert_config.env_vars,
                 user_config_file=ert_config.user_config_file,

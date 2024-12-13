@@ -221,33 +221,6 @@ def create_forward_model_json(
     }
 
 
-def forward_model_data_to_json(
-    substitutions: Substitutions,
-    forward_model_steps: list[ForwardModelStep],
-    env_vars: dict[str, str],
-    env_pr_fm_step: dict[str, dict[str, Any]] | None = None,
-    user_config_file: str | None = "",
-    run_id: str | None = None,
-    iens: int = 0,
-    itr: int = 0,
-    context_env: dict[str, str] | None = None,
-):
-    if context_env is None:
-        context_env = {}
-    if env_pr_fm_step is None:
-        env_pr_fm_step = {}
-    return create_forward_model_json(
-        context=substitutions,
-        forward_model_steps=forward_model_steps,
-        user_config_file=user_config_file,
-        env_vars={**env_vars, **context_env},
-        env_pr_fm_step=env_pr_fm_step,
-        run_id=run_id,
-        iens=iens,
-        itr=itr,
-    )
-
-
 @dataclass
 class ErtConfig:
     DEFAULT_ENSPATH: ClassVar[str] = "storage"

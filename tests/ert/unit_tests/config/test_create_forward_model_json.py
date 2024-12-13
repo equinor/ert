@@ -10,7 +10,7 @@ import pytest
 from ert.config import ErtConfig, ForwardModelStep
 from ert.config.ert_config import (
     _forward_model_step_from_config_file,
-    forward_model_data_to_json,
+    create_forward_model_json,
 )
 from ert.substitutions import Substitutions
 
@@ -295,8 +295,8 @@ def test_config_path_and_file(context):
         substitutions=context,
         user_config_file="path_to_config_file/config.ert",
     )
-    steps_json = forward_model_data_to_json(
-        substitutions=ert_config.substitutions,
+    steps_json = create_forward_model_json(
+        context=ert_config.substitutions,
         forward_model_steps=ert_config.forward_model_steps,
         env_vars=ert_config.env_vars,
         user_config_file=ert_config.user_config_file,
@@ -318,8 +318,8 @@ def test_no_steps(context):
         user_config_file="path_to_config_file/config.ert",
     )
 
-    data = forward_model_data_to_json(
-        substitutions=ert_config.substitutions,
+    data = create_forward_model_json(
+        context=ert_config.substitutions,
         forward_model_steps=ert_config.forward_model_steps,
         env_vars=ert_config.env_vars,
         user_config_file=ert_config.user_config_file,
@@ -339,8 +339,8 @@ def test_one_step(fm_step_list, context):
             substitutions=context,
         )
 
-        data = forward_model_data_to_json(
-            substitutions=ert_config.substitutions,
+        data = create_forward_model_json(
+            context=ert_config.substitutions,
             forward_model_steps=ert_config.forward_model_steps,
             env_vars=ert_config.env_vars,
             user_config_file=ert_config.user_config_file,
@@ -357,8 +357,8 @@ def run_all(fm_steplist, context):
         substitutions=context,
     )
 
-    data = forward_model_data_to_json(
-        substitutions=ert_config.substitutions,
+    data = create_forward_model_json(
+        context=ert_config.substitutions,
         forward_model_steps=ert_config.forward_model_steps,
         env_vars=ert_config.env_vars,
         user_config_file=ert_config.user_config_file,
@@ -400,8 +400,8 @@ def test_that_values_with_brackets_are_ommitted(caplog, fm_step_list, context):
         forward_model_steps=forward_model_list, substitutions=context
     )
 
-    data = forward_model_data_to_json(
-        substitutions=ert_config.substitutions,
+    data = create_forward_model_json(
+        context=ert_config.substitutions,
         forward_model_steps=ert_config.forward_model_steps,
         env_vars=ert_config.env_vars,
         user_config_file=ert_config.user_config_file,
@@ -558,8 +558,8 @@ def test_forward_model_job(job, forward_model, expected_args):
 
     forward_model = ert_config.forward_model_steps
 
-    data = forward_model_data_to_json(
-        substitutions=ert_config.substitutions,
+    data = create_forward_model_json(
+        context=ert_config.substitutions,
         forward_model_steps=ert_config.forward_model_steps,
         env_vars=ert_config.env_vars,
         user_config_file=ert_config.user_config_file,
@@ -589,8 +589,8 @@ def test_that_config_path_is_the_directory_of_the_main_ert_config():
         fout.write("FORWARD_MODEL job_name")
 
     ert_config = ErtConfig.from_file("config_file.ert")
-    data = forward_model_data_to_json(
-        substitutions=ert_config.substitutions,
+    data = create_forward_model_json(
+        context=ert_config.substitutions,
         forward_model_steps=ert_config.forward_model_steps,
         env_vars=ert_config.env_vars,
         user_config_file=ert_config.user_config_file,
@@ -661,8 +661,8 @@ def test_simulation_job(job, forward_model, expected_args):
         fout.write(forward_model)
 
     ert_config = ErtConfig.from_file("config_file.ert")
-    data = forward_model_data_to_json(
-        substitutions=ert_config.substitutions,
+    data = create_forward_model_json(
+        context=ert_config.substitutions,
         forward_model_steps=ert_config.forward_model_steps,
         env_vars=ert_config.env_vars,
         user_config_file=ert_config.user_config_file,
@@ -696,8 +696,8 @@ def test_that_private_over_global_args_gives_logging_message(caplog):
         fout.write("FORWARD_MODEL job_name(<ARG>=B)")
 
     ert_config = ErtConfig.from_file("config_file.ert")
-    data = forward_model_data_to_json(
-        substitutions=ert_config.substitutions,
+    data = create_forward_model_json(
+        context=ert_config.substitutions,
         forward_model_steps=ert_config.forward_model_steps,
         env_vars=ert_config.env_vars,
         user_config_file=ert_config.user_config_file,
@@ -735,8 +735,8 @@ def test_that_private_over_global_args_does_not_give_logging_message_for_argpass
         fout.write("FORWARD_MODEL job_name(<ARG>=<ARG>)")
 
     ert_config = ErtConfig.from_file("config_file.ert")
-    data = forward_model_data_to_json(
-        substitutions=ert_config.substitutions,
+    data = create_forward_model_json(
+        context=ert_config.substitutions,
         forward_model_steps=ert_config.forward_model_steps,
         env_vars=ert_config.env_vars,
         user_config_file=ert_config.user_config_file,
@@ -786,8 +786,8 @@ def test_that_environment_variables_are_set_in_forward_model(
         fout.write(forward_model)
 
     ert_config = ErtConfig.from_file("config_file.ert")
-    data = forward_model_data_to_json(
-        substitutions=ert_config.substitutions,
+    data = create_forward_model_json(
+        context=ert_config.substitutions,
         forward_model_steps=ert_config.forward_model_steps,
         env_vars=ert_config.env_vars,
         user_config_file=ert_config.user_config_file,
@@ -817,8 +817,8 @@ def test_that_executables_in_path_are_not_made_realpath(tmp_path):
     )
 
     ert_config = ErtConfig.from_file(str(config_file))
-    data = forward_model_data_to_json(
-        substitutions=ert_config.substitutions,
+    data = create_forward_model_json(
+        context=ert_config.substitutions,
         forward_model_steps=ert_config.forward_model_steps,
         env_vars=ert_config.env_vars,
         user_config_file=ert_config.user_config_file,

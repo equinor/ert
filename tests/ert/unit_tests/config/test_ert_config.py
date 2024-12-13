@@ -17,7 +17,7 @@ from pydantic import RootModel, TypeAdapter
 
 from ert.config import AnalysisConfig, ConfigValidationError, ErtConfig, HookRuntime
 from ert.config.ert_config import (
-    forward_model_data_to_json,
+    create_forward_model_json,
     site_config_location,
 )
 from ert.config.parsing import ConfigKeys, ConfigWarning
@@ -857,11 +857,12 @@ def test_fm_step_config_via_plugin_ends_up_json_data(monkeypatch):
         encoding="utf-8",
     )
     ert_config = ErtConfig.with_plugins().from_file("config.ert")
-    step_json = forward_model_data_to_json(
-        substitutions=ert_config.substitutions,
+    step_json = create_forward_model_json(
+        context=ert_config.substitutions,
         forward_model_steps=ert_config.forward_model_steps,
         env_vars=ert_config.env_vars,
         env_pr_fm_step=ert_config.env_pr_fm_step,
+        run_id=None,
     )
     assert step_json["jobList"][0]["environment"]["FOO"] == "bar"
 
@@ -885,12 +886,14 @@ def test_fm_step_config_via_plugin_does_not_leak_to_other_step(monkeypatch):
         encoding="utf-8",
     )
     ert_config = ErtConfig.with_plugins().from_file("config.ert")
-    step_json = forward_model_data_to_json(
-        substitutions=ert_config.substitutions,
+    step_json = create_forward_model_json(
+        context=ert_config.substitutions,
         forward_model_steps=ert_config.forward_model_steps,
         env_vars=ert_config.env_vars,
         env_pr_fm_step=ert_config.env_pr_fm_step,
+        run_id=None,
     )
+
     assert "FOO" not in step_json["jobList"][0]["environment"]
 
 
@@ -913,12 +916,14 @@ def test_fm_step_config_via_plugin_has_key_names_uppercased(monkeypatch):
         encoding="utf-8",
     )
     ert_config = ErtConfig.with_plugins().from_file("config.ert")
-    step_json = forward_model_data_to_json(
-        substitutions=ert_config.substitutions,
+    step_json = create_forward_model_json(
+        context=ert_config.substitutions,
         forward_model_steps=ert_config.forward_model_steps,
         env_vars=ert_config.env_vars,
         env_pr_fm_step=ert_config.env_pr_fm_step,
+        run_id=None,
     )
+
     assert step_json["jobList"][0]["environment"]["FOO"] == "bar"
 
 
@@ -941,11 +946,12 @@ def test_fm_step_config_via_plugin_stringifies_python_objects(monkeypatch):
         encoding="utf-8",
     )
     ert_config = ErtConfig.with_plugins().from_file("config.ert")
-    step_json = forward_model_data_to_json(
-        substitutions=ert_config.substitutions,
+    step_json = create_forward_model_json(
+        context=ert_config.substitutions,
         forward_model_steps=ert_config.forward_model_steps,
         env_vars=ert_config.env_vars,
         env_pr_fm_step=ert_config.env_pr_fm_step,
+        run_id=None,
     )
     assert step_json["jobList"][0]["environment"]["FOO"] == "{'a_dict_as_value': 1}"
 
@@ -972,11 +978,12 @@ def test_fm_step_config_via_plugin_ignores_conflict_with_setenv(monkeypatch):
         encoding="utf-8",
     )
     ert_config = ErtConfig.with_plugins().from_file("config.ert")
-    step_json = forward_model_data_to_json(
-        substitutions=ert_config.substitutions,
+    step_json = create_forward_model_json(
+        context=ert_config.substitutions,
         forward_model_steps=ert_config.forward_model_steps,
         env_vars=ert_config.env_vars,
         env_pr_fm_step=ert_config.env_pr_fm_step,
+        run_id=None,
     )
     assert step_json["global_environment"]["FOO"] == "bar_from_setenv"
     assert step_json["jobList"][0]["environment"]["FOO"] == "bar_from_plugin"
@@ -1002,11 +1009,12 @@ def test_fm_step_config_via_plugin_does_not_override_default_env(monkeypatch):
         encoding="utf-8",
     )
     ert_config = ErtConfig.with_plugins().from_file("config.ert")
-    step_json = forward_model_data_to_json(
-        substitutions=ert_config.substitutions,
+    step_json = create_forward_model_json(
+        context=ert_config.substitutions,
         forward_model_steps=ert_config.forward_model_steps,
         env_vars=ert_config.env_vars,
         env_pr_fm_step=ert_config.env_pr_fm_step,
+        run_id=None,
     )
     assert (
         step_json["jobList"][0]["environment"]["_ERT_RUNPATH"]
@@ -1034,11 +1042,12 @@ def test_fm_step_config_via_plugin_is_substituted_for_defines(monkeypatch):
         encoding="utf-8",
     )
     ert_config = ErtConfig.with_plugins().from_file("config.ert")
-    step_json = forward_model_data_to_json(
-        substitutions=ert_config.substitutions,
+    step_json = create_forward_model_json(
+        context=ert_config.substitutions,
         forward_model_steps=ert_config.forward_model_steps,
         env_vars=ert_config.env_vars,
         env_pr_fm_step=ert_config.env_pr_fm_step,
+        run_id=None,
     )
     assert step_json["jobList"][0]["environment"]["FOO"] == "define_works"
 
@@ -1062,11 +1071,12 @@ def test_fm_step_config_via_plugin_is_dropped_if_not_define_exists(monkeypatch):
         encoding="utf-8",
     )
     ert_config = ErtConfig.with_plugins().from_file("config.ert")
-    step_json = forward_model_data_to_json(
-        substitutions=ert_config.substitutions,
+    step_json = create_forward_model_json(
+        context=ert_config.substitutions,
         forward_model_steps=ert_config.forward_model_steps,
         env_vars=ert_config.env_vars,
         env_pr_fm_step=ert_config.env_pr_fm_step,
+        run_id=None,
     )
     assert "FOO" not in step_json["jobList"][0]["environment"]
 
@@ -1533,13 +1543,13 @@ def test_validate_no_logs_when_overwriting_with_same_value(caplog):
 
     with caplog.at_level(logging.INFO):
         ert_config = ErtConfig.from_file("config_file.ert")
-        forward_model_data_to_json(
-            substitutions=ert_config.substitutions,
+        create_forward_model_json(
+            context=ert_config.substitutions,
             forward_model_steps=ert_config.forward_model_steps,
             env_vars=ert_config.env_vars,
             user_config_file=ert_config.user_config_file,
             run_id="0",
-            iens="0",
+            iens=0,
             itr=0,
         )
 
