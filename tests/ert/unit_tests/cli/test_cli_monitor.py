@@ -77,7 +77,6 @@ def test_print_progress():
     monitor._start_time = datetime.now()
     general_event = SnapshotUpdateEvent(
         iteration_label="Test Phase",
-        current_iteration=0,
         total_iterations=2,
         progress=0.5,
         realization_count=100,

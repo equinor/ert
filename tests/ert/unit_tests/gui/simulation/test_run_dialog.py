@@ -119,7 +119,6 @@ def test_large_snapshot(
         FullSnapshotEvent(
             snapshot=large_snapshot,
             iteration_label="Foo",
-            current_iteration=0,
             total_iterations=1,
             progress=0.5,
             realization_count=4,
@@ -129,7 +128,6 @@ def test_large_snapshot(
         FullSnapshotEvent(
             snapshot=large_snapshot,
             iteration_label="Foo",
-            current_iteration=0,
             total_iterations=1,
             progress=0.5,
             realization_count=4,
@@ -172,7 +170,6 @@ def test_large_snapshot(
                         .build(["0"], state.REALIZATION_STATE_UNKNOWN)
                     ),
                     iteration_label="Foo",
-                    current_iteration=0,
                     total_iterations=1,
                     progress=0.25,
                     realization_count=4,
@@ -184,7 +181,6 @@ def test_large_snapshot(
                         [], status=state.REALIZATION_STATE_FINISHED
                     ),
                     iteration_label="Foo",
-                    current_iteration=0,
                     total_iterations=1,
                     progress=0.5,
                     realization_count=4,
@@ -212,7 +208,6 @@ def test_large_snapshot(
                         .build(["0"], state.REALIZATION_STATE_UNKNOWN)
                     ),
                     iteration_label="Foo",
-                    current_iteration=0,
                     total_iterations=1,
                     progress=0.25,
                     realization_count=4,
@@ -224,7 +219,6 @@ def test_large_snapshot(
                         ["0"], status=state.REALIZATION_STATE_FINISHED
                     ),
                     iteration_label="Foo",
-                    current_iteration=0,
                     total_iterations=1,
                     progress=0.5,
                     realization_count=4,
@@ -256,7 +250,6 @@ def test_large_snapshot(
                         .build(["0", "1"], state.REALIZATION_STATE_UNKNOWN)
                     ),
                     iteration_label="Foo",
-                    current_iteration=0,
                     total_iterations=1,
                     progress=0.25,
                     realization_count=4,
@@ -273,7 +266,6 @@ def test_large_snapshot(
                     )
                     .build(["1"], status=state.REALIZATION_STATE_RUNNING),
                     iteration_label="Foo",
-                    current_iteration=0,
                     total_iterations=1,
                     progress=0.5,
                     realization_count=4,
@@ -290,7 +282,6 @@ def test_large_snapshot(
                     )
                     .build(["0"], status=state.REALIZATION_STATE_FAILED),
                     iteration_label="Foo",
-                    current_iteration=0,
                     total_iterations=1,
                     progress=0.5,
                     realization_count=4,
@@ -316,7 +307,6 @@ def test_large_snapshot(
                         .build(["0"], state.REALIZATION_STATE_UNKNOWN)
                     ),
                     iteration_label="Foo",
-                    current_iteration=0,
                     total_iterations=1,
                     progress=0.25,
                     realization_count=4,
@@ -335,7 +325,6 @@ def test_large_snapshot(
                         .build(["0"], state.REALIZATION_STATE_UNKNOWN)
                     ),
                     iteration_label="Foo",
-                    current_iteration=0,
                     total_iterations=1,
                     progress=0.5,
                     realization_count=4,
@@ -377,7 +366,6 @@ def test_run_dialog(events, tab_widget_count, qtbot: QtBot, run_dialog, event_qu
                         .build(["0"], state.REALIZATION_STATE_UNKNOWN)
                     ),
                     iteration_label="Foo",
-                    current_iteration=0,
                     total_iterations=1,
                     progress=0.25,
                     realization_count=4,
@@ -396,7 +384,6 @@ def test_run_dialog(events, tab_widget_count, qtbot: QtBot, run_dialog, event_qu
                     )
                     .build(["0"], status=state.REALIZATION_STATE_RUNNING),
                     iteration_label="Foo",
-                    current_iteration=0,
                     total_iterations=1,
                     progress=0.5,
                     realization_count=4,
@@ -415,7 +402,6 @@ def test_run_dialog(events, tab_widget_count, qtbot: QtBot, run_dialog, event_qu
                     )
                     .build(["0"], status=state.REALIZATION_STATE_FINISHED),
                     iteration_label="Foo",
-                    current_iteration=0,
                     total_iterations=1,
                     progress=1,
                     realization_count=4,
@@ -486,7 +472,6 @@ def test_run_dialog_memory_usage_showing(
                         )
                     ),
                     iteration_label="Foo",
-                    current_iteration=0,
                     total_iterations=1,
                     progress=0.25,
                     realization_count=4,
@@ -519,7 +504,6 @@ def test_run_dialog_memory_usage_showing(
                         .build(["0", "1"], status=state.REALIZATION_STATE_UNKNOWN)
                     ),
                     iteration_label="Foo",
-                    current_iteration=0,
                     total_iterations=1,
                     progress=0.25,
                     realization_count=4,

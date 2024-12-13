@@ -136,7 +136,7 @@ class Monitor:
             )
 
     def _print_progress(self, event: SnapshotUpdateEvent) -> None:
-        current_iteration = min(event.total_iterations, event.current_iteration + 1)
+        current_iteration = min(event.total_iterations, event.iteration + 1)
         if self._start_time is not None:
             elapsed = datetime.now() - self._start_time
         else:

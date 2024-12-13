@@ -462,7 +462,6 @@ class BaseRunModel(ABC):
             self.send_event(
                 FullSnapshotEvent(
                     iteration_label=f"Running forecast for iteration: {iteration}",
-                    current_iteration=iteration,
                     total_iterations=self._total_iterations,
                     progress=current_progress,
                     realization_count=realization_count,
@@ -487,7 +486,6 @@ class BaseRunModel(ABC):
             self.send_event(
                 SnapshotUpdateEvent(
                     iteration_label=f"Running forecast for iteration: {iteration}",
-                    current_iteration=iteration,
                     total_iterations=self._total_iterations,
                     progress=current_progress,
                     realization_count=realization_count,

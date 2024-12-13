@@ -6,7 +6,6 @@ from .snapshot import EnsembleSnapshot
 @dataclass
 class _UpdateEvent:
     iteration_label: str
-    current_iteration: int
     total_iterations: int
     progress: float
     realization_count: int
