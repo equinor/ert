@@ -762,3 +762,98 @@ def test_that_design_matrix_show_parameters_button_is_visible(
             assert isinstance(show_dm_parameters, QPushButton)
         else:
             assert show_dm_parameters is None
+
+
+@pytest.mark.parametrize(
+    "events,tab_widget_count",
+    [
+        pytest.param(
+            [
+                FullSnapshotEvent(
+                    snapshot=(
+                        SnapshotBuilder()
+                        .add_fm_step(
+                            fm_step_id="0",
+                            index="0",
+                            name="fm_step_0",
+                            status=state.FORWARD_MODEL_STATE_START,
+                        )
+                        .build(["0", "1"], state.REALIZATION_STATE_UNKNOWN)
+                    ),
+                    iteration_label="Foo",
+                    total_iterations=1,
+                    progress=0.5,
+                    realization_count=2,
+                    status_count={"Finished": 1, "Pending": 1},
+                    iteration=0,
+                ),
+                FullSnapshotEvent(
+                    snapshot=(
+                        SnapshotBuilder()
+                        .add_fm_step(
+                            fm_step_id="0",
+                            index="0",
+                            name="fm_step_0",
+                            status=state.FORWARD_MODEL_STATE_START,
+                        )
+                        .build(["0", "1"], state.REALIZATION_STATE_FINISHED)
+                    ),
+                    iteration_label="Foo",
+                    total_iterations=1,
+                    progress=0.5,
+                    realization_count=2,
+                    status_count={"Finished": 1, "Pending": 1},
+                    iteration=1,
+                ),
+                EndEvent(failed=False, msg=""),
+            ],
+            2,
+            id="changing from between tabs",
+        ),
+    ],
+)
+def test_forward_model_overview_label_selected_on_tab_change(
+    events, tab_widget_count, qtbot: QtBot, event_queue, run_dialog
+):
+    run_dialog.run_experiment()
+    for event in events:
+        event_queue.put(event)
+
+    def qt_bot_click_realization(realization_index: int, iteration: int) -> None:
+        view = run_dialog._tab_widget.widget(iteration)._real_view
+        model_index = view.model().index(realization_index, 0)
+        view.scrollTo(model_index)
+        rect = view.visualRect(model_index)
+        click_pos = rect.center()
+        qtbot.mouseClick(view.viewport(), Qt.LeftButton, pos=click_pos)
+
+    def qt_bot_click_tab_index(tab_index: int) -> None:
+        tab_bar = run_dialog._tab_widget.tabBar()
+        tab_rect = tab_bar.tabRect(tab_index)
+        click_pos = tab_rect.center()
+        qtbot.mouseClick(tab_bar, Qt.LeftButton, pos=click_pos)
+
+    # verify two tabs present
+    qtbot.waitUntil(
+        lambda: run_dialog._tab_widget.count() == tab_widget_count, timeout=5000
+    )
+    qtbot.waitUntil(lambda: run_dialog.is_simulation_done() == True, timeout=5000)
+
+    qt_bot_click_tab_index(0)
+    fm_step_label = run_dialog.findChild(QLabel, name="fm_step_label")
+    assert "Realization id 0 in iteration 0" in fm_step_label.text()
+
+    qt_bot_click_realization(1, 0)
+    assert "Realization id 1 in iteration 0" in fm_step_label.text()
+
+    qt_bot_click_tab_index(1)
+    assert "Realization id 0 in iteration 1" in fm_step_label.text()
+
+    qt_bot_click_realization(1, 1)
+    assert "Realization id 1 in iteration 1" in fm_step_label.text()
+
+    qt_bot_click_tab_index(0)
+    assert "Realization id 1 in iteration 0" in fm_step_label.text()
+
+    qt_bot_click_tab_index(1)
+    assert "Realization id 1 in iteration 1" in fm_step_label.text()
