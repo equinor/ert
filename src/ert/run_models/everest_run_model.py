@@ -21,13 +21,13 @@ from typing import (
 )
 
 import numpy as np
-from seba_sqlite import SqliteStorage, sqlite_storage
 from numpy import float64
 from numpy._typing import NDArray
 from ropt.enums import EventType, OptimizerExitCode
 from ropt.evaluator import EvaluatorContext, EvaluatorResult
 from ropt.plan import BasicOptimizer
 from ropt.plan import Event as OptimizerEvent
+from seba_sqlite import SqliteStorage, sqlite_storage
 from typing_extensions import TypedDict
 
 from _ert.events import EESnapshot, EESnapshotUpdate, Event
@@ -130,7 +130,7 @@ class OptimizerCallback(Protocol):
 
 
 @dataclass
-class OptimalResult:
+class OptimalResult:  # noqa
     batch: int
     controls: list[Any]
     total_objective: float
@@ -297,7 +297,7 @@ class EverestRunModel(BaseRunModel):
 
         # Seems ROPT batches are 1-indexed now,
         # whereas seba has its own 0-indexed counter.
-        assert self._result == optimal_result_from_everstorage
+        assert self._result.__dict__ == optimal_result_from_everstorage.__dict__
 
         self._exit_code = (
             "max_batch_num_reached"

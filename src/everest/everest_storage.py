@@ -52,7 +52,7 @@ def try_read_df(path: Path) -> polars.DataFrame | None:
 @dataclass
 class BatchDataFrames:
     batch_id: int
-    batch_controls: polars.DataFrame
+    realization_controls: polars.DataFrame
     batch_objectives: polars.DataFrame | None
     realization_objectives: polars.DataFrame | None
     batch_constraints: polars.DataFrame | None
@@ -72,6 +72,9 @@ class BatchDataFrames:
 
         if self.realization_objectives is not None:
             dataframes["realization_objectives"] = self.realization_objectives
+
+        if self.realization_controls is not None:
+            dataframes["realization_controls"] = self.realization_controls
 
         if self.batch_constraints is not None:
             dataframes["batch_constraints"] = self.batch_constraints
@@ -102,6 +105,27 @@ class EverestStorageDataFrames:
     objective_functions: polars.DataFrame | None = None
     nonlinear_constraints: polars.DataFrame | None = None
     realization_weights: polars.DataFrame | None = None
+
+    @property
+    def simulation_to_realization_map(self):
+        dummy_df = next(
+            (
+                b.realization_controls
+                for b in self.batches
+                if b.realization_controls is not None
+            ),
+            None,
+        )
+
+        if dummy_df is None:
+            return {}
+
+        mapping = {}
+        for d in dummy_df.select("realization", "simulation_id").to_dicts():
+            # Currently we work with str, but should maybe not be done in future
+            mapping[str(d["simulation_id"])] = str(d["realization"])
+
+        return mapping
 
     def write_to_experiment(
         self, experiment: _OptimizerOnlyExperiment, write_csv=False
@@ -250,8 +274,8 @@ class EverestStorageDataFrames:
                 ens.optimizer_mount_point / "perturbation_constraints.parquet"
             )
 
-            batch_controls = try_read_df(
-                ens.optimizer_mount_point / "batch_controls.parquet"
+            realization_controls = try_read_df(
+                ens.optimizer_mount_point / "realization_controls.parquet"
             )
 
             with open(ens.optimizer_mount_point / "batch.json", encoding="utf-8") as f:
@@ -262,7 +286,7 @@ class EverestStorageDataFrames:
             self.batches.append(
                 BatchDataFrames(
                     batch_id,
-                    batch_controls,
+                    realization_controls,
                     batch_objectives,
                     realization_objectives,
                     batch_constraints,
@@ -321,7 +345,7 @@ class _OptimizerOnlyExperiment:
 
 @dataclass
 class _EvaluationResults:
-    batch_controls: polars.DataFrame
+    realization_controls: polars.DataFrame
     batch_objectives: polars.DataFrame
     realization_objectives: polars.DataFrame
     batch_constraints: polars.DataFrame | None
@@ -411,13 +435,13 @@ class EverestStorage:
                     self._convert_names(config.variables.names), dtype=polars.String
                 ),
                 "initial_value": polars.Series(
-                    config.variables.initial_values, dtype=polars.Float32
+                    config.variables.initial_values, dtype=polars.Float64
                 ),
                 "lower_bounds": polars.Series(
-                    config.variables.lower_bounds, dtype=polars.Float32
+                    config.variables.lower_bounds, dtype=polars.Float64
                 ),
                 "upper_bounds": polars.Series(
-                    config.variables.upper_bounds, dtype=polars.Float32
+                    config.variables.upper_bounds, dtype=polars.Float64
                 ),
             }
         )
@@ -426,11 +450,11 @@ class EverestStorage:
             {
                 "objective_name": config.objectives.names,
                 "weight": polars.Series(
-                    config.objectives.weights, dtype=polars.Float32
+                    config.objectives.weights, dtype=polars.Float64
                 ),
                 "normalization": polars.Series(
                     [1.0 / s for s in config.objectives.scales],
-                    dtype=polars.Float32,
+                    dtype=polars.Float64,
                 ),
             }
         )
@@ -439,7 +463,9 @@ class EverestStorage:
             self.data.nonlinear_constraints = polars.DataFrame(
                 {
                     "constraint_name": config.nonlinear_constraints.names,
-                    "normalization": config.nonlinear_constraints.scales,
+                    "normalization": [
+                        1.0 / s for s in config.nonlinear_constraints.scales
+                    ],  # Q: Is this correct?
                     "constraint_rhs_value": config.nonlinear_constraints.rhs_values,
                     "constraint_type": config.nonlinear_constraints.types,
                 }
@@ -451,7 +477,7 @@ class EverestStorage:
                     config.realizations.names, dtype=polars.UInt16
                 ),
                 "weight": polars.Series(
-                    config.realizations.weights, dtype=polars.Float32
+                    config.realizations.weights, dtype=polars.Float64
                 ),
             }
         )
@@ -462,7 +488,7 @@ class EverestStorage:
         realization_objectives = polars.from_pandas(
             results.to_dataframe(
                 "evaluations",
-                select=["variables", "objectives", "constraints", "evaluation_ids"],
+                select=["objectives", "constraints", "evaluation_ids"],
             ).reset_index(),
         ).drop("plan_id")
         batch_objectives = polars.from_pandas(
@@ -472,26 +498,20 @@ class EverestStorage:
             ).reset_index()
         ).drop("plan_id")
 
-        batch_controls = polars.from_pandas(
-            results.to_dataframe("evaluations", select=["variables"]).reset_index()
+        realization_controls = polars.from_pandas(
+            results.to_dataframe(
+                "evaluations", select=["variables", "evaluation_ids"]
+            ).reset_index()
         ).drop("plan_id")
 
-        batch_controls = self._rename_columns(batch_controls)
-        control_names = batch_controls["control_name"].unique().to_list()
+        realization_controls = self._rename_columns(realization_controls)
+        realization_controls = self._enforce_dtypes(realization_controls)
 
-        has_scaled_controls = "scaled_control_value" in batch_controls
-        batch_controls = batch_controls.pivot(
+        realization_controls = realization_controls.pivot(
             on="control_name",
             values=["control_value"],  # , "scaled_control_value"]
             separator=":",
         )
-
-        if has_scaled_controls:
-            batch_controls = batch_controls.rename(
-                {
-                    **{f"control_value:{name}": name for name in control_names},
-                }
-            )
 
         try:
             batch_constraints = polars.from_pandas(
@@ -503,7 +523,10 @@ class EverestStorage:
         realization_constraints = None
 
         batch_objectives = self._rename_columns(batch_objectives)
+        batch_objectives = self._enforce_dtypes(batch_objectives)
+
         realization_objectives = self._rename_columns(realization_objectives)
+        realization_objectives = self._enforce_dtypes(realization_objectives)
 
         batch_objectives = batch_objectives.pivot(
             on="objective_name",
@@ -544,35 +567,33 @@ class EverestStorage:
                 "result_id",
                 "batch_id",
                 "realization",
+                "simulation_id",
                 "constraint_name",
                 "constraint_value",
-            ].unique(["result_id", "batch_id", "realization", "constraint_name"])
+            ]
             realization_constraints = realization_constraints.pivot(
                 values=["constraint_value"], on="constraint_name"
             )
             realization_objectives = realization_objectives.drop(
                 [c for c in realization_objectives.columns if "constraint" in c.lower()]
-            ).unique(subset=["result_id", "batch_id", "realization", "control_name"])
+            )
             batch_objectives = batch_objectives.drop(
                 [c for c in batch_objectives.columns if "constraint" in c.lower()]
-            ).unique(subset=["result_id", "batch_id"])
-
-        realization_objectives = (
-            realization_objectives.drop(["control_name", "control_value"])
-            .unique(subset=["result_id", "batch_id", "realization", "objective_name"])
-            .pivot(
-                values="objective_value",
-                index=[
-                    "result_id",
-                    "batch_id",
-                    "realization",
-                ],
-                columns="objective_name",
             )
+
+        realization_objectives = realization_objectives.pivot(
+            values="objective_value",
+            index=[
+                "result_id",
+                "batch_id",
+                "realization",
+                "simulation_id",
+            ],
+            columns="objective_name",
         )
 
         return _EvaluationResults(
-            batch_controls,
+            realization_controls,
             batch_objectives,
             realization_objectives,
             batch_constraints,
@@ -585,7 +606,7 @@ class EverestStorage:
         if len(scaled_cols) > 0:
             raise ValueError("Don't store scaled columns")
 
-        _renames = {
+        renames = {
             "objective": "objective_name",
             "weighted_objective": "total_objective_value",
             "variable": "control_name",
@@ -601,8 +622,51 @@ class EverestStorage:
             "scaled_perturbed_objectives": "scaled_perturbed_objective_value",
             "scaled_perturbed_constraints": "scaled_perturbed_constraint_value",
             "scaled_variables": "scaled_control_value",
+            "evaluation_ids": "simulation_id",
         }
-        return df.rename({k: v for k, v in _renames.items() if k in df.columns})
+        return df.rename({k: v for k, v in renames.items() if k in df.columns})
+
+    @staticmethod
+    def _enforce_dtypes(df: polars.DataFrame):
+        dtypes = {
+            "batch_id": polars.UInt16,
+            "result_id": polars.UInt16,
+            "perturbation": polars.UInt16,
+            "realization": polars.UInt16,
+            "simulation_id": polars.UInt16,
+            "objective_name": polars.String,
+            "control_name": polars.String,
+            "constraint_name": polars.String,
+            "total_objective_value": polars.Float64,
+            "control_value": polars.Float64,
+            "objective_value": polars.Float64,
+            "constraint_value": polars.Float64,
+            "scaled_constraint_value": polars.Float64,
+            "scaled_objective_value": polars.Float64,
+            "perturbed_control_value": polars.Float64,
+            "perturbed_objective_value": polars.Float64,
+            "perturbed_constraint_value": polars.Float64,
+            "scaled_perturbed_objective_value": polars.Float64,
+            "scaled_perturbed_constraint_value": polars.Float64,
+            "scaled_control_value": polars.Float64,
+        }
+
+        existing_cols = set(df.columns)
+        unaccounted_cols = existing_cols - set(dtypes)
+        if len(unaccounted_cols) > 0:
+            raise KeyError(
+                f"Expected all keys to have a specified dtype, found {unaccounted_cols}"
+            )
+
+        df = df.cast(
+            {
+                colname: dtype
+                for colname, dtype in dtypes.items()
+                if colname in df.columns
+            }
+        )
+
+        return df
 
     def _store_gradient_results(self, results: FunctionResults) -> _GradientResults:
         perturbation_objectives = polars.from_pandas(
@@ -628,7 +692,9 @@ class EverestStorage:
                 if c.lower().startswith("scaled")
             )
             batch_objective_gradient = self._rename_columns(batch_objective_gradient)
+            batch_objective_gradient = self._enforce_dtypes(batch_objective_gradient)
 
+        perturbation_objectives = self._rename_columns(perturbation_objectives)
         perturbation_objectives = self._rename_columns(perturbation_objectives)
 
         if "constraint_name" in perturbation_objectives:
@@ -761,41 +827,43 @@ class EverestStorage:
         # +-----------------------------------------------------------------+
         last_batch = -1
 
-        _batches = {}
+        batches = {}
         for item in results:
-            if item.batch_id not in _batches:
-                _batches[item.batch_id] = {}
+            if item.batch_id not in batches:
+                batches[item.batch_id] = {}
 
             if isinstance(item, FunctionResults):
                 eval_results = self._store_function_results(item)
 
-                _batches[item.batch_id]["batch_controls"] = eval_results.batch_controls
-                _batches[item.batch_id]["batch_objectives"] = (
+                batches[item.batch_id]["realization_controls"] = (
+                    eval_results.realization_controls
+                )
+                batches[item.batch_id]["batch_objectives"] = (
                     eval_results.batch_objectives
                 )
-                _batches[item.batch_id]["realization_objectives"] = (
+                batches[item.batch_id]["realization_objectives"] = (
                     eval_results.realization_objectives
                 )
-                _batches[item.batch_id]["batch_constraints"] = (
+                batches[item.batch_id]["batch_constraints"] = (
                     eval_results.batch_constraints
                 )
-                _batches[item.batch_id]["realization_constraints"] = (
+                batches[item.batch_id]["realization_constraints"] = (
                     eval_results.realization_constraints
                 )
 
             if isinstance(item, GradientResults):
                 gradient_results = self._store_gradient_results(item)
 
-                _batches[item.batch_id]["batch_objective_gradient"] = (
+                batches[item.batch_id]["batch_objective_gradient"] = (
                     gradient_results.batch_objective_gradient
                 )
-                _batches[item.batch_id]["perturbation_objectives"] = (
+                batches[item.batch_id]["perturbation_objectives"] = (
                     gradient_results.perturbation_objectives
                 )
-                _batches[item.batch_id]["batch_constraint_gradient"] = (
+                batches[item.batch_id]["batch_constraint_gradient"] = (
                     gradient_results.batch_constraint_gradient
                 )
-                _batches[item.batch_id]["perturbation_constraints"] = (
+                batches[item.batch_id]["perturbation_constraints"] = (
                     gradient_results.perturbation_constraints
                 )
 
@@ -805,11 +873,11 @@ class EverestStorage:
                 #    self._database.set_batch_ended
             last_batch = item.batch_id
 
-        for batch_id, info in _batches.items():
+        for batch_id, info in batches.items():
             self.data.batches.append(
                 BatchDataFrames(
                     batch_id=batch_id,
-                    batch_controls=info.get("batch_controls"),
+                    realization_controls=info.get("realization_controls"),
                     batch_objectives=info.get("batch_objectives"),
                     realization_objectives=info.get("realization_objectives"),
                     batch_constraints=info.get("batch_constraints"),
@@ -870,20 +938,22 @@ class EverestStorage:
                 return None
 
             matching_batches.sort(key=sort_by)
-            _batch = matching_batches[0]
-            _controls_dict = _batch.batch_controls.drop(
+            batch = matching_batches[0]
+            controls_dict = batch.realization_controls.drop(
                 [
                     "result_id",
                     "batch_id",
+                    "simulation_id",
+                    "realization",
                     *[
                         c
-                        for c in _batch.batch_controls.columns
+                        for c in batch.realization_controls.columns
                         if c.endswith(".scaled")  # don't need scaled control values
                     ],
                 ]
             ).to_dicts()[0]
 
-            return _batch, _controls_dict
+            return batch, controls_dict
 
         if has_merit:
             # Minimize merit

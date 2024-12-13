@@ -70,9 +70,7 @@ def test_export_only_non_gradient_with_increased_merit(cached_example, snapshot)
 
     # Test that the default export functionality generated data frame
     # contains only non gradient simulations
-    snapshot.assert_match(
-        df.drop(["start_time", "end_time"], axis=1).round(4).to_csv(), "export.csv"
-    )
+    snapshot.assert_match(df.round(4).to_csv(), "export.csv")
 
 
 def test_export_only_non_gradient(cached_example, snapshot):
@@ -88,9 +86,7 @@ def test_export_only_non_gradient(cached_example, snapshot):
         data_file=config.model.data_file if config.model else None,
     )
 
-    snapshot.assert_match(
-        df.drop(["start_time", "end_time"], axis=1).round(4).to_csv(), "export.csv"
-    )
+    snapshot.assert_match(df.round(4).to_csv(), "export.csv")
 
 
 def test_export_only_increased_merit(cached_example, snapshot):
@@ -107,7 +103,7 @@ def test_export_only_increased_merit(cached_example, snapshot):
     )
 
     snapshot.assert_match(
-        df.drop(["start_time", "end_time"], axis=1).round(4).to_csv(),
+        df.round(4).to_csv(),
         "export.csv",
     )
 
@@ -125,9 +121,7 @@ def test_export_all_batches(cached_example, snapshot):
         data_file=config.model.data_file if config.model else None,
     )
 
-    snapshot.assert_match(
-        df.drop(["start_time", "end_time"], axis=1).round(4).to_csv(), "export.csv"
-    )
+    snapshot.assert_match(df.round(4).to_csv(), "export.csv")
 
 
 def test_export_only_give_batches(cached_example, snapshot):
@@ -143,9 +137,7 @@ def test_export_only_give_batches(cached_example, snapshot):
         data_file=config.model.data_file if config.model else None,
     )
 
-    snapshot.assert_match(
-        df.drop(["start_time", "end_time"], axis=1).round(4).to_csv(), "export.csv"
-    )
+    snapshot.assert_match(df.round(4).to_csv(), "export.csv")
 
 
 def test_export_batches_progress(cached_example, snapshot):
@@ -348,6 +340,4 @@ def test_export_gradients(cached_example, snapshot):
         data_file=config.model.data_file if config.model else None,
     )
 
-    snapshot.assert_match(
-        df.drop(["start_time", "end_time"], axis=1).round(4).to_csv(), "export.csv"
-    )
+    snapshot.assert_match(df.round(4).to_csv(), "export.csv")
