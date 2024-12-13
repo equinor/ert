@@ -199,7 +199,7 @@ def create_experiment_args(
 
 
 @dataclass
-class _UpdatePerfTestConfig:
+class StoragePerfTestConfig:
     num_parameters: int
     num_gen_data_keys: int
     num_gen_data_report_steps: int
@@ -226,7 +226,7 @@ class _UpdatePerfTestConfig:
 
 
 @dataclass
-class _ExpectedPerformance:
+class ExpectedPerformance:
     memory_limit_mb: float
     time_limit_s: float
     last_measured_memory_mb: float | None = None  # For bookkeeping
@@ -236,9 +236,9 @@ class _ExpectedPerformance:
 @dataclass
 class _Benchmark:
     alias: str
-    config: _UpdatePerfTestConfig
-    expected_update_performance: _ExpectedPerformance
-    expected_join_performance: _ExpectedPerformance
+    config: StoragePerfTestConfig
+    expected_update_performance: ExpectedPerformance
+    expected_join_performance: ExpectedPerformance
 
 
 # We want to apply these benchmarks
@@ -246,10 +246,10 @@ class _Benchmark:
 # hence they are all declared here
 # Note: Adjusting num responses did not seem
 # to have a very big impact on performance.
-_BenchMarks: list[_Benchmark] = [
+_benchmarks: list[_Benchmark] = [
     _Benchmark(
         alias="small",
-        config=_UpdatePerfTestConfig(
+        config=StoragePerfTestConfig(
             num_parameters=1,
             num_gen_data_keys=100,
             num_gen_data_report_steps=2,
@@ -260,13 +260,13 @@ _BenchMarks: list[_Benchmark] = [
             num_summary_obs=1,
             num_realizations=2,
         ),
-        expected_join_performance=_ExpectedPerformance(
+        expected_join_performance=ExpectedPerformance(
             memory_limit_mb=100,
             time_limit_s=2,
             last_measured_time=0.03,
             last_measured_memory_mb=17,
         ),
-        expected_update_performance=_ExpectedPerformance(
+        expected_update_performance=ExpectedPerformance(
             last_measured_time=0.09,
             last_measured_memory_mb=7.13,
             memory_limit_mb=100,
@@ -275,7 +275,7 @@ _BenchMarks: list[_Benchmark] = [
     ),
     _Benchmark(
         alias="medium",
-        config=_UpdatePerfTestConfig(
+        config=StoragePerfTestConfig(
             num_parameters=1,
             num_gen_data_keys=2000,
             num_gen_data_report_steps=2,
@@ -286,13 +286,13 @@ _BenchMarks: list[_Benchmark] = [
             num_summary_obs=2000,
             num_realizations=200,
         ),
-        expected_join_performance=_ExpectedPerformance(
+        expected_join_performance=ExpectedPerformance(
             memory_limit_mb=1500,
             time_limit_s=30,
             last_measured_time=2.78,
             last_measured_memory_mb=1027,
         ),
-        expected_update_performance=_ExpectedPerformance(
+        expected_update_performance=ExpectedPerformance(
             memory_limit_mb=3100,
             time_limit_s=30,
             last_measured_time=5.34,
@@ -301,7 +301,7 @@ _BenchMarks: list[_Benchmark] = [
     ),
     _Benchmark(
         alias="large",
-        config=_UpdatePerfTestConfig(
+        config=StoragePerfTestConfig(
             num_parameters=1,
             num_gen_data_keys=5000,
             num_gen_data_report_steps=2,
@@ -312,13 +312,13 @@ _BenchMarks: list[_Benchmark] = [
             num_summary_obs=2000,
             num_realizations=200,
         ),
-        expected_join_performance=_ExpectedPerformance(
+        expected_join_performance=ExpectedPerformance(
             memory_limit_mb=4500,
             time_limit_s=45,
             last_measured_memory_mb=1710,
             last_measured_time=3.59,
         ),
-        expected_update_performance=_ExpectedPerformance(
+        expected_update_performance=ExpectedPerformance(
             memory_limit_mb=4000,
             time_limit_s=40,
             last_measured_memory_mb=3088,
@@ -327,7 +327,7 @@ _BenchMarks: list[_Benchmark] = [
     ),
     _Benchmark(
         alias="large+",
-        config=_UpdatePerfTestConfig(
+        config=StoragePerfTestConfig(
             num_parameters=1,
             num_gen_data_keys=5000,
             num_gen_data_report_steps=2,
@@ -338,13 +338,13 @@ _BenchMarks: list[_Benchmark] = [
             num_summary_obs=5000,
             num_realizations=200,
         ),
-        expected_join_performance=_ExpectedPerformance(
+        expected_join_performance=ExpectedPerformance(
             memory_limit_mb=3300,
             time_limit_s=55,
             last_measured_time=3.96,
             last_measured_memory_mb=1715,
         ),
-        expected_update_performance=_ExpectedPerformance(
+        expected_update_performance=ExpectedPerformance(
             memory_limit_mb=4500,
             time_limit_s=50,
             last_measured_time=6.98,
@@ -390,13 +390,13 @@ _BenchMarks: list[_Benchmark] = [
             f"{b.alias}:{b.config!s}",
             id=f"{b.alias}:{b.config!s}",
         )
-        for b in _BenchMarks
+        for b in _benchmarks
     ],
 )
 @pytest.mark.integration_test
 def test_performance_of_joining_observations_and_responses(
-    config: _UpdatePerfTestConfig,
-    expected_performance: _ExpectedPerformance,
+    config: StoragePerfTestConfig,
+    expected_performance: ExpectedPerformance,
     alias,
     tmp_path,
 ):
@@ -454,12 +454,12 @@ def test_performance_of_joining_observations_and_responses(
             f"{b.alias}:{b.config!s}",
             id=f"{b.alias}:{b.config!s}",
         )
-        for b in _BenchMarks
+        for b in _benchmarks
     ],
 )
 @pytest.mark.integration_test
 def test_performance_of_doing_es_update(
-    config: _UpdatePerfTestConfig, expected_performance, alias, tmp_path
+    config: StoragePerfTestConfig, expected_performance, alias, tmp_path
 ):
     info = create_experiment_args(
         config.num_parameters,
