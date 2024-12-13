@@ -1,3 +1,5 @@
+from pathlib import Path
+
 import pytest
 
 from everest.bin.config_branch_script import (
@@ -6,18 +8,23 @@ from everest.bin.config_branch_script import (
 )
 from everest.config_file_loader import load_yaml
 from everest.config_keys import ConfigKeys as CK
-from tests.everest.utils import relpath
-
-CONFIG_FILE = "config_advanced.yml"
-CACHED_SEBA_FOLDER = relpath("test_data", "cached_results_config_advanced")
 
 
-def test_get_controls_for_batch(copy_math_func_test_data_to_tmp):
-    assert opt_controls_by_batch(CACHED_SEBA_FOLDER, 1) is not None
+def test_get_controls_for_batch(cached_example):
+    path, _, _ = cached_example("math_func/config_advanced.yml")
 
-    assert opt_controls_by_batch(CACHED_SEBA_FOLDER, 42) is None
+    assert (
+        opt_controls_by_batch(Path(path) / "everest_output" / "optimization_output", 1)
+        is not None
+    )
+    assert (
+        opt_controls_by_batch(Path(path) / "everest_output" / "optimization_output", 42)
+        is None
+    )
 
-    opt_controls = opt_controls_by_batch(CACHED_SEBA_FOLDER, 1)
+    opt_controls = opt_controls_by_batch(
+        Path(path) / "everest_output" / "optimization_output", 1
+    )
     control_names = set(opt_controls.keys())
     expected_control_names = {"point_x-0", "point_x-1", "point_x-2"}
 
@@ -36,8 +43,10 @@ def test_get_controls_for_batch(copy_math_func_test_data_to_tmp):
     )
 
 
-def test_update_controls_initial_guess(copy_math_func_test_data_to_tmp):
-    old_controls = load_yaml(CONFIG_FILE)[CK.CONTROLS]
+def test_update_controls_initial_guess(cached_example):
+    path, _, _ = cached_example("math_func/config_advanced.yml")
+
+    old_controls = load_yaml("config_advanced.yml")[CK.CONTROLS]
 
     assert len(old_controls) == 1
 
@@ -49,7 +58,9 @@ def test_update_controls_initial_guess(copy_math_func_test_data_to_tmp):
     for var in old_ctrl[CK.VARIABLES]:
         assert CK.INITIAL_GUESS not in var
 
-    opt_controls = opt_controls_by_batch(CACHED_SEBA_FOLDER, 1)
+    opt_controls = opt_controls_by_batch(
+        Path(path) / "everest_output" / "optimization_output", 1
+    )
     updated_controls = _updated_initial_guess(old_controls, opt_controls)
     updated_ctl = next(iter(updated_controls), None)
 
