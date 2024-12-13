@@ -27,14 +27,6 @@ def skipif_no_opm(function):
     return pytest.mark.skipif(not has_opm(), reason="OPM not found")(function)
 
 
-def skipif_no_simulator(function):
-    """Decorator to skip a test if no project res is available is not available"""
-    return pytest.mark.skipif(
-        condition=os.environ.get("NO_PROJECT_RES", False),
-        reason="Skipping tests when no access to /project/res",
-    )(function)
-
-
 def skipif_no_everest_models(function):
     """Decorator to skip a test if everest-models is not available"""
     spec = importlib.util.find_spec("everest_models")
