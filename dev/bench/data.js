@@ -1,39 +1,8 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1734046129690,
+  "lastUpdate": 1734080708664,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
-      {
-        "commit": {
-          "author": {
-            "email": "ejah@equinor.com",
-            "name": "Eivind Jahren",
-            "username": "eivindjahren"
-          },
-          "committer": {
-            "email": "ejah@equinor.com",
-            "name": "Eivind Jahren",
-            "username": "eivindjahren"
-          },
-          "distinct": true,
-          "id": "5061a9426cc6f5ae2db17d2f958a6c9ecfe0cb58",
-          "message": "Inline redefinition of components in test",
-          "timestamp": "2024-12-06T12:34:23+01:00",
-          "tree_id": "e44e579d3509cb6d869a7ded31288311d70c227f",
-          "url": "https://github.com/equinor/ert/commit/5061a9426cc6f5ae2db17d2f958a6c9ecfe0cb58"
-        },
-        "date": 1733484970869,
-        "tool": "pytest",
-        "benches": [
-          {
-            "name": "tests/ert/performance_tests/test_analysis.py::test_and_benchmark_adaptive_localization_with_fields",
-            "value": 0.21343338675248258,
-            "unit": "iter/sec",
-            "range": "stddev: 0.059976100777467865",
-            "extra": "mean: 4.685302591200008 sec\nrounds: 5"
-          }
-        ]
-      },
       {
         "commit": {
           "author": {
@@ -930,6 +899,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.02752415245771421",
             "extra": "mean: 4.550244118999996 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "havb@equinor.com",
+            "name": "Håvard Berland",
+            "username": "berland"
+          },
+          "committer": {
+            "email": "berland@pvv.ntnu.no",
+            "name": "Håvard Berland",
+            "username": "berland"
+          },
+          "distinct": true,
+          "id": "1ed8fc3584691dce4a3470129ff2bfe911bc2ccc",
+          "message": "Add logging of event processing time when significant",
+          "timestamp": "2024-12-13T10:03:13+01:00",
+          "tree_id": "c95d214dd313a9de841a6feb13ecd24908187f4b",
+          "url": "https://github.com/equinor/ert/commit/1ed8fc3584691dce4a3470129ff2bfe911bc2ccc"
+        },
+        "date": 1734080708135,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/ert/performance_tests/test_analysis.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 0.21815696533415874,
+            "unit": "iter/sec",
+            "range": "stddev: 0.027873626339338563",
+            "extra": "mean: 4.583855475199999 sec\nrounds: 5"
           }
         ]
       }
