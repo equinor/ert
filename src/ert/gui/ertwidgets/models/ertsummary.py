@@ -37,6 +37,6 @@ class ErtSummary:
     def getObservations(self) -> list[ObservationCount]:
         counts: list[ObservationCount] = []
         for df in self.ert_config.observations.values():
-            counts.extend(df.group_by("observation_key").count().to_dicts())  #  type: ignore
+            counts.extend(df.group_by("observation_key").len(name="count").to_dicts())  #  type: ignore
 
         return sorted(counts, key=lambda k: k["observation_key"].lower())
