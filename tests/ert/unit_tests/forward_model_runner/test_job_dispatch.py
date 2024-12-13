@@ -92,20 +92,20 @@ else:
         )
     os.chmod("setsid", 0o755)
 
-    job_dispatch_script = importlib.util.find_spec(
-        "_ert.forward_model_runner.job_dispatch"
+    fm_dispatch_script = importlib.util.find_spec(
+        "_ert.forward_model_runner.fm_dispatch"
     ).origin
     # (we wait for the process below)
-    job_dispatch_process = Popen(
+    fm_dispatch_process = Popen(
         [
             os.getcwd() + "/setsid",
             sys.executable,
-            job_dispatch_script,
+            fm_dispatch_script,
             os.getcwd(),
         ]
     )
 
-    p = psutil.Process(job_dispatch_process.pid)
+    p = psutil.Process(fm_dispatch_process.pid)
 
     # Three levels of processes should spawn 8 children in total
     wait_until(lambda: len(p.children(recursive=True)) == 8)
@@ -148,7 +148,7 @@ def test_memory_profile_is_logged_as_csv():
     subprocess.run(
         [
             sys.executable,
-            importlib.util.find_spec("_ert.forward_model_runner.job_dispatch").origin,
+            importlib.util.find_spec("_ert.forward_model_runner.fm_dispatch").origin,
             os.getcwd(),
         ],
         check=False,
@@ -162,7 +162,7 @@ def test_memory_profile_is_logged_as_csv():
 
 
 @pytest.mark.usefixtures("use_tmpdir")
-def test_job_dispatch_run_subset_specified_as_parameter():
+def test_fm_dispatch_run_subset_specified_as_parameter():
     with open("dummy_executable", "w", encoding="utf-8") as f:
         f.write(
             "#!/usr/bin/env python\n"
@@ -256,22 +256,22 @@ def test_job_dispatch_run_subset_specified_as_parameter():
         )
     os.chmod("setsid", 0o755)
 
-    job_dispatch_script = importlib.util.find_spec(
-        "_ert.forward_model_runner.job_dispatch"
+    fm_dispatch_script = importlib.util.find_spec(
+        "_ert.forward_model_runner.fm_dispatch"
     ).origin
     # (we wait for the process below)
-    job_dispatch_process = Popen(
+    fm_dispatch_process = Popen(
         [
             os.getcwd() + "/setsid",
             sys.executable,
-            job_dispatch_script,
+            fm_dispatch_script,
             os.getcwd(),
             "step_B",
             "step_C",
         ]
     )
 
-    job_dispatch_process.wait()
+    fm_dispatch_process.wait()
 
     assert not os.path.isfile("step_A.out")
     assert os.path.isfile("step_B.out")
@@ -344,7 +344,7 @@ def test_setup_reporters(is_interactive_run, ens_id):
 
 
 @pytest.mark.usefixtures("use_tmpdir")
-def test_job_dispatch_kills_itself_after_unsuccessful_job(unused_tcp_port):
+def test_fm_dispatch_kills_itself_after_unsuccessful_job(unused_tcp_port):
     host = "localhost"
     port = unused_tcp_port
     jobs_json = json.dumps({"ens_id": "_id_", "dispatch_url": f"ws://localhost:{port}"})

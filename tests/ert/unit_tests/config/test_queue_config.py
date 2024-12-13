@@ -228,7 +228,7 @@ def test_that_overwriting_QUEUE_OPTIONS_warns(
             f"QUEUE_SYSTEM {queue_system}\n"
             f"QUEUE_OPTION {queue_system} {queue_system_option} test_1\n"
             f"QUEUE_OPTION {queue_system} MAX_RUNNING 10\n",
-            site_config_contents="JOB_SCRIPT job_dispatch.py\n"
+            site_config_contents="JOB_SCRIPT fm_dispatch.py\n"
             f"QUEUE_SYSTEM {queue_system}\n"
             f"QUEUE_OPTION {queue_system} {queue_system_option} test_0\n"
             f"QUEUE_OPTION {queue_system} MAX_RUNNING 10\n",

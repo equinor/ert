@@ -144,9 +144,7 @@ def main(args):
             try:
                 reporter.report(job_status)
             except OSError as oserror:
-                print(
-                    f"job_dispatch failed due to {oserror}. Stopping and cleaning up."
-                )
+                print(f"fm_dispatch failed due to {oserror}. Stopping and cleaning up.")
                 _stop_reporters_and_sigkill(reporters)
 
         if isinstance(job_status, Finish) and not job_status.success():

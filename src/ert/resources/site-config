@@ -3,7 +3,7 @@
 WORKFLOW_JOB_DIRECTORY workflows/jobs/shell
 WORKFLOW_JOB_DIRECTORY workflows/jobs/internal-gui/config
 
-JOB_SCRIPT job_dispatch.py
+JOB_SCRIPT fm_dispatch.py
 
 QUEUE_SYSTEM LOCAL
 QUEUE_OPTION LOCAL MAX_RUNNING 1

@@ -54,7 +54,7 @@ def snapshot():
 @pytest.fixture(name="queue_config")
 def queue_config_fixture():
     return QueueConfig(
-        job_script="job_dispatch.py",
+        job_script="fm_dispatch.py",
         max_submit=1,
         queue_system=QueueSystem.LOCAL,
         queue_options=LocalQueueOptions(max_running=50),
@@ -118,7 +118,7 @@ def make_ensemble(queue_config):
                         active=True,
                         iens=iens,
                         fm_steps=forward_model_list,
-                        job_script="job_dispatch.py",
+                        job_script="fm_dispatch.py",
                         max_runtime=10,
                         num_cpu=1,
                         run_arg=RunArg(
