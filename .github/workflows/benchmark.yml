@@ -13,7 +13,7 @@ permissions:
 env:
   ERT_SHOW_BACKTRACE: 1
   ECL_SKIP_SIGNAL: 1
-  UV_SYSTEM_PYTHON: 1
+  UV_FROZEN: true
 
 jobs:
   benchmark:
@@ -35,6 +35,8 @@ jobs:
 
       - name: Install uv
         uses: astral-sh/setup-uv@v4
+        with:
+          python-version: "3.11"
 
       - name: Install ert with dev-deps
         run: |

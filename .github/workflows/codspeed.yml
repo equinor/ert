@@ -8,7 +8,7 @@ on:
   workflow_dispatch:
 
 env:
-  UV_SYSTEM_PYTHON: 1
+  UV_FROZEN: true
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -25,6 +25,8 @@ jobs:
           python-version: '3.12'
       - name: Install uv
         uses: astral-sh/setup-uv@v4
+        with:
+          python-version: '3.12'
       - run: |
           uv sync --extra dev --extra everest
           uv pip uninstall pytest-benchmark
