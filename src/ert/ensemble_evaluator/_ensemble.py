@@ -108,7 +108,6 @@ class LegacyEnsemble:
         self._config: EvaluatorServerConfig | None = None
         self.snapshot: EnsembleSnapshot = self._create_snapshot()
         self.status = self.snapshot.status
-        self._client: Client | None = None
         if self.snapshot.status:
             self._status_tracker = _EnsembleStateTracker(self.snapshot.status)
         else:
