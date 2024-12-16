@@ -21,7 +21,7 @@ async def test_successful_sending(unused_tcp_port):
     messages_c1 = ["test_1", "test_2", "test_3"]
     async with MockZMQServer(unused_tcp_port) as mock_server, Client(url) as c1:
         for message in messages_c1:
-            await c1._send(message)
+            await c1.send(message)
 
     for msg in messages_c1:
         assert msg in mock_server.messages
@@ -38,7 +38,7 @@ async def test_retry(unused_tcp_port):
     ):
         for message in messages_c1:
             try:
-                await c1._send(message, retries=1)
+                await c1.send(message, retries=1)
             except ClientConnectionError:
                 client_connection_error_set = True
                 mock_server.signal(0)

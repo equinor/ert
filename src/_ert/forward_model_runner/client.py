@@ -8,8 +8,6 @@ from typing import Any, Self
 import zmq
 import zmq.asyncio
 
-from _ert.async_utils import new_event_loop
-
 logger = logging.getLogger(__name__)
 
 
@@ -31,14 +29,6 @@ class Client:
     DEFAULT_ACK_TIMEOUT = 5
     _receiver_task: asyncio.Task[None] | None
 
-    def __enter__(self) -> Self:
-        self.loop.run_until_complete(self.__aenter__())
-        return self
-
-    def __exit__(self, exc_type: Any, exc_value: Any, exc_traceback: Any) -> None:
-        self.loop.run_until_complete(self.__aexit__(exc_type, exc_value, exc_traceback))
-        self.loop.close()
-
     async def __aenter__(self) -> Self:
         await self.connect()
         return self
@@ -47,7 +37,7 @@ class Client:
         self, exc_type: Any, exc_value: Any, exc_traceback: Any
     ) -> None:
         try:
-            await self._send(DISCONNECT_MSG)
+            await self.send(DISCONNECT_MSG)
         except ClientConnectionError:
             logger.error("No ack for dealer disconnection. Connection is down!")
         finally:
@@ -89,7 +79,6 @@ class Client:
             self.socket.curve_publickey = client_public
             self.socket.curve_serverkey = token.encode("utf-8")
 
-        self.loop = new_event_loop()
         self._receiver_task = None
 
     async def connect(self) -> None:
@@ -97,14 +86,11 @@ class Client:
         await self._term_receiver_task()
         self._receiver_task = asyncio.create_task(self._receiver())
         try:
-            await self._send(CONNECT_MSG, retries=1)
+            await self.send(CONNECT_MSG, retries=1)
         except ClientConnectionError:
             await self._term_receiver_task()
             self.term()
             raise
-
-    def send(self, message: str, retries: int | None = None) -> None:
-        self.loop.run_until_complete(self._send(message, retries))
 
     async def process_message(self, msg: str) -> None:
         raise NotImplementedError("Only monitor can receive messages!")
@@ -124,7 +110,7 @@ class Client:
                 await asyncio.sleep(1)
                 self.socket.connect(self.url)
 
-    async def _send(self, message: str, retries: int | None = None) -> None:
+    async def send(self, message: str, retries: int | None = None) -> None:
         self._ack_event.clear()
 
         backoff = 1

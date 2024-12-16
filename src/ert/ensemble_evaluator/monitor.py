@@ -49,7 +49,7 @@ class Monitor(Client):
         logger.debug(f"monitor-{self._id} asking server to cancel...")
 
         cancel_event = EEUserCancel(monitor=self._id)
-        await self._send(event_to_json(cancel_event))
+        await self.send(event_to_json(cancel_event))
         logger.debug(f"monitor-{self._id} asked server to cancel")
 
     async def signal_done(self) -> None:
@@ -57,7 +57,7 @@ class Monitor(Client):
         logger.debug(f"monitor-{self._id} informing server monitor is done...")
 
         done_event = EEUserDone(monitor=self._id)
-        await self._send(event_to_json(done_event))
+        await self.send(event_to_json(done_event))
         logger.debug(f"monitor-{self._id} informed server monitor is done")
 
     async def track(
