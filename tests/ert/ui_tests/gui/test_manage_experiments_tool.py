@@ -1,10 +1,12 @@
+import datetime
 import shutil
 
+import polars
 import pytest
 from qtpy.QtCore import Qt
 from qtpy.QtWidgets import QPushButton, QTextEdit
 
-from ert.config import ErtConfig
+from ert.config import ErtConfig, SummaryConfig
 from ert.gui.ertnotifier import ErtNotifier
 from ert.gui.tools.manage_experiments import ManageExperimentsPanel
 from ert.gui.tools.manage_experiments.storage_info_widget import (
@@ -341,6 +343,67 @@ ANALYSIS_SET_VAR OBSERVATIONS AUTO_SCALE POLY_OBS1_*
             for l in ensemble_widget._figure.get_axes()[0].get_lines()
             if "Scaled observation" in l.get_xdata()
         )
+
+
+@pytest.mark.usefixtures("copy_poly_case")
+def test_ensemble_observations_view_on_empty_ensemble(qtbot):
+    config = ErtConfig.from_file("poly.ert")
+    notifier = ErtNotifier(config.config_path)
+    with open_storage(config.ens_path, mode="w") as storage:
+        notifier.set_storage(storage)
+        storage.create_experiment(
+            responses=[SummaryConfig(keys=["*"])],
+            observations={
+                "summary": polars.DataFrame(
+                    polars.DataFrame(
+                        {
+                            "response_key": ["FOPR"],
+                            "observation_key": ["O4"],
+                            "time": polars.Series(
+                                [datetime.datetime(2000, 1, 1)],
+                                dtype=polars.Datetime("ms"),
+                            ),
+                            "observations": polars.Series([10.2], dtype=polars.Float32),
+                            "std": polars.Series([0.1], dtype=polars.Float32),
+                        }
+                    )
+                ),
+            },
+        ).create_ensemble(
+            name="test", ensemble_size=config.model_config.num_realizations
+        )
+
+        tool = ManageExperimentsPanel(
+            config, notifier, config.model_config.num_realizations
+        )
+
+        # select the ensemble
+        storage_widget = tool.findChild(StorageWidget)
+        storage_widget._tree_view.expandAll()
+        model_index = storage_widget._tree_view.model().index(
+            0, 0, storage_widget._tree_view.model().index(0, 0)
+        )
+        storage_widget._tree_view.setCurrentIndex(model_index)
+        assert (
+            tool._storage_info_widget._content_layout.currentIndex()
+            == _WidgetType.ENSEMBLE_WIDGET
+        )
+
+        ensemble_widget = tool._storage_info_widget._content_layout.currentWidget()
+        assert isinstance(ensemble_widget, _EnsembleWidget)
+        assert ensemble_widget._name_label.text()
+        assert ensemble_widget._uuid_label.text()
+        assert not ensemble_widget._state_text_edit.toPlainText()
+
+        ensemble_widget._tab_widget.setCurrentIndex(_EnsembleWidgetTabs.STATE_TAB)
+        assert ensemble_widget._state_text_edit.toPlainText()
+
+        ensemble_widget._tab_widget.setCurrentIndex(
+            _EnsembleWidgetTabs.OBSERVATIONS_TAB
+        )
+
+        # Expect only one figure, the one for the observation
+        assert len(ensemble_widget._figure.get_axes()) == 1
 
 
 def test_realization_view(
