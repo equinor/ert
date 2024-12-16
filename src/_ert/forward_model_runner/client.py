@@ -35,10 +35,6 @@ class Client:
         self.loop.run_until_complete(self.__aenter__())
         return self
 
-    def term(self) -> None:
-        self.socket.close()
-        self.context.term()
-
     def __exit__(self, exc_type: Any, exc_value: Any, exc_traceback: Any) -> None:
         self.loop.run_until_complete(self.__aexit__(exc_type, exc_value, exc_traceback))
         self.loop.close()
@@ -59,6 +55,10 @@ class Client:
             await self._term_receiver_task()
             self.term()
 
+    def term(self) -> None:
+        self.socket.close()
+        self.context.term()
+
     async def _term_receiver_task(self) -> None:
         if self._receiver_task and not self._receiver_task.done():
             self._receiver_task.cancel()
@@ -76,7 +76,6 @@ class Client:
         self.url = url
         self.token = token
 
-        # Set up ZeroMQ context and socke
         self._ack_event: asyncio.Event = asyncio.Event()
         self.context = zmq.asyncio.Context()
         self.socket = self.context.socket(zmq.DEALER)
@@ -111,7 +110,7 @@ class Client:
         self.loop.run_until_complete(self._send(message, retries))
 
     async def process_message(self, msg: str) -> None:
-        pass
+        raise NotImplementedError("Only monitor can receive messages!")
 
     async def _receiver(self) -> None:
         while True:
