@@ -69,6 +69,8 @@ class Client:
         self._ack_event: asyncio.Event = asyncio.Event()
         self.context = zmq.asyncio.Context()
         self.socket = self.context.socket(zmq.DEALER)
+        # this is to avoid blocking the event loop when closing the socket
+        # wherein the linger is set to 0 to discard all messages in the queue
         self.socket.setsockopt(zmq.LINGER, 0)
         self.dealer_id = dealer_name or f"dispatch-{uuid.uuid4().hex[:8]}"
         self.socket.setsockopt_string(zmq.IDENTITY, self.dealer_id)
