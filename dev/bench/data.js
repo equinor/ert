@@ -1,39 +1,8 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1734354574130,
+  "lastUpdate": 1734356324018,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
-      {
-        "commit": {
-          "author": {
-            "email": "ejah@equinor.com",
-            "name": "Eivind Jahren",
-            "username": "eivindjahren"
-          },
-          "committer": {
-            "email": "ejah@equinor.com",
-            "name": "Eivind Jahren",
-            "username": "eivindjahren"
-          },
-          "distinct": true,
-          "id": "ad786d8aafd2a68307598f251b74f4f415615bc2",
-          "message": "Use pattern matching for make_summary_key",
-          "timestamp": "2024-12-09T15:35:09+01:00",
-          "tree_id": "792a5098ecdd3cd0f48f7780d324b0eaa547cae3",
-          "url": "https://github.com/equinor/ert/commit/ad786d8aafd2a68307598f251b74f4f415615bc2"
-        },
-        "date": 1733755018491,
-        "tool": "pytest",
-        "benches": [
-          {
-            "name": "tests/ert/performance_tests/test_analysis.py::test_and_benchmark_adaptive_localization_with_fields",
-            "value": 0.21490196426339978,
-            "unit": "iter/sec",
-            "range": "stddev: 0.018610687178640374",
-            "extra": "mean: 4.653284596199995 sec\nrounds: 5"
-          }
-        ]
-      },
       {
         "commit": {
           "author": {
@@ -930,6 +899,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.016044370930411698",
             "extra": "mean: 4.537265587199999 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "pieter.verveer@tno.nl",
+            "name": "Peter Verveer",
+            "username": "verveerpj"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "d4e7b72c2eac3ad7ce31f51d585793639f654e6a",
+          "message": "Fix everest batch numbering (#9563)",
+          "timestamp": "2024-12-16T14:36:49+01:00",
+          "tree_id": "48c65cd113c76535ebb2cee0dea75cba345c70a7",
+          "url": "https://github.com/equinor/ert/commit/d4e7b72c2eac3ad7ce31f51d585793639f654e6a"
+        },
+        "date": 1734356323558,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/ert/performance_tests/test_analysis.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 0.2168985342088425,
+            "unit": "iter/sec",
+            "range": "stddev: 0.04184824753979805",
+            "extra": "mean: 4.61045070519998 sec\nrounds: 5"
           }
         ]
       }
