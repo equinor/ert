@@ -8,7 +8,7 @@ name: Test Semeio
 on: [pull_request]
 
 env:
-  UV_SYSTEM_PYTHON: 1
+  UV_FROZEN: true
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -40,10 +40,13 @@ jobs:
 
     - name: Install uv
       uses: astral-sh/setup-uv@v5
+      with:
+        enable-cache: true
+        python-version: ${{ matrix.python-version }}
 
     - name: Install ert
       run: |
-        uv pip install .
+        uv sync
 
     - name: Get semeio
       run: |
@@ -52,5 +55,5 @@ jobs:
     - name: Test semeio
       run: |
         pushd semeio
-        uv pip install ".[test]"
-        pytest
+        VIRTUAL_ENV=../.venv uv pip install ".[test]"
+        UV_PROJECT_ENVIRONMENT=../.venv uv run --no-sync pytest

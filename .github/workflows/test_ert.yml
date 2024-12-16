@@ -14,8 +14,8 @@ on:
 env:
   ERT_SHOW_BACKTRACE: 1
   ECL_SKIP_SIGNAL: 1
-  UV_SYSTEM_PYTHON: 1
   ERT_PYTEST_ARGS: '-m ${{ inputs.select-string }} --cov=ert --cov=everest --cov=_ert --cov-report=xml:cov1.xml --junit-xml=junit.xml -o junit_family=legacy -v --durations=25 --benchmark-disable'
+  UV_FROZEN: true
 
 jobs:
   tests-ert:
@@ -40,15 +40,18 @@ jobs:
 
     - name: Install uv
       uses: astral-sh/setup-uv@v5
+      with:
+        enable-cache: true
+        python-version: ${{ inputs.python-version }}
 
     - name: Install ert
       run: |
-        uv pip install ".[dev, everest]"
+        uv sync --extra everest --extra dev
 
     - name: GUI Test
       if: inputs.test-type == 'gui-tests'
       run: |
-        just ert-gui-tests
+        uv run just ert-gui-tests
 
     - name: Upload artifact images
       uses: actions/upload-artifact@v4
@@ -61,13 +64,13 @@ jobs:
     - name: CLI Test
       if: inputs.test-type == 'cli-tests'
       run: |
-        just ert-cli-tests
+        uv run just ert-cli-tests
 
     - name: Unit Test
       if: inputs.test-type == 'performance-and-unit-tests'
       run: |
-        just ert-unit-tests
-        ERT_PYTEST_ARGS='-m ${{ inputs.select-string }} --cov=ert --cov=everest --cov=_ert --cov-report=xml:cov2.xml --junit-xml=junit.xml -o junit_family=legacy -v --durations=25 --benchmark-disable' just ert-doc-tests
+        uv run just ert-unit-tests
+        ERT_PYTEST_ARGS='-m ${{ inputs.select-string }} --cov=ert --cov=everest --cov=_ert --cov-report=xml:cov2.xml --junit-xml=junit.xml -o junit_family=legacy -v --durations=25 --benchmark-disable' uv run just ert-doc-tests
 
     - name: Upload coverage to Codecov
       id: codecov1
@@ -105,11 +108,12 @@ jobs:
 
     - name: Test CLI
       run: |
-        ert --help
+        uv run ert --help
 
     - name: Test for a clean repository
       run: |
         # Remove things we have generated on purpose:
+        ls -la
         rm -rf .coverage
         rm -f coverage.xml cov1.xml cov2.xml junit.xml
         rm -f ert.*.whl

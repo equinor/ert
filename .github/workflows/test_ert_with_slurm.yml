@@ -7,7 +7,7 @@ on:
         type: string
 
 env:
-  UV_SYSTEM_PYTHON: 1
+  UV_FROZEN: true
 
 jobs:
   test-ert-on-slurm:
@@ -29,10 +29,13 @@ jobs:
 
     - name: Install uv
       uses: astral-sh/setup-uv@v5
+      with:
+        enable-cache: true
+        python-version: ${{ inputs.python-version }}
 
     - name: Install ert
       run: |
-        uv pip install ".[dev]"
+        uv sync --extra dev
 
     - name: Install and setup slurm
       run: |
@@ -84,11 +87,11 @@ jobs:
       run: |
         set -e
         export _ERT_TESTS_ALTERNATIVE_QUEUE=AlternativeQ
-        pytest tests/ert/unit_tests/scheduler/test_{generic,slurm}_driver.py -sv --slurm \
+        uv run pytest tests/ert/unit_tests/scheduler/test_{generic,slurm}_driver.py -sv --slurm \
           -n 8 --durations=10 -k "not (LsfDriver or LocalDriver or OpenPBSDriver)"
         scontrol show job
 
-        pytest tests/ert/ui_tests/cli/test_missing_runpath.py --slurm
+        uv run pytest tests/ert/ui_tests/cli/test_missing_runpath.py --slurm
 
     - name: Test poly-example on slurm
       run: |
@@ -102,4 +105,4 @@ jobs:
         QUEUE_SYSTEM SLURM
         EOF
 
-        time ert ensemble_experiment poly.ert
+        time uv run ert ensemble_experiment poly.ert
