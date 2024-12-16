@@ -1,39 +1,8 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1734363270977,
+  "lastUpdate": 1734370209198,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
-      {
-        "commit": {
-          "author": {
-            "email": "havb@equinor.com",
-            "name": "Håvard Berland",
-            "username": "berland"
-          },
-          "committer": {
-            "email": "berland@pvv.ntnu.no",
-            "name": "Håvard Berland",
-            "username": "berland"
-          },
-          "distinct": true,
-          "id": "60fa1a6e1bd598aa5569820698a9801f3e79f329",
-          "message": "Fix bug in careful_copy handling None\n\nThe function careful_copy_file was not able to handle None as\na target. Added the functionality as probably originally intended\nand added tests.",
-          "timestamp": "2024-12-10T11:31:06+01:00",
-          "tree_id": "c856d2dec03203e486342d9fc3e5e1ebcb04f2e3",
-          "url": "https://github.com/equinor/ert/commit/60fa1a6e1bd598aa5569820698a9801f3e79f329"
-        },
-        "date": 1733826772370,
-        "tool": "pytest",
-        "benches": [
-          {
-            "name": "tests/ert/performance_tests/test_analysis.py::test_and_benchmark_adaptive_localization_with_fields",
-            "value": 0.22661602393836813,
-            "unit": "iter/sec",
-            "range": "stddev: 0.026439295745565545",
-            "extra": "mean: 4.412750619400003 sec\nrounds: 5"
-          }
-        ]
-      },
       {
         "commit": {
           "author": {
@@ -930,6 +899,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.03633777651701471",
             "extra": "mean: 4.537722772199982 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "cmrqs@unicamp.br",
+            "name": "Carlos Marques",
+            "username": "cmrqs"
+          },
+          "committer": {
+            "email": "berland@pvv.ntnu.no",
+            "name": "Håvard Berland",
+            "username": "berland"
+          },
+          "distinct": true,
+          "id": "0e1901256b18e622c31a8bb5937eb3e0267b77ef",
+          "message": "Name job after its executable when not specified",
+          "timestamp": "2024-12-16T18:28:13+01:00",
+          "tree_id": "00adfcd6681758c4f8729fde0b38784de4c57f5a",
+          "url": "https://github.com/equinor/ert/commit/0e1901256b18e622c31a8bb5937eb3e0267b77ef"
+        },
+        "date": 1734370208277,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/ert/performance_tests/test_analysis.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 0.21292027902073588,
+            "unit": "iter/sec",
+            "range": "stddev: 0.03826610314741605",
+            "extra": "mean: 4.696593507199998 sec\nrounds: 5"
           }
         ]
       }
