@@ -263,3 +263,6 @@ PYSIDE6 = false
 PYQT5 = true
 PYSIDE2 = false
 PYQT6 = false
+
+[tool.uv]
+fork-strategy = "requires-python"
