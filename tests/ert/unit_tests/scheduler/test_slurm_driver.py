@@ -145,6 +145,15 @@ async def test_project_code_is_set(project_code):
 
 
 @pytest.mark.usefixtures("capturing_sbatch")
+async def test_empty_job_name():
+    driver = SlurmDriver()
+    await driver.submit(0, "/bin/sleep")
+    assert "--job-name=sleep" in Path("captured_sbatch_args").read_text(
+        encoding="utf-8"
+    )
+
+
+@pytest.mark.usefixtures("capturing_sbatch")
 @given(max_runtime=st.floats(min_value=1, max_value=999999999))
 async def test_max_runtime_is_properly_formatted(max_runtime):
     # According to https://slurm.schedmd.com/sbatch.html we accept the formats

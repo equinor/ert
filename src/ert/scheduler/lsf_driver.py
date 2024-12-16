@@ -292,13 +292,15 @@ class LsfDriver(Driver):
         executable: str,
         /,
         *args: str,
-        name: str = "dummy",
+        name: str | None = None,
         runpath: Path | None = None,
         num_cpu: int | None = 1,
         realization_memory: int | None = 0,
     ) -> None:
         if runpath is None:
             runpath = Path.cwd()
+        if name is None:
+            name = Path(executable).name
 
         arg_queue_name = ["-q", self._queue_name] if self._queue_name else []
         arg_project_code = ["-P", self._project_code] if self._project_code else []
