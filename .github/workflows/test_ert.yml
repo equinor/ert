@@ -113,7 +113,7 @@ jobs:
         rm -rf .coverage
         rm -f coverage.xml cov1.xml cov2.xml junit.xml
         rm -f ert.*.whl
-        rm -f .coverage*
+        rm -f .coverage.*
         ls -la
         git status --porcelain
         test -z "$(git status --porcelain)"
