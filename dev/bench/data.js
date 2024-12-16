@@ -1,39 +1,8 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1734357912366,
+  "lastUpdate": 1734357993350,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
-      {
-        "commit": {
-          "author": {
-            "email": "ejah@equinor.com",
-            "name": "Eivind Jahren",
-            "username": "eivindjahren"
-          },
-          "committer": {
-            "email": "ejah@equinor.com",
-            "name": "Eivind Jahren",
-            "username": "eivindjahren"
-          },
-          "distinct": true,
-          "id": "602a9b2444fe6262514f7a76665d4d4237e1b498",
-          "message": "Use pattern matching for config schema",
-          "timestamp": "2024-12-10T09:49:48+01:00",
-          "tree_id": "ab22c6111029f34e88c76e7578a83f1e6169d31c",
-          "url": "https://github.com/equinor/ert/commit/602a9b2444fe6262514f7a76665d4d4237e1b498"
-        },
-        "date": 1733820704060,
-        "tool": "pytest",
-        "benches": [
-          {
-            "name": "tests/ert/performance_tests/test_analysis.py::test_and_benchmark_adaptive_localization_with_fields",
-            "value": 0.2183465894258909,
-            "unit": "iter/sec",
-            "range": "stddev: 0.026407073519232785",
-            "extra": "mean: 4.579874605000003 sec\nrounds: 5"
-          }
-        ]
-      },
       {
         "commit": {
           "author": {
@@ -930,6 +899,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.024628987265804588",
             "extra": "mean: 4.6323613814 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "levje@equinor.com",
+            "name": "larsevj",
+            "username": "larsevj"
+          },
+          "committer": {
+            "email": "60844986+larsevj@users.noreply.github.com",
+            "name": "Lars Evje",
+            "username": "larsevj"
+          },
+          "distinct": true,
+          "id": "69535ab2e3a8f31394edec4849756f41baf12ae1",
+          "message": "Remove unreliable test: test_gui_snapshot",
+          "timestamp": "2024-12-16T15:04:39+01:00",
+          "tree_id": "7966cc3eda35bf716354ba03c79163e1248f65b6",
+          "url": "https://github.com/equinor/ert/commit/69535ab2e3a8f31394edec4849756f41baf12ae1"
+        },
+        "date": 1734357992826,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/ert/performance_tests/test_analysis.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 0.21804041852322464,
+            "unit": "iter/sec",
+            "range": "stddev: 0.022650697789625963",
+            "extra": "mean: 4.586305634400003 sec\nrounds: 5"
           }
         ]
       }
