@@ -223,9 +223,17 @@ class _EnsembleWidget(QWidget):
         obs = _filter_on_observation_label(obs)
 
         response_key = obs["response_key"].unique().to_list()[0]
-        response_ds = self._ensemble.load_responses(
-            response_key,
-            tuple(self._ensemble.get_realization_list_with_responses()),
+        reals_with_responses = tuple(
+            self._ensemble.get_realization_list_with_responses()
+        )
+
+        response_ds = (
+            self._ensemble.load_responses(
+                response_key,
+                reals_with_responses,
+            )
+            if reals_with_responses
+            else None
         )
 
         scaling_df = self._ensemble.load_observation_scaling_factors()
@@ -260,7 +268,7 @@ class _EnsembleWidget(QWidget):
                 color="black",
             )
 
-        if not response_ds.is_empty():
+        if response_ds is not None and not response_ds.is_empty():
             response_ds_for_label = _filter_on_observation_label(response_ds).rename(
                 {"values": "Responses"}
             )[["response_key", "Responses"]]
