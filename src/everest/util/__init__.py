@@ -5,7 +5,6 @@ import os
 from ropt.version import version as ropt_version
 
 from ert.shared.version import version as ert_version
-from everest.plugins.everest_plugin_manager import EverestPluginManager
 from everest.strings import DATE_FORMAT, EVEREST
 
 try:
@@ -20,13 +19,6 @@ except ImportError:
 
     def has_opm():
         return False
-
-
-def get_azure_logging_handler():
-    pm = EverestPluginManager()
-    handles = pm.hook.add_log_handle_to_root()
-    if handles:
-        return handles[0]
 
 
 def version_info():
