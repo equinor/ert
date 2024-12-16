@@ -1,14 +1,19 @@
+import asyncio
 import os
+from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
+from typing import Any
 
 import pytest
+import yaml
 
 from ert.scheduler.event import FinishedEvent
-from everest.config import EverestConfig, ServerConfig
+from everest.config import (
+    EverestConfig,
+    ServerConfig,
+)
 from everest.detached import start_server, wait_for_server
 from everest.util import makedirs_if_needed
-
-CONFIG_FILE = "config_fm_failure.yml"
 
 
 def _string_exists_in_file(file_path, string):
@@ -26,7 +31,13 @@ async def test_logging_setup(copy_math_func_test_data_to_tmp):
             if isinstance(event, FinishedEvent) and event.iens == 0:
                 return
 
-    everest_config = EverestConfig.load_file(CONFIG_FILE)
+    config_yaml = await _read_file_as_yaml_async("config_minimal.yml")
+    config_yaml["install_jobs"].append(
+        {"name": "toggle_failure", "source": "jobs/FAIL_SIMULATION"}
+    )
+    config_yaml["forward_model"].append("toggle_failure --fail simulation_2")
+    await _write_yaml_to_file_async(config_yaml, "config.yml")
+    everest_config = EverestConfig.load_file("config.yml")
 
     makedirs_if_needed(everest_config.output_dir, roll_if_exists=True)
     driver = await start_server(everest_config, debug=True)
@@ -65,3 +76,29 @@ async def test_logging_setup(copy_math_func_test_data_to_tmp):
     # the everest server has started
     if endpoint_logs:
         assert "everserver INFO: / entered from" in endpoint_logs
+
+
+async def _read_file_as_yaml_async(path: str):
+    loop = asyncio.get_event_loop()
+    with ThreadPoolExecutor() as pool:
+        result = await loop.run_in_executor(pool, _read_file_as_yaml, path)
+    return result
+
+
+async def _write_yaml_to_file_async(config_yaml: dict[str, Any], path: str):
+    loop = asyncio.get_event_loop()
+    with ThreadPoolExecutor() as pool:
+        result = await loop.run_in_executor(
+            pool, _write_yaml_to_file, config_yaml, path
+        )
+    return result
+
+
+def _read_file_as_yaml(path: str) -> dict[str, Any]:
+    with open(path, encoding="utf-8") as file:
+        return yaml.safe_load(file)
+
+
+def _write_yaml_to_file(config_yaml: dict[str, Any], path: str) -> None:
+    with open(path, "w", encoding="utf-8") as fout:
+        yaml.dump(config_yaml, fout)
