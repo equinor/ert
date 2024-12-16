@@ -214,7 +214,6 @@ def _configure_loggers(detached_dir: Path, log_dir: Path, logging_level: int) ->
         "disable_existing_loggers": False,
         "handlers": {
             "root": {"level": "NOTSET", "class": "logging.NullHandler"},
-            "res": make_handler_config(detached_dir / "simulations.log"),
             "everserver": make_handler_config(detached_dir / "endpoint.log"),
             "everest": make_handler_config(log_dir / "everest.log", logging_level),
             "forward_models": make_handler_config(
@@ -223,7 +222,6 @@ def _configure_loggers(detached_dir: Path, log_dir: Path, logging_level: int) ->
         },
         "loggers": {
             "": {"handlers": ["root"], "level": "NOTSET"},
-            "res": {"handlers": ["res"]},
             "everserver": {"handlers": ["everserver"]},
             "everest": {"handlers": ["everest"]},
             "forward_models": {"handlers": ["forward_models"]},
