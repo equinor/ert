@@ -1,39 +1,8 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1734341247778,
+  "lastUpdate": 1734354574130,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
-      {
-        "commit": {
-          "author": {
-            "email": "ejah@equinor.com",
-            "name": "Eivind Jahren",
-            "username": "eivindjahren"
-          },
-          "committer": {
-            "email": "ejah@equinor.com",
-            "name": "Eivind Jahren",
-            "username": "eivindjahren"
-          },
-          "distinct": true,
-          "id": "0bbd49e3a867f28f6de840d210336ba881d17405",
-          "message": "Require positive std_cutoff",
-          "timestamp": "2024-12-09T14:50:11+01:00",
-          "tree_id": "60ed741b163f4a1fae7958406e222f85a4804ec6",
-          "url": "https://github.com/equinor/ert/commit/0bbd49e3a867f28f6de840d210336ba881d17405"
-        },
-        "date": 1733752319912,
-        "tool": "pytest",
-        "benches": [
-          {
-            "name": "tests/ert/performance_tests/test_analysis.py::test_and_benchmark_adaptive_localization_with_fields",
-            "value": 0.2140253415088439,
-            "unit": "iter/sec",
-            "range": "stddev: 0.02019763556109462",
-            "extra": "mean: 4.672343905399998 sec\nrounds: 5"
-          }
-        ]
-      },
       {
         "commit": {
           "author": {
@@ -930,6 +899,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.14127235805009516",
             "extra": "mean: 4.747361857399994 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "augustommg@gmail.com",
+            "name": "AugustoMagalhaes",
+            "username": "AugustoMagalhaes"
+          },
+          "committer": {
+            "email": "114403625+andreas-el@users.noreply.github.com",
+            "name": "Andreas Eknes Lie",
+            "username": "andreas-el"
+          },
+          "distinct": true,
+          "id": "0d10c5d116aa6b294ae9d3361629cf3e9ebe23db",
+          "message": "Automatically change sidebar focus when running simulations",
+          "timestamp": "2024-12-16T14:07:39+01:00",
+          "tree_id": "b52cecd487f337b128e33d91aac68b639002a08a",
+          "url": "https://github.com/equinor/ert/commit/0d10c5d116aa6b294ae9d3361629cf3e9ebe23db"
+        },
+        "date": 1734354573149,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/ert/performance_tests/test_analysis.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 0.22039706091287284,
+            "unit": "iter/sec",
+            "range": "stddev: 0.016044370930411698",
+            "extra": "mean: 4.537265587199999 sec\nrounds: 5"
           }
         ]
       }
