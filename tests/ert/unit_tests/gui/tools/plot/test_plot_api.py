@@ -11,7 +11,7 @@ import xarray as xr
 from pandas.testing import assert_frame_equal
 from starlette.testclient import TestClient
 
-from ert.config import GenKwConfig, SummaryConfig
+from ert.config import GenDataConfig, GenKwConfig, SummaryConfig
 from ert.dark_storage import enkf
 from ert.dark_storage.app import app
 from ert.gui.tools.plot.plot_api import PlotApi, PlotApiKeyDefinition
@@ -326,3 +326,43 @@ def test_that_multiple_observations_are_parsed_correctly(api):
     ensemble = next(x for x in api.get_all_ensembles() if x.id == "ens_id_5")
     obs_data = api.observations_for_key([ensemble.id], "WOPR:OP1")
     assert obs_data.shape == (3, 6)
+
+
+def test_that_observations_for_empty_ensemble_returns_empty_data(api_and_storage):
+    api, storage = api_and_storage
+    key = "NAIMFRAC"
+    expected_genobs = polars.DataFrame(
+        {
+            "observation_key": "gen_data",
+            "response_key": ["gen_data_0"],
+            "report_step": polars.Series([0], dtype=polars.UInt16),
+            "index": polars.Series([0], dtype=polars.UInt16),
+            "observations": polars.Series([13.37], dtype=polars.Float32),
+            "std": polars.Series([0.15], dtype=polars.Float32),
+        }
+    )
+
+    experiment = storage.create_experiment(
+        parameters=[],
+        responses=[
+            GenDataConfig(
+                name="gen_data",
+                report_steps_list=[[0]],
+                keys=["gen_data_0"],
+            ),
+            SummaryConfig(
+                name="summary",
+                input_files=[""],
+                keys=[key],
+            ),
+        ],
+        observations={"gen_data": expected_genobs},
+    )
+    ensemble = storage.create_ensemble(experiment.id, ensemble_size=695)
+
+    # Important to request a non-existing gen data key here
+    # so it hits the summary-request logic clause and finds that there
+    # is no
+    gen_obs = api.observations_for_key([str(ensemble.id)], "gen_data_0@1")
+
+    assert gen_obs.empty
