@@ -109,8 +109,10 @@ jobs:
     - name: Test for a clean repository
       run: |
         # Remove things we have generated on purpose:
+        ls -la
         rm -rf .coverage
         rm -f coverage.xml cov1.xml cov2.xml junit.xml
         rm -f ert.*.whl
+        ls -la
         git status --porcelain
         test -z "$(git status --porcelain)"
