@@ -144,7 +144,7 @@ jobs:
 
     - name: Install ert
       run: |
-        uv sync --extra dev --extra everest
+        uv sync --extra everest --group dev
 
     - name: Make test directory
       run: |

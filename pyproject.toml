@@ -93,6 +93,19 @@ wdupdate = "everest.jobs.scripts.wdupdate:main"
 Repository = "https://github.com/equinor/ert"
 
 [project.optional-dependencies]
+everest = [
+    "progressbar2",
+    "ruamel.yaml",
+    "fastapi",
+    "decorator",
+    "resdata",
+    "colorama",
+    "ropt[pandas]>=0.1,<0.11",
+    "ropt-dakota>=0.1,<0.11",
+    "seba-sqlite",
+]
+
+[dependency-groups]
 dev = [
     "furo",
     "hypothesis!=6.102.0,!=6.112.3,>=6.85",
@@ -139,16 +152,11 @@ types = [
     "types-psutil",
     "types-setuptools"
 ]
-everest = [
-    "progressbar2",
-    "ruamel.yaml",
-    "fastapi",
-    "decorator",
-    "resdata",
-    "colorama",
-    "ropt[pandas]>=0.1,<0.11",
-    "ropt-dakota>=0.1,<0.11",
-    "seba-sqlite",
+
+all = [
+  { include-group = 'dev' },
+  { include-group = 'style' },
+  { include-group = 'types' },
 ]
 
 [tool.setuptools]
