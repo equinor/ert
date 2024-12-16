@@ -682,17 +682,20 @@ class EverestRunModel(BaseRunModel):
                     self._simulator_cache.add_simulation_results(
                         sim_idx, real_id, control_values, objectives, constraints
                     )
-        self.batch_id += 1
 
         # Note the negative sign for the objective results. Everest aims to do a
         # maximization, while the standard practice of minimizing is followed by
         # ropt. Therefore we will minimize the negative of the objectives:
-        return EvaluatorResult(
+        evaluator_result = EvaluatorResult(
             objectives=-objectives,
             constraints=constraints,
             batch_id=self.batch_id,
             evaluation_ids=sim_ids,
         )
+
+        self.batch_id += 1
+
+        return evaluator_result
 
     def send_snapshot_event(self, event: Event, iteration: int) -> None:
         super().send_snapshot_event(event, iteration)
