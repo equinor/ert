@@ -3,7 +3,6 @@ from __future__ import annotations
 import asyncio
 import logging
 import queue
-import time
 from pathlib import Path
 from typing import Final
 
@@ -99,14 +98,14 @@ class Event(Reporter):
                 while True:
                     try:
                         if self._done.is_set() and start_time is None:
-                            start_time = time.time()
+                            start_time = asyncio.get_event_loop().time()
                         if event is None:
                             event = self._event_queue.get()
                             if event is self._sentinel:
                                 break
                         if (
                             start_time
-                            and (time.time() - start_time)
+                            and (asyncio.get_event_loop().time() - start_time)
                             > self._finished_event_timeout
                         ):
                             break
