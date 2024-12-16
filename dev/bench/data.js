@@ -1,39 +1,8 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1734357098576,
+  "lastUpdate": 1734357912366,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
-      {
-        "commit": {
-          "author": {
-            "email": "JONAK@equinor.com",
-            "name": "Jonathan Karlsen",
-            "username": "jonathan-eq"
-          },
-          "committer": {
-            "email": "107626001+jonathan-eq@users.noreply.github.com",
-            "name": "Jonathan Karlsen",
-            "username": "jonathan-eq"
-          },
-          "distinct": true,
-          "id": "bf2d515c9e9948fcad5caa4b4fba7c60e6339cfa",
-          "message": "Fix ForwardModelStep `handle_process_timeout...` timeout\n\nThis fixes the bug where some code was unreachable after the refactoring in commit #4dc894ca63687476e091f582df5a42045190f7bd",
-          "timestamp": "2024-12-10T09:18:33+01:00",
-          "tree_id": "fac3444a941125e008dfefb9b8a03fbedecc6620",
-          "url": "https://github.com/equinor/ert/commit/bf2d515c9e9948fcad5caa4b4fba7c60e6339cfa"
-        },
-        "date": 1733818824915,
-        "tool": "pytest",
-        "benches": [
-          {
-            "name": "tests/ert/performance_tests/test_analysis.py::test_and_benchmark_adaptive_localization_with_fields",
-            "value": 0.2214792527246713,
-            "unit": "iter/sec",
-            "range": "stddev: 0.045115848454224346",
-            "extra": "mean: 4.515095602399993 sec\nrounds: 5"
-          }
-        ]
-      },
       {
         "commit": {
           "author": {
@@ -930,6 +899,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.07902852908449726",
             "extra": "mean: 4.649722620399996 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "eide.oyvind87@gmail.com",
+            "name": "Øyvind Eide",
+            "username": "oyvindeide"
+          },
+          "committer": {
+            "email": "44577479+oyvindeide@users.noreply.github.com",
+            "name": "Øyvind Eide",
+            "username": "oyvindeide"
+          },
+          "distinct": true,
+          "id": "87cbac355e155db79349e0ed9fc3733d7147769a",
+          "message": "Remove env variable that was always false",
+          "timestamp": "2024-12-16T15:03:18+01:00",
+          "tree_id": "bdca649b515e52327fcbf04c701ff12681e67d0c",
+          "url": "https://github.com/equinor/ert/commit/87cbac355e155db79349e0ed9fc3733d7147769a"
+        },
+        "date": 1734357911775,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/ert/performance_tests/test_analysis.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 0.215872622549534,
+            "unit": "iter/sec",
+            "range": "stddev: 0.024628987265804588",
+            "extra": "mean: 4.6323613814 sec\nrounds: 5"
           }
         ]
       }
