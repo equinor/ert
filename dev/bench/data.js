@@ -1,39 +1,8 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1734356324018,
+  "lastUpdate": 1734356610181,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
-      {
-        "commit": {
-          "author": {
-            "email": "ejah@equinor.com",
-            "name": "Eivind Jahren",
-            "username": "eivindjahren"
-          },
-          "committer": {
-            "email": "ejah@equinor.com",
-            "name": "Eivind Jahren",
-            "username": "eivindjahren"
-          },
-          "distinct": true,
-          "id": "35e410144fdcee7c64e5675be461cdeacccef98f",
-          "message": "Use pattern-matching for ensemble_parameters",
-          "timestamp": "2024-12-09T15:34:44+01:00",
-          "tree_id": "fd510197e7304a33062b38a6d9f7b9311e7ec812",
-          "url": "https://github.com/equinor/ert/commit/35e410144fdcee7c64e5675be461cdeacccef98f"
-        },
-        "date": 1733755046896,
-        "tool": "pytest",
-        "benches": [
-          {
-            "name": "tests/ert/performance_tests/test_analysis.py::test_and_benchmark_adaptive_localization_with_fields",
-            "value": 0.21639733693184626,
-            "unit": "iter/sec",
-            "range": "stddev: 0.03895051510979895",
-            "extra": "mean: 4.621128957400003 sec\nrounds: 5"
-          }
-        ]
-      },
       {
         "commit": {
           "author": {
@@ -930,6 +899,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.04184824753979805",
             "extra": "mean: 4.61045070519998 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "augustommg@gmail.com",
+            "name": "AugustoMagalhaes",
+            "username": "AugustoMagalhaes"
+          },
+          "committer": {
+            "email": "berland@pvv.ntnu.no",
+            "name": "Håvard Berland",
+            "username": "berland"
+          },
+          "distinct": true,
+          "id": "ab58e603d964ce1126ae85b6f396340850877de6",
+          "message": "Remove superfluous layer in ert_config",
+          "timestamp": "2024-12-16T14:41:30+01:00",
+          "tree_id": "5f1657d93d7f1a2359b029ce25d315fafce013e9",
+          "url": "https://github.com/equinor/ert/commit/ab58e603d964ce1126ae85b6f396340850877de6"
+        },
+        "date": 1734356609593,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/ert/performance_tests/test_analysis.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 0.21745873067969923,
+            "unit": "iter/sec",
+            "range": "stddev: 0.02440214123462098",
+            "extra": "mean: 4.598573701200007 sec\nrounds: 5"
           }
         ]
       }
