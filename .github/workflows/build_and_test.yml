@@ -169,7 +169,7 @@ jobs:
 
     - name: Install ert
       run: |
-        uv pip install ".[dev, everest]"
+        uv sync --extra dev --extra everest
 
     - name: Make test directory
       run: |

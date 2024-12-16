@@ -37,9 +37,9 @@ jobs:
 
     - name: Install ERT with style dependencies
       run: |
-        uv pip install ".[style]"
+        uv sync --extra style
 
     - name: Run style check
       if: ${{ always() }}
       run: |
-        SKIP=no-commit-to-branch pre-commit run --all-files --show-diff-on-failure
+        SKIP=no-commit-to-branch uv run pre-commit run --all-files --show-diff-on-failure

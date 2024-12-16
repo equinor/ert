@@ -38,7 +38,7 @@ jobs:
 
     - name: Install ert
       run: |
-        uv pip install .
+        uv sync
 
     - name: Get semeio
       run: |
@@ -48,4 +48,4 @@ jobs:
       run: |
         pushd semeio
         uv pip install ".[test]"
-        pytest
+        uv run pytest

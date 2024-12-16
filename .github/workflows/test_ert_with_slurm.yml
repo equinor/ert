@@ -28,7 +28,7 @@ jobs:
 
     - name: Install ert
       run: |
-        uv pip install ".[dev]"
+        uv sync --extra dev
 
     - name: Install and setup slurm
       run: |
@@ -69,8 +69,8 @@ jobs:
       run: |
         set -e
         export _ERT_TESTS_ALTERNATIVE_QUEUE=AlternativeQ
-        pytest tests/ert/unit_tests/scheduler --slurm
-        pytest tests/ert/ui_tests/cli/test_missing_runpath.py --slurm
+        uv run pytest tests/ert/unit_tests/scheduler --slurm
+        uv run pytest tests/ert/ui_tests/cli/test_missing_runpath.py --slurm
 
     - name: Test poly-example on slurm
       run: |
@@ -84,4 +84,4 @@ jobs:
         QUEUE_SYSTEM SLURM
         EOF
 
-        time ert ensemble_experiment poly.ert
+        time uv run ert ensemble_experiment poly.ert
