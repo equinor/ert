@@ -237,6 +237,9 @@ class ErtMainWindow(QMainWindow):
             self.config_file,
             self.facade.get_ensemble_size(),
         )
+        experiment_panel.experiment_started.connect(
+            lambda: self.results_button.setChecked(True)
+        )
         self.central_layout.addWidget(experiment_panel)
         self._experiment_panel = experiment_panel
         self.central_panels_map["Start simulation"] = self._experiment_panel
