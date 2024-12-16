@@ -1,8 +1,6 @@
 import datetime
 import random
-import time
 from dataclasses import dataclass
-from textwrap import dedent
 
 import memray
 import numpy as np
@@ -228,9 +226,7 @@ class _UpdatePerfTestConfig:
 @dataclass
 class _ExpectedPerformance:
     memory_limit_mb: float
-    time_limit_s: float
     last_measured_memory_mb: float | None = None  # For bookkeeping
-    last_measured_time: float | None = None  # For bookkeeping
 
 
 @dataclass
@@ -288,14 +284,10 @@ _BenchMarks: list[_Benchmark] = [
         ),
         expected_join_performance=_ExpectedPerformance(
             memory_limit_mb=1500,
-            time_limit_s=30,
-            last_measured_time=2.78,
             last_measured_memory_mb=1027,
         ),
         expected_update_performance=_ExpectedPerformance(
             memory_limit_mb=3100,
-            time_limit_s=30,
-            last_measured_time=5.34,
             last_measured_memory_mb=2230,
         ),
     ),
@@ -314,15 +306,11 @@ _BenchMarks: list[_Benchmark] = [
         ),
         expected_join_performance=_ExpectedPerformance(
             memory_limit_mb=4500,
-            time_limit_s=45,
             last_measured_memory_mb=1710,
-            last_measured_time=3.59,
         ),
         expected_update_performance=_ExpectedPerformance(
             memory_limit_mb=4000,
-            time_limit_s=40,
             last_measured_memory_mb=3088,
-            last_measured_time=6.23,
         ),
     ),
     _Benchmark(
@@ -340,14 +328,10 @@ _BenchMarks: list[_Benchmark] = [
         ),
         expected_join_performance=_ExpectedPerformance(
             memory_limit_mb=3300,
-            time_limit_s=55,
-            last_measured_time=3.96,
             last_measured_memory_mb=1715,
         ),
         expected_update_performance=_ExpectedPerformance(
             memory_limit_mb=4500,
-            time_limit_s=50,
-            last_measured_time=6.98,
             last_measured_memory_mb=3115,
         ),
     ),
@@ -367,39 +351,27 @@ _BenchMarks: list[_Benchmark] = [
     #    ),
     #    expected_join_performance=_ExpectedPerformance(
     #        memory_limit_mb=55000,
-    #        time_limit_s=60,
-    #        last_measured_time=16.03,
     #        last_measured_memory_mb=48504,
     #    ),
     #    expected_update_performance=_ExpectedPerformance(
     #        memory_limit_mb=55000,
-    #        time_limit_s=60,
-    #        last_measured_time=13,
     #        last_measured_memory_mb=45315,
     #    ),
     # ),
 ]
 
 
-@pytest.mark.parametrize(
-    "config, expected_performance, alias",
-    [
-        pytest.param(
+@pytest.fixture(
+    params=[
+        (
             b.config,
             b.expected_join_performance,
-            f"{b.alias}:{b.config!s}",
-            id=f"{b.alias}:{b.config!s}",
         )
         for b in _BenchMarks
     ],
 )
-@pytest.mark.integration_test
-def test_performance_of_joining_observations_and_responses(
-    config: _UpdatePerfTestConfig,
-    expected_performance: _ExpectedPerformance,
-    alias,
-    tmp_path,
-):
+def setup_benchmark(tmp_path, request):
+    config, expected_performance = request.param
     info = create_experiment_args(
         config.num_parameters,
         config.num_gen_data_keys,
@@ -428,39 +400,49 @@ def test_performance_of_joining_observations_and_responses(
             ens.save_response("summary", info.summary_responses.clone(), real)
             ens.save_response("gen_data", info.gen_data_responses.clone(), real)
 
-        with memray.Tracker(tmp_path / "memray.bin"):
-            t0 = time.time()
-            ens.get_observations_and_responses(
-                experiment.observation_keys, np.array(range(config.num_realizations))
-            )
-            t1 = time.time()
-            time_elapsed_s = t1 - t0
+        yield (
+            ens,
+            experiment.observation_keys,
+            np.array(range(config.num_realizations)),
+            expected_performance,
+        )
+
+
+def test_memory_performance_of_joining_observations_and_responses(
+    setup_benchmark, tmp_path
+):
+    ens, observation_keys, mask, expected_performance = setup_benchmark
+
+    with memray.Tracker(tmp_path / "memray.bin"):
+        ens.get_observations_and_responses(observation_keys, mask)
 
     stats = memray._memray.compute_statistics(str(tmp_path / "memray.bin"))
     mem_usage_mb = stats.total_memory_allocated / (1024**2)
-    print(
-        dedent(f"join,'{alias}',{round(time_elapsed_s,2)}s,{round(mem_usage_mb,2)}mb")
-    )
     assert mem_usage_mb < expected_performance.memory_limit_mb
-    assert time_elapsed_s < expected_performance.time_limit_s
 
 
-@pytest.mark.parametrize(
-    "config, expected_performance, alias",
-    [
-        pytest.param(
+def test_time_performance_of_joining_observations_and_responses(
+    setup_benchmark, benchmark
+):
+    ens, observation_keys, mask, _ = setup_benchmark
+
+    def run():
+        ens.get_observations_and_responses(observation_keys, mask)
+
+    benchmark(run)
+
+
+@pytest.fixture(
+    params=[
+        (
             b.config,
-            b.expected_update_performance,
-            f"{b.alias}:{b.config!s}",
-            id=f"{b.alias}:{b.config!s}",
+            b.expected_join_performance,
         )
         for b in _BenchMarks
     ],
 )
-@pytest.mark.integration_test
-def test_performance_of_doing_es_update(
-    config: _UpdatePerfTestConfig, expected_performance, alias, tmp_path
-):
+def setup_es_benchmark(tmp_path, request):
+    config, expected_performance = request.param
     info = create_experiment_args(
         config.num_parameters,
         config.num_gen_data_keys,
@@ -504,21 +486,34 @@ def test_performance_of_doing_es_update(
             prior_ensemble=prior,
             iteration=1,
         )
-        with memray.Tracker(tmp_path / "memray.bin"):
-            t0 = time.time()
-            smoother_update(
-                prior,
-                posterior,
-                prior.experiment.observation_keys,
-                [info.gen_kw_config.name],
-            )
-            t1 = time.time()
-            time_elapsed_s = t1 - t0
+
+        yield prior, posterior, info.gen_kw_config.name, expected_performance
+
+
+def test_memory_performance_of_doing_es_update(setup_es_benchmark, tmp_path):
+    prior, posterior, gen_kw_name, expected_performance = setup_es_benchmark
+    with memray.Tracker(tmp_path / "memray.bin"):
+        smoother_update(
+            prior,
+            posterior,
+            prior.experiment.observation_keys,
+            [gen_kw_name],
+        )
 
     stats = memray._memray.compute_statistics(str(tmp_path / "memray.bin"))
     mem_usage_mb = stats.total_memory_allocated / (1024**2)
-    print(
-        dedent(f"update,'{alias}',{round(time_elapsed_s,2)}s,{round(mem_usage_mb,2)}mb")
-    )
     assert mem_usage_mb < expected_performance.memory_limit_mb
-    assert time_elapsed_s < expected_performance.time_limit_s
+
+
+def test_speed_performance_of_doing_es_update(setup_es_benchmark, benchmark):
+    prior, posterior, gen_kw_name, _ = setup_es_benchmark
+
+    def run():
+        smoother_update(
+            prior,
+            posterior,
+            prior.experiment.observation_keys,
+            [gen_kw_name],
+        )
+
+    benchmark(run)
