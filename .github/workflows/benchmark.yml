@@ -40,7 +40,7 @@ jobs:
 
       - name: Install ert with dev-deps
         run: |
-          uv sync --extra dev
+          uv sync --group dev
 
       - name: Run benchmark
         run: |
