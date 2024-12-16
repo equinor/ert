@@ -80,12 +80,9 @@ class Client:
         self.context = zmq.asyncio.Context()
         self.socket = self.context.socket(zmq.DEALER)
         self.socket.setsockopt(zmq.LINGER, 0)
-        if dealer_name is None:
-            self.dealer_id = f"dispatch-{uuid.uuid4().hex[:8]}"
-        else:
-            self.dealer_id = dealer_name
+        self.dealer_id = dealer_name or f"dispatch-{uuid.uuid4().hex[:8]}"
         self.socket.setsockopt_string(zmq.IDENTITY, self.dealer_id)
-        print(f"Created: {self.dealer_id=} {token=} {self._ack_timeout=}")
+
         if token is not None:
             client_public, client_secret = zmq.curve_keypair()
             self.socket.curve_secretkey = client_secret
