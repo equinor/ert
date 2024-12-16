@@ -116,7 +116,8 @@ class Client:
         self._ack_event.clear()
 
         backoff = 1
-        retries = retries or self.DEFAULT_MAX_RETRIES
+        if retries is None:
+            retries = self.DEFAULT_MAX_RETRIES
         while retries >= 0:
             try:
                 await self.socket.send_multipart([b"", message.encode("utf-8")])

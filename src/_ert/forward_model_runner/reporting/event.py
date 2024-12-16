@@ -182,10 +182,7 @@ class Event(Reporter):
             self._dump_event(event)
 
     def _finished_handler(self, _):
-        self._event_queue.put(Event._sentinel)
-        self._done.set()
-        if self._event_publisher_thread.is_alive():
-            self._event_publisher_thread.join()
+        self.stop()
 
     def _checksum_handler(self, msg: Checksum):
         fm_checksum = ForwardModelStepChecksum(
