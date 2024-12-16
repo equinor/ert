@@ -29,32 +29,6 @@ class Client:
     DEFAULT_ACK_TIMEOUT = 5
     _receiver_task: asyncio.Task[None] | None
 
-    async def __aenter__(self) -> Self:
-        await self.connect()
-        return self
-
-    async def __aexit__(
-        self, exc_type: Any, exc_value: Any, exc_traceback: Any
-    ) -> None:
-        try:
-            await self.send(DISCONNECT_MSG)
-        except ClientConnectionError:
-            logger.error("No ack for dealer disconnection. Connection is down!")
-        finally:
-            self.socket.disconnect(self.url)
-            await self._term_receiver_task()
-            self.term()
-
-    def term(self) -> None:
-        self.socket.close()
-        self.context.term()
-
-    async def _term_receiver_task(self) -> None:
-        if self._receiver_task and not self._receiver_task.done():
-            self._receiver_task.cancel()
-            await asyncio.gather(self._receiver_task, return_exceptions=True)
-            self._receiver_task = None
-
     def __init__(
         self,
         url: str,
@@ -82,6 +56,32 @@ class Client:
             self.socket.curve_serverkey = token.encode("utf-8")
 
         self._receiver_task = None
+
+    async def __aenter__(self) -> Self:
+        await self.connect()
+        return self
+
+    async def __aexit__(
+        self, exc_type: Any, exc_value: Any, exc_traceback: Any
+    ) -> None:
+        try:
+            await self.send(DISCONNECT_MSG)
+        except ClientConnectionError:
+            logger.error("No ack for dealer disconnection. Connection is down!")
+        finally:
+            self.socket.disconnect(self.url)
+            await self._term_receiver_task()
+            self.term()
+
+    def term(self) -> None:
+        self.socket.close()
+        self.context.term()
+
+    async def _term_receiver_task(self) -> None:
+        if self._receiver_task and not self._receiver_task.done():
+            self._receiver_task.cancel()
+            await asyncio.gather(self._receiver_task, return_exceptions=True)
+            self._receiver_task = None
 
     async def connect(self) -> None:
         self.socket.connect(self.url)
