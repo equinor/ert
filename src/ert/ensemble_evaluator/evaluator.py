@@ -69,8 +69,10 @@ class EnsembleEvaluator:
         self._server_started: asyncio.Event = asyncio.Event()
         self._clients_connected: set[bytes] = set()
         self._clients_empty: asyncio.Event = asyncio.Event()
+        self._clients_empty.set()
         self._dispatchers_connected: set[bytes] = set()
         self._dispatchers_empty: asyncio.Event = asyncio.Event()
+        self._dispatchers_empty.set()
 
     async def _publisher(self) -> None:
         await self._server_started.wait()
