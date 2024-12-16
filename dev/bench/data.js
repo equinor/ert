@@ -1,39 +1,8 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1734100726011,
+  "lastUpdate": 1734341247778,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
-      {
-        "commit": {
-          "author": {
-            "email": "levje@equinor.com",
-            "name": "larsevj",
-            "username": "larsevj"
-          },
-          "committer": {
-            "email": "60844986+larsevj@users.noreply.github.com",
-            "name": "Lars Evje",
-            "username": "larsevj"
-          },
-          "distinct": true,
-          "id": "ea78bd8890343d1c99337be738c3ccae8c32fd45",
-          "message": "Only set active realizations from selected ensemble when restart is checked es_mda",
-          "timestamp": "2024-12-09T14:06:59+01:00",
-          "tree_id": "07962ecd11797d4dc9a46e969fda438d1acbeead",
-          "url": "https://github.com/equinor/ert/commit/ea78bd8890343d1c99337be738c3ccae8c32fd45"
-        },
-        "date": 1733749733640,
-        "tool": "pytest",
-        "benches": [
-          {
-            "name": "tests/ert/performance_tests/test_analysis.py::test_and_benchmark_adaptive_localization_with_fields",
-            "value": 0.21473519569661298,
-            "unit": "iter/sec",
-            "range": "stddev: 0.09679680966034868",
-            "extra": "mean: 4.656898449999983 sec\nrounds: 5"
-          }
-        ]
-      },
       {
         "commit": {
           "author": {
@@ -930,6 +899,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.03546044688253611",
             "extra": "mean: 4.564293293399999 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "cmrqs@unicamp.br",
+            "name": "Carlos Marques",
+            "username": "cmrqs"
+          },
+          "committer": {
+            "email": "dan.sava42@gmail.com",
+            "name": "Dan Sava",
+            "username": "DanSava"
+          },
+          "distinct": true,
+          "id": "72babc57267823fd3fe7b8c6906ea1005eec1974",
+          "message": "Add torque params to everserver queue config tests",
+          "timestamp": "2024-12-16T18:25:34+09:00",
+          "tree_id": "5ddf793f117709eb933209e5bec9070d5961c931",
+          "url": "https://github.com/equinor/ert/commit/72babc57267823fd3fe7b8c6906ea1005eec1974"
+        },
+        "date": 1734341247307,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/ert/performance_tests/test_analysis.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 0.21064330675388496,
+            "unit": "iter/sec",
+            "range": "stddev: 0.14127235805009516",
+            "extra": "mean: 4.747361857399994 sec\nrounds: 5"
           }
         ]
       }
