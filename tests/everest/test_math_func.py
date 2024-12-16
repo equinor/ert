@@ -4,6 +4,7 @@ import os
 import numpy as np
 import pandas as pd
 import pytest
+import yaml
 
 from ert.run_models.everest_run_model import EverestRunModel
 from everest import ConfigKeys as CK
@@ -185,13 +186,17 @@ def test_math_func_advanced(
 def test_remove_run_path(
     copy_math_func_test_data_to_tmp, evaluator_server_config_generator
 ):
-    config = EverestConfig.load_file(CONFIG_FILE_REMOVE_RUN_PATH)
-
-    simulation_should_fail = "simulation_2"
-    # Add to the config dictionary what simulation needs to fail
-    config.forward_model[config.forward_model.index("toggle_failure")] = (
-        f"toggle_failure --fail {simulation_should_fail}"
-    )
+    # config = EverestConfig.load_file(CONFIG_FILE_REMOVE_RUN_PATH)
+    with open("config_minimal.yml", encoding="utf-8") as file:
+        config_yaml = yaml.safe_load(file)
+        config_yaml["simulator"] = {"delete_run_path": True}
+        config_yaml["install_jobs"].append(
+            {"name": "toggle_failure", "source": "jobs/FAIL_SIMULATION"}
+        )
+        config_yaml["forward_model"].append("toggle_failure --fail simulation_2")
+    with open("config.yml", "w", encoding="utf-8") as fout:
+        yaml.dump(config_yaml, fout)
+    config = EverestConfig.load_file("config.yml")
 
     simulation_dir = config.simulation_dir
 
