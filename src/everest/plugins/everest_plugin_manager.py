@@ -1,3 +1,4 @@
+import logging
 from typing import Any
 
 import pluggy
@@ -20,3 +21,8 @@ class EverestPluginManager(pluggy.PluginManager):
     def get_documentation(self) -> dict[str, Any]:
         docs = self.hook.get_forward_model_documentations()
         return {k: v for d in docs for k, v in d.items()} if docs else {}
+
+    def add_log_handle_to_root(self):
+        root_logger = logging.getLogger()
+        for handler in self.hook.add_log_handle_to_root():
+            root_logger.addHandler(handler)
