@@ -49,24 +49,6 @@ def test_snapshot_handling_of_forward_model_events(
     )
 
 
-def test_gui_snapshot(
-    benchmark,
-    large_snapshot,  # noqa: F811
-    qtbot,
-    run_dialog,  # noqa: F811
-    event_queue,  # noqa: F811
-):
-    infinite_timeout = 100000
-    benchmark(
-        test_large_snapshot,
-        large_snapshot,
-        qtbot,
-        run_dialog,
-        event_queue,
-        timeout_per_iter=infinite_timeout,
-    )
-
-
 def simulate_forward_model_event_handling(
     ensemble_size, forward_models, memory_reports
 ):
