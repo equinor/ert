@@ -166,6 +166,13 @@ async def test_job_name():
 
 
 @pytest.mark.usefixtures("capturing_qsub")
+async def test_empty_job_name():
+    driver = OpenPBSDriver()
+    await driver.submit(0, "/bin/sleep")
+    assert " -Nsleep " in Path("captured_qsub_args").read_text(encoding="utf-8")
+
+
+@pytest.mark.usefixtures("capturing_qsub")
 async def test_job_name_with_prefix():
     driver = OpenPBSDriver(job_prefix="pre_")
     await driver.submit(0, "sleep", name="sleepy")

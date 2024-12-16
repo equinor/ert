@@ -1167,6 +1167,13 @@ async def test_submit_with_resource_requirement_with_bsub_capture():
     assert "hname" not in Path("captured_bsub_args").read_text(encoding="utf-8")
 
 
+@pytest.mark.usefixtures("capturing_bsub")
+async def test_empty_job_name():
+    driver = LsfDriver()
+    await driver.submit(0, "/bin/sleep")
+    assert " -J sleep " in Path("captured_bsub_args").read_text(encoding="utf-8")
+
+
 @pytest.mark.integration_test
 @pytest.mark.usefixtures("use_tmpdir")
 async def test_submit_with_num_cpu(pytestconfig, job_name):

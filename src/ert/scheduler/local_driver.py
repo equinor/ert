@@ -29,7 +29,7 @@ class LocalDriver(Driver):
         executable: str,
         /,
         *args: str,
-        name: str = "dummy",
+        name: str | None = None,
         runpath: Path | None = None,
         num_cpu: int | None = 1,
         realization_memory: int | None = 0,

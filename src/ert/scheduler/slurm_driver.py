@@ -155,13 +155,15 @@ class SlurmDriver(Driver):
         executable: str,
         /,
         *args: str,
-        name: str = "dummy",
+        name: str | None = None,
         runpath: Path | None = None,
         num_cpu: int | None = 1,
         realization_memory: int | None = 0,
     ) -> None:
         if runpath is None:
             runpath = Path.cwd()
+        if name is None:
+            name = Path(executable).name
 
         script = create_submit_script(runpath, executable, args, self.activate_script)
         script_path: Path | None = None
