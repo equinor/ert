@@ -10,7 +10,7 @@ on:
 
 env:
   ERT_SHOW_BACKTRACE: 1   # resdata print on failure https://github.com/equinor/resdata/blob/5fdf0280726a2670161ed536705dc9156aea39be/lib/util/util_abort.cpp#L96
-  UV_SYSTEM_PYTHON: 1     # https://docs.astral.sh/uv/configuration/environment/#uv_system_python
+  UV_FROZEN: true         # https://docs.astral.sh/uv/configuration/environment/#uv_frozen
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -147,14 +147,17 @@ jobs:
 
     - name: Install uv
       uses: astral-sh/setup-uv@v5
+      with:
+        enable-cache: true
+        python-version: ${{ matrix.python-version }}
 
     - name: Install ert
       run: |
-        uv pip install ".[dev, everest]"
+        uv sync --extra everest --extra dev
 
     - name: Test docs
       run: |
-        just build-ert-docs
+        uv run just build-ert-docs
 
   publish:
     name: Publish to PyPI

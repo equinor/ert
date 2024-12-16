@@ -8,7 +8,7 @@ on:
   workflow_dispatch:
 
 env:
-  UV_SYSTEM_PYTHON: 1
+  UV_FROZEN: true
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -28,12 +28,15 @@ jobs:
           python-version: '3.12'
       - name: Install uv
         uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: true
+          python-version: '3.12'
       - run: |
-          uv pip install ".[dev, everest]"
+          uv sync --extra everest --extra dev
           uv pip uninstall pytest-benchmark
           uv pip install pytest-codspeed
       - uses: CodSpeedHQ/action@v3
         with:
           token: ${{ secrets.CODSPEED_TOKEN }}
           run: |
-            pytest tests/ert/performance_tests --codspeed --timeout=1200
+            uv run pytest tests/ert/performance_tests --codspeed --timeout=1200
