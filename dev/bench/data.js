@@ -1,39 +1,8 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1734357993350,
+  "lastUpdate": 1734363213799,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
-      {
-        "commit": {
-          "author": {
-            "email": "ejah@equinor.com",
-            "name": "Eivind Jahren",
-            "username": "eivindjahren"
-          },
-          "committer": {
-            "email": "ejah@equinor.com",
-            "name": "Eivind Jahren",
-            "username": "eivindjahren"
-          },
-          "distinct": true,
-          "id": "a156a6b176ae1d5ebdf1b6f3b7b1131671f67b7f",
-          "message": "Mark tests taking more than a second as integration test",
-          "timestamp": "2024-12-10T10:47:43+01:00",
-          "tree_id": "4f9bac00943bca26cb1c724a1233d7ea809d16ae",
-          "url": "https://github.com/equinor/ert/commit/a156a6b176ae1d5ebdf1b6f3b7b1131671f67b7f"
-        },
-        "date": 1733824172016,
-        "tool": "pytest",
-        "benches": [
-          {
-            "name": "tests/ert/performance_tests/test_analysis.py::test_and_benchmark_adaptive_localization_with_fields",
-            "value": 0.22711674495822548,
-            "unit": "iter/sec",
-            "range": "stddev: 0.03677181838482849",
-            "extra": "mean: 4.403021891599996 sec\nrounds: 5"
-          }
-        ]
-      },
       {
         "commit": {
           "author": {
@@ -930,6 +899,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.022650697789625963",
             "extra": "mean: 4.586305634400003 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "frodeaarstad@gmail.com",
+            "name": "Frode Aarstad",
+            "username": "frode-aarstad"
+          },
+          "committer": {
+            "email": "frodeaarstad@gmail.com",
+            "name": "Frode Aarstad",
+            "username": "frode-aarstad"
+          },
+          "distinct": true,
+          "id": "d332898b76bb68cbba381ad904c964d2fa006e7a",
+          "message": "Stop using cached seba data",
+          "timestamp": "2024-12-16T16:31:40+01:00",
+          "tree_id": "217e3714154bb80d8c6b870af2fb0d1e2a293fc7",
+          "url": "https://github.com/equinor/ert/commit/d332898b76bb68cbba381ad904c964d2fa006e7a"
+        },
+        "date": 1734363213052,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/ert/performance_tests/test_analysis.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 0.21930685420641616,
+            "unit": "iter/sec",
+            "range": "stddev: 0.01009793739296743",
+            "extra": "mean: 4.559821003400009 sec\nrounds: 5"
           }
         ]
       }
