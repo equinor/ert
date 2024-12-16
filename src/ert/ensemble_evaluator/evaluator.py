@@ -277,8 +277,6 @@ class EnsembleEvaluator:
     async def _server(self) -> None:
         zmq_context = zmq.asyncio.Context()
         try:
-            print("INIT ZMQ ...")
-            # Create and configure the ROUTER socket
             self._router_socket: zmq.asyncio.Socket = zmq_context.socket(zmq.ROUTER)
             self._router_socket.setsockopt(zmq.LINGER, 0)
             if self._config.server_public_key and self._config.server_secret_key:
@@ -286,14 +284,11 @@ class EnsembleEvaluator:
                 self._router_socket.curve_publickey = self._config.server_public_key
                 self._router_socket.curve_server = True
 
-            # Attempt to bind the ROUTER socket
-            # self._router_socket.bind(f"tcp://*:{self._config.router_port}")
             if self._config.router_port:
                 self._router_socket.bind(f"tcp://*:{self._config.router_port}")
             else:
                 self._router_socket.bind(self._config.url)
             self._server_started.set()
-            print(f"ROUTER listens on {self._config.url}")
         except zmq.error.ZMQError as e:
             logger.error(f"ZMQ error encountered {e} during evaluator initialization")
             print(f"ZMQ error encountered {e} during evaluator initialization")

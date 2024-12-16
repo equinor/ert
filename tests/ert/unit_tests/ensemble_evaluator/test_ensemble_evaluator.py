@@ -6,6 +6,7 @@ from typing import cast
 import pytest
 from hypothesis import given
 from hypothesis import strategies as st
+from pydantic import ValidationError
 
 from _ert.events import (
     EESnapshot,
@@ -19,7 +20,7 @@ from _ert.events import (
     RealizationSuccess,
     event_to_json,
 )
-from _ert.forward_model_runner.client import Client
+from _ert.forward_model_runner.client import CONNECT_MSG, DISCONNECT_MSG, Client
 from ert.ensemble_evaluator import (
     EnsembleEvaluator,
     EnsembleSnapshot,
@@ -66,18 +67,27 @@ async def test_when_task_fails_evaluator_raises_exception(
         await evaluator.run_and_get_successful_realizations()
 
 
-# TODO refactor this test
-# async def test_when_dispatch_is_given_invalid_event_the_socket_is_closed(
-#     make_ee_config,
-# ):
-#     evaluator = EnsembleEvaluator(TestEnsemble(0, 2, 2, id_="0"), make_ee_config())
+async def test_evaluator_raises_on_invalid_dispatch_event(
+    make_ee_config,
+):
+    evaluator = EnsembleEvaluator(TestEnsemble(0, 2, 2, id_="0"), make_ee_config())
 
-#     socket = MagicMock(spec=WebSocketServerProtocol)
-#     socket.__aiter__.return_value = ["invalid_json"]
-#     await evaluator.handle_dispatch(socket)
-#     socket.close.assert_called_once_with(
-#         code=1011, reason="failed handling message 'invalid_json'"
-#     )
+    with pytest.raises(ValidationError):
+        await evaluator.handle_dispatch(b"dispatcher-1", b"This is not an event!!")
+
+
+async def test_evaluator_handles_dispatchers_connected(
+    make_ee_config,
+):
+    evaluator = EnsembleEvaluator(TestEnsemble(0, 2, 2, id_="0"), make_ee_config())
+
+    await evaluator.handle_dispatch(b"dispatcher-1", CONNECT_MSG.encode("utf-8"))
+    await evaluator.handle_dispatch(b"dispatcher-2", CONNECT_MSG.encode("utf-8"))
+    assert not evaluator._dispatchers_empty.is_set()
+    assert evaluator._dispatchers_connected == {b"dispatcher-1", b"dispatcher-2"}
+    await evaluator.handle_dispatch(b"dispatcher-1", DISCONNECT_MSG.encode("utf-8"))
+    await evaluator.handle_dispatch(b"dispatcher-2", DISCONNECT_MSG.encode("utf-8"))
+    assert evaluator._dispatchers_empty.is_set()
 
 
 async def test_no_config_raises_valueerror_when_running():
