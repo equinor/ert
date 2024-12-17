@@ -26,8 +26,5 @@ class ValidationStatus:
     def __bool__(self) -> bool:
         return not self.__fail
 
-    def __nonzero__(self) -> bool:
-        return self.__bool__()
-
     def __str__(self) -> str:
         return self.__message
