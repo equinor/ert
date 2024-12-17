@@ -5,10 +5,10 @@ from ert.config import ConfigWarning
 
 class ModelConfig(BaseModel, extra="forbid"):  # type: ignore
     realizations: list[NonNegativeInt] = Field(
-        default_factory=lambda: [],
         description="""List of realizations to use in optimization ensemble.
 
 Typically, this is a list [0, 1, ..., n-1] of all realizations in the ensemble.""",
+        min_length=1,
     )
     data_file: str | None = Field(
         default=None,

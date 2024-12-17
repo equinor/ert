@@ -114,8 +114,7 @@ class EverestConfig(BaseModelWithPropertySupport):  # type: ignore
         default=OptimizationConfig(),
         description="Optimizer options",
     )
-    model: ModelConfig | None = Field(
-        default=ModelConfig(),
+    model: ModelConfig = Field(
         description="Configuration of the Everest model",
     )
 
