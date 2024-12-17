@@ -53,7 +53,7 @@ async def test_https_requests(tmp_path, monkeypatch, min_config):
     monkeypatch.chdir(tmp_path)
     with open("sleep_job", "w", encoding="utf-8") as fout:
         fout.write("EXECUTABLE sleep")
-    with open("config.yml", "w") as fout:
+    with open("config.yml", "w", encoding="utf-8") as fout:
         yaml.dump(min_config | {
             "install_jobs": [{"name": "sleep", "source": "sleep_job"}],
             "forward_model": ["sleep --sleep 10"],
