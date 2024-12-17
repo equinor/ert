@@ -19,7 +19,7 @@ MATH_CONFIG_FILE = "config_minimal.yml"
 def test_render_invalid(copy_template_test_data_to_tmp):
     render = everest.jobs.templating.render
 
-    prod_wells = {"PROD%d" % idx: 0.3 * idx for idx in range(4)}
+    prod_wells = {f"PROD{idx:d}": 0.3 * idx for idx in range(4)}
     prod_in = "well_drill_prod.json"
     with open(prod_in, "w", encoding="utf-8") as fout:
         json.dump(prod_wells, fout)
@@ -45,8 +45,8 @@ def test_render_invalid(copy_template_test_data_to_tmp):
 def test_render(copy_template_test_data_to_tmp):
     render = everest.jobs.templating.render
 
-    wells = {"PROD%d" % idx: 0.2 * idx for idx in range(1, 5)}
-    wells.update({"INJ%d" % idx: 1 - 0.2 * idx for idx in range(1, 5)})
+    wells = {f"PROD{idx:d}": 0.2 * idx for idx in range(1, 5)}
+    wells.update({f"INJ{idx:d}": 1 - 0.2 * idx for idx in range(1, 5)})
     wells_in = "well_drill.json"
     with open(wells_in, "w", encoding="utf-8") as fout:
         json.dump(wells, fout)
@@ -64,8 +64,8 @@ def test_render(copy_template_test_data_to_tmp):
             assert line == "----------------------------------\n"
         else:
             on_off = "on" if wells[split[0]] >= 0.5 else "off"
-            expected_string = "{} takes value {}, implying {}\n".format(
-                split[0], wells[split[0]], on_off
+            expected_string = (
+                f"{split[0]} takes value {wells[split[0]]}, implying {on_off}\n"
             )
             if idx == len(output) - 1:
                 expected_string = expected_string[:-1]
@@ -75,12 +75,12 @@ def test_render(copy_template_test_data_to_tmp):
 def test_render_multiple_input(copy_template_test_data_to_tmp):
     render = everest.jobs.templating.render
 
-    wells_north = {"PROD%d" % idx: 0.2 * idx for idx in range(1, 5)}
+    wells_north = {f"PROD{idx:d}": 0.2 * idx for idx in range(1, 5)}
     wells_north_in = "well_drill_north.json"
     with open(wells_north_in, "w", encoding="utf-8") as fout:
         json.dump(wells_north, fout)
 
-    wells_south = {"PROD%d" % idx: 1 - 0.2 * idx for idx in range(1, 5)}
+    wells_south = {f"PROD{idx:d}": 1 - 0.2 * idx for idx in range(1, 5)}
     wells_south_in = "well_drill_south.json"
     with open(wells_south_in, "w", encoding="utf-8") as fout:
         json.dump(wells_south, fout)
@@ -98,12 +98,12 @@ def test_render_executable(copy_template_test_data_to_tmp):
     assert os.access(everest.jobs.render, os.X_OK)
 
     # Dump input
-    wells_north = {"PROD%d" % idx: 0.2 * idx for idx in range(1, 5)}
+    wells_north = {f"PROD{idx:d}": 0.2 * idx for idx in range(1, 5)}
     wells_north_in = "well_drill_north.json"
     with open(wells_north_in, "w", encoding="utf-8") as fout:
         json.dump(wells_north, fout)
 
-    wells_south = {"PROD%d" % idx: 1 - 0.2 * idx for idx in range(1, 5)}
+    wells_south = {f"PROD{idx:d}": 1 - 0.2 * idx for idx in range(1, 5)}
     wells_south_in = "well_drill_south.json"
     with open(wells_south_in, "w", encoding="utf-8") as fout:
         json.dump(wells_south, fout)
@@ -238,4 +238,4 @@ def test_user_specified_data_n_template(
         contents = f.read()
     assert (
         contents == "VALUE1+VALUE2"
-    ), 'Expected contents: "VALUE1+VALUE2", found: {}'.format(contents)
+    ), f'Expected contents: "VALUE1+VALUE2", found: {contents}'

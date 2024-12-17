@@ -127,13 +127,13 @@ def test_server_status(copy_math_func_test_data_to_tmp):
     )
     status = everserver_status(everserver_status_path)
     assert status["status"] == ServerStatus.failed
-    assert status["message"] == "{}\n{}".format(err_msg_1, err_msg_2)
+    assert status["message"] == f"{err_msg_1}\n{err_msg_2}"
 
     update_everserver_status(everserver_status_path, ServerStatus.completed)
     status = everserver_status(everserver_status_path)
     assert status["status"] == ServerStatus.completed
     assert status["message"] is not None
-    assert status["message"] == "{}\n{}".format(err_msg_1, err_msg_2)
+    assert status["message"] == f"{err_msg_1}\n{err_msg_2}"
 
 
 @patch("everest.detached.server_is_running", return_value=False)

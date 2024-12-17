@@ -142,9 +142,9 @@ def test_math_func_advanced(
 
     ok_evals_0 = ok_evals[ok_evals["realization"] == 0]
     best_0 = ok_evals_0.iloc[-1]
-    assert best_0["point_{}".format(point_names[0])] == pytest.approx(x0)
-    assert best_0["point_{}".format(point_names[1])] == pytest.approx(x1)
-    assert best_0["point_{}".format(point_names[2])] == pytest.approx(x2)
+    assert best_0[f"point_{point_names[0]}"] == pytest.approx(x0)
+    assert best_0[f"point_{point_names[1]}"] == pytest.approx(x1)
+    assert best_0[f"point_{point_names[2]}"] == pytest.approx(x2)
     assert best_0["distance"] == pytest.approx(-dist_0, abs=0.001)
     assert best_0["real_avg_obj"] == pytest.approx(
         run_model.result.total_objective, abs=0.001
@@ -153,9 +153,9 @@ def test_math_func_advanced(
 
     ok_evals_1 = ok_evals[ok_evals["realization"] == 2]
     best_1 = ok_evals_1.iloc[-1]
-    assert best_1["point_{}".format(point_names[0])] == pytest.approx(x0)
-    assert best_1["point_{}".format(point_names[1])] == pytest.approx(x1)
-    assert best_1["point_{}".format(point_names[2])] == pytest.approx(x2)
+    assert best_1[f"point_{point_names[0]}"] == pytest.approx(x0)
+    assert best_1[f"point_{point_names[1]}"] == pytest.approx(x1)
+    assert best_1[f"point_{point_names[2]}"] == pytest.approx(x2)
     assert best_1["distance"] == pytest.approx(-dist_1, abs=0.001)
     assert best_1["real_avg_obj"] == pytest.approx(
         run_model.result.total_objective, abs=0.001
@@ -191,7 +191,7 @@ def test_remove_run_path(
     simulation_should_fail = "simulation_2"
     # Add to the config dictionary what simulation needs to fail
     config.forward_model[config.forward_model.index("toggle_failure")] = (
-        "toggle_failure --fail %s" % simulation_should_fail
+        f"toggle_failure --fail {simulation_should_fail}"
     )
 
     simulation_dir = config.simulation_dir

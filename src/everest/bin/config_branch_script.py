@@ -78,7 +78,7 @@ def _updated_initial_guess(conf_controls, opt_controls):
             if opt_control_val is None:
                 print(
                     "No generated optimization control value found for"
-                    " control {} index {}".format(variable[CK.NAME], var_index)
+                    f" control {variable[CK.NAME]} index {var_index}"
                 )
                 return None
             else:

@@ -490,7 +490,7 @@ def _generate_exp_ert_config(config_path, output_dir):
             ),
             (
                 "symlink",
-                "{config_path}/../input/files".format(config_path=config_path),
+                f"{config_path}/../input/files",
                 "files",
             ),
             (
@@ -710,7 +710,7 @@ def test_run_egg_model(copy_egg_test_data_to_tmp):
     cgname = config.controls[0].name
     well_names = [well.name for well in config.wells]
     for wname in well_names:
-        assert "{cg}_{w}-1".format(cg=cgname, w=wname) in df
+        assert f"{cgname}_{wname}-1" in df
 
     # Check objective export
     objective_names = [objf.name for objf in config.objective_functions]

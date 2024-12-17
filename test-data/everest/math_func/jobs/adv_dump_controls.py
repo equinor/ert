@@ -18,10 +18,10 @@ def main(argv):
     for name, indices in controls.items():
         for idx, val in indices.items():
             out_file = "{}{}{}".format(
-                opts.out_prefix, "{}-{}".format(name, idx), opts.out_suffix
+                opts.out_prefix, f"{name}-{idx}", opts.out_suffix
             )
             with open(out_file, "w", encoding="utf-8") as f:
-                f.write("%g \n" % val)
+                f.write(f"{val:g} \n")
 
 
 if __name__ == "__main__":

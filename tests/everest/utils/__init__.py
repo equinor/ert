@@ -112,7 +112,7 @@ def everest_default_jobs(output_dir):
     return [
         (
             script_name,
-            os.path.join(output_dir, ".jobs", "_%s" % script_name),
+            os.path.join(output_dir, ".jobs", f"_{script_name}"),
         )
         for script_name in script_names
     ]

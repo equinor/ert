@@ -60,8 +60,8 @@ def _get_definitions(configuration, configpath):
         for key, val in ERT_CONFIG_TEMPLATES.items():
             if key in defs:
                 logging.warning(
-                    "Internal key {k} specified by user as {u}. "
-                    "Overriding as {v}".format(k=key, u=defs[key], v=val)
+                    f"Internal key {key} specified by user as {defs[key]}. "
+                    f"Overriding as {val}"
                 )
             defs[key] = f"<{val}>"  # ert uses <GEO_ID> as format
     else:

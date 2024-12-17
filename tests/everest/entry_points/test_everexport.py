@@ -168,12 +168,7 @@ def test_everexport_entry_no_usr_def_ecl_keys(mocked_func, cached_example):
 
     # Add export section to config file and set run_export flag to false
     with open(config_file, "a", encoding="utf-8") as f:
-        f.write(
-            "{export}:\n  {keywords}:".format(
-                export=CK.EXPORT,
-                keywords=CK.KEYWORDS,
-            )
-        )
+        f.write(f"{CK.EXPORT}:\n  {CK.KEYWORDS}:")
 
     everexport_entry([config_file])
 
@@ -209,11 +204,7 @@ def test_everexport_entry_internalized_usr_def_ecl_keys(mocked_func, cached_exam
 
     # Add export section to config file and set run_export flag to false
     with open(config_file, "a", encoding="utf-8") as f:
-        f.write(
-            "{export}:\n  {keywords}: {keys}".format(
-                export=CK.EXPORT, keywords=CK.KEYWORDS, keys=user_def_keys
-            )
-        )
+        f.write(f"{CK.EXPORT}:\n  {CK.KEYWORDS}: {user_def_keys}")
 
     everexport_entry([config_file])
 
@@ -250,11 +241,7 @@ def test_everexport_entry_non_int_usr_def_ecl_keys(mocked_func, caplog, cached_e
 
     # Add export section to config file and set run_export flag to false
     with open(config_file, "a", encoding="utf-8") as f:
-        f.write(
-            "{export}:\n  {keywords}: {keys}".format(
-                export=CK.EXPORT, keywords=CK.KEYWORDS, keys=user_def_keys
-            )
-        )
+        f.write(f"{CK.EXPORT}:\n  {CK.KEYWORDS}: {user_def_keys}")
 
     with caplog.at_level(logging.DEBUG):
         everexport_entry([config_file])
@@ -297,11 +284,7 @@ def test_everexport_entry_not_available_batches(mocked_func, caplog, cached_exam
 
     # Add export section to config file and set run_export flag to false
     with open(config_file, "a", encoding="utf-8") as f:
-        f.write(
-            "{export}:\n  {batch_key}: {batches}".format(
-                export=CK.EXPORT, batch_key=CK.BATCHES, batches=user_def_batches
-            )
-        )
+        f.write(f"{CK.EXPORT}:\n  {CK.BATCHES}: {user_def_batches}")
 
     with caplog.at_level(logging.DEBUG):
         everexport_entry([config_file])

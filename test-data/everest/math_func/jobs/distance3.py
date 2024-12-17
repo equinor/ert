@@ -49,7 +49,7 @@ def main(argv):
 
     if options.out:
         with open(options.out, "w", encoding="utf-8") as f:
-            f.write("%g \n" % value)
+            f.write(f"{value:g} \n")
     else:
         print(value)
 

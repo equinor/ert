@@ -134,9 +134,7 @@ def export_metadata(config: ExportConfig | None, optimization_output_dir: str):
                         )
             else:
                 print(
-                    "Batch {} has no available optimization data".format(
-                        md_row[MetaDataColumnNames.BATCH]
-                    )
+                    f"Batch {md_row[MetaDataColumnNames.BATCH]} has no available optimization data"
                 )
         metadata.append(md_row)
 
@@ -190,9 +188,8 @@ def check_for_errors(
         available_batches_ = available_batches(optimization_output_path)
         for batch in set(config.batches).difference(available_batches_):
             export_errors.append(
-                "Batch {} not found in optimization "
+                f"Batch {batch} not found in optimization "
                 "results. Skipping for current export."
-                "".format(batch)
             )
         config.batches = list(set(config.batches).intersection(available_batches_))
 

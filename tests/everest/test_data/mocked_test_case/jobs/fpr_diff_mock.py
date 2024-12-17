@@ -34,7 +34,7 @@ def main(argv):
 
     diff = compute_fpr_diff(sum_mock)
     with open(target_file, "w", encoding="utf-8") as out:
-        out.write("{} \n".format(diff))
+        out.write(f"{diff} \n")
 
 
 if __name__ == "__main__":

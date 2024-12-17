@@ -16,9 +16,9 @@ def main(argv):
         controls = json.load(f)
 
     for k, v in controls.items():
-        out_file = "{}{}{}".format(opts.out_prefix, k, opts.out_suffix)
+        out_file = f"{opts.out_prefix}{k}{opts.out_suffix}"
         with open(out_file, "w", encoding="utf-8") as f:
-            f.write("%g \n" % v)
+            f.write(f"{v:g} \n")
 
 
 if __name__ == "__main__":

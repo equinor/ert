@@ -36,8 +36,7 @@ def compute_npv(sum):
     with open("debug.txt", "w", encoding="utf-8") as f:
         DCF = compute_dcf(fopt[0], fwpt[0], fgpt[0], fwit[0], elapsedtime[0])
         f.write(
-            "%f\t%f\t%f\t%f\t%f\t%f\n"
-            % (elapsedtime[0], fopt[0], fwpt[0], fgpt[0], fwit[0], DCF)
+            f"{elapsedtime[0]:f}\t{fopt[0]:f}\t{fwpt[0]:f}\t{fgpt[0]:f}\t{fwit[0]:f}\t{DCF:f}\n"
         )
         NPV = DCF
 
@@ -51,8 +50,7 @@ def compute_npv(sum):
             )
             NPV += DCF
             f.write(
-                "%f\t%f\t%f\t%f\t%f\t%f\n"
-                % (elapsedtime[i], fopt[i], fwpt[i], fgpt[i], fwit[i], DCF)
+                f"{elapsedtime[i]:f}\t{fopt[i]:f}\t{fwpt[i]:f}\t{fgpt[i]:f}\t{fwit[i]:f}\t{DCF:f}\n"
             )
 
     return NPV
@@ -78,7 +76,7 @@ def compute_dcf(voilp, vwaterp, vgasp, vwateri, elapsedtime):
 
 def save_object_value(object_value, target_file):
     with open(target_file, "w", encoding="utf-8") as f:
-        f.write("%g \n" % object_value)
+        f.write(f"{object_value:g} \n")
 
 
 def main(argv):
