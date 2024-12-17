@@ -732,6 +732,7 @@ and environment variables are exposed in the form 'os.NAME', for example:
             "controls": [],
             "objective_functions": [],
             "config_path": ".",
+            "model": {"realizations": [0]},
         }
 
         return EverestConfig.model_validate({**defaults, **kwargs})
