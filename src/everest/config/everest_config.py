@@ -148,8 +148,7 @@ class EverestConfig(BaseModelWithPropertySupport):  # type: ignore
         default=OptimizationConfig(),
         description="Optimizer options",
     )
-    model: ModelConfig | None = Field(
-        default=ModelConfig(),
+    model: ModelConfig = Field(
         description="Configuration of the Everest model",
     )
 
@@ -463,13 +462,11 @@ and environment variables are exposed in the form 'os.NAME', for example:
     @model_validator(mode="after")
     def validate_maintained_forward_models(self) -> Self:
         install_data = self.install_data
-        model = self.model
-        realizations = model.realizations if model else [0]
 
         with InstallDataContext(install_data, self.config_path) as context:
-            for realization in realizations:
+            for realization in self.model.realizations:
                 context.add_links_for_realization(realization)
-                validate_forward_model_configs(self.forward_model, self.install_jobs)
+            validate_forward_model_configs(self.forward_model, self.install_jobs)
         return self
 
     @model_validator(mode="after")
@@ -769,6 +766,7 @@ and environment variables are exposed in the form 'os.NAME', for example:
             "controls": [],
             "objective_functions": [],
             "config_path": ".",
+            "model": {"realizations": [0]},
         }
 
         return EverestConfig.model_validate({**defaults, **kwargs})
