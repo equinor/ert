@@ -1659,7 +1659,7 @@ def test_no_timemap_or_refcase_provides_clear_error():
 def test_that_multiple_errors_are_shown_when_validating_observation_config():
     with fileinput.input("observations/observations.txt", inplace=True) as fin:
         for line_number, line in enumerate(fin, 1):
-            if line_number in [13, 32]:
+            if line_number in {13, 32}:
                 continue
             print(line, end="")
 

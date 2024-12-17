@@ -34,13 +34,13 @@ async def test_scheduler_receives_checksum_and_waits_for_disk_sync(
                         await asyncio.wait_for(rename_and_wait(), timeout=5)
                     except TimeoutError:
                         await monitor.signal_done()
-                if type(event) in (
+                if type(event) in {
                     EESnapshot,
                     EESnapshotUpdate,
-                ) and event.snapshot.get(identifiers.STATUS) in [
+                } and event.snapshot.get(identifiers.STATUS) in {
                     state.ENSEMBLE_STATE_FAILED,
                     state.ENSEMBLE_STATE_STOPPED,
-                ]:
+                }:
                     await monitor.signal_done()
         return True
 

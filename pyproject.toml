@@ -204,7 +204,6 @@ ignore = [
     "PLR0912", # too-many-branches
     "PLR0911", # too-many-return-statements
     "PLC2701", # import-private-name
-    "PLR6201", # literal-membership
     "PLR0914", # too-many-locals
     "PLR6301", # no-self-use
     "PLW1641", # eq-without-hash

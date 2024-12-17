@@ -268,7 +268,7 @@ def _read_spec(
             kw = entry.read_keyword()
             if kw in arrays:
                 arrays[kw] = _check_vals(kw, spec, entry.read_array())
-            if kw in ("WGNAMES ", "NAMES   "):
+            if kw in {"WGNAMES ", "NAMES   "}:
                 wgnames = _check_vals(kw, spec, entry.read_array())
             if kw == "DIMENS  ":
                 vals = _check_vals(kw, spec, entry.read_array())

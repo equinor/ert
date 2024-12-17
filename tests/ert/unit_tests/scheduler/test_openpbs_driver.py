@@ -72,7 +72,7 @@ async def test_events_produced_from_jobstate_updates(jobstate_sequence: list[str
         jobstate = _parse_jobs_dict({"1": {"job_state": statestr, "Exit_status": 0}})[
             "1"
         ]
-        if statestr in ["E", "F"] and "1" in driver._non_finished_job_ids:
+        if statestr in {"E", "F"} and "1" in driver._non_finished_job_ids:
             driver._non_finished_job_ids.remove("1")
             driver._finished_job_ids.add("1")
         await driver._process_job_update("1", jobstate)

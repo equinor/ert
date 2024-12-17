@@ -154,7 +154,7 @@ class FMStepOverview(QTableView):
             index = self.indexAt(event.pos())
             if index.isValid():
                 data_name = FM_STEP_COLUMNS[index.column()]
-                if data_name in [ids.STDOUT, ids.STDERR] and file_has_content(
+                if data_name in {ids.STDOUT, ids.STDERR} and file_has_content(
                     index.data(FileRole)
                 ):
                     self.setCursor(Qt.CursorShape.PointingHandCursor)

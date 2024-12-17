@@ -86,9 +86,9 @@ class FMStepListProxyModel(QAbstractProxyModel):
         if role == Qt.ItemDataRole.DisplayRole:
             if orientation == Qt.Orientation.Horizontal:
                 header = FM_STEP_COLUMNS[section]
-                if header in [ids.STDOUT, ids.STDERR]:
+                if header in {ids.STDOUT, ids.STDERR}:
                     return header.upper()
-                elif header in [ids.MAX_MEMORY_USAGE]:
+                elif header in {ids.MAX_MEMORY_USAGE}:
                     header = header.replace("_", " ")
                 return header.capitalize()
             if orientation == Qt.Orientation.Vertical:

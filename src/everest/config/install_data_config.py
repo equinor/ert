@@ -34,6 +34,6 @@ class InstallDataConfig(BaseModel, extra="forbid"):  # type: ignore
 
     @model_validator(mode="after")
     def validate_target(self):
-        if self.target in (".", "./"):
+        if self.target in {".", "./"}:
             self.target = Path(self.source).name
         return self

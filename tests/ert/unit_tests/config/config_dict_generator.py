@@ -167,7 +167,7 @@ def valid_queue_values(option_name, queue_system):
     elif option_name in queue_options_by_type["posfloat"][queue_system]:
         return small_floats.map(str)
     elif option_name in queue_options_by_type["posint"][queue_system]:
-        if option_name in ["NUM_NODES", "NUM_CPUS_PER_NODE"]:
+        if option_name in {"NUM_NODES", "NUM_CPUS_PER_NODE"}:
             return st.just("1")
         return positives.map(str)
     elif option_name in queue_options_by_type["bool"][queue_system]:

@@ -56,7 +56,7 @@ def main() -> None:
             if returncode != "0":
                 state = "FAILED"
 
-        if state in ["PENDING", "RUNNING"]:
+        if state in {"PENDING", "RUNNING"}:
             print(f"{job} {state}")
 
 

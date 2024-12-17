@@ -186,7 +186,7 @@ def test_individual_control_variable_config(copy_test_data_to_tmp):
         exp_var_def = _perturb_control_zero(config, gmin, gmax, ginit, fill)
 
         # Not complete configuration
-        if None in [gmin, gmax, ginit] and not fill:
+        if None in {gmin, gmax, ginit} and not fill:
             with pytest.raises(expected_exception=ValidationError):
                 EverestConfig.model_validate(config.to_dict())
             continue

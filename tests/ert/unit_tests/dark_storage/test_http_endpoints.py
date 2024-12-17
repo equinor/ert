@@ -30,7 +30,7 @@ def test_get_ensemble(poly_example_tmp_dir, dark_storage_client):
     ensemble_json = resp.json()
 
     assert ensemble_json["experiment_id"] == experiment_json[0]["id"]
-    assert ensemble_json["userdata"]["name"] in ("iter-0", "iter-1")
+    assert ensemble_json["userdata"]["name"] in {"iter-0", "iter-1"}
     assert ensemble_json["userdata"]["experiment_name"] == experiment_json[0]["name"]
 
 
@@ -48,7 +48,7 @@ def test_get_experiment_ensemble(poly_example_tmp_dir, dark_storage_client):
 
     assert len(ensembles_json) == 2
     assert ensembles_json[0]["experiment_id"] == experiment_json[0]["id"]
-    assert ensembles_json[0]["userdata"]["name"] in ("iter-0", "iter-1")
+    assert ensembles_json[0]["userdata"]["name"] in {"iter-0", "iter-1"}
 
 
 @pytest.mark.integration_test

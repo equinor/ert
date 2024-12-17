@@ -263,7 +263,7 @@ def verify_json_dump(fm_steplist, config, selected_steps, run_id):
         step["name"] = default_name_if_none(step["name"])
 
         for key in json_keywords:
-            if key in ["stdout", "stderr"]:
+            if key in {"stdout", "stderr"}:
                 assert (
                     create_std_file(step, std=key, step_index=step_index)
                     == loaded_step[key]

@@ -436,10 +436,10 @@ class BaseRunModel(ABC):
 
         if all_realizations:
             for real in all_realizations.values():
-                if real["status"] in [
+                if real["status"] in {
                     REALIZATION_STATE_FINISHED,
                     REALIZATION_STATE_FAILED,
-                ]:
+                }:
                     done_realizations += 1
 
             realization_progress = float(done_realizations) / len(
@@ -505,10 +505,10 @@ class BaseRunModel(ABC):
             async with Monitor(ee_config.get_connection_info()) as monitor:
                 logger.debug("connected")
                 async for event in monitor.track(heartbeat_interval=0.1):
-                    if type(event) in (
+                    if type(event) in {
                         EESnapshot,
                         EESnapshotUpdate,
-                    ):
+                    }:
                         event = cast(EESnapshot | EESnapshotUpdate, event)
                         await asyncio.get_running_loop().run_in_executor(
                             None,
@@ -517,10 +517,10 @@ class BaseRunModel(ABC):
                             iteration,
                         )
 
-                        if event.snapshot.get(STATUS) in [
+                        if event.snapshot.get(STATUS) in {
                             ENSEMBLE_STATE_STOPPED,
                             ENSEMBLE_STATE_FAILED,
-                        ]:
+                        }:
                             logger.debug(
                                 "observed evaluation stopped event, signal done"
                             )

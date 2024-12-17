@@ -63,7 +63,7 @@ deprecated_keywords_list = [
             "dimension set using ENKF_NCOMP keyword. "
             "This can be safely removed.",
         ),
-        check=lambda line: str(line[1]) in ["ENKF_FORCE_NCOMP"],
+        check=lambda line: str(line[1]) in {"ENKF_FORCE_NCOMP"},
     ),
     DeprecationInfo(
         keyword="RUNPATH",

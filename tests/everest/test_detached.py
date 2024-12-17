@@ -91,10 +91,7 @@ async def test_https_requests(copy_math_func_test_data_to_tmp):
         server_status = everserver_status(status_path)
 
         # Possible the case completed while waiting for the server to stop
-        assert server_status["status"] in [
-            ServerStatus.stopped,
-            ServerStatus.completed,
-        ]
+        assert server_status["status"] in {ServerStatus.stopped, ServerStatus.completed}
         assert not server_is_running(*server_context)
     else:
         server_status = everserver_status(status_path)

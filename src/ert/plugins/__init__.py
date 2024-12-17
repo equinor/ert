@@ -20,7 +20,7 @@ def plugin(name: str) -> Callable[[Callable[P, Any]], Callable[P, Any]]:
             res = func(*args, **kwargs)
             if (
                 func.__name__
-                in [
+                in {
                     "installable_jobs",
                     "job_documentation",
                     "installable_workflow_jobs",
@@ -30,10 +30,9 @@ def plugin(name: str) -> Callable[[Callable[P, Any]], Callable[P, Any]]:
                     "ecl100_config_path",
                     "ecl300_config_path",
                     "flow_config_path",
-                    "help_links",
                     "site_config_lines",
                     "activate_script",
-                ]
+                }
                 and res is not None
             ):
                 return PluginResponse(

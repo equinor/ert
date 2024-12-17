@@ -253,7 +253,7 @@ def _group_queue_options_by_queue_system(
         grouped[system] = {
             option_line[1]: option_line[2]
             for option_line in queue_config_list
-            if option_line[0] in (QueueSystemWithGeneric.GENERIC, system)
+            if option_line[0] in {QueueSystemWithGeneric.GENERIC, system}
             # Empty option values are ignored, yields defaults:
             and len(option_line) > 2
         }
@@ -317,7 +317,7 @@ class QueueConfig:
             tags = {
                 fm_name.lower()
                 for fm_name, *_ in config_dict.get(ConfigKeys.FORWARD_MODEL, [])
-                if fm_name in ["RMS", "FLOW", "ECLIPSE100", "ECLIPSE300"]
+                if fm_name in {"RMS", "FLOW", "ECLIPSE100", "ECLIPSE300"}
             }
             if tags:
                 queue_options.project_code = "+".join(tags)
