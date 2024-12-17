@@ -34,6 +34,7 @@ class EvaluatorServerConfig:
         self.router_port: int | None = None
         self.url = f"ipc:///tmp/socket-{uuid.uuid4().hex[:8]}"
         self.token: str | None = None
+        self._socket_handle: socket | None = None
 
         self.server_public_key: bytes | None = None
         self.server_secret_key: bytes | None = None
@@ -50,8 +51,10 @@ class EvaluatorServerConfig:
             self.server_public_key, self.server_secret_key = zmq.curve_keypair()
             self.token = self.server_public_key.decode("utf-8")
 
-    def get_socket(self) -> socket.socket:
-        return self._socket_handle.dup()
+    def get_socket(self) -> socket.socket | None:
+        if self._socket_handle:
+            return self._socket_handle.dup()
+        return None
 
     def get_connection_info(self) -> EvaluatorConnectionInfo:
         return EvaluatorConnectionInfo(
