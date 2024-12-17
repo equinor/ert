@@ -5,7 +5,6 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 import requests
-import yaml
 
 import everest.detached
 from ert.config import ErtConfig
@@ -49,16 +48,15 @@ from everest.util import makedirs_if_needed
 @pytest.mark.integration_test
 @pytest.mark.fails_on_macos_github_workflow
 @pytest.mark.xdist_group(name="starts_everest")
-async def test_https_requests(tmp_path, monkeypatch, min_config):
-    monkeypatch.chdir(tmp_path)
-    with open("sleep_job", "w", encoding="utf-8") as fout:
-        fout.write("EXECUTABLE sleep")
-    with open("config.yml", "w", encoding="utf-8") as fout:
-        yaml.dump(min_config | {
-            "install_jobs": [{"name": "sleep", "source": "sleep_job"}],
-            "forward_model": ["sleep --sleep 10"],
-        }, fout)
-    everest_config = EverestConfig.load_file("config.yml")
+async def test_https_requests(copy_math_func_test_data_to_tmp):
+    everest_config = EverestConfig.load_file("config_minimal.yml")
+    # Overwrite forward_model with model that actually does nothing, since we test for httprequests and server status
+    everest_config.forward_model = ["toggle_failure"]
+    everest_config.install_jobs = [
+        InstallJobConfig(name="toggle_failure", source="jobs/FAIL_SIMULATION")
+    ]
+    # start_server() loads config based on config_path, so we need to actually overwrite it
+    everest_config.dump("config_minimal.yml")
 
     status_path = ServerConfig.get_everserver_status_path(everest_config.output_dir)
     expected_server_status = ServerStatus.never_run
