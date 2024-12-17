@@ -2,6 +2,8 @@ from pydantic import BaseModel, Field, NonNegativeInt, model_validator
 
 from ert.config import ConfigWarning
 
+EMPTY_MODEL_CONFIG_WARNING = "`model` cannot be empty, it needs to contain `realizations` (a list of non-negative integers with length > 0)"
+
 
 class ModelConfig(BaseModel, extra="forbid"):  # type: ignore
     realizations: list[NonNegativeInt] = Field(
@@ -27,6 +29,9 @@ If specified, it must be a list of numeric values, one per realization.""",
     @model_validator(mode="before")
     @classmethod
     def remove_deprecated(cls, values):
+        if values is None:
+            raise ValueError(EMPTY_MODEL_CONFIG_WARNING)
+
         if values.get("report_steps") is not None:
             ConfigWarning.warn(
                 "report_steps no longer has any effect and can be removed."
@@ -37,6 +42,9 @@ If specified, it must be a list of numeric values, one per realization.""",
     @model_validator(mode="before")
     @classmethod
     def validate_realizations_weights_same_cardinaltiy(cls, values):  # pylint: disable=E0213
+        if values is None:
+            raise ValueError(EMPTY_MODEL_CONFIG_WARNING)
+
         weights = values.get("realizations_weights")
         reals = values.get("realizations")
 
