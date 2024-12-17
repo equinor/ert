@@ -1,10 +1,10 @@
-model (optional)
+model (required)
 ----------------
-Type: *Optional[ModelConfig]*
+Type: *ModelConfig*
 
 Configuration of the Everest model
 
-**realizations (optional)**
+**realizations (required)**
     Type: *list[NonNegativeInt]*
 
     List of realizations to use in optimization ensemble.
