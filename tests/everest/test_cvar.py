@@ -2,7 +2,6 @@ import pytest
 
 from ert.run_models.everest_run_model import EverestRunModel
 from everest.config import (
-    ControlConfig,
     CVaRConfig,
     EverestConfig,
     ModelConfig,
@@ -16,17 +15,6 @@ def test_mathfunc_cvar(
 ):
     # Arrange
     config = EverestConfig.load_file("config_minimal.yml")
-    config.controls = [
-        ControlConfig(
-            name="point",
-            type="generic_control",
-            min=-2.0,
-            max=2.0,
-            initial_guess=0.0,
-            perturbation_magnitude=0.01,
-            variables=[{"name": "x"}, {"name": "y"}, {"name": "z"}],
-        )
-    ]
     config.optimization = OptimizationConfig(
         backend="scipy",
         algorithm="slsqp",
