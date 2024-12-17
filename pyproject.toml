@@ -210,7 +210,6 @@ ignore = [
     "PLW1641", # eq-without-hash
     "PLR0904", # too-many-public-methods
     "PLR1702", # too-many-nested-blocks
-    "PLW3201", # bad-dunder-method-name
     "UP032",   # f-string
     "UP031",   # printf-string-formatting
 ]
@@ -230,8 +229,14 @@ allowed-confusables = ["–"]
 "src/ert/dark_storage/json_schema/__init__.py" = ["F401"]
 "src/ert/dark_storage/*" = ["RUF029"] # unused-async
 
+
 [tool.ruff.lint.pylint]
 max-args = 20
+allow-dunder-method-names = [
+    "__default_token__",
+    "__get_pydantic_core_schema__",
+    "__get_pydantic_json_schema__",
+]
 
 [tool.ruff.lint.flake8-bugbear]
 extend-immutable-calls = [
