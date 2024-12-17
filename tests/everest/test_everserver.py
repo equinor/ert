@@ -5,11 +5,10 @@ from functools import partial
 from pathlib import Path
 from unittest.mock import patch
 
-import yaml
 from ropt.enums import OptimizerExitCode
 from seba_sqlite.snapshot import SebaSnapshot
 
-from everest.config import EverestConfig, ServerConfig
+from everest.config import EverestConfig, OptimizationConfig, ServerConfig
 from everest.detached import ServerStatus, everserver_status
 from everest.detached.jobs import everserver
 from everest.simulator import JOB_FAILURE, JOB_SUCCESS
@@ -203,13 +202,11 @@ def test_everserver_status_exception(
 def test_everserver_status_max_batch_num(
     _1, mock_server, copy_math_func_test_data_to_tmp
 ):
-    with open("config_minimal.yml", encoding="utf-8") as file:
-        config = yaml.safe_load(file)
-        config["optimization"] = {"algorithm": "optpp_q_newton", "max_batch_num": 1}
-
-    with open("config.yml", "w", encoding="utf-8") as fout:
-        yaml.dump(config, fout)
-    config = EverestConfig.load_file("config.yml")
+    config = EverestConfig.load_file("config_minimal.yml")
+    config.optimization = OptimizationConfig(
+        algorithm="optpp_q_newton", max_batch_num=1
+    )
+    config.dump("config_minimal.yml")
 
     everserver.main()
     status = everserver_status(
