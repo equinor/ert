@@ -54,9 +54,9 @@ def _build_args_parser():
         usage=(
             "everest <command> [<args>]\n\n"
             "The most commonly used everest commands are:\n"
-            "{commands}\n\n"
+            f"{EverestMain.methods_help()}\n\n"
             "Run everest <command> --help for more information on a command"
-        ).format(commands=EverestMain.methods_help()),
+        ),
     )
     arg_parser.add_argument("command", help="Subcommand to run")
     arg_parser.add_argument(

@@ -31,9 +31,7 @@ def get_azure_logging_handler():
 
 
 def version_info():
-    return ("everest:'{}'\nropt:'{}'\nert:'{}'").format(
-        ert_version, ropt_version, ert_version
-    )
+    return f"everest:'{ert_version}'\nropt:'{ropt_version}'\nert:'{ert_version}'"
 
 
 def date2str(date):

@@ -253,7 +253,7 @@ def test_summary_default_no_opm(copy_egg_test_data_to_tmp):
         list(everest.simulator.DEFAULT_DATA_SUMMARY_KEYS)
         + list(everest.simulator.DEFAULT_FIELD_SUMMARY_KEYS)
         + [
-            "{}:{}".format(k, w)
+            f"{k}:{w}"
             for k, w in itertools.product(
                 everest.simulator.DEFAULT_WELL_SUMMARY_KEYS, wells
             )

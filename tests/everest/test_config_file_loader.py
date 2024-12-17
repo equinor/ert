@@ -80,7 +80,7 @@ def test_dependent_definitions(copy_mocked_test_data_to_tmp):
         string.ascii_lowercase[:-1], string.ascii_lowercase[1:], strict=False
     )
     for c, cdef in [*list(conseq_chars), (string.ascii_lowercase[-1], "configpath")]:
-        raw_config[CK.DEFINITIONS][c] = "r{{{{ {} }}}}".format(cdef)
+        raw_config[CK.DEFINITIONS][c] = f"r{{{{ {cdef} }}}}"
 
     with open(config_file, "w", encoding="utf-8") as f:
         yaml = YAML(typ="safe", pure=True)

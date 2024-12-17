@@ -188,7 +188,7 @@ def _dump_merge_data(well_data_file, additional_data_files):
     ]
 
     for idx, add_data_file in enumerate(additional_data_files):
-        prop = "property_{}".format(idx)
+        prop = f"property_{idx}"
         add_data = [
             {name: "PROD2", prop: idx * 100 + 11},
             {name: "INJECT1", prop: idx * 100 + 1},

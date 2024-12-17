@@ -20,7 +20,7 @@ def main(argv):
     options, _ = arg_parser.parse_known_args(args=argv)
 
     if options.fail in os.getcwd():
-        raise Exception("Failing %s by request!" % options.fail)
+        raise Exception(f"Failing {options.fail} by request!")
 
     time.sleep(1)
 

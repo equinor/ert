@@ -332,7 +332,7 @@ def _is_dir_all_geo(source, ever_config: EverestConfig):
         if not os.path.exists(geo_source):
             msg = (
                 "Expected source to exist for data installation, "
-                "did not find: {}".format(geo_source)
+                f"did not find: {geo_source}"
             )
             raise ValueError(msg)
 

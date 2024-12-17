@@ -311,9 +311,7 @@ def test_validate_export(cached_example):
 
     check_error(
         (
-            "Non-internalized ecl keys selected for export '{keys}'." "".format(
-                keys=non_int_key
-            ),
+            f"Non-internalized ecl keys selected for export '{non_int_key}'.",
             False,
         ),
         (errors, export_ecl),
@@ -331,8 +329,8 @@ def test_validate_export(cached_example):
     )
     check_error(
         (
-            "Batch {} not found in optimization results. Skipping for"
-            " current export".format(non_valid_batch),
+            f"Batch {non_valid_batch} not found in optimization results. Skipping for"
+            " current export",
             True,
         ),
         (errors, export_ecl),

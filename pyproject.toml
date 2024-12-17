@@ -209,8 +209,6 @@ ignore = [
     "PLW1641", # eq-without-hash
     "PLR0904", # too-many-public-methods
     "PLR1702", # too-many-nested-blocks
-    "UP032",   # f-string
-    "UP031",   # printf-string-formatting
 ]
 
 # Allow EN DASH (U+2013)
