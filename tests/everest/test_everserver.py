@@ -8,7 +8,8 @@ from unittest.mock import patch
 import pytest
 from seba_sqlite.snapshot import SebaSnapshot
 
-from ert.run_models.everest_run_model import EverestExitCode
+from _ert.events import event_from_json, event_to_json
+from ert.run_models.everest_run_model import EverestExitCode, EverestRunModel
 from everest.config import EverestConfig, OptimizationConfig, ServerConfig
 from everest.detached import ServerStatus, everserver_status
 from everest.detached.jobs import everserver
@@ -252,3 +253,34 @@ def test_everserver_status_contains_max_runtime_failure(
         "sleep Failed with: The run is cancelled due to reaching MAX_RUNTIME"
         in status["message"]
     )
+
+
+def test_event_serialization(
+    copy_math_func_test_data_to_tmp,
+    evaluator_server_config_generator,
+):
+    config = EverestConfig.load_file("config_minimal.yml")
+
+    def check_status_round_tripping(status):
+        round_trip_status = json.loads(json.dumps(status))
+        assert round_trip_status == status
+
+    run_model = EverestRunModel.create(
+        config,
+        simulation_callback=check_status_round_tripping,
+    )
+
+    send_snapshot_event = run_model.send_snapshot_event
+
+    def check_event_serialization_round_trip(*args, **_):
+        event, _ = args
+        event_json = event_to_json(event)
+        round_trip_event = event_from_json(str(event_json))
+        assert event == round_trip_event
+        send_snapshot_event(*args)
+
+    run_model.send_snapshot_event = check_event_serialization_round_trip
+
+    evaluator_server_config = evaluator_server_config_generator(run_model)
+
+    run_model.run_experiment(evaluator_server_config)
