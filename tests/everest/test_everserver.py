@@ -5,6 +5,7 @@ from functools import partial
 from pathlib import Path
 from unittest.mock import patch
 
+import yaml
 from ropt.enums import OptimizerExitCode
 from seba_sqlite.snapshot import SebaSnapshot
 
@@ -194,7 +195,7 @@ def test_everserver_status_exception(
     assert "Exception: Failed optimization" in status["message"]
 
 
-@patch("sys.argv", ["name", "--config-file", "config_one_batch.yml"])
+@patch("sys.argv", ["name", "--config-file", "config_minimal.yml"])
 @patch(
     "everest.detached.jobs.everserver._sim_monitor",
     side_effect=partial(set_shared_status, progress=[]),
@@ -202,8 +203,14 @@ def test_everserver_status_exception(
 def test_everserver_status_max_batch_num(
     _1, mock_server, copy_math_func_test_data_to_tmp
 ):
-    config_file = "config_one_batch.yml"
-    config = EverestConfig.load_file(config_file)
+    with open("config_minimal.yml", encoding="utf-8") as file:
+        config = yaml.safe_load(file)
+        config["optimization"] = {"algorithm": "optpp_q_newton", "max_batch_num": 1}
+
+    with open("config.yml", "w", encoding="utf-8") as fout:
+        yaml.dump(config, fout)
+    config = EverestConfig.load_file("config.yml")
+
     everserver.main()
     status = everserver_status(
         ServerConfig.get_everserver_status_path(config.output_dir)
