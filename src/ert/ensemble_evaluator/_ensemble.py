@@ -144,34 +144,6 @@ class LegacyEnsemble:
     def get_successful_realizations(self) -> list[int]:
         return self.snapshot.get_successful_realizations()
 
-    def _log_completed_fm_step(
-        self, event: FMEvent, step_snapshot: FMStepSnapshot | None
-    ) -> None:
-        if step_snapshot is None:
-            logger.warning(f"Should log {event}, but there was no step_snapshot")
-            return
-        step_name = step_snapshot.get("name", "")
-        start_time = step_snapshot.get("start_time")
-        cpu_seconds = step_snapshot.get("cpu_seconds")
-        current_memory_usage = step_snapshot.get("current_memory_usage")
-        if start_time is not None and event.time is not None:
-            walltime = (event.time - start_time).total_seconds()
-        else:
-            # We get here if the Running event is in the same event batch as
-            # the Success event. That means that runtime is close to zero.
-            walltime = 0
-
-        if walltime > 120:
-            logger.info(
-                f"{event.event_type} {step_name} "
-                f"{walltime=} "
-                f"{cpu_seconds=} "
-                f"{current_memory_usage=} "
-                f"step_index={event.fm_step} "
-                f"real={event.real} "
-                f"ensemble={event.ensemble}"
-            )
-
     def update_snapshot(self, events: Sequence[Event]) -> EnsembleSnapshot:
         snapshot_mutate_event = EnsembleSnapshot()
         for event in events:
@@ -189,20 +161,9 @@ class LegacyEnsemble:
                     .get("fm_steps", {})
                     .get(event.fm_step)
                 )
-                self._log_completed_fm_step(event, step)
+                _log_completed_fm_step(event, step)
 
         return snapshot_mutate_event
-
-    async def send_event(
-        self,
-        url: str,
-        event: Event,
-        token: str | None = None,
-        cert: str | bytes | None = None,
-        retries: int = 10,
-    ) -> None:
-        async with Client(url, token, cert, max_retries=retries) as client:
-            await client._send(event_to_json(event))
 
     def generate_event_creator(self) -> Callable[[Id.ENSEMBLE_TYPES], Event]:
         def event_builder(status: str) -> Event:
@@ -226,7 +187,7 @@ class LegacyEnsemble:
             self.__class__,
             ce_unary_send_method_name,
             partialmethod(
-                self.__class__.send_event,
+                send_event,
                 self._config.dispatch_uri,
                 token=self._config.token,
                 cert=self._config.cert,
@@ -326,6 +287,46 @@ class LegacyEnsemble:
         if self._scheduler is not None:
             self._scheduler.kill_all_jobs()
         logger.debug("evaluator cancelled")
+
+
+async def send_event(
+    url: str,
+    event: Event,
+    token: str | None = None,
+    cert: str | bytes | None = None,
+    retries: int = 10,
+) -> None:
+    async with Client(url, token, cert, max_retries=retries) as client:
+        await client._send(event_to_json(event))
+
+
+def _log_completed_fm_step(
+    event: FMEvent, step_snapshot: FMStepSnapshot | None
+) -> None:
+    if step_snapshot is None:
+        logger.warning(f"Should log {event}, but there was no step_snapshot")
+        return
+    step_name = step_snapshot.get("name", "")
+    start_time = step_snapshot.get("start_time")
+    cpu_seconds = step_snapshot.get("cpu_seconds")
+    current_memory_usage = step_snapshot.get("current_memory_usage")
+    if start_time is not None and event.time is not None:
+        walltime = (event.time - start_time).total_seconds()
+    else:
+        # We get here if the Running event is in the same event batch as
+        # the Success event. That means that runtime is close to zero.
+        walltime = 0
+
+    if walltime > 120:
+        logger.info(
+            f"{event.event_type} {step_name} "
+            f"{walltime=} "
+            f"{cpu_seconds=} "
+            f"{current_memory_usage=} "
+            f"step_index={event.fm_step} "
+            f"real={event.real} "
+            f"ensemble={event.ensemble}"
+        )
 
 
 class _KillAllJobs(Protocol):

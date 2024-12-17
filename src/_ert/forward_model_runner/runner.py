@@ -28,27 +28,6 @@ class ForwardModelRunner:
 
         self._set_environment()
 
-    def _read_manifest(self):
-        if not Path("manifest.json").exists():
-            return None
-        with open("manifest.json", encoding="utf-8") as f:
-            data = json.load(f)
-        return {
-            name: {"type": "file", "path": str(Path(file).absolute())}
-            for name, file in data.items()
-        }
-
-    def _populate_checksums(self, manifest):
-        if not manifest:
-            return {}
-        for info in manifest.values():
-            path = Path(info["path"])
-            if path.exists():
-                info["md5sum"] = hashlib.md5(path.read_bytes()).hexdigest()
-            else:
-                info["error"] = f"Expected file {path} not created by forward model!"
-        return manifest
-
     def run(self, names_of_steps_to_run: list[str]):
         if not names_of_steps_to_run:
             step_queue = self.steps
@@ -86,7 +65,7 @@ class ForwardModelRunner:
                     )
                     return
 
-        checksum_dict = self._populate_checksums(self._read_manifest())
+        checksum_dict = _populate_checksums(_read_manifest())
         yield Checksum(checksum_dict=checksum_dict, run_path=os.getcwd())
         yield Finish()
 
@@ -96,3 +75,26 @@ class ForwardModelRunner:
                 for env_key, env_val in os.environ.items():
                     value = value.replace(f"${env_key}", env_val)
                 os.environ[key] = value
+
+
+def _read_manifest() -> dict[str, dict[str, str]] | None:
+    if not Path("manifest.json").exists():
+        return None
+    with open("manifest.json", encoding="utf-8") as f:
+        data = json.load(f)
+    return {
+        name: {"type": "file", "path": str(Path(file).absolute())}
+        for name, file in data.items()
+    }
+
+
+def _populate_checksums(manifest) -> dict[str, dict[str, str]]:
+    if not manifest:
+        return {}
+    for info in manifest.values():
+        path = Path(info["path"])
+        if path.exists():
+            info["md5sum"] = hashlib.md5(path.read_bytes()).hexdigest()
+        else:
+            info["error"] = f"Expected file {path} not created by forward model!"
+    return manifest
