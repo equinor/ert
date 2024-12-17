@@ -325,9 +325,9 @@ def _validate_summary_values(
     for key, value in inp.items():
         if key == "RESTART":
             date_dict.restart = validate_positive_int(value, key)
-        elif key in ["ERROR", "ERROR_MIN"]:
+        elif key in {"ERROR", "ERROR_MIN"}:
             float_values[str(key)] = validate_positive_float(value, key)
-        elif key in ["DAYS", "HOURS"]:
+        elif key in {"DAYS", "HOURS"}:
             setattr(date_dict, str(key).lower(), validate_positive_float(value, key))
         elif key == "VALUE":
             float_values[str(key)] = validate_float(value, key)
@@ -405,11 +405,11 @@ def _validate_gen_obs_values(
             output.restart = validate_positive_int(value, key)
         elif key == "VALUE":
             output.value = validate_float(value, key)
-        elif key in ["ERROR", "DAYS", "HOURS"]:
+        elif key in {"ERROR", "DAYS", "HOURS"}:
             setattr(output, str(key).lower(), validate_positive_float(value, key))
-        elif key in ["DATE", "INDEX_LIST"]:
+        elif key in {"DATE", "INDEX_LIST"}:
             setattr(output, str(key).lower(), value)
-        elif key in ["OBS_FILE", "INDEX_FILE"]:
+        elif key in {"OBS_FILE", "INDEX_FILE"}:
             filename = value
             if not os.path.isabs(filename):
                 filename = os.path.join(directory, filename)

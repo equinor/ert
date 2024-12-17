@@ -158,7 +158,7 @@ def check_path_valid(path: str):
             os.lstat(os.path.join(root, dirname))
 
         except OSError as e:
-            if e.errno in (errno.ENAMETOOLONG, errno.ERANGE):
+            if e.errno in {errno.ENAMETOOLONG, errno.ERANGE}:
                 raise ValueError(e.strerror) from e
         except TypeError as e:
             raise ValueError(str(e)) from e
@@ -279,7 +279,7 @@ def validate_forward_model_configs(
             (
                 i
                 for i, arg in enumerate(args)
-                if arg in ["-c", "--config"] and i + 1 < len(args)
+                if arg in {"-c", "--config"} and i + 1 < len(args)
             ),
             None,
         )
@@ -299,7 +299,7 @@ def validate_forward_model_configs(
         if (index := _job_config_index(*args)) is None:
             raise ValueError(f"No config file specified for job {job}")
 
-        if args[0] in ("run", "lint") and (
+        if args[0] in {"run", "lint"} and (
             errors := lint_forward_model_job(job, args[index : index + 2])
         ):
             raise ValueError("\n\t".join(errors))

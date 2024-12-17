@@ -1334,7 +1334,7 @@ async def test_that_kill_before_submit_is_finished_works(tmp_path, monkeypatch, 
         # get SIGTERM but rather LSF_FAILED_JOB. Whether SIGNAL_OFFSET is
         # added or not depends on various shell configurations and is a
         # detail we do not want to track.
-        assert returncode in (SIGTERM, SIGNAL_OFFSET + SIGTERM, LSF_FAILED_JOB)
+        assert returncode in {SIGTERM, SIGNAL_OFFSET + SIGTERM, LSF_FAILED_JOB}
 
     await poll(driver, {0}, finished=finished)
     assert "ERROR" not in str(caplog.text)

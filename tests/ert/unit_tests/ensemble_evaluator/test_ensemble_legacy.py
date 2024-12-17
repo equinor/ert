@@ -51,13 +51,13 @@ async def test_run_legacy_ensemble(
             Monitor(config) as monitor,
         ):
             async for event in monitor.track():
-                if type(event) in (
+                if type(event) in {
                     EESnapshotUpdate,
                     EESnapshot,
-                ) and event.snapshot.get(identifiers.STATUS) in [
+                } and event.snapshot.get(identifiers.STATUS) in {
                     state.ENSEMBLE_STATE_FAILED,
                     state.ENSEMBLE_STATE_STOPPED,
-                ]:
+                }:
                     await monitor.signal_done()
             assert evaluator._ensemble.status == state.ENSEMBLE_STATE_STOPPED
             assert len(evaluator._ensemble.get_successful_realizations()) == num_reals

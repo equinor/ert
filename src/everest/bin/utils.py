@@ -260,7 +260,7 @@ class _DetachedMonitor:
                     job_progress[job_idx] = JobProgress(name=job["name"])
                 realization = int(job["realization"])
                 status = job["status"]
-                if status in [JOB_RUNNING, JOB_SUCCESS, JOB_FAILURE]:
+                if status in {JOB_RUNNING, JOB_SUCCESS, JOB_FAILURE}:
                     job_progress[job_idx].status[status].append(realization)
         return job_progress.values()
 

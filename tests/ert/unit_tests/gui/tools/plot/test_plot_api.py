@@ -143,7 +143,7 @@ def test_load_history_data_searches_until_history_found(api):
     ensemble_ids = [
         ens.id
         for ens in api.get_all_ensembles()
-        if ens.name in ["no-history", "default_0"]
+        if ens.name in {"no-history", "default_0"}
     ]
     df = api.history_data(ensemble_ids=ensemble_ids, key="FOPR")
     assert_frame_equal(
@@ -155,7 +155,7 @@ def test_load_history_data_returns_empty_frame_if_no_history(api):
     ensemble_ids = [
         ens.id
         for ens in api.get_all_ensembles()
-        if ens.name in ["no-history", "still-no-history"]
+        if ens.name in {"no-history", "still-no-history"}
     ]
     df = api.history_data(ensemble_ids=ensemble_ids, key="FOPR")
     assert_frame_equal(df, pd.DataFrame())

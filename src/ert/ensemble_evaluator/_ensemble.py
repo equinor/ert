@@ -69,10 +69,10 @@ class _EnsembleStateTracker:
         self._state = ENSEMBLE_STATE_STARTED
 
     def _handle_failed(self) -> None:
-        if self._state not in [
+        if self._state not in {
             ENSEMBLE_STATE_UNKNOWN,
             ENSEMBLE_STATE_STARTED,
-        ]:
+        }:
             logger.warning(self._msg, self._state, ENSEMBLE_STATE_FAILED)
         self._state = ENSEMBLE_STATE_FAILED
 

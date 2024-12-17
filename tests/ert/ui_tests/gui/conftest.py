@@ -255,10 +255,10 @@ def run_experiment_fixture(request):
                 lambda: handle_run_path_dialog(gui, qtbot, delete_run_path=False),
             )
 
-        if not experiment_mode.name() in (
+        if not experiment_mode.name() in {
             "Ensemble experiment",
             "Evaluate ensemble",
-        ):
+        }:
             QTimer.singleShot(500, handle_dialog)
         qtbot.mouseClick(run_experiment, Qt.LeftButton)
 

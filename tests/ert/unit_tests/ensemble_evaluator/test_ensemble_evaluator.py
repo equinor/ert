@@ -524,7 +524,7 @@ async def test_ensure_multi_level_events_in_order(evaluator_to_use):
                 assert snapshot_event_received == True
                 final_event_was_EETerminated = True
                 assert ensemble_state == ENSEMBLE_STATE_STOPPED
-            if type(event) in [EESnapshot, EESnapshotUpdate]:
+            if type(event) in {EESnapshot, EESnapshotUpdate}:
                 # if we get an snapshot event than this need to be valid
                 assert final_event_was_EETerminated == False
                 snapshot_event_received = True

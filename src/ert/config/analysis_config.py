@@ -137,7 +137,7 @@ class AnalysisConfig:
                     )
                 )
                 continue
-            if var_name in ["INVERSION", "IES_INVERSION"]:
+            if var_name in {"INVERSION", "IES_INVERSION"}:
                 if value in inversion_str_map[module_name]:
                     new_value = inversion_str_map[module_name][value]
                     if var_name == "IES_INVERSION":

@@ -186,10 +186,10 @@ class EnsembleEvaluator:
             self.stop()
 
     async def _failed_handler(self, events: Sequence[EnsembleFailed]) -> None:
-        if self.ensemble.status in (
+        if self.ensemble.status in {
             ENSEMBLE_STATE_STOPPED,
             ENSEMBLE_STATE_CANCELLED,
-        ):
+        }:
             return
         # if list is empty this call is not triggered by an
         # event, but as a consequence of some bad state
@@ -263,7 +263,7 @@ class EnsembleEvaluator:
                         )
                         return
 
-                    if type(event) in [EnsembleSucceeded, EnsembleFailed]:
+                    if type(event) in {EnsembleSucceeded, EnsembleFailed}:
                         return
             except ConnectionClosedError as connection_error:
                 # Dispatchers may close the connection abruptly in the case of

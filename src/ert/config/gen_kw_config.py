@@ -219,7 +219,7 @@ class GenKwConfig(ParameterConfig):
             if prior["function"] == "LOGNORMAL":
                 _check_non_negative_parameter("MEAN", prior)
                 _check_non_negative_parameter("STD", prior)
-            elif prior["function"] in ["NORMAL", "TRUNCATED_NORMAL"]:
+            elif prior["function"] in {"NORMAL", "TRUNCATED_NORMAL"}:
                 _check_non_negative_parameter("STD", prior)
         if errors:
             raise ConfigValidationError.from_collected(errors)
@@ -494,7 +494,7 @@ class TransformFunction:
     use_log: bool = False
 
     def __post_init__(self) -> None:
-        if self.transform_function_name in ["LOGNORMAL", "LOGUNIF"]:
+        if self.transform_function_name in {"LOGNORMAL", "LOGUNIF"}:
             self.use_log = True
 
     @staticmethod

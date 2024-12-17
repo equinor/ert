@@ -54,22 +54,22 @@ def run_cli(args: Namespace, plugin_manager: ErtPluginManager | None = None) -> 
             f"Config contains forward model step {fm_step_name} {count} time(s)",
         )
 
-    if not ert_config.observations and args.mode not in [
+    if not ert_config.observations and args.mode not in {
         ENSEMBLE_EXPERIMENT_MODE,
         TEST_RUN_MODE,
         WORKFLOW_MODE,
-    ]:
+    }:
         raise ErtCliError(
             f"To run {args.mode}, observations are needed. \n"
             f"Please add an observation file to {args.config}. Example: \n"
             f"'OBS_CONFIG observation_file.txt'."
         )
 
-    if args.mode in [
+    if args.mode in {
         ENSEMBLE_SMOOTHER_MODE,
         ES_MDA_MODE,
         ITERATIVE_ENSEMBLE_SMOOTHER_MODE,
-    ]:
+    }:
         if not ert_config.ensemble_config.parameter_configs:
             raise ErtCliError(
                 f"To run {args.mode}, GEN_KW, FIELD or SURFACE parameters are needed. \n"

@@ -336,11 +336,11 @@ class SnapshotModel(QAbstractItemModel):
             if index.column() == 1:
                 return f"{node.data.status}"
 
-        if role in (
+        if role in {
             Qt.ItemDataRole.StatusTipRole,
             Qt.ItemDataRole.WhatsThisRole,
             Qt.ItemDataRole.ToolTipRole,
-        ):
+        }:
             return ""
 
         if role == Qt.ItemDataRole.SizeHintRole:
@@ -349,11 +349,11 @@ class SnapshotModel(QAbstractItemModel):
         if role == Qt.ItemDataRole.FontRole:
             return QFont()
 
-        if role in (
+        if role in {
             Qt.ItemDataRole.BackgroundRole,
             Qt.ItemDataRole.ForegroundRole,
             Qt.ItemDataRole.DecorationRole,
-        ):
+        }:
             return QColor()
 
         return QVariant()
@@ -395,7 +395,7 @@ class SnapshotModel(QAbstractItemModel):
 
         if role == Qt.ItemDataRole.FontRole:
             data_name = FM_STEP_COLUMNS[index.column()]
-            if data_name in [ids.STDOUT, ids.STDERR] and file_has_content(
+            if data_name in {ids.STDOUT, ids.STDERR} and file_has_content(
                 index.data(FileRole)
             ):
                 font = QFont()
@@ -404,7 +404,7 @@ class SnapshotModel(QAbstractItemModel):
 
         if role == Qt.ItemDataRole.ForegroundRole:
             data_name = FM_STEP_COLUMNS[index.column()]
-            if data_name in [ids.STDOUT, ids.STDERR] and file_has_content(
+            if data_name in {ids.STDOUT, ids.STDERR} and file_has_content(
                 index.data(FileRole)
             ):
                 return QColor(Qt.GlobalColor.blue)
@@ -418,18 +418,18 @@ class SnapshotModel(QAbstractItemModel):
 
         if role == Qt.ItemDataRole.DisplayRole:
             data_name = FM_STEP_COLUMNS[index.column()]
-            if data_name in [ids.MAX_MEMORY_USAGE]:
+            if data_name in {ids.MAX_MEMORY_USAGE}:
                 data = node.data
                 bytes_: str | None = data.get(data_name)  # type: ignore
                 if bytes_:
                     return byte_with_unit(float(bytes_))
 
-            if data_name in [ids.STDOUT, ids.STDERR]:
+            if data_name in {ids.STDOUT, ids.STDERR}:
                 if not file_has_content(index.data(FileRole)):
                     return "-"
                 return "View" if data_name in node.data else QVariant()
 
-            if data_name in [DURATION]:
+            if data_name in {DURATION}:
                 start_time = node.data.get(ids.START_TIME)
                 if start_time is None:
                     return QVariant()
@@ -444,7 +444,7 @@ class SnapshotModel(QAbstractItemModel):
 
         if role == FileRole:
             data_name = FM_STEP_COLUMNS[index.column()]
-            if data_name in [ids.STDOUT, ids.STDERR]:
+            if data_name in {ids.STDOUT, ids.STDERR}:
                 return node.data.get(data_name, QVariant())
 
         if role == RealIens:

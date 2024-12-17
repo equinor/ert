@@ -205,7 +205,7 @@ def summary_observations(
     if time_type == "date":
         date = draw(dates)
         kws["date"] = date.strftime("%Y-%m-%d")
-    if time_type in ["days", "hours"]:
+    if time_type in {"days", "hours"}:
         kws[time_type] = draw(st.floats(min_value=1, max_value=3000))
     if time_type == "restart":
         kws[time_type] = draw(st.integers(min_value=1, max_value=10))

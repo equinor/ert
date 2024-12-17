@@ -96,7 +96,7 @@ class EclConfig:
         if version in self._config[Keys.versions]:
             return True
 
-        return self.default_version is not None and version in [None, Keys.default]
+        return self.default_version is not None and version in {None, Keys.default}
 
     def get_eclrun_env(self) -> dict[str, str] | None:
         if "eclrun_env" in self._config:
@@ -108,7 +108,7 @@ class EclConfig:
         return self._config.get(Keys.default_version)
 
     def _get_version(self, version_arg: str | None) -> str:
-        if version_arg in [None, Keys.default]:
+        if version_arg in {None, Keys.default}:
             version = self.default_version
         else:
             version = version_arg

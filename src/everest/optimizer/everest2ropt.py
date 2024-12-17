@@ -138,7 +138,7 @@ def _variable_initial_guess_list_injection(
     variables["names"].extend(ropt_names)
     variables["initial_values"].extend(control.initial_values)
     for key, value in asdict(control).items():
-        if key not in (*IGNORE_KEYS, "initial_values"):
+        if key not in {*IGNORE_KEYS, "initial_values"}:
             (gradients if "perturbation" in key else variables)[key].extend(
                 [value] * guesses
             )

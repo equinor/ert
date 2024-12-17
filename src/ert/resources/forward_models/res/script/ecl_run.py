@@ -161,10 +161,10 @@ def find_unsmry(basepath: Path) -> Path | None:
         if "." not in path:
             return False
         splitted = path.split(".")
-        return splitted[-2].endswith(base) and splitted[-1].lower() in [
+        return splitted[-2].endswith(base) and splitted[-1].lower() in {
             "unsmry",
             "funsmry",
-        ]
+        }
 
     base = basepath.name
     candidates: list[str] = list(
@@ -268,7 +268,7 @@ class EclRun:
         # Dechipher the ecl_case argument.
         input_arg = ecl_case
         (_, ext) = os.path.splitext(input_arg)
-        if ext and ext in [".data", ".DATA"]:
+        if ext and ext in {".data", ".DATA"}:
             data_file = input_arg
         elif input_arg.islower():
             data_file = input_arg + ".data"
