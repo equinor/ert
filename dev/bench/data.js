@@ -1,39 +1,8 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1734509233866,
+  "lastUpdate": 1734526299255,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
-      {
-        "commit": {
-          "author": {
-            "email": "JONAK@equinor.com",
-            "name": "Jonathan Karlsen",
-            "username": "jonathan-eq"
-          },
-          "committer": {
-            "email": "107626001+jonathan-eq@users.noreply.github.com",
-            "name": "Jonathan Karlsen",
-            "username": "jonathan-eq"
-          },
-          "distinct": true,
-          "id": "ae944073bcd130adf03cd3d12235cee722941622",
-          "message": "Remove unused mock validate_active_realizations_count-method in tests for runmodel",
-          "timestamp": "2024-12-10T13:27:54+01:00",
-          "tree_id": "4b28eb07d72c3742c513a10a2f7a10cb40feb1d1",
-          "url": "https://github.com/equinor/ert/commit/ae944073bcd130adf03cd3d12235cee722941622"
-        },
-        "date": 1733833789077,
-        "tool": "pytest",
-        "benches": [
-          {
-            "name": "tests/ert/performance_tests/test_analysis.py::test_and_benchmark_adaptive_localization_with_fields",
-            "value": 0.209538826607953,
-            "unit": "iter/sec",
-            "range": "stddev: 0.035846505022795204",
-            "extra": "mean: 4.772385224199996 sec\nrounds: 5"
-          }
-        ]
-      },
       {
         "commit": {
           "author": {
@@ -930,6 +899,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.010339623610527466",
             "extra": "mean: 4.6590535306 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "levje@equinor.com",
+            "name": "larsevj",
+            "username": "larsevj"
+          },
+          "committer": {
+            "email": "60844986+larsevj@users.noreply.github.com",
+            "name": "Lars Evje",
+            "username": "larsevj"
+          },
+          "distinct": true,
+          "id": "a6649a18d307b353de1e01428b189a6b335108e6",
+          "message": "Unpin pydantic",
+          "timestamp": "2024-12-18T13:49:34+01:00",
+          "tree_id": "0b3fc34b704dca4f183d131375f05b1033bb35b8",
+          "url": "https://github.com/equinor/ert/commit/a6649a18d307b353de1e01428b189a6b335108e6"
+        },
+        "date": 1734526298593,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/ert/performance_tests/test_analysis.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 0.2171199435754667,
+            "unit": "iter/sec",
+            "range": "stddev: 0.04954297387413186",
+            "extra": "mean: 4.6057491703999975 sec\nrounds: 5"
           }
         ]
       }
