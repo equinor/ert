@@ -6,13 +6,14 @@ from typing import Any
 
 import httpx
 import requests
+from opentelemetry.instrumentation.httpx import HTTPXClientInstrumentor
 
 from ert.dark_storage.client import Client, ConnInfo
 from ert.services._base_service import BaseService, _Context, local_exec_args
 from ert.trace import get_traceparent
 
-from opentelemetry.instrumentation.httpx import HTTPXClientInstrumentor
 HTTPXClientInstrumentor().instrument()
+
 
 class StorageService(BaseService):
     service_name = "storage"
@@ -24,7 +25,7 @@ class StorageService(BaseService):
         conn_info: Mapping[str, Any] | Exception | None = None,
         project: str | None = None,
         verbose: bool = False,
-        traceparent: str | None = "inherit_parent"
+        traceparent: str | None = "inherit_parent",
     ):
         self._url: str | None = None
 
@@ -34,7 +35,9 @@ class StorageService(BaseService):
         if verbose:
             exec_args.append("--verbose")
         if traceparent:
-            traceparent = get_traceparent() if traceparent == "inherit_parent" else traceparent
+            traceparent = (
+                get_traceparent() if traceparent == "inherit_parent" else traceparent
+            )
             exec_args.extend(["--traceparent", str(traceparent)])
 
         super().__init__(exec_args, timeout, conn_info, project)

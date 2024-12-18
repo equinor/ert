@@ -15,8 +15,9 @@ tracer = trace.get_tracer("ert.main")
 def get_trace_id() -> str:
     return trace.format_trace_id(trace.get_current_span().get_span_context().trace_id)
 
+
 def get_traceparent() -> str | None:
     carrier = {}
     # Write the current context into the carrier.
     TraceContextTextMapPropagator().inject(carrier)
-    return carrier.get('traceparent')
+    return carrier.get("traceparent")
