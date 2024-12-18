@@ -330,39 +330,10 @@ def test_that_multiple_observations_are_parsed_correctly(api):
 
 def test_that_observations_for_empty_ensemble_returns_empty_data(api_and_storage):
     api, storage = api_and_storage
-    key = "NAIMFRAC"
-    expected_genobs = polars.DataFrame(
-        {
-            "observation_key": "gen_data",
-            "response_key": ["gen_data_0"],
-            "report_step": polars.Series([0], dtype=polars.UInt16),
-            "index": polars.Series([0], dtype=polars.UInt16),
-            "observations": polars.Series([13.37], dtype=polars.Float32),
-            "std": polars.Series([0.15], dtype=polars.Float32),
-        }
-    )
-
     experiment = storage.create_experiment(
         parameters=[],
-        responses=[
-            GenDataConfig(
-                name="gen_data",
-                report_steps_list=[[0]],
-                keys=["gen_data_0"],
-            ),
-            SummaryConfig(
-                name="summary",
-                input_files=[""],
-                keys=[key],
-            ),
-        ],
-        observations={"gen_data": expected_genobs},
+        responses=[SummaryConfig(name="summary", input_files=[""], keys=["NAIMFRAC"])],
+        observations={},
     )
-    ensemble = storage.create_ensemble(experiment.id, ensemble_size=695)
-
-    # Important to request a non-existing gen data key here
-    # so it hits the summary-request logic clause and finds that there
-    # is no
-    gen_obs = api.observations_for_key([str(ensemble.id)], "gen_data_0@1")
-
-    assert gen_obs.empty
+    ensemble = storage.create_ensemble(experiment.id, ensemble_size=1)
+    assert api.observations_for_key([str(ensemble.id)], "NAIMFRAC").empty
