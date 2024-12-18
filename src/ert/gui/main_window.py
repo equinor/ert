@@ -4,10 +4,9 @@ import datetime
 import functools
 import webbrowser
 
-from qtpy.QtCore import QSize, Qt, Signal, Slot
-from qtpy.QtGui import QCloseEvent, QCursor, QIcon, QMouseEvent
-from qtpy.QtWidgets import (
-    QAction,
+from PySide6.QtCore import QSize, Qt, Signal, Slot
+from PySide6.QtGui import QAction, QCloseEvent, QCursor, QIcon, QMouseEvent
+from PySide6.QtWidgets import (
     QButtonGroup,
     QFrame,
     QHBoxLayout,
@@ -190,7 +189,7 @@ class ErtMainWindow(QMainWindow):
             for i, widget in self.central_panels_map.items():
                 widget.setVisible(i == index_name)
 
-    @Slot(object)
+    @Slot(RunDialog, result=None)
     def slot_add_widget(self, run_dialog: RunDialog) -> None:
         for widget in self.central_panels_map.values():
             widget.setVisible(False)
@@ -219,8 +218,10 @@ class ErtMainWindow(QMainWindow):
         if self.run_dialog_counter == 2:
             # swap from button to menu selection
             self.results_button.clicked.disconnect(self.select_central_widget)
-            self.results_button.setMenu(QMenu())
-            self.results_button.setPopupMode(QToolButton.InstantPopup)
+            self.results_button.setMenu(QMenu(self))
+            self.results_button.setPopupMode(
+                QToolButton.ToolButtonPopupMode.InstantPopup
+            )
 
             for prev_date_time, widget in self.central_panels_map.items():
                 if isinstance(widget, RunDialog):
@@ -300,7 +301,7 @@ class ErtMainWindow(QMainWindow):
             help_link_item = help_menu.addAction(menu_label)
             assert help_link_item is not None
             help_link_item.setMenuRole(QAction.MenuRole.ApplicationSpecificRole)
-            help_link_item.triggered.connect(functools.partial(webbrowser.open, link))  # type: ignore
+            help_link_item.triggered.connect(functools.partial(webbrowser.open, link))
 
         show_about = help_menu.addAction("About")
         assert show_about is not None

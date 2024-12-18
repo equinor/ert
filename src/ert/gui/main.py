@@ -6,9 +6,9 @@ from collections import Counter
 from importlib.resources import files
 from signal import SIG_DFL, SIGINT, signal
 
-from qtpy.QtCore import QDir
-from qtpy.QtGui import QIcon
-from qtpy.QtWidgets import QApplication, QWidget
+from PySide6.QtCore import QDir
+from PySide6.QtGui import QIcon
+from PySide6.QtWidgets import QApplication, QWidget
 
 from ert.config import (
     ErrorInfo,
@@ -84,6 +84,8 @@ def _start_initial_gui_window(
         ert_config = ErtConfig.with_plugins().from_file(args.config)
 
         local_storage_set_ert_config(ert_config)
+
+    storage = None
     if ert_config is not None:
         try:
             storage = open_storage(ert_config.ens_path, mode="w")
@@ -105,7 +107,6 @@ def _start_initial_gui_window(
             ),
             None,
         )
-    assert ert_config is not None
     counter_fm_steps = Counter(fms.name for fms in ert_config.forward_model_steps)
 
     for fm_step_name, count in counter_fm_steps.items():
@@ -118,6 +119,7 @@ def _start_initial_gui_window(
     for msg in validation_messages.warnings:
         logger.info(f"Warning shown in gui '{msg}'")
 
+    assert storage is not None
     main_window = _setup_main_window(
         ert_config, args, log_handler, storage, plugin_manager
     )

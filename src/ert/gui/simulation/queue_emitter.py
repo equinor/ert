@@ -5,7 +5,7 @@ from contextlib import suppress
 from queue import Empty, SimpleQueue
 from time import sleep
 
-from qtpy.QtCore import QObject, Signal, Slot
+from PySide6.QtCore import QObject, Signal, Slot
 
 from ert.ensemble_evaluator import EndEvent, FullSnapshotEvent, SnapshotUpdateEvent
 from ert.gui.model.snapshot import SnapshotModel

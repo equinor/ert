@@ -5,9 +5,9 @@ import time
 from datetime import timedelta
 
 import humanize
-from qtpy.QtCore import Qt, Slot
-from qtpy.QtGui import QColor, QKeyEvent, QKeySequence
-from qtpy.QtWidgets import (
+from PySide6.QtCore import Qt, Slot
+from PySide6.QtGui import QColor, QKeyEvent, QKeySequence
+from PySide6.QtWidgets import (
     QAbstractItemView,
     QApplication,
     QGridLayout,
@@ -46,17 +46,17 @@ class UpdateLogTable(QTableWidget):
         self.setRowCount(len(data.data))
         self.setHorizontalHeaderLabels(data.header)
         self.setSelectionBehavior(QAbstractItemView.SelectionBehavior.SelectRows)
-        self.setEditTriggers(QAbstractItemView.NoEditTriggers)
+        self.setEditTriggers(QAbstractItemView.EditTrigger.NoEditTriggers)
         horizontal_header = self.horizontalHeader()
         assert horizontal_header is not None
-        horizontal_header.setSectionResizeMode(QHeaderView.ResizeToContents)
+        horizontal_header.setSectionResizeMode(QHeaderView.ResizeMode.ResizeToContents)
         self.setSortingEnabled(True)
         for i, row in enumerate(data.data):
             for j, val in enumerate(row):
                 self.setItem(i, j, QTableWidgetItem(str(val)))
 
-    def keyPressEvent(self, e: QKeyEvent | None) -> None:
-        if e is not None and e.matches(QKeySequence.Copy):
+    def keyPressEvent(self, event: QKeyEvent) -> None:
+        if event is not None and event.matches(QKeySequence.StandardKey.Copy):
             stream = ""
             for i in self.selectedIndexes():
                 item = self.itemFromIndex(i)
@@ -71,10 +71,10 @@ class UpdateLogTable(QTableWidget):
                     None,
                     "Error",
                     "Cannot copy text to clipboard because your system does not have a clipboard",
-                    QMessageBox.Ok,
+                    QMessageBox.StandardButton.Ok,
                 )
         else:
-            super().keyPressEvent(e)
+            super().keyPressEvent(event)
 
 
 class UpdateWidget(QWidget):
@@ -127,7 +127,7 @@ class UpdateWidget(QWidget):
     def _insert_status_message(self, message: str) -> None:
         item = QListWidgetItem()
         item.setText(message)
-        item.setFlags(item.flags() & ~Qt.ItemFlags(Qt.ItemFlag.ItemIsEnabled))
+        item.setFlags(item.flags() & ~Qt.ItemFlag.ItemIsEnabled)
         self._msg_list.addItem(item)
 
     def _insert_table_tab(

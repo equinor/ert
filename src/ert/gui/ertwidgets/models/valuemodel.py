@@ -1,4 +1,4 @@
-from qtpy.QtCore import QObject, Signal, Slot
+from PySide6.QtCore import QObject, Signal, Slot
 
 
 class ValueModel(QObject):

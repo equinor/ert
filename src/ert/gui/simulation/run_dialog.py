@@ -4,15 +4,11 @@ import logging
 from collections.abc import Callable
 from pathlib import Path
 from queue import SimpleQueue
+from typing import cast
 
-from qtpy.QtCore import QModelIndex, QSize, Qt, QThread, QTimer, Signal, Slot
-from qtpy.QtGui import (
-    QMouseEvent,
-    QMovie,
-    QTextCursor,
-    QTextOption,
-)
-from qtpy.QtWidgets import (
+from PySide6.QtCore import QModelIndex, QSize, Qt, QThread, QTimer, Signal, Slot
+from PySide6.QtGui import QMouseEvent, QMovie, QTextCursor, QTextOption
+from PySide6.QtWidgets import (
     QAbstractItemView,
     QDialog,
     QDialogButtonBox,
@@ -80,9 +76,9 @@ class FMStepOverview(QTableView):
         self._fm_step_model = FMStepListProxyModel(self, 0, 0)
         self._fm_step_model.setSourceModel(snapshot_model)
 
-        self.setVerticalScrollMode(QAbstractItemView.ScrollPerItem)
-        self.setSelectionBehavior(QAbstractItemView.SelectRows)
-        self.setSelectionMode(QAbstractItemView.SingleSelection)
+        self.setVerticalScrollMode(QAbstractItemView.ScrollMode.ScrollPerItem)
+        self.setSelectionBehavior(QAbstractItemView.SelectionBehavior.SelectRows)
+        self.setSelectionMode(QAbstractItemView.SelectionMode.SingleSelection)
 
         self.clicked.connect(self._fm_step_clicked)
         self.setModel(self._fm_step_model)
@@ -98,9 +94,9 @@ class FMStepOverview(QTableView):
             # Only last section should be stretch
             horizontal_header.setSectionResizeMode(
                 section,
-                QHeaderView.Stretch
+                QHeaderView.ResizeMode.Stretch
                 if section == horizontal_header.count() - 1
-                else QHeaderView.Interactive,
+                else QHeaderView.ResizeMode.Interactive,
             )
 
         vertical_header = self.verticalHeader()
@@ -119,6 +115,7 @@ class FMStepOverview(QTableView):
             return
         selected_file = index.data(FileRole)
         file_dialog = self.findChild(QDialog, name=selected_file)
+        file_dialog = cast(QDialog, file_dialog)
         if file_dialog and file_dialog.isVisible():
             file_dialog.raise_()
         elif selected_file and file_has_content(selected_file):
@@ -138,18 +135,18 @@ class FMStepOverview(QTableView):
 
             error_textedit = QPlainTextEdit()
             error_textedit.setReadOnly(True)
-            error_textedit.setWordWrapMode(QTextOption.NoWrap)
+            error_textedit.setWordWrapMode(QTextOption.WrapMode.NoWrap)
             error_textedit.appendPlainText(index.data())
             layout.addWidget(error_textedit)
 
-            dialog_button = QDialogButtonBox(QDialogButtonBox.Ok)
+            dialog_button = QDialogButtonBox(QDialogButtonBox.StandardButton.Ok)
             dialog_button.accepted.connect(error_dialog.accept)
             layout.addWidget(dialog_button)
             error_dialog.resize(700, 300)
-            error_textedit.moveCursor(QTextCursor.Start)
+            error_textedit.moveCursor(QTextCursor.MoveOperation.Start)
             error_dialog.exec_()
 
-    def mouseMoveEvent(self, event: QMouseEvent | None) -> None:
+    def mouseMoveEvent(self, event: QMouseEvent) -> None:
         if event:
             index = self.indexAt(event.pos())
             if index.isValid():
@@ -283,7 +280,7 @@ class RunDialog(QFrame):
 
         self.setLayout(layout)
 
-        self.kill_button.clicked.connect(self.killJobs)  # type: ignore
+        self.kill_button.clicked.connect(self.killJobs)
         self.restart_button.clicked.connect(self.restart_failed_realizations)
         self.simulation_done.connect(self._on_simulation_done)
 
@@ -307,9 +304,11 @@ class RunDialog(QFrame):
     ) -> None:
         if not parent.isValid():
             index = self._snapshot_model.index(start, 0, parent)
+            # iteration = index.data(IterNum)
+            iteration = index.internalPointer().id_  # type: ignore
             iter_row = start
             self._iteration_progress_label.setText(
-                f"Progress for iteration {index.internalPointer().id_}"
+                f"Progress for iteration {iteration}"
             )
 
             widget = RealizationWidget(iter_row)
@@ -317,7 +316,7 @@ class RunDialog(QFrame):
             widget.itemClicked.connect(self._select_real)
             self._select_real(widget._real_list_model.index(0, 0))
             tab_index = self._tab_widget.addTab(
-                widget, f"Realizations for iteration {index.internalPointer().id_}"
+                widget, f"Realizations for iteration {iteration}"
             )
             if self._tab_widget.currentIndex() == self._tab_widget.count() - 2:
                 self._tab_widget.setCurrentIndex(tab_index)
@@ -383,10 +382,13 @@ class RunDialog(QFrame):
     def killJobs(self) -> QMessageBox.StandardButton:
         msg = "Are you sure you want to terminate the currently running experiment?"
         kill_job = QMessageBox.question(
-            self, "Terminate experiment", msg, QMessageBox.Yes | QMessageBox.No
+            self,
+            "Terminate experiment",
+            msg,
+            QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
         )
 
-        if kill_job == QMessageBox.Yes:
+        if kill_job == QMessageBox.StandardButton.Yes:
             # Normally this slot would be invoked by the signal/slot system,
             # but the worker is busy tracking the evaluation.
             self._run_model.cancel()
@@ -494,17 +496,19 @@ class RunDialog(QFrame):
 
     def restart_failed_realizations(self) -> None:
         msg = QMessageBox(self)
-        msg.setIcon(QMessageBox.Information)
+        msg.setIcon(QMessageBox.Icon.Information)
         msg.setText(
             "Note that workflows will only be executed on the restarted "
             "realizations and that this might have unexpected consequences."
         )
         msg.setWindowTitle("Restart failed realizations")
-        msg.setStandardButtons(QMessageBox.Ok | QMessageBox.Cancel)
+        msg.setStandardButtons(
+            QMessageBox.StandardButton.Ok | QMessageBox.StandardButton.Cancel
+        )
         msg.setObjectName("restart_prompt")
         result = msg.exec_()
 
-        if result == QMessageBox.Ok:
+        if result == QMessageBox.StandardButton.Ok:
             self.restart_button.setVisible(False)
             self.kill_button.setVisible(True)
             self.run_experiment(restart=True)

@@ -31,6 +31,10 @@ jobs:
       with:
         fetch-depth: 0
 
+    - uses: ./.github/actions/install_dependencies_qt
+      with:
+        os: ${{ matrix.os }}
+
     - name: Set up Python ${{ matrix.python-version }}
       uses: actions/setup-python@v5
       with:
