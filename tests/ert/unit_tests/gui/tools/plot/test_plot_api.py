@@ -326,3 +326,14 @@ def test_that_multiple_observations_are_parsed_correctly(api):
     ensemble = next(x for x in api.get_all_ensembles() if x.id == "ens_id_5")
     obs_data = api.observations_for_key([ensemble.id], "WOPR:OP1")
     assert obs_data.shape == (3, 6)
+
+
+def test_that_observations_for_empty_ensemble_returns_empty_data(api_and_storage):
+    api, storage = api_and_storage
+    experiment = storage.create_experiment(
+        parameters=[],
+        responses=[SummaryConfig(name="summary", input_files=[""], keys=["NAIMFRAC"])],
+        observations={},
+    )
+    ensemble = storage.create_ensemble(experiment.id, ensemble_size=1)
+    assert api.observations_for_key([str(ensemble.id)], "NAIMFRAC").empty
