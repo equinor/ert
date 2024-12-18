@@ -1,39 +1,8 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1734370209198,
+  "lastUpdate": 1734506288394,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
-      {
-        "commit": {
-          "author": {
-            "email": "ynk@equinor.com",
-            "name": "Yngve S. Kristiansen",
-            "username": "yngve-sk"
-          },
-          "committer": {
-            "email": "yngve-sk@users.noreply.github.com",
-            "name": "Yngve S. Kristiansen",
-            "username": "yngve-sk"
-          },
-          "distinct": true,
-          "id": "68d01c72cb386db9c9236591c52b3862d12ad375",
-          "message": "Lower test_memory_smoothing threshold",
-          "timestamp": "2024-12-10T11:53:29+01:00",
-          "tree_id": "c9197c37daaa4da06cb25d941da7998420010f10",
-          "url": "https://github.com/equinor/ert/commit/68d01c72cb386db9c9236591c52b3862d12ad375"
-        },
-        "date": 1733828121140,
-        "tool": "pytest",
-        "benches": [
-          {
-            "name": "tests/ert/performance_tests/test_analysis.py::test_and_benchmark_adaptive_localization_with_fields",
-            "value": 0.21975888542340732,
-            "unit": "iter/sec",
-            "range": "stddev: 0.029186475432132337",
-            "extra": "mean: 4.550441717400003 sec\nrounds: 5"
-          }
-        ]
-      },
       {
         "commit": {
           "author": {
@@ -930,6 +899,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.03826610314741605",
             "extra": "mean: 4.696593507199998 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "yngve-sk@users.noreply.github.com",
+            "name": "Yngve S. Kristiansen",
+            "username": "yngve-sk"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "b17963f93942bee4648288964e8a0133adfda1c8",
+          "message": "Fix key error on empty summary observations in plotter\n\n\r\n\r\nCo-authored-by: Eivind Jahren <ejah@equinor.com>",
+          "timestamp": "2024-12-18T08:16:17+01:00",
+          "tree_id": "636a98d4862c118a7c0efc0068beb8fb772d400b",
+          "url": "https://github.com/equinor/ert/commit/b17963f93942bee4648288964e8a0133adfda1c8"
+        },
+        "date": 1734506287950,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/ert/performance_tests/test_analysis.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 0.2148757785156491,
+            "unit": "iter/sec",
+            "range": "stddev: 0.016913266146428664",
+            "extra": "mean: 4.653851666799994 sec\nrounds: 5"
           }
         ]
       }
