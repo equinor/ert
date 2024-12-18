@@ -154,44 +154,6 @@ def test_invalid_realization_memory(invalid_memory_spec: str):
         )
 
 
-def test_conflicting_realization_openpbs_memory_per_job():
-    with (
-        pytest.raises(ConfigValidationError),
-        pytest.warns(ConfigWarning, match="deprecated"),
-    ):
-        ErtConfig.from_file_contents(
-            "NUM_REALIZATIONS 1\n"
-            "REALIZATION_MEMORY 10Mb\n"
-            "QUEUE_SYSTEM TORQUE\n"
-            "QUEUE_OPTION TORQUE MEMORY_PER_JOB 20mb\n"
-        )
-
-
-def test_conflicting_realization_openpbs_memory_per_job_but_slurm_activated_only_warns():
-    with pytest.warns(ConfigWarning):
-        ErtConfig.from_file_contents(
-            "NUM_REALIZATIONS 1\n"
-            "REALIZATION_MEMORY 10Mb\n"
-            "QUEUE_SYSTEM SLURM\n"
-            "QUEUE_OPTION TORQUE MEMORY_PER_JOB 20mb\n"
-        )
-
-
-@pytest.mark.parametrize("torque_memory_with_unit_str", ["gb", "mb", "1 gb"])
-def test_that_invalid_memory_pr_job_raises_validation_error(
-    torque_memory_with_unit_str,
-):
-    with (
-        pytest.raises(ConfigValidationError),
-        pytest.warns(ConfigWarning, match="deprecated"),
-    ):
-        ErtConfig.from_file_contents(
-            "NUM_REALIZATIONS 1\n"
-            "QUEUE_SYSTEM TORQUE\n"
-            f"QUEUE_OPTION TORQUE MEMORY_PER_JOB {torque_memory_with_unit_str}"
-        )
-
-
 @pytest.mark.parametrize(
     "queue_system, queue_system_option",
     [("LSF", "LSF_QUEUE"), ("SLURM", "SQUEUE"), ("TORQUE", "QUEUE")],
@@ -244,7 +206,6 @@ def test_initializing_empty_config_queue_options_resets_to_default_value(
     "queue_system, queue_option, queue_value, err_msg",
     [
         ("SLURM", "SQUEUE_TIMEOUT", "5a", "should be a valid number"),
-        ("TORQUE", "NUM_NODES", "3.5", "should be a valid integer"),
     ],
 )
 def test_wrong_config_option_types(queue_system, queue_option, queue_value, err_msg):
@@ -255,11 +216,7 @@ def test_wrong_config_option_types(queue_system, queue_option, queue_value, err_
     )
 
     with pytest.raises(ConfigValidationError, match=err_msg):
-        if queue_system == "TORQUE":
-            with pytest.warns(ConfigWarning, match="deprecated"):
-                ErtConfig.from_file_contents(file_contents)
-        else:
-            ErtConfig.from_file_contents(file_contents)
+        ErtConfig.from_file_contents(file_contents)
 
 
 def test_that_configuring_another_queue_system_gives_warning():
@@ -269,44 +226,6 @@ def test_that_configuring_another_queue_system_gives_warning():
             "QUEUE_SYSTEM LSF\n"
             "QUEUE_OPTION SLURM SQUEUE_TIMEOUT ert\n"
         )
-
-
-@pytest.mark.parametrize(
-    "mem_per_job",
-    ["5gb", "5mb", "5kb"],
-)
-def test_that_valid_torque_queue_mem_options_are_ok(mem_per_job):
-    with pytest.warns(ConfigWarning, match="deprecated"):
-        ErtConfig.from_file_contents(
-            "NUM_REALIZATIONS 1\n"
-            "QUEUE_SYSTEM SLURM\n"
-            f"QUEUE_OPTION TORQUE MEMORY_PER_JOB {mem_per_job}\n"
-        )
-
-
-@pytest.mark.parametrize(
-    "mem_per_job",
-    ["5", "5g"],
-)
-def test_that_torque_queue_mem_options_are_corrected(mem_per_job: str):
-    with (
-        pytest.raises(ConfigValidationError) as e,
-        pytest.warns(ConfigWarning, match="deprecated"),
-    ):
-        ErtConfig.from_file_contents(
-            "NUM_REALIZATIONS 1\n"
-            "QUEUE_SYSTEM TORQUE\n"
-            f"QUEUE_OPTION TORQUE MEMORY_PER_JOB {mem_per_job}\n"
-        )
-
-    info = e.value.errors[0]
-
-    assert (
-        f"Value error, wrong memory format. Got input '{mem_per_job}'." in info.message
-    )
-    assert info.line == 3
-    assert info.column == 36
-    assert info.end_column == info.column + len(mem_per_job)
 
 
 def test_max_running_property():
