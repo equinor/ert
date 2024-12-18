@@ -22,7 +22,9 @@ def get_experiments(
         js.ExperimentOut(
             id=experiment.id,
             name=experiment.name,
-            ensemble_ids=[ens.id for ens in experiment.ensembles],
+            ensemble_ids=[
+                ens.id for ens in experiment.ensembles if experiment.is_valid()
+            ],
             priors=create_priors(experiment),
             userdata={},
         )

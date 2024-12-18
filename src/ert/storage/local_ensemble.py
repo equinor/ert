@@ -92,6 +92,7 @@ class LocalEnsemble(BaseMode):
             return self._path / f"realization-{realization}"
 
         self._realization_dir = create_realization_dir
+        self.has_valid_experiment: bool | None = None
 
     @classmethod
     def create(
@@ -406,7 +407,11 @@ class LocalEnsemble(BaseMode):
         states : list of RealizationStorageState
             list of realization states.
         """
-
+        if not self.experiment.is_valid():
+            logger.warning(
+                f"Could not get ensemble state for ensemble ({self.id}) due to invalid experiment ({self.experiment_id}): {self.experiment.error_message}"
+            )
+            return []
         response_configs = self.experiment.response_configuration
 
         def _parameters_exist_for_realization(realization: int) -> bool:

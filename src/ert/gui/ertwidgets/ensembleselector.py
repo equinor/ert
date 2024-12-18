@@ -7,6 +7,7 @@ from qtpy.QtCore import Qt, Signal
 from qtpy.QtWidgets import QComboBox
 
 from ert.gui.ertnotifier import ErtNotifier
+from ert.storage.local_ensemble import LocalEnsemble
 from ert.storage.realization_storage_state import RealizationStorageState
 
 if TYPE_CHECKING:
@@ -22,6 +23,7 @@ class EnsembleSelector(QComboBox):
         update_ert: bool = True,
         show_only_undefined: bool = False,
         show_only_no_children: bool = False,
+        show_only_with_valid_experiment: bool = False,
     ):
         super().__init__()
         self.notifier = notifier
@@ -36,6 +38,7 @@ class EnsembleSelector(QComboBox):
         # if the ensemble has not been used in an update, as that would
         # invalidate the result
         self._show_only_no_children = show_only_no_children
+        self._show_only_with_valid_experiment = show_only_with_valid_experiment
         self.setSizeAdjustPolicy(QComboBox.AdjustToContents)
 
         self.setEnabled(False)
@@ -57,7 +60,16 @@ class EnsembleSelector(QComboBox):
 
     @property
     def selected_ensemble(self) -> Ensemble:
-        return self.itemData(self.currentIndex())
+        print("GETTING SELECTED_ENSEMBLE")
+        itemData: LocalEnsemble = self.itemData(self.currentIndex())
+        print(f"{itemData.experiment.is_valid()=}")
+        return itemData
+
+    def get_selected_ensemble(self) -> Ensemble:
+        print("GETTING SELECTED_ENSEMBLE")
+        itemData: LocalEnsemble = self.itemData(self.currentIndex())
+        print(f"{itemData.experiment.is_valid()=}")
+        return itemData
 
     def populate(self) -> None:
         block = self.blockSignals(True)
@@ -68,9 +80,27 @@ class EnsembleSelector(QComboBox):
             self.setEnabled(True)
 
         for ensemble in self._ensemble_list():
+            model = self.model()
             self.addItem(
                 f"{ensemble.experiment.name} : {ensemble.name}", userData=ensemble
             )
+            if (
+                self._show_only_with_valid_experiment
+                and not ensemble.experiment.is_valid()
+            ):
+                print(
+                    f"FOUND INVALID EXPERIMENT {ensemble.experiment_id} FOR ENSEMBLE {ensemble.name}"
+                )
+                index = self.count() - 1
+                model_item = model.item(index)
+                model_item.setFlags(
+                    model_item.flags()
+                    & ~Qt.ItemFlag.ItemIsEnabled
+                    & ~Qt.ItemFlag.ItemIsSelectable
+                )
+                self.setItemData(
+                    index, "This ensemble is invalid", Qt.ItemDataRole.ToolTipRole
+                )
 
         current_index = self.findData(
             self.notifier.current_ensemble, Qt.ItemDataRole.UserRole
@@ -84,6 +114,7 @@ class EnsembleSelector(QComboBox):
 
     def _ensemble_list(self) -> Iterable[Ensemble]:
         if self._show_only_undefined:
+            print("JONAK1")
             ensembles = (
                 ensemble
                 for ensemble in self.notifier.storage.ensembles
@@ -95,6 +126,9 @@ class EnsembleSelector(QComboBox):
         else:
             ensembles = self.notifier.storage.ensembles
         ensemble_list = list(ensembles)
+        if self._show_only_with_valid_experiment:
+            print("FILTERED")
+            ensemble_list = [ens for ens in ensemble_list if ens.experiment.is_valid()]
         if self._show_only_no_children:
             parents = [
                 ens.parent for ens in self.notifier.storage.ensembles if ens.parent
@@ -103,7 +137,9 @@ class EnsembleSelector(QComboBox):
         return sorted(ensemble_list, key=lambda x: x.started_at, reverse=True)
 
     def _on_current_index_changed(self, index: int) -> None:
+        print("ON CURRENT INDEX CHANGED")
         self.notifier.set_current_ensemble(self.itemData(index))
 
     def _on_global_current_ensemble_changed(self, data: Ensemble | None) -> None:
+        print("ON GLOBAL CURRENT ENSEMBLE CHANGED")
         self.setCurrentIndex(max(self.findData(data, Qt.ItemDataRole.UserRole), 0))
