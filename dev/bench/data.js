@@ -1,39 +1,8 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1734526299255,
+  "lastUpdate": 1734528294940,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
-      {
-        "commit": {
-          "author": {
-            "email": "ejah@equinor.com",
-            "name": "Eivind Jahren",
-            "username": "eivindjahren"
-          },
-          "committer": {
-            "email": "ejah@equinor.com",
-            "name": "Eivind Jahren",
-            "username": "eivindjahren"
-          },
-          "distinct": true,
-          "id": "82972b0db0244aa4787b1a8385fb4280d8f4fc6b",
-          "message": "Remove use of deprecated types",
-          "timestamp": "2024-12-10T13:54:24+01:00",
-          "tree_id": "1931f5ebec992e066badc2a18049bc4b912160db",
-          "url": "https://github.com/equinor/ert/commit/82972b0db0244aa4787b1a8385fb4280d8f4fc6b"
-        },
-        "date": 1733835370227,
-        "tool": "pytest",
-        "benches": [
-          {
-            "name": "tests/ert/performance_tests/test_analysis.py::test_and_benchmark_adaptive_localization_with_fields",
-            "value": 0.22017516807077772,
-            "unit": "iter/sec",
-            "range": "stddev: 0.013477091318217439",
-            "extra": "mean: 4.541838249799992 sec\nrounds: 5"
-          }
-        ]
-      },
       {
         "commit": {
           "author": {
@@ -930,6 +899,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.04954297387413186",
             "extra": "mean: 4.6057491703999975 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "levje@equinor.com",
+            "name": "larsevj",
+            "username": "larsevj"
+          },
+          "committer": {
+            "email": "60844986+larsevj@users.noreply.github.com",
+            "name": "Lars Evje",
+            "username": "larsevj"
+          },
+          "distinct": true,
+          "id": "a0dc76e4dadb0d08bfc69afc2adbec7137306172",
+          "message": "Replace deprecated polars count with len",
+          "timestamp": "2024-12-18T14:22:54+01:00",
+          "tree_id": "6316496331e025e9011e73ed857da1f77ba339bb",
+          "url": "https://github.com/equinor/ert/commit/a0dc76e4dadb0d08bfc69afc2adbec7137306172"
+        },
+        "date": 1734528293991,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/ert/performance_tests/test_analysis.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 0.20917190507829692,
+            "unit": "iter/sec",
+            "range": "stddev: 0.03708193137887556",
+            "extra": "mean: 4.780756763800002 sec\nrounds: 5"
           }
         ]
       }
