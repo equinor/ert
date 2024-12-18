@@ -1,8 +1,8 @@
 from dataclasses import dataclass
 
 import numpy as np
-from qtpy import QtCore
-from qtpy.QtWidgets import QFormLayout, QLabel
+from PyQt6.QtCore import Qt
+from PyQt6.QtWidgets import QFormLayout, QLabel
 
 from ert.config import AnalysisConfig
 from ert.gui.ertnotifier import ErtNotifier
@@ -43,7 +43,7 @@ class ManualUpdatePanel(ExperimentConfigPanel):
         layout = QFormLayout()
         lab = QLabel(" ".join(ManualUpdate.__doc__.split()))  # type: ignore
         lab.setWordWrap(True)
-        lab.setAlignment(QtCore.Qt.AlignmentFlag.AlignLeft)
+        lab.setAlignment(Qt.AlignmentFlag.AlignLeft)
         layout.addRow(lab)
         self._ensemble_selector = EnsembleSelector(notifier)
         layout.addRow("Ensemble:", self._ensemble_selector)

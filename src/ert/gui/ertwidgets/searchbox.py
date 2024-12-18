@@ -1,8 +1,9 @@
 from typing import Any
 
-from qtpy.QtCore import Qt, Signal
-from qtpy.QtGui import QColor, QFocusEvent, QKeyEvent
-from qtpy.QtWidgets import QLineEdit
+from PyQt6.QtCore import Qt
+from PyQt6.QtCore import pyqtSignal as Signal
+from PyQt6.QtGui import QColor, QFocusEvent, QKeyEvent
+from PyQt6.QtWidgets import QLineEdit
 
 
 class SearchBox(QLineEdit):
@@ -63,7 +64,7 @@ class SearchBox(QLineEdit):
         self.exitSearch()
 
     def keyPressEvent(self, a0: QKeyEvent | None) -> None:
-        if a0 is not None and a0.key() == Qt.Key.Key_Escape:
+        if a0 and a0.key() == Qt.Key.Key_Escape:
             self.clear()
             self.clearFocus()
         else:

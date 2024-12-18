@@ -3,8 +3,8 @@ import random
 import stat
 from textwrap import dedent
 
-from qtpy.QtCore import Qt, QTimer
-from qtpy.QtWidgets import QComboBox, QMessageBox, QWidget
+from PyQt6.QtCore import Qt, QTimer
+from PyQt6.QtWidgets import QComboBox, QMessageBox, QWidget
 
 from ert.gui.simulation.experiment_panel import ExperimentPanel
 from ert.gui.simulation.run_dialog import RunDialog
@@ -99,12 +99,12 @@ def test_restart_failed_realizations(opened_main_window_poly, qtbot):
     assert set(failed_realizations) == failing_reals_first_try
 
     def handle_dialog():
-        message_box = wait_for_child(gui, qtbot, QMessageBox, name="restart_prompt")
+        message_box = gui.findChildren(QMessageBox, name="restart_prompt")[-1]
         qtbot.mouseClick(message_box.buttons()[0], Qt.MouseButton.LeftButton)
 
-    QTimer.singleShot(500, handle_dialog)
     failing_reals_second_try = {*random.sample(list(failing_reals_first_try), 5)}
     write_poly_eval(failing_reals=failing_reals_second_try)
+    QTimer.singleShot(500, handle_dialog)
     qtbot.mouseClick(run_dialog.restart_button, Qt.MouseButton.LeftButton)
 
     qtbot.waitUntil(lambda: run_dialog.is_simulation_done() == True, timeout=60000)

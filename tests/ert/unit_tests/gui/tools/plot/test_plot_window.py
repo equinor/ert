@@ -1,6 +1,6 @@
+from PyQt6.QtCore import Qt
+from PyQt6.QtWidgets import QApplication, QPushButton
 from pytestqt.qtbot import QtBot
-from qtpy.QtCore import Qt
-from qtpy.QtWidgets import QApplication, QPushButton
 
 from ert.gui.tools.plot.plot_window import create_error_dialog
 

@@ -3,8 +3,8 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import TYPE_CHECKING
 
-from qtpy.QtCore import Slot
-from qtpy.QtWidgets import QFormLayout, QLabel
+from PyQt6.QtCore import pyqtSlot as Slot
+from PyQt6.QtWidgets import QFormLayout, QLabel, QWidget
 
 from ert.gui.ertnotifier import ErtNotifier
 from ert.gui.ertwidgets import (
@@ -103,8 +103,8 @@ class EnsembleSmootherPanel(ExperimentConfigPanel):
 
         self.notifier.ertChanged.connect(self._update_experiment_name_placeholder)
 
-    @Slot(ExperimentConfigPanel)
-    def experimentTypeChanged(self, w: ExperimentConfigPanel) -> None:
+    @Slot(QWidget)
+    def experimentTypeChanged(self, w: QWidget) -> None:
         if isinstance(w, EnsembleSmootherPanel):
             self._update_experiment_name_placeholder()
 

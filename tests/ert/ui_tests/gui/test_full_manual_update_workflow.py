@@ -2,8 +2,8 @@ import contextlib
 import shutil
 
 import numpy as np
-from qtpy.QtCore import Qt
-from qtpy.QtWidgets import QComboBox, QToolButton, QTreeView, QWidget
+from PyQt6.QtCore import Qt
+from PyQt6.QtWidgets import QComboBox, QToolButton, QTreeView, QWidget
 
 from ert.data import MeasuredData
 from ert.gui.simulation.evaluate_ensemble_panel import EvaluateEnsemblePanel
@@ -37,7 +37,7 @@ def test_manual_analysis_workflow(ensemble_experiment_has_run, qtbot):
 
     # Click start simulation and agree to the message
     run_experiment = get_child(experiment_panel, QWidget, name="run_experiment")
-    qtbot.mouseClick(run_experiment, Qt.LeftButton)
+    qtbot.mouseClick(run_experiment, Qt.MouseButton.LeftButton)
     # The Run dialog opens, wait until done appears, then click done
     run_dialog = wait_for_child(gui, qtbot, RunDialog)
     qtbot.waitUntil(lambda: run_dialog.is_simulation_done() == True, timeout=10000)
@@ -45,7 +45,7 @@ def test_manual_analysis_workflow(ensemble_experiment_has_run, qtbot):
 
     button_manage_experiments = gui.findChild(QToolButton, "button_Manage_experiments")
     assert button_manage_experiments
-    qtbot.mouseClick(button_manage_experiments, Qt.LeftButton)
+    qtbot.mouseClick(button_manage_experiments, Qt.MouseButton.LeftButton)
     experiments_panel = gui.findChild(ManageExperimentsPanel)
     assert experiments_panel
 
@@ -70,7 +70,9 @@ def test_manual_analysis_workflow(ensemble_experiment_has_run, qtbot):
     simulation_mode_combo.setCurrentText(EvaluateEnsemble.name())
 
     idx = simulation_settings._ensemble_selector.findData(
-        "ensemble_experiment : iter-0_1", Qt.MatchStartsWith
+        "ensemble_experiment : iter-0_1",
+        Qt.ItemDataRole.DisplayRole,
+        Qt.MatchFlag.MatchStartsWith,
     )
     assert idx != -1
     simulation_settings._ensemble_selector.setCurrentIndex(idx)

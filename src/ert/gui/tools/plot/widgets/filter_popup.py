@@ -2,9 +2,10 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from qtpy.QtCore import QEvent, Qt, Signal
-from qtpy.QtGui import QCursor
-from qtpy.QtWidgets import (
+from PyQt6.QtCore import QEvent, Qt
+from PyQt6.QtCore import pyqtSignal as Signal
+from PyQt6.QtGui import QCursor
+from PyQt6.QtWidgets import (
     QCheckBox,
     QDialog,
     QFrame,
@@ -27,9 +28,9 @@ class FilterPopup(QDialog):
         QDialog.__init__(
             self,
             parent,
-            Qt.WindowStaysOnTopHint  # type: ignore
-            | Qt.X11BypassWindowManagerHint  # type: ignore
-            | Qt.FramelessWindowHint,  # type: ignore
+            Qt.WindowType.WindowStaysOnTopHint
+            | Qt.WindowType.X11BypassWindowManagerHint
+            | Qt.WindowType.FramelessWindowHint,
         )
         self.setVisible(False)
 
@@ -38,7 +39,7 @@ class FilterPopup(QDialog):
         layout = QVBoxLayout()
         layout.setContentsMargins(0, 0, 0, 0)
         frame = QFrame()
-        frame.setFrameStyle(QFrame.StyledPanel | QFrame.Raised)
+        frame.setFrameStyle(QFrame.Shape.StyledPanel | QFrame.Shadow.Raised)
         layout.addWidget(frame)
 
         self.__layout = QVBoxLayout()
@@ -69,9 +70,9 @@ class FilterPopup(QDialog):
 
         self.__layout.addWidget(check_box)
 
-    def leaveEvent(self, event: QEvent | None) -> None:
+    def leaveEvent(self, a0: QEvent | None) -> None:
         self.hide()
-        QWidget.leaveEvent(self, event)
+        QWidget.leaveEvent(self, a0)
 
     def show(self) -> None:
         QWidget.show(self)

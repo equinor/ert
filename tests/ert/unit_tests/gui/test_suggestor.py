@@ -1,5 +1,5 @@
 import pytest
-from qtpy.QtWidgets import QWidget
+from PyQt6.QtWidgets import QWidget
 
 from ert.config import ErrorInfo
 from ert.gui.suggestor import Suggestor

@@ -5,8 +5,8 @@ from pathlib import Path
 
 import pandas as pd
 import pytest
-from qtpy.QtCore import Qt, QTimer
-from qtpy.QtWidgets import QComboBox, QMessageBox, QWidget
+from PyQt6.QtCore import Qt, QTimer
+from PyQt6.QtWidgets import QComboBox, QMessageBox, QWidget
 
 from ert.gui.ertwidgets.listeditbox import ListEditBox
 from ert.gui.ertwidgets.pathchooser import PathChooser
@@ -45,7 +45,8 @@ def export_data(gui, qtbot, ensemble_select):
         finished_message = wait_for_child(gui, qtbot, QMessageBox)
         assert "completed" in finished_message.text()
         qtbot.mouseClick(
-            finished_message.button(QMessageBox.Ok), Qt.MouseButton.LeftButton
+            finished_message.button(QMessageBox.StandardButton.Ok),
+            Qt.MouseButton.LeftButton,
         )
 
     QTimer.singleShot(500, handle_export_dialog)
@@ -98,7 +99,7 @@ def run_experiment_via_gui(gui, qtbot):
         shutil.rmtree("poly_out")
 
     run_experiment = get_child(experiment_panel, QWidget, name="run_experiment")
-    qtbot.mouseClick(run_experiment, Qt.LeftButton)
+    qtbot.mouseClick(run_experiment, Qt.MouseButton.LeftButton)
 
     run_dialog = wait_for_child(gui, qtbot, RunDialog)
     qtbot.waitUntil(lambda: run_dialog.is_simulation_done() == True, timeout=20000)

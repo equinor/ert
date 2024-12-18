@@ -1,7 +1,8 @@
 from __future__ import annotations
 
-from qtpy.QtCore import Qt, Signal
-from qtpy.QtWidgets import QFormLayout, QLabel, QMessageBox, QWidget
+from PyQt6.QtCore import Qt
+from PyQt6.QtCore import pyqtSignal as Signal
+from PyQt6.QtWidgets import QFormLayout, QLabel, QMessageBox, QWidget
 
 from ert.gui.ertnotifier import ErtNotifier
 from ert.gui.ertwidgets import (
@@ -112,10 +113,10 @@ class LoadResultsPanel(QWidget):
             msg = ErtMessageBox(
                 f"Successfully loaded {loaded} realizations", "\n".join(messages)
             )
-            msg.exec_()
+            msg.exec()
         else:
             msg = ErtMessageBox("No realizations loaded", "\n".join(messages))
-            msg.exec_()
+            msg.exec()
         return loaded
 
     def refresh(self) -> None:

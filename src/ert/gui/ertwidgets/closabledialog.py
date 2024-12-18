@@ -1,13 +1,13 @@
 from __future__ import annotations
 
+from collections.abc import Callable
 from typing import TYPE_CHECKING
 
-from qtpy.QtCore import Qt
-from qtpy.QtWidgets import QDialog, QHBoxLayout, QPushButton, QVBoxLayout, QWidget
+from PyQt6.QtCore import Qt
+from PyQt6.QtWidgets import QDialog, QHBoxLayout, QPushButton, QVBoxLayout, QWidget
 
 if TYPE_CHECKING:
-    from qtpy.QtGui import QKeyEvent
-    from qtpy.QtWidgets import QT_SLOT
+    from PyQt6.QtGui import QKeyEvent
 
 
 class ClosableDialog(QDialog):
@@ -15,16 +15,11 @@ class ClosableDialog(QDialog):
         self, title: str | None, widget: QWidget, parent: QWidget | None = None
     ) -> None:
         QDialog.__init__(self, parent)
-        self.setWindowTitle(title)
+        self.setWindowTitle(title if title else "")
         self.setModal(True)
-        self.setWindowFlags(self.windowFlags() | Qt.WindowType.CustomizeWindowHint)
-        self.setWindowFlags(
-            self.windowFlags()
-            & ~Qt.WindowFlags(Qt.WindowType.WindowContextHelpButtonHint)
-        )
-        self.setWindowFlags(
-            self.windowFlags() & ~Qt.WindowFlags(Qt.WindowType.WindowCloseButtonHint)
-        )
+        self.setWindowFlag(Qt.WindowType.CustomizeWindowHint, True)
+        self.setWindowFlag(Qt.WindowType.WindowContextHelpButtonHint, False)
+        self.setWindowFlag(Qt.WindowType.WindowCloseButtonHint, False)
 
         layout = QVBoxLayout()
         layout.addWidget(widget, stretch=1)
@@ -51,7 +46,7 @@ class ClosableDialog(QDialog):
         if self.close_button.isEnabled() or a0 is None or a0.key() != Qt.Key.Key_Escape:
             QDialog.keyPressEvent(self, a0)
 
-    def addButton(self, caption: str, listener: QT_SLOT) -> QPushButton:
+    def addButton(self, caption: str, listener: Callable[..., None]) -> QPushButton:
         button = QPushButton(caption)
         button.setObjectName(str(caption).capitalize())
         self.__button_layout.insertWidget(1, button)

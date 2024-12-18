@@ -3,8 +3,8 @@ import shutil
 
 import polars
 import pytest
-from qtpy.QtCore import Qt
-from qtpy.QtWidgets import QPushButton, QTextEdit
+from PyQt6.QtCore import Qt
+from PyQt6.QtWidgets import QPushButton, QTextEdit
 
 from ert.config import ErtConfig, SummaryConfig
 from ert.gui.ertnotifier import ErtNotifier
@@ -13,6 +13,7 @@ from ert.gui.tools.manage_experiments.storage_info_widget import (
     _EnsembleWidget,
     _EnsembleWidgetTabs,
     _ExperimentWidget,
+    _RealizationWidget,
     _WidgetType,
 )
 from ert.gui.tools.manage_experiments.storage_widget import StorageWidget
@@ -436,6 +437,7 @@ def test_realization_view(
     )
 
     realization_widget = tool._storage_info_widget._content_layout.currentWidget()
+    assert type(realization_widget) is _RealizationWidget
 
     assert (
         realization_widget._state_label.text()

@@ -1,8 +1,8 @@
 import contextlib
 import shutil
 
-from qtpy.QtCore import Qt
-from qtpy.QtWidgets import QComboBox, QWidget
+from PyQt6.QtCore import Qt
+from PyQt6.QtWidgets import QComboBox, QWidget
 
 from ert.gui.simulation.experiment_panel import ExperimentPanel
 from ert.gui.simulation.run_dialog import RunDialog
@@ -28,7 +28,7 @@ def test_single_test_run_after_ensemble_experiment(
     simulation_mode_combo.setCurrentText("Single realization test-run")
 
     run_experiment = get_child(experiment_panel, QWidget, name="run_experiment")
-    qtbot.mouseClick(run_experiment, Qt.LeftButton)
+    qtbot.mouseClick(run_experiment, Qt.MouseButton.LeftButton)
     run_dialog = wait_for_child(gui, qtbot, RunDialog)
     qtbot.waitUntil(lambda: run_dialog.is_simulation_done() == True, timeout=100000)
     qtbot.waitUntil(lambda: run_dialog._tab_widget.currentWidget() is not None)

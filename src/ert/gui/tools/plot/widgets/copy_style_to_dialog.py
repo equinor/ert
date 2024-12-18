@@ -2,8 +2,8 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any
 
-from qtpy.QtGui import QIcon
-from qtpy.QtWidgets import (
+from PyQt6.QtGui import QIcon
+from PyQt6.QtWidgets import (
     QDialog,
     QFormLayout,
     QHBoxLayout,

@@ -1,8 +1,13 @@
 from collections.abc import Iterator
 from typing import Any
 
-from qtpy.QtCore import QModelIndex, QSize, Qt, Signal
-from qtpy.QtGui import (
+from PyQt6.QtCore import (
+    QModelIndex,
+    QSize,
+    Qt,
+)
+from PyQt6.QtCore import pyqtSignal as Signal
+from PyQt6.QtGui import (
     QBrush,
     QColor,
     QCursor,
@@ -12,7 +17,7 @@ from qtpy.QtGui import (
     QPainter,
     QPen,
 )
-from qtpy.QtWidgets import (
+from PyQt6.QtWidgets import (
     QAbstractItemView,
     QListWidget,
     QListWidgetItem,
@@ -67,7 +72,7 @@ class EnsembleSelectListWidget(QListWidget):
 
         if (viewport := self.viewport()) is not None:
             viewport.setMouseTracking(True)
-        self.setDragDropMode(QAbstractItemView.InternalMove)
+        self.setDragDropMode(QAbstractItemView.DragDropMode.InternalMove)
         self.setItemDelegate(CustomItemDelegate())
         self.itemClicked.connect(self.slot_toggle_plot)
 
@@ -113,14 +118,11 @@ class CustomItemDelegate(QStyledItemDelegate):
         return QSize(-1, 30)
 
     def paint(
-        self,
-        painter: QPainter | None,
-        option: QStyleOptionViewItem,
-        index: QModelIndex,
+        self, painter: QPainter | None, option: QStyleOptionViewItem, index: QModelIndex
     ) -> None:
         if painter is None:
             return
-        painter.setRenderHint(QPainter.Antialiasing)
+        painter.setRenderHint(QPainter.RenderHint.Antialiasing)
 
         pen_color = QColor("black")
         background_color = QColor("lightgray")
