@@ -11,7 +11,7 @@ from textwrap import dedent
 from unittest.mock import MagicMock
 
 import pytest
-from hypothesis import assume, example, given, settings
+from hypothesis import HealthCheck, assume, example, given, settings
 from hypothesis import strategies as st
 from pydantic import RootModel, TypeAdapter
 
@@ -838,12 +838,16 @@ def test_that_include_statements_with_multiple_values_raises_error():
         )
 
 
+@pytest.mark.integration_test
+@settings(suppress_health_check=[HealthCheck.function_scoped_fixture])
 @pytest.mark.usefixtures("use_tmpdir")
-def test_fm_step_config_via_plugin_ends_up_json_data(monkeypatch):
+@given(anystring=st.text())
+def test_fm_step_config_via_plugin_ends_up_json_data(monkeypatch, anystring):
+    assume(not (anystring and anystring[0] == "<" and anystring[-1] == ">"))
     monkeypatch.setattr(
         ErtPluginManager,
         "get_forward_model_configuration",
-        MagicMock(return_value={"SOME_STEP": {"FOO": "bar"}}),
+        MagicMock(return_value={"SOME_STEP": {"FOO": anystring}}),
     )
     Path("SOME_STEP").write_text("EXECUTABLE /bin/ls", encoding="utf-8")
     Path("config.ert").write_text(
@@ -864,7 +868,7 @@ def test_fm_step_config_via_plugin_ends_up_json_data(monkeypatch):
         env_pr_fm_step=ert_config.env_pr_fm_step,
         run_id=None,
     )
-    assert step_json["jobList"][0]["environment"]["FOO"] == "bar"
+    assert step_json["jobList"][0]["environment"]["FOO"] == anystring
 
 
 @pytest.mark.usefixtures("use_tmpdir")
