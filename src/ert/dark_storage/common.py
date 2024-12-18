@@ -294,7 +294,7 @@ def get_observation_keys_for_response(
 
     elif (
         displayed_response_key
-        in ensemble.experiment.response_type_to_response_keys["summary"]
+        in ensemble.experiment.response_type_to_response_keys.get("summary", {})
     ):
         response_key = displayed_key_to_response_key["summary"](displayed_response_key)[
             0
