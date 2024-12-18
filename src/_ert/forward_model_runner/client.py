@@ -130,8 +130,6 @@ class Client:
                 logger.debug(
                     f"{self.dealer_id} connection to evaluator went down, reconnecting: {exc}"
                 )
-                await asyncio.sleep(1)
-                self.socket.connect(self.url)
             except asyncio.CancelledError:
                 self.term()
                 raise
@@ -140,6 +138,8 @@ class Client:
             if retries > 0:
                 logger.info(f"Retrying... ({retries} attempts left)")
                 await asyncio.sleep(backoff)
+                # this call is idempotent
+                self.socket.connect(self.url)
                 backoff = min(backoff * 2, 10)  # Exponential backoff
         raise ClientConnectionError(
             f"{self.dealer_id} Failed to send {message=} after {retries=}"
