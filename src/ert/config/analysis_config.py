@@ -41,7 +41,7 @@ class AnalysisConfig:
     ies_module: IESSettings = field(default_factory=IESSettings)
     observation_settings: UpdateSettings = field(default_factory=UpdateSettings)
     num_iterations: int = 1
-    design_matrices: list[DesignMatrix] = field(default_factory=list)
+    design_matrix: DesignMatrix | None = None
 
     @no_type_check
     @classmethod
@@ -191,6 +191,11 @@ class AnalysisConfig:
             DesignMatrix.from_config_list(design_matrix_config_list)
             for design_matrix_config_list in design_matrix_config_lists
         ]
+        design_matrix: DesignMatrix | None = None
+        if design_matrices:
+            design_matrix = design_matrices[0]
+            for dm_other in design_matrices[1:]:
+                design_matrix = design_matrix.merge_with_other(dm_other)
         config = cls(
             max_runtime=config_dict.get(ConfigKeys.MAX_RUNTIME),
             minimum_required_realizations=min_realization,
@@ -198,7 +203,7 @@ class AnalysisConfig:
             observation_settings=obs_settings,
             es_module=es_settings,
             ies_module=ies_settings,
-            design_matrices=design_matrices,
+            design_matrix=design_matrix,
         )
         return config
 
