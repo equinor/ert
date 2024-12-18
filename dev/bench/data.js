@@ -1,39 +1,8 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1734529093153,
+  "lastUpdate": 1734530306287,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
-      {
-        "commit": {
-          "author": {
-            "email": "jholba@equinor.com",
-            "name": "Jon Holba",
-            "username": "JHolba"
-          },
-          "committer": {
-            "email": "ejah@equinor.com",
-            "name": "Eivind Jahren",
-            "username": "eivindjahren"
-          },
-          "distinct": true,
-          "id": "dffa41ef351c87292a0291e4d5c1c0036b41c8e8",
-          "message": "Run pyupgrade on src tree",
-          "timestamp": "2024-12-11T09:28:00+01:00",
-          "tree_id": "45c02de10652357c09899afad6c9adaeea84adb4",
-          "url": "https://github.com/equinor/ert/commit/dffa41ef351c87292a0291e4d5c1c0036b41c8e8"
-        },
-        "date": 1733905814889,
-        "tool": "pytest",
-        "benches": [
-          {
-            "name": "tests/ert/performance_tests/test_analysis.py::test_and_benchmark_adaptive_localization_with_fields",
-            "value": 0.21846783445621357,
-            "unit": "iter/sec",
-            "range": "stddev: 0.012075998138562862",
-            "extra": "mean: 4.5773328714 sec\nrounds: 5"
-          }
-        ]
-      },
       {
         "commit": {
           "author": {
@@ -930,6 +899,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.033091739166018826",
             "extra": "mean: 4.581393377599994 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "andrli@equinor.com",
+            "name": "Andreas Eknes Lie",
+            "username": "andreas-el"
+          },
+          "committer": {
+            "email": "114403625+andreas-el@users.noreply.github.com",
+            "name": "Andreas Eknes Lie",
+            "username": "andreas-el"
+          },
+          "distinct": true,
+          "id": "7f72c056b7b55de316903d2dc4a60e52954be9b0",
+          "message": "Emit signal when tab changes to select realization\n\nCo-authored-by: Jonathan Karlsen <jonak@equinor.com>",
+          "timestamp": "2024-12-18T14:56:29+01:00",
+          "tree_id": "8f85eba314f6e8eb21b8ff6e5c9e3693a86c7e37",
+          "url": "https://github.com/equinor/ert/commit/7f72c056b7b55de316903d2dc4a60e52954be9b0"
+        },
+        "date": 1734530305624,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/ert/performance_tests/test_analysis.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 0.21693890847473488,
+            "unit": "iter/sec",
+            "range": "stddev: 0.03951958364486",
+            "extra": "mean: 4.609592659200007 sec\nrounds: 5"
           }
         ]
       }
