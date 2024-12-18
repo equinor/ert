@@ -5,7 +5,11 @@ import pytest
 
 from ert.scheduler.event import FinishedEvent
 from everest.config import EverestConfig, ServerConfig
-from everest.detached import start_server, wait_for_server
+from everest.detached import (
+    start_experiment,
+    start_server,
+    wait_for_server,
+)
 from everest.util import makedirs_if_needed
 
 CONFIG_FILE = "config_fm_failure.yml"
@@ -32,6 +36,10 @@ async def test_logging_setup(copy_math_func_test_data_to_tmp):
     driver = await start_server(everest_config, debug=True)
     try:
         wait_for_server(everest_config.output_dir, 60)
+        start_experiment(
+            server_context=ServerConfig.get_server_context(everest_config.output_dir),
+            config=everest_config,
+        )
     except (SystemExit, RuntimeError) as e:
         raise e
     await server_running()
