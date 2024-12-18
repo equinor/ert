@@ -61,15 +61,7 @@ class EnsembleSelector(QComboBox):
 
     @property
     def selected_ensemble(self) -> Ensemble:
-        print("GETTING SELECTED_ENSEMBLE")
-        print(f"{self.count()=}")
-        try:
-            itemData: LocalEnsemble = self.itemData(self.currentIndex())
-        except Exception as e:
-            print(f"{e=}")
-            raise e
-
-        print(f"{itemData.experiment.is_valid()=}")
+        itemData: LocalEnsemble | None = self.itemData(self.currentIndex())
         return itemData
 
     def populate(self) -> None:
