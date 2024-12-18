@@ -11,7 +11,7 @@ import xarray as xr
 from pandas.testing import assert_frame_equal
 from starlette.testclient import TestClient
 
-from ert.config import GenDataConfig, GenKwConfig, SummaryConfig
+from ert.config import GenKwConfig, SummaryConfig
 from ert.dark_storage import enkf
 from ert.dark_storage.app import app
 from ert.gui.tools.plot.plot_api import PlotApi, PlotApiKeyDefinition
