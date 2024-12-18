@@ -1,8 +1,8 @@
 from uuid import uuid4
 
 import numpy as np
+from PySide6.QtWidgets import QTableWidget
 from pytestqt.qtbot import QtBot
-from qtpy.QtWidgets import QTableWidget
 
 from ert.analysis.event import DataSection
 from ert.gui.simulation.view import UpdateWidget

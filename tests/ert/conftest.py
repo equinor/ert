@@ -13,8 +13,8 @@ from unittest.mock import MagicMock
 import pytest
 from hypothesis import HealthCheck, settings
 from hypothesis import strategies as st
-from qtpy.QtCore import QDir
-from qtpy.QtWidgets import QApplication
+from PySide6.QtCore import QDir
+from PySide6.QtWidgets import QApplication
 
 import _ert.forward_model_runner.cli
 from _ert.threading import set_signal_handler

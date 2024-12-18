@@ -6,8 +6,8 @@ import numpy as np
 import pandas as pd
 from httpx import RequestError
 from pandas import DataFrame
-from qtpy.QtCore import Qt, Slot
-from qtpy.QtWidgets import QDockWidget, QMainWindow, QTabWidget, QWidget
+from PySide6.QtCore import Qt, Slot
+from PySide6.QtWidgets import QDockWidget, QMainWindow, QTabWidget, QWidget
 
 from ert.gui.ertwidgets import showWaitCursorWhileWaiting
 
@@ -41,7 +41,7 @@ STD_DEV_DEFAULT = 6
 
 logger = logging.getLogger(__name__)
 
-from qtpy.QtWidgets import (
+from PySide6.QtWidgets import (
     QApplication,
     QDialog,
     QHBoxLayout,
@@ -192,7 +192,7 @@ class PlotWindow(QMainWindow):
         key = key_def.key
 
         plot_widget = self._central_tab.currentWidget()
-        assert plot_widget is not None
+        assert type(plot_widget) is PlotWidget
 
         if plot_widget._plotter.dimensionality == key_def.dimensionality:
             selected_ensembles = (
@@ -329,7 +329,8 @@ class PlotWindow(QMainWindow):
         dock_widget.setWidget(widget)
         dock_widget.setAllowedAreas(allowed_areas)
         dock_widget.setFeatures(
-            QDockWidget.DockWidgetFloatable | QDockWidget.DockWidgetMovable
+            QDockWidget.DockWidgetFeature.DockWidgetFloatable
+            | QDockWidget.DockWidgetFeature.DockWidgetMovable
         )
 
         self.addDockWidget(area, dock_widget)

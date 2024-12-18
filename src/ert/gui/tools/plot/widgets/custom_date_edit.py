@@ -1,8 +1,8 @@
 import datetime
 
-from qtpy.QtCore import QDate
-from qtpy.QtGui import QIcon
-from qtpy.QtWidgets import (
+from PySide6.QtCore import QDate
+from PySide6.QtGui import QIcon
+from PySide6.QtWidgets import (
     QCalendarWidget,
     QHBoxLayout,
     QMenu,
@@ -20,7 +20,7 @@ class CustomDateEdit(QWidget):
         self._line_edit = ClearableLineEdit()
 
         self._calendar_button = QToolButton()
-        self._calendar_button.setPopupMode(QToolButton.InstantPopup)
+        self._calendar_button.setPopupMode(QToolButton.ToolButtonPopupMode.InstantPopup)
         self._calendar_button.setFixedSize(26, 26)
         self._calendar_button.setAutoRaise(True)
         self._calendar_button.setIcon(QIcon("img:calendar_date_range.svg"))
@@ -45,7 +45,7 @@ class CustomDateEdit(QWidget):
 
     def setDate(self, date: datetime.date | QDate) -> None:
         if isinstance(date, datetime.date):
-            date = QDate(date.year, date.month, date.day)  # type: ignore
+            date = QDate(date.year, date.month, date.day)
 
         if date is not None and date.isValid():
             self._line_edit.setText(str(date.toString("yyyy-MM-dd")))

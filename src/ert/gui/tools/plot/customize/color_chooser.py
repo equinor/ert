@@ -1,6 +1,6 @@
-from qtpy.QtCore import QRect, QSize, Signal, Slot
-from qtpy.QtGui import QColor, QMouseEvent, QPainter, QPaintEvent
-from qtpy.QtWidgets import QColorDialog, QFrame
+from PySide6.QtCore import QRect, QSize, Signal, Slot
+from PySide6.QtGui import QColor, QMouseEvent, QPainter, QPaintEvent
+from PySide6.QtWidgets import QColorDialog, QFrame
 
 
 class ColorBox(QFrame):
@@ -11,7 +11,7 @@ class ColorBox(QFrame):
 
     def __init__(self, size: int = 15) -> None:
         QFrame.__init__(self)
-        self.setFrameStyle(QFrame.Panel | QFrame.Sunken)
+        self.setFrameStyle(QFrame.Shape.Panel | QFrame.Shadow.Sunken)
         self.setMaximumSize(QSize(size, size))
         self.setMinimumSize(QSize(size, size))
 
@@ -30,7 +30,7 @@ class ColorBox(QFrame):
     def show_color_dialog(self) -> None:
         color_dialog = QColorDialog(self._color, self)
         color_dialog.setWindowTitle("Select color")
-        color_dialog.setOption(QColorDialog.ShowAlphaChannel)
+        color_dialog.setOption(QColorDialog.ColorDialogOption.ShowAlphaChannel)
         color_dialog.accepted.connect(
             lambda: self.colorChanged.emit(color_dialog.selectedColor())
         )
@@ -47,7 +47,7 @@ class ColorBox(QFrame):
         self._color = new_color
         self.update()
 
-    def paintEvent(self, event: QPaintEvent | None) -> None:
+    def paintEvent(self, arg__1: QPaintEvent) -> None:
         """Paints the box"""
         painter = QPainter(self)
         rect = self.contentsRect()
@@ -65,9 +65,9 @@ class ColorBox(QFrame):
         painter.restore()
         painter.fillRect(rect, self._color)
 
-        QFrame.paintEvent(self, event)
+        QFrame.paintEvent(self, arg__1)
 
-    def mouseReleaseEvent(self, event: QMouseEvent | None) -> None:
+    def mouseReleaseEvent(self, event: QMouseEvent) -> None:
         if event:
             self.mouseRelease.emit()
         return super().mouseReleaseEvent(event)

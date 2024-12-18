@@ -20,6 +20,9 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - uses: ./.github/actions/install_dependencies_qt
+        with:
+          os: ubuntu-latest
       - uses: actions/setup-python@v5
         with:
           python-version: '3.12'

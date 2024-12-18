@@ -128,6 +128,10 @@ jobs:
         fetch-depth: 0
         filter: tree:0
 
+    - uses: ./.github/actions/install_dependencies_qt
+      with:
+        os: ${{ matrix.os }}
+
     - name: Install pandoc
       run: |
         sudo apt install pandoc

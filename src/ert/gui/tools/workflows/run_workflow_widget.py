@@ -4,9 +4,9 @@ import time
 from collections.abc import Iterable
 from typing import TYPE_CHECKING
 
-from qtpy.QtCore import QSize, Qt, Signal
-from qtpy.QtGui import QIcon, QMovie
-from qtpy.QtWidgets import (
+from PySide6.QtCore import QSize, Qt, Signal
+from PySide6.QtGui import QIcon, QMovie
+from PySide6.QtWidgets import (
     QComboBox,
     QFormLayout,
     QHBoxLayout,
@@ -40,7 +40,7 @@ class RunWorkflowWidget(QWidget):
         layout = QFormLayout()
 
         self._workflow_combo = QComboBox()
-        self._workflow_combo.addItems(sorted(config.workflows.keys(), key=str.lower))  # type: ignore
+        self._workflow_combo.addItems(sorted(config.workflows.keys(), key=str.lower))
 
         layout.addRow("Workflow", self._workflow_combo)
 
@@ -97,10 +97,10 @@ class RunWorkflowWidget(QWidget):
                 self,
                 "Confirm cancel",
                 "Are you sure you want to cancel the running workflow?",
-                QMessageBox.Yes | QMessageBox.No,
+                QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
             )
 
-            if cancel == QMessageBox.Yes:
+            if cancel == QMessageBox.StandardButton.Yes:
                 self._workflow_runner.cancel()
                 if self._running_workflow_dialog is not None:
                     self._running_workflow_dialog.disableCloseButton()
