@@ -1,16 +1,17 @@
 from collections.abc import Callable
 
-from qtpy.QtCore import (
+from PySide6.QtCore import (
     QAbstractItemModel,
     QItemSelectionModel,
     QModelIndex,
+    QPersistentModelIndex,
     QSize,
     QSortFilterProxyModel,
     Qt,
     Signal,
 )
-from qtpy.QtGui import QIcon
-from qtpy.QtWidgets import (
+from PySide6.QtGui import QIcon
+from PySide6.QtWidgets import (
     QHBoxLayout,
     QLineEdit,
     QToolButton,
@@ -64,9 +65,13 @@ class _SortingProxyModel(QSortFilterProxyModel):
         super().__init__()
         self.setSourceModel(model)
 
-    def lessThan(self, left: QModelIndex, right: QModelIndex) -> bool:
-        left_data = left.data()
-        right_data = right.data()
+    def lessThan(
+        self,
+        source_left: QModelIndex | QPersistentModelIndex,
+        source_right: QModelIndex | QPersistentModelIndex,
+    ) -> bool:
+        left_data = source_left.data()
+        right_data = source_right.data()
 
         if (
             isinstance(left_data, str)
@@ -79,7 +84,7 @@ class _SortingProxyModel(QSortFilterProxyModel):
 
             return left_realization_number < right_realization_number
 
-        return super().lessThan(left, right)
+        return super().lessThan(source_left, source_right)
 
 
 class StorageWidget(QWidget):
@@ -114,9 +119,9 @@ class StorageWidget(QWidget):
         self._tree_view.setModel(proxy_model)
         search_bar.textChanged.connect(proxy_model.setFilterFixedString)
 
-        selection_model = QItemSelectionModel(proxy_model)
-        selection_model.currentChanged.connect(self._currentChanged)
-        self._tree_view.setSelectionModel(selection_model)
+        self._sel_model = QItemSelectionModel(proxy_model)
+        self._sel_model.currentChanged.connect(self._currentChanged)
+        self._tree_view.setSelectionModel(self._sel_model)
         self._tree_view.setColumnWidth(0, 225)
         self._tree_view.setColumnWidth(1, 125)
         self._tree_view.setColumnWidth(2, 100)
@@ -147,7 +152,7 @@ class StorageWidget(QWidget):
     def _addItem(self) -> None:
         create_experiment_dialog = CreateExperimentDialog(self._notifier, parent=self)
         create_experiment_dialog.show()
-        if create_experiment_dialog.exec_():
+        if create_experiment_dialog.exec():
             ensemble = self._notifier.storage.create_experiment(
                 parameters=self._ert_config.ensemble_config.parameter_configuration,
                 responses=self._ert_config.ensemble_config.response_configuration,

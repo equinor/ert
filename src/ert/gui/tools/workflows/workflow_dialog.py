@@ -1,6 +1,6 @@
-from qtpy.QtCore import Qt, Signal
-from qtpy.QtGui import QKeyEvent
-from qtpy.QtWidgets import (
+from PySide6.QtCore import Qt, Signal
+from PySide6.QtGui import QKeyEvent
+from PySide6.QtWidgets import (
     QDialog,
     QHBoxLayout,
     QLayout,
@@ -20,13 +20,8 @@ class WorkflowDialog(QDialog):
 
         self.setWindowTitle(title)
         self.setModal(True)
-        self.setWindowFlags(
-            self.windowFlags()
-            & ~Qt.WindowFlags(Qt.WindowType.WindowContextHelpButtonHint)
-        )
-        self.setWindowFlags(
-            self.windowFlags() & ~Qt.WindowFlags(Qt.WindowType.WindowCloseButtonHint)
-        )
+        self.setWindowFlag(Qt.WindowType.WindowContextHelpButtonHint, False)
+        self.setWindowFlag(Qt.WindowType.WindowCloseButtonHint, False)
 
         layout = QVBoxLayout()
         layout.setSizeConstraint(
@@ -51,12 +46,12 @@ class WorkflowDialog(QDialog):
     def enableCloseButton(self) -> None:
         self.close_button.setEnabled(True)
 
-    def keyPressEvent(self, a0: QKeyEvent | None) -> None:
+    def keyPressEvent(self, arg__1: QKeyEvent) -> None:
         # disallow pressing escape to close
         # when close button is not enabled
         if (
-            self._close_button.isEnabled()
-            or a0 is None
-            or a0.key() != Qt.Key.Key_Escape
+            self.close_button.isEnabled()
+            or arg__1 is None
+            or arg__1.key() != Qt.Key.Key_Escape
         ):
-            QDialog.keyPressEvent(self, a0)
+            QDialog.keyPressEvent(self, arg__1)

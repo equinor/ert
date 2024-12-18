@@ -1,5 +1,5 @@
-from qtpy.QtCore import Qt, QTimer
-from qtpy.QtWidgets import QPushButton
+from PySide6.QtCore import Qt, QTimer
+from PySide6.QtWidgets import QPushButton
 
 from ert.gui.ertwidgets import ClosableDialog, StringBox, TextBox
 from ert.gui.ertwidgets.ensembleselector import EnsembleSelector

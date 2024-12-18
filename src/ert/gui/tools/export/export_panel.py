@@ -3,7 +3,7 @@ from __future__ import annotations
 import json
 from typing import TYPE_CHECKING
 
-from qtpy.QtWidgets import QCheckBox, QWidget
+from PySide6.QtWidgets import QCheckBox, QWidget
 
 from ert.gui.ertwidgets import CustomDialog, ListEditBox, PathChooser, PathModel
 

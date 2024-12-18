@@ -1,6 +1,6 @@
 from collections.abc import Iterator
 
-from qtpy.QtWidgets import (
+from PySide6.QtWidgets import (
     QComboBox,
     QDoubleSpinBox,
     QHBoxLayout,

@@ -3,8 +3,8 @@ import shutil
 
 import polars
 import pytest
-from qtpy.QtCore import Qt
-from qtpy.QtWidgets import QPushButton, QTextEdit
+from PySide6.QtCore import Qt
+from PySide6.QtWidgets import QPushButton, QTextEdit
 
 from ert.config import ErtConfig, SummaryConfig
 from ert.gui.ertnotifier import ErtNotifier
@@ -13,6 +13,7 @@ from ert.gui.tools.manage_experiments.storage_info_widget import (
     _EnsembleWidget,
     _EnsembleWidgetTabs,
     _ExperimentWidget,
+    _RealizationWidget,
     _WidgetType,
 )
 from ert.gui.tools.manage_experiments.storage_widget import StorageWidget
@@ -79,10 +80,12 @@ def test_that_init_updates_the_info_tab(qtbot, storage):
     )
 
     html_edit = tool.findChild(QTextEdit, name="ensemble_state_text")
+    assert type(html_edit) is QTextEdit
     assert not html_edit.toPlainText()
 
     # select the created ensemble
     storage_widget = tool.findChild(StorageWidget)
+    assert type(storage_widget) is StorageWidget
     storage_widget._tree_view.expandAll()
     model_index = storage_widget._tree_view.model().index(
         0, 0, storage_widget._tree_view.model().index(0, 0)
@@ -91,6 +94,7 @@ def test_that_init_updates_the_info_tab(qtbot, storage):
 
     # select the correct tab
     ensemble_widget = tool.findChild(_EnsembleWidget)
+    assert type(ensemble_widget) is _EnsembleWidget
     ensemble_widget._currentTabChanged(1)
 
     assert "UNDEFINED" in html_edit.toPlainText()
@@ -140,6 +144,7 @@ def test_experiment_view(
 
     # select the experiment
     storage_widget = tool.findChild(StorageWidget)
+    assert type(storage_widget) is StorageWidget
     storage_widget._tree_view.expandAll()
     model_index = storage_widget._tree_view.model().index(0, 0)
     storage_widget._tree_view.setCurrentIndex(model_index)
@@ -172,6 +177,7 @@ def test_ensemble_view(
 
     # select the ensemble
     storage_widget = tool.findChild(StorageWidget)
+    assert type(storage_widget) is StorageWidget
     storage_widget._tree_view.expandAll()
     model_index = storage_widget._tree_view.model().index(
         0, 0, storage_widget._tree_view.model().index(0, 0)
@@ -314,6 +320,7 @@ ANALYSIS_SET_VAR OBSERVATIONS AUTO_SCALE POLY_OBS1_*
 
         # select the ensemble
         storage_widget = tool.findChild(StorageWidget)
+        assert type(storage_widget) is StorageWidget
         storage_widget._tree_view.expandAll()
         model_index = storage_widget._tree_view.model().index(
             0, 0, storage_widget._tree_view.model().index(0, 0)
@@ -379,6 +386,7 @@ def test_ensemble_observations_view_on_empty_ensemble(qtbot):
 
         # select the ensemble
         storage_widget = tool.findChild(StorageWidget)
+        assert type(storage_widget) is StorageWidget
         storage_widget._tree_view.expandAll()
         model_index = storage_widget._tree_view.model().index(
             0, 0, storage_widget._tree_view.model().index(0, 0)
@@ -421,6 +429,7 @@ def test_realization_view(
 
     # select the realization
     storage_widget = tool.findChild(StorageWidget)
+    assert type(storage_widget) is StorageWidget
     storage_widget._tree_view.expandAll()
     model_index = storage_widget._tree_view.model().index(
         0,
@@ -436,6 +445,7 @@ def test_realization_view(
     )
 
     realization_widget = tool._storage_info_widget._content_layout.currentWidget()
+    assert type(realization_widget) is _RealizationWidget
 
     assert (
         realization_widget._state_label.text()

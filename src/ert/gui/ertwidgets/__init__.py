@@ -1,7 +1,7 @@
 # isort: skip_file
-from qtpy.QtCore import Qt
-from qtpy.QtGui import QCursor
-from qtpy.QtWidgets import QApplication
+from PySide6.QtCore import Qt
+from PySide6.QtGui import QCursor
+from PySide6.QtWidgets import QApplication
 from typing import Any
 from collections.abc import Callable
 

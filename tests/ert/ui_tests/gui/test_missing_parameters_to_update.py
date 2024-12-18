@@ -1,8 +1,8 @@
 import fileinput
 
 import pytest
-from qtpy.QtCore import Qt
-from qtpy.QtWidgets import QComboBox
+from PySide6.QtCore import Qt
+from PySide6.QtWidgets import QComboBox
 
 from ert.gui.simulation.experiment_panel import ExperimentPanel
 from tests.ert.ui_tests.gui.conftest import get_child, open_gui_with_config

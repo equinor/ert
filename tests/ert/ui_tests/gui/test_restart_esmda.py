@@ -1,5 +1,5 @@
-from qtpy.QtCore import Qt
-from qtpy.QtWidgets import QCheckBox, QComboBox, QWidget
+from PySide6.QtCore import Qt
+from PySide6.QtWidgets import QCheckBox, QComboBox, QWidget
 
 from ert.gui.ertwidgets import StringBox
 from ert.gui.simulation.experiment_panel import ExperimentPanel

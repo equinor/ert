@@ -2,10 +2,10 @@ from __future__ import annotations
 
 from copy import copy
 from datetime import date
-from typing import TYPE_CHECKING, Any, ClassVar
+from typing import TYPE_CHECKING, Any, ClassVar, cast
 
-from qtpy.QtGui import QDoubleValidator, QIntValidator
-from qtpy.QtWidgets import QLabel, QStackedWidget, QWidget
+from PySide6.QtGui import QDoubleValidator, QIntValidator
+from PySide6.QtWidgets import QLabel, QLineEdit, QStackedWidget
 
 from ert.gui.tools.plot.plottery import PlotContext, PlotLimits
 from ert.gui.tools.plot.widgets import ClearableLineEdit, CustomDateEdit
@@ -19,12 +19,14 @@ if TYPE_CHECKING:
 class StackedInput(QStackedWidget):
     def __init__(self) -> None:
         QStackedWidget.__init__(self)
-        self._inputs: dict[str | None, QWidget] = {}
+        self._inputs: dict[str | None, QLineEdit | QLabel | CustomDateEdit] = {}
         self._index_map: dict[str | None, int] = {}
         self.addInput(PlotContext.UNKNOWN_AXIS, QLabel("Fixed"))
         self._current_name: str | None = PlotContext.UNKNOWN_AXIS
 
-    def addInput(self, name: str | None, widget: QWidget) -> None:
+    def addInput(
+        self, name: str | None, widget: QLineEdit | QLabel | CustomDateEdit
+    ) -> None:
         index = self.addWidget(widget)
         self._inputs[name] = widget
         self._index_map[name] = index
@@ -102,28 +104,27 @@ class LimitsStack(StackedInput):
     def setValue(self, axis_name: str | None, value: Any) -> None:
         input_ = self._inputs[axis_name]
 
-        if axis_name in LimitsStack.NUMBER_AXIS:
-            if value is None:
-                input_.setText("")
-            else:
-                input_.setText(str(value))
-        elif axis_name == PlotContext.DATE_AXIS:
+        if axis_name in LimitsStack.NUMBER_AXIS and (
+            issubclass(type(input_), QLineEdit) or issubclass(type(input_), QLabel)
+        ):
+            input_ = cast(QLineEdit | QLabel, input_)
+            input_.setText(str(value) if value is not None else "")
+        elif axis_name == PlotContext.DATE_AXIS and type(input_) is CustomDateEdit:
             input_.setDate(value)
 
     def getValue(self, axis_name: str | None) -> float | int | date | None:
         input_ = self._inputs[axis_name]
-        result = None
-        if axis_name in LimitsStack.FLOAT_AXIS:
+        result: float | int | date | None = None
+        if issubclass(type(input_), QLineEdit) or issubclass(type(input_), QLabel):
             try:
-                result = float(input_.text())
+                input_ = cast(QLineEdit | QLabel, input_)
+                if axis_name in LimitsStack.FLOAT_AXIS:
+                    result = float(input_.text())
+                elif axis_name in LimitsStack.INT_AXIS:
+                    result = int(input_.text())
             except ValueError:
                 result = None
-        elif axis_name in LimitsStack.INT_AXIS:
-            try:
-                result = int(input_.text())
-            except ValueError:
-                result = None
-        elif axis_name == PlotContext.DATE_AXIS:
+        elif axis_name == PlotContext.DATE_AXIS and type(input_) is CustomDateEdit:
             result = input_.date()
 
         return result

@@ -3,8 +3,8 @@ from textwrap import dedent
 from unittest.mock import Mock
 
 import pytest
-from qtpy.QtCore import Qt, QTimer
-from qtpy.QtWidgets import QCheckBox, QMessageBox
+from PySide6.QtCore import Qt, QTimer
+from PySide6.QtWidgets import QCheckBox, QMessageBox
 
 from ert.config import ErtConfig
 from ert.gui.ertwidgets import CustomDialog, ListEditBox, PathChooser
@@ -89,11 +89,14 @@ def test_rft_csv_export_plugin_exports_rft_data(
 
         def handle_finished_box():
             """
-            Click on the plugin finised dialog once it pops up
+            Click on the plugin finished dialog once it pops up
             """
             finished_message = wait_for_child(gui, qtbot, QMessageBox)
             assert "completed" in finished_message.text()
-            qtbot.mouseClick(finished_message.button(QMessageBox.Ok), Qt.LeftButton)
+            qtbot.mouseClick(
+                finished_message.button(QMessageBox.StandardButton.Ok),
+                Qt.MouseButton.LeftButton,
+            )
 
         def handle_rft_plugin_dialog():
             dialog = wait_for_child(gui, qtbot, CustomDialog)
@@ -105,7 +108,7 @@ def test_rft_csv_export_plugin_exports_rft_data(
                 dialog, QCheckBox, name="drop_const_columns_check"
             )
             drop_constant.setChecked(True)
-            qtbot.mouseClick(dialog.ok_button, Qt.LeftButton)
+            qtbot.mouseClick(dialog.ok_button, Qt.MouseButton.LeftButton)
 
         plugin_tool = gui.plugins_tool
         plugin_actions = plugin_tool.menu.actions()

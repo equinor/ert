@@ -1,4 +1,4 @@
-from qtpy.QtWidgets import QFileDialog
+from PySide6.QtWidgets import QFileDialog
 
 from ert.gui.ertwidgets.models.path_model import PathModel
 from ert.gui.ertwidgets.pathchooser import PathChooser

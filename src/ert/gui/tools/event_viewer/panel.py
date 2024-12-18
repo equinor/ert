@@ -2,9 +2,9 @@ import logging
 from collections.abc import Iterator
 from contextlib import contextmanager
 
-from qtpy import QtCore
-from qtpy.QtCore import QObject
-from qtpy.QtWidgets import QPlainTextEdit, QVBoxLayout
+from PySide6 import QtCore
+from PySide6.QtCore import QObject
+from PySide6.QtWidgets import QPlainTextEdit, QVBoxLayout
 
 from ert.gui.tools.search_bar import SearchBar
 

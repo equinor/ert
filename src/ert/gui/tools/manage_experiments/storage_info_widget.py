@@ -6,8 +6,8 @@ import seaborn as sns
 import yaml
 from matplotlib.backends.backend_qt5agg import FigureCanvas  # type: ignore
 from matplotlib.figure import Figure
-from qtpy.QtCore import Qt, Slot
-from qtpy.QtWidgets import (
+from PySide6.QtCore import Qt, Slot
+from PySide6.QtWidgets import (
     QFrame,
     QHBoxLayout,
     QLabel,

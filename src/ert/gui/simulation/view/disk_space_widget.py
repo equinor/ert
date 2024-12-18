@@ -2,8 +2,8 @@ import contextlib
 import shutil
 from pathlib import Path
 
-from qtpy.QtCore import Qt
-from qtpy.QtWidgets import QHBoxLayout, QLabel, QProgressBar, QWidget
+from PySide6.QtCore import Qt
+from PySide6.QtWidgets import QHBoxLayout, QLabel, QProgressBar, QWidget
 
 from ert.shared.status.utils import byte_with_unit
 
@@ -31,7 +31,7 @@ class DiskSpaceWidget(QWidget):
         self.progress_bar.setRange(0, 100)
         self.progress_bar.setTextVisible(True)
         self.progress_bar.setFixedWidth(100)
-        self.progress_bar.setAlignment(Qt.AlignCenter)  # type: ignore
+        self.progress_bar.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
         layout.addWidget(self.usage_label)
         layout.addWidget(self.progress_bar)

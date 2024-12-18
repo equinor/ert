@@ -4,15 +4,11 @@ import logging
 from collections.abc import Callable
 from pathlib import Path
 from queue import SimpleQueue
+from typing import cast
 
-from qtpy.QtCore import QModelIndex, QSize, Qt, QThread, QTimer, Signal, Slot
-from qtpy.QtGui import (
-    QMouseEvent,
-    QMovie,
-    QTextCursor,
-    QTextOption,
-)
-from qtpy.QtWidgets import (
+from PySide6.QtCore import QModelIndex, QSize, Qt, QThread, QTimer, Signal, Slot
+from PySide6.QtGui import QMouseEvent, QMovie, QTextCursor, QTextOption
+from PySide6.QtWidgets import (
     QAbstractItemView,
     QDialog,
     QDialogButtonBox,
@@ -43,6 +39,8 @@ from ert.ensemble_evaluator import identifiers as ids
 from ert.gui.ertnotifier import ErtNotifier
 from ert.gui.ertwidgets.message_box import ErtMessageBox
 from ert.gui.model.fm_step_list import FMStepListProxyModel
+from ert.gui.model.node import IterNode
+from ert.gui.model.real_list import RealListModel
 from ert.gui.model.snapshot import (
     FM_STEP_COLUMNS,
     FileRole,
@@ -81,9 +79,9 @@ class FMStepOverview(QTableView):
         self._fm_step_model = FMStepListProxyModel(self, 0, 0)
         self._fm_step_model.setSourceModel(snapshot_model)
 
-        self.setVerticalScrollMode(QAbstractItemView.ScrollPerItem)
-        self.setSelectionBehavior(QAbstractItemView.SelectRows)
-        self.setSelectionMode(QAbstractItemView.SingleSelection)
+        self.setVerticalScrollMode(QAbstractItemView.ScrollMode.ScrollPerItem)
+        self.setSelectionBehavior(QAbstractItemView.SelectionBehavior.SelectRows)
+        self.setSelectionMode(QAbstractItemView.SelectionMode.SingleSelection)
 
         self.clicked.connect(self._fm_step_clicked)
         self.setModel(self._fm_step_model)
@@ -99,9 +97,9 @@ class FMStepOverview(QTableView):
             # Only last section should be stretch
             horizontal_header.setSectionResizeMode(
                 section,
-                QHeaderView.Stretch
+                QHeaderView.ResizeMode.Stretch
                 if section == horizontal_header.count() - 1
-                else QHeaderView.Interactive,
+                else QHeaderView.ResizeMode.Interactive,
             )
 
         vertical_header = self.verticalHeader()
@@ -120,6 +118,7 @@ class FMStepOverview(QTableView):
             return
         selected_file = index.data(FileRole)
         file_dialog = self.findChild(QDialog, name=selected_file)
+        file_dialog = cast(QDialog, file_dialog)
         if file_dialog and file_dialog.isVisible():
             file_dialog.raise_()
         elif selected_file and file_has_content(selected_file):
@@ -139,28 +138,27 @@ class FMStepOverview(QTableView):
 
             error_textedit = QPlainTextEdit()
             error_textedit.setReadOnly(True)
-            error_textedit.setWordWrapMode(QTextOption.NoWrap)
+            error_textedit.setWordWrapMode(QTextOption.WrapMode.NoWrap)
             error_textedit.appendPlainText(index.data())
             layout.addWidget(error_textedit)
 
-            dialog_button = QDialogButtonBox(QDialogButtonBox.Ok)
+            dialog_button = QDialogButtonBox(QDialogButtonBox.StandardButton.Ok)
             dialog_button.accepted.connect(error_dialog.accept)
             layout.addWidget(dialog_button)
             error_dialog.resize(700, 300)
-            error_textedit.moveCursor(QTextCursor.Start)
-            error_dialog.exec_()
+            error_textedit.moveCursor(QTextCursor.MoveOperation.Start)
+            error_dialog.exec()
 
-    def mouseMoveEvent(self, event: QMouseEvent | None) -> None:
-        if event:
-            index = self.indexAt(event.pos())
-            if index.isValid():
-                data_name = FM_STEP_COLUMNS[index.column()]
-                if data_name in {ids.STDOUT, ids.STDERR} and file_has_content(
-                    index.data(FileRole)
-                ):
-                    self.setCursor(Qt.CursorShape.PointingHandCursor)
-                else:
-                    self.setCursor(Qt.CursorShape.ArrowCursor)
+    def mouseMoveEvent(self, event: QMouseEvent) -> None:
+        index = self.indexAt(event.pos())
+        if index.isValid():
+            data_name = FM_STEP_COLUMNS[index.column()]
+            if data_name in {ids.STDOUT, ids.STDERR} and file_has_content(
+                index.data(FileRole)
+            ):
+                self.setCursor(Qt.CursorShape.PointingHandCursor)
+            else:
+                self.setCursor(Qt.CursorShape.ArrowCursor)
 
         return super().mouseMoveEvent(event)
 
@@ -180,11 +178,11 @@ class RunDialog(QFrame):
         parent: QWidget | None = None,
         output_path: Path | None = None,
     ):
-        QFrame.__init__(self, parent)
+        super().__init__(parent)
         self.output_path = output_path
         self.setAttribute(Qt.WidgetAttribute.WA_DeleteOnClose)
         self.setWindowFlags(Qt.WindowType.Window)
-        self.setWindowFlags(self.windowFlags() & ~Qt.WindowContextHelpButtonHint)  # type: ignore
+        self.setWindowFlag(Qt.WindowType.WindowContextHelpButtonHint, False)
         self.setWindowTitle(f"Experiment - {config_file} {find_ert_info()}")
 
         self._snapshot_model = SnapshotModel(self)
@@ -289,7 +287,7 @@ class RunDialog(QFrame):
 
         self.setLayout(layout)
 
-        self.kill_button.clicked.connect(self.killJobs)  # type: ignore
+        self.kill_button.clicked.connect(self.killJobs)
         self.restart_button.clicked.connect(self.restart_failed_realizations)
         self.simulation_done.connect(self._on_simulation_done)
 
@@ -313,9 +311,10 @@ class RunDialog(QFrame):
     ) -> None:
         if not parent.isValid():
             index = self._snapshot_model.index(start, 0, parent)
+            iteration = cast(IterNode, index.internalPointer()).id_
             iter_row = start
             self._iteration_progress_label.setText(
-                f"Progress for iteration {index.internalPointer().id_}"
+                f"Progress for iteration {iteration}"
             )
 
             widget = RealizationWidget(iter_row)
@@ -323,7 +322,7 @@ class RunDialog(QFrame):
             widget.itemClicked.connect(self._select_real)
             self._select_real(widget._real_list_model.index(0, 0))
             tab_index = self._tab_widget.addTab(
-                widget, f"Realizations for iteration {index.internalPointer().id_}"
+                widget, f"Realizations for iteration {iteration}"
             )
             if self._tab_widget.currentIndex() == self._tab_widget.count() - 2:
                 self._tab_widget.setCurrentIndex(tab_index)
@@ -332,7 +331,7 @@ class RunDialog(QFrame):
     def _select_real(self, index: QModelIndex) -> None:
         if index.isValid():
             real = index.row()
-            iter_ = index.model().get_iter()  # type: ignore
+            iter_ = cast(RealListModel, index.model()).get_iter()
             exec_hosts = None
 
             iter_node = self._snapshot_model.root.children.get(str(iter_), None)
@@ -374,12 +373,13 @@ class RunDialog(QFrame):
         )
 
         self._worker_thread = QThread(parent=self)
-        self.destroyed.connect(lambda: _stop_worker(self))
 
         self._worker = QueueEmitter(self._event_queue)
         self._worker.done.connect(self._worker_thread.quit)
         self._worker.new_event.connect(self._on_event)
         self._worker.moveToThread(self._worker_thread)
+
+        self.destroyed.connect(lambda: _stop_worker(self._worker_thread, self._worker))
 
         self.simulation_done.connect(self._worker.stop)
 
@@ -393,10 +393,13 @@ class RunDialog(QFrame):
     def killJobs(self) -> QMessageBox.StandardButton:
         msg = "Are you sure you want to terminate the currently running experiment?"
         kill_job = QMessageBox.question(
-            self, "Terminate experiment", msg, QMessageBox.Yes | QMessageBox.No
+            self,
+            "Terminate experiment",
+            msg,
+            QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
         )
 
-        if kill_job == QMessageBox.Yes:
+        if kill_job == QMessageBox.StandardButton.Yes:
             # Normally this slot would be invoked by the signal/slot system,
             # but the worker is busy tracking the evaluation.
             self._run_model.cancel()
@@ -506,17 +509,19 @@ class RunDialog(QFrame):
 
     def restart_failed_realizations(self) -> None:
         msg = QMessageBox(self)
-        msg.setIcon(QMessageBox.Information)
+        msg.setIcon(QMessageBox.Icon.Information)
         msg.setText(
             "Note that workflows will only be executed on the restarted "
             "realizations and that this might have unexpected consequences."
         )
         msg.setWindowTitle("Restart failed realizations")
-        msg.setStandardButtons(QMessageBox.Ok | QMessageBox.Cancel)
+        msg.setStandardButtons(
+            QMessageBox.StandardButton.Ok | QMessageBox.StandardButton.Cancel
+        )
         msg.setObjectName("restart_prompt")
-        result = msg.exec_()
+        result = msg.exec()
 
-        if result == QMessageBox.Ok:
+        if result == QMessageBox.StandardButton.Ok:
             self.restart_button.setVisible(False)
             self.kill_button.setVisible(True)
             self.run_experiment(restart=True)
@@ -551,13 +556,13 @@ class CopyDebugInfoButton(QPushButton):
 # Cannot use a non-static method here as
 # it is called when the object is destroyed
 # https://stackoverflow.com/questions/16842955
-def _stop_worker(run_dialog: RunDialog) -> None:
-    if run_dialog._worker_thread.isRunning():
-        run_dialog._worker.stop()
-        run_dialog._worker_thread.wait(3000)
-    if run_dialog._worker_thread.isRunning():
-        run_dialog._worker_thread.quit()
-        run_dialog._worker_thread.wait(3000)
-    if run_dialog._worker_thread.isRunning():
-        run_dialog._worker_thread.terminate()
-        run_dialog._worker_thread.wait(3000)
+def _stop_worker(worker_thread: QThread, worker: QueueEmitter) -> None:
+    if worker_thread.isRunning():
+        worker.stop()
+        worker_thread.wait(3000)
+    if worker_thread.isRunning():
+        worker_thread.quit()
+        worker_thread.wait(3000)
+    if worker_thread.isRunning():
+        worker_thread.terminate()
+        worker_thread.wait(3000)

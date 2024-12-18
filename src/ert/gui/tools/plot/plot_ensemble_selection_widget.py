@@ -1,8 +1,8 @@
 from collections.abc import Iterator
 from typing import Any
 
-from qtpy.QtCore import QModelIndex, QSize, Qt, Signal
-from qtpy.QtGui import (
+from PySide6.QtCore import QModelIndex, QPersistentModelIndex, QSize, Qt, Signal
+from PySide6.QtGui import (
     QBrush,
     QColor,
     QCursor,
@@ -12,7 +12,7 @@ from qtpy.QtGui import (
     QPainter,
     QPen,
 )
-from qtpy.QtWidgets import (
+from PySide6.QtWidgets import (
     QAbstractItemView,
     QListWidget,
     QListWidgetItem,
@@ -67,7 +67,7 @@ class EnsembleSelectListWidget(QListWidget):
 
         if (viewport := self.viewport()) is not None:
             viewport.setMouseTracking(True)
-        self.setDragDropMode(QAbstractItemView.InternalMove)
+        self.setDragDropMode(QAbstractItemView.DragDropMode.InternalMove)
         self.setItemDelegate(CustomItemDelegate())
         self.itemClicked.connect(self.slot_toggle_plot)
 
@@ -81,14 +81,14 @@ class EnsembleSelectListWidget(QListWidget):
 
         return list(_iter())
 
-    def mouseMoveEvent(self, e: QMouseEvent | None) -> None:
+    def mouseMoveEvent(self, e: QMouseEvent) -> None:
         super().mouseMoveEvent(e)
         if e is not None and self.itemAt(e.pos()):
             self.setCursor(QCursor(Qt.CursorShape.PointingHandCursor))
         else:
             self.setCursor(QCursor(Qt.CursorShape.ArrowCursor))
 
-    def dropEvent(self, event: QDropEvent | None) -> None:
+    def dropEvent(self, event: QDropEvent) -> None:
         super().dropEvent(event)
         self.ensembleSelectionListChanged.emit()
 
@@ -116,17 +116,17 @@ class CustomItemDelegate(QStyledItemDelegate):
         self,
         painter: QPainter | None,
         option: QStyleOptionViewItem,
-        index: QModelIndex,
+        index: QModelIndex | QPersistentModelIndex,
     ) -> None:
         if painter is None:
             return
-        painter.setRenderHint(QPainter.Antialiasing)
+        painter.setRenderHint(QPainter.RenderHint.Antialiasing)
 
         pen_color = QColor("black")
         background_color = QColor("lightgray")
         selected_background_color = QColor("lightblue")
 
-        rect = option.rect.adjusted(2, 2, -2, -2)
+        rect = option.rect.adjusted(2, 2, -2, -2)  # type:ignore[attr-defined]
         painter.setPen(QPen(pen_color))
 
         if index.data(Qt.ItemDataRole.CheckStateRole):
@@ -139,6 +139,6 @@ class CustomItemDelegate(QStyledItemDelegate):
         text_rect = rect.adjusted(self.swap_pixmap.width() + 4, 4, -4, -4)
         painter.drawText(text_rect, Qt.AlignmentFlag.AlignLeft, index.data())
 
-        cursor_x = option.rect.left() + self.swap_pixmap.width() - 14
-        cursor_y = int(option.rect.center().y() - (self.swap_pixmap.height() / 2))
+        cursor_x = option.rect.left() + self.swap_pixmap.width() - 14  # type:ignore[attr-defined]
+        cursor_y = int(option.rect.center().y() - (self.swap_pixmap.height() / 2))  # type:ignore[attr-defined]
         painter.drawPixmap(cursor_x, cursor_y, self.swap_pixmap)

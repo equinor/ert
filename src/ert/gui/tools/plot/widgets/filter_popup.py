@@ -2,9 +2,9 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from qtpy.QtCore import QEvent, Qt, Signal
-from qtpy.QtGui import QCursor
-from qtpy.QtWidgets import (
+from PySide6.QtCore import QEvent, Qt, Signal
+from PySide6.QtGui import QCursor
+from PySide6.QtWidgets import (
     QCheckBox,
     QDialog,
     QFrame,
@@ -38,7 +38,7 @@ class FilterPopup(QDialog):
         layout = QVBoxLayout()
         layout.setContentsMargins(0, 0, 0, 0)
         frame = QFrame()
-        frame.setFrameStyle(QFrame.StyledPanel | QFrame.Raised)
+        frame.setFrameStyle(QFrame.Shape.StyledPanel | QFrame.Shadow.Raised)
         layout.addWidget(frame)
 
         self.__layout = QVBoxLayout()
@@ -69,7 +69,7 @@ class FilterPopup(QDialog):
 
         self.__layout.addWidget(check_box)
 
-    def leaveEvent(self, event: QEvent | None) -> None:
+    def leaveEvent(self, event: QEvent) -> None:
         self.hide()
         QWidget.leaveEvent(self, event)
 

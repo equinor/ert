@@ -3,9 +3,9 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import TYPE_CHECKING, Any
 
-from qtpy.QtCore import Slot
-from qtpy.QtGui import QFont
-from qtpy.QtWidgets import QCheckBox, QFormLayout, QLabel
+from PySide6.QtCore import Slot
+from PySide6.QtGui import QFont
+from PySide6.QtWidgets import QCheckBox, QFormLayout, QLabel
 
 from ert.gui.ertnotifier import ErtNotifier
 from ert.gui.ertwidgets import (
@@ -276,7 +276,7 @@ class _ActiveLabel(QLabel):
         self._model = model
 
         font = self.font()
-        font.setWeight(QFont.Bold)
+        font.setWeight(QFont.Weight.Bold)
         self.setFont(font)
 
         self._model.valueChanged.connect(self.updateLabel)

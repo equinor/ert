@@ -1,12 +1,12 @@
 from typing import Any, overload
 
-from qtpy.QtCore import (
+from PySide6.QtCore import (
     QAbstractItemModel,
     QAbstractProxyModel,
     QModelIndex,
     QObject,
+    QPersistentModelIndex,
     Qt,
-    QVariant,
     Slot,
 )
 from typing_extensions import override
@@ -93,13 +93,17 @@ class FMStepListProxyModel(QAbstractProxyModel):
                 return header.capitalize()
             if orientation == Qt.Orientation.Vertical:
                 return section
-        return QVariant()
+        return None
 
     @override
-    def columnCount(self, parent: QModelIndex | None = None) -> int:
+    def columnCount(
+        self, parent: QModelIndex | QPersistentModelIndex | None = None
+    ) -> int:
         return FM_STEP_COLUMN_SIZE
 
-    def rowCount(self, parent: QModelIndex | None = None) -> int:
+    def rowCount(
+        self, parent: QModelIndex | QPersistentModelIndex | None = None
+    ) -> int:
         parent = parent if parent else QModelIndex()
         if not parent.isValid():
             source_model = self.sourceModel()
@@ -110,16 +114,21 @@ class FMStepListProxyModel(QAbstractProxyModel):
         return 0
 
     @overload
-    def parent(self, child: QModelIndex) -> QModelIndex: ...
+    def parent(self) -> QObject: ...
     @overload
-    def parent(self) -> QObject | None: ...
+    def parent(self, child: QModelIndex | QPersistentModelIndex) -> QModelIndex: ...
     @override
-    def parent(self, child: QModelIndex | None = None) -> QObject | None:
+    def parent(
+        self, child: QModelIndex | QPersistentModelIndex | None = None
+    ) -> QObject | QModelIndex:
         return QModelIndex()
 
     @override
     def index(
-        self, row: int, column: int, parent: QModelIndex | None = None
+        self,
+        row: int,
+        column: int,
+        parent: QModelIndex | QPersistentModelIndex | None = None,
     ) -> QModelIndex:
         parent = parent if parent else QModelIndex()
         if not parent.isValid():
@@ -127,7 +136,9 @@ class FMStepListProxyModel(QAbstractProxyModel):
             return self.createIndex(row, column, job_index.data(NodeRole))
         return QModelIndex()
 
-    def mapToSource(self, proxyIndex: QModelIndex) -> QModelIndex:
+    def mapToSource(
+        self, proxyIndex: QModelIndex | QPersistentModelIndex
+    ) -> QModelIndex:
         if proxyIndex.isValid():
             sm = self.sourceModel()
             assert sm is not None
@@ -138,10 +149,12 @@ class FMStepListProxyModel(QAbstractProxyModel):
                     return sm.index(proxyIndex.row(), proxyIndex.column(), real_index)
         return QModelIndex()
 
-    def mapFromSource(self, src_index: QModelIndex) -> QModelIndex:
+    def mapFromSource(
+        self, sourceIndex: QModelIndex | QPersistentModelIndex
+    ) -> QModelIndex:
         return (
-            self.index(src_index.row(), src_index.column(), QModelIndex())
-            if src_index.isValid() and self._accept_index(src_index)
+            self.index(sourceIndex.row(), sourceIndex.column(), QModelIndex())
+            if sourceIndex.isValid() and self._accept_index(sourceIndex)
             else QModelIndex()
         )
 
@@ -154,7 +167,7 @@ class FMStepListProxyModel(QAbstractProxyModel):
             if all([proxy_top_left.isValid(), proxy_bottom_right.isValid()]):
                 self.dataChanged.emit(proxy_top_left, proxy_bottom_right, roles)
 
-    def _accept_index(self, index: QModelIndex) -> bool:
+    def _accept_index(self, index: QModelIndex | QPersistentModelIndex) -> bool:
         if not index.internalPointer() or not index.data(IsFMStepRole):
             return False
 

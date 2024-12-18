@@ -5,7 +5,7 @@ from textwrap import dedent
 from unittest.mock import Mock
 
 import pytest
-from qtpy.QtCore import Qt, QTimer
+from PySide6.QtCore import Qt, QTimer
 
 from ert.config import ErtConfig
 from ert.gui.ertwidgets import ClosableDialog
@@ -75,7 +75,8 @@ def test_run_export_runpath_workflow(open_gui, qtbot, run_experiment):
         workflow_widget = get_child(dialog, RunWorkflowWidget)
 
         def close_all():
-            workflow_widget._running_workflow_dialog.accept()
+            if running_dlg := workflow_widget._running_workflow_dialog:
+                running_dlg.accept()
             dialog.close()
 
         workflow_widget.workflowSucceeded.disconnect()

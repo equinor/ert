@@ -1,7 +1,13 @@
 from typing import Any, overload
 
-from qtpy.QtCore import QAbstractItemModel, QModelIndex, QObject, Qt
-from qtpy.QtGui import QColor, QIcon
+from PySide6.QtCore import (
+    QAbstractItemModel,
+    QModelIndex,
+    QObject,
+    QPersistentModelIndex,
+    Qt,
+)
+from PySide6.QtGui import QColor, QIcon
 from typing_extensions import override
 
 from .plot_api import PlotApiKeyDefinition
@@ -19,28 +25,41 @@ class DataTypeKeysListModel(QAbstractItemModel):
 
     @override
     def index(
-        self, row: int, column: int, parent: QModelIndex | None = None
+        self,
+        row: int,
+        column: int,
+        parent: QModelIndex | QPersistentModelIndex | None = None,
     ) -> QModelIndex:
         return self.createIndex(row, column)
 
     @overload
-    def parent(self, child: QModelIndex) -> QModelIndex: ...
+    def parent(self) -> QObject: ...
     @overload
-    def parent(self) -> QObject | None: ...
+    def parent(self, child: QModelIndex | QPersistentModelIndex) -> QModelIndex: ...
     @override
-    def parent(self, child: QModelIndex | None = None) -> QObject | None:
+    def parent(
+        self, child: QModelIndex | QPersistentModelIndex | None = None
+    ) -> QObject | QModelIndex:
         return QModelIndex()
 
     @override
-    def rowCount(self, parent: QModelIndex | None = None) -> int:
+    def rowCount(
+        self, parent: QModelIndex | QPersistentModelIndex | None = None
+    ) -> int:
         return len(self._keys)
 
     @override
-    def columnCount(self, parent: QModelIndex | None = None) -> int:
+    def columnCount(
+        self, parent: QModelIndex | QPersistentModelIndex | None = None
+    ) -> int:
         return 1
 
     @override
-    def data(self, index: QModelIndex, role: int = Qt.ItemDataRole.DisplayRole) -> Any:
+    def data(
+        self,
+        index: QModelIndex | QPersistentModelIndex,
+        role: int = Qt.ItemDataRole.DisplayRole,
+    ) -> Any:
         assert isinstance(index, QModelIndex)
 
         if index.isValid():

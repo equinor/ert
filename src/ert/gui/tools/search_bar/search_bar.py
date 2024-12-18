@@ -1,6 +1,6 @@
-from qtpy import QtCore
-from qtpy.QtGui import QBrush, QColor, QTextCharFormat, QTextCursor
-from qtpy.QtWidgets import QBoxLayout, QHBoxLayout, QLabel, QLineEdit, QPlainTextEdit
+from PySide6 import QtCore
+from PySide6.QtGui import QBrush, QColor, QTextCharFormat, QTextCursor
+from PySide6.QtWidgets import QBoxLayout, QHBoxLayout, QLabel, QLineEdit, QPlainTextEdit
 
 
 class SearchBar(QLineEdit):
@@ -33,11 +33,14 @@ class SearchBar(QLineEdit):
                 ):
                     # Check if the entire term matches
                     self._cursor.movePosition(
-                        QTextCursor.Right, QTextCursor.KeepAnchor, len(value)
+                        QTextCursor.MoveOperation.Right,
+                        QTextCursor.MoveMode.KeepAnchor,
+                        len(value),
                     )
                     self._cursor.mergeCharFormat(text_format)
                 self._cursor.movePosition(
-                    QTextCursor.NextCharacter, QTextCursor.MoveAnchor
+                    QTextCursor.MoveOperation.NextCharacter,
+                    QTextCursor.MoveMode.MoveAnchor,
                 )
 
     def get_layout(self) -> QBoxLayout:
@@ -48,13 +51,17 @@ class SearchBar(QLineEdit):
 
     def select_text(self, start: int, length: int) -> None:
         self._cursor.setPosition(start)
-        self._cursor.movePosition(QTextCursor.Right, QTextCursor.KeepAnchor, length)
+        self._cursor.movePosition(
+            QTextCursor.MoveOperation.Right, QTextCursor.MoveMode.KeepAnchor, length
+        )
         self._text_box.setTextCursor(self._cursor)
 
     def clear_selection(self) -> None:
         text_format = QTextCharFormat()
-        self._cursor.setPosition(QTextCursor.Start)
-        self._cursor.movePosition(QTextCursor.End, QTextCursor.KeepAnchor)
+        self._cursor.setPosition(0, QTextCursor.MoveMode.MoveAnchor)
+        self._cursor.movePosition(
+            QTextCursor.MoveOperation.End, QTextCursor.MoveMode.KeepAnchor
+        )
         text_format.setBackground(QBrush(QColor("white")))
         self._cursor.mergeCharFormat(text_format)
         self._cursor.clearSelection()

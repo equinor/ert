@@ -2,8 +2,8 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any
 
-from qtpy.QtCore import Signal, Slot
-from qtpy.QtWidgets import QWidget
+from PySide6.QtCore import Signal, Slot
+from PySide6.QtWidgets import QWidget
 
 if TYPE_CHECKING:
     from ert.run_models import BaseRunModel

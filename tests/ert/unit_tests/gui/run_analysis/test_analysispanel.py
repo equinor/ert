@@ -1,20 +1,22 @@
 import math
 
 import pytest
-from qtpy.QtCore import Qt
-from qtpy.QtWidgets import QCheckBox, QDoubleSpinBox
+from PySide6.QtCore import Qt
+from PySide6.QtWidgets import QCheckBox, QDoubleSpinBox
+from pytestqt.qtbot import QtBot
 
 from ert.config import ESSettings
 from ert.gui.ertwidgets.analysismodulevariablespanel import AnalysisModuleVariablesPanel
 
 
 @pytest.fixture
-def panel_with_localization_on(qtbot):
+def panel_with_localization_on(qtbot: QtBot):
     def func(settings, ensemble_size):
         widget = AnalysisModuleVariablesPanel(settings, ensemble_size)
         qtbot.addWidget(widget)
+        widget.show()
         check_box = widget.findChild(QCheckBox, name="localization")
-        qtbot.mouseClick(check_box, Qt.LeftButton)
+        qtbot.mouseClick(check_box, Qt.MouseButton.LeftButton)
         return settings, widget
 
     yield func

@@ -1,5 +1,5 @@
+from PySide6.QtCore import Qt
 from pytestqt.qtbot import QtBot
-from qtpy.QtCore import Qt
 
 from ert.gui.simulation.run_dialog import CopyDebugInfoButton
 

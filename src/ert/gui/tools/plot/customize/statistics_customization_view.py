@@ -1,11 +1,11 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, cast
 
-from qtpy.QtWidgets import QComboBox, QHBoxLayout
+from PySide6.QtWidgets import QComboBox, QHBoxLayout
 
 from .customization_view import CustomizationView, WidgetProperty
-from .style_chooser import STYLESET_AREA
+from .style_chooser import STYLESET_AREA, StyleChooser
 
 if TYPE_CHECKING:
     from ert.gui.tools.plot.plottery import PlotConfig
@@ -80,7 +80,8 @@ class StatisticsCustomizationView(CustomizationView):
             "Toggle distribution connection lines visibility.",
         )
 
-        self["mean_style"].createLabelLayout(layout)
+        style = cast(StyleChooser, self["mean_style"])
+        style.createLabelLayout(layout)
 
     def createPresets(self) -> QComboBox:
         preset_combo = QComboBox()

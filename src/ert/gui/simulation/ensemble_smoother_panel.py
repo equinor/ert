@@ -3,8 +3,8 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import TYPE_CHECKING
 
-from qtpy.QtCore import Slot
-from qtpy.QtWidgets import QFormLayout, QLabel
+from PySide6.QtCore import Slot
+from PySide6.QtWidgets import QFormLayout, QLabel
 
 from ert.gui.ertnotifier import ErtNotifier
 from ert.gui.ertwidgets import (

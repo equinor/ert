@@ -9,10 +9,9 @@ from pathlib import Path
 from queue import SimpleQueue
 from typing import TYPE_CHECKING, Any
 
-from qtpy.QtCore import QSize, Qt, Signal
-from qtpy.QtGui import QIcon, QStandardItemModel
-from qtpy.QtWidgets import (
-    QAction,
+from PySide6.QtCore import QSize, Qt, Signal
+from PySide6.QtGui import QAction, QIcon, QStandardItemModel
+from PySide6.QtWidgets import (
     QApplication,
     QCheckBox,
     QFrame,
@@ -135,11 +134,13 @@ class ExperimentPanel(QWidget):
 
         self._experiment_stack = QStackedWidget()
         self._experiment_stack.setLineWidth(1)
-        self._experiment_stack.setFrameStyle(QFrame.StyledPanel)
+        self._experiment_stack.setFrameStyle(QFrame.Shape.StyledPanel)
 
         layout.addWidget(self._experiment_stack)
 
-        self._experiment_widgets: dict[type[BaseRunModel], QWidget] = OrderedDict()
+        self._experiment_widgets: dict[type[BaseRunModel], ExperimentConfigPanel] = (
+            OrderedDict()
+        )
         self.addExperimentConfigPanel(
             SingleTestRunPanel(run_path, notifier),
             True,
@@ -228,8 +229,7 @@ class ExperimentPanel(QWidget):
 
     def get_experiment_arguments(self) -> Any:
         simulation_widget = self._experiment_widgets[self.get_current_experiment_type()]
-        args = simulation_widget.get_experiment_arguments()
-        return args
+        return simulation_widget.get_experiment_arguments()
 
     def getExperimentName(self) -> str:
         """Get the experiment name as provided by the user. Defaults to run mode if not set."""
@@ -249,7 +249,10 @@ class ExperimentPanel(QWidget):
 
         except ValueError as e:
             QMessageBox.warning(
-                self, "ERROR: Failed to create experiment", str(e), QMessageBox.Ok
+                self,
+                "ERROR: Failed to create experiment",
+                str(e),
+                QMessageBox.StandardButton.Ok,
             )
             return
 
@@ -260,7 +263,7 @@ class ExperimentPanel(QWidget):
             msg_box = QMessageBox(self)
             msg_box.setObjectName("RUN_PATH_WARNING_BOX")
 
-            msg_box.setIcon(QMessageBox.Warning)
+            msg_box.setIcon(QMessageBox.Icon.Warning)
 
             msg_box.setText("Run experiments")
             msg_box.setInformativeText(
@@ -279,13 +282,15 @@ class ExperimentPanel(QWidget):
             delete_runpath_checkbox.setText("Delete run_path")
             msg_box.setCheckBox(delete_runpath_checkbox)
 
-            msg_box.setStandardButtons(QMessageBox.Yes | QMessageBox.No)
-            msg_box.setDefaultButton(QMessageBox.No)
+            msg_box.setStandardButtons(
+                QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No
+            )
+            msg_box.setDefaultButton(QMessageBox.StandardButton.No)
 
             msg_box.setWindowModality(Qt.WindowModality.ApplicationModal)
 
             msg_box_res = msg_box.exec()
-            if msg_box_res == QMessageBox.No:
+            if msg_box_res == QMessageBox.StandardButton.No:
                 return
 
             if delete_runpath_checkbox.checkState() == Qt.CheckState.Checked:
@@ -296,20 +301,22 @@ class ExperimentPanel(QWidget):
                     QApplication.restoreOverrideCursor()
                     msg_box = QMessageBox(self)
                     msg_box.setObjectName("RUN_PATH_ERROR_BOX")
-                    msg_box.setIcon(QMessageBox.Warning)
+                    msg_box.setIcon(QMessageBox.Icon.Warning)
                     msg_box.setText("ERT could not delete the existing runpath")
                     msg_box.setInformativeText(
                         f"{e}\n\nContinue without deleting the runpath?"
                     )
-                    msg_box.setStandardButtons(QMessageBox.Yes | QMessageBox.No)
-                    msg_box.setDefaultButton(QMessageBox.No)
+                    msg_box.setStandardButtons(
+                        QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No
+                    )
+                    msg_box.setDefaultButton(QMessageBox.StandardButton.No)
                     msg_box.setWindowModality(Qt.WindowModality.ApplicationModal)
                     msg_box_res = msg_box.exec()
-                    if msg_box_res == QMessageBox.No:
+                    if msg_box_res == QMessageBox.StandardButton.No:
                         return
                 QApplication.restoreOverrideCursor()
 
-        dialog = RunDialog(
+        self._dialog = RunDialog(
             self._config_file,
             model,
             event_queue,
@@ -317,11 +324,13 @@ class ExperimentPanel(QWidget):
             self.parent(),  # type: ignore
             output_path=self.config.analysis_config.log_path,
         )
-        self.experiment_started.emit(dialog)
-        dialog.produce_clipboard_debug_info.connect(self.populate_clipboard_debug_info)
+        self.experiment_started.emit(self._dialog)
+        self._dialog.produce_clipboard_debug_info.connect(
+            self.populate_clipboard_debug_info
+        )
         self._simulation_done = False
         self.run_button.setEnabled(self._simulation_done)
-        dialog.run_experiment()
+        self._dialog.run_experiment()
 
         def simulation_done_handler() -> None:
             self._simulation_done = True
@@ -329,7 +338,7 @@ class ExperimentPanel(QWidget):
             self.toggleExperimentType()
             self._notifier.emitErtChange()
 
-        dialog.simulation_done.connect(simulation_done_handler)
+        self._dialog.simulation_done.connect(simulation_done_handler)
 
     def toggleExperimentType(self) -> None:
         current_model = self.get_current_experiment_type()

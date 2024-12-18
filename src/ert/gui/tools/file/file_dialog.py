@@ -1,8 +1,8 @@
 from math import floor
 
-from qtpy.QtCore import QSize, Qt, QThread
-from qtpy.QtGui import QClipboard, QFontDatabase, QTextCursor, QTextOption
-from qtpy.QtWidgets import (
+from PySide6.QtCore import QSize, Qt, QThread
+from PySide6.QtGui import QClipboard, QFontDatabase, QTextCursor, QTextOption
+from PySide6.QtWidgets import (
     QApplication,
     QDialog,
     QDialogButtonBox,
@@ -60,10 +60,10 @@ class FileDialog(QDialog):
             self._file = open(file_name, encoding="utf-8")  # noqa: SIM115
         except OSError as error:
             self._mb = QMessageBox(
-                QMessageBox.Critical,
+                QMessageBox.Icon.Critical,
                 "Error opening file",
-                error.strerror,
-                QMessageBox.Ok,
+                error.strerror if error.strerror else "",
+                QMessageBox.StandardButton.Ok,
                 self,
             )
             self._mb.finished.connect(self.accept)
@@ -72,7 +72,7 @@ class FileDialog(QDialog):
 
         self._view = QPlainTextEdit()
         self._view.setReadOnly(True)
-        self._view.setWordWrapMode(QTextOption.NoWrap)
+        self._view.setWordWrapMode(QTextOption.WrapMode.NoWrap)
         # for moving the actual slider
         scroll_bar = self._view.verticalScrollBar()
         assert scroll_bar is not None
@@ -80,7 +80,7 @@ class FileDialog(QDialog):
         # for mouse wheel and keyboard arrows
         scroll_bar.valueChanged.connect(self._update_cursor)
 
-        self._view.setFont(QFontDatabase.systemFont(QFontDatabase.FixedFont))
+        self._view.setFont(QFontDatabase.systemFont(QFontDatabase.SystemFont.FixedFont))
         self._search_bar = SearchBar(self._view)
         self._follow_mode = False
 
@@ -95,19 +95,19 @@ class FileDialog(QDialog):
         self._file.close()
 
     def _init_layout(self) -> None:
-        dialog_buttons = QDialogButtonBox(QDialogButtonBox.Ok)
+        dialog_buttons = QDialogButtonBox(QDialogButtonBox.StandardButton.Ok)
         dialog_buttons.accepted.connect(self.accept)
 
         self._copy_all_button = dialog_buttons.addButton(
             "Copy all",
-            QDialogButtonBox.ActionRole,
+            QDialogButtonBox.ButtonRole.ActionRole,
         )
         assert self._copy_all_button is not None
         self._copy_all_button.clicked.connect(self._copy_all)
 
         self._follow_button = dialog_buttons.addButton(
             "Follow",
-            QDialogButtonBox.ActionRole,
+            QDialogButtonBox.ButtonRole.ActionRole,
         )
         assert self._follow_button is not None
         self._follow_button.setCheckable(True)
@@ -151,13 +151,13 @@ class FileDialog(QDialog):
         vertical_scroll_bar.setDisabled(enable)
         self._follow_mode = enable
         if enable:
-            self._view.moveCursor(QTextCursor.End)
+            self._view.moveCursor(QTextCursor.MoveOperation.End)
             self._view.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
             self._view.setTextInteractionFlags(Qt.TextInteractionFlag.NoTextInteraction)
         else:
             self._view.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAsNeeded)
             self._view.setTextInteractionFlags(
-                Qt.TextInteractionFlags(Qt.TextInteractionFlag.TextSelectableByMouse)
+                Qt.TextInteractionFlag.TextSelectableByMouse
                 | Qt.TextInteractionFlag.TextSelectableByKeyboard
             )
 
@@ -166,7 +166,7 @@ class FileDialog(QDialog):
         if text[-1:] == "\n":
             text = text[:-1]
         if self._follow_mode:
-            self._view.moveCursor(QTextCursor.End)
+            self._view.moveCursor(QTextCursor.MoveOperation.End)
         self._view.appendPlainText(text)
         self.adjustSize()
 
