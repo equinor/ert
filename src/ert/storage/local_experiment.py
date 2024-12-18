@@ -75,6 +75,26 @@ class LocalExperiment(BaseMode):
         self._index = _Index.model_validate_json(
             (path / "index.json").read_text(encoding="utf-8")
         )
+        self._validate_files()
+
+    def _validate_files(self) -> None:
+        self.valid_parameters = (self._path / self._parameter_file).exists()
+        self.valid_responses = (self._path / self._responses_file).exists()
+        self.valid_metadata = (self._path / self._metadata_file).exists()
+
+    def is_valid(self) -> bool:
+        return self.valid_parameters and self.valid_responses and self.valid_metadata
+
+    @property
+    def error_message(self) -> str:
+        errors = []
+        if not self.valid_parameters:
+            errors.append("Parameter file is missing")
+        if not self.valid_responses:
+            errors.append("Responses file is missing")
+        if not self.valid_metadata:
+            errors.append("Metadata file is missing")
+        return "\n".join(errors)
 
     @classmethod
     def create(

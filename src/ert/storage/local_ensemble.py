@@ -406,6 +406,11 @@ class LocalEnsemble(BaseMode):
         states : list of RealizationStorageState
             list of realization states.
         """
+        if not self.experiment.is_valid():
+            logger.warning(
+                f"Could not get ensemble state for ensemble ({self.id}) due to invalid experiment ({self.experiment_id}): {self.experiment.error_message}"
+            )
+            return []
 
         response_configs = self.experiment.response_configuration
 

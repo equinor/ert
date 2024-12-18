@@ -75,7 +75,11 @@ class ManageExperimentsPanel(QTabWidget):
 
         ensemble_layout = QHBoxLayout()
         ensemble_label = QLabel("Target ensemble:")
-        ensemble_selector = EnsembleSelector(self.notifier, show_only_undefined=True)
+        ensemble_selector = EnsembleSelector(
+            self.notifier,
+            show_only_undefined=True,
+            show_only_with_valid_experiment=True,
+        )
         ensemble_selector.setMinimumWidth(300)
         ensemble_layout.addWidget(ensemble_label)
         ensemble_layout.addWidget(ensemble_selector)

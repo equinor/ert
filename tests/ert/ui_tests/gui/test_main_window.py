@@ -39,6 +39,7 @@ from ert.gui.tools.event_viewer import add_gui_log_handler
 from ert.gui.tools.manage_experiments import (
     ManageExperimentsPanel,
 )
+from ert.gui.tools.manage_experiments.storage_model import StorageModel
 from ert.gui.tools.manage_experiments.storage_widget import AddWidget, StorageWidget
 from ert.gui.tools.plot.data_type_keys_widget import DataTypeKeysWidget
 from ert.gui.tools.plot.plot_ensemble_selection_widget import (
@@ -66,6 +67,7 @@ from .conftest import (
     get_children,
     load_results_manually,
     wait_for_child,
+    wait_for_children,
 )
 
 
@@ -857,3 +859,84 @@ def test_that_simulation_status_button_adds_menu_on_subsequent_runs(
         choice.trigger()
         find_and_check_selected("button_Start_simulation", False)
         find_and_check_selected("button_Simulation_status", True)
+
+
+from pytestqt.qtbot import QtBot
+
+
+def test_that_invalid_experiments_are_disabled(opened_main_window_poly, qtbot: QtBot):
+    gui: ErtMainWindow = opened_main_window_poly
+
+    def find_and_click_button(button_name: str):
+        button = gui.findChild(QToolButton, button_name)
+        assert button
+        qtbot.mouseClick(button, Qt.MouseButton.LeftButton)
+
+    def run_experiment():
+        run_experiment_panel = wait_for_child(gui, qtbot, ExperimentPanel)
+        qtbot.wait_until(lambda: not run_experiment_panel.isHidden(), timeout=5000)
+        assert run_experiment_panel.run_button.isEnabled()
+        qtbot.mouseClick(run_experiment_panel.run_button, Qt.MouseButton.LeftButton)
+
+    def wait_for_simulation_completed():
+        run_dialogs = get_children(gui, RunDialog)
+        dialog = run_dialogs[-1]
+        qtbot.wait_until(lambda: not dialog.isHidden(), timeout=5000)
+        qtbot.wait_until(lambda: dialog.is_simulation_done() == True, timeout=15000)
+
+    def check_manage_experiment_tab(
+        expected_number_of_valid_experiments: int,
+        expected_number_of_invalid_experiments: int,
+    ) -> None:
+        find_and_click_button("button_Manage_experiments")
+        experiments_panel = wait_for_child(gui, qtbot, ManageExperimentsPanel)
+
+        storage_widget = get_child(experiments_panel, StorageWidget)
+        tree_view = get_child(storage_widget, QTreeView)
+        tree_view_model: StorageModel = tree_view.model()
+
+        number_of_found_invalid_experiments = 0
+        number_of_found_valid_experiments = 0
+        for row in range(tree_view_model.rowCount()):
+            index = tree_view_model.index(row, 0)
+            entry_is_enabled = bool(
+                tree_view_model.flags(index) & Qt.ItemFlag.ItemIsEnabled
+            )  # here we check if it is enabled
+            if entry_is_enabled:
+                number_of_found_valid_experiments += 1
+            else:
+                number_of_found_invalid_experiments += 1
+                assert (
+                    tree_view_model.data(index, Qt.ItemDataRole.ToolTipRole)
+                    == "Responses file is missing"
+                )
+        assert (
+            number_of_found_invalid_experiments
+            == expected_number_of_invalid_experiments
+        )
+        assert number_of_found_valid_experiments == expected_number_of_valid_experiments
+
+    def check_plot_tool(expected_number_of_cases: int) -> None:
+        find_and_click_button("button_Create_plot")
+        # Due to the fact that we create new instances of PlotWindow on tab change, QtBot is defaulting to the first child
+        plot_window = wait_for_children(gui, qtbot, PlotWindow)[-1]
+        case_selection = get_child(plot_window, EnsembleSelectListWidget)
+        assert case_selection._ensemble_count == expected_number_of_cases
+
+    find_and_click_button("button_Start_simulation")
+    run_experiment()
+    wait_for_simulation_completed()
+
+    # make sure experiment is valid in manage experiments panel
+    check_manage_experiment_tab(1, 0)
+    check_plot_tool(expected_number_of_cases=1)
+
+    # delete the responses.json of the experiment
+    experiment_id = os.listdir("./storage/experiments")[0]
+    os.remove(f"./storage/experiments/{experiment_id}/responses.json")
+
+    # The experiment should still be there, but disabled
+    check_manage_experiment_tab(0, 1)
+
+    find_and_click_button("button_Create_plot")
+    check_plot_tool(expected_number_of_cases=0)

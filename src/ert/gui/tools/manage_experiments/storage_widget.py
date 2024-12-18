@@ -139,7 +139,8 @@ class StorageWidget(QWidget):
             self.onSelectEnsemble.emit(ensemble)
         elif isinstance(cls, ExperimentModel):
             experiment = self._notifier.storage.get_experiment(cls._id)
-            self.onSelectExperiment.emit(experiment)
+            if experiment.is_valid():
+                self.onSelectExperiment.emit(experiment)
         elif isinstance(cls, RealizationModel):
             ensemble = self._notifier.storage.get_ensemble(cls.ensemble_id)
             self.onSelectRealization.emit(ensemble, cls.realization)

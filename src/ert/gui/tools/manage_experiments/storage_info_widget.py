@@ -95,6 +95,8 @@ class _ExperimentWidget(QWidget):
 
     @Slot(Experiment)
     def setExperiment(self, experiment: Experiment) -> None:
+        if not experiment.is_valid():
+            return
         self._experiment = experiment
 
         self._name_label.setText(f"Name: {experiment.name!s}")

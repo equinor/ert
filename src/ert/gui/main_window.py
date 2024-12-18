@@ -158,6 +158,7 @@ class ErtMainWindow(QMainWindow):
     def select_central_widget(self) -> None:
         actor = self.sender()
         if actor:
+            self.notifier.revalidate_storage()
             index_name = actor.property("index")
 
             for widget in self.central_panels_map.values():

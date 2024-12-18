@@ -35,7 +35,9 @@ class EvaluateEnsemblePanel(ExperimentConfigPanel):
         lab.setWordWrap(True)
         lab.setAlignment(Qt.AlignmentFlag.AlignLeft)
         layout.addRow(lab)
-        self._ensemble_selector = EnsembleSelector(notifier, show_only_no_children=True)
+        self._ensemble_selector = EnsembleSelector(
+            notifier, show_only_no_children=True, show_only_with_valid_experiment=True
+        )
         layout.addRow("Ensemble:", self._ensemble_selector)
         runpath_label = CopyableLabel(text=run_path)
         layout.addRow("Runpath:", runpath_label)

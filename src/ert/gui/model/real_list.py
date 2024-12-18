@@ -1,10 +1,15 @@
-from typing import overload
+from typing import cast, overload
 
 from PyQt6.QtCore import QAbstractItemModel, QAbstractProxyModel, QModelIndex, QObject
 from PyQt6.QtCore import pyqtSlot as Slot
 from typing_extensions import override
 
-from ert.gui.model.snapshot import IsEnsembleRole, IsRealizationRole, NodeRole
+from ert.gui.model.snapshot import (
+    IsEnsembleRole,
+    IsRealizationRole,
+    NodeRole,
+    SnapshotModel,
+)
 
 
 class RealListModel(QAbstractProxyModel):
@@ -62,7 +67,7 @@ class RealListModel(QAbstractProxyModel):
     def rowCount(self, parent: QModelIndex | None = None) -> int:
         parent = parent if parent else QModelIndex()
         if not parent.isValid():
-            source_model = self.sourceModel()
+            source_model = cast(SnapshotModel, self.sourceModel())
             assert source_model is not None
             iter_index = source_model.index(self._iter, 0, QModelIndex())
             if iter_index.isValid():
