@@ -63,6 +63,7 @@ class EnsembleModel:
         self._id = ensemble.id
         self._start_time = ensemble.started_at
         self._children: list[RealizationModel] = []
+        self._error = ensemble.experiment.error_message
 
     def add_realization(self, realization: RealizationModel) -> None:
         self._children.append(realization)
@@ -75,7 +76,6 @@ class EnsembleModel:
     def data(self, index: QModelIndex, role: Qt.ItemDataRole) -> Any:
         if not index.isValid():
             return None
-
         col = index.column()
         if role == Qt.ItemDataRole.DisplayRole:
             if col == _Column.NAME:
@@ -83,17 +83,20 @@ class EnsembleModel:
             if col == _Column.TIME:
                 return humanize.naturaltime(self._start_time)
         elif role == Qt.ItemDataRole.ToolTipRole:
+            if self._error:
+                return self._error
             if col == _Column.TIME:
                 return str(self._start_time)
-
         return None
 
 
-class ExperimentModel:
-    def __init__(self, experiment: Experiment, parent: Any):
+class ExperimentModel(QAbstractItemModel):
+    def __init__(self, experiment: Experiment, parent: "StorageModel"):
         self._parent = parent
         self._id = experiment.id
         self._name = experiment.name
+        self._is_valid = experiment.is_valid()
+        self._error = experiment.error_message
         self._experiment_type = experiment.metadata.get("ensemble_type")
         self._children: list[EnsembleModel] = []
 
@@ -105,9 +108,7 @@ class ExperimentModel:
             return self._parent._children.index(self)
         return 0
 
-    def data(
-        self, index: QModelIndex, role: Qt.ItemDataRole = Qt.ItemDataRole.DisplayRole
-    ) -> Any:
+    def data(self, index: QModelIndex, role: int = Qt.ItemDataRole.DisplayRole) -> Any:
         if not index.isValid():
             return None
 
@@ -128,7 +129,9 @@ class ExperimentModel:
                 qapp = QApplication.instance()
                 assert isinstance(qapp, QApplication)
                 return qapp.palette().mid()
-
+        elif role == Qt.ItemDataRole.ToolTipRole:
+            if self._error:
+                return self._error
         return None
 
 
@@ -211,8 +214,30 @@ class StorageModel(QAbstractItemModel):
     def data(self, index: QModelIndex, role: int = Qt.ItemDataRole.DisplayRole) -> Any:
         if not index.isValid():
             return None
-
         return index.internalPointer().data(index, role)
+
+    @override
+    def flags(self, index: QModelIndex) -> Qt.ItemFlags:
+        default_flags = super().flags(index)
+        if not index.isValid():
+            return default_flags
+        item = index.internalPointer()
+        if isinstance(item, ExperimentModel) and not item._is_valid:
+            new_flags = default_flags & ~Qt.ItemFlags(Qt.ItemFlag.ItemIsEnabled)
+            return Qt.ItemFlags(new_flags)
+        return default_flags
+
+    @override
+    def hasChildren(self, parent: QModelIndex | None = None) -> bool:
+        if parent is None or not parent.isValid():
+            return True
+
+        flags = self.flags(parent)
+        # hide children if disabled
+        if not (flags & Qt.ItemFlag.ItemIsEnabled):
+            return False
+
+        return super().hasChildren(parent)
 
     @override
     def index(
