@@ -3,7 +3,7 @@ from __future__ import annotations
 from collections.abc import Callable
 from typing import TYPE_CHECKING, Any
 
-from qtpy.QtWidgets import (
+from PyQt6.QtWidgets import (
     QCheckBox,
     QFormLayout,
     QHBoxLayout,
@@ -28,7 +28,7 @@ class CustomizationView(QWidget):
         self.setLayout(self._layout)
         self._widgets: dict[str, QWidget] = {}
 
-    def addRow(self, title: str | None, widget: QWidget | None) -> None:
+    def addRow(self, title: str, widget: QWidget) -> None:
         self._layout.addRow(title, widget)
 
     def addLineEdit(

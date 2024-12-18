@@ -59,7 +59,7 @@ class StdDevPlot:
                     im = ax_heat.imshow(data, cmap="viridis", aspect="equal")
                     heatmaps.append(im)
 
-                    ax_box.boxplot(data.flatten(), vert=True, widths=0.5)
+                    ax_box.boxplot(data.flatten(), orientation="vertical", widths=0.5)
                     boxplot_axes.append(ax_box)
 
                     min_value = np.min(data)

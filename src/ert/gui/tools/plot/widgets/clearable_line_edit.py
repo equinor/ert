@@ -1,6 +1,6 @@
-from qtpy.QtCore import QSize, Qt
-from qtpy.QtGui import QColor, QFocusEvent, QIcon, QKeyEvent, QResizeEvent
-from qtpy.QtWidgets import QLineEdit, QPushButton, QStyle
+from PyQt6.QtCore import QSize, Qt
+from PyQt6.QtGui import QColor, QFocusEvent, QIcon, QKeyEvent, QResizeEvent
+from PyQt6.QtWidgets import QLineEdit, QPushButton, QStyle
 
 
 class ClearableLineEdit(QLineEdit):

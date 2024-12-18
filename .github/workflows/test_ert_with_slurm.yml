@@ -18,6 +18,10 @@ jobs:
     steps:
     - uses: actions/checkout@v4
 
+    - uses: ./.github/actions/install_dependencies_qt
+      with:
+        os: ${{ inputs.os }}
+
     - uses: actions/setup-python@v5
       id: setup_python
       with:

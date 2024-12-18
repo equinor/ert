@@ -3,9 +3,9 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import TYPE_CHECKING, Any
 
-from qtpy.QtCore import Slot
-from qtpy.QtGui import QFont
-from qtpy.QtWidgets import QCheckBox, QFormLayout, QLabel
+from PyQt6.QtCore import pyqtSlot as Slot
+from PyQt6.QtGui import QFont
+from PyQt6.QtWidgets import QCheckBox, QFormLayout, QLabel, QWidget
 
 from ert.gui.ertnotifier import ErtNotifier
 from ert.gui.ertwidgets import (
@@ -139,8 +139,8 @@ class MultipleDataAssimilationPanel(ExperimentConfigPanel):
 
         self.notifier.ertChanged.connect(self._update_experiment_name_placeholder)
 
-    @Slot(ExperimentConfigPanel)
-    def experimentTypeChanged(self, w: ExperimentConfigPanel) -> None:
+    @Slot(QWidget)
+    def experimentTypeChanged(self, w: QWidget) -> None:
         if isinstance(w, MultipleDataAssimilationPanel):
             self._update_experiment_name_placeholder()
 
@@ -276,7 +276,7 @@ class _ActiveLabel(QLabel):
         self._model = model
 
         font = self.font()
-        font.setWeight(QFont.Bold)
+        font.setWeight(QFont.Weight.Bold)
         self.setFont(font)
 
         self._model.valueChanged.connect(self.updateLabel)

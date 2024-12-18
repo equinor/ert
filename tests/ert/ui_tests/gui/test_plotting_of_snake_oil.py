@@ -1,8 +1,8 @@
 from unittest.mock import Mock
 
 import pytest
-from qtpy.QtCore import Qt
-from qtpy.QtWidgets import QCheckBox, QToolButton
+from PyQt6.QtCore import Qt
+from PyQt6.QtWidgets import QCheckBox, QToolButton
 
 from ert.gui.main import GUILogHandler, _setup_main_window
 from ert.gui.tools.plot.data_type_keys_widget import DataTypeKeysWidget
@@ -64,7 +64,7 @@ def plot_figure(qtbot, heat_equation_storage, snake_oil_case_storage, request):
 
         button_plot_tool = gui.findChild(QToolButton, "button_Create_plot")
         assert button_plot_tool
-        qtbot.mouseClick(button_plot_tool, Qt.LeftButton)
+        qtbot.mouseClick(button_plot_tool, Qt.MouseButton.LeftButton)
         plot_window = wait_for_child(gui, qtbot, PlotWindow)
         central_tab = plot_window._central_tab
 
@@ -147,7 +147,7 @@ def test_that_all_plotter_filter_boxes_yield_expected_filter_results(
 
         button_plot_tool = gui.findChild(QToolButton, "button_Create_plot")
         assert button_plot_tool
-        qtbot.mouseClick(button_plot_tool, Qt.LeftButton)
+        qtbot.mouseClick(button_plot_tool, Qt.MouseButton.LeftButton)
         plot_window = wait_for_child(gui, qtbot, PlotWindow)
 
         key_list = plot_window.findChild(DataTypeKeysWidget).data_type_keys_widget

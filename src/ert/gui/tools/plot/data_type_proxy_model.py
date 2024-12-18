@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from qtpy.QtCore import QModelIndex, QObject, QSortFilterProxyModel, Qt
+from PyQt6.QtCore import QModelIndex, QObject, QSortFilterProxyModel, Qt
 
 if TYPE_CHECKING:
     from .data_type_keys_list_model import DataTypeKeysListModel

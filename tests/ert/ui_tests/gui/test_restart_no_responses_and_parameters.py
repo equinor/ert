@@ -6,10 +6,8 @@ from textwrap import dedent
 from unittest.mock import Mock
 
 import pytest
-from qtpy.QtCore import Qt
-from qtpy.QtWidgets import (
-    QComboBox,
-)
+from PyQt6.QtCore import Qt
+from PyQt6.QtWidgets import QComboBox
 
 from ert.config import ErtConfig
 from ert.gui.main import _setup_main_window
@@ -107,7 +105,9 @@ def test_sensitivity_restart(open_gui, qtbot, run_experiment):
     simulation_mode_combo.setCurrentText(EvaluateEnsemble.name())
 
     idx = simulation_settings._ensemble_selector.findData(
-        "ensemble_experiment : iter-0", Qt.MatchStartsWith
+        "ensemble_experiment : iter-0",
+        Qt.ItemDataRole.DisplayRole,
+        Qt.MatchFlag.MatchStartsWith,
     )
     assert idx != -1
     simulation_settings._ensemble_selector.setCurrentIndex(idx)

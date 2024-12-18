@@ -1,7 +1,7 @@
 from os import path
 
-from qtpy.QtCore import Qt
-from qtpy.QtWidgets import QHBoxLayout, QLabel
+from PyQt6.QtCore import Qt
+from PyQt6.QtWidgets import QHBoxLayout, QLabel
 
 from .copy_button import CopyButton
 

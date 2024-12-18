@@ -7,7 +7,7 @@ from typing import Any
 import numpy
 import pandas as pd
 import polars
-from qtpy.QtWidgets import QCheckBox, QWidget
+from PyQt6.QtWidgets import QCheckBox, QWidget
 
 from ert.config import CancelPluginException, ErtPlugin
 from ert.storage import Storage
