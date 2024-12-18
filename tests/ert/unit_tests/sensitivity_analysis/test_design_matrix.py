@@ -6,6 +6,87 @@ from ert.config.design_matrix import DESIGN_MATRIX_GROUP, DesignMatrix
 from ert.config.gen_kw_config import GenKwConfig, TransformFunctionDefinition
 
 
+def _create_design_matrix(xls_path, design_matrix_df, default_sheet_df) -> DesignMatrix:
+    with pd.ExcelWriter(xls_path) as xl_write:
+        design_matrix_df.to_excel(xl_write, index=False, sheet_name="DesignSheet01")
+        default_sheet_df.to_excel(
+            xl_write, index=False, sheet_name="DefaultValues", header=False
+        )
+    return DesignMatrix(xls_path, "DesignSheet01", "DefaultValues")
+
+
+@pytest.mark.parametrize(
+    "design_sheet_pd, default_sheet_pd, error_msg",
+    [
+        pytest.param(
+            pd.DataFrame(
+                {
+                    "REAL": [0, 1, 2],
+                    "c": [1, 2, 3],
+                    "d": [0, 2, 0],
+                }
+            ),
+            pd.DataFrame([["e", 1]]),
+            "",
+            id="ok_merge",
+        ),
+        pytest.param(
+            pd.DataFrame(
+                {
+                    "REAL": [0, 1, 2],
+                    "a": [1, 2, 3],
+                }
+            ),
+            pd.DataFrame([["e", 1]]),
+            "Design Matrices do not have unique keys",
+            id="not_unique_keys",
+        ),
+        pytest.param(
+            pd.DataFrame(
+                {
+                    "REAL": [0, 1],
+                    "d": [1, 2],
+                }
+            ),
+            pd.DataFrame([["e", 1]]),
+            "Design Matrices don't have the same active realizations!",
+            id="not_same_acitve_realizations",
+        ),
+    ],
+)
+def test_merge_multiple_occurrences(
+    tmp_path, design_sheet_pd, default_sheet_pd, error_msg
+):
+    design_matrix_1 = _create_design_matrix(
+        tmp_path / "design_matrix_1.xlsx",
+        pd.DataFrame(
+            {
+                "REAL": [0, 1, 2],
+                "a": [1, 2, 3],
+                "b": [0, 2, 0],
+            },
+        ),
+        pd.DataFrame([["a", 1], ["b", 4]]),
+    )
+
+    design_matrix_2 = _create_design_matrix(
+        tmp_path / "design_matrix_2.xlsx", design_sheet_pd, default_sheet_pd
+    )
+    if error_msg:
+        with pytest.raises(ValueError, match=error_msg):
+            design_matrix_1.merge_with_other(design_matrix_2)
+    else:
+        design_matrix_1.merge_with_other(design_matrix_2)
+        design_params = design_matrix_1.parameter_configuration.get("DESIGN_MATRIX", [])
+        assert all(param in design_params for param in ("a", "b", "c", "d"))
+        assert design_matrix_1.active_realizations == [True, True, True]
+        df = design_matrix_1.design_matrix_df
+        np.testing.assert_equal(df[DESIGN_MATRIX_GROUP, "a"], np.array([1, 2, 3]))
+        np.testing.assert_equal(df[DESIGN_MATRIX_GROUP, "b"], np.array([0, 2, 0]))
+        np.testing.assert_equal(df[DESIGN_MATRIX_GROUP, "c"], np.array([1, 2, 3]))
+        np.testing.assert_equal(df[DESIGN_MATRIX_GROUP, "d"], np.array([0, 2, 0]))
+
+
 @pytest.mark.parametrize(
     "parameters, error_msg",
     [
