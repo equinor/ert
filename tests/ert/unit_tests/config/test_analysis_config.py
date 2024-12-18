@@ -47,9 +47,11 @@ def test_analysis_config_from_file_is_same_as_from_dict(monkeypatch, tmp_path):
                 ("STD_ENKF", "ENKF_TRUNCATION", 0.8),
             ],
             ConfigKeys.DESIGN_MATRIX: [
-                "my_design_matrix.xlsx",
-                "DESIGN_SHEET:my_sheet",
-                "DEFAULT_SHEET:my_default_sheet",
+                [
+                    "my_design_matrix.xlsx",
+                    "DESIGN_SHEET:my_sheet",
+                    "DEFAULT_SHEET:my_default_sheet",
+                ]
             ],
         }
     )
@@ -110,9 +112,11 @@ def test_invalid_design_matrix_format_raises_validation_error():
             {
                 ConfigKeys.NUM_REALIZATIONS: 1,
                 ConfigKeys.DESIGN_MATRIX: [
-                    "my_matrix.txt",
-                    "DESIGN_SHEET:sheet1",
-                    "DEFAULT_SHEET:sheet2",
+                    [
+                        "my_matrix.txt",
+                        "DESIGN_SHEET:sheet1",
+                        "DEFAULT_SHEET:sheet2",
+                    ],
                 ],
             }
         )
@@ -123,9 +127,11 @@ def test_design_matrix_without_design_sheet_raises_validation_error():
         AnalysisConfig.from_dict(
             {
                 ConfigKeys.DESIGN_MATRIX: [
-                    "my_matrix.xlsx",
-                    "DESIGN_:design",
-                    "DEFAULT_SHEET:default",
+                    [
+                        "my_matrix.xlsx",
+                        "DESIGN_:design",
+                        "DEFAULT_SHEET:default",
+                    ]
                 ],
             }
         )
@@ -136,9 +142,11 @@ def test_design_matrix_without_default_sheet_raises_validation_error():
         AnalysisConfig.from_dict(
             {
                 ConfigKeys.DESIGN_MATRIX: [
-                    "my_matrix.xlsx",
-                    "DESIGN_SHEET:design",
-                    "DEFAULT_:default",
+                    [
+                        "my_matrix.xlsx",
+                        "DESIGN_SHEET:design",
+                        "DEFAULT_:default",
+                    ]
                 ],
             }
         )

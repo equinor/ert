@@ -78,6 +78,38 @@ class DesignMatrix:
             default_sheet=default_sheet,
         )
 
+    def merge_with_other(self, dm_other: DesignMatrix) -> None:
+        errors = []
+        if self.active_realizations != dm_other.active_realizations:
+            errors.append(
+                ErrorInfo("Design Matrices don't have the same active realizations!")
+            )
+
+        common_keys = set(self.design_matrix_df.columns) & set(
+            dm_other.design_matrix_df.columns
+        )
+        if common_keys:
+            errors.append(
+                ErrorInfo(f"Design Matrices do not have unique keys {common_keys}!")
+            )
+
+        try:
+            self.design_matrix_df = pd.concat(
+                [self.design_matrix_df, dm_other.design_matrix_df], axis=1
+            )
+        except ValueError as exc:
+            errors.append(ErrorInfo(f"Error when merging design matrices {exc}!"))
+
+        pc_other = dm_other.parameter_configuration[DESIGN_MATRIX_GROUP]
+        pc_self = self.parameter_configuration[DESIGN_MATRIX_GROUP]
+        assert isinstance(pc_other, GenKwConfig)
+        assert isinstance(pc_self, GenKwConfig)
+        for tfd in pc_other.transform_function_definitions:
+            pc_self.transform_function_definitions.append(tfd)
+
+        if errors:
+            raise ConfigValidationError.from_collected(errors)
+
     def merge_with_existing_parameters(
         self, existing_parameters: list[ParameterConfig]
     ) -> tuple[list[ParameterConfig], ParameterConfig | None]:

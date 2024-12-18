@@ -264,7 +264,7 @@ def design_matrix_keyword() -> SchemaItem:
             SchemaItemType.STRING,
             SchemaItemType.STRING,
         ],
-        multi_occurrence=False,
+        multi_occurrence=True,
     )
 
 
