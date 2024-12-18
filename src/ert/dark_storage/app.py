@@ -10,6 +10,8 @@ from fastapi.responses import HTMLResponse, RedirectResponse, Response
 from ert.dark_storage.endpoints import router as endpoints_router
 from ert.dark_storage.exceptions import ErtStorageError
 
+from opentelemetry.instrumentation.fastapi import FastAPIInstrumentor
+
 
 class JSONEncoder(json.JSONEncoder):
     """
@@ -107,3 +109,5 @@ async def healthcheck() -> str:
 
 
 app.include_router(endpoints_router)
+
+FastAPIInstrumentor.instrument_app(app)

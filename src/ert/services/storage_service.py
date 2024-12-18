@@ -10,6 +10,8 @@ import requests
 from ert.dark_storage.client import Client, ConnInfo
 from ert.services._base_service import BaseService, _Context, local_exec_args
 
+from opentelemetry.instrumentation.httpx import HTTPXClientInstrumentor
+HTTPXClientInstrumentor().instrument()
 
 class StorageService(BaseService):
     service_name = "storage"
