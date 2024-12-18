@@ -134,6 +134,8 @@ def create_forward_model_json(
                 new_value = self.substitute(value)
                 if new_value is None:
                     result[new_key] = None
+                elif not new_value:
+                    result[new_key] = ""
                 elif not (new_value[0] == "<" and new_value[-1] == ">"):
                     # Remove values containing "<XXX>". These are expected to be
                     # replaced by substitute, but were not.

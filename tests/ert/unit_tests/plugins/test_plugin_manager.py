@@ -83,6 +83,17 @@ def test_fm_config_with_empty_config_for_step():
     )
 
 
+def test_fm_config_with_empty_string_for_step():
+    class SomePlugin:
+        @plugin(name="foo")
+        def forward_model_configuration():
+            return {"foo": {"com": ""}}
+
+    assert ErtPluginManager(plugins=[SomePlugin]).get_forward_model_configuration() == {
+        "foo": {"com": ""}
+    }
+
+
 def test_fm_config_merges_data_for_step():
     class SomePlugin:
         @plugin(name="foo")
