@@ -1,39 +1,8 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1734530306287,
+  "lastUpdate": 1734554828612,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
-      {
-        "commit": {
-          "author": {
-            "email": "ynk@equinor.com",
-            "name": "Yngve S. Kristiansen",
-            "username": "yngve-sk"
-          },
-          "committer": {
-            "email": "ejah@equinor.com",
-            "name": "Eivind Jahren",
-            "username": "eivindjahren"
-          },
-          "distinct": true,
-          "id": "c9ae9b2844386c9930d70ae003e6fc30a65cbefe",
-          "message": "Increase esupdate performance test limits",
-          "timestamp": "2024-12-11T09:44:49+01:00",
-          "tree_id": "6504f3b093cd044251368b59edaeb27bc7396ab1",
-          "url": "https://github.com/equinor/ert/commit/c9ae9b2844386c9930d70ae003e6fc30a65cbefe"
-        },
-        "date": 1733906821039,
-        "tool": "pytest",
-        "benches": [
-          {
-            "name": "tests/ert/performance_tests/test_analysis.py::test_and_benchmark_adaptive_localization_with_fields",
-            "value": 0.22206886758150107,
-            "unit": "iter/sec",
-            "range": "stddev: 0.014318287483247165",
-            "extra": "mean: 4.503107576000008 sec\nrounds: 5"
-          }
-        ]
-      },
       {
         "commit": {
           "author": {
@@ -930,6 +899,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.03951958364486",
             "extra": "mean: 4.609592659200007 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "havb@equinor.com",
+            "name": "Håvard Berland",
+            "username": "berland"
+          },
+          "committer": {
+            "email": "berland@pvv.ntnu.no",
+            "name": "Håvard Berland",
+            "username": "berland"
+          },
+          "distinct": true,
+          "id": "6ce4714e1c65b04473fb1cd0f74e1e951fc39f28",
+          "message": "Solve ruff literal-membership\n\nruff check --fix --unsafe-fixes",
+          "timestamp": "2024-12-18T21:45:13+01:00",
+          "tree_id": "81d4bd24f8e000c06c0c1d426f8840e8bea028a1",
+          "url": "https://github.com/equinor/ert/commit/6ce4714e1c65b04473fb1cd0f74e1e951fc39f28"
+        },
+        "date": 1734554827693,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/ert/performance_tests/test_analysis.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 0.2188614973114114,
+            "unit": "iter/sec",
+            "range": "stddev: 0.019665328952347745",
+            "extra": "mean: 4.569099692199996 sec\nrounds: 5"
           }
         ]
       }
