@@ -1,9 +1,9 @@
-from collections.abc import Iterable
+from collections.abc import Sequence
 from uuid import UUID
 
-from qtpy.QtCore import QSize, Qt
-from qtpy.QtGui import QIcon, QKeyEvent
-from qtpy.QtWidgets import (
+from PyQt6.QtCore import QSize, Qt
+from PyQt6.QtGui import QIcon, QKeyEvent
+from PyQt6.QtWidgets import (
     QCompleter,
     QHBoxLayout,
     QInputDialog,
@@ -18,14 +18,14 @@ from .validationsupport import ValidationSupport
 
 class AutoCompleteLineEdit(QLineEdit):
     # http://blog.elentok.com/2011/08/autocomplete-textbox-for-multiple.html
-    def __init__(self, items: Iterable[str | None], parent: QWidget | None = None):
+    def __init__(self, items: Sequence[str], parent: QWidget | None = None):
         super().__init__(parent)
 
         self._separators = [",", " "]
 
         self._completer = QCompleter(items, self)
         self._completer.setWidget(self)
-        self._completer.activated[str].connect(self.__insertCompletion)
+        self._completer.activated.connect(self.__insertCompletion)
         self._completer.setCaseSensitivity(Qt.CaseSensitivity.CaseInsensitive)
 
         self.__keysToIgnore = [
@@ -71,7 +71,7 @@ class AutoCompleteLineEdit(QLineEdit):
         if popup is not None and len(completion_prefix) == 0:
             popup.hide()
 
-    def __updateCompleterPopupItems(self, completionPrefix: str | None) -> None:
+    def __updateCompleterPopupItems(self, completionPrefix: str) -> None:
         self._completer.setCompletionPrefix(completionPrefix)
         popup = self._completer.popup()
         assert popup is not None

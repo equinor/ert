@@ -1,8 +1,8 @@
 from typing import Any
 
-from qtpy.QtCore import QModelIndex, QPoint, QSize
-from qtpy.QtGui import QColor, QRegion
-from qtpy.QtWidgets import (
+from PyQt6.QtCore import QModelIndex, QPoint, QSize
+from PyQt6.QtGui import QColor, QRegion
+from PyQt6.QtWidgets import (
     QComboBox,
     QLabel,
     QStyle,
@@ -85,11 +85,11 @@ class _ComboBoxWithDescriptionDelegate(QStyledItemDelegate):
         description = index.data(DESCRIPTION_ROLE)
         group = index.data(GROUP_TITLE_ROLE)
 
-        is_enabled = option.state & QStyle.State_Enabled  # type: ignore
+        is_enabled = option.state & QStyle.StateFlag.State_Enabled
 
         if is_enabled and (
-            option.state & QStyle.State_Selected  # type: ignore
-            or option.state & QStyle.State_MouseOver  # type: ignore
+            option.state & QStyle.StateFlag.State_Selected
+            or option.state & QStyle.StateFlag.State_MouseOver
         ):
             color = COLOR_HIGHLIGHT_LIGHT
             if option.palette.text().color().value() > 150:
@@ -120,7 +120,7 @@ class QComboBoxWithDescription(QComboBox):
         self.setItemDelegate(_ComboBoxWithDescriptionDelegate(self))
 
     def addDescriptionItem(
-        self, label: str | None, description: Any, group: str | None = None
+        self, label: str, description: Any, group: str | None = None
     ) -> None:
         super().addItem(label)
         model = self.model()

@@ -2,9 +2,10 @@ import logging
 from collections.abc import Iterator
 from contextlib import contextmanager
 
-from qtpy import QtCore
-from qtpy.QtCore import QObject
-from qtpy.QtWidgets import QPlainTextEdit, QVBoxLayout
+from PyQt6.QtCore import QObject
+from PyQt6.QtCore import pyqtSignal as Signal
+from PyQt6.QtCore import pyqtSlot as Slot
+from PyQt6.QtWidgets import QPlainTextEdit, QVBoxLayout
 
 from ert.gui.tools.search_bar import SearchBar
 
@@ -14,7 +15,7 @@ from ert.gui.tools.search_bar import SearchBar
 
 
 class _Signaler(QObject):
-    append_log_statement = QtCore.Signal(str)
+    append_log_statement = Signal(str)
 
 
 class _GUILogHandler(logging.Handler):
@@ -70,7 +71,7 @@ class EventViewerPanel(QPlainTextEdit):
         self.setLayout(layout)
         log_handler.append_log_statement.connect(self.val_changed)
 
-    @QtCore.Slot(str)
+    @Slot(str)
     def val_changed(self, value: str) -> None:
         self.text_box.appendPlainText(value)
 

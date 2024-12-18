@@ -6,7 +6,7 @@ from typing import TYPE_CHECKING
 from .plugin import Plugin
 
 if TYPE_CHECKING:
-    from qtpy.QtWidgets import QWidget
+    from PyQt6.QtWidgets import QWidget
 
     from ert.config import WorkflowJob
     from ert.gui.ertnotifier import ErtNotifier

@@ -1,7 +1,7 @@
 import pytest
+from PyQt6.QtCore import QModelIndex
+from PyQt6.QtGui import QColor
 from pytestqt.qt_compat import qt_api
-from qtpy.QtCore import QModelIndex
-from qtpy.QtGui import QColor
 
 from ert.ensemble_evaluator.state import COLOR_FAILED
 from ert.gui.model.snapshot import FMStepColorHint, SnapshotModel

@@ -3,8 +3,8 @@ from __future__ import annotations
 import logging
 from typing import TYPE_CHECKING, Any, cast, no_type_check
 
-from qtpy.QtGui import QIcon
-from qtpy.QtWidgets import QMessageBox, QWidget
+from PyQt6.QtGui import QIcon
+from PyQt6.QtWidgets import QMessageBox, QWidget
 
 if TYPE_CHECKING:
     from ert.config import ErtConfig
@@ -54,7 +54,7 @@ class ExportTool(Tool):
                 cast(QWidget, self.parent()),
                 "Success",
                 """Export completed!""",
-                QMessageBox.Ok,
+                QMessageBox.StandardButton.Ok,
             )
         except UserWarning as usrwarning:
             logger.error(str(usrwarning))
@@ -62,5 +62,5 @@ class ExportTool(Tool):
                 cast(QWidget, self.parent()),
                 "Failure",
                 f"Export failed with the following message:\n{usrwarning}",
-                QMessageBox.Ok,
+                QMessageBox.StandardButton.Ok,
             )

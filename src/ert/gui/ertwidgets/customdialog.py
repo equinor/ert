@@ -1,8 +1,8 @@
 from typing import Any
 
-from qtpy.QtCore import QSize, Qt
-from qtpy.QtGui import QColor
-from qtpy.QtWidgets import (
+from PyQt6.QtCore import QSize, Qt
+from PyQt6.QtGui import QColor
+from PyQt6.QtWidgets import (
     QDialog,
     QDialogButtonBox,
     QFormLayout,
@@ -71,7 +71,7 @@ class CustomDialog(QDialog):
         Shows the dialog modally and returns the true or false (accept/reject)
         """
         self.optionValidationChanged()
-        return self.exec_()
+        return self.exec()
 
     @staticmethod
     def createSpace(size: int = 5) -> QWidget:
@@ -93,18 +93,18 @@ class CustomDialog(QDialog):
 
         self._layout.addRow(f"{label}:", option_widget)
 
-    def addWidget(self, widget: QWidget | QLayout | None, label: str = "") -> None:
+    def addWidget(self, widget: QWidget | QLayout, label: str = "") -> None:
         if not label.endswith(":"):
             label = f"{label}:"
         self._layout.addRow(label, widget)
 
     def addButtons(self) -> None:
         buttons = QDialogButtonBox(
-            QDialogButtonBox.Ok | QDialogButtonBox.Cancel,
+            QDialogButtonBox.StandardButton.Ok | QDialogButtonBox.StandardButton.Cancel,
             Qt.Orientation.Horizontal,
             self,
         )
-        self.ok_button = buttons.button(QDialogButtonBox.Ok)
+        self.ok_button = buttons.button(QDialogButtonBox.StandardButton.Ok)
         if self.ok_button:
             self.ok_button.setEnabled(False)
 

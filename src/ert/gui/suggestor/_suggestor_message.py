@@ -2,10 +2,10 @@ from __future__ import annotations
 
 from typing import Any, Self
 
-from qtpy import QtSvg
-from qtpy.QtCore import Qt
-from qtpy.QtGui import QColor
-from qtpy.QtWidgets import (
+from PyQt6.QtCore import Qt
+from PyQt6.QtGui import QColor
+from PyQt6.QtSvgWidgets import QSvgWidget
+from PyQt6.QtWidgets import (
     QGraphicsDropShadowEffect,
     QHBoxLayout,
     QLabel,
@@ -24,9 +24,9 @@ from ._colors import (
 )
 
 
-def _svg_icon(image_name: str) -> QtSvg.QSvgWidget:
-    widget = QtSvg.QSvgWidget(f"img:{image_name}.svg")
-    widget.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
+def _svg_icon(image_name: str) -> QSvgWidget:
+    widget = QSvgWidget(f"img:{image_name}.svg")
+    widget.setSizePolicy(QSizePolicy.Policy.Fixed, QSizePolicy.Policy.Fixed)
     return widget
 
 
@@ -73,7 +73,9 @@ class SuggestorMessage(QWidget):
 
         self.lbl = QLabel(self._collapsed_text())
         self.lbl.setOpenExternalLinks(False)
-        self.lbl.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
+        self.lbl.setSizePolicy(
+            QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding
+        )
         self.lbl.setTextInteractionFlags(Qt.TextInteractionFlag.TextSelectableByMouse)
         self.lbl.setWordWrap(True)
         self._expanded = False

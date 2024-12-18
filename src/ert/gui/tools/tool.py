@@ -1,6 +1,5 @@
-from qtpy.QtCore import QObject
-from qtpy.QtGui import QIcon
-from qtpy.QtWidgets import QAction
+from PyQt6.QtCore import QObject
+from PyQt6.QtGui import QAction, QIcon
 
 
 class Tool:
@@ -39,8 +38,8 @@ class Tool:
         self.__parent = parent
         self.__action.setParent(parent)
 
-    def parent(self) -> QObject | None:
-        return self.__parent
+    def parent(self) -> QObject:
+        return self.__parent if self.__parent else QObject()
 
     def isEnabled(self) -> bool:
         return self.__enabled

@@ -1,16 +1,18 @@
-from qtpy.QtCore import (
+from typing import cast
+
+from PyQt6.QtCore import (
     QAbstractItemModel,
     QEvent,
     QItemSelectionModel,
     QModelIndex,
     QObject,
-    QPoint,
+    QPointF,
     QSize,
     Qt,
-    Signal,
 )
-from qtpy.QtGui import QColor, QColorConstants, QPainter, QPalette, QPen
-from qtpy.QtWidgets import (
+from PyQt6.QtCore import pyqtSignal as Signal
+from PyQt6.QtGui import QColor, QMouseEvent, QPainter, QPalette, QPen
+from PyQt6.QtWidgets import (
     QAbstractItemView,
     QListView,
     QStyle,
@@ -39,18 +41,20 @@ class RealizationWidget(QWidget):
         self._delegate_size = QSize(90, 90)
 
         self._real_view = QListView(self)
-        self._real_view.setViewMode(QListView.IconMode)
+        self._real_view.setViewMode(QListView.ViewMode.IconMode)
         self._real_view.setGridSize(self._delegate_size)
         real_delegate = RealizationDelegate(self._delegate_size, self)
         self._real_view.setMouseTracking(True)
         self._real_view.setItemDelegate(real_delegate)
-        self._real_view.setSelectionMode(QAbstractItemView.SingleSelection)
-        self._real_view.setFlow(QListView.LeftToRight)
+        self._real_view.setSelectionMode(
+            QAbstractItemView.SelectionMode.SingleSelection
+        )
+        self._real_view.setFlow(QListView.Flow.LeftToRight)
         self._real_view.setWrapping(True)
-        self._real_view.setResizeMode(QListView.Adjust)
+        self._real_view.setResizeMode(QListView.ResizeMode.Adjust)
         self._real_view.setUniformItemSizes(True)
         self._real_view.setStyleSheet(
-            f"QListView {{ background-color: {self.palette().color(QPalette.Window).name()}; }}"
+            f"QListView {{ background-color: {self.palette().color(QPalette.ColorRole.Window).name()}; }}"
         )
 
         self._real_view.clicked.connect(self._item_clicked)
@@ -91,17 +95,14 @@ class RealizationDelegate(QStyledItemDelegate):
         super().__init__(parent)
         self._size = size
         parent.installEventFilter(self)
-        self.adjustment_point_for_job_rect_margin = QPoint(-20, -20)
+        self.adjustment_point_for_job_rect_margin = QPointF(-20, -20)
         self._color_black = QColor(0, 0, 0, 180)
         self._color_progress = QColor(50, 173, 230, 200)
-        self._color_lightgray = QColor(QColorConstants.LightGray).lighter(120)
+        self._color_lightgray = QColor("LightGray").lighter(120)
         self._pen_black = QPen(self._color_black, 2, Qt.PenStyle.SolidLine)
 
     def paint(
-        self,
-        painter: QPainter | None,
-        option: QStyleOptionViewItem,
-        index: QModelIndex,
+        self, painter: QPainter | None, option: QStyleOptionViewItem, index: QModelIndex
     ) -> None:
         if painter is None:
             return
@@ -109,8 +110,8 @@ class RealizationDelegate(QStyledItemDelegate):
         selected_color, finished_count, total_count = tuple(index.data(FMStepColorHint))
 
         painter.save()
-        painter.setRenderHint(QPainter.TextAntialiasing, True)
-        painter.setRenderHint(QPainter.Antialiasing, True)
+        painter.setRenderHint(QPainter.RenderHint.TextAntialiasing, True)
+        painter.setRenderHint(QPainter.RenderHint.Antialiasing, True)
 
         percentage_done = (
             100 if total_count < 1 else int((finished_count * 100.0) / total_count)
@@ -152,9 +153,11 @@ class RealizationDelegate(QStyledItemDelegate):
         return self._size
 
     def eventFilter(self, object: QObject | None, event: QEvent | None) -> bool:
-        if event.type() == QEvent.Type.ToolTip:  # type: ignore
-            mouse_pos = event.pos() + self.adjustment_point_for_job_rect_margin  # type: ignore
-            parent: RealizationWidget = self.parent()  # type: ignore
+        if event and event.type() == QEvent.Type.ToolTip and type(event) is QMouseEvent:
+            mouse_pos = (
+                event.position() + self.adjustment_point_for_job_rect_margin
+            ).toPoint()
+            parent: RealizationWidget = cast(RealizationWidget, self.parent())
             view = parent._real_view
             index = view.indexAt(mouse_pos)
             if index.isValid():

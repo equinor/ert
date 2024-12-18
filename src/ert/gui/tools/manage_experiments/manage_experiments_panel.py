@@ -1,9 +1,9 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING
 
-from qtpy.QtCore import QEvent, QObject, Qt
-from qtpy.QtWidgets import (
+from PyQt6.QtCore import QEvent, QObject, Qt
+from PyQt6.QtWidgets import (
     QHBoxLayout,
     QLabel,
     QPushButton,
@@ -110,7 +110,7 @@ class ManageExperimentsPanel(QTabWidget):
         initialize_button.setMaximumWidth(150)
 
         @showWaitCursorWhileWaiting
-        def initialize_from_scratch(_: Any) -> None:
+        def initialize_from_scratch(_: bool) -> None:
             parameters = parameter_model.getSelectedItems()
             sample_prior(
                 ensemble=ensemble_selector.currentData(),
@@ -126,7 +126,7 @@ class ManageExperimentsPanel(QTabWidget):
         ensemble_selector.ensemble_populated.connect(update_button_state)
         initialize_button.clicked.connect(initialize_from_scratch)
         initialize_button.clicked.connect(
-            lambda: self._storage_info_widget.setEnsemble(
+            lambda _: self._storage_info_widget.setEnsemble(
                 ensemble_selector.currentData()
             )
         )

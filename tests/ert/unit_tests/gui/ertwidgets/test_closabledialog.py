@@ -1,6 +1,6 @@
+from PyQt6.QtCore import Qt
+from PyQt6.QtWidgets import QPushButton
 from pytestqt.qtbot import QtBot
-from qtpy.QtCore import Qt
-from qtpy.QtWidgets import QPushButton
 
 from ert.gui.ertwidgets import ClosableDialog
 

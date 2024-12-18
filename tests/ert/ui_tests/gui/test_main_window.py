@@ -8,9 +8,9 @@ from unittest.mock import MagicMock, Mock, patch
 
 import numpy as np
 import pytest
-from qtpy.QtCore import Qt, QTimer
-from qtpy.QtWidgets import (
-    QAction,
+from PyQt6.QtCore import Qt, QTimer
+from PyQt6.QtGui import QAction
+from PyQt6.QtWidgets import (
     QCheckBox,
     QComboBox,
     QDoubleSpinBox,
@@ -191,7 +191,7 @@ def test_help_buttons_in_suggester_dialog(tmp_path, qtbot):
 
         with patch("webbrowser.open", MagicMock(return_value=True)) as browser_open:
             github_button = get_child(gui, QWidget, name="GitHub page")
-            qtbot.mouseClick(github_button, Qt.LeftButton)
+            qtbot.mouseClick(github_button, Qt.MouseButton.LeftButton)
             assert browser_open.called
 
 
@@ -299,7 +299,7 @@ def test_that_the_plot_window_contains_the_expected_elements(
     # Click on Create plot after esmda has run
     button_plot_tool = gui.findChild(QToolButton, "button_Create_plot")
     assert button_plot_tool
-    qtbot.mouseClick(button_plot_tool, Qt.LeftButton)
+    qtbot.mouseClick(button_plot_tool, Qt.MouseButton.LeftButton)
     plot_window = wait_for_child(gui, qtbot, PlotWindow)
 
     data_types = get_child(plot_window, DataTypeKeysWidget)
@@ -318,7 +318,7 @@ def test_that_the_plot_window_contains_the_expected_elements(
     data_keys = data_types.data_type_keys_widget
     for i in range(data_keys.model().rowCount()):
         index = data_keys.model().index(i, 0)
-        data_names.append(str(index.data(Qt.DisplayRole)))
+        data_names.append(str(index.data(Qt.ItemDataRole.DisplayRole)))
 
     expected_data_names = [
         "POLY_RES@0",
@@ -351,12 +351,12 @@ def test_that_the_plot_window_contains_the_expected_elements(
         viewport = data_keys.viewport()
         center = viewport.mapToGlobal(center)
         local_pos = viewport.mapFromGlobal(center)
-        qtbot.mouseClick(data_keys.viewport(), Qt.LeftButton, pos=local_pos)
+        qtbot.mouseClick(data_keys.viewport(), Qt.MouseButton.LeftButton, pos=local_pos)
 
     def click_tab_index(pos: int) -> None:
         tab_bar = plot_window._central_tab.tabBar()
         tab_center = tab_bar.tabRect(pos).center()
-        qtbot.mouseClick(tab_bar, Qt.LeftButton, pos=tab_center)
+        qtbot.mouseClick(tab_bar, Qt.MouseButton.LeftButton, pos=tab_center)
 
     # make sure plotter remembers plot types selected previously
     response_index = 0
@@ -398,7 +398,7 @@ def test_that_the_manage_experiments_tool_can_be_used(esmda_has_run, qtbot):
 
     button_manage_experiments = gui.findChild(QToolButton, "button_Manage_experiments")
     assert button_manage_experiments
-    qtbot.mouseClick(button_manage_experiments, Qt.LeftButton)
+    qtbot.mouseClick(button_manage_experiments, Qt.MouseButton.LeftButton)
     experiments_panel = wait_for_child(gui, qtbot, ManageExperimentsPanel)
 
     # Open the tab
@@ -437,7 +437,7 @@ def test_that_the_manage_experiments_tool_can_be_used(esmda_has_run, qtbot):
 
     QTimer.singleShot(1000, handle_add_dialog)
     create_widget = get_child(storage_widget, AddWidget)
-    qtbot.mouseClick(create_widget.addButton, Qt.LeftButton)
+    qtbot.mouseClick(create_widget.addButton, Qt.MouseButton.LeftButton)
 
     assert experiments_panel.notifier.current_ensemble.iteration == 42
 
@@ -452,14 +452,14 @@ def test_that_the_manage_experiments_tool_can_be_used(esmda_has_run, qtbot):
         QPushButton,
         name="initialize_from_scratch_button",
     )
-    qtbot.mouseClick(initialize_button, Qt.LeftButton)
+    qtbot.mouseClick(initialize_button, Qt.MouseButton.LeftButton)
 
 
 def test_that_inversion_type_can_be_set_from_gui(qtbot, opened_main_window_poly):
     gui = opened_main_window_poly
 
     sim_mode = get_child(gui, QWidget, name="experiment_type")
-    qtbot.keyClick(sim_mode, Qt.Key_Down)
+    qtbot.keyClick(sim_mode, Qt.Key.Key_Down)
     es_panel = get_child(gui, QWidget, name="ensemble_smoother_panel")
     es_edit = get_child(es_panel, QWidget, name="ensemble_smoother_edit")
 
@@ -481,7 +481,9 @@ def test_that_inversion_type_can_be_set_from_gui(qtbot, opened_main_window_poly)
         var_panel.parent().close()
 
     QTimer.singleShot(500, handle_analysis_module_panel)
-    qtbot.mouseClick(get_child(es_edit, QToolButton), Qt.LeftButton, delay=1)
+    qtbot.mouseClick(
+        get_child(es_edit, QToolButton), Qt.MouseButton.LeftButton, delay=1
+    )
 
 
 def test_that_the_manage_experiments_tool_can_be_used_with_clean_storage(
@@ -491,7 +493,7 @@ def test_that_the_manage_experiments_tool_can_be_used_with_clean_storage(
 
     button_manage_experiments = gui.findChild(QToolButton, "button_Manage_experiments")
     assert button_manage_experiments
-    qtbot.mouseClick(button_manage_experiments, Qt.LeftButton)
+    qtbot.mouseClick(button_manage_experiments, Qt.MouseButton.LeftButton)
     experiments_panel = wait_for_child(gui, qtbot, ManageExperimentsPanel)
 
     # Open the create new ensembles tab
@@ -533,7 +535,7 @@ def test_that_the_manage_experiments_tool_can_be_used_with_clean_storage(
     initialize_button = get_child(
         current_tab, QPushButton, name="initialize_from_scratch_button"
     )
-    qtbot.mouseClick(initialize_button, Qt.LeftButton)
+    qtbot.mouseClick(initialize_button, Qt.MouseButton.LeftButton)
 
 
 @pytest.mark.usefixtures("use_tmpdir")
@@ -595,7 +597,7 @@ def test_that_a_failing_job_shows_error_message_with_context(
             assert substring in text
         error_dialog.accept()
 
-    qtbot.mouseClick(run_experiment, Qt.LeftButton)
+    qtbot.mouseClick(run_experiment, Qt.MouseButton.LeftButton)
 
     run_dialog = wait_for_child(gui, qtbot, RunDialog)
 
@@ -620,7 +622,7 @@ def test_that_gui_plotter_works_when_no_data(qtbot, storage, monkeypatch):
 
         button_plot_tool = gui.findChild(QToolButton, "button_Create_plot")
         assert button_plot_tool
-        qtbot.mouseClick(button_plot_tool, Qt.LeftButton)
+        qtbot.mouseClick(button_plot_tool, Qt.MouseButton.LeftButton)
         plot_window = wait_for_child(gui, qtbot, PlotWindow)
 
         ensemble_plot_names = get_child(
@@ -644,7 +646,7 @@ def test_right_click_plot_button_opens_external_plotter(qtbot, storage, monkeypa
         gui = _setup_main_window(ert_config, args_mock, GUILogHandler(), storage)
         qtbot.addWidget(gui)
 
-        button_plot_tool = gui.findChild(SidebarToolButton, "button_Create_plot")
+        button_plot_tool = gui.findChild(QToolButton, "button_Create_plot")
         assert button_plot_tool
 
         def top_level_plotter_windows() -> list[PlotWindow]:
@@ -658,7 +660,7 @@ def test_right_click_plot_button_opens_external_plotter(qtbot, storage, monkeypa
 
         def right_click_plotter_button() -> None:
             top_level_windows = len(top_level_plotter_windows())
-            qtbot.mouseClick(button_plot_tool, Qt.RightButton)
+            qtbot.mouseClick(button_plot_tool, Qt.MouseButton.RightButton)
             qtbot.wait_until(
                 lambda: len(top_level_plotter_windows()) > top_level_windows,
                 timeout=5000,
@@ -676,7 +678,7 @@ def test_right_click_plot_button_opens_external_plotter(qtbot, storage, monkeypa
 
         qtbot.wait_until(lambda: not top_level_plotter_windows(), timeout=5000)
 
-        qtbot.mouseClick(button_plot_tool, Qt.LeftButton)
+        qtbot.mouseClick(button_plot_tool, Qt.MouseButton.LeftButton)
         plot_window = wait_for_child(gui, qtbot, PlotWindow)
         assert plot_window
         assert "Plotting" in plot_window.windowTitle()
@@ -737,7 +739,8 @@ def test_help_menu(qtbot):
         about_dialog = wait_for_child(gui, qtbot, AboutDialog)
         assert about_dialog.windowTitle() == "About"
         qtbot.mouseClick(
-            get_child(about_dialog, QPushButton, name="close_button"), Qt.LeftButton
+            get_child(about_dialog, QPushButton, name="close_button"),
+            Qt.MouseButton.LeftButton,
         )
 
 
@@ -786,7 +789,7 @@ def test_that_simulation_status_button_adds_menu_on_subsequent_runs(
         assert button
         assert button.isEnabled() == expected_enabled_state
         if should_click:
-            qtbot.mouseClick(button, Qt.LeftButton)
+            qtbot.mouseClick(button, Qt.MouseButton.LeftButton)
 
     def find_and_check_selected(button_name: str, expected_selected_state: bool):
         button = gui.findChild(SidebarToolButton, button_name)
@@ -797,7 +800,7 @@ def test_that_simulation_status_button_adds_menu_on_subsequent_runs(
         run_experiment_panel = wait_for_child(gui, qtbot, ExperimentPanel)
         qtbot.wait_until(lambda: not run_experiment_panel.isHidden(), timeout=5000)
         assert run_experiment_panel.run_button.isEnabled()
-        qtbot.mouseClick(run_experiment_panel.run_button, Qt.LeftButton)
+        qtbot.mouseClick(run_experiment_panel.run_button, Qt.MouseButton.LeftButton)
 
     def wait_for_simulation_completed():
         run_dialogs = get_children(gui, RunDialog)

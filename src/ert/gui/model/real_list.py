@@ -1,12 +1,7 @@
 from typing import overload
 
-from qtpy.QtCore import (
-    QAbstractItemModel,
-    QAbstractProxyModel,
-    QModelIndex,
-    QObject,
-    Slot,
-)
+from PyQt6.QtCore import QAbstractItemModel, QAbstractProxyModel, QModelIndex, QObject
+from PyQt6.QtCore import pyqtSlot as Slot
 from typing_extensions import override
 
 from ert.gui.model.snapshot import IsEnsembleRole, IsRealizationRole, NodeRole
@@ -77,9 +72,9 @@ class RealListModel(QAbstractProxyModel):
     @overload
     def parent(self, child: QModelIndex) -> QModelIndex: ...
     @overload
-    def parent(self) -> QObject | None: ...
+    def parent(self) -> QObject: ...
     @override
-    def parent(self, child: QModelIndex | None = None) -> QObject | None:
+    def parent(self, child: QModelIndex | None = None) -> QObject | QModelIndex:
         return QModelIndex()
 
     @override

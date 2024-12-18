@@ -1,8 +1,8 @@
 from dataclasses import dataclass
 
-from qtpy import QtCore
-from qtpy.QtCore import Slot
-from qtpy.QtWidgets import QFormLayout, QHBoxLayout, QLabel, QPushButton
+from PyQt6.QtCore import Qt
+from PyQt6.QtCore import pyqtSlot as Slot
+from PyQt6.QtWidgets import QFormLayout, QHBoxLayout, QLabel, QPushButton, QWidget
 
 from ert.config import AnalysisConfig, DesignMatrix
 from ert.gui.ertnotifier import ErtNotifier
@@ -44,7 +44,7 @@ class EnsembleExperimentPanel(ExperimentConfigPanel):
         layout = QFormLayout()
         lab = QLabel(" ".join(EnsembleExperiment.__doc__.split()))  # type: ignore
         lab.setWordWrap(True)
-        lab.setAlignment(QtCore.Qt.AlignmentFlag.AlignLeft)
+        lab.setAlignment(Qt.AlignmentFlag.AlignLeft)
         layout.addRow(lab)
 
         self._experiment_name_field = StringBox(
@@ -123,10 +123,10 @@ class EnsembleExperimentPanel(ExperimentConfigPanel):
         viewer.setMinimumHeight(500)
         viewer.setMinimumWidth(1000)
         viewer.adjustSize()
-        viewer.exec_()
+        viewer.exec()
 
-    @Slot(ExperimentConfigPanel)
-    def experimentTypeChanged(self, w: ExperimentConfigPanel) -> None:
+    @Slot(QWidget)
+    def experimentTypeChanged(self, w: QWidget) -> None:
         if isinstance(w, EnsembleExperimentPanel):
             self._update_experiment_name_placeholder()
 

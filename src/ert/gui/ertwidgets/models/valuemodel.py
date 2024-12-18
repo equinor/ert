@@ -1,4 +1,6 @@
-from qtpy.QtCore import QObject, Signal, Slot
+from PyQt6.QtCore import QObject
+from PyQt6.QtCore import pyqtSignal as Signal
+from PyQt6.QtCore import pyqtSlot as Slot
 
 
 class ValueModel(QObject):
