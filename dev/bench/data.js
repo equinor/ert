@@ -1,39 +1,8 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1734528294940,
+  "lastUpdate": 1734529093153,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
-      {
-        "commit": {
-          "author": {
-            "email": "60844986+larsevj@users.noreply.github.com",
-            "name": "Lars Evje",
-            "username": "larsevj"
-          },
-          "committer": {
-            "email": "noreply@github.com",
-            "name": "GitHub",
-            "username": "web-flow"
-          },
-          "distinct": true,
-          "id": "c9d43bc005ac7a77564372e3ef80a9c6ce7ab567",
-          "message": "Add pyupgrade UP rule to ruff\n\n---------\r\n\r\nCo-authored-by: Eivind Jahren <ejah@equinor.com>",
-          "timestamp": "2024-12-10T20:42:32Z",
-          "tree_id": "4ce4a43347adab0c59907dd8c59683c70757f538",
-          "url": "https://github.com/equinor/ert/commit/c9d43bc005ac7a77564372e3ef80a9c6ce7ab567"
-        },
-        "date": 1733863468744,
-        "tool": "pytest",
-        "benches": [
-          {
-            "name": "tests/ert/performance_tests/test_analysis.py::test_and_benchmark_adaptive_localization_with_fields",
-            "value": 0.21071038331313507,
-            "unit": "iter/sec",
-            "range": "stddev: 0.07808106962564963",
-            "extra": "mean: 4.74585060440001 sec\nrounds: 5"
-          }
-        ]
-      },
       {
         "commit": {
           "author": {
@@ -930,6 +899,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.03708193137887556",
             "extra": "mean: 4.780756763800002 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "eide.oyvind87@gmail.com",
+            "name": "Øyvind Eide",
+            "username": "oyvindeide"
+          },
+          "committer": {
+            "email": "44577479+oyvindeide@users.noreply.github.com",
+            "name": "Øyvind Eide",
+            "username": "oyvindeide"
+          },
+          "distinct": true,
+          "id": "b7b57747012bfc9ac1e4c8f611d56f9f6879055d",
+          "message": "Remove unused test data",
+          "timestamp": "2024-12-18T14:36:21+01:00",
+          "tree_id": "a4fa814c30272156a7523083cffbd249f9aab56d",
+          "url": "https://github.com/equinor/ert/commit/b7b57747012bfc9ac1e4c8f611d56f9f6879055d"
+        },
+        "date": 1734529092500,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/ert/performance_tests/test_analysis.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 0.21827420559198069,
+            "unit": "iter/sec",
+            "range": "stddev: 0.033091739166018826",
+            "extra": "mean: 4.581393377599994 sec\nrounds: 5"
           }
         ]
       }
