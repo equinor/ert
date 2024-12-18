@@ -11,7 +11,7 @@ import everest
 from ert.config import ExtParamConfig
 from ert.config.parsing import ConfigKeys as ErtConfigKeys
 from everest import ConfigKeys as CK
-from everest.config import EverestConfig
+from everest.config import EverestConfig, EverestValidationError
 from everest.simulator.everest_to_ert import (
     _everest_to_ert_config_dict,
     everest_to_ert_config,
@@ -278,7 +278,7 @@ def test_summary_default_no_opm(copy_egg_test_data_to_tmp):
         ),
         (
             {"source": None, "link": True, "target": "bar.json"},
-            "Input should be a valid string [type=string_type, input_value=None, input_type=NoneType]",
+            "Input should be a valid string",
         ),
         (
             {"source": "", "link": "false", "target": "bar.json"},
@@ -286,7 +286,7 @@ def test_summary_default_no_opm(copy_egg_test_data_to_tmp):
         ),
         (
             {"source": "baz/", "link": True, "target": 3},
-            "Input should be a valid string [type=string_type, input_value=3, input_type=int]",
+            "Input should be a valid string",
         ),
     ],
 )
@@ -313,7 +313,7 @@ def test_install_data_with_invalid_templates(
         yaml.default_flow_style = False
         yaml.dump(raw_config, f)
 
-    with pytest.raises(ValueError) as exc_info:
+    with pytest.raises(EverestValidationError) as exc_info:
         EverestConfig.load_file(config_file)
 
     assert expected_error_msg in str(exc_info.value)

@@ -12,7 +12,8 @@ from tests.everest.utils import MockParser, skipif_no_everest_models
 
 
 @pytest.mark.parametrize("random_seed", [None, 1234])
-def test_random_seed(random_seed):
+def test_random_seed(tmp_path, monkeypatch, random_seed):
+    monkeypatch.chdir(tmp_path)
     config = {"model": {"realizations": [0]}}
     if random_seed:
         config["environment"] = {"random_seed": random_seed}
@@ -128,7 +129,7 @@ def test_invalid_forward_model_config_files(copy_test_data_to_tmp, monkeypatch):
     config_file = "valid_config_maintained_forward_models.yml"
     template_path = "./templates/wellopen.jinja"
     assert f"""Loading config file <{config_file}> failed with:
-Found  1 validation error:
+Found 1 validation error:
 
 
     * Value error, job = 'add_templates'\t-c/--config = {template_config_path}

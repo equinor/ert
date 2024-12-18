@@ -3,12 +3,12 @@ import string
 from unittest.mock import patch
 
 import pytest
-from pydantic_core import ValidationError
 from ruamel.yaml import YAML
 
 from everest import ConfigKeys as CK
 from everest import config_file_loader as loader
 from everest.config import EverestConfig
+from everest.config.everest_config import EverestValidationError
 from tests.everest.utils import relpath
 
 mocked_root = relpath(os.path.join("test_data", "mocked_test_case"))
@@ -122,12 +122,12 @@ def test_dependent_definitions_value_error(copy_mocked_test_data_to_tmp):
 def test_load_empty_configuration(copy_mocked_test_data_to_tmp):
     with open("empty_config.yml", mode="w", encoding="utf-8") as fh:
         fh.writelines("")
-    with pytest.raises(ValidationError, match="missing"):
+    with pytest.raises(EverestValidationError, match="missing"):
         EverestConfig.load_file("empty_config.yml")
 
 
 def test_load_invalid_configuration(copy_mocked_test_data_to_tmp):
     with open("invalid_config.yml", mode="w", encoding="utf-8") as fh:
         fh.writelines("asdf")
-    with pytest.raises(ValidationError, match="missing"):
+    with pytest.raises(EverestValidationError, match="missing"):
         EverestConfig.load_file("invalid_config.yml")

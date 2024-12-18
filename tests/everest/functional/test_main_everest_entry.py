@@ -20,6 +20,7 @@ WELL_ORDER = "everest/model/config.yml"
 pytestmark = pytest.mark.xdist_group(name="starts_everest")
 
 
+@pytest.mark.integration_test
 def test_everest_entry_docs():
     """Test calling everest with --docs
 
@@ -40,6 +41,7 @@ def test_everest_entry_docs():
     assert not err.getvalue()
 
 
+@pytest.mark.integration_test
 def test_everest_entry_manual():
     """Test calling everest with --manual"""
     with capture_streams() as (out, err), pytest.raises(SystemExit):
@@ -55,6 +57,7 @@ def test_everest_entry_manual():
     assert not err.getvalue()
 
 
+@pytest.mark.integration_test
 def test_everest_entry_version():
     """Test calling everest with --version"""
     with capture_streams() as (out, err), pytest.raises(SystemExit):
@@ -64,6 +67,7 @@ def test_everest_entry_version():
     assert any(everest_version in channel for channel in channels)
 
 
+@pytest.mark.integration_test
 def test_everest_main_entry_bad_command():
     # Setup command line arguments for the test
     with capture_streams() as (_, err), pytest.raises(SystemExit):
@@ -76,6 +80,7 @@ def test_everest_main_entry_bad_command():
 
 @pytest.mark.flaky(reruns=5)
 @pytest.mark.fails_on_macos_github_workflow
+@pytest.mark.integration_test
 def test_everest_entry_run(copy_math_func_test_data_to_tmp):
     # Setup command line arguments
     with capture_streams():
@@ -108,6 +113,7 @@ def test_everest_entry_run(copy_math_func_test_data_to_tmp):
     assert status["status"] == ServerStatus.completed
 
 
+@pytest.mark.integration_test
 def test_everest_entry_monitor_no_run(copy_math_func_test_data_to_tmp):
     with capture_streams():
         start_everest(["everest", "monitor", CONFIG_FILE_MINIMAL])
@@ -120,6 +126,7 @@ def test_everest_entry_monitor_no_run(copy_math_func_test_data_to_tmp):
     assert status["status"] == ServerStatus.never_run
 
 
+@pytest.mark.integration_test
 def test_everest_main_export_entry(copy_math_func_test_data_to_tmp):
     # Setup command line arguments
     with capture_streams():
@@ -127,6 +134,7 @@ def test_everest_main_export_entry(copy_math_func_test_data_to_tmp):
     assert os.path.exists(os.path.join("everest_output", "config_minimal.csv"))
 
 
+@pytest.mark.integration_test
 def test_everest_main_lint_entry(copy_math_func_test_data_to_tmp):
     # Setup command line arguments
     with capture_streams() as (out, err):
@@ -149,7 +157,7 @@ def test_everest_main_lint_entry(copy_math_func_test_data_to_tmp):
     type_ = "(type=float_parsing)"
     validation_msg = dedent(
         f"""Loading config file <config_minimal.yml> failed with:
-Found  1 validation error:
+Found 1 validation error:
 
 controls -> 0 -> initial_guess
     * Input should be a valid number, unable to parse string as a number {type_}
@@ -161,6 +169,7 @@ controls -> 0 -> initial_guess
 @pytest.mark.fails_on_macos_github_workflow
 @skipif_no_everest_models
 @pytest.mark.everest_models_test
+@pytest.mark.integration_test
 def test_everest_main_configdump_entry(copy_egg_test_data_to_tmp):
     # Setup command line arguments
     with capture_streams() as (out, _):

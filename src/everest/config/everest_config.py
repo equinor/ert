@@ -3,6 +3,7 @@ import os
 import shutil
 from argparse import ArgumentParser
 from io import StringIO
+from itertools import chain
 from pathlib import Path
 from typing import (
     TYPE_CHECKING,
@@ -35,7 +36,6 @@ from everest.config.validation_utils import (
     check_for_duplicate_names,
     check_path_exists,
     check_writeable_path,
-    format_errors,
     unique_items,
     validate_forward_model_configs,
 )
@@ -94,6 +94,40 @@ class BaseModelWithPropertySupport(BaseModel):
             getattr(self.__class__, name).fset(self, value)
         except AttributeError:
             super().__setattr__(name, value)
+
+
+class EverestValidationError(ValueError):
+    def __init__(self):
+        super().__init__()
+        self.errors: list[tuple[ErrorDetails, tuple[int, int] | None]] = []
+
+    @property
+    def error(self):
+        return self.errors
+
+    def __str__(self):
+        return f"{self.errors!s}"
+
+
+def _error_loc(error_dict: "ErrorDetails") -> str:
+    return " -> ".join(
+        str(e) for e in error_dict["loc"] if e is not None and e != "__root__"
+    )
+
+
+def format_errors(validation_error: EverestValidationError) -> str:
+    msg = f"Found {len(validation_error.errors)} validation error{'s' if len(validation_error.errors) > 1 else ''}:\n\n"
+    error_map = {}
+    for error, pos in validation_error.errors:
+        if pos:
+            row, col = pos
+            key = f"line: {row}, column: {col}. {_error_loc(error)}"
+        else:
+            key = f"{_error_loc(error)}"
+        if key not in error_map:
+            error_map[key] = [key]
+        error_map[key].append(f"    * {error['msg']} (type={error['type']})")
+    return msg + "\n".join(list(chain.from_iterable(error_map.values())))
 
 
 class HasName(Protocol):
@@ -753,14 +787,33 @@ and environment variables are exposed in the form 'os.NAME', for example:
         EverestConfig.model_validate(config)
 
     @staticmethod
-    def load_file(config_path: str) -> "EverestConfig":
-        config_path = os.path.realpath(config_path)
+    def load_file(config_file: str) -> "EverestConfig":
+        config_path = os.path.realpath(config_file)
 
         if not os.path.isfile(config_path):
             raise FileNotFoundError(f"File not found: {config_path}")
 
         config_dict = yaml_file_to_substituted_config_dict(config_path)
-        return EverestConfig.model_validate(config_dict)
+        try:
+            return EverestConfig.model_validate(config_dict)
+        except ValidationError as error:
+            exp = EverestValidationError()
+            file_content = []
+            with open(config_path, encoding="utf-8") as f:
+                file_content = f.readlines()
+
+            for e in error.errors(
+                include_context=True, include_input=True, include_url=False
+            ):
+                if e["type"] == "literal_error":
+                    for index, line in enumerate(file_content):
+                        if (pos := line.find(e["input"])) != -1:
+                            exp.errors.append((e, (index + 1, pos + 1)))
+                            break
+                else:
+                    exp.errors.append((e, None))
+
+            raise exp from error
 
     @staticmethod
     def load_file_with_argparser(
@@ -775,7 +828,7 @@ and environment variables are exposed in the form 'os.NAME', for example:
                 f"The config file: <{config_path}> contains"
                 f" invalid YAML syntax: {e!s}"
             )
-        except ValidationError as e:
+        except EverestValidationError as e:
             parser.error(
                 f"Loading config file <{config_path}> failed with:\n"
                 f"{format_errors(e)}"
