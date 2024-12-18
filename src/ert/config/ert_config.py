@@ -127,29 +127,29 @@ def create_forward_model_json(
             )
             return context.substitute_real_iter(string, iens, itr)
 
-        def filter_env_dict(self, d):
-            result = {}
-            for key, value in d.items():
-                new_key = self.substitute(key)
-                new_value = self.substitute(value)
-                if new_value is None:
-                    result[new_key] = None
-                elif not new_value:
-                    result[new_key] = ""
-                elif not (new_value[0] == "<" and new_value[-1] == ">"):
+        def filter_env_dict(self, env_dict: dict[str, str]) -> dict[str, str] | None:
+            substituted_dict = {}
+            for key, value in env_dict.items():
+                substituted_key = self.substitute(key)
+                substituted_value = self.substitute(value)
+                if substituted_value is None:
+                    substituted_dict[substituted_key] = None
+                elif not substituted_value:
+                    substituted_dict[substituted_key] = ""
+                elif not (substituted_value[0] == "<" and substituted_value[-1] == ">"):
                     # Remove values containing "<XXX>". These are expected to be
                     # replaced by substitute, but were not.
-                    result[new_key] = new_value
+                    substituted_dict[substituted_key] = substituted_value
                 else:
                     logger.warning(
-                        f"Environment variable {new_key} skipped due to"
-                        f" unmatched define {new_value}",
+                        f"Environment variable {substituted_key} skipped due to"
+                        f" unmatched define {substituted_value}",
                     )
             # Its expected that empty dicts be replaced with "null"
             # in jobs.json
-            if not result:
+            if not substituted_dict:
                 return None
-            return result
+            return substituted_dict
 
     def handle_default(fm_step: ForwardModelStep, arg: str) -> str:
         return fm_step.default_mapping.get(arg, arg)
