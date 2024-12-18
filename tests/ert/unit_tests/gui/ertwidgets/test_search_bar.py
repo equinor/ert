@@ -1,7 +1,7 @@
 import pytest
+from PySide6.QtGui import QColor
+from PySide6.QtWidgets import QPlainTextEdit
 from pytestqt.qtbot import QtBot
-from qtpy.QtGui import QColor
-from qtpy.QtWidgets import QPlainTextEdit
 
 from ert.gui.tools.search_bar import SearchBar
 

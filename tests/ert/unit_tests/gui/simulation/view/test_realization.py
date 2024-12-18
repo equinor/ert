@@ -1,9 +1,9 @@
 from datetime import datetime as dt
 
 import pytest
-from qtpy import QtCore
-from qtpy.QtCore import QModelIndex, QSize
-from qtpy.QtWidgets import QStyledItemDelegate, QStyleOptionViewItem
+from PySide6 import QtCore
+from PySide6.QtCore import QModelIndex, QSize
+from PySide6.QtWidgets import QStyledItemDelegate, QStyleOptionViewItem
 
 from ert.ensemble_evaluator.snapshot import (
     EnsembleSnapshot,

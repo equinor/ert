@@ -4,7 +4,7 @@ from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
 from typing import cast
 
-from qtpy.QtGui import QColor
+from PySide6.QtGui import QColor
 
 from ert.ensemble_evaluator.snapshot import FMStepSnapshot
 

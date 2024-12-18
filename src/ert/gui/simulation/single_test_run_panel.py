@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 
-from qtpy import QtCore
-from qtpy.QtWidgets import QFormLayout, QLabel
+from PySide6 import QtCore
+from PySide6.QtWidgets import QFormLayout, QLabel
 
 from ert.gui.ertnotifier import ErtNotifier
 from ert.gui.ertwidgets import CopyableLabel

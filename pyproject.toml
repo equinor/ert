@@ -59,7 +59,7 @@ dependencies = [
     "python-multipart",  # extra dependency for fastapi
     "pyyaml",
     "pyzmq",
-    "qtpy",
+    "PySide6",
     "requests",
     "resfo",
     "scipy >= 1.10.1",
@@ -126,6 +126,7 @@ style = [
 ]
 types = [
     "mypy",
+    "pyside6-stubs",
     "types-lxml",
     "types-requests",
     "types-PyYAML",
@@ -248,7 +249,7 @@ typeCheckingMode = "standard"
 pythonVersion = "3.11"
 
 [tool.pyright.defineConstant]
-PYSIDE6 = false
-PYQT5 = true
+PYSIDE6 = true
+PYQT5 = false
 PYSIDE2 = false
 PYQT6 = false

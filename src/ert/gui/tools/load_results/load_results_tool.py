@@ -1,6 +1,6 @@
 from typing import Any
 
-from qtpy.QtGui import QIcon
+from PySide6.QtGui import QIcon
 
 from ert.gui.ertnotifier import ErtNotifier
 from ert.gui.ertwidgets import ClosableDialog

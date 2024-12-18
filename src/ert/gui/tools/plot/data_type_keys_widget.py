@@ -1,6 +1,6 @@
-from qtpy.QtCore import QSize, Signal
-from qtpy.QtGui import QColor, QIcon, QPainter, QPaintEvent
-from qtpy.QtWidgets import (
+from PySide6.QtCore import QSize, Signal
+from PySide6.QtGui import QColor, QIcon, QPainter, QPaintEvent
+from PySide6.QtWidgets import (
     QHBoxLayout,
     QLabel,
     QListView,
@@ -56,7 +56,7 @@ class _Legend(QWidget):
         layout.setContentsMargins(0, 0, 0, 0)
 
         self.legend_marker = _LegendMarker(color)
-        self.legend_marker.setToolTip(legend)
+        self.legend_marker.setToolTip(legend if legend else "")
 
         layout.addWidget(self.legend_marker)
         self.legend_label = QLabel(legend)
@@ -127,7 +127,7 @@ class DataTypeKeysWidget(QWidget):
         self.data_type_keys_widget.setCurrentIndex(self.filter_model.index(0, 0))
 
     def setSearchString(self, filter_: str | None) -> None:
-        self.filter_model.setFilterFixedString(filter_)
+        self.filter_model.setFilterFixedString(filter_ if filter_ else "")
 
     def showFilterPopup(self) -> None:
         self.__filter_popup.show()

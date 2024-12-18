@@ -1,9 +1,9 @@
-from collections.abc import Iterable
+from collections.abc import Sequence
 from uuid import UUID
 
-from qtpy.QtCore import QSize, Qt
-from qtpy.QtGui import QIcon, QKeyEvent
-from qtpy.QtWidgets import (
+from PySide6.QtCore import QSize, Qt
+from PySide6.QtGui import QIcon, QKeyEvent
+from PySide6.QtWidgets import (
     QCompleter,
     QHBoxLayout,
     QInputDialog,
@@ -18,14 +18,14 @@ from .validationsupport import ValidationSupport
 
 class AutoCompleteLineEdit(QLineEdit):
     # http://blog.elentok.com/2011/08/autocomplete-textbox-for-multiple.html
-    def __init__(self, items: Iterable[str | None], parent: QWidget | None = None):
+    def __init__(self, items: Sequence[str], parent: QWidget | None = None):
         super().__init__(parent)
 
         self._separators = [",", " "]
 
         self._completer = QCompleter(items, self)
         self._completer.setWidget(self)
-        self._completer.activated[str].connect(self.__insertCompletion)
+        self._completer.activated.connect(self.__insertCompletion)
         self._completer.setCaseSensitivity(Qt.CaseSensitivity.CaseInsensitive)
 
         self.__keysToIgnore = [
@@ -50,28 +50,28 @@ class AutoCompleteLineEdit(QLineEdit):
             i -= 1
         return text_under_cursor
 
-    def keyPressEvent(self, a0: QKeyEvent | None) -> None:
+    def keyPressEvent(self, arg__1: QKeyEvent) -> None:
         popup = self._completer.popup()
         if (
             popup is not None
             and popup.isVisible()
-            and a0 is not None
-            and a0.key() in self.__keysToIgnore
+            and arg__1 is not None
+            and arg__1.key() in self.__keysToIgnore
         ):
-            a0.ignore()
+            arg__1.ignore()
             return
 
-        super().keyPressEvent(a0)
+        super().keyPressEvent(arg__1)
 
         completion_prefix = self.textUnderCursor()
         if completion_prefix != self._completer.completionPrefix():
             self.__updateCompleterPopupItems(completion_prefix)
-        if a0 is not None and len(a0.text()) > 0 and len(completion_prefix) > 0:
+        if arg__1 is not None and len(arg__1.text()) > 0 and len(completion_prefix) > 0:
             self._completer.complete()
         if popup is not None and len(completion_prefix) == 0:
             popup.hide()
 
-    def __updateCompleterPopupItems(self, completionPrefix: str | None) -> None:
+    def __updateCompleterPopupItems(self, completionPrefix: str) -> None:
         self._completer.setCompletionPrefix(completionPrefix)
         popup = self._completer.popup()
         assert popup is not None
