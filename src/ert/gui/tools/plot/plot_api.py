@@ -112,7 +112,6 @@ class PlotApi:
                     f"/experiments/{experiment['id']}/ensembles", timeout=self._timeout
                 )
                 self._check_response(response)
-
                 for ensemble in response.json():
                     response = client.get(
                         f"/ensembles/{ensemble['id']}/responses", timeout=self._timeout
