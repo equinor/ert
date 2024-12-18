@@ -56,22 +56,24 @@ class EnsembleSelector(QComboBox):
         notifier.storage_changed.connect(self.populate)
 
         if notifier.is_storage_available:
+            print("populating from notifier available storage")
             self.populate()
 
     @property
     def selected_ensemble(self) -> Ensemble:
         print("GETTING SELECTED_ENSEMBLE")
-        itemData: LocalEnsemble = self.itemData(self.currentIndex())
-        print(f"{itemData.experiment.is_valid()=}")
-        return itemData
+        print(f"{self.count()=}")
+        try:
+            itemData: LocalEnsemble = self.itemData(self.currentIndex())
+        except Exception as e:
+            print(f"{e=}")
+            raise e
 
-    def get_selected_ensemble(self) -> Ensemble:
-        print("GETTING SELECTED_ENSEMBLE")
-        itemData: LocalEnsemble = self.itemData(self.currentIndex())
         print(f"{itemData.experiment.is_valid()=}")
         return itemData
 
     def populate(self) -> None:
+        print("CALLED POPULATE")
         block = self.blockSignals(True)
 
         self.clear()
@@ -109,7 +111,7 @@ class EnsembleSelector(QComboBox):
         self.setCurrentIndex(max(current_index, 0))
 
         self.blockSignals(block)
-
+        print("EMITTING ENSEMBLE POPULATED")
         self.ensemble_populated.emit()
 
     def _ensemble_list(self) -> Iterable[Ensemble]:

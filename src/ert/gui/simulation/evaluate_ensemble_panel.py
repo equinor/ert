@@ -73,6 +73,7 @@ class EvaluateEnsemblePanel(ExperimentConfigPanel):
         )
 
     def get_experiment_arguments(self) -> Arguments:
+        print("GET_EXPERIMENT_ARGUMENTS")
         return Arguments(
             mode=EVALUATE_ENSEMBLE_MODE,
             ensemble_id=str(self._ensemble_selector.selected_ensemble.id),
@@ -80,6 +81,7 @@ class EvaluateEnsemblePanel(ExperimentConfigPanel):
         )
 
     def _realizations_from_fs(self) -> None:
+        print("REALIZATIONS_FROM_FS")
         ensemble = self._ensemble_selector.selected_ensemble
         self._active_realizations_field.setEnabled(ensemble is not None)
         if ensemble:
