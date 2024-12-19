@@ -258,7 +258,6 @@ _BenchMarks: list[_Benchmark] = [
         ),
         expected_join_performance=_ExpectedPerformance(
             memory_limit_mb=100,
-            last_measured_time=0.03,
             last_measured_memory_mb=17,
         ),
         expected_update_performance=_ExpectedPerformance(
