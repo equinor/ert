@@ -14,7 +14,7 @@ def test_seed(copy_math_func_test_data_to_tmp):
     config.environment.random_seed = random_seed
 
     run_model = EverestRunModel.create(config)
-    assert random_seed == run_model.everest_config.environment.random_seed
+    assert random_seed == run_model._everest_config.environment.random_seed
 
     # Res
     ert_config = _everest_to_ert_config_dict(config)
@@ -26,5 +26,5 @@ def test_loglevel(copy_math_func_test_data_to_tmp):
     config = EverestConfig.load_file(CONFIG_FILE)
     config.environment.log_level = "info"
     run_model = EverestRunModel.create(config)
-    config = run_model.everest_config
+    config = run_model._everest_config
     assert len(EverestConfig.lint_config_dict(config.to_dict())) == 0
