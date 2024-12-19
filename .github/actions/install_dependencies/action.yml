@@ -2,9 +2,8 @@ name: install_dependencies
 description: Installs dependencies for the pip build
 
 inputs:
-    os:
-        required: true
-
+  os:
+    required: true
 
 runs:
   using: "composite"

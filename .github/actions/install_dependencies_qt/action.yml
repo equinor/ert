@@ -1,0 +1,16 @@
+name: install_dependencies_qt
+description: Installs dependencies for qt
+
+inputs:
+  os:
+    required: true
+
+runs:
+  using: "composite"
+  steps:
+    - name: Install Ubuntu dependencies
+      if: inputs.os == 'ubuntu-latest'
+      run: |
+        sudo apt-get update
+        sudo apt-get install libegl1
+      shell: bash

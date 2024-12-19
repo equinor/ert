@@ -1,8 +1,8 @@
 from typing import Any
 
-from qtpy.QtCore import QModelIndex, QPoint, QSize
-from qtpy.QtGui import QColor, QRegion
-from qtpy.QtWidgets import (
+from PySide6.QtCore import QModelIndex, QPersistentModelIndex, QPoint, QSize
+from PySide6.QtGui import QColor, QRegion
+from PySide6.QtWidgets import (
     QComboBox,
     QLabel,
     QStyle,
@@ -104,7 +104,9 @@ class _ComboBoxWithDescriptionDelegate(QStyledItemDelegate):
         widget.render(painter, QPoint(), QRegion(), QWidget.RenderFlag.DrawChildren)
         painter.restore()
 
-    def sizeHint(self, option: QStyleOptionViewItem, index: QModelIndex) -> QSize:
+    def sizeHint(
+        self, option: QStyleOptionViewItem, index: QModelIndex | QPersistentModelIndex
+    ) -> QSize:
         label = index.data(LABEL_ROLE)
         description = index.data(DESCRIPTION_ROLE)
         group = index.data(GROUP_TITLE_ROLE)
@@ -120,7 +122,7 @@ class QComboBoxWithDescription(QComboBox):
         self.setItemDelegate(_ComboBoxWithDescriptionDelegate(self))
 
     def addDescriptionItem(
-        self, label: str | None, description: Any, group: str | None = None
+        self, label: str, description: Any, group: str | None = None
     ) -> None:
         super().addItem(label)
         model = self.model()

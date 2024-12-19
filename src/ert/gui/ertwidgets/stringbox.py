@@ -2,8 +2,8 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any
 
-from qtpy.QtGui import QPalette
-from qtpy.QtWidgets import QLineEdit
+from PySide6.QtGui import QPalette
+from PySide6.QtWidgets import QLineEdit
 
 from .validationsupport import ValidationSupport
 

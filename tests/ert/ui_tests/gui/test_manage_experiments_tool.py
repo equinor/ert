@@ -3,8 +3,8 @@ import shutil
 
 import polars
 import pytest
-from qtpy.QtCore import Qt
-from qtpy.QtWidgets import QPushButton, QTextEdit
+from PySide6.QtCore import Qt
+from PySide6.QtWidgets import QPushButton, QTextEdit
 
 from ert.config import ErtConfig, SummaryConfig
 from ert.gui.ertnotifier import ErtNotifier

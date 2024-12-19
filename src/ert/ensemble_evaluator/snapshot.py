@@ -6,7 +6,7 @@ from collections.abc import Mapping
 from datetime import datetime
 from typing import Any, TypeVar, cast, get_args
 
-from qtpy.QtGui import QColor
+from PySide6.QtGui import QColor
 from typing_extensions import TypedDict
 
 from _ert.events import (

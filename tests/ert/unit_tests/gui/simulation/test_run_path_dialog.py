@@ -3,9 +3,9 @@ from pathlib import Path
 from unittest.mock import Mock, patch
 
 import pytest
+from PySide6.QtCore import Qt, QTimer
+from PySide6.QtWidgets import QComboBox, QMessageBox, QToolButton, QWidget
 from pytestqt.qtbot import QtBot
-from qtpy.QtCore import Qt, QTimer
-from qtpy.QtWidgets import QComboBox, QMessageBox, QToolButton, QWidget
 
 from ert.config import ErtConfig
 from ert.gui.main import _setup_main_window
@@ -25,16 +25,17 @@ def handle_run_path_dialog(
     delete_run_path: bool = True,
     expect_error: bool = False,
 ):
-    mb = gui.findChild(QMessageBox, "RUN_PATH_WARNING_BOX")
+    mb = gui.findChildren(QMessageBox, "RUN_PATH_WARNING_BOX")
+    mb = mb[-1] if mb else None
 
     if mb is not None:
         assert mb
         assert isinstance(mb, QMessageBox)
 
         if delete_run_path:
-            qtbot.mouseClick(mb.checkBox(), Qt.LeftButton)
+            qtbot.mouseClick(mb.checkBox(), Qt.MouseButton.LeftButton)
 
-        qtbot.mouseClick(mb.buttons()[0], Qt.LeftButton)
+        qtbot.mouseClick(mb.buttons()[0], Qt.MouseButton.LeftButton)
         if expect_error:
             QTimer.singleShot(1000, lambda: handle_run_path_error_dialog(gui, qtbot))
 
@@ -46,7 +47,7 @@ def handle_run_path_error_dialog(gui: ErtMainWindow, qtbot: QtBot):
         assert mb
         assert isinstance(mb, QMessageBox)
         # Continue without deleting the runpath
-        qtbot.mouseClick(mb.buttons()[0], Qt.LeftButton)
+        qtbot.mouseClick(mb.buttons()[0], Qt.MouseButton.LeftButton)
 
 
 @pytest.mark.integration_test
@@ -91,7 +92,7 @@ def test_run_path_deleted_error(
             1000, lambda: handle_run_path_dialog(gui, qtbot, expect_error=True)
         )
         with patch("shutil.rmtree", side_effect=PermissionError("Not allowed!")):
-            qtbot.mouseClick(run_experiment, Qt.LeftButton)
+            qtbot.mouseClick(run_experiment, Qt.MouseButton.LeftButton)
 
             qtbot.waitUntil(lambda: gui.findChild(RunDialog) is not None)
         run_dialog = gui.findChild(RunDialog)
@@ -138,7 +139,7 @@ def test_run_path_is_deleted(snake_oil_case_storage: ErtConfig, qtbot: QtBot):
         QTimer.singleShot(
             1000, lambda: handle_run_path_dialog(gui, qtbot, delete_run_path=True)
         )
-        qtbot.mouseClick(run_experiment, Qt.LeftButton)
+        qtbot.mouseClick(run_experiment, Qt.MouseButton.LeftButton)
 
         qtbot.waitUntil(lambda: gui.findChild(RunDialog) is not None)
         run_dialog = gui.findChild(RunDialog)
@@ -183,7 +184,7 @@ def test_run_path_is_not_deleted(snake_oil_case_storage: ErtConfig, qtbot: QtBot
         QTimer.singleShot(
             500, lambda: handle_run_path_dialog(gui, qtbot, delete_run_path=False)
         )
-        qtbot.mouseClick(run_experiment, Qt.LeftButton)
+        qtbot.mouseClick(run_experiment, Qt.MouseButton.LeftButton)
 
         qtbot.waitUntil(lambda: gui.findChild(RunDialog) is not None, timeout=10000)
         run_dialog = gui.findChild(RunDialog)
