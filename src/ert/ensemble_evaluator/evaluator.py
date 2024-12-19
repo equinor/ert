@@ -388,10 +388,10 @@ class EnsembleEvaluator:
                     raise task_exception
                 elif task.get_name() == "server_task":
                     return
-                elif task.get_name() == "ensemble_task" or task.get_name() in [
+                elif task.get_name() == "ensemble_task" or task.get_name() in {
                     "ensemble_task",
                     "listener_task",
-                ]:
+                }:
                     timeout = self.CLOSE_SERVER_TIMEOUT
                 else:
                     msg = (

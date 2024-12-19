@@ -115,11 +115,10 @@ class MockZMQServer:
         while True:
             try:
                 dealer, __, frame = await self.router_socket.recv_multipart()
-                print(f"{dealer=} {frame=} {self.value=}")
                 frame = frame.decode("utf-8")
-                if frame in [CONNECT_MSG, DISCONNECT_MSG] or self.value == 0:
+                if frame in {CONNECT_MSG, DISCONNECT_MSG} or self.value == 0:
                     await self.router_socket.send_multipart([dealer, b"", ACK_MSG])
-                if frame not in [CONNECT_MSG, DISCONNECT_MSG] and self.value != 1:
+                if frame not in {CONNECT_MSG, DISCONNECT_MSG} and self.value != 1:
                     self.messages.append(frame)
             except asyncio.CancelledError:
                 break
