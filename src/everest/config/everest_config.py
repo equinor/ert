@@ -114,8 +114,7 @@ class EverestConfig(BaseModelWithPropertySupport):  # type: ignore
         default=OptimizationConfig(),
         description="Optimizer options",
     )
-    model: ModelConfig | None = Field(
-        default=ModelConfig(),
+    model: ModelConfig = Field(
         description="Configuration of the Everest model",
     )
 
@@ -733,6 +732,7 @@ and environment variables are exposed in the form 'os.NAME', for example:
             "controls": [],
             "objective_functions": [],
             "config_path": ".",
+            "model": {"realizations": [0]},
         }
 
         return EverestConfig.model_validate({**defaults, **kwargs})

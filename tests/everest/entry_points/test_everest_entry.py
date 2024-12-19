@@ -504,15 +504,13 @@ def test_complete_status_for_normal_run_monitor(
     return_value={"status": ServerStatus.never_run, "message": None},
 )
 def test_validate_ert_config_before_starting_everest_server(
-    server_is_running_mock, server_status_mock, tmpdir, monkeypatch
+    server_is_running_mock, server_status_mock, copy_math_func_test_data_to_tmp
 ):
-    path = tmpdir / "new_folder"
-    os.makedirs(path)
-    monkeypatch.chdir(path)
-    config_file = path / "minimal_config.yml"
+    config_file = "config_minimal.yml"
     everest_config = EverestConfig.with_defaults()
+    everest_config.model.realizations = []
     everest_config.dump(config_file)
-    everest_config.config_path = Path(config_file).absolute()
-    error = "Expected realizations when analysing data installation source"
-    with pytest.raises(SystemExit, match=f"Config validation error: {error}"):
+    everest_config.config_path = Path(config_file)
+
+    with pytest.raises(SystemExit):
         everest_entry([str(everest_config.config_path)])

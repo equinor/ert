@@ -891,7 +891,7 @@ def test_that_missing_required_fields_cause_error():
 
     # Expect missing error for:
     # controls, objective_functions, config_path
-    assert len(error_dicts) == 3
+    assert len(error_dicts) == 4
 
     config_with_defaults = EverestConfig.with_defaults()
     config_args = {}
@@ -899,6 +899,7 @@ def test_that_missing_required_fields_cause_error():
         "controls",
         "objective_functions",
         "config_path",
+        "model",
     ]
 
     for key in required_argnames:
@@ -970,6 +971,6 @@ def test_warning_forward_model_write_objectives(objective, forward_model, warnin
             )
 
 
-def test_deprecated_keyword():
+def test_deprecated_keyword_report_steps():
     with pytest.warns(ConfigWarning, match="report_steps .* can be removed"):
-        ModelConfig(**{"report_steps": []})
+        ModelConfig(**{"realizations": [0], "report_steps": []})
