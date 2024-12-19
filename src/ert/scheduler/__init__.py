@@ -19,23 +19,23 @@ if TYPE_CHECKING:
 
 
 def create_driver(queue_options: QueueOptions) -> Driver:
-    if queue_options.name == QueueSystem.LOCAL:
-        return LocalDriver()
-    elif queue_options.name == QueueSystem.TORQUE:
-        return OpenPBSDriver(**queue_options.driver_options)
-    elif queue_options.name == QueueSystem.LSF:
-        return LsfDriver(**queue_options.driver_options)
-    elif queue_options.name == QueueSystem.SLURM:
-        return SlurmDriver(
-            **dict(
-                {"user": getpwuid(getuid()).pw_name},
-                **queue_options.driver_options,
+    match str(queue_options.name).upper():
+        case QueueSystem.LOCAL:
+            return LocalDriver()
+        case QueueSystem.TORQUE:
+            return OpenPBSDriver(**queue_options.driver_options)
+        case QueueSystem.LSF:
+            return LsfDriver(**queue_options.driver_options)
+        case QueueSystem.SLURM:
+            return SlurmDriver(
+                **dict(
+                    {"user": getpwuid(getuid()).pw_name},
+                    **queue_options.driver_options,
+                )
             )
-        )
-    else:
-        raise NotImplementedError(
-            "Only LOCAL, SLURM, TORQUE and LSF drivers are implemented"
-        )
+    raise NotImplementedError(
+        "Only LOCAL, SLURM, TORQUE and LSF drivers are implemented"
+    )
 
 
 __all__ = [

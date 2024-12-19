@@ -1,8 +1,15 @@
 import json
 import os
-from typing import Literal
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, field_validator
+
+from ert.config.queue_config import (
+    LocalQueueOptions,
+    LsfQueueOptions,
+    SlurmQueueOptions,
+    TorqueQueueOptions,
+)
+from ert.plugins import ErtPluginManager
 
 from ..strings import (
     CERTIFICATE_DIR,
@@ -11,10 +18,9 @@ from ..strings import (
     SERVER_STATUS,
     SESSION_DIR,
 )
-from .has_ert_queue_options import HasErtQueueOptions
 
 
-class ServerConfig(BaseModel, HasErtQueueOptions):  # type: ignore
+class ServerConfig(BaseModel):  # type: ignore
     name: str | None = Field(
         None,
         description="""Specifies which queue to use.
@@ -27,29 +33,29 @@ The everest server generally has lower resource requirements than forward models
 as RMS and Eclipse.
     """,
     )  # Corresponds to queue name
-    exclude_host: str | None = Field(
-        "",
-        description="""Comma separated list of nodes that should be
-         excluded from the slurm run""",
-    )
-    include_host: str | None = Field(
-        "",
-        description="""Comma separated list of nodes that
-        should be included in the slurm run""",
-    )
-    options: str | None = Field(
-        None,
-        description="""Used to specify options to LSF.
-        Examples to set memory requirement is:
-        * rusage[mem=1000]""",
-    )
-    queue_system: Literal["lsf", "local", "slurm"] | None = Field(
-        None,
-        description="Defines which queue system the everest server runs on.",
+    queue_system: (
+        LocalQueueOptions
+        | LsfQueueOptions
+        | SlurmQueueOptions
+        | TorqueQueueOptions
+        | None
+    ) = Field(
+        default=None,
+        description="Defines which queue system the everest submits jobs to",
+        discriminator="name",
     )
     model_config = ConfigDict(
         extra="forbid",
     )
+
+    @field_validator("queue_system", mode="before")
+    @classmethod
+    def default_local_queue(cls, v):
+        if v is None:
+            return v
+        elif "activate_script" not in v and ErtPluginManager().activate_script():
+            v["activate_script"] = ErtPluginManager().activate_script()
+        return v
 
     @staticmethod
     def get_server_url(output_dir: str) -> str:

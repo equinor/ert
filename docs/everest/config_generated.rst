@@ -870,25 +870,6 @@ Type: *Optional[SimulatorConfig]*
 
 Simulation settings
 
-**name (optional)**
-    Type: *Optional[str]*
-
-    Specifies which queue to use
-
-
-**cores (optional)**
-    Type: *Optional[PositiveInt]*
-
-    Defines the number of simultaneously running forward models.
-
-    When using queue system lsf, this corresponds to number of nodes used at one
-    time, whereas when using the local queue system, cores refers to the number of
-    cores you want to use on your system.
-
-    This number is specified in Ert as MAX_RUNNING.
-
-
-
 **cores_per_node (optional)**
     Type: *Optional[PositiveInt]*
 
@@ -906,20 +887,6 @@ Simulation settings
     Whether the batch folder for a successful simulation needs to be deleted.
 
 
-**exclude_host (optional)**
-    Type: *Optional[str]*
-
-    Comma separated list of nodes that should be
-    excluded from the slurm run.
-
-
-**include_host (optional)**
-    Type: *Optional[str]*
-
-    Comma separated list of nodes that
-    should be included in the slurm run
-
-
 **max_runtime (optional)**
     Type: *Optional[NonNegativeInt]*
 
@@ -929,18 +896,10 @@ Simulation settings
 
 
 
-**options (optional)**
-    Type: *Optional[str]*
-
-    Used to specify options to LSF.
-    Examples to set memory requirement is:
-    * rusage[mem=1000]
-
-
 **queue_system (optional)**
-    Type: *Optional[Literal['lsf', 'local', 'slurm', 'torque']]*
+    Type: *Optional[LocalQueueOptions, LsfQueueOptions, SlurmQueueOptions, TorqueQueueOptions]*
 
-    Defines which queue system the everest server runs on.
+    Defines which queue system the everest submits jobs to
 
 
 **resubmit_limit (optional)**
@@ -956,54 +915,6 @@ Simulation settings
     If not specified, a default value of 1 will be used.
 
 
-**sbatch (optional)**
-    Type: *Optional[str]*
-
-    sbatch executable to be used by the slurm queue interface.
-
-
-**scancel (optional)**
-    Type: *Optional[str]*
-
-    scancel executable to be used by the slurm queue interface.
-
-
-**scontrol (optional)**
-    Type: *Optional[str]*
-
-    scontrol executable to be used by the slurm queue interface.
-
-
-**sacct (optional)**
-    Type: *Optional[str]*
-
-    sacct executable to be used by the slurm queue interface.
-
-
-**squeue (optional)**
-    Type: *Optional[str]*
-
-    squeue executable to be used by the slurm queue interface.
-
-
-**server (optional)**
-    Type: *Optional[str]*
-
-    Name of LSF server to use. This option is deprecated and no longer required
-
-
-**slurm_timeout (optional)**
-    Type: *Optional[int]*
-
-    Timeout for cached status used by the slurm queue interface
-
-
-**squeue_timeout (optional)**
-    Type: *Optional[int]*
-
-    Timeout for cached status used by the slurm queue interface.
-
-
 **enable_cache (optional)**
     Type: *bool*
 
@@ -1017,72 +928,6 @@ Simulation settings
     This option is disabled by default, since it will not be necessary for
     the most common use of a standard optimization with a continuous
     optimizer.
-
-
-**qsub_cmd (optional)**
-    Type: *Optional[str]*
-
-    The submit command
-
-
-**qstat_cmd (optional)**
-    Type: *Optional[str]*
-
-    The query command
-
-
-**qdel_cmd (optional)**
-    Type: *Optional[str]*
-
-    The kill command
-
-
-**qstat_options (optional)**
-    Type: *Optional[str]*
-
-    Options to be supplied to the qstat command. This defaults to -x, which tells the qstat command to include exited processes.
-
-
-**cluster_label (optional)**
-    Type: *Optional[str]*
-
-    The name of the cluster you are running simulations in.
-
-
-**memory_per_job (optional)**
-    Type: *Optional[str]*
-
-    You can specify the amount of memory you will need for running your job. This will ensure that not too many jobs will run on a single shared memory node at once, possibly crashing the compute node if it runs out of memory.
-    You can get an indication of the memory requirement by watching the course of a local run using the htop utility. Whether you should set the peak memory usage as your requirement or a lower figure depends on how simultaneously each job will run.
-    The option to be supplied will be used as a string in the qsub argument. You must specify the unit, either gb or mb.
-
-
-
-**keep_qsub_output (optional)**
-    Type: *Optional[int]*
-
-    Set to 1 to keep error messages from qsub. Usually only to be used if somethign is seriously wrong with the queue environment/setup.
-
-
-**submit_sleep (optional)**
-    Type: *Optional[float]*
-
-    To avoid stressing the TORQUE/PBS system you can instruct the driver to sleep for every submit request. The argument to the SUBMIT_SLEEP is the number of seconds to sleep for every submit, which can be a fraction like 0.5
-
-
-**queue_query_timeout (optional)**
-    Type: *Optional[int]*
-
-
-    The driver allows the backend TORQUE/PBS system to be flaky, i.e. it may intermittently not respond and give error messages when submitting jobs or asking for job statuses. The timeout (in seconds) determines how long ERT will wait before it will give up. Applies to job submission (qsub) and job status queries (qstat). Default is 126 seconds.
-    ERT will do exponential sleeps, starting at 2 seconds, and the provided timeout is a maximum. Let the timeout be sums of series like 2+4+8+16+32+64 in order to be explicit about the number of retries. Set to zero to disallow flakyness, setting it to 2 will allow for one re-attempt, and 6 will give two re-attempts. Example allowing six retries:
-
-
-
-**project_code (optional)**
-    Type: *Optional[str]*
-
-    String identifier used to map hardware resource usage to a project or account. The project or account does not have to exist.
 
 
 
@@ -1246,32 +1091,10 @@ requirements of the forward models.
 
 
 
-**exclude_host (optional)**
-    Type: *Optional[str]*
-
-    Comma separated list of nodes that should be
-    excluded from the slurm run
-
-
-**include_host (optional)**
-    Type: *Optional[str]*
-
-    Comma separated list of nodes that
-    should be included in the slurm run
-
-
-**options (optional)**
-    Type: *Optional[str]*
-
-    Used to specify options to LSF.
-    Examples to set memory requirement is:
-    * rusage[mem=1000]
-
-
 **queue_system (optional)**
-    Type: *Optional[Literal['lsf', 'local', 'slurm']]*
+    Type: *Optional[LocalQueueOptions, LsfQueueOptions, SlurmQueueOptions, TorqueQueueOptions]*
 
-    Defines which queue system the everest server runs on.
+    Defines which queue system the everest submits jobs to
 
 
 

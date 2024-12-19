@@ -18,7 +18,6 @@ from everest.config.install_data_config import InstallDataConfig
 from everest.config.install_job_config import InstallJobConfig
 from everest.config.simulator_config import SimulatorConfig
 from everest.config_keys import ConfigKeys
-from everest.queue_driver.queue_driver import _extract_queue_system
 from everest.strings import EVEREST, SIMULATION_DIR, STORAGE_DIR
 
 
@@ -474,7 +473,6 @@ def _everest_to_ert_config_dict(
     _extract_workflow_jobs(ever_config, ert_config, config_dir)
     _extract_workflows(ever_config, ert_config, config_dir)
     _extract_model(ever_config, ert_config)
-    _extract_queue_system(ever_config, ert_config)
     _extract_seed(ever_config, ert_config)
     _extract_results(ever_config, ert_config)
 
@@ -487,6 +485,8 @@ def everest_to_ert_config(ever_config: EverestConfig) -> ErtConfig:
             ever_config, site_config=ErtConfig.read_site_config()
         )
         ert_config = ErtConfig.with_plugins().from_dict(config_dict=config_dict)
+    ert_config.queue_config.queue_options = ever_config.simulator.queue_system
+    ert_config.queue_config.queue_system = ever_config.simulator.queue_system.name
     ens_config = ert_config.ensemble_config
 
     def _get_variables(

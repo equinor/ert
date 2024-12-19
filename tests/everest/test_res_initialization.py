@@ -28,15 +28,15 @@ from tests.everest.utils import (
     [
         [
             {
-                "queue_system": "torque",
-                "name": "permanent_8",
+                "name": "torque",
+                "queue": "permanent_8",
                 "qsub_cmd": "qsub",
                 "qstat_cmd": "qstat",
                 "qdel_cmd": "qdel",
                 "keep_qsub_output": 1,
                 "submit_sleep": 0.5,
                 "project_code": "snake_oil_pc",
-                "cores_per_node": 3,
+                "num_cpus_per_node": 3,
             },
             {
                 "project_code": "snake_oil_pc",
@@ -51,8 +51,8 @@ from tests.everest.utils import (
         ],
         [
             {
-                "queue_system": "slurm",
-                "name": "default-queue",
+                "name": "slurm",
+                "partition": "default-queue",
                 "exclude_host": "host1,host2,host3,host4",
                 "include_host": "host5,host6,host7,host8",
             },
@@ -70,10 +70,9 @@ from tests.everest.utils import (
         ],
         [
             {
-                "queue_system": "lsf",
-                "name": "mr",
-                "options": "span = 1 && select[x86 and GNU/Linux]",
-                "server": "lx-fastserver01",
+                "name": "lsf",
+                "lsf_queue": "mr",
+                "lsf_resource": "span = 1 && select[x86 and GNU/Linux]",
             },
             {
                 "queue_name": "mr",
@@ -83,10 +82,13 @@ from tests.everest.utils import (
     ],
 )
 def test_everest_to_ert_queue_config(config, expected):
-    general_options = {"resubmit_limit": 7, "cores": 42}
+    general_queue_options = {"max_running": 10}
+    general_options = {"resubmit_limit": 7}
+
     ever_config = EverestConfig.with_defaults(
         **{
-            "simulator": config | general_options,
+            "simulator": {"queue_system": config | general_queue_options}
+            | general_options,
             "model": {"realizations": [0]},
         }
     )
@@ -94,12 +96,12 @@ def test_everest_to_ert_queue_config(config, expected):
 
     qc = ert_config.queue_config
     qo = qc.queue_options
-    assert qc.queue_system == config["queue_system"].upper()
+    assert str(qc.queue_system) == config["name"]
     driver_options = qo.driver_options
     driver_options.pop("activate_script")
     assert {k: v for k, v in driver_options.items() if v is not None} == expected
     assert qc.max_submit == general_options["resubmit_limit"] + 1
-    assert qo.max_running == general_options["cores"]
+    assert qo.max_running == general_queue_options["max_running"]
 
 
 def test_everest_to_ert_controls():
