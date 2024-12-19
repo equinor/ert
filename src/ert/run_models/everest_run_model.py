@@ -671,7 +671,7 @@ class EverestRunModel(BaseRunModel):
 
     def send_snapshot_event(self, event: Event, iteration: int) -> None:
         super().send_snapshot_event(event, iteration)
-        if type(event) in (EESnapshot, EESnapshotUpdate):
+        if type(event) in {EESnapshot, EESnapshotUpdate}:
             newstatus = self._simulation_status(self.get_current_snapshot())
             if self._status != newstatus:  # No change in status
                 if self._sim_callback is not None:
