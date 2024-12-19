@@ -1,7 +1,6 @@
 import json
 import os
 import ssl
-import stat
 from functools import partial
 from pathlib import Path
 from unittest.mock import patch
@@ -103,21 +102,6 @@ def test_everserver_status_failure(_1, copy_math_func_test_data_to_tmp):
 
 
 @patch("sys.argv", ["name", "--config-file", "config_minimal.yml"])
-@patch("everest.detached.jobs.everserver._configure_loggers")
-@patch("everest.detached.jobs.everserver._generate_authentication")
-@patch(
-    "everest.detached.jobs.everserver._generate_certificate",
-    return_value=(None, None, None),
-)
-@patch(
-    "everest.detached.jobs.everserver._find_open_port",
-    return_value=42,
-)
-@patch(
-    "everest.detached.jobs.everserver._write_hostfile",
-    side_effect=partial(check_status, status=ServerStatus.starting),
-)
-@patch("everest.detached.jobs.everserver._everserver_thread")
 @patch(
     "ert.run_models.everest_run_model.EverestRunModel.run_experiment",
     autospec=True,
@@ -126,13 +110,8 @@ def test_everserver_status_failure(_1, copy_math_func_test_data_to_tmp):
         status=ServerStatus.running,
     ),
 )
-@patch(
-    "everest.detached.jobs.everserver.check_for_errors",
-    return_value=([], False),
-)
-@patch("everest.detached.jobs.everserver.export_to_csv")
 def test_everserver_status_running_complete(
-    _1, _2, _3, _4, _5, _6, _7, _8, _9, copy_math_func_test_data_to_tmp
+    _1, mock_server, copy_math_func_test_data_to_tmp
 ):
     config_file = "config_minimal.yml"
     config = EverestConfig.load_file(config_file)
@@ -146,18 +125,6 @@ def test_everserver_status_running_complete(
 
 
 @patch("sys.argv", ["name", "--config-file", "config_minimal.yml"])
-@patch("everest.detached.jobs.everserver._configure_loggers")
-@patch("everest.detached.jobs.everserver._generate_authentication")
-@patch(
-    "everest.detached.jobs.everserver._generate_certificate",
-    return_value=(None, None, None),
-)
-@patch(
-    "everest.detached.jobs.everserver._find_open_port",
-    return_value=42,
-)
-@patch("everest.detached.jobs.everserver._write_hostfile")
-@patch("everest.detached.jobs.everserver._everserver_thread")
 @patch(
     "ert.run_models.everest_run_model.EverestRunModel.run_experiment",
     autospec=True,
@@ -182,7 +149,7 @@ def test_everserver_status_running_complete(
     ),
 )
 def test_everserver_status_failed_job(
-    _1, _2, _3, _4, _5, _6, _7, _8, copy_math_func_test_data_to_tmp
+    _1, _2, mock_server, copy_math_func_test_data_to_tmp
 ):
     config_file = "config_minimal.yml"
     config = EverestConfig.load_file(config_file)
@@ -200,18 +167,6 @@ def test_everserver_status_failed_job(
 
 
 @patch("sys.argv", ["name", "--config-file", "config_minimal.yml"])
-@patch("everest.detached.jobs.everserver._configure_loggers")
-@patch("everest.detached.jobs.everserver._generate_authentication")
-@patch(
-    "everest.detached.jobs.everserver._generate_certificate",
-    return_value=(None, None, None),
-)
-@patch(
-    "everest.detached.jobs.everserver._find_open_port",
-    return_value=42,
-)
-@patch("everest.detached.jobs.everserver._write_hostfile")
-@patch("everest.detached.jobs.everserver._everserver_thread")
 @patch(
     "ert.run_models.everest_run_model.EverestRunModel.run_experiment",
     autospec=True,
@@ -224,7 +179,7 @@ def test_everserver_status_failed_job(
     side_effect=partial(set_shared_status, progress=[]),
 )
 def test_everserver_status_exception(
-    _1, _2, _3, _4, _5, _6, _7, _8, copy_math_func_test_data_to_tmp
+    _1, _2, mock_server, copy_math_func_test_data_to_tmp
 ):
     config_file = "config_minimal.yml"
     config = EverestConfig.load_file(config_file)
@@ -240,24 +195,12 @@ def test_everserver_status_exception(
 
 
 @patch("sys.argv", ["name", "--config-file", "config_one_batch.yml"])
-@patch("everest.detached.jobs.everserver._configure_loggers")
-@patch("everest.detached.jobs.everserver._generate_authentication")
-@patch(
-    "everest.detached.jobs.everserver._generate_certificate",
-    return_value=(None, None, None),
-)
-@patch(
-    "everest.detached.jobs.everserver._find_open_port",
-    return_value=42,
-)
-@patch("everest.detached.jobs.everserver._write_hostfile")
-@patch("everest.detached.jobs.everserver._everserver_thread")
 @patch(
     "everest.detached.jobs.everserver._sim_monitor",
     side_effect=partial(set_shared_status, progress=[]),
 )
 def test_everserver_status_max_batch_num(
-    _1, _2, _3, _4, _5, _6, _7, copy_math_func_test_data_to_tmp
+    _1, mock_server, copy_math_func_test_data_to_tmp
 ):
     config_file = "config_one_batch.yml"
     config = EverestConfig.load_file(config_file)
@@ -277,20 +220,8 @@ def test_everserver_status_max_batch_num(
 
 
 @patch("sys.argv", ["name", "--config-file", "config_minimal.yml"])
-@patch("everest.detached.jobs.everserver._configure_loggers")
-@patch("everest.detached.jobs.everserver._generate_authentication")
-@patch(
-    "everest.detached.jobs.everserver._generate_certificate",
-    return_value=(None, None, None),
-)
-@patch(
-    "everest.detached.jobs.everserver._find_open_port",
-    return_value=42,
-)
-@patch("everest.detached.jobs.everserver._write_hostfile")
-@patch("everest.detached.jobs.everserver._everserver_thread")
 def test_everserver_status_contains_max_runtime_failure(
-    _1, _2, _3, _4, _5, _6, change_to_tmpdir, min_config
+    mock_server, change_to_tmpdir, min_config
 ):
     config_file = "config_minimal.yml"
 

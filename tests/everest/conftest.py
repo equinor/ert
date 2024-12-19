@@ -5,6 +5,7 @@ from collections.abc import Callable, Iterator
 from copy import deepcopy
 from pathlib import Path
 from textwrap import dedent
+from unittest.mock import MagicMock
 
 import pytest
 import yaml
@@ -14,6 +15,7 @@ from ert.ensemble_evaluator import EvaluatorServerConfig
 from ert.run_models.everest_run_model import EverestRunModel
 from everest.config import EverestConfig
 from everest.config.control_config import ControlConfig
+from everest.detached.jobs import everserver
 from tests.everest.utils import relpath
 
 
@@ -211,3 +213,17 @@ def min_config():
     config_path: .
     """)
     )
+
+
+@pytest.fixture()
+def mock_server(monkeypatch):
+    monkeypatch.setattr(everserver, "_configure_loggers", MagicMock())
+    monkeypatch.setattr(everserver, "_generate_authentication", MagicMock())
+    monkeypatch.setattr(
+        everserver, "_generate_certificate", lambda *args: (None, None, None)
+    )
+    monkeypatch.setattr(everserver, "_find_open_port", lambda *args, **kwargs: 42)
+    monkeypatch.setattr(everserver, "_write_hostfile", MagicMock())
+    monkeypatch.setattr(everserver, "_everserver_thread", MagicMock())
+    monkeypatch.setattr(everserver, "export_to_csv", MagicMock())
+    monkeypatch.setattr(everserver, "export_with_progress", MagicMock())
