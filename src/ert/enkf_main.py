@@ -284,12 +284,19 @@ def create_run_path(
             )
             with open(run_path / "jobs.json", mode="wb") as fptr:
                 fptr.write(
-                    orjson.dumps(forward_model_output, option=orjson.OPT_NON_STR_KEYS)
+                    orjson.dumps(
+                        forward_model_output,
+                        option=orjson.OPT_NON_STR_KEYS | orjson.OPT_INDENT_2,
+                    )
                 )
             # Write MANIFEST file to runpath use to avoid NFS sync issues
             data = _manifest_to_json(ensemble, run_arg.iens, run_arg.itr)
             with open(run_path / "manifest.json", mode="wb") as fptr:
-                fptr.write(orjson.dumps(data, option=orjson.OPT_NON_STR_KEYS))
+                fptr.write(
+                    orjson.dumps(
+                        data, option=orjson.OPT_NON_STR_KEYS | orjson.OPT_INDENT_2
+                    )
+                )
 
     runpaths.write_runpath_list(
         [ensemble.iteration], [real.iens for real in run_args if real.active]
