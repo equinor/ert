@@ -625,3 +625,59 @@ def test_suggestion_on_empty_parameter_file(tmp_path):
                 ],
             }
         )
+
+
+@pytest.mark.parametrize(
+    "distribution, min, mode, max, error",
+    [
+        ("TRIANGULAR", "0", "2", "3", None),
+        (
+            "TRIANGULAR",
+            "3.0",
+            "3.0",
+            "3.0",
+            "Minimum 3.0 must be strictly less than the maxiumum 3.0",
+        ),
+        ("TRIANGULAR", "-1", "0", "1", None),
+        (
+            "TRIANGULAR",
+            "3.0",
+            "6.0",
+            "5.5",
+            "The mode 6.0 must be between the minimum 3.0 and maximum 5.5",
+        ),
+        (
+            "TRIANGULAR",
+            "3.0",
+            "-6.0",
+            "5.5",
+            "The mode -6.0 must be between the minimum 3.0 and maximum 5.5",
+        ),
+    ],
+)
+def test_validation_triangular_distribution(
+    tmpdir, distribution, min, mode, max, error
+):
+    with tmpdir.as_cwd():
+        config = dedent(
+            """
+        JOBNAME my_name%d
+        NUM_REALIZATIONS 1
+        GEN_KW KW_NAME template.txt kw.txt prior.txt
+        """
+        )
+        with open("config.ert", "w", encoding="utf-8") as fh:
+            fh.writelines(config)
+        with open("template.txt", "w", encoding="utf-8") as fh:
+            fh.writelines("MY_KEYWORD <MY_KEYWORD>")
+        with open("prior.txt", "w", encoding="utf-8") as fh:
+            fh.writelines(f"MY_KEYWORD {distribution} {min} {mode} {max}")
+
+        if error:
+            with pytest.raises(
+                ConfigValidationError,
+                match=error,
+            ):
+                ErtConfig.from_file("config.ert")
+        else:
+            ErtConfig.from_file("config.ert")
