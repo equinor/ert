@@ -4,9 +4,9 @@
 # This file does only contain a selection of the most common options. For a
 # full list see the documentation:
 # http://www.sphinx-doc.org/en/master/config
+import json
 
 # -- Path setup --------------------------------------------------------------
-
 # If extensions (or modules to document with autodoc) are in another directory,
 # add these directories to sys.path here. If the directory is relative to the
 # documentation root, use os.path.abspath to make it absolute, like shown here.
@@ -34,6 +34,29 @@ version = ".".join(dist_version.split(".")[:2])
 # The full version, including alpha/beta/rc tags
 release = dist_version
 
+from json_schema_for_humans.generate import generate_from_filename
+from json_schema_for_humans.generation_configuration import GenerationConfiguration
+
+from everest.config import EverestConfig
+
+config = GenerationConfiguration(
+    copy_css=False,
+    expand_buttons=True,
+    link_to_reused_ref=False,
+    show_breadcrumbs=False,
+    examples_as_yaml=True,
+    with_footer=False,
+)
+with open("config_schema.json", "w", encoding="utf-8") as fout:
+    json.dump(EverestConfig.model_json_schema(), fout)
+
+generate_from_filename("config_schema.json", "config_schema.html", config=config)
+
+with open("config_schema.html", encoding="utf-8") as fin:
+    data = fin.read()
+data = data.replace("schema_doc.css", "_static/styles/furo.css")
+with open("config_schema.html", "w", encoding="utf-8") as fout:
+    fout.write(data)
 
 # -- General configuration ---------------------------------------------------
 
