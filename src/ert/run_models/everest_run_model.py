@@ -8,7 +8,7 @@ import os
 import queue
 import shutil
 from collections import defaultdict
-from collections.abc import Callable, Mapping
+from collections.abc import Callable
 from dataclasses import dataclass
 from enum import IntEnum
 from pathlib import Path
@@ -33,7 +33,6 @@ from ert.runpaths import Runpaths
 from ert.storage import open_storage
 from everest.config import EverestConfig
 from everest.optimizer.everest2ropt import everest2ropt
-from everest.simulator import SimulatorCache
 from everest.simulator.everest_to_ert import everest_to_ert_config
 from everest.strings import EVEREST
 
@@ -354,32 +353,31 @@ class EverestRunModel(BaseRunModel):
             return "".join([x if x.isalnum() else "_" for x in entity.strip()])
 
         self._status = None  # Reset the current run status
-        assert metadata.config.realizations.names
-        realization_ids = [
-            metadata.config.realizations.names[realization]
-            for realization in metadata.realizations
-        ]
-        case_data, active, cached = self._init_case_data(
-            control_values=control_values,
-            metadata=metadata,
-            realization_ids=realization_ids,
-        )
+
+        # Get cached_results:
+        cached_results = self._get_cached_results(control_values, metadata)
+
+        # Create the batch to run:
+        case_data = self._init_case_data(control_values, metadata, cached_results)
+
         assert self._experiment
         ensemble = self._experiment.create_ensemble(
             name=f"batch_{self._batch_id}",
             ensemble_size=len(case_data),
         )
-        for sim_id, (geo_id, controls) in enumerate(case_data):
-            assert isinstance(geo_id, int)
+        for sim_id, controls in enumerate(case_data.values()):
             self._setup_sim(sim_id, controls, ensemble)
 
         substitutions = self.ert_config.substitutions
         # fill in the missing geo_id data
         substitutions["<BATCH_NAME>"] = _slug(ensemble.name)
         self.active_realizations = [True] * len(case_data)
-        for sim_id, (geo_id, _) in enumerate(case_data):
-            if self.active_realizations[sim_id]:
-                substitutions[f"<GEO_ID_{sim_id}_0>"] = str(geo_id)
+        assert metadata.config.realizations.names is not None
+        for sim_id, control_idx in enumerate(case_data.keys()):
+            realization = metadata.realizations[control_idx]
+            substitutions[f"<GEO_ID_{sim_id}_0>"] = str(
+                metadata.config.realizations.names[realization]
+            )
 
         run_paths = Runpaths(
             jobname_format=self.ert_config.model_config.jobname_format_string,
@@ -422,11 +420,12 @@ class EverestRunModel(BaseRunModel):
             for result in results:
                 result[fnc_name] = result[alias]
 
-        objectives = self._get_active_results(
+        # Note the minus sign: we minimize the negative of the objective:
+        objectives = -self._get_active_results(
             results,
             metadata.config.objectives.names,  # type: ignore
             control_values,
-            active,
+            case_data,
         )
 
         constraints = None
@@ -435,102 +434,96 @@ class EverestRunModel(BaseRunModel):
                 results,
                 metadata.config.nonlinear_constraints.names,  # type: ignore
                 control_values,
-                active,
+                case_data,
             )
 
         if self._simulator_cache is not None:
-            for sim_idx, cache_id in cached.items():
-                objectives[sim_idx, ...] = self._simulator_cache.get_objectives(
-                    cache_id
-                )
+            for control_idx, (
+                cached_objectives,
+                cached_constraints,
+            ) in cached_results.items():
+                objectives[control_idx, ...] = cached_objectives
                 if constraints is not None:
-                    constraints[sim_idx, ...] = self._simulator_cache.get_constraints(
-                        cache_id
-                    )
+                    assert cached_constraints is not None
+                    constraints[control_idx, ...] = cached_constraints
 
-        sim_ids = np.empty(control_values.shape[0], dtype=np.intc)
-        sim_ids.fill(-1)
-        sim_ids[active] = np.arange(len(results), dtype=np.intc)
-
-        # Add the results from active simulations to the cache:
-        if self._simulator_cache is not None:
-            for sim_idx, real_id in enumerate(realization_ids):
-                if active[sim_idx]:
-                    self._simulator_cache.add_simulation_results(
-                        sim_idx, real_id, control_values, objectives, constraints
-                    )
-
-        # Note the negative sign for the objective results. Everest aims to do a
-        # maximization, while the standard practice of minimizing is followed by
-        # ropt. Therefore we will minimize the negative of the objectives:
+        sim_ids = np.full(control_values.shape[0], -1, dtype=np.intc)
+        sim_ids[list(case_data.keys())] = np.arange(len(results), dtype=np.intc)
         evaluator_result = EvaluatorResult(
-            objectives=-objectives,
+            objectives=objectives,
             constraints=constraints,
             batch_id=self._batch_id,
             evaluation_ids=sim_ids,
+        )
+
+        # Add the results from the evaluations to the cache:
+        self._add_results_to_cache(
+            control_values,
+            metadata,
+            case_data,
+            evaluator_result.objectives,
+            evaluator_result.constraints,
         )
 
         self._batch_id += 1
 
         return evaluator_result
 
-    def _init_case_data(
-        self,
-        control_values: NDArray[np.float64],
-        metadata: EvaluatorContext,
-        realization_ids: list[int],
-    ) -> tuple[
-        list[tuple[int, defaultdict[str, Any]]], NDArray[np.bool_], dict[int, int]
-    ]:
-        active = (
-            np.ones(control_values.shape[0], dtype=np.bool_)
-            if metadata.active is None
-            else np.fromiter(
-                (metadata.active[realization] for realization in metadata.realizations),
-                dtype=np.bool_,
-            )
-        )
-        case_data = []
-        cached = {}
-
-        for sim_idx, real_id in enumerate(realization_ids):
-            if self._simulator_cache is not None:
-                cache_id = self._simulator_cache.find_key(
-                    real_id, control_values[sim_idx, :]
-                )
-                if cache_id is not None:
-                    cached[sim_idx] = cache_id
-                    active[sim_idx] = False
-
-            if active[sim_idx]:
-                controls: defaultdict[str, Any] = defaultdict(dict)
-                assert metadata.config.variables.names is not None
-                for control_name, control_value in zip(
-                    metadata.config.variables.names,
+    def _get_cached_results(
+        self, control_values: NDArray[np.float64], evaluator_context: EvaluatorContext
+    ) -> dict[int, Any]:
+        cached_results: dict[int, Any] = {}
+        if self._simulator_cache is not None:
+            assert evaluator_context.config.realizations.names is not None
+            for sim_idx, realization in enumerate(evaluator_context.realizations):
+                cached_data = self._simulator_cache.get(
+                    evaluator_context.config.realizations.names[realization],
                     control_values[sim_idx, :],
-                    strict=False,
-                ):
-                    self._add_control(controls, control_name, control_value)
-                case_data.append((real_id, controls))
-        return case_data, active, cached
+                )
+                if cached_data is not None:
+                    cached_results[sim_idx] = cached_data
+        return cached_results
 
     @staticmethod
-    def _add_control(
-        controls: Mapping[str, Any],
-        control_name: tuple[Any, ...],
-        control_value: float,
-    ) -> None:
-        group_name = control_name[0]
-        variable_name = control_name[1]
-        group = controls[group_name]
-        if len(control_name) > 2:
-            index_name = str(control_name[2])
-            if variable_name in group:
-                group[variable_name][index_name] = control_value
+    def _init_case_data(
+        control_values: NDArray[np.float64],
+        evaluator_context: EvaluatorContext,
+        cached_results: dict[int, Any],
+    ) -> dict[int, dict[str, Any]]:
+        def add_control(
+            controls: dict[str, Any],
+            control_name: tuple[Any, ...],
+            control_value: float,
+        ) -> None:
+            group_name = control_name[0]
+            variable_name = control_name[1]
+            group = controls.get(group_name, {})
+            if len(control_name) > 2:
+                index_name = str(control_name[2])
+                if variable_name in group:
+                    group[variable_name][index_name] = control_value
+                else:
+                    group[variable_name] = {index_name: control_value}
             else:
-                group[variable_name] = {index_name: control_value}
-        else:
-            group[variable_name] = control_value
+                group[variable_name] = control_value
+            controls[group_name] = group
+
+        case_data = {}
+        for control_idx in range(control_values.shape[0]):
+            if control_idx not in cached_results and (
+                evaluator_context.active is None
+                or evaluator_context.active[evaluator_context.realizations[control_idx]]
+            ):
+                controls: dict[str, Any] = {}
+                assert evaluator_context.config.variables.names is not None
+                for control_name, control_value in zip(
+                    evaluator_context.config.variables.names,
+                    control_values[control_idx, :],
+                    strict=False,
+                ):
+                    add_control(controls, control_name, control_value)
+                case_data[control_idx] = controls
+        return case_data
 
     def _setup_sim(
         self,
@@ -614,15 +607,35 @@ class EverestRunModel(BaseRunModel):
         results: list[dict[str, NDArray[np.float64]]],
         names: tuple[str],
         controls: NDArray[np.float64],
-        active: NDArray[np.bool_],
+        case_data: dict[int, Any],
     ) -> NDArray[np.float64]:
+        control_indices = list(case_data.keys())
         values = np.zeros((controls.shape[0], len(names)), dtype=float64)
         for func_idx, name in enumerate(names):
-            values[active, func_idx] = np.fromiter(
+            values[control_indices, func_idx] = np.fromiter(
                 (np.nan if not result else result[name][0] for result in results),
                 dtype=np.float64,
             )
         return values
+
+    def _add_results_to_cache(
+        self,
+        control_values: NDArray[np.float64],
+        evaluator_context: EvaluatorContext,
+        case_data: dict[int, Any],
+        objectives: NDArray[np.float64],
+        constraints: NDArray[np.float64] | None,
+    ) -> None:
+        if self._simulator_cache is not None:
+            assert evaluator_context.config.realizations.names is not None
+            for control_idx in case_data:
+                realization = evaluator_context.realizations[control_idx]
+                self._simulator_cache.add(
+                    evaluator_context.config.realizations.names[realization],
+                    control_values[control_idx, ...],
+                    objectives[control_idx, ...],
+                    None if constraints is None else constraints[control_idx, ...],
+                )
 
     def check_if_runpath_exists(self) -> bool:
         return (
@@ -706,3 +719,42 @@ class EverestRunModel(BaseRunModel):
             self._fm_errors[error_hash]["ids"].append(fm_id)
             error_id = self._fm_errors[error_hash]["error_id"]
             fm_logger.error(err_msg.format("Already reported as", error_id))
+
+
+class SimulatorCache:
+    EPS = float(np.finfo(np.float32).eps)
+
+    def __init__(self) -> None:
+        self._data: defaultdict[
+            int,
+            list[
+                tuple[
+                    NDArray[np.float64], NDArray[np.float64], NDArray[np.float64] | None
+                ]
+            ],
+        ] = defaultdict(list)
+
+    def add(
+        self,
+        realization_id: int,
+        control_values: NDArray[np.float64],
+        objectives: NDArray[np.float64],
+        constraints: NDArray[np.float64] | None,
+    ) -> None:
+        self._data[realization_id].append(
+            (
+                control_values.copy(),
+                objectives.copy(),
+                None if constraints is None else constraints.copy(),
+            ),
+        )
+
+    def get(
+        self, realization_id: int, controls: NDArray[np.float64]
+    ) -> tuple[NDArray[np.float64], NDArray[np.float64] | None] | None:
+        for control_values, objectives, constraints in self._data.get(
+            realization_id, []
+        ):
+            if np.allclose(controls, control_values, rtol=0.0, atol=self.EPS):
+                return objectives, constraints
+        return None
