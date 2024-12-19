@@ -29,7 +29,7 @@ def create_ert_config(path: Path):
             NUM_REALIZATIONS 1
             MIN_REALIZATIONS 1
             INSTALL_JOB write_pid_to_file_and_sleep TEST_JOB
-            SIMULATION_JOB write_pid_to_file_and_sleep
+            FORWARD_MODEL write_pid_to_file_and_sleep
             """
         ),
         encoding="utf-8",

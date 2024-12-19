@@ -481,61 +481,68 @@ def _generate_exp_ert_config(config_path, output_dir):
             os.path.realpath("everest/model"),
             "everest_output/.res_runpath_list",
         ),
-        ErtConfigKeys.SIMULATION_JOB: [
-            (
+        ErtConfigKeys.FORWARD_MODEL: [
+            [
                 "copy_directory",
-                f"{config_path}/../../eclipse/include/"
-                "realizations/realization-<GEO_ID>/eclipse",
-                "eclipse",
-            ),
-            (
+                [
+                    f"{config_path}/../../eclipse/include/"
+                    "realizations/realization-<GEO_ID>/eclipse",
+                    "eclipse",
+                ],
+            ],
+            [
                 "symlink",
-                f"{config_path}/../input/files",
-                "files",
-            ),
-            (
+                [f"{config_path}/../input/files", "files"],
+            ],
+            [
                 "copy_file",
-                os.path.realpath(
-                    "everest/model/everest_output/.internal_data/wells.json"
-                ),
-                "wells.json",
-            ),
-            (
+                [
+                    os.path.realpath(
+                        "everest/model/everest_output/.internal_data/wells.json"
+                    ),
+                    "wells.json",
+                ],
+            ],
+            [
                 "well_constraints",
-                "-i",
-                "files/well_readydate.json",
-                "-c",
-                "files/wc_config.yml",
-                "-rc",
-                "well_rate.json",
-                "-o",
-                "wc_wells.json",
-            ),
-            (
+                [
+                    "-i",
+                    "files/well_readydate.json",
+                    "-c",
+                    "files/wc_config.yml",
+                    "-rc",
+                    "well_rate.json",
+                    "-o",
+                    "wc_wells.json",
+                ],
+            ],
+            [
                 "add_templates",
-                "-i",
-                "wc_wells.json",
-                "-c",
-                "files/at_config.yml",
-                "-o",
-                "at_wells.json",
-            ),
-            (
+                [
+                    "-i",
+                    "wc_wells.json",
+                    "-c",
+                    "files/at_config.yml",
+                    "-o",
+                    "at_wells.json",
+                ],
+            ],
+            [
                 "schmerge",
-                "-s",
-                "eclipse/include/schedule/schedule.tmpl",
-                "-i",
-                "at_wells.json",
-                "-o",
-                "eclipse/include/schedule/schedule.sch",
-            ),
-            (
+                [
+                    "-s",
+                    "eclipse/include/schedule/schedule.tmpl",
+                    "-i",
+                    "at_wells.json",
+                    "-o",
+                    "eclipse/include/schedule/schedule.sch",
+                ],
+            ],
+            [
                 "eclipse100",
-                "eclipse/model/EGG.DATA",
-                "--version",
-                "2020.2",
-            ),
-            ("rf", "-s", "eclipse/model/EGG", "-o", "rf"),
+                ["eclipse/model/EGG.DATA", "--version", "2020.2"],
+            ],
+            ["rf", ["-s", "eclipse/model/EGG", "-o", "rf"]],
         ],
         ErtConfigKeys.ENSPATH: os.path.join(
             os.path.realpath("everest/model"),
