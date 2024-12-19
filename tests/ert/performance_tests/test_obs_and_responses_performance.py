@@ -424,7 +424,7 @@ def test_time_performance_of_joining_observations_and_responses(
 ):
     alias, ens, observation_keys, mask, _ = setup_benchmark
 
-    if alias not in {"small", "medium"}:
+    if alias != "small":
         pytest.skip()
 
     def run():
@@ -516,7 +516,7 @@ def test_memory_performance_of_doing_es_update(setup_es_benchmark, tmp_path):
 def test_speed_performance_of_doing_es_update(setup_es_benchmark, benchmark):
     alias, prior, posterior, gen_kw_name, _ = setup_es_benchmark
 
-    if alias not in {"small", "medium"}:
+    if alias != "small":
         pytest.skip()
 
     def run():
