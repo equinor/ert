@@ -5,7 +5,7 @@ from .control_variable_config import (
 )
 from .cvar_config import CVaRConfig
 from .environment_config import EnvironmentConfig
-from .everest_config import EverestConfig
+from .everest_config import EverestConfig, EverestValidationError
 from .export_config import ExportConfig
 from .input_constraint_config import InputConstraintConfig
 from .install_data_config import InstallDataConfig
@@ -28,6 +28,7 @@ __all__ = [
     "ControlVariableGuessListConfig",
     "EnvironmentConfig",
     "EverestConfig",
+    "EverestValidationError",
     "ExportConfig",
     "InputConstraintConfig",
     "InstallDataConfig",

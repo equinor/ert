@@ -2,6 +2,7 @@ import os
 import pathlib
 import re
 import warnings
+from argparse import ArgumentParser
 from pathlib import Path
 from typing import Any
 
@@ -973,3 +974,26 @@ def test_warning_forward_model_write_objectives(objective, forward_model, warnin
 def test_deprecated_keyword():
     with pytest.warns(ConfigWarning, match="report_steps .* can be removed"):
         ModelConfig(**{"report_steps": []})
+
+
+def test_load_file_non_existing():
+    with pytest.raises(FileNotFoundError):
+        EverestConfig.load_file("non_existing.yml")
+
+
+def test_load_file_with_errors(copy_math_func_test_data_to_tmp, capsys):
+    with open("config_minimal.yml", encoding="utf-8") as file:
+        content = file.read()
+
+    with open("config_minimal_error.yml", "w", encoding="utf-8") as file:
+        file.write(content.replace("generic_control", "yolo_control"))
+
+    with pytest.raises(SystemExit):
+        parser = ArgumentParser(prog="test")
+        EverestConfig.load_file_with_argparser("config_minimal_error.yml", parser)
+
+    captured = capsys.readouterr()
+
+    assert "Found 1 validation error" in captured.err
+    assert "line: 4, column: 11" in captured.err
+    assert "Input should be 'well_control' or 'generic_control'" in captured.err

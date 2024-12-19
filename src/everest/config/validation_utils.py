@@ -3,11 +3,10 @@ import os
 import tempfile
 from collections import Counter
 from collections.abc import Sequence
-from itertools import chain
 from pathlib import Path
-from typing import TYPE_CHECKING, TypeVar
+from typing import TypeVar
 
-from pydantic import BaseModel, ValidationError
+from pydantic import BaseModel
 
 from everest.config.install_data_config import InstallDataConfig
 from everest.util.forward_models import (
@@ -18,8 +17,6 @@ from everest.util.forward_models import (
 
 from .install_job_config import InstallJobConfig
 
-if TYPE_CHECKING:
-    from pydantic_core import ErrorDetails
 _VARIABLE_ERROR_MESSAGE = (
     "Variable {name} must define {variable_type} value either"
     " at control level or variable level"
@@ -245,24 +242,6 @@ def check_writeable_path(path_source: str, config_path: Path):
 
     if not os.access(path, os.W_OK | os.X_OK):
         raise ValueError(f"User does not have write access to {path}")
-
-
-def _error_loc(error_dict: "ErrorDetails") -> str:
-    return " -> ".join(
-        str(e) for e in error_dict["loc"] if e is not None and e != "__root__"
-    )
-
-
-def format_errors(error: ValidationError) -> str:
-    errors = error.errors()
-    msg = f"Found  {len(errors)} validation error{'s' if len(errors) > 1 else ''}:\n\n"
-    error_map = {}
-    for err in error.errors():
-        key = _error_loc(err)
-        if key not in error_map:
-            error_map[key] = [key]
-        error_map[key].append(f"    * {err['msg']} (type={err['type']})")
-    return msg + "\n".join(list(chain.from_iterable(error_map.values())))
 
 
 def validate_forward_model_configs(
