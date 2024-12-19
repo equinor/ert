@@ -39,6 +39,8 @@ from ert.ensemble_evaluator import identifiers as ids
 from ert.gui.ertnotifier import ErtNotifier
 from ert.gui.ertwidgets.message_box import ErtMessageBox
 from ert.gui.model.fm_step_list import FMStepListProxyModel
+from ert.gui.model.node import Node
+from ert.gui.model.real_list import RealListModel
 from ert.gui.model.snapshot import (
     FM_STEP_COLUMNS,
     FileRole,
@@ -179,8 +181,8 @@ class RunDialog(QFrame):
         QFrame.__init__(self, parent)
         self.output_path = output_path
         self.setAttribute(Qt.WidgetAttribute.WA_DeleteOnClose)
-        self.setWindowFlags(Qt.WindowType.Window)
-        self.setWindowFlags(self.windowFlags() & ~Qt.WindowContextHelpButtonHint)  # type: ignore
+        self.setWindowFlag(Qt.WindowType.Window, True)
+        self.setWindowFlag(Qt.WindowType.WindowContextHelpButtonHint, False)
         self.setWindowTitle(f"Experiment - {config_file} {find_ert_info()}")
 
         self._snapshot_model = SnapshotModel(self)
@@ -304,8 +306,7 @@ class RunDialog(QFrame):
     ) -> None:
         if not parent.isValid():
             index = self._snapshot_model.index(start, 0, parent)
-            # iteration = index.data(IterNum)
-            iteration = index.internalPointer().id_  # type: ignore
+            iteration = cast(Node, index.internalPointer()).id_
             iter_row = start
             self._iteration_progress_label.setText(
                 f"Progress for iteration {iteration}"
@@ -325,7 +326,7 @@ class RunDialog(QFrame):
     def _select_real(self, index: QModelIndex) -> None:
         if index.isValid():
             real = index.row()
-            iter_ = index.model().get_iter()  # type: ignore
+            iter_ = cast(RealListModel, index.model()).get_iter()
             exec_hosts = None
 
             iter_node = self._snapshot_model.root.children.get(str(iter_), None)
