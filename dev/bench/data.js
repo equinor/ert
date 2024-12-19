@@ -1,39 +1,8 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1734591443087,
+  "lastUpdate": 1734591772982,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
-      {
-        "commit": {
-          "author": {
-            "email": "ynk@equinor.com",
-            "name": "Yngve S. Kristiansen",
-            "username": "yngve-sk"
-          },
-          "committer": {
-            "email": "yngve-sk@users.noreply.github.com",
-            "name": "Yngve S. Kristiansen",
-            "username": "yngve-sk"
-          },
-          "distinct": true,
-          "id": "104c326981cc4ccfe163c805ceac4b01398c9262",
-          "message": "Small logic fix in data_for_key",
-          "timestamp": "2024-12-12T12:24:35+01:00",
-          "tree_id": "d6dd86579308f60f5e7ba8446206947827d73ed7",
-          "url": "https://github.com/equinor/ert/commit/104c326981cc4ccfe163c805ceac4b01398c9262"
-        },
-        "date": 1734002782290,
-        "tool": "pytest",
-        "benches": [
-          {
-            "name": "tests/ert/performance_tests/test_analysis.py::test_and_benchmark_adaptive_localization_with_fields",
-            "value": 0.22281022911173926,
-            "unit": "iter/sec",
-            "range": "stddev: 0.03272720269613646",
-            "extra": "mean: 4.488124283999997 sec\nrounds: 5"
-          }
-        ]
-      },
       {
         "commit": {
           "author": {
@@ -930,6 +899,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.01975973325220808",
             "extra": "mean: 4.484222016600006 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "havb@equinor.com",
+            "name": "Håvard Berland",
+            "username": "berland"
+          },
+          "committer": {
+            "email": "berland@pvv.ntnu.no",
+            "name": "Håvard Berland",
+            "username": "berland"
+          },
+          "distinct": true,
+          "id": "2b41fe21b9f34819bac83824140beeed7c9f6ec8",
+          "message": "Type filter_env_dict and rename internals",
+          "timestamp": "2024-12-19T08:01:03+01:00",
+          "tree_id": "eb19d3614066231f2296ca5de0fd91012dd85948",
+          "url": "https://github.com/equinor/ert/commit/2b41fe21b9f34819bac83824140beeed7c9f6ec8"
+        },
+        "date": 1734591772384,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/ert/performance_tests/test_analysis.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 0.2194161609945277,
+            "unit": "iter/sec",
+            "range": "stddev: 0.015882687725442296",
+            "extra": "mean: 4.557549432400014 sec\nrounds: 5"
           }
         ]
       }
