@@ -681,3 +681,39 @@ def test_validation_triangular_distribution(
                 ErtConfig.from_file("config.ert")
         else:
             ErtConfig.from_file("config.ert")
+
+
+@pytest.mark.parametrize(
+    "distribution, nbins, min, max, skew, width, error",
+    [
+        ("DERRF", "10", "-1", "3", "-1", "2", None),
+    ],
+)
+def test_validation_derrf_distribution(
+    tmpdir, distribution, nbins, min, max, skew, width, error
+):
+    with tmpdir.as_cwd():
+        config = dedent(
+            """
+        JOBNAME my_name%d
+        NUM_REALIZATIONS 1
+        GEN_KW KW_NAME template.txt kw.txt prior.txt
+        """
+        )
+        with open("config.ert", "w", encoding="utf-8") as fh:
+            fh.writelines(config)
+        with open("template.txt", "w", encoding="utf-8") as fh:
+            fh.writelines("MY_KEYWORD <MY_KEYWORD>")
+        with open("prior.txt", "w", encoding="utf-8") as fh:
+            fh.writelines(
+                f"MY_KEYWORD {distribution} {nbins} {min} {max} {skew} {width}"
+            )
+
+        if error:
+            with pytest.raises(
+                ConfigValidationError,
+                match=error,
+            ):
+                ErtConfig.from_file("config.ert")
+        else:
+            ErtConfig.from_file("config.ert")
