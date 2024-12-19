@@ -432,7 +432,7 @@ def test_time_performance_of_joining_observations_and_responses(
     params=[
         (
             b.config,
-            b.expected_join_performance,
+            b.expected_update_performance,
         )
         for b in _BenchMarks
     ],
