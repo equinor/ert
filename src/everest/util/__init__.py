@@ -7,7 +7,6 @@ from ropt.version import version as ropt_version
 from ert.shared.version import version as ert_version
 from everest.plugins.everest_plugin_manager import EverestPluginManager
 from everest.strings import DATE_FORMAT, EVEREST
-from everest.util.async_run import async_run  # noqa
 
 try:
     import opm.io
