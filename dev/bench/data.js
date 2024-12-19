@@ -1,39 +1,8 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1734617693689,
+  "lastUpdate": 1734627898871,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
-      {
-        "commit": {
-          "author": {
-            "email": "havb@equinor.com",
-            "name": "Håvard Berland",
-            "username": "berland"
-          },
-          "committer": {
-            "email": "berland@pvv.ntnu.no",
-            "name": "Håvard Berland",
-            "username": "berland"
-          },
-          "distinct": true,
-          "id": "0ca408f16c0e252b104a1ae4228702442edab0f1",
-          "message": "Fix ruff issues\n\nThese issues sneaked into main via a rebase while ruff was upgraded",
-          "timestamp": "2024-12-13T13:01:39+01:00",
-          "tree_id": "e7defd4396166d1025a6ae4bb99e84c928dda4c9",
-          "url": "https://github.com/equinor/ert/commit/0ca408f16c0e252b104a1ae4228702442edab0f1"
-        },
-        "date": 1734091417431,
-        "tool": "pytest",
-        "benches": [
-          {
-            "name": "tests/ert/performance_tests/test_analysis.py::test_and_benchmark_adaptive_localization_with_fields",
-            "value": 0.21617873392737874,
-            "unit": "iter/sec",
-            "range": "stddev: 0.02639143017563111",
-            "extra": "mean: 4.625801908599999 sec\nrounds: 5"
-          }
-        ]
-      },
       {
         "commit": {
           "author": {
@@ -930,6 +899,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.12342531081203442",
             "extra": "mean: 4.6574282568 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "stephan.dehoop@tno.nl",
+            "name": "Stephan de Hoop",
+            "username": "StephanDeHoop"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "e64449681453b0945c0673732450f1c3c8a8155a",
+          "message": "Simplify tests and remove uncessary config files everest/mathfunc (#9434)\n\nCleanup Everest config files and tests in mathfunc",
+          "timestamp": "2024-12-19T18:03:08+01:00",
+          "tree_id": "c9c3799198de222b500f0e28c050f99b5aa669f9",
+          "url": "https://github.com/equinor/ert/commit/e64449681453b0945c0673732450f1c3c8a8155a"
+        },
+        "date": 1734627898409,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/ert/performance_tests/test_analysis.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 0.21718485304406093,
+            "unit": "iter/sec",
+            "range": "stddev: 0.04668860467064045",
+            "extra": "mean: 4.6043726622000065 sec\nrounds: 5"
           }
         ]
       }
