@@ -4,7 +4,6 @@ import logging
 import sys
 
 from ert.shared.version import __version__ as everest_version
-from everest import docs
 from everest.bin.config_branch_script import config_branch_entry
 from everest.bin.everconfigdump_script import config_dump_entry
 from everest.bin.everest_script import everest_entry
@@ -59,16 +58,6 @@ def _build_args_parser():
         ),
     )
     arg_parser.add_argument("command", help="Subcommand to run")
-    arg_parser.add_argument(
-        "--docs",
-        action=_create_dump_action(docs.generate_docs_pydantic_to_rst, extended=False),
-        help="dump everest config documentation and exit",
-    )
-    arg_parser.add_argument(
-        "--manual",
-        action=_create_dump_action(docs.generate_docs_pydantic_to_rst, extended=True),
-        help="dump extended everest config documentation and exit",
-    )
     arg_parser.add_argument(
         "--version",
         action="version",
