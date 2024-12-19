@@ -2,6 +2,7 @@ import os
 import pathlib
 import re
 import warnings
+from contextlib import ExitStack as does_not_raise
 from pathlib import Path
 from typing import Any
 
@@ -140,34 +141,37 @@ def test_that_max_runtime_errors_only_on_negative():
 
 
 def test_that_invalid_queue_system_errors():
-    with pytest.raises(ValueError) as e:
-        EverestConfig.with_defaults(simulator={"queue_system": "docal"})
+    with pytest.raises(
+        ValueError, match="does not match .*'local',.*'lsf',.*'slurm', .*'torque'"
+    ):
+        EverestConfig.with_defaults(simulator={"queue_system": {"name": "docal"}})
 
-    assert has_error(
-        e.value, match="Input should be 'lsf', 'local', 'slurm' or 'torque'"
+
+@pytest.mark.parametrize(
+    ["cores", "expected_error"], [(0, False), (-1, True), (1, False)]
+)
+def test_that_cores_errors_only_on_lt_eq0(cores, expected_error):
+    expectation = (
+        pytest.raises(ValueError, match="greater than or equal to 0")
+        if expected_error
+        else does_not_raise()
     )
-    EverestConfig.with_defaults(simulator={"queue_system": "local"})
-    EverestConfig.with_defaults(simulator={"queue_system": "lsf"})
-    EverestConfig.with_defaults(simulator={"queue_system": "slurm"})
-    EverestConfig.with_defaults(simulator={"queue_system": "torque"})
+    with expectation:
+        EverestConfig.with_defaults(
+            simulator={"queue_system": {"name": "local", "max_running": cores}}
+        )
 
 
 @pytest.mark.parametrize(
     ["cores", "expected_error"], [(0, True), (-1, True), (1, False)]
 )
-def test_that_cores_errors_only_on_lt0(cores, expected_error):
-    if expected_error:
-        with pytest.raises(ValueError) as e:
-            EverestConfig.with_defaults(simulator={"cores": cores})
-
-        assert has_error(e.value, match=".*greater than 0")
-
-        with pytest.raises(ValueError) as e:
-            EverestConfig.with_defaults(simulator={"cores_per_node": cores})
-
-        assert has_error(e.value, match=".*greater than 0")
-    else:
-        EverestConfig.with_defaults(simulator={"cores": cores})
+def test_that_cores_per_node_errors_only_on_lt0(cores, expected_error):
+    expectation = (
+        pytest.raises(ValueError, match="greater than 0")
+        if expected_error
+        else does_not_raise()
+    )
+    with expectation:
         EverestConfig.with_defaults(simulator={"cores_per_node": cores})
 
 

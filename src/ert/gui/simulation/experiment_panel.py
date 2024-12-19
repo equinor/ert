@@ -35,6 +35,7 @@ from ert.shared.status.utils import (
 )
 from ert.trace import get_trace_id
 
+from ...config.queue_config import LocalQueueOptions
 from ..summarypanel import SummaryPanel
 from .combobox_with_description import QComboBoxWithDescription
 from .ensemble_experiment_panel import EnsembleExperimentPanel
@@ -376,7 +377,7 @@ class ExperimentPanel(QWidget):
         queue_opts = self.config.queue_config.queue_options
 
         if isinstance(self.get_current_experiment_type(), SingleTestRun):
-            queue_opts = self.config.queue_config.queue_options_test_run
+            queue_opts = LocalQueueOptions(max_running=1)
 
         for field in fields(queue_opts):
             field_value = getattr(queue_opts, field.name)

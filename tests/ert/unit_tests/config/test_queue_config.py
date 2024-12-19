@@ -15,7 +15,6 @@ from ert.config.parsing import ConfigKeys
 from ert.config.queue_config import (
     LocalQueueOptions,
     LsfQueueOptions,
-    QueueOptions,
     SlurmQueueOptions,
     TorqueQueueOptions,
 )
@@ -481,5 +480,5 @@ def test_default_activate_script_generation(expected, monkeypatch, venv):
         monkeypatch.setenv("VIRTUAL_ENV", venv)
     else:
         monkeypatch.delenv("VIRTUAL_ENV", raising=False)
-    options = QueueOptions(name="local")
+    options = LocalQueueOptions()
     assert options.activate_script == expected
