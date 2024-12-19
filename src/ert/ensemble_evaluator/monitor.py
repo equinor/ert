@@ -1,13 +1,10 @@
+from __future__ import annotations
+
 import asyncio
 import logging
-import ssl
 import uuid
 from collections.abc import AsyncGenerator
-from typing import TYPE_CHECKING, Any, Final
-
-from aiohttp import ClientError
-from websockets import ConnectionClosed, Headers
-from websockets.asyncio.client import ClientConnection, connect
+from typing import TYPE_CHECKING, Final
 
 from _ert.events import (
     EETerminated,
@@ -17,7 +14,7 @@ from _ert.events import (
     event_from_json,
     event_to_json,
 )
-from ert.ensemble_evaluator._wait_for_evaluator import wait_for_evaluator
+from _ert.forward_model_runner.client import Client
 
 if TYPE_CHECKING:
     from ert.ensemble_evaluator.evaluator_connection_info import EvaluatorConnectionInfo
@@ -30,60 +27,37 @@ class EventSentinel:
     pass
 
 
-class Monitor:
+class Monitor(Client):
     _sentinel: Final = EventSentinel()
 
-    def __init__(self, ee_con_info: "EvaluatorConnectionInfo") -> None:
-        self._ee_con_info = ee_con_info
+    def __init__(self, ee_con_info: EvaluatorConnectionInfo) -> None:
         self._id = str(uuid.uuid1()).split("-", maxsplit=1)[0]
         self._event_queue: asyncio.Queue[Event | EventSentinel] = asyncio.Queue()
-        self._connection: ClientConnection | None = None
-        self._receiver_task: asyncio.Task[None] | None = None
-        self._connected: asyncio.Future[None] = asyncio.Future()
-        self._connection_timeout: float = 120.0
         self._receiver_timeout: float = 60.0
+        super().__init__(
+            ee_con_info.router_uri,
+            ee_con_info.token,
+            dealer_name=f"client-{self._id}",
+        )
 
-    async def __aenter__(self) -> "Monitor":
-        self._receiver_task = asyncio.create_task(self._receiver())
-        try:
-            await asyncio.wait_for(self._connected, timeout=self._connection_timeout)
-        except TimeoutError as exc:
-            msg = "Couldn't establish connection with the ensemble evaluator!"
-            logger.error(msg)
-            self._receiver_task.cancel()
-            raise RuntimeError(msg) from exc
-        return self
-
-    async def __aexit__(self, exc_type: Any, exc_value: Any, traceback: Any) -> None:
-        if self._receiver_task:
-            if not self._receiver_task.done():
-                self._receiver_task.cancel()
-            # we are done and not interested in errors when cancelling
-            await asyncio.gather(
-                self._receiver_task,
-                return_exceptions=True,
-            )
-        if self._connection:
-            await self._connection.close()
+    async def process_message(self, msg: str) -> None:
+        event = event_from_json(msg)
+        await self._event_queue.put(event)
 
     async def signal_cancel(self) -> None:
-        if not self._connection:
-            return
         await self._event_queue.put(Monitor._sentinel)
         logger.debug(f"monitor-{self._id} asking server to cancel...")
 
         cancel_event = EEUserCancel(monitor=self._id)
-        await self._connection.send(event_to_json(cancel_event))
+        await self.send(event_to_json(cancel_event))
         logger.debug(f"monitor-{self._id} asked server to cancel")
 
     async def signal_done(self) -> None:
-        if not self._connection:
-            return
         await self._event_queue.put(Monitor._sentinel)
         logger.debug(f"monitor-{self._id} informing server monitor is done...")
 
         done_event = EEUserDone(monitor=self._id)
-        await self._connection.send(event_to_json(done_event))
+        await self.send(event_to_json(done_event))
         logger.debug(f"monitor-{self._id} informed server monitor is done")
 
     async def track(
@@ -116,45 +90,3 @@ class Monitor:
                     break
             if event is not None:
                 self._event_queue.task_done()
-
-    async def _receiver(self) -> None:
-        tls: ssl.SSLContext | None = None
-        if self._ee_con_info.cert:
-            tls = ssl.SSLContext(ssl.PROTOCOL_TLS_CLIENT)
-            tls.load_verify_locations(cadata=self._ee_con_info.cert)
-        headers = Headers()
-        if self._ee_con_info.token:
-            headers["token"] = self._ee_con_info.token
-        try:
-            await wait_for_evaluator(
-                base_url=self._ee_con_info.url,
-                token=self._ee_con_info.token,
-                cert=self._ee_con_info.cert,
-                timeout=5,
-            )
-        except Exception as e:
-            self._connected.set_exception(e)
-            return
-        async for conn in connect(
-            self._ee_con_info.client_uri,
-            ssl=tls,
-            additional_headers=headers,
-            max_size=2**26,
-            max_queue=500,
-            open_timeout=5,
-            ping_timeout=60,
-            ping_interval=60,
-            close_timeout=60,
-        ):
-            try:
-                self._connection = conn
-                self._connected.set_result(None)
-                async for raw_msg in self._connection:
-                    event = event_from_json(raw_msg)
-                    await self._event_queue.put(event)
-            except (ConnectionRefusedError, ConnectionClosed, ClientError) as exc:
-                self._connection = None
-                self._connected = asyncio.Future()
-                logger.debug(
-                    f"Monitor connection to EnsembleEvaluator went down, reconnecting: {exc}"
-                )
