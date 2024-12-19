@@ -73,7 +73,7 @@ def test_gen_kw_config_get_priors():
         f.write("KEY5  UNIFORM 2 3\n")
         f.write("KEY6  DUNIF 3 0 1\n")
         f.write("KEY7  ERRF 0 1 2 3\n")
-        f.write("KEY8  DERRF 0 1 2 3 4\n")
+        f.write("KEY8  DERRF 1 1 2 3 4\n")
         f.write("KEY9  LOGUNIF 0 1\n")
         f.write("KEY10  CONST 10\n")
 
@@ -143,7 +143,7 @@ def test_gen_kw_config_get_priors():
     assert {
         "key": "KEY8",
         "function": "DERRF",
-        "parameters": {"STEPS": 0, "MIN": 1, "MAX": 2, "SKEWNESS": 3, "WIDTH": 4},
+        "parameters": {"STEPS": 1, "MIN": 1, "MAX": 2, "SKEWNESS": 3, "WIDTH": 4},
     } in priors
 
     assert {
@@ -672,6 +672,125 @@ def test_validation_triangular_distribution(
             fh.writelines("MY_KEYWORD <MY_KEYWORD>")
         with open("prior.txt", "w", encoding="utf-8") as fh:
             fh.writelines(f"MY_KEYWORD {distribution} {min} {mode} {max}")
+
+        if error:
+            with pytest.raises(
+                ConfigValidationError,
+                match=error,
+            ):
+                ErtConfig.from_file("config.ert")
+        else:
+            ErtConfig.from_file("config.ert")
+
+
+@pytest.mark.parametrize(
+    "distribution, nbins, min, max, skew, width, error",
+    [
+        ("DERRF", "10", "-1", "3", "-1", "2", None),
+        ("DERRF", "100", "-10", "10", "0", "1", None),
+        ("DERRF", "2", "-0.5", "0.5", "1", "0.1", None),
+        (
+            "DERRF",
+            "0",
+            "-1",
+            "3",
+            "-1",
+            "2",
+            "NBINS 0.0 must be a positive integer larger than 1 for DERRF distributed parameter MY_KEYWORD",
+        ),
+        (
+            "DERRF",
+            "-5",
+            "-1",
+            "3",
+            "-1",
+            "2",
+            "NBINS -5.0 must be a positive integer larger than 1 for DERRF distributed parameter MY_KEYWORD",
+        ),
+        (
+            "DERRF",
+            "1.5",
+            "-1",
+            "3",
+            "-1",
+            "2",
+            "NBINS 1.5 must be a positive integer larger than 1 for DERRF distributed parameter MY_KEYWORD",
+        ),
+        (
+            "DERRF",
+            "10",
+            "3",
+            "-1",
+            "-1",
+            "2",
+            "The minimum 3.0 must be less than the maximum -1.0 for DERRF distributed parameter MY_KEYWORD",
+        ),
+        (
+            "DERRF",
+            "10",
+            "1",
+            "1",
+            "-1",
+            "2",
+            "The minimum 1.0 must be less than the maximum 1.0 for DERRF distributed parameter MY_KEYWORD",
+        ),
+        (
+            "DERRF",
+            "10",
+            "-1",
+            "3",
+            "-1",
+            "0",
+            "The width 0.0 must be greater than 0 for DERRF distributed parameter MY_KEYWORD",
+        ),
+        (
+            "DERRF",
+            "10",
+            "-1",
+            "3",
+            "-1",
+            "-2",
+            "The width -2.0 must be greater than 0 for DERRF distributed parameter MY_KEYWORD",
+        ),
+        (
+            "DERRF",
+            "2",
+            "-999999",
+            "999999",
+            "0",
+            "0.0001",
+            None,
+        ),
+        (
+            "DERRF",
+            "1000",
+            "-0.001",
+            "0.001",
+            "0",
+            "0.0001",
+            None,
+        ),
+    ],
+)
+def test_validation_derrf_distribution(
+    tmpdir, distribution, nbins, min, max, skew, width, error
+):
+    with tmpdir.as_cwd():
+        config = dedent(
+            """
+        JOBNAME my_name%d
+        NUM_REALIZATIONS 1
+        GEN_KW KW_NAME template.txt kw.txt prior.txt
+        """
+        )
+        with open("config.ert", "w", encoding="utf-8") as fh:
+            fh.writelines(config)
+        with open("template.txt", "w", encoding="utf-8") as fh:
+            fh.writelines("MY_KEYWORD <MY_KEYWORD>")
+        with open("prior.txt", "w", encoding="utf-8") as fh:
+            fh.writelines(
+                f"MY_KEYWORD {distribution} {nbins} {min} {max} {skew} {width}"
+            )
 
         if error:
             with pytest.raises(

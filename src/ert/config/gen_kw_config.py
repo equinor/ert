@@ -224,6 +224,32 @@ class GenKwConfig(ParameterConfig):
                     ).set_context(self.name)
                 )
 
+        def _check_valid_derrf_parameters(prior: PriorDict) -> None:
+            key = prior["key"]
+            dist = prior["function"]
+            steps, min_, max_, _, width = prior["parameters"].values()
+            if not (steps >= 1 and steps.is_integer()):
+                errors.append(
+                    ErrorInfo(
+                        f"NBINS {steps} must be a positive integer larger than 1"
+                        f" for {dist} distributed parameter {key}",
+                    ).set_context(self.name)
+                )
+            if not (min_ < max_):
+                errors.append(
+                    ErrorInfo(
+                        f"The minimum {min_} must be less than the maximum {max_}"
+                        f" for {dist} distributed parameter {key}",
+                    ).set_context(self.name)
+                )
+            if not (width > 0):
+                errors.append(
+                    ErrorInfo(
+                        f"The width {width} must be greater than 0"
+                        f" for {dist} distributed parameter {key}",
+                    ).set_context(self.name)
+                )
+
         unique_keys = set()
         for prior in self.get_priors():
             key = prior["key"]
@@ -240,6 +266,8 @@ class GenKwConfig(ParameterConfig):
                 _check_non_negative_parameter("STD", prior)
             elif prior["function"] == "TRIANGULAR":
                 _check_valid_triangular_parameters(prior)
+            elif prior["function"] == "DERRF":
+                _check_valid_derrf_parameters(prior)
             elif prior["function"] in {"NORMAL", "TRUNCATED_NORMAL"}:
                 _check_non_negative_parameter("STD", prior)
         if errors:
