@@ -760,8 +760,12 @@ class ErtConfig:
                 )
                 continue
             fm_step.private_args = Substitutions()
-            for key, val in args:
-                fm_step.private_args[key] = val
+            for arg in args:
+                match arg:
+                    case key, val:
+                        fm_step.private_args[key] = val
+                    case val:
+                        fm_step.arglist.append(val)
 
             should_add_step = True
 
@@ -778,21 +782,6 @@ class ErtConfig:
 
             if should_add_step:
                 fm_steps.append(fm_step)
-
-        for fm_step_description in config_dict.get(ConfigKeys.SIMULATION_JOB, []):
-            try:
-                fm_step = copy.deepcopy(installed_steps[fm_step_description[0]])
-            except KeyError:
-                errors.append(
-                    ConfigValidationError.with_context(
-                        f"Could not find forward model step {fm_step_description[0]!r} "
-                        f"in list of installed forward model steps: {installed_steps}",
-                        fm_step_description[0],
-                    )
-                )
-                continue
-            fm_step.arglist = fm_step_description[1:]
-            fm_steps.append(fm_step)
 
         for fm_step in fm_steps:
             if fm_step.name in cls.PREINSTALLED_FORWARD_MODEL_STEPS:

@@ -411,12 +411,12 @@ def _extract_forward_model(ever_config: EverestConfig, ert_config):
     forward_model += _extract_templating(ever_config)
     forward_model += ever_config.forward_model or []
 
-    sim_job = ert_config.get(ErtConfigKeys.SIMULATION_JOB, [])
+    fm_steps = ert_config.get(ErtConfigKeys.FORWARD_MODEL, [])
     for job in forward_model:
-        tmp = job.split()
-        sim_job.append(tuple(tmp))
+        job_name, *args = job.split()
+        fm_steps.append([job_name, args])
 
-    ert_config[ErtConfigKeys.SIMULATION_JOB] = sim_job
+    ert_config[ErtConfigKeys.FORWARD_MODEL] = fm_steps
 
 
 def _extract_model(ever_config: EverestConfig, ert_config):

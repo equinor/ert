@@ -23,10 +23,6 @@ To add a job to the forward model, use the :code:`FORWARD_MODEL` keyword.
 Each :code:`FORWARD_MODEL` keyword instructs ERT to run a specific executable.
 You can build a series of jobs by listing multiple :code:`FORWARD_MODEL` keywords.
 
-An alternative to :code:`FORWARD_MODEL` is the :code:`SIMULATION_JOB` keyword,
-which can also configure the forward model.
-The difference lies in how these keywords pass command-line arguments to the final executable.
-
 You can find all pre-configured jobs to define your forward models :ref:`here <Pre-configured jobs>`.
 These jobs form the building blocks for your custom forward models in ERT.
 
