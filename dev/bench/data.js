@@ -1,39 +1,8 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1734602782433,
+  "lastUpdate": 1734614380256,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
-      {
-        "commit": {
-          "author": {
-            "email": "havb@equinor.com",
-            "name": "Håvard Berland",
-            "username": "berland"
-          },
-          "committer": {
-            "email": "berland@pvv.ntnu.no",
-            "name": "Håvard Berland",
-            "username": "berland"
-          },
-          "distinct": true,
-          "id": "1ed8fc3584691dce4a3470129ff2bfe911bc2ccc",
-          "message": "Add logging of event processing time when significant",
-          "timestamp": "2024-12-13T10:03:13+01:00",
-          "tree_id": "c95d214dd313a9de841a6feb13ecd24908187f4b",
-          "url": "https://github.com/equinor/ert/commit/1ed8fc3584691dce4a3470129ff2bfe911bc2ccc"
-        },
-        "date": 1734080708135,
-        "tool": "pytest",
-        "benches": [
-          {
-            "name": "tests/ert/performance_tests/test_analysis.py::test_and_benchmark_adaptive_localization_with_fields",
-            "value": 0.21815696533415874,
-            "unit": "iter/sec",
-            "range": "stddev: 0.027873626339338563",
-            "extra": "mean: 4.583855475199999 sec\nrounds: 5"
-          }
-        ]
-      },
       {
         "commit": {
           "author": {
@@ -930,6 +899,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.04506683164528437",
             "extra": "mean: 4.566066533800006 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "levje@equinor.com",
+            "name": "larsevj",
+            "username": "larsevj"
+          },
+          "committer": {
+            "email": "60844986+larsevj@users.noreply.github.com",
+            "name": "Lars Evje",
+            "username": "larsevj"
+          },
+          "distinct": true,
+          "id": "d9088eb8e2f26e5b38cc45160fdca49786b1a359",
+          "message": "Validate triangular dist parameters on startup",
+          "timestamp": "2024-12-19T14:17:49+01:00",
+          "tree_id": "b3526ff487600adff34e2a0faf8628a631ebe8cd",
+          "url": "https://github.com/equinor/ert/commit/d9088eb8e2f26e5b38cc45160fdca49786b1a359"
+        },
+        "date": 1734614379815,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/ert/performance_tests/test_analysis.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 0.2149859993083223,
+            "unit": "iter/sec",
+            "range": "stddev: 0.022294367364244606",
+            "extra": "mean: 4.651465691800001 sec\nrounds: 5"
           }
         ]
       }
