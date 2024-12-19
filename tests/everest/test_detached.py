@@ -16,7 +16,7 @@ from ert.config.queue_config import (
     activate_script,
 )
 from ert.scheduler.event import FinishedEvent
-from everest.config import EverestConfig
+from everest.config import EverestConfig, InstallJobConfig
 from everest.config.server_config import ServerConfig
 from everest.config.simulator_config import SimulatorConfig
 from everest.config_keys import ConfigKeys as CK
@@ -49,7 +49,15 @@ from everest.util import makedirs_if_needed
 @pytest.mark.fails_on_macos_github_workflow
 @pytest.mark.xdist_group(name="starts_everest")
 async def test_https_requests(copy_math_func_test_data_to_tmp):
-    everest_config = EverestConfig.load_file("config_minimal_slow.yml")
+    everest_config = EverestConfig.load_file("config_minimal.yml")
+    # Overwrite forward_model with model that actually does nothing, since we test for httprequests and server status
+    everest_config.forward_model = ["toggle_failure"]
+    everest_config.install_jobs = [
+        InstallJobConfig(name="toggle_failure", source="jobs/FAIL_SIMULATION")
+    ]
+    # start_server() loads config based on config_path, so we need to actually overwrite it
+    everest_config.dump("config_minimal.yml")
+
     status_path = ServerConfig.get_everserver_status_path(everest_config.output_dir)
     expected_server_status = ServerStatus.never_run
     assert expected_server_status == everserver_status(status_path)["status"]

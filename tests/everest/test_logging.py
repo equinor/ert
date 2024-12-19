@@ -4,11 +4,13 @@ from pathlib import Path
 import pytest
 
 from ert.scheduler.event import FinishedEvent
-from everest.config import EverestConfig, ServerConfig
+from everest.config import (
+    EverestConfig,
+    ServerConfig,
+)
+from everest.config.install_job_config import InstallJobConfig
 from everest.detached import start_server, wait_for_server
 from everest.util import makedirs_if_needed
-
-CONFIG_FILE = "config_fm_failure.yml"
 
 
 def _string_exists_in_file(file_path, string):
@@ -26,7 +28,13 @@ async def test_logging_setup(copy_math_func_test_data_to_tmp):
             if isinstance(event, FinishedEvent) and event.iens == 0:
                 return
 
-    everest_config = EverestConfig.load_file(CONFIG_FILE)
+    everest_config = EverestConfig.load_file("config_minimal.yml")
+    everest_config.forward_model.append("toggle_failure --fail simulation_2")
+    everest_config.install_jobs.append(
+        InstallJobConfig(name="toggle_failure", source="jobs/FAIL_SIMULATION")
+    )
+    # start_server() loads config based on config_path, so we need to actually overwrite it
+    everest_config.dump("config_minimal.yml")
 
     makedirs_if_needed(everest_config.output_dir, roll_if_exists=True)
     driver = await start_server(everest_config, debug=True)
