@@ -1,39 +1,8 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1734554828612,
+  "lastUpdate": 1734590568375,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
-      {
-        "commit": {
-          "author": {
-            "email": "ynk@equinor.com",
-            "name": "Yngve S. Kristiansen",
-            "username": "yngve-sk"
-          },
-          "committer": {
-            "email": "yngve-sk@users.noreply.github.com",
-            "name": "Yngve S. Kristiansen",
-            "username": "yngve-sk"
-          },
-          "distinct": true,
-          "id": "05b33a5039bc8135ce171323b2eb6dc180230534",
-          "message": "Remove deprecated comment,\n\nref https://github.com/equinor/ert/pull/9495#discussion_r1880099231",
-          "timestamp": "2024-12-11T13:56:28+01:00",
-          "tree_id": "5eebbc49e599afe5187c4c6bcdd258111843cd15",
-          "url": "https://github.com/equinor/ert/commit/05b33a5039bc8135ce171323b2eb6dc180230534"
-        },
-        "date": 1733921919420,
-        "tool": "pytest",
-        "benches": [
-          {
-            "name": "tests/ert/performance_tests/test_analysis.py::test_and_benchmark_adaptive_localization_with_fields",
-            "value": 0.2172208094816743,
-            "unit": "iter/sec",
-            "range": "stddev: 0.03218128145278603",
-            "extra": "mean: 4.60361050300001 sec\nrounds: 5"
-          }
-        ]
-      },
       {
         "commit": {
           "author": {
@@ -930,6 +899,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.019665328952347745",
             "extra": "mean: 4.569099692199996 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "JONAK@equinor.com",
+            "name": "Jonathan Karlsen",
+            "username": "jonathan-eq"
+          },
+          "committer": {
+            "email": "107626001+jonathan-eq@users.noreply.github.com",
+            "name": "Jonathan Karlsen",
+            "username": "jonathan-eq"
+          },
+          "distinct": true,
+          "id": "a95d0d2f2bd7bb6963d272c0f56635e0a47ed298",
+          "message": "Rename job_dispatch -> fm_dispatch",
+          "timestamp": "2024-12-19T07:40:58+01:00",
+          "tree_id": "62eb4933ad6ae699b1df161e110c00556ee55009",
+          "url": "https://github.com/equinor/ert/commit/a95d0d2f2bd7bb6963d272c0f56635e0a47ed298"
+        },
+        "date": 1734590567766,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/ert/performance_tests/test_analysis.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 0.21899830226388506,
+            "unit": "iter/sec",
+            "range": "stddev: 0.03780022140777206",
+            "extra": "mean: 4.566245444200002 sec\nrounds: 5"
           }
         ]
       }
