@@ -517,12 +517,8 @@ class EverestRunModel(BaseRunModel):
         metadata: EvaluatorContext,
         case_data: dict[int, Any],
     ) -> list[RunArg]:
-        def _slug(entity: str) -> str:
-            entity = " ".join(str(entity).split())
-            return "".join([x if x.isalnum() else "_" for x in entity.strip()])
-
         substitutions = self.ert_config.substitutions
-        substitutions["<BATCH_NAME>"] = _slug(ensemble.name)
+        substitutions["<BATCH_NAME>"] = ensemble.name
         self.active_realizations = [True] * len(case_data)
         assert metadata.config.realizations.names is not None
         for sim_id, control_idx in enumerate(case_data.keys()):
