@@ -1,39 +1,8 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1734598766861,
+  "lastUpdate": 1734602782433,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
-      {
-        "commit": {
-          "author": {
-            "email": "jparu@equinor.com",
-            "name": "xjules",
-            "username": "xjules"
-          },
-          "committer": {
-            "email": "jparu@equinor.com",
-            "name": "Julius Parulek",
-            "username": "xjules"
-          },
-          "distinct": true,
-          "id": "4301b63377d4b73678d8ed98669396562e14c975",
-          "message": "Add run experiment with design matrix to ensemble experiment panel\n\n- Catagorical data is not treated properly yet, wherein the design\nmatrix group that contains catagorical data will automatically store all\nparameters inside this group to objects; ie, strings.\n- Prefil active realization box with realizations from design matrix\n- Use design_matrix parameters in ensemble experiment\n- add test run cli with design matrix and poly example\n- add test that save parameters internalize DataFrame parameters in the storage\n- add merge function to merge design parameters with existing parameters\n -- Raise Validation error when having multiple overlapping groups\n- Update writting to parameter.txt with categorical values",
-          "timestamp": "2024-12-13T00:26:53+01:00",
-          "tree_id": "988124ce975ca5a6c89c3ecf6f79168c8b58f900",
-          "url": "https://github.com/equinor/ert/commit/4301b63377d4b73678d8ed98669396562e14c975"
-        },
-        "date": 1734046129192,
-        "tool": "pytest",
-        "benches": [
-          {
-            "name": "tests/ert/performance_tests/test_analysis.py::test_and_benchmark_adaptive_localization_with_fields",
-            "value": 0.21976842864856433,
-            "unit": "iter/sec",
-            "range": "stddev: 0.02752415245771421",
-            "extra": "mean: 4.550244118999996 sec\nrounds: 5"
-          }
-        ]
-      },
       {
         "commit": {
           "author": {
@@ -930,6 +899,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.05581156998013488",
             "extra": "mean: 4.582902496600002 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "havb@equinor.com",
+            "name": "Håvard Berland",
+            "username": "berland"
+          },
+          "committer": {
+            "email": "berland@pvv.ntnu.no",
+            "name": "Håvard Berland",
+            "username": "berland"
+          },
+          "distinct": true,
+          "id": "2a4b6bef24f8e7f8a3a7f02a5eb3972c00026696",
+          "message": "Pretty print manifest.json\n\njobs.json was already effectively pretty-printed as it is overwritten at\na later stage, but now both writes of jobs.json are consistent in\nprinting pretty.",
+          "timestamp": "2024-12-19T11:04:26+01:00",
+          "tree_id": "2c8e9c362bcd60e04829f85c1a0415fd2b72bc62",
+          "url": "https://github.com/equinor/ert/commit/2a4b6bef24f8e7f8a3a7f02a5eb3972c00026696"
+        },
+        "date": 1734602781828,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/ert/performance_tests/test_analysis.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 0.21900688318875033,
+            "unit": "iter/sec",
+            "range": "stddev: 0.04506683164528437",
+            "extra": "mean: 4.566066533800006 sec\nrounds: 5"
           }
         ]
       }
