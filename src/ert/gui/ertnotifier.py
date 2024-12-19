@@ -54,6 +54,7 @@ class ErtNotifier(QObject):
     def set_storage(self, storage: Storage) -> None:
         self._storage = storage
         self.storage_changed.emit(storage)
+        print("EMITTED STORAGE CHANGED")
 
     @Slot(object)
     def set_current_ensemble(self, ensemble: Ensemble | None = None) -> None:

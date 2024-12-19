@@ -63,6 +63,7 @@ class EnsembleModel:
         self._id = ensemble.id
         self._start_time = ensemble.started_at
         self._children: list[RealizationModel] = []
+        self._error = ensemble.experiment.error_message
 
     def add_realization(self, realization: RealizationModel) -> None:
         self._children.append(realization)
@@ -75,7 +76,7 @@ class EnsembleModel:
     def data(self, index: QModelIndex, role: Qt.ItemDataRole) -> Any:
         if not index.isValid():
             return None
-
+        print(f"{self=}")
         col = index.column()
         if role == Qt.ItemDataRole.DisplayRole:
             if col == _Column.NAME:
@@ -83,17 +84,20 @@ class EnsembleModel:
             if col == _Column.TIME:
                 return humanize.naturaltime(self._start_time)
         elif role == Qt.ItemDataRole.ToolTipRole:
+            if self._error:
+                print("FOUND ERROR TOOLTIP")
+                return self._error
             if col == _Column.TIME:
                 return str(self._start_time)
-
         return None
 
 
-class ExperimentModel:
-    def __init__(self, experiment: Experiment, parent: Any):
+class ExperimentModel(QAbstractItemModel):
+    def __init__(self, experiment: Experiment, parent: "StorageModel"):
         self._parent = parent
         self._id = experiment.id
         self._name = experiment.name
+        self._is_valid = experiment.is_valid()
         self._experiment_type = experiment.metadata.get("ensemble_type")
         self._children: list[EnsembleModel] = []
 
@@ -104,6 +108,14 @@ class ExperimentModel:
         if self._parent:
             return self._parent._children.index(self)
         return 0
+
+    def flags(self, index: QModelIndex) -> Qt.ItemFlag:
+        print(f"2.{self=}")
+        return (
+            Qt.ItemFlag.ItemIsEnabled | Qt.ItemFlag.ItemIsSelectable
+            if self._is_valid
+            else None
+        )
 
     def data(
         self, index: QModelIndex, role: Qt.ItemDataRole = Qt.ItemDataRole.DisplayRole
@@ -128,7 +140,6 @@ class ExperimentModel:
                 qapp = QApplication.instance()
                 assert isinstance(qapp, QApplication)
                 return qapp.palette().mid()
-
         return None
 
 
