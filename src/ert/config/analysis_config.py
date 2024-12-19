@@ -195,7 +195,7 @@ class AnalysisConfig:
         if design_matrices:
             design_matrix = design_matrices[0]
             for dm_other in design_matrices[1:]:
-                design_matrix = design_matrix.merge_with_other(dm_other)
+                design_matrix.merge_with_other(dm_other)
         config = cls(
             max_runtime=config_dict.get(ConfigKeys.MAX_RUNTIME),
             minimum_required_realizations=min_realization,

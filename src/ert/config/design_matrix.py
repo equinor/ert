@@ -78,7 +78,7 @@ class DesignMatrix:
             default_sheet=default_sheet,
         )
 
-    def merge_with_other(self, dm_other: DesignMatrix) -> DesignMatrix:
+    def merge_with_other(self, dm_other: DesignMatrix) -> None:
         errors = []
         if self.active_realizations != dm_other.active_realizations:
             errors.append(
@@ -109,8 +109,6 @@ class DesignMatrix:
 
         if errors:
             raise ConfigValidationError.from_collected(errors)
-
-        return self
 
     def merge_with_existing_parameters(
         self, existing_parameters: list[ParameterConfig]
