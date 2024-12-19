@@ -1,39 +1,8 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1734614380256,
+  "lastUpdate": 1734617693689,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
-      {
-        "commit": {
-          "author": {
-            "email": "havb@equinor.com",
-            "name": "Håvard Berland",
-            "username": "berland"
-          },
-          "committer": {
-            "email": "berland@pvv.ntnu.no",
-            "name": "Håvard Berland",
-            "username": "berland"
-          },
-          "distinct": true,
-          "id": "9725d7d71fdf2bdb915238d6498742fb2e54d2f8",
-          "message": "Type code in src/ert/resources\n\nSkipping eclrun/flow as it will be dealt with in another PR.",
-          "timestamp": "2024-12-13T12:41:17+01:00",
-          "tree_id": "a581c3b3924b4fda04f898ed449098e0c948b5fc",
-          "url": "https://github.com/equinor/ert/commit/9725d7d71fdf2bdb915238d6498742fb2e54d2f8"
-        },
-        "date": 1734090194252,
-        "tool": "pytest",
-        "benches": [
-          {
-            "name": "tests/ert/performance_tests/test_analysis.py::test_and_benchmark_adaptive_localization_with_fields",
-            "value": 0.21484107953209544,
-            "unit": "iter/sec",
-            "range": "stddev: 0.037694267637426934",
-            "extra": "mean: 4.654603310399994 sec\nrounds: 5"
-          }
-        ]
-      },
       {
         "commit": {
           "author": {
@@ -930,6 +899,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.022294367364244606",
             "extra": "mean: 4.651465691800001 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "ejah@equinor.com",
+            "name": "Eivind Jahren",
+            "username": "eivindjahren"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "9ba5a2829e4cbd87e9e8085727e206934375a99a",
+          "message": "Change obs_and_responses test to benchmark",
+          "timestamp": "2024-12-19T14:12:33Z",
+          "tree_id": "d525a5930d19157d43e3d46e6c591b23c849548e",
+          "url": "https://github.com/equinor/ert/commit/9ba5a2829e4cbd87e9e8085727e206934375a99a"
+        },
+        "date": 1734617692780,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/ert/performance_tests/test_analysis.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 0.2147107684460768,
+            "unit": "iter/sec",
+            "range": "stddev: 0.12342531081203442",
+            "extra": "mean: 4.6574282568 sec\nrounds: 5"
           }
         ]
       }
