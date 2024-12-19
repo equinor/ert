@@ -971,6 +971,6 @@ def test_warning_forward_model_write_objectives(objective, forward_model, warnin
             )
 
 
-def test_deprecated_keyword():
+def test_deprecated_keyword_report_steps():
     with pytest.warns(ConfigWarning, match="report_steps .* can be removed"):
-        ModelConfig(**{"report_steps": []})
+        ModelConfig(**{"realizations": [0], "report_steps": []})
