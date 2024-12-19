@@ -1,5 +1,5 @@
 from enum import IntEnum
-from typing import Any, overload
+from typing import Any, cast, overload
 from uuid import UUID
 
 import humanize
@@ -52,7 +52,9 @@ class RealizationModel:
             return self._parent._children.index(self)
         return 0
 
-    def data(self, index: QModelIndex, role: Qt.ItemDataRole) -> Any:
+    def data(
+        self, index: QModelIndex | QPersistentModelIndex, role: Qt.ItemDataRole
+    ) -> Any:
         if not index.isValid():
             return None
 
@@ -79,7 +81,9 @@ class EnsembleModel:
             return self._parent._children.index(self)
         return 0
 
-    def data(self, index: QModelIndex, role: Qt.ItemDataRole) -> Any:
+    def data(
+        self, index: QModelIndex | QPersistentModelIndex, role: Qt.ItemDataRole
+    ) -> Any:
         if not index.isValid():
             return None
 
@@ -113,7 +117,9 @@ class ExperimentModel:
         return 0
 
     def data(
-        self, index: QModelIndex, role: Qt.ItemDataRole = Qt.ItemDataRole.DisplayRole
+        self,
+        index: QModelIndex | QPersistentModelIndex,
+        role: Qt.ItemDataRole = Qt.ItemDataRole.DisplayRole,
     ) -> Any:
         if not index.isValid():
             return None
@@ -137,6 +143,9 @@ class ExperimentModel:
                 return qapp.palette().mid()
 
         return None
+
+
+ChildModel = ExperimentModel | EnsembleModel | RealizationModel
 
 
 class StorageModel(QAbstractItemModel):
@@ -180,12 +189,9 @@ class StorageModel(QAbstractItemModel):
     def rowCount(
         self, parent: QModelIndex | QPersistentModelIndex | None = None
     ) -> int:
-        if parent is None:
-            parent = QModelIndex()
-        if parent.isValid():
-            if isinstance(parent.internalPointer(), RealizationModel):
-                return 0
-            return len(parent.internalPointer()._children)  # type: ignore
+        if parent is not None and parent.isValid():
+            data = cast(ChildModel | StorageModel, parent.internalPointer())
+            return 0 if isinstance(data, RealizationModel) else len(data._children)
         else:
             return len(self._children)
 
@@ -200,8 +206,8 @@ class StorageModel(QAbstractItemModel):
         if child is None or not child.isValid():
             return QModelIndex()
 
-        child_item = child.internalPointer()
-        parentItem = child_item._parent  # type: ignore
+        child_item = cast(ChildModel, child.internalPointer())
+        parentItem = child_item._parent
 
         if parentItem == self:
             return QModelIndex()
@@ -229,7 +235,9 @@ class StorageModel(QAbstractItemModel):
         if not index.isValid():
             return None
 
-        return index.internalPointer().data(index, role)  # type:ignore
+        return cast(ChildModel | StorageModel, index.internalPointer()).data(
+            index, cast(Qt.ItemDataRole, role)
+        )
 
     @override
     def index(
