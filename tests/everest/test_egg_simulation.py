@@ -475,7 +475,7 @@ def _generate_exp_ert_config(config_path, output_dir):
         ErtConfigKeys.NUM_REALIZATIONS: NUM_REALIZATIONS,
         ErtConfigKeys.RUNPATH: os.path.join(
             output_dir,
-            "egg_simulations/<CASE_NAME>/geo_realization_<GEO_ID>/simulation_<IENS>",
+            "egg_simulations/<BATCH_NAME>/geo_realization_<GEO_ID>/simulation_<IENS>",
         ),
         ErtConfigKeys.RUNPATH_FILE: os.path.join(
             os.path.realpath("everest/model"),

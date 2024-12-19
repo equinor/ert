@@ -598,7 +598,7 @@ class EverestRunModel(BaseRunModel):
 
         substitutions = self.ert_config.substitutions
         # fill in the missing geo_id data
-        substitutions["<CASE_NAME>"] = _slug(ensemble.name)
+        substitutions["<BATCH_NAME>"] = _slug(ensemble.name)
         self.active_realizations = [True] * len(case_data)
         for sim_id, (geo_id, _) in enumerate(case_data):
             if self.active_realizations[sim_id]:
