@@ -5,9 +5,9 @@ from functools import partial
 from pathlib import Path
 from unittest.mock import patch
 
-from ropt.enums import OptimizerExitCode
 from seba_sqlite.snapshot import SebaSnapshot
 
+from ert.run_models.everest_run_model import EverestExitCode
 from everest.config import EverestConfig, ServerConfig
 from everest.detached import ServerStatus, everserver_status
 from everest.detached.jobs import everserver
@@ -33,8 +33,8 @@ def fail_optimization(self, from_ropt=False):
     # shared_data (see set_shared_status() below).
     self._sim_callback(None)
     if from_ropt:
-        self._exit_code = OptimizerExitCode.TOO_FEW_REALIZATIONS
-        return OptimizerExitCode.TOO_FEW_REALIZATIONS
+        self._exit_code = EverestExitCode.TOO_FEW_REALIZATIONS
+        return EverestExitCode.TOO_FEW_REALIZATIONS
 
     raise Exception("Failed optimization")
 
@@ -106,7 +106,7 @@ def test_everserver_status_failure(_1, copy_math_func_test_data_to_tmp):
     "ert.run_models.everest_run_model.EverestRunModel.run_experiment",
     autospec=True,
     side_effect=lambda self, evaluator_server_config, restart=False: check_status(
-        ServerConfig.get_hostfile_path(self.everest_config.output_dir),
+        ServerConfig.get_hostfile_path(self._everest_config.output_dir),
         status=ServerStatus.running,
     ),
 )

@@ -1,5 +1,3 @@
-from everest.simulator.simulator_cache import SimulatorCache
-
 JOB_SUCCESS = "Finished"
 JOB_WAITING = "Waiting"
 JOB_RUNNING = "Running"
@@ -109,5 +107,4 @@ __all__ = [
     "JOB_RUNNING",
     "JOB_SUCCESS",
     "JOB_WAITING",
-    "SimulatorCache",
 ]
