@@ -39,6 +39,7 @@ from everest import export_to_csv, export_with_progress
 from everest.config import EverestConfig, ServerConfig
 from everest.detached import ServerStatus, get_opt_status, update_everserver_status
 from everest.export import check_for_errors
+from everest.plugins.everest_plugin_manager import EverestPluginManager
 from everest.simulator import JOB_FAILURE
 from everest.strings import (
     DEFAULT_LOGGING_FORMAT,
@@ -48,7 +49,7 @@ from everest.strings import (
     SIM_PROGRESS_ENDPOINT,
     STOP_ENDPOINT,
 )
-from everest.util import get_azure_logging_handler, makedirs_if_needed, version_info
+from everest.util import makedirs_if_needed, version_info
 
 
 def _get_machine_name() -> str:
@@ -208,30 +209,21 @@ def _configure_loggers(detached_dir: Path, log_dir: Path, logging_level: int) ->
             "filename": path,
         }
 
-    def azure_handler():
-        azure_handler = get_azure_logging_handler()
-        if azure_handler:
-            return azure_handler
-        return logging.NullHandler()
-
     logging_config = {
         "version": 1,
         "disable_existing_loggers": False,
         "handlers": {
             "root": {"level": "NOTSET", "class": "logging.NullHandler"},
-            "res": make_handler_config(detached_dir / "simulations.log"),
             "everserver": make_handler_config(detached_dir / "endpoint.log"),
             "everest": make_handler_config(log_dir / "everest.log", logging_level),
             "forward_models": make_handler_config(
                 log_dir / "forward_models.log", logging_level
             ),
-            "azure_handler": {"()": azure_handler},
         },
         "loggers": {
             "": {"handlers": ["root"], "level": "NOTSET"},
-            "res": {"handlers": ["res"]},
             "everserver": {"handlers": ["everserver"]},
-            "everest": {"handlers": ["everest", "azure_handler"]},
+            "everest": {"handlers": ["everest"]},
             "forward_models": {"handlers": ["forward_models"]},
         },
         "formatters": {
@@ -240,6 +232,7 @@ def _configure_loggers(detached_dir: Path, log_dir: Path, logging_level: int) ->
     }
 
     logging.config.dictConfig(logging_config)
+    EverestPluginManager().add_log_handle_to_root()
 
 
 def main():

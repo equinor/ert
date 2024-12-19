@@ -13,7 +13,7 @@ from everest.bin.everlint_script import lint_entry
 from everest.bin.kill_script import kill_entry
 from everest.bin.monitor_script import monitor_entry
 from everest.bin.visualization_script import visualization_entry
-from everest.util import get_azure_logging_handler
+from everest.plugins.everest_plugin_manager import EverestPluginManager
 
 
 def _create_dump_action(dumps, extended=False):
@@ -86,12 +86,9 @@ class EverestMain:
         if not hasattr(self, parsed_args.command):
             parser.error("Unrecognized command")
 
-        # Setup logging to azure:
-        logger = logging.getLogger("everest_main")
-        azure_handler = get_azure_logging_handler()
-        if azure_handler:
-            logger.addHandler(azure_handler)
-
+        # Setup logging from plugins:
+        EverestPluginManager().add_log_handle_to_root()
+        logger = logging.getLogger(__name__)
         logger.info(f"Started everest with {parsed_args}")
         # Use dispatch pattern to invoke method with same name
         getattr(self, parsed_args.command)(args[2:])
