@@ -80,8 +80,7 @@ class SummaryConfig(ResponseConfig):
                 )
             time_map = set(refcase.dates) if refcase is not None else None
             fm_steps = config_dict.get(ConfigKeys.FORWARD_MODEL, [])
-            sim_steps = config_dict.get(ConfigKeys.SIMULATION_JOB, [])
-            names = [fm_step[0] for fm_step in fm_steps + sim_steps]
+            names = [fm_step[0] for fm_step in fm_steps]
             simulation_step_exists = any(
                 any(sim in _name.lower() for sim in ["eclipse", "flow"])
                 for _name in names

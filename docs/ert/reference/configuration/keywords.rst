@@ -67,7 +67,6 @@ Keyword name                                                            Required
 :ref:`RUNPATH_FILE <runpath_file>`                                      NO                                      .ert_runpath_list               Name of file with path for all forward models that ERT has run. To be used by user defined scripts to find the realizations
 :ref:`RUN_TEMPLATE <run_template>`                                      NO                                                                      Install arbitrary files in the runpath directory
 :ref:`SETENV <setenv>`                                                  NO                                                                      You can modify the UNIX environment with SETENV calls
-:ref:`SIMULATION_JOB <simulation_job>`                                  NO                                                                      Lightweight alternative FORWARD_MODEL
 :ref:`STOP_LONG_RUNNING <stop_long_running>`                            NO                                      FALSE                           Stop long running realizations after minimum number of realizations (MIN_REALIZATIONS) have run
 :ref:`SUBMIT_SLEEP  <submit_sleep>`                                     NO                                      0.0                             Determines for how long the system will sleep between submitting jobs.
 :ref:`SUMMARY  <summary>`                                               NO                                                                      Add summary variables for internalization
@@ -1758,15 +1757,6 @@ FORWARD_MODEL
             FORWARD_MODEL ECLIPSE100
 
     In available jobs in ERT you can see a list of the jobs which are available.
-
-SIMULATION_JOB
---------------
-.. _simulation_job:
-
-``SIMULATION_JOB`` is a lightweight version of ``FORWARD_MODEL`` that allows passing
-raw command line arguments to executable.
-It is heavily used in Everest as the Everest configuration transpiles all jobs
-into ``SIMULATION_JOB``.
 
 JOB_SCRIPT
 ----------

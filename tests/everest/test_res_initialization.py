@@ -200,7 +200,7 @@ def test_install_data_no_init(tmp_path, source, target, symlink, cmd, monkeypatc
 
     ert_config = everest_to_ert_config(ever_config)
     expected_fm = next(val for val in ert_config.forward_model_steps if val.name == cmd)
-    assert expected_fm.arglist == (f"./{source}", target)
+    assert expected_fm.arglist == [f"./{source}", target]
 
 
 @skipif_no_opm
