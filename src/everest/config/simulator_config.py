@@ -5,6 +5,8 @@ from pydantic import BaseModel, Field, NonNegativeInt, PositiveInt, field_valida
 
 from .has_ert_queue_options import HasErtQueueOptions
 
+simulator_example = {"queue_system": {"name": "local", "max_running": 3}}
+
 
 class SimulatorConfig(BaseModel, HasErtQueueOptions, extra="forbid"):  # type: ignore
     name: str | None = Field(default=None, description="Specifies which queue to use")
