@@ -153,12 +153,11 @@ def get_internalized_keys(
     internal_keys: set = set()
     with open_storage(storage_path, "r") as storage:
         for batch_id in batch_ids:
-            case_name = f"batch_{batch_id}"
             experiments = [*storage.experiments]
             assert len(experiments) == 1
             experiment = experiments[0]
 
-            ensemble = experiment.get_ensemble_by_name(case_name)
+            ensemble = experiment.get_ensemble_by_name(f"batch_{batch_id}")
             if not internal_keys:
                 internal_keys = set(
                     ensemble.experiment.response_type_to_response_keys["summary"]
@@ -316,14 +315,13 @@ def load_simulation_data(
     with open_storage(ens_path, "r") as storage:
         # pylint: disable=unnecessary-lambda-assignment
         def load_batch_by_id():
-            case_name = f"batch_{batch}"
             experiments = [*storage.experiments]
 
             # Always assume 1 experiment per simulation/enspath, never multiple
             assert len(experiments) == 1
             experiment = experiments[0]
 
-            ensemble = experiment.get_ensemble_by_name(case_name)
+            ensemble = experiment.get_ensemble_by_name(f"batch_{batch}")
             realizations = ensemble.get_realization_list_with_responses()
             try:
                 df_pl = ensemble.load_responses("summary", tuple(realizations))
