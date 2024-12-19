@@ -483,3 +483,26 @@ def test_default_activate_script_generation(expected, monkeypatch, venv):
         monkeypatch.delenv("VIRTUAL_ENV", raising=False)
     options = QueueOptions(name="local")
     assert options.activate_script == expected
+
+
+@pytest.mark.parametrize(
+    "env, expected",
+    [
+        ("my_env", 'eval "$(conda shell.bash hook)" && conda activate my_env'),
+    ],
+)
+def test_conda_activate_script_generation(expected, monkeypatch, env):
+    monkeypatch.setenv("CONDA_ENV", env)
+    options = QueueOptions(name="local")
+    assert options.activate_script == expected
+
+
+@pytest.mark.parametrize(
+    "env, expected",
+    [("my_env", "source my_env/bin/activate")],
+)
+def test_multiple_activate_script_generation(expected, monkeypatch, env):
+    monkeypatch.setenv("VIRTUAL_ENV", env)
+    monkeypatch.setenv("CONDA_ENV", env)
+    options = QueueOptions(name="local")
+    assert options.activate_script == expected
