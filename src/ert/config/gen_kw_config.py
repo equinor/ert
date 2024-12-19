@@ -205,6 +205,25 @@ class GenKwConfig(ParameterConfig):
                     ).set_context(self.name)
                 )
 
+        def _check_valid_triangular_parameters(prior: PriorDict) -> None:
+            key = prior["key"]
+            dist = prior["function"]
+            xmin, xmode, xmax = prior["parameters"].values()
+            if not (xmin < xmax):
+                errors.append(
+                    ErrorInfo(
+                        f"Minimum {xmin} must be strictly less than the maxiumum {xmax}"
+                        f" for {dist} distributed parameter {key}",
+                    ).set_context(self.name)
+                )
+            if not (xmin <= xmode <= xmax):
+                errors.append(
+                    ErrorInfo(
+                        f"The mode {xmode} must be between the minimum {xmin} and maximum {xmax}"
+                        f" for {dist} distributed parameter {key}",
+                    ).set_context(self.name)
+                )
+
         unique_keys = set()
         for prior in self.get_priors():
             key = prior["key"]
@@ -219,6 +238,8 @@ class GenKwConfig(ParameterConfig):
             if prior["function"] == "LOGNORMAL":
                 _check_non_negative_parameter("MEAN", prior)
                 _check_non_negative_parameter("STD", prior)
+            elif prior["function"] == "TRIANGULAR":
+                _check_valid_triangular_parameters(prior)
             elif prior["function"] in {"NORMAL", "TRUNCATED_NORMAL"}:
                 _check_non_negative_parameter("STD", prior)
         if errors:
