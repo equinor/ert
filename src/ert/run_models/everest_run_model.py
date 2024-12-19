@@ -522,9 +522,9 @@ class EverestRunModel(BaseRunModel):
         self.active_realizations = [True] * len(batch_data)
         assert evaluator_context.config.realizations.names is not None
         for sim_id, control_idx in enumerate(batch_data.keys()):
-            realization = evaluator_context.realizations[control_idx]
+            realization_idx = evaluator_context.realizations[control_idx]
             substitutions[f"<GEO_ID_{sim_id}_0>"] = str(
-                evaluator_context.config.realizations.names[realization]
+                evaluator_context.config.realizations.names[realization_idx]
             )
         run_paths = Runpaths(
             jobname_format=self.ert_config.model_config.jobname_format_string,
@@ -654,9 +654,9 @@ class EverestRunModel(BaseRunModel):
         if self._simulator_cache is not None:
             assert evaluator_context.config.realizations.names is not None
             for control_idx in batch_data:
-                realization = evaluator_context.realizations[control_idx]
+                realization_idx = evaluator_context.realizations[control_idx]
                 self._simulator_cache.add(
-                    evaluator_context.config.realizations.names[realization],
+                    evaluator_context.config.realizations.names[realization_idx],
                     control_values[control_idx, ...],
                     objectives[control_idx, ...],
                     None if constraints is None else constraints[control_idx, ...],
@@ -751,7 +751,7 @@ class SimulatorCache:
 
     def __init__(self) -> None:
         self._data: defaultdict[
-            int,
+            str,
             list[
                 tuple[
                     NDArray[np.float64], NDArray[np.float64], NDArray[np.float64] | None
@@ -761,12 +761,12 @@ class SimulatorCache:
 
     def add(
         self,
-        realization_id: int,
+        realization: str,
         control_values: NDArray[np.float64],
         objectives: NDArray[np.float64],
         constraints: NDArray[np.float64] | None,
     ) -> None:
-        self._data[realization_id].append(
+        self._data[realization].append(
             (
                 control_values.copy(),
                 objectives.copy(),
@@ -775,11 +775,9 @@ class SimulatorCache:
         )
 
     def get(
-        self, realization_id: int, controls: NDArray[np.float64]
+        self, realization: str, controls: NDArray[np.float64]
     ) -> tuple[NDArray[np.float64], NDArray[np.float64] | None] | None:
-        for control_values, objectives, constraints in self._data.get(
-            realization_id, []
-        ):
+        for control_values, objectives, constraints in self._data.get(realization, []):
             if np.allclose(controls, control_values, rtol=0.0, atol=self.EPS):
                 return objectives, constraints
         return None
