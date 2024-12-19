@@ -1,39 +1,8 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1734591772982,
+  "lastUpdate": 1734593449097,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
-      {
-        "commit": {
-          "author": {
-            "email": "JONAK@equinor.com",
-            "name": "Jonathan Karlsen",
-            "username": "jonathan-eq"
-          },
-          "committer": {
-            "email": "107626001+jonathan-eq@users.noreply.github.com",
-            "name": "Jonathan Karlsen",
-            "username": "jonathan-eq"
-          },
-          "distinct": true,
-          "id": "d875982c2c94fd55936137990e1053aa38851295",
-          "message": "Remove deprecated slurm options `MEMORY` and `MEMORY_PER_CPU`",
-          "timestamp": "2024-12-12T12:53:24+01:00",
-          "tree_id": "f923ec92785ef76ff9cfc780d1e42f553937bbcc",
-          "url": "https://github.com/equinor/ert/commit/d875982c2c94fd55936137990e1053aa38851295"
-        },
-        "date": 1734004515556,
-        "tool": "pytest",
-        "benches": [
-          {
-            "name": "tests/ert/performance_tests/test_analysis.py::test_and_benchmark_adaptive_localization_with_fields",
-            "value": 0.2179409032641027,
-            "unit": "iter/sec",
-            "range": "stddev: 0.031233707796770253",
-            "extra": "mean: 4.588399813999996 sec\nrounds: 5"
-          }
-        ]
-      },
       {
         "commit": {
           "author": {
@@ -930,6 +899,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.015882687725442296",
             "extra": "mean: 4.557549432400014 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "levje@equinor.com",
+            "name": "larsevj",
+            "username": "larsevj"
+          },
+          "committer": {
+            "email": "60844986+larsevj@users.noreply.github.com",
+            "name": "Lars Evje",
+            "username": "larsevj"
+          },
+          "distinct": true,
+          "id": "e5c79532c79e4d58baf1884fb271a42f1eba68e9",
+          "message": "Remove printing of snapshots in gui test",
+          "timestamp": "2024-12-19T08:29:01+01:00",
+          "tree_id": "6b7943ef213830c5bcd6106011c6ab9e37f5555b",
+          "url": "https://github.com/equinor/ert/commit/e5c79532c79e4d58baf1884fb271a42f1eba68e9"
+        },
+        "date": 1734593448628,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/ert/performance_tests/test_analysis.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 0.21571393792067625,
+            "unit": "iter/sec",
+            "range": "stddev: 0.02173625803016719",
+            "extra": "mean: 4.635769063599992 sec\nrounds: 5"
           }
         ]
       }
