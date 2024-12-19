@@ -1,4 +1,5 @@
 from collections import OrderedDict
+from pathlib import Path
 
 import polars as pl
 from seba_sqlite.snapshot import SebaSnapshot
@@ -6,6 +7,7 @@ from seba_sqlite.snapshot import SebaSnapshot
 from ert.storage import open_storage
 from everest.config import EverestConfig, ServerConfig
 from everest.detached import ServerStatus, everserver_status
+from everest.everest_storage import EverestStorage
 
 
 class EverestDataAPI:
@@ -13,10 +15,18 @@ class EverestDataAPI:
         self._config = config
         output_folder = config.optimization_output_dir
         self._snapshot = SebaSnapshot(output_folder).get_snapshot(filter_out_gradient)
+        self._ever_storage = EverestStorage(Path(output_folder))
+        self._ever_storage.read_from_output_dir()
 
     @property
     def batches(self):
         batch_ids = list({opt.batch_id for opt in self._snapshot.optimization_data})
+        batch_ids2 = sorted(
+            b.batch_id
+            for b in self._ever_storage.data.batches
+            if b.batch_objectives is not None
+        )
+        assert batch_ids == batch_ids2
         return sorted(batch_ids)
 
     @property
@@ -24,15 +34,38 @@ class EverestDataAPI:
         batch_ids = list(
             {opt.batch_id for opt in self._snapshot.optimization_data if opt.merit_flag}
         )
+        batch_ids2 = sorted(
+            b.batch_id for b in self._ever_storage.data.batches if b.is_improvement
+        )
+        assert batch_ids == batch_ids2
+
         return sorted(batch_ids)
 
     @property
     def objective_function_names(self):
-        return [fnc.name for fnc in self._snapshot.metadata.objectives.values()]
+        original = [fnc.name for fnc in self._snapshot.metadata.objectives.values()]
+        new = sorted(
+            self._ever_storage.data.objective_functions["objective_name"]
+            .unique()
+            .to_list()
+        )
+        assert original == new
+        return original
 
     @property
     def output_constraint_names(self):
-        return [fnc.name for fnc in self._snapshot.metadata.constraints.values()]
+        original = [fnc.name for fnc in self._snapshot.metadata.constraints.values()]
+        new = (
+            sorted(
+                self._ever_storage.data.nonlinear_constraints["constraint_name"]
+                .unique()
+                .to_list()
+            )
+            if self._ever_storage.data.nonlinear_constraints is not None
+            else []
+        )
+        assert original == new
+        return original
 
     def input_constraint(self, control):
         controls = [
@@ -40,7 +73,19 @@ class EverestDataAPI:
             for con in self._snapshot.metadata.controls.values()
             if con.name == control
         ]
-        return {"min": controls[0].min_value, "max": controls[0].max_value}
+
+        original = {"min": controls[0].min_value, "max": controls[0].max_value}
+
+        initial_values = self._ever_storage.data.initial_values
+        control_spec = initial_values.filter(
+            pl.col("control_name") == control
+        ).to_dicts()[0]
+        new = {
+            "min": control_spec.get("lower_bounds"),
+            "max": control_spec.get("upper_bounds"),
+        }
+        assert new == original
+        return original
 
     def output_constraint(self, constraint):
         """
@@ -55,30 +100,62 @@ class EverestDataAPI:
             for con in self._snapshot.metadata.constraints.values()
             if con.name == constraint
         ]
-        return {
+
+        old = {
             "type": constraints[0].constraint_type,
             "right_hand_side": constraints[0].rhs_value,
         }
 
+        constraint_dict = self._ever_storage.data.nonlinear_constraints.to_dicts()[0]
+        new = {
+            "type": constraint_dict["constraint_type"],
+            "right_hand_side": constraint_dict["rhs_value"],
+        }
+
+        assert old == new
+        return new
+
     @property
     def realizations(self):
-        return list(
+        old = list(
             OrderedDict.fromkeys(
                 int(sim.realization) for sim in self._snapshot.simulation_data
             )
         )
+        new = sorted(
+            self._ever_storage.data.batches[0]
+            .realization_objectives["realization"]
+            .unique()
+            .to_list()
+        )
+        assert old == new
+        return new
 
     @property
     def simulations(self):
-        return list(
+        old = list(
             OrderedDict.fromkeys(
                 [int(sim.simulation) for sim in self._snapshot.simulation_data]
             )
         )
 
+        new = sorted(
+            self._ever_storage.data.batches[0]
+            .realization_objectives["result_id"]
+            .unique()
+            .to_list()
+        )
+        assert old == new
+        return new
+
     @property
     def control_names(self):
-        return [con.name for con in self._snapshot.metadata.controls.values()]
+        old = [con.name for con in self._snapshot.metadata.controls.values()]
+        new = sorted(
+            self._ever_storage.data.initial_values["control_name"].unique().to_list()
+        )
+        assert old == new
+        return new
 
     @property
     def control_values(self):
@@ -92,7 +169,7 @@ class EverestDataAPI:
 
     @property
     def objective_values(self):
-        return [
+        old = [
             {
                 "function": objective.name,
                 "batch": sim.batch,
@@ -106,6 +183,14 @@ class EverestDataAPI:
             for objective in self._snapshot.metadata.objectives.values()
             if objective.name in sim.objectives
         ]
+
+        new = [
+            b for b in self._ever_storage.data.batches if b.batch_objectives is not None
+        ]
+
+        assert old == new
+
+        return old
 
     @property
     def single_objective_values(self):
