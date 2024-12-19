@@ -152,8 +152,8 @@ class EverestRunModel(BaseRunModel):
         self,
         config: ErtConfig,
         everest_config: EverestConfig,
-        simulation_callback: SimulationCallback,
-        optimization_callback: OptimizerCallback,
+        simulation_callback: SimulationCallback | None,
+        optimization_callback: OptimizerCallback | None,
     ):
         everest_config = self._add_defaults(everest_config)
 
@@ -227,21 +227,11 @@ class EverestRunModel(BaseRunModel):
         simulation_callback: SimulationCallback | None = None,
         optimization_callback: OptimizerCallback | None = None,
     ) -> EverestRunModel:
-        def default_simulation_callback(
-            simulation_status: SimulationStatus | None,
-        ) -> str | None:
-            return None
-
-        def default_optimization_callback() -> str | None:
-            return None
-
-        ert_config = everest_to_ert_config(cls._add_defaults(ever_config))
         return cls(
-            config=ert_config,
+            config=everest_to_ert_config(cls._add_defaults(ever_config)),
             everest_config=ever_config,
-            simulation_callback=simulation_callback or default_simulation_callback,
-            optimization_callback=optimization_callback
-            or default_optimization_callback,
+            simulation_callback=simulation_callback,
+            optimization_callback=optimization_callback,
         )
 
     def run_experiment(
@@ -700,7 +690,8 @@ class EverestRunModel(BaseRunModel):
         if type(event) in {EESnapshot, EESnapshotUpdate}:
             newstatus = self._simulation_status(self.get_current_snapshot())
             if self._status != newstatus:  # No change in status
-                self._sim_callback(newstatus)
+                if self._sim_callback is not None:
+                    self._sim_callback(newstatus)
                 self._status = newstatus
 
     def _simulation_status(self, snapshot: EnsembleSnapshot) -> SimulationStatus:
