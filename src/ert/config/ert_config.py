@@ -797,6 +797,20 @@ class ErtConfig:
                 )
                 continue
             fm_step.arglist = fm_step_description[1:]
+
+            fm_step.environment = {
+                **cls.ENV_PR_FM_STEP.get(fm_step.name.upper(), {}),
+                **fm_step.environment,
+            }
+
+            # Special casing for run_reservoirsimulator.py
+            if fm_step.name == "eclipse100":
+                fm_step.arglist = ("eclipse", *fm_step.arglist)
+            if fm_step.name == "eclipse300":
+                fm_step.arglist = ("eclipse300", *fm_step.arglist)
+            if fm_step.name == "flow":
+                fm_step.arglist = ("flow", *fm_step.arglist)
+
             fm_steps.append(fm_step)
 
         for fm_step in fm_steps:

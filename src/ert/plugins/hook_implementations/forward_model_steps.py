@@ -207,8 +207,9 @@ class Eclipse100(ForwardModelStepPlugin):
                     ).resolve()
                 ),
                 "eclipse",
-                "<VERSION>",
                 "<ECLBASE>",
+                "--version",
+                "<VERSION>",
                 "-n",
                 "<NUM_CPU>",
                 "<OPTS>",
@@ -267,8 +268,9 @@ class Eclipse300(ForwardModelStepPlugin):
                     ).resolve()
                 ),
                 "e300",
-                "<VERSION>",
                 "<ECLBASE>",
+                "--version",
+                "<VERSION>",
                 "-n",
                 "<NUM_CPU>",
                 "<OPTS>",
@@ -324,8 +326,9 @@ class Flow(ForwardModelStepPlugin):
                     ).resolve()
                 ),
                 "flow",
-                "<VERSION>",
                 "<ECLBASE>",
+                "--version",
+                "<VERSION>",
                 "-n",
                 "<NUM_CPU>",
                 "<OPTS>",

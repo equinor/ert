@@ -195,7 +195,7 @@ class RunReservoirSimulator:
             self.simulator,
             "--version",
             str(self.version),
-            self.data_file,
+            str(self.run_path / self.data_file),
             "--summary-conversion",
             "yes" if self.summary_conversion else "no",
         ]
@@ -211,7 +211,7 @@ class RunReservoirSimulator:
             self.runner_abspath,
             "--version",
             str(self.version),
-            self.data_file,
+            str(self.run_path / self.data_file),
             "--np",
             str(self.num_cpu),
         ]
@@ -377,8 +377,8 @@ def tail_textfile(file_path: Path, num_chars: int) -> str:
 def run_reservoirsimulator(args: list[str]) -> None:
     parser = ArgumentParser()
     parser.add_argument("simulator", type=str, choices=["flow", "eclipse", "e300"])
-    parser.add_argument("version", type=str)
     parser.add_argument("ecl_case", type=str)
+    parser.add_argument("--version", type=str, default="")
     parser.add_argument("-n", "--num-cpu", dest="num_cpu", type=int, default=1)
     parser.add_argument(
         "-i", "--ignore-errors", dest="ignore_errors", action="store_true"
@@ -389,6 +389,10 @@ def run_reservoirsimulator(args: list[str]) -> None:
 
     options = parser.parse_args(args)
 
+    if not options.version:
+        raise RuntimeError(
+            f"The version to {options.simulator} must be explicitly passed"
+        )
     if options.summary_conversion and options.simulator == "flow":
         raise RuntimeError("--summary-conversion is not available with simulator flow")
 
