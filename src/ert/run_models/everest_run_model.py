@@ -41,61 +41,8 @@ from ..run_arg import RunArg, create_run_arguments
 from .base_run_model import BaseRunModel, StatusEvents
 
 if TYPE_CHECKING:
-    import numpy.typing as npt
-
     from ert.storage import Ensemble, Experiment
 
-
-# A number of settings for the table reporters:
-RESULT_COLUMNS = {
-    "result_id": "ID",
-    "batch_id": "Batch",
-    "functions.weighted_objective": "Total-Objective",
-    "linear_constraints.violations": "IC-violation",
-    "nonlinear_constraints.violations": "OC-violation",
-    "functions.objectives": "Objective",
-    "functions.constraints": "Constraint",
-    "evaluations.variables": "Control",
-    "linear_constraints.values": "IC-diff",
-    "nonlinear_constraints.values": "OC-diff",
-    "functions.scaled_objectives": "Scaled-Objective",
-    "functions.scaled_constraints": "Scaled-Constraint",
-    "evaluations.scaled_variables": "Scaled-Control",
-    "nonlinear_constraints.scaled_values": "Scaled-OC-diff",
-    "nonlinear_constraints.scaled_violations": "Scaled-OC-violation",
-}
-GRADIENT_COLUMNS = {
-    "result_id": "ID",
-    "batch_id": "Batch",
-    "gradients.weighted_objective": "Total-Gradient",
-    "gradients.objectives": "Grad-objective",
-    "gradients.constraints": "Grad-constraint",
-}
-SIMULATION_COLUMNS = {
-    "result_id": "ID",
-    "batch_id": "Batch",
-    "realization": "Realization",
-    "evaluations.evaluation_ids": "Simulation",
-    "evaluations.variables": "Control",
-    "evaluations.objectives": "Objective",
-    "evaluations.constraints": "Constraint",
-    "evaluations.scaled_variables": "Scaled-Control",
-    "evaluations.scaled_objectives": "Scaled-Objective",
-    "evaluations.scaled_constraints": "Scaled-Constraint",
-}
-PERTURBATIONS_COLUMNS = {
-    "result_id": "ID",
-    "batch_id": "Batch",
-    "realization": "Realization",
-    "evaluations.perturbed_evaluation_ids": "Simulation",
-    "evaluations.perturbed_variables": "Control",
-    "evaluations.perturbed_objectives": "Objective",
-    "evaluations.perturbed_constraints": "Constraint",
-    "evaluations.scaled_perturbed_variables": "Scaled-Control",
-    "evaluations.scaled_perturbed_objectives": "Scaled-Objective",
-    "evaluations.scaled_perturbed_constraints": "Scaled-Constraint",
-}
-MIN_HEADER_LEN = 3
 
 logger = logging.getLogger(__name__)
 
@@ -220,7 +167,6 @@ class EverestRunModel(BaseRunModel):
         self, evaluator_server_config: EvaluatorServerConfig, restart: bool = False
     ) -> None:
         self.log_at_startup()
-        self.restart = restart
         self._eval_server_cfg = evaluator_server_config
         self._experiment = self._storage.create_experiment(
             name=f"EnOpt@{datetime.datetime.now().strftime('%Y-%m-%d@%H:%M:%S')}",
@@ -340,18 +286,62 @@ class EverestRunModel(BaseRunModel):
             optimizer.abort_optimization()
 
     def _create_optimizer(self) -> BasicOptimizer:
-        assert (
-            self._everest_config.environment is not None
-            and self._everest_config.environment is not None
-        )
-
-        ropt_output_folder = Path(self._everest_config.optimization_output_dir)
+        RESULT_COLUMNS = {
+            "result_id": "ID",
+            "batch_id": "Batch",
+            "functions.weighted_objective": "Total-Objective",
+            "linear_constraints.violations": "IC-violation",
+            "nonlinear_constraints.violations": "OC-violation",
+            "functions.objectives": "Objective",
+            "functions.constraints": "Constraint",
+            "evaluations.variables": "Control",
+            "linear_constraints.values": "IC-diff",
+            "nonlinear_constraints.values": "OC-diff",
+            "functions.scaled_objectives": "Scaled-Objective",
+            "functions.scaled_constraints": "Scaled-Constraint",
+            "evaluations.scaled_variables": "Scaled-Control",
+            "nonlinear_constraints.scaled_values": "Scaled-OC-diff",
+            "nonlinear_constraints.scaled_violations": "Scaled-OC-violation",
+        }
+        GRADIENT_COLUMNS = {
+            "result_id": "ID",
+            "batch_id": "Batch",
+            "gradients.weighted_objective": "Total-Gradient",
+            "gradients.objectives": "Grad-objective",
+            "gradients.constraints": "Grad-constraint",
+        }
+        SIMULATION_COLUMNS = {
+            "result_id": "ID",
+            "batch_id": "Batch",
+            "realization": "Realization",
+            "evaluations.evaluation_ids": "Simulation",
+            "evaluations.variables": "Control",
+            "evaluations.objectives": "Objective",
+            "evaluations.constraints": "Constraint",
+            "evaluations.scaled_variables": "Scaled-Control",
+            "evaluations.scaled_objectives": "Scaled-Objective",
+            "evaluations.scaled_constraints": "Scaled-Constraint",
+        }
+        PERTURBATIONS_COLUMNS = {
+            "result_id": "ID",
+            "batch_id": "Batch",
+            "realization": "Realization",
+            "evaluations.perturbed_evaluation_ids": "Simulation",
+            "evaluations.perturbed_variables": "Control",
+            "evaluations.perturbed_objectives": "Objective",
+            "evaluations.perturbed_constraints": "Constraint",
+            "evaluations.scaled_perturbed_variables": "Scaled-Control",
+            "evaluations.scaled_perturbed_objectives": "Scaled-Objective",
+            "evaluations.scaled_perturbed_constraints": "Scaled-Constraint",
+        }
+        MIN_HEADER_LEN = 3
 
         # Initialize the optimizer with output tables. `min_header_len` is set
         # to ensure that all tables have the same number of header lines,
         # simplifying code that reads them as fixed width tables. `maximize` is
         # set because ropt reports minimization results, while everest wants
         # maximization results, necessitating a conversion step.
+        ropt_output_folder = Path(self._everest_config.optimization_output_dir)
         optimizer = (
             BasicOptimizer(
                 enopt_config=self._ropt_config, evaluator=self._forward_model_evaluator
@@ -448,7 +438,7 @@ class EverestRunModel(BaseRunModel):
             )
         return values
 
-    def init_case_data(
+    def _init_case_data(
         self,
         control_values: NDArray[np.float64],
         metadata: EvaluatorContext,
@@ -555,7 +545,7 @@ class EverestRunModel(BaseRunModel):
             metadata.config.realizations.names[realization]
             for realization in metadata.realizations
         ]
-        case_data, active, cached = self.init_case_data(
+        case_data, active, cached = self._init_case_data(
             control_values=control_values,
             metadata=metadata,
             realization_ids=realization_ids,
@@ -602,7 +592,7 @@ class EverestRunModel(BaseRunModel):
 
         self._delete_runpath(run_args)
         # gather results
-        results: list[dict[str, npt.NDArray[np.float64]]] = []
+        results: list[dict[str, NDArray[np.float64]]] = []
         for sim_id, successful in enumerate(self.active_realizations):
             if not successful:
                 logger.error(f"Simulation {sim_id} failed.")
