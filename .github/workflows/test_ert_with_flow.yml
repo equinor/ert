@@ -26,9 +26,10 @@ jobs:
     - name: Install uv
       uses: astral-sh/setup-uv@v4
 
-    - name: Install ert
-      run:
-        uv pip install ".[dev]"
+    - name: Install ert and everest
+      run: |
+        uv pip install ".[everest,dev]"
+        uv pip install git+https://github.com/equinor/everest-models
 
     - name: Install flow
       run: |
@@ -47,6 +48,23 @@ jobs:
         set -e
         pytest tests/ert/unit_tests/resources/test_run_flow_simulator.py
 
-        cd test-data/ert/flow_example
+    - name: Run Ert on an example configuration with flow
+      run: |
+        pushd test-data/ert/flow_example
         perl -p -i -e 's/NUM_REALIZATIONS\s*12/NUM_REALIZATIONS 2/g' flow.ert
-        ert ensemble_experiment flow.ert --disable-monitor
+        ert ensemble_experiment flow.ert
+        popd
+
+    - name: Run Everest on an example configuration with flow
+      run: |
+        set -e
+        pushd test-data/everest/egg/everest/model
+        everest lint config_flow.yml
+        everest run config_flow.yml || (
+          find .
+          find . -name "ERROR"
+          find . -name "ERROR" -exec cat {} \;
+          find . -name "./*stderr*"
+          find . -name "./*stderr*" -exec cat {} \;
+        )
+        popd
