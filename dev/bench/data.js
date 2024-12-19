@@ -1,39 +1,8 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1734593449097,
+  "lastUpdate": 1734598766861,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
-      {
-        "commit": {
-          "author": {
-            "email": "andrli@equinor.com",
-            "name": "Andreas Eknes Lie",
-            "username": "andreas-el"
-          },
-          "committer": {
-            "email": "114403625+andreas-el@users.noreply.github.com",
-            "name": "Andreas Eknes Lie",
-            "username": "andreas-el"
-          },
-          "distinct": true,
-          "id": "d27c2d18f15f4e37d36d6da35d0ef8c963807541",
-          "message": "Set persistent cells in update table cells",
-          "timestamp": "2024-12-12T18:59:55+01:00",
-          "tree_id": "46eecaa5995baff79d1604024ea7220dda62c208",
-          "url": "https://github.com/equinor/ert/commit/d27c2d18f15f4e37d36d6da35d0ef8c963807541"
-        },
-        "date": 1734026506014,
-        "tool": "pytest",
-        "benches": [
-          {
-            "name": "tests/ert/performance_tests/test_analysis.py::test_and_benchmark_adaptive_localization_with_fields",
-            "value": 0.21793326549223063,
-            "unit": "iter/sec",
-            "range": "stddev: 0.01955495229463724",
-            "extra": "mean: 4.588560620799996 sec\nrounds: 5"
-          }
-        ]
-      },
       {
         "commit": {
           "author": {
@@ -930,6 +899,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.02173625803016719",
             "extra": "mean: 4.635769063599992 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "dan.sava42@gmail.com",
+            "name": "DanSava",
+            "username": "DanSava"
+          },
+          "committer": {
+            "email": "dan.sava42@gmail.com",
+            "name": "Dan Sava",
+            "username": "DanSava"
+          },
+          "distinct": true,
+          "id": "a159fa7f0ca17724652f94786fff77346fa13c87",
+          "message": "Move duplicate patching in test_everserver.py to mock_server fixture",
+          "timestamp": "2024-12-19T10:57:39+02:00",
+          "tree_id": "e8ba160d85ca2bfdaad309fda5f0bc8d82c145a7",
+          "url": "https://github.com/equinor/ert/commit/a159fa7f0ca17724652f94786fff77346fa13c87"
+        },
+        "date": 1734598766393,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/ert/performance_tests/test_analysis.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 0.21820232936264464,
+            "unit": "iter/sec",
+            "range": "stddev: 0.05581156998013488",
+            "extra": "mean: 4.582902496600002 sec\nrounds: 5"
           }
         ]
       }
