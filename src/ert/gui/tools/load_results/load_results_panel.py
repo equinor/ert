@@ -1,7 +1,7 @@
 from __future__ import annotations
 
-from qtpy.QtCore import Qt, Signal
-from qtpy.QtWidgets import QFormLayout, QLabel, QMessageBox, QWidget
+from PySide6.QtCore import Qt, Signal
+from PySide6.QtWidgets import QFormLayout, QLabel, QMessageBox, QWidget
 
 from ert.gui.ertnotifier import ErtNotifier
 from ert.gui.ertwidgets import (

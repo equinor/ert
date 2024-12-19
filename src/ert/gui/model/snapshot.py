@@ -5,8 +5,15 @@ from contextlib import ExitStack
 from datetime import datetime, timedelta
 from typing import Any, Final, overload
 
-from qtpy.QtCore import QAbstractItemModel, QModelIndex, QObject, QSize, Qt, QVariant
-from qtpy.QtGui import QColor, QFont
+from PySide6.QtCore import (
+    QAbstractItemModel,
+    QModelIndex,
+    QObject,
+    QPersistentModelIndex,
+    QSize,
+    Qt,
+)
+from PySide6.QtGui import QColor, QFont
 from typing_extensions import override
 
 from ert.ensemble_evaluator import EnsembleSnapshot, state
@@ -172,8 +179,8 @@ class SnapshotModel(QAbstractItemModel):
                 if real_id in metadata["real_status_colors"]:
                     data.real_status_color = metadata["real_status_colors"][real_id]
                 reals_changed.append(real_node.row())
-                if real.get("message"):
-                    data.message = real["message"]
+                if msg := real.get("message"):
+                    data.message = msg
 
             fm_steps_changed_by_real: dict[str, list[int]] = defaultdict(list)
             for (real_id, fm_step_id), fm_step in fm_steps.items():
@@ -276,12 +283,16 @@ class SnapshotModel(QAbstractItemModel):
         self.rowsInserted.emit(parent, snapshot_tree.row(), snapshot_tree.row())
 
     @override
-    def columnCount(self, parent: QModelIndex | None = None) -> int:
+    def columnCount(
+        self, parent: QModelIndex | QPersistentModelIndex | None = None
+    ) -> int:
         if parent and isinstance(parent.internalPointer(), RealNode):
             return FM_STEP_COLUMN_SIZE
         return 1
 
-    def rowCount(self, parent: QModelIndex | None = None) -> int:
+    def rowCount(
+        self, parent: QModelIndex | QPersistentModelIndex | None = None
+    ) -> int:
         if parent is None:
             parent = QModelIndex()
         parent_item = self.root if not parent.isValid() else parent.internalPointer()
@@ -289,32 +300,38 @@ class SnapshotModel(QAbstractItemModel):
         if parent.column() > 0:
             return 0
 
-        return len(parent_item.children)
+        return len(parent_item.children)  # type: ignore
 
     @overload
-    def parent(self, child: QModelIndex) -> QModelIndex: ...
+    def parent(self) -> QObject: ...
     @overload
-    def parent(self) -> QObject | None: ...
+    def parent(self, child: QModelIndex | QPersistentModelIndex) -> QModelIndex: ...
     @override
-    def parent(self, child: QModelIndex | None = None) -> QObject | None:
+    def parent(
+        self, child: QModelIndex | QPersistentModelIndex | None = None
+    ) -> QObject | QModelIndex:
         if child is None or not child.isValid():
             return QModelIndex()
 
-        parent_item = child.internalPointer().parent
+        parent_item = child.internalPointer().parent  # type:ignore
         if parent_item == self.root:
             return QModelIndex()
 
         return self.createIndex(parent_item.row(), 0, parent_item)
 
     @override
-    def data(self, index: QModelIndex, role: int = Qt.ItemDataRole.DisplayRole) -> Any:
+    def data(
+        self,
+        index: QModelIndex | QPersistentModelIndex,
+        role: int = Qt.ItemDataRole.DisplayRole,
+    ) -> Any:
         if not index.isValid():
-            return QVariant()
+            return None
 
         if role == Qt.ItemDataRole.TextAlignmentRole:
             return Qt.AlignmentFlag.AlignCenter
 
-        node: IterNode | RealNode | ForwardModelStepNode = index.internalPointer()
+        node: IterNode | RealNode | ForwardModelStepNode = index.internalPointer()  # type:ignore
         if role == NodeRole:
             return node
 
@@ -356,10 +373,12 @@ class SnapshotModel(QAbstractItemModel):
         }:
             return QColor()
 
-        return QVariant()
+        return None
 
     @staticmethod
-    def _real_data(_: QModelIndex, node: RealNode, role: int) -> Any:
+    def _real_data(
+        _: QModelIndex | QPersistentModelIndex, node: RealNode, role: int
+    ) -> Any:
         if role == FMStepColorHint:
             total_count = len(node.data.fm_step_status_color_by_id)
             finished_count = sum(
@@ -383,11 +402,11 @@ class SnapshotModel(QAbstractItemModel):
         if role == CallbackStatusMessageRole:
             return node.data.message
 
-        return QVariant()
+        return None
 
     @staticmethod
     def _fm_step_data(
-        index: QModelIndex,
+        index: QModelIndex | QPersistentModelIndex,
         node: ForwardModelStepNode,
         role: int,  # Qt.ItemDataRole
     ) -> Any:
@@ -427,12 +446,12 @@ class SnapshotModel(QAbstractItemModel):
             if data_name in {ids.STDOUT, ids.STDERR}:
                 if not file_has_content(index.data(FileRole)):
                     return "-"
-                return "View" if data_name in node.data else QVariant()
+                return "View" if data_name in node.data else None
 
             if data_name in {DURATION}:
                 start_time = node.data.get(ids.START_TIME)
                 if start_time is None:
-                    return QVariant()
+                    return None
                 delta = _estimate_duration(
                     start_time, end_time=node.data.get(ids.END_TIME)
                 )
@@ -445,7 +464,7 @@ class SnapshotModel(QAbstractItemModel):
         if role == FileRole:
             data_name = FM_STEP_COLUMNS[index.column()]
             if data_name in {ids.STDOUT, ids.STDERR}:
-                return node.data.get(data_name, QVariant())
+                return node.data.get(data_name, None)
 
         if role == RealIens:
             return node.parent.id_ if node.parent else None
@@ -470,11 +489,14 @@ class SnapshotModel(QAbstractItemModel):
             if tt_text is not None:
                 return str(tt_text)
 
-        return QVariant()
+        return None
 
     @override
     def index(
-        self, row: int, column: int, parent: QModelIndex | None = None
+        self,
+        row: int,
+        column: int,
+        parent: QModelIndex | QPersistentModelIndex | None = None,
     ) -> QModelIndex:
         if parent is None:
             parent = QModelIndex()
@@ -483,7 +505,7 @@ class SnapshotModel(QAbstractItemModel):
 
         parent_item = self.root if not parent.isValid() else parent.internalPointer()
         try:
-            child_item = list(parent_item.children.values())[row]
+            child_item = list(parent_item.children.values())[row]  # type:ignore
         except KeyError:
             return QModelIndex()
         else:

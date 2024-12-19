@@ -7,9 +7,9 @@ from collections import defaultdict
 from collections.abc import Callable, Sequence
 from typing import TYPE_CHECKING
 
-from qtpy.QtCore import Qt
-from qtpy.QtGui import QCursor
-from qtpy.QtWidgets import (
+from PySide6.QtCore import Qt
+from PySide6.QtGui import QCursor
+from PySide6.QtWidgets import (
     QFrame,
     QGridLayout,
     QHBoxLayout,
@@ -19,6 +19,8 @@ from qtpy.QtWidgets import (
     QVBoxLayout,
     QWidget,
 )
+
+from ert.gui.ertnotifier import ErtNotifier
 
 from ._colors import BLUE_TEXT
 from ._suggestor_message import SuggestorMessage
@@ -111,6 +113,7 @@ class Suggestor(QWidget):
         deprecations: list[WarningInfo],
         continue_action: Callable[[], None] | None,
         help_links: dict[str, str] | None = None,
+        notifier: ErtNotifier | None = None,
     ) -> None:
         super().__init__()
         self._continue_action = continue_action
@@ -131,6 +134,7 @@ class Suggestor(QWidget):
         self.setStyleSheet(f"background-color: {LIGHT_GREY}; color: black")
         self.__layout.setContentsMargins(32, 47, 32, 16)
         self.__layout.setSpacing(32)
+        self.notifier = notifier
 
         data_layout = QHBoxLayout()
         data_widget.setLayout(data_layout)
@@ -166,7 +170,7 @@ class Suggestor(QWidget):
         help_buttons_layout.addWidget(help_header, alignment=Qt.AlignmentFlag.AlignTop)
 
         separator = QFrame(parent=self)
-        separator.setFrameShape(QFrame.HLine)
+        separator.setFrameShape(QFrame.Shape.HLine)
         separator.setStyleSheet(f"color: {HEAVY_GREY};")
         separator.setFixedWidth(388)
         help_buttons_layout.addWidget(separator)
@@ -219,7 +223,7 @@ class Suggestor(QWidget):
 
         run.setObjectName("run_ert_button")
         run.pressed.connect(run_pressed)
-        give_up.pressed.connect(self.close)  # type: ignore
+        give_up.pressed.connect(self.close)
         buttons = QWidget(parent=self)
         buttons_layout = QHBoxLayout()
         buttons_layout.insertStretch(-1, -1)

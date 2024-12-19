@@ -2,14 +2,13 @@ from __future__ import annotations
 
 from typing import Any
 
-from qtpy.QtGui import QColor
-from qtpy.QtWidgets import (
+from PySide6.QtGui import QColor
+from PySide6.QtWidgets import (
     QFrame,
     QHBoxLayout,
     QLabel,
     QProgressBar,
     QVBoxLayout,
-    QWidget,
 )
 
 from ert.ensemble_evaluator.state import ENSEMBLE_STATE_FAILED, REAL_STATE_TO_COLOR
@@ -17,7 +16,7 @@ from ert.ensemble_evaluator.state import ENSEMBLE_STATE_FAILED, REAL_STATE_TO_CO
 
 class ProgressWidget(QFrame):
     def __init__(self) -> None:
-        QWidget.__init__(self)
+        QFrame.__init__(self)
         self.setFixedHeight(70)
 
         self._vertical_layout = QVBoxLayout(self)
@@ -110,5 +109,5 @@ class ProgressWidget(QFrame):
             self.stop_waiting_progress_bar()
         self.repaint_components()
 
-    def resizeEvent(self, a0: Any, event: Any = None) -> None:
+    def resizeEvent(self, event: Any = None) -> None:
         self.repaint_components()

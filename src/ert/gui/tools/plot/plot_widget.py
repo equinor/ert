@@ -10,9 +10,9 @@ from matplotlib.backends.backend_qt5agg import (  # type: ignore
     NavigationToolbar2QT,
 )
 from matplotlib.figure import Figure
-from qtpy.QtCore import QStringListModel, Qt, Signal, Slot
-from qtpy.QtGui import QIcon
-from qtpy.QtWidgets import QAction, QComboBox, QVBoxLayout, QWidget, QWidgetAction
+from PySide6.QtCore import QStringListModel, Qt, Signal, Slot
+from PySide6.QtGui import QAction, QIcon
+from PySide6.QtWidgets import QComboBox, QVBoxLayout, QWidget, QWidgetAction
 
 from .plot_api import EnsembleObject
 

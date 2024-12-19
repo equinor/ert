@@ -2,7 +2,7 @@ import math
 from os import path
 
 import pytest
-from qtpy.QtWidgets import QApplication
+from PySide6.QtWidgets import QApplication
 
 from ert.gui.tools.file.file_dialog import FileDialog
 

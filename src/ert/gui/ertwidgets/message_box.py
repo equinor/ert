@@ -1,4 +1,4 @@
-from qtpy.QtWidgets import (
+from PySide6.QtWidgets import (
     QDialog,
     QDialogButtonBox,
     QGridLayout,
@@ -20,12 +20,12 @@ class ErtMessageBox(QDialog):
     def __init__(
         self,
         text: str | None,
-        detailed_text: str | None,
+        detailed_text: str,
         parent: QWidget | None = None,
     ) -> None:
         super().__init__(parent)
         self.box = QDialogButtonBox(
-            QDialogButtonBox.Ok,
+            QDialogButtonBox.StandardButton.Ok,
         )
         self.box.setCenterButtons(True)
         self.box.accepted.connect(self.accept)

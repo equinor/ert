@@ -3,18 +3,18 @@ from __future__ import annotations
 import html
 from typing import TYPE_CHECKING
 
-from qtpy.QtCore import (
+from PySide6.QtCore import (
     QObject,
     QPoint,
     Qt,
     Signal,
 )
-from qtpy.QtGui import QColor
-from qtpy.QtWidgets import QFrame, QLabel, QSizePolicy, QVBoxLayout, QWidget
+from PySide6.QtGui import QColor, QEnterEvent
+from PySide6.QtWidgets import QFrame, QLabel, QSizePolicy, QVBoxLayout, QWidget
 
 if TYPE_CHECKING:
-    from qtpy.QtCore import QEvent
-    from qtpy.QtGui import QHideEvent
+    from PySide6.QtCore import QEvent
+    from PySide6.QtGui import QHideEvent
 
 
 class ErrorPopup(QWidget):
@@ -36,8 +36,10 @@ class ErrorPopup(QWidget):
         layout.setContentsMargins(0, 0, 0, 0)
 
         self._error_widget = QLabel("")
-        self._error_widget.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Minimum)
-        self._error_widget.setFrameStyle(QFrame.Box)
+        self._error_widget.setSizePolicy(
+            QSizePolicy.Policy.Preferred, QSizePolicy.Policy.Minimum
+        )
+        self._error_widget.setFrameStyle(QFrame.Shape.Box)
         self._error_widget.setWordWrap(True)
         self._error_widget.setScaledContents(True)
         self._error_widget.setTextFormat(Qt.TextFormat.RichText)
@@ -84,8 +86,8 @@ class ValidationSupport(QObject):
         self._originalLeaveEvent = validation_target.leaveEvent
         self._originalHideEvent = validation_target.hideEvent
 
-        def enterEvent(a0: QEvent | None) -> None:
-            self._originalEnterEvent(a0)
+        def enterEvent(event: QEnterEvent) -> None:
+            self._originalEnterEvent(event)
 
             if not self.isValid():
                 self._error_popup.presentError(
@@ -95,17 +97,17 @@ class ValidationSupport(QObject):
 
         validation_target.enterEvent = enterEvent  # type: ignore[method-assign]
 
-        def leaveEvent(a0: QEvent | None) -> None:
-            self._originalLeaveEvent(a0)
+        def leaveEvent(event: QEvent) -> None:
+            self._originalLeaveEvent(event)
 
             if self._error_popup is not None:
                 self._error_popup.hide()
 
         validation_target.leaveEvent = leaveEvent  # type: ignore[method-assign]
 
-        def hideEvent(a0: QHideEvent | None) -> None:
+        def hideEvent(event: QHideEvent) -> None:
             self._error_popup.hide()
-            self._originalHideEvent(a0)
+            self._originalHideEvent(event)
 
         validation_target.hideEvent = hideEvent  # type: ignore[method-assign]
 
