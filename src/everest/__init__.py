@@ -12,7 +12,7 @@ try:
 except ImportError:
     __version__ = "0.0.0"
 
-from everest import detached, docs, jobs, templates, util
+from everest import detached, jobs, templates, util
 from everest.bin.utils import export_to_csv, export_with_progress
 from everest.config_keys import ConfigKeys
 from everest.export import MetaDataColumnNames, filter_data
@@ -22,7 +22,6 @@ __all__ = [
     "ConfigKeys",
     "MetaDataColumnNames",
     "detached",
-    "docs",
     "export_to_csv",
     "export_with_progress",
     "filter_data",

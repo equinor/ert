@@ -21,43 +21,6 @@ pytestmark = pytest.mark.xdist_group(name="starts_everest")
 
 
 @pytest.mark.integration_test
-def test_everest_entry_docs():
-    """Test calling everest with --docs
-
-    Note that the correctness of the information printed out is checked by
-    other tests. Here we just check that the entry point triggers the
-    correct execution paths in the applcation
-    """
-    with (
-        capture_streams() as (out, err),
-        pytest.raises(SystemExit),
-    ):  # there is a call to sys.exit
-        start_everest(["everest", "--docs"])
-    lines = [line.strip() for line in out.getvalue().split("\n")]
-    assert "wells (optional)" in lines
-    assert "controls (required)" in lines
-    assert "objective_functions (required)" in lines
-    assert "definitions (optional)" in lines
-    assert not err.getvalue()
-
-
-@pytest.mark.integration_test
-def test_everest_entry_manual():
-    """Test calling everest with --manual"""
-    with capture_streams() as (out, err), pytest.raises(SystemExit):
-        start_everest(["everest", "--manual"])
-    lines = [line.strip() for line in out.getvalue().split("\n")]
-    assert "wells (optional)" in lines
-    assert "controls (required)" in lines
-    assert "objective_functions (required)" in lines
-    assert "definitions (optional)" in lines
-
-    doc_lines = [line for line in lines if line.startswith("| Documentation:")]
-    assert doc_lines != []
-    assert not err.getvalue()
-
-
-@pytest.mark.integration_test
 def test_everest_entry_version():
     """Test calling everest with --version"""
     with capture_streams() as (out, err), pytest.raises(SystemExit):
