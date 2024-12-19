@@ -4,7 +4,7 @@ from ert.run_models.everest_run_model import EverestRunModel
 from everest.config import EverestConfig
 from everest.config.sampler_config import SamplerConfig
 
-CONFIG_FILE_ADVANCED = "config_advanced_scipy.yml"
+CONFIG_FILE_ADVANCED = "config_advanced.yml"
 
 
 def test_sampler_uniform(
