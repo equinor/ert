@@ -395,9 +395,9 @@ class BaseRunModel(ABC):
                     status[str(real["status"])] += 1
 
         if self.restart:
-            status[
-                "Finished"
-            ] += self._get_number_of_finished_realizations_from_reruns()
+            status["Finished"] += (
+                self._get_number_of_finished_realizations_from_reruns()
+            )
         return status
 
     def _get_number_of_finished_realizations_from_reruns(self) -> int:
