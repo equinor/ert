@@ -154,44 +154,38 @@ class EverestRunModel(BaseRunModel):
         everest_config: EverestConfig,
         simulation_callback: SimulationCallback,
         optimization_callback: OptimizerCallback,
-        display_all_jobs: bool = True,
     ):
         everest_config = self._add_defaults(everest_config)
 
         Path(everest_config.log_dir).mkdir(parents=True, exist_ok=True)
         Path(everest_config.optimization_output_dir).mkdir(parents=True, exist_ok=True)
 
-        self.ropt_config = everest2ropt(everest_config)
-        self.everest_config = everest_config
-        self.support_restart = False
+        self._everest_config = everest_config
+        self._ropt_config = everest2ropt(everest_config)
 
         self._sim_callback = simulation_callback
         self._opt_callback = optimization_callback
         self._fm_errors: dict[int, dict[str, Any]] = {}
-        self._simulation_delete_run_path = (
-            False
-            if everest_config.simulator is None
-            else (everest_config.simulator.delete_run_path or False)
-        )
-        self._display_all_jobs = display_all_jobs
         self._result: OptimalResult | None = None
         self._exit_code: Literal["max_batch_num_reached"] | OptimizerExitCode | None = (
             None
         )
         self._max_batch_num_reached = False
-        self._simulator_cache: SimulatorCache | None = None
-        if (
-            everest_config.simulator is not None
-            and everest_config.simulator.enable_cache
-        ):
-            self._simulator_cache = SimulatorCache()
+        self._simulator_cache = (
+            SimulatorCache()
+            if (
+                everest_config.simulator is not None
+                and everest_config.simulator.enable_cache
+            )
+            else None
+        )
         self._experiment: Experiment | None = None
-        self.eval_server_cfg: EvaluatorServerConfig | None = None
+        self._eval_server_cfg: EvaluatorServerConfig | None = None
+        self._batch_id: int = 0
+        self._status: SimulationStatus | None = None
+
         storage = open_storage(config.ens_path, mode="w")
         status_queue: queue.SimpleQueue[StatusEvents] = queue.SimpleQueue()
-        self.batch_id: int = 0
-        self.status: SimulationStatus | None = None
-
         super().__init__(
             config,
             storage,
@@ -199,8 +193,7 @@ class EverestRunModel(BaseRunModel):
             status_queue,
             active_realizations=[],  # Set dynamically in run_forward_model()
         )
-
-        self.num_retries_per_iter = 0  # OK?
+        self.support_restart = False
 
     @staticmethod
     def _add_defaults(config: EverestConfig) -> EverestConfig:
@@ -256,7 +249,7 @@ class EverestRunModel(BaseRunModel):
     ) -> None:
         self.log_at_startup()
         self.restart = restart
-        self.eval_server_cfg = evaluator_server_config
+        self._eval_server_cfg = evaluator_server_config
         self._experiment = self._storage.create_experiment(
             name=f"EnOpt@{datetime.datetime.now().strftime('%Y-%m-%d@%H:%M:%S')}",
             parameters=self.ert_config.ensemble_config.parameter_configuration,
@@ -273,7 +266,7 @@ class EverestRunModel(BaseRunModel):
         # This mechanism is outdated and not supported by the ropt package. It
         # is retained for now via the seba_sqlite package.
         seba_storage = SqliteStorage(  # type: ignore
-            optimizer, self.everest_config.optimization_output_dir
+            optimizer, self._everest_config.optimization_output_dir
         )
 
         # Run the optimization:
@@ -292,9 +285,9 @@ class EverestRunModel(BaseRunModel):
 
     def check_if_runpath_exists(self) -> bool:
         return (
-            self.everest_config.simulation_dir is not None
-            and os.path.exists(self.everest_config.simulation_dir)
-            and any(os.listdir(self.everest_config.simulation_dir))
+            self._everest_config.simulation_dir is not None
+            and os.path.exists(self._everest_config.simulation_dir)
+            and any(os.listdir(self._everest_config.simulation_dir))
         )
 
     def _handle_errors(
@@ -328,7 +321,10 @@ class EverestRunModel(BaseRunModel):
 
     def _delete_runpath(self, run_args: list[RunArg]) -> None:
         logging.getLogger(EVEREST).debug("Simulation callback called")
-        if self._simulation_delete_run_path:
+        if (
+            self._everest_config.simulator is not None
+            and self._everest_config.simulator.delete_run_path
+        ):
             for i, real in self.get_current_snapshot().reals.items():
                 path_to_delete = run_args[int(i)].runpath
                 if real["status"] == "Finished" and os.path.isdir(path_to_delete):
@@ -352,9 +348,9 @@ class EverestRunModel(BaseRunModel):
         logging.getLogger(EVEREST).debug("Optimization callback called")
 
         if (
-            self.everest_config.optimization is not None
-            and self.everest_config.optimization.max_batch_num is not None
-            and (self.batch_id >= self.everest_config.optimization.max_batch_num)
+            self._everest_config.optimization is not None
+            and self._everest_config.optimization.max_batch_num is not None
+            and (self._batch_id >= self._everest_config.optimization.max_batch_num)
         ):
             self._max_batch_num_reached = True
             logging.getLogger(EVEREST).info("Maximum number of batches reached")
@@ -368,11 +364,11 @@ class EverestRunModel(BaseRunModel):
 
     def _create_optimizer(self) -> BasicOptimizer:
         assert (
-            self.everest_config.environment is not None
-            and self.everest_config.environment is not None
+            self._everest_config.environment is not None
+            and self._everest_config.environment is not None
         )
 
-        ropt_output_folder = Path(self.everest_config.optimization_output_dir)
+        ropt_output_folder = Path(self._everest_config.optimization_output_dir)
 
         # Initialize the optimizer with output tables. `min_header_len` is set
         # to ensure that all tables have the same number of header lines,
@@ -381,7 +377,7 @@ class EverestRunModel(BaseRunModel):
         # maximization results, necessitating a conversion step.
         optimizer = (
             BasicOptimizer(
-                enopt_config=self.ropt_config, evaluator=self._forward_model_evaluator
+                enopt_config=self._ropt_config, evaluator=self._forward_model_evaluator
             )
             .add_table(
                 columns=RESULT_COLUMNS,
@@ -441,7 +437,7 @@ class EverestRunModel(BaseRunModel):
         return self._result
 
     def __repr__(self) -> str:
-        config_json = json.dumps(self.everest_config, sort_keys=True, indent=2)
+        config_json = json.dumps(self._everest_config, sort_keys=True, indent=2)
         return f"EverestRunModel(config={config_json})"
 
     @staticmethod
@@ -551,7 +547,7 @@ class EverestRunModel(BaseRunModel):
                         f"Key {key} has suffixes, a suffix must be specified"
                     )
 
-        if set(controls.keys()) != set(self.everest_config.control_names):
+        if set(controls.keys()) != set(self._everest_config.control_names):
             err_msg = "Mismatch between initialized and provided control names."
             raise KeyError(err_msg)
 
@@ -578,7 +574,7 @@ class EverestRunModel(BaseRunModel):
             entity = " ".join(str(entity).split())
             return "".join([x if x.isalnum() else "_" for x in entity.strip()])
 
-        self.status = None  # Reset the current run status
+        self._status = None  # Reset the current run status
         assert metadata.config.realizations.names
         realization_ids = [
             metadata.config.realizations.names[realization]
@@ -591,7 +587,7 @@ class EverestRunModel(BaseRunModel):
         )
         assert self._experiment
         ensemble = self._experiment.create_ensemble(
-            name=f"batch_{self.batch_id}",
+            name=f"batch_{self._batch_id}",
             ensemble_size=len(case_data),
         )
         for sim_id, (geo_id, controls) in enumerate(case_data):
@@ -626,8 +622,8 @@ class EverestRunModel(BaseRunModel):
                 "_ERT_SIMULATION_MODE": "batch_simulation",
             }
         )
-        assert self.eval_server_cfg
-        self._evaluate_and_postprocess(run_args, ensemble, self.eval_server_cfg)
+        assert self._eval_server_cfg
+        self._evaluate_and_postprocess(run_args, ensemble, self._eval_server_cfg)
 
         self._delete_runpath(run_args)
         # gather results
@@ -638,12 +634,12 @@ class EverestRunModel(BaseRunModel):
                 results.append({})
                 continue
             d = {}
-            for key in self.everest_config.result_names:
+            for key in self._everest_config.result_names:
                 data = ensemble.load_responses(key, (sim_id,))
                 d[key] = data["values"].to_numpy()
             results.append(d)
 
-        for fnc_name, alias in self.everest_config.function_aliases.items():
+        for fnc_name, alias in self._everest_config.function_aliases.items():
             for result in results:
                 result[fnc_name] = result[alias]
 
@@ -691,11 +687,11 @@ class EverestRunModel(BaseRunModel):
         evaluator_result = EvaluatorResult(
             objectives=-objectives,
             constraints=constraints,
-            batch_id=self.batch_id,
+            batch_id=self._batch_id,
             evaluation_ids=sim_ids,
         )
 
-        self.batch_id += 1
+        self._batch_id += 1
 
         return evaluator_result
 
@@ -703,9 +699,9 @@ class EverestRunModel(BaseRunModel):
         super().send_snapshot_event(event, iteration)
         if type(event) in {EESnapshot, EESnapshotUpdate}:
             newstatus = self._simulation_status(self.get_current_snapshot())
-            if self.status != newstatus:  # No change in status
+            if self._status != newstatus:  # No change in status
                 self._sim_callback(newstatus)
-                self.status = newstatus
+                self._status = newstatus
 
     def _simulation_status(self, snapshot: EnsembleSnapshot) -> SimulationStatus:
         jobs_progress: list[list[JobProgress]] = []
@@ -730,7 +726,7 @@ class EverestRunModel(BaseRunModel):
             )
             if fm_step.get("error", ""):
                 self._handle_errors(
-                    batch=self.batch_id,
+                    batch=self._batch_id,
                     simulation=simulation,
                     realization=realization,
                     fm_name=fm_step.get("name", "Unknwon"),  # type: ignore
@@ -742,5 +738,5 @@ class EverestRunModel(BaseRunModel):
         return {
             "status": self.get_current_status(),
             "progress": jobs_progress,
-            "batch_number": self.batch_id,
+            "batch_number": self._batch_id,
         }

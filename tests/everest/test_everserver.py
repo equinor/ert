@@ -106,7 +106,7 @@ def test_everserver_status_failure(_1, copy_math_func_test_data_to_tmp):
     "ert.run_models.everest_run_model.EverestRunModel.run_experiment",
     autospec=True,
     side_effect=lambda self, evaluator_server_config, restart=False: check_status(
-        ServerConfig.get_hostfile_path(self.everest_config.output_dir),
+        ServerConfig.get_hostfile_path(self._everest_config.output_dir),
         status=ServerStatus.running,
     ),
 )
