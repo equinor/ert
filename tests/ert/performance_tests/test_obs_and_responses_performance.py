@@ -360,6 +360,7 @@ _BenchMarks: list[_Benchmark] = [
 @pytest.fixture(
     params=[
         (
+            b.alias,
             b.config,
             b.expected_join_performance,
         )
@@ -367,7 +368,7 @@ _BenchMarks: list[_Benchmark] = [
     ],
 )
 def setup_benchmark(tmp_path, request):
-    config, expected_performance = request.param
+    alias, config, expected_performance = request.param
     info = create_experiment_args(
         config.num_parameters,
         config.num_gen_data_keys,
@@ -397,6 +398,7 @@ def setup_benchmark(tmp_path, request):
             ens.save_response("gen_data", info.gen_data_responses.clone(), real)
 
         yield (
+            alias,
             ens,
             experiment.observation_keys,
             np.array(range(config.num_realizations)),
@@ -407,7 +409,7 @@ def setup_benchmark(tmp_path, request):
 def test_memory_performance_of_joining_observations_and_responses(
     setup_benchmark, tmp_path
 ):
-    ens, observation_keys, mask, expected_performance = setup_benchmark
+    _, ens, observation_keys, mask, expected_performance = setup_benchmark
 
     with memray.Tracker(tmp_path / "memray.bin"):
         ens.get_observations_and_responses(observation_keys, mask)
@@ -420,7 +422,10 @@ def test_memory_performance_of_joining_observations_and_responses(
 def test_time_performance_of_joining_observations_and_responses(
     setup_benchmark, benchmark
 ):
-    ens, observation_keys, mask, _ = setup_benchmark
+    alias, ens, observation_keys, mask, _ = setup_benchmark
+
+    if alias not in ["small", "medium"]:
+        pytest.skip()
 
     def run():
         ens.get_observations_and_responses(observation_keys, mask)
@@ -431,6 +436,7 @@ def test_time_performance_of_joining_observations_and_responses(
 @pytest.fixture(
     params=[
         (
+            b.alias,
             b.config,
             b.expected_update_performance,
         )
@@ -438,7 +444,7 @@ def test_time_performance_of_joining_observations_and_responses(
     ],
 )
 def setup_es_benchmark(tmp_path, request):
-    config, expected_performance = request.param
+    alias, config, expected_performance = request.param
     info = create_experiment_args(
         config.num_parameters,
         config.num_gen_data_keys,
@@ -483,11 +489,17 @@ def setup_es_benchmark(tmp_path, request):
             iteration=1,
         )
 
-        yield prior, posterior, info.gen_kw_config.name, expected_performance
+        yield (
+            alias,
+            prior,
+            posterior,
+            info.gen_kw_config.name,
+            expected_performance,
+        )
 
 
 def test_memory_performance_of_doing_es_update(setup_es_benchmark, tmp_path):
-    prior, posterior, gen_kw_name, expected_performance = setup_es_benchmark
+    _, prior, posterior, gen_kw_name, expected_performance = setup_es_benchmark
     with memray.Tracker(tmp_path / "memray.bin"):
         smoother_update(
             prior,
@@ -502,7 +514,10 @@ def test_memory_performance_of_doing_es_update(setup_es_benchmark, tmp_path):
 
 
 def test_speed_performance_of_doing_es_update(setup_es_benchmark, benchmark):
-    prior, posterior, gen_kw_name, _ = setup_es_benchmark
+    alias, prior, posterior, gen_kw_name, _ = setup_es_benchmark
+
+    if alias not in ["small", "medium"]:
+        pytest.skip()
 
     def run():
         smoother_update(
