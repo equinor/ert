@@ -1,6 +1,7 @@
-from typing import Literal
+from typing import Literal, Self
 
-from pydantic import BaseModel, Field, field_validator
+from numpy.random import SeedSequence
+from pydantic import BaseModel, Field, field_validator, model_validator
 
 from everest.config.validation_utils import check_path_valid
 
@@ -43,3 +44,9 @@ continue running.
     def validate_output_folder(cls, output_folder):  # pylint:disable=E0213
         check_path_valid(output_folder)
         return output_folder
+
+    @model_validator(mode="after")
+    def validate_random_seed(self) -> Self:
+        if self.random_seed is None:
+            self.random_seed = SeedSequence().entropy
+        return self
