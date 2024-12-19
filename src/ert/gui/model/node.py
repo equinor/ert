@@ -10,7 +10,7 @@ from ert.ensemble_evaluator.snapshot import FMStepSnapshot
 
 
 @dataclass
-class _Node(ABC):
+class Node(ABC):
     id_: str
     parent: RootNode | IterNode | RealNode | None = None
     children: (
@@ -24,7 +24,7 @@ class _Node(ABC):
         return f"Node<{type(self).__name__}>@{self.id_} with {parent}parent and {children}children"
 
     @abstractmethod
-    def add_child(self, node: _Node) -> None:
+    def add_child(self, node: Node) -> None:
         pass
 
     def row(self) -> int:
@@ -37,12 +37,12 @@ class _Node(ABC):
 
 
 @dataclass
-class RootNode(_Node):
+class RootNode(Node):
     parent: None = field(default=None, init=False)
     children: dict[str, IterNode] = field(default_factory=dict)
     max_memory_usage: int | None = None
 
-    def add_child(self, node: _Node) -> None:
+    def add_child(self, node: Node) -> None:
         node = cast(IterNode, node)
         node.parent = self
         self.children[node.id_] = node
@@ -55,12 +55,12 @@ class IterNodeData:
 
 
 @dataclass
-class IterNode(_Node):
+class IterNode(Node):
     parent: RootNode | None = None
     data: IterNodeData = field(default_factory=IterNodeData)
     children: dict[str, RealNode] = field(default_factory=dict)
 
-    def add_child(self, node: _Node) -> None:
+    def add_child(self, node: Node) -> None:
         node = cast(RealNode, node)
         node.parent = self
         self.children[node.id_] = node
@@ -80,21 +80,21 @@ class RealNodeData:
 
 
 @dataclass
-class RealNode(_Node):
+class RealNode(Node):
     parent: IterNode | None = None
     data: RealNodeData = field(default_factory=RealNodeData)
     children: dict[str, ForwardModelStepNode] = field(default_factory=dict)
 
-    def add_child(self, node: _Node) -> None:
+    def add_child(self, node: Node) -> None:
         node = cast(ForwardModelStepNode, node)
         node.parent = self
         self.children[node.id_] = node
 
 
 @dataclass
-class ForwardModelStepNode(_Node):
+class ForwardModelStepNode(Node):
     parent: RealNode | None
     data: FMStepSnapshot = field(default_factory=lambda: FMStepSnapshot())  # noqa: PLW0108
 
-    def add_child(self, node: _Node) -> None:
+    def add_child(self, node: Node) -> None:
         pass
