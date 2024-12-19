@@ -56,7 +56,6 @@ class EnsembleSelector(QComboBox):
         notifier.storage_changed.connect(self.populate)
 
         if notifier.is_storage_available:
-            print("populating from notifier available storage")
             self.populate()
 
     @property
@@ -65,7 +64,6 @@ class EnsembleSelector(QComboBox):
         return itemData
 
     def populate(self) -> None:
-        print("CALLED POPULATE")
         block = self.blockSignals(True)
 
         self.clear()
@@ -82,9 +80,6 @@ class EnsembleSelector(QComboBox):
                 self._show_only_with_valid_experiment
                 and not ensemble.experiment.is_valid()
             ):
-                print(
-                    f"FOUND INVALID EXPERIMENT {ensemble.experiment_id} FOR ENSEMBLE {ensemble.name}"
-                )
                 index = self.count() - 1
                 model_item = model.item(index)
                 model_item.setFlags(
@@ -103,12 +98,10 @@ class EnsembleSelector(QComboBox):
         self.setCurrentIndex(max(current_index, 0))
 
         self.blockSignals(block)
-        print("EMITTING ENSEMBLE POPULATED")
         self.ensemble_populated.emit()
 
     def _ensemble_list(self) -> Iterable[Ensemble]:
         if self._show_only_undefined:
-            print("JONAK1")
             ensembles = (
                 ensemble
                 for ensemble in self.notifier.storage.ensembles
@@ -121,7 +114,6 @@ class EnsembleSelector(QComboBox):
             ensembles = self.notifier.storage.ensembles
         ensemble_list = list(ensembles)
         if self._show_only_with_valid_experiment:
-            print("FILTERED")
             ensemble_list = [ens for ens in ensemble_list if ens.experiment.is_valid()]
         if self._show_only_no_children:
             parents = [
@@ -131,9 +123,7 @@ class EnsembleSelector(QComboBox):
         return sorted(ensemble_list, key=lambda x: x.started_at, reverse=True)
 
     def _on_current_index_changed(self, index: int) -> None:
-        print("ON CURRENT INDEX CHANGED")
         self.notifier.set_current_ensemble(self.itemData(index))
 
     def _on_global_current_ensemble_changed(self, data: Ensemble | None) -> None:
-        print("ON GLOBAL CURRENT ENSEMBLE CHANGED")
         self.setCurrentIndex(max(self.findData(data, Qt.ItemDataRole.UserRole), 0))

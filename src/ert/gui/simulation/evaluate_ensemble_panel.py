@@ -35,7 +35,9 @@ class EvaluateEnsemblePanel(ExperimentConfigPanel):
         lab.setWordWrap(True)
         lab.setAlignment(QtCore.Qt.AlignmentFlag.AlignLeft)
         layout.addRow(lab)
-        self._ensemble_selector = EnsembleSelector(notifier, show_only_no_children=True)
+        self._ensemble_selector = EnsembleSelector(
+            notifier, show_only_no_children=True, show_only_with_valid_experiment=True
+        )
         layout.addRow("Ensemble:", self._ensemble_selector)
         runpath_label = CopyableLabel(text=run_path)
         layout.addRow("Runpath:", runpath_label)
@@ -73,7 +75,6 @@ class EvaluateEnsemblePanel(ExperimentConfigPanel):
         )
 
     def get_experiment_arguments(self) -> Arguments:
-        print("GET_EXPERIMENT_ARGUMENTS")
         return Arguments(
             mode=EVALUATE_ENSEMBLE_MODE,
             ensemble_id=str(self._ensemble_selector.selected_ensemble.id),
@@ -81,7 +82,6 @@ class EvaluateEnsemblePanel(ExperimentConfigPanel):
         )
 
     def _realizations_from_fs(self) -> None:
-        print("REALIZATIONS_FROM_FS")
         ensemble = self._ensemble_selector.selected_ensemble
         self._active_realizations_field.setEnabled(ensemble is not None)
         if ensemble:
