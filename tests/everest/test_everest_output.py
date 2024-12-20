@@ -52,13 +52,7 @@ async def test_everest_output(copy_mocked_test_data_to_tmp):
     initial_folders = set(folders)
     initial_files = set(files)
 
-    # Tests in this class used to fail when a callback was passed in
-    # Use a callback just to see that everything works fine, even though
-    # the callback does nothing
-    def useless_cb(*args, **kwargs):
-        pass
-
-    EverestRunModel.create(config, optimization_callback=useless_cb)
+    EverestRunModel.create(config)
 
     # Check the output folder is created when stating the optimization
     # in everest workflow
