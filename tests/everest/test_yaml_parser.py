@@ -18,9 +18,13 @@ def test_random_seed(tmp_path, monkeypatch, random_seed):
     if random_seed:
         config["environment"] = {"random_seed": random_seed}
     ever_config = EverestConfig.with_defaults(**config)
-    assert ever_config.environment.random_seed == random_seed
     ert_config = everest_to_ert_config(ever_config)
-    assert ert_config.random_seed == random_seed
+    if random_seed is None:
+        assert ever_config.environment.random_seed > 0
+        assert ert_config.random_seed > 0
+    else:
+        assert ever_config.environment.random_seed == random_seed
+        assert ert_config.random_seed == random_seed
 
 
 def test_read_file(tmp_path, monkeypatch):

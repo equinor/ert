@@ -6,7 +6,6 @@ import json
 import logging
 import os
 import queue
-import random
 import shutil
 from collections import defaultdict
 from collections.abc import Callable, Mapping
@@ -155,10 +154,17 @@ class EverestRunModel(BaseRunModel):
         simulation_callback: SimulationCallback | None,
         optimization_callback: OptimizerCallback | None,
     ):
-        everest_config = self._add_defaults(everest_config)
-
         Path(everest_config.log_dir).mkdir(parents=True, exist_ok=True)
         Path(everest_config.optimization_output_dir).mkdir(parents=True, exist_ok=True)
+
+        assert everest_config.environment is not None
+        logging.getLogger(EVEREST).info(
+            "Using random seed: %d", everest_config.environment.random_seed
+        )
+        logging.getLogger(EVEREST).info(
+            "To deterministically reproduce this experiment, "
+            "add the above random seed to your configuration file."
+        )
 
         self._everest_config = everest_config
         self._ropt_config = everest2ropt(everest_config)
@@ -195,31 +201,6 @@ class EverestRunModel(BaseRunModel):
         )
         self.support_restart = False
 
-    @staticmethod
-    def _add_defaults(config: EverestConfig) -> EverestConfig:
-        """This function exists as a temporary mechanism to default configurations that
-        needs to be global in the sense that they should carry over both to ropt and ERT.
-        When the proper mechanism for this is implemented this code
-        should die.
-
-        """
-        defaulted_config = config.copy()
-        assert defaulted_config.environment is not None
-
-        random_seed = defaulted_config.environment.random_seed
-        if random_seed is None:
-            random_seed = random.randint(1, 2**30)
-
-        defaulted_config.environment.random_seed = random_seed
-
-        logging.getLogger(EVEREST).info("Using random seed: %d", random_seed)
-        logging.getLogger(EVEREST).info(
-            "To deterministically reproduce this experiment, "
-            "add the above random seed to your configuration file."
-        )
-
-        return defaulted_config
-
     @classmethod
     def create(
         cls,
@@ -228,7 +209,7 @@ class EverestRunModel(BaseRunModel):
         optimization_callback: OptimizerCallback | None = None,
     ) -> EverestRunModel:
         return cls(
-            config=everest_to_ert_config(cls._add_defaults(ever_config)),
+            config=everest_to_ert_config(ever_config),
             everest_config=ever_config,
             simulation_callback=simulation_callback,
             optimization_callback=optimization_callback,
