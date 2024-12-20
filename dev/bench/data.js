@@ -1,39 +1,8 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1734700156645,
+  "lastUpdate": 1734701387803,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
-      {
-        "commit": {
-          "author": {
-            "email": "cmrqs@unicamp.br",
-            "name": "Carlos Marques",
-            "username": "cmrqs"
-          },
-          "committer": {
-            "email": "dan.sava42@gmail.com",
-            "name": "Dan Sava",
-            "username": "DanSava"
-          },
-          "distinct": true,
-          "id": "72babc57267823fd3fe7b8c6906ea1005eec1974",
-          "message": "Add torque params to everserver queue config tests",
-          "timestamp": "2024-12-16T18:25:34+09:00",
-          "tree_id": "5ddf793f117709eb933209e5bec9070d5961c931",
-          "url": "https://github.com/equinor/ert/commit/72babc57267823fd3fe7b8c6906ea1005eec1974"
-        },
-        "date": 1734341247307,
-        "tool": "pytest",
-        "benches": [
-          {
-            "name": "tests/ert/performance_tests/test_analysis.py::test_and_benchmark_adaptive_localization_with_fields",
-            "value": 0.21064330675388496,
-            "unit": "iter/sec",
-            "range": "stddev: 0.14127235805009516",
-            "extra": "mean: 4.747361857399994 sec\nrounds: 5"
-          }
-        ]
-      },
       {
         "commit": {
           "author": {
@@ -930,6 +899,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.03988909457111767",
             "extra": "mean: 4.579137164000002 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "pieter.verveer@tno.nl",
+            "name": "Peter Verveer",
+            "username": "verveerpj"
+          },
+          "committer": {
+            "email": "pieter.verveer@tno.nl",
+            "name": "Peter Verveer",
+            "username": "verveerpj"
+          },
+          "distinct": true,
+          "id": "722e0fc805cde27add2a3ad3344fcfc99fdf5b10",
+          "message": "EverestRunModel: sanitize realization var names",
+          "timestamp": "2024-12-20T14:27:56+01:00",
+          "tree_id": "ed41627d26d55693d518eb54f9bad50b37092805",
+          "url": "https://github.com/equinor/ert/commit/722e0fc805cde27add2a3ad3344fcfc99fdf5b10"
+        },
+        "date": 1734701386950,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/ert/performance_tests/test_analysis.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 0.21948512170606432,
+            "unit": "iter/sec",
+            "range": "stddev: 0.019461140551392343",
+            "extra": "mean: 4.5561174817999985 sec\nrounds: 5"
           }
         ]
       }
