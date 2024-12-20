@@ -10,14 +10,10 @@ import shutil
 from collections import defaultdict
 from collections.abc import Callable, Mapping
 from dataclasses import dataclass
+from enum import IntEnum
 from pathlib import Path
 from types import TracebackType
-from typing import (
-    TYPE_CHECKING,
-    Any,
-    Literal,
-    Protocol,
-)
+from typing import TYPE_CHECKING, Any, Protocol
 
 import numpy as np
 import seba_sqlite.sqlite_storage
@@ -146,6 +142,14 @@ class OptimalResult:
         )
 
 
+class EverestExitCode(IntEnum):
+    COMPLETED = 1
+    TOO_FEW_REALIZATIONS = 2
+    MAX_FUNCTIONS_REACHED = 3
+    MAX_BATCH_NUM_REACHED = 4
+    USER_ABORT = 5
+
+
 class EverestRunModel(BaseRunModel):
     def __init__(
         self,
@@ -173,10 +177,7 @@ class EverestRunModel(BaseRunModel):
         self._opt_callback = optimization_callback
         self._fm_errors: dict[int, dict[str, Any]] = {}
         self._result: OptimalResult | None = None
-        self._exit_code: Literal["max_batch_num_reached"] | OptimizerExitCode | None = (
-            None
-        )
-        self._max_batch_num_reached = False
+        self._exit_code: EverestExitCode | None = None
         self._simulator_cache = (
             SimulatorCache()
             if (
@@ -248,11 +249,16 @@ class EverestRunModel(BaseRunModel):
             seba_storage.get_optimal_result()  # type: ignore
         )
 
-        self._exit_code = (
-            "max_batch_num_reached"
-            if self._max_batch_num_reached
-            else optimizer_exit_code
-        )
+        if self._exit_code is None:
+            match optimizer_exit_code:
+                case OptimizerExitCode.MAX_FUNCTIONS_REACHED:
+                    self._exit_code = EverestExitCode.MAX_FUNCTIONS_REACHED
+                case OptimizerExitCode.USER_ABORT:
+                    self._exit_code = EverestExitCode.USER_ABORT
+                case OptimizerExitCode.TOO_FEW_REALIZATIONS:
+                    self._exit_code = EverestExitCode.TOO_FEW_REALIZATIONS
+                case _:
+                    self._exit_code = EverestExitCode.COMPLETED
 
     def check_if_runpath_exists(self) -> bool:
         return (
@@ -323,7 +329,7 @@ class EverestRunModel(BaseRunModel):
             and self._everest_config.optimization.max_batch_num is not None
             and (self._batch_id >= self._everest_config.optimization.max_batch_num)
         ):
-            self._max_batch_num_reached = True
+            self._exit_code = EverestExitCode.MAX_BATCH_NUM_REACHED
             logging.getLogger(EVEREST).info("Maximum number of batches reached")
             optimizer.abort_optimization()
         if (
@@ -398,9 +404,7 @@ class EverestRunModel(BaseRunModel):
         return "Run batches "
 
     @property
-    def exit_code(
-        self,
-    ) -> Literal["max_batch_num_reached"] | OptimizerExitCode | None:
+    def exit_code(self) -> EverestExitCode | None:
         return self._exit_code
 
     @property
