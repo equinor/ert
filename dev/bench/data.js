@@ -1,39 +1,8 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1734700072876,
+  "lastUpdate": 1734700156645,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
-      {
-        "commit": {
-          "author": {
-            "email": "levje@equinor.com",
-            "name": "larsevj",
-            "username": "larsevj"
-          },
-          "committer": {
-            "email": "60844986+larsevj@users.noreply.github.com",
-            "name": "Lars Evje",
-            "username": "larsevj"
-          },
-          "distinct": true,
-          "id": "ebe548ea7413351e74f1c9b378210e3ef3392b61",
-          "message": "Reduce logging of gui events to file\n\n- Also increases log level for websockets or asyncio",
-          "timestamp": "2024-12-13T15:36:57+01:00",
-          "tree_id": "83dde9ce170f4caa329704d03af40171f4df2ad1",
-          "url": "https://github.com/equinor/ert/commit/ebe548ea7413351e74f1c9b378210e3ef3392b61"
-        },
-        "date": 1734100725395,
-        "tool": "pytest",
-        "benches": [
-          {
-            "name": "tests/ert/performance_tests/test_analysis.py::test_and_benchmark_adaptive_localization_with_fields",
-            "value": 0.21909196796051808,
-            "unit": "iter/sec",
-            "range": "stddev: 0.03546044688253611",
-            "extra": "mean: 4.564293293399999 sec\nrounds: 5"
-          }
-        ]
-      },
       {
         "commit": {
           "author": {
@@ -930,6 +899,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.03573023895218398",
             "extra": "mean: 4.636126591800002 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "eide.oyvind87@gmail.com",
+            "name": "Øyvind Eide",
+            "username": "oyvindeide"
+          },
+          "committer": {
+            "email": "44577479+oyvindeide@users.noreply.github.com",
+            "name": "Øyvind Eide",
+            "username": "oyvindeide"
+          },
+          "distinct": true,
+          "id": "8fa3040800cc5253dc1ed5a34c8ceb32281373c7",
+          "message": "Remove outdated logging handle",
+          "timestamp": "2024-12-20T14:07:24+01:00",
+          "tree_id": "0d92b4c9a2b2f21d743ac9e00697aa34bc0a79df",
+          "url": "https://github.com/equinor/ert/commit/8fa3040800cc5253dc1ed5a34c8ceb32281373c7"
+        },
+        "date": 1734700155622,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/ert/performance_tests/test_analysis.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 0.21838175275939375,
+            "unit": "iter/sec",
+            "range": "stddev: 0.03988909457111767",
+            "extra": "mean: 4.579137164000002 sec\nrounds: 5"
           }
         ]
       }
