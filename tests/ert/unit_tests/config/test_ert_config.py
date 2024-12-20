@@ -731,17 +731,16 @@ def test_that_magic_strings_get_substituted_in_workflow():
     assert ert_config.workflows["workflow"].cmd_list[0][1] == ["0"]
 
 
-@pytest.mark.parametrize("fm_keyword", ["FORWARD_MODEL", "SIMULATION_JOB"])
-def test_that_unknown_job_gives_config_validation_error(fm_keyword):
+def test_that_unknown_job_gives_config_validation_error():
     with pytest.raises(
         ConfigValidationError,
         match="Could not find forward model step 'NO_SUCH_FORWARD_MODEL_STEP'",
     ):
         _ = ErtConfig.from_file_contents(
             dedent(
-                f"""
+                """
                 NUM_REALIZATIONS  1
-                {fm_keyword} NO_SUCH_FORWARD_MODEL_STEP
+                FORWARD_MODEL NO_SUCH_FORWARD_MODEL_STEP
                 """
             )
         )
@@ -1803,11 +1802,6 @@ def test_warning_raised_when_summary_key_and_no_simulation_job_present():
         ("flow", "FORWARD_MODEL"),
         ("FLOW", "FORWARD_MODEL"),
         ("ECLIPSE100", "FORWARD_MODEL"),
-        ("eclipse", "SIMULATION_JOB"),
-        ("eclipse100", "SIMULATION_JOB"),
-        ("flow", "SIMULATION_JOB"),
-        ("FLOW", "SIMULATION_JOB"),
-        ("ECLIPSE100", "SIMULATION_JOB"),
     ],
 )
 @pytest.mark.usefixtures("use_tmpdir")

@@ -49,14 +49,6 @@ def forward_model_keyword() -> SchemaItem:
     )
 
 
-def simulation_job_keyword() -> SchemaItem:
-    return SchemaItem(
-        kw=ConfigKeys.SIMULATION_JOB,
-        argc_max=None,
-        multi_occurrence=True,
-    )
-
-
 def data_kw_keyword() -> SchemaItem:
     return SchemaItem(
         kw=ConfigKeys.DATA_KW,
@@ -349,7 +341,6 @@ def init_user_config_schema() -> ConfigSchemaDict:
         path_keyword(ConfigKeys.ENSPATH),
         single_arg_keyword(ConfigKeys.JOBNAME),
         forward_model_keyword(),
-        simulation_job_keyword(),
         data_kw_keyword(),
         define_keyword(),
         existing_path_keyword(ConfigKeys.OBS_CONFIG),

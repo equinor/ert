@@ -1,1 +1,2 @@
 EXECUTABLE heat_equation.py
+ARGLIST <ARG0> <ARG1>
