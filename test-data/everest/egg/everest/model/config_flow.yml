@@ -1,5 +1,5 @@
 definitions:
-  eclbase: eclipse/model/EGG_FLOW
+  eclbase: eclipse/model/EGG
 
 wells:
   - { name: PROD1 }
@@ -87,7 +87,7 @@ optimization:
 
 model:
   realizations: [0, 1, 2]
-  data_file: ../../eclipse/include/realizations/realization-r{{realization}}/eclipse/model/EGG_FLOW.DATA
+  data_file: ../../eclipse/include/realizations/realization-r{{realization}}/eclipse/model/EGG.DATA
 
 environment:
   simulation_folder: egg_simulations
