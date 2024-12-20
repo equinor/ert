@@ -1,6 +1,6 @@
-from qtpy.QtCore import QSize, Qt
-from qtpy.QtGui import QColor, QFocusEvent, QIcon, QKeyEvent, QResizeEvent
-from qtpy.QtWidgets import QLineEdit, QPushButton, QStyle
+from PySide6.QtCore import QSize, Qt
+from PySide6.QtGui import QColor, QFocusEvent, QIcon, QKeyEvent, QResizeEvent
+from PySide6.QtWidgets import QLineEdit, QPushButton, QStyle
 
 
 class ClearableLineEdit(QLineEdit):
@@ -40,7 +40,7 @@ class ClearableLineEdit(QLineEdit):
         size = QLineEdit.minimumSizeHint(self)
         return QSize(size.width() + self._clear_button.width() + 3, size.height())
 
-    def resizeEvent(self, a0: QResizeEvent | None) -> None:
+    def resizeEvent(self, event: QResizeEvent) -> None:
         right = self.rect().right()
         style = self.style()
         assert style is not None
@@ -49,7 +49,7 @@ class ClearableLineEdit(QLineEdit):
             right - frame_width - self._clear_button.width(),
             int((self.height() - self._clear_button.height()) / 2),
         )
-        QLineEdit.resizeEvent(self, a0)
+        QLineEdit.resizeEvent(self, event)
 
     def clearButtonClicked(self) -> None:
         self.setText("")
@@ -70,29 +70,29 @@ class ClearableLineEdit(QLineEdit):
             palette.setColor(self.foregroundRole(), self._active_color)
             self.setPalette(palette)
 
-    def focusInEvent(self, a0: QFocusEvent | None) -> None:
-        QLineEdit.focusInEvent(self, a0)
+    def focusInEvent(self, arg__1: QFocusEvent) -> None:
+        QLineEdit.focusInEvent(self, arg__1)
         self.hidePlaceHolder()
 
-    def focusOutEvent(self, a0: QFocusEvent | None) -> None:
-        QLineEdit.focusOutEvent(self, a0)
+    def focusOutEvent(self, arg__1: QFocusEvent) -> None:
+        QLineEdit.focusOutEvent(self, arg__1)
         if not QLineEdit.text(self):
             self.showPlaceholder()
 
-    def keyPressEvent(self, a0: QKeyEvent | None) -> None:
-        if a0 is not None and a0.key() == Qt.Key.Key_Escape:
+    def keyPressEvent(self, arg__1: QKeyEvent) -> None:
+        if arg__1 is not None and arg__1.key() == Qt.Key.Key_Escape:
             self.clear()
             self.clearFocus()
-            a0.accept()
+            arg__1.accept()
 
-        QLineEdit.keyPressEvent(self, a0)
+        QLineEdit.keyPressEvent(self, arg__1)
 
-    def setText(self, a0: str | None) -> None:
+    def setText(self, arg__1: str | None) -> None:
         self.hidePlaceHolder()
 
-        QLineEdit.setText(self, a0)
+        QLineEdit.setText(self, arg__1)
 
-        if len(str(a0)) == 0 and not self.hasFocus():
+        if len(str(arg__1)) == 0 and not self.hasFocus():
             self.showPlaceholder()
 
     def text(self) -> str:

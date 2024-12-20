@@ -1,4 +1,4 @@
-from qtpy.QtWidgets import QFileDialog, QMessageBox
+from PySide6.QtWidgets import QFileDialog, QMessageBox
 
 
 def mock_dialogs(
@@ -57,10 +57,10 @@ def mock_dialogs_all(
     open_file_name="",
     open_file_names="",
     save_file_name="",
-    information_button=QMessageBox.Ok,
-    warning_button=QMessageBox.Ok,
-    critical_button=QMessageBox.Ok,
-    question_button=QMessageBox.Ok | QMessageBox.Yes,
+    information_button=QMessageBox.StandardButton.Ok,
+    warning_button=QMessageBox.StandardButton.Ok,
+    critical_button=QMessageBox.StandardButton.Ok,
+    question_button=QMessageBox.StandardButton.Ok | QMessageBox.StandardButton.Yes,
 ):
     """Same as mock_dialog but with some acceptable default"""
     mock_dialogs(

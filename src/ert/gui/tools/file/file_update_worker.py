@@ -1,6 +1,6 @@
 from io import TextIOWrapper
 
-from qtpy.QtCore import QObject, QTimer, Signal, Slot
+from PySide6.QtCore import QObject, QTimer, Signal, Slot
 
 
 class FileUpdateWorker(QObject):

@@ -1,14 +1,14 @@
 from abc import abstractmethod
 
-from qtpy.QtCore import QTimer
-from qtpy.QtGui import QIcon
-from qtpy.QtWidgets import QApplication, QMessageBox, QPushButton, QSizePolicy
+from PySide6.QtCore import QTimer
+from PySide6.QtGui import QIcon
+from PySide6.QtWidgets import QApplication, QMessageBox, QPushButton, QSizePolicy
 
 
 class CopyButton(QPushButton):
     def __init__(self) -> None:
         super().__init__()
-        self.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Fixed)
+        self.setSizePolicy(QSizePolicy.Policy.Preferred, QSizePolicy.Policy.Fixed)
         self.setIcon(QIcon("img:copy.svg"))
         self.restore_timer = QTimer(self)
 
@@ -32,7 +32,7 @@ class CopyButton(QPushButton):
                 None,
                 "Error",
                 "Cannot copy text to clipboard because your system does not have a clipboard",
-                QMessageBox.Ok,
+                QMessageBox.StandardButton.Ok,
             )
         self.setIcon(QIcon("img:check.svg"))
         self.restore_timer.start(1000)

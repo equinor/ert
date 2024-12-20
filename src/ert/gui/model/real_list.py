@@ -1,10 +1,11 @@
 from typing import overload
 
-from qtpy.QtCore import (
+from PySide6.QtCore import (
     QAbstractItemModel,
     QAbstractProxyModel,
     QModelIndex,
     QObject,
+    QPersistentModelIndex,
     Slot,
 )
 from typing_extensions import override
@@ -61,10 +62,14 @@ class RealListModel(QAbstractProxyModel):
         self.endResetModel()
 
     @override
-    def columnCount(self, parent: QModelIndex | None = None) -> int:
+    def columnCount(
+        self, parent: QModelIndex | QPersistentModelIndex | None = None
+    ) -> int:
         return 1
 
-    def rowCount(self, parent: QModelIndex | None = None) -> int:
+    def rowCount(
+        self, parent: QModelIndex | QPersistentModelIndex | None = None
+    ) -> int:
         parent = parent if parent else QModelIndex()
         if not parent.isValid():
             source_model = self.sourceModel()
@@ -75,16 +80,21 @@ class RealListModel(QAbstractProxyModel):
         return 0
 
     @overload
-    def parent(self, child: QModelIndex) -> QModelIndex: ...
+    def parent(self) -> QObject: ...
     @overload
-    def parent(self) -> QObject | None: ...
+    def parent(self, child: QModelIndex | QPersistentModelIndex) -> QModelIndex: ...
     @override
-    def parent(self, child: QModelIndex | None = None) -> QObject | None:
+    def parent(
+        self, child: QModelIndex | QPersistentModelIndex | None = None
+    ) -> QObject | QModelIndex:
         return QModelIndex()
 
     @override
     def index(
-        self, row: int, column: int, parent: QModelIndex | None = None
+        self,
+        row: int,
+        column: int,
+        parent: QModelIndex | QPersistentModelIndex | None = None,
     ) -> QModelIndex:
         parent = parent if parent else QModelIndex()
         if not parent.isValid():
@@ -93,7 +103,9 @@ class RealListModel(QAbstractProxyModel):
         return QModelIndex()
 
     @override
-    def hasChildren(self, parent: QModelIndex | None = None) -> bool:
+    def hasChildren(
+        self, parent: QModelIndex | QPersistentModelIndex | None = None
+    ) -> bool:
         # Reimplemented, since in the source model, the realizations have
         # children (i.e. valid indices.). Realizations do not have children in
         # this model.
@@ -105,7 +117,9 @@ class RealListModel(QAbstractProxyModel):
         return False
 
     @override
-    def mapToSource(self, proxyIndex: QModelIndex) -> QModelIndex:
+    def mapToSource(
+        self, proxyIndex: QModelIndex | QPersistentModelIndex
+    ) -> QModelIndex:
         if proxyIndex.isValid():
             sm = self.sourceModel()
             assert sm is not None
@@ -115,7 +129,9 @@ class RealListModel(QAbstractProxyModel):
         return QModelIndex()
 
     @override
-    def mapFromSource(self, sourceIndex: QModelIndex) -> QModelIndex:
+    def mapFromSource(
+        self, sourceIndex: QModelIndex | QPersistentModelIndex
+    ) -> QModelIndex:
         return (
             self.index(sourceIndex.row(), sourceIndex.column(), QModelIndex())
             if sourceIndex.isValid() and self._accept_index(sourceIndex)
@@ -144,7 +160,7 @@ class RealListModel(QAbstractProxyModel):
         if parent.isValid() and self._accept_index(parent):
             self.endInsertRows()
 
-    def _accept_index(self, index: QModelIndex) -> bool:
+    def _accept_index(self, index: QModelIndex | QPersistentModelIndex) -> bool:
         # If the index under test isn't a realization, it is of no interest as
         # this model should only consist of realization indices.
         if not index.internalPointer() or not index.data(IsRealizationRole):
