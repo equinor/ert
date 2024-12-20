@@ -71,6 +71,7 @@ def test_api_snapshots(config_file, snapshot, cached_example):
         .strip()
         + "\n"
     )
+
     snapshot.assert_match(snapshot_str, "snapshot.json")
 
 
