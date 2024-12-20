@@ -76,7 +76,6 @@ class EnsembleModel:
     def data(self, index: QModelIndex, role: Qt.ItemDataRole) -> Any:
         if not index.isValid():
             return None
-        print(f"{self=}")
         col = index.column()
         if role == Qt.ItemDataRole.DisplayRole:
             if col == _Column.NAME:
@@ -98,6 +97,7 @@ class ExperimentModel(QAbstractItemModel):
         self._id = experiment.id
         self._name = experiment.name
         self._is_valid = experiment.is_valid()
+        print(f"{self._is_valid=}")
         self._experiment_type = experiment.metadata.get("ensemble_type")
         self._children: list[EnsembleModel] = []
 
@@ -108,28 +108,6 @@ class ExperimentModel(QAbstractItemModel):
         if self._parent:
             return self._parent._children.index(self)
         return 0
-
-    @override
-    def hasChildren(self, index):
-        print("CALLED HAS_CHILDREN")
-        if not index.isValid():
-            return True
-
-        flags = self.flags(index)
-        # hide children if disabled
-        if not (flags & Qt.ItemFlag.ItemIsEnabled):
-            return False
-
-        return super().hasChildren(index)
-
-    @override
-    def flags(self, index: QModelIndex) -> Qt.ItemFlag:
-        default_flags = super().flags(index)
-        if not self._is_valid:
-            print("FLAGS WAS INVALID")
-            return default_flags & ~Qt.ItemFlag.ItemIsEnabled
-        print("FLAGS WAS VALID")
-        return default_flags
 
     def data(
         self, index: QModelIndex, role: Qt.ItemDataRole = Qt.ItemDataRole.DisplayRole
@@ -236,8 +214,31 @@ class StorageModel(QAbstractItemModel):
     def data(self, index: QModelIndex, role: int = Qt.ItemDataRole.DisplayRole) -> Any:
         if not index.isValid():
             return None
-
+        print("CALLED DATA")
         return index.internalPointer().data(index, role)
+
+    @override
+    def flags(self, index: QModelIndex) -> Qt.ItemFlag:
+        default_flags = super().flags(index)
+        if not index.isValid():
+            return default_flags
+        item = index.internalPointer()
+        print("CALLED FLAGS")
+        if isinstance(item, ExperimentModel) and not item._is_valid:
+            return default_flags & ~Qt.ItemFlag.ItemIsEnabled
+        return default_flags
+
+    @override
+    def hasChildren(self, index):
+        if not index.isValid():
+            return True
+
+        flags = self.flags(index)
+        # hide children if disabled
+        if not (flags & Qt.ItemFlag.ItemIsEnabled):
+            return False
+
+        return super().hasChildren(index)
 
     @override
     def index(
