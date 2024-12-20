@@ -271,6 +271,7 @@ class QueueConfig:
     ) = pydantic.Field(default_factory=LocalQueueOptions, discriminator="name")
     queue_options_test_run: LocalQueueOptions = field(default_factory=LocalQueueOptions)
     stop_long_running: bool = False
+    max_runtime: int | None = None
 
     @no_type_check
     @classmethod
@@ -347,6 +348,7 @@ class QueueConfig:
             queue_options,
             queue_options_test_run,
             stop_long_running=bool(stop_long_running),
+            max_runtime=config_dict.get(ConfigKeys.MAX_RUNTIME),
         )
 
     def create_local_copy(self) -> QueueConfig:
@@ -358,6 +360,7 @@ class QueueConfig:
             self.queue_options_test_run,
             self.queue_options_test_run,
             stop_long_running=bool(self.stop_long_running),
+            max_runtime=self.max_runtime,
         )
 
     @property

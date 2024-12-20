@@ -610,7 +610,7 @@ class BaseRunModel(ABC):
                     active=run_arg.active,
                     iens=run_arg.iens,
                     fm_steps=self.ert_config.forward_model_steps,
-                    max_runtime=self.ert_config.analysis_config.max_runtime,
+                    max_runtime=self._queue_config.max_runtime,
                     run_arg=run_arg,
                     num_cpu=self.ert_config.preferred_num_cpu,
                     job_script=self.ert_config.queue_config.job_script,
