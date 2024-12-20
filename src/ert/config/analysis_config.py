@@ -34,7 +34,6 @@ class UpdateSettings:
 
 @dataclass
 class AnalysisConfig:
-    max_runtime: int | None = None
     minimum_required_realizations: int = 0
     update_log_path: str | Path = "update_log"
     es_module: ESSettings = field(default_factory=ESSettings)
@@ -188,7 +187,6 @@ class AnalysisConfig:
             raise ConfigValidationError.from_collected(all_errors)
 
         config = cls(
-            max_runtime=config_dict.get(ConfigKeys.MAX_RUNTIME),
             minimum_required_realizations=min_realization,
             update_log_path=config_dict.get(ConfigKeys.UPDATE_LOG_PATH, "update_log"),
             observation_settings=obs_settings,
@@ -207,7 +205,6 @@ class AnalysisConfig:
     def __repr__(self) -> str:
         return (
             "AnalysisConfig("
-            f"max_runtime={self.max_runtime}, "
             f"min_realization={self.minimum_required_realizations}, "
             f"update_log_path={self.update_log_path}, "
         )
@@ -217,9 +214,6 @@ class AnalysisConfig:
             return False
 
         if self.log_path != other.log_path:
-            return False
-
-        if self.max_runtime != other.max_runtime:
             return False
 
         if self.observation_settings != other.observation_settings:

@@ -240,19 +240,6 @@ def test_std_cutoff_is_set_from_corresponding_key(value):
     )
 
 
-def test_default_max_runtime_is_unlimited():
-    assert AnalysisConfig.from_dict({}).max_runtime is None
-    assert AnalysisConfig().max_runtime is None
-
-
-@given(st.integers(min_value=1))
-def test_max_runtime_is_set_from_corresponding_keyword(value):
-    assert (
-        AnalysisConfig.from_dict({ConfigKeys.MAX_RUNTIME: value}).max_runtime == value
-    )
-    assert AnalysisConfig(max_runtime=value).max_runtime == value
-
-
 @given(st.integers(min_value=1))
 def test_default_min_realization_is_all_realizations(value):
     assert (
