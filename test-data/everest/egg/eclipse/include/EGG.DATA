@@ -25,9 +25,6 @@ NUMRES
 ENDSCALE
  'NODIR'  'REVERS'  1  20 					/
 
-EQLOPTS
- 'QUIESC'  							/
-
 TABDIMS
     2*    24 2*    20    20 1*     1 7* /
 EQLDIMS
