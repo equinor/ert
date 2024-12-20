@@ -45,7 +45,7 @@ def test_simulator_cache(copy_math_func_test_data_to_tmp):
     Path("everest_output/optimization_output/seba.db").unlink()
 
     # The batch_id was used as a stopping criterion, so it must be reset:
-    run_model.batch_id = 0
+    run_model._batch_id = 0
 
     run_model.run_experiment(evaluator_server_config)
     assert n_evals == 0
