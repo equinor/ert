@@ -47,7 +47,7 @@ class ManageExperimentsPanel(QTabWidget):
     def _add_create_new_ensemble_tab(self) -> None:
         panel = QWidget()
         panel.setObjectName("create_new_ensemble_tab")
-
+        print(f"{self.ensemble_size=}")
         layout = QHBoxLayout()
         storage_widget = StorageWidget(
             self.notifier, self.ert_config, self.ensemble_size

@@ -109,13 +109,27 @@ class ExperimentModel(QAbstractItemModel):
             return self._parent._children.index(self)
         return 0
 
+    @override
+    def hasChildren(self, index):
+        print("CALLED HAS_CHILDREN")
+        if not index.isValid():
+            return True
+
+        flags = self.flags(index)
+        # hide children if disabled
+        if not (flags & Qt.ItemFlag.ItemIsEnabled):
+            return False
+
+        return super().hasChildren(index)
+
+    @override
     def flags(self, index: QModelIndex) -> Qt.ItemFlag:
-        print(f"2.{self=}")
-        return (
-            Qt.ItemFlag.ItemIsEnabled | Qt.ItemFlag.ItemIsSelectable
-            if self._is_valid
-            else None
-        )
+        default_flags = super().flags(index)
+        if not self._is_valid:
+            print("FLAGS WAS INVALID")
+            return default_flags & ~Qt.ItemFlag.ItemIsEnabled
+        print("FLAGS WAS VALID")
+        return default_flags
 
     def data(
         self, index: QModelIndex, role: Qt.ItemDataRole = Qt.ItemDataRole.DisplayRole
