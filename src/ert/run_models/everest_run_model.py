@@ -407,13 +407,13 @@ class EverestRunModel(BaseRunModel):
         cached_results: dict[int, Any] = {}
         if self._simulator_cache is not None:
             assert evaluator_context.config.realizations.names is not None
-            for sim_idx, realization in enumerate(evaluator_context.realizations):
+            for control_idx, real_idx in enumerate(evaluator_context.realizations):
                 cached_data = self._simulator_cache.get(
-                    evaluator_context.config.realizations.names[realization],
-                    control_values[sim_idx, :],
+                    int(evaluator_context.config.realizations.names[real_idx]),
+                    control_values[control_idx, :],
                 )
                 if cached_data is not None:
-                    cached_results[sim_idx] = cached_data
+                    cached_results[control_idx] = cached_data
         return cached_results
 
     @staticmethod
@@ -522,9 +522,12 @@ class EverestRunModel(BaseRunModel):
         self.active_realizations = [True] * len(batch_data)
         assert evaluator_context.config.realizations.names is not None
         for sim_id, control_idx in enumerate(batch_data.keys()):
-            realization = evaluator_context.realizations[control_idx]
             substitutions[f"<GEO_ID_{sim_id}_0>"] = str(
-                evaluator_context.config.realizations.names[realization]
+                int(
+                    evaluator_context.config.realizations.names[
+                        evaluator_context.realizations[control_idx]
+                    ]
+                )
             )
         run_paths = Runpaths(
             jobname_format=self.ert_config.model_config.jobname_format_string,
@@ -654,9 +657,12 @@ class EverestRunModel(BaseRunModel):
         if self._simulator_cache is not None:
             assert evaluator_context.config.realizations.names is not None
             for control_idx in batch_data:
-                realization = evaluator_context.realizations[control_idx]
                 self._simulator_cache.add(
-                    evaluator_context.config.realizations.names[realization],
+                    int(
+                        evaluator_context.config.realizations.names[
+                            evaluator_context.realizations[control_idx]
+                        ]
+                    ),
                     control_values[control_idx, ...],
                     objectives[control_idx, ...],
                     None if constraints is None else constraints[control_idx, ...],
@@ -761,12 +767,19 @@ class SimulatorCache:
 
     def add(
         self,
-        realization_id: int,
+        realization: int,
         control_values: NDArray[np.float64],
         objectives: NDArray[np.float64],
         constraints: NDArray[np.float64] | None,
     ) -> None:
-        self._data[realization_id].append(
+        """Add objective and constraints for a given realization and control values.
+
+        The realization is the index of the realization in the ensemble, as specified
+        in by the realizations entry in the everest model configuration. Both the control
+        values and the realization are used as keys to retrieve the objectives and
+        constraints later.
+        """
+        self._data[realization].append(
             (
                 control_values.copy(),
                 objectives.copy(),
@@ -775,11 +788,16 @@ class SimulatorCache:
         )
 
     def get(
-        self, realization_id: int, controls: NDArray[np.float64]
+        self, realization: int, controls: NDArray[np.float64]
     ) -> tuple[NDArray[np.float64], NDArray[np.float64] | None] | None:
-        for control_values, objectives, constraints in self._data.get(
-            realization_id, []
-        ):
+        """Get objective and constraints for a given realization and control values.
+
+        The realization is the index of the realization in the ensemble, as specified
+        in by the realizations entry in the everest model configuration. Both the control
+        values and the realization are used as keys to retrieve the objectives and
+        constraints from the cached values.
+        """
+        for control_values, objectives, constraints in self._data.get(realization, []):
             if np.allclose(controls, control_values, rtol=0.0, atol=self.EPS):
                 return objectives, constraints
         return None
