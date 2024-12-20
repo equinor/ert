@@ -221,14 +221,6 @@ class StorageModel(QAbstractItemModel):
     def data(self, index: QModelIndex, role: int = Qt.ItemDataRole.DisplayRole) -> Any:
         if not index.isValid():
             return None
-        if role == Qt.ItemDataRole.ToolTipRole:
-            print("TRYING TO GET TOOLTIP")
-            error = index.internalPointer().data(index, role)._error
-            if error:
-                print("FOUND ERROR TOOLTIP")
-                return self._error
-            else:
-                return "NO PROBLEM :)"
         return index.internalPointer().data(index, role)
 
     @override
