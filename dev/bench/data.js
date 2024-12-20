@@ -1,39 +1,8 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1734676909730,
+  "lastUpdate": 1734692843707,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
-      {
-        "commit": {
-          "author": {
-            "email": "ejah@equinor.com",
-            "name": "Eivind Jahren",
-            "username": "eivindjahren"
-          },
-          "committer": {
-            "email": "ejah@equinor.com",
-            "name": "Eivind Jahren",
-            "username": "eivindjahren"
-          },
-          "distinct": true,
-          "id": "5ae6ece1bfbfe9dff576d6601624474441a88c0d",
-          "message": "Add benchmarking with codspeed",
-          "timestamp": "2024-12-13T15:01:20+01:00",
-          "tree_id": "7f6bff216b05504e95ed7ca720df8ddfcb1d30d1",
-          "url": "https://github.com/equinor/ert/commit/5ae6ece1bfbfe9dff576d6601624474441a88c0d"
-        },
-        "date": 1734098595294,
-        "tool": "pytest",
-        "benches": [
-          {
-            "name": "tests/ert/performance_tests/test_analysis.py::test_and_benchmark_adaptive_localization_with_fields",
-            "value": 0.2157385424052652,
-            "unit": "iter/sec",
-            "range": "stddev: 0.036735243320427345",
-            "extra": "mean: 4.6352403647999925 sec\nrounds: 5"
-          }
-        ]
-      },
       {
         "commit": {
           "author": {
@@ -930,6 +899,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.02277579060793452",
             "extra": "mean: 4.5417440752000005 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "havb@equinor.com",
+            "name": "Håvard Berland",
+            "username": "berland"
+          },
+          "committer": {
+            "email": "berland@pvv.ntnu.no",
+            "name": "Håvard Berland",
+            "username": "berland"
+          },
+          "distinct": true,
+          "id": "1889e2ab1cb9bc44d4791985d181181a253caf4e",
+          "message": "Merge EGG.DATA and EGG_FLOW.DATA\n\nRemoving QUIESC from EGG.DATA makes it possible to merge these two decks into one,\nand fixes an otherwise non-functional EGG_FLOW setup. This allows future CI tests on\nEverest with flow.",
+          "timestamp": "2024-12-20T12:05:22+01:00",
+          "tree_id": "ec7e28c8c9ca965f16effa8c9d42c5a51c83a2b4",
+          "url": "https://github.com/equinor/ert/commit/1889e2ab1cb9bc44d4791985d181181a253caf4e"
+        },
+        "date": 1734692842806,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/ert/performance_tests/test_analysis.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 0.21489655153830137,
+            "unit": "iter/sec",
+            "range": "stddev: 0.04711308683411575",
+            "extra": "mean: 4.653401801199999 sec\nrounds: 5"
           }
         ]
       }
