@@ -1,39 +1,8 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1734703955896,
+  "lastUpdate": 1734705056151,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
-      {
-        "commit": {
-          "author": {
-            "email": "pieter.verveer@tno.nl",
-            "name": "Peter Verveer",
-            "username": "verveerpj"
-          },
-          "committer": {
-            "email": "noreply@github.com",
-            "name": "GitHub",
-            "username": "web-flow"
-          },
-          "distinct": true,
-          "id": "d4e7b72c2eac3ad7ce31f51d585793639f654e6a",
-          "message": "Fix everest batch numbering (#9563)",
-          "timestamp": "2024-12-16T14:36:49+01:00",
-          "tree_id": "48c65cd113c76535ebb2cee0dea75cba345c70a7",
-          "url": "https://github.com/equinor/ert/commit/d4e7b72c2eac3ad7ce31f51d585793639f654e6a"
-        },
-        "date": 1734356323558,
-        "tool": "pytest",
-        "benches": [
-          {
-            "name": "tests/ert/performance_tests/test_analysis.py::test_and_benchmark_adaptive_localization_with_fields",
-            "value": 0.2168985342088425,
-            "unit": "iter/sec",
-            "range": "stddev: 0.04184824753979805",
-            "extra": "mean: 4.61045070519998 sec\nrounds: 5"
-          }
-        ]
-      },
       {
         "commit": {
           "author": {
@@ -930,6 +899,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.03837322182960567",
             "extra": "mean: 4.516961568200003 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "JONAK@equinor.com",
+            "name": "Jonathan Karlsen",
+            "username": "jonathan-eq"
+          },
+          "committer": {
+            "email": "107626001+jonathan-eq@users.noreply.github.com",
+            "name": "Jonathan Karlsen",
+            "username": "jonathan-eq"
+          },
+          "distinct": true,
+          "id": "b13ad454dbeceaee6a3f3470c9d95693d0ca9a02",
+          "message": "Remove deprecated torque options\n\nThis commit removes the deprecated torque/openpbs queue options:\n* QUEUE_QUERY_TIMEOUT\n* NUM_NODES\n* NUM_CPUS_PER_NODE\n* QSTAT_OPTIONS\n* MEMORY_PER_JOB",
+          "timestamp": "2024-12-20T15:29:08+01:00",
+          "tree_id": "8bb6563900111aa9740d7bf5d3083038ff475345",
+          "url": "https://github.com/equinor/ert/commit/b13ad454dbeceaee6a3f3470c9d95693d0ca9a02"
+        },
+        "date": 1734705055699,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/ert/performance_tests/test_analysis.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 0.21959705996330614,
+            "unit": "iter/sec",
+            "range": "stddev: 0.023333546213795374",
+            "extra": "mean: 4.553795028800005 sec\nrounds: 5"
           }
         ]
       }
