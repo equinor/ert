@@ -1,39 +1,8 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1734701387803,
+  "lastUpdate": 1734703955896,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
-      {
-        "commit": {
-          "author": {
-            "email": "augustommg@gmail.com",
-            "name": "AugustoMagalhaes",
-            "username": "AugustoMagalhaes"
-          },
-          "committer": {
-            "email": "114403625+andreas-el@users.noreply.github.com",
-            "name": "Andreas Eknes Lie",
-            "username": "andreas-el"
-          },
-          "distinct": true,
-          "id": "0d10c5d116aa6b294ae9d3361629cf3e9ebe23db",
-          "message": "Automatically change sidebar focus when running simulations",
-          "timestamp": "2024-12-16T14:07:39+01:00",
-          "tree_id": "b52cecd487f337b128e33d91aac68b639002a08a",
-          "url": "https://github.com/equinor/ert/commit/0d10c5d116aa6b294ae9d3361629cf3e9ebe23db"
-        },
-        "date": 1734354573149,
-        "tool": "pytest",
-        "benches": [
-          {
-            "name": "tests/ert/performance_tests/test_analysis.py::test_and_benchmark_adaptive_localization_with_fields",
-            "value": 0.22039706091287284,
-            "unit": "iter/sec",
-            "range": "stddev: 0.016044370930411698",
-            "extra": "mean: 4.537265587199999 sec\nrounds: 5"
-          }
-        ]
-      },
       {
         "commit": {
           "author": {
@@ -930,6 +899,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.019461140551392343",
             "extra": "mean: 4.5561174817999985 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "jparu@equinor.com",
+            "name": "xjules",
+            "username": "xjules"
+          },
+          "committer": {
+            "email": "jparu@equinor.com",
+            "name": "Julius Parulek",
+            "username": "xjules"
+          },
+          "distinct": true,
+          "id": "9b1a01e384a8ee51ba79179633afa44f85f9d070",
+          "message": "Implementing router-dealer pattern with custom acknowledgments with zmq\n\n - dealers always wait for acknowledgment from the evaluator\n - removing websockets and wait_for_evaluator\n - Settup encryption with curve\n - each dealer (client, dispatcher) will get a unique name\n - Monitor is an advanced version Client\n - _server_started.wait() is to signal that zmq router socket is bound\n - Use TCP protocol only when using LSF, SLURM or TORQUE queues\n -- Use ipc_protocol when using LOCAL driver\n - Remove certificate\n - Remove synced _send from Client\n - Remove cert generator\n - Remove ClientConnectionClosedOK\n - Add test for new connection while closing down evaluator\n - Add test for handle dispatcher and dispatcher messages in evaluator\n - Add tests for ipc and tcp ee config\n - Add test for clear connect and disconnect of Monitor\n - Set a a correct protocol for everestserver",
+          "timestamp": "2024-12-20T15:10:48+01:00",
+          "tree_id": "97f8232e6ba8bbfc1633b74ddd045360372e50f5",
+          "url": "https://github.com/equinor/ert/commit/9b1a01e384a8ee51ba79179633afa44f85f9d070"
+        },
+        "date": 1734703955491,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/ert/performance_tests/test_analysis.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 0.2213877592052432,
+            "unit": "iter/sec",
+            "range": "stddev: 0.03837322182960567",
+            "extra": "mean: 4.516961568200003 sec\nrounds: 5"
           }
         ]
       }
