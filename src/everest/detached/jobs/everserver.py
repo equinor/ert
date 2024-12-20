@@ -30,11 +30,10 @@ from fastapi.security import (
     HTTPBasic,
     HTTPBasicCredentials,
 )
-from ropt.enums import OptimizerExitCode
 
 from ert.config import QueueSystem
 from ert.ensemble_evaluator import EvaluatorServerConfig
-from ert.run_models.everest_run_model import EverestRunModel
+from ert.run_models.everest_run_model import EverestExitCode, EverestRunModel
 from everest import export_to_csv, export_with_progress
 from everest.config import EverestConfig, ServerConfig
 from everest.detached import ServerStatus, get_opt_status, update_everserver_status
@@ -373,25 +372,31 @@ def main():
 
 
 def _get_optimization_status(exit_code, shared_data):
-    if exit_code == "max_batch_num_reached":
-        return ServerStatus.completed, "Maximum number of batches reached."
+    match exit_code:
+        case EverestExitCode.MAX_BATCH_NUM_REACHED:
+            return ServerStatus.completed, "Maximum number of batches reached."
 
-    if exit_code == OptimizerExitCode.MAX_FUNCTIONS_REACHED:
-        return ServerStatus.completed, "Maximum number of function evaluations reached."
+        case EverestExitCode.MAX_FUNCTIONS_REACHED:
+            return (
+                ServerStatus.completed,
+                "Maximum number of function evaluations reached.",
+            )
 
-    if exit_code == OptimizerExitCode.USER_ABORT:
-        return ServerStatus.stopped, "Optimization aborted."
+        case EverestExitCode.USER_ABORT:
+            return ServerStatus.stopped, "Optimization aborted."
 
-    if exit_code == OptimizerExitCode.TOO_FEW_REALIZATIONS:
-        status = (
-            ServerStatus.stopped if shared_data[STOP_ENDPOINT] else ServerStatus.failed
-        )
-        messages = _failed_realizations_messages(shared_data)
-        for msg in messages:
-            logging.getLogger(EVEREST).error(msg)
-        return status, "\n".join(messages)
-
-    return ServerStatus.completed, "Optimization completed."
+        case EverestExitCode.TOO_FEW_REALIZATIONS:
+            status = (
+                ServerStatus.stopped
+                if shared_data[STOP_ENDPOINT]
+                else ServerStatus.failed
+            )
+            messages = _failed_realizations_messages(shared_data)
+            for msg in messages:
+                logging.getLogger(EVEREST).error(msg)
+            return status, "\n".join(messages)
+        case _:
+            return ServerStatus.completed, "Optimization completed."
 
 
 def _failed_realizations_messages(shared_data):
