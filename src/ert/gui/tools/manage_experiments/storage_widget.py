@@ -100,6 +100,9 @@ class StorageWidget(QWidget):
         self._tree_view = QTreeView(self)
         storage_model = StorageModel(self._notifier.storage)
         notifier.storage_changed.connect(storage_model.reloadStorage)
+        notifier.storage_changed.connect(
+            lambda *args, **kwargs: print("Storage changed")
+        )
         notifier.ertChanged.connect(
             lambda: storage_model.reloadStorage(self._notifier.storage)
         )
@@ -108,7 +111,7 @@ class StorageWidget(QWidget):
         search_bar.setPlaceholderText("Filter")
         proxy_model = _SortingProxyModel(storage_model)
         proxy_model.setFilterKeyColumn(-1)  # Search all columns.
-        proxy_model.setSourceModel(storage_model)
+        proxy_model.setSourceModel(storage_model)  # JONAK - CAN THIS BE REMOVED?
         proxy_model.sort(0, Qt.SortOrder.AscendingOrder)
 
         self._tree_view.setModel(proxy_model)

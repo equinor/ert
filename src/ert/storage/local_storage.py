@@ -226,11 +226,15 @@ class LocalStorage(BaseMode):
         }
 
     def _load_experiments(self) -> dict[UUID, LocalExperiment]:
-        experiment_ids = {ens.experiment_id for ens in self._ensembles.values()}
-        return {
-            exp_id: LocalExperiment(self, self._experiment_path(exp_id), self.mode)
-            for exp_id in experiment_ids
-        }
+        experiments = {}
+        for ens in self._ensembles.values():
+            experiment = LocalExperiment(
+                self, self._experiment_path(ens.experiment_id), self.mode
+            )
+            ens.has_valid_experiment = experiment.is_valid()
+            experiments[ens.experiment_id] = experiment
+
+        return experiments
 
     def _ensemble_path(self, ensemble_id: UUID) -> Path:
         return self.path / self.ENSEMBLES_PATH / str(ensemble_id)

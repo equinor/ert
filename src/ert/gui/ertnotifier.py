@@ -54,6 +54,7 @@ class ErtNotifier(QObject):
     def set_storage(self, storage: Storage) -> None:
         self._storage = storage
         self.storage_changed.emit(storage)
+        print("EMITTED STORAGE CHANGED")
 
     @Slot(object)
     def set_current_ensemble(self, ensemble: Ensemble | None = None) -> None:
@@ -63,3 +64,10 @@ class ErtNotifier(QObject):
     @Slot(bool)
     def set_is_simulation_running(self, is_running: bool) -> None:
         self._is_simulation_running = is_running
+
+    def refresh(self):
+        print("FORCED REFRESH")
+        if self._storage is None:
+            return
+        self._storage.refresh()
+        self.storage_changed.emit(self._storage)

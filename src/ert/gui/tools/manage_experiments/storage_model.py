@@ -63,6 +63,7 @@ class EnsembleModel:
         self._id = ensemble.id
         self._start_time = ensemble.started_at
         self._children: list[RealizationModel] = []
+        self._error = ensemble.experiment.error_message
 
     def add_realization(self, realization: RealizationModel) -> None:
         self._children.append(realization)
@@ -75,7 +76,6 @@ class EnsembleModel:
     def data(self, index: QModelIndex, role: Qt.ItemDataRole) -> Any:
         if not index.isValid():
             return None
-
         col = index.column()
         if role == Qt.ItemDataRole.DisplayRole:
             if col == _Column.NAME:
@@ -83,17 +83,22 @@ class EnsembleModel:
             if col == _Column.TIME:
                 return humanize.naturaltime(self._start_time)
         elif role == Qt.ItemDataRole.ToolTipRole:
+            if self._error:
+                print("FOUND ERROR TOOLTIP")
+                return self._error
             if col == _Column.TIME:
                 return str(self._start_time)
-
         return None
 
 
-class ExperimentModel:
-    def __init__(self, experiment: Experiment, parent: Any):
+class ExperimentModel(QAbstractItemModel):
+    def __init__(self, experiment: Experiment, parent: "StorageModel"):
         self._parent = parent
         self._id = experiment.id
         self._name = experiment.name
+        self._is_valid = experiment.is_valid()
+        self._error = experiment.error_message
+        print(f"{self._is_valid=}")
         self._experiment_type = experiment.metadata.get("ensemble_type")
         self._children: list[EnsembleModel] = []
 
@@ -128,7 +133,11 @@ class ExperimentModel:
                 qapp = QApplication.instance()
                 assert isinstance(qapp, QApplication)
                 return qapp.palette().mid()
-
+        if role == Qt.ItemDataRole.ToolTipRole:
+            print("TRYING TO GET TOOLTIP")
+            if self._error:
+                print("FOUND ERROR TOOLTIP")
+                return self._error
         return None
 
 
@@ -140,6 +149,7 @@ class StorageModel(QAbstractItemModel):
 
     @Slot(Storage)
     def reloadStorage(self, storage: Storage) -> None:
+        print("RELOADED STORAGE")
         self.beginResetModel()
         self._load_storage(storage)
         self.endResetModel()
@@ -211,8 +221,29 @@ class StorageModel(QAbstractItemModel):
     def data(self, index: QModelIndex, role: int = Qt.ItemDataRole.DisplayRole) -> Any:
         if not index.isValid():
             return None
-
         return index.internalPointer().data(index, role)
+
+    @override
+    def flags(self, index: QModelIndex) -> Qt.ItemFlag:
+        default_flags = super().flags(index)
+        if not index.isValid():
+            return default_flags
+        item = index.internalPointer()
+        if isinstance(item, ExperimentModel) and not item._is_valid:
+            return default_flags & ~Qt.ItemFlag.ItemIsEnabled
+        return default_flags
+
+    @override
+    def hasChildren(self, index):
+        if not index.isValid():
+            return True
+
+        flags = self.flags(index)
+        # hide children if disabled
+        if not (flags & Qt.ItemFlag.ItemIsEnabled):
+            return False
+
+        return super().hasChildren(index)
 
     @override
     def index(
