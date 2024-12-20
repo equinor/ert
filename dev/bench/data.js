@@ -1,39 +1,8 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1734627898871,
+  "lastUpdate": 1734676909730,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
-      {
-        "commit": {
-          "author": {
-            "email": "havb@equinor.com",
-            "name": "Håvard Berland",
-            "username": "berland"
-          },
-          "committer": {
-            "email": "berland@pvv.ntnu.no",
-            "name": "Håvard Berland",
-            "username": "berland"
-          },
-          "distinct": true,
-          "id": "1af592dde9dc250b17b153e928618bdb813855f4",
-          "message": "Avoid version specific sed syntax\n\nThe argument to sed prior to this change triggers something in sed version 4.6 or 4.7\n\nAlso solve contamination issues that has crept in.",
-          "timestamp": "2024-12-13T13:45:48+01:00",
-          "tree_id": "0b68fa71e0d38539ab1df814d07233670bf75096",
-          "url": "https://github.com/equinor/ert/commit/1af592dde9dc250b17b153e928618bdb813855f4"
-        },
-        "date": 1734094057335,
-        "tool": "pytest",
-        "benches": [
-          {
-            "name": "tests/ert/performance_tests/test_analysis.py::test_and_benchmark_adaptive_localization_with_fields",
-            "value": 0.21759708041954798,
-            "unit": "iter/sec",
-            "range": "stddev: 0.08156905213378346",
-            "extra": "mean: 4.595649896000003 sec\nrounds: 5"
-          }
-        ]
-      },
       {
         "commit": {
           "author": {
@@ -930,6 +899,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.04668860467064045",
             "extra": "mean: 4.6043726622000065 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "frodeaarstad@gmail.com",
+            "name": "Frode Aarstad",
+            "username": "frode-aarstad"
+          },
+          "committer": {
+            "email": "frodeaarstad@gmail.com",
+            "name": "Frode Aarstad",
+            "username": "frode-aarstad"
+          },
+          "distinct": true,
+          "id": "2e9c71a22e8fa11a7d6aa5d7ed5e5deeeed0862f",
+          "message": "Add line numbers when validating everest config files",
+          "timestamp": "2024-12-20T07:40:03+01:00",
+          "tree_id": "6494a356704c566840a21f42cbdb516d95475e29",
+          "url": "https://github.com/equinor/ert/commit/2e9c71a22e8fa11a7d6aa5d7ed5e5deeeed0862f"
+        },
+        "date": 1734676909281,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/ert/performance_tests/test_analysis.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 0.2201797334773787,
+            "unit": "iter/sec",
+            "range": "stddev: 0.02277579060793452",
+            "extra": "mean: 4.5417440752000005 sec\nrounds: 5"
           }
         ]
       }
