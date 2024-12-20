@@ -29,6 +29,7 @@ def get_experiments(
             userdata={},
         )
         for experiment in storage.experiments
+        if experiment.is_valid()
     ]
 
 
