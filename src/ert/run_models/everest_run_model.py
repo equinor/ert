@@ -346,28 +346,30 @@ class EverestRunModel(BaseRunModel):
             optimizer.abort_optimization()
 
     def _forward_model_evaluator(
-        self, control_values: NDArray[np.float64], metadata: EvaluatorContext
+        self, control_values: NDArray[np.float64], evaluator_context: EvaluatorContext
     ) -> EvaluatorResult:
         # Reset the current run status:
         self._status = None
 
         # Get cached_results:
-        cached_results = self._get_cached_results(control_values, metadata)
+        cached_results = self._get_cached_results(control_values, evaluator_context)
 
         # Create the batch to run:
-        case_data = self._init_case_data(control_values, metadata, cached_results)
+        batch_data = self._init_batch_data(
+            control_values, evaluator_context, cached_results
+        )
 
-        # Initialize a new experiment in storage:
+        # Initialize a new ensemble in storage:
         assert self._experiment is not None
         ensemble = self._experiment.create_ensemble(
             name=f"batch_{self._batch_id}",
-            ensemble_size=len(case_data),
+            ensemble_size=len(batch_data),
         )
-        for sim_id, controls in enumerate(case_data.values()):
+        for sim_id, controls in enumerate(batch_data.values()):
             self._setup_sim(sim_id, controls, ensemble)
 
         # Evaluate the batch:
-        run_args = self._get_run_args(ensemble, metadata, case_data)
+        run_args = self._get_run_args(ensemble, evaluator_context, batch_data)
         self._context_env.update(
             {
                 "_ERT_EXPERIMENT_ID": str(ensemble.experiment_id),
@@ -384,14 +386,14 @@ class EverestRunModel(BaseRunModel):
         # Gather the results and create the result for ropt:
         results = self._gather_simulation_results(ensemble)
         evaluator_result = self._make_evaluator_result(
-            control_values, metadata, case_data, results, cached_results
+            control_values, evaluator_context, batch_data, results, cached_results
         )
 
         # Add the results from the evaluations to the cache:
         self._add_results_to_cache(
             control_values,
-            metadata,
-            case_data,
+            evaluator_context,
+            batch_data,
             evaluator_result.objectives,
             evaluator_result.constraints,
         )
@@ -417,7 +419,7 @@ class EverestRunModel(BaseRunModel):
         return cached_results
 
     @staticmethod
-    def _init_case_data(
+    def _init_batch_data(
         control_values: NDArray[np.float64],
         evaluator_context: EvaluatorContext,
         cached_results: dict[int, Any],
@@ -440,7 +442,7 @@ class EverestRunModel(BaseRunModel):
                 group[variable_name] = control_value
             controls[group_name] = group
 
-        case_data = {}
+        batch_data = {}
         for control_idx in range(control_values.shape[0]):
             if control_idx not in cached_results and (
                 evaluator_context.active is None
@@ -454,8 +456,8 @@ class EverestRunModel(BaseRunModel):
                     strict=False,
                 ):
                     add_control(controls, control_name, control_value)
-                case_data[control_idx] = controls
-        return case_data
+                batch_data[control_idx] = controls
+        return batch_data
 
     def _setup_sim(
         self,
@@ -514,17 +516,17 @@ class EverestRunModel(BaseRunModel):
     def _get_run_args(
         self,
         ensemble: Ensemble,
-        metadata: EvaluatorContext,
-        case_data: dict[int, Any],
+        evaluator_context: EvaluatorContext,
+        batch_data: dict[int, Any],
     ) -> list[RunArg]:
         substitutions = self.ert_config.substitutions
         substitutions["<BATCH_NAME>"] = ensemble.name
-        self.active_realizations = [True] * len(case_data)
-        assert metadata.config.realizations.names is not None
-        for sim_id, control_idx in enumerate(case_data.keys()):
-            realization = metadata.realizations[control_idx]
+        self.active_realizations = [True] * len(batch_data)
+        assert evaluator_context.config.realizations.names is not None
+        for sim_id, control_idx in enumerate(batch_data.keys()):
+            realization = evaluator_context.realizations[control_idx]
             substitutions[f"<GEO_ID_{sim_id}_0>"] = str(
-                metadata.config.realizations.names[realization]
+                evaluator_context.config.realizations.names[realization]
             )
         run_paths = Runpaths(
             jobname_format=self.ert_config.model_config.jobname_format_string,
@@ -584,26 +586,28 @@ class EverestRunModel(BaseRunModel):
     def _make_evaluator_result(
         self,
         control_values: NDArray[np.float64],
-        metadata: EvaluatorContext,
-        case_data: dict[int, Any],
+        evaluator_context: EvaluatorContext,
+        batch_data: dict[int, Any],
         results: list[dict[str, NDArray[np.float64]]],
         cached_results: dict[int, Any],
     ) -> EvaluatorResult:
         # We minimize the negative of the objectives:
+        assert evaluator_context.config.objectives.names is not None
         objectives = -self._get_simulation_results(
             results,
-            metadata.config.objectives.names,  # type: ignore
+            evaluator_context.config.objectives.names,
             control_values,
-            case_data,
+            batch_data,
         )
 
         constraints = None
-        if metadata.config.nonlinear_constraints is not None:
+        if evaluator_context.config.nonlinear_constraints is not None:
+            assert evaluator_context.config.nonlinear_constraints.names is not None
             constraints = self._get_simulation_results(
                 results,
-                metadata.config.nonlinear_constraints.names,  # type: ignore
+                evaluator_context.config.nonlinear_constraints.names,
                 control_values,
-                case_data,
+                batch_data,
             )
 
         if self._simulator_cache is not None:
@@ -617,7 +621,7 @@ class EverestRunModel(BaseRunModel):
                     constraints[control_idx, ...] = cached_constraints
 
         sim_ids = np.full(control_values.shape[0], -1, dtype=np.intc)
-        sim_ids[list(case_data.keys())] = np.arange(len(case_data), dtype=np.intc)
+        sim_ids[list(batch_data.keys())] = np.arange(len(batch_data), dtype=np.intc)
         return EvaluatorResult(
             objectives=objectives,
             constraints=constraints,
@@ -630,9 +634,9 @@ class EverestRunModel(BaseRunModel):
         results: list[dict[str, NDArray[np.float64]]],
         names: tuple[str],
         controls: NDArray[np.float64],
-        case_data: dict[int, Any],
+        batch_data: dict[int, Any],
     ) -> NDArray[np.float64]:
-        control_indices = list(case_data.keys())
+        control_indices = list(batch_data.keys())
         values = np.zeros((controls.shape[0], len(names)), dtype=float64)
         for func_idx, name in enumerate(names):
             values[control_indices, func_idx] = np.fromiter(
@@ -645,13 +649,13 @@ class EverestRunModel(BaseRunModel):
         self,
         control_values: NDArray[np.float64],
         evaluator_context: EvaluatorContext,
-        case_data: dict[int, Any],
+        batch_data: dict[int, Any],
         objectives: NDArray[np.float64],
         constraints: NDArray[np.float64] | None,
     ) -> None:
         if self._simulator_cache is not None:
             assert evaluator_context.config.realizations.names is not None
-            for control_idx in case_data:
+            for control_idx in batch_data:
                 realization = evaluator_context.realizations[control_idx]
                 self._simulator_cache.add(
                     evaluator_context.config.realizations.names[realization],
@@ -669,7 +673,7 @@ class EverestRunModel(BaseRunModel):
 
     def send_snapshot_event(self, event: Event, iteration: int) -> None:
         super().send_snapshot_event(event, iteration)
-        if type(event) in (EESnapshot, EESnapshotUpdate):
+        if type(event) in {EESnapshot, EESnapshotUpdate}:
             newstatus = self._simulation_status(self.get_current_snapshot())
             if self._status != newstatus:  # No change in status
                 if self._sim_callback is not None:
