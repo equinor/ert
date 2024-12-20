@@ -163,6 +163,26 @@ class EverestRunModel(BaseRunModel):
             optimization_callback=optimization_callback,
         )
 
+    @classmethod
+    def name(cls) -> str:
+        return "Optimization run"
+
+    @classmethod
+    def description(cls) -> str:
+        return "Run batches "
+
+    @property
+    def exit_code(self) -> EverestExitCode | None:
+        return self._exit_code
+
+    @property
+    def result(self) -> OptimalResult | None:
+        return self._result
+
+    def __repr__(self) -> str:
+        config_json = json.dumps(self._everest_config, sort_keys=True, indent=2)
+        return f"EverestRunModel(config={config_json})"
+
     def run_experiment(
         self, evaluator_server_config: EvaluatorServerConfig, restart: bool = False
     ) -> None:
@@ -205,85 +225,6 @@ class EverestRunModel(BaseRunModel):
                     self._exit_code = EverestExitCode.TOO_FEW_REALIZATIONS
                 case _:
                     self._exit_code = EverestExitCode.COMPLETED
-
-    def check_if_runpath_exists(self) -> bool:
-        return (
-            self._everest_config.simulation_dir is not None
-            and os.path.exists(self._everest_config.simulation_dir)
-            and any(os.listdir(self._everest_config.simulation_dir))
-        )
-
-    def _handle_errors(
-        self,
-        batch: int,
-        simulation: Any,
-        realization: str,
-        fm_name: str,
-        error_path: str,
-        fm_running_err: str,
-    ) -> None:
-        fm_id = f"b_{batch}_r_{realization}_s_{simulation}_{fm_name}"
-        fm_logger = logging.getLogger("forward_models")
-        if Path(error_path).is_file():
-            error_str = Path(error_path).read_text(encoding="utf-8") or fm_running_err
-        else:
-            error_str = fm_running_err
-        error_hash = hash(error_str)
-        err_msg = "Batch: {} Realization: {} Simulation: {} Job: {} Failed {}".format(
-            batch, realization, simulation, fm_name, "\n Error: {} ID:{}"
-        )
-
-        if error_hash not in self._fm_errors:
-            error_id = len(self._fm_errors)
-            fm_logger.error(err_msg.format(error_str, error_id))
-            self._fm_errors.update({error_hash: {"error_id": error_id, "ids": [fm_id]}})
-        elif fm_id not in self._fm_errors[error_hash]["ids"]:
-            self._fm_errors[error_hash]["ids"].append(fm_id)
-            error_id = self._fm_errors[error_hash]["error_id"]
-            fm_logger.error(err_msg.format("Already reported as", error_id))
-
-    def _delete_runpath(self, run_args: list[RunArg]) -> None:
-        logging.getLogger(EVEREST).debug("Simulation callback called")
-        if (
-            self._everest_config.simulator is not None
-            and self._everest_config.simulator.delete_run_path
-        ):
-            for i, real in self.get_current_snapshot().reals.items():
-                path_to_delete = run_args[int(i)].runpath
-                if real["status"] == "Finished" and os.path.isdir(path_to_delete):
-
-                    def onerror(
-                        _: Callable[..., Any],
-                        path: str,
-                        sys_info: tuple[
-                            type[BaseException], BaseException, TracebackType
-                        ],
-                    ) -> None:
-                        logging.getLogger(EVEREST).debug(
-                            f"Failed to remove {path}, {sys_info}"
-                        )
-
-                    shutil.rmtree(path_to_delete, onerror=onerror)  # pylint: disable=deprecated-argument
-
-    def _on_before_forward_model_evaluation(
-        self, _: OptimizerEvent, optimizer: BasicOptimizer
-    ) -> None:
-        logging.getLogger(EVEREST).debug("Optimization callback called")
-
-        if (
-            self._everest_config.optimization is not None
-            and self._everest_config.optimization.max_batch_num is not None
-            and (self._batch_id >= self._everest_config.optimization.max_batch_num)
-        ):
-            self._exit_code = EverestExitCode.MAX_BATCH_NUM_REACHED
-            logging.getLogger(EVEREST).info("Maximum number of batches reached")
-            optimizer.abort_optimization()
-        if (
-            self._opt_callback is not None
-            and self._opt_callback() == "stop_optimization"
-        ):
-            logging.getLogger(EVEREST).info("User abort requested.")
-            optimizer.abort_optimization()
 
     def _create_optimizer(self) -> BasicOptimizer:
         RESULT_COLUMNS = {
@@ -385,152 +326,25 @@ class EverestRunModel(BaseRunModel):
 
         return optimizer
 
-    @classmethod
-    def name(cls) -> str:
-        return "Optimization run"
-
-    @classmethod
-    def description(cls) -> str:
-        return "Run batches "
-
-    @property
-    def exit_code(self) -> EverestExitCode | None:
-        return self._exit_code
-
-    @property
-    def result(self) -> OptimalResult | None:
-        return self._result
-
-    def __repr__(self) -> str:
-        config_json = json.dumps(self._everest_config, sort_keys=True, indent=2)
-        return f"EverestRunModel(config={config_json})"
-
-    @staticmethod
-    def _add_control(
-        controls: Mapping[str, Any],
-        control_name: tuple[Any, ...],
-        control_value: float,
+    def _on_before_forward_model_evaluation(
+        self, _: OptimizerEvent, optimizer: BasicOptimizer
     ) -> None:
-        group_name = control_name[0]
-        variable_name = control_name[1]
-        group = controls[group_name]
-        if len(control_name) > 2:
-            index_name = str(control_name[2])
-            if variable_name in group:
-                group[variable_name][index_name] = control_value
-            else:
-                group[variable_name] = {index_name: control_value}
-        else:
-            group[variable_name] = control_value
+        logging.getLogger(EVEREST).debug("Optimization callback called")
 
-    @staticmethod
-    def _get_active_results(
-        results: list[dict[str, NDArray[np.float64]]],
-        names: tuple[str],
-        controls: NDArray[np.float64],
-        active: NDArray[np.bool_],
-    ) -> NDArray[np.float64]:
-        values = np.zeros((controls.shape[0], len(names)), dtype=float64)
-        for func_idx, name in enumerate(names):
-            values[active, func_idx] = np.fromiter(
-                (np.nan if not result else result[name][0] for result in results),
-                dtype=np.float64,
-            )
-        return values
-
-    def _init_case_data(
-        self,
-        control_values: NDArray[np.float64],
-        metadata: EvaluatorContext,
-        realization_ids: list[int],
-    ) -> tuple[
-        list[tuple[int, defaultdict[str, Any]]], NDArray[np.bool_], dict[int, int]
-    ]:
-        active = (
-            np.ones(control_values.shape[0], dtype=np.bool_)
-            if metadata.active is None
-            else np.fromiter(
-                (metadata.active[realization] for realization in metadata.realizations),
-                dtype=np.bool_,
-            )
-        )
-        case_data = []
-        cached = {}
-
-        for sim_idx, real_id in enumerate(realization_ids):
-            if self._simulator_cache is not None:
-                cache_id = self._simulator_cache.find_key(
-                    real_id, control_values[sim_idx, :]
-                )
-                if cache_id is not None:
-                    cached[sim_idx] = cache_id
-                    active[sim_idx] = False
-
-            if active[sim_idx]:
-                controls: defaultdict[str, Any] = defaultdict(dict)
-                assert metadata.config.variables.names is not None
-                for control_name, control_value in zip(
-                    metadata.config.variables.names,
-                    control_values[sim_idx, :],
-                    strict=False,
-                ):
-                    self._add_control(controls, control_name, control_value)
-                case_data.append((real_id, controls))
-        return case_data, active, cached
-
-    def _setup_sim(
-        self,
-        sim_id: int,
-        controls: dict[str, dict[str, Any]],
-        ensemble: Ensemble,
-    ) -> None:
-        def _check_suffix(
-            ext_config: ExtParamConfig,
-            key: str,
-            assignment: dict[str, Any] | tuple[str, str] | str | int,
-        ) -> None:
-            if key not in ext_config:
-                raise KeyError(f"No such key: {key}")
-            if isinstance(assignment, dict):  # handle suffixes
-                suffixes = ext_config[key]
-                if len(assignment) != len(suffixes):
-                    missingsuffixes = set(suffixes).difference(set(assignment.keys()))
-                    raise KeyError(
-                        f"Key {key} is missing values for "
-                        f"these suffixes: {missingsuffixes}"
-                    )
-                for suffix in assignment:
-                    if suffix not in suffixes:
-                        raise KeyError(
-                            f"Key {key} has suffixes {suffixes}. "
-                            f"Can't find the requested suffix {suffix}"
-                        )
-            else:
-                suffixes = ext_config[key]
-                if suffixes:
-                    raise KeyError(
-                        f"Key {key} has suffixes, a suffix must be specified"
-                    )
-
-        if set(controls.keys()) != set(self._everest_config.control_names):
-            err_msg = "Mismatch between initialized and provided control names."
-            raise KeyError(err_msg)
-
-        for control_name, control in controls.items():
-            ext_config = self.ert_config.ensemble_config.parameter_configs[control_name]
-            if isinstance(ext_config, ExtParamConfig):
-                if len(ext_config) != len(control.keys()):
-                    raise KeyError(
-                        f"Expected {len(ext_config)} variables for "
-                        f"control {control_name}, "
-                        f"received {len(control.keys())}."
-                    )
-                for var_name, var_setting in control.items():
-                    _check_suffix(ext_config, var_name, var_setting)
-
-                ensemble.save_parameters(
-                    control_name, sim_id, ExtParamConfig.to_dataset(control)
-                )
+        if (
+            self._everest_config.optimization is not None
+            and self._everest_config.optimization.max_batch_num is not None
+            and (self._batch_id >= self._everest_config.optimization.max_batch_num)
+        ):
+            self._exit_code = EverestExitCode.MAX_BATCH_NUM_REACHED
+            logging.getLogger(EVEREST).info("Maximum number of batches reached")
+            optimizer.abort_optimization()
+        if (
+            self._opt_callback is not None
+            and self._opt_callback() == "stop_optimization"
+        ):
+            logging.getLogger(EVEREST).info("User abort requested.")
+            optimizer.abort_optimization()
 
     def _forward_model_evaluator(
         self, control_values: NDArray[np.float64], metadata: EvaluatorContext
@@ -660,9 +474,166 @@ class EverestRunModel(BaseRunModel):
 
         return evaluator_result
 
+    def _init_case_data(
+        self,
+        control_values: NDArray[np.float64],
+        metadata: EvaluatorContext,
+        realization_ids: list[int],
+    ) -> tuple[
+        list[tuple[int, defaultdict[str, Any]]], NDArray[np.bool_], dict[int, int]
+    ]:
+        active = (
+            np.ones(control_values.shape[0], dtype=np.bool_)
+            if metadata.active is None
+            else np.fromiter(
+                (metadata.active[realization] for realization in metadata.realizations),
+                dtype=np.bool_,
+            )
+        )
+        case_data = []
+        cached = {}
+
+        for sim_idx, real_id in enumerate(realization_ids):
+            if self._simulator_cache is not None:
+                cache_id = self._simulator_cache.find_key(
+                    real_id, control_values[sim_idx, :]
+                )
+                if cache_id is not None:
+                    cached[sim_idx] = cache_id
+                    active[sim_idx] = False
+
+            if active[sim_idx]:
+                controls: defaultdict[str, Any] = defaultdict(dict)
+                assert metadata.config.variables.names is not None
+                for control_name, control_value in zip(
+                    metadata.config.variables.names,
+                    control_values[sim_idx, :],
+                    strict=False,
+                ):
+                    self._add_control(controls, control_name, control_value)
+                case_data.append((real_id, controls))
+        return case_data, active, cached
+
+    @staticmethod
+    def _add_control(
+        controls: Mapping[str, Any],
+        control_name: tuple[Any, ...],
+        control_value: float,
+    ) -> None:
+        group_name = control_name[0]
+        variable_name = control_name[1]
+        group = controls[group_name]
+        if len(control_name) > 2:
+            index_name = str(control_name[2])
+            if variable_name in group:
+                group[variable_name][index_name] = control_value
+            else:
+                group[variable_name] = {index_name: control_value}
+        else:
+            group[variable_name] = control_value
+
+    def _setup_sim(
+        self,
+        sim_id: int,
+        controls: dict[str, dict[str, Any]],
+        ensemble: Ensemble,
+    ) -> None:
+        def _check_suffix(
+            ext_config: ExtParamConfig,
+            key: str,
+            assignment: dict[str, Any] | tuple[str, str] | str | int,
+        ) -> None:
+            if key not in ext_config:
+                raise KeyError(f"No such key: {key}")
+            if isinstance(assignment, dict):  # handle suffixes
+                suffixes = ext_config[key]
+                if len(assignment) != len(suffixes):
+                    missingsuffixes = set(suffixes).difference(set(assignment.keys()))
+                    raise KeyError(
+                        f"Key {key} is missing values for "
+                        f"these suffixes: {missingsuffixes}"
+                    )
+                for suffix in assignment:
+                    if suffix not in suffixes:
+                        raise KeyError(
+                            f"Key {key} has suffixes {suffixes}. "
+                            f"Can't find the requested suffix {suffix}"
+                        )
+            else:
+                suffixes = ext_config[key]
+                if suffixes:
+                    raise KeyError(
+                        f"Key {key} has suffixes, a suffix must be specified"
+                    )
+
+        if set(controls.keys()) != set(self._everest_config.control_names):
+            err_msg = "Mismatch between initialized and provided control names."
+            raise KeyError(err_msg)
+
+        for control_name, control in controls.items():
+            ext_config = self.ert_config.ensemble_config.parameter_configs[control_name]
+            if isinstance(ext_config, ExtParamConfig):
+                if len(ext_config) != len(control.keys()):
+                    raise KeyError(
+                        f"Expected {len(ext_config)} variables for "
+                        f"control {control_name}, "
+                        f"received {len(control.keys())}."
+                    )
+                for var_name, var_setting in control.items():
+                    _check_suffix(ext_config, var_name, var_setting)
+
+                ensemble.save_parameters(
+                    control_name, sim_id, ExtParamConfig.to_dataset(control)
+                )
+
+    def _delete_runpath(self, run_args: list[RunArg]) -> None:
+        logging.getLogger(EVEREST).debug("Simulation callback called")
+        if (
+            self._everest_config.simulator is not None
+            and self._everest_config.simulator.delete_run_path
+        ):
+            for i, real in self.get_current_snapshot().reals.items():
+                path_to_delete = run_args[int(i)].runpath
+                if real["status"] == "Finished" and os.path.isdir(path_to_delete):
+
+                    def onerror(
+                        _: Callable[..., Any],
+                        path: str,
+                        sys_info: tuple[
+                            type[BaseException], BaseException, TracebackType
+                        ],
+                    ) -> None:
+                        logging.getLogger(EVEREST).debug(
+                            f"Failed to remove {path}, {sys_info}"
+                        )
+
+                    shutil.rmtree(path_to_delete, onerror=onerror)  # pylint: disable=deprecated-argument
+
+    @staticmethod
+    def _get_active_results(
+        results: list[dict[str, NDArray[np.float64]]],
+        names: tuple[str],
+        controls: NDArray[np.float64],
+        active: NDArray[np.bool_],
+    ) -> NDArray[np.float64]:
+        values = np.zeros((controls.shape[0], len(names)), dtype=float64)
+        for func_idx, name in enumerate(names):
+            values[active, func_idx] = np.fromiter(
+                (np.nan if not result else result[name][0] for result in results),
+                dtype=np.float64,
+            )
+        return values
+
+    def check_if_runpath_exists(self) -> bool:
+        return (
+            self._everest_config.simulation_dir is not None
+            and os.path.exists(self._everest_config.simulation_dir)
+            and any(os.listdir(self._everest_config.simulation_dir))
+        )
+
     def send_snapshot_event(self, event: Event, iteration: int) -> None:
         super().send_snapshot_event(event, iteration)
-        if type(event) in {EESnapshot, EESnapshotUpdate}:
+        if type(event) in (EESnapshot, EESnapshotUpdate):
             newstatus = self._simulation_status(self.get_current_snapshot())
             if self._status != newstatus:  # No change in status
                 if self._sim_callback is not None:
@@ -695,7 +666,7 @@ class EverestRunModel(BaseRunModel):
                     batch=self._batch_id,
                     simulation=simulation,
                     realization=realization,
-                    fm_name=fm_step.get("name", "Unknwon"),  # type: ignore
+                    fm_name=fm_step.get("name", "Unknown"),  # type: ignore
                     error_path=fm_step.get("stderr", ""),  # type: ignore
                     fm_running_err=fm_step.get("error", ""),  # type: ignore
                 )
@@ -706,3 +677,32 @@ class EverestRunModel(BaseRunModel):
             "progress": jobs_progress,
             "batch_number": self._batch_id,
         }
+
+    def _handle_errors(
+        self,
+        batch: int,
+        simulation: Any,
+        realization: str,
+        fm_name: str,
+        error_path: str,
+        fm_running_err: str,
+    ) -> None:
+        fm_id = f"b_{batch}_r_{realization}_s_{simulation}_{fm_name}"
+        fm_logger = logging.getLogger("forward_models")
+        if Path(error_path).is_file():
+            error_str = Path(error_path).read_text(encoding="utf-8") or fm_running_err
+        else:
+            error_str = fm_running_err
+        error_hash = hash(error_str)
+        err_msg = "Batch: {} Realization: {} Simulation: {} Job: {} Failed {}".format(
+            batch, realization, simulation, fm_name, "\n Error: {} ID:{}"
+        )
+
+        if error_hash not in self._fm_errors:
+            error_id = len(self._fm_errors)
+            fm_logger.error(err_msg.format(error_str, error_id))
+            self._fm_errors.update({error_hash: {"error_id": error_id, "ids": [fm_id]}})
+        elif fm_id not in self._fm_errors[error_hash]["ids"]:
+            self._fm_errors[error_hash]["ids"].append(fm_id)
+            error_id = self._fm_errors[error_hash]["error_id"]
+            fm_logger.error(err_msg.format("Already reported as", error_id))
