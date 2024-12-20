@@ -97,6 +97,7 @@ class ExperimentModel(QAbstractItemModel):
         self._id = experiment.id
         self._name = experiment.name
         self._is_valid = experiment.is_valid()
+        self._error = experiment.error_message
         print(f"{self._is_valid=}")
         self._experiment_type = experiment.metadata.get("ensemble_type")
         self._children: list[EnsembleModel] = []
@@ -132,6 +133,11 @@ class ExperimentModel(QAbstractItemModel):
                 qapp = QApplication.instance()
                 assert isinstance(qapp, QApplication)
                 return qapp.palette().mid()
+        if role == Qt.ItemDataRole.ToolTipRole:
+            print("TRYING TO GET TOOLTIP")
+            if self._error:
+                print("FOUND ERROR TOOLTIP")
+                return self._error
         return None
 
 
@@ -143,6 +149,7 @@ class StorageModel(QAbstractItemModel):
 
     @Slot(Storage)
     def reloadStorage(self, storage: Storage) -> None:
+        print("RELOADED STORAGE")
         self.beginResetModel()
         self._load_storage(storage)
         self.endResetModel()
@@ -214,7 +221,14 @@ class StorageModel(QAbstractItemModel):
     def data(self, index: QModelIndex, role: int = Qt.ItemDataRole.DisplayRole) -> Any:
         if not index.isValid():
             return None
-        print("CALLED DATA")
+        if role == Qt.ItemDataRole.ToolTipRole:
+            print("TRYING TO GET TOOLTIP")
+            error = index.internalPointer().data(index, role)._error
+            if error:
+                print("FOUND ERROR TOOLTIP")
+                return self._error
+            else:
+                return "NO PROBLEM :)"
         return index.internalPointer().data(index, role)
 
     @override
@@ -223,7 +237,6 @@ class StorageModel(QAbstractItemModel):
         if not index.isValid():
             return default_flags
         item = index.internalPointer()
-        print("CALLED FLAGS")
         if isinstance(item, ExperimentModel) and not item._is_valid:
             return default_flags & ~Qt.ItemFlag.ItemIsEnabled
         return default_flags
