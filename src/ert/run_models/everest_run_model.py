@@ -109,11 +109,9 @@ class EverestRunModel(BaseRunModel):
 
         assert everest_config.environment is not None
         logging.getLogger(EVEREST).info(
-            "Using random seed: %d", everest_config.environment.random_seed
-        )
-        logging.getLogger(EVEREST).info(
-            "To deterministically reproduce this experiment, "
-            "add the above random seed to your configuration file."
+            "Using random seed: %d. To deterministically reproduce this experiment, "
+            "add the above random seed to your configuration file.",
+            everest_config.environment.random_seed,
         )
 
         self._everest_config = everest_config
