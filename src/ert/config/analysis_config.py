@@ -80,7 +80,7 @@ class AnalysisConfig:
 
         min_realization = min(min_realization, num_realization)
 
-        design_matrix_config_list = config_dict.get(ConfigKeys.DESIGN_MATRIX, None)
+        design_matrix_config_lists = config_dict.get(ConfigKeys.DESIGN_MATRIX, [])
 
         options: dict[str, dict[str, Any]] = {"STD_ENKF": {}, "IES_ENKF": {}}
         observation_settings: dict[str, Any] = {
@@ -186,15 +186,22 @@ class AnalysisConfig:
         if all_errors:
             raise ConfigValidationError.from_collected(all_errors)
 
+        design_matrices = [
+            DesignMatrix.from_config_list(design_matrix_config_list)
+            for design_matrix_config_list in design_matrix_config_lists
+        ]
+        design_matrix: DesignMatrix | None = None
+        if design_matrices:
+            design_matrix = design_matrices[0]
+            for dm_other in design_matrices[1:]:
+                design_matrix.merge_with_other(dm_other)
         config = cls(
             minimum_required_realizations=min_realization,
             update_log_path=config_dict.get(ConfigKeys.UPDATE_LOG_PATH, "update_log"),
             observation_settings=obs_settings,
             es_module=es_settings,
             ies_module=ies_settings,
-            design_matrix=DesignMatrix.from_config_list(design_matrix_config_list)
-            if design_matrix_config_list is not None
-            else None,
+            design_matrix=design_matrix,
         )
         return config
 
