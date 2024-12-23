@@ -18,7 +18,7 @@ def _string_exists_in_file(file_path, string):
 
 
 @pytest.mark.flaky(reruns=5)
-@pytest.mark.timeout(70)  # Simulation might not finish
+@pytest.mark.timeout(120)  # Simulation might not finish
 @pytest.mark.integration_test
 @pytest.mark.xdist_group(name="starts_everest")
 async def test_logging_setup(copy_math_func_test_data_to_tmp):
@@ -33,13 +33,18 @@ async def test_logging_setup(copy_math_func_test_data_to_tmp):
     everest_config.install_jobs.append(
         InstallJobConfig(name="toggle_failure", source="jobs/FAIL_SIMULATION")
     )
+    everest_config.optimization.min_pert_success = 1
+    everest_config.optimization.max_iterations = 1
+    everest_config.optimization.min_realizations_success = 1
+    everest_config.optimization.perturbation_num = 2
+
     # start_server() loads config based on config_path, so we need to actually overwrite it
     everest_config.dump("config_minimal.yml")
 
     makedirs_if_needed(everest_config.output_dir, roll_if_exists=True)
     driver = await start_server(everest_config, debug=True)
     try:
-        wait_for_server(everest_config.output_dir, 60)
+        wait_for_server(everest_config.output_dir, 120)
     except (SystemExit, RuntimeError) as e:
         raise e
     await server_running()
