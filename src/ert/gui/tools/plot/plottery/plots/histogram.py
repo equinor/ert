@@ -103,8 +103,8 @@ def plotHistogram(
         else:
             current_min = data[ensemble.name].min()
             current_max = data[ensemble.name].max()
-            minimum = current_min if minimum is None else min(minimum, current_min)  # type: ignore
-            maximum = current_max if maximum is None else max(maximum, current_max)  # type: ignore
+            minimum = current_min if minimum is None else min(minimum, current_min)
+            maximum = current_max if maximum is None else max(maximum, current_max)
             max_element_count = max(max_element_count, len(data[ensemble.name].index))
 
     bin_count = ceil(sqrt(max_element_count))
