@@ -19,7 +19,7 @@ def main(argv):
     arg_parser.add_argument("--fail", type=str)
     options, _ = arg_parser.parse_known_args(args=argv)
 
-    if options.fail in os.getcwd():
+    if options.fail is not None and options.fail in os.getcwd():
         raise Exception(f"Failing {options.fail} by request!")
 
     time.sleep(1)
