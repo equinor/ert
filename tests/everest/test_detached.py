@@ -50,11 +50,11 @@ from everest.util import makedirs_if_needed
 @pytest.mark.xdist_group(name="starts_everest")
 async def test_https_requests(copy_math_func_test_data_to_tmp):
     everest_config = EverestConfig.load_file("config_minimal.yml")
-    # Overwrite forward_model with model that actually does nothing, since we test for httprequests and server status
-    everest_config.forward_model = ["toggle_failure"]
-    everest_config.install_jobs = [
-        InstallJobConfig(name="toggle_failure", source="jobs/FAIL_SIMULATION")
-    ]
+    Path("SLEEP_job").write_text("EXECUTABLE sleep", encoding="utf-8")
+    everest_config.forward_model.append("sleep 5")
+    everest_config.install_jobs.append(
+        InstallJobConfig(name="sleep", source="SLEEP_job")
+    )
     # start_server() loads config based on config_path, so we need to actually overwrite it
     everest_config.dump("config_minimal.yml")
 
