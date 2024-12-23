@@ -1,39 +1,8 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1734705056151,
+  "lastUpdate": 1734969896695,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
-      {
-        "commit": {
-          "author": {
-            "email": "augustommg@gmail.com",
-            "name": "AugustoMagalhaes",
-            "username": "AugustoMagalhaes"
-          },
-          "committer": {
-            "email": "berland@pvv.ntnu.no",
-            "name": "Håvard Berland",
-            "username": "berland"
-          },
-          "distinct": true,
-          "id": "ab58e603d964ce1126ae85b6f396340850877de6",
-          "message": "Remove superfluous layer in ert_config",
-          "timestamp": "2024-12-16T14:41:30+01:00",
-          "tree_id": "5f1657d93d7f1a2359b029ce25d315fafce013e9",
-          "url": "https://github.com/equinor/ert/commit/ab58e603d964ce1126ae85b6f396340850877de6"
-        },
-        "date": 1734356609593,
-        "tool": "pytest",
-        "benches": [
-          {
-            "name": "tests/ert/performance_tests/test_analysis.py::test_and_benchmark_adaptive_localization_with_fields",
-            "value": 0.21745873067969923,
-            "unit": "iter/sec",
-            "range": "stddev: 0.02440214123462098",
-            "extra": "mean: 4.598573701200007 sec\nrounds: 5"
-          }
-        ]
-      },
       {
         "commit": {
           "author": {
@@ -930,6 +899,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.023333546213795374",
             "extra": "mean: 4.553795028800005 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "dan.sava42@gmail.com",
+            "name": "DanSava",
+            "username": "DanSava"
+          },
+          "committer": {
+            "email": "dan.sava42@gmail.com",
+            "name": "Dan Sava",
+            "username": "DanSava"
+          },
+          "distinct": true,
+          "id": "855c517890b2342f82907a11ae519aec2b50d885",
+          "message": "Remove unused type ignore.",
+          "timestamp": "2024-12-23T18:03:09+02:00",
+          "tree_id": "78a1ee71b253db603121844eea9e740b147e1662",
+          "url": "https://github.com/equinor/ert/commit/855c517890b2342f82907a11ae519aec2b50d885"
+        },
+        "date": 1734969896128,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/ert/performance_tests/test_analysis.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 0.21858073960126662,
+            "unit": "iter/sec",
+            "range": "stddev: 0.008085150111211182",
+            "extra": "mean: 4.574968507400024 sec\nrounds: 5"
           }
         ]
       }
