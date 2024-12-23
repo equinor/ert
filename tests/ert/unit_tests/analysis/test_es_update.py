@@ -631,17 +631,19 @@ def test_that_autoscaling_applies_to_scaled_errors(storage):
 
         experiment = storage.create_experiment(name="dummyexp")
         ensemble = experiment.create_ensemble(name="dummy", ensemble_size=10)
-        _, (_, scaled_errors_with_autoscale, _) = _mock_load_observations_and_responses(
-            observations_and_responses,
-            alpha=alpha,
-            std_cutoff=std_cutoff,
-            global_std_scaling=global_std_scaling,
-            auto_scale_observations=[["obs1*"]],
-            progress_callback=progress_callback,
-            ensemble=ensemble,
+        _, (_, _, scaled_errors_with_autoscale, _) = (
+            _mock_load_observations_and_responses(
+                observations_and_responses,
+                alpha=alpha,
+                std_cutoff=std_cutoff,
+                global_std_scaling=global_std_scaling,
+                auto_scale_observations=[["obs1*"]],
+                progress_callback=progress_callback,
+                ensemble=ensemble,
+            )
         )
 
-        _, (_, scaled_errors_without_autoscale, _) = (
+        _, (_, _, scaled_errors_without_autoscale, _) = (
             _mock_load_observations_and_responses(
                 observations_and_responses,
                 alpha=alpha,

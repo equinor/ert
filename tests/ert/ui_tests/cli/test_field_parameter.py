@@ -23,38 +23,63 @@ from ert.storage import open_storage
 from .run_cli import run_cli
 
 
-def test_field_param_update_using_heat_equation(heat_equation_storage):
-    config = ErtConfig.from_file("config.ert")
-    with open_storage(config.ens_path, mode="w") as storage:
+def test_shared_heat_equation_storage(heat_equation_storage):
+    """The fixture heat_equation_storage runs the heat equation test case.
+    This test verifies that results are as expected.
+    """
+    config = heat_equation_storage
+    with open_storage(config.ens_path) as storage:
         experiment = storage.get_experiment_by_name("es-mda")
-        prior = experiment.get_ensemble_by_name("default_0")
-        posterior = experiment.get_ensemble_by_name("default_1")
-
-        prior_result = prior.load_parameters("COND")["values"]
+        ensembles = [experiment.get_ensemble_by_name(f"default_{i}") for i in range(4)]
 
         param_config = config.ensemble_config.parameter_configs["COND"]
-        assert len(prior_result.x) == param_config.nx
-        assert len(prior_result.y) == param_config.ny
-        assert len(prior_result.z) == param_config.nz
 
-        posterior_result = posterior.load_parameters("COND")["values"]
-        prior_covariance = np.cov(
-            prior_result.values.reshape(
-                prior.ensemble_size, param_config.nx * param_config.ny * param_config.nz
-            ),
-            rowvar=False,
-        )
-        posterior_covariance = np.cov(
-            posterior_result.values.reshape(
-                posterior.ensemble_size,
+        # Check that generalized variance decreases across consecutive ensembles
+        covariances = []
+        for ensemble in ensembles:
+            results = ensemble.load_parameters("COND")["values"]
+            reshaped_values = results.values.reshape(
+                ensemble.ensemble_size,
                 param_config.nx * param_config.ny * param_config.nz,
-            ),
-            rowvar=False,
-        )
-        # Check that generalized variance is reduced by update step.
-        assert np.trace(prior_covariance) > np.trace(posterior_covariance)
+            )
+            covariances.append(np.cov(reshaped_values, rowvar=False))
+        for i in range(len(covariances) - 1):
+            assert np.trace(covariances[i]) > np.trace(
+                covariances[i + 1]
+            ), f"Generalized variance did not decrease from iteration {i} to {i + 1}"
 
-    # Check that fields in the runpath are different between iterations
+        # Check that the saved cross-correlations are as expected.
+        for i in range(3):
+            ensemble = ensembles[i]
+            corr_XY = ensemble.load_cross_correlations()
+
+            assert sorted(corr_XY["param_group"].unique().to_list()) == [
+                "CORR_LENGTH",
+                "INIT_TEMP_SCALE",
+            ]
+            assert corr_XY["param_name"].unique().to_list() == ["x"]
+
+            # Make sure correlations are between -1 and 1.
+            is_valid = (corr_XY["value"] >= -1) & (corr_XY["value"] <= 1)
+            assert is_valid.all()
+
+            # Check obs names and obs groups
+            expected_obs_groups = [obs[0] for obs in config.observation_config]
+            obs_groups = corr_XY["obs_group"].unique().to_list()
+            assert sorted(obs_groups) == sorted(expected_obs_groups)
+            # Check that obs names are created using obs groups
+            obs_name_starts_with_group = (
+                corr_XY.with_columns(
+                    pl.col("obs_name")
+                    .str.starts_with(pl.col("obs_group"))
+                    .alias("starts_with_check")
+                )
+                .get_column("starts_with_check")
+                .all()
+            )
+            assert obs_name_starts_with_group
+
+    # Check that fields in the runpath are different between ensembles
     cond_iter0 = resfo.read("simulations/realization-0/iter-0/cond.bgrdecl")[0][1]
     cond_iter1 = resfo.read("simulations/realization-0/iter-1/cond.bgrdecl")[0][1]
     assert (cond_iter0 != cond_iter1).all()
