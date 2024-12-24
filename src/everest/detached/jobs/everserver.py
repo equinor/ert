@@ -306,7 +306,7 @@ def main():
             optimization_callback=partial(_opt_monitor, shared_data=shared_data),
         )
         if run_model.ert_config.queue_config.queue_system == QueueSystem.LOCAL:
-            evaluator_server_config = EvaluatorServerConfig()
+            evaluator_server_config = EvaluatorServerConfig(use_ipc_protocol=False)
         else:
             evaluator_server_config = EvaluatorServerConfig(
                 custom_port_range=range(49152, 51819), use_ipc_protocol=False
