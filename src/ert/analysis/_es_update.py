@@ -202,7 +202,7 @@ def _load_observations_and_responses(
 
     # Identifies non-outlier observations based on responses.
     ens_mean = S.mean(axis=1)
-    ens_std = S.std(ddof=0, axis=1)
+    ens_std = S.std(ddof=0, axis=1, dtype=np.float64).astype(np.float32)
     ens_std_mask = ens_std > std_cutoff
     ens_mean_mask = abs(observations - ens_mean) <= alpha * (ens_std + scaled_errors)
     obs_mask = np.logical_and(ens_mean_mask, ens_std_mask)
