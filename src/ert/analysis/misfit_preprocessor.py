@@ -17,10 +17,6 @@ def get_scaling_factor(nr_observations: int, nr_components: int) -> float:
         nr_components is the number of primary components from PCA analysis
             below a user threshold
     """
-    logger.info(
-        f"Calculation scaling factor, nr of primary components: "
-        f"{nr_components}, number of observations: {nr_observations}"
-    )
     if nr_components == 0:
         nr_components = 1
         logger.warning(
@@ -160,4 +156,5 @@ def main(
         scale_factor = get_scaling_factor(len(index), components)
         nr_components[index] *= components
         scale_factors[index] *= scale_factor
+    logger.info(f"Calculated scaling factors for {len(scale_factors)} clusters")
     return scale_factors, clusters, nr_components
