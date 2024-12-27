@@ -27,6 +27,7 @@ from ert.config.analysis_config import UpdateSettings
 from ert.config.analysis_module import ESSettings, IESSettings
 from ert.config.gen_kw_config import TransformFunctionDefinition
 from ert.field_utils import Shape
+from ert.storage import open_storage
 
 
 @pytest.fixture
@@ -202,6 +203,129 @@ def test_update_report_with_different_observation_status_from_smoother_update(
         "Deactivated observations - ensemble_std > STD_CUTOFF"
     ] == str(std_cutoff)
     assert data_section.extra["Deactivated observations - outliers"] == str(outliers)
+
+
+def test_update_handles_precision_loss_in_std_dev(tmp_path):
+    """
+    This is a regression test for precision loss in calculating
+    standard deviation.
+    """
+    gen_kw = GenKwConfig(
+        name="COEFFS",
+        forward_init=False,
+        update=True,
+        template_file=None,
+        output_file=None,
+        transform_function_definitions=[
+            TransformFunctionDefinition(
+                name="coeff_0", param_name="CONST", values=["0.1"]
+            ),
+        ],
+    )
+    # The values given here are chosen so that when computing
+    # `ens_std = S.std(ddof=0, axis=1)`, ens_std[0] is not zero even though
+    # all responses have the same value: 5.08078746e07.
+    # This is due to precision loss.
+    with open_storage(tmp_path, mode="w") as storage:
+        experiment = storage.create_experiment(
+            name="ensemble_smoother",
+            parameters=[gen_kw],
+            observations={
+                "gen_data": polars.DataFrame(
+                    {
+                        "response_key": "RES",
+                        "observation_key": "OBS",
+                        "report_step": polars.Series(np.zeros(3), dtype=polars.UInt16),
+                        "index": polars.Series([0, 1, 2], dtype=polars.UInt16),
+                        "observations": polars.Series(
+                            [-218285263.28648496, -999999999.0, -107098474.0148249],
+                            dtype=polars.Float32,
+                        ),
+                        "std": polars.Series(
+                            [559437122.6211826, 999999999.9999999, 1.9],
+                            dtype=polars.Float32,
+                        ),
+                    }
+                )
+            },
+            responses=[
+                GenDataConfig(
+                    name="gen_data",
+                    input_files=["poly.out"],
+                    keys=["RES"],
+                    has_finalized_keys=True,
+                    report_steps_list=[None],
+                )
+            ],
+        )
+        prior = storage.create_ensemble(experiment.id, ensemble_size=23, name="prior")
+        for realization_nr in range(prior.ensemble_size):
+            ds = gen_kw.sample_or_load(
+                realization_nr,
+                random_seed=1234,
+                ensemble_size=prior.ensemble_size,
+            )
+            prior.save_parameters("COEFFS", realization_nr, ds)
+
+        prior.save_response(
+            "gen_data",
+            polars.DataFrame(
+                {
+                    "response_key": "RES",
+                    "report_step": polars.Series(np.zeros(3), dtype=polars.UInt16),
+                    "index": polars.Series(np.arange(3), dtype=polars.UInt16),
+                    "values": polars.Series(
+                        np.array([5.08078746e07, 4.07677769e10, 2.28002538e12]),
+                        dtype=polars.Float32,
+                    ),
+                }
+            ),
+            0,
+        )
+        for i in range(1, prior.ensemble_size):
+            prior.save_response(
+                "gen_data",
+                polars.DataFrame(
+                    {
+                        "response_key": "RES",
+                        "report_step": polars.Series(np.zeros(3), dtype=polars.UInt16),
+                        "index": polars.Series(np.arange(3), dtype=polars.UInt16),
+                        "values": polars.Series(
+                            np.array([5.08078744e07, 4.12422210e09, 1.26490794e10]),
+                            dtype=polars.Float32,
+                        ),
+                    }
+                ),
+                i,
+            )
+
+        posterior = storage.create_ensemble(
+            prior.experiment_id,
+            ensemble_size=prior.ensemble_size,
+            iteration=1,
+            name="posterior",
+            prior_ensemble=prior,
+        )
+        events = []
+
+        ss = smoother_update(
+            prior,
+            posterior,
+            experiment.observation_keys,
+            ["COEFFS"],
+            UpdateSettings(auto_scale_observations=[["OBS*"]]),
+            ESSettings(),
+            progress_callback=events.append,
+        )
+
+        assert (
+            sum(
+                1
+                for e in ss.update_step_snapshots
+                if e.status == ObservationStatus.STD_CUTOFF
+            )
+            == 1
+        )
 
 
 @pytest.mark.parametrize(
