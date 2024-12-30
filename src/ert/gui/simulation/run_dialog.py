@@ -39,7 +39,7 @@ from ert.ensemble_evaluator import identifiers as ids
 from ert.gui.ertnotifier import ErtNotifier
 from ert.gui.ertwidgets.message_box import ErtMessageBox
 from ert.gui.model.fm_step_list import FMStepListProxyModel
-from ert.gui.model.node import Node
+from ert.gui.model.node import IterNode
 from ert.gui.model.real_list import RealListModel
 from ert.gui.model.snapshot import (
     FM_STEP_COLUMNS,
@@ -306,7 +306,7 @@ class RunDialog(QFrame):
     ) -> None:
         if not parent.isValid():
             index = self._snapshot_model.index(start, 0, parent)
-            iteration = cast(Node, index.internalPointer()).id_
+            iteration = cast(IterNode, index.internalPointer()).id_
             iter_row = start
             self._iteration_progress_label.setText(
                 f"Progress for iteration {iteration}"
