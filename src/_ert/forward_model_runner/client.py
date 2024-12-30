@@ -23,6 +23,7 @@ ACK_MSG = b"ACK"
 class Client:
     DEFAULT_MAX_RETRIES = 10
     DEFAULT_ACK_TIMEOUT = 5
+    DEFAULT_CONNECT_RETRIES = 1
 
     def __init__(
         self,
@@ -83,7 +84,7 @@ class Client:
         await self._term_receiver_task()
         self._receiver_task = asyncio.create_task(self._receiver())
         try:
-            await self.send(CONNECT_MSG, retries=1)
+            await self.send(CONNECT_MSG, retries=self.DEFAULT_CONNECT_RETRIES)
         except ClientConnectionError:
             await self._term_receiver_task()
             self.term()
@@ -136,13 +137,14 @@ class Client:
                 self.term()
                 raise
 
-            retries -= 1
             if retries > 0:
                 logger.info(f"Retrying... ({retries} attempts left)")
                 await asyncio.sleep(backoff)
                 # this call is idempotent
+                self.socket.disconnect(self.url)
                 self.socket.connect(self.url)
                 backoff = min(backoff * 2, 10)  # Exponential backoff
+            retries -= 1
         raise ClientConnectionError(
             f"{self.dealer_id} Failed to send {message!r} after retries!"
         )
