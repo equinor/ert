@@ -45,4 +45,4 @@ class AnalysisModuleEdit(QWidget):
             variable_dialog,
             self.parent(),  # type: ignore
         )
-        dialog.exec_()
+        dialog.exec()

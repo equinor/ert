@@ -41,7 +41,7 @@ class LoadResultsTool(Tool):
             self._loadButton.setEnabled(False)
             self._loadButton.setToolTip("Must load into a ensemble")
         assert self._dialog is not None
-        self._dialog.exec_()
+        self._dialog.exec()
 
     def load(self, _: Any) -> None:
         assert self._dialog is not None

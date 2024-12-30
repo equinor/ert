@@ -118,13 +118,13 @@ class ProcessJobDialog(QDialog):
         self._msg_box = self.__createMsgBox(title, message, details)
         self._msg_box.setIcon(QMessageBox.Icon.Information)
 
-        self._msg_box.exec_()
+        self._msg_box.exec()
 
     def __presentError(self, title: str, message: str, details: str) -> None:
         self._msg_box = self.__createMsgBox(title, message, details)
         self._msg_box.setIcon(QMessageBox.Icon.Critical)
 
-        self._msg_box.exec_()
+        self._msg_box.exec()
 
     def __confirmCancel(self) -> None:
         cancel_box = self.__createMsgBox(
@@ -134,7 +134,7 @@ class ProcessJobDialog(QDialog):
         cancel_box.setStandardButtons(
             QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No
         )
-        cancel_box.exec_()
+        cancel_box.exec()
 
         cancel = cancel_box.result()
 
