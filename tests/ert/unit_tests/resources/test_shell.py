@@ -398,27 +398,63 @@ def test_that_delete_directory_can_delete_directories_with_internal_symlinks():
 
 
 @pytest.mark.usefixtures("use_tmpdir")
-def test_copy_directory_error():
-    with pytest.raises(OSError, match="existing directory"):
-        copy_directory("does/not/exist", "target")
+def test_copy_directory_errors_when_source_directory_does_not_exist():
+    not_existing = "does/not/exist"
+    with pytest.raises(
+        OSError,
+        match=f"Input argument: '{not_existing}' does not correspond to an existing directory",
+    ):
+        copy_directory(not_existing, "target")
 
-    with open("file", "w", encoding="utf-8") as f:
-        f.write("hei")
 
-    with pytest.raises(OSError, match="existing directory"):
-        copy_directory("hei", "target")
+@pytest.mark.usefixtures("use_tmpdir")
+def test_copy_directory_errors_when_source_directory_is_file():
+    textfilename = "hei"
+    Path("file").write_text(textfilename, encoding="utf-8")
+    with pytest.raises(
+        OSError,
+        match=f"Input argument: '{textfilename}' does not correspond to an existing directory",
+    ):
+        copy_directory(textfilename, "target")
 
-    empty_dir = "emptytestdir"
-    if not os.path.exists(empty_dir):
-        os.makedirs(empty_dir)
 
-    file_path = os.path.join(empty_dir, "file")
+@pytest.mark.usefixtures("use_tmpdir")
+def test_copy_directory_errors_when_copying_dir_to_itself():
+    empty_dir = Path("testdir")
+    empty_dir.mkdir()
 
-    with open(file_path, "w", encoding="utf-8") as f:
-        f.write("some_text")
+    (empty_dir / "file").write_text("some_text", encoding="utf-8")
 
-    with pytest.raises(OSError):
-        copy_directory(empty_dir, ".")
+    with pytest.raises(OSError, match="are the same file"):
+        copy_directory(empty_dir.name, ".")
+
+
+@pytest.mark.usefixtures("use_tmpdir")
+def test_copy_directory_errors_when_symlinks_point_nowhere():
+    somedir = "somedir"
+    some_symlink = f"{somedir}/some_symlink"
+    Path(somedir).mkdir()
+    os.symlink("/not_existing", some_symlink)
+    with pytest.raises(OSError, match=f"No such file or directory: '{some_symlink}'"):
+        copy_directory(somedir, "copydir")
+
+
+@pytest.mark.usefixtures("use_tmpdir")
+def test_copy_directory_reports_multiple_errors():
+    somedir = "somedir"
+    some_symlink = f"{somedir}/some_symlink"
+    some_other_symlink = f"{somedir}/some_other_symlink"
+
+    Path(somedir).mkdir()
+    os.symlink("/not_existing", some_symlink)
+    os.symlink("/not_existing", some_other_symlink)
+    try:
+        copy_directory(somedir, "copydir")
+        raise AssertionError("copy_directory should raise")
+    except OSError as err:
+        # (The order of occurence of the filenames in the string is non-deterministic)
+        assert some_symlink in str(err)
+        assert some_other_symlink in str(err)
 
 
 @pytest.mark.usefixtures("use_tmpdir")
