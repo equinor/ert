@@ -168,7 +168,7 @@ class CheckList(QWidget):
         menu.addSeparator()
         clear_selection = menu.addAction("Clear selection")
 
-        selected_item = menu.exec_(p)
+        selected_item = menu.exec(p)
 
         if selected_item == check_selected:
             self.checkSelected()

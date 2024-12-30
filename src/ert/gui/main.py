@@ -51,7 +51,7 @@ def run_gui(args: Namespace, plugin_manager: ErtPluginManager | None = None) -> 
             window.show()
             window.activateWindow()
             window.raise_()
-            return app.exec_()
+            return app.exec()
 
         # ens_path is None indicates that there was an error in the setup and
         # window is now just showing that error message, in which

@@ -71,7 +71,7 @@ class CustomDialog(QDialog):
         Shows the dialog modally and returns the true or false (accept/reject)
         """
         self.optionValidationChanged()
-        return self.exec_()
+        return self.exec()
 
     @staticmethod
     def createSpace(size: int = 5) -> QWidget:

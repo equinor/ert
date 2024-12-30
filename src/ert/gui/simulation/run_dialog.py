@@ -146,7 +146,7 @@ class FMStepOverview(QTableView):
             layout.addWidget(dialog_button)
             error_dialog.resize(700, 300)
             error_textedit.moveCursor(QTextCursor.MoveOperation.Start)
-            error_dialog.exec_()
+            error_dialog.exec()
 
     def mouseMoveEvent(self, event: QMouseEvent) -> None:
         if event:
@@ -511,7 +511,7 @@ class RunDialog(QFrame):
             QMessageBox.StandardButton.Ok | QMessageBox.StandardButton.Cancel
         )
         msg.setObjectName("restart_prompt")
-        result = msg.exec_()
+        result = msg.exec()
 
         if result == QMessageBox.StandardButton.Ok:
             self.restart_button.setVisible(False)

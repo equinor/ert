@@ -123,7 +123,7 @@ class EnsembleExperimentPanel(ExperimentConfigPanel):
         viewer.setMinimumHeight(500)
         viewer.setMinimumWidth(1000)
         viewer.adjustSize()
-        viewer.exec_()
+        viewer.exec()
 
     @Slot(ExperimentConfigPanel)
     def experimentTypeChanged(self, w: ExperimentConfigPanel) -> None:
