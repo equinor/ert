@@ -20,8 +20,6 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
-from ert.gui.ertnotifier import ErtNotifier
-
 from ._colors import BLUE_TEXT
 from ._suggestor_message import SuggestorMessage
 
@@ -113,7 +111,6 @@ class Suggestor(QWidget):
         deprecations: list[WarningInfo],
         continue_action: Callable[[], None] | None,
         help_links: dict[str, str] | None = None,
-        notifier: ErtNotifier | None = None,
     ) -> None:
         super().__init__()
         self._continue_action = continue_action
@@ -134,7 +131,6 @@ class Suggestor(QWidget):
         self.setStyleSheet(f"background-color: {LIGHT_GREY}; color: black")
         self.__layout.setContentsMargins(32, 47, 32, 16)
         self.__layout.setSpacing(32)
-        self.notifier = notifier
 
         data_layout = QHBoxLayout()
         data_widget.setLayout(data_layout)

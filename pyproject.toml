@@ -56,7 +56,6 @@ dependencies = [
     "psutil",
     "pyarrow",  # extra dependency for pandas (parquet)
     "pydantic > 2",
-    "PyQt5",
     "python-dateutil",
     "python-multipart",  # extra dependency for fastapi
     "pyyaml",

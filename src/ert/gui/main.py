@@ -139,7 +139,6 @@ def _start_initial_gui_window(
             continue_action,
             plugin_manager.get_help_links() if plugin_manager is not None else {},
         )
-        suggestor.notifier = main_window.notifier
         return (
             suggestor,
             ert_config.ens_path,

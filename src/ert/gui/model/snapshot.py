@@ -3,7 +3,7 @@ from collections import defaultdict
 from collections.abc import Sequence
 from contextlib import ExitStack
 from datetime import datetime, timedelta
-from typing import Any, Final, overload
+from typing import Any, Final, cast, overload
 
 from PySide6.QtCore import (
     QAbstractItemModel,
@@ -52,9 +52,9 @@ IsRealizationRole = UserRole + 9
 IsFMStepRole = UserRole + 10
 StatusRole = UserRole + 11
 
-DURATION = "Duration"
+DURATION: Final[str] = "Duration"
 
-FM_STEP_COLUMNS: Sequence[str] = [
+FM_STEP_COLUMNS: Final[Sequence[str]] = [
     ids.NAME,
     ids.ERROR,
     ids.STATUS,
@@ -295,12 +295,16 @@ class SnapshotModel(QAbstractItemModel):
     ) -> int:
         if parent is None:
             parent = QModelIndex()
-        parent_item = self.root if not parent.isValid() else parent.internalPointer()
+        parent_item = (
+            self.root
+            if not parent.isValid()
+            else cast(RootNode | IterNode | RealNode, parent.internalPointer())
+        )
 
         if parent.column() > 0:
             return 0
 
-        return len(parent_item.children)  # type: ignore
+        return len(parent_item.children)
 
     @overload
     def parent(self) -> QObject: ...
@@ -313,10 +317,13 @@ class SnapshotModel(QAbstractItemModel):
         if child is None or not child.isValid():
             return QModelIndex()
 
-        parent_item = child.internalPointer().parent  # type:ignore
+        parent_item = cast(
+            IterNode | RealNode | ForwardModelStepNode, child.internalPointer()
+        ).parent
         if parent_item == self.root:
             return QModelIndex()
 
+        assert parent_item
         return self.createIndex(parent_item.row(), 0, parent_item)
 
     @override
@@ -331,7 +338,7 @@ class SnapshotModel(QAbstractItemModel):
         if role == Qt.ItemDataRole.TextAlignmentRole:
             return Qt.AlignmentFlag.AlignCenter
 
-        node: IterNode | RealNode | ForwardModelStepNode = index.internalPointer()  # type:ignore
+        node = cast(IterNode | RealNode | ForwardModelStepNode, index.internalPointer())
         if role == NodeRole:
             return node
 
@@ -343,7 +350,7 @@ class SnapshotModel(QAbstractItemModel):
             return isinstance(node, ForwardModelStepNode)
 
         if isinstance(node, ForwardModelStepNode):
-            return self._fm_step_data(index, node, role)
+            return self._fm_step_data(index, node, Qt.ItemDataRole(role))
         if isinstance(node, RealNode):
             return self._real_data(index, node, role)
 
@@ -408,7 +415,7 @@ class SnapshotModel(QAbstractItemModel):
     def _fm_step_data(
         index: QModelIndex | QPersistentModelIndex,
         node: ForwardModelStepNode,
-        role: int,  # Qt.ItemDataRole
+        role: Qt.ItemDataRole,
     ) -> Any:
         node_id = str(node.id_)
 
@@ -437,9 +444,9 @@ class SnapshotModel(QAbstractItemModel):
 
         if role == Qt.ItemDataRole.DisplayRole:
             data_name = FM_STEP_COLUMNS[index.column()]
-            if data_name in {ids.MAX_MEMORY_USAGE}:
+            if data_name == ids.MAX_MEMORY_USAGE:
                 data = node.data
-                bytes_: str | None = data.get(data_name)  # type: ignore
+                bytes_ = cast(str | None, data.get(data_name))
                 if bytes_:
                     return byte_with_unit(float(bytes_))
 
@@ -448,7 +455,7 @@ class SnapshotModel(QAbstractItemModel):
                     return "-"
                 return "View" if data_name in node.data else None
 
-            if data_name in {DURATION}:
+            if data_name == DURATION:
                 start_time = node.data.get(ids.START_TIME)
                 if start_time is None:
                     return None
