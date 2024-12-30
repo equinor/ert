@@ -249,7 +249,14 @@ class StorageModel(QAbstractItemModel):
         if parent is None:
             parent = QModelIndex()
 
-        model = cast(ChildModel, parent.internalPointer()) if parent.isValid() else self
+        model = (
+            cast(
+                StorageModel | EnsembleModel | ExperimentModel | RealizationModel,
+                parent.internalPointer(),
+            )
+            if parent.isValid()
+            else self
+        )
         if type(model) is not RealizationModel:
             model = cast(StorageModel | EnsembleModel | ExperimentModel, model)
             if len(model._children) > row:
