@@ -1,4 +1,5 @@
 import argparse
+import datetime
 import json
 import logging
 import os
@@ -7,7 +8,6 @@ import ssl
 import threading
 import traceback
 from base64 import b64encode
-from datetime import datetime, timedelta
 from functools import partial
 from pathlib import Path
 from typing import Any
@@ -437,8 +437,10 @@ def _generate_certificate(cert_folder: str):
         .issuer_name(issuer)
         .public_key(key.public_key())
         .serial_number(x509.random_serial_number())
-        .not_valid_before(datetime.utcnow())
-        .not_valid_after(datetime.utcnow() + timedelta(days=365))  # 1 year
+        .not_valid_before(datetime.datetime.now(datetime.UTC))
+        .not_valid_after(
+            datetime.datetime.now(datetime.UTC) + datetime.timedelta(days=365)
+        )  # 1 year
         .add_extension(
             x509.SubjectAlternativeName([x509.DNSName(f"{cert_name}")]),
             critical=False,
