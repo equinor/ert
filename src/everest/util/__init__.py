@@ -64,7 +64,9 @@ def warn_user_that_runpath_is_nonempty() -> None:
 
 def _roll_dir(old_name):
     old_name = os.path.realpath(old_name)
-    new_name = old_name + datetime.datetime.utcnow().strftime("__%Y-%m-%d_%H.%M.%S.%f")
+    new_name = old_name + datetime.datetime.now(datetime.UTC).strftime(
+        "__%Y-%m-%d_%H.%M.%S.%f"
+    )
     os.rename(old_name, new_name)
     logging.getLogger(EVEREST).info(f"renamed {old_name} to {new_name}")
 
