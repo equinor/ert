@@ -214,7 +214,7 @@ def test_direct_dark_performance_with_storage(
 def api_and_storage(monkeypatch, tmp_path):
     with open_storage(tmp_path / "storage", mode="w") as storage:
         monkeypatch.setenv("ERT_STORAGE_NO_TOKEN", "yup")
-        monkeypatch.setenv("ERT_STORAGE_ENS_PATH", storage.path)
+        monkeypatch.setenv("ERT_STORAGE_ENS_PATH", str(storage.path))
         api = PlotApi()
         yield api, storage
     if enkf._storage is not None:
@@ -227,7 +227,7 @@ def api_and_storage(monkeypatch, tmp_path):
 def api_and_snake_oil_storage(snake_oil_case_storage, monkeypatch):
     with open_storage(snake_oil_case_storage.ens_path, mode="r") as storage:
         monkeypatch.setenv("ERT_STORAGE_NO_TOKEN", "yup")
-        monkeypatch.setenv("ERT_STORAGE_ENS_PATH", storage.path)
+        monkeypatch.setenv("ERT_STORAGE_ENS_PATH", str(storage.path))
 
         api = PlotApi()
         yield api, storage
