@@ -78,8 +78,8 @@ def test_that_the_cli_raises_exceptions_when_parameters_are_missing(mode):
             mode,
             "--disable-monitor",
             "poly-no-gen-kw.ert",
-            "--target-case",
-            "testcase-%d",
+            "--target-ensemble",
+            "testensemble-%d",
         )
 
 
@@ -93,8 +93,8 @@ def test_that_the_cli_raises_exceptions_when_no_weight_provided_for_es_mda():
             ES_MDA_MODE,
             "--disable-monitor",
             "poly.ert",
-            "--target-case",
-            "testcase-%d",
+            "--target-ensemble",
+            "testensemble-%d",
             "--weights",
             "0",
         )
@@ -572,7 +572,7 @@ def test_ensemble_evaluator():
     run_cli(
         ENSEMBLE_SMOOTHER_MODE,
         "--disable-monitor",
-        "--target-case",
+        "--target-ensemble",
         "poly_runpath_file_%d",
         "--realizations",
         "1,2,4,8,16,32,64",
@@ -591,7 +591,7 @@ def test_es_mda(snapshot):
     run_cli(
         ES_MDA_MODE,
         "--disable-monitor",
-        "--target-case",
+        "--target-ensemble",
         "iter-%d",
         "--realizations",
         "1,2,4,8,16",
@@ -639,7 +639,7 @@ def test_cli_does_not_run_without_observations(mode, target):
     remove_linestartswith("poly.ert", "OBS_CONFIG")
 
     with pytest.raises(ErtCliError, match=f"To run {mode}, observations are needed."):
-        run_cli(mode, "--disable-monitor", "--target-case", target, "poly.ert")
+        run_cli(mode, "--disable-monitor", "--target-ensemble", target, "poly.ert")
 
 
 @pytest.mark.usefixtures("copy_poly_case")
@@ -668,7 +668,7 @@ def test_ies():
     run_cli(
         ITERATIVE_ENSEMBLE_SMOOTHER_MODE,
         "--disable-monitor",
-        "--target-case",
+        "--target-ensemble",
         "iter-%d",
         "--realizations",
         "1,2,4,8,16",
@@ -686,7 +686,7 @@ def test_that_running_ies_with_different_steplength_produces_different_result():
         run_cli(
             ITERATIVE_ENSEMBLE_SMOOTHER_MODE,
             "--disable-monitor",
-            "--target-case",
+            "--target-ensemble",
             f"{target}-%d",
             "--realizations",
             "1,2,4,8",
@@ -831,7 +831,7 @@ def test_exclude_parameter_from_update():
     run_cli(
         ENSEMBLE_SMOOTHER_MODE,
         "--disable-monitor",
-        "--target-case",
+        "--target-ensemble",
         "iter-%d",
         "--realizations",
         "0-5",
