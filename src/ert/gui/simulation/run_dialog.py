@@ -69,7 +69,7 @@ from ert.shared.status.utils import (
 
 from ..find_ert_info import find_ert_info
 from .queue_emitter import QueueEmitter
-from .view import ProgressWidget, RealizationWidget, UpdateWidget
+from .view import DiskSpaceWidget, ProgressWidget, RealizationWidget, UpdateWidget
 
 _TOTAL_PROGRESS_TEMPLATE = "Total progress {total_progress}% — {iteration_label}"
 
@@ -223,7 +223,7 @@ class RunDialog(QFrame):
 
         self.running_time = QLabel("")
         self.memory_usage = QLabel("")
-        self.disk_space = QLabel("")
+        self.disk_space = DiskSpaceWidget()
 
         self.kill_button = QPushButton("Terminate experiment")
         self.restart_button = QPushButton("Rerun failed")
@@ -433,7 +433,7 @@ class RunDialog(QFrame):
         disk_usage = disk_space_status(self.run_path_mp)
 
         if disk_usage:
-            self.disk_space.setText(f"Disk space used runpath: {disk_usage:.2f}%")
+            self.disk_space.update_status(self.run_path_mp)
 
         if maximum_memory_usage:
             self.memory_usage.setText(

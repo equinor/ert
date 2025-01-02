@@ -90,7 +90,6 @@ def get_ert_memory_usage() -> int:
 def disk_space_status(runpath: str) -> float | None:
     with contextlib.suppress(Exception):
         mount_dir = _get_mount_directory(runpath)
-        print(mount_dir)
         total_space, used_space, _free_space = shutil.disk_usage(mount_dir)
         percentage_used = used_space / total_space
         return percentage_used
