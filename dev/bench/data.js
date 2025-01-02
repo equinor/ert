@@ -1,39 +1,8 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1735817713498,
+  "lastUpdate": 1735829397247,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
-      {
-        "commit": {
-          "author": {
-            "email": "frodeaarstad@gmail.com",
-            "name": "Frode Aarstad",
-            "username": "frode-aarstad"
-          },
-          "committer": {
-            "email": "frodeaarstad@gmail.com",
-            "name": "Frode Aarstad",
-            "username": "frode-aarstad"
-          },
-          "distinct": true,
-          "id": "f96d3ce2b78b89c7d58824fb84b6944c58babac8",
-          "message": "Stop using cached seba data",
-          "timestamp": "2024-12-16T16:32:37+01:00",
-          "tree_id": "44c6b26df876190d11b21f3fd90eeb9c7a168bc5",
-          "url": "https://github.com/equinor/ert/commit/f96d3ce2b78b89c7d58824fb84b6944c58babac8"
-        },
-        "date": 1734363270252,
-        "tool": "pytest",
-        "benches": [
-          {
-            "name": "tests/ert/performance_tests/test_analysis.py::test_and_benchmark_adaptive_localization_with_fields",
-            "value": 0.22037485545093788,
-            "unit": "iter/sec",
-            "range": "stddev: 0.03633777651701471",
-            "extra": "mean: 4.537722772199982 sec\nrounds: 5"
-          }
-        ]
-      },
       {
         "commit": {
           "author": {
@@ -930,6 +899,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.03724143083640846",
             "extra": "mean: 4.592780669000007 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "havb@equinor.com",
+            "name": "Håvard Berland",
+            "username": "berland"
+          },
+          "committer": {
+            "email": "berland@pvv.ntnu.no",
+            "name": "Håvard Berland",
+            "username": "berland"
+          },
+          "distinct": true,
+          "id": "135c3c9053c91364bc957d979c42a8365c124c6a",
+          "message": "Avoid repeated logging for each cluster in misfit analysis",
+          "timestamp": "2025-01-02T15:48:01+01:00",
+          "tree_id": "f1ed2b06ce0701e3b0e12ccf96829f5a95274d16",
+          "url": "https://github.com/equinor/ert/commit/135c3c9053c91364bc957d979c42a8365c124c6a"
+        },
+        "date": 1735829396671,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/ert/performance_tests/test_analysis.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 0.21640452699990395,
+            "unit": "iter/sec",
+            "range": "stddev: 0.018154236135735673",
+            "extra": "mean: 4.620975419799993 sec\nrounds: 5"
           }
         ]
       }
