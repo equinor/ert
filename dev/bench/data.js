@@ -1,39 +1,8 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1735805241556,
+  "lastUpdate": 1735807931123,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
-      {
-        "commit": {
-          "author": {
-            "email": "levje@equinor.com",
-            "name": "larsevj",
-            "username": "larsevj"
-          },
-          "committer": {
-            "email": "60844986+larsevj@users.noreply.github.com",
-            "name": "Lars Evje",
-            "username": "larsevj"
-          },
-          "distinct": true,
-          "id": "69535ab2e3a8f31394edec4849756f41baf12ae1",
-          "message": "Remove unreliable test: test_gui_snapshot",
-          "timestamp": "2024-12-16T15:04:39+01:00",
-          "tree_id": "7966cc3eda35bf716354ba03c79163e1248f65b6",
-          "url": "https://github.com/equinor/ert/commit/69535ab2e3a8f31394edec4849756f41baf12ae1"
-        },
-        "date": 1734357992826,
-        "tool": "pytest",
-        "benches": [
-          {
-            "name": "tests/ert/performance_tests/test_analysis.py::test_and_benchmark_adaptive_localization_with_fields",
-            "value": 0.21804041852322464,
-            "unit": "iter/sec",
-            "range": "stddev: 0.022650697789625963",
-            "extra": "mean: 4.586305634400003 sec\nrounds: 5"
-          }
-        ]
-      },
       {
         "commit": {
           "author": {
@@ -930,6 +899,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.01825512749633529",
             "extra": "mean: 4.694145590200003 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "havb@equinor.com",
+            "name": "Håvard Berland",
+            "username": "berland"
+          },
+          "committer": {
+            "email": "berland@pvv.ntnu.no",
+            "name": "Håvard Berland",
+            "username": "berland"
+          },
+          "distinct": true,
+          "id": "45a4b7ca72b6bdda0a777d7a4712d19d97ab32b6",
+          "message": "Workaround Python bug for shutil.copytree() exceptions\n\nSee https://github.com/python/cpython/issues/102931\n\nThis PR will detect if the bug is triggered, and massage the data\naccordingly. Patch is prepared upstream destined for Python 3.14.\n\nExisting tests are split for readability and preciseness, and extended\nto test that the workaround is performing as it should.",
+          "timestamp": "2025-01-02T09:50:23+01:00",
+          "tree_id": "c547f6e90012d98758f3c8a6061b15f77febb069",
+          "url": "https://github.com/equinor/ert/commit/45a4b7ca72b6bdda0a777d7a4712d19d97ab32b6"
+        },
+        "date": 1735807930663,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/ert/performance_tests/test_analysis.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 0.2204107451657714,
+            "unit": "iter/sec",
+            "range": "stddev: 0.0216063470528396",
+            "extra": "mean: 4.536983889999999 sec\nrounds: 5"
           }
         ]
       }
