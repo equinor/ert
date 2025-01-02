@@ -46,7 +46,12 @@ from ert.gui.tools.plot.data_type_keys_widget import DataTypeKeysWidget
 from ert.gui.tools.plot.plot_ensemble_selection_widget import (
     EnsembleSelectListWidget,
 )
-from ert.gui.tools.plot.plot_window import PlotApi, PlotWindow
+from ert.gui.tools.plot.plot_window import (
+    GEN_KW_DEFAULT,
+    RESPONSE_DEFAULT,
+    PlotApi,
+    PlotWindow,
+)
 from ert.plugins import ErtPluginManager
 from ert.run_models import (
     EnsembleExperiment,
@@ -341,21 +346,53 @@ def test_that_the_plot_window_contains_the_expected_elements(
         "Std Dev",
     }
 
-    # Cycle through showing all the tabs and plot each data key
-
     model = data_keys.model()
     assert model is not None
+
+    def click_plotter_item(pos: int) -> None:
+        center = data_keys.visualRect(model.index(pos, 0)).center()
+        viewport = data_keys.viewport()
+        center = viewport.mapToGlobal(center)
+        local_pos = viewport.mapFromGlobal(center)
+        qtbot.mouseClick(data_keys.viewport(), Qt.LeftButton, pos=local_pos)
+
+    def click_tab_index(pos: int) -> None:
+        tab_bar = plot_window._central_tab.tabBar()
+        tab_center = tab_bar.tabRect(pos).center()
+        qtbot.mouseClick(tab_bar, Qt.LeftButton, pos=tab_center)
+
+    # make sure plotter remembers plot types selected previously
+    response_index = 0
+    gen_kw_index = 1
+    response_alternate_index = 1
+    gen_kw_alternate_index = 3
+
+    # check default selections
+    click_plotter_item(response_index)
+    assert plot_window._central_tab.currentIndex() == RESPONSE_DEFAULT
+    click_plotter_item(gen_kw_index)
+    assert plot_window._central_tab.currentIndex() == GEN_KW_DEFAULT
+
+    # alter selections
+    click_plotter_item(response_index)
+    click_tab_index(response_alternate_index)
+    click_plotter_item(gen_kw_index)
+    click_tab_index(gen_kw_alternate_index)
+
+    # verify previous selections still valid
+    click_plotter_item(response_index)
+    assert plot_window._central_tab.currentIndex() == response_alternate_index
+    click_plotter_item(gen_kw_index)
+    assert plot_window._central_tab.currentIndex() == gen_kw_alternate_index
+
+    # finally click all items
     for i in range(model.rowCount()):
-        index = model.index(i, 0)
-        qtbot.mouseClick(
-            data_types.data_type_keys_widget,
-            Qt.LeftButton,
-            pos=data_types.data_type_keys_widget.visualRect(index).center(),
-        )
+        click_plotter_item(i)
         for tab_index in range(plot_window._central_tab.count()):
             if not plot_window._central_tab.isTabEnabled(tab_index):
                 continue
-            plot_window._central_tab.setCurrentIndex(tab_index)
+            click_tab_index(tab_index)
+
     plot_window.close()
 
 
