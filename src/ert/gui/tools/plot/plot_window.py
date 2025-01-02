@@ -35,6 +35,10 @@ HISTOGRAM = "Histogram"
 STATISTICS = "Statistics"
 STD_DEV = "Std Dev"
 
+RESPONSE_DEFAULT = 0
+GEN_KW_DEFAULT = 2
+STD_DEV_DEFAULT = 6
+
 logger = logging.getLogger(__name__)
 
 from qtpy.QtWidgets import (
@@ -137,7 +141,15 @@ class PlotWindow(QMainWindow):
         self.addPlotWidget(CROSS_ENSEMBLE_STATISTICS, CrossEnsembleStatisticsPlot())
         self.addPlotWidget(STD_DEV, StdDevPlot())
         self._central_tab.currentChanged.connect(self.currentTabChanged)
-        self._prev_tab_widget: QWidget | None = None
+
+        self._prev_tab_widget_index = -1
+        self._current_tab_index = -1
+        self._prev_key_dimensionality = -1
+        self._prev_tab_widget_index_map: dict[int, int] = {
+            2: RESPONSE_DEFAULT,
+            1: GEN_KW_DEFAULT,
+            3: STD_DEV_DEFAULT,
+        }
 
         QApplication.setOverrideCursor(Qt.CursorShape.WaitCursor)
         try:
@@ -166,6 +178,7 @@ class PlotWindow(QMainWindow):
 
     @Slot(int)
     def currentTabChanged(self, index: Any) -> None:
+        self._current_tab_index = index
         self.updatePlot()
 
     @Slot(int)
@@ -334,7 +347,6 @@ class PlotWindow(QMainWindow):
             for widget in self._plot_widgets
             if widget._plotter.dimensionality == key_def.dimensionality
         ]
-
         current_widget = self._central_tab.currentWidget()
 
         # Enabling/disabling tab triggers the
@@ -350,17 +362,20 @@ class PlotWindow(QMainWindow):
             )
         self._central_tab.currentChanged.connect(self.currentTabChanged)
 
-        # Remember which tab widget was selected when switching between
-        # both same and different data-types.
-        if current_widget in available_widgets:
-            self._central_tab.setCurrentWidget(current_widget)
-        else:
-            if self._prev_tab_widget is None:
-                self._central_tab.setCurrentWidget(available_widgets[0])
-            else:
-                self._central_tab.setCurrentWidget(self._prev_tab_widget)
-            self._prev_tab_widget = current_widget
+        if 0 < self._prev_key_dimensionality != key_def.dimensionality:
+            if self._current_tab_index == -1:
+                self._current_tab_index = self._prev_tab_widget_index
+            self._prev_tab_widget_index_map[self._prev_key_dimensionality] = (
+                self._current_tab_index
+            )
+            current_widget = self._central_tab.widget(
+                self._prev_tab_widget_index_map[key_def.dimensionality]
+            )
+            self._current_tab_index = -1
 
+        self._central_tab.setCurrentWidget(current_widget)
+        self._prev_tab_widget_index = self._central_tab.currentIndex()
+        self._prev_key_dimensionality = key_def.dimensionality
         self.updatePlot()
 
     def toggleCustomizeDialog(self) -> None:
