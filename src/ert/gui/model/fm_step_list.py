@@ -93,7 +93,7 @@ class FMStepListProxyModel(QAbstractProxyModel):
                 return header.capitalize()
             if orientation == Qt.Orientation.Vertical:
                 return section
-        return QObject()
+        return None
 
     @override
     def columnCount(

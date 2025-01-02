@@ -103,7 +103,7 @@ class RealNode(_NodeBase):
 class ForwardModelStepNode(_NodeBase):
     parent: RealNode | None = None
     data: FMStepSnapshot = field(default_factory=lambda: FMStepSnapshot())  # noqa: PLW0108
-    children: None = None
+    children: dict[None, None] = field(default_factory=dict)
 
     def add_child(self, _: _NodeBase) -> None:
         raise RuntimeError(f"Can not add children to {self.__class__.__name__}")
