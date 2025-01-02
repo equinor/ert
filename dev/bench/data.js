@@ -1,39 +1,8 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1734969896695,
+  "lastUpdate": 1735805220207,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
-      {
-        "commit": {
-          "author": {
-            "email": "ynk@equinor.com",
-            "name": "Yngve S. Kristiansen",
-            "username": "yngve-sk"
-          },
-          "committer": {
-            "email": "yngve-sk@users.noreply.github.com",
-            "name": "Yngve S. Kristiansen",
-            "username": "yngve-sk"
-          },
-          "distinct": true,
-          "id": "4550d408674487ff44a1381876f8b14530e703a9",
-          "message": "Handle empty ensemble edge case",
-          "timestamp": "2024-12-16T14:49:41+01:00",
-          "tree_id": "05f1ba95860b95e559b8053ccfae41cb039e8043",
-          "url": "https://github.com/equinor/ert/commit/4550d408674487ff44a1381876f8b14530e703a9"
-        },
-        "date": 1734357097598,
-        "tool": "pytest",
-        "benches": [
-          {
-            "name": "tests/ert/performance_tests/test_analysis.py::test_and_benchmark_adaptive_localization_with_fields",
-            "value": 0.21506659249148377,
-            "unit": "iter/sec",
-            "range": "stddev: 0.07902852908449726",
-            "extra": "mean: 4.649722620399996 sec\nrounds: 5"
-          }
-        ]
-      },
       {
         "commit": {
           "author": {
@@ -930,6 +899,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.008085150111211182",
             "extra": "mean: 4.574968507400024 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "havb@equinor.com",
+            "name": "Håvard Berland",
+            "username": "berland"
+          },
+          "committer": {
+            "email": "berland@pvv.ntnu.no",
+            "name": "Håvard Berland",
+            "username": "berland"
+          },
+          "distinct": true,
+          "id": "9ba6c47784c8c7ad59a84ea6a645f42c759721eb",
+          "message": "Avoid warning from pytest\n\nPytestWarning: Value of environment variable ERT_STORAGE_ENS_PATH type\nshould be str, but got PosixPath('/.../storage') (type: PosixPath);\nconverted to str implicitly",
+          "timestamp": "2025-01-02T09:05:09+01:00",
+          "tree_id": "f12f6a458868d0303e7fc7d5524ade45dd29d3b8",
+          "url": "https://github.com/equinor/ert/commit/9ba6c47784c8c7ad59a84ea6a645f42c759721eb"
+        },
+        "date": 1735805219779,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/ert/performance_tests/test_analysis.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 0.22087436811815722,
+            "unit": "iter/sec",
+            "range": "stddev: 0.015636184030795086",
+            "extra": "mean: 4.527460603599996 sec\nrounds: 5"
           }
         ]
       }
