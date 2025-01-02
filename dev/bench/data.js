@@ -1,39 +1,8 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1735805220207,
+  "lastUpdate": 1735805241556,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
-      {
-        "commit": {
-          "author": {
-            "email": "eide.oyvind87@gmail.com",
-            "name": "Øyvind Eide",
-            "username": "oyvindeide"
-          },
-          "committer": {
-            "email": "44577479+oyvindeide@users.noreply.github.com",
-            "name": "Øyvind Eide",
-            "username": "oyvindeide"
-          },
-          "distinct": true,
-          "id": "87cbac355e155db79349e0ed9fc3733d7147769a",
-          "message": "Remove env variable that was always false",
-          "timestamp": "2024-12-16T15:03:18+01:00",
-          "tree_id": "bdca649b515e52327fcbf04c701ff12681e67d0c",
-          "url": "https://github.com/equinor/ert/commit/87cbac355e155db79349e0ed9fc3733d7147769a"
-        },
-        "date": 1734357911775,
-        "tool": "pytest",
-        "benches": [
-          {
-            "name": "tests/ert/performance_tests/test_analysis.py::test_and_benchmark_adaptive_localization_with_fields",
-            "value": 0.215872622549534,
-            "unit": "iter/sec",
-            "range": "stddev: 0.024628987265804588",
-            "extra": "mean: 4.6323613814 sec\nrounds: 5"
-          }
-        ]
-      },
       {
         "commit": {
           "author": {
@@ -930,6 +899,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.015636184030795086",
             "extra": "mean: 4.527460603599996 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "havb@equinor.com",
+            "name": "Håvard Berland",
+            "username": "berland"
+          },
+          "committer": {
+            "email": "berland@pvv.ntnu.no",
+            "name": "Håvard Berland",
+            "username": "berland"
+          },
+          "distinct": true,
+          "id": "929d59b73cea011aafc95bd62a950d963928cf64",
+          "message": "Avoid using deprecated --target-case in tests",
+          "timestamp": "2025-01-02T09:05:27+01:00",
+          "tree_id": "b6dc1b1cae0e7a3c6f0c6767c52da7b975f55dd5",
+          "url": "https://github.com/equinor/ert/commit/929d59b73cea011aafc95bd62a950d963928cf64"
+        },
+        "date": 1735805240505,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/ert/performance_tests/test_analysis.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 0.2130313133209388,
+            "unit": "iter/sec",
+            "range": "stddev: 0.01825512749633529",
+            "extra": "mean: 4.694145590200003 sec\nrounds: 5"
           }
         ]
       }
