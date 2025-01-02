@@ -117,7 +117,6 @@ class AnalysisModuleVariablesPanel(QWidget):
                 partial(
                     self.valueChangedCheckBox,
                     "localization",
-                    bool,
                     local_checkbox,
                 )
             )
@@ -179,31 +178,11 @@ class AnalysisModuleVariablesPanel(QWidget):
 
         spinner.setSingleStep(step_length)
         spinner.setValue(variable_value)
-        spinner.valueChanged.connect(
-            partial(self.valueChanged, variable_name, float, spinner)
-        )
+        spinner.valueChanged.connect(partial(self.valueChangedSpinner, variable_name))
         return spinner
 
-    def valueChanged(
-        self,
-        variable_name: str,
-        variable_type: type[bool] | type[float],
-        variable_control: QWidget,
-        value: float,
-    ) -> None:
-        if value is not None:
-            self.analysis_module.__setattr__(variable_name, value)  # noqa: PLC2801
+    def valueChangedSpinner(self, name: str, value: float) -> None:
+        self.analysis_module.__setattr__(name, value)  # noqa: PLC2801
 
-    def valueChangedCheckBox(
-        self,
-        variable_name: str,
-        variable_type: type[bool] | type[float],
-        variable_control: QWidget,
-    ) -> None:
-        value = None
-        if variable_type == bool:
-            assert isinstance(variable_control, QCheckBox)
-            value = variable_control.isChecked()
-
-        if value is not None:
-            self.analysis_module.__setattr__(variable_name, value)  # noqa: PLC2801
+    def valueChangedCheckBox(self, name: str, control: QCheckBox) -> None:
+        self.analysis_module.__setattr__(name, control.isChecked())  # noqa: PLC2801
