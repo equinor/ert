@@ -1,3 +1,5 @@
+from pathlib import Path
+
 from qtpy.QtCore import Qt
 from qtpy.QtWidgets import QHBoxLayout, QLabel, QProgressBar, QWidget
 
@@ -5,7 +7,7 @@ from ert.shared.status.utils import disk_space_status
 
 
 class DiskSpaceWidget(QWidget):
-    def __init__(self, parent=None):
+    def __init__(self, parent: QWidget | None = None) -> None:
         super().__init__(parent)
 
         layout = QHBoxLayout(self)
@@ -13,43 +15,51 @@ class DiskSpaceWidget(QWidget):
         layout.setSpacing(10)
 
         # Text label
-        self.label = QLabel(self)
+        self.usage_label = QLabel(self)
+        self.space_left_label = QLabel(self)
 
         # Progress bar
         self.progress_bar = QProgressBar(self)
         self.progress_bar.setRange(0, 100)
         self.progress_bar.setTextVisible(True)
         self.progress_bar.setFixedWidth(100)
-        self.progress_bar.setAlignment(Qt.AlignCenter)
+        self.progress_bar.setAlignment(Qt.AlignCenter)  # type: ignore
 
-        # Add color styling based on usage
-        self.progress_bar.setStyleSheet("""
-            QProgressBar {
-                border: 1px solid #ccc;
-                border-radius: 2px;
-                text-align: center;
-            }
-
-            QProgressBar::chunk {
-                background-color: qlineargradient(
-                    x1: 0, y1: 0.5, x2: 1, y2: 0.5,
-                    stop: 0 #2ecc71,
-                    stop: 0.7 #f1c40f,
-                    stop: 0.9 #e74c3c
-                );
-            }
-        """)
-
-        layout.addWidget(self.label)
+        layout.addWidget(self.usage_label)
         layout.addWidget(self.progress_bar)
+        layout.addWidget(self.space_left_label)
 
-    def update_status(self, run_path_mp):
+    def update_status(self, mount_dir: Path) -> None:
         """Update both the label and progress bar with current disk usage"""
-        disk_usage = disk_space_status(run_path_mp)
-        if disk_usage is not None:
-            self.label.setText("Disk space used runpath:")
-            self.progress_bar.setValue(int(disk_usage))
-            self.progress_bar.setFormat(f"{disk_usage:.1f}%")
+        disk_info = disk_space_status(mount_dir)
+        if disk_info is not None:
+            usage = int(disk_info[0])
+            self.usage_label.setText("Disk space runpath:")
+            self.progress_bar.setValue(usage)
+            self.progress_bar.setFormat(f"{disk_info[0]:.1f}%")
+
+            # Set color based on usage threshold
+            if usage >= 90:
+                color = "#e74c3c"  # Red for critical usage
+            elif usage >= 70:
+                color = "#f1c40f"  # Yellow for warning
+            else:
+                color = "#2ecc71"  # Green for normal usage
+
+            self.progress_bar.setStyleSheet(f"""
+                QProgressBar {{
+                    border: 1px solid #ccc;
+                    border-radius: 2px;
+                    text-align: center;
+                }}
+
+                QProgressBar::chunk {{
+                    background-color: {color};
+                }}
+            """)
+
+            self.space_left_label.setText(f"{disk_info[1]} free")
+
             self.setVisible(True)
         else:
             self.setVisible(False)

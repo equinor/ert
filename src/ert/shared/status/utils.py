@@ -87,15 +87,15 @@ def get_ert_memory_usage() -> int:
     return usage.ru_maxrss // rss_scale
 
 
-def disk_space_status(runpath: str) -> float | None:
+def disk_space_status(mount_dir: Path) -> tuple[float, str] | None:
     with contextlib.suppress(Exception):
-        mount_dir = _get_mount_directory(runpath)
-        total_space, used_space, _free_space = shutil.disk_usage(mount_dir)
-        percentage_used = used_space / total_space
-        return percentage_used
+        disk_info = shutil.disk_usage(mount_dir)
+        percentage_used = (disk_info.used / disk_info.total) * 100
+        return percentage_used, byte_with_unit(disk_info.free)
+    return None
 
 
-def _get_mount_directory(runpath: str) -> Path:
+def get_mount_directory(runpath: str) -> Path:
     path = Path(runpath).absolute()
 
     while not path.is_mount():

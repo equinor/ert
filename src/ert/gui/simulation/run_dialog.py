@@ -62,9 +62,9 @@ from ert.run_models import (
 from ert.run_models.event import RunModelDataEvent, RunModelErrorEvent
 from ert.shared.status.utils import (
     byte_with_unit,
-    disk_space_status,
     file_has_content,
     format_running_time,
+    get_mount_directory,
 )
 
 from ..find_ert_info import find_ert_info
@@ -196,7 +196,7 @@ class RunDialog(QFrame):
         self._ticker = QTimer(self)
         self._ticker.timeout.connect(self._on_ticker)
 
-        self.run_path_mp = run_model.run_paths._runpath_format
+        self.run_path_mp = get_mount_directory(run_model.run_paths._runpath_format)
 
         self._total_progress_label = QLabel(
             _TOTAL_PROGRESS_TEMPLATE.format(
@@ -430,10 +430,8 @@ class RunDialog(QFrame):
         self.running_time.setText(format_running_time(runtime))
 
         maximum_memory_usage = self._snapshot_model.root.max_memory_usage
-        disk_usage = disk_space_status(self.run_path_mp)
 
-        if disk_usage:
-            self.disk_space.update_status(self.run_path_mp)
+        self.disk_space.update_status(self.run_path_mp)
 
         if maximum_memory_usage:
             self.memory_usage.setText(

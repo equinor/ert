@@ -5,13 +5,12 @@ import logging
 import os.path
 import shutil
 from datetime import datetime
-from pathlib import Path
 from typing import no_type_check
 
 from pydantic import field_validator
 from pydantic.dataclasses import dataclass
 
-from ert.shared.status.utils import byte_with_unit
+from ert.shared.status.utils import byte_with_unit, get_mount_directory
 
 from .parsing import (
     ConfigDict,
@@ -94,7 +93,7 @@ class ModelConfig:
             ConfigWarning.warn(msg)
             logger.warning(msg)
         with contextlib.suppress(Exception):
-            mount_dir = _get_mount_directory(runpath_format_string)
+            mount_dir = get_mount_directory(runpath_format_string)
             total_space, used_space, free_space = shutil.disk_usage(mount_dir)
             percentage_used = used_space / total_space
             if (
@@ -165,12 +164,3 @@ def _replace_runpath_format(format_string: str) -> str:
     format_string = format_string.replace("%d", "<IENS>", 1)
     format_string = format_string.replace("%d", "<ITER>", 1)
     return format_string
-
-
-def _get_mount_directory(runpath: str) -> Path:
-    path = Path(runpath).absolute()
-
-    while not path.is_mount():
-        path = path.parent
-
-    return path
