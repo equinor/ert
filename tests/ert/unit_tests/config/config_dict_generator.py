@@ -255,7 +255,6 @@ class ErtConfigValues:
     min_realizations: str
     define: list[tuple[str, str]]
     forward_model: tuple[str, list[tuple[str, str]]]
-    simulation_job: list[list[str]]
     stop_long_running: bool
     data_kw_key: list[tuple[str, str]]
     data_file: str
@@ -290,7 +289,6 @@ class ErtConfigValues:
     def to_config_dict(self, config_file, cwd, all_defines=True):
         result = {
             ConfigKeys.FORWARD_MODEL: self.forward_model,
-            ConfigKeys.SIMULATION_JOB: self.simulation_job,
             ConfigKeys.NUM_REALIZATIONS: self.num_realizations,
             ConfigKeys.RUNPATH_FILE: self.runpath_file,
             ConfigKeys.RUN_TEMPLATE: self.run_template,
@@ -385,7 +383,6 @@ def ert_config_values(draw, use_eclbase=booleans):
     queue_system = draw(queue_systems)
     install_jobs = draw(small_list(random_forward_model_names(words, file_names)))
     forward_model = draw(small_list(job(install_jobs))) if install_jobs else []
-    simulation_job = draw(small_list(sim_job(install_jobs))) if install_jobs else []
     gen_data = draw(
         small_list(
             st.tuples(
@@ -434,7 +431,6 @@ def ert_config_values(draw, use_eclbase=booleans):
         st.builds(
             ErtConfigValues,
             forward_model=st.just(forward_model),
-            simulation_job=st.just(simulation_job),
             num_realizations=positives,
             eclbase=st.just(draw(words) + "%d") if use_eclbase else st.just(None),
             runpath_file=st.just(draw(file_names) + "runpath"),
@@ -713,11 +709,6 @@ def to_config_file(filename, config_values):
             if keyword in tuple_value_keywords:
                 for tuple_key, tuple_value in keyword_value:
                     config.write(f"{keyword} {tuple_key} {tuple_value}\n")
-            elif keyword == ConfigKeys.SIMULATION_JOB:
-                for job_config in keyword_value:
-                    job_name = job_config[0]
-                    job_args = " ".join(job_config[1:])
-                    config.write(f"{keyword} {job_name} {job_args}\n")
             elif keyword == ConfigKeys.FORWARD_MODEL:
                 for job_name, job_args in keyword_value:
                     config.write(

@@ -171,7 +171,7 @@ def _get_reference_config():
                 DETACHED_NODE_DIR,
                 SIMULATION_DIR,
             ),
-            "SIMULATION_JOB": [
+            "FORWARD_MODEL": [
                 [
                     EVEREST_SERVER_CONFIG,
                     "--config-file",
