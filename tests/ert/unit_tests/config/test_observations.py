@@ -135,7 +135,7 @@ def test_observations(minimum_case):
     summary_key = "test_key"
     observation_key = "test_obs_key"
     observation_vector = ObsVector(
-        ObservationType.SUMMARY_OBS,
+        ObservationType.SUMMARY,
         observation_key,
         "summary",
         {},

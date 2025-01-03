@@ -23,13 +23,11 @@ from ert.config import (
     Field,
     GenDataConfig,
     GenKwConfig,
+    ObservationType,
     ParameterConfig,
     ResponseConfig,
     SummaryConfig,
     SurfaceConfig,
-)
-from ert.config.enkf_observation_implementation_type import (
-    ObservationType,
 )
 from ert.config.gen_kw_config import TransformFunctionDefinition
 from ert.config.general_observation import GenObservation
@@ -537,7 +535,7 @@ observations = st.builds(
         words,
         st.builds(
             ObsVector,
-            observation_type=st.just(ObservationType.GEN_OBS),
+            observation_type=st.just(ObservationType.GENERAL),
             observation_key=words,
             data_key=words,
             observations=st.dictionaries(

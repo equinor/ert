@@ -10,11 +10,10 @@ import polars
 
 from ert.validation import rangestring_to_list
 
-from .enkf_observation_implementation_type import ObservationType
 from .gen_data_config import GenDataConfig
 from .general_observation import GenObservation
 from .observation_vector import ObsVector
-from .parsing import ConfigWarning, HistorySource
+from .parsing import ConfigWarning, HistorySource, ObservationType
 from .parsing.observations_parser import (
     DateValues,
     ErrorValues,
@@ -46,13 +45,13 @@ class EnkfObs:
     def __post_init__(self) -> None:
         grouped: dict[str, list[polars.DataFrame]] = {}
         for vec in self.obs_vectors.values():
-            if vec.observation_type == ObservationType.SUMMARY_OBS:
+            if vec.observation_type == ObservationType.SUMMARY:
                 if "summary" not in grouped:
                     grouped["summary"] = []
 
                 grouped["summary"].append(vec.to_dataset([]))
 
-            elif vec.observation_type == ObservationType.GEN_OBS:
+            elif vec.observation_type == ObservationType.GENERAL:
                 if "gen_data" not in grouped:
                     grouped["gen_data"] = []
 
@@ -183,7 +182,7 @@ class EnkfObs:
 
         return {
             summary_key: ObsVector(
-                ObservationType.SUMMARY_OBS,
+                ObservationType.SUMMARY,
                 summary_key,
                 "summary",
                 data,
@@ -334,7 +333,7 @@ class EnkfObs:
             )
         return {
             obs_key: ObsVector(
-                ObservationType.SUMMARY_OBS,
+                ObservationType.SUMMARY,
                 summary_key,
                 "summary",
                 {date: SummaryObservation(summary_key, obs_key, value, std_dev)},
@@ -463,7 +462,7 @@ class EnkfObs:
         try:
             return {
                 obs_key: ObsVector(
-                    ObservationType.GEN_OBS,
+                    ObservationType.GENERAL,
                     obs_key,
                     response_key,
                     {
