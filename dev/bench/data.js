@@ -1,39 +1,8 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1735892744763,
+  "lastUpdate": 1735906397897,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
-      {
-        "commit": {
-          "author": {
-            "email": "yngve-sk@users.noreply.github.com",
-            "name": "Yngve S. Kristiansen",
-            "username": "yngve-sk"
-          },
-          "committer": {
-            "email": "noreply@github.com",
-            "name": "GitHub",
-            "username": "web-flow"
-          },
-          "distinct": true,
-          "id": "b17963f93942bee4648288964e8a0133adfda1c8",
-          "message": "Fix key error on empty summary observations in plotter\n\n\r\n\r\nCo-authored-by: Eivind Jahren <ejah@equinor.com>",
-          "timestamp": "2024-12-18T08:16:17+01:00",
-          "tree_id": "636a98d4862c118a7c0efc0068beb8fb772d400b",
-          "url": "https://github.com/equinor/ert/commit/b17963f93942bee4648288964e8a0133adfda1c8"
-        },
-        "date": 1734506287950,
-        "tool": "pytest",
-        "benches": [
-          {
-            "name": "tests/ert/performance_tests/test_analysis.py::test_and_benchmark_adaptive_localization_with_fields",
-            "value": 0.2148757785156491,
-            "unit": "iter/sec",
-            "range": "stddev: 0.016913266146428664",
-            "extra": "mean: 4.653851666799994 sec\nrounds: 5"
-          }
-        ]
-      },
       {
         "commit": {
           "author": {
@@ -930,6 +899,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.023821548294085563",
             "extra": "mean: 4.5444959280000035 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "havb@equinor.com",
+            "name": "Håvard Berland",
+            "username": "berland"
+          },
+          "committer": {
+            "email": "berland@pvv.ntnu.no",
+            "name": "Håvard Berland",
+            "username": "berland"
+          },
+          "distinct": true,
+          "id": "a372383de1d69a2b0da463f1fd6897e5cd50b3e0",
+          "message": "Pin iterative_ensemble_smoother\n\nTests are not working with 0.3.0",
+          "timestamp": "2025-01-03T13:11:29+01:00",
+          "tree_id": "8a9d3cc3d4034939aa0154276fc62cf534a14b81",
+          "url": "https://github.com/equinor/ert/commit/a372383de1d69a2b0da463f1fd6897e5cd50b3e0"
+        },
+        "date": 1735906397422,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/ert/performance_tests/test_analysis.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 0.21740204916053793,
+            "unit": "iter/sec",
+            "range": "stddev: 0.03137568113211991",
+            "extra": "mean: 4.599772651 sec\nrounds: 5"
           }
         ]
       }
