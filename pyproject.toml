@@ -35,7 +35,7 @@ dependencies = [
     "filelock",
     "httpx",
     "humanize",
-    "iterative_ensemble_smoother>=0.2.6",
+    "iterative_ensemble_smoother>=0.3.0",
     "jinja2 >= 2.10",
     "lark",
     "lxml",

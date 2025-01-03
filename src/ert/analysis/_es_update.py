@@ -5,6 +5,7 @@ import logging
 import time
 from collections.abc import Callable, Iterable, Sequence
 from fnmatch import fnmatch
+from itertools import groupby
 from typing import (
     TYPE_CHECKING,
     Generic,
@@ -168,6 +169,7 @@ def _load_observations_and_responses(
     npt.NDArray[np.float64],
     tuple[
         npt.NDArray[np.float64],
+        list[str],
         npt.NDArray[np.float64],
         list[ObservationAndResponseSnapshot],
     ],
@@ -315,6 +317,7 @@ def _load_observations_and_responses(
 
     return S[obs_mask], (
         observations[obs_mask],
+        obs_keys[obs_mask],
         scaled_errors[obs_mask],
         update_snapshot,
     )
@@ -458,6 +461,7 @@ def analysis_ES(
         S,
         (
             observation_values,
+            observation_keys,
             observation_errors,
             update_snapshot,
         ),
@@ -474,6 +478,14 @@ def analysis_ES(
     num_obs = len(observation_values)
 
     smoother_snapshot.update_step_snapshots = update_snapshot
+    # Used as labels for observations in cross-correlation matrix.
+    # Say we have two observation groups "FOPR" and "WOPR" where "FOPR" has
+    # 2 responses and "WOPR" has 3.
+    # In this case we create a list [FOPR_0, FOPR_1, WOPR_0, WOPR_1, WOPR_2]
+    # as labels for observations.
+    unique_obs_names = [
+        f"{k}_{i}" for k, g in groupby(observation_keys) for i, _ in enumerate(list(g))
+    ]
 
     if num_obs == 0:
         msg = "No active observations for update step"
@@ -577,6 +589,8 @@ def analysis_ES(
                         cross_correlations_,
                         param_group,
                         parameter_names[: cross_correlations_.shape[0]],
+                        unique_obs_names,
+                        list(observation_keys),
                     )
             logger.info(
                 f"Adaptive Localization of {param_group} completed in {(time.time() - start) / 60} minutes"
@@ -639,6 +653,7 @@ def analysis_IES(
         S,
         (
             observation_values,
+            _,
             observation_errors,
             update_snapshot,
         ),
