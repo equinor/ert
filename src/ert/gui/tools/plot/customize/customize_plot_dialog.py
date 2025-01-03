@@ -203,8 +203,8 @@ class CustomizePlotDialog(QDialog):
         self.current_key = key
         self._key_defs = key_defs
 
-        self.setWindowFlags(self.windowFlags() & ~Qt.WindowContextHelpButtonHint)  # type: ignore
-        self.setWindowFlags(self.windowFlags() & ~Qt.WindowCloseButtonHint)  # type: ignore
+        self.setWindowFlag(Qt.WindowType.WindowContextHelpButtonHint, False)
+        self.setWindowFlag(Qt.WindowType.WindowCloseButtonHint, False)
 
         self._tab_map: dict[str, CustomizationView] = {}
         self._tab_order: list[str] = []
@@ -295,13 +295,13 @@ class CustomizePlotDialog(QDialog):
     def currentPlotKeyChanged(self, new_key: str | None) -> None:
         self.current_key = new_key
 
-    def keyPressEvent(self, arg__1: QKeyEvent | None) -> None:
+    def keyPressEvent(self, arg__1: QKeyEvent) -> None:
         # Hide when pressing Escape instead of QDialog.keyPressEvent(KeyEscape)
         # which closes the dialog
-        if arg__1 is not None and arg__1.key() == Qt.Key.Key_Escape:
+        if arg__1.key() == Qt.Key.Key_Escape:
             self.hide()
         else:
-            QDialog.keyPressEvent(self, arg__1)  # type: ignore[arg-type]
+            QDialog.keyPressEvent(self, arg__1)
 
     def addTab(
         self, attribute_name: str, title: str, widget: CustomizationView
