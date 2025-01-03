@@ -10,7 +10,7 @@ import polars
 
 from ert.validation import rangestring_to_list
 
-from .enkf_observation_implementation_type import EnkfObservationImplementationType
+from .enkf_observation_implementation_type import ObservationType
 from .gen_data_config import GenDataConfig
 from .general_observation import GenObservation
 from .observation_vector import ObsVector
@@ -46,13 +46,13 @@ class EnkfObs:
     def __post_init__(self) -> None:
         grouped: dict[str, list[polars.DataFrame]] = {}
         for vec in self.obs_vectors.values():
-            if vec.observation_type == EnkfObservationImplementationType.SUMMARY_OBS:
+            if vec.observation_type == ObservationType.SUMMARY_OBS:
                 if "summary" not in grouped:
                     grouped["summary"] = []
 
                 grouped["summary"].append(vec.to_dataset([]))
 
-            elif vec.observation_type == EnkfObservationImplementationType.GEN_OBS:
+            elif vec.observation_type == ObservationType.GEN_OBS:
                 if "gen_data" not in grouped:
                     grouped["gen_data"] = []
 
@@ -90,7 +90,7 @@ class EnkfObs:
         return all(self.datasets[k].equals(other.datasets[k]) for k in self.datasets)
 
     def getTypedKeylist(
-        self, observation_implementation_type: EnkfObservationImplementationType
+        self, observation_implementation_type: ObservationType
     ) -> list[str]:
         return sorted(
             [
@@ -183,7 +183,7 @@ class EnkfObs:
 
         return {
             summary_key: ObsVector(
-                EnkfObservationImplementationType.SUMMARY_OBS,
+                ObservationType.SUMMARY_OBS,
                 summary_key,
                 "summary",
                 data,
@@ -334,7 +334,7 @@ class EnkfObs:
             )
         return {
             obs_key: ObsVector(
-                EnkfObservationImplementationType.SUMMARY_OBS,
+                ObservationType.SUMMARY_OBS,
                 summary_key,
                 "summary",
                 {date: SummaryObservation(summary_key, obs_key, value, std_dev)},
@@ -463,7 +463,7 @@ class EnkfObs:
         try:
             return {
                 obs_key: ObsVector(
-                    EnkfObservationImplementationType.GEN_OBS,
+                    ObservationType.GEN_OBS,
                     obs_key,
                     response_key,
                     {

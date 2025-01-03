@@ -6,7 +6,7 @@ from typing import TYPE_CHECKING
 
 import numpy as np
 
-from .enkf_observation_implementation_type import EnkfObservationImplementationType
+from .enkf_observation_implementation_type import ObservationType
 from .general_observation import GenObservation
 from .summary_observation import SummaryObservation
 
@@ -18,7 +18,7 @@ import polars
 
 @dataclass
 class ObsVector:
-    observation_type: EnkfObservationImplementationType
+    observation_type: ObservationType
     observation_key: str
     data_key: str
     observations: dict[int | datetime, GenObservation | SummaryObservation]
@@ -31,7 +31,7 @@ class ObsVector:
         return len(self.observations)
 
     def to_dataset(self, active_list: list[int]) -> polars.DataFrame:
-        if self.observation_type == EnkfObservationImplementationType.GEN_OBS:
+        if self.observation_type == ObservationType.GEN_OBS:
             dataframes = []
             for time_step, node in self.observations.items():
                 if active_list and time_step not in active_list:
@@ -58,7 +58,7 @@ class ObsVector:
 
             combined = polars.concat(dataframes)
             return combined
-        elif self.observation_type == EnkfObservationImplementationType.SUMMARY_OBS:
+        elif self.observation_type == ObservationType.SUMMARY_OBS:
             observations = []
             actual_response_key = self.observation_key
             actual_observation_keys = []
