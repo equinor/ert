@@ -4,8 +4,8 @@ from functools import partial
 from typing import cast, get_args
 
 from annotated_types import Ge, Gt, Le
-from qtpy.QtCore import Qt
-from qtpy.QtWidgets import (
+from PySide6.QtCore import Qt
+from PySide6.QtWidgets import (
     QCheckBox,
     QComboBox,
     QDoubleSpinBox,
@@ -13,7 +13,6 @@ from qtpy.QtWidgets import (
     QFrame,
     QHBoxLayout,
     QLabel,
-    QLayout,
     QWidget,
 )
 
@@ -52,7 +51,7 @@ class AnalysisModuleVariablesPanel(QWidget):
             ):
                 metadata = analysis_module.model_fields[variable_name]
                 layout.addRow(
-                    metadata.title,
+                    metadata.title if metadata.title else "",
                     self.createDoubleSpinBox(
                         variable_name,
                         analysis_module.__getattribute__(variable_name),
@@ -105,7 +104,8 @@ class AnalysisModuleVariablesPanel(QWidget):
 
             localization_frame = QFrame()
             localization_frame.setLayout(QHBoxLayout())
-            lf_layout = cast(QLayout, localization_frame.layout())
+            lf_layout = localization_frame.layout()
+            assert lf_layout is not None
             lf_layout.setContentsMargins(0, 0, 0, 0)
 
             metadata = analysis_module.model_fields[
@@ -115,9 +115,8 @@ class AnalysisModuleVariablesPanel(QWidget):
             local_checkbox.setObjectName("localization")
             local_checkbox.clicked.connect(
                 partial(
-                    self.valueChanged,
+                    self.valueChangedCheckBox,
                     "localization",
-                    bool,
                     local_checkbox,
                 )
             )
@@ -154,8 +153,8 @@ class AnalysisModuleVariablesPanel(QWidget):
     @staticmethod
     def create_horizontal_line() -> QFrame:
         hline = QFrame()
-        hline.setFrameShape(QFrame.HLine)
-        hline.setFrameShadow(QFrame.Sunken)
+        hline.setFrameShape(QFrame.Shape.HLine)
+        hline.setFrameShadow(QFrame.Shadow.Sunken)
         hline.setFixedHeight(20)
         return hline
 
@@ -179,24 +178,11 @@ class AnalysisModuleVariablesPanel(QWidget):
 
         spinner.setSingleStep(step_length)
         spinner.setValue(variable_value)
-        spinner.valueChanged.connect(
-            partial(self.valueChanged, variable_name, float, spinner)
-        )
+        spinner.valueChanged.connect(partial(self.valueChangedSpinner, variable_name))
         return spinner
 
-    def valueChanged(
-        self,
-        variable_name: str,
-        variable_type: type[bool] | type[float],
-        variable_control: QWidget,
-    ) -> None:
-        value: bool | float | None = None
-        if variable_type == bool:
-            assert isinstance(variable_control, QCheckBox)
-            value = variable_control.isChecked()
-        elif variable_type == float:
-            assert isinstance(variable_control, QDoubleSpinBox)
-            value = variable_control.value()
+    def valueChangedSpinner(self, name: str, value: float) -> None:
+        self.analysis_module.__setattr__(name, value)  # noqa: PLC2801
 
-        if value is not None:
-            self.analysis_module.__setattr__(variable_name, value)  # noqa: PLC2801
+    def valueChangedCheckBox(self, name: str, control: QCheckBox) -> None:
+        self.analysis_module.__setattr__(name, control.isChecked())  # noqa: PLC2801

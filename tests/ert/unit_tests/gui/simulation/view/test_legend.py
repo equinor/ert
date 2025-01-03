@@ -1,7 +1,7 @@
 import hypothesis.strategies as st
 import pytest
 from hypothesis import HealthCheck, given, settings
-from qtpy.QtWidgets import QLabel
+from PySide6.QtWidgets import QLabel
 
 from ert.ensemble_evaluator.state import REAL_STATE_TO_COLOR
 from ert.gui.simulation.view import ProgressWidget

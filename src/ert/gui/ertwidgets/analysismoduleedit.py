@@ -2,9 +2,9 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from qtpy.QtCore import QMargins, Qt
-from qtpy.QtGui import QIcon
-from qtpy.QtWidgets import QHBoxLayout, QToolButton, QWidget
+from PySide6.QtCore import QMargins, Qt
+from PySide6.QtGui import QIcon
+from PySide6.QtWidgets import QHBoxLayout, QToolButton, QWidget
 
 from ert.gui.ertwidgets import ClosableDialog
 from ert.gui.ertwidgets.analysismodulevariablespanel import AnalysisModuleVariablesPanel
@@ -45,4 +45,4 @@ class AnalysisModuleEdit(QWidget):
             variable_dialog,
             self.parent(),  # type: ignore
         )
-        dialog.exec_()
+        dialog.exec()

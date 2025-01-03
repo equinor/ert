@@ -1,9 +1,9 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING
 
-from qtpy.QtCore import QEvent, QObject, Qt
-from qtpy.QtWidgets import (
+from PySide6.QtCore import QEvent, QObject, Qt
+from PySide6.QtWidgets import (
     QHBoxLayout,
     QLabel,
     QPushButton,
@@ -110,7 +110,7 @@ class ManageExperimentsPanel(QTabWidget):
         initialize_button.setMaximumWidth(150)
 
         @showWaitCursorWhileWaiting
-        def initialize_from_scratch(_: Any) -> None:
+        def initialize_from_scratch() -> None:
             parameters = parameter_model.getSelectedItems()
             sample_prior(
                 ensemble=ensemble_selector.currentData(),
@@ -138,7 +138,7 @@ class ManageExperimentsPanel(QTabWidget):
 
         self.addTab(panel, "Initialize from scratch")
 
-    def eventFilter(self, a0: QObject | None, a1: QEvent | None) -> bool:
-        if a1 is not None and a1.type() == QEvent.Type.Close:
+    def eventFilter(self, watched: QObject, event: QEvent) -> bool:
+        if event is not None and event.type() == QEvent.Type.Close:
             self.notifier.emitErtChange()
-        return super().eventFilter(a0, a1)
+        return super().eventFilter(watched, event)

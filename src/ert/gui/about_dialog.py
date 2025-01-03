@@ -1,6 +1,6 @@
-from qtpy.QtCore import QSize, Qt
-from qtpy.QtGui import QFont
-from qtpy.QtWidgets import (
+from PySide6.QtCore import QSize, Qt
+from PySide6.QtGui import QFont
+from PySide6.QtWidgets import (
     QDialog,
     QHBoxLayout,
     QLabel,
@@ -19,13 +19,8 @@ class AboutDialog(QDialog):
         self.setWindowTitle("About")
         self.setModal(True)
         self.setFixedSize(QSize(600, 480))
-        self.setWindowFlags(
-            self.windowFlags()
-            & ~Qt.WindowFlags(Qt.WindowType.WindowContextHelpButtonHint)
-        )
-        self.setWindowFlags(
-            self.windowFlags() & ~Qt.WindowFlags(Qt.WindowType.WindowCloseButtonHint)
-        )
+        self.setWindowFlag(Qt.WindowType.WindowContextHelpButtonHint, False)
+        self.setWindowFlag(Qt.WindowType.WindowCloseButtonHint, False)
 
         main_layout = QVBoxLayout()
 
