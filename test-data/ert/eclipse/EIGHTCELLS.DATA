@@ -1,0 +1,179 @@
+RUNSPEC
+
+TITLE
+  EIGHTCELLS
+
+DIMENS
+  2 2 2 /
+
+OIL
+WATER
+--GAS
+
+START
+  1 'JAN' 2000 /
+
+TABDIMS
+  1 1 20 20 2 /
+
+EQLDIMS
+  1 /
+
+WELLDIMS
+  1 1 1 1 /
+
+WSEGDIMS
+  1 10 10 /
+
+UNIFOUT
+
+
+GRID
+
+NEWTRAN
+
+COORD
+    0   0   0     0   0 100
+   50   0   0    50   0 100
+  100   0   0   100   0 100
+    0  50   0     0  50 100
+   50  50   0    50  50 100
+  100  50   0   100  50 100
+    0 100   0     0 100 100
+   50 100   0    50 100 100
+  100 100   0   100 100 100
+/
+
+ZCORN
+  0 0 0 0
+  0 0 0 0
+  0 0 0 0
+  0 0 0 0
+  50 50 50 50
+  50 50 50 50
+  50 50 50 50
+  50 50 50 50
+  50 50 50 50
+  50 50 50 50
+  50 50 50 50
+  50 50 50 50
+  100 100 100 100
+  100 100 100 100
+  100 100 100 100
+  100 100 100 100
+/
+
+
+PORO
+  0.2  0.2  0.2  0.2   0.2  0.2  0.2  0.2
+/
+
+PERMX
+  100.0  100.0  100.0  100.0    100.0  100.0  100.0  100.0
+/
+
+PERMY
+  100.0  100.0  100.0  100.0    100.0  100.0  100.0  100.0
+/
+
+PERMZ
+  100.0  100.0  100.0  100.0    100.0  100.0  100.0  100.0
+/
+
+
+GRIDFILE
+  0 1
+/
+
+INIT
+
+PROPS
+
+
+SWOF
+-- SW KRW KROW PC
+  0.1 0 1 1
+  1 1.0 0.0 0
+/
+
+
+DENSITY
+  800 1000 1.2 /
+
+PVTW
+  1 1 0.0001 0.2 0.00001 /
+
+PVDO
+  10 1   1
+  150 0.9 1 /
+
+ROCK
+  100 0.0001 /
+
+FILLEPS
+
+REGIONS
+
+SATNUM
+  1  1  1  1  1  1  1  1/
+
+EQLNUM
+  1  1  1  1  1  1  1  1/
+
+FIPNUM
+  1 1 1 1 2 2 2 2
+/
+
+SOLUTION
+
+EQUIL
+-- datum pressure_datum owc/gwc pc@owc goc pc@goc item7 item8 oip_init
+  100 100 50 /
+
+
+RPTRST
+  ALLPROPS/
+
+SUMMARY
+FOPR
+FOPT
+WOPT
+/
+WOPR
+/
+CPI
+  OP1 /
+/
+
+SCHEDULE
+
+WELSPECS
+ OP1 OPS 1 1 50 OIL /
+/
+
+COMPDAT
+  OP1 1 1 1 1 OPEN 1* 1* 0.15  /
+/
+
+
+WELSEGS
+  OP1 5 5 1* INC /
+   2 2 1 1 10 10  0.015 0.0001 /
+/
+
+COMPSEGS
+ OP1 /
+--i j k branch len
+  1 1 1 1      10 20 Z /
+/
+
+WRFTPLT
+ '*' YES YES YES  /
+/
+
+WCONPROD
+ OP1 OPEN ORAT 50 /
+/
+
+TSTEP
+  1 1 /
