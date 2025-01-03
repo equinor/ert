@@ -1,39 +1,8 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1735906397897,
+  "lastUpdate": 1735907606027,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
-      {
-        "commit": {
-          "author": {
-            "email": "havb@equinor.com",
-            "name": "Håvard Berland",
-            "username": "berland"
-          },
-          "committer": {
-            "email": "berland@pvv.ntnu.no",
-            "name": "Håvard Berland",
-            "username": "berland"
-          },
-          "distinct": true,
-          "id": "01156bb8355596d8dcb22570d963091bdca71c74",
-          "message": "Add specific exceptions to bad-dunder-names",
-          "timestamp": "2024-12-18T09:04:48+01:00",
-          "tree_id": "b5a5857550018617a9288eed2e4d5d33898fe280",
-          "url": "https://github.com/equinor/ert/commit/01156bb8355596d8dcb22570d963091bdca71c74"
-        },
-        "date": 1734509233256,
-        "tool": "pytest",
-        "benches": [
-          {
-            "name": "tests/ert/performance_tests/test_analysis.py::test_and_benchmark_adaptive_localization_with_fields",
-            "value": 0.21463586830074877,
-            "unit": "iter/sec",
-            "range": "stddev: 0.010339623610527466",
-            "extra": "mean: 4.6590535306 sec\nrounds: 5"
-          }
-        ]
-      },
       {
         "commit": {
           "author": {
@@ -930,6 +899,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.03137568113211991",
             "extra": "mean: 4.599772651 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "ejah@equinor.com",
+            "name": "Eivind Jahren",
+            "username": "eivindjahren"
+          },
+          "committer": {
+            "email": "ejah@equinor.com",
+            "name": "Eivind Jahren",
+            "username": "eivindjahren"
+          },
+          "distinct": true,
+          "id": "987bb0b555b5f77d07ba64c7a90433adba9eaca2",
+          "message": "Add property test of ensemble_smoother",
+          "timestamp": "2025-01-03T13:31:39+01:00",
+          "tree_id": "796aa000b707084c8f003344ebeaf67393e2d9f9",
+          "url": "https://github.com/equinor/ert/commit/987bb0b555b5f77d07ba64c7a90433adba9eaca2"
+        },
+        "date": 1735907605571,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/ert/performance_tests/test_analysis.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 0.21585071692996452,
+            "unit": "iter/sec",
+            "range": "stddev: 0.049524646250869074",
+            "extra": "mean: 4.632831496799997 sec\nrounds: 5"
           }
         ]
       }
