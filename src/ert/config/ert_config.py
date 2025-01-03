@@ -191,7 +191,11 @@ def create_forward_model_json(
                 for arg in fm_step.arglist
             ],
             "environment": substituter.filter_env_dict(
-                dict(env_pr_fm_step.get(fm_step.name, {}), **fm_step.environment)
+                dict(
+                    env_pr_fm_step.get(fm_step.name, {}),
+                    **fm_step.environment,
+                    **env_vars,  # SETENV
+                )
             ),
             "exec_env": substituter.filter_env_dict(fm_step.exec_env),
             "max_running_minutes": fm_step.max_running_minutes,
@@ -826,8 +830,8 @@ class ErtConfig:
                     fm_json = substituted_json["jobList"][0]
                     fm_json["environment"] = {
                         **cls.ENV_PR_FM_STEP.get(fm_step.name, {}),  # plugins
-                        **fm_json["environment"],  # setenv
-                        **substituted_json["global_environment"],
+                        **fm_json["environment"],
+                        **substituted_json["global_environment"],  # SETENV
                     }
                     fm_step.validate_pre_experiment(fm_json)
                 except ForwardModelStepValidationError as err:
