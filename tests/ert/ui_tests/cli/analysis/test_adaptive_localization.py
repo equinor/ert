@@ -49,11 +49,6 @@ def test_that_adaptive_localization_with_cutoff_1_equals_ensemble_prior():
         f.writelines(lines)
     prior_ensemble, posterior_ensemble = run_cli_ES_with_case("poly_localization_1.ert")
 
-    with pytest.raises(
-        FileNotFoundError, match="No cross-correlation data available at"
-    ):
-        prior_ensemble.load_cross_correlations()
-
     prior_sample = prior_ensemble.load_parameters("COEFFS")["values"]
     posterior_sample = posterior_ensemble.load_parameters("COEFFS")["values"]
     # Check prior and posterior samples are equal
@@ -300,8 +295,8 @@ def test_that_posterior_generalized_variance_increases_in_cutoff():
     )
 
     cross_correlations = prior_ensemble_cutoff1.load_cross_correlations()
-    assert all(cross_correlations.parameter.to_numpy() == ["a", "b"])
-    assert cross_correlations["COEFFS"].values.shape == (2, 5)
+    assert all(cross_correlations.parameter.to_numpy() == ["a", "b", "c"])
+    assert cross_correlations["COEFFS"].values.shape == (3, 5)
     assert (
         (cross_correlations["COEFFS"].values >= -1)
         & (cross_correlations["COEFFS"].values <= 1)
