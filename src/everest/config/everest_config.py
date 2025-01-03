@@ -61,7 +61,7 @@ from .model_config import ModelConfig
 from .objective_function_config import ObjectiveFunctionConfig
 from .optimization_config import OptimizationConfig
 from .output_constraint_config import OutputConstraintConfig
-from .simulator_config import SimulatorConfig
+from .simulator_config import SimulatorConfig, simulator_example
 from .well_config import WellConfig
 from .workflow_config import WorkflowConfig
 
@@ -235,7 +235,9 @@ and environment variables are exposed in the form 'os.NAME', for example:
 """,
     )
     simulator: SimulatorConfig | None = Field(
-        default_factory=SimulatorConfig, description="Simulation settings"
+        default_factory=SimulatorConfig,
+        description="Simulation settings",
+        examples=[simulator_example],
     )
     forward_model: list[str] | None = Field(
         default=None, description="List of jobs to run"

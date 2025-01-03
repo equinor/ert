@@ -10,4 +10,5 @@ some basic type. It may also be a list, which indicates that the keyword can be
 repeated as a yaml list. If a keyword is required, this is also indicated in
 brackets after the keyword name.
 
-.. include:: config_generated.rst
+.. raw:: html
+   :file: config_schema.html

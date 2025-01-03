@@ -70,11 +70,6 @@ jobs:
         uv pip install git+https://github.com/equinor/everest-models.git
         python -m pytest tests/everest -n 4 --cov=ert --cov=everest --cov=_ert --cov-report=xml:cov1.xml --junit-xml=junit.xml -o junit_family=legacy -m everest_models_test --dist loadgroup
 
-    - name: Test docs entry point
-      if: inputs.test-type == 'everest-docs-entry-test'
-      run: |
-        python -m everest.docs
-
     - name: Upload coverage to Codecov
       if: inputs.test-type != 'everest-docs-entry-test' && inputs.test-type != 'doc'
       id: codecov1

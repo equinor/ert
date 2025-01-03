@@ -120,6 +120,7 @@ dev = [
     "sphinx-autoapi",
     "sphinx-copybutton",
     "sphinxcontrib.datatemplates",
+    "json-schema-for-humans"
 ]
 style = [
     "pre-commit",
