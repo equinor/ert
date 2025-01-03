@@ -2,7 +2,6 @@ from .analysis_config import AnalysisConfig
 from .analysis_module import AnalysisModule, ESSettings, IESSettings
 from .capture_validation import capture_validation
 from .design_matrix import DesignMatrix
-from .enkf_observation_implementation_type import EnkfObservationImplementationType
 from .ensemble_config import EnsembleConfig
 from .ert_config import ErtConfig
 from .ert_plugin import CancelPluginException, ErtPlugin
@@ -33,6 +32,7 @@ from .parsing import (
     QueueSystem,
     WarningInfo,
 )
+from .parsing.observations_parser import ObservationType
 from .queue_config import QueueConfig
 from .response_config import InvalidResponseFile, ResponseConfig
 from .summary_config import SummaryConfig
@@ -52,7 +52,6 @@ __all__ = [
     "DesignMatrix",
     "ESSettings",
     "EnkfObs",
-    "EnkfObservationImplementationType",
     "EnsembleConfig",
     "ErrorInfo",
     "ErtConfig",
@@ -73,6 +72,7 @@ __all__ = [
     "IESSettings",
     "InvalidResponseFile",
     "ModelConfig",
+    "ObservationType",
     "ParameterConfig",
     "PriorDict",
     "QueueConfig",

@@ -10,6 +10,7 @@ from .forward_model_schema import init_forward_model_schema
 from .history_source import HistorySource
 from .hook_runtime import HookRuntime
 from .lark_parser import parse, parse_contents, read_file
+from .observations_parser import ObservationType
 from .queue_system import QueueSystem, QueueSystemWithGeneric
 from .schema_item_type import SchemaItemType
 from .types import MaybeWithContext
@@ -31,6 +32,7 @@ __all__ = [
     "HistorySource",
     "HookRuntime",
     "MaybeWithContext",
+    "ObservationType",
     "QueueSystem",
     "QueueSystemWithGeneric",
     "SchemaItemType",
