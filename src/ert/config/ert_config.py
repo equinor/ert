@@ -192,9 +192,13 @@ def create_forward_model_json(
             ],
             "environment": substituter.filter_env_dict(
                 dict(
-                    env_pr_fm_step.get(fm_step.name, {}),
+                    **{
+                        key: value
+                        for key, value in env_pr_fm_step.get(fm_step.name, {}).items()
+                        # Let SETENV override keys set through the plugin system:
+                        if key not in env_vars
+                    },
                     **fm_step.environment,
-                    **env_vars,  # SETENV
                 )
             ),
             "exec_env": substituter.filter_env_dict(fm_step.exec_env),
