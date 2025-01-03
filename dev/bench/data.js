@@ -1,39 +1,8 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1735907606027,
+  "lastUpdate": 1735908422996,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
-      {
-        "commit": {
-          "author": {
-            "email": "levje@equinor.com",
-            "name": "larsevj",
-            "username": "larsevj"
-          },
-          "committer": {
-            "email": "60844986+larsevj@users.noreply.github.com",
-            "name": "Lars Evje",
-            "username": "larsevj"
-          },
-          "distinct": true,
-          "id": "a6649a18d307b353de1e01428b189a6b335108e6",
-          "message": "Unpin pydantic",
-          "timestamp": "2024-12-18T13:49:34+01:00",
-          "tree_id": "0b3fc34b704dca4f183d131375f05b1033bb35b8",
-          "url": "https://github.com/equinor/ert/commit/a6649a18d307b353de1e01428b189a6b335108e6"
-        },
-        "date": 1734526298593,
-        "tool": "pytest",
-        "benches": [
-          {
-            "name": "tests/ert/performance_tests/test_analysis.py::test_and_benchmark_adaptive_localization_with_fields",
-            "value": 0.2171199435754667,
-            "unit": "iter/sec",
-            "range": "stddev: 0.04954297387413186",
-            "extra": "mean: 4.6057491703999975 sec\nrounds: 5"
-          }
-        ]
-      },
       {
         "commit": {
           "author": {
@@ -930,6 +899,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.049524646250869074",
             "extra": "mean: 4.632831496799997 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "feda.curic@gmail.com",
+            "name": "Feda Curic",
+            "username": "dafeda"
+          },
+          "committer": {
+            "email": "feda.curic@gmail.com",
+            "name": "Feda Curic",
+            "username": "dafeda"
+          },
+          "distinct": true,
+          "id": "6a823997185e298d1eed3266c1615a7beb2158a1",
+          "message": "Use new version of iterative_ensemble_smoother\n\nReturns all correlated pairs and not just those deemed\nsignificantly correlated.\nTherefore, some tests need to be updated.",
+          "timestamp": "2025-01-03T13:45:12+01:00",
+          "tree_id": "3795a98a8a1b82cb741a9ce056d730729908f5b7",
+          "url": "https://github.com/equinor/ert/commit/6a823997185e298d1eed3266c1615a7beb2158a1"
+        },
+        "date": 1735908422013,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/ert/performance_tests/test_analysis.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 0.22117051425708484,
+            "unit": "iter/sec",
+            "range": "stddev: 0.036435514528603996",
+            "extra": "mean: 4.521398358000004 sec\nrounds: 5"
           }
         ]
       }
