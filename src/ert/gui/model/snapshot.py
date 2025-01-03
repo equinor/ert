@@ -471,7 +471,7 @@ class SnapshotModel(QAbstractItemModel):
         if role == FileRole:
             data_name = FM_STEP_COLUMNS[index.column()]
             if data_name in {ids.STDOUT, ids.STDERR}:
-                return node.data.get(data_name, None)
+                return node.data.get(data_name)
 
         if role == RealIens:
             return node.parent.id_ if node.parent else None
