@@ -152,7 +152,7 @@ class LibresFacade:
 
     def get_data_key_for_obs_key(self, observation_key: str) -> str:
         obs = self.config.enkf_obs[observation_key]
-        if obs.observation_type == ObservationType.SUMMARY_OBS:
+        if obs.observation_type == ObservationType.SUMMARY:
             return next(iter(obs.observations.values())).summary_key  # type: ignore
         else:
             return obs.data_key
