@@ -48,6 +48,9 @@ def run_model():
     run_model.format_error.return_value = ""
     run_model.get_runtime.return_value = 1
     run_model.support_restart = True
+    run_paths_mock = MagicMock()
+    run_paths_mock._runpath_format = "/"
+    run_model.run_paths = run_paths_mock
     return run_model
 
 
