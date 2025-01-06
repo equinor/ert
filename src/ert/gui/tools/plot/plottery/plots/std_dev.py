@@ -108,8 +108,9 @@ class StdDevPlot:
                 im.set_norm(norm)
 
             padding = 0.05 * (vmax - vmin)
-            for ax_box in boxplot_axes:
-                ax_box.set_ylim(vmin - padding, vmax + padding)
+            if padding > 0.0:
+                for ax_box in boxplot_axes:
+                    ax_box.set_ylim(vmin - padding, vmax + padding)
 
     @staticmethod
     def _colorbar(mappable: Any) -> Any:
