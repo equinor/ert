@@ -14,7 +14,6 @@ from typing import TYPE_CHECKING, Any
 import orjson
 from pydantic.dataclasses import dataclass
 
-from _ert.async_utils import get_running_loop
 from _ert.events import Event, ForwardModelStepChecksum, Id, event_from_dict
 
 from .driver import Driver
@@ -82,7 +81,6 @@ class Scheduler:
             real.iens: Job(self, real) for real in (realizations or [])
         }
 
-        self._loop = get_running_loop()
         self._events: asyncio.Queue[Any] = asyncio.Queue()
         self._running: asyncio.Event = asyncio.Event()
 
@@ -103,12 +101,8 @@ class Scheduler:
 
         self.checksum: dict[str, dict[str, Any]] = {}
 
-    def kill_all_jobs(self) -> None:
-        assert self._loop
-        # Checking that the loop is running is required because everest is closing the
-        # simulation context whenever an optimization simulation batch is done
-        if self._loop.is_running():
-            asyncio.run_coroutine_threadsafe(self.cancel_all_jobs(), self._loop)
+    async def kill_all_jobs(self) -> None:
+        await self.cancel_all_jobs()
 
     async def cancel_all_jobs(self) -> None:
         await self._running.wait()

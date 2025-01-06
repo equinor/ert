@@ -6,7 +6,7 @@ import traceback
 from collections.abc import Awaitable, Callable, Sequence
 from dataclasses import dataclass
 from functools import partialmethod
-from typing import Any, Protocol
+from typing import Any
 
 from _ert.events import (
     Event,
@@ -104,7 +104,7 @@ class LegacyEnsemble:
     id_: str
 
     def __post_init__(self) -> None:
-        self._scheduler: _KillAllJobs | None = None
+        self._scheduler: Scheduler | None = None
         self._config: EvaluatorServerConfig | None = None
         self.snapshot: EnsembleSnapshot = self._create_snapshot()
         self.status = self.snapshot.status
@@ -309,14 +309,10 @@ class LegacyEnsemble:
     def cancellable(self) -> bool:
         return True
 
-    def cancel(self) -> None:
+    async def cancel(self) -> None:
         if self._scheduler is not None:
-            self._scheduler.kill_all_jobs()
+            await self._scheduler.kill_all_jobs()
         logger.debug("evaluator cancelled")
-
-
-class _KillAllJobs(Protocol):
-    def kill_all_jobs(self) -> None: ...
 
 
 @dataclass
