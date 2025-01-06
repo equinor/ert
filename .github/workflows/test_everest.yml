@@ -78,7 +78,7 @@ jobs:
     - name: Upload coverage to Codecov
       if: inputs.test-type != 'everest-docs-entry-test' && inputs.test-type != 'doc'
       id: codecov1
-      uses: codecov/codecov-action@v4
+      uses: codecov/codecov-action@v5
       continue-on-error: true
       with:
         token: ${{ secrets.CODECOV_TOKEN }}
@@ -90,7 +90,7 @@ jobs:
       run: |
         sleep 30
     - name: Codecov retry
-      uses: codecov/codecov-action@v4
+      uses: codecov/codecov-action@v5
       if: steps.codecov1.outcome == 'failure' && inputs.test-type != 'everest-docs-entry-test' && inputs.test-type != 'doc'
       with:
         token: ${{ secrets.CODECOV_TOKEN }}
