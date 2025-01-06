@@ -1,39 +1,8 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1736163347876,
+  "lastUpdate": 1736163526426,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
-      {
-        "commit": {
-          "author": {
-            "email": "JONAK@equinor.com",
-            "name": "Jonathan Karlsen",
-            "username": "jonathan-eq"
-          },
-          "committer": {
-            "email": "107626001+jonathan-eq@users.noreply.github.com",
-            "name": "Jonathan Karlsen",
-            "username": "jonathan-eq"
-          },
-          "distinct": true,
-          "id": "a95d0d2f2bd7bb6963d272c0f56635e0a47ed298",
-          "message": "Rename job_dispatch -> fm_dispatch",
-          "timestamp": "2024-12-19T07:40:58+01:00",
-          "tree_id": "62eb4933ad6ae699b1df161e110c00556ee55009",
-          "url": "https://github.com/equinor/ert/commit/a95d0d2f2bd7bb6963d272c0f56635e0a47ed298"
-        },
-        "date": 1734590567766,
-        "tool": "pytest",
-        "benches": [
-          {
-            "name": "tests/ert/performance_tests/test_analysis.py::test_and_benchmark_adaptive_localization_with_fields",
-            "value": 0.21899830226388506,
-            "unit": "iter/sec",
-            "range": "stddev: 0.03780022140777206",
-            "extra": "mean: 4.566245444200002 sec\nrounds: 5"
-          }
-        ]
-      },
       {
         "commit": {
           "author": {
@@ -930,6 +899,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.026559978642120226",
             "extra": "mean: 4.612475268199995 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "49699333+dependabot[bot]@users.noreply.github.com",
+            "name": "dependabot[bot]",
+            "username": "dependabot[bot]"
+          },
+          "committer": {
+            "email": "60844986+larsevj@users.noreply.github.com",
+            "name": "Lars Evje",
+            "username": "larsevj"
+          },
+          "distinct": true,
+          "id": "ab373dd5930aec8fe06622df2e0bd8100b0a750b",
+          "message": "Bump pypa/gh-action-pypi-publish from 1.10.1 to 1.12.3\n\nBumps [pypa/gh-action-pypi-publish](https://github.com/pypa/gh-action-pypi-publish) from 1.10.1 to 1.12.3.\n- [Release notes](https://github.com/pypa/gh-action-pypi-publish/releases)\n- [Commits](https://github.com/pypa/gh-action-pypi-publish/compare/v1.10.1...v1.12.3)\n\n---\nupdated-dependencies:\n- dependency-name: pypa/gh-action-pypi-publish\n  dependency-type: direct:production\n  update-type: version-update:semver-minor\n...\n\nSigned-off-by: dependabot[bot] <support@github.com>",
+          "timestamp": "2025-01-06T12:36:59+01:00",
+          "tree_id": "7be64911980eac6e06a16265f0222028a84c63d8",
+          "url": "https://github.com/equinor/ert/commit/ab373dd5930aec8fe06622df2e0bd8100b0a750b"
+        },
+        "date": 1736163525935,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/ert/performance_tests/test_analysis.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 0.2162420984924752,
+            "unit": "iter/sec",
+            "range": "stddev: 0.029626205247944",
+            "extra": "mean: 4.624446428200002 sec\nrounds: 5"
           }
         ]
       }
