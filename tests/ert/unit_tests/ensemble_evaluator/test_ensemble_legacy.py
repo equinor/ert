@@ -93,6 +93,7 @@ async def test_run_and_cancel_legacy_ensemble(
             # and the ensemble is set to STOPPED
             monitor._receiver_timeout = 10.0
             cancel = True
+            await evaluator._ensemble._scheduler._running.wait()
             with contextlib.suppress(
                 ConnectionClosed
             ):  # monitor throws some variant of CC if dispatcher dies

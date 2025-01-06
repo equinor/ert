@@ -62,8 +62,6 @@ class EnsembleEvaluator:
         self._config: EvaluatorServerConfig = config
         self._ensemble: Ensemble = ensemble
 
-        self._loop: asyncio.AbstractEventLoop | None = None
-
         self._clients: set[ServerConnection] = set()
         self._dispatchers_connected: asyncio.Queue[None] = asyncio.Queue()
 
@@ -198,7 +196,7 @@ class EnsembleEvaluator:
         if len(events) == 0:
             events = [EnsembleFailed(ensemble=self.ensemble.id_)]
         await self._append_message(self.ensemble.update_snapshot(events))
-        self._signal_cancel()  # let ensemble know it should stop
+        await self._signal_cancel()  # let ensemble know it should stop
 
     @property
     def ensemble(self) -> Ensemble:
@@ -223,7 +221,7 @@ class EnsembleEvaluator:
                 logger.debug(f"got message from client: {event}")
                 if type(event) is EEUserCancel:
                     logger.debug(f"Client {websocket.remote_address} asked to cancel.")
-                    self._signal_cancel()
+                    await self._signal_cancel()
 
                 elif type(event) is EEUserDone:
                     logger.debug(f"Client {websocket.remote_address} signalled done.")
@@ -342,7 +340,7 @@ class EnsembleEvaluator:
     def stop(self) -> None:
         self._server_done.set()
 
-    def _signal_cancel(self) -> None:
+    async def _signal_cancel(self) -> None:
         """
         This is just a wrapper around logic for whether to signal cancel via
         a cancellable ensemble or to use internal stop-mechanism directly
@@ -353,8 +351,7 @@ class EnsembleEvaluator:
         """
         if self._ensemble.cancellable:
             logger.debug("Cancelling current ensemble")
-            assert self._loop is not None
-            self._loop.run_in_executor(None, self._ensemble.cancel)
+            await self._ensemble.cancel()
         else:
             logger.debug("Stopping current ensemble")
             self.stop()
@@ -362,7 +359,6 @@ class EnsembleEvaluator:
     async def _start_running(self) -> None:
         if not self._config:
             raise ValueError("no config for evaluator")
-        self._loop = asyncio.get_running_loop()
         self._ee_tasks = [
             asyncio.create_task(self._server(), name="server_task"),
             asyncio.create_task(
