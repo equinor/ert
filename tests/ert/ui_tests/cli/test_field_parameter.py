@@ -252,6 +252,8 @@ def test_field_param_update_using_heat_equation_zero_var_params_and_adaptive_loc
         experiment = storage.get_experiment_by_name("es-mda")
         prior = experiment.get_ensemble_by_name("default_0")
         cond = prior.load_parameters("COND")
+        init_temp_scale = prior.load_parameters("INIT_TEMP_SCALE")
+        corr_length = prior.load_parameters("CORR_LENGTH")
 
         new_experiment = storage.create_experiment(
             parameters=config.ensemble_config.parameter_configuration,
@@ -268,6 +270,8 @@ def test_field_param_update_using_heat_equation_zero_var_params_and_adaptive_loc
         cond["values"][:, :, :5, 0] = 1.0
         for real in range(prior.ensemble_size):
             new_prior.save_parameters("COND", real, cond)
+            new_prior.save_parameters("INIT_TEMP_SCALE", real, init_temp_scale)
+            new_prior.save_parameters("CORR_LENGTH", real, corr_length)
 
         # Copy responses from existing prior to new prior.
         # Note that we ideally should generate new responses by running the
