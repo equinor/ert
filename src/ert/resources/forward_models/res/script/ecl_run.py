@@ -466,7 +466,7 @@ class EclRun:
             error_and_slave_msg = sep.join(error_list)
             extra_message = ""
             error_messages = [
-                error for error in error_list if not "STARTING SLAVE" in str(error)
+                error for error in error_list if "STARTING SLAVE" not in str(error)
             ]
             if result.errors != len(error_messages):
                 extra_message = (

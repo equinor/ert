@@ -94,7 +94,7 @@ def test_that_init_updates_the_info_tab(qtbot, storage):
     ensemble_widget._currentTabChanged(1)
 
     assert "UNDEFINED" in html_edit.toPlainText()
-    assert not "RealizationStorageState.UNDEFINED" in html_edit.toPlainText()
+    assert "RealizationStorageState.UNDEFINED" not in html_edit.toPlainText()
 
     # Change to the "initialize from scratch" tab
     tool.setCurrentIndex(1)
@@ -107,7 +107,7 @@ def test_that_init_updates_the_info_tab(qtbot, storage):
     tool.setCurrentIndex(0)
     ensemble_widget._currentTabChanged(1)
     assert "PARAMETERS_LOADED" in html_edit.toPlainText()
-    assert not "RealizationStorageState.PARAMETERS_LOADED" in html_edit.toPlainText()
+    assert "RealizationStorageState.PARAMETERS_LOADED" not in html_edit.toPlainText()
 
     # select the observation
     storage_info_widget = tool._storage_info_widget
