@@ -1,39 +1,8 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1736148274795,
+  "lastUpdate": 1736155643070,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
-      {
-        "commit": {
-          "author": {
-            "email": "eide.oyvind87@gmail.com",
-            "name": "Øyvind Eide",
-            "username": "oyvindeide"
-          },
-          "committer": {
-            "email": "44577479+oyvindeide@users.noreply.github.com",
-            "name": "Øyvind Eide",
-            "username": "oyvindeide"
-          },
-          "distinct": true,
-          "id": "b7b57747012bfc9ac1e4c8f611d56f9f6879055d",
-          "message": "Remove unused test data",
-          "timestamp": "2024-12-18T14:36:21+01:00",
-          "tree_id": "a4fa814c30272156a7523083cffbd249f9aab56d",
-          "url": "https://github.com/equinor/ert/commit/b7b57747012bfc9ac1e4c8f611d56f9f6879055d"
-        },
-        "date": 1734529092500,
-        "tool": "pytest",
-        "benches": [
-          {
-            "name": "tests/ert/performance_tests/test_analysis.py::test_and_benchmark_adaptive_localization_with_fields",
-            "value": 0.21827420559198069,
-            "unit": "iter/sec",
-            "range": "stddev: 0.033091739166018826",
-            "extra": "mean: 4.581393377599994 sec\nrounds: 5"
-          }
-        ]
-      },
       {
         "commit": {
           "author": {
@@ -930,6 +899,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.0255482766256843",
             "extra": "mean: 4.886718963599995 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "levje@equinor.com",
+            "name": "larsevj",
+            "username": "larsevj"
+          },
+          "committer": {
+            "email": "60844986+larsevj@users.noreply.github.com",
+            "name": "Lars Evje",
+            "username": "larsevj"
+          },
+          "distinct": true,
+          "id": "864c1e85cbd8f1ce8f66d26a915cbe1f6791245f",
+          "message": "Pin scipy < 1.15",
+          "timestamp": "2025-01-06T10:25:29+01:00",
+          "tree_id": "4a6e7a94b057f606528c49cdb00b9e856154a150",
+          "url": "https://github.com/equinor/ert/commit/864c1e85cbd8f1ce8f66d26a915cbe1f6791245f"
+        },
+        "date": 1736155642188,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/ert/performance_tests/test_analysis.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 0.21938858886307655,
+            "unit": "iter/sec",
+            "range": "stddev: 0.04083733083937065",
+            "extra": "mean: 4.558122212199987 sec\nrounds: 5"
           }
         ]
       }
