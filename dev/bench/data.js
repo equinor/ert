@@ -1,39 +1,8 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1736155643070,
+  "lastUpdate": 1736159519225,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
-      {
-        "commit": {
-          "author": {
-            "email": "andrli@equinor.com",
-            "name": "Andreas Eknes Lie",
-            "username": "andreas-el"
-          },
-          "committer": {
-            "email": "114403625+andreas-el@users.noreply.github.com",
-            "name": "Andreas Eknes Lie",
-            "username": "andreas-el"
-          },
-          "distinct": true,
-          "id": "7f72c056b7b55de316903d2dc4a60e52954be9b0",
-          "message": "Emit signal when tab changes to select realization\n\nCo-authored-by: Jonathan Karlsen <jonak@equinor.com>",
-          "timestamp": "2024-12-18T14:56:29+01:00",
-          "tree_id": "8f85eba314f6e8eb21b8ff6e5c9e3693a86c7e37",
-          "url": "https://github.com/equinor/ert/commit/7f72c056b7b55de316903d2dc4a60e52954be9b0"
-        },
-        "date": 1734530305624,
-        "tool": "pytest",
-        "benches": [
-          {
-            "name": "tests/ert/performance_tests/test_analysis.py::test_and_benchmark_adaptive_localization_with_fields",
-            "value": 0.21693890847473488,
-            "unit": "iter/sec",
-            "range": "stddev: 0.03951958364486",
-            "extra": "mean: 4.609592659200007 sec\nrounds: 5"
-          }
-        ]
-      },
       {
         "commit": {
           "author": {
@@ -930,6 +899,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.04083733083937065",
             "extra": "mean: 4.558122212199987 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "frodeaarstad@gmail.com",
+            "name": "Frode Aarstad",
+            "username": "frode-aarstad"
+          },
+          "committer": {
+            "email": "frodeaarstad@gmail.com",
+            "name": "Frode Aarstad",
+            "username": "frode-aarstad"
+          },
+          "distinct": true,
+          "id": "839610bb7c6a249cf03fdccf7f0e467b68a9f88a",
+          "message": "Ignore unimportant ConfigWarnings",
+          "timestamp": "2025-01-06T11:30:00+01:00",
+          "tree_id": "253d8cc5d9ef311f8e13a8010763c96abdc83c60",
+          "url": "https://github.com/equinor/ert/commit/839610bb7c6a249cf03fdccf7f0e467b68a9f88a"
+        },
+        "date": 1736159518362,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/ert/performance_tests/test_analysis.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 0.21533315528316188,
+            "unit": "iter/sec",
+            "range": "stddev: 0.043433576491164506",
+            "extra": "mean: 4.643966688199993 sec\nrounds: 5"
           }
         ]
       }
