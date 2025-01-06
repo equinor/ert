@@ -61,7 +61,7 @@ dependencies = [
     "qtpy",
     "requests",
     "resfo",
-    "scipy >= 1.10.1",
+    "scipy >= 1.10.1, < 1.15",
     "seaborn",
     "tables",  # extra dependency for pandas (hdf5)
     "tabulate",
