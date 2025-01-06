@@ -1,39 +1,8 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1736169933925,
+  "lastUpdate": 1736170881139,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
-      {
-        "commit": {
-          "author": {
-            "email": "ejah@equinor.com",
-            "name": "Eivind Jahren",
-            "username": "eivindjahren"
-          },
-          "committer": {
-            "email": "noreply@github.com",
-            "name": "GitHub",
-            "username": "web-flow"
-          },
-          "distinct": true,
-          "id": "9ba5a2829e4cbd87e9e8085727e206934375a99a",
-          "message": "Change obs_and_responses test to benchmark",
-          "timestamp": "2024-12-19T14:12:33Z",
-          "tree_id": "d525a5930d19157d43e3d46e6c591b23c849548e",
-          "url": "https://github.com/equinor/ert/commit/9ba5a2829e4cbd87e9e8085727e206934375a99a"
-        },
-        "date": 1734617692780,
-        "tool": "pytest",
-        "benches": [
-          {
-            "name": "tests/ert/performance_tests/test_analysis.py::test_and_benchmark_adaptive_localization_with_fields",
-            "value": 0.2147107684460768,
-            "unit": "iter/sec",
-            "range": "stddev: 0.12342531081203442",
-            "extra": "mean: 4.6574282568 sec\nrounds: 5"
-          }
-        ]
-      },
       {
         "commit": {
           "author": {
@@ -930,6 +899,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.03101188336562572",
             "extra": "mean: 4.548894335799997 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "yngve-sk@users.noreply.github.com",
+            "name": "Yngve S. Kristiansen",
+            "username": "yngve-sk"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "d24f588722a7a1e101a6aa8827e9fec6b933a873",
+          "message": "Add post/pre experiment simulation hooks\n\n* Add post/pre experiment simulation hooks\r\n* Add docs for PRE/POST_EXPERIMENT hooks",
+          "timestamp": "2025-01-06T14:39:24+01:00",
+          "tree_id": "7e5efe7fe0c93b33cbe66f3d0d5f78da13460574",
+          "url": "https://github.com/equinor/ert/commit/d24f588722a7a1e101a6aa8827e9fec6b933a873"
+        },
+        "date": 1736170880245,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/ert/performance_tests/test_analysis.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 0.21887509448985565,
+            "unit": "iter/sec",
+            "range": "stddev: 0.02236606260307451",
+            "extra": "mean: 4.5688158460000015 sec\nrounds: 5"
           }
         ]
       }
