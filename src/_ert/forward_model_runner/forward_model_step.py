@@ -44,7 +44,9 @@ def killed_by_oom(pids: set[int]) -> bool:
         return False
 
     try:
-        dmesg_result = run("dmesg", capture_output=True, check=False)
+        dmesg_result = run(
+            ["dmesg", "-T", "--time-format=iso"], capture_output=True, check=False
+        )
         if dmesg_result.returncode != 0:
             logger.warning(
                 "Could not use dmesg to check for OOM kill, "
