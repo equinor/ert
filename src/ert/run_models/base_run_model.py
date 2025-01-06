@@ -423,7 +423,7 @@ class BaseRunModel(ABC):
             status["Finished"] += (
                 self._get_number_of_finished_realizations_from_reruns()
             )
-        return status
+        return dict(status)
 
     def _get_number_of_finished_realizations_from_reruns(self) -> int:
         return self.active_realizations.count(
