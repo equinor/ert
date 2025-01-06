@@ -82,7 +82,7 @@ def test_changes(full_snapshot):
 
 
 @pytest.mark.requires_window_manager
-@pytest.mark.parametrize("timezone", [(None), (tz.gettz("UTC"))])
+@pytest.mark.parametrize("timezone", [(None), tz.gettz("UTC")])
 @patch("ert.gui.model.snapshot.datetime", wraps=datetime)
 def test_duration(mock_datetime, timezone, full_snapshot):
     source_model = SnapshotModel()

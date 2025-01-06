@@ -909,7 +909,7 @@ class ErtConfig:
                             job.ert_script.validate(args)
                         except ConfigValidationError as err:
                             errors.append(
-                                ErrorInfo(message=(str(err))).set_context(work[0])
+                                ErrorInfo(message=str(err)).set_context(work[0])
                             )
                             continue
                 workflows[filename] = workflow

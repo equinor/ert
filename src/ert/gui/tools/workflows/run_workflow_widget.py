@@ -107,7 +107,7 @@ class RunWorkflowWidget(QWidget):
 
     def getCurrentWorkflowName(self) -> str:
         index = self._workflow_combo.currentIndex()
-        return (sorted(self.config.workflows.keys(), key=str.lower))[index]
+        return sorted(self.config.workflows.keys(), key=str.lower)[index]
 
     def startWorkflow(self) -> None:
         dialog = WorkflowDialog("Running workflow", self.createSpinWidget(), self)

@@ -248,7 +248,7 @@ class ExperimentPanel(QWidget):
 
         except ValueError as e:
             QMessageBox.warning(
-                self, "ERROR: Failed to create experiment", (str(e)), QMessageBox.Ok
+                self, "ERROR: Failed to create experiment", str(e), QMessageBox.Ok
             )
             return
 
