@@ -14,7 +14,6 @@ from everest.bin.main import start_everest
 from everest.config import EverestConfig, ServerConfig
 from everest.detached import ServerStatus, everserver_status
 
-CONFIG_FILE_MINIMAL = "config_minimal.yml"
 WELL_ORDER = "everest/model/config.yml"
 
 pytestmark = pytest.mark.xdist_group(name="starts_everest")
@@ -81,12 +80,13 @@ def test_everest_main_entry_bad_command():
 @pytest.mark.flaky(reruns=5)
 @pytest.mark.fails_on_macos_github_workflow
 @pytest.mark.integration_test
-def test_everest_entry_run(copy_math_func_test_data_to_tmp):
+def test_everest_entry_run(cached_example):
+    _, config_file, _ = cached_example("math_func/config_minimal.yml")
     # Setup command line arguments
     with capture_streams():
-        start_everest(["everest", "run", CONFIG_FILE_MINIMAL])
+        start_everest(["everest", "run", config_file])
 
-    config = EverestConfig.load_file(CONFIG_FILE_MINIMAL)
+    config = EverestConfig.load_file(config_file)
     status = everserver_status(
         ServerConfig.get_everserver_status_path(config.output_dir)
     )
@@ -103,9 +103,9 @@ def test_everest_entry_run(copy_math_func_test_data_to_tmp):
     assert best_settings.objective_value == pytest.approx(0.0, abs=0.0005)
 
     with capture_streams():
-        start_everest(["everest", "monitor", CONFIG_FILE_MINIMAL])
+        start_everest(["everest", "monitor", config_file])
 
-    config = EverestConfig.load_file(CONFIG_FILE_MINIMAL)
+    config = EverestConfig.load_file(config_file)
     status = everserver_status(
         ServerConfig.get_everserver_status_path(config.output_dir)
     )
@@ -114,11 +114,12 @@ def test_everest_entry_run(copy_math_func_test_data_to_tmp):
 
 
 @pytest.mark.integration_test
-def test_everest_entry_monitor_no_run(copy_math_func_test_data_to_tmp):
+def test_everest_entry_monitor_no_run(cached_example):
+    _, config_file, _ = cached_example("math_func/config_minimal.yml")
     with capture_streams():
-        start_everest(["everest", "monitor", CONFIG_FILE_MINIMAL])
+        start_everest(["everest", "monitor", config_file])
 
-    config = EverestConfig.load_file(CONFIG_FILE_MINIMAL)
+    config = EverestConfig.load_file(config_file)
     status = everserver_status(
         ServerConfig.get_everserver_status_path(config.output_dir)
     )
@@ -127,32 +128,34 @@ def test_everest_entry_monitor_no_run(copy_math_func_test_data_to_tmp):
 
 
 @pytest.mark.integration_test
-def test_everest_main_export_entry(copy_math_func_test_data_to_tmp):
+def test_everest_main_export_entry(cached_example):
     # Setup command line arguments
+    _, config_file, _ = cached_example("math_func/config_minimal.yml")
     with capture_streams():
-        start_everest(["everest", "export", CONFIG_FILE_MINIMAL])
+        start_everest(["everest", "export", config_file])
     assert os.path.exists(os.path.join("everest_output", "config_minimal.csv"))
 
 
 @pytest.mark.integration_test
-def test_everest_main_lint_entry(copy_math_func_test_data_to_tmp):
+def test_everest_main_lint_entry(cached_example):
     # Setup command line arguments
+    _, config_file, _ = cached_example("math_func/config_minimal.yml")
     with capture_streams() as (out, err):
-        start_everest(["everest", "lint", CONFIG_FILE_MINIMAL])
+        start_everest(["everest", "lint", config_file])
     assert "config_minimal.yml is valid" in out.getvalue()
 
     # Make the config invalid
-    with open(CONFIG_FILE_MINIMAL, encoding="utf-8") as f:
+    with open(config_file, encoding="utf-8") as f:
         raw_config = YAML(typ="safe", pure=True).load(f)
     raw_config["controls"][0]["initial_guess"] = "invalid"
-    with open(CONFIG_FILE_MINIMAL, "w", encoding="utf-8") as f:
+    with open(config_file, "w", encoding="utf-8") as f:
         yaml = YAML(typ="safe", pure=True)
         yaml.indent = 2
         yaml.default_flow_style = False
         yaml.dump(raw_config, f)
 
     with capture_streams() as (out, err), pytest.raises(SystemExit):
-        start_everest(["everest", "lint", CONFIG_FILE_MINIMAL])
+        start_everest(["everest", "lint", config_file])
 
     type_ = "(type=float_parsing)"
     validation_msg = dedent(
@@ -166,7 +169,6 @@ controls -> 0 -> initial_guess
     assert validation_msg in err.getvalue()
 
 
-@pytest.mark.fails_on_macos_github_workflow
 @skipif_no_everest_models
 @pytest.mark.everest_models_test
 @pytest.mark.integration_test
