@@ -59,7 +59,9 @@ def test_hook_call_order_ensemble_smoother(monkeypatch):
     test_class.run_experiment(MagicMock())
 
     expected_calls = [
-        call(expected_call, ANY, ANY) for expected_call in EXPECTED_CALL_ORDER
+        call(HookRuntime.PRE_EXPERIMENT),
+        *[call(expected_call, ANY, ANY) for expected_call in EXPECTED_CALL_ORDER],
+        call(HookRuntime.POST_EXPERIMENT),
     ]
     assert run_wfs_mock.mock_calls == expected_calls
 
@@ -95,7 +97,9 @@ def test_hook_call_order_es_mda(monkeypatch):
     test_class.run_experiment(MagicMock())
 
     expected_calls = [
-        call(expected_call, ANY, ANY) for expected_call in EXPECTED_CALL_ORDER
+        call(HookRuntime.PRE_EXPERIMENT),
+        *[call(expected_call, ANY, ANY) for expected_call in EXPECTED_CALL_ORDER],
+        call(HookRuntime.POST_EXPERIMENT),
     ]
     assert run_wfs_mock.mock_calls == expected_calls
 
@@ -130,6 +134,8 @@ def test_hook_call_order_iterative_ensemble_smoother(monkeypatch):
         test_class.run_experiment(MagicMock())
 
     expected_calls = [
-        call(expected_call, ANY, ANY) for expected_call in EXPECTED_CALL_ORDER
+        call(HookRuntime.PRE_EXPERIMENT),
+        *[call(expected_call, ANY, ANY) for expected_call in EXPECTED_CALL_ORDER],
+        call(HookRuntime.POST_EXPERIMENT),
     ]
     assert run_wfs_mock.mock_calls == expected_calls

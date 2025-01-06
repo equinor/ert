@@ -123,6 +123,7 @@ class IteratedEnsembleSmoother(BaseRunModel):
     ) -> None:
         self.log_at_startup()
         self.restart = restart
+        self.run_workflows(HookRuntime.PRE_EXPERIMENT)
         target_ensemble_format = self.target_ensemble_format
         experiment = self._storage.create_experiment(
             parameters=self.ert_config.ensemble_config.parameter_configuration,
@@ -150,6 +151,7 @@ class IteratedEnsembleSmoother(BaseRunModel):
             np.where(self.active_realizations)[0],
             random_seed=self.random_seed,
         )
+
         self._evaluate_and_postprocess(
             prior_args,
             prior,
@@ -217,6 +219,8 @@ class IteratedEnsembleSmoother(BaseRunModel):
                     f"for iteration {prior_iter}"
                 )
             prior = posterior
+
+        self.run_workflows(HookRuntime.POST_EXPERIMENT)
 
     @classmethod
     def name(cls) -> str:
