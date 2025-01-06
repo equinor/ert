@@ -52,7 +52,8 @@ def test_project_code_is_set_when_forward_model_contains_selected_simulator(
     project_code = queue_config.queue_options.project_code
 
     assert project_code is not None
-    assert "flow" in project_code and "rms" in project_code
+    assert "flow" in project_code
+    assert "rms" in project_code
 
 
 @pytest.mark.parametrize("queue_system", ["LSF", "TORQUE", "SLURM"])
@@ -175,7 +176,8 @@ def test_that_overwriting_QUEUE_OPTIONS_warns(
     assert (
         f"Overwriting QUEUE_OPTION {queue_system} {queue_system_option}: \n Old value:"
         " test_0 \n New value: test_1"
-    ) in caplog.text and (
+    ) in caplog.text
+    assert (
         f"Overwriting QUEUE_OPTION {queue_system} MAX_RUNNING: \n Old value:"
         " 10 \n New value: 10"
     ) not in caplog.text

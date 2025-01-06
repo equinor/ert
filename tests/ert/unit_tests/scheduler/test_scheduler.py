@@ -157,7 +157,8 @@ async def test_add_dispatch_information_to_jobs_file(
         assert content["real_id"] == realization.iens
         assert content["dispatch_url"] == test_ee_uri
         assert content["ee_token"] == test_ee_token
-        assert type(content["jobList"]) == list and len(content["jobList"]) == 0
+        assert type(content["jobList"]) == list
+        assert len(content["jobList"]) == 0
 
 
 @pytest.mark.parametrize("max_submit", [1, 2, 3])
