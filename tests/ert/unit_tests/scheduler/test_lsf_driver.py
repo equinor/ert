@@ -1265,7 +1265,8 @@ async def test_polling_bhist_fallback(not_found_bjobs, caplog, job_name):
     await poll(driver, {0})
     assert "bhist is used" in caplog.text
     assert bhist_called
-    assert driver._bhist_cache and job_id in driver._bhist_cache
+    assert driver._bhist_cache
+    assert job_id in driver._bhist_cache
 
 
 @pytest.mark.integration_test

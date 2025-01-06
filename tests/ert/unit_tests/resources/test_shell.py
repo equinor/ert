@@ -283,9 +283,11 @@ def test_that_delete_file_deletes_broken_symlinks():
 
     delete_file("file")
     assert not Path("file").exists()
-    assert Path("link").is_symlink() and not Path("link").exists()
+    assert Path("link").is_symlink()
+    assert not Path("link").exists()
     delete_file("link")
-    assert not Path("link").is_symlink() and not Path("link").exists()
+    assert not Path("link").is_symlink()
+    assert not Path("link").exists()
 
 
 @pytest.mark.usefixtures("use_tmpdir")
