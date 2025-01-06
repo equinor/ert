@@ -89,6 +89,7 @@ async def test_run_and_cancel_legacy_ensemble(
             # and the ensemble is set to STOPPED
             monitor._receiver_timeout = 10.0
             cancel = True
+            await evaluator._ensemble._scheduler._running.wait()
             async for event in monitor.track(heartbeat_interval=0.1):
                 # Cancel the ensemble upon the arrival of the first event
                 if cancel:
