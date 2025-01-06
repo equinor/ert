@@ -911,7 +911,9 @@ def test_that_missing_required_fields_cause_error():
 
 
 def test_that_non_existing_workflow_jobs_cause_error():
-    with pytest.raises(ValidationError, match="No such file or directory (.*)jobs/JOB"):
+    with pytest.raises(
+        ValidationError, match=r"No such file or directory (.*)jobs/JOB"
+    ):
         EverestConfig.with_defaults(
             install_workflow_jobs=[{"name": "job0", "source": "jobs/JOB"}],
             workflows={

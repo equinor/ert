@@ -148,7 +148,7 @@ def test_server_status(copy_math_func_test_data_to_tmp):
 def test_wait_for_server(server_is_running_mock, caplog, monkeypatch):
     config = EverestConfig.with_defaults()
 
-    with pytest.raises(RuntimeError, match="Failed to start .* timeout"):
+    with pytest.raises(RuntimeError, match=r"Failed to start .* timeout"):
         wait_for_server(config.output_dir, timeout=1)
 
     assert not caplog.messages

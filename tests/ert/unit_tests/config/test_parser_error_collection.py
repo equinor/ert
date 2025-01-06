@@ -708,7 +708,7 @@ def test_that_unicode_decode_error_is_localized_first_line():
 
     with pytest.raises(
         ConfigValidationError,
-        match="Unsupported non UTF-8 character 'ÿ' found in file: .*test.ert",
+        match=r"Unsupported non UTF-8 character 'ÿ' found in file: .*test.ert",
     ) as caught_error:
         ErtConfig.from_file("test.ert")
 
@@ -748,7 +748,7 @@ def test_that_unicode_decode_error_is_localized_random_line_single_insert():
 
         with pytest.raises(
             ConfigValidationError,
-            match="Unsupported non UTF-8 character " "'ÿ' found in file: .*test.ert",
+            match=r"Unsupported non UTF-8 character " "'ÿ' found in file: .*test.ert",
         ) as caught_error:
             ErtConfig.from_file("test.ert")
 
@@ -809,7 +809,7 @@ def test_that_unicode_decode_error_is_localized_multiple_random_inserts(
 
     with pytest.raises(
         ConfigValidationError,
-        match="Unsupported non UTF-8 character 'ÿ' found in file: .*test.ert",
+        match=r"Unsupported non UTF-8 character 'ÿ' found in file: .*test.ert",
     ) as caught_error:
         ErtConfig.from_file("test.ert")
 

@@ -394,7 +394,7 @@ def test_unknown_date_unit_in_summary_files_raises_informative_errors(
 
     with pytest.raises(
         InvalidResponseFile,
-        match="Unknown date unit .* ANNUAL",
+        match=r"Unknown date unit .* ANNUAL",
     ):
         read_summary(str(tmp_path / "test"), ["*"])
 

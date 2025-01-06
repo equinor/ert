@@ -77,7 +77,7 @@ def test_that_failure_in_parsing_workflow_gives_config_validation_error():
     with open("workflow", "w", encoding="utf-8") as f:
         f.write("DEFINE\n")
     with pytest.raises(
-        ConfigValidationError, match="DEFINE must have .* arguments"
+        ConfigValidationError, match=r"DEFINE must have .* arguments"
     ) as err:
         _ = Workflow.from_file("workflow", None, {})
     assert os.path.abspath(err.value.errors[0].filename) == os.path.abspath("workflow")

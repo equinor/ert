@@ -596,7 +596,7 @@ def test_gen_kw_forward_init(tmpdir, storage, load_forward_init):
                 ConfigValidationError,
                 match=(
                     "Loading GEN_KW from files created by "
-                    "the forward model is not supported."
+                    "the forward model is not supported\\."
                 ),
             ):
                 create_runpath(storage, "config.ert")

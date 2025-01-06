@@ -197,7 +197,7 @@ def test_everest2ropt_cvar():
         "number_of_realizations": 1,
     }
 
-    with pytest.raises(ValidationError, match=".*Invalid CVaR section.*"):
+    with pytest.raises(ValidationError, match=r".*Invalid CVaR section.*"):
         EverestConfig.model_validate(config_dict)
 
     config_dict["optimization"]["cvar"] = {

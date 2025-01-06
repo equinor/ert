@@ -882,7 +882,7 @@ def test_that_plugin_forward_model_raises_pre_realization_validation_error(tmp_p
 
     with pytest.raises(
         ConfigValidationError,
-        match=".*This is a bad forward model step, dont use it.*",
+        match=r".*This is a bad forward model step, dont use it.*",
     ):
         create_forward_model_json(
             context=config.substitutions,
@@ -932,7 +932,7 @@ def test_that_plugin_forward_model_raises_pre_experiment_validation_error_early(
 
             raise ForwardModelStepValidationError("well that's nice")
 
-    with pytest.raises(ConfigValidationError, match=".*hamster style.*that's nice.*"):
+    with pytest.raises(ConfigValidationError, match=r".*hamster style.*that's nice.*"):
         _ = ErtConfig.with_plugins(forward_model_step_classes=[FM1, FM2]).from_file(
             tmp_path / "test.ert"
         )

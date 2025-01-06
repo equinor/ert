@@ -107,7 +107,7 @@ def test_that_saving_empty_responses_fails_nicely(tmp_path):
 
         with pytest.raises(
             ValueError,
-            match="Responses RESPONSE are empty. Cannot proceed with saving to storage.",
+            match="Responses RESPONSE are empty\\. Cannot proceed with saving to storage\\.",
         ):
             ensemble.save_response("RESPONSE", empty_data, 0)
 
@@ -191,7 +191,7 @@ def test_that_saving_empty_parameters_fails_nicely(tmp_path):
         )
         with pytest.raises(
             ValueError,
-            match="Parameters PARAMETER are empty. Cannot proceed with saving to storage.",
+            match="Parameters PARAMETER are empty\\. Cannot proceed with saving to storage\\.",
         ):
             prior.save_parameters("PARAMETER", 0, empty_data)
 
@@ -359,7 +359,7 @@ def test_open_storage_with_corrupted_storage(tmp_path):
     with open_storage(tmp_path / "storage", mode="w") as storage:
         storage.create_experiment().create_ensemble(name="prior", ensemble_size=1)
     os.remove(tmp_path / "storage" / "index.json")
-    with pytest.raises(ErtStorageException, match="No index.json"):
+    with pytest.raises(ErtStorageException, match="No index\\.json"):
         open_storage(tmp_path / "storage", mode="w")
 
 

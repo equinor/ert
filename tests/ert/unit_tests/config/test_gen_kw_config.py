@@ -40,7 +40,7 @@ def test_gen_kw_config():
 def test_gen_kw_config_duplicate_keys_raises():
     with pytest.raises(
         ConfigValidationError,
-        match="Duplicate GEN_KW keys 'KEY2' found, keys must be unique.",
+        match="Duplicate GEN_KW keys 'KEY2' found, keys must be unique\\.",
     ):
         GenKwConfig(
             name="KEY",
@@ -559,7 +559,7 @@ def test_gen_kw_config_validation():
     )
 
     with pytest.raises(
-        ConfigValidationError, match="config.ert.* No such template file"
+        ConfigValidationError, match=r"config.ert.* No such template file"
     ):
         EnsembleConfig.from_dict(
             config_dict={
@@ -575,7 +575,7 @@ def test_gen_kw_config_validation():
         )
 
     with pytest.raises(
-        ConfigValidationError, match="config.ert.* No such parameter file"
+        ConfigValidationError, match=r"config.ert.* No such parameter file"
     ):
         EnsembleConfig.from_dict(
             config_dict={

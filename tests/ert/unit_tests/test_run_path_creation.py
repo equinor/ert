@@ -285,7 +285,7 @@ def test_that_error_is_raised_when_data_file_is_badly_encoded(
 
     with pytest.raises(
         ValueError,
-        match="Unsupported non UTF-8 character found in file: .*MY_DATA_FILE.DATA",
+        match=r"Unsupported non UTF-8 character found in file: .*MY_DATA_FILE.DATA",
     ):
         create_run_path(
             run_args=run_args(ert_config, prior_ensemble),

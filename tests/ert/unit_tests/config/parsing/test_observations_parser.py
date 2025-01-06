@@ -119,7 +119,7 @@ def test_parse(file_contents):
 def test_that_unexpected_character_gives_observation_config_error():
     with pytest.raises(
         ObservationConfigError,
-        match="Line 1.*include a;",
+        match=r"Line 1.*include a;",
     ):
         _parse_content(content="include a;", filename="")
 

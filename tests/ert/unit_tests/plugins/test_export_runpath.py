@@ -80,7 +80,7 @@ def test_export_runpath_combination_parameter(writing_setup):
 
 def test_export_runpath_bad_arguments(writing_setup):
     writing_setup, config = writing_setup
-    with pytest.raises(ValueError, match="Expected |"):
+    with pytest.raises(ValueError, match="Expected \\|"):
         writing_setup.export_job.run(config, ["wat"])
 
 

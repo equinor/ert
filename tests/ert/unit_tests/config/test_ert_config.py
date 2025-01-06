@@ -1163,7 +1163,7 @@ def test_that_failing_to_load_ert_script_with_errors_fails_gracefully(load_state
 def test_that_define_statements_with_less_than_one_argument_raises_error():
     with pytest.raises(
         ConfigValidationError,
-        match="DEFINE must have (two or more|at least 2) arguments",
+        match=r"DEFINE must have (two or more|at least 2) arguments",
     ):
         _ = ErtConfig.from_file_contents(
             dedent(
