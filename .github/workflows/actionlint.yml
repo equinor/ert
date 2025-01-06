@@ -1,5 +1,11 @@
 name: Lint GitHub Actions workflows
-on: [push, pull_request]
+on:
+  push:
+    branches:
+      - main
+      - 'version-**'
+    tags: "*"
+  pull_request:
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
