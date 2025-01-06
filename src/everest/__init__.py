@@ -3,7 +3,15 @@ This is the main Everest module.
 
 """
 
-from .loader import load
+try:
+    from .loader import load
+except Exception as e:
+    print(
+        f"Error during initialization: {e}\nPlease make sure that everest is installed correctly and that all dependencies are updated."
+    )
+    import sys
+
+    sys.exit(1)
 
 try:
     from ert.shared.version import version
