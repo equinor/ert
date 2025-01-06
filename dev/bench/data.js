@@ -1,39 +1,8 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1736164847291,
+  "lastUpdate": 1736166726290,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
-      {
-        "commit": {
-          "author": {
-            "email": "havb@equinor.com",
-            "name": "Håvard Berland",
-            "username": "berland"
-          },
-          "committer": {
-            "email": "berland@pvv.ntnu.no",
-            "name": "Håvard Berland",
-            "username": "berland"
-          },
-          "distinct": true,
-          "id": "2b41fe21b9f34819bac83824140beeed7c9f6ec8",
-          "message": "Type filter_env_dict and rename internals",
-          "timestamp": "2024-12-19T08:01:03+01:00",
-          "tree_id": "eb19d3614066231f2296ca5de0fd91012dd85948",
-          "url": "https://github.com/equinor/ert/commit/2b41fe21b9f34819bac83824140beeed7c9f6ec8"
-        },
-        "date": 1734591772384,
-        "tool": "pytest",
-        "benches": [
-          {
-            "name": "tests/ert/performance_tests/test_analysis.py::test_and_benchmark_adaptive_localization_with_fields",
-            "value": 0.2194161609945277,
-            "unit": "iter/sec",
-            "range": "stddev: 0.015882687725442296",
-            "extra": "mean: 4.557549432400014 sec\nrounds: 5"
-          }
-        ]
-      },
       {
         "commit": {
           "author": {
@@ -930,6 +899,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.05606033087355752",
             "extra": "mean: 4.658922959199998 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "levje@equinor.com",
+            "name": "larsevj",
+            "username": "larsevj"
+          },
+          "committer": {
+            "email": "60844986+larsevj@users.noreply.github.com",
+            "name": "Lars Evje",
+            "username": "larsevj"
+          },
+          "distinct": true,
+          "id": "3cee24dc05262c38bc9116d9228f7d770401306b",
+          "message": "Validate derrf distribution parameters on startup",
+          "timestamp": "2025-01-06T13:30:18+01:00",
+          "tree_id": "1446c51c808304c04e32f0fba8168a458c07fa06",
+          "url": "https://github.com/equinor/ert/commit/3cee24dc05262c38bc9116d9228f7d770401306b"
+        },
+        "date": 1736166725834,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/ert/performance_tests/test_analysis.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 0.2168873548856917,
+            "unit": "iter/sec",
+            "range": "stddev: 0.08776663116942524",
+            "extra": "mean: 4.610688348000002 sec\nrounds: 5"
           }
         ]
       }
