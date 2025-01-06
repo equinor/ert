@@ -1,39 +1,8 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1736159519225,
+  "lastUpdate": 1736163347876,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
-      {
-        "commit": {
-          "author": {
-            "email": "havb@equinor.com",
-            "name": "Håvard Berland",
-            "username": "berland"
-          },
-          "committer": {
-            "email": "berland@pvv.ntnu.no",
-            "name": "Håvard Berland",
-            "username": "berland"
-          },
-          "distinct": true,
-          "id": "6ce4714e1c65b04473fb1cd0f74e1e951fc39f28",
-          "message": "Solve ruff literal-membership\n\nruff check --fix --unsafe-fixes",
-          "timestamp": "2024-12-18T21:45:13+01:00",
-          "tree_id": "81d4bd24f8e000c06c0c1d426f8840e8bea028a1",
-          "url": "https://github.com/equinor/ert/commit/6ce4714e1c65b04473fb1cd0f74e1e951fc39f28"
-        },
-        "date": 1734554827693,
-        "tool": "pytest",
-        "benches": [
-          {
-            "name": "tests/ert/performance_tests/test_analysis.py::test_and_benchmark_adaptive_localization_with_fields",
-            "value": 0.2188614973114114,
-            "unit": "iter/sec",
-            "range": "stddev: 0.019665328952347745",
-            "extra": "mean: 4.569099692199996 sec\nrounds: 5"
-          }
-        ]
-      },
       {
         "commit": {
           "author": {
@@ -930,6 +899,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.043433576491164506",
             "extra": "mean: 4.643966688199993 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "49699333+dependabot[bot]@users.noreply.github.com",
+            "name": "dependabot[bot]",
+            "username": "dependabot[bot]"
+          },
+          "committer": {
+            "email": "60844986+larsevj@users.noreply.github.com",
+            "name": "Lars Evje",
+            "username": "larsevj"
+          },
+          "distinct": true,
+          "id": "7d73f740d8f12d2a0a726782fb7753acd3c06ef2",
+          "message": "Bump astral-sh/setup-uv from 4 to 5\n\nBumps [astral-sh/setup-uv](https://github.com/astral-sh/setup-uv) from 4 to 5.\n- [Release notes](https://github.com/astral-sh/setup-uv/releases)\n- [Commits](https://github.com/astral-sh/setup-uv/compare/v4...v5)\n\n---\nupdated-dependencies:\n- dependency-name: astral-sh/setup-uv\n  dependency-type: direct:production\n  update-type: version-update:semver-major\n...\n\nSigned-off-by: dependabot[bot] <support@github.com>",
+          "timestamp": "2025-01-06T12:33:59+01:00",
+          "tree_id": "720473b4719f3cd6476a3d40c89d3d3ed5ae2b85",
+          "url": "https://github.com/equinor/ert/commit/7d73f740d8f12d2a0a726782fb7753acd3c06ef2"
+        },
+        "date": 1736163347409,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/ert/performance_tests/test_analysis.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 0.21680333050116213,
+            "unit": "iter/sec",
+            "range": "stddev: 0.026559978642120226",
+            "extra": "mean: 4.612475268199995 sec\nrounds: 5"
           }
         ]
       }
