@@ -34,7 +34,7 @@ class EnsembleRealizationsArgument(RangeStringArgument):
         invalid_realizations = []
         initialized_realization_ids = self.__ensemble.is_initalized()
         for realization in attempted_realizations:
-            if not realization in initialized_realization_ids:
+            if realization not in initialized_realization_ids:
                 invalid_realizations.append(realization)
 
         if invalid_realizations:
