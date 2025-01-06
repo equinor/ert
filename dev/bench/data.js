@@ -1,39 +1,8 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1736168201674,
+  "lastUpdate": 1736169541546,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
-      {
-        "commit": {
-          "author": {
-            "email": "havb@equinor.com",
-            "name": "Håvard Berland",
-            "username": "berland"
-          },
-          "committer": {
-            "email": "berland@pvv.ntnu.no",
-            "name": "Håvard Berland",
-            "username": "berland"
-          },
-          "distinct": true,
-          "id": "2a4b6bef24f8e7f8a3a7f02a5eb3972c00026696",
-          "message": "Pretty print manifest.json\n\njobs.json was already effectively pretty-printed as it is overwritten at\na later stage, but now both writes of jobs.json are consistent in\nprinting pretty.",
-          "timestamp": "2024-12-19T11:04:26+01:00",
-          "tree_id": "2c8e9c362bcd60e04829f85c1a0415fd2b72bc62",
-          "url": "https://github.com/equinor/ert/commit/2a4b6bef24f8e7f8a3a7f02a5eb3972c00026696"
-        },
-        "date": 1734602781828,
-        "tool": "pytest",
-        "benches": [
-          {
-            "name": "tests/ert/performance_tests/test_analysis.py::test_and_benchmark_adaptive_localization_with_fields",
-            "value": 0.21900688318875033,
-            "unit": "iter/sec",
-            "range": "stddev: 0.04506683164528437",
-            "extra": "mean: 4.566066533800006 sec\nrounds: 5"
-          }
-        ]
-      },
       {
         "commit": {
           "author": {
@@ -930,6 +899,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.11823279806557728",
             "extra": "mean: 4.710562411200004 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "49699333+dependabot[bot]@users.noreply.github.com",
+            "name": "dependabot[bot]",
+            "username": "dependabot[bot]"
+          },
+          "committer": {
+            "email": "60844986+larsevj@users.noreply.github.com",
+            "name": "Lars Evje",
+            "username": "larsevj"
+          },
+          "distinct": true,
+          "id": "1a4c078c4ec040d207c453c20f69f97f08ef9571",
+          "message": "Bump codecov/codecov-action from 4 to 5\n\nBumps [codecov/codecov-action](https://github.com/codecov/codecov-action) from 4 to 5.\n- [Release notes](https://github.com/codecov/codecov-action/releases)\n- [Changelog](https://github.com/codecov/codecov-action/blob/main/CHANGELOG.md)\n- [Commits](https://github.com/codecov/codecov-action/compare/v4...v5)\n\n---\nupdated-dependencies:\n- dependency-name: codecov/codecov-action\n  dependency-type: direct:production\n  update-type: version-update:semver-major\n...\n\nSigned-off-by: dependabot[bot] <support@github.com>\n\nClean up files left by codecov workflow",
+          "timestamp": "2025-01-06T14:16:52+01:00",
+          "tree_id": "c03557837eb4464ad156112281889ec6eb4be452",
+          "url": "https://github.com/equinor/ert/commit/1a4c078c4ec040d207c453c20f69f97f08ef9571"
+        },
+        "date": 1736169540972,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/ert/performance_tests/test_analysis.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 0.21421863391165544,
+            "unit": "iter/sec",
+            "range": "stddev: 0.03453731157924506",
+            "extra": "mean: 4.6681279856 sec\nrounds: 5"
           }
         ]
       }
