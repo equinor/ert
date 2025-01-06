@@ -113,6 +113,11 @@ class EnsembleSnapshot:
             sorted_fm_step_ids=defaultdict(list),
         )
 
+    def __eq__(self, other: object) -> bool:
+        if not isinstance(other, EnsembleSnapshot):
+            return NotImplemented
+        return self.to_dict() == other.to_dict()
+
     @classmethod
     def from_nested_dict(cls, source: Mapping[Any, Any]) -> EnsembleSnapshot:
         ensemble = EnsembleSnapshot()
