@@ -1,6 +1,7 @@
 import os
 import shutil
 import tempfile
+import warnings
 from collections.abc import Callable, Iterator
 from copy import deepcopy
 from pathlib import Path
@@ -10,13 +11,22 @@ from unittest.mock import MagicMock
 import pytest
 import yaml
 
-from ert.config import QueueSystem
+from ert.config import ConfigWarning, QueueSystem
 from ert.ensemble_evaluator import EvaluatorServerConfig
 from ert.run_models.everest_run_model import EverestRunModel
 from everest.config import EverestConfig
 from everest.config.control_config import ControlConfig
 from everest.detached.jobs import everserver
 from tests.everest.utils import relpath
+
+
+@pytest.fixture(autouse=True)
+def filter_warnings():
+    warnings.filterwarnings(
+        "ignore",
+        message=".*Forward model might not write the required output.*",
+        category=ConfigWarning,
+    )
 
 
 @pytest.fixture(scope="session")
