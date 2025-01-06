@@ -1,39 +1,8 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1736167304843,
+  "lastUpdate": 1736168201674,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
-      {
-        "commit": {
-          "author": {
-            "email": "dan.sava42@gmail.com",
-            "name": "DanSava",
-            "username": "DanSava"
-          },
-          "committer": {
-            "email": "dan.sava42@gmail.com",
-            "name": "Dan Sava",
-            "username": "DanSava"
-          },
-          "distinct": true,
-          "id": "a159fa7f0ca17724652f94786fff77346fa13c87",
-          "message": "Move duplicate patching in test_everserver.py to mock_server fixture",
-          "timestamp": "2024-12-19T10:57:39+02:00",
-          "tree_id": "e8ba160d85ca2bfdaad309fda5f0bc8d82c145a7",
-          "url": "https://github.com/equinor/ert/commit/a159fa7f0ca17724652f94786fff77346fa13c87"
-        },
-        "date": 1734598766393,
-        "tool": "pytest",
-        "benches": [
-          {
-            "name": "tests/ert/performance_tests/test_analysis.py::test_and_benchmark_adaptive_localization_with_fields",
-            "value": 0.21820232936264464,
-            "unit": "iter/sec",
-            "range": "stddev: 0.05581156998013488",
-            "extra": "mean: 4.582902496600002 sec\nrounds: 5"
-          }
-        ]
-      },
       {
         "commit": {
           "author": {
@@ -930,6 +899,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.06383405514701589",
             "extra": "mean: 4.732779612600001 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "ejah@equinor.com",
+            "name": "Eivind Jahren",
+            "username": "eivindjahren"
+          },
+          "committer": {
+            "email": "ejah@equinor.com",
+            "name": "Eivind Jahren",
+            "username": "eivindjahren"
+          },
+          "distinct": true,
+          "id": "18fb2b1a903c7868a48dd675e78b5396b0d4c979",
+          "message": "Split asserts combined with and for better error message",
+          "timestamp": "2025-01-06T13:54:51+01:00",
+          "tree_id": "540ec38484d0e9a0882c9ad5abd19d5d7bdab96c",
+          "url": "https://github.com/equinor/ert/commit/18fb2b1a903c7868a48dd675e78b5396b0d4c979"
+        },
+        "date": 1736168201192,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/ert/performance_tests/test_analysis.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 0.21228887608459737,
+            "unit": "iter/sec",
+            "range": "stddev: 0.11823279806557728",
+            "extra": "mean: 4.710562411200004 sec\nrounds: 5"
           }
         ]
       }
