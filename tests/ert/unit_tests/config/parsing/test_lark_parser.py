@@ -169,13 +169,13 @@ def test_include_cyclical_raises_error():
     with open(test_include_file_name, "w", encoding="utf-8") as fh:
         fh.write(test_include_contents)
 
-    with pytest.raises(ConfigValidationError, match="Cyclical .*test.ert"):
+    with pytest.raises(ConfigValidationError, match=r"Cyclical .*test.ert"):
         _ = parse(test_config_file_name, schema=init_user_config_schema())
 
     # Test self include raises cyclical include error
     with open(test_config_file_name, "w", encoding="utf-8") as fh:
         fh.write(test_config_self_include)
-    with pytest.raises(ConfigValidationError, match="Cyclical .*test.ert->test.ert"):
+    with pytest.raises(ConfigValidationError, match=r"Cyclical .*test.ert->test.ert"):
         _ = parse(test_config_file_name, schema=init_user_config_schema())
 
 

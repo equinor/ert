@@ -129,7 +129,7 @@ def test_that_invalid_gendata_outfile_error_propagates(tmp_path):
     )
     with pytest.raises(
         InvalidResponseFile,
-        match="Error reading GEN_DATA.*could not convert string.*4.910405046410615,4.910405046410615.*to float64",
+        match=r"Error reading GEN_DATA.*could not convert string.*4.910405046410615,4.910405046410615.*to float64",
     ):
         config.read_from_file(tmp_path, 0, 0)
 

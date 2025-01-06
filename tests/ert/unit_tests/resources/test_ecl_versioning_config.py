@@ -46,7 +46,7 @@ def test_loading_of_eclipse_configurations(monkeypatch):
         f.write("this:\n -should\n-be\ninvalid:yaml?")
 
     monkeypatch.setenv("ECL100_SITE_CONFIG", "file.yml")
-    with pytest.raises(ValueError, match="Failed parse: file.yml as yaml"):
+    with pytest.raises(ValueError, match="Failed parse: file\\.yml as yaml"):
         conf = ecl_config.Ecl100Config()
 
     scalar_exe = "bin/scalar_exe"

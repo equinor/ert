@@ -98,7 +98,7 @@ def test_init_files_must_contain_placeholder_when_not_forward_init():
 def test_when_base_surface_does_not_exist_gives_config_error():
     with pytest.raises(
         ConfigValidationError,
-        match="surface/small_out.irap not found",
+        match="surface/small_out\\.irap not found",
     ):
         SurfaceConfig.from_config_list(
             [
@@ -180,7 +180,7 @@ def test_config_file_line_sets_the_corresponding_properties(
 def test_invalid_surface_files_gives_config_error():
     Path("base_surface.irap").write_text("not valid irap", encoding="utf-8")
     with pytest.raises(
-        ConfigValidationError, match="Could not load surface 'base_surface.irap'"
+        ConfigValidationError, match="Could not load surface 'base_surface\\.irap'"
     ):
         _ = SurfaceConfig.from_config_list(
             [

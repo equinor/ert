@@ -181,7 +181,7 @@ def test_invalid_forward_init_gives_a_user_error_message(parse_field_line, inval
 def test_missing_init_files_gives_a_user_error_message(parse_field_line):
     with pytest.raises(
         ConfigValidationError,
-        match="Line 3.*Missing required INIT_FILES for field 'foo'",
+        match=r"Line 3.*Missing required INIT_FILES for field 'foo'",
     ):
         _ = parse_field_line("FIELD foo parameter bar.roff")
 

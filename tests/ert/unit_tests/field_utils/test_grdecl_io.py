@@ -13,7 +13,7 @@ from ert.field_utils.grdecl_io import export_grdecl, import_bgrdecl, import_grde
 
 def test_that_importing_mess_from_bgrdecl_raises_field_io_error(tmp_path):
     resfo.write(tmp_path / "test.bgrdecl", [("FOPR    ", resfo.MESS)])
-    with pytest.raises(ValueError, match="FOPR in .* has MESS type"):
+    with pytest.raises(ValueError, match=r"FOPR in .* has MESS type"):
         import_bgrdecl(tmp_path / "test.bgrdecl", "FOPR    ", (1, 1, 1))
 
 

@@ -9,9 +9,9 @@ class WebvizErt(BaseService):
 
     def __init__(self, **kwargs: Any):
         exec_args = [sys.executable, "-m", "webviz_ert"]
-        if kwargs.get("experimental_mode", False):
+        if kwargs.get("experimental_mode"):
             exec_args.append("--experimental-mode")
-        if kwargs.get("verbose", False):
+        if kwargs.get("verbose"):
             exec_args.append("--verbose")
         exec_args.extend(["--title", str(kwargs.get("title"))])
         project = kwargs.get("project")

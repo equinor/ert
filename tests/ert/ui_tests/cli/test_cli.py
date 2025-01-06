@@ -41,7 +41,7 @@ from .run_cli import run_cli
 @pytest.mark.filterwarnings("ignore::ert.config.ConfigWarning")
 def test_bad_config_error_message(tmp_path):
     (tmp_path / "test.ert").write_text("NUM_REL 10\n")
-    with pytest.raises(ConfigValidationError, match="NUM_REALIZATIONS must be set."):
+    with pytest.raises(ConfigValidationError, match="NUM_REALIZATIONS must be set\\."):
         run_cli(TEST_RUN_MODE, "--disable-monitor", str(tmp_path / "test.ert"))
 
 
@@ -548,7 +548,7 @@ def test_that_stop_on_fail_workflow_jobs_stop_ert(
         )
 
     if expect_stopped:
-        with pytest.raises(Exception, match="Workflow job .* failed with error"):
+        with pytest.raises(Exception, match=r"Workflow job .* failed with error"):
             run_cli(TEST_RUN_MODE, "--disable-monitor", "poly.ert")
     else:
         run_cli(TEST_RUN_MODE, "--disable-monitor", "poly.ert")

@@ -155,7 +155,7 @@ def test_variable_name_index_validation(copy_test_data_to_tmp):
     with pytest.raises(
         ValidationError,
         match="does not match any instance of "
-        "control_name.variable_name-variable_index",
+        "control_name\\.variable_name-variable_index",
     ):
         EverestConfig.model_validate(config.model_dump(exclude_none=True))
 

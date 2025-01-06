@@ -104,7 +104,7 @@ def test_invalid_min_realization_raises_config_validation_error():
 def test_invalid_design_matrix_format_raises_validation_error():
     with pytest.raises(
         ConfigValidationError,
-        match="DESIGN_MATRIX must be of format .xls or .xlsx; is 'my_matrix.txt'",
+        match="DESIGN_MATRIX must be of format \\.xls or \\.xlsx; is 'my_matrix\\.txt'",
     ):
         AnalysisConfig.from_dict(
             {
