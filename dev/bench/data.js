@@ -1,39 +1,8 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1736163526426,
+  "lastUpdate": 1736164847291,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
-      {
-        "commit": {
-          "author": {
-            "email": "havb@equinor.com",
-            "name": "Håvard Berland",
-            "username": "berland"
-          },
-          "committer": {
-            "email": "berland@pvv.ntnu.no",
-            "name": "Håvard Berland",
-            "username": "berland"
-          },
-          "distinct": true,
-          "id": "a509da2859f2c7feef650394ae67671b25aa7f92",
-          "message": "Use f-strings for formatting",
-          "timestamp": "2024-12-19T07:55:34+01:00",
-          "tree_id": "09a6e64a25dc1118d6324099f0c6aebf9c41422b",
-          "url": "https://github.com/equinor/ert/commit/a509da2859f2c7feef650394ae67671b25aa7f92"
-        },
-        "date": 1734591442472,
-        "tool": "pytest",
-        "benches": [
-          {
-            "name": "tests/ert/performance_tests/test_analysis.py::test_and_benchmark_adaptive_localization_with_fields",
-            "value": 0.22300412341274142,
-            "unit": "iter/sec",
-            "range": "stddev: 0.01975973325220808",
-            "extra": "mean: 4.484222016600006 sec\nrounds: 5"
-          }
-        ]
-      },
       {
         "commit": {
           "author": {
@@ -930,6 +899,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.029626205247944",
             "extra": "mean: 4.624446428200002 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "andrli@equinor.com",
+            "name": "Andreas Eknes Lie",
+            "username": "andreas-el"
+          },
+          "committer": {
+            "email": "berland@pvv.ntnu.no",
+            "name": "Håvard Berland",
+            "username": "berland"
+          },
+          "distinct": true,
+          "id": "68263ff9a8e4675e59a6a98b43bdc765e11cf1a0",
+          "message": "Fixed plotter storing correct tab when switching plot types",
+          "timestamp": "2025-01-06T12:58:53+01:00",
+          "tree_id": "0ccef630c0b333979236f1c2a9f3e303c59babac",
+          "url": "https://github.com/equinor/ert/commit/68263ff9a8e4675e59a6a98b43bdc765e11cf1a0"
+        },
+        "date": 1736164846339,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/ert/performance_tests/test_analysis.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 0.2146418837051802,
+            "unit": "iter/sec",
+            "range": "stddev: 0.05606033087355752",
+            "extra": "mean: 4.658922959199998 sec\nrounds: 5"
           }
         ]
       }
