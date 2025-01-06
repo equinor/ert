@@ -1,39 +1,8 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1736169541546,
+  "lastUpdate": 1736169933925,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
-      {
-        "commit": {
-          "author": {
-            "email": "levje@equinor.com",
-            "name": "larsevj",
-            "username": "larsevj"
-          },
-          "committer": {
-            "email": "60844986+larsevj@users.noreply.github.com",
-            "name": "Lars Evje",
-            "username": "larsevj"
-          },
-          "distinct": true,
-          "id": "d9088eb8e2f26e5b38cc45160fdca49786b1a359",
-          "message": "Validate triangular dist parameters on startup",
-          "timestamp": "2024-12-19T14:17:49+01:00",
-          "tree_id": "b3526ff487600adff34e2a0faf8628a631ebe8cd",
-          "url": "https://github.com/equinor/ert/commit/d9088eb8e2f26e5b38cc45160fdca49786b1a359"
-        },
-        "date": 1734614379815,
-        "tool": "pytest",
-        "benches": [
-          {
-            "name": "tests/ert/performance_tests/test_analysis.py::test_and_benchmark_adaptive_localization_with_fields",
-            "value": 0.2149859993083223,
-            "unit": "iter/sec",
-            "range": "stddev: 0.022294367364244606",
-            "extra": "mean: 4.651465691800001 sec\nrounds: 5"
-          }
-        ]
-      },
       {
         "commit": {
           "author": {
@@ -930,6 +899,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.03453731157924506",
             "extra": "mean: 4.6681279856 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "levje@equinor.com",
+            "name": "larsevj",
+            "username": "larsevj"
+          },
+          "committer": {
+            "email": "60844986+larsevj@users.noreply.github.com",
+            "name": "Lars Evje",
+            "username": "larsevj"
+          },
+          "distinct": true,
+          "id": "6c9db0b556ce39be3e676bc2b4337895d3477f8e",
+          "message": "Do not run actionlint twice on PRs",
+          "timestamp": "2025-01-06T14:23:45+01:00",
+          "tree_id": "d3869c39a14d10db0b96185a692745e692e36717",
+          "url": "https://github.com/equinor/ert/commit/6c9db0b556ce39be3e676bc2b4337895d3477f8e"
+        },
+        "date": 1736169933337,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/ert/performance_tests/test_analysis.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 0.21983364004082406,
+            "unit": "iter/sec",
+            "range": "stddev: 0.03101188336562572",
+            "extra": "mean: 4.548894335799997 sec\nrounds: 5"
           }
         ]
       }
