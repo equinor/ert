@@ -71,7 +71,6 @@ class Monitor:
             return
         await self._event_queue.put(Monitor._sentinel)
         logger.debug(f"monitor-{self._id} asking server to cancel...")
-
         cancel_event = EEUserCancel(monitor=self._id)
         await self._connection.send(event_to_json(cancel_event))
         logger.debug(f"monitor-{self._id} asked server to cancel")
