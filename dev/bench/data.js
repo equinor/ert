@@ -1,39 +1,8 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1736253364498,
+  "lastUpdate": 1736266350160,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
-      {
-        "commit": {
-          "author": {
-            "email": "dan.sava42@gmail.com",
-            "name": "DanSava",
-            "username": "DanSava"
-          },
-          "committer": {
-            "email": "dan.sava42@gmail.com",
-            "name": "Dan Sava",
-            "username": "DanSava"
-          },
-          "distinct": true,
-          "id": "855c517890b2342f82907a11ae519aec2b50d885",
-          "message": "Remove unused type ignore.",
-          "timestamp": "2024-12-23T18:03:09+02:00",
-          "tree_id": "78a1ee71b253db603121844eea9e740b147e1662",
-          "url": "https://github.com/equinor/ert/commit/855c517890b2342f82907a11ae519aec2b50d885"
-        },
-        "date": 1734969896128,
-        "tool": "pytest",
-        "benches": [
-          {
-            "name": "tests/ert/performance_tests/test_analysis.py::test_and_benchmark_adaptive_localization_with_fields",
-            "value": 0.21858073960126662,
-            "unit": "iter/sec",
-            "range": "stddev: 0.008085150111211182",
-            "extra": "mean: 4.574968507400024 sec\nrounds: 5"
-          }
-        ]
-      },
       {
         "commit": {
           "author": {
@@ -930,6 +899,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.02351995839858765",
             "extra": "mean: 4.565557811400003 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "stephan.dehoop@tno.nl",
+            "name": "Stephan de Hoop",
+            "username": "StephanDeHoop"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "eb9b04a589b3f1d777ccb4c7d4dd31ef42d9d011",
+          "message": "Non optional everest model and nonzero realizations (#9577)\n\nFor EverestConfig require Model and realizations.len() > 0",
+          "timestamp": "2025-01-07T17:10:38+01:00",
+          "tree_id": "a0985d90212d4529c3053de199abcaa11c1fe21d",
+          "url": "https://github.com/equinor/ert/commit/eb9b04a589b3f1d777ccb4c7d4dd31ef42d9d011"
+        },
+        "date": 1736266349702,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/ert/performance_tests/test_analysis.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 0.21896301576265956,
+            "unit": "iter/sec",
+            "range": "stddev: 0.017399442138751015",
+            "extra": "mean: 4.5669813074000105 sec\nrounds: 5"
           }
         ]
       }
