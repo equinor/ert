@@ -1,39 +1,8 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1736238424276,
+  "lastUpdate": 1736238489787,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
-      {
-        "commit": {
-          "author": {
-            "email": "pieter.verveer@tno.nl",
-            "name": "Peter Verveer",
-            "username": "verveerpj"
-          },
-          "committer": {
-            "email": "pieter.verveer@tno.nl",
-            "name": "Peter Verveer",
-            "username": "verveerpj"
-          },
-          "distinct": true,
-          "id": "722e0fc805cde27add2a3ad3344fcfc99fdf5b10",
-          "message": "EverestRunModel: sanitize realization var names",
-          "timestamp": "2024-12-20T14:27:56+01:00",
-          "tree_id": "ed41627d26d55693d518eb54f9bad50b37092805",
-          "url": "https://github.com/equinor/ert/commit/722e0fc805cde27add2a3ad3344fcfc99fdf5b10"
-        },
-        "date": 1734701386950,
-        "tool": "pytest",
-        "benches": [
-          {
-            "name": "tests/ert/performance_tests/test_analysis.py::test_and_benchmark_adaptive_localization_with_fields",
-            "value": 0.21948512170606432,
-            "unit": "iter/sec",
-            "range": "stddev: 0.019461140551392343",
-            "extra": "mean: 4.5561174817999985 sec\nrounds: 5"
-          }
-        ]
-      },
       {
         "commit": {
           "author": {
@@ -930,6 +899,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.030207119201486343",
             "extra": "mean: 4.552804808400003 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "feda.curic@gmail.com",
+            "name": "Feda Curic",
+            "username": "dafeda"
+          },
+          "committer": {
+            "email": "feda.curic@gmail.com",
+            "name": "Feda Curic",
+            "username": "dafeda"
+          },
+          "distinct": true,
+          "id": "d82fc01bc98f4ea3182b5e7501b255d05bca95b3",
+          "message": "Add GEN_KW to heat equation and turn localization on\n\nMakes it easier to write more realistic tests.",
+          "timestamp": "2025-01-07T09:26:23+01:00",
+          "tree_id": "bebba6cc88eed0709ae785b29c50b8df430f7886",
+          "url": "https://github.com/equinor/ert/commit/d82fc01bc98f4ea3182b5e7501b255d05bca95b3"
+        },
+        "date": 1736238489287,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/ert/performance_tests/test_analysis.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 0.21789469644185985,
+            "unit": "iter/sec",
+            "range": "stddev: 0.015257471053639851",
+            "extra": "mean: 4.589372831599997 sec\nrounds: 5"
           }
         ]
       }
