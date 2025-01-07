@@ -1,39 +1,8 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1736178697385,
+  "lastUpdate": 1736237936982,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
-      {
-        "commit": {
-          "author": {
-            "email": "havb@equinor.com",
-            "name": "Håvard Berland",
-            "username": "berland"
-          },
-          "committer": {
-            "email": "berland@pvv.ntnu.no",
-            "name": "Håvard Berland",
-            "username": "berland"
-          },
-          "distinct": true,
-          "id": "1889e2ab1cb9bc44d4791985d181181a253caf4e",
-          "message": "Merge EGG.DATA and EGG_FLOW.DATA\n\nRemoving QUIESC from EGG.DATA makes it possible to merge these two decks into one,\nand fixes an otherwise non-functional EGG_FLOW setup. This allows future CI tests on\nEverest with flow.",
-          "timestamp": "2024-12-20T12:05:22+01:00",
-          "tree_id": "ec7e28c8c9ca965f16effa8c9d42c5a51c83a2b4",
-          "url": "https://github.com/equinor/ert/commit/1889e2ab1cb9bc44d4791985d181181a253caf4e"
-        },
-        "date": 1734692842806,
-        "tool": "pytest",
-        "benches": [
-          {
-            "name": "tests/ert/performance_tests/test_analysis.py::test_and_benchmark_adaptive_localization_with_fields",
-            "value": 0.21489655153830137,
-            "unit": "iter/sec",
-            "range": "stddev: 0.04711308683411575",
-            "extra": "mean: 4.653401801199999 sec\nrounds: 5"
-          }
-        ]
-      },
       {
         "commit": {
           "author": {
@@ -930,6 +899,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.049432446890215",
             "extra": "mean: 4.564867767399994 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "eide.oyvind87@gmail.com",
+            "name": "Øyvind Eide",
+            "username": "oyvindeide"
+          },
+          "committer": {
+            "email": "44577479+oyvindeide@users.noreply.github.com",
+            "name": "Øyvind Eide",
+            "username": "oyvindeide"
+          },
+          "distinct": true,
+          "id": "a6d2dba8cd9c5cd9368f1b891931b7982c438051",
+          "message": "Replace custom schema generation with library",
+          "timestamp": "2025-01-07T09:17:04+01:00",
+          "tree_id": "b59bfc8de678bde5e848ae7a43293857e884ee9d",
+          "url": "https://github.com/equinor/ert/commit/a6d2dba8cd9c5cd9368f1b891931b7982c438051"
+        },
+        "date": 1736237936574,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/ert/performance_tests/test_analysis.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 0.21600439227720425,
+            "unit": "iter/sec",
+            "range": "stddev: 0.013815307542831789",
+            "extra": "mean: 4.629535489800008 sec\nrounds: 5"
           }
         ]
       }
