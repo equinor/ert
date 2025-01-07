@@ -1,39 +1,8 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1736238368069,
+  "lastUpdate": 1736238424276,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
-      {
-        "commit": {
-          "author": {
-            "email": "eide.oyvind87@gmail.com",
-            "name": "Øyvind Eide",
-            "username": "oyvindeide"
-          },
-          "committer": {
-            "email": "44577479+oyvindeide@users.noreply.github.com",
-            "name": "Øyvind Eide",
-            "username": "oyvindeide"
-          },
-          "distinct": true,
-          "id": "8fa3040800cc5253dc1ed5a34c8ceb32281373c7",
-          "message": "Remove outdated logging handle",
-          "timestamp": "2024-12-20T14:07:24+01:00",
-          "tree_id": "0d92b4c9a2b2f21d743ac9e00697aa34bc0a79df",
-          "url": "https://github.com/equinor/ert/commit/8fa3040800cc5253dc1ed5a34c8ceb32281373c7"
-        },
-        "date": 1734700155622,
-        "tool": "pytest",
-        "benches": [
-          {
-            "name": "tests/ert/performance_tests/test_analysis.py::test_and_benchmark_adaptive_localization_with_fields",
-            "value": 0.21838175275939375,
-            "unit": "iter/sec",
-            "range": "stddev: 0.03988909457111767",
-            "extra": "mean: 4.579137164000002 sec\nrounds: 5"
-          }
-        ]
-      },
       {
         "commit": {
           "author": {
@@ -930,6 +899,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.02404537024979024",
             "extra": "mean: 4.63464484299999 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "cmrqs@unicamp.br",
+            "name": "Carlos Marques",
+            "username": "cmrqs"
+          },
+          "committer": {
+            "email": "sondreso@users.noreply.github.com",
+            "name": "Sondre Sortland",
+            "username": "sondreso"
+          },
+          "distinct": true,
+          "id": "f1ec937ec63d43140ef8580d26951feb2f6ebaf4",
+          "message": "Add unit tests for conda activation script",
+          "timestamp": "2025-01-07T09:25:08+01:00",
+          "tree_id": "49d1f63f823339ceeac2c36f937e4c9467f82017",
+          "url": "https://github.com/equinor/ert/commit/f1ec937ec63d43140ef8580d26951feb2f6ebaf4"
+        },
+        "date": 1736238422936,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/ert/performance_tests/test_analysis.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 0.21964482161743082,
+            "unit": "iter/sec",
+            "range": "stddev: 0.030207119201486343",
+            "extra": "mean: 4.552804808400003 sec\nrounds: 5"
           }
         ]
       }
