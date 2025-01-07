@@ -1,6 +1,5 @@
 import logging
 import os
-import shutil
 from argparse import ArgumentParser
 from io import StringIO
 from itertools import chain
@@ -32,7 +31,6 @@ from everest.config.install_template_config import InstallTemplateConfig
 from everest.config.server_config import ServerConfig
 from everest.config.validation_utils import (
     InstallDataContext,
-    as_abs_path,
     check_for_duplicate_names,
     check_path_exists,
     check_writeable_path,
@@ -251,71 +249,6 @@ and environment variables are exposed in the form 'os.NAME', for example:
     )
     config_path: Path = Field()
     model_config = ConfigDict(extra="forbid")
-
-    @model_validator(mode="after")
-    def validate_install_job_sources(self) -> Self:  # pylint: disable=E0213
-        model = self.model
-        config_path = self.config_path
-        if not model or not config_path:
-            return self
-
-        errors = []
-        config_dir = Path(config_path).parent
-        realizations = model.realizations
-
-        for install_jobs in (self.install_jobs, self.install_workflow_jobs):
-            if not install_jobs:
-                continue
-
-            sources = [job.source for job in install_jobs]
-            for source in sources:
-                try:
-                    check_path_exists(
-                        path_source=source,
-                        config_path=config_path,
-                        realizations=realizations,
-                    )
-                except ValueError as e:
-                    errors.append(str(e))
-                abs_config_path = as_abs_path(source, str(config_dir))
-                if not os.path.isfile(abs_config_path):
-                    errors.append(f"Is not a file {abs_config_path}")
-                    continue
-                exec_path = None
-                valid_jobfile = True
-                with open(abs_config_path, encoding="utf-8") as jobfile:
-                    for line in jobfile:
-                        if not line.startswith("EXECUTABLE"):
-                            continue
-                        data = line.strip().split()
-                        if len(data) != 2:
-                            valid_jobfile = False
-                            continue
-                        exec_path = data[1]
-                        break
-
-                if not valid_jobfile:
-                    errors.append(f"malformed EXECUTABLE in {source}")
-                    continue
-                if exec_path is None:
-                    errors.append(f"missing EXECUTABLE in {source}")
-                    continue
-
-                exec_relpath = os.path.join(os.path.dirname(abs_config_path), exec_path)
-                if os.path.isfile(exec_relpath):
-                    if os.access(exec_relpath, os.X_OK):
-                        continue
-                    # exec_relpath is a file, but not executable; flag and return False
-                    errors.append(f"{exec_relpath} is not executable")
-                    continue
-
-                if not shutil.which(exec_path):
-                    errors.append(f"No such executable {exec_path}")
-
-        if len(errors) > 0:
-            raise ValueError(errors)
-
-        return self
 
     @model_validator(mode="after")
     def validate_forward_model_job_name_installed(self) -> Self:  # pylint: disable=E0213

@@ -10,9 +10,11 @@ import pytest
 from pydantic import ValidationError
 
 from ert.config import ConfigWarning
+from ert.config.parsing import ConfigValidationError
 from everest.config import EverestConfig, ModelConfig
 from everest.config.control_variable_config import ControlVariableConfig
 from everest.config.sampler_config import SamplerConfig
+from everest.simulator.everest_to_ert import everest_to_ert_config
 from tests.everest.utils import skipif_no_everest_models
 
 
@@ -656,16 +658,16 @@ def test_that_non_existing_install_job_errors(install_keyword, change_to_tmpdir)
     os.makedirs("config_dir")
     with open("config_dir/test.yml", "w", encoding="utf-8") as f:
         f.write(" ")
-    with pytest.raises(ValueError) as e:
-        EverestConfig.with_defaults(
-            model={
-                "realizations": [1, 2, 3],
-            },
-            config_path=Path("config_dir/test.yml"),
-            **{install_keyword: [{"name": "test", "source": "non_existing"}]},
-        )
+    config = EverestConfig.with_defaults(
+        model={
+            "realizations": [1, 2, 3],
+        },
+        config_path=Path("config_dir/test.yml"),
+        **{install_keyword: [{"name": "test", "source": "non_existing"}]},
+    )
 
-    assert has_error(e.value, "No such file or directory")
+    with pytest.raises(ConfigValidationError, match="No such file or directory:"):
+        everest_to_ert_config(config)
 
 
 @pytest.mark.parametrize(
@@ -690,22 +692,23 @@ def test_that_existing_install_job_with_malformed_executable_errors(
         """
         )
 
-    with pytest.raises(ValueError) as e:
-        EverestConfig.with_defaults(
-            model={
-                "realizations": [1, 2, 3],
-            },
-            config_path=Path("."),
-            **{
-                install_keyword: [
-                    {"name": "test", "source": "malformed.ert"},
-                    {"name": "test2", "source": "malformed2.ert"},
-                ]
-            },
-        )
+    config = EverestConfig.with_defaults(
+        model={
+            "realizations": [1, 2, 3],
+        },
+        config_path=Path("."),
+        **{
+            install_keyword: [
+                {"name": "test", "source": "malformed.ert"},
+                {"name": "test2", "source": "malformed2.ert"},
+            ]
+        },
+    )
 
-    assert has_error(e.value, "malformed EXECUTABLE in malformed.ert")
-    assert has_error(e.value, "malformed EXECUTABLE in malformed2.ert")
+    with pytest.raises(
+        ConfigValidationError, match="EXECUTABLE must have at least 1 arguments"
+    ):
+        everest_to_ert_config(config)
 
 
 @pytest.mark.parametrize(
@@ -730,20 +733,20 @@ def test_that_existing_install_job_with_non_executable_executable_errors(
     os.chmod("non_executable", os.stat("non_executable").st_mode & ~0o111)
     assert not os.access("non_executable", os.X_OK)
 
-    with pytest.raises(ValueError) as e:
-        EverestConfig.with_defaults(
-            model={
-                "realizations": [1, 2, 3],
-            },
-            config_path=Path("."),
-            **{
-                install_keyword: [
-                    {"name": "test", "source": "exec.ert"},
-                ]
-            },
-        )
+    config = EverestConfig.with_defaults(
+        model={
+            "realizations": [1, 2, 3],
+        },
+        config_path=Path("."),
+        **{
+            install_keyword: [
+                {"name": "test", "source": "exec.ert"},
+            ]
+        },
+    )
 
-    assert has_error(e.value, ".*non_executable is not executable")
+    with pytest.raises(ConfigValidationError, match="File not executable"):
+        everest_to_ert_config(config)
 
 
 @pytest.mark.parametrize(
@@ -764,20 +767,20 @@ def test_that_existing_install_job_with_non_existing_executable_errors(
 
     assert not os.access("non_executable", os.X_OK)
 
-    with pytest.raises(ValueError) as e:
-        EverestConfig.with_defaults(
-            model={
-                "realizations": [1, 2, 3],
-            },
-            config_path=Path("."),
-            **{
-                install_keyword: [
-                    {"name": "test", "source": "exec.ert"},
-                ]
-            },
-        )
+    config = EverestConfig.with_defaults(
+        model={
+            "realizations": [1, 2, 3],
+        },
+        config_path=Path("."),
+        **{
+            install_keyword: [
+                {"name": "test", "source": "exec.ert"},
+            ]
+        },
+    )
 
-    assert has_error(e.value, "No such executable non_existing")
+    with pytest.raises(ConfigValidationError, match="Could not find executable"):
+        everest_to_ert_config(config)
 
 
 @pytest.mark.parametrize(
@@ -911,9 +914,7 @@ def test_that_missing_required_fields_cause_error():
 
 
 def test_that_non_existing_workflow_jobs_cause_error():
-    with pytest.raises(
-        ValidationError, match=r"No such file or directory (.*)jobs/JOB"
-    ):
+    with pytest.raises(ValidationError) as e:
         EverestConfig.with_defaults(
             install_workflow_jobs=[{"name": "job0", "source": "jobs/JOB"}],
             workflows={
@@ -923,6 +924,7 @@ def test_that_non_existing_workflow_jobs_cause_error():
                 ]
             },
         )
+    assert has_error(e.value, "unknown workflow job job1")
 
 
 @skipif_no_everest_models
