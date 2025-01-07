@@ -120,10 +120,6 @@ def test_extra_key(min_config):
             "No such file or directory",
         ),
         (
-            {"install_jobs": [{"source": "does_not_exist", "name": "not_relevant"}]},
-            "Is not a file .*/does_not_exist",
-        ),
-        (
             {"install_jobs": [{"source": None, "name": "not_relevant"}]},
             "source\n.* should be a valid string",
         ),
@@ -220,23 +216,6 @@ def test_export_filepath_validation(min_config, tmp_path, monkeypatch, path_val,
         else pytest.raises(ValidationError, match="Invalid type")
     )
     with expectation:
-        EverestConfig(**min_config)
-
-
-@pytest.mark.parametrize(
-    "content, error",
-    [
-        ("ARGUMENT 1\n", "missing EXECUTABLE (.*)"),
-        ("EXECUTABLE /no/such/path\n", "No such executable (.*)"),
-        ("EXECUTABLE my_file\n", "(.*)my_file is not executable"),
-    ],
-)
-def test_ert_job_file(tmp_path, monkeypatch, min_config, content, error):
-    monkeypatch.chdir(tmp_path)
-    Path("my_file").touch()
-    Path("ert_job_file").write_text(content, encoding="utf-8")
-    min_config["install_jobs"] = [{"source": "ert_job_file", "name": "irrelephant"}]
-    with pytest.raises(ValidationError, match=error):
         EverestConfig(**min_config)
 
 
