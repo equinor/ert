@@ -188,4 +188,11 @@ deprecated_keywords_list = [
         check=lambda line: "LSF_RESOURCE" in line
         and "mem=" in cast(list[str], line)[-1],
     ),
+    DeprecationInfo(
+        keyword="SIMULATION_JOB",
+        message=lambda args: "The SIMULATION_JOB keyword has been removed and no longer "
+        "has any effect. It has been used in the as a lightweight alternative of "
+        "FORWARD_MODEL. Please use FORWARD_MODEL keyword instead:\n"
+        f"FORWARD_MODEL {' '.join(args) if args else ''}",
+    ),
 ]
