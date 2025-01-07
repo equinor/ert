@@ -1,39 +1,8 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1736237936982,
+  "lastUpdate": 1736238368069,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
-      {
-        "commit": {
-          "author": {
-            "email": "eide.oyvind87@gmail.com",
-            "name": "Øyvind Eide",
-            "username": "oyvindeide"
-          },
-          "committer": {
-            "email": "44577479+oyvindeide@users.noreply.github.com",
-            "name": "Øyvind Eide",
-            "username": "oyvindeide"
-          },
-          "distinct": true,
-          "id": "1bd4fe1294258050dd495e9a33ba3d23f47149b7",
-          "message": "Remove unused async_run",
-          "timestamp": "2024-12-20T14:06:05+01:00",
-          "tree_id": "85bf2c979daf0ca04f6fd2a58006b95445cbe925",
-          "url": "https://github.com/equinor/ert/commit/1bd4fe1294258050dd495e9a33ba3d23f47149b7"
-        },
-        "date": 1734700072391,
-        "tool": "pytest",
-        "benches": [
-          {
-            "name": "tests/ert/performance_tests/test_analysis.py::test_and_benchmark_adaptive_localization_with_fields",
-            "value": 0.21569730252161742,
-            "unit": "iter/sec",
-            "range": "stddev: 0.03573023895218398",
-            "extra": "mean: 4.636126591800002 sec\nrounds: 5"
-          }
-        ]
-      },
       {
         "commit": {
           "author": {
@@ -930,6 +899,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.013815307542831789",
             "extra": "mean: 4.629535489800008 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "havb@equinor.com",
+            "name": "Håvard Berland",
+            "username": "berland"
+          },
+          "committer": {
+            "email": "sondreso@users.noreply.github.com",
+            "name": "Sondre Sortland",
+            "username": "sondreso"
+          },
+          "distinct": true,
+          "id": "23015dc234b1c82de3ac00a5033beea49a4043dc",
+          "message": "Avoid UserWarning when vmin==vmax in std_dev plot",
+          "timestamp": "2025-01-07T09:24:18+01:00",
+          "tree_id": "823ca1fc5e745684f2f8e5bea60439489f9c68fe",
+          "url": "https://github.com/equinor/ert/commit/23015dc234b1c82de3ac00a5033beea49a4043dc"
+        },
+        "date": 1736238367513,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/ert/performance_tests/test_analysis.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 0.2157662634085902,
+            "unit": "iter/sec",
+            "range": "stddev: 0.02404537024979024",
+            "extra": "mean: 4.63464484299999 sec\nrounds: 5"
           }
         ]
       }
