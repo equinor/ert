@@ -384,7 +384,7 @@ class EverestRunModel(BaseRunModel):
         # Gather the results and create the result for ropt:
         results = self._gather_simulation_results(ensemble)
         evaluator_result = self._make_evaluator_result(
-            control_values, evaluator_context, batch_data, results, cached_results
+            control_values, batch_data, results, cached_results
         )
 
         # Add the results from the evaluations to the cache:
@@ -406,18 +406,17 @@ class EverestRunModel(BaseRunModel):
     ) -> dict[int, Any]:
         cached_results: dict[int, Any] = {}
         if self._simulator_cache is not None:
-            assert evaluator_context.config.realizations.names is not None
             for control_idx, real_idx in enumerate(evaluator_context.realizations):
                 cached_data = self._simulator_cache.get(
-                    int(evaluator_context.config.realizations.names[real_idx]),
+                    self._everest_config.model.realizations[real_idx],
                     control_values[control_idx, :],
                 )
                 if cached_data is not None:
                     cached_results[control_idx] = cached_data
         return cached_results
 
-    @staticmethod
     def _init_batch_data(
+        self,
         control_values: NDArray[np.float64],
         evaluator_context: EvaluatorContext,
         cached_results: dict[int, Any],
@@ -447,9 +446,8 @@ class EverestRunModel(BaseRunModel):
                 or evaluator_context.active[evaluator_context.realizations[control_idx]]
             ):
                 controls: dict[str, Any] = {}
-                assert evaluator_context.config.variables.names is not None
                 for control_name, control_value in zip(
-                    evaluator_context.config.variables.names,
+                    self._everest_config.control_name_tuples,
                     control_values[control_idx, :],
                     strict=False,
                 ):
@@ -520,14 +518,11 @@ class EverestRunModel(BaseRunModel):
         substitutions = self.ert_config.substitutions
         substitutions["<BATCH_NAME>"] = ensemble.name
         self.active_realizations = [True] * len(batch_data)
-        assert evaluator_context.config.realizations.names is not None
         for sim_id, control_idx in enumerate(batch_data.keys()):
             substitutions[f"<GEO_ID_{sim_id}_0>"] = str(
-                int(
-                    evaluator_context.config.realizations.names[
-                        evaluator_context.realizations[control_idx]
-                    ]
-                )
+                self._everest_config.model.realizations[
+                    evaluator_context.realizations[control_idx]
+                ]
             )
         run_paths = Runpaths(
             jobname_format=self.ert_config.model_config.jobname_format_string,
@@ -587,26 +582,20 @@ class EverestRunModel(BaseRunModel):
     def _make_evaluator_result(
         self,
         control_values: NDArray[np.float64],
-        evaluator_context: EvaluatorContext,
         batch_data: dict[int, Any],
         results: list[dict[str, NDArray[np.float64]]],
         cached_results: dict[int, Any],
     ) -> EvaluatorResult:
         # We minimize the negative of the objectives:
-        assert evaluator_context.config.objectives.names is not None
         objectives = -self._get_simulation_results(
-            results,
-            evaluator_context.config.objectives.names,
-            control_values,
-            batch_data,
+            results, self._everest_config.objective_names, control_values, batch_data
         )
 
         constraints = None
-        if evaluator_context.config.nonlinear_constraints is not None:
-            assert evaluator_context.config.nonlinear_constraints.names is not None
+        if self._everest_config.output_constraints:
             constraints = self._get_simulation_results(
                 results,
-                evaluator_context.config.nonlinear_constraints.names,
+                self._everest_config.constraint_names,
                 control_values,
                 batch_data,
             )
@@ -633,7 +622,7 @@ class EverestRunModel(BaseRunModel):
     @staticmethod
     def _get_simulation_results(
         results: list[dict[str, NDArray[np.float64]]],
-        names: tuple[str],
+        names: list[str],
         controls: NDArray[np.float64],
         batch_data: dict[int, Any],
     ) -> NDArray[np.float64]:
@@ -655,14 +644,11 @@ class EverestRunModel(BaseRunModel):
         constraints: NDArray[np.float64] | None,
     ) -> None:
         if self._simulator_cache is not None:
-            assert evaluator_context.config.realizations.names is not None
             for control_idx in batch_data:
                 self._simulator_cache.add(
-                    int(
-                        evaluator_context.config.realizations.names[
-                            evaluator_context.realizations[control_idx]
-                        ]
-                    ),
+                    self._everest_config.model.realizations[
+                        evaluator_context.realizations[control_idx]
+                    ],
                     control_values[control_idx, ...],
                     objectives[control_idx, ...],
                     None if constraints is None else constraints[control_idx, ...],

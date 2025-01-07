@@ -1,6 +1,7 @@
 import logging
 import os
 from argparse import ArgumentParser
+from functools import cached_property
 from io import StringIO
 from itertools import chain
 from pathlib import Path
@@ -629,6 +630,48 @@ and environment variables are exposed in the form 'os.NAME', for example:
     def control_names(self):
         controls = self.controls or []
         return [control.name for control in controls]
+
+    @cached_property
+    def control_name_tuples(self) -> list[tuple[str, str, int | tuple[str, str]]]:
+        tuples = []
+        for control in self.controls:
+            for variable in control.variables:
+                if isinstance(variable, ControlVariableGuessListConfig):
+                    for index in range(1, len(variable.initial_guess) + 1):
+                        tuples.append((control.name, variable.name, index))
+                elif variable.index is not None:
+                    tuples.append((control.name, variable.name, variable.index))
+                else:
+                    tuples.append((control.name, variable.name))
+        return tuples
+
+    @property
+    def objective_names(self) -> list[str]:
+        return [objective.name for objective in self.objective_functions]
+
+    @cached_property
+    def constraint_names(self) -> list[str]:
+        names: list[str] = []
+
+        def _add_output_constraint(rhs_value: float | None, suffix=None):
+            if rhs_value is not None:
+                name = constr.name
+                names.append(name if suffix is None else f"{name}:{suffix}")
+
+        for constr in self.output_constraints or []:
+            _add_output_constraint(
+                constr.target,
+            )
+            _add_output_constraint(
+                constr.upper_bound,
+                None if constr.lower_bound is None else "upper",
+            )
+            _add_output_constraint(
+                constr.lower_bound,
+                None if constr.upper_bound is None else "lower",
+            )
+
+        return names
 
     @property
     def result_names(self):
