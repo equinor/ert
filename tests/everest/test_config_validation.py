@@ -5,6 +5,7 @@ import warnings
 from argparse import ArgumentParser
 from pathlib import Path
 from typing import Any
+from unittest.mock import patch
 
 import pytest
 from pydantic import ValidationError
@@ -894,8 +895,8 @@ def test_that_missing_required_fields_cause_error():
     error_dicts = e.value.errors()
 
     # Expect missing error for:
-    # controls, objective_functions, config_path
-    assert len(error_dicts) == 3
+    # controls, objective_functions, config_path, model
+    assert len(error_dicts) == 4
 
     config_with_defaults = EverestConfig.with_defaults()
     config_args = {}
@@ -903,6 +904,7 @@ def test_that_missing_required_fields_cause_error():
         "controls",
         "objective_functions",
         "config_path",
+        "model",
     ]
 
     for key in required_argnames:
@@ -960,24 +962,26 @@ def test_that_non_existing_workflow_jobs_cause_error():
     ],
 )
 def test_warning_forward_model_write_objectives(objective, forward_model, warning_msg):
-    if warning_msg is not None:
-        with pytest.warns(ConfigWarning, match=warning_msg):
-            EverestConfig.with_defaults(
-                objective_functions=[{"name": o} for o in objective],
-                forward_model=forward_model,
-            )
-    else:
-        with warnings.catch_warnings():
-            warnings.simplefilter("error", category=ConfigWarning)
-            EverestConfig.with_defaults(
-                objective_functions=[{"name": o} for o in objective],
-                forward_model=forward_model,
-            )
+    # model.realizations is non-empty and therefore this test will run full validation on forward model schema, we don't want that for this test
+    with patch("everest.config.everest_config.validate_forward_model_configs"):
+        if warning_msg is not None:
+            with pytest.warns(ConfigWarning, match=warning_msg):
+                EverestConfig.with_defaults(
+                    objective_functions=[{"name": o} for o in objective],
+                    forward_model=forward_model,
+                )
+        else:
+            with warnings.catch_warnings():
+                warnings.simplefilter("error", category=ConfigWarning)
+                EverestConfig.with_defaults(
+                    objective_functions=[{"name": o} for o in objective],
+                    forward_model=forward_model,
+                )
 
 
-def test_deprecated_keyword():
+def test_deprecated_keyword_report_steps():
     with pytest.warns(ConfigWarning, match="report_steps .* can be removed"):
-        ModelConfig(**{"report_steps": []})
+        ModelConfig(**{"realizations": [0], "report_steps": []})
 
 
 def test_load_file_non_existing():
