@@ -1,8 +1,9 @@
 #!/usr/bin/env python
-from datetime import datetime
+import datetime
 
+import numpy as np
+import resfo
 from oil_reservoir_synthesizer import OilSimulator
-from resdata.summary import Summary
 
 
 def globalIndex(i, j, k, nx=10, ny=10):
@@ -30,119 +31,152 @@ def read_parameters(filename):
     return params
 
 
-def runSimulator(simulator, history_simulator, time_step_count):
-    summary = Summary.writer("SNAKE_OIL_FIELD", datetime(2010, 1, 1), 10, 10, 10)
+def write_summary_spec(file, keywords, names, units, nums):
+    content = [
+        ("INTEHEAD", np.array([1, 100], dtype=np.int32)),
+        ("RESTART ", [b"        "] * 8),
+        ("DIMENS  ", np.array([1 + len(keywords), 10, 10, 10, 0, -1], dtype=np.int32)),
+        ("KEYWORDS", [f"{x: <8}" for x in (["TIME", *keywords])]),
+        ("WGNAMES ", [b":+:+:+:+", *names]),
+        ("NUMS    ", np.array([-32676, *nums], dtype=np.int32)),
+        ("UNITS   ", [f"{x: <8}" for x in (["DAYS", *units])]),
+        ("STARTDAT", np.array([1, 1, 2010, 0, 0, 0], dtype=np.int32)),
+    ]
+    resfo.write(file, content)
 
-    summary.add_variable("FOPT")
-    summary.add_variable("FOPR")
-    summary.add_variable("FGPT")
-    summary.add_variable("FGPR")
-    summary.add_variable("FWPT")
-    summary.add_variable("FWPR")
-    summary.add_variable("FGOR")
-    summary.add_variable("FWCT")
 
-    summary.add_variable("FOPTH")
-    summary.add_variable("FOPRH")
-    summary.add_variable("FGPTH")
-    summary.add_variable("FGPRH")
-    summary.add_variable("FWPTH")
-    summary.add_variable("FWPRH")
-    summary.add_variable("FGORH")
-    summary.add_variable("FWCTH")
-
-    summary.add_variable("WOPR", wgname="OP1")
-    summary.add_variable("WOPR", wgname="OP2")
-    summary.add_variable("WWPR", wgname="OP1")
-    summary.add_variable("WWPR", wgname="OP2")
-    summary.add_variable("WGPR", wgname="OP1")
-    summary.add_variable("WGPR", wgname="OP2")
-    summary.add_variable("WGOR", wgname="OP1")
-    summary.add_variable("WGOR", wgname="OP2")
-    summary.add_variable("WWCT", wgname="OP1")
-    summary.add_variable("WWCT", wgname="OP2")
-
-    summary.add_variable("WOPRH", wgname="OP1")
-    summary.add_variable("WOPRH", wgname="OP2")
-    summary.add_variable("WWPRH", wgname="OP1")
-    summary.add_variable("WWPRH", wgname="OP2")
-    summary.add_variable("WGPRH", wgname="OP1")
-    summary.add_variable("WGPRH", wgname="OP2")
-    summary.add_variable("WGORH", wgname="OP1")
-    summary.add_variable("WGORH", wgname="OP2")
-    summary.add_variable("WWCTH", wgname="OP1")
-    summary.add_variable("WWCTH", wgname="OP2")
-
-    summary.add_variable("BPR", num=globalIndex(5, 5, 5))
-    summary.add_variable("BPR", num=globalIndex(1, 3, 8))
-
+def write_summary_data(
+    file, simulator, history_simulator, time_step_count, mini_step_count=10
+):
     time_map = []
-    mini_step_count = 10
     total_step_count = time_step_count * mini_step_count
+    start_date = datetime.date(2010, 1, 1)
 
-    for report_step in range(time_step_count):
-        for mini_step in range(mini_step_count):
-            t_step = summary.add_t_step(
-                report_step + 1, sim_days=report_step * mini_step_count + mini_step
-            )
+    def content_generator():
+        for report_step in range(time_step_count):
+            yield "SEQHDR  ", np.array([0], dtype=np.int32)
+            for mini_step in range(mini_step_count):
+                simulator.step(scale=1.0 / total_step_count)
+                history_simulator.step(scale=1.0 / total_step_count)
 
-            time_map.append(t_step.get_sim_time().datetime().strftime("%d/%m/%Y"))
+                step = report_step * mini_step_count + mini_step
+                day = float(step)
+                time_map.append(
+                    (start_date + datetime.timedelta(days=day)).strftime("%Y-%m-%d")
+                )
+                values = [
+                    simulator.fopt(),
+                    simulator.fopr(),
+                    simulator.fgpt(),
+                    simulator.fgpr(),
+                    simulator.fwpt(),
+                    simulator.fwpr(),
+                    simulator.fgor(),
+                    simulator.fwct(),
+                    simulator.foip(),
+                    simulator.fgip(),
+                    simulator.fwip(),
+                    history_simulator.fopt(),
+                    history_simulator.fopr(),
+                    history_simulator.fgpt(),
+                    history_simulator.fgpr(),
+                    history_simulator.fwpt(),
+                    history_simulator.fwpr(),
+                    history_simulator.fgor(),
+                    history_simulator.fwct(),
+                    history_simulator.foip(),
+                    history_simulator.fgip(),
+                    history_simulator.fwip(),
+                    simulator.opr("OP1"),
+                    simulator.opr("OP2"),
+                    simulator.wpr("OP1"),
+                    simulator.wpr("OP2"),
+                    simulator.gpr("OP1"),
+                    simulator.gpr("OP2"),
+                    simulator.gor("OP1"),
+                    simulator.gor("OP2"),
+                    simulator.wct("OP1"),
+                    simulator.wct("OP2"),
+                    history_simulator.opr("OP1"),
+                    history_simulator.opr("OP2"),
+                    history_simulator.wpr("OP1"),
+                    history_simulator.wpr("OP2"),
+                    history_simulator.gpr("OP1"),
+                    history_simulator.gpr("OP2"),
+                    history_simulator.gor("OP1"),
+                    history_simulator.gor("OP2"),
+                    history_simulator.wct("OP1"),
+                    history_simulator.wct("OP2"),
+                    simulator.bpr("5,5,5"),
+                    simulator.bpr("1,3,8"),
+                ]
+                yield "MINISTEP", np.array([step], dtype=np.int32)
+                yield "PARAMS  ", np.array([day, *values], dtype=np.float32)
 
-            simulator.step(scale=1.0 / total_step_count)
-            history_simulator.step(scale=1.0 / total_step_count)
+    resfo.write(file, content_generator())
+    print("Wrote summary data")
+    return time_map
 
-            t_step["FOPR"] = simulator.fopr()
-            t_step["FOPT"] = simulator.fopt()
-            t_step["FGPR"] = simulator.fgpr()
-            t_step["FGPT"] = simulator.fgpt()
-            t_step["FWPR"] = simulator.fwpr()
-            t_step["FWPT"] = simulator.fwpt()
-            t_step["FGOR"] = simulator.fgor()
-            t_step["FWCT"] = simulator.fwct()
 
-            t_step["WOPR:OP1"] = simulator.opr("OP1")
-            t_step["WOPR:OP2"] = simulator.opr("OP2")
-
-            t_step["WGPR:OP1"] = simulator.gpr("OP1")
-            t_step["WGPR:OP2"] = simulator.gpr("OP2")
-
-            t_step["WWPR:OP1"] = simulator.wpr("OP1")
-            t_step["WWPR:OP2"] = simulator.wpr("OP2")
-
-            t_step["WGOR:OP1"] = simulator.gor("OP1")
-            t_step["WGOR:OP2"] = simulator.gor("OP2")
-
-            t_step["WWCT:OP1"] = simulator.wct("OP1")
-            t_step["WWCT:OP2"] = simulator.wct("OP2")
-
-            t_step["BPR:5,5,5"] = simulator.bpr("5,5,5")
-            t_step["BPR:1,3,8"] = simulator.bpr("1,3,8")
-
-            t_step["FOPRH"] = history_simulator.fopr()
-            t_step["FOPTH"] = history_simulator.fopt()
-            t_step["FGPRH"] = history_simulator.fgpr()
-            t_step["FGPTH"] = history_simulator.fgpt()
-            t_step["FWPRH"] = history_simulator.fwpr()
-            t_step["FWPTH"] = history_simulator.fwpt()
-            t_step["FGORH"] = history_simulator.fgor()
-            t_step["FWCTH"] = history_simulator.fwct()
-
-            t_step["WOPRH:OP1"] = history_simulator.opr("OP1")
-            t_step["WOPRH:OP2"] = history_simulator.opr("OP2")
-
-            t_step["WGPRH:OP1"] = history_simulator.gpr("OP1")
-            t_step["WGPRH:OP2"] = history_simulator.gpr("OP2")
-
-            t_step["WWPRH:OP1"] = history_simulator.wpr("OP1")
-            t_step["WWPRH:OP2"] = history_simulator.wpr("OP2")
-
-            t_step["WGORH:OP1"] = history_simulator.gor("OP1")
-            t_step["WGORH:OP2"] = history_simulator.gor("OP2")
-
-            t_step["WWCTH:OP1"] = history_simulator.wct("OP1")
-            t_step["WWCTH:OP2"] = history_simulator.wct("OP2")
-
-    return summary, time_map
+def runSimulator(simulator, history_simulator, time_step_count):
+    write_summary_spec(
+        "SNAKE_OIL_FIELD.SMSPEC",
+        *zip(
+            *[
+                ("FOPT", "", "SM3", 0),
+                ("FOPR", "", "SM3/DAY", 0),
+                ("FGPT", "", "SM3", 0),
+                ("FGPR", "", "SM3/DAY", 0),
+                ("FWPT", "", "SM3", 0),
+                ("FWPR", "", "SM3/DAY", 0),
+                ("FGOR", "", "SM3/SM3", 0),
+                ("FWCT", "", "SM3/SM3", 0),
+                ("FOIP", "", "SM3", 0),
+                ("FGIP", "", "SM3", 0),
+                ("FWIP", "", "SM3", 0),
+                ("FOPTH", "", "SM3", 0),
+                ("FOPRH", "", "SM3/DAY", 0),
+                ("FGPTH", "", "SM3", 0),
+                ("FGPRH", "", "SM3/DAY", 0),
+                ("FWPTH", "", "SM3", 0),
+                ("FWPRH", "", "SM3/DAY", 0),
+                ("FGORH", "", "SM3/SM3", 0),
+                ("FWCTH", "", "SM3/SM3", 0),
+                ("FOIPH", "", "SM3", 0),
+                ("FGIPH", "", "SM3", 0),
+                ("FWIPH", "", "SM3", 0),
+                ("WOPR", "OP1", "SM3/DAY", 0),
+                ("WOPR", "OP2", "SM3/DAY", 0),
+                ("WWPR", "OP1", "SM3/DAY", 0),
+                ("WWPR", "OP2", "SM3/DAY", 0),
+                ("WGPR", "OP1", "SM3/DAY", 0),
+                ("WGPR", "OP2", "SM3/DAY", 0),
+                ("WGOR", "OP1", "SM3/SM3", 0),
+                ("WGOR", "OP2", "SM3/SM3", 0),
+                ("WWCT", "OP1", "SM3/SM3", 0),
+                ("WWCT", "OP2", "SM3/SM3", 0),
+                ("WOPRH", "OP1", "SM3/DAY", 0),
+                ("WOPRH", "OP2", "SM3/DAY", 0),
+                ("WWPRH", "OP1", "SM3/DAY", 0),
+                ("WWPRH", "OP2", "SM3/DAY", 0),
+                ("WGPRH", "OP1", "SM3/DAY", 0),
+                ("WGPRH", "OP2", "SM3/DAY", 0),
+                ("WGORH", "OP1", "SM3/SM3", 0),
+                ("WGORH", "OP2", "SM3/SM3", 0),
+                ("WWCTH", "OP1", "SM3/SM3", 0),
+                ("WWCTH", "OP2", "SM3/SM3", 0),
+                ("BPR", "", "BARSA", globalIndex(5, 5, 5)),
+                ("BPR", "", "BARSA", globalIndex(1, 3, 8)),
+            ],
+            strict=False,
+        ),
+    )
+    return write_summary_data(
+        "SNAKE_OIL_FIELD.UNSMRY",
+        simulator,
+        history_simulator,
+        time_step_count=time_step_count,
+    )
 
 
 def roundedInt(value):
@@ -190,10 +224,8 @@ if __name__ == "__main__":
     history_simulator.addWell("OP2", 118116362)
 
     report_step_count = 200
-    ecl_sum, time_map = runSimulator(simulator, history_simulator, report_step_count)
+    time_map = runSimulator(simulator, history_simulator, report_step_count)
 
-    ecl_sum.fwrite()
-
-    with open("time_map.txt", "w", encoding="utf-8") as filehandle:
-        for timestep_string in time_map:
-            filehandle.write(f"{timestep_string}\n")
+    with open("time_map.txt", "w", encoding="utf-8") as f:
+        for t in time_map:
+            f.write(f"{t}\n")
