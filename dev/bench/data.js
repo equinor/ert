@@ -1,39 +1,8 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1736252302756,
+  "lastUpdate": 1736253364498,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
-      {
-        "commit": {
-          "author": {
-            "email": "JONAK@equinor.com",
-            "name": "Jonathan Karlsen",
-            "username": "jonathan-eq"
-          },
-          "committer": {
-            "email": "107626001+jonathan-eq@users.noreply.github.com",
-            "name": "Jonathan Karlsen",
-            "username": "jonathan-eq"
-          },
-          "distinct": true,
-          "id": "b13ad454dbeceaee6a3f3470c9d95693d0ca9a02",
-          "message": "Remove deprecated torque options\n\nThis commit removes the deprecated torque/openpbs queue options:\n* QUEUE_QUERY_TIMEOUT\n* NUM_NODES\n* NUM_CPUS_PER_NODE\n* QSTAT_OPTIONS\n* MEMORY_PER_JOB",
-          "timestamp": "2024-12-20T15:29:08+01:00",
-          "tree_id": "8bb6563900111aa9740d7bf5d3083038ff475345",
-          "url": "https://github.com/equinor/ert/commit/b13ad454dbeceaee6a3f3470c9d95693d0ca9a02"
-        },
-        "date": 1734705055699,
-        "tool": "pytest",
-        "benches": [
-          {
-            "name": "tests/ert/performance_tests/test_analysis.py::test_and_benchmark_adaptive_localization_with_fields",
-            "value": 0.21959705996330614,
-            "unit": "iter/sec",
-            "range": "stddev: 0.023333546213795374",
-            "extra": "mean: 4.553795028800005 sec\nrounds: 5"
-          }
-        ]
-      },
       {
         "commit": {
           "author": {
@@ -930,6 +899,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.02297207905254267",
             "extra": "mean: 4.6921936716 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "pieter.verveer@tno.nl",
+            "name": "Peter Verveer",
+            "username": "verveerpj"
+          },
+          "committer": {
+            "email": "pieter.verveer@tno.nl",
+            "name": "Peter Verveer",
+            "username": "verveerpj"
+          },
+          "distinct": true,
+          "id": "00b015fcf79da832e5cd8e400cd9d95c58561529",
+          "message": "Remove job validation from everest config code",
+          "timestamp": "2025-01-07T13:34:09+01:00",
+          "tree_id": "8e17a8b3e15557f29deb72cdd04692166a1c1e2a",
+          "url": "https://github.com/equinor/ert/commit/00b015fcf79da832e5cd8e400cd9d95c58561529"
+        },
+        "date": 1736253363932,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/ert/performance_tests/test_analysis.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 0.21903128627635435,
+            "unit": "iter/sec",
+            "range": "stddev: 0.02351995839858765",
+            "extra": "mean: 4.565557811400003 sec\nrounds: 5"
           }
         ]
       }
