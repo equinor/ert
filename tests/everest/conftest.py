@@ -149,7 +149,7 @@ def evaluator_server_config_generator():
     def create_evaluator_server_config(run_model):
         return EvaluatorServerConfig(
             custom_port_range=range(49152, 51819)
-            if run_model.ert_config.queue_config.queue_system == QueueSystem.LOCAL
+            if run_model._queue_config.queue_system == QueueSystem.LOCAL
             else None
         )
 

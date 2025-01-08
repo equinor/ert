@@ -137,14 +137,26 @@ class EverestRunModel(BaseRunModel):
 
         storage = open_storage(config.ens_path, mode="w")
         status_queue: queue.SimpleQueue[StatusEvents] = queue.SimpleQueue()
+
         super().__init__(
-            config,
             storage,
+            config.runpath_file,
+            Path(config.user_config_file),
+            config.env_vars,
+            config.env_pr_fm_step,
+            config.model_config,
             config.queue_config,
+            config.forward_model_steps,
             status_queue,
+            config.substitutions,
+            config.ert_templates,
+            config.hooked_workflows,
             active_realizations=[],  # Set dynamically in run_forward_model()
         )
         self.support_restart = False
+        self._parameter_configuration = config.ensemble_config.parameter_configuration
+        self._parameter_configs = config.ensemble_config.parameter_configs
+        self._response_configuration = config.ensemble_config.response_configuration
 
     @classmethod
     def create(
@@ -187,8 +199,8 @@ class EverestRunModel(BaseRunModel):
         self._eval_server_cfg = evaluator_server_config
         self._experiment = self._storage.create_experiment(
             name=f"EnOpt@{datetime.datetime.now().strftime('%Y-%m-%d@%H:%M:%S')}",
-            parameters=self.ert_config.ensemble_config.parameter_configuration,
-            responses=self.ert_config.ensemble_config.response_configuration,
+            parameters=self._parameter_configuration,
+            responses=self._response_configuration,
         )
 
         # Initialize the ropt optimizer:
@@ -494,7 +506,7 @@ class EverestRunModel(BaseRunModel):
             raise KeyError(err_msg)
 
         for control_name, control in controls.items():
-            ext_config = self.ert_config.ensemble_config.parameter_configs[control_name]
+            ext_config = self._parameter_configs[control_name]
             if isinstance(ext_config, ExtParamConfig):
                 if len(ext_config) != len(control.keys()):
                     raise KeyError(
@@ -515,7 +527,7 @@ class EverestRunModel(BaseRunModel):
         evaluator_context: EvaluatorContext,
         batch_data: dict[int, Any],
     ) -> list[RunArg]:
-        substitutions = self.ert_config.substitutions
+        substitutions = self._substitutions
         substitutions["<BATCH_NAME>"] = ensemble.name
         self.active_realizations = [True] * len(batch_data)
         for sim_id, control_idx in enumerate(batch_data.keys()):
@@ -525,11 +537,11 @@ class EverestRunModel(BaseRunModel):
                 ]
             )
         run_paths = Runpaths(
-            jobname_format=self.ert_config.model_config.jobname_format_string,
-            runpath_format=self.ert_config.model_config.runpath_format_string,
-            filename=str(self.ert_config.runpath_file),
+            jobname_format=self._model_config.jobname_format_string,
+            runpath_format=self._model_config.runpath_format_string,
+            filename=str(self._runpath_file),
             substitutions=substitutions,
-            eclbase=self.ert_config.model_config.eclbase_format_string,
+            eclbase=self._model_config.eclbase_format_string,
         )
         return create_run_arguments(
             run_paths,

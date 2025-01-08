@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import logging
+from pathlib import Path
 from queue import SimpleQueue
 from typing import TYPE_CHECKING
 from uuid import UUID
@@ -38,20 +39,27 @@ class ManualUpdate(UpdateRunModel):
         status_queue: SimpleQueue[StatusEvents],
     ):
         try:
-            prior_id = UUID(ensemble_id)
-            prior = storage.get_ensemble(prior_id)
+            prior = storage.get_ensemble(UUID(ensemble_id))
         except (KeyError, ValueError) as err:
             raise ErtRunError(
-                f"Prior ensemble with ID: {prior_id} does not exists"
+                f"Prior ensemble with ID: {UUID(ensemble_id)} does not exists"
             ) from err
 
         super().__init__(
             es_settings,
             update_settings,
-            config,
             storage,
+            config.runpath_file,
+            Path(config.user_config_file),
+            config.env_vars,
+            config.env_pr_fm_step,
+            config.model_config,
             queue_config,
+            config.forward_model_steps,
             status_queue,
+            config.substitutions,
+            config.ert_templates,
+            config.hooked_workflows,
             active_realizations=active_realizations,
             total_iterations=1,
             start_iteration=prior.iteration,

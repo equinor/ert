@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import logging
+from pathlib import Path
 from typing import TYPE_CHECKING
 from uuid import UUID
 
@@ -47,11 +48,20 @@ class EvaluateEnsemble(BaseRunModel):
             self.ensemble = storage.get_ensemble(UUID(ensemble_id))
         except KeyError as err:
             raise ValueError(f"No ensemble: {ensemble_id}") from err
+
         super().__init__(
-            config,
             storage,
+            config.runpath_file,
+            Path(config.user_config_file),
+            config.env_vars,
+            config.env_pr_fm_step,
+            config.model_config,
             queue_config,
+            config.forward_model_steps,
             status_queue,
+            config.substitutions,
+            config.ert_templates,
+            config.hooked_workflows,
             start_iteration=self.ensemble.iteration,
             total_iterations=1,
             active_realizations=active_realizations,
