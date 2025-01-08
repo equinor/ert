@@ -139,7 +139,7 @@ def main(
         # each other
         return scale_factors, np.ones(len(obs_errors), dtype=int), nr_components
 
-    prim_components = get_nr_primary_components(scaled_responses, threshold=0.95)
+    prim_components = get_nr_primary_components(scaled_responses.T, threshold=0.95)
 
     clusters = cluster_responses(scaled_responses.T, nr_clusters=prim_components)
 
