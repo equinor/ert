@@ -42,7 +42,7 @@ def get_nr_primary_components(
     # We compute the cumulative sum of these, then divide by their total sum to get the
     # cumulative proportion of variance explained by each successive component.
     variance_ratio = np.cumsum(singulars**2) / np.sum(singulars**2)
-    return max(len([1 for i in variance_ratio if i < threshold]), 1)
+    return np.argmax(variance_ratio >= threshold) + 1
 
 
 def cluster_responses(
