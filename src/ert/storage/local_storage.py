@@ -5,7 +5,7 @@ import json
 import logging
 import os
 import shutil
-from collections.abc import Generator, MutableSequence
+from collections.abc import Callable, Generator, MutableSequence
 from datetime import datetime
 from functools import cached_property
 from pathlib import Path
@@ -37,6 +37,15 @@ class _Migrations(BaseModel):
     timestamp: datetime = Field(default_factory=datetime.now)
     name: str
     version_range: tuple[int, int]
+
+
+class StorageEvents:
+    EXPERIMENT_ADDED = "experiment:added"
+    EXPERIMENT_REMOVED = "experiment:removed"
+    EXPERIMENT_MODIFIED = "experiment:modified"
+    ENSEMBLE_ADDED = "ensemble:added"
+    ENSEMBLE_REMOVED = "ensemble:removed"
+    ENSEMBLE_MODIFIED = "ensemble:modified"
 
 
 class _Index(BaseModel):
@@ -85,7 +94,7 @@ class LocalStorage(BaseMode):
         self._experiments: dict[UUID, LocalExperiment]
         self._ensembles: dict[UUID, LocalEnsemble]
         self._index: _Index
-
+        self._event_handlers: dict[StorageEvents, Callable[[None], None]] = {}
         try:
             version = _storage_version(self.path)
         except FileNotFoundError as err:
@@ -117,6 +126,15 @@ class LocalStorage(BaseMode):
                 f"Cannot open storage '{self.path}' in read-only mode: Storage version {version} is too old. Run ert to initiate migration."
             )
         self.refresh()
+
+    def register_event_handler(
+        self, event: StorageEvents, handler: Callable[[None], None]
+    ) -> None:
+        self._event_handlers[event] = handler
+
+    def handle_event(self, event: StorageEvents) -> None:
+        if event_handler := self._event_handlers.get(event):
+            event_handler()
 
     def refresh(self) -> None:
         """

@@ -5,6 +5,8 @@ from ert.storage import Ensemble, Storage
 
 class ErtNotifier(QObject):
     ertChanged = Signal()
+    experimentChanged = Signal()
+    ensembleChanged = Signal()
     storage_changed = Signal(object, name="storageChanged")
     current_ensemble_changed = Signal(object, name="currentEnsembleChanged")
 
