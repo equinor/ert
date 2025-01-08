@@ -3,8 +3,13 @@ from textwrap import dedent
 
 import pytest
 
-from ert.config import ConfigWarning, ErtConfig
+from ert.config import ConfigValidationError, ConfigWarning, ErtConfig, WorkflowJob
 from ert.plugins import ErtPluginContext
+
+
+def test_reading_non_existent_workflow_job_raises_config_error():
+    with pytest.raises(ConfigValidationError, match="No such file or directory"):
+        WorkflowJob.from_file("/tmp/does_not_exist")
 
 
 def test_that_ert_warns_on_duplicate_workflow_jobs(tmp_path):

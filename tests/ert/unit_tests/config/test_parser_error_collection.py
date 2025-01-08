@@ -60,7 +60,8 @@ def find_and_assert_errors_matching_filename(
     )
 
     assert len(matching_errors) > 0, (
-        f"Expected minimum 1 error matching filename" f" {filename}, got 0"
+        f"Expected minimum 1 error matching filename"
+        f" {filename}, got 0 from {errors}"
     )
 
     return matching_errors
@@ -419,7 +420,7 @@ def test_that_include_non_existing_file_errors_with_location(tmpdir):
             line=4,
             column=9,
             end_column=24,
-            match=r"INCLUDE file:.*does_not_exists not found",
+            match=r"does_not_exists.*No such file or directory",
         ),
     )
 
@@ -509,7 +510,7 @@ def test_queue_option_max_running_non_int():
                         line=line,
                         column=9,
                         end_column=24,
-                        match=f"INCLUDE file:.*does_not_exist{i} not found",
+                        match=f"does_not_exist{i} .* No such file or directory",
                     )
                     for i, line in enumerate([2, 4, 5, 6, 8, 9, 10, 11])
                 ],

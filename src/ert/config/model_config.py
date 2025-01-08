@@ -14,12 +14,13 @@ from .parsing import (
     ConfigValidationError,
     ConfigWarning,
     HistorySource,
+    read_file,
 )
 
 logger = logging.getLogger(__name__)
 
 
-def _read_time_map(file_name: str) -> list[datetime]:
+def _read_time_map(file_contents: str) -> list[datetime]:
     def str_to_datetime(date_str: str) -> datetime:
         try:
             return datetime.fromisoformat(date_str)
@@ -31,9 +32,8 @@ def _read_time_map(file_name: str) -> list[datetime]:
             return datetime.strptime(date_str, "%d/%m/%Y")
 
     dates = []
-    with open(file_name, encoding="utf-8") as fin:
-        for line in fin:
-            dates.append(str_to_datetime(line.strip()))
+    for line in file_contents.splitlines():
+        dates.append(str_to_datetime(line.strip()))
     return dates
 
 
@@ -109,9 +109,10 @@ class ModelConfig:
         )
         time_map = None
         if time_map_file is not None:
+            file_contents = read_file(time_map_file)
             try:
-                time_map = _read_time_map(time_map_file)
-            except (OSError, ValueError) as err:
+                time_map = _read_time_map(file_contents)
+            except ValueError as err:
                 raise ConfigValidationError.with_context(
                     f"Could not read timemap file {time_map_file}: {err}", time_map_file
                 ) from err

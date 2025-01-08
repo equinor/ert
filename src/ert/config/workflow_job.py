@@ -10,7 +10,6 @@ from .ert_script import ErtScript
 from .parse_arg_types_list import parse_arg_types_list
 from .parsing import (
     ConfigDict,
-    ConfigValidationError,
     SchemaItemType,
     WorkflowJobKeys,
     init_workflow_job_schema,
@@ -73,8 +72,6 @@ class WorkflowJob:
 
     @classmethod
     def from_file(cls, config_file: str, name: str | None = None) -> WorkflowJob:
-        if not (os.path.isfile(config_file) and os.access(config_file, os.R_OK)):
-            raise ConfigValidationError(f"Could not open config_file:{config_file!r}")
         if not name:
             name = os.path.basename(config_file)
 

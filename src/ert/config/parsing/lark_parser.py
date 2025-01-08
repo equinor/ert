@@ -373,12 +373,15 @@ def _handle_includes(
 
             try:
                 sub_tree = _parse_file(file_to_include)
-            except FileNotFoundError:
-                errors.append(
-                    ErrorInfo(f"INCLUDE file: {file_to_include} not found").set_context(
-                        args[0]
+            except ConfigValidationError as err:
+                for info in err.errors:
+                    info.message = (
+                        f"Error in {file_to_include} included from {config_file}: "
+                        + info.message
                     )
-                )
+                    if info.filename is None:
+                        info.set_context_list(args)
+                    errors.append(info)
                 continue
 
             child_included_file = IncludedFile(
@@ -439,6 +442,8 @@ def read_file(file: str) -> str:
     try:
         with open(file, encoding="utf-8") as f:
             return f.read()
+    except OSError as err:
+        raise ConfigValidationError.with_context(str(err), file) from err
     except UnicodeDecodeError as e:
         error_words = str(e).split(" ")
         hex_str = error_words[error_words.index("byte") + 1]
