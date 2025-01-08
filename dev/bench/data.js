@@ -1,39 +1,8 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1736316666237,
+  "lastUpdate": 1736323539637,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
-      {
-        "commit": {
-          "author": {
-            "email": "havb@equinor.com",
-            "name": "Håvard Berland",
-            "username": "berland"
-          },
-          "committer": {
-            "email": "berland@pvv.ntnu.no",
-            "name": "Håvard Berland",
-            "username": "berland"
-          },
-          "distinct": true,
-          "id": "929d59b73cea011aafc95bd62a950d963928cf64",
-          "message": "Avoid using deprecated --target-case in tests",
-          "timestamp": "2025-01-02T09:05:27+01:00",
-          "tree_id": "b6dc1b1cae0e7a3c6f0c6767c52da7b975f55dd5",
-          "url": "https://github.com/equinor/ert/commit/929d59b73cea011aafc95bd62a950d963928cf64"
-        },
-        "date": 1735805240505,
-        "tool": "pytest",
-        "benches": [
-          {
-            "name": "tests/ert/performance_tests/test_analysis.py::test_and_benchmark_adaptive_localization_with_fields",
-            "value": 0.2130313133209388,
-            "unit": "iter/sec",
-            "range": "stddev: 0.01825512749633529",
-            "extra": "mean: 4.694145590200003 sec\nrounds: 5"
-          }
-        ]
-      },
       {
         "commit": {
           "author": {
@@ -930,6 +899,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.03879839145311598",
             "extra": "mean: 4.553394607999991 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "ejah@equinor.com",
+            "name": "Eivind Jahren",
+            "username": "eivindjahren"
+          },
+          "committer": {
+            "email": "ejah@equinor.com",
+            "name": "Eivind Jahren",
+            "username": "eivindjahren"
+          },
+          "distinct": true,
+          "id": "383d6454c982da42a08c1f864fa85aa4c19f21e1",
+          "message": "Use resfo for snake_oil_simulator",
+          "timestamp": "2025-01-08T09:03:41+01:00",
+          "tree_id": "75087374f7c1d0cad7d051167a04c21a69ba62ce",
+          "url": "https://github.com/equinor/ert/commit/383d6454c982da42a08c1f864fa85aa4c19f21e1"
+        },
+        "date": 1736323538773,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/ert/performance_tests/test_analysis.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 0.2137166107562481,
+            "unit": "iter/sec",
+            "range": "stddev: 0.011818798830819769",
+            "extra": "mean: 4.679093480199993 sec\nrounds: 5"
           }
         ]
       }
