@@ -328,6 +328,115 @@ def test_update_handles_precision_loss_in_std_dev(tmp_path):
         )
 
 
+def test_update_raises_on_singular_matrix(tmp_path):
+    """
+    This is a regression test for precision loss in calculating
+    standard deviation.
+    """
+    gen_kw = GenKwConfig(
+        name="COEFFS",
+        forward_init=False,
+        update=True,
+        template_file=None,
+        output_file=None,
+        transform_function_definitions=[
+            TransformFunctionDefinition(
+                name="coeff_0", param_name="CONST", values=["0.1"]
+            ),
+        ],
+    )
+    # The values given here are chosen so that when computing
+    # `ens_std = S.std(ddof=0, axis=1)`, ens_std[0] is not zero even though
+    # all responses have the same value: 5.08078746e07.
+    # This is due to precision loss.
+    with open_storage(tmp_path, mode="w") as storage:
+        experiment = storage.create_experiment(
+            name="ensemble_smoother",
+            parameters=[gen_kw],
+            observations={
+                "gen_data": polars.DataFrame(
+                    {
+                        "response_key": "RES",
+                        "observation_key": "OBS",
+                        "report_step": polars.Series(np.zeros(3), dtype=polars.UInt16),
+                        "index": polars.Series([0, 1, 2], dtype=polars.UInt16),
+                        "observations": polars.Series(
+                            [-1.5, 5.9604645e-08, 0.0],
+                            dtype=polars.Float32,
+                        ),
+                        "std": polars.Series(
+                            [0.33333334, 0.14142136, 0.0],
+                            dtype=polars.Float32,
+                        ),
+                    }
+                )
+            },
+            responses=[
+                GenDataConfig(
+                    name="gen_data",
+                    input_files=["poly.out"],
+                    keys=["RES"],
+                    has_finalized_keys=True,
+                    report_steps_list=[None],
+                )
+            ],
+        )
+        prior = storage.create_ensemble(experiment.id, ensemble_size=2, name="prior")
+        for realization_nr in range(prior.ensemble_size):
+            ds = gen_kw.sample_or_load(
+                realization_nr,
+                random_seed=1234,
+                ensemble_size=prior.ensemble_size,
+            )
+            prior.save_parameters("COEFFS", realization_nr, ds)
+
+        for i, v in enumerate(
+            [
+                [5.4112810e-01, 2.7799776e08, 1.0093105e10],
+                [4.1801736e-01, 5.9196467e08, 2.2322526e10],
+            ]
+        ):
+            prior.save_response(
+                "gen_data",
+                polars.DataFrame(
+                    {
+                        "response_key": "RES",
+                        "report_step": polars.Series(np.zeros(3), dtype=polars.UInt16),
+                        "index": polars.Series(np.arange(3), dtype=polars.UInt16),
+                        "values": polars.Series(
+                            np.array(v),
+                            dtype=polars.Float32,
+                        ),
+                    }
+                ),
+                i,
+            )
+
+        posterior = storage.create_ensemble(
+            prior.experiment_id,
+            ensemble_size=prior.ensemble_size,
+            iteration=1,
+            name="posterior",
+            prior_ensemble=prior,
+        )
+        events = []
+
+        with pytest.raises(
+            ErtAnalysisError,
+            match=r"Failed while computing transition matrix.* Matrix is singular",
+        ):
+            _ = smoother_update(
+                prior,
+                posterior,
+                experiment.observation_keys,
+                ["COEFFS"],
+                UpdateSettings(auto_scale_observations=[["OBS*"]]),
+                ESSettings(),
+                rng=np.random.default_rng(1234),
+                progress_callback=events.append,
+            )
+
+
 @pytest.mark.parametrize(
     "module, expected_gen_kw",
     [
