@@ -18,14 +18,28 @@ def patch_abstractmethods(monkeypatch):
     monkeypatch.setattr(BaseRunModel, "__abstractmethods__", set())
 
 
-def test_base_run_model_supports_restart(minimum_case):
-    brm = BaseRunModel(minimum_case, None, None, minimum_case.queue_config, [True])
-    assert brm.support_restart
-
-
 class MockJob:
     def __init__(self, status):
         self.status = status
+
+
+def test_base_run_model_supports_restart(minimum_case):
+    brm = BaseRunModel(
+        storage=minimum_case,
+        runpath_file=MagicMock(),
+        user_config_file=MagicMock(),
+        env_vars=MagicMock(),
+        env_pr_fm_step=MagicMock(),
+        model_config=MagicMock(),
+        queue_config=minimum_case.queue_config,
+        forward_model_steps=MagicMock(),
+        status_queue=MagicMock(),
+        substitutions=MagicMock(),
+        templates=MagicMock(),
+        hooked_workflows=MagicMock(),
+        active_realizations=[True],
+    )
+    assert brm.support_restart
 
 
 @pytest.mark.parametrize(
@@ -40,7 +54,21 @@ class MockJob:
     ],
 )
 def test_active_realizations(initials):
-    brm = BaseRunModel(MagicMock(), None, None, None, initials)
+    brm = BaseRunModel(
+        storage=MagicMock(),
+        runpath_file=MagicMock(),
+        user_config_file=MagicMock(),
+        env_vars=MagicMock(),
+        env_pr_fm_step=MagicMock(),
+        model_config=MagicMock(),
+        queue_config=MagicMock(),
+        forward_model_steps=MagicMock(),
+        status_queue=MagicMock(),
+        substitutions=MagicMock(),
+        templates=MagicMock(),
+        hooked_workflows=MagicMock(),
+        active_realizations=initials,
+    )
     brm._initial_realizations_mask = initials
     assert brm.ensemble_size == len(initials)
 
@@ -59,7 +87,21 @@ def test_active_realizations(initials):
     ],
 )
 def test_failed_realizations(initials, completed, any_failed, failures):
-    brm = BaseRunModel(MagicMock(), None, None, None, initials)
+    brm = BaseRunModel(
+        storage=MagicMock(),
+        runpath_file=MagicMock(),
+        user_config_file=MagicMock(),
+        env_vars=MagicMock(),
+        env_pr_fm_step=MagicMock(),
+        model_config=MagicMock(),
+        queue_config=MagicMock(),
+        forward_model_steps=MagicMock(),
+        status_queue=MagicMock(),
+        substitutions=MagicMock(),
+        templates=MagicMock(),
+        hooked_workflows=MagicMock(),
+        active_realizations=initials,
+    )
     brm._initial_realizations_mask = initials
     brm._completed_realizations_mask = completed
 
@@ -89,15 +131,19 @@ def test_check_if_runpath_exists(
 ):
     model_config = ModelConfig(runpath_format_string=run_path)
     subs_list = Substitutions()
-    config = MagicMock()
-    config.model_config = model_config
-    config.substitutions = subs_list
-
     brm = BaseRunModel(
-        config,
-        None,
-        None,
-        None,
+        storage=MagicMock(),
+        runpath_file=MagicMock(),
+        user_config_file=MagicMock(),
+        env_vars=MagicMock(),
+        env_pr_fm_step=MagicMock(),
+        model_config=model_config,
+        queue_config=MagicMock(),
+        forward_model_steps=MagicMock(),
+        status_queue=MagicMock(),
+        substitutions=subs_list,
+        templates=MagicMock(),
+        hooked_workflows=MagicMock(),
         active_realizations=active_realizations_mask,
         start_iteration=start_iteration,
         total_iterations=number_of_iterations,
@@ -121,17 +167,22 @@ def test_get_number_of_existing_runpaths(
     run_path = "out/realization-%d/iter-%d"
     model_config = ModelConfig(runpath_format_string=run_path)
     subs_list = Substitutions()
-    config = MagicMock()
-    config.model_config = model_config
-    config.substitutions = subs_list
-
     brm = BaseRunModel(
-        config=config,
         storage=MagicMock(),
+        runpath_file=MagicMock(),
+        user_config_file=MagicMock(),
+        env_vars=MagicMock(),
+        env_pr_fm_step=MagicMock(),
+        model_config=model_config,
         queue_config=MagicMock(),
+        forward_model_steps=MagicMock(),
         status_queue=MagicMock(),
+        substitutions=subs_list,
+        templates=MagicMock(),
+        hooked_workflows=MagicMock(),
         active_realizations=active_realizations_mask,
     )
+
     assert brm.get_number_of_existing_runpaths() == expected_number
 
 
@@ -162,13 +213,23 @@ def test_delete_run_path(run_path_format, active_realizations):
     os.makedirs(share_path)
     model_config = ModelConfig(runpath_format_string=run_path_format)
     subs_list = Substitutions({"<ITER>": "0", "<ERTCASE>": "Case_Name"})
-    config = MagicMock()
-    config.model_config = model_config
-    config.substitutions = subs_list
 
     brm = BaseRunModel(
-        config, MagicMock(), MagicMock(), MagicMock(), active_realizations
+        storage=MagicMock(),
+        runpath_file=MagicMock(),
+        user_config_file=MagicMock(),
+        env_vars=MagicMock(),
+        env_pr_fm_step=MagicMock(),
+        model_config=model_config,
+        queue_config=MagicMock(),
+        forward_model_steps=MagicMock(),
+        status_queue=MagicMock(),
+        substitutions=subs_list,
+        templates=MagicMock(),
+        hooked_workflows=MagicMock(),
+        active_realizations=active_realizations,
     )
+
     brm.rm_run_path()
     assert not any(path.exists() for path in expected_removed)
     assert all(path.parent.exists() for path in expected_removed)
@@ -182,12 +243,21 @@ def test_num_cpu_is_propagated_from_config_to_ensemble(run_args):
     # Set up a BaseRunModel object from the config above:
 
     brm = BaseRunModel(
-        config=config,
         storage=MagicMock(spec=Storage),
+        runpath_file=MagicMock(),
+        user_config_file=MagicMock(),
+        env_vars=MagicMock(),
+        env_pr_fm_step=MagicMock(),
+        model_config=MagicMock(),
         queue_config=config.queue_config,
+        forward_model_steps=MagicMock(),
         status_queue=MagicMock(spec=SimpleQueue),
+        substitutions=config.substitutions,
+        templates=MagicMock(),
+        hooked_workflows=MagicMock(),
         active_realizations=[True],
     )
+
     run_args = run_args(config, MagicMock())
 
     # Instead of running the BaseRunModel, we only test its implementation detail which is to
@@ -226,13 +296,23 @@ def test_get_current_status(
     config = ErtConfig.from_file_contents("NUM_REALIZATIONS 3")
     initial_active_realizations = [True] * 3
     new_active_realizations = [True] * 3
+
     brm = BaseRunModel(
-        config=config,
         storage=MagicMock(spec=Storage),
+        runpath_file=MagicMock(),
+        user_config_file=MagicMock(),
+        env_vars=MagicMock(),
+        env_pr_fm_step=MagicMock(),
+        model_config=MagicMock(),
         queue_config=config.queue_config,
+        forward_model_steps=MagicMock(),
         status_queue=MagicMock(spec=SimpleQueue),
+        substitutions=config.substitutions,
+        templates=MagicMock(),
+        hooked_workflows=MagicMock(),
         active_realizations=initial_active_realizations,
     )
+
     snapshot_dict_reals = {}
     for index, realization_status in real_status_dict.items():
         snapshot_dict_reals[index] = {"status": realization_status}
@@ -305,12 +385,21 @@ def test_get_current_status_when_rerun(
     """Active realizations gets changed when we choose to rerun, and the result from the previous run should be included in the current_status."""
     config = ErtConfig.from_file_contents("NUM_REALIZATIONS 3")
     brm = BaseRunModel(
-        config=config,
         storage=MagicMock(spec=Storage),
+        runpath_file=MagicMock(),
+        user_config_file=MagicMock(),
+        env_vars=MagicMock(),
+        env_pr_fm_step=MagicMock(),
+        model_config=MagicMock(),
         queue_config=config.queue_config,
+        forward_model_steps=MagicMock(),
         status_queue=MagicMock(spec=SimpleQueue),
+        substitutions=config.substitutions,
+        templates=MagicMock(),
+        hooked_workflows=MagicMock(),
         active_realizations=initial_active_realizations,
     )
+
     brm.restart = True
     snapshot_dict_reals = {}
     for index, realization_status in real_status_dict.items():
@@ -328,13 +417,23 @@ def test_get_current_status_for_new_iteration_when_realization_failed_in_previou
     # Realization 0,1, and 3 failed in the previous iteration
     new_active_realizations = [False, False, True, False, True]
     config = ErtConfig.from_file_contents("NUM_REALIZATIONS 5")
+
     brm = BaseRunModel(
-        config=config,
         storage=MagicMock(spec=Storage),
+        runpath_file=MagicMock(),
+        user_config_file=MagicMock(),
+        env_vars=MagicMock(),
+        env_pr_fm_step=MagicMock(),
+        model_config=MagicMock(),
         queue_config=config.queue_config,
+        forward_model_steps=MagicMock(),
         status_queue=MagicMock(spec=SimpleQueue),
+        substitutions=config.substitutions,
+        templates=MagicMock(),
+        hooked_workflows=MagicMock(),
         active_realizations=initial_active_realizations,
     )
+
     snapshot_dict_reals = {
         "2": {"status": "Running"},
         "4": {"status": "Finished"},
@@ -371,13 +470,23 @@ def test_get_number_of_active_realizations_varies_when_rerun_or_new_iteration(
     When running a new iteration based on the result of the previous iteration, we only include the successful realizations."""
     initial_active_realizations = [True] * 5
     config = ErtConfig.from_file_contents("NUM_REALIZATIONS 5")
+
     brm = BaseRunModel(
-        config=config,
         storage=MagicMock(spec=Storage),
+        runpath_file=MagicMock(),
+        user_config_file=MagicMock(),
+        env_vars=MagicMock(),
+        env_pr_fm_step=MagicMock(),
+        model_config=MagicMock(),
         queue_config=config.queue_config,
+        forward_model_steps=MagicMock(),
         status_queue=MagicMock(spec=SimpleQueue),
+        substitutions=config.substitutions,
+        templates=MagicMock(),
+        hooked_workflows=MagicMock(),
         active_realizations=initial_active_realizations,
     )
+
     brm.active_realizations = new_active_realizations
     brm.restart = was_rerun
     assert brm.get_number_of_active_realizations() == expected_result

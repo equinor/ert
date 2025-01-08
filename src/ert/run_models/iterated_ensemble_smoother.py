@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import functools
 import logging
+from pathlib import Path
 from queue import SimpleQueue
 from typing import TYPE_CHECKING
 
@@ -62,11 +63,21 @@ class IteratedEnsembleSmoother(BaseRunModel):
         self.target_ensemble_format = target_ensemble
         self.experiment_name = experiment_name
 
+        config.analysis_config.num_iterations = number_of_iterations
+
         super().__init__(
-            config,
             storage,
+            config.runpath_file,
+            Path(config.user_config_file),
+            config.env_vars,
+            config.env_pr_fm_step,
+            config.model_config,
             queue_config,
+            config.forward_model_steps,
             status_queue,
+            config.substitutions,
+            config.ert_templates,
+            config.hooked_workflows,
             active_realizations=active_realizations,
             total_iterations=number_of_iterations,
             random_seed=random_seed,
@@ -77,6 +88,11 @@ class IteratedEnsembleSmoother(BaseRunModel):
         # It is initialized later, but kept track of here
         self.sies_smoother = None
         self.num_retries_per_iter = num_retries_per_iter
+
+        self._design_matrix = config.analysis_config.design_matrix
+        self._observations = config.observations
+        self._parameter_configuration = config.ensemble_config.parameter_configuration
+        self._response_configuration = config.ensemble_config.response_configuration
 
     @property
     def sies_iteration(self) -> int:
@@ -126,9 +142,9 @@ class IteratedEnsembleSmoother(BaseRunModel):
         self.run_workflows(HookRuntime.PRE_EXPERIMENT)
         target_ensemble_format = self.target_ensemble_format
         experiment = self._storage.create_experiment(
-            parameters=self.ert_config.ensemble_config.parameter_configuration,
-            observations=self.ert_config.observations,
-            responses=self.ert_config.ensemble_config.response_configuration,
+            parameters=self._parameter_configuration,
+            observations=self._observations,
+            responses=self._response_configuration,
             name=self.experiment_name,
         )
         prior = self._storage.create_ensemble(

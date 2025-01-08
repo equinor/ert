@@ -24,7 +24,7 @@ def test_simulator_cache(copy_math_func_test_data_to_tmp):
 
     evaluator_server_config = EvaluatorServerConfig(
         custom_port_range=range(49152, 51819)
-        if run_model.ert_config.queue_config.queue_system == QueueSystem.LOCAL
+        if run_model._queue_config.queue_system == QueueSystem.LOCAL
         else None
     )
 

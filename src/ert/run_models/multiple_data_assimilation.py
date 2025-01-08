@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import logging
+from pathlib import Path
 from queue import SimpleQueue
 from typing import TYPE_CHECKING
 from uuid import UUID
@@ -70,16 +71,27 @@ class MultipleDataAssimilation(UpdateRunModel):
         super().__init__(
             es_settings,
             update_settings,
-            config,
             storage,
+            config.runpath_file,
+            Path(config.user_config_file),
+            config.env_vars,
+            config.env_pr_fm_step,
+            config.model_config,
             queue_config,
+            config.forward_model_steps,
             status_queue,
+            config.substitutions,
+            config.ert_templates,
+            config.hooked_workflows,
             active_realizations=active_realizations,
             total_iterations=total_iterations,
             start_iteration=start_iteration,
             random_seed=random_seed,
             minimum_required_realizations=minimum_required_realizations,
         )
+        self._observations = config.observations
+        self._parameter_configuration = config.ensemble_config.parameter_configuration
+        self._response_configuration = config.ensemble_config.response_configuration
 
     @tracer.start_as_current_span(f"{__name__}.run_experiment")
     def run_experiment(
@@ -109,9 +121,9 @@ class MultipleDataAssimilation(UpdateRunModel):
             self.run_workflows(HookRuntime.PRE_EXPERIMENT)
             sim_args = {"weights": self._relative_weights}
             experiment = self._storage.create_experiment(
-                parameters=self.ert_config.ensemble_config.parameter_configuration,
-                observations=self.ert_config.observations,
-                responses=self.ert_config.ensemble_config.response_configuration,
+                parameters=self._parameter_configuration,
+                observations=self._observations,
+                responses=self._response_configuration,
                 simulation_arguments=sim_args,
                 name=self.experiment_name,
             )

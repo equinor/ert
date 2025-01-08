@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import logging
+from pathlib import Path
 from queue import SimpleQueue
 from typing import TYPE_CHECKING
 
@@ -42,10 +43,18 @@ class EnsembleSmoother(UpdateRunModel):
         super().__init__(
             es_settings,
             update_settings,
-            config,
             storage,
+            config.runpath_file,
+            Path(config.user_config_file),
+            config.env_vars,
+            config.env_pr_fm_step,
+            config.model_config,
             queue_config,
+            config.forward_model_steps,
             status_queue,
+            config.substitutions,
+            config.ert_templates,
+            config.hooked_workflows,
             active_realizations=active_realizations,
             start_iteration=0,
             total_iterations=2,
@@ -57,6 +66,10 @@ class EnsembleSmoother(UpdateRunModel):
 
         self.support_restart = False
 
+        self._parameter_configuration = config.ensemble_config.parameter_configuration
+        self._observations = config.observations
+        self._response_configuration = config.ensemble_config.response_configuration
+
     @tracer.start_as_current_span(f"{__name__}.run_experiment")
     def run_experiment(
         self, evaluator_server_config: EvaluatorServerConfig, restart: bool = False
@@ -66,9 +79,9 @@ class EnsembleSmoother(UpdateRunModel):
         self.run_workflows(HookRuntime.PRE_EXPERIMENT)
         ensemble_format = self.target_ensemble_format
         experiment = self._storage.create_experiment(
-            parameters=self.ert_config.ensemble_config.parameter_configuration,
-            observations=self.ert_config.observations,
-            responses=self.ert_config.ensemble_config.response_configuration,
+            parameters=self._parameter_configuration,
+            observations=self._observations,
+            responses=self._response_configuration,
             name=self.experiment_name,
         )
 

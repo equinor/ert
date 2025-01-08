@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import logging
+from pathlib import Path
 from queue import SimpleQueue
 from typing import TYPE_CHECKING
 
@@ -46,11 +47,24 @@ class EnsembleExperiment(BaseRunModel):
         self.experiment: Experiment | None = None
         self.ensemble: Ensemble | None = None
 
+        self._design_matrix = config.analysis_config.design_matrix
+        self._observations = config.observations
+        self._parameter_configuration = config.ensemble_config.parameter_configuration
+        self._response_configuration = config.ensemble_config.response_configuration
+
         super().__init__(
-            config,
             storage,
+            config.runpath_file,
+            Path(config.user_config_file),
+            config.env_vars,
+            config.env_pr_fm_step,
+            config.model_config,
             queue_config,
+            config.forward_model_steps,
             status_queue,
+            config.substitutions,
+            config.ert_templates,
+            config.hooked_workflows,
             total_iterations=1,
             active_realizations=active_realizations,
             random_seed=random_seed,
@@ -67,8 +81,8 @@ class EnsembleExperiment(BaseRunModel):
         self.restart = restart
         # If design matrix is present, we try to merge design matrix parameters
         # to the experiment parameters and set new active realizations
-        parameters_config = self.ert_config.ensemble_config.parameter_configuration
-        design_matrix = self.ert_config.analysis_config.design_matrix
+        parameters_config = self._parameter_configuration
+        design_matrix = self._design_matrix
         design_matrix_group = None
         if design_matrix is not None:
             try:
@@ -87,8 +101,8 @@ class EnsembleExperiment(BaseRunModel):
                     if design_matrix_group is not None
                     else parameters_config
                 ),
-                observations=self.ert_config.observations,
-                responses=self.ert_config.ensemble_config.response_configuration,
+                observations=self._observations,
+                responses=self._response_configuration,
             )
             self.ensemble = self._storage.create_ensemble(
                 self.experiment,

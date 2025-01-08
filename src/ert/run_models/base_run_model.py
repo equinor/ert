@@ -14,7 +14,7 @@ from collections.abc import Generator, MutableSequence
 from contextlib import contextmanager
 from pathlib import Path
 from queue import SimpleQueue
-from typing import TYPE_CHECKING, cast
+from typing import TYPE_CHECKING, Any, cast
 
 import numpy as np
 
@@ -31,8 +31,11 @@ from ert.analysis.event import (
     AnalysisDataEvent,
     AnalysisErrorEvent,
 )
-from ert.config import ErtConfig, HookRuntime, QueueSystem
+from ert.config import HookRuntime, QueueSystem
 from ert.config.analysis_module import BaseSettings
+from ert.config.forward_model_step import ForwardModelStep
+from ert.config.model_config import ModelConfig
+from ert.config.workflow import Workflow
 from ert.enkf_main import _seed_sequence, create_run_path
 from ert.ensemble_evaluator import Ensemble as EEEnsemble
 from ert.ensemble_evaluator import (
@@ -58,6 +61,7 @@ from ert.ensemble_evaluator.state import (
 from ert.mode_definitions import MODULE_MODE
 from ert.runpaths import Runpaths
 from ert.storage import Ensemble, Storage
+from ert.substitutions import Substitutions
 from ert.trace import tracer
 from ert.workflow_runner import WorkflowRunner
 
@@ -131,10 +135,18 @@ def captured_logs(
 class BaseRunModel(ABC):
     def __init__(
         self,
-        config: ErtConfig,
         storage: Storage,
+        runpath_file: Path,
+        user_config_file: Path,
+        env_vars: dict[str, str],
+        env_pr_fm_step: dict[str, dict[str, Any]],
+        model_config: ModelConfig,
         queue_config: QueueConfig,
+        forward_model_steps: list[ForwardModelStep],
         status_queue: SimpleQueue[StatusEvents],
+        substitutions: Substitutions,
+        templates: list[tuple[str, str]],
+        hooked_workflows: defaultdict[HookRuntime, list[Workflow]],
         active_realizations: list[bool],
         total_iterations: int = 1,
         start_iteration: int = 0,
@@ -147,27 +159,35 @@ class BaseRunModel(ABC):
         the forward model and passing events back through the supplied queue.
         """
         self._total_iterations = total_iterations
-        config.analysis_config.num_iterations = total_iterations
-
         self.start_time: int | None = None
         self.stop_time: int | None = None
         self._queue_config: QueueConfig = queue_config
         self._initial_realizations_mask: list[bool] = copy.copy(active_realizations)
         self._completed_realizations_mask: list[bool] = []
         self.support_restart: bool = True
-        self.ert_config = config
         self._storage = storage
         self._context_env: dict[str, str] = {}
         self.random_seed: int = _seed_sequence(random_seed)
         self.rng = np.random.default_rng(self.random_seed)
-        self.substitutions = config.substitutions
+        self._substitutions: Substitutions = substitutions
+        self._model_config: ModelConfig = model_config
+        self._runpath_file: Path = runpath_file
+        self._forward_model_steps: list[ForwardModelStep] = forward_model_steps
+        self._user_config_file: Path = user_config_file
+        self._templates: list[tuple[str, str]] = templates
+        self._hooked_workflows: defaultdict[HookRuntime, list[Workflow]] = (
+            hooked_workflows
+        )
+
+        self._env_vars: dict[str, str] = env_vars
+        self._env_pr_fm_step: dict[str, dict[str, Any]] = env_pr_fm_step
 
         self.run_paths = Runpaths(
-            jobname_format=config.model_config.jobname_format_string,
-            runpath_format=config.model_config.runpath_format_string,
-            filename=str(config.runpath_file),
-            substitutions=self.substitutions,
-            eclbase=config.model_config.eclbase_format_string,
+            jobname_format=self._model_config.jobname_format_string,
+            runpath_format=self._model_config.runpath_format_string,
+            filename=str(self._runpath_file),
+            substitutions=self._substitutions,
+            eclbase=self._model_config.eclbase_format_string,
         )
         self._iter_snapshot: dict[int, EnsembleSnapshot] = {}
         self._status_queue = status_queue
@@ -600,12 +620,12 @@ class BaseRunModel(ABC):
                 Realization(
                     active=run_arg.active,
                     iens=run_arg.iens,
-                    fm_steps=self.ert_config.forward_model_steps,
+                    fm_steps=self._forward_model_steps,
                     max_runtime=self._queue_config.max_runtime,
                     run_arg=run_arg,
                     num_cpu=self._queue_config.preferred_num_cpu,
-                    job_script=self.ert_config.queue_config.job_script,
-                    realization_memory=self.ert_config.queue_config.realization_memory,
+                    job_script=self._queue_config.job_script,
+                    realization_memory=self._queue_config.realization_memory,
                 )
             )
         return EEEnsemble(
@@ -673,7 +693,7 @@ class BaseRunModel(ABC):
         storage: Storage | None = None,
         ensemble: Ensemble | None = None,
     ) -> None:
-        for workflow in self.ert_config.hooked_workflows[runtime]:
+        for workflow in self._hooked_workflows[runtime]:
             WorkflowRunner(workflow, storage, ensemble).run_blocking()
 
     def _evaluate_and_postprocess(
@@ -685,13 +705,13 @@ class BaseRunModel(ABC):
         create_run_path(
             run_args=run_args,
             ensemble=ensemble,
-            user_config_file=self.ert_config.user_config_file,
-            env_vars=self.ert_config.env_vars,
-            env_pr_fm_step=self.ert_config.env_pr_fm_step,
-            forward_model_steps=self.ert_config.forward_model_steps,
-            substitutions=self.ert_config.substitutions,
-            templates=self.ert_config.ert_templates,
-            model_config=self.ert_config.model_config,
+            user_config_file=str(self._user_config_file),
+            env_vars=self._env_vars,
+            env_pr_fm_step=self._env_pr_fm_step,
+            forward_model_steps=self._forward_model_steps,
+            substitutions=self._substitutions,
+            templates=self._templates,
+            model_config=self._model_config,
             runpaths=self.run_paths,
             context_env=self._context_env,
         )
@@ -732,10 +752,18 @@ class UpdateRunModel(BaseRunModel):
         self,
         analysis_settings: BaseSettings,
         update_settings: UpdateSettings,
-        config: ErtConfig,
         storage: Storage,
+        runpath_file: Path,
+        user_config_file: Path,
+        env_vars: dict[str, str],
+        env_pr_fm_step: dict[str, dict[str, Any]],
+        model_config: ModelConfig,
         queue_config: QueueConfig,
+        forward_model_steps: list[ForwardModelStep],
         status_queue: SimpleQueue[StatusEvents],
+        substitutions: Substitutions,
+        templates: list[tuple[str, str]],
+        hooked_workflows: defaultdict[HookRuntime, list[Workflow]],
         active_realizations: list[bool],
         total_iterations: int,
         start_iteration: int,
@@ -746,10 +774,18 @@ class UpdateRunModel(BaseRunModel):
         self._update_settings: UpdateSettings = update_settings
 
         super().__init__(
-            config,
             storage,
+            runpath_file,
+            user_config_file,
+            env_vars,
+            env_pr_fm_step,
+            model_config,
             queue_config,
+            forward_model_steps,
             status_queue,
+            substitutions,
+            templates,
+            hooked_workflows,
             active_realizations=active_realizations,
             total_iterations=total_iterations,
             start_iteration=start_iteration,
