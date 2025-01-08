@@ -16,6 +16,7 @@ import iterative_ensemble_smoother as ies
 import numpy as np
 import polars
 import psutil
+import scipy
 from iterative_ensemble_smoother.experimental import AdaptiveESMDA
 
 from ert.config import GenKwConfig
@@ -515,7 +516,26 @@ def analysis_ES(
     else:
         # Compute transition matrix so that
         # X_posterior = X_prior @ T
-        T = smoother_es.compute_transition_matrix(Y=S, alpha=1.0, truncation=truncation)
+        try:
+            T = smoother_es.compute_transition_matrix(
+                Y=S, alpha=1.0, truncation=truncation
+            )
+        except scipy.linalg.LinAlgError as err:
+            msg = (
+                "Failed while computing transition matrix, "
+                f"this might be due to outlier values in one or more realizations: {err}"
+            )
+            progress_callback(
+                AnalysisErrorEvent(
+                    error_msg=msg,
+                    data=DataSection(
+                        header=smoother_snapshot.header,
+                        data=smoother_snapshot.csv,
+                        extra=smoother_snapshot.extra,
+                    ),
+                )
+            )
+            raise ErtAnalysisError(msg) from err
         # Add identity in place for fast computation
         np.fill_diagonal(T, T.diagonal() + 1)
 
