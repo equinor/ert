@@ -11,7 +11,7 @@ from ert.config.parsing import ConfigKeys
 
 def test_default_num_cpu():
     ert_config = ErtConfig.from_file_contents("NUM_REALIZATIONS 1")
-    assert ert_config.preferred_num_cpu == 1
+    assert ert_config.queue_config.preferred_num_cpu == 1
 
 
 @pytest.mark.usefixtures("use_tmpdir")
@@ -33,7 +33,7 @@ def test_num_cpu_from_config_preferred():
                 ConfigKeys.NUM_REALIZATIONS: 1,
                 ConfigKeys.DATA_FILE: data_file,
             }
-        ).preferred_num_cpu
+        ).queue_config.preferred_num_cpu
         == config_num_cpu
     )
 
@@ -104,7 +104,7 @@ def test_num_cpu_from_data_file_used_if_config_num_cpu_not_set(
                 ConfigKeys.NUM_REALIZATIONS: 1,
                 ConfigKeys.DATA_FILE: data_file,
             }
-        ).preferred_num_cpu
+        ).queue_config.preferred_num_cpu
         == data_file_num_cpu
     )
 
