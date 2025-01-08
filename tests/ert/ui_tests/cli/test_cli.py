@@ -521,9 +521,7 @@ def test_that_stop_on_fail_workflow_jobs_stop_ert(
 
 
 @pytest.mark.usefixtures("copy_poly_case")
-def test_that_pre_post_experiment_hook_works(monkeypatch, capsys):
-    monkeypatch.setattr(_ert.threading, "_can_raise", False)
-
+def test_that_pre_post_experiment_hook_works(capsys):
     # The executable
     with open("hello_post_exp.sh", "w", encoding="utf-8") as f:
         f.write(
