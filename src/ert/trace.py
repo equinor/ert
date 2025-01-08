@@ -17,7 +17,7 @@ def get_trace_id() -> str:
 
 
 def get_traceparent() -> str | None:
-    carrier = {}
+    carrier: dict[str, str] = {}
     # Write the current context into the carrier.
     TraceContextTextMapPropagator().inject(carrier)
     return carrier.get("traceparent")

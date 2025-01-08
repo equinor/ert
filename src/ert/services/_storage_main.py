@@ -11,6 +11,7 @@ import sys
 import threading
 import time
 import warnings
+from types import FrameType
 from typing import Any
 
 import uvicorn
@@ -87,7 +88,9 @@ def _create_connection_info(sock: socket.socket, authtoken: str) -> dict[str, An
 
 
 def run_server(
-    args: argparse.Namespace | None = None, debug: bool = False, uvicorn_config=None
+    args: argparse.Namespace | None = None,
+    debug: bool = False,
+    uvicorn_config: uvicorn.Config | None = None,
 ) -> None:
     if args is None:
         args = parse_args()
@@ -154,7 +157,7 @@ def terminate_on_parent_death(
     os.kill(os.getpid(), signal.SIGTERM)
 
 
-def main():
+def main() -> None:
     args = parse_args()
     config_args: dict[str, Any] = {}
     with open(STORAGE_LOG_CONFIG, encoding="utf-8") as conf_file:
@@ -195,7 +198,7 @@ def main():
                 terminate_on_parent_death_thread.join()
 
 
-def sigterm_handler(_signo, _stack_frame):
+def sigterm_handler(_signo: int, _stack_frame: FrameType | None) -> None:
     sys.exit(0)
 
 
