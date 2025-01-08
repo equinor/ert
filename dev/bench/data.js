@@ -1,39 +1,8 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1736266350160,
+  "lastUpdate": 1736316666237,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
-      {
-        "commit": {
-          "author": {
-            "email": "havb@equinor.com",
-            "name": "Håvard Berland",
-            "username": "berland"
-          },
-          "committer": {
-            "email": "berland@pvv.ntnu.no",
-            "name": "Håvard Berland",
-            "username": "berland"
-          },
-          "distinct": true,
-          "id": "9ba6c47784c8c7ad59a84ea6a645f42c759721eb",
-          "message": "Avoid warning from pytest\n\nPytestWarning: Value of environment variable ERT_STORAGE_ENS_PATH type\nshould be str, but got PosixPath('/.../storage') (type: PosixPath);\nconverted to str implicitly",
-          "timestamp": "2025-01-02T09:05:09+01:00",
-          "tree_id": "f12f6a458868d0303e7fc7d5524ade45dd29d3b8",
-          "url": "https://github.com/equinor/ert/commit/9ba6c47784c8c7ad59a84ea6a645f42c759721eb"
-        },
-        "date": 1735805219779,
-        "tool": "pytest",
-        "benches": [
-          {
-            "name": "tests/ert/performance_tests/test_analysis.py::test_and_benchmark_adaptive_localization_with_fields",
-            "value": 0.22087436811815722,
-            "unit": "iter/sec",
-            "range": "stddev: 0.015636184030795086",
-            "extra": "mean: 4.527460603599996 sec\nrounds: 5"
-          }
-        ]
-      },
       {
         "commit": {
           "author": {
@@ -930,6 +899,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.017399442138751015",
             "extra": "mean: 4.5669813074000105 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "pieter.verveer@tno.nl",
+            "name": "Peter Verveer",
+            "username": "verveerpj"
+          },
+          "committer": {
+            "email": "pieter.verveer@tno.nl",
+            "name": "Peter Verveer",
+            "username": "verveerpj"
+          },
+          "distinct": true,
+          "id": "71275280104b46942e41a907a76342e262928aeb",
+          "message": "Remove dependency on ropt config in forward model evaluations",
+          "timestamp": "2025-01-08T07:09:10+01:00",
+          "tree_id": "1e8e94d36d177a58cca738d36f9f67b01bbf69fb",
+          "url": "https://github.com/equinor/ert/commit/71275280104b46942e41a907a76342e262928aeb"
+        },
+        "date": 1736316665675,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/ert/performance_tests/test_analysis.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 0.21961637110103988,
+            "unit": "iter/sec",
+            "range": "stddev: 0.03879839145311598",
+            "extra": "mean: 4.553394607999991 sec\nrounds: 5"
           }
         ]
       }
