@@ -3,6 +3,7 @@ from __future__ import annotations
 import functools
 import logging
 import time
+import traceback
 from collections.abc import Callable, Iterable, Sequence
 from fnmatch import fnmatch
 from typing import (
@@ -876,6 +877,8 @@ def iterative_smoother_update(
             initial_mask=initial_mask,
         )
     except Exception as e:
+        print("Exception!")
+        traceback.print_tb(e.__traceback__)
         progress_callback(
             AnalysisErrorEvent(
                 error_msg=str(e),
