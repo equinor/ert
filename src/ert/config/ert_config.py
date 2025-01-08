@@ -25,7 +25,6 @@ from pydantic.dataclasses import dataclass, rebuild_dataclass
 from ert.plugins import ErtPluginManager
 from ert.substitutions import Substitutions
 
-from ._get_num_cpu import get_num_cpu_from_data_file
 from .analysis_config import AnalysisConfig
 from .ensemble_config import EnsembleConfig
 from .forward_model_step import (
@@ -464,6 +463,9 @@ class ErtConfig:
                     ]
                 )
             queue_config = QueueConfig.from_dict(config_dict)
+
+            substitutions["<NUM_CPU>"] = str(queue_config.preferred_num_cpu)
+
         except ConfigValidationError as err:
             errors.append(err)
 
@@ -998,10 +1000,6 @@ class ErtConfig:
         return fm_steps
 
     @property
-    def preferred_num_cpu(self) -> int:
-        return int(self.substitutions.get(f"<{ConfigKeys.NUM_CPU}>", 1))
-
-    @property
     def env_pr_fm_step(self) -> dict[str, dict[str, Any]]:
         return self.ENV_PR_FM_STEP
 
@@ -1101,14 +1099,6 @@ def _substitutions_from_dict(config_dict) -> Substitutions:
 
     if "<CONFIG_PATH>" not in subst_list:
         subst_list["<CONFIG_PATH>"] = config_dict.get("CONFIG_DIRECTORY", os.getcwd())
-
-    num_cpus = config_dict.get("NUM_CPU")
-    if num_cpus is None and "DATA_FILE" in config_dict:
-        num_cpus = get_num_cpu_from_data_file(config_dict.get("DATA_FILE"))
-        logger.info(f"Parsed NUM_CPU={num_cpus} from DATA-file")
-    if num_cpus is None:
-        num_cpus = 1
-    subst_list["<NUM_CPU>"] = str(num_cpus)
 
     for key, val in config_dict.get("DATA_KW", []):
         subst_list[key] = val
