@@ -1117,43 +1117,40 @@ def _forward_model_step_from_config_file(
 
     schema = init_forward_model_schema()
 
-    try:
-        content_dict = parse_config(file=config_file, schema=schema, pre_defines=[])
+    content_dict = parse_config(file=config_file, schema=schema, pre_defines=[])
 
-        specified_arg_types: list[tuple[int, str]] = content_dict.get(
-            ForwardModelStepKeys.ARG_TYPE, []
-        )
+    specified_arg_types: list[tuple[int, str]] = content_dict.get(
+        ForwardModelStepKeys.ARG_TYPE, []
+    )
 
-        specified_max_args: int = content_dict.get("MAX_ARG", 0)
-        specified_min_args: int = content_dict.get("MIN_ARG", 0)
+    specified_max_args: int = content_dict.get("MAX_ARG", 0)
+    specified_min_args: int = content_dict.get("MIN_ARG", 0)
 
-        arg_types_list = parse_arg_types_list(
-            specified_arg_types, specified_min_args, specified_max_args
-        )
+    arg_types_list = parse_arg_types_list(
+        specified_arg_types, specified_min_args, specified_max_args
+    )
 
-        environment = {k: v for [k, v] in content_dict.get("ENV", [])}
-        default_mapping = {k: v for [k, v] in content_dict.get("DEFAULT", [])}
+    environment = {k: v for [k, v] in content_dict.get("ENV", [])}
+    default_mapping = {k: v for [k, v] in content_dict.get("DEFAULT", [])}
 
-        return ForwardModelStep(
-            name=name,
-            executable=content_dict.get("EXECUTABLE"),
-            stdin_file=content_dict.get("STDIN"),
-            stdout_file=content_dict.get("STDOUT"),
-            stderr_file=content_dict.get("STDERR"),
-            start_file=content_dict.get("START_FILE"),
-            target_file=content_dict.get("TARGET_FILE"),
-            error_file=content_dict.get("ERROR_FILE"),
-            max_running_minutes=content_dict.get("MAX_RUNNING_MINUTES"),
-            min_arg=content_dict.get("MIN_ARG"),
-            max_arg=content_dict.get("MAX_ARG"),
-            arglist=content_dict.get("ARGLIST", []),
-            arg_types=arg_types_list,
-            environment=environment,
-            required_keywords=content_dict.get("REQUIRED", []),
-            default_mapping=default_mapping,
-        )
-    except OSError as err:
-        raise ConfigValidationError.with_context(str(err), config_file) from err
+    return ForwardModelStep(
+        name=name,
+        executable=content_dict.get("EXECUTABLE"),
+        stdin_file=content_dict.get("STDIN"),
+        stdout_file=content_dict.get("STDOUT"),
+        stderr_file=content_dict.get("STDERR"),
+        start_file=content_dict.get("START_FILE"),
+        target_file=content_dict.get("TARGET_FILE"),
+        error_file=content_dict.get("ERROR_FILE"),
+        max_running_minutes=content_dict.get("MAX_RUNNING_MINUTES"),
+        min_arg=content_dict.get("MIN_ARG"),
+        max_arg=content_dict.get("MAX_ARG"),
+        arglist=content_dict.get("ARGLIST", []),
+        arg_types=arg_types_list,
+        environment=environment,
+        required_keywords=content_dict.get("REQUIRED", []),
+        default_mapping=default_mapping,
+    )
 
 
 # Due to circular dependency in type annotations between ErtConfig -> WorkflowJob -> ErtScript -> ErtConfig

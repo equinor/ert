@@ -29,7 +29,7 @@ def test_workflow():
 
     dump_job = WorkflowJob.from_file("dump_job", name="DUMP")
 
-    with pytest.raises(ConfigValidationError, match="Could not open config_file"):
+    with pytest.raises(ConfigValidationError, match="No such file or directory"):
         _ = WorkflowJob.from_file("knock_job", name="KNOCK")
 
     workflow = Workflow.from_file("dump_workflow", None, {"DUMP": dump_job})
@@ -68,7 +68,7 @@ def test_workflow_run():
 
 @pytest.mark.usefixtures("use_tmpdir")
 def test_failing_workflow_run():
-    with pytest.raises(ConfigValidationError, match="does not exist"):
+    with pytest.raises(ConfigValidationError, match="No such file or directory"):
         _ = Workflow.from_file("the_file_name.ert", None, {})
 
 

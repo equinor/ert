@@ -132,14 +132,12 @@ def test_include_non_existing_file(tmpdir):
         with open("config.ert", mode="w", encoding="utf-8") as fh:
             fh.writelines(config)
 
-        with pytest.raises(
-            ConfigValidationError, match=r"INCLUDE file:.*does_not_exists not found"
-        ):
+        with pytest.raises(ConfigValidationError, match=r"No such file or directory"):
             _ = parse("config.ert", schema=init_user_config_schema())
 
 
 def test_invalid_user_config():
-    with pytest.raises(FileNotFoundError):
+    with pytest.raises(ConfigValidationError):
         _ = parse("this/is/not/a/file", schema=init_user_config_schema())
 
 
