@@ -1,5 +1,6 @@
 import os
 from queue import SimpleQueue
+from typing import cast
 from unittest.mock import MagicMock, Mock, patch
 
 import pandas as pd
@@ -17,6 +18,7 @@ from PySide6.QtWidgets import (
 from pytestqt.qtbot import QtBot
 
 import ert
+import ert.run_models
 from ert.config import ErtConfig
 from ert.ensemble_evaluator import state
 from ert.ensemble_evaluator.event import (
@@ -83,8 +85,9 @@ def test_terminating_experiment_shows_a_confirmation_dialog(
             confirm_terminate_dialog = wait_for_child(
                 run_dialog, qtbot, QtWidgets.QMessageBox
             )
-            dialog_buttons = confirm_terminate_dialog.findChild(
-                QtWidgets.QDialogButtonBox
+            dialog_buttons = cast(
+                QtWidgets.QDialogButtonBox,
+                confirm_terminate_dialog.findChild(QtWidgets.QDialogButtonBox),
             ).buttons()
             yes_button = next(b for b in dialog_buttons if "Yes" in b.text())
             qtbot.mouseClick(yes_button, Qt.MouseButton.LeftButton)
@@ -585,7 +588,7 @@ def test_that_exception_in_base_run_model_is_handled(qtbot: QtBot, storage):
             assert "I failed :(" in text
             qtbot.mouseClick(error_dialog.box.buttons()[0], Qt.MouseButton.LeftButton)
 
-        simulation_mode_combo = gui.findChild(QComboBox)
+        simulation_mode_combo = cast(QComboBox, gui.findChild(QComboBox))
         simulation_mode_combo.setCurrentText("Single realization test-run")
         qtbot.mouseClick(run_experiment, Qt.MouseButton.LeftButton)
         run_dialog = wait_for_child(gui, qtbot, RunDialog)
@@ -617,7 +620,7 @@ def test_that_debug_info_button_provides_data_in_clipboard(qtbot: QtBot, storage
 
         qtbot.mouseClick(run_experiment, Qt.MouseButton.LeftButton)
         qtbot.waitUntil(lambda: gui.findChild(RunDialog) is not None, timeout=5000)
-        run_dialog = gui.findChild(RunDialog)
+        run_dialog = cast(RunDialog, gui.findChild(RunDialog))
         assert run_dialog is not None
         qtbot.waitUntil(lambda: run_dialog.is_simulation_done() == True, timeout=100000)
         copy_debug_info_button = gui.findChild(QPushButton, "copy_debug_info_button")
@@ -657,7 +660,9 @@ def test_that_stdout_and_stderr_buttons_react_to_file_content(
         simulation_mode_combo = experiment_panel.findChild(QComboBox)
         assert isinstance(simulation_mode_combo, QComboBox)
         simulation_mode_combo.setCurrentText(EnsembleExperiment.name())
-        simulation_settings = gui.findChild(EnsembleExperimentPanel)
+        simulation_settings = cast(
+            EnsembleExperimentPanel, gui.findChild(EnsembleExperimentPanel)
+        )
         simulation_settings._experiment_name_field.setText("new_experiment_name")
 
         run_experiment = experiment_panel.findChild(QWidget, name="run_experiment")
@@ -669,13 +674,15 @@ def test_that_stdout_and_stderr_buttons_react_to_file_content(
         )
         qtbot.mouseClick(run_experiment, Qt.MouseButton.LeftButton)
         qtbot.waitUntil(lambda: gui.findChild(RunDialog) is not None, timeout=5000)
-        run_dialog = gui.findChild(RunDialog)
+        run_dialog = cast(RunDialog, gui.findChild(RunDialog))
 
         qtbot.waitUntil(lambda: run_dialog.is_simulation_done() == True, timeout=100000)
 
         fm_step_overview = run_dialog._fm_step_overview
         qtbot.waitUntil(lambda: not fm_step_overview.isHidden(), timeout=20000)
-        realization_widget = run_dialog.findChild(RealizationWidget)
+        realization_widget = cast(
+            RealizationWidget, run_dialog.findChild(RealizationWidget)
+        )
 
         click_pos = realization_widget._real_view.rectForIndex(
             realization_widget._real_list_model.index(0, 0)
@@ -704,7 +711,7 @@ def test_that_stdout_and_stderr_buttons_react_to_file_content(
         qtbot.mouseClick(
             fm_step_overview.viewport(), Qt.MouseButton.LeftButton, pos=click_pos
         )
-        file_dialog = run_dialog.findChild(FileDialog)
+        file_dialog = cast(FileDialog, run_dialog.findChild(FileDialog))
         qtbot.waitUntil(file_dialog.isVisible, timeout=10000)
         file_dialog.close()
 
@@ -755,9 +762,12 @@ def test_that_design_matrix_show_parameters_button_is_visible(
         assert isinstance(simulation_mode_combo, QComboBox)
 
         simulation_mode_combo.setCurrentText(EnsembleExperiment.name())
-        simulation_settings = gui.findChild(EnsembleExperimentPanel)
-        show_dm_parameters = simulation_settings.findChild(
-            QPushButton, "show-dm-parameters"
+        simulation_settings = cast(
+            EnsembleExperimentPanel, gui.findChild(EnsembleExperimentPanel)
+        )
+        show_dm_parameters = cast(
+            QPushButton,
+            simulation_settings.findChild(QPushButton, "show-dm-parameters"),
         )
         if design_matrix_entry:
             assert isinstance(show_dm_parameters, QPushButton)
@@ -826,13 +836,13 @@ def test_forward_model_overview_label_selected_on_tab_change(
         view.scrollTo(model_index)
         rect = view.visualRect(model_index)
         click_pos = rect.center()
-        qtbot.mouseClick(view.viewport(), Qt.LeftButton, pos=click_pos)
+        qtbot.mouseClick(view.viewport(), Qt.MouseButton.LeftButton, pos=click_pos)
 
     def qt_bot_click_tab_index(tab_index: int) -> None:
         tab_bar = run_dialog._tab_widget.tabBar()
         tab_rect = tab_bar.tabRect(tab_index)
         click_pos = tab_rect.center()
-        qtbot.mouseClick(tab_bar, Qt.LeftButton, pos=click_pos)
+        qtbot.mouseClick(tab_bar, Qt.MouseButton.LeftButton, pos=click_pos)
 
     # verify two tabs present
     qtbot.waitUntil(

@@ -31,7 +31,6 @@ from ert.gui.ertwidgets.analysismodulevariablespanel import AnalysisModuleVariab
 from ert.gui.ertwidgets.create_experiment_dialog import CreateExperimentDialog
 from ert.gui.ertwidgets.ensembleselector import EnsembleSelector
 from ert.gui.main import ErtMainWindow, GUILogHandler, _setup_main_window
-from ert.gui.main_window import SidebarToolButton
 from ert.gui.simulation.experiment_panel import ExperimentPanel
 from ert.gui.simulation.run_dialog import RunDialog
 from ert.gui.suggestor import Suggestor
@@ -358,7 +357,7 @@ def test_that_the_plot_window_contains_the_expected_elements(
     def click_tab_index(pos: int) -> None:
         tab_bar = plot_window._central_tab.tabBar()
         tab_center = tab_bar.tabRect(pos).center()
-        qtbot.mouseClick(tab_bar, Qt.LeftButton, pos=tab_center)
+        qtbot.mouseClick(tab_bar, Qt.MouseButton.LeftButton, pos=tab_center)
 
     # make sure plotter remembers plot types selected previously
     response_index = 0
@@ -648,7 +647,7 @@ def test_right_click_plot_button_opens_external_plotter(qtbot, storage, monkeypa
         gui = _setup_main_window(ert_config, args_mock, GUILogHandler(), storage)
         qtbot.addWidget(gui)
 
-        button_plot_tool = gui.findChild(SidebarToolButton, "button_Create_plot")
+        button_plot_tool = gui.findChild(QToolButton, "button_Create_plot")
         assert button_plot_tool
 
         def top_level_plotter_windows() -> list[QWindow]:
