@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, cast
 
 from PySide6.QtWidgets import QComboBox, QHBoxLayout
 
@@ -80,8 +80,7 @@ class StatisticsCustomizationView(CustomizationView):
             "Toggle distribution connection lines visibility.",
         )
 
-        style = self["mean_style"]
-        assert type(style) is StyleChooser
+        style = cast(StyleChooser, self["mean_style"])
         style.createLabelLayout(layout)
 
     def createPresets(self) -> QComboBox:

@@ -1,6 +1,6 @@
 import logging
 import time
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, cast
 
 import numpy as np
 import pandas as pd
@@ -191,8 +191,7 @@ class PlotWindow(QMainWindow):
             return
         key = key_def.key
 
-        plot_widget = self._central_tab.currentWidget()
-        assert type(plot_widget) is PlotWidget
+        plot_widget = cast(PlotWidget, self._central_tab.currentWidget())
 
         if plot_widget._plotter.dimensionality == key_def.dimensionality:
             selected_ensembles = (

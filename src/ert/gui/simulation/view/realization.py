@@ -160,10 +160,12 @@ class RealizationDelegate(QStyledItemDelegate):
 
     def eventFilter(self, object: QObject, event: QEvent) -> bool:
         if event.type() == QEvent.Type.ToolTip and type(event) is QMouseEvent:
-            mouse_pos = event.position() + self.adjustment_point_for_job_rect_margin
+            mouse_pos = (
+                event.position() + self.adjustment_point_for_job_rect_margin
+            ).toPoint()
             parent: RealizationWidget = cast(RealizationWidget, self.parent())
             view = parent._real_view
-            index = view.indexAt(mouse_pos.toPoint())
+            index = view.indexAt(mouse_pos)
             if index.isValid():
                 tooltip_text = ""
                 maximum_memory_usage = index.data(MemoryUsageRole)
@@ -175,9 +177,7 @@ class RealizationDelegate(QStyledItemDelegate):
                 if callback_error_msg := index.data(CallbackStatusMessageRole):
                     tooltip_text += callback_error_msg
                 if tooltip_text:
-                    QToolTip.showText(
-                        view.mapToGlobal(mouse_pos.toPoint()), tooltip_text
-                    )
+                    QToolTip.showText(view.mapToGlobal(mouse_pos), tooltip_text)
                     return True
 
         return super().eventFilter(object, event)

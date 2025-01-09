@@ -105,7 +105,7 @@ class LimitsStack(StackedInput):
         input_ = self._inputs[axis_name]
 
         if axis_name in LimitsStack.NUMBER_AXIS and (
-            type(input_) is QLineEdit or type(input_) is QLabel
+            issubclass(type(input_), QLineEdit) or issubclass(type(input_), QLabel)
         ):
             input_.setText(str(value) if value is not None else "")
         elif axis_name == PlotContext.DATE_AXIS and type(input_) is CustomDateEdit:
@@ -114,7 +114,7 @@ class LimitsStack(StackedInput):
     def getValue(self, axis_name: str | None) -> float | int | date | None:
         input_ = self._inputs[axis_name]
         result: float | int | date | None = None
-        if type(input_) is QLineEdit or type(input_) is QLabel:
+        if issubclass(type(input_), QLineEdit) or issubclass(type(input_), QLabel):
             if axis_name in LimitsStack.FLOAT_AXIS:
                 try:
                     result = float(input_.text())

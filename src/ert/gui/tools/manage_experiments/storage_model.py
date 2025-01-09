@@ -260,6 +260,9 @@ class StorageModel(QAbstractItemModel):
         if type(model) is not RealizationModel:
             model = cast(StorageModel | EnsembleModel | ExperimentModel, model)
             if len(model._children) > row:
-                childItem = model._children[row]
-                return self.createIndex(row, column, childItem)
+                try:
+                    childItem = model._children[row]
+                    return self.createIndex(row, column, childItem)
+                except KeyError:
+                    pass
         return QModelIndex()

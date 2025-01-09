@@ -1,4 +1,4 @@
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, cast
 
 from PySide6.QtWidgets import QHBoxLayout
 
@@ -36,8 +36,7 @@ class StyleCustomizationView(CustomizationView):
             line_style_set=STYLESET_TOGGLE,
         )
 
-        style = self["default_style"]
-        assert type(style) is StyleChooser
+        style = cast(StyleChooser, self["default_style"])
         style.createLabelLayout(layout)
 
         self.addSpacing(10)
