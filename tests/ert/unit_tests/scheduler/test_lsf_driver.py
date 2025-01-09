@@ -1270,6 +1270,20 @@ async def test_polling_bhist_fallback(not_found_bjobs, caplog, job_name):
 
 
 @pytest.mark.integration_test
+async def test_no_exception_when_bjobs_does_not_exist(caplog, job_name):
+    caplog.set_level(logging.DEBUG)
+    driver = LsfDriver(
+        bjobs_cmd="/bin_foo/not_existing", bhist_cmd="/bin_bar/not_existing"
+    )
+    driver._poll_period = 0.01
+    await driver.submit(0, "sh", "-c", "sleep 1", name=job_name)
+    await poll(driver, {0})
+    print("waiting..")
+    await asyncio.sleep(1)
+    print(caplog.text)
+
+
+@pytest.mark.integration_test
 async def test_that_kill_before_submit_is_finished_works(tmp_path, monkeypatch, caplog):
     """This test asserts that it is possible to issue a kill command
     to a realization right after it has been submitted (as in driver.submit()).

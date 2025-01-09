@@ -435,6 +435,7 @@ class LsfDriver(Driver):
             current_jobids = list(self._jobs.keys())
 
             try:
+                print("POLLLING BJOBS")
                 process = await asyncio.create_subprocess_exec(
                     str(self._bjobs_cmd),
                     "-noheader",
