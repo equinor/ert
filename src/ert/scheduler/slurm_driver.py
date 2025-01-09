@@ -251,9 +251,10 @@ class SlurmDriver(Driver):
                     stdout=asyncio.subprocess.PIPE,
                     stderr=asyncio.subprocess.PIPE,
                 )
-            except FileNotFoundError as e:
+            except OSError as e:
                 logger.error(str(e))
-                return
+                await asyncio.sleep(self._poll_period)
+                continue
             stdout, stderr = await process.communicate()
             if process.returncode:
                 logger.warning(

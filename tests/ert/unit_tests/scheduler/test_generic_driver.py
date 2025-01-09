@@ -230,9 +230,10 @@ async def test_execute_with_retry_exits_on_filenotfounderror(driver: Driver, cap
 
 
 @pytest.mark.integration_test
-async def test_poll_exits_on_filenotfounderror(driver: Driver, caplog):
+async def test_poll_ignores_filenotfounderror(driver: Driver, caplog):
     if isinstance(driver, LocalDriver):
         pytest.skip("LocalDriver does not poll")
+    driver._poll_period = 0.01
     caplog.set_level(logging.DEBUG)
     invalid_cmd = ["/usr/bin/foo", "bar"]
     driver._bjobs_cmd = invalid_cmd
@@ -240,9 +241,11 @@ async def test_poll_exits_on_filenotfounderror(driver: Driver, caplog):
     driver._squeue = invalid_cmd
     driver._jobs = {"foo": "bar"}
     driver._non_finished_job_ids = ["foo"]
-    await driver.poll()
+    with pytest.raises(asyncio.TimeoutError):
+        await asyncio.wait_for(driver.poll(), timeout=0.1)
 
-    # We log a retry message every time we retry
-    assert "retry" not in str(caplog.text)
+    assert "retry" not in str(
+        caplog.text
+    ), "_execute_with_retry() should not be invoked in poll()"
     assert "No such file or directory" in str(caplog.text)
     assert "/usr/bin/foo" in str(caplog.text)

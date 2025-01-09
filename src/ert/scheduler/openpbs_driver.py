@@ -307,9 +307,10 @@ class OpenPBSDriver(Driver):
                         stdout=asyncio.subprocess.PIPE,
                         stderr=asyncio.subprocess.PIPE,
                     )
-                except FileNotFoundError as e:
+                except OSError as e:
                     logger.error(str(e))
-                    return
+                    await asyncio.sleep(self._poll_period)
+                    continue
                 stdout, stderr = await process.communicate()
                 if process.returncode not in {0, QSTAT_UNKNOWN_JOB_ID}:
                     # Any unknown job ids will yield QSTAT_UNKNOWN_JOB_ID, but
@@ -367,7 +368,8 @@ class OpenPBSDriver(Driver):
         iens, old_state = self._jobs[job_id]
         if isinstance(new_state, IgnoredJobstates):
             logger.debug(
-                f"Job ID '{job_id}' for {iens=} is of unknown job state '{new_state.job_state}'"
+                f"Job ID '{job_id}' for {iens=} is of "
+                f"unknown job state '{new_state.job_state}'"
             )
             return
 
