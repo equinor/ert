@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from copy import copy
 from datetime import date
-from typing import TYPE_CHECKING, Any, ClassVar
+from typing import TYPE_CHECKING, Any, ClassVar, cast
 
 from PySide6.QtGui import QDoubleValidator, QIntValidator
 from PySide6.QtWidgets import QLabel, QLineEdit, QStackedWidget
@@ -107,6 +107,7 @@ class LimitsStack(StackedInput):
         if axis_name in LimitsStack.NUMBER_AXIS and (
             issubclass(type(input_), QLineEdit) or issubclass(type(input_), QLabel)
         ):
+            input_ = cast(QLineEdit | QLabel, input_)
             input_.setText(str(value) if value is not None else "")
         elif axis_name == PlotContext.DATE_AXIS and type(input_) is CustomDateEdit:
             input_.setDate(value)
@@ -115,6 +116,7 @@ class LimitsStack(StackedInput):
         input_ = self._inputs[axis_name]
         result: float | int | date | None = None
         if issubclass(type(input_), QLineEdit) or issubclass(type(input_), QLabel):
+            input_ = cast(QLineEdit | QLabel, input_)
             if axis_name in LimitsStack.FLOAT_AXIS:
                 try:
                     result = float(input_.text())
