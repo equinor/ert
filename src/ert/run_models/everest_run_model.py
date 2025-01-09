@@ -28,7 +28,7 @@ from typing_extensions import TypedDict
 
 from _ert.events import EESnapshot, EESnapshotUpdate, Event
 from ert.config import ErtConfig, ExtParamConfig
-from ert.ensemble_evaluator import EnsembleSnapshot, EvaluatorServerConfig
+from ert.ensemble_evaluator import EndEvent, EnsembleSnapshot, EvaluatorServerConfig
 from ert.runpaths import Runpaths
 from ert.storage import open_storage
 from everest.config import EverestConfig
@@ -103,10 +103,11 @@ class EverestRunModel(BaseRunModel):
         everest_config: EverestConfig,
         simulation_callback: SimulationCallback | None,
         optimization_callback: OptimizerCallback | None,
+        status_queue: queue.SimpleQueue[StatusEvents] | None = None,
     ):
         Path(everest_config.log_dir).mkdir(parents=True, exist_ok=True)
         Path(everest_config.optimization_output_dir).mkdir(parents=True, exist_ok=True)
-
+        status_queue = queue.SimpleQueue() if status_queue is None else status_queue
         assert everest_config.environment is not None
         logging.getLogger(EVEREST).info(
             "Using random seed: %d. To deterministically reproduce this experiment, "
@@ -136,7 +137,6 @@ class EverestRunModel(BaseRunModel):
         self._status: SimulationStatus | None = None
 
         storage = open_storage(config.ens_path, mode="w")
-        status_queue: queue.SimpleQueue[StatusEvents] = queue.SimpleQueue()
         super().__init__(
             config,
             storage,
@@ -152,12 +152,14 @@ class EverestRunModel(BaseRunModel):
         ever_config: EverestConfig,
         simulation_callback: SimulationCallback | None = None,
         optimization_callback: OptimizerCallback | None = None,
+        status_queue: queue.SimpleQueue[StatusEvents] | None = None,
     ) -> EverestRunModel:
         return cls(
             config=everest_to_ert_config(ever_config),
             everest_config=ever_config,
             simulation_callback=simulation_callback,
             optimization_callback=optimization_callback,
+            status_queue=status_queue,
         )
 
     @classmethod
@@ -222,6 +224,7 @@ class EverestRunModel(BaseRunModel):
                     self._exit_code = EverestExitCode.TOO_FEW_REALIZATIONS
                 case _:
                     self._exit_code = EverestExitCode.COMPLETED
+        self.send_event(EndEvent(failed=bool(self.exit_code)))
 
     def _create_optimizer(self) -> BasicOptimizer:
         RESULT_COLUMNS = {
