@@ -11,7 +11,8 @@ from resdata.summary import Summary
 
 from ert import LibresFacade
 from ert.analysis import ErtAnalysisError, smoother_update
-from ert.config import ErtConfig
+from ert.config import ErtConfig, ESSettings
+from ert.config.analysis_config import UpdateSettings
 from ert.data import MeasuredData
 from ert.enkf_main import sample_prior
 
@@ -102,6 +103,8 @@ def test_that_reading_matching_time_is_ok(ert_config, storage, prior_ensemble):
         target_ensemble,
         prior_ensemble.experiment.observation_keys,
         ert_config.ensemble_config.parameters,
+        UpdateSettings(),
+        ESSettings(),
     )
 
 
@@ -129,6 +132,8 @@ def test_that_mismatched_responses_give_error(ert_config, storage, prior_ensembl
             target_ensemble,
             prior_ensemble.experiment.observation_keys,
             ert_config.ensemble_config.parameters,
+            UpdateSettings(),
+            ESSettings(),
         )
 
 
@@ -160,6 +165,8 @@ def test_that_different_length_is_ok_as_long_as_observation_time_exists(
         target_ensemble,
         prior_ensemble.experiment.observation_keys,
         ert_config.ensemble_config.parameters,
+        UpdateSettings(),
+        ESSettings(),
     )
 
 
@@ -206,6 +213,8 @@ def test_that_duplicate_summary_time_steps_does_not_fail(
         target_ensemble,
         prior_ensemble.experiment.observation_keys,
         ert_config.ensemble_config.parameters,
+        UpdateSettings(),
+        ESSettings(),
     )
 
 
