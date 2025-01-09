@@ -68,33 +68,25 @@ from ert.workflow_runner import WorkflowRunner
 from ..config.analysis_config import UpdateSettings
 from ..run_arg import RunArg
 from .event import (
+    AnalysisEvent,
+    AnalysisStatusEvent,
+    AnalysisTimeEvent,
+    EndEvent,
+    FullSnapshotEvent,
     RunModelDataEvent,
     RunModelErrorEvent,
     RunModelStatusEvent,
     RunModelTimeEvent,
     RunModelUpdateBeginEvent,
     RunModelUpdateEndEvent,
+    SnapshotUpdateEvent,
+    StatusEvents,
 )
 
 logger = logging.getLogger(__name__)
 
 if TYPE_CHECKING:
     from ert.config import QueueConfig
-
-StatusEvents = (
-    FullSnapshotEvent
-    | SnapshotUpdateEvent
-    | EndEvent
-    | AnalysisEvent
-    | AnalysisStatusEvent
-    | AnalysisTimeEvent
-    | RunModelErrorEvent
-    | RunModelStatusEvent
-    | RunModelTimeEvent
-    | RunModelUpdateBeginEvent
-    | RunModelDataEvent
-    | RunModelUpdateEndEvent
-)
 
 
 class OutOfOrderSnapshotUpdateException(ValueError):
