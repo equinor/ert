@@ -1,39 +1,8 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1736412759397,
+  "lastUpdate": 1736418380990,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
-      {
-        "commit": {
-          "author": {
-            "email": "ejah@equinor.com",
-            "name": "Eivind Jahren",
-            "username": "eivindjahren"
-          },
-          "committer": {
-            "email": "ejah@equinor.com",
-            "name": "Eivind Jahren",
-            "username": "eivindjahren"
-          },
-          "distinct": true,
-          "id": "987bb0b555b5f77d07ba64c7a90433adba9eaca2",
-          "message": "Add property test of ensemble_smoother",
-          "timestamp": "2025-01-03T13:31:39+01:00",
-          "tree_id": "796aa000b707084c8f003344ebeaf67393e2d9f9",
-          "url": "https://github.com/equinor/ert/commit/987bb0b555b5f77d07ba64c7a90433adba9eaca2"
-        },
-        "date": 1735907605571,
-        "tool": "pytest",
-        "benches": [
-          {
-            "name": "tests/ert/performance_tests/test_analysis.py::test_and_benchmark_adaptive_localization_with_fields",
-            "value": 0.21585071692996452,
-            "unit": "iter/sec",
-            "range": "stddev: 0.049524646250869074",
-            "extra": "mean: 4.632831496799997 sec\nrounds: 5"
-          }
-        ]
-      },
       {
         "commit": {
           "author": {
@@ -930,6 +899,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.08374957890094412",
             "extra": "mean: 4.5905246159999935 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "havb@equinor.com",
+            "name": "Håvard Berland",
+            "username": "berland"
+          },
+          "committer": {
+            "email": "berland@pvv.ntnu.no",
+            "name": "Håvard Berland",
+            "username": "berland"
+          },
+          "distinct": true,
+          "id": "c4217b16d52c6cac0a6227cf314d7c68581c9523",
+          "message": "Remove exec_env\n\nThis feature has been deprecated since 2019 and can finally be removed. Its last user\nwas the RMS forward model step, which no longer uses it.",
+          "timestamp": "2025-01-09T11:24:28+01:00",
+          "tree_id": "d33b5c86ee9ec64ca9b14e0e991d404ea957586c",
+          "url": "https://github.com/equinor/ert/commit/c4217b16d52c6cac0a6227cf314d7c68581c9523"
+        },
+        "date": 1736418380398,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/ert/performance_tests/test_analysis.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 0.21847536580495114,
+            "unit": "iter/sec",
+            "range": "stddev: 0.027137010108530375",
+            "extra": "mean: 4.577175080199993 sec\nrounds: 5"
           }
         ]
       }
