@@ -1,39 +1,8 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1736411138959,
+  "lastUpdate": 1736412759397,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
-      {
-        "commit": {
-          "author": {
-            "email": "havb@equinor.com",
-            "name": "Håvard Berland",
-            "username": "berland"
-          },
-          "committer": {
-            "email": "berland@pvv.ntnu.no",
-            "name": "Håvard Berland",
-            "username": "berland"
-          },
-          "distinct": true,
-          "id": "a372383de1d69a2b0da463f1fd6897e5cd50b3e0",
-          "message": "Pin iterative_ensemble_smoother\n\nTests are not working with 0.3.0",
-          "timestamp": "2025-01-03T13:11:29+01:00",
-          "tree_id": "8a9d3cc3d4034939aa0154276fc62cf534a14b81",
-          "url": "https://github.com/equinor/ert/commit/a372383de1d69a2b0da463f1fd6897e5cd50b3e0"
-        },
-        "date": 1735906397422,
-        "tool": "pytest",
-        "benches": [
-          {
-            "name": "tests/ert/performance_tests/test_analysis.py::test_and_benchmark_adaptive_localization_with_fields",
-            "value": 0.21740204916053793,
-            "unit": "iter/sec",
-            "range": "stddev: 0.03137568113211991",
-            "extra": "mean: 4.599772651 sec\nrounds: 5"
-          }
-        ]
-      },
       {
         "commit": {
           "author": {
@@ -930,6 +899,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.05912433343272758",
             "extra": "mean: 4.672009949200003 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "49289030+HakonSohoel@users.noreply.github.com",
+            "name": "Håkon Steinkopf Søhoel",
+            "username": "HakonSohoel"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "3a31ffb7788282a00ff39bc8e99016e1fbc3e602",
+          "message": "Include spans for dark storage (#9535)",
+          "timestamp": "2025-01-09T09:50:41+01:00",
+          "tree_id": "8982d9e3891ad3550a6322426dcd9954d9694245",
+          "url": "https://github.com/equinor/ert/commit/3a31ffb7788282a00ff39bc8e99016e1fbc3e602"
+        },
+        "date": 1736412758356,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/ert/performance_tests/test_analysis.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 0.21784002562900132,
+            "unit": "iter/sec",
+            "range": "stddev: 0.08374957890094412",
+            "extra": "mean: 4.5905246159999935 sec\nrounds: 5"
           }
         ]
       }
