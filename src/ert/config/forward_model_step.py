@@ -50,8 +50,6 @@ class ForwardModelStepJSON(TypedDict):
         argList: List of command line arguments to be given to the executable.
         environment: Dictionary of environment variables to inject into the
             environment of the forward model step run
-        exec_env: Dictionary of environment variables to inject into the execution
-            environment of the forward model step.
         max_running_minutes: Maximum runtime in minutes. If the forward model step
             takes longer than this, the job is requested to be cancelled.
     """
@@ -66,7 +64,6 @@ class ForwardModelStepJSON(TypedDict):
     stdin: str
     argList: list[str]
     environment: dict[str, str]
-    exec_env: dict[str, str]
     max_running_minutes: int
 
 
@@ -79,7 +76,6 @@ class ForwardModelStepOptions(TypedDict, total=False):
     error_file: NotRequired[str]
     max_running_minutes: NotRequired[int]
     environment: NotRequired[dict[str, str | int]]
-    exec_env: NotRequired[dict[str, str | int]]
     default_mapping: NotRequired[dict[str, str | int]]
 
 
@@ -131,8 +127,6 @@ class ForwardModelStep:
             and thus also subject to substitution.
         environment: Dictionary representing environment variables to inject into the
             environment of the forward model step run
-        exec_env: Dictionary of environment variables to inject into the execution
-            environment of the forward model step.
         default_mapping: Default values for optional arguments provided by the user.
             For example { "A": "default_A" }
         private_args: A dictionary of user-provided keyword arguments.
@@ -155,7 +149,6 @@ class ForwardModelStep:
     required_keywords: list[str] = field(default_factory=list)
     arg_types: list[SchemaItemType] = field(default_factory=list)
     environment: dict[str, int | str] = field(default_factory=dict)
-    exec_env: dict[str, int | str] = field(default_factory=dict)
     default_mapping: dict[str, int | str] = field(default_factory=dict)
     private_args: Substitutions = field(default_factory=Substitutions)
 
@@ -230,7 +223,6 @@ class ForwardModelStepPlugin(ForwardModelStep):
         error_file = kwargs.get("error_file")
         max_running_minutes = kwargs.get("max_running_minutes")
         environment = kwargs.get("environment", {}) or {}
-        exec_env = kwargs.get("exec_env", {}) or {}
         default_mapping = kwargs.get("default_mapping", {}) or {}
 
         super().__init__(
@@ -249,7 +241,6 @@ class ForwardModelStepPlugin(ForwardModelStep):
             required_keywords=[],
             arg_types=[],
             environment=environment,
-            exec_env=exec_env,
             default_mapping=default_mapping,
             private_args=Substitutions(),
         )

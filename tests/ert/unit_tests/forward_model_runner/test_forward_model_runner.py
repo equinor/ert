@@ -211,53 +211,6 @@ def test_run_multiple_fail_only_runs_one():
 
 
 @pytest.mark.usefixtures("use_tmpdir")
-def test_exec_env():
-    with open("exec_env.py", "w", encoding="utf-8") as f:
-        f.write(
-            """#!/usr/bin/env python\n
-import os
-import json
-with open("exec_env_exec_env.json") as f:
- exec_env = json.load(f)
-assert exec_env["TEST_ENV"] == "123"
-            """
-        )
-    os.chmod("exec_env.py", stat.S_IEXEC + stat.S_IREAD)
-
-    with open("EXEC_ENV", "w", encoding="utf-8") as f:
-        f.write("EXECUTABLE exec_env.py\n")
-        f.write("EXEC_ENV TEST_ENV 123\n")
-
-    forward_model = _forward_model_step_from_config_file(
-        name=None, config_file="EXEC_ENV"
-    )
-
-    with open("jobs.json", mode="w", encoding="utf-8") as fptr:
-        ert_config = ErtConfig(forward_model_steps=[forward_model])
-        json.dump(
-            create_forward_model_json(
-                context=ert_config.substitutions,
-                forward_model_steps=ert_config.forward_model_steps,
-                env_vars=ert_config.env_vars,
-                user_config_file=ert_config.user_config_file,
-                run_id="run_id",
-            ),
-            fptr,
-        )
-
-    with open("jobs.json", encoding="utf-8") as f:
-        jobs_json = json.load(f)
-
-    for msg in list(ForwardModelRunner(jobs_json).run([])):
-        if isinstance(msg, Start):
-            with open("exec_env_exec_env.json", encoding="utf-8") as f:
-                exec_env = json.load(f)
-                assert exec_env["TEST_ENV"] == "123"
-        if isinstance(msg, Exited):
-            assert msg.exit_code == 0
-
-
-@pytest.mark.usefixtures("use_tmpdir")
 def test_env_var_available_inside_step_context():
     with open("run_me.py", "w", encoding="utf-8") as f:
         f.write(

@@ -178,34 +178,6 @@ def test_forward_model_optionals(
 
 
 @pytest.mark.usefixtures("use_tmpdir")
-def test_forward_model_env_and_exec_env_is_set():
-    with open("exec", "w", encoding="utf-8") as f:
-        pass
-
-    os.chmod("exec", stat.S_IXUSR | stat.S_IXGRP | stat.S_IXOTH)
-
-    with open("CONFIG", "w", encoding="utf-8") as f:
-        f.write(
-            dedent(
-                """
-        EXECUTABLE exec
-        ENV a b
-        ENV c d
-        EXEC_ENV a1 b1
-        EXEC_ENV c1 d1
-        """
-            )
-        )
-    forward_model = _forward_model_step_from_config_file("CONFIG")
-
-    assert forward_model.environment["a"] == "b"
-    assert forward_model.environment["c"] == "d"
-
-    assert forward_model.exec_env["a1"] == "b1"
-    assert forward_model.exec_env["c1"] == "d1"
-
-
-@pytest.mark.usefixtures("use_tmpdir")
 def test_forward_model_stdout_stderr_defaults_to_filename():
     with open("exec", "w", encoding="utf-8") as f:
         pass
@@ -706,7 +678,6 @@ def test_that_plugin_forward_models_are_installed(tmp_path):
             "_ERT_REALIZATION_NUMBER": "<IENS>",
             "_ERT_RUNPATH": "<RUNPATH>",
         },
-        "exec_env": {},
         "default_mapping": {},
         "private_args": Substitutions(
             {

@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import contextlib
 import io
-import json
 import logging
 import os
 import signal
@@ -103,7 +102,6 @@ class ForwardModelStep:
 
         errors = self._check_job_files()
         errors.extend(self._assert_arg_list())
-        self._dump_exec_env()
 
         if errors:
             start_message = start_message.with_error("\n".join(errors))
@@ -316,15 +314,6 @@ class ForwardModelStep:
 
     def name(self) -> str:
         return self.job_data["name"]
-
-    def _dump_exec_env(self) -> None:
-        exec_env = self.job_data.get("exec_env")
-        if exec_env:
-            exec_name, _ = os.path.splitext(
-                os.path.basename(cast(Path, self.job_data.get("executable")))
-            )
-            with open(f"{exec_name}_exec_env.json", "w", encoding="utf-8") as f_handle:
-                f_handle.write(json.dumps(exec_env, indent=4))
 
     def _check_job_files(self) -> list[str]:
         """
