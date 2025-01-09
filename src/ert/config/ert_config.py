@@ -193,7 +193,6 @@ def create_forward_model_json(
             "environment": substituter.filter_env_dict(
                 dict(env_pr_fm_step.get(fm_step.name, {}), **fm_step.environment)
             ),
-            "exec_env": substituter.filter_env_dict(fm_step.exec_env),
             "max_running_minutes": fm_step.max_running_minutes,
         }
 
@@ -1133,7 +1132,6 @@ def _forward_model_step_from_config_file(
         )
 
         environment = {k: v for [k, v] in content_dict.get("ENV", [])}
-        exec_env = {k: v for [k, v] in content_dict.get("EXEC_ENV", [])}
         default_mapping = {k: v for [k, v] in content_dict.get("DEFAULT", [])}
 
         return ForwardModelStep(
@@ -1152,7 +1150,6 @@ def _forward_model_step_from_config_file(
             arg_types=arg_types_list,
             environment=environment,
             required_keywords=content_dict.get("REQUIRED", []),
-            exec_env=exec_env,
             default_mapping=default_mapping,
         )
     except OSError as err:

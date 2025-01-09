@@ -24,6 +24,5 @@ class ForwardModelStepKeys(StrEnum):
     REQUIRED = "REQUIRED"
 
     ENV = "ENV"
-    EXEC_ENV = "EXEC_ENV"
     DEFAULT = "DEFAULT"
     PRIVATE_ARGS = "PRIVATE_ARGS"

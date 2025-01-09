@@ -117,16 +117,6 @@ def env_keyword() -> SchemaItem:
     )
 
 
-def exec_env_keyword() -> SchemaItem:
-    return SchemaItem(
-        kw=ForwardModelStepKeys.EXEC_ENV,
-        argc_min=2,
-        argc_max=2,
-        multi_occurrence=True,
-        type_map=[SchemaItemType.STRING, SchemaItemType.STRING],
-    )
-
-
 def default_keyword() -> SchemaItem:
     return SchemaItem(
         kw=ForwardModelStepKeys.DEFAULT,
@@ -153,7 +143,6 @@ forward_model_schema_items: list[SchemaItem] = [
     default_keyword(),  # Default values for args
     arg_type_keyword(),
     env_keyword(),
-    exec_env_keyword(),
 ]
 
 forward_model_deprecations: list[DeprecationInfo] = [
