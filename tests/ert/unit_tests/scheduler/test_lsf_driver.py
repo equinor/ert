@@ -584,7 +584,8 @@ async def test_that_bsub_will_retry_and_fail(
     driver._max_bsub_attempts = 2
     driver._sleep_time_between_cmd_retries = 0.2
     match_str = (
-        f'failed after 2 attempts with exit code {exit_code}.*error: "{error_msg if error_msg else "<empty>"}"'
+        f"failed after 2 attempts with exit code {exit_code}.*"
+        f'error: "{error_msg if error_msg else "<empty>"}"'
         if exit_code != 199
         else 'failed with exit code 199.*error: "Not recognized"'
     )
@@ -1270,6 +1271,21 @@ async def test_polling_bhist_fallback(not_found_bjobs, caplog, job_name):
 
 
 @pytest.mark.integration_test
+async def test_no_exception_when_no_access_to_bjobs_executable(
+    not_found_bjobs, caplog, job_name
+):
+    """The intent of this test is to ensure the driver will not
+    go down if the filesystem is temporarily flaky."""
+    driver = LsfDriver()
+    driver._poll_period = 0.01
+    Path("bin/bjobs").chmod(0x0)  # Modify the bjobs from the fixture
+    await driver.submit(0, "sh", "-c", "echo", name=job_name)
+    with pytest.raises(asyncio.TimeoutError):
+        await asyncio.wait_for(driver.poll(), timeout=0.1)
+    assert "Permission denied" in caplog.text
+
+
+@pytest.mark.integration_test
 async def test_that_kill_before_submit_is_finished_works(tmp_path, monkeypatch, caplog):
     """This test asserts that it is possible to issue a kill command
     to a realization right after it has been submitted (as in driver.submit()).
@@ -1326,7 +1342,8 @@ async def test_that_kill_before_submit_is_finished_works(tmp_path, monkeypatch, 
         )
     )
     await asyncio.sleep(0.01)  # Allow submit task to start executing
-    await driver.kill(0)  # This will wait until the submit is done and then kill
+    # This will wait until the submit is done and then kill
+    await driver.kill(0)
 
     async def finished(iens: int, returncode: int):
         SIGTERM = 15
