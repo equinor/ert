@@ -13,7 +13,7 @@ concurrency:
 
 jobs:
   actionlint:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     name: Check all workflow files
     timeout-minutes: 60
     steps:
