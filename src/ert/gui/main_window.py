@@ -4,7 +4,7 @@ import datetime
 import functools
 import webbrowser
 
-from qtpy.QtCore import QSize, Qt, Signal, Slot
+from qtpy.QtCore import QCoreApplication, QEvent, QSize, Qt, Signal, Slot
 from qtpy.QtGui import QCloseEvent, QCursor, QIcon, QMouseEvent
 from qtpy.QtWidgets import (
     QAction,
@@ -50,7 +50,7 @@ BUTTON_STYLE_SHEET: str = """
 BUTTON_STYLE_SHEET_LIGHT: str = (
     BUTTON_STYLE_SHEET
     + """
-    QToolButton:hover {background-color: rgba(50, 50, 50, 90);}
+    QToolButton:hover {background-color: rgba(50, 50, 50, 50);}
     QToolButton:checked {background-color: rgba(50, 50, 50, 120);}
     """
 )
@@ -58,8 +58,8 @@ BUTTON_STYLE_SHEET_LIGHT: str = (
 BUTTON_STYLE_SHEET_DARK: str = (
     BUTTON_STYLE_SHEET
     + """
-    QToolButton:hover {background-color: rgba(30, 30, 30, 150);}
-    QToolButton:checked {background-color: rgba(30, 30, 30, 120);}
+    QToolButton:hover {background-color: rgba(20, 20, 20, 90);}
+    QToolButton:checked {background-color: rgba(20, 20, 20, 150);}
     """
 )
 
@@ -118,9 +118,9 @@ class ErtMainWindow(QMainWindow):
         self._experiment_panel: ExperimentPanel | None = None
         self._plot_window: PlotWindow | None = None
         self._manage_experiments_panel: ManageExperimentsPanel | None = None
-        self._add_sidebar_button(
+        self.simulation_button = self._add_sidebar_button(
             "Start simulation", QIcon("img:library_add.svg")
-        ).click()
+        )
         plot_button = self._add_sidebar_button("Create plot", QIcon("img:timeline.svg"))
         plot_button.setToolTip("Right click to open external window")
         self._add_sidebar_button("Manage experiments", QIcon("img:build_wrench.svg"))
@@ -128,6 +128,7 @@ class ErtMainWindow(QMainWindow):
             "Simulation status", QIcon("img:in_progress.svg")
         )
         self.results_button.setEnabled(False)
+        self.simulation_button.click()
         self.run_dialog_counter = 0
 
         self.vbox_layout.addStretch()
@@ -190,6 +191,16 @@ class ErtMainWindow(QMainWindow):
             for i, widget in self.central_panels_map.items():
                 widget.setVisible(i == index_name)
 
+            if index_name not in [
+                button.text().replace("\n", " ")
+                for button in self.button_group.buttons()
+            ]:
+                self.results_button.setChecked(True)
+
+    @Slot()
+    def onMenuAboutToHide(self) -> None:
+        QCoreApplication.sendEvent(self.results_button, QEvent(QEvent.Type.Leave))
+
     @Slot(object)
     def slot_add_widget(self, run_dialog: RunDialog) -> None:
         for widget in self.central_panels_map.values():
@@ -219,8 +230,10 @@ class ErtMainWindow(QMainWindow):
         if self.run_dialog_counter == 2:
             # swap from button to menu selection
             self.results_button.clicked.disconnect(self.select_central_widget)
-            self.results_button.setMenu(QMenu())
+            menu = QMenu()
+            self.results_button.setMenu(menu)
             self.results_button.setPopupMode(QToolButton.InstantPopup)
+            menu.aboutToHide.connect(self.onMenuAboutToHide)
 
             for prev_date_time, widget in self.central_panels_map.items():
                 if isinstance(widget, RunDialog):

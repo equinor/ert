@@ -782,11 +782,16 @@ def test_that_simulation_status_button_adds_menu_on_subsequent_runs(
     def find_and_click_button(
         button_name: str, should_click: bool, expected_enabled_state: bool
     ):
-        button = gui.findChild(QToolButton, button_name)
+        button = gui.findChild(SidebarToolButton, button_name)
         assert button
         assert button.isEnabled() == expected_enabled_state
         if should_click:
             qtbot.mouseClick(button, Qt.LeftButton)
+
+    def find_and_check_selected(button_name: str, expected_selected_state: bool):
+        button = gui.findChild(SidebarToolButton, button_name)
+        assert button
+        assert button.isChecked() == expected_selected_state
 
     def run_experiment():
         run_experiment_panel = wait_for_child(gui, qtbot, ExperimentPanel)
@@ -817,7 +822,9 @@ def test_that_simulation_status_button_adds_menu_on_subsequent_runs(
     qtbot.wait_until(lambda: not run_dialog.isHidden(), timeout=5000)
 
     # verify no drop menu
-    button_simulation_status = gui.findChild(QToolButton, "button_Simulation_status")
+    button_simulation_status = gui.findChild(
+        SidebarToolButton, "button_Simulation_status"
+    )
     assert button_simulation_status.menu() is None
 
     find_and_click_button("button_Start_simulation", True, True)
@@ -832,6 +839,18 @@ def test_that_simulation_status_button_adds_menu_on_subsequent_runs(
     QTimer.singleShot(500, lambda: handle_run_path_dialog(gui, qtbot, True))
     run_experiment()
     wait_for_simulation_completed()
+
+    # click on something else just to shift focus
+    find_and_click_button("button_Start_simulation", True, True)
+    # verify correct button in focus
+    find_and_check_selected("button_Start_simulation", True)
+    find_and_check_selected("button_Simulation_status", False)
+
     assert len(button_simulation_status.menu().actions()) == 3
     for choice in button_simulation_status.menu().actions():
         assert "Single realization test-run" in choice.text()
+
+        # verify correct button in focus when selecting from drop-down
+        choice.trigger()
+        find_and_check_selected("button_Start_simulation", False)
+        find_and_check_selected("button_Simulation_status", True)
