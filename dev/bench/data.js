@@ -1,39 +1,8 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1736410058807,
+  "lastUpdate": 1736410114261,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
-      {
-        "commit": {
-          "author": {
-            "email": "havb@equinor.com",
-            "name": "Håvard Berland",
-            "username": "berland"
-          },
-          "committer": {
-            "email": "berland@pvv.ntnu.no",
-            "name": "Håvard Berland",
-            "username": "berland"
-          },
-          "distinct": true,
-          "id": "135c3c9053c91364bc957d979c42a8365c124c6a",
-          "message": "Avoid repeated logging for each cluster in misfit analysis",
-          "timestamp": "2025-01-02T15:48:01+01:00",
-          "tree_id": "f1ed2b06ce0701e3b0e12ccf96829f5a95274d16",
-          "url": "https://github.com/equinor/ert/commit/135c3c9053c91364bc957d979c42a8365c124c6a"
-        },
-        "date": 1735829396671,
-        "tool": "pytest",
-        "benches": [
-          {
-            "name": "tests/ert/performance_tests/test_analysis.py::test_and_benchmark_adaptive_localization_with_fields",
-            "value": 0.21640452699990395,
-            "unit": "iter/sec",
-            "range": "stddev: 0.018154236135735673",
-            "extra": "mean: 4.620975419799993 sec\nrounds: 5"
-          }
-        ]
-      },
       {
         "commit": {
           "author": {
@@ -930,6 +899,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.022408783739957087",
             "extra": "mean: 4.5906319626000025 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "yngve-sk@users.noreply.github.com",
+            "name": "Yngve S. Kristiansen",
+            "username": "yngve-sk"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "2a3c5b60137d6879896ee30552c2e2e6ed36d02a",
+          "message": "Remove test_run_egg_model\n\ntest_egg_snapshot does close to the same thing",
+          "timestamp": "2025-01-09T09:06:40+01:00",
+          "tree_id": "ae5ea5e9ff68405e9e59d9f0dbca57082a5669ad",
+          "url": "https://github.com/equinor/ert/commit/2a3c5b60137d6879896ee30552c2e2e6ed36d02a"
+        },
+        "date": 1736410113159,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/ert/performance_tests/test_analysis.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 0.2200678854876305,
+            "unit": "iter/sec",
+            "range": "stddev: 0.01888290737861992",
+            "extra": "mean: 4.5440523853999935 sec\nrounds: 5"
           }
         ]
       }
