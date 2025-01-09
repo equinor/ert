@@ -1,12 +1,16 @@
 import argparse
+import asyncio
 import datetime
 import json
 import logging
+import multiprocessing as mp
 import os
+import queue
 import socket
 import ssl
 import threading
 import traceback
+import uuid
 from base64 import b64encode
 from functools import partial
 from pathlib import Path
@@ -19,7 +23,7 @@ from cryptography.hazmat.primitives import hashes, serialization
 from cryptography.hazmat.primitives.asymmetric import rsa
 from cryptography.x509.oid import NameOID
 from dns import resolver, reversename
-from fastapi import Depends, FastAPI, HTTPException, Request, status
+from fastapi import Depends, FastAPI, HTTPException, Request, WebSocket, status
 from fastapi.encoders import jsonable_encoder
 from fastapi.responses import (
     JSONResponse,
@@ -32,7 +36,8 @@ from fastapi.security import (
 )
 
 from ert.config.parsing.queue_system import QueueSystem
-from ert.ensemble_evaluator import EvaluatorServerConfig
+from ert.ensemble_evaluator import EndEvent, EvaluatorServerConfig
+from ert.run_models import StatusEvents
 from ert.run_models.everest_run_model import EverestExitCode, EverestRunModel
 from everest import export_to_csv, export_with_progress
 from everest.config import EverestConfig, ServerConfig
@@ -49,6 +54,23 @@ from everest.strings import (
     STOP_ENDPOINT,
 )
 from everest.util import makedirs_if_needed, version_info
+
+
+class EndTaskEvent:
+    pass
+
+
+class Subscriber:
+    def __init__(self) -> None:
+        self.index = 0
+        self._event = asyncio.Event()
+
+    def notify(self):
+        self._event.set()
+
+    async def wait_for_event(self):
+        await self._event.wait()
+        self._event.clear()
 
 
 def _get_machine_name() -> str:
@@ -153,6 +175,29 @@ def _everserver_thread(shared_data, server_config) -> None:
         progress = get_opt_status(server_config["optimization_output_dir"])
         return JSONResponse(jsonable_encoder(progress))
 
+    @app.websocket("/events")
+    async def websocket_endpoint(websocket: WebSocket):
+        subscriber_id = str(uuid.uuid4())
+        await websocket.accept()
+        while True:
+            event = await get_event(subscriber_id=subscriber_id)
+            if isinstance(event, EndTaskEvent):
+                break
+            await websocket.send_json(event)
+            await asyncio.sleep(0.1)
+
+    async def get_event(subscriber_id: str) -> StatusEvents:
+        if subscriber_id not in shared_data["subscribers"]:
+            shared_data["subscribers"][subscriber_id] = Subscriber()
+        subscriber = shared_data["subscribers"][subscriber_id]
+
+        while subscriber.index >= len(shared_data["events"]):
+            await subscriber.wait_for_event()
+
+        event = shared_data["events"][subscriber.index]
+        shared_data["subscribers"][subscriber_id].index += 1
+        return event
+
     uvicorn.run(
         app,
         host="0.0.0.0",
@@ -235,6 +280,10 @@ def _configure_loggers(detached_dir: Path, log_dir: Path, logging_level: int) ->
 
 
 def main():
+    asyncio.run(everserver_main())
+
+
+async def everserver_main():
     arg_parser = argparse.ArgumentParser()
     arg_parser.add_argument("--config-file", type=str)
     arg_parser.add_argument("--debug", action="store_true")
@@ -270,6 +319,8 @@ def main():
         shared_data = {
             SIM_PROGRESS_ENDPOINT: {},
             STOP_ENDPOINT: False,
+            "events": [],
+            "subscribers": {},
         }
 
         server_config = {
@@ -294,14 +345,14 @@ def main():
             message=traceback.format_exc(),
         )
         return
-
+    status_queue: mp.Queue[StatusEvents] = mp.Queue()
     try:
         update_everserver_status(status_path, ServerStatus.running)
-
         run_model = EverestRunModel.create(
             config,
             simulation_callback=partial(_sim_monitor, shared_data=shared_data),
             optimization_callback=partial(_opt_monitor, shared_data=shared_data),
+            status_queue=status_queue,
         )
         if run_model._queue_config.queue_system == QueueSystem.LOCAL:
             evaluator_server_config = EvaluatorServerConfig()
@@ -309,10 +360,36 @@ def main():
             evaluator_server_config = EvaluatorServerConfig(
                 custom_port_range=range(49152, 51819), use_ipc_protocol=False
             )
+        loop = asyncio.get_running_loop()
+        simulation_future = loop.run_in_executor(
+            None,
+            lambda: run_model.run_experiment(evaluator_server_config),
+        )
+        events = []
+        while True:
+            try:
+                item: StatusEvents = status_queue.get(block=False)
+            except queue.Empty:
+                await asyncio.sleep(0.01)
+                continue
 
-        run_model.run_experiment(evaluator_server_config)
+            event = jsonable_encoder(item)
+            shared_data["events"].append(event)
+            for sub in shared_data["subscribers"].values():
+                sub.notify()
+            await asyncio.sleep(0.1)
+
+            if isinstance(item, EndEvent):
+                events.append(EndTaskEvent())
+                for sub in shared_data["subscribers"].values():
+                    sub.notify()
+                break
+
+        await simulation_future
 
         status, message = _get_optimization_status(run_model.exit_code, shared_data)
+        run_model = None
+
         if status != ServerStatus.completed:
             update_everserver_status(status_path, status, message)
             return

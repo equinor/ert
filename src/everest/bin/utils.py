@@ -14,7 +14,6 @@ from ert.resources import all_shell_script_fm_steps
 from everest.config import EverestConfig
 from everest.detached import (
     OPT_PROGRESS_ID,
-    SIM_PROGRESS_ID,
     ServerStatus,
     everserver_status,
     get_opt_status,
@@ -159,17 +158,6 @@ class _DetachedMonitor:
                             self._clear()
                         print(msg + "\n")
                         self._clear_lines = 0
-            if SIM_PROGRESS_ID in status:
-                sim_progress = status[SIM_PROGRESS_ID]
-                sim_progress["progress"] = self._filter_jobs(sim_progress["progress"])
-                msg, batch = self.get_fm_progress(sim_progress)
-                if msg.strip():
-                    # Clear the previous report if it is still the same batch:
-                    if batch == self._last_reported_batch:
-                        self._clear()
-                    print(msg)
-                    self._clear_lines = len(msg.split("\n"))
-                    self._last_reported_batch = batch
         except:
             logging.getLogger(EVEREST).debug(traceback.format_exc())
 
