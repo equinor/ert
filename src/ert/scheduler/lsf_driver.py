@@ -444,9 +444,10 @@ class LsfDriver(Driver):
                     stdout=asyncio.subprocess.PIPE,
                     stderr=asyncio.subprocess.PIPE,
                 )
-            except FileNotFoundError as e:
+            except OSError as e:
                 logger.error(str(e))
-                return
+                await asyncio.sleep(self._poll_period)
+                continue
 
             stdout, stderr = await process.communicate()
             if process.returncode:
@@ -583,12 +584,17 @@ class LsfDriver(Driver):
         if time.time() - self._bhist_cache_timestamp < self._bhist_required_cache_age:
             return {}
 
-        process = await asyncio.create_subprocess_exec(
-            self._bhist_cmd,
-            *[str(job_id) for job_id in missing_job_ids],
-            stdout=asyncio.subprocess.PIPE,
-            stderr=asyncio.subprocess.PIPE,
-        )
+        try:
+            process = await asyncio.create_subprocess_exec(
+                self._bhist_cmd,
+                *[str(job_id) for job_id in missing_job_ids],
+                stdout=asyncio.subprocess.PIPE,
+                stderr=asyncio.subprocess.PIPE,
+            )
+        except OSError as e:
+            logger.error(str(e))
+            return {}
+
         stdout, stderr = await process.communicate()
         if process.returncode:
             logger.error(
