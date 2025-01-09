@@ -4,8 +4,10 @@ import json
 import logging
 import os
 import re
+import ssl
 import time
 import traceback
+from base64 import b64encode
 from collections.abc import Callable, Mapping
 from enum import Enum
 from pathlib import Path
@@ -13,7 +15,11 @@ from typing import Any, Literal
 
 import polars as pl
 import requests
+from pydantic import ValidationError
+from websockets.sync.client import connect
 
+from ert.ensemble_evaluator import EndEvent
+from ert.run_models.event import status_event_from_json
 from ert.scheduler import create_driver
 from ert.scheduler.driver import Driver, FailedSubmit
 from ert.scheduler.event import StartedEvent
@@ -23,7 +29,6 @@ from everest.strings import (
     EVEREST_SERVER_CONFIG,
     OPT_PROGRESS_ENDPOINT,
     OPT_PROGRESS_ID,
-    SIM_PROGRESS_ENDPOINT,
     SIM_PROGRESS_ID,
     START_EXPERIMENT_ENDPOINT,
     STOP_ENDPOINT,
@@ -40,6 +45,7 @@ PROXY = {"http": None, "https": None}
 # Information from the client side is relatively uninteresting, so we show it in
 # the default logger (stdout). Info from the server will be logged to the
 # everest.log file instead
+logger = logging.getLogger(__name__)
 
 
 async def start_server(
@@ -252,29 +258,42 @@ def start_monitor(
     interrupted by returning True from the callback
     """
     url, cert, auth = server_context
-    sim_endpoint = "/".join([url, SIM_PROGRESS_ENDPOINT])
     opt_endpoint = "/".join([url, OPT_PROGRESS_ENDPOINT])
-
-    sim_status: dict[str, Any] = {}
     opt_status: dict[str, Any] = {}
     stop = False
 
-    try:
-        while not stop:
-            new_sim_status = _query_server(cert, auth, sim_endpoint)
-            if new_sim_status != sim_status:
-                sim_status = new_sim_status
-                ret = bool(callback({SIM_PROGRESS_ID: sim_status}))
-                stop |= ret
-            # When the API will support it query only from a certain batch on
+    ssl_context = ssl.create_default_context()
+    ssl_context.load_verify_locations(cafile=cert)
+    username, password = auth
+    credentials = b64encode(f"{username}:{password}".encode()).decode()
 
-            # Check the optimization status
-            new_opt_status = _query_server(cert, auth, opt_endpoint)
-            if new_opt_status != opt_status:
-                opt_status = new_opt_status
-                ret = bool(callback({OPT_PROGRESS_ID: opt_status}))
-                stop |= ret
-            time.sleep(polling_interval)
+    try:
+        with connect(
+            url.replace("https://", "wss://") + "/events",
+            ssl=ssl_context,
+            open_timeout=30,
+            additional_headers={"Authorization": f"Basic {credentials}"},
+        ) as websocket:
+            while not stop:
+                try:
+                    message = websocket.recv(timeout=1.0)
+                except TimeoutError:
+                    message = None
+                if message:
+                    try:
+                        event = status_event_from_json(message)
+                    except ValidationError as e:
+                        logger.error("Error when processing event %s", exc_info=e)
+                    if isinstance(event, EndEvent):
+                        print(event.msg)
+                    callback({SIM_PROGRESS_ID: event})
+                # Check the optimization status
+                new_opt_status = _query_server(cert, auth, opt_endpoint)
+                if new_opt_status != opt_status:
+                    opt_status = new_opt_status
+                    ret = bool(callback({OPT_PROGRESS_ID: opt_status}))
+                    stop |= ret
+                time.sleep(polling_interval)
     except:
         logging.debug(traceback.format_exc())
 

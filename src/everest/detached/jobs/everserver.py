@@ -1,14 +1,17 @@
 import argparse
+import asyncio
 import datetime
 import json
 import logging
 import os
+import queue
 import random
 import socket
 import ssl
 import threading
 import traceback
-from base64 import b64encode
+import uuid
+from base64 import b64decode, b64encode
 from contextlib import asynccontextmanager
 from functools import partial
 from pathlib import Path
@@ -22,7 +25,16 @@ from cryptography.hazmat.primitives import hashes, serialization
 from cryptography.hazmat.primitives.asymmetric import rsa
 from cryptography.x509.oid import NameOID
 from dns import resolver, reversename
-from fastapi import Depends, FastAPI, HTTPException, Request, status
+from fastapi import (
+    BackgroundTasks,
+    Depends,
+    FastAPI,
+    HTTPException,
+    Request,
+    WebSocket,
+    WebSocketException,
+    status,
+)
 from fastapi.encoders import jsonable_encoder
 from fastapi.responses import (
     JSONResponse,
@@ -36,8 +48,18 @@ from fastapi.security import (
 from pydantic import BaseModel
 
 from ert.config.parsing.queue_system import QueueSystem
-from ert.ensemble_evaluator import EvaluatorServerConfig
-from ert.run_models.everest_run_model import EverestExitCode, EverestRunModel
+from ert.ensemble_evaluator import (
+    EndEvent,
+    EnsembleSnapshot,
+    EvaluatorServerConfig,
+    FullSnapshotEvent,
+    SnapshotUpdateEvent,
+)
+from ert.run_models import StatusEvents
+from ert.run_models.everest_run_model import (
+    EverestExitCode,
+    EverestRunModel,
+)
 from everest.config import EverestConfig, ServerConfig
 from everest.detached import (
     ServerStatus,
@@ -45,7 +67,6 @@ from everest.detached import (
     update_everserver_status,
 )
 from everest.plugins.everest_plugin_manager import EverestPluginManager
-from everest.simulator import JOB_FAILURE
 from everest.strings import (
     DEFAULT_LOGGING_FORMAT,
     EVEREST,
@@ -53,7 +74,6 @@ from everest.strings import (
     OPT_PROGRESS_ENDPOINT,
     OPTIMIZATION_LOG_DIR,
     OPTIMIZATION_OUTPUT_DIR,
-    SIM_PROGRESS_ENDPOINT,
     START_EXPERIMENT_ENDPOINT,
     STOP_ENDPOINT,
 )
@@ -81,7 +101,7 @@ class ExperimentFailed(EverestServerMsg):
     pass
 
 
-class ExperimentRunner(threading.Thread):
+class ExperimentRunner:
     def __init__(
         self,
         everest_config: EverestConfig,
@@ -94,25 +114,45 @@ class ExperimentRunner(threading.Thread):
         self._shared_data = shared_data
         self._msg_queue = msg_queue
 
-    def run(self) -> None:
-        try:
-            run_model = EverestRunModel.create(
-                self._everest_config,
-                simulation_callback=partial(
-                    _sim_monitor, shared_data=self._shared_data
-                ),
-                optimization_callback=partial(
-                    _opt_monitor, shared_data=self._shared_data
-                ),
-            )
-            if run_model._queue_config.queue_system == QueueSystem.LOCAL:
-                evaluator_server_config = EvaluatorServerConfig()
-            else:
-                evaluator_server_config = EvaluatorServerConfig(
-                    port_range=(49152, 51819), use_ipc_protocol=False
-                )
+    async def run(self) -> None:
+        status_queue: SimpleQueue[StatusEvents] = SimpleQueue()
+        run_model = EverestRunModel.create(
+            self._everest_config,
+            optimization_callback=partial(_opt_monitor, shared_data=self._shared_data),
+            status_queue=status_queue,
+        )
 
-            run_model.run_experiment(evaluator_server_config)
+        if run_model._queue_config.queue_system == QueueSystem.LOCAL:
+            evaluator_server_config = EvaluatorServerConfig()
+        else:
+            evaluator_server_config = EvaluatorServerConfig(
+                port_range=(49152, 51819), use_ipc_protocol=False
+            )
+
+        try:
+            loop = asyncio.get_running_loop()
+            simulation_future = loop.run_in_executor(
+                None,
+                lambda: run_model.start_simulations_thread(evaluator_server_config),
+            )
+            while True:
+                if self._shared_data[STOP_ENDPOINT]:
+                    run_model.cancel()
+                    raise ValueError("Optimization aborted")
+                try:
+                    item: StatusEvents = status_queue.get(block=False)
+                except queue.Empty:
+                    await asyncio.sleep(0.01)
+                    continue
+
+                self._shared_data["events"].append(item)
+                for sub in self._shared_data["subscribers"].values():
+                    sub.notify()
+
+                if isinstance(item, EndEvent):
+                    break
+                await asyncio.sleep(0.1)
+            await simulation_future
             assert run_model.exit_code is not None
             self._msg_queue.put(
                 ExperimentComplete(
@@ -121,6 +161,26 @@ class ExperimentRunner(threading.Thread):
             )
         except Exception as e:
             self._msg_queue.put(ExperimentFailed(msg=str(e)))
+
+
+class Subscriber:
+    """
+    This class keeps track of events and allows subscribers
+    to wait for new events to occur. Each subscriber instance
+    can be notified of an event, at which point any coroutines
+    that are waiting for an event will resume execution.
+    """
+
+    def __init__(self) -> None:
+        self.index = 0
+        self._event = asyncio.Event()
+
+    def notify(self) -> None:
+        self._event.set()
+
+    async def wait_for_event(self) -> None:
+        await self._event.wait()
+        self._event.clear()
 
 
 def _get_machine_name() -> str:
@@ -150,27 +210,6 @@ def _get_machine_name() -> str:
         return "localhost"
 
 
-def _sim_monitor(
-    context_status: dict[str, Any], shared_data: dict[str, Any]
-) -> str | None:
-    status_ = context_status["status"]
-    shared_data[SIM_PROGRESS_ENDPOINT] = {
-        "batch_number": context_status["batch_number"],
-        "status": {
-            "running": status_.get("Running", 0),
-            "waiting": status_.get("Waiting", 0),
-            "pending": status_.get("Pending", 0),
-            "complete": status_.get("Finished", 0),
-            "failed": status_.get("Failed", 0),
-        },
-        "progress": context_status["progress"],
-    }
-
-    if shared_data[STOP_ENDPOINT]:
-        return "stop_queue"
-    return None
-
-
 def _opt_monitor(shared_data: dict[str, Any]) -> str | None:
     if shared_data[STOP_ENDPOINT]:
         return "stop_optimization"
@@ -194,7 +233,16 @@ def _everserver_thread(
     app = FastAPI(lifespan=lifespan)
     security = HTTPBasic()
 
-    runner: ExperimentRunner | None = None
+    def _check_authentication(auth_header: str) -> None:
+        if auth_header is None:
+            raise WebSocketException(
+                code=status.WS_1008_POLICY_VIOLATION, reason="No authentication"
+            )
+        _, encoded_credentials = auth_header.split(" ")
+        decoded_credentials = b64decode(encoded_credentials).decode("utf-8")
+        _, _, password = decoded_credentials.partition(":")
+        if password != server_config["authentication"]:
+            raise WebSocketException(code=status.WS_1008_POLICY_VIOLATION)
 
     def _check_user(credentials: HTTPBasicCredentials) -> None:
         if credentials.password != server_config["authentication"]:
@@ -227,15 +275,6 @@ def _everserver_thread(
         msg_queue.put(ServerStopped())
         return Response("Raise STOP flag succeeded. Everest initiates shutdown..", 200)
 
-    @app.get("/" + SIM_PROGRESS_ENDPOINT)
-    def get_sim_progress(
-        request: Request, credentials: HTTPBasicCredentials = Depends(security)
-    ) -> JSONResponse:
-        _log(request)
-        _check_user(credentials)
-        progress = shared_data[SIM_PROGRESS_ENDPOINT]
-        return JSONResponse(jsonable_encoder(progress))
-
     @app.get("/" + OPT_PROGRESS_ENDPOINT)
     def get_opt_progress(
         request: Request, credentials: HTTPBasicCredentials = Depends(security)
@@ -246,24 +285,56 @@ def _everserver_thread(
         return JSONResponse(jsonable_encoder(progress))
 
     @app.post("/" + START_EXPERIMENT_ENDPOINT)
-    def start_experiment(
+    async def start_experiment(
         config: EverestConfig,
         request: Request,
+        background_tasks: BackgroundTasks,
         credentials: HTTPBasicCredentials = Depends(security),
     ) -> Response:
         _log(request)
         _check_user(credentials)
-
-        nonlocal runner
-        if runner is None:
+        if not shared_data["started"]:
             runner = ExperimentRunner(config, shared_data, msg_queue)
             try:
-                runner.start()
+                background_tasks.add_task(runner.run)
+                shared_data["started"] = True
                 return Response("Everest experiment started")
             except Exception as e:
                 return Response(f"Could not start experiment: {e!s}", status_code=501)
         return Response("Everest experiment is running")
 
+    @app.websocket("/events")
+    async def websocket_endpoint(websocket: WebSocket) -> None:
+        await websocket.accept()
+        _check_authentication(websocket.headers.get("Authorization"))
+        subscriber_id = str(uuid.uuid4())
+        while True:
+            event = await get_event(subscriber_id=subscriber_id)
+            await websocket.send_json(jsonable_encoder(event))
+            await asyncio.sleep(0.1)
+            if isinstance(event, EndEvent):
+                # Give some time for subscribers to get events
+                await asyncio.sleep(5)
+                break
+
+    async def get_event(subscriber_id: str) -> StatusEvents:
+        """
+        The function waits until there is an event available for the subscriber
+        and returns the event. If the subscriber is up to date it will
+        wait until we wake up the subscriber using notify
+        """
+        if subscriber_id not in shared_data["subscribers"]:
+            shared_data["subscribers"][subscriber_id] = Subscriber()
+        subscriber = shared_data["subscribers"][subscriber_id]
+
+        while subscriber.index >= len(shared_data["events"]):
+            await subscriber.wait_for_event()
+
+        event = shared_data["events"][subscriber.index]
+        subscriber.index += 1
+        return event
+
+    # Configure the Uvicorn server
     uvicorn.run(
         app,
         host="0.0.0.0",
@@ -345,6 +416,7 @@ def _configure_loggers(detached_dir: Path, log_dir: Path, logging_level: int) ->
             "everserver": {"handlers": ["everserver"]},
             "everest": {"handlers": ["everest"]},
             "forward_models": {"handlers": ["forward_models"]},
+            "ert.scheduler.job": {"handlers": ["forward_models"], "propagate": False},
         },
         "formatters": {
             "default": {"format": DEFAULT_LOGGING_FORMAT},
@@ -389,8 +461,10 @@ def main() -> None:
         _write_hostfile(host_file, host, port, cert_path, authentication)
 
         shared_data = {
-            SIM_PROGRESS_ENDPOINT: {},
             STOP_ENDPOINT: False,
+            "started": False,
+            "events": [],
+            "subscribers": {},
         }
 
         server_config = {
@@ -471,16 +545,22 @@ def _get_optimization_status(
 
 
 def _failed_realizations_messages(shared_data: dict[str, Any]) -> list[str]:
+    snapshots: dict[int, EnsembleSnapshot] = {}
+    for event in shared_data["events"]:
+        if isinstance(event, FullSnapshotEvent) and event.snapshot:
+            snapshots[event.iteration] = event.snapshot
+        elif isinstance(event, SnapshotUpdateEvent) and event.snapshot:
+            snapshot = snapshots[event.iteration]
+            assert isinstance(snapshot, EnsembleSnapshot)
+            snapshot.merge_snapshot(event.snapshot)
+    logging.getLogger("forward_models").info("Status event")
     messages = [OPT_FAILURE_REALIZATIONS]
-    failed = shared_data[SIM_PROGRESS_ENDPOINT]["status"]["failed"]
-    if failed > 0:
-        # Report each unique pair of failed job name and error
-        for queue in shared_data[SIM_PROGRESS_ENDPOINT]["progress"]:
-            for job in queue:
-                if job["status"] == JOB_FAILURE:
-                    err_msg = f"{job['name']} Failed with: {job.get('error', '')}"
-                    if err_msg not in messages:
-                        messages.append(err_msg)
+    for snapshot in snapshots.values():
+        for job in snapshot.get_all_fm_steps().values():
+            if error := job.get("error"):
+                msg = f"{job['name']} Failed with: {error}"
+                if msg not in messages:
+                    messages.append(msg)
     return messages
 
 
