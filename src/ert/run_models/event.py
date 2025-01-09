@@ -4,7 +4,17 @@ from dataclasses import dataclass
 from pathlib import Path
 from uuid import UUID
 
+from ert.analysis import (
+    AnalysisEvent,
+    AnalysisStatusEvent,
+    AnalysisTimeEvent,
+)
 from ert.analysis.event import DataSection
+from ert.ensemble_evaluator.event import (
+    EndEvent,
+    FullSnapshotEvent,
+    SnapshotUpdateEvent,
+)
 
 
 @dataclass
@@ -56,3 +66,19 @@ class RunModelErrorEvent(RunModelEvent):
     def write_as_csv(self, output_path: Path | None) -> None:
         if output_path and self.data:
             self.data.to_csv("Report", output_path / str(self.run_id))
+
+
+StatusEvents = (
+    AnalysisEvent
+    | AnalysisStatusEvent
+    | AnalysisTimeEvent
+    | EndEvent
+    | FullSnapshotEvent
+    | SnapshotUpdateEvent
+    | RunModelErrorEvent
+    | RunModelStatusEvent
+    | RunModelTimeEvent
+    | RunModelUpdateBeginEvent
+    | RunModelDataEvent
+    | RunModelUpdateEndEvent
+)
