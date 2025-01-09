@@ -1,39 +1,8 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1736428047765,
+  "lastUpdate": 1736437376441,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
-      {
-        "commit": {
-          "author": {
-            "email": "ejah@equinor.com",
-            "name": "Eivind Jahren",
-            "username": "eivindjahren"
-          },
-          "committer": {
-            "email": "ejah@equinor.com",
-            "name": "Eivind Jahren",
-            "username": "eivindjahren"
-          },
-          "distinct": true,
-          "id": "719a81e8b66424dddacfc4564255d0ff1fb9a361",
-          "message": "Set up dependabot for github actions",
-          "timestamp": "2025-01-06T08:22:45+01:00",
-          "tree_id": "3a6bf743cedc1801f8e1c0c4ae703f959d75acf9",
-          "url": "https://github.com/equinor/ert/commit/719a81e8b66424dddacfc4564255d0ff1fb9a361"
-        },
-        "date": 1736148274354,
-        "tool": "pytest",
-        "benches": [
-          {
-            "name": "tests/ert/performance_tests/test_analysis.py::test_and_benchmark_adaptive_localization_with_fields",
-            "value": 0.20463628202251075,
-            "unit": "iter/sec",
-            "range": "stddev: 0.0255482766256843",
-            "extra": "mean: 4.886718963599995 sec\nrounds: 5"
-          }
-        ]
-      },
       {
         "commit": {
           "author": {
@@ -930,6 +899,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.012002047937071825",
             "extra": "mean: 4.539961854800003 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "havb@equinor.com",
+            "name": "Håvard Berland",
+            "username": "berland"
+          },
+          "committer": {
+            "email": "berland@pvv.ntnu.no",
+            "name": "Håvard Berland",
+            "username": "berland"
+          },
+          "distinct": true,
+          "id": "1ae12f6efb66e9fa4208faef2a04898043cdcb37",
+          "message": "Replace erts interface towards reservoir simulators\n\nThis replaces the yaml configuration file for Eclipse100/300 with a set\nof environment variables set through the plugin system. Ert cannot any\nlonger start the raw Eclipse binary itself, it depends on the vendor\nsupplied wrapper binary called \"eclrun\".\n\nSimilarly, for OPM flow, Ert will now support a wrapper script \"flowrun\"\nif it is present, assuming it has a similar command line API as eclrun.\nIf flowrun is not present, it will look for a binary \"flow\" in $PATH\nwhich can be used, but then only with single-cpu possibilities.\n\nUsers can point to a custom location of eclrun by adding SETENV to the\nconfiguration file.",
+          "timestamp": "2025-01-09T16:40:43+01:00",
+          "tree_id": "3e58eb10aacae19e6e717c57d30f333d00533dac",
+          "url": "https://github.com/equinor/ert/commit/1ae12f6efb66e9fa4208faef2a04898043cdcb37"
+        },
+        "date": 1736437375543,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/ert/performance_tests/test_analysis.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 0.2168821050902408,
+            "unit": "iter/sec",
+            "range": "stddev: 0.04013748871607781",
+            "extra": "mean: 4.610799953200001 sec\nrounds: 5"
           }
         ]
       }
