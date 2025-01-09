@@ -40,3 +40,19 @@ def test_that_ert_warns_on_duplicate_workflow_jobs(tmp_path):
         ErtPluginContext(),
     ):
         _ = ErtConfig.from_file(test_config_file_name)
+
+
+@pytest.mark.usefixtures("use_tmpdir")
+def test_stop_on_fail_is_parsed_external():
+    with open("fail_job", "w+", encoding="utf-8") as f:
+        f.write("INTERNAL False\n")
+        f.write("EXECUTABLE echo\n")
+        f.write("MIN_ARG 1\n")
+        f.write("STOP_ON_FAIL True\n")
+
+    job_internal = WorkflowJob.from_file(
+        name="FAIL",
+        config_file="fail_job",
+    )
+
+    assert job_internal.stop_on_fail
