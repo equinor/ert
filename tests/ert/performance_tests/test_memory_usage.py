@@ -13,7 +13,8 @@ import pytest
 import xtgeo
 
 from ert.analysis import smoother_update
-from ert.config import ErtConfig
+from ert.config import ErtConfig, ESSettings
+from ert.config.analysis_config import UpdateSettings
 from ert.enkf_main import sample_prior
 from ert.mode_definitions import ENSEMBLE_SMOOTHER_MODE
 from ert.storage import open_storage
@@ -65,6 +66,8 @@ def test_memory_smoothing(poly_template):
                 posterior_ens,
                 list(experiment.observation_keys),
                 list(ert_config.ensemble_config.parameters),
+                UpdateSettings(),
+                ESSettings(),
             )
 
     stats = memray._memray.compute_statistics(str(poly_template / "memray.bin"))

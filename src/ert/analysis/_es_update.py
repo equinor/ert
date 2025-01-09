@@ -22,7 +22,7 @@ from iterative_ensemble_smoother.experimental import AdaptiveESMDA
 from ert.config import GenKwConfig
 
 from ..config.analysis_config import ObservationGroups, UpdateSettings
-from ..config.analysis_module import ESSettings, IESSettings
+from ..config.analysis_module import BaseSettings, ESSettings, IESSettings
 from . import misfit_preprocessor
 from .event import (
     AnalysisCompleteEvent,
@@ -749,14 +749,14 @@ def analysis_IES(
 def _create_smoother_snapshot(
     prior_name: str,
     posterior_name: str,
-    analysis_config: UpdateSettings,
+    update_settings: UpdateSettings,
     global_scaling: float,
 ) -> SmootherSnapshot:
     return SmootherSnapshot(
         source_ensemble_name=prior_name,
         target_ensemble_name=posterior_name,
-        alpha=analysis_config.alpha,
-        std_cutoff=analysis_config.std_cutoff,
+        alpha=update_settings.alpha,
+        std_cutoff=update_settings.std_cutoff,
         global_scaling=global_scaling,
         update_step_snapshots=[],
     )
@@ -767,8 +767,8 @@ def smoother_update(
     posterior_storage: Ensemble,
     observations: Iterable[str],
     parameters: Iterable[str],
-    analysis_config: UpdateSettings | None = None,
-    es_settings: ESSettings | None = None,
+    update_settings: UpdateSettings,
+    es_settings: BaseSettings,
     rng: np.random.Generator | None = None,
     progress_callback: Callable[[AnalysisEvent], None] | None = None,
     global_scaling: float = 1.0,
@@ -777,14 +777,15 @@ def smoother_update(
         progress_callback = noop_progress_callback
     if rng is None:
         rng = np.random.default_rng()
-    analysis_config = UpdateSettings() if analysis_config is None else analysis_config
-    es_settings = ESSettings() if es_settings is None else es_settings
+
+    assert isinstance(es_settings, ESSettings)
+
     ens_mask = prior_storage.get_realization_mask_with_responses()
 
     smoother_snapshot = _create_smoother_snapshot(
         prior_storage.name,
         posterior_storage.name,
-        analysis_config,
+        update_settings,
         global_scaling,
     )
 
@@ -794,15 +795,15 @@ def smoother_update(
             observations,
             rng,
             es_settings,
-            analysis_config.alpha,
-            analysis_config.std_cutoff,
+            update_settings.alpha,
+            update_settings.std_cutoff,
             global_scaling,
             smoother_snapshot,
             ens_mask,
             prior_storage,
             posterior_storage,
             progress_callback,
-            analysis_config.auto_scale_observations,
+            update_settings.auto_scale_observations,
         )
     except Exception as e:
         progress_callback(

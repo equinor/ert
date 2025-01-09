@@ -8,7 +8,8 @@ import polars
 import pytest
 
 from ert.analysis import smoother_update
-from ert.config import GenDataConfig, GenKwConfig, SummaryConfig
+from ert.config import ESSettings, GenDataConfig, GenKwConfig, SummaryConfig
+from ert.config.analysis_config import UpdateSettings
 from ert.config.gen_kw_config import TransformFunctionDefinition
 from ert.enkf_main import sample_prior
 from ert.storage import open_storage
@@ -506,6 +507,8 @@ def test_memory_performance_of_doing_es_update(setup_es_benchmark, tmp_path):
             posterior,
             prior.experiment.observation_keys,
             [gen_kw_name],
+            UpdateSettings(),
+            ESSettings(),
         )
 
     stats = memray._memray.compute_statistics(str(tmp_path / "memray.bin"))
@@ -525,6 +528,8 @@ def test_speed_performance_of_doing_es_update(setup_es_benchmark, benchmark):
             posterior,
             prior.experiment.observation_keys,
             [gen_kw_name],
+            UpdateSettings(),
+            ESSettings(),
         )
 
     benchmark(run)

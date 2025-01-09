@@ -31,7 +31,8 @@ from ert.analysis.event import (
     AnalysisDataEvent,
     AnalysisErrorEvent,
 )
-from ert.config import ErtConfig, ESSettings, HookRuntime, QueueSystem
+from ert.config import ErtConfig, HookRuntime, QueueSystem
+from ert.config.analysis_module import BaseSettings
 from ert.enkf_main import _seed_sequence, create_run_path
 from ert.ensemble_evaluator import Ensemble as EEEnsemble
 from ert.ensemble_evaluator import (
@@ -732,7 +733,7 @@ class BaseRunModel(ABC):
 class UpdateRunModel(BaseRunModel):
     def __init__(
         self,
-        es_settings: ESSettings,
+        analysis_settings: BaseSettings,
         update_settings: UpdateSettings,
         config: ErtConfig,
         storage: Storage,
@@ -744,8 +745,9 @@ class UpdateRunModel(BaseRunModel):
         random_seed: int | None,
         minimum_required_realizations: int,
     ):
-        self.es_settings = es_settings
-        self.update_settings = update_settings
+        self._analysis_settings: BaseSettings = analysis_settings
+        self._update_settings: UpdateSettings = update_settings
+
         super().__init__(
             config,
             storage,
@@ -786,8 +788,8 @@ class UpdateRunModel(BaseRunModel):
             smoother_update(
                 prior,
                 posterior,
-                analysis_config=self.update_settings,
-                es_settings=self.es_settings,
+                update_settings=self._update_settings,
+                es_settings=self._analysis_settings,
                 parameters=prior.experiment.update_parameters,
                 observations=prior.experiment.observation_keys,
                 global_scaling=weight,
