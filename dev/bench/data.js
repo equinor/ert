@@ -1,39 +1,8 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1736410114261,
+  "lastUpdate": 1736411138959,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
-      {
-        "commit": {
-          "author": {
-            "email": "frodeaarstad@gmail.com",
-            "name": "Frode Aarstad",
-            "username": "frode-aarstad"
-          },
-          "committer": {
-            "email": "frodeaarstad@gmail.com",
-            "name": "Frode Aarstad",
-            "username": "frode-aarstad"
-          },
-          "distinct": true,
-          "id": "7e8d20cdc4001980021b6b51b87e76e53a5c6dfc",
-          "message": "Change needed for updated everest-models",
-          "timestamp": "2025-01-03T09:23:55+01:00",
-          "tree_id": "68e380011fb2204e36e75a0dd9ff56f48f40d243",
-          "url": "https://github.com/equinor/ert/commit/7e8d20cdc4001980021b6b51b87e76e53a5c6dfc"
-        },
-        "date": 1735892743897,
-        "tool": "pytest",
-        "benches": [
-          {
-            "name": "tests/ert/performance_tests/test_analysis.py::test_and_benchmark_adaptive_localization_with_fields",
-            "value": 0.22004640687181604,
-            "unit": "iter/sec",
-            "range": "stddev: 0.023821548294085563",
-            "extra": "mean: 4.5444959280000035 sec\nrounds: 5"
-          }
-        ]
-      },
       {
         "commit": {
           "author": {
@@ -930,6 +899,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.01888290737861992",
             "extra": "mean: 4.5440523853999935 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "hsoho@equinor.com",
+            "name": "Håkon Steinkopf Søhoel",
+            "username": "HakonSohoel"
+          },
+          "committer": {
+            "email": "49289030+HakonSohoel@users.noreply.github.com",
+            "name": "Håkon Steinkopf Søhoel",
+            "username": "HakonSohoel"
+          },
+          "distinct": true,
+          "id": "71e38f20fdec8d89f4c63348ec2ec766fd279119",
+          "message": "Make realization number span attribute",
+          "timestamp": "2025-01-09T09:23:47+01:00",
+          "tree_id": "dd91b82eebad34d4f7bf8822b74f9b0033ccc11f",
+          "url": "https://github.com/equinor/ert/commit/71e38f20fdec8d89f4c63348ec2ec766fd279119"
+        },
+        "date": 1736411138484,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/ert/performance_tests/test_analysis.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 0.21404064008280457,
+            "unit": "iter/sec",
+            "range": "stddev: 0.05912433343272758",
+            "extra": "mean: 4.672009949200003 sec\nrounds: 5"
           }
         ]
       }
