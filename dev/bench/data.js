@@ -1,39 +1,8 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1736323539637,
+  "lastUpdate": 1736409721745,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
-      {
-        "commit": {
-          "author": {
-            "email": "havb@equinor.com",
-            "name": "Håvard Berland",
-            "username": "berland"
-          },
-          "committer": {
-            "email": "berland@pvv.ntnu.no",
-            "name": "Håvard Berland",
-            "username": "berland"
-          },
-          "distinct": true,
-          "id": "45a4b7ca72b6bdda0a777d7a4712d19d97ab32b6",
-          "message": "Workaround Python bug for shutil.copytree() exceptions\n\nSee https://github.com/python/cpython/issues/102931\n\nThis PR will detect if the bug is triggered, and massage the data\naccordingly. Patch is prepared upstream destined for Python 3.14.\n\nExisting tests are split for readability and preciseness, and extended\nto test that the workaround is performing as it should.",
-          "timestamp": "2025-01-02T09:50:23+01:00",
-          "tree_id": "c547f6e90012d98758f3c8a6061b15f77febb069",
-          "url": "https://github.com/equinor/ert/commit/45a4b7ca72b6bdda0a777d7a4712d19d97ab32b6"
-        },
-        "date": 1735807930663,
-        "tool": "pytest",
-        "benches": [
-          {
-            "name": "tests/ert/performance_tests/test_analysis.py::test_and_benchmark_adaptive_localization_with_fields",
-            "value": 0.2204107451657714,
-            "unit": "iter/sec",
-            "range": "stddev: 0.0216063470528396",
-            "extra": "mean: 4.536983889999999 sec\nrounds: 5"
-          }
-        ]
-      },
       {
         "commit": {
           "author": {
@@ -930,6 +899,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.011818798830819769",
             "extra": "mean: 4.679093480199993 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "havb@equinor.com",
+            "name": "Håvard Berland",
+            "username": "berland"
+          },
+          "committer": {
+            "email": "berland@pvv.ntnu.no",
+            "name": "Håvard Berland",
+            "username": "berland"
+          },
+          "distinct": true,
+          "id": "e32c0adbff11fb48db0394bfee2ae7111ed6869f",
+          "message": "Make timestamps in dmesg output human readable",
+          "timestamp": "2025-01-09T09:00:10+01:00",
+          "tree_id": "e87d8cf704d33adad00ded5775b25c0ea32842e6",
+          "url": "https://github.com/equinor/ert/commit/e32c0adbff11fb48db0394bfee2ae7111ed6869f"
+        },
+        "date": 1736409721157,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/ert/performance_tests/test_analysis.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 0.21833625860587397,
+            "unit": "iter/sec",
+            "range": "stddev: 0.028542746552989325",
+            "extra": "mean: 4.5800913068 sec\nrounds: 5"
           }
         ]
       }
