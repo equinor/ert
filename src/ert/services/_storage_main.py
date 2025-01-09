@@ -7,13 +7,16 @@ import random
 import signal
 import socket
 import string
+import sys
 import threading
 import time
 import warnings
+from types import FrameType
 from typing import Any
 
 import uvicorn
 import yaml
+from opentelemetry.trace.propagation.tracecontext import TraceContextTextMapPropagator
 from uvicorn.supervisors import ChangeReload
 
 from ert.logging import STORAGE_LOG_CONFIG
@@ -21,6 +24,9 @@ from ert.plugins import ErtPluginContext
 from ert.shared import __file__ as ert_shared_path
 from ert.shared import find_available_socket
 from ert.shared.storage.command import add_parser_options
+from ert.trace import tracer, tracer_provider
+
+DARK_STORAGE_APP = "ert.dark_storage.app:app"
 
 
 class Server(uvicorn.Server):
@@ -81,7 +87,11 @@ def _create_connection_info(sock: socket.socket, authtoken: str) -> dict[str, An
     return connection_info
 
 
-def run_server(args: argparse.Namespace | None = None, debug: bool = False) -> None:
+def run_server(
+    args: argparse.Namespace | None = None,
+    debug: bool = False,
+    uvicorn_config: uvicorn.Config | None = None,
+) -> None:
     if args is None:
         args = parse_args()
 
@@ -102,12 +112,16 @@ def run_server(args: argparse.Namespace | None = None, debug: bool = False) -> N
     # Appropriated from uvicorn.main:run
     os.environ["ERT_STORAGE_NO_TOKEN"] = "1"
     os.environ["ERT_STORAGE_ENS_PATH"] = os.path.abspath(args.project)
-    config = uvicorn.Config("ert.dark_storage.app:app", **config_args)
+    config = (
+        uvicorn.Config(DARK_STORAGE_APP, **config_args)
+        if uvicorn_config is None
+        else uvicorn_config
+    )  # uvicorn.Config() resets the logging config (overriding additional handlers added to loggers like e.g. the ert_azurelogger handler added through the pluggin system
     server = Server(config, json.dumps(connection_info))
 
     logger = logging.getLogger("ert.shared.storage.info")
-    log_level = logging.INFO if args.verbose else logging.WARNING
-    logger.setLevel(log_level)
+    if args.verbose and logger.level > logging.INFO:
+        logger.setLevel(logging.INFO)
     logger.info("Storage server is ready to accept requests. Listening on:")
     for url in connection_info["urls"]:
         logger.info(f"  {url}")
@@ -143,21 +157,53 @@ def terminate_on_parent_death(
     os.kill(os.getpid(), signal.SIGTERM)
 
 
-if __name__ == "__main__":
+def main() -> None:
+    args = parse_args()
+    config_args: dict[str, Any] = {}
     with open(STORAGE_LOG_CONFIG, encoding="utf-8") as conf_file:
         logging_conf = yaml.safe_load(conf_file)
         logging.config.dictConfig(logging_conf)
+        config_args.update(log_config=logging_conf)
     warnings.filterwarnings("ignore", category=DeprecationWarning)
-    uvicorn.config.LOGGING_CONFIG.clear()
-    uvicorn.config.LOGGING_CONFIG.update(logging_conf)
-    _stopped = threading.Event()
-    terminate_on_parent_death_thread = threading.Thread(
-        target=terminate_on_parent_death, args=[_stopped, 1.0]
+
+    if args.debug:
+        config_args.update(reload=True, reload_dirs=[os.path.dirname(ert_shared_path)])
+    uvicorn_config = uvicorn.Config(
+        DARK_STORAGE_APP, **config_args
+    )  # Need to run uvicorn.Config before entering the ErtPluginContext because uvicorn.Config overrides the configuration of existing loggers, thus removing log handlers added by ErtPluginContext
+
+    ctx = (
+        TraceContextTextMapPropagator().extract(
+            carrier={"traceparent": args.traceparent}
+        )
+        if args.traceparent
+        else None
     )
-    with ErtPluginContext(logger=logging.getLogger()) as context:
+
+    stopped = threading.Event()
+    terminate_on_parent_death_thread = threading.Thread(
+        target=terminate_on_parent_death, args=[stopped, 1.0]
+    )
+    with ErtPluginContext(logger=logging.getLogger(), trace_provider=tracer_provider):
         terminate_on_parent_death_thread.start()
-        try:
-            run_server(debug=False)
-        finally:
-            _stopped.set()
-            terminate_on_parent_death_thread.join()
+        with tracer.start_as_current_span("run_storage_server", ctx):
+            logger = logging.getLogger("ert.shared.storage.info")
+            try:
+                logger.info("Starting dark storage")
+                run_server(args, debug=False, uvicorn_config=uvicorn_config)
+            except SystemExit:
+                logger.info("Stopping dark storage")
+            finally:
+                stopped.set()
+                terminate_on_parent_death_thread.join()
+
+
+def sigterm_handler(_signo: int, _stack_frame: FrameType | None) -> None:
+    sys.exit(0)
+
+
+signal.signal(signal.SIGTERM, sigterm_handler)
+
+
+if __name__ == "__main__":
+    main()
