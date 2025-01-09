@@ -32,7 +32,7 @@ if TYPE_CHECKING:
     import numpy.typing as npt
 
     from ert.namespace import Namespace
-    from ert.run_models.base_run_model import StatusEvents
+    from ert.run_models.event import StatusEvents
     from ert.storage import Storage
 
 
