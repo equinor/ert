@@ -39,6 +39,7 @@ This guide serves as documentation for the *Everest* decision-making tool.
    :caption: Theory
 
    theory
+   optimization_algorithms
 
 .. toctree::
    :hidden:
