@@ -9,17 +9,21 @@ from typing import ClassVar
 import colorama
 from colorama import Fore
 
+from ert.ensemble_evaluator import (
+    EnsembleSnapshot,
+    FullSnapshotEvent,
+    SnapshotUpdateEvent,
+)
 from ert.resources import all_shell_script_fm_steps
 from everest.detached import (
     OPT_PROGRESS_ID,
-    SIM_PROGRESS_ID,
     ServerStatus,
     everserver_status,
     get_opt_status,
     start_monitor,
 )
 from everest.simulator import JOB_FAILURE, JOB_RUNNING, JOB_SUCCESS
-from everest.strings import EVEREST
+from everest.strings import EVEREST, SIM_PROGRESS_ID
 
 
 def handle_keyboard_interrupt(signal, frame, options):
@@ -111,6 +115,7 @@ class _DetachedMonitor:
         self._batches_done = set()
         self._last_reported_batch = -1
         colorama.init(autoreset=True)
+        self._snapshots: dict[int, EnsembleSnapshot] = {}
 
     def update(self, status):
         try:
@@ -126,16 +131,37 @@ class _DetachedMonitor:
                         print(msg + "\n")
                         self._clear_lines = 0
             if SIM_PROGRESS_ID in status:
-                sim_progress = status[SIM_PROGRESS_ID]
-                sim_progress["progress"] = self._filter_jobs(sim_progress["progress"])
-                msg, batch = self.get_fm_progress(sim_progress)
-                if msg.strip():
-                    # Clear the previous report if it is still the same batch:
-                    if batch == self._last_reported_batch:
-                        self._clear()
-                    print(msg)
-                    self._clear_lines = len(msg.split("\n"))
-                    self._last_reported_batch = batch
+                match status[SIM_PROGRESS_ID]:
+                    case FullSnapshotEvent(snapshot=snapshot, iteration=batch):
+                        if snapshot is not None:
+                            self._snapshots[batch] = snapshot
+                    case (
+                        SnapshotUpdateEvent(snapshot=snapshot, iteration=batch) as event
+                    ):
+                        if snapshot is not None:
+                            batch_number = event.iteration
+                            self._snapshots[batch_number].merge_snapshot(snapshot)
+                            header = self._make_header(
+                                f"Running forward models (Batch #{batch_number})",
+                                Fore.BLUE,
+                            )
+                            summary = self._get_progress_summary(event.status_count)
+                            job_states = self._get_job_states(
+                                self._snapshots[batch_number], self._show_all_jobs
+                            )
+                            msg = (
+                                self._join_two_newlines_indent(
+                                    (header, summary, job_states)
+                                )
+                                + "\n"
+                            )
+                            if batch == self._last_reported_batch:
+                                self._clear()
+                            print(msg)
+                            self._clear_lines = len(msg.split("\n"))
+                            self._last_reported_batch = max(
+                                self._last_reported_batch, batch
+                            )
         except:
             logging.getLogger(EVEREST).debug(traceback.format_exc())
 
@@ -173,36 +199,28 @@ class _DetachedMonitor:
             (header, controls, objectives, total_objective)
         )
 
-    def get_fm_progress(self, context_status):
-        batch_number = int(context_status["batch_number"])
-        header = self._make_header(
-            f"Running forward models (Batch #{batch_number})", Fore.BLUE
-        )
-        summary = self._get_progress_summary(context_status["status"])
-        job_states = self._get_job_states(context_status["progress"])
-        msg = self._join_two_newlines_indent((header, summary, job_states)) + "\n"
-        return msg, batch_number
-
     @staticmethod
     def _get_progress_summary(status):
         colors = [
             Fore.BLACK,
             Fore.BLACK,
-            Fore.BLUE if status["running"] > 0 else Fore.BLACK,
-            Fore.GREEN if status["complete"] > 0 else Fore.BLACK,
-            Fore.RED if status["failed"] > 0 else Fore.BLACK,
+            Fore.BLUE if status.get("Running", 0) > 0 else Fore.BLACK,
+            Fore.GREEN if status.get("Finished", 0) > 0 else Fore.BLACK,
+            Fore.RED if status.get("Failed", 0) > 0 else Fore.BLACK,
         ]
-        labels = ("Waiting", "Pending", "Running", "Complete", "FAILED")
-        values = [status.get(ls.lower(), 0) for ls in labels]
+        labels = ("Waiting", "Pending", "Running", "Finished", "Failed")
+        values = [status.get(ls, 0) for ls in labels]
         return " | ".join(
             f"{color}{key}: {value}{Fore.RESET}"
             for color, key, value in zip(colors, labels, values, strict=False)
         )
 
     @classmethod
-    def _get_job_states(cls, progress):
+    def _get_job_states(cls, snapshot: EnsembleSnapshot, show_all_jobs: bool):
         print_lines = ""
-        jobs_status = cls._get_jobs_status(progress)
+        jobs_status = cls._get_jobs_status(snapshot)
+        if not show_all_jobs:
+            jobs_status = cls._filter_jobs(jobs_status)
         if jobs_status:
             max_widths = {
                 state: _get_max_width(
@@ -218,29 +236,19 @@ class _DetachedMonitor:
         return print_lines
 
     @staticmethod
-    def _get_jobs_status(progress):
+    def _get_jobs_status(snapshot: EnsembleSnapshot) -> list[JobProgress]:
         job_progress = {}
-        for queue in progress:
-            for job_idx, job in enumerate(queue):
-                if job_idx not in job_progress:
-                    job_progress[job_idx] = JobProgress(name=job["name"])
-                realization = int(job["realization"])
-                status = job["status"]
-                if status in {JOB_RUNNING, JOB_SUCCESS, JOB_FAILURE}:
-                    job_progress[job_idx].status[status].append(realization)
-        return job_progress.values()
+        for (realization, job_idx), job in snapshot.get_all_fm_steps().items():
+            if job_idx not in job_progress:
+                job_progress[job_idx] = JobProgress(name=job["name"])
+            status = job["status"]
+            if status in {JOB_RUNNING, JOB_SUCCESS, JOB_FAILURE}:
+                job_progress[job_idx].status[status].append(int(realization))
+        return list(job_progress.values())
 
-    def _filter_jobs(self, progress):
-        if not self._show_all_jobs:
-            progress = [
-                [
-                    job
-                    for job in progress_list
-                    if job["name"] not in all_shell_script_fm_steps
-                ]
-                for progress_list in progress
-            ]
-        return progress
+    @staticmethod
+    def _filter_jobs(jobs: list[JobProgress]):
+        return [job for job in jobs if job.name not in all_shell_script_fm_steps]
 
     @classmethod
     def _join_one_newline_indent(cls, sequence):
