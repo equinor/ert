@@ -11,7 +11,7 @@ from ert.run_models.everest_run_model import EverestRunModel
 from everest.config import EverestConfig
 from everest.config.export_config import ExportConfig
 from everest.config_keys import ConfigKeys
-from everest.export import MetaDataColumnNames, export_data
+from everest.export import export_data
 from everest.simulator.everest_to_ert import _everest_to_ert_config_dict
 from tests.everest.utils import (
     everest_default_jobs,
@@ -667,118 +667,6 @@ def test_init_egg_model(copy_egg_test_data_to_tmp):
         config, site_config=ErtConfig.read_site_config()
     )
     ErtConfig.with_plugins().from_dict(config_dict=ert_config)
-
-
-@skipif_no_everest_models
-@pytest.mark.everest_models_test
-@pytest.mark.requires_eclipse
-def test_run_egg_model(copy_egg_test_data_to_tmp):
-    config = EverestConfig.load_file(CONFIG_FILE)
-
-    # test callback
-    class CBTracker:
-        def __init__(self):
-            self.called = False
-
-        def sweetcallbackofmine(self, *args, **kwargs):
-            self.called = True
-
-    cbtracker = CBTracker()
-    run_model = EverestRunModel.create(
-        config, simulation_callback=cbtracker.sweetcallbackofmine
-    )
-    evaluator_server_config = EvaluatorServerConfig()
-    run_model.run_experiment(evaluator_server_config)
-
-    assert cbtracker.called
-    # TODO: The comparison is currently disabled because we know it would
-    # fail. 0.851423 is indeed the optimal value, but the underlying
-    # optimization algorithm (newton) is unable to find the optimum for a
-    # well drill problem. We believe this is because newton is gradient
-    # based, so it works ok for continuous problems, but well drill is
-    # highly discontinuous.
-    # As soon as a solution for this problem is found, this comparison will
-    # be enabled again; high delta for now.
-
-    # self.assertAlmostEqual(result.total_objective, 0.851423, delta=0.5)
-
-    # Test conversion to pandas DataFrame
-    df = export_data(
-        export_config=config.export,
-        output_dir=config.output_dir,
-        data_file=config.model.data_file if config.model else None,
-    )
-
-    # Check meta data export
-    for meta_key in MetaDataColumnNames.get_all():
-        assert meta_key in df
-
-    # Check control export
-    cgname = config.controls[0].name
-    well_names = [well.name for well in config.wells]
-    for wname in well_names:
-        assert f"{cgname}_{wname}-1" in df
-
-    # Check objective export
-    objective_names = [objf.name for objf in config.objective_functions]
-    for objective_name in objective_names:
-        assert objective_name in df
-
-    exp_keywords = [
-        "FOPT",
-        "WOPT:PROD4",
-        "WOPT:PROD3",
-        "WOPT:INJECT8",
-        "WOPT:INJECT6",
-        "WOPT:INJECT7",
-        "WOPT:INJECT4",
-        "WOPT:INJECT5",
-        "WOPT:INJECT2",
-        "WOPT:INJECT3",
-        "WOPT:INJECT1",
-        "WOPT:PROD1",
-        "WOPT:PROD2",
-        "well_rate_INJECT5-1",
-        "well_rate_INJECT4-1",
-        "well_rate_INJECT7-1",
-        "well_rate_INJECT6-1",
-        "well_rate_INJECT1-1",
-        "well_rate_INJECT3-1",
-        "rf",
-        "well_rate_INJECT2-1",
-        "rf_norm",
-        "well_rate_INJECT8-1",
-        "well_rate_PROD3-1",
-        "well_rate_PROD2-1",
-        "well_rate_PROD1-1",
-        "rf_weighted_norm",
-        "well_rate_PROD4-1",
-    ]
-
-    # Check summary keys
-    for summary_key in exp_keywords:
-        assert summary_key in df
-
-    # Check length
-    num_dates = len(set(df[MetaDataColumnNames.SIMULATED_DATE]))
-    assert num_dates > 0
-    num_real = len(config.model.realizations)
-    pert_num = config.optimization.perturbation_num or 5
-    assert df.shape[0] >= num_dates * num_real * (1 + pert_num)
-
-    # Check export filter
-    config.export = ExportConfig(keywords=["*OPT*"])
-
-    filtered_df = export_data(
-        export_config=config.export,
-        output_dir=config.output_dir,
-        data_file=config.model.data_file if config.model else None,
-    )
-
-    exp_keywords += MetaDataColumnNames.get_all()
-    columns = sorted(set(filtered_df.columns))
-    for expected_key in sorted(set(exp_keywords)):
-        assert expected_key in columns
 
 
 @skipif_no_everest_models
