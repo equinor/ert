@@ -66,7 +66,9 @@ def test_api_snapshots(config_file, snapshot, cached_example):
     rounded_json_snapshot = _round_floats(json_snapshot, 8)
 
     snapshot_str = (
-        orjson.dumps(rounded_json_snapshot, option=orjson.OPT_INDENT_2)
+        orjson.dumps(
+            rounded_json_snapshot, option=orjson.OPT_INDENT_2 | orjson.OPT_SORT_KEYS
+        )
         .decode("utf-8")
         .strip()
         + "\n"
