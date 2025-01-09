@@ -1,39 +1,8 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1736409721745,
+  "lastUpdate": 1736410058807,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
-      {
-        "commit": {
-          "author": {
-            "email": "havb@equinor.com",
-            "name": "Håvard Berland",
-            "username": "berland"
-          },
-          "committer": {
-            "email": "berland@pvv.ntnu.no",
-            "name": "Håvard Berland",
-            "username": "berland"
-          },
-          "distinct": true,
-          "id": "9e2e32f88af2a4eec85cacdaddc47ba4af2de227",
-          "message": "Avoid deprecated utcnow()",
-          "timestamp": "2025-01-02T12:33:28+01:00",
-          "tree_id": "46ad2b0faf1c940fa80a69961197d31097d0cbb9",
-          "url": "https://github.com/equinor/ert/commit/9e2e32f88af2a4eec85cacdaddc47ba4af2de227"
-        },
-        "date": 1735817713031,
-        "tool": "pytest",
-        "benches": [
-          {
-            "name": "tests/ert/performance_tests/test_analysis.py::test_and_benchmark_adaptive_localization_with_fields",
-            "value": 0.21773301885494384,
-            "unit": "iter/sec",
-            "range": "stddev: 0.03724143083640846",
-            "extra": "mean: 4.592780669000007 sec\nrounds: 5"
-          }
-        ]
-      },
       {
         "commit": {
           "author": {
@@ -930,6 +899,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.028542746552989325",
             "extra": "mean: 4.5800913068 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "yngve-sk@users.noreply.github.com",
+            "name": "Yngve S. Kristiansen",
+            "username": "yngve-sk"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "40d33bde4b53393573e455227970f7c6868e0951",
+          "message": "Explicitly sort dicts in test_api_snapshots",
+          "timestamp": "2025-01-09T09:05:49+01:00",
+          "tree_id": "fe50da4804b62dc4ad6b15962c81335cf03d2423",
+          "url": "https://github.com/equinor/ert/commit/40d33bde4b53393573e455227970f7c6868e0951"
+        },
+        "date": 1736410058124,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/ert/performance_tests/test_analysis.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 0.21783493169285315,
+            "unit": "iter/sec",
+            "range": "stddev: 0.022408783739957087",
+            "extra": "mean: 4.5906319626000025 sec\nrounds: 5"
           }
         ]
       }
