@@ -10,6 +10,7 @@ from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
 from lxml import etree
+from opentelemetry.trace import Status, StatusCode
 from pydantic_core._pydantic_core import ValidationError
 
 from _ert.events import Id, RealizationTimeout, event_from_dict
@@ -176,6 +177,7 @@ class Job:
                 self.returncode = asyncio.Future()
                 self.started.clear()
             else:
+                current_span.set_status(Status(StatusCode.ERROR))
                 await self._send(JobState.FAILED)
 
     async def _max_runtime_task(self) -> None:
