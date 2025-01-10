@@ -150,7 +150,7 @@ def main(
             components = 1
         else:
             components = get_nr_primary_components(
-                scaled_responses[index], threshold=0.95
+                scaled_responses[index].T, threshold=0.95
             )
         scale_factor = get_scaling_factor(len(index), components)
         nr_components[index] *= components
