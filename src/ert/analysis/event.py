@@ -4,28 +4,30 @@ import re
 from collections.abc import Sequence
 from dataclasses import dataclass
 from pathlib import Path
+from typing import Literal
 
 import pandas as pd
+from pydantic import BaseModel, ConfigDict
 
 
-@dataclass
-class AnalysisEvent:
+class AnalysisEvent(BaseModel):
+    model_config = ConfigDict(arbitrary_types_allowed=True, extra="forbid")
     pass
 
 
-@dataclass
 class AnalysisStatusEvent(AnalysisEvent):
+    event_type: Literal["AnalysisStatusEvent"] = "AnalysisStatusEvent"
     msg: str
 
 
-@dataclass
 class AnalysisTimeEvent(AnalysisEvent):
+    event_type: Literal["AnalysisTimeEvent"] = "AnalysisTimeEvent"
     remaining_time: float
     elapsed_time: float
 
 
-@dataclass
 class AnalysisReportEvent(AnalysisEvent):
+    event_type: Literal["AnalysisReportEvent"] = "AnalysisReportEvent"
     report: str
 
 
@@ -56,18 +58,18 @@ class DataSection:
         df.to_csv(f_path.with_suffix(".csv"))
 
 
-@dataclass
 class AnalysisDataEvent(AnalysisEvent):
+    event_type: Literal["AnalysisDataEvent"] = "AnalysisDataEvent"
     name: str
     data: DataSection
 
 
-@dataclass
 class AnalysisErrorEvent(AnalysisEvent):
+    event_type: Literal["AnalysisErrorEvent"] = "AnalysisErrorEvent"
     error_msg: str
     data: DataSection | None = None
 
 
-@dataclass
 class AnalysisCompleteEvent(AnalysisEvent):
+    event_type: Literal["AnalysisCompleteEvent"] = "AnalysisCompleteEvent"
     data: DataSection

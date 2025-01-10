@@ -65,8 +65,10 @@ _ENSEMBLE_TYPE_EVENT_TO_STATUS = {
 
 
 def convert_iso8601_to_datetime(
-    timestamp: datetime | str,
-) -> datetime:
+    timestamp: datetime | str | None,
+) -> datetime | None:
+    if timestamp is None:
+        return None
     if isinstance(timestamp, datetime):
         return timestamp
 
@@ -161,13 +163,17 @@ class EnsembleSnapshot:
         if self._ensemble_state:
             dict_["status"] = self._ensemble_state
         if self._realization_snapshots:
-            dict_["reals"] = self._realization_snapshots
+            dict_["reals"] = {
+                k: _filter_nones(v) for k, v in self._realization_snapshots.items()
+            }
 
         for (real_id, fm_id), fm_values_dict in self._fm_step_snapshots.items():
             if "reals" not in dict_:
                 dict_["reals"] = {}
             if real_id not in dict_["reals"]:
-                dict_["reals"][real_id] = RealizationSnapshot(fm_steps={})
+                dict_["reals"][real_id] = _filter_nones(
+                    RealizationSnapshot(fm_steps={})
+                )
             if "fm_steps" not in dict_["reals"][real_id]:
                 dict_["reals"][real_id]["fm_steps"] = {}
 
@@ -400,12 +406,17 @@ def _realization_dict_to_realization_snapshot(
     realization = RealizationSnapshot(
         status=source.get("status"),
         active=source.get("active"),
-        start_time=source.get("start_time"),
-        end_time=source.get("end_time"),
+        start_time=convert_iso8601_to_datetime(source.get("start_time")),
+        end_time=convert_iso8601_to_datetime(source.get("end_time")),
         exec_hosts=source.get("exec_hosts"),
         message=source.get("message"),
         fm_steps=source.get("fm_steps", {}),
     )
+    for step in realization["fm_steps"].values():
+        if step.get("start_time"):
+            step["start_time"] = convert_iso8601_to_datetime(step["start_time"])
+        if step.get("end_time"):
+            step["end_time"] = convert_iso8601_to_datetime(step["end_time"])
     return _filter_nones(realization)
 
 

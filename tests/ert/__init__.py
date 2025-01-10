@@ -38,6 +38,7 @@ class SnapshotBuilder(BaseModel):
         exec_hosts: str | None = None,
         start_time: datetime | None = None,
         end_time: datetime | None = None,
+        message: str | None = None,
     ) -> EnsembleSnapshot:
         snapshot = EnsembleSnapshot()
         snapshot._ensemble_state = status
@@ -53,6 +54,7 @@ class SnapshotBuilder(BaseModel):
                     end_time=end_time,
                     exec_hosts=exec_hosts,
                     status=status,
+                    message=message,
                 ),
             )
         return snapshot

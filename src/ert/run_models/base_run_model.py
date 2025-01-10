@@ -20,9 +20,6 @@ import numpy as np
 
 from _ert.events import EESnapshot, EESnapshotUpdate, EETerminated, Event
 from ert.analysis import (
-    AnalysisEvent,
-    AnalysisStatusEvent,
-    AnalysisTimeEvent,
     ErtAnalysisError,
     smoother_update,
 )
@@ -30,6 +27,7 @@ from ert.analysis.event import (
     AnalysisCompleteEvent,
     AnalysisDataEvent,
     AnalysisErrorEvent,
+    AnalysisEvent,
 )
 from ert.config import HookRuntime, QueueSystem
 from ert.config.analysis_module import BaseSettings
@@ -43,11 +41,6 @@ from ert.ensemble_evaluator import (
     EvaluatorServerConfig,
     Monitor,
     Realization,
-)
-from ert.ensemble_evaluator.event import (
-    EndEvent,
-    FullSnapshotEvent,
-    SnapshotUpdateEvent,
 )
 from ert.ensemble_evaluator.identifiers import STATUS
 from ert.ensemble_evaluator.snapshot import EnsembleSnapshot
@@ -68,7 +61,6 @@ from ert.workflow_runner import WorkflowRunner
 from ..config.analysis_config import UpdateSettings
 from ..run_arg import RunArg
 from .event import (
-    AnalysisEvent,
     AnalysisStatusEvent,
     AnalysisTimeEvent,
     EndEvent,
