@@ -4,10 +4,7 @@ import argparse
 import logging
 from functools import partial
 
-from everest import export_to_csv, export_with_progress
 from everest.config import EverestConfig
-from everest.config.export_config import ExportConfig
-from everest.export import check_for_errors
 from everest.strings import EVEREST
 
 
@@ -22,26 +19,9 @@ def everexport_entry(args=None):
 
     config = options.config_file
 
-    # Turn into .export once
-    # explicit None is disallowed
-    export_config = config.export or ExportConfig()
-
-    if options.batches is not None:
-        batch_list = [int(item) for item in options.batches]
-        export_config.batches = batch_list
-
-    err_msgs, export_ecl = check_for_errors(
-        config=export_config,
-        optimization_output_path=config.optimization_output_dir,
-        storage_path=config.storage_dir,
-        data_file_path=config.model.data_file,
-    )
-    for msg in err_msgs:
-        logger.warning(msg)
-
-    export_to_csv(
-        data_frame=export_with_progress(config, export_config, export_ecl),
-        export_path=config.export_path,
+    logger.info("Everexport deprecation warning seen")
+    print(
+        f"Everexport is deprecated, optimization results already exist @ {config.optimization_output_dir}"
     )
 
 
