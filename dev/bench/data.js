@@ -1,39 +1,8 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1736513707448,
+  "lastUpdate": 1736515969892,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
-      {
-        "commit": {
-          "author": {
-            "email": "49699333+dependabot[bot]@users.noreply.github.com",
-            "name": "dependabot[bot]",
-            "username": "dependabot[bot]"
-          },
-          "committer": {
-            "email": "60844986+larsevj@users.noreply.github.com",
-            "name": "Lars Evje",
-            "username": "larsevj"
-          },
-          "distinct": true,
-          "id": "ab373dd5930aec8fe06622df2e0bd8100b0a750b",
-          "message": "Bump pypa/gh-action-pypi-publish from 1.10.1 to 1.12.3\n\nBumps [pypa/gh-action-pypi-publish](https://github.com/pypa/gh-action-pypi-publish) from 1.10.1 to 1.12.3.\n- [Release notes](https://github.com/pypa/gh-action-pypi-publish/releases)\n- [Commits](https://github.com/pypa/gh-action-pypi-publish/compare/v1.10.1...v1.12.3)\n\n---\nupdated-dependencies:\n- dependency-name: pypa/gh-action-pypi-publish\n  dependency-type: direct:production\n  update-type: version-update:semver-minor\n...\n\nSigned-off-by: dependabot[bot] <support@github.com>",
-          "timestamp": "2025-01-06T12:36:59+01:00",
-          "tree_id": "7be64911980eac6e06a16265f0222028a84c63d8",
-          "url": "https://github.com/equinor/ert/commit/ab373dd5930aec8fe06622df2e0bd8100b0a750b"
-        },
-        "date": 1736163525935,
-        "tool": "pytest",
-        "benches": [
-          {
-            "name": "tests/ert/performance_tests/test_analysis.py::test_and_benchmark_adaptive_localization_with_fields",
-            "value": 0.2162420984924752,
-            "unit": "iter/sec",
-            "range": "stddev: 0.029626205247944",
-            "extra": "mean: 4.624446428200002 sec\nrounds: 5"
-          }
-        ]
-      },
       {
         "commit": {
           "author": {
@@ -930,6 +899,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.13264117300765876",
             "extra": "mean: 4.708146354799998 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "andrli@equinor.com",
+            "name": "Andreas Eknes Lie",
+            "username": "andreas-el"
+          },
+          "committer": {
+            "email": "114403625+andreas-el@users.noreply.github.com",
+            "name": "Andreas Eknes Lie",
+            "username": "andreas-el"
+          },
+          "distinct": true,
+          "id": "4480295150a8db352a5bf1020388ec5f0c60a002",
+          "message": "Handle button visual indications based on actions\n\nUse SidebarToolButton instead of QToolButton",
+          "timestamp": "2025-01-10T14:31:01+01:00",
+          "tree_id": "819cb21a0a52f945c26565a7c0c3ec336f3085f6",
+          "url": "https://github.com/equinor/ert/commit/4480295150a8db352a5bf1020388ec5f0c60a002"
+        },
+        "date": 1736515969471,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/ert/performance_tests/test_analysis.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 0.21855746435616563,
+            "unit": "iter/sec",
+            "range": "stddev: 0.03610331598553161",
+            "extra": "mean: 4.575455718000003 sec\nrounds: 5"
           }
         ]
       }
