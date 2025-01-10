@@ -6,12 +6,12 @@ from pathlib import Path
 from unittest.mock import patch
 
 import pytest
-from seba_sqlite.snapshot import SebaSnapshot
 
 from ert.run_models.everest_run_model import EverestExitCode
 from everest.config import EverestConfig, OptimizationConfig, ServerConfig
 from everest.detached import ServerStatus, everserver_status
 from everest.detached.jobs import everserver
+from everest.everest_storage import EverestStorage
 from everest.simulator import JOB_FAILURE, JOB_SUCCESS
 from everest.strings import OPT_FAILURE_REALIZATIONS, SIM_PROGRESS_ENDPOINT
 
@@ -218,12 +218,11 @@ def test_everserver_status_max_batch_num(
 
     # The server should complete without error.
     assert status["status"] == ServerStatus.completed
+    storage = EverestStorage(Path(config.optimization_output_dir))
+    storage.read_from_output_dir()
 
     # Check that there is only one batch.
-    snapshot = SebaSnapshot(config.optimization_output_dir).get_snapshot(
-        filter_out_gradient=False, batches=None
-    )
-    assert {data.batch for data in snapshot.simulation_data} == {0}
+    assert {b.batch_id for b in storage.data.batches} == {0}
 
 
 @pytest.mark.integration_test
