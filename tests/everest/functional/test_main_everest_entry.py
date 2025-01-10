@@ -94,9 +94,10 @@ def test_everest_entry_monitor_no_run(cached_example):
 def test_everest_main_export_entry(cached_example):
     # Setup command line arguments
     _, config_file, _ = cached_example("math_func/config_minimal.yml")
-    with capture_streams():
-        start_everest(["everest", "export", config_file])
-    assert os.path.exists(os.path.join("everest_output", "config_minimal.csv"))
+    with capture_streams() as (out, _):
+        start_everest(["everest", "export", str(config_file)])
+
+    assert "Everexport is deprecated" in out.getvalue()
 
 
 @pytest.mark.integration_test
