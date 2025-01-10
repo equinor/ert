@@ -804,6 +804,7 @@ class ErtConfig:
                         forward_model_steps=[fm_step],
                         skip_pre_experiment_validation=True,
                         env_vars=env_vars,
+                        env_pr_fm_step=cls.ENV_PR_FM_STEP,
                     )
                     fm_json_for_validation = dict(substituted_json["jobList"][0])
                     fm_json_for_validation["environment"] = {
