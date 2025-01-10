@@ -1,39 +1,8 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1736511981114,
+  "lastUpdate": 1736513707448,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
-      {
-        "commit": {
-          "author": {
-            "email": "49699333+dependabot[bot]@users.noreply.github.com",
-            "name": "dependabot[bot]",
-            "username": "dependabot[bot]"
-          },
-          "committer": {
-            "email": "60844986+larsevj@users.noreply.github.com",
-            "name": "Lars Evje",
-            "username": "larsevj"
-          },
-          "distinct": true,
-          "id": "7d73f740d8f12d2a0a726782fb7753acd3c06ef2",
-          "message": "Bump astral-sh/setup-uv from 4 to 5\n\nBumps [astral-sh/setup-uv](https://github.com/astral-sh/setup-uv) from 4 to 5.\n- [Release notes](https://github.com/astral-sh/setup-uv/releases)\n- [Commits](https://github.com/astral-sh/setup-uv/compare/v4...v5)\n\n---\nupdated-dependencies:\n- dependency-name: astral-sh/setup-uv\n  dependency-type: direct:production\n  update-type: version-update:semver-major\n...\n\nSigned-off-by: dependabot[bot] <support@github.com>",
-          "timestamp": "2025-01-06T12:33:59+01:00",
-          "tree_id": "720473b4719f3cd6476a3d40c89d3d3ed5ae2b85",
-          "url": "https://github.com/equinor/ert/commit/7d73f740d8f12d2a0a726782fb7753acd3c06ef2"
-        },
-        "date": 1736163347409,
-        "tool": "pytest",
-        "benches": [
-          {
-            "name": "tests/ert/performance_tests/test_analysis.py::test_and_benchmark_adaptive_localization_with_fields",
-            "value": 0.21680333050116213,
-            "unit": "iter/sec",
-            "range": "stddev: 0.026559978642120226",
-            "extra": "mean: 4.612475268199995 sec\nrounds: 5"
-          }
-        ]
-      },
       {
         "commit": {
           "author": {
@@ -930,6 +899,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.03126683911471407",
             "extra": "mean: 4.563996467200002 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "ejah@equinor.com",
+            "name": "Eivind Jahren",
+            "username": "eivindjahren"
+          },
+          "committer": {
+            "email": "ejah@equinor.com",
+            "name": "Eivind Jahren",
+            "username": "eivindjahren"
+          },
+          "distinct": true,
+          "id": "d8338514a2b3c9cbe6c13073631ac6a605115af0",
+          "message": "Reorganize workflow tests",
+          "timestamp": "2025-01-10T13:53:00+01:00",
+          "tree_id": "f6bbb6a890b146da22f7cb61f401620f0973fbfd",
+          "url": "https://github.com/equinor/ert/commit/d8338514a2b3c9cbe6c13073631ac6a605115af0"
+        },
+        "date": 1736513706788,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/ert/performance_tests/test_analysis.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 0.21239781532714902,
+            "unit": "iter/sec",
+            "range": "stddev: 0.13264117300765876",
+            "extra": "mean: 4.708146354799998 sec\nrounds: 5"
           }
         ]
       }
