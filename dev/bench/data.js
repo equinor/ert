@@ -1,39 +1,8 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1736437376441,
+  "lastUpdate": 1736495317297,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
-      {
-        "commit": {
-          "author": {
-            "email": "levje@equinor.com",
-            "name": "larsevj",
-            "username": "larsevj"
-          },
-          "committer": {
-            "email": "60844986+larsevj@users.noreply.github.com",
-            "name": "Lars Evje",
-            "username": "larsevj"
-          },
-          "distinct": true,
-          "id": "864c1e85cbd8f1ce8f66d26a915cbe1f6791245f",
-          "message": "Pin scipy < 1.15",
-          "timestamp": "2025-01-06T10:25:29+01:00",
-          "tree_id": "4a6e7a94b057f606528c49cdb00b9e856154a150",
-          "url": "https://github.com/equinor/ert/commit/864c1e85cbd8f1ce8f66d26a915cbe1f6791245f"
-        },
-        "date": 1736155642188,
-        "tool": "pytest",
-        "benches": [
-          {
-            "name": "tests/ert/performance_tests/test_analysis.py::test_and_benchmark_adaptive_localization_with_fields",
-            "value": 0.21938858886307655,
-            "unit": "iter/sec",
-            "range": "stddev: 0.04083733083937065",
-            "extra": "mean: 4.558122212199987 sec\nrounds: 5"
-          }
-        ]
-      },
       {
         "commit": {
           "author": {
@@ -930,6 +899,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.04013748871607781",
             "extra": "mean: 4.610799953200001 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "ejah@equinor.com",
+            "name": "Eivind Jahren",
+            "username": "eivindjahren"
+          },
+          "committer": {
+            "email": "ejah@equinor.com",
+            "name": "Eivind Jahren",
+            "username": "eivindjahren"
+          },
+          "distinct": true,
+          "id": "7b2bedf144cc86b1fcaef3e5b880522c8cf9a384",
+          "message": "Show inversion errors in GUI",
+          "timestamp": "2025-01-10T08:46:43+01:00",
+          "tree_id": "3131ea715763f6eeed1c20e72e0b88787dfcc076",
+          "url": "https://github.com/equinor/ert/commit/7b2bedf144cc86b1fcaef3e5b880522c8cf9a384"
+        },
+        "date": 1736495316715,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/ert/performance_tests/test_analysis.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 0.21176326382634605,
+            "unit": "iter/sec",
+            "range": "stddev: 0.029305271839122727",
+            "extra": "mean: 4.722254379399999 sec\nrounds: 5"
           }
         ]
       }
