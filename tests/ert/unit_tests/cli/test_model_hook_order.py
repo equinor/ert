@@ -1,3 +1,4 @@
+import uuid
 from unittest.mock import ANY, MagicMock, PropertyMock, call, patch
 
 import pytest
@@ -48,6 +49,7 @@ def test_hook_call_order_ensemble_smoother(monkeypatch):
 
     ens_mock = MagicMock()
     ens_mock.iteration = 0
+    ens_mock.id = uuid.uuid1()
     storage_mock = MagicMock()
     storage_mock.create_ensemble.return_value = ens_mock
 
@@ -86,6 +88,7 @@ def test_hook_call_order_es_mda(monkeypatch):
 
     ens_mock = MagicMock()
     ens_mock.iteration = 0
+    ens_mock.id = uuid.uuid1()
     storage_mock = MagicMock()
     storage_mock.create_ensemble.return_value = ens_mock
     test_class = MultipleDataAssimilation(
@@ -115,9 +118,15 @@ def test_hook_call_order_iterative_ensemble_smoother(monkeypatch):
     monkeypatch.setattr(base_run_model, "_seed_sequence", MagicMock(return_value=0))
     monkeypatch.setattr(base_run_model.BaseRunModel, "run_workflows", run_wfs_mock)
 
+    ens_mock = MagicMock()
+    ens_mock.iteration = 2
+    ens_mock.id = uuid.uuid1()
+    storage_mock = MagicMock()
+    storage_mock.create_ensemble.return_value = ens_mock
+
     test_class = IteratedEnsembleSmoother(*[MagicMock()] * 13)
     test_class.run_ensemble_evaluator = MagicMock(return_value=[0])
-
+    test_class._storage = storage_mock
     # Mock the return values of iterative_smoother_update
     # Mock the iteration property of IteratedEnsembleSmoother
     with (

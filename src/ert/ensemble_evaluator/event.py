@@ -1,59 +1,49 @@
-import json
-from dataclasses import dataclass
+from collections.abc import Mapping
+from typing import Any, Literal
+
+from pydantic import BaseModel, ConfigDict, field_serializer, field_validator
 
 from .snapshot import EnsembleSnapshot
 
 
-@dataclass
-class _UpdateEvent:
+class _UpdateEvent(BaseModel):
+    model_config = ConfigDict(arbitrary_types_allowed=True, extra="forbid")
     iteration_label: str
     total_iterations: int
     progress: float
     realization_count: int
     status_count: dict[str, int]
     iteration: int
+    snapshot: EnsembleSnapshot | None = None
+
+    @field_serializer("snapshot")
+    def serialize_snapshot(
+        self, value: EnsembleSnapshot | None
+    ) -> dict[str, Any] | None:
+        if value is None:
+            return None
+        return value.to_dict()
+
+    @field_validator("snapshot", mode="before")
+    @classmethod
+    def validate_snapshot(
+        cls, value: EnsembleSnapshot | Mapping[Any, Any]
+    ) -> EnsembleSnapshot:
+        if isinstance(value, EnsembleSnapshot):
+            return value
+        return EnsembleSnapshot.from_nested_dict(value)
 
 
-@dataclass
 class FullSnapshotEvent(_UpdateEvent):
-    snapshot: EnsembleSnapshot | None = None
+    event_type: Literal["FullSnapshotEvent"] = "FullSnapshotEvent"
 
 
-@dataclass
 class SnapshotUpdateEvent(_UpdateEvent):
-    snapshot: EnsembleSnapshot | None = None
+    event_type: Literal["SnapshotUpdateEvent"] = "SnapshotUpdateEvent"
 
 
-@dataclass
-class EndEvent:
+class EndEvent(BaseModel):
+    model_config = ConfigDict(arbitrary_types_allowed=True, extra="forbid")
+    event_type: Literal["EndEvent"] = "EndEvent"
     failed: bool
-    msg: str | None = None
-
-
-def snapshot_event_from_json(json_str: str) -> FullSnapshotEvent | SnapshotUpdateEvent:
-    json_dict = json.loads(json_str)
-    snapshot = EnsembleSnapshot.from_nested_dict(json_dict["snapshot"])
-    json_dict["snapshot"] = snapshot
-    match json_dict.pop("type"):
-        case "FullSnapshotEvent":
-            return FullSnapshotEvent(**json_dict)
-        case "SnapshotUpdateEvent":
-            return SnapshotUpdateEvent(**json_dict)
-        case unknown:
-            raise TypeError(f"Unknown snapshot update event type {unknown}")
-
-
-def snapshot_event_to_json(event: FullSnapshotEvent | SnapshotUpdateEvent) -> str:
-    assert event.snapshot is not None
-    return json.dumps(
-        {
-            "iteration_label": event.iteration_label,
-            "total_iterations": event.total_iterations,
-            "progress": event.progress,
-            "realization_count": event.realization_count,
-            "status_count": event.status_count,
-            "iteration": event.iteration,
-            "snapshot": event.snapshot.to_dict(),
-            "type": event.__class__.__name__,
-        }
-    )
+    msg: str
