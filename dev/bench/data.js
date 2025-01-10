@@ -1,39 +1,8 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1736495317297,
+  "lastUpdate": 1736511981114,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
-      {
-        "commit": {
-          "author": {
-            "email": "frodeaarstad@gmail.com",
-            "name": "Frode Aarstad",
-            "username": "frode-aarstad"
-          },
-          "committer": {
-            "email": "frodeaarstad@gmail.com",
-            "name": "Frode Aarstad",
-            "username": "frode-aarstad"
-          },
-          "distinct": true,
-          "id": "839610bb7c6a249cf03fdccf7f0e467b68a9f88a",
-          "message": "Ignore unimportant ConfigWarnings",
-          "timestamp": "2025-01-06T11:30:00+01:00",
-          "tree_id": "253d8cc5d9ef311f8e13a8010763c96abdc83c60",
-          "url": "https://github.com/equinor/ert/commit/839610bb7c6a249cf03fdccf7f0e467b68a9f88a"
-        },
-        "date": 1736159518362,
-        "tool": "pytest",
-        "benches": [
-          {
-            "name": "tests/ert/performance_tests/test_analysis.py::test_and_benchmark_adaptive_localization_with_fields",
-            "value": 0.21533315528316188,
-            "unit": "iter/sec",
-            "range": "stddev: 0.043433576491164506",
-            "extra": "mean: 4.643966688199993 sec\nrounds: 5"
-          }
-        ]
-      },
       {
         "commit": {
           "author": {
@@ -930,6 +899,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.029305271839122727",
             "extra": "mean: 4.722254379399999 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "havb@equinor.com",
+            "name": "Håvard Berland",
+            "username": "berland"
+          },
+          "committer": {
+            "email": "berland@pvv.ntnu.no",
+            "name": "Håvard Berland",
+            "username": "berland"
+          },
+          "distinct": true,
+          "id": "2a3f4f041b6b7d4c1bd022d9259003518ee9a534",
+          "message": "Ensure pre_experiment validation has access to plugin configuration\n\nThis is a fixup of a regression in 1ae12f6efb66e9fa4208faef2a04898043cdcb37\n\nThe bug slipped through as the feature is skipped unless the test is\nrun on-premise",
+          "timestamp": "2025-01-10T13:24:24+01:00",
+          "tree_id": "1892de1b99f8307950852f4834c1616e24ed2bef",
+          "url": "https://github.com/equinor/ert/commit/2a3f4f041b6b7d4c1bd022d9259003518ee9a534"
+        },
+        "date": 1736511980458,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/ert/performance_tests/test_analysis.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 0.219106216927792,
+            "unit": "iter/sec",
+            "range": "stddev: 0.03126683911471407",
+            "extra": "mean: 4.563996467200002 sec\nrounds: 5"
           }
         ]
       }
