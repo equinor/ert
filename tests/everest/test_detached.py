@@ -3,6 +3,7 @@ import stat
 from pathlib import Path
 from unittest.mock import MagicMock, patch
 
+import numpy as np
 import pytest
 import requests
 
@@ -24,6 +25,7 @@ from everest.detached import (
     PROXY,
     ServerStatus,
     everserver_status,
+    get_opt_status,
     server_is_running,
     start_server,
     stop_server,
@@ -341,3 +343,79 @@ if __name__ == "__main__":
     driver = await start_server(everest_config, debug=True)
     final_state = await server_running()
     assert final_state.returncode == 0
+
+
+def test_get_opt_status(cached_example):
+    _, config_file, _ = cached_example("math_func/config_multiobj.yml")
+    config = EverestConfig.load_file(config_file)
+
+    opts = get_opt_status(config.optimization_output_dir)
+
+    assert np.allclose(
+        opts["objective_history"], [-2.3333, -2.3335, -2.0000], atol=1e-4
+    )
+
+    assert np.allclose(
+        opts["control_history"]["point_x"],
+        [0.0, -0.004202181916184627, -0.0021007888698514315],
+        atol=1e-4,
+    )
+    assert np.allclose(
+        opts["control_history"]["point_y"],
+        [0.0, -0.011298196942730383, -0.0056482862617779715],
+        atol=1e-4,
+    )
+    assert np.allclose(
+        opts["control_history"]["point_z"], [0.0, 1.0, 0.4999281115746754], atol=1e-4
+    )
+
+    assert np.allclose(
+        opts["objectives_history"]["distance_p"],
+        [-0.75, -0.7656459808349609, -0.5077850222587585],
+        atol=1e-4,
+    )
+    assert np.allclose(
+        opts["objectives_history"]["distance_q"],
+        [-4.75, -4.703639984130859, -4.476789951324463],
+        atol=1e-4,
+    )
+
+    assert opts["accepted_control_indices"] == [0, 2]
+
+    cmond = opts["cli_monitor_data"]
+
+    assert cmond["batches"] == [0, 1, 2]
+    assert cmond["controls"][0]["point_x"] == 0.0
+    assert cmond["controls"][0]["point_y"] == 0.0
+    assert cmond["controls"][0]["point_z"] == 0.0
+
+    assert np.allclose(
+        cmond["controls"][1]["point_x"], -0.004202181916184627, atol=1e-4
+    )
+    assert np.allclose(
+        cmond["controls"][1]["point_y"], -0.011298196942730383, atol=1e-4
+    )
+    assert np.allclose(cmond["controls"][1]["point_z"], 1.0, atol=1e-4)
+    assert np.allclose(
+        cmond["controls"][2]["point_x"], -0.0021007888698514315, atol=1e-4
+    )
+    assert np.allclose(
+        cmond["controls"][2]["point_y"], -0.0056482862617779715, atol=1e-4
+    )
+    assert np.allclose(cmond["controls"][2]["point_z"], 0.4999281115746754, atol=1e-4)
+
+    assert np.allclose(
+        cmond["objective_value"],
+        [-2.333333333333333, -2.333525975545247, -2.000048339366913],
+        atol=1e-4,
+    )
+    assert np.allclose(
+        cmond["expected_objectives"]["distance_p"],
+        [-0.75, -0.7656459808349609, -0.5077850222587585],
+        atol=1e-4,
+    )
+    assert np.allclose(
+        cmond["expected_objectives"]["distance_q"],
+        [-4.75, -4.703639984130859, -4.476789951324463],
+        atol=1e-4,
+    )
