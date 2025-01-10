@@ -34,10 +34,8 @@ from fastapi.security import (
 from ert.config.parsing.queue_system import QueueSystem
 from ert.ensemble_evaluator import EvaluatorServerConfig
 from ert.run_models.everest_run_model import EverestExitCode, EverestRunModel
-from everest import export_to_csv, export_with_progress
 from everest.config import EverestConfig, ServerConfig
 from everest.detached import ServerStatus, get_opt_status, update_everserver_status
-from everest.export import check_for_errors
 from everest.plugins.everest_plugin_manager import EverestPluginManager
 from everest.simulator import JOB_FAILURE
 from everest.strings import (
@@ -331,34 +329,6 @@ def main():
                 ServerStatus.failed,
                 message=traceback.format_exc(),
             )
-        return
-
-    try:
-        # Exporting data
-        update_everserver_status(status_path, ServerStatus.exporting_to_csv)
-
-        if config.export is not None:
-            err_msgs, export_ecl = check_for_errors(
-                config=config.export,
-                optimization_output_path=config.optimization_output_dir,
-                storage_path=config.storage_dir,
-                data_file_path=config.model.data_file,
-            )
-            for msg in err_msgs:
-                logging.getLogger(EVEREST).warning(msg)
-        else:
-            export_ecl = True
-
-        export_to_csv(
-            data_frame=export_with_progress(config, export_ecl),
-            export_path=config.export_path,
-        )
-    except:
-        update_everserver_status(
-            status_path,
-            ServerStatus.failed,
-            message=traceback.format_exc(),
-        )
         return
 
     update_everserver_status(status_path, ServerStatus.completed, message=message)

@@ -5,8 +5,7 @@ import polars as pl
 from ropt.enums import ConstraintType
 
 from ert.storage import open_storage
-from everest.config import EverestConfig, ServerConfig
-from everest.detached import ServerStatus, everserver_status
+from everest.config import EverestConfig
 from everest.everest_storage import EverestStorage
 
 
@@ -239,12 +238,3 @@ class EverestDataAPI:
     @property
     def output_folder(self):
         return self._config.output_dir
-
-    @property
-    def everest_csv(self):
-        status_path = ServerConfig.get_everserver_status_path(self._config.output_dir)
-        state = everserver_status(status_path)
-        if state["status"] == ServerStatus.completed:
-            return self._config.export_path
-        else:
-            return None
