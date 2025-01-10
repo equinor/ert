@@ -161,13 +161,17 @@ class EnsembleSnapshot:
         if self._ensemble_state:
             dict_["status"] = self._ensemble_state
         if self._realization_snapshots:
-            dict_["reals"] = self._realization_snapshots
+            dict_["reals"] = {
+                k: _filter_nones(v) for k, v in self._realization_snapshots.items()
+            }
 
         for (real_id, fm_id), fm_values_dict in self._fm_step_snapshots.items():
             if "reals" not in dict_:
                 dict_["reals"] = {}
             if real_id not in dict_["reals"]:
-                dict_["reals"][real_id] = RealizationSnapshot(fm_steps={})
+                dict_["reals"][real_id] = _filter_nones(
+                    RealizationSnapshot(fm_steps={})
+                )
             if "fm_steps" not in dict_["reals"][real_id]:
                 dict_["reals"][real_id]["fm_steps"] = {}
 
@@ -397,15 +401,27 @@ class RealizationSnapshot(TypedDict, total=False):
 def _realization_dict_to_realization_snapshot(
     source: dict[str, Any],
 ) -> RealizationSnapshot:
+    start_time = source.get("start_time")
+    if start_time and isinstance(start_time, str):
+        start_time = datetime.fromisoformat(start_time)
+    end_time = source.get("end_time")
+    if end_time and isinstance(end_time, str):
+        end_time = datetime.fromisoformat(end_time)
+
     realization = RealizationSnapshot(
         status=source.get("status"),
         active=source.get("active"),
-        start_time=source.get("start_time"),
-        end_time=source.get("end_time"),
+        start_time=start_time,
+        end_time=end_time,
         exec_hosts=source.get("exec_hosts"),
         message=source.get("message"),
         fm_steps=source.get("fm_steps", {}),
     )
+    for step in realization["fm_steps"].values():
+        if "start_time" in step and isinstance(step["start_time"], str):
+            step["start_time"] = datetime.fromisoformat(step["start_time"])
+        if "end_time" in step and isinstance(step["end_time"], str):
+            step["end_time"] = datetime.fromisoformat(step["end_time"])
     return _filter_nones(realization)
 
 

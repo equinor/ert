@@ -1,6 +1,8 @@
 from __future__ import annotations
 
-from dataclasses import dataclass
+import json
+from dataclasses import asdict, dataclass
+from datetime import datetime
 from pathlib import Path
 from uuid import UUID
 
@@ -15,6 +17,7 @@ from ert.ensemble_evaluator.event import (
     FullSnapshotEvent,
     SnapshotUpdateEvent,
 )
+from ert.ensemble_evaluator.snapshot import EnsembleSnapshot
 
 
 @dataclass
@@ -82,3 +85,72 @@ StatusEvents = (
     | RunModelDataEvent
     | RunModelUpdateEndEvent
 )
+
+
+EVENT_MAPPING = {
+    "AnalysisEvent": AnalysisEvent,
+    "AnalysisStatusEvent": AnalysisStatusEvent,
+    "AnalysisTimeEvent": AnalysisTimeEvent,
+    "EndEvent": EndEvent,
+    "FullSnapshotEvent": FullSnapshotEvent,
+    "SnapshotUpdateEvent": SnapshotUpdateEvent,
+    "RunModelErrorEvent": RunModelErrorEvent,
+    "RunModelStatusEvent": RunModelStatusEvent,
+    "RunModelTimeEvent": RunModelTimeEvent,
+    "RunModelUpdateBeginEvent": RunModelUpdateBeginEvent,
+    "RunModelDataEvent": RunModelDataEvent,
+    "RunModelUpdateEndEvent": RunModelUpdateEndEvent,
+}
+
+
+def status_event_from_json(json_str: str) -> StatusEvents:
+    json_dict = json.loads(json_str)
+    event_type = json_dict.pop("event_type", None)
+
+    match event_type:
+        case FullSnapshotEvent.__name__:
+            snapshot = EnsembleSnapshot.from_nested_dict(json_dict["snapshot"])
+            json_dict["snapshot"] = snapshot
+            return FullSnapshotEvent(**json_dict)
+        case SnapshotUpdateEvent.__name__:
+            snapshot = EnsembleSnapshot.from_nested_dict(json_dict["snapshot"])
+            json_dict["snapshot"] = snapshot
+            return SnapshotUpdateEvent(**json_dict)
+        case RunModelDataEvent.__name__ | RunModelUpdateEndEvent.__name__:
+            if "run_id" in json_dict and isinstance(json_dict["run_id"], str):
+                json_dict["run_id"] = UUID(json_dict["run_id"])
+            if json_dict.get("data"):
+                json_dict["data"] = DataSection(**json_dict["data"])
+            return EVENT_MAPPING[event_type](**json_dict)
+        case _:
+            if event_type in EVENT_MAPPING:
+                if "run_id" in json_dict and isinstance(json_dict["run_id"], str):
+                    json_dict["run_id"] = UUID(json_dict["run_id"])
+                return EVENT_MAPPING[event_type](**json_dict)
+            else:
+                raise TypeError(f"Unknown status event type {event_type}")
+
+
+def status_event_to_json(event: StatusEvents) -> str:
+    match event:
+        case FullSnapshotEvent() | SnapshotUpdateEvent():
+            assert event.snapshot is not None
+            event_dict = asdict(event)
+            event_dict.update(
+                {
+                    "snapshot": event.snapshot.to_dict(),
+                    "event_type": event.__class__.__name__,
+                }
+            )
+            return json.dumps(
+                event_dict,
+                default=lambda o: o.strftime("%Y-%m-%dT%H:%M:%S")
+                if isinstance(o, datetime)
+                else None,
+            )
+        case StatusEvents:
+            event_dict = asdict(event)
+            event_dict["event_type"] = StatusEvents.__class__.__name__
+            return json.dumps(
+                event_dict, default=lambda o: str(o) if isinstance(o, UUID) else None
+            )

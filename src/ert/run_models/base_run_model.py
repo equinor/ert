@@ -20,9 +20,6 @@ import numpy as np
 
 from _ert.events import EESnapshot, EESnapshotUpdate, EETerminated, Event
 from ert.analysis import (
-    AnalysisEvent,
-    AnalysisStatusEvent,
-    AnalysisTimeEvent,
     ErtAnalysisError,
     smoother_update,
 )
@@ -39,11 +36,6 @@ from ert.ensemble_evaluator import (
     EvaluatorServerConfig,
     Monitor,
     Realization,
-)
-from ert.ensemble_evaluator.event import (
-    EndEvent,
-    FullSnapshotEvent,
-    SnapshotUpdateEvent,
 )
 from ert.ensemble_evaluator.identifiers import STATUS
 from ert.ensemble_evaluator.snapshot import EnsembleSnapshot
