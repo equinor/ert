@@ -14,13 +14,13 @@ class _NodeBase(ABC):
     _index: int | None = None
 
 
-def _repr(node: _Node) -> str:
+def _repr(node: RootNode | IterNode | RealNode | ForwardModelStepNode) -> str:
     parent = "no " if node.parent is None else ""
     children = "no " if not node.children else f"{len(node.children)} "
     return f"Node<{type(node).__name__}>@{node.id_} with {parent}parent and {children}children"
 
 
-def _row(node: _Node) -> int:
+def _row(node: RootNode | IterNode | RealNode | ForwardModelStepNode) -> int:
     if not node._index:
         if node.parent:
             node._index = list(node.parent.children.keys()).index(node.id_)
@@ -105,14 +105,8 @@ class ForwardModelStepNode(_NodeBase):
     data: FMStepSnapshot = field(default_factory=lambda: FMStepSnapshot())  # noqa: PLW0108
     children: dict[str, None] = field(default_factory=dict)
 
-    def add_child(self, _: _NodeBase) -> None:
-        raise RuntimeError(f"Can not add children to {self.__class__.__name__}")
-
     def row(self) -> int:
         return _row(self)
 
     def __repr__(self) -> str:
         return _repr(self)
-
-
-_Node = RootNode | IterNode | RealNode | ForwardModelStepNode

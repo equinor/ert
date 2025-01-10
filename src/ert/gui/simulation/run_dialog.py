@@ -149,16 +149,15 @@ class FMStepOverview(QTableView):
             error_dialog.exec()
 
     def mouseMoveEvent(self, event: QMouseEvent) -> None:
-        if event:
-            index = self.indexAt(event.pos())
-            if index.isValid():
-                data_name = FM_STEP_COLUMNS[index.column()]
-                if data_name in {ids.STDOUT, ids.STDERR} and file_has_content(
-                    index.data(FileRole)
-                ):
-                    self.setCursor(Qt.CursorShape.PointingHandCursor)
-                else:
-                    self.setCursor(Qt.CursorShape.ArrowCursor)
+        index = self.indexAt(event.pos())
+        if index.isValid():
+            data_name = FM_STEP_COLUMNS[index.column()]
+            if data_name in {ids.STDOUT, ids.STDERR} and file_has_content(
+                index.data(FileRole)
+            ):
+                self.setCursor(Qt.CursorShape.PointingHandCursor)
+            else:
+                self.setCursor(Qt.CursorShape.ArrowCursor)
 
         return super().mouseMoveEvent(event)
 
@@ -181,7 +180,7 @@ class RunDialog(QFrame):
         QFrame.__init__(self, parent)
         self.output_path = output_path
         self.setAttribute(Qt.WidgetAttribute.WA_DeleteOnClose)
-        self.setWindowFlag(Qt.WindowType.Window, True)
+        self.setWindowFlags(Qt.WindowType.Window)
         self.setWindowFlag(Qt.WindowType.WindowContextHelpButtonHint, False)
         self.setWindowTitle(f"Experiment - {config_file} {find_ert_info()}")
 

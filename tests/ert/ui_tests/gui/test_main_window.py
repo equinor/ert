@@ -31,6 +31,7 @@ from ert.gui.ertwidgets.analysismodulevariablespanel import AnalysisModuleVariab
 from ert.gui.ertwidgets.create_experiment_dialog import CreateExperimentDialog
 from ert.gui.ertwidgets.ensembleselector import EnsembleSelector
 from ert.gui.main import ErtMainWindow, GUILogHandler, _setup_main_window
+from ert.gui.main_window import SidebarToolButton
 from ert.gui.simulation.experiment_panel import ExperimentPanel
 from ert.gui.simulation.run_dialog import RunDialog
 from ert.gui.suggestor import Suggestor

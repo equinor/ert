@@ -116,17 +116,14 @@ class LimitsStack(StackedInput):
         input_ = self._inputs[axis_name]
         result: float | int | date | None = None
         if issubclass(type(input_), QLineEdit) or issubclass(type(input_), QLabel):
-            input_ = cast(QLineEdit | QLabel, input_)
-            if axis_name in LimitsStack.FLOAT_AXIS:
-                try:
+            try:
+                input_ = cast(QLineEdit | QLabel, input_)
+                if axis_name in LimitsStack.FLOAT_AXIS:
                     result = float(input_.text())
-                except ValueError:
-                    result = None
-            elif axis_name in LimitsStack.INT_AXIS:
-                try:
+                elif axis_name in LimitsStack.INT_AXIS:
                     result = int(input_.text())
-                except ValueError:
-                    result = None
+            except ValueError:
+                result = None
         elif axis_name == PlotContext.DATE_AXIS and type(input_) is CustomDateEdit:
             result = input_.date()
 

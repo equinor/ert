@@ -52,12 +52,7 @@ class AutoCompleteLineEdit(QLineEdit):
 
     def keyPressEvent(self, arg__1: QKeyEvent) -> None:
         popup = self._completer.popup()
-        if (
-            popup is not None
-            and popup.isVisible()
-            and arg__1 is not None
-            and arg__1.key() in self.__keysToIgnore
-        ):
+        if popup and popup.isVisible() and arg__1.key() in self.__keysToIgnore:
             arg__1.ignore()
             return
 
@@ -66,7 +61,7 @@ class AutoCompleteLineEdit(QLineEdit):
         completion_prefix = self.textUnderCursor()
         if completion_prefix != self._completer.completionPrefix():
             self.__updateCompleterPopupItems(completion_prefix)
-        if arg__1 is not None and len(arg__1.text()) > 0 and len(completion_prefix) > 0:
+        if len(arg__1.text()) > 0 and len(completion_prefix) > 0:
             self._completer.complete()
         if popup is not None and len(completion_prefix) == 0:
             popup.hide()

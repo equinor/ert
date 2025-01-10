@@ -251,7 +251,7 @@ class ExperimentPanel(QWidget):
             QMessageBox.warning(
                 self,
                 "ERROR: Failed to create experiment",
-                (str(e)),
+                str(e),
                 QMessageBox.StandardButton.Ok,
             )
             return

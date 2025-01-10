@@ -352,7 +352,7 @@ class SnapshotModel(QAbstractItemModel):
         if isinstance(node, ForwardModelStepNode):
             return self._fm_step_data(index, node, Qt.ItemDataRole(role))
         if isinstance(node, RealNode):
-            return self._real_data(index, node, role)
+            return self._real_data(node, role)
 
         if role == Qt.ItemDataRole.DisplayRole:
             if index.column() == 0:
@@ -383,9 +383,7 @@ class SnapshotModel(QAbstractItemModel):
         return None
 
     @staticmethod
-    def _real_data(
-        _: QModelIndex | QPersistentModelIndex, node: RealNode, role: int
-    ) -> Any:
+    def _real_data(node: RealNode, role: int) -> Any:
         if role == FMStepColorHint:
             total_count = len(node.data.fm_step_status_color_by_id)
             finished_count = sum(
