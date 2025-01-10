@@ -1,414 +1,923 @@
-import copy
+from __future__ import annotations
+
+import json
 import logging
 import os
-import sqlite3
-import time
-from collections import namedtuple
-from itertools import count
+from dataclasses import dataclass, field
 from pathlib import Path
+from typing import (
+    Any,
+    TypedDict,
+    cast,
+)
 
 import numpy as np
-
-from ropt.enums import ConstraintType, EventType
+import polars
+from ropt.enums import EventType
+from ropt.plan import BasicOptimizer, Event
 from ropt.results import FunctionResults, GradientResults, convert_to_maximize
-from .database import Database
-from .snapshot import SebaSnapshot
-
-OptimalResult = namedtuple(
-    "OptimalResult", "batch, controls, total_objective, expected_objectives"
-)
 
 logger = logging.getLogger(__name__)
 
 
-def _convert_names(control_names):
-    converted_names = []
-    for name in control_names:
-        converted = f"{name[0]}_{name[1]}"
-        if len(name) > 2:
-            converted += f"-{name[2]}"
-        converted_names.append(converted)
-    return converted_names
+@dataclass
+class OptimalResult:
+    batch: int
+    controls: list[Any]
+    total_objective: float
+
+
+def try_read_df(path: Path) -> polars.DataFrame | None:
+    return polars.read_parquet(path) if path.exists() else None
+
+
+@dataclass
+class BatchDataFrames:
+    batch_id: int
+    realization_controls: polars.DataFrame
+    batch_objectives: polars.DataFrame | None
+    realization_objectives: polars.DataFrame | None
+    batch_constraints: polars.DataFrame | None
+    realization_constraints: polars.DataFrame | None
+    batch_objective_gradient: polars.DataFrame | None
+    perturbation_objectives: polars.DataFrame | None
+    batch_constraint_gradient: polars.DataFrame | None
+    perturbation_constraints: polars.DataFrame | None
+    is_improvement: bool | None = False
+
+    @property
+    def existing_dataframes(self) -> dict[str, polars.DataFrame]:
+        return {
+            k: cast(polars.DataFrame, getattr(self, k))
+            for k in [
+                "batch_objectives",
+                "batch_objective_gradient",
+                "batch_constraints",
+                "batch_constraint_gradient",
+                "realization_controls",
+                "realization_objectives",
+                "realization_constraints",
+                "perturbation_objectives",
+                "perturbation_constraints",
+            ]
+            if getattr(self, k) is not None
+        }
+
+
+@dataclass
+class EverestStorageDataFrames:
+    batches: list[BatchDataFrames] = field(default_factory=list)
+    controls: polars.DataFrame | None = None
+    objective_functions: polars.DataFrame | None = None
+    nonlinear_constraints: polars.DataFrame | None = None
+    realization_weights: polars.DataFrame | None = None
+
+    @property
+    def simulation_to_geo_realization_map(self) -> dict[str, str]:
+        """
+        Mapping from simulation ID to geo-realization
+        """
+        dummy_df = next(
+            (
+                b.realization_controls
+                for b in self.batches
+                if b.realization_controls is not None
+            ),
+            None,
+        )
+
+        if dummy_df is None:
+            return {}
+
+        mapping = {}
+        for d in dummy_df.select("realization", "simulation_id").to_dicts():
+            # Currently we work with str, but should maybe not be done in future
+            mapping[str(d["simulation_id"])] = str(d["realization"])
+
+        return mapping
+
+    @property
+    def existing_dataframes(self) -> dict[str, polars.DataFrame]:
+        return {
+            k: cast(polars.DataFrame, getattr(self, k))
+            for k in [
+                "controls",
+                "objective_functions",
+                "nonlinear_constraints",
+                "realization_weights",
+            ]
+            if getattr(self, k) is not None
+        }
+
+    def write_to_experiment(
+        self, experiment: _OptimizerOnlyExperiment, write_csv=False
+    ) -> None:
+        for df_name, df in self.existing_dataframes.items():
+            with open(
+                experiment.optimizer_mount_point / f"{df_name}.json",
+                mode="w+",
+                encoding="utf-8",
+            ) as f:
+                f.write(json.dumps(df.to_dicts()))
+
+            df.write_parquet(f"{experiment.optimizer_mount_point / df_name}.parquet")
+
+            if write_csv:
+                df.write_csv(f"{experiment.optimizer_mount_point / df_name}.csv")
+
+        for batch_data in self.batches:
+            ensemble = experiment.get_ensemble_by_name(f"batch_{batch_data.batch_id}")
+            with open(
+                ensemble.optimizer_mount_point / "batch.json", "w+", encoding="utf-8"
+            ) as f:
+                json.dump(
+                    {
+                        "batch_id": batch_data.batch_id,
+                        "is_improvement": batch_data.is_improvement,
+                    },
+                    f,
+                )
+
+            for df_key, df in batch_data.existing_dataframes.items():
+                df.write_parquet(ensemble.optimizer_mount_point / f"{df_key}.parquet")
+                df.write_csv(ensemble.optimizer_mount_point / f"{df_key}.csv")
+                df.write_json(ensemble.optimizer_mount_point / f"{df_key}.json")
+
+    def read_from_experiment(self, experiment: _OptimizerOnlyExperiment) -> None:
+        self.controls = polars.read_parquet(
+            experiment.optimizer_mount_point / "controls.parquet"
+        )
+        self.objective_functions = polars.read_parquet(
+            experiment.optimizer_mount_point / "objective_functions.parquet"
+        )
+
+        if (
+            experiment.optimizer_mount_point / "nonlinear_constraints.parquet"
+        ).exists():
+            self.nonlinear_constraints = polars.read_parquet(
+                experiment.optimizer_mount_point / "nonlinear_constraints.parquet"
+            )
+
+        if (experiment.optimizer_mount_point / "realization_weights.parquet").exists():
+            self.realization_weights = polars.read_parquet(
+                experiment.optimizer_mount_point / "realization_weights.parquet"
+            )
+
+        for ens in experiment.ensembles.values():
+            with open(ens.optimizer_mount_point / "batch.json", encoding="utf-8") as f:
+                info = json.load(f)
+
+            self.batches.append(
+                BatchDataFrames(
+                    batch_id=info["batch_id"],
+                    **{
+                        df_name: try_read_df(
+                            Path(ens.optimizer_mount_point) / f"{df_name}.parquet"
+                        )
+                        for df_name in [
+                            "batch_objectives",
+                            "batch_objective_gradient",
+                            "batch_constraints",
+                            "batch_constraint_gradient",
+                            "realization_controls",
+                            "realization_objectives",
+                            "realization_constraints",
+                            "perturbation_objectives",
+                            "perturbation_constraints",
+                        ]
+                    },
+                    is_improvement=info["is_improvement"],
+                )
+            )
+
+        self.batches.sort(key=lambda b: b.batch_id)
+
+
+class _OptimizerOnlyEnsemble:
+    def __init__(self, output_dir: Path) -> None:
+        self._output_dir = output_dir
+
+    @property
+    def optimizer_mount_point(self) -> Path:
+        if not (self._output_dir / "optimizer").exists():
+            Path.mkdir(self._output_dir / "optimizer", parents=True)
+
+        return self._output_dir / "optimizer"
+
+
+class _OptimizerOnlyExperiment:
+    """
+    Mocks an ERT storage, if we want to store optimization results within the
+    ERT storage, we can use an ERT Experiment object with an optimizer_mount_point
+    property
+    """
+
+    def __init__(self, output_dir: Path) -> None:
+        self._output_dir = output_dir
+        self._ensembles = {}
+
+    @property
+    def optimizer_mount_point(self) -> Path:
+        if not (self._output_dir / "optimizer").exists():
+            Path.mkdir(self._output_dir / "optimizer", parents=True)
+
+        return self._output_dir / "optimizer"
+
+    @property
+    def ensembles(self) -> dict[str, _OptimizerOnlyEnsemble]:
+        return {
+            str(d): _OptimizerOnlyEnsemble(self._output_dir / "ensembles" / d)
+            for d in os.listdir(self._output_dir / "ensembles")
+            if "batch_" in d
+        }
+
+    def get_ensemble_by_name(self, name: str) -> _OptimizerOnlyEnsemble:
+        if name not in self._ensembles:
+            self._ensembles[name] = _OptimizerOnlyEnsemble(
+                self._output_dir / "ensembles" / name
+            )
+
+        return self._ensembles[name]
+
+
+@dataclass
+class _EvaluationResults(TypedDict):
+    realization_controls: polars.DataFrame
+    batch_objectives: polars.DataFrame
+    realization_objectives: polars.DataFrame
+    batch_constraints: polars.DataFrame | None
+    realization_constraints: polars.DataFrame | None
+
+
+@dataclass
+class _GradientResults(TypedDict):
+    batch_objective_gradient: polars.DataFrame | None
+    perturbation_objectives: polars.DataFrame | None
+    batch_constraint_gradient: polars.DataFrame | None
+    perturbation_constraints: polars.DataFrame | None
+
+
+@dataclass
+class _MeritValue:
+    value: float
+    iter: int
 
 
 class EverestStorage:
-    # This implementation builds as much as possible on the older database and
-    # snapshot code, since it is meant for backwards compatibility, and should
-    # not be extended with new functionality.
-
-    def __init__(self, optimizer, output_dir):
-        # Internal variables.
-        self._output_dir = output_dir
-        self._database = Database(output_dir)
+    def __init__(
+        self,
+        output_dir: Path,
+    ) -> None:
         self._control_ensemble_id = 0
         self._gradient_ensemble_id = 0
-        self._simulator_results = None
-        self._merit_file = Path(output_dir) / "dakota" / "OPT_DEFAULT.out"
 
-        # Connect event handlers.
-        self._set_event_handlers(optimizer)
+        self._output_dir = output_dir
+        self._merit_file: Path | None = None
+        self.data = EverestStorageDataFrames()
 
-        self._initialized = False
+    @staticmethod
+    def _rename_ropt_df_columns(df: polars.DataFrame) -> polars.DataFrame:
+        """
+        Renames columns of a dataframe from ROPT to what will be displayed
+        to the user.
+        """
+        scaled_cols = [c for c in df.columns if c.lower().startswith("scaled")]
+        if len(scaled_cols) > 0:
+            raise ValueError("Scaled columns should not be stored into Everest storage")
 
-    @property
-    def file(self):
-        return self._database.location
+        renames = {
+            "objective": "objective_name",
+            "weighted_objective": "total_objective_value",
+            "variable": "control_name",
+            "variables": "control_value",
+            "objectives": "objective_value",
+            "constraints": "constraint_value",
+            "nonlinear_constraint": "constraint_name",
+            "perturbed_variables": "perturbed_control_value",
+            "perturbed_objectives": "perturbed_objective_value",
+            "perturbed_constraints": "perturbed_constraint_value",
+            "evaluation_ids": "simulation_id",
+        }
+        return df.rename({k: v for k, v in renames.items() if k in df.columns})
 
-    def _initialize(self, event):
-        if self._initialized:
-            return
-        self._initialized = True
+    @staticmethod
+    def _enforce_dtypes(df: polars.DataFrame) -> polars.DataFrame:
+        dtypes = {
+            "batch_id": polars.UInt32,
+            "result_id": polars.UInt32,
+            "perturbation": polars.UInt32,
+            "realization": polars.UInt32,
+            # -1 is used as a value in simulator cache.
+            # thus we need signed, otherwise we could do unsigned
+            "simulation_id": polars.Int32,
+            "objective_name": polars.String,
+            "control_name": polars.String,
+            "constraint_name": polars.String,
+            "total_objective_value": polars.Float64,
+            "control_value": polars.Float64,
+            "objective_value": polars.Float64,
+            "constraint_value": polars.Float64,
+            "perturbed_control_value": polars.Float64,
+            "perturbed_objective_value": polars.Float64,
+            "perturbed_constraint_value": polars.Float64,
+        }
 
-        self._database.add_experiment(
-            name="optimization_experiment", start_time_stamp=time.time()
+        existing_cols = set(df.columns)
+        unaccounted_cols = existing_cols - set(dtypes)
+        if len(unaccounted_cols) > 0:
+            raise KeyError(
+                f"Expected all keys to have a specified dtype, found {unaccounted_cols}"
+            )
+
+        df = df.cast(
+            {
+                colname: dtype
+                for colname, dtype in dtypes.items()
+                if colname in df.columns
+            }
         )
 
-        # Add configuration values.
+        return df
+
+    def write_to_output_dir(self) -> None:
+        exp = _OptimizerOnlyExperiment(self._output_dir)
+
+        # csv writing mostly for dev/debugging/quick inspection
+        self.data.write_to_experiment(exp, write_csv=True)
+
+    def read_from_output_dir(self) -> None:
+        exp = _OptimizerOnlyExperiment(self._output_dir)
+        self.data.read_from_experiment(exp)
+
+    def observe_optimizer(
+        self,
+        optimizer: BasicOptimizer,
+        merit_file: Path,
+    ) -> None:
+        # We only need this file if we are observing a running ROPT instance
+        # (using dakota backend)
+        self._merit_file = merit_file
+
+        optimizer.add_observer(
+            EventType.START_OPTIMIZER_STEP, self._on_start_optimization
+        )
+        optimizer.add_observer(
+            EventType.FINISHED_EVALUATION, self._on_batch_evaluation_finished
+        )
+        optimizer.add_observer(
+            EventType.FINISHED_OPTIMIZER_STEP,
+            self._on_optimization_finished,
+        )
+
+    def _on_start_optimization(self, event: Event) -> None:
+        def _format_control_names(control_names):
+            converted_names = []
+            for name in control_names:
+                converted = f"{name[0]}_{name[1]}"
+                if len(name) > 2:
+                    converted += f"-{name[2]}"
+                converted_names.append(converted)
+
+            return converted_names
+
         config = event.config
-        for control_name, initial_value, lower_bound, upper_bound in zip(
-                _convert_names(config.variables.names),
-                config.variables.initial_values,
-                config.variables.lower_bounds,
-                config.variables.upper_bounds,
-        ):
-            self._database.add_control_definition(
-                control_name, initial_value, lower_bound, upper_bound
-            )
 
-        for name, weight, scale in zip(
-                config.objective_functions.names,
-                config.objective_functions.weights,
-                config.objective_functions.scales,
-        ):
-            self._database.add_function(
-                name=name,
-                function_type="OBJECTIVE",
-                weight=weight,
-                normalization=1.0 / scale,
-            )
-
-        if config.nonlinear_constraints is not None:
-            for name, scale, rhs_value, constraint_type in zip(
-                    config.nonlinear_constraints.names,
-                    config.nonlinear_constraints.scales,
-                    config.nonlinear_constraints.rhs_values,
-                    config.nonlinear_constraints.types,
-            ):
-                self._database.add_function(
-                    name=name,
-                    function_type="CONSTRAINT",
-                    normalization=scale,
-                    rhs_value=rhs_value,
-                    constraint_type=ConstraintType(constraint_type).name.lower(),
-                )
-
-        for name, weight in zip(
-                config.realizations.names,
-                config.realizations.weights,
-        ):
-            self._database.add_realization(str(name), weight)
-
-    def _add_batch(self, config, controls, perturbed_controls):
-        self._gradient_ensemble_id += 1
-        self._control_ensemble_id = self._gradient_ensemble_id
-        control_names = _convert_names(config.variables.names)
-        for control_name, value in zip(control_names, controls):
-            self._database.add_control_value(
-                set_id=self._control_ensemble_id,
-                control_name=control_name,
-                value=value,
-            )
-        if perturbed_controls is not None:
-            perturbed_controls = perturbed_controls.reshape(
-                perturbed_controls.shape[0], -1
-            )
-            self._gradient_ensemble_id = self._control_ensemble_id
-            for g_idx in range(perturbed_controls.shape[1]):
-                self._gradient_ensemble_id += 1
-                for c_idx, c_name in enumerate(control_names):
-                    self._database.add_control_value(
-                        set_id=self._gradient_ensemble_id,
-                        control_name=c_name,
-                        value=perturbed_controls[c_idx, g_idx],
-                    )
-
-    def _add_simulations(self, config, result):
-        self._gradient_ensemble_id = self._control_ensemble_id
-        simulation_index = count()
-        if isinstance(result, FunctionResults):
-            for realization_name in config.realizations.names:
-                self._database.add_simulation(
-                    realization_name=str(realization_name),
-                    set_id=self._control_ensemble_id,
-                    sim_name=f"{result.batch_id}_{next(simulation_index)}",
-                    is_gradient=False,
-                )
-        if isinstance(result, GradientResults):
-            for realization_name in config.realizations.names:
-                for _ in range(config.gradient.number_of_perturbations):
-                    self._gradient_ensemble_id += 1
-                    self._database.add_simulation(
-                        realization_name=str(realization_name),
-                        set_id=self._gradient_ensemble_id,
-                        sim_name=f"{result.batch_id}_{next(simulation_index)}",
-                        is_gradient=True,
-                    )
-
-    def _add_simulator_results(
-        self, config, batch, objective_results, constraint_results
-    ):
-        if constraint_results is None:
-            results = objective_results
-        else:
-            results = np.vstack((objective_results, constraint_results))
-        statuses = np.logical_and.reduce(np.isfinite(results), axis=0)
-        names = config.objective_functions.names
-        if config.nonlinear_constraints is not None:
-            names += config.nonlinear_constraints.names
-
-        for sim_idx, status in enumerate(statuses):
-            sim_name = f"{batch}_{sim_idx}"
-            for function_idx, name in enumerate(names):
-                if status:
-                    self._database.add_simulation_result(
-                        sim_name, results[function_idx, sim_idx], name, 0
-                    )
-            self._database.set_simulation_ended(sim_name, status)
-
-    def _add_constraint_values(self, config, batch, constraint_values):
-        statuses = np.logical_and.reduce(np.isfinite(constraint_values), axis=0)
-        for sim_id, status in enumerate(statuses):
-            if status:
-                for idx, constraint_name in enumerate(
-                        config.nonlinear_constraints.names
-                ):
-                    # Note the time_index=0, the database supports storing
-                    # multipel time-points, but we do not support that, so we
-                    # use times_index=0.
-                    self._database.update_simulation_result(
-                        simulation_name=f"{batch}_{sim_id}",
-                        function_name=constraint_name,
-                        times_index=0,
-                        value=constraint_values[idx, sim_id],
-                    )
-
-    def _add_gradients(self, config, objective_gradients):
-        for grad_index, gradient in enumerate(objective_gradients):
-            for control_index, control_name in enumerate(
-                    _convert_names(config.variables.names)
-            ):
-                self._database.add_gradient_result(
-                    gradient[control_index],
-                    config.objective_functions.names[grad_index],
-                    1,
-                    control_name,
-                )
-
-    def _add_total_objective(self, total_objective):
-        self._database.add_calculation_result(
-            set_id=self._control_ensemble_id,
-            object_function_value=total_objective,
+        # Note: We probably do not have to store
+        # all of this information, consider removing.
+        self.data.controls = polars.DataFrame(
+            {
+                "control_name": polars.Series(
+                    _format_control_names(config.variables.names), dtype=polars.String
+                ),
+                "initial_value": polars.Series(
+                    config.variables.initial_values, dtype=polars.Float64
+                ),
+                "lower_bounds": polars.Series(
+                    config.variables.lower_bounds, dtype=polars.Float64
+                ),
+                "upper_bounds": polars.Series(
+                    config.variables.upper_bounds, dtype=polars.Float64
+                ),
+            }
         )
 
-    def _convert_constraints(self, config, constraint_results):
-        constraint_results = copy.deepcopy(constraint_results)
-        rhs_values = config.nonlinear_constraints.rhs_values
-        for idx, constraint_type in enumerate(config.nonlinear_constraints.types):
-            constraint_results[idx] -= rhs_values[idx]
-            if constraint_type == ConstraintType.LE:
-                constraint_results[idx] *= -1.0
-        return constraint_results
+        self.data.objective_functions = polars.DataFrame(
+            {
+                "objective_name": config.objectives.names,
+                "weight": polars.Series(
+                    config.objectives.weights, dtype=polars.Float64
+                ),
+                "normalization": polars.Series(  # Q: Is this correct?
+                    [1.0 / s for s in config.objectives.scales],
+                    dtype=polars.Float64,
+                ),
+            }
+        )
 
-    def _store_results(self, config, results):
-        if isinstance(results, FunctionResults):
-            objective_results = results.evaluations.objectives
-            objective_results = np.moveaxis(objective_results, -1, 0)
-            constraint_results = results.evaluations.constraints
-            if constraint_results is not None:
-                constraint_results = np.moveaxis(constraint_results, -1, 0)
-        else:
-            objective_results = None
-            constraint_results = None
-
-        if isinstance(results, GradientResults):
-            perturbed_variables = results.evaluations.perturbed_variables
-            perturbed_variables = np.moveaxis(perturbed_variables, -1, 0)
-            perturbed_objectives = results.evaluations.perturbed_objectives
-            perturbed_objectives = np.moveaxis(perturbed_objectives, -1, 0)
-            perturbed_constraints = results.evaluations.perturbed_constraints
-            if perturbed_constraints is not None:
-                perturbed_constraints = np.moveaxis(perturbed_constraints, -1, 0)
-        else:
-            perturbed_variables = None
-            perturbed_objectives = None
-            perturbed_constraints = None
-
-        self._add_batch(config, results.evaluations.variables, perturbed_variables)
-        self._add_simulations(config, results)
-
-        # Convert back the simulation results to the legacy format:
-        if perturbed_objectives is not None:
-            perturbed_objectives = perturbed_objectives.reshape(
-                perturbed_objectives.shape[0], -1
+        if config.nonlinear_constraints is not None:
+            self.data.nonlinear_constraints = polars.DataFrame(
+                {
+                    "constraint_name": config.nonlinear_constraints.names,
+                    "normalization": [
+                        1.0 / s for s in config.nonlinear_constraints.scales
+                    ],  # Q: Is this correct?
+                    "constraint_rhs_value": config.nonlinear_constraints.rhs_values,
+                    "constraint_type": config.nonlinear_constraints.types,
+                }
             )
-            if objective_results is None:
-                objective_results = perturbed_objectives
+
+        self.data.realization_weights = polars.DataFrame(
+            {
+                "realization": polars.Series(
+                    config.realizations.names, dtype=polars.UInt32
+                ),
+                "weight": polars.Series(
+                    config.realizations.weights, dtype=polars.Float64
+                ),
+            }
+        )
+
+    def _store_function_results(self, results: FunctionResults) -> _EvaluationResults:
+        # We could select only objective values,
+        # but we select all to also get the constraint values (if they exist)
+        realization_objectives = polars.from_pandas(
+            results.to_dataframe(
+                "evaluations",
+                select=["objectives", "evaluation_ids"],
+            ).reset_index(),
+        ).select(
+            "result_id",
+            "batch_id",
+            "realization",
+            "objective",
+            "objectives",
+            "evaluation_ids",
+        )
+
+        if results.nonlinear_constraints is not None:
+            realization_constraints = polars.from_pandas(
+                results.to_dataframe(
+                    "evaluations",
+                    select=["constraints", "evaluation_ids"],
+                ).reset_index(),
+            ).select(
+                "result_id",
+                "batch_id",
+                "realization",
+                "evaluation_ids",
+                "nonlinear_constraint",
+                "constraints",
+            )
+
+            realization_constraints = self._rename_ropt_df_columns(
+                realization_constraints
+            )
+
+            batch_constraints = polars.from_pandas(
+                results.to_dataframe("nonlinear_constraints").reset_index()
+            ).select(
+                "result_id", "batch_id", "nonlinear_constraint", "values", "violations"
+            )
+
+            batch_constraints = batch_constraints.rename(
+                {
+                    "nonlinear_constraint": "constraint_name",
+                    "values": "constraint_value",
+                    "violations": "constraint_violation",
+                }
+            )
+
+            constraint_names = batch_constraints["constraint_name"].unique().to_list()
+
+            batch_constraints = batch_constraints.pivot(
+                on="constraint_name",
+                values=[
+                    "constraint_value",
+                    "constraint_violation",
+                ],
+                separator=";",
+            ).rename(
+                {
+                    **{f"constraint_value;{name}": name for name in constraint_names},
+                    **{
+                        f"constraint_violation;{name}": f"{name}.violation"
+                        for name in constraint_names
+                    },
+                }
+            )
+
+            realization_constraints = realization_constraints.pivot(
+                values=["constraint_value"], on="constraint_name"
+            )
+        else:
+            batch_constraints = None
+            realization_constraints = None
+
+        batch_objectives = polars.from_pandas(
+            results.to_dataframe(
+                "functions",
+                select=["objectives", "weighted_objective"],
+            ).reset_index()
+        ).select(
+            "result_id", "batch_id", "objective", "objectives", "weighted_objective"
+        )
+
+        realization_controls = polars.from_pandas(
+            results.to_dataframe(
+                "evaluations", select=["variables", "evaluation_ids"]
+            ).reset_index()
+        ).select(
+            "result_id",
+            "batch_id",
+            "variable",
+            "realization",
+            "variables",
+            "evaluation_ids",
+        )
+
+        realization_controls = self._rename_ropt_df_columns(realization_controls)
+        realization_controls = self._enforce_dtypes(realization_controls)
+
+        realization_controls = realization_controls.pivot(
+            on="control_name",
+            values=["control_value"],
+            separator=":",
+        )
+
+        batch_objectives = self._rename_ropt_df_columns(batch_objectives)
+        batch_objectives = self._enforce_dtypes(batch_objectives)
+
+        realization_objectives = self._rename_ropt_df_columns(realization_objectives)
+        realization_objectives = self._enforce_dtypes(realization_objectives)
+
+        batch_objectives = batch_objectives.pivot(
+            on="objective_name",
+            values=["objective_value"],
+            separator=":",
+        )
+
+        realization_objectives = realization_objectives.pivot(
+            values="objective_value",
+            index=[
+                "result_id",
+                "batch_id",
+                "realization",
+                "simulation_id",
+            ],
+            columns="objective_name",
+        )
+
+        return {
+            "realization_controls": realization_controls,
+            "batch_objectives": batch_objectives,
+            "realization_objectives": realization_objectives,
+            "batch_constraints": batch_constraints,
+            "realization_constraints": realization_constraints,
+        }
+
+    def _store_gradient_results(self, results: GradientResults) -> _GradientResults:
+        perturbation_objectives = polars.from_pandas(
+            results.to_dataframe("evaluations").reset_index()
+        ).select(
+            [
+                "result_id",
+                "batch_id",
+                "variable",
+                "realization",
+                "perturbation",
+                "objective",
+                "variables",
+                "perturbed_variables",
+                "perturbed_objectives",
+                "perturbed_evaluation_ids",
+                *(
+                    ["nonlinear_constraint", "perturbed_constraints"]
+                    if results.evaluations.perturbed_constraints is not None
+                    else []
+                ),
+            ]
+        )
+        perturbation_objectives = self._rename_ropt_df_columns(perturbation_objectives)
+
+        if results.gradients is not None:
+            batch_objective_gradient = polars.from_pandas(
+                results.to_dataframe("gradients").reset_index()
+            ).select(
+                [
+                    "result_id",
+                    "batch_id",
+                    "variable",
+                    "objective",
+                    "weighted_objective",
+                    "objectives",
+                    *(
+                        ["nonlinear_constraint", "constraints"]
+                        if results.gradients.constraints is not None
+                        else []
+                    ),
+                ]
+            )
+            batch_objective_gradient = self._rename_ropt_df_columns(
+                batch_objective_gradient
+            )
+            batch_objective_gradient = self._enforce_dtypes(batch_objective_gradient)
+        else:
+            batch_objective_gradient = None
+
+        if results.evaluations.perturbed_constraints is not None:
+            perturbation_constraints = (
+                perturbation_objectives[
+                    "result_id",
+                    "batch_id",
+                    "realization",
+                    "perturbation",
+                    "control_name",
+                    "perturbed_control_value",
+                    *[
+                        c
+                        for c in perturbation_objectives.columns
+                        if "constraint" in c.lower()
+                    ],
+                ]
+                .pivot(on="constraint_name", values=["perturbed_constraint_value"])
+                .pivot(on="control_name", values="perturbed_control_value")
+            )
+
+            if batch_objective_gradient is not None:
+                batch_constraint_gradient = batch_objective_gradient[
+                    "result_id",
+                    "batch_id",
+                    "control_name",
+                    *[
+                        c
+                        for c in batch_objective_gradient.columns
+                        if "constraint" in c.lower()
+                    ],
+                ]
+
+                batch_objective_gradient = batch_objective_gradient.drop(
+                    [
+                        c
+                        for c in batch_objective_gradient.columns
+                        if "constraint" in c.lower()
+                    ]
+                ).unique()
+
+                batch_constraint_gradient = batch_constraint_gradient.pivot(
+                    on="constraint_name",
+                    values=["constraint_value"],
+                )
             else:
-                objective_results = np.hstack((objective_results, perturbed_objectives))
+                batch_constraint_gradient = None
 
-        if config.nonlinear_constraints is not None:
-            if perturbed_constraints is not None:
-                perturbed_constraints = perturbed_constraints.reshape(
-                    perturbed_constraints.shape[0], -1
-                )
-                if constraint_results is None:
-                    constraint_results = perturbed_constraints
-                else:
-                    constraint_results = np.hstack(
-                        (constraint_results, perturbed_constraints)
-                    )
-            # The legacy code converts all constraints to the form f(x) >=0:
-            constraint_results = self._convert_constraints(config, constraint_results)
+            perturbation_objectives = perturbation_objectives.drop(
+                [
+                    c
+                    for c in perturbation_objectives.columns
+                    if "constraint" in c.lower()
+                ]
+            ).unique()
+        else:
+            batch_constraint_gradient = None
+            perturbation_constraints = None
 
-        self._add_simulator_results(
-            config, results.batch_id, objective_results, constraint_results
+        perturbation_objectives = perturbation_objectives.drop(
+            "perturbed_evaluation_ids", "control_value"
         )
-        if config.nonlinear_constraints:
-            self._add_constraint_values(config, results.batch_id, constraint_results)
-        if isinstance(results, FunctionResults) and results.functions is not None:
-            self._add_total_objective(results.functions.weighted_objective)
-        if isinstance(results, GradientResults) and results.gradients is not None:
-            self._add_gradients(config, results.gradients.objectives)
 
-    def _handle_finished_batch_event(self, event):
-        logger.debug("Storing batch results in the sqlite database")
+        perturbation_objectives = perturbation_objectives.pivot(
+            on="objective_name", values="perturbed_objective_value"
+        )
+
+        perturbation_objectives = perturbation_objectives.pivot(
+            on="control_name", values="perturbed_control_value"
+        )
+
+        if batch_objective_gradient is not None:
+            objective_names = (
+                batch_objective_gradient["objective_name"].unique().to_list()
+            )
+            batch_objective_gradient = batch_objective_gradient.pivot(
+                on="objective_name",
+                values=["objective_value", "total_objective_value"],
+                separator=";",
+            ).rename(
+                {
+                    **{f"objective_value;{name}": name for name in objective_names},
+                    **{
+                        f"total_objective_value;{name}": f"{name}.total"
+                        for name in objective_names
+                    },
+                }
+            )
+
+        return {
+            "batch_objective_gradient": batch_objective_gradient,
+            "perturbation_objectives": perturbation_objectives,
+            "batch_constraint_gradient": batch_constraint_gradient,
+            "perturbation_constraints": perturbation_constraints,
+        }
+
+    def _on_batch_evaluation_finished(self, event: Event) -> None:
+        logger.debug("Storing batch results dataframes")
 
         converted_results = tuple(
-            convert_to_maximize(result) for result in event.results)
-        results = []
+            convert_to_maximize(result) for result in event.results
+        )
+        results: list[FunctionResults | GradientResults] = []
+
         best_value = -np.inf
         best_results = None
         for item in converted_results:
             if isinstance(item, GradientResults):
                 results.append(item)
             if (
-                    isinstance(item, FunctionResults)
-                    and item.functions is not None
-                    and item.functions.weighted_objective > best_value
+                isinstance(item, FunctionResults)
+                and item.functions is not None
+                and item.functions.weighted_objective > best_value
             ):
                 best_value = item.functions.weighted_objective
                 best_results = item
+
         if best_results is not None:
-            results = [best_results] + results
-        last_batch = -1
+            results = [best_results, *results]
+
+        batch_dicts = {}
         for item in results:
-            if item.batch_id != last_batch:
-                self._database.add_batch()
-            self._store_results(event.config, item)
-            if item.batch_id != last_batch:
-                self._database.set_batch_ended
-            last_batch = item.batch_id
+            if item.batch_id not in batch_dicts:
+                batch_dicts[item.batch_id] = {}
 
-        self._database.set_batch_ended(time.time(), True)
+            if isinstance(item, FunctionResults):
+                eval_results = self._store_function_results(item)
+                batch_dicts[item.batch_id].update(eval_results)
 
-        # Merit values are dakota specific, load them if the output file exists:
-        self._database.update_calculation_result(_get_merit_values(self._merit_file))
+            if isinstance(item, GradientResults):
+                gradient_results = self._store_gradient_results(item)
+                batch_dicts[item.batch_id].update(gradient_results)
 
-        backup_data(self._database.location)
+        for batch_id, batch_dict in batch_dicts.items():
+            self.data.batches.append(
+                BatchDataFrames(
+                    batch_id=batch_id,
+                    realization_controls=batch_dict.get("realization_controls"),
+                    batch_objectives=batch_dict.get("batch_objectives"),
+                    realization_objectives=batch_dict.get("realization_objectives"),
+                    batch_constraints=batch_dict.get("batch_constraints"),
+                    realization_constraints=batch_dict.get("realization_constraints"),
+                    batch_objective_gradient=batch_dict.get("batch_objective_gradient"),
+                    perturbation_objectives=batch_dict.get("perturbation_objectives"),
+                    batch_constraint_gradient=batch_dict.get(
+                        "batch_constraint_gradient"
+                    ),
+                    perturbation_constraints=batch_dict.get("perturbation_constraints"),
+                )
+            )
 
-    def _handle_finished_event(self, event):
-        logger.debug("Storing final results in the sqlite database")
-        self._database.update_calculation_result(_get_merit_values(self._merit_file))
-        self._database.set_experiment_ended(time.time())
+    def _on_optimization_finished(self, _) -> None:
+        logger.debug("Storing final results Everest storage")
 
-    def _set_event_handlers(self, optimizer):
-        optimizer.add_observer(
-            EventType.START_OPTIMIZER_STEP, self._initialize
+        merit_values = self._get_merit_values()
+        if merit_values:
+            # NOTE: Batch 0 is always an "accepted batch", and "accepted batches" are
+            # batches with merit_flag , which means that it was an improvement
+            self.data.batches[0].is_improvement = True
+
+            improvement_batches = [
+                b for b in self.data.batches if b.batch_objectives is not None
+            ][1:]
+            for i, b in enumerate(improvement_batches):
+                merit_value = next(
+                    (m.value for m in merit_values if (m.iter - 1) == i), None
+                )
+                if merit_value is None:
+                    continue
+
+                b.batch_objectives = b.batch_objectives.with_columns(
+                    polars.lit(merit_value).alias("merit_value")
+                )
+                b.is_improvement = True
+        else:
+            max_total_objective = -np.inf
+            for b in self.data.batches:
+                if b.batch_objectives is not None:
+                    total_objective = b.batch_objectives["total_objective_value"].item()
+                    if total_objective > max_total_objective:
+                        b.is_improvement = True
+                        max_total_objective = total_objective
+
+        self.write_to_output_dir()
+
+    def get_optimal_result(self) -> OptimalResult | None:
+        # Only used in tests, but re-created to ensure
+        # same behavior as w/ old SEBA setup
+        has_merit = any(
+            "merit_value" in b.batch_objectives.columns
+            for b in self.data.batches
+            if b.batch_objectives is not None
         )
-        optimizer.add_observer(
-            EventType.FINISHED_EVALUATION, self._handle_finished_batch_event
-        )
-        optimizer.add_observer(
-            EventType.FINISHED_OPTIMIZER_STEP,
-            self._handle_finished_event,
-        )
 
-    def get_optimal_result(self):
-        snapshot = SebaSnapshot(self._output_dir)
-        optimum = next(
-            (
-                data
-                for data in reversed(snapshot.get_optimization_data())
-                if data.merit_flag
-            ),
-            None,
-        )
-        if optimum is None:
+        def find_best_batch(
+            filter_by, sort_by
+        ) -> tuple[BatchDataFrames | None, dict | None]:
+            matching_batches = [b for b in self.data.batches if filter_by(b)]
+
+            if not matching_batches:
+                return None, None
+
+            matching_batches.sort(key=sort_by)
+            batch = matching_batches[0]
+            controls_dict = batch.realization_controls.drop(
+                [
+                    "result_id",
+                    "batch_id",
+                    "simulation_id",
+                    "realization",
+                ]
+            ).to_dicts()[0]
+
+            return batch, controls_dict
+
+        if has_merit:
+            # Minimize merit
+            batch, controls_dict = find_best_batch(
+                filter_by=lambda b: (
+                    b.batch_objectives is not None
+                    and "merit_value" in b.batch_objectives.columns
+                ),
+                sort_by=lambda b: b.batch_objectives.select(
+                    polars.col("merit_value").min()
+                ).item(),
+            )
+
+            if batch is None:
+                return None
+
+            return OptimalResult(
+                batch=batch.batch_id,
+                controls=controls_dict,
+                total_objective=batch.batch_objectives.select(
+                    polars.col("total_objective_value").sample(n=1)
+                ).item(),
+            )
+        else:
+            # Maximize objective
+            batch, controls_dict = find_best_batch(
+                filter_by=lambda b: b.batch_objectives is not None
+                and not b.batch_objectives.is_empty(),
+                sort_by=lambda b: -b.batch_objectives.select(
+                    polars.col("total_objective_value").sample(n=1)
+                ).item(),
+            )
+
+            if batch is None:
+                return None
+
+            return OptimalResult(
+                batch=batch.batch_id,
+                controls=controls_dict,
+                total_objective=batch.batch_objectives.select(
+                    polars.col("total_objective_value")
+                ).item(),
+            )
+
+    def _get_merit_values(self) -> list[_MeritValue]:
+        # Read the file containing merit information.
+        # The file should contain the following table header
+        # Iter    F(x)    mu    alpha    Merit    feval    btracks    Penalty
+        # :return: merit values indexed by the function evaluation number
+
+        def _get_merit_fn_lines(merit_path: str) -> list[str]:
+            if os.path.isfile(merit_path):
+                with open(merit_path, errors="replace", encoding="utf-8") as reader:
+                    lines = reader.readlines()
+                start_line_idx = -1
+                for inx, line in enumerate(lines):
+                    if "Merit" in line and "feval" in line:
+                        start_line_idx = inx + 1
+                    if start_line_idx > -1 and line.startswith("="):
+                        return lines[start_line_idx:inx]
+                if start_line_idx > -1:
+                    return lines[start_line_idx:]
+            return []
+
+        def _parse_merit_line(merit_values_string: str) -> tuple[int, float] | None:
+            values = []
+            for merit_elem in merit_values_string.split():
+                try:
+                    values.append(float(merit_elem))
+                except ValueError:
+                    for elem in merit_elem.split("0x")[1:]:
+                        values.append(float.fromhex("0x" + elem))
+            if len(values) == 8:
+                # Dakota starts counting at one, correct to be zero-based.
+                return int(values[5]) - 1, values[4]
             return None
-        objectives = snapshot.get_snapshot(batches=[optimum.batch_id])
-        return OptimalResult(
-            batch=optimum.batch_id,
-            controls=optimum.controls,
-            total_objective=optimum.objective_value,
-            expected_objectives={
-                name:value[0] for name, value in objectives.expected_objectives.items()
-            },
-        )
 
+        merit_values = []
+        if self._merit_file.exists():
+            for line in _get_merit_fn_lines(self._merit_file):
+                value = _parse_merit_line(line)
+                if value is not None:
+                    merit_values.append(_MeritValue(iter=value[0], value=value[1]))
 
-def backup_data(database_location) -> None:
-    src = sqlite3.connect(database_location)
-    dst = sqlite3.connect(database_location + ".backup")
-    with dst:
-        src.backup(dst)
-    src.close()
-    dst.close()
-
-
-def _get_merit_fn_lines(merit_path):
-    if os.path.isfile(merit_path):
-        with open(merit_path, "r", errors="replace", encoding="utf-8") as reader:
-            lines = reader.readlines()
-        start_line_idx = -1
-        for inx, line in enumerate(lines):
-            if "Merit" in line and "feval" in line:
-                start_line_idx = inx + 1
-            if start_line_idx > -1 and line.startswith("="):
-                return lines[start_line_idx:inx]
-        if start_line_idx > -1:
-            return lines[start_line_idx:]
-    return []
-
-
-def _parse_merit_line(merit_values_string):
-    values = []
-    for merit_elem in merit_values_string.split():
-        try:
-            values.append(float(merit_elem))
-        except ValueError:
-            for elem in merit_elem.split("0x")[1:]:
-                values.append(float.fromhex("0x" + elem))
-    if len(values) == 8:
-        # Dakota starts counting at one, correct to be zero-based.
-        return int(values[5]) - 1, values[4]
-    return None
-
-
-def _get_merit_values(merit_file):
-    # Read the file containing merit information.
-    # The file should contain the following table header
-    # Iter    F(x)    mu    alpha    Merit    feval    btracks    Penalty
-    # :return: merit values indexed by the function evaluation number
-    # example:
-    #     0: merit_value_0
-    #     1: merit_value_1
-    #     2  merit_value_2
-    #     ...
-    # ]
-    merit_values = []
-    if merit_file.exists():
-        for line in _get_merit_fn_lines(merit_file):
-            value = _parse_merit_line(line)
-            if value is not None:
-                merit_values.append({"iter":value[0], "value":value[1]})
-    return merit_values
+        return merit_values
