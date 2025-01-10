@@ -139,10 +139,9 @@ def test_configure_logger_failure(mocked_logger, copy_math_func_test_data_to_tmp
 
 @patch("sys.argv", ["name", "--config-file", "config_minimal.yml"])
 @patch("everest.detached.jobs.everserver._configure_loggers")
-@patch("everest.bin.utils.export_to_csv")
 @patch("requests.get")
 def test_status_running_complete(
-    mocked_get, mocked_export_to_csv, mocked_logger, copy_math_func_test_data_to_tmp
+    mocked_get, mocked_logger, copy_math_func_test_data_to_tmp
 ):
     config_file = "config_minimal.yml"
     config = EverestConfig.load_file(config_file)

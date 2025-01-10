@@ -673,28 +673,6 @@ and environment variables are exposed in the form 'os.NAME', for example:
                 aliases[f"{constraint.name}:upper"] = constraint.name
         return aliases
 
-    @property
-    def export_path(self):
-        """Returns the export file path. If not file name is provide the default
-        export file name will have the same name as the config file, with the '.csv'
-        extension."""
-
-        export = self.export
-
-        output_path = None
-        if export is not None:
-            output_path = export.csv_output_filepath
-
-        if output_path is None:
-            output_path = ""
-
-        full_file_path = os.path.join(self.output_dir, output_path)
-        if output_path:
-            return full_file_path
-        else:
-            default_export_file = f"{os.path.splitext(self.config_file)[0]}.csv"
-            return os.path.join(full_file_path, default_export_file)
-
     def to_dict(self) -> dict:
         the_dict = self.model_dump(exclude_none=True)
 
