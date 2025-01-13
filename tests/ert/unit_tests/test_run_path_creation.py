@@ -85,7 +85,7 @@ def test_setup_without_gen_kw_does_not_generates_parameters_txt(make_run_path):
 
 
 @pytest.mark.usefixtures("use_tmpdir")
-def test_jobs_file_is_backed_up(make_run_path):
+def test_jobs_json_is_backed_up(make_run_path):
     Path("genkw").write_text("genkw0 UNIFORM 0 1", encoding="utf-8")
     ert_config = ErtConfig.from_file_contents(
         config_contents.format(parameters="GEN_KW GENKW genkw")
