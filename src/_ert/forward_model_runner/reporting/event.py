@@ -82,7 +82,7 @@ class Event(Reporter):
         if finished_event_timeout is not None:
             self._finished_event_timeout = finished_event_timeout
         else:
-            self._finished_event_timeout = 60
+            self._finished_event_timeout = 600
 
     def stop(self):
         self._event_queue.put(Event._sentinel)
