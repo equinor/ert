@@ -21,7 +21,6 @@ from ert.enkf_main import create_run_path, sample_prior
 from ert.load_status import LoadStatus
 from ert.run_arg import create_run_arguments
 from ert.runpaths import Runpaths
-from ert.storage import Storage
 from tests.ert.unit_tests.config.egrid_generator import simple_grid
 from tests.ert.unit_tests.config.summary_generator import simple_smspec, simple_unsmry
 
@@ -43,8 +42,10 @@ def make_run_path(run_paths, run_args, storage):
             experiment_id, name="prior", ensemble_size=1
         )
         sample_prior(prior_ensemble, [0])
+        runargs = run_args(ert_config, prior_ensemble, 1)
+        runpaths = run_paths(ert_config)
         create_run_path(
-            run_args=run_args(ert_config, prior_ensemble, 1),
+            run_args=runargs,
             ensemble=prior_ensemble,
             user_config_file=ert_config.user_config_file,
             forward_model_steps=ert_config.forward_model_steps,
@@ -53,8 +54,9 @@ def make_run_path(run_paths, run_args, storage):
             substitutions=ert_config.substitutions,
             templates=ert_config.ert_templates,
             model_config=ert_config.model_config,
-            runpaths=run_paths(ert_config),
+            runpaths=runpaths,
         )
+        return prior_ensemble, runargs, runpaths
 
     return func
 
@@ -110,16 +112,15 @@ def test_that_run_template_replace_symlink_does_not_write_to_source(
     it also has the side effect of testing that we are able to create the
     run path although the expected folders are already present
     """
-    config_text = dedent(
-        """
-        NUM_REALIZATIONS 1
-        JOBNAME my_case%d
-        RUN_TEMPLATE template.tmpl result.txt
-        """
-    )
     Path("template.tmpl").write_text("I want to replace: <IENS>", encoding="utf-8")
-    Path("config.ert").write_text(config_text, encoding="utf-8")
-    ert_config = ErtConfig.from_file("config.ert")
+    ert_config = ErtConfig.from_file_contents(
+        dedent(
+            """\
+            NUM_REALIZATIONS 1
+            RUN_TEMPLATE template.tmpl result.txt
+            """
+        )
+    )
     run_arg = run_args(ert_config, prior_ensemble)
     run_path = Path(run_arg[0].runpath)
     os.makedirs(run_path)
@@ -152,38 +153,23 @@ def test_that_run_template_replace_symlink_does_not_write_to_source(
 
 
 @pytest.mark.usefixtures("use_tmpdir")
-def test_run_template_replace_in_file_with_custom_define(
-    prior_ensemble, run_args, run_paths
-):
+def test_run_template_replace_in_file_with_custom_define(make_run_path):
     """
     This test checks that we are able to magically replace custom magic
     strings using the DEFINE keyword
     """
-    config_text = dedent(
-        """
-        NUM_REALIZATIONS 1
-        JOBNAME my_case%d
-        DEFINE <MY_VAR> my_custom_variable
-        RUN_TEMPLATE template.tmpl result.txt
-        """
-    )
     Path("template.tmpl").write_text("I WANT TO REPLACE:<MY_VAR>", encoding="utf-8")
-    Path("config.ert").write_text(config_text, encoding="utf-8")
-
-    ert_config = ErtConfig.from_file("config.ert")
-    run_arg = run_args(ert_config, prior_ensemble)
-    create_run_path(
-        run_args=run_arg,
-        ensemble=prior_ensemble,
-        user_config_file=ert_config.user_config_file,
-        env_vars=ert_config.env_vars,
-        env_pr_fm_step=ert_config.env_pr_fm_step,
-        forward_model_steps=ert_config.forward_model_steps,
-        substitutions=ert_config.substitutions,
-        templates=ert_config.ert_templates,
-        model_config=ert_config.model_config,
-        runpaths=run_paths(ert_config),
+    ert_config = ErtConfig.from_file_contents(
+        dedent(
+            """\
+            NUM_REALIZATIONS 1
+            DEFINE <MY_VAR> my_custom_variable
+            RUN_TEMPLATE template.tmpl result.txt
+            """
+        )
     )
+    _, run_arg, _ = make_run_path(ert_config)
+
     assert (
         Path(run_arg[0].runpath) / "result.txt"
     ).read_text() == "I WANT TO REPLACE:my_custom_variable"
@@ -205,33 +191,19 @@ def test_run_template_replace_in_file_with_custom_define(
         ("<ITER>", "0"),
     ],
 )
-def test_run_template_replace_in_file(
-    key, expected, prior_ensemble, run_args, run_paths
-):
-    config_text = dedent(
-        """
-        NUM_REALIZATIONS 1
-        JOBNAME my_case%d
-        RUN_TEMPLATE template.tmpl result.txt
-        """
-    )
+def test_run_template_replace_in_file(key, expected, make_run_path):
     Path("template.tmpl").write_text(f"I WANT TO REPLACE:{key}", encoding="utf-8")
-    Path("config.ert").write_text(config_text, encoding="utf-8")
-
-    ert_config = ErtConfig.from_file("config.ert")
-    run_arg = run_args(ert_config, prior_ensemble)
-    create_run_path(
-        run_args=run_arg,
-        ensemble=prior_ensemble,
-        user_config_file=ert_config.user_config_file,
-        env_vars=ert_config.env_vars,
-        env_pr_fm_step=ert_config.env_pr_fm_step,
-        forward_model_steps=ert_config.forward_model_steps,
-        substitutions=ert_config.substitutions,
-        templates=ert_config.ert_templates,
-        model_config=ert_config.model_config,
-        runpaths=run_paths(ert_config),
+    ert_config = ErtConfig.from_file_contents(
+        dedent(
+            """\
+            NUM_REALIZATIONS 1
+            JOBNAME my_case%d
+            RUN_TEMPLATE template.tmpl result.txt
+            """
+        )
     )
+    _, run_arg, _ = make_run_path(ert_config)
+
     assert (Path(run_arg[0].runpath) / "result.txt").read_text(
         encoding="utf-8"
     ) == f"I WANT TO REPLACE:{expected}"
@@ -247,35 +219,20 @@ def test_run_template_replace_in_file(
         ("MY_ECL_BASE<IENS>", "MY_ECL_BASE0.DATA"),
     ),
 )
-def test_run_template_replace_in_ecl(
-    ecl_base, expected_file, prior_ensemble, run_args, run_paths
-):
-    config_text = dedent(
-        f"""
-        NUM_REALIZATIONS 1
-        ECLBASE {ecl_base}
-        RUN_TEMPLATE BASE_ECL_FILE.DATA <ECLBASE>.DATA
-        """
-    )
+def test_run_template_replace_in_ecl(ecl_base, expected_file, make_run_path):
     Path("BASE_ECL_FILE.DATA").write_text(
         "I WANT TO REPLACE:<NUM_CPU>", encoding="utf-8"
     )
-    Path("config.ert").write_text(config_text, encoding="utf-8")
-
-    ert_config = ErtConfig.from_file("config.ert")
-    run_arg = run_args(ert_config, prior_ensemble)
-    create_run_path(
-        run_args=run_arg,
-        ensemble=prior_ensemble,
-        user_config_file=ert_config.user_config_file,
-        env_vars=ert_config.env_vars,
-        env_pr_fm_step=ert_config.env_pr_fm_step,
-        forward_model_steps=ert_config.forward_model_steps,
-        substitutions=ert_config.substitutions,
-        templates=ert_config.ert_templates,
-        model_config=ert_config.model_config,
-        runpaths=run_paths(ert_config),
+    ert_config = ErtConfig.from_file_contents(
+        dedent(
+            f"""\
+            NUM_REALIZATIONS 1
+            ECLBASE {ecl_base}
+            RUN_TEMPLATE BASE_ECL_FILE.DATA <ECLBASE>.DATA
+            """
+        )
     )
+    _, run_arg, _ = make_run_path(ert_config)
     assert (
         Path(run_arg[0].runpath) / expected_file
     ).read_text() == "I WANT TO REPLACE:1"
@@ -297,58 +254,41 @@ def test_run_template_replace_in_ecl(
         ("<ITER>", "0"),
     ],
 )
-def test_run_template_replace_in_ecl_data_file(
-    key, expected, prior_ensemble, run_paths, run_args
-):
+def test_run_template_replace_in_ecl_data_file(key, expected, make_run_path):
     """
     This test that we copy the DATA_FILE into the runpath,
     do substitutions and rename it from the DATA_FILE name
     to ECLBASE
     """
-    config_text = dedent(
-        """
+    Path("MY_DATA_FILE.DATA").write_text(f"I WANT TO REPLACE:{key}", encoding="utf-8")
+    ert_config = ErtConfig.from_file_contents(
+        dedent(
+            """\
         NUM_REALIZATIONS 1
         ECLBASE ECL_CASE<IENS>
         DATA_FILE MY_DATA_FILE.DATA
         """
+        )
     )
-    Path("MY_DATA_FILE.DATA").write_text(f"I WANT TO REPLACE:{key}", encoding="utf-8")
-    Path("config.ert").write_text(config_text, encoding="utf-8")
-
-    ert_config = ErtConfig.from_file("config.ert")
-    run_arg = run_args(ert_config, prior_ensemble)
-    create_run_path(
-        run_args=run_arg,
-        ensemble=prior_ensemble,
-        user_config_file=ert_config.user_config_file,
-        env_vars=ert_config.env_vars,
-        env_pr_fm_step=ert_config.env_pr_fm_step,
-        forward_model_steps=ert_config.forward_model_steps,
-        substitutions=ert_config.substitutions,
-        templates=ert_config.ert_templates,
-        model_config=ert_config.model_config,
-        runpaths=run_paths(ert_config),
-    )
+    _, run_arg, _ = make_run_path(ert_config)
     assert (Path(run_arg[0].runpath) / "ECL_CASE0.DATA").read_text(
         encoding="utf-8"
     ) == f"I WANT TO REPLACE:{expected}"
 
 
 @pytest.mark.usefixtures("use_tmpdir")
-def test_that_error_is_raised_when_data_file_is_badly_encoded(
-    prior_ensemble, run_paths, run_args
-):
-    config_text = dedent(
-        """
-    NUM_REALIZATIONS 1
-    ECLBASE ECL_CASE<IENS>
-    DATA_FILE MY_DATA_FILE.DATA
-    """
-    )
+def test_that_error_is_raised_when_data_file_is_badly_encoded(make_run_path):
     Path("MY_DATA_FILE.DATA").write_text("I WANT TO REPLACE:<DATE>", encoding="utf-8")
-    Path("config.ert").write_text(config_text, encoding="utf-8")
 
-    ert_config = ErtConfig.from_file("config.ert")
+    ert_config = ErtConfig.from_file_contents(
+        dedent(
+            """\
+            NUM_REALIZATIONS 1
+            ECLBASE ECL_CASE<IENS>
+            DATA_FILE MY_DATA_FILE.DATA
+            """
+        )
+    )
 
     Path("MY_DATA_FILE.DATA").write_text(
         "ä I WANT TO REPLACE:<DATE>", encoding="iso-8859-1"
@@ -358,53 +298,28 @@ def test_that_error_is_raised_when_data_file_is_badly_encoded(
         ValueError,
         match=r"Unsupported non UTF-8 character found in file: .*MY_DATA_FILE.DATA",
     ):
-        create_run_path(
-            run_args=run_args(ert_config, prior_ensemble),
-            ensemble=prior_ensemble,
-            user_config_file=ert_config.user_config_file,
-            env_vars=ert_config.env_vars,
-            env_pr_fm_step=ert_config.env_pr_fm_step,
-            forward_model_steps=ert_config.forward_model_steps,
-            substitutions=ert_config.substitutions,
-            templates=ert_config.ert_templates,
-            model_config=ert_config.model_config,
-            runpaths=run_paths(ert_config),
-        )
+        make_run_path(ert_config)
 
 
 @pytest.mark.usefixtures("use_tmpdir")
-def test_run_template_replace_in_file_name(prior_ensemble, run_args, run_paths):
+def test_run_template_replace_in_file_name(make_run_path):
     """
     This test checks that we are able to magically replace custom magic
     strings using the DEFINE keyword
     """
-    config_text = dedent(
-        """
-        NUM_REALIZATIONS 1
-        JOBNAME my_case%d
-        DEFINE <MY_FILE_NAME> result.txt
-        RUN_TEMPLATE template.tmpl <MY_FILE_NAME>
-        """
-    )
     Path("template.tmpl").write_text(
         "Not important, name of the file is important", encoding="utf-8"
     )
-    Path("config.ert").write_text(config_text, encoding="utf-8")
-
-    ert_config = ErtConfig.from_file("config.ert")
-    run_arg = run_args(ert_config, prior_ensemble)
-    create_run_path(
-        run_args=run_arg,
-        ensemble=prior_ensemble,
-        user_config_file=ert_config.user_config_file,
-        env_vars=ert_config.env_vars,
-        env_pr_fm_step=ert_config.env_pr_fm_step,
-        forward_model_steps=ert_config.forward_model_steps,
-        substitutions=ert_config.substitutions,
-        templates=ert_config.ert_templates,
-        model_config=ert_config.model_config,
-        runpaths=run_paths(ert_config),
+    ert_config = ErtConfig.from_file_contents(
+        dedent(
+            """\
+        NUM_REALIZATIONS 1
+        DEFINE <MY_FILE_NAME> result.txt
+        RUN_TEMPLATE template.tmpl <MY_FILE_NAME>
+        """
+        )
     )
+    _, run_arg, _ = make_run_path(ert_config)
     assert (
         Path(run_arg[0].runpath) / "result.txt"
     ).read_text() == "Not important, name of the file is important"
@@ -416,23 +331,18 @@ def test_that_sampling_prior_makes_initialized_fs(storage):
     This checks that creating the run path initializes the selected case,
     for that parameters are needed, so add a simple GEN_KW.
     """
-    config_text = dedent(
-        """
-        NUM_REALIZATIONS 1
-        JOBNAME my_case%d
-        GEN_KW KW_NAME template.txt kw.txt prior.txt FORWARD_INIT:False
-        """
-    )
-    Path("template.tmpl").write_text(
-        "Not important, name of the file is important", encoding="utf-8"
-    )
-    Path("config.ert").write_text(config_text, encoding="utf-8")
-    with open("template.txt", "w", encoding="utf-8") as fh:
-        fh.writelines("MY_KEYWORD <MY_KEYWORD>")
-    with open("prior.txt", "w", encoding="utf-8") as fh:
-        fh.writelines("MY_KEYWORD NORMAL 0 1")
+    Path("template.tmpl").write_text("Unimportant", encoding="utf-8")
+    Path("template.txt").write_text("MY_KEYWORD <MY_KEYWORD>", encoding="utf-8")
+    Path("prior.txt").write_text("MY_KEYWORD NORMAL 0 1", encoding="utf-8")
 
-    ert_config = ErtConfig.from_file("config.ert")
+    ert_config = ErtConfig.from_file_contents(
+        dedent(
+            """\
+            NUM_REALIZATIONS 1
+            GEN_KW KW_NAME template.txt kw.txt prior.txt FORWARD_INIT:False
+            """
+        )
+    )
 
     prior_ensemble = storage.create_ensemble(
         storage.create_experiment(
@@ -453,7 +363,7 @@ def test_that_sampling_prior_makes_initialized_fs(storage):
         ("PARALLEL 4 /", 4),
         pytest.param(
             dedent(
-                """
+                """\
             SLAVES
             -- comment
             -- comment with slash / "
@@ -474,16 +384,16 @@ def test_that_sampling_prior_makes_initialized_fs(storage):
 )
 @pytest.mark.usefixtures("use_tmpdir")
 def test_that_data_file_sets_num_cpu(eclipse_data, expected_cpus):
-    config_text = dedent(
-        """
-        NUM_REALIZATIONS 1
-        DATA_FILE MY_DATA_FILE.DATA
-        """
-    )
     Path("MY_DATA_FILE.DATA").write_text(eclipse_data, encoding="utf-8")
-    Path("config.ert").write_text(config_text, encoding="utf-8")
 
-    ert_config = ErtConfig.from_file("config.ert")
+    ert_config = ErtConfig.from_file_contents(
+        dedent(
+            """\
+            NUM_REALIZATIONS 1
+            DATA_FILE MY_DATA_FILE.DATA
+            """
+        )
+    )
     assert int(ert_config.substitutions["<NUM_CPU>"]) == expected_cpus
 
 
@@ -491,37 +401,21 @@ def test_that_data_file_sets_num_cpu(eclipse_data, expected_cpus):
     "ignore:.*RUNPATH keyword contains deprecated value placeholders.*:ert.config.ConfigWarning"
 )
 @pytest.mark.usefixtures("use_tmpdir")
-def test_that_deprecated_runpath_substitution_remain_valid(
-    prior_ensemble, run_paths, run_args
-):
+def test_that_deprecated_runpath_substitution_remain_valid(make_run_path):
     """
     This checks that deprecated runpath substitution, using %d, remain intact.
     """
-    config_text = dedent(
-        """
-        NUM_REALIZATIONS 2
-        JOBNAME my_case%d
-        RUNPATH realization-%d/iter-%d
-        FORWARD_MODEL COPY_DIRECTORY(<FROM>=<CONFIG_PATH>/, <TO>=<RUNPATH>/)
-        """
+    ert_config = ErtConfig.with_plugins().from_file_contents(
+        dedent(
+            """\
+            NUM_REALIZATIONS 2
+            RUNPATH realization-%d/iter-%d
+            FORWARD_MODEL COPY_DIRECTORY(<FROM>=<CONFIG_PATH>/, <TO>=<RUNPATH>/)
+            """
+        )
     )
-    Path("config.ert").write_text(config_text, encoding="utf-8")
 
-    ert_config = ErtConfig.with_plugins().from_file("config.ert")
-
-    run_arg = run_args(ert_config, prior_ensemble, 2)
-    create_run_path(
-        run_args=run_arg,
-        ensemble=prior_ensemble,
-        user_config_file=ert_config.user_config_file,
-        env_vars=ert_config.env_vars,
-        env_pr_fm_step=ert_config.env_pr_fm_step,
-        forward_model_steps=ert_config.forward_model_steps,
-        substitutions=ert_config.substitutions,
-        templates=ert_config.ert_templates,
-        model_config=ert_config.model_config,
-        runpaths=run_paths(ert_config),
-    )
+    _, run_arg, _ = make_run_path(ert_config)
 
     for realization in run_arg:
         assert str(Path().absolute()) + "/realization-" + str(
@@ -603,36 +497,21 @@ def test_write_snakeoil_runpath_file(snake_oil_case, storage, itr):
 
 
 @pytest.mark.usefixtures("use_tmpdir")
-def test_assert_export(prior_ensemble, run_args, run_paths):
-    # Write a minimal config file with env
-    with open("config_file.ert", "w", encoding="utf-8") as fout:
-        fout.write(
-            dedent(
-                """
-        NUM_REALIZATIONS 1
-        JOBNAME a_name_%d
-        RUNPATH_FILE directory/test_runpath_list.txt
-        """
-            )
+def test_assert_export(make_run_path):
+    ert_config = ErtConfig.from_file_contents(
+        dedent(
+            """\
+            NUM_REALIZATIONS 1
+            JOBNAME a_name_%d
+            RUNPATH_FILE directory/test_runpath_list.txt
+            """
         )
-    ert_config = ErtConfig.from_file("config_file.ert")
+    )
     runpath_list_file = ert_config.runpath_file
     assert not runpath_list_file.exists()
 
-    sample_prior(prior_ensemble, [0])
-    run_arg = run_args(ert_config, prior_ensemble)
-    create_run_path(
-        run_args=run_arg,
-        ensemble=prior_ensemble,
-        user_config_file=ert_config.user_config_file,
-        env_vars=ert_config.env_vars,
-        env_pr_fm_step=ert_config.env_pr_fm_step,
-        forward_model_steps=ert_config.forward_model_steps,
-        substitutions=ert_config.substitutions,
-        templates=ert_config.ert_templates,
-        model_config=ert_config.model_config,
-        runpaths=run_paths(ert_config),
-    )
+    make_run_path(ert_config)
+
     assert runpath_list_file.exists()
     assert runpath_list_file.name == "test_runpath_list.txt"
     assert (
@@ -641,37 +520,7 @@ def test_assert_export(prior_ensemble, run_args, run_paths):
     )
 
 
-def _create_runpath(ert_config: ErtConfig, storage: Storage) -> None:
-    """
-    Instantiate an ERT runpath. This will create the parameter coefficients.
-    """
-    ensemble = storage.create_ensemble(
-        storage.create_experiment(),
-        name="prior",
-        ensemble_size=ert_config.model_config.num_realizations,
-    )
-    run_paths = Runpaths(
-        jobname_format=ert_config.model_config.jobname_format_string,
-        runpath_format=ert_config.model_config.runpath_format_string,
-        filename=str(ert_config.runpath_file),
-        substitutions=ert_config.substitutions,
-    )
-    create_run_path(
-        run_args=create_run_arguments(
-            run_paths, [True] * ensemble.ensemble_size, ensemble
-        ),
-        ensemble=ensemble,
-        user_config_file=ert_config.user_config_file,
-        env_vars=ert_config.env_vars,
-        env_pr_fm_step=ert_config.env_pr_fm_step,
-        forward_model_steps=ert_config.forward_model_steps,
-        substitutions=ert_config.substitutions,
-        templates=ert_config.ert_templates,
-        model_config=ert_config.model_config,
-        runpaths=run_paths,
-    )
-
-
+@pytest.mark.usefixtures("use_tmpdir")
 @pytest.mark.parametrize(
     "append,numcpu",
     [
@@ -681,25 +530,17 @@ def _create_runpath(ert_config: ErtConfig, storage: Storage) -> None:
         ("NUM_CPU 3\nDATA_FILE DATA\n", 3),  # Explicit NUM_CPU supersedes PARALLEL
     ],
 )
-def test_num_cpu_subst(
-    monkeypatch, tmp_path, append, numcpu, storage, run_paths, run_args
-):
+def test_num_cpu_subst(append, numcpu, make_run_path):
     """
     Make sure that <NUM_CPU> is substituted to the correct values
     """
-    monkeypatch.chdir(tmp_path)
+    Path("DATA").write_text("PARALLEL 8 /", encoding="utf-8")
+    Path("DUMP").write_text("EXECUTABLE echo\nARGLIST <NUM_CPU>\n", encoding="utf-8")
 
-    (tmp_path / "test.ert").write_text(
-        "JOBNAME test_%d\n"
-        "NUM_REALIZATIONS 1\n"
-        "INSTALL_JOB dump DUMP\n"
-        "FORWARD_MODEL dump\n" + append
+    config = ErtConfig.from_file_contents(
+        "NUM_REALIZATIONS 1\nINSTALL_JOB dump DUMP\nFORWARD_MODEL dump\n" + append
     )
-    (tmp_path / "DATA").write_text("PARALLEL 8 /")
-    (tmp_path / "DUMP").write_text("EXECUTABLE echo\nARGLIST <NUM_CPU>\n")
-
-    config = ErtConfig.from_file(str(tmp_path / "test.ert"))
-    _create_runpath(config, storage)
+    make_run_path(config)
 
     with open("simulations/realization-0/iter-0/jobs.json", encoding="utf-8") as f:
         jobs = orjson.loads(f.read())
@@ -743,20 +584,16 @@ def test_that_runpaths_are_raised_when_invalid(run_path, expected_raise, msg):
     This checks that RUNPATH does not include too many or few substitution placeholders
     """
     config_text = dedent(
-        """
-        NUM_REALIZATIONS 2
+        f"""\
+        NUM_REALIZATIONS 1
+        RUNPATH {run_path}
         """
     )
-    Path("config.ert").write_text(config_text + f"RUNPATH {run_path}", encoding="utf-8")
-
     if expected_raise:
-        with pytest.raises(
-            ConfigValidationError,
-            match=f"{msg}.*{run_path}`.",
-        ):
-            _ = ErtConfig.from_file("config.ert")
+        with pytest.raises(ConfigValidationError, match=f"{msg}.*{run_path}`."):
+            _ = ErtConfig.from_file_contents(config_text)
     else:
-        _ = ErtConfig.from_file("config.ert")
+        _ = ErtConfig.from_file_contents(config_text)
 
 
 @pytest.mark.usefixtures("use_tmpdir")
@@ -764,20 +601,17 @@ def test_that_runpaths_are_raised_when_invalid(run_path, expected_raise, msg):
     "placeholder",
     ["<ERTCASE>", "<ERT-CASE>"],
 )
-def test_assert_ertcase_replaced_in_runpath(placeholder, prior_ensemble, storage):
-    # Write a minimal config file with env
-    with open("config_file.ert", "w", encoding="utf-8") as fout:
-        fout.write(
-            dedent(
-                f"""
-        NUM_REALIZATIONS 1
-        JOBNAME a_name_%d
-        RUNPATH simulations/{placeholder}/realization-<IENS>/iter-<ITER>
-        """
-            )
+def test_assert_ertcase_replaced_in_runpath(placeholder, make_run_path):
+    ert_config = ErtConfig.from_file_contents(
+        dedent(
+            f"""\
+            NUM_REALIZATIONS 1
+            JOBNAME a_name_%d
+            RUNPATH simulations/{placeholder}/realization-<IENS>/iter-<ITER>
+            """
         )
-    ert_config = ErtConfig.from_file("config_file.ert")
-    _create_runpath(ert_config, storage)
+    )
+    prior_ensemble, _, _ = make_run_path(ert_config)
 
     runpath_file = (
         f"{os.getcwd()}/simulations/{prior_ensemble.name}/realization-0/iter-0"
