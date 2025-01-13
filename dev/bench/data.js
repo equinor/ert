@@ -1,39 +1,8 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1736774090414,
+  "lastUpdate": 1736774333547,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
-      {
-        "commit": {
-          "author": {
-            "email": "levje@equinor.com",
-            "name": "larsevj",
-            "username": "larsevj"
-          },
-          "committer": {
-            "email": "60844986+larsevj@users.noreply.github.com",
-            "name": "Lars Evje",
-            "username": "larsevj"
-          },
-          "distinct": true,
-          "id": "3f8b3206db9ec63b09af372802998768f61c7adc",
-          "message": "Upgrade pre-commits ruff 0.8.3 -> 0.8.6",
-          "timestamp": "2025-01-06T16:49:48+01:00",
-          "tree_id": "f008e746dadb4dc2d7041b8da37b90a12e993f01",
-          "url": "https://github.com/equinor/ert/commit/3f8b3206db9ec63b09af372802998768f61c7adc"
-        },
-        "date": 1736178696963,
-        "tool": "pytest",
-        "benches": [
-          {
-            "name": "tests/ert/performance_tests/test_analysis.py::test_and_benchmark_adaptive_localization_with_fields",
-            "value": 0.21906439593749036,
-            "unit": "iter/sec",
-            "range": "stddev: 0.049432446890215",
-            "extra": "mean: 4.564867767399994 sec\nrounds: 5"
-          }
-        ]
-      },
       {
         "commit": {
           "author": {
@@ -930,6 +899,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.030580872338815884",
             "extra": "mean: 4.752507678799995 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "ejah@equinor.com",
+            "name": "Eivind Jahren",
+            "username": "eivindjahren"
+          },
+          "committer": {
+            "email": "ejah@equinor.com",
+            "name": "Eivind Jahren",
+            "username": "eivindjahren"
+          },
+          "distinct": true,
+          "id": "7368dc8b6c2cebaf16cfd1719b7a67fbb52b63f7",
+          "message": "Remove unused install_dependencies action",
+          "timestamp": "2025-01-13T14:16:58+01:00",
+          "tree_id": "e6108455414823c5fbb71bcd191abeb967057ce5",
+          "url": "https://github.com/equinor/ert/commit/7368dc8b6c2cebaf16cfd1719b7a67fbb52b63f7"
+        },
+        "date": 1736774297851,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/ert/performance_tests/test_analysis.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 0.21706520962393724,
+            "unit": "iter/sec",
+            "range": "stddev: 0.04341485545408905",
+            "extra": "mean: 4.6069105304 sec\nrounds: 5"
           }
         ]
       }
