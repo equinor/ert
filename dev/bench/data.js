@@ -1,39 +1,8 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1736756287864,
+  "lastUpdate": 1736757268640,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
-      {
-        "commit": {
-          "author": {
-            "email": "levje@equinor.com",
-            "name": "larsevj",
-            "username": "larsevj"
-          },
-          "committer": {
-            "email": "60844986+larsevj@users.noreply.github.com",
-            "name": "Lars Evje",
-            "username": "larsevj"
-          },
-          "distinct": true,
-          "id": "3cee24dc05262c38bc9116d9228f7d770401306b",
-          "message": "Validate derrf distribution parameters on startup",
-          "timestamp": "2025-01-06T13:30:18+01:00",
-          "tree_id": "1446c51c808304c04e32f0fba8168a458c07fa06",
-          "url": "https://github.com/equinor/ert/commit/3cee24dc05262c38bc9116d9228f7d770401306b"
-        },
-        "date": 1736166725834,
-        "tool": "pytest",
-        "benches": [
-          {
-            "name": "tests/ert/performance_tests/test_analysis.py::test_and_benchmark_adaptive_localization_with_fields",
-            "value": 0.2168873548856917,
-            "unit": "iter/sec",
-            "range": "stddev: 0.08776663116942524",
-            "extra": "mean: 4.610688348000002 sec\nrounds: 5"
-          }
-        ]
-      },
       {
         "commit": {
           "author": {
@@ -930,6 +899,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.047548023697719474",
             "extra": "mean: 4.615424465999999 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "havb@equinor.com",
+            "name": "Håvard Berland",
+            "username": "berland"
+          },
+          "committer": {
+            "email": "berland@pvv.ntnu.no",
+            "name": "Håvard Berland",
+            "username": "berland"
+          },
+          "distinct": true,
+          "id": "5a0ff5f28e60d171200bf52d919161ffc806fe1a",
+          "message": "Adapt everest to run_reservoirsimulator\n\nThis is a fixup of a regression from 1ae12f6efb66e9fa4208faef2a04898043cdcb37",
+          "timestamp": "2025-01-13T09:32:40+01:00",
+          "tree_id": "5dbdb935040aecc63ba8359a2291701ea8123fdb",
+          "url": "https://github.com/equinor/ert/commit/5a0ff5f28e60d171200bf52d919161ffc806fe1a"
+        },
+        "date": 1736757268225,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/ert/performance_tests/test_analysis.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 0.2182373089808161,
+            "unit": "iter/sec",
+            "range": "stddev: 0.031243100457874057",
+            "extra": "mean: 4.5821679375999995 sec\nrounds: 5"
           }
         ]
       }
