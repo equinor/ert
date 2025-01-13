@@ -291,7 +291,7 @@ class LegacyEnsemble:
         except Exception as exc:
             logger.exception(
                 (
-                    "Unexpected exception in ensemble: \n" "".join(
+                    "Unexpected exception in ensemble: \n".join(
                         traceback.format_exception(None, exc, exc.__traceback__)
                     )
                 ),

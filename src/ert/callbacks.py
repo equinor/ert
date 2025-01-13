@@ -124,8 +124,7 @@ async def forward_model_ok(
         )
         parameters_result = LoadResult(
             LoadStatus.LOAD_FAILURE,
-            "Failed to load results for realization "
-            f"{realization}, failed with: {err}",
+            f"Failed to load results for realization {realization}, failed with: {err}",
         )
 
     final_result = parameters_result

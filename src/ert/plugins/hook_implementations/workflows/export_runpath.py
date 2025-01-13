@@ -75,7 +75,7 @@ class ExportRunpathJob(ErtScript):
     ) -> tuple[str, str]:
         if not args:
             return (
-                f"0-{number_of_realizations-1}",
+                f"0-{number_of_realizations - 1}",
                 "0-0",  # weird default behavior, kept for backwards compatability
             )
         if "|" not in args:

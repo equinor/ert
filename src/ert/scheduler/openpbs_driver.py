@@ -161,7 +161,7 @@ class OpenPBSDriver(Driver):
         if num_cpu > 1:
             cpu_resources += [f"ncpus={num_cpu}"]
         if realization_memory > 0:
-            cpu_resources += [f"mem={realization_memory // 1024**2 }mb"]
+            cpu_resources += [f"mem={realization_memory // 1024**2}mb"]
         if cpu_resources:
             resource_specifiers.append(":".join(cpu_resources))
 

@@ -84,7 +84,7 @@ class ProgressWidget(QFrame):
 
             for state, label in self._legend_map_text.items():
                 label.setText(
-                    f" {state} ({self._status.get(state,0)}/{self._realization_count})"
+                    f" {state} ({self._status.get(state, 0)}/{self._realization_count})"
                 )
 
     def stop_waiting_progress_bar(self) -> None:

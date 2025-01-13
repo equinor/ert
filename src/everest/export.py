@@ -194,15 +194,14 @@ def check_for_errors(
 
     if config.batches == []:
         export_errors.append(
-            "No batches selected for export. "
-            "Only optimization data will be exported."
+            "No batches selected for export. Only optimization data will be exported."
         )
         return export_errors, False
 
     if not data_file_path:
         export_ecl = False
         export_errors.append(
-            "No data file found in config." "Only optimization data will be exported."
+            "No data file found in config.Only optimization data will be exported."
         )
 
     # If no user defined keywords are present it is no longer possible to check

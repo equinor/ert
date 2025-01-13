@@ -588,7 +588,7 @@ def test_that_empty_job_directory_gives_warning(tmp_path):
             dedent(
                 f"""
                 NUM_REALIZATIONS  1
-                INSTALL_JOB_DIRECTORY {tmp_path / 'empty'}
+                INSTALL_JOB_DIRECTORY {tmp_path / "empty"}
                 """
             )
         )

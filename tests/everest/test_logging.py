@@ -70,7 +70,7 @@ async def test_logging_setup(copy_math_func_test_data_to_tmp):
         forward_model_log_path, "Exception: Failing simulation_2 by request!"
     )
     assert _string_exists_in_file(
-        forward_model_log_path, "Exception: Failing simulation_2" " by request!"
+        forward_model_log_path, "Exception: Failing simulation_2 by request!"
     )
 
     endpoint_logs = Path(endpoint_log_path).read_text(encoding="utf-8")

@@ -25,7 +25,7 @@ class ActiveRealizationsModel(ValueModel):
     def getDefaultValue(self) -> str | None:
         if self.show_default:
             size = self.ensemble_size
-            return f"0-{size-1:d}"
+            return f"0-{size - 1:d}"
         return None
 
     def getActiveRealizationsMask(self) -> list[bool]:

@@ -170,7 +170,7 @@ class Job:
             if attempt < max_submit - 1:
                 message = (
                     f"Realization {self.iens} failed, "
-                    f"resubmitting for attempt {attempt+2} of {max_submit}"
+                    f"resubmitting for attempt {attempt + 2} of {max_submit}"
                 )
                 logger.warning(message)
                 self.returncode = asyncio.Future()

@@ -479,12 +479,12 @@ class LocalStorage(BaseMode):
                     Detected outdated storage (blockfs), which is no longer supported
                     by ERT. Its contents are copied to:
 
-                    {self.path / '_ert_block_storage_backup'}
+                    {self.path / "_ert_block_storage_backup"}
 
                     In order to migrate this storage, do the following:
 
                     (1) with ert version <= 10.3.*, open up the same ert config with:
-                    ENSPATH={self.path / '_ert_block_storage_backup'}
+                    ENSPATH={self.path / "_ert_block_storage_backup"}
 
                     (2) with current ert version, open up the same storage again.
                     The contents of the storage should now be up-to-date, and you may
@@ -503,7 +503,7 @@ class LocalStorage(BaseMode):
                     enumerate([to2, to3, to4, to5, to6, to7, to8, to9], start=1)
                 )
                 for from_version, migration in migrations[version - 1 :]:
-                    print(f"* Updating storage to version: {from_version+1}")
+                    print(f"* Updating storage to version: {from_version + 1}")
                     migration.migrate(self.path)
                     self._add_migration_information(
                         from_version, from_version + 1, migration.info
@@ -639,9 +639,9 @@ def local_storage_get_ert_config() -> ErtConfig:
         The ErtConfig instance.
     """
 
-    assert (
-        _migration_ert_config is not None
-    ), "Use 'local_storage_set_ert_config' before retrieving the config"
+    assert _migration_ert_config is not None, (
+        "Use 'local_storage_set_ert_config' before retrieving the config"
+    )
     return _migration_ert_config
 
 

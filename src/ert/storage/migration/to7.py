@@ -91,9 +91,9 @@ def _migrate_response_datasets(path: Path) -> None:
         with open(responses_file, encoding="utf-8") as f:
             responses_obj = json.load(f)
 
-        assert (
-            responses_obj is not None
-        ), f"Failed to load responses.json @ {responses_file}"
+        assert responses_obj is not None, (
+            f"Failed to load responses.json @ {responses_file}"
+        )
 
         gendata_keys = responses_obj.get("gen_data", {}).get("keys", [])
 

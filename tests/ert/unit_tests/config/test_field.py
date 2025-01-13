@@ -189,8 +189,7 @@ def test_missing_init_files_gives_a_user_error_message(parse_field_line):
 def test_the_user_gets_a_warning_about_input_transform_usage(parse_field_line):
     with pytest.warns(
         ConfigWarning,
-        match="Got INPUT_TRANSFORM for FIELD: f,"
-        " this has no effect and can be removed",
+        match="Got INPUT_TRANSFORM for FIELD: f, this has no effect and can be removed",
     ):
         _ = parse_field_line(
             "FIELD f parameter out.roff INPUT_TRANSFORM:log INIT_FILES:file.init"

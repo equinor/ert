@@ -509,7 +509,7 @@ def test_write_snakeoil_runpath_file(snake_oil_case, storage, itr):
     for run_arg in run_args:
         if not run_arg.active:
             continue
-        assert os.path.isdir(f"simulations/{10*run_arg.iens}")
+        assert os.path.isdir(f"simulations/{10 * run_arg.iens}")
 
     runpath_list_path = "a_file_name"
     assert os.path.isfile(runpath_list_path)

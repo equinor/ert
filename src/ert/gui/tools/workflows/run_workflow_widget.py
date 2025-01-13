@@ -174,7 +174,7 @@ class RunWorkflowWidget(QWidget):
             (wfname, info) for wfname, info in report.items() if not info["completed"]
         ]
 
-        title_text = f"Workflow{'s' if len(failing_workflows) > 1  else ''} failed"
+        title_text = f"Workflow{'s' if len(failing_workflows) > 1 else ''} failed"
         content_text = "\n\n".join(
             [
                 f"{wfname} failed: \n {info['stderr'].strip()}"

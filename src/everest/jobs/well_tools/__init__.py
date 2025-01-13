@@ -48,7 +48,7 @@ def well_set(well_data_file, new_entry_file, output_file):
     new_entry = everest.jobs.io.load_data(new_entry_file)
 
     if len(new_entry) != 1:
-        err_msg = "Expected there to be exactly one new entry " "in {nef}, was {ne}"
+        err_msg = "Expected there to be exactly one new entry in {nef}, was {ne}"
         raise ValueError(err_msg.format(nef=new_entry_file, ne=len(new_entry)))
 
     entry_key = next(iter(new_entry.keys()))

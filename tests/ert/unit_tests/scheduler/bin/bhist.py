@@ -69,7 +69,7 @@ def bhist_long_formatter(jobstats: list[Job]) -> str:
             f"{job.total!s:8.8s}"
         )
         formatted_job_outputs.append(job_output)
-    return f"{50*'-'}".join(formatted_job_outputs)
+    return f"{50 * '-'}".join(formatted_job_outputs)
 
 
 def read(path: Path, default: str | None = None) -> str | None:

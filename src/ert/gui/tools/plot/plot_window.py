@@ -174,7 +174,7 @@ class PlotWindow(QMainWindow):
 
         self._data_type_keys_widget.selectDefault()
 
-        logger.info(f"PlotWindow __init__ done. time={time.perf_counter() -t}")
+        logger.info(f"PlotWindow __init__ done. time={time.perf_counter() - t}")
 
     @Slot(int)
     def currentTabChanged(self, index: int) -> None:

@@ -214,11 +214,7 @@ def test_template_executable():
         }
         json_file.write(json.dumps(parameters))
 
-    params = (
-        " --output_file out_file "
-        "--template_file template "
-        "--input_files other.json"
-    )
+    params = " --output_file out_file --template_file template --input_files other.json"
     template_render_exec = str(
         Path(importlib.util.find_spec("ert").origin).parent
         / "resources/forward_models/template_render.py"

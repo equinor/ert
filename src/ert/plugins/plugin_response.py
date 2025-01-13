@@ -1,14 +1,13 @@
 from __future__ import annotations
 
-from typing import Generic, TypeVar
+from typing import Generic, NamedTuple, TypeVar
 
 T = TypeVar("T")
 
 
-class PluginMetadata:
-    def __init__(self, plugin_name: str, function_name: str) -> None:
-        self.plugin_name = plugin_name
-        self.function_name = function_name
+class PluginMetadata(NamedTuple):
+    plugin_name: str
+    function_name: str
 
 
 class PluginResponse(Generic[T]):

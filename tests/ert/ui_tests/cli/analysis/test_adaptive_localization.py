@@ -320,9 +320,9 @@ def test_that_posterior_generalized_variance_increases_in_cutoff():
     # Check that posterior generalized variance in positive, increases in cutoff and
     # does not exceed prior generalized variance
     assert generalized_variance_1 > 0, f"Assertion failed with cutoff1={cutoff1}"
-    assert (
-        generalized_variance_1 <= generalized_variance_2
-    ), f"Assertion failed with cutoff1={cutoff1} and cutoff2={cutoff2}"
-    assert (
-        generalized_variance_2 <= generalized_variance_prior
-    ), f"Assertion failed with cutoff2={cutoff2}"
+    assert generalized_variance_1 <= generalized_variance_2, (
+        f"Assertion failed with cutoff1={cutoff1} and cutoff2={cutoff2}"
+    )
+    assert generalized_variance_2 <= generalized_variance_prior, (
+        f"Assertion failed with cutoff2={cutoff2}"
+    )

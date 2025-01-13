@@ -120,6 +120,5 @@ def test_num_cpu_from_data_file_used_if_config_num_cpu_not_set(
 def test_wrong_num_cpu_raises_validation_error(num_cpu_value, error_msg):
     with pytest.raises(ConfigValidationError, match=error_msg):
         ErtConfig.from_file_contents(
-            f"{ConfigKeys.NUM_REALIZATIONS} 1\n"
-            f"{ConfigKeys.NUM_CPU} {num_cpu_value}\n"
+            f"{ConfigKeys.NUM_REALIZATIONS} 1\n{ConfigKeys.NUM_CPU} {num_cpu_value}\n"
         )

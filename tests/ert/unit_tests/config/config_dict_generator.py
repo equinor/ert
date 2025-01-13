@@ -713,7 +713,7 @@ def to_config_file(filename, config_values):
                 for job_name, job_args in keyword_value:
                     config.write(
                         f"{keyword} {job_name}"
-                        f"({', '.join(f'{a}={b}' for a,b in job_args)})\n"
+                        f"({', '.join(f'{a}={b}' for a, b in job_args)})\n"
                     )
             elif keyword == ConfigKeys.FIELD:
                 # keyword_value is a list of dicts, each defining a field

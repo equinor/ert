@@ -178,7 +178,7 @@ def test_suggester_gives_deprecated_define_migration_hint(
     tmp_path, definer, definition, expected
 ):
     (tmp_path / "config.ert").write_text(
-        "NUM_REALIZATIONS 1\n" f"{definer} {definition}\n"
+        f"NUM_REALIZATIONS 1\n{definer} {definition}\n"
     )
     print(f"{definer} {definition}")
     if expected:

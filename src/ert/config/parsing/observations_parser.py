@@ -415,8 +415,7 @@ def _validate_gen_obs_values(
                 filename = os.path.join(directory, filename)
             if not os.path.exists(filename):
                 raise ObservationConfigError.with_context(
-                    "The following keywords did not"
-                    f" resolve to a valid path:\n {key}",
+                    f"The following keywords did not resolve to a valid path:\n {key}",
                     value,
                 )
             setattr(output, str(key).lower(), filename)
@@ -500,7 +499,7 @@ def _conversion_error(
     token: FileContextToken, value: Any, type_name: str
 ) -> ObservationConfigError:
     return ObservationConfigError.with_context(
-        f"Could not convert {value} to " f'{type_name}. Failed to validate "{value}"',
+        f'Could not convert {value} to {type_name}. Failed to validate "{value}"',
         token,
     )
 
