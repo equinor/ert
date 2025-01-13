@@ -1,39 +1,8 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1736769991003,
+  "lastUpdate": 1736771153860,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
-      {
-        "commit": {
-          "author": {
-            "email": "49699333+dependabot[bot]@users.noreply.github.com",
-            "name": "dependabot[bot]",
-            "username": "dependabot[bot]"
-          },
-          "committer": {
-            "email": "60844986+larsevj@users.noreply.github.com",
-            "name": "Lars Evje",
-            "username": "larsevj"
-          },
-          "distinct": true,
-          "id": "1a4c078c4ec040d207c453c20f69f97f08ef9571",
-          "message": "Bump codecov/codecov-action from 4 to 5\n\nBumps [codecov/codecov-action](https://github.com/codecov/codecov-action) from 4 to 5.\n- [Release notes](https://github.com/codecov/codecov-action/releases)\n- [Changelog](https://github.com/codecov/codecov-action/blob/main/CHANGELOG.md)\n- [Commits](https://github.com/codecov/codecov-action/compare/v4...v5)\n\n---\nupdated-dependencies:\n- dependency-name: codecov/codecov-action\n  dependency-type: direct:production\n  update-type: version-update:semver-major\n...\n\nSigned-off-by: dependabot[bot] <support@github.com>\n\nClean up files left by codecov workflow",
-          "timestamp": "2025-01-06T14:16:52+01:00",
-          "tree_id": "c03557837eb4464ad156112281889ec6eb4be452",
-          "url": "https://github.com/equinor/ert/commit/1a4c078c4ec040d207c453c20f69f97f08ef9571"
-        },
-        "date": 1736169540972,
-        "tool": "pytest",
-        "benches": [
-          {
-            "name": "tests/ert/performance_tests/test_analysis.py::test_and_benchmark_adaptive_localization_with_fields",
-            "value": 0.21421863391165544,
-            "unit": "iter/sec",
-            "range": "stddev: 0.03453731157924506",
-            "extra": "mean: 4.6681279856 sec\nrounds: 5"
-          }
-        ]
-      },
       {
         "commit": {
           "author": {
@@ -930,6 +899,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.024690762932409144",
             "extra": "mean: 4.626277810000005 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "ejah@equinor.com",
+            "name": "Eivind Jahren",
+            "username": "eivindjahren"
+          },
+          "committer": {
+            "email": "ejah@equinor.com",
+            "name": "Eivind Jahren",
+            "username": "eivindjahren"
+          },
+          "distinct": true,
+          "id": "718fd5046d5b52271b5bc58a5d1c366b4bf8ecb5",
+          "message": "Rename test_jobs_file_is_backed_up",
+          "timestamp": "2025-01-13T13:23:57+01:00",
+          "tree_id": "64a98a737d415a2b1631ae1037f5ad22086e768b",
+          "url": "https://github.com/equinor/ert/commit/718fd5046d5b52271b5bc58a5d1c366b4bf8ecb5"
+        },
+        "date": 1736771153276,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/ert/performance_tests/test_analysis.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 0.2164381185900452,
+            "unit": "iter/sec",
+            "range": "stddev: 0.02403586279174922",
+            "extra": "mean: 4.620258235999995 sec\nrounds: 5"
           }
         ]
       }
