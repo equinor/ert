@@ -372,7 +372,7 @@ def test_that_open_storage_in_read_mode_with_newer_version_throws_exception(
 
     with pytest.raises(
         ErtStorageException,
-        match=f"Cannot open storage '{tmp_path}': Storage version {_LOCAL_STORAGE_VERSION+1} is newer than the current version {_LOCAL_STORAGE_VERSION}, upgrade ert to continue, or run with a different ENSPATH",
+        match=f"Cannot open storage '{tmp_path}': Storage version {_LOCAL_STORAGE_VERSION + 1} is newer than the current version {_LOCAL_STORAGE_VERSION}, upgrade ert to continue, or run with a different ENSPATH",
     ):
         open_storage(tmp_path, mode="r")
 
@@ -386,7 +386,7 @@ def test_that_open_storage_in_read_mode_with_older_version_throws_exception(
 
     with pytest.raises(
         ErtStorageException,
-        match=f"Cannot open storage '{tmp_path}' in read-only mode: Storage version {_LOCAL_STORAGE_VERSION-1} is too old",
+        match=f"Cannot open storage '{tmp_path}' in read-only mode: Storage version {_LOCAL_STORAGE_VERSION - 1} is too old",
     ):
         open_storage(tmp_path, mode="r")
 
@@ -400,7 +400,7 @@ def test_that_open_storage_in_write_mode_with_newer_version_throws_exception(
 
     with pytest.raises(
         ErtStorageException,
-        match=f"Cannot open storage '{tmp_path}': Storage version {_LOCAL_STORAGE_VERSION+1} is newer than the current version {_LOCAL_STORAGE_VERSION}, upgrade ert to continue, or run with a different ENSPATH",
+        match=f"Cannot open storage '{tmp_path}': Storage version {_LOCAL_STORAGE_VERSION + 1} is newer than the current version {_LOCAL_STORAGE_VERSION}, upgrade ert to continue, or run with a different ENSPATH",
     ):
         open_storage(tmp_path, mode="w")
 

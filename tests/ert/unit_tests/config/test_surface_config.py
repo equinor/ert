@@ -75,9 +75,9 @@ def test_runpath_roundtrip(tmp_path, storage, surface):
         ("yflip", 1.0),
         ("rotation", 10),
     ):
-        assert (
-            getattr(config, prop) == getattr(actual_surface, prop) == val
-        ), f"Failed for: {prop}"
+        assert getattr(config, prop) == getattr(actual_surface, prop) == val, (
+            f"Failed for: {prop}"
+        )
 
 
 def test_init_files_must_contain_placeholder_when_not_forward_init():

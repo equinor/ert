@@ -155,9 +155,9 @@ async def test_that_monitor_track_can_exit_without_terminated_event_from_evaluat
         async for event in monitor.track():
             raise RuntimeError(f"Got unexpected event {event} after cancellation")
 
-        assert (
-            "Evaluator did not send the TERMINATED event!"
-        ) in caplog.messages, "Monitor receiver did not stop!"
+        assert ("Evaluator did not send the TERMINATED event!") in caplog.messages, (
+            "Monitor receiver did not stop!"
+        )
 
     await websocket_server_task
 

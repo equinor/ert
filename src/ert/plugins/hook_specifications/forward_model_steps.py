@@ -11,9 +11,9 @@ if TYPE_CHECKING:
 
 @no_type_check
 @hook_specification
-def installable_forward_model_steps() -> (
-    PluginResponse[list[type[ForwardModelStepPlugin]]]
-):
+def installable_forward_model_steps() -> PluginResponse[
+    list[type[ForwardModelStepPlugin]]
+]:
     """
     :return: List of forward model step plugins in the form of subclasses of the
         ForwardModelStepPlugin class

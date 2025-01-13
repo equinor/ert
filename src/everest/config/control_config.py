@@ -33,8 +33,7 @@ def _all_or_no_index(variables: ControlVariable) -> ControlVariable:
 
     if len({getattr(variable, "index", None) is None for variable in variables}) != 1:
         raise ValueError(
-            "Index should be given either for all of the variables or for none"
-            " of them"
+            "Index should be given either for all of the variables or for none of them"
         )
     return variables
 

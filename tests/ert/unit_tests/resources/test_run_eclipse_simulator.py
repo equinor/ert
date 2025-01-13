@@ -63,9 +63,9 @@ def test_run_eclipseX00_can_run_eclipse_and_verify(source_root):
 
     assert len(erun.parse_errors()) == 0
 
-    assert not Path(
-        "EIGHTCELLS.h5"
-    ).exists(), "HDF conversion should not be run by default"
+    assert not Path("EIGHTCELLS.h5").exists(), (
+        "HDF conversion should not be run by default"
+    )
 
 
 @pytest.mark.integration_test
@@ -197,9 +197,9 @@ def test_await_completed_summary_file_does_not_time_out_on_nosim_with_mpi(source
         ["eclipse", "SPE1.DATA", "--version", "2019.3", "--num-cpu=2"]
     )
     assert Path("SPE1.OK").exists()
-    assert not Path(
-        "SPE1.UNSMRY"
-    ).exists(), "A nosim run should not produce an unsmry file"
+    assert not Path("SPE1.UNSMRY").exists(), (
+        "A nosim run should not produce an unsmry file"
+    )
     # The timeout will not happen since find_unsmry() returns None.
 
     # There is no assert on runtime because we cannot predict how long the Eclipse license
@@ -309,9 +309,9 @@ def test_mpi_is_working_without_run_reservoirsimulator_knowing_it(source_root):
     assert Path("SPE1_PARALLEL.PRT").stat().st_size > 0, "Eclipse did not run at all"
     assert Path("SPE1_PARALLEL.MSG").exists(), "No output from MPI process 1"
     assert Path("SPE1_PARALLEL.2.MSG").exists(), "No output from MPI process 2"
-    assert not Path(
-        "SPE1_PARALLEL.3.MSG"
-    ).exists(), "There should not be 3 MPI processes"
+    assert not Path("SPE1_PARALLEL.3.MSG").exists(), (
+        "There should not be 3 MPI processes"
+    )
 
 
 @pytest.mark.parametrize(

@@ -94,7 +94,7 @@ class ErtPluginManager(pluggy.PluginManager):
         logger.debug(
             f"Got {config_name} config path from "
             f"{response.plugin_metadata.plugin_name} "
-            f"({response.plugin_metadata.function_name,})"
+            f"({(response.plugin_metadata.function_name,)})"
         )
         return response.data
 

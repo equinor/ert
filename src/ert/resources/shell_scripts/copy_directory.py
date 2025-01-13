@@ -34,8 +34,7 @@ def copy_directory(src_path: str, target_path: str) -> None:
                 ) from err
     else:
         raise OSError(
-            f"Input argument: '{src_path}' "
-            "does not correspond to an existing directory"
+            f"Input argument: '{src_path}' does not correspond to an existing directory"
         )
 
 

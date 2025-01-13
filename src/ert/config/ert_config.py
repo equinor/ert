@@ -823,7 +823,7 @@ class ErtConfig:
                     )
                 except Exception as e:  # type: ignore
                     ConfigWarning.warn(
-                        f"Unexpected plugin forward model exception: " f"{e!s}",
+                        f"Unexpected plugin forward model exception: {e!s}",
                         context=fm_step.name,
                     )
 

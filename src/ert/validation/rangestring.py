@@ -30,7 +30,7 @@ def mask_to_rangestring(mask: Collection[bool | int]) -> str:
         if end - begin == 1:
             ranges.append(f"{begin}")
         else:
-            ranges.append(f"{begin}-{end-1}")
+            ranges.append(f"{begin}-{end - 1}")
 
     start: int | None = None
     for i, is_active in enumerate(mask):

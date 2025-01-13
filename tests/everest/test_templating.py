@@ -236,6 +236,6 @@ def test_user_specified_data_n_template(
     # Check expected contents of file
     with open(expected_file, encoding="utf-8") as f:
         contents = f.read()
-    assert (
-        contents == "VALUE1+VALUE2"
-    ), f'Expected contents: "VALUE1+VALUE2", found: {contents}'
+    assert contents == "VALUE1+VALUE2", (
+        f'Expected contents: "VALUE1+VALUE2", found: {contents}'
+    )

@@ -1007,7 +1007,7 @@ def not_found_bjobs(monkeypatch, tmp_path):
     monkeypatch.setenv("PATH", f"{bin_path}:{os.environ['PATH']}")
     bjobs_path = bin_path / "bjobs"
     bjobs_path.write_text(
-        "#!/bin/sh\n" 'echo "Job <$1> is not found"',
+        '#!/bin/sh\necho "Job <$1> is not found"',
         encoding="utf-8",
     )
     bjobs_path.chmod(bjobs_path.stat().st_mode | stat.S_IEXEC)
@@ -1034,9 +1034,9 @@ async def test_lsf_stdout_file(tmp_path, job_name):
     await driver.submit(0, "sh", "-c", "echo yay", name=job_name)
     await poll(driver, {0})
     lsf_stdout = Path(f"{job_name}.LSF-stdout").read_text(encoding="utf-8")
-    assert Path(
-        f"{job_name}.LSF-stdout"
-    ).exists(), "LSF system did not write output file"
+    assert Path(f"{job_name}.LSF-stdout").exists(), (
+        "LSF system did not write output file"
+    )
 
     assert "Sender: " in lsf_stdout, "LSF stdout should always start with 'Sender:'"
     assert "The output (if any) follows:" in lsf_stdout
@@ -1049,9 +1049,9 @@ async def test_lsf_dumps_stderr_to_file(tmp_path, job_name):
     failure_message = "failURE"
     await driver.submit(0, "sh", "-c", f"echo {failure_message} >&2", name=job_name)
     await poll(driver, {0})
-    assert Path(
-        f"{job_name}.LSF-stderr"
-    ).exists(), "LSF system did not write stderr file"
+    assert Path(f"{job_name}.LSF-stderr").exists(), (
+        "LSF system did not write stderr file"
+    )
 
     assert (
         Path(f"{job_name}.LSF-stderr").read_text(encoding="utf-8").strip()
@@ -1196,9 +1196,9 @@ async def test_submit_with_num_cpu(pytestconfig, job_name):
     stdout, stderr = await process.communicate()
     stdout_no_whitespaces = re.sub(r"\s+", "", stdout.decode())
     matches = re.search(r".*([0-9]+)ProcessorsRequested.*", stdout_no_whitespaces)
-    assert matches and matches[1] == str(
-        num_cpu
-    ), f"Could not verify processor allocation from stdout: {stdout}, stderr: {stderr}"
+    assert matches and matches[1] == str(num_cpu), (
+        f"Could not verify processor allocation from stdout: {stdout}, stderr: {stderr}"
+    )
 
     assert Path("test").read_text(encoding="utf-8") == "test\n"
 

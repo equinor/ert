@@ -657,9 +657,9 @@ def test_that_plugin_forward_models_are_installed(tmp_path):
     }
 
     for a, v in expected_attrs.items():
-        assert (
-            getattr(first_fm, a) == v
-        ), f"Expected fm[{a}] to be {v} but was {getattr(first_fm,a)}"
+        assert getattr(first_fm, a) == v, (
+            f"Expected fm[{a}] to be {v} but was {getattr(first_fm, a)}"
+        )
 
     fm_json = create_forward_model_json(
         context=ert_config.substitutions,

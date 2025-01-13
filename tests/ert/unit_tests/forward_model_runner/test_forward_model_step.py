@@ -211,9 +211,9 @@ def test_run_fails_using_exit_bash_builtin():
 
     assert len(statuses) == 3, "Wrong statuses count"
     assert statuses[2].exit_code == 1, "Exited status wrong exit_code"
-    assert (
-        statuses[2].error_message == "Process exited with status code 1"
-    ), "Exited status wrong error_message"
+    assert statuses[2].error_message == "Process exited with status code 1", (
+        "Exited status wrong error_message"
+    )
 
 
 @pytest.mark.usefixtures("use_tmpdir")

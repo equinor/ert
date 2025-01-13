@@ -33,20 +33,20 @@ class DefaultCustomizationView(CustomizationView):
         self.addLineEdit(
             "title",
             "Title",
-            f'The title of the plot. {_label_msg("title")}',
+            f"The title of the plot. {_label_msg('title')}",
             placeholder="Title",
         )
         self.addSpacing()
         self.addLineEdit(
             "x_label",
             "x-label",
-            f'The label of the x-axis. {_label_msg("label")}',
+            f"The label of the x-axis. {_label_msg('label')}",
             placeholder="x-label",
         )
         self.addLineEdit(
             "y_label",
             "y-label",
-            f'The label of the y-axis. {_label_msg("label")}',
+            f"The label of the y-axis. {_label_msg('label')}",
             placeholder="y-label",
         )
         self.addSpacing()

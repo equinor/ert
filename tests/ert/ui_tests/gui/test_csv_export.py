@@ -144,6 +144,6 @@ def test_that_export_tool_does_not_produce_duplicate_data(
     second_half = df.iloc[half_point:]
 
     # Ensure the two halves are not identical
-    assert not first_half.equals(
-        second_half
-    ), "The first half of the data is identical to the second half."
+    assert not first_half.equals(second_half), (
+        "The first half of the data is identical to the second half."
+    )

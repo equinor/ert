@@ -58,9 +58,9 @@ async def assert_scheduler_events(
     scheduler: Scheduler, expected_job_events: list[JobState]
 ) -> None:
     for expected_job_event in expected_job_events:
-        assert (
-            scheduler._events.qsize()
-        ), f"Expected to find {expected_job_event=} in the event queue"
+        assert scheduler._events.qsize(), (
+            f"Expected to find {expected_job_event=} in the event queue"
+        )
         event = scheduler._events.get_nowait()
         assert event.queue_event_type == expected_job_event
 

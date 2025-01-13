@@ -241,9 +241,9 @@ def test_singleton_connect_early(server_script, tmp_path):
     start_event.wait()  # Client thread has started
     with _DummyService.start_server(exec_args=[str(server_script)]) as server:
         ready_event.wait()  # Client thread has connected to server
-        assert not getattr(
-            client_thread, "exception", None
-        ), f"Exception from connect: {client_thread.exception}"
+        assert not getattr(client_thread, "exception", None), (
+            f"Exception from connect: {client_thread.exception}"
+        )
         client = client_thread.client
         assert client is not server
         assert client.fetch_conn_info() == server.fetch_conn_info()

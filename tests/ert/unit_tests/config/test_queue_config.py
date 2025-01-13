@@ -276,7 +276,7 @@ def test_multiple_max_submit_keywords():
 def test_wrong_max_submit_raises_validation_error(max_submit_value, error_msg):
     with pytest.raises(ConfigValidationError, match=error_msg):
         ErtConfig.from_file_contents(
-            "NUM_REALIZATIONS 1\n" f"MAX_SUBMIT {max_submit_value}\n"
+            f"NUM_REALIZATIONS 1\nMAX_SUBMIT {max_submit_value}\n"
         )
 
 
@@ -375,7 +375,7 @@ def test_wrong_generic_queue_option_raises_validation_error(queue_system, key, v
     )
     with pytest.raises(ConfigValidationError, match=error_msg):
         ErtConfig.from_file_contents(
-            "NUM_REALIZATIONS 1\n" f"QUEUE_SYSTEM {queue_system}\n" f"{key} {value}\n"
+            f"NUM_REALIZATIONS 1\nQUEUE_SYSTEM {queue_system}\n{key} {value}\n"
         )
 
 

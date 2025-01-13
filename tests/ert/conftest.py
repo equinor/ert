@@ -43,9 +43,9 @@ def log_check():
     yield
     logger_after = logging.getLogger()
     level_after = logger_after.getEffectiveLevel()
-    assert (
-        level_after == logging.WARNING
-    ), f"Detected differences in log environment: Changed to {level_after}"
+    assert level_after == logging.WARNING, (
+        f"Detected differences in log environment: Changed to {level_after}"
+    )
 
 
 @pytest.fixture(scope="session", autouse=True)

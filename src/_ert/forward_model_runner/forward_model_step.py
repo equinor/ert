@@ -239,7 +239,7 @@ class ForwardModelStep:
             self.job_data["error_file"]
         ):
             return exited_message.with_error(
-                f'Found the error file:{self.job_data["error_file"]} - job failed.'
+                f"Found the error file:{self.job_data['error_file']} - job failed."
             )
 
         if target_file_mtime:
@@ -264,7 +264,7 @@ class ForwardModelStep:
                 f"Forward model step {self.job_data.get('name')} "
                 f"was killed due to out-of-memory on {socket.gethostname()}. "
                 "Max memory usage recorded by Ert for the "
-                f"realization was {max_memory_usage//1024//1024} MB. "
+                f"realization was {max_memory_usage // 1024 // 1024} MB. "
                 "Please add REALIZATION_MEMORY to your ert config together "
                 "with a suitable memory amount to avoid this."
             )
@@ -322,12 +322,12 @@ class ForwardModelStep:
         """
         errors = []
         if self.job_data.get("stdin") and not os.path.exists(self.job_data["stdin"]):
-            errors.append(f'Could not locate stdin file: {self.job_data["stdin"]}')
+            errors.append(f"Could not locate stdin file: {self.job_data['stdin']}")
 
         if self.job_data.get("start_file") and not os.path.exists(
             cast(Path, self.job_data["start_file"])
         ):
-            errors.append(f'Could not locate start_file:{self.job_data["start_file"]}')
+            errors.append(f"Could not locate start_file:{self.job_data['start_file']}")
 
         if self.job_data.get("error_file") and os.path.exists(
             cast(Path, self.job_data.get("error_file"))

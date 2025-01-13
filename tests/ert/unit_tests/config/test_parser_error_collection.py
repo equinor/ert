@@ -60,8 +60,7 @@ def find_and_assert_errors_matching_filename(
     )
 
     assert len(matching_errors) > 0, (
-        f"Expected minimum 1 error matching filename"
-        f" {filename}, got 0 from {errors}"
+        f"Expected minimum 1 error matching filename {filename}, got 0 from {errors}"
     )
 
     return matching_errors
@@ -106,9 +105,9 @@ def find_and_assert_errors_matching_message(
     re_match = re.compile(match)
     matching_errors = [err for err in errors if re.search(re_match, err.message)]
 
-    assert (
-        len(matching_errors) > 0
-    ), f"Expected to find error matching message {match} {errors}"
+    assert len(matching_errors) > 0, (
+        f"Expected to find error matching message {match} {errors}"
+    )
 
     return matching_errors
 
@@ -624,7 +623,7 @@ def test_that_cyclical_import_error_is_located_stop_early(n):
             contents=dedent(
                 f"""
                 JOBNAME include{i}
-                INCLUDE include{i+1}.ert
+                INCLUDE include{i + 1}.ert
                 """
             )
         )
@@ -632,7 +631,7 @@ def test_that_cyclical_import_error_is_located_stop_early(n):
     }
 
     expected_match = (
-        f"test.ert->{'->'.join([f'include{i}.ert' for i in range(n+1)])}->test.ert"
+        f"test.ert->{'->'.join([f'include{i}.ert' for i in range(n + 1)])}->test.ert"
     )
 
     expected_error = ExpectedErrorInfo(
@@ -641,7 +640,7 @@ def test_that_cyclical_import_error_is_located_stop_early(n):
             f"include{n}.ert": FileDetail(
                 contents=dedent(
                     f"""
-                    JOBNAME include{n+1}
+                    JOBNAME include{n + 1}
                     INCLUDE test.ert
                     """
                 )

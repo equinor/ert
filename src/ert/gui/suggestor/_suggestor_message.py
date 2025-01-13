@@ -122,7 +122,7 @@ class SuggestorMessage(QWidget):
         first = True
         for loc in self._locations:
             if first:
-                location_paragraphs += f'<p>{self._color_bold("location:")}{loc}</p>'
+                location_paragraphs += f"<p>{self._color_bold('location:')}{loc}</p>"
                 first = False
             else:
                 location_paragraphs += f"<p>{loc}</p>"

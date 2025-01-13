@@ -59,9 +59,9 @@ def test_report_with_successful_start_message_argument(reporter):
     with open(STATUS_file, encoding="utf-8") as f:
         assert "fmstep1" in f.readline(), "STATUS file missing fmstep1"
     with open(LOG_file, encoding="utf-8") as f:
-        assert (
-            "Calling: /bin/sh --foo 1 --bar 2" in f.readline()
-        ), """JOB_LOG file missing executable and arguments"""
+        assert "Calling: /bin/sh --foo 1 --bar 2" in f.readline(), (
+            """JOB_LOG file missing executable and arguments"""
+        )
 
     with open(STATUS_json, encoding="utf-8") as f:
         content = "".join(f.readlines())
@@ -77,18 +77,18 @@ def test_report_with_failed_start_message_argument(reporter):
     reporter.report(msg)
 
     with open(STATUS_file, encoding="utf-8") as f:
-        assert (
-            "EXIT: -10/massive_failure" in f.readline()
-        ), "STATUS file missing EXIT message"
+        assert "EXIT: -10/massive_failure" in f.readline(), (
+            "STATUS file missing EXIT message"
+        )
     with open(STATUS_json, encoding="utf-8") as f:
         content = "".join(f.readlines())
         assert '"status": "Failure"' in content, "status.json missing Failure status"
-        assert (
-            '"error": "massive_failure"' in content
-        ), "status.json missing error message"
-    assert (
-        reporter.status_dict["jobs"][0]["end_time"] is not None
-    ), "end_time not set for fmstep1"
+        assert '"error": "massive_failure"' in content, (
+            "status.json missing error message"
+        )
+    assert reporter.status_dict["jobs"][0]["end_time"] is not None, (
+        "end_time not set for fmstep1"
+    )
 
 
 @pytest.mark.usefixtures("use_tmpdir")
@@ -117,18 +117,18 @@ def test_report_with_failed_exit_message_argument(reporter):
     with open(ERROR_file, encoding="utf-8") as f:
         content = "".join(f.readlines())
         assert "<job>fmstep1</job>" in content, "ERROR file missing fmstep"
-        assert (
-            "<reason>massive_failure</reason>" in content
-        ), "ERROR file missing reason"
-        assert (
-            "stderr: Not redirected" in content
-        ), "ERROR had invalid stderr information"
+        assert "<reason>massive_failure</reason>" in content, (
+            "ERROR file missing reason"
+        )
+        assert "stderr: Not redirected" in content, (
+            "ERROR had invalid stderr information"
+        )
     with open(STATUS_json, encoding="utf-8") as f:
         content = "".join(f.readlines())
         assert '"status": "Failure"' in content, "status.json missing Failure status"
-        assert (
-            '"error": "massive_failure"' in content
-        ), "status.json missing error message"
+        assert '"error": "massive_failure"' in content, (
+            "status.json missing error message"
+        )
     assert reporter.status_dict["jobs"][0]["end_time"] is not None
 
 
@@ -145,12 +145,12 @@ def test_report_with_running_message_argument(reporter):
     with open(STATUS_json, encoding="utf-8") as f:
         content = "".join(f.readlines())
         assert '"status": "Running"' in content, "status.json missing status"
-        assert (
-            '"max_memory_usage": 100' in content
-        ), "status.json missing max_memory_usage"
-        assert (
-            '"current_memory_usage": 10' in content
-        ), "status.json missing current_memory_usage"
+        assert '"max_memory_usage": 100' in content, (
+            "status.json missing max_memory_usage"
+        )
+        assert '"current_memory_usage": 10' in content, (
+            "status.json missing current_memory_usage"
+        )
         assert '"cpu_seconds": 1.1' in content, "status.json missing cpu_seconds"
 
 

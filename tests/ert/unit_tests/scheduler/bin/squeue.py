@@ -35,9 +35,9 @@ def main() -> None:
     args = get_parser().parse_args()
 
     assert args.noheader, "Mocked squeue requires noheader"
-    assert (
-        args.format == "%i %T"
-    ), "Sorry, mocked squeue only supports one custom format."
+    assert args.format == "%i %T", (
+        "Sorry, mocked squeue only supports one custom format."
+    )
 
     jobs_path = Path(os.getenv("PYTEST_TMP_PATH", ".")) / "mock_jobs"
 

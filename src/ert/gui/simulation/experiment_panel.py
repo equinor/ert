@@ -298,7 +298,7 @@ class ExperimentPanel(QWidget):
                     msg_box.setIcon(QMessageBox.Warning)
                     msg_box.setText("ERT could not delete the existing runpath")
                     msg_box.setInformativeText(
-                        f"{e}\n\n" "Continue without deleting the runpath?"
+                        f"{e}\n\nContinue without deleting the runpath?"
                     )
                     msg_box.setStandardButtons(QMessageBox.Yes | QMessageBox.No)
                     msg_box.setDefaultButton(QMessageBox.No)

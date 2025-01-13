@@ -274,7 +274,7 @@ async def test_full_resource_string(realization_memory, num_cpu, cluster_label):
         Path("captured_qsub_args").read_text(encoding="utf-8")
     )
     assert resources.get("mem", "") == (
-        f"{realization_memory // 1024**2 }mb" if realization_memory > 0 else ""
+        f"{realization_memory // 1024**2}mb" if realization_memory > 0 else ""
     )
     assert resources.get("select", "1") == "1"
     assert resources.get("ncpus", "1") == str(num_cpu)
@@ -490,9 +490,9 @@ async def test_that_openpbs_driver_ignores_qstat_flakiness(
     with contextlib.suppress(TypeError):
         await asyncio.wait_for(poll(driver, expected={0}), timeout=10)
 
-    assert (
-        int(Path("counter_file").read_text(encoding="utf-8")) >= 3
-    ), "polling did not occur, test setup failed"
+    assert int(Path("counter_file").read_text(encoding="utf-8")) >= 3, (
+        "polling did not occur, test setup failed"
+    )
 
     assert text_to_ignore not in capsys.readouterr().out
     assert text_to_ignore not in capsys.readouterr().err

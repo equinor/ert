@@ -801,13 +801,11 @@ and environment variables are exposed in the form 'os.NAME', for example:
             parser.error(f"File not found: {config_path}")
         except YAMLError as e:
             parser.error(
-                f"The config file: <{config_path}> contains"
-                f" invalid YAML syntax: {e!s}"
+                f"The config file: <{config_path}> contains invalid YAML syntax: {e!s}"
             )
         except EverestValidationError as e:
             parser.error(
-                f"Loading config file <{config_path}> failed with:\n"
-                f"{format_errors(e)}"
+                f"Loading config file <{config_path}> failed with:\n{format_errors(e)}"
             )
 
     def dump(self, fname: str | None = None) -> str | None:

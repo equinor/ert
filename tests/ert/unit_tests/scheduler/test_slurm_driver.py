@@ -33,7 +33,7 @@ def capturing_sbatch(monkeypatch, tmp_path):
     monkeypatch.setenv("PATH", f"{bin_path}:{os.environ['PATH']}")
     sbatch_path = bin_path / "sbatch"
     sbatch_path.write_text(
-        "#!/bin/sh\n" "echo $@ > captured_sbatch_args\n" "echo 1",
+        "#!/bin/sh\necho $@ > captured_sbatch_args\necho 1",
         encoding="utf-8",
     )
     sbatch_path.chmod(sbatch_path.stat().st_mode | stat.S_IEXEC)
@@ -360,9 +360,9 @@ async def test_submit_with_num_cpu(pytestconfig, job_name):
         stderr=asyncio.subprocess.PIPE,
     )
     stdout, stderr = await process.communicate()
-    assert " NumCPUs=2 " in stdout.decode(
-        errors="ignore"
-    ), f"Could not verify processor allocation from stdout: {stdout}, stderr: {stderr}"
+    assert " NumCPUs=2 " in stdout.decode(errors="ignore"), (
+        f"Could not verify processor allocation from stdout: {stdout}, stderr: {stderr}"
+    )
 
     assert Path("test").read_text(encoding="utf-8") == "test\n"
 
@@ -427,9 +427,9 @@ async def test_kill_before_submit_is_finished(
     # there.
     assert test_grace_time > job_kill_window, "Wrong test setup"
     await asyncio.sleep(test_grace_time)
-    assert not Path(
-        "survived"
-    ).exists(), "The process children of the job should also have been killed"
+    assert not Path("survived").exists(), (
+        "The process children of the job should also have been killed"
+    )
 
 
 @pytest.mark.parametrize("cmd, exit_code", [("true", 0), ("false", 1)])
