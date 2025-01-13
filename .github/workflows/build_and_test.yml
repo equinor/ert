@@ -81,29 +81,15 @@ jobs:
       python-version: ${{ matrix.python-version }}
     secrets: inherit
 
-  test-mac-ert:
-    if: github.ref_type != 'tag' # when not tag
-    strategy:
-      fail-fast: false
-      matrix:
-        test-type: [ 'performance-tests', 'unit-tests', 'gui-tests', 'cli-tests' ]
-        python-version: [ '3.12' ]
-        os: [ 'macos-latest' ]
-    uses: ./.github/workflows/test_ert.yml
-    with:
-      os: ${{ matrix.os }}
-      python-version: ${{ matrix.python-version }}
-      test-type: ${{ matrix.test-type }}
-    secrets: inherit
-
-  test-mac-everest:
-    if: github.ref_type != 'tag' # when not tag
+  test-mac-main-everest:
+    if: github.ref == 'refs/heads/main' # only perform mac tests on main branch
     strategy:
       fail-fast: false
       matrix:
         test-type: [ 'test', 'integration-test', 'everest-models-test' ]
-        python-version: [ '3.12' ]
         os: [ 'macos-latest' ]
+        python-version: [ '3.12' ]
+
     uses: ./.github/workflows/test_everest.yml
     with:
       os: ${{ matrix.os }}
@@ -111,36 +97,14 @@ jobs:
       test-type: ${{ matrix.test-type }}
     secrets: inherit
 
-
-  test-mac-for-tags-everest:
-    if: github.ref_type == 'tag' # only test all variants for tags
-    strategy:
-      fail-fast: false
-      matrix:
-        test-type: [ 'test', 'integration-test', 'everest-models-test' ]
-        os: [ 'macos-13', 'macos-14', 'macos-14-large']
-        python-version: [ '3.12' ]
-        exclude:
-          - os: 'macos-13'
-            python-version: '3.12'
-    uses: ./.github/workflows/test_everest.yml
-    with:
-      os: ${{ matrix.os }}
-      python-version: ${{ matrix.python-version }}
-      test-type: ${{ matrix.test-type }}
-    secrets: inherit
-
-  test-mac-for-tags-ert:
-    if: github.ref_type == 'tag' # only test all variants for tags
+  test-mac-main-ert:
+    if: github.ref == 'refs/heads/main' # only perform mac tests on main branch
     strategy:
       fail-fast: false
       matrix:
         test-type: [ 'performance-tests', 'unit-tests', 'gui-tests', 'cli-tests' ]
         python-version: [ '3.12' ]
-        os: [ 'macos-13', 'macos-14']
-        exclude:
-          - os: 'macos-13'
-            python-version: '3.12'
+        os: [ 'macos-latest']
 
     uses: ./.github/workflows/test_ert.yml
     with:
@@ -197,7 +161,7 @@ jobs:
   publish:
     name: Publish to PyPI
     runs-on: ubuntu-latest
-    needs: [build-wheels, test-linux-ert, test-linux-everest, test-mac-for-tags-ert, test-mac-for-tags-everest, docs-ert]
+    needs: [build-wheels, test-linux-ert, test-linux-everest, test-mac-main-ert, test-mac-main-everest, docs-ert]
     permissions:
       id-token: write
 
