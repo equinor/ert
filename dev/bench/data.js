@@ -1,39 +1,8 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1736772149467,
+  "lastUpdate": 1736774090414,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
-      {
-        "commit": {
-          "author": {
-            "email": "eide.oyvind87@gmail.com",
-            "name": "Øyvind Eide",
-            "username": "oyvindeide"
-          },
-          "committer": {
-            "email": "44577479+oyvindeide@users.noreply.github.com",
-            "name": "Øyvind Eide",
-            "username": "oyvindeide"
-          },
-          "distinct": true,
-          "id": "790933d7b29bc68b13c2534fea91bc9ad58911c8",
-          "message": "Delete duplicate enum",
-          "timestamp": "2025-01-06T15:11:29+01:00",
-          "tree_id": "f92c72ac4373b2fe3a8a81c7fbeadffc9e15fdcc",
-          "url": "https://github.com/equinor/ert/commit/790933d7b29bc68b13c2534fea91bc9ad58911c8"
-        },
-        "date": 1736172798660,
-        "tool": "pytest",
-        "benches": [
-          {
-            "name": "tests/ert/performance_tests/test_analysis.py::test_and_benchmark_adaptive_localization_with_fields",
-            "value": 0.2182612177777976,
-            "unit": "iter/sec",
-            "range": "stddev: 0.024209504476434666",
-            "extra": "mean: 4.581665997200003 sec\nrounds: 5"
-          }
-        ]
-      },
       {
         "commit": {
           "author": {
@@ -930,6 +899,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.02350508586191256",
             "extra": "mean: 4.604068455199993 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "havb@equinor.com",
+            "name": "Håvard Berland",
+            "username": "berland"
+          },
+          "committer": {
+            "email": "berland@pvv.ntnu.no",
+            "name": "Håvard Berland",
+            "username": "berland"
+          },
+          "distinct": true,
+          "id": "5cb786131c2fa649f06590a6a3981827ede2aa7c",
+          "message": "Ignore OSErrors on subprocess call in poll() and bhist\n\nPretend these kinds of issues are flaky. It is important not to crash on\npotentially intermittent failures in code that is rerun every 2 seconds.",
+          "timestamp": "2025-01-13T14:12:57+01:00",
+          "tree_id": "0e0ee7ca7b9f8b86bc68ea36a81f6122a2756eee",
+          "url": "https://github.com/equinor/ert/commit/5cb786131c2fa649f06590a6a3981827ede2aa7c"
+        },
+        "date": 1736774089965,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/ert/performance_tests/test_analysis.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 0.2104152307761235,
+            "unit": "iter/sec",
+            "range": "stddev: 0.030580872338815884",
+            "extra": "mean: 4.752507678799995 sec\nrounds: 5"
           }
         ]
       }
