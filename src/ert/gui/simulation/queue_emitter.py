@@ -36,7 +36,7 @@ class QueueEmitter(QObject):
         while True:
             event = None
             with suppress(Empty):
-                event = self._event_queue.get(timeout=1.0)
+                event = self._event_queue.get_nowait()
             if self._stopped:
                 logger.debug("stopped")
                 break

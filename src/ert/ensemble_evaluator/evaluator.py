@@ -133,11 +133,12 @@ class EnsembleEvaluator:
             ):
                 self._complete_batch.clear()
                 try:
-                    event = await asyncio.wait_for(self._events.get(), timeout=0.1)
+                    event = self._events.get_nowait()
                     function = event_handler[type(event)]
                     batch.append((function, event))
                     self._events.task_done()
-                except TimeoutError:
+                except asyncio.QueueEmpty:
+                    await asyncio.sleep(0.1)
                     continue
             self._complete_batch.set()
             await self._batch_processing_queue.put(batch)
