@@ -414,7 +414,18 @@ def _extract_forward_model(ever_config: EverestConfig, ert_config):
     fm_steps = ert_config.get(ErtConfigKeys.FORWARD_MODEL, [])
     for job in forward_model:
         job_name, *args = job.split()
-        fm_steps.append([job_name, args])
+        match job_name:
+            # All three reservoir simulator fm_steps map to
+            # "run_reservoirsimulator" which requires the simulator name
+            # as its first argument.
+            case "eclipse100":
+                fm_steps.append(["eclipse100", ["eclipse", *args]])
+            case "eclipse300":
+                fm_steps.append(["eclipse300", ["e300", *args]])
+            case "flow":
+                fm_steps.append(["flow", ["flow", *args]])
+            case _:
+                fm_steps.append([job_name, args])
 
     ert_config[ErtConfigKeys.FORWARD_MODEL] = fm_steps
 

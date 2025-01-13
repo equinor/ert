@@ -57,7 +57,6 @@ jobs:
 
     - name: Run Everest on an example configuration with flow
       run: |
-        set +e
         pushd test-data/everest/egg/everest/model
         everest lint config_flow.yml
         everest run config_flow.yml

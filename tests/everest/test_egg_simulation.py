@@ -540,7 +540,7 @@ def _generate_exp_ert_config(config_path, output_dir):
             ],
             [
                 "eclipse100",
-                ["eclipse/model/EGG.DATA", "--version", "2020.2"],
+                ["eclipse", "eclipse/model/EGG.DATA", "--version", "2020.2"],
             ],
             ["rf", ["-s", "eclipse/model/EGG", "-o", "rf"]],
         ],
