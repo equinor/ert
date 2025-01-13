@@ -24,7 +24,8 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          fetch-depth: 0
+          fetch-depth: 1024
+          fetch-tags: true
           submodules: true
           lfs: true
           ref: gh-pages
