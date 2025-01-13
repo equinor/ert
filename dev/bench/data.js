@@ -1,39 +1,8 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1736771738026,
+  "lastUpdate": 1736772149467,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
-      {
-        "commit": {
-          "author": {
-            "email": "yngve-sk@users.noreply.github.com",
-            "name": "Yngve S. Kristiansen",
-            "username": "yngve-sk"
-          },
-          "committer": {
-            "email": "noreply@github.com",
-            "name": "GitHub",
-            "username": "web-flow"
-          },
-          "distinct": true,
-          "id": "d24f588722a7a1e101a6aa8827e9fec6b933a873",
-          "message": "Add post/pre experiment simulation hooks\n\n* Add post/pre experiment simulation hooks\r\n* Add docs for PRE/POST_EXPERIMENT hooks",
-          "timestamp": "2025-01-06T14:39:24+01:00",
-          "tree_id": "7e5efe7fe0c93b33cbe66f3d0d5f78da13460574",
-          "url": "https://github.com/equinor/ert/commit/d24f588722a7a1e101a6aa8827e9fec6b933a873"
-        },
-        "date": 1736170880245,
-        "tool": "pytest",
-        "benches": [
-          {
-            "name": "tests/ert/performance_tests/test_analysis.py::test_and_benchmark_adaptive_localization_with_fields",
-            "value": 0.21887509448985565,
-            "unit": "iter/sec",
-            "range": "stddev: 0.02236606260307451",
-            "extra": "mean: 4.5688158460000015 sec\nrounds: 5"
-          }
-        ]
-      },
       {
         "commit": {
           "author": {
@@ -930,6 +899,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.03495697133700672",
             "extra": "mean: 4.590382685400004 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "andrli@equinor.com",
+            "name": "Andreas Eknes Lie",
+            "username": "andreas-el"
+          },
+          "committer": {
+            "email": "114403625+andreas-el@users.noreply.github.com",
+            "name": "Andreas Eknes Lie",
+            "username": "andreas-el"
+          },
+          "distinct": true,
+          "id": "5fb2308f9e5acbfcdb59d4c314eebfc2aa5cd543",
+          "message": "Only test for mac when pushing changes to main branch\n\nRemove `macos-13` since this is excluded for specified python version\nChange `macos-14` to `macos-latest` as we want to build for arm-architecture,\nand also this aligns with our free CI-minutes\nRemove `macos-14-large` as testing also on `x64` architecture seems excessive.",
+          "timestamp": "2025-01-13T13:40:36+01:00",
+          "tree_id": "49c5192f2b2088dc8946972fd600b4572a446681",
+          "url": "https://github.com/equinor/ert/commit/5fb2308f9e5acbfcdb59d4c314eebfc2aa5cd543"
+        },
+        "date": 1736772148875,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/ert/performance_tests/test_analysis.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 0.21719920321136096,
+            "unit": "iter/sec",
+            "range": "stddev: 0.02350508586191256",
+            "extra": "mean: 4.604068455199993 sec\nrounds: 5"
           }
         ]
       }
