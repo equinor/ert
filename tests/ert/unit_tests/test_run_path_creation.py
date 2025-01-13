@@ -94,9 +94,9 @@ def test_jobs_json_is_backed_up(make_run_path):
     assert os.path.exists("simulations/realization-0/iter-0/jobs.json")
     make_run_path(ert_config)
     iter0_output_files = os.listdir("simulations/realization-0/iter-0/")
-    assert (
-        len([f for f in iter0_output_files if f.startswith("jobs.json")]) > 1
-    ), "No backup created for jobs.json"
+    assert len([f for f in iter0_output_files if f.startswith("jobs.json")]) > 1, (
+        "No backup created for jobs.json"
+    )
 
 
 @pytest.mark.usefixtures("use_tmpdir")
