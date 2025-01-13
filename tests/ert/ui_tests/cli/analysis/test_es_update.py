@@ -162,6 +162,10 @@ def test_that_surfaces_retain_their_order_when_loaded_and_saved_by_ert():
 @pytest.mark.integration_test
 @pytest.mark.usefixtures("copy_snake_oil_field")
 def test_update_multiple_param():
+    with open("snake_oil.ert", "a", encoding="utf-8") as f:
+        f.write("\nANALYSIS_SET_VAR STD_ENKF LOCALIZATION True\n")
+        f.write("ANALYSIS_SET_VAR STD_ENKF LOCALIZATION_CORRELATION_THRESHOLD 0.1\n")
+
     run_cli(
         ENSEMBLE_SMOOTHER_MODE,
         "--disable-monitor",
@@ -182,6 +186,22 @@ def test_update_multiple_param():
     # generalized variance for the parameters.
     # https://en.wikipedia.org/wiki/Variance#For_vector-valued_random_variables
     assert np.trace(np.cov(posterior_array)) < np.trace(np.cov(prior_array))
+
+    corr_XY = prior_ensemble.load_cross_correlations()
+    expected_obs_groups = [obs[0] for obs in ert_config.observation_config]
+    obs_groups = corr_XY["obs_group"].unique().to_list()
+    assert sorted(obs_groups) == sorted(expected_obs_groups)
+    # Check that obs names are created using obs groups
+    obs_name_starts_with_group = (
+        corr_XY.with_columns(
+            polars.col("obs_name")
+            .str.starts_with(polars.col("obs_group"))
+            .alias("starts_with_check")
+        )
+        .get_column("starts_with_check")
+        .all()
+    )
+    assert obs_name_starts_with_group
 
 
 @pytest.mark.usefixtures("copy_poly_case")
