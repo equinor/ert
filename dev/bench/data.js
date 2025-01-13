@@ -1,39 +1,8 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1736774333547,
+  "lastUpdate": 1736775024873,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
-      {
-        "commit": {
-          "author": {
-            "email": "eide.oyvind87@gmail.com",
-            "name": "Øyvind Eide",
-            "username": "oyvindeide"
-          },
-          "committer": {
-            "email": "44577479+oyvindeide@users.noreply.github.com",
-            "name": "Øyvind Eide",
-            "username": "oyvindeide"
-          },
-          "distinct": true,
-          "id": "a6d2dba8cd9c5cd9368f1b891931b7982c438051",
-          "message": "Replace custom schema generation with library",
-          "timestamp": "2025-01-07T09:17:04+01:00",
-          "tree_id": "b59bfc8de678bde5e848ae7a43293857e884ee9d",
-          "url": "https://github.com/equinor/ert/commit/a6d2dba8cd9c5cd9368f1b891931b7982c438051"
-        },
-        "date": 1736237936574,
-        "tool": "pytest",
-        "benches": [
-          {
-            "name": "tests/ert/performance_tests/test_analysis.py::test_and_benchmark_adaptive_localization_with_fields",
-            "value": 0.21600439227720425,
-            "unit": "iter/sec",
-            "range": "stddev: 0.013815307542831789",
-            "extra": "mean: 4.629535489800008 sec\nrounds: 5"
-          }
-        ]
-      },
       {
         "commit": {
           "author": {
@@ -930,6 +899,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.04341485545408905",
             "extra": "mean: 4.6069105304 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "eide.oyvind87@gmail.com",
+            "name": "Øyvind Eide",
+            "username": "oyvindeide"
+          },
+          "committer": {
+            "email": "44577479+oyvindeide@users.noreply.github.com",
+            "name": "Øyvind Eide",
+            "username": "oyvindeide"
+          },
+          "distinct": true,
+          "id": "9b0a3b198d25475335e3b4cdd1543511ca2db3f4",
+          "message": "Use pattern matching",
+          "timestamp": "2025-01-13T14:28:24+01:00",
+          "tree_id": "bcebbde614f747722f06616461b473476bf23e6c",
+          "url": "https://github.com/equinor/ert/commit/9b0a3b198d25475335e3b4cdd1543511ca2db3f4"
+        },
+        "date": 1736774986785,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/ert/performance_tests/test_analysis.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 0.2179556951335767,
+            "unit": "iter/sec",
+            "range": "stddev: 0.014412422697833875",
+            "extra": "mean: 4.5880884158000015 sec\nrounds: 5"
           }
         ]
       }
