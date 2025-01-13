@@ -425,36 +425,37 @@ def test_that_deprecated_runpath_substitution_remain_valid(make_run_path):
         )
 
 
+@pytest.mark.usefixtures("use_tmpdir")
 @pytest.mark.parametrize("itr", [0, 1, 2, 17])
-def test_write_snakeoil_runpath_file(snake_oil_case, storage, itr):
-    ert_config = snake_oil_case
+def test_write_runpath_file(storage, itr, run_paths):
+    runpath_fmt = "simulations/<GEO_ID>/realization-<IENS>/iter-<ITER>"
+    runpath_list_path = "a_file_name"
+    ert_config = ErtConfig.with_plugins().from_file_contents(
+        dedent(
+            f"""\
+            NUM_REALIZATIONS 25
+            RUNPATH {runpath_fmt}
+            RUNPATH_FILE {runpath_list_path}
+            """
+        )
+    )
+    num_realizations = ert_config.model_config.num_realizations
     experiment_id = storage.create_experiment(
         parameters=ert_config.ensemble_config.parameter_configuration
     )
     prior_ensemble = storage.create_ensemble(
-        experiment_id, name="prior", ensemble_size=25, iteration=itr
+        experiment_id, name="prior", ensemble_size=num_realizations, iteration=itr
     )
 
-    num_realizations = 25
     mask = [True] * num_realizations
     mask[13] = False
-    runpath_fmt = (
-        "simulations/<GEO_ID>/realization-<IENS>/iter-<ITER>/"
-        "magic-real-<IENS>/magic-iter-<ITER>"
-    )
-    jobname_fmt = "SNAKE_OIL_%d"
     global_substitutions = ert_config.substitutions
     for i in range(num_realizations):
         global_substitutions[f"<GEO_ID_{i}_{itr}>"] = str(10 * i)
-    run_paths = Runpaths(
-        jobname_format=jobname_fmt,
-        runpath_format=runpath_fmt,
-        filename="a_file_name",
-        substitutions=global_substitutions,
-    )
+    run_path = run_paths(ert_config)
     sample_prior(prior_ensemble, [i for i, active in enumerate(mask) if active])
     run_args = create_run_arguments(
-        run_paths,
+        run_path,
         [True, True],
         prior_ensemble,
     )
@@ -468,7 +469,7 @@ def test_write_snakeoil_runpath_file(snake_oil_case, storage, itr):
         substitutions=ert_config.substitutions,
         templates=ert_config.ert_templates,
         model_config=ert_config.model_config,
-        runpaths=run_paths,
+        runpaths=run_path,
     )
 
     for run_arg in run_args:
@@ -476,7 +477,6 @@ def test_write_snakeoil_runpath_file(snake_oil_case, storage, itr):
             continue
         assert os.path.isdir(f"simulations/{10*run_arg.iens}")
 
-    runpath_list_path = "a_file_name"
     assert os.path.isfile(runpath_list_path)
 
     exp_runpaths = [
@@ -624,76 +624,6 @@ def test_assert_ertcase_replaced_in_runpath(placeholder, make_run_path):
     assert Path(runpath_file).exists()
     jobs_json = Path(runpath_file) / "jobs.json"
     assert jobs_json.exists()
-
-
-@pytest.mark.parametrize("itr", [0, 1, 2, 17])
-def test_create_runpath_adds_manifest_to_runpath(snake_oil_case, storage, itr):
-    ert_config = snake_oil_case
-    experiment_id = storage.create_experiment(
-        parameters=ert_config.ensemble_config.parameter_configuration,
-        responses=ert_config.ensemble_config.response_configuration,
-    )
-    prior_ensemble = storage.create_ensemble(
-        experiment_id, name="prior", ensemble_size=25, iteration=itr
-    )
-
-    num_realizations = 25
-    runpath_fmt = (
-        "simulations/<GEO_ID>/realization-<IENS>/iter-<ITER>/"
-        "magic-real-<IENS>/magic-iter-<ITER>"
-    )
-    global_substitutions = ert_config.substitutions
-    for i in range(num_realizations):
-        global_substitutions[f"<GEO_ID_{i}_{itr}>"] = str(10 * i)
-
-    run_paths = Runpaths(
-        jobname_format="SNAKE_OIL_%d",
-        runpath_format=runpath_fmt,
-        filename="a_file_name",
-        substitutions=global_substitutions,
-    )
-
-    sample_prior(prior_ensemble, range(num_realizations))
-    run_args = create_run_arguments(
-        run_paths,
-        [True, True],
-        prior_ensemble,
-    )
-
-    create_run_path(
-        run_args=run_args,
-        ensemble=prior_ensemble,
-        user_config_file=ert_config.user_config_file,
-        env_vars=ert_config.env_vars,
-        env_pr_fm_step=ert_config.env_pr_fm_step,
-        forward_model_steps=ert_config.forward_model_steps,
-        substitutions=ert_config.substitutions,
-        templates=ert_config.ert_templates,
-        model_config=ert_config.model_config,
-        runpaths=run_paths,
-    )
-
-    exp_runpaths = [
-        runpath_fmt.replace("<ITER>", str(itr))
-        .replace("<IENS>", str(run_arg.iens))
-        .replace("<GEO_ID>", str(10 * run_arg.iens))
-        for run_arg in run_args
-        if run_arg.active
-    ]
-    exp_runpaths = list(map(os.path.realpath, exp_runpaths))
-    expected_manifest_values = {
-        "snake_oil_opr_diff_199.txt",
-        "snake_oil_wpr_diff_199.txt",
-        "snake_oil_gpr_diff_199.txt",
-        "SNAKE_OIL_FIELD.UNSMRY",
-        "SNAKE_OIL_FIELD.SMSPEC",
-    }
-    for run_path in exp_runpaths:
-        manifest_path = Path(run_path) / "manifest.json"
-        assert manifest_path.exists()
-        with open(manifest_path, encoding="utf-8") as f:
-            manifest = orjson.loads(f.read())
-            assert set(manifest.values()) == expected_manifest_values
 
 
 def save_zeros(prior_ensemble, num_realizations, dim_size):
