@@ -1,39 +1,8 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1736771153860,
+  "lastUpdate": 1736771738026,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
-      {
-        "commit": {
-          "author": {
-            "email": "levje@equinor.com",
-            "name": "larsevj",
-            "username": "larsevj"
-          },
-          "committer": {
-            "email": "60844986+larsevj@users.noreply.github.com",
-            "name": "Lars Evje",
-            "username": "larsevj"
-          },
-          "distinct": true,
-          "id": "6c9db0b556ce39be3e676bc2b4337895d3477f8e",
-          "message": "Do not run actionlint twice on PRs",
-          "timestamp": "2025-01-06T14:23:45+01:00",
-          "tree_id": "d3869c39a14d10db0b96185a692745e692e36717",
-          "url": "https://github.com/equinor/ert/commit/6c9db0b556ce39be3e676bc2b4337895d3477f8e"
-        },
-        "date": 1736169933337,
-        "tool": "pytest",
-        "benches": [
-          {
-            "name": "tests/ert/performance_tests/test_analysis.py::test_and_benchmark_adaptive_localization_with_fields",
-            "value": 0.21983364004082406,
-            "unit": "iter/sec",
-            "range": "stddev: 0.03101188336562572",
-            "extra": "mean: 4.548894335799997 sec\nrounds: 5"
-          }
-        ]
-      },
       {
         "commit": {
           "author": {
@@ -930,6 +899,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.02403586279174922",
             "extra": "mean: 4.620258235999995 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "levje@equinor.com",
+            "name": "larsevj",
+            "username": "larsevj"
+          },
+          "committer": {
+            "email": "60844986+larsevj@users.noreply.github.com",
+            "name": "Lars Evje",
+            "username": "larsevj"
+          },
+          "distinct": true,
+          "id": "ef7daed36c880922f1b7ff23904943e6bd72a18d",
+          "message": "Fix missing comma in SUMMARY_KEYS everest",
+          "timestamp": "2025-01-13T13:33:48+01:00",
+          "tree_id": "1495932fa477fe6dbc8c9b1b8f24383b8375088f",
+          "url": "https://github.com/equinor/ert/commit/ef7daed36c880922f1b7ff23904943e6bd72a18d"
+        },
+        "date": 1736771737563,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/ert/performance_tests/test_analysis.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 0.21784676105122167,
+            "unit": "iter/sec",
+            "range": "stddev: 0.03495697133700672",
+            "extra": "mean: 4.590382685400004 sec\nrounds: 5"
           }
         ]
       }
