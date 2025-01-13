@@ -413,6 +413,7 @@ def test_default_activate_script_generation(expected, monkeypatch, venv):
     ],
 )
 def test_conda_activate_script_generation(expected, monkeypatch, env):
+    monkeypatch.setenv("VIRTUAL_ENV", "")
     monkeypatch.setenv("CONDA_ENV", env)
     options = QueueOptions(name="local")
     assert options.activate_script == expected
