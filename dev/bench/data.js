@@ -1,39 +1,8 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1736777495415,
+  "lastUpdate": 1736790925734,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
-      {
-        "commit": {
-          "author": {
-            "email": "cmrqs@unicamp.br",
-            "name": "Carlos Marques",
-            "username": "cmrqs"
-          },
-          "committer": {
-            "email": "sondreso@users.noreply.github.com",
-            "name": "Sondre Sortland",
-            "username": "sondreso"
-          },
-          "distinct": true,
-          "id": "f1ec937ec63d43140ef8580d26951feb2f6ebaf4",
-          "message": "Add unit tests for conda activation script",
-          "timestamp": "2025-01-07T09:25:08+01:00",
-          "tree_id": "49d1f63f823339ceeac2c36f937e4c9467f82017",
-          "url": "https://github.com/equinor/ert/commit/f1ec937ec63d43140ef8580d26951feb2f6ebaf4"
-        },
-        "date": 1736238422936,
-        "tool": "pytest",
-        "benches": [
-          {
-            "name": "tests/ert/performance_tests/test_analysis.py::test_and_benchmark_adaptive_localization_with_fields",
-            "value": 0.21964482161743082,
-            "unit": "iter/sec",
-            "range": "stddev: 0.030207119201486343",
-            "extra": "mean: 4.552804808400003 sec\nrounds: 5"
-          }
-        ]
-      },
       {
         "commit": {
           "author": {
@@ -930,6 +899,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.02251458215253986",
             "extra": "mean: 4.536033561000002 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "49699333+dependabot[bot]@users.noreply.github.com",
+            "name": "dependabot[bot]",
+            "username": "dependabot[bot]"
+          },
+          "committer": {
+            "email": "60844986+larsevj@users.noreply.github.com",
+            "name": "Lars Evje",
+            "username": "larsevj"
+          },
+          "distinct": true,
+          "id": "be7f637eedc5eb1f434d3f5564de315874712775",
+          "message": "Bump astral-sh/setup-uv from 4 to 5\n\nBumps [astral-sh/setup-uv](https://github.com/astral-sh/setup-uv) from 4 to 5.\n- [Release notes](https://github.com/astral-sh/setup-uv/releases)\n- [Commits](https://github.com/astral-sh/setup-uv/compare/v4...v5)\n\n---\nupdated-dependencies:\n- dependency-name: astral-sh/setup-uv\n  dependency-type: direct:production\n  update-type: version-update:semver-major\n...\n\nSigned-off-by: dependabot[bot] <support@github.com>",
+          "timestamp": "2025-01-13T18:53:29+01:00",
+          "tree_id": "ca09298659ce5c2be17a248534476e7b476d2e6b",
+          "url": "https://github.com/equinor/ert/commit/be7f637eedc5eb1f434d3f5564de315874712775"
+        },
+        "date": 1736790885338,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/ert/performance_tests/test_analysis.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 0.221652605260119,
+            "unit": "iter/sec",
+            "range": "stddev: 0.03259297945375952",
+            "extra": "mean: 4.511564386200002 sec\nrounds: 5"
           }
         ]
       }
