@@ -1,39 +1,8 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1736775024873,
+  "lastUpdate": 1736777495415,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
-      {
-        "commit": {
-          "author": {
-            "email": "havb@equinor.com",
-            "name": "Håvard Berland",
-            "username": "berland"
-          },
-          "committer": {
-            "email": "sondreso@users.noreply.github.com",
-            "name": "Sondre Sortland",
-            "username": "sondreso"
-          },
-          "distinct": true,
-          "id": "23015dc234b1c82de3ac00a5033beea49a4043dc",
-          "message": "Avoid UserWarning when vmin==vmax in std_dev plot",
-          "timestamp": "2025-01-07T09:24:18+01:00",
-          "tree_id": "823ca1fc5e745684f2f8e5bea60439489f9c68fe",
-          "url": "https://github.com/equinor/ert/commit/23015dc234b1c82de3ac00a5033beea49a4043dc"
-        },
-        "date": 1736238367513,
-        "tool": "pytest",
-        "benches": [
-          {
-            "name": "tests/ert/performance_tests/test_analysis.py::test_and_benchmark_adaptive_localization_with_fields",
-            "value": 0.2157662634085902,
-            "unit": "iter/sec",
-            "range": "stddev: 0.02404537024979024",
-            "extra": "mean: 4.63464484299999 sec\nrounds: 5"
-          }
-        ]
-      },
       {
         "commit": {
           "author": {
@@ -930,6 +899,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.014412422697833875",
             "extra": "mean: 4.5880884158000015 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "JONAK@equinor.com",
+            "name": "Jonathan Karlsen",
+            "username": "jonathan-eq"
+          },
+          "committer": {
+            "email": "107626001+jonathan-eq@users.noreply.github.com",
+            "name": "Jonathan Karlsen",
+            "username": "jonathan-eq"
+          },
+          "distinct": true,
+          "id": "94439f500d3885e8fbe25809650defffb7c8ea57",
+          "message": "Make scheduler cancel() and kill_all_jobs async\n\nThis commit makes the methods async, so we can await them instead\nfire-and-forgetting them through asyncio.run_coroutine_threadsafe.",
+          "timestamp": "2025-01-13T15:09:36+01:00",
+          "tree_id": "8396fa683811a3db413af1ef300899f9896063f5",
+          "url": "https://github.com/equinor/ert/commit/94439f500d3885e8fbe25809650defffb7c8ea57"
+        },
+        "date": 1736777456634,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/ert/performance_tests/test_analysis.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 0.22045692267310796,
+            "unit": "iter/sec",
+            "range": "stddev: 0.02251458215253986",
+            "extra": "mean: 4.536033561000002 sec\nrounds: 5"
           }
         ]
       }
