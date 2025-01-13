@@ -73,7 +73,7 @@ class EverestStorageDataFrames:
     realization_weights: polars.DataFrame | None = None
 
     @property
-    def simulation_to_geo_realization_map(self) -> dict[str, str]:
+    def simulation_to_geo_realization_map(self) -> dict[int, int]:
         """
         Mapping from simulation ID to geo-realization
         """
@@ -91,8 +91,7 @@ class EverestStorageDataFrames:
 
         mapping = {}
         for d in dummy_df.select("realization", "simulation_id").to_dicts():
-            # Currently we work with str, but should maybe not be done in future
-            mapping[str(d["simulation_id"])] = str(d["realization"])
+            mapping[int(d["simulation_id"])] = int(d["realization"])
 
         return mapping
 
