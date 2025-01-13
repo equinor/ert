@@ -24,7 +24,8 @@ CONFIG_FILE = "everest/model/config.yml"
 NUM_REALIZATIONS = 3  # tied to the specified config.yml defined in CONFIG_FILE
 SUM_KEYS_NO_OPM = [
     "YEAR",
-    "YEARSTCPU",
+    "YEARS",
+    "TCPU",
     "TCPUDAY",
     "MONTH",
     "DAY",
