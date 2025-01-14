@@ -4,7 +4,7 @@ import os
 import os.path
 from typing import Self
 
-from lark import Discard, Lark, Token, Transformer, Tree, UnexpectedCharacters
+from lark import Discard, Lark, Token, Transformer, Tree, UnexpectedToken
 
 from .config_dict import ConfigDict
 from .config_errors import ConfigValidationError, ConfigWarning
@@ -32,7 +32,7 @@ UCASE_LETTER: "A".."Z"
 
 LETTER: UCASE_LETTER | LCASE_LETTER
 
-COMMENT: "--" /[^\n]*/
+COMMENT.9: "--" /[^\n]*/
 %ignore COMMENT
 
 UNQUOTED: (/[^\" \t\n]/)+
@@ -128,7 +128,7 @@ class InstructionTransformer(Transformer):
         return Discard
 
 
-_parser = Lark(grammar, propagate_positions=True)
+_parser = Lark(grammar, propagate_positions=True, parser="lalr")
 
 
 def _substitute_token(
@@ -418,13 +418,10 @@ def _parse_contents(content: str, file: str) -> Tree[Instruction]:
             * ArgumentToStringTransformer()
             * InstructionTransformer()
         ).transform(tree)
-    except UnexpectedCharacters as e:
-        unexpected_char = e.char
-        allowed_chars = e.allowed
-        message = (
-            f"Did not expect character: {unexpected_char}. "
-            f"Expected one of {allowed_chars}"
-        )
+    except UnexpectedToken as e:
+        unexpected_token = e.token
+        allowed = e.expected
+        message = f"Did not expect token: {unexpected_token}. Expected one of {allowed}"
         raise ConfigValidationError.from_info(
             ErrorInfo(
                 message=message,

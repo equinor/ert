@@ -414,7 +414,7 @@ def test_that_quotations_in_forward_model_arglist_are_handled_correctly():
 
 
 def test_that_positional_forward_model_args_gives_config_validation_error():
-    with pytest.raises(ConfigValidationError, match="Did not expect character: <"):
+    with pytest.raises(ConfigValidationError, match="Did not expect token: <IENS>"):
         _ = ErtConfig.from_file_contents(
             """
             NUM_REALIZATIONS  1

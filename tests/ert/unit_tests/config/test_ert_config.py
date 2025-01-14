@@ -402,6 +402,16 @@ def test_that_double_comments_are_handled():
     assert ert_config.model_config.jobname_format_string == "&SUM$VAR@12@#£¤<"
 
 
+def test_that_strings_escape_comments():
+    ert_config = ErtConfig.from_file_contents(
+        """
+        NUM_REALIZATIONS 1
+        JOBNAME " -- "
+        """
+    )
+    assert ert_config.model_config.jobname_format_string == " -- "
+
+
 @pytest.mark.filterwarnings("ignore:.*Unknown keyword.*:ert.config.ConfigWarning")
 def test_bad_user_config_file_error_message():
     with pytest.raises(ConfigValidationError, match="NUM_REALIZATIONS must be set"):
