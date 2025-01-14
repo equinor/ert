@@ -9,7 +9,7 @@ from everest.config import (
     ServerConfig,
 )
 from everest.config.install_job_config import InstallJobConfig
-from everest.detached import start_server, wait_for_server
+from everest.detached import start_experiment, start_server, wait_for_server
 from everest.util import makedirs_if_needed
 
 
@@ -17,7 +17,6 @@ def _string_exists_in_file(file_path, string):
     return string in Path(file_path).read_text(encoding="utf-8")
 
 
-@pytest.mark.flaky(reruns=5)
 @pytest.mark.timeout(120)  # Simulation might not finish
 @pytest.mark.integration_test
 @pytest.mark.xdist_group(name="starts_everest")
@@ -45,17 +44,19 @@ async def test_logging_setup(copy_math_func_test_data_to_tmp):
     driver = await start_server(everest_config, debug=True)
     try:
         wait_for_server(everest_config.output_dir, 120)
+
+        start_experiment(
+            server_context=ServerConfig.get_server_context(everest_config.output_dir),
+            config=everest_config,
+        )
     except (SystemExit, RuntimeError) as e:
         raise e
     await server_running()
 
     everest_output_path = os.path.join(os.getcwd(), "everest_output")
-
     everest_logs_dir_path = everest_config.log_dir
-
     detached_node_dir = ServerConfig.get_detached_node_dir(everest_config.output_dir)
     endpoint_log_path = os.path.join(detached_node_dir, "endpoint.log")
-
     everest_log_path = os.path.join(everest_logs_dir_path, "everest.log")
     forward_model_log_path = os.path.join(everest_logs_dir_path, "forward_models.log")
 
