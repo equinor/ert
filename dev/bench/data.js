@@ -1,39 +1,8 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1736790925734,
+  "lastUpdate": 1736836996935,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
-      {
-        "commit": {
-          "author": {
-            "email": "feda.curic@gmail.com",
-            "name": "Feda Curic",
-            "username": "dafeda"
-          },
-          "committer": {
-            "email": "feda.curic@gmail.com",
-            "name": "Feda Curic",
-            "username": "dafeda"
-          },
-          "distinct": true,
-          "id": "d82fc01bc98f4ea3182b5e7501b255d05bca95b3",
-          "message": "Add GEN_KW to heat equation and turn localization on\n\nMakes it easier to write more realistic tests.",
-          "timestamp": "2025-01-07T09:26:23+01:00",
-          "tree_id": "bebba6cc88eed0709ae785b29c50b8df430f7886",
-          "url": "https://github.com/equinor/ert/commit/d82fc01bc98f4ea3182b5e7501b255d05bca95b3"
-        },
-        "date": 1736238489287,
-        "tool": "pytest",
-        "benches": [
-          {
-            "name": "tests/ert/performance_tests/test_analysis.py::test_and_benchmark_adaptive_localization_with_fields",
-            "value": 0.21789469644185985,
-            "unit": "iter/sec",
-            "range": "stddev: 0.015257471053639851",
-            "extra": "mean: 4.589372831599997 sec\nrounds: 5"
-          }
-        ]
-      },
       {
         "commit": {
           "author": {
@@ -930,6 +899,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.03259297945375952",
             "extra": "mean: 4.511564386200002 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "hsoho@equinor.com",
+            "name": "Håkon Steinkopf Søhoel",
+            "username": "HakonSohoel"
+          },
+          "committer": {
+            "email": "49289030+HakonSohoel@users.noreply.github.com",
+            "name": "Håkon Steinkopf Søhoel",
+            "username": "HakonSohoel"
+          },
+          "distinct": true,
+          "id": "735ea0eea127a7e31c7f9fdd2e361316e23d8d61",
+          "message": "Set span status if realization fails",
+          "timestamp": "2025-01-14T07:41:21+01:00",
+          "tree_id": "0c3c3cedd5b96f9ac78a3614b8be7eede0acd97a",
+          "url": "https://github.com/equinor/ert/commit/735ea0eea127a7e31c7f9fdd2e361316e23d8d61"
+        },
+        "date": 1736836953848,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/ert/performance_tests/test_analysis.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 0.22002245427011805,
+            "unit": "iter/sec",
+            "range": "stddev: 0.028920568117441783",
+            "extra": "mean: 4.544990661600002 sec\nrounds: 5"
           }
         ]
       }
