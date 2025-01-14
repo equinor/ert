@@ -82,7 +82,10 @@ class Event(Reporter):
         if finished_event_timeout is not None:
             self._finished_event_timeout = finished_event_timeout
         else:
-            self._finished_event_timeout = 60
+            # for the sake of heavy load when using LOCAL_DRIVER
+            # we set the default timeout to 10 minutes since forward model
+            # can be finished but not all the events were sent yet
+            self._finished_event_timeout = 600
 
     def stop(self):
         self._event_queue.put(Event._sentinel)
