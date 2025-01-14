@@ -3,10 +3,8 @@ import fileinput
 import json
 import logging
 import os
-import shutil
 import stat
 import threading
-import traceback
 from datetime import datetime
 from pathlib import Path
 from textwrap import dedent
@@ -523,7 +521,11 @@ def test_that_stop_on_fail_workflow_jobs_stop_ert(
 
 
 @pytest.mark.usefixtures("copy_poly_case")
-def test_that_pre_post_experiment_hook_works():
+@pytest.mark.parametrize(
+    "mode",
+    [ITERATIVE_ENSEMBLE_SMOOTHER_MODE, ES_MDA_MODE, ENSEMBLE_SMOOTHER_MODE],
+)
+def test_that_pre_post_experiment_hook_works(capsys, mode):
     # The executable
     with open("hello_post_exp.sh", "w", encoding="utf-8") as f:
         f.write(
@@ -580,31 +582,12 @@ def test_that_pre_post_experiment_hook_works():
                 """
             )
         )
-    cwd = os.getcwd()
-    # Copy cwd one level up
 
-    dst = str(Path(cwd) / ".." / "checkme")
-    print(f"If fail, will copy project w/ fail from {cwd} to {dst}")
+    run_cli(mode, "--disable-monitor", "poly.ert")
 
-    for mode in [ITERATIVE_ENSEMBLE_SMOOTHER_MODE, ES_MDA_MODE, ENSEMBLE_SMOOTHER_MODE]:
-        try:
-            run_cli(mode, "--disable-monitor", "poly.ert")
-        except Exception as e:
-            print(f"{mode}")
-            print(traceback.format_exc())
-            print("\n".join(traceback.format_tb(e.__traceback__)))
-            print(str(e.__traceback__))
-            cwd = os.getcwd()
-            # Copy cwd one level up
-
-            dst = str(Path(cwd) / ".." / "checkme")
-            shutil.copytree(cwd, dst)
-            print(f"Copied project w/ fail from {cwd} to {dst}")
-            raise AssertionError() from e
-
-        # captured = capsys.readouterr()
-        # assert "first" in captured.out
-        # assert "just sending regards" in captured.out
+    captured = capsys.readouterr()
+    assert "first" in captured.out
+    assert "just sending regards" in captured.out
 
 
 @pytest.fixture(name="mock_cli_run")
