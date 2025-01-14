@@ -180,7 +180,7 @@ class RunDialog(QFrame):
         QFrame.__init__(self, parent)
         self.output_path = output_path
         self.setAttribute(Qt.WidgetAttribute.WA_DeleteOnClose)
-        self.setWindowFlags(Qt.WindowType.Window)
+        self.setWindowFlag(Qt.WindowType.Window, True)
         self.setWindowFlag(Qt.WindowType.WindowContextHelpButtonHint, False)
         self.setWindowTitle(f"Experiment - {config_file} {find_ert_info()}")
 
