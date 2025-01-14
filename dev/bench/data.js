@@ -1,39 +1,8 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1736861538241,
+  "lastUpdate": 1736863828740,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
-      {
-        "commit": {
-          "author": {
-            "email": "yngve-sk@users.noreply.github.com",
-            "name": "Yngve S. Kristiansen",
-            "username": "yngve-sk"
-          },
-          "committer": {
-            "email": "noreply@github.com",
-            "name": "GitHub",
-            "username": "web-flow"
-          },
-          "distinct": true,
-          "id": "2a3c5b60137d6879896ee30552c2e2e6ed36d02a",
-          "message": "Remove test_run_egg_model\n\ntest_egg_snapshot does close to the same thing",
-          "timestamp": "2025-01-09T09:06:40+01:00",
-          "tree_id": "ae5ea5e9ff68405e9e59d9f0dbca57082a5669ad",
-          "url": "https://github.com/equinor/ert/commit/2a3c5b60137d6879896ee30552c2e2e6ed36d02a"
-        },
-        "date": 1736410113159,
-        "tool": "pytest",
-        "benches": [
-          {
-            "name": "tests/ert/performance_tests/test_analysis.py::test_and_benchmark_adaptive_localization_with_fields",
-            "value": 0.2200678854876305,
-            "unit": "iter/sec",
-            "range": "stddev: 0.01888290737861992",
-            "extra": "mean: 4.5440523853999935 sec\nrounds: 5"
-          }
-        ]
-      },
       {
         "commit": {
           "author": {
@@ -930,6 +899,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.053266134559518064",
             "extra": "mean: 4.771175850600002 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "feda.curic@gmail.com",
+            "name": "Feda Curic",
+            "username": "dafeda"
+          },
+          "committer": {
+            "email": "feda.curic@gmail.com",
+            "name": "Feda Curic",
+            "username": "dafeda"
+          },
+          "distinct": true,
+          "id": "024fcbaa8a960d3a3e8ab6e44ef6e21a38263f9e",
+          "message": "Fix bug in docstring of ForwardModelStep",
+          "timestamp": "2025-01-14T15:08:21+01:00",
+          "tree_id": "d9ffbe775edd3cd4bb44caa76cbd051ace370e92",
+          "url": "https://github.com/equinor/ert/commit/024fcbaa8a960d3a3e8ab6e44ef6e21a38263f9e"
+        },
+        "date": 1736863785139,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/ert/performance_tests/test_analysis.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 0.21527766177391452,
+            "unit": "iter/sec",
+            "range": "stddev: 0.03733844344660833",
+            "extra": "mean: 4.6451637934000045 sec\nrounds: 5"
           }
         ]
       }
