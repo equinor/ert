@@ -104,9 +104,9 @@ class ForwardModelStep:
 
     Attributes:
         executable: The name of the executable to be run
-        stdin_file: File where this forward model step's stdout is written
-        stdout_file: File where this forward model step's stderr is written
-        stderr_file: File where this forward model step's stdin is written
+        stdin_file: File where this forward model step's stdin is written
+        stdout_file: File where this forward model step's stdout is written
+        stderr_file: File where this forward model step's stderr is written
         target_file: Name of file expected to be produced after the forward
             model step is executed successfully.
             This file is used for the legacy ERT queue driver, and may be deprecated.
