@@ -31,11 +31,12 @@ def test_that_one_experiment_creates_one_ensemble_per_batch(cached_example):
 @patch("everest.bin.everest_script.run_detached_monitor")
 @patch("everest.bin.everest_script.wait_for_server")
 @patch("everest.bin.everest_script.start_server")
+@patch("everest.bin.everest_script.start_experiment")
 @patch(
     "everest.bin.everest_script.everserver_status",
     return_value={"status": ServerStatus.never_run, "message": None},
 )
-def test_save_running_config(_, _1, _2, _3, _4, copy_math_func_test_data_to_tmp):
+def test_save_running_config(_, _1, _2, _3, _4, _5, copy_math_func_test_data_to_tmp):
     """Test everest detached, when an optimization has already run"""
     # optimization already run, notify the user
     file_name = "config_minimal.yml"

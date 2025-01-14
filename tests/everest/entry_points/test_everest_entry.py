@@ -77,7 +77,9 @@ def run_detached_monitor_mock(status=ServerStatus.completed, error=None, **kwarg
     "everest.bin.everest_script.everserver_status",
     return_value={"status": ServerStatus.never_run, "message": None},
 )
+@patch("everest.bin.everest_script.start_experiment")
 def test_everest_entry_debug(
+    start_experiment_mock,
     everserver_status_mock,
     start_server_mock,
     wait_for_server_mock,
@@ -93,6 +95,7 @@ def test_everest_entry_debug(
     wait_for_server_mock.assert_called_once()
     start_monitor_mock.assert_called_once()
     everserver_status_mock.assert_called()
+    start_experiment_mock.assert_called_once()
 
     # the config file itself is dumped at DEBUG level
     assert '"controls"' in logstream
@@ -108,7 +111,9 @@ def test_everest_entry_debug(
     "everest.bin.everest_script.everserver_status",
     return_value={"status": ServerStatus.never_run, "message": None},
 )
+@patch("everest.bin.everest_script.start_experiment")
 def test_everest_entry(
+    start_experiment_mock,
     everserver_status_mock,
     start_server_mock,
     wait_for_server_mock,
@@ -121,6 +126,7 @@ def test_everest_entry(
     wait_for_server_mock.assert_called_once()
     start_monitor_mock.assert_called_once()
     everserver_status_mock.assert_called()
+    start_experiment_mock.assert_called_once()
 
 
 @patch("everest.bin.everest_script.server_is_running", return_value=False)
@@ -131,7 +137,9 @@ def test_everest_entry(
     "everest.bin.everest_script.everserver_status",
     return_value={"status": ServerStatus.completed, "message": None},
 )
+@patch("everest.bin.everest_script.start_experiment")
 def test_everest_entry_detached_already_run(
+    start_experiment_mock,
     everserver_status_mock,
     start_server_mock,
     wait_for_server_mock,
@@ -296,7 +304,9 @@ def test_everest_entry_monitor_no_run(
     "everest.bin.everest_script.everserver_status",
     return_value={"status": ServerStatus.never_run, "message": None},
 )
+@patch("everest.bin.everest_script.start_experiment")
 def test_everest_entry_show_all_jobs(
+    start_experiment_mock,
     everserver_status_mock,
     get_opt_status_mock,
     get_server_context_mock,
@@ -330,7 +340,9 @@ def test_everest_entry_show_all_jobs(
     "everest.bin.everest_script.everserver_status",
     return_value={"status": ServerStatus.never_run, "message": None},
 )
+@patch("everest.bin.everest_script.start_experiment")
 def test_everest_entry_no_show_all_jobs(
+    start_experiment_mock,
     everserver_status_mock,
     get_opt_status_mock,
     get_server_context_mock,
@@ -429,7 +441,9 @@ def test_monitor_entry_no_show_all_jobs(
 )
 @patch("everest.bin.everest_script.wait_for_server")
 @patch("everest.bin.everest_script.start_server")
+@patch("everest.bin.everest_script.start_experiment")
 def test_exception_raised_when_server_run_fails(
+    start_experiment_mock,
     start_server_mock,
     wait_for_server_mock,
     start_monitor_mock,
@@ -461,7 +475,9 @@ def test_exception_raised_when_server_run_fails_monitor(
 )
 @patch("everest.bin.everest_script.wait_for_server")
 @patch("everest.bin.everest_script.start_server")
+@patch("everest.bin.everest_script.start_experiment")
 def test_complete_status_for_normal_run(
+    start_experiment_mock,
     start_server_mock,
     wait_for_server_mock,
     start_monitor_mock,
