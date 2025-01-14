@@ -1,39 +1,8 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1736836996935,
+  "lastUpdate": 1736842856594,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
-      {
-        "commit": {
-          "author": {
-            "email": "dan.sava42@gmail.com",
-            "name": "DanSava",
-            "username": "DanSava"
-          },
-          "committer": {
-            "email": "dan.sava42@gmail.com",
-            "name": "Dan Sava",
-            "username": "DanSava"
-          },
-          "distinct": true,
-          "id": "2f81dd1cfd19ee4e89d36817a4de195aa85bbd59",
-          "message": "Add deprecation warning for SIMULATION_JOB keyword",
-          "timestamp": "2025-01-07T14:16:32+02:00",
-          "tree_id": "f9abd862ea95a48632f06e06889734b53942eb43",
-          "url": "https://github.com/equinor/ert/commit/2f81dd1cfd19ee4e89d36817a4de195aa85bbd59"
-        },
-        "date": 1736252302335,
-        "tool": "pytest",
-        "benches": [
-          {
-            "name": "tests/ert/performance_tests/test_analysis.py::test_and_benchmark_adaptive_localization_with_fields",
-            "value": 0.2131199328051197,
-            "unit": "iter/sec",
-            "range": "stddev: 0.02297207905254267",
-            "extra": "mean: 4.6921936716 sec\nrounds: 5"
-          }
-        ]
-      },
       {
         "commit": {
           "author": {
@@ -930,6 +899,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.028920568117441783",
             "extra": "mean: 4.544990661600002 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "dan.sava42@gmail.com",
+            "name": "DanSava",
+            "username": "DanSava"
+          },
+          "committer": {
+            "email": "dan.sava42@gmail.com",
+            "name": "Dan Sava",
+            "username": "DanSava"
+          },
+          "distinct": true,
+          "id": "9ab687a0f4bcccd9bd23ffa648dae4f3d257828b",
+          "message": "Ignore non ConfigWarnings when running everest lint command",
+          "timestamp": "2025-01-14T10:18:56+02:00",
+          "tree_id": "a6ab75bee14440c3df13e8910e6e5212db1b2c15",
+          "url": "https://github.com/equinor/ert/commit/9ab687a0f4bcccd9bd23ffa648dae4f3d257828b"
+        },
+        "date": 1736842815089,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/ert/performance_tests/test_analysis.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 0.2162289944848741,
+            "unit": "iter/sec",
+            "range": "stddev: 0.026282788526628627",
+            "extra": "mean: 4.624726681000004 sec\nrounds: 5"
           }
         ]
       }
