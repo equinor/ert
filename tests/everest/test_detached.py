@@ -1,17 +1,19 @@
 import os
 import stat
 from pathlib import Path
-from unittest.mock import patch
+from unittest.mock import MagicMock, patch
 
 import pytest
 import requests
 
+import everest
 from ert.config import ErtConfig
 from ert.config.queue_config import (
     LocalQueueOptions,
     LsfQueueOptions,
     SlurmQueueOptions,
     TorqueQueueOptions,
+    activate_script,
 )
 from ert.scheduler.event import FinishedEvent
 from everest.config import EverestConfig, InstallJobConfig
@@ -283,6 +285,11 @@ def test_generate_queue_options_no_config():
 def test_generate_queue_options_use_simulator_values(
     queue_options, expected_result, monkeypatch
 ):
+    monkeypatch.setattr(
+        everest.config.server_config.ErtPluginManager,
+        "activate_script",
+        MagicMock(return_value=activate_script()),
+    )
     config = EverestConfig.with_defaults(
         **{"simulator": {"queue_system": queue_options}}
     )
