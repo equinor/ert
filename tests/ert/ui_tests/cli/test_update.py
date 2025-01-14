@@ -15,7 +15,7 @@ from ert.config.gen_kw_config import DISTRIBUTION_PARAMETERS
 from ert.mode_definitions import ENSEMBLE_SMOOTHER_MODE
 from ert.storage import open_storage
 
-from .run_cli import run_cli_with_pm
+from .run_cli import run_cli
 
 names = st.text(
     min_size=1,
@@ -201,14 +201,12 @@ def test_update_lowers_generalized_variance_or_deactives_observations(
         with warnings.catch_warnings(record=True) as all_warnings:
             warnings.simplefilter("always")
             try:
-                run_cli_with_pm(
-                    [
-                        ENSEMBLE_SMOOTHER_MODE,
-                        "--disable-monitor",
-                        "--experiment-name",
-                        "experiment",
-                        "config.ert",
-                    ]
+                run_cli(
+                    ENSEMBLE_SMOOTHER_MODE,
+                    "--disable-monitor",
+                    "--experiment-name",
+                    "experiment",
+                    "config.ert",
                 )
             except ErtCliError as err:
                 success = False
