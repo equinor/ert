@@ -1,39 +1,8 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1736844984111,
+  "lastUpdate": 1736846466507,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
-      {
-        "commit": {
-          "author": {
-            "email": "stephan.dehoop@tno.nl",
-            "name": "Stephan de Hoop",
-            "username": "StephanDeHoop"
-          },
-          "committer": {
-            "email": "noreply@github.com",
-            "name": "GitHub",
-            "username": "web-flow"
-          },
-          "distinct": true,
-          "id": "eb9b04a589b3f1d777ccb4c7d4dd31ef42d9d011",
-          "message": "Non optional everest model and nonzero realizations (#9577)\n\nFor EverestConfig require Model and realizations.len() > 0",
-          "timestamp": "2025-01-07T17:10:38+01:00",
-          "tree_id": "a0985d90212d4529c3053de199abcaa11c1fe21d",
-          "url": "https://github.com/equinor/ert/commit/eb9b04a589b3f1d777ccb4c7d4dd31ef42d9d011"
-        },
-        "date": 1736266349702,
-        "tool": "pytest",
-        "benches": [
-          {
-            "name": "tests/ert/performance_tests/test_analysis.py::test_and_benchmark_adaptive_localization_with_fields",
-            "value": 0.21896301576265956,
-            "unit": "iter/sec",
-            "range": "stddev: 0.017399442138751015",
-            "extra": "mean: 4.5669813074000105 sec\nrounds: 5"
-          }
-        ]
-      },
       {
         "commit": {
           "author": {
@@ -930,6 +899,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.09525639382765581",
             "extra": "mean: 4.611104398799995 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "frodeaarstad@gmail.com",
+            "name": "Frode Aarstad",
+            "username": "frode-aarstad"
+          },
+          "committer": {
+            "email": "frodeaarstad@gmail.com",
+            "name": "Frode Aarstad",
+            "username": "frode-aarstad"
+          },
+          "distinct": true,
+          "id": "0c7bf35e9a645989252e4c12c5a81dfbc998b485",
+          "message": "Refactor BaseRunModel",
+          "timestamp": "2025-01-14T10:19:13+01:00",
+          "tree_id": "3d75e935ed5a5b6473d1378774b8f8d6f5a3b2ec",
+          "url": "https://github.com/equinor/ert/commit/0c7bf35e9a645989252e4c12c5a81dfbc998b485"
+        },
+        "date": 1736846428309,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/ert/performance_tests/test_analysis.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 0.21954249720525112,
+            "unit": "iter/sec",
+            "range": "stddev: 0.027055588339479842",
+            "extra": "mean: 4.554926780600004 sec\nrounds: 5"
           }
         ]
       }
