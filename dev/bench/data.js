@@ -1,39 +1,8 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1736861524843,
+  "lastUpdate": 1736861538241,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
-      {
-        "commit": {
-          "author": {
-            "email": "yngve-sk@users.noreply.github.com",
-            "name": "Yngve S. Kristiansen",
-            "username": "yngve-sk"
-          },
-          "committer": {
-            "email": "noreply@github.com",
-            "name": "GitHub",
-            "username": "web-flow"
-          },
-          "distinct": true,
-          "id": "40d33bde4b53393573e455227970f7c6868e0951",
-          "message": "Explicitly sort dicts in test_api_snapshots",
-          "timestamp": "2025-01-09T09:05:49+01:00",
-          "tree_id": "fe50da4804b62dc4ad6b15962c81335cf03d2423",
-          "url": "https://github.com/equinor/ert/commit/40d33bde4b53393573e455227970f7c6868e0951"
-        },
-        "date": 1736410058124,
-        "tool": "pytest",
-        "benches": [
-          {
-            "name": "tests/ert/performance_tests/test_analysis.py::test_and_benchmark_adaptive_localization_with_fields",
-            "value": 0.21783493169285315,
-            "unit": "iter/sec",
-            "range": "stddev: 0.022408783739957087",
-            "extra": "mean: 4.5906319626000025 sec\nrounds: 5"
-          }
-        ]
-      },
       {
         "commit": {
           "author": {
@@ -930,6 +899,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.01899322592247238",
             "extra": "mean: 4.637192648000001 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "jparu@equinor.com",
+            "name": "xjules",
+            "username": "xjules"
+          },
+          "committer": {
+            "email": "jparu@equinor.com",
+            "name": "Julius Parulek",
+            "username": "xjules"
+          },
+          "distinct": true,
+          "id": "0d9c178d286cd4647d6a1720196152e6cb4aaa09",
+          "message": "Increase Event reporter timeout after sucesful Finish\n\nFor the sake of heavy load when using LOCAL_DRIVER we set the default timeout to 10 minutes since forward model can be finished but not all the events were sent yet.\n\nCo-authored-by: Lars Evje <levje@equinor.com>",
+          "timestamp": "2025-01-14T14:30:22+01:00",
+          "tree_id": "91739fa37e96e33e0514d8fc01c5be28bb23fa2c",
+          "url": "https://github.com/equinor/ert/commit/0d9c178d286cd4647d6a1720196152e6cb4aaa09"
+        },
+        "date": 1736861496704,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/ert/performance_tests/test_analysis.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 0.2095919394532994,
+            "unit": "iter/sec",
+            "range": "stddev: 0.053266134559518064",
+            "extra": "mean: 4.771175850600002 sec\nrounds: 5"
           }
         ]
       }
