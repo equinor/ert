@@ -85,18 +85,12 @@ FORWARD_MODEL poly_eval
 ANALYSIS_SET_VAR OBSERVATIONS AUTO_SCALE *
 """
 
-coeff_priors = """\
-coeff_0 {distribution0} 0 1
-coeff_1 {distribution1} 0 2
-coeff_2 {distribution2} 0 5
-"""
-
-observation = """
+observation = """\
 GENERAL_OBSERVATION POLY_OBS_{i} {{
         DATA       = POLY_RES;
         INDEX_FILE = index_{i}.txt;
         OBS_FILE   = poly_obs_{i}.txt;
-    }};
+}};
 """
 
 poly_eval = """\
@@ -150,7 +144,6 @@ def test_update_lowers_generalized_variance_or_deactives_observations(
     )
     num_groups = data.draw(st.integers(min_value=1, max_value=num_points))
     per_group = num_points // num_groups
-    print(num_groups, num_points, per_group)
 
     tmp_path = tmp_path_factory.mktemp("parameter_example")
     note(f"Running in directory {tmp_path}")
@@ -167,7 +160,6 @@ def test_update_lowers_generalized_variance_or_deactives_observations(
         os.chmod(py, mode.st_mode | stat.S_IEXEC)
 
         for i in range(num_groups):
-            print(f"{i * per_group} {(i + 1) * per_group}")
             with open("observations", mode="a", encoding="utf-8") as f:
                 f.write(observation.format(i=i))
             Path(f"poly_obs_{i}.txt").write_text(
