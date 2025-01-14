@@ -11,3 +11,9 @@ snake_oil:
 # execute rapid unittests
 rapid-tests:
     nice pytest -n logical tests/ert/unit_tests -m "not integration_tests"
+
+
+eve-math:
+    git clean -fd
+    everest run test-data/everest/math_func/config_minimal.yml --debug
+    

@@ -12,6 +12,7 @@ from functools import partial
 from pathlib import Path
 from typing import Any
 
+import requests
 import uvicorn
 from cryptography import x509
 from cryptography.hazmat.backends import default_backend
@@ -36,19 +37,64 @@ from ert.ensemble_evaluator import EvaluatorServerConfig
 from ert.run_models.everest_run_model import EverestExitCode, EverestRunModel
 from everest import export_to_csv, export_with_progress
 from everest.config import EverestConfig, ServerConfig
-from everest.detached import ServerStatus, get_opt_status, update_everserver_status
+from everest.detached import ServerStatus, get_opt_status, start_experiment, update_everserver_status, wait_for_server
 from everest.export import check_for_errors
 from everest.plugins.everest_plugin_manager import EverestPluginManager
 from everest.simulator import JOB_FAILURE
 from everest.strings import (
     DEFAULT_LOGGING_FORMAT,
     EVEREST,
+    EXPERIMENT_STATUS_ENDPOINT,
     OPT_FAILURE_REALIZATIONS,
     OPT_PROGRESS_ENDPOINT,
     SIM_PROGRESS_ENDPOINT,
+    START_EXPERIMENT_ENDPOINT,
     STOP_ENDPOINT,
 )
 from everest.util import makedirs_if_needed, version_info
+
+
+
+
+
+class ExperimentRunner(threading.Thread):
+    def __init__(self, everest_config, shared_data: dict):
+        super().__init__()
+
+        self._everest_config = everest_config
+        self._shared_data = shared_data
+        self._exit_code: EverestExitCode | None = None
+
+    def run(self):
+        run_model = EverestRunModel.create(
+            self._everest_config,
+            simulation_callback=partial(_sim_monitor, shared_data=self._shared_data),
+            optimization_callback=partial(_opt_monitor, shared_data=self._shared_data),
+        )
+
+        if run_model._queue_config.queue_system == QueueSystem.LOCAL:
+            evaluator_server_config = EvaluatorServerConfig()
+        else:
+            evaluator_server_config = EvaluatorServerConfig(
+                custom_port_range=range(49152, 51819), use_ipc_protocol=False
+            )
+
+        try:
+            print("Starting experiment...")
+            run_model.run_experiment(evaluator_server_config)
+            print("Starting experiment... done")
+
+            self._exit_code = run_model.exit_code
+        except Exception:
+            print("EXCEPTION")
+            #self.status = ExperimentRunnerStatus(
+            #    status="Experiment failed", message=traceback.format_exc()
+            #)
+
+    @property
+    def exit_code(self) -> EverestExitCode | None:
+        return self._exit_code
+    
 
 
 def _get_machine_name() -> str:
@@ -105,6 +151,8 @@ def _everserver_thread(shared_data, server_config) -> None:
     app = FastAPI()
     security = HTTPBasic()
 
+    runner:ExperimentRunner | None = None
+
     def _check_user(credentials: HTTPBasicCredentials) -> None:
         if credentials.password != server_config["authentication"]:
             raise HTTPException(
@@ -152,6 +200,38 @@ def _everserver_thread(shared_data, server_config) -> None:
         _check_user(credentials)
         progress = get_opt_status(server_config["optimization_output_dir"])
         return JSONResponse(jsonable_encoder(progress))
+    
+    @app.post("/" + START_EXPERIMENT_ENDPOINT)
+    def start_experiment(
+        config: EverestConfig,
+        request: Request,
+        credentials: HTTPBasicCredentials = Depends(security),
+    ) -> Response:
+        _log(request)
+        _check_user(credentials)
+
+        nonlocal runner
+        runner = ExperimentRunner(config, shared_data)
+        runner.start()
+
+        return Response("Everest experiment started", 200)
+
+
+    @app.get("/" + EXPERIMENT_STATUS_ENDPOINT)
+    def get_experiment_status(
+        request: Request, credentials: HTTPBasicCredentials = Depends(security)
+    ) -> Response:
+        _log(request)
+        _check_user(credentials)
+        if runner is None:
+            return Response(None, 204)
+        status = runner.exit_code
+        if status is None:
+            return Response(None, 204)
+        return Response(f"{status}", 200)
+
+
+
 
     uvicorn.run(
         app,
@@ -300,6 +380,9 @@ def main():
     try:
         update_everserver_status(status_path, ServerStatus.running)
 
+
+
+        """ 
         run_model = EverestRunModel.create(
             config,
             simulation_callback=partial(_sim_monitor, shared_data=shared_data),
@@ -313,8 +396,47 @@ def main():
             )
 
         run_model.run_experiment(evaluator_server_config)
+ """
+        
+        wait_for_server(config.output_dir, timeout=600)
 
-        status, message = _get_optimization_status(run_model.exit_code, shared_data)
+        start_experiment(
+            server_context=ServerConfig.get_server_context(config.output_dir),
+            config=config,
+        )
+
+        print("Waiting for experiment ...")
+
+        PROXY = {"http": None, "https": None}
+
+
+        is_running = True
+        while (is_running): 
+            url, cert, auth = ServerConfig.get_server_context(config.output_dir)
+            response = requests.get(
+                "/".join([url, EXPERIMENT_STATUS_ENDPOINT]),
+                verify=cert,
+                auth=auth,
+                timeout=1,
+                proxies=PROXY,  # type: ignore
+            )
+            exit_code = None
+            if response.status_code == 200:
+                exit_code = response.text
+                is_running = False
+
+
+            status, message = _get_optimization_status(exit_code, shared_data)
+            if status != ServerStatus.completed:
+                update_everserver_status(status_path, status, message)
+
+            import time
+            time.sleep(1)        
+
+
+        print("Everest experiment done")
+
+        status, message = _get_optimization_status(exit_code, shared_data)
         if status != ServerStatus.completed:
             update_everserver_status(status_path, status, message)
             return
