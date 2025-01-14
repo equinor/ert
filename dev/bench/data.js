@@ -1,39 +1,8 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1736859298868,
+  "lastUpdate": 1736861524843,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
-      {
-        "commit": {
-          "author": {
-            "email": "havb@equinor.com",
-            "name": "Håvard Berland",
-            "username": "berland"
-          },
-          "committer": {
-            "email": "berland@pvv.ntnu.no",
-            "name": "Håvard Berland",
-            "username": "berland"
-          },
-          "distinct": true,
-          "id": "e32c0adbff11fb48db0394bfee2ae7111ed6869f",
-          "message": "Make timestamps in dmesg output human readable",
-          "timestamp": "2025-01-09T09:00:10+01:00",
-          "tree_id": "e87d8cf704d33adad00ded5775b25c0ea32842e6",
-          "url": "https://github.com/equinor/ert/commit/e32c0adbff11fb48db0394bfee2ae7111ed6869f"
-        },
-        "date": 1736409721157,
-        "tool": "pytest",
-        "benches": [
-          {
-            "name": "tests/ert/performance_tests/test_analysis.py::test_and_benchmark_adaptive_localization_with_fields",
-            "value": 0.21833625860587397,
-            "unit": "iter/sec",
-            "range": "stddev: 0.028542746552989325",
-            "extra": "mean: 4.5800913068 sec\nrounds: 5"
-          }
-        ]
-      },
       {
         "commit": {
           "author": {
@@ -930,6 +899,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.020972502608077006",
             "extra": "mean: 4.673689989200005 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "jparu@equinor.com",
+            "name": "xjules",
+            "username": "xjules"
+          },
+          "committer": {
+            "email": "jparu@equinor.com",
+            "name": "Julius Parulek",
+            "username": "xjules"
+          },
+          "distinct": true,
+          "id": "c43f97fbea72b321e7a500433d96650606493052",
+          "message": "Speed up batching of events in evaluator\n\nasyncio wait_for used in evaluator is \"slow\" in performance when dealing with O(100K) events in the event queue.\nTherefore the suggestion is to replace it with direct fetching (via get_nowait())\nand instead just sleep whenever the event queue is empty.\n\nCo-authored-by: Lars Evje <levje@equinor.com>",
+          "timestamp": "2025-01-14T14:30:02+01:00",
+          "tree_id": "95472962253406a4238a2b9c26f36a40dca0fb49",
+          "url": "https://github.com/equinor/ert/commit/c43f97fbea72b321e7a500433d96650606493052"
+        },
+        "date": 1736861480991,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/ert/performance_tests/test_analysis.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 0.2156477153113954,
+            "unit": "iter/sec",
+            "range": "stddev: 0.01899322592247238",
+            "extra": "mean: 4.637192648000001 sec\nrounds: 5"
           }
         ]
       }
