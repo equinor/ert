@@ -1,39 +1,8 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1736846466507,
+  "lastUpdate": 1736847178264,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
-      {
-        "commit": {
-          "author": {
-            "email": "pieter.verveer@tno.nl",
-            "name": "Peter Verveer",
-            "username": "verveerpj"
-          },
-          "committer": {
-            "email": "pieter.verveer@tno.nl",
-            "name": "Peter Verveer",
-            "username": "verveerpj"
-          },
-          "distinct": true,
-          "id": "71275280104b46942e41a907a76342e262928aeb",
-          "message": "Remove dependency on ropt config in forward model evaluations",
-          "timestamp": "2025-01-08T07:09:10+01:00",
-          "tree_id": "1e8e94d36d177a58cca738d36f9f67b01bbf69fb",
-          "url": "https://github.com/equinor/ert/commit/71275280104b46942e41a907a76342e262928aeb"
-        },
-        "date": 1736316665675,
-        "tool": "pytest",
-        "benches": [
-          {
-            "name": "tests/ert/performance_tests/test_analysis.py::test_and_benchmark_adaptive_localization_with_fields",
-            "value": 0.21961637110103988,
-            "unit": "iter/sec",
-            "range": "stddev: 0.03879839145311598",
-            "extra": "mean: 4.553394607999991 sec\nrounds: 5"
-          }
-        ]
-      },
       {
         "commit": {
           "author": {
@@ -930,6 +899,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.027055588339479842",
             "extra": "mean: 4.554926780600004 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "ejah@equinor.com",
+            "name": "Eivind Jahren",
+            "username": "eivindjahren"
+          },
+          "committer": {
+            "email": "ejah@equinor.com",
+            "name": "Eivind Jahren",
+            "username": "eivindjahren"
+          },
+          "distinct": true,
+          "id": "60fc8f83cb00749526374029bf335b577fee9dec",
+          "message": "Fix typo in update test",
+          "timestamp": "2025-01-14T10:31:07+01:00",
+          "tree_id": "87bd243c4d03ad7577f0ffbf79259501779988f5",
+          "url": "https://github.com/equinor/ert/commit/60fc8f83cb00749526374029bf335b577fee9dec"
+        },
+        "date": 1736847139944,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/ert/performance_tests/test_analysis.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 0.2199965225563273,
+            "unit": "iter/sec",
+            "range": "stddev: 0.029260392279015925",
+            "extra": "mean: 4.5455263946 sec\nrounds: 5"
           }
         ]
       }
