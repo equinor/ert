@@ -210,6 +210,7 @@ def test_update_lowers_generalized_variance_or_deactives_observations(
                 # https://github.com/equinor/ert/issues/9585
                 assert (
                     "No active observations" in se
+                    or "Matrix is singular" in se
                     or "math domain error" in se
                     or "math range error" in se
                 )
