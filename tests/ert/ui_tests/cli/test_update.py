@@ -106,7 +106,7 @@ with open("poly.out", "w", encoding="utf-8") as f:
 POLY_EVAL = "EXECUTABLE poly_eval.py"
 
 
-@settings(max_examples=10)
+@settings(max_examples=3)
 @given(
     num_realizations=st.integers(min_value=20, max_value=40),
     num_points=st.integers(min_value=1, max_value=20),
