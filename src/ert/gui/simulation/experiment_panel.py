@@ -316,7 +316,7 @@ class ExperimentPanel(QWidget):
                         return
                 QApplication.restoreOverrideCursor()
 
-        dialog = RunDialog(
+        self._dialog = RunDialog(
             self._config_file,
             model,
             event_queue,
@@ -324,11 +324,13 @@ class ExperimentPanel(QWidget):
             self.parent(),  # type: ignore
             output_path=self.config.analysis_config.log_path,
         )
-        self.experiment_started.emit(dialog)
-        dialog.produce_clipboard_debug_info.connect(self.populate_clipboard_debug_info)
+        self.experiment_started.emit(self._dialog)
+        self._dialog.produce_clipboard_debug_info.connect(
+            self.populate_clipboard_debug_info
+        )
         self._simulation_done = False
         self.run_button.setEnabled(self._simulation_done)
-        dialog.run_experiment()
+        self._dialog.run_experiment()
 
         def simulation_done_handler() -> None:
             self._simulation_done = True
@@ -336,7 +338,7 @@ class ExperimentPanel(QWidget):
             self.toggleExperimentType()
             self._notifier.emitErtChange()
 
-        dialog.simulation_done.connect(simulation_done_handler)
+        self._dialog.simulation_done.connect(simulation_done_handler)
 
     def toggleExperimentType(self) -> None:
         current_model = self.get_current_experiment_type()

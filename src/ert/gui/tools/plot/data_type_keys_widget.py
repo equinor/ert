@@ -94,9 +94,9 @@ class DataTypeKeysWidget(QWidget):
 
         self.data_type_keys_widget = QListView()
         self.data_type_keys_widget.setModel(self.filter_model)
-        selection_model = self.data_type_keys_widget.selectionModel()
-        assert selection_model is not None
-        selection_model.selectionChanged.connect(self.itemSelected)
+        self._sel_model = self.data_type_keys_widget.selectionModel()
+        assert self._sel_model is not None
+        self._sel_model.selectionChanged.connect(self.itemSelected)
 
         layout.addSpacing(15)
         layout.addWidget(self.data_type_keys_widget, 2)

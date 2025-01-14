@@ -119,9 +119,9 @@ class StorageWidget(QWidget):
         self._tree_view.setModel(proxy_model)
         search_bar.textChanged.connect(proxy_model.setFilterFixedString)
 
-        selection_model = QItemSelectionModel(proxy_model)
-        selection_model.currentChanged.connect(self._currentChanged)
-        self._tree_view.setSelectionModel(selection_model)
+        self._sel_model = QItemSelectionModel(proxy_model)
+        self._sel_model.currentChanged.connect(self._currentChanged)
+        self._tree_view.setSelectionModel(self._sel_model)
         self._tree_view.setColumnWidth(0, 225)
         self._tree_view.setColumnWidth(1, 125)
         self._tree_view.setColumnWidth(2, 100)
