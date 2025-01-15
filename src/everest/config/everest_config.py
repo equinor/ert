@@ -151,10 +151,6 @@ class EverestConfig(BaseModelWithPropertySupport):  # type: ignore
     model: ModelConfig = Field(
         description="Configuration of the Everest model",
     )
-
-    # It IS required but is currently used in a non-required manner by tests
-    # Thus, it is to be made explicitly required as the other logic
-    # is being rewritten
     environment: EnvironmentConfig | None = Field(
         default=EnvironmentConfig(),
         description="The environment of Everest, specifies which folders are used "
