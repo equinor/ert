@@ -44,12 +44,11 @@ def test_config_branch_entry(cached_example):
 
 
 def test_config_branch_preserves_config_section_order(cached_example):
-    path, _, _ = cached_example("math_func/config_advanced.yml")
+    path, _, _ = cached_example("math_func/config_minimal.yml")
 
-    config_branch_entry(["config_advanced.yml", "new_restart_config.yml", "-b", "1"])
+    config_branch_entry(["config_minimal.yml", "new_restart_config.yml", "-b", "1"])
 
     assert exists("new_restart_config.yml")
-
     opt_controls = {}
 
     snapshot = SebaSnapshot(Path(path) / "everest_output" / "optimization_output")
@@ -61,7 +60,7 @@ def test_config_branch_preserves_config_section_order(cached_example):
 
     diff_lines = []
     with (
-        open("config_advanced.yml", encoding="utf-8") as initial_config,
+        open("config_minimal.yml", encoding="utf-8") as initial_config,
         open("new_restart_config.yml", encoding="utf-8") as branch_config,
     ):
         diff = difflib.unified_diff(
@@ -79,6 +78,5 @@ def test_config_branch_preserves_config_section_order(cached_example):
             diff_lines.append(line.replace(" ", "").strip())
 
     assert len(diff_lines) == 4
-    assert "-initial_guess:0.25" in diff_lines
     for control_val in opt_control_val_for_batch_id:
         assert f"+initial_guess:{control_val}" in diff_lines

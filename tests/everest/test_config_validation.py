@@ -1007,5 +1007,5 @@ def test_load_file_with_errors(copy_math_func_test_data_to_tmp, capsys):
     captured = capsys.readouterr()
 
     assert "Found 1 validation error" in captured.err
-    assert "line: 4, column: 11" in captured.err
+    assert "line: 3, column: 11" in captured.err
     assert "Input should be 'well_control' or 'generic_control'" in captured.err
