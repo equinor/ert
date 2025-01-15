@@ -1,3 +1,4 @@
+import queue
 from argparse import Namespace
 from unittest.mock import MagicMock
 from uuid import uuid1
@@ -5,8 +6,13 @@ from uuid import uuid1
 import pytest
 
 import ert
-from ert.config import ConfigValidationError, ErtConfig, ModelConfig
+from ert.config import ConfigValidationError, ConfigWarning, ErtConfig, ModelConfig
 from ert.libres_facade import LibresFacade
+from ert.mode_definitions import (
+    ENSEMBLE_SMOOTHER_MODE,
+    ES_MDA_MODE,
+    ITERATIVE_ENSEMBLE_SMOOTHER_MODE,
+)
 from ert.run_models import (
     EnsembleExperiment,
     EnsembleSmoother,
@@ -16,6 +22,49 @@ from ert.run_models import (
     model_factory,
 )
 from ert.run_models.evaluate_ensemble import EvaluateEnsemble
+
+
+@pytest.mark.parametrize(
+    "mode",
+    [
+        pytest.param(ENSEMBLE_SMOOTHER_MODE),
+        pytest.param(ITERATIVE_ENSEMBLE_SMOOTHER_MODE),
+        pytest.param(ES_MDA_MODE),
+    ],
+)
+def test_that_the_model_warns_when_active_realizations_less_min_realizations(
+    mode, storage
+):
+    """
+    Verify that the run model checks that active realizations is equal or higher than
+    NUM_REALIZATIONS when running an experiment.
+    A warning is issued when NUM_REALIZATIONS is higher than active_realizations.
+    """
+
+    with pytest.warns(
+        ConfigWarning,
+        match=r"MIN_REALIZATIONS was set to the current number of active realizations \(5\)",
+    ):
+        _ = model_factory.create_model(
+            ErtConfig.from_file_contents(
+                """\
+                NUM_REALIZATIONS 100
+                MIN_REALIZATION 10
+                """
+            ),
+            storage,
+            Namespace(
+                mode=mode,
+                realizations="0-4",
+                target_ensemble="target",
+                experiment_name="experiment",
+                num_iterations=1,
+                restart_run=False,
+                prior_ensemble_id="",
+                weights="2,3",
+            ),
+            queue.SimpleQueue(),
+        )
 
 
 @pytest.mark.parametrize(
