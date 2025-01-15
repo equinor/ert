@@ -20,7 +20,7 @@ run_reservoirsimulator = import_from_location(
     SOURCE_DIR / "src/ert/resources/forward_models/run_reservoirsimulator.py",
 )
 
-FLOW_VERSION = "daily"
+FLOW_VERSION = "default"
 
 
 @pytest.mark.integration_test
