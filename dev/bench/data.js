@@ -1,39 +1,8 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1736957245830,
+  "lastUpdate": 1736958184822,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
-      {
-        "commit": {
-          "author": {
-            "email": "andrli@equinor.com",
-            "name": "Andreas Eknes Lie",
-            "username": "andreas-el"
-          },
-          "committer": {
-            "email": "114403625+andreas-el@users.noreply.github.com",
-            "name": "Andreas Eknes Lie",
-            "username": "andreas-el"
-          },
-          "distinct": true,
-          "id": "4480295150a8db352a5bf1020388ec5f0c60a002",
-          "message": "Handle button visual indications based on actions\n\nUse SidebarToolButton instead of QToolButton",
-          "timestamp": "2025-01-10T14:31:01+01:00",
-          "tree_id": "819cb21a0a52f945c26565a7c0c3ec336f3085f6",
-          "url": "https://github.com/equinor/ert/commit/4480295150a8db352a5bf1020388ec5f0c60a002"
-        },
-        "date": 1736515969471,
-        "tool": "pytest",
-        "benches": [
-          {
-            "name": "tests/ert/performance_tests/test_analysis.py::test_and_benchmark_adaptive_localization_with_fields",
-            "value": 0.21855746435616563,
-            "unit": "iter/sec",
-            "range": "stddev: 0.03610331598553161",
-            "extra": "mean: 4.575455718000003 sec\nrounds: 5"
-          }
-        ]
-      },
       {
         "commit": {
           "author": {
@@ -930,6 +899,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.02695430433184421",
             "extra": "mean: 4.611554034199997 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "ejah@equinor.com",
+            "name": "Eivind Jahren",
+            "username": "eivindjahren"
+          },
+          "committer": {
+            "email": "ejah@equinor.com",
+            "name": "Eivind Jahren",
+            "username": "eivindjahren"
+          },
+          "distinct": true,
+          "id": "d1608b0c233d4bedfc2eaf48fb149e0d762161c8",
+          "message": "Remove redundant test_ensemble_evaluator",
+          "timestamp": "2025-01-15T17:20:59+01:00",
+          "tree_id": "e2c6b751ea9bb1baddf775b36443dda8f679c2df",
+          "url": "https://github.com/equinor/ert/commit/d1608b0c233d4bedfc2eaf48fb149e0d762161c8"
+        },
+        "date": 1736958140781,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/ert/performance_tests/test_analysis.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 0.21062565043794193,
+            "unit": "iter/sec",
+            "range": "stddev: 0.03418915592567183",
+            "extra": "mean: 4.747759818999998 sec\nrounds: 5"
           }
         ]
       }
