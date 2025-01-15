@@ -64,7 +64,7 @@ class EnsembleEvaluator:
         self._max_batch_size: int = 500
         self._batching_interval: float = 2.0
         self._complete_batch: asyncio.Event = asyncio.Event()
-        self._server_started: asyncio.Future = asyncio.Future()
+        self._server_started: asyncio.Future[None] = asyncio.Future()
         self._clients_connected: set[bytes] = set()
         self._clients_empty: asyncio.Event = asyncio.Event()
         self._clients_empty.set()
