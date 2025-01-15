@@ -8,7 +8,6 @@ import pytest
 from everest import util
 from everest.bin.utils import report_on_previous_run, show_scaled_controls_warning
 from everest.config import EverestConfig, ServerConfig
-from everest.config.everest_config import get_system_installed_jobs
 from everest.detached import ServerStatus
 from everest.strings import EVEREST, SERVER_STATUS
 from tests.everest.utils import (
@@ -104,13 +103,6 @@ def test_get_everserver_status_path(copy_math_func_test_data_to_tmp):
     expected_path = os.path.join(session_path, SERVER_STATUS)
 
     assert path == expected_path
-
-
-def test_get_system_installed_job_names():
-    job_names = get_system_installed_jobs()
-    assert job_names is not None
-    assert isinstance(job_names, list)
-    assert len(job_names) > 0
 
 
 @patch(
