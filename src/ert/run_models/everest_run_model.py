@@ -37,6 +37,7 @@ from everest.simulator.everest_to_ert import everest_to_ert_config
 from everest.strings import EVEREST
 
 from ..run_arg import RunArg, create_run_arguments
+from ..storage.local_ensemble import EverestRealizationInfo
 from .base_run_model import BaseRunModel, StatusEvents
 
 if TYPE_CHECKING:
@@ -375,6 +376,40 @@ class EverestRunModel(BaseRunModel):
             name=f"batch_{self._batch_id}",
             ensemble_size=len(batch_data),
         )
+
+        realizations = self._everest_config.model.realizations
+        num_perturbations = self._everest_config.optimization.perturbation_num
+        realization_mapping: dict[int, EverestRealizationInfo] = {}
+
+        if len(evaluator_context.realizations) == len(realizations):
+            # Function evaluation
+            realization_mapping = {
+                i: EverestRealizationInfo(geo_realization=real, perturbation=None)
+                for i, real in enumerate(realizations)
+            }
+        elif len(evaluator_context.realizations) == num_perturbations:
+            realization_mapping = {
+                p: EverestRealizationInfo(geo_realization=real, perturbation=p)
+                for p, real in enumerate(realizations)
+            }
+        else:
+            # Function and gradient
+            realization_mapping = {}
+            for i, real in enumerate(realizations):
+                realization_mapping[i] = EverestRealizationInfo(
+                    geo_realization=real, perturbation=None
+                )
+
+            i = len(realization_mapping)
+            for real in realizations:
+                for p in range(num_perturbations):
+                    realization_mapping[i] = EverestRealizationInfo(
+                        geo_realization=real, perturbation=p
+                    )
+                    i += 1
+
+        # Fill in data from ROPT here
+        ensemble.save_everest_metadata(realization_mapping=realization_mapping)
         for sim_id, controls in enumerate(batch_data.values()):
             self._setup_sim(sim_id, controls, ensemble)
 
