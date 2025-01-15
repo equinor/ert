@@ -1,8 +1,7 @@
-import io
 import json
 import os
+import sys
 
-import polars
 import pytest
 
 from ert.config import ErtConfig
@@ -12,6 +11,7 @@ from ert.run_models.everest_run_model import EverestRunModel
 from everest.config import EverestConfig
 from everest.config.export_config import ExportConfig
 from everest.config_keys import ConfigKeys
+from everest.export import export_data
 from everest.simulator.everest_to_ert import _everest_to_ert_config_dict
 from tests.everest.utils import (
     everest_default_jobs,
@@ -708,23 +708,15 @@ def test_egg_snapshot(snapshot, copy_egg_test_data_to_tmp):
     run_model.run_experiment(evaluator_server_config)
 
     assert cbtracker.called
-    best_batch = [b for b in run_model.ever_storage.data.batches if b.is_improvement][
-        -1
-    ]
 
-    def _df_to_string(df: polars.DataFrame):
-        strbuf = io.StringIO()
-        schema = df.schema
-        df.with_columns(
-            polars.col(c) for c in df.columns if schema[c] == polars.Float32
-        ).write_csv(strbuf)
-
-        return strbuf.getvalue()
-
-    best_objectives_csv = _df_to_string(best_batch.perturbation_objectives)
-    best_objective_gradients_csv = _df_to_string(best_batch.batch_objective_gradient)
-    best_controls = _df_to_string(best_batch.realization_controls)
-
-    snapshot.assert_match(best_controls, "best_controls")
-    snapshot.assert_match(best_objectives_csv, "best_objectives_csv")
-    snapshot.assert_match(best_objective_gradients_csv, "best_objective_gradients_csv")
+    data = export_data(
+        export_config=config.export,
+        output_dir=config.output_dir,
+        data_file=config.model.data_file if config.model else None,
+    )
+    snapshot.assert_match(
+        data.drop(columns=["TCPUDAY", "start_time", "end_time"], axis=1)
+        .round(6)
+        .to_csv(),
+        f"egg-py{sys.version_info.major}{sys.version_info.minor}.csv",
+    )
