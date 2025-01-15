@@ -134,14 +134,18 @@ def test_surface_init_fails_during_forward_model_callback():
         )
         line_with_surface_top = content_lines[index_line_with_surface_top]
         breaking_line_with_surface_top = line_with_surface_top
-        content_lines[index_line_with_surface_top] = breaking_line_with_surface_top
+        content_lines[index_line_with_surface_top] = (
+            breaking_line_with_surface_top.replace(
+                "FORWARD_INIT:False", "FORWARD_INIT:True"
+            )
+        )
         config_file_handler.seek(0)
         config_file_handler.write("\n".join(content_lines))
 
-    try:
+    with pytest.raises(
+        ErtCliError, match=f"Failed to initialize parameter {parameter_name!r}"
+    ):
         run_cli(TEST_RUN_MODE, "--disable-monitor", config_file_name)
-    except ErtCliError as err:
-        assert f"Failed to initialize parameter {parameter_name!r}" in str(err)
 
 
 @pytest.mark.usefixtures("copy_snake_oil_field")
