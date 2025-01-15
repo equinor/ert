@@ -2,10 +2,11 @@ import difflib
 from os.path import exists
 from pathlib import Path
 
+from seba_sqlite.snapshot import SebaSnapshot
+
 from everest.bin.config_branch_script import config_branch_entry
 from everest.config_file_loader import load_yaml
 from everest.config_keys import ConfigKeys as CK
-from everest.everest_storage import EverestStorage
 
 
 def test_config_branch_entry(cached_example):
@@ -27,21 +28,19 @@ def test_config_branch_entry(cached_example):
     assert len(new_controls) == len(old_controls)
     assert len(new_controls[0][CK.VARIABLES]) == len(old_controls[0][CK.VARIABLES])
 
-    storage = EverestStorage(Path(path) / "everest_output" / "optimization_output")
-    storage.read_from_output_dir()
+    opt_controls = {}
+
+    snapshot = SebaSnapshot(Path(path) / "everest_output" / "optimization_output")
+    for opt_data in snapshot._optimization_data():
+        if opt_data.batch_id == 1:
+            opt_controls = opt_data.controls
 
     new_controls_initial_guesses = {
         var[CK.INITIAL_GUESS] for var in new_controls[0][CK.VARIABLES]
     }
+    opt_control_val_for_batch_id = {v for k, v in opt_controls.items()}
 
-    control_names = storage.data.controls["control_name"]
-    batch_1_info = next(b for b in storage.data.batches if b.batch_id == 1)
-    realization_control_vals_mean = batch_1_info.realization_controls.select(
-        *control_names
-    ).to_dicts()[0]
-    control_values = set(realization_control_vals_mean.values())
-
-    assert new_controls_initial_guesses == control_values
+    assert new_controls_initial_guesses == opt_control_val_for_batch_id
 
 
 def test_config_branch_preserves_config_section_order(cached_example):
@@ -50,6 +49,15 @@ def test_config_branch_preserves_config_section_order(cached_example):
     config_branch_entry(["config_advanced.yml", "new_restart_config.yml", "-b", "1"])
 
     assert exists("new_restart_config.yml")
+
+    opt_controls = {}
+
+    snapshot = SebaSnapshot(Path(path) / "everest_output" / "optimization_output")
+    for opt_data in snapshot._optimization_data():
+        if opt_data.batch_id == 1:
+            opt_controls = opt_data.controls
+
+    opt_control_val_for_batch_id = {v for k, v in opt_controls.items()}
 
     diff_lines = []
     with (
@@ -72,15 +80,5 @@ def test_config_branch_preserves_config_section_order(cached_example):
 
     assert len(diff_lines) == 4
     assert "-initial_guess:0.25" in diff_lines
-
-    storage = EverestStorage(Path(path) / "everest_output" / "optimization_output")
-    storage.read_from_output_dir()
-    control_names = storage.data.controls["control_name"]
-    batch_1_info = next(b for b in storage.data.batches if b.batch_id == 1)
-    realization_control_vals_mean = batch_1_info.realization_controls.select(
-        *control_names
-    ).to_dicts()[0]
-    control_values = set(realization_control_vals_mean.values())
-
-    for control_val in control_values:
+    for control_val in opt_control_val_for_batch_id:
         assert f"+initial_guess:{control_val}" in diff_lines
