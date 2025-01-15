@@ -1,39 +1,8 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1736929493854,
+  "lastUpdate": 1736929997737,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
-      {
-        "commit": {
-          "author": {
-            "email": "havb@equinor.com",
-            "name": "Håvard Berland",
-            "username": "berland"
-          },
-          "committer": {
-            "email": "berland@pvv.ntnu.no",
-            "name": "Håvard Berland",
-            "username": "berland"
-          },
-          "distinct": true,
-          "id": "c4217b16d52c6cac0a6227cf314d7c68581c9523",
-          "message": "Remove exec_env\n\nThis feature has been deprecated since 2019 and can finally be removed. Its last user\nwas the RMS forward model step, which no longer uses it.",
-          "timestamp": "2025-01-09T11:24:28+01:00",
-          "tree_id": "d33b5c86ee9ec64ca9b14e0e991d404ea957586c",
-          "url": "https://github.com/equinor/ert/commit/c4217b16d52c6cac0a6227cf314d7c68581c9523"
-        },
-        "date": 1736418380398,
-        "tool": "pytest",
-        "benches": [
-          {
-            "name": "tests/ert/performance_tests/test_analysis.py::test_and_benchmark_adaptive_localization_with_fields",
-            "value": 0.21847536580495114,
-            "unit": "iter/sec",
-            "range": "stddev: 0.027137010108530375",
-            "extra": "mean: 4.577175080199993 sec\nrounds: 5"
-          }
-        ]
-      },
       {
         "commit": {
           "author": {
@@ -930,6 +899,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.02584693117079259",
             "extra": "mean: 4.581463993600002 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "ejah@equinor.com",
+            "name": "Eivind Jahren",
+            "username": "eivindjahren"
+          },
+          "committer": {
+            "email": "ejah@equinor.com",
+            "name": "Eivind Jahren",
+            "username": "eivindjahren"
+          },
+          "distinct": true,
+          "id": "9a1002d3191d56def21d8c4256184b8af2c9f695",
+          "message": "Speed up tests by avoiding recreating PluginManager",
+          "timestamp": "2025-01-15T09:31:24+01:00",
+          "tree_id": "457b81e89a525dfd80f5833a608c366a39999323",
+          "url": "https://github.com/equinor/ert/commit/9a1002d3191d56def21d8c4256184b8af2c9f695"
+        },
+        "date": 1736929959863,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/ert/performance_tests/test_analysis.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 0.2145204837317843,
+            "unit": "iter/sec",
+            "range": "stddev: 0.04616200503930073",
+            "extra": "mean: 4.661559505199994 sec\nrounds: 5"
           }
         ]
       }
