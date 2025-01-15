@@ -1,3 +1,5 @@
+from pathlib import Path
+
 import numpy as np
 
 from ert.config import QueueSystem
@@ -38,6 +40,9 @@ def test_simulator_cache(copy_math_func_test_data_to_tmp):
 
     # Now do another run, where the functions should come from the cache:
     n_evals = 0
+
+    # If we want to do another run, the seba database must be made new:
+    Path("everest_output/optimization_output/seba.db").unlink()
 
     # The batch_id was used as a stopping criterion, so it must be reset:
     run_model._batch_id = 0
