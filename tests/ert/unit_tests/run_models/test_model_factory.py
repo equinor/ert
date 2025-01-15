@@ -6,8 +6,13 @@ from uuid import uuid1
 import pytest
 
 import ert
-from ert.config import ConfigValidationError, ConfigWarning, ErtConfig, ModelConfig
-from ert.libres_facade import LibresFacade
+from ert.config import (
+    ConfigValidationError,
+    ConfigWarning,
+    ErtConfig,
+    ModelConfig,
+)
+from ert.config.analysis_config import UpdateSettings
 from ert.mode_definitions import (
     ENSEMBLE_SMOOTHER_MODE,
     ES_MDA_MODE,
@@ -73,35 +78,35 @@ def test_that_the_model_warns_when_active_realizations_less_min_realizations(
         (None, "default_%d"),
     ],
 )
-def test_iterative_ensemble_format(target_ensemble, expected, poly_case):
+def test_iterative_ensemble_format(target_ensemble, expected):
     args = Namespace(
         random_seed=None, current_ensemble="default", target_ensemble=target_ensemble
     )
     assert model_factory._iterative_ensemble_format(args) == expected
 
 
-def test_default_realizations(poly_case):
-    facade = LibresFacade(poly_case)
-    args = Namespace(realizations=None)
+def test_default_realizations():
+    ensemble_size = 100
     assert (
-        model_factory._realizations(args, facade.get_ensemble_size()).tolist()
-        == [True] * facade.get_ensemble_size()
+        model_factory._realizations(
+            Namespace(realizations=None), ensemble_size
+        ).tolist()
+        == [True] * ensemble_size
     )
 
 
-def test_custom_realizations(poly_case):
-    facade = LibresFacade(poly_case)
+def test_custom_realizations():
+    ensemble_size = 100
     args = Namespace(realizations="0-4,7,8")
-    ensemble_size = facade.get_ensemble_size()
     active_mask = [False] * ensemble_size
     active_mask[0:5] = [True] * 5
     active_mask[7:9] = [True] * 2
     assert model_factory._realizations(args, ensemble_size).tolist() == active_mask
 
 
-def test_setup_single_test_run(poly_case, storage):
+def test_setup_single_test_run(storage):
     model = model_factory._setup_single_test_run(
-        poly_case,
+        ErtConfig.from_file_contents("NUM_REALIZATIONS 100\n"),
         storage,
         Namespace(
             current_ensemble="current-ensemble",
@@ -109,16 +114,16 @@ def test_setup_single_test_run(poly_case, storage):
             random_seed=None,
             experiment_name=None,
         ),
-        MagicMock(),
+        queue.SimpleQueue(),
     )
     assert isinstance(model, SingleTestRun)
     assert model._storage == storage
     # assert model.ert_config == poly_case
 
 
-def test_setup_single_test_run_with_ensemble(poly_case, storage):
+def test_setup_single_test_run_with_ensemble(storage):
     model = model_factory._setup_single_test_run(
-        poly_case,
+        ErtConfig.from_file_contents("NUM_REALIZATIONS 100\n"),
         storage,
         Namespace(
             current_ensemble="current-ensemble",
@@ -126,42 +131,43 @@ def test_setup_single_test_run_with_ensemble(poly_case, storage):
             random_seed=None,
             experiment_name=None,
         ),
-        MagicMock(),
+        queue.SimpleQueue(),
     )
     assert isinstance(model, SingleTestRun)
     assert model._storage == storage
     # assert model.ert_config == poly_case
 
 
-def test_setup_ensemble_experiment(poly_case, storage):
-    args = Namespace(
-        realizations=None,
-        iter_num=1,
-        current_ensemble="default",
-        target_ensemble=None,
-        experiment_name="ensemble_experiment",
-    )
+def test_setup_ensemble_experiment(storage):
     model = model_factory._setup_ensemble_experiment(
-        poly_case,
+        ErtConfig.from_file_contents("NUM_REALIZATIONS 100\n"),
         storage,
-        args,
-        MagicMock(),
+        Namespace(
+            realizations=None,
+            iter_num=1,
+            current_ensemble="default",
+            target_ensemble=None,
+            experiment_name="ensemble_experiment",
+        ),
+        queue.SimpleQueue(),
     )
     assert isinstance(model, EnsembleExperiment)
 
     assert model.active_realizations == [True] * 100
 
 
-def test_setup_ensemble_smoother(poly_case, storage):
-    args = Namespace(
-        realizations="0-4,7,8",
-        current_ensemble="default",
-        target_ensemble="test_case",
-        experiment_name=None,
-    )
-
+def test_setup_ensemble_smoother(storage):
     model = model_factory._setup_ensemble_smoother(
-        poly_case, storage, args, MagicMock(), MagicMock()
+        ErtConfig.from_file_contents("NUM_REALIZATIONS 100\n"),
+        storage,
+        Namespace(
+            realizations="0-4,7,8",
+            current_ensemble="default",
+            target_ensemble="test_case",
+            experiment_name=None,
+        ),
+        UpdateSettings(),
+        queue.SimpleQueue(),
     )
     assert isinstance(model, EnsembleSmoother)
     assert (
@@ -170,19 +176,21 @@ def test_setup_ensemble_smoother(poly_case, storage):
     )
 
 
-def test_setup_multiple_data_assimilation(poly_case, storage):
-    args = Namespace(
-        realizations="0-4,8",
-        weights="6,4,2",
-        target_ensemble="test_case_%d",
-        restart_run=False,
-        prior_ensemble_id="b272fe09-83ac-4744-b667-9a0a5415420b",
-        experiment_name="My-experiment",
-        starting_iteration=0,
-    )
-
+def test_setup_multiple_data_assimilation(storage):
     model = model_factory._setup_multiple_data_assimilation(
-        poly_case, storage, args, MagicMock(), MagicMock()
+        ErtConfig.from_file_contents("NUM_REALIZATIONS 100\n"),
+        storage,
+        Namespace(
+            realizations="0-4,8",
+            weights="6,4,2",
+            target_ensemble="test_case_%d",
+            restart_run=False,
+            prior_ensemble_id="b272fe09-83ac-4744-b667-9a0a5415420b",
+            experiment_name="My-experiment",
+            starting_iteration=0,
+        ),
+        UpdateSettings(),
+        queue.SimpleQueue(),
     )
     assert isinstance(model, MultipleDataAssimilation)
     assert model.weights == MultipleDataAssimilation.parse_weights("6,4,2")
@@ -196,15 +204,17 @@ def test_setup_multiple_data_assimilation(poly_case, storage):
 
 
 def test_setup_iterative_ensemble_smoother(poly_case, storage):
-    args = Namespace(
-        realizations="0-4,7,8",
-        target_ensemble="test_case_%d",
-        num_iterations=10,
-        experiment_name=None,
-    )
-
     model = model_factory._setup_iterative_ensemble_smoother(
-        poly_case, storage, args, MagicMock(), MagicMock()
+        ErtConfig.from_file_contents("NUM_REALIZATIONS 100\n"),
+        storage,
+        Namespace(
+            realizations="0-4,7,8",
+            target_ensemble="test_case_%d",
+            num_iterations=10,
+            experiment_name=None,
+        ),
+        UpdateSettings(),
+        queue.SimpleQueue(),
     )
     assert isinstance(model, IteratedEnsembleSmoother)
     assert model.target_ensemble_format == "test_case_%d"
