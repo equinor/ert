@@ -11,15 +11,15 @@ from enum import Enum
 from pathlib import Path
 from typing import Literal
 
-import polars
 import requests
+from seba_sqlite.exceptions import ObjectNotFoundError
+from seba_sqlite.snapshot import SebaSnapshot
 
 from ert.scheduler import create_driver
 from ert.scheduler.driver import Driver, FailedSubmit
 from ert.scheduler.event import StartedEvent
 from everest.config import EverestConfig, ServerConfig
 from everest.config_keys import ConfigKeys as CK
-from everest.everest_storage import EverestStorage
 from everest.strings import (
     EVEREST_SERVER_CONFIG,
     OPT_PROGRESS_ENDPOINT,
@@ -124,63 +124,32 @@ def wait_for_server(output_dir: str, timeout: int) -> None:
 
 
 def get_opt_status(output_folder):
-    """Return a dictionary with optimization information retrieved from storage"""
-    if not Path(output_folder).exists() or not os.listdir(output_folder):
+    """Retrieve a seba database snapshot and return a dictionary with
+    optimization information."""
+    if not os.path.exists(os.path.join(output_folder, "seba.db")):
         return {}
-
-    storage = EverestStorage(Path(output_folder))
     try:
-        storage.read_from_output_dir()
-    except FileNotFoundError:
-        # Optimization output dir exists and not empty, but still missing
-        # actual stored results
+        seba_snapshot = SebaSnapshot(output_folder)
+    except ObjectNotFoundError:
         return {}
+    snapshot = seba_snapshot.get_snapshot(filter_out_gradient=True)
 
-    objective_names = storage.data.objective_functions["objective_name"].to_list()
-    control_names = storage.data.controls["control_name"].to_list()
-
-    expected_objectives = polars.concat(
-        [
-            b.batch_objectives.select(objective_names)
-            for b in storage.data.batches
-            if b.batch_objectives is not None
-        ]
-    ).to_dict(as_series=False)
-
-    expected_total_objective = [
-        b.batch_objectives["total_objective_value"].item()
-        for b in storage.data.batches
-        if b.batch_objectives is not None
-    ]
-
-    improvement_batches = [b.batch_id for b in storage.data.batches if b.is_improvement]
-
-    cli_monitor_data = {
-        "batches": [
-            b.batch_id
-            for b in storage.data.batches
-            if b.realization_controls is not None and b.batch_objectives is not None
-        ],
-        "controls": [
-            b.realization_controls.select(control_names).to_dicts()[0]
-            for b in storage.data.batches
-            if b.realization_controls is not None
-        ],
-        "objective_value": expected_total_objective,
-        "expected_objectives": expected_objectives,
-    }
+    cli_monitor_data = {}
+    if snapshot.optimization_data:
+        cli_monitor_data = {
+            "batches": [item.batch_id for item in snapshot.optimization_data],
+            "controls": [item.controls for item in snapshot.optimization_data],
+            "objective_value": [
+                item.objective_value for item in snapshot.optimization_data
+            ],
+            "expected_objectives": snapshot.expected_objectives,
+        }
 
     return {
-        "objective_history": expected_total_objective,
-        "control_history": polars.concat(
-            [
-                b.realization_controls.select(control_names)
-                for b in storage.data.batches
-                if b.realization_controls is not None
-            ]
-        ).to_dict(as_series=False),
-        "objectives_history": expected_objectives,
-        "accepted_control_indices": improvement_batches,
+        "objective_history": snapshot.expected_single_objective,
+        "control_history": snapshot.optimization_controls,
+        "objectives_history": snapshot.expected_objectives,
+        "accepted_control_indices": snapshot.increased_merit_indices,
         "cli_monitor_data": cli_monitor_data,
     }
 

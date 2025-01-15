@@ -8,8 +8,10 @@ from typing import ClassVar
 
 import colorama
 from colorama import Fore
+from pandas import DataFrame
 
 from ert.resources import all_shell_script_fm_steps
+from everest.config import EverestConfig
 from everest.detached import (
     OPT_PROGRESS_ID,
     SIM_PROGRESS_ID,
@@ -18,8 +20,40 @@ from everest.detached import (
     get_opt_status,
     start_monitor,
 )
+from everest.export import export_data
 from everest.simulator import JOB_FAILURE, JOB_RUNNING, JOB_SUCCESS
 from everest.strings import EVEREST
+
+try:
+    from progressbar import AdaptiveETA, Bar, Percentage, ProgressBar, Timer
+except ImportError:
+    ProgressBar = None  # type: ignore
+
+
+def export_with_progress(config: EverestConfig, export_ecl=True):
+    logging.getLogger(EVEREST).info("Exporting results to csv ...")
+    if ProgressBar is not None:
+        widgets = [Percentage(), "  ", Bar(), "  ", Timer(), "  ", AdaptiveETA()]
+        with ProgressBar(max_value=1, widgets=widgets) as bar:
+            return export_data(
+                export_config=config.export,
+                output_dir=config.output_dir,
+                data_file=config.model.data_file if config.model else None,
+                export_ecl=export_ecl,
+                progress_callback=bar.update,
+            )
+    return export_data(
+        export_config=config.export,
+        output_dir=config.output_dir,
+        data_file=config.model.data_file if config.model else None,
+        export_ecl=export_ecl,
+    )
+
+
+def export_to_csv(data_frame: DataFrame, export_path: str) -> None:
+    os.makedirs(os.path.dirname(export_path), exist_ok=True)
+    data_frame.to_csv(export_path, sep=";", index=False)
+    logging.getLogger(EVEREST).info(f"Data exported to {export_path}")
 
 
 def handle_keyboard_interrupt(signal, frame, options):
@@ -301,5 +335,6 @@ def report_on_previous_run(
             f"Optimization completed.\n"
             "\nTo re-run the optimization use command:\n"
             f"  `everest run --new-run {config_file}`\n"
-            f"Results are stored in {optimization_output_dir}"
+            "To export the results use command:\n"
+            f"  `everest export {config_file}`"
         )
