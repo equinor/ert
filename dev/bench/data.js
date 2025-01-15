@@ -1,39 +1,8 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1736930832962,
+  "lastUpdate": 1736931139739,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
-      {
-        "commit": {
-          "author": {
-            "email": "havb@equinor.com",
-            "name": "Håvard Berland",
-            "username": "berland"
-          },
-          "committer": {
-            "email": "berland@pvv.ntnu.no",
-            "name": "Håvard Berland",
-            "username": "berland"
-          },
-          "distinct": true,
-          "id": "1ae12f6efb66e9fa4208faef2a04898043cdcb37",
-          "message": "Replace erts interface towards reservoir simulators\n\nThis replaces the yaml configuration file for Eclipse100/300 with a set\nof environment variables set through the plugin system. Ert cannot any\nlonger start the raw Eclipse binary itself, it depends on the vendor\nsupplied wrapper binary called \"eclrun\".\n\nSimilarly, for OPM flow, Ert will now support a wrapper script \"flowrun\"\nif it is present, assuming it has a similar command line API as eclrun.\nIf flowrun is not present, it will look for a binary \"flow\" in $PATH\nwhich can be used, but then only with single-cpu possibilities.\n\nUsers can point to a custom location of eclrun by adding SETENV to the\nconfiguration file.",
-          "timestamp": "2025-01-09T16:40:43+01:00",
-          "tree_id": "3e58eb10aacae19e6e717c57d30f333d00533dac",
-          "url": "https://github.com/equinor/ert/commit/1ae12f6efb66e9fa4208faef2a04898043cdcb37"
-        },
-        "date": 1736437375543,
-        "tool": "pytest",
-        "benches": [
-          {
-            "name": "tests/ert/performance_tests/test_analysis.py::test_and_benchmark_adaptive_localization_with_fields",
-            "value": 0.2168821050902408,
-            "unit": "iter/sec",
-            "range": "stddev: 0.04013748871607781",
-            "extra": "mean: 4.610799953200001 sec\nrounds: 5"
-          }
-        ]
-      },
       {
         "commit": {
           "author": {
@@ -930,6 +899,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.03127751551107894",
             "extra": "mean: 4.6331978764000015 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "levje@equinor.com",
+            "name": "larsevj",
+            "username": "larsevj"
+          },
+          "committer": {
+            "email": "ejah@equinor.com",
+            "name": "Eivind Jahren",
+            "username": "eivindjahren"
+          },
+          "distinct": true,
+          "id": "b6edc3bf0b0a07cba396067a5f34a60c5fd56c4e",
+          "message": "Add disk space status to gui",
+          "timestamp": "2025-01-15T09:50:22+01:00",
+          "tree_id": "d4a257f19b038e5ac4c80ec5c69b12d4b0897fcf",
+          "url": "https://github.com/equinor/ert/commit/b6edc3bf0b0a07cba396067a5f34a60c5fd56c4e"
+        },
+        "date": 1736931098891,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/ert/performance_tests/test_analysis.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 0.21766573492155622,
+            "unit": "iter/sec",
+            "range": "stddev: 0.038683257085160835",
+            "extra": "mean: 4.594200370399991 sec\nrounds: 5"
           }
         ]
       }
