@@ -52,6 +52,9 @@ def test_that_get_nr_primary_components_is_according_to_theory():
     assert get_nr_primary_components(Y, threshold_2 + 0.01) == 2
     assert get_nr_primary_components(Y, threshold_3 + 0.01) == 3
 
+    # check that we always return at least 1
+    assert get_nr_primary_components(Y, 0) == 1
+
 
 @pytest.mark.parametrize("nr_observations", [4, 10, 100])
 def test_misfit_preprocessor(nr_observations):
