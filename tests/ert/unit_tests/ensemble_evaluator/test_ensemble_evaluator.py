@@ -144,7 +144,7 @@ async def evaluator_to_use_fixture(make_ee_config):
     evaluator = EnsembleEvaluator(ensemble, make_ee_config(use_token=False))
     evaluator._batching_interval = 0.5  # batching can be faster for tests
     run_task = asyncio.create_task(evaluator.run_and_get_successful_realizations())
-    await evaluator._server_started.wait()
+    await evaluator._server_started
     yield evaluator
     evaluator.stop()
     await run_task
