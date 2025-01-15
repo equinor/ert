@@ -202,6 +202,23 @@ def test_bool_validation(value, valid, min_config, tmp_path, monkeypatch):
         EverestConfig(**min_config)
 
 
+@pytest.mark.parametrize(
+    "path_val, valid", [("my_file", True), ("my_folder/", False), ("my_folder", False)]
+)
+def test_export_filepath_validation(min_config, tmp_path, monkeypatch, path_val, valid):
+    monkeypatch.chdir(tmp_path)
+    Path("my_file").touch()
+    Path("my_folder").mkdir()
+    min_config["export"] = {"csv_output_filepath": path_val}
+    expectation = (
+        does_not_raise()
+        if valid
+        else pytest.raises(ValidationError, match="Invalid type")
+    )
+    with expectation:
+        EverestConfig(**min_config)
+
+
 def test_invalid_wells(tmp_path, monkeypatch):
     monkeypatch.chdir(tmp_path)
     Path("my_file").touch()
