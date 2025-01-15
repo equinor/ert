@@ -1,39 +1,8 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1736863828740,
+  "lastUpdate": 1736929463497,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
-      {
-        "commit": {
-          "author": {
-            "email": "hsoho@equinor.com",
-            "name": "Håkon Steinkopf Søhoel",
-            "username": "HakonSohoel"
-          },
-          "committer": {
-            "email": "49289030+HakonSohoel@users.noreply.github.com",
-            "name": "Håkon Steinkopf Søhoel",
-            "username": "HakonSohoel"
-          },
-          "distinct": true,
-          "id": "71e38f20fdec8d89f4c63348ec2ec766fd279119",
-          "message": "Make realization number span attribute",
-          "timestamp": "2025-01-09T09:23:47+01:00",
-          "tree_id": "dd91b82eebad34d4f7bf8822b74f9b0033ccc11f",
-          "url": "https://github.com/equinor/ert/commit/71e38f20fdec8d89f4c63348ec2ec766fd279119"
-        },
-        "date": 1736411138484,
-        "tool": "pytest",
-        "benches": [
-          {
-            "name": "tests/ert/performance_tests/test_analysis.py::test_and_benchmark_adaptive_localization_with_fields",
-            "value": 0.21404064008280457,
-            "unit": "iter/sec",
-            "range": "stddev: 0.05912433343272758",
-            "extra": "mean: 4.672009949200003 sec\nrounds: 5"
-          }
-        ]
-      },
       {
         "commit": {
           "author": {
@@ -930,6 +899,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.03733844344660833",
             "extra": "mean: 4.6451637934000045 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "havb@equinor.com",
+            "name": "Håvard Berland",
+            "username": "berland"
+          },
+          "committer": {
+            "email": "berland@pvv.ntnu.no",
+            "name": "Håvard Berland",
+            "username": "berland"
+          },
+          "distinct": true,
+          "id": "56b33818027d81369ac8a7d2ca0e8d4fafad0ad1",
+          "message": "Set the default flow simulator version to default\n\ndaily is too on-premises specific, and will actually not\nwork when the current version of ert-configurations is installed\noff-premise.",
+          "timestamp": "2025-01-15T09:22:23+01:00",
+          "tree_id": "bb228da62bdff4342e9c0bb6b9293d7eaef996cf",
+          "url": "https://github.com/equinor/ert/commit/56b33818027d81369ac8a7d2ca0e8d4fafad0ad1"
+        },
+        "date": 1736929422661,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/ert/performance_tests/test_analysis.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 0.2156870193608191,
+            "unit": "iter/sec",
+            "range": "stddev: 0.030857132655623096",
+            "extra": "mean: 4.6363476252 sec\nrounds: 5"
           }
         ]
       }
