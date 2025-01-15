@@ -66,7 +66,7 @@ async def test_scheduler_receives_checksum_and_waits_for_disk_sync(
             run_task = asyncio.create_task(
                 evaluator.run_and_get_successful_realizations()
             )
-            await evaluator._server_started.wait()
+            await evaluator._server_started
             await _run_monitor()
             await run_task
         assert "Waiting for disk synchronization" in caplog.messages
