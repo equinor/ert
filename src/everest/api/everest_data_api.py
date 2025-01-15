@@ -173,7 +173,7 @@ class EverestDataAPI:
         if not all_batch_data:
             return []
 
-        all_info = polars.concat(all_batch_data).drop("result_id")
+        all_info = polars.concat(all_batch_data)
         objective_columns = [
             c
             for c in all_info.drop(["batch_id", "control_name"]).columns
