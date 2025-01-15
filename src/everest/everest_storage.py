@@ -303,7 +303,6 @@ class EverestStorage:
     def _enforce_dtypes(df: polars.DataFrame) -> polars.DataFrame:
         dtypes = {
             "batch_id": polars.UInt32,
-            "result_id": polars.UInt32,
             "perturbation": polars.UInt32,
             "realization": polars.UInt32,
             # -1 is used as a value in simulator cache.
@@ -445,7 +444,6 @@ class EverestStorage:
                 select=["objectives", "evaluation_ids"],
             ).reset_index(),
         ).select(
-            "result_id",
             "batch_id",
             "realization",
             "objective",
@@ -460,7 +458,6 @@ class EverestStorage:
                     select=["constraints", "evaluation_ids"],
                 ).reset_index(),
             ).select(
-                "result_id",
                 "batch_id",
                 "realization",
                 "evaluation_ids",
@@ -474,9 +471,7 @@ class EverestStorage:
 
             batch_constraints = polars.from_pandas(
                 results.to_dataframe("nonlinear_constraints").reset_index()
-            ).select(
-                "result_id", "batch_id", "nonlinear_constraint", "values", "violations"
-            )
+            ).select("batch_id", "nonlinear_constraint", "values", "violations")
 
             batch_constraints = batch_constraints.rename(
                 {
@@ -517,16 +512,13 @@ class EverestStorage:
                 "functions",
                 select=["objectives", "weighted_objective"],
             ).reset_index()
-        ).select(
-            "result_id", "batch_id", "objective", "objectives", "weighted_objective"
-        )
+        ).select("batch_id", "objective", "objectives", "weighted_objective")
 
         realization_controls = polars.from_pandas(
             results.to_dataframe(
                 "evaluations", select=["variables", "evaluation_ids"]
             ).reset_index()
         ).select(
-            "result_id",
             "batch_id",
             "variable",
             "realization",
@@ -558,7 +550,6 @@ class EverestStorage:
         realization_objectives = realization_objectives.pivot(
             values="objective_value",
             index=[
-                "result_id",
                 "batch_id",
                 "realization",
                 "simulation_id",
@@ -579,7 +570,6 @@ class EverestStorage:
             results.to_dataframe("evaluations").reset_index()
         ).select(
             [
-                "result_id",
                 "batch_id",
                 "variable",
                 "realization",
@@ -603,7 +593,6 @@ class EverestStorage:
                 results.to_dataframe("gradients").reset_index()
             ).select(
                 [
-                    "result_id",
                     "batch_id",
                     "variable",
                     "objective",
@@ -626,7 +615,6 @@ class EverestStorage:
         if results.evaluations.perturbed_constraints is not None:
             perturbation_constraints = (
                 perturbation_objectives[
-                    "result_id",
                     "batch_id",
                     "realization",
                     "perturbation",
@@ -644,7 +632,6 @@ class EverestStorage:
 
             if batch_objective_gradient is not None:
                 batch_constraint_gradient = batch_objective_gradient[
-                    "result_id",
                     "batch_id",
                     "control_name",
                     *[
@@ -827,7 +814,6 @@ class EverestStorage:
             batch = matching_batches[0]
             controls_dict = batch.realization_controls.drop(
                 [
-                    "result_id",
                     "batch_id",
                     "simulation_id",
                     "realization",
