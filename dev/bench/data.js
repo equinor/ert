@@ -1,39 +1,8 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1736931139739,
+  "lastUpdate": 1736941028398,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
-      {
-        "commit": {
-          "author": {
-            "email": "ejah@equinor.com",
-            "name": "Eivind Jahren",
-            "username": "eivindjahren"
-          },
-          "committer": {
-            "email": "ejah@equinor.com",
-            "name": "Eivind Jahren",
-            "username": "eivindjahren"
-          },
-          "distinct": true,
-          "id": "7b2bedf144cc86b1fcaef3e5b880522c8cf9a384",
-          "message": "Show inversion errors in GUI",
-          "timestamp": "2025-01-10T08:46:43+01:00",
-          "tree_id": "3131ea715763f6eeed1c20e72e0b88787dfcc076",
-          "url": "https://github.com/equinor/ert/commit/7b2bedf144cc86b1fcaef3e5b880522c8cf9a384"
-        },
-        "date": 1736495316715,
-        "tool": "pytest",
-        "benches": [
-          {
-            "name": "tests/ert/performance_tests/test_analysis.py::test_and_benchmark_adaptive_localization_with_fields",
-            "value": 0.21176326382634605,
-            "unit": "iter/sec",
-            "range": "stddev: 0.029305271839122727",
-            "extra": "mean: 4.722254379399999 sec\nrounds: 5"
-          }
-        ]
-      },
       {
         "commit": {
           "author": {
@@ -930,6 +899,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.038683257085160835",
             "extra": "mean: 4.594200370399991 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "ejah@equinor.com",
+            "name": "Eivind Jahren",
+            "username": "eivindjahren"
+          },
+          "committer": {
+            "email": "ejah@equinor.com",
+            "name": "Eivind Jahren",
+            "username": "eivindjahren"
+          },
+          "distinct": true,
+          "id": "867aac333e1b03f2a8a82c024234e5c2fa76bda6",
+          "message": "Avoid using poly_case in test_model_factory",
+          "timestamp": "2025-01-15T12:34:59+01:00",
+          "tree_id": "22eacb670383fa453a8a948a6f8fc21927b59b3a",
+          "url": "https://github.com/equinor/ert/commit/867aac333e1b03f2a8a82c024234e5c2fa76bda6"
+        },
+        "date": 1736940976512,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/ert/performance_tests/test_analysis.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 0.2217963887899267,
+            "unit": "iter/sec",
+            "range": "stddev: 0.01777197516678981",
+            "extra": "mean: 4.5086396827999975 sec\nrounds: 5"
           }
         ]
       }
