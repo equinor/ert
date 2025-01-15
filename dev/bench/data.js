@@ -1,39 +1,8 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1736958184822,
+  "lastUpdate": 1736972255182,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
-      {
-        "commit": {
-          "author": {
-            "email": "frodeaarstad@gmail.com",
-            "name": "Frode Aarstad",
-            "username": "frode-aarstad"
-          },
-          "committer": {
-            "email": "frodeaarstad@gmail.com",
-            "name": "Frode Aarstad",
-            "username": "frode-aarstad"
-          },
-          "distinct": true,
-          "id": "ea36931b29b232b311324947ef9da1dd934fa75f",
-          "message": "Refactor preferred_num_cpu",
-          "timestamp": "2025-01-13T09:16:12+01:00",
-          "tree_id": "828f74b8c8cb2f1add0bdf6aec383e0a13fe0627",
-          "url": "https://github.com/equinor/ert/commit/ea36931b29b232b311324947ef9da1dd934fa75f"
-        },
-        "date": 1736756287297,
-        "tool": "pytest",
-        "benches": [
-          {
-            "name": "tests/ert/performance_tests/test_analysis.py::test_and_benchmark_adaptive_localization_with_fields",
-            "value": 0.21666479591781931,
-            "unit": "iter/sec",
-            "range": "stddev: 0.047548023697719474",
-            "extra": "mean: 4.615424465999999 sec\nrounds: 5"
-          }
-        ]
-      },
       {
         "commit": {
           "author": {
@@ -930,6 +899,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.03418915592567183",
             "extra": "mean: 4.747759818999998 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "yngve-sk@users.noreply.github.com",
+            "name": "Yngve S. Kristiansen",
+            "username": "yngve-sk"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "843f4fdee343e3a797d9a11981aeacc2814df7ab",
+          "message": "Revert \"Store everest results in ERT storage\"\n\nRevert oopsie",
+          "timestamp": "2025-01-15T21:15:43+01:00",
+          "tree_id": "99820ba657ca2c9d8e1291cd0e08dddeb99870c1",
+          "url": "https://github.com/equinor/ert/commit/843f4fdee343e3a797d9a11981aeacc2814df7ab"
+        },
+        "date": 1736972215507,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/ert/performance_tests/test_analysis.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 0.21898000602433101,
+            "unit": "iter/sec",
+            "range": "stddev: 0.027790636274979155",
+            "extra": "mean: 4.566626963599998 sec\nrounds: 5"
           }
         ]
       }
