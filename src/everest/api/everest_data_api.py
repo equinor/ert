@@ -226,7 +226,7 @@ class EverestDataAPI:
                 )
                 realizations = pl.Series(
                     "realization",
-                    [realization_map.get(int(sim)) for sim in summary["simulation"]],
+                    [realization_map.get(str(sim)) for sim in summary["simulation"]],
                 )
                 realizations = realizations.cast(pl.Int64, strict=False)
                 summary = summary.with_columns(realizations)
