@@ -1,39 +1,8 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1736941028398,
+  "lastUpdate": 1736947779546,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
-      {
-        "commit": {
-          "author": {
-            "email": "havb@equinor.com",
-            "name": "Håvard Berland",
-            "username": "berland"
-          },
-          "committer": {
-            "email": "berland@pvv.ntnu.no",
-            "name": "Håvard Berland",
-            "username": "berland"
-          },
-          "distinct": true,
-          "id": "2a3f4f041b6b7d4c1bd022d9259003518ee9a534",
-          "message": "Ensure pre_experiment validation has access to plugin configuration\n\nThis is a fixup of a regression in 1ae12f6efb66e9fa4208faef2a04898043cdcb37\n\nThe bug slipped through as the feature is skipped unless the test is\nrun on-premise",
-          "timestamp": "2025-01-10T13:24:24+01:00",
-          "tree_id": "1892de1b99f8307950852f4834c1616e24ed2bef",
-          "url": "https://github.com/equinor/ert/commit/2a3f4f041b6b7d4c1bd022d9259003518ee9a534"
-        },
-        "date": 1736511980458,
-        "tool": "pytest",
-        "benches": [
-          {
-            "name": "tests/ert/performance_tests/test_analysis.py::test_and_benchmark_adaptive_localization_with_fields",
-            "value": 0.219106216927792,
-            "unit": "iter/sec",
-            "range": "stddev: 0.03126683911471407",
-            "extra": "mean: 4.563996467200002 sec\nrounds: 5"
-          }
-        ]
-      },
       {
         "commit": {
           "author": {
@@ -930,6 +899,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.01777197516678981",
             "extra": "mean: 4.5086396827999975 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "havb@equinor.com",
+            "name": "Håvard Berland",
+            "username": "berland"
+          },
+          "committer": {
+            "email": "berland@pvv.ntnu.no",
+            "name": "Håvard Berland",
+            "username": "berland"
+          },
+          "distinct": true,
+          "id": "6b9c1a0ec13bcb6aeb26ca495dd67b98c165db44",
+          "message": "Update forward model doc for FLOW\n\nMention that it is now possible to select the version",
+          "timestamp": "2025-01-15T14:27:40+01:00",
+          "tree_id": "c6aacabd4479274c8480fc1bdd990a0e08e19976",
+          "url": "https://github.com/equinor/ert/commit/6b9c1a0ec13bcb6aeb26ca495dd67b98c165db44"
+        },
+        "date": 1736947733447,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/ert/performance_tests/test_analysis.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 0.21869992472930336,
+            "unit": "iter/sec",
+            "range": "stddev: 0.01877686374016909",
+            "extra": "mean: 4.572475281999999 sec\nrounds: 5"
           }
         ]
       }
