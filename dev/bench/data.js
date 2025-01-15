@@ -1,39 +1,8 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1736929463497,
+  "lastUpdate": 1736929493854,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
-      {
-        "commit": {
-          "author": {
-            "email": "49289030+HakonSohoel@users.noreply.github.com",
-            "name": "Håkon Steinkopf Søhoel",
-            "username": "HakonSohoel"
-          },
-          "committer": {
-            "email": "noreply@github.com",
-            "name": "GitHub",
-            "username": "web-flow"
-          },
-          "distinct": true,
-          "id": "3a31ffb7788282a00ff39bc8e99016e1fbc3e602",
-          "message": "Include spans for dark storage (#9535)",
-          "timestamp": "2025-01-09T09:50:41+01:00",
-          "tree_id": "8982d9e3891ad3550a6322426dcd9954d9694245",
-          "url": "https://github.com/equinor/ert/commit/3a31ffb7788282a00ff39bc8e99016e1fbc3e602"
-        },
-        "date": 1736412758356,
-        "tool": "pytest",
-        "benches": [
-          {
-            "name": "tests/ert/performance_tests/test_analysis.py::test_and_benchmark_adaptive_localization_with_fields",
-            "value": 0.21784002562900132,
-            "unit": "iter/sec",
-            "range": "stddev: 0.08374957890094412",
-            "extra": "mean: 4.5905246159999935 sec\nrounds: 5"
-          }
-        ]
-      },
       {
         "commit": {
           "author": {
@@ -930,6 +899,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.030857132655623096",
             "extra": "mean: 4.6363476252 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "havb@equinor.com",
+            "name": "Håvard Berland",
+            "username": "berland"
+          },
+          "committer": {
+            "email": "berland@pvv.ntnu.no",
+            "name": "Håvard Berland",
+            "username": "berland"
+          },
+          "distinct": true,
+          "id": "9a4f5c89d446a262c2b5e631460ca8b64acc9531",
+          "message": "Support forwarding multiple arguments to reservoir simulators",
+          "timestamp": "2025-01-15T09:23:00+01:00",
+          "tree_id": "3bf9434de32b099e82c8e47e369e73cb2ca50197",
+          "url": "https://github.com/equinor/ert/commit/9a4f5c89d446a262c2b5e631460ca8b64acc9531"
+        },
+        "date": 1736929455118,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/ert/performance_tests/test_analysis.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 0.21827084124134402,
+            "unit": "iter/sec",
+            "range": "stddev: 0.02584693117079259",
+            "extra": "mean: 4.581463993600002 sec\nrounds: 5"
           }
         ]
       }
