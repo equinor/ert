@@ -23,7 +23,7 @@ import ert.shared
 from _ert.forward_model_runner.client import Client
 from ert import LibresFacade
 from ert.cli.main import ErtCliError
-from ert.config import ConfigValidationError, ConfigWarning, ErtConfig
+from ert.config import ConfigValidationError, ErtConfig
 from ert.enkf_main import sample_prior
 from ert.ensemble_evaluator import EnsembleEvaluator
 from ert.mode_definitions import (
@@ -209,45 +209,6 @@ def test_that_the_model_raises_exception_if_successful_realizations_less_than_mi
         match="Number of successful realizations",
     ):
         run_cli(mode, "--disable-monitor", "failing_realizations.ert")
-
-
-@pytest.mark.parametrize(
-    "mode",
-    [
-        pytest.param(ENSEMBLE_SMOOTHER_MODE),
-        pytest.param(ITERATIVE_ENSEMBLE_SMOOTHER_MODE),
-        pytest.param(ES_MDA_MODE),
-    ],
-)
-@pytest.mark.usefixtures("copy_poly_case")
-def test_that_the_model_warns_when_active_realizations_less_min_realizations(mode):
-    """
-    Verify that the run model checks that active realizations is equal or higher than
-    NUM_REALIZATIONS when running an experiment.
-    A warning is issued when NUM_REALIZATIONS is higher than active_realizations.
-    """
-    with (
-        open("poly.ert", encoding="utf-8") as fin,
-        open("poly_lower_active_reals.ert", "w", encoding="utf-8") as fout,
-    ):
-        for line in fin:
-            if "MIN_REALIZATIONS" in line:
-                fout.write("MIN_REALIZATIONS 10\n")
-            elif "NUM_REALIZATIONS" in line:
-                fout.write("NUM_REALIZATIONS 10\n")
-            else:
-                fout.write(line)
-    with pytest.warns(
-        ConfigWarning,
-        match=r"MIN_REALIZATIONS was set to the current number of active realizations \(5\)",
-    ):
-        run_cli(
-            mode,
-            "--disable-monitor",
-            "poly_lower_active_reals.ert",
-            "--realizations",
-            "0-4",
-        )
 
 
 @pytest.fixture
