@@ -1,9 +1,9 @@
 import os
-from pathlib import Path
 from textwrap import dedent
 
 import pytest
 from ruamel.yaml import YAML
+from seba_sqlite.snapshot import SebaSnapshot
 from tests.everest.utils import (
     capture_streams,
     skipif_no_everest_models,
@@ -13,7 +13,6 @@ from everest import __version__ as everest_version
 from everest.bin.main import start_everest
 from everest.config import EverestConfig, ServerConfig
 from everest.detached import ServerStatus, everserver_status
-from everest.everest_storage import EverestStorage
 
 WELL_ORDER = "everest/model/config.yml"
 
@@ -57,15 +56,14 @@ def test_everest_entry_run(cached_example):
 
     assert status["status"] == ServerStatus.completed
 
-    storage = EverestStorage(Path(config.optimization_output_dir))
-    storage.read_from_output_dir()
-    optimal = storage.get_optimal_result()
+    snapshot = SebaSnapshot(config.optimization_output_dir).get_snapshot()
 
-    assert optimal.controls["point_x"] == pytest.approx(0.5, abs=0.05)
-    assert optimal.controls["point_y"] == pytest.approx(0.5, abs=0.05)
-    assert optimal.controls["point_z"] == pytest.approx(0.5, abs=0.05)
+    best_settings = snapshot.optimization_data[-1]
+    assert best_settings.controls["point_x"] == pytest.approx(0.5, abs=0.05)
+    assert best_settings.controls["point_y"] == pytest.approx(0.5, abs=0.05)
+    assert best_settings.controls["point_z"] == pytest.approx(0.5, abs=0.05)
 
-    assert optimal.total_objective == pytest.approx(0.0, abs=0.0005)
+    assert best_settings.objective_value == pytest.approx(0.0, abs=0.0005)
 
     with capture_streams():
         start_everest(["everest", "monitor", config_file])
