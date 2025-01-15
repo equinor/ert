@@ -10,13 +10,13 @@ from everest.config_keys import ConfigKeys as CK
 
 
 def test_config_branch_entry(cached_example):
-    path, _, _ = cached_example("math_func/config_advanced.yml")
+    path, _, _ = cached_example("math_func/config_minimal.yml")
 
-    config_branch_entry(["config_advanced.yml", "new_restart_config.yml", "-b", "1"])
+    config_branch_entry(["config_minimal.yml", "new_restart_config.yml", "-b", "1"])
 
     assert exists("new_restart_config.yml")
 
-    old_config = load_yaml("config_advanced.yml")
+    old_config = load_yaml("config_minimal.yml")
     old_controls = old_config[CK.CONTROLS]
 
     assert CK.INITIAL_GUESS in old_controls[0]
