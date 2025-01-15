@@ -30,7 +30,8 @@ keyword.
 
 Additional options specific to Dakota can be passed as a list of strings using
 the `options` keyword. The `backend_options` keyword is ignored by the Dakota
-backend.
+backend. The main differences between the Dakota `optpp_q_newton` and `conmin_mfd`
+are listed in :ref:`cha_optimization_algorithms`.
 
 .. important::
 
