@@ -18,7 +18,7 @@ def evaluator_to_use():
     async def run_evaluator(ensemble, ee_config):
         evaluator = EnsembleEvaluator(ensemble, ee_config)
         run_task = asyncio.create_task(evaluator.run_and_get_successful_realizations())
-        await evaluator._server_started.wait()
+        await evaluator._server_started
         try:
             yield evaluator
         finally:
