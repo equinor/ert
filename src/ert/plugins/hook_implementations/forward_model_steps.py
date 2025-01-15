@@ -347,16 +347,20 @@ class Flow(ForwardModelStepPlugin):
             examples="""
 .. code-block:: bash
 
-    FORWARD_MODEL FLOW(<ECLBASE>, <OPTS>="--ignore-errors")
+    FORWARD_MODEL FLOW(<ECLBASE>, <VERSION>=xxx, <OPTS>="--ignore-errors")
 
-The :code:`OPTS` argument is optional and can be removed, thus running flow
-without ignoring errors.
+The :code:`OPTS` argument is optional and can be removed. :code>`ECLBASE` can
+also be defaulted. Multiple options can be supplied by separating them
+with a space.
 
-ERT will be able to run with flow only if OPM FLOW simulator is installed and available
-in the user $PATH environment varaible.
+ERT will be able to run the flow simulator if there is a binary named
+:code:`flow` or the wrapper :code:`flowrun` in the users :code:`$PATH`
+environment variable.
 
-Currently ERT does not support changing the default options for the flow simulator.
-
+If :code:`flowrun` is found, it will take precedence, and then it will be
+possible to select the version of flow to use by setting :code:`<VERSION>`.
+Available versions are verified towards what :code:`flowrun --report-versions`
+returns.
 """,
             description="""Forward model for OPM Flow simulator""",
         )
