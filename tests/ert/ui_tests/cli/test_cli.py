@@ -734,19 +734,6 @@ def test_cli_test_run(mock_cli_run):
 
 
 @pytest.mark.usefixtures("copy_poly_case")
-def test_ies():
-    run_cli(
-        ITERATIVE_ENSEMBLE_SMOOTHER_MODE,
-        "--disable-monitor",
-        "--target-ensemble",
-        "iter-%d",
-        "--realizations",
-        "1,2,4,8,16",
-        "poly.ert",
-    )
-
-
-@pytest.mark.usefixtures("copy_poly_case")
 def test_that_running_ies_with_different_steplength_produces_different_result():
     """This is a regression test to make sure that different step-lengths
     give different results when running SIES.
