@@ -1,39 +1,8 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1736929997737,
+  "lastUpdate": 1736930832962,
   "repoUrl": "https://github.com/equinor/ert",
   "entries": {
     "Python Benchmark with pytest-benchmark": [
-      {
-        "commit": {
-          "author": {
-            "email": "hsoho@equinor.com",
-            "name": "Håkon Steinkopf Søhoel",
-            "username": "HakonSohoel"
-          },
-          "committer": {
-            "email": "49289030+HakonSohoel@users.noreply.github.com",
-            "name": "Håkon Steinkopf Søhoel",
-            "username": "HakonSohoel"
-          },
-          "distinct": true,
-          "id": "3b745a6e027400ec011b2e75a55078b1f9140acf",
-          "message": "Fix typo in dependencies",
-          "timestamp": "2025-01-09T14:04:46+01:00",
-          "tree_id": "4217a2b591beffabe20d91a8b8efaaacf011b49f",
-          "url": "https://github.com/equinor/ert/commit/3b745a6e027400ec011b2e75a55078b1f9140acf"
-        },
-        "date": 1736428047295,
-        "tool": "pytest",
-        "benches": [
-          {
-            "name": "tests/ert/performance_tests/test_analysis.py::test_and_benchmark_adaptive_localization_with_fields",
-            "value": 0.22026616786278097,
-            "unit": "iter/sec",
-            "range": "stddev: 0.012002047937071825",
-            "extra": "mean: 4.539961854800003 sec\nrounds: 5"
-          }
-        ]
-      },
       {
         "commit": {
           "author": {
@@ -930,6 +899,37 @@ window.BENCHMARK_DATA = {
             "unit": "iter/sec",
             "range": "stddev: 0.04616200503930073",
             "extra": "mean: 4.661559505199994 sec\nrounds: 5"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "ejah@equinor.com",
+            "name": "Eivind Jahren",
+            "username": "eivindjahren"
+          },
+          "committer": {
+            "email": "ejah@equinor.com",
+            "name": "Eivind Jahren",
+            "username": "eivindjahren"
+          },
+          "distinct": true,
+          "id": "f60dc0032c2ffe416cfd25bdea17f049828b9d91",
+          "message": "Use lalr parser for main ert config\n\nThis is for performance reasons. May cause ambiguous config files\nto no longer be parsed.",
+          "timestamp": "2025-01-15T09:45:19+01:00",
+          "tree_id": "3b06f6cbbd31bd9c33538727632de61ee9cfb990",
+          "url": "https://github.com/equinor/ert/commit/f60dc0032c2ffe416cfd25bdea17f049828b9d91"
+        },
+        "date": 1736930795080,
+        "tool": "pytest",
+        "benches": [
+          {
+            "name": "tests/ert/performance_tests/test_analysis.py::test_and_benchmark_adaptive_localization_with_fields",
+            "value": 0.215833648092967,
+            "unit": "iter/sec",
+            "range": "stddev: 0.03127751551107894",
+            "extra": "mean: 4.6331978764000015 sec\nrounds: 5"
           }
         ]
       }
