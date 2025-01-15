@@ -155,7 +155,7 @@ class RunReservoirSimulator:
         self.summary_conversion: bool = summary_conversion
 
         self.bypass_flowrun: bool = False
-        self.forwarded_args: list[str] = forwarded_args or []
+        self.forwarded_args: list[str] = " ".join(forwarded_args or []).split()
 
         runner_abspath: str | Path | None = None
         if simulator in {"eclipse", "e300"}:

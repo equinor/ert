@@ -161,7 +161,7 @@ def test_await_completed_summary_file_will_wait_for_slow_smry():
 
 @pytest.mark.parametrize("simulator", ["eclipse", "e300", "flow"])
 @pytest.mark.usefixtures("use_tmpdir")
-def test_runner_will_forward_unknown_arguments_to_eclrun(monkeypatch, simulator):
+def test_runner_will_forward_unknown_arguments(monkeypatch, simulator):
     eclrun_bin = Path("bin/eclrun")
     eclrun_bin.parent.mkdir()
     eclrun_bin.write_text("#!/bin/sh\necho $@ > eclrun_args\nexit 0", encoding="utf-8")
@@ -182,5 +182,35 @@ def test_runner_will_forward_unknown_arguments_to_eclrun(monkeypatch, simulator)
     )
 
     assert "--arbitrary_option_being_forwarded" in Path("eclrun_args").read_text(
+        encoding="utf-8"
+    )
+
+
+@pytest.mark.parametrize("simulator", ["eclipse", "e300", "flow"])
+@pytest.mark.usefixtures("use_tmpdir")
+def test_runner_will_forward_multiple_unknown_arguments(monkeypatch, simulator):
+    eclrun_bin = Path("bin/eclrun")
+    eclrun_bin.parent.mkdir()
+    eclrun_bin.write_text(
+        '#!/bin/sh\nfor arg in "$@"; do echo $arg >> eclrun_args; done\nexit 0',
+        encoding="utf-8",
+    )
+    eclrun_bin.chmod(eclrun_bin.stat().st_mode | stat.S_IEXEC)
+    shutil.copy(eclrun_bin, "bin/flowrun")
+    monkeypatch.setenv("PATH", f"bin:{os.environ['PATH']}")
+    Path("EIGHTCELLS.DATA").touch()
+    Path("EIGHTCELLS.PRT").write_text("Errors 0\nBugs 0", encoding="utf-8")
+
+    run_reservoirsimulator.run_reservoirsimulator(
+        [
+            simulator,
+            "EIGHTCELLS.DATA",
+            "--version",
+            "2019.3",
+            "--first-option --second-option",
+        ]
+    )
+
+    assert "--first-option\n--second-option" in Path("eclrun_args").read_text(
         encoding="utf-8"
     )
