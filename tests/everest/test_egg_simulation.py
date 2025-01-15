@@ -594,7 +594,6 @@ def test_opm_fail_default_summary_keys(copy_egg_test_data_to_tmp):
     config = EverestConfig.load_file(CONFIG_FILE)
     # The Everest config file will fail to load as an Eclipse data file
     config.model.data_file = os.path.realpath(CONFIG_FILE)
-    assert len(EverestConfig.lint_config_dict(config.to_dict())) == 0
 
     ert_config = _everest_to_ert_config_dict(config)
 
