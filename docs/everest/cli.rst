@@ -52,78 +52,7 @@ Using again the command `everest monitor config_file.yml`, will reattach to the 
 Everest `export`
 ================
 
-.. argparse::
-    :module: everest.bin.everexport_script
-    :func: _build_args_parser
-    :prog: everexport_entry
-
-
-The everest export functionality is configured in the export section of the config file.
-The following represents an export section a config file set with default values.
-
-.. code-block:: yaml
-
-    export:
-        skip_export: False
-        keywords:
-        batches:
-        discard_gradient: True # Export only non-gradient simulations
-        discard_rejected: True # Export only increased merit simulations
-        csv_output_filepath: everest_output_folder/config_file.csv
-
-When the export command `everest export config_file.yml` is run with a config file that does not define an export section default values will be used, a `config_file.csv` file in the Everest output folder will be created.
-By default Everest exports only non-gradient with increased merit simulations when no config section is defined in the config file.
-The file will contain optimization data for all the optimization batches and the available eclipse keywords (if a data file is available) for only the non-gradient simulations and the simulations that increase merit.
-
-**Examples**
-
-* Export only non-gradient simulation using the following export section in the config file
-
-.. code-block:: yaml
-
-    export:
-        discard_rejected: False
-
-* Export only increased merit simulation using the following export section in the config file
-
-.. code-block:: yaml
-
-    export:
-        discard_gradient: False
-
-
-* Export only a list of available batches even if they are gradient batches and if no export section is defined.
-
- everest export config_file.yml --batches 0 2 4
-
-The command above is equivalent to having the following export section defined in the config file `config_file.yml`.
-
-.. code-block:: yaml
-
-    export:
-      batches: [0, 2, 4]
-
-* Exporting just a specific list of eclipse keywords requires the following export section defined in the config file.
-
-.. code-block:: yaml
-
-    export:
-      keywords: ['FOIP', 'FOPT']
-
-* Skip export by adding the following section in the config file.
-
-.. code-block:: yaml
-
-    export:
-      skip_export: True
-
-* Export will also be skipped if an empty list of batches is defined in the export section.
-
-.. code-block:: yaml
-
-    export:
-      batches: []
-
+The everest export has been removed. All data is now always exported to the optimization output directory.
 
 ==============
 Everest `lint`

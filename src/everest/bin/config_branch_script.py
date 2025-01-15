@@ -1,16 +1,15 @@
 import argparse
 from copy import deepcopy as copy
 from functools import partial
-from os.path import exists, join
+from pathlib import Path
 from typing import Any
 
 from ruamel.yaml import YAML
-from seba_sqlite.database import Database as seba_db
-from seba_sqlite.snapshot import SebaSnapshot
 
 from everest.config import EverestConfig
 from everest.config_file_loader import load_yaml
 from everest.config_keys import ConfigKeys as CK
+from everest.everest_storage import EverestStorage
 
 
 def _yaml_config(file_path: str, parser) -> tuple[str, dict[str, Any] | None]:
@@ -46,10 +45,19 @@ def _build_args_parser():
 
 
 def opt_controls_by_batch(optimization_dir, batch):
-    snapshot = SebaSnapshot(optimization_dir)
-    for opt_data in snapshot.get_optimization_data():
-        if opt_data.batch_id == batch:
-            return opt_data.controls
+    storage = EverestStorage(Path(optimization_dir))
+    storage.read_from_output_dir()
+
+    control_names = storage.data.controls["control_name"]
+    batch_data = next((b for b in storage.data.batches if b.batch_id == batch), None)
+
+    if batch_data:
+        # All geo-realizations should have the same unperturbed control values per batch
+        # hence it does not matter which realization we select the controls for
+        return batch_data.realization_controls.select(
+            control_names.to_list()
+        ).to_dicts()[0]
+
     return None
 
 
@@ -91,10 +99,6 @@ def config_branch_entry(args=None):
     parser = _build_args_parser()
     options = parser.parse_args(args)
     optimization_dir, yml_config = options.input_config
-
-    db_path = join(optimization_dir, seba_db.FILENAME)
-    if not exists(db_path):
-        parser.error(f"Optimization source {db_path} not found")
 
     opt_controls = opt_controls_by_batch(optimization_dir, options.batch)
     if opt_controls is None:
