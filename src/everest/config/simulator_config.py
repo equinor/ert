@@ -97,8 +97,10 @@ class SimulatorConfig(BaseModel, extra="forbid"):  # type: ignore
     def default_local_queue(cls, v):
         if v is None:
             return LocalQueueOptions(max_running=8)
-        elif "activate_script" not in v and ErtPluginManager().activate_script():
-            v["activate_script"] = ErtPluginManager().activate_script()
+        if "activate_script" not in v and (
+            active_script := ErtPluginManager().activate_script()
+        ):
+            v["activate_script"] = active_script
         return v
 
     @model_validator(mode="before")

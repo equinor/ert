@@ -305,8 +305,9 @@ class ErtConfig:
         forward_model_step_classes: list[type[ForwardModelStepPlugin]] | None = None,
         env_pr_fm_step: dict[str, dict[str, Any]] | None = None,
     ) -> type["ErtConfig"]:
+        pm = ErtPluginManager()
         if forward_model_step_classes is None:
-            forward_model_step_classes = ErtPluginManager().forward_model_steps
+            forward_model_step_classes = pm.forward_model_steps
 
         preinstalled_fm_steps: dict[str, ForwardModelStepPlugin] = {}
         for fm_step_subclass in forward_model_step_classes:
@@ -315,7 +316,7 @@ class ErtConfig:
 
         if env_pr_fm_step is None:
             env_pr_fm_step = _uppercase_subkeys_and_stringify_subvalues(
-                ErtPluginManager().get_forward_model_configuration()
+                pm.get_forward_model_configuration()
             )
 
         class ErtConfigWithPlugins(ErtConfig):
@@ -323,7 +324,7 @@ class ErtConfig:
                 dict[str, ForwardModelStepPlugin]
             ] = preinstalled_fm_steps
             ENV_PR_FM_STEP: ClassVar[dict[str, dict[str, Any]]] = env_pr_fm_step
-            ACTIVATE_SCRIPT = ErtPluginManager().activate_script()
+            ACTIVATE_SCRIPT = pm.activate_script()
 
         assert issubclass(ErtConfigWithPlugins, ErtConfig)
         return ErtConfigWithPlugins
