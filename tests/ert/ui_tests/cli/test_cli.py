@@ -603,19 +603,6 @@ def fixture_mock_cli_run(monkeypatch):
 
 
 @pytest.mark.usefixtures("copy_poly_case")
-def test_ensemble_evaluator():
-    run_cli(
-        ENSEMBLE_SMOOTHER_MODE,
-        "--disable-monitor",
-        "--target-ensemble",
-        "poly_runpath_file_%d",
-        "--realizations",
-        "1,2,4,8,16,32,64",
-        "poly.ert",
-    )
-
-
-@pytest.mark.usefixtures("copy_poly_case")
 def test_es_mda(snapshot):
     with fileinput.input("poly.ert", inplace=True) as fin:
         for line_nr, line in enumerate(fin):
@@ -678,7 +665,7 @@ def test_cli_does_not_run_without_observations(mode, target):
 
 
 @pytest.mark.usefixtures("copy_poly_case")
-def test_ensemble_evaluator_disable_monitoring():
+def test_ensemble_smoother():
     run_cli(
         ENSEMBLE_SMOOTHER_MODE,
         "--disable-monitoring",
