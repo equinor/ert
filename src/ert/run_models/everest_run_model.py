@@ -9,18 +9,21 @@ import queue
 import shutil
 from collections import defaultdict
 from collections.abc import Callable
+from dataclasses import dataclass
 from enum import IntEnum
 from pathlib import Path
 from types import TracebackType
 from typing import TYPE_CHECKING, Any, Protocol
 
 import numpy as np
+import seba_sqlite.sqlite_storage
 from numpy import float64
 from numpy._typing import NDArray
 from ropt.enums import EventType, OptimizerExitCode
 from ropt.evaluator import EvaluatorContext, EvaluatorResult
 from ropt.plan import BasicOptimizer
 from ropt.plan import Event as OptimizerEvent
+from seba_sqlite import SqliteStorage
 from typing_extensions import TypedDict
 
 from _ert.events import EESnapshot, EESnapshotUpdate, Event
@@ -29,7 +32,6 @@ from ert.ensemble_evaluator import EnsembleSnapshot, EvaluatorServerConfig
 from ert.runpaths import Runpaths
 from ert.storage import open_storage
 from everest.config import EverestConfig
-from everest.everest_storage import EverestStorage, OptimalResult
 from everest.optimizer.everest2ropt import everest2ropt
 from everest.simulator.everest_to_ert import everest_to_ert_config
 from everest.strings import EVEREST
@@ -66,6 +68,24 @@ class SimulationCallback(Protocol):
 
 class OptimizerCallback(Protocol):
     def __call__(self) -> str | None: ...
+
+
+@dataclass
+class OptimalResult:
+    batch: int
+    controls: list[Any]
+    total_objective: float
+
+    @staticmethod
+    def from_seba_optimal_result(
+        o: seba_sqlite.sqlite_storage.OptimalResult | None = None,
+    ) -> OptimalResult | None:
+        if o is None:
+            return None
+
+        return OptimalResult(
+            batch=o.batch, controls=o.controls, total_objective=o.total_objective
+        )
 
 
 class EverestExitCode(IntEnum):
@@ -186,21 +206,23 @@ class EverestRunModel(BaseRunModel):
         # Initialize the ropt optimizer:
         optimizer = self._create_optimizer()
 
-        self.ever_storage = EverestStorage(
-            output_dir=Path(self._everest_config.optimization_output_dir),
-        )
-        self.ever_storage.observe_optimizer(
-            optimizer,
-            Path(self._everest_config.optimization_output_dir)
-            / "dakota"
-            / "OPT_DEFAULT.out",
+        # The SqliteStorage object is used to store optimization results from
+        # Seba in an sqlite database. It reacts directly to events emitted by
+        # Seba and is not called by Everest directly. The stored results are
+        # accessed by Everest via separate SebaSnapshot objects.
+        # This mechanism is outdated and not supported by the ropt package. It
+        # is retained for now via the seba_sqlite package.
+        seba_storage = SqliteStorage(  # type: ignore
+            optimizer, self._everest_config.optimization_output_dir
         )
 
         # Run the optimization:
         optimizer_exit_code = optimizer.run().exit_code
 
         # Extract the best result from the storage.
-        self._result = self.ever_storage.get_optimal_result()
+        self._result = OptimalResult.from_seba_optimal_result(
+            seba_storage.get_optimal_result()  # type: ignore
+        )
 
         if self._exit_code is None:
             match optimizer_exit_code:
