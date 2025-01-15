@@ -85,7 +85,7 @@ class SimulatorConfig(BaseModelWithContextSupport, extra="forbid"):
         if v is None:
             options = None
             if info.context:
-                options = info.context.get(info.field_name)
+                options = info.context.get("queue_system")
             return options or LocalQueueOptions(max_running=8)
         return v
 

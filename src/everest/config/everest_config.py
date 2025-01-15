@@ -70,18 +70,6 @@ from .well_config import WellConfig
 from .workflow_config import WorkflowConfig
 
 
-def _dummy_ert_config() -> ErtConfig:
-    site_config = ErtConfig.read_site_config()
-    dummy_config = {"NUM_REALIZATIONS": 1, "ENSPATH": "."}
-    dummy_config.update(site_config)  # type: ignore
-    return ErtConfig.with_plugins().from_dict(config_dict=dummy_config)
-
-
-def get_system_installed_jobs() -> list[str]:
-    """Returns list of all system installed job names"""
-    return list(_dummy_ert_config().installed_forward_model_steps.keys())
-
-
 class EverestValidationError(ValueError):
     def __init__(self) -> None:
         super().__init__()
@@ -179,7 +167,7 @@ and environment variables are exposed in the form 'os.NAME', for example:
         default=None, description="A list of output constraints with unique names."
     )
     install_jobs: list[InstallJobConfig] | None = Field(
-        default=None, description="A list of jobs to install"
+        default=None, description="A list of jobs to install", validate_default=True
     )
     install_workflow_jobs: list[InstallJobConfig] | None = Field(
         default=None, description="A list of workflow jobs to install"
@@ -263,7 +251,8 @@ and environment variables are exposed in the form 'os.NAME', for example:
             return self
         installed_jobs_name = [job.name for job in install_jobs]
         installed_jobs_name += list(script_names)  # default jobs
-        installed_jobs_name += get_system_installed_jobs()  # system jobs
+        if info.context:  # Add plugin jobs
+            installed_jobs_name += info.context.get("install_jobs", {}).keys()
 
         errors = []
         for fm_job in forward_model_jobs:
@@ -698,12 +687,12 @@ and environment variables are exposed in the form 'os.NAME', for example:
             "model": {"realizations": [0]},
         }
 
-        return cls.model_validate({**defaults, **kwargs})
+        return cls.with_plugins({**defaults, **kwargs})  # type: ignore
 
     @staticmethod
     def lint_config_dict(config: ConfigDict) -> list[ErrorDetails]:
         try:
-            EverestConfig.model_validate(config)
+            EverestConfig.with_plugins(config)
         except ValidationError as err:
             return err.errors()
         else:
@@ -746,9 +735,14 @@ and environment variables are exposed in the form 'os.NAME', for example:
 
     @classmethod
     def with_plugins(cls, config_dict):
-        context = {}
-        activate_script = ErtPluginManager().activate_script()
         site_config = ErtConfig.read_site_config()
+        ert_config: ErtConfig = ErtConfig.with_plugins().from_dict(
+            config_dict=site_config
+        )
+        context: dict[str, Any] = {
+            "install_jobs": ert_config.installed_forward_model_steps,
+        }
+        activate_script = ErtPluginManager().activate_script()
         if site_config:
             context["queue_system"] = QueueConfig.from_dict(site_config).queue_options
         if activate_script:
