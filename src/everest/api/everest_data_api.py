@@ -51,8 +51,6 @@ class EverestDataAPI:
         )
 
     def input_constraint(self, control):
-        # Note: This function is weird, its existence is probably not well-justified
-        # consider removing!
         initial_values = self._ever_storage.data.controls
         control_spec = initial_values.filter(
             pl.col("control_name") == control
