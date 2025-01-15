@@ -430,7 +430,7 @@ def test_that_deprecated_runpath_substitution_remain_valid(make_run_path):
 def test_write_runpath_file(storage, itr, run_paths):
     runpath_fmt = "simulations/<GEO_ID>/realization-<IENS>/iter-<ITER>"
     runpath_list_path = "a_file_name"
-    ert_config = ErtConfig.with_plugins().from_file_contents(
+    ert_config = ErtConfig.from_file_contents(
         dedent(
             f"""\
             NUM_REALIZATIONS 25
