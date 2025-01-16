@@ -425,16 +425,10 @@ def test_ert_config_parses_date():
     assert ert_config.model_config.runpath_format_string == expected_run_path
 
 
-@pytest.mark.usefixtures("use_tmpdir")
 def test_that_subst_list_is_given_default_runpath_file():
-    test_config_file_base = "test"
-    test_config_file_name = f"{test_config_file_base}.ert"
-    test_config_contents = "NUM_REALIZATIONS 1"
-    Path(test_config_file_name).write_text(test_config_contents, encoding="utf-8")
-    ert_config = ErtConfig.from_file(test_config_file_name)
-    assert ert_config.substitutions["<RUNPATH_FILE>"] == os.path.abspath(
-        ErtConfig.DEFAULT_RUNPATH_FILE
-    )
+    assert ErtConfig.from_file_contents("NUM_REALIZATIONS 1").substitutions[
+        "<RUNPATH_FILE>"
+    ] == os.path.abspath(ErtConfig.DEFAULT_RUNPATH_FILE)
 
 
 @pytest.mark.integration_test
