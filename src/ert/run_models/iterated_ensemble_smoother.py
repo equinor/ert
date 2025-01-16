@@ -244,4 +244,4 @@ class IteratedEnsembleSmoother(BaseRunModel):
 
     @classmethod
     def description(cls) -> str:
-        return "Sample parameters → [evaluate → update] several iterations"
+        return "Sample parameters → [evaluate → update] several iterations.\nDeprecated algorithm. Prefer ES-MDA."
