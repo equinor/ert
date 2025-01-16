@@ -64,7 +64,7 @@ class EnsembleEvaluator:
         self._max_batch_size: int = 500
         self._batching_interval: float = 2.0
         self._complete_batch: asyncio.Event = asyncio.Event()
-        self._server_started: asyncio.Event = asyncio.Event()
+        self._server_started: asyncio.Future[None] = asyncio.Future()
         self._clients_connected: set[bytes] = set()
         self._clients_empty: asyncio.Event = asyncio.Event()
         self._clients_empty.set()
@@ -73,7 +73,7 @@ class EnsembleEvaluator:
         self._dispatchers_empty.set()
 
     async def _publisher(self) -> None:
-        await self._server_started.wait()
+        await self._server_started
         while True:
             event = await self._events_to_send.get()
             for identity in self._clients_connected:
@@ -243,7 +243,7 @@ class EnsembleEvaluator:
                 await self._events.put(event)
 
     async def listen_for_messages(self) -> None:
-        await self._server_started.wait()
+        await self._server_started
         while True:
             try:
                 dealer, _, frame = await self._router_socket.recv_multipart()
@@ -285,9 +285,10 @@ class EnsembleEvaluator:
                 self._router_socket.bind(f"tcp://*:{self._config.router_port}")
             else:
                 self._router_socket.bind(self._config.url)
-            self._server_started.set()
+            self._server_started.set_result(None)
         except zmq.error.ZMQError as e:
             logger.error(f"ZMQ error encountered {e} during evaluator initialization")
+            self._server_started.set_exception(e)
             raise
         try:
             await self._server_done.wait()
@@ -350,7 +351,7 @@ class EnsembleEvaluator:
             asyncio.create_task(self.listen_for_messages(), name="listener_task"),
         ]
 
-        await self._server_started.wait()
+        await self._server_started
         self._ee_tasks.append(
             asyncio.create_task(
                 self._ensemble.evaluate(
