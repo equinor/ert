@@ -25,12 +25,7 @@ def test_no_plugins():
     assert len(pm.forward_model_steps) > 0
     assert len(pm._get_config_workflow_jobs()) > 0
 
-    assert pm._site_config_lines() == [
-        "-- Content below originated from ert (site_config_lines)",
-        "JOB_SCRIPT fm_dispatch.py",
-        "QUEUE_SYSTEM LOCAL",
-        "QUEUE_OPTION LOCAL MAX_RUNNING 1",
-    ]
+    assert pm._site_config_lines() == []
 
 
 def test_with_plugins():
@@ -51,10 +46,6 @@ def test_with_plugins():
     assert pm._get_config_workflow_jobs()["wf_job2"] == "/dummy/path/wf_job2"
 
     assert pm._site_config_lines() == [
-        "-- Content below originated from ert (site_config_lines)",
-        "JOB_SCRIPT fm_dispatch.py",
-        "QUEUE_SYSTEM LOCAL",
-        "QUEUE_OPTION LOCAL MAX_RUNNING 1",
         "-- Content below originated from dummy (site_config_lines)",
         "JOB_SCRIPT fm_dispatch_dummy.py",
         "QUEUE_OPTION LOCAL MAX_RUNNING 2",

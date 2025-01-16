@@ -1,6 +1,5 @@
 # mypy: ignore-errors
 import copy
-import importlib
 import logging
 import os
 from collections import defaultdict
@@ -72,12 +71,10 @@ from .workflow_job import ErtScriptLoadFailure, WorkflowJob
 logger = logging.getLogger(__name__)
 
 
-def site_config_location() -> str:
+def site_config_location() -> str | None:
     if "ERT_SITE_CONFIG" in os.environ:
         return os.environ["ERT_SITE_CONFIG"]
-    return str(
-        Path(importlib.util.find_spec("ert").origin).parent / "resources/site-config"
-    )
+    return None
 
 
 def create_forward_model_json(
@@ -347,10 +344,9 @@ class ErtConfig:
         user_config_contents = read_file(user_config_file)
         cls._log_config_file(user_config_file, user_config_contents)
         site_config_file = site_config_location()
-        site_config_contents = read_file(site_config_file)
         user_config_dict = cls._config_dict_from_contents(
             user_config_contents,
-            site_config_contents,
+            read_file(site_config_file) if site_config_file else None,
             user_config_file,
             site_config_file,
         )
@@ -361,14 +357,18 @@ class ErtConfig:
     def _config_dict_from_contents(
         cls,
         user_config_contents: str,
-        site_config_contents: str,
+        site_config_contents: str | None,
         config_file_name: str,
         site_config_name: str,
     ) -> ConfigDict:
-        site_config_dict = parse_contents(
-            site_config_contents,
-            file_name=site_config_name,
-            schema=init_site_config_schema(),
+        site_config_dict = (
+            parse_contents(
+                site_config_contents,
+                file_name=site_config_name,
+                schema=init_site_config_schema(),
+            )
+            if site_config_contents
+            else ConfigDict()
         )
         user_config_dict = cls._read_user_config_and_apply_site_config(
             user_config_contents,
@@ -634,6 +634,8 @@ class ErtConfig:
     @classmethod
     def read_site_config(cls) -> ConfigDict:
         site_config_file = site_config_location()
+        if not site_config_file:
+            return ConfigDict()
         return parse_contents(
             read_file(site_config_file),
             file_name=site_config_file,

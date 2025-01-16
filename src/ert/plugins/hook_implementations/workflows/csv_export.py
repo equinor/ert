@@ -17,8 +17,7 @@ def loadDesignMatrix(filename: str) -> pandas.DataFrame:
 
 
 class CSVExportJob(ErtScript):
-    """
-    Export of summary, misfit, design matrix data and gen kw into a single CSV file.
+    """Export of summary, misfit, design matrix data and gen kw into a single CSV file.
 
     The script expects a single argument:
 
@@ -35,6 +34,7 @@ class CSVExportJob(ErtScript):
     The script also looks for default values for output path and design matrix
     path to present in the GUI. These can be specified with DATA_KW keyword in
     the config file:
+
         DATA_KW <CSV_OUTPUT_PATH> {some path}
         DATA_KW <DESIGN_MATRIX_PATH> {some path}
     """
