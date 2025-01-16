@@ -39,7 +39,7 @@ def activate_script() -> str:
 
 @pydantic.dataclasses.dataclass(config={"extra": "forbid", "validate_assignment": True})
 class QueueOptions:
-    name: str
+    name: QueueSystem
     max_running: pydantic.NonNegativeInt = 0
     submit_sleep: pydantic.NonNegativeFloat = 0.0
     project_code: str | None = None
@@ -93,7 +93,7 @@ class QueueOptions:
 
 @pydantic.dataclasses.dataclass
 class LocalQueueOptions(QueueOptions):
-    name: Literal[QueueSystem.LOCAL, "local"] = "local"
+    name: Literal[QueueSystem.LOCAL] = QueueSystem.LOCAL
 
     @property
     def driver_options(self) -> dict[str, Any]:
@@ -102,7 +102,7 @@ class LocalQueueOptions(QueueOptions):
 
 @pydantic.dataclasses.dataclass
 class LsfQueueOptions(QueueOptions):
-    name: Literal[QueueSystem.LSF, "lsf"] = "lsf"
+    name: Literal[QueueSystem.LSF] = QueueSystem.LSF
     bhist_cmd: NonEmptyString | None = None
     bjobs_cmd: NonEmptyString | None = None
     bkill_cmd: NonEmptyString | None = None
@@ -125,7 +125,7 @@ class LsfQueueOptions(QueueOptions):
 
 @pydantic.dataclasses.dataclass
 class TorqueQueueOptions(QueueOptions):
-    name: Literal[QueueSystem.TORQUE, "torque"] = "torque"
+    name: Literal[QueueSystem.TORQUE] = QueueSystem.TORQUE
     qsub_cmd: NonEmptyString | None = None
     qstat_cmd: NonEmptyString | None = None
     qdel_cmd: NonEmptyString | None = None
@@ -146,7 +146,7 @@ class TorqueQueueOptions(QueueOptions):
 
 @pydantic.dataclasses.dataclass
 class SlurmQueueOptions(QueueOptions):
-    name: Literal[QueueSystem.SLURM, "slurm"] = "slurm"
+    name: Literal[QueueSystem.SLURM] = QueueSystem.SLURM
     sbatch: NonEmptyString = "sbatch"
     scancel: NonEmptyString = "scancel"
     scontrol: NonEmptyString = "scontrol"
@@ -196,13 +196,11 @@ torque_memory_usage_format: QueueMemoryStringFormat = QueueMemoryStringFormat(
 )
 
 valid_options: dict[str, list[str]] = {
-    QueueSystem.LOCAL.name: [field.name.upper() for field in fields(LocalQueueOptions)],
-    QueueSystem.LSF.name: [field.name.upper() for field in fields(LsfQueueOptions)],
-    QueueSystem.SLURM.name: [field.name.upper() for field in fields(SlurmQueueOptions)],
-    QueueSystem.TORQUE.name: [
-        field.name.upper() for field in fields(TorqueQueueOptions)
-    ],
-    QueueSystemWithGeneric.GENERIC.name: [
+    QueueSystem.LOCAL: [field.name.upper() for field in fields(LocalQueueOptions)],
+    QueueSystem.LSF: [field.name.upper() for field in fields(LsfQueueOptions)],
+    QueueSystem.SLURM: [field.name.upper() for field in fields(SlurmQueueOptions)],
+    QueueSystem.TORQUE: [field.name.upper() for field in fields(TorqueQueueOptions)],
+    QueueSystemWithGeneric.GENERIC: [
         field.name.upper() for field in fields(QueueOptions)
     ],
 }

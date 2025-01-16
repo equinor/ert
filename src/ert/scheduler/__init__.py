@@ -19,7 +19,7 @@ if TYPE_CHECKING:
 
 
 def create_driver(queue_options: QueueOptions) -> Driver:
-    match str(queue_options.name).upper():
+    match str(queue_options.name):
         case QueueSystem.LOCAL:
             return LocalDriver()
         case QueueSystem.TORQUE:
