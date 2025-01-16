@@ -56,7 +56,9 @@ def test_project_code_is_set_when_forward_model_contains_selected_simulator(
     assert "rms" in project_code
 
 
-@pytest.mark.parametrize("queue_system", ["LSF", "TORQUE", "SLURM"])
+@pytest.mark.parametrize(
+    "queue_system", [QueueSystem.LSF, QueueSystem.TORQUE, QueueSystem.SLURM]
+)
 def test_project_code_is_not_overwritten_if_set_in_config(queue_system):
     queue_config = QueueConfig.from_dict(
         {
@@ -87,7 +89,8 @@ def test_that_an_invalid_queue_system_provided_raises_validation_error(
 
 
 @pytest.mark.parametrize(
-    "queue_system, invalid_option", [("LOCAL", "BSUB_CMD"), ("TORQUE", "BOGUS")]
+    "queue_system, invalid_option",
+    [(QueueSystem.LOCAL, "BSUB_CMD"), (QueueSystem.TORQUE, "BOGUS")],
 )
 def test_that_invalid_queue_option_raises_validation_error(
     queue_system, invalid_option
@@ -157,7 +160,11 @@ def test_invalid_realization_memory(invalid_memory_spec: str):
 
 @pytest.mark.parametrize(
     "queue_system, queue_system_option",
-    [("LSF", "LSF_QUEUE"), ("SLURM", "SQUEUE"), ("TORQUE", "QUEUE")],
+    [
+        (QueueSystem.LSF, "LSF_QUEUE"),
+        (QueueSystem.SLURM, "SQUEUE"),
+        (QueueSystem.TORQUE, "QUEUE"),
+    ],
 )
 def test_that_overwriting_QUEUE_OPTIONS_warns(
     queue_system, queue_system_option, caplog

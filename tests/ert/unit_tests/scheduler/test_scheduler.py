@@ -10,7 +10,7 @@ from pathlib import Path
 import pytest
 
 from _ert.events import Id, RealizationFailed, RealizationTimeout
-from ert.config import QueueConfig
+from ert.config import QueueConfig, QueueSystem
 from ert.ensemble_evaluator import Realization
 from ert.load_status import LoadResult, LoadStatus
 from ert.run_arg import RunArg
@@ -620,16 +620,16 @@ def test_scheduler_create_lsf_driver():
     lsf_resource = "select[cs && x86_64Linux]"
     exclude_host = "host1,host2"
     queue_config_dict = {
-        "QUEUE_SYSTEM": "LSF",
+        "QUEUE_SYSTEM": QueueSystem.LSF,
         "FORWARD_MODEL": [("FLOW",), ("RMS",)],
         "QUEUE_OPTION": [
-            ("LSF", "BSUB_CMD", bsub_cmd),
-            ("LSF", "BKILL_CMD", bkill_cmd),
-            ("LSF", "BJOBS_CMD", bjobs_cmd),
-            ("LSF", "BHIST_CMD", bhist_cmd),
-            ("LSF", "LSF_QUEUE", queue_name),
-            ("LSF", "LSF_RESOURCE", lsf_resource),
-            ("LSF", "EXCLUDE_HOST", exclude_host),
+            (QueueSystem.LSF, "BSUB_CMD", bsub_cmd),
+            (QueueSystem.LSF, "BKILL_CMD", bkill_cmd),
+            (QueueSystem.LSF, "BJOBS_CMD", bjobs_cmd),
+            (QueueSystem.LSF, "BHIST_CMD", bhist_cmd),
+            (QueueSystem.LSF, "LSF_QUEUE", queue_name),
+            (QueueSystem.LSF, "LSF_RESOURCE", lsf_resource),
+            (QueueSystem.LSF, "EXCLUDE_HOST", exclude_host),
         ],
     }
     queue_config = QueueConfig.from_dict(queue_config_dict)
@@ -654,16 +654,16 @@ def test_scheduler_create_openpbs_driver():
     qdel_cmd = "foo_qdel_cmd"
     qstat_cmd = "bar_qstat_cmd"
     queue_config_dict = {
-        "QUEUE_SYSTEM": "TORQUE",
+        "QUEUE_SYSTEM": QueueSystem.TORQUE,
         "FORWARD_MODEL": [("FLOW",), ("RMS",)],
         "QUEUE_OPTION": [
-            ("TORQUE", "QUEUE", queue_name),
-            ("TORQUE", "KEEP_QSUB_OUTPUT", keep_qsub_output),
-            ("TORQUE", "CLUSTER_LABEL", cluster_label),
-            ("TORQUE", "JOB_PREFIX", job_prefix),
-            ("TORQUE", "QSUB_CMD", qsub_cmd),
-            ("TORQUE", "QSTAT_CMD", qstat_cmd),
-            ("TORQUE", "QDEL_CMD", qdel_cmd),
+            (QueueSystem.TORQUE, "QUEUE", queue_name),
+            (QueueSystem.TORQUE, "KEEP_QSUB_OUTPUT", keep_qsub_output),
+            (QueueSystem.TORQUE, "CLUSTER_LABEL", cluster_label),
+            (QueueSystem.TORQUE, "JOB_PREFIX", job_prefix),
+            (QueueSystem.TORQUE, "QSUB_CMD", qsub_cmd),
+            (QueueSystem.TORQUE, "QSTAT_CMD", qstat_cmd),
+            (QueueSystem.TORQUE, "QDEL_CMD", qdel_cmd),
         ],
     }
     queue_config = QueueConfig.from_dict(queue_config_dict)
