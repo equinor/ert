@@ -1,20 +1,18 @@
 controls:
-  -
-    name: point
+  - name: point
     type: generic_control
     min: -1.0
     max: 1.0
     initial_guess: 0.1
-    perturbation_magnitude : 0.001
+    perturbation_magnitude: 0.001
     variables:
-        - name: x
-        - name: y
-        - name: z
+      - name: x
+      - name: y
+      - name: z
 
 
 objective_functions:
-  -
-    name: distance
+  - name: distance
 
 
 optimization:
@@ -25,17 +23,14 @@ optimization:
 
 
 install_jobs:
-  -
-    name: distance3
+  - name: distance3
     source: jobs/DISTANCE3
 
 model:
   realizations: [0]
 
 forward_model:
-  - distance3 --point-file point.json
-              --target 0.5 0.5 0.5
-              --out distance
+  - distance3 --point-file point.json --target 0.5 0.5 0.5 --out distance
 
 environment:
   simulation_folder: sim_output

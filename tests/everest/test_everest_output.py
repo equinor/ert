@@ -20,14 +20,9 @@ from everest.strings import (
 from everest.util import makedirs_if_needed
 
 
-def test_that_one_experiment_creates_one_ensemble_per_batch(
-    copy_math_func_test_data_to_tmp, evaluator_server_config_generator
-):
-    config = EverestConfig.load_file("config_minimal.yml")
-
-    run_model = EverestRunModel.create(config)
-    evaluator_server_config = evaluator_server_config_generator(run_model)
-    run_model.run_experiment(evaluator_server_config)
+def test_that_one_experiment_creates_one_ensemble_per_batch(cached_example):
+    _, config, _ = cached_example("math_func/config_minimal.yml")
+    config = EverestConfig.load_file(config)
 
     batches = os.listdir(config.simulation_dir)
     ert_config = ErtConfig.with_plugins().from_dict(_everest_to_ert_config_dict(config))
