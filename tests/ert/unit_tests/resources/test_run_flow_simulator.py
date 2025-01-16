@@ -35,13 +35,13 @@ def eightcells(use_tmpdir, source_root):
 
 
 @pytest.mark.integration_test
+@pytest.mark.usefixtures("eightcells")
 @pytest.mark.skipif(not shutil.which("flowrun"), reason="flowrun not available")
-def test_flow_can_produce_output(source_root):
-    shutil.copy(source_root / "test-data/ert/eclipse/SPE1.DATA", "SPE1.DATA")
+def test_flow_can_produce_output():
     run_reservoirsimulator.RunReservoirSimulator(
-        "flow", FLOW_VERSION, "SPE1.DATA"
+        "flow", FLOW_VERSION, "EIGHTCELLS.DATA"
     ).run_flow()
-    assert Path("SPE1.UNSMRY").exists()
+    assert Path("EIGHTCELLS.UNSMRY").exists()
 
 
 def test_flowrun_can_be_bypassed_when_flow_is_available(tmp_path, monkeypatch):
@@ -77,14 +77,15 @@ def test_flowrun_cannot_be_bypassed_for_parallel_runs(tmp_path, monkeypatch):
 
 
 @pytest.mark.integration_test
-@pytest.mark.usefixtures("use_tmpdir")
+@pytest.mark.usefixtures("eightcells")
 @pytest.mark.skipif(not shutil.which("flow"), reason="flow not available")
-def test_run_flow_with_no_flowrun(tmp_path, monkeypatch, source_root):
+def test_run_flow_with_no_flowrun(tmp_path, monkeypatch):
     # Set FLOWRUN_PATH to a path guaranteed not to contain flowrun
     monkeypatch.setenv("FLOWRUN_PATH", str(tmp_path))
-    shutil.copy(source_root / "test-data/ert/eclipse/SPE1.DATA", "SPE1.DATA")
-    run_reservoirsimulator.RunReservoirSimulator("flow", None, "SPE1.DATA").run_flow()
-    assert Path("SPE1.UNSMRY").exists()
+    run_reservoirsimulator.RunReservoirSimulator(
+        "flow", None, "EIGHTCELLS.DATA"
+    ).run_flow()
+    assert Path("EIGHTCELLS.UNSMRY").exists()
 
 
 @pytest.mark.integration_test
