@@ -197,10 +197,22 @@ class SchemaItem:
                 try:
                     return val_type(str(token))
                 except ValueError as err:
+                    config_case = (
+                        val_type.ert_config_case()
+                        if hasattr(val_type, "ert_config_case")
+                        else None
+                    )
+                    match config_case:
+                        case "upper":
+                            valid_options = [v.value.upper() for v in val_type]  # type: ignore
+                        case "lower":
+                            valid_options = [v.value.lower() for v in val_type]  # type: ignore
+                        case _:
+                            valid_options = [v.value for v in val_type]  # type: ignore
                     raise ConfigValidationError.with_context(
                         (
                             f"{self.kw!r} argument {index + 1!r} must be one of"
-                            f" {[v.value for v in val_type]!r} was {token.value!r}"  # type: ignore
+                            f" {valid_options!r} was {token.value!r}"
                         ),
                         token,
                     ) from None
