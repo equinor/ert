@@ -251,15 +251,6 @@ def test_that_parsing_workflows_gives_expected():
         ConfigKeys.NUM_REALIZATIONS: 1,
     }
 
-    with open("minimum_config", "a+", encoding="utf-8") as ert_file:
-        ert_file.write("LOAD_WORKFLOW_JOB workflows/UBER_PRINT print_uber\n")
-        ert_file.write("LOAD_WORKFLOW_JOB workflows/HIDDEN_PRINT\n")
-        ert_file.write("LOAD_WORKFLOW workflows/MAGIC_PRINT magic_print\n")
-        ert_file.write("LOAD_WORKFLOW workflows/NO_PRINT no_print\n")
-        ert_file.write("LOAD_WORKFLOW workflows/SOME_PRINT some_print\n")
-        ert_file.write("HOOK_WORKFLOW magic_print POST_UPDATE\n")
-        ert_file.write("HOOK_WORKFLOW no_print PRE_UPDATE\n")
-
     os.mkdir("workflows")
 
     with open("workflows/MAGIC_PRINT", "w", encoding="utf-8") as f:
