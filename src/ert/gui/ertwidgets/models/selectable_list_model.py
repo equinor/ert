@@ -1,4 +1,4 @@
-from qtpy.QtCore import QObject, Signal
+from PySide6.QtCore import QObject, Signal
 
 
 class SelectableListModel(QObject):

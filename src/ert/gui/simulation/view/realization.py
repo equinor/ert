@@ -1,16 +1,19 @@
-from qtpy.QtCore import (
+from typing import cast
+
+from PySide6.QtCore import (
     QAbstractItemModel,
     QEvent,
     QItemSelectionModel,
     QModelIndex,
     QObject,
+    QPersistentModelIndex,
     QPoint,
     QSize,
     Qt,
     Signal,
 )
-from qtpy.QtGui import QColor, QColorConstants, QPainter, QPalette, QPen
-from qtpy.QtWidgets import (
+from PySide6.QtGui import QColor, QMouseEvent, QPainter, QPalette, QPen
+from PySide6.QtWidgets import (
     QAbstractItemView,
     QListView,
     QStyle,
@@ -39,18 +42,20 @@ class RealizationWidget(QWidget):
         self._delegate_size = QSize(90, 90)
 
         self._real_view = QListView(self)
-        self._real_view.setViewMode(QListView.IconMode)
+        self._real_view.setViewMode(QListView.ViewMode.IconMode)
         self._real_view.setGridSize(self._delegate_size)
         real_delegate = RealizationDelegate(self._delegate_size, self)
         self._real_view.setMouseTracking(True)
         self._real_view.setItemDelegate(real_delegate)
-        self._real_view.setSelectionMode(QAbstractItemView.SingleSelection)
-        self._real_view.setFlow(QListView.LeftToRight)
+        self._real_view.setSelectionMode(
+            QAbstractItemView.SelectionMode.SingleSelection
+        )
+        self._real_view.setFlow(QListView.Flow.LeftToRight)
         self._real_view.setWrapping(True)
-        self._real_view.setResizeMode(QListView.Adjust)
+        self._real_view.setResizeMode(QListView.ResizeMode.Adjust)
         self._real_view.setUniformItemSizes(True)
         self._real_view.setStyleSheet(
-            f"QListView {{ background-color: {self.palette().color(QPalette.Window).name()}; }}"
+            f"QListView {{ background-color: {self.palette().color(QPalette.ColorRole.Window).name()}; }}"
         )
 
         self._real_view.clicked.connect(self._item_clicked)
@@ -94,14 +99,14 @@ class RealizationDelegate(QStyledItemDelegate):
         self.adjustment_point_for_job_rect_margin = QPoint(-20, -20)
         self._color_black = QColor(0, 0, 0, 180)
         self._color_progress = QColor(50, 173, 230, 200)
-        self._color_lightgray = QColor(QColorConstants.LightGray).lighter(120)
+        self._color_lightgray = QColor("LightGray").lighter(120)
         self._pen_black = QPen(self._color_black, 2, Qt.PenStyle.SolidLine)
 
     def paint(
         self,
         painter: QPainter | None,
         option: QStyleOptionViewItem,
-        index: QModelIndex,
+        index: QModelIndex | QPersistentModelIndex,
     ) -> None:
         if painter is None:
             return
@@ -109,15 +114,15 @@ class RealizationDelegate(QStyledItemDelegate):
         selected_color, finished_count, total_count = tuple(index.data(FMStepColorHint))
 
         painter.save()
-        painter.setRenderHint(QPainter.TextAntialiasing, True)
-        painter.setRenderHint(QPainter.Antialiasing, True)
+        painter.setRenderHint(QPainter.RenderHint.TextAntialiasing, True)
+        painter.setRenderHint(QPainter.RenderHint.Antialiasing, True)
 
         percentage_done = (
             100 if total_count < 1 else int((finished_count * 100.0) / total_count)
         )
 
         painter.setPen(self._pen_black)
-        adjusted_rect = option.rect.adjusted(2, 2, -2, -2)
+        adjusted_rect = option.rect.adjusted(2, 2, -2, -2)  # type: ignore[attr-defined]
 
         painter.setBrush(
             self._color_progress if percentage_done == 100 else self._color_lightgray
@@ -128,33 +133,37 @@ class RealizationDelegate(QStyledItemDelegate):
             painter.setBrush(self._color_progress)
             painter.drawPie(adjusted_rect, 1440, -int(percentage_done * 57.6))
 
-        if option.state & QStyle.StateFlag.State_Selected:
+        if option.state & QStyle.StateFlag.State_Selected:  # type: ignore[attr-defined]
             selected_color = selected_color.lighter(125)
 
         painter.setBrush(selected_color)
-        adjusted_rect = option.rect.adjusted(7, 7, -7, -7)
+        adjusted_rect = option.rect.adjusted(7, 7, -7, -7)  # type: ignore[attr-defined]
         painter.drawEllipse(adjusted_rect)
 
         font = painter.font()
         font.setBold(True)
         painter.setFont(font)
 
-        adj_rect = option.rect.adjusted(0, 20, 0, 0)
+        adj_rect = option.rect.adjusted(0, 20, 0, 0)  # type: ignore[attr-defined]
         painter.drawText(adj_rect, Qt.AlignmentFlag.AlignHCenter, text)
-        adj_rect = option.rect.adjusted(0, 45, 0, 0)
+        adj_rect = option.rect.adjusted(0, 45, 0, 0)  # type: ignore[attr-defined]
         painter.drawText(
             adj_rect, Qt.AlignmentFlag.AlignHCenter, f"{finished_count} / {total_count}"
         )
 
         painter.restore()
 
-    def sizeHint(self, option: QStyleOptionViewItem, index: QModelIndex) -> QSize:
+    def sizeHint(
+        self, option: QStyleOptionViewItem, index: QModelIndex | QPersistentModelIndex
+    ) -> QSize:
         return self._size
 
-    def eventFilter(self, object: QObject | None, event: QEvent | None) -> bool:
-        if event.type() == QEvent.Type.ToolTip:  # type: ignore
-            mouse_pos = event.pos() + self.adjustment_point_for_job_rect_margin  # type: ignore
-            parent: RealizationWidget = self.parent()  # type: ignore
+    def eventFilter(self, object: QObject, event: QEvent) -> bool:
+        if event.type() == QEvent.Type.ToolTip and type(event) is QMouseEvent:
+            mouse_pos = (
+                event.position() + self.adjustment_point_for_job_rect_margin
+            ).toPoint()
+            parent: RealizationWidget = cast(RealizationWidget, self.parent())
             view = parent._real_view
             index = view.indexAt(mouse_pos)
             if index.isValid():

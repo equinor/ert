@@ -3,8 +3,8 @@ from __future__ import annotations
 from collections.abc import Iterable
 from typing import TYPE_CHECKING
 
-from qtpy.QtCore import Qt, Signal
-from qtpy.QtWidgets import QComboBox
+from PySide6.QtCore import Qt, Signal
+from PySide6.QtWidgets import QComboBox
 
 from ert.gui.ertnotifier import ErtNotifier
 from ert.storage.realization_storage_state import RealizationStorageState
@@ -36,13 +36,13 @@ class EnsembleSelector(QComboBox):
         # if the ensemble has not been used in an update, as that would
         # invalidate the result
         self._show_only_no_children = show_only_no_children
-        self.setSizeAdjustPolicy(QComboBox.AdjustToContents)
+        self.setSizeAdjustPolicy(QComboBox.SizeAdjustPolicy.AdjustToContents)
 
         self.setEnabled(False)
 
         if update_ert:
             # Update ERT when this combo box is changed
-            self.currentIndexChanged[int].connect(self._on_current_index_changed)
+            self.currentIndexChanged.connect(self._on_current_index_changed)
 
             # Update this combo box when ERT is changed
             notifier.current_ensemble_changed.connect(

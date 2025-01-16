@@ -1,10 +1,10 @@
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, cast
 
-from qtpy.QtWidgets import QHBoxLayout
+from PySide6.QtWidgets import QHBoxLayout
 
 from .color_chooser import ColorBox
 from .customization_view import CustomizationView, WidgetProperty
-from .style_chooser import STYLESET_TOGGLE
+from .style_chooser import STYLESET_TOGGLE, StyleChooser
 
 if TYPE_CHECKING:
     from ert.gui.tools.plot.plottery import PlotConfig
@@ -36,7 +36,8 @@ class StyleCustomizationView(CustomizationView):
             line_style_set=STYLESET_TOGGLE,
         )
 
-        self["default_style"].createLabelLayout(layout)
+        style = cast(StyleChooser, self["default_style"])
+        style.createLabelLayout(layout)
 
         self.addSpacing(10)
 

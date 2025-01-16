@@ -2,7 +2,13 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from qtpy.QtCore import QModelIndex, QObject, QSortFilterProxyModel, Qt
+from PySide6.QtCore import (
+    QModelIndex,
+    QObject,
+    QPersistentModelIndex,
+    QSortFilterProxyModel,
+    Qt,
+)
 
 if TYPE_CHECKING:
     from .data_type_keys_list_model import DataTypeKeysListModel
@@ -21,7 +27,9 @@ class DataTypeProxyModel(QSortFilterProxyModel):
         self.setFilterCaseSensitivity(Qt.CaseSensitivity.CaseInsensitive)
         self.setSourceModel(model)
 
-    def filterAcceptsRow(self, source_row: int, source_parent: QModelIndex) -> bool:
+    def filterAcceptsRow(
+        self, source_row: int, source_parent: QModelIndex | QPersistentModelIndex
+    ) -> bool:
         show = QSortFilterProxyModel.filterAcceptsRow(self, source_row, source_parent)
 
         if show:

@@ -1,8 +1,8 @@
 from dataclasses import dataclass
 
-from qtpy import QtCore
-from qtpy.QtCore import Slot
-from qtpy.QtWidgets import QFormLayout, QHBoxLayout, QLabel, QPushButton
+from PySide6 import QtCore
+from PySide6.QtCore import Slot
+from PySide6.QtWidgets import QFormLayout, QHBoxLayout, QLabel, QPushButton
 
 from ert.config import AnalysisConfig, DesignMatrix
 from ert.gui.ertnotifier import ErtNotifier
@@ -123,7 +123,7 @@ class EnsembleExperimentPanel(ExperimentConfigPanel):
         viewer.setMinimumHeight(500)
         viewer.setMinimumWidth(1000)
         viewer.adjustSize()
-        viewer.exec_()
+        viewer.exec()
 
     @Slot(ExperimentConfigPanel)
     def experimentTypeChanged(self, w: ExperimentConfigPanel) -> None:

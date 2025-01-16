@@ -1,51 +1,49 @@
 from __future__ import annotations
 
-from abc import ABC, abstractmethod
+from abc import ABC
 from dataclasses import dataclass, field
-from typing import cast
 
-from qtpy.QtGui import QColor
+from PySide6.QtGui import QColor
 
 from ert.ensemble_evaluator.snapshot import FMStepSnapshot
 
 
 @dataclass
-class _Node(ABC):
+class _NodeBase(ABC):
     id_: str
-    parent: RootNode | IterNode | RealNode | None = None
-    children: (
-        dict[str, IterNode] | dict[str, RealNode] | dict[str, ForwardModelStepNode]
-    ) = field(default_factory=dict)
     _index: int | None = None
 
-    def __repr__(self) -> str:
-        parent = "no " if self.parent is None else ""
-        children = "no " if len(self.children) == 0 else f"{len(self.children)} "
-        return f"Node<{type(self).__name__}>@{self.id_} with {parent}parent and {children}children"
 
-    @abstractmethod
-    def add_child(self, node: _Node) -> None:
-        pass
+def _repr(node: RootNode | IterNode | RealNode | ForwardModelStepNode) -> str:
+    parent = "no " if node.parent is None else ""
+    children = "no " if not node.children else f"{len(node.children)} "
+    return f"Node<{type(node).__name__}>@{node.id_} with {parent}parent and {children}children"
 
-    def row(self) -> int:
-        if not self._index:
-            if self.parent:
-                self._index = list(self.parent.children.keys()).index(self.id_)
-            else:
-                raise ValueError(f"{self} had no parent")
-        return self._index
+
+def _row(node: RootNode | IterNode | RealNode | ForwardModelStepNode) -> int:
+    if not node._index:
+        if node.parent:
+            node._index = list(node.parent.children.keys()).index(node.id_)
+        else:
+            raise ValueError(f"{node} had no parent")
+    return node._index
 
 
 @dataclass
-class RootNode(_Node):
+class RootNode(_NodeBase):
     parent: None = field(default=None, init=False)
     children: dict[str, IterNode] = field(default_factory=dict)
     max_memory_usage: int | None = None
 
-    def add_child(self, node: _Node) -> None:
-        node = cast(IterNode, node)
+    def add_child(self, node: IterNode) -> None:
         node.parent = self
         self.children[node.id_] = node
+
+    def row(self) -> int:
+        return _row(self)
+
+    def __repr__(self) -> str:
+        return _repr(self)
 
 
 @dataclass
@@ -55,15 +53,20 @@ class IterNodeData:
 
 
 @dataclass
-class IterNode(_Node):
+class IterNode(_NodeBase):
     parent: RootNode | None = None
     data: IterNodeData = field(default_factory=IterNodeData)
     children: dict[str, RealNode] = field(default_factory=dict)
 
-    def add_child(self, node: _Node) -> None:
-        node = cast(RealNode, node)
+    def add_child(self, node: RealNode) -> None:
         node.parent = self
         self.children[node.id_] = node
+
+    def row(self) -> int:
+        return _row(self)
+
+    def __repr__(self) -> str:
+        return _repr(self)
 
 
 @dataclass
@@ -80,21 +83,30 @@ class RealNodeData:
 
 
 @dataclass
-class RealNode(_Node):
+class RealNode(_NodeBase):
     parent: IterNode | None = None
     data: RealNodeData = field(default_factory=RealNodeData)
     children: dict[str, ForwardModelStepNode] = field(default_factory=dict)
 
-    def add_child(self, node: _Node) -> None:
-        node = cast(ForwardModelStepNode, node)
+    def add_child(self, node: ForwardModelStepNode) -> None:
         node.parent = self
         self.children[node.id_] = node
 
+    def row(self) -> int:
+        return _row(self)
+
+    def __repr__(self) -> str:
+        return _repr(self)
+
 
 @dataclass
-class ForwardModelStepNode(_Node):
-    parent: RealNode | None
+class ForwardModelStepNode(_NodeBase):
+    parent: RealNode | None = None
     data: FMStepSnapshot = field(default_factory=lambda: FMStepSnapshot())  # noqa: PLW0108
+    children: dict[str, None] = field(default_factory=dict)
 
-    def add_child(self, node: _Node) -> None:
-        pass
+    def row(self) -> int:
+        return _row(self)
+
+    def __repr__(self) -> str:
+        return _repr(self)

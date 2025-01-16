@@ -1,9 +1,9 @@
 from datetime import datetime as dt
 
 import pytest
-from qtpy import QtCore
-from qtpy.QtCore import QModelIndex, QSize
-from qtpy.QtWidgets import QStyledItemDelegate, QStyleOptionViewItem
+from PySide6 import QtCore
+from PySide6.QtCore import QModelIndex, QPersistentModelIndex, QSize
+from PySide6.QtWidgets import QStyledItemDelegate, QStyleOptionViewItem
 
 from ert.ensemble_evaluator.snapshot import (
     EnsembleSnapshot,
@@ -12,7 +12,7 @@ from ert.ensemble_evaluator.state import (
     FORWARD_MODEL_STATE_START,
     REALIZATION_STATE_UNKNOWN,
 )
-from ert.gui.model.node import _Node
+from ert.gui.model.node import ForwardModelStepNode, IterNode, RealNode, RootNode
 from ert.gui.model.snapshot import SnapshotModel
 from ert.gui.simulation.view.realization import RealizationWidget
 from tests.ert import SnapshotBuilder
@@ -44,7 +44,12 @@ class MockDelegate(QStyledItemDelegate):
         self._size = QSize(50, 50)
         self._max_id = 0
 
-    def paint(self, painter, option: QStyleOptionViewItem, index: QModelIndex) -> None:
+    def paint(
+        self,
+        painter,
+        option: QStyleOptionViewItem,
+        index: QModelIndex | QPersistentModelIndex,
+    ) -> None:
         self._max_id = max(int(index.internalPointer().id_), self._max_id)
 
     def sizeHint(self, option, index) -> QSize:
@@ -104,13 +109,15 @@ def test_selection_success(large_snapshot, qtbot):
 
     def check_selection_cb(index):
         node = index.internalPointer()
-        return isinstance(node, _Node) and str(node.id_) == str(selection_id)
+        return isinstance(
+            node, ForwardModelStepNode | RealNode | IterNode | RootNode
+        ) and str(node.id_) == str(selection_id)
 
     with qtbot.waitSignal(
         widget.itemClicked, timeout=30000, check_params_cb=check_selection_cb
     ):
         qtbot.mouseClick(
             widget._real_view.viewport(),
-            QtCore.Qt.LeftButton,
+            QtCore.Qt.MouseButton.LeftButton,
             pos=selection_rect.center(),
         )
