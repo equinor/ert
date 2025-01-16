@@ -118,7 +118,6 @@ def test_setup_single_test_run(storage):
     )
     assert isinstance(model, SingleTestRun)
     assert model._storage == storage
-    # assert model.ert_config == poly_case
 
 
 def test_setup_single_test_run_with_ensemble(storage):
@@ -135,7 +134,6 @@ def test_setup_single_test_run_with_ensemble(storage):
     )
     assert isinstance(model, SingleTestRun)
     assert model._storage == storage
-    # assert model.ert_config == poly_case
 
 
 def test_setup_ensemble_experiment(storage):
