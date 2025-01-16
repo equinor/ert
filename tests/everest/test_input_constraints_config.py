@@ -1,4 +1,3 @@
-from everest import ConfigKeys
 from everest.config import EverestConfig
 from tests.everest.utils import relpath
 
@@ -15,7 +14,7 @@ def test_input_constraint_initialization():
     # Get the first input constraint
     input_constraint = config.input_constraints[0]
     # Check that this defines both upper and lower bounds
-    exp_operations = {ConfigKeys.UPPER_BOUND, ConfigKeys.LOWER_BOUND}
+    exp_operations = {"upper_bound", "lower_bound"}
     assert (
         exp_operations.intersection(input_constraint.model_dump(exclude_none=True))
         == exp_operations

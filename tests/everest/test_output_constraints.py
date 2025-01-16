@@ -5,7 +5,6 @@ from ropt.config.enopt import EnOptConfig
 from ropt.enums import ConstraintType
 
 from ert.run_models.everest_run_model import EverestRunModel
-from everest import ConfigKeys
 from everest.config import EverestConfig
 from everest.optimizer.everest2ropt import everest2ropt
 
@@ -61,9 +60,9 @@ def test_wrong_output_constr_def(copy_mocked_test_data_to_tmp):
                     "variables": [{"name": "w07", "initial_guess": 0.0633}],
                 }
             ],
-            "environment": {ConfigKeys.SIMULATION_FOLDER: "/tmp/everest"},
-            "optimization": {ConfigKeys.ALGORITHM: "optpp_q_newton"},
-            "model": {ConfigKeys.REALIZATIONS: [0]},
+            "environment": {"simulation_folder": "/tmp/everest"},
+            "optimization": {"algorithm": "optpp_q_newton"},
+            "model": {"realizations": [0]},
             "objective_functions": [{"name": "npv_function"}],
         }
     )
@@ -91,9 +90,9 @@ def test_wrong_output_constr_def(copy_mocked_test_data_to_tmp):
                     "variables": [{"name": "w07", "initial_guess": 0.0633}],
                 }
             ],
-            "environment": {ConfigKeys.SIMULATION_FOLDER: "/tmp/everest"},
-            "optimization": {ConfigKeys.ALGORITHM: "optpp_q_newton"},
-            "model": {ConfigKeys.REALIZATIONS: [0]},
+            "environment": {"simulation_folder": "/tmp/everest"},
+            "optimization": {"algorithm": "optpp_q_newton"},
+            "model": {"realizations": [0]},
             "objective_functions": [{"name": "npv_function"}],
         }
     )
@@ -117,9 +116,9 @@ def test_wrong_output_constr_def(copy_mocked_test_data_to_tmp):
                     "variables": [{"name": "w07", "initial_guess": 0.0633}],
                 }
             ],
-            "environment": {ConfigKeys.SIMULATION_FOLDER: "/tmp/everest"},
-            "optimization": {ConfigKeys.ALGORITHM: "optpp_q_newton"},
-            "model": {ConfigKeys.REALIZATIONS: [0]},
+            "environment": {"simulation_folder": "/tmp/everest"},
+            "optimization": {"algorithm": "optpp_q_newton"},
+            "model": {"realizations": [0]},
             "objective_functions": [{"name": "npv_function"}],
         }
     )
@@ -146,9 +145,9 @@ def test_wrong_output_constr_def(copy_mocked_test_data_to_tmp):
                 "variables": [{"name": "w07", "initial_guess": 0.0633}],
             }
         ],
-        "environment": {ConfigKeys.SIMULATION_FOLDER: "/tmp/everest"},
-        "optimization": {ConfigKeys.ALGORITHM: "optpp_q_newton"},
-        "model": {ConfigKeys.REALIZATIONS: [0]},
+        "environment": {"simulation_folder": "/tmp/everest"},
+        "optimization": {"algorithm": "optpp_q_newton"},
+        "model": {"realizations": [0]},
         "objective_functions": [{"name": "npv_function"}],
     }
 
@@ -175,9 +174,9 @@ def test_wrong_output_constr_def(copy_mocked_test_data_to_tmp):
                     "variables": [{"name": "w07", "initial_guess": 0.0633}],
                 }
             ],
-            "environment": {ConfigKeys.SIMULATION_FOLDER: "/tmp/everest"},
-            "optimization": {ConfigKeys.ALGORITHM: "optpp_q_newton"},
-            "model": {ConfigKeys.REALIZATIONS: [0]},
+            "environment": {"simulation_folder": "/tmp/everest"},
+            "optimization": {"algorithm": "optpp_q_newton"},
+            "model": {"realizations": [0]},
             "objective_functions": [{"name": "npv_function"}],
         }
     )
@@ -205,9 +204,9 @@ def test_upper_bound_output_constraint_def(copy_mocked_test_data_to_tmp):
                     "variables": [{"name": "w07", "initial_guess": 0.0633}],
                 }
             ],
-            "environment": {ConfigKeys.SIMULATION_FOLDER: "/tmp/everest"},
-            "optimization": {ConfigKeys.ALGORITHM: "optpp_q_newton"},
-            "model": {ConfigKeys.REALIZATIONS: [0]},
+            "environment": {"simulation_folder": "/tmp/everest"},
+            "optimization": {"algorithm": "optpp_q_newton"},
+            "model": {"realizations": [0]},
             "objective_functions": [{"name": "npv_function"}],
         }
     )

@@ -7,9 +7,7 @@ import everest
 def well_reorder(well_data_file, well_order_file, output_file):
     well_data = everest.jobs.io.load_data(well_data_file)
     well_order = everest.jobs.io.load_data(well_order_file)
-
-    name = everest.ConfigKeys.NAME
-    well_data.sort(key=lambda well: well_order.index(well[name]))
+    well_data.sort(key=lambda well: well_order.index(well["name"]))
 
     with everest.jobs.io.safe_open(output_file, "w") as fout:
         json.dump(well_data, fout)
@@ -18,10 +16,8 @@ def well_reorder(well_data_file, well_order_file, output_file):
 def well_filter(well_data_file, well_filter_file, output_file):
     well_data = everest.jobs.io.load_data(well_data_file)
     well_filter = everest.jobs.io.load_data(well_filter_file)
-
-    name = everest.ConfigKeys.NAME
     well_data = [
-        well_entry for well_entry in well_data if well_entry[name] in well_filter
+        well_entry for well_entry in well_data if well_entry["name"] in well_filter
     ]
 
     with everest.jobs.io.safe_open(output_file, "w") as fout:
@@ -29,15 +25,14 @@ def well_filter(well_data_file, well_filter_file, output_file):
 
 
 def well_update(master_data_file, additional_data_files, output_file):
-    name = everest.ConfigKeys.NAME
     well_data = everest.jobs.io.load_data(master_data_file)
 
     for add_data_file in additional_data_files:
         add_data = everest.jobs.io.load_data(add_data_file)
-        add_data = {well_entry[name]: well_entry for well_entry in add_data}
+        add_data = {well_entry["name"]: well_entry for well_entry in add_data}
 
         for well_entry in well_data:
-            well_entry.update(add_data[well_entry[name]])
+            well_entry.update(add_data[well_entry["name"]])
 
     with everest.jobs.io.safe_open(output_file, "w") as fout:
         json.dump(well_data, fout)
@@ -73,31 +68,26 @@ def well_set(well_data_file, new_entry_file, output_file):
 
 
 def add_completion_date(well_data_file, start_date, output_file):
-    drill_time_key = everest.ConfigKeys.DRILL_TIME
-    drill_date_key = everest.ConfigKeys.DRILL_DATE
-    drill_delay_key = everest.ConfigKeys.DRILL_DELAY
-    completion_date_key = everest.ConfigKeys.COMPLETION_DATE
-
     start_date = everest.util.str2date(start_date)
     well_data = everest.jobs.io.load_data(well_data_file)
 
     prev_date = start_date
     for well_entry in well_data:
-        well_start_date = well_entry.get(drill_date_key)
+        well_start_date = well_entry.get("drill_date")
         if well_start_date is not None:
             well_start_date = everest.util.str2date(well_start_date)
         else:
             well_start_date = prev_date
 
-        drill_delay = well_entry.get(drill_delay_key, 0)
+        drill_delay = well_entry.get("drill_delay", 0)
         well_start_date = max(
             well_start_date,
             prev_date + datetime.timedelta(days=drill_delay),
         )
 
-        drill_time = well_entry.get(drill_time_key, 0)
+        drill_time = well_entry.get("drill_time", 0)
         completion_date = well_start_date + datetime.timedelta(days=drill_time)
-        well_entry[completion_date_key] = everest.util.date2str(completion_date)
+        well_entry["completion_date"] = everest.util.date2str(completion_date)
         prev_date = completion_date
 
     with everest.jobs.io.safe_open(output_file, "w") as fout:
@@ -105,11 +95,8 @@ def add_completion_date(well_data_file, start_date, output_file):
 
 
 def _valid_operational_dates(well_entry, start_date, end_date):
-    drill_time_key = everest.ConfigKeys.DRILL_TIME
-    completion_date_key = everest.ConfigKeys.COMPLETION_DATE
-
-    drill_time = well_entry.get(drill_time_key, 0)
-    compl_date = everest.util.str2date(well_entry[completion_date_key])
+    drill_time = well_entry.get("drill_time", 0)
+    compl_date = everest.util.str2date(well_entry["completion_date"])
     real_drill_date = compl_date - datetime.timedelta(days=drill_time)
 
     return start_date <= real_drill_date <= compl_date <= end_date

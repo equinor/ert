@@ -5,7 +5,6 @@ from textwrap import dedent
 import pytest
 from ruamel.yaml import YAML
 
-from everest import ConfigKeys
 from everest.config import EverestConfig
 from everest.simulator.everest_to_ert import everest_to_ert_config
 from tests.everest.utils import MockParser, skipif_no_everest_models
@@ -47,16 +46,16 @@ def test_read_file(tmp_path, monkeypatch):
     )
     everest_config = EverestConfig.load_file("config.yml")
     keys = [
-        ConfigKeys.WELLS,
-        ConfigKeys.CONTROLS,
-        ConfigKeys.OBJECTIVE_FUNCTIONS,
-        ConfigKeys.ENVIRONMENT,
-        ConfigKeys.MODEL,
-        ConfigKeys.SIMULATOR,
-        ConfigKeys.OPTIMIZATION,
-        ConfigKeys.EVERSERVER,
-        ConfigKeys.DEFINITIONS,
-        ConfigKeys.CONFIGPATH,
+        "wells",
+        "controls",
+        "objective_functions",
+        "environment",
+        "model",
+        "simulator",
+        "optimization",
+        "server",
+        "definitions",
+        "config_path",
     ]
     assert sorted(everest_config.to_dict().keys()) == sorted(keys)
 

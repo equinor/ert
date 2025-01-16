@@ -9,14 +9,11 @@ import everest
 
 
 def _dump_sort_data(well_data_file, well_order_file):
-    name = everest.ConfigKeys.NAME
-    drill_time = everest.ConfigKeys.DRILL_TIME
-
     well_data = [
-        {name: "PROD1", drill_time: 14},
-        {name: "PROD2", drill_time: 11},
-        {name: "INJECT1", drill_time: 1},
-        {name: "INJECT2", drill_time: 114},
+        {"name": "PROD1", "drill_time": 14},
+        {"name": "PROD2", "drill_time": 11},
+        {"name": "INJECT1", "drill_time": 1},
+        {"name": "INJECT2", "drill_time": 114},
     ]
 
     with open(well_data_file, "w", encoding="utf-8") as f:
@@ -33,10 +30,10 @@ def _dump_sort_data(well_data_file, well_order_file):
         json.dump(well_order, f)
 
     return [
-        {name: "INJECT1", drill_time: 1},
-        {name: "PROD2", drill_time: 11},
-        {name: "INJECT2", drill_time: 114},
-        {name: "PROD1", drill_time: 14},
+        {"name": "INJECT1", "drill_time": 1},
+        {"name": "PROD2", "drill_time": 11},
+        {"name": "INJECT2", "drill_time": 114},
+        {"name": "PROD1", "drill_time": 14},
     ]
 
 
@@ -88,14 +85,11 @@ def test_well_reorder_script(change_to_tmpdir):
 
 
 def _dump_filter_data(well_data_file, well_filter_file):
-    name = everest.ConfigKeys.NAME
-    drill_time = everest.ConfigKeys.DRILL_TIME
-
     well_data = [
-        {name: "PROD1", drill_time: 14},
-        {name: "PROD2", drill_time: 11},
-        {name: "INJECT1", drill_time: 1},
-        {name: "INJECT2", drill_time: 114},
+        {"name": "PROD1", "drill_time": 14},
+        {"name": "PROD2", "drill_time": 11},
+        {"name": "INJECT1", "drill_time": 1},
+        {"name": "INJECT2", "drill_time": 114},
     ]
 
     with open(well_data_file, "w", encoding="utf-8") as f:
@@ -111,9 +105,9 @@ def _dump_filter_data(well_data_file, well_filter_file):
         json.dump(well_filter, f)
 
     return [
-        {name: "PROD1", drill_time: 14},
-        {name: "PROD2", drill_time: 11},
-        {name: "INJECT1", drill_time: 1},
+        {"name": "PROD1", "drill_time": 14},
+        {"name": "PROD2", "drill_time": 11},
+        {"name": "INJECT1", "drill_time": 1},
     ]
 
 
@@ -167,33 +161,30 @@ def test_well_filter_script(change_to_tmpdir):
 
 
 def _dump_merge_data(well_data_file, additional_data_files):
-    name = everest.ConfigKeys.NAME
-    drill_time = everest.ConfigKeys.DRILL_TIME
-
     well_data = [
-        {name: "PROD1", drill_time: 14},
-        {name: "PROD2", drill_time: 11},
-        {name: "INJECT1", drill_time: 1},
-        {name: "INJECT2", drill_time: 114},
+        {"name": "PROD1", "drill_time": 14},
+        {"name": "PROD2", "drill_time": 11},
+        {"name": "INJECT1", "drill_time": 1},
+        {"name": "INJECT2", "drill_time": 114},
     ]
 
     with open(well_data_file, "w", encoding="utf-8") as f:
         json.dump(well_data, f)
 
     merged_data = [
-        {name: "PROD1", drill_time: 14},
-        {name: "PROD2", drill_time: 11},
-        {name: "INJECT1", drill_time: 1},
-        {name: "INJECT2", drill_time: 114},
+        {"name": "PROD1", "drill_time": 14},
+        {"name": "PROD2", "drill_time": 11},
+        {"name": "INJECT1", "drill_time": 1},
+        {"name": "INJECT2", "drill_time": 114},
     ]
 
     for idx, add_data_file in enumerate(additional_data_files):
         prop = f"property_{idx}"
         add_data = [
-            {name: "PROD2", prop: idx * 100 + 11},
-            {name: "INJECT1", prop: idx * 100 + 1},
-            {name: "PROD1", prop: idx * 100 + 14},
-            {name: "INJECT2", prop: idx * 100 + 114},
+            {"name": "PROD2", prop: idx * 100 + 11},
+            {"name": "INJECT1", prop: idx * 100 + 1},
+            {"name": "PROD1", prop: idx * 100 + 14},
+            {"name": "INJECT2", prop: idx * 100 + 114},
         ]
 
         yaml = YAML(typ="safe", pure=True)
@@ -246,13 +237,11 @@ def test_well_update(change_to_tmpdir):
 
 
 def test_well_set_invalid_data_length(change_to_tmpdir):
-    name = everest.ConfigKeys.NAME
-
     well_data_file = "well_data.yml"
     well_data = [
-        {name: "W1", "a": 1, "b": 2},
-        {name: "W3", "a": 2, "b": 1},
-        {name: "W2", "a": 7, "b": 5},
+        {"name": "W1", "a": 1, "b": 2},
+        {"name": "W3", "a": 2, "b": 1},
+        {"name": "W2", "a": 7, "b": 5},
     ]
     yaml = YAML(typ="safe", pure=True)
     with open(well_data_file, "w", encoding="utf-8") as f:
@@ -272,13 +261,11 @@ def test_well_set_invalid_data_length(change_to_tmpdir):
 
 
 def test_well_set_too_many_entries(change_to_tmpdir):
-    name = everest.ConfigKeys.NAME
-
     well_data_file = "well_data.yml"
     well_data = [
-        {name: "W1", "a": 1, "b": 2},
-        {name: "W3", "a": 2, "b": 1},
-        {name: "W2", "a": 7, "b": 5},
+        {"name": "W1", "a": 1, "b": 2},
+        {"name": "W3", "a": 2, "b": 1},
+        {"name": "W2", "a": 7, "b": 5},
     ]
     yaml = YAML(typ="safe", pure=True)
     with open(well_data_file, "w", encoding="utf-8") as f:
@@ -298,13 +285,11 @@ def test_well_set_too_many_entries(change_to_tmpdir):
 
 
 def test_well_set_new_entry(change_to_tmpdir):
-    name = everest.ConfigKeys.NAME
-
     well_data_file = "well_data.yml"
     well_data = [
-        {name: "W1", "a": 1, "b": 2},
-        {name: "W3", "a": 2, "b": 1},
-        {name: "W2", "a": 7, "b": 5},
+        {"name": "W1", "a": 1, "b": 2},
+        {"name": "W3", "a": 2, "b": 1},
+        {"name": "W2", "a": 7, "b": 5},
     ]
     yaml = YAML(typ="safe", pure=True)
     with open(well_data_file, "w", encoding="utf-8") as f:
@@ -323,9 +308,9 @@ def test_well_set_new_entry(change_to_tmpdir):
     )
 
     set_well_data = [
-        {name: "W1", "a": 1, "b": 2, "c": 4},
-        {name: "W3", "a": 2, "b": 1, "c": 8},
-        {name: "W2", "a": 7, "b": 5, "c": 12},
+        {"name": "W1", "a": 1, "b": 2, "c": 4},
+        {"name": "W3", "a": 2, "b": 1, "c": 8},
+        {"name": "W2", "a": 7, "b": 5, "c": 12},
     ]
 
     with open(output_file, encoding="utf-8") as f:
@@ -333,13 +318,11 @@ def test_well_set_new_entry(change_to_tmpdir):
 
 
 def test_well_set_entry(change_to_tmpdir):
-    name = everest.ConfigKeys.NAME
-
     well_data_file = "well_data.yml"
     well_data = [
-        {name: "W1", "a": 1, "b": 2},
-        {name: "W3", "a": 2, "b": 1, "c": 100},
-        {name: "W2", "a": 7, "b": 5},
+        {"name": "W1", "a": 1, "b": 2},
+        {"name": "W3", "a": 2, "b": 1, "c": 100},
+        {"name": "W2", "a": 7, "b": 5},
     ]
     yaml = YAML(typ="safe", pure=True)
     with open(well_data_file, "w", encoding="utf-8") as f:
@@ -358,9 +341,9 @@ def test_well_set_entry(change_to_tmpdir):
     )
 
     set_well_data = [
-        {name: "W1", "a": 1, "b": 2, "c": 4},
-        {name: "W3", "a": 2, "b": 1, "c": 8},
-        {name: "W2", "a": 7, "b": 5, "c": 12},
+        {"name": "W1", "a": 1, "b": 2, "c": 4},
+        {"name": "W3", "a": 2, "b": 1, "c": 8},
+        {"name": "W2", "a": 7, "b": 5, "c": 12},
     ]
 
     with open(output_file, encoding="utf-8") as f:
@@ -370,13 +353,12 @@ def test_well_set_entry(change_to_tmpdir):
 @pytest.mark.integration_test
 def test_well_set_script(change_to_tmpdir):
     assert os.access(everest.jobs.wdset, os.X_OK)
-    name = everest.ConfigKeys.NAME
 
     well_data_file = "well_data.yml"
     well_data = [
-        {name: "W1", "a": 1, "b": 2},
-        {name: "W3", "a": 2, "b": 1},
-        {name: "W2", "a": 7, "b": 5},
+        {"name": "W1", "a": 1, "b": 2},
+        {"name": "W3", "a": 2, "b": 1},
+        {"name": "W2", "a": 7, "b": 5},
     ]
     yaml = YAML(typ="safe", pure=True)
     with open(well_data_file, "w", encoding="utf-8") as f:
@@ -400,9 +382,9 @@ def test_well_set_script(change_to_tmpdir):
     subprocess.check_call(cmd, shell=True)
 
     set_well_data = [
-        {name: "W1", "a": 1, "b": 2, "c": 4},
-        {name: "W3", "a": 2, "b": 1, "c": 8},
-        {name: "W2", "a": 7, "b": 5, "c": 12},
+        {"name": "W1", "a": 1, "b": 2, "c": 4},
+        {"name": "W3", "a": 2, "b": 1, "c": 8},
+        {"name": "W2", "a": 7, "b": 5, "c": 12},
     ]
 
     with open(output_file, encoding="utf-8") as f:
@@ -410,22 +392,21 @@ def test_well_set_script(change_to_tmpdir):
 
 
 def _dump_completion_data(well_data_file, start_date):
-    name = everest.ConfigKeys.NAME
-    drill_time = everest.ConfigKeys.DRILL_TIME
-    drill_date = everest.ConfigKeys.DRILL_DATE
-    drill_delay = everest.ConfigKeys.DRILL_DELAY
-    completion_date = everest.ConfigKeys.COMPLETION_DATE
-
     well_data = [
-        {name: "PROD1", drill_time: 30, drill_date: "2001-01-01"},
-        {name: "PROD2", drill_time: 40, drill_date: "2001-01-01"},
-        {name: "PROD3", drill_time: 2, drill_date: "2001-03-01"},
-        {name: "INJECT1", drill_date: "2001-03-01"},
-        {name: "INJECT2", drill_time: 400, drill_date: "2002-01-01"},
-        {name: "INJECT3", drill_time: 30, drill_date: "2003-01-01"},
-        {name: "INJECT4", drill_time: 30},
-        {name: "INJECT5", drill_time: 1, drill_delay: 3},
-        {name: "INJECT6", drill_time: 1, drill_delay: 4, drill_date: "2003-04-15"},
+        {"name": "PROD1", "drill_time": 30, "drill_date": "2001-01-01"},
+        {"name": "PROD2", "drill_time": 40, "drill_date": "2001-01-01"},
+        {"name": "PROD3", "drill_time": 2, "drill_date": "2001-03-01"},
+        {"name": "INJECT1", "drill_date": "2001-03-01"},
+        {"name": "INJECT2", "drill_time": 400, "drill_date": "2002-01-01"},
+        {"name": "INJECT3", "drill_time": 30, "drill_date": "2003-01-01"},
+        {"name": "INJECT4", "drill_time": 30},
+        {"name": "INJECT5", "drill_time": 1, "drill_delay": 3},
+        {
+            "name": "INJECT6",
+            "drill_time": 1,
+            "drill_delay": 4,
+            "drill_date": "2003-04-15",
+        },
     ]
 
     yaml = YAML(typ="safe", pure=True)
@@ -434,57 +415,57 @@ def _dump_completion_data(well_data_file, start_date):
 
     return [
         {
-            name: "PROD1",
-            drill_time: 30,
-            drill_date: "2001-01-01",
-            completion_date: "2001-02-01",
+            "name": "PROD1",
+            "drill_time": 30,
+            "drill_date": "2001-01-01",
+            "completion_date": "2001-02-01",
         },
         {
-            name: "PROD2",
-            drill_time: 40,
-            drill_date: "2001-01-01",
-            completion_date: "2001-03-13",
+            "name": "PROD2",
+            "drill_time": 40,
+            "drill_date": "2001-01-01",
+            "completion_date": "2001-03-13",
         },
         {
-            name: "PROD3",
-            drill_time: 2,
-            drill_date: "2001-03-01",
-            completion_date: "2001-03-15",
+            "name": "PROD3",
+            "drill_time": 2,
+            "drill_date": "2001-03-01",
+            "completion_date": "2001-03-15",
         },
         {
-            name: "INJECT1",
-            drill_date: "2001-03-01",
-            completion_date: "2001-03-15",
+            "name": "INJECT1",
+            "drill_date": "2001-03-01",
+            "completion_date": "2001-03-15",
         },
         {
-            name: "INJECT2",
-            drill_time: 400,
-            drill_date: "2002-01-01",
-            completion_date: "2003-02-05",
+            "name": "INJECT2",
+            "drill_time": 400,
+            "drill_date": "2002-01-01",
+            "completion_date": "2003-02-05",
         },
         {
-            name: "INJECT3",
-            drill_time: 30,
-            drill_date: "2003-01-01",
-            completion_date: "2003-03-07",
+            "name": "INJECT3",
+            "drill_time": 30,
+            "drill_date": "2003-01-01",
+            "completion_date": "2003-03-07",
         },
         {
-            name: "INJECT4",
-            drill_time: 30,
-            completion_date: "2003-04-06",
+            "name": "INJECT4",
+            "drill_time": 30,
+            "completion_date": "2003-04-06",
         },
         {
-            name: "INJECT5",
-            drill_time: 1,
-            drill_delay: 3,
-            completion_date: "2003-04-10",
+            "name": "INJECT5",
+            "drill_time": 1,
+            "drill_delay": 3,
+            "completion_date": "2003-04-10",
         },
         {
-            name: "INJECT6",
-            drill_time: 1,
-            drill_delay: 4,
-            drill_date: "2003-04-15",
-            completion_date: "2003-04-16",
+            "name": "INJECT6",
+            "drill_time": 1,
+            "drill_delay": 4,
+            "drill_date": "2003-04-15",
+            "completion_date": "2003-04-16",
         },
     ]
 
@@ -540,51 +521,46 @@ def test_completion_date_script(change_to_tmpdir):
 
 
 def _dump_compl_filter_data(well_data_file):
-    name = everest.ConfigKeys.NAME
-    drill_time = everest.ConfigKeys.DRILL_TIME
-    drill_date = everest.ConfigKeys.DRILL_DATE
-    completion_date = everest.ConfigKeys.COMPLETION_DATE
-
     well_data = [
         {
-            name: "PROD1",
-            drill_time: 30,
-            drill_date: "2001-01-01",
-            completion_date: "2001-02-01",
+            "name": "PROD1",
+            "drill_time": 30,
+            "drill_date": "2001-01-01",
+            "completion_date": "2001-02-01",
         },
         {
-            name: "PROD2",
-            drill_time: 40,
-            drill_date: "2001-01-01",
-            completion_date: "2001-03-13",
+            "name": "PROD2",
+            "drill_time": 40,
+            "drill_date": "2001-01-01",
+            "completion_date": "2001-03-13",
         },
         {
-            name: "PROD3",
-            drill_time: 2,
-            drill_date: "2001-03-01",
-            completion_date: "2001-03-15",
+            "name": "PROD3",
+            "drill_time": 2,
+            "drill_date": "2001-03-01",
+            "completion_date": "2001-03-15",
         },
         {
-            name: "INJECT1",
-            drill_date: "2001-03-01",
-            completion_date: "2001-03-15",
+            "name": "INJECT1",
+            "drill_date": "2001-03-01",
+            "completion_date": "2001-03-15",
         },
         {
-            name: "INJECT2",
-            drill_time: 400,
-            drill_date: "2002-01-01",
-            completion_date: "2003-02-05",
+            "name": "INJECT2",
+            "drill_time": 400,
+            "drill_date": "2002-01-01",
+            "completion_date": "2003-02-05",
         },
         {
-            name: "INJECT3",
-            drill_time: 30,
-            drill_date: "2003-01-01",
-            completion_date: "2003-03-07",
+            "name": "INJECT3",
+            "drill_time": 30,
+            "drill_date": "2003-01-01",
+            "completion_date": "2003-03-07",
         },
         {
-            name: "INJECT4",
-            drill_time: 30,
-            completion_date: "2003-04-06",
+            "name": "INJECT4",
+            "drill_time": 30,
+            "completion_date": "2003-04-06",
         },
     ]
 
@@ -594,33 +570,33 @@ def _dump_compl_filter_data(well_data_file):
 
     filtered_well_data = [
         {
-            name: "PROD2",
-            drill_time: 40,
-            drill_date: "2001-01-01",
-            completion_date: "2001-03-13",
+            "name": "PROD2",
+            "drill_time": 40,
+            "drill_date": "2001-01-01",
+            "completion_date": "2001-03-13",
         },
         {
-            name: "PROD3",
-            drill_time: 2,
-            drill_date: "2001-03-01",
-            completion_date: "2001-03-15",
+            "name": "PROD3",
+            "drill_time": 2,
+            "drill_date": "2001-03-01",
+            "completion_date": "2001-03-15",
         },
         {
-            name: "INJECT1",
-            drill_date: "2001-03-01",
-            completion_date: "2001-03-15",
+            "name": "INJECT1",
+            "drill_date": "2001-03-01",
+            "completion_date": "2001-03-15",
         },
         {
-            name: "INJECT2",
-            drill_time: 400,
-            drill_date: "2002-01-01",
-            completion_date: "2003-02-05",
+            "name": "INJECT2",
+            "drill_time": 400,
+            "drill_date": "2002-01-01",
+            "completion_date": "2003-02-05",
         },
         {
-            name: "INJECT3",
-            drill_time: 30,
-            drill_date: "2003-01-01",
-            completion_date: "2003-03-07",
+            "name": "INJECT3",
+            "drill_time": 30,
+            "drill_date": "2003-01-01",
+            "completion_date": "2003-03-07",
         },
     ]
 

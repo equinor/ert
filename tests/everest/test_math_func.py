@@ -7,7 +7,6 @@ import pytest
 import yaml
 
 from ert.run_models.everest_run_model import EverestRunModel
-from everest import ConfigKeys as CK
 from everest.config import EverestConfig, InputConstraintConfig
 from everest.config.export_config import ExportConfig
 from everest.export import export_data
@@ -162,7 +161,7 @@ def test_math_func_advanced(
     assert best_1["realization_weight"] == 0.75
 
     # check functionality of export batch filtering
-    if CK.EXPORT not in config:
+    if "export" not in config:
         config.export = ExportConfig()
 
     exp_nunique = 2

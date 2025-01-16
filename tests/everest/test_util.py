@@ -8,7 +8,6 @@ from everest import util
 from everest.bin.utils import report_on_previous_run
 from everest.config import EverestConfig, ServerConfig
 from everest.config.everest_config import get_system_installed_jobs
-from everest.config_keys import ConfigKeys
 from everest.detached import ServerStatus
 from everest.strings import SERVER_STATUS
 from tests.everest.utils import (
@@ -60,11 +59,11 @@ def test_get_values(change_to_tmpdir):
 
     config = EverestConfig.with_defaults(
         **{
-            ConfigKeys.ENVIRONMENT: {
-                ConfigKeys.OUTPUT_DIR: abs_out_dir,
-                ConfigKeys.SIMULATION_FOLDER: "simulation_folder",
+            "environment": {
+                "output_folder": abs_out_dir,
+                "simulation_folder": "simulation_folder",
             },
-            ConfigKeys.CONFIGPATH: Path(os.path.join(exp_dir, exp_file)),
+            "config_path": Path(os.path.join(exp_dir, exp_file)),
         }
     )
 
@@ -148,7 +147,7 @@ def test_get_system_installed_job_names():
 def test_report_on_previous_run(_, change_to_tmpdir):
     with open("config_file", "w", encoding="utf-8") as f:
         f.write(" ")
-    config = EverestConfig.with_defaults(**{ConfigKeys.CONFIGPATH: "config_file"})
+    config = EverestConfig.with_defaults(**{"config_path": "config_file"})
     with capture_streams() as (out, _):
         report_on_previous_run(
             config_file=config.config_file,

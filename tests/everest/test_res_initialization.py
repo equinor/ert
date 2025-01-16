@@ -16,7 +16,6 @@ from ert.config.queue_config import (
     SlurmQueueOptions,
     TorqueQueueOptions,
 )
-from everest import ConfigKeys as CK
 from everest.config import EverestConfig, EverestValidationError
 from everest.simulator.everest_to_ert import (
     _everest_to_ert_config_dict,
@@ -306,7 +305,7 @@ def test_install_data_with_invalid_templates(
     with open(config_file, encoding="utf-8") as f:
         raw_config = YAML(typ="safe", pure=True).load(f)
 
-    raw_config[CK.INSTALL_DATA] = [install_data]
+    raw_config["install_data"] = [install_data]
 
     with open(config_file, "w", encoding="utf-8") as f:
         yaml = YAML(typ="safe", pure=True)

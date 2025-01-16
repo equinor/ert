@@ -7,8 +7,6 @@ from typing import Any
 import jinja2
 from ruamel.yaml import YAML, YAMLError
 
-from .config_keys import ConfigKeys
-
 # Since YAML interprets '{' as start of a dict, we need to prefix it with
 # something to make reading possible.
 #
@@ -51,11 +49,11 @@ def load_yaml(file_name: str) -> dict[str, Any] | None:
 def _get_definitions(configuration, configpath):
     defs = {}
     if configuration:
-        if ConfigKeys.DEFINITIONS not in configuration:
+        if "definitions" not in configuration:
             msg = "No {} node found in configuration file"
-            logging.debug(msg.format(ConfigKeys.DEFINITIONS))
+            logging.debug(msg.format("definitions"))
         else:
-            defs = configuration.get(ConfigKeys.DEFINITIONS, {})
+            defs = configuration.get("definitions", {})
 
         for key, val in ERT_CONFIG_TEMPLATES.items():
             if key in defs:
@@ -71,7 +69,7 @@ def _get_definitions(configuration, configpath):
     defs["configpath"] = defs.get("configpath", configpath)
 
     # If user didn't define a eclbase arg for eclipse100, we insert it.
-    defs[ConfigKeys.ECLBASE] = defs.get(ConfigKeys.ECLBASE, "eclipse/ECL")
+    defs["eclbase"] = defs.get("eclbase", "eclipse/ECL")
 
     return defs
 
@@ -141,5 +139,5 @@ def yaml_file_to_substituted_config_dict(config_path: str) -> dict[str, Any]:
         yaml = {}
 
     # Inject config path
-    yaml[ConfigKeys.CONFIGPATH] = config_path
+    yaml["config_path"] = config_path
     return yaml
