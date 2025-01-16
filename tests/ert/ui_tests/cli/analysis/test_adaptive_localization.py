@@ -15,7 +15,7 @@ from tests.ert.ui_tests.cli.run_cli import run_cli
 def run_cli_ES_with_case(poly_config):
     run_cli(
         ENSEMBLE_SMOOTHER_MODE,
-        "--disable-monitor",
+        "--disable-monitoring",
         "--realizations",
         "1-50",
         poly_config,

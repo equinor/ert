@@ -83,7 +83,7 @@ def template_config(request, source_root, tmp_path_factory):
                 parser,
                 [
                     ENSEMBLE_EXPERIMENT_MODE,
-                    "--disable-monitor",
+                    "--disable-monitoring",
                     "poly.ert",
                 ],
             )

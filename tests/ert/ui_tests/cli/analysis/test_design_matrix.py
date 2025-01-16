@@ -84,7 +84,7 @@ def test_run_poly_example_with_design_matrix():
 
     run_cli(
         ENSEMBLE_EXPERIMENT_MODE,
-        "--disable-monitor",
+        "--disable-monitoring",
         "poly.ert",
         "--experiment-name",
         "test-experiment",
@@ -172,7 +172,7 @@ def test_run_poly_example_with_design_matrix_and_genkw_merge(default_values, err
         with pytest.raises(ErtCliError, match=error_msg):
             run_cli(
                 ENSEMBLE_EXPERIMENT_MODE,
-                "--disable-monitor",
+                "--disable-monitoring",
                 "poly.ert",
                 "--experiment-name",
                 "test-experiment",
@@ -180,7 +180,7 @@ def test_run_poly_example_with_design_matrix_and_genkw_merge(default_values, err
         return
     run_cli(
         ENSEMBLE_EXPERIMENT_MODE,
-        "--disable-monitor",
+        "--disable-monitoring",
         "poly.ert",
         "--experiment-name",
         "test-experiment",
@@ -267,7 +267,7 @@ def test_run_poly_example_with_multiple_design_matrix_instances():
 
     run_cli(
         ENSEMBLE_EXPERIMENT_MODE,
-        "--disable-monitor",
+        "--disable-monitoring",
         "poly.ert",
         "--experiment-name",
         "test-experiment",

@@ -156,7 +156,7 @@ if __name__ == "__main__":
 
         run_cli(
             ENSEMBLE_SMOOTHER_MODE,
-            "--disable-monitor",
+            "--disable-monitoring",
             "config.ert",
         )
         config = ErtConfig.from_file("config.ert")
@@ -339,7 +339,7 @@ def test_foward_init_false():
     config = ErtConfig.from_file("config_forward_init_false.ert")
     run_cli(
         ENSEMBLE_SMOOTHER_MODE,
-        "--disable-monitor",
+        "--disable-monitoring",
         "config_forward_init_false.ert",
         "--experiment-name",
         "es-test",

@@ -440,7 +440,9 @@ def test_that_parameters_are_placed_in_the_runpath_as_expected(
         smspec.to_file("ECLBASE.SMSPEC")
         unsmry.to_file("ECLBASE.UNSMRY")
 
-        run_cli_with_pm([ENSEMBLE_EXPERIMENT_MODE, "--disable-monitor", "config.ert"])
+        run_cli_with_pm(
+            [ENSEMBLE_EXPERIMENT_MODE, "--disable-monitoring", "config.ert"]
+        )
 
         mask = np.logical_not(
             np.array(io_source.actnum).reshape(io_source.dims, order="F")
