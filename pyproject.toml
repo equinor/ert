@@ -11,7 +11,7 @@ authors = [
     { name = "Equinor ASA", email = "fg_sib-scout@equinor.com" },
 ]
 description = "Ensemble based Reservoir Tool (ERT)"
-requires-python = ">=3.11"
+requires-python = ">=3.11, <3.13"
 readme = "README.md"
 license = { text = "GPL-3.0" }
 classifiers = [
@@ -93,6 +93,19 @@ wdupdate = "everest.jobs.scripts.wdupdate:main"
 Repository = "https://github.com/equinor/ert"
 
 [project.optional-dependencies]
+everest = [
+    "progressbar2",
+    "ruamel.yaml",
+    "fastapi",
+    "decorator",
+    "resdata",
+    "colorama",
+    "ropt[pandas]>=0.1,<0.11",
+    "ropt-dakota>=0.1,<0.11",
+    "seba-sqlite",
+]
+
+[dependency-groups]
 dev = [
     "furo",
     "hypothesis!=6.102.0,!=6.112.3,>=6.85",
@@ -139,16 +152,11 @@ types = [
     "types-psutil",
     "types-setuptools"
 ]
-everest = [
-    "progressbar2",
-    "ruamel.yaml",
-    "fastapi",
-    "decorator",
-    "resdata",
-    "colorama",
-    "ropt[pandas]>=0.1,<0.11",
-    "ropt-dakota>=0.1,<0.11",
-    "seba-sqlite",
+
+all = [
+  { include-group = 'dev' },
+  { include-group = 'style' },
+  { include-group = 'types' },
 ]
 
 [tool.setuptools]
@@ -255,3 +263,6 @@ PYSIDE6 = false
 PYQT5 = true
 PYSIDE2 = false
 PYQT6 = false
+
+[tool.uv]
+fork-strategy = "requires-python"
