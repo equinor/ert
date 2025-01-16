@@ -26,6 +26,7 @@ from everest.strings import (
     OPT_PROGRESS_ID,
     SIM_PROGRESS_ENDPOINT,
     SIM_PROGRESS_ID,
+    START_EXPERIMENT_ENDPOINT,
     STOP_ENDPOINT,
 )
 
@@ -69,6 +70,7 @@ def stop_server(server_context: tuple[str, str, tuple[str, str]], retries: int =
     """
     for retry in range(retries):
         try:
+            print("stopping server")
             url, cert, auth = server_context
             stop_endpoint = "/".join([url, STOP_ENDPOINT])
             response = requests.post(
@@ -83,6 +85,26 @@ def stop_server(server_context: tuple[str, str, tuple[str, str]], retries: int =
             logging.debug(traceback.format_exc())
             time.sleep(retry)
     return False
+
+
+def start_experiment(
+    server_context: tuple[str, str, tuple[str, str]],
+    config: EverestConfig,
+) -> None:
+    print("Starting experiment")
+    try:
+        url, cert, auth = server_context
+        start_endpoint = "/".join([url, START_EXPERIMENT_ENDPOINT])
+        response = requests.post(
+            start_endpoint,
+            verify=cert,
+            auth=auth,
+            proxies=PROXY,  # type: ignore
+            json=config.to_dict(),
+        )
+        response.raise_for_status()
+    except Exception as e:
+        raise ValueError("Failed to start experiment.") from e
 
 
 def extract_errors_from_file(path: str):
