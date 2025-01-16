@@ -235,5 +235,3 @@ def mock_server(monkeypatch):
     monkeypatch.setattr(everserver, "_find_open_port", lambda *args, **kwargs: 42)
     monkeypatch.setattr(everserver, "_write_hostfile", MagicMock())
     monkeypatch.setattr(everserver, "_everserver_thread", MagicMock())
-    monkeypatch.setattr(everserver, "export_to_csv", MagicMock())
-    monkeypatch.setattr(everserver, "export_with_progress", MagicMock())

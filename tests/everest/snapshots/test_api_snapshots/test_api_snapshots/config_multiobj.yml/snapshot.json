@@ -69,18 +69,6 @@
     },
     {
       "batch": 0,
-      "control": "point_y",
-      "function": "distance_p",
-      "value": 0.98866227
-    },
-    {
-      "batch": 0,
-      "control": "point_z",
-      "function": "distance_p",
-      "value": 1.00465235
-    },
-    {
-      "batch": 0,
       "control": "point_x",
       "function": "distance_q",
       "value": -3.00456477
@@ -88,8 +76,20 @@
     {
       "batch": 0,
       "control": "point_y",
+      "function": "distance_p",
+      "value": 0.98866227
+    },
+    {
+      "batch": 0,
+      "control": "point_y",
       "function": "distance_q",
       "value": -3.011388
+    },
+    {
+      "batch": 0,
+      "control": "point_z",
+      "function": "distance_p",
+      "value": 1.00465235
     },
     {
       "batch": 0,
