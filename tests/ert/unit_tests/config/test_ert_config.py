@@ -198,7 +198,6 @@ def test_custom_forward_models_are_logged(caplog):
     ), "check if site-config fm were logged"
 
 
-@pytest.mark.usefixtures("use_tmpdir")
 def test_logging_with_comments(caplog):
     """
     Run logging on an actual config file with line comments
