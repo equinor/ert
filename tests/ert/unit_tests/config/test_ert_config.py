@@ -15,7 +15,7 @@ from hypothesis import HealthCheck, assume, given, settings
 from hypothesis import strategies as st
 from pydantic import RootModel, TypeAdapter
 
-from ert.config import AnalysisConfig, ConfigValidationError, ErtConfig, HookRuntime
+from ert.config import ConfigValidationError, ErtConfig, HookRuntime
 from ert.config.ert_config import (
     create_forward_model_json,
     site_config_location,
@@ -52,17 +52,11 @@ def test_config_can_include_existing_file():
 
 
 @pytest.mark.usefixtures("use_tmpdir")
-def test_minimal_ert_configuration():
+def test_that_config_path_substitution_is_the_name_of_the_configs_directory():
     Path("minimal_config.ert").write_text("NUM_REALIZATIONS 1", encoding="utf-8")
     ert_config = ErtConfig.from_file("minimal_config.ert")
 
-    assert ert_config is not None
-
-    assert ert_config.analysis_config is not None
-    assert isinstance(ert_config.analysis_config, AnalysisConfig)
-
     assert ert_config.config_path == os.getcwd()
-
     assert ert_config.substitutions["<CONFIG_PATH>"] == os.getcwd()
 
 
