@@ -22,9 +22,10 @@ from pydantic import (
     field_validator,
     model_validator,
 )
+from pydantic_core.core_schema import ValidationInfo
 from ruamel.yaml import YAML, YAMLError
 
-from ert.config import ErtConfig
+from ert.config import ErtConfig, QueueConfig
 from ert.config.parsing import BaseModelWithContextSupport
 from ert.config.parsing.base_model_context import init_context
 from ert.plugins import ErtPluginManager
@@ -251,7 +252,7 @@ and environment variables are exposed in the form 'os.NAME', for example:
         return self
 
     @model_validator(mode="after")
-    def validate_forward_model_job_name_installed(self) -> Self:  # pylint: disable=E0213
+    def validate_forward_model_job_name_installed(self, info: ValidationInfo) -> Self:  # pylint: disable=E0213
         install_jobs = self.install_jobs
         forward_model_jobs = self.forward_model
         if install_jobs is None:
@@ -769,6 +770,9 @@ and environment variables are exposed in the form 'os.NAME', for example:
     def with_plugins(cls, config_dict):
         context = {}
         activate_script = ErtPluginManager().activate_script()
+        site_config = ErtConfig.read_site_config()
+        if site_config:
+            context["queue_system"] = QueueConfig.from_dict(site_config).queue_options
         if activate_script:
             context["activate_script"] = ErtPluginManager().activate_script()
         with init_context(context):
