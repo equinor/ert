@@ -110,7 +110,7 @@ if __name__ == "__main__":
 
         run_cli(
             ENSEMBLE_SMOOTHER_MODE,
-            "--disable-monitor",
+            "--disable-monitoring",
             "config.ert",
         )
         with open_storage(tmpdir / "storage") as storage:

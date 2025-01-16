@@ -32,7 +32,7 @@ def poly_example_tmp_dir_shared(
             parser,
             [
                 ENSEMBLE_SMOOTHER_MODE,
-                "--disable-monitor",
+                "--disable-monitoring",
                 "--realizations",
                 "1,2,4",
                 "poly.ert",

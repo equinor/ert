@@ -299,7 +299,7 @@ def _run_snake_oil(source_root):
         parser,
         [
             ENSEMBLE_EXPERIMENT_MODE,
-            "--disable-monitor",
+            "--disable-monitoring",
             "--current-ensemble",
             "default_0",
             "snake_oil.ert",
@@ -321,7 +321,7 @@ def _run_heat_equation(source_root):
         parser,
         [
             ES_MDA_MODE,
-            "--disable-monitor",
+            "--disable-monitoring",
             "config.ert",
         ],
     )

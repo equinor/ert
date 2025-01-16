@@ -248,6 +248,6 @@ if __name__ == "__main__":
 def run_poly():
     run_cli(
         ENSEMBLE_SMOOTHER_MODE,
-        "--disable-monitor",
+        "--disable-monitoring",
         "config.ert",
     )

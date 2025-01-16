@@ -43,14 +43,14 @@ from .run_cli import run_cli
 def test_bad_config_error_message(tmp_path):
     (tmp_path / "test.ert").write_text("NUM_REL 10\n")
     with pytest.raises(ConfigValidationError, match="NUM_REALIZATIONS must be set\\."):
-        run_cli(TEST_RUN_MODE, "--disable-monitor", str(tmp_path / "test.ert"))
+        run_cli(TEST_RUN_MODE, "--disable-monitoring", str(tmp_path / "test.ert"))
 
 
 def test_test_run_on_lsf_configuration_works_with_no_errors(tmp_path):
     (tmp_path / "test.ert").write_text(
         "NUM_REALIZATIONS 1\nQUEUE_SYSTEM LSF", encoding="utf-8"
     )
-    run_cli(TEST_RUN_MODE, "--disable-monitor", str(tmp_path / "test.ert"))
+    run_cli(TEST_RUN_MODE, "--disable-monitoring", str(tmp_path / "test.ert"))
 
 
 @pytest.mark.parametrize(
@@ -77,7 +77,7 @@ def test_that_the_cli_raises_exceptions_when_parameters_are_missing(mode):
     ):
         run_cli(
             mode,
-            "--disable-monitor",
+            "--disable-monitoring",
             "poly-no-gen-kw.ert",
             "--target-ensemble",
             "testensemble-%d",
@@ -92,7 +92,7 @@ def test_that_the_cli_raises_exceptions_when_no_weight_provided_for_es_mda():
     ):
         run_cli(
             ES_MDA_MODE,
-            "--disable-monitor",
+            "--disable-monitoring",
             "poly.ert",
             "--target-ensemble",
             "testensemble-%d",
@@ -108,7 +108,7 @@ def test_field_init_file_not_readable(monkeypatch):
     os.chmod(field_file_rel_path, 0x0)
 
     with pytest.raises(ErtCliError, match="Permission denied:"):
-        run_cli(TEST_RUN_MODE, "--disable-monitor", config_file_name)
+        run_cli(TEST_RUN_MODE, "--disable-monitoring", config_file_name)
 
 
 @pytest.mark.usefixtures("copy_snake_oil_field")
@@ -145,7 +145,7 @@ def test_surface_init_fails_during_forward_model_callback():
     with pytest.raises(
         ErtCliError, match=f"Failed to initialize parameter {parameter_name!r}"
     ):
-        run_cli(TEST_RUN_MODE, "--disable-monitor", config_file_name)
+        run_cli(TEST_RUN_MODE, "--disable-monitoring", config_file_name)
 
 
 @pytest.mark.usefixtures("copy_snake_oil_field")
@@ -212,7 +212,7 @@ def test_that_the_model_raises_exception_if_successful_realizations_less_than_mi
         ErtCliError,
         match="Number of successful realizations",
     ):
-        run_cli(mode, "--disable-monitor", "failing_realizations.ert")
+        run_cli(mode, "--disable-monitoring", "failing_realizations.ert")
 
 
 @pytest.fixture
@@ -276,7 +276,7 @@ def test_that_setenv_sets_environment_variables_in_jobs(setenv_config):
     # When running the jobs
     run_cli(
         TEST_RUN_MODE,
-        "--disable-monitor",
+        "--disable-monitoring",
         str(setenv_config),
     )
 
@@ -515,9 +515,9 @@ def test_that_stop_on_fail_workflow_jobs_stop_ert(
 
     if expect_stopped:
         with pytest.raises(Exception, match=r"Workflow job .* failed with error"):
-            run_cli(TEST_RUN_MODE, "--disable-monitor", "poly.ert")
+            run_cli(TEST_RUN_MODE, "--disable-monitoring", "poly.ert")
     else:
-        run_cli(TEST_RUN_MODE, "--disable-monitor", "poly.ert")
+        run_cli(TEST_RUN_MODE, "--disable-monitoring", "poly.ert")
 
 
 @pytest.mark.usefixtures("copy_poly_case")
@@ -582,7 +582,7 @@ def test_that_pre_post_experiment_hook_works(monkeypatch, capsys):
         )
 
     for mode in [ITERATIVE_ENSEMBLE_SMOOTHER_MODE, ES_MDA_MODE, ENSEMBLE_SMOOTHER_MODE]:
-        run_cli(mode, "--disable-monitor", "poly.ert")
+        run_cli(mode, "--disable-monitoring", "poly.ert")
 
         captured = capsys.readouterr()
         assert "first" in captured.out
@@ -612,7 +612,7 @@ def test_es_mda(snapshot):
 
     run_cli(
         ES_MDA_MODE,
-        "--disable-monitor",
+        "--disable-monitoring",
         "--target-ensemble",
         "iter-%d",
         "--realizations",
@@ -661,7 +661,7 @@ def test_cli_does_not_run_without_observations(mode, target):
     remove_linestartswith("poly.ert", "OBS_CONFIG")
 
     with pytest.raises(ErtCliError, match=f"To run {mode}, observations are needed."):
-        run_cli(mode, "--disable-monitor", "--target-ensemble", target, "poly.ert")
+        run_cli(mode, "--disable-monitoring", "--target-ensemble", target, "poly.ert")
 
 
 @pytest.mark.usefixtures("copy_poly_case")
@@ -677,7 +677,7 @@ def test_ensemble_smoother():
 
 @pytest.mark.usefixtures("copy_poly_case")
 def test_cli_test_run(mock_cli_run):
-    run_cli(TEST_RUN_MODE, "--disable-monitor", "poly.ert")
+    run_cli(TEST_RUN_MODE, "--disable-monitoring", "poly.ert")
 
     monitor_mock, thread_join_mock, thread_start_mock = mock_cli_run
     monitor_mock.assert_called_once()
@@ -694,7 +694,7 @@ def test_that_running_ies_with_different_steplength_produces_different_result():
     def _run(target, experiment_name):
         run_cli(
             ITERATIVE_ENSEMBLE_SMOOTHER_MODE,
-            "--disable-monitor",
+            "--disable-monitoring",
             "--target-ensemble",
             f"{target}-%d",
             "--realizations",
@@ -789,7 +789,7 @@ def test_that_prior_is_not_overwritten_in_ensemble_experiment(
     with caplog.at_level(logging.INFO):
         run_cli(
             ENSEMBLE_EXPERIMENT_MODE,
-            "--disable-monitor",
+            "--disable-monitoring",
             "poly.ert",
             "--current-case=iter-0",
             "--realizations",
@@ -819,7 +819,7 @@ def test_failing_job_cli_error_message():
         "RuntimeError: Argh",
     ]
     try:
-        run_cli(TEST_RUN_MODE, "--disable-monitor", "poly.ert")
+        run_cli(TEST_RUN_MODE, "--disable-monitoring", "poly.ert")
     except ErtCliError as error:
         for substring in expected_substrings:
             assert substring in f"{error}"
@@ -839,7 +839,7 @@ def test_exclude_parameter_from_update():
 
     run_cli(
         ENSEMBLE_SMOOTHER_MODE,
-        "--disable-monitor",
+        "--disable-monitoring",
         "--target-ensemble",
         "iter-%d",
         "--realizations",
@@ -899,7 +899,7 @@ def test_that_log_is_cleaned_up_from_repeated_forward_model_steps(caplog):
     with caplog.at_level(logging.INFO):
         run_cli(
             "ensemble_experiment",
-            "--disable-monitor",
+            "--disable-monitoring",
             "poly_repeated_forward_model_steps.ert",
             "--realizations",
             "0-4",
@@ -948,7 +948,7 @@ def test_that_a_custom_eclrun_can_be_activated_through_setenv():
     run_cli(
         TEST_RUN_MODE,
         str(config_file),
-        "--disable-monitor",
+        "--disable-monitoring",
     )
 
 

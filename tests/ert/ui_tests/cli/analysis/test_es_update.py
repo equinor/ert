@@ -52,7 +52,7 @@ def obs() -> polars.DataFrame:
 def test_that_posterior_has_lower_variance_than_prior():
     run_cli(
         ENSEMBLE_SMOOTHER_MODE,
-        "--disable-monitor",
+        "--disable-monitoring",
         "--realizations",
         "1-50",
         "poly.ert",
@@ -126,7 +126,7 @@ def test_that_surfaces_retain_their_order_when_loaded_and_saved_by_ert():
 
     run_cli(
         ENSEMBLE_SMOOTHER_MODE,
-        "--disable-monitor",
+        "--disable-monitoring",
         "snake_oil_surface.ert",
     )
 
@@ -164,7 +164,7 @@ def test_that_surfaces_retain_their_order_when_loaded_and_saved_by_ert():
 def test_update_multiple_param():
     run_cli(
         ENSEMBLE_SMOOTHER_MODE,
-        "--disable-monitor",
+        "--disable-monitoring",
         "snake_oil.ert",
     )
 
@@ -219,7 +219,7 @@ def test_that_update_works_with_failed_realizations():
 
     run_cli(
         ENSEMBLE_SMOOTHER_MODE,
-        "--disable-monitor",
+        "--disable-monitoring",
         "poly.ert",
     )
 

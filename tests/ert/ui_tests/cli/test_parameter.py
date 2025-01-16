@@ -22,7 +22,7 @@ def test_running_smoother_raises_without_updateable_parameters():
         parser,
         [
             ENSEMBLE_SMOOTHER_MODE,
-            "--disable-monitor",
+            "--disable-monitoring",
             "poly.ert",
         ],
     )

@@ -195,7 +195,7 @@ def test_update_lowers_generalized_variance_or_deactivates_observations(
             try:
                 run_cli(
                     ENSEMBLE_SMOOTHER_MODE,
-                    "--disable-monitor",
+                    "--disable-monitoring",
                     "--experiment-name",
                     "experiment",
                     "config.ert",
