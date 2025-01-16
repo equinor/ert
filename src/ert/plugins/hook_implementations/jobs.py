@@ -29,6 +29,5 @@ def _get_jobs_from_directories(directories: list[str]) -> dict[str, str]:
 def installable_workflow_jobs() -> dict[str, str]:
     directories = [
         "{{ERT_SHARE_PATH}}/workflows/jobs/shell",
-        "{{ERT_SHARE_PATH}}/workflows/jobs/internal-{{ERT_UI_MODE}}/config",
     ]
     return _get_jobs_from_directories(directories)

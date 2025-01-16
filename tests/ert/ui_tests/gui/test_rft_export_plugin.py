@@ -10,6 +10,7 @@ from qtpy.QtWidgets import QCheckBox, QMessageBox
 from ert.config import ErtConfig
 from ert.gui.ertwidgets import CustomDialog, ListEditBox, PathChooser
 from ert.gui.main import GUILogHandler, _setup_main_window
+from ert.plugins import ErtPluginContext
 from ert.services import StorageService
 from ert.storage import open_storage
 
@@ -77,8 +78,8 @@ def test_rft_csv_export_plugin_exports_rft_data(
     args.config = "config.ert"
 
     output_file = Path("output.csv")
-
-    ert_config = ErtConfig.from_file(args.config)
+    with ErtPluginContext():
+        ert_config = ErtConfig.with_plugins().from_file(args.config)
     with (
         StorageService.init_service(
             project=os.path.abspath(ert_config.ens_path),
