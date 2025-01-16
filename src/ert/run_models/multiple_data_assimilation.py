@@ -210,7 +210,7 @@ class MultipleDataAssimilation(UpdateRunModel):
 
     @classmethod
     def description(cls) -> str:
-        return "[Sample|restart] → [evaluate → update] for each weight"
+        return "[Sample|restart] → [evaluate → update] for each weight.\nRecommended algorithm."
 
     @classmethod
     def group(cls) -> str | None:
