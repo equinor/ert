@@ -54,15 +54,10 @@ async def test_logging_setup(copy_math_func_test_data_to_tmp):
         raise e
     await server_running()
 
-   
-
     everest_output_path = os.path.join(os.getcwd(), "everest_output")
-
     everest_logs_dir_path = everest_config.log_dir
-
     detached_node_dir = ServerConfig.get_detached_node_dir(everest_config.output_dir)
     endpoint_log_path = os.path.join(detached_node_dir, "endpoint.log")
-
     everest_log_path = os.path.join(everest_logs_dir_path, "everest.log")
     forward_model_log_path = os.path.join(everest_logs_dir_path, "forward_models.log")
 

@@ -197,7 +197,6 @@ def test_everserver_status_failed_job(
     assert "job1 Failed with: job 1 error 2" in status["message"]
     assert "job2 Failed with: job 2 error 1" in status["message"]
 
-@pytest.skip()
 @patch("sys.argv", ["name", "--config-file", "config_minimal.yml"])
 @patch("everest.detached.jobs.everserver._configure_loggers")
 @patch("requests.get")
@@ -244,6 +243,7 @@ def test_everserver_status_exception(
     "everest.detached.jobs.everserver._sim_monitor",
     side_effect=partial(set_shared_status, progress=[]),
 )
+@pytest.mark.timeout(20)
 def test_everserver_status_max_batch_num(
     _1, mock_server, copy_math_func_test_data_to_tmp
 ):
@@ -268,8 +268,10 @@ def test_everserver_status_max_batch_num(
     assert {data.batch for data in snapshot.simulation_data} == {0}
 
 
+
 @pytest.mark.integration_test
 @pytest.mark.xdist_group(name="starts_everest")
+@pytest.mark.timeout(20)
 @patch("sys.argv", ["name", "--config-file", "config_minimal.yml"])
 def test_everserver_status_contains_max_runtime_failure(
     mock_server, change_to_tmpdir, min_config
