@@ -84,17 +84,10 @@ class ExperimentRunner(threading.Thread):
             )
 
         try:
-            print("Starting experiment...")
             run_model.run_experiment(evaluator_server_config)
-            print("Starting experiment... done")
-
             self._exit_code = run_model.exit_code
         except Exception:
             self._exit_code = EverestExitCode.EXCEPTION
-            print("EXCEPTION")
-            # self.status = ExperimentRunnerStatus(
-            #    status="Experiment failed", message=traceback.format_exc()
-            # )
 
     @property
     def exit_code(self) -> EverestExitCode | None:
@@ -414,9 +407,9 @@ def main():
         update_everserver_status(status_path, ServerStatus.running)
 
         # add timeout
-        is_done = True
+        is_done = False
         exit_code = None
-        while is_done:
+        while not is_done:
             response = requests.get(
                 "/".join([url, EXPERIMENT_STATUS_ENDPOINT]),
                 verify=cert,
@@ -427,14 +420,9 @@ def main():
                 exit_code = int(
                     response.text if hasattr(response, "text") else response.body
                 )
-                is_done = False
+                is_done = True
             else:
                 time.sleep(1)
-
-            # status, message = _get_optimization_status(exit_code, shared_data)
-            # if status != ServerStatus.completed:
-            #    update_everserver_status(status_path, status, message)
-            #    time.sleep(1)
 
         response: requests.Response = requests.get(
             url + "/" + SHARED_DATA_ENDPOINT,
@@ -446,9 +434,6 @@ def main():
             response.text if hasattr(response, "text") else response.body
         ):
             shared_data = json_body
-
-        print("Shared data: ", shared_data)
-        print("Exit code: ", exit_code)
 
         status, message = _get_optimization_status(exit_code, shared_data)
         if status != ServerStatus.completed:

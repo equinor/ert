@@ -1,7 +1,6 @@
 import json
 import os
 import ssl
-from functools import partial
 from pathlib import Path
 from unittest.mock import patch
 
@@ -12,8 +11,15 @@ from fastapi.responses import JSONResponse, PlainTextResponse
 from seba_sqlite.snapshot import SebaSnapshot
 
 from ert.run_models.everest_run_model import EverestExitCode
+from ert.scheduler.event import FinishedEvent
 from everest.config import EverestConfig, OptimizationConfig, ServerConfig
-from everest.detached import ServerStatus, everserver_status, start_experiment
+from everest.detached import (
+    ServerStatus,
+    everserver_status,
+    start_experiment,
+    start_server,
+    wait_for_server,
+)
 from everest.detached.jobs import everserver
 from everest.simulator import JOB_FAILURE, JOB_SUCCESS
 from everest.strings import (
@@ -114,7 +120,7 @@ def test_configure_logger_failure(mocked_logger, copy_math_func_test_data_to_tmp
 @patch("everest.detached.jobs.everserver._configure_loggers")
 @patch("everest.bin.utils.export_to_csv")
 @patch("requests.get")
-def test_everserver_status_running_complete(
+def test_status_running_complete(
     mocked_get, mocked_export_to_csv, mocked_logger, copy_math_func_test_data_to_tmp
 ):
     config_file = "config_minimal.yml"
@@ -150,9 +156,7 @@ def test_everserver_status_running_complete(
 @patch("sys.argv", ["name", "--config-file", "config_minimal.yml"])
 @patch("everest.detached.jobs.everserver._configure_loggers")
 @patch("requests.get")
-def test_everserver_status_failed_job(
-    mocked_get, mocked_logger, copy_math_func_test_data_to_tmp
-):
+def test_status_failed_job(mocked_get, mocked_logger, copy_math_func_test_data_to_tmp):
     config_file = "config_minimal.yml"
     config = EverestConfig.load_file(config_file)
 
@@ -218,9 +222,7 @@ def test_everserver_status_failed_job(
 @patch("sys.argv", ["name", "--config-file", "config_minimal.yml"])
 @patch("everest.detached.jobs.everserver._configure_loggers")
 @patch("requests.get")
-def test_everserver_status_exception(
-    mocked_get, mocked_logger, copy_math_func_test_data_to_tmp
-):
+def test_status_exception(mocked_get, mocked_logger, copy_math_func_test_data_to_tmp):
     config_file = "config_minimal.yml"
     config = EverestConfig.load_file(config_file)
 
@@ -256,22 +258,33 @@ def test_everserver_status_exception(
 
 
 @pytest.mark.integration_test
+@pytest.mark.xdist_group(name="starts_everest")
+@pytest.mark.timeout(120)
 @patch("sys.argv", ["name", "--config-file", "config_minimal.yml"])
-@patch(
-    "everest.detached.jobs.everserver._sim_monitor",
-    side_effect=partial(set_shared_status, progress=[]),
-)
-@pytest.mark.timeout(20)
-def test_everserver_status_max_batch_num(
-    _1, mock_server, copy_math_func_test_data_to_tmp
-):
+async def test_status_max_batch_num(copy_math_func_test_data_to_tmp):
     config = EverestConfig.load_file("config_minimal.yml")
     config.optimization = OptimizationConfig(
         algorithm="optpp_q_newton", max_batch_num=1
     )
     config.dump("config_minimal.yml")
 
-    everserver.main()
+    async def server_running():
+        while True:
+            event = await driver.event_queue.get()
+            if isinstance(event, FinishedEvent) and event.iens == 0:
+                return
+
+    driver = await start_server(config, debug=True)
+    try:
+        wait_for_server(config.output_dir, 120)
+        start_experiment(
+            server_context=ServerConfig.get_server_context(config.output_dir),
+            config=config,
+        )
+    except (SystemExit, RuntimeError) as e:
+        raise e
+    await server_running()
+
     status = everserver_status(
         ServerConfig.get_everserver_status_path(config.output_dir)
     )
@@ -288,10 +301,10 @@ def test_everserver_status_max_batch_num(
 
 @pytest.mark.integration_test
 @pytest.mark.xdist_group(name="starts_everest")
-@pytest.mark.timeout(20)
+@pytest.mark.timeout(120)
 @patch("sys.argv", ["name", "--config-file", "config_minimal.yml"])
-def test_everserver_status_contains_max_runtime_failure(
-    mock_server, change_to_tmpdir, min_config
+async def test_status_contains_max_runtime_failure(
+    copy_math_func_test_data_to_tmp, min_config
 ):
     config_file = "config_minimal.yml"
 
@@ -300,15 +313,28 @@ def test_everserver_status_contains_max_runtime_failure(
     min_config["forward_model"] = ["sleep 5"]
     min_config["install_jobs"] = [{"name": "sleep", "source": "SLEEP_job"}]
 
-    config = EverestConfig(**min_config)
-    config.dump(config_file)
+    tmp_config = EverestConfig(**min_config)
+    tmp_config.dump(config_file)
 
-    everserver.main()
+    config = EverestConfig.load_file(config_file)
 
-    start_experiment(
-        server_context=ServerConfig.get_server_context(config.output_dir),
-        config=config,
-    )
+    async def server_running():
+        while True:
+            event = await driver.event_queue.get()
+            if isinstance(event, FinishedEvent) and event.iens == 0:
+                return
+
+    driver = await start_server(config, debug=True)
+    try:
+        wait_for_server(config.output_dir, 120)
+
+        start_experiment(
+            server_context=ServerConfig.get_server_context(config.output_dir),
+            config=config,
+        )
+    except (SystemExit, RuntimeError) as e:
+        raise e
+    await server_running()
 
     status = everserver_status(
         ServerConfig.get_everserver_status_path(config.output_dir)

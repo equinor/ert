@@ -138,6 +138,7 @@ async def run_everest(options):
             config=options.config,
         )
 
+        # blocks until the run is finished
         run_detached_monitor(
             server_context=ServerConfig.get_server_context(options.config.output_dir),
             optimization_output_dir=options.config.optimization_output_dir,
