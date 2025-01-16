@@ -18,7 +18,6 @@ from pydantic import RootModel, TypeAdapter
 from ert.config import ConfigValidationError, ErtConfig, HookRuntime
 from ert.config.ert_config import (
     create_forward_model_json,
-    site_config_location,
 )
 from ert.config.parsing import ConfigKeys, ConfigWarning
 from ert.config.parsing.context_values import (
@@ -31,6 +30,7 @@ from ert.config.parsing.context_values import (
 )
 from ert.config.parsing.queue_system import QueueSystem
 from ert.plugins import ErtPluginManager
+from ert.shared import ert_share_path
 
 from .config_dict_generator import config_generators
 
@@ -225,8 +225,6 @@ SUMMARY *"""
 
 @pytest.mark.usefixtures("use_tmpdir")
 def test_that_parsing_workflows_gives_expected():
-    ERT_SITE_CONFIG = site_config_location()
-    ERT_SHARE_PATH = os.path.dirname(ERT_SITE_CONFIG)
     cwd = os.getcwd()
 
     config_dict = {
@@ -240,8 +238,7 @@ def test_that_parsing_workflows_gives_expected():
             [cwd + "/workflows/SOME_PRINT", "some_print"],
         ],
         ConfigKeys.WORKFLOW_JOB_DIRECTORY: [
-            ERT_SHARE_PATH + "/workflows/jobs/shell",
-            ERT_SHARE_PATH + "/workflows/jobs/internal-gui/config",
+            ert_share_path() + "/workflows/jobs/shell",
         ],
         ConfigKeys.HOOK_WORKFLOW: [
             ["magic_print", "POST_UPDATE"],

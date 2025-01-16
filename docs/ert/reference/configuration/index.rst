@@ -26,4 +26,3 @@ This chapter sets out everything you need to know to configure ERT.
    keywords
    queue
    magic_strings
-   site_wide
