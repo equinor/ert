@@ -7,7 +7,7 @@ from collections.abc import Iterable
 from datetime import datetime
 from functools import cache, lru_cache
 from pathlib import Path
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, TypedDict
 from uuid import UUID
 
 import numpy as np
@@ -32,6 +32,13 @@ logger = logging.getLogger(__name__)
 import polars
 
 
+class EverestRealizationInfo(TypedDict):
+    geo_realization: int
+    perturbation: int | None  # None means it stems from unperturbed controls
+    # Q: Maybe we also need result ID, or no? Ref if we have multiple evaluations
+    # for unperturbed values, though the ERT real id will also differentiate them
+
+
 class _Index(BaseModel):
     id: UUID
     experiment_id: UUID
@@ -40,6 +47,8 @@ class _Index(BaseModel):
     name: str
     prior_ensemble_id: UUID | None
     started_at: datetime
+
+    everest_realizations: dict[int, EverestRealizationInfo] | None = None
 
 
 class _Failure(BaseModel):
@@ -1039,3 +1048,35 @@ class LocalEnsemble(BaseMode):
             return polars.concat(dfs_per_response_type, how="vertical").with_columns(
                 polars.col("response_key").cast(polars.String).alias("response_key")
             )
+
+    def save_everest_metadata(
+        self, realization_mapping: dict[int, EverestRealizationInfo]
+    ):
+        self._index.everest_realizations = realization_mapping
+        self._storage._write_transaction(
+            self._path / "index.json", self._index.model_dump_json().encode("utf-8")
+        )
+        self._index = _Index.model_validate_json(
+            (self._path / "index.json").read_text(encoding="utf-8")
+        )
+
+    def _everest_to_ert_realizations(
+        self, geo_realization, perturbation: int | None = None
+    ) -> tuple[int, ...]:
+        pass
+
+    def load_everest_parameters(
+        self, geo_realization, perturbation: int | None = None
+    ) -> polars.DataFrame:
+        # ert_realizations = self._everest_to_ert_realizations(
+        #    geo_realization, perturbation
+        # )
+        pass
+
+    def load_everest_responses(
+        self, geo_realization: int, perturbation: int | None = None
+    ) -> polars.DataFrame:
+        ert_realizations = self._everest_to_ert_realizations(
+            geo_realization, perturbation
+        )
+        return self.load_responses("gen_data", ert_realizations)
