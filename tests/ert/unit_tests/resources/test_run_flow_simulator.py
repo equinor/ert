@@ -99,7 +99,7 @@ def test_flowrunner_will_raise_when_flow_fails(source_root):
 @pytest.mark.integration_test
 @pytest.mark.usefixtures("use_tmpdir")
 @pytest.mark.skipif(not shutil.which("flowrun"), reason="flowrun not available")
-def test_flowrunner_will_can_ignore_flow_errors(source_root):
+def test_flowrunner_can_ignore_flow_errors(source_root):
     shutil.copy(
         source_root / "test-data/ert/eclipse/SPE1_ERROR.DATA", "SPE1_ERROR.DATA"
     )
