@@ -221,6 +221,10 @@ class BaseRunModel(ABC):
     def name(cls) -> str: ...
 
     @classmethod
+    def display_name(cls) -> str:
+        return cls.name()
+
+    @classmethod
     @abstractmethod
     def description(cls) -> str: ...
 
