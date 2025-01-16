@@ -41,7 +41,7 @@ dependencies = [
     "lxml",
     "matplotlib",
     "netCDF4",
-    "numpy<2",
+    "numpy",
     "openpyxl",  # extra dependency for pandas (excel)
     "opentelemetry-api",
     "opentelemetry-sdk",
