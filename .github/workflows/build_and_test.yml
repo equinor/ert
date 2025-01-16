@@ -82,7 +82,6 @@ jobs:
     secrets: inherit
 
   test-mac-main-everest:
-    if: github.ref == 'refs/heads/main' # only perform mac tests on main branch
     strategy:
       fail-fast: false
       matrix:
@@ -98,7 +97,6 @@ jobs:
     secrets: inherit
 
   test-mac-main-ert:
-    if: github.ref == 'refs/heads/main' # only perform mac tests on main branch
     strategy:
       fail-fast: false
       matrix:
