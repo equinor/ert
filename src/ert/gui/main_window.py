@@ -5,7 +5,7 @@ import functools
 import webbrowser
 
 from qtpy.QtCore import QCoreApplication, QEvent, QSize, Qt, Signal, Slot
-from qtpy.QtGui import QCloseEvent, QCursor, QIcon, QMouseEvent
+from qtpy.QtGui import QCloseEvent, QCursor, QFocusEvent, QIcon, QMouseEvent
 from qtpy.QtWidgets import (
     QAction,
     QButtonGroup,
@@ -105,7 +105,8 @@ class ErtMainWindow(QMainWindow):
         self.side_frame = QFrame(self)
         self.button_group = QButtonGroup(self.side_frame)
         self._external_plot_windows: list[PlotWindow] = []
-
+        self.setFocusPolicy(Qt.FocusPolicy.TabFocus)
+        self.central_widget.setFocusPolicy(Qt.FocusPolicy.TabFocus)
         if self.is_dark_mode():
             self.side_frame.setStyleSheet("background-color: rgb(64, 64, 64);")
         else:
@@ -154,6 +155,7 @@ class ErtMainWindow(QMainWindow):
     def select_central_widget(self) -> None:
         actor = self.sender()
         if actor:
+            self.notifier.refresh()
             index_name = actor.property("index")
 
             for widget in self.central_panels_map.values():
@@ -364,3 +366,7 @@ class ErtMainWindow(QMainWindow):
     def __showAboutMessage(self) -> None:
         diag = AboutDialog(self)
         diag.show()
+
+    def focusInEvent(self, event: QFocusEvent) -> None:
+        self.notifier.refresh()
+        QMainWindow.focusInEvent(self, event)

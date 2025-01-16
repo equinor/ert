@@ -4,6 +4,7 @@ from collections.abc import Iterable
 from typing import TYPE_CHECKING
 
 from qtpy.QtCore import Qt, Signal
+from qtpy.QtGui import QStandardItemModel
 from qtpy.QtWidgets import QComboBox
 
 from ert.gui.ertnotifier import ErtNotifier
@@ -22,6 +23,7 @@ class EnsembleSelector(QComboBox):
         update_ert: bool = True,
         show_only_undefined: bool = False,
         show_only_no_children: bool = False,
+        show_only_with_valid_experiment: bool = False,
     ):
         super().__init__()
         self.notifier = notifier
@@ -36,6 +38,7 @@ class EnsembleSelector(QComboBox):
         # if the ensemble has not been used in an update, as that would
         # invalidate the result
         self._show_only_no_children = show_only_no_children
+        self._show_only_with_valid_experiment = show_only_with_valid_experiment
         self.setSizeAdjustPolicy(QComboBox.AdjustToContents)
 
         self.setEnabled(False)
@@ -68,9 +71,28 @@ class EnsembleSelector(QComboBox):
             self.setEnabled(True)
 
         for ensemble in self._ensemble_list():
+            model = self.model()
+            assert isinstance(model, QStandardItemModel)
+            assert model is not None
             self.addItem(
                 f"{ensemble.experiment.name} : {ensemble.name}", userData=ensemble
             )
+            if (
+                self._show_only_with_valid_experiment
+                and not ensemble.experiment.is_valid()
+            ):
+                index = self.count() - 1
+                model_item = model.item(index)
+                assert model_item is not None
+                new_flags = (
+                    model_item.flags()
+                    & ~Qt.ItemFlags(Qt.ItemFlag.ItemIsEnabled)
+                    & ~Qt.ItemFlags(Qt.ItemFlag.ItemIsSelectable)
+                )
+                model_item.setFlags(new_flags)
+                self.setItemData(
+                    index, "This ensemble is invalid", Qt.ItemDataRole.ToolTipRole
+                )
 
         current_index = self.findData(
             self.notifier.current_ensemble, Qt.ItemDataRole.UserRole
@@ -95,6 +117,8 @@ class EnsembleSelector(QComboBox):
         else:
             ensembles = self.notifier.storage.ensembles
         ensemble_list = list(ensembles)
+        if self._show_only_with_valid_experiment:
+            ensemble_list = [ens for ens in ensemble_list if ens.experiment.is_valid()]
         if self._show_only_no_children:
             parents = [
                 ens.parent for ens in self.notifier.storage.ensembles if ens.parent

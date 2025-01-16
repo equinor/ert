@@ -63,3 +63,10 @@ class ErtNotifier(QObject):
     @Slot(bool)
     def set_is_simulation_running(self, is_running: bool) -> None:
         self._is_simulation_running = is_running
+        self.refresh()
+
+    def refresh(self) -> None:
+        if self._storage is None:
+            return
+        self._storage.refresh()
+        self.storage_changed.emit(self._storage)
