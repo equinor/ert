@@ -76,8 +76,12 @@ def test_api_snapshots(config_file, snapshot, cached_example):
     snapshot.assert_match(snapshot_str, "snapshot.json")
 
 
-def test_api_summary_snapshot(snapshot, cached_example):
-    config_path, config_file, _ = cached_example("math_func/config_minimal.yml")
+@pytest.mark.parametrize(
+    "config_file",
+    ["config_advanced.yml", "config_minimal.yml", "config_multiobj.yml"],
+)
+def test_api_summary_snapshot(config_file, snapshot, cached_example):
+    config_path, config_file, _ = cached_example(f"math_func/{config_file}")
     config = EverestConfig.load_file(Path(config_path) / config_file)
 
     with open_storage(config.storage_dir, mode="w") as storage:
