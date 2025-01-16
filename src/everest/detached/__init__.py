@@ -19,7 +19,6 @@ from ert.scheduler import create_driver
 from ert.scheduler.driver import Driver, FailedSubmit
 from ert.scheduler.event import StartedEvent
 from everest.config import EverestConfig, ServerConfig
-from everest.config_keys import ConfigKeys as CK
 from everest.strings import (
     EVEREST_SERVER_CONFIG,
     OPT_PROGRESS_ENDPOINT,
@@ -233,19 +232,19 @@ _EVERSERVER_JOB_PATH = str(
 )
 
 
-_QUEUE_SYSTEMS: Mapping[Literal["LSF", "SLURM"], dict] = {
+_QUEUE_SYSTEMS: Mapping[Literal["LSF", "SLURM", "TORQUE"], dict] = {
     "LSF": {
-        "options": [(CK.LSF_OPTIONS, "LSF_RESOURCE")],
+        "options": [("options", "LSF_RESOURCE")],
         "name": "LSF_QUEUE",
     },
     "SLURM": {
         "options": [
-            (CK.SLURM_EXCLUDE_HOST_OPTION, "EXCLUDE_HOST"),
-            (CK.SLURM_INCLUDE_HOST_OPTION, "INCLUDE_HOST"),
+            ("exclude_host", "EXCLUDE_HOST"),
+            ("include_host", "INCLUDE_HOST"),
         ],
         "name": "PARTITION",
     },
-    "TORQUE": {"options": [CK.TORQUE_CLUSTER_LABEL, "CLUSTER_LABEL"], "name": "QUEUE"},
+    "TORQUE": {"options": ["cluster_label", "CLUSTER_LABEL"], "name": "QUEUE"},
 }
 
 

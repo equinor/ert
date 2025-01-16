@@ -6,7 +6,6 @@ from seba_sqlite.snapshot import SebaSnapshot
 
 from everest.bin.config_branch_script import config_branch_entry
 from everest.config_file_loader import load_yaml
-from everest.config_keys import ConfigKeys as CK
 
 
 def test_config_branch_entry(cached_example):
@@ -17,16 +16,16 @@ def test_config_branch_entry(cached_example):
     assert exists("new_restart_config.yml")
 
     old_config = load_yaml("config_minimal.yml")
-    old_controls = old_config[CK.CONTROLS]
+    old_controls = old_config["controls"]
 
-    assert CK.INITIAL_GUESS in old_controls[0]
+    assert "initial_guess" in old_controls[0]
 
     new_config = load_yaml("new_restart_config.yml")
-    new_controls = new_config[CK.CONTROLS]
+    new_controls = new_config["controls"]
 
-    assert CK.INITIAL_GUESS not in new_controls[0]
+    assert "initial_guess" not in new_controls[0]
     assert len(new_controls) == len(old_controls)
-    assert len(new_controls[0][CK.VARIABLES]) == len(old_controls[0][CK.VARIABLES])
+    assert len(new_controls[0]["variables"]) == len(old_controls[0]["variables"])
 
     opt_controls = {}
 
@@ -36,7 +35,7 @@ def test_config_branch_entry(cached_example):
             opt_controls = opt_data.controls
 
     new_controls_initial_guesses = {
-        var[CK.INITIAL_GUESS] for var in new_controls[0][CK.VARIABLES]
+        var["initial_guess"] for var in new_controls[0]["variables"]
     }
     opt_control_val_for_batch_id = {v for k, v in opt_controls.items()}
 

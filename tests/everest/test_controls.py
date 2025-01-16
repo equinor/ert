@@ -6,7 +6,6 @@ from copy import deepcopy
 import pytest
 from pydantic import ValidationError
 
-from everest import ConfigKeys
 from everest.config import EverestConfig
 from everest.config.control_config import ControlConfig
 from everest.config.control_variable_config import (
@@ -39,7 +38,7 @@ def test_controls_initialization():
     config.controls.append(
         ControlConfig(
             name=exp_grp_name,
-            type=ConfigKeys.WELL_CONTROL,
+            type="well_control",
             variables=[
                 ControlVariableConfig(
                     name=a_ctrl_name,

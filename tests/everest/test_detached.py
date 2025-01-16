@@ -19,7 +19,6 @@ from ert.scheduler.event import FinishedEvent
 from everest.config import EverestConfig, InstallJobConfig
 from everest.config.server_config import ServerConfig
 from everest.config.simulator_config import SimulatorConfig
-from everest.config_keys import ConfigKeys as CK
 from everest.detached import (
     _EVERSERVER_JOB_PATH,
     PROXY,
@@ -202,7 +201,7 @@ def test_detached_mode_config_base(copy_math_func_test_data_to_tmp):
     ],
 )
 def test_everserver_queue_config_equal_to_run_config(queue_system, cores):
-    simulator_config = {CK.QUEUE_SYSTEM: {"name": queue_system, "max_running": cores}}
+    simulator_config = {"queue_system": {"name": queue_system, "max_running": cores}}
     everest_config = EverestConfig.with_defaults(**{"simulator": simulator_config})
     everest_config.server.queue_system = SimulatorConfig(**simulator_config)
 
@@ -215,8 +214,8 @@ def test_detached_mode_config_error():
     with pytest.raises(ValueError, match="so must the everest server"):
         EverestConfig.with_defaults(
             **{
-                "simulator": {CK.QUEUE_SYSTEM: {"name": "local"}},
-                "server": {CK.QUEUE_SYSTEM: {"name": "lsf"}},
+                "simulator": {"queue_system": {"name": "local"}},
+                "server": {"queue_system": {"name": "lsf"}},
             }
         )
 
@@ -226,15 +225,15 @@ def test_detached_mode_config_error():
     [
         (
             EverestConfig.with_defaults(
-                **{CK.SIMULATOR: {CK.QUEUE_SYSTEM: {"name": "lsf"}}}
+                **{"simulator": {"queue_system": {"name": "lsf"}}}
             ),
             "lsf",
         ),
         (
             EverestConfig.with_defaults(
                 **{
-                    CK.SIMULATOR: {CK.QUEUE_SYSTEM: {"name": "lsf"}},
-                    CK.EVERSERVER: {CK.QUEUE_SYSTEM: {"name": "lsf"}},
+                    "simulator": {"queue_system": {"name": "lsf"}},
+                    "server": {"queue_system": {"name": "lsf"}},
                 }
             ),
             "lsf",
@@ -242,7 +241,7 @@ def test_detached_mode_config_error():
         (EverestConfig.with_defaults(**{}), "local"),
         (
             EverestConfig.with_defaults(
-                **{CK.SIMULATOR: {CK.QUEUE_SYSTEM: {"name": "local"}}}
+                **{"simulator": {"queue_system": {"name": "local"}}}
             ),
             "local",
         ),

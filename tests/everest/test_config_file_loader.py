@@ -5,7 +5,6 @@ from unittest.mock import patch
 import pytest
 from ruamel.yaml import YAML
 
-from everest import ConfigKeys as CK
 from everest import config_file_loader as loader
 from everest.config import EverestConfig
 from everest.config.everest_config import EverestValidationError
@@ -18,7 +17,7 @@ def test_load_yaml():
     config_file = os.path.join(mocked_root, "mocked_test_case.yml")
     configuration = loader.load_yaml(config_file)
     assert configuration is not None
-    assert configuration[CK.DEFINITIONS] is not None
+    assert configuration["definitions"] is not None
 
 
 @patch.dict("os.environ", {"USER": "NO_USERNAME_ENV_SET"})
@@ -80,7 +79,7 @@ def test_dependent_definitions(copy_mocked_test_data_to_tmp):
         string.ascii_lowercase[:-1], string.ascii_lowercase[1:], strict=False
     )
     for c, cdef in [*list(conseq_chars), (string.ascii_lowercase[-1], "configpath")]:
-        raw_config[CK.DEFINITIONS][c] = f"r{{{{ {cdef} }}}}"
+        raw_config["definitions"][c] = f"r{{{{ {cdef} }}}}"
 
     with open(config_file, "w", encoding="utf-8") as f:
         yaml = YAML(typ="safe", pure=True)
@@ -107,8 +106,8 @@ def test_dependent_definitions_value_error(copy_mocked_test_data_to_tmp):
     with open(config_file, encoding="utf-8") as f:
         raw_config = YAML(typ="safe", pure=True).load(f)
 
-    raw_config[CK.DEFINITIONS]["a"] = "r{{ b }}"
-    raw_config[CK.DEFINITIONS]["b"] = "r{{ a }}"
+    raw_config["definitions"]["a"] = "r{{ b }}"
+    raw_config["definitions"]["b"] = "r{{ a }}"
 
     with open(config_file, "w", encoding="utf-8") as f:
         yaml = YAML(typ="safe", pure=True)

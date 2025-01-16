@@ -7,7 +7,6 @@ from everest.bin.config_branch_script import (
     opt_controls_by_batch,
 )
 from everest.config_file_loader import load_yaml
-from everest.config_keys import ConfigKeys as CK
 
 
 def test_get_controls_for_batch(cached_example):
@@ -46,17 +45,17 @@ def test_get_controls_for_batch(cached_example):
 def test_update_controls_initial_guess(cached_example):
     path, _, _ = cached_example("math_func/config_advanced.yml")
 
-    old_controls = load_yaml("config_advanced.yml")[CK.CONTROLS]
+    old_controls = load_yaml("config_advanced.yml")["controls"]
 
     assert len(old_controls) == 1
 
     old_ctrl = next(iter(old_controls), None)
 
     assert old_ctrl is not None
-    assert CK.INITIAL_GUESS in old_ctrl
+    assert "initial_guess" in old_ctrl
 
-    for var in old_ctrl[CK.VARIABLES]:
-        assert CK.INITIAL_GUESS not in var
+    for var in old_ctrl["variables"]:
+        assert "initial_guess" not in var
 
     opt_controls = opt_controls_by_batch(
         Path(path) / "everest_output" / "optimization_output", 1
@@ -67,11 +66,9 @@ def test_update_controls_initial_guess(cached_example):
     assert len(updated_controls) == len(old_controls)
     assert updated_ctl is not None
 
-    for var in updated_ctl[CK.VARIABLES]:
-        assert CK.INITIAL_GUESS in var
+    for var in updated_ctl["variables"]:
+        assert "initial_guess" in var
 
     opt_ctrl_values = {v for k, v in opt_controls.items()}
-    updated_initial_guesses = {
-        var[CK.INITIAL_GUESS] for var in updated_ctl[CK.VARIABLES]
-    }
+    updated_initial_guesses = {var["initial_guess"] for var in updated_ctl["variables"]}
     assert opt_ctrl_values == updated_initial_guesses

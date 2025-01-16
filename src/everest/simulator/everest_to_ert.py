@@ -17,7 +17,6 @@ from everest.config.control_variable_config import (
 from everest.config.install_data_config import InstallDataConfig
 from everest.config.install_job_config import InstallJobConfig
 from everest.config.simulator_config import SimulatorConfig
-from everest.config_keys import ConfigKeys
 from everest.strings import EVEREST, SIMULATION_DIR, STORAGE_DIR
 
 
@@ -154,7 +153,7 @@ def _inject_simulation_defaults(ert_config, ever_config: EverestConfig):
     inject_default(
         "ECLBASE",
         (ever_config.definitions if ever_config.definitions is not None else {}).get(
-            ConfigKeys.ECLBASE, "eclipse/ECL"
+            "eclbase", "eclipse/ECL"
         ),
     )
 
@@ -221,21 +220,21 @@ def _extract_jobs(ever_config, ert_config, path):
     std_ever_jobs = _fetch_everest_jobs(ever_config)
 
     # Add standard Everest jobs
-    job_names = [job[ConfigKeys.NAME] for job in ever_jobs]
+    job_names = [job["name"] for job in ever_jobs]
     for default_job in std_ever_jobs:
         if default_job.name not in job_names:
             ever_jobs.append(
                 {
-                    ConfigKeys.NAME: default_job.name,
-                    ConfigKeys.SOURCE: default_job.source,
+                    "name": default_job.name,
+                    "source": default_job.source,
                 }
             )
 
     res_jobs = ert_config.get(ErtConfigKeys.INSTALL_JOB, [])
     for job in ever_jobs:
         new_job = (
-            job[ConfigKeys.NAME],
-            os.path.join(path, job[ConfigKeys.SOURCE]),
+            job["name"],
+            os.path.join(path, job["source"]),
         )
         res_jobs.append(new_job)
 
@@ -248,8 +247,8 @@ def _extract_workflow_jobs(ever_config, ert_config, path):
     res_jobs = ert_config.get(ErtConfigKeys.LOAD_WORKFLOW_JOB, [])
     for job in workflow_jobs:
         new_job = (
-            os.path.join(path, job[ConfigKeys.SOURCE]),
-            job[ConfigKeys.NAME],
+            os.path.join(path, job["source"]),
+            job["name"],
         )
         res_jobs.append(new_job)
 
@@ -354,8 +353,8 @@ def _extract_data_operations(ever_config: EverestConfig):
     install_data += [
         InstallDataConfig(
             **{
-                ConfigKeys.SOURCE: datafile,
-                ConfigKeys.TARGET: os.path.basename(datafile),
+                "source": datafile,
+                "target": os.path.basename(datafile),
             }
         )
         for datafile in _internal_data_files(ever_config)

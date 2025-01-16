@@ -6,7 +6,6 @@ import pytest
 import yaml
 from pydantic import ValidationError
 
-from everest import ConfigKeys
 from everest.config import EverestConfig
 from everest.config_file_loader import yaml_file_to_substituted_config_dict
 from tests.everest.test_config_validation import has_error
@@ -16,10 +15,10 @@ from tests.everest.utils import relpath
 @pytest.mark.parametrize(
     "required_key",
     (
-        ConfigKeys.OBJECTIVE_FUNCTIONS,
-        ConfigKeys.CONTROLS,
-        # ConfigKeys.MODEL, # This is not actually optional
-        ConfigKeys.CONFIGPATH,
+        "objective_functions",
+        "controls",
+        # "model", # This is not actually optional
+        "config_path",
     ),
 )
 def test_missing_key(required_key, min_config):
@@ -33,13 +32,13 @@ def test_missing_key(required_key, min_config):
 @pytest.mark.parametrize(
     "optional_key",
     (
-        ConfigKeys.OUTPUT_CONSTRAINTS,
-        ConfigKeys.INPUT_CONSTRAINTS,
-        ConfigKeys.INSTALL_JOBS,
-        ConfigKeys.INSTALL_DATA,
-        ConfigKeys.FORWARD_MODEL,
-        ConfigKeys.SIMULATOR,
-        ConfigKeys.DEFINITIONS,
+        "output_constraints",
+        "input_constraints",
+        "install_jobs",
+        "install_data",
+        "forward_model",
+        "simulator",
+        "definitions",
     ),
 )
 def test_optional_keys(optional_key, min_config):
@@ -165,13 +164,13 @@ def test_invalid_subconfig(extra_config, min_config, expected):
 
 
 def test_no_list(min_config):
-    min_config[ConfigKeys.INSTALL_DATA] = None
+    min_config["install_data"] = None
     errors = EverestConfig.lint_config_dict(min_config)
     assert len(errors) == 0
 
 
 def test_empty_list(min_config):
-    min_config[ConfigKeys.INSTALL_DATA] = []
+    min_config["install_data"] = []
     errors = EverestConfig.lint_config_dict(min_config)
     assert len(errors) == 0
 
@@ -236,8 +235,8 @@ def test_invalid_wells(tmp_path, monkeypatch):
 
 def test_well_ref_validation(min_config):
     config = min_config
-    variables = config[ConfigKeys.CONTROLS][0][ConfigKeys.VARIABLES]
-    variables.append({ConfigKeys.NAME: "a.new.well", ConfigKeys.INITIAL_GUESS: 0.2})
+    variables = config["controls"][0]["variables"]
+    variables.append({"name": "a.new.well", "initial_guess": 0.2})
     errors = EverestConfig.lint_config_dict(config)
     has_error(errors, match="(.*) name can not contain any dots")
 
@@ -261,49 +260,49 @@ def test_init_context_controls():
 
         # Messed up controls
         config = yaml_file_to_substituted_config_dict(config_file)
-        config.pop(ConfigKeys.CONTROLS)
+        config.pop("controls")
         assert len(EverestConfig.lint_config_dict(config)) > 0
 
         config = yaml_file_to_substituted_config_dict(config_file)
-        config[ConfigKeys.CONTROLS] = "monkey"
+        config["controls"] = "monkey"
         assert len(EverestConfig.lint_config_dict(config)) > 0
 
         # Messed up control group name
         config = yaml_file_to_substituted_config_dict(config_file)
-        config[ConfigKeys.CONTROLS][0].pop(ConfigKeys.NAME)
+        config["controls"][0].pop("name")
         assert len(EverestConfig.lint_config_dict(config)) > 0
 
         config = yaml_file_to_substituted_config_dict(config_file)
-        config[ConfigKeys.CONTROLS][0]["name"] = ["my", "name"]
+        config["controls"][0]["name"] = ["my", "name"]
         assert len(EverestConfig.lint_config_dict(config)) > 0
 
         config = yaml_file_to_substituted_config_dict(config_file)
-        config[ConfigKeys.CONTROLS][0]["name"] = "my.name"
+        config["controls"][0]["name"] = "my.name"
         assert len(EverestConfig.lint_config_dict(config)) > 0
 
         # Messed up variables
         config = yaml_file_to_substituted_config_dict(config_file)
-        config[ConfigKeys.CONTROLS][0].pop(ConfigKeys.VARIABLES)
+        config["controls"][0].pop("variables")
         assert len(EverestConfig.lint_config_dict(config)) > 0
 
         config = yaml_file_to_substituted_config_dict(config_file)
-        config[ConfigKeys.CONTROLS][0] = "my vars"
+        config["controls"][0] = "my vars"
         assert len(EverestConfig.lint_config_dict(config)) > 0
 
         # Messed up names
         config = yaml_file_to_substituted_config_dict(config_file)
-        variable = config[ConfigKeys.CONTROLS][0][ConfigKeys.VARIABLES][0]
-        variable.pop(ConfigKeys.NAME)
+        variable = config["controls"][0]["variables"][0]
+        variable.pop("name")
         assert len(EverestConfig.lint_config_dict(config)) > 0
 
         config = yaml_file_to_substituted_config_dict(config_file)
-        variable = config[ConfigKeys.CONTROLS][0][ConfigKeys.VARIABLES][0]
-        variable[ConfigKeys.NAME] = {"name": True}
+        variable = config["controls"][0]["variables"][0]
+        variable["name"] = {"name": True}
         assert len(EverestConfig.lint_config_dict(config)) > 0
 
         config = yaml_file_to_substituted_config_dict(config_file)
-        variable = config[ConfigKeys.CONTROLS][0][ConfigKeys.VARIABLES][0]
-        variable[ConfigKeys.NAME] = "my.name"
+        variable = config["controls"][0]["variables"][0]
+        variable["name"] = "my.name"
         assert len(EverestConfig.lint_config_dict(config)) > 0
 
 

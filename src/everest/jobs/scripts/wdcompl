@@ -6,12 +6,11 @@ import everest
 
 
 def _build_argument_parser() -> argparse.ArgumentParser:
-    eck = everest.ConfigKeys
     description = (
-        f"Sets the {eck.COMPLETION_DATE} for each well in WELL_DATA based on the "
+        "Sets the completion_date for each well in WELL_DATA based on the "
         "START_DATE. In particular, the wells are drilled in the provided order. "
-        f"For no well is the drilling initiated before its {eck.DRILL_DATE} and "
-        f"each well finishes its {eck.DRILL_TIME} (defaulted to 0) before the "
+        "For no well is the drilling initiated before its drill_date and "
+        "each well finishes its drill_time (defaulted to 0) before the "
         "drilling of the next well is initiated."
     )
     parser = argparse.ArgumentParser(description=description)

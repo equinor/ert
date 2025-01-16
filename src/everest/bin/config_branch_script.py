@@ -10,7 +10,6 @@ from seba_sqlite.snapshot import SebaSnapshot
 
 from everest.config import EverestConfig
 from everest.config_file_loader import load_yaml
-from everest.config_keys import ConfigKeys as CK
 
 
 def _yaml_config(file_path: str, parser) -> tuple[str, dict[str, Any] | None]:
@@ -57,32 +56,32 @@ def _updated_initial_guess(conf_controls, opt_controls):
     conf_controls = copy(conf_controls)
 
     for control in conf_controls:
-        control.pop(CK.INITIAL_GUESS, None)
-        control_name = f"{control[CK.NAME]}_"
+        control_name = f"{control['name']}_"
+        control.pop("initial_guess", None)
         batch_controls = {
             key.split(control_name)[-1]: val
             for key, val in opt_controls.items()
             if control_name in key
         }
 
-        for variable in control[CK.VARIABLES]:
-            var_index = variable.get(CK.INDEX, None)
+        for variable in control["variables"]:
+            var_index = variable.get("index", None)
 
             if var_index is not None:
-                opt_control_name = f"{variable[CK.NAME]}-{var_index}"
+                opt_control_name = f"{variable['name']}-{var_index}"
             else:
-                opt_control_name = variable[CK.NAME]
+                opt_control_name = variable["name"]
 
             opt_control_val = batch_controls.get(opt_control_name)
 
             if opt_control_val is None:
                 print(
                     "No generated optimization control value found for"
-                    f" control {variable[CK.NAME]} index {var_index}"
+                    f" control {variable['name']} index {var_index}"
                 )
                 return None
             else:
-                variable[CK.INITIAL_GUESS] = opt_control_val
+                variable["initial_guess"] = opt_control_val
 
     return conf_controls
 
@@ -100,8 +99,8 @@ def config_branch_entry(args=None):
     if opt_controls is None:
         parser.error(f"Batch {options.batch} not present in optimization data")
 
-    yml_config[CK.CONTROLS] = _updated_initial_guess(
-        conf_controls=yml_config[CK.CONTROLS], opt_controls=opt_controls
+    yml_config["controls"] = _updated_initial_guess(
+        conf_controls=yml_config["controls"], opt_controls=opt_controls
     )
 
     yaml = YAML()
