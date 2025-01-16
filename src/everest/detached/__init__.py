@@ -70,6 +70,7 @@ def stop_server(server_context: tuple[str, str, tuple[str, str]], retries: int =
     """
     for retry in range(retries):
         try:
+            print("stopping server")
             url, cert, auth = server_context
             stop_endpoint = "/".join([url, STOP_ENDPOINT])
             response = requests.post(

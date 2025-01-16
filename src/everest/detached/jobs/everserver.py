@@ -62,17 +62,20 @@ class ExperimentRunner(threading.Thread):
         super().__init__()
 
         self._everest_config = everest_config
-     
+        self._shared_data = shared_data
         self._exit_code: EverestExitCode | None = None
+
+
 
     def run(self):
         run_model = EverestRunModel.create(
             self._everest_config,
-            simulation_callback=partial(_sim_monitor, shared_data=hared_data),
-            optimization_callback=partial(_opt_monitor, shared_data=shared_data),
+            simulation_callback=partial(_sim_monitor, shared_data=self._shared_data),
+            optimization_callback=partial(_opt_monitor, shared_data=self._shared_data),
         )
 
-        if run_model._queue_config.queue_system == QueueSystem.LOCAL:
+        if self._everest_config.simulator.queue_system.name == "local":
+        #if run_model._queue_config.queue_system == QueueSystem.LOCAL:
             evaluator_server_config = EvaluatorServerConfig()
         else:
             evaluator_server_config = EvaluatorServerConfig(
@@ -187,6 +190,7 @@ def _everserver_thread(shared_data, server_config) -> None:
     ) -> Response:
         _log(request)
         _check_user(credentials)
+        print(f"STOP ENDPOINT {shared_data}")
         shared_data[STOP_ENDPOINT] = True
         return Response("Raise STOP flag succeeded. Everest initiates shutdown..", 200)
 

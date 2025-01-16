@@ -41,7 +41,7 @@ from everest.strings import (
 from everest.util import makedirs_if_needed
 
 
-@pytest.mark.flaky(reruns=5)
+#@pytest.mark.flaky(reruns=5)
 @pytest.mark.integration_test
 @pytest.mark.fails_on_macos_github_workflow
 @pytest.mark.xdist_group(name="starts_everest")
