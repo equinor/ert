@@ -5,6 +5,12 @@ from qtpy.QtCore import Qt
 from qtpy.QtWidgets import QComboBox
 
 from ert.gui.simulation.experiment_panel import ExperimentPanel
+from ert.run_models import (
+    EnsembleExperiment,
+    EnsembleSmoother,
+    IteratedEnsembleSmoother,
+    MultipleDataAssimilation,
+)
 from tests.ert.ui_tests.gui.conftest import get_child, open_gui_with_config
 
 
@@ -20,19 +26,19 @@ def test_no_updateable_parameters(qtbot):
     for gui in open_gui_with_config("poly.ert"):
         experiment_panel = get_child(gui, ExperimentPanel)
         simulation_mode_combo = get_child(experiment_panel, QComboBox)
-        idx = simulation_mode_combo.findText("Ensemble smoother")
+        idx = simulation_mode_combo.findText(EnsembleSmoother.display_name())
         assert not (
             simulation_mode_combo.model().item(idx).flags() & Qt.ItemFlag.ItemIsEnabled
         )
-        idx = simulation_mode_combo.findText("Multiple data assimilation")
+        idx = simulation_mode_combo.findText(MultipleDataAssimilation.display_name())
         assert not (
             simulation_mode_combo.model().item(idx).flags() & Qt.ItemFlag.ItemIsEnabled
         )
-        idx = simulation_mode_combo.findText("Iterated ensemble smoother")
+        idx = simulation_mode_combo.findText(IteratedEnsembleSmoother.display_name())
         assert not (
             simulation_mode_combo.model().item(idx).flags() & Qt.ItemFlag.ItemIsEnabled
         )
-        idx = simulation_mode_combo.findText("Ensemble experiment")
+        idx = simulation_mode_combo.findText(EnsembleExperiment.display_name())
         assert (
             simulation_mode_combo.model().item(idx).flags() & Qt.ItemFlag.ItemIsEnabled
         )
