@@ -1317,7 +1317,6 @@ def test_that_substitution_happens_for_include():
         RUNPATH my_silly_runpath<ITER>-<IENS>
         """
     )
-    # The old parser tries to find dir/job2
     os.mkdir("dir")
     with open(test_config_file_name, "w", encoding="utf-8") as fh:
         fh.write(test_config_contents)
@@ -1347,7 +1346,6 @@ def test_that_defines_in_included_files_has_immediate_effect():
         DEFINE <FOO> baz
         """
     )
-    # The old parser tries to find dir/job2
     os.mkdir("dir")
     with open(test_config_file_name, "w", encoding="utf-8") as fh:
         fh.write(test_config_contents)
