@@ -521,9 +521,11 @@ def test_that_stop_on_fail_workflow_jobs_stop_ert(
 
 
 @pytest.mark.usefixtures("copy_poly_case")
-def test_that_pre_post_experiment_hook_works(monkeypatch, capsys):
-    monkeypatch.setattr(_ert.threading, "_can_raise", False)
-
+@pytest.mark.parametrize(
+    "mode",
+    [ITERATIVE_ENSEMBLE_SMOOTHER_MODE, ES_MDA_MODE, ENSEMBLE_SMOOTHER_MODE],
+)
+def test_that_pre_post_experiment_hook_works(capsys, mode):
     # The executable
     with open("hello_post_exp.sh", "w", encoding="utf-8") as f:
         f.write(
@@ -542,7 +544,7 @@ def test_that_pre_post_experiment_hook_works(monkeypatch, capsys):
 
     # The workflow
     with open("SAY_HELLO_POST_EXP.wf", "w", encoding="utf-8") as s:
-        s.write("""dump_final_ensemble_id""")
+        s.write("""alias_for_hello_post_exp_wfjob""")
 
     # The executable
     with open("hello_pre_exp.sh", "w", encoding="utf-8") as f:
@@ -562,7 +564,7 @@ def test_that_pre_post_experiment_hook_works(monkeypatch, capsys):
 
     # The workflow
     with open("SAY_HELLO_PRE_EXP.wf", "w", encoding="utf-8") as s:
-        s.write("""dump_first_ensemble_id""")
+        s.write("""alias_for_hello_pre_exp_wfjob""")
 
     with open("poly.ert", mode="a", encoding="utf-8") as fh:
         fh.write(
@@ -570,23 +572,22 @@ def test_that_pre_post_experiment_hook_works(monkeypatch, capsys):
                 """
                     NUM_REALIZATIONS 2
 
-                    LOAD_WORKFLOW_JOB SAY_HELLO_POST_EXP dump_final_ensemble_id
+                    LOAD_WORKFLOW_JOB SAY_HELLO_POST_EXP alias_for_hello_post_exp_wfjob
                     LOAD_WORKFLOW SAY_HELLO_POST_EXP.wf POST_EXPERIMENT_DUMP
                     HOOK_WORKFLOW POST_EXPERIMENT_DUMP POST_EXPERIMENT
 
-                    LOAD_WORKFLOW_JOB SAY_HELLO_PRE_EXP dump_first_ensemble_id
+                    LOAD_WORKFLOW_JOB SAY_HELLO_PRE_EXP alias_for_hello_pre_exp_wfjob
                     LOAD_WORKFLOW SAY_HELLO_PRE_EXP.wf PRE_EXPERIMENT_DUMP
                     HOOK_WORKFLOW PRE_EXPERIMENT_DUMP PRE_EXPERIMENT
                 """
             )
         )
 
-    for mode in [ITERATIVE_ENSEMBLE_SMOOTHER_MODE, ES_MDA_MODE, ENSEMBLE_SMOOTHER_MODE]:
-        run_cli(mode, "--disable-monitor", "poly.ert")
+    run_cli(mode, "--disable-monitoring", "poly.ert")
 
-        captured = capsys.readouterr()
-        assert "first" in captured.out
-        assert "just sending regards" in captured.out
+    captured = capsys.readouterr()
+    assert "first" in captured.out
+    assert "just sending regards" in captured.out
 
 
 @pytest.fixture(name="mock_cli_run")

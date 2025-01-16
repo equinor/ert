@@ -54,7 +54,16 @@ jobs:
     - name: CLI Test
       if: inputs.test-type == 'cli-tests'
       run: |
-        pytest --cov=ert --cov=everest --cov=_ert --cov-report=xml:cov1.xml --junit-xml=junit.xml -o junit_family=legacy -v --benchmark-disable  --dist loadgroup tests/ert/ui_tests/cli --durations=25
+        echo {{github.workspace}}
+        pytest -x --cov=ert --cov=everest --cov=_ert --cov-report=xml:cov1.xml --junit-xml=junit.xml -o junit_family=legacy -v --benchmark-disable  --dist loadgroup tests/ert/ui_tests/cli --durations=25
+
+    - name: Upload checkme folder if exists
+      if: ${{ !cancelled() }}
+      continue-on-error: true
+      uses: actions/upload-artifact@v4
+      with:
+        name: folder-artifact
+        path: '/tmp/pytest-of-runner/**/checkme'
 
     - name: Unit Test
       if: inputs.test-type == 'unit-tests'

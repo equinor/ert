@@ -7,6 +7,7 @@ import logging
 import os
 import shutil
 import time
+import traceback
 import uuid
 from abc import ABC, abstractmethod
 from collections import defaultdict
@@ -233,6 +234,10 @@ class BaseRunModel(ABC):
         return None
 
     def send_event(self, event: StatusEvents) -> None:
+        if hasattr(event, "error_msg"):
+            traceback.print_stack()
+            print(event.error_msg)
+
         self._status_queue.put(event)
 
     def send_smoother_event(
