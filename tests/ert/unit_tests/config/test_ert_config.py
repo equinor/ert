@@ -1815,18 +1815,17 @@ def test_no_warning_when_summary_key_and_simulation_job_present(job_name, key):
         ErtConfig.from_file("config_file.ert")
 
 
-def test_warning_is_emitted_when_malformatted_runpath(tmp_path):
-    config_path = tmp_path / "config_file.ert"
-    with open(config_path, "w", encoding="utf-8") as fout:
-        # Write a minimal config file
-        fout.write(
-            "RUNPATH <STORAGE>/runpath/constant-realization-num/constant-iter-num\n"
+def test_warning_is_emitted_when_malformatted_runpath():
+    with warnings.catch_warnings(record=True, category=ConfigWarning) as all_warnings:
+        ErtConfig.from_file_contents(
+            dedent(
+                """\
+                NUM_REALIZATIONS 1
+                RUNPATH <STORAGE>/runpath/constant-realization-num/constant-iter-num
+                """
+            )
         )
-        fout.write("NUM_REALIZATIONS 1\n")
-    with warnings.catch_warnings(record=True) as all_warnings:
-        ErtConfig.from_file(config_path)
     assert any(
         ("RUNPATH keyword contains no value placeholders" in str(w.message))
         for w in all_warnings
-        if isinstance(w.message, ConfigWarning)
     )
