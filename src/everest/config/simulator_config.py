@@ -1,14 +1,15 @@
 from typing import Any
 
 from pydantic import (
-    BaseModel,
     Field,
     NonNegativeInt,
     PositiveInt,
     field_validator,
     model_validator,
 )
+from pydantic_core.core_schema import ValidationInfo
 
+from ert.config.parsing import BaseModelWithContextSupport
 from ert.config.queue_config import (
     LocalQueueOptions,
     LsfQueueOptions,
@@ -32,7 +33,7 @@ def check_removed_config(queue_system: Any) -> None:
         )
 
 
-class SimulatorConfig(BaseModel, extra="forbid"):
+class SimulatorConfig(BaseModelWithContextSupport, extra="forbid"):
     cores_per_node: PositiveInt | None = Field(
         default=None,
         description="""defines the number of CPUs when running
@@ -80,9 +81,12 @@ class SimulatorConfig(BaseModel, extra="forbid"):
 
     @field_validator("queue_system", mode="before")
     @classmethod
-    def default_local_queue(cls, v: Any) -> Any:
+    def default_local_queue(cls, v: Any, info: ValidationInfo) -> Any:
         if v is None:
-            return LocalQueueOptions(max_running=8)
+            options = None
+            if info.context:
+                options = info.context.get(info.field_name)
+            return options or LocalQueueOptions(max_running=8)
         return v
 
     @model_validator(mode="before")

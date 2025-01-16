@@ -361,3 +361,29 @@ def test_user_config_jobs_precedence(tmp_path, monkeypatch):
     assert installed_forward_model_steps_new.get(existing_job).executable == which(
         "echo"
     )
+
+
+def test_that_queue_settings_are_taken_from_site_config(
+    min_config, monkeypatch, tmp_path
+):
+    monkeypatch.chdir(tmp_path)
+    assert "simulator" not in min_config  # Double check
+    Path("site-config").write_text(
+        dedent("""
+    QUEUE_SYSTEM LSF
+    QUEUE_OPTION LSF LSF_RESOURCE my_resource
+    QUEUE_OPTION LSF LSF_QUEUE my_queue
+    """),
+        encoding="utf-8",
+    )
+    with open("config.yml", "w", encoding="utf-8") as f:
+        yaml.dump(min_config, f)
+    monkeypatch.setenv("ERT_SITE_CONFIG", "site-config")
+    config = EverestConfig.load_file("config.yml")
+    assert config.simulator.queue_system == LsfQueueOptions(
+        lsf_queue="my_queue", lsf_resource="my_resource"
+    )
+    queue_config = QueueConfig.from_dict(everest_to_ert_config_dict(config))
+    assert queue_config.queue_options == LsfQueueOptions(
+        lsf_queue="my_queue", lsf_resource="my_resource"
+    )
