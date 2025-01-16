@@ -191,7 +191,7 @@ class ExperimentPanel(QWidget):
         experiment_type = panel.get_experiment_type()
         self._experiment_widgets[experiment_type] = panel
         self._experiment_type_combo.addDescriptionItem(
-            experiment_type.name(),
+            experiment_type.display_name(),
             experiment_type.description(),
             experiment_type.group(),
         )
@@ -220,9 +220,11 @@ class ExperimentPanel(QWidget):
         return []
 
     def get_current_experiment_type(self) -> Any:
-        experiment_type_name = self._experiment_type_combo.currentText()
+        experiment_type_display_name = self._experiment_type_combo.currentText()
         return next(
-            w for w in self._experiment_widgets if w.name() == experiment_type_name
+            w
+            for w in self._experiment_widgets
+            if w.display_name() == experiment_type_display_name
         )
 
     def get_experiment_arguments(self) -> Any:

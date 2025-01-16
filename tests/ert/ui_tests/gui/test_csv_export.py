@@ -89,7 +89,7 @@ def test_csv_export(esmda_has_run, qtbot, ensemble_select):
 def run_experiment_via_gui(gui, qtbot):
     experiment_panel = get_child(gui, ExperimentPanel)
     simulation_mode_combo = get_child(experiment_panel, QComboBox)
-    simulation_mode_combo.setCurrentText(EnsembleExperiment.name())
+    simulation_mode_combo.setCurrentText(EnsembleExperiment.display_name())
     ensemble_experiment_panel = get_child(experiment_panel, EnsembleExperimentPanel)
     ensemble_experiment_panel._ensemble_name_field.setText("iter-0")
 

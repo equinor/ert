@@ -193,8 +193,12 @@ class MultipleDataAssimilation(UpdateRunModel):
         return "Multiple data assimilation"
 
     @classmethod
+    def display_name(cls) -> str:
+        return cls.name() + " - Recommended algorithm"
+
+    @classmethod
     def description(cls) -> str:
-        return "[Sample|restart] → [evaluate → update] for each weight"
+        return "[Sample|restart] → [evaluate → update] for each weight."
 
     @classmethod
     def group(cls) -> str | None:
