@@ -23,9 +23,10 @@ from pydantic import (
     model_validator,
 )
 from pydantic_core import ErrorDetails
+from pydantic_core.core_schema import ValidationInfo
 from ruamel.yaml import YAML, YAMLError
 
-from ert.config import ErtConfig
+from ert.config import ErtConfig, QueueConfig
 from ert.config.parsing import BaseModelWithContextSupport
 from ert.config.parsing.base_model_context import init_context
 from ert.config.parsing.queue_system import QueueSystem
@@ -253,7 +254,7 @@ and environment variables are exposed in the form 'os.NAME', for example:
         return self
 
     @model_validator(mode="after")
-    def validate_forward_model_job_name_installed(self) -> Self:  # pylint: disable=E0213
+    def validate_forward_model_job_name_installed(self, info: ValidationInfo) -> Self:  # pylint: disable=E0213
         install_jobs = self.install_jobs
         forward_model_jobs = self.forward_model
         if install_jobs is None:
@@ -715,8 +716,8 @@ and environment variables are exposed in the form 'os.NAME', for example:
         # more understandable
         EverestConfig.model_validate(config)
 
-    @staticmethod
-    def load_file(config_file: str) -> "EverestConfig":
+    @classmethod
+    def load_file(cls, config_file: str) -> Self:
         config_path = os.path.realpath(config_file)
 
         if not os.path.isfile(config_path):
@@ -724,7 +725,7 @@ and environment variables are exposed in the form 'os.NAME', for example:
 
         config_dict = yaml_file_to_substituted_config_dict(config_path)
         try:
-            return EverestConfig.model_validate(config_dict)
+            return cls.with_plugins(config_dict)
         except ValidationError as error:
             exp = EverestValidationError()
             file_content = []
@@ -747,6 +748,9 @@ and environment variables are exposed in the form 'os.NAME', for example:
     def with_plugins(cls, config_dict):
         context = {}
         activate_script = ErtPluginManager().activate_script()
+        site_config = ErtConfig.read_site_config()
+        if site_config:
+            context["queue_system"] = QueueConfig.from_dict(site_config).queue_options
         if activate_script:
             context["activate_script"] = activate_script
         with init_context(context):

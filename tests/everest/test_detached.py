@@ -8,7 +8,7 @@ import pytest
 import requests
 
 import everest
-from ert.config import ErtConfig
+from ert.config import ErtConfig, QueueSystem
 from ert.config.queue_config import (
     LocalQueueOptions,
     LsfQueueOptions,
@@ -311,7 +311,34 @@ def test_queue_options_site_config(queue_options, use_plugin, monkeypatch, min_c
     config = EverestConfig.with_plugins(
         {"simulator": {"queue_system": queue_options}} | min_config
     )
-    assert config.server.queue_system.activate_script == expected_result
+    assert config.simulator.queue_system.activate_script == expected_result
+
+
+@pytest.mark.parametrize("use_plugin", (True, False))
+@pytest.mark.parametrize(
+    "queue_options",
+    [
+        {"queue_system": {"name": "slurm"}},
+        {},
+    ],
+)
+def test_simulator_queue_system_site_config(
+    queue_options, use_plugin, monkeypatch, min_config
+):
+    if queue_options:
+        expected_result = SlurmQueueOptions  # User specified
+    elif use_plugin:
+        expected_result = LsfQueueOptions  # Mock site config
+    else:
+        expected_result = LocalQueueOptions  # Default value
+    if use_plugin:
+        monkeypatch.setattr(
+            everest.config.everest_config.ErtConfig,
+            "read_site_config",
+            MagicMock(return_value={"QUEUE_SYSTEM": QueueSystem.LSF}),
+        )
+    config = EverestConfig.with_plugins({"simulator": queue_options} | min_config)
+    assert isinstance(config.simulator.queue_system, expected_result)
 
 
 @pytest.mark.timeout(5)  # Simulation might not finish
