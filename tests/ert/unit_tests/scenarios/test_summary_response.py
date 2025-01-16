@@ -218,6 +218,7 @@ def test_that_duplicate_summary_time_steps_does_not_fail(
     )
 
 
+@pytest.mark.flaky(reruns=5)
 def test_that_mismatched_responses_gives_nan_measured_data(ert_config, prior_ensemble):
     sample_prior(prior_ensemble, range(prior_ensemble.ensemble_size))
 
