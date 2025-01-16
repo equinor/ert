@@ -583,7 +583,7 @@ def test_that_pre_post_experiment_hook_works(capsys, mode):
             )
         )
 
-    run_cli(mode, "--disable-monitor", "poly.ert")
+    run_cli(mode, "--disable-monitoring", "poly.ert")
 
     captured = capsys.readouterr()
     assert "first" in captured.out
