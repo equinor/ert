@@ -41,7 +41,7 @@ from everest.strings import (
 from everest.util import makedirs_if_needed
 
 
-#@pytest.mark.flaky(reruns=5)
+# @pytest.mark.flaky(reruns=5)
 @pytest.mark.integration_test
 @pytest.mark.fails_on_macos_github_workflow
 @pytest.mark.xdist_group(name="starts_everest")
@@ -66,7 +66,7 @@ async def test_https_requests(copy_math_func_test_data_to_tmp):
         raise e
 
     server_status = everserver_status(status_path)
-    assert ServerStatus.running == server_status["status"]
+    assert server_status["status"] in {ServerStatus.running, ServerStatus.starting}
 
     url, cert, auth = ServerConfig.get_server_context(everest_config.output_dir)
     result = requests.get(url, verify=cert, auth=auth, proxies=PROXY)  # noqa: ASYNC210

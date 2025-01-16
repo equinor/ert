@@ -5,6 +5,7 @@ from functools import partial
 from pathlib import Path
 from unittest.mock import patch
 
+import pytest
 from fastapi import Response
 from fastapi.encoders import jsonable_encoder
 from fastapi.responses import JSONResponse, PlainTextResponse
@@ -12,13 +13,15 @@ from seba_sqlite.snapshot import SebaSnapshot
 
 from ert.run_models.everest_run_model import EverestExitCode
 from everest.config import EverestConfig, OptimizationConfig, ServerConfig
-from everest.detached import ServerStatus, everserver_status, PROXY, start_experiment
+from everest.detached import ServerStatus, everserver_status, start_experiment
 from everest.detached.jobs import everserver
 from everest.simulator import JOB_FAILURE, JOB_SUCCESS
-from everest.strings import OPT_FAILURE_REALIZATIONS, SIM_PROGRESS_ENDPOINT, STOP_ENDPOINT
+from everest.strings import (
+    OPT_FAILURE_REALIZATIONS,
+    SIM_PROGRESS_ENDPOINT,
+    STOP_ENDPOINT,
+)
 
-import pytest
-import requests
 
 def configure_everserver_logger(*args, **kwargs):
     """Mock exception raised"""
@@ -106,7 +109,6 @@ def test_configure_logger_failure(mocked_logger, copy_math_func_test_data_to_tmp
     assert "Exception: Configuring logger failed" in status["message"]
 
 
-
 @patch("sys.argv", ["name", "--config-file", "config_minimal.yml"])
 @patch("everest.detached.jobs.everserver._configure_loggers")
 @patch("everest.bin.utils.export_to_csv")
@@ -148,7 +150,7 @@ def test_everserver_status_running_complete(
 @patch("everest.detached.jobs.everserver._configure_loggers")
 @patch("requests.get")
 def test_everserver_status_failed_job(
-     mocked_get, mocked_logger, copy_math_func_test_data_to_tmp
+    mocked_get, mocked_logger, copy_math_func_test_data_to_tmp
 ):
     config_file = "config_minimal.yml"
     config = EverestConfig.load_file(config_file)
@@ -156,7 +158,7 @@ def test_everserver_status_failed_job(
     def mocked_server(url, verify, auth, proxies):
         if "/experiment_status" in url:
             return Response(f"{EverestExitCode.TOO_FEW_REALIZATIONS}", 200)
-    
+
         if "/shared_data" in url:
             return JSONResponse(
                 jsonable_encoder(
@@ -165,12 +167,28 @@ def test_everserver_status_failed_job(
                             "status": {"failed": 3},
                             "progress": [
                                 [
-                                    {"name": "job1", "status": JOB_FAILURE, "error": "job 1 error 1"},
-                                    {"name": "job1", "status": JOB_FAILURE,"error": "job 1 error 2"},
+                                    {
+                                        "name": "job1",
+                                        "status": JOB_FAILURE,
+                                        "error": "job 1 error 1",
+                                    },
+                                    {
+                                        "name": "job1",
+                                        "status": JOB_FAILURE,
+                                        "error": "job 1 error 2",
+                                    },
                                 ],
                                 [
-                                    {"name": "job2", "status": JOB_SUCCESS, "error":""},
-                                    {"name": "job2", "status": JOB_FAILURE, "error": "job 2 error 1"},
+                                    {
+                                        "name": "job2",
+                                        "status": JOB_SUCCESS,
+                                        "error": "",
+                                    },
+                                    {
+                                        "name": "job2",
+                                        "status": JOB_FAILURE,
+                                        "error": "job 2 error 1",
+                                    },
                                 ],
                             ],
                         },
@@ -178,12 +196,12 @@ def test_everserver_status_failed_job(
                     }
                 )
             )
-        return PlainTextResponse("Everest is running") 
-    
+        return PlainTextResponse("Everest is running")
+
     mocked_get.side_effect = mocked_server
 
     everserver.main()
-    
+
     status = everserver_status(
         ServerConfig.get_everserver_status_path(config.output_dir)
     )
@@ -194,6 +212,7 @@ def test_everserver_status_failed_job(
     assert "job1 Failed with: job 1 error 1" in status["message"]
     assert "job1 Failed with: job 1 error 2" in status["message"]
     assert "job2 Failed with: job 2 error 1" in status["message"]
+
 
 @patch("sys.argv", ["name", "--config-file", "config_minimal.yml"])
 @patch("everest.detached.jobs.everserver._configure_loggers")
@@ -207,7 +226,7 @@ def test_everserver_status_exception(
     def mocked_server(url, verify, auth, proxies):
         if "/experiment_status" in url:
             return Response(f"{EverestExitCode.EXCEPTION}", 200)
-    
+
         if "/shared_data" in url:
             return JSONResponse(
                 jsonable_encoder(
@@ -220,8 +239,8 @@ def test_everserver_status_exception(
                     }
                 )
             )
-        return PlainTextResponse("Everest is running") 
-    
+        return PlainTextResponse("Everest is running")
+
     mocked_get.side_effect = mocked_server
 
     everserver.main()
@@ -265,7 +284,6 @@ def test_everserver_status_max_batch_num(
     assert {data.batch for data in snapshot.simulation_data} == {0}
 
 
-
 @pytest.mark.integration_test
 @pytest.mark.xdist_group(name="starts_everest")
 @pytest.mark.timeout(20)
@@ -288,11 +306,7 @@ def test_everserver_status_contains_max_runtime_failure(
     start_experiment(
         server_context=ServerConfig.get_server_context(config.output_dir),
         config=config,
-    )    
-
-
-
-
+    )
 
     status = everserver_status(
         ServerConfig.get_everserver_status_path(config.output_dir)

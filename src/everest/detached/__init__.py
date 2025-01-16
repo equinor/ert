@@ -87,7 +87,6 @@ def stop_server(server_context: tuple[str, str, tuple[str, str]], retries: int =
     return False
 
 
-
 def start_experiment(
     server_context: tuple[str, str, tuple[str, str]],
     config: EverestConfig,
@@ -106,7 +105,6 @@ def start_experiment(
         response.raise_for_status()
     except Exception as e:
         raise ValueError("Failed to start experiment.") from e
-
 
 
 def extract_errors_from_file(path: str):
