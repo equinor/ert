@@ -20,9 +20,6 @@ import numpy as np
 
 from _ert.events import EESnapshot, EESnapshotUpdate, EETerminated, Event
 from ert.analysis import (
-    AnalysisEvent,
-    AnalysisStatusEvent,
-    AnalysisTimeEvent,
     ErtAnalysisError,
     smoother_update,
 )
@@ -44,11 +41,6 @@ from ert.ensemble_evaluator import (
     Monitor,
     Realization,
 )
-from ert.ensemble_evaluator.event import (
-    EndEvent,
-    FullSnapshotEvent,
-    SnapshotUpdateEvent,
-)
 from ert.ensemble_evaluator.identifiers import STATUS
 from ert.ensemble_evaluator.snapshot import EnsembleSnapshot
 from ert.ensemble_evaluator.state import (
@@ -68,33 +60,25 @@ from ert.workflow_runner import WorkflowRunner
 from ..config.analysis_config import UpdateSettings
 from ..run_arg import RunArg
 from .event import (
+    AnalysisEvent,
+    AnalysisStatusEvent,
+    AnalysisTimeEvent,
+    EndEvent,
+    FullSnapshotEvent,
     RunModelDataEvent,
     RunModelErrorEvent,
     RunModelStatusEvent,
     RunModelTimeEvent,
     RunModelUpdateBeginEvent,
     RunModelUpdateEndEvent,
+    SnapshotUpdateEvent,
+    StatusEvents,
 )
 
 logger = logging.getLogger(__name__)
 
 if TYPE_CHECKING:
     from ert.config import QueueConfig
-
-StatusEvents = (
-    FullSnapshotEvent
-    | SnapshotUpdateEvent
-    | EndEvent
-    | AnalysisEvent
-    | AnalysisStatusEvent
-    | AnalysisTimeEvent
-    | RunModelErrorEvent
-    | RunModelStatusEvent
-    | RunModelTimeEvent
-    | RunModelUpdateBeginEvent
-    | RunModelDataEvent
-    | RunModelUpdateEndEvent
-)
 
 
 class OutOfOrderSnapshotUpdateException(ValueError):
@@ -419,7 +403,7 @@ class BaseRunModel(ABC):
             status["Finished"] += (
                 self._get_number_of_finished_realizations_from_reruns()
             )
-        return status
+        return dict(status)
 
     def _get_number_of_finished_realizations_from_reruns(self) -> int:
         return self.active_realizations.count(

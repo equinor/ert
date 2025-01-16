@@ -24,7 +24,7 @@ from ert.mode_definitions import (
 )
 from ert.namespace import Namespace
 from ert.plugins import ErtPluginManager
-from ert.run_models.base_run_model import StatusEvents
+from ert.run_models.event import StatusEvents
 from ert.run_models.model_factory import create_model
 from ert.storage import open_storage
 from ert.storage.local_storage import local_storage_set_ert_config

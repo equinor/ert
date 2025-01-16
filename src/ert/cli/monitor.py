@@ -22,11 +22,11 @@ from ert.ensemble_evaluator.state import (
     FORWARD_MODEL_STATE_FAILURE,
     REAL_STATE_TO_COLOR,
 )
-from ert.run_models.base_run_model import StatusEvents
 from ert.run_models.event import (
     RunModelDataEvent,
     RunModelErrorEvent,
     RunModelUpdateEndEvent,
+    StatusEvents,
 )
 from ert.shared.status.utils import format_running_time
 
