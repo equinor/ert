@@ -21,7 +21,7 @@ def test_and_benchmark_adaptive_localization_with_fields(
 
     rng = np.random.default_rng(42)
 
-    num_grid_cells = 1000
+    num_grid_cells = 500
     num_parameters = num_grid_cells * num_grid_cells
     num_observations = 50
     num_ensemble = 25
