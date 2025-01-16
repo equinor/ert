@@ -135,7 +135,7 @@ def main(
     scale_factors = np.ones(len(obs_errors))
     nr_components = np.ones(len(obs_errors), dtype=int)
 
-    scaled_responses = responses * obs_errors.reshape(-1, 1)
+    scaled_responses = responses / obs_errors.reshape(-1, 1)
 
     if len(obs_errors) <= 2:
         # Either observations are not correlated, or only correlated
