@@ -277,12 +277,41 @@ def test_generate_queue_options_use_simulator_values(
     queue_options, expected_result, monkeypatch
 ):
     monkeypatch.setattr(
-        everest.config.server_config.ErtPluginManager,
+        everest.config.everest_config.ErtPluginManager,
         "activate_script",
         MagicMock(return_value=activate_script()),
     )
     config = EverestConfig.with_defaults(simulator={"queue_system": queue_options})
     assert config.server.queue_system == expected_result
+
+
+@pytest.mark.parametrize("use_plugin", (True, False))
+@pytest.mark.parametrize(
+    "queue_options",
+    [
+        {"name": "slurm", "activate_script": "From user"},
+        {"name": "slurm"},
+    ],
+)
+def test_queue_options_site_config(queue_options, use_plugin, monkeypatch, min_config):
+    plugin_result = "From plugin"
+    if "activate_script" in queue_options:
+        expected_result = queue_options["activate_script"]
+    elif use_plugin:
+        expected_result = plugin_result
+    else:
+        expected_result = activate_script()
+
+    if use_plugin:
+        monkeypatch.setattr(
+            everest.config.everest_config.ErtPluginManager,
+            "activate_script",
+            MagicMock(return_value=plugin_result),
+        )
+    config = EverestConfig.with_plugins(
+        {"simulator": {"queue_system": queue_options}} | min_config
+    )
+    assert config.server.queue_system.activate_script == expected_result
 
 
 @pytest.mark.timeout(5)  # Simulation might not finish
