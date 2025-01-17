@@ -6,9 +6,10 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 import requests
+import yaml
 
 import everest
-from ert.config import ErtConfig, QueueSystem
+from ert.config import QueueSystem
 from ert.config.queue_config import (
     LocalQueueOptions,
     LsfQueueOptions,
@@ -21,7 +22,6 @@ from everest.config import EverestConfig, InstallJobConfig
 from everest.config.server_config import ServerConfig
 from everest.config.simulator_config import SimulatorConfig
 from everest.detached import (
-    _EVERSERVER_JOB_PATH,
     PROXY,
     ServerStatus,
     everserver_status,
@@ -31,12 +31,6 @@ from everest.detached import (
     update_everserver_status,
     wait_for_server,
     wait_for_server_to_stop,
-)
-from everest.strings import (
-    DEFAULT_OUTPUT_DIR,
-    DETACHED_NODE_DIR,
-    EVEREST_SERVER_CONFIG,
-    SIMULATION_DIR,
 )
 from everest.util import makedirs_if_needed
 
@@ -150,43 +144,11 @@ def test_wait_for_server(server_is_running_mock, caplog):
     assert not caplog.messages
 
 
-def _get_reference_config():
-    everest_config = EverestConfig.load_file("config_minimal.yml")
-    reference_config = ErtConfig.read_site_config()
-    cwd = os.getcwd()
-    reference_config.update(
-        {
-            "INSTALL_JOB": [(EVEREST_SERVER_CONFIG, _EVERSERVER_JOB_PATH)],
-            "QUEUE_SYSTEM": "LOCAL",
-            "JOBNAME": EVEREST_SERVER_CONFIG,
-            "MAX_SUBMIT": 1,
-            "NUM_REALIZATIONS": 1,
-            "RUNPATH": os.path.join(
-                cwd,
-                DEFAULT_OUTPUT_DIR,
-                DETACHED_NODE_DIR,
-                SIMULATION_DIR,
-            ),
-            "FORWARD_MODEL": [
-                [
-                    EVEREST_SERVER_CONFIG,
-                    "--config-file",
-                    os.path.join(cwd, "config_minimal.yml"),
-                ],
-            ],
-            "ENSPATH": os.path.join(
-                cwd, DEFAULT_OUTPUT_DIR, DETACHED_NODE_DIR, EVEREST_SERVER_CONFIG
-            ),
-            "RUNPATH_FILE": os.path.join(
-                cwd, DEFAULT_OUTPUT_DIR, DETACHED_NODE_DIR, ".res_runpath_list"
-            ),
-        }
-    )
-    return everest_config, reference_config
-
-
-def test_detached_mode_config_base(copy_math_func_test_data_to_tmp):
-    everest_config, _ = _get_reference_config()
+def test_detached_mode_config_base(min_config, monkeypatch, tmp_path):
+    monkeypatch.chdir(tmp_path)
+    with open("config.yml", "w", encoding="utf-8") as fout:
+        yaml.dump(min_config, fout)
+    everest_config = EverestConfig.load_file("config.yml")
     assert everest_config.simulator.queue_system == LocalQueueOptions(max_running=8)
 
 
