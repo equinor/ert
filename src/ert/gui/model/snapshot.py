@@ -45,7 +45,7 @@ IsRealizationRole = UserRole + 9
 IsFMStepRole = UserRole + 10
 StatusRole = UserRole + 11
 
-DURATION = "Duration"
+DURATION: Final = "Duration"
 
 FM_STEP_COLUMNS: Sequence[str] = [
     ids.NAME,
@@ -418,7 +418,7 @@ class SnapshotModel(QAbstractItemModel):
 
         if role == Qt.ItemDataRole.DisplayRole:
             data_name = FM_STEP_COLUMNS[index.column()]
-            if data_name in {ids.MAX_MEMORY_USAGE}:
+            if data_name == ids.MAX_MEMORY_USAGE:
                 data = node.data
                 bytes_: str | None = data.get(data_name)  # type: ignore
                 if bytes_:
@@ -429,7 +429,7 @@ class SnapshotModel(QAbstractItemModel):
                     return "-"
                 return "View" if data_name in node.data else QVariant()
 
-            if data_name in {DURATION}:
+            if data_name == DURATION:
                 start_time = node.data.get(ids.START_TIME)
                 if start_time is None:
                     return QVariant()
