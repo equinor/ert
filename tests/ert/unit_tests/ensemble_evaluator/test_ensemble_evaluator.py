@@ -2,6 +2,7 @@ import asyncio
 import datetime
 from functools import partial
 from typing import cast
+from unittest.mock import patch
 
 import pytest
 from hypothesis import given
@@ -20,7 +21,13 @@ from _ert.events import (
     RealizationSuccess,
     event_to_json,
 )
-from _ert.forward_model_runner.client import CONNECT_MSG, DISCONNECT_MSG, Client
+from _ert.forward_model_runner.client import (
+    ACK_MSG,
+    CONNECT_MSG,
+    DISCONNECT_MSG,
+    HEARTBEAT_MSG,
+    Client,
+)
 from ert.ensemble_evaluator import (
     EnsembleEvaluator,
     EnsembleSnapshot,
@@ -354,6 +361,30 @@ async def test_new_monitor_can_pick_up_where_we_left_off(evaluator_to_use):
             final_snapshot = final_snapshot.update_from_event(event)
             if check_if_final_snapshot_is_complete(final_snapshot):
                 break
+
+
+@patch("ert.ensemble_evaluator.evaluator.HEARTBEAT_TIMEOUT", 0.1)
+@pytest.mark.integration_test
+async def test_monitor_receive_heartbeats(evaluator_to_use):
+    evaluator = evaluator_to_use
+    conn_info = evaluator._config.get_connection_info()
+    received_heartbeats = 0
+
+    async def mock_receiver(self):
+        nonlocal received_heartbeats
+        while True:
+            _, raw_msg = await self.socket.recv_multipart()
+            if raw_msg == ACK_MSG:
+                self._ack_event.set()
+            elif raw_msg == HEARTBEAT_MSG:
+                received_heartbeats += 1
+
+    with patch.object(Monitor, "_receiver", mock_receiver):
+        async with Monitor(conn_info) as monitor:
+            await asyncio.sleep(1.0)
+            await monitor.signal_done()
+    # in 1 second we should receive at least 2 heartbeats
+    assert received_heartbeats > 1
 
 
 @pytest.mark.integration_test

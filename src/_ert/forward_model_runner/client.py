@@ -18,6 +18,8 @@ class ClientConnectionError(Exception):
 CONNECT_MSG = b"CONNECT"
 DISCONNECT_MSG = b"DISCONNECT"
 ACK_MSG = b"ACK"
+HEARTBEAT_MSG = b"BEAT"
+HEARTBEAT_TIMEOUT = 5.0
 
 
 class Client:
@@ -83,7 +85,7 @@ class Client:
         await self._term_receiver_task()
         self._receiver_task = asyncio.create_task(self._receiver())
         try:
-            await self.send(CONNECT_MSG, retries=1)
+            await self.send(CONNECT_MSG)
         except ClientConnectionError:
             await self._term_receiver_task()
             self.term()
@@ -93,11 +95,23 @@ class Client:
         raise NotImplementedError("Only monitor can receive messages!")
 
     async def _receiver(self) -> None:
+        last_heartbeat_time: float | None = None
         while True:
             try:
                 _, raw_msg = await self.socket.recv_multipart()
                 if raw_msg == ACK_MSG:
                     self._ack_event.set()
+                elif raw_msg == HEARTBEAT_MSG:
+                    if (
+                        last_heartbeat_time
+                        and (asyncio.get_running_loop().time() - last_heartbeat_time)
+                        > 2 * HEARTBEAT_TIMEOUT
+                    ):
+                        await self.socket.send_multipart([b"", CONNECT_MSG])
+                        logger.warning(
+                            f"{self.dealer_id} heartbeat failed - reconnecting."
+                        )
+                    last_heartbeat_time = asyncio.get_running_loop().time()
                 else:
                     await self.process_message(raw_msg.decode("utf-8"))
             except zmq.ZMQError as exc:
@@ -144,5 +158,5 @@ class Client:
                 self.socket.connect(self.url)
                 backoff = min(backoff * 2, 10)  # Exponential backoff
         raise ClientConnectionError(
-            f"{self.dealer_id} Failed to send {message!r} after retries!"
+            f"{self.dealer_id} Failed to send {message!r} to {self.url} after retries!"
         )

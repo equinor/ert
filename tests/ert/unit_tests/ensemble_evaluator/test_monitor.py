@@ -55,8 +55,9 @@ async def test_monitor_connects_and_disconnects_successfully(unused_tcp_port):
     assert msg == DISCONNECT_MSG
 
 
-async def test_no_connection_established(make_ee_config):
+async def test_no_connection_established(monkeypatch, make_ee_config):
     ee_config = make_ee_config()
+    monkeypatch.setattr(Monitor, "DEFAULT_MAX_RETRIES", 0)
     monitor = Monitor(ee_config.get_connection_info())
     monitor._ack_timeout = 0.1
     with pytest.raises(ClientConnectionError):
