@@ -270,3 +270,177 @@ class EverestDataAPI:
     @property
     def output_folder(self):
         return self._config.output_dir
+
+    def export_dataframes(
+        self,
+    ) -> tuple[polars.DataFrame, polars.DataFrame, polars.DataFrame]:
+        batch_dfs_to_join = {}
+        realization_dfs_to_join = {}
+        perturbation_dfs_to_join = {}
+
+        batch_ids = [b.batch_id for b in self._ever_storage.data.batches]
+        all_controls = self._ever_storage.data.controls["control_name"].to_list()
+
+        def _try_append_df(
+            batch_id: int,
+            df: polars.DataFrame | None,
+            target: dict[str, list[polars.DataFrame]],
+        ):
+            if df is not None:
+                if batch_id not in target:
+                    target[batch.batch_id] = []
+
+                target[batch_id].append(df)
+
+        def try_append_batch_dfs(batch_id: int, *dfs: polars.DataFrame):
+            for df_ in dfs:
+                _try_append_df(batch_id, df_, batch_dfs_to_join)
+
+        def try_append_realization_dfs(batch_id: int, *dfs: polars.DataFrame):
+            for df_ in dfs:
+                _try_append_df(batch_id, df_, realization_dfs_to_join)
+
+        def try_append_perturbation_dfs(batch_id: int, *dfs: polars.DataFrame):
+            for df_ in dfs:
+                _try_append_df(batch_id, df_, perturbation_dfs_to_join)
+
+        def pivot_gradient(df: polars.DataFrame) -> polars.DataFrame:
+            pivoted_ = df.pivot(on="control_name", index="batch_id", separator=" wrt ")
+            return pivoted_.rename(
+                {
+                    col: f"grad({col})"
+                    for col in pivoted_.columns
+                    if col != "batch_id" and col not in all_controls
+                }
+            )
+
+        for batch in self._ever_storage.data.batches:
+            try_append_perturbation_dfs(
+                batch.batch_id,
+                batch.perturbation_objectives,
+                batch.perturbation_constraints,
+            )
+
+            try_append_realization_dfs(
+                batch.batch_id,
+                batch.realization_objectives,
+                batch.realization_controls,
+                batch.realization_constraints,
+            )
+
+            if batch.batch_objective_gradient is not None:
+                try_append_batch_dfs(
+                    batch.batch_id, pivot_gradient(batch.batch_objective_gradient)
+                )
+
+            if batch.batch_constraint_gradient is not None:
+                try_append_batch_dfs(
+                    batch.batch_id,
+                    pivot_gradient(batch.batch_constraint_gradient),
+                )
+
+            try_append_batch_dfs(
+                batch.batch_id, batch.batch_objectives, batch.batch_constraints
+            )
+
+        def _join_by_batch(
+            dfs: dict[int, list[polars.DataFrame]], on: list[str]
+        ) -> list[polars.DataFrame]:
+            """
+            Creates one dataframe per batch, with one column per input/output,
+            including control, objective, constraint, gradient value.
+            """
+            dfs_to_concat_ = []
+            for batch_id in batch_ids:
+                if batch_id not in dfs:
+                    continue
+
+                batch_df_ = dfs[batch_id][0]
+                for bdf_ in dfs[batch_id][1:]:
+                    if set(all_controls).issubset(set(bdf_.columns)) and set(
+                        all_controls
+                    ).issubset(set(batch_df_.columns)):
+                        bdf_ = bdf_.drop(all_controls)
+
+                    batch_df_ = batch_df_.join(
+                        bdf_,
+                        on=on,
+                    )
+
+                dfs_to_concat_.append(batch_df_)
+
+            return dfs_to_concat_
+
+        batch_dfs_to_concat = _join_by_batch(batch_dfs_to_join, on=["batch_id"])
+        batch_df = polars.concat(batch_dfs_to_concat, how="diagonal")
+
+        realization_dfs_to_concat = _join_by_batch(
+            realization_dfs_to_join, on=["batch_id", "realization", "simulation_id"]
+        )
+        realization_df = polars.concat(realization_dfs_to_concat, how="diagonal")
+
+        perturbation_dfs_to_concat = _join_by_batch(
+            perturbation_dfs_to_join, on=["batch_id", "realization", "perturbation"]
+        )
+        perturbation_df = polars.concat(perturbation_dfs_to_concat, how="diagonal")
+
+        pert_real_df = polars.concat([realization_df, perturbation_df], how="diagonal")
+
+        pert_real_df = pert_real_df.select(
+            "batch_id",
+            "realization",
+            "perturbation",
+            *list(
+                set(pert_real_df.columns) - {"batch_id", "realization", "perturbation"}
+            ),
+        )
+
+        # Avoid name collisions when joining with simulations
+        batch_df_renamed = batch_df.rename(
+            {
+                col: f"batch_{col}"
+                for col in batch_df.columns
+                if col != "batch_id" and not col.startswith("grad")
+            }
+        )
+        combined_df = pert_real_df.join(
+            batch_df_renamed, on="batch_id", how="full", coalesce=True
+        )
+
+        def _sort_df(df: polars.DataFrame, index: list[str]):
+            sorted_cols = index + sorted(set(df.columns) - set(index))
+            df_ = df.select(sorted_cols).sort(by=index)
+            return df_
+
+        return (
+            _sort_df(
+                combined_df,
+                ["batch_id", "realization", "simulation_id", "perturbation"],
+            ),
+            _sort_df(
+                pert_real_df,
+                [
+                    "batch_id",
+                    "realization",
+                    "perturbation",
+                    "simulation_id",
+                ],
+            ),
+            _sort_df(batch_df, ["batch_id", "total_objective_value"]),
+        )
+
+    @property
+    def everest_csv(self):
+        export_filename = (
+            self._config.export.csv_output_filepath
+            if self._config.export is not None
+            else f"{self._config.config_file}.csv"
+        )
+
+        full_path = os.path.join(self.output_folder, export_filename)
+
+        if not os.path.exists(full_path):
+            combined_df, _, _ = self.export_dataframes()
+            combined_df.write_csv(full_path)
+
+        return os.path.join(self.output_folder, export_filename)
