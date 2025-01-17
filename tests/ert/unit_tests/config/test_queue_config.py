@@ -15,7 +15,6 @@ from ert.config.parsing import ConfigKeys
 from ert.config.queue_config import (
     LocalQueueOptions,
     LsfQueueOptions,
-    QueueOptions,
     SlurmQueueOptions,
     TorqueQueueOptions,
 )
@@ -432,7 +431,7 @@ def test_default_activate_script_generation(expected, monkeypatch, venv):
 def test_conda_activate_script_generation(expected, monkeypatch, env):
     monkeypatch.setenv("VIRTUAL_ENV", "")
     monkeypatch.setenv("CONDA_ENV", env)
-    options = QueueOptions(name="local")
+    options = LocalQueueOptions(name="local")
     assert options.activate_script == expected
 
 
@@ -443,7 +442,7 @@ def test_conda_activate_script_generation(expected, monkeypatch, env):
 def test_multiple_activate_script_generation(expected, monkeypatch, env):
     monkeypatch.setenv("VIRTUAL_ENV", env)
     monkeypatch.setenv("CONDA_ENV", env)
-    options = QueueOptions(name="local")
+    options = LocalQueueOptions(name="local")
     assert options.activate_script == expected
 
 
