@@ -35,10 +35,73 @@ run_ert_with_opm() {
 }
 
 run_everest_tests() {
-    python -m pytest tests/everest -s \
+    python -m pytest -n auto tests/everest -s \
     --ignore-glob "*test_visualization_entry*"
-
+    return $?
 }
+
+# Clean up everest egg tmp folders
+remove_one_week_old_temp_folders () {
+    case "$1" in
+        "azure")
+            runner_root="/lustre1/users/f_scout_ci/egg_tests"
+            ;;
+        *)
+            runner_root="/scratch/oompf/egg_tests"
+            ;;
+    esac
+    old_directories=$(find $runner_root -maxdepth 1 -mtime +7 -user f_scout_ci -type d 2>/dev/null || true)
+    if [[ -n "$old_directories" ]] ; then
+        echo "Host: $(hostname -s), removing the following dirs: $old_directories"
+        rm -rf "$old_directories" || true
+    fi
+}
+
+
+make_run_path () {
+    case "$1" in
+        "azure")
+            mktemp -d -p /lustre1/users/f_scout_ci/egg_tests
+            ;;
+        *)
+            mktemp -d -p /scratch/oompf/egg_tests
+            ;;
+    esac
+}
+
+# Run everest egg test on LSF
+run_everest_egg_test() {
+
+    # Need to copy the egg test to a directory that is accessible by the LSF cluster
+    LSF_RUNNER_ROOT=$(make_run_path "$CI_RUNNER_LABEL")
+    mkdir -p "$LSF_RUNNER_ROOT"
+    LSF_TMP_DIR=$(mktemp -d -p "$LSF_RUNNER_ROOT")
+    chmod a+rx "$LSF_TMP_DIR"
+    cp -r "${CI_SOURCE_ROOT}/test-data/everest/egg" "$LSF_TMP_DIR"
+    pushd "${LSF_TMP_DIR}/egg"
+    echo "LSF_TMP_DIR: $LSF_TMP_DIR"
+
+    # Need to activate a komodo version available on LSF. Not a komodoenv
+    disable_komodo
+    # shellcheck source=/dev/null
+    source "${_KOMODO_ROOT}/${_FULL_RELEASE_NAME}/enable"
+
+
+    CONFIG="everest/model/config.yml"
+    sed -i "s/name: local/name: lsf/g" "$CONFIG"
+    cat "$CONFIG"
+    export PATH=$PATH:/global/bin  # LSF executables
+
+    everest run "$CONFIG"
+    STATUS=$?
+    popd
+
+    remove_one_week_old_temp_folders "$CI_RUNNER_LABEL"
+
+    return $STATUS
+}
+
+
 
 start_tests() {
     export NO_PROXY=localhost,127.0.0.1
@@ -81,6 +144,10 @@ start_tests() {
 
     run_everest_tests
     return_code_everest_tests=$?
+
+    run_everest_egg_test
+    return_code_everest_egg_test=$?
+
     set -e
 
     return_code_combined_tests=0
@@ -107,6 +174,10 @@ start_tests() {
     fi
     if [ "$return_code_everest_tests" -ne 0 ]; then
         echo "One or more Everest tests failed."
+        return_code_combined_tests=1
+    fi
+    if [ "$return_code_everest_egg_test" -ne 0 ]; then
+        echo "Everest egg tests failed."
         return_code_combined_tests=1
     fi
     return $return_code_combined_tests
