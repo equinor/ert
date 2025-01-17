@@ -95,6 +95,35 @@
   "objective_function_names": [
     "distance"
   ],
+  "objective_values": [
+    {
+      "batch": 0,
+      "function": "distance",
+      "norm": 1,
+      "realization": "0",
+      "simulation": "0",
+      "value": -0.47999999,
+      "weight": 1
+    },
+    {
+      "batch": 1,
+      "function": "distance",
+      "norm": 1,
+      "realization": "0",
+      "simulation": "0",
+      "value": -0.48021799,
+      "weight": 1
+    },
+    {
+      "batch": 2,
+      "function": "distance",
+      "norm": 1,
+      "realization": "0",
+      "simulation": "0",
+      "value": -2.2e-7,
+      "weight": 1
+    }
+  ],
   "optimal_result_json": {
     "batch": 2,
     "controls": {
