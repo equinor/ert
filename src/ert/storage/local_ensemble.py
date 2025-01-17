@@ -147,7 +147,7 @@ class LocalEnsemble(BaseMode):
         )
 
         storage._write_transaction(
-            path / "index.json", index.model_dump_json().encode("utf-8")
+            path / "index.json", index.model_dump_json(indent=2).encode("utf-8")
         )
 
         return cls(storage, path, Mode.WRITE)
@@ -341,7 +341,7 @@ class LocalEnsemble(BaseMode):
             type=failure_type, message=message if message else "", time=datetime.now()
         )
         self._storage._write_transaction(
-            filename, error.model_dump_json().encode("utf-8")
+            filename, error.model_dump_json(indent=2).encode("utf-8")
         )
 
     def unset_failure(

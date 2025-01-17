@@ -31,7 +31,7 @@ def migrate(path: Path) -> None:
             print(
                 _Index(
                     id=UUID(experiment.name), name="default_experiment_name"
-                ).model_dump_json(),
+                ).model_dump_json(indent=2),
                 file=f,
             )
 

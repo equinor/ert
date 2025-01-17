@@ -119,7 +119,9 @@ class LocalExperiment(BaseMode):
         if name is None:
             name = datetime.today().strftime("%Y-%m-%d")
 
-        (path / "index.json").write_text(_Index(id=uuid, name=name).model_dump_json())
+        (path / "index.json").write_text(
+            _Index(id=uuid, name=name).model_dump_json(indent=2)
+        )
 
         parameter_data = {}
         for parameter in parameters or []:
