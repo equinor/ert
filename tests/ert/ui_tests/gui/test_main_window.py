@@ -9,10 +9,8 @@ from unittest.mock import MagicMock, Mock, patch
 import numpy as np
 import pytest
 from qtpy.QtCore import Qt, QTimer
-from qtpy.QtGui import QWindow
 from qtpy.QtWidgets import (
     QAction,
-    QApplication,
     QCheckBox,
     QComboBox,
     QDoubleSpinBox,
@@ -650,11 +648,12 @@ def test_right_click_plot_button_opens_external_plotter(qtbot, storage, monkeypa
         button_plot_tool = gui.findChild(SidebarToolButton, "button_Create_plot")
         assert button_plot_tool
 
-        def top_level_plotter_windows() -> list[QWindow]:
+        def top_level_plotter_windows() -> list[PlotWindow]:
+            plot_windows = gui.get_external_plot_windows()
             top_level_plot_windows = []
-            top_level_windows = QApplication.topLevelWindows()
-            for win in top_level_windows:
-                if "Plotting" in win.title() and win.isVisible():
+
+            for win in plot_windows:
+                if "Plotting" in win.windowTitle() and win.isVisible():
                     top_level_plot_windows.append(win)
             return top_level_plot_windows
 
