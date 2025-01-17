@@ -77,7 +77,7 @@ There are many kinds of tests in the `tests` directory, while iterating on your
 code you can run a fast subset of the tests with
 
 ```sh
-pytest -n logical tests/ert/unit_tests -m "not integration_tests"
+pytest -n auto tests/ert/unit_tests -m "not integration_test"
 ```
 
 [Git LFS](https://git-lfs.com/) must be installed to get all the files. This is
