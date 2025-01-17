@@ -114,6 +114,62 @@
     "distance_p",
     "distance_q"
   ],
+  "objective_values": [
+    {
+      "batch": 0,
+      "function": "distance_p",
+      "norm": 1.5,
+      "realization": "0",
+      "simulation": "0",
+      "value": -0.75,
+      "weight": 0.66666667
+    },
+    {
+      "batch": 0,
+      "function": "distance_q",
+      "norm": 1,
+      "realization": "0",
+      "simulation": "0",
+      "value": -4.75,
+      "weight": 0.33333333
+    },
+    {
+      "batch": 1,
+      "function": "distance_p",
+      "norm": 1.5,
+      "realization": "0",
+      "simulation": "0",
+      "value": -0.76564598,
+      "weight": 0.66666667
+    },
+    {
+      "batch": 1,
+      "function": "distance_q",
+      "norm": 1,
+      "realization": "0",
+      "simulation": "0",
+      "value": -4.70363998,
+      "weight": 0.33333333
+    },
+    {
+      "batch": 2,
+      "function": "distance_p",
+      "norm": 1.5,
+      "realization": "0",
+      "simulation": "0",
+      "value": -0.50778502,
+      "weight": 0.66666667
+    },
+    {
+      "batch": 2,
+      "function": "distance_q",
+      "norm": 1,
+      "realization": "0",
+      "simulation": "0",
+      "value": -4.47678995,
+      "weight": 0.33333333
+    }
+  ],
   "optimal_result_json": {
     "batch": 2,
     "controls": {
