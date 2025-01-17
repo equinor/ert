@@ -1,0 +1,5 @@
+batch_id,total_objective_value,distance,grad(distance wrt point_x),grad(distance wrt point_y),grad(distance wrt point_z),grad(distance.total wrt point_x),grad(distance.total wrt point_y),grad(distance.total wrt point_z)
+0,-0.48,-0.48,0.8004,0.8005,0.7993,0.8004,0.8005,0.7993
+1,-0.4802,-0.4802,,,,,,
+2,-0.0,-0.0,,,,,,
+3,,,-0.0026,-0.0022,0.0021,-0.0026,-0.0022,0.0021
