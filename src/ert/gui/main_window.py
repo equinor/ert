@@ -151,6 +151,9 @@ class ErtMainWindow(QMainWindow):
             pw.show()
             self._external_plot_windows.append(pw)
 
+    def get_external_plot_windows(self) -> list[PlotWindow]:
+        return self._external_plot_windows
+
     def select_central_widget(self) -> None:
         actor = self.sender()
         if actor:
