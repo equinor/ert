@@ -1,4 +1,3 @@
-import os
 from pathlib import Path
 from textwrap import dedent
 from unittest.mock import Mock
@@ -11,7 +10,6 @@ from ert.config import ErtConfig
 from ert.gui.ertwidgets import CustomDialog, ListEditBox, PathChooser
 from ert.gui.main import GUILogHandler, _setup_main_window
 from ert.plugins import ErtPluginContext
-from ert.services import StorageService
 from ert.storage import open_storage
 
 from .conftest import (
@@ -81,9 +79,6 @@ def test_rft_csv_export_plugin_exports_rft_data(
     with ErtPluginContext():
         ert_config = ErtConfig.with_plugins().from_file(args.config)
     with (
-        StorageService.init_service(
-            project=os.path.abspath(ert_config.ens_path),
-        ),
         open_storage(ert_config.ens_path, mode="w") as storage,
     ):
         gui = _setup_main_window(ert_config, args, GUILogHandler(), storage)
