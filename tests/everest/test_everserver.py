@@ -5,9 +5,8 @@ from pathlib import Path
 from unittest.mock import patch
 
 import pytest
-from fastapi import Response
 from fastapi.encoders import jsonable_encoder
-from fastapi.responses import JSONResponse, PlainTextResponse
+from fastapi.responses import JSONResponse, PlainTextResponse, Response
 from seba_sqlite.snapshot import SebaSnapshot
 
 from ert.run_models.everest_run_model import EverestExitCode

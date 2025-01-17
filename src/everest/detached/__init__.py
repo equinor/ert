@@ -63,13 +63,14 @@ async def start_server(config: EverestConfig, debug: bool = False) -> Driver:
     return driver
 
 
-def stop_server(server_context: tuple[str, str, tuple[str, str]], retries: int = 5):
+def stop_server(
+    server_context: tuple[str, str, tuple[str, str]], retries: int = 5
+) -> bool:
     """
     Stop server if found and it is running.
     """
     for retry in range(retries):
         try:
-            print("stopping server")
             url, cert, auth = server_context
             stop_endpoint = "/".join([url, STOP_ENDPOINT])
             response = requests.post(
@@ -89,27 +90,51 @@ def stop_server(server_context: tuple[str, str, tuple[str, str]], retries: int =
 def start_experiment(
     server_context: tuple[str, str, tuple[str, str]],
     config: EverestConfig,
+    retries: int = 5,
 ) -> None:
-    print("Starting experiment")
-    try:
-        url, cert, auth = server_context
-        start_endpoint = "/".join([url, START_EXPERIMENT_ENDPOINT])
-        response = requests.post(
-            start_endpoint,
-            verify=cert,
-            auth=auth,
-            proxies=PROXY,  # type: ignore
-            json=config.to_dict(),
-        )
-        response.raise_for_status()
-    except Exception as e:
-        raise ValueError("Failed to start experiment.") from e
+    for retry in range(retries):
+        try:
+            url, cert, auth = server_context
+            start_endpoint = "/".join([url, START_EXPERIMENT_ENDPOINT])
+            response = requests.post(
+                start_endpoint,
+                verify=cert,
+                auth=auth,
+                proxies=PROXY,  # type: ignore
+                json=config.to_dict(),
+            )
+            response.raise_for_status()
+            return
+        except:
+            logging.debug(traceback.format_exc())
+            time.sleep(retry)
+    raise ValueError("Failed to start experiment")
 
 
 def extract_errors_from_file(path: str):
     with open(path, encoding="utf-8") as f:
         content = f.read()
     return re.findall(r"(Error \w+.*)", content)
+
+
+def wait_for_server_simple(
+    url: str, cert: str, auth: tuple[str, str], timeout: int
+) -> None:
+    """
+    Checks everest server has started _HTTP_REQUEST_RETRY times. Waits
+    progressively longer between each check.
+
+    Raise an exception when the timeout is reached.
+    """
+    sleep_time_increment = float(timeout) / (2**_HTTP_REQUEST_RETRY - 1)
+    for retry_count in range(_HTTP_REQUEST_RETRY):
+        try:
+            requests.get(url + "/", verify=cert, auth=auth, proxies=PROXY)  # type: ignore
+            return
+        except Exception:
+            sleep_time = sleep_time_increment * (2**retry_count)
+            time.sleep(sleep_time)
+    raise RuntimeError("Failed to get reply from server within configured timeout.")
 
 
 def wait_for_server(output_dir: str, timeout: int) -> None:

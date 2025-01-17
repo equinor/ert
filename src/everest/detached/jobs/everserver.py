@@ -42,6 +42,7 @@ from everest.detached import (
     ServerStatus,
     get_opt_status,
     update_everserver_status,
+    wait_for_server_simple,
 )
 from everest.export import check_for_errors
 from everest.plugins.everest_plugin_manager import EverestPluginManager
@@ -184,8 +185,6 @@ def _everserver_thread(shared_data, server_config) -> None:
     ) -> Response:
         _log(request)
         _check_user(credentials)
-        print(f"STOP ENDPOINT {shared_data}")
-
         shared_data[STOP_ENDPOINT] = True
         return Response("Raise STOP flag succeeded. Everest initiates shutdown..", 200)
 
@@ -228,7 +227,6 @@ def _everserver_thread(shared_data, server_config) -> None:
     ) -> Response:
         _log(request)
         _check_user(credentials)
-
         if shared_data[STOP_ENDPOINT]:
             return Response(f"{EverestExitCode.USER_ABORT}", 200)
         if runner is None:
@@ -395,20 +393,13 @@ def main():
         return
 
     try:
-        # add timeout
-        is_running = False
-        while not is_running:
-            try:
-                requests.get(url + "/", verify=cert, auth=auth, proxies=PROXY)  # type: ignore
-                is_running = True
-            except:
-                time.sleep(1)
+        wait_for_server_simple(url, cert, auth, 60)
 
         update_everserver_status(status_path, ServerStatus.running)
 
-        # add timeout
         is_done = False
         exit_code = None
+        # loop unil the optimization is done
         while not is_done:
             response = requests.get(
                 "/".join([url, EXPERIMENT_STATUS_ENDPOINT]),
@@ -424,8 +415,8 @@ def main():
             else:
                 time.sleep(1)
 
-        response: requests.Response = requests.get(
-            url + "/" + SHARED_DATA_ENDPOINT,
+        response = requests.get(
+            "/".join([url, SHARED_DATA_ENDPOINT]),
             verify=cert,
             auth=auth,
             proxies=PROXY,  # type: ignore
@@ -439,7 +430,7 @@ def main():
         if status != ServerStatus.completed:
             update_everserver_status(status_path, status, message)
             return
-    except Exception:
+    except:
         if shared_data[STOP_ENDPOINT]:
             update_everserver_status(
                 status_path,
@@ -474,7 +465,7 @@ def main():
             data_frame=export_with_progress(config, export_ecl),
             export_path=config.export_path,
         )
-    except Exception:
+    except:
         update_everserver_status(
             status_path,
             ServerStatus.failed,
