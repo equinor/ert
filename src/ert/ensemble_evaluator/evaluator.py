@@ -5,6 +5,7 @@ import datetime
 import logging
 import traceback
 from collections.abc import Awaitable, Callable, Iterable, Sequence
+from enum import Enum
 from typing import Any, get_args
 
 import zmq.asyncio
@@ -27,7 +28,13 @@ from _ert.events import (
     event_from_json,
     event_to_json,
 )
-from _ert.forward_model_runner.client import ACK_MSG, CONNECT_MSG, DISCONNECT_MSG
+from _ert.forward_model_runner.client import (
+    ACK_MSG,
+    CONNECT_MSG,
+    DISCONNECT_MSG,
+    HEARTBEAT_MSG,
+    HEARTBEAT_TIMEOUT,
+)
 from ert.ensemble_evaluator import identifiers as ids
 
 from ._ensemble import FMStepSnapshot
@@ -45,13 +52,17 @@ logger = logging.getLogger(__name__)
 EVENT_HANDLER = Callable[[list[Event]], Awaitable[None]]
 
 
+class HeartbeatEvent(Enum):
+    event = HEARTBEAT_MSG
+
+
 class EnsembleEvaluator:
     def __init__(self, ensemble: Ensemble, config: EvaluatorServerConfig):
         self._config: EvaluatorServerConfig = config
         self._ensemble: Ensemble = ensemble
 
         self._events: asyncio.Queue[Event] = asyncio.Queue()
-        self._events_to_send: asyncio.Queue[Event] = asyncio.Queue()
+        self._events_to_send: asyncio.Queue[Event | HeartbeatEvent] = asyncio.Queue()
         self._manifest_queue: asyncio.Queue[Any] = asyncio.Queue()
 
         self._ee_tasks: list[asyncio.Task[None]] = []
@@ -72,14 +83,28 @@ class EnsembleEvaluator:
         self._dispatchers_empty: asyncio.Event = asyncio.Event()
         self._dispatchers_empty.set()
 
+    async def _do_heartbeat_clients(self) -> None:
+        await self._server_started
+        while True:
+            if self._clients_connected:
+                await self._events_to_send.put(HeartbeatEvent.event)
+                await asyncio.sleep(HEARTBEAT_TIMEOUT)
+            else:
+                await asyncio.sleep(0.1)
+
     async def _publisher(self) -> None:
         await self._server_started
         while True:
             event = await self._events_to_send.get()
             for identity in self._clients_connected:
-                await self._router_socket.send_multipart(
-                    [identity, b"", event_to_json(event).encode("utf-8")]
-                )
+                if isinstance(event, HeartbeatEvent):
+                    await self._router_socket.send_multipart(
+                        [identity, b"", event.value]
+                    )
+                else:
+                    await self._router_socket.send_multipart(
+                        [identity, b"", event_to_json(event).encode("utf-8")]
+                    )
             self._events_to_send.task_done()
 
     async def _append_message(self, snapshot_update_event: EnsembleSnapshot) -> None:
@@ -197,6 +222,8 @@ class EnsembleEvaluator:
 
     async def handle_client(self, dealer: bytes, frame: bytes) -> None:
         if frame == CONNECT_MSG:
+            if dealer in self._clients_connected:
+                logger.warning(f"{dealer!r} wants to reconnect.")
             self._clients_connected.add(dealer)
             self._clients_empty.clear()
             current_snapshot_dict = self._ensemble.snapshot.to_dict()
@@ -343,6 +370,7 @@ class EnsembleEvaluator:
             raise ValueError("no config for evaluator")
         self._ee_tasks = [
             asyncio.create_task(self._server(), name="server_task"),
+            asyncio.create_task(self._do_heartbeat_clients(), name="heartbeat_task"),
             asyncio.create_task(
                 self._batch_events_into_buffer(), name="dispatcher_task"
             ),
