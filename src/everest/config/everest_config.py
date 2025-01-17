@@ -28,6 +28,9 @@ from pydantic import (
 from ruamel.yaml import YAML, YAMLError
 
 from ert.config import ErtConfig
+from ert.config.parsing import BaseModelWithContextSupport
+from ert.config.parsing.base_model_context import init_context
+from ert.plugins import ErtPluginManager
 from everest.config.control_variable_config import ControlVariableGuessListConfig
 from everest.config.install_template_config import InstallTemplateConfig
 from everest.config.server_config import ServerConfig
@@ -134,7 +137,7 @@ class HasName(Protocol):
     name: str
 
 
-class EverestConfig(BaseModelWithPropertySupport):  # type: ignore
+class EverestConfig(BaseModelWithPropertySupport, BaseModelWithContextSupport):  # type: ignore
     controls: Annotated[list[ControlConfig], AfterValidator(unique_items)] = Field(
         description="""Defines a list of controls.
          Controls should have unique names each control defines
@@ -806,6 +809,15 @@ and environment variables are exposed in the form 'os.NAME', for example:
                     exp.errors.append((e, None))
 
             raise exp from error
+
+    @classmethod
+    def with_plugins(cls, config_dict):
+        context = {}
+        activate_script = ErtPluginManager().activate_script()
+        if activate_script:
+            context["activate_script"] = ErtPluginManager().activate_script()
+        with init_context(context):
+            return cls(**config_dict)
 
     @staticmethod
     def load_file_with_argparser(
