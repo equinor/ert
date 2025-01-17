@@ -8,11 +8,13 @@ from abc import abstractmethod
 from typing import Annotated, Any, Literal, no_type_check
 
 import pydantic
-from pydantic import BaseModel, Field
+from pydantic import Field, field_validator
 from pydantic.dataclasses import dataclass
+from pydantic_core.core_schema import ValidationInfo
 
 from ._get_num_cpu import get_num_cpu_from_data_file
 from .parsing import (
+    BaseModelWithContextSupport,
     ConfigDict,
     ConfigKeys,
     ConfigValidationError,
@@ -38,7 +40,7 @@ def activate_script() -> str:
 
 
 class QueueOptions(
-    BaseModel,
+    BaseModelWithContextSupport,
     validate_assignment=True,
     extra="forbid",
     use_enum_values=True,
@@ -48,7 +50,19 @@ class QueueOptions(
     max_running: pydantic.NonNegativeInt = 0
     submit_sleep: pydantic.NonNegativeFloat = 0.0
     project_code: str | None = None
-    activate_script: str = Field(default_factory=activate_script)
+    activate_script: str | None = Field(default=None, validate_default=True)
+
+    @field_validator("activate_script", mode="before")
+    @classmethod
+    def inject_site_config_script(cls, v: str, info: ValidationInfo) -> str:
+        # User value gets highest priority
+        if isinstance(v, str):
+            return v
+        # Use from plugin system if user has not specified
+        plugin_script = None
+        if info.context:
+            plugin_script = info.context.get("activate_script")
+        return plugin_script or activate_script()  # Return default value
 
     @staticmethod
     def create_queue_options(
