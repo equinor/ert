@@ -244,20 +244,14 @@ class LocalExperiment(BaseMode):
     @property
     def parameter_info(self) -> dict[str, Any]:
         info: dict[str, Any]
-        path = self.mount_point / self._parameter_file
-        if not path.exists():
-            raise ValueError(f"{self._parameter_file!s} does not exist")
-        with open(path, encoding="utf-8") as f:
+        with open(self.mount_point / self._parameter_file, encoding="utf-8") as f:
             info = json.load(f)
         return info
 
     @property
     def response_info(self) -> dict[str, Any]:
         info: dict[str, Any]
-        path = self.mount_point / self._responses_file
-        if not path.exists():
-            raise ValueError(f"{self._responses_file!s} does not exist")
-        with open(path, encoding="utf-8") as f:
+        with open(self.mount_point / self._responses_file, encoding="utf-8") as f:
             info = json.load(f)
         return info
 
