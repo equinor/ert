@@ -1,3 +1,4 @@
+default_install_hook_types: [pre-commit]
 repos:
 -   repo: https://github.com/pre-commit/pre-commit-hooks
     rev: v5.0.0
@@ -16,3 +17,14 @@ repos:
     - id: ruff
       args: [ --fix ]
     - id: ruff-format
+
+- repo: local
+  hooks:
+  - id: pytest
+    name: pytest
+    entry: pytest
+    args: [-n, auto, tests/ert/unit_tests, --hypothesis-profile=fast, -m, not integration_test]
+    language: system
+    types: [python]
+    stages: [pre-push]
+    pass_filenames: false
