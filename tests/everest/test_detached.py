@@ -5,9 +5,10 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 import requests
+import yaml
 
 import everest
-from ert.config import ErtConfig
+from ert.config import QueueSystem
 from ert.config.queue_config import (
     LocalQueueOptions,
     LsfQueueOptions,
@@ -20,7 +21,6 @@ from everest.config import EverestConfig, InstallJobConfig
 from everest.config.server_config import ServerConfig
 from everest.config.simulator_config import SimulatorConfig
 from everest.detached import (
-    _EVERSERVER_JOB_PATH,
     PROXY,
     ServerStatus,
     everserver_status,
@@ -30,12 +30,6 @@ from everest.detached import (
     update_everserver_status,
     wait_for_server,
     wait_for_server_to_stop,
-)
-from everest.strings import (
-    DEFAULT_OUTPUT_DIR,
-    DETACHED_NODE_DIR,
-    EVEREST_SERVER_CONFIG,
-    SIMULATION_DIR,
 )
 from everest.util import makedirs_if_needed
 
@@ -150,43 +144,11 @@ def test_wait_for_server(server_is_running_mock, caplog, monkeypatch):
     assert not caplog.messages
 
 
-def _get_reference_config():
-    everest_config = EverestConfig.load_file("config_minimal.yml")
-    reference_config = ErtConfig.read_site_config()
-    cwd = os.getcwd()
-    reference_config.update(
-        {
-            "INSTALL_JOB": [(EVEREST_SERVER_CONFIG, _EVERSERVER_JOB_PATH)],
-            "QUEUE_SYSTEM": "LOCAL",
-            "JOBNAME": EVEREST_SERVER_CONFIG,
-            "MAX_SUBMIT": 1,
-            "NUM_REALIZATIONS": 1,
-            "RUNPATH": os.path.join(
-                cwd,
-                DEFAULT_OUTPUT_DIR,
-                DETACHED_NODE_DIR,
-                SIMULATION_DIR,
-            ),
-            "FORWARD_MODEL": [
-                [
-                    EVEREST_SERVER_CONFIG,
-                    "--config-file",
-                    os.path.join(cwd, "config_minimal.yml"),
-                ],
-            ],
-            "ENSPATH": os.path.join(
-                cwd, DEFAULT_OUTPUT_DIR, DETACHED_NODE_DIR, EVEREST_SERVER_CONFIG
-            ),
-            "RUNPATH_FILE": os.path.join(
-                cwd, DEFAULT_OUTPUT_DIR, DETACHED_NODE_DIR, ".res_runpath_list"
-            ),
-        }
-    )
-    return everest_config, reference_config
-
-
-def test_detached_mode_config_base(copy_math_func_test_data_to_tmp):
-    everest_config, _ = _get_reference_config()
+def test_detached_mode_config_base(min_config, monkeypatch, tmp_path):
+    monkeypatch.chdir(tmp_path)
+    with open("config.yml", "w", encoding="utf-8") as fout:
+        yaml.dump(min_config, fout)
+    everest_config = EverestConfig.load_file("config.yml")
     assert everest_config.simulator.queue_system == LocalQueueOptions(max_running=8)
 
 
@@ -285,7 +247,7 @@ def test_generate_queue_options_use_simulator_values(
     queue_options, expected_result, monkeypatch
 ):
     monkeypatch.setattr(
-        everest.config.server_config.ErtPluginManager,
+        everest.config.everest_config.ErtPluginManager,
         "activate_script",
         MagicMock(return_value=activate_script()),
     )
@@ -293,6 +255,62 @@ def test_generate_queue_options_use_simulator_values(
         **{"simulator": {"queue_system": queue_options}}
     )
     assert config.server.queue_system == expected_result
+
+
+@pytest.mark.parametrize("use_plugin", (True, False))
+@pytest.mark.parametrize(
+    "queue_options",
+    [
+        {"name": "slurm", "activate_script": "From user"},
+        {"name": "slurm"},
+    ],
+)
+def test_queue_options_site_config(queue_options, use_plugin, monkeypatch, min_config):
+    plugin_result = "From plugin"
+    if "activate_script" in queue_options:
+        expected_result = queue_options["activate_script"]
+    elif use_plugin:
+        expected_result = plugin_result
+    else:
+        expected_result = activate_script()
+
+    if use_plugin:
+        monkeypatch.setattr(
+            everest.config.everest_config.ErtPluginManager,
+            "activate_script",
+            MagicMock(return_value=plugin_result),
+        )
+    config = EverestConfig.with_plugins(
+        {"simulator": {"queue_system": queue_options}} | min_config
+    )
+    assert config.simulator.queue_system.activate_script == expected_result
+
+
+@pytest.mark.parametrize("use_plugin", (True, False))
+@pytest.mark.parametrize(
+    "queue_options",
+    [
+        {"queue_system": {"name": "slurm"}},
+        {},
+    ],
+)
+def test_simulator_queue_system_site_config(
+    queue_options, use_plugin, monkeypatch, min_config
+):
+    if queue_options:
+        expected_result = SlurmQueueOptions  # User specified
+    elif use_plugin:
+        expected_result = LsfQueueOptions  # Mock site config
+    else:
+        expected_result = LocalQueueOptions  # Default value
+    if use_plugin:
+        monkeypatch.setattr(
+            everest.config.everest_config.ErtConfig,
+            "read_site_config",
+            MagicMock(return_value={"QUEUE_SYSTEM": QueueSystem.LSF}),
+        )
+    config = EverestConfig.with_plugins({"simulator": queue_options} | min_config)
+    assert isinstance(config.simulator.queue_system, expected_result)
 
 
 @pytest.mark.timeout(5)  # Simulation might not finish

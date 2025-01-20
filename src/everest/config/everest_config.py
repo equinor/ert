@@ -25,9 +25,13 @@ from pydantic import (
     field_validator,
     model_validator,
 )
+from pydantic_core.core_schema import ValidationInfo
 from ruamel.yaml import YAML, YAMLError
 
-from ert.config import ErtConfig
+from ert.config import ErtConfig, QueueConfig
+from ert.config.parsing import BaseModelWithContextSupport
+from ert.config.parsing.base_model_context import init_context
+from ert.plugins import ErtPluginManager
 from everest.config.control_variable_config import ControlVariableGuessListConfig
 from everest.config.install_template_config import InstallTemplateConfig
 from everest.config.server_config import ServerConfig
@@ -67,18 +71,6 @@ from .workflow_config import WorkflowConfig
 
 if TYPE_CHECKING:
     from pydantic_core import ErrorDetails
-
-
-def _dummy_ert_config():
-    site_config = ErtConfig.read_site_config()
-    dummy_config = {"NUM_REALIZATIONS": 1, "ENSPATH": "."}
-    dummy_config.update(site_config)
-    return ErtConfig.with_plugins().from_dict(config_dict=dummy_config)
-
-
-def get_system_installed_jobs():
-    """Returns list of all system installed job names"""
-    return list(_dummy_ert_config().installed_forward_model_steps.keys())
 
 
 # Makes property.setter work
@@ -134,7 +126,7 @@ class HasName(Protocol):
     name: str
 
 
-class EverestConfig(BaseModelWithPropertySupport):  # type: ignore
+class EverestConfig(BaseModelWithPropertySupport, BaseModelWithContextSupport):  # type: ignore
     controls: Annotated[list[ControlConfig], AfterValidator(unique_items)] = Field(
         description="""Defines a list of controls.
          Controls should have unique names each control defines
@@ -192,7 +184,7 @@ and environment variables are exposed in the form 'os.NAME', for example:
         default=None, description="A list of output constraints with unique names."
     )
     install_jobs: list[InstallJobConfig] | None = Field(
-        default=None, description="A list of jobs to install"
+        default=None, description="A list of jobs to install", validate_default=True
     )
     install_workflow_jobs: list[InstallJobConfig] | None = Field(
         default=None, description="A list of workflow jobs to install"
@@ -267,7 +259,7 @@ and environment variables are exposed in the form 'os.NAME', for example:
         return self
 
     @model_validator(mode="after")
-    def validate_forward_model_job_name_installed(self) -> Self:  # pylint: disable=E0213
+    def validate_forward_model_job_name_installed(self, info: ValidationInfo) -> Self:  # pylint: disable=E0213
         install_jobs = self.install_jobs
         forward_model_jobs = self.forward_model
         if install_jobs is None:
@@ -276,7 +268,8 @@ and environment variables are exposed in the form 'os.NAME', for example:
             return self
         installed_jobs_name = [job.name for job in install_jobs]
         installed_jobs_name += list(script_names)  # default jobs
-        installed_jobs_name += get_system_installed_jobs()  # system jobs
+        if info.context:  # Add plugin jobs
+            installed_jobs_name += info.context.get("install_jobs", {}).keys()
 
         errors = []
         for fm_job in forward_model_jobs:
@@ -761,7 +754,7 @@ and environment variables are exposed in the form 'os.NAME', for example:
             "model": {"realizations": [0]},
         }
 
-        return cls.model_validate({**defaults, **kwargs})
+        return cls.with_plugins({**defaults, **kwargs})
 
     @staticmethod
     def lint_config_dict(config: dict) -> list["ErrorDetails"]:
@@ -778,8 +771,8 @@ and environment variables are exposed in the form 'os.NAME', for example:
         # more understandable
         EverestConfig.model_validate(config)
 
-    @staticmethod
-    def load_file(config_file: str) -> "EverestConfig":
+    @classmethod
+    def load_file(cls, config_file: str):
         config_path = os.path.realpath(config_file)
 
         if not os.path.isfile(config_path):
@@ -787,7 +780,7 @@ and environment variables are exposed in the form 'os.NAME', for example:
 
         config_dict = yaml_file_to_substituted_config_dict(config_path)
         try:
-            return EverestConfig.model_validate(config_dict)
+            return cls.with_plugins(config_dict)
         except ValidationError as error:
             exp = EverestValidationError()
             file_content = []
@@ -806,6 +799,23 @@ and environment variables are exposed in the form 'os.NAME', for example:
                     exp.errors.append((e, None))
 
             raise exp from error
+
+    @classmethod
+    def with_plugins(cls, config_dict):
+        site_config = ErtConfig.read_site_config()
+        ert_config: ErtConfig = ErtConfig.with_plugins().from_dict(
+            config_dict=site_config
+        )
+        context = {
+            "install_jobs": ert_config.installed_forward_model_steps,
+        }
+        activate_script = ErtPluginManager().activate_script()
+        if site_config:
+            context["queue_system"] = QueueConfig.from_dict(site_config).queue_options
+        if activate_script:
+            context["activate_script"] = ErtPluginManager().activate_script()
+        with init_context(context):
+            return cls(**config_dict)
 
     @staticmethod
     def load_file_with_argparser(

@@ -3,7 +3,6 @@ from __future__ import annotations
 import os
 import platform
 from collections import OrderedDict
-from dataclasses import fields
 from datetime import datetime
 from pathlib import Path
 from queue import SimpleQueue
@@ -379,10 +378,10 @@ class ExperimentPanel(QWidget):
         if isinstance(self.get_current_experiment_type(), SingleTestRun):
             queue_opts = LocalQueueOptions(max_running=1)
 
-        for field in fields(queue_opts):
-            field_value = getattr(queue_opts, field.name)
+        for name in queue_opts.model_fields:
+            field_value = getattr(queue_opts, name)
             if field_value is not None:
-                kv[field.name.replace("_", " ").capitalize()] = str(field_value)
+                kv[name.replace("_", " ").capitalize()] = str(field_value)
 
         kv["**Status**"] = ""
         kv["Trace ID"] = get_trace_id()
