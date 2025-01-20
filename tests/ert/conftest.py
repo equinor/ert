@@ -70,6 +70,14 @@ settings.register_profile(
 )
 settings.load_profile("no_timeouts")
 
+settings.register_profile(
+    "fast",
+    deadline=None,
+    suppress_health_check=[HealthCheck.too_slow],
+    print_blob=True,
+    max_examples=10,
+)
+
 
 @pytest.fixture()
 def set_site_config(monkeypatch, tmp_path):
