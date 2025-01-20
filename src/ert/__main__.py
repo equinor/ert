@@ -53,7 +53,9 @@ logger = logging.getLogger(__name__)
 
 def run_ert_storage(args: Namespace, _: ErtPluginManager | None = None) -> None:
     with StorageService.start_server(
-        verbose=True, project=ErtConfig.from_file(args.config).ens_path
+        verbose=True,
+        project=ErtConfig.from_file(args.config).ens_path,
+        parent_pid=os.getpid(),
     ) as server:
         server.wait()
 
