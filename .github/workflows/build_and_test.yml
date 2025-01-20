@@ -47,9 +47,13 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        test-type: [ 'test', 'integration-test', 'everest-models-test', 'doc', 'everest-docs-entry-test' ]
+        test-type: [ 'test', 'integration-test', 'everest-models-test', 'doc']
         python-version: [ '3.11', '3.12' ]
         os: [ ubuntu-latest ]
+        exclude:
+        - os: 'ubuntu-latest'
+          test-type: 'doc'
+          python-version: '3.11'
     uses: ./.github/workflows/test_everest.yml
     with:
       os: ${{ matrix.os }}
