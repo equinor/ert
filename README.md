@@ -124,6 +124,14 @@ $ pip install pre-commit
 $ pre-commit install
 ```
 
+There is also a pre-push hook configured in `pre-commit` to run a collection of
+relatively fast tests, to install this hook:
+
+```sh
+$ pre-commit install --hook-type pre-push
+```
+
+
 ### Trouble with setup
 
 As a simple test of your `ert` installation, you may try to run one of the
