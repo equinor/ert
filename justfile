@@ -10,4 +10,4 @@ snake_oil:
 
 # execute rapid unittests
 rapid-tests:
-    nice pytest -n auto tests/ert/unit_tests -m "not integration_test"
+    nice pytest -n auto tests/ert/unit_tests --hypothesis-profile=fast -m "not integration_test"
