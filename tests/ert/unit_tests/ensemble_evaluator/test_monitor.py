@@ -95,6 +95,7 @@ async def test_immediate_stop(unused_tcp_port):
     assert connected is False
 
 
+@pytest.mark.integration_test
 async def test_unexpected_close_after_connection_successful(
     monkeypatch, unused_tcp_port
 ):

@@ -195,6 +195,7 @@ async def test_that_max_submit_is_not_reached_on_success(realization, mock_drive
     assert retries == 1
 
 
+@pytest.mark.integration_test
 @pytest.mark.timeout(10)
 async def test_max_runtime(realization, mock_driver, caplog):
     wait_started = asyncio.Event()
@@ -221,6 +222,7 @@ async def test_max_runtime(realization, mock_driver, caplog):
     assert "Realization 0 stopped due to MAX_RUNTIME=1 seconds" in caplog.text
 
 
+@pytest.mark.integration_test
 async def test_no_resubmit_on_max_runtime_kill(realization, mock_driver):
     retries = 0
 

@@ -919,7 +919,6 @@ def test_that_autoscaling_ignores_typos_in_observation_names(storage, caplog):
     assert "obs1_1" in logged_messages
 
 
-@pytest.mark.integration_test
 def test_gen_data_obs_data_mismatch(storage, uniform_parameter):
     resp = GenDataConfig(keys=["RESPONSE"])
     gen_data_obs = polars.DataFrame(
@@ -994,7 +993,6 @@ def test_gen_data_obs_data_mismatch(storage, uniform_parameter):
 
 
 @pytest.mark.usefixtures("use_tmpdir")
-@pytest.mark.integration_test
 def test_gen_data_missing(storage, uniform_parameter, obs):
     resp = GenDataConfig(keys=["RESPONSE"])
     experiment = storage.create_experiment(
@@ -1066,7 +1064,6 @@ def test_gen_data_missing(storage, uniform_parameter, obs):
 
 
 @pytest.mark.usefixtures("use_tmpdir")
-@pytest.mark.integration_test
 def test_update_subset_parameters(storage, uniform_parameter, obs):
     no_update_param = GenKwConfig(
         name="EXTRA_PARAMETER",

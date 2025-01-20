@@ -199,7 +199,6 @@ async def test_max_runtime_formatting_samples(seconds, expected_format):
     assert _seconds_to_slurm_time_format(seconds) == expected_format
 
 
-@pytest.mark.integration_test
 @pytest.mark.parametrize(
     "sbatch_script, expectation",
     [

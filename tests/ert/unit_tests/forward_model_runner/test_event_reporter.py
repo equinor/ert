@@ -179,6 +179,7 @@ def test_report_inconsistent_events(unused_tcp_port):
         reporter.report(Finish())
 
 
+@pytest.mark.integration_test
 def test_report_with_failed_reporter_but_finished_jobs(unused_tcp_port):
     # this is to show when the reporter fails ert won't crash nor
     # staying hanging but instead finishes up the job;

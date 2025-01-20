@@ -87,6 +87,7 @@ def test_shutdown_after_finish(server):
     server.shutdown()
 
 
+@pytest.mark.integration_test
 @pytest.mark.script(
     """\
 time.sleep(0.5)

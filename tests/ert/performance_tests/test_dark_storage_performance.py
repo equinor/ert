@@ -147,7 +147,6 @@ def get_parameters(storage, ensemble_id1, keyword, poly_ran):
 @pytest.mark.parametrize(
     "keyword", ["summary", "gen_data", "summary_with_obs", "gen_data_with_obs"]
 )
-@pytest.mark.integration_test
 def test_direct_dark_performance(
     benchmark, template_config, monkeypatch, function, keyword
 ):
@@ -183,7 +182,6 @@ def test_direct_dark_performance(
 @pytest.mark.parametrize(
     "keyword", ["summary", "gen_data", "summary_with_obs", "gen_data_with_obs"]
 )
-@pytest.mark.integration_test
 def test_direct_dark_performance_with_storage(
     benchmark, template_config, monkeypatch, function, keyword
 ):

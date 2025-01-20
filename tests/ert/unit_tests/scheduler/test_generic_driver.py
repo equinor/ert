@@ -184,7 +184,6 @@ async def test_kill_actually_kills(driver: Driver, tmp_path, pytestconfig):
     assert not Path("survived").exists(), "Job should have been killed"
 
 
-@pytest.mark.integration_test
 async def test_num_cpu_sets_env_variables(driver: Driver, tmp_path, job_name):
     """The intention of this check is to verify that the driver sets up
     the num_cpu requirement correctly for the relevant queue system.
@@ -229,7 +228,6 @@ async def test_execute_with_retry_exits_on_filenotfounderror(driver: Driver, cap
     assert "/usr/bin/foo" in message
 
 
-@pytest.mark.integration_test
 async def test_poll_ignores_filenotfounderror(driver: Driver, caplog):
     if isinstance(driver, LocalDriver):
         pytest.skip("LocalDriver does not poll")

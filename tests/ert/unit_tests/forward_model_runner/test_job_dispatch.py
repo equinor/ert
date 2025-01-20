@@ -160,6 +160,7 @@ def test_memory_profile_is_logged_as_csv():
     assert (mem_df["rss"] >= 0).all()  # 0 has been observed
 
 
+@pytest.mark.integration_test
 @pytest.mark.usefixtures("use_tmpdir")
 def test_fm_dispatch_run_subset_specified_as_parameter():
     with open("dummy_executable", "w", encoding="utf-8") as f:
