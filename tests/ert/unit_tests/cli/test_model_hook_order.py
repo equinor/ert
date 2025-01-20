@@ -15,13 +15,15 @@ from ert.run_models import (
 )
 
 EXPECTED_CALL_ORDER = [
-    HookRuntime.PRE_SIMULATION,
-    HookRuntime.POST_SIMULATION,
-    HookRuntime.PRE_FIRST_UPDATE,
-    HookRuntime.PRE_UPDATE,
-    HookRuntime.POST_UPDATE,
-    HookRuntime.PRE_SIMULATION,
-    HookRuntime.POST_SIMULATION,
+    call(HookRuntime.PRE_EXPERIMENT),
+    call(HookRuntime.PRE_SIMULATION, ANY, ANY),
+    call(HookRuntime.POST_SIMULATION, ANY, ANY),
+    call(HookRuntime.PRE_FIRST_UPDATE, ANY, ANY),
+    call(HookRuntime.PRE_UPDATE, ANY, ANY),
+    call(HookRuntime.POST_UPDATE, ANY, ANY),
+    call(HookRuntime.PRE_SIMULATION, ANY, ANY),
+    call(HookRuntime.POST_SIMULATION, ANY, ANY),
+    call(HookRuntime.POST_EXPERIMENT),
 ]
 
 
@@ -58,12 +60,7 @@ def test_hook_call_order_ensemble_smoother(monkeypatch):
     test_class._storage = storage_mock
     test_class.run_experiment(MagicMock())
 
-    expected_calls = [
-        call(HookRuntime.PRE_EXPERIMENT),
-        *[call(expected_call, ANY, ANY) for expected_call in EXPECTED_CALL_ORDER],
-        call(HookRuntime.POST_EXPERIMENT),
-    ]
-    assert run_wfs_mock.mock_calls == expected_calls
+    assert run_wfs_mock.mock_calls == EXPECTED_CALL_ORDER
 
 
 @pytest.mark.usefixtures("patch_base_run_model")
@@ -96,12 +93,7 @@ def test_hook_call_order_es_mda(monkeypatch):
     test_class.run_ensemble_evaluator = MagicMock(return_value=[0])
     test_class.run_experiment(MagicMock())
 
-    expected_calls = [
-        call(HookRuntime.PRE_EXPERIMENT),
-        *[call(expected_call, ANY, ANY) for expected_call in EXPECTED_CALL_ORDER],
-        call(HookRuntime.POST_EXPERIMENT),
-    ]
-    assert run_wfs_mock.mock_calls == expected_calls
+    assert run_wfs_mock.mock_calls == EXPECTED_CALL_ORDER
 
 
 @pytest.mark.usefixtures("patch_base_run_model")
@@ -133,9 +125,4 @@ def test_hook_call_order_iterative_ensemble_smoother(monkeypatch):
         mock_iteration.return_value = 2
         test_class.run_experiment(MagicMock())
 
-    expected_calls = [
-        call(HookRuntime.PRE_EXPERIMENT),
-        *[call(expected_call, ANY, ANY) for expected_call in EXPECTED_CALL_ORDER],
-        call(HookRuntime.POST_EXPERIMENT),
-    ]
-    assert run_wfs_mock.mock_calls == expected_calls
+    assert run_wfs_mock.mock_calls == EXPECTED_CALL_ORDER
