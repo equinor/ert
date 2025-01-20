@@ -240,8 +240,6 @@ def main():
     arg_parser.add_argument("--debug", action="store_true")
     options = arg_parser.parse_args()
     config = EverestConfig.load_file(options.config_file)
-    if options.debug:
-        config.logging_level = "debug"
     status_path = ServerConfig.get_everserver_status_path(config.output_dir)
     host_file = ServerConfig.get_hostfile_path(config.output_dir)
 
@@ -253,7 +251,7 @@ def main():
                 if config.log_dir is None
                 else Path(config.log_dir)
             ),
-            logging_level=config.logging_level,
+            logging_level=config.logging_level if not options.debug else logging.DEBUG,
         )
 
         update_everserver_status(status_path, ServerStatus.starting)
