@@ -119,9 +119,9 @@ html_logo = "./images/everest_icon.svg"
 # documentation.
 
 html_theme_options = {
-    "source_repository": "https://github.com/equinor/everest/",
+    "source_repository": "https://github.com/equinor/ert/",
     "source_branch": "main",
-    "source_directory": "docs/source",
+    "source_directory": "docs/everest",
 }
 
 # Add any paths that contain custom static files (such as style sheets) here,
