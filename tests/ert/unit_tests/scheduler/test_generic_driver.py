@@ -154,33 +154,26 @@ async def test_repeated_submit_same_iens(driver: Driver, tmp_path):
 @pytest.mark.flaky(reruns=5)
 async def test_kill_actually_kills(driver: Driver, tmp_path, pytestconfig):
     os.chdir(tmp_path)
-    if (
-        (isinstance(driver, LsfDriver) and pytestconfig.getoption("lsf"))  # noqa: PLR0916
-        or (isinstance(driver, OpenPBSDriver) and pytestconfig.getoption("openpbs"))
-        or (isinstance(driver, SlurmDriver) and pytestconfig.getoption("slurm"))
-    ):
-        # Allow more time when tested on a real compute cluster to avoid false positives.
-        job_kill_window = 60
-        test_grace_time = 120
-    else:
-        job_kill_window = 5  # Busy test nodes require a long kill window
-        test_grace_time = 8
+    finished = False
 
     async def kill_job_once_started(iens):
         nonlocal driver
         await driver.kill(iens)
 
+    async def mark_as_finished(iens, code):
+        nonlocal finished
+        finished = True
+
     await driver.submit(
         0,
         "sh",
         "-c",
-        f"sleep {job_kill_window}; touch {tmp_path}/survived",
+        f"sleep 10; touch {tmp_path}/survived",
         name="kill_me",
     )
-    await poll(driver, {0}, started=kill_job_once_started)
+    await poll(driver, {0}, started=kill_job_once_started, finished=mark_as_finished)
+    assert finished
 
-    # Give the script a chance to finish if it is running
-    await asyncio.sleep(test_grace_time)
     assert not Path("survived").exists(), "Job should have been killed"
 
 
