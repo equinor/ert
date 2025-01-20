@@ -116,7 +116,6 @@ dev = [
     "pytest>6",
     "resdata",
     "resfo",
-    "scikit-learn",
     "sphinx",
     "sphinx-argparse",
     "sphinx-autoapi",
