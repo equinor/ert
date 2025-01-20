@@ -51,8 +51,8 @@ This guide serves as documentation for the *Everest* decision-making tool.
    :hidden:
    :caption: About
 
-   Code in GitHub <https://github.com/equinor/everest>
-   Issue tracker <https://github.com/equinor/everest/issues>
+   Code in GitHub <https://github.com/equinor/ert>
+   Issue tracker <https://github.com/equinor/ert/issues>
 
 .. Indices and tables
    ==================

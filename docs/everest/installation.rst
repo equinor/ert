@@ -11,12 +11,12 @@ Using pip (Recommended for General Users)
 
 .. code-block:: bash
 
-   $ pip install git+https://github.com/equinor/everest.git
+   $ pip install git+https://github.com/equinor/ert.git
 
 
 Installing the Development Version
 ---------------------------------------------------
-If you want to build and install the latest development version, follow the instructions on the `Everest Github page <https://github.com/equinor/everest>`_.
+If you want to build and install the latest development version, follow the instructions on the `Ert Github page <https://github.com/equinor/ert>`_.
 
 
 For Equinor Employees (Using Komodo Release)
