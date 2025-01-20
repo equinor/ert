@@ -1,6 +1,7 @@
 import json
 import os
 import shutil
+import stat
 import tempfile
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta
@@ -585,6 +586,7 @@ def test_write_transaction(data):
         filepath = Path("./file.txt")
         storage._write_transaction(filepath, data)
 
+        assert stat.S_IMODE(filepath.stat().st_mode) == 0o666
         assert filepath.read_bytes() == data
 
 
