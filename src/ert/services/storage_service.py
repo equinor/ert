@@ -22,6 +22,7 @@ class StorageService(BaseService):
         self,
         exec_args: Sequence[str] = (),
         timeout: int = 120,
+        parent_pid: int | None = None,
         conn_info: Mapping[str, Any] | Exception | None = None,
         project: str | None = None,
         verbose: bool = False,
@@ -39,6 +40,8 @@ class StorageService(BaseService):
                 get_traceparent() if traceparent == "inherit_parent" else traceparent
             )
             exec_args.extend(["--traceparent", str(traceparent)])
+        if parent_pid is not None:
+            exec_args.extend(["--parent_pid", str(parent_pid)])
 
         super().__init__(exec_args, timeout, conn_info, project)
 
