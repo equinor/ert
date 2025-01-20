@@ -56,10 +56,12 @@ def cluster_responses(
     Cluster responses using hierarchical clustering based on Spearman correlation.
     Observations that tend to vary similarly across different simulation runs will be clustered together.
     """
-    correlation = spearmanr(responses).statistic
-    if isinstance(correlation, np.float64):
-        correlation = np.array([[1, correlation], [correlation, 1]])
-    linkage_matrix = linkage(correlation, "average", "euclidean")
+    distance = 1 - np.abs(spearmanr(responses).statistic)
+    if isinstance(distance, np.float64):
+        distance = np.array(distance)
+    linkage_matrix = linkage(
+        distance[np.triu_indices(distance.shape[0], k=1)], "average", "euclidean"
+    )
     return fcluster(linkage_matrix, nr_clusters, criterion="maxclust", depth=2)
 
 

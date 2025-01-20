@@ -68,11 +68,11 @@ def test_misfit_preprocessor(nr_observations):
     nr_realizations = 1000
     Y = np.ones((nr_observations, nr_realizations))
     parameters_a = rng.standard_normal(nr_realizations)
-    parameters_b = rng.standard_normal(nr_realizations)
+    parameters_b = rng.normal(scale=5, size=nr_realizations)
     for i in range(nr_observations - 1):
         Y[i] = i + 1 * parameters_a
     Y[-1] = 5 + 1 * parameters_b
-    obs_errors = Y.mean(axis=1)
+    obs_errors = np.array([0.1] * nr_observations)
     Y_original = Y.copy()
     obs_error_copy = obs_errors.copy()
     result, *_ = main(Y, obs_errors)
