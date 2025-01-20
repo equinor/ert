@@ -419,7 +419,6 @@ def test_update_raises_on_singular_matrix(tmp_path):
             name="posterior",
             prior_ensemble=prior,
         )
-        events = []
 
         with pytest.raises(
             ErtAnalysisError,
@@ -433,7 +432,6 @@ def test_update_raises_on_singular_matrix(tmp_path):
                 UpdateSettings(auto_scale_observations=[["OBS*"]]),
                 ESSettings(),
                 rng=np.random.default_rng(1234),
-                progress_callback=events.append,
             )
 
 
