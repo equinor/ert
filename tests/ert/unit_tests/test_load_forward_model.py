@@ -294,15 +294,12 @@ def test_that_the_states_are_set_correctly():
 @pytest.mark.parametrize("itr", [None, 0, 1, 2, 3])
 @pytest.mark.usefixtures("use_tmpdir")
 def test_loading_from_any_available_iter(storage, run_paths, run_args, itr):
-    config_text = dedent(
-        """
-    NUM_REALIZATIONS 1
-    GEN_DATA RESPONSE RESULT_FILE:response.out INPUT_FORMAT:ASCII
+    ert_config = ErtConfig.from_file_contents(
+        """\
+        NUM_REALIZATIONS 1
+        GEN_DATA RESPONSE RESULT_FILE:response.out INPUT_FORMAT:ASCII
         """
     )
-    Path("config.ert").write_text(config_text, encoding="utf-8")
-
-    ert_config = ErtConfig.from_file("config.ert")
     prior_ensemble = storage.create_ensemble(
         storage.create_experiment(
             responses=ert_config.ensemble_config.response_configuration
@@ -330,7 +327,7 @@ def test_loading_from_any_available_iter(storage, run_paths, run_args, itr):
     with open(run_path / "response.out_active", "w", encoding="utf-8") as fout:
         fout.write("\n".join(["1", "0", "1"]))
 
-    facade = LibresFacade.from_config_file("config.ert")
+    facade = LibresFacade(ert_config)
     run_path_format = str(
         Path(
             f"simulations/realization-<IENS>/iter-{itr if itr is not None else 0}"
