@@ -19,7 +19,7 @@ def _write_transaction(filename: str | os.PathLike[str], data: bytes) -> None:
     Path("./swp").mkdir(parents=True, exist_ok=True)
     with NamedTemporaryFile(dir="./swp", delete=False) as f:
         f.write(data)
-        os.chmod(f.name, 0o666)
+        os.chmod(f.name, 0o660)
         os.rename(f.name, filename)
 
 

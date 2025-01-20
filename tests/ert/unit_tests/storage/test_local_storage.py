@@ -586,7 +586,7 @@ def test_write_transaction(data):
         filepath = Path("./file.txt")
         storage._write_transaction(filepath, data)
 
-        assert stat.S_IMODE(filepath.stat().st_mode) == 0o666
+        assert stat.S_IMODE(filepath.stat().st_mode) == 0o660
         assert filepath.read_bytes() == data
 
 
