@@ -9,7 +9,6 @@ from pathlib import Path
 from typing import (
     TYPE_CHECKING,
     Annotated,
-    Literal,
     Optional,
     Protocol,
     Self,
@@ -81,21 +80,6 @@ def get_system_installed_jobs():
     return list(_dummy_ert_config().installed_forward_model_steps.keys())
 
 
-# Makes property.setter work
-# Based on https://github.com/pydantic/pydantic/issues/1577#issuecomment-790506164
-# We should use computed_property instead of this, when upgrading to pydantic 2.
-class BaseModelWithPropertySupport(BaseModel):
-    @no_type_check
-    def __setattr__(self, name, value):
-        """
-        To be able to use properties with setters
-        """
-        try:
-            getattr(self.__class__, name).fset(self, value)
-        except AttributeError:
-            super().__setattr__(name, value)
-
-
 class EverestValidationError(ValueError):
     def __init__(self):
         super().__init__()
@@ -134,7 +118,7 @@ class HasName(Protocol):
     name: str
 
 
-class EverestConfig(BaseModelWithPropertySupport):  # type: ignore
+class EverestConfig(BaseModel):  # type: ignore
     controls: Annotated[list[ControlConfig], AfterValidator(unique_items)] = Field(
         description="""Defines a list of controls.
          Controls should have unique names each control defines
@@ -569,14 +553,6 @@ and environment variables are exposed in the form 'os.NAME', for example:
             "critical": logging.CRITICAL,  # 50
         }
         return levels.get(level.lower(), logging.INFO)
-
-    @logging_level.setter
-    def logging_level(
-        self, level: Literal["debug", "info", "warning", "error", "critical"]
-    ):
-        env = self.environment
-        assert env is not None
-        env.log_level = level  # pylint:disable = E0237
 
     @property
     def config_directory(self) -> str | None:

@@ -281,11 +281,6 @@ def test_that_log_level_property_is_consistent_with_environment_log_level():
         config.environment.log_level = lvl_str
         assert config.logging_level == lvl_int
 
-    for lvl_str, lvl_int in levels.items():
-        config.logging_level = lvl_str
-        assert config.environment.log_level == lvl_str
-        assert config.logging_level == lvl_int
-
 
 @pytest.mark.parametrize("config_class", [SimulatorConfig, ServerConfig])
 @pytest.mark.parametrize("queue_system", ["lsf", "torque", "slurm", "local"])
