@@ -139,14 +139,14 @@ def run_server(
 
 
 def terminate_on_parent_death(
-    stopped: threading.Event, poll_interval: float = 1.0
+    stopped: threading.Event, parent: int, poll_interval: float = 1.0
 ) -> None:
     """
     Quit the server when the parent process is no longer running.
     """
 
     def check_parent_alive() -> bool:
-        return os.getppid() != 1
+        return os.getppid() == parent
 
     while check_parent_alive():
         if stopped.is_set():
@@ -182,7 +182,7 @@ def main() -> None:
 
     stopped = threading.Event()
     terminate_on_parent_death_thread = threading.Thread(
-        target=terminate_on_parent_death, args=[stopped, 1.0]
+        target=terminate_on_parent_death, args=[stopped, args.parent_pid, 1.0]
     )
     with ErtPluginContext(logger=logging.getLogger(), trace_provider=tracer_provider):
         terminate_on_parent_death_thread.start()
