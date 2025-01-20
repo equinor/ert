@@ -23,6 +23,12 @@ def add_parser_options(ap: ArgumentParser) -> None:
         default=None,
     )
     ap.add_argument(
+        "--parent_pid",
+        type=int,
+        help="The parent process id",
+        default=os.getppid(),
+    )
+    ap.add_argument(
         "--host", type=str, default=os.environ.get("ERT_STORAGE_HOST", "127.0.0.1")
     )
     ap.add_argument(
