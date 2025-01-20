@@ -229,7 +229,6 @@ async def test_submit_with_realization_memory_with_bsub_capture():
     assert "-R rusage[mem=1]" in Path("captured_bsub_args").read_text(encoding="utf-8")
 
 
-@pytest.mark.integration_test
 @pytest.mark.parametrize(
     "bsub_script, expectation",
     [
@@ -1065,6 +1064,7 @@ def generate_random_text(size):
     return "".join(random.choice(letters) for i in range(size))
 
 
+@pytest.mark.integration_test
 @pytest.mark.parametrize("tail_chars_to_read", [(5), (50), (500), (700)])
 async def test_lsf_can_retrieve_stdout_and_stderr(
     tmp_path, job_name, tail_chars_to_read
@@ -1089,6 +1089,7 @@ async def test_lsf_can_retrieve_stdout_and_stderr(
     assert stdout_txt[-min(tail_chars_to_read, num_written_characters) + 2 :] in message
 
 
+@pytest.mark.integration_test
 async def test_lsf_cannot_retrieve_stdout_and_stderr(tmp_path, job_name):
     os.chdir(tmp_path)
     driver = LsfDriver()
@@ -1109,6 +1110,7 @@ async def test_lsf_cannot_retrieve_stdout_and_stderr(tmp_path, job_name):
     assert "LSF-stdout:\nNo output file" in message
 
 
+@pytest.mark.integration_test
 @pytest.mark.parametrize("explicit_runpath", [(True), (False)])
 async def test_lsf_info_file_in_runpath(explicit_runpath, tmp_path, job_name):
     os.chdir(tmp_path)
@@ -1148,6 +1150,7 @@ async def test_submit_to_named_queue(tmp_path, caplog, job_name):
     assert (tmp_path / "test").read_text(encoding="utf-8") == "test\n"
 
 
+@pytest.mark.integration_test
 @pytest.mark.usefixtures("use_tmpdir")
 async def test_submit_with_resource_requirement(job_name):
     resource_requirement = "select[cs && x86_64Linux]"
@@ -1175,7 +1178,6 @@ async def test_empty_job_name():
     assert " -J sleep " in Path("captured_bsub_args").read_text(encoding="utf-8")
 
 
-@pytest.mark.integration_test
 @pytest.mark.usefixtures("use_tmpdir")
 async def test_submit_with_num_cpu(pytestconfig, job_name):
     if not pytestconfig.getoption("lsf"):
@@ -1270,7 +1272,6 @@ async def test_polling_bhist_fallback(not_found_bjobs, caplog, job_name):
     assert job_id in driver._bhist_cache
 
 
-@pytest.mark.integration_test
 async def test_no_exception_when_no_access_to_bjobs_executable(
     not_found_bjobs, caplog, job_name
 ):

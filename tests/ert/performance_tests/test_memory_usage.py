@@ -46,7 +46,6 @@ def poly_template(monkeypatch):
     yield folder
 
 
-@pytest.mark.integration_test
 def test_memory_smoothing(poly_template):
     ert_config = ErtConfig.from_file("poly.ert")
     fill_storage_with_data(poly_template, ert_config)

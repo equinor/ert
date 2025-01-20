@@ -248,7 +248,6 @@ def test_local_well_summary_format_have_cell_index_and_name(keyword, name, lgr_n
     )
 
 
-@pytest.mark.integration_test
 @given(summaries(), st.sampled_from(resfo.Format))
 def test_that_reading_summaries_returns_the_contents_of_the_file(
     tmp_path_factory, summary, format

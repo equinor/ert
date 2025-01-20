@@ -17,7 +17,6 @@ def eightcells(use_tmpdir, source_root):
     )
 
 
-@pytest.mark.integration_test
 @pytest.mark.usefixtures("eightcells")
 @pytest.mark.parametrize("num_cpu", [1, 2])
 @pytest.mark.skipif(not shutil.which("flowrun"), reason="flowrun not available")
@@ -40,7 +39,6 @@ def test_numcpu_maps_to_mpi_processes_with_flow(num_cpu):
     assert re.search(r"Threads per MPI process:\s+1", flow_stdout)
 
 
-@pytest.mark.integration_test
 @pytest.mark.usefixtures("eightcells")
 @pytest.mark.skipif(not shutil.which("flowrun"), reason="flowrun not available")
 def test_user_can_specify_threads_and_oversubscribe_compute_node():
@@ -62,7 +60,6 @@ def test_user_can_specify_threads_and_oversubscribe_compute_node():
     assert re.search(r"Threads per MPI process:\s+2", flow_stdout)
 
 
-@pytest.mark.integration_test
 @pytest.mark.usefixtures("eightcells")
 @pytest.mark.skipif(not shutil.which("flowrun"), reason="flowrun not available")
 def test_user_can_specify_threads_and_mpi_processes_and_oversubscribe_compute_node():
@@ -84,7 +81,6 @@ def test_user_can_specify_threads_and_mpi_processes_and_oversubscribe_compute_no
     assert re.search(r"Threads per MPI process:\s+2", flow_stdout)
 
 
-@pytest.mark.integration_test
 @pytest.mark.usefixtures("eightcells")
 @pytest.mark.skipif(not shutil.which("flowrun"), reason="flowrun not available")
 def test_setenv_can_be_used_to_set_threads():
@@ -107,7 +103,6 @@ def test_setenv_can_be_used_to_set_threads():
     assert re.search(r"Threads per MPI process:\s+2", flow_stdout)
 
 
-@pytest.mark.integration_test
 @pytest.mark.usefixtures("eightcells")
 @pytest.mark.skipif(not shutil.which("flowrun"), reason="flowrun not available")
 def test_ert_will_fetch_parallel_keyword_and_set_mpi_processes():
@@ -133,7 +128,6 @@ def test_ert_will_fetch_parallel_keyword_and_set_mpi_processes():
     assert re.search(r"Threads per MPI process:\s+1", flow_stdout)
 
 
-@pytest.mark.integration_test
 @pytest.mark.usefixtures("eightcells")
 @pytest.mark.skipif(not shutil.which("flowrun"), reason="flowrun not available")
 def test_num_cpu_wins_over_parallel_in_deck():

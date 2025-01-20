@@ -27,6 +27,7 @@ async def test_successful_sending(unused_tcp_port):
         assert msg in mock_server.messages
 
 
+@pytest.mark.integration_test
 async def test_retry(unused_tcp_port):
     host = "localhost"
     url = f"tcp://{host}:{unused_tcp_port}"
