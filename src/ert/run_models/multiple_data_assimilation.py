@@ -51,7 +51,6 @@ class MultipleDataAssimilation(UpdateRunModel):
         update_settings: UpdateSettings,
         status_queue: SimpleQueue[StatusEvents],
     ):
-        self.support_restart = False
         self._relative_weights = weights
         self.weights = self.parse_weights(weights)
 
@@ -89,6 +88,7 @@ class MultipleDataAssimilation(UpdateRunModel):
             random_seed=random_seed,
             minimum_required_realizations=minimum_required_realizations,
         )
+        self.support_restart = False
         self._observations = config.observations
         self._parameter_configuration = config.ensemble_config.parameter_configuration
         self._response_configuration = config.ensemble_config.response_configuration
