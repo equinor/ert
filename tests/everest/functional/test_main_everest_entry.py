@@ -125,7 +125,7 @@ def test_everest_main_lint_entry(cached_example):
         f"""Loading config file <config_minimal.yml> failed with:
 Found 1 validation error:
 
-controls -> 0 -> initial_guess
+line: 2, column: 18. controls -> 0 -> initial_guess
     * Input should be a valid number, unable to parse string as a number {type_}
 """
     )
