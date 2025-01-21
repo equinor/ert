@@ -4,6 +4,7 @@ import pytest
 
 from ert.config import ForwardModelStep, QueueConfig, QueueSystem
 from ert.ensemble_evaluator._ensemble import LegacyEnsemble, Realization
+from ert.ensemble_evaluator.state import FORWARD_MODEL_STATE_INIT
 
 
 @pytest.mark.parametrize("active_real", [True, False])
@@ -29,3 +30,8 @@ def test_build_ensemble(active_real):
 
     real = ensemble.reals[0]
     assert real.active == active_real
+    if active_real:
+        assert (
+            ensemble.snapshot.get_fm_step("2", "0").get("status")
+            == FORWARD_MODEL_STATE_INIT
+        )

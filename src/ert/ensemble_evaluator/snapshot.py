@@ -320,7 +320,7 @@ class EnsembleSnapshot:
                     fm_idx = (event.real, fm_step_id)
                     self._fm_step_snapshots[fm_idx].update(
                         FMStepSnapshot(
-                            status=state.FORWARD_MODEL_STATE_START,
+                            status=state.FORWARD_MODEL_STATE_INIT,
                             start_time=None,
                             end_time=None,
                             current_memory_usage=None,

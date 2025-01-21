@@ -44,8 +44,8 @@ from ert.ensemble_evaluator.state import (
     ENSEMBLE_STATE_UNKNOWN,
     FORWARD_MODEL_STATE_FAILURE,
     FORWARD_MODEL_STATE_FINISHED,
+    FORWARD_MODEL_STATE_INIT,
     FORWARD_MODEL_STATE_RUNNING,
-    FORWARD_MODEL_STATE_START,
 )
 from ert.scheduler import JobState
 
@@ -668,7 +668,7 @@ async def test_snapshot_on_resubmit_is_cleared(evaluator_to_use):
             await evaluator._events.put(event_from_dict(event_dict))
             event = await anext(events)
             snapshot = EnsembleSnapshot.from_nested_dict(event.snapshot)
-            assert snapshot.get_fm_step("0", "0")["status"] == FORWARD_MODEL_STATE_START
-            assert snapshot.get_fm_step("0", "1")["status"] == FORWARD_MODEL_STATE_START
+            assert snapshot.get_fm_step("0", "0")["status"] == FORWARD_MODEL_STATE_INIT
+            assert snapshot.get_fm_step("0", "1")["status"] == FORWARD_MODEL_STATE_INIT
 
         await monitor.signal_done()
