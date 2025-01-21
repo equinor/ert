@@ -63,9 +63,9 @@ class LocalDriver(Driver):
                 raise result
         logger.info("All realization tasks finished")
 
-    async def _run(self, iens: int, executable: str, /, *args: str) -> None:
+    async def _run(self, iens: int, executable: str, /, *args: str | Path) -> None:
         logger.debug(
-            f"Submitting realization {iens} as command '{executable} {' '.join(args)}'"
+            f"Submitting realization {iens} as command '{executable} {' '.join(str(arg) for arg in args)}'"
         )
         try:
             proc = await self._init(
@@ -100,7 +100,7 @@ class LocalDriver(Driver):
             self._sent_finished_events.add(iens)
 
     @staticmethod
-    async def _init(iens: int, executable: str, /, *args: str) -> Process:
+    async def _init(iens: int, executable: str, /, *args: str | Path) -> Process:
         """This method exists to allow for mocking it in tests"""
         return await asyncio.create_subprocess_exec(
             executable,
