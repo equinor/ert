@@ -73,7 +73,7 @@ class EnsembleEvaluator:
             list[tuple[EVENT_HANDLER, Event]]
         ] = asyncio.Queue()
         self._max_batch_size: int = 500
-        self._batching_interval: float = 2.0
+        self._batching_interval: float = 0.5
         self._complete_batch: asyncio.Event = asyncio.Event()
         self._server_started: asyncio.Future[None] = asyncio.Future()
         self._clients_connected: set[bytes] = set()
