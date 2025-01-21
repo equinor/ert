@@ -30,7 +30,7 @@ from .state import (
     ENSEMBLE_STATE_STARTED,
     ENSEMBLE_STATE_STOPPED,
     ENSEMBLE_STATE_UNKNOWN,
-    FORWARD_MODEL_STATE_START,
+    FORWARD_MODEL_STATE_INIT,
     REALIZATION_STATE_WAITING,
 )
 
@@ -126,7 +126,7 @@ class LegacyEnsemble:
             )
             for index, fm_step in enumerate(real.fm_steps):
                 realization["fm_steps"][str(index)] = FMStepSnapshot(
-                    status=FORWARD_MODEL_STATE_START,
+                    status=FORWARD_MODEL_STATE_INIT,
                     index=str(index),
                     name=fm_step.name,
                 )

@@ -56,7 +56,7 @@ def test_snapshot_model_data_intact_on_full_update(full_snapshot, fail_snapshot)
     model._add_snapshot(SnapshotModel.prerender(full_snapshot), "0")
 
     first_real = model.index(0, 0, model.index(0, 0))
-    assert first_real.internalPointer().children["0"].data["status"] == "Pending"
+    assert first_real.internalPointer().children["0"].data["status"] == "Running"
     # Update with a different snapshot, -- data should change accordingly
     model._add_snapshot(SnapshotModel.prerender(fail_snapshot), "0")
     first_real = model.index(0, 0, model.index(0, 0))
