@@ -49,7 +49,6 @@ class IteratedEnsembleSmoother(BaseRunModel):
         update_settings: UpdateSettings,
         status_queue: SimpleQueue[StatusEvents],
     ):
-        self.support_restart = False
         self.analysis_config = analysis_config
         self.update_settings = update_settings
 
@@ -72,6 +71,7 @@ class IteratedEnsembleSmoother(BaseRunModel):
             random_seed=random_seed,
             minimum_required_realizations=minimum_required_realizations,
         )
+        self.support_restart = False
 
         # Initialize sies_smoother to None
         # It is initialized later, but kept track of here
