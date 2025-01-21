@@ -998,7 +998,11 @@ def test_load_file_with_errors(copy_math_func_test_data_to_tmp, capsys):
         content = file.read()
 
     with open("config_minimal_error.yml", "w", encoding="utf-8") as file:
-        file.write(content.replace("generic_control", "yolo_control"))
+        content = content.replace("generic_control", "yolo_control")
+        content = content.replace("max: 1.0", "max: not_a number")
+        pos = content.find("name: distance")
+        content = content[: pos + 14] + "\n    invalid: invalid" + content[pos + 14 :]
+        file.write(content)
 
     with pytest.raises(SystemExit):
         parser = ArgumentParser(prog="test")
@@ -1006,6 +1010,18 @@ def test_load_file_with_errors(copy_math_func_test_data_to_tmp, capsys):
 
     captured = capsys.readouterr()
 
-    assert "Found 1 validation error" in captured.err
+    assert "Found 3 validation error" in captured.err
     assert "line: 3, column: 11" in captured.err
-    assert "Input should be 'well_control' or 'generic_control'" in captured.err
+    assert (
+        "Input should be 'well_control' or 'generic_control' (type=literal_error)"
+        in captured.err
+    )
+
+    assert "line: 5, column: 10" in captured.err
+    assert (
+        "Input should be a valid number, unable to parse string as a number (type=float_parsing)"
+        in captured.err
+    )
+
+    assert "line: 16, column: 5" in captured.err
+    assert "Extra inputs are not permitted (type=extra_forbidden)" in captured.err
