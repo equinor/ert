@@ -305,6 +305,7 @@ def test_ert_config_throws_on_missing_forward_model_step(
             )
 
 
+@pytest.mark.integration_test
 def test_that_substitutions_can_be_done_in_job_names():
     """
     Regression test for a usage case involving setting ECL100 or ECL300
@@ -441,6 +442,7 @@ def test_that_installing_two_forward_model_steps_with_the_same_name_warn():
         _ = ErtConfig.from_file(test_config_file_name)
 
 
+@pytest.mark.integration_test
 @pytest.mark.usefixtures("use_tmpdir")
 def test_that_forward_model_substitution_does_not_warn_about_reaching_max_iterations(
     caplog,
@@ -490,6 +492,7 @@ def test_that_installing_two_forward_model_steps_with_the_same_name_warn_with_di
         _ = ErtConfig.from_file(test_config_file_name)
 
 
+@pytest.mark.integration_test
 def test_that_spaces_in_forward_model_args_are_dropped():
     # Intentionally inserted several spaces before comma
     ert_config = ErtConfig.with_plugins().from_file_contents(
@@ -543,6 +546,7 @@ def test_that_eclipse_fm_step_require_explicit_version(eclipse_v):
         )
 
 
+@pytest.mark.integration_test
 @pytest.mark.skipif(shutil.which("eclrun") is None, reason="eclrun is not in $PATH")
 @pytest.mark.parametrize("eclipse_v", ["ECLIPSE100", "ECLIPSE300"])
 @pytest.mark.usefixtures("use_tmpdir")
