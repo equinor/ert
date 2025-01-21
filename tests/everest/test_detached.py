@@ -40,7 +40,6 @@ from everest.strings import (
 from everest.util import makedirs_if_needed
 
 
-# @pytest.mark.flaky(reruns=5)
 @pytest.mark.integration_test
 @pytest.mark.skip_mac_ci
 @pytest.mark.xdist_group(name="starts_everest")
@@ -140,12 +139,13 @@ def test_server_status(copy_math_func_test_data_to_tmp):
     assert status["message"] == f"{err_msg_1}\n{err_msg_2}"
 
 
-@pytest.mark.integration_test
 @patch("everest.detached.server_is_running", return_value=False)
-def test_wait_for_server(server_is_running_mock, caplog, monkeypatch):
+def test_wait_for_server(server_is_running_mock, caplog):
     config = EverestConfig.with_defaults()
 
-    with pytest.raises(RuntimeError, match=r"Failed to start .* timeout"):
+    with pytest.raises(
+        RuntimeError, match=r"Failed to get reply from server .* timeout"
+    ):
         wait_for_server(config.output_dir, timeout=1)
 
     assert not caplog.messages

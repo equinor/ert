@@ -5,8 +5,9 @@ from pathlib import Path
 from unittest.mock import patch
 
 import pytest
+import requests
 from fastapi.encoders import jsonable_encoder
-from fastapi.responses import JSONResponse, PlainTextResponse, Response
+from fastapi.responses import JSONResponse, Response
 from seba_sqlite.snapshot import SebaSnapshot
 
 from ert.run_models.everest_run_model import EverestExitCode
@@ -26,6 +27,27 @@ from everest.strings import (
     SIM_PROGRESS_ENDPOINT,
     STOP_ENDPOINT,
 )
+
+
+async def wait_for_server_to_complete(config):
+    # Wait for the server to complete the optimization.
+    # There should be a @pytest.mark.timeout(x) for tests that call this function.
+    async def server_running():
+        while True:
+            event = await driver.event_queue.get()
+            if isinstance(event, FinishedEvent) and event.iens == 0:
+                return
+
+    driver = await start_server(config, debug=True)
+    try:
+        wait_for_server(config.output_dir, 120)
+        start_experiment(
+            server_context=ServerConfig.get_server_context(config.output_dir),
+            config=config,
+        )
+    except (SystemExit, RuntimeError) as e:
+        raise e
+    await server_running()
 
 
 def configure_everserver_logger(*args, **kwargs):
@@ -125,7 +147,7 @@ def test_status_running_complete(
     config_file = "config_minimal.yml"
     config = EverestConfig.load_file(config_file)
 
-    def mocked_server(url, verify, auth, proxies):
+    def mocked_server(url, verify, auth, timeout, proxies):
         if "/experiment_status" in url:
             return Response(f"{EverestExitCode.COMPLETED}", 200)
         if "/shared_data" in url:
@@ -138,7 +160,9 @@ def test_status_running_complete(
                 )
             )
 
-        return PlainTextResponse("Everest is running")
+        resp = requests.Response()
+        resp.status_code = 200
+        return resp
 
     mocked_get.side_effect = mocked_server
 
@@ -159,7 +183,7 @@ def test_status_failed_job(mocked_get, mocked_logger, copy_math_func_test_data_t
     config_file = "config_minimal.yml"
     config = EverestConfig.load_file(config_file)
 
-    def mocked_server(url, verify, auth, proxies):
+    def mocked_server(url, verify, auth, timeout, proxies):
         if "/experiment_status" in url:
             return Response(f"{EverestExitCode.TOO_FEW_REALIZATIONS}", 200)
 
@@ -200,7 +224,9 @@ def test_status_failed_job(mocked_get, mocked_logger, copy_math_func_test_data_t
                     }
                 )
             )
-        return PlainTextResponse("Everest is running")
+        resp = requests.Response()
+        resp.status_code = 200
+        return resp
 
     mocked_get.side_effect = mocked_server
 
@@ -225,7 +251,7 @@ def test_status_exception(mocked_get, mocked_logger, copy_math_func_test_data_to
     config_file = "config_minimal.yml"
     config = EverestConfig.load_file(config_file)
 
-    def mocked_server(url, verify, auth, proxies):
+    def mocked_server(url, verify, auth, timeout, proxies):
         if "/experiment_status" in url:
             return Response(f"{EverestExitCode.EXCEPTION}", 200)
 
@@ -241,7 +267,10 @@ def test_status_exception(mocked_get, mocked_logger, copy_math_func_test_data_to
                     }
                 )
             )
-        return PlainTextResponse("Everest is running")
+
+        resp = requests.Response()
+        resp.status_code = 200
+        return resp
 
     mocked_get.side_effect = mocked_server
 
@@ -267,22 +296,7 @@ async def test_status_max_batch_num(copy_math_func_test_data_to_tmp):
     )
     config.dump("config_minimal.yml")
 
-    async def server_running():
-        while True:
-            event = await driver.event_queue.get()
-            if isinstance(event, FinishedEvent) and event.iens == 0:
-                return
-
-    driver = await start_server(config, debug=True)
-    try:
-        wait_for_server(config.output_dir, 120)
-        start_experiment(
-            server_context=ServerConfig.get_server_context(config.output_dir),
-            config=config,
-        )
-    except (SystemExit, RuntimeError) as e:
-        raise e
-    await server_running()
+    await wait_for_server_to_complete(config)
 
     status = everserver_status(
         ServerConfig.get_everserver_status_path(config.output_dir)
@@ -317,23 +331,7 @@ async def test_status_contains_max_runtime_failure(
 
     config = EverestConfig.load_file(config_file)
 
-    async def server_running():
-        while True:
-            event = await driver.event_queue.get()
-            if isinstance(event, FinishedEvent) and event.iens == 0:
-                return
-
-    driver = await start_server(config, debug=True)
-    try:
-        wait_for_server(config.output_dir, 120)
-
-        start_experiment(
-            server_context=ServerConfig.get_server_context(config.output_dir),
-            config=config,
-        )
-    except (SystemExit, RuntimeError) as e:
-        raise e
-    await server_running()
+    await wait_for_server_to_complete(config)
 
     status = everserver_status(
         ServerConfig.get_everserver_status_path(config.output_dir)

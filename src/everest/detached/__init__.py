@@ -117,9 +117,7 @@ def extract_errors_from_file(path: str):
     return re.findall(r"(Error \w+.*)", content)
 
 
-def wait_for_server_simple(
-    url: str, cert: str, auth: tuple[str, str], timeout: int
-) -> None:
+def wait_for_server(output_dir: str, timeout: int) -> None:
     """
     Checks everest server has started _HTTP_REQUEST_RETRY times. Waits
     progressively longer between each check.
@@ -128,45 +126,11 @@ def wait_for_server_simple(
     """
     sleep_time_increment = float(timeout) / (2**_HTTP_REQUEST_RETRY - 1)
     for retry_count in range(_HTTP_REQUEST_RETRY):
-        try:
-            requests.get(url + "/", verify=cert, auth=auth, proxies=PROXY)  # type: ignore
+        if server_is_running(*ServerConfig.get_server_context(output_dir)):
             return
-        except Exception:
-            sleep_time = sleep_time_increment * (2**retry_count)
-            time.sleep(sleep_time)
+        else:
+            time.sleep(sleep_time_increment * (2**retry_count))
     raise RuntimeError("Failed to get reply from server within configured timeout.")
-
-
-def wait_for_server(output_dir: str, timeout: int) -> None:
-    """
-    Checks everest server has started _HTTP_REQUEST_RETRY times. Waits
-    progressively longer between each check.
-
-    Raise an exception when the timeout is reached.
-    """
-    everserver_status_path = ServerConfig.get_everserver_status_path(output_dir)
-    if not server_is_running(*ServerConfig.get_server_context(output_dir)):
-        sleep_time_increment = float(timeout) / (2**_HTTP_REQUEST_RETRY - 1)
-        for retry_count in range(_HTTP_REQUEST_RETRY):
-            # Failure may occur before contact with the server is established:
-            status = everserver_status(everserver_status_path)
-            if status["status"] == ServerStatus.completed:
-                # For very small cases the optimization will finish and bring down the
-                # server before we can verify that it is running.
-                return
-
-            if status["status"] == ServerStatus.failed:
-                raise SystemExit(
-                    "Failed to start Everest with error:\n{}".format(status["message"])
-                )
-
-            sleep_time = sleep_time_increment * (2**retry_count)
-            time.sleep(sleep_time)
-            if server_is_running(*ServerConfig.get_server_context(output_dir)):
-                return
-
-    # If number of retries reached and server is not running - throw exception
-    raise RuntimeError("Failed to start server within configured timeout.")
 
 
 def get_opt_status(output_folder):
@@ -222,6 +186,7 @@ def wait_for_server_to_stop(server_context: tuple[str, str, tuple[str, str]], ti
 
 def server_is_running(url: str, cert: str, auth: tuple[str, str]):
     try:
+        logging.info(f"Checking server status at {url} ")
         response = requests.get(
             url,
             verify=cert,

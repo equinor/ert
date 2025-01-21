@@ -33,6 +33,7 @@ from fastapi.security import (
     HTTPBasicCredentials,
 )
 
+from ert.config.parsing.queue_system import QueueSystem
 from ert.ensemble_evaluator import EvaluatorServerConfig
 from ert.run_models.everest_run_model import EverestExitCode, EverestRunModel
 from everest import export_to_csv, export_with_progress
@@ -42,7 +43,7 @@ from everest.detached import (
     ServerStatus,
     get_opt_status,
     update_everserver_status,
-    wait_for_server_simple,
+    wait_for_server,
 )
 from everest.export import check_for_errors
 from everest.plugins.everest_plugin_manager import EverestPluginManager
@@ -76,8 +77,7 @@ class ExperimentRunner(threading.Thread):
             optimization_callback=partial(_opt_monitor, shared_data=self._shared_data),
         )
 
-        if self._everest_config.simulator.queue_system.name == "local":
-            # if run_model._queue_config.queue_system == QueueSystem.LOCAL:
+        if run_model._queue_config.queue_system == QueueSystem.LOCAL:
             evaluator_server_config = EvaluatorServerConfig()
         else:
             evaluator_server_config = EvaluatorServerConfig(
@@ -381,9 +381,6 @@ def main():
         everserver_instance.daemon = True
         everserver_instance.start()
 
-        server_context = (ServerConfig.get_server_context(config.output_dir),)
-        url, cert, auth = server_context[0]
-
     except:
         update_everserver_status(
             status_path,
@@ -393,25 +390,29 @@ def main():
         return
 
     try:
-        wait_for_server_simple(url, cert, auth, 60)
+        wait_for_server(config.output_dir, 60)
 
         update_everserver_status(status_path, ServerStatus.running)
 
-        is_done = False
+        server_context = (ServerConfig.get_server_context(config.output_dir),)
+        url, cert, auth = server_context[0]
+
+        done = False
         exit_code = None
-        # loop unil the optimization is done
-        while not is_done:
+        # loop until the optimization is done
+        while not done:
             response = requests.get(
                 "/".join([url, EXPERIMENT_STATUS_ENDPOINT]),
                 verify=cert,
                 auth=auth,
+                timeout=1,
                 proxies=PROXY,  # type: ignore
             )
             if response.status_code == requests.codes.OK:
                 exit_code = int(
                     response.text if hasattr(response, "text") else response.body
                 )
-                is_done = True
+                done = True
             else:
                 time.sleep(1)
 
@@ -419,6 +420,7 @@ def main():
             "/".join([url, SHARED_DATA_ENDPOINT]),
             verify=cert,
             auth=auth,
+            timeout=1,
             proxies=PROXY,  # type: ignore
         )
         if json_body := json.loads(

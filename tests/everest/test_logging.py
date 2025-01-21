@@ -17,7 +17,6 @@ def _string_exists_in_file(file_path, string):
     return string in Path(file_path).read_text(encoding="utf-8")
 
 
-# @pytest.mark.flaky(reruns=5)
 @pytest.mark.timeout(120)  # Simulation might not finish
 @pytest.mark.integration_test
 @pytest.mark.xdist_group(name="starts_everest")
