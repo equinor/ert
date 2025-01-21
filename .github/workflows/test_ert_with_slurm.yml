@@ -13,7 +13,7 @@ jobs:
   test-ert-on-slurm:
     name: Run ert tests
     timeout-minutes: 20
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
 
     steps:
     - uses: actions/checkout@v4
@@ -36,11 +36,16 @@ jobs:
 
         sudo apt install slurmd slurmctld -y
 
+        sudo mkdir /var/spool/slurm
+        sudo chown slurm /var/spool/slurm
+
         cat <<EOF > slurm.conf
         ClusterName=localcluster
+        SlurmUser=slurm
         SlurmctldHost=localhost
-        SelectType=select/cons_res  # Select nodes based on consumable resources
+        SelectType=select/cons_tres  # Select nodes based on consumable resources
         SelectTypeParameters=CR_Core  # Cores are the consumable resource
+        StateSaveLocation=/var/spool/slurm
         ProctrackType=proctrack/linuxproc  # Use /proc to track processes
         PartitionName=LocalQ Nodes=ALL Default=YES MaxTime=INFINITE State=UP
         PartitionName=AlternativeQ Nodes=ALL Default=YES MaxTime=INFINITE State=UP
@@ -54,6 +59,9 @@ jobs:
         sudo mv slurm.conf /etc/slurm/
         sudo systemctl start slurmd  # The compute node slurm daemon
         sudo systemctl start slurmctld  # The slurm controller daemon
+
+        systemctl status slurmd
+        systemctl status slurmctld
 
         # Show partition and node information configured:
         sinfo
