@@ -31,7 +31,7 @@ from ert.config import ErtConfig, ExtParamConfig
 from ert.ensemble_evaluator import EnsembleSnapshot, EvaluatorServerConfig
 from ert.runpaths import Runpaths
 from ert.storage import open_storage
-from everest.config import EverestConfig
+from everest.config import ControlConfig, ControlVariableGuessListConfig, EverestConfig
 from everest.optimizer.everest2ropt import everest2ropt
 from everest.simulator.everest_to_ert import everest_to_ert_config
 from everest.strings import EVEREST
@@ -433,39 +433,36 @@ class EverestRunModel(BaseRunModel):
         evaluator_context: EvaluatorContext,
         cached_results: dict[int, Any],
     ) -> dict[int, dict[str, Any]]:
-        def add_control(
-            controls: dict[str, Any],
-            control_name: tuple[Any, ...],
-            control_value: float,
-        ) -> None:
-            group_name = control_name[0]
-            variable_name = control_name[1]
-            group = controls.get(group_name, {})
-            if len(control_name) > 2:
-                index_name = str(control_name[2])
-                if variable_name in group:
-                    group[variable_name][index_name] = control_value
-                else:
-                    group[variable_name] = {index_name: control_value}
-            else:
-                group[variable_name] = control_value
-            controls[group_name] = group
+        def _add_controls(
+            controls_config: list[ControlConfig], values: NDArray[np.float64]
+        ) -> dict[str, Any]:
+            batch_data_item: dict[str, Any] = {}
+            value_list = values.tolist()
+            for control in controls_config:
+                control_dict: dict[str, Any] = batch_data_item.get(control.name, {})
+                for variable in control.variables:
+                    variable_value = control_dict.get(variable.name, {})
+                    if isinstance(variable, ControlVariableGuessListConfig):
+                        for index in range(1, len(variable.initial_guess) + 1):
+                            variable_value[str(index)] = value_list.pop(0)
+                    elif variable.index is not None:
+                        variable_value[str(variable.index)] = value_list.pop(0)
+                    else:
+                        variable_value = value_list.pop(0)
+                    control_dict[variable.name] = variable_value
+                batch_data_item[control.name] = control_dict
+            return batch_data_item
 
-        batch_data = {}
-        for control_idx in range(control_values.shape[0]):
-            if control_idx not in cached_results and (
-                evaluator_context.active is None
-                or evaluator_context.active[evaluator_context.realizations[control_idx]]
-            ):
-                controls: dict[str, Any] = {}
-                for control_name, control_value in zip(
-                    self._everest_config.control_name_tuples,
-                    control_values[control_idx, :],
-                    strict=False,
-                ):
-                    add_control(controls, control_name, control_value)
-                batch_data[control_idx] = controls
-        return batch_data
+        active = evaluator_context.active
+        realizations = evaluator_context.realizations
+        return {
+            idx: _add_controls(self._everest_config.controls, control_values[idx, :])
+            for idx in range(control_values.shape[0])
+            if (
+                idx not in cached_results
+                and (active is None or active[realizations[idx]])
+            )
+        }
 
     def _setup_sim(
         self,
