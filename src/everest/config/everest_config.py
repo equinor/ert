@@ -229,7 +229,7 @@ and environment variables are exposed in the form 'os.NAME', for example:
         description="Settings to control the exports of a optimization run by everest.",
     )
     config_path: Path = Field()
-    model_config = ConfigDict(extra="forbid")
+    model_config = ConfigDict(extra="forbid", frozen=True)
 
     @model_validator(mode="after")
     def validate_queue_system(self) -> Self:  # pylint: disable=E0213
