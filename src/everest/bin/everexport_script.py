@@ -24,15 +24,14 @@ def everexport_entry(args=None):
 
     # Turn into .export once
     # explicit None is disallowed
-    if config.export is None:
-        config.export = ExportConfig()
+    export_config = config.export or ExportConfig()
 
     if options.batches is not None:
         batch_list = [int(item) for item in options.batches]
-        config.export.batches = batch_list
+        export_config.batches = batch_list
 
     err_msgs, export_ecl = check_for_errors(
-        config=config.export,
+        config=export_config,
         optimization_output_path=config.optimization_output_dir,
         storage_path=config.storage_dir,
         data_file_path=config.model.data_file,
@@ -41,7 +40,7 @@ def everexport_entry(args=None):
         logger.warning(msg)
 
     export_to_csv(
-        data_frame=export_with_progress(config, export_ecl),
+        data_frame=export_with_progress(config, export_config, export_ecl),
         export_path=config.export_path,
     )
 

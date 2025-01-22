@@ -77,10 +77,12 @@ def test_export_only_non_gradient_with_increased_merit(cached_example, snapshot)
 
 def test_export_only_non_gradient(cached_example, snapshot):
     config_path, config_file, _ = cached_example("math_func/config_multiobj.yml")
-    config = EverestConfig.load_file(Path(config_path) / config_file)
+    config_path = Path(config_path) / config_file
 
-    # Add export section to config
-    config.export = ExportConfig(discard_rejected=False)
+    with open(config_path, "a", encoding="utf-8") as f:
+        f.write("export:\n  discard_rejected: False")
+
+    config = EverestConfig.load_file(config_path)
 
     df = export_data(
         export_config=config.export,
@@ -95,10 +97,12 @@ def test_export_only_non_gradient(cached_example, snapshot):
 
 def test_export_only_increased_merit(cached_example, snapshot):
     config_path, config_file, _ = cached_example("math_func/config_multiobj.yml")
-    config = EverestConfig.load_file(Path(config_path) / config_file)
+    config_path = Path(config_path) / config_file
 
-    # Add export section to config
-    config.export = ExportConfig(discard_gradient=False)
+    with open(config_path, "a", encoding="utf-8") as f:
+        f.write("export:\n  discard_gradient: False")
+
+    config = EverestConfig.load_file(config_path)
 
     df = export_data(
         export_config=config.export,
@@ -114,10 +118,12 @@ def test_export_only_increased_merit(cached_example, snapshot):
 
 def test_export_all_batches(cached_example, snapshot):
     config_path, config_file, _ = cached_example("math_func/config_multiobj.yml")
-    config = EverestConfig.load_file(Path(config_path) / config_file)
+    config_path = Path(config_path) / config_file
 
-    # Add export section to config
-    config.export = ExportConfig(discard_gradient=False, discard_rejected=False)
+    with open(config_path, "a", encoding="utf-8") as f:
+        f.write("export:\n  discard_rejected: False\n  discard_gradient: False")
+
+    config = EverestConfig.load_file(config_path)
 
     df = export_data(
         export_config=config.export,
@@ -132,10 +138,12 @@ def test_export_all_batches(cached_example, snapshot):
 
 def test_export_only_give_batches(cached_example, snapshot):
     config_path, config_file, _ = cached_example("math_func/config_multiobj.yml")
-    config = EverestConfig.load_file(Path(config_path) / config_file)
+    config_path = Path(config_path) / config_file
 
-    # Add export section to config
-    config.export = ExportConfig(discard_gradient=True, batches=[2])
+    with open(config_path, "a", encoding="utf-8") as f:
+        f.write("export:\n  discard_gradient: True\n  batches: [2]")
+
+    config = EverestConfig.load_file(config_path)
 
     df = export_data(
         export_config=config.export,
@@ -150,12 +158,14 @@ def test_export_only_give_batches(cached_example, snapshot):
 
 def test_export_batches_progress(cached_example, snapshot):
     config_path, config_file, _ = cached_example("math_func/config_multiobj.yml")
-    config = EverestConfig.load_file(Path(config_path) / config_file)
+    config_path = Path(config_path) / config_file
 
-    # Add export section to config
-    config.export = ExportConfig(discard_gradient=True, batches=[2])
+    with open(config_path, "a", encoding="utf-8") as f:
+        f.write("export:\n  discard_gradient: True\n  batches: [2]")
 
-    df = export_with_progress(config)
+    config = EverestConfig.load_file(config_path)
+
+    df = export_with_progress(config, export_config=config.export)
     # Check only simulations from given batches are present in export
     # drop non-deterministic columns
     df = df.drop(["start_time", "end_time", "simulation"], axis=1)
@@ -166,12 +176,15 @@ def test_export_batches_progress(cached_example, snapshot):
 
 def test_export_nothing_for_empty_batch_list(cached_example):
     config_path, config_file, _ = cached_example("math_func/config_multiobj.yml")
-    config = EverestConfig.load_file(Path(config_path) / config_file)
+    config_path = Path(config_path) / config_file
 
-    # Add discard gradient flag to config file
-    config.export = ExportConfig(
-        discard_gradient=True, discard_rejected=True, batches=[]
-    )
+    with open(config_path, "a", encoding="utf-8") as f:
+        f.write(
+            "export:\n  discard_rejected: True\n  discard_gradient: True\n  batches: []"
+        )
+
+    config = EverestConfig.load_file(config_path)
+
     df = export_data(
         export_config=config.export,
         output_dir=config.output_dir,
@@ -184,12 +197,15 @@ def test_export_nothing_for_empty_batch_list(cached_example):
 
 def test_export_nothing(cached_example):
     config_path, config_file, _ = cached_example("math_func/config_multiobj.yml")
-    config = EverestConfig.load_file(Path(config_path) / config_file)
+    config_path = Path(config_path) / config_file
 
-    # Add discard gradient flag to config file
-    config.export = ExportConfig(
-        skip_export=True, discard_gradient=True, discard_rejected=True, batches=[3]
-    )
+    with open(config_path, "a", encoding="utf-8") as f:
+        f.write(
+            "export:\n  skip_export: True\n  discard_rejected: True\n  discard_gradient: True\n  batches: []"
+        )
+
+    config = EverestConfig.load_file(config_path)
+
     df = export_data(
         export_config=config.export,
         output_dir=config.output_dir,
@@ -202,7 +218,8 @@ def test_export_nothing(cached_example):
 
 def test_get_export_path(cached_example):
     config_path, config_file, _ = cached_example("math_func/config_multiobj.yml")
-    config = EverestConfig.load_file(Path(config_path) / config_file)
+    config_path = Path(config_path) / config_file
+    config = EverestConfig.load_file(config_path)
 
     # Test default export path when no csv_output_filepath is defined
     expected_export_path = os.path.join(
@@ -215,8 +232,11 @@ def test_get_export_path(cached_example):
     new_export_filepath = os.path.join(
         new_export_folderpath, CONFIG_FILE.replace(".yml", ".csv")
     )
+    shutil.copy(CONFIG_FILE, "test.yml")
+    with open("test.yml", "a", encoding="utf-8") as f:
+        f.write(f"export:\n  csv_output_filepath: {new_export_filepath}")
 
-    config.export = ExportConfig(csv_output_filepath=new_export_filepath)
+    config = EverestConfig.load_file("test.yml")
 
     expected_export_path = new_export_filepath
     assert expected_export_path == config.export_path
@@ -261,10 +281,10 @@ def test_validate_export(cached_example):
             assert expected_export_ecl == export_ecl
 
     # Test error when user defines an empty list for the eclipse keywords
-    config.export = ExportConfig()
-    config.export.keywords = []
+    export_config = ExportConfig()
+    export_config.keywords = []
     errors, export_ecl = check_for_errors(
-        config=config.export,
+        config=export_config,
         optimization_output_path=config.optimization_output_dir,
         storage_path=config.storage_dir,
         data_file_path=config.model.data_file,
@@ -276,9 +296,9 @@ def test_validate_export(cached_example):
 
     # Test error when user defines an empty list for the eclipse keywords
     # and empty list of for batches to export
-    config.export.batches = []
+    export_config.batches = []
     errors, export_ecl = check_for_errors(
-        config=config.export,
+        config=export_config,
         optimization_output_path=config.optimization_output_dir,
         storage_path=config.storage_dir,
         data_file_path=config.model.data_file,
@@ -290,10 +310,10 @@ def test_validate_export(cached_example):
 
     # Test export validator outputs no errors when the config file contains
     # only keywords that represent a subset of already internalized keys
-    config.export.keywords = ["FOPT"]
-    config.export.batches = None
+    export_config.keywords = ["FOPT"]
+    export_config.batches = None
     errors, export_ecl = check_for_errors(
-        config=config.export,
+        config=export_config,
         optimization_output_path=config.optimization_output_dir,
         storage_path=config.storage_dir,
         data_file_path=config.model.data_file,
@@ -301,9 +321,9 @@ def test_validate_export(cached_example):
     check_error(expected_error=("", True), reported_errors=(errors, export_ecl))
 
     non_int_key = "STANGE_KEY"
-    config.export.keywords = [non_int_key, "FOPT"]
+    export_config.keywords = [non_int_key, "FOPT"]
     errors, export_ecl = check_for_errors(
-        config=config.export,
+        config=export_config,
         optimization_output_path=config.optimization_output_dir,
         storage_path=config.storage_dir,
         data_file_path=config.model.data_file,
@@ -320,9 +340,9 @@ def test_validate_export(cached_example):
     # Test that validating the export spots non-valid batches and removes
     # them from the list of batches selected for export.
     non_valid_batch = 42
-    config.export = ExportConfig(batches=[0, non_valid_batch])
+    export_config = ExportConfig(batches=[0, non_valid_batch])
     errors, export_ecl = check_for_errors(
-        config=config.export,
+        config=export_config,
         optimization_output_path=config.optimization_output_dir,
         storage_path=config.storage_dir,
         data_file_path=config.model.data_file,
@@ -335,7 +355,7 @@ def test_validate_export(cached_example):
         ),
         (errors, export_ecl),
     )
-    assert config.export.batches == [0]
+    assert export_config.batches == [0]
 
 
 def test_export_gradients(cached_example, snapshot):
