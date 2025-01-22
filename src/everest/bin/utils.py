@@ -21,7 +21,7 @@ from everest.detached import (
 )
 from everest.export import export_data
 from everest.simulator import JOB_FAILURE, JOB_RUNNING, JOB_SUCCESS
-from everest.strings import EVEREST
+from everest.strings import EVEREST, SIM_PROGRESS_ID
 
 try:
     from progressbar import AdaptiveETA, Bar, Percentage, ProgressBar, Timer
@@ -158,6 +158,8 @@ class _DetachedMonitor:
                             self._clear()
                         print(msg + "\n")
                         self._clear_lines = 0
+            if SIM_PROGRESS_ID in status:
+                print(status[SIM_PROGRESS_ID])
         except:
             logging.getLogger(EVEREST).debug(traceback.format_exc())
 

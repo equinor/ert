@@ -10,13 +10,16 @@ import traceback
 from collections.abc import Mapping
 from enum import Enum
 from pathlib import Path
-from typing import Literal
+from typing import Annotated, Literal
 
 import requests
+from pydantic import BaseModel, ConfigDict, Field, ValidationError
 from seba_sqlite.exceptions import ObjectNotFoundError
 from seba_sqlite.snapshot import SebaSnapshot
 from websockets.sync.client import connect
 
+from ert.ensemble_evaluator import EnsembleSnapshot
+from ert.run_models import StatusEvents
 from ert.scheduler import create_driver
 from ert.scheduler.driver import Driver, FailedSubmit
 from ert.scheduler.event import StartedEvent
@@ -25,6 +28,7 @@ from everest.strings import (
     EVEREST_SERVER_CONFIG,
     OPT_PROGRESS_ENDPOINT,
     OPT_PROGRESS_ID,
+    SIM_PROGRESS_ID,
     STOP_ENDPOINT,
 )
 
@@ -39,6 +43,14 @@ PROXY = {"http": None, "https": None}
 # Information from the client side is relatively uninteresting, so we show it in
 # the default logger (stdout). Info from the server will be logged to the
 # everest.log file instead
+
+
+logger = logging.getLogger(__name__)
+
+
+class EventWrapper(BaseModel):
+    model_config = ConfigDict(arbitrary_types_allowed=True)
+    event: Annotated[StatusEvents, Field(discriminator="event_type")]
 
 
 async def start_server(config: EverestConfig, debug: bool = False) -> Driver:
@@ -218,6 +230,17 @@ def start_monitor(
                 except TimeoutError:
                     message = None
                 print(f"Got message {message}")
+                if message:
+                    event_dict = json.loads(message)
+                    if "snapshot" in event_dict:
+                        event_dict["snapshot"] = EnsembleSnapshot.from_nested_dict(
+                            event_dict["snapshot"]
+                        )
+                    try:
+                        event_wrapper = EventWrapper(event=event_dict)
+                    except ValidationError as e:
+                        logger.error("Error when processing event %s", exc_info=e)
+                    callback({SIM_PROGRESS_ID: event_wrapper.event})
                 # Check the optimization status
                 new_opt_status = _query_server(cert, auth, opt_endpoint)
                 if new_opt_status != opt_status:
