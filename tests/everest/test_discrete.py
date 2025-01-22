@@ -2,11 +2,7 @@ import pytest
 
 from ert.run_models.everest_run_model import EverestRunModel
 from everest.config import (
-    ControlConfig,
     EverestConfig,
-    InputConstraintConfig,
-    InstallJobConfig,
-    OptimizationConfig,
 )
 
 
@@ -16,30 +12,33 @@ def test_discrete_optimizer(
 ):
     # Arrange
     config = EverestConfig.load_file("config_minimal.yml")
-    config.controls = [
-        ControlConfig(
-            name="point",
-            type="generic_control",
-            min=0,
-            max=10,
-            control_type="integer",
-            initial_guess=0,
-            variables=[{"name": "x"}, {"name": "y"}],
-        )
-    ]
-    config.input_constraints = [
-        InputConstraintConfig(weights={"point.x": 1.0, "point.y": 1.0}, upper_bound=10)
-    ]
-    config.optimization = OptimizationConfig(
-        backend="scipy",
-        algorithm="differential_evolution",
-        max_function_evaluations=4,
-        parallel=False,
-        backend_options={"seed": 9},
-    )
-    config.install_jobs = [InstallJobConfig(name="discrete", source="jobs/DISCRETE")]
-    config.forward_model = ["discrete --point-file point.json --out distance"]
-
+    config_dict = {
+        **config.model_dump(exclude_none=True),
+        "optimization": {
+            "backend": "scipy",
+            "algorithm": "differential_evolution",
+            "max_function_evaluations": 4,
+            "parallel": False,
+            "backend_options": {"seed": 9},
+        },
+        "controls": [
+            {
+                "name": "point",
+                "type": "generic_control",
+                "min": 0,
+                "max": 10,
+                "control_type": "integer",
+                "initial_guess": 0,
+                "variables": [{"name": "x"}, {"name": "y"}],
+            }
+        ],
+        "input_constraints": [
+            {"weights": {"point.x": 1.0, "point.y": 1.0}, "upper_bound": 10}
+        ],
+        "install_jobs": [{"name": "discrete", "source": "jobs/DISCRETE"}],
+        "forward_model": ["discrete --point-file point.json --out distance"],
+    }
+    config = EverestConfig.model_validate(config_dict)
     # Act
     run_model = EverestRunModel.create(config)
     evaluator_server_config = evaluator_server_config_generator(run_model)

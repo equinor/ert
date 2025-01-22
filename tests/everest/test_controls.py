@@ -12,7 +12,6 @@ from everest.config.control_variable_config import (
     ControlVariableConfig,
     ControlVariableGuessListConfig,
 )
-from everest.config.input_constraint_config import InputConstraintConfig
 from everest.config.well_config import WellConfig
 from tests.everest.utils import relpath
 
@@ -144,30 +143,29 @@ def test_variable_name_index_validation(copy_test_data_to_tmp):
     # specifying index
 
     config.controls[0].variables[1].name = "w01"
-    input_constraints = [
-        InputConstraintConfig.model_validate(
+    config_dict = {
+        **config.model_dump(exclude_none=True),
+        "input_constraints": [
             {"upper_bound": 1, "lower_bound": 0, "weights": {"group.w00": 0.1}}
-        )
-    ]
+        ],
+    }
 
-    config.input_constraints = input_constraints
     with pytest.raises(
         ValidationError,
         match="does not match any instance of "
         "control_name\\.variable_name-variable_index",
     ):
-        EverestConfig.model_validate(config.model_dump(exclude_none=True))
+        EverestConfig.model_validate(config_dict)
 
     # Index and name unique and valid and input constraints are specifying
     # index
-    input_constraints = [
-        InputConstraintConfig(
-            **{"upper_bound": 1, "lower_bound": 0, "weights": {"group.w00-0": 0.1}}
-        )
-    ]
-
-    config.input_constraints = input_constraints
-    EverestConfig.model_validate(config.model_dump(exclude_none=True))
+    config_dict = {
+        **config.model_dump(exclude_none=True),
+        "input_constraints": [
+            {"upper_bound": 1, "lower_bound": 0, "weights": {"group.w00-0": 0.1}}
+        ],
+    }
+    EverestConfig.model_validate(config_dict)
 
 
 @pytest.mark.integration_test

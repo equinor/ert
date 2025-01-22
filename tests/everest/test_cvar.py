@@ -2,10 +2,7 @@ import pytest
 
 from ert.run_models.everest_run_model import EverestRunModel
 from everest.config import (
-    CVaRConfig,
     EverestConfig,
-    ModelConfig,
-    OptimizationConfig,
 )
 
 
@@ -13,19 +10,21 @@ from everest.config import (
 def test_mathfunc_cvar(
     copy_math_func_test_data_to_tmp, evaluator_server_config_generator
 ):
-    # Arrange
     config = EverestConfig.load_file("config_minimal.yml")
-    config.optimization = OptimizationConfig(
-        backend="scipy",
-        algorithm="slsqp",
-        cvar=CVaRConfig(percentile=0.5),
-        max_batch_num=5,
-    )
-    config.model = ModelConfig(realizations=[0, 1])
-    config.forward_model = [
-        "distance3 --point-file point.json --realization <GEO_ID> --target 0.5 0.5 0.5 --out distance"
-    ]
-
+    config_dict = {
+        **config.model_dump(exclude_none=True),
+        "optimization": {
+            "backend": "scipy",
+            "algorithm": "slsqp",
+            "cvar": {"percentile": 0.5},
+            "max_batch_num": 5,
+        },
+        "model": {"realizations": [0, 1]},
+        "forward_model": [
+            "distance3 --point-file point.json --realization <GEO_ID> --target 0.5 0.5 0.5 --out distance"
+        ],
+    }
+    config = EverestConfig.model_validate(config_dict)
     # Act
     run_model = EverestRunModel.create(config)
     evaluator_server_config = evaluator_server_config_generator(run_model)

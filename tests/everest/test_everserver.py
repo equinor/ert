@@ -9,7 +9,7 @@ import pytest
 from seba_sqlite.snapshot import SebaSnapshot
 
 from ert.run_models.everest_run_model import EverestExitCode
-from everest.config import EverestConfig, OptimizationConfig, ServerConfig
+from everest.config import EverestConfig, ServerConfig
 from everest.detached import ServerStatus, everserver_status
 from everest.detached.jobs import everserver
 from everest.simulator import JOB_FAILURE, JOB_SUCCESS
@@ -206,9 +206,11 @@ def test_everserver_status_max_batch_num(
     _1, mock_server, copy_math_func_test_data_to_tmp
 ):
     config = EverestConfig.load_file("config_minimal.yml")
-    config.optimization = OptimizationConfig(
-        algorithm="optpp_q_newton", max_batch_num=1
-    )
+    config_dict = {
+        **config.model_dump(exclude_none=True),
+        "optimization": {"algorithm": "optpp_q_newton", "max_batch_num": 1},
+    }
+    config = EverestConfig.model_validate(config_dict)
     config.dump("config_minimal.yml")
 
     everserver.main()

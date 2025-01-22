@@ -81,10 +81,11 @@ def test_valid_config_file(copy_test_data_to_tmp, monkeypatch):
 
     assert EverestConfig.load_file_with_argparser("test", parser=parser) is not None
 
-    config.objective_functions = None
+    config_dict = config.to_dict()
+    del config_dict["objective_functions"]
     yaml = YAML(typ="safe", pure=True)
     with open("test", "w", encoding="utf-8") as f:
-        yaml.dump(config.to_dict(), f)
+        yaml.dump(config_dict, f)
 
     # Check a valid config file is also linted
     assert EverestConfig.load_file_with_argparser("test", parser=parser) is None

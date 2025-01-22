@@ -110,7 +110,7 @@ def test_save_running_config(_, _1, _2, _3, _4, copy_math_func_test_data_to_tmp)
     new_config = EverestConfig.load_file("saved_config.yml")
 
     # Ignore different config names
-    config.config_path = None
-    new_config.config_path = None
+    old_config_dict = {**config.model_dump(exclude_none=True), "config_path": None}
+    new_config_dict = {**new_config.model_dump(exclude_none=True), "config_path": None}
 
-    assert config == new_config
+    assert old_config_dict == new_config_dict
