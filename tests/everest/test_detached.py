@@ -140,6 +140,7 @@ def test_server_status(copy_math_func_test_data_to_tmp):
     assert status["message"] == f"{err_msg_1}\n{err_msg_2}"
 
 
+@pytest.mark.integration_test
 @patch("everest.detached.server_is_running", return_value=False)
 def test_wait_for_server(server_is_running_mock, caplog, monkeypatch):
     config = EverestConfig.with_defaults()

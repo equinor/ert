@@ -7,6 +7,7 @@ from everest.config.sampler_config import SamplerConfig
 CONFIG_FILE_ADVANCED = "config_advanced.yml"
 
 
+@pytest.mark.integration_test
 def test_sampler_uniform(
     copy_math_func_test_data_to_tmp, evaluator_server_config_generator
 ):
@@ -38,6 +39,7 @@ def test_sampler_uniform(
     assert expected_opt == pytest.approx(run_model.result.total_objective, abs=0.001)
 
 
+@pytest.mark.integration_test
 def test_sampler_mixed(
     copy_math_func_test_data_to_tmp, evaluator_server_config_generator
 ):

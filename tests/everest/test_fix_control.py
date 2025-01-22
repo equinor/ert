@@ -1,9 +1,12 @@
+import pytest
+
 from ert.run_models.everest_run_model import EverestRunModel
 from everest.config import EverestConfig
 
 CONFIG_FILE_ADVANCED = "config_advanced.yml"
 
 
+@pytest.mark.integration_test
 def test_fix_control(
     copy_math_func_test_data_to_tmp, evaluator_server_config_generator
 ):
