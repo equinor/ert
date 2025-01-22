@@ -11,7 +11,7 @@ from colorama import Fore
 from pandas import DataFrame
 
 from ert.resources import all_shell_script_fm_steps
-from everest.config import EverestConfig
+from everest.config import EverestConfig, ExportConfig
 from everest.detached import (
     OPT_PROGRESS_ID,
     SIM_PROGRESS_ID,
@@ -30,20 +30,22 @@ except ImportError:
     ProgressBar = None  # type: ignore
 
 
-def export_with_progress(config: EverestConfig, export_ecl=True):
+def export_with_progress(
+    config: EverestConfig, export_config: ExportConfig, export_ecl=True
+):
     logging.getLogger(EVEREST).info("Exporting results to csv ...")
     if ProgressBar is not None:
         widgets = [Percentage(), "  ", Bar(), "  ", Timer(), "  ", AdaptiveETA()]
         with ProgressBar(max_value=1, widgets=widgets) as bar:
             return export_data(
-                export_config=config.export,
+                export_config=export_config,
                 output_dir=config.output_dir,
                 data_file=config.model.data_file if config.model else None,
                 export_ecl=export_ecl,
                 progress_callback=bar.update,
             )
     return export_data(
-        export_config=config.export,
+        export_config=export_config,
         output_dir=config.output_dir,
         data_file=config.model.data_file if config.model else None,
         export_ecl=export_ecl,
