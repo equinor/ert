@@ -111,7 +111,6 @@ dev = [
     "resdata",
     "resfo",
     "rust-just",
-    "scikit-learn",
     "sphinx",
     "sphinx-argparse",
     "sphinx-autoapi",
