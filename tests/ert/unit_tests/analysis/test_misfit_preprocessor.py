@@ -1,6 +1,5 @@
 import numpy as np
 import pytest
-from sklearn.preprocessing import StandardScaler
 
 from ert.analysis.misfit_preprocessor import (
     get_nr_primary_components,
@@ -35,7 +34,7 @@ def test_that_get_nr_primary_components_is_according_to_theory():
     X = rng.standard_normal(size=(p, N))
     Y = (np.linalg.cholesky(R) @ X).T
 
-    Y = StandardScaler().fit_transform(Y)
+    Y = (Y - Y.mean(axis=0)) / Y.std(axis=0)
 
     lambda_1 = sigma**2 * (1 + (p - 1) * rho)
     lambda_remaining = sigma**2 * (1 - rho)
