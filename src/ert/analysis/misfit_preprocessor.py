@@ -42,7 +42,7 @@ def get_nr_primary_components(
     # We compute the cumulative sum of these, then divide by their total sum to get the
     # cumulative proportion of variance explained by each successive component.
     variance_ratio = np.cumsum(singulars**2) / np.sum(singulars**2)
-    return len([1 for i in variance_ratio[:-1] if i < threshold])
+    return len([1 for i in variance_ratio if i < threshold]) + 1
 
 
 def cluster_responses(
@@ -139,7 +139,7 @@ def main(
         # each other
         return scale_factors, np.ones(len(obs_errors), dtype=int), nr_components
 
-    prim_components = get_nr_primary_components(scaled_responses, threshold=0.95)
+    prim_components = get_nr_primary_components(scaled_responses.T, threshold=0.95)
 
     clusters = cluster_responses(scaled_responses.T, nr_clusters=prim_components)
 
@@ -150,7 +150,7 @@ def main(
             components = 1
         else:
             components = get_nr_primary_components(
-                scaled_responses[index], threshold=0.95
+                scaled_responses[index].T, threshold=0.95
             )
             components = 1 if components == 0 else components
         scale_factor = get_scaling_factor(len(index), components)
