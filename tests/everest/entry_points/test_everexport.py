@@ -102,7 +102,7 @@ def test_everexport_entry_empty(mocked_func, cached_example):
     side_effect=validate_export_mock,
 )
 @patch("everest.bin.utils.export_data")
-@pytest.mark.fails_on_macos_github_workflow
+@pytest.mark.skip_mac_ci
 def test_everexport_entry_batches(mocked_func, validate_export_mock, cached_example):
     """Test running everexport with the --batches flag"""
     _, config_file, _ = cached_example("math_func/config_minimal.yml")
@@ -157,7 +157,7 @@ def test_everexport_entry_empty_export(mocked_func, cached_example):
 
 
 @patch("everest.bin.utils.export_data")
-@pytest.mark.fails_on_macos_github_workflow
+@pytest.mark.skip_mac_ci
 def test_everexport_entry_no_usr_def_ecl_keys(mocked_func, cached_example):
     """Test running everexport with config file containing only the
     keywords label without any list of keys"""
@@ -191,7 +191,7 @@ def test_everexport_entry_no_usr_def_ecl_keys(mocked_func, cached_example):
 
 
 @patch("everest.bin.utils.export_data")
-@pytest.mark.fails_on_macos_github_workflow
+@pytest.mark.skip_mac_ci
 def test_everexport_entry_internalized_usr_def_ecl_keys(mocked_func, cached_example):
     """Test running everexport with config file containing a key in the
     list of user defined ecl keywords, that has been internalized on
@@ -227,7 +227,7 @@ def test_everexport_entry_internalized_usr_def_ecl_keys(mocked_func, cached_exam
 
 
 @patch("everest.bin.utils.export_data")
-@pytest.mark.fails_on_macos_github_workflow
+@pytest.mark.skip_mac_ci
 def test_everexport_entry_non_int_usr_def_ecl_keys(mocked_func, caplog, cached_example):
     """Test running everexport  when config file contains non internalized
     ecl keys in the user defined keywords list"""
@@ -270,7 +270,7 @@ def test_everexport_entry_non_int_usr_def_ecl_keys(mocked_func, caplog, cached_e
 
 
 @patch("everest.bin.utils.export_data")
-@pytest.mark.fails_on_macos_github_workflow
+@pytest.mark.skip_mac_ci
 def test_everexport_entry_not_available_batches(mocked_func, caplog, cached_example):
     """Test running everexport  when config file contains non existing
     batch numbers in the list of user defined batches"""

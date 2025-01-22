@@ -79,7 +79,7 @@ def test_everest_main_entry_bad_command():
 
 
 @pytest.mark.flaky(reruns=5)
-@pytest.mark.fails_on_macos_github_workflow
+@pytest.mark.skip_mac_ci
 @pytest.mark.integration_test
 def test_everest_entry_run(copy_math_func_test_data_to_tmp):
     # Setup command line arguments

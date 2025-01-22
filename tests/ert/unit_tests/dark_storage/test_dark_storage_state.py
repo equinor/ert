@@ -111,4 +111,6 @@ class DarkStorageStateTest(StatefulStorageTest):
             del os.environ["ERT_STORAGE_ENS_PATH"]
 
 
-TestDarkStorage = pytest.mark.integration_test(DarkStorageStateTest.TestCase)
+TestDarkStorage = pytest.mark.skip_mac_ci(
+    pytest.mark.integration_test(DarkStorageStateTest.TestCase)
+)

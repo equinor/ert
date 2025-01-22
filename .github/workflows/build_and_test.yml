@@ -105,6 +105,7 @@ jobs:
         test-type: [ 'performance-and-unit-tests', 'gui-tests', 'cli-tests' ]
         python-version: [ '3.12' ]
         os: [ 'macos-latest']
+        select-string: ['"not skip_mac_ci"']
 
     uses: ./.github/workflows/test_ert.yml
     with:
