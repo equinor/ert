@@ -229,7 +229,7 @@ def start_monitor(
                     message = websocket.recv(timeout=1.0)
                 except TimeoutError:
                     message = None
-                print(f"Got message {message}")
+                # print(f"Got message {message}")
                 if message:
                     event_dict = json.loads(message)
                     if "snapshot" in event_dict:
