@@ -333,7 +333,7 @@ def test_date_type(date, valid, min_config):
         EverestConfig(**min_config)
 
 
-@pytest.mark.fails_on_macos_github_workflow
+@pytest.mark.skip_mac_ci
 def test_lint_everest_models_jobs():
     pytest.importorskip("everest_models")
     config_file = relpath("../../test-data/everest/egg/everest/model/config.yml")
