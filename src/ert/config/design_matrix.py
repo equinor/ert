@@ -100,19 +100,15 @@ class DesignMatrix:
         except ValueError as exc:
             errors.append(ErrorInfo(f"Error when merging design matrices {exc}!"))
 
-        pc_other = dm_other.parameter_configuration[DESIGN_MATRIX_GROUP]
-        pc_self = self.parameter_configuration[DESIGN_MATRIX_GROUP]
-        assert isinstance(pc_other, GenKwConfig)
-        assert isinstance(pc_self, GenKwConfig)
-        for tfd in pc_other.transform_function_definitions:
-            pc_self.transform_function_definitions.append(tfd)
+        for tfd in dm_other.parameter_configuration.transform_function_definitions:
+            self.parameter_configuration.transform_function_definitions.append(tfd)
 
         if errors:
             raise ConfigValidationError.from_collected(errors)
 
     def merge_with_existing_parameters(
         self, existing_parameters: list[ParameterConfig]
-    ) -> tuple[list[ParameterConfig], ParameterConfig | None]:
+    ) -> tuple[list[ParameterConfig], GenKwConfig]:
         """
         This method merges the design matrix parameters with the existing parameters and
         returns the new list of existing parameters, wherein we drop GEN_KW group having a full overlap with the design matrix group.
@@ -131,10 +127,8 @@ class DesignMatrix:
 
         new_param_config: list[ParameterConfig] = []
 
-        design_parameter_group = self.parameter_configuration[DESIGN_MATRIX_GROUP]
-        design_keys = []
-        if isinstance(design_parameter_group, GenKwConfig):
-            design_keys = [e.name for e in design_parameter_group.transform_functions]
+        design_parameter_group = self.parameter_configuration
+        design_keys = [e.name for e in design_parameter_group.transform_functions]
 
         design_group_added = False
         for parameter_group in existing_parameters:
@@ -163,7 +157,7 @@ class DesignMatrix:
 
     def read_design_matrix(
         self,
-    ) -> tuple[list[bool], pd.DataFrame, dict[str, ParameterConfig]]:
+    ) -> tuple[list[bool], pd.DataFrame, GenKwConfig]:
         # Read the parameter names (first row) as strings to prevent pandas from modifying them.
         # This ensures that duplicate or empty column names are preserved exactly as they appear in the Excel sheet.
         # By doing this, we can properly validate variable names, including detecting duplicates or missing names.
@@ -204,7 +198,6 @@ class DesignMatrix:
         )
         design_matrix_df = design_matrix_df.assign(**defaults_to_use)
 
-        parameter_configuration: dict[str, ParameterConfig] = {}
         transform_function_definitions: list[TransformFunctionDefinition] = []
         for parameter in design_matrix_df.columns:
             transform_function_definitions.append(
@@ -214,7 +207,7 @@ class DesignMatrix:
                     values=[],
                 )
             )
-        parameter_configuration[DESIGN_MATRIX_GROUP] = GenKwConfig(
+        parameter_configuration = GenKwConfig(
             name=DESIGN_MATRIX_GROUP,
             forward_init=False,
             template_file=None,

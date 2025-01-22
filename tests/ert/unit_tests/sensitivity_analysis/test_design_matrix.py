@@ -77,7 +77,7 @@ def test_merge_multiple_occurrences(
             design_matrix_1.merge_with_other(design_matrix_2)
     else:
         design_matrix_1.merge_with_other(design_matrix_2)
-        design_params = design_matrix_1.parameter_configuration.get("DESIGN_MATRIX", [])
+        design_params = design_matrix_1.parameter_configuration
         assert all(param in design_params for param in ("a", "b", "c", "d"))
         assert design_matrix_1.active_realizations == [True, True, True]
         df = design_matrix_1.design_matrix_df
@@ -181,7 +181,7 @@ def test_reading_design_matrix(tmp_path):
             xl_write, index=False, sheet_name="DefaultValues", header=False
         )
     design_matrix = DesignMatrix(design_path, "DesignSheet01", "DefaultValues")
-    design_params = design_matrix.parameter_configuration.get(DESIGN_MATRIX_GROUP, [])
+    design_params = design_matrix.parameter_configuration
     assert all(param in design_params for param in ("a", "b", "c", "one", "d"))
     assert design_matrix.active_realizations == [True, True, False, False, True]
 
