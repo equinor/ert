@@ -46,7 +46,7 @@ jobs:
     - name: Run Tests macOS
       if: ${{ inputs.test-type == 'test' && runner.os == 'macOS'}}
       run: |
-        python -m pytest tests/everest -n 4 --cov=ert --cov=everest --cov=_ert --cov-report=xml:cov1.xml --junit-xml=junit.xml -o junit_family=legacy -m "not integration_test and not fails_on_macos_github_workflow" --dist loadgroup -sv
+        python -m pytest tests/everest -n 4 --cov=ert --cov=everest --cov=_ert --cov-report=xml:cov1.xml --junit-xml=junit.xml -o junit_family=legacy -m "not integration_test and not skip_mac_ci" --dist loadgroup -sv
 
     - name: Run Integration Tests Linux
       if: ${{inputs.test-type == 'integration-test' && runner.os != 'macOS'}}
@@ -56,7 +56,7 @@ jobs:
     - name: Run Integration Tests macOS
       if: ${{inputs.test-type == 'integration-test' && runner.os == 'macOS'}}
       run: |
-        python -m pytest tests/everest -n 4 --cov=ert --cov=everest --cov=_ert --cov-report=xml:cov1.xml --junit-xml=junit.xml -o junit_family=legacy -m "integration_test and not fails_on_macos_github_workflow" --dist loadgroup
+        python -m pytest tests/everest -n 4 --cov=ert --cov=everest --cov=_ert --cov-report=xml:cov1.xml --junit-xml=junit.xml -o junit_family=legacy -m "integration_test and not skip_mac_ci" --dist loadgroup
 
     - name: Build Documentation
       if: inputs.test-type == 'doc'
