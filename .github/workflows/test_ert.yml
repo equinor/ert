@@ -7,6 +7,9 @@ on:
         type: string
       test-type:
         type: string
+      select-string:
+        type: string
+        default: "''"
 
 env:
   ERT_SHOW_BACKTRACE: 1
@@ -40,7 +43,7 @@ jobs:
     - name: GUI Test
       if: inputs.test-type == 'gui-tests'
       run: |
-        pytest --cov=ert --cov=everest --cov=_ert --cov-report=xml:cov1.xml --junit-xml=junit.xml -o junit_family=legacy -v --mpl --benchmark-disable tests/ert/ui_tests/gui --durations=25
+        pytest -m ${{ inputs.select-string }} --cov=ert --cov=everest --cov=_ert --cov-report=xml:cov1.xml --junit-xml=junit.xml -o junit_family=legacy -v --mpl --benchmark-disable tests/ert/ui_tests/gui --durations=25
 
     - name: Upload artifact images
       uses: actions/upload-artifact@v4
@@ -53,18 +56,18 @@ jobs:
     - name: CLI Test
       if: inputs.test-type == 'cli-tests'
       run: |
-        pytest --cov=ert --cov=everest --cov=_ert --cov-report=xml:cov1.xml --junit-xml=junit.xml -o junit_family=legacy -v --benchmark-disable  --dist loadgroup tests/ert/ui_tests/cli --durations=25
+        pytest -m ${{ inputs.select-string }} --cov=ert --cov=everest --cov=_ert --cov-report=xml:cov1.xml --junit-xml=junit.xml -o junit_family=legacy -v --benchmark-disable  --dist loadgroup tests/ert/ui_tests/cli --durations=25
 
     - name: Unit Test
       if: inputs.test-type == 'unit-tests'
       run: |
-        pytest --cov=ert --cov=everest --cov=_ert --cov-report=xml:cov1.xml --junit-xml=junit.xml -o junit_family=legacy -n logical --show-capture=stderr -v --benchmark-disable --mpl --dist loadgroup tests/ert/unit_tests --durations=25
+        pytest -m ${{ inputs.select-string }} --cov=ert --cov=everest --cov=_ert --cov-report=xml:cov1.xml --junit-xml=junit.xml -o junit_family=legacy -n logical --show-capture=stderr -v --benchmark-disable --mpl --dist loadgroup tests/ert/unit_tests --durations=25
         pytest --doctest-modules --cov=ert --cov=everest --cov=_ert --cov-report=xml:cov2.xml src/ --ignore src/ert/dark_storage
 
     - name: Performance Test
       if: inputs.test-type == 'performance-tests'
       run: |
-        pytest --cov=ert --cov=everest --cov=_ert --cov-report=xml:cov1.xml --junit-xml=junit.xml -o junit_family=legacy -n logical --show-capture=stderr -v --benchmark-disable  --dist loadgroup tests/ert/performance_tests --durations=25
+        pytest -m ${{ inputs.select-string }} --cov=ert --cov=everest --cov=_ert --cov-report=xml:cov1.xml --junit-xml=junit.xml -o junit_family=legacy -n logical --show-capture=stderr -v --benchmark-disable  --dist loadgroup tests/ert/performance_tests --durations=25
 
     - name: Upload coverage to Codecov
       id: codecov1

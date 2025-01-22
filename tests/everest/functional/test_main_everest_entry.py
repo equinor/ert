@@ -41,7 +41,7 @@ def test_everest_main_entry_bad_command():
 
 
 @pytest.mark.flaky(reruns=5)
-@pytest.mark.fails_on_macos_github_workflow
+@pytest.mark.skip_mac_ci
 @pytest.mark.integration_test
 def test_everest_entry_run(cached_example):
     _, config_file, _ = cached_example("math_func/config_minimal.yml")
