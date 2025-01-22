@@ -19,7 +19,7 @@ import numpy as np
 import xtgeo
 from hypothesis import given, note, settings
 from hypothesis.extra.numpy import arrays
-from pytest import MonkeyPatch, TempPathFactory
+from pytest import MonkeyPatch, TempPathFactory, mark
 from resdata import ResDataType
 from resdata.grid import GridGenerator
 from resdata.resfile import ResdataKW
@@ -409,6 +409,7 @@ class SurfaceParameter(Parameter):
         max_size=3,
     ),
 )
+@mark.skip_mac_ci  # test is slow
 def test_that_parameters_are_placed_in_the_runpath_as_expected(
     io_source: IoProvider,
     grid_format: Literal["grid", "egrid"],

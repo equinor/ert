@@ -10,6 +10,7 @@ from .gui_models_utils import finish_snapshot
 
 
 @pytest.mark.integration_test
+@pytest.mark.skip_mac_ci  # slow
 def test_using_qt_model_tester(qtmodeltester, full_snapshot):
     model = SnapshotModel()
 
