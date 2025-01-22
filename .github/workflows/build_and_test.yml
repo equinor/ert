@@ -109,13 +109,13 @@ jobs:
         test-type: [ 'performance-tests', 'unit-tests', 'gui-tests', 'cli-tests' ]
         python-version: [ '3.12' ]
         os: [ 'macos-latest']
-        select-string: ['"not skip_mac_ci"']
 
     uses: ./.github/workflows/test_ert.yml
     with:
       os: ${{ matrix.os }}
       python-version: ${{ matrix.python-version }}
       test-type: ${{ matrix.test-type }}
+      select-string: '"not skip_mac_ci"'
     secrets: inherit
 
   docs-ert:
