@@ -10,7 +10,6 @@ from ert.config import (
     ConfigValidationError,
     ErtConfig,
     ESSettings,
-    IESSettings,
 )
 from ert.config.parsing import ConfigKeys, ConfigWarning
 
@@ -185,18 +184,6 @@ def test_valid_min_realization(value, expected):
 )
 def test_analysis_config_modules(analysis_config):
     assert isinstance(analysis_config.es_module, ESSettings)
-    assert isinstance(analysis_config.ies_module, IESSettings)
-
-
-def test_incorrect_variable_raises_validation_error():
-    with pytest.raises(
-        ConfigValidationError, match="Input should be 'exact' or 'subspace'"
-    ):
-        _ = AnalysisConfig.from_dict(
-            {
-                ConfigKeys.ANALYSIS_SET_VAR: [["STD_ENKF", "IES_INVERSION", "FOO"]],
-            }
-        )
 
 
 def test_unknown_variable_raises_validation_error():
@@ -302,27 +289,13 @@ def test_num_realizations_0_means_all():
     )
 
 
-@pytest.mark.parametrize(
-    "config, expected",
-    [
-        (
-            ["STD_ENKF", "INVERSION", "1"],
-            "Using 1 is deprecated, use:\nANALYSIS_SET_VAR STD_ENKF INVERSION SUBSPACE",
-        ),
-        (
-            ["STD_ENKF", "IES_INVERSION", "1"],
-            dedent(
-                """IES_INVERSION is deprecated, please use INVERSION instead:
-ANALYSIS_SET_VAR STD_ENKF INVERSION SUBSPACE"""
-            ),
-        ),
-    ],
-)
-def test_incorrect_variable_deprecation_warning(config, expected):
-    with pytest.warns(match=expected):
+def test_incorrect_variable_deprecation_warning():
+    with pytest.warns(
+        match="Using 1 is deprecated, use:\nANALYSIS_SET_VAR STD_ENKF INVERSION SUBSPACE"
+    ):
         AnalysisConfig.from_dict(
             {
-                ConfigKeys.ANALYSIS_SET_VAR: [config],
+                ConfigKeys.ANALYSIS_SET_VAR: [["STD_ENKF", "INVERSION", "1"]],
             }
         )
 

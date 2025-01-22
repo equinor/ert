@@ -16,12 +16,10 @@ from ert.config.analysis_config import UpdateSettings
 from ert.mode_definitions import (
     ENSEMBLE_SMOOTHER_MODE,
     ES_MDA_MODE,
-    ITERATIVE_ENSEMBLE_SMOOTHER_MODE,
 )
 from ert.run_models import (
     EnsembleExperiment,
     EnsembleSmoother,
-    IteratedEnsembleSmoother,
     MultipleDataAssimilation,
     SingleTestRun,
     model_factory,
@@ -33,7 +31,6 @@ from ert.run_models.evaluate_ensemble import EvaluateEnsemble
     "mode",
     [
         pytest.param(ENSEMBLE_SMOOTHER_MODE),
-        pytest.param(ITERATIVE_ENSEMBLE_SMOOTHER_MODE),
         pytest.param(ES_MDA_MODE),
     ],
 )
@@ -201,28 +198,6 @@ def test_setup_multiple_data_assimilation(storage):
     assert model.restart_run == False
 
 
-def test_setup_iterative_ensemble_smoother(poly_case, storage):
-    model = model_factory._setup_iterative_ensemble_smoother(
-        ErtConfig.from_file_contents("NUM_REALIZATIONS 100\n"),
-        storage,
-        Namespace(
-            realizations="0-4,7,8",
-            target_ensemble="test_case_%d",
-            num_iterations=10,
-            experiment_name=None,
-        ),
-        UpdateSettings(),
-        queue.SimpleQueue(),
-    )
-    assert isinstance(model, IteratedEnsembleSmoother)
-    assert model.target_ensemble_format == "test_case_%d"
-    assert (
-        model.active_realizations
-        == [True] * 5 + [False] * 2 + [True] * 2 + [False] * 91
-    )
-    assert model._total_iterations == 10
-
-
 @pytest.mark.parametrize(
     "restart_from_iteration, expected_path",
     [
@@ -286,7 +261,6 @@ def test_multiple_data_assimilation_restart_paths(
     [
         model_factory._setup_multiple_data_assimilation,
         model_factory._setup_ensemble_smoother,
-        model_factory._setup_iterative_ensemble_smoother,
     ],
 )
 def test_num_realizations_specified_incorrectly_raises(analysis_mode):

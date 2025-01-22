@@ -384,11 +384,6 @@ In plain English, the ES MDA consists of several consecutive smoother updates wi
 error bars. The ES MDA with one iteration is identical to the Ensemble smoother.
 
 
-Iterative ensemble smoother - Ensemble subspace version
--------------------------------------------------------
-
-The algorithm implemented is described in the article `Efficient Implementation of an Iterative Ensemble Smoother for Data Assimilation and Reservoir History Matching <https://www.frontiersin.org/articles/10.3389/fams.2019.00047/full>`_.
-
 Kalman posterior properties
 ---------------------------
 

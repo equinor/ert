@@ -40,9 +40,6 @@ Keyword name                                                            Required
 :ref:`GRID <grid>`                                                      NO                                                                      Provide an ECLIPSE grid for the reservoir model
 :ref:`HISTORY_SOURCE <history_source>`                                  NO                                      REFCASE_HISTORY                 Source used for historical values
 :ref:`HOOK_WORKFLOW <hook_workflow>`                                    NO                                                                      Install a workflow to be run automatically
-:ref:`IES_DEC_STEPLENGTH <ies_dec_steplength>`                          NO                                      2.5                             Gauss-Newton steplength decline
-:ref:`IES_MAX_STEPLENGTH <ies_max_steplength>`                          NO                                      0.6                             Gauss-Newton maximum steplength
-:ref:`IES_MIN_STEPLENGTH <ies_min_steplength>`                          NO                                      0.3                             Gauss-Newton minimum steplength
 :ref:`INCLUDE <include>`                                                NO                                                                      Include contents from another ert config
 :ref:`INSTALL_JOB <install_job>`                                        NO                                                                      Install a job for use in a forward model
 :ref:`INVERSION <inversion_algorithm>`                                  NO                                                                      Set inversion method for analysis module
@@ -1421,11 +1418,11 @@ ANALYSIS_SET_VAR
 
 The analysis modules can have internal state, like e.g. truncation cutoff
 values. These can be manipulated from the config file using the
-ANALYSIS_SET_VAR keyword for either the `STD_ENKF` or `IES_ENKF` module.
+ANALYSIS_SET_VAR keyword for the `STD_ENKF` module.
 
 ::
 
-    ANALYSIS_SET_VAR  <STD_ENKF|IES_ENKF>  ENKF_TRUNCATION  0.98
+    ANALYSIS_SET_VAR  STD_ENKF  ENKF_TRUNCATION  0.98
 
 
 
@@ -1435,109 +1432,30 @@ INVERSION
 
 The analysis modules can specify inversion algorithm used.
 These can be manipulated from the config file using the
-ANALYSIS_SET_VAR keyword for either the `STD_ENKF` or `IES_ENKF` module.
+ANALYSIS_SET_VAR keyword for the `STD_ENKF` module.
 
 **STD_ENKF**
 
 
 .. list-table:: Inversion Algorithms for Ensemble Smoother
-   :widths: 50 50 50 50
+   :widths: 50 50 50
    :header-rows: 1
 
    * - Description
      - INVERSION
-     - IES_INVERSION (deprecated)
      - Note
    * - Exact inversion with diagonal R=I
      - EXACT
-     - 0
      -
    * - Subspace inversion with exact R
      - SUBSPACE_EXACT_R / SUBSPACE
-     - 1
      - Preferred name: SUBSPACE
    * - Subspace inversion using R=EE'
      - SUBSPACE_EE_R
-     - 2
      - Deprecated, maps to: SUBSPACE
    * - Subspace inversion using E
      - SUBSPACE_RE
-     - 3
      - Deprecated, maps to: SUBSPACE
-
-
-**IES_ENKF**
-
-
-.. list-table:: Inversion Algorithms for IES
-   :widths: 50 50 50 50
-   :header-rows: 1
-
-   * - Description
-     - INVERSION
-     - IES_INVERSION (deprecated)
-     - Note
-   * - Exact inversion with diagonal R=I
-     - EXACT / DIRECT
-     - 0
-     - Preferred name: DIRECT
-   * - Subspace inversion with exact R
-     - SUBSPACE_EXACT_R / SUBSPACE_EXACT
-     - 1
-     - Preferred name: SUBSPACE_EXACT
-   * - Subspace inversion using R=EE'
-     - SUBSPACE_EE_R / SUBSPACE_PROJECTED
-     - 2
-     - Preferred name: SUBSPACE_PROJECTED
-   * - Subspace inversion using E
-     - SUBSPACE_RE
-     - 3
-     - Deprecated, maps to: SUBSPACE_PROJECTED
-
-Setting the inversion method
-::
-
-        -- Example for the `STD_ENKF` module
-        ANALYSIS_SET_VAR  STD_ENKF  INVERSION  DIRECT
-
-
-IES_MAX_STEPLENGTH
-^^^^^^^^^^^^^^^^^^
-.. _ies_max_steplength:
-
-The analysis modules can specify the Gauss-Newton maximum steplength
-for the ``IES_ENKF`` module only.
-This is default set to ``0.60``, valid values in range ``[0.1, 1.00]``
-
-::
-
-        ANALYSIS_SET_VAR  IES_ENKF  IES_MAX_STEPLENGTH  0.6
-
-
-IES_MIN_STEPLENGTH
-^^^^^^^^^^^^^^^^^^
-.. _ies_min_steplength:
-
-The analysis modules can specify the Gauss-Newton minimum steplength
-for the ``IES_ENKF`` module only.
-This is default set to ``0.30``, valid values in range ``[0.1, 1.00]``
-
-::
-
-        ANALYSIS_SET_VAR  IES_ENKF  IES_MIN_STEPLENGTH  0.3
-
-
-IES_DEC_STEPLENGTH
-^^^^^^^^^^^^^^^^^^
-.. _ies_dec_steplength:
-
-The analysis modules can specify the Gauss-Newton steplength decline
-for the ``IES_ENKF`` module only.
-This is default set to ``2.5``, valid values in range ``[1.1, 10.0]``
-
-::
-
-        ANALYSIS_SET_VAR  IES_ENKF  IES_DEC_STEPLENGTH  2.5
 
 
 LOCALIZATION
@@ -1615,8 +1533,7 @@ al. 1979).
 
 ::
 
-    -- Example for the `IES_ENKF` module
-    ANALYSIS_SET_VAR  IES_ENKF  ENKF_TRUNCATION  0.98
+    ANALYSIS_SET_VAR  STD_ENKF  ENKF_TRUNCATION  0.98
 
 The default value of ENKF_TRUNCATION is 0.98. If ensemble collapse is a big
 problem, a smaller value should be used (e.g 0.90 or smaller). However, this

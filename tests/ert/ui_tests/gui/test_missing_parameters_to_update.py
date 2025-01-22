@@ -8,7 +8,6 @@ from ert.gui.simulation.experiment_panel import ExperimentPanel
 from ert.run_models import (
     EnsembleExperiment,
     EnsembleSmoother,
-    IteratedEnsembleSmoother,
     MultipleDataAssimilation,
 )
 from tests.ert.ui_tests.gui.conftest import get_child, open_gui_with_config
@@ -31,10 +30,6 @@ def test_no_updateable_parameters(qtbot):
             simulation_mode_combo.model().item(idx).flags() & Qt.ItemFlag.ItemIsEnabled
         )
         idx = simulation_mode_combo.findText(MultipleDataAssimilation.display_name())
-        assert not (
-            simulation_mode_combo.model().item(idx).flags() & Qt.ItemFlag.ItemIsEnabled
-        )
-        idx = simulation_mode_combo.findText(IteratedEnsembleSmoother.display_name())
         assert not (
             simulation_mode_combo.model().item(idx).flags() & Qt.ItemFlag.ItemIsEnabled
         )

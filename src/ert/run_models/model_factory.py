@@ -13,7 +13,6 @@ from ert.mode_definitions import (
     ENSEMBLE_SMOOTHER_MODE,
     ES_MDA_MODE,
     EVALUATE_ENSEMBLE_MODE,
-    ITERATIVE_ENSEMBLE_SMOOTHER_MODE,
     MANUAL_UPDATE_MODE,
     TEST_RUN_MODE,
 )
@@ -23,7 +22,6 @@ from .base_run_model import BaseRunModel
 from .ensemble_experiment import EnsembleExperiment
 from .ensemble_smoother import EnsembleSmoother
 from .evaluate_ensemble import EvaluateEnsemble
-from .iterated_ensemble_smoother import IteratedEnsembleSmoother
 from .manual_update import ManualUpdate
 from .multiple_data_assimilation import MultipleDataAssimilation
 from .single_test_run import SingleTestRun
@@ -65,10 +63,6 @@ def create_model(
         )
     if args.mode == ES_MDA_MODE:
         return _setup_multiple_data_assimilation(
-            config, storage, args, update_settings, status_queue
-        )
-    if args.mode == ITERATIVE_ENSEMBLE_SMOOTHER_MODE:
-        return _setup_iterative_ensemble_smoother(
             config, storage, args, update_settings, status_queue
         )
     if args.mode == MANUAL_UPDATE_MODE:
@@ -260,34 +254,6 @@ def _setup_multiple_data_assimilation(
         storage=storage,
         queue_config=config.queue_config,
         es_settings=config.analysis_config.es_module,
-        update_settings=update_settings,
-        status_queue=status_queue,
-    )
-
-
-def _setup_iterative_ensemble_smoother(
-    config: ErtConfig,
-    storage: Storage,
-    args: Namespace,
-    update_settings: UpdateSettings,
-    status_queue: SimpleQueue[StatusEvents],
-) -> IteratedEnsembleSmoother:
-    experiment_name = "ies" if args.experiment_name is None else args.experiment_name
-    active_realizations = _validate_num_realizations(args, config)
-    return IteratedEnsembleSmoother(
-        random_seed=config.random_seed,
-        active_realizations=active_realizations.tolist(),
-        target_ensemble=_iterative_ensemble_format(args),
-        number_of_iterations=(
-            int(args.num_iterations) if args.num_iterations is not None else 4
-        ),
-        minimum_required_realizations=config.analysis_config.minimum_required_realizations,
-        num_retries_per_iter=4,
-        experiment_name=experiment_name,
-        config=config,
-        storage=storage,
-        queue_config=config.queue_config,
-        analysis_config=config.analysis_config.ies_module,
         update_settings=update_settings,
         status_queue=status_queue,
     )

@@ -54,7 +54,6 @@ from ert.plugins import ErtPluginManager
 from ert.run_models import (
     EnsembleExperiment,
     EnsembleSmoother,
-    IteratedEnsembleSmoother,
     MultipleDataAssimilation,
     SingleTestRun,
 )
@@ -112,7 +111,7 @@ def test_that_the_ui_show_no_errors_and_enables_update_for_poly_example(qapp):
     with add_gui_log_handler() as log_handler:
         gui, *_ = ert.gui.main._start_initial_gui_window(args, log_handler)
         combo_box = get_child(gui, QComboBox, name="experiment_type")
-        assert combo_box.count() == 7
+        assert combo_box.count() == 6
 
         for i in range(combo_box.count()):
             assert combo_box.model().item(i).isEnabled()
@@ -132,7 +131,7 @@ def test_gui_shows_a_warning_and_disables_update_when_there_are_no_observations(
     with add_gui_log_handler() as log_handler:
         gui, *_ = ert.gui.main._start_initial_gui_window(args, log_handler)
         combo_box = get_child(gui, QComboBox, name="experiment_type")
-        assert combo_box.count() == 7
+        assert combo_box.count() == 6
 
         for i in range(3):
             assert combo_box.model().item(i).isEnabled()
@@ -160,7 +159,7 @@ def test_gui_shows_a_warning_and_disables_update_when_parameters_are_missing(
     with add_gui_log_handler() as log_handler:
         gui, *_ = ert.gui.main._start_initial_gui_window(args, log_handler)
         combo_box = get_child(gui, QComboBox, name="experiment_type")
-        assert combo_box.count() == 7
+        assert combo_box.count() == 6
 
         for i in range(3):
             assert combo_box.model().item(i).isEnabled()
@@ -698,7 +697,7 @@ def test_that_es_mda_restart_run_box_is_disabled_when_there_are_no_cases(qtbot):
 
         combo_box = get_child(gui, QComboBox, name="experiment_type")
         qtbot.mouseClick(combo_box, Qt.MouseButton.LeftButton)
-        assert combo_box.count() == 7
+        assert combo_box.count() == 6
         combo_box.setCurrentIndex(3)
 
         assert combo_box.currentText() == MultipleDataAssimilation.display_name()
@@ -757,7 +756,6 @@ def test_validation_of_experiment_names_in_run_models(
             MultipleDataAssimilation.display_name(),
             "ES_MDA_panel",
         ),
-        (IteratedEnsembleSmoother.display_name(), "iterated_ensemble_smoother_panel"),
     )
     for exp_type, panel_name in experiment_types_to_test:
         experiment_types.setCurrentText(exp_type)

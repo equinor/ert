@@ -1,6 +1,5 @@
 from ._es_update import (
     ErtAnalysisError,
-    iterative_smoother_update,
     smoother_update,
 )
 from .event import (
@@ -26,6 +25,5 @@ __all__ = [
     "ObservationAndResponseSnapshot",
     "ObservationStatus",
     "SmootherSnapshot",
-    "iterative_smoother_update",
     "smoother_update",
 ]

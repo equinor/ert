@@ -8,7 +8,6 @@ from .event import (
     RunModelUpdateBeginEvent,
     RunModelUpdateEndEvent,
 )
-from .iterated_ensemble_smoother import IteratedEnsembleSmoother
 from .model_factory import create_model
 from .multiple_data_assimilation import MultipleDataAssimilation
 from .single_test_run import SingleTestRun
@@ -18,7 +17,6 @@ __all__ = [
     "EnsembleExperiment",
     "EnsembleSmoother",
     "ErtRunError",
-    "IteratedEnsembleSmoother",
     "MultipleDataAssimilation",
     "RunModelEvent",
     "RunModelStatusEvent",

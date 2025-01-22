@@ -18,7 +18,6 @@ from ert.mode_definitions import (
     ENSEMBLE_EXPERIMENT_MODE,
     ENSEMBLE_SMOOTHER_MODE,
     ES_MDA_MODE,
-    ITERATIVE_ENSEMBLE_SMOOTHER_MODE,
     TEST_RUN_MODE,
     WORKFLOW_MODE,
 )
@@ -68,7 +67,6 @@ def run_cli(args: Namespace, plugin_manager: ErtPluginManager | None = None) -> 
     if args.mode in {
         ENSEMBLE_SMOOTHER_MODE,
         ES_MDA_MODE,
-        ITERATIVE_ENSEMBLE_SMOOTHER_MODE,
     }:
         if not ert_config.ensemble_config.parameter_configs:
             raise ErtCliError(

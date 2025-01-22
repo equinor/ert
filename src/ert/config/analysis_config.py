@@ -9,10 +9,9 @@ from typing import Any, Final, no_type_check
 
 from pydantic import PositiveFloat, ValidationError
 
-from .analysis_module import ESSettings, IESSettings
+from .analysis_module import ESSettings
 from .design_matrix import DesignMatrix
 from .parsing import (
-    AnalysisMode,
     ConfigDict,
     ConfigKeys,
     ConfigValidationError,
@@ -21,7 +20,6 @@ from .parsing import (
 
 logger = logging.getLogger(__name__)
 
-DEFAULT_ANALYSIS_MODE = AnalysisMode.ENSEMBLE_SMOOTHER
 ObservationGroups = list[str]
 
 
@@ -37,7 +35,6 @@ class AnalysisConfig:
     minimum_required_realizations: int = 0
     update_log_path: str | Path = "update_log"
     es_module: ESSettings = field(default_factory=ESSettings)
-    ies_module: IESSettings = field(default_factory=IESSettings)
     observation_settings: UpdateSettings = field(default_factory=UpdateSettings)
     num_iterations: int = 1
     design_matrix: DesignMatrix | None = None
@@ -82,7 +79,7 @@ class AnalysisConfig:
 
         design_matrix_config_lists = config_dict.get(ConfigKeys.DESIGN_MATRIX, [])
 
-        options: dict[str, dict[str, Any]] = {"STD_ENKF": {}, "IES_ENKF": {}}
+        options: dict[str, dict[str, Any]] = {"STD_ENKF": {}}
         observation_settings: dict[str, Any] = {
             "alpha": config_dict.get(ConfigKeys.ENKF_ALPHA, 3.0),
             "std_cutoff": config_dict.get(ConfigKeys.STD_CUTOFF, 1e-6),
@@ -95,13 +92,7 @@ class AnalysisConfig:
                 **dict.fromkeys(["SUBSPACE_EXACT_R", "1"], "subspace"),
                 **dict.fromkeys(["SUBSPACE_EE_R", "2"], "subspace"),
                 **dict.fromkeys(["SUBSPACE_RE", "3"], "subspace"),
-            },
-            "IES_ENKF": {
-                **dict.fromkeys(["EXACT", "0"], "direct"),
-                **dict.fromkeys(["SUBSPACE_EXACT_R", "1"], "subspace_exact"),
-                **dict.fromkeys(["SUBSPACE_EE_R", "2"], "subspace_projected"),
-                **dict.fromkeys(["SUBSPACE_RE", "3"], "subspace_projected"),
-            },
+            }
         }
         deprecated_keys = ["ENKF_NCOMP", "ENKF_SUBSPACE_DIMENSION"]
         deprecated_inversion_keys = ["USE_EE", "USE_GE"]
@@ -109,6 +100,12 @@ class AnalysisConfig:
         all_errors = []
 
         for module_name, var_name, value in analysis_set_var:
+            if module_name == "IES_ENKF":
+                ConfigWarning.warn(
+                    f"{module_name} has been removed and has no effect, valid options are:\n"
+                    "ANALYSIS_SET_VAR STD_ENKF ..."
+                )
+                continue
             if module_name == "OBSERVATIONS":
                 if var_name == "AUTO_SCALE":
                     observation_settings["auto_scale_observations"].append(
@@ -136,19 +133,13 @@ class AnalysisConfig:
                     )
                 )
                 continue
-            if var_name in {"INVERSION", "IES_INVERSION"}:
+            if var_name in {"INVERSION"}:
                 if value in inversion_str_map[module_name]:
                     new_value = inversion_str_map[module_name][value]
-                    if var_name == "IES_INVERSION":
-                        ConfigWarning.warn(
-                            "IES_INVERSION is deprecated, please use INVERSION instead:\n"
-                            f"ANALYSIS_SET_VAR {module_name} INVERSION {new_value.upper()}"
-                        )
-                    else:
-                        ConfigWarning.warn(
-                            f"Using {value} is deprecated, use:\n"
-                            f"ANALYSIS_SET_VAR {module_name} INVERSION {new_value.upper()}"
-                        )
+                    ConfigWarning.warn(
+                        f"Using {value} is deprecated, use:\n"
+                        f"ANALYSIS_SET_VAR {module_name} INVERSION {new_value.upper()}"
+                    )
                     value = new_value
 
                 var_name = "inversion"
@@ -174,7 +165,6 @@ class AnalysisConfig:
 
         try:
             es_settings = ESSettings(**options["STD_ENKF"])
-            ies_settings = IESSettings(**options["IES_ENKF"])
             obs_settings = UpdateSettings(**observation_settings)
         except ValidationError as err:
             for error in err.errors():
@@ -200,7 +190,6 @@ class AnalysisConfig:
             update_log_path=config_dict.get(ConfigKeys.UPDATE_LOG_PATH, "update_log"),
             observation_settings=obs_settings,
             es_module=es_settings,
-            ies_module=ies_settings,
             design_matrix=design_matrix,
         )
         return config
@@ -224,9 +213,6 @@ class AnalysisConfig:
             return False
 
         if self.observation_settings != other.observation_settings:
-            return False
-
-        if self.ies_module != other.ies_module:
             return False
 
         if self.es_module != other.es_module:
