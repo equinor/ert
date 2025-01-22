@@ -7,6 +7,7 @@ from ropt.enums import ConstraintType, PerturbationType, VariableType
 from everest.config import (
     ControlConfig,
     EverestConfig,
+    InputConstraintConfig,
     ModelConfig,
     ObjectiveFunctionConfig,
     OptimizationConfig,
@@ -70,9 +71,7 @@ def _parse_controls(ever_controls: list[ControlConfig], ropt_config):
             }
             for sampler in controls.samplers
         ]
-        ropt_config["gradient"]["samplers"] = [
-            max(0, idx) for idx in controls.sampler_indices
-        ]
+        ropt_config["gradient"]["samplers"] = controls.sampler_indices
 
     default_magnitude = (max(controls.upper_bounds) - min(controls.lower_bounds)) / 10.0
     ropt_config["gradient"]["perturbation_magnitudes"] = [
@@ -139,17 +138,23 @@ def _parse_objectives(objective_functions: list[ObjectiveFunctionConfig], ropt_c
         ropt_config["function_transforms"] = transforms
 
 
-def _parse_input_constraints(ever_config: EverestConfig, ropt_config):
-    if not ever_config.input_constraints:
+def _parse_input_constraints(
+    controls: list[ControlConfig],
+    input_constraints: list[InputConstraintConfig] | None,
+    ropt_config,
+):
+    if not input_constraints:
         return
 
+    # TODO: Issue #9816 is intended to address the need for a more general
+    # naming scheme. This code should be revisited once that issue is resolved.
     formatted_names = [
         (
             f"{control_name[0]}.{control_name[1]}-{control_name[2]}"
             if len(control_name) > 2
             else f"{control_name[0]}.{control_name[1]}"
         )
-        for control_name in control_tuples(ever_config.controls)
+        for control_name in control_tuples(controls)
     ]
 
     coefficients_matrix = []
@@ -162,7 +167,7 @@ def _parse_input_constraints(ever_config: EverestConfig, ropt_config):
             rhs_values.append(rhs_value)
             types.append(constraint_type)
 
-    for constr in ever_config.input_constraints:
+    for constr in input_constraints:
         coefficients = [0.0] * len(formatted_names)
         for name, value in constr.weights.items():
             coefficients[formatted_names.index(name)] = value
@@ -379,7 +384,9 @@ def everest2ropt(ever_config: EverestConfig) -> EnOptConfig:
 
     _parse_controls(ever_config.controls, ropt_config)
     _parse_objectives(ever_config.objective_functions, ropt_config)
-    _parse_input_constraints(ever_config, ropt_config)
+    _parse_input_constraints(
+        ever_config.controls, ever_config.input_constraints, ropt_config
+    )
     _parse_output_constraints(ever_config.output_constraints, ropt_config)
     _parse_optimization(
         ever_opt=ever_config.optimization,
