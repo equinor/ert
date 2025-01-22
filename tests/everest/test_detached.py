@@ -317,7 +317,11 @@ async def test_starting_not_in_folder(tmp_path, monkeypatch):
     monkeypatch.chdir(tmp_path / "new_folder")
     everest_config = EverestConfig.with_defaults()
     everest_config.dump("minimal_config.yml")
-    everest_config.config_path = Path("minimal_config.yml").absolute()
+    config_dict = {
+        **everest_config.model_dump(exclude_none=True),
+        "config_path": str(Path("minimal_config.yml").absolute()),
+    }
+    everest_config = EverestConfig.model_validate(config_dict)
     monkeypatch.chdir(tmp_path)
     monkeypatch.setenv("PATH", f".:{os.environ['PATH']}")
     everserver_path = Path("everserver")

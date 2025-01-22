@@ -3,8 +3,6 @@ import pytest
 from ert.run_models.everest_run_model import EverestRunModel
 from everest.config import (
     EverestConfig,
-    ModelConfig,
-    ObjectiveFunctionConfig,
 )
 
 
@@ -14,17 +12,18 @@ def test_objective_type(
 ):
     # Arrange
     config = EverestConfig.load_file("config_minimal.yml")
-    config.objective_functions = [
-        ObjectiveFunctionConfig(name="distance", weight=1.0),
-        ObjectiveFunctionConfig(
-            name="stddev", weight=1.0, type="stddev", alias="distance"
-        ),
-    ]
-    config.model = ModelConfig(realizations=[0, 1])
-    config.forward_model = [
-        "distance3 --point-file point.json --realization <GEO_ID> --target 0.5 0.5 0.5 --out distance"
-    ]
-
+    config_dict = {
+        **config.model_dump(exclude_none=True),
+        "objective_functions": [
+            {"name": "distance", "weight": 1.0},
+            {"name": "stddev", "weight": 1.0, "type": "stddev", "alias": "distance"},
+        ],
+        "model": {"realizations": [0, 1]},
+        "forward_model": [
+            "distance3 --point-file point.json --realization <GEO_ID> --target 0.5 0.5 0.5 --out distance"
+        ],
+    }
+    config = EverestConfig.model_validate(config_dict)
     # Act
     run_model = EverestRunModel.create(config)
     evaluator_server_config = evaluator_server_config_generator(run_model)

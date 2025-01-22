@@ -7,7 +7,7 @@ import pytest
 import yaml
 
 from ert.run_models.everest_run_model import EverestRunModel
-from everest.config import EverestConfig, InputConstraintConfig
+from everest.config import EverestConfig
 from everest.config.export_config import ExportConfig
 from everest.export import export_data
 from everest.util import makedirs_if_needed
@@ -37,12 +37,8 @@ def test_math_func_multiobj(
         (-0.5 * (2.0 / 3.0) * 1.5) + (-4.5 * (1.0 / 3.0) * 1.0), abs=0.01
     )
 
-    # Test conversion to pandas DataFrame
-    if config.export is None:
-        config.export = ExportConfig(discard_rejected=False)
-
     df = export_data(
-        export_config=config.export,
+        export_config=ExportConfig(discard_rejected=False),
         output_dir=config.output_dir,
         data_file=config.model.data_file if config.model else None,
     )
@@ -161,15 +157,14 @@ def test_math_func_advanced(
     assert best_1["realization_weight"] == 0.75
 
     # check functionality of export batch filtering
-    if "export" not in config:
-        config.export = ExportConfig()
+    export_config = config.export or ExportConfig()
 
     exp_nunique = 2
     batches_list = [0, 2]
-    config.export.batches = batches_list
+    export_config.batches = batches_list
 
     batch_filtered_df = export_data(
-        export_config=config.export,
+        export_config=export_config,
         output_dir=config.output_dir,
         data_file=config.model.data_file if config.model else None,
     )
@@ -245,13 +240,18 @@ def test_math_func_auto_scaled_controls(
     config = EverestConfig.load_file("config_minimal.yml")
     config.controls[0].auto_scale = True
     config.controls[0].scaled_range = [0.3, 0.7]
-    config.input_constraints = [
-        InputConstraintConfig(weights={"point.x": 1.0, "point.y": 1.0}, upper_bound=0.5)
-    ]
-    config.forward_model[0] += " --scaling -1 1 0.3 0.7"
+
     # Convergence is slower that's why more batches and start closer to final solution?
     config.controls[0].initial_guess = 0.2
     config.optimization.max_batch_num = 10
+    config_dict = {
+        **config.model_dump(exclude_none=True),
+        "input_constraints": [
+            {"weights": {"point.x": 1.0, "point.y": 1.0}, "upper_bound": 0.5}
+        ],
+    }
+    config_dict["forward_model"][0] += " --scaling -1 1 0.3 0.7"
+    config = EverestConfig.model_validate(config_dict)
 
     # Act
     run_model = EverestRunModel.create(config)
