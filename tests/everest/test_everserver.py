@@ -5,6 +5,7 @@ from functools import partial
 from pathlib import Path
 from unittest.mock import patch
 
+import pytest
 from seba_sqlite.snapshot import SebaSnapshot
 
 from ert.run_models.everest_run_model import EverestExitCode
@@ -52,6 +53,7 @@ def set_shared_status(*args, progress, shared_data):
     }
 
 
+@pytest.mark.integration_test
 def test_certificate_generation(copy_math_func_test_data_to_tmp):
     config = EverestConfig.load_file("config_minimal.yml")
     cert, key, pw = everserver._generate_certificate(
@@ -194,6 +196,7 @@ def test_everserver_status_exception(
     assert "Exception: Failed optimization" in status["message"]
 
 
+@pytest.mark.integration_test
 @patch("sys.argv", ["name", "--config-file", "config_minimal.yml"])
 @patch(
     "everest.detached.jobs.everserver._sim_monitor",
@@ -223,6 +226,7 @@ def test_everserver_status_max_batch_num(
     assert {data.batch for data in snapshot.simulation_data} == {0}
 
 
+@pytest.mark.integration_test
 @patch("sys.argv", ["name", "--config-file", "config_minimal.yml"])
 def test_everserver_status_contains_max_runtime_failure(
     mock_server, change_to_tmpdir, min_config

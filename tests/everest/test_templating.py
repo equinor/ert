@@ -94,6 +94,7 @@ def test_render_multiple_input(copy_template_test_data_to_tmp):
     assert output == ["0.2 vs 0.8"]
 
 
+@pytest.mark.integration_test
 def test_render_executable(copy_template_test_data_to_tmp):
     assert os.access(everest.jobs.render, os.X_OK)
 

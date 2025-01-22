@@ -77,6 +77,7 @@ def test_api_snapshots(config_file, snapshot, cached_example):
     snapshot.assert_match(snapshot_str, "snapshot.json")
 
 
+@pytest.mark.integration_test
 @pytest.mark.parametrize(
     "config_file",
     ["config_advanced.yml", "config_minimal.yml", "config_multiobj.yml"],

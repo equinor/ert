@@ -246,6 +246,7 @@ def test_control_ref_validation(min_config):
     EverestConfig(**min_config)
 
 
+@pytest.mark.integration_test
 def test_init_context_controls():
     test_configs = [
         "test_data/mocked_test_case/config_input_constraints.yml",
