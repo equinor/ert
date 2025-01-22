@@ -1,4 +1,3 @@
-import functools
 from contextlib import ExitStack as does_not_raise
 from unittest.mock import patch
 
@@ -7,13 +6,11 @@ import polars
 import pytest
 import xarray as xr
 import xtgeo
-from iterative_ensemble_smoother import steplength_exponential
 from tabulate import tabulate
 
 from ert.analysis import (
     ErtAnalysisError,
     ObservationStatus,
-    iterative_smoother_update,
     smoother_update,
 )
 from ert.analysis._es_update import (
@@ -24,7 +21,7 @@ from ert.analysis._es_update import (
 from ert.analysis.event import AnalysisCompleteEvent, AnalysisErrorEvent
 from ert.config import Field, GenDataConfig, GenKwConfig
 from ert.config.analysis_config import UpdateSettings
-from ert.config.analysis_module import ESSettings, IESSettings
+from ert.config.analysis_module import ESSettings
 from ert.config.gen_kw_config import TransformFunctionDefinition
 from ert.field_utils import Shape
 from ert.storage import open_storage
@@ -435,51 +432,26 @@ def test_update_raises_on_singular_matrix(tmp_path):
             )
 
 
-@pytest.mark.parametrize(
-    "module, expected_gen_kw",
-    [
-        (
-            "IES_ENKF",
-            [
-                0.6038000995616932,
-                -0.8995579663087738,
-                -0.650440718033405,
-                -0.11664520562571357,
-                0.14637004546145008,
-                0.06369104020984925,
-                -1.5673340724477953,
-                0.2045320804879709,
-                -0.8182935847537811,
-                0.7551499933992224,
-            ],
-        ),
-        (
-            "STD_ENKF",
-            [
-                1.7365584618531105,
-                -0.819068074727709,
-                -1.6628460358849138,
-                -1.269803440396085,
-                -0.06688718485326725,
-                0.5544021609832737,
-                -2.904293766981197,
-                1.6866443742416257,
-                -1.6783511959093573,
-                1.3081213916230614,
-            ],
-        ),
-    ],
-)
 def test_update_snapshot(
     snake_oil_case_storage,
     snake_oil_storage,
-    module,
-    expected_gen_kw,
 ):
     """
     Note that this is now a snapshot test, so there is no guarantee that the
     snapshots are correct, they are just documenting the current behavior.
     """
+    expected_gen_kw = [
+        1.7365584618531105,
+        -0.819068074727709,
+        -1.6628460358849138,
+        -1.269803440396085,
+        -0.06688718485326725,
+        0.5544021609832737,
+        -2.904293766981197,
+        1.6866443742416257,
+        -1.6783511959093573,
+        1.3081213916230614,
+    ]
     ert_config = snake_oil_case_storage
 
     # Making sure that row scaling with a row scaling factor of 1.0
@@ -498,39 +470,15 @@ def test_update_snapshot(
     # Make sure we always have the same seed in updates
     rng = np.random.default_rng(42)
 
-    if module == "IES_ENKF":
-        # Step length defined as a callable on sies-iterations
-        sies_step_length = functools.partial(steplength_exponential)
-
-        # The sies-smoother is initially optional
-        sies_smoother = None
-
-        # The initial_mask equals ens_mask on first iteration
-        initial_mask = prior_ens.get_realization_mask_with_responses()
-
-        # Call an iteration of SIES algorithm. Producing snapshot and SIES obj
-        iterative_smoother_update(
-            prior_storage=prior_ens,
-            posterior_storage=posterior_ens,
-            sies_smoother=sies_smoother,
-            observations=experiment.observation_keys,
-            parameters=list(ert_config.ensemble_config.parameters),
-            update_settings=UpdateSettings(),
-            analysis_config=IESSettings(inversion="subspace_exact"),
-            sies_step_length=sies_step_length,
-            initial_mask=initial_mask,
-            rng=rng,
-        )
-    else:
-        smoother_update(
-            prior_ens,
-            posterior_ens,
-            experiment.observation_keys,
-            list(ert_config.ensemble_config.parameters),
-            UpdateSettings(),
-            ESSettings(inversion="subspace"),
-            rng=rng,
-        )
+    smoother_update(
+        prior_ens,
+        posterior_ens,
+        experiment.observation_keys,
+        list(ert_config.ensemble_config.parameters),
+        UpdateSettings(),
+        ESSettings(inversion="subspace"),
+        rng=rng,
+    )
 
     sim_gen_kw = list(
         prior_ens.load_parameters("SNAKE_OIL_PARAM", 0)["values"].values.flatten()
@@ -645,26 +593,15 @@ def test_smoother_snapshot_alpha(
         prior_ensemble=prior_storage,
     )
 
-    # Step length defined as a callable on sies-iterations
-    sies_step_length = functools.partial(steplength_exponential)
-
-    # The sies-smoother is initially optional
-    sies_smoother = None
-
-    # The initial_mask equals ens_mask on first iteration
-    initial_mask = prior_storage.get_realization_mask_with_responses()
-
     with expectation:
-        result_snapshot, _ = iterative_smoother_update(
-            prior_storage=prior_storage,
-            posterior_storage=posterior_storage,
-            sies_smoother=sies_smoother,
+        result_snapshot = smoother_update(
+            prior_storage,
+            posterior_storage,
             observations=["OBSERVATION"],
             parameters=["PARAMETER"],
             update_settings=UpdateSettings(alpha=alpha),
-            analysis_config=IESSettings(),
-            sies_step_length=sies_step_length,
-            initial_mask=initial_mask,
+            es_settings=ESSettings(inversion="subspace"),
+            rng=rng,
         )
         assert result_snapshot.alpha == alpha
         assert [

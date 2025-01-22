@@ -21,7 +21,6 @@ from resdata.summary import Summary
 import _ert.threading
 import ert.shared
 from _ert.forward_model_runner.client import Client
-from ert import LibresFacade
 from ert.cli.main import ErtCliError
 from ert.config import ConfigValidationError, ErtConfig
 from ert.enkf_main import sample_prior
@@ -30,7 +29,6 @@ from ert.mode_definitions import (
     ENSEMBLE_EXPERIMENT_MODE,
     ENSEMBLE_SMOOTHER_MODE,
     ES_MDA_MODE,
-    ITERATIVE_ENSEMBLE_SMOOTHER_MODE,
     TEST_RUN_MODE,
 )
 from ert.scheduler.job import Job
@@ -57,7 +55,6 @@ def test_test_run_on_lsf_configuration_works_with_no_errors(tmp_path):
     "mode",
     [
         pytest.param(ENSEMBLE_SMOOTHER_MODE),
-        pytest.param(ITERATIVE_ENSEMBLE_SMOOTHER_MODE),
         pytest.param(ES_MDA_MODE),
     ],
 )
@@ -175,7 +172,6 @@ def test_unopenable_observation_config_fails_gracefully():
     "mode",
     [
         pytest.param(ENSEMBLE_SMOOTHER_MODE),
-        pytest.param(ITERATIVE_ENSEMBLE_SMOOTHER_MODE),
         pytest.param(ES_MDA_MODE),
     ],
 )
@@ -573,11 +569,6 @@ def test_es_mda(snapshot):
         pytest.param(
             ENSEMBLE_SMOOTHER_MODE, "target_%d", id=f"{ENSEMBLE_SMOOTHER_MODE}"
         ),
-        pytest.param(
-            ITERATIVE_ENSEMBLE_SMOOTHER_MODE,
-            "iter-%d",
-            id=f"{ITERATIVE_ENSEMBLE_SMOOTHER_MODE}",
-        ),
         pytest.param(ES_MDA_MODE, "iter-%d", id=f"{ES_MDA_MODE}"),
     ],
 )
@@ -614,76 +605,6 @@ def test_cli_test_run(mock_cli_run):
     monitor_mock.assert_called_once()
     thread_join_mock.assert_called_once()
     thread_start_mock.assert_has_calls([[call(), call()]])
-
-
-@pytest.mark.usefixtures("copy_poly_case")
-def test_that_running_ies_with_different_steplength_produces_different_result():
-    """This is a regression test to make sure that different step-lengths
-    give different results when running SIES.
-    """
-
-    def _run(target, experiment_name):
-        run_cli(
-            ITERATIVE_ENSEMBLE_SMOOTHER_MODE,
-            "--disable-monitoring",
-            "--target-ensemble",
-            f"{target}-%d",
-            "--realizations",
-            "1,2,4,8",
-            "poly.ert",
-            "--num-iterations",
-            "1",
-            "--experiment-name",
-            experiment_name,
-        )
-        facade = LibresFacade.from_config_file("poly.ert")
-        with open_storage(facade.enspath) as storage:
-            experiment = storage.get_experiment_by_name(experiment_name)
-            iter_0_fs = experiment.get_ensemble_by_name(f"{target}-0")
-            df_iter_0 = iter_0_fs.load_all_gen_kw_data()
-            iter_1_fs = experiment.get_ensemble_by_name(f"{target}-1")
-            df_iter_1 = iter_1_fs.load_all_gen_kw_data()
-
-            result = pd.concat(
-                [df_iter_0, df_iter_1],
-                keys=["iter-0", "iter-1"],
-            )
-            return result
-
-    # Run SIES with step-lengths defined
-    with open("poly.ert", mode="a", encoding="utf-8") as fh:
-        fh.write(
-            dedent(
-                """
-            RANDOM_SEED 123456
-            ANALYSIS_SET_VAR IES_ENKF IES_MAX_STEPLENGTH 0.5
-            ANALYSIS_SET_VAR IES_ENKF IES_MIN_STEPLENGTH 0.2
-            ANALYSIS_SET_VAR IES_ENKF IES_DEC_STEPLENGTH 2.5
-            """
-            )
-        )
-
-    result_1 = _run("target_result_1", experiment_name="ies-1")
-
-    # Run SIES with different step-lengths defined
-    with open("poly.ert", mode="a", encoding="utf-8") as fh:
-        fh.write(
-            dedent(
-                """
-            ANALYSIS_SET_VAR IES_ENKF IES_MAX_STEPLENGTH 0.6
-            ANALYSIS_SET_VAR IES_ENKF IES_MIN_STEPLENGTH 0.3
-            ANALYSIS_SET_VAR IES_ENKF IES_DEC_STEPLENGTH 2.0
-            """
-            )
-        )
-
-    result_2 = _run("target_result_2", experiment_name="ies-2")
-
-    # Prior should be the same
-    assert result_1.loc["iter-0"].equals(result_2.loc["iter-0"])
-
-    # Posterior should be different
-    assert not np.isclose(result_1.loc["iter-1"], result_2.loc["iter-1"]).all()
 
 
 @pytest.mark.usefixtures("copy_poly_case")

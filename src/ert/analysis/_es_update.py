@@ -22,7 +22,7 @@ from iterative_ensemble_smoother.experimental import AdaptiveESMDA
 from ert.config import GenKwConfig
 
 from ..config.analysis_config import ObservationGroups, UpdateSettings
-from ..config.analysis_module import BaseSettings, ESSettings, IESSettings
+from ..config.analysis_module import ESSettings
 from . import misfit_preprocessor
 from .event import (
     AnalysisCompleteEvent,
@@ -629,123 +629,6 @@ def analysis_ES(
         )
 
 
-def analysis_IES(
-    parameters: Iterable[str],
-    observations: Iterable[str],
-    rng: np.random.Generator,
-    analysis_config: IESSettings,
-    alpha: float,
-    std_cutoff: float,
-    smoother_snapshot: SmootherSnapshot,
-    ens_mask: npt.NDArray[np.bool_],
-    source_ensemble: Ensemble,
-    target_ensemble: Ensemble,
-    sies_smoother: ies.SIES | None,
-    progress_callback: Callable[[AnalysisEvent], None],
-    auto_scale_observations: list[ObservationGroups],
-    sies_step_length: Callable[[int], float],
-    initial_mask: npt.NDArray[np.bool_],
-) -> ies.SIES:
-    iens_active_index = np.flatnonzero(ens_mask)
-    # Pick out realizations that were among the initials that are still living
-    # Example: initial_mask=[1,1,1,0,1], ens_mask=[0,1,1,0,1]
-    # Then the result is [0,1,1,1]
-    # This is needed for the SIES library
-    masking_of_initial_parameters = ens_mask[initial_mask]
-
-    progress_callback(AnalysisStatusEvent(msg="Loading observations and responses.."))
-
-    (
-        S,
-        (
-            observation_values,
-            observation_errors,
-            update_snapshot,
-        ),
-    ) = _load_observations_and_responses(
-        source_ensemble,
-        alpha,
-        std_cutoff,
-        1.0,
-        iens_active_index,
-        observations,
-        auto_scale_observations,
-        progress_callback,
-    )
-
-    smoother_snapshot.update_step_snapshots = update_snapshot
-    if len(observation_values) == 0:
-        msg = "No active observations for update step"
-        progress_callback(
-            AnalysisErrorEvent(
-                error_msg=msg,
-                data=DataSection(
-                    header=smoother_snapshot.header,
-                    data=smoother_snapshot.csv,
-                    extra=smoother_snapshot.extra,
-                ),
-            )
-        )
-        raise ErtAnalysisError(msg)
-
-    # if the algorithm object is not passed, initialize it
-    if sies_smoother is None:
-        # The sies smoother must be initialized with the full parameter ensemble
-        # Get relevant active realizations
-        parameter_ensemble_active = _all_parameters(source_ensemble, iens_active_index)
-        sies_smoother = ies.SIES(
-            parameters=parameter_ensemble_active,
-            covariance=observation_errors**2,
-            observations=observation_values,
-            seed=rng,
-            inversion=analysis_config.inversion,
-            truncation=analysis_config.enkf_truncation,
-        )
-
-        # Keep track of iterations to calculate step-lengths
-        sies_smoother.iteration = 1
-
-    # Calculate step-lengths to scale SIES iteration
-    step_length = sies_step_length(sies_smoother.iteration)
-
-    # Propose a transition matrix using only active realizations
-    proposed_W = sies_smoother.propose_W_masked(
-        S, ensemble_mask=masking_of_initial_parameters, step_length=step_length
-    )
-
-    # Store transition matrix for later use on sies object
-    sies_smoother.W[:, masking_of_initial_parameters] = proposed_W
-
-    for param_group in parameters:
-        param_ensemble_array = _load_param_ensemble_array(
-            source_ensemble, param_group, iens_active_index
-        )
-        param_ensemble_array += (
-            param_ensemble_array @ sies_smoother.W / np.sqrt(len(iens_active_index) - 1)
-        )
-
-        progress_callback(AnalysisStatusEvent(msg=f"Storing data for {param_group}.."))
-        _save_param_ensemble_array_to_disk(
-            target_ensemble, param_ensemble_array, param_group, iens_active_index
-        )
-
-    _copy_unupdated_parameters(
-        list(source_ensemble.experiment.parameter_configuration.keys()),
-        parameters,
-        iens_active_index,
-        source_ensemble,
-        target_ensemble,
-    )
-
-    assert sies_smoother is not None, "sies_smoother should be initialized"
-
-    # Increment the iteration number
-    sies_smoother.iteration += 1
-
-    # Return the sies smoother so it may be iterated over
-    return sies_smoother
-
-
 def _create_smoother_snapshot(
     prior_name: str,
     posterior_name: str,
@@ -768,7 +651,7 @@ def smoother_update(
     observations: Iterable[str],
     parameters: Iterable[str],
     update_settings: UpdateSettings,
-    es_settings: BaseSettings,
+    es_settings: ESSettings,
     rng: np.random.Generator | None = None,
     progress_callback: Callable[[AnalysisEvent], None] | None = None,
     global_scaling: float = 1.0,
@@ -777,8 +660,6 @@ def smoother_update(
         progress_callback = noop_progress_callback
     if rng is None:
         rng = np.random.default_rng()
-
-    assert isinstance(es_settings, ESSettings)
 
     ens_mask = prior_storage.get_realization_mask_with_responses()
 
@@ -827,73 +708,3 @@ def smoother_update(
         )
     )
     return smoother_snapshot
-
-
-def iterative_smoother_update(
-    prior_storage: Ensemble,
-    posterior_storage: Ensemble,
-    sies_smoother: ies.SIES | None,
-    parameters: Iterable[str],
-    observations: Iterable[str],
-    update_settings: UpdateSettings,
-    analysis_config: IESSettings,
-    sies_step_length: Callable[[int], float],
-    initial_mask: npt.NDArray[np.bool_],
-    rng: np.random.Generator | None = None,
-    progress_callback: Callable[[AnalysisEvent], None] | None = None,
-    global_scaling: float = 1.0,
-) -> tuple[SmootherSnapshot, ies.SIES]:
-    if not progress_callback:
-        progress_callback = noop_progress_callback
-    if rng is None:
-        rng = np.random.default_rng()
-
-    ens_mask = prior_storage.get_realization_mask_with_responses()
-
-    smoother_snapshot = _create_smoother_snapshot(
-        prior_storage.name,
-        posterior_storage.name,
-        update_settings,
-        global_scaling,
-    )
-
-    try:
-        sies_smoother = analysis_IES(
-            parameters=parameters,
-            observations=observations,
-            rng=rng,
-            analysis_config=analysis_config,
-            alpha=update_settings.alpha,
-            std_cutoff=update_settings.std_cutoff,
-            smoother_snapshot=smoother_snapshot,
-            ens_mask=ens_mask,
-            source_ensemble=prior_storage,
-            target_ensemble=posterior_storage,
-            sies_smoother=sies_smoother,
-            progress_callback=progress_callback,
-            auto_scale_observations=update_settings.auto_scale_observations,
-            sies_step_length=sies_step_length,
-            initial_mask=initial_mask,
-        )
-    except Exception as e:
-        progress_callback(
-            AnalysisErrorEvent(
-                error_msg=str(e),
-                data=DataSection(
-                    header=smoother_snapshot.header,
-                    data=smoother_snapshot.csv,
-                    extra=smoother_snapshot.extra,
-                ),
-            )
-        )
-        raise e
-    progress_callback(
-        AnalysisCompleteEvent(
-            data=DataSection(
-                header=smoother_snapshot.header,
-                data=smoother_snapshot.csv,
-                extra=smoother_snapshot.extra,
-            )
-        )
-    )
-    return smoother_snapshot, sies_smoother

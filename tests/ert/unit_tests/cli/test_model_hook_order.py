@@ -1,5 +1,5 @@
 import uuid
-from unittest.mock import ANY, MagicMock, PropertyMock, call, patch
+from unittest.mock import ANY, MagicMock, call
 
 import pytest
 
@@ -7,11 +7,9 @@ from ert.config import HookRuntime
 from ert.run_models import (
     BaseRunModel,
     EnsembleSmoother,
-    IteratedEnsembleSmoother,
     MultipleDataAssimilation,
     base_run_model,
     ensemble_smoother,
-    iterated_ensemble_smoother,
     multiple_data_assimilation,
 )
 
@@ -95,43 +93,5 @@ def test_hook_call_order_es_mda(monkeypatch):
     test_class.restart_run = False
     test_class.run_ensemble_evaluator = MagicMock(return_value=[0])
     test_class.run_experiment(MagicMock())
-
-    assert run_wfs_mock.mock_calls == EXPECTED_CALL_ORDER
-
-
-@pytest.mark.usefixtures("patch_base_run_model")
-def test_hook_call_order_iterative_ensemble_smoother(monkeypatch):
-    """
-    The goal of this test is to assert that the hook call order is the same
-    across different models.
-    """
-    run_wfs_mock = MagicMock()
-    monkeypatch.setattr(iterated_ensemble_smoother, "sample_prior", MagicMock())
-    monkeypatch.setattr(base_run_model, "_seed_sequence", MagicMock(return_value=0))
-    monkeypatch.setattr(base_run_model.BaseRunModel, "run_workflows", run_wfs_mock)
-
-    ens_mock = MagicMock()
-    ens_mock.iteration = 2
-    ens_mock.id = uuid.uuid1()
-    storage_mock = MagicMock()
-    storage_mock.create_ensemble.return_value = ens_mock
-
-    test_class = IteratedEnsembleSmoother(*[MagicMock()] * 13)
-    test_class.run_ensemble_evaluator = MagicMock(return_value=[0])
-    test_class._storage = storage_mock
-    # Mock the return values of iterative_smoother_update
-    # Mock the iteration property of IteratedEnsembleSmoother
-    with (
-        patch(
-            "ert.run_models.iterated_ensemble_smoother.iterative_smoother_update",
-            MagicMock(return_value=(MagicMock(), MagicMock())),
-        ),
-        patch(
-            "ert.run_models.iterated_ensemble_smoother.IteratedEnsembleSmoother.sies_iteration",
-            new_callable=PropertyMock,
-        ) as mock_iteration,
-    ):
-        mock_iteration.return_value = 2
-        test_class.run_experiment(MagicMock())
 
     assert run_wfs_mock.mock_calls == EXPECTED_CALL_ORDER

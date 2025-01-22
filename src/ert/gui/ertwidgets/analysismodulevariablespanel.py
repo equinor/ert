@@ -19,9 +19,7 @@ from qtpy.QtWidgets import (
 
 from ert.config.analysis_module import (
     AnalysisModule,
-    IESSettings,
     InversionTypeES,
-    InversionTypeIES,
 )
 
 
@@ -37,43 +35,8 @@ class AnalysisModuleVariablesPanel(QWidget):
 
         self.blockSignals(True)
 
-        layout.addRow(
-            QLabel(
-                "AnalysisModule: STD_ENKF"
-                if type(analysis_module) != IESSettings
-                else "AnalysisModule: IES_ENKF"
-            )
-        )
+        layout.addRow(QLabel("AnalysisModule: STD_ENKF"))
         layout.addRow(self.create_horizontal_line())
-
-        if isinstance(analysis_module, IESSettings):
-            for variable_name in (
-                name for name in analysis_module.model_fields if "steplength" in name
-            ):
-                metadata = analysis_module.model_fields[variable_name]
-                layout.addRow(
-                    metadata.title,
-                    self.createDoubleSpinBox(
-                        variable_name,
-                        analysis_module.__getattribute__(variable_name),
-                        cast(
-                            float,
-                            next(v for v in metadata.metadata if isinstance(v, Ge)).ge,
-                        ),
-                        cast(
-                            float,
-                            next(v for v in metadata.metadata if isinstance(v, Le)).le,
-                        ),
-                        0.1,
-                    ),
-                )
-
-            lab = QLabel(analysis_module.__doc__)
-            lab.setStyleSheet("font-style: italic; font-size: 10pt; font-weight: 300")
-            layout.addRow(lab)
-
-            layout.addRow(self.create_horizontal_line())
-
         layout.addRow(QLabel("Inversion Algorithm"))
         dropdown = QComboBox(self)
         options = analysis_module.model_fields["inversion"]
@@ -99,53 +62,48 @@ class AnalysisModuleVariablesPanel(QWidget):
         self.truncation_spinner.setEnabled(False)
         layout.addRow("Singular value truncation", self.truncation_spinner)
 
-        if not isinstance(analysis_module, IESSettings):
-            layout.addRow(self.create_horizontal_line())
-            layout.addRow(QLabel("[EXPERIMENTAL]"))
+        layout.addRow(self.create_horizontal_line())
+        layout.addRow(QLabel("[EXPERIMENTAL]"))
 
-            localization_frame = QFrame()
-            localization_frame.setLayout(QHBoxLayout())
-            lf_layout = cast(QLayout, localization_frame.layout())
-            lf_layout.setContentsMargins(0, 0, 0, 0)
+        localization_frame = QFrame()
+        localization_frame.setLayout(QHBoxLayout())
+        lf_layout = cast(QLayout, localization_frame.layout())
+        lf_layout.setContentsMargins(0, 0, 0, 0)
 
-            metadata = analysis_module.model_fields[
-                "localization_correlation_threshold"
-            ]
-            local_checkbox = QCheckBox(metadata.title)
-            local_checkbox.setObjectName("localization")
-            local_checkbox.clicked.connect(
-                partial(
-                    self.valueChanged,
-                    "localization",
-                    bool,
-                    local_checkbox,
-                )
+        metadata = analysis_module.model_fields["localization_correlation_threshold"]
+        local_checkbox = QCheckBox(metadata.title)
+        local_checkbox.setObjectName("localization")
+        local_checkbox.clicked.connect(
+            partial(
+                self.valueChanged,
+                "localization",
+                bool,
+                local_checkbox,
             )
-            var_name = "localization_correlation_threshold"
-            metadata = analysis_module.model_fields[var_name]
-            self.local_spinner = self.createDoubleSpinBox(
-                var_name,
-                analysis_module.correlation_threshold(ensemble_size),
-                cast(float, next(v for v in metadata.metadata if isinstance(v, Ge)).ge),
-                cast(float, next(v for v in metadata.metadata if isinstance(v, Le)).le),
-                0.1,
-            )
-            self.local_spinner.setObjectName("localization_threshold")
-            self.local_spinner.setEnabled(local_checkbox.isChecked())
+        )
+        var_name = "localization_correlation_threshold"
+        metadata = analysis_module.model_fields[var_name]
+        self.local_spinner = self.createDoubleSpinBox(
+            var_name,
+            analysis_module.correlation_threshold(ensemble_size),
+            cast(float, next(v for v in metadata.metadata if isinstance(v, Ge)).ge),
+            cast(float, next(v for v in metadata.metadata if isinstance(v, Le)).le),
+            0.1,
+        )
+        self.local_spinner.setObjectName("localization_threshold")
+        self.local_spinner.setEnabled(local_checkbox.isChecked())
 
-            lf_layout.addWidget(local_checkbox)
-            lf_layout.addWidget(self.local_spinner)
-            layout.addRow(localization_frame)
+        lf_layout.addWidget(local_checkbox)
+        lf_layout.addWidget(self.local_spinner)
+        layout.addRow(localization_frame)
 
-            local_checkbox.stateChanged.connect(self.local_spinner.setEnabled)
-            local_checkbox.setChecked(analysis_module.localization)
+        local_checkbox.stateChanged.connect(self.local_spinner.setEnabled)
+        local_checkbox.setChecked(analysis_module.localization)
 
         self.setLayout(layout)
         self.blockSignals(False)
 
-    def update_inversion_algorithm(
-        self, text: InversionTypeES | InversionTypeIES
-    ) -> None:
+    def update_inversion_algorithm(self, text: InversionTypeES) -> None:
         self.truncation_spinner.setEnabled(
             not any(val in text.lower() for val in ["direct", "exact"])
         )

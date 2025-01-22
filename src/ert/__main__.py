@@ -28,7 +28,6 @@ from ert.mode_definitions import (
     ENSEMBLE_EXPERIMENT_MODE,
     ENSEMBLE_SMOOTHER_MODE,
     ES_MDA_MODE,
-    ITERATIVE_ENSEMBLE_SMOOTHER_MODE,
     TEST_RUN_MODE,
     WORKFLOW_MODE,
 )
@@ -421,73 +420,6 @@ def get_ert_parser(parser: ArgumentParser | None = None) -> ArgumentParser:
         help="Name of the experiment",
     )
 
-    # iterative_ensemble_smoother_parser
-    iterative_ensemble_smoother_description = (
-        "Run experiments in cli while performing updates"
-        " on the parameters using the iterative ensemble smoother algorithm."
-    )
-    iterative_ensemble_smoother_parser = subparsers.add_parser(
-        ITERATIVE_ENSEMBLE_SMOOTHER_MODE,
-        description=iterative_ensemble_smoother_description,
-        help=iterative_ensemble_smoother_description,
-    )
-    iterative_ensemble_smoother_parser.add_argument(
-        "--current-case",
-        type=valid_name,
-        default="default",
-        action=DeprecatedAction,
-        alternative_option="--current-ensemble",
-        dest="current_ensemble",
-        help="Deprecated: This argument is deprecated and will be "
-        "removed in future versions. Use --current-ensemble instead.",
-    )
-    iterative_ensemble_smoother_parser.add_argument(
-        "--current-ensemble",
-        type=valid_name,
-        default="default",
-        help="Name of the ensemble where the results for the experiment "
-        "using the prior parameters will be stored.",
-    )
-    iterative_ensemble_smoother_parser.add_argument(
-        "--target-case",
-        type=valid_name_format,
-        default="iter-%d",
-        action=DeprecatedAction,
-        dest="target_ensemble",
-        alternative_option="--target--ensemble",
-        help="Deprecated: This argument is deprecated and will be "
-        "removed in future versions. Use --target-ensemble instead.",
-    )
-    iterative_ensemble_smoother_parser.add_argument(
-        "--target-ensemble",
-        type=valid_name_format,
-        default="iter-%d",
-        help="The iterative ensemble smoother creates multiple ensembles for the different "
-        "iterations. The ensemble names will follow the specified format. "
-        "For example, 'Target ensemble format: iter_%%d' will generate "
-        "ensembles with the names iter_0, iter_1, iter_2, iter_3, ....",
-    )
-    iterative_ensemble_smoother_parser.add_argument(
-        "--realizations",
-        type=valid_realizations,
-        help="These are the realizations that will be used to perform experiments."
-        "For example, if 'Number of realizations:50 and active realizations are 0-9', "
-        "then only realizations 0,1,2,3,...,9 will be used to perform experiments "
-        "while realizations 10,11, 12,...,49 will be excluded.",
-    )
-    iterative_ensemble_smoother_parser.add_argument(
-        "--num-iterations",
-        type=valid_num_iterations,
-        required=False,
-        help="The number of iterations to run.",
-    )
-    iterative_ensemble_smoother_parser.add_argument(
-        "--experiment-name",
-        type=str,
-        default="ies",
-        help="Name of the experiment",
-    )
-
     # es_mda_parser
     es_mda_description = f"Run '{ES_MDA_MODE}' in cli"
     es_mda_parser = subparsers.add_parser(
@@ -574,7 +506,6 @@ def get_ert_parser(parser: ArgumentParser | None = None) -> ArgumentParser:
         test_run_parser,
         ensemble_experiment_parser,
         ensemble_smoother_parser,
-        iterative_ensemble_smoother_parser,
         es_mda_parser,
         workflow_parser,
     ]:

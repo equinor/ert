@@ -9,7 +9,6 @@ from ert.mode_definitions import (
     ENSEMBLE_EXPERIMENT_MODE,
     ENSEMBLE_SMOOTHER_MODE,
     ES_MDA_MODE,
-    ITERATIVE_ENSEMBLE_SMOOTHER_MODE,
     TEST_RUN_MODE,
     WORKFLOW_MODE,
 )
@@ -96,20 +95,17 @@ def test_argparse_exec_ensemble_experiment_faulty_realizations():
         )
 
 
-@pytest.mark.parametrize(
-    "mode", [ITERATIVE_ENSEMBLE_SMOOTHER_MODE, ENSEMBLE_SMOOTHER_MODE]
-)
-def test_argparse_exec_smoother_valid_ensemble(mode):
+def test_argparse_exec_smoother_valid_ensemble():
     parsed = ert_parser(
         None,
         [
-            mode,
+            ENSEMBLE_SMOOTHER_MODE,
             "--target-ensemble",
             "some_ensemble_%d",
             "path/to/config.ert",
         ],
     )
-    assert parsed.mode == mode
+    assert parsed.mode == ENSEMBLE_SMOOTHER_MODE
     assert parsed.target_ensemble == "some_ensemble_%d"
     assert parsed.func.__name__ == "run_cli"
 
@@ -155,23 +151,6 @@ def test_argparse_exec_workflow():
     parsed = ert_parser(None, [WORKFLOW_MODE, "workflow_name", "path/to/config.ert"])
     assert parsed.mode == WORKFLOW_MODE
     assert parsed.name == "workflow_name"
-    assert parsed.func.__name__ == "run_cli"
-
-
-def test_argparse_exec_iterative_ensemble_smoother_current_ensemble():
-    parsed = ert_parser(
-        None,
-        [
-            ITERATIVE_ENSEMBLE_SMOOTHER_MODE,
-            "--current-ensemble",
-            "test_ensemble",
-            "--target-ensemble",
-            "test_ensemble_smoother_%d",
-            "path/to/config.ert",
-        ],
-    )
-    assert parsed.mode == ITERATIVE_ENSEMBLE_SMOOTHER_MODE
-    assert parsed.current_ensemble == "test_ensemble"
     assert parsed.func.__name__ == "run_cli"
 
 

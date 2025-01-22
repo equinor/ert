@@ -43,15 +43,6 @@ Ensemble Smoother
    :prog: ert
    :path: ensemble_smoother
 
-Iterative Ensemble Smoother
-~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-.. argparse::
-   :module: ert.__main__
-   :func: get_ert_parser
-   :prog: ert
-   :path: iterative_ensemble_smoother
-    
 ES MDA
 ~~~~~~
 
