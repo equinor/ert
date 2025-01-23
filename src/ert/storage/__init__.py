@@ -27,8 +27,7 @@ EnsembleReader = LocalEnsemble
 EnsembleAccessor = LocalEnsemble
 
 
-class ErtStorageException(Exception):
-    pass
+from ert.storage.local_experiment import ErtStorageException
 
 
 def open_storage(

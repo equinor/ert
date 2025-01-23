@@ -149,6 +149,7 @@ class Job:
         self,
         sem: asyncio.BoundedSemaphore,
         forward_model_ok_lock: asyncio.Lock,
+        forward_model_ok_permanent_error_future: asyncio.Future[str],
         checksum_lock: asyncio.Lock,
         max_submit: int = 1,
     ) -> None:
@@ -165,7 +166,9 @@ class Job:
                 if self._scheduler._manifest_queue is not None:
                     await self._verify_checksum(checksum_lock)
                 async with forward_model_ok_lock:
-                    await self._handle_finished_forward_model()
+                    await self._handle_finished_forward_model(
+                        forward_model_ok_permanent_error_future
+                    )
                 break
 
             if attempt < max_submit - 1:
@@ -245,12 +248,15 @@ class Job:
                 else:
                     logger.error(f"Disk synchronization failed for {file_path}")
 
-    async def _handle_finished_forward_model(self) -> None:
+    async def _handle_finished_forward_model(
+        self, forward_model_ok_permanent_error_future: asyncio.Future[str]
+    ) -> None:
         callback_status, status_msg = await forward_model_ok(
             run_path=self.real.run_arg.runpath,
             realization=self.real.run_arg.iens,
             iter=self.real.run_arg.itr,
             ensemble=self.real.run_arg.ensemble_storage,
+            forward_model_ok_permanent_error_future=forward_model_ok_permanent_error_future,
         )
         if self._message:
             self._message = status_msg

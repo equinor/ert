@@ -254,6 +254,7 @@ class Scheduler:
         # this lock is to assure that no more than 1 task
         # does internalization at a time
         forward_model_ok_lock = asyncio.Lock()
+        forward_model_ok_permanent_error_future: asyncio.Future[str] = asyncio.Future()
         verify_checksum_lock = asyncio.Lock()
         for iens, job in self._jobs.items():
             await asyncio.sleep(0)
@@ -262,6 +263,7 @@ class Scheduler:
                     job.run(
                         sem,
                         forward_model_ok_lock,
+                        forward_model_ok_permanent_error_future,
                         verify_checksum_lock,
                         self._max_submit,
                     ),

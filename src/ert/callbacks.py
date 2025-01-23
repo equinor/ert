@@ -6,7 +6,7 @@ import time
 from pathlib import Path
 
 from ert.config import InvalidResponseFile
-from ert.storage import Ensemble
+from ert.storage import Ensemble, ErtStorageException
 from ert.storage.realization_storage_state import RealizationStorageState
 
 from .load_status import LoadResult, LoadStatus
@@ -96,36 +96,49 @@ async def forward_model_ok(
     realization: int,
     iter: int,
     ensemble: Ensemble,
+    forward_model_ok_permanent_error_future: asyncio.Future[str] | None = None,
 ) -> LoadResult:
     parameters_result = LoadResult(LoadStatus.LOAD_SUCCESSFUL, "")
     response_result = LoadResult(LoadStatus.LOAD_SUCCESSFUL, "")
-    try:
-        # We only read parameters after the prior, after that, ERT
-        # handles parameters
-        if iter == 0:
-            parameters_result = await _read_parameters(
-                run_path,
-                realization,
-                iter,
-                ensemble,
-            )
-
-        if parameters_result.status == LoadStatus.LOAD_SUCCESSFUL:
-            response_result = await _write_responses_to_storage(
-                run_path,
-                realization,
-                ensemble,
-            )
-
-    except Exception as err:
-        logger.exception(
-            f"Failed to load results for realization {realization}",
-            exc_info=err,
-        )
+    if forward_model_ok_permanent_error_future is None:
+        forward_model_ok_permanent_error_future = asyncio.Future()
+    if (
+        forward_model_ok_permanent_error_future.done()
+        and forward_model_ok_permanent_error_future.exception()
+    ):
         parameters_result = LoadResult(
             LoadStatus.LOAD_FAILURE,
-            f"Failed to load results for realization {realization}, failed with: {err}",
+            f"Failed to load results for realization {realization}, failed with: {forward_model_ok_permanent_error_future.exception()}",
         )
+    else:
+        try:
+            # We only read parameters after the prior, after that, ERT
+            # handles parameters
+            if iter == 0:
+                parameters_result = await _read_parameters(
+                    run_path,
+                    realization,
+                    iter,
+                    ensemble,
+                )
+
+            if parameters_result.status == LoadStatus.LOAD_SUCCESSFUL:
+                response_result = await _write_responses_to_storage(
+                    run_path,
+                    realization,
+                    ensemble,
+                )
+        except Exception as err:
+            if isinstance(err, ErtStorageException):
+                forward_model_ok_permanent_error_future.set_exception(err)
+            logger.exception(
+                f"Failed to load results for realization {realization}",
+                exc_info=err,
+            )
+            parameters_result = LoadResult(
+                LoadStatus.LOAD_FAILURE,
+                f"Failed to load results for realization {realization}, failed with: {err}",
+            )
 
     final_result = parameters_result
     if response_result.status != LoadStatus.LOAD_SUCCESSFUL:

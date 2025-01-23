@@ -17,6 +17,7 @@ from pydantic import BaseModel
 from typing_extensions import deprecated
 
 from ert.config.gen_kw_config import GenKwConfig
+from ert.storage.local_experiment import ErtStorageException
 from ert.storage.mode import BaseMode, Mode, require_write
 
 from .realization_storage_state import RealizationStorageState
@@ -406,8 +407,10 @@ class LocalEnsemble(BaseMode):
         states : list of RealizationStorageState
             list of realization states.
         """
-
-        response_configs = self.experiment.response_configuration
+        try:
+            response_configs = self.experiment.response_configuration
+        except ErtStorageException:
+            response_configs = {}
 
         def _parameters_exist_for_realization(realization: int) -> bool:
             """
