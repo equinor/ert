@@ -232,9 +232,7 @@ and environment variables are exposed in the form 'os.NAME', for example:
 
     @model_validator(mode="after")
     def validate_queue_system(self) -> Self:  # pylint: disable=E0213
-        if self.server is None:
-            self.server = ServerConfig(queue_system=copy(self.simulator.queue_system))
-        elif self.server.queue_system is None:
+        if self.server.queue_system is None:
             self.server.queue_system = copy(self.simulator.queue_system)
         if (
             str(self.simulator.queue_system.name).lower() == "local"
