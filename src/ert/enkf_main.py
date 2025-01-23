@@ -65,24 +65,9 @@ def _value_export_json(
     if len(values) == 0:
         return
 
-    def parse_value(value: float | int | str) -> float | int | str:
-        if isinstance(value, float | int):
-            return value
-        try:
-            return int(value)
-        except ValueError:
-            try:
-                return float(value)
-            except ValueError:
-                return value
-
     # Hierarchical
-    json_out: dict[str, float | dict[str, float | int | str]] = {
-        key: {
-            inner_key: parse_value(inner_value)
-            for inner_key, inner_value in param_map.items()
-        }
-        for key, param_map in values.items()
+    json_out: dict[str, float | dict[str, float]] = {
+        key: dict(param_map.items()) for key, param_map in values.items()
     }
 
     # Disallow NaN from being written: ERT produces the parameters and the only
