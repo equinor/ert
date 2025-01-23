@@ -940,6 +940,29 @@ def test_fm_step_config_via_plugin_is_overridden_by_setenv(monkeypatch):
 
 
 @pytest.mark.usefixtures("use_tmpdir")
+def test_setenv_will_be_substituted_in_jobs_json(monkeypatch):
+    Path("config.ert").write_text(
+        dedent(
+            """
+            NUM_REALIZATIONS 1
+            SETENV FOO <NUM_CPU>
+            NUM_CPU 2
+            """
+        ),
+        encoding="utf-8",
+    )
+    ert_config = ErtConfig.with_plugins().from_file("config.ert")
+    step_json = create_forward_model_json(
+        context=ert_config.substitutions,
+        forward_model_steps=ert_config.forward_model_steps,
+        env_vars=ert_config.env_vars,
+        env_pr_fm_step=ert_config.env_pr_fm_step,
+        run_id=None,
+    )
+    assert step_json["global_environment"]["FOO"] == "2"
+
+
+@pytest.mark.usefixtures("use_tmpdir")
 def test_fm_step_config_via_plugin_does_not_override_default_env(monkeypatch):
     monkeypatch.setattr(
         ErtPluginManager,
