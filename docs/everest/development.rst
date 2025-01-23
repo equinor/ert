@@ -91,8 +91,8 @@ The mapping from data models in EVEREST and ERT is done in the `ropt` library, i
 `Batches` in EVEREST can contain several different configurations depending on the algorithm used. Gradient-based algorithms can have a single function
 evaluation (`unperturbed controls`) per `<GEO_ID>`, a set of `perturbed controls` per `<GEO_ID>` to evaluate the gradient, or both.
 Derivative-free methods can have several function evaluations per `<GEO_ID>` and no `perturbed controls`.
-**NOTE**: the optimizer may decide that some `<GEO_ID>`s are not needed, these are then skipped and the mapping from `ropt`
-should reflect this (i.e., less `<GEO_ID>`s in the batch results than expected).
+**NOTE:** the optimizer may decide that some `<GEO_ID>` are not needed, these are then skipped and the mapping from `ropt`
+should reflect this (i.e., less `<GEO_ID>` in the batch results than expected).
 
 Another thing to note is that continuity for `realizations` between `ensemble` exists; however, this is not the case for `simulations` in `batches`.
 A `batch` can contain several different configurations (Fig 5) and `simulation 0` for `<GEO_ID> = 0` can be either `unperturbed`
