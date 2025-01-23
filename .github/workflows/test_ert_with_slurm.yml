@@ -34,7 +34,7 @@ jobs:
       run: |
         set -e
 
-        sudo apt install slurmd slurmctld -y
+        sudo apt install libpmix-dev slurmd slurmctld -y
 
         sudo mkdir /var/spool/slurm
         sudo chown slurm /var/spool/slurm
@@ -43,9 +43,11 @@ jobs:
         ClusterName=localcluster
         SlurmUser=slurm
         SlurmctldHost=localhost
+        SchedulerType=sched/builtin  # Avoid default backfill scheduler which adds delays
         SelectType=select/cons_tres  # Select nodes based on consumable resources
         SelectTypeParameters=CR_Core  # Cores are the consumable resource
         StateSaveLocation=/var/spool/slurm
+        PriorityType=priority/basic  # Tests depend on FIFO scheduling
         ProctrackType=proctrack/linuxproc  # Use /proc to track processes
         PartitionName=LocalQ Nodes=ALL Default=YES MaxTime=INFINITE State=UP
         PartitionName=AlternativeQ Nodes=ALL Default=YES MaxTime=INFINITE State=UP
@@ -59,12 +61,13 @@ jobs:
         sudo mv slurm.conf /etc/slurm/
         sudo systemctl start slurmd  # The compute node slurm daemon
         sudo systemctl start slurmctld  # The slurm controller daemon
-
+        sleep 1
         systemctl status slurmd
         systemctl status slurmctld
 
         # Show partition and node information configured:
         sinfo
+        scontrol show nodes
 
     - name: Verify slurm cluster works
       # Timeout is set low to catch a misconfigured cluster where srun will hang.
@@ -77,7 +80,7 @@ jobs:
       run: |
         set -e
         export _ERT_TESTS_ALTERNATIVE_QUEUE=AlternativeQ
-        pytest tests/ert/unit_tests/scheduler/test_{generic,slurm}_driver.py --slurm \
+        pytest tests/ert/unit_tests/scheduler/test_{generic,slurm}_driver.py -sv --slurm \
           -n 8 --durations=10 -k "not (LsfDriver or LocalDriver or OpenPBSDriver)"
         scontrol show job
 
