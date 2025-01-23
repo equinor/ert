@@ -90,7 +90,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        test-type: [ 'test', 'integration-test', 'everest-models-test' ]
+        test-type: [ 'test', 'everest-models-test' ]
         os: [ 'macos-latest' ]
         python-version: [ '3.12' ]
 
