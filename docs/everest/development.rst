@@ -87,32 +87,12 @@ certain number of `realizations` (denoted by `<GEO_ID>`) and each `realization` 
 As is evident from the image above, in terms of execution in the queue `realization` (ERT) and `simulation` (EVEREST) are synonymous.
 This means that ERT queue system is agnostic about the meaning of each run only when the data is collected back in EVEREST (`GEN_DATA`) is meaning
 of each run attributed.
-The mapping from data models in EVEREST to ERT is the same as flattening a 2D array (i.e., from a `<GEO_ID>` and `pertubation` based index in EVEREST to
-`realization` in ERT).
-
-Explicitly this means:
-
-.. math::
-
-	r(g, p) = g,
-
-if `batch` only has `unperturbed controls`,
-
-.. math::
-
-	r(g, p) = p + g * P,
-
-if `batch` only has `perturbed controls`,
-
-.. math::
-
-	r(g, p) = g * (p<0) + (p + g * P + G) (p>=0),
-
-if `batch` has `unperturbed` and `perturbed controls`, where `r` is the ERT `realization_id` (0, ..., `R` - 1), `g` is the `<GEO_ID>` (0, ..., `G` - 1), `p` is `pertubation_id` (-1, 0, ..., `P` - 1), `R`
-is the total number of ERT `realizations`, `G` is the total number of static `model_realizations`, `P` is the total number of pertubations.
-NOTE: `p = -1` for `unperturbed controls`, and `p = 0, ..., P - 1` for `perturbed controls`.
-**THIS IS MY SUGGESTION AND CURRENTLY NOT HOW IT WORKS AND ONLY VALID FOR GRADIENT BASED OPTIMIZATION ALGORITHMS I GUESS?
-If we don't want `p` to be negative we need to use a flag (e.g., `is_pertubation`)**
+The mapping from data models in EVEREST and ERT is done in the `ropt` library, it maps from `realization` (ERT) to `<GEO_ID>` and `pertubation` (EVEREST) and vice versa.
+`Batches` in EVEREST can contain several different configurations depending on the algorithm used. Gradient-based algorithms can have a single function
+evaluation (`unperturbed controls`) per `<GEO_ID>`, a set of `perturbed controls` per `<GEO_ID>` to evaluate the gradient, or both.
+Derivative-free methods can have several function evaluations per `<GEO_ID>` and no `perturbed controls`.
+**NOTE**: the optimizer may decide that some `<GEO_ID>`s are not needed, these are then skipped and the mapping from `ropt`
+should reflect this (i.e., less `<GEO_ID>`s in the batch results than expected).
 
 Another thing to note is that continuity for `realizations` between `ensemble` exists; however, this is not the case for `simulations` in `batches`.
 A `batch` can contain several different configurations (Fig 5) and `simulation 0` for `<GEO_ID> = 0` can be either `unperturbed`
