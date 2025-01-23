@@ -37,10 +37,11 @@ from everest.simulator.everest_to_ert import everest_to_ert_config
 from everest.strings import EVEREST
 
 from ..run_arg import RunArg, create_run_arguments
+from ..storage.everest_experiment import EverestExperiment
 from .base_run_model import BaseRunModel, StatusEvents
 
 if TYPE_CHECKING:
-    from ert.storage import Ensemble, Experiment
+    from ert.storage import Ensemble
 
 
 logger = logging.getLogger(__name__)
@@ -130,7 +131,7 @@ class EverestRunModel(BaseRunModel):
             )
             else None
         )
-        self._experiment: Experiment | None = None
+        self._experiment: EverestExperiment | None = None
         self._eval_server_cfg: EvaluatorServerConfig | None = None
         self._batch_id: int = 0
         self._status: SimulationStatus | None = None
@@ -197,7 +198,8 @@ class EverestRunModel(BaseRunModel):
     ) -> None:
         self.log_at_startup()
         self._eval_server_cfg = evaluator_server_config
-        self._experiment = self._storage.create_experiment(
+
+        self._experiment = self._storage.create_everest_experiment(
             name=f"EnOpt@{datetime.datetime.now().strftime('%Y-%m-%d@%H:%M:%S')}",
             parameters=self._parameter_configuration,
             responses=self._response_configuration,
@@ -371,30 +373,31 @@ class EverestRunModel(BaseRunModel):
 
         # Initialize a new ensemble in storage:
         assert self._experiment is not None
-        ensemble = self._experiment.create_ensemble(
+        everest_ensemble = self._experiment.create_ensemble(
             name=f"batch_{self._batch_id}",
             ensemble_size=len(batch_data),
         )
+        ert_ensemble = everest_ensemble.ert_ensemble
         for sim_id, controls in enumerate(batch_data.values()):
-            self._setup_sim(sim_id, controls, ensemble)
+            self._setup_sim(sim_id, controls, ert_ensemble)
 
         # Evaluate the batch:
-        run_args = self._get_run_args(ensemble, evaluator_context, batch_data)
+        run_args = self._get_run_args(ert_ensemble, evaluator_context, batch_data)
         self._context_env.update(
             {
-                "_ERT_EXPERIMENT_ID": str(ensemble.experiment_id),
-                "_ERT_ENSEMBLE_ID": str(ensemble.id),
+                "_ERT_EXPERIMENT_ID": str(ert_ensemble.experiment_id),
+                "_ERT_ENSEMBLE_ID": str(ert_ensemble.id),
                 "_ERT_SIMULATION_MODE": "batch_simulation",
             }
         )
         assert self._eval_server_cfg is not None
-        self._evaluate_and_postprocess(run_args, ensemble, self._eval_server_cfg)
+        self._evaluate_and_postprocess(run_args, ert_ensemble, self._eval_server_cfg)
 
         # If necessary, delete the run path:
         self._delete_runpath(run_args)
 
         # Gather the results and create the result for ropt:
-        results = self._gather_simulation_results(ensemble)
+        results = self._gather_simulation_results(ert_ensemble)
         evaluator_result = self._make_evaluator_result(
             control_values, batch_data, results, cached_results
         )
