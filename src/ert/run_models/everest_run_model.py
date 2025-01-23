@@ -59,10 +59,11 @@ from everest.simulator.everest_to_ert import (
 from everest.strings import EVEREST, STORAGE_DIR
 
 from ..run_arg import RunArg, create_run_arguments
+from ..storage.everest_experiment import EverestExperiment
 from .base_run_model import BaseRunModel, StatusEvents
 
 if TYPE_CHECKING:
-    from ert.storage import Ensemble, Experiment
+    from ert.storage import Ensemble
 
 
 logger = logging.getLogger(__name__)
@@ -135,7 +136,7 @@ class EverestRunModel(BaseRunModel):
             )
             else None
         )
-        self._experiment: Experiment | None = None
+        self._experiment: EverestExperiment | None = None
         self._eval_server_cfg: EvaluatorServerConfig | None = None
         self._batch_id: int = 0
         self._status: SimulationStatus | None = None
@@ -287,11 +288,13 @@ class EverestRunModel(BaseRunModel):
     ) -> None:
         self.log_at_startup()
         self._eval_server_cfg = evaluator_server_config
-        self._experiment = self._storage.create_experiment(
-            name=f"EnOpt@{datetime.datetime.now().strftime('%Y-%m-%d@%H:%M:%S')}",
-            parameters=self._parameter_configuration,
-            responses=self._response_configuration,
-        )
+
+        if self._experiment is None:
+            self._experiment = self._storage.create_everest_experiment(
+                parameters=self._parameter_configuration,
+                responses=self._response_configuration,
+                name=f"EnOpt@{datetime.datetime.now().strftime('%Y-%m-%d@%H:%M:%S')}",
+            )
 
         # Initialize the ropt optimizer:
         optimizer = self._create_optimizer()
@@ -347,6 +350,7 @@ class EverestRunModel(BaseRunModel):
             objectives, constraints, _ = self._run_forward_model(
                 np.repeat(np.expand_dims(variables, axis=0), nreal, axis=0),
                 model_realizations,
+                [],
             )
             if transforms.objectives.has_auto_scale:
                 transforms.objectives.calculate_auto_scales(objectives)
@@ -430,32 +434,33 @@ class EverestRunModel(BaseRunModel):
 
         # Initialize a new ensemble in storage:
         assert self._experiment is not None
-        ensemble = self._experiment.create_ensemble(
+        everest_ensemble = self._experiment.create_ensemble(
             name=f"batch_{self._batch_id}",
             ensemble_size=len(evaluated_control_indices),
         )
+        ert_ensemble = everest_ensemble.ert_ensemble
         for sim_id, controls in enumerate(sim_controls.values()):
-            self._setup_sim(sim_id, controls, ensemble)
+            self._setup_sim(sim_id, controls, ert_ensemble)
 
         # Evaluate the batch:
         run_args = self._get_run_args(
-            ensemble, model_realizations, evaluated_control_indices
+            ert_ensemble, model_realizations, evaluated_control_indices
         )
         self._context_env.update(
             {
-                "_ERT_EXPERIMENT_ID": str(ensemble.experiment_id),
-                "_ERT_ENSEMBLE_ID": str(ensemble.id),
+                "_ERT_EXPERIMENT_ID": str(ert_ensemble.experiment_id),
+                "_ERT_ENSEMBLE_ID": str(ert_ensemble.id),
                 "_ERT_SIMULATION_MODE": "batch_simulation",
             }
         )
         assert self._eval_server_cfg is not None
-        self._evaluate_and_postprocess(run_args, ensemble, self._eval_server_cfg)
+        self._evaluate_and_postprocess(run_args, ert_ensemble, self._eval_server_cfg)
 
         # If necessary, delete the run path:
         self._delete_runpath(run_args)
 
         # Gather the results and create the result for ropt:
-        results = self._gather_simulation_results(ensemble)
+        results = self._gather_simulation_results(ert_ensemble)
         objectives, constraints = self._get_objectives_and_constraints(
             control_values, evaluated_control_indices, results, cached_results
         )
