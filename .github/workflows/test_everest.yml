@@ -41,22 +41,12 @@ jobs:
     - name: Run Tests Linux
       if: ${{ inputs.test-type == 'test' && runner.os != 'macOS'}}
       run: |
-        pytest tests/everest -n 4 --cov=ert --cov=everest --cov=_ert --cov-report=xml:cov1.xml --junit-xml=junit.xml -o junit_family=legacy -m "not integration_test" --dist loadgroup -sv
+        pytest tests/everest -n 4 --cov=ert --cov=everest --cov=_ert --cov-report=xml:cov1.xml --junit-xml=junit.xml -o junit_family=legacy --dist loadgroup -sv
 
     - name: Run Tests macOS
       if: ${{ inputs.test-type == 'test' && runner.os == 'macOS'}}
       run: |
-        python -m pytest tests/everest -n 4 --cov=ert --cov=everest --cov=_ert --cov-report=xml:cov1.xml --junit-xml=junit.xml -o junit_family=legacy -m "not integration_test and not skip_mac_ci" --dist loadgroup -sv
-
-    - name: Run Integration Tests Linux
-      if: ${{inputs.test-type == 'integration-test' && runner.os != 'macOS'}}
-      run: |
-        pytest tests/everest -n 4 --cov=ert --cov=everest --cov=_ert --cov-report=xml:cov1.xml --junit-xml=junit.xml -o junit_family=legacy -m "integration_test" --dist loadgroup -sv
-
-    - name: Run Integration Tests macOS
-      if: ${{inputs.test-type == 'integration-test' && runner.os == 'macOS'}}
-      run: |
-        python -m pytest tests/everest -n 4 --cov=ert --cov=everest --cov=_ert --cov-report=xml:cov1.xml --junit-xml=junit.xml -o junit_family=legacy -m "integration_test and not skip_mac_ci" --dist loadgroup
+        python -m pytest tests/everest -n 4 --cov=ert --cov=everest --cov=_ert --cov-report=xml:cov1.xml --junit-xml=junit.xml -o junit_family=legacy -m "not skip_mac_ci" --dist loadgroup -sv
 
     - name: Build Documentation
       if: inputs.test-type == 'doc'
