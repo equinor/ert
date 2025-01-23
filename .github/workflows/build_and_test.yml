@@ -33,7 +33,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        test-type: [ 'performance-tests', 'unit-tests', 'gui-tests', 'cli-tests' ]
+        test-type: [ 'performance-and-unit-tests', 'gui-tests', 'cli-tests' ]
         python-version: [ '3.11', '3.12' ]
         os: [ ubuntu-latest ]
     uses: ./.github/workflows/test_ert.yml
@@ -123,7 +123,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        test-type: [ 'performance-tests', 'unit-tests', 'gui-tests', 'cli-tests' ]
+        test-type: [ 'performance-and-unit-tests', 'gui-tests', 'cli-tests' ]
         python-version: [ '3.12' ]
         os: [ 'macos-13', 'macos-14']
         exclude:
