@@ -332,8 +332,23 @@ class GenKwConfig(ParameterConfig):
                 f" is of size {len(self.transform_functions)}, expected {array.size}"
             )
 
+        def parse_value(value: float | int | str) -> float | int | str:
+            if isinstance(value, float | int):
+                return value
+            try:
+                return int(value)
+            except ValueError:
+                try:
+                    return float(value)
+                except ValueError:
+                    return value
+
         data = dict(
-            zip(array["names"].values.tolist(), array.values.tolist(), strict=False)
+            zip(
+                array["names"].values.tolist(),
+                [parse_value(i) for i in array.values],
+                strict=False,
+            )
         )
 
         log10_data = {
@@ -358,7 +373,6 @@ class GenKwConfig(ParameterConfig):
                 template = template.replace(f"<{key}>", f"{value:.6g}")
             with open(run_path / target_file, "w", encoding="utf-8") as f:
                 f.write(template)
-
         if log10_data:
             return {self.name: data, f"LOG10_{self.name}": log10_data}
         else:
