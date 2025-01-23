@@ -190,6 +190,7 @@ def main() -> None:
             logger = logging.getLogger("ert.shared.storage.info")
             try:
                 logger.info("Starting dark storage")
+                logger.info(f"Started dark storage with parent {args.parent_pid}")
                 run_server(args, debug=False, uvicorn_config=uvicorn_config)
             except SystemExit:
                 logger.info("Stopping dark storage")
