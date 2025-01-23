@@ -123,4 +123,5 @@ or `perturbed controls`. `<GEO_ID>` is continuous from one `batch` to the next s
     :width: 700px
     :alt: Other `batch` configurations EVEREST
 
-    Two other possible configurations of EVEREST `batches` in the context of gradient-based optimization algorithms (i.e., `optpp_q_newton`).
+    Three other possible configurations of EVEREST `batches` in the context of gradient-based (i.e., `optpp_q_newton`)
+    and gradient-free (i.e., **WHICH ONE DO WE SUPPORT?**) optimization algorithms.
