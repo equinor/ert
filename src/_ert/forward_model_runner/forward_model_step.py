@@ -188,7 +188,21 @@ class ForwardModelStep:
         max_memory_usage = 0
         max_cpu_seconds = 0
         fm_step_pids = {int(process.pid)}
-        while exit_code is None:
+        while True:
+            try:
+                exit_code = process.wait(timeout=self.MEMORY_POLL_PERIOD)
+                if exit_code is not None:
+                    break
+            except TimeoutExpired:
+                potential_exited_msg = (
+                    self.handle_process_timeout_and_create_exited_msg(
+                        exit_code, proc, run_start_time
+                    )
+                )
+                if isinstance(potential_exited_msg, Exited):
+                    yield potential_exited_msg
+                    return
+
             (memory_rss, cpu_seconds, oom_score, pids) = _get_processtree_data(process)
             max_cpu_seconds = max(max_cpu_seconds, cpu_seconds or 0)
             fm_step_pids |= pids
@@ -204,18 +218,6 @@ class ForwardModelStep:
                     oom_score=oom_score,
                 ),
             )
-
-            try:
-                exit_code = process.wait(timeout=self.MEMORY_POLL_PERIOD)
-            except TimeoutExpired:
-                potential_exited_msg = (
-                    self.handle_process_timeout_and_create_exited_msg(
-                        exit_code, proc, run_start_time
-                    )
-                )
-                if isinstance(potential_exited_msg, Exited):
-                    yield potential_exited_msg
-                    return
 
         ensure_file_handles_closed([stdin, stdout, stderr])
         exited_message = self._create_exited_message_based_on_exit_code(

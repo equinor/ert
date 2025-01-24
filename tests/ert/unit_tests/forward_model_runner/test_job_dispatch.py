@@ -6,7 +6,6 @@ import json
 import os
 import signal
 import stat
-import subprocess
 import sys
 from subprocess import Popen
 from textwrap import dedent
@@ -116,8 +115,9 @@ else:
     os.wait()  # allow os to clean up zombie processes
 
 
+@pytest.mark.integration_test
 @pytest.mark.usefixtures("use_tmpdir")
-def test_memory_profile_is_logged_as_csv():
+def test_memory_profile_is_logged_as_csv(monkeypatch):
     """This tests that a csv is produced and has basic validity.
     It does not try to verify the validity of the logged RSS values."""
     fm_stepname = "do_nothing"
@@ -126,6 +126,7 @@ def test_memory_profile_is_logged_as_csv():
     with open(scriptname, "w", encoding="utf-8") as script:
         script.write(
             """#!/bin/sh
+        sleep 0.5
         exit 0
         """
         )
@@ -144,18 +145,14 @@ def test_memory_profile_is_logged_as_csv():
     with open(JOBS_FILE, "w", encoding="utf-8") as f:
         f.write(json.dumps(forward_model_steps))
 
-    subprocess.run(
-        [
-            sys.executable,
-            importlib.util.find_spec("_ert.forward_model_runner.fm_dispatch").origin,
-            os.getcwd(),
-        ],
-        check=False,
+    monkeypatch.setattr(
+        _ert.forward_model_runner.runner.ForwardModelStep, "MEMORY_POLL_PERIOD", 0.1
     )
+    main(["fm_dispatch", os.getcwd()])
     csv_files = glob.glob("logs/memory-profile*csv")
     mem_df = pd.read_csv(csv_files[0], parse_dates=True)
     assert mem_df["timestamp"].is_monotonic_increasing
-    assert (mem_df["fm_step_id"].values == [0, 1, 2]).all()
+    assert (mem_df["fm_step_id"].unique() == [0, 1, 2]).all()
     assert mem_df["fm_step_name"].unique() == [fm_stepname]
     assert (mem_df["rss"] >= 0).all()  # 0 has been observed
 
