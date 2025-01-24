@@ -123,3 +123,40 @@ def test_api_summary_snapshot(config_file, snapshot, cached_example):
         orjson.dumps(dicts, option=orjson.OPT_INDENT_2).decode("utf-8").strip() + "\n",
         "snapshot.json",
     )
+
+
+@pytest.mark.parametrize(
+    "config_file",
+    ["config_advanced.yml", "config_minimal.yml", "config_multiobj.yml"],
+)
+def test_csv_export(config_file, cached_example, snapshot):
+    config_path, config_file, _ = cached_example(f"math_func/{config_file}")
+    config = EverestConfig.load_file(Path(config_path) / config_file)
+
+    api = EverestDataAPI(config)
+    combined_df, pert_real_df, batch_df = api.export_dataframes()
+
+    def _sort_df(df: polars.DataFrame) -> polars.DataFrame:
+        df_ = df.select(df.columns)
+
+        sort_rows_by = df_.columns[0 : (min(len(df_.columns), 8))]
+        return df_.sort(sort_rows_by)
+
+    snapshot.assert_match(
+        _sort_df(
+            combined_df.with_columns(polars.col(polars.Float64).round(4))
+        ).write_csv(),
+        "combined_df.csv",
+    )
+    snapshot.assert_match(
+        _sort_df(
+            pert_real_df.with_columns(polars.col(polars.Float64).round(4))
+        ).write_csv(),
+        "pert_real_df.csv",
+    )
+    snapshot.assert_match(
+        _sort_df(
+            batch_df.with_columns(polars.col(polars.Float64).round(4))
+        ).write_csv(),
+        "batch_df.csv",
+    )
