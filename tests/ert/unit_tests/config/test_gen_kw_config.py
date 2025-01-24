@@ -57,6 +57,20 @@ def test_gen_kw_config_duplicate_keys_raises():
         )
 
 
+def test_short_definition_raises_config_error(tmp_path):
+    parameter_file = tmp_path / "parameter.txt"
+    parameter_file.write_text("incorrect", encoding="utf-8")
+
+    with pytest.raises(ConfigValidationError, match="Too few values"):
+        GenKwConfig.from_config_list(
+            [
+                "GEN",
+                str(parameter_file),
+                "INIT_FILES:%dgen_init.txt",
+            ]
+        )
+
+
 def test_gen_kw_config_get_priors():
     conf = GenKwConfig(
         name="KW_NAME",

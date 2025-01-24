@@ -156,22 +156,34 @@ class GenKwConfig(ParameterConfig):
                     "Loading GEN_KW from files requires %d in file format", gen_kw
                 )
             )
+
         if errors:
             raise ConfigValidationError.from_collected(errors)
 
         transform_function_definitions: list[TransformFunctionDefinition] = []
         with open(parameter_file, encoding="utf-8") as file:
-            for item in file:
+            for line_number, item in enumerate(file):
                 item = item.split("--")[0]  # remove comments
                 if item.strip():  # only lines with content
                     items = item.split()
-                    transform_function_definitions.append(
-                        TransformFunctionDefinition(
-                            name=items[0],
-                            param_name=items[1],
-                            values=items[2:],
+                    if len(items) < 2:
+                        errors.append(
+                            ConfigValidationError.with_context(
+                                f"Too few values on line {line_number} in parameter file {parameter_file}",
+                                gen_kw,
+                            )
                         )
-                    )
+                    else:
+                        transform_function_definitions.append(
+                            TransformFunctionDefinition(
+                                name=items[0],
+                                param_name=items[1],
+                                values=items[2:],
+                            )
+                        )
+
+        if errors:
+            raise ConfigValidationError.from_collected(errors)
 
         if gen_kw_key == "PRED" and update_parameter:
             ConfigWarning.warn(
