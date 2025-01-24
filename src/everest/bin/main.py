@@ -3,7 +3,10 @@ import argparse
 import logging
 import sys
 
-from ert.shared.version import __version__ as everest_version
+try:
+    from ert.shared.version import __version__ as everest_version
+except ImportError:
+    everest_version = "0.0.0"
 from everest.bin.config_branch_script import config_branch_entry
 from everest.bin.everconfigdump_script import config_dump_entry
 from everest.bin.everest_script import everest_entry
