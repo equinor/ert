@@ -179,7 +179,6 @@ def test_report_inconsistent_events(unused_tcp_port):
         reporter.report(Finish())
 
 
-@pytest.mark.integration_test
 def test_report_with_failed_reporter_but_finished_jobs(unused_tcp_port):
     # this is to show when the reporter fails ert won't crash nor
     # staying hanging but instead finishes up the job;
@@ -192,7 +191,10 @@ def test_report_with_failed_reporter_but_finished_jobs(unused_tcp_port):
     url = f"tcp://{host}:{unused_tcp_port}"
     with MockZMQServer(unused_tcp_port) as mock_server:
         reporter = Event(
-            evaluator_url=url, ack_timeout=2, max_retries=0, finished_event_timeout=2
+            evaluator_url=url,
+            ack_timeout=0.1,
+            max_retries=0,
+            finished_event_timeout=0.1,
         )
         fmstep1 = ForwardModelStep(
             {"name": "fmstep1", "stdout": "stdout", "stderr": "stderr"}, 0
