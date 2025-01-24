@@ -124,9 +124,8 @@ def test_everest_to_ert_controls():
     )
 
 
-@pytest.mark.parametrize(
-    "name",
-    [
+def test_default_installed_jobs():
+    jobs = [
         "render",
         "recovery_factor",
         "wdreorder",
@@ -140,22 +139,18 @@ def test_everest_to_ert_controls():
         "copy_file",
         "move_file",
         "symlink",
-    ],
-)
-def test_default_installed_jobs(tmp_path, monkeypatch, name):
-    monkeypatch.chdir(tmp_path)
+    ]
     ever_config_dict = EverestConfig.with_defaults(
         **yaml.safe_load(
             dedent(f"""
     model: {{"realizations": [0]}}
-    forward_model:
-      - {name}
+    forward_model: {jobs}
     """)
         )
     )
     config = everest_to_ert_config(ever_config_dict)
     # Index 0 is the copy job for wells.json
-    assert config.forward_model_steps[1].name == name
+    assert [c.name for c in config.forward_model_steps[1:]] == jobs
 
 
 def test_combined_wells_everest_to_ert(tmp_path, monkeypatch):
