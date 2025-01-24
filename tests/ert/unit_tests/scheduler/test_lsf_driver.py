@@ -581,7 +581,7 @@ async def test_that_bsub_will_retry_and_fail(
     bsub_path.chmod(bsub_path.stat().st_mode | stat.S_IEXEC)
     driver = LsfDriver()
     driver._max_bsub_attempts = 2
-    driver._sleep_time_between_cmd_retries = 0.2
+    driver._sleep_time_between_cmd_retries = 0.0
     match_str = (
         f"failed after 2 attempts with exit code {exit_code}.*"
         f'error: "{error_msg if error_msg else "<empty>"}"'
@@ -666,7 +666,7 @@ async def test_that_bsub_will_retry_and_succeed(
     bsub_path.chmod(bsub_path.stat().st_mode | stat.S_IEXEC)
     driver = LsfDriver()
     driver._max_bsub_attempts = 2
-    driver._sleep_time_between_cmd_retries = 0.2
+    driver._sleep_time_between_cmd_retries = 0.0
     await driver.submit(0, "sleep 10")
 
 
