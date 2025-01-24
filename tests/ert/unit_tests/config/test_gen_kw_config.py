@@ -57,41 +57,25 @@ def test_gen_kw_config_duplicate_keys_raises():
         )
 
 
-@pytest.mark.usefixtures("use_tmpdir")
 def test_gen_kw_config_get_priors():
-    parameter_file = "parameters.txt"
-    template_file = "template.txt"
-
-    with open(template_file, "w", encoding="utf-8") as f:
-        f.write("Hello")
-
-    with open(parameter_file, "w", encoding="utf-8") as f:
-        f.write("KEY1  NORMAL 0 1\n")
-        f.write("KEY2  LOGNORMAL 2 3\n")
-        f.write("KEY3  TRUNCATED_NORMAL 4 5 6 7\n")
-        f.write("KEY4  TRIANGULAR 0 1 2\n")
-        f.write("KEY5  UNIFORM 2 3\n")
-        f.write("KEY6  DUNIF 3 0 1\n")
-        f.write("KEY7  ERRF 0 1 2 3\n")
-        f.write("KEY8  DERRF 1 1 2 3 4\n")
-        f.write("KEY9  LOGUNIF 0 1\n")
-        f.write("KEY10  CONST 10\n")
-
-    transform_function_definitions = []
-    with open(parameter_file, encoding="utf-8") as file:
-        for item in file:
-            items = item.split()
-            transform_function_definitions.append(
-                TransformFunctionDefinition(
-                    name=items[0], param_name=items[1], values=items[2:]
-                )
-            )
-
     conf = GenKwConfig(
         name="KW_NAME",
         forward_init=False,
-        template_file=template_file,
-        transform_function_definitions=transform_function_definitions,
+        template_file="template.txt",
+        transform_function_definitions=[
+            TransformFunctionDefinition("KEY1", "NORMAL", ["0", "1"]),
+            TransformFunctionDefinition("KEY2", "LOGNORMAL", ["2", "3"]),
+            TransformFunctionDefinition(
+                "KEY3", "TRUNCATED_NORMAL", ["4", "5", "6", "7"]
+            ),
+            TransformFunctionDefinition("KEY4", "TRIANGULAR", ["0", "1", "2"]),
+            TransformFunctionDefinition("KEY5", "UNIFORM", ["2", "3"]),
+            TransformFunctionDefinition("KEY6", "DUNIF", ["3", "0", "1"]),
+            TransformFunctionDefinition("KEY7", "ERRF", ["0", "1", "2", "3"]),
+            TransformFunctionDefinition("KEY8", "DERRF", ["1", "1", "2", "3", "4"]),
+            TransformFunctionDefinition("KEY9", "LOGUNIF", ["0", "1"]),
+            TransformFunctionDefinition("KEY10", "CONST", ["10"]),
+        ],
         output_file="param.txt",
         update=True,
     )
