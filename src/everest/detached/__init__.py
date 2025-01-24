@@ -18,7 +18,7 @@ from seba_sqlite.exceptions import ObjectNotFoundError
 from seba_sqlite.snapshot import SebaSnapshot
 from websockets.sync.client import connect
 
-from ert.ensemble_evaluator import EnsembleSnapshot
+from ert.ensemble_evaluator import EndEvent, EnsembleSnapshot
 from ert.run_models import StatusEvents
 from ert.scheduler import create_driver
 from ert.scheduler.driver import Driver, FailedSubmit
@@ -229,7 +229,6 @@ def start_monitor(
                     message = websocket.recv(timeout=1.0)
                 except TimeoutError:
                     message = None
-                # print(f"Got message {message}")
                 if message:
                     event_dict = json.loads(message)
                     if "snapshot" in event_dict:
@@ -237,10 +236,13 @@ def start_monitor(
                             event_dict["snapshot"]
                         )
                     try:
-                        event_wrapper = EventWrapper(event=event_dict)
+                        event = EventWrapper(event=event_dict).event
                     except ValidationError as e:
                         logger.error("Error when processing event %s", exc_info=e)
-                    callback({SIM_PROGRESS_ID: event_wrapper.event})
+                    if isinstance(event, EndEvent):
+                        print(event.msg)
+                        return
+                    callback({SIM_PROGRESS_ID: event})
                 # Check the optimization status
                 new_opt_status = _query_server(cert, auth, opt_endpoint)
                 if new_opt_status != opt_status:

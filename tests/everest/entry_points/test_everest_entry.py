@@ -12,12 +12,12 @@ from everest.bin.kill_script import kill_entry
 from everest.bin.monitor_script import monitor_entry
 from everest.config import EverestConfig, ServerConfig
 from everest.detached import (
-    SIM_PROGRESS_ENDPOINT,
     ServerStatus,
     everserver_status,
     update_everserver_status,
 )
 from everest.simulator import JOB_SUCCESS
+from everest.strings import SIM_PROGRESS_ENDPOINT
 from tests.everest.utils import capture_streams
 
 CONFIG_FILE_MINIMAL = "config_minimal.yml"
