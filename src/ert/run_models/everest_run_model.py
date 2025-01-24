@@ -375,6 +375,7 @@ class EverestRunModel(BaseRunModel):
         ensemble = self._experiment.create_ensemble(
             name=f"batch_{self._batch_id}",
             ensemble_size=len(batch_data),
+            iteration=self._batch_id,
         )
         for sim_id, controls in enumerate(batch_data.values()):
             self._setup_sim(sim_id, controls, ensemble)
