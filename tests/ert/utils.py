@@ -111,6 +111,7 @@ class MockZMQServer:
     async def mock_zmq_server(self):
         zmq_context = zmq.asyncio.Context()
         self.router_socket = zmq_context.socket(zmq.ROUTER)
+        self.router_socket.setsockopt(zmq.LINGER, 0)
         self.router_socket.bind(f"tcp://*:{self.port}")
 
         self.handler_task = asyncio.create_task(self._handler())
