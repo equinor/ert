@@ -56,10 +56,6 @@ from everest.strings import (
 from everest.util import makedirs_if_needed, version_info
 
 
-class EndTaskEvent:
-    pass
-
-
 class Subscriber:
     def __init__(self) -> None:
         self.index = 0
@@ -181,10 +177,10 @@ def _everserver_thread(shared_data, server_config) -> None:
         await websocket.accept()
         while True:
             event = await get_event(subscriber_id=subscriber_id)
-            if isinstance(event, EndTaskEvent):
-                break
             await websocket.send_json(event)
             await asyncio.sleep(0.1)
+            if isinstance(event, EndEvent):
+                break
 
     async def get_event(subscriber_id: str) -> StatusEvents:
         if subscriber_id not in shared_data["subscribers"]:
@@ -365,7 +361,6 @@ async def everserver_main():
             None,
             lambda: run_model.run_experiment(evaluator_server_config),
         )
-        events = []
         while True:
             try:
                 item: StatusEvents = status_queue.get(block=False)
@@ -374,13 +369,14 @@ async def everserver_main():
                 continue
 
             event = jsonable_encoder(item)
+            print("Event: ", type(item))
             shared_data["events"].append(event)
             for sub in shared_data["subscribers"].values():
                 sub.notify()
             await asyncio.sleep(0.1)
 
             if isinstance(item, EndEvent):
-                events.append(EndTaskEvent())
+                shared_data["events"].append(event)
                 for sub in shared_data["subscribers"].values():
                     sub.notify()
                 break
