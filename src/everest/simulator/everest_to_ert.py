@@ -489,6 +489,14 @@ def _everest_to_ert_config_dict(
     return ert_config
 
 
+def everest_to_ert_config_dict(everest_config: EverestConfig) -> ConfigDict:
+    with ErtPluginContext():
+        config_dict = _everest_to_ert_config_dict(
+            everest_config, site_config=ErtConfig.read_site_config()
+        )
+    return config_dict
+
+
 def everest_to_ert_config(ever_config: EverestConfig) -> ErtConfig:
     with ErtPluginContext():
         config_dict = _everest_to_ert_config_dict(
