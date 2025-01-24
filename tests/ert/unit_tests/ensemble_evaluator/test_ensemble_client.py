@@ -7,14 +7,15 @@ from _ert.forward_model_runner.client import Client, ClientConnectionError
 from tests.ert.utils import MockZMQServer
 
 
-@pytest.mark.integration_test
-async def test_invalid_server():
+async def test_invalid_server(monkeypatch):
     port = 7777
     host = "localhost"
     url = f"tcp://{host}:{port}"
 
+    monkeypatch.setattr(Client, "DEFAULT_MAX_RETRIES", 0)
+
     with pytest.raises(ClientConnectionError):
-        async with Client(url, ack_timeout=1.0):
+        async with Client(url, ack_timeout=0.01):
             pass
 
 
