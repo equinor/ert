@@ -26,9 +26,8 @@ from ropt.plan import Event as OptimizerEvent
 from seba_sqlite import SqliteStorage
 from typing_extensions import TypedDict
 
-from _ert.events import EESnapshot, EESnapshotUpdate, Event
 from ert.config import ErtConfig, ExtParamConfig
-from ert.ensemble_evaluator import EnsembleSnapshot, EvaluatorServerConfig
+from ert.ensemble_evaluator import EndEvent, EvaluatorServerConfig
 from ert.runpaths import Runpaths
 from ert.storage import open_storage
 from everest.config import ControlConfig, ControlVariableGuessListConfig, EverestConfig
@@ -103,10 +102,11 @@ class EverestRunModel(BaseRunModel):
         everest_config: EverestConfig,
         simulation_callback: SimulationCallback | None,
         optimization_callback: OptimizerCallback | None,
+        status_queue: queue.SimpleQueue[StatusEvents] | None = None,
     ):
         Path(everest_config.log_dir).mkdir(parents=True, exist_ok=True)
         Path(everest_config.optimization_output_dir).mkdir(parents=True, exist_ok=True)
-
+        status_queue = queue.SimpleQueue() if status_queue is None else status_queue
         assert everest_config.environment is not None
         logging.getLogger(EVEREST).info(
             "Using random seed: %d. To deterministically reproduce this experiment, "
@@ -136,8 +136,6 @@ class EverestRunModel(BaseRunModel):
         self._status: SimulationStatus | None = None
 
         storage = open_storage(config.ens_path, mode="w")
-        status_queue: queue.SimpleQueue[StatusEvents] = queue.SimpleQueue()
-
         super().__init__(
             storage,
             config.runpath_file,
@@ -164,12 +162,14 @@ class EverestRunModel(BaseRunModel):
         ever_config: EverestConfig,
         simulation_callback: SimulationCallback | None = None,
         optimization_callback: OptimizerCallback | None = None,
+        status_queue: queue.SimpleQueue[StatusEvents] | None = None,
     ) -> EverestRunModel:
         return cls(
             config=everest_to_ert_config(ever_config),
             everest_config=ever_config,
             simulation_callback=simulation_callback,
             optimization_callback=optimization_callback,
+            status_queue=status_queue,
         )
 
     @classmethod
@@ -234,6 +234,7 @@ class EverestRunModel(BaseRunModel):
                     self._exit_code = EverestExitCode.TOO_FEW_REALIZATIONS
                 case _:
                     self._exit_code = EverestExitCode.COMPLETED
+        self.send_event(EndEvent(failed=bool(self.exit_code)))
 
     def _create_optimizer(self) -> BasicOptimizer:
         RESULT_COLUMNS = {
@@ -374,6 +375,7 @@ class EverestRunModel(BaseRunModel):
         ensemble = self._experiment.create_ensemble(
             name=f"batch_{self._batch_id}",
             ensemble_size=len(batch_data),
+            iteration=self._batch_id,
         )
         for sim_id, controls in enumerate(batch_data.values()):
             self._setup_sim(sim_id, controls, ensemble)
@@ -669,82 +671,6 @@ class EverestRunModel(BaseRunModel):
             and os.path.exists(self._everest_config.simulation_dir)
             and any(os.listdir(self._everest_config.simulation_dir))
         )
-
-    def send_snapshot_event(self, event: Event, iteration: int) -> None:
-        super().send_snapshot_event(event, iteration)
-        if type(event) in {EESnapshot, EESnapshotUpdate}:
-            newstatus = self._simulation_status(self.get_current_snapshot())
-            if self._status != newstatus:  # No change in status
-                if self._sim_callback is not None:
-                    self._sim_callback(newstatus)
-                self._status = newstatus
-
-    def _simulation_status(self, snapshot: EnsembleSnapshot) -> SimulationStatus:
-        jobs_progress: list[list[JobProgress]] = []
-        prev_realization = None
-        jobs: list[JobProgress] = []
-        for (realization, simulation), fm_step in snapshot.get_all_fm_steps().items():
-            if realization != prev_realization:
-                prev_realization = realization
-                if jobs:
-                    jobs_progress.append(jobs)
-                jobs = []
-            jobs.append(
-                {
-                    "name": fm_step.get("name") or "Unknown",
-                    "status": fm_step.get("status") or "Unknown",
-                    "error": fm_step.get("error", ""),
-                    "start_time": fm_step.get("start_time", None),
-                    "end_time": fm_step.get("end_time", None),
-                    "realization": realization,
-                    "simulation": simulation,
-                }
-            )
-            if fm_step.get("error", ""):
-                self._handle_errors(
-                    batch=self._batch_id,
-                    simulation=simulation,
-                    realization=realization,
-                    fm_name=fm_step.get("name", "Unknown"),  # type: ignore
-                    error_path=fm_step.get("stderr", ""),  # type: ignore
-                    fm_running_err=fm_step.get("error", ""),  # type: ignore
-                )
-        jobs_progress.append(jobs)
-
-        return {
-            "status": self.get_current_status(),
-            "progress": jobs_progress,
-            "batch_number": self._batch_id,
-        }
-
-    def _handle_errors(
-        self,
-        batch: int,
-        simulation: Any,
-        realization: str,
-        fm_name: str,
-        error_path: str,
-        fm_running_err: str,
-    ) -> None:
-        fm_id = f"b_{batch}_r_{realization}_s_{simulation}_{fm_name}"
-        fm_logger = logging.getLogger("forward_models")
-        if Path(error_path).is_file():
-            error_str = Path(error_path).read_text(encoding="utf-8") or fm_running_err
-        else:
-            error_str = fm_running_err
-        error_hash = hash(error_str)
-        err_msg = "Batch: {} Realization: {} Simulation: {} Job: {} Failed {}".format(
-            batch, realization, simulation, fm_name, "\n Error: {} ID:{}"
-        )
-
-        if error_hash not in self._fm_errors:
-            error_id = len(self._fm_errors)
-            fm_logger.error(err_msg.format(error_str, error_id))
-            self._fm_errors.update({error_hash: {"error_id": error_id, "ids": [fm_id]}})
-        elif fm_id not in self._fm_errors[error_hash]["ids"]:
-            self._fm_errors[error_hash]["ids"].append(fm_id)
-            error_id = self._fm_errors[error_hash]["error_id"]
-            fm_logger.error(err_msg.format("Already reported as", error_id))
 
 
 class SimulatorCache:
