@@ -1,9 +1,9 @@
+import asyncio
 import contextlib
 import gc
 import io
 import os
 import time
-from asyncio import get_event_loop
 from collections.abc import Awaitable
 from datetime import datetime, timedelta
 from typing import TypeVar
@@ -45,7 +45,13 @@ def use_testclient(monkeypatch):
 
 
 def run_in_loop(coro: Awaitable[T]) -> T:
-    return get_event_loop().run_until_complete(coro)
+    try:
+        loop = asyncio.get_running_loop()
+    except RuntimeError:
+        loop = asyncio.new_event_loop()
+
+    asyncio.set_event_loop(loop)
+    return loop.run_until_complete(coro)
 
 
 def get_single_record_csv(storage, ensemble_id1, keyword, poly_ran):

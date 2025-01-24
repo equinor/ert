@@ -18,7 +18,7 @@ def test_restart_esmda(ensemble_experiment_has_run_no_failure, qtbot):
 
     experiment_panel = get_child(gui, ExperimentPanel)
     simulation_mode_combo = get_child(experiment_panel, QComboBox)
-    simulation_mode_combo.setCurrentText(MultipleDataAssimilation.name())
+    simulation_mode_combo.setCurrentText(MultipleDataAssimilation.display_name())
 
     es_mda_panel = gui.findChild(QWidget, name="ES_MDA_panel")
     assert es_mda_panel
@@ -49,7 +49,7 @@ def test_active_realizations_esmda(opened_main_window_poly, qtbot):
 
     experiment_panel = get_child(gui, ExperimentPanel)
     simulation_mode_combo = get_child(experiment_panel, QComboBox)
-    simulation_mode_combo.setCurrentText(SingleTestRun.name())
+    simulation_mode_combo.setCurrentText(SingleTestRun.display_name())
 
     single_test_run_panel = gui.findChild(QWidget, name="Single_test_run_panel")
     assert single_test_run_panel
@@ -63,7 +63,7 @@ def test_active_realizations_esmda(opened_main_window_poly, qtbot):
         == "Total progress 100% — Experiment completed."
     )
 
-    simulation_mode_combo.setCurrentText(MultipleDataAssimilation.name())
+    simulation_mode_combo.setCurrentText(MultipleDataAssimilation.display_name())
     es_mda_panel = gui.findChild(QWidget, name="ES_MDA_panel")
     assert es_mda_panel
     active_reals = gui.findChild(StringBox, "active_realizations_box")
@@ -88,7 +88,7 @@ def test_custom_weights_stored_and_retrieved_from_metadata_esmda(
 
     experiment_panel = get_child(gui, ExperimentPanel)
     simulation_mode_combo = get_child(experiment_panel, QComboBox)
-    simulation_mode_combo.setCurrentText(MultipleDataAssimilation.name())
+    simulation_mode_combo.setCurrentText(MultipleDataAssimilation.display_name())
 
     es_mda_panel = gui.findChild(QWidget, name="ES_MDA_panel")
     assert es_mda_panel

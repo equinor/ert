@@ -42,7 +42,7 @@ from everest.util import makedirs_if_needed
 
 @pytest.mark.flaky(reruns=5)
 @pytest.mark.integration_test
-@pytest.mark.fails_on_macos_github_workflow
+@pytest.mark.skip_mac_ci
 @pytest.mark.xdist_group(name="starts_everest")
 async def test_https_requests(copy_math_func_test_data_to_tmp):
     everest_config = EverestConfig.load_file("config_minimal.yml")
@@ -140,6 +140,7 @@ def test_server_status(copy_math_func_test_data_to_tmp):
     assert status["message"] == f"{err_msg_1}\n{err_msg_2}"
 
 
+@pytest.mark.integration_test
 @patch("everest.detached.server_is_running", return_value=False)
 def test_wait_for_server(server_is_running_mock, caplog, monkeypatch):
     config = EverestConfig.with_defaults()

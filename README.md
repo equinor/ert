@@ -77,7 +77,7 @@ There are many kinds of tests in the `tests` directory, while iterating on your
 code you can run a fast subset of the tests with
 
 ```sh
-pytest -n auto --hypothesis-profile=fast tests/ert/unit_tests -m "not integration_test"
+pytest -n auto --hypothesis-profile=fast tests/ert/unit_tests tests/everest -m "not integration_test"
 ```
 
 [Git LFS](https://git-lfs.com/) must be installed to get all the files. This is
@@ -123,6 +123,14 @@ configuration, to have it automatically run on each commit do:
 $ pip install pre-commit
 $ pre-commit install
 ```
+
+There is also a pre-push hook configured in `pre-commit` to run a collection of
+relatively fast tests, to install this hook:
+
+```sh
+$ pre-commit install --hook-type pre-push
+```
+
 
 ### Trouble with setup
 

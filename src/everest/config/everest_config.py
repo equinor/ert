@@ -797,14 +797,13 @@ and environment variables are exposed in the form 'os.NAME', for example:
             for e in error.errors(
                 include_context=True, include_input=True, include_url=False
             ):
-                if e["type"] == "literal_error":
+                if e["type"] in {"missing", "value_error"} or e["input"] is None:
+                    exp.errors.append((e, None))
+                else:
                     for index, line in enumerate(file_content):
-                        if (pos := line.find(e["input"])) != -1:
+                        if (pos := line.find(str(e["input"]))) != -1:
                             exp.errors.append((e, (index + 1, pos + 1)))
                             break
-                else:
-                    exp.errors.append((e, None))
-
             raise exp from error
 
     @staticmethod

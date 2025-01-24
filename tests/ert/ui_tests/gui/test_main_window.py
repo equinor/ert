@@ -242,7 +242,7 @@ def test_that_es_mda_is_disabled_when_weights_are_invalid(qtbot):
         combo_box = get_child(gui, QComboBox, name="experiment_type")
         combo_box.setCurrentIndex(3)
 
-        assert combo_box.currentText() == "Multiple data assimilation"
+        assert combo_box.currentText() == MultipleDataAssimilation.display_name()
 
         es_mda_panel = get_child(gui, QWidget, name="ES_MDA_panel")
         assert es_mda_panel
@@ -701,7 +701,7 @@ def test_that_es_mda_restart_run_box_is_disabled_when_there_are_no_cases(qtbot):
         assert combo_box.count() == 7
         combo_box.setCurrentIndex(3)
 
-        assert combo_box.currentText() == "Multiple data assimilation"
+        assert combo_box.currentText() == MultipleDataAssimilation.display_name()
 
         es_mda_panel = get_child(gui, QWidget, name="ES_MDA_panel")
         assert es_mda_panel
@@ -751,10 +751,13 @@ def test_validation_of_experiment_names_in_run_models(
     run_experiment = get_child(experiment_panel, QWidget, name="run_experiment")
 
     experiment_types_to_test = (
-        (EnsembleExperiment.name(), "Ensemble_experiment_panel"),
-        (EnsembleSmoother.name(), "ensemble_smoother_panel"),
-        (MultipleDataAssimilation.name(), "ES_MDA_panel"),
-        (IteratedEnsembleSmoother.name(), "iterated_ensemble_smoother_panel"),
+        (EnsembleExperiment.display_name(), "Ensemble_experiment_panel"),
+        (EnsembleSmoother.display_name(), "ensemble_smoother_panel"),
+        (
+            MultipleDataAssimilation.display_name(),
+            "ES_MDA_panel",
+        ),
+        (IteratedEnsembleSmoother.display_name(), "iterated_ensemble_smoother_panel"),
     )
     for exp_type, panel_name in experiment_types_to_test:
         experiment_types.setCurrentText(exp_type)

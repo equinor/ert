@@ -1,5 +1,7 @@
+import json
 import os
 import stat
+from pathlib import Path
 from textwrap import dedent
 
 import numpy as np
@@ -90,16 +92,31 @@ def test_run_poly_example_with_design_matrix():
         "test-experiment",
     )
     storage_path = ErtConfig.from_file("poly.ert").ens_path
+    config_path = ErtConfig.from_file("poly.ert").config_path
     with open_storage(storage_path) as storage:
         experiment = storage.get_experiment_by_name("test-experiment")
         params = experiment.get_ensemble_by_name("default").load_parameters(
             "DESIGN_MATRIX"
         )["values"]
-        # All parameters are strings, this needs to be fixed
         np.testing.assert_array_equal(params[:, 0], [str(idx) for idx in a_values])
         np.testing.assert_array_equal(params[:, 1], 5 * ["cat1"] + 5 * ["cat2"])
         np.testing.assert_array_equal(params[:, 2], 10 * ["1"])
         np.testing.assert_array_equal(params[:, 3], 10 * ["2"])
+
+    real_0_iter_0_parameters_json_path = (
+        Path(config_path) / "poly_out" / "realization-0" / "iter-0" / "parameters.json"
+    )
+    assert real_0_iter_0_parameters_json_path.exists()
+    with open(real_0_iter_0_parameters_json_path, mode="r+", encoding="utf-8") as fs:
+        parameters_contents = json.load(fs)
+    assert isinstance(parameters_contents, dict)
+    design_matrix_content = parameters_contents.get("DESIGN_MATRIX")
+    assert isinstance(design_matrix_content, dict)
+    for k, v in design_matrix_content.items():
+        if k == "category":
+            assert isinstance(v, str)
+        else:
+            assert isinstance(v, float | int)
 
 
 @pytest.mark.usefixtures("copy_poly_case")

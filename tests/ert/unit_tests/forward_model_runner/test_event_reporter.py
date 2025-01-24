@@ -213,9 +213,7 @@ def test_report_with_failed_reporter_but_finished_jobs(unused_tcp_port):
 def test_report_with_reconnected_reporter_but_finished_jobs(unused_tcp_port):
     # this is to show when the reporter fails but reconnects
     # reporter still manages to send events and completes fine
-    # see assert reporter._timeout_timestamp is not None
-    # meaning Finish event initiated _timeout but timeout wasn't reached since
-    # it finished succesfully
+    # see reporter._event_publisher for more details.
 
     host = "localhost"
     url = f"tcp://{host}:{unused_tcp_port}"

@@ -239,7 +239,7 @@ def run_experiment_fixture(request):
         assert isinstance(experiment_panel, ExperimentPanel)
         simulation_mode_combo = experiment_panel.findChild(QComboBox)
         assert isinstance(simulation_mode_combo, QComboBox)
-        simulation_mode_combo.setCurrentText(experiment_mode.name())
+        simulation_mode_combo.setCurrentText(experiment_mode.display_name())
         simulation_settings = experiment_panel._experiment_widgets[
             experiment_panel.get_current_experiment_type()
         ]
@@ -255,7 +255,7 @@ def run_experiment_fixture(request):
                 lambda: handle_run_path_dialog(gui, qtbot, delete_run_path=False),
             )
 
-        if not experiment_mode.name() in {
+        if experiment_mode.name() not in {
             "Ensemble experiment",
             "Evaluate ensemble",
         }:

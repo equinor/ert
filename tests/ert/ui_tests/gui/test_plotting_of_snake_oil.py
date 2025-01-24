@@ -121,6 +121,7 @@ def plot_figure(qtbot, heat_equation_storage, snake_oil_case_storage, request):
 # The tolerance is chosen by guess, in one bug we observed a
 # mismatch of 58 which would fail the test by being above 10.0
 @pytest.mark.mpl_image_compare(tolerance=10.0)
+@pytest.mark.skip_mac_ci  # test is slow
 def test_that_all_snake_oil_visualisations_matches_snapshot(plot_figure):
     return plot_figure
 

@@ -528,7 +528,7 @@ class ErtConfig:
 
         env_vars = {}
         for key, val in config_dict.get("SETENV", []):
-            env_vars[key] = val
+            env_vars[key] = substitutions.substitute(val)
 
         return cls(
             substitutions=substitutions,
@@ -753,7 +753,7 @@ class ErtConfig:
 
         env_vars = {}
         for key, val in config_dict.get("SETENV", []):
-            env_vars[key] = val
+            env_vars[key] = substitutions.substitute(val)
 
         for fm_step_description in config_dict.get(ConfigKeys.FORWARD_MODEL, []):
             if len(fm_step_description) > 1:

@@ -241,7 +241,7 @@ def test_summary_default(copy_egg_test_data_to_tmp):
 @hide_opm
 @skipif_no_everest_models
 @pytest.mark.everest_models_test
-@pytest.mark.fails_on_macos_github_workflow
+@pytest.mark.skip_mac_ci
 def test_summary_default_no_opm(copy_egg_test_data_to_tmp):
     config_dir = "everest/model"
     config_file = os.path.join(config_dir, "config.yml")

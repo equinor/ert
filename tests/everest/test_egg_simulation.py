@@ -553,6 +553,7 @@ def _generate_exp_ert_config(config_path, output_dir):
     }
 
 
+@pytest.mark.integration_test
 @skipif_no_opm
 def test_egg_model_convert(copy_egg_test_data_to_tmp):
     config = EverestConfig.load_file(CONFIG_FILE)
@@ -667,6 +668,7 @@ def test_init_egg_model(copy_egg_test_data_to_tmp):
     ErtConfig.with_plugins().from_dict(config_dict=ert_config)
 
 
+@pytest.mark.integration_test
 @skipif_no_everest_models
 @pytest.mark.everest_models_test
 @skipif_no_opm

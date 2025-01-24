@@ -373,11 +373,7 @@ async def test_kill_before_submit_is_finished(
 ):
     os.chdir(tmp_path)
 
-    if pytestconfig.getoption("slurm"):
-        # Allow more time when tested on a real compute cluster to avoid false positives.
-        job_kill_window = 5
-        test_grace_time = 10
-    elif sys.platform.startswith("darwin"):
+    if sys.platform.startswith("darwin"):
         # Mitigate flakiness on low-power test nodes
         job_kill_window = 5
         test_grace_time = 10
