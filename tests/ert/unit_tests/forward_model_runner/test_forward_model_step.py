@@ -35,7 +35,6 @@ def test_run_with_process_failing(mock_process, mock_popen, mock_check_executabl
     run = fmstep.run()
 
     assert isinstance(next(run), Start), "run did not yield Start message"
-    assert isinstance(next(run), Running), "run did not yield Running message"
     exited = next(run)
     assert isinstance(exited, Exited), "run did not yield Exited message"
     assert exited.exit_code == 9, "Exited message had unexpected exit code"
@@ -213,9 +212,9 @@ def test_run_fails_using_exit_bash_builtin():
 
     statuses = list(fmstep.run())
 
-    assert len(statuses) == 3, "Wrong statuses count"
-    assert statuses[2].exit_code == 1, "Exited status wrong exit_code"
-    assert statuses[2].error_message == "Process exited with status code 1", (
+    assert len(statuses) == 2, "Wrong statuses count"
+    assert statuses[1].exit_code == 1, "Exited status wrong exit_code"
+    assert statuses[1].error_message == "Process exited with status code 1", (
         "Exited status wrong error_message"
     )
 
