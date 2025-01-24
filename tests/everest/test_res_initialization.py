@@ -102,7 +102,8 @@ def test_everest_to_ert_queue_config(config, config_class):
     assert ert_config.queue_config.queue_options == config_class(**config)
 
 
-def test_everest_to_ert_controls():
+def test_everest_to_ert_controls(tmp_path, monkeypatch):
+    monkeypatch.chdir(tmp_path)
     ever_config = EverestConfig.with_defaults(
         **yaml.safe_load(
             dedent("""
