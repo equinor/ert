@@ -228,13 +228,11 @@ and environment variables are exposed in the form 'os.NAME', for example:
         description="Settings to control the exports of a optimization run by everest.",
     )
     config_path: Path = Field()
-    model_config = ConfigDict(extra="forbid")
+    model_config = ConfigDict(extra="forbid", frozen=True)
 
     @model_validator(mode="after")
     def validate_queue_system(self) -> Self:  # pylint: disable=E0213
-        if self.server is None:
-            self.server = ServerConfig(queue_system=copy(self.simulator.queue_system))
-        elif self.server.queue_system is None:
+        if self.server.queue_system is None:
             self.server.queue_system = copy(self.simulator.queue_system)
         if (
             str(self.simulator.queue_system.name).lower() == "local"

@@ -35,7 +35,7 @@ from ert.config.parsing.queue_system import QueueSystem
 from ert.ensemble_evaluator import EvaluatorServerConfig
 from ert.run_models.everest_run_model import EverestExitCode, EverestRunModel
 from everest import export_to_csv, export_with_progress
-from everest.config import EverestConfig, ServerConfig
+from everest.config import EverestConfig, ExportConfig, ServerConfig
 from everest.detached import ServerStatus, get_opt_status, update_everserver_status
 from everest.export import check_for_errors
 from everest.plugins.everest_plugin_manager import EverestPluginManager
@@ -346,9 +346,9 @@ def main():
                 logging.getLogger(EVEREST).warning(msg)
         else:
             export_ecl = True
-
+        export_config = config.export or ExportConfig()
         export_to_csv(
-            data_frame=export_with_progress(config, export_ecl),
+            data_frame=export_with_progress(config, export_config, export_ecl),
             export_path=config.export_path,
         )
     except:

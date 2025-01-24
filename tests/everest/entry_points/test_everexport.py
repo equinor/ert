@@ -9,7 +9,7 @@ import pytest
 from everest import MetaDataColumnNames as MDCN
 from everest.bin.everexport_script import everexport_entry
 from everest.bin.utils import ProgressBar
-from everest.config import EverestConfig, ExportConfig
+from everest.config import EverestConfig
 from tests.everest.utils import (
     satisfy,
     satisfy_callable,
@@ -47,12 +47,12 @@ TEST_DATA = pd.DataFrame(
 )
 
 
-def export_mock(config, export_ecl=True, progress_callback=lambda _: None):
+def export_mock(config, _, export_ecl=True, progress_callback=lambda _: None):
     progress_callback(1.0)
     return TEST_DATA
 
 
-def empty_mock(config, export_ecl=True, progress_callback=lambda _: None):
+def empty_mock(config, _, export_ecl=True, progress_callback=lambda _: None):
     progress_callback(1.0)
     return pd.DataFrame()
 
@@ -129,8 +129,11 @@ def test_everexport_entry_no_export(mocked_func, cached_example):
     set to true"""
 
     config_path, config_file, _ = cached_example("math_func/config_minimal.yml")
-    config = EverestConfig.load_file(Path(config_path) / config_file)
-    config.export = ExportConfig(skip_export=True)
+    config_path = Path(config_path) / config_file
+    with open(config_path, "a", encoding="utf-8") as f:
+        f.write("export:\n  skip_export: True")
+    config = EverestConfig.load_file(config_path)
+
     # Add export section to config file and set run_export flag to false
     export_file_path = config.export_path
     assert not os.path.isfile(export_file_path)

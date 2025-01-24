@@ -6,7 +6,7 @@ import pytest
 from ert.config import QueueSystem
 from ert.ensemble_evaluator import EvaluatorServerConfig
 from ert.run_models.everest_run_model import EverestRunModel
-from everest.config import EverestConfig, SimulatorConfig
+from everest.config import EverestConfig
 
 
 @pytest.mark.integration_test
@@ -20,7 +20,9 @@ def test_simulator_cache(copy_math_func_test_data_to_tmp):
         return result
 
     config = EverestConfig.load_file("config_minimal.yml")
-    config.simulator = SimulatorConfig(enable_cache=True)
+    config_dict = config.model_dump(exclude_none=True)
+    config_dict["simulator"] = {"enable_cache": True}
+    config = EverestConfig.model_validate(config_dict)
 
     run_model = EverestRunModel.create(config)
 

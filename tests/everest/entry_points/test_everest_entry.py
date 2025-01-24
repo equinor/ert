@@ -1,7 +1,6 @@
 import logging
 import os
 from functools import partial
-from pathlib import Path
 from unittest.mock import patch
 
 import pytest
@@ -503,14 +502,20 @@ def test_complete_status_for_normal_run_monitor(
     "everest.bin.everest_script.everserver_status",
     return_value={"status": ServerStatus.never_run, "message": None},
 )
+@patch(
+    "everest.simulator.everest_to_ert._everest_to_ert_config_dict",
+    return_value={"SUMMARY": "*"},
+)
 def test_validate_ert_config_before_starting_everest_server(
-    server_is_running_mock, server_status_mock, copy_math_func_test_data_to_tmp
+    server_is_running_mock,
+    server_status_mock,
+    _ert_config_mock,
+    copy_math_func_test_data_to_tmp,
 ):
     config_file = "config_minimal.yml"
     everest_config = EverestConfig.with_defaults()
-    everest_config.model.realizations = []
+    everest_config.model.realizations = [0]
     everest_config.dump(config_file)
-    everest_config.config_path = Path(config_file)
 
-    with pytest.raises(SystemExit):
-        everest_entry([str(everest_config.config_path)])
+    with pytest.raises(SystemExit, match="Config validation error:"):
+        everest_entry([config_file])
