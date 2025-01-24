@@ -129,6 +129,7 @@ async def test_when_task_prematurely_ends_raises_exception(
         await evaluator.run_and_get_successful_realizations()
 
 
+@pytest.mark.integration_test
 async def test_new_connections_are_no_problem_when_evaluator_is_closing_down(
     evaluator_to_use,
 ):
