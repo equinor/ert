@@ -19,7 +19,6 @@ WELL_ORDER = "everest/model/config.yml"
 pytestmark = pytest.mark.xdist_group(name="starts_everest")
 
 
-@pytest.mark.integration_test
 def test_everest_entry_version():
     """Test calling everest with --version"""
     with capture_streams() as (out, err), pytest.raises(SystemExit):
@@ -29,7 +28,6 @@ def test_everest_entry_version():
     assert any(everest_version in channel for channel in channels)
 
 
-@pytest.mark.integration_test
 def test_everest_main_entry_bad_command():
     # Setup command line arguments for the test
     with capture_streams() as (_, err), pytest.raises(SystemExit):
@@ -40,9 +38,9 @@ def test_everest_main_entry_bad_command():
     assert "Run everest <command> --help for more information on a command" in lines
 
 
-@pytest.mark.flaky(reruns=5)
 @pytest.mark.skip_mac_ci
 @pytest.mark.integration_test
+@pytest.mark.xdist_group(name="starts_everest")
 def test_everest_entry_run(cached_example):
     _, config_file, _ = cached_example("math_func/config_minimal.yml")
     # Setup command line arguments
@@ -76,7 +74,6 @@ def test_everest_entry_run(cached_example):
     assert status["status"] == ServerStatus.completed
 
 
-@pytest.mark.integration_test
 def test_everest_entry_monitor_no_run(cached_example):
     _, config_file, _ = cached_example("math_func/config_minimal.yml")
     with capture_streams():
@@ -99,7 +96,6 @@ def test_everest_main_export_entry(cached_example):
     assert os.path.exists(os.path.join("everest_output", "config_minimal.csv"))
 
 
-@pytest.mark.integration_test
 def test_everest_main_lint_entry(cached_example):
     # Setup command line arguments
     _, config_file, _ = cached_example("math_func/config_minimal.yml")
