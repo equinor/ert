@@ -214,7 +214,7 @@ class StorageModel(QAbstractItemModel):
             return None
 
         return cast(ChildModel | Self, index.internalPointer()).data(
-            index, cast(Qt.ItemDataRole, role)
+            index, Qt.ItemDataRole(role)
         )
 
     @override

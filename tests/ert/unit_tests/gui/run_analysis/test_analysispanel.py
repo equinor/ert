@@ -14,7 +14,6 @@ def panel_with_localization_on(qtbot: QtBot):
     def func(settings, ensemble_size):
         widget = AnalysisModuleVariablesPanel(settings, ensemble_size)
         qtbot.addWidget(widget)
-        widget.show()
         check_box = widget.findChild(QCheckBox, name="localization")
         qtbot.mouseClick(check_box, Qt.MouseButton.LeftButton)
         return settings, widget
