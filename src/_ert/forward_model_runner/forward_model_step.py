@@ -186,9 +186,11 @@ class ForwardModelStep:
         exit_code = None
 
         max_memory_usage = 0
+        max_cpu_seconds = 0
         fm_step_pids = {int(process.pid)}
         while exit_code is None:
             (memory_rss, cpu_seconds, oom_score, pids) = _get_processtree_data(process)
+            max_cpu_seconds = max(max_cpu_seconds, cpu_seconds or 0)
             fm_step_pids |= pids
             max_memory_usage = max(memory_rss, max_memory_usage)
             yield Running(
@@ -198,7 +200,7 @@ class ForwardModelStep:
                     max_rss=max_memory_usage,
                     fm_step_id=self.index,
                     fm_step_name=self.job_data.get("name"),
-                    cpu_seconds=cpu_seconds,
+                    cpu_seconds=max_cpu_seconds,
                     oom_score=oom_score,
                 ),
             )
