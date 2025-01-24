@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import collections
 import datetime
 import functools
 import json
@@ -25,11 +26,25 @@ from ropt.transforms import OptModelTransforms
 from typing_extensions import TypedDict
 
 from _ert.events import EESnapshot, EESnapshotUpdate, Event
-from ert.config import ErtConfig, ExtParamConfig
+from ert.config import ExtParamConfig
+from ert.config.ensemble_config import EnsembleConfig
+from ert.config.ert_config import (
+    _substitutions_from_dict,
+    create_list_of_forward_model_steps_to_run,
+    installed_forward_model_steps_from_dict,
+    read_templates,
+    uppercase_subkeys_and_stringify_subvalues,
+    workflows_from_dict,
+)
+from ert.config.forward_model_step import ForwardModelStep
+from ert.config.model_config import ModelConfig
+from ert.config.queue_config import QueueConfig
 from ert.ensemble_evaluator import EnsembleSnapshot, EvaluatorServerConfig
+from ert.plugins.plugin_manager import ErtPluginManager
 from ert.runpaths import Runpaths
 from ert.storage import open_storage
 from everest.config import ControlConfig, ControlVariableGuessListConfig, EverestConfig
+from everest.config.control_variable_config import ControlVariableConfig
 from everest.config.utils import FlattenedControls
 from everest.everest_storage import EverestStorage, OptimalResult
 from everest.optimizer.everest2ropt import everest2ropt
@@ -37,8 +52,10 @@ from everest.optimizer.opt_model_transforms import (
     ObjectiveScaler,
     get_optimization_domain_transforms,
 )
-from everest.simulator.everest_to_ert import everest_to_ert_config
-from everest.strings import EVEREST
+from everest.simulator.everest_to_ert import (
+    everest_to_ert_config_dict,
+)
+from everest.strings import EVEREST, STORAGE_DIR
 
 from ..run_arg import RunArg, create_run_arguments
 from .base_run_model import BaseRunModel, StatusEvents
@@ -86,11 +103,13 @@ class EverestExitCode(IntEnum):
 class EverestRunModel(BaseRunModel):
     def __init__(
         self,
-        config: ErtConfig,
         everest_config: EverestConfig,
         simulation_callback: SimulationCallback | None,
         optimization_callback: OptimizerCallback | None,
     ):
+        assert everest_config.log_dir is not None
+        assert everest_config.optimization_output_dir is not None
+
         Path(everest_config.log_dir).mkdir(parents=True, exist_ok=True)
         Path(everest_config.optimization_output_dir).mkdir(parents=True, exist_ok=True)
 
@@ -120,39 +139,119 @@ class EverestRunModel(BaseRunModel):
         self._batch_id: int = 0
         self._status: SimulationStatus | None = None
 
-        storage = open_storage(config.ens_path, mode="w")
+        ens_path = os.path.join(everest_config.output_dir, STORAGE_DIR)
+        storage = open_storage(ens_path, mode="w")
         status_queue: queue.SimpleQueue[StatusEvents] = queue.SimpleQueue()
+
+        config_dict = everest_to_ert_config_dict(everest_config)
+
+        runpath_file: Path = Path(
+            os.path.join(everest_config.output_dir, ".res_runpath_list")
+        )
+
+        assert everest_config.config_file is not None
+        config_file: Path = Path(everest_config.config_file)
+
+        model_config = ModelConfig.from_dict(config_dict)
+        queue_config = QueueConfig.from_dict(config_dict)
+
+        ensemble_config = EnsembleConfig.from_dict(config_dict)
+
+        def _get_variables(
+            variables: list[ControlVariableConfig]
+            | list[ControlVariableGuessListConfig],
+        ) -> list[str] | dict[str, list[str]]:
+            if (
+                isinstance(variables[0], ControlVariableConfig)
+                and getattr(variables[0], "index", None) is None
+            ):
+                return [var.name for var in variables]
+            result: collections.defaultdict[str, list] = collections.defaultdict(list)  # type: ignore
+            for variable in variables:
+                if isinstance(variable, ControlVariableGuessListConfig):
+                    result[variable.name].extend(
+                        str(index + 1) for index, _ in enumerate(variable.initial_guess)
+                    )
+                else:
+                    result[variable.name].append(str(variable.index))
+            return dict(result)
+
+        # This adds an EXT_PARAM key to the ert_config, which is not a true ERT
+        # configuration key. When initializing an ERT config object, it is ignored.
+        # It is used by the Simulator object to inject ExtParamConfig nodes.
+        for control in everest_config.controls or []:
+            ensemble_config.parameter_configs[control.name] = ExtParamConfig(
+                name=control.name,
+                input_keys=_get_variables(control.variables),
+                output_file=control.name + ".json",
+            )
+
+        substitutions = _substitutions_from_dict(config_dict)
+        substitutions["<RUNPATH_FILE>"] = str(runpath_file)
+        substitutions["<RUNPATH>"] = model_config.runpath_format_string
+        substitutions["<ECL_BASE>"] = model_config.eclbase_format_string
+        substitutions["<ECLBASE>"] = model_config.eclbase_format_string
+        substitutions["<NUM_CPU>"] = str(queue_config.preferred_num_cpu)
+
+        ert_templates = read_templates(config_dict)
+        _, _, hooked_workflows = workflows_from_dict(config_dict, substitutions)  # type: ignore
+
+        installed_forward_model_steps: dict[str, ForwardModelStep] = {}
+        pm = ErtPluginManager()
+        for fm_step_subclass in pm.forward_model_steps:
+            fm_step = fm_step_subclass()  # type: ignore
+            installed_forward_model_steps[fm_step.name] = fm_step
+
+        installed_forward_model_steps.update(
+            installed_forward_model_steps_from_dict(config_dict)
+        )
+
+        env_pr_fm_step = uppercase_subkeys_and_stringify_subvalues(
+            pm.get_forward_model_configuration()
+        )
+
+        forward_model_steps = create_list_of_forward_model_steps_to_run(
+            installed_forward_model_steps,
+            substitutions,
+            config_dict,
+            installed_forward_model_steps,
+            env_pr_fm_step,
+        )
+
+        env_vars = {}
+        for key, val in config_dict.get("SETENV", []):  # type: ignore
+            env_vars[key] = val
+
+        self.support_restart = False
+        self._parameter_configuration = ensemble_config.parameter_configuration
+        self._parameter_configs = ensemble_config.parameter_configs
+        self._response_configuration = ensemble_config.response_configuration
 
         super().__init__(
             storage,
-            config.runpath_file,
-            Path(config.user_config_file),
-            config.env_vars,
-            config.env_pr_fm_step,
-            config.model_config,
-            config.queue_config,
-            config.forward_model_steps,
+            runpath_file,
+            config_file,
+            env_vars,
+            env_pr_fm_step,
+            model_config,
+            queue_config,
+            forward_model_steps,
             status_queue,
-            config.substitutions,
-            config.ert_templates,
-            config.hooked_workflows,
+            substitutions,
+            ert_templates,
+            hooked_workflows,
             active_realizations=[],  # Set dynamically in run_forward_model()
         )
-        self.support_restart = False
-        self._parameter_configuration = config.ensemble_config.parameter_configuration
-        self._parameter_configs = config.ensemble_config.parameter_configs
-        self._response_configuration = config.ensemble_config.response_configuration
 
     @classmethod
     def create(
         cls,
-        ever_config: EverestConfig,
+        everest_config: EverestConfig,
         simulation_callback: SimulationCallback | None = None,
         optimization_callback: OptimizerCallback | None = None,
     ) -> EverestRunModel:
         return cls(
-            config=everest_to_ert_config(ever_config),
-            everest_config=ever_config,
+            everest_config=everest_config,
             simulation_callback=simulation_callback,
             optimization_callback=optimization_callback,
         )

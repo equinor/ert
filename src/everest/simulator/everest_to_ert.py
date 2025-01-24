@@ -5,15 +5,11 @@ import logging
 import os
 
 import everest
-from ert.config import ErtConfig, ExtParamConfig
+from ert.config import ErtConfig
 from ert.config.parsing import ConfigDict
 from ert.config.parsing import ConfigKeys as ErtConfigKeys
 from ert.plugins import ErtPluginContext
 from everest.config import EverestConfig
-from everest.config.control_variable_config import (
-    ControlVariableConfig,
-    ControlVariableGuessListConfig,
-)
 from everest.config.install_data_config import InstallDataConfig
 from everest.config.install_job_config import InstallJobConfig
 from everest.config.simulator_config import SimulatorConfig
@@ -484,6 +480,14 @@ def _everest_to_ert_config_dict(
     return ert_config
 
 
+def everest_to_ert_config_dict(everest_config: EverestConfig) -> ConfigDict:
+    with ErtPluginContext():
+        config_dict = _everest_to_ert_config_dict(
+            everest_config, site_config=ErtConfig.read_site_config()
+        )
+    return config_dict
+
+
 def everest_to_ert_config(ever_config: EverestConfig) -> ErtConfig:
     with ErtPluginContext():
         config_dict = _everest_to_ert_config_dict(
@@ -492,34 +496,5 @@ def everest_to_ert_config(ever_config: EverestConfig) -> ErtConfig:
         ert_config = ErtConfig.with_plugins().from_dict(config_dict=config_dict)
     ert_config.queue_config.queue_options = ever_config.simulator.queue_system
     ert_config.queue_config.queue_system = ever_config.simulator.queue_system.name
-    ens_config = ert_config.ensemble_config
-
-    def _get_variables(
-        variables: list[ControlVariableConfig] | list[ControlVariableGuessListConfig],
-    ) -> list[str] | dict[str, list[str]]:
-        if (
-            isinstance(variables[0], ControlVariableConfig)
-            and getattr(variables[0], "index", None) is None
-        ):
-            return [var.name for var in variables]
-        result: collections.defaultdict[str, list] = collections.defaultdict(list)
-        for variable in variables:
-            if isinstance(variable, ControlVariableGuessListConfig):
-                result[variable.name].extend(
-                    str(index + 1) for index, _ in enumerate(variable.initial_guess)
-                )
-            else:
-                result[variable.name].append(str(variable.index))  # type: ignore
-        return dict(result)
-
-    # This adds an EXT_PARAM key to the ert_config, which is not a true ERT
-    # configuration key. When initializing an ERT config object, it is ignored.
-    # It is used by the Simulator object to inject ExtParamConfig nodes.
-    for control in ever_config.controls or []:
-        ens_config.parameter_configs[control.name] = ExtParamConfig(
-            name=control.name,
-            input_keys=_get_variables(control.variables),
-            output_file=control.name + ".json",
-        )
 
     return ert_config

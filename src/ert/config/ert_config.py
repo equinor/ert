@@ -229,6 +229,302 @@ def create_forward_model_json(
     }
 
 
+@staticmethod
+def check_non_utf_chars(file_path: str) -> None:
+    try:
+        with open(file_path, encoding="utf-8") as f:
+            f.read()
+    except UnicodeDecodeError as e:
+        error_words = str(e).split(" ")
+        hex_str = error_words[error_words.index("byte") + 1]
+        try:
+            unknown_char = chr(int(hex_str, 16))
+        except ValueError as ve:
+            unknown_char = f"hex:{hex_str}"
+            raise ConfigValidationError(
+                f"Unsupported non UTF-8 character {unknown_char!r} "
+                f"found in file: {file_path!r}",
+                config_file=file_path,
+            ) from ve
+        raise ConfigValidationError(
+            f"Unsupported non UTF-8 character {unknown_char!r} "
+            f"found in file: {file_path!r}",
+            config_file=file_path,
+        ) from e
+
+
+@staticmethod
+def read_templates(config_dict) -> list[tuple[str, str]]:
+    templates = []
+    if ConfigKeys.DATA_FILE in config_dict and ConfigKeys.ECLBASE in config_dict:
+        # This replicates the behavior of the DATA_FILE implementation
+        # in C, it adds the .DATA extension and facilitates magic string
+        # replacement in the data file
+        source_file = config_dict[ConfigKeys.DATA_FILE]
+        target_file = config_dict[ConfigKeys.ECLBASE].replace("%d", "<IENS>") + ".DATA"
+        check_non_utf_chars(source_file)
+        templates.append([source_file, target_file])
+
+    for template in config_dict.get(ConfigKeys.RUN_TEMPLATE, []):
+        templates.append(template)
+    return templates
+
+
+@staticmethod
+def workflows_from_dict(
+    content_dict,
+    substitutions,
+):
+    workflow_job_info = content_dict.get(ConfigKeys.LOAD_WORKFLOW_JOB, [])
+    workflow_job_dir_info = content_dict.get(ConfigKeys.WORKFLOW_JOB_DIRECTORY, [])
+    hook_workflow_info = content_dict.get(ConfigKeys.HOOK_WORKFLOW, [])
+    workflow_info = content_dict.get(ConfigKeys.LOAD_WORKFLOW, [])
+
+    workflow_jobs = {}
+    workflows = {}
+    hooked_workflows = defaultdict(list)
+
+    errors = []
+
+    for workflow_job in workflow_job_info:
+        try:
+            # WorkflowJob.fromFile only throws error if a
+            # non-readable file is provided.
+            # Non-existing files are caught by the new parser
+            new_job = WorkflowJob.from_file(
+                config_file=workflow_job[0],
+                name=None if len(workflow_job) == 1 else workflow_job[1],
+            )
+            name = new_job.name
+            if name in workflow_jobs:
+                ConfigWarning.warn(
+                    f"Duplicate workflow jobs with name {name!r}, choosing "
+                    f"{new_job.executable or new_job.script!r} over "
+                    f"{workflow_jobs[name].executable or workflow_jobs[name].script!r}",
+                    name,
+                )
+            workflow_jobs[name] = new_job
+        except ErtScriptLoadFailure as err:
+            ConfigWarning.warn(
+                f"Loading workflow job {workflow_job[0]!r}"
+                f" failed with '{err}'. It will not be loaded.",
+                workflow_job[0],
+            )
+        except ConfigValidationError as err:
+            errors.append(ErrorInfo(message=str(err)).set_context(workflow_job[0]))
+
+    for job_path in workflow_job_dir_info:
+        for file_name in _get_files_in_directory(job_path, errors):
+            try:
+                new_job = WorkflowJob.from_file(config_file=file_name)
+                name = new_job.name
+                if name in workflow_jobs:
+                    ConfigWarning.warn(
+                        f"Duplicate workflow jobs with name {name!r}, choosing "
+                        f"{new_job.executable or new_job.script!r} over "
+                        f"{workflow_jobs[name].executable or workflow_jobs[name].script!r}",
+                        name,
+                    )
+                workflow_jobs[name] = new_job
+            except ErtScriptLoadFailure as err:
+                ConfigWarning.warn(
+                    f"Loading workflow job {file_name!r}"
+                    f" failed with '{err}'. It will not be loaded.",
+                    file_name,
+                )
+            except ConfigValidationError as err:
+                errors.append(ErrorInfo(message=str(err)).set_context(job_path))
+    if errors:
+        raise ConfigValidationError.from_collected(errors)
+
+    for work in workflow_info:
+        filename = path.basename(work[0]) if len(work) == 1 else work[1]
+        try:
+            existed = filename in workflows
+            workflow = Workflow.from_file(
+                work[0],
+                substitutions,
+                workflow_jobs,
+            )
+            for job, args in workflow:
+                if job.ert_script:
+                    try:
+                        job.ert_script.validate(args)
+                    except ConfigValidationError as err:
+                        errors.append(ErrorInfo(message=str(err)).set_context(work[0]))
+                        continue
+            workflows[filename] = workflow
+            if existed:
+                ConfigWarning.warn(f"Workflow {filename!r} was added twice", work[0])
+        except ConfigValidationError as err:
+            ConfigWarning.warn(
+                f"Encountered the following error(s) while "
+                f"reading workflow {filename!r}. It will not be loaded: "
+                + err.cli_message(),
+                work[0],
+            )
+
+    for hook_name, mode in hook_workflow_info:
+        if hook_name not in workflows:
+            errors.append(
+                ErrorInfo(
+                    message="Cannot setup hook for non-existing"
+                    f" job name {hook_name!r}",
+                ).set_context(hook_name)
+            )
+            continue
+
+        hooked_workflows[mode].append(workflows[hook_name])
+
+    if errors:
+        raise ConfigValidationError.from_collected(errors)
+    return workflow_jobs, workflows, hooked_workflows
+
+
+@staticmethod
+def installed_forward_model_steps_from_dict(config_dict) -> dict[str, ForwardModelStep]:
+    errors = []
+    fm_steps = {}
+    for fm_step in config_dict.get(ConfigKeys.INSTALL_JOB, []):
+        name = fm_step[0]
+        fm_step_config_file = path.abspath(fm_step[1])
+        try:
+            new_fm_step = _forward_model_step_from_config_file(
+                name=name,
+                config_file=fm_step_config_file,
+            )
+        except ConfigValidationError as e:
+            errors.append(e)
+            continue
+        if name in fm_steps:
+            ConfigWarning.warn(
+                f"Duplicate forward model step with name {name!r}, choosing "
+                f"{fm_step_config_file!r} over {fm_steps[name].executable!r}",
+                name,
+            )
+        fm_steps[name] = new_fm_step
+
+    for fm_step_path in config_dict.get(ConfigKeys.INSTALL_JOB_DIRECTORY, []):
+        for file_name in _get_files_in_directory(fm_step_path, errors):
+            if not path.isfile(file_name):
+                continue
+            try:
+                new_fm_step = _forward_model_step_from_config_file(
+                    config_file=file_name
+                )
+            except ConfigValidationError as e:
+                errors.append(e)
+                continue
+            name = new_fm_step.name
+            if name in fm_steps:
+                ConfigWarning.warn(
+                    f"Duplicate forward model step with name {name!r}, "
+                    f"choosing {file_name!r} over {fm_steps[name].executable!r}",
+                    name,
+                )
+            fm_steps[name] = new_fm_step
+
+    if errors:
+        raise ConfigValidationError.from_collected(errors)
+    return fm_steps
+
+
+@staticmethod
+def create_list_of_forward_model_steps_to_run(
+    installed_steps: dict[str, ForwardModelStep],
+    substitutions: Substitutions,
+    config_dict: dict,
+    preinstalled_forward_model_steps: dict[str, ForwardModelStep],
+    env_pr_fm_step: dict[str, dict[str, Any]],
+) -> list[ForwardModelStep]:
+    errors = []
+    fm_steps = []
+
+    env_vars = {}
+    for key, val in config_dict.get("SETENV", []):
+        env_vars[key] = substitutions.substitute(val)
+
+    for fm_step_description in config_dict.get(ConfigKeys.FORWARD_MODEL, []):
+        if len(fm_step_description) > 1:
+            unsubstituted_step_name, args = fm_step_description
+        else:
+            unsubstituted_step_name = fm_step_description[0]
+            args = []
+        fm_step_name = substitutions.substitute(unsubstituted_step_name)
+        try:
+            fm_step = copy.deepcopy(installed_steps[fm_step_name])
+
+            # Preserve as ContextString
+            fm_step.name = fm_step_name
+        except KeyError:
+            errors.append(
+                ConfigValidationError.with_context(
+                    f"Could not find forward model step {fm_step_name!r} in list"
+                    f" of installed forward model steps: {list(installed_steps.keys())!r}",
+                    fm_step_name,
+                )
+            )
+            continue
+        fm_step.private_args = Substitutions()
+        for arg in args:
+            match arg:
+                case key, val:
+                    fm_step.private_args[key] = val
+                case val:
+                    fm_step.arglist.append(val)
+
+        should_add_step = True
+
+        if fm_step.required_keywords:
+            for req in fm_step.required_keywords:
+                if req not in fm_step.private_args:
+                    errors.append(
+                        ConfigValidationError.with_context(
+                            f"Required keyword {req} not found for forward model step {fm_step_name}",
+                            fm_step_name,
+                        )
+                    )
+                    should_add_step = False
+
+        if should_add_step:
+            fm_steps.append(fm_step)
+
+    for fm_step in fm_steps:
+        if fm_step.name in preinstalled_forward_model_steps:
+            try:
+                substituted_json = create_forward_model_json(
+                    run_id=None,
+                    context=substitutions,
+                    forward_model_steps=[fm_step],
+                    skip_pre_experiment_validation=True,
+                    env_vars=env_vars,
+                    env_pr_fm_step=env_pr_fm_step,
+                )
+                fm_json_for_validation = dict(substituted_json["jobList"][0])
+                fm_json_for_validation["environment"] = {
+                    **substituted_json["global_environment"],
+                    **fm_json_for_validation["environment"],
+                }
+                fm_step.validate_pre_experiment(fm_json_for_validation)
+            except ForwardModelStepValidationError as err:
+                errors.append(
+                    ConfigValidationError.with_context(
+                        f"Forward model step pre-experiment validation failed: {err!s}",
+                        context=fm_step.name,
+                    ),
+                )
+            except Exception as e:  # type: ignore
+                ConfigWarning.warn(
+                    f"Unexpected plugin forward model exception: {e!s}",
+                    context=fm_step.name,
+                )
+
+    if errors:
+        raise ConfigValidationError.from_collected(errors)
+
+    return fm_steps
+
+
 @dataclass
 class ErtConfig:
     DEFAULT_ENSPATH: ClassVar[str] = "storage"
@@ -315,7 +611,7 @@ class ErtConfig:
             preinstalled_fm_steps[fm_step.name] = fm_step
 
         if env_pr_fm_step is None:
-            env_pr_fm_step = _uppercase_subkeys_and_stringify_subvalues(
+            env_pr_fm_step = uppercase_subkeys_and_stringify_subvalues(
                 pm.get_forward_model_configuration()
             )
 
@@ -437,7 +733,7 @@ class ErtConfig:
                 errors.append(e["ctx"]["error"])
 
         try:
-            workflow_jobs, workflows, hooked_workflows = cls._workflows_from_dict(
+            workflow_jobs, workflows, hooked_workflows = workflows_from_dict(
                 config_dict, substitutions
             )
         except ConfigValidationError as e:
@@ -449,7 +745,7 @@ class ErtConfig:
             )
 
             installed_forward_model_steps.update(
-                cls._installed_forward_model_steps_from_dict(config_dict)
+                installed_forward_model_steps_from_dict(config_dict)
             )
 
         except ConfigValidationError as e:
@@ -545,7 +841,7 @@ class ErtConfig:
             workflows=workflows,
             hooked_workflows=hooked_workflows,
             runpath_file=Path(runpath_file),
-            ert_templates=cls._read_templates(config_dict),
+            ert_templates=read_templates(config_dict),
             installed_forward_model_steps=installed_forward_model_steps,
             forward_model_steps=cls._create_list_of_forward_model_steps_to_run(
                 installed_forward_model_steps,
@@ -556,6 +852,21 @@ class ErtConfig:
             user_config_file=config_file_path,
             observation_config=obs_config_content,
             enkf_obs=observations,
+        )
+
+    @classmethod
+    def _create_list_of_forward_model_steps_to_run(
+        cls,
+        installed_steps: dict[str, ForwardModelStep],
+        substitutions: Substitutions,
+        config_dict: dict,
+    ) -> list[ForwardModelStep]:
+        return create_list_of_forward_model_steps_to_run(
+            installed_steps,
+            substitutions,
+            config_dict,
+            cls.PREINSTALLED_FORWARD_MODEL_STEPS,
+            cls.ENV_PR_FM_STEP,
         )
 
     @classmethod
@@ -687,47 +998,6 @@ class ErtConfig:
         cls._log_custom_forward_model_steps(user_config_dict)
         return cls._merge_user_and_site_config(user_config_dict, site_config_dict)
 
-    @staticmethod
-    def check_non_utf_chars(file_path: str) -> None:
-        try:
-            with open(file_path, encoding="utf-8") as f:
-                f.read()
-        except UnicodeDecodeError as e:
-            error_words = str(e).split(" ")
-            hex_str = error_words[error_words.index("byte") + 1]
-            try:
-                unknown_char = chr(int(hex_str, 16))
-            except ValueError as ve:
-                unknown_char = f"hex:{hex_str}"
-                raise ConfigValidationError(
-                    f"Unsupported non UTF-8 character {unknown_char!r} "
-                    f"found in file: {file_path!r}",
-                    config_file=file_path,
-                ) from ve
-            raise ConfigValidationError(
-                f"Unsupported non UTF-8 character {unknown_char!r} "
-                f"found in file: {file_path!r}",
-                config_file=file_path,
-            ) from e
-
-    @classmethod
-    def _read_templates(cls, config_dict) -> list[tuple[str, str]]:
-        templates = []
-        if ConfigKeys.DATA_FILE in config_dict and ConfigKeys.ECLBASE in config_dict:
-            # This replicates the behavior of the DATA_FILE implementation
-            # in C, it adds the .DATA extension and facilitates magic string
-            # replacement in the data file
-            source_file = config_dict[ConfigKeys.DATA_FILE]
-            target_file = (
-                config_dict[ConfigKeys.ECLBASE].replace("%d", "<IENS>") + ".DATA"
-            )
-            cls.check_non_utf_chars(source_file)
-            templates.append([source_file, target_file])
-
-        for template in config_dict.get(ConfigKeys.RUN_TEMPLATE, []):
-            templates.append(template)
-        return templates
-
     @classmethod
     def _validate_dict(
         cls, config_dict, config_file: str
@@ -744,266 +1014,8 @@ class ErtConfig:
             )
         return errors
 
-    @classmethod
-    def _create_list_of_forward_model_steps_to_run(
-        cls,
-        installed_steps: dict[str, ForwardModelStep],
-        substitutions: Substitutions,
-        config_dict: dict,
-    ) -> list[ForwardModelStep]:
-        errors = []
-        fm_steps = []
-
-        env_vars = {}
-        for key, val in config_dict.get("SETENV", []):
-            env_vars[key] = substitutions.substitute(val)
-
-        for fm_step_description in config_dict.get(ConfigKeys.FORWARD_MODEL, []):
-            if len(fm_step_description) > 1:
-                unsubstituted_step_name, args = fm_step_description
-            else:
-                unsubstituted_step_name = fm_step_description[0]
-                args = []
-            fm_step_name = substitutions.substitute(unsubstituted_step_name)
-            try:
-                fm_step = copy.deepcopy(installed_steps[fm_step_name])
-
-                # Preserve as ContextString
-                fm_step.name = fm_step_name
-            except KeyError:
-                errors.append(
-                    ConfigValidationError.with_context(
-                        f"Could not find forward model step {fm_step_name!r} in list"
-                        f" of installed forward model steps: {list(installed_steps.keys())!r}",
-                        fm_step_name,
-                    )
-                )
-                continue
-            fm_step.private_args = Substitutions()
-            for arg in args:
-                match arg:
-                    case key, val:
-                        fm_step.private_args[key] = val
-                    case val:
-                        fm_step.arglist.append(val)
-
-            should_add_step = True
-
-            if fm_step.required_keywords:
-                for req in fm_step.required_keywords:
-                    if req not in fm_step.private_args:
-                        errors.append(
-                            ConfigValidationError.with_context(
-                                f"Required keyword {req} not found for forward model step {fm_step_name}",
-                                fm_step_name,
-                            )
-                        )
-                        should_add_step = False
-
-            if should_add_step:
-                fm_steps.append(fm_step)
-
-        for fm_step in fm_steps:
-            if fm_step.name in cls.PREINSTALLED_FORWARD_MODEL_STEPS:
-                try:
-                    substituted_json = create_forward_model_json(
-                        run_id=None,
-                        context=substitutions,
-                        forward_model_steps=[fm_step],
-                        skip_pre_experiment_validation=True,
-                        env_vars=env_vars,
-                        env_pr_fm_step=cls.ENV_PR_FM_STEP,
-                    )
-                    fm_json_for_validation = dict(substituted_json["jobList"][0])
-                    fm_json_for_validation["environment"] = {
-                        **substituted_json["global_environment"],
-                        **fm_json_for_validation["environment"],
-                    }
-                    fm_step.validate_pre_experiment(fm_json_for_validation)
-                except ForwardModelStepValidationError as err:
-                    errors.append(
-                        ConfigValidationError.with_context(
-                            f"Forward model step pre-experiment validation failed: {err!s}",
-                            context=fm_step.name,
-                        ),
-                    )
-                except Exception as e:  # type: ignore
-                    ConfigWarning.warn(
-                        f"Unexpected plugin forward model exception: {e!s}",
-                        context=fm_step.name,
-                    )
-
-        if errors:
-            raise ConfigValidationError.from_collected(errors)
-
-        return fm_steps
-
     def forward_model_step_name_list(self) -> list[str]:
         return [j.name for j in self.forward_model_steps]
-
-    @classmethod
-    def _workflows_from_dict(
-        cls,
-        content_dict,
-        substitutions,
-    ):
-        workflow_job_info = content_dict.get(ConfigKeys.LOAD_WORKFLOW_JOB, [])
-        workflow_job_dir_info = content_dict.get(ConfigKeys.WORKFLOW_JOB_DIRECTORY, [])
-        hook_workflow_info = content_dict.get(ConfigKeys.HOOK_WORKFLOW, [])
-        workflow_info = content_dict.get(ConfigKeys.LOAD_WORKFLOW, [])
-
-        workflow_jobs = {}
-        workflows = {}
-        hooked_workflows = defaultdict(list)
-
-        errors = []
-
-        for workflow_job in workflow_job_info:
-            try:
-                # WorkflowJob.fromFile only throws error if a
-                # non-readable file is provided.
-                # Non-existing files are caught by the new parser
-                new_job = WorkflowJob.from_file(
-                    config_file=workflow_job[0],
-                    name=None if len(workflow_job) == 1 else workflow_job[1],
-                )
-                name = new_job.name
-                if name in workflow_jobs:
-                    ConfigWarning.warn(
-                        f"Duplicate workflow jobs with name {name!r}, choosing "
-                        f"{new_job.executable or new_job.script!r} over "
-                        f"{workflow_jobs[name].executable or workflow_jobs[name].script!r}",
-                        name,
-                    )
-                workflow_jobs[name] = new_job
-            except ErtScriptLoadFailure as err:
-                ConfigWarning.warn(
-                    f"Loading workflow job {workflow_job[0]!r}"
-                    f" failed with '{err}'. It will not be loaded.",
-                    workflow_job[0],
-                )
-            except ConfigValidationError as err:
-                errors.append(ErrorInfo(message=str(err)).set_context(workflow_job[0]))
-
-        for job_path in workflow_job_dir_info:
-            for file_name in _get_files_in_directory(job_path, errors):
-                try:
-                    new_job = WorkflowJob.from_file(config_file=file_name)
-                    name = new_job.name
-                    if name in workflow_jobs:
-                        ConfigWarning.warn(
-                            f"Duplicate workflow jobs with name {name!r}, choosing "
-                            f"{new_job.executable or new_job.script!r} over "
-                            f"{workflow_jobs[name].executable or workflow_jobs[name].script!r}",
-                            name,
-                        )
-                    workflow_jobs[name] = new_job
-                except ErtScriptLoadFailure as err:
-                    ConfigWarning.warn(
-                        f"Loading workflow job {file_name!r}"
-                        f" failed with '{err}'. It will not be loaded.",
-                        file_name,
-                    )
-                except ConfigValidationError as err:
-                    errors.append(ErrorInfo(message=str(err)).set_context(job_path))
-        if errors:
-            raise ConfigValidationError.from_collected(errors)
-
-        for work in workflow_info:
-            filename = path.basename(work[0]) if len(work) == 1 else work[1]
-            try:
-                existed = filename in workflows
-                workflow = Workflow.from_file(
-                    work[0],
-                    substitutions,
-                    workflow_jobs,
-                )
-                for job, args in workflow:
-                    if job.ert_script:
-                        try:
-                            job.ert_script.validate(args)
-                        except ConfigValidationError as err:
-                            errors.append(
-                                ErrorInfo(message=str(err)).set_context(work[0])
-                            )
-                            continue
-                workflows[filename] = workflow
-                if existed:
-                    ConfigWarning.warn(
-                        f"Workflow {filename!r} was added twice", work[0]
-                    )
-            except ConfigValidationError as err:
-                ConfigWarning.warn(
-                    f"Encountered the following error(s) while "
-                    f"reading workflow {filename!r}. It will not be loaded: "
-                    + err.cli_message(),
-                    work[0],
-                )
-
-        for hook_name, mode in hook_workflow_info:
-            if hook_name not in workflows:
-                errors.append(
-                    ErrorInfo(
-                        message="Cannot setup hook for non-existing"
-                        f" job name {hook_name!r}",
-                    ).set_context(hook_name)
-                )
-                continue
-
-            hooked_workflows[mode].append(workflows[hook_name])
-
-        if errors:
-            raise ConfigValidationError.from_collected(errors)
-        return workflow_jobs, workflows, hooked_workflows
-
-    @classmethod
-    def _installed_forward_model_steps_from_dict(
-        cls, config_dict
-    ) -> dict[str, ForwardModelStep]:
-        errors = []
-        fm_steps = {}
-        for fm_step in config_dict.get(ConfigKeys.INSTALL_JOB, []):
-            name = fm_step[0]
-            fm_step_config_file = path.abspath(fm_step[1])
-            try:
-                new_fm_step = _forward_model_step_from_config_file(
-                    name=name,
-                    config_file=fm_step_config_file,
-                )
-            except ConfigValidationError as e:
-                errors.append(e)
-                continue
-            if name in fm_steps:
-                ConfigWarning.warn(
-                    f"Duplicate forward model step with name {name!r}, choosing "
-                    f"{fm_step_config_file!r} over {fm_steps[name].executable!r}",
-                    name,
-                )
-            fm_steps[name] = new_fm_step
-
-        for fm_step_path in config_dict.get(ConfigKeys.INSTALL_JOB_DIRECTORY, []):
-            for file_name in _get_files_in_directory(fm_step_path, errors):
-                if not path.isfile(file_name):
-                    continue
-                try:
-                    new_fm_step = _forward_model_step_from_config_file(
-                        config_file=file_name
-                    )
-                except ConfigValidationError as e:
-                    errors.append(e)
-                    continue
-                name = new_fm_step.name
-                if name in fm_steps:
-                    ConfigWarning.warn(
-                        f"Duplicate forward model step with name {name!r}, "
-                        f"choosing {file_name!r} over {fm_steps[name].executable!r}",
-                        name,
-                    )
-                fm_steps[name] = new_fm_step
-
-        if errors:
-            raise ConfigValidationError.from_collected(errors)
-        return fm_steps
 
     @property
     def env_pr_fm_step(self) -> dict[str, dict[str, Any]]:
@@ -1112,7 +1124,8 @@ def _substitutions_from_dict(config_dict) -> Substitutions:
     return Substitutions(subst_list)
 
 
-def _uppercase_subkeys_and_stringify_subvalues(
+@staticmethod
+def uppercase_subkeys_and_stringify_subvalues(
     nested_dict: dict[str, dict[str, Any]],
 ) -> dict[str, dict[str, str]]:
     fixed_dict: dict[str, dict[str, str]] = {}
