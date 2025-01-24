@@ -80,6 +80,7 @@ def test_delegate_drawing_count(small_snapshot, qtbot):
         )
 
 
+@pytest.mark.integration_test
 def test_selection_success(large_snapshot, qtbot):
     it = 0
     widget = RealizationWidget(it)
