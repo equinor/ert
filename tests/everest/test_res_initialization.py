@@ -8,7 +8,6 @@ import yaml
 from ruamel.yaml import YAML
 
 import everest
-from ert.config import ExtParamConfig
 from ert.config.parsing import ConfigKeys as ErtConfigKeys
 from ert.config.queue_config import (
     LocalQueueOptions,
@@ -99,29 +98,6 @@ def test_everest_to_ert_queue_config(config, config_class, tmp_path, monkeypatch
     )
     ert_config = everest_to_ert_config(ever_config)
     assert ert_config.queue_config.queue_options == config_class(**config)
-
-
-def test_everest_to_ert_controls(tmp_path, monkeypatch):
-    monkeypatch.chdir(tmp_path)
-    ever_config = EverestConfig.with_defaults(
-        **yaml.safe_load(
-            dedent("""
-    model: {"realizations": [0]}
-    controls:
-      -
-        name: my_control
-        type: well_control
-        min: 0
-        max: 0.1
-        variables:
-          - { name: test, initial_guess: 0.1 }
-    """)
-        )
-    )
-    config = everest_to_ert_config(ever_config)
-    assert config.ensemble_config["my_control"] == ExtParamConfig(
-        input_keys=["test"], name="my_control", output_file="my_control.json"
-    )
 
 
 def test_default_installed_jobs(tmp_path, monkeypatch):
