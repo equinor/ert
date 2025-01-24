@@ -453,33 +453,20 @@ class EverestStorage:
 
             batch_constraints = polars.from_pandas(
                 results.to_dataframe("nonlinear_constraints").reset_index()
-            ).select("batch_id", "nonlinear_constraint", "values", "violations")
+            ).select("batch_id", "nonlinear_constraint", "values")
 
             batch_constraints = batch_constraints.rename(
                 {
                     "nonlinear_constraint": "constraint_name",
                     "values": "constraint_value",
-                    "violations": "constraint_violation",
                 }
             )
-
-            constraint_names = batch_constraints["constraint_name"].unique().to_list()
 
             batch_constraints = batch_constraints.pivot(
                 on="constraint_name",
                 values=[
                     "constraint_value",
-                    "constraint_violation",
                 ],
-                separator=";",
-            ).rename(
-                {
-                    **{f"constraint_value;{name}": name for name in constraint_names},
-                    **{
-                        f"constraint_violation;{name}": f"{name}.violation"
-                        for name in constraint_names
-                    },
-                }
             )
 
             realization_constraints = realization_constraints.pivot(
