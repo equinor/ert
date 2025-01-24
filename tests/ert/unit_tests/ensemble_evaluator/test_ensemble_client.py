@@ -67,6 +67,9 @@ async def test_reconnect_when_missing_heartbeat(unused_tcp_port, monkeypatch):
             await mock_server.do_heartbeat()
             await client.send("stop", retries=1)
 
+    # the client should be disconnected
+    assert len(mock_server.dealers) == 0
+
     # when reconnection happens CONNECT message is sent again
     assert mock_server.messages.count("CONNECT") == 2
     assert mock_server.messages.count("DISCONNECT") == 1

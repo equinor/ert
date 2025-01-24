@@ -81,6 +81,8 @@ class MockZMQServer:
         self.server_task = None
         self.handler_task = None
         self.dealers = set()
+        self.no_dealers = asyncio.Event()
+        self.no_dealers.set()
 
     def start_event_loop(self):
         asyncio.set_event_loop(self.loop)
@@ -104,6 +106,8 @@ class MockZMQServer:
 
     async def __aexit__(self, exc_type, exc_value, traceback):
         if not self.server_task.done():
+            with contextlib.suppress(asyncio.TimeoutError):
+                await asyncio.wait_for(self.no_dealers.wait(), timeout=2.0)
             self.server_task.cancel()
             with contextlib.suppress(asyncio.CancelledError):
                 await self.server_task
@@ -132,18 +136,21 @@ class MockZMQServer:
         while True:
             try:
                 dealer, __, frame = await self.router_socket.recv_multipart()
-                if frame == CONNECT_MSG:
-                    await self.router_socket.send_multipart([dealer, b"", ACK_MSG])
-                    self.dealers.add(dealer)
-                elif frame == DISCONNECT_MSG:
-                    await self.router_socket.send_multipart([dealer, b"", ACK_MSG])
-                    self.dealers.discard(dealer)
-                elif self.value in {0, 3}:
-                    await self.router_socket.send_multipart([dealer, b"", ACK_MSG])
                 if (
                     self.value in {0, 2} and frame not in {CONNECT_MSG, DISCONNECT_MSG}
                 ) or self.value == 3:
                     self.messages.append(frame.decode("utf-8"))
+                if frame == CONNECT_MSG:
+                    self.dealers.add(dealer)
+                    self.no_dealers.clear()
+                    await self.router_socket.send_multipart([dealer, b"", ACK_MSG])
+                elif frame == DISCONNECT_MSG:
+                    self.dealers.discard(dealer)
+                    if not self.dealers:
+                        self.no_dealers.set()
+                    await self.router_socket.send_multipart([dealer, b"", ACK_MSG])
+                elif self.value in {0, 3}:
+                    await self.router_socket.send_multipart([dealer, b"", ACK_MSG])
             except asyncio.CancelledError:
                 break
 
