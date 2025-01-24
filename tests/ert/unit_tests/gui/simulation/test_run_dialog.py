@@ -111,6 +111,7 @@ def test_run_dialog_polls_run_model_for_runtime(
     qtbot.waitUntil(lambda: run_dialog.is_simulation_done() == True)
 
 
+@pytest.mark.integration_test
 def test_large_snapshot(
     large_snapshot,
     qtbot: QtBot,
