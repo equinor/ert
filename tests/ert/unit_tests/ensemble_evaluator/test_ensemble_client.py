@@ -56,18 +56,16 @@ async def test_retry(unused_tcp_port):
 async def test_reconnect_when_missing_heartbeat(unused_tcp_port, monkeypatch):
     host = "localhost"
     url = f"tcp://{host}:{unused_tcp_port}"
-    monkeypatch.setattr(_ert.forward_model_runner.client, "HEARTBEAT_TIMEOUT", 0.01)
 
-    async with (
-        MockZMQServer(unused_tcp_port, signal=3) as mock_server,
-        Client(url) as client,
-    ):
-        await client.send("start", retries=1)
+    async with MockZMQServer(unused_tcp_port, signal=3) as mock_server:
+        monkeypatch.setattr(_ert.forward_model_runner.client, "HEARTBEAT_TIMEOUT", 0.01)
+        async with Client(url) as client:
+            await client.send("start", retries=1)
 
-        await mock_server.do_heartbeat()
-        await asyncio.sleep(0.1)
-        await mock_server.do_heartbeat()
-        await client.send("stop", retries=1)
+            await mock_server.do_heartbeat()
+            await asyncio.sleep(0.1)
+            await mock_server.do_heartbeat()
+            await client.send("stop", retries=1)
 
     # when reconnection happens CONNECT message is sent again
     assert mock_server.messages.count("CONNECT") == 2
