@@ -4,7 +4,10 @@ import os
 
 from ropt.version import version as ropt_version
 
-from ert.shared.version import version as ert_version
+try:
+    from ert.shared.version import version as ert_version
+except ImportError:
+    ert_version = "0.0.0"
 from everest.strings import DATE_FORMAT, EVEREST
 
 try:
