@@ -133,13 +133,13 @@ class StorageWidget(QWidget):
     def _currentChanged(self, selected: QModelIndex, previous: QModelIndex) -> None:
         idx = self._tree_view.model().mapToSource(selected)  # type: ignore
         cls = idx.internalPointer()
-
         if isinstance(cls, EnsembleModel):
             ensemble = self._notifier.storage.get_ensemble(cls._id)
             self.onSelectEnsemble.emit(ensemble)
         elif isinstance(cls, ExperimentModel):
             experiment = self._notifier.storage.get_experiment(cls._id)
-            self.onSelectExperiment.emit(experiment)
+            if experiment.is_valid():
+                self.onSelectExperiment.emit(experiment)
         elif isinstance(cls, RealizationModel):
             ensemble = self._notifier.storage.get_ensemble(cls.ensemble_id)
             self.onSelectRealization.emit(ensemble, cls.realization)

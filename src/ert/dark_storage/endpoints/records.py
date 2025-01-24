@@ -124,8 +124,7 @@ def get_ensemble_responses(
 
     response_names_with_observations = set()
     observations = ensemble.experiment.observations
-
-    if len(ensemble.has_data()) == 0:
+    if not ensemble.experiment.is_valid() or len(ensemble.has_data()) == 0:
         return {}
 
     for (

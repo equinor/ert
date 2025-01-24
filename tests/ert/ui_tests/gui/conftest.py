@@ -394,6 +394,13 @@ def wait_for_child(gui, qtbot: QtBot, typ: type[V], timeout=5000, **kwargs) -> V
     return get_child(gui, typ, **kwargs)
 
 
+def wait_for_children(
+    gui, qtbot: QtBot, typ: type[V], timeout=5000, **kwargs
+) -> list[V]:
+    qtbot.waitUntil(lambda: gui.findChildren(typ) is not None, timeout=timeout)
+    return get_children(gui, typ, **kwargs)
+
+
 def get_child(gui: QWidget, typ: type[V], *args, **kwargs) -> V:
     child = gui.findChild(typ, *args, **kwargs)
     assert isinstance(child, typ)
