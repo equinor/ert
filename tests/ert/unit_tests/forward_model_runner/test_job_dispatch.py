@@ -116,6 +116,7 @@ else:
     os.wait()  # allow os to clean up zombie processes
 
 
+@pytest.mark.integration_test
 @pytest.mark.usefixtures("use_tmpdir")
 def test_memory_profile_is_logged_as_csv():
     """This tests that a csv is produced and has basic validity.
@@ -126,7 +127,7 @@ def test_memory_profile_is_logged_as_csv():
     with open(scriptname, "w", encoding="utf-8") as script:
         script.write(
             """#!/bin/sh
-        exit 0
+        sleep 6
         """
         )
     os.chmod(scriptname, stat.S_IRWXU | stat.S_IRWXO | stat.S_IRWXG)
