@@ -16,6 +16,7 @@ from types import TracebackType
 from typing import TYPE_CHECKING, Any, Protocol
 
 import numpy as np
+import polars
 import seba_sqlite.sqlite_storage
 from numpy import float64
 from numpy._typing import NDArray
@@ -37,10 +38,12 @@ from everest.simulator.everest_to_ert import everest_to_ert_config
 from everest.strings import EVEREST
 
 from ..run_arg import RunArg, create_run_arguments
+from ..storage.everest_ensemble import EverestRealizationInfo
+from ..storage.everest_experiment import EverestExperiment
 from .base_run_model import BaseRunModel, StatusEvents
 
 if TYPE_CHECKING:
-    from ert.storage import Ensemble, Experiment
+    from ert.storage import Ensemble
 
 
 logger = logging.getLogger(__name__)
@@ -130,7 +133,7 @@ class EverestRunModel(BaseRunModel):
             )
             else None
         )
-        self._experiment: Experiment | None = None
+        self._experiment: EverestExperiment | None = None
         self._eval_server_cfg: EvaluatorServerConfig | None = None
         self._batch_id: int = 0
         self._status: SimulationStatus | None = None
@@ -197,11 +200,16 @@ class EverestRunModel(BaseRunModel):
     ) -> None:
         self.log_at_startup()
         self._eval_server_cfg = evaluator_server_config
-        self._experiment = self._storage.create_experiment(
-            name=f"EnOpt@{datetime.datetime.now().strftime('%Y-%m-%d@%H:%M:%S')}",
-            parameters=self._parameter_configuration,
-            responses=self._response_configuration,
-        )
+
+        # Keep for re-runs, will work in-memory
+        # 2DO: If an experiment for this exact config already exists,
+        # we should load the experiment from the file system
+        if self._experiment is None:
+            self._experiment = self._storage.create_everest_experiment(
+                name=f"EnOpt@{datetime.datetime.now().strftime('%Y-%m-%d@%H:%M:%S')}",
+                parameters=self._parameter_configuration,
+                responses=self._response_configuration,
+            )
 
         # Initialize the ropt optimizer:
         optimizer = self._create_optimizer()
@@ -371,30 +379,67 @@ class EverestRunModel(BaseRunModel):
 
         # Initialize a new ensemble in storage:
         assert self._experiment is not None
-        ensemble = self._experiment.create_ensemble(
+        everest_ensemble = self._experiment.create_ensemble(
             name=f"batch_{self._batch_id}",
             ensemble_size=len(batch_data),
         )
+        ert_ensemble = everest_ensemble.ert_ensemble
+
+        realizations = self._everest_config.model.realizations
+        num_perturbations = self._everest_config.optimization.perturbation_num
+        realization_mapping: dict[int, EverestRealizationInfo] = {}
+
+        if len(evaluator_context.realizations) == len(realizations):
+            # Function evaluation
+            realization_mapping = {
+                i: EverestRealizationInfo(geo_realization=real, perturbation=None)
+                for i, real in enumerate(realizations)
+            }
+        elif len(evaluator_context.realizations) == num_perturbations:
+            realization_mapping = {
+                p: EverestRealizationInfo(geo_realization=real, perturbation=p)
+                for p, real in enumerate(realizations)
+            }
+        else:
+            # Function and gradient
+            realization_mapping = {}
+            for i, real in enumerate(realizations):
+                realization_mapping[i] = EverestRealizationInfo(
+                    geo_realization=real, perturbation=None
+                )
+
+            i = len(realization_mapping)
+            for real in realizations:
+                for p in range(num_perturbations or 1):
+                    realization_mapping[i] = EverestRealizationInfo(
+                        geo_realization=real, perturbation=p
+                    )
+                    i += 1
+
+        # Fill in data from ROPT here
+        everest_ensemble.save_realization_mapping(
+            realization_mapping=realization_mapping
+        )
         for sim_id, controls in enumerate(batch_data.values()):
-            self._setup_sim(sim_id, controls, ensemble)
+            self._setup_sim(sim_id, controls, ert_ensemble)
 
         # Evaluate the batch:
-        run_args = self._get_run_args(ensemble, evaluator_context, batch_data)
+        run_args = self._get_run_args(ert_ensemble, evaluator_context, batch_data)
         self._context_env.update(
             {
-                "_ERT_EXPERIMENT_ID": str(ensemble.experiment_id),
-                "_ERT_ENSEMBLE_ID": str(ensemble.id),
+                "_ERT_EXPERIMENT_ID": str(ert_ensemble.experiment_id),
+                "_ERT_ENSEMBLE_ID": str(ert_ensemble.id),
                 "_ERT_SIMULATION_MODE": "batch_simulation",
             }
         )
         assert self._eval_server_cfg is not None
-        self._evaluate_and_postprocess(run_args, ensemble, self._eval_server_cfg)
+        self._evaluate_and_postprocess(run_args, ert_ensemble, self._eval_server_cfg)
 
         # If necessary, delete the run path:
         self._delete_runpath(run_args)
 
         # Gather the results and create the result for ropt:
-        results = self._gather_simulation_results(ensemble)
+        results = self._gather_simulation_results(ert_ensemble)
         evaluator_result = self._make_evaluator_result(
             control_values, batch_data, results, cached_results
         )
@@ -416,6 +461,22 @@ class EverestRunModel(BaseRunModel):
     def _get_cached_results(
         self, control_values: NDArray[np.float64], evaluator_context: EvaluatorContext
     ) -> dict[int, Any]:
+        control_groups = {c.name: c for c in self._everest_config.controls}
+        control_variables = {g: len(c.variables) for g, c in control_groups.items()}
+        control_group_spans = []
+        span_ = 0
+        for num_vars in control_variables.values():
+            control_group_spans.append((span_, span_ + num_vars))
+            span_ += num_vars
+
+        def controls_1d_to_dict(values_: list[float]):
+            return {
+                group: values_[span_[0] : span_[1]]
+                for group, span_ in zip(
+                    control_groups, control_group_spans, strict=False
+                )
+            }
+
         cached_results: dict[int, Any] = {}
         if self._simulator_cache is not None:
             for control_idx, real_idx in enumerate(evaluator_context.realizations):
@@ -425,7 +486,57 @@ class EverestRunModel(BaseRunModel):
                 )
                 if cached_data is not None:
                     cached_results[control_idx] = cached_data
-        return cached_results
+
+        cached_results2: dict[int, Any] = {}
+        for control_values_ in control_values.tolist():
+            parameter_group_values = controls_1d_to_dict(control_values_)
+
+            # If several realizations have the same controls,
+            # but different responses, make sure to not get stuck
+            # on the first found realization.
+            ert_realization, matching_ensemble = (
+                self._experiment.find_realization_with_data(
+                    parameter_group_values, exclude=cached_results2.keys()
+                )
+            )
+            if ert_realization is not None:
+                assert matching_ensemble is not None
+                responses = matching_ensemble.ert_ensemble.load_responses(
+                    "gen_data", (ert_realization,)
+                )
+                objectives = responses.filter(
+                    polars.col("response_key").is_in(
+                        self._everest_config.objective_names
+                    )
+                )["values"]
+
+                constraints = responses.filter(
+                    polars.col("response_key").is_in(
+                        self._everest_config.constraint_names
+                    )
+                )["values"]
+
+                cached_data = (
+                    objectives.to_numpy() * -1,
+                    constraints.to_numpy() if not constraints.is_empty() else None,
+                )
+                cached_results2[ert_realization] = cached_data
+
+        # Redundant double-checking for sanity, to be removed
+        # +--------------------------------------------------------+
+        for k, expected in cached_results.items():
+            actual_objs, actual_constrs = cached_results2[k]
+            exp_objs, exp_constrs = expected
+            if not np.allclose(actual_objs, exp_objs, atol=1e-6):
+                print("Something wrong with caching!")
+
+            if actual_constrs != exp_constrs and not np.allclose(
+                actual_constrs, exp_constrs, atol=1e-6
+            ):
+                print("Something wrong with caching!")
+        # +--------------------------------------------------------+
+
+        return cached_results2
 
     def _init_batch_data(
         self,

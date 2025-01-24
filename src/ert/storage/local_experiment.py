@@ -390,3 +390,34 @@ class LocalExperiment(BaseMode):
 
         if self.response_type_to_response_keys is not None:
             del self.response_type_to_response_keys
+
+    def find_realization_by_parameter_values(
+        self, parameter_values: dict[str, np.array]
+    ) -> int | None:
+        if not list(self.ensembles):
+            return None
+
+        for ensemble in self.ensembles:
+            ens_parameters = {
+                group: ensemble.load_parameters(group)
+                .to_dataarray()
+                .data.reshape((ensemble.ensemble_size, -1))
+                for group in parameter_values
+            }
+
+            matching_real = next(
+                (
+                    i
+                    for i in range(ensemble.ensemble_size)
+                    if all(
+                        np.allclose(ens_parameters[group][i], group_data, atol=1e-8)
+                        for group, group_data in parameter_values.items()
+                    )
+                ),
+                None,
+            )
+
+            if matching_real is not None:
+                return matching_real
+
+        return None
