@@ -393,7 +393,7 @@ async def test_dispatch_endpoint_clients_can_connect_and_monitor_can_shut_down_e
     evaluator_to_use,
 ):
     evaluator = evaluator_to_use
-    evaluator._batching_interval = 10
+    evaluator._batching_interval = 0.2
 
     evaluator._max_batch_size = 4
     conn_info = evaluator._config.get_connection_info()
