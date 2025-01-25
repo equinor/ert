@@ -49,8 +49,8 @@ def test_run_with_process_failing(mock_process, mock_popen, mock_check_executabl
 @pytest.mark.usefixtures("use_tmpdir")
 def test_cpu_seconds_can_detect_multiprocess():
     """Run a fm step that sets of two simultaneous processes that
-    each run for 2 second. We should be able to detect the total
-    cpu seconds consumed to be roughly 2 seconds.
+    each run for 1 and 2 seconds respectively. We should be able to detect
+    the total cpu seconds consumed to be roughly 3 seconds.
 
     The test is flaky in that it tries to gather cpu_seconds data while
     the subprocesses are running. On a loaded CPU this is not very robust,
@@ -64,8 +64,9 @@ def test_cpu_seconds_can_detect_multiprocess():
             textwrap.dedent(
                 """\
             import time
+            import sys
             now = time.time()
-            while time.time() < now + 2:
+            while time.time() < now + int(sys.argv[1]):
                 pass"""
             )
         )
@@ -75,8 +76,8 @@ def test_cpu_seconds_can_detect_multiprocess():
             textwrap.dedent(
                 """\
             #!/bin/sh
-            python busy.py &
-            python busy.py"""
+            python busy.py 1 &
+            python busy.py 2"""
             )
         )
     executable = os.path.realpath(scriptname)
@@ -180,7 +181,7 @@ class MockedProcess:
 
 def test_cpu_seconds_for_process_with_children():
     (_, cpu_seconds, _, _) = _get_processtree_data(MockedProcess(123))
-    assert cpu_seconds == 123 / 10.0 + 124 / 10.0
+    assert cpu_seconds == {"123": 12.3, "124": 12.4}
 
 
 @pytest.mark.skipif(sys.platform.startswith("darwin"), reason="No oom_score on MacOS")
