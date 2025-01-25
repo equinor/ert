@@ -34,6 +34,9 @@ def get_nr_primary_components(
     """
     Calculate the number of principal components needed to achieve a cumulative
     variance less than a specified threshold using Singular Value Decomposition (SVD).
+
+    responses is expected to be on format n x p, where n is number of realizations and
+    p is number of observations.
     """
     data_matrix = responses - responses.mean(axis=0)
     _, singulars, _ = np.linalg.svd(data_matrix.astype(float), full_matrices=False)
@@ -42,7 +45,7 @@ def get_nr_primary_components(
     # We compute the cumulative sum of these, then divide by their total sum to get the
     # cumulative proportion of variance explained by each successive component.
     variance_ratio = np.cumsum(singulars**2) / np.sum(singulars**2)
-    return len([1 for i in variance_ratio[:-1] if i < threshold])
+    return int(np.argmax(variance_ratio >= threshold)) + 1
 
 
 def cluster_responses(
@@ -53,10 +56,12 @@ def cluster_responses(
     Cluster responses using hierarchical clustering based on Spearman correlation.
     Observations that tend to vary similarly across different simulation runs will be clustered together.
     """
-    correlation = spearmanr(responses).statistic
-    if isinstance(correlation, np.float64):
-        correlation = np.array([[1, correlation], [correlation, 1]])
-    linkage_matrix = linkage(correlation, "average", "euclidean")
+    distance = 1 - np.abs(spearmanr(responses).statistic)
+    if isinstance(distance, np.float64):
+        distance = np.array(distance)
+    linkage_matrix = linkage(
+        distance[np.triu_indices(distance.shape[0], k=1)], "average", "euclidean"
+    )
     return fcluster(linkage_matrix, nr_clusters, criterion="maxclust", depth=2)
 
 
@@ -139,7 +144,7 @@ def main(
         # each other
         return scale_factors, np.ones(len(obs_errors), dtype=int), nr_components
 
-    prim_components = get_nr_primary_components(scaled_responses, threshold=0.95)
+    prim_components = get_nr_primary_components(scaled_responses.T, threshold=0.95)
 
     clusters = cluster_responses(scaled_responses.T, nr_clusters=prim_components)
 
@@ -150,9 +155,8 @@ def main(
             components = 1
         else:
             components = get_nr_primary_components(
-                scaled_responses[index], threshold=0.95
+                scaled_responses[index].T, threshold=0.95
             )
-            components = 1 if components == 0 else components
         scale_factor = get_scaling_factor(len(index), components)
         nr_components[index] *= components
         scale_factors[index] *= scale_factor

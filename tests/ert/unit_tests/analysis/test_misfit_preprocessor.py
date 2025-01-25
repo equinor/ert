@@ -34,9 +34,10 @@ def test_that_get_nr_primary_components_is_according_to_theory():
     # Fast sampling of correlated multivariate observations
     X = rng.standard_normal(size=(p, N))
     Y = (np.linalg.cholesky(R) @ X).T
-
+    Z = Y.copy()
     Y = StandardScaler().fit_transform(Y)
-
+    Z = (Z - Z.mean(axis=0)) / Z.std(axis=0)
+    np.testing.assert_almost_equal(Y, Z)
     lambda_1 = sigma**2 * (1 + (p - 1) * rho)
     lambda_remaining = sigma**2 * (1 - rho)
     s1 = np.sqrt(lambda_1 * (N - 1))
@@ -48,9 +49,12 @@ def test_that_get_nr_primary_components_is_according_to_theory():
     threshold_3 = (s1**2 + 2 * s_remaining**2) / total
 
     # Adding a bit to the thresholds because of numerical accuracy.
-    assert get_nr_primary_components(Y, threshold_1 + 0.01) == 1
-    assert get_nr_primary_components(Y, threshold_2 + 0.01) == 2
-    assert get_nr_primary_components(Y, threshold_3 + 0.01) == 3
+    assert get_nr_primary_components(Y, threshold_1 + 0.01) == 2
+    assert get_nr_primary_components(Y, threshold_2 + 0.01) == 3
+    assert get_nr_primary_components(Y, threshold_3 + 0.01) == 4
+
+    # check that we always return at least 1
+    assert get_nr_primary_components(Y, 0) == 1
 
 
 @pytest.mark.parametrize("nr_observations", [4, 10, 100])
@@ -64,11 +68,11 @@ def test_misfit_preprocessor(nr_observations):
     nr_realizations = 1000
     Y = np.ones((nr_observations, nr_realizations))
     parameters_a = rng.standard_normal(nr_realizations)
-    parameters_b = rng.standard_normal(nr_realizations)
+    parameters_b = rng.normal(scale=5, size=nr_realizations)
     for i in range(nr_observations - 1):
         Y[i] = i + 1 * parameters_a
     Y[-1] = 5 + 1 * parameters_b
-    obs_errors = Y.mean(axis=1)
+    obs_errors = np.array([0.1] * nr_observations)
     Y_original = Y.copy()
     obs_error_copy = obs_errors.copy()
     result, *_ = main(Y, obs_errors)
