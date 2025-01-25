@@ -108,7 +108,7 @@ async def test_unexpected_close_after_connection_successful(
     ee_con_info = EvaluatorConnectionInfo(f"tcp://127.0.0.1:{unused_tcp_port}")
 
     monkeypatch.setattr(Monitor, "DEFAULT_MAX_RETRIES", 0)
-    monkeypatch.setattr(Monitor, "DEFAULT_ACK_TIMEOUT", 1)
+    monkeypatch.setattr(Monitor, "DEFAULT_ACK_TIMEOUT", 0.5)
 
     async def mock_event_handler(router_socket):
         dealer, _, frame = await router_socket.recv_multipart()
