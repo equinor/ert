@@ -382,9 +382,9 @@ async def test_monitor_receive_heartbeats(evaluator_to_use):
 
     with patch.object(Monitor, "_receiver", mock_receiver):
         async with Monitor(conn_info) as monitor:
-            await asyncio.sleep(1.0)
+            await asyncio.sleep(0.5)
             await monitor.signal_done()
-    # in 1 second we should receive at least 2 heartbeats
+    # in 0.5 second we should receive at least 2 heartbeats
     assert received_heartbeats > 1
 
 
