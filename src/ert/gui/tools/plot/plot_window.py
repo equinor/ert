@@ -1,13 +1,14 @@
 import logging
 import time
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, cast
 
 import numpy as np
 import pandas as pd
 from httpx import RequestError
 from pandas import DataFrame
-from qtpy.QtCore import Qt, Slot
-from qtpy.QtWidgets import QDockWidget, QMainWindow, QTabWidget, QWidget
+from PyQt6.QtCore import Qt
+from PyQt6.QtCore import pyqtSlot as Slot
+from PyQt6.QtWidgets import QDockWidget, QMainWindow, QTabWidget, QWidget
 
 from ert.gui.ertwidgets import showWaitCursorWhileWaiting
 
@@ -41,7 +42,7 @@ STD_DEV_DEFAULT = 6
 
 logger = logging.getLogger(__name__)
 
-from qtpy.QtWidgets import (
+from PyQt6.QtWidgets import (
     QApplication,
     QDialog,
     QHBoxLayout,
@@ -97,7 +98,7 @@ def open_error_dialog(title: str, content: str) -> None:
 
 class PlotWindow(QMainWindow):
     def __init__(self, config_file: str, parent: QWidget | None):
-        QMainWindow.__init__(self, parent)
+        super().__init__(parent)
         t = time.perf_counter()
 
         logger.info("PlotWindow __init__")
@@ -191,8 +192,7 @@ class PlotWindow(QMainWindow):
             return
         key = key_def.key
 
-        plot_widget = self._central_tab.currentWidget()
-        assert plot_widget is not None
+        plot_widget = cast(PlotWidget, self._central_tab.currentWidget())
 
         if plot_widget._plotter.dimensionality == key_def.dimensionality:
             selected_ensembles = (
@@ -329,7 +329,8 @@ class PlotWindow(QMainWindow):
         dock_widget.setWidget(widget)
         dock_widget.setAllowedAreas(allowed_areas)
         dock_widget.setFeatures(
-            QDockWidget.DockWidgetFloatable | QDockWidget.DockWidgetMovable
+            QDockWidget.DockWidgetFeature.DockWidgetFloatable
+            | QDockWidget.DockWidgetFeature.DockWidgetMovable
         )
 
         self.addDockWidget(area, dock_widget)

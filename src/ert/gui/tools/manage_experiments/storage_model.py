@@ -1,10 +1,11 @@
 from enum import IntEnum
-from typing import Any, overload
+from typing import Any, Self, cast, overload
 from uuid import UUID
 
 import humanize
-from qtpy.QtCore import QAbstractItemModel, QModelIndex, QObject, Qt, Slot
-from qtpy.QtWidgets import QApplication
+from PyQt6.QtCore import QAbstractItemModel, QModelIndex, QObject, Qt
+from PyQt6.QtCore import pyqtSlot as Slot
+from PyQt6.QtWidgets import QApplication
 from typing_extensions import override
 
 from ert.storage import Ensemble, Experiment, Storage
@@ -132,6 +133,9 @@ class ExperimentModel:
         return None
 
 
+ChildModel = ExperimentModel | EnsembleModel | RealizationModel
+
+
 class StorageModel(QAbstractItemModel):
     def __init__(self, storage: Storage):
         super().__init__(None)
@@ -144,7 +148,7 @@ class StorageModel(QAbstractItemModel):
         self._load_storage(storage)
         self.endResetModel()
 
-    @Slot()
+    @Slot(ExperimentModel)
     def add_experiment(self, experiment: ExperimentModel) -> None:
         idx = QModelIndex()
         self.beginInsertRows(idx, 0, 0)
@@ -169,25 +173,22 @@ class StorageModel(QAbstractItemModel):
 
     @override
     def rowCount(self, parent: QModelIndex | None = None) -> int:
-        if parent is None:
-            parent = QModelIndex()
-        if parent.isValid():
-            if isinstance(parent.internalPointer(), RealizationModel):
-                return 0
-            return len(parent.internalPointer()._children)
+        if parent is not None and parent.isValid():
+            data = cast(ChildModel | Self, parent.internalPointer())
+            return 0 if isinstance(data, RealizationModel) else len(data._children)
         else:
             return len(self._children)
 
     @overload
     def parent(self, child: QModelIndex) -> QModelIndex: ...
     @overload
-    def parent(self) -> QObject | None: ...
+    def parent(self) -> QObject: ...
     @override
-    def parent(self, child: QModelIndex | None = None) -> QObject | None:
+    def parent(self, child: QModelIndex | None = None) -> QObject | QModelIndex:
         if child is None or not child.isValid():
             return QModelIndex()
 
-        child_item = child.internalPointer()
+        child_item = cast(ChildModel, child.internalPointer())
         parentItem = child_item._parent
 
         if parentItem == self:
@@ -212,7 +213,9 @@ class StorageModel(QAbstractItemModel):
         if not index.isValid():
             return None
 
-        return index.internalPointer().data(index, role)
+        return cast(ChildModel | Self, index.internalPointer()).data(
+            index, Qt.ItemDataRole(role)
+        )
 
     @override
     def index(
@@ -220,11 +223,17 @@ class StorageModel(QAbstractItemModel):
     ) -> QModelIndex:
         if parent is None:
             parent = QModelIndex()
-        parentItem = parent.internalPointer() if parent.isValid() else self
-        try:
-            childItem = parentItem._children[row]
-        except KeyError:
-            childItem = None
-        if childItem:
-            return self.createIndex(row, column, childItem)
+
+        model = (
+            cast(ChildModel | Self, parent.internalPointer())
+            if parent.isValid()
+            else self
+        )
+        if type(model) is not RealizationModel:
+            model = cast(Self | EnsembleModel | ExperimentModel, model)
+            try:
+                childItem = model._children[row]
+                return self.createIndex(row, column, childItem)
+            except KeyError:
+                pass
         return QModelIndex()

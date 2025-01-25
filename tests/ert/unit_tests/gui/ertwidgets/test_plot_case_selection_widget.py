@@ -1,5 +1,5 @@
+from PyQt6.QtCore import Qt
 from pytestqt.qtbot import QtBot
-from qtpy.QtCore import Qt
 
 from ert.gui.tools.plot.plot_api import EnsembleObject
 from ert.gui.tools.plot.plot_ensemble_selection_widget import (
@@ -24,7 +24,7 @@ def test_ensemble_selection_widget_max_min_selection(qtbot: QtBot):
 
     qtbot.mouseClick(
         list_widget.viewport(),
-        Qt.LeftButton,
+        Qt.MouseButton.LeftButton,
         pos=list_widget.visualItemRect(list_widget.item(0)).center(),
     )  # deselect the only item selected
 
@@ -36,7 +36,7 @@ def test_ensemble_selection_widget_max_min_selection(qtbot: QtBot):
         it = list_widget.item(index)
         qtbot.mouseClick(
             list_widget.viewport(),
-            Qt.LeftButton,
+            Qt.MouseButton.LeftButton,
             pos=list_widget.visualItemRect(it).center(),
         )
 
@@ -46,7 +46,7 @@ def test_ensemble_selection_widget_max_min_selection(qtbot: QtBot):
         it = list_widget.item(index)
         qtbot.mouseClick(
             list_widget.viewport(),
-            Qt.LeftButton,
+            Qt.MouseButton.LeftButton,
             pos=list_widget.visualItemRect(it).center(),
         )
 

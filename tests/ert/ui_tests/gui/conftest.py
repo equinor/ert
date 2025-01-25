@@ -13,9 +13,8 @@ from typing import TypeVar
 from unittest.mock import MagicMock, Mock
 
 import pytest
-from pytestqt.qtbot import QtBot
-from qtpy.QtCore import Qt, QTimer
-from qtpy.QtWidgets import (
+from PyQt6.QtCore import Qt, QTimer
+from PyQt6.QtWidgets import (
     QApplication,
     QComboBox,
     QMessageBox,
@@ -23,6 +22,7 @@ from qtpy.QtWidgets import (
     QToolButton,
     QWidget,
 )
+from pytestqt.qtbot import QtBot
 
 from ert.config import ErtConfig
 from ert.gui.ertwidgets import ClosableDialog
@@ -260,7 +260,7 @@ def run_experiment_fixture(request):
             "Evaluate ensemble",
         }:
             QTimer.singleShot(500, handle_dialog)
-        qtbot.mouseClick(run_experiment, Qt.LeftButton)
+        qtbot.mouseClick(run_experiment, Qt.MouseButton.LeftButton)
 
         if click_done:
             # The Run dialog opens, click show details and wait until done appears
@@ -348,11 +348,11 @@ def load_results_manually(qtbot, gui, ensemble_name="default"):
             messagebox = QApplication.activeModalWidget()
             assert isinstance(messagebox, QMessageBox)
             assert messagebox.text() == "Successfully loaded all realisations"
-            ok_button = messagebox.button(QMessageBox.Ok)
-            qtbot.mouseClick(ok_button, Qt.LeftButton)
+            ok_button = messagebox.button(QMessageBox.StandardButton.Ok)
+            qtbot.mouseClick(ok_button, Qt.MouseButton.LeftButton)
 
         QTimer.singleShot(2000, handle_popup_dialog)
-        qtbot.mouseClick(load_button, Qt.LeftButton)
+        qtbot.mouseClick(load_button, Qt.MouseButton.LeftButton)
         dialog.close()
 
     QTimer.singleShot(1000, handle_load_results_dialog)
@@ -364,7 +364,7 @@ def add_experiment_manually(
 ):
     button_manage_experiments = gui.findChild(QToolButton, "button_Manage_experiments")
     assert button_manage_experiments
-    qtbot.mouseClick(button_manage_experiments, Qt.LeftButton)
+    qtbot.mouseClick(button_manage_experiments, Qt.MouseButton.LeftButton)
     experiments_panel = gui.findChild(ManageExperimentsPanel)
 
     # Open the create new experiment tab

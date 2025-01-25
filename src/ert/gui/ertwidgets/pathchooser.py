@@ -4,9 +4,9 @@ import os
 import re
 from typing import TYPE_CHECKING
 
-from qtpy.QtCore import QSize
-from qtpy.QtGui import QIcon
-from qtpy.QtWidgets import QFileDialog, QHBoxLayout, QLineEdit, QToolButton, QWidget
+from PyQt6.QtCore import QSize
+from PyQt6.QtGui import QIcon
+from PyQt6.QtWidgets import QFileDialog, QHBoxLayout, QLineEdit, QToolButton, QWidget
 
 from .validationsupport import ValidationSupport
 

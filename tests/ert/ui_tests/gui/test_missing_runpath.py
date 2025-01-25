@@ -1,8 +1,8 @@
 import stat
 from contextlib import suppress
 
-from qtpy.QtCore import QTimer
-from qtpy.QtWidgets import QLabel
+from PyQt6.QtCore import QTimer
+from PyQt6.QtWidgets import QLabel
 
 from ert.ensemble_evaluator.state import ENSEMBLE_STATE_FAILED
 from ert.gui.simulation.run_dialog import RunDialog

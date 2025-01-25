@@ -3,9 +3,10 @@ from __future__ import annotations
 from collections.abc import Iterable, Iterator
 from typing import TYPE_CHECKING
 
-from qtpy.QtCore import QObject, Qt, Signal
-from qtpy.QtGui import QIcon, QKeyEvent
-from qtpy.QtWidgets import (
+from PyQt6.QtCore import QObject, Qt
+from PyQt6.QtCore import pyqtSignal as Signal
+from PyQt6.QtGui import QIcon, QKeyEvent
+from PyQt6.QtWidgets import (
     QDialog,
     QHBoxLayout,
     QLayout,
@@ -197,15 +198,16 @@ class CustomizePlotDialog(QDialog):
         key: str | None = "",
     ) -> None:
         QDialog.__init__(self, parent)
-        self.setWindowTitle(title)
+        if title is not None:
+            self.setWindowTitle(title)
 
         self.current_key = key
         self._key_defs = key_defs
 
-        self.setWindowFlags(self.windowFlags() & ~Qt.WindowContextHelpButtonHint)  # type: ignore
-        self.setWindowFlags(self.windowFlags() & ~Qt.WindowCloseButtonHint)  # type: ignore
+        self.setWindowFlag(Qt.WindowType.WindowContextHelpButtonHint, False)
+        self.setWindowFlag(Qt.WindowType.WindowCloseButtonHint, False)
 
-        self._tab_map: dict[str, QWidget] = {}
+        self._tab_map: dict[str, CustomizationView] = {}
         self._tab_order: list[str] = []
 
         layout = QVBoxLayout()
@@ -235,13 +237,15 @@ class CustomizePlotDialog(QDialog):
         self._copy_from_button = QToolButton()
         self._copy_from_button.setIcon(QIcon("img:download.svg"))
         self._copy_from_button.setToolTip("Copy settings from another key")
-        self._copy_from_button.setPopupMode(QToolButton.InstantPopup)
+        self._copy_from_button.setPopupMode(
+            QToolButton.ToolButtonPopupMode.InstantPopup
+        )
         self._copy_from_button.setEnabled(False)
 
         self._copy_to_button = QToolButton()
         self._copy_to_button.setIcon(QIcon("img:upload.svg"))
         self._copy_to_button.setToolTip("Copy current plot settings to other keys")
-        self._copy_to_button.setPopupMode(QToolButton.InstantPopup)
+        self._copy_to_button.setPopupMode(QToolButton.ToolButtonPopupMode.InstantPopup)
         self._copy_to_button.clicked.connect(self.initiateCopyStyleToDialog)
         self._copy_to_button.setEnabled(True)
 
@@ -280,10 +284,10 @@ class CustomizePlotDialog(QDialog):
 
     def initiateCopyStyleToDialog(self) -> None:
         dialog = CopyStyleToDialog(self, self.current_key, self._key_defs)
-        if dialog.exec_():
+        if dialog.exec():
             self.copySettingsToOthers.emit(dialog.getSelectedKeys())
 
-    def addCopyableKey(self, key: str | QListWidgetItem | None) -> None:
+    def addCopyableKey(self, key: str | QListWidgetItem) -> None:
         self._popup_list.addItem(key)
 
     def keySelected(self, list_widget_item: QListWidgetItem) -> None:
@@ -295,12 +299,14 @@ class CustomizePlotDialog(QDialog):
     def keyPressEvent(self, a0: QKeyEvent | None) -> None:
         # Hide when pressing Escape instead of QDialog.keyPressEvent(KeyEscape)
         # which closes the dialog
-        if a0 is not None and a0.key() == Qt.Key.Key_Escape:
+        if a0 and a0.key() == Qt.Key.Key_Escape:
             self.hide()
         else:
             QDialog.keyPressEvent(self, a0)
 
-    def addTab(self, attribute_name: str, title: str, widget: QWidget) -> None:
+    def addTab(
+        self, attribute_name: str, title: str, widget: CustomizationView
+    ) -> None:
         self._tabs.addTab(widget, title)
         self._tab_map[attribute_name] = widget
         self._tab_order.append(attribute_name)
@@ -308,7 +314,7 @@ class CustomizePlotDialog(QDialog):
     def __getitem__(self, item: str) -> CustomizationView:
         return self._tab_map[item]
 
-    def __iter__(self) -> Iterator[QWidget]:
+    def __iter__(self) -> Iterator[CustomizationView]:
         for attribute_name in self._tab_order:
             yield self._tab_map[attribute_name]
 

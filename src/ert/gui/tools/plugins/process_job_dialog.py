@@ -1,8 +1,9 @@
 from typing import cast
 
-from qtpy.QtCore import QSize, Qt, Signal
-from qtpy.QtGui import QCloseEvent, QKeyEvent, QMovie
-from qtpy.QtWidgets import (
+from PyQt6.QtCore import QSize, Qt
+from PyQt6.QtCore import pyqtSignal as Signal
+from PyQt6.QtGui import QCloseEvent, QKeyEvent, QMovie
+from PyQt6.QtWidgets import (
     QDialog,
     QGridLayout,
     QHBoxLayout,
@@ -31,13 +32,8 @@ class ProcessJobDialog(QDialog):
         self.__parent = parent
         self.setWindowTitle(title)
         self.setModal(True)
-        self.setWindowFlags(
-            self.windowFlags()
-            & ~Qt.WindowFlags(Qt.WindowType.WindowContextHelpButtonHint)
-        )
-        self.setWindowFlags(
-            self.windowFlags() & ~Qt.WindowFlags(Qt.WindowType.WindowCloseButtonHint)
-        )
+        self.setWindowFlag(Qt.WindowType.WindowContextHelpButtonHint, False)
+        self.setWindowFlag(Qt.WindowType.WindowCloseButtonHint, False)
 
         layout = QVBoxLayout()
         layout.setSizeConstraint(QLayout.SizeConstraint.SetFixedSize)
@@ -91,11 +87,7 @@ class ProcessJobDialog(QDialog):
     def keyPressEvent(self, a0: QKeyEvent | None) -> None:
         # disallow pressing escape to close
         # when close button is not enabled
-        if (
-            self._close_button.isEnabled()
-            or a0 is None
-            or a0.key() != Qt.Key.Key_Escape
-        ):
+        if self.close_button.isEnabled() or a0 is None or a0.key() != Qt.Key.Key_Escape:
             QDialog.keyPressEvent(self, a0)
 
     def closeEvent(self, a0: QCloseEvent | None) -> None:
@@ -103,9 +95,7 @@ class ProcessJobDialog(QDialog):
             a0.ignore()
         self.closeButtonPressed.emit()
 
-    def __createMsgBox(
-        self, title: str | None, message: str | None, details: str
-    ) -> QMessageBox:
+    def __createMsgBox(self, title: str, message: str, details: str) -> QMessageBox:
         msg_box = QMessageBox(cast(QWidget | None, self.parent()))
         msg_box.setText(title)
         msg_box.setInformativeText(message)
@@ -114,38 +104,36 @@ class ProcessJobDialog(QDialog):
             msg_box.setDetailedText(details)
 
         horizontal_spacer = QSpacerItem(
-            500, 0, QSizePolicy.MinimumExpanding, QSizePolicy.Expanding
+            500, 0, QSizePolicy.Policy.MinimumExpanding, QSizePolicy.Policy.Expanding
         )
         layout = cast(QGridLayout, msg_box.layout())
         layout.addItem(horizontal_spacer, layout.rowCount(), 0, 1, layout.columnCount())
 
         return msg_box
 
-    def __presentInformation(
-        self, title: str | None, message: str | None, details: str
-    ) -> None:
+    def __presentInformation(self, title: str, message: str, details: str) -> None:
         self._msg_box = self.__createMsgBox(title, message, details)
-        self._msg_box.setIcon(QMessageBox.Information)
+        self._msg_box.setIcon(QMessageBox.Icon.Information)
 
-        self._msg_box.exec_()
+        self._msg_box.exec()
 
-    def __presentError(
-        self, title: str | None, message: str | None, details: str
-    ) -> None:
+    def __presentError(self, title: str, message: str, details: str) -> None:
         self._msg_box = self.__createMsgBox(title, message, details)
-        self._msg_box.setIcon(QMessageBox.Critical)
+        self._msg_box.setIcon(QMessageBox.Icon.Critical)
 
-        self._msg_box.exec_()
+        self._msg_box.exec()
 
     def __confirmCancel(self) -> None:
         cancel_box = self.__createMsgBox(
             "Confirm cancel", "Are you sure you want to cancel the running job?", ""
         )
-        cancel_box.setIcon(QMessageBox.Question)
-        cancel_box.setStandardButtons(QMessageBox.Yes | QMessageBox.No)
-        cancel_box.exec_()
+        cancel_box.setIcon(QMessageBox.Icon.Question)
+        cancel_box.setStandardButtons(
+            QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No
+        )
+        cancel_box.exec()
 
         cancel = cancel_box.result()
 
-        if cancel == QMessageBox.Yes:
+        if cancel == QMessageBox.StandardButton.Yes:
             self.cancelConfirmed.emit()

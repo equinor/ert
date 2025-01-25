@@ -1,14 +1,13 @@
 from typing import Any, overload
 
-from qtpy.QtCore import (
+from PyQt6.QtCore import (
     QAbstractItemModel,
     QAbstractProxyModel,
     QModelIndex,
     QObject,
     Qt,
-    QVariant,
-    Slot,
 )
+from PyQt6.QtCore import pyqtSlot as Slot
 from typing_extensions import override
 
 from ert.ensemble_evaluator import identifiers as ids
@@ -93,7 +92,7 @@ class FMStepListProxyModel(QAbstractProxyModel):
                 return header.capitalize()
             if orientation == Qt.Orientation.Vertical:
                 return section
-        return QVariant()
+        return None
 
     @override
     def columnCount(self, parent: QModelIndex | None = None) -> int:
@@ -112,9 +111,9 @@ class FMStepListProxyModel(QAbstractProxyModel):
     @overload
     def parent(self, child: QModelIndex) -> QModelIndex: ...
     @overload
-    def parent(self) -> QObject | None: ...
+    def parent(self) -> QObject: ...
     @override
-    def parent(self, child: QModelIndex | None = None) -> QObject | None:
+    def parent(self, child: QModelIndex | None = None) -> QObject | QModelIndex:
         return QModelIndex()
 
     @override
@@ -138,10 +137,10 @@ class FMStepListProxyModel(QAbstractProxyModel):
                     return sm.index(proxyIndex.row(), proxyIndex.column(), real_index)
         return QModelIndex()
 
-    def mapFromSource(self, src_index: QModelIndex) -> QModelIndex:
+    def mapFromSource(self, sourceIndex: QModelIndex) -> QModelIndex:
         return (
-            self.index(src_index.row(), src_index.column(), QModelIndex())
-            if src_index.isValid() and self._accept_index(src_index)
+            self.index(sourceIndex.row(), sourceIndex.column(), QModelIndex())
+            if sourceIndex.isValid() and self._accept_index(sourceIndex)
             else QModelIndex()
         )
 

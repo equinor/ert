@@ -1,7 +1,7 @@
 from typing import Any, overload
 
-from qtpy.QtCore import QAbstractItemModel, QModelIndex, QObject, Qt
-from qtpy.QtGui import QColor, QIcon
+from PyQt6.QtCore import QAbstractItemModel, QModelIndex, QObject, Qt
+from PyQt6.QtGui import QColor, QIcon
 from typing_extensions import override
 
 from .plot_api import PlotApiKeyDefinition
@@ -26,9 +26,9 @@ class DataTypeKeysListModel(QAbstractItemModel):
     @overload
     def parent(self, child: QModelIndex) -> QModelIndex: ...
     @overload
-    def parent(self) -> QObject | None: ...
+    def parent(self) -> QObject: ...
     @override
-    def parent(self, child: QModelIndex | None = None) -> QObject | None:
+    def parent(self, child: QModelIndex | None = None) -> QObject | QModelIndex:
         return QModelIndex()
 
     @override

@@ -7,9 +7,9 @@ from collections import defaultdict
 from collections.abc import Callable, Sequence
 from typing import TYPE_CHECKING
 
-from qtpy.QtCore import Qt
-from qtpy.QtGui import QCursor
-from qtpy.QtWidgets import (
+from PyQt6.QtCore import Qt
+from PyQt6.QtGui import QCursor
+from PyQt6.QtWidgets import (
     QFrame,
     QGridLayout,
     QHBoxLayout,
@@ -166,7 +166,7 @@ class Suggestor(QWidget):
         help_buttons_layout.addWidget(help_header, alignment=Qt.AlignmentFlag.AlignTop)
 
         separator = QFrame(parent=self)
-        separator.setFrameShape(QFrame.HLine)
+        separator.setFrameShape(QFrame.Shape.HLine)
         separator.setStyleSheet(f"color: {HEAVY_GREY};")
         separator.setFixedWidth(388)
         help_buttons_layout.addWidget(separator)
@@ -219,7 +219,7 @@ class Suggestor(QWidget):
 
         run.setObjectName("run_ert_button")
         run.pressed.connect(run_pressed)
-        give_up.pressed.connect(self.close)  # type: ignore
+        give_up.pressed.connect(self.close)
         buttons = QWidget(parent=self)
         buttons_layout = QHBoxLayout()
         buttons_layout.insertStretch(-1, -1)

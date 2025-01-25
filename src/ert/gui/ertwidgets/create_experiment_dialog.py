@@ -1,8 +1,6 @@
-from qtpy.QtCore import (
-    Qt,
-    Signal,
-)
-from qtpy.QtWidgets import (
+from PyQt6.QtCore import Qt
+from PyQt6.QtCore import pyqtSignal as Signal
+from PyQt6.QtWidgets import (
     QDialog,
     QDialogButtonBox,
     QGridLayout,
@@ -59,13 +57,13 @@ class CreateExperimentDialog(QDialog):
         self._iterations_field.setValidator(IntegerArgument(from_value=0))
         self._iterations_field.setObjectName("iterations_field_ced")
         buttons = QDialogButtonBox(
-            QDialogButtonBox.Ok | QDialogButtonBox.Cancel,
+            QDialogButtonBox.StandardButton.Ok | QDialogButtonBox.StandardButton.Cancel,
             Qt.Orientation.Horizontal,
             self,
         )
         buttons.accepted.connect(self.accept)
         buttons.rejected.connect(self.reject)
-        ok_button = buttons.button(QDialogButtonBox.Ok)
+        ok_button = buttons.button(QDialogButtonBox.StandardButton.Ok)
         assert ok_button
         self._ok_button = ok_button
 

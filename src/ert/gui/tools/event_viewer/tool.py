@@ -1,5 +1,6 @@
-from qtpy.QtCore import QObject, Slot
-from qtpy.QtGui import QIcon
+from PyQt6.QtCore import QObject
+from PyQt6.QtCore import pyqtSlot as Slot
+from PyQt6.QtGui import QIcon
 
 from ert.gui.tools import Tool
 

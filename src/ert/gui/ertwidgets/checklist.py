@@ -2,9 +2,9 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from qtpy.QtCore import QPoint, QSize, Qt
-from qtpy.QtGui import QIcon
-from qtpy.QtWidgets import (
+from PyQt6.QtCore import QPoint, QSize, Qt
+from PyQt6.QtGui import QIcon
+from PyQt6.QtWidgets import (
     QAbstractItemView,
     QHBoxLayout,
     QLabel,
@@ -44,7 +44,7 @@ class CheckList(QWidget):
 
         self._list = QListWidget()
         self._list.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
-        self._list.setSelectionMode(QAbstractItemView.ExtendedSelection)
+        self._list.setSelectionMode(QAbstractItemView.SelectionMode.ExtendedSelection)
 
         self._search_box = SearchBox()
 
@@ -162,13 +162,13 @@ class CheckList(QWidget):
 
     def showContextMenu(self, point: QPoint) -> None:
         p = self._list.mapToGlobal(point)
-        menu = QMenu()
+        menu = QMenu(self)
         check_selected = menu.addAction("Check selected")
         uncheck_selected = menu.addAction("Uncheck selected")
         menu.addSeparator()
         clear_selection = menu.addAction("Clear selection")
 
-        selected_item = menu.exec_(p)
+        selected_item = menu.exec(p)
 
         if selected_item == check_selected:
             self.checkSelected()

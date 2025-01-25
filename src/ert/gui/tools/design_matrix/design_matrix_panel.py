@@ -1,6 +1,6 @@
 import pandas as pd
-from qtpy.QtGui import QStandardItem, QStandardItemModel
-from qtpy.QtWidgets import QDialog, QTableView, QVBoxLayout, QWidget
+from PyQt6.QtGui import QStandardItem, QStandardItemModel
+from PyQt6.QtWidgets import QDialog, QTableView, QVBoxLayout, QWidget
 
 
 class DesignMatrixPanel(QDialog):
@@ -15,7 +15,7 @@ class DesignMatrixPanel(QDialog):
         self.setWindowTitle(f"Design matrix parameters from {filename}")
 
         table_view = QTableView(self)
-        table_view.setEditTriggers(QTableView.NoEditTriggers)
+        table_view.setEditTriggers(QTableView.EditTrigger.NoEditTriggers)
 
         self.model = self.create_model(design_matrix_df)
         table_view.setModel(self.model)
