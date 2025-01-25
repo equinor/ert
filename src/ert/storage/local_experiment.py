@@ -38,6 +38,10 @@ class _Index(BaseModel):
     name: str
 
 
+class ErtStorageException(Exception):
+    pass
+
+
 class LocalExperiment(BaseMode):
     """
     Represents an experiment within the local storage system of ERT.
@@ -253,6 +257,10 @@ class LocalExperiment(BaseMode):
     @property
     def response_info(self) -> dict[str, Any]:
         info: dict[str, Any]
+        if not (self.mount_point / self._responses_file).exists():
+            raise ErtStorageException(
+                "responses.json does not exist. Please make sure storage is still valid."
+            )
         with open(self.mount_point / self._responses_file, encoding="utf-8") as f:
             info = json.load(f)
         return info
