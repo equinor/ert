@@ -7,10 +7,6 @@ class TestEnsemble(Ensemble):
     __test__ = False
 
     def __init__(self, iter_, reals, fm_steps, id_):
-        self.iter = iter_
-        self.test_reals = reals
-        self.fm_steps = fm_steps
-
         the_reals = [
             Realization(
                 real_no,
