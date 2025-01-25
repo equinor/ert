@@ -8,6 +8,7 @@ import signal
 import socket
 import sys
 import time
+import uuid
 from collections.abc import Generator, Sequence
 from datetime import datetime as dt
 from pathlib import Path
@@ -186,8 +187,8 @@ class ForwardModelStep:
         exit_code = None
 
         max_memory_usage = 0
-        max_cpu_seconds = 0
         fm_step_pids = {int(process.pid)}
+        cpu_seconds_pr_pid: dict[str, float] = {}
         while True:
             try:
                 exit_code = process.wait(timeout=self.MEMORY_POLL_PERIOD)
@@ -203,8 +204,19 @@ class ForwardModelStep:
                     yield potential_exited_msg
                     return
 
-            (memory_rss, cpu_seconds, oom_score, pids) = _get_processtree_data(process)
-            max_cpu_seconds = max(max_cpu_seconds, cpu_seconds or 0)
+            (memory_rss, cpu_seconds_snapshot, oom_score, pids) = _get_processtree_data(
+                process
+            )
+            for pid, seconds in cpu_seconds_snapshot.items():
+                if cpu_seconds_pr_pid.get(str(pid), 0.0) <= seconds:
+                    cpu_seconds_pr_pid[str(pid)] = seconds
+                else:
+                    # cpu_seconds must be monotonely increasing. Since
+                    # decreasing cpu_seconds was detected, it must be due to pid reuse
+                    cpu_seconds_pr_pid[str(pid) + str(uuid.uuid4())] = (
+                        cpu_seconds_pr_pid[str(pid)]
+                    )
+                    cpu_seconds_pr_pid[str(pid)] = seconds
             fm_step_pids |= pids
             max_memory_usage = max(memory_rss, max_memory_usage)
             yield Running(
@@ -214,11 +226,10 @@ class ForwardModelStep:
                     max_rss=max_memory_usage,
                     fm_step_id=self.index,
                     fm_step_name=self.job_data.get("name"),
-                    cpu_seconds=max_cpu_seconds,
+                    cpu_seconds=sum(cpu_seconds_pr_pid.values()),
                     oom_score=oom_score,
                 ),
             )
-
         ensure_file_handles_closed([stdin, stdout, stderr])
         exited_message = self._create_exited_message_based_on_exit_code(
             max_memory_usage, target_file_mtime, exit_code, fm_step_pids
@@ -418,7 +429,7 @@ def ensure_file_handles_closed(file_handles: Sequence[io.TextIOWrapper | None]) 
 
 def _get_processtree_data(
     process: Process,
-) -> tuple[int, float, int | None, set[int]]:
+) -> tuple[int, dict[str, float], int | None, set[int]]:
     """Obtain the oom_score (the Linux kernel uses this number to
     decide which process to kill first in out-of-memory siturations).
 
@@ -437,7 +448,7 @@ def _get_processtree_data(
     oom_score = None
     # A value of None means that we have no information.
     memory_rss = 0
-    cpu_seconds = 0.0
+    cpu_seconds_pr_pid: dict[str, float] = {}
     pids = set()
     with contextlib.suppress(ValueError, FileNotFoundError):
         oom_score = int(
@@ -450,7 +461,7 @@ def _get_processtree_data(
         process.oneshot(),
     ):
         memory_rss = process.memory_info().rss
-        cpu_seconds = process.cpu_times().user
+        cpu_seconds_pr_pid[str(process.pid)] = process.cpu_times().user
 
     with contextlib.suppress(
         NoSuchProcess, AccessDenied, ZombieProcess, ProcessLookupError
@@ -478,5 +489,5 @@ def _get_processtree_data(
                 child.oneshot(),
             ):
                 memory_rss += child.memory_info().rss
-                cpu_seconds += child.cpu_times().user
-    return (memory_rss, cpu_seconds, oom_score, pids)
+                cpu_seconds_pr_pid[str(child.pid)] = child.cpu_times().user
+    return (memory_rss, cpu_seconds_pr_pid, oom_score, pids)
