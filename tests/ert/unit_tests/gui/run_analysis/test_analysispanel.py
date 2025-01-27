@@ -13,6 +13,7 @@ from ert.gui.ertwidgets.analysismodulevariablespanel import AnalysisModuleVariab
 def panel_with_localization_on(qtbot: QtBot):
     def func(settings, ensemble_size):
         widget = AnalysisModuleVariablesPanel(settings, ensemble_size)
+        widget.show()
         qtbot.addWidget(widget)
         check_box = widget.findChild(QCheckBox, name="localization")
         qtbot.mouseClick(check_box, Qt.MouseButton.LeftButton)
