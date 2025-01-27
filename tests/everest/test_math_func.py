@@ -1,10 +1,12 @@
 import os
+from pathlib import Path
 
 import pytest
 import yaml
 
 from ert.run_models.everest_run_model import EverestRunModel
 from everest.config import EverestConfig
+from everest.everest_storage import EverestStorage
 from everest.util import makedirs_if_needed
 
 CONFIG_FILE_MULTIOBJ = "config_multiobj.yml"
@@ -12,46 +14,44 @@ CONFIG_FILE_ADVANCED = "config_advanced.yml"
 
 
 @pytest.mark.integration_test
-def test_math_func_multiobj(
-    copy_math_func_test_data_to_tmp, evaluator_server_config_generator
-):
-    config = EverestConfig.load_file(CONFIG_FILE_MULTIOBJ)
+def test_math_func_multiobj(cached_example):
+    config_path, config_file, _ = cached_example("math_func/config_multiobj.yml")
 
-    run_model = EverestRunModel.create(config)
-    evaluator_server_config = evaluator_server_config_generator(run_model)
-    run_model.run_experiment(evaluator_server_config)
+    config = EverestConfig.load_file(Path(config_path) / config_file)
 
+    storage = EverestStorage(Path(config.optimization_output_dir))
+    storage.read_from_output_dir()
+    result = storage.get_optimal_result()
     # Check resulting points
-    x, y, z = (run_model.result.controls["point_" + p] for p in ("x", "y", "z"))
+    x, y, z = (result.controls["point_" + p] for p in ("x", "y", "z"))
     assert x == pytest.approx(0.0, abs=0.05)
     assert y == pytest.approx(0.0, abs=0.05)
     assert z == pytest.approx(0.5, abs=0.05)
 
     # The overall optimum is a weighted average of the objectives
-    assert run_model.result.total_objective == pytest.approx(
+    assert result.total_objective == pytest.approx(
         (-0.5 * (2.0 / 3.0) * 1.5) + (-4.5 * (1.0 / 3.0) * 1.0), abs=0.01
     )
 
 
 @pytest.mark.integration_test
-def test_math_func_advanced(
-    copy_math_func_test_data_to_tmp, evaluator_server_config_generator
-):
-    config = EverestConfig.load_file(CONFIG_FILE_ADVANCED)
+def test_math_func_advanced(cached_example):
+    config_path, config_file, _ = cached_example("math_func/config_advanced.yml")
 
-    run_model = EverestRunModel.create(config)
-    evaluator_server_config = evaluator_server_config_generator(run_model)
-    run_model.run_experiment(evaluator_server_config)
+    config = EverestConfig.load_file(Path(config_path) / config_file)
+    storage = EverestStorage(Path(config.optimization_output_dir))
+    storage.read_from_output_dir()
+    result = storage.get_optimal_result()
 
     point_names = ["x-0", "x-1", "x-2"]
     # Check resulting points
-    x0, x1, x2 = (run_model.result.controls["point_" + p] for p in point_names)
+    x0, x1, x2 = (result.controls["point_" + p] for p in point_names)
     assert x0 == pytest.approx(0.1, abs=0.05)
     assert x1 == pytest.approx(0.0, abs=0.05)
     assert x2 == pytest.approx(0.4, abs=0.05)
 
     # Check optimum value
-    assert pytest.approx(run_model.result.total_objective, abs=0.1) == -(
+    assert pytest.approx(result.total_objective, abs=0.1) == -(
         0.25 * (1.6**2 + 1.5**2 + 0.1**2) + 0.75 * (0.4**2 + 0.5**2 + 0.1**2)
     )
     # Expected distance is the weighted average of the (squared) distances
@@ -61,7 +61,7 @@ def test_math_func_advanced(
     dist_0 = (x0 + 1.5) ** 2 + (x1 + 1.5) ** 2 + (x2 - 0.5) ** 2
     dist_1 = (x0 - 0.5) ** 2 + (x1 - 0.5) ** 2 + (x2 - 0.5) ** 2
     expected_opt = -(w[0] * (dist_0) + w[1] * (dist_1))
-    assert expected_opt == pytest.approx(run_model.result.total_objective, abs=0.001)
+    assert expected_opt == pytest.approx(result.total_objective, abs=0.001)
 
 
 @pytest.mark.integration_test
