@@ -166,7 +166,7 @@ controls -> 0 -> initial_guess
     assert validation_msg in err.getvalue()
 
 
-@pytest.mark.fails_on_macos_github_workflow
+@pytest.mark.skip_mac_ci
 @skipif_no_everest_models
 @pytest.mark.everest_models_test
 @pytest.mark.integration_test
