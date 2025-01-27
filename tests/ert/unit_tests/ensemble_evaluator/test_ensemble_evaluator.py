@@ -5,6 +5,7 @@ from typing import cast
 from unittest.mock import patch
 
 import pytest
+import zmq.asyncio
 from hypothesis import given
 from hypothesis import strategies as st
 from pydantic import ValidationError
@@ -95,6 +96,19 @@ async def test_evaluator_handles_dispatchers_connected(
     await evaluator.handle_dispatch(b"dispatcher-1", DISCONNECT_MSG)
     await evaluator.handle_dispatch(b"dispatcher-2", DISCONNECT_MSG)
     assert evaluator._dispatchers_empty.is_set()
+
+
+async def test_evaluator_raises_on_start_with_address_in_use(make_ee_config):
+    ee_config = make_ee_config(use_ipc_protocol=False)
+    ctx = zmq.asyncio.Context()
+    socket = ctx.socket(zmq.ROUTER)
+    try:
+        socket.bind(f"tcp://*:{ee_config.router_port}")
+        evaluator = EnsembleEvaluator(TestEnsemble(0, 2, 2, id_="0"), ee_config)
+        with pytest.raises(zmq.error.ZMQError, match="Address already in use"):
+            await evaluator.run_and_get_successful_realizations()
+    finally:
+        ctx.destroy()
 
 
 async def test_no_config_raises_valueerror_when_running():
