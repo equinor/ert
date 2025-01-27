@@ -84,7 +84,6 @@ class EnsembleEvaluator:
         self._dispatchers_empty.set()
 
     async def _do_heartbeat_clients(self) -> None:
-        await self._server_started
         while True:
             if self._clients_connected:
                 await self._events_to_send.put(HeartbeatEvent.event)
@@ -93,7 +92,6 @@ class EnsembleEvaluator:
                 await asyncio.sleep(0.1)
 
     async def _publisher(self) -> None:
-        await self._server_started
         while True:
             event = await self._events_to_send.get()
             for identity in self._clients_connected:
@@ -270,7 +268,6 @@ class EnsembleEvaluator:
                 await self._events.put(event)
 
     async def listen_for_messages(self) -> None:
-        await self._server_started
         while True:
             try:
                 dealer, _, frame = await self._router_socket.recv_multipart()
@@ -368,8 +365,9 @@ class EnsembleEvaluator:
     async def _start_running(self) -> None:
         if not self._config:
             raise ValueError("no config for evaluator")
-        self._ee_tasks = [
-            asyncio.create_task(self._server(), name="server_task"),
+        self._ee_tasks = [asyncio.create_task(self._server(), name="server_task")]
+        await self._server_started
+        self._ee_tasks += [
             asyncio.create_task(self._do_heartbeat_clients(), name="heartbeat_task"),
             asyncio.create_task(
                 self._batch_events_into_buffer(), name="dispatcher_task"
@@ -377,17 +375,13 @@ class EnsembleEvaluator:
             asyncio.create_task(self._process_event_buffer(), name="processing_task"),
             asyncio.create_task(self._publisher(), name="publisher_task"),
             asyncio.create_task(self.listen_for_messages(), name="listener_task"),
-        ]
-
-        await self._server_started
-        self._ee_tasks.append(
             asyncio.create_task(
                 self._ensemble.evaluate(
                     self._config, self._events, self._manifest_queue
                 ),
                 name="ensemble_task",
-            )
-        )
+            ),
+        ]
 
     CLOSE_SERVER_TIMEOUT = 60
 
