@@ -35,8 +35,7 @@ run_ert_with_opm() {
 }
 
 run_everest_tests() {
-    python -m pytest -n auto tests/everest -s \
-    --ignore-glob "*test_visualization_entry*"
+    python -m pytest -n auto tests/everest -s
     return $?
 }
 
