@@ -85,10 +85,11 @@ from tests.everest.utils import (
         ],
     ],
 )
-def test_everest_to_ert_queue_config(config, config_class):
+def test_everest_to_ert_queue_config(config, config_class, tmp_path, monkeypatch):
     """Note that these objects are used directly in the Everest
     config, and if you have to make changes to this test, it is likely
     that it is a breaking change to Everest"""
+    monkeypatch.chdir(tmp_path)
     general_queue_options = {"max_running": 10}
     general_options = {"resubmit_limit": 7}
     config |= general_queue_options
@@ -125,7 +126,8 @@ def test_everest_to_ert_controls(tmp_path, monkeypatch):
     )
 
 
-def test_default_installed_jobs():
+def test_default_installed_jobs(tmp_path, monkeypatch):
+    monkeypatch.chdir(tmp_path)
     jobs = [
         "render",
         "recovery_factor",
