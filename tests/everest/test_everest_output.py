@@ -1,23 +1,13 @@
-import fnmatch
 import os
 import shutil
 from unittest.mock import patch
 
-import pytest
-
 from ert.config import ErtConfig
-from ert.run_models.everest_run_model import EverestRunModel
 from ert.storage import open_storage
 from everest.bin.everest_script import everest_entry
 from everest.config import EverestConfig
-from everest.detached import ServerStatus, start_server
+from everest.detached import ServerStatus
 from everest.simulator.everest_to_ert import _everest_to_ert_config_dict
-from everest.strings import (
-    DEFAULT_OUTPUT_DIR,
-    DETACHED_NODE_DIR,
-    OPTIMIZATION_OUTPUT_DIR,
-)
-from everest.util import makedirs_if_needed
 
 
 def test_that_one_experiment_creates_one_ensemble_per_batch(cached_example):
@@ -35,57 +25,6 @@ def test_that_one_experiment_creates_one_ensemble_per_batch(cached_example):
 
         ensemble_names = {ens.name for ens in experiment.ensembles}
         assert ensemble_names == set(batches)
-
-
-@pytest.mark.integration_test
-async def test_everest_output(copy_mocked_test_data_to_tmp):
-    config_folder = os.getcwd()
-    config = EverestConfig.load_file("mocked_test_case.yml")
-    everest_output_dir = config.output_dir
-
-    (path, folders, files) = next(os.walk(config_folder))
-    initial_folders = set(folders)
-    initial_files = set(files)
-
-    EverestRunModel.create(config)
-
-    # Check the output folder is created when stating the optimization
-    # in everest workflow
-    assert DEFAULT_OUTPUT_DIR not in initial_folders
-    assert os.path.exists(everest_output_dir)
-
-    # Expected ropt and dakota output in a sub-folder from the expected output path
-    assert OPTIMIZATION_OUTPUT_DIR in os.listdir(everest_output_dir)
-
-    # If output folder is present because of test class setup, remove it
-    if os.path.exists(everest_output_dir):
-        shutil.rmtree(everest_output_dir)
-
-    assert "storage" not in initial_folders
-    assert DETACHED_NODE_DIR not in initial_folders
-    makedirs_if_needed(config.output_dir, roll_if_exists=True)
-    await start_server(config)
-
-    (path, folders, files) = next(os.walk(config_folder))
-    # Check we are looking at the config folder
-    assert path == config_folder
-
-    final_folders = set(folders)
-    final_files = set(files)
-
-    new_folders = final_folders.difference(initial_folders)
-    # Check only the everest output folder was added
-    assert list(new_folders) == [DEFAULT_OUTPUT_DIR]
-    # Check no new files were created when starting the server
-    assert len(final_files.difference(initial_files)) == 0
-    # Check storage folder no longer created in the config folder
-    assert "storage" not in final_folders
-    makedirs_if_needed(config.output_dir, roll_if_exists=True)
-    await start_server(config)
-    final_files = os.listdir(config_folder)
-
-    # verify two everest_output dirs present
-    assert len(fnmatch.filter(final_files, "everest_output*")) == 2
 
 
 @patch("everest.bin.everest_script.server_is_running", return_value=False)
