@@ -152,14 +152,17 @@ def test_everest2ropt_backend_options():
     ropt_config = everest2ropt(config)
     assert ropt_config.optimizer.options == ["test = 1"]
 
-    config.optimization.backend = "scipy"
-    config.optimization.backend_options = {"test": 1}
-    with pytest.raises(RuntimeError):
-        _ = everest2ropt(config)
+    config.optimization.backend_options = {"test": "5"}  # should be disregarded
+    ropt_config = everest2ropt(config)
+    assert ropt_config.optimizer.options == ["test = 1"]
 
     config.optimization.options = None
     ropt_config = everest2ropt(config)
-    assert ropt_config.optimizer.options["test"] == 1
+    assert ropt_config.optimizer.options == {"test": "5"}
+
+    config.optimization.options = ["hey", "a=b", "c 100"]
+    ropt_config = everest2ropt(config)
+    assert ropt_config.optimizer.options == ["hey", "a=b", "c 100"]
 
 
 def test_everest2ropt_samplers():
