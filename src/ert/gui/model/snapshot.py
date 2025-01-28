@@ -13,7 +13,6 @@ from ert.ensemble_evaluator import EnsembleSnapshot, state
 from ert.ensemble_evaluator import identifiers as ids
 from ert.ensemble_evaluator.snapshot import (
     EnsembleSnapshotMetadata,
-    RealId,
     convert_iso8601_to_datetime,
 )
 from ert.gui.model.node import (
@@ -109,27 +108,14 @@ class SnapshotModel(QAbstractItemModel):
                     state.REAL_STATE_TO_COLOR[status]
                 ]
 
-        metadata["sorted_real_ids"] = sorted(ensemble.reals.keys(), key=int)
+        metadata["sorted_real_ids"] = sorted(reals.keys(), key=int)
         metadata["sorted_fm_step_ids"] = defaultdict(list)
 
-        running_fm_step_id: dict[RealId, int] = {}
-        for (real_id, fm_step_id), fm_step_snapshot in fm_step_snapshots.items():
-            if fm_step_snapshot == state.FORWARD_MODEL_STATE_RUNNING:
-                running_fm_step_id[real_id] = int(fm_step_id)
-
-        for (real_id, fm_step_id), fm_step_snapshot in fm_step_snapshots.items():
+        for (real_id, fm_step_id), fm_step_status in fm_step_snapshots.items():
             metadata["sorted_fm_step_ids"][real_id].append(fm_step_id)
-            if (
-                real_id in running_fm_step_id
-                and int(fm_step_id) > running_fm_step_id[real_id]
-            ):
-                # Triggered on resubmitted realizations
-                color = _QCOLORS[
-                    state.FORWARD_MODEL_STATE_TO_COLOR[state.FORWARD_MODEL_STATE_START]
-                ]
-            else:
-                color = _QCOLORS[state.FORWARD_MODEL_STATE_TO_COLOR[fm_step_snapshot]]
-            metadata["aggr_fm_step_status_colors"][real_id][fm_step_id] = color
+            metadata["aggr_fm_step_status_colors"][real_id][fm_step_id] = _QCOLORS[
+                state.FORWARD_MODEL_STATE_TO_COLOR[fm_step_status]
+            ]
 
         ensemble.merge_metadata(metadata)
         return ensemble

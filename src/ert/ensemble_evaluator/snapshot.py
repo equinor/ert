@@ -26,6 +26,7 @@ from _ert.events import (
     RealizationEvent,
     RealizationFailed,
     RealizationPending,
+    RealizationResubmit,
     RealizationRunning,
     RealizationSuccess,
     RealizationTimeout,
@@ -50,6 +51,7 @@ _FM_TYPE_EVENT_TO_STATUS = {
     RealizationSuccess: state.REALIZATION_STATE_FINISHED,
     RealizationUnknown: state.REALIZATION_STATE_UNKNOWN,
     RealizationTimeout: state.REALIZATION_STATE_FAILED,
+    RealizationResubmit: state.REALIZATION_STATE_WAITING,  # For consistency since realization will turn to waiting state when resubmitted
     ForwardModelStepStart: state.FORWARD_MODEL_STATE_START,
     ForwardModelStepRunning: state.FORWARD_MODEL_STATE_RUNNING,
     ForwardModelStepSuccess: state.FORWARD_MODEL_STATE_FINISHED,
@@ -313,6 +315,22 @@ class EnsembleSnapshot:
                                 "reaching MAX_RUNTIME",
                             )
                         )
+            elif e_type is RealizationResubmit:
+                for fm_step_id in source_snapshot.get_fm_steps_for_real(event.real):
+                    fm_idx = (event.real, fm_step_id)
+                    self._fm_step_snapshots[fm_idx].update(
+                        FMStepSnapshot(
+                            status=state.FORWARD_MODEL_STATE_START,
+                            start_time=None,
+                            end_time=None,
+                            current_memory_usage=None,
+                            max_memory_usage=None,
+                            cpu_seconds=None,
+                            error=None,
+                            stdout=None,
+                            stderr=None,
+                        )
+                    )
 
         elif e_type in get_args(FMEvent):
             event = cast(FMEvent, event)

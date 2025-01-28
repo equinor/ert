@@ -18,7 +18,9 @@ from _ert.events import (
     ForwardModelStepFailure,
     ForwardModelStepRunning,
     ForwardModelStepSuccess,
+    Id,
     RealizationSuccess,
+    event_from_dict,
     event_to_json,
 )
 from _ert.forward_model_runner.client import (
@@ -42,7 +44,9 @@ from ert.ensemble_evaluator.state import (
     FORWARD_MODEL_STATE_FAILURE,
     FORWARD_MODEL_STATE_FINISHED,
     FORWARD_MODEL_STATE_RUNNING,
+    FORWARD_MODEL_STATE_START,
 )
+from ert.scheduler import JobState
 
 from .ensemble_evaluator_utils import TestEnsemble
 
@@ -574,3 +578,69 @@ def test_overspent_cpu_is_logged(
         assert "Misconfigured NUM_CPU" in message
     else:
         assert "NUM_CPU" not in message
+
+
+@pytest.mark.integration_test
+async def test_snapshot_on_resubmit_is_cleared(evaluator_to_use):
+    evaluator = evaluator_to_use
+    evaluator._batching_interval = 0.4
+    config_info = evaluator._config.get_connection_info()
+    async with Monitor(config_info) as monitor:
+        events = monitor.track()
+
+        token = evaluator._config.token
+        url = config_info.router_uri
+
+        snapshot_event = await anext(events)
+        assert type(snapshot_event) is EESnapshot
+        async with Client(url, token=token) as dispatch:
+            event = ForwardModelStepRunning(
+                ensemble=evaluator.ensemble.id_,
+                real="0",
+                fm_step="0",
+                current_memory_usage=1000,
+            )
+            await dispatch.send(event_to_json(event))
+            event = ForwardModelStepSuccess(
+                ensemble=evaluator.ensemble.id_,
+                real="0",
+                fm_step="0",
+                current_memory_usage=1000,
+            )
+            await dispatch.send(event_to_json(event))
+            event = ForwardModelStepRunning(
+                ensemble=evaluator.ensemble.id_,
+                real="0",
+                fm_step="1",
+                current_memory_usage=1000,
+            )
+            await dispatch.send(event_to_json(event))
+            event = ForwardModelStepFailure(
+                ensemble=evaluator.ensemble.id_,
+                real="0",
+                fm_step="1",
+                error_msg="error",
+            )
+            await dispatch.send(event_to_json(event))
+            event = await anext(events)
+            snapshot = EnsembleSnapshot.from_nested_dict(event.snapshot)
+            assert (
+                snapshot.get_fm_step("0", "0")["status"] == FORWARD_MODEL_STATE_FINISHED
+            )
+            assert (
+                snapshot.get_fm_step("0", "1")["status"] == FORWARD_MODEL_STATE_FAILURE
+            )
+            event_dict = {
+                "ensemble": str(evaluator._ensemble.id_),
+                "event_type": Id.REALIZATION_RESUBMIT,
+                "queue_event_type": JobState.RESUBMITTING,
+                "real": "0",
+                "exec_hosts": "something",
+            }
+            await evaluator._events.put(event_from_dict(event_dict))
+            event = await anext(events)
+            snapshot = EnsembleSnapshot.from_nested_dict(event.snapshot)
+            assert snapshot.get_fm_step("0", "0")["status"] == FORWARD_MODEL_STATE_START
+            assert snapshot.get_fm_step("0", "1")["status"] == FORWARD_MODEL_STATE_START
+
+        await monitor.signal_done()

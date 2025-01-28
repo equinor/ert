@@ -32,6 +32,7 @@ logger = logging.getLogger(__name__)
 
 class JobState(StrEnum):
     WAITING = "WAITING"
+    RESUBMITTING = "RESUBMITTING"
     SUBMITTING = "SUBMITTING"
     PENDING = "PENDING"
     RUNNING = "RUNNING"
@@ -44,6 +45,7 @@ class JobState(StrEnum):
 _queue_jobstate_event_type = {
     JobState.WAITING: Id.REALIZATION_WAITING,
     JobState.SUBMITTING: Id.REALIZATION_WAITING,
+    JobState.RESUBMITTING: Id.REALIZATION_RESUBMIT,
     JobState.PENDING: Id.REALIZATION_PENDING,
     JobState.RUNNING: Id.REALIZATION_RUNNING,
     JobState.ABORTING: Id.REALIZATION_FAILURE,
@@ -176,6 +178,7 @@ class Job:
                 logger.warning(message)
                 self.returncode = asyncio.Future()
                 self.started.clear()
+                await self._send(JobState.RESUBMITTING)
             else:
                 current_span.set_status(Status(StatusCode.ERROR))
                 await self._send(JobState.FAILED)
