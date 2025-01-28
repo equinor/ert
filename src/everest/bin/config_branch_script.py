@@ -1,23 +1,22 @@
 import argparse
 from copy import deepcopy as copy
 from functools import partial
-from os.path import exists, join
+from pathlib import Path
 from typing import Any
 
 from ruamel.yaml import YAML
-from seba_sqlite.database import Database as seba_db
-from seba_sqlite.snapshot import SebaSnapshot
 
 from everest.config import EverestConfig
 from everest.config_file_loader import load_yaml
+from everest.everest_storage import EverestStorage
 
 
-def _yaml_config(file_path: str, parser) -> tuple[str, dict[str, Any] | None]:
+def _yaml_config(file_path: str, parser) -> tuple[str, str, dict[str, Any] | None]:
     loaded_config = EverestConfig.load_file_with_argparser(file_path, parser)
 
     assert loaded_config is not None
     opt_folder = loaded_config.optimization_output_dir
-    return opt_folder, load_yaml(file_path)
+    return file_path, opt_folder, load_yaml(file_path)
 
 
 def _build_args_parser():
@@ -45,10 +44,21 @@ def _build_args_parser():
 
 
 def opt_controls_by_batch(optimization_dir, batch):
-    snapshot = SebaSnapshot(optimization_dir)
-    for opt_data in snapshot.get_optimization_data():
-        if opt_data.batch_id == batch:
-            return opt_data.controls
+    storage = EverestStorage(Path(optimization_dir))
+    storage.read_from_output_dir()
+
+    control_names = storage.data.controls["control_name"]
+    batch_data = next((b for b in storage.data.batches if b.batch_id == batch), None)
+
+    if batch_data:
+        # It is currently assumed that the batch provided is not a perturbation-only
+        # batch.
+        # All geo-realizations should have the same unperturbed control values per batch
+        # hence it does not matter which realization we select the controls for
+        return batch_data.realization_controls.select(
+            control_names.to_list()
+        ).to_dicts()[0]
+
     return None
 
 
@@ -89,11 +99,8 @@ def _updated_initial_guess(conf_controls, opt_controls):
 def config_branch_entry(args=None):
     parser = _build_args_parser()
     options = parser.parse_args(args)
-    optimization_dir, yml_config = options.input_config
-
-    db_path = join(optimization_dir, seba_db.FILENAME)
-    if not exists(db_path):
-        parser.error(f"Optimization source {db_path} not found")
+    ever_config_path, optimization_dir, yml_config = options.input_config
+    EverestStorage.check_for_deprecated_seba_storage(ever_config_path)
 
     opt_controls = opt_controls_by_batch(optimization_dir, options.batch)
     if opt_controls is None:

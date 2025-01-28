@@ -69,18 +69,6 @@
     },
     {
       "batch": 0,
-      "control": "point_y",
-      "function": "distance_p",
-      "value": 0.98866227
-    },
-    {
-      "batch": 0,
-      "control": "point_z",
-      "function": "distance_p",
-      "value": 1.00465235
-    },
-    {
-      "batch": 0,
       "control": "point_x",
       "function": "distance_q",
       "value": -3.00456477
@@ -88,8 +76,20 @@
     {
       "batch": 0,
       "control": "point_y",
+      "function": "distance_p",
+      "value": 0.98866227
+    },
+    {
+      "batch": 0,
+      "control": "point_y",
       "function": "distance_q",
       "value": -3.011388
+    },
+    {
+      "batch": 0,
+      "control": "point_z",
+      "function": "distance_p",
+      "value": 1.00465235
     },
     {
       "batch": 0,
@@ -119,17 +119,17 @@
       "batch": 0,
       "function": "distance_p",
       "norm": 1.5,
-      "realization": "0",
-      "simulation": "0",
+      "realization": 0,
+      "simulation": 0,
       "value": -0.75,
       "weight": 0.66666667
     },
     {
       "batch": 0,
       "function": "distance_q",
-      "norm": 1,
-      "realization": "0",
-      "simulation": "0",
+      "norm": 1.0,
+      "realization": 0,
+      "simulation": 0,
       "value": -4.75,
       "weight": 0.33333333
     },
@@ -137,17 +137,17 @@
       "batch": 1,
       "function": "distance_p",
       "norm": 1.5,
-      "realization": "0",
-      "simulation": "0",
+      "realization": 0,
+      "simulation": 0,
       "value": -0.76564598,
       "weight": 0.66666667
     },
     {
       "batch": 1,
       "function": "distance_q",
-      "norm": 1,
-      "realization": "0",
-      "simulation": "0",
+      "norm": 1.0,
+      "realization": 0,
+      "simulation": 0,
       "value": -4.70363998,
       "weight": 0.33333333
     },
@@ -155,17 +155,17 @@
       "batch": 2,
       "function": "distance_p",
       "norm": 1.5,
-      "realization": "0",
-      "simulation": "0",
+      "realization": 0,
+      "simulation": 0,
       "value": -0.50778502,
       "weight": 0.66666667
     },
     {
       "batch": 2,
       "function": "distance_q",
-      "norm": 1,
-      "realization": "0",
-      "simulation": "0",
+      "norm": 1.0,
+      "realization": 0,
+      "simulation": 0,
       "value": -4.47678995,
       "weight": 0.33333333
     }

@@ -18,6 +18,7 @@ from everest.detached import (
     start_server,
     wait_for_server,
 )
+from everest.everest_storage import EverestStorage
 from everest.simulator.everest_to_ert import everest_to_ert_config
 from everest.strings import EVEREST
 from everest.util import (
@@ -89,6 +90,8 @@ async def run_everest(options):
     everserver_status_path = ServerConfig.get_everserver_status_path(
         options.config.output_dir
     )
+
+    EverestStorage.check_for_deprecated_seba_storage(options.config.config_path)
     server_state = everserver_status(everserver_status_path)
     if server_is_running(*ServerConfig.get_server_context(options.config.output_dir)):
         config_file = options.config.config_file
