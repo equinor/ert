@@ -182,14 +182,16 @@ def test_custom_forward_models_are_logged(caplog):
     Path(localhack).write_text("", encoding="utf-8")
     st = os.stat(localhack)
     os.chmod(localhack, st.st_mode | stat.S_IEXEC)
-    Path("foo_fm").write_text(f"EXECUTABLE {localhack}", encoding="utf-8")
+    Path("foo_fm").write_text(
+        f"-- A comment\n   \nEXECUTABLE {localhack}\n\n\n", encoding="utf-8"
+    )
     Path("config.ert").write_text(
         "NUM_REALIZATIONS 1\nINSTALL_JOB foo_fm foo_fm", encoding="utf-8"
     )
     with caplog.at_level(logging.INFO):
         ErtConfig.from_file("config.ert")
     assert (
-        f"Custom forward_model_step foo_fm installed as: EXECUTABLE {localhack}"
+        f"Custom forward_model_step foo_fm installed as: -- A comment\nEXECUTABLE {localhack}"
         in caplog.messages
     )
     assert (
