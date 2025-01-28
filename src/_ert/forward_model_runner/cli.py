@@ -5,11 +5,15 @@ import os
 import signal
 import sys
 import time
-import typing
+from collections.abc import Generator, Iterable
 from datetime import datetime
 
 from _ert.forward_model_runner import reporting
-from _ert.forward_model_runner.reporting.message import Finish, ProcessTreeStatus
+from _ert.forward_model_runner.reporting.message import (
+    Finish,
+    Message,
+    ProcessTreeStatus,
+)
 from _ert.forward_model_runner.runner import ForwardModelRunner
 
 JOBS_FILE = "jobs.json"
@@ -131,16 +135,22 @@ def main(args):
 
     job_runner = ForwardModelRunner(jobs_data)
     signal.signal(signal.SIGTERM, lambda _, __: _stop_reporters_and_sigkill(reporters))
-    for job_status in job_runner.run(parsed_args.job):
-        logger.info(f"Job status: {job_status}")
+    _report_all_messages(job_runner.run(parsed_args.job), reporters)
+
+
+def _report_all_messages(
+    messages: Generator[Message], reporters: Iterable[reporting.Reporter]
+) -> None:
+    for msg in messages:
+        logger.info(f"Job status: {msg}")
         for reporter in reporters:
             try:
-                reporter.report(job_status)
+                reporter.report(msg)
             except OSError as oserror:
                 print(f"fm_dispatch failed due to {oserror}. Stopping and cleaning up.")
                 _stop_reporters_and_sigkill(reporters)
 
-        if isinstance(job_status, Finish) and not job_status.success():
+        if isinstance(msg, Finish) and not msg.success():
             _stop_reporters_and_sigkill(reporters)
 
 
@@ -150,7 +160,7 @@ def _stop_reporters_and_sigkill(reporters):
     os.killpg(pgid, signal.SIGKILL)
 
 
-def _stop_reporters(reporters: typing.Iterable[reporting.Reporter]) -> None:
+def _stop_reporters(reporters: Iterable[reporting.Reporter]) -> None:
     for reporter in reporters:
         if isinstance(reporter, reporting.Event):
             reporter.stop()

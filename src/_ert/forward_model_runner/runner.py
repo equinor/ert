@@ -1,11 +1,12 @@
 import hashlib
 import json
 import os
+from collections.abc import Generator
 from pathlib import Path
 from typing import Any
 
 from _ert.forward_model_runner.forward_model_step import ForwardModelStep
-from _ert.forward_model_runner.reporting.message import Checksum, Finish, Init
+from _ert.forward_model_runner.reporting.message import Checksum, Finish, Init, Message
 
 
 class ForwardModelRunner:
@@ -49,7 +50,7 @@ class ForwardModelRunner:
                 info["error"] = f"Expected file {path} not created by forward model!"
         return manifest
 
-    def run(self, names_of_steps_to_run: list[str]):
+    def run(self, names_of_steps_to_run: list[str]) -> Generator[Message]:
         if not names_of_steps_to_run:
             step_queue = self.steps
         else:
