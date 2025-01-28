@@ -96,7 +96,9 @@ def run_server(args: argparse.Namespace | None = None, debug: bool = False) -> N
         config_args.update(reload=True, reload_dirs=[os.path.dirname(ert_shared_path)])
         os.environ["ERT_STORAGE_DEBUG"] = "1"
 
-    sock = find_available_socket(custom_host=args.host)
+    sock = find_available_socket(
+        custom_host=args.host, custom_range=range(51850, 51870)
+    )
     connection_info = _create_connection_info(sock, authtoken)
 
     # Appropriated from uvicorn.main:run
