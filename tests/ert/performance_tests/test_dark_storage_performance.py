@@ -3,7 +3,6 @@ import contextlib
 import gc
 import io
 import os
-import time
 from collections.abc import Awaitable
 from datetime import datetime, timedelta
 from typing import TypeVar
@@ -319,38 +318,32 @@ def test_plot_api_big_summary_memory_usage(
     assert total_memory_usage < max_memory_mb
 
 
-def test_plotter_on_all_snake_oil_responses_time(api_and_snake_oil_storage):
+def test_plotter_on_all_snake_oil_responses_time(api_and_snake_oil_storage, benchmark):
     api, _ = api_and_snake_oil_storage
-    t0 = time.time()
-    key_infos = api.all_data_type_keys()
-    all_ensembles = api.get_all_ensembles()
-    t1 = time.time()
-    # Cycle through all ensembles and get all responses
-    for key_info in key_infos:
-        for ensemble in all_ensembles:
-            api.data_for_key(ensemble_id=ensemble.id, key=key_info.key)
 
-        if key_info.observations:
-            with contextlib.suppress(RequestError, TimeoutError):
-                api.observations_for_key(
-                    [ens.id for ens in all_ensembles], key_info.key
-                )
+    def run():
+        key_infos = api.all_data_type_keys()
+        all_ensembles = api.get_all_ensembles()
+        # Cycle through all ensembles and get all responses
+        for key_info in key_infos:
+            for ensemble in all_ensembles:
+                api.data_for_key(ensemble_id=ensemble.id, key=key_info.key)
 
-        # Note: Does not test for fields
-        if not (str(key_info.key).endswith("H") or "H:" in str(key_info.key)):
-            with contextlib.suppress(RequestError, TimeoutError):
-                api.history_data(
-                    key_info.key,
-                    [e.id for e in all_ensembles],
-                )
+            if key_info.observations:
+                with contextlib.suppress(RequestError, TimeoutError):
+                    api.observations_for_key(
+                        [ens.id for ens in all_ensembles], key_info.key
+                    )
 
-    t2 = time.time()
-    time_to_get_metadata = t1 - t0
-    time_to_cycle_through_responses = t2 - t1
+            # Note: Does not test for fields
+            if not (str(key_info.key).endswith("H") or "H:" in str(key_info.key)):
+                with contextlib.suppress(RequestError, TimeoutError):
+                    api.history_data(
+                        key_info.key,
+                        [e.id for e in all_ensembles],
+                    )
 
-    # Local times were about 10% of the asserted times
-    assert time_to_get_metadata < 1
-    assert time_to_cycle_through_responses < 14
+    benchmark(run)
 
 
 def test_plotter_on_all_snake_oil_responses_memory(api_and_snake_oil_storage):
