@@ -2,6 +2,7 @@ import logging
 import os
 import sys
 import traceback
+from collections import defaultdict
 from dataclasses import dataclass, field
 from itertools import groupby
 from typing import ClassVar
@@ -77,6 +78,7 @@ class JobProgress:
             JOB_FAILURE: [],  # contains failed simulation numbers i.e [5,6]
         }
     )
+    errors: defaultdict[list] = field(default_factory=lambda: defaultdict(list))
     STATUS_COLOR: ClassVar = {
         JOB_RUNNING: Fore.BLUE,
         JOB_SUCCESS: Fore.GREEN,
@@ -217,7 +219,7 @@ class _DetachedMonitor:
 
     @classmethod
     def _get_job_states(cls, snapshot: EnsembleSnapshot, show_all_jobs: bool):
-        print_lines = ""
+        print_lines = []
         jobs_status = cls._get_jobs_status(snapshot)
         if not show_all_jobs:
             jobs_status = cls._filter_jobs(jobs_status)
@@ -229,11 +231,18 @@ class _DetachedMonitor:
                 for state in [JOB_RUNNING, JOB_SUCCESS, JOB_FAILURE]
             }
             width = _get_max_width([item.name for item in jobs_status])
-            print_lines = cls._join_one_newline_indent(
-                f"{item.name:>{width}}: {item.progress_str(max_widths)}{Fore.RESET}"
-                for item in jobs_status
-            )
-        return print_lines
+            for job in jobs_status:
+                print_lines.append(
+                    f"{job.name:>{width}}: {job.progress_str(max_widths)}{Fore.RESET}"
+                )
+                if job.errors:
+                    print_lines.extend(
+                        [
+                            f"{Fore.RED}{job.name:>{width}}: Failed: {err}, realizations: {_format_list(job.errors[err])}{Fore.RESET}"
+                            for err in job.errors
+                        ]
+                    )
+        return cls._join_one_newline_indent(print_lines)
 
     @staticmethod
     def _get_jobs_status(snapshot: EnsembleSnapshot) -> list[JobProgress]:
@@ -244,6 +253,8 @@ class _DetachedMonitor:
             status = job["status"]
             if status in {JOB_RUNNING, JOB_SUCCESS, JOB_FAILURE}:
                 job_progress[job_idx].status[status].append(int(realization))
+            if error := job.get("error"):
+                job_progress[job_idx].errors[error].append(int(realization))
         return list(job_progress.values())
 
     @staticmethod
