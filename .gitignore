@@ -46,3 +46,6 @@ src/ert/shared/version.py
 
 # config for pyright
 pyrightconfig.json
+
+everest_docs/
+ert_docs/
