@@ -74,10 +74,17 @@ pytest tests/
 ```
 
 There are many kinds of tests in the `tests` directory, while iterating on your
-code you can run a fast subset of the tests with
+code you can run a fast subset of the tests with by using the rapid checks from the
+justfile:
 
 ```sh
-pytest -n auto --hypothesis-profile=fast tests/ert/unit_tests tests/everest -m "not integration_test"
+just rapid-tests
+```
+
+You can also run all of the checks in parallel with
+
+```sh
+just check-all
 ```
 
 [Git LFS](https://git-lfs.com/) must be installed to get all the files. This is
@@ -104,9 +111,10 @@ git submodule foreach "git lfs pull"
 You can build the documentation after installation by running
 ```sh
 pip install ".[dev]"
-sphinx-build -n -v -E -W ./docs/ert ./ert_docs
+just build-docs
 ```
-and then open the generated `./ert_docs/index.html` in a browser.
+and then open the generated `./ert_docs/index.html` or
+`./everest_docs/index.html` in a browser.
 
 To automatically reload on changes you may use
 

@@ -15,6 +15,7 @@ env:
   ERT_SHOW_BACKTRACE: 1
   ECL_SKIP_SIGNAL: 1
   UV_SYSTEM_PYTHON: 1
+  ERT_PYTEST_ARGS: '-m ${{ inputs.select-string }} --cov=ert --cov=everest --cov=_ert --cov-report=xml:cov1.xml --junit-xml=junit.xml -o junit_family=legacy -v --durations=25 --benchmark-disable'
 
 jobs:
   tests-ert:
@@ -47,7 +48,7 @@ jobs:
     - name: GUI Test
       if: inputs.test-type == 'gui-tests'
       run: |
-        pytest -m ${{ inputs.select-string }} --cov=ert --cov=everest --cov=_ert --cov-report=xml:cov1.xml --junit-xml=junit.xml -o junit_family=legacy -v --mpl --benchmark-disable tests/ert/ui_tests/gui --durations=25
+        just ert-gui-tests
 
     - name: Upload artifact images
       uses: actions/upload-artifact@v4
@@ -60,13 +61,13 @@ jobs:
     - name: CLI Test
       if: inputs.test-type == 'cli-tests'
       run: |
-        pytest -m ${{ inputs.select-string }} --cov=ert --cov=everest --cov=_ert --cov-report=xml:cov1.xml --junit-xml=junit.xml -o junit_family=legacy -v --benchmark-disable  --dist loadgroup tests/ert/ui_tests/cli --durations=25
+        just ert-cli-tests
 
     - name: Unit Test
       if: inputs.test-type == 'performance-and-unit-tests'
       run: |
-        pytest -m ${{ inputs.select-string }} --cov=ert --cov=everest --cov=_ert --cov-report=xml:cov1.xml --junit-xml=junit.xml -o junit_family=legacy -n logical --show-capture=stderr -v --benchmark-disable --mpl --dist loadgroup tests/ert/unit_tests tests/ert/performance_tests --durations=25
-        pytest --doctest-modules --cov=ert --cov=everest --cov=_ert --cov-report=xml:cov2.xml src/ --ignore src/ert/dark_storage
+        just ert-unit-tests
+        ERT_PYTEST_ARGS="-m ${{ inputs.select-string }} --cov=ert --cov=everest --cov=_ert --cov-report=xml:cov2.xml --junit-xml=junit.xml -o junit_family=legacy -v --durations=25 --benchmark-disable" just ert-doc-tests
 
     - name: Upload coverage to Codecov
       id: codecov1
