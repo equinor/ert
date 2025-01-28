@@ -150,7 +150,7 @@ if all realizations failed. Most algorithms are not capable of this and will adj
 the value to be equal to one.
 """,
     )
-    options: list[str] | None = Field(
+    options: list[str] | dict[str, Any] | None = Field(
         default=None,
         description="""specifies non-validated, optional
 passthrough parameters for the optimizer

@@ -1,3 +1,4 @@
+import logging
 import os
 from typing import Any
 
@@ -14,6 +15,7 @@ from everest.config import (
     OutputConstraintConfig,
 )
 from everest.config.utils import FlattenedControls, control_tuples
+from everest.strings import EVEREST
 
 
 def _parse_controls(ever_controls: list[ControlConfig], ropt_config):
@@ -279,19 +281,27 @@ def _parse_optimization(
     # Handle the backend options. Due to historical reasons there two keywords:
     # "options" is used to pass a list of string, "backend_options" is used to
     # pass a dict. These are redirected to the same ropt option:
-    options = ever_opt.options or []
-    backend_options = ever_opt.backend_options or {}
-    if options and backend_options:
-        raise RuntimeError("Only one of 'options' and 'backend_options' allowed.")
+    if ever_opt.backend_options is not None:
+        message = (
+            "optimization.backend_options is deprecated. "
+            "Please use optimization.options instead, "
+            "it will accept both objects and lists of strings."
+        )
+        print(message)
+        logging.getLogger(EVEREST).warning(message)
+
+    options = ever_opt.options or ever_opt.backend_options or {}
+
+    alg_const_tol = ever_opt.constraint_tolerance or None
+    if (
+        has_output_constraints
+        and alg_const_tol is not None
+        and isinstance(options, list)
+    ):
+        options += [f"constraint_tolerance = {alg_const_tol}"]
+
     # The constraint_tolerance option is only used by Dakota:
-    if backend == "dakota":
-        alg_const_tol = ever_opt.constraint_tolerance or None
-        if has_output_constraints and alg_const_tol is not None:
-            options += [f"constraint_tolerance = {alg_const_tol}"]
-    if options:
-        ropt_optimizer["options"] = options
-    if backend_options:
-        ropt_optimizer["options"] = backend_options
+    ropt_optimizer["options"] = options
 
     parallel = True if ever_opt.parallel is None else ever_opt.parallel
     ropt_optimizer["parallel"] = True if parallel is None else parallel
