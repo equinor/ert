@@ -1,7 +1,8 @@
+import io
 import json
 import os
-import sys
 
+import polars
 import pytest
 
 from ert.config import ErtConfig
@@ -9,7 +10,7 @@ from ert.config.parsing import ConfigKeys as ErtConfigKeys
 from ert.ensemble_evaluator import EvaluatorServerConfig
 from ert.run_models.everest_run_model import EverestRunModel
 from everest.config import EverestConfig
-from everest.export import export_data
+from everest.config.export_config import ExportConfig
 from everest.simulator.everest_to_ert import _everest_to_ert_config_dict
 from tests.everest.utils import (
     everest_default_jobs,
@@ -625,13 +626,12 @@ def test_opm_fail_explicit_summary_keys(copy_egg_test_data_to_tmp):
         "GWPT:PRODUC",
         "GWIR:INJECT",
     ]
-    with open(CONFIG_FILE, "a", encoding="utf-8") as f:
-        f.write("export:\n  skip_export: False")
+
     config = EverestConfig.load_file(CONFIG_FILE)
     # The Everest config file will fail to load as an Eclipse data file
     config.model.data_file = os.path.realpath(CONFIG_FILE)
-
-    assert config.export is not None
+    if "export" not in config:
+        config.export = ExportConfig()
 
     config.export.keywords = extra_sum_keys
     assert len(EverestConfig.lint_config_dict(config.to_dict())) == 0
@@ -709,15 +709,23 @@ def test_egg_snapshot(snapshot, copy_egg_test_data_to_tmp):
     run_model.run_experiment(evaluator_server_config)
 
     assert cbtracker.called
+    best_batch = [b for b in run_model.ever_storage.data.batches if b.is_improvement][
+        -1
+    ]
 
-    data = export_data(
-        export_config=config.export,
-        output_dir=config.output_dir,
-        data_file=config.model.data_file if config.model else None,
-    )
-    snapshot.assert_match(
-        data.drop(columns=["TCPUDAY", "start_time", "end_time"], axis=1)
-        .round(6)
-        .to_csv(),
-        f"egg-py{sys.version_info.major}{sys.version_info.minor}.csv",
-    )
+    def _df_to_string(df: polars.DataFrame):
+        strbuf = io.StringIO()
+        schema = df.schema
+        df.with_columns(
+            polars.col(c) for c in df.columns if schema[c] == polars.Float32
+        ).write_csv(strbuf)
+
+        return strbuf.getvalue()
+
+    best_objectives_csv = _df_to_string(best_batch.perturbation_objectives)
+    best_objective_gradients_csv = _df_to_string(best_batch.batch_objective_gradient)
+    best_controls = _df_to_string(best_batch.realization_controls)
+
+    snapshot.assert_match(best_controls, "best_controls")
+    snapshot.assert_match(best_objectives_csv, "best_objectives_csv")
+    snapshot.assert_match(best_objective_gradients_csv, "best_objective_gradients_csv")

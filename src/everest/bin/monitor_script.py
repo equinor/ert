@@ -8,6 +8,7 @@ from functools import partial
 
 from everest.config import EverestConfig, ServerConfig
 from everest.detached import ServerStatus, everserver_status, server_is_running
+from everest.everest_storage import EverestStorage
 
 from .utils import (
     handle_keyboard_interrupt,
@@ -31,6 +32,8 @@ def monitor_entry(args=None):
             signal.SIGINT,
             partial(handle_keyboard_interrupt, options=options),
         )
+
+    EverestStorage.check_for_deprecated_seba_storage(options.config.config_path)
 
     monitor_everest(options)
 
