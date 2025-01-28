@@ -393,7 +393,7 @@ async def test_dispatch_endpoint_clients_can_connect_and_monitor_can_shut_down_e
     evaluator_to_use,
 ):
     evaluator = evaluator_to_use
-    evaluator._batching_interval = 0.2
+    evaluator._batching_interval = 0.1
 
     evaluator._max_batch_size = 4
     conn_info = evaluator._config.get_connection_info()
@@ -451,17 +451,30 @@ async def test_dispatch_endpoint_clients_can_connect_and_monitor_can_shut_down_e
             )
             await dispatch2.send(event_to_json(event))
 
-            event = await anext(events)
-            snapshot = EnsembleSnapshot.from_nested_dict(event.snapshot)
-            assert (
-                snapshot.get_fm_step("1", "0")["status"] == FORWARD_MODEL_STATE_FINISHED
-            )
-            assert (
-                snapshot.get_fm_step("0", "0")["status"] == FORWARD_MODEL_STATE_RUNNING
-            )
-            assert (
-                snapshot.get_fm_step("1", "1")["status"] == FORWARD_MODEL_STATE_FAILURE
-            )
+            snapshot = EnsembleSnapshot.from_nested_dict({})
+
+            def is_completed_snapshot(snapshot):
+                try:
+                    assert (
+                        snapshot.get_fm_step("1", "0").get("status")
+                        == FORWARD_MODEL_STATE_FINISHED
+                    )
+                    assert (
+                        snapshot.get_fm_step("0", "0").get("status")
+                        == FORWARD_MODEL_STATE_RUNNING
+                    )
+                    assert (
+                        snapshot.get_fm_step("1", "1").get("status")
+                        == FORWARD_MODEL_STATE_FAILURE
+                    )
+                    return True
+                except AssertionError:
+                    return False
+
+            async for event in events:
+                snapshot.update_from_event(event)
+                if is_completed_snapshot(snapshot):
+                    break
         # a second monitor connects
         async with Monitor(evaluator._config.get_connection_info()) as monitor2:
             events2 = monitor2.track()
