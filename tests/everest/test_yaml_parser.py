@@ -102,7 +102,7 @@ def test_valid_config_file(copy_test_data_to_tmp, monkeypatch):
     assert "could not find expected ':'" in parser.get_error()
 
 
-@pytest.mark.fails_on_macos_github_workflow
+@pytest.mark.skip_mac_ci
 @skipif_no_everest_models
 @pytest.mark.everest_models_test
 def test_valid_forward_model_config_files(copy_test_data_to_tmp, monkeypatch):
@@ -117,7 +117,7 @@ def test_valid_forward_model_config_files(copy_test_data_to_tmp, monkeypatch):
 
 @skipif_no_everest_models
 @pytest.mark.everest_models_test
-@pytest.mark.fails_on_macos_github_workflow
+@pytest.mark.skip_mac_ci
 def test_invalid_forward_model_config_files(copy_test_data_to_tmp, monkeypatch):
     monkeypatch.chdir("valid_config_file/forward_models")
     parser = MockParser()

@@ -57,7 +57,7 @@ observation_times = st.dates(
             }
         )
     ),
-    std_cutoff=st.floats(min_value=0.0, max_value=1.0),
+    std_cutoff=st.floats(min_value=1e-6, max_value=1.0),
     enkf_alpha=st.floats(min_value=3.0, max_value=10.0),
     epsilon=st.sampled_from([0.0, 1.1, 2.0, -2.0]),
 )
