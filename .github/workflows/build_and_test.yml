@@ -153,13 +153,6 @@ jobs:
       run: |
         uv pip install ".[dev, everest]"
 
-    - name: Make test directory
-      run: |
-        mkdir tmp_tests
-        mv tests tmp_tests/tests
-        mv test-data tmp_tests/test-data
-        mkdir tmp_tests/.git
-
     - name: Test docs
       run: |
         sphinx-build -n -v -E -W ./docs/ert ./tmp/ert_docs
