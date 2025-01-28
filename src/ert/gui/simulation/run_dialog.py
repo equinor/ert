@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import logging
-from collections.abc import Callable
 from pathlib import Path
 from queue import SimpleQueue
 from typing import cast
@@ -167,7 +166,6 @@ class FMStepOverview(QTableView):
 
 class RunDialog(QFrame):
     simulation_done = Signal(bool, str)
-    produce_clipboard_debug_info = Signal()
     progress_update_event = Signal(dict, int)
     _RUN_TIME_POLL_RATE = 1000
 
@@ -229,10 +227,6 @@ class RunDialog(QFrame):
         self.restart_button = QPushButton("Rerun failed")
         self.restart_button.setHidden(True)
 
-        self.copy_debug_info_button = CopyDebugInfoButton(
-            on_click=self.produce_clipboard_debug_info.emit
-        )
-
         size = 20
         spin_movie = QMovie("img:loading.gif")
         spin_movie.setSpeed(60)
@@ -251,7 +245,6 @@ class RunDialog(QFrame):
         button_layout.addStretch()
         button_layout.addWidget(self.disk_space)
         button_layout.addStretch()
-        button_layout.addWidget(self.copy_debug_info_button)
         button_layout.addWidget(self.kill_button)
         button_layout.addWidget(self.restart_button)
 
@@ -527,32 +520,6 @@ class RunDialog(QFrame):
             self.restart_button.setVisible(False)
             self.kill_button.setVisible(True)
             self.run_experiment(restart=True)
-
-
-class CopyDebugInfoButton(QPushButton):
-    _initial_text = "Copy Debug Info"
-    _clicked_text = "Copied..."
-
-    def __init__(self, on_click: Callable[[], None], time_to_alternate: int = 1000):
-        QPushButton.__init__(self, CopyDebugInfoButton._initial_text)
-        self.setToolTip("Copies useful information to clipboard")
-        self.setObjectName("copy_debug_info_button")
-        self.setFixedWidth(140)
-        self.time_to_alternate = time_to_alternate
-
-        def alternate_button_text_on_click_and_call_callback() -> None:
-            self._alternate_button_text()
-            on_click()
-            QTimer.singleShot(self.time_to_alternate, self._alternate_button_text)
-
-        self.clicked.connect(alternate_button_text_on_click_and_call_callback)
-
-    def _alternate_button_text(self) -> None:
-        self.setText(
-            CopyDebugInfoButton._initial_text
-            if self.text() == CopyDebugInfoButton._clicked_text
-            else CopyDebugInfoButton._clicked_text
-        )
 
 
 # Cannot use a non-static method here as
