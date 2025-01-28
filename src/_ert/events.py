@@ -23,6 +23,7 @@ class Id:
     REALIZATION_UNKNOWN_TYPE = Literal["realization.unknown"]
     REALIZATION_WAITING_TYPE = Literal["realization.waiting"]
     REALIZATION_TIMEOUT_TYPE = Literal["realization.timeout"]
+    REALIZATION_RESUBMIT_TYPE = Literal["realization.resubmit"]
     REALIZATION_FAILURE: Final = "realization.failure"
     REALIZATION_PENDING: Final = "realization.pending"
     REALIZATION_RUNNING: Final = "realization.running"
@@ -30,6 +31,7 @@ class Id:
     REALIZATION_UNKNOWN: Final = "realization.unknown"
     REALIZATION_WAITING: Final = "realization.waiting"
     REALIZATION_TIMEOUT: Final = "realization.timeout"
+    REALIZATION_RESUBMIT: Final = "realization.resubmit"
 
     ENSEMBLE_STARTED_TYPE = Literal["ensemble.started"]
     ENSEMBLE_SUCCEEDED_TYPE = Literal["ensemble.succeeded"]
@@ -109,6 +111,10 @@ class RealizationBaseEvent(BaseEvent):
 
 class RealizationPending(RealizationBaseEvent):
     event_type: Id.REALIZATION_PENDING_TYPE = Id.REALIZATION_PENDING
+
+
+class RealizationResubmit(RealizationBaseEvent):
+    event_type: Id.REALIZATION_RESUBMIT_TYPE = Id.REALIZATION_RESUBMIT
 
 
 class RealizationRunning(RealizationBaseEvent):
@@ -196,6 +202,7 @@ RealizationEvent = (
     | RealizationTimeout
     | RealizationUnknown
     | RealizationWaiting
+    | RealizationResubmit
 )
 
 EnsembleEvent = EnsembleStarted | EnsembleSucceeded | EnsembleFailed | EnsembleCancelled
