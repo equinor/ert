@@ -41,10 +41,6 @@ jobs:
         uv pip install ".[dev, types, everest]"
 
     - run: echo ::add-matcher::.github/mypy-matcher.json
-    - name: Run mypy ert
+    - name: Run mypy
       run: |
-        mypy src/ert
-
-    - name: Run mypy everest
-      run: |
-        mypy src/everest
+        mypy src/ert src/everest
