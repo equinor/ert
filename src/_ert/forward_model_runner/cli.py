@@ -1,4 +1,5 @@
 import argparse
+import contextlib
 import json
 import logging
 import os
@@ -139,17 +140,25 @@ def main(args):
 
 
 def _report_all_messages(
-    messages: Generator[Message], reporters: Iterable[reporting.Reporter]
+    messages: Generator[Message], reporters: list[reporting.Reporter]
 ) -> None:
     for msg in messages:
         logger.info(f"Job status: {msg}")
-        for reporter in reporters:
+        i = 0
+        while i < len(reporters):
+            reporter = reporters[i]
             try:
                 reporter.report(msg)
-            except OSError as oserror:
-                print(f"fm_dispatch failed due to {oserror}. Stopping and cleaning up.")
-                _stop_reporters_and_sigkill(reporters)
-
+                i += 1
+            except Exception as err:
+                with contextlib.suppress(Exception):
+                    del reporters[i]
+                    if isinstance(reporter, reporting.Event):
+                        reporter.stop()
+                    logger.exception(
+                        f"Reporter {reporter} failed due to {err}."
+                        " Removing the reporter."
+                    )
         if isinstance(msg, Finish) and not msg.success():
             _stop_reporters_and_sigkill(reporters)
 
