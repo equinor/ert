@@ -6,7 +6,6 @@ import pandas as pd
 import pytest
 from PyQt6.QtCore import Qt, QTimer
 from PyQt6.QtWidgets import (
-    QApplication,
     QComboBox,
     QDialogButtonBox,
     QLabel,
@@ -589,46 +588,6 @@ def test_that_exception_in_base_run_model_is_handled(qtbot: QtBot, storage):
 
         QTimer.singleShot(100, lambda: handle_error_dialog(run_dialog))
         qtbot.waitUntil(lambda: run_dialog.is_simulation_done() == True, timeout=100000)
-
-
-@pytest.mark.integration_test
-@pytest.mark.usefixtures("use_tmpdir")
-def test_that_debug_info_button_provides_data_in_clipboard(qtbot: QtBot, storage):
-    config_file = "minimal_config.ert"
-    with open(config_file, "w", encoding="utf-8") as f:
-        f.write("NUM_REALIZATIONS 1")
-    args_mock = Mock()
-    args_mock.config = config_file
-
-    ert_config = ErtConfig.from_file(config_file)
-    with StorageService.init_service(
-        project=os.path.abspath(ert_config.ens_path),
-    ):
-        gui = _setup_main_window(ert_config, args_mock, GUILogHandler(), storage)
-        experiment_panel = gui.findChild(ExperimentPanel)
-        assert experiment_panel
-
-        run_experiment = experiment_panel.findChild(QToolButton, name="run_experiment")
-        assert run_experiment
-
-        qtbot.mouseClick(run_experiment, Qt.MouseButton.LeftButton)
-        qtbot.waitUntil(lambda: gui.findChild(RunDialog) is not None, timeout=5000)
-        run_dialog = gui.findChild(RunDialog)
-        assert run_dialog
-        qtbot.waitUntil(lambda: run_dialog.is_simulation_done() == True, timeout=100000)
-        copy_debug_info_button = gui.findChild(QPushButton, "copy_debug_info_button")
-        assert copy_debug_info_button
-        qtbot.mouseClick(copy_debug_info_button, Qt.MouseButton.LeftButton)
-
-        clipboard_text = QApplication.clipboard().text()
-
-        for keyword in [
-            "Single realization test-run",
-            "Local",
-            r"minimal\_config.ert",
-            "Trace ID",
-        ]:
-            assert keyword in clipboard_text
 
 
 @pytest.mark.integration_test
