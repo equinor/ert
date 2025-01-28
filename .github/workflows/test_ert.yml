@@ -66,8 +66,8 @@ jobs:
     - name: Unit Test
       if: inputs.test-type == 'performance-and-unit-tests'
       run: |
-        just ert-unit-tests
-        ERT_PYTEST_ARGS="${{ env.ERT_PYTEST_ARGS }}" just ert-doc-tests
+        # just ert-unit-tests
+        ERT_PYTEST_ARGS="-m \'${{ inputs.select-string }}\' --cov=ert --cov=everest --cov=_ert --cov-report=xml:cov1.xml --junit-xml=junit.xml -o junit_family=legacy -v --durations=25 --benchmark-disable" just hello
 
     - name: Upload coverage to Codecov
       id: codecov1

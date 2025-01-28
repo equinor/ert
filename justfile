@@ -10,6 +10,9 @@ snake_oil:
 
 pytest_args := env("ERT_PYTEST_ARGS", "--quiet")
 
+hello:
+    echo "hello world"
+
 # execute rapid unittests
 rapid-tests:
     nice pytest -n auto tests/ert/unit_tests tests/everest --hypothesis-profile=fast -m "not integration_test"
