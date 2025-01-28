@@ -45,12 +45,12 @@ jobs:
     - name: Run Tests Linux
       if: ${{ inputs.test-type == 'test' && runner.os != 'macOS'}}
       run: |
-        pytest tests/everest -n 4 --cov=ert --cov=everest --cov=_ert --cov-report=xml:cov1.xml --junit-xml=junit.xml -o junit_family=legacy --dist loadgroup -sv
+        ERT_PYTEST_ARGS='--cov=ert --cov=everest --cov=_ert --cov-report=xml:cov1.xml --junit-xml=junit.xml -o junit_family=legacy --dist loadgroup -sv' just everest-tests
 
     - name: Run Tests macOS
       if: ${{ inputs.test-type == 'test' && runner.os == 'macOS'}}
       run: |
-        python -m pytest tests/everest -n 4 --cov=ert --cov=everest --cov=_ert --cov-report=xml:cov1.xml --junit-xml=junit.xml -o junit_family=legacy -m "not skip_mac_ci" --dist loadgroup -sv
+        ERT_PYTEST_ARGS='--cov=ert --cov=everest --cov=_ert --cov-report=xml:cov1.xml --junit-xml=junit.xml -o junit_family=legacy -m "not skip_mac_ci" --dist loadgroup -sv' just everest-tests
 
     - name: Build Documentation
       if: inputs.test-type == 'doc'
@@ -62,7 +62,7 @@ jobs:
       if: inputs.test-type == 'everest-models-test'
       run: |
         uv pip install git+https://github.com/equinor/everest-models.git
-        python -m pytest tests/everest -n 4 --cov=ert --cov=everest --cov=_ert --cov-report=xml:cov1.xml --junit-xml=junit.xml -o junit_family=legacy -m everest_models_test --dist loadgroup
+        ERT_PYTEST_ARGS='--cov=ert --cov=everest --cov=_ert --cov-report=xml:cov1.xml --junit-xml=junit.xml -o junit_family=legacy -m everest_models_test --dist loadgroup' just everest-tests
 
     - name: Upload coverage to Codecov
       if: inputs.test-type != 'everest-docs-entry-test' && inputs.test-type != 'doc'

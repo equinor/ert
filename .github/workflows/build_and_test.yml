@@ -155,7 +155,7 @@ jobs:
 
     - name: Test docs
       run: |
-        sphinx-build -n -v -E -W ./docs/ert ./ert_docs
+        just build-ert-docs
 
   publish:
     name: Publish to PyPI
