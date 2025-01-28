@@ -11,17 +11,26 @@ import sys
 from subprocess import Popen
 from textwrap import dedent
 from threading import Lock
-from unittest.mock import mock_open, patch
+from unittest.mock import MagicMock, mock_open, patch
 
 import pandas as pd
 import psutil
 import pytest
 
 import _ert.forward_model_runner.cli
-from _ert.forward_model_runner.cli import JOBS_FILE, _setup_reporters, main
+from _ert.forward_model_runner.cli import (
+    JOBS_FILE,
+    _report_all_messages,
+    _setup_reporters,
+    main,
+)
 from _ert.forward_model_runner.forward_model_step import killed_by_oom
-from _ert.forward_model_runner.reporting import Event, Interactive
-from _ert.forward_model_runner.reporting.message import Finish, Init
+from _ert.forward_model_runner.reporting import Event, Interactive, Reporter
+from _ert.forward_model_runner.reporting.message import (
+    Finish,
+    Init,
+    Message,
+)
 from _ert.threading import ErtThread
 from tests.ert.utils import MockZMQServer, wait_until
 
@@ -384,3 +393,25 @@ def test_killed_by_oom(tmp_path, monkeypatch):
     assert killed_by_oom({child_pid})
     assert not killed_by_oom({parent_pid})
     assert not killed_by_oom({child_pid + 1})
+
+
+def test_report_all_messages():
+    message = MagicMock(spec=Message)
+    reporter = MagicMock(spec=Reporter)
+
+    _report_all_messages(iter([message]), [reporter])
+    reporter.report.assert_called_once_with(message)
+
+
+def test_report_all_messages_drops_reporter_on_error():
+    message1 = MagicMock(spec=Message)
+    message2 = MagicMock(spec=Message)
+    reporter = MagicMock(spec=Reporter)
+
+    def raises(*args, **kwargs):
+        raise OSError("No space left on device")
+
+    reporter.report.side_effect = raises
+
+    _report_all_messages(iter([message1, message2]), [reporter])
+    reporter.report.assert_called_once_with(message1)
