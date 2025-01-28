@@ -2,6 +2,7 @@
 import copy
 import logging
 import os
+import re
 from collections import defaultdict
 from collections.abc import Sequence
 from dataclasses import field
@@ -69,6 +70,8 @@ from .workflow import Workflow
 from .workflow_job import ErtScriptLoadFailure, WorkflowJob
 
 logger = logging.getLogger(__name__)
+
+EMPTY_LINES = re.compile(r"\n[\s\n]*\n")
 
 
 def site_config_location() -> str | None:
@@ -609,8 +612,8 @@ class ErtConfig:
     @classmethod
     def _log_custom_forward_model_steps(cls, user_config: ConfigDict) -> None:
         for fm_step, fm_step_filename in user_config.get(ConfigKeys.INSTALL_JOB, []):
-            fm_configuration = (
-                Path(fm_step_filename).read_text(encoding="utf-8").strip()
+            fm_configuration = EMPTY_LINES.sub(
+                "\n", (Path(fm_step_filename).read_text(encoding="utf-8").strip())
             )
             logger.info(
                 f"Custom forward_model_step {fm_step} installed as: {fm_configuration}"
