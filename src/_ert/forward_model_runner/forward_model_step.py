@@ -91,7 +91,7 @@ class ForwardModelStep:
         self.std_err = job_data.get("stderr")
         self.std_out = job_data.get("stdout")
 
-    def run(self) -> Generator[Start | Exited | Running | None]:
+    def run(self) -> Generator[Start | Exited | Running]:
         try:
             yield from self._run()
         except Exception as e:
@@ -151,7 +151,7 @@ class ForwardModelStep:
             combined_environment = {**os.environ, **environment}
         return combined_environment
 
-    def _run(self) -> Generator[Start | Exited | Running | None]:
+    def _run(self) -> Generator[Start | Exited | Running]:
         start_message = self.create_start_message_and_check_job_files()
 
         yield start_message
