@@ -123,9 +123,10 @@ class EverestConfig(BaseModel):  # type: ignore
          Controls should have unique names each control defines
             a group of control variables
         """,
+        min_length=1,
     )
     objective_functions: list[ObjectiveFunctionConfig] = Field(
-        description="List of objective function specifications",
+        description="List of objective function specifications", min_length=1
     )
     optimization: OptimizationConfig | None = Field(
         default=OptimizationConfig(),
@@ -710,8 +711,17 @@ and environment variables are exposed in the form 'os.NAME', for example:
         without having to provide empty defaults.
         """
         defaults = {
-            "controls": [],
-            "objective_functions": [],
+            "controls": [
+                {
+                    "name": "default_group",
+                    "type": "generic_control",
+                    "initial_guess": 0.5,
+                    "variables": [
+                        {"name": "default_name", "min": 0, "max": 1},
+                    ],
+                }
+            ],
+            "objective_functions": [{"name": "default"}],
             "config_path": ".",
             "model": {"realizations": [0]},
         }
