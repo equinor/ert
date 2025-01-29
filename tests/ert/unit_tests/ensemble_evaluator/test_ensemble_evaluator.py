@@ -98,6 +98,7 @@ async def test_evaluator_handles_dispatchers_connected(
     assert evaluator._dispatchers_empty.is_set()
 
 
+@pytest.mark.integration_test
 async def test_evaluator_raises_on_start_with_address_in_use(make_ee_config):
     ee_config = make_ee_config(use_ipc_protocol=False)
     ctx = zmq.asyncio.Context()
