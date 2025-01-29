@@ -313,7 +313,8 @@ class EnsembleEvaluator:
         except zmq.error.ZMQError as e:
             logger.error(f"ZMQ error encountered {e} during evaluator initialization")
             self._server_started.set_exception(e)
-            raise
+            zmq_context.destroy(linger=0)
+            return
         try:
             await self._server_done.wait()
             try:
@@ -338,7 +339,7 @@ class EnsembleEvaluator:
         finally:
             try:
                 self._router_socket.close()
-                zmq_context.destroy()
+                zmq_context.destroy(linger=0)
             except Exception as exc:
                 logger.warning(f"Failed to clean up zmq context {exc}")
             logger.info("ZMQ cleanup done!")
