@@ -173,11 +173,11 @@ def test_everest2ropt_samplers():
 
     assert len(ropt_config.samplers) == 5
     assert ropt_config.gradient.samplers.tolist() == [0, 0, 1, 2, 3, 4]
-    assert ropt_config.samplers[0].method == "scipy/norm"
-    assert ropt_config.samplers[1].method == "scipy/norm"
-    assert ropt_config.samplers[2].method == "scipy/uniform"
-    assert ropt_config.samplers[3].method == "scipy/norm"
-    assert ropt_config.samplers[4].method == "scipy/uniform"
+    assert ropt_config.samplers[0].method == "norm"
+    assert ropt_config.samplers[1].method == "norm"
+    assert ropt_config.samplers[2].method == "uniform"
+    assert ropt_config.samplers[3].method == "norm"
+    assert ropt_config.samplers[4].method == "uniform"
     for idx in range(5):
         if idx == 1:
             assert ropt_config.samplers[idx].shared
