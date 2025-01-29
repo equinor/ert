@@ -197,25 +197,3 @@ class AnalysisConfig:
     @property
     def log_path(self) -> Path:
         return Path(realpath(self.update_log_path))
-
-    def __repr__(self) -> str:
-        return (
-            "AnalysisConfig("
-            f"min_realization={self.minimum_required_realizations}, "
-            f"update_log_path={self.update_log_path}, "
-        )
-
-    def __eq__(self, other: object) -> bool:
-        if not isinstance(other, AnalysisConfig):
-            return False
-
-        if self.log_path != other.log_path:
-            return False
-
-        if self.observation_settings != other.observation_settings:
-            return False
-
-        if self.es_module != other.es_module:
-            return False
-
-        return self.minimum_required_realizations == other.minimum_required_realizations
