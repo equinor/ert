@@ -108,7 +108,8 @@ async def test_evaluator_raises_on_start_with_address_in_use(make_ee_config):
         with pytest.raises(zmq.error.ZMQError, match="Address already in use"):
             await evaluator.run_and_get_successful_realizations()
     finally:
-        ctx.destroy()
+        socket.close()
+        ctx.destroy(linger=0)
 
 
 async def test_no_config_raises_valueerror_when_running():
