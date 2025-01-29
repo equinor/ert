@@ -11,8 +11,8 @@ from ert.config import (
     ConfigWarning,
     ErtConfig,
     ModelConfig,
+    UpdateSettings,
 )
-from ert.config.analysis_config import UpdateSettings
 from ert.mode_definitions import (
     ENSEMBLE_SMOOTHER_MODE,
     ES_MDA_MODE,

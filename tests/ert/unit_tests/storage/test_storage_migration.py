@@ -10,8 +10,7 @@ import pytest
 from packaging import version
 
 from ert.analysis import ErtAnalysisError, smoother_update
-from ert.config import ErtConfig, ESSettings
-from ert.config.analysis_config import UpdateSettings
+from ert.config import ErtConfig, ESSettings, UpdateSettings
 from ert.storage import open_storage
 from ert.storage.local_storage import (
     _LOCAL_STORAGE_VERSION,

@@ -19,9 +19,7 @@ from ert.analysis._es_update import (
     _save_param_ensemble_array_to_disk,
 )
 from ert.analysis.event import AnalysisCompleteEvent, AnalysisErrorEvent
-from ert.config import Field, GenDataConfig, GenKwConfig
-from ert.config.analysis_config import UpdateSettings
-from ert.config.analysis_module import ESSettings
+from ert.config import ESSettings, Field, GenDataConfig, GenKwConfig, UpdateSettings
 from ert.config.gen_kw_config import TransformFunctionDefinition
 from ert.field_utils import Shape
 from ert.storage import open_storage

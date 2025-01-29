@@ -19,10 +19,8 @@ import psutil
 import scipy
 from iterative_ensemble_smoother.experimental import AdaptiveESMDA
 
-from ert.config import GenKwConfig
+from ert.config import ESSettings, GenKwConfig, ObservationGroups, UpdateSettings
 
-from ..config.analysis_config import ObservationGroups, UpdateSettings
-from ..config.analysis_module import ESSettings
 from . import misfit_preprocessor
 from .event import (
     AnalysisCompleteEvent,

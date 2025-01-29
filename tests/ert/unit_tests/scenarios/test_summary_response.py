@@ -11,8 +11,7 @@ from resdata.summary import Summary
 
 from ert import LibresFacade
 from ert.analysis import ErtAnalysisError, smoother_update
-from ert.config import ErtConfig, ESSettings
-from ert.config.analysis_config import UpdateSettings
+from ert.config import ErtConfig, ESSettings, UpdateSettings
 from ert.data import MeasuredData
 from ert.enkf_main import sample_prior
 

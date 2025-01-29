@@ -29,7 +29,7 @@ from ert.analysis.event import (
     AnalysisErrorEvent,
     AnalysisEvent,
 )
-from ert.config import HookRuntime, QueueSystem
+from ert.config import HookRuntime, QueueSystem, UpdateSettings
 from ert.config.analysis_module import ESSettings
 from ert.config.forward_model_step import ForwardModelStep
 from ert.config.model_config import ModelConfig
@@ -58,7 +58,6 @@ from ert.substitutions import Substitutions
 from ert.trace import tracer
 from ert.workflow_runner import WorkflowRunner
 
-from ..config.analysis_config import UpdateSettings
 from ..run_arg import RunArg
 from .event import (
     AnalysisStatusEvent,
