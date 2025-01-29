@@ -6,8 +6,7 @@ from typing import TYPE_CHECKING
 
 import numpy as np
 
-from ert.config import ConfigValidationError, ConfigWarning, ErtConfig
-from ert.config.analysis_config import UpdateSettings
+from ert.config import ConfigValidationError, ConfigWarning, ErtConfig, UpdateSettings
 from ert.mode_definitions import (
     ENSEMBLE_EXPERIMENT_MODE,
     ENSEMBLE_SMOOTHER_MODE,

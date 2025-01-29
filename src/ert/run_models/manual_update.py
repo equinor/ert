@@ -6,12 +6,10 @@ from queue import SimpleQueue
 from typing import TYPE_CHECKING
 from uuid import UUID
 
-from ert.config import ErtConfig
+from ert.config import ErtConfig, ESSettings, UpdateSettings
 from ert.ensemble_evaluator import EvaluatorServerConfig
 from ert.storage import Storage
 
-from ..config.analysis_config import UpdateSettings
-from ..config.analysis_module import ESSettings
 from .base_run_model import ErtRunError, StatusEvents, UpdateRunModel
 
 if TYPE_CHECKING:

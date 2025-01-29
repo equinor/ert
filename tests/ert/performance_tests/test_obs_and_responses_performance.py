@@ -8,8 +8,13 @@ import polars
 import pytest
 
 from ert.analysis import smoother_update
-from ert.config import ESSettings, GenDataConfig, GenKwConfig, SummaryConfig
-from ert.config.analysis_config import UpdateSettings
+from ert.config import (
+    ESSettings,
+    GenDataConfig,
+    GenKwConfig,
+    SummaryConfig,
+    UpdateSettings,
+)
 from ert.config.gen_kw_config import TransformFunctionDefinition
 from ert.enkf_main import sample_prior
 from ert.storage import open_storage

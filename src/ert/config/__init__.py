@@ -1,4 +1,4 @@
-from .analysis_config import AnalysisConfig
+from .analysis_config import AnalysisConfig, ObservationGroups, UpdateSettings
 from .analysis_module import AnalysisModule, ESSettings
 from .capture_validation import capture_validation
 from .design_matrix import DesignMatrix
@@ -69,6 +69,7 @@ __all__ = [
     "HookRuntime",
     "InvalidResponseFile",
     "ModelConfig",
+    "ObservationGroups",
     "ObservationType",
     "ParameterConfig",
     "PriorDict",
@@ -79,6 +80,7 @@ __all__ = [
     "SummaryObservation",
     "SurfaceConfig",
     "TransformFunction",
+    "UpdateSettings",
     "WarningInfo",
     "Workflow",
     "WorkflowJob",

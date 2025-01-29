@@ -8,9 +8,7 @@ import xtgeo
 from scipy.ndimage import gaussian_filter
 
 from ert.analysis import smoother_update
-from ert.config import Field, GenDataConfig
-from ert.config.analysis_config import UpdateSettings
-from ert.config.analysis_module import ESSettings
+from ert.config import ESSettings, Field, GenDataConfig, UpdateSettings
 from ert.field_utils import Shape
 
 

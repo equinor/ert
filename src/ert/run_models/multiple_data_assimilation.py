@@ -8,14 +8,12 @@ from uuid import UUID
 
 import numpy as np
 
-from ert.config import ErtConfig, HookRuntime
+from ert.config import ErtConfig, ESSettings, HookRuntime, UpdateSettings
 from ert.enkf_main import sample_prior
 from ert.ensemble_evaluator import EvaluatorServerConfig
 from ert.storage import Ensemble, Storage
 from ert.trace import tracer
 
-from ..config.analysis_config import UpdateSettings
-from ..config.analysis_module import ESSettings
 from ..run_arg import create_run_arguments
 from .base_run_model import ErtRunError, StatusEvents, UpdateRunModel
 
