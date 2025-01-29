@@ -13,7 +13,6 @@ wells:
 controls:
   -
     name: well_order
-    type: well_control
     min: 0
     max: 1
     perturbation_magnitude: 0.05
@@ -27,7 +26,6 @@ controls:
 
   -
     name: well_number
-    type: generic_control
     min: 0.0
     max: 1.0
     perturbation_magnitude: 0.1

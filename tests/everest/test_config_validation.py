@@ -185,7 +185,6 @@ def test_that_duplicate_control_names_raise_error():
             controls=[
                 {
                     "name": "group_0",
-                    "type": "well_control",
                     "min": 0,
                     "max": 0.1,
                     "variables": [
@@ -194,7 +193,6 @@ def test_that_duplicate_control_names_raise_error():
                 },
                 {
                     "name": "group_0",
-                    "type": "well_control",
                     "min": 0,
                     "max": 0.1,
                     "variables": [
@@ -213,7 +211,6 @@ def test_that_dot_not_in_control_names():
             controls=[
                 {
                     "name": "group_0.2",
-                    "type": "well_control",
                     "min": 0,
                     "max": 0.1,
                     "variables": [
@@ -236,7 +233,6 @@ def test_that_scaled_range_is_valid_range():
             controls=[
                 {
                     "name": "group_0",
-                    "type": "well_control",
                     "min": 0,
                     "max": 0.1,
                     "scaled_range": [2, 1],
@@ -294,9 +290,7 @@ def test_that_invalid_control_initial_guess_outside_bounds(
 ):
     with pytest.raises(ValueError) as e:
         EverestConfig.with_defaults(
-            controls=[
-                {"name": "group_0", "type": "well_control", "variables": variables}
-            ]
+            controls=[{"name": "group_0", "variables": variables}]
         )
 
     assert (
@@ -345,7 +339,6 @@ def test_that_invalid_control_unique_entry(variables, unique_key):
             controls=[
                 {
                     "name": "group_0",
-                    "type": "well_control",
                     "max": 0,
                     "min": 0.1,
                     "variables": variables,
@@ -365,7 +358,6 @@ def test_that_invalid_control_undefined_fields():
             controls=[
                 {
                     "name": "group_0",
-                    "type": "well_control",
                     "variables": [
                         {"name": "w00"},
                     ],
@@ -386,7 +378,6 @@ def test_that_control_variables_index_is_defined_for_all_variables():
             controls=[
                 {
                     "name": "group_0",
-                    "type": "well_control",
                     "min": 0,
                     "max": 0.1,
                     "variables": [
@@ -998,7 +989,6 @@ def test_load_file_with_errors(copy_math_func_test_data_to_tmp, capsys):
         content = file.read()
 
     with open("config_minimal_error.yml", "w", encoding="utf-8") as file:
-        content = content.replace("generic_control", "yolo_control")
         content = content.replace("max: 1.0", "max: not_a number")
         pos = content.find("name: distance")
         content = content[: pos + 14] + "\n    invalid: invalid" + content[pos + 14 :]
@@ -1009,19 +999,13 @@ def test_load_file_with_errors(copy_math_func_test_data_to_tmp, capsys):
         EverestConfig.load_file_with_argparser("config_minimal_error.yml", parser)
 
     captured = capsys.readouterr()
+    assert "Found 2 validation error" in captured.err
 
-    assert "Found 3 validation error" in captured.err
-    assert "line: 3, column: 11" in captured.err
-    assert (
-        "Input should be 'well_control' or 'generic_control' (type=literal_error)"
-        in captured.err
-    )
-
-    assert "line: 5, column: 10" in captured.err
+    assert "line: 4, column: 10" in captured.err
     assert (
         "Input should be a valid number, unable to parse string as a number (type=float_parsing)"
         in captured.err
     )
 
-    assert "line: 16, column: 5" in captured.err
+    assert "line: 15, column: 5" in captured.err
     assert "Extra inputs are not permitted (type=extra_forbidden)" in captured.err

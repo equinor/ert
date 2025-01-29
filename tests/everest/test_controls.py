@@ -37,7 +37,6 @@ def test_controls_initialization():
     config.controls.append(
         ControlConfig(
             name=exp_grp_name,
-            type="well_control",
             variables=[
                 ControlVariableConfig(
                     name=a_ctrl_name,
@@ -84,7 +83,6 @@ def _perturb_control_zero(
         if revised_control_zero is None:
             revised_control_zero = ControlConfig(
                 name=control_zero.name,
-                type=control_zero.type,
                 min=gmin,
                 max=gmax,
                 initial_guess=ginit,
@@ -232,7 +230,7 @@ def test_control_none_well_variable_name():
     config.controls[0].variables[0].name = illegal_name
     with pytest.raises(
         ValidationError,
-        match="Variable name does not match any well name",
+        match="Variable names should either all or none match well names",
     ):
         EverestConfig.model_validate(config.to_dict())
 

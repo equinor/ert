@@ -42,16 +42,9 @@ class ControlConfig(BaseModel):
     name: Annotated[str, AfterValidator(no_dots_in_string)] = Field(
         description="Control name"
     )
-    type: Literal["well_control", "generic_control"] = Field(
-        description="""
-Only two allowed control types are accepted
-
-* **well_control**: Standard built-in Everest control type designed for field\
- optimization
-
-* **generic_control**: Enables the user to define controls types to be employed for\
- customized optimization jobs.
-"""
+    type: str | None = Field(
+        default=None,
+        description="""Type has been deprecated and can be removed from the config""",
     )
     variables: Annotated[
         ControlVariable,

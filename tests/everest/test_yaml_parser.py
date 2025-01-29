@@ -34,7 +34,6 @@ def test_read_file(tmp_path, monkeypatch):
     controls:
       -
         name: my_control
-        type: well_control
         min: 0
         max: 0.1
         variables:

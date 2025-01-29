@@ -1,7 +1,6 @@
 controls:
   -
     name: not_really_important_for_this_test
-    type: generic_control
     min: -1.0
     max: 1.0
     initial_guess: 0

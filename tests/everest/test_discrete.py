@@ -24,7 +24,6 @@ def test_discrete_optimizer(
         "controls": [
             {
                 "name": "point",
-                "type": "generic_control",
                 "min": 0,
                 "max": 10,
                 "control_type": "integer",

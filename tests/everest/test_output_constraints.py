@@ -54,7 +54,6 @@ def test_wrong_output_constr_def(copy_mocked_test_data_to_tmp):
             "controls": [
                 {
                     "name": "well_order",
-                    "type": "well_control",
                     "min": 0,
                     "max": 1,
                     "variables": [{"name": "w07", "initial_guess": 0.0633}],
@@ -84,7 +83,6 @@ def test_wrong_output_constr_def(copy_mocked_test_data_to_tmp):
             "controls": [
                 {
                     "name": "well_order",
-                    "type": "well_control",
                     "min": 0,
                     "max": 1,
                     "variables": [{"name": "w07", "initial_guess": 0.0633}],
@@ -110,7 +108,6 @@ def test_wrong_output_constr_def(copy_mocked_test_data_to_tmp):
             "controls": [
                 {
                     "name": "well_order",
-                    "type": "well_control",
                     "min": 0,
                     "max": 1,
                     "variables": [{"name": "w07", "initial_guess": 0.0633}],
@@ -139,7 +136,6 @@ def test_wrong_output_constr_def(copy_mocked_test_data_to_tmp):
         "controls": [
             {
                 "name": "well_order",
-                "type": "well_control",
                 "min": 0,
                 "max": 1,
                 "variables": [{"name": "w07", "initial_guess": 0.0633}],
@@ -168,7 +164,6 @@ def test_wrong_output_constr_def(copy_mocked_test_data_to_tmp):
             "controls": [
                 {
                     "name": "well_order",
-                    "type": "well_control",
                     "min": 0,
                     "max": 1,
                     "variables": [{"name": "w07", "initial_guess": 0.0633}],
@@ -198,7 +193,6 @@ def test_upper_bound_output_constraint_def(copy_mocked_test_data_to_tmp):
             "controls": [
                 {
                     "name": "group_0",
-                    "type": "well_control",
                     "min": 0,
                     "max": 1,
                     "variables": [{"name": "w07", "initial_guess": 0.0633}],

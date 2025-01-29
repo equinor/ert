@@ -20,7 +20,6 @@ wells:
 controls:
   -
     name: group
-    type: well_control
     min: 0
     max: 0.1
     variables:

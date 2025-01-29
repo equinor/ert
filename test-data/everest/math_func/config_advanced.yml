@@ -6,7 +6,6 @@ controls:
     min: -1.0
     initial_guess: 0.25
     perturbation_magnitude: 0.005
-    type: generic_control
     variables:
       - name: x
         index: 0

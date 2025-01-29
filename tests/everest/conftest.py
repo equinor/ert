@@ -53,7 +53,6 @@ def copy_testdata_tmpdir(
 def control_data_no_variables() -> dict[str, str | float]:
     return {
         "name": "group_0",
-        "type": "well_control",
         "min": 0.0,
         "max": 0.1,
         "perturbation_magnitude": 0.005,
@@ -213,7 +212,6 @@ def min_config():
     controls:
       -
         name: my_control
-        type: well_control
         min: 0
         max: 0.1
         variables:

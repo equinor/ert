@@ -6,7 +6,6 @@ wells:
 controls:
   -
     name: group
-    type: well_control
     min: 0
     max: 0.1
     sampler:
@@ -21,7 +20,6 @@ controls:
         initial_guess: 0.0624
   -
     name: group_1
-    type: well_control
     min: 0
     max: 0.1
     variables:
@@ -40,7 +38,6 @@ controls:
           method: uniform
   -
     name: group_2
-    type: well_control
     min: 0
     max: 0.1
     sampler:

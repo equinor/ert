@@ -452,15 +452,18 @@ and environment variables are exposed in the form 'os.NAME', for example:
         wells = self.wells
         if controls is None or wells is None:
             return self
-        well_names = [w.name for w in wells]
+        well_names = {w.name for w in wells}
         if not well_names:
             return self
         for c in controls:
-            if c.type == "generic_control":
-                continue
-            for v in c.variables:
-                if v.name not in well_names:
-                    raise ValueError("Variable name does not match any well name")
+            variable_names = {v.name for v in c.variables}
+            if len(variable_names.intersection(well_names)) not in {
+                0,
+                len(variable_names),
+            }:
+                raise ValueError(
+                    "Variable names should either all or none match well names"
+                )
 
         return self
 
