@@ -1,3 +1,4 @@
+import os.path
 from textwrap import dedent
 
 import hypothesis.strategies as st
@@ -47,7 +48,7 @@ def test_analysis_config_from_file_is_same_as_from_dict(monkeypatch, tmp_path):
             ],
             ConfigKeys.DESIGN_MATRIX: [
                 [
-                    "my_design_matrix.xlsx",
+                    os.path.abspath("my_design_matrix.xlsx"),
                     "DESIGN_SHEET:my_sheet",
                     "DEFAULT_SHEET:my_default_sheet",
                 ]
