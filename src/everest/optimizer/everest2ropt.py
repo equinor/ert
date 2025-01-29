@@ -67,7 +67,7 @@ def _parse_controls(ever_controls: list[ControlConfig], ropt_config):
     if any(item >= 0 for item in controls.sampler_indices):
         ropt_config["samplers"] = [
             {
-                "method": f"{sampler.backend}/{sampler.method}",
+                "method": sampler.method,
                 "options": {} if sampler.options is None else sampler.options,
                 "shared": False if sampler.shared is None else sampler.shared,
             }
