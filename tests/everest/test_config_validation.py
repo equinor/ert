@@ -544,7 +544,7 @@ def test_that_missing_optimization_algorithm_errors():
     with pytest.raises(ValueError) as e:
         EverestConfig.with_defaults(**{"optimization": {"algorithm": "ddlygldt"}})
 
-    assert has_error(e.value, match="Optimizer algorithm 'dakota/ddlygldt' not found")
+    assert has_error(e.value, match="Optimizer algorithm 'ddlygldt' not found")
 
 
 @pytest.mark.parametrize(

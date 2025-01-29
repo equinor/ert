@@ -1,14 +1,16 @@
+import logging
 from typing import Any
 
 from pydantic import BaseModel, Field, model_validator
 
 from everest.config.cvar_config import CVaRConfig
 from everest.optimizer.utils import get_ropt_plugin_manager
+from everest.strings import EVEREST
 
 
 class OptimizationConfig(BaseModel, extra="forbid"):  # type: ignore
     algorithm: str | None = Field(
-        default="default",
+        default="optpp_q_newton",
         description="""Algorithm used by Everest.  Defaults to
 optpp_q_newton, a quasi-Newton algorithm in Dakota's OPT PP library.
 """,
@@ -33,8 +35,8 @@ iteration.
 (From the Dakota Manual.)""",
     )
     backend: str | None = Field(
-        default="dakota",
-        description="""The optimization backend used.  Defaults to "dakota".
+        default=None,
+        description="""(deprecated) The optimization backend used.".
 
 Currently, backends are included to use Dakota or SciPy ("dakota" and "scipy").
 The Dakota backend is the default, and can be assumed to be installed. The SciPy
@@ -199,9 +201,17 @@ The default is to use parallel evaluation if supported.
     @model_validator(mode="after")
     def validate_backend_and_algorithm(self):  # pylint: disable=E0213
         method = "default" if self.algorithm is None else self.algorithm
-        backend = "dakota" if self.backend is None else self.backend
-        if not get_ropt_plugin_manager().is_supported(
-            "optimizer", f"{backend}/{method}"
-        ):
-            raise ValueError(f"Optimizer algorithm '{backend}/{method}' not found")
+        if not get_ropt_plugin_manager().is_supported("optimizer", method):
+            raise ValueError(f"Optimizer algorithm '{method}' not found")
+
+        if self.backend is not None:
+            message = (
+                "optimization.backend is deprecated. "
+                "The correct backend will be inferred by the algorithm. "
+                "If several backends have an algorithm named A and you want to pick "
+                "a specific backend B, put B/A in optimization.algorithm."
+            )
+            print(message)
+            logging.getLogger(EVEREST).warning(message)
+
         return self

@@ -132,7 +132,7 @@ def test_everest2ropt_controls_optimizer_setting():
     config = EverestConfig.load_file(config)
     ropt_config = everest2ropt(config)
     assert len(ropt_config.realizations.names) == 15
-    assert ropt_config.optimizer.method == "dakota/conmin_mfd"
+    assert ropt_config.optimizer.method == "conmin_mfd"
     assert ropt_config.gradient.number_of_perturbations == 20
     assert ropt_config.realizations.names == tuple(range(15))
 
@@ -244,4 +244,4 @@ def test_everest2ropt_no_algorithm_name(copy_test_data_to_tmp):
 
     config.optimization.algorithm = None
     ropt_config = everest2ropt(config)
-    assert ropt_config.optimizer.method == "dakota/default"
+    assert ropt_config.optimizer.method == "optpp_q_newton"
