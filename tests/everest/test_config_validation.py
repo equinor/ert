@@ -1025,3 +1025,54 @@ def test_load_file_with_errors(copy_math_func_test_data_to_tmp, capsys):
 
     assert "line: 16, column: 5" in captured.err
     assert "Extra inputs are not permitted (type=extra_forbidden)" in captured.err
+
+
+@pytest.mark.parametrize(
+    ["controls", "objectives", "error_msg"],
+    [
+        (
+            [],
+            [],
+            [
+                "controls\n  List should have at least 1 item after validation, not 0",
+                "objective_functions\n  List should have at least 1 item after validation, not 0",
+            ],
+        ),
+        (
+            [],
+            [{"name": "npv"}],
+            [
+                "controls\n  List should have at least 1 item after validation, not 0",
+            ],
+        ),
+        (
+            [
+                {
+                    "name": "test",
+                    "type": "generic_control",
+                    "initial_guess": 0.5,
+                    "variables": [
+                        {"name": "test", "min": 0, "max": 1},
+                    ],
+                }
+            ],
+            [{"name": "npv"}],
+            [],
+        ),
+    ],
+)
+def test_warning_empty_controls_and_objectives(controls, objectives, error_msg):
+    if error_msg:
+        with pytest.raises(ValueError) as e:
+            EverestConfig.with_defaults(
+                objective_functions=objectives,
+                controls=controls,
+            )
+
+        for msg in error_msg:
+            assert msg in str(e.value)
+    else:
+        EverestConfig.with_defaults(
+            objective_functions=objectives,
+            controls=controls,
+        )
