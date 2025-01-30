@@ -308,7 +308,7 @@ class EnkfObs:
         try:
             if summary_dict.date is not None and not time_map:
                 # We special case when the user has provided date in SUMMARY_OBS
-                # and not REFCASE or time_map so that we dont change current behavior.
+                # and not REFCASE or time_map so that we don't change current behavior.
                 try:
                     date = datetime.fromisoformat(summary_dict.date)
                 except ValueError as err:

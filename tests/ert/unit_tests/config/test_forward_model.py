@@ -796,7 +796,7 @@ def test_that_plugin_forward_model_raises_pre_realization_validation_error(tmp_p
             self, fm_step_json: ForwardModelStepJSON
         ) -> ForwardModelStepJSON:
             raise ForwardModelStepValidationError(
-                "This is a bad forward model step, dont use it"
+                "This is a bad forward model step, don't use it"
             )
 
     class FM2(ForwardModelStepPlugin):
@@ -825,7 +825,7 @@ def test_that_plugin_forward_model_raises_pre_realization_validation_error(tmp_p
 
     with pytest.raises(
         ConfigValidationError,
-        match=r".*This is a bad forward model step, dont use it.*",
+        match=r".*This is a bad forward model step, don't use it.*",
     ):
         create_forward_model_json(
             context=config.substitutions,
