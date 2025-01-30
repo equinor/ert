@@ -157,7 +157,7 @@ def valid_num_iterations(user_input: str) -> str:
     return user_input
 
 
-def attemp_int_conversion(val: str) -> int:
+def _attempt_int_conversion(val: str) -> int:
     try:
         return int(val)
     except ValueError as e:
@@ -165,7 +165,7 @@ def attemp_int_conversion(val: str) -> int:
 
 
 def convert_port(val: str) -> int:
-    int_val = attemp_int_conversion(val)
+    int_val = _attempt_int_conversion(val)
     if not 0 <= int_val <= 65535:
         raise ArgumentTypeError(f"{int_val} is not in valid port range 0-65535")
     return int_val
