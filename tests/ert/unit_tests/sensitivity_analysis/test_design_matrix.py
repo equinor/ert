@@ -238,8 +238,24 @@ def test_reading_design_matrix_validate_reals(tmp_path, real_column, error_msg):
         ),
         pytest.param(
             ["a", "b  ", ""],
-            r"Column headers not present in column \[2\]",
+            r"Empty parameter name found in column 2",
             id="missing entries",
+        ),
+        pytest.param(
+            ["a", "b", "parameter name with spaces"],
+            "Multiple words in parameter name found in column 2.",
+            id="multiple words in parameter name",
+        ),
+        pytest.param(
+            ["a", "b", " "],
+            "Empty parameter name found in column 2",
+            id="dataframe loads parameter name as whitespace",
+        ),
+        pytest.param(["a", "b", "3"], "Numeric parameter name found in column 2"),
+        pytest.param(
+            ["a", "b c d e", 33],
+            r"Multiple words in parameter name found in column 1 \(b c d e\)\.\nNumeric parameter name found in column 2",
+            id="multiple errors",
         ),
     ],
 )
