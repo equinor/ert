@@ -9,9 +9,8 @@ on:
  pull_request:
 
 env:
-  ERT_SHOW_BACKTRACE: 1
-  ECL_SKIP_SIGNAL: 1
-  UV_SYSTEM_PYTHON: 1
+  ERT_SHOW_BACKTRACE: 1   # resdata print on failure https://github.com/equinor/resdata/blob/5fdf0280726a2670161ed536705dc9156aea39be/lib/util/util_abort.cpp#L96
+  UV_SYSTEM_PYTHON: 1     # https://docs.astral.sh/uv/configuration/environment/#uv_system_python
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
