@@ -16,7 +16,6 @@ def test_get_scaling_factor():
 
 
 def test_that_get_nr_primary_components_is_according_to_theory():
-    # pylint: disable=too-many-locals,invalid-name
     """Based on theory in Multivariate Statistical Methods 4th Edition
     by Donald F. Morrison.
     See section 6.5 - Some Patterned Matrices and Their Principal Components.
