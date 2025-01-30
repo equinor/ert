@@ -19,15 +19,15 @@ Iterative Ensemble Smoother (IES).
 ## Installation
 
 ```sh
-$ pip install ert
-$ ert --help
+pip install ert
+ert --help
 ```
 
 or, for the latest development version:
 
 ```sh
-$ pip install git+https://github.com/equinor/ert.git@main
-$ ert --help
+pip install git+https://github.com/equinor/ert.git@main
+ert --help
 ```
 
 For examples and help with configuration, see the [ert Documentation](https://ert.readthedocs.io/en/latest/getting_started/configuration/poly_new/guide.html#configuration-guide).
@@ -41,7 +41,7 @@ This will enable robust decisions about drilling schedule and well
 placement, in order to achieve results of significant practical value.
 
 ```sh
-    pip install ert[everest]
+pip install ert[everest]
 ```
 
 ## Developing
@@ -128,15 +128,15 @@ There are a set of style requirements, which are gathered in the `pre-commit`
 configuration, to have it automatically run on each commit do:
 
 ```sh
-$ pip install pre-commit
-$ pre-commit install
+pip install pre-commit
+pre-commit install
 ```
 
 There is also a pre-push hook configured in `pre-commit` to run a collection of
 relatively fast tests, to install this hook:
 
 ```sh
-$ pre-commit install --hook-type pre-push
+pre-commit install --hook-type pre-push
 ```
 
 
