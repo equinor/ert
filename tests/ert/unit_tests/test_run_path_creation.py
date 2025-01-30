@@ -127,7 +127,7 @@ def test_that_run_template_replace_symlink_does_not_write_to_source(
     # Write a file that will be symlinked into the run run path with the
     # same name as the target_file
     Path("start.txt").write_text(
-        "I dont want to replace in this file", encoding="utf-8"
+        "I don't want to replace in this file", encoding="utf-8"
     )
     os.symlink("start.txt", run_path / "result.txt")
     create_run_path(
@@ -148,7 +148,7 @@ def test_that_run_template_replace_symlink_does_not_write_to_source(
     # Check that the source of the symlinked file is not updated
     assert (
         Path("start.txt").read_text(encoding="utf-8")
-        == "I dont want to replace in this file"
+        == "I don't want to replace in this file"
     )
 
 
