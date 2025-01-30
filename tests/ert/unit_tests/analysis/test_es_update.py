@@ -54,7 +54,6 @@ def obs() -> polars.DataFrame:
 
 
 @pytest.mark.integration_test
-@pytest.mark.flaky(reruns=5)
 @pytest.mark.parametrize(
     "misfit_preprocess", [[["*"]], [], [["FOPR"]], [["FOPR"], ["WOPR_OP1_1*"]]]
 )
