@@ -25,7 +25,7 @@ def load_args(filename: str, column_names: list[str] | None = None) -> pd.DataFr
         if len(column_names) <= columns:
             columns = len(column_names)
         else:
-            raise ValueError("To many coloumns in input")
+            raise ValueError("To many columns in input")
 
     data = numpy.empty(shape=(rows, columns), dtype=numpy.float64)
     data.fill(numpy.nan)

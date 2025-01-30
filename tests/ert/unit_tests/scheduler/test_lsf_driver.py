@@ -347,7 +347,7 @@ async def test_faulty_bsub_produces_error_log(monkeypatch, tmp_path):
             "wrong_stdout...",
             "",
             "wrong_stdout...",
-            id="artifical_bkill_stdout_giving_logged_error",
+            id="artificial_bkill_stdout_giving_logged_error",
         ),
         pytest.param(
             {"1": "11"},
@@ -356,7 +356,7 @@ async def test_faulty_bsub_produces_error_log(monkeypatch, tmp_path):
             "",
             "wrong_on_stderr",
             "wrong_on_stderr",
-            id="artifical_bkill_stderr_and_returncode_giving_logged_error",
+            id="artificial_bkill_stderr_and_returncode_giving_logged_error",
         ),
         pytest.param(
             {"1": "11"},

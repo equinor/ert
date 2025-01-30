@@ -92,7 +92,7 @@ class _LogAggregration(logging.Handler):
     def __init__(self, messages: MutableSequence[str]) -> None:
         self.messages = messages
 
-        # Contains list of record names that should be exlucded from aggregated logs
+        # Contains list of record names that should be excluded from aggregated logs
         self.exclude_logs: list[str] = []
         super().__init__()
 
@@ -663,12 +663,12 @@ class BaseRunModel(ABC):
                 shutil.rmtree(run_path)
 
     def validate_successful_realizations_count(self) -> None:
-        successful_reallizations_count = self.get_number_of_successful_realizations()
+        successful_realizations_count = self.get_number_of_successful_realizations()
         min_realization_count = self.minimum_required_realizations
 
-        if successful_reallizations_count < min_realization_count:
+        if successful_realizations_count < min_realization_count:
             raise ValueError(
-                f"Number of successful realizations ({successful_reallizations_count}) is less "
+                f"Number of successful realizations ({successful_realizations_count}) is less "
                 f"than the specified MIN_REALIZATIONS"
                 f"({min_realization_count})"
             )
