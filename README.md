@@ -2,7 +2,7 @@
 <img src="https://raw.githubusercontent.com/equinor/ert/main/src/ert/gui/resources/gui/img/ert_icon.svg" width="200">
 </h1>
 
-[![Build Status](https://github.com/equinor/ert/actions/workflows/build.yml/badge.svg)](https://github.com/equinor/ert/actions/workflows/build.yml)
+[![Build Status](https://github.com/equinor/ert/actions/workflows/build_and_test.yml/badge.svg)](https://github.com/equinor/ert/actions/workflows/build_and_test.yml)
 [![PyPI - Python Version](https://img.shields.io/pypi/pyversions/ert)](https://img.shields.io/pypi/pyversions/ert)
 [![Code Style](https://github.com/equinor/ert/actions/workflows/style.yml/badge.svg)](https://github.com/equinor/ert/actions/workflows/style.yml)
 [![Type checking](https://github.com/equinor/ert/actions/workflows/typing.yml/badge.svg)](https://github.com/equinor/ert/actions/workflows/typing.yml)
