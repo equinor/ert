@@ -55,7 +55,7 @@ inter_region_summary_variables = [
 
 
 @st.composite
-def root_memnonic(draw):
+def root_mnemonic(draw):
     first_character = draw(st.sampled_from("ABFGRWCS"))
     if first_character == "A":
         second_character = draw(st.sampled_from("ALN"))
@@ -90,7 +90,7 @@ def summary_variables(draw):
                 "segment",
                 "well",
                 "region2region",
-                "memnonic",
+                "mnemonic",
                 "region",
             ]
         )
@@ -113,7 +113,7 @@ def summary_variables(draw):
         direction = draw(st.sampled_from(["", "-"]))
         return draw(st.sampled_from(["GKR", "OKR", "WKR"])) + dimension + direction
     elif kind == "network":
-        root = draw(root_memnonic())
+        root = draw(root_mnemonic())
         return "N" + root
     elif kind == "segment":
         return draw(
@@ -122,7 +122,7 @@ def summary_variables(draw):
     elif kind == "well":
         return draw(
             st.one_of(
-                st.builds(lambda r: "W" + r, root_memnonic()),
+                st.builds(lambda r: "W" + r, root_mnemonic()),
                 st.sampled_from(
                     [
                         "WBHP",
@@ -143,9 +143,9 @@ def summary_variables(draw):
     elif kind == "region2region":
         return draw(st.sampled_from(inter_region_summary_variables))
     elif kind == "region":
-        return draw(st.builds(lambda r: "R" + r, root_memnonic()))
+        return draw(st.builds(lambda r: "R" + r, root_mnemonic()))
     else:
-        return draw(root_memnonic())
+        return draw(root_mnemonic())
 
 
 unit_names = st.sampled_from(
