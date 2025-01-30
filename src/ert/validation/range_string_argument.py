@@ -41,3 +41,24 @@ class RangeStringArgument(ArgumentDefinition):
         validation_status.setValue(token)
 
         return validation_status
+
+
+class RangeSubsetStringArgument(RangeStringArgument):
+    def __init__(self, source_active_range: ActiveRange) -> None:
+        super().__init__()
+        self._source_range = source_active_range
+
+    def validate(self, token: str) -> ValidationStatus:
+        validation_status = super().validate(token)
+
+        if not validation_status:
+            return validation_status
+        try:
+            other_range = ActiveRange(rangestring=token, length=len(self._source_range))
+            self._source_range.validate_range_is_subset(other_range)
+        except ValueError as e:
+            validation_status.setFailed()
+            validation_status.addToMessage(str(e))
+
+        validation_status.setValue(token)
+        return validation_status

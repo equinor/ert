@@ -8,6 +8,7 @@ class ActiveRange:
         rangestring: str | None = None,
         length: int | None = None,
     ):
+        self.length = length
         if mask is None and rangestring is None and length is None:
             raise ValueError("Supply mask or rangestring and length to IndexRange.")
         if mask is None:
@@ -74,3 +75,13 @@ class ActiveRange:
                     f"for size {length}"
                 )
         return (rangestring, length)
+
+    def validate_range_is_subset(self, other: "ActiveRange") -> None:
+        if (
+            not [a and b for a, b in zip(self.mask, other.mask, strict=False)]
+            == other.mask
+        ):
+            raise ValueError(
+                f"Specified rangestring ({other.rangestring}) is not a subset "
+                f"of the active realizations ({self.rangestring})"
+            )

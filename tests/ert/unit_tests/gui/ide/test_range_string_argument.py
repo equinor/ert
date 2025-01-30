@@ -1,4 +1,5 @@
-from ert.validation import RangeStringArgument
+from ert.validation import RangeStringArgument, RangeSubsetStringArgument
+from ert.validation.active_range import ActiveRange
 
 
 def test_proper_name_argument():
@@ -23,3 +24,15 @@ def test_proper_name_argument():
 
     assert argument.validate("1-5, 9")
     assert not argument.validate("10")
+
+
+def test_range_subset():
+    source_range = ActiveRange(rangestring="0-3,5,7-9", length=10)
+    argument_range = RangeSubsetStringArgument(source_active_range=source_range)
+
+    assert argument_range.validate("1")
+    assert argument_range.validate("0-3")
+    assert argument_range.validate("0-3,5,7-9")
+    assert not argument_range.validate("10")
+    assert not argument_range.validate("1-10")
+    assert not argument_range.validate("0-4")
