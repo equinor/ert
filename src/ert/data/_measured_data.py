@@ -128,11 +128,12 @@ class MeasuredData:
             )
 
             if "time" in pivoted:
-                joined = observations_for_type.join_asof(
-                    pivoted,
+                joined = observations_for_type.sort(by="time").join_asof(
+                    pivoted.sort(by="time"),
                     by=["response_key", *response_cls.primary_key],
                     on="time",
                     tolerance="1s",
+                    strategy="nearest",
                 )
             else:
                 joined = observations_for_type.join(
