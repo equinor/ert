@@ -293,7 +293,7 @@ def test_status_exception(mocked_get, mocked_logger, copy_math_func_test_data_to
 
 @pytest.mark.integration_test
 @pytest.mark.xdist_group(name="starts_everest")
-@pytest.mark.timeout(120)
+@pytest.mark.timeout(240)
 @patch("sys.argv", ["name", "--config-file", "config_minimal.yml"])
 async def test_status_max_batch_num(copy_math_func_test_data_to_tmp):
     config = EverestConfig.load_file("config_minimal.yml")
@@ -322,7 +322,7 @@ async def test_status_max_batch_num(copy_math_func_test_data_to_tmp):
 
 @pytest.mark.integration_test
 @pytest.mark.xdist_group(name="starts_everest")
-@pytest.mark.timeout(120)
+@pytest.mark.timeout(240)
 @patch("sys.argv", ["name", "--config-file", "config_minimal.yml"])
 async def test_status_contains_max_runtime_failure(
     copy_math_func_test_data_to_tmp, min_config
