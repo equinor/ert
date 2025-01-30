@@ -34,6 +34,8 @@ def get_nr_primary_components(
     """
     Calculate the number of principal components needed to achieve a cumulative
     variance less than a specified threshold using Singular Value Decomposition (SVD).
+
+    responses should be on form (n_realizations, n_observations)
     """
     data_matrix = responses - responses.mean(axis=0)
     _, singulars, _ = np.linalg.svd(data_matrix.astype(float), full_matrices=False)
@@ -139,7 +141,7 @@ def main(
         # each other
         return scale_factors, np.ones(len(obs_errors), dtype=int), nr_components
 
-    prim_components = get_nr_primary_components(scaled_responses, threshold=0.95)
+    prim_components = get_nr_primary_components(scaled_responses.T, threshold=0.95)
 
     clusters = cluster_responses(scaled_responses.T, nr_clusters=prim_components)
 
@@ -150,7 +152,7 @@ def main(
             components = 1
         else:
             components = get_nr_primary_components(
-                scaled_responses[index], threshold=0.95
+                scaled_responses[index].T, threshold=0.95
             )
             components = 1 if components == 0 else components
         scale_factor = get_scaling_factor(len(index), components)
