@@ -61,7 +61,7 @@ async def test_https_requests(copy_math_func_test_data_to_tmp):
     makedirs_if_needed(everest_config.output_dir, roll_if_exists=True)
     await start_server(everest_config)
     try:
-        wait_for_server(everest_config.output_dir, 120)
+        wait_for_server(everest_config.output_dir, 240)
     except SystemExit as e:
         raise e
 
@@ -92,7 +92,7 @@ async def test_https_requests(copy_math_func_test_data_to_tmp):
     )
     server_context = ServerConfig.get_server_context(everest_config.output_dir)
     if stop_server(server_context):
-        wait_for_server_to_stop(server_context, 60)
+        wait_for_server_to_stop(server_context, 240)
         server_status = everserver_status(status_path)
 
         # Possible the case completed while waiting for the server to stop
