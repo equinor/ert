@@ -3,7 +3,6 @@ from pathlib import Path
 
 import polars
 import polars as pl
-from ropt.enums import ConstraintType
 
 from ert.storage import open_storage
 from everest.config import EverestConfig
@@ -52,35 +51,6 @@ class EverestDataAPI:
             if self._ever_storage.data.nonlinear_constraints is not None
             else []
         )
-
-    def input_constraint(self, control):
-        # Note: This function is weird, its existence is probably not well-justified
-        # consider removing!
-        initial_values = self._ever_storage.data.controls
-        control_spec = initial_values.filter(
-            pl.col("control_name") == control
-        ).to_dicts()[0]
-        return {
-            "min": control_spec.get("lower_bounds"),
-            "max": control_spec.get("upper_bounds"),
-        }
-
-    def output_constraint(self, constraint):
-        """
-        :return: a dictionary with two keys: "type" and "right_hand_side".
-                 "type" has three options:
-                     ["lower_bound", "upper_bound", "target"]
-                 "right_hand_side" is a constant real number that indicates
-                 the constraint bound/target.
-        """
-
-        constraint_dict = self._ever_storage.data.nonlinear_constraints.filter(
-            polars.col("constraint_name") == constraint
-        ).to_dicts()[0]
-        return {
-            "type": ConstraintType(constraint_dict["constraint_type"]).name.lower(),
-            "right_hand_side": constraint_dict["constraint_rhs_value"],
-        }
 
     @property
     def realizations(self):

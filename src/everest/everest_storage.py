@@ -6,11 +6,7 @@ import os
 import traceback
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import (
-    Any,
-    TypedDict,
-    cast,
-)
+from typing import Any, TypedDict, cast
 
 import numpy as np
 import polars
@@ -389,18 +385,10 @@ class EverestStorage:
                 "control_name": polars.Series(
                     _format_control_names(config.variables.names), dtype=polars.String
                 ),
-                "initial_value": polars.Series(
-                    config.variables.initial_values, dtype=polars.Float64
-                ),
-                "lower_bounds": polars.Series(
-                    config.variables.lower_bounds, dtype=polars.Float64
-                ),
-                "upper_bounds": polars.Series(
-                    config.variables.upper_bounds, dtype=polars.Float64
-                ),
             }
         )
-
+        # TODO: The weight and normalization keys are only used by the everest api,
+        # with everviz. They should be removed in the long run.
         self.data.objective_functions = polars.DataFrame(
             {
                 "objective_name": config.objectives.names,
@@ -418,11 +406,6 @@ class EverestStorage:
             self.data.nonlinear_constraints = polars.DataFrame(
                 {
                     "constraint_name": config.nonlinear_constraints.names,
-                    "normalization": [
-                        1.0 / s for s in config.nonlinear_constraints.scales
-                    ],  # Q: Is this correct?
-                    "constraint_rhs_value": config.nonlinear_constraints.rhs_values,
-                    "constraint_type": config.nonlinear_constraints.types,
                 }
             )
 
@@ -430,9 +413,6 @@ class EverestStorage:
             {
                 "realization": polars.Series(
                     config.realizations.names, dtype=polars.UInt32
-                ),
-                "weight": polars.Series(
-                    config.realizations.weights, dtype=polars.Float64
                 ),
             }
         )
