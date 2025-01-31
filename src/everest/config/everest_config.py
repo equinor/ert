@@ -622,6 +622,20 @@ and environment variables are exposed in the form 'os.NAME', for example:
         return [control.name for control in controls]
 
     @property
+    def formatted_control_names(self) -> list[str]:
+        names = []
+        for control in self.controls:
+            for variable in control.variables:
+                if isinstance(variable, ControlVariableGuessListConfig):
+                    for index in range(1, len(variable.initial_guess) + 1):
+                        names.append(f"{control.name}_{variable.name}-{index}")
+                elif variable.index is not None:
+                    names.append(f"{control.name}_{variable.name}-{variable.index}")
+                else:
+                    names.append(f"{control.name}_{variable.name}")
+        return names
+
+    @property
     def objective_names(self) -> list[str]:
         return [objective.name for objective in self.objective_functions]
 

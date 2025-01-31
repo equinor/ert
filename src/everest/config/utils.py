@@ -1,4 +1,4 @@
-from collections.abc import Generator, Iterator
+from collections.abc import Generator
 from typing import Any
 
 from .control_config import ControlConfig
@@ -129,17 +129,3 @@ class FlattenedControls:
             ]:
                 if var_dict.get(key) is None:
                     var_dict[key] = getattr(control, key)
-
-
-def control_tuples(
-    controls: list[ControlConfig],
-) -> Iterator[tuple[str, str, int] | tuple[str, str]]:
-    for control in controls:
-        for variable in control.variables:
-            if isinstance(variable, ControlVariableGuessListConfig):
-                for index in range(1, len(variable.initial_guess) + 1):
-                    yield (control.name, variable.name, index)
-            elif variable.index is not None:
-                yield (control.name, variable.name, variable.index)
-            else:
-                yield (control.name, variable.name)

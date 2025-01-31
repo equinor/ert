@@ -14,12 +14,11 @@ from everest.config import (
     OptimizationConfig,
     OutputConstraintConfig,
 )
-from everest.config.utils import FlattenedControls, control_tuples
+from everest.config.utils import FlattenedControls
 from everest.strings import EVEREST
 
 
-def _parse_controls(ever_controls: list[ControlConfig], ropt_config):
-    controls = FlattenedControls(ever_controls)
+def _parse_controls(controls: FlattenedControls, ropt_config):
     control_types = [
         None if type_ is None else VariableType[type_.upper()]
         for type_ in controls.types
@@ -141,7 +140,7 @@ def _parse_objectives(objective_functions: list[ObjectiveFunctionConfig], ropt_c
 
 
 def _parse_input_constraints(
-    controls: list[ControlConfig],
+    controls: FlattenedControls,
     input_constraints: list[InputConstraintConfig] | None,
     ropt_config,
 ):
@@ -150,13 +149,14 @@ def _parse_input_constraints(
 
     # TODO: Issue #9816 is intended to address the need for a more general
     # naming scheme. This code should be revisited once that issue is resolved.
+    # Ideally the formatted_control_names property of the config is used.
     formatted_names = [
         (
             f"{control_name[0]}.{control_name[1]}-{control_name[2]}"
             if len(control_name) > 2
             else f"{control_name[0]}.{control_name[1]}"
         )
-        for control_name in control_tuples(controls)
+        for control_name in controls.names
     ]
 
     coefficients_matrix = []
@@ -391,10 +391,12 @@ def everest2ropt(ever_config: EverestConfig) -> EnOptConfig:
     """
     ropt_config: dict[str, Any] = {}
 
-    _parse_controls(ever_config.controls, ropt_config)
+    flattened_controls = FlattenedControls(ever_config.controls)
+
+    _parse_controls(flattened_controls, ropt_config)
     _parse_objectives(ever_config.objective_functions, ropt_config)
     _parse_input_constraints(
-        ever_config.controls, ever_config.input_constraints, ropt_config
+        flattened_controls, ever_config.input_constraints, ropt_config
     )
     _parse_output_constraints(ever_config.output_constraints, ropt_config)
     _parse_optimization(
