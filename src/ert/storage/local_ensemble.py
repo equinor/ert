@@ -984,7 +984,10 @@ class LocalEnsemble(BaseMode):
                     elif "time" in pivoted:
                         joined = observations_for_type.join_asof(
                             pivoted,
-                            by=["response_key", *response_cls.primary_key],
+                            by=[
+                                "response_key",
+                                *[k for k in response_cls.primary_key if k != "time"],
+                            ],
                             on="time",
                             tolerance="1s",
                         )
