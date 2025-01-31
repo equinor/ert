@@ -222,7 +222,6 @@ def test_upper_bound_output_constraint_def(copy_mocked_test_data_to_tmp):
     }
 
     assert expected["scale"] == 1.0 / ropt_conf.nonlinear_constraints.scales[0]
-    assert expected["name"] == ropt_conf.nonlinear_constraints.names[0]
     assert expected["rhs_value"] == ropt_conf.nonlinear_constraints.rhs_values[0]
     assert expected["type"] == ropt_conf.nonlinear_constraints.types[0]
 

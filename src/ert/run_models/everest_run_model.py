@@ -190,6 +190,7 @@ class EverestRunModel(BaseRunModel):
         self.ever_storage = EverestStorage(
             output_dir=Path(self._everest_config.optimization_output_dir),
         )
+        self.ever_storage.init(self._everest_config)
         self.ever_storage.observe_optimizer(optimizer)
 
         # Run the optimization:
