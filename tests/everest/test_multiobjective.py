@@ -89,10 +89,8 @@ def test_multi_objectives2ropt(copy_mocked_test_data_to_tmp):
     enopt_config = EnOptConfig.model_validate(
         everest2ropt(EverestConfig.model_validate(config_dict))
     )
-    assert len(enopt_config.objectives.names) == 2
-    assert enopt_config.objectives.names[1] == ever_objs[1]["name"]
+    assert len(enopt_config.objectives.weights) == 2
     assert enopt_config.objectives.weights[1] == ever_objs[1]["weight"] / norm
-    assert enopt_config.objectives.names[0] == ever_objs[0]["name"]
     assert enopt_config.objectives.weights[0] == ever_objs[0]["weight"] / norm
     assert enopt_config.objectives.scales[0] == ever_objs[0]["normalization"]
 

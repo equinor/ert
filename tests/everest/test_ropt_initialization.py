@@ -20,8 +20,7 @@ def test_tutorial_everest2ropt():
 
     realizations = ropt_config.realizations
 
-    assert len(realizations.names) == 2
-    assert realizations.names[0] == 0
+    assert len(realizations.weights) == 2
     assert realizations.weights[0] == 0.5
 
 
@@ -131,17 +130,16 @@ def test_everest2ropt_controls_optimizer_setting():
     config = os.path.join(_CONFIG_DIR, "config_full_gradient_info.yml")
     config = EverestConfig.load_file(config)
     ropt_config = everest2ropt(config)
-    assert len(ropt_config.realizations.names) == 15
+    assert len(ropt_config.realizations.weights) == 15
     assert ropt_config.optimizer.method == "conmin_mfd"
     assert ropt_config.gradient.number_of_perturbations == 20
-    assert ropt_config.realizations.names == tuple(range(15))
 
 
 def test_everest2ropt_constraints():
     config = os.path.join(_CONFIG_DIR, "config_output_constraints.yml")
     config = EverestConfig.load_file(config)
     ropt_config = everest2ropt(config)
-    assert len(ropt_config.nonlinear_constraints.names) == 16
+    assert len(ropt_config.nonlinear_constraints.rhs_values) == 16
 
 
 def test_everest2ropt_backend_options():

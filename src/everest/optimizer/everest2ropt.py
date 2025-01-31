@@ -6,7 +6,6 @@ from ropt.config.enopt import EnOptConfig
 from ropt.enums import ConstraintType, PerturbationType, VariableType
 
 from everest.config import (
-    ControlConfig,
     EverestConfig,
     InputConstraintConfig,
     ModelConfig,
@@ -49,7 +48,6 @@ def _parse_controls(controls: FlattenedControls, ropt_config):
         ]
     indices = [idx for idx, is_enabled in enumerate(controls.enabled) if is_enabled]
     ropt_config["variables"] = {
-        "names": controls.names,
         "types": None if all(item is None for item in control_types) else control_types,
         "initial_values": controls.initial_guesses,
         "lower_bounds": controls.lower_bounds,
@@ -57,7 +55,6 @@ def _parse_controls(controls: FlattenedControls, ropt_config):
         "offsets": offsets,
         "scales": scales,
         "indices": indices if indices else None,
-        "delimiters": "_-",
     }
 
     if "gradients" not in ropt_config:
@@ -81,62 +78,55 @@ def _parse_controls(controls: FlattenedControls, ropt_config):
     ]
 
     ropt_config["gradient"]["perturbation_types"] = [
-        PerturbationType.SCALED.value
-        if auto_scale
-        else PerturbationType[perturbation_type.upper()]
-        for perturbation_type, auto_scale in zip(
-            controls.perturbation_types, controls.auto_scales, strict=True
-        )
+        PerturbationType[perturbation_type.upper()]
+        for perturbation_type in controls.perturbation_types
     ]
 
 
 def _parse_objectives(objective_functions: list[ObjectiveFunctionConfig], ropt_config):
-    names: list[str] = []
     scales: list[float] = []
     auto_scale: list[bool] = []
     weights: list[float] = []
-    transform_indices: list[int] = []
-    transforms: list = []
+    function_estimator_indices: list[int] = []
+    function_estimators: list = []
 
     for objective in objective_functions:
         assert isinstance(objective.name, str)
-        names.append(objective.name)
         weights.append(objective.weight or 1.0)
         scales.append(1.0 / (objective.normalization or 1.0))
         auto_scale.append(objective.auto_normalize or False)
 
         # If any objective specifies an objective type, we have to specify
-        # function transforms in ropt to implement these types. This is done by
-        # supplying a list of transforms and for each objective an index into
+        # function estimators in ropt to implement these types. This is done by
+        # supplying a list of estimators and for each objective an index into
         # that list:
         objective_type = objective.type
         if objective_type is None:
             objective_type = "mean"
-        # Find the transform if it exists:
-        transform_idx = next(
+        # Find the estimator if it exists:
+        function_estimator_idx = next(
             (
                 idx
-                for idx, transform in enumerate(transforms)
-                if transform["method"] == objective_type
+                for idx, estimator in enumerate(function_estimators)
+                if estimator["method"] == objective_type
             ),
             None,
         )
-        # If not, make a new transform:
-        if transform_idx is None:
-            transform_idx = len(transforms)
-            transforms.append({"method": objective_type})
-        transform_indices.append(transform_idx)
+        # If not, make a new estimator:
+        if function_estimator_idx is None:
+            function_estimator_idx = len(function_estimators)
+            function_estimators.append({"method": objective_type})
+        function_estimator_indices.append(function_estimator_idx)
 
     ropt_config["objectives"] = {
-        "names": names,
         "weights": weights,
         "scales": scales,
         "auto_scale": auto_scale,
     }
-    if transforms:
+    if function_estimators:
         # Only needed if we specified at least one objective type:
-        ropt_config["objectives"]["function_transforms"] = transform_indices
-        ropt_config["function_transforms"] = transforms
+        ropt_config["objectives"]["function_estimators"] = function_estimator_indices
+        ropt_config["function_estimators"] = function_estimators
 
 
 def _parse_input_constraints(
@@ -197,7 +187,6 @@ def _parse_output_constraints(
     if not output_constraints:
         return
 
-    names: list[str] = []
     rhs_values: list[float] = []
     scales: list[float] = []
     auto_scale: list[bool] = []
@@ -207,8 +196,6 @@ def _parse_output_constraints(
         rhs_value: float | None, constraint_type: ConstraintType, suffix=None
     ):
         if rhs_value is not None:
-            name = constr.name
-            names.append(name if suffix is None else f"{name}:{suffix}")
             rhs_values.append(rhs_value)
             scales.append(constr.scale if constr.scale is not None else 1.0)
             auto_scale.append(constr.auto_scale or False)
@@ -238,7 +225,6 @@ def _parse_output_constraints(
         )
 
     ropt_config["nonlinear_constraints"] = {
-        "names": names,
         "rhs_values": rhs_values,
         "scales": scales,
         "auto_scale": auto_scale,
@@ -336,9 +322,9 @@ def _parse_optimization(
             # indices to any realization filters that should be applied. In this
             # case, we want all objectives and constraints to refer to the same
             # filter implementing cvar:
-            objective_count = len(ropt_config["objectives"]["names"])
+            objective_count = len(ropt_config["objectives"]["weights"])
             constraint_count = len(
-                ropt_config.get("nonlinear_constraints", {}).get("names", [])
+                ropt_config.get("nonlinear_constraints", {}).get("rhs_values", [])
             )
             ropt_config["objectives"]["realization_filters"] = objective_count * [0]
             if constraint_count > 0:
@@ -366,7 +352,6 @@ def _parse_model(
         ever_reals_weights = [1.0 / len(ever_reals)] * len(ever_reals)
 
     ropt_config["realizations"] = {
-        "names": ever_reals,
         "weights": ever_reals_weights,
     }
     min_real_succ = ever_opt.min_realizations_success if ever_opt else None

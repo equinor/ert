@@ -350,80 +350,82 @@ class EverestStorage:
         exp = _OptimizerOnlyExperiment(self._output_dir)
         self.data.read_from_experiment(exp)
 
-    def observe_optimizer(
-        self,
-        optimizer: BasicOptimizer,
-    ) -> None:
-        optimizer.add_observer(
-            EventType.START_OPTIMIZER_STEP, self._on_start_optimization
-        )
+    def observe_optimizer(self, optimizer: BasicOptimizer) -> None:
         optimizer.add_observer(
             EventType.FINISHED_EVALUATION, self._on_batch_evaluation_finished
         )
         optimizer.add_observer(
-            EventType.FINISHED_OPTIMIZER_STEP,
-            self._on_optimization_finished,
+            EventType.FINISHED_OPTIMIZER_STEP, self._on_optimization_finished
         )
 
-    def _on_start_optimization(self, event: Event) -> None:
-        def _format_control_names(control_names):
-            converted_names = []
-            for name in control_names:
-                converted = f"{name[0]}_{name[1]}"
-                if len(name) > 2:
-                    converted += f"-{name[2]}"
-                converted_names.append(converted)
-
-            return converted_names
-
-        config = event.config
-
-        # Note: We probably do not have to store
-        # all of this information, consider removing.
+    def init(self, everest_config: EverestConfig) -> None:
         self.data.controls = polars.DataFrame(
             {
                 "control_name": polars.Series(
-                    _format_control_names(config.variables.names), dtype=polars.String
+                    everest_config.formatted_control_names, dtype=polars.String
                 ),
             }
         )
+
         # TODO: The weight and normalization keys are only used by the everest api,
         # with everviz. They should be removed in the long run.
+        weights = np.fromiter(
+            (
+                1.0 if obj.weight is None else obj.weight
+                for obj in everest_config.objective_functions
+            ),
+            dtype=np.float64,
+        )
         self.data.objective_functions = polars.DataFrame(
             {
-                "objective_name": config.objectives.names,
-                "weight": polars.Series(
-                    config.objectives.weights, dtype=polars.Float64
-                ),
-                "normalization": polars.Series(  # Q: Is this correct?
-                    [1.0 / s for s in config.objectives.scales],
+                "objective_name": everest_config.objective_names,
+                "weight": polars.Series(weights / sum(weights), dtype=polars.Float64),
+                "normalization": polars.Series(
+                    [
+                        1.0 if obj.normalization is None else obj.normalization
+                        for obj in everest_config.objective_functions
+                    ],
                     dtype=polars.Float64,
                 ),
             }
         )
 
-        if config.nonlinear_constraints is not None:
+        if everest_config.output_constraints is not None:
             self.data.nonlinear_constraints = polars.DataFrame(
                 {
-                    "constraint_name": config.nonlinear_constraints.names,
+                    "constraint_name": everest_config.constraint_names,
                 }
             )
+        else:
+            self.data.nonlinear_constraints = None
 
         self.data.realization_weights = polars.DataFrame(
             {
                 "realization": polars.Series(
-                    config.realizations.names, dtype=polars.UInt32
+                    everest_config.model.realizations, dtype=polars.UInt32
                 ),
             }
         )
 
     def _store_function_results(self, results: FunctionResults) -> _EvaluationResults:
+        names = {
+            "variable": self.data.controls["control_name"],
+            "objective": self.data.objective_functions["objective_name"],
+            "nonlinear_constraint": (
+                self.data.nonlinear_constraints["constraint_name"]
+                if self.data.nonlinear_constraints is not None
+                else None
+            ),
+            "realization": self.data.realization_weights["realization"],
+        }
+
         # We could select only objective values,
         # but we select all to also get the constraint values (if they exist)
         realization_objectives = polars.from_pandas(
             results.to_dataframe(
                 "evaluations",
                 select=["objectives", "evaluation_ids"],
+                names=names,
             ).reset_index(),
         ).select(
             "batch_id",
@@ -438,6 +440,7 @@ class EverestStorage:
                 results.to_dataframe(
                     "evaluations",
                     select=["constraints", "evaluation_ids"],
+                    names=names,
                 ).reset_index(),
             ).select(
                 "batch_id",
@@ -452,7 +455,9 @@ class EverestStorage:
             )
 
             batch_constraints = polars.from_pandas(
-                results.to_dataframe("functions", select=["constraints"]).reset_index()
+                results.to_dataframe(
+                    "functions", select=["constraints"], names=names
+                ).reset_index()
             ).select("batch_id", "nonlinear_constraint", "constraints")
 
             batch_constraints = batch_constraints.rename(
@@ -480,12 +485,13 @@ class EverestStorage:
             results.to_dataframe(
                 "functions",
                 select=["objectives", "weighted_objective"],
+                names=names,
             ).reset_index()
         ).select("batch_id", "objective", "objectives", "weighted_objective")
 
         realization_controls = polars.from_pandas(
             results.to_dataframe(
-                "evaluations", select=["variables", "evaluation_ids"]
+                "evaluations", select=["variables", "evaluation_ids"], names=names
             ).reset_index()
         ).select(
             "batch_id",
@@ -535,8 +541,19 @@ class EverestStorage:
         }
 
     def _store_gradient_results(self, results: GradientResults) -> _GradientResults:
+        names = {
+            "variable": self.data.controls["control_name"],
+            "objective": self.data.objective_functions["objective_name"],
+            "nonlinear_constraint": (
+                self.data.nonlinear_constraints["constraint_name"]
+                if self.data.nonlinear_constraints is not None
+                else None
+            ),
+            "realization": self.data.realization_weights["realization"],
+        }
+
         perturbation_objectives = polars.from_pandas(
-            results.to_dataframe("evaluations").reset_index()
+            results.to_dataframe("evaluations", names=names).reset_index()
         ).select(
             [
                 "batch_id",
@@ -560,7 +577,7 @@ class EverestStorage:
 
         if results.gradients is not None:
             batch_objective_gradient = polars.from_pandas(
-                results.to_dataframe("gradients").reset_index()
+                results.to_dataframe("gradients", names=names).reset_index()
             ).select(
                 [
                     "batch_id",
@@ -678,7 +695,7 @@ class EverestStorage:
         logger.debug("Storing batch results dataframes")
 
         converted_results = tuple(
-            convert_to_maximize(result) for result in event.results
+            convert_to_maximize(result) for result in event.data.get("results", [])
         )
         results: list[FunctionResults | GradientResults] = []
 
