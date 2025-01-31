@@ -1,7 +1,7 @@
 import datetime
 import shutil
 
-import polars
+import polars as pl
 import pytest
 from PyQt6.QtCore import Qt
 from PyQt6.QtWidgets import QPushButton, QTextEdit
@@ -355,17 +355,17 @@ def test_ensemble_observations_view_on_empty_ensemble(qtbot):
         storage.create_experiment(
             responses=[SummaryConfig(keys=["*"])],
             observations={
-                "summary": polars.DataFrame(
-                    polars.DataFrame(
+                "summary": pl.DataFrame(
+                    pl.DataFrame(
                         {
                             "response_key": ["FOPR"],
                             "observation_key": ["O4"],
-                            "time": polars.Series(
+                            "time": pl.Series(
                                 [datetime.datetime(2000, 1, 1)],
-                                dtype=polars.Datetime("ms"),
+                                dtype=pl.Datetime("ms"),
                             ),
-                            "observations": polars.Series([10.2], dtype=polars.Float32),
-                            "std": polars.Series([0.1], dtype=polars.Float32),
+                            "observations": pl.Series([10.2], dtype=pl.Float32),
+                            "std": pl.Series([0.1], dtype=pl.Float32),
                         }
                     )
                 ),

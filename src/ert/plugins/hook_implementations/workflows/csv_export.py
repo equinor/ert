@@ -2,15 +2,15 @@ import json
 import os
 from collections.abc import Sequence
 
-import pandas
+import pandas as pd
 
 from ert import ErtScript, LibresFacade
 from ert.config import ErtConfig
 from ert.storage import Storage
 
 
-def loadDesignMatrix(filename: str) -> pandas.DataFrame:
-    dm = pandas.read_csv(filename, delim_whitespace=True)
+def loadDesignMatrix(filename: str) -> pd.DataFrame:
+    dm = pd.read_csv(filename, delim_whitespace=True)
     dm = dm.rename(columns={dm.columns[0]: "Realization"})
     dm = dm.set_index(["Realization"])
     return dm
@@ -81,7 +81,7 @@ class CSVExportJob(ErtScript):
             if not os.path.isfile(design_matrix_path):
                 raise UserWarning("The design matrix is not a file!")
 
-        data = pandas.DataFrame()
+        data = pd.DataFrame()
 
         for ensemble in ensembles:
             if not ensemble.has_data():
@@ -113,7 +113,7 @@ class CSVExportJob(ErtScript):
                 ["Ensemble", "Iteration"], append=True, inplace=True
             )
 
-            data = pandas.concat([data, ensemble_data])
+            data = pd.concat([data, ensemble_data])
 
         data = data.reorder_levels(["Realization", "Iteration", "Date", "Ensemble"])
         if drop_const_cols:

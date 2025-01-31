@@ -1,7 +1,7 @@
 import json
 from enum import IntEnum
 
-import polars
+import polars as pl
 import seaborn as sns
 import yaml
 from matplotlib.backends.backend_qt5agg import FigureCanvas  # type: ignore
@@ -205,7 +205,7 @@ class _EnsembleWidget(QWidget):
         ]
         x_axis_col = response_config.primary_key[-1]
 
-        def _filter_on_observation_label(df: polars.DataFrame) -> polars.DataFrame:
+        def _filter_on_observation_label(df: pl.DataFrame) -> pl.DataFrame:
             # We add a column with the display name of the x axis column
             # to correctly compare it to the observation_label
             # (which is also such a display name)
@@ -213,14 +213,14 @@ class _EnsembleWidget(QWidget):
                 df[x_axis_col]
                 .map_elements(
                     lambda x: response_config.display_column(x, x_axis_col),
-                    return_dtype=polars.String,
+                    return_dtype=pl.String,
                 )
                 .alias("temp")
-            ).filter(polars.col("temp").eq(observation_label))[
+            ).filter(pl.col("temp").eq(observation_label))[
                 [x for x in df.columns if x != "temp"]
             ]
 
-        obs = obs_for_type.filter(polars.col("observation_key").eq(observation_key))
+        obs = obs_for_type.filter(pl.col("observation_key").eq(observation_key))
         obs = _filter_on_observation_label(obs)
 
         response_key = obs["response_key"].unique().to_list()[0]
@@ -243,7 +243,7 @@ class _EnsembleWidget(QWidget):
             if scaling_df is None:
                 return None
 
-            index_col = polars.concat_str(response_config.primary_key, separator=", ")
+            index_col = pl.concat_str(response_config.primary_key, separator=", ")
             joined = obs.with_columns(index_col.alias("_tmp_index")).join(
                 scaling_df,
                 how="left",
@@ -253,7 +253,7 @@ class _EnsembleWidget(QWidget):
 
             joined_small = joined[["observations", "std", "scaling_factor"]]
             joined_small = joined_small.group_by(["observations", "std"]).agg(
-                [polars.col("scaling_factor").product()]
+                [pl.col("scaling_factor").product()]
             )
             joined_small = joined_small.with_columns(
                 joined_small["std"] * joined_small["scaling_factor"]
@@ -336,7 +336,7 @@ class _EnsembleWidget(QWidget):
                         root = match_list[0]
 
                     obs_ds = obs_ds_for_type.filter(
-                        polars.col("observation_key").eq(obs_key)
+                        pl.col("observation_key").eq(obs_key)
                     )
                     response_config = exp.response_configuration[response_type]
                     column_to_display = response_config.primary_key[-1]

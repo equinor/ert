@@ -2,7 +2,7 @@ from contextlib import ExitStack as does_not_raise
 from unittest.mock import patch
 
 import numpy as np
-import polars
+import polars as pl
 import pytest
 import xarray as xr
 import xtgeo
@@ -40,15 +40,15 @@ def uniform_parameter():
 
 
 @pytest.fixture
-def obs() -> polars.DataFrame:
-    return polars.DataFrame(
+def obs() -> pl.DataFrame:
+    return pl.DataFrame(
         {
             "response_key": "RESPONSE",
             "observation_key": "OBSERVATION",
-            "report_step": polars.Series(np.full(3, 0), dtype=polars.UInt16),
-            "index": polars.Series([0, 1, 2], dtype=polars.UInt16),
-            "observations": polars.Series([1.0, 1.0, 1.0], dtype=polars.Float32),
-            "std": polars.Series([0.1, 1.0, 10.0], dtype=polars.Float32),
+            "report_step": pl.Series(np.full(3, 0), dtype=pl.UInt16),
+            "index": pl.Series([0, 1, 2], dtype=pl.UInt16),
+            "observations": pl.Series([1.0, 1.0, 1.0], dtype=pl.Float32),
+            "std": pl.Series([0.1, 1.0, 10.0], dtype=pl.Float32),
         }
     )
 
@@ -225,19 +225,19 @@ def test_update_handles_precision_loss_in_std_dev(tmp_path):
             name="ensemble_smoother",
             parameters=[gen_kw],
             observations={
-                "gen_data": polars.DataFrame(
+                "gen_data": pl.DataFrame(
                     {
                         "response_key": "RES",
                         "observation_key": "OBS",
-                        "report_step": polars.Series(np.zeros(3), dtype=polars.UInt16),
-                        "index": polars.Series([0, 1, 2], dtype=polars.UInt16),
-                        "observations": polars.Series(
+                        "report_step": pl.Series(np.zeros(3), dtype=pl.UInt16),
+                        "index": pl.Series([0, 1, 2], dtype=pl.UInt16),
+                        "observations": pl.Series(
                             [-218285263.28648496, -999999999.0, -107098474.0148249],
-                            dtype=polars.Float32,
+                            dtype=pl.Float32,
                         ),
-                        "std": polars.Series(
+                        "std": pl.Series(
                             [559437122.6211826, 999999999.9999999, 1.9],
-                            dtype=polars.Float32,
+                            dtype=pl.Float32,
                         ),
                     }
                 )
@@ -263,14 +263,14 @@ def test_update_handles_precision_loss_in_std_dev(tmp_path):
 
         prior.save_response(
             "gen_data",
-            polars.DataFrame(
+            pl.DataFrame(
                 {
                     "response_key": "RES",
-                    "report_step": polars.Series(np.zeros(3), dtype=polars.UInt16),
-                    "index": polars.Series(np.arange(3), dtype=polars.UInt16),
-                    "values": polars.Series(
+                    "report_step": pl.Series(np.zeros(3), dtype=pl.UInt16),
+                    "index": pl.Series(np.arange(3), dtype=pl.UInt16),
+                    "values": pl.Series(
                         np.array([5.08078746e07, 4.07677769e10, 2.28002538e12]),
-                        dtype=polars.Float32,
+                        dtype=pl.Float32,
                     ),
                 }
             ),
@@ -279,14 +279,14 @@ def test_update_handles_precision_loss_in_std_dev(tmp_path):
         for i in range(1, prior.ensemble_size):
             prior.save_response(
                 "gen_data",
-                polars.DataFrame(
+                pl.DataFrame(
                     {
                         "response_key": "RES",
-                        "report_step": polars.Series(np.zeros(3), dtype=polars.UInt16),
-                        "index": polars.Series(np.arange(3), dtype=polars.UInt16),
-                        "values": polars.Series(
+                        "report_step": pl.Series(np.zeros(3), dtype=pl.UInt16),
+                        "index": pl.Series(np.arange(3), dtype=pl.UInt16),
+                        "values": pl.Series(
                             np.array([5.08078744e07, 4.12422210e09, 1.26490794e10]),
-                            dtype=polars.Float32,
+                            dtype=pl.Float32,
                         ),
                     }
                 ),
@@ -348,19 +348,19 @@ def test_update_raises_on_singular_matrix(tmp_path):
             name="ensemble_smoother",
             parameters=[gen_kw],
             observations={
-                "gen_data": polars.DataFrame(
+                "gen_data": pl.DataFrame(
                     {
                         "response_key": "RES",
                         "observation_key": "OBS",
-                        "report_step": polars.Series(np.zeros(3), dtype=polars.UInt16),
-                        "index": polars.Series([0, 1, 2], dtype=polars.UInt16),
-                        "observations": polars.Series(
+                        "report_step": pl.Series(np.zeros(3), dtype=pl.UInt16),
+                        "index": pl.Series([0, 1, 2], dtype=pl.UInt16),
+                        "observations": pl.Series(
                             [-1.5, 5.9604645e-08, 0.0],
-                            dtype=polars.Float32,
+                            dtype=pl.Float32,
                         ),
-                        "std": polars.Series(
+                        "std": pl.Series(
                             [0.33333334, 0.14142136, 0.0],
-                            dtype=polars.Float32,
+                            dtype=pl.Float32,
                         ),
                     }
                 )
@@ -392,14 +392,14 @@ def test_update_raises_on_singular_matrix(tmp_path):
         ):
             prior.save_response(
                 "gen_data",
-                polars.DataFrame(
+                pl.DataFrame(
                     {
                         "response_key": "RES",
-                        "report_step": polars.Series(np.zeros(3), dtype=polars.UInt16),
-                        "index": polars.Series(np.arange(3), dtype=polars.UInt16),
-                        "values": polars.Series(
+                        "report_step": pl.Series(np.zeros(3), dtype=pl.UInt16),
+                        "index": pl.Series(np.arange(3), dtype=pl.UInt16),
+                        "values": pl.Series(
                             np.array(v),
-                            dtype=polars.Float32,
+                            dtype=pl.Float32,
                         ),
                     }
                 ),
@@ -570,13 +570,11 @@ def test_smoother_snapshot_alpha(
         data = rng.uniform(0.8, 1, 3)
         prior_storage.save_response(
             "gen_data",
-            polars.DataFrame(
+            pl.DataFrame(
                 {
                     "response_key": "RESPONSE",
-                    "report_step": polars.Series(
-                        np.full(len(data), 0), dtype=polars.UInt16
-                    ),
-                    "index": polars.Series(range(len(data)), dtype=polars.UInt16),
+                    "report_step": pl.Series(np.full(len(data), 0), dtype=pl.UInt16),
+                    "index": pl.Series(range(len(data)), dtype=pl.UInt16),
                     "values": data,
                 }
             ),
@@ -776,16 +774,16 @@ def test_that_autoscaling_applies_to_scaled_errors(storage):
             np.array([1, 1]),
         )
 
-        observations_and_responses = polars.DataFrame(
+        observations_and_responses = pl.DataFrame(
             {
                 "response_key": ["RESPONSE", "RESPONSE", "RESPONSE", "RESPONSE"],
                 "index": ["rs00", "rs0", "rs0", "rs1"],
                 "observation_key": ["obs1_1", "obs1_2", "obs2", "obs2"],
-                "observations": polars.Series([2, 4, 3, 3], dtype=polars.Float32),
-                "std": polars.Series([1, 2, 1, 1], dtype=polars.Float32),
-                "1": polars.Series([1, 4, 7, 8], dtype=polars.Float32),
-                "2": polars.Series([2, 5, 8, 11], dtype=polars.Float32),
-                "3": polars.Series([3, 6, 9, 12], dtype=polars.Float32),
+                "observations": pl.Series([2, 4, 3, 3], dtype=pl.Float32),
+                "std": pl.Series([1, 2, 1, 1], dtype=pl.Float32),
+                "1": pl.Series([1, 4, 7, 8], dtype=pl.Float32),
+                "2": pl.Series([2, 5, 8, 11], dtype=pl.Float32),
+                "3": pl.Series([3, 6, 9, 12], dtype=pl.Float32),
             }
         )
 
@@ -823,14 +821,14 @@ def test_that_autoscaling_applies_to_scaled_errors(storage):
 
 
 def test_that_autoscaling_ignores_typos_in_observation_names(storage, caplog):
-    observations_and_responses = polars.DataFrame(
+    observations_and_responses = pl.DataFrame(
         {
             "response_key": ["RESPONSE", "RESPONSE", "RESPONSE", "RESPONSE"],
             "index": ["rs00", "rs0", "rs0", "rs1"],
             "observation_key": ["obs1_1", "obs1_2", "obs2", "obs2"],
-            "observations": polars.Series([2, 4, 3, 3], dtype=polars.Float32),
-            "std": polars.Series([1, 2, 1, 1], dtype=polars.Float32),
-            "1": polars.Series([1, 4, 7, 8], dtype=polars.Float32),
+            "observations": pl.Series([2, 4, 3, 3], dtype=pl.Float32),
+            "std": pl.Series([1, 2, 1, 1], dtype=pl.Float32),
+            "1": pl.Series([1, 4, 7, 8], dtype=pl.Float32),
         }
     )
 
@@ -853,14 +851,14 @@ def test_that_autoscaling_ignores_typos_in_observation_names(storage, caplog):
 
 def test_gen_data_obs_data_mismatch(storage, uniform_parameter):
     resp = GenDataConfig(keys=["RESPONSE"])
-    gen_data_obs = polars.DataFrame(
+    gen_data_obs = pl.DataFrame(
         {
             "observation_key": "OBSERVATION",
             "response_key": ["RESPONSE"],
-            "report_step": polars.Series([0], dtype=polars.UInt16),
-            "index": polars.Series([1000], dtype=polars.UInt16),
-            "observations": polars.Series([1.0], dtype=polars.Float32),
-            "std": polars.Series([0.1], dtype=polars.Float32),
+            "report_step": pl.Series([0], dtype=pl.UInt16),
+            "index": pl.Series([1000], dtype=pl.UInt16),
+            "observations": pl.Series([1.0], dtype=pl.Float32),
+            "std": pl.Series([0.1], dtype=pl.Float32),
         }
     )
 
@@ -893,12 +891,12 @@ def test_gen_data_obs_data_mismatch(storage, uniform_parameter):
         data = rng.uniform(0.8, 1, 3)
         prior.save_response(
             "gen_data",
-            polars.DataFrame(
+            pl.DataFrame(
                 {
                     "response_key": "RESPONSE",
-                    "report_step": polars.Series([0] * len(data), dtype=polars.UInt16),
-                    "index": polars.Series(range(len(data)), dtype=polars.UInt16),
-                    "values": polars.Series(data, dtype=polars.Float32),
+                    "report_step": pl.Series([0] * len(data), dtype=pl.UInt16),
+                    "index": pl.Series(range(len(data)), dtype=pl.UInt16),
+                    "values": pl.Series(data, dtype=pl.Float32),
                 }
             ),
             iens,
@@ -955,12 +953,12 @@ def test_gen_data_missing(storage, uniform_parameter, obs):
         data = rng.uniform(0.8, 1, 2)  # Importantly, shorter than obs
         prior.save_response(
             "gen_data",
-            polars.DataFrame(
+            pl.DataFrame(
                 {
                     "response_key": "RESPONSE",
-                    "report_step": polars.Series([0] * len(data), dtype=polars.UInt16),
-                    "index": polars.Series(range(len(data)), dtype=polars.UInt16),
-                    "values": polars.Series(data, dtype=polars.Float32),
+                    "report_step": pl.Series([0] * len(data), dtype=pl.UInt16),
+                    "index": pl.Series(range(len(data)), dtype=pl.UInt16),
+                    "values": pl.Series(data, dtype=pl.Float32),
                 }
             ),
             iens,
@@ -1048,12 +1046,12 @@ def test_update_subset_parameters(storage, uniform_parameter, obs):
         data = rng.uniform(0.8, 1, 10)
         prior.save_response(
             "gen_data",
-            polars.DataFrame(
+            pl.DataFrame(
                 {
                     "response_key": "RESPONSE",
-                    "report_step": polars.Series([0] * len(data), dtype=polars.UInt16),
-                    "index": polars.Series(range(len(data)), dtype=polars.UInt16),
-                    "values": polars.Series(data, dtype=polars.Float32),
+                    "report_step": pl.Series([0] * len(data), dtype=pl.UInt16),
+                    "index": pl.Series(range(len(data)), dtype=pl.UInt16),
+                    "values": pl.Series(data, dtype=pl.Float32),
                 }
             ),
             iens,

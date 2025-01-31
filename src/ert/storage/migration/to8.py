@@ -3,7 +3,7 @@ import json
 import os
 from pathlib import Path
 
-import polars
+import polars as pl
 import xarray as xr
 
 info = "Store observations & responses as parquet"
@@ -11,7 +11,7 @@ info = "Store observations & responses as parquet"
 
 @dataclasses.dataclass
 class ObservationDatasetInfo:
-    polars_df: polars.DataFrame
+    polars_df: pl.DataFrame
     response_type: str
     original_ds_path: Path
 
@@ -22,23 +22,23 @@ class ObservationDatasetInfo:
         response_key = ds.attrs["response"]
         response_type = "summary" if response_key == "summary" else "gen_data"
 
-        df = polars.from_pandas(
+        df = pl.from_pandas(
             ds.to_dataframe().dropna().reset_index(),
             schema_overrides={
-                "report_step": polars.UInt16,
-                "index": polars.UInt16,
-                "observations": polars.Float32,
-                "std": polars.Float32,
+                "report_step": pl.UInt16,
+                "index": pl.UInt16,
+                "observations": pl.Float32,
+                "std": pl.Float32,
             }
             if response_type == "gen_data"
             else {
-                "time": polars.Datetime("ms"),  # type: ignore
-                "observations": polars.Float32,
-                "std": polars.Float32,
+                "time": pl.Datetime("ms"),  # type: ignore
+                "observations": pl.Float32,
+                "std": pl.Float32,
             },
         )
 
-        df = df.with_columns(observation_key=polars.lit(observation_key))
+        df = df.with_columns(observation_key=pl.lit(observation_key))
 
         primary_key = (
             ["time"] if response_type == "summary" else ["report_step", "index"]
@@ -48,7 +48,7 @@ class ObservationDatasetInfo:
 
         if response_type == "gen_data":
             df = df.with_columns(
-                response_key=polars.lit(response_key),
+                response_key=pl.lit(response_key),
             )
 
         df = df[
@@ -80,18 +80,18 @@ def _migrate_responses_from_netcdf_to_parquet(path: Path) -> None:
                     (
                         "gen_data",
                         {
-                            "realization": polars.UInt16,
-                            "report_step": polars.UInt16,
-                            "index": polars.UInt16,
-                            "values": polars.Float32,
+                            "realization": pl.UInt16,
+                            "report_step": pl.UInt16,
+                            "index": pl.UInt16,
+                            "values": pl.Float32,
                         },
                     ),
                     (
                         "summary",
                         {
-                            "realization": polars.UInt16,
-                            "time": polars.Datetime("ms"),
-                            "values": polars.Float32,
+                            "realization": pl.UInt16,
+                            "time": pl.Datetime("ms"),
+                            "values": pl.Float32,
                         },
                     ),
                 ]:
@@ -102,7 +102,7 @@ def _migrate_responses_from_netcdf_to_parquet(path: Path) -> None:
                         )
 
                         pandas_df = xr_ds.to_dataframe().dropna().reset_index()
-                        polars_df = polars.from_pandas(
+                        polars_df = pl.from_pandas(
                             pandas_df,
                             schema_overrides=schema_overrides,  # type: ignore
                         )
@@ -143,7 +143,7 @@ def _migrate_observations_to_grouped_parquet(path: Path) -> None:
                 _info for _info in obs_ds_infos if _info.response_type == response_type
             ]
             if len(infos) > 0:
-                concatd_df = polars.concat([_info.polars_df for _info in infos])
+                concatd_df = pl.concat([_info.polars_df for _info in infos])
                 concatd_df.write_parquet(experiment / "observations" / response_type)
 
                 for _info in infos:

@@ -11,7 +11,7 @@ from enum import Enum
 from pathlib import Path
 from typing import Literal
 
-import polars
+import polars as pl
 import requests
 
 from ert.scheduler import create_driver
@@ -149,7 +149,7 @@ def get_opt_status(output_folder):
     objective_names = storage.data.objective_functions["objective_name"].to_list()
     control_names = storage.data.controls["control_name"].to_list()
 
-    expected_objectives = polars.concat(
+    expected_objectives = pl.concat(
         [
             b.batch_objectives.select(objective_names)
             for b in storage.data.batches
@@ -182,7 +182,7 @@ def get_opt_status(output_folder):
 
     return {
         "objective_history": expected_total_objective,
-        "control_history": polars.concat(
+        "control_history": pl.concat(
             [
                 b.realization_controls.select(control_names)
                 for b in storage.data.batches

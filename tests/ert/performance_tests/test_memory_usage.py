@@ -7,7 +7,7 @@ from textwrap import dedent
 
 import memray
 import numpy as np
-import polars
+import polars as pl
 import py
 import pytest
 import xtgeo
@@ -92,13 +92,13 @@ def fill_storage_with_data(poly_template: Path, ert_config: ErtConfig) -> None:
                 gendata_df = make_gen_data(df["index"].max() + 1)
                 gendata_df = gendata_df.insert_column(
                     0,
-                    polars.Series(np.full(len(gendata_df), response_key)).alias(
+                    pl.Series(np.full(len(gendata_df), response_key)).alias(
                         "response_key"
                     ),
                 )
                 gendatas.append(gendata_df)
 
-            source.save_response("gen_data", polars.concat(gendatas), real)
+            source.save_response("gen_data", pl.concat(gendatas), real)
 
             obs_time_list = ens_config.refcase.all_dates
 
@@ -123,12 +123,12 @@ def fill_storage_with_data(poly_template: Path, ert_config: ErtConfig) -> None:
         )
 
 
-def make_gen_data(obs: int, min_val: float = 0, max_val: float = 5) -> polars.DataFrame:
+def make_gen_data(obs: int, min_val: float = 0, max_val: float = 5) -> pl.DataFrame:
     data = np.random.default_rng().uniform(min_val, max_val, obs)
-    return polars.DataFrame(
+    return pl.DataFrame(
         {
-            "report_step": polars.Series(np.full(len(data), 0), dtype=polars.UInt16),
-            "index": polars.Series(range(len(data)), dtype=polars.UInt16),
+            "report_step": pl.Series(np.full(len(data), 0), dtype=pl.UInt16),
+            "index": pl.Series(range(len(data)), dtype=pl.UInt16),
             "values": data,
         }
     )
@@ -139,15 +139,15 @@ def make_summary_data(
     dates,
     min_val: float = 0,
     max_val: float = 5,
-) -> polars.DataFrame:
+) -> pl.DataFrame:
     data = np.random.default_rng().uniform(min_val, max_val, len(obs_keys) * len(dates))
 
-    return polars.DataFrame(
+    return pl.DataFrame(
         {
             "response_key": np.repeat(obs_keys, len(dates)),
-            "time": polars.Series(
-                np.tile(dates, len(obs_keys)).tolist()
-            ).dt.cast_time_unit("ms"),
+            "time": pl.Series(np.tile(dates, len(obs_keys)).tolist()).dt.cast_time_unit(
+                "ms"
+            ),
             "values": data,
         }
     )

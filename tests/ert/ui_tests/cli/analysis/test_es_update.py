@@ -4,7 +4,7 @@ from pathlib import Path
 from textwrap import dedent
 
 import numpy as np
-import polars
+import polars as pl
 import pytest
 from scipy.ndimage import gaussian_filter
 from xtgeo import RegularSurface, surface_from_file
@@ -34,15 +34,15 @@ def uniform_parameter():
 
 
 @pytest.fixture
-def obs() -> polars.DataFrame:
-    return polars.DataFrame(
+def obs() -> pl.DataFrame:
+    return pl.DataFrame(
         {
             "response_key": "RESPONSE",
             "observation_key": "OBSERVATION",
-            "report_step": polars.Series(np.full(3, 0), dtype=polars.UInt16),
-            "index": polars.Series([0, 1, 2], dtype=polars.UInt16),
-            "observations": polars.Series([1.0, 1.0, 1.0], dtype=polars.Float32),
-            "std": polars.Series([0.1, 1.0, 10.0], dtype=polars.Float32),
+            "report_step": pl.Series(np.full(3, 0), dtype=pl.UInt16),
+            "index": pl.Series([0, 1, 2], dtype=pl.UInt16),
+            "observations": pl.Series([1.0, 1.0, 1.0], dtype=pl.Float32),
+            "std": pl.Series([0.1, 1.0, 10.0], dtype=pl.Float32),
         }
     )
 

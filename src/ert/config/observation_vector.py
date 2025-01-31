@@ -13,7 +13,7 @@ from .summary_observation import SummaryObservation
 if TYPE_CHECKING:
     from datetime import datetime
 
-import polars
+import polars as pl
 
 
 @dataclass
@@ -30,7 +30,7 @@ class ObsVector:
     def __len__(self) -> int:
         return len(self.observations)
 
-    def to_dataset(self, active_list: list[int]) -> polars.DataFrame:
+    def to_dataset(self, active_list: list[int]) -> pl.DataFrame:
         if self.observation_type == ObservationType.GENERAL:
             dataframes = []
             for time_step, node in self.observations.items():
@@ -39,24 +39,22 @@ class ObsVector:
 
                 assert isinstance(node, GenObservation)
                 dataframes.append(
-                    polars.DataFrame(
+                    pl.DataFrame(
                         {
                             "response_key": self.data_key,
                             "observation_key": self.observation_key,
-                            "report_step": polars.Series(
+                            "report_step": pl.Series(
                                 np.full(len(node.indices), time_step),
-                                dtype=polars.UInt16,
+                                dtype=pl.UInt16,
                             ),
-                            "index": polars.Series(node.indices, dtype=polars.UInt16),
-                            "observations": polars.Series(
-                                node.values, dtype=polars.Float32
-                            ),
-                            "std": polars.Series(node.stds, dtype=polars.Float32),
+                            "index": pl.Series(node.indices, dtype=pl.UInt16),
+                            "observations": pl.Series(node.values, dtype=pl.Float32),
+                            "std": pl.Series(node.stds, dtype=pl.Float32),
                         }
                     )
                 )
 
-            combined = polars.concat(dataframes)
+            combined = pl.concat(dataframes)
             return combined
         elif self.observation_type == ObservationType.SUMMARY:
             observations = []
@@ -74,15 +72,15 @@ class ObsVector:
                 observations.append(n.value)
                 errors.append(n.std)
 
-            dates_series = polars.Series(dates).dt.cast_time_unit("ms")
+            dates_series = pl.Series(dates).dt.cast_time_unit("ms")
 
-            return polars.DataFrame(
+            return pl.DataFrame(
                 {
                     "response_key": actual_response_key,
                     "observation_key": actual_observation_keys,
                     "time": dates_series,
-                    "observations": polars.Series(observations, dtype=polars.Float32),
-                    "std": polars.Series(errors, dtype=polars.Float32),
+                    "observations": pl.Series(observations, dtype=pl.Float32),
+                    "std": pl.Series(errors, dtype=pl.Float32),
                 }
             )
         else:

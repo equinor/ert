@@ -1,7 +1,7 @@
 import datetime
 
 import pandas as pd
-import polars
+import polars as pl
 import pytest
 
 from ert.config import GenDataConfig, SummaryConfig
@@ -84,14 +84,14 @@ def test_data_for_key_doesnt_mistake_history_for_response(tmp_path):
         ensemble = experiment.create_ensemble(name="ensemble", ensemble_size=1)
         ensemble.save_response(
             "summary",
-            polars.DataFrame(
+            pl.DataFrame(
                 {
                     "response_key": ["FGPR", "FGPR"],
-                    "time": polars.Series(
+                    "time": pl.Series(
                         [datetime.datetime(2000, 1, 1), datetime.datetime(2000, 1, 2)],
-                        dtype=polars.Datetime("ms"),
+                        dtype=pl.Datetime("ms"),
                     ),
-                    "values": polars.Series([0.0, 1.0], dtype=polars.Float32),
+                    "values": pl.Series([0.0, 1.0], dtype=pl.Float32),
                 }
             ),
             0,
@@ -116,12 +116,12 @@ def test_data_for_key_returns_empty_gen_data_config(tmp_path):
 
         ensemble.save_response(
             "gen_data",
-            polars.DataFrame(
+            pl.DataFrame(
                 {
                     "response_key": "response",
-                    "report_step": polars.Series([0], dtype=polars.UInt16),
-                    "index": polars.Series([0], dtype=polars.UInt16),
-                    "values": polars.Series([0.0], dtype=polars.Float32),
+                    "report_step": pl.Series([0], dtype=pl.UInt16),
+                    "index": pl.Series([0], dtype=pl.UInt16),
+                    "values": pl.Series([0.0], dtype=pl.Float32),
                 }
             ),
             0,

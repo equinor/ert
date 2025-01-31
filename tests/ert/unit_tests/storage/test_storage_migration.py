@@ -5,7 +5,7 @@ import shutil
 from pathlib import Path
 
 import numpy as np
-import polars
+import polars as pl
 import pytest
 from packaging import version
 
@@ -413,20 +413,20 @@ def test_that_manual_update_from_migrated_storage_works(
         prior_ens = ensembles[0]
 
         assert set(experiment.observations["gen_data"].schema.items()) == {
-            ("index", polars.UInt16),
-            ("observation_key", polars.String),
-            ("observations", polars.Float32),
-            ("report_step", polars.UInt16),
-            ("response_key", polars.String),
-            ("std", polars.Float32),
+            ("index", pl.UInt16),
+            ("observation_key", pl.String),
+            ("observations", pl.Float32),
+            ("report_step", pl.UInt16),
+            ("response_key", pl.String),
+            ("std", pl.Float32),
         }
 
         assert set(experiment.observations["summary"].schema.items()) == {
-            ("observation_key", polars.String),
-            ("observations", polars.Float32),
-            ("response_key", polars.String),
-            ("std", polars.Float32),
-            ("time", polars.Datetime(time_unit="ms")),
+            ("observation_key", pl.String),
+            ("observations", pl.Float32),
+            ("response_key", pl.String),
+            ("std", pl.Float32),
+            ("time", pl.Datetime(time_unit="ms")),
         }
 
         prior_gendata = prior_ens.load_responses(
@@ -437,18 +437,18 @@ def test_that_manual_update_from_migrated_storage_works(
         )
 
         assert set(prior_gendata.schema.items()) == {
-            ("response_key", polars.String),
-            ("index", polars.UInt16),
-            ("realization", polars.UInt16),
-            ("report_step", polars.UInt16),
-            ("values", polars.Float32),
+            ("response_key", pl.String),
+            ("index", pl.UInt16),
+            ("realization", pl.UInt16),
+            ("report_step", pl.UInt16),
+            ("values", pl.Float32),
         }
 
         assert set(prior_smry.schema.items()) == {
-            ("response_key", polars.String),
-            ("time", polars.Datetime(time_unit="ms")),
-            ("realization", polars.UInt16),
-            ("values", polars.Float32),
+            ("response_key", pl.String),
+            ("time", pl.Datetime(time_unit="ms")),
+            ("realization", pl.UInt16),
+            ("values", pl.Float32),
         }
 
         posterior_ens = storage.create_ensemble(

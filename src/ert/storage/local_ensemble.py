@@ -29,7 +29,7 @@ if TYPE_CHECKING:
 
 logger = logging.getLogger(__name__)
 
-import polars
+import polars as pl
 
 
 class _Index(BaseModel):
@@ -572,17 +572,17 @@ class LocalEnsemble(BaseMode):
         return xr.open_dataset(input_path, engine="scipy")
 
     @require_write
-    def save_observation_scaling_factors(self, dataset: polars.DataFrame) -> None:
+    def save_observation_scaling_factors(self, dataset: pl.DataFrame) -> None:
         self._storage._to_parquet_transaction(
             self.mount_point / "observation_scaling_factors.parquet", dataset
         )
 
     def load_observation_scaling_factors(
         self,
-    ) -> polars.DataFrame | None:
+    ) -> pl.DataFrame | None:
         ds_path = self.mount_point / "observation_scaling_factors.parquet"
         if ds_path.exists():
-            return polars.read_parquet(ds_path)
+            return pl.read_parquet(ds_path)
 
         return None
 
@@ -604,9 +604,7 @@ class LocalEnsemble(BaseMode):
         file_path = os.path.join(self.mount_point, "corr_XY.nc")
         self._storage._to_netcdf_transaction(file_path, dataset)
 
-    def load_responses(
-        self, key: str, realizations: tuple[int, ...]
-    ) -> polars.DataFrame:
+    def load_responses(self, key: str, realizations: tuple[int, ...]) -> pl.DataFrame:
         """Load responses for key and realizations into xarray Dataset.
 
         For each given realization, response data is loaded from the NetCDF
@@ -629,7 +627,7 @@ class LocalEnsemble(BaseMode):
 
     def _load_responses_lazy(
         self, key: str, realizations: tuple[int, ...]
-    ) -> polars.LazyFrame:
+    ) -> pl.LazyFrame:
         """Load responses for key and realizations into xarray Dataset.
 
         For each given realization, response data is loaded from the NetCDF
@@ -662,14 +660,14 @@ class LocalEnsemble(BaseMode):
             input_path = self._realization_dir(realization) / f"{response_type}.parquet"
             if not input_path.exists():
                 raise KeyError(f"No response for key {key}, realization: {realization}")
-            df = polars.scan_parquet(input_path)
+            df = pl.scan_parquet(input_path)
 
             if select_key:
-                df = df.filter(polars.col("response_key") == key)
+                df = df.filter(pl.col("response_key") == key)
 
             loaded.append(df)
 
-        return polars.concat(loaded) if loaded else polars.DataFrame().lazy()
+        return pl.concat(loaded) if loaded else pl.DataFrame().lazy()
 
     @deprecated("Use load_responses")
     def load_all_summary_data(
@@ -827,7 +825,7 @@ class LocalEnsemble(BaseMode):
 
     @require_write
     def save_response(
-        self, response_type: str, data: polars.DataFrame, realization: int
+        self, response_type: str, data: pl.DataFrame, realization: int
     ) -> None:
         """
         Save dataset as response under group and realization index.
@@ -856,8 +854,8 @@ class LocalEnsemble(BaseMode):
         if "realization" not in data.columns:
             data.insert_column(
                 0,
-                polars.Series(
-                    "realization", np.full(len(data), realization), dtype=polars.UInt16
+                pl.Series(
+                    "realization", np.full(len(data), realization), dtype=pl.UInt16
                 ),
             )
 
@@ -906,11 +904,11 @@ class LocalEnsemble(BaseMode):
         self,
         selected_observations: Iterable[str],
         iens_active_index: npt.NDArray[np.int_],
-    ) -> polars.DataFrame:
+    ) -> pl.DataFrame:
         """Fetches and aligns selected observations with their corresponding simulated responses from an ensemble."""
         observations_by_type = self.experiment.observations
 
-        with polars.StringCache():
+        with pl.StringCache():
             dfs_per_response_type = []
             for (
                 response_type,
@@ -922,12 +920,12 @@ class LocalEnsemble(BaseMode):
                 observations_for_type = (
                     observations_by_type[response_type]
                     .filter(
-                        polars.col("observation_key").is_in(list(selected_observations))
+                        pl.col("observation_key").is_in(list(selected_observations))
                     )
                     .with_columns(
                         [
-                            polars.col("response_key")
-                            .cast(polars.Categorical)
+                            pl.col("response_key")
+                            .cast(pl.Categorical)
                             .alias("response_key")
                         ]
                     )
@@ -941,24 +939,22 @@ class LocalEnsemble(BaseMode):
                 reals = iens_active_index.tolist()
                 reals.sort()
                 # too much memory to do it all at once, go per realization
-                first_columns: polars.DataFrame | None = None
-                realization_columns: list[polars.DataFrame] = []
+                first_columns: pl.DataFrame | None = None
+                realization_columns: list[pl.DataFrame] = []
                 for real in reals:
                     responses = self._load_responses_lazy(
                         response_type, (real,)
                     ).with_columns(
                         [
-                            polars.col("response_key")
-                            .cast(polars.Categorical)
+                            pl.col("response_key")
+                            .cast(pl.Categorical)
                             .alias("response_key")
                         ]
                     )
 
                     # Filter out responses without observations
                     for col, observed_values in observed_cols.items():
-                        responses = responses.filter(
-                            polars.col(col).is_in(observed_values)
-                        )
+                        responses = responses.filter(pl.col(col).is_in(observed_values))
 
                     pivoted = responses.collect().pivot(
                         on="realization",
@@ -974,10 +970,10 @@ class LocalEnsemble(BaseMode):
                         # for this realization, each observation points
                         # to a NaN response.
                         joined = observations_for_type.with_columns(
-                            polars.Series(
+                            pl.Series(
                                 str(real),
                                 [np.nan] * len(observations_for_type),
-                                dtype=polars.Float32,
+                                dtype=pl.Float32,
                             )
                         )
                     elif "time" in pivoted:
@@ -996,7 +992,7 @@ class LocalEnsemble(BaseMode):
 
                     joined = (
                         joined.with_columns(
-                            polars.concat_str(
+                            pl.concat_str(
                                 response_cls.primary_key, separator=", "
                             ).alias(
                                 "__tmp_index_key__"
@@ -1031,11 +1027,9 @@ class LocalEnsemble(BaseMode):
                     continue
 
                 dfs_per_response_type.append(
-                    polars.concat(
-                        [first_columns, *realization_columns], how="horizontal"
-                    )
+                    pl.concat([first_columns, *realization_columns], how="horizontal")
                 )
 
-            return polars.concat(dfs_per_response_type, how="vertical").with_columns(
-                polars.col("response_key").cast(polars.String).alias("response_key")
+            return pl.concat(dfs_per_response_type, how="vertical").with_columns(
+                pl.col("response_key").cast(pl.String).alias("response_key")
             )

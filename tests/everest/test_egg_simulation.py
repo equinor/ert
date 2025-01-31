@@ -2,7 +2,7 @@ import io
 import json
 import os
 
-import polars
+import polars as pl
 import pytest
 
 from ert.config import ErtConfig
@@ -713,11 +713,11 @@ def test_egg_snapshot(snapshot, copy_egg_test_data_to_tmp):
         -1
     ]
 
-    def _df_to_string(df: polars.DataFrame):
+    def _df_to_string(df: pl.DataFrame):
         strbuf = io.StringIO()
         schema = df.schema
         df.with_columns(
-            polars.col(c) for c in df.columns if schema[c] == polars.Float32
+            pl.col(c) for c in df.columns if schema[c] == pl.Float32
         ).write_csv(strbuf)
 
         return strbuf.getvalue()

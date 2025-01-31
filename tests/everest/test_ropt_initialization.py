@@ -1,6 +1,6 @@
 import os.path
 
-import numpy
+import numpy as np
 import pytest
 from pydantic import ValidationError
 from ropt.enums import ConstraintType
@@ -42,8 +42,8 @@ def test_everest2ropt_controls_auto_scale():
     controls[0].auto_scale = True
     controls[0].scaled_range = [0.3, 0.7]
     ropt_config = everest2ropt(config)
-    assert numpy.allclose(ropt_config.variables.lower_bounds, 0.3)
-    assert numpy.allclose(ropt_config.variables.upper_bounds, 0.7)
+    assert np.allclose(ropt_config.variables.lower_bounds, 0.3)
+    assert np.allclose(ropt_config.variables.upper_bounds, 0.7)
 
 
 def test_everest2ropt_variables_auto_scale():
@@ -56,8 +56,8 @@ def test_everest2ropt_variables_auto_scale():
     assert ropt_config.variables.upper_bounds[0] == 0.1
     assert ropt_config.variables.lower_bounds[1] == 0.3
     assert ropt_config.variables.upper_bounds[1] == 0.7
-    assert numpy.allclose(ropt_config.variables.lower_bounds[2:], 0.0)
-    assert numpy.allclose(ropt_config.variables.upper_bounds[2:], 0.1)
+    assert np.allclose(ropt_config.variables.lower_bounds[2:], 0.0)
+    assert np.allclose(ropt_config.variables.upper_bounds[2:], 0.1)
 
 
 def test_everest2ropt_controls_input_constraint():
@@ -109,18 +109,18 @@ def test_everest2ropt_controls_input_constraint_auto_scale():
     controls[0].auto_scale = True
     controls[0].scaled_range = [0.3, 0.7]
 
-    scaled_rhs_values = rhs_values - numpy.matmul(
+    scaled_rhs_values = rhs_values - np.matmul(
         coefficients, min_values - 0.3 * (max_values - min_values) / 0.4
     )
     scaled_coefficients = coefficients * (max_values - min_values) / 0.4
     scaled_coefficients[:2, 1] = coefficients[:2, 1] * 2.0 / 0.4
 
     ropt_config = everest2ropt(config)
-    assert numpy.allclose(
+    assert np.allclose(
         ropt_config.linear_constraints.coefficients,
         scaled_coefficients,
     )
-    assert numpy.allclose(
+    assert np.allclose(
         ropt_config.linear_constraints.rhs_values[0],
         scaled_rhs_values[0],
     )
