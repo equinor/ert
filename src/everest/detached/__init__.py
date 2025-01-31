@@ -202,7 +202,7 @@ def get_opt_status(output_folder):
 
 def wait_for_server_to_stop(server_context: tuple[str, str, tuple[str, str]], timeout):
     """
-    Checks everest server has stoped _HTTP_REQUEST_RETRY times. Waits
+    Checks everest server has stopped _HTTP_REQUEST_RETRY times. Waits
     progressively longer between each check.
 
     Raise an exception when the timeout is reached.
