@@ -956,9 +956,10 @@ class LocalEnsemble(BaseMode):
 
                     # Filter out responses without observations
                     for col, observed_values in observed_cols.items():
-                        responses = responses.filter(
-                            polars.col(col).is_in(observed_values)
-                        )
+                        if col != "time":
+                            responses = responses.filter(
+                                polars.col(col).is_in(observed_values)
+                            )
 
                     pivoted = responses.collect().pivot(
                         on="realization",
