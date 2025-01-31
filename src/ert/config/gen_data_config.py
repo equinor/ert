@@ -5,7 +5,7 @@ from pathlib import Path
 from typing import Self
 
 import numpy as np
-import polars
+import polars as pl
 
 from ert.substitutions import substitute_runpath_name
 from ert.validation import rangestring_to_list
@@ -116,8 +116,8 @@ class GenDataConfig(ResponseConfig):
             report_steps_list=report_steps,
         )
 
-    def read_from_file(self, run_path: str, iens: int, iter: int) -> polars.DataFrame:
-        def _read_file(filename: Path, report_step: int) -> polars.DataFrame:
+    def read_from_file(self, run_path: str, iens: int, iter: int) -> pl.DataFrame:
+        def _read_file(filename: Path, report_step: int) -> pl.DataFrame:
             try:
                 data = np.loadtxt(filename, ndmin=1)
             except ValueError as err:
@@ -129,13 +129,13 @@ class GenDataConfig(ResponseConfig):
                 except ValueError as err:
                     raise InvalidResponseFile(str(err)) from err
                 data[active_list == 0] = np.nan
-            return polars.DataFrame(
+            return pl.DataFrame(
                 {
-                    "report_step": polars.Series(
-                        np.full(len(data), report_step), dtype=polars.UInt16
+                    "report_step": pl.Series(
+                        np.full(len(data), report_step), dtype=pl.UInt16
                     ),
-                    "index": polars.Series(np.arange(len(data)), dtype=polars.UInt16),
-                    "values": polars.Series(data, dtype=polars.Float32),
+                    "index": pl.Series(np.arange(len(data)), dtype=pl.UInt16),
+                    "values": pl.Series(data, dtype=pl.Float32),
                 }
             )
 
@@ -167,9 +167,9 @@ class GenDataConfig(ResponseConfig):
                         errors.append(err)
 
             if len(datasets_per_report_step) > 0:
-                ds_all_report_steps = polars.concat(datasets_per_report_step)
+                ds_all_report_steps = pl.concat(datasets_per_report_step)
                 ds_all_report_steps.insert_column(
-                    0, polars.Series("response_key", [name] * len(ds_all_report_steps))
+                    0, pl.Series("response_key", [name] * len(ds_all_report_steps))
                 )
                 datasets_per_name.append(ds_all_report_steps)
 
@@ -185,7 +185,7 @@ class GenDataConfig(ResponseConfig):
                     f"{self.name}, errors: {','.join([str(err) for err in errors])}"
                 )
 
-        combined = polars.concat(datasets_per_name)
+        combined = pl.concat(datasets_per_name)
         return combined
 
     def get_args_for_key(self, key: str) -> tuple[str | None, list[int] | None]:

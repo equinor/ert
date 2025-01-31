@@ -14,7 +14,7 @@ from typing import (
 
 import iterative_ensemble_smoother as ies
 import numpy as np
-import polars
+import polars as pl
 import psutil
 import scipy
 from iterative_ensemble_smoother.experimental import AdaptiveESMDA
@@ -222,14 +222,12 @@ def _load_observations_and_responses(
             scaling[obs_group_mask] *= scaling_factors
 
             scaling_factors_dfs.append(
-                polars.DataFrame(
+                pl.DataFrame(
                     {
                         "input_group": [", ".join(input_group)] * len(scaling_factors),
                         "index": indexes[obs_group_mask],
                         "obs_key": obs_keys[obs_group_mask],
-                        "scaling_factor": polars.Series(
-                            scaling_factors, dtype=polars.Float32
-                        ),
+                        "scaling_factor": pl.Series(scaling_factors, dtype=pl.Float32),
                     }
                 )
             )
@@ -259,7 +257,7 @@ def _load_observations_and_responses(
             )
 
         if scaling_factors_dfs:
-            scaling_factors_df = polars.concat(scaling_factors_dfs)
+            scaling_factors_df = pl.concat(scaling_factors_dfs)
             ensemble.save_observation_scaling_factors(scaling_factors_df)
 
             # Recompute with updated scales

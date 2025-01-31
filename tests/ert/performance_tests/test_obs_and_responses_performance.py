@@ -4,7 +4,7 @@ from dataclasses import dataclass
 
 import memray
 import numpy as np
-import polars
+import polars as pl
 import pytest
 
 from ert.analysis import smoother_update
@@ -22,11 +22,11 @@ from ert.storage import open_storage
 _rng = np.random.default_rng(0)
 
 
-def _add_noise_to_df_values(df: polars.DataFrame):
+def _add_noise_to_df_values(df: pl.DataFrame):
     return df.with_columns(
         (
-            polars.col("values")
-            + polars.Series(
+            pl.col("values")
+            + pl.Series(
                 "noise",
                 _rng.normal(loc=0, scale=2.5, size=len(df)),
             )
@@ -39,10 +39,10 @@ class ExperimentInfo:
     gen_kw_config: GenKwConfig
     gen_data_config: GenDataConfig
     summary_config: SummaryConfig
-    summary_observations: polars.DataFrame
-    summary_responses: polars.DataFrame
-    gen_data_responses: polars.DataFrame
-    gen_data_observations: polars.DataFrame
+    summary_observations: pl.DataFrame
+    summary_responses: pl.DataFrame
+    gen_data_responses: pl.DataFrame
+    gen_data_observations: pl.DataFrame
 
 
 def create_experiment_args(
@@ -94,44 +94,44 @@ def create_experiment_args(
 
     gen_data_response_keys = [f"gen_data_{i}" for i in range(num_gen_data_keys)]
 
-    gen_data_responses = polars.DataFrame(
+    gen_data_responses = pl.DataFrame(
         {
             "response_key": gen_data_response_keys
             * (num_gen_data_report_steps * num_gen_data_index),
-            "report_step": polars.Series(
+            "report_step": pl.Series(
                 gendata_report_steps * (num_gen_data_keys * num_gen_data_index),
-                dtype=polars.UInt16,
+                dtype=pl.UInt16,
             ),
-            "index": polars.Series(
+            "index": pl.Series(
                 gendata_indexes * (num_gen_data_keys * num_gen_data_report_steps),
-                dtype=polars.UInt16,
+                dtype=pl.UInt16,
             ),
-            "values": polars.Series(
+            "values": pl.Series(
                 _rng.normal(loc=10, scale=0.1, size=num_gendata_rows),
-                dtype=polars.Float32,
+                dtype=pl.Float32,
             ),
         }
     )
 
-    gen_data_observations = polars.DataFrame(
+    gen_data_observations = pl.DataFrame(
         {
             "observation_key": gen_obs_keys,
             "response_key": random.choices(gen_data_response_keys, k=num_gen_data_obs),
-            "report_step": polars.Series(
+            "report_step": pl.Series(
                 random.choices(gendata_report_steps, k=num_gen_data_obs),
-                dtype=polars.UInt16,
+                dtype=pl.UInt16,
             ),
-            "index": polars.Series(
+            "index": pl.Series(
                 random.choices(gendata_indexes, k=num_gen_data_obs),
-                dtype=polars.UInt16,
+                dtype=pl.UInt16,
             ),
-            "observations": polars.Series(
+            "observations": pl.Series(
                 _rng.normal(loc=10, scale=0.1, size=num_gen_data_obs),
-                dtype=polars.Float32,
+                dtype=pl.Float32,
             ),
-            "std": polars.Series(
+            "std": pl.Series(
                 _rng.normal(loc=0.2, scale=0.1, size=num_gen_data_obs),
-                dtype=polars.Float32,
+                dtype=pl.Float32,
             ),
         }
     )
@@ -147,24 +147,22 @@ def create_experiment_args(
         for i in range(num_summary_keys)
     ]
 
-    smry_response_key_series = polars.Series("response_key", summary_response_keys)
-    smry_time_series = polars.Series(
-        "time", summary_timesteps, dtype=polars.Datetime("ms")
-    )
-    smry_values_series = polars.Series(
+    smry_response_key_series = pl.Series("response_key", summary_response_keys)
+    smry_time_series = pl.Series("time", summary_timesteps, dtype=pl.Datetime("ms"))
+    smry_values_series = pl.Series(
         "values",
         _rng.normal(loc=10, scale=0.1, size=num_summary_keys),
-        dtype=polars.Float32,
+        dtype=pl.Float32,
     )
 
-    response_key_repeated = polars.concat(
+    response_key_repeated = pl.concat(
         [smry_response_key_series] * num_summary_timesteps
     )
-    time_repeated = polars.concat([smry_time_series] * num_summary_keys)
-    values_repeated = polars.concat([smry_values_series] * num_summary_timesteps)
+    time_repeated = pl.concat([smry_time_series] * num_summary_keys)
+    values_repeated = pl.concat([smry_values_series] * num_summary_timesteps)
 
     # Create the DataFrame
-    summary_responses = polars.DataFrame(
+    summary_responses = pl.DataFrame(
         {
             "response_key": response_key_repeated,
             "time": time_repeated,
@@ -172,21 +170,21 @@ def create_experiment_args(
         }
     )
 
-    summary_observations = polars.DataFrame(
+    summary_observations = pl.DataFrame(
         {
             "observation_key": [f"summary_obs_{i}" for i in range(num_summary_obs)],
             "response_key": random.choices(summary_response_keys, k=num_summary_obs),
-            "time": polars.Series(
+            "time": pl.Series(
                 random.choices(summary_timesteps, k=num_summary_obs),
-                dtype=polars.Datetime("ms"),
+                dtype=pl.Datetime("ms"),
             ),
-            "observations": polars.Series(
+            "observations": pl.Series(
                 _rng.normal(loc=10, scale=0.1, size=num_summary_obs),
-                dtype=polars.Float32,
+                dtype=pl.Float32,
             ),
-            "std": polars.Series(
+            "std": pl.Series(
                 _rng.normal(loc=0.2, scale=0.1, size=num_summary_obs),
-                dtype=polars.Float32,
+                dtype=pl.Float32,
             ),
         }
     )

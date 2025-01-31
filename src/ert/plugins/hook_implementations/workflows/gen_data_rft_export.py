@@ -4,9 +4,9 @@ import os
 from collections.abc import Sequence
 from typing import Any
 
-import numpy
+import numpy as np
 import pandas as pd
-import polars
+import polars as pl
 from PyQt6.QtWidgets import QCheckBox, QWidget
 
 from ert.config import CancelPluginException, ErtPlugin
@@ -27,8 +27,8 @@ def load_args(filename: str, column_names: list[str] | None = None) -> pd.DataFr
         else:
             raise ValueError("To many columns in input")
 
-    data = numpy.empty(shape=(rows, columns), dtype=numpy.float64)
-    data.fill(numpy.nan)
+    data = np.empty(shape=(rows, columns), dtype=np.float64)
+    data.fill(np.nan)
 
     row = 0
     with open(filename, encoding="utf-8") as fileH:
@@ -127,7 +127,7 @@ class GenDataRFTCSVExportJob(ErtPlugin):
             for obs_key in obs_keys:
                 well_key = obs_key.replace("RFT_", "")
 
-                obs_df = obs_df.filter(polars.col("observation_key").eq(obs_key))
+                obs_df = obs_df.filter(pl.col("observation_key").eq(obs_key))
                 response_key = obs_df["response_key"].unique().to_list()[0]
 
                 if len(obs_df["report_step"].unique()) != 1:
@@ -163,18 +163,16 @@ class GenDataRFTCSVExportJob(ErtPlugin):
                     }
                 ).with_columns(
                     [
-                        polars.lit(well_key).alias("Well").cast(polars.String),
-                        polars.lit(ensemble.name).alias("Ensemble").cast(polars.String),
-                        polars.lit(ensemble.iteration)
-                        .alias("Iteration")
-                        .cast(polars.UInt8),
-                        polars.lit(tvd_arg).alias("TVD").cast(polars.Float32),
+                        pl.lit(well_key).alias("Well").cast(pl.String),
+                        pl.lit(ensemble.name).alias("Ensemble").cast(pl.String),
+                        pl.lit(ensemble.iteration).alias("Iteration").cast(pl.UInt8),
+                        pl.lit(tvd_arg).alias("TVD").cast(pl.Float32),
                     ]
                 )
 
                 data.append(all_realization_frames)
 
-        frame = polars.concat(data)
+        frame = pl.concat(data)
 
         cols_index = ["Well", "Ensemble", "Iteration"]
         const_cols_right = ["ObsValue", "ObsStd"]

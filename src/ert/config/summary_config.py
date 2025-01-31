@@ -15,7 +15,7 @@ from .response_config import InvalidResponseFile, ResponseConfig
 from .responses_index import responses_index
 
 logger = logging.getLogger(__name__)
-import polars
+import polars as pl
 
 
 @dataclass
@@ -36,7 +36,7 @@ class SummaryConfig(ResponseConfig):
         base = self.input_files[0]
         return [f"{base}.UNSMRY", f"{base}.SMSPEC"]
 
-    def read_from_file(self, run_path: str, iens: int, iter: int) -> polars.DataFrame:
+    def read_from_file(self, run_path: str, iens: int, iter: int) -> pl.DataFrame:
         filename = substitute_runpath_name(self.input_files[0], iens, iter)
         _, keys, time_map, data = read_summary(f"{run_path}/{filename}", self.keys)
         if len(data) == 0 or len(keys) == 0:
@@ -49,12 +49,12 @@ class SummaryConfig(ResponseConfig):
 
         # Important: Pick lowest unit resolution to allow for using
         # datetimes many years into the future
-        time_map_series = polars.Series(time_map).dt.cast_time_unit("ms")
-        df = polars.DataFrame(
+        time_map_series = pl.Series(time_map).dt.cast_time_unit("ms")
+        df = pl.DataFrame(
             {
                 "response_key": keys,
                 "time": [time_map_series for _ in data],
-                "values": [polars.Series(row, dtype=polars.Float32) for row in data],
+                "values": [pl.Series(row, dtype=pl.Float32) for row in data],
             }
         )
         df = df.explode("values", "time")

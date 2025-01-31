@@ -1,7 +1,7 @@
 from functools import partial
 
 import numpy as np
-import polars
+import polars as pl
 import scipy as sp
 import xarray as xr
 import xtgeo
@@ -74,7 +74,7 @@ def test_and_benchmark_adaptive_localization_with_fields(
     grid.to_file("MY_EGRID.EGRID", "egrid")
 
     resp = GenDataConfig(keys=["RESPONSE"])
-    obs = polars.DataFrame(
+    obs = pl.DataFrame(
         {
             "response_key": "RESPONSE",
             "observation_key": "OBSERVATION",
@@ -128,7 +128,7 @@ def test_and_benchmark_adaptive_localization_with_fields(
 
         prior_ensemble.save_response(
             "gen_data",
-            polars.DataFrame(
+            pl.DataFrame(
                 {
                     "response_key": "RESPONSE",
                     "report_step": 0,

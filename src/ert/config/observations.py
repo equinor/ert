@@ -6,7 +6,7 @@ from pathlib import Path
 from typing import TYPE_CHECKING
 
 import numpy as np
-import polars
+import polars as pl
 
 from ert.validation import rangestring_to_list
 
@@ -43,7 +43,7 @@ class EnkfObs:
     obs_time: list[datetime] = field(default_factory=list)
 
     def __post_init__(self) -> None:
-        grouped: dict[str, list[polars.DataFrame]] = {}
+        grouped: dict[str, list[pl.DataFrame]] = {}
         for vec in self.obs_vectors.values():
             if vec.observation_type == ObservationType.SUMMARY:
                 if "summary" not in grouped:
@@ -57,12 +57,12 @@ class EnkfObs:
 
                 grouped["gen_data"].append(vec.to_dataset([]))
 
-        datasets: dict[str, polars.DataFrame] = {}
+        datasets: dict[str, pl.DataFrame] = {}
 
         for name, dfs in grouped.items():
             non_empty_dfs = [df for df in dfs if not df.is_empty()]
             if len(non_empty_dfs) > 0:
-                datasets[name] = polars.concat(non_empty_dfs).sort("observation_key")
+                datasets[name] = pl.concat(non_empty_dfs).sort("observation_key")
 
         self.datasets = datasets
 

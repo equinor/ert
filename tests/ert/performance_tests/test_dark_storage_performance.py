@@ -11,7 +11,7 @@ from urllib.parse import quote
 import memray
 import numpy as np
 import pandas as pd
-import polars
+import polars as pl
 import pytest
 from httpx import RequestError
 from starlette.testclient import TestClient
@@ -264,14 +264,14 @@ def test_plot_api_big_summary_memory_usage(
     for i in range(num_keys):
         dates += [datetime(2000, 1, 1) + timedelta(days=i)] * num_dates
 
-    dates_df = polars.Series(dates, dtype=polars.Datetime).dt.cast_time_unit("ms")
+    dates_df = pl.Series(dates, dtype=pl.Datetime).dt.cast_time_unit("ms")
 
-    keys_df = polars.Series([f"K{i}" for i in range(num_keys)])
-    values_df = polars.Series(list(range(num_keys * num_dates)), dtype=polars.Float32)
+    keys_df = pl.Series([f"K{i}" for i in range(num_keys)])
+    values_df = pl.Series(list(range(num_keys * num_dates)), dtype=pl.Float32)
 
-    big_summary = polars.DataFrame(
+    big_summary = pl.DataFrame(
         {
-            "response_key": polars.concat([keys_df] * num_dates),
+            "response_key": pl.concat([keys_df] * num_dates),
             "time": dates_df,
             "values": values_df,
         }

@@ -3,7 +3,7 @@ import os
 from pathlib import Path
 from tempfile import NamedTemporaryFile
 
-import polars
+import polars as pl
 
 info = "Migrate finalized response keys into configs"
 
@@ -48,7 +48,7 @@ def migrate(path: Path) -> None:
 
                         for real_dir in real_dirs:
                             if (real_dir / f"{response_type}.parquet").exists():
-                                df = polars.scan_parquet(
+                                df = pl.scan_parquet(
                                     real_dir / f"{response_type}.parquet"
                                 )
                                 response_keys = (

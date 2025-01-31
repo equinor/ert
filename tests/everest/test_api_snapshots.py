@@ -4,7 +4,7 @@ from pathlib import Path
 from typing import Any
 
 import orjson
-import polars
+import polars as pl
 import pytest
 
 from ert.config import SummaryConfig
@@ -94,15 +94,13 @@ def test_api_summary_snapshot(config_file, snapshot, cached_example):
             ).encode("utf-8"),
         )
 
-        smry_data = polars.DataFrame(
+        smry_data = pl.DataFrame(
             {
                 "response_key": ["FOPR", "FOPR", "WOPR", "WOPR", "FOPT", "FOPT"],
-                "time": polars.Series(
+                "time": pl.Series(
                     [datetime(2000, 1, 1) + timedelta(days=i) for i in range(6)]
                 ).dt.cast_time_unit("ms"),
-                "values": polars.Series(
-                    [0.2, 0.2, 1.0, 1.1, 3.3, 3.3], dtype=polars.Float32
-                ),
+                "values": pl.Series([0.2, 0.2, 1.0, 1.1, 3.3, 3.3], dtype=pl.Float32),
             }
         )
         for ens in experiment.ensembles:
@@ -128,27 +126,21 @@ def test_csv_export(config_file, cached_example, snapshot):
     api = EverestDataAPI(config)
     combined_df, pert_real_df, batch_df = api.export_dataframes()
 
-    def _sort_df(df: polars.DataFrame) -> polars.DataFrame:
+    def _sort_df(df: pl.DataFrame) -> pl.DataFrame:
         df_ = df.select(df.columns)
 
         sort_rows_by = df_.columns[0 : (min(len(df_.columns), 8))]
         return df_.sort(sort_rows_by)
 
     snapshot.assert_match(
-        _sort_df(
-            combined_df.with_columns(polars.col(polars.Float64).round(4))
-        ).write_csv(),
+        _sort_df(combined_df.with_columns(pl.col(pl.Float64).round(4))).write_csv(),
         "combined_df.csv",
     )
     snapshot.assert_match(
-        _sort_df(
-            pert_real_df.with_columns(polars.col(polars.Float64).round(4))
-        ).write_csv(),
+        _sort_df(pert_real_df.with_columns(pl.col(pl.Float64).round(4))).write_csv(),
         "pert_real_df.csv",
     )
     snapshot.assert_match(
-        _sort_df(
-            batch_df.with_columns(polars.col(polars.Float64).round(4))
-        ).write_csv(),
+        _sort_df(batch_df.with_columns(pl.col(pl.Float64).round(4))).write_csv(),
         "batch_df.csv",
     )

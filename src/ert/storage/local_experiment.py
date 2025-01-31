@@ -9,7 +9,7 @@ from typing import TYPE_CHECKING, Any
 from uuid import UUID
 
 import numpy as np
-import polars
+import polars as pl
 import xtgeo
 from pydantic import BaseModel
 
@@ -85,7 +85,7 @@ class LocalExperiment(BaseMode):
         *,
         parameters: list[ParameterConfig] | None = None,
         responses: list[ResponseConfig] | None = None,
-        observations: dict[str, polars.DataFrame] | None = None,
+        observations: dict[str, pl.DataFrame] | None = None,
         simulation_arguments: dict[Any, Any] | None = None,
         name: str | None = None,
     ) -> LocalExperiment:
@@ -303,10 +303,10 @@ class LocalExperiment(BaseMode):
         return [p.name for p in self.parameter_configuration.values() if p.update]
 
     @cached_property
-    def observations(self) -> dict[str, polars.DataFrame]:
+    def observations(self) -> dict[str, pl.DataFrame]:
         observations = sorted(self.mount_point.glob("observations/*"))
         return {
-            observation.name: polars.read_parquet(f"{observation}")
+            observation.name: pl.read_parquet(f"{observation}")
             for observation in observations
         }
 

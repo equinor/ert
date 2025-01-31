@@ -1,7 +1,6 @@
 import os
 from pathlib import Path
 
-import polars
 import polars as pl
 
 from ert.storage import open_storage
@@ -129,13 +128,11 @@ class EverestDataAPI:
 
     @property
     def single_objective_values(self):
-        batch_datas = polars.concat(
+        batch_datas = pl.concat(
             [
                 b.batch_objectives.select(
                     c for c in b.batch_objectives.columns if c != "merit_value"
-                ).with_columns(
-                    polars.lit(1 if b.is_improvement else 0).alias("accepted")
-                )
+                ).with_columns(pl.lit(1 if b.is_improvement else 0).alias("accepted"))
                 for b in self._ever_storage.data.batches
                 if b.realization_controls is not None
             ]
@@ -145,7 +142,7 @@ class EverestDataAPI:
 
         for o in objectives.to_dicts():
             batch_datas = batch_datas.with_columns(
-                polars.col(o["objective_name"]) * o["weight"] * o["normalization"]
+                pl.col(o["objective_name"]) * o["weight"] * o["normalization"]
             )
 
         columns = [
@@ -173,7 +170,7 @@ class EverestDataAPI:
         if not all_batch_data:
             return []
 
-        all_info = polars.concat(all_batch_data)
+        all_info = pl.concat(all_batch_data)
         objective_columns = [
             c
             for c in all_info.drop(["batch_id", "control_name"]).columns
@@ -243,7 +240,7 @@ class EverestDataAPI:
 
     def export_dataframes(
         self,
-    ) -> tuple[polars.DataFrame, polars.DataFrame, polars.DataFrame]:
+    ) -> tuple[pl.DataFrame, pl.DataFrame, pl.DataFrame]:
         batch_dfs_to_join = {}
         realization_dfs_to_join = {}
         perturbation_dfs_to_join = {}
@@ -253,8 +250,8 @@ class EverestDataAPI:
 
         def _try_append_df(
             batch_id: int,
-            df: polars.DataFrame | None,
-            target: dict[str, list[polars.DataFrame]],
+            df: pl.DataFrame | None,
+            target: dict[str, list[pl.DataFrame]],
         ):
             if df is not None:
                 if batch_id not in target:
@@ -262,19 +259,19 @@ class EverestDataAPI:
 
                 target[batch_id].append(df)
 
-        def try_append_batch_dfs(batch_id: int, *dfs: polars.DataFrame):
+        def try_append_batch_dfs(batch_id: int, *dfs: pl.DataFrame):
             for df_ in dfs:
                 _try_append_df(batch_id, df_, batch_dfs_to_join)
 
-        def try_append_realization_dfs(batch_id: int, *dfs: polars.DataFrame):
+        def try_append_realization_dfs(batch_id: int, *dfs: pl.DataFrame):
             for df_ in dfs:
                 _try_append_df(batch_id, df_, realization_dfs_to_join)
 
-        def try_append_perturbation_dfs(batch_id: int, *dfs: polars.DataFrame):
+        def try_append_perturbation_dfs(batch_id: int, *dfs: pl.DataFrame):
             for df_ in dfs:
                 _try_append_df(batch_id, df_, perturbation_dfs_to_join)
 
-        def pivot_gradient(df: polars.DataFrame) -> polars.DataFrame:
+        def pivot_gradient(df: pl.DataFrame) -> pl.DataFrame:
             pivoted_ = df.pivot(on="control_name", index="batch_id", separator=" wrt ")
             return pivoted_.rename(
                 {
@@ -314,8 +311,8 @@ class EverestDataAPI:
             )
 
         def _join_by_batch(
-            dfs: dict[int, list[polars.DataFrame]], on: list[str]
-        ) -> list[polars.DataFrame]:
+            dfs: dict[int, list[pl.DataFrame]], on: list[str]
+        ) -> list[pl.DataFrame]:
             """
             Creates one dataframe per batch, with one column per input/output,
             including control, objective, constraint, gradient value.
@@ -342,19 +339,19 @@ class EverestDataAPI:
             return dfs_to_concat_
 
         batch_dfs_to_concat = _join_by_batch(batch_dfs_to_join, on=["batch_id"])
-        batch_df = polars.concat(batch_dfs_to_concat, how="diagonal")
+        batch_df = pl.concat(batch_dfs_to_concat, how="diagonal")
 
         realization_dfs_to_concat = _join_by_batch(
             realization_dfs_to_join, on=["batch_id", "realization", "simulation_id"]
         )
-        realization_df = polars.concat(realization_dfs_to_concat, how="diagonal")
+        realization_df = pl.concat(realization_dfs_to_concat, how="diagonal")
 
         perturbation_dfs_to_concat = _join_by_batch(
             perturbation_dfs_to_join, on=["batch_id", "realization", "perturbation"]
         )
-        perturbation_df = polars.concat(perturbation_dfs_to_concat, how="diagonal")
+        perturbation_df = pl.concat(perturbation_dfs_to_concat, how="diagonal")
 
-        pert_real_df = polars.concat([realization_df, perturbation_df], how="diagonal")
+        pert_real_df = pl.concat([realization_df, perturbation_df], how="diagonal")
 
         pert_real_df = pert_real_df.select(
             "batch_id",
@@ -377,7 +374,7 @@ class EverestDataAPI:
             batch_df_renamed, on="batch_id", how="full", coalesce=True
         )
 
-        def _sort_df(df: polars.DataFrame, index: list[str]):
+        def _sort_df(df: pl.DataFrame, index: list[str]):
             sorted_cols = index + sorted(set(df.columns) - set(index))
             df_ = df.select(sorted_cols).sort(by=index)
             return df_

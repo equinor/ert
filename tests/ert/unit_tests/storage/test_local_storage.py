@@ -12,7 +12,7 @@ from uuid import UUID
 
 import hypothesis.strategies as st
 import numpy as np
-import polars
+import polars as pl
 import pytest
 import xarray as xr
 from hypothesis import assume, given, note, settings
@@ -94,10 +94,10 @@ def test_that_saving_empty_responses_fails_nicely(tmp_path):
             ValueError,
             match="Dataset for response group 'RESPONSE' must contain a 'values' variable",
         ):
-            ensemble.save_response("RESPONSE", polars.DataFrame(), 0)
+            ensemble.save_response("RESPONSE", pl.DataFrame(), 0)
 
         # Test for dataset with 'values' but no actual data
-        empty_data = polars.DataFrame(
+        empty_data = pl.DataFrame(
             {
                 "response_key": [],
                 "report_step": [],
@@ -122,15 +122,13 @@ def test_that_saving_response_updates_configs(tmp_path):
             experiment, ensemble_size=1, iteration=0, name="prior"
         )
 
-        summary_df = polars.DataFrame(
+        summary_df = pl.DataFrame(
             {
                 "response_key": ["FOPR", "FOPT:OP1", "FOPR:OP3", "FLAP", "F*"],
-                "time": polars.Series(
+                "time": pl.Series(
                     [datetime(2000, 1, i) for i in range(1, 6)]
                 ).dt.cast_time_unit("ms"),
-                "values": polars.Series(
-                    [0.0, 1.0, 2.0, 3.0, 4.0], dtype=polars.Float32
-                ),
+                "values": pl.Series([0.0, 1.0, 2.0, 3.0, 4.0], dtype=pl.Float32),
             }
         )
 
@@ -303,15 +301,13 @@ def test_that_reader_storage_reads_most_recent_response_configs(tmp_path):
     assert read_smry_config.keys == ["*", "FOPR"]
     assert not read_smry_config.has_finalized_keys
 
-    smry_data = polars.DataFrame(
+    smry_data = pl.DataFrame(
         {
             "response_key": ["FOPR", "FOPR", "WOPR", "WOPR", "FOPT", "FOPT"],
-            "time": polars.Series(
+            "time": pl.Series(
                 [datetime.now() + timedelta(days=i) for i in range(6)]
             ).dt.cast_time_unit("ms"),
-            "values": polars.Series(
-                [0.2, 0.2, 1.0, 1.1, 3.3, 3.3], dtype=polars.Float32
-            ),
+            "values": pl.Series([0.2, 0.2, 1.0, 1.1, 3.3, 3.3], dtype=pl.Float32),
         }
     )
 
@@ -651,7 +647,7 @@ class Experiment:
     ensembles: dict[UUID, Ensemble] = field(default_factory=dict)
     parameters: list[ParameterConfig] = field(default_factory=list)
     responses: list[ResponseConfig] = field(default_factory=list)
-    observations: dict[str, polars.DataFrame] = field(default_factory=dict)
+    observations: dict[str, pl.DataFrame] = field(default_factory=dict)
 
 
 @settings(max_examples=250)

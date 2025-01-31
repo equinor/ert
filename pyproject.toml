@@ -189,6 +189,7 @@ select = [
     "ASYNC", # flake8-async
     "RUF",   # ruff specific rules
     "UP",    # pyupgrade
+    "ICN",   # flake8-import-conventions
 ]
 preview = true
 ignore = [

@@ -6,7 +6,7 @@ from uuid import UUID
 
 import numpy as np
 import pandas as pd
-import polars
+import polars as pl
 import xarray as xr
 from polars.exceptions import ColumnNotFoundError
 
@@ -165,7 +165,7 @@ def data_for_key(
                 return pd.DataFrame()
 
             try:
-                vals = data.filter(polars.col("report_step").eq(report_step))
+                vals = data.filter(pl.col("report_step").eq(report_step))
                 pivoted = vals.drop("response_key", "report_step").pivot(
                     on="index", values="values"
                 )
@@ -227,7 +227,7 @@ def _get_observations(
 
     for response_type, df in experiment.observations.items():
         if observation_keys is not None:
-            df = df.filter(polars.col("observation_key").is_in(observation_keys))
+            df = df.filter(pl.col("observation_key").is_in(observation_keys))
 
         if df.is_empty():
             continue
@@ -240,9 +240,7 @@ def _get_observations(
                 "observations": "values",
             }
         )
-        df = df.with_columns(
-            polars.Series(name="x_axis", values=df.map_rows(x_axis_fn))
-        )
+        df = df.with_columns(pl.Series(name="x_axis", values=df.map_rows(x_axis_fn)))
         df = df.sort("x_axis")
 
         for obs_key, _obs_df in df.group_by("name"):
@@ -283,8 +281,8 @@ def get_observation_keys_for_response(
         if "gen_data" in ensemble.experiment.observations:
             observations = ensemble.experiment.observations["gen_data"]
             filtered = observations.filter(
-                polars.col("response_key").eq(response_key)
-                & polars.col("report_step").eq(report_step)
+                pl.col("response_key").eq(response_key)
+                & pl.col("report_step").eq(report_step)
             )
 
             if filtered.is_empty():
@@ -302,7 +300,7 @@ def get_observation_keys_for_response(
 
         if "summary" in ensemble.experiment.observations:
             observations = ensemble.experiment.observations["summary"]
-            filtered = observations.filter(polars.col("response_key").eq(response_key))
+            filtered = observations.filter(pl.col("response_key").eq(response_key))
 
             if filtered.is_empty():
                 return []

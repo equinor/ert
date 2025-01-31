@@ -5,7 +5,7 @@ from urllib.parse import quote
 
 import httpx
 import pandas as pd
-import polars
+import polars as pl
 import pytest
 import xarray as xr
 from pandas.testing import assert_frame_equal
@@ -209,24 +209,24 @@ def test_plot_api_handles_urlescape(api_and_storage):
             )
         ],
         observations={
-            "summary": polars.DataFrame(
+            "summary": pl.DataFrame(
                 {
                     "response_key": key,
                     "observation_key": "sumobs",
-                    "time": polars.Series([date]).dt.cast_time_unit("ms"),
-                    "observations": polars.Series([1.0], dtype=polars.Float32),
-                    "std": polars.Series([1.0], dtype=polars.Float32),
+                    "time": pl.Series([date]).dt.cast_time_unit("ms"),
+                    "observations": pl.Series([1.0], dtype=pl.Float32),
+                    "std": pl.Series([1.0], dtype=pl.Float32),
                 }
             )
         },
     )
     ensemble = experiment.create_ensemble(ensemble_size=1, name="ensemble")
     assert api.data_for_key(str(ensemble.id), key).empty
-    df = polars.DataFrame(
+    df = pl.DataFrame(
         {
             "response_key": [key],
-            "time": [polars.Series([date]).dt.cast_time_unit("ms")],
-            "values": [polars.Series([1.0], dtype=polars.Float32)],
+            "time": [pl.Series([date]).dt.cast_time_unit("ms")],
+            "values": [pl.Series([1.0], dtype=pl.Float32)],
         }
     )
     df = df.explode("values", "time")

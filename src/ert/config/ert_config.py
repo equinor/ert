@@ -17,7 +17,7 @@ from typing import (
     overload,
 )
 
-import polars
+import polars as pl
 from pydantic import ValidationError as PydanticValidationError
 from pydantic import field_validator
 from pydantic.dataclasses import dataclass, rebuild_dataclass
@@ -298,7 +298,7 @@ class ErtConfig:
             if self.user_config_file
             else os.getcwd()
         )
-        self.observations: dict[str, polars.DataFrame] = self.enkf_obs.datasets
+        self.observations: dict[str, pl.DataFrame] = self.enkf_obs.datasets
 
     @staticmethod
     def with_plugins(

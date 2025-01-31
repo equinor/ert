@@ -2,7 +2,7 @@ import dataclasses
 from abc import ABC, abstractmethod
 from typing import Any, Self
 
-import polars
+import polars as pl
 
 from ert.config.parameter_config import CustomDict
 from ert.config.parsing import ConfigDict
@@ -23,7 +23,7 @@ class ResponseConfig(ABC):
     has_finalized_keys: bool = False
 
     @abstractmethod
-    def read_from_file(self, run_path: str, iens: int, iter: int) -> polars.DataFrame:
+    def read_from_file(self, run_path: str, iens: int, iter: int) -> pl.DataFrame:
         """Reads the data for the response from run_path.
 
         Raises:

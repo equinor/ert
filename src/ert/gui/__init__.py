@@ -1,6 +1,6 @@
 import os
 
-import matplotlib
+import matplotlib as mpl
 
 import ert.shared
 
@@ -10,8 +10,8 @@ def headless() -> bool:
 
 
 if headless():
-    matplotlib.use("Agg")
+    mpl.use("Agg")
 else:
-    matplotlib.use("Qt5Agg")
+    mpl.use("Qt5Agg")
 
 __version__ = ert.shared.__version__

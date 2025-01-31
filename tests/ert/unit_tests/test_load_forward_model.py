@@ -4,7 +4,7 @@ from pathlib import Path
 from textwrap import dedent
 
 import numpy as np
-import polars
+import polars as pl
 import pytest
 from resdata.summary import Summary
 
@@ -181,7 +181,7 @@ def test_load_forward_model_gen_data(setup_case):
 
     LibresFacade.load_from_run_path(str(run_path), prior_ensemble, [0])
     df = prior_ensemble.load_responses("gen_data", (0,))
-    filter_cond = polars.col("report_step").eq(0), polars.col("values").is_not_nan()
+    filter_cond = pl.col("report_step").eq(0), pl.col("values").is_not_nan()
     assert df.filter(filter_cond)["values"].to_list() == [1.0, 3.0]
 
 
@@ -265,7 +265,7 @@ def test_loading_gen_data_without_restart(storage, run_paths, run_args):
 
     LibresFacade.load_from_run_path(str(run_path), prior_ensemble, [0])
     df = prior_ensemble.load_responses("RESPONSE", (0,))
-    df_no_nans = df.filter(polars.col("values").is_not_nan())
+    df_no_nans = df.filter(pl.col("values").is_not_nan())
     assert df_no_nans["values"].to_list() == [1.0, 3.0]
 
 
@@ -335,5 +335,5 @@ def test_loading_from_any_available_iter(storage, run_paths, run_args, itr):
     )
     facade.load_from_run_path(run_path_format, prior_ensemble, [0])
     df = prior_ensemble.load_responses("RESPONSE", (0,))
-    df_no_nans = df.filter(polars.col("values").is_not_nan())
+    df_no_nans = df.filter(pl.col("values").is_not_nan())
     assert df_no_nans["values"].to_list() == [1.0, 3.0]

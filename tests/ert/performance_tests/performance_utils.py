@@ -6,7 +6,7 @@ import sys
 import tempfile
 from pathlib import Path
 
-import numpy
+import numpy as np
 import py
 import resfo
 from jinja2 import Environment, FileSystemLoader
@@ -27,14 +27,14 @@ def source_dir() -> Path:
 
 def write_summary_spec(file, keywords):
     content = [
-        ("INTEHEAD", array([1, 100], dtype=numpy.int32)),
+        ("INTEHEAD", array([1, 100], dtype=np.int32)),
         ("RESTART ", [b"        "] * 8),
-        ("DIMENS  ", array([1 + len(keywords), 10, 10, 10, 0, -1], dtype=numpy.int32)),
+        ("DIMENS  ", array([1 + len(keywords), 10, 10, 10, 0, -1], dtype=np.int32)),
         ("KEYWORDS", [f"{x: <8}" for x in ["TIME", *keywords]]),
         ("WGNAMES ", [b":+:+:+:+"] * (len(keywords) + 1)),
-        ("NUMS    ", array([-32676] + ([0] * len(keywords)), dtype=numpy.int32)),
+        ("NUMS    ", array([-32676] + ([0] * len(keywords)), dtype=np.int32)),
         ("UNITS   ", [f"{x: <8}" for x in ["DAYS"] + ["None"] * len(keywords)]),
-        ("STARTDAT", array([1, 1, 2010, 0, 0, 0], dtype=numpy.int32)),
+        ("STARTDAT", array([1, 1, 2010, 0, 0, 0], dtype=np.int32)),
     ]
     resfo.write(file, content)
 
@@ -44,13 +44,13 @@ def write_summary_data(file, x_size, keywords, update_steps):
 
     def content_generator():
         for x in range(x_size):
-            yield "SEQHDR  ", array([0], dtype=numpy.int32)
+            yield "SEQHDR  ", array([0], dtype=np.int32)
             for m in range(update_steps):
                 step = x * update_steps + m
                 day = float(step + 1)
                 values = [5.0] * num_keys
-                yield "MINISTEP", array([step], dtype=numpy.int32)
-                yield "PARAMS  ", array([day, *values], dtype=numpy.float32)
+                yield "MINISTEP", array([step], dtype=np.int32)
+                yield "PARAMS  ", array([day, *values], dtype=np.float32)
 
     resfo.write(file, content_generator())
 

@@ -9,7 +9,7 @@ from pathlib import Path
 from typing import Any, TypedDict, cast
 
 import numpy as np
-import polars
+import polars as pl
 from ropt.enums import EventType
 from ropt.plan import BasicOptimizer, Event
 from ropt.results import FunctionResults, GradientResults, convert_to_maximize
@@ -27,28 +27,28 @@ class OptimalResult:
     total_objective: float
 
 
-def try_read_df(path: Path) -> polars.DataFrame | None:
-    return polars.read_parquet(path) if path.exists() else None
+def try_read_df(path: Path) -> pl.DataFrame | None:
+    return pl.read_parquet(path) if path.exists() else None
 
 
 @dataclass
 class BatchStorageData:
     batch_id: int
-    realization_controls: polars.DataFrame
-    batch_objectives: polars.DataFrame | None
-    realization_objectives: polars.DataFrame | None
-    batch_constraints: polars.DataFrame | None
-    realization_constraints: polars.DataFrame | None
-    batch_objective_gradient: polars.DataFrame | None
-    perturbation_objectives: polars.DataFrame | None
-    batch_constraint_gradient: polars.DataFrame | None
-    perturbation_constraints: polars.DataFrame | None
+    realization_controls: pl.DataFrame
+    batch_objectives: pl.DataFrame | None
+    realization_objectives: pl.DataFrame | None
+    batch_constraints: pl.DataFrame | None
+    realization_constraints: pl.DataFrame | None
+    batch_objective_gradient: pl.DataFrame | None
+    perturbation_objectives: pl.DataFrame | None
+    batch_constraint_gradient: pl.DataFrame | None
+    perturbation_constraints: pl.DataFrame | None
     is_improvement: bool | None = False
 
     @property
-    def existing_dataframes(self) -> dict[str, polars.DataFrame]:
+    def existing_dataframes(self) -> dict[str, pl.DataFrame]:
         return {
-            k: cast(polars.DataFrame, getattr(self, k))
+            k: cast(pl.DataFrame, getattr(self, k))
             for k in [
                 "batch_objectives",
                 "batch_objective_gradient",
@@ -67,10 +67,10 @@ class BatchStorageData:
 @dataclass
 class OptimizationStorageData:
     batches: list[BatchStorageData] = field(default_factory=list)
-    controls: polars.DataFrame | None = None
-    objective_functions: polars.DataFrame | None = None
-    nonlinear_constraints: polars.DataFrame | None = None
-    realization_weights: polars.DataFrame | None = None
+    controls: pl.DataFrame | None = None
+    objective_functions: pl.DataFrame | None = None
+    nonlinear_constraints: pl.DataFrame | None = None
+    realization_weights: pl.DataFrame | None = None
 
     def simulation_to_geo_realization_map(self, batch_id: int) -> dict[int, int]:
         """
@@ -95,9 +95,9 @@ class OptimizationStorageData:
         return mapping
 
     @property
-    def existing_dataframes(self) -> dict[str, polars.DataFrame]:
+    def existing_dataframes(self) -> dict[str, pl.DataFrame]:
         return {
-            k: cast(polars.DataFrame, getattr(self, k))
+            k: cast(pl.DataFrame, getattr(self, k))
             for k in [
                 "controls",
                 "objective_functions",
@@ -128,22 +128,22 @@ class OptimizationStorageData:
                 df.write_parquet(ensemble.optimizer_mount_point / f"{df_key}.parquet")
 
     def read_from_experiment(self, experiment: _OptimizerOnlyExperiment) -> None:
-        self.controls = polars.read_parquet(
+        self.controls = pl.read_parquet(
             experiment.optimizer_mount_point / "controls.parquet"
         )
-        self.objective_functions = polars.read_parquet(
+        self.objective_functions = pl.read_parquet(
             experiment.optimizer_mount_point / "objective_functions.parquet"
         )
 
         if (
             experiment.optimizer_mount_point / "nonlinear_constraints.parquet"
         ).exists():
-            self.nonlinear_constraints = polars.read_parquet(
+            self.nonlinear_constraints = pl.read_parquet(
                 experiment.optimizer_mount_point / "nonlinear_constraints.parquet"
             )
 
         if (experiment.optimizer_mount_point / "realization_weights.parquet").exists():
-            self.realization_weights = polars.read_parquet(
+            self.realization_weights = pl.read_parquet(
                 experiment.optimizer_mount_point / "realization_weights.parquet"
             )
 
@@ -226,19 +226,19 @@ class _OptimizerOnlyExperiment:
 
 @dataclass
 class _EvaluationResults(TypedDict):
-    realization_controls: polars.DataFrame
-    batch_objectives: polars.DataFrame
-    realization_objectives: polars.DataFrame
-    batch_constraints: polars.DataFrame | None
-    realization_constraints: polars.DataFrame | None
+    realization_controls: pl.DataFrame
+    batch_objectives: pl.DataFrame
+    realization_objectives: pl.DataFrame
+    batch_constraints: pl.DataFrame | None
+    realization_constraints: pl.DataFrame | None
 
 
 @dataclass
 class _GradientResults(TypedDict):
-    batch_objective_gradient: polars.DataFrame | None
-    perturbation_objectives: polars.DataFrame | None
-    batch_constraint_gradient: polars.DataFrame | None
-    perturbation_constraints: polars.DataFrame | None
+    batch_objective_gradient: pl.DataFrame | None
+    perturbation_objectives: pl.DataFrame | None
+    batch_constraint_gradient: pl.DataFrame | None
+    perturbation_constraints: pl.DataFrame | None
 
 
 @dataclass
@@ -259,7 +259,7 @@ class EverestStorage:
         self.data = OptimizationStorageData()
 
     @staticmethod
-    def _rename_ropt_df_columns(df: polars.DataFrame) -> polars.DataFrame:
+    def _rename_ropt_df_columns(df: pl.DataFrame) -> pl.DataFrame:
         """
         Renames columns of a dataframe from ROPT to what will be displayed
         to the user.
@@ -286,25 +286,25 @@ class EverestStorage:
         return df.rename({k: v for k, v in renames.items() if k in df.columns})
 
     @staticmethod
-    def _enforce_dtypes(df: polars.DataFrame) -> polars.DataFrame:
+    def _enforce_dtypes(df: pl.DataFrame) -> pl.DataFrame:
         dtypes = {
-            "batch_id": polars.UInt32,
-            "perturbation": polars.UInt32,
-            "realization": polars.UInt32,
+            "batch_id": pl.UInt32,
+            "perturbation": pl.UInt32,
+            "realization": pl.UInt32,
             # -1 is used as a value in simulator cache.
             # thus we need signed, otherwise we could do unsigned
-            "simulation_id": polars.Int32,
-            "perturbed_evaluation_ids": polars.Int32,
-            "objective_name": polars.String,
-            "control_name": polars.String,
-            "constraint_name": polars.String,
-            "total_objective_value": polars.Float64,
-            "control_value": polars.Float64,
-            "objective_value": polars.Float64,
-            "constraint_value": polars.Float64,
-            "perturbed_control_value": polars.Float64,
-            "perturbed_objective_value": polars.Float64,
-            "perturbed_constraint_value": polars.Float64,
+            "simulation_id": pl.Int32,
+            "perturbed_evaluation_ids": pl.Int32,
+            "objective_name": pl.String,
+            "control_name": pl.String,
+            "constraint_name": pl.String,
+            "total_objective_value": pl.Float64,
+            "control_value": pl.Float64,
+            "objective_value": pl.Float64,
+            "constraint_value": pl.Float64,
+            "perturbed_control_value": pl.Float64,
+            "perturbed_objective_value": pl.Float64,
+            "perturbed_constraint_value": pl.Float64,
         }
 
         existing_cols = set(df.columns)
@@ -331,8 +331,8 @@ class EverestStorage:
         *,
         values: list[str],
         select: list,
-    ) -> polars.DataFrame:
-        df = polars.from_pandas(
+    ) -> pl.DataFrame:
+        df = pl.from_pandas(
             results.to_dataframe(field, select=values).reset_index(),
         ).select(select + values)
 
@@ -351,7 +351,7 @@ class EverestStorage:
             "realization": self.data.realization_weights["realization"],
         }
         df = df.with_columns(
-            polars.col(ropt_name).replace_strict(dict(enumerate(everest_names)))
+            pl.col(ropt_name).replace_strict(dict(enumerate(everest_names)))
             for ropt_name, everest_names in ropt_to_everest_names.items()
             if ropt_name in select
         )
@@ -396,10 +396,10 @@ class EverestStorage:
         )
 
     def init(self, everest_config: EverestConfig) -> None:
-        self.data.controls = polars.DataFrame(
+        self.data.controls = pl.DataFrame(
             {
-                "control_name": polars.Series(
-                    everest_config.formatted_control_names, dtype=polars.String
+                "control_name": pl.Series(
+                    everest_config.formatted_control_names, dtype=pl.String
                 ),
             }
         )
@@ -413,22 +413,22 @@ class EverestStorage:
             ),
             dtype=np.float64,
         )
-        self.data.objective_functions = polars.DataFrame(
+        self.data.objective_functions = pl.DataFrame(
             {
                 "objective_name": everest_config.objective_names,
-                "weight": polars.Series(weights / sum(weights), dtype=polars.Float64),
-                "normalization": polars.Series(
+                "weight": pl.Series(weights / sum(weights), dtype=pl.Float64),
+                "normalization": pl.Series(
                     [
                         1.0 if obj.normalization is None else obj.normalization
                         for obj in everest_config.objective_functions
                     ],
-                    dtype=polars.Float64,
+                    dtype=pl.Float64,
                 ),
             }
         )
 
         if everest_config.output_constraints is not None:
-            self.data.nonlinear_constraints = polars.DataFrame(
+            self.data.nonlinear_constraints = pl.DataFrame(
                 {
                     "constraint_name": everest_config.constraint_names,
                 }
@@ -436,10 +436,10 @@ class EverestStorage:
         else:
             self.data.nonlinear_constraints = None
 
-        self.data.realization_weights = polars.DataFrame(
+        self.data.realization_weights = pl.DataFrame(
             {
-                "realization": polars.Series(
-                    everest_config.model.realizations, dtype=polars.UInt32
+                "realization": pl.Series(
+                    everest_config.model.realizations, dtype=pl.UInt32
                 ),
             }
         )
@@ -733,7 +733,7 @@ class EverestStorage:
                     continue
 
                 b.batch_objectives = b.batch_objectives.with_columns(
-                    polars.lit(merit_value).alias("merit_value")
+                    pl.lit(merit_value).alias("merit_value")
                 )
                 b.is_improvement = True
         else:
@@ -784,7 +784,7 @@ class EverestStorage:
                     and "merit_value" in b.batch_objectives.columns
                 ),
                 sort_by=lambda b: b.batch_objectives.select(
-                    polars.col("merit_value").min()
+                    pl.col("merit_value").min()
                 ).item(),
             )
 
@@ -795,7 +795,7 @@ class EverestStorage:
                 batch=batch.batch_id,
                 controls=controls_dict,
                 total_objective=batch.batch_objectives.select(
-                    polars.col("total_objective_value").sample(n=1)
+                    pl.col("total_objective_value").sample(n=1)
                 ).item(),
             )
         else:
@@ -804,7 +804,7 @@ class EverestStorage:
                 filter_by=lambda b: b.batch_objectives is not None
                 and not b.batch_objectives.is_empty(),
                 sort_by=lambda b: -b.batch_objectives.select(
-                    polars.col("total_objective_value").sample(n=1)
+                    pl.col("total_objective_value").sample(n=1)
                 ).item(),
             )
 
@@ -815,7 +815,7 @@ class EverestStorage:
                 batch=batch.batch_id,
                 controls=controls_dict,
                 total_objective=batch.batch_objectives.select(
-                    polars.col("total_objective_value")
+                    pl.col("total_objective_value")
                 ).item(),
             )
 

@@ -6,7 +6,7 @@ from uuid import UUID
 
 import hypothesis.strategies as st
 import pandas as pd
-import polars
+import polars as pl
 import pytest
 from hypothesis import assume
 from hypothesis.stateful import rule
@@ -91,7 +91,7 @@ class DarkStorageStateTest(StatefulStorageTest):
         assert {dt[:10] for dt in df.columns} == {
             str(dt)[:10]
             for dt in model_ensemble.response_values[response_name].filter(
-                polars.col("response_key") == response_key
+                pl.col("response_key") == response_key
             )["time"]
         }
 

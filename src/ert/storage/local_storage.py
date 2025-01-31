@@ -15,7 +15,7 @@ from types import TracebackType
 from typing import Any
 from uuid import UUID, uuid4
 
-import polars
+import polars as pl
 import xarray as xr
 from filelock import FileLock, Timeout
 from pydantic import BaseModel, Field
@@ -301,7 +301,7 @@ class LocalStorage(BaseMode):
         self,
         parameters: list[ParameterConfig] | None = None,
         responses: list[ResponseConfig] | None = None,
-        observations: dict[str, polars.DataFrame] | None = None,
+        observations: dict[str, pl.DataFrame] | None = None,
         simulation_arguments: dict[Any, Any] | None = None,
         name: str | None = None,
     ) -> LocalExperiment:
@@ -575,7 +575,7 @@ class LocalStorage(BaseMode):
             os.rename(f.name, filename)
 
     def _to_parquet_transaction(
-        self, filename: str | os.PathLike[str], dataframe: polars.DataFrame
+        self, filename: str | os.PathLike[str], dataframe: pl.DataFrame
     ) -> None:
         """
         Writes the dataset to the filename as a transaction.

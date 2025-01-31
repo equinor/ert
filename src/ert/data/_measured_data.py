@@ -12,7 +12,7 @@ from typing import TYPE_CHECKING
 
 import numpy as np
 import pandas as pd
-import polars
+import polars as pl
 
 if TYPE_CHECKING:
     from ert.storage import Ensemble
@@ -106,7 +106,7 @@ class MeasuredData:
             response_cls,
         ) in ensemble.experiment.response_configuration.items():
             observations_for_type = observations_by_type[response_type].filter(
-                polars.col("observation_key").is_in(observation_keys)
+                pl.col("observation_key").is_in(observation_keys)
             )
             responses_for_type = ensemble.load_responses(
                 response_type,
@@ -142,7 +142,7 @@ class MeasuredData:
                 )
 
             joined = joined.sort(by="observation_key").with_columns(
-                polars.concat_str(response_cls.primary_key, separator=", ").alias(
+                pl.concat_str(response_cls.primary_key, separator=", ").alias(
                     "key_index"
                 )
             )
@@ -154,7 +154,7 @@ class MeasuredData:
             if not joined.is_empty():
                 dfs.append(joined)
 
-        df = polars.concat(dfs)
+        df = pl.concat(dfs)
         df = df.rename(
             {
                 "observations": "OBS",
