@@ -37,7 +37,6 @@ class RunModelTimeEvent(RunModelEvent):
 
 class RunModelUpdateBeginEvent(RunModelEvent):
     event_type: Literal["RunModelUpdateBeginEvent"] = "RunModelUpdateBeginEvent"
-    pass
 
 
 class RunModelDataEvent(RunModelEvent):

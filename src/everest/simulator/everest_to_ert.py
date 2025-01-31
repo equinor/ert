@@ -351,12 +351,7 @@ def _extract_data_operations(ever_config: EverestConfig):
     forward_model = []
     install_data = ever_config.install_data or []
     install_data += [
-        InstallDataConfig(
-            **{
-                "source": datafile,
-                "target": os.path.basename(datafile),
-            }
-        )
+        InstallDataConfig(source=datafile, target=os.path.basename(datafile))
         for datafile in _internal_data_files(ever_config)
     ]
 

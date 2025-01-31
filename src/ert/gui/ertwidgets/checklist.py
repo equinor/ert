@@ -126,7 +126,7 @@ class CheckList(QWidget):
     def filterList(self, filter_: str) -> None:
         filter_ = filter_.lower()
 
-        for index in range(0, self._list.count()):
+        for index in range(self._list.count()):
             item = self._list.item(index)
             assert item is not None
             text = item.text().lower()
@@ -140,7 +140,7 @@ class CheckList(QWidget):
         """
         Checks all visible items in the list.
         """
-        for index in range(0, self._list.count()):
+        for index in range(self._list.count()):
             item = self._list.item(index)
             assert item is not None
             if not item.isHidden():

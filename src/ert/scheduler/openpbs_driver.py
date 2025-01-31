@@ -101,7 +101,7 @@ def _parse_jobs_dict(jobs: Mapping[str, Mapping[str, str]]) -> dict[str, AnyJob]
 def parse_qstat(qstat_output: str) -> dict[str, dict[str, str]]:
     data: dict[str, dict[str, str]] = {}
     for line in qstat_output.splitlines():
-        if line.startswith("Job id  ") or line.startswith("-" * 16):
+        if line.startswith(("Job id  ", "-" * 16)):
             continue
         tokens = line.split(maxsplit=6)
         if len(tokens) >= 5 and tokens[0] and tokens[5]:

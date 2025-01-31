@@ -188,27 +188,25 @@ def test_upper_bound_output_constraint_def(copy_mocked_test_data_to_tmp):
         f.write(" ")
 
     config = EverestConfig.with_defaults(
-        **{
-            "wells": [{"name": "w07"}],
-            "output_constraints": [
-                {"name": "some_name", "upper_bound": 5000, "scale": 1.0},
-            ],
-            "config_path": os.getcwd() + "/conf_file",
-            "forward_model": [],
-            "controls": [
-                {
-                    "name": "group_0",
-                    "type": "well_control",
-                    "min": 0,
-                    "max": 1,
-                    "variables": [{"name": "w07", "initial_guess": 0.0633}],
-                }
-            ],
-            "environment": {"simulation_folder": "/tmp/everest"},
-            "optimization": {"algorithm": "optpp_q_newton"},
-            "model": {"realizations": [0]},
-            "objective_functions": [{"name": "npv_function"}],
-        }
+        wells=[{"name": "w07"}],
+        output_constraints=[
+            {"name": "some_name", "upper_bound": 5000, "scale": 1.0},
+        ],
+        config_path=os.getcwd() + "/conf_file",
+        forward_model=[],
+        controls=[
+            {
+                "name": "group_0",
+                "type": "well_control",
+                "min": 0,
+                "max": 1,
+                "variables": [{"name": "w07", "initial_guess": 0.0633}],
+            }
+        ],
+        environment={"simulation_folder": "/tmp/everest"},
+        optimization={"algorithm": "optpp_q_newton"},
+        model={"realizations": [0]},
+        objective_functions=[{"name": "npv_function"}],
     )
 
     # Check ropt conversion

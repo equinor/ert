@@ -34,7 +34,7 @@ def test_realization_sort_order(full_snapshot):
 
     model._add_snapshot(SnapshotModel.prerender(full_snapshot), "0")
 
-    for i in range(0, 100):
+    for i in range(100):
         iter_index = model.index(i, 0, model.index(0, 0, QModelIndex()))
 
         assert str(i) == str(iter_index.internalPointer().id_)

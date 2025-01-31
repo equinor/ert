@@ -12,7 +12,6 @@ from pydantic import BaseModel, ConfigDict
 
 class AnalysisEvent(BaseModel):
     model_config = ConfigDict(arbitrary_types_allowed=True, extra="forbid")
-    pass
 
 
 class AnalysisStatusEvent(AnalysisEvent):

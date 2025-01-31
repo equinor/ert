@@ -205,7 +205,7 @@ def test_detached_mode_config_base(copy_math_func_test_data_to_tmp):
 )
 def test_everserver_queue_config_equal_to_run_config(queue_system, cores):
     simulator_config = {"queue_system": {"name": queue_system, "max_running": cores}}
-    everest_config = EverestConfig.with_defaults(**{"simulator": simulator_config})
+    everest_config = EverestConfig.with_defaults(simulator=simulator_config)
     everest_config.server.queue_system = SimulatorConfig(**simulator_config)
 
 
@@ -216,10 +216,8 @@ def test_detached_mode_config_error():
     """
     with pytest.raises(ValueError, match="so must the everest server"):
         EverestConfig.with_defaults(
-            **{
-                "simulator": {"queue_system": {"name": "local"}},
-                "server": {"queue_system": {"name": "lsf"}},
-            }
+            simulator={"queue_system": {"name": "local"}},
+            server={"queue_system": {"name": "lsf"}},
         )
 
 
@@ -227,25 +225,19 @@ def test_detached_mode_config_error():
     "config, expected_result",
     [
         (
-            EverestConfig.with_defaults(
-                **{"simulator": {"queue_system": {"name": "lsf"}}}
-            ),
+            EverestConfig.with_defaults(simulator={"queue_system": {"name": "lsf"}}),
             "lsf",
         ),
         (
             EverestConfig.with_defaults(
-                **{
-                    "simulator": {"queue_system": {"name": "lsf"}},
-                    "server": {"queue_system": {"name": "lsf"}},
-                }
+                simulator={"queue_system": {"name": "lsf"}},
+                server={"queue_system": {"name": "lsf"}},
             ),
             "lsf",
         ),
-        (EverestConfig.with_defaults(**{}), "local"),
+        (EverestConfig.with_defaults(), "local"),
         (
-            EverestConfig.with_defaults(
-                **{"simulator": {"queue_system": {"name": "local"}}}
-            ),
+            EverestConfig.with_defaults(simulator={"queue_system": {"name": "local"}}),
             "local",
         ),
     ],
@@ -257,7 +249,7 @@ def test_find_queue_system(config: EverestConfig, expected_result):
 
 
 def test_generate_queue_options_no_config():
-    config = EverestConfig.with_defaults(**{})
+    config = EverestConfig.with_defaults()
     assert config.server.queue_system == LocalQueueOptions(max_running=1)
 
 
@@ -292,9 +284,7 @@ def test_generate_queue_options_use_simulator_values(
         "activate_script",
         MagicMock(return_value=activate_script()),
     )
-    config = EverestConfig.with_defaults(
-        **{"simulator": {"queue_system": queue_options}}
-    )
+    config = EverestConfig.with_defaults(simulator={"queue_system": queue_options})
     assert config.server.queue_system == expected_result
 
 

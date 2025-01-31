@@ -94,10 +94,8 @@ def test_everest_to_ert_queue_config(config, config_class, tmp_path, monkeypatch
     general_options = {"resubmit_limit": 7}
     config |= general_queue_options
     ever_config = EverestConfig.with_defaults(
-        **{
-            "simulator": {"queue_system": config} | general_options,
-            "model": {"realizations": [0]},
-        }
+        simulator={"queue_system": config} | general_options,
+        model={"realizations": [0]},
     )
     ert_config = everest_to_ert_config(ever_config)
     assert ert_config.queue_config.queue_options == config_class(**config)
@@ -189,10 +187,8 @@ def test_install_data_no_init(tmp_path, source, target, symlink, cmd, monkeypatc
     Path("source_file").touch()
     Path.mkdir("source_folder")
     ever_config = EverestConfig.with_defaults(
-        **{
-            "model": {"realizations": [0]},
-            "install_data": [{"source": source, "target": target, "link": symlink}],
-        }
+        model={"realizations": [0]},
+        install_data=[{"source": source, "target": target, "link": symlink}],
     )
 
     errors = EverestConfig.lint_config_dict(ever_config.to_dict())
@@ -322,7 +318,7 @@ def test_workflow_job(tmp_path, monkeypatch):
     Path("TEST").write_text("EXECUTABLE echo", encoding="utf-8")
     workflow_jobs = [{"name": "test", "source": "TEST"}]
     ever_config = EverestConfig.with_defaults(
-        **{"install_workflow_jobs": workflow_jobs, "model": {"realizations": [0]}}
+        install_workflow_jobs=workflow_jobs, model={"realizations": [0]}
     )
     ert_config = everest_to_ert_config(ever_config)
     jobs = ert_config.workflow_jobs.get("test")
@@ -335,11 +331,9 @@ def test_workflows(tmp_path, monkeypatch):
     workflow_jobs = [{"name": "my_test", "source": "TEST"}]
     workflow = {"pre_simulation": ["my_test"]}
     ever_config = EverestConfig.with_defaults(
-        **{
-            "workflows": workflow,
-            "model": {"realizations": [0]},
-            "install_workflow_jobs": workflow_jobs,
-        }
+        workflows=workflow,
+        model={"realizations": [0]},
+        install_workflow_jobs=workflow_jobs,
     )
     ert_config = everest_to_ert_config(ever_config)
     jobs = ert_config.workflows.get("pre_simulation")
@@ -351,15 +345,13 @@ def test_user_config_jobs_precedence(tmp_path, monkeypatch):
     monkeypatch.chdir(tmp_path)
     existing_job = "recovery_factor"
     ert_config = everest_to_ert_config(
-        EverestConfig.with_defaults(**{"model": {"realizations": [0]}})
+        EverestConfig.with_defaults(model={"realizations": [0]})
     )
     assert existing_job in ert_config.installed_forward_model_steps
     Path("my_custom").write_text("EXECUTABLE echo", encoding="utf-8")
     ever_config = EverestConfig.with_defaults(
-        **{
-            "model": {"realizations": [0]},
-            "install_jobs": [{"name": existing_job, "source": "my_custom"}],
-        }
+        model={"realizations": [0]},
+        install_jobs=[{"name": existing_job, "source": "my_custom"}],
     )
     assert (
         everest_to_ert_config(ever_config)

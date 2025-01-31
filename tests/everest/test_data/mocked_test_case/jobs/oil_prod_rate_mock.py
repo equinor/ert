@@ -20,7 +20,7 @@ def main(argv):
     sum = {}
     sum["FOPR"] = 17 * [6000]
 
-    for i in range(0, len(times)):
+    for i in range(len(times)):
         val = sum.get("FOPR")[i]
         save_return_value(val, f"oil_prod_rate_{i:03d}")
 
