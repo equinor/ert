@@ -249,7 +249,7 @@ def server_is_running(url: str, cert: str, auth: tuple[str, str]) -> bool:
 def start_monitor(
     server_context: tuple[str, str, tuple[str, str]],
     callback: Callable[..., dict[str, Any]],
-    polling_interval: int = 5,
+    polling_interval: float = 0.1,
 ) -> None:
     """
     Checks status on Everest server and calls callback when status changes
