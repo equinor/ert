@@ -989,6 +989,7 @@ class LocalEnsemble(BaseMode):
                                 *[k for k in response_cls.primary_key if k != "time"],
                             ],
                             on="time",
+                            strategy="nearest",
                             tolerance="1s",
                         )
                     else:
