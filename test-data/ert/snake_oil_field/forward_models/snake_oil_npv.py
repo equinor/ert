@@ -80,7 +80,7 @@ if __name__ == "__main__":
     production_sums = summary.blocked_production("FOPT", date_ranges)
 
     npv = 0.0
-    for index in range(0, len(date_ranges) - 1):
+    for index in range(len(date_ranges) - 1):
         date = date_ranges[index + 1]  # end of period
         production_sum = production_sums[index]
 

@@ -70,7 +70,7 @@ def make_ensemble(queue_config):
         monkeypatch.setattr(ert.scheduler.job, "forward_model_ok", load_successful)
         with tmpdir.as_cwd():
             forward_model_list = []
-            for job_index in range(0, num_jobs):
+            for job_index in range(num_jobs):
                 forward_model_config = Path(tmpdir) / f"EXT_JOB_{job_index}"
                 with open(forward_model_config, "w", encoding="utf-8") as f:
                     f.write(f"EXECUTABLE ext_{job_index}.py\n")
@@ -96,7 +96,7 @@ def make_ensemble(queue_config):
                     )
                 )
             realizations = []
-            for iens in range(0, num_reals):
+            for iens in range(num_reals):
                 run_path = Path(tmpdir / f"real_{iens}")
                 os.mkdir(run_path)
 

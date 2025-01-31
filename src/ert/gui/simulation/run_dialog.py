@@ -482,7 +482,7 @@ class RunDialog(QFrame):
                 event.write_as_csv(self.output_path)
 
     def _get_update_widget(self, iteration: int) -> UpdateWidget:
-        for i in range(0, self._tab_widget.count()):
+        for i in range(self._tab_widget.count()):
             widget = self._tab_widget.widget(i)
             if isinstance(widget, UpdateWidget) and widget.iteration == iteration:
                 return widget

@@ -20,7 +20,7 @@ from tests.ert import SnapshotBuilder
 @pytest.fixture
 def small_snapshot() -> EnsembleSnapshot:
     builder = SnapshotBuilder()
-    for i in range(0, 2):
+    for i in range(2):
         builder.add_fm_step(
             fm_step_id=str(i),
             index=str(i),
@@ -33,7 +33,7 @@ def small_snapshot() -> EnsembleSnapshot:
             start_time=dt(1999, 1, 1),
             end_time=dt(2019, 1, 1),
         )
-    real_ids = [str(i) for i in range(0, 5)]
+    real_ids = [str(i) for i in range(5)]
     return builder.build(real_ids, REALIZATION_STATE_UNKNOWN)
 
 

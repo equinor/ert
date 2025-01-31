@@ -193,7 +193,7 @@ def test_version_mocked(capsys, monkeypatch):
 
 @pytest.mark.parametrize(
     "port_input,expected_range",
-    [("10-20", range(10, 21)), ("0-65535", range(0, 65536)), ("1-1", range(1, 2))],
+    [("10-20", range(10, 21)), ("0-65535", range(65536)), ("1-1", range(1, 2))],
 )
 def test_argparse_valid_port_range(port_input, expected_range):
     parsed = ert_parser(

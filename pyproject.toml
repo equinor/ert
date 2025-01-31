@@ -190,6 +190,7 @@ select = [
     "RUF",   # ruff specific rules
     "UP",    # pyupgrade
     "ICN",   # flake8-import-conventions
+    "PIE",   # flake8-pie
 ]
 preview = true
 ignore = [

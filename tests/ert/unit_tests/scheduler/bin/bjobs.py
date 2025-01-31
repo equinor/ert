@@ -57,14 +57,7 @@ def main() -> None:
         elif pid is not None:
             state = "RUN"
 
-        jobs_output.append(
-            Job(
-                **{
-                    "job_id": job,
-                    "job_state": state,
-                }
-            )
-        )
+        jobs_output.append(Job(job_id=job, job_state=state))
 
     print(bjobs_formatter(jobs_output))
 

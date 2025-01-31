@@ -58,13 +58,11 @@ def test_get_values(change_to_tmpdir):
         f.write(" ")
 
     config = EverestConfig.with_defaults(
-        **{
-            "environment": {
-                "output_folder": abs_out_dir,
-                "simulation_folder": "simulation_folder",
-            },
-            "config_path": Path(os.path.join(exp_dir, exp_file)),
-        }
+        environment={
+            "output_folder": abs_out_dir,
+            "simulation_folder": "simulation_folder",
+        },
+        config_path=Path(os.path.join(exp_dir, exp_file)),
     )
 
     config.environment.output_folder = rel_out_dir
@@ -147,7 +145,7 @@ def test_get_system_installed_job_names():
 def test_report_on_previous_run(_, change_to_tmpdir):
     with open("config_file", "w", encoding="utf-8") as f:
         f.write(" ")
-    config = EverestConfig.with_defaults(**{"config_path": "config_file"})
+    config = EverestConfig.with_defaults(config_path="config_file")
     with capture_streams() as (out, _):
         report_on_previous_run(
             config_file=config.config_file,

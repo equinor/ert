@@ -106,14 +106,12 @@ def main() -> None:
 
         jobs_output.append(
             Job(
-                **{
-                    "job_id": job,
-                    "user": "dummyuser",
-                    "job_name": job_name,
-                    "pend": pend,
-                    "run": max(0, end_time_millis - run_start_time_millis),
-                    "total": end_time_millis - submit_time_millis,
-                }
+                job_id=job,
+                user="dummyuser",
+                job_name=job_name,
+                pend=pend,
+                run=max(0, end_time_millis - run_start_time_millis),
+                total=end_time_millis - submit_time_millis,
             )
         )
     print(bhist_long_formatter(jobs_output) if args.l else bhist_formatter(jobs_output))

@@ -11,7 +11,7 @@ class TestEnsemble(Ensemble):
             Realization(
                 real_no,
                 fm_steps=[
-                    ForwardModelStep(str(fm_idx), "") for fm_idx in range(0, fm_steps)
+                    ForwardModelStep(str(fm_idx), "") for fm_idx in range(fm_steps)
                 ],
                 active=True,
                 max_runtime=0,
@@ -20,7 +20,7 @@ class TestEnsemble(Ensemble):
                 job_script=None,
                 realization_memory=0,
             )
-            for real_no in range(0, reals)
+            for real_no in range(reals)
         ]
         super().__init__(the_reals, {}, QueueConfig(), 0, id_)
 

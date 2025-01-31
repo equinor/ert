@@ -77,7 +77,7 @@ def full_snapshot() -> EnsembleSnapshot:
         },
     )
     snapshot = EnsembleSnapshot()
-    for i in range(0, 100):
+    for i in range(100):
         snapshot.add_realization(str(i), copy.deepcopy(real))
 
     return snapshot
@@ -106,7 +106,7 @@ def fail_snapshot() -> EnsembleSnapshot:
     snapshot = EnsembleSnapshot()
     snapshot._ensemble_state = ENSEMBLE_STATE_STARTED
 
-    for i in range(0, 1):
+    for i in range(1):
         snapshot.add_realization(str(i), copy.deepcopy(real))
 
     return snapshot
@@ -115,7 +115,7 @@ def fail_snapshot() -> EnsembleSnapshot:
 @pytest.fixture()
 def large_snapshot() -> EnsembleSnapshot:
     builder = SnapshotBuilder()
-    for i in range(0, 150):
+    for i in range(150):
         builder.add_fm_step(
             fm_step_id=str(i),
             index=str(i),
@@ -128,5 +128,5 @@ def large_snapshot() -> EnsembleSnapshot:
             start_time=dt(1999, 1, 1),
             end_time=dt(2019, 1, 1),
         )
-    real_ids = [str(i) for i in range(0, 150)]
+    real_ids = [str(i) for i in range(150)]
     return builder.build(real_ids, REALIZATION_STATE_UNKNOWN)

@@ -96,7 +96,7 @@ def test_that_negative_drill_time_raises_error():
 def test_that_cvar_attrs_are_mutex():
     cvar = {"percentile": 0.1, "number_of_realizations": 3}
     with pytest.raises(ValueError) as e:
-        EverestConfig.with_defaults(**{"optimization": {"cvar": cvar}})
+        EverestConfig.with_defaults(optimization={"cvar": cvar})
 
     assert has_error(e.value, match="Invalid CVaR section")
 
@@ -105,14 +105,12 @@ def test_that_cvar_attrs_are_mutex():
 def test_that_cvar_nreals_interval_outside_range_errors(nreals):
     with pytest.raises(ValueError) as e:
         EverestConfig.with_defaults(
-            **{
-                "optimization": {
-                    "cvar": {
-                        "number_of_realizations": nreals,
-                    }
-                },
-                "model": {"realizations": [1, 2, 3, 4, 5, 6]},
-            }
+            optimization={
+                "cvar": {
+                    "number_of_realizations": nreals,
+                }
+            },
+            model={"realizations": [1, 2, 3, 4, 5, 6]},
         )
 
     assert has_error(
@@ -124,14 +122,12 @@ def test_that_cvar_nreals_interval_outside_range_errors(nreals):
 @pytest.mark.parametrize("nreals", [1, 2, 3, 4, 5])
 def test_that_cvar_nreals_valid_doesnt_error(nreals):
     EverestConfig.with_defaults(
-        **{
-            "optimization": {
-                "cvar": {
-                    "number_of_realizations": nreals,
-                }
-            },
-            "model": {"realizations": [1, 2, 3, 4, 5, 6]},
-        }
+        optimization={
+            "cvar": {
+                "number_of_realizations": nreals,
+            }
+        },
+        model={"realizations": [1, 2, 3, 4, 5, 6]},
     )
 
 
@@ -505,17 +501,17 @@ def test_that_variable_perturbation_is_positive(perturbation, expected_error):
 
 def test_that_model_realizations_accept_only_positive_ints():
     with pytest.raises(ValueError) as e:
-        EverestConfig.with_defaults(**{"model": {"realizations": [-1, 1, 2, 3]}})
+        EverestConfig.with_defaults(model={"realizations": [-1, 1, 2, 3]})
 
     assert has_error(e.value, match="Input should be greater than or equal to 0")
 
-    EverestConfig.with_defaults(**{"model": {"realizations": [0, 1, 2, 3]}})
+    EverestConfig.with_defaults(model={"realizations": [0, 1, 2, 3]})
 
 
 def test_that_model_realizations_weights_must_correspond_to_realizations():
     with pytest.raises(ValueError) as e:
         EverestConfig.with_defaults(
-            **{"model": {"realizations": [1, 2, 3], "realizations_weights": [1, 2]}}
+            model={"realizations": [1, 2, 3], "realizations_weights": [1, 2]}
         )
     assert has_error(
         e.value, match="Specified realizations_weights must have one weight per"
@@ -523,26 +519,24 @@ def test_that_model_realizations_weights_must_correspond_to_realizations():
 
     with pytest.raises(ValueError) as e:
         EverestConfig.with_defaults(
-            **{
-                "model": {
-                    "realizations": [1, 2, 3],
-                    "realizations_weights": [1, 2, 3, 4],
-                }
+            model={
+                "realizations": [1, 2, 3],
+                "realizations_weights": [1, 2, 3, 4],
             }
         )
     assert has_error(
         e.value, match="Specified realizations_weights must have one weight per"
     )
 
-    EverestConfig.with_defaults(**{"model": {"realizations": [1, 2, 3]}})
+    EverestConfig.with_defaults(model={"realizations": [1, 2, 3]})
     EverestConfig.with_defaults(
-        **{"model": {"realizations": [1, 2, 3], "realizations_weights": [5, 5, -5]}}
+        model={"realizations": [1, 2, 3], "realizations_weights": [5, 5, -5]}
     )
 
 
 def test_that_missing_optimization_algorithm_errors():
     with pytest.raises(ValueError) as e:
-        EverestConfig.with_defaults(**{"optimization": {"algorithm": "ddlygldt"}})
+        EverestConfig.with_defaults(optimization={"algorithm": "ddlygldt"})
 
     assert has_error(e.value, match="Optimizer algorithm 'ddlygldt' not found")
 
@@ -559,27 +553,25 @@ def test_that_missing_optimization_algorithm_errors():
 )
 def test_that_some_optimization_attrs_must_be_positive(optimizer_attr):
     with pytest.raises(ValueError) as e:
-        EverestConfig.with_defaults(**{"optimization": {optimizer_attr: -1}})
+        EverestConfig.with_defaults(optimization={optimizer_attr: -1})
 
     assert has_error(e.value, match="(.*)Input should be greater than 0")
 
     with pytest.raises(ValueError) as e:
-        EverestConfig.with_defaults(**{"optimization": {optimizer_attr: 0}})
+        EverestConfig.with_defaults(optimization={optimizer_attr: 0})
 
     assert has_error(e.value, match="(.*)Input should be greater than 0")
 
-    EverestConfig.with_defaults(**{"optimization": {optimizer_attr: 1}})
+    EverestConfig.with_defaults(optimization={optimizer_attr: 1})
 
 
 def test_that_min_realizations_success_is_nonnegative():
     with pytest.raises(ValueError) as e:
-        EverestConfig.with_defaults(
-            **{"optimization": {"min_realizations_success": -1}}
-        )
+        EverestConfig.with_defaults(optimization={"min_realizations_success": -1})
 
     assert has_error(e.value, match="(.*)Input should be greater than or equal to 0")
 
-    EverestConfig.with_defaults(**{"optimization": {"min_realizations_success": 0}})
+    EverestConfig.with_defaults(optimization={"min_realizations_success": 0})
 
 
 @pytest.mark.parametrize(
@@ -894,7 +886,7 @@ def test_that_install_template_template_must_be_existing_file(change_to_tmpdir):
 
 def test_that_missing_required_fields_cause_error():
     with pytest.raises(ValidationError) as e:
-        EverestConfig(**{})
+        EverestConfig()
 
     error_dicts = e.value.errors()
 
@@ -985,7 +977,7 @@ def test_warning_forward_model_write_objectives(objective, forward_model, warnin
 
 def test_deprecated_keyword_report_steps():
     with pytest.warns(ConfigWarning, match="report_steps .* can be removed"):
-        ModelConfig(**{"realizations": [0], "report_steps": []})
+        ModelConfig(realizations=[0], report_steps=[])
 
 
 def test_load_file_non_existing():

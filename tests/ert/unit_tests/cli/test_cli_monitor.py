@@ -25,7 +25,7 @@ def test_legends():
     monitor = Monitor(out=StringIO())
     snapshot = EnsembleSnapshot()
     snapshot._ensemble_state = ""
-    for i in range(0, 100):
+    for i in range(100):
         status = REALIZATION_STATE_FINISHED if i < 10 else REALIZATION_STATE_RUNNING
         snapshot.add_realization(
             str(i), RealizationSnapshot(status=status, active=True)
@@ -68,7 +68,7 @@ def test_print_progress():
     monitor = Monitor(out=out)
     snapshot = EnsembleSnapshot()
     snapshot._ensemble_state = ""
-    for i in range(0, 100):
+    for i in range(100):
         status = REALIZATION_STATE_FINISHED if i < 50 else REALIZATION_STATE_WAITING
         snapshot.add_realization(
             str(i), RealizationSnapshot(status=status, active=True)
