@@ -39,14 +39,6 @@ def make_api_snapshot(api) -> dict[str, Any]:
         "single_objective_values": api.single_objective_values,
         "gradient_values": api.gradient_values,
         "objective_values": api.objective_values,
-        **{
-            f"input_constraint('{control}')": api.input_constraint(control)
-            for control in api.control_names
-        },
-        **{
-            f"output_constraint('{constraint}')": api.output_constraint(constraint)
-            for constraint in api.output_constraint_names
-        },
     }
 
     return api_json

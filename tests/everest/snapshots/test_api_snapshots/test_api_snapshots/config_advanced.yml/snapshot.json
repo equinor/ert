@@ -312,18 +312,6 @@
       "value": 0.2172204
     }
   ],
-  "input_constraint('point_x-0')": {
-    "max": 1.0,
-    "min": -1.0
-  },
-  "input_constraint('point_x-1')": {
-    "max": 1.0,
-    "min": -1.0
-  },
-  "input_constraint('point_x-2')": {
-    "max": 1.0,
-    "min": -1.0
-  },
   "objective_function_names": [
     "distance"
   ],
@@ -445,10 +433,6 @@
       "point_x-2": 0.38836369
     },
     "total_objective": -1.52561897
-  },
-  "output_constraint('x-0_coord')": {
-    "right_hand_side": 0.1,
-    "type": "ge"
   },
   "output_constraint_names": [
     "x-0_coord"

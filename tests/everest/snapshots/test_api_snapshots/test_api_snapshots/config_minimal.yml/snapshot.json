@@ -80,18 +80,6 @@
       "value": 0.79933798
     }
   ],
-  "input_constraint('point_x')": {
-    "max": 1.0,
-    "min": -1.0
-  },
-  "input_constraint('point_y')": {
-    "max": 1.0,
-    "min": -1.0
-  },
-  "input_constraint('point_z')": {
-    "max": 1.0,
-    "min": -1.0
-  },
   "objective_function_names": [
     "distance"
   ],
