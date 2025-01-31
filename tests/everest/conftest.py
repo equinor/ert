@@ -1,6 +1,7 @@
 import os
 import shutil
 import tempfile
+import time
 import warnings
 from collections.abc import Callable, Iterator
 from copy import deepcopy
@@ -145,11 +146,17 @@ def change_to_tmpdir(tmp_path, monkeypatch):
 
 
 @pytest.fixture
-def cached_example(pytestconfig):
+def cached_example(pytestconfig: pytest.Config):
     cache = pytestconfig.cache
 
     def run_config(test_data_case: str):
-        if cache.get(f"cached_example:{test_data_case}", None) is None:
+        if (
+            cache.get(
+                f"cached_example:{test_data_case}",
+                None,
+            )
+            is None
+        ):
             my_tmpdir = Path(tempfile.mkdtemp())
             config_path = (
                 Path(__file__) / f"../../../test-data/everest/{test_data_case}"
@@ -173,16 +180,24 @@ def cached_example(pytestconfig):
                 "controls": optimal_result.controls,
                 "total_objective": optimal_result.total_objective,
             }
+            if (
+                cache.get(
+                    f"cached_example:{test_data_case}",
+                    None,
+                )
+                is None
+            ):
+                cache.set(
+                    f"cached_example:{test_data_case}",
+                    (str(result_path), config_file, optimal_result_json),
+                )
 
-            cache.set(
-                f"cached_example:{test_data_case}",
-                (str(result_path), config_file, optimal_result_json),
-            )
-
-        result_path, config_file, optimal_result_json = cache.get(
-            f"cached_example:{test_data_case}", (None, None, None)
-        )
-
+        result = None
+        while result is None:
+            result = cache.get(f"cached_example:{test_data_case}", None)
+            time.sleep(0.1)
+        result_path, config_file, optimal_result_json = result
+        assert result_path is not None
         copied_tmpdir = tempfile.mkdtemp()
         shutil.copytree(result_path, Path(copied_tmpdir) / "everest")
         copied_path = str(Path(copied_tmpdir) / "everest")
