@@ -324,6 +324,43 @@ class EverestStorage:
 
         return df
 
+    def _ropt_to_df(
+        self,
+        results: FunctionResults | GradientResults,
+        field: str,
+        *,
+        values: list[str],
+        select: list,
+    ) -> polars.DataFrame:
+        df = polars.from_pandas(
+            results.to_dataframe(field, select=values).reset_index(),
+        ).select(select + values)
+
+        # The results from ropt do not contain any names, but indices referring
+        # to control names, objective names, etc. The corresponding names can be
+        # retrieved from the everest configuration and were stored in the init
+        # method. Here we replace the indices with those names:
+        ropt_to_everest_names = {
+            "variable": self.data.controls["control_name"],
+            "objective": self.data.objective_functions["objective_name"],
+            "nonlinear_constraint": (
+                self.data.nonlinear_constraints["constraint_name"]
+                if self.data.nonlinear_constraints is not None
+                else None
+            ),
+            "realization": self.data.realization_weights["realization"],
+        }
+        df = df.with_columns(
+            polars.col(ropt_name).replace_strict(dict(enumerate(everest_names)))
+            for ropt_name, everest_names in ropt_to_everest_names.items()
+            if ropt_name in select
+        )
+
+        df = self._rename_ropt_df_columns(df)
+        df = self._enforce_dtypes(df)
+
+        return df
+
     def write_to_output_dir(self) -> None:
         exp = _OptimizerOnlyExperiment(self._output_dir)
 
@@ -408,63 +445,28 @@ class EverestStorage:
         )
 
     def _store_function_results(self, results: FunctionResults) -> _EvaluationResults:
-        names = {
-            "variable": self.data.controls["control_name"],
-            "objective": self.data.objective_functions["objective_name"],
-            "nonlinear_constraint": (
-                self.data.nonlinear_constraints["constraint_name"]
-                if self.data.nonlinear_constraints is not None
-                else None
-            ),
-            "realization": self.data.realization_weights["realization"],
-        }
-
         # We could select only objective values,
         # but we select all to also get the constraint values (if they exist)
-        realization_objectives = polars.from_pandas(
-            results.to_dataframe(
-                "evaluations",
-                select=["objectives", "evaluation_ids"],
-                names=names,
-            ).reset_index(),
-        ).select(
-            "batch_id",
-            "realization",
-            "objective",
-            "objectives",
-            "evaluation_ids",
+        realization_objectives = self._ropt_to_df(
+            results,
+            "evaluations",
+            values=["objectives", "evaluation_ids"],
+            select=["batch_id", "realization", "objective"],
         )
 
         if results.functions is not None and results.functions.constraints is not None:
-            realization_constraints = polars.from_pandas(
-                results.to_dataframe(
-                    "evaluations",
-                    select=["constraints", "evaluation_ids"],
-                    names=names,
-                ).reset_index(),
-            ).select(
-                "batch_id",
-                "realization",
-                "evaluation_ids",
-                "nonlinear_constraint",
-                "constraints",
+            realization_constraints = self._ropt_to_df(
+                results,
+                "evaluations",
+                values=["constraints", "evaluation_ids"],
+                select=["batch_id", "realization", "nonlinear_constraint"],
             )
 
-            realization_constraints = self._rename_ropt_df_columns(
-                realization_constraints
-            )
-
-            batch_constraints = polars.from_pandas(
-                results.to_dataframe(
-                    "functions", select=["constraints"], names=names
-                ).reset_index()
-            ).select("batch_id", "nonlinear_constraint", "constraints")
-
-            batch_constraints = batch_constraints.rename(
-                {
-                    "nonlinear_constraint": "constraint_name",
-                    "constraints": "constraint_value",
-                }
+            batch_constraints = self._ropt_to_df(
+                results,
+                "functions",
+                values=["constraints"],
+                select=["batch_id", "nonlinear_constraint"],
             )
 
             batch_constraints = batch_constraints.pivot(
@@ -481,40 +483,25 @@ class EverestStorage:
             batch_constraints = None
             realization_constraints = None
 
-        batch_objectives = polars.from_pandas(
-            results.to_dataframe(
-                "functions",
-                select=["objectives", "weighted_objective"],
-                names=names,
-            ).reset_index()
-        ).select("batch_id", "objective", "objectives", "weighted_objective")
-
-        realization_controls = polars.from_pandas(
-            results.to_dataframe(
-                "evaluations", select=["variables", "evaluation_ids"], names=names
-            ).reset_index()
-        ).select(
-            "batch_id",
-            "variable",
-            "realization",
-            "variables",
-            "evaluation_ids",
+        batch_objectives = self._ropt_to_df(
+            results,
+            "functions",
+            values=["objectives", "weighted_objective"],
+            select=["batch_id", "objective"],
         )
 
-        realization_controls = self._rename_ropt_df_columns(realization_controls)
-        realization_controls = self._enforce_dtypes(realization_controls)
+        realization_controls = self._ropt_to_df(
+            results,
+            "evaluations",
+            values=["variables", "evaluation_ids"],
+            select=["batch_id", "variable", "realization"],
+        )
 
         realization_controls = realization_controls.pivot(
             on="control_name",
             values=["control_value"],
             separator=":",
         )
-
-        batch_objectives = self._rename_ropt_df_columns(batch_objectives)
-        batch_objectives = self._enforce_dtypes(batch_objectives)
-
-        realization_objectives = self._rename_ropt_df_columns(realization_objectives)
-        realization_objectives = self._enforce_dtypes(realization_objectives)
 
         batch_objectives = batch_objectives.pivot(
             on="objective_name",
@@ -541,65 +528,45 @@ class EverestStorage:
         }
 
     def _store_gradient_results(self, results: GradientResults) -> _GradientResults:
-        names = {
-            "variable": self.data.controls["control_name"],
-            "objective": self.data.objective_functions["objective_name"],
-            "nonlinear_constraint": (
-                self.data.nonlinear_constraints["constraint_name"]
-                if self.data.nonlinear_constraints is not None
-                else None
-            ),
-            "realization": self.data.realization_weights["realization"],
-        }
-
-        perturbation_objectives = polars.from_pandas(
-            results.to_dataframe("evaluations", names=names).reset_index()
-        ).select(
-            [
-                "batch_id",
-                "variable",
-                "realization",
-                "perturbation",
-                "objective",
-                "variables",
-                "perturbed_variables",
-                "perturbed_objectives",
-                "perturbed_evaluation_ids",
-                *(
-                    ["nonlinear_constraint", "perturbed_constraints"]
-                    if results.evaluations.perturbed_constraints is not None
-                    else []
-                ),
-            ]
+        have_perturbed_constraints = (
+            results.evaluations.perturbed_constraints is not None
         )
-        perturbation_objectives = self._rename_ropt_df_columns(perturbation_objectives)
-        perturbation_objectives = self._enforce_dtypes(perturbation_objectives)
+        perturbation_objectives = self._ropt_to_df(
+            results,
+            "evaluations",
+            values=(
+                [
+                    "variables",
+                    "perturbed_variables",
+                    "perturbed_objectives",
+                    "perturbed_evaluation_ids",
+                ]
+                + (["perturbed_constraints"] if have_perturbed_constraints else [])
+            ),
+            select=(
+                ["batch_id", "variable", "realization", "perturbation", "objective"]
+                + (["nonlinear_constraint"] if have_perturbed_constraints else [])
+            ),
+        )
 
         if results.gradients is not None:
-            batch_objective_gradient = polars.from_pandas(
-                results.to_dataframe("gradients", names=names).reset_index()
-            ).select(
-                [
-                    "batch_id",
-                    "variable",
-                    "objective",
-                    "weighted_objective",
-                    "objectives",
-                    *(
-                        ["nonlinear_constraint", "constraints"]
-                        if results.gradients.constraints is not None
-                        else []
-                    ),
-                ]
+            have_constraints = results.gradients.constraints is not None
+            batch_objective_gradient = self._ropt_to_df(
+                results,
+                "gradients",
+                values=(
+                    ["weighted_objective", "objectives"]
+                    + (["constraints"] if have_constraints else [])
+                ),
+                select=(
+                    ["batch_id", "variable", "objective"]
+                    + (["nonlinear_constraint"] if have_constraints else [])
+                ),
             )
-            batch_objective_gradient = self._rename_ropt_df_columns(
-                batch_objective_gradient
-            )
-            batch_objective_gradient = self._enforce_dtypes(batch_objective_gradient)
         else:
             batch_objective_gradient = None
 
-        if results.evaluations.perturbed_constraints is not None:
+        if have_perturbed_constraints:
             perturbation_constraints = (
                 perturbation_objectives[
                     "batch_id",
