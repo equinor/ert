@@ -19,7 +19,6 @@ def test_simulator_cache(copy_math_func_test_data_to_tmp):
 
     config = EverestConfig.load_file("config_minimal.yml")
     config_dict = config.model_dump(exclude_none=True)
-    config_dict["simulator"] = {"enable_cache": True}
     config = EverestConfig.model_validate(config_dict)
 
     run_model = EverestRunModel.create(config)
