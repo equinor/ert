@@ -5,6 +5,7 @@ import logging
 import os
 import traceback
 from dataclasses import dataclass, field
+from functools import partial
 from pathlib import Path
 from typing import Any, TypedDict, cast
 
@@ -13,6 +14,7 @@ import polars as pl
 from ropt.enums import EventType
 from ropt.plan import BasicOptimizer, Event
 from ropt.results import FunctionResults, GradientResults, convert_to_maximize
+from ropt.transforms import OptModelTransforms
 
 from everest.config import EverestConfig
 from everest.strings import EVEREST
@@ -387,9 +389,12 @@ class EverestStorage:
         exp = _OptimizerOnlyExperiment(self._output_dir)
         self.data.read_from_experiment(exp)
 
-    def observe_optimizer(self, optimizer: BasicOptimizer) -> None:
+    def observe_optimizer(
+        self, optimizer: BasicOptimizer, transforms: OptModelTransforms
+    ) -> None:
         optimizer.add_observer(
-            EventType.FINISHED_EVALUATION, self._on_batch_evaluation_finished
+            EventType.FINISHED_EVALUATION,
+            partial(self._on_batch_evaluation_finished, transforms=transforms),
         )
         optimizer.add_observer(
             EventType.FINISHED_OPTIMIZER_STEP, self._on_optimization_finished
@@ -658,11 +663,14 @@ class EverestStorage:
             "perturbation_constraints": perturbation_constraints,
         }
 
-    def _on_batch_evaluation_finished(self, event: Event) -> None:
+    def _on_batch_evaluation_finished(
+        self, event: Event, transforms: OptModelTransforms
+    ) -> None:
         logger.debug("Storing batch results dataframes")
 
         converted_results = tuple(
-            convert_to_maximize(result) for result in event.data.get("results", [])
+            convert_to_maximize(result).transform_back(transforms)
+            for result in event.data.get("results", [])
         )
         results: list[FunctionResults | GradientResults] = []
 

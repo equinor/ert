@@ -8,6 +8,7 @@ from ropt.enums import ConstraintType
 from everest.config import EverestConfig
 from everest.config_file_loader import yaml_file_to_substituted_config_dict
 from everest.optimizer.everest2ropt import everest2ropt
+from everest.optimizer.opt_model_transforms import get_opt_model_transforms
 from tests.everest.utils import relpath
 
 _CONFIG_DIR = relpath("test_data/mocked_test_case")
@@ -41,7 +42,9 @@ def test_everest2ropt_controls_auto_scale():
     controls = config.controls
     controls[0].auto_scale = True
     controls[0].scaled_range = [0.3, 0.7]
-    ropt_config = everest2ropt(config)
+    ropt_config = everest2ropt(
+        config, transforms=get_opt_model_transforms(config.controls)
+    )
     assert np.allclose(ropt_config.variables.lower_bounds, 0.3)
     assert np.allclose(ropt_config.variables.upper_bounds, 0.7)
 
@@ -51,7 +54,9 @@ def test_everest2ropt_variables_auto_scale():
     controls = config.controls
     controls[0].variables[1].auto_scale = True
     controls[0].variables[1].scaled_range = [0.3, 0.7]
-    ropt_config = everest2ropt(config)
+    ropt_config = everest2ropt(
+        config, transforms=get_opt_model_transforms(config.controls)
+    )
     assert ropt_config.variables.lower_bounds[0] == 0.0
     assert ropt_config.variables.upper_bounds[0] == 0.1
     assert ropt_config.variables.lower_bounds[1] == 0.3
@@ -115,7 +120,9 @@ def test_everest2ropt_controls_input_constraint_auto_scale():
     scaled_coefficients = coefficients * (max_values - min_values) / 0.4
     scaled_coefficients[:2, 1] = coefficients[:2, 1] * 2.0 / 0.4
 
-    ropt_config = everest2ropt(config)
+    ropt_config = everest2ropt(
+        config, transforms=get_opt_model_transforms(config.controls)
+    )
     assert np.allclose(
         ropt_config.linear_constraints.coefficients,
         scaled_coefficients,
