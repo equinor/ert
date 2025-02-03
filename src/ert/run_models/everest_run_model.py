@@ -31,6 +31,7 @@ from ert.storage import open_storage
 from everest.config import ControlConfig, ControlVariableGuessListConfig, EverestConfig
 from everest.everest_storage import EverestStorage, OptimalResult
 from everest.optimizer.everest2ropt import everest2ropt
+from everest.optimizer.opt_model_transforms import get_opt_model_transforms
 from everest.simulator.everest_to_ert import everest_to_ert_config
 from everest.strings import EVEREST
 
@@ -96,7 +97,10 @@ class EverestRunModel(BaseRunModel):
         )
 
         self._everest_config = everest_config
-        self._ropt_config = everest2ropt(everest_config)
+        self._opt_model_transforms = get_opt_model_transforms(everest_config.controls)
+        self._ropt_config = everest2ropt(
+            everest_config, transforms=self._opt_model_transforms
+        )
 
         self._sim_callback = simulation_callback
         self._opt_callback = optimization_callback
@@ -191,7 +195,7 @@ class EverestRunModel(BaseRunModel):
             output_dir=Path(self._everest_config.optimization_output_dir),
         )
         self.ever_storage.init(self._everest_config)
-        self.ever_storage.observe_optimizer(optimizer)
+        self.ever_storage.observe_optimizer(optimizer, self._opt_model_transforms)
 
         # Run the optimization:
         optimizer_exit_code = optimizer.run().exit_code

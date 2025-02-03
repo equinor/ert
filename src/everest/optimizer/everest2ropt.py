@@ -2,8 +2,9 @@ import logging
 import os
 from typing import Any
 
-from ropt.config.enopt import EnOptConfig
+from ropt.config.enopt import EnOptConfig, EnOptContext
 from ropt.enums import ConstraintType, PerturbationType, VariableType
+from ropt.transforms import OptModelTransforms
 
 from everest.config import (
     EverestConfig,
@@ -22,38 +23,12 @@ def _parse_controls(controls: FlattenedControls, ropt_config):
         None if type_ is None else VariableType[type_.upper()]
         for type_ in controls.types
     ]
-    if all(item is None for item in controls.auto_scales):
-        offsets = None
-        scales = None
-    else:
-        scales = [
-            (ub - lb) / (sr[1] - sr[0]) if au else 1.0
-            for au, lb, ub, sr in zip(
-                controls.auto_scales,
-                controls.lower_bounds,
-                controls.upper_bounds,
-                controls.scaled_ranges,
-                strict=True,
-            )
-        ]
-        offsets = [
-            lb - sr[0] * sc if au else 0.0
-            for au, lb, sc, sr in zip(
-                controls.auto_scales,
-                controls.lower_bounds,
-                scales,
-                controls.scaled_ranges,
-                strict=True,
-            )
-        ]
     indices = [idx for idx, is_enabled in enumerate(controls.enabled) if is_enabled]
     ropt_config["variables"] = {
         "types": None if all(item is None for item in control_types) else control_types,
         "initial_values": controls.initial_guesses,
         "lower_bounds": controls.lower_bounds,
         "upper_bounds": controls.upper_bounds,
-        "offsets": offsets,
-        "scales": scales,
         "indices": indices if indices else None,
     }
 
@@ -367,7 +342,9 @@ def _parse_environment(
         ropt_config["gradient"]["seed"] = random_seed
 
 
-def everest2ropt(ever_config: EverestConfig) -> EnOptConfig:
+def everest2ropt(
+    ever_config: EverestConfig, transforms: OptModelTransforms | None = None
+) -> EnOptConfig:
     """Generate a ropt configuration from an Everest one
 
     NOTE: This method is a work in progress. So far only the some of
@@ -402,4 +379,7 @@ def everest2ropt(ever_config: EverestConfig) -> EnOptConfig:
         ropt_config=ropt_config,
     )
 
-    return EnOptConfig.model_validate(ropt_config)
+    return EnOptConfig.model_validate(
+        ropt_config,
+        context=None if transforms is None else EnOptContext(transforms=transforms),
+    )
