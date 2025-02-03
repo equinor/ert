@@ -109,6 +109,7 @@ class Job:
             if self._scheduler.submit_sleep_state:
                 await self._scheduler.submit_sleep_state.sleep_until_we_can_submit()
             await self._send(JobState.SUBMITTING)
+            submit_time = time.time()
             try:
                 await self.driver.submit(
                     self.real.iens,
@@ -128,6 +129,12 @@ class Job:
             await self._send(JobState.PENDING)
             await self.started.wait()
             self._start_time = time.time()
+            pending_time = self._start_time - submit_time
+            logger.info(
+                f"Pending time for realization {self.iens} "
+                f"was {pending_time:.2f} seconds "
+                f"(num_cpu={self.real.num_cpu} realization_memory={self.real.realization_memory})"
+            )
 
             await self._send(JobState.RUNNING)
             if self.real.max_runtime is not None and self.real.max_runtime > 0:
