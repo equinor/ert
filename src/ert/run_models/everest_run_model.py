@@ -327,9 +327,12 @@ class EverestRunModel(BaseRunModel):
         control_values: NDArray[np.float64],
         evaluator_context: EvaluatorContext,
         cached_results: dict[int, Any],
+        prefix: str = "",
     ) -> dict[int, dict[str, Any]]:
         def _add_controls(
-            controls_config: list[ControlConfig], values: NDArray[np.float64]
+            controls_config: list[ControlConfig],
+            values: NDArray[np.float64],
+            prefix: str = "",
         ) -> dict[str, Any]:
             batch_data_item: dict[str, Any] = {}
             value_list = values.tolist()
@@ -345,13 +348,28 @@ class EverestRunModel(BaseRunModel):
                     else:
                         variable_value = value_list.pop(0)
                     control_dict[variable.name] = variable_value
-                batch_data_item[control.name] = control_dict
+                batch_data_item[prefix + control.name] = control_dict
+            return batch_data_item
+
+        def _add_controls_with_rescaling(
+            controls_config: list[ControlConfig], values: NDArray[np.float64]
+        ) -> dict[str, Any]:
+            batch_data_item = _add_controls(controls_config, values)
+            if self._opt_model_transforms.variables is not None:
+                rescaled_item = _add_controls(
+                    controls_config,
+                    self._opt_model_transforms.variables.backward(values),
+                    prefix="rescaled-",
+                )
+                batch_data_item.update(rescaled_item)
             return batch_data_item
 
         active = evaluator_context.active
         realizations = evaluator_context.realizations
         return {
-            idx: _add_controls(self._everest_config.controls, control_values[idx, :])
+            idx: _add_controls_with_rescaling(
+                self._everest_config.controls, control_values[idx, :]
+            )
             for idx in range(control_values.shape[0])
             if (
                 idx not in cached_results
@@ -393,7 +411,12 @@ class EverestRunModel(BaseRunModel):
                         f"Key {key} has suffixes, a suffix must be specified"
                     )
 
-        if set(controls.keys()) != set(self._everest_config.control_names):
+        control_names = set(self._everest_config.control_names)
+        if self._opt_model_transforms.variables is not None:
+            control_names |= {
+                "rescaled-" + name for name in self._everest_config.control_names
+            }
+        if set(controls.keys()) != control_names:
             err_msg = "Mismatch between initialized and provided control names."
             raise KeyError(err_msg)
 

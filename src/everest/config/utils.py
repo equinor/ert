@@ -66,8 +66,6 @@ class FlattenedControls:
             for key in [
                 "control_type",
                 "enabled",
-                "auto_scale",
-                "scaled_range",
                 "min",
                 "max",
                 "perturbation_magnitude",

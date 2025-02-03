@@ -521,5 +521,11 @@ def everest_to_ert_config(ever_config: EverestConfig) -> ErtConfig:
             input_keys=_get_variables(control.variables),
             output_file=control.name + ".json",
         )
+        if control.auto_scale:
+            ens_config.parameter_configs["rescaled-" + control.name] = ExtParamConfig(
+                name="rescaled-" + control.name,
+                input_keys=_get_variables(control.variables),
+                output_file="rescaled-" + control.name + ".json",
+            )
 
     return ert_config

@@ -139,7 +139,6 @@ def test_math_func_auto_scaled_controls(
             {"weights": {"point.x": 1.0, "point.y": 1.0}, "upper_bound": 0.5}
         ],
     }
-    config_dict["forward_model"][0] += " --scaling -1 1 0.3 0.7"
     config = EverestConfig.model_validate(config_dict)
 
     # Act

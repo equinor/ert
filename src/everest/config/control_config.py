@@ -179,12 +179,6 @@ sampler to use the same perturbations for each realization.
     def ropt_control_type(self) -> VariableType:
         return VariableType[self.control_type.upper()]
 
-    @property
-    def has_auto_scale(self) -> bool:
-        return self.auto_scale or any(
-            variable.auto_scale for variable in self.variables
-        )
-
     @model_validator(mode="after")
     def validate_variables(self) -> Self:
         if self.variables is None:

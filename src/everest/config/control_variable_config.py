@@ -11,7 +11,7 @@ from pydantic import (
 from ropt.enums import VariableType
 
 from .sampler_config import SamplerConfig
-from .validation_utils import no_dots_in_string, valid_range
+from .validation_utils import no_dots_in_string
 
 
 class _ControlVariable(BaseModel):
@@ -33,24 +33,6 @@ ignored if the algorithm that is used does not support different control types.
 If `True`, the variable will be optimized, otherwise it will be fixed to the
 initial value.
 """,
-    )
-    auto_scale: bool | None = Field(
-        default=None,
-        description="""
-Can be set to true to re-scale variable from the range
-defined by [min, max] to the range defined by scaled_range (default [0, 1])
-""",
-    )
-    scaled_range: Annotated[tuple[float, float] | None, AfterValidator(valid_range)] = (
-        Field(
-            default=None,
-            description="""
-Can be used to set the range of the variable values
-after scaling (default = [0, 1]).
-
-This option has no effect if auto_scale is not set.
-""",
-        )
     )
     min: float | None = Field(
         default=None,

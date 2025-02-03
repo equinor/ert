@@ -49,22 +49,6 @@ def test_everest2ropt_controls_auto_scale():
     assert np.allclose(ropt_config.variables.upper_bounds, 0.7)
 
 
-def test_everest2ropt_variables_auto_scale():
-    config = EverestConfig.load_file(os.path.join(_CONFIG_DIR, _CONFIG_FILE))
-    controls = config.controls
-    controls[0].variables[1].auto_scale = True
-    controls[0].variables[1].scaled_range = [0.3, 0.7]
-    ropt_config = everest2ropt(
-        config, transforms=get_opt_model_transforms(config.controls)
-    )
-    assert ropt_config.variables.lower_bounds[0] == 0.0
-    assert ropt_config.variables.upper_bounds[0] == 0.1
-    assert ropt_config.variables.lower_bounds[1] == 0.3
-    assert ropt_config.variables.upper_bounds[1] == 0.7
-    assert np.allclose(ropt_config.variables.lower_bounds[2:], 0.0)
-    assert np.allclose(ropt_config.variables.upper_bounds[2:], 0.1)
-
-
 def test_everest2ropt_controls_input_constraint():
     config = EverestConfig.load_file(
         os.path.join(_CONFIG_DIR, "config_input_constraints.yml")
