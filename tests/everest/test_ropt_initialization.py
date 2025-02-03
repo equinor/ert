@@ -2,6 +2,7 @@ import os.path
 
 import numpy as np
 import pytest
+from orjson import orjson
 from pydantic import ValidationError
 from ropt.enums import ConstraintType
 
@@ -250,3 +251,40 @@ def test_everest2ropt_no_algorithm_name(copy_test_data_to_tmp):
     config.optimization.algorithm = None
     ropt_config = everest2ropt(config)
     assert ropt_config.optimizer.method == "optpp_q_newton"
+
+
+@pytest.mark.parametrize(
+    "case", ["config_advanced.yml", "config_multiobj.yml", "config_minimal.yml"]
+)
+def test_everest2ropt_snapshot(case, snapshot):
+    config = EverestConfig.load_file(
+        relpath(f"../../test-data/everest/math_func/{case}")
+    )
+    ropt_config = everest2ropt(config).model_dump()
+
+    def safe_default(obj):
+        if isinstance(obj, np.ndarray):
+            return obj.tolist()  # Convert numpy array to a list
+        elif isinstance(
+            obj, np.generic
+        ):  # Handles numpy scalars like np.int32, np.float64
+            return obj.item()
+        else:
+            return str(obj)
+
+        raise TypeError(f"Object of type {type(obj)} is not JSON serializable")
+
+    ropt_config["optimizer"]["output_dir"] = "not_relevant"
+    del ropt_config["original_inputs"]
+
+    ropt_config_str = (
+        orjson.dumps(
+            ropt_config,
+            option=orjson.OPT_INDENT_2 | orjson.OPT_SORT_KEYS,
+            default=safe_default,
+        )
+        .decode("utf-8")
+        .strip()
+        + "\n"
+    )
+    snapshot.assert_match(ropt_config_str, "ropt_config.json")

@@ -1,0 +1,115 @@
+{
+  "function_estimators": [
+    {
+      "method": "mean",
+      "options": {}
+    }
+  ],
+  "gradient": {
+    "boundary_types": [
+      3,
+      3,
+      3
+    ],
+    "merge_realizations": false,
+    "number_of_perturbations": 5,
+    "perturbation_magnitudes": [
+      0.01,
+      0.01,
+      0.01
+    ],
+    "perturbation_min_success": 5,
+    "perturbation_types": [
+      1,
+      1,
+      1
+    ],
+    "samplers": null,
+    "seed": [
+      999
+    ]
+  },
+  "linear_constraints": null,
+  "nonlinear_constraints": null,
+  "objectives": {
+    "auto_scale": [
+      false,
+      false
+    ],
+    "function_estimators": [
+      0,
+      0
+    ],
+    "realization_filters": null,
+    "scales": [
+      0.6666666666666666,
+      1.0
+    ],
+    "weights": [
+      0.6666666666666666,
+      0.3333333333333333
+    ]
+  },
+  "optimizer": {
+    "max_functions": null,
+    "max_iterations": null,
+    "method": "optpp_q_newton",
+    "options": {},
+    "output_dir": "not_relevant",
+    "parallel": true,
+    "speculative": false,
+    "split_evaluations": false,
+    "tolerance": 0.005
+  },
+  "realization_filters": [],
+  "realizations": {
+    "realization_min_success": 1,
+    "weights": [
+      1.0
+    ]
+  },
+  "samplers": [
+    {
+      "method": "scipy/default",
+      "options": {},
+      "shared": false
+    }
+  ],
+  "variables": {
+    "indices": [
+      0,
+      1,
+      2
+    ],
+    "initial_values": [
+      0.0,
+      0.0,
+      0.0
+    ],
+    "lower_bounds": [
+      -1.0,
+      -1.0,
+      -1.0
+    ],
+    "offsets": [
+      0.0,
+      0.0,
+      0.0
+    ],
+    "scales": [
+      1.0,
+      1.0,
+      1.0
+    ],
+    "types": [
+      1,
+      1,
+      1
+    ],
+    "upper_bounds": [
+      1.0,
+      1.0,
+      1.0
+    ]
+  }
+}
