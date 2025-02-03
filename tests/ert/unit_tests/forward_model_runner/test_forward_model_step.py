@@ -28,10 +28,6 @@ def test_run_with_process_failing(mock_process, mock_popen, mock_check_executabl
     )
     mock_process.return_value.wait.return_value = 9
 
-    mock_cpu_times = MagicMock()
-    mock_cpu_times.user = 0.0
-    mock_process.return_value.cpu_times.return_value = mock_cpu_times
-
     run = fmstep.run()
 
     assert isinstance(next(run), Start), "run did not yield Start message"
