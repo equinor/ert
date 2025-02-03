@@ -10,7 +10,6 @@ from ert.config.parsing import ConfigKeys as ErtConfigKeys
 from ert.ensemble_evaluator import EvaluatorServerConfig
 from ert.run_models.everest_run_model import EverestRunModel
 from everest.config import EverestConfig
-from everest.config.export_config import ExportConfig
 from everest.simulator.everest_to_ert import _everest_to_ert_config_dict
 from tests.everest.utils import (
     everest_default_jobs,
@@ -630,10 +629,11 @@ def test_opm_fail_explicit_summary_keys(copy_egg_test_data_to_tmp):
     config = EverestConfig.load_file(CONFIG_FILE)
     # The Everest config file will fail to load as an Eclipse data file
     config.model.data_file = os.path.realpath(CONFIG_FILE)
-    if "export" not in config:
-        config.export = ExportConfig()
+    if config.export is None:
+        config_dict = config.model_dump(exclude_none=True)
+        config_dict["export"] = {"keywords": extra_sum_keys}
+        config = EverestConfig.model_validate(config_dict)
 
-    config.export.keywords = extra_sum_keys
     assert len(EverestConfig.lint_config_dict(config.to_dict())) == 0
 
     ert_config = _everest_to_ert_config_dict(config)
