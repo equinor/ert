@@ -66,7 +66,7 @@ def _updated_initial_guess(conf_controls, opt_controls):
     conf_controls = copy(conf_controls)
 
     for control in conf_controls:
-        control_name = f"{control['name']}_"
+        control_name = f"{control['name']}."
         control.pop("initial_guess", None)
         batch_controls = {
             key.split(control_name)[-1]: val
@@ -78,7 +78,7 @@ def _updated_initial_guess(conf_controls, opt_controls):
             var_index = variable.get("index", None)
 
             if var_index is not None:
-                opt_control_name = f"{variable['name']}-{var_index}"
+                opt_control_name = f"{variable['name']}.{var_index}"
             else:
                 opt_control_name = variable["name"]
 

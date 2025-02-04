@@ -107,22 +107,23 @@ def _parse_objectives(objective_functions: list[ObjectiveFunctionConfig], ropt_c
 def _parse_input_constraints(
     controls: FlattenedControls,
     input_constraints: list[InputConstraintConfig] | None,
+    formatted_control_names: list[str],
+    formatted_control_names_dotdash: list[str],
     ropt_config,
 ):
     if not input_constraints:
         return
 
-    # TODO: Issue #9816 is intended to address the need for a more general
-    # naming scheme. This code should be revisited once that issue is resolved.
-    # Ideally the formatted_control_names property of the config is used.
-    formatted_names = [
-        (
-            f"{control_name[0]}.{control_name[1]}-{control_name[2]}"
-            if len(control_name) > 2
-            else f"{control_name[0]}.{control_name[1]}"
-        )
-        for control_name in controls.names
-    ]
+    def _get_control_index(name: str):
+        try:
+            matching_index = formatted_control_names.index(name.replace("-", "."))
+            return matching_index
+        except ValueError:
+            pass
+
+        # Dash is deprecated, should eventually be removed
+        # along with formatted_control_names_dotdash
+        return formatted_control_names_dotdash.index(name)
 
     coefficients_matrix = []
     rhs_values = []
@@ -135,9 +136,11 @@ def _parse_input_constraints(
             types.append(constraint_type)
 
     for constr in input_constraints:
-        coefficients = [0.0] * len(formatted_names)
+        coefficients = [0.0] * len(formatted_control_names)
         for name, value in constr.weights.items():
-            coefficients[formatted_names.index(name)] = value
+            index = _get_control_index(name)
+            coefficients[index] = value
+
         target = constr.target
         upper_bound = constr.upper_bound
         lower_bound = constr.lower_bound
@@ -358,7 +361,11 @@ def everest2ropt(
     _parse_controls(flattened_controls, ropt_config)
     _parse_objectives(ever_config.objective_functions, ropt_config)
     _parse_input_constraints(
-        flattened_controls, ever_config.input_constraints, ropt_config
+        flattened_controls,
+        ever_config.input_constraints,
+        ever_config.formatted_control_names,
+        ever_config.formatted_control_names_dotdash,
+        ropt_config,
     )
     _parse_output_constraints(ever_config.output_constraints, ropt_config)
     _parse_optimization(

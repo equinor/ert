@@ -23,7 +23,7 @@ def test_math_func_multiobj(cached_example):
     storage.read_from_output_dir()
     result = storage.get_optimal_result()
     # Check resulting points
-    x, y, z = (result.controls["point_" + p] for p in ("x", "y", "z"))
+    x, y, z = (result.controls["point." + p] for p in ("x", "y", "z"))
     assert x == pytest.approx(0.0, abs=0.05)
     assert y == pytest.approx(0.0, abs=0.05)
     assert z == pytest.approx(0.5, abs=0.05)
@@ -43,9 +43,9 @@ def test_math_func_advanced(cached_example):
     storage.read_from_output_dir()
     result = storage.get_optimal_result()
 
-    point_names = ["x-0", "x-1", "x-2"]
+    point_names = ["x.0", "x.1", "x.2"]
     # Check resulting points
-    x0, x1, x2 = (result.controls["point_" + p] for p in point_names)
+    x0, x1, x2 = (result.controls["point." + p] for p in point_names)
     assert x0 == pytest.approx(0.1, abs=0.05)
     assert x1 == pytest.approx(0.0, abs=0.05)
     assert x2 == pytest.approx(0.4, abs=0.05)
@@ -148,7 +148,7 @@ def test_math_func_auto_scaled_controls(
     run_model.run_experiment(evaluator_server_config)
 
     # Assert
-    x, y, z = (run_model.result.controls["point_" + p] for p in ("x", "y", "z"))
+    x, y, z = (run_model.result.controls["point." + p] for p in ("x", "y", "z"))
 
     assert x == pytest.approx(0.25, abs=0.05)
     assert y == pytest.approx(0.25, abs=0.05)

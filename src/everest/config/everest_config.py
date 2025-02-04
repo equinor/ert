@@ -45,6 +45,7 @@ from everest.util.forward_models import (
 from ..config_file_loader import yaml_file_to_substituted_config_dict
 from ..strings import (
     DEFAULT_OUTPUT_DIR,
+    EVEREST,
     OPTIMIZATION_LOG_DIR,
     OPTIMIZATION_OUTPUT_DIR,
     STORAGE_DIR,
@@ -419,27 +420,26 @@ and environment variables are exposed in the form 'os.NAME', for example:
         controls = self.controls
         if controls is None:
             return self
-        control_full_name = []
+        control_names = self.formatted_control_names
+        control_names_deprecated = self.formatted_control_names_dotdash
         errors = []
-        for c in controls:
-            for v in c.variables:
-                if isinstance(v, ControlVariableGuessListConfig):
-                    control_full_name.extend(
-                        f"{c.name}.{v.name}-{index}"
-                        for index, _ in enumerate(v.initial_guess, start=1)
-                    )
-                elif v.index is not None:
-                    control_full_name.append(f"{c.name}.{v.name}-{v.index}")
-                else:
-                    control_full_name.append(f"{c.name}.{v.name}")
 
         for input_const in input_constraints:
             for key in input_const.weights:
-                if key not in control_full_name:
+                if key in control_names_deprecated and key not in control_names:
+                    logging.getLogger(EVEREST).warning(
+                        f"Deprecated reference to control: {key} in input constraint."
+                    )
+                    print(
+                        f"Deprecated input control name: {key} "
+                        f"reference in input constraint. This format is deprecated, "
+                        f"please use only '.' as delimiters: {key.replace('-', '.')}"
+                    )
+                elif key not in control_names and key not in control_names_deprecated:
                     errors.append(
                         f"Input control weight name {key} "
                         f"does not match any instance of "
-                        f"control_name.variable_name-variable_index"
+                        f"control_name.variable_name.variable_index"
                     )
 
         if len(errors) > 0:  # Note: python3.11 ExceptionGroup will solve this nicely
@@ -628,11 +628,27 @@ and environment variables are exposed in the form 'os.NAME', for example:
             for variable in control.variables:
                 if isinstance(variable, ControlVariableGuessListConfig):
                     for index in range(1, len(variable.initial_guess) + 1):
-                        names.append(f"{control.name}_{variable.name}-{index}")
+                        names.append(f"{control.name}.{variable.name}.{index}")
                 elif variable.index is not None:
-                    names.append(f"{control.name}_{variable.name}-{variable.index}")
+                    names.append(f"{control.name}.{variable.name}.{variable.index}")
                 else:
-                    names.append(f"{control.name}_{variable.name}")
+                    names.append(f"{control.name}.{variable.name}")
+        return names
+
+    @property
+    def formatted_control_names_dotdash(self) -> list[str]:
+        # Note: Should be removed as the .- way of referencing controls
+        # from input constraints is removed
+        names = []
+        for control in self.controls:
+            for variable in control.variables:
+                if isinstance(variable, ControlVariableGuessListConfig):
+                    for index in range(1, len(variable.initial_guess) + 1):
+                        names.append(f"{control.name}.{variable.name}-{index}")
+                elif variable.index is not None:
+                    names.append(f"{control.name}.{variable.name}-{variable.index}")
+                else:
+                    names.append(f"{control.name}.{variable.name}")
         return names
 
     @property

@@ -9,91 +9,91 @@
     2
   ],
   "control_names": [
-    "point_x",
-    "point_y",
-    "point_z"
+    "point.x",
+    "point.y",
+    "point.z"
   ],
   "control_values": [
     {
       "batch": 0,
-      "control": "point_x",
+      "control": "point.x",
       "value": 0.0
     },
     {
       "batch": 0,
-      "control": "point_y",
+      "control": "point.y",
       "value": 0.0
     },
     {
       "batch": 0,
-      "control": "point_z",
+      "control": "point.z",
       "value": 0.0
     },
     {
       "batch": 1,
-      "control": "point_x",
+      "control": "point.x",
       "value": -0.00420218
     },
     {
       "batch": 1,
-      "control": "point_y",
+      "control": "point.y",
       "value": -0.0112982
     },
     {
       "batch": 1,
-      "control": "point_z",
+      "control": "point.z",
       "value": 1.0
     },
     {
       "batch": 2,
-      "control": "point_x",
+      "control": "point.x",
       "value": -0.00210079
     },
     {
       "batch": 2,
-      "control": "point_y",
+      "control": "point.y",
       "value": -0.00564829
     },
     {
       "batch": 2,
-      "control": "point_z",
+      "control": "point.z",
       "value": 0.49992811
     }
   ],
   "gradient_values": [
     {
       "batch": 0,
-      "control": "point_x",
+      "control": "point.x",
       "function": "distance_p",
       "value": 0.99589284
     },
     {
       "batch": 0,
-      "control": "point_x",
+      "control": "point.x",
       "function": "distance_q",
       "value": -3.00456477
     },
     {
       "batch": 0,
-      "control": "point_y",
+      "control": "point.y",
       "function": "distance_p",
       "value": 0.98866227
     },
     {
       "batch": 0,
-      "control": "point_y",
+      "control": "point.y",
       "function": "distance_q",
       "value": -3.011388
     },
     {
       "batch": 0,
-      "control": "point_z",
+      "control": "point.z",
       "function": "distance_p",
       "value": 1.00465235
     },
     {
       "batch": 0,
-      "control": "point_z",
+      "control": "point.z",
       "function": "distance_q",
       "value": 1.0044895
     }
@@ -161,9 +161,9 @@
   "optimal_result_json": {
     "batch": 2,
     "controls": {
-      "point_x": -0.00210079,
-      "point_y": -0.00564829,
-      "point_z": 0.49992811
+      "point.x": -0.00210079,
+      "point.y": -0.00564829,
+      "point.z": 0.49992811
     },
     "total_objective": -2.00004834
   },
