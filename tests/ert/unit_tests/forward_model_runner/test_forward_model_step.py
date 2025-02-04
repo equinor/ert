@@ -11,6 +11,7 @@ import pytest
 
 from _ert.forward_model_runner.forward_model_step import (
     ForwardModelStep,
+    ProcesstreeTimer,
     _get_processtree_data,
 )
 from _ert.forward_model_runner.reporting.message import Exited, Running, Start
@@ -319,3 +320,23 @@ def test_makedirs(monkeypatch, tmp_path):
         pass
     assert (tmp_path / "a/file").is_file()
     assert (tmp_path / "b/c/file").is_file()
+
+
+@pytest.mark.parametrize(
+    "snapshots, expected_total_seconds",
+    [
+        ([{}], 0.0),
+        ([{"1": 1.1}], 1.1),
+        ([{"1": 1.1}, {"1": 2.1}], 2.1),
+        ([{"1": 1.1}, {"1": 1.1}], 1.1),
+        ([{"1": 1.1}, {"2": 3.1}], 1.1 + 3.1),
+        ([{"1": 1.1}, {"1": 0.2}], 1.1 + 0.2),  # pid reuse
+    ],
+)
+def test_processtree_timer(
+    snapshots: list[dict[str, float]], expected_total_seconds: float
+):
+    timer = ProcesstreeTimer()
+    for snapshot in snapshots:
+        timer.update(snapshot)
+    assert timer.total_cpu_seconds() == expected_total_seconds

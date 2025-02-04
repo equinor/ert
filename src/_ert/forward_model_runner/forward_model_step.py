@@ -10,6 +10,7 @@ import sys
 import time
 import uuid
 from collections.abc import Generator, Sequence
+from dataclasses import dataclass, field
 from datetime import datetime as dt
 from pathlib import Path
 from subprocess import Popen, run
@@ -188,7 +189,7 @@ class ForwardModelStep:
 
         max_memory_usage = 0
         fm_step_pids = {int(process.pid)}
-        cpu_seconds_pr_pid: dict[str, float] = {}
+        cpu_seconds_processtree: ProcesstreeTimer = ProcesstreeTimer()
         while True:
             try:
                 exit_code = process.wait(timeout=self.MEMORY_POLL_PERIOD)
@@ -207,16 +208,7 @@ class ForwardModelStep:
             (memory_rss, cpu_seconds_snapshot, oom_score, pids) = _get_processtree_data(
                 process
             )
-            for pid, seconds in cpu_seconds_snapshot.items():
-                if cpu_seconds_pr_pid.get(str(pid), 0.0) <= seconds:
-                    cpu_seconds_pr_pid[str(pid)] = seconds
-                else:
-                    # cpu_seconds must be monotonely increasing. Since
-                    # decreasing cpu_seconds was detected, it must be due to pid reuse
-                    cpu_seconds_pr_pid[str(pid) + str(uuid.uuid4())] = (
-                        cpu_seconds_pr_pid[str(pid)]
-                    )
-                    cpu_seconds_pr_pid[str(pid)] = seconds
+            cpu_seconds_processtree.update(cpu_seconds_snapshot)
             fm_step_pids |= pids
             max_memory_usage = max(memory_rss, max_memory_usage)
             yield Running(
@@ -226,7 +218,7 @@ class ForwardModelStep:
                     max_rss=max_memory_usage,
                     fm_step_id=self.index,
                     fm_step_name=self.job_data.get("name"),
-                    cpu_seconds=sum(cpu_seconds_pr_pid.values()),
+                    cpu_seconds=cpu_seconds_processtree.total_cpu_seconds(),
                     oom_score=oom_score,
                 ),
             )
@@ -425,6 +417,24 @@ def ensure_file_handles_closed(file_handles: Sequence[io.TextIOWrapper | None]) 
     for file_handle in file_handles:
         if file_handle is not None:
             file_handle.close()
+
+
+@dataclass
+class ProcesstreeTimer:
+    _cpu_seconds_pr_pid: dict[str, float] = field(default_factory=dict, init=False)
+
+    def update(self, cpu_seconds_snapshot: dict[str, float]) -> None:
+        for pid, seconds in cpu_seconds_snapshot.items():
+            if self._cpu_seconds_pr_pid.get(pid, 0.0) > seconds:
+                # cpu_seconds for a process must increase monotonically.
+                # Since decreasing cpu_seconds was detected, it must be due to pid reuse
+                self._cpu_seconds_pr_pid[pid + "-" + str(uuid.uuid4())] = (
+                    self._cpu_seconds_pr_pid[pid]
+                )
+            self._cpu_seconds_pr_pid[pid] = seconds
+
+    def total_cpu_seconds(self) -> float:
+        return sum(self._cpu_seconds_pr_pid.values())
 
 
 def _get_processtree_data(
