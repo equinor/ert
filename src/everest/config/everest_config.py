@@ -728,7 +728,7 @@ and environment variables are exposed in the form 'os.NAME', for example:
         EverestConfig.model_validate(config)
 
     @classmethod
-    def load_file(cls, config_file: str):
+    def load_file(cls, config_file: str) -> Self:
         config_path = os.path.realpath(config_file)
 
         if not os.path.isfile(config_path):
@@ -768,7 +768,7 @@ and environment variables are exposed in the form 'os.NAME', for example:
         if site_config:
             context["queue_system"] = QueueConfig.from_dict(site_config).queue_options
         if activate_script:
-            context["activate_script"] = ErtPluginManager().activate_script()
+            context["activate_script"] = activate_script
         with init_context(context):
             return cls(**config_dict)
 

@@ -61,7 +61,7 @@ class QueueOptions(
         # Use from plugin system if user has not specified
         plugin_script = None
         if info.context:
-            plugin_script = info.context.get(info.field_name)
+            plugin_script = info.context.get("activate_script")
         return plugin_script or activate_script()  # Return default value
 
     @staticmethod
@@ -154,8 +154,6 @@ class TorqueQueueOptions(QueueOptions):
                 "name",
                 "max_running",
                 "submit_sleep",
-                "qstat_options",
-                "queue_query_timeout",
             }
         )
         driver_dict["queue_name"] = driver_dict.pop("queue")
