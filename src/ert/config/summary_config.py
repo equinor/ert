@@ -58,6 +58,7 @@ class SummaryConfig(ResponseConfig):
             }
         )
         df = df.explode("values", "time")
+        df = df.sort(by=["time"])
         return df
 
     @property
