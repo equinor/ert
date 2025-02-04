@@ -59,9 +59,9 @@ def test_everest_entry_run(cached_example):
     storage.read_from_output_dir()
     optimal = storage.get_optimal_result()
 
-    assert optimal.controls["point_x"] == pytest.approx(0.5, abs=0.05)
-    assert optimal.controls["point_y"] == pytest.approx(0.5, abs=0.05)
-    assert optimal.controls["point_z"] == pytest.approx(0.5, abs=0.05)
+    assert optimal.controls["point.x"] == pytest.approx(0.5, abs=0.05)
+    assert optimal.controls["point.y"] == pytest.approx(0.5, abs=0.05)
+    assert optimal.controls["point.z"] == pytest.approx(0.5, abs=0.05)
 
     assert optimal.total_objective == pytest.approx(0.0, abs=0.0005)
 

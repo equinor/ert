@@ -1,4 +1,4 @@
-batch_id,realization,perturbation,simulation_id,distance,point_x-0,point_x-1,point_x-2,x-0_coord
+batch_id,realization,perturbation,simulation_id,distance,point.x.0,point.x.1,point.x.2,x-0_coord
 0,0,,0,-6.1875,0.25,0.25,0.25,0.25
 0,0,0,,-6.1975,0.2538,0.2475,0.2397,0.2538
 0,0,1,,-6.1979,0.25,0.2526,0.2474,0.25

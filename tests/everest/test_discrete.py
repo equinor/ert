@@ -45,5 +45,5 @@ def test_discrete_optimizer(
     run_model.run_experiment(evaluator_server_config)
 
     # Assert
-    assert run_model.result.controls["point_x"] == 3
-    assert run_model.result.controls["point_y"] == 7
+    assert run_model.result.controls["point.x"] == 3
+    assert run_model.result.controls["point.y"] == 7

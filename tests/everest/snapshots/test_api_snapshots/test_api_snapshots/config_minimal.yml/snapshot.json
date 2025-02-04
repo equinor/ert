@@ -9,73 +9,73 @@
     2
   ],
   "control_names": [
-    "point_x",
-    "point_y",
-    "point_z"
+    "point.x",
+    "point.y",
+    "point.z"
   ],
   "control_values": [
     {
       "batch": 0,
-      "control": "point_x",
+      "control": "point.x",
       "value": 0.1
     },
     {
       "batch": 0,
-      "control": "point_y",
+      "control": "point.y",
       "value": 0.1
     },
     {
       "batch": 0,
-      "control": "point_z",
+      "control": "point.z",
       "value": 0.1
     },
     {
       "batch": 1,
-      "control": "point_x",
+      "control": "point.x",
       "value": 0.90038639
     },
     {
       "batch": 1,
-      "control": "point_y",
+      "control": "point.y",
       "value": 0.90054756
     },
     {
       "batch": 1,
-      "control": "point_z",
+      "control": "point.z",
       "value": 0.89933796
     },
     {
       "batch": 2,
-      "control": "point_x",
+      "control": "point.x",
       "value": 0.50014777
     },
     {
       "batch": 2,
-      "control": "point_y",
+      "control": "point.y",
       "value": 0.50022835
     },
     {
       "batch": 2,
-      "control": "point_z",
+      "control": "point.z",
       "value": 0.49962361
     }
   ],
   "gradient_values": [
     {
       "batch": 0,
-      "control": "point_x",
+      "control": "point.x",
       "function": "distance",
       "value": 0.80038641
     },
     {
       "batch": 0,
-      "control": "point_y",
+      "control": "point.y",
       "function": "distance",
       "value": 0.80054758
     },
     {
       "batch": 0,
-      "control": "point_z",
+      "control": "point.z",
       "function": "distance",
       "value": 0.79933798
     }
@@ -115,9 +115,9 @@
   "optimal_result_json": {
     "batch": 2,
     "controls": {
-      "point_x": 0.50014777,
-      "point_y": 0.50022835,
-      "point_z": 0.49962361
+      "point.x": 0.50014777,
+      "point.y": 0.50022835,
+      "point.z": 0.49962361
     },
     "total_objective": -2.2e-7
   },

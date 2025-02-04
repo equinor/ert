@@ -31,7 +31,7 @@ def test_mathfunc_cvar(
     run_model.run_experiment(evaluator_server_config)
 
     # Assert
-    x0, x1, x2 = (run_model.result.controls["point_" + p] for p in ["x", "y", "z"])
+    x0, x1, x2 = (run_model.result.controls["point." + p] for p in ["x", "y", "z"])
 
     assert x0 == pytest.approx(0.5, 0.05)
     assert x1 == pytest.approx(0.5, 0.05)

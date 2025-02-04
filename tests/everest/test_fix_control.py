@@ -19,4 +19,4 @@ def test_fix_control(
     run_model.run_experiment(evaluator_server_config)
 
     # Check that the first variable remains fixed:
-    assert run_model.result.controls["point_x-0"] == config.controls[0].initial_guess
+    assert run_model.result.controls["point.x.0"] == config.controls[0].initial_guess

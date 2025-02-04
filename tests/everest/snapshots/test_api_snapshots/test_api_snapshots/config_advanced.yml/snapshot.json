@@ -16,298 +16,298 @@
     5
   ],
   "control_names": [
-    "point_x-0",
-    "point_x-1",
-    "point_x-2"
+    "point.x.0",
+    "point.x.1",
+    "point.x.2"
   ],
   "control_values": [
     {
       "batch": 0,
-      "control": "point_x-0",
+      "control": "point.x.0",
       "value": 0.25
     },
     {
       "batch": 0,
-      "control": "point_x-1",
+      "control": "point.x.1",
       "value": 0.25
     },
     {
       "batch": 0,
-      "control": "point_x-2",
+      "control": "point.x.2",
       "value": 0.25
     },
     {
       "batch": 0,
-      "control": "point_x-0",
+      "control": "point.x.0",
       "value": 0.25
     },
     {
       "batch": 0,
-      "control": "point_x-1",
+      "control": "point.x.1",
       "value": 0.25
     },
     {
       "batch": 0,
-      "control": "point_x-2",
+      "control": "point.x.2",
       "value": 0.25
     },
     {
       "batch": 1,
-      "control": "point_x-0",
+      "control": "point.x.0",
       "value": 0.25904478
     },
     {
       "batch": 1,
-      "control": "point_x-1",
+      "control": "point.x.1",
       "value": 0.13792475
     },
     {
       "batch": 1,
-      "control": "point_x-2",
+      "control": "point.x.2",
       "value": 0.17336687
     },
     {
       "batch": 1,
-      "control": "point_x-0",
+      "control": "point.x.0",
       "value": 0.25904478
     },
     {
       "batch": 1,
-      "control": "point_x-1",
+      "control": "point.x.1",
       "value": 0.13792475
     },
     {
       "batch": 1,
-      "control": "point_x-2",
+      "control": "point.x.2",
       "value": 0.17336687
     },
     {
       "batch": 2,
-      "control": "point_x-0",
+      "control": "point.x.0",
       "value": 0.31863568
     },
     {
       "batch": 2,
-      "control": "point_x-1",
+      "control": "point.x.1",
       "value": 0.00504358
     },
     {
       "batch": 2,
-      "control": "point_x-2",
+      "control": "point.x.2",
       "value": 0.13385209
     },
     {
       "batch": 2,
-      "control": "point_x-0",
+      "control": "point.x.0",
       "value": 0.31863568
     },
     {
       "batch": 2,
-      "control": "point_x-1",
+      "control": "point.x.1",
       "value": 0.00504358
     },
     {
       "batch": 2,
-      "control": "point_x-2",
+      "control": "point.x.2",
       "value": 0.13385209
     },
     {
       "batch": 3,
-      "control": "point_x-0",
+      "control": "point.x.0",
       "value": 0.24117771
     },
     {
       "batch": 3,
-      "control": "point_x-1",
+      "control": "point.x.1",
       "value": 0.03015417
     },
     {
       "batch": 3,
-      "control": "point_x-2",
+      "control": "point.x.2",
       "value": 0.24583776
     },
     {
       "batch": 3,
-      "control": "point_x-0",
+      "control": "point.x.0",
       "value": 0.24117771
     },
     {
       "batch": 3,
-      "control": "point_x-1",
+      "control": "point.x.1",
       "value": 0.03015417
     },
     {
       "batch": 3,
-      "control": "point_x-2",
+      "control": "point.x.2",
       "value": 0.24583776
     },
     {
       "batch": 4,
-      "control": "point_x-0",
+      "control": "point.x.0",
       "value": 0.15091481
     },
     {
       "batch": 4,
-      "control": "point_x-1",
+      "control": "point.x.1",
       "value": -0.00394611
     },
     {
       "batch": 4,
-      "control": "point_x-2",
+      "control": "point.x.2",
       "value": 0.36960914
     },
     {
       "batch": 4,
-      "control": "point_x-0",
+      "control": "point.x.0",
       "value": 0.15091481
     },
     {
       "batch": 4,
-      "control": "point_x-1",
+      "control": "point.x.1",
       "value": -0.00394611
     },
     {
       "batch": 4,
-      "control": "point_x-2",
+      "control": "point.x.2",
       "value": 0.36960914
     },
     {
       "batch": 5,
-      "control": "point_x-0",
+      "control": "point.x.0",
       "value": 0.1145273
     },
     {
       "batch": 5,
-      "control": "point_x-1",
+      "control": "point.x.1",
       "value": 0.00635029
     },
     {
       "batch": 5,
-      "control": "point_x-2",
+      "control": "point.x.2",
       "value": 0.38836369
     },
     {
       "batch": 5,
-      "control": "point_x-0",
+      "control": "point.x.0",
       "value": 0.1145273
     },
     {
       "batch": 5,
-      "control": "point_x-1",
+      "control": "point.x.1",
       "value": 0.00635029
     },
     {
       "batch": 5,
-      "control": "point_x-2",
+      "control": "point.x.2",
       "value": 0.38836369
     }
   ],
   "gradient_values": [
     {
       "batch": 0,
-      "control": "point_x-0",
+      "control": "point.x.0",
       "function": "distance",
       "value": -0.49076627
     },
     {
       "batch": 0,
-      "control": "point_x-1",
+      "control": "point.x.1",
       "function": "distance",
       "value": -0.50191014
     },
     {
       "batch": 0,
-      "control": "point_x-2",
+      "control": "point.x.2",
       "function": "distance",
       "value": 0.50424549
     },
     {
       "batch": 1,
-      "control": "point_x-0",
+      "control": "point.x.0",
       "function": "distance",
       "value": -0.52209326
     },
     {
       "batch": 1,
-      "control": "point_x-1",
+      "control": "point.x.1",
       "function": "distance",
       "value": -0.28579331
     },
     {
       "batch": 1,
-      "control": "point_x-2",
+      "control": "point.x.2",
       "function": "distance",
       "value": 0.64869691
     },
     {
       "batch": 2,
-      "control": "point_x-0",
+      "control": "point.x.0",
       "function": "distance",
       "value": -0.64281291
     },
     {
       "batch": 2,
-      "control": "point_x-1",
+      "control": "point.x.1",
       "function": "distance",
       "value": -0.00521952
     },
     {
       "batch": 2,
-      "control": "point_x-2",
+      "control": "point.x.2",
       "function": "distance",
       "value": 0.73152662
     },
     {
       "batch": 3,
-      "control": "point_x-0",
+      "control": "point.x.0",
       "function": "distance",
       "value": -0.47276201
     },
     {
       "batch": 3,
-      "control": "point_x-1",
+      "control": "point.x.1",
       "function": "distance",
       "value": -0.0785477
     },
     {
       "batch": 3,
-      "control": "point_x-2",
+      "control": "point.x.2",
       "function": "distance",
       "value": 0.51539765
     },
     {
       "batch": 4,
-      "control": "point_x-0",
+      "control": "point.x.0",
       "function": "distance",
       "value": -0.30369426
     },
     {
       "batch": 4,
-      "control": "point_x-1",
+      "control": "point.x.1",
       "function": "distance",
       "value": 0.02314375
     },
     {
       "batch": 4,
-      "control": "point_x-2",
+      "control": "point.x.2",
       "function": "distance",
       "value": 0.25834193
     },
     {
       "batch": 5,
-      "control": "point_x-0",
+      "control": "point.x.0",
       "function": "distance",
       "value": -0.21656122
     },
     {
       "batch": 5,
-      "control": "point_x-1",
+      "control": "point.x.1",
       "function": "distance",
       "value": -0.00578828
     },
     {
       "batch": 5,
-      "control": "point_x-2",
+      "control": "point.x.2",
       "function": "distance",
       "value": 0.2172204
     }
@@ -428,9 +428,9 @@
   "optimal_result_json": {
     "batch": 5,
     "controls": {
-      "point_x-0": 0.1145273,
-      "point_x-1": 0.00635029,
-      "point_x-2": 0.38836369
+      "point.x.0": 0.1145273,
+      "point.x.1": 0.00635029,
+      "point.x.2": 0.38836369
     },
     "total_objective": -1.52561897
   },

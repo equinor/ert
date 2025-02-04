@@ -1,4 +1,4 @@
-batch_id,realization,simulation_id,perturbation,batch_distance,batch_total_objective_value,distance,grad(distance wrt point_x),grad(distance wrt point_y),grad(distance wrt point_z),grad(distance.total wrt point_x),grad(distance.total wrt point_y),grad(distance.total wrt point_z),point_x,point_y,point_z
+batch_id,realization,simulation_id,perturbation,batch_distance,batch_total_objective_value,distance,grad(distance wrt point.x),grad(distance wrt point.y),grad(distance wrt point.z),grad(distance.total wrt point.x),grad(distance.total wrt point.y),grad(distance.total wrt point.z),point.x,point.y,point.z
 0,0,,0,-0.48,-0.48,-0.4801,0.8004,0.8005,0.7993,0.8004,0.8005,0.7993,0.099,0.0996,0.1013
 0,0,,1,-0.48,-0.48,-0.4786,0.8004,0.8005,0.7993,0.8004,0.8005,0.7993,0.1002,0.1009,0.1006
 0,0,,2,-0.48,-0.48,-0.4803,0.8004,0.8005,0.7993,0.8004,0.8005,0.7993,0.0994,0.1005,0.0997

@@ -1,4 +1,4 @@
-batch_id,realization,perturbation,simulation_id,distance,point_x,point_y,point_z
+batch_id,realization,perturbation,simulation_id,distance,point.x,point.y,point.z
 0,0,,0,-0.48,0.1,0.1,0.1
 0,0,0,,-0.4801,0.099,0.0996,0.1013
 0,0,1,,-0.4786,0.1002,0.1009,0.1006

@@ -346,17 +346,17 @@ def test_get_opt_status(cached_example):
     )
 
     assert np.allclose(
-        opts["control_history"]["point_x"],
+        opts["control_history"]["point.x"],
         [0.0, -0.004202181916184627, -0.0021007888698514315],
         atol=1e-4,
     )
     assert np.allclose(
-        opts["control_history"]["point_y"],
+        opts["control_history"]["point.y"],
         [0.0, -0.011298196942730383, -0.0056482862617779715],
         atol=1e-4,
     )
     assert np.allclose(
-        opts["control_history"]["point_z"], [0.0, 1.0, 0.4999281115746754], atol=1e-4
+        opts["control_history"]["point.z"], [0.0, 1.0, 0.4999281115746754], atol=1e-4
     )
 
     assert np.allclose(
@@ -375,24 +375,24 @@ def test_get_opt_status(cached_example):
     cmond = opts["cli_monitor_data"]
 
     assert cmond["batches"] == [0, 1, 2]
-    assert cmond["controls"][0]["point_x"] == 0.0
-    assert cmond["controls"][0]["point_y"] == 0.0
-    assert cmond["controls"][0]["point_z"] == 0.0
+    assert cmond["controls"][0]["point.x"] == 0.0
+    assert cmond["controls"][0]["point.y"] == 0.0
+    assert cmond["controls"][0]["point.z"] == 0.0
 
     assert np.allclose(
-        cmond["controls"][1]["point_x"], -0.004202181916184627, atol=1e-4
+        cmond["controls"][1]["point.x"], -0.004202181916184627, atol=1e-4
     )
     assert np.allclose(
-        cmond["controls"][1]["point_y"], -0.011298196942730383, atol=1e-4
+        cmond["controls"][1]["point.y"], -0.011298196942730383, atol=1e-4
     )
-    assert np.allclose(cmond["controls"][1]["point_z"], 1.0, atol=1e-4)
+    assert np.allclose(cmond["controls"][1]["point.z"], 1.0, atol=1e-4)
     assert np.allclose(
-        cmond["controls"][2]["point_x"], -0.0021007888698514315, atol=1e-4
+        cmond["controls"][2]["point.x"], -0.0021007888698514315, atol=1e-4
     )
     assert np.allclose(
-        cmond["controls"][2]["point_y"], -0.0056482862617779715, atol=1e-4
+        cmond["controls"][2]["point.y"], -0.0056482862617779715, atol=1e-4
     )
-    assert np.allclose(cmond["controls"][2]["point_z"], 0.4999281115746754, atol=1e-4)
+    assert np.allclose(cmond["controls"][2]["point.z"], 0.4999281115746754, atol=1e-4)
 
     assert np.allclose(
         cmond["objective_value"],

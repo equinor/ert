@@ -1,4 +1,4 @@
-batch_id,total_objective_value,distance,grad(distance wrt point_x-0),grad(distance wrt point_x-1),grad(distance wrt point_x-2),grad(distance.total wrt point_x-0),grad(distance.total wrt point_x-1),grad(distance.total wrt point_x-2),merit_value,point_x-0,point_x-1,point_x-2,x-0_coord
+batch_id,total_objective_value,distance,grad(distance wrt point.x.0),grad(distance wrt point.x.1),grad(distance wrt point.x.2),grad(distance.total wrt point.x.0),grad(distance.total wrt point.x.1),grad(distance.total wrt point.x.2),merit_value,point.x.0,point.x.1,point.x.2,x-0_coord
 0,-1.6875,-1.6875,-0.4908,-0.5019,0.5042,-0.4908,-0.5019,0.5042,,1.0,-0.0,-0.0,0.25
 1,-1.6928,-1.6928,-0.5221,-0.2858,0.6487,-0.5221,-0.2858,0.6487,389.8557,1.0,0.0,0.0001,0.259
 2,-1.7356,-1.7356,-0.6428,-0.0052,0.7315,-0.6428,-0.0052,0.7315,381.4612,1.0,0.0,0.0,0.3186

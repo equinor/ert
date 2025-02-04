@@ -30,7 +30,7 @@ def test_objective_type(
     run_model.run_experiment(evaluator_server_config)
 
     # Assert
-    x0, x1, x2 = (run_model.result.controls["point_" + p] for p in ["x", "y", "z"])
+    x0, x1, x2 = (run_model.result.controls["point." + p] for p in ["x", "y", "z"])
     assert x0 == pytest.approx(0.5, abs=0.025)
     assert x1 == pytest.approx(0.5, abs=0.025)
     assert x2 == pytest.approx(0.5, abs=0.025)

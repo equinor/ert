@@ -7,9 +7,9 @@ class InputConstraintConfig(BaseModel, extra="forbid"):  # type: ignore
 If we are trying to constrain only one control (i.e the z control) value:
 | input_constraints:
 | - weights:
-|   point_3D.x-0: 0
-|   point_3D.y-1: 0
-|   point_3D.z-2: 1
+|   point_3D.x.0: 0
+|   point_3D.y.1: 0
+|   point_3D.z.2: 1
 | upper_bound: 0.2
 
 Only control values (x, y, z) that satisfy the following equation will be allowed:
@@ -21,9 +21,9 @@ Only control values (x, y, z) that satisfy the following equation will be allowe
         description="""**Example**
 | input_constraints:
 | - weights:
-|   point_3D.x-0: 1
-|   point_3D.y-1: 2
-|   point_3D.z-2: 3
+|   point_3D.x.0: 1
+|   point_3D.y.1: 2
+|   point_3D.z.2: 3
 | target: 4
 
 Only control values (x, y, z) that satisfy the following equation will be allowed:
@@ -35,9 +35,9 @@ Only control values (x, y, z) that satisfy the following equation will be allowe
         description="""**Example**
 | input_constraints:
 | - weights:
-|   point_3D.x-0: 1
-|   point_3D.y-1: 2
-|   point_3D.z-2: 3
+|   point_3D.x.0: 1
+|   point_3D.y.1: 2
+|   point_3D.z.2: 3
 | lower_bound: 4
 
 Only control values (x, y, z) that satisfy the following
@@ -50,9 +50,9 @@ equation will be allowed:
         description="""**Example**
 | input_constraints:
 | - weights:
-|   point_3D.x-0: 1
-|   point_3D.y-1: 2
-|   point_3D.z-2: 3
+|   point_3D.x.0: 1
+|   point_3D.y.1: 2
+|   point_3D.z.2: 3
 | upper_bound: 4
 
 Only control values (x, y, z) that satisfy the following equation will be allowed:
