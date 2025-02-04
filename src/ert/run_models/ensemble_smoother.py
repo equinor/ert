@@ -74,7 +74,6 @@ class EnsembleSmoother(UpdateRunModel):
     ) -> None:
         self.log_at_startup()
         self.restart = restart
-        self.run_workflows(HookRuntime.PRE_EXPERIMENT)
         ensemble_format = self.target_ensemble_format
         experiment = self._storage.create_experiment(
             parameters=self._parameter_configuration,
@@ -89,6 +88,7 @@ class EnsembleSmoother(UpdateRunModel):
             ensemble_size=self.ensemble_size,
             name=ensemble_format % 0,
         )
+        self.run_workflows(HookRuntime.PRE_EXPERIMENT, prior)
         self.set_env_key("_ERT_ENSEMBLE_ID", str(prior.id))
         prior_args = create_run_arguments(
             self.run_paths,
@@ -120,7 +120,7 @@ class EnsembleSmoother(UpdateRunModel):
             posterior,
             evaluator_server_config,
         )
-        self.run_workflows(HookRuntime.POST_EXPERIMENT)
+        self.run_workflows(HookRuntime.POST_EXPERIMENT, posterior)
 
     @classmethod
     def name(cls) -> str:

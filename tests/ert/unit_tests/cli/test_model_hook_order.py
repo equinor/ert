@@ -14,15 +14,15 @@ from ert.run_models import (
 )
 
 EXPECTED_CALL_ORDER = [
-    call(HookRuntime.PRE_EXPERIMENT),
-    call(HookRuntime.PRE_SIMULATION, ANY, ANY),
-    call(HookRuntime.POST_SIMULATION, ANY, ANY),
-    call(HookRuntime.PRE_FIRST_UPDATE, ANY, ANY),
-    call(HookRuntime.PRE_UPDATE, ANY, ANY),
-    call(HookRuntime.POST_UPDATE, ANY, ANY),
-    call(HookRuntime.PRE_SIMULATION, ANY, ANY),
-    call(HookRuntime.POST_SIMULATION, ANY, ANY),
-    call(HookRuntime.POST_EXPERIMENT),
+    call(HookRuntime.PRE_EXPERIMENT, ANY),
+    call(HookRuntime.PRE_SIMULATION, ANY),
+    call(HookRuntime.POST_SIMULATION, ANY),
+    call(HookRuntime.PRE_FIRST_UPDATE, ANY),
+    call(HookRuntime.PRE_UPDATE, ANY),
+    call(HookRuntime.POST_UPDATE, ANY),
+    call(HookRuntime.PRE_SIMULATION, ANY),
+    call(HookRuntime.POST_SIMULATION, ANY),
+    call(HookRuntime.POST_EXPERIMENT, ANY),
 ]
 
 

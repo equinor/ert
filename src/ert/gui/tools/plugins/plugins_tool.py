@@ -6,6 +6,7 @@ from PyQt6.QtGui import QIcon
 from PyQt6.QtWidgets import QMenu
 
 from ert.gui.tools import Tool
+from ert.runpaths import Runpaths
 
 from .plugin_runner import PluginRunner
 
@@ -35,8 +36,15 @@ class PluginsTool(Tool):
         self.__plugins = {}
 
         self.menu = QMenu("&Plugins")
+        runpaths = Runpaths(
+            jobname_format=ert_config.model_config.jobname_format_string,
+            runpath_format=ert_config.model_config.runpath_format_string,
+            filename=str(ert_config.runpath_file),
+            substitutions=ert_config.substitutions,
+            eclbase=ert_config.model_config.eclbase_format_string,
+        )
         for plugin in plugin_handler:
-            plugin_runner = PluginRunner(plugin, ert_config, notifier.storage)
+            plugin_runner = PluginRunner(plugin, runpaths, notifier.storage)
             plugin_runner.setPluginFinishedCallback(self.trigger)
 
             self.__plugins[plugin] = plugin_runner

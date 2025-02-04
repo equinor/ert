@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from unittest.mock import Mock, patch
+from unittest.mock import MagicMock, Mock, patch
 
 import pytest
 
@@ -30,17 +30,36 @@ def writing_setup(setup_case):
 
 def test_export_runpath_empty_range(writing_setup):
     writing_setup, config = writing_setup
-    writing_setup.export_job.run(config, [])
+    run_paths = Runpaths(
+        jobname_format=config.model_config.jobname_format_string,
+        runpath_format=config.model_config.runpath_format_string,
+        filename=str(config.runpath_file),
+        substitutions=config.substitutions,
+        eclbase=config.model_config.eclbase_format_string,
+    )
+    mock_ensemble = MagicMock()
+    mock_ensemble.iteration = 0
+    mock_ensemble.ensemble_size = 25
+    writing_setup.export_job.run(run_paths, mock_ensemble, [])
 
     writing_setup.write_mock.assert_called_with(
-        [0],
-        list(range(25)),
+        [0], list(range(mock_ensemble.ensemble_size))
     )
 
 
 def test_export_runpath_star_parameter(writing_setup):
     writing_setup, config = writing_setup
-    writing_setup.export_job.run(config, ["* | *"])
+    run_paths = Runpaths(
+        jobname_format=config.model_config.jobname_format_string,
+        runpath_format=config.model_config.runpath_format_string,
+        filename=str(config.runpath_file),
+        substitutions=config.substitutions,
+        eclbase=config.model_config.eclbase_format_string,
+    )
+    mock_ensemble = MagicMock()
+    mock_ensemble.iteration = 1
+    mock_ensemble.ensemble_size = 25
+    writing_setup.export_job.run(run_paths, mock_ensemble, ["* | *"])
 
     writing_setup.write_mock.assert_called_with(
         list(range(1)),
@@ -50,7 +69,18 @@ def test_export_runpath_star_parameter(writing_setup):
 
 def test_export_runpath_range_parameter(writing_setup):
     writing_setup, config = writing_setup
-    writing_setup.export_job.run(config, ["* | 1-2"])
+
+    run_paths = Runpaths(
+        jobname_format=config.model_config.jobname_format_string,
+        runpath_format=config.model_config.runpath_format_string,
+        filename=str(config.runpath_file),
+        substitutions=config.substitutions,
+        eclbase=config.model_config.eclbase_format_string,
+    )
+    mock_ensemble = MagicMock()
+    mock_ensemble.iteration = 0
+    mock_ensemble.ensemble_size = 25
+    writing_setup.export_job.run(run_paths, mock_ensemble, ["* | 1-2"])
 
     writing_setup.write_mock.assert_called_with(
         [1, 2],
@@ -60,7 +90,17 @@ def test_export_runpath_range_parameter(writing_setup):
 
 def test_export_runpath_comma_parameter(writing_setup):
     writing_setup, config = writing_setup
-    writing_setup.export_job.run(config, ["3,4 | 1-2"])
+    run_paths = Runpaths(
+        jobname_format=config.model_config.jobname_format_string,
+        runpath_format=config.model_config.runpath_format_string,
+        filename=str(config.runpath_file),
+        substitutions=config.substitutions,
+        eclbase=config.model_config.eclbase_format_string,
+    )
+    mock_ensemble = MagicMock()
+    mock_ensemble.iteration = 0
+    mock_ensemble.ensemble_size = 25
+    writing_setup.export_job.run(run_paths, mock_ensemble, ["3,4 | 1-2"])
 
     writing_setup.write_mock.assert_called_with(
         [1, 2],
@@ -70,7 +110,17 @@ def test_export_runpath_comma_parameter(writing_setup):
 
 def test_export_runpath_combination_parameter(writing_setup):
     writing_setup, config = writing_setup
-    writing_setup.export_job.run(config, ["1,2-3 | 1-2"])
+    run_paths = Runpaths(
+        jobname_format=config.model_config.jobname_format_string,
+        runpath_format=config.model_config.runpath_format_string,
+        filename=str(config.runpath_file),
+        substitutions=config.substitutions,
+        eclbase=config.model_config.eclbase_format_string,
+    )
+    mock_ensemble = MagicMock()
+    mock_ensemble.iteration = 0
+    mock_ensemble.ensemble_size = 25
+    writing_setup.export_job.run(run_paths, mock_ensemble, ["1,2-3 | 1-2"])
 
     writing_setup.write_mock.assert_called_with(
         [1, 2],
@@ -80,8 +130,18 @@ def test_export_runpath_combination_parameter(writing_setup):
 
 def test_export_runpath_bad_arguments(writing_setup):
     writing_setup, config = writing_setup
+    run_paths = Runpaths(
+        jobname_format=config.model_config.jobname_format_string,
+        runpath_format=config.model_config.runpath_format_string,
+        filename=str(config.runpath_file),
+        substitutions=config.substitutions,
+        eclbase=config.model_config.eclbase_format_string,
+    )
+    mock_ensemble = MagicMock()
+    mock_ensemble.iteration = 0
+    mock_ensemble.ensemble_size = 25
     with pytest.raises(ValueError, match="Expected \\|"):
-        writing_setup.export_job.run(config, ["wat"])
+        writing_setup.export_job.run(run_paths, mock_ensemble, ["wat"])
 
 
 def test_export_runpath_job_is_loaded():

@@ -6,12 +6,12 @@ from typing import TYPE_CHECKING, Any
 
 from _ert.threading import ErtThread
 from ert.config import CancelPluginException
+from ert.runpaths import Runpaths
 from ert.workflow_runner import WorkflowJobRunner
 
 from .process_job_dialog import ProcessJobDialog
 
 if TYPE_CHECKING:
-    from ert.config import ErtConfig
     from ert.storage import LocalStorage
 
     from .plugin import Plugin
@@ -19,13 +19,12 @@ if TYPE_CHECKING:
 
 class PluginRunner:
     def __init__(
-        self, plugin: Plugin, ert_config: ErtConfig, storage: LocalStorage
+        self, plugin: Plugin, run_paths: Runpaths, storage: LocalStorage
     ) -> None:
         super().__init__()
-        self.ert_config = ert_config
+        self.run_paths = run_paths
         self.storage = storage
         self.__plugin = plugin
-
         self.__plugin_finished_callback: Callable[[], None] = lambda: None
 
         self.__result = None
@@ -35,9 +34,8 @@ class PluginRunner:
     def run(self) -> None:
         try:
             plugin = self.__plugin
-
             arguments = plugin.getArguments(
-                fixtures={"storage": self.storage, "ert_config": self.ert_config}
+                fixtures={"storage": self.storage, "run_paths": self.run_paths}
             )
             dialog = ProcessJobDialog(plugin.getName(), plugin.getParentWindow())
             dialog.setObjectName("process_job_dialog")
@@ -45,7 +43,7 @@ class PluginRunner:
             dialog.cancelConfirmed.connect(self.cancel)
             fixtures = {
                 k: getattr(self, k)
-                for k in ["storage", "ert_config"]
+                for k in ["storage", "run_paths"]
                 if getattr(self, k)
             }
             workflow_job_thread = ErtThread(

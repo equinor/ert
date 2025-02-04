@@ -677,11 +677,12 @@ class BaseRunModel(ABC):
     def run_workflows(
         self,
         runtime: HookRuntime,
-        storage: Storage | None = None,
         ensemble: Ensemble | None = None,
     ) -> None:
         for workflow in self._hooked_workflows[runtime]:
-            WorkflowRunner(workflow, storage, ensemble).run_blocking()
+            WorkflowRunner(
+                workflow, self._storage, ensemble, self.run_paths
+            ).run_blocking()
 
     def _evaluate_and_postprocess(
         self,
@@ -703,7 +704,7 @@ class BaseRunModel(ABC):
             context_env=self._context_env,
         )
 
-        self.run_workflows(HookRuntime.PRE_SIMULATION, self._storage, ensemble)
+        self.run_workflows(HookRuntime.PRE_SIMULATION, ensemble)
         successful_realizations = self.run_ensemble_evaluator(
             run_args,
             ensemble,
@@ -729,7 +730,7 @@ class BaseRunModel(ABC):
             f"{self.ensemble_size - num_successful_realizations}"
         )
         logger.info(f"Experiment run finished in: {self.get_runtime()}s")
-        self.run_workflows(HookRuntime.POST_SIMULATION, self._storage, ensemble)
+        self.run_workflows(HookRuntime.POST_SIMULATION, ensemble)
 
         return num_successful_realizations
 
@@ -802,8 +803,8 @@ class UpdateRunModel(BaseRunModel):
             prior_ensemble=prior,
         )
         if prior.iteration == 0:
-            self.run_workflows(HookRuntime.PRE_FIRST_UPDATE, self._storage, prior)
-        self.run_workflows(HookRuntime.PRE_UPDATE, self._storage, prior)
+            self.run_workflows(HookRuntime.PRE_FIRST_UPDATE, prior)
+        self.run_workflows(HookRuntime.PRE_UPDATE, prior)
         try:
             smoother_update(
                 prior,
@@ -825,5 +826,5 @@ class UpdateRunModel(BaseRunModel):
                 "Update algorithm failed for iteration:"
                 f"{posterior.iteration}. The following error occurred: {e}"
             ) from e
-        self.run_workflows(HookRuntime.POST_UPDATE, self._storage, prior)
+        self.run_workflows(HookRuntime.POST_UPDATE, prior)
         return posterior

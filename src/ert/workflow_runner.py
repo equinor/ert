@@ -5,7 +5,8 @@ from concurrent import futures
 from concurrent.futures import Future
 from typing import TYPE_CHECKING, Any, Self
 
-from ert.config import ErtConfig, ErtScript, ExternalErtScript, Workflow, WorkflowJob
+from ert.config import ErtScript, ExternalErtScript, Workflow, WorkflowJob
+from ert.runpaths import Runpaths
 
 if TYPE_CHECKING:
     from ert.storage import Ensemble, Storage
@@ -109,12 +110,12 @@ class WorkflowRunner:
         workflow: Workflow,
         storage: Storage | None = None,
         ensemble: Ensemble | None = None,
-        ert_config: ErtConfig | None = None,
+        run_paths: Runpaths | None = None,
     ) -> None:
         self.__workflow = workflow
         self.storage = storage
         self.ensemble = ensemble
-        self.ert_config = ert_config
+        self.run_paths = run_paths
 
         self.__workflow_result: bool | None = None
         self._workflow_executor = futures.ThreadPoolExecutor(max_workers=1)
@@ -152,7 +153,7 @@ class WorkflowRunner:
         self.__running = True
         fixtures = {
             k: getattr(self, k)
-            for k in ["storage", "ensemble", "ert_config"]
+            for k in ["storage", "ensemble", "run_paths"]
             if getattr(self, k)
         }
 

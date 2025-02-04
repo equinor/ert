@@ -3,6 +3,7 @@ from __future__ import annotations
 import logging
 from typing import TYPE_CHECKING
 
+from ert.runpaths import Runpaths
 from ert.workflow_runner import WorkflowRunner
 
 if TYPE_CHECKING:
@@ -20,7 +21,14 @@ def execute_workflow(
         msg = "Workflow {} is not in the list of available workflows"
         logger.error(msg.format(workflow_name))
         return
-    runner = WorkflowRunner(workflow=workflow, storage=storage, ert_config=ert_config)
+    run_paths = Runpaths(
+        jobname_format=ert_config.model_config.jobname_format_string,
+        runpath_format=ert_config.model_config.runpath_format_string,
+        filename=str(ert_config.runpath_file),
+        substitutions=ert_config.substitutions,
+        eclbase=ert_config.model_config.eclbase_format_string,
+    )
+    runner = WorkflowRunner(workflow=workflow, storage=storage, run_paths=run_paths)
     runner.run_blocking()
     if not all(v["completed"] for v in runner.workflowReport().values()):
         logger.error(f"Workflow {workflow_name} failed!")
