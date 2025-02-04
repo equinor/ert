@@ -46,12 +46,14 @@ def test_that_get_nr_primary_components_is_according_to_theory():
     threshold_3 = (s1**2 + 2 * s_remaining**2) / total
 
     # Adding a bit to the thresholds because of numerical accuracy.
-    assert get_nr_primary_components(Y, threshold_1 + 0.01) == 1
-    assert get_nr_primary_components(Y, threshold_2 + 0.01) == 2
-    assert get_nr_primary_components(Y, threshold_3 + 0.01) == 3
+    assert get_nr_primary_components(Y, threshold_1 + 0.01) == 2
+    assert get_nr_primary_components(Y, threshold_2 + 0.01) == 3
+    assert get_nr_primary_components(Y, threshold_3 + 0.01) == 4
+
+    assert get_nr_primary_components(Y, 0) == 1
 
 
-@pytest.mark.parametrize("nr_observations", [4, 10, 100])
+@pytest.mark.parametrize("nr_observations", [4, 5, 10])
 def test_misfit_preprocessor(nr_observations):
     """We create two independent parameters, a and b.
     Using the linear function y = ax.
@@ -66,7 +68,7 @@ def test_misfit_preprocessor(nr_observations):
     for i in range(nr_observations - 1):
         Y[i] = i + 1 * parameters_a
     Y[-1] = 5 + 1 * parameters_b
-    obs_errors = Y.mean(axis=1)
+    obs_errors = Y.std(axis=1)
     Y_original = Y.copy()
     obs_error_copy = obs_errors.copy()
     result, *_ = main(Y, obs_errors)
