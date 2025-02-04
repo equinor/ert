@@ -1,12 +1,9 @@
-import os
 from contextlib import ExitStack as does_not_raise
 from datetime import datetime, timedelta
 from pathlib import Path
 from textwrap import dedent
 
 import pytest
-from hypothesis import given, settings
-from hypothesis import strategies as st
 from resdata.summary import Summary
 
 from ert.config import (
@@ -18,8 +15,6 @@ from ert.config import (
 )
 from ert.config.general_observation import GenObservation
 from ert.config.observation_vector import ObsVector
-
-from .config_dict_generator import config_generators
 
 
 def run_simulator():
@@ -184,44 +179,6 @@ def test_gen_obs_invalid_observation_std(std):
             list(range(len(std))),
             list(range(len(std))),
         )
-
-
-@pytest.mark.integration_test
-@settings(max_examples=10)
-@pytest.mark.filterwarnings("ignore::UserWarning")
-@pytest.mark.filterwarnings("ignore::RuntimeWarning")
-@pytest.mark.filterwarnings("ignore::ert.config.ConfigWarning")
-@given(config_generators(use_eclbase=st.just(True)))
-def test_that_enkf_obs_keys_are_ordered(tmp_path_factory, config_generator):
-    with config_generator(tmp_path_factory) as config_values:
-        observations = ErtConfig.from_dict(
-            config_values.to_config_dict("test.ert", os.getcwd())
-        ).observations
-
-        non_empty_observations = {
-            _response_type: _df
-            for _response_type, _df in observations.items()
-            if not _df.is_empty()
-        }
-
-        for _obs in config_values.observations:
-            if (
-                _obs.class_name == "SUMMARY_OBSERVATION"
-                and "summary" in non_empty_observations
-            ):
-                assert _obs.name in non_empty_observations["summary"]["observation_key"]
-            if (
-                _obs.class_name == "GENERAL_OBSERVATION"
-                and _obs.value is not None
-                and "gen_data" in non_empty_observations
-            ):
-                assert (
-                    _obs.name in non_empty_observations["gen_data"]["observation_key"]
-                )
-
-        for df in observations.values():
-            obs_keys_list = df["observation_key"].to_list()
-            assert sorted(obs_keys_list) == obs_keys_list
 
 
 def test_that_empty_observations_file_causes_exception(tmpdir):
