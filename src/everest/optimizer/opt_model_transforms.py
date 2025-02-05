@@ -47,7 +47,7 @@ class ControlScaler(VariableTransform):
     def transform_magnitudes(self, values: NDArray[np.float64]) -> NDArray[np.float64]:
         return values / self._scales
 
-    def transform_linear_constraints(
+    def transform_linear_constraints(  # type: ignore
         self,
         coefficients: NDArray[np.float64],
         lower_bounds: NDArray[np.float64],
@@ -97,7 +97,7 @@ class ObjectiveScaler(ObjectiveTransform):
     def backward(self, objectives: NDArray[np.float64]) -> NDArray[np.float64]:
         return -objectives * self._scales
 
-    def transform_weighted_objective(self, weighted_objective):
+    def transform_weighted_objective(self, weighted_objective):  # type: ignore
         return -weighted_objective
 
     def calculate_auto_scales(self, objectives: NDArray[np.float64]) -> None:

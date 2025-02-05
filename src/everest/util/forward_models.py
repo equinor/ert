@@ -1,4 +1,5 @@
-from typing import TypeVar
+from collections.abc import Sequence
+from typing import Any, TypeVar
 
 from pydantic import BaseModel, ValidationError
 
@@ -9,14 +10,14 @@ pm = EverestPluginManager()
 T = TypeVar("T", bound=BaseModel)
 
 
-def collect_forward_model_schemas():
+def collect_forward_model_schemas() -> dict[str, Any] | None:
     schemas = pm.hook.get_forward_models_schemas()
     if schemas:
         return schemas.pop()
     return {}
 
 
-def lint_forward_model_job(job: str, args) -> list[str]:
+def lint_forward_model_job(job: str, args: Sequence[str]) -> list[str]:
     return pm.hook.lint_forward_model(job=job, args=args)
 
 

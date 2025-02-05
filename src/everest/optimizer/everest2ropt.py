@@ -19,7 +19,7 @@ from everest.config.utils import FlattenedControls
 from everest.strings import EVEREST
 
 
-def _parse_controls(controls: FlattenedControls, ropt_config):
+def _parse_controls(controls: FlattenedControls, ropt_config: dict[str, Any]) -> None:
     control_types = [
         None if type_ is None else VariableType[type_.upper()]
         for type_ in controls.types
@@ -58,10 +58,12 @@ def _parse_controls(controls: FlattenedControls, ropt_config):
     ]
 
 
-def _parse_objectives(objective_functions: list[ObjectiveFunctionConfig], ropt_config):
+def _parse_objectives(
+    objective_functions: list[ObjectiveFunctionConfig], ropt_config: dict[str, Any]
+) -> None:
     weights: list[float] = []
     function_estimator_indices: list[int] = []
-    function_estimators: list = []
+    function_estimators: list = []  # type: ignore
 
     for objective in objective_functions:
         assert isinstance(objective.name, str)
@@ -125,9 +127,9 @@ def _parse_input_constraints(
     input_constraints: list[InputConstraintConfig] | None,
     formatted_control_names: list[str],
     formatted_control_names_dotdash: list[str],
-    ropt_config,
-):
-    def _get_control_index(name: str):
+    ropt_config: dict[str, Any],
+) -> None:
+    def _get_control_index(name: str) -> int:
         try:
             matching_index = formatted_control_names.index(name.replace("-", "."))
             return matching_index
@@ -157,8 +159,8 @@ def _parse_input_constraints(
 
 
 def _parse_output_constraints(
-    output_constraints: list[OutputConstraintConfig] | None, ropt_config
-):
+    output_constraints: list[OutputConstraintConfig] | None, ropt_config: dict[str, Any]
+) -> None:
     if output_constraints:
         lower_bounds, upper_bounds = _get_bounds(output_constraints)
         ropt_config["nonlinear_constraints"] = {
@@ -170,8 +172,8 @@ def _parse_output_constraints(
 def _parse_optimization(
     ever_opt: OptimizationConfig | None,
     has_output_constraints: bool,
-    ropt_config,
-):
+    ropt_config: dict[str, Any],
+) -> None:
     ropt_config["optimizer"] = {}
     if not ever_opt:
         return
@@ -276,8 +278,8 @@ def _parse_optimization(
 def _parse_model(
     ever_model: ModelConfig | None,
     ever_opt: OptimizationConfig | None,
-    ropt_config,
-):
+    ropt_config: dict[str, Any],
+) -> None:
     if not ever_model:
         return
 
@@ -295,8 +297,8 @@ def _parse_model(
 
 
 def _parse_environment(
-    optimization_output_dir: str, random_seed: int | None, ropt_config
-):
+    optimization_output_dir: str, random_seed: int | None, ropt_config: dict[str, Any]
+) -> None:
     ropt_config["optimizer"]["output_dir"] = os.path.abspath(optimization_output_dir)
     if random_seed is not None:
         ropt_config["gradient"]["seed"] = random_seed

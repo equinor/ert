@@ -1,4 +1,4 @@
-import importlib
+from importlib import util
 from pathlib import Path
 
 template_names = (
@@ -11,7 +11,8 @@ template_names = (
 
 
 def fetch_template(template_name: str) -> str:
-    return str(
-        Path(importlib.util.find_spec("everest.templates").origin).parent
-        / template_name
-    )
+    module_spec = util.find_spec("everest.templates")
+    assert module_spec, "everest.templates not found"
+    assert module_spec.origin, "everest.templates has no origin"
+
+    return str(Path(module_spec.origin).parent / template_name)
