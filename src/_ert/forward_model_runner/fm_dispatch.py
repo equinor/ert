@@ -17,7 +17,14 @@ from _ert.forward_model_runner.reporting.message import (
 )
 from _ert.forward_model_runner.runner import ForwardModelRunner
 
-JOBS_FILE = "jobs.json"
+# This is incorrecty named, but is kept to avoid a breaking change.
+# "job" was previously used for what is now called a "forward_model_step".
+FORWARD_MODEL_DESCRIPTION_FILE = "jobs.json"
+
+# On shared filesystems race conditions between different computers can occur
+# yielding FileNotFoundError due to synchronization issues. This constant
+# determines how long we can wait for synchronization to happen:
+FILE_RETRY_TIME = 30
 
 logger = logging.getLogger(__name__)
 
@@ -41,7 +48,7 @@ def _setup_reporters(
 
 
 def _setup_logging(directory: str = "logs"):
-    job_runner_logger = logging.getLogger("_ert.forward_model_runner")
+    fm_runner_logger = logging.getLogger("_ert.forward_model_runner")
     memory_csv_logger = logging.getLogger("_ert.forward_model_memory_profiler")
 
     os.makedirs(directory, exist_ok=True)
@@ -64,28 +71,29 @@ def _setup_logging(directory: str = "logs"):
     # Write the CSV header to the file:
     memory_csv_logger.info(ProcessTreeStatus().csv_header())
 
-    job_runner_logger.addHandler(handler)
-    job_runner_logger.setLevel(logging.DEBUG)
-
-
-JOBS_JSON_RETRY_TIME = 30
+    fm_runner_logger.addHandler(handler)
+    fm_runner_logger.setLevel(logging.DEBUG)
 
 
 def _wait_for_retry():
-    time.sleep(JOBS_JSON_RETRY_TIME)
+    time.sleep(FILE_RETRY_TIME)
 
 
-def _read_jobs_file(retry=True):
+def _read_fm_description_file(retry=True):
     try:
-        with open(JOBS_FILE, encoding="utf-8") as json_file:
+        with open(FORWARD_MODEL_DESCRIPTION_FILE, encoding="utf-8") as json_file:
             return json.load(json_file)
     except json.JSONDecodeError as e:
-        raise OSError("Job Runner cli failed to load JSON-file.") from e
+        raise OSError(
+            "fm_dispatch failed to load JSON-file describing the forward model."
+        ) from e
     except FileNotFoundError as e:
         if retry:
-            logger.error(f"Could not find file {JOBS_FILE}, retrying")
+            logger.error(
+                f"Could not find file {FORWARD_MODEL_DESCRIPTION_FILE}, retrying"
+            )
             _wait_for_retry()
-            return _read_jobs_file(retry=False)
+            return _read_fm_description_file(retry=False)
         else:
             raise e
 
@@ -94,7 +102,7 @@ def _report_all_messages(
     messages: Generator[Message], reporters: list[reporting.Reporter]
 ) -> None:
     for msg in messages:
-        logger.info(f"Job status: {msg}")
+        logger.info(f"Forward model status: {msg}")
         i = 0
         while i < len(reporters):
             reporter = reporters[i]
@@ -134,17 +142,17 @@ def sigterm_handler(_signo, _stack_frame):
 def fm_dispatch(args):
     parser = argparse.ArgumentParser(
         description=(
-            "Run all the jobs specified in jobs.json, "
-            "or specify the names of the jobs to run."
+            "Run all the forward model steps specified in jobs.json, "
+            "or specify the names of the steps to run."
         )
     )
     parser.add_argument("run_path", nargs="?", help="Path where jobs.json is located")
     parser.add_argument(
-        "job",
+        "steps",
         nargs="*",
         help=(
-            "One or more jobs to be executed from the jobs.json file. "
-            "If no jobs are specified, all jobs will be executed."
+            "One or more forward model steps to be executed from the jobs.json file. "
+            "If no steps are specified, all steps will be executed."
         ),
     )
 
@@ -159,14 +167,14 @@ def fm_dispatch(args):
     # Make sure that logging is setup _after_ we have moved to the runpath directory
     _setup_logging()
 
-    jobs_data = _read_jobs_file()
+    fm_description = _read_fm_description_file()
 
-    experiment_id = jobs_data.get("experiment_id")
-    ens_id = jobs_data.get("ens_id")
-    ee_token = jobs_data.get("ee_token")
-    dispatch_url = jobs_data.get("dispatch_url")
+    experiment_id = fm_description.get("experiment_id")
+    ens_id = fm_description.get("ens_id")
+    ee_token = fm_description.get("ee_token")
+    dispatch_url = fm_description.get("dispatch_url")
 
-    is_interactive_run = len(parsed_args.job) > 0
+    is_interactive_run = len(parsed_args.steps) > 0
     reporters = _setup_reporters(
         is_interactive_run,
         ens_id,
@@ -175,9 +183,9 @@ def fm_dispatch(args):
         experiment_id,
     )
 
-    job_runner = ForwardModelRunner(jobs_data)
+    fm_runner = ForwardModelRunner(fm_description)
     signal.signal(signal.SIGTERM, lambda _, __: _stop_reporters_and_sigkill(reporters))
-    _report_all_messages(job_runner.run(parsed_args.job), reporters)
+    _report_all_messages(fm_runner.run(parsed_args.steps), reporters)
 
 
 def main():

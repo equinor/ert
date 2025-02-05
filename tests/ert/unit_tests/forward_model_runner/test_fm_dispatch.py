@@ -18,7 +18,7 @@ import pytest
 
 import _ert.forward_model_runner.fm_dispatch
 from _ert.forward_model_runner.fm_dispatch import (
-    JOBS_FILE,
+    FORWARD_MODEL_DESCRIPTION_FILE,
     _report_all_messages,
     _setup_reporters,
     fm_dispatch,
@@ -55,7 +55,7 @@ else:
     executable = os.path.realpath("dummy_executable")
     os.chmod("dummy_executable", stat.S_IRWXU | stat.S_IRWXO | stat.S_IRWXG)
 
-    step_list = {
+    fm_description = {
         "global_environment": {},
         "global_update_path": {},
         "jobList": [
@@ -81,8 +81,8 @@ else:
         "ert_pid": "",
     }
 
-    with open(JOBS_FILE, "w", encoding="utf-8") as f:
-        f.write(json.dumps(step_list))
+    with open(FORWARD_MODEL_DESCRIPTION_FILE, "w", encoding="utf-8") as f:
+        f.write(json.dumps(fm_description))
 
     # macOS doesn't provide /usr/bin/setsid, so we roll our own
     with open("setsid", "w", encoding="utf-8") as f:
@@ -151,7 +151,7 @@ def test_memory_profile_is_logged_as_csv(monkeypatch):
         * fm_step_repeats,
     }
 
-    with open(JOBS_FILE, "w", encoding="utf-8") as f:
+    with open(FORWARD_MODEL_DESCRIPTION_FILE, "w", encoding="utf-8") as f:
         f.write(json.dumps(forward_model_steps))
 
     monkeypatch.setattr(
@@ -181,7 +181,7 @@ def test_fm_dispatch_run_subset_specified_as_parameter():
     executable = os.path.realpath("dummy_executable")
     os.chmod("dummy_executable", stat.S_IRWXU | stat.S_IRWXO | stat.S_IRWXG)
 
-    job_list = {
+    fm_description = {
         "global_environment": {},
         "global_update_path": {},
         "jobList": [
@@ -241,8 +241,8 @@ def test_fm_dispatch_run_subset_specified_as_parameter():
         "ert_pid": "",
     }
 
-    with open(JOBS_FILE, "w", encoding="utf-8") as f:
-        f.write(json.dumps(job_list))
+    with open(FORWARD_MODEL_DESCRIPTION_FILE, "w", encoding="utf-8") as f:
+        f.write(json.dumps(fm_description))
 
     # macOS doesn't provide /usr/bin/setsid, so we roll our own
     with open("setsid", "w", encoding="utf-8") as f:
@@ -287,7 +287,7 @@ def test_no_jobs_json_file_raises_IOError(tmp_path):
 
 
 def test_invalid_jobs_json_raises_OSError(tmp_path):
-    (tmp_path / JOBS_FILE).write_text("not json")
+    (tmp_path / FORWARD_MODEL_DESCRIPTION_FILE).write_text("not json")
 
     with pytest.raises(OSError):
         fm_dispatch(["script.py", str(tmp_path)])
@@ -314,11 +314,12 @@ def test_retry_of_jobs_json_file_read(unused_tcp_port, tmp_path, monkeypatch, ca
 
     def create_jobs_file_after_lock():
         _wait_until(
-            lambda: f"Could not find file {JOBS_FILE}, retrying" in caplog.text,
+            lambda: f"Could not find file {FORWARD_MODEL_DESCRIPTION_FILE}, retrying"
+            in caplog.text,
             2,
-            "Did not get expected log message from missing jobs.json",
+            f"Did not get expected log message from missing {FORWARD_MODEL_DESCRIPTION_FILE}",
         )
-        (tmp_path / JOBS_FILE).write_text(jobs_json)
+        (tmp_path / FORWARD_MODEL_DESCRIPTION_FILE).write_text(jobs_json)
         lock.release()
 
     with MockZMQServer(unused_tcp_port):
@@ -349,7 +350,7 @@ def test_setup_reporters(is_interactive_run, ens_id):
 
 
 @pytest.mark.usefixtures("use_tmpdir")
-def test_fm_dispatch_kills_itself_after_unsuccessful_job(unused_tcp_port):
+def test_fm_dispatch_kills_itself_after_unsuccessful_step(unused_tcp_port):
     port = unused_tcp_port
     jobs_json = json.dumps(
         {"ens_id": "_id_", "dispatch_url": f"tcp://localhost:{port}"}
