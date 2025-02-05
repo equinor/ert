@@ -128,7 +128,7 @@ style = [
     "pre-commit",
 ]
 types = [
-    "mypy",
+    "mypy<1.15.0",
     "types-lxml",
     "types-requests",
     "types-PyYAML",
