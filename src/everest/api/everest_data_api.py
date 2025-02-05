@@ -118,7 +118,7 @@ class EverestDataAPI:
                             "realization": int(geo_realization),
                             "simulation": int(simulation_id),
                             "function": obj_name,
-                            "norm": float(obj_dict["normalization"]),
+                            "scale": float(obj_dict["scale"]),
                             "value": float(df[obj_name].item()),
                             "weight": float(obj_dict["weight"]),
                         }
@@ -142,7 +142,7 @@ class EverestDataAPI:
 
         for o in objectives.to_dicts():
             batch_datas = batch_datas.with_columns(
-                pl.col(o["objective_name"]) * o["weight"] * o["normalization"]
+                pl.col(o["objective_name"]) * o["weight"] / o["scale"]
             )
 
         columns = [

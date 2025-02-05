@@ -68,8 +68,8 @@ def _parse_objectives(objective_functions: list[ObjectiveFunctionConfig], ropt_c
     for objective in objective_functions:
         assert isinstance(objective.name, str)
         weights.append(objective.weight or 1.0)
-        scales.append(1.0 / (objective.normalization or 1.0))
-        auto_scale.append(objective.auto_normalize or False)
+        scales.append(objective.scaling or 1.0)
+        auto_scale.append(objective.auto_scale or False)
 
         # If any objective specifies an objective type, we have to specify
         # function estimators in ropt to implement these types. This is done by
