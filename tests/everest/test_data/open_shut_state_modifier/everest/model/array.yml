@@ -44,7 +44,7 @@ controls:
 objective_functions:
   - name: npv
     weight: 1
-    normalization: 0.000000001
+    scaling: 1000000001
 
 optimization:
   backend: scipy

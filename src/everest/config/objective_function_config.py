@@ -1,4 +1,8 @@
-from pydantic import BaseModel, Field, PositiveFloat, field_validator
+from typing import Self
+
+from pydantic import BaseModel, Field, PositiveFloat, field_validator, model_validator
+
+from ert.config.parsing import ConfigWarning
 
 
 class ObjectiveFunctionConfig(BaseModel, extra="forbid"):  # type: ignore
@@ -29,22 +33,34 @@ used in the optimization process.
     normalization: float | None = Field(
         default=None,
         description="""
-normalization is a multiplication factor defined per objective function.
-
-The value of each objective function is multiplied by the related normalization value.
-When optimizing with respect to multiple objective functions, it is important
-that the normalization is set so that all the normalized objectives have the same order
-of magnitude. Ultimately, the normalized objectives are used in computing
-the weighted sum that Everest tries to optimize.
+    normalization key is deprecated and has been replaced with scaling
 """,
+    )
+    scaling: float | None = Field(
+        default=None,
+        description="""
+    scaling is a division factor defined per objective function.
+
+    The value of each objective function is divided by the related scaling value.
+    When optimizing with respect to multiple objective functions, it is important
+    that the scaling is set so that all the scaled objectives have the same order
+    of magnitude. Ultimately, the scaled objectives are used in computing
+    the weighted sum that Everest tries to optimize.
+    """,
     )
     auto_normalize: bool | None = Field(
         default=None,
         description="""
+    auto_normalize key is deprecated has been replaced with auto_scale.
+    """,
+    )
+    auto_scale: bool | None = Field(
+        default=None,
+        description="""
 auto_normalize can be set to true to automatically
-determine the normalization factor from the objective value in batch 0.
+determine the scaling factor from the objective value in batch 0.
 
-If normalization is also set, the automatic value is multiplied by its value.
+If scaling is also set, the automatic value is divided by its value.
 """,
     )
     type: str | None = Field(
@@ -61,9 +77,31 @@ preferred to be maximized.
 """,
     )
 
-    @field_validator("normalization")
+    @field_validator("scaling")
     @classmethod
-    def validate_normalization_is_not_zero(cls, normalization):  # pylint: disable=E0213
-        if normalization == 0.0:
-            raise ValueError("Normalization value cannot be zero")
-        return normalization
+    def validate_scaling_is_not_zero(cls, scaling) -> float | None:
+        if scaling == 0.0:
+            raise ValueError("Scaling value cannot be zero")
+        return scaling
+
+    @model_validator(mode="after")
+    def deprecate_normalization(self) -> Self:
+        if self.normalization is not None:
+            ConfigWarning.deprecation_warn(
+                "normalization key is deprecated and has been replaced with scaling"
+            )
+        if self.auto_normalize is not None:
+            ConfigWarning.deprecation_warn(
+                "auto_normalize key is deprecated and has been replaced with auto_scale"
+            )
+        return self
+
+    @model_validator(mode="after")
+    def make_scaling_backwards_compatible(self) -> Self:
+        if self.scaling is None and self.normalization is not None:
+            if self.normalization == 0.0:
+                raise ValueError("Scaling value cannot be zero")
+            self.scaling = 1 / self.normalization
+        if self.auto_scale is None and self.auto_normalize is not None:
+            self.auto_scale = self.auto_normalize
+        return self

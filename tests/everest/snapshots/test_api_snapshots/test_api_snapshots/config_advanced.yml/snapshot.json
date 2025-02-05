@@ -319,8 +319,8 @@
     {
       "batch": 0,
       "function": "distance",
-      "norm": 1.0,
       "realization": 0,
+      "scale": 1.0,
       "simulation": 0,
       "value": -6.1875,
       "weight": 1.0
@@ -328,8 +328,8 @@
     {
       "batch": 0,
       "function": "distance",
-      "norm": 1.0,
       "realization": 2,
+      "scale": 1.0,
       "simulation": 1,
       "value": -0.1875,
       "weight": 1.0
@@ -337,8 +337,8 @@
     {
       "batch": 1,
       "function": "distance",
-      "norm": 1.0,
       "realization": 0,
+      "scale": 1.0,
       "simulation": 0,
       "value": -5.88372993,
       "weight": 1.0
@@ -346,8 +346,8 @@
     {
       "batch": 1,
       "function": "distance",
-      "norm": 1.0,
       "realization": 2,
+      "scale": 1.0,
       "simulation": 1,
       "value": -0.295847,
       "weight": 1.0
@@ -355,8 +355,8 @@
     {
       "batch": 2,
       "function": "distance",
-      "norm": 1.0,
       "realization": 0,
+      "scale": 1.0,
       "simulation": 0,
       "value": -5.70665979,
       "weight": 1.0
@@ -364,8 +364,8 @@
     {
       "batch": 2,
       "function": "distance",
-      "norm": 1.0,
       "realization": 2,
+      "scale": 1.0,
       "simulation": 1,
       "value": -0.411939,
       "weight": 1.0
@@ -373,8 +373,8 @@
     {
       "batch": 3,
       "function": "distance",
-      "norm": 1.0,
       "realization": 0,
+      "scale": 1.0,
       "simulation": 0,
       "value": -5.43767023,
       "weight": 1.0
@@ -382,8 +382,8 @@
     {
       "batch": 3,
       "function": "distance",
-      "norm": 1.0,
       "realization": 2,
+      "scale": 1.0,
       "simulation": 1,
       "value": -0.35234299,
       "weight": 1.0
@@ -391,8 +391,8 @@
     {
       "batch": 4,
       "function": "distance",
-      "norm": 1.0,
       "realization": 0,
+      "scale": 1.0,
       "simulation": 0,
       "value": -4.98070002,
       "weight": 1.0
@@ -400,8 +400,8 @@
     {
       "batch": 4,
       "function": "distance",
-      "norm": 1.0,
       "realization": 2,
+      "scale": 1.0,
       "simulation": 1,
       "value": -0.39282399,
       "weight": 1.0
@@ -409,8 +409,8 @@
     {
       "batch": 5,
       "function": "distance",
-      "norm": 1.0,
       "realization": 0,
+      "scale": 1.0,
       "simulation": 0,
       "value": -4.88824987,
       "weight": 1.0
@@ -418,8 +418,8 @@
     {
       "batch": 5,
       "function": "distance",
-      "norm": 1.0,
       "realization": 2,
+      "scale": 1.0,
       "simulation": 1,
       "value": -0.404742,
       "weight": 1.0
