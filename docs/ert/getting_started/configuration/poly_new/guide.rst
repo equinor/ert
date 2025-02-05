@@ -82,7 +82,7 @@ In the ``simulations`` folder, you'll find folders for each realization, labeled
     │       ├── STATUS
     │       ├── jobs.json
     │       ├── logs
-    │       │   ├── job-runner-log-2024-05-16T0915.txt
+    │       │   ├── forward-model-runner-log-2025-02-01T0915.txt
     │       │   └── memory-profile-2024-05-16T0915.csv
     │       └── status.json
     ├── realization-1
@@ -91,7 +91,7 @@ In the ``simulations`` folder, you'll find folders for each realization, labeled
     │       ├── STATUS
     │       ├── jobs.json
     │       ├── logs
-    │       │   ├── job-runner-log-2024-05-16T0915.txt
+    │       │   ├── forward-model-runner-log-2025-02-01T0915.txt
     │       │   └── memory-profile-2024-05-16T0915.csv
     │       └── status.json
 
