@@ -25,15 +25,9 @@ from _ert.forward_model_runner.fm_dispatch import (
 )
 from _ert.forward_model_runner.forward_model_step import killed_by_oom
 from _ert.forward_model_runner.reporting import Event, Interactive, Reporter
-from _ert.forward_model_runner.reporting.message import (
-    Finish,
-    Init,
-    Message,
-)
+from _ert.forward_model_runner.reporting.message import Finish, Init, Message
 from _ert.threading import ErtThread
 from tests.ert.utils import MockZMQServer, wait_until
-
-from .test_event_reporter import _wait_until
 
 
 @pytest.mark.integration_test
@@ -313,11 +307,10 @@ def test_retry_of_jobs_json_file_read(unused_tcp_port, tmp_path, monkeypatch, ca
     )
 
     def create_jobs_file_after_lock():
-        _wait_until(
-            lambda: f"Could not find file {FORWARD_MODEL_DESCRIPTION_FILE}, retrying"
-            in caplog.text,
-            2,
-            f"Did not get expected log message from missing {FORWARD_MODEL_DESCRIPTION_FILE}",
+        wait_until(
+            lambda: f"Could not find file {FORWARD_MODEL_DESCRIPTION_FILE}, retrying",
+            interval=0.1,
+            timeout=2,
         )
         (tmp_path / FORWARD_MODEL_DESCRIPTION_FILE).write_text(jobs_json)
         lock.release()
