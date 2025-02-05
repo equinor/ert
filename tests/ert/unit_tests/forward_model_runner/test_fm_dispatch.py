@@ -16,12 +16,12 @@ import pandas as pd
 import psutil
 import pytest
 
-import _ert.forward_model_runner.cli
-from _ert.forward_model_runner.cli import (
+import _ert.forward_model_runner.fm_dispatch
+from _ert.forward_model_runner.fm_dispatch import (
     JOBS_FILE,
     _report_all_messages,
     _setup_reporters,
-    main,
+    fm_dispatch,
 )
 from _ert.forward_model_runner.forward_model_step import killed_by_oom
 from _ert.forward_model_runner.reporting import Event, Interactive, Reporter
@@ -157,7 +157,7 @@ def test_memory_profile_is_logged_as_csv(monkeypatch):
     monkeypatch.setattr(
         _ert.forward_model_runner.runner.ForwardModelStep, "MEMORY_POLL_PERIOD", 0.1
     )
-    main(["fm_dispatch", os.getcwd()])
+    fm_dispatch(["fm_dispatch", os.getcwd()])
     csv_files = glob.glob("logs/memory-profile*csv")
     mem_df = pd.read_csv(csv_files[0], parse_dates=True)
     assert mem_df["timestamp"].is_monotonic_increasing
@@ -283,25 +283,27 @@ def test_fm_dispatch_run_subset_specified_as_parameter():
 
 def test_no_jobs_json_file_raises_IOError(tmp_path):
     with pytest.raises(IOError):
-        main(["script.py", str(tmp_path)])
+        fm_dispatch(["script.py", str(tmp_path)])
 
 
 def test_invalid_jobs_json_raises_OSError(tmp_path):
     (tmp_path / JOBS_FILE).write_text("not json")
 
     with pytest.raises(OSError):
-        main(["script.py", str(tmp_path)])
+        fm_dispatch(["script.py", str(tmp_path)])
 
 
 def test_missing_directory_exits(tmp_path):
     with pytest.raises(SystemExit):
-        main(["script.py", str(tmp_path / "non_existent")])
+        fm_dispatch(["script.py", str(tmp_path / "non_existent")])
 
 
 def test_retry_of_jobs_json_file_read(unused_tcp_port, tmp_path, monkeypatch, caplog):
     lock = Lock()
     lock.acquire()
-    monkeypatch.setattr(_ert.forward_model_runner.cli, "_wait_for_retry", lock.acquire)
+    monkeypatch.setattr(
+        _ert.forward_model_runner.fm_dispatch, "_wait_for_retry", lock.acquire
+    )
     jobs_json = json.dumps(
         {
             "ens_id": "_id_",
@@ -322,7 +324,7 @@ def test_retry_of_jobs_json_file_read(unused_tcp_port, tmp_path, monkeypatch, ca
     with MockZMQServer(unused_tcp_port):
         thread = ErtThread(target=create_jobs_file_after_lock)
         thread.start()
-        main(args=["script.py", str(tmp_path)])
+        fm_dispatch(args=["script.py", str(tmp_path)])
         thread.join()
 
 
@@ -347,17 +349,22 @@ def test_setup_reporters(is_interactive_run, ens_id):
 
 
 @pytest.mark.usefixtures("use_tmpdir")
-def test_job_dispatch_kills_itself_after_unsuccessful_job(unused_tcp_port):
+def test_fm_dispatch_kills_itself_after_unsuccessful_job(unused_tcp_port):
     port = unused_tcp_port
     jobs_json = json.dumps(
         {"ens_id": "_id_", "dispatch_url": f"tcp://localhost:{port}"}
     )
 
     with (
-        patch("_ert.forward_model_runner.cli.os.killpg") as mock_killpg,
-        patch("_ert.forward_model_runner.cli.os.getpgid") as mock_getpgid,
-        patch("_ert.forward_model_runner.cli.open", new=mock_open(read_data=jobs_json)),
-        patch("_ert.forward_model_runner.cli.ForwardModelRunner") as mock_runner,
+        patch("_ert.forward_model_runner.fm_dispatch.os.killpg") as mock_killpg,
+        patch("_ert.forward_model_runner.fm_dispatch.os.getpgid") as mock_getpgid,
+        patch(
+            "_ert.forward_model_runner.fm_dispatch.open",
+            new=mock_open(read_data=jobs_json),
+        ),
+        patch(
+            "_ert.forward_model_runner.fm_dispatch.ForwardModelRunner"
+        ) as mock_runner,
     ):
         mock_runner.return_value.run.return_value = [
             Init([], 0, 0),
@@ -366,7 +373,7 @@ def test_job_dispatch_kills_itself_after_unsuccessful_job(unused_tcp_port):
         mock_getpgid.return_value = 17
 
         with MockZMQServer(port):
-            main(["script.py"])
+            fm_dispatch(["script.py"])
 
         mock_killpg.assert_called_with(17, signal.SIGKILL)
 
