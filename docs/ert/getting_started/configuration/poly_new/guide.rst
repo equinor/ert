@@ -5,26 +5,26 @@ Configuration guide
 This guide will introduce you to the basic concepts of ERT by demonstrating
 a project setup that uses a simple polynomial as the :ref:`forward model <forward_model_chapter>`.
 
-Minimal Configuration
+Minimal configuration
 ---------------------
 We first create a minimal configuration and run an experiment that
 doesn't execute any computations, but only generates the necessary folders and files.
 
-1. **Create a Folder**:
+1. **Create a folder**:
     Start by creating a folder named ``poly_example``.
     This folder will contain all required files for our example.
 
-Create a Configuration File
+Create a configuration file
 ***************************
 Running ERT requires a dedicated configuration file, typically with the extension ``.ert``.
 
-1. **Create the File**: Within the ``poly_example`` folder, create a file named ``poly.ert`` with the following content:
+1. **Create the file**: Within the ``poly_example`` folder, create a file named ``poly.ert`` with the following content:
 
    .. literalinclude:: minimal/poly.ert
 
 :ref:`NUM_REALIZATIONS <num_realizations>` specifies how many simulations you want to run.
 
-Launch the User Interface
+Launch the user interface
 *************************
 1. **Run ERT**: Launch the GUI with the command:
 
@@ -36,28 +36,28 @@ Launch the User Interface
 
    .. image:: minimal/ert.png
 
-The Main Elements Relevant to This Guide Are:
+The main elements relevant to this guide are:
 *********************************************
 
-* **Simulation Mode**: Displays available algorithms. Only a limited set is available at this stage, as we have not fully configured ERT yet.
+* **Simulation mode**: Displays available algorithms. Only a limited set is available at this stage, as we have not fully configured ERT yet.
 * **Runpath**: A configurable path determining where each realization of the experiment will be executed. The placeholders ``<IENS>`` and ``<ITER>`` will be replaced by the number of the realization and the number of iterations, respectively.
-* **Configuration Summary**: Initially empty, but will display what has been configured once you've set up your experiment.
-* **Run Experiment**: Initiates an experiment with the current configuration and selected simulation mode.
+* **Configuration summary**: Initially empty, but will display what has been configured once you've set up your experiment.
+* **Run experiment**: Initiates an experiment with the current configuration and selected simulation mode.
 
-Run an Empty Experiment
+Run an empty experiment
 ***********************
 
 To execute an empty experiment, follow these steps:
 
-1. **Select Simulation Mode**: Choose "Ensemble Experiment" as the Simulation mode.
-2. **Start the Experiment**: Click the "Run Experiment" button.
+1. **Select simulation mode**: Choose "Ensemble experiment" as the Simulation mode.
+2. **Start the experiment**: Click the "Run experiment" button.
 
 A new window named "Experiment" will appear, displaying the status of the experiment.
 You can view the status of each running realization by pressing "Show Details."
 
 .. image:: minimal/simulations.png
 
-* **Realizations Limitation**: As the experiment runs, you may notice that not all the realizations are running simultaneously.
+* **Realizations limitation**: As the experiment runs, you may notice that not all the realizations are running simultaneously.
   This is due to an upper limit on how many realizations can run concurrently, a constraint determined by the queue system.
   We will configure this at a later stage.
 
@@ -105,7 +105,7 @@ In the ``simulations`` folder, you'll find folders for each realization, labeled
 
 Do not modify these files, either manually or through your experiments' jobs.
 
-Adding a Forward Model
+Adding a forward model
 ----------------------
 As mentioned, this example experiment will use a simple polynomial evaluation as the forward
 model. In real-world scenarios, this would typically involve executing a physics simulator,
@@ -116,7 +116,7 @@ To get started, the forward model will be implemented as a simple Python script 
 Initially, we'll create a basic script to ensure that it can be executed.
 As we progress, both the script and the configuration file will be expanded to showcase fundamental features of ERT.
 
-Changing the Default Runpath
+Changing the default runpath
 ****************************
 The minimal configuration utilized the default :ref:`RUNPATH <runpath>`,
 causing the realization to execute within the directory structure ``simulations/realization-<IENS>/iter-<ITER>``.
@@ -133,7 +133,7 @@ giving you more control over the organization of your experiment's outputs.
 
 .. _create_script:
 
-Creating a Script to Define the Forward Model
+Creating a script to define the forward model
 *********************************************
 The forward model for our example will be defined in a Python script named ``poly_eval.py``.
 The script will evaluate a polynomial with fixed coefficients at specific points, writing the results to a file.
@@ -145,15 +145,15 @@ The script will evaluate a polynomial with fixed coefficients at specific points
 
 This script performs the following actions:
 
-- **Define Coefficients**: A dictionary is used to store the coefficients of the polynomial with keys ``a``, ``b``, and ``c``.
-- **Evaluate the Polynomial**: The polynomial is evaluated at fixed points ranging from 0 to 9.
-- **Write Results**: After evaluation, the script writes the results to a file named ``poly.out``.
+- **Define coefficients**: A dictionary is used to store the coefficients of the polynomial with keys ``a``, ``b``, and ``c``.
+- **Evaluate the polynomial**: The polynomial is evaluated at fixed points ranging from 0 to 9.
+- **Write results**: After evaluation, the script writes the results to a file named ``poly.out``.
 
-Marking the Script as Executable
+Marking the script as executable
 ********************************
 The ``poly_eval.py`` script must be marked as executable to allow it to be invoked by other programs.
 
-1. **Run the Command**: Execute the following command to mark the script as executable:
+1. **Run the command**: Execute the following command to mark the script as executable:
 
    .. code-block:: shell
 
@@ -162,17 +162,17 @@ The ``poly_eval.py`` script must be marked as executable to allow it to be invok
    This command changes the permissions of the file, allowing it to be executed like a program.
    Once you have run this command, the script can be run directly from the terminal or used within ERT as needed.
 
-Adding a Job to the Forward Model
+Adding a job to the forward model
 *********************************
 To add a job to the forward model, you need to define the job in a separate file and then reference it in your configuration.
 Here's how to do it:
 
-1. **Define the Job**: Create a file named ``POLY_EVAL`` with the following content to specify the executable:
+1. **Define the job**: Create a file named ``POLY_EVAL`` with the following content to specify the executable:
 
 .. include:: with_simple_script/POLY_EVAL
     :code:
 
-2. **Reference the Job in Configuration**: Open your configuration file and add these lines:
+2. **Reference the job in configuration**: Open your configuration file and add these lines:
 
 .. code-block:: shell
 
@@ -192,11 +192,11 @@ For more details on configuring your own jobs, see the corresponding section on 
 
 By following these steps, you have added a job to the forward model, allowing ERT to execute the ``poly_eval.py`` script as part of the forward model.
 
-Running with the New Job
+Running with the new job
 ************************
 With the new job added, follow these steps to run ERT and observe the results:
 
-1. **Delete Old Output Files**: To clear any previous results, execute the following command:
+1. **Delete old output files**: To clear any previous results, execute the following command:
 
 .. code-block:: shell
 
@@ -212,15 +212,15 @@ With the new job added, follow these steps to run ERT and observe the results:
 
 You will notice the updated configuration summary, including the newly defined job and the customized runpath.
 
-3. **Run the Experiment**: Execute the ensemble experiment as before. Once it's complete, close all ERT windows.
+3. **Run the experiment**: Execute the ensemble experiment as before. Once it's complete, close all ERT windows.
 
-4. **Inspect the Output**: In your project folder, you'll find a new directory ``poly_out``, corresponding to the ``RUNPATH`` configuration. This will contain folders for each realization, and within those, a new level of folders named ``iter-0``, containing the simulation results. You will find new files such as:
+4. **Inspect the output**: In your project folder, you'll find a new directory ``poly_out``, corresponding to the ``RUNPATH`` configuration. This will contain folders for each realization, and within those, a new level of folders named ``iter-0``, containing the simulation results. You will find new files such as:
 
    - ``poly_eval.stderr.0``: Information the ``poly_eval.py`` script writes to the standard error stream.
    - ``poly_eval.stdout.0``: Information the ``poly_eval.py`` script writes to the standard output stream.
    - ``poly.out``: The file where the script writes results.
 
-5. **Examine the Results**: You can view the contents of ``poly.out`` in each runpath. For example:
+5. **Examine the results**: You can view the contents of ``poly.out`` in each runpath. For example:
 
    .. code-block:: shell
 
@@ -244,14 +244,14 @@ You will notice the updated configuration summary, including the newly defined j
 At this stage, each realization contains identical results, as they all evaluate the same model.
 In the following section, you'll learn how to use ERT to automatically vary parameters across realizations, leading to different results.
 
-Creating Parameters
+Creating parameters
 -------------------
 To sample different parameters across realizations in ERT,
 you'll need to define the prior distribution for each parameter.
 Furthermore, you'll detail how ERT can identify and inject these parameters into
 each simulation run via a templating mechanism.
 
-Adding Prior Distributions
+Adding prior distributions
 **************************
 Create a file named ``coeff_priors`` and add the following content:
 
@@ -281,7 +281,7 @@ The two required arguments for :ref:`GEN_KW <gen_kw>` are:
  1. **COEFFS**: The name assigned to the parameter set, serving as an identifier.
  2. **coeff_priors**: The name of the file containing the defined priors.
 
-Reading Parameters in the Simulation Script
+Reading parameters in the simulation script
 *******************************************
 The simulation script must be modified to read the parameters. ERT always outputs a file called ``parameters.json``, which
 contains all the ``GEN_KW`` parameters.
@@ -290,17 +290,17 @@ Update ``poly_eval.py`` to the following:
 
 .. literalinclude:: with_results/poly_eval.py
 
-Reading Simulation Results a.k.a Responses
+Reading simulation results a.k.a responses
 ******************************************
 To enable ERT to read the responses, you'll need to use the :ref:`GEN_DATA <gen_data>` keyword.
 
-1. **Adding the GEN_DATA Line**: Edit the ``poly.ert`` file to include the following line:
+1. **Adding the GEN_DATA line**: Edit the ``poly.ert`` file to include the following line:
 
 .. code-block:: shell
 
     GEN_DATA POLY_RES RESULT_FILE:poly.out
 
-2. **Understanding the Arguments**:
+2. **Understanding the arguments**:
 
 - **POLY_RES**: Name of this result set.
 - **RESULT_FILE:poly.out**: Path to the file with the simulation results.
@@ -309,9 +309,9 @@ Increasing the number of realizations
 *************************************
 Let's increase the number of realizations to obtain a larger sample size.
 
-1. **Increase the Number of Realizations**: Set the ``NUM_REALIZATIONS`` value to ``100`` to instruct ERT to run 100 simulations.
+1. **Increase the number of realizations**: Set the ``NUM_REALIZATIONS`` value to ``100`` to instruct ERT to run 100 simulations.
 
-2. **Configure Parallel Execution**: To make the experiment run faster, you can specify the number of simultaneous simulations that the system can execute.
+2. **Configure parallel execution**: To make the experiment run faster, you can specify the number of simultaneous simulations that the system can execute.
    Use the :ref:`queue option <queue_option>` ``MAX_RUNNING`` for the ``LOCAL`` queue and set it to ``50``:
 
 .. code-block:: shell
@@ -326,36 +326,36 @@ The updated config file, ``poly.ert``, should now look like this:
 .. include:: with_results/poly.ert
     :code:
 
-Running with Sampled Parameters
+Running with sampled parameters
 *******************************
 Before proceeding with the next run, delete the ``storage`` and ``poly_out`` folders from the last run.
 This ensures that you'll only see the new data in your results.
 
 1. **Launch ERT**: Open ERT again and observe that the "Config Summary" now includes the name of the parameter set you've defined.
 
-2. **Run Experiment**: Choose "Ensemble Experiment" in the "Simulation mode" and hit "Run Experiment".
+2. **Run experiment**: Choose "Ensemble Experiment" in the "Simulation mode" and hit "Run Experiment".
 
-3. **Create Plot**: Once the experiment is completed, press the "Create Plot" button either in the progress window or in the main window.
+3. **Create plot**: Once the experiment is completed, press the "Create Plot" button either in the progress window or in the main window.
    This action will open the "Plotting" window.
 
-4. **View Distributions**: In the "Plotting" window, you can now observe the distributions of the three different parameters you created: ``COEFFS:a``, ``COEFFS:b``, and ``COEFFS:c``.
+4. **View distributions**: In the "Plotting" window, you can now observe the distributions of the three different parameters you created: ``COEFFS:a``, ``COEFFS:b``, and ``COEFFS:c``.
    These names are formatted with the parameter set name first, followed by a colon, and then the specific parameter name.
 
 You should see something similar to this:
 
 .. image:: with_results/plots.png
 
-5. **View Responses**: Click on ``POLY_RES`` to view responses.
+5. **View responses**: Click on ``POLY_RES`` to view responses.
 
 .. image:: with_results/poly_plot.png
 
 Play around and look at the different plots.
 
-Inspecting Parameters and Responses
-*************************************
+Inspecting parameters and responses
+***********************************
 The sampled parameters and responses can be inspected within each runpath.
 
-1. **Inspecting the Parameters**: Each realization and ensemble contains a ``parameter.json`` that contains the sampled parameters.
+1. **Inspecting the parameters**: Each realization and ensemble contains a ``parameter.json`` that contains the sampled parameters.
    To look at a specific file, run:
 
 .. code-block:: shell
@@ -374,7 +374,7 @@ This should return something similar to:
         }
     }
 
-2. **Inspecting the Results**: Each simulation generated a unique file named ``poly.out`` reflecting the varying outcomes.
+2. **Inspecting the results**: Each simulation generated a unique file named ``poly.out`` reflecting the varying outcomes.
    A typical output from a realization might look like:
 
 .. code-block:: shell
@@ -394,7 +394,7 @@ This should return something similar to:
     44.26980916415639
     54.79368733563777
 
-3. **Next Steps**: Having inspected both the parameters and responses, you have built an understanding of how sampling works in ERT.
+3. **Next steps**: Having inspected both the parameters and responses, you have built an understanding of how sampling works in ERT.
    In the next section, we will see how to describe the responses to ERT, and how to specify some observations that we wish ERT to optimise towards.
 
 Adding observations
@@ -404,7 +404,7 @@ representing our best current understanding of how this process behaves.
 The accuracy of this model hinges on how well a polynomial mirrors reality and how precise the parameters ``a``, ``b``, and ``c`` are.
 In this section, we'll leverage ERT to improve the parameter estimates using real-world observations.
 
-Observations File
+Observations file
 *****************
 The following code adds noise to evaluations of the polynomial at the points 0, 2, 4, 6 and 8 to generate synthetic observations.
 In realistic cases such as reservoir management, the points would instead be times at which the observations were measured.
@@ -417,7 +417,7 @@ In realistic cases such as reservoir management, the points would instead be tim
 
 Each line holds an observation, where the first number is the observed value, and the second number is its uncertainty.
 
-Defining the Observation Configurations
+Defining the observation configurations
 ***************************************
 We make ERT aware of observations using the :ref:`OBS_CONFIG <obs_config>` keyword,
 which refers to a file where the :ref:`GENERAL_OBSERVATION <general_observation>` keyword is used to define observations.
@@ -441,7 +441,7 @@ which refers to a file where the :ref:`GENERAL_OBSERVATION <general_observation>
 
    This line informs ERT about the description of an observation set in the ``observations`` file.
 
-Simulation and Analysis
+Simulation and analysis
 ***********************
 With the final configuration:
 
@@ -457,7 +457,7 @@ Ensembles can be selected / deselected in the "Plot ensemble" section.
 
 .. image:: with_observations/plot_obs.png
 
-Evaluating the Updated Parameters
+Evaluating the updated parameters
 *********************************
 Examine the improved estimates for ``a``, ``b``, and ``c``.
 Though not perfect, they're better than the initial guesses.
@@ -468,7 +468,7 @@ Though not perfect, they're better than the initial guesses.
 
 .. image:: with_observations/coeff_c.png
 
-Adding Observations
+Adding observations
 *******************
 Notice that there is not much improvement in the estimate of parameter ``b``.
 Let's try adding more observations with lower uncertainty and run a new experiment.
