@@ -46,7 +46,9 @@ def load_yaml(file_name: str) -> dict[str, Any] | None:
         return None
 
 
-def _get_definitions(configuration, configpath):
+def _get_definitions(
+    configuration: dict[str, Any] | None, configpath: str
+) -> dict[str, Any]:
     defs = {}
     if configuration:
         if "definitions" not in configuration:
@@ -74,7 +76,11 @@ def _get_definitions(configuration, configpath):
     return defs
 
 
-def _os():
+class Os:
+    pass
+
+
+def _os() -> Os:
     """Return an object whose properties are the users environment variables.
 
     For example, calling os.USER returns the username, os.HOSTNAME returns the
@@ -83,23 +89,22 @@ def _os():
 
     """
 
-    class Os:
-        pass
-
     x = Os()
     x.__dict__.update(os.environ)
     return x
 
 
-def _render_definitions(definitions, jinja_env):
+def _render_definitions(
+    definitions: dict[str, Any], jinja_env: jinja2.Environment
+) -> None:
     # pylint: disable=unnecessary-lambda-assignment
     render = lambda s, d: jinja_env.from_string(s).render(**d)
-    for key in definitions:
+    for key in definitions:  # noqa: PLC0206
         if not isinstance(definitions[key], str):
             continue
 
         for _idx in range(len(definitions) + 1):
-            new_val = render(definitions[key], definitions)
+            new_val = render(definitions[key], definitions)  # type: ignore
             if definitions[key] != new_val:
                 definitions[key] = new_val
             else:

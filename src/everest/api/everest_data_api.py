@@ -1,5 +1,6 @@
 import os
 from pathlib import Path
+from typing import Any
 
 import polars as pl
 
@@ -9,16 +10,17 @@ from everest.everest_storage import EverestStorage
 
 
 class EverestDataAPI:
-    def __init__(self, config: EverestConfig, filter_out_gradient=True):
+    def __init__(self, config: EverestConfig, filter_out_gradient: bool = True):
         self._config = config
         output_folder = config.optimization_output_dir
+        assert output_folder
         self._ever_storage = EverestStorage(Path(output_folder))
 
         if os.path.exists(output_folder):
             self._ever_storage.read_from_output_dir()
 
     @property
-    def batches(self):
+    def batches(self) -> list[int]:
         return sorted(
             b.batch_id
             for b in self._ever_storage.data.batches
@@ -26,13 +28,15 @@ class EverestDataAPI:
         )
 
     @property
-    def accepted_batches(self):
+    def accepted_batches(self) -> list[int]:
         return sorted(
             b.batch_id for b in self._ever_storage.data.batches if b.is_improvement
         )
 
     @property
-    def objective_function_names(self):
+    def objective_function_names(self) -> list[str]:
+        if self._ever_storage.data.objective_functions is None:
+            return []
         return sorted(
             self._ever_storage.data.objective_functions["objective_name"]
             .unique()
@@ -40,7 +44,7 @@ class EverestDataAPI:
         )
 
     @property
-    def output_constraint_names(self):
+    def output_constraint_names(self) -> list[str]:
         return (
             sorted(
                 self._ever_storage.data.nonlinear_constraints["constraint_name"]
@@ -52,7 +56,9 @@ class EverestDataAPI:
         )
 
     @property
-    def realizations(self):
+    def realizations(self) -> list[int]:
+        if self._ever_storage.data.batches[0].realization_objectives is None:
+            return []
         return sorted(
             self._ever_storage.data.batches[0]
             .realization_objectives["realization"]
@@ -61,7 +67,9 @@ class EverestDataAPI:
         )
 
     @property
-    def simulations(self):
+    def simulations(self) -> list[int]:
+        if self._ever_storage.data.batches[0].realization_objectives is None:
+            return []
         return sorted(
             self._ever_storage.data.batches[0]
             .realization_objectives["simulation_id"]
@@ -70,14 +78,19 @@ class EverestDataAPI:
         )
 
     @property
-    def control_names(self):
+    def control_names(self) -> list[str]:
+        assert self._ever_storage.data.controls is not None
         return sorted(
             self._ever_storage.data.controls["control_name"].unique().to_list()
         )
 
     @property
-    def control_values(self):
-        all_control_names = self._ever_storage.data.controls["control_name"].to_list()
+    def control_values(self) -> list[dict[str, Any]]:
+        all_control_names = (
+            self._ever_storage.data.controls["control_name"].to_list()
+            if self._ever_storage.data.controls is not None
+            else []
+        )
         new = []
         for batch in self._ever_storage.data.batches:
             if batch.realization_controls is None:
@@ -96,7 +109,7 @@ class EverestDataAPI:
         return new
 
     @property
-    def objective_values(self):
+    def objective_values(self) -> list[dict[str, Any]]:
         obj_values = []
         for b in self._ever_storage.data.batches:
             if b.realization_objectives is None:
@@ -108,15 +121,19 @@ class EverestDataAPI:
             ), df in b.realization_objectives.sort(
                 ["realization", "simulation_id"]
             ).group_by(["realization", "simulation_id"], maintain_order=True):
-                for obj_dict in self._ever_storage.data.objective_functions.sort(
-                    ["objective_name"]
-                ).to_dicts():
+                for obj_dict in (
+                    self._ever_storage.data.objective_functions.sort(
+                        ["objective_name"]
+                    ).to_dicts()
+                    if self._ever_storage.data.objective_functions is not None
+                    else []
+                ):
                     obj_name = obj_dict["objective_name"]
                     obj_values.append(
                         {
                             "batch": int(b.batch_id),
-                            "realization": int(geo_realization),
-                            "simulation": int(simulation_id),
+                            "realization": int(geo_realization),  # type: ignore
+                            "simulation": int(simulation_id),  # type: ignore
                             "function": obj_name,
                             "scale": float(obj_dict["scale"]),
                             "value": float(df[obj_name].item()),
@@ -127,17 +144,20 @@ class EverestDataAPI:
         return obj_values
 
     @property
-    def single_objective_values(self):
+    def single_objective_values(self) -> list[dict[str, Any]]:
         batch_datas = pl.concat(
             [
-                b.batch_objectives.select(
-                    c for c in b.batch_objectives.columns if c != "merit_value"
+                b.batch_objectives.select(  # type: ignore
+                    c
+                    for c in b.batch_objectives.columns  # type: ignore
+                    if c != "merit_value"
                 ).with_columns(pl.lit(1 if b.is_improvement else 0).alias("accepted"))
                 for b in self._ever_storage.data.batches
                 if b.realization_controls is not None
             ]
         )
         objectives = self._ever_storage.data.objective_functions
+        assert objectives is not None
         objective_names = objectives["objective_name"].unique().to_list()
 
         for o in objectives.to_dicts():
@@ -161,7 +181,7 @@ class EverestDataAPI:
         )
 
     @property
-    def gradient_values(self):
+    def gradient_values(self) -> list[dict[str, Any]]:
         all_batch_data = [
             b.batch_objective_gradient
             for b in self._ever_storage.data.batches
@@ -190,10 +210,13 @@ class EverestDataAPI:
             .to_dicts()
         )
 
-    def summary_values(self, batches=None, keys=None):
+    def summary_values(
+        self, batches: list[int] | None = None, keys: list[Any] | None = None
+    ) -> pl.DataFrame:
         if batches is None:
             batches = self.batches
         data_frames = []
+        assert self._config.storage_dir
         storage = open_storage(self._config.storage_dir, "r")
         experiment = next(storage.experiments)
         for batch_id in batches:
@@ -235,39 +258,42 @@ class EverestDataAPI:
         return pl.concat(data_frames)
 
     @property
-    def output_folder(self):
+    def output_folder(self) -> str:
         return self._config.output_dir
 
     def export_dataframes(
         self,
     ) -> tuple[pl.DataFrame, pl.DataFrame, pl.DataFrame]:
-        batch_dfs_to_join = {}
-        realization_dfs_to_join = {}
-        perturbation_dfs_to_join = {}
+        batch_dfs_to_join = {}  # type: ignore
+        realization_dfs_to_join = {}  # type: ignore
+        perturbation_dfs_to_join = {}  # type: ignore
 
         batch_ids = [b.batch_id for b in self._ever_storage.data.batches]
-        all_controls = self._ever_storage.data.controls["control_name"].to_list()
+        all_controls = (
+            self._ever_storage.data.controls["control_name"].to_list()
+            if self._ever_storage.data.controls is not None
+            else []
+        )
 
         def _try_append_df(
             batch_id: int,
             df: pl.DataFrame | None,
             target: dict[str, list[pl.DataFrame]],
-        ):
+        ) -> None:
             if df is not None:
-                if batch_id not in target:
-                    target[batch.batch_id] = []
+                if batch_id not in target:  # type: ignore
+                    target[batch.batch_id] = []  # type: ignore
+                target[batch_id].append(df)  # type: ignore
 
-                target[batch_id].append(df)
-
-        def try_append_batch_dfs(batch_id: int, *dfs: pl.DataFrame):
+        def try_append_batch_dfs(batch_id: int, *dfs: pl.DataFrame) -> None:
             for df_ in dfs:
                 _try_append_df(batch_id, df_, batch_dfs_to_join)
 
-        def try_append_realization_dfs(batch_id: int, *dfs: pl.DataFrame):
+        def try_append_realization_dfs(batch_id: int, *dfs: pl.DataFrame) -> None:
             for df_ in dfs:
                 _try_append_df(batch_id, df_, realization_dfs_to_join)
 
-        def try_append_perturbation_dfs(batch_id: int, *dfs: pl.DataFrame):
+        def try_append_perturbation_dfs(batch_id: int, *dfs: pl.DataFrame) -> None:
             for df_ in dfs:
                 _try_append_df(batch_id, df_, perturbation_dfs_to_join)
 
@@ -284,15 +310,15 @@ class EverestDataAPI:
         for batch in self._ever_storage.data.batches:
             try_append_perturbation_dfs(
                 batch.batch_id,
-                batch.perturbation_objectives,
-                batch.perturbation_constraints,
+                batch.perturbation_objectives,  # type: ignore
+                batch.perturbation_constraints,  # type: ignore
             )
 
             try_append_realization_dfs(
                 batch.batch_id,
-                batch.realization_objectives,
+                batch.realization_objectives,  # type: ignore
                 batch.realization_controls,
-                batch.realization_constraints,
+                batch.realization_constraints,  # type: ignore
             )
 
             if batch.batch_objective_gradient is not None:
@@ -307,7 +333,9 @@ class EverestDataAPI:
                 )
 
             try_append_batch_dfs(
-                batch.batch_id, batch.batch_objectives, batch.batch_constraints
+                batch.batch_id,
+                batch.batch_objectives,  # type: ignore
+                batch.batch_constraints,  # type: ignore
             )
 
         def _join_by_batch(
@@ -374,7 +402,7 @@ class EverestDataAPI:
             batch_df_renamed, on="batch_id", how="full", coalesce=True
         )
 
-        def _sort_df(df: pl.DataFrame, index: list[str]):
+        def _sort_df(df: pl.DataFrame, index: list[str]) -> pl.DataFrame:
             sorted_cols = index + sorted(set(df.columns) - set(index))
             df_ = df.select(sorted_cols).sort(by=index)
             return df_
@@ -397,12 +425,13 @@ class EverestDataAPI:
         )
 
     @property
-    def everest_csv(self):
+    def everest_csv(self) -> str:
         export_filename = (
             self._config.export.csv_output_filepath
             if self._config.export is not None
             else f"{self._config.config_file}.csv"
         )
+        assert export_filename
 
         full_path = os.path.join(self.output_folder, export_filename)
 
