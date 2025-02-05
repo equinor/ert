@@ -4,7 +4,7 @@
 
 
 ******************
-Forward Model Jobs
+Forward model jobs
 ******************
 
 Some of the forward models are connected and often the output of one is the

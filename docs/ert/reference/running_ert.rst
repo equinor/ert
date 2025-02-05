@@ -1,7 +1,7 @@
 Running ERT
 ===========
 
-Graphical User Interface (GUI)
+Graphical user interface (GUI)
 ------------------------------
 
 .. argparse::
@@ -10,13 +10,13 @@ Graphical User Interface (GUI)
    :prog: ert
    :path: gui
 
-Command Line Interface (CLI)
+Command line interface (CLI)
 ----------------------------
 
 The following sub commands can be used in order to use ERT's command line interface.
 Note that different sub commands may require different additional arguments.
 
-Test Run
+Test run
 ~~~~~~~~
 
 .. argparse::
@@ -25,7 +25,7 @@ Test Run
    :prog: ert
    :path: test_run
 
-Ensemble Experiment
+Ensemble experiment
 ~~~~~~~~~~~~~~~~~~~
 
 .. argparse::
@@ -34,7 +34,7 @@ Ensemble Experiment
    :prog: ert
    :path: ensemble_experiment
 
-Ensemble Smoother
+Ensemble smoother
 ~~~~~~~~~~~~~~~~~
 
 .. argparse::

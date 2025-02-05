@@ -1,4 +1,4 @@
-Everest™ Documentation
+Everest™ documentation
 ======================
 
 This guide serves as documentation for the *Everest* decision-making tool.
@@ -43,7 +43,7 @@ This guide serves as documentation for the *Everest* decision-making tool.
 
 .. toctree::
    :hidden:
-   :caption: Developer Documentation
+   :caption: Developer documentation
 
    development
 

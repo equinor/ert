@@ -124,7 +124,7 @@ with the documentation as specified, else respond with :code:`None`.
 When creating documentation in ERT, forward model steps will be grouped by their
 main categories (ie. the category listed before the first dot).
 
-Workflow Job
+Workflow job
 ~~~~~~~~~~~~
 
 There are two ways to install workflow jobs in ERT.
@@ -227,7 +227,7 @@ The configuration object and properties are as follows.
     :members:
     :undoc-members:
 
-Logging Configuration
+Logging configuration
 ~~~~~~~~~~~~~~~~~~~~~
 The logging can be configured by plugins to add custom log handlers.
 

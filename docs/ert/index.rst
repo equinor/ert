@@ -2,7 +2,7 @@
    :align: center
    :scale: 50%
 
-Welcome to the ERT Documentation!
+Welcome to the ERT documentation!
 =================================
 
 ERT (Ensemble based Reservoir Tool) is a free and open-source tool for automating complex workflows,
