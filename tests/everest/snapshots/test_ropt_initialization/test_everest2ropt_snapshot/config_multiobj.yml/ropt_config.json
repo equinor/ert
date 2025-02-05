@@ -91,16 +91,8 @@
       -1.0,
       -1.0
     ],
-    "offsets": [
-      0.0,
-      0.0,
-      0.0
-    ],
-    "scales": [
-      1.0,
-      1.0,
-      1.0
-    ],
+    "offsets": null,
+    "scales": null,
     "types": [
       1,
       1,
