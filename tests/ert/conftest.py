@@ -33,9 +33,7 @@ st.register_type_strategy(Path, st.builds(Path, st.text().map(lambda x: "/tmp/" 
 
 @pytest.fixture(autouse=True)
 def no_jobs_file_retry(monkeypatch):
-    monkeypatch.setattr(
-        _ert.forward_model_runner.fm_dispatch, "JOBS_JSON_RETRY_TIME", 0
-    )
+    monkeypatch.setattr(_ert.forward_model_runner.fm_dispatch, "FILE_RETRY_TIME", 0)
 
 
 @pytest.fixture(autouse=True)
