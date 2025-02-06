@@ -160,8 +160,7 @@ class LegacyEnsemble:
                 f"{cpu_seconds=} "
                 f"{current_memory_usage=} "
                 f"step_index={event.fm_step} "
-                f"real={event.real} "
-                f"ensemble={event.ensemble}"
+                f"real={event.real}"
             )
 
     def update_snapshot(self, events: Sequence[Event]) -> EnsembleSnapshot:
