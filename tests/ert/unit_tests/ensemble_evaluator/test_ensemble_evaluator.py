@@ -105,7 +105,11 @@ async def test_evaluator_handles_dispatchers_connected(
 
 async def test_find_socket_works_with_zmq(unused_tcp_port):
     custom_range = range(unused_tcp_port, unused_tcp_port + 1)
-    sock = find_available_socket(custom_range=custom_range, custom_host="127.0.0.1")
+    sock = find_available_socket(
+        custom_range=custom_range,
+        custom_host="127.0.0.1",
+        will_close_then_reopen_socket=True,
+    )
     host, port = sock.getsockname()
     print(host, port)
 
