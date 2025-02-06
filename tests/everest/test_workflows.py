@@ -3,6 +3,7 @@ from pathlib import Path
 
 import pytest
 
+from ert.ensemble_evaluator.config import EvaluatorServerConfig
 from ert.run_models.everest_run_model import EverestRunModel
 from everest.config import EverestConfig
 from tests.everest.utils import relpath, skipif_no_everest_models
@@ -12,11 +13,11 @@ CONFIG_FILE = "config_workflow.yml"
 
 
 @pytest.mark.integration_test
-def test_workflow_run(copy_mocked_test_data_to_tmp, evaluator_server_config_generator):
+def test_workflow_run(copy_mocked_test_data_to_tmp):
     config = EverestConfig.load_file(CONFIG_FILE)
 
     run_model = EverestRunModel.create(config)
-    evaluator_server_config = evaluator_server_config_generator(run_model)
+    evaluator_server_config = EvaluatorServerConfig()
     run_model.run_experiment(evaluator_server_config)
 
     for name in ("pre_simulation", "post_simulation"):
@@ -34,14 +35,13 @@ def test_workflow_run(copy_mocked_test_data_to_tmp, evaluator_server_config_gene
 def test_state_modifier_workflow_run(
     config: str,
     copy_testdata_tmpdir: Callable[[str | None], Path],
-    evaluator_server_config_generator,
 ) -> None:
     cwd = copy_testdata_tmpdir("open_shut_state_modifier")
 
     run_model = EverestRunModel.create(
         EverestConfig.load_file(f"everest/model/{config}.yml")
     )
-    evaluator_server_config = evaluator_server_config_generator(run_model)
+    evaluator_server_config = EvaluatorServerConfig()
     run_model.run_experiment(evaluator_server_config)
     paths = list(Path.cwd().glob("**/simulation_0/RESULT.SCH"))
     assert paths

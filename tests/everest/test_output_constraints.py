@@ -4,6 +4,7 @@ import pytest
 from ropt.config.enopt import EnOptConfig
 from ropt.enums import ConstraintType
 
+from ert.ensemble_evaluator.config import EvaluatorServerConfig
 from ert.run_models.everest_run_model import EverestRunModel
 from everest.config import EverestConfig
 from everest.optimizer.everest2ropt import everest2ropt
@@ -227,10 +228,8 @@ def test_upper_bound_output_constraint_def(copy_mocked_test_data_to_tmp):
 
 
 @pytest.mark.integration_test
-def test_sim_output_constraints(
-    copy_mocked_test_data_to_tmp, evaluator_server_config_generator
-):
+def test_sim_output_constraints(copy_mocked_test_data_to_tmp):
     config = EverestConfig.load_file(CONFIG_FILE)
     run_model = EverestRunModel.create(config)
-    evaluator_server_config = evaluator_server_config_generator(run_model)
+    evaluator_server_config = EvaluatorServerConfig()
     run_model.run_experiment(evaluator_server_config)

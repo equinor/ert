@@ -11,7 +11,7 @@ from unittest.mock import MagicMock
 import pytest
 import yaml
 
-from ert.config import ConfigWarning, QueueSystem
+from ert.config import ConfigWarning
 from ert.ensemble_evaluator import EvaluatorServerConfig
 from ert.run_models.everest_run_model import EverestRunModel
 from everest.config import EverestConfig
@@ -145,19 +145,7 @@ def change_to_tmpdir(tmp_path, monkeypatch):
 
 
 @pytest.fixture
-def evaluator_server_config_generator():
-    def create_evaluator_server_config(run_model):
-        return EvaluatorServerConfig(
-            custom_port_range=range(49152, 51819)
-            if run_model._queue_config.queue_system == QueueSystem.LOCAL
-            else None
-        )
-
-    return create_evaluator_server_config
-
-
-@pytest.fixture
-def cached_example(pytestconfig, evaluator_server_config_generator):
+def cached_example(pytestconfig):
     cache = pytestconfig.cache
 
     def run_config(test_data_case: str):
@@ -171,7 +159,7 @@ def cached_example(pytestconfig, evaluator_server_config_generator):
             shutil.copytree(config_path.parent, my_tmpdir / "everest")
             config = EverestConfig.load_file(my_tmpdir / "everest" / config_file)
             run_model = EverestRunModel.create(config)
-            evaluator_server_config = evaluator_server_config_generator(run_model)
+            evaluator_server_config = EvaluatorServerConfig()
             try:
                 run_model.run_experiment(evaluator_server_config)
             except Exception as e:
@@ -208,7 +196,8 @@ def cached_example(pytestconfig, evaluator_server_config_generator):
 @pytest.fixture
 def min_config():
     yield yaml.safe_load(
-        dedent("""
+        dedent(
+            """
     model: {"realizations": [0]}
     controls:
       -
@@ -221,7 +210,8 @@ def min_config():
     objective_functions:
       - {name: my_objective}
     config_path: .
-    """)
+    """
+        )
     )
 
 
