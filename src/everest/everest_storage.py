@@ -226,7 +226,6 @@ class _OptimizerOnlyExperiment:
         return self._ensembles[name]
 
 
-@dataclass
 class _EvaluationResults(TypedDict):
     realization_controls: pl.DataFrame
     batch_objectives: pl.DataFrame
@@ -235,7 +234,6 @@ class _EvaluationResults(TypedDict):
     realization_constraints: pl.DataFrame | None
 
 
-@dataclass
 class _GradientResults(TypedDict):
     batch_objective_gradient: pl.DataFrame | None
     perturbation_objectives: pl.DataFrame | None
