@@ -79,9 +79,7 @@ async def test_when_task_fails_evaluator_raises_exception(
         await evaluator.run_and_get_successful_realizations()
 
 
-async def test_evaluator_raises_on_invalid_dispatch_event(
-    make_ee_config,
-):
+async def test_evaluator_raises_on_invalid_dispatch_event(make_ee_config):
     evaluator = EnsembleEvaluator(TestEnsemble(0, 2, 2, id_="0"), make_ee_config())
 
     with pytest.raises(ValidationError):
@@ -107,9 +105,17 @@ async def test_evaluator_raises_on_start_with_address_in_use(make_ee_config):
     ctx = zmq.asyncio.Context()
     socket = ctx.socket(zmq.ROUTER)
     try:
-        socket.bind(f"tcp://*:{ee_config.router_port}")
+        ee_config.router_port = socket.bind_to_random_port(
+            "tcp://*",
+            min_port=ee_config.min_port,
+            max_port=ee_config.max_port,
+        )
+        ee_config.min_port = ee_config.router_port
+        ee_config.max_port = ee_config.router_port + 1
         evaluator = EnsembleEvaluator(TestEnsemble(0, 2, 2, id_="0"), ee_config)
-        with pytest.raises(zmq.error.ZMQError, match="Address already in use"):
+        with pytest.raises(
+            zmq.error.ZMQBindError, match="Could not bind socket to random port"
+        ):
             await evaluator.run_and_get_successful_realizations()
     finally:
         socket.close()
@@ -156,7 +162,7 @@ async def test_new_connections_are_no_problem_when_evaluator_is_closing_down(
 
     async def new_connection():
         await evaluator._server_done.wait()
-        async with Monitor(evaluator._config.get_connection_info()):
+        async with Monitor(evaluator._config.get_uri()):
             pass
 
     new_connection_task = asyncio.create_task(new_connection())
@@ -182,10 +188,9 @@ async def evaluator_to_use_fixture(make_ee_config):
 async def test_restarted_jobs_do_not_have_error_msgs(evaluator_to_use):
     evaluator = evaluator_to_use
     token = evaluator._config.token
-    url = evaluator._config.get_connection_info().router_uri
+    url = evaluator._config.get_uri()
 
-    config_info = evaluator._config.get_connection_info()
-    async with Monitor(config_info) as monitor:
+    async with Monitor(url, token) as monitor:
         # first snapshot before any event occurs
         events = monitor.track()
         snapshot_event = await anext(events)
@@ -243,7 +248,7 @@ async def test_restarted_jobs_do_not_have_error_msgs(evaluator_to_use):
         await dispatch.send(event_to_json(event))
 
     # reconnect new monitor
-    async with Monitor(config_info) as new_monitor:
+    async with Monitor(url, token) as new_monitor:
 
         def check_if_final_snapshot_is_complete(snapshot: EnsembleSnapshot) -> bool:
             try:
@@ -268,12 +273,10 @@ async def test_restarted_jobs_do_not_have_error_msgs(evaluator_to_use):
 @pytest.mark.timeout(20)
 async def test_new_monitor_can_pick_up_where_we_left_off(evaluator_to_use):
     evaluator = evaluator_to_use
-
     token = evaluator._config.token
-    url = evaluator._config.get_connection_info().router_uri
+    url = evaluator._config.get_uri()
 
-    config_info = evaluator._config.get_connection_info()
-    async with Monitor(config_info) as monitor:
+    async with Monitor(url, token) as monitor:
         async with (
             Client(
                 url,
@@ -375,7 +378,7 @@ async def test_new_monitor_can_pick_up_where_we_left_off(evaluator_to_use):
             return False
 
     # reconnect new monitor
-    async with Monitor(config_info) as new_monitor:
+    async with Monitor(url, token) as new_monitor:
         final_snapshot = EnsembleSnapshot()
         async for event in new_monitor.track():
             final_snapshot = final_snapshot.update_from_event(event)
@@ -387,7 +390,8 @@ async def test_new_monitor_can_pick_up_where_we_left_off(evaluator_to_use):
 @pytest.mark.integration_test
 async def test_monitor_receive_heartbeats(evaluator_to_use):
     evaluator = evaluator_to_use
-    conn_info = evaluator._config.get_connection_info()
+    token = evaluator._config.token
+    url = evaluator._config.get_uri()
     received_heartbeats = 0
 
     async def mock_receiver(self):
@@ -400,7 +404,7 @@ async def test_monitor_receive_heartbeats(evaluator_to_use):
                 received_heartbeats += 1
 
     with patch.object(Monitor, "_receiver", mock_receiver):
-        async with Monitor(conn_info) as monitor:
+        async with Monitor(url, token) as monitor:
             await asyncio.sleep(0.5)
             await monitor.signal_done()
     # in 0.5 second we should receive at least 2 heartbeats
@@ -415,12 +419,11 @@ async def test_dispatch_endpoint_clients_can_connect_and_monitor_can_shut_down_e
     evaluator._batching_interval = 0.1
 
     evaluator._max_batch_size = 4
-    conn_info = evaluator._config.get_connection_info()
-    async with Monitor(conn_info) as monitor:
+    token = evaluator._config.token
+    url = evaluator._config.get_uri()
+    async with Monitor(url, token) as monitor:
         events = monitor.track()
-        token = evaluator._config.token
 
-        url = conn_info.router_uri
         # first snapshot before any event occurs
         snapshot_event = await anext(events)
         assert type(snapshot_event) is EESnapshot
@@ -495,7 +498,7 @@ async def test_dispatch_endpoint_clients_can_connect_and_monitor_can_shut_down_e
                 if is_completed_snapshot(snapshot):
                     break
         # a second monitor connects
-        async with Monitor(evaluator._config.get_connection_info()) as monitor2:
+        async with Monitor(url, token) as monitor2:
             events2 = monitor2.track()
             full_snapshot_event = await anext(events2)
             event = cast(EESnapshot, full_snapshot_event)
@@ -533,12 +536,11 @@ async def test_dispatch_endpoint_clients_can_connect_and_monitor_can_shut_down_e
 async def test_ensure_multi_level_events_in_order(evaluator_to_use):
     evaluator = evaluator_to_use
 
-    config_info = evaluator._config.get_connection_info()
-    async with Monitor(config_info) as monitor:
-        events = monitor.track()
+    token = evaluator._config.token
+    url = evaluator._config.get_uri()
 
-        token = evaluator._config.token
-        url = config_info.router_uri
+    async with Monitor(url, token) as monitor:
+        events = monitor.track()
 
         snapshot_event = await anext(events)
         assert type(snapshot_event) is EESnapshot
@@ -612,12 +614,11 @@ def test_overspent_cpu_is_logged(
 async def test_snapshot_on_resubmit_is_cleared(evaluator_to_use):
     evaluator = evaluator_to_use
     evaluator._batching_interval = 0.4
-    config_info = evaluator._config.get_connection_info()
-    async with Monitor(config_info) as monitor:
-        events = monitor.track()
+    token = evaluator._config.token
+    url = evaluator._config.get_uri()
 
-        token = evaluator._config.token
-        url = config_info.router_uri
+    async with Monitor(url, token) as monitor:
+        events = monitor.track()
 
         snapshot_event = await anext(events)
         assert type(snapshot_event) is EESnapshot

@@ -503,7 +503,7 @@ class BaseRunModel(ABC):
     ) -> bool:
         try:
             logger.debug("connecting to new monitor...")
-            async with Monitor(ee_config.get_connection_info()) as monitor:
+            async with Monitor(ee_config.get_uri(), ee_config.token) as monitor:
                 logger.debug("connected")
                 async for event in monitor.track(heartbeat_interval=0.1):
                     if type(event) in {

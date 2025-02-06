@@ -305,12 +305,17 @@ class EnsembleEvaluator:
                 self._router_socket.curve_publickey = self._config.server_public_key
                 self._router_socket.curve_server = True
 
-            if self._config.router_port:
-                self._router_socket.bind(f"tcp://*:{self._config.router_port}")
+            if self._config.use_ipc_protocol:
+                self._router_socket.bind(self._config.get_uri())
             else:
-                self._router_socket.bind(self._config.url)
+                self._config.router_port = self._router_socket.bind_to_random_port(
+                    "tcp://*",
+                    min_port=self._config.min_port,
+                    max_port=self._config.max_port,
+                )
+
             self._server_started.set_result(None)
-        except zmq.error.ZMQError as e:
+        except zmq.error.ZMQBaseError as e:
             logger.error(f"ZMQ error encountered {e} during evaluator initialization")
             self._server_started.set_exception(e)
             zmq_context.destroy(linger=0)
