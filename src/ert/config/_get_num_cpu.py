@@ -186,7 +186,7 @@ def _split_line(line: str) -> Iterator[str]:
     ['ALLPROPS', '/']
     """
     value = ""
-    inside_str = None
+    inside_str = False
     for char in line:
         if char == "'":
             # end of str
@@ -199,7 +199,7 @@ def _split_line(line: str) -> Iterator[str]:
                 if value:
                     yield value
                 value = ""
-                inside_str = char
+                inside_str = True
         elif inside_str:
             value += char
         elif value and value[-1] == "-" and char == "-":
