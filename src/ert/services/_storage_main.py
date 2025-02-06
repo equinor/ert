@@ -122,8 +122,14 @@ def run_server(
     server = Server(config, json.dumps(connection_info))
 
     logger = logging.getLogger("ert.shared.storage.info")
-    if args.verbose and logger.level > logging.INFO:
-        logger.setLevel(logging.INFO)
+    if args.verbose:
+        handler = logging.StreamHandler(sys.stdout)
+        handler.setLevel(logging.INFO)
+        formatter = logging.Formatter("%(message)s")
+        handler.setFormatter(formatter)
+        logger.addHandler(handler)
+        if logger.level > logging.INFO:
+            logger.setLevel(logging.INFO)
     logger.info("Storage server is ready to accept requests. Listening on:")
     for url in connection_info["urls"]:
         logger.info(f"  {url}")
