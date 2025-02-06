@@ -387,12 +387,10 @@ class EverestStorage:
         exp = _OptimizerOnlyExperiment(self._output_dir)
         self.data.read_from_experiment(exp)
 
-    def observe_optimizer(
-        self, optimizer: BasicOptimizer, transforms: OptModelTransforms
-    ) -> None:
+    def observe_optimizer(self, optimizer: BasicOptimizer) -> None:
         optimizer.add_observer(
             EventType.FINISHED_EVALUATION,
-            partial(self._on_batch_evaluation_finished, transforms=transforms),
+            partial(self._on_batch_evaluation_finished),
         )
         optimizer.add_observer(
             EventType.FINISHED_OPTIMIZER_STEP, self._on_optimization_finished
@@ -661,14 +659,11 @@ class EverestStorage:
             "perturbation_constraints": perturbation_constraints,
         }
 
-    def _on_batch_evaluation_finished(
-        self, event: Event, transforms: OptModelTransforms
-    ) -> None:
+    def _on_batch_evaluation_finished(self, event: Event) -> None:
         logger.debug("Storing batch results dataframes")
 
         converted_results = tuple(
-            convert_to_maximize(result).transform_back(transforms)
-            for result in event.data.get("results", [])
+            convert_to_maximize(result) for result in event.data.get("results", [])
         )
         results: list[FunctionResults | GradientResults] = []
 

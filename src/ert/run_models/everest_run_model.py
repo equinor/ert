@@ -195,7 +195,7 @@ class EverestRunModel(BaseRunModel):
             output_dir=Path(self._everest_config.optimization_output_dir),
         )
         self.ever_storage.init(self._everest_config)
-        self.ever_storage.observe_optimizer(optimizer, self._opt_model_transforms)
+        self.ever_storage.observe_optimizer(optimizer)
 
         # Run the optimization:
         optimizer_exit_code = optimizer.run().exit_code
