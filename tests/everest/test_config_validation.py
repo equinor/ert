@@ -1072,7 +1072,7 @@ def test_warning_empty_controls_and_objectives(controls, objectives, error_msg):
 
 def test_deprecated_objective_function_normalization():
     with pytest.warns(
-        ConfigWarning, match="normalization key is deprecated .* replaced with scaling"
+        ConfigWarning, match="normalization key is deprecated .* replaced with scale"
     ):
         ObjectiveFunctionConfig(name="test", normalization=10)
 
@@ -1086,7 +1086,7 @@ def test_deprecated_objective_function_auto_normalize():
 
 
 @pytest.mark.parametrize(
-    "normalization, scaling, auto_normalize, auto_scale",
+    "normalization, scale, auto_normalize, auto_scale",
     [
         (None, None, None, None),
         (0.2, None, None, None),
@@ -1099,19 +1099,19 @@ def test_deprecated_objective_function_auto_normalize():
     ],
 )
 def test_objective_function_scaling_is_backward_compatible_with_scaling(
-    normalization, auto_normalize, scaling, auto_scale
+    normalization, scale, auto_normalize, auto_scale
 ):
     o = ObjectiveFunctionConfig(
         name="test",
         normalization=normalization,
         auto_normalize=auto_normalize,
-        scaling=scaling,
+        scale=scale,
         auto_scale=auto_scale,
     )
-    if scaling is None and normalization is not None:
-        assert o.scaling == 1 / o.normalization
+    if scale is None and normalization is not None:
+        assert o.scale == 1 / o.normalization
     else:
-        assert o.scaling == scaling
+        assert o.scale == scale
         assert o.normalization == normalization
 
     if auto_scale is None and auto_normalize is not None:

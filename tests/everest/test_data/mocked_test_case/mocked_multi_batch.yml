@@ -32,7 +32,7 @@ objective_functions:
     name: npv_function
   -
     name: group_sum
-    scaling: 0.0001
+    scale: 0.0001
 
 
 optimization:

@@ -68,7 +68,7 @@ def _parse_objectives(objective_functions: list[ObjectiveFunctionConfig], ropt_c
     for objective in objective_functions:
         assert isinstance(objective.name, str)
         weights.append(objective.weight or 1.0)
-        scales.append(objective.scaling or 1.0)
+        scales.append(objective.scale or 1.0)
         auto_scale.append(objective.auto_scale or False)
 
         # If any objective specifies an objective type, we have to specify

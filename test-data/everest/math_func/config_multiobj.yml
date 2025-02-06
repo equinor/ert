@@ -15,10 +15,10 @@ controls:
 objective_functions:
   - name: distance_p
     weight: 0.50
-    scaling: 0.6666666667
+    scale: 0.6666666667
   - name: distance_q
     weight: 0.25
-    scaling: 1.0
+    scale: 1.0
 
 
 optimization:
