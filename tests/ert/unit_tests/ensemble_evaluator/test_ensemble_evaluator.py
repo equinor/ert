@@ -48,7 +48,7 @@ from ert.ensemble_evaluator.state import (
     FORWARD_MODEL_STATE_RUNNING,
 )
 from ert.scheduler import JobState
-from ert.shared import find_available_socket
+from ert.shared.net_utils import NoPortsInRangeException, find_available_socket
 
 from .ensemble_evaluator_utils import TestEnsemble
 
@@ -111,16 +111,22 @@ async def test_find_socket_works_with_zmq(unused_tcp_port):
         will_close_then_reopen_socket=True,
     )
     host, port = sock.getsockname()
+
     print(host, port)
 
+    with pytest.raises(NoPortsInRangeException):
+        find_available_socket(custom_range=custom_range, custom_host="127.0.0.1")
+
     for _ in range(4):
-        try:
-            ctx = zmq.asyncio.Context()
-            socket = ctx.socket(zmq.ROUTER)
-            socket.bind(f"tcp://*:{port}")
-        finally:
-            socket.close()
-            ctx.destroy(linger=0)
+        ctx = zmq.asyncio.Context()
+        socket = ctx.socket(zmq.ROUTER)
+        socket.bind(f"tcp://*:{port}")
+        await asyncio.sleep(0.1)
+        socket.close()
+        ctx.destroy(linger=0)
+        await asyncio.sleep(1.0)
+        with pytest.raises(NoPortsInRangeException):
+            find_available_socket(custom_range=custom_range, custom_host="127.0.0.1")
 
 
 async def test_evaluator_raises_on_start_with_address_in_use(make_ee_config):
