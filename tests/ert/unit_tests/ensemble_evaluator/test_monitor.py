@@ -14,7 +14,10 @@ from _ert.forward_model_runner.client import (
     ClientConnectionError,
 )
 from ert.ensemble_evaluator import Monitor
-from ert.ensemble_evaluator.config import EvaluatorConnectionInfo
+
+
+def localhost_uri(port: int):
+    return f"tcp://127.0.0.1:{port}"
 
 
 async def async_zmq_server(port, handler, secret_key: bytes | None = None):
@@ -32,8 +35,7 @@ async def async_zmq_server(port, handler, secret_key: bytes | None = None):
 
 
 async def test_monitor_connects_and_disconnects_successfully(unused_tcp_port):
-    ee_con_info = EvaluatorConnectionInfo(f"tcp://127.0.0.1:{unused_tcp_port}")
-    monitor = Monitor(ee_con_info)
+    monitor = Monitor(localhost_uri(unused_tcp_port))
 
     messages = []
 
@@ -63,7 +65,7 @@ async def test_monitor_connects_and_disconnects_successfully(unused_tcp_port):
 async def test_no_connection_established(monkeypatch, make_ee_config):
     ee_config = make_ee_config()
     monkeypatch.setattr(Monitor, "DEFAULT_MAX_RETRIES", 0)
-    monitor = Monitor(ee_config.get_connection_info())
+    monitor = Monitor(ee_config.get_uri())
     monitor._ack_timeout = 0.1
     with pytest.raises(ClientConnectionError):
         async with monitor:
@@ -71,8 +73,6 @@ async def test_no_connection_established(monkeypatch, make_ee_config):
 
 
 async def test_immediate_stop(unused_tcp_port):
-    ee_con_info = EvaluatorConnectionInfo(f"tcp://127.0.0.1:{unused_tcp_port}")
-
     connected = False
 
     async def mock_event_handler(router_socket):
@@ -94,7 +94,7 @@ async def test_immediate_stop(unused_tcp_port):
     websocket_server_task = asyncio.create_task(
         async_zmq_server(unused_tcp_port, mock_event_handler)
     )
-    async with Monitor(ee_con_info) as monitor:
+    async with Monitor(localhost_uri(unused_tcp_port)) as monitor:
         assert connected is True
         await monitor.signal_done()
     await websocket_server_task
@@ -105,8 +105,6 @@ async def test_immediate_stop(unused_tcp_port):
 async def test_unexpected_close_after_connection_successful(
     monkeypatch, unused_tcp_port
 ):
-    ee_con_info = EvaluatorConnectionInfo(f"tcp://127.0.0.1:{unused_tcp_port}")
-
     monkeypatch.setattr(Monitor, "DEFAULT_MAX_RETRIES", 0)
     monkeypatch.setattr(Monitor, "DEFAULT_ACK_TIMEOUT", 0.5)
 
@@ -121,7 +119,7 @@ async def test_unexpected_close_after_connection_successful(
     websocket_server_task = asyncio.create_task(
         async_zmq_server(unused_tcp_port, mock_event_handler)
     )
-    async with Monitor(ee_con_info) as monitor:
+    async with Monitor(localhost_uri(unused_tcp_port)) as monitor:
         with pytest.raises(ClientConnectionError):
             await monitor.signal_done()
 
@@ -139,10 +137,8 @@ async def test_that_monitor_cannot_connect_with_wrong_server_key(
     correct_server_key, monkeypatch, unused_tcp_port
 ):
     public_key, secret_key = zmq.curve_keypair()
-    ee_con_info = EvaluatorConnectionInfo(
-        f"tcp://127.0.0.1:{unused_tcp_port}",
-        public_key.decode("utf-8") if correct_server_key else None,
-    )
+    uri = localhost_uri(unused_tcp_port)
+    token = public_key.decode("utf-8") if correct_server_key else None
 
     monkeypatch.setattr(Monitor, "DEFAULT_MAX_RETRIES", 0)
     monkeypatch.setattr(Monitor, "DEFAULT_ACK_TIMEOUT", 0.5)
@@ -164,12 +160,12 @@ async def test_that_monitor_cannot_connect_with_wrong_server_key(
         async_zmq_server(unused_tcp_port, mock_event_handler, secret_key=secret_key)
     )
     if correct_server_key:
-        async with Monitor(ee_con_info):
+        async with Monitor(uri, token):
             assert connected
         assert connected is False
     else:
         with pytest.raises(ClientConnectionError):
-            async with Monitor(ee_con_info):
+            async with Monitor(uri, token):
                 pass
         assert connected is False
         websocket_server_task.cancel()
@@ -181,7 +177,7 @@ async def test_that_monitor_track_can_exit_without_terminated_event_from_evaluat
     unused_tcp_port, caplog
 ):
     caplog.set_level(logging.ERROR)
-    ee_con_info = EvaluatorConnectionInfo(f"tcp://127.0.0.1:{unused_tcp_port}")
+    uri = localhost_uri(unused_tcp_port)
 
     connected = False
 
@@ -204,7 +200,7 @@ async def test_that_monitor_track_can_exit_without_terminated_event_from_evaluat
         async_zmq_server(unused_tcp_port, mock_event_handler)
     )
 
-    async with Monitor(ee_con_info) as monitor:
+    async with Monitor(uri) as monitor:
         monitor._receiver_timeout = 0.1
         await monitor.signal_cancel()
 
@@ -223,7 +219,7 @@ async def test_that_monitor_can_emit_heartbeats(unused_tcp_port):
     exit anytime. A heartbeat is a None event.
 
     If the heartbeat is never sent, this test function will hang and then timeout."""
-    ee_con_info = EvaluatorConnectionInfo(f"tcp://127.0.0.1:{unused_tcp_port}")
+    uri = localhost_uri(unused_tcp_port)
 
     async def mock_event_handler(router_socket):
         while True:
@@ -237,7 +233,7 @@ async def test_that_monitor_can_emit_heartbeats(unused_tcp_port):
         async_zmq_server(unused_tcp_port, mock_event_handler)
     )
 
-    async with Monitor(ee_con_info) as monitor:
+    async with Monitor(uri) as monitor:
         async for event in monitor.track(heartbeat_interval=0.001):
             if event is None:
                 break

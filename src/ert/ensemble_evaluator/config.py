@@ -1,14 +1,11 @@
 import logging
-import socket
 import uuid
 import warnings
 
 import zmq
 
-from ert.shared import find_available_socket
 from ert.shared import get_machine_name as ert_shared_get_machine_name
-
-from .evaluator_connection_info import EvaluatorConnectionInfo
+from ert.shared.net_utils import get_ip_address
 
 logger = logging.getLogger(__name__)
 
@@ -25,39 +22,41 @@ def get_machine_name() -> str:
 class EvaluatorServerConfig:
     def __init__(
         self,
-        custom_port_range: range | None = None,
+        port_range: tuple[int, int] | None = None,
         use_token: bool = True,
-        custom_host: str | None = None,
+        host: str | None = None,
         use_ipc_protocol: bool = True,
     ) -> None:
-        self.host: str | None = None
+        self.host: str | None = host
         self.router_port: int | None = None
-        self.url = f"ipc:///tmp/socket-{uuid.uuid4().hex[:8]}"
         self.token: str | None = None
-        self._socket_handle: socket.socket | None = None
-
         self.server_public_key: bytes | None = None
         self.server_secret_key: bytes | None = None
-        if not use_ipc_protocol:
-            self._socket_handle = find_available_socket(
-                custom_range=custom_port_range,
-                custom_host=custom_host,
-                will_close_then_reopen_socket=True,
-            )
-            self.host, self.router_port = self._socket_handle.getsockname()
-            self.url = f"tcp://{self.host}:{self.router_port}"
+        self.use_ipc_protocol: bool = use_ipc_protocol
+
+        if port_range is None:
+            port_range = (51820, 51840 + 1)
+        else:
+            if port_range[0] > port_range[1]:
+                raise ValueError("Minimum port in range is higher than maximum port")
+
+            if port_range[0] == port_range[1]:
+                port_range = (port_range[0], port_range[0] + 1)
+
+        self.min_port = port_range[0]
+        self.max_port = port_range[1]
+
+        if use_ipc_protocol:
+            self.uri = f"ipc:///tmp/socket-{uuid.uuid4().hex[:8]}"
+        elif self.host is None:
+            self.host = get_ip_address()
 
         if use_token:
             self.server_public_key, self.server_secret_key = zmq.curve_keypair()
             self.token = self.server_public_key.decode("utf-8")
 
-    def get_socket(self) -> socket.socket | None:
-        if self._socket_handle:
-            return self._socket_handle.dup()
-        return None
+    def get_uri(self) -> str:
+        if not self.use_ipc_protocol:
+            return f"tcp://{self.host}:{self.router_port}"
 
-    def get_connection_info(self) -> EvaluatorConnectionInfo:
-        return EvaluatorConnectionInfo(
-            self.url,
-            self.token,
-        )
+        return self.uri

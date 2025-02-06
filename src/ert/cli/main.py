@@ -104,7 +104,10 @@ def run_cli(args: Namespace, plugin_manager: ErtPluginManager | None = None) -> 
 
     use_ipc_protocol = model.queue_system == QueueSystem.LOCAL
     evaluator_server_config = EvaluatorServerConfig(
-        custom_port_range=args.port_range, use_ipc_protocol=use_ipc_protocol
+        port_range=None
+        if args.port_range is None
+        else (min(args.port_range), max(args.port_range) + 1),
+        use_ipc_protocol=use_ipc_protocol,
     )
 
     if model.check_if_runpath_exists():

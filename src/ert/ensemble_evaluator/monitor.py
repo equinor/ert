@@ -4,7 +4,7 @@ import asyncio
 import logging
 import uuid
 from collections.abc import AsyncGenerator
-from typing import TYPE_CHECKING, Final
+from typing import Final
 
 from _ert.events import (
     EETerminated,
@@ -16,10 +16,6 @@ from _ert.events import (
 )
 from _ert.forward_model_runner.client import Client
 
-if TYPE_CHECKING:
-    from ert.ensemble_evaluator.evaluator_connection_info import EvaluatorConnectionInfo
-
-
 logger = logging.getLogger(__name__)
 
 
@@ -30,15 +26,11 @@ class EventSentinel:
 class Monitor(Client):
     _sentinel: Final = EventSentinel()
 
-    def __init__(self, ee_con_info: EvaluatorConnectionInfo) -> None:
+    def __init__(self, uri: str, token: str | None = None) -> None:
         self._id = str(uuid.uuid1()).split("-", maxsplit=1)[0]
         self._event_queue: asyncio.Queue[Event | EventSentinel] = asyncio.Queue()
         self._receiver_timeout: float = 60.0
-        super().__init__(
-            ee_con_info.router_uri,
-            ee_con_info.token,
-            dealer_name=f"client-{self._id}",
-        )
+        super().__init__(uri, token, dealer_name=f"client-{self._id}")
 
     async def process_message(self, msg: str) -> None:
         event = event_from_json(msg)
