@@ -184,11 +184,7 @@ def test_tracking(
         queue,
     )
 
-    evaluator_server_config = EvaluatorServerConfig(
-        custom_port_range=range(1024, 65535),
-        custom_host="127.0.0.1",
-        use_token=False,
-    )
+    evaluator_server_config = EvaluatorServerConfig(use_token=False)
 
     thread = ErtThread(
         name="ert_cli_simulation_thread",
@@ -274,11 +270,7 @@ def test_setting_env_context_during_run(
     ert_config = ErtConfig.from_file(parsed.config)
     os.chdir(ert_config.config_path)
 
-    evaluator_server_config = EvaluatorServerConfig(
-        custom_port_range=range(1024, 65535),
-        custom_host="127.0.0.1",
-        use_token=False,
-    )
+    evaluator_server_config = EvaluatorServerConfig(use_token=False)
     queue = Events()
     model = create_model(
         ert_config,
@@ -350,11 +342,7 @@ def test_run_information_present_as_env_var_in_fm_context(
     ert_config = ErtConfig.from_file(parsed.config)
     os.chdir(ert_config.config_path)
 
-    evaluator_server_config = EvaluatorServerConfig(
-        custom_port_range=range(1024, 65535),
-        custom_host="127.0.0.1",
-        use_token=False,
-    )
+    evaluator_server_config = EvaluatorServerConfig(use_token=False)
     queue = Events()
     model = create_model(ert_config, storage, parsed, queue)
 

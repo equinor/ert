@@ -95,9 +95,7 @@ def run_server(
     if args is None:
         args = parse_args()
 
-    if "ERT_STORAGE_TOKEN" in os.environ:
-        authtoken = os.environ["ERT_STORAGE_TOKEN"]
-    else:
+    if (authtoken := os.environ.get("ERT_STORAGE_TOKEN")) is None:
         authtoken = generate_authtoken()
         os.environ["ERT_STORAGE_TOKEN"] = authtoken
 
@@ -106,9 +104,7 @@ def run_server(
         config_args.update(reload=True, reload_dirs=[os.path.dirname(ert_shared_path)])
         os.environ["ERT_STORAGE_DEBUG"] = "1"
 
-    sock = find_available_socket(
-        custom_host=args.host, custom_range=range(51850, 51870)
-    )
+    sock = find_available_socket(host=args.host, port_range=range(51850, 51870 + 1))
     connection_info = _create_connection_info(sock, authtoken)
 
     # Appropriated from uvicorn.main:run

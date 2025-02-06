@@ -354,13 +354,8 @@ class RunDialog(QFrame):
             self._snapshot_model.reset()
             self._tab_widget.clear()
 
-        port_range = None
-        use_ipc_protocol = False
-        if self._run_model.queue_system == QueueSystem.LOCAL:
-            port_range = range(49152, 51819)
-            use_ipc_protocol = True
         evaluator_server_config = EvaluatorServerConfig(
-            custom_port_range=port_range, use_ipc_protocol=use_ipc_protocol
+            use_ipc_protocol=self._run_model.queue_system == QueueSystem.LOCAL
         )
 
         def run() -> None:

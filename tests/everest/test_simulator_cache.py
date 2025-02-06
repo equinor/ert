@@ -3,7 +3,6 @@ from pathlib import Path
 import numpy as np
 import pytest
 
-from ert.config import QueueSystem
 from ert.ensemble_evaluator import EvaluatorServerConfig
 from ert.run_models.everest_run_model import EverestRunModel
 from everest.config import EverestConfig, SimulatorConfig
@@ -23,12 +22,7 @@ def test_simulator_cache(copy_math_func_test_data_to_tmp):
     config.simulator = SimulatorConfig(enable_cache=True)
 
     run_model = EverestRunModel.create(config)
-
-    evaluator_server_config = EvaluatorServerConfig(
-        custom_port_range=range(49152, 51819)
-        if run_model._queue_config.queue_system == QueueSystem.LOCAL
-        else None
-    )
+    evaluator_server_config = EvaluatorServerConfig()
 
     # Modify the forward model function to track number of calls:
     original_call = run_model._forward_model_evaluator
