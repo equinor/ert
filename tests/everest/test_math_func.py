@@ -4,6 +4,7 @@ from pathlib import Path
 import pytest
 import yaml
 
+from ert.ensemble_evaluator.config import EvaluatorServerConfig
 from ert.run_models.everest_run_model import EverestRunModel
 from everest.config import EverestConfig
 from everest.everest_storage import EverestStorage
@@ -65,9 +66,7 @@ def test_math_func_advanced(cached_example):
 
 
 @pytest.mark.integration_test
-def test_remove_run_path(
-    copy_math_func_test_data_to_tmp, evaluator_server_config_generator
-):
+def test_remove_run_path(copy_math_func_test_data_to_tmp):
     with open("config_minimal.yml", encoding="utf-8") as file:
         config_yaml = yaml.safe_load(file)
         config_yaml["simulator"] = {"delete_run_path": True}
@@ -82,7 +81,7 @@ def test_remove_run_path(
     simulation_dir = config.simulation_dir
 
     run_model = EverestRunModel.create(config)
-    evaluator_server_config = evaluator_server_config_generator(run_model)
+    evaluator_server_config = EvaluatorServerConfig()
     run_model.run_experiment(evaluator_server_config)
 
     # Check the failed simulation folder still exists
@@ -104,7 +103,7 @@ def test_remove_run_path(
 
     config.simulator.delete_run_path = False
     run_model = EverestRunModel.create(config)
-    evaluator_server_config = evaluator_server_config_generator(run_model)
+    evaluator_server_config = EvaluatorServerConfig()
     run_model.run_experiment(evaluator_server_config)
 
     # Check the all simulation folder exist when delete_run_path is set to False
@@ -122,9 +121,7 @@ def test_remove_run_path(
 
 
 @pytest.mark.integration_test
-def test_math_func_auto_scaled_controls(
-    copy_math_func_test_data_to_tmp, evaluator_server_config_generator
-):
+def test_math_func_auto_scaled_controls(copy_math_func_test_data_to_tmp):
     # Arrange
     config = EverestConfig.load_file("config_minimal.yml")
     config.controls[0].auto_scale = True
@@ -144,7 +141,7 @@ def test_math_func_auto_scaled_controls(
 
     # Act
     run_model = EverestRunModel.create(config)
-    evaluator_server_config = evaluator_server_config_generator(run_model)
+    evaluator_server_config = EvaluatorServerConfig()
     run_model.run_experiment(evaluator_server_config)
 
     # Assert

@@ -6,6 +6,7 @@ import pytest
 from ruamel.yaml import YAML
 
 import everest
+from ert.ensemble_evaluator.config import EvaluatorServerConfig
 from ert.run_models.everest_run_model import EverestRunModel
 from everest.config import EverestConfig
 
@@ -127,12 +128,10 @@ def test_render_executable(copy_template_test_data_to_tmp):
 
 
 @pytest.mark.integration_test
-def test_install_template(
-    copy_template_test_data_to_tmp, evaluator_server_config_generator
-):
+def test_install_template(copy_template_test_data_to_tmp):
     config = EverestConfig.load_file(TMPL_CONFIG_FILE)
     run_model = EverestRunModel.create(config)
-    evaluator_server_config = evaluator_server_config_generator(run_model)
+    evaluator_server_config = EvaluatorServerConfig()
     run_model.run_experiment(evaluator_server_config)
 
 
@@ -170,7 +169,7 @@ def test_well_order_template(change_to_tmpdir):
 
 @pytest.mark.integration_test
 def test_user_specified_data_n_template(
-    copy_math_func_test_data_to_tmp, evaluator_server_config_generator
+    copy_math_func_test_data_to_tmp,
 ):
     """
     Ensure that a user specifying a data resource and an installed_template
@@ -220,7 +219,7 @@ def test_user_specified_data_n_template(
     config = EverestConfig.with_defaults(**updated_config_dict)
 
     run_model = EverestRunModel.create(config)
-    evaluator_server_config = evaluator_server_config_generator(run_model)
+    evaluator_server_config = EvaluatorServerConfig()
     run_model.run_experiment(evaluator_server_config)
 
     # The data should have been loaded and passed through template to file.

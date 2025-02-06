@@ -1,15 +1,12 @@
 import pytest
 
+from ert.ensemble_evaluator.config import EvaluatorServerConfig
 from ert.run_models.everest_run_model import EverestRunModel
-from everest.config import (
-    EverestConfig,
-)
+from everest.config import EverestConfig
 
 
 @pytest.mark.integration_test
-def test_objective_type(
-    copy_math_func_test_data_to_tmp, evaluator_server_config_generator
-):
+def test_objective_type(copy_math_func_test_data_to_tmp):
     # Arrange
     config = EverestConfig.load_file("config_minimal.yml")
     config_dict = {
@@ -26,7 +23,7 @@ def test_objective_type(
     config = EverestConfig.model_validate(config_dict)
     # Act
     run_model = EverestRunModel.create(config)
-    evaluator_server_config = evaluator_server_config_generator(run_model)
+    evaluator_server_config = EvaluatorServerConfig()
     run_model.run_experiment(evaluator_server_config)
 
     # Assert
