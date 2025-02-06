@@ -2,6 +2,7 @@ import logging
 import os
 import pathlib
 import sys
+from collections.abc import Callable
 from datetime import datetime
 from types import TracebackType
 from typing import Any
@@ -74,3 +75,15 @@ class TerminalFormatter(logging.Formatter):
         | tuple[None, None, None],
     ) -> str:
         return ""
+
+
+def suppresse_logs(logs_to_suppress: list[str]) -> Callable[[logging.LogRecord], bool]:
+    """Suppresses logs from loggers listed in logs_to_suppress"""
+
+    def filter(record: logging.LogRecord) -> bool:
+        for log_name in logs_to_suppress:
+            if record.name.startswith(log_name):
+                return False
+        return True
+
+    return filter
