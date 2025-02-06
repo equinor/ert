@@ -309,7 +309,7 @@ def main():
             evaluator_server_config = EvaluatorServerConfig()
         else:
             evaluator_server_config = EvaluatorServerConfig(
-                custom_port_range=range(49152, 51819), use_ipc_protocol=False
+                port_range=(49152, 51819), use_ipc_protocol=False
             )
 
         run_model.run_experiment(evaluator_server_config)

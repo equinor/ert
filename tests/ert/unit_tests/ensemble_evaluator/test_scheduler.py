@@ -16,7 +16,7 @@ async def test_scheduler_receives_checksum_and_waits_for_disk_sync(
     tmpdir, make_ensemble, monkeypatch, caplog
 ):
     num_reals = 1
-    custom_port_range = range(1024, 65535)
+    port_range = (1024, 65535)
 
     async def rename_and_wait():
         Path("real_0/job_test_file").rename("real_0/test")
@@ -25,7 +25,7 @@ async def test_scheduler_receives_checksum_and_waits_for_disk_sync(
         Path("real_0/test").rename("real_0/job_test_file")
 
     async def _run_monitor():
-        async with Monitor(config.get_connection_info()) as monitor:
+        async with Monitor(config.get_uri(), config.token) as monitor:
             async for event in monitor.track():
                 if type(event) is ForwardModelStepChecksum:
                     # Monitor got the checksum message renaming the file
@@ -57,8 +57,8 @@ async def test_scheduler_receives_checksum_and_waits_for_disk_sync(
         file_path.write_text("test")
         # actual_md5sum = hashlib.md5(file_path.read_bytes()).hexdigest()
         config = EvaluatorServerConfig(
-            custom_port_range=custom_port_range,
-            custom_host="127.0.0.1",
+            port_range=port_range,
+            host="127.0.0.1",
             use_token=False,
         )
         evaluator = EnsembleEvaluator(ensemble, config)

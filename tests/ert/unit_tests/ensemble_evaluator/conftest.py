@@ -170,6 +170,6 @@ def _dump_forward_model(forward_model, index):
 @pytest.fixture(name="make_ee_config")
 def make_ee_config_fixture():
     def _ee_config(**kwargs):
-        return EvaluatorServerConfig(custom_port_range=range(1024, 65535), **kwargs)
+        return EvaluatorServerConfig(**kwargs)
 
     return _ee_config

@@ -46,9 +46,8 @@ def get_machine_name() -> str:
 
 
 def find_available_socket(
-    custom_host: str | None = None,
-    custom_range: range | None = None,
-    will_close_then_reopen_socket: bool = False,
+    host: str | None = None,
+    port_range: range = range(51820, 51840 + 1),
 ) -> socket.socket:
     """
     The default and recommended approach here is to return a bound socket to the
@@ -70,15 +69,12 @@ def find_available_socket(
 
     See e.g. implementation and comments in EvaluatorServerConfig
     """
-    current_host = custom_host if custom_host is not None else _get_ip_address()
-    current_range = (
-        custom_range if custom_range is not None else range(51820, 51840 + 1)
-    )
+    current_host = host if host is not None else get_ip_address()
 
-    if current_range.start == current_range.stop:
-        ports = list(range(current_range.start, current_range.stop + 1))
+    if port_range.start == port_range.stop:
+        ports = list(range(port_range.start, port_range.stop + 1))
     else:
-        ports = list(range(current_range.start, current_range.stop))
+        ports = list(range(port_range.start, port_range.stop))
 
     random.shuffle(ports)
     for port in ports:
@@ -86,33 +82,17 @@ def find_available_socket(
             return _bind_socket(
                 host=current_host,
                 port=port,
-                will_close_then_reopen_socket=will_close_then_reopen_socket,
             )
         except PortAlreadyInUseException:
             continue
 
-    raise NoPortsInRangeException(f"No available ports in range {current_range}.")
+    raise NoPortsInRangeException(f"No available ports in range {port_range}.")
 
 
-def _bind_socket(
-    host: str, port: int, will_close_then_reopen_socket: bool = False
-) -> socket.socket:
+def _bind_socket(host: str, port: int) -> socket.socket:
     try:
         family = get_family(host=host)
         sock = socket.socket(family=family, type=socket.SOCK_STREAM)
-
-        # Setting flags like SO_REUSEADDR and/or SO_REUSEPORT may have
-        # undesirable side-effects but we allow it if caller insists. Refer to
-        # comment on find_available_socket()
-        #
-        # See e.g.  https://stackoverflow.com/a/14388707 for an extensive
-        # explanation of these flags, in particular the part about TIME_WAIT
-
-        if will_close_then_reopen_socket:
-            sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-        else:
-            sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 0)
-
         sock.bind((host, port))
         return sock
     except socket.gaierror as err_info:
@@ -139,18 +119,19 @@ def get_family(host: str) -> socket.AddressFamily:
 
 
 # See https://stackoverflow.com/a/28950776
-def _get_ip_address() -> str:
+def get_ip_address() -> str:
     try:
         s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-        s.settimeout(0)
-        # try pinging a reserved, internal address in order
-        # to determine IP representing the default route
-        s.connect(("10.255.255.255", 1))
-        retval = s.getsockname()[0]
+        try:
+            s.settimeout(0)
+            # try pinging a reserved, internal address in order
+            # to determine IP representing the default route
+            s.connect(("10.255.255.255", 1))
+            address = s.getsockname()[0]
+        finally:
+            s.close()
     except BaseException:
-        logger.warning("Cannot determine ip-address. Fallback to localhost...")
-        retval = "127.0.0.1"
-    finally:
-        s.close()
-    logger.debug(f"ip-address: {retval}")
-    return retval
+        logger.warning("Cannot determine ip-address. Falling back to localhost.")
+        address = "127.0.0.1"
+    logger.debug(f"ip-address: {address}")
+    return address

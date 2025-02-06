@@ -11,7 +11,7 @@ from unittest.mock import MagicMock
 import pytest
 import yaml
 
-from ert.config import ConfigWarning, QueueSystem
+from ert.config import ConfigWarning
 from ert.ensemble_evaluator import EvaluatorServerConfig
 from ert.run_models.everest_run_model import EverestRunModel
 from everest.config import EverestConfig
@@ -147,11 +147,7 @@ def change_to_tmpdir(tmp_path, monkeypatch):
 @pytest.fixture
 def evaluator_server_config_generator():
     def create_evaluator_server_config(run_model):
-        return EvaluatorServerConfig(
-            custom_port_range=range(49152, 51819)
-            if run_model._queue_config.queue_system == QueueSystem.LOCAL
-            else None
-        )
+        return EvaluatorServerConfig()
 
     return create_evaluator_server_config
 

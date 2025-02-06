@@ -218,7 +218,7 @@ class LegacyEnsemble:
             ce_unary_send_method_name,
             partialmethod(
                 self.__class__.send_event,
-                self._config.get_connection_info().router_uri,
+                self._config.get_uri(),
                 token=self._config.token,
             ),
         )
@@ -267,7 +267,7 @@ class LegacyEnsemble:
                 max_running=self._queue_config.max_running,
                 submit_sleep=self._queue_config.submit_sleep,
                 ens_id=self.id_,
-                ee_uri=self._config.get_connection_info().router_uri,
+                ee_uri=self._config.get_uri(),
                 ee_token=self._config.token,
             )
             logger.info(

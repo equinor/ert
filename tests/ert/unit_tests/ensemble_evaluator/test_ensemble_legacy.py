@@ -35,17 +35,12 @@ async def test_run_legacy_ensemble(
     tmpdir, make_ensemble, monkeypatch, evaluator_to_use
 ):
     num_reals = 2
-    custom_port_range = range(1024, 65535)
     with tmpdir.as_cwd():
         ensemble = make_ensemble(monkeypatch, tmpdir, num_reals, 2)
-        config = EvaluatorServerConfig(
-            custom_port_range=custom_port_range,
-            custom_host="127.0.0.1",
-            use_token=False,
-        )
+        config = EvaluatorServerConfig(use_token=False)
         async with (
             evaluator_to_use(ensemble, config) as evaluator,
-            Monitor(config.get_connection_info()) as monitor,
+            Monitor(config.get_uri(), config.token) as monitor,
         ):
             async for event in monitor.track():
                 if type(event) in {
@@ -70,20 +65,15 @@ async def test_run_and_cancel_legacy_ensemble(
     tmpdir, make_ensemble, monkeypatch, evaluator_to_use
 ):
     num_reals = 2
-    custom_port_range = range(1024, 65535)
     with tmpdir.as_cwd():
         ensemble = make_ensemble(monkeypatch, tmpdir, num_reals, 2, job_sleep=40)
-        config = EvaluatorServerConfig(
-            custom_port_range=custom_port_range,
-            custom_host="127.0.0.1",
-            use_token=False,
-        )
+        config = EvaluatorServerConfig(use_token=False)
 
         terminated_event = False
 
         async with (
             evaluator_to_use(ensemble, config) as evaluator,
-            Monitor(config.get_connection_info()) as monitor,
+            Monitor(config.get_uri(), config.token) as monitor,
         ):
             # on lesser hardware the realizations might be killed by max_runtime
             # and the ensemble is set to STOPPED
