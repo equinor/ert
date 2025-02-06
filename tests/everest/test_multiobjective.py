@@ -31,7 +31,7 @@ def test_config_multi_objectives(copy_mocked_test_data_to_tmp):
         len(EverestConfig.lint_config_dict(config_dict)) == 0
     )  # weight given for all the objectivs
 
-    obj_funcs.append({"weight": 1, "scaling": 1})
+    obj_funcs.append({"weight": 1, "scale": 1})
     assert has_error(
         EverestConfig.lint_config_dict(config_dict),
         match="Field required",
@@ -51,13 +51,13 @@ def test_config_multi_objectives(copy_mocked_test_data_to_tmp):
     )  # 0 weight
 
     obj_funcs[-1]["weight"] = 1
-    obj_funcs[-1]["scaling"] = 0
+    obj_funcs[-1]["scale"] = 0
     assert has_error(
         EverestConfig.lint_config_dict(config_dict),
-        match="Scaling value cannot be zero",
-    )  # 0 scaling
+        match="Scale value cannot be zero",
+    )  # 0 scale
 
-    obj_funcs[-1]["scaling"] = -125
+    obj_funcs[-1]["scale"] = -125
     assert (
         len(EverestConfig.lint_config_dict(config_dict)) == 0
     )  # negative normalization is ok)

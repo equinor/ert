@@ -33,13 +33,13 @@ used in the optimization process.
     normalization: float | None = Field(
         default=None,
         description="""
-    normalization key is deprecated and has been replaced with scaling
+    normalization key is deprecated and has been replaced with scale
 """,
     )
-    scaling: float | None = Field(
+    scale: float | None = Field(
         default=None,
         description="""
-    scaling is a division factor defined per objective function.
+    scale is a division factor defined per objective function.
 
     The value of each objective function is divided by the related scaling value.
     When optimizing with respect to multiple objective functions, it is important
@@ -60,7 +60,7 @@ used in the optimization process.
 auto_normalize can be set to true to automatically
 determine the scaling factor from the objective value in batch 0.
 
-If scaling is also set, the automatic value is divided by its value.
+If scale is also set, the automatic value is divided by its value.
 """,
     )
     type: str | None = Field(
@@ -77,18 +77,18 @@ preferred to be maximized.
 """,
     )
 
-    @field_validator("scaling")
+    @field_validator("scale")
     @classmethod
-    def validate_scaling_is_not_zero(cls, scaling) -> float | None:
-        if scaling == 0.0:
-            raise ValueError("Scaling value cannot be zero")
-        return scaling
+    def validate_scale_is_not_zero(cls, scale) -> float | None:
+        if scale == 0.0:
+            raise ValueError("Scale value cannot be zero")
+        return scale
 
     @model_validator(mode="after")
     def deprecate_normalization(self) -> Self:
         if self.normalization is not None:
             ConfigWarning.deprecation_warn(
-                "normalization key is deprecated and has been replaced with scaling"
+                "normalization key is deprecated and has been replaced with scale"
             )
         if self.auto_normalize is not None:
             ConfigWarning.deprecation_warn(
@@ -97,11 +97,11 @@ preferred to be maximized.
         return self
 
     @model_validator(mode="after")
-    def make_scaling_backwards_compatible(self) -> Self:
-        if self.scaling is None and self.normalization is not None:
+    def make_scale_backwards_compatible(self) -> Self:
+        if self.scale is None and self.normalization is not None:
             if self.normalization == 0.0:
-                raise ValueError("Scaling value cannot be zero")
-            self.scaling = 1 / self.normalization
+                raise ValueError("Scale value cannot be zero")
+            self.scale = 1 / self.normalization
         if self.auto_scale is None and self.auto_normalize is not None:
             self.auto_scale = self.auto_normalize
         return self
