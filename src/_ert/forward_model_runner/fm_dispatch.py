@@ -41,7 +41,10 @@ def _setup_reporters(
         reporters.append(reporting.Interactive())
     elif ens_id and experiment_id is None:
         reporters.append(reporting.File())
-        reporters.append(reporting.Event(evaluator_url=dispatch_url, token=ee_token))
+        if dispatch_url is not None:
+            reporters.append(
+                reporting.Event(evaluator_url=dispatch_url, token=ee_token)
+            )
     else:
         reporters.append(reporting.File())
     return reporters
