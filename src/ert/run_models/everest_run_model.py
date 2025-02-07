@@ -419,7 +419,9 @@ class EverestRunModel(BaseRunModel):
         ]
 
         # Create the batch to run:
-        batch_data = self._init_batch_data(control_values, evaluated_control_indices)
+        sim_controls = self._create_simulation_controls(
+            control_values, evaluated_control_indices
+        )
 
         # Initialize a new ensemble in storage:
         assert self._experiment is not None
@@ -427,7 +429,7 @@ class EverestRunModel(BaseRunModel):
             name=f"batch_{self._batch_id}",
             ensemble_size=len(evaluated_control_indices),
         )
-        for sim_id, controls in enumerate(batch_data.values()):
+        for sim_id, controls in enumerate(sim_controls.values()):
             self._setup_sim(sim_id, controls, ensemble)
 
         # Evaluate the batch:
@@ -521,18 +523,18 @@ class EverestRunModel(BaseRunModel):
                     cached_results[sim_id] = cached_data
         return cached_results
 
-    def _init_batch_data(
+    def _create_simulation_controls(
         self,
         control_values: NDArray[np.float64],
         controls_to_evaluate: list[int],
     ) -> dict[int, dict[str, Any]]:
-        def _add_controls(
+        def _create_control_dicts_for_simulation(
             controls_config: list[ControlConfig], values: NDArray[np.float64]
         ) -> dict[str, Any]:
-            batch_data_item: dict[str, Any] = {}
+            control_dicts: dict[str, Any] = {}
             value_list = values.tolist()
             for control in controls_config:
-                control_dict: dict[str, Any] = batch_data_item.get(control.name, {})
+                control_dict: dict[str, Any] = control_dicts.get(control.name, {})
                 for variable in control.variables:
                     variable_value = control_dict.get(variable.name, {})
                     if isinstance(variable, ControlVariableGuessListConfig):
@@ -543,12 +545,14 @@ class EverestRunModel(BaseRunModel):
                     else:
                         variable_value = value_list.pop(0)
                     control_dict[variable.name] = variable_value
-                batch_data_item[control.name] = control_dict
-            return batch_data_item
+                control_dicts[control.name] = control_dict
+            return control_dicts
 
         return {
-            idx: _add_controls(self._everest_config.controls, control_values[idx, :])
-            for idx in controls_to_evaluate
+            sim_id: _create_control_dicts_for_simulation(
+                self._everest_config.controls, control_values[sim_id, :]
+            )
+            for sim_id in controls_to_evaluate
         }
 
     def _setup_sim(
