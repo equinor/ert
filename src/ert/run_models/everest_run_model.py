@@ -21,6 +21,7 @@ from ropt.enums import EventType, OptimizerExitCode
 from ropt.evaluator import EvaluatorContext, EvaluatorResult
 from ropt.plan import BasicOptimizer
 from ropt.plan import Event as OptimizerEvent
+from ropt.results import FunctionResults
 from ropt.transforms import OptModelTransforms
 from typing_extensions import TypedDict
 
@@ -54,6 +55,10 @@ from everest.strings import EVEREST, STORAGE_DIR
 
 from ..run_arg import RunArg, create_run_arguments
 from .base_run_model import BaseRunModel, StatusEvents
+from .event import (
+    EverestBatchResultEvent,
+    EverestStatusEvent,
+)
 
 if TYPE_CHECKING:
     from ert.storage import Ensemble, Experiment
@@ -292,10 +297,29 @@ class EverestRunModel(BaseRunModel):
             # to compute the scales. This will add an ensemble/batch in the
             # storage that is not part of the optimization run. However, the
             # results may be used in the optimization via the caching mechanism.
+
+            self.send_event(
+                EverestStatusEvent(
+                    batch=None,  # Always 0, but omitting it for consistency
+                    everest_event="START_SAMPLING_EVALUATION",
+                    exit_code=None,
+                )
+            )
+
             objectives, constraints, _ = self._run_forward_model(
                 np.repeat(np.expand_dims(variables, axis=0), nreal, axis=0),
                 model_realizations,
             )
+
+            self.send_event(
+                EverestBatchResultEvent(
+                    batch=self._batch_id,
+                    everest_event="FINISHED_SAMPLING_EVALUATION",
+                    result_type="FunctionResult",
+                    exit_code=None,
+                )
+            )
+
             if transforms.objectives.has_auto_scale:
                 transforms.objectives.calculate_auto_scales(objectives)
             if (
@@ -328,6 +352,52 @@ class EverestRunModel(BaseRunModel):
                 optimizer=optimizer,
             ),
         )
+
+        def _forward_ropt_event(everest_event: OptimizerEvent) -> None:
+            has_results = bool(everest_event.data and everest_event.data.get("results"))
+
+            # The batch these results pertain to
+            # If the event has results, they usually pertain to the
+            # batch before self._batch_id, i.e., self._batch_id - 1
+            exit_code = everest_event.data.get("exit_code")
+            exit_code_name = (
+                None if exit_code is None else OptimizerExitCode(exit_code).name
+            )
+
+            if has_results:
+                # A ROPT event may contain multiple results, here we send one
+                # event per result
+                results = everest_event.data["results"]
+                batch_id = results[0].batch_id
+
+                for r in results:
+                    self.send_event(
+                        EverestBatchResultEvent(
+                            batch=batch_id,
+                            everest_event=everest_event.event_type.name,
+                            result_type=(
+                                "FunctionResult"
+                                if isinstance(r, FunctionResults)
+                                else "GradientResult"
+                            ),
+                            exit_code=exit_code_name,
+                        )
+                    )
+            else:
+                # Events indicating the start of an evaluation,
+                # start of optimizer step holds no results
+                # but may still be relevant to the subscriber
+                self.send_event(
+                    EverestStatusEvent(
+                        batch=None,
+                        everest_event=everest_event.event_type.name,
+                        exit_code=exit_code_name,
+                    )
+                )
+
+        # Forward ROPT events to queue
+        for event_type in EventType:
+            optimizer.add_observer(event_type, _forward_ropt_event)
 
         return optimizer
 
