@@ -29,6 +29,31 @@ class RunModelStatusEvent(RunModelEvent):
     msg: str
 
 
+class EverestStatusEvent(BaseModel):
+    batch: int | None
+    event_type: Literal["EverestStatusEvent"] = "EverestStatusEvent"
+
+    # Reflects what is currently in ROPT,
+    # changes in ROPT should appear here accordingly
+    everest_event: Literal[
+        "START_EVALUATION",
+        "START_SAMPLING_EVALUATION",
+        "START_OPTIMIZER_STEP",
+        "FINISHED_OPTIMIZER_STEP",
+        "START_EVALUATOR_STEP",
+        "FINISHED_EVALUATOR_STEP",
+    ]
+    exit_code: str | None = None
+
+
+class EverestBatchResultEvent(BaseModel):
+    batch: int
+    event_type: Literal["EverestBatchResultEvent"] = "EverestBatchResultEvent"
+    everest_event: Literal["FINISHED_EVALUATION", "FINISHED_SAMPLING_EVALUATION"]
+    result_type: Literal["FunctionResult", "GradientResult"]
+    exit_code: str | None = None
+
+
 class RunModelTimeEvent(RunModelEvent):
     event_type: Literal["RunModelTimeEvent"] = "RunModelTimeEvent"
     remaining_time: float
@@ -72,6 +97,8 @@ StatusEvents = (
     AnalysisStatusEvent
     | AnalysisTimeEvent
     | EndEvent
+    | EverestStatusEvent
+    | EverestBatchResultEvent
     | FullSnapshotEvent
     | SnapshotUpdateEvent
     | RunModelErrorEvent
