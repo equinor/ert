@@ -2,6 +2,7 @@ import orjson
 import pytest
 
 from ert.ensemble_evaluator import FullSnapshotEvent
+from ert.run_models.event import EverestBatchResultEvent, EverestStatusEvent
 
 
 @pytest.mark.integration_test
@@ -17,9 +18,15 @@ def test_everest_events(config_file, snapshot, cached_example):
     _, config_file, _, events_list = cached_example(f"math_func/{config_file}")
 
     full_snapshots = [e for e in events_list if isinstance(e, FullSnapshotEvent)]
+    everest_events = [
+        e.model_dump()
+        for e in events_list
+        if isinstance(e, EverestStatusEvent | EverestBatchResultEvent)
+    ]
 
     event_info_json = {
         "num_full_snapshots": len(full_snapshots),
+        "everest_events": everest_events,
     }
 
     snapshot_str = (
