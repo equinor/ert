@@ -180,19 +180,12 @@ def _parse_output_constraints(
             raise RuntimeError(
                 "output constraint error: target cannot be combined with bounds"
             )
+        _add_output_constraint(target, ConstraintType.EQ)
         _add_output_constraint(
-            target,
-            ConstraintType.EQ,
+            upper_bound, ConstraintType.LE, None if lower_bound is None else "upper"
         )
         _add_output_constraint(
-            upper_bound,
-            ConstraintType.LE,
-            None if lower_bound is None else "upper",
-        )
-        _add_output_constraint(
-            lower_bound,
-            ConstraintType.GE,
-            None if upper_bound is None else "lower",
+            lower_bound, ConstraintType.GE, None if upper_bound is None else "lower"
         )
 
     ropt_config["nonlinear_constraints"] = {
