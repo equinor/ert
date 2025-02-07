@@ -1,6 +1,7 @@
 import os
 from pathlib import Path
 
+import numpy as np
 import pytest
 import yaml
 
@@ -181,3 +182,41 @@ def test_math_func_auto_scaled_objectives(copy_math_func_test_data_to_tmp):
     total = -(expected_p * 0.5 + expected_q * 0.25) / (0.5 + 0.25)
 
     assert total == optim
+
+
+@pytest.mark.integration_test
+def test_math_func_auto_scaled_constraints(copy_math_func_test_data_to_tmp):
+    config = EverestConfig.load_file("config_advanced.yml")
+    config_dict = config.model_dump(exclude_none=True)
+
+    # control number of batches, no need for full convergence:
+    config_dict["optimization"]["convergence_tolerance"] = 1e-10
+    config_dict["optimization"]["max_batch_num"] = 3
+
+    # Run with auto_scaling:
+    config_dict["environment"]["output_folder"] = "output_auto_scale"
+    config_dict["output_constraints"][0]["auto_scale"] = True
+    config_dict["output_constraints"][0]["scale"] = 1.0
+    config = EverestConfig.model_validate(config_dict)
+    run_model = EverestRunModel.create(config)
+    evaluator_server_config = EvaluatorServerConfig()
+    run_model.run_experiment(evaluator_server_config)
+    result1 = run_model.result
+
+    # Run the equivalent without auto-scaling:
+    config_dict["environment"]["output_folder"] = "output_manual_scale"
+    config_dict["output_constraints"][0]["auto_scale"] = False
+    config_dict["output_constraints"][0]["scale"] = 0.25  # x(0)
+    # We need one batch less, no auto-scaling:
+    config_dict["optimization"]["max_batch_num"] -= 1
+    config = EverestConfig.model_validate(config_dict)
+    run_model = EverestRunModel.create(config)
+    evaluator_server_config = EvaluatorServerConfig()
+    run_model.run_experiment(evaluator_server_config)
+    result2 = run_model.result
+
+    assert result1.total_objective == pytest.approx(result2.total_objective)
+    assert np.allclose(
+        np.fromiter(result1.controls.values(), dtype=np.float64),
+        np.fromiter(result2.controls.values(), dtype=np.float64),
+    )

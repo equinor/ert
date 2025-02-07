@@ -159,8 +159,6 @@ def _parse_output_constraints(
         return
 
     rhs_values: list[float] = []
-    scales: list[float] = []
-    auto_scale: list[bool] = []
     types: list[ConstraintType] = []
 
     def _add_output_constraint(
@@ -168,8 +166,6 @@ def _parse_output_constraints(
     ):
         if rhs_value is not None:
             rhs_values.append(rhs_value)
-            scales.append(constr.scale if constr.scale is not None else 1.0)
-            auto_scale.append(constr.auto_scale or False)
             types.append(constraint_type)
 
     for constr in output_constraints:
@@ -190,8 +186,6 @@ def _parse_output_constraints(
 
     ropt_config["nonlinear_constraints"] = {
         "rhs_values": rhs_values,
-        "scales": scales,
-        "auto_scale": auto_scale,
         "types": types,
     }
 

@@ -48,6 +48,7 @@ def test_everest2ropt_controls_auto_scale():
         transforms=get_optimization_domain_transforms(
             config.controls,
             config.objective_functions,
+            config.output_constraints,
             config.model.realizations_weights,
         ),
     )
@@ -65,6 +66,7 @@ def test_everest2ropt_variables_auto_scale():
         transforms=get_optimization_domain_transforms(
             config.controls,
             config.objective_functions,
+            config.output_constraints,
             config.model.realizations_weights,
         ),
     )
@@ -136,6 +138,7 @@ def test_everest2ropt_controls_input_constraint_auto_scale():
         transforms=get_optimization_domain_transforms(
             config.controls,
             config.objective_functions,
+            config.output_constraints,
             config.model.realizations_weights,
         ),
     )
@@ -280,6 +283,7 @@ def test_everest2ropt_snapshot(case, snapshot):
         transforms=get_optimization_domain_transforms(
             config.controls,
             config.objective_functions,
+            config.output_constraints,
             config.model.realizations_weights,
         ),
     ).model_dump()

@@ -49,6 +49,7 @@ from everest.config.utils import FlattenedControls
 from everest.everest_storage import EverestStorage, OptimalResult
 from everest.optimizer.everest2ropt import everest2ropt
 from everest.optimizer.opt_model_transforms import (
+    ConstraintScaler,
     ObjectiveScaler,
     get_optimization_domain_transforms,
 )
@@ -322,20 +323,39 @@ class EverestRunModel(BaseRunModel):
         transforms = get_optimization_domain_transforms(
             self._everest_config.controls,
             self._everest_config.objective_functions,
+            self._everest_config.output_constraints,
             realization_weights,
         )
         # If required, initialize auto-scaling:
         assert isinstance(transforms.objectives, ObjectiveScaler)
-        if transforms.objectives.has_auto_scale:
-            objectives, _, _ = self._run_forward_model(
+        assert transforms.nonlinear_constraints is None or isinstance(
+            transforms.nonlinear_constraints, ConstraintScaler
+        )
+        if transforms.objectives.has_auto_scale or (
+            transforms.nonlinear_constraints
+            and transforms.nonlinear_constraints.has_auto_scale
+        ):
+            # Run the forward model once to find the objective/constraint values
+            # to compute the scales. This will add an ensemble/batch in the
+            # storage that is not part of the optimization run. However, the
+            # results may be used in the optimization via the caching mechanism.
+            objectives, constraints, _ = self._run_forward_model(
                 np.repeat(np.expand_dims(variables, axis=0), nreal, axis=0),
                 realizations,
             )
-            transforms.objectives.calculate_auto_scales(objectives)
+            if transforms.objectives.has_auto_scale:
+                transforms.objectives.calculate_auto_scales(objectives)
+            if (
+                transforms.nonlinear_constraints
+                and transforms.nonlinear_constraints.has_auto_scale
+            ):
+                assert constraints is not None
+                transforms.nonlinear_constraints.calculate_auto_scales(constraints)
         return transforms
 
     def _create_optimizer(self) -> BasicOptimizer:
-        # Initialize the optimization model transforms:
+        # Initialize the optimization model transforms. This may run one initial
+        # ensemble for auto-scaling purposes:
         transforms = self._init_transforms(
             np.asarray(
                 FlattenedControls(self._everest_config.controls).initial_guesses,
