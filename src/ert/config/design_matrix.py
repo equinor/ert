@@ -218,9 +218,6 @@ class DesignMatrix:
             update=False,
         )
 
-        design_matrix_df.columns = pd.MultiIndex.from_product(
-            [[DESIGN_MATRIX_GROUP], design_matrix_df.columns]
-        )
         reals = design_matrix_df.index.tolist()
         return (
             [x in reals for x in range(max(reals) + 1)],
