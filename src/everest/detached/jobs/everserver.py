@@ -372,8 +372,7 @@ def main():
 
         update_everserver_status(status_path, ServerStatus.starting)
         logging.getLogger(EVEREST).info(version_info())
-        logging.getLogger(EVEREST).info(f"Output directory: {config.output_dir}")
-        logging.getLogger(EVEREST).debug(str(options))
+        logging.getLogger(EVEREST).info(f"Output directory: {output_dir}")
 
         authentication = _generate_authentication()
         cert_path, key_path, key_pw = _generate_certificate(
