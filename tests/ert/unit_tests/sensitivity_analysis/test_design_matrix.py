@@ -189,15 +189,19 @@ def test_reading_design_matrix(tmp_path):
 @pytest.mark.parametrize(
     "real_column, error_msg",
     [
-        pytest.param([0, 1, 1], "Index has duplicate keys", id="duplicate entries"),
+        pytest.param(
+            [0, 1, 1],
+            "REAL column must only contain unique positive integers",
+            id="duplicate entries",
+        ),
         pytest.param(
             [0, 1.1, 2],
-            "REAL column must only contain positive integers",
+            "REAL column must only contain unique positive integers",
             id="invalid float values",
         ),
         pytest.param(
             [0, "a", 10],
-            "REAL column must only contain positive integers",
+            "REAL column must only contain unique positive integers",
             id="invalid types",
         ),
     ],
@@ -280,12 +284,12 @@ def test_reading_design_matrix_validate_headers(tmp_path, column_names, error_ms
     [
         pytest.param(
             [0, pd.NA, 1],
-            r"Design matrix contains empty cells \['Realization 5, column a'\]",
+            r"Design matrix contains empty cells \['Row 1, column 1'\]",
             id="duplicate entries",
         ),
         pytest.param(
             [0, "some", np.nan],
-            r"Design matrix contains empty cells \['Realization 7, column a'\]",
+            r"Design matrix contains empty cells \['Row 2, column 1'\]",
             id="invalid float values",
         ),
     ],

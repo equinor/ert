@@ -10,7 +10,7 @@ from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
 import orjson
-import pandas as pd
+import polars as pl
 import xarray as xr
 from numpy.random import SeedSequence
 
@@ -157,24 +157,28 @@ def _seed_sequence(seed: int | None) -> int:
 
 
 def save_design_matrix_to_ensemble(
-    design_matrix_df: pd.DataFrame,
+    design_matrix_df: pl.DataFrame,
     ensemble: Ensemble,
     active_realizations: Iterable[int],
     design_group_name: str = DESIGN_MATRIX_GROUP,
 ) -> None:
-    assert not design_matrix_df.empty
-    for realization_nr in active_realizations:
-        row = design_matrix_df.loc[realization_nr]
+    assert not design_matrix_df.is_empty()
+    param_names = design_matrix_df.select(pl.exclude("REAL")).columns
+    if not set(design_matrix_df.get_column("REAL")).issubset(set(active_realizations)):
+        raise KeyError("Active realizations not found in design matrix data frame.")
+    for row in design_matrix_df.filter(
+        pl.col("REAL").is_in(active_realizations)
+    ).to_numpy():
         ds = xr.Dataset(
             {
-                "values": ("names", list(row.values)),
-                "transformed_values": ("names", list(row.values)),
-                "names": list(row.keys()),
+                "values": ("names", row[1:]),
+                "transformed_values": ("names", row[1:]),
+                "names": param_names,
             }
         )
         ensemble.save_parameters(
             design_group_name,
-            realization_nr,
+            row[0],
             ds,
         )
 
