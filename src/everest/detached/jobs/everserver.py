@@ -3,6 +3,7 @@ import datetime
 import json
 import logging
 import os
+import random
 import socket
 import ssl
 import threading
@@ -273,7 +274,15 @@ def _everserver_thread(shared_data, server_config) -> None:
 
 
 def _find_open_port(host, lower, upper) -> int:
-    for port in range(lower, upper):
+    # Making the port selection random does not fix the problem that an
+    # everserver might be assigned a port that another everserver in the process
+    # of shutting down already have.
+    #
+    # Since this problem is very unlikely in the normal usage of everest this change
+    # is mainly for alowing testing to run in paralell.
+
+    for _ in range(10):
+        port = random.randint(lower, upper)
         try:
             sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             sock.bind((host, port))
@@ -283,7 +292,7 @@ def _find_open_port(host, lower, upper) -> int:
             logging.getLogger("everserver").info(
                 f"Port {port} for host {host} is taken"
             )
-    msg = f"No open port for host {host} in the range {lower}-{upper}"
+    msg = f"Failed 10 times to get a random port in the range {lower}-{upper} on {host}. Giving up."
     logging.getLogger("everserver").exception(msg)
     raise Exception(msg)
 
