@@ -42,15 +42,20 @@ PROXY = {"http": None, "https": None}
 # everest.log file instead
 
 
-async def start_server(config: EverestConfig, debug: bool = False) -> Driver:
+async def start_server(
+    config: EverestConfig, logging_level: int = logging.INFO
+) -> Driver:
     """
     Start an Everest server running the optimization defined in the config
     """
     driver = create_driver(config.server.queue_system)
     try:
-        args = ["--config-file", str(config.config_path)]
-        if debug:
-            args.append("--debug")
+        args = [
+            "--output-dir",
+            str(config.output_dir),
+            "--logging-level",
+            str(logging_level),
+        ]
         poll_task = asyncio.create_task(driver.poll(), name="poll_task")
         await driver.submit(0, "everserver", *args, name=Path(config.config_file).stem)
     except FailedSubmit as err:

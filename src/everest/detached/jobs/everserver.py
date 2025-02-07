@@ -53,6 +53,8 @@ from everest.strings import (
     EXPERIMENT_STATUS_ENDPOINT,
     OPT_FAILURE_REALIZATIONS,
     OPT_PROGRESS_ENDPOINT,
+    OPTIMIZATION_LOG_DIR,
+    OPTIMIZATION_OUTPUT_DIR,
     SHARED_DATA_ENDPOINT,
     SIM_PROGRESS_ENDPOINT,
     START_EXPERIMENT_ENDPOINT,
@@ -343,22 +345,22 @@ def _configure_loggers(detached_dir: Path, log_dir: Path, logging_level: int) ->
 
 def main():
     arg_parser = argparse.ArgumentParser()
-    arg_parser.add_argument("--config-file", type=str)
-    arg_parser.add_argument("--debug", action="store_true")
+    arg_parser.add_argument("--output-dir", "-o", type=str)
+    arg_parser.add_argument("--logging-level", "-l", type=int, default=logging.INFO)
     options = arg_parser.parse_args()
-    config = EverestConfig.load_file(options.config_file)
-    status_path = ServerConfig.get_everserver_status_path(config.output_dir)
-    host_file = ServerConfig.get_hostfile_path(config.output_dir)
+
+    output_dir = options.output_dir
+    optimization_output_dir = str(Path(output_dir).absolute() / OPTIMIZATION_OUTPUT_DIR)
+    logging_level = options.logging_level
+
+    status_path = ServerConfig.get_everserver_status_path(output_dir)
+    host_file = ServerConfig.get_hostfile_path(output_dir)
 
     try:
         _configure_loggers(
-            detached_dir=Path(ServerConfig.get_detached_node_dir(config.output_dir)),
-            log_dir=(
-                Path(config.output_dir) / "logs"
-                if config.log_dir is None
-                else Path(config.log_dir)
-            ),
-            logging_level=config.logging_level if not options.debug else logging.DEBUG,
+            detached_dir=Path(ServerConfig.get_detached_node_dir(output_dir)),
+            log_dir=Path(output_dir) / OPTIMIZATION_LOG_DIR,
+            logging_level=logging_level,
         )
 
         update_everserver_status(status_path, ServerStatus.starting)
@@ -367,7 +369,7 @@ def main():
 
         authentication = _generate_authentication()
         cert_path, key_path, key_pw = _generate_certificate(
-            ServerConfig.get_certificate_dir(config.output_dir)
+            ServerConfig.get_certificate_dir(output_dir)
         )
         host = _get_machine_name()
         port = _find_open_port(host, lower=5000, upper=5800)
@@ -379,7 +381,7 @@ def main():
         }
 
         server_config = {
-            "optimization_output_dir": config.optimization_output_dir,
+            "optimization_output_dir": optimization_output_dir,
             "port": port,
             "cert_path": cert_path,
             "key_path": key_path,
@@ -403,11 +405,11 @@ def main():
         return
 
     try:
-        wait_for_server(config.output_dir, 60)
+        wait_for_server(output_dir, 60)
 
         update_everserver_status(status_path, ServerStatus.running)
 
-        server_context = (ServerConfig.get_server_context(config.output_dir),)
+        server_context = (ServerConfig.get_server_context(output_dir),)
         url, cert, auth = server_context[0]
 
         done = False

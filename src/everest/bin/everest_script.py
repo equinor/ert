@@ -133,7 +133,9 @@ async def run_everest(options):
             options.config.dump(save_config_path)
         except (OSError, LookupError) as e:
             logging.getLogger(EVEREST).error(f"Failed to save optimization config: {e}")
-        await start_server(options.config, options.debug)
+
+        logging_level = logging.DEBUG if options.debug else options.config.logging_level
+        await start_server(options.config, logging_level)
         print("Waiting for server ...")
         wait_for_server(options.config.output_dir, timeout=600)
         print("Everest server found!")

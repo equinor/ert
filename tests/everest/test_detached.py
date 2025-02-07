@@ -1,3 +1,4 @@
+import logging
 import os
 import stat
 from pathlib import Path
@@ -330,7 +331,7 @@ if __name__ == "__main__":
         )
     everserver_path.chmod(everserver_path.stat().st_mode | stat.S_IEXEC)
     makedirs_if_needed(everest_config.output_dir, roll_if_exists=True)
-    driver = await start_server(everest_config, debug=True)
+    driver = await start_server(everest_config, logging_level=logging.DEBUG)
     final_state = await server_running()
     assert final_state.returncode == 0
 
