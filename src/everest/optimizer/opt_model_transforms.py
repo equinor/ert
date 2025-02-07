@@ -56,11 +56,17 @@ class ObjectiveScaler(ObjectiveTransform):
         self._auto_scales = np.asarray(auto_scales, dtype=np.bool_)
         self._weights = np.asarray(weights, dtype=np.float64)
 
+    # The transform methods below all return the negative of the objectives.
+    # This is because Everest maximizes the objectives, while ropt is a minimizer.
+
     def forward(self, objectives: NDArray[np.float64]) -> NDArray[np.float64]:
-        return objectives / self._scales
+        return -objectives / self._scales
 
     def backward(self, objectives: NDArray[np.float64]) -> NDArray[np.float64]:
-        return objectives * self._scales
+        return -objectives * self._scales
+
+    def transform_weighted_objective(self, weighted_objective):
+        return -weighted_objective
 
     def calculate_auto_scales(self, objectives: NDArray[np.float64]) -> None:
         auto_scales = np.abs(
