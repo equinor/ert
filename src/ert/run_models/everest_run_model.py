@@ -315,8 +315,8 @@ class EverestRunModel(BaseRunModel):
                     self._exit_code = EverestExitCode.COMPLETED
 
     def _init_transforms(self, variables: NDArray[np.float64]) -> OptModelTransforms:
-        realizations = self._everest_config.model.realizations
-        nreal = len(realizations)
+        model_realizations = self._everest_config.model.realizations
+        nreal = len(model_realizations)
         realization_weights = self._everest_config.model.realizations_weights
         if realization_weights is None:
             realization_weights = [1.0 / nreal] * nreal
@@ -341,7 +341,7 @@ class EverestRunModel(BaseRunModel):
             # results may be used in the optimization via the caching mechanism.
             objectives, constraints, _ = self._run_forward_model(
                 np.repeat(np.expand_dims(variables, axis=0), nreal, axis=0),
-                realizations,
+                model_realizations,
             )
             if transforms.objectives.has_auto_scale:
                 transforms.objectives.calculate_auto_scales(objectives)
@@ -401,14 +401,14 @@ class EverestRunModel(BaseRunModel):
     def _run_forward_model(
         self,
         control_values: NDArray[np.float64],
-        realizations: list[int],
+        model_realizations: list[int],
         active_control_vectors: list[bool] | None = None,
     ) -> tuple[NDArray[np.float64], NDArray[np.float64] | None, list[int]]:
         # Reset the current run status:
         self._status = None
 
         # Get cached_results:
-        cached_results = self._get_cached_results(control_values, realizations)
+        cached_results = self._get_cached_results(control_values, model_realizations)
 
         # Collect the indices of the controls that must be evaluated in the batch:
         evaluated_control_indices = [
@@ -431,7 +431,7 @@ class EverestRunModel(BaseRunModel):
             self._setup_sim(sim_id, controls, ensemble)
 
         # Evaluate the batch:
-        run_args = self._get_run_args(ensemble, realizations, batch_data)
+        run_args = self._get_run_args(ensemble, model_realizations, batch_data)
         self._context_env.update(
             {
                 "_ERT_EXPERIMENT_ID": str(ensemble.experiment_id),
@@ -453,7 +453,7 @@ class EverestRunModel(BaseRunModel):
 
         # Add the results from the evaluations to the cache:
         self._add_results_to_cache(
-            control_values, realizations, batch_data, objectives, constraints
+            control_values, model_realizations, batch_data, objectives, constraints
         )
 
         # Increase the batch ID for the next evaluation:
@@ -466,7 +466,7 @@ class EverestRunModel(BaseRunModel):
         self, control_values: NDArray[np.float64], evaluator_context: EvaluatorContext
     ) -> EvaluatorResult:
         control_indices = list(range(control_values.shape[0]))
-        realizations = [
+        model_realizations = [
             self._everest_config.model.realizations[evaluator_context.realizations[idx]]
             for idx in control_indices
         ]
@@ -477,7 +477,7 @@ class EverestRunModel(BaseRunModel):
         ]
         batch_id = self._batch_id  # Save the batch ID, it will be modified.
         objectives, constraints, evaluated_control_indices = self._run_forward_model(
-            control_values, realizations, active_control_vectors
+            control_values, model_realizations, active_control_vectors
         )
 
         # The simulation id's are a simple enumeration over the evaluated
@@ -503,16 +503,16 @@ class EverestRunModel(BaseRunModel):
         )
 
     def _get_cached_results(
-        self, control_values: NDArray[np.float64], realizations: list[int]
+        self, control_values: NDArray[np.float64], model_realizations: list[int]
     ) -> dict[int, Any]:
         cached_results: dict[int, Any] = {}
         if self._simulator_cache is not None:
-            for control_idx, realization in enumerate(realizations):
+            for sim_id, model_realization in enumerate(model_realizations):
                 cached_data = self._simulator_cache.get(
-                    realization, control_values[control_idx, :]
+                    model_realization, control_values[sim_id, :]
                 )
                 if cached_data is not None:
-                    cached_results[control_idx] = cached_data
+                    cached_results[sim_id] = cached_data
         return cached_results
 
     def _init_batch_data(
@@ -602,14 +602,14 @@ class EverestRunModel(BaseRunModel):
     def _get_run_args(
         self,
         ensemble: Ensemble,
-        realizations: list[int],
+        model_realizations: list[int],
         batch_data: dict[int, Any],
     ) -> list[RunArg]:
         substitutions = self._substitutions
         substitutions["<BATCH_NAME>"] = ensemble.name
         self.active_realizations = [True] * len(batch_data)
         for sim_id, control_idx in enumerate(batch_data.keys()):
-            substitutions[f"<GEO_ID_{sim_id}_0>"] = str(realizations[control_idx])
+            substitutions[f"<GEO_ID_{sim_id}_0>"] = str(model_realizations[control_idx])
         run_paths = Runpaths(
             jobname_format=self._model_config.jobname_format_string,
             runpath_format=self._model_config.runpath_format_string,
@@ -716,18 +716,18 @@ class EverestRunModel(BaseRunModel):
     def _add_results_to_cache(
         self,
         control_values: NDArray[np.float64],
-        realizations: list[int],
+        model_realizations: list[int],
         batch_data: dict[int, Any],
         objectives: NDArray[np.float64],
         constraints: NDArray[np.float64] | None,
     ) -> None:
         if self._simulator_cache is not None:
-            for control_idx in batch_data:
+            for sim_id in batch_data:
                 self._simulator_cache.add(
-                    realizations[control_idx],
-                    control_values[control_idx, ...],
-                    objectives[control_idx, ...],
-                    None if constraints is None else constraints[control_idx, ...],
+                    model_realizations[sim_id],
+                    control_values[sim_id, ...],
+                    objectives[sim_id, ...],
+                    None if constraints is None else constraints[sim_id, ...],
                 )
 
     def check_if_runpath_exists(self) -> bool:
@@ -748,11 +748,14 @@ class EverestRunModel(BaseRunModel):
 
     def _simulation_status(self, snapshot: EnsembleSnapshot) -> SimulationStatus:
         jobs_progress: list[list[JobProgress]] = []
-        prev_realization = None
+        prev_model_realization = None
         jobs: list[JobProgress] = []
-        for (realization, simulation), fm_step in snapshot.get_all_fm_steps().items():
-            if realization != prev_realization:
-                prev_realization = realization
+        for (
+            model_realization,
+            simulation,
+        ), fm_step in snapshot.get_all_fm_steps().items():
+            if model_realization != prev_model_realization:
+                prev_model_realization = model_realization
                 if jobs:
                     jobs_progress.append(jobs)
                 jobs = []
@@ -763,7 +766,7 @@ class EverestRunModel(BaseRunModel):
                     "error": fm_step.get("error", ""),
                     "start_time": fm_step.get("start_time", None),
                     "end_time": fm_step.get("end_time", None),
-                    "realization": realization,
+                    "realization": model_realization,
                     "simulation": simulation,
                 }
             )
@@ -771,7 +774,7 @@ class EverestRunModel(BaseRunModel):
                 self._handle_errors(
                     batch=self._batch_id,
                     simulation=simulation,
-                    realization=realization,
+                    model_realization=model_realization,
                     fm_name=fm_step.get("name", "Unknown"),  # type: ignore
                     error_path=fm_step.get("stderr", ""),  # type: ignore
                     fm_running_err=fm_step.get("error", ""),  # type: ignore
@@ -788,12 +791,12 @@ class EverestRunModel(BaseRunModel):
         self,
         batch: int,
         simulation: Any,
-        realization: str,
+        model_realization: str,
         fm_name: str,
         error_path: str,
         fm_running_err: str,
     ) -> None:
-        fm_id = f"b_{batch}_r_{realization}_s_{simulation}_{fm_name}"
+        fm_id = f"b_{batch}_r_{model_realization}_s_{simulation}_{fm_name}"
         fm_logger = logging.getLogger("forward_models")
         if Path(error_path).is_file():
             error_str = Path(error_path).read_text(encoding="utf-8") or fm_running_err
@@ -801,7 +804,7 @@ class EverestRunModel(BaseRunModel):
             error_str = fm_running_err
         error_hash = hash(error_str)
         err_msg = "Batch: {} Realization: {} Simulation: {} Job: {} Failed {}".format(
-            batch, realization, simulation, fm_name, "\n Error: {} ID:{}"
+            batch, model_realization, simulation, fm_name, "\n Error: {} ID:{}"
         )
 
         if error_hash not in self._fm_errors:
