@@ -51,10 +51,10 @@
     "function_estimators": null,
     "realization_filters": null,
     "rhs_values": [
-      0.1
+      1.0
     ],
     "scales": [
-      0.1
+      1.0
     ],
     "types": [
       2
