@@ -9,10 +9,10 @@ import orjson
 from _ert.forward_model_runner.io import cond_unlink
 from _ert.forward_model_runner.reporting.base import Reporter
 from _ert.forward_model_runner.reporting.message import (
-    _JOB_EXIT_FAILED_STRING,
-    _JOB_STATUS_FAILURE,
-    _JOB_STATUS_RUNNING,
-    _JOB_STATUS_SUCCESS,
+    _STEP_EXIT_FAILED_STRING,
+    _STEP_STATUS_FAILURE,
+    _STEP_STATUS_RUNNING,
+    _STEP_STATUS_SUCCESS,
     Exited,
     Finish,
     Init,
@@ -42,34 +42,34 @@ class File(Reporter):
     def report(self, msg: Message):
         fm_step_status = {}
 
-        if msg.job:
-            logger.debug("Adding message job to status dictionary.")
-            fm_step_status = self.status_dict["jobs"][msg.job.index]
+        if msg.step:
+            logger.debug("Adding message step to status dictionary.")
+            fm_step_status = self.status_dict["steps"][msg.step.index]
 
         if isinstance(msg, Init):
             logger.debug("Init Message Instance")
             self._delete_old_status_files()
             self._init_status_file()
-            self.status_dict = self._init_job_status_dict(
-                msg.timestamp, msg.run_id, msg.jobs
+            self.status_dict = self._init_step_status_dict(
+                msg.timestamp, msg.run_id, msg.steps
             )
 
         elif isinstance(msg, Start):
             if msg.success():
                 logger.debug(
-                    f"Forward model step {msg.job.name()} was successfully started"
+                    f"Forward model step {msg.step.name()} was successfully started"
                 )
                 self._start_status_file(msg)
-                self._add_log_line(msg.job)
+                self._add_log_line(msg.step)
                 fm_step_status.update(
-                    status=_JOB_STATUS_RUNNING,
+                    status=_STEP_STATUS_RUNNING,
                     start_time=data_util.datetime_serialize(msg.timestamp),
                 )
             else:
-                logger.error(f"Forward model step {msg.job.name()} FAILED to start")
+                logger.error(f"Forward model step {msg.step.name()} FAILED to start")
                 error_msg = msg.error_message
                 fm_step_status.update(
-                    status=_JOB_STATUS_FAILURE,
+                    status=_STEP_STATUS_FAILURE,
                     error=error_msg,
                     end_time=data_util.datetime_serialize(msg.timestamp),
                 )
@@ -78,32 +78,34 @@ class File(Reporter):
         elif isinstance(msg, Exited):
             fm_step_status["end_time"] = data_util.datetime_serialize(msg.timestamp)
             if msg.success():
-                logger.debug(f"Forward model step {msg.job.name()} exited successfully")
-                fm_step_status["status"] = _JOB_STATUS_SUCCESS
+                logger.debug(
+                    f"Forward model step {msg.step.name()} exited successfully"
+                )
+                fm_step_status["status"] = _STEP_STATUS_SUCCESS
                 self._complete_status_file(msg)
             else:
                 error_msg = msg.error_message
                 logger.error(
-                    _JOB_EXIT_FAILED_STRING.format(
-                        job_name=msg.job.name(),
+                    _STEP_EXIT_FAILED_STRING.format(
+                        step_name=msg.step.name(),
                         exit_code=msg.exit_code,
                         error_message=msg.error_message,
                     )
                 )
-                fm_step_status.update(error=error_msg, status=_JOB_STATUS_FAILURE)
+                fm_step_status.update(error=error_msg, status=_STEP_STATUS_FAILURE)
 
                 # A STATUS_file is not written if there is no exit_code, i.e.
-                # when the job is killed due to timeout.
+                # when the step is killed due to timeout.
                 if msg.exit_code:
                     self._complete_status_file(msg)
-                self._dump_error_file(msg.job, error_msg)
+                self._dump_error_file(msg.step, error_msg)
 
         elif isinstance(msg, Running):
             fm_step_status.update(
                 max_memory_usage=msg.memory_status.max_rss,
                 current_memory_usage=msg.memory_status.rss,
                 cpu_seconds=msg.memory_status.cpu_seconds,
-                status=_JOB_STATUS_RUNNING,
+                status=_STEP_STATUS_RUNNING,
             )
             memory_logger.info(msg.memory_status)
 
@@ -133,20 +135,20 @@ class File(Reporter):
         self._write_status_file(f"{'Current host':32}: {self.node}/{os.uname()[4]}\n")
 
     @staticmethod
-    def _init_job_status_dict(start_time, run_id, jobs):
+    def _init_step_status_dict(start_time, run_id, steps):
         return {
             "run_id": run_id,
             "start_time": data_util.datetime_serialize(start_time),
             "end_time": None,
-            "jobs": [data_util.create_job_dict(j) for j in jobs],
+            "steps": [data_util.create_step_dict(step) for step in steps],
         }
 
     def _start_status_file(self, msg):
         timestamp = msg.timestamp.strftime(TIME_FORMAT)
-        job_name = msg.job.name()
-        self._write_status_file(f"{job_name:32}: {timestamp} .... ")
+        step_name = msg.step.name()
+        self._write_status_file(f"{step_name:32}: {timestamp} .... ")
         logger.info(
-            f"Append {job_name} job starting timestamp {timestamp} to STATUS_file."
+            f"Append {step_name} step starting timestamp {timestamp} to STATUS_file."
         )
 
     def _complete_status_file(self, msg):
@@ -157,15 +159,15 @@ class File(Reporter):
             # an arbitrary code less than -9.
             exit_code = -10 if isinstance(msg, Start) else msg.exit_code
             status = f" EXIT: {exit_code}/{msg.error_message}"
-            logger.error(f"{msg.job.name()} job, {timestamp} {status}")
+            logger.error(f"{msg.step.name()} step, {timestamp} {status}")
         self._write_status_file(f"{timestamp}  {status}\n")
 
     @staticmethod
-    def _add_log_line(job):
+    def _add_log_line(step):
         with append(file=LOG_file) as f:
-            args = " ".join(job.job_data["argList"])
+            args = " ".join(step.step_data["argList"])
             time_str = time.strftime(TIME_FORMAT, time.localtime())
-            f.write(f"{time_str}  Calling: {job.job_data['executable']} {args}\n")
+            f.write(f"{time_str}  Calling: {step.step_data['executable']} {args}\n")
 
     @staticmethod
     def _dump_error_file(fm_step, error_msg):

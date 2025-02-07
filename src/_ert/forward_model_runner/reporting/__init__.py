@@ -1,6 +1,6 @@
 """
 The reporting package provides classes for reporting the results of forward
-model jobs.
+model steps.
 """
 
 from .base import Reporter

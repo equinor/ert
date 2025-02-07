@@ -1,19 +1,19 @@
-"""Utility to compensate for a weak job type."""
+"""Utility to compensate for a weak step type."""
 
 import time
 
-from _ert.forward_model_runner.reporting.message import _JOB_STATUS_WAITING
+from _ert.forward_model_runner.reporting.message import _STEP_STATUS_WAITING
 
 
-def create_job_dict(job):
+def create_step_dict(step):
     return {
-        "name": job.name(),
-        "status": _JOB_STATUS_WAITING,
+        "name": step.name(),
+        "status": _STEP_STATUS_WAITING,
         "error": None,
         "start_time": None,
         "end_time": None,
-        "stdout": job.std_out,
-        "stderr": job.std_err,
+        "stdout": step.std_out,
+        "stderr": step.std_err,
         "current_memory_usage": None,
         "max_memory_usage": None,
     }
