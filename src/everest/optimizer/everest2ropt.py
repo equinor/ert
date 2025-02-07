@@ -99,7 +99,6 @@ def _parse_objectives(objective_functions: list[ObjectiveFunctionConfig], ropt_c
 
 
 def _parse_input_constraints(
-    controls: FlattenedControls,
     input_constraints: list[InputConstraintConfig] | None,
     formatted_control_names: list[str],
     formatted_control_names_dotdash: list[str],
@@ -350,12 +349,9 @@ def everest2ropt(
     """
     ropt_config: dict[str, Any] = {}
 
-    flattened_controls = FlattenedControls(ever_config.controls)
-
-    _parse_controls(flattened_controls, ropt_config)
+    _parse_controls(FlattenedControls(ever_config.controls), ropt_config)
     _parse_objectives(ever_config.objective_functions, ropt_config)
     _parse_input_constraints(
-        flattened_controls,
         ever_config.input_constraints,
         ever_config.formatted_control_names,
         ever_config.formatted_control_names_dotdash,
