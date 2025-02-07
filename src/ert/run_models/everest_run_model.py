@@ -21,6 +21,7 @@ from ropt.enums import EventType, OptimizerExitCode
 from ropt.evaluator import EvaluatorContext, EvaluatorResult
 from ropt.plan import BasicOptimizer
 from ropt.plan import Event as OptimizerEvent
+from ropt.transforms import OptModelTransforms
 from typing_extensions import TypedDict
 
 from _ert.events import EESnapshot, EESnapshotUpdate, Event
@@ -29,9 +30,13 @@ from ert.ensemble_evaluator import EnsembleSnapshot, EvaluatorServerConfig
 from ert.runpaths import Runpaths
 from ert.storage import open_storage
 from everest.config import ControlConfig, ControlVariableGuessListConfig, EverestConfig
+from everest.config.utils import FlattenedControls
 from everest.everest_storage import EverestStorage, OptimalResult
 from everest.optimizer.everest2ropt import everest2ropt
-from everest.optimizer.opt_model_transforms import get_opt_model_transforms
+from everest.optimizer.opt_model_transforms import (
+    ObjectiveScaler,
+    get_optimization_domain_transforms,
+)
 from everest.simulator.everest_to_ert import everest_to_ert_config
 from everest.strings import EVEREST
 
@@ -97,11 +102,6 @@ class EverestRunModel(BaseRunModel):
         )
 
         self._everest_config = everest_config
-        self._opt_model_transforms = get_opt_model_transforms(everest_config.controls)
-        self._ropt_config = everest2ropt(
-            everest_config, transforms=self._opt_model_transforms
-        )
-
         self._sim_callback = simulation_callback
         self._opt_callback = optimization_callback
         self._fm_errors: dict[int, dict[str, Any]] = {}
@@ -214,9 +214,38 @@ class EverestRunModel(BaseRunModel):
                 case _:
                     self._exit_code = EverestExitCode.COMPLETED
 
+    def _init_transforms(self, variables: NDArray[np.float64]) -> OptModelTransforms:
+        realizations = self._everest_config.model.realizations
+        nreal = len(realizations)
+        realization_weights = self._everest_config.model.realizations_weights
+        if realization_weights is None:
+            realization_weights = [1.0 / nreal] * nreal
+        transforms = get_optimization_domain_transforms(
+            self._everest_config.controls,
+            self._everest_config.objective_functions,
+            realization_weights,
+        )
+        # If required, initialize auto-scaling:
+        assert isinstance(transforms.objectives, ObjectiveScaler)
+        if transforms.objectives.has_auto_scale:
+            objectives, _, _ = self._run_forward_model(
+                np.repeat(np.expand_dims(variables, axis=0), nreal, axis=0),
+                realizations,
+            )
+            transforms.objectives.calculate_auto_scales(objectives)
+        return transforms
+
     def _create_optimizer(self) -> BasicOptimizer:
+        # Initialize the optimization model transforms:
+        transforms = self._init_transforms(
+            np.asarray(
+                FlattenedControls(self._everest_config.controls).initial_guesses,
+                dtype=np.float64,
+            )
+        )
         optimizer = BasicOptimizer(
-            enopt_config=self._ropt_config, evaluator=self._forward_model_evaluator
+            enopt_config=everest2ropt(self._everest_config, transforms=transforms),
+            evaluator=self._forward_model_evaluator,
         )
 
         # Before each batch evaluation we check if we should abort:

@@ -155,4 +155,29 @@ def test_math_func_auto_scaled_controls(copy_math_func_test_data_to_tmp):
     optim = -run_model.result.total_objective  # distance is provided as -distance
     expected_dist = 0.25**2 + 0.25**2
     assert expected_dist == pytest.approx(optim, abs=0.05)
-    assert expected_dist == pytest.approx(optim, abs=0.05)
+
+
+@pytest.mark.integration_test
+def test_math_func_auto_scaled_objectives(copy_math_func_test_data_to_tmp):
+    config = EverestConfig.load_file("config_multiobj.yml")
+    config_dict = config.model_dump(exclude_none=True)
+
+    # Normalize only distance_p:
+    config_dict["objective_functions"][0]["auto_scale"] = True
+    config_dict["objective_functions"][0]["scale"] = 1.0
+
+    # We two batches, the first to do the auto-scaling,
+    # the second is the initial function evaluation:
+    config_dict["optimization"]["max_batch_num"] = 2
+
+    config = EverestConfig.model_validate(config_dict)
+    run_model = EverestRunModel.create(config)
+    evaluator_server_config = EvaluatorServerConfig()
+    run_model.run_experiment(evaluator_server_config)
+    optim = run_model.result.total_objective
+
+    expected_p = 1.0  # normalized
+    expected_q = 4.75  # not normalized
+    total = -(expected_p * 0.5 + expected_q * 0.25) / (0.5 + 0.25)
+
+    assert total == optim
