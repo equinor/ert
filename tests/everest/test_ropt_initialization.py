@@ -9,7 +9,7 @@ from ropt.enums import ConstraintType
 from everest.config import EverestConfig
 from everest.config_file_loader import yaml_file_to_substituted_config_dict
 from everest.optimizer.everest2ropt import everest2ropt
-from everest.optimizer.opt_model_transforms import get_opt_model_transforms
+from everest.optimizer.opt_model_transforms import get_optimization_domain_transforms
 from tests.everest.utils import relpath
 
 _CONFIG_DIR = relpath("test_data/mocked_test_case")
@@ -44,7 +44,12 @@ def test_everest2ropt_controls_auto_scale():
     controls[0].auto_scale = True
     controls[0].scaled_range = [0.3, 0.7]
     ropt_config = everest2ropt(
-        config, transforms=get_opt_model_transforms(config.controls)
+        config,
+        transforms=get_optimization_domain_transforms(
+            config.controls,
+            config.objective_functions,
+            config.model.realizations_weights,
+        ),
     )
     assert np.allclose(ropt_config.variables.lower_bounds, 0.3)
     assert np.allclose(ropt_config.variables.upper_bounds, 0.7)
@@ -56,7 +61,12 @@ def test_everest2ropt_variables_auto_scale():
     controls[0].variables[1].auto_scale = True
     controls[0].variables[1].scaled_range = [0.3, 0.7]
     ropt_config = everest2ropt(
-        config, transforms=get_opt_model_transforms(config.controls)
+        config,
+        transforms=get_optimization_domain_transforms(
+            config.controls,
+            config.objective_functions,
+            config.model.realizations_weights,
+        ),
     )
     assert ropt_config.variables.lower_bounds[0] == 0.0
     assert ropt_config.variables.upper_bounds[0] == 0.1
@@ -122,7 +132,12 @@ def test_everest2ropt_controls_input_constraint_auto_scale():
     scaled_coefficients[:2, 1] = coefficients[:2, 1] * 2.0 / 0.4
 
     ropt_config = everest2ropt(
-        config, transforms=get_opt_model_transforms(config.controls)
+        config,
+        transforms=get_optimization_domain_transforms(
+            config.controls,
+            config.objective_functions,
+            config.model.realizations_weights,
+        ),
     )
     assert np.allclose(
         ropt_config.linear_constraints.coefficients,
@@ -260,7 +275,14 @@ def test_everest2ropt_snapshot(case, snapshot):
     config = EverestConfig.load_file(
         relpath(f"../../test-data/everest/math_func/{case}")
     )
-    ropt_config = everest2ropt(config).model_dump()
+    ropt_config = everest2ropt(
+        config,
+        transforms=get_optimization_domain_transforms(
+            config.controls,
+            config.objective_functions,
+            config.model.realizations_weights,
+        ),
+    ).model_dump()
 
     def safe_default(obj):
         if isinstance(obj, np.ndarray):

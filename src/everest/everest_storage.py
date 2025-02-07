@@ -14,7 +14,6 @@ import polars as pl
 from ropt.enums import EventType
 from ropt.plan import BasicOptimizer, Event
 from ropt.results import FunctionResults, GradientResults, convert_to_maximize
-from ropt.transforms import OptModelTransforms
 
 from everest.config import EverestConfig
 from everest.strings import EVEREST
