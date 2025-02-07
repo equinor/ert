@@ -344,7 +344,6 @@ async def test_status_contains_max_runtime_failure(
     )
 
     assert status["status"] == ServerStatus.failed
-    print(status["message"])
     assert (
         "sleep Failed with: The run is cancelled due to reaching MAX_RUNTIME"
         in status["message"]
