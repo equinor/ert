@@ -151,8 +151,6 @@ def _simulate_server(host, port, sock: socket.socket):
 
 def test_socket_can_rebind_if_never_used(unused_tcp_port):
     """
-    Executive summary of this test
-
     1. the original socket is obtained
     2. no activity is triggered on the socket
     3. port is not closed but kept alive
@@ -195,8 +193,6 @@ def test_socket_can_rebind_if_never_used(unused_tcp_port):
 
 def test_socket_can_not_rebind_if_open(unused_tcp_port):
     """
-    Executive summary of this test
-
     1. the original socket is obtained
     2. activity is triggered on the socket using a dummy-server/client
     3. socket is not closed but kept alive
@@ -221,8 +217,6 @@ def test_socket_can_not_rebind_if_open(unused_tcp_port):
 @pytest.mark.integration_test
 def test_socket_can_not_rebind_immediately_after_close_if_used(unused_tcp_port):
     """
-    Executive summary of this test
-
     1. the original socket is obtained
     2. activity is triggered on the socket using a dummy-server/client
     3. socket is closed
