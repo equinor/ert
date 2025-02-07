@@ -13,7 +13,7 @@ import numpy as np
 import polars as pl
 from ropt.enums import EventType
 from ropt.plan import BasicOptimizer, Event
-from ropt.results import FunctionResults, GradientResults, convert_to_maximize
+from ropt.results import FunctionResults, GradientResults
 
 from everest.config import EverestConfig
 from everest.strings import EVEREST
@@ -661,14 +661,11 @@ class EverestStorage:
     def _on_batch_evaluation_finished(self, event: Event) -> None:
         logger.debug("Storing batch results dataframes")
 
-        converted_results = tuple(
-            convert_to_maximize(result) for result in event.data.get("results", [])
-        )
         results: list[FunctionResults | GradientResults] = []
 
         best_value = -np.inf
         best_results = None
-        for item in converted_results:
+        for item in event.data.get("results", []):
             if isinstance(item, GradientResults):
                 results.append(item)
             if (

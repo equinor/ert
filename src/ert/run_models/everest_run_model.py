@@ -553,8 +553,7 @@ class EverestRunModel(BaseRunModel):
         results: list[dict[str, NDArray[np.float64]]],
         cached_results: dict[int, Any],
     ) -> tuple[NDArray[np.float64], NDArray[np.float64] | None]:
-        # We minimize the negative of the objectives:
-        objectives = -self._get_simulation_results(
+        objectives = self._get_simulation_results(
             results, self._everest_config.objective_names, control_values, batch_data
         )
 
