@@ -52,7 +52,7 @@ def test_report_with_successful_start_message_argument(reporter):
             0,
         )
     )
-    reporter.status_dict = reporter._init_job_status_dict(msg.timestamp, 0, [msg.job])
+    reporter.status_dict = reporter._init_step_status_dict(msg.timestamp, 0, [msg.step])
 
     reporter.report(msg)
 
@@ -72,7 +72,7 @@ def test_report_with_successful_start_message_argument(reporter):
 @pytest.mark.usefixtures("use_tmpdir")
 def test_report_with_failed_start_message_argument(reporter):
     msg = Start(ForwardModelStep({"name": "fmstep1"}, 0)).with_error("massive_failure")
-    reporter.status_dict = reporter._init_job_status_dict(msg.timestamp, 0, [msg.job])
+    reporter.status_dict = reporter._init_step_status_dict(msg.timestamp, 0, [msg.step])
 
     reporter.report(msg)
 
@@ -86,7 +86,7 @@ def test_report_with_failed_start_message_argument(reporter):
         assert '"error": "massive_failure"' in content, (
             "status.json missing error message"
         )
-    assert reporter.status_dict["jobs"][0]["end_time"] is not None, (
+    assert reporter.status_dict["steps"][0]["end_time"] is not None, (
         "end_time not set for fmstep1"
     )
 
@@ -94,7 +94,7 @@ def test_report_with_failed_start_message_argument(reporter):
 @pytest.mark.usefixtures("use_tmpdir")
 def test_report_with_successful_exit_message_argument(reporter):
     msg = Exited(ForwardModelStep({"name": "fmstep1"}, 0), 0)
-    reporter.status_dict = reporter._init_job_status_dict(msg.timestamp, 0, [msg.job])
+    reporter.status_dict = reporter._init_step_status_dict(msg.timestamp, 0, [msg.step])
 
     reporter.report(msg)
 
@@ -108,7 +108,7 @@ def test_report_with_failed_exit_message_argument(reporter):
     msg = Exited(ForwardModelStep({"name": "fmstep1"}, 0), 1).with_error(
         "massive_failure"
     )
-    reporter.status_dict = reporter._init_job_status_dict(msg.timestamp, 0, [msg.job])
+    reporter.status_dict = reporter._init_step_status_dict(msg.timestamp, 0, [msg.step])
 
     reporter.report(msg)
 
@@ -129,7 +129,7 @@ def test_report_with_failed_exit_message_argument(reporter):
         assert '"error": "massive_failure"' in content, (
             "status.json missing error message"
         )
-    assert reporter.status_dict["jobs"][0]["end_time"] is not None
+    assert reporter.status_dict["steps"][0]["end_time"] is not None
 
 
 @pytest.mark.usefixtures("use_tmpdir")
@@ -138,7 +138,7 @@ def test_report_with_running_message_argument(reporter):
         ForwardModelStep({"name": "fmstep1"}, 0),
         ProcessTreeStatus(max_rss=100, rss=10, cpu_seconds=1.1),
     )
-    reporter.status_dict = reporter._init_job_status_dict(msg.timestamp, 0, [msg.job])
+    reporter.status_dict = reporter._init_step_status_dict(msg.timestamp, 0, [msg.step])
 
     reporter.report(msg)
 
@@ -157,7 +157,7 @@ def test_report_with_running_message_argument(reporter):
 @pytest.mark.usefixtures("use_tmpdir")
 def test_report_with_successful_finish_message_argument(reporter):
     msg = Finish()
-    reporter.status_dict = reporter._init_job_status_dict(msg.timestamp, 0, [])
+    reporter.status_dict = reporter._init_step_status_dict(msg.timestamp, 0, [])
 
     reporter.report(msg)
 

@@ -85,13 +85,13 @@ class ForwardModelStep:
     MEMORY_POLL_PERIOD = 5  # Seconds between memory polls
 
     def __init__(
-        self, job_data: ForwardModelStepJSON, index: int, sleep_interval: int = 1
+        self, step_data: ForwardModelStepJSON, index: int, sleep_interval: int = 1
     ) -> None:
         self.sleep_interval = sleep_interval
-        self.job_data = job_data
+        self.step_data = step_data
         self.index = index
-        self.std_err = job_data.get("stderr")
-        self.std_out = job_data.get("stdout")
+        self.std_err = step_data.get("stderr")
+        self.std_out = step_data.get("stdout")
 
     def run(self) -> Generator[Start | Exited | Running]:
         try:
@@ -99,10 +99,10 @@ class ForwardModelStep:
         except Exception as e:
             yield Exited(self, exit_code=1).with_error(str(e))
 
-    def create_start_message_and_check_job_files(self) -> Start:
+    def create_start_message_and_check_step_files(self) -> Start:
         start_message = Start(self)
 
-        errors = self._check_job_files()
+        errors = self._check_step_files()
         errors.extend(self._assert_arg_list())
 
         if errors:
@@ -110,10 +110,10 @@ class ForwardModelStep:
         return start_message
 
     def _build_arg_list(self) -> list[str]:
-        executable = self.job_data.get("executable")
+        executable = self.step_data.get("executable")
         # assert executable is not None
         combined_arg_list = [executable]
-        if arg_list := self.job_data.get("argList"):
+        if arg_list := self.step_data.get("argList"):
             combined_arg_list += arg_list
         return combined_arg_list
 
@@ -122,8 +122,8 @@ class ForwardModelStep:
     ) -> tuple[
         io.TextIOWrapper | None, io.TextIOWrapper | None, io.TextIOWrapper | None
     ]:
-        if self.job_data.get("stdin"):
-            stdin = open(cast(Path, self.job_data.get("stdin")), encoding="utf-8")  # noqa
+        if self.step_data.get("stdin"):
+            stdin = open(cast(Path, self.step_data.get("stdin")), encoding="utf-8")  # noqa
         else:
             stdin = None
 
@@ -149,12 +149,12 @@ class ForwardModelStep:
 
     def _create_environment(self) -> dict[str, str] | None:
         combined_environment = None
-        if environment := self.job_data.get("environment"):
+        if environment := self.step_data.get("environment"):
             combined_environment = {**os.environ, **environment}
         return combined_environment
 
     def _run(self) -> Generator[Start | Exited | Running]:
-        start_message = self.create_start_message_and_check_job_files()
+        start_message = self.create_start_message_and_check_step_files()
 
         yield start_message
         if not start_message.success():
@@ -165,7 +165,7 @@ class ForwardModelStep:
         (stdin, stdout, stderr) = self._open_file_handles()
         # stdin/stdout/stderr are closed at the end of this function
 
-        target_file = self.job_data.get("target_file")
+        target_file = self.step_data.get("target_file")
         target_file_mtime: int | None = _get_target_file_ntime(target_file)
         run_start_time = dt.now()
         try:
@@ -217,7 +217,7 @@ class ForwardModelStep:
                     rss=memory_rss,
                     max_rss=max_memory_usage,
                     fm_step_id=self.index,
-                    fm_step_name=self.job_data.get("name"),
+                    fm_step_name=self.step_data.get("name"),
                     cpu_seconds=cpu_seconds_processtree.total_cpu_seconds(),
                     oom_score=oom_score,
                 ),
@@ -242,11 +242,11 @@ class ForwardModelStep:
             return exited_message
 
         exited_message = Exited(self, exit_code)
-        if self.job_data.get("error_file") and os.path.exists(
-            self.job_data["error_file"]
+        if self.step_data.get("error_file") and os.path.exists(
+            self.step_data["error_file"]
         ):
             return exited_message.with_error(
-                f"Found the error file:{self.job_data['error_file']} - job failed."
+                f"Found the error file:{self.step_data['error_file']} - step failed."
             )
 
         if target_file_mtime:
@@ -268,7 +268,7 @@ class ForwardModelStep:
 
         if killed_by_oom(fm_step_pids):
             return exited_message.with_error(
-                f"Forward model step {self.job_data.get('name')} "
+                f"Forward model step {self.step_data.get('name')} "
                 f"was killed due to out-of-memory on {socket.gethostname()}. "
                 "Max memory usage recorded by Ert for the "
                 f"realization was {max_memory_usage // 1024 // 1024} MB. "
@@ -282,7 +282,7 @@ class ForwardModelStep:
     def handle_process_timeout_and_create_exited_msg(
         self, exit_code: int | None, proc: Popen[Process], run_start_time: dt
     ) -> Exited | None:
-        max_running_minutes = self.job_data.get("max_running_minutes")
+        max_running_minutes = self.step_data.get("max_running_minutes")
 
         run_time = dt.now() - run_start_time
         if max_running_minutes is None or run_time.seconds < max_running_minutes * 60:
@@ -300,7 +300,7 @@ class ForwardModelStep:
             os.killpg(process_group_id, signal.SIGKILL)
 
         return Exited(self, exit_code).with_error(
-            f"Job:{self.name()} has been running "
+            f"Step:{self.name()} has been running "
             f"for more than {max_running_minutes} "
             "minutes - explicitly killed."
         )
@@ -320,28 +320,28 @@ class ForwardModelStep:
         return Exited(self, e.errno).with_error(msg)
 
     def name(self) -> str:
-        return self.job_data["name"]
+        return self.step_data["name"]
 
-    def _check_job_files(self) -> list[str]:
+    def _check_step_files(self) -> list[str]:
         """
         Returns the empty list if no failed checks, or a list of errors in case
         of failed checks.
         """
         errors = []
-        if self.job_data.get("stdin") and not os.path.exists(self.job_data["stdin"]):
-            errors.append(f"Could not locate stdin file: {self.job_data['stdin']}")
+        if self.step_data.get("stdin") and not os.path.exists(self.step_data["stdin"]):
+            errors.append(f"Could not locate stdin file: {self.step_data['stdin']}")
 
-        if self.job_data.get("start_file") and not os.path.exists(
-            cast(Path, self.job_data["start_file"])
+        if self.step_data.get("start_file") and not os.path.exists(
+            cast(Path, self.step_data["start_file"])
         ):
-            errors.append(f"Could not locate start_file:{self.job_data['start_file']}")
+            errors.append(f"Could not locate start_file:{self.step_data['start_file']}")
 
-        if self.job_data.get("error_file") and os.path.exists(
-            cast(Path, self.job_data.get("error_file"))
+        if self.step_data.get("error_file") and os.path.exists(
+            cast(Path, self.step_data.get("error_file"))
         ):
-            os.unlink(cast(Path, self.job_data.get("error_file")))
+            os.unlink(cast(Path, self.step_data.get("error_file")))
 
-        if executable_error := check_executable(self.job_data.get("executable")):
+        if executable_error := check_executable(self.step_data.get("executable")):
             errors.append(executable_error)
 
         return errors
@@ -354,10 +354,10 @@ class ForwardModelStep:
         case of success, an error message in the case of failure.
         """
         # no target file is expected at all, indicate success
-        if "target_file" not in self.job_data:
+        if "target_file" not in self.step_data:
             return None
 
-        target_file = self.job_data["target_file"]
+        target_file = self.step_data["target_file"]
 
         start_time = time.time()
         while True:
@@ -383,15 +383,15 @@ class ForwardModelStep:
 
     def _assert_arg_list(self):
         errors = []
-        if "arg_types" in self.job_data:
-            arg_types = self.job_data["arg_types"]
-            arg_list = self.job_data.get("argList")
+        if "arg_types" in self.step_data:
+            arg_types = self.step_data["arg_types"]
+            arg_list = self.step_data.get("argList")
             for index, arg_type in enumerate(arg_types):
                 if arg_type == "RUNTIME_FILE":
                     file_path = os.path.join(os.getcwd(), arg_list[index])
                     if not os.path.isfile(file_path):
                         errors.append(
-                            f"In job {self.name()}: RUNTIME_FILE {arg_list[index]} "
+                            f"In step {self.name()}: RUNTIME_FILE {arg_list[index]} "
                             "does not exist."
                         )
                 if arg_type == "RUNTIME_INT":
@@ -399,7 +399,7 @@ class ForwardModelStep:
                         int(arg_list[index])
                     except ValueError:
                         errors.append(
-                            f"In job {self.name()}: argument with index {index} "
+                            f"In step {self.name()}: argument with index {index} "
                             "is of incorrect type, should be integer."
                         )
         return errors

@@ -22,14 +22,14 @@ class StateMachine:
     def __init__(self) -> None:
         logger.debug("Initializing state machines")
         initialized = (Init,)
-        jobs = (Start, Running, Exited)
+        steps = (Start, Running, Exited)
         checksum = (Checksum,)
         finished = (Finish,)
         self._handler: dict[Message, Callable[[Message], None]] = {}
         self._transitions = {
             None: initialized,
-            initialized: jobs + checksum + finished,
-            jobs: jobs + checksum + finished,
+            initialized: steps + checksum + finished,
+            steps: steps + checksum + finished,
             checksum: checksum + finished,
         }
         self._state = None
