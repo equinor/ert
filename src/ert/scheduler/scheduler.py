@@ -14,7 +14,13 @@ from typing import TYPE_CHECKING, Any
 import orjson
 from pydantic.dataclasses import dataclass
 
-from _ert.events import Event, ForwardModelStepChecksum, Id, event_from_dict
+from _ert.events import (
+    Event,
+    ForwardModelStepChecksum,
+    Id,
+    RealizationStoppedLongRunning,
+    event_from_dict,
+)
 
 from .driver import Driver
 from .event import FinishedEvent, StartedEvent
@@ -142,11 +148,16 @@ class Scheduler:
                         > long_running_factor * self._average_job_runtime
                         and not task.done()
                     ):
-                        logger.info(
+                        logger.warning(
                             f"Stopping realization {iens} as its running duration "
                             f"{self._jobs[iens].running_duration}s is longer than "
                             f"the factor {long_running_factor} multiplied with the "
                             f"average runtime {self._average_job_runtime}s."
+                        )
+                        await self._events.put(
+                            RealizationStoppedLongRunning(
+                                real=str(iens), ensemble=self._ens_id
+                            )
                         )
                         task.cancel()
                         with suppress(asyncio.CancelledError):

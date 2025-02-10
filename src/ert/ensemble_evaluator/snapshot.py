@@ -28,6 +28,7 @@ from _ert.events import (
     RealizationPending,
     RealizationResubmit,
     RealizationRunning,
+    RealizationStoppedLongRunning,
     RealizationSuccess,
     RealizationTimeout,
     RealizationUnknown,
@@ -51,6 +52,7 @@ _FM_TYPE_EVENT_TO_STATUS = {
     RealizationSuccess: state.REALIZATION_STATE_FINISHED,
     RealizationUnknown: state.REALIZATION_STATE_UNKNOWN,
     RealizationTimeout: state.REALIZATION_STATE_FAILED,
+    RealizationStoppedLongRunning: state.REALIZATION_STATE_FAILED,
     RealizationResubmit: state.REALIZATION_STATE_WAITING,  # For consistency since realization will turn to waiting state when resubmitted
     ForwardModelStepStart: state.FORWARD_MODEL_STATE_START,
     ForwardModelStepRunning: state.FORWARD_MODEL_STATE_RUNNING,
@@ -285,6 +287,7 @@ class EnsembleSnapshot:
                 RealizationSuccess,
                 RealizationFailed,
                 RealizationTimeout,
+                RealizationStoppedLongRunning,
             }:
                 end_time = convert_iso8601_to_datetime(timestamp)
             if type(event) is RealizationFailed:
@@ -313,6 +316,24 @@ class EnsembleSnapshot:
                                 end_time=end_time,
                                 error="The run is cancelled due to "
                                 "reaching MAX_RUNTIME",
+                            )
+                        )
+            elif e_type is RealizationStoppedLongRunning:
+                for (
+                    fm_step_id,
+                    fm_step,
+                ) in source_snapshot.get_fm_steps_for_real(event.real).items():
+                    if fm_step.get(ids.STATUS) != state.FORWARD_MODEL_STATE_FINISHED:
+                        fm_idx = (event.real, fm_step_id)
+                        if fm_idx not in source_snapshot._fm_step_snapshots:
+                            self._fm_step_snapshots[fm_idx] = FMStepSnapshot()
+                        self._fm_step_snapshots[fm_idx].update(
+                            FMStepSnapshot(
+                                status=state.FORWARD_MODEL_STATE_FAILURE,
+                                end_time=end_time,
+                                error="The run is cancelled due to "
+                                "excessive runtime, 25% more than the average "
+                                "runtime (check keyword STOP_LONG_RUNNING)",
                             )
                         )
             elif e_type is RealizationResubmit:
