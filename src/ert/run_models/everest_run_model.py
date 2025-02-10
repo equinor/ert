@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import collections
 import datetime
 import functools
 import json
@@ -27,24 +26,16 @@ from typing_extensions import TypedDict
 
 from _ert.events import EESnapshot, EESnapshotUpdate, Event
 from ert.config import ExtParamConfig
-from ert.config.ensemble_config import EnsembleConfig
 from ert.config.ert_config import (
-    _substitutions_from_dict,
-    create_list_of_forward_model_steps_to_run,
-    installed_forward_model_steps_from_dict,
     read_templates,
-    uppercase_subkeys_and_stringify_subvalues,
     workflows_from_dict,
 )
-from ert.config.forward_model_step import ForwardModelStep
 from ert.config.model_config import ModelConfig
 from ert.config.queue_config import QueueConfig
 from ert.ensemble_evaluator import EnsembleSnapshot, EvaluatorServerConfig
-from ert.plugins.plugin_manager import ErtPluginManager
 from ert.runpaths import Runpaths
 from ert.storage import open_storage
 from everest.config import ControlConfig, ControlVariableGuessListConfig, EverestConfig
-from everest.config.control_variable_config import ControlVariableConfig
 from everest.config.utils import FlattenedControls
 from everest.everest_storage import EverestStorage, OptimalResult
 from everest.optimizer.everest2ropt import everest2ropt
@@ -55,6 +46,9 @@ from everest.optimizer.opt_model_transforms import (
 )
 from everest.simulator.everest_to_ert import (
     everest_to_ert_config_dict,
+    get_ensemble_config,
+    get_forward_model_steps,
+    get_substitutions,
 )
 from everest.strings import EVEREST, STORAGE_DIR
 
@@ -154,69 +148,24 @@ class EverestRunModel(BaseRunModel):
         config_file: Path = Path(everest_config.config_file)
 
         model_config = ModelConfig.from_dict(config_dict)
+
         queue_config = QueueConfig.from_dict(config_dict)
+        assert everest_config.simulator is not None
+        assert everest_config.simulator.queue_system is not None
+        queue_config.queue_options = everest_config.simulator.queue_system
+        queue_config.queue_system = everest_config.simulator.queue_system.name
 
-        ensemble_config = EnsembleConfig.from_dict(config_dict)
+        ensemble_config = get_ensemble_config(config_dict, everest_config)
 
-        def _get_variables(
-            variables: list[ControlVariableConfig]
-            | list[ControlVariableGuessListConfig],
-        ) -> list[str] | dict[str, list[str]]:
-            if (
-                isinstance(variables[0], ControlVariableConfig)
-                and getattr(variables[0], "index", None) is None
-            ):
-                return [var.name for var in variables]
-            result: collections.defaultdict[str, list] = collections.defaultdict(list)  # type: ignore
-            for variable in variables:
-                if isinstance(variable, ControlVariableGuessListConfig):
-                    result[variable.name].extend(
-                        str(index + 1) for index, _ in enumerate(variable.initial_guess)
-                    )
-                else:
-                    result[variable.name].append(str(variable.index))
-            return dict(result)
-
-        # This adds an EXT_PARAM key to the ert_config, which is not a true ERT
-        # configuration key. When initializing an ERT config object, it is ignored.
-        # It is used by the Simulator object to inject ExtParamConfig nodes.
-        for control in everest_config.controls or []:
-            ensemble_config.parameter_configs[control.name] = ExtParamConfig(
-                name=control.name,
-                input_keys=_get_variables(control.variables),
-                output_file=control.name + ".json",
-            )
-
-        substitutions = _substitutions_from_dict(config_dict)
-        substitutions["<RUNPATH_FILE>"] = str(runpath_file)
-        substitutions["<RUNPATH>"] = model_config.runpath_format_string
-        substitutions["<ECL_BASE>"] = model_config.eclbase_format_string
-        substitutions["<ECLBASE>"] = model_config.eclbase_format_string
-        substitutions["<NUM_CPU>"] = str(queue_config.preferred_num_cpu)
+        substitutions = get_substitutions(
+            config_dict, model_config, runpath_file, queue_config.preferred_num_cpu
+        )
 
         ert_templates = read_templates(config_dict)
         _, _, hooked_workflows = workflows_from_dict(config_dict, substitutions)  # type: ignore
 
-        installed_forward_model_steps: dict[str, ForwardModelStep] = {}
-        pm = ErtPluginManager()
-        for fm_step_subclass in pm.forward_model_steps:
-            fm_step = fm_step_subclass()  # type: ignore
-            installed_forward_model_steps[fm_step.name] = fm_step
-
-        installed_forward_model_steps.update(
-            installed_forward_model_steps_from_dict(config_dict)
-        )
-
-        env_pr_fm_step = uppercase_subkeys_and_stringify_subvalues(
-            pm.get_forward_model_configuration()
-        )
-
-        forward_model_steps = create_list_of_forward_model_steps_to_run(
-            installed_forward_model_steps,
-            substitutions,
-            config_dict,
-            installed_forward_model_steps,
-            env_pr_fm_step,
+        forward_model_steps, env_pr_fm_step = get_forward_model_steps(
+            config_dict, substitutions
         )
 
         env_vars = {}

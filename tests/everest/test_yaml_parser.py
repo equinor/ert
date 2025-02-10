@@ -5,8 +5,11 @@ from textwrap import dedent
 import pytest
 from ruamel.yaml import YAML
 
+from ert.config.parsing import ConfigKeys as ErtConfigKeys
 from everest.config import EverestConfig
-from everest.simulator.everest_to_ert import everest_to_ert_config
+from everest.simulator.everest_to_ert import (
+    everest_to_ert_config_dict,
+)
 from tests.everest.utils import MockParser, skipif_no_everest_models
 
 
@@ -17,13 +20,14 @@ def test_random_seed(tmp_path, monkeypatch, random_seed):
     if random_seed:
         config["environment"] = {"random_seed": random_seed}
     ever_config = EverestConfig.with_defaults(**config)
-    ert_config = everest_to_ert_config(ever_config)
+    dict = everest_to_ert_config_dict(ever_config)
+
     if random_seed is None:
         assert ever_config.environment.random_seed > 0
-        assert ert_config.random_seed > 0
+        assert dict[ErtConfigKeys.RANDOM_SEED] > 0
     else:
         assert ever_config.environment.random_seed == random_seed
-        assert ert_config.random_seed == random_seed
+        assert dict[ErtConfigKeys.RANDOM_SEED] == random_seed
 
 
 def test_read_file(tmp_path, monkeypatch):

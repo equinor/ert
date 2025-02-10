@@ -3,13 +3,30 @@ import itertools
 import json
 import logging
 import os
+from pathlib import Path
 
 import everest
 from ert.config import ErtConfig
+from ert.config.ensemble_config import EnsembleConfig
+from ert.config.ert_config import (
+    _substitutions_from_dict,
+    create_list_of_forward_model_steps_to_run,
+    installed_forward_model_steps_from_dict,
+    uppercase_subkeys_and_stringify_subvalues,
+)
+from ert.config.ext_param_config import ExtParamConfig
+from ert.config.forward_model_step import ForwardModelStep
+from ert.config.model_config import ModelConfig
 from ert.config.parsing import ConfigDict
 from ert.config.parsing import ConfigKeys as ErtConfigKeys
 from ert.plugins import ErtPluginContext
+from ert.plugins.plugin_manager import ErtPluginManager
+from ert.substitutions import Substitutions
 from everest.config import EverestConfig
+from everest.config.control_variable_config import (
+    ControlVariableConfig,
+    ControlVariableGuessListConfig,
+)
 from everest.config.install_data_config import InstallDataConfig
 from everest.config.install_job_config import InstallJobConfig
 from everest.config.simulator_config import SimulatorConfig
@@ -454,6 +471,82 @@ def _extract_results(ever_config: EverestConfig, ert_config):
     ert_config[ErtConfigKeys.GEN_DATA] = gen_data
 
 
+def get_substitutions(
+    config_dict: ConfigDict, model_config: ModelConfig, runpath_file: Path, num_cpu: int
+) -> Substitutions:
+    substitutions = _substitutions_from_dict(config_dict)
+    substitutions["<RUNPATH_FILE>"] = str(runpath_file)
+    substitutions["<RUNPATH>"] = model_config.runpath_format_string
+    substitutions["<ECL_BASE>"] = model_config.eclbase_format_string
+    substitutions["<ECLBASE>"] = model_config.eclbase_format_string
+    substitutions["<NUM_CPU>"] = str(num_cpu)
+    return substitutions
+
+
+def get_forward_model_steps(
+    config_dict: ConfigDict, substitutions: Substitutions
+) -> tuple[list[ForwardModelStep], dict]:
+    installed_forward_model_steps: dict[str, ForwardModelStep] = {}
+    pm = ErtPluginManager()
+    for fm_step_subclass in pm.forward_model_steps:
+        fm_step = fm_step_subclass()  # type: ignore
+        installed_forward_model_steps[fm_step.name] = fm_step
+
+    installed_forward_model_steps.update(
+        installed_forward_model_steps_from_dict(config_dict)
+    )
+
+    env_pr_fm_step = uppercase_subkeys_and_stringify_subvalues(
+        pm.get_forward_model_configuration()
+    )
+
+    forward_model_steps = create_list_of_forward_model_steps_to_run(
+        installed_forward_model_steps,
+        substitutions,
+        config_dict,
+        installed_forward_model_steps,
+        env_pr_fm_step,
+    )
+
+    return forward_model_steps, env_pr_fm_step
+
+
+def get_ensemble_config(
+    config_dict: ConfigDict, everest_config: EverestConfig
+) -> EnsembleConfig:
+    ensemble_config = EnsembleConfig.from_dict(config_dict)
+
+    def _get_variables(
+        variables: list[ControlVariableConfig] | list[ControlVariableGuessListConfig],
+    ) -> list[str] | dict[str, list[str]]:
+        if (
+            isinstance(variables[0], ControlVariableConfig)
+            and getattr(variables[0], "index", None) is None
+        ):
+            return [var.name for var in variables]
+        result: collections.defaultdict[str, list] = collections.defaultdict(list)  # type: ignore
+        for variable in variables:
+            if isinstance(variable, ControlVariableGuessListConfig):
+                result[variable.name].extend(
+                    str(index + 1) for index, _ in enumerate(variable.initial_guess)
+                )
+            else:
+                result[variable.name].append(str(variable.index))
+        return dict(result)
+
+    # This adds an EXT_PARAM key to the ert_config, which is not a true ERT
+    # configuration key. When initializing an ERT config object, it is ignored.
+    # It is used by the Simulator object to inject ExtParamConfig nodes.
+    for control in everest_config.controls or []:
+        ensemble_config.parameter_configs[control.name] = ExtParamConfig(
+            name=control.name,
+            input_keys=_get_variables(control.variables),
+            output_file=control.name + ".json",
+        )
+
+    return ensemble_config
+
+
 def _everest_to_ert_config_dict(
     ever_config: EverestConfig, site_config=None
 ) -> ConfigDict:
@@ -486,15 +579,3 @@ def everest_to_ert_config_dict(everest_config: EverestConfig) -> ConfigDict:
             everest_config, site_config=ErtConfig.read_site_config()
         )
     return config_dict
-
-
-def everest_to_ert_config(ever_config: EverestConfig) -> ErtConfig:
-    with ErtPluginContext():
-        config_dict = _everest_to_ert_config_dict(
-            ever_config, site_config=ErtConfig.read_site_config()
-        )
-        ert_config = ErtConfig.with_plugins().from_dict(config_dict=config_dict)
-    ert_config.queue_config.queue_options = ever_config.simulator.queue_system
-    ert_config.queue_config.queue_system = ever_config.simulator.queue_system.name
-
-    return ert_config
