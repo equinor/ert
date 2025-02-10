@@ -23,6 +23,7 @@ class Id:
     REALIZATION_UNKNOWN_TYPE = Literal["realization.unknown"]
     REALIZATION_WAITING_TYPE = Literal["realization.waiting"]
     REALIZATION_TIMEOUT_TYPE = Literal["realization.timeout"]
+    REALIZATION_STOPPED_LONG_RUNNING_TYPE = Literal["realization.stoppedlongrunning"]
     REALIZATION_FAILURE: Final = "realization.failure"
     REALIZATION_PENDING: Final = "realization.pending"
     REALIZATION_RUNNING: Final = "realization.running"
@@ -30,6 +31,7 @@ class Id:
     REALIZATION_UNKNOWN: Final = "realization.unknown"
     REALIZATION_WAITING: Final = "realization.waiting"
     REALIZATION_TIMEOUT: Final = "realization.timeout"
+    REALIZATION_STOPPED_LONG_RUNNING: Final = "realization.stoppedlongrunning"
 
     ENSEMBLE_STARTED_TYPE = Literal["ensemble.started"]
     ENSEMBLE_SUCCEEDED_TYPE = Literal["ensemble.succeeded"]
@@ -136,6 +138,12 @@ class RealizationTimeout(RealizationBaseEvent):
     event_type: Id.REALIZATION_TIMEOUT_TYPE = Id.REALIZATION_TIMEOUT
 
 
+class RealizationStoppedLongRunning(RealizationBaseEvent):
+    event_type: Id.REALIZATION_STOPPED_LONG_RUNNING_TYPE = (
+        Id.REALIZATION_STOPPED_LONG_RUNNING
+    )
+
+
 class EnsembleBaseEvent(BaseEvent):
     ensemble: str | None = None
 
@@ -194,6 +202,7 @@ RealizationEvent = (
     | RealizationSuccess
     | RealizationFailed
     | RealizationTimeout
+    | RealizationStoppedLongRunning
     | RealizationUnknown
     | RealizationWaiting
 )
