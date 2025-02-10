@@ -347,7 +347,7 @@ def log_info_from_exit_file(exit_file_path: Path) -> None:
         )
         return
     filecontents: list[str] = []
-    for element in ["job", "reason", "stderr_file", "stderr"]:
+    for element in ["step", "reason", "stderr_file", "stderr"]:
         filecontents.append(str(exit_file.findtext(element)))
     logger.error(
         "job {} failed with: '{}'\n\tstderr file: '{}',\n\tits contents:{}".format(
