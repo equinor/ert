@@ -9,7 +9,12 @@ from pathlib import Path
 
 import pytest
 
-from _ert.events import Id, RealizationFailed, RealizationTimeout
+from _ert.events import (
+    Id,
+    RealizationFailed,
+    RealizationStoppedLongRunning,
+    RealizationTimeout,
+)
 from ert.config import QueueConfig, QueueSystem
 from ert.ensemble_evaluator import Realization
 from ert.load_status import LoadResult, LoadStatus
@@ -445,7 +450,9 @@ async def test_that_failed_realization_will_not_be_cancelled(
 
 
 @pytest.mark.timeout(6)
-async def test_that_long_running_jobs_were_stopped(storage, tmp_path, mock_driver):
+async def test_that_long_running_jobs_were_stopped(
+    storage, tmp_path, mock_driver, caplog
+):
     killed_iens = []
 
     async def kill(iens):
@@ -475,7 +482,24 @@ async def test_that_long_running_jobs_were_stopped(storage, tmp_path, mock_drive
     )
 
     assert await sch.execute(min_required_realizations=5) == Id.ENSEMBLE_SUCCEEDED
+
+    stop_long_running_events_found = 0
+    while not sch._events.empty():
+        event = await sch._events.get()
+        if type(event) is RealizationStoppedLongRunning:
+            stop_long_running_events_found += 1
+    assert stop_long_running_events_found == 4
+
     assert killed_iens == [6, 7, 8, 9]
+
+    assert "Stopping realization 6 as its running duration" in caplog.text
+    assert "Stopping realization 7 as its running duration" in caplog.text
+    assert "Stopping realization 8 as its running duration" in caplog.text
+    assert "Stopping realization 9 as its running duration" in caplog.text
+    assert (
+        "is longer than the factor 1.25 multiplied with the average runtime"
+        in caplog.text
+    )
 
 
 @pytest.mark.integration_test
