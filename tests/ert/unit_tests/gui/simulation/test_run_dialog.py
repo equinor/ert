@@ -73,6 +73,7 @@ def run_dialog(qtbot: QtBot, run_model, event_queue, notifier):
     yield run_dialog
 
 
+@pytest.mark.integration_test
 def test_terminating_experiment_shows_a_confirmation_dialog(qtbot: QtBot, run_dialog):
     run_dialog.run_experiment()
 
