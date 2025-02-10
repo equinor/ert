@@ -122,7 +122,7 @@ def extract_errors_from_file(path: str):
     return re.findall(r"(Error \w+.*)", content)
 
 
-def wait_for_server(output_dir: str, timeout: int) -> None:
+def wait_for_server(output_dir: str, timeout: int | float) -> None:
     """
     Checks everest server has started _HTTP_REQUEST_RETRY times. Waits
     progressively longer between each check.

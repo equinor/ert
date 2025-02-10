@@ -149,7 +149,7 @@ def test_wait_for_server(server_is_running_mock, caplog):
     with pytest.raises(
         RuntimeError, match=r"Failed to get reply from server .* timeout"
     ):
-        wait_for_server(config.output_dir, timeout=1)
+        wait_for_server(config.output_dir, timeout=0.01)
 
     assert not caplog.messages
 
