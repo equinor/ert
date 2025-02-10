@@ -355,7 +355,7 @@ async def test_when_no_checksum_info_is_received_a_warning_is_logged(
 @pytest.mark.usefixtures("use_tmpdir")
 async def test_log_info_from_exit_file(caplog):
     exit_contents = {
-        "job": "foojob",
+        "step": "foojob",
         "reason": "Divizion-by-sero",
         "stderr_file": "somefilename",
         "stderr": "some_error",

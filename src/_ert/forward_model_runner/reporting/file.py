@@ -174,7 +174,7 @@ class File(Reporter):
             file.write(
                 f"  <time>{time.strftime(TIME_FORMAT, time.localtime())}</time>\n"
             )
-            file.write(f"  <job>{fm_step.name()}</job>\n")
+            file.write(f"  <step>{fm_step.name()}</step>\n")
             file.write(f"  <reason>{error_msg}</reason>\n")
             stderr_file = None
             if fm_step.std_err:

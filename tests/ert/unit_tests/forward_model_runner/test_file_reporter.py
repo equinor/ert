@@ -116,7 +116,7 @@ def test_report_with_failed_exit_message_argument(reporter):
         assert "EXIT: 1/massive_failure" in f.readline()
     with open(ERROR_file, encoding="utf-8") as f:
         content = "".join(f.readlines())
-        assert "<job>fmstep1</job>" in content, "ERROR file missing fmstep"
+        assert "<step>fmstep1</step>" in content, "ERROR file missing fmstep"
         assert "<reason>massive_failure</reason>" in content, (
             "ERROR file missing reason"
         )
