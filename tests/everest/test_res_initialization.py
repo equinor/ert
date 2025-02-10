@@ -2,23 +2,33 @@ import itertools
 import os
 from pathlib import Path
 from textwrap import dedent
+from unittest.mock import MagicMock
 
 import pytest
 import yaml
 from ruamel.yaml import YAML
 
 import everest
+from ert.config.ensemble_config import EnsembleConfig
+from ert.config.ert_config import (
+    installed_forward_model_steps_from_dict,
+    workflows_from_dict,
+)
+from ert.config.model_config import ModelConfig
 from ert.config.parsing import ConfigKeys as ErtConfigKeys
 from ert.config.queue_config import (
     LocalQueueOptions,
     LsfQueueOptions,
+    QueueConfig,
     SlurmQueueOptions,
     TorqueQueueOptions,
 )
 from everest.config import EverestConfig, EverestValidationError
 from everest.simulator.everest_to_ert import (
     _everest_to_ert_config_dict,
-    everest_to_ert_config,
+    everest_to_ert_config_dict,
+    get_forward_model_steps,
+    get_substitutions,
 )
 from tests.everest.utils import (
     hide_opm,
@@ -96,8 +106,13 @@ def test_everest_to_ert_queue_config(config, config_class, tmp_path, monkeypatch
         simulator={"queue_system": config} | general_options,
         model={"realizations": [0]},
     )
-    ert_config = everest_to_ert_config(ever_config)
-    assert ert_config.queue_config.queue_options == config_class(**config)
+
+    config_dict = everest_to_ert_config_dict(ever_config)
+    queue_config = QueueConfig.from_dict(config_dict)
+    queue_config.queue_options = ever_config.simulator.queue_system
+    queue_config.queue_system = ever_config.simulator.queue_system.name
+
+    assert queue_config.queue_options == config_class(**config)
 
 
 def test_default_installed_jobs(tmp_path, monkeypatch):
@@ -117,7 +132,7 @@ def test_default_installed_jobs(tmp_path, monkeypatch):
         "move_file",
         "symlink",
     ]
-    ever_config_dict = EverestConfig.with_defaults(
+    ever_config = EverestConfig.with_defaults(
         **yaml.safe_load(
             dedent(f"""
     model: {{"realizations": [0]}}
@@ -125,15 +140,24 @@ def test_default_installed_jobs(tmp_path, monkeypatch):
     """)
         )
     )
-    config = everest_to_ert_config(ever_config_dict)
+
+    config_dict = everest_to_ert_config_dict(ever_config)
+    substitutions = get_substitutions(
+        config_dict=config_dict,
+        model_config=ModelConfig(),
+        runpath_file=MagicMock(),
+        num_cpu=0,
+    )
+    forward_model_steps, _ = get_forward_model_steps(config_dict, substitutions)
+
     # Index 0 is the copy job for wells.json
-    assert [c.name for c in config.forward_model_steps[1:]] == jobs
+    assert [c.name for c in forward_model_steps[1:]] == jobs
 
 
 def test_combined_wells_everest_to_ert(tmp_path, monkeypatch):
     monkeypatch.chdir(tmp_path)
     Path("my_file").touch()
-    ever_config_dict = EverestConfig.with_defaults(
+    ever_config = EverestConfig.with_defaults(
         **yaml.safe_load(
             dedent("""
     model: {"realizations": [0], data_file: my_file}
@@ -142,8 +166,10 @@ def test_combined_wells_everest_to_ert(tmp_path, monkeypatch):
     """)
         )
     )
-    config = everest_to_ert_config(ever_config_dict)
-    assert "WOPR:fakename" in config.ensemble_config.response_configs["summary"].keys
+    config_dict = everest_to_ert_config_dict(ever_config)
+    ensemble_config = EnsembleConfig.from_dict(config_dict)
+
+    assert "WOPR:fakename" in ensemble_config.response_configs["summary"].keys
 
 
 @pytest.mark.parametrize(
@@ -170,8 +196,16 @@ def test_install_data_no_init(tmp_path, source, target, symlink, cmd, monkeypatc
     errors = EverestConfig.lint_config_dict(ever_config.to_dict())
     assert len(errors) == 0
 
-    ert_config = everest_to_ert_config(ever_config)
-    expected_fm = next(val for val in ert_config.forward_model_steps if val.name == cmd)
+    config_dict = everest_to_ert_config_dict(ever_config)
+    substitutions = get_substitutions(
+        config_dict=config_dict,
+        model_config=ModelConfig(),
+        runpath_file=MagicMock(),
+        num_cpu=0,
+    )
+    forward_model_steps, _ = get_forward_model_steps(config_dict, substitutions)
+
+    expected_fm = next(val for val in forward_model_steps if val.name == cmd)
     assert expected_fm.arglist == [f"./{source}", target]
 
 
@@ -296,8 +330,16 @@ def test_workflow_job(tmp_path, monkeypatch):
     ever_config = EverestConfig.with_defaults(
         install_workflow_jobs=workflow_jobs, model={"realizations": [0]}
     )
-    ert_config = everest_to_ert_config(ever_config)
-    jobs = ert_config.workflow_jobs.get("test")
+    config_dict = everest_to_ert_config_dict(ever_config)
+    substitutions = get_substitutions(
+        config_dict=config_dict,
+        model_config=ModelConfig(),
+        runpath_file=MagicMock(),
+        num_cpu=0,
+    )
+    workflow_jobs, _, _ = workflows_from_dict(config_dict, substitutions)
+
+    jobs = workflow_jobs.get("test")
     assert jobs.executable == "echo"
 
 
@@ -311,8 +353,16 @@ def test_workflows(tmp_path, monkeypatch):
         model={"realizations": [0]},
         install_workflow_jobs=workflow_jobs,
     )
-    ert_config = everest_to_ert_config(ever_config)
-    jobs = ert_config.workflows.get("pre_simulation")
+    config_dict = everest_to_ert_config_dict(ever_config)
+    substitutions = get_substitutions(
+        config_dict=config_dict,
+        model_config=ModelConfig(),
+        runpath_file=MagicMock(),
+        num_cpu=0,
+    )
+    _, workflows, _ = workflows_from_dict(config_dict, substitutions)
+
+    jobs = workflows.get("pre_simulation")
     assert jobs.cmd_list[0][0].name == "my_test"
     assert jobs.cmd_list[0][0].executable == "echo"
 
@@ -320,18 +370,22 @@ def test_workflows(tmp_path, monkeypatch):
 def test_user_config_jobs_precedence(tmp_path, monkeypatch):
     monkeypatch.chdir(tmp_path)
     existing_job = "recovery_factor"
-    ert_config = everest_to_ert_config(
+    config_dict = everest_to_ert_config_dict(
         EverestConfig.with_defaults(model={"realizations": [0]})
     )
-    assert existing_job in ert_config.installed_forward_model_steps
+    installed_forward_model_steps = installed_forward_model_steps_from_dict(config_dict)
+
+    assert existing_job in installed_forward_model_steps
+
     Path("my_custom").write_text("EXECUTABLE echo", encoding="utf-8")
-    ever_config = EverestConfig.with_defaults(
-        model={"realizations": [0]},
-        install_jobs=[{"name": existing_job, "source": "my_custom"}],
+    config_dict_new = everest_to_ert_config_dict(
+        EverestConfig.with_defaults(
+            model={"realizations": [0]},
+            install_jobs=[{"name": existing_job, "source": "my_custom"}],
+        )
     )
-    assert (
-        everest_to_ert_config(ever_config)
-        .installed_forward_model_steps.get(existing_job)
-        .executable
-        == "echo"
+    installed_forward_model_steps_new = installed_forward_model_steps_from_dict(
+        config_dict_new
     )
+
+    assert installed_forward_model_steps_new.get(existing_job).executable == "echo"

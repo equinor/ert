@@ -9,6 +9,7 @@ import signal
 import threading
 from functools import partial
 
+from ert.config.ert_config import ErtConfig
 from everest.config import EverestConfig, ServerConfig
 from everest.detached import (
     ServerStatus,
@@ -19,7 +20,9 @@ from everest.detached import (
     wait_for_server,
 )
 from everest.everest_storage import EverestStorage
-from everest.simulator.everest_to_ert import everest_to_ert_config
+from everest.simulator.everest_to_ert import (
+    everest_to_ert_config_dict,
+)
 from everest.strings import EVEREST
 from everest.util import (
     makedirs_if_needed,
@@ -115,7 +118,8 @@ async def run_everest(options):
 
         # Validate ert config
         try:
-            _ = everest_to_ert_config(options.config)
+            dict = everest_to_ert_config_dict(options.config)
+            ErtConfig.with_plugins().from_dict(dict)
         except ValueError as exc:
             raise SystemExit(f"Config validation error: {exc}") from exc
 

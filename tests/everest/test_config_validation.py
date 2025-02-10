@@ -12,11 +12,14 @@ import pytest
 from pydantic import ValidationError
 
 from ert.config import ConfigWarning
+from ert.config.ert_config import ErtConfig
 from ert.config.parsing import ConfigValidationError
 from everest.config import EverestConfig, ModelConfig, ObjectiveFunctionConfig
 from everest.config.control_variable_config import ControlVariableConfig
 from everest.config.sampler_config import SamplerConfig
-from everest.simulator.everest_to_ert import everest_to_ert_config
+from everest.simulator.everest_to_ert import (
+    everest_to_ert_config_dict,
+)
 from tests.everest.utils import skipif_no_everest_models
 
 
@@ -664,7 +667,8 @@ def test_that_non_existing_install_job_errors(install_keyword, change_to_tmpdir)
     )
 
     with pytest.raises(ConfigValidationError, match="No such file or directory:"):
-        everest_to_ert_config(config)
+        dict = everest_to_ert_config_dict(config)
+        ErtConfig.from_dict(dict)
 
 
 @pytest.mark.parametrize(
@@ -705,7 +709,8 @@ def test_that_existing_install_job_with_malformed_executable_errors(
     with pytest.raises(
         ConfigValidationError, match="EXECUTABLE must have at least 1 arguments"
     ):
-        everest_to_ert_config(config)
+        dict = everest_to_ert_config_dict(config)
+        ErtConfig.from_dict(dict)
 
 
 @pytest.mark.parametrize(
@@ -743,7 +748,8 @@ def test_that_existing_install_job_with_non_executable_executable_errors(
     )
 
     with pytest.raises(ConfigValidationError, match="File not executable"):
-        everest_to_ert_config(config)
+        dict = everest_to_ert_config_dict(config)
+        ErtConfig.from_dict(dict)
 
 
 @pytest.mark.parametrize(
@@ -777,7 +783,8 @@ def test_that_existing_install_job_with_non_existing_executable_errors(
     )
 
     with pytest.raises(ConfigValidationError, match="Could not find executable"):
-        everest_to_ert_config(config)
+        dict = everest_to_ert_config_dict(config)
+        ErtConfig.from_dict(dict)
 
 
 @pytest.mark.parametrize(
