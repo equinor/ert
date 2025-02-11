@@ -67,6 +67,7 @@ class EvaluateEnsemble(BaseRunModel):
             active_realizations=active_realizations,
             minimum_required_realizations=minimum_required_realizations,
             random_seed=random_seed,
+            log_path=config.analysis_config.log_path,
         )
 
     @tracer.start_as_current_span(f"{__name__}.run_experiment")

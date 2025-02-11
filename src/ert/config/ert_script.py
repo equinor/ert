@@ -13,6 +13,8 @@ from typing import TYPE_CHECKING, Any, TypeAlias
 
 from typing_extensions import deprecated
 
+from ert.config.workflow_fixtures import WorkflowFixtures
+
 if TYPE_CHECKING:
     from ert.config import ErtConfig
     from ert.storage import Ensemble, Storage
@@ -38,11 +40,6 @@ class ErtScript:
         self.__failed = False
         self._stdoutdata = ""
         self._stderrdata = ""
-
-        # Deprecated:
-        self._ert = None
-        self._ensemble = None
-        self._storage = None
 
     @abstractmethod
     def run(self, *arg: Any, **kwarg: Any) -> Any:
@@ -72,29 +69,29 @@ class ErtScript:
         return self._stderrdata
 
     @deprecated("Use fixtures to the run function instead")
-    def ert(self) -> ErtConfig | None:
+    def ert(self) -> None:
         logger.info(f"Accessing EnKFMain from workflow: {self.__class__.__name__}")
-        return self._ert
+        raise AttributeError("Attribute 'ert' is deprecated, use fixtures instead.")
 
     @property
-    def ensemble(self) -> Ensemble | None:
+    def ensemble(self) -> None:
         warnings.warn(
             "The ensemble property is deprecated, use the fixture to the run function instead",
             DeprecationWarning,
             stacklevel=1,
         )
         logger.info(f"Accessing ensemble from workflow: {self.__class__.__name__}")
-        return self._ensemble
+        raise AttributeError("Attribute 'ensemble' is deprecated, use fixture instead.")
 
     @property
-    def storage(self) -> Storage | None:
+    def storage(self) -> None:
         warnings.warn(
             "The storage property is deprecated, use the fixture to the run function instead",
             DeprecationWarning,
             stacklevel=1,
         )
         logger.info(f"Accessing storage from workflow: {self.__class__.__name__}")
-        return self._storage
+        raise AttributeError("Attribute 'storage' is deprecated, use fixture instead.")
 
     def isCancelled(self) -> bool:
         return self.__is_cancelled
@@ -114,7 +111,7 @@ class ErtScript:
         self,
         argument_types: list[type[Any]],
         argument_values: list[str],
-        fixtures: dict[str, Any] | None = None,
+        fixtures: WorkflowFixtures | None = None,
     ) -> Any:
         fixtures = {} if fixtures is None else fixtures
         arguments = []
@@ -139,10 +136,7 @@ class ErtScript:
                     logger.warning(
                         f"Mixture of fixtures and positional arguments, err: {e}"
                     )
-            # Part of deprecation
-            self._ert = fixtures.get("ert_config")
-            self._ensemble = fixtures.get("ensemble")
-            self._storage = fixtures.get("storage")
+
             return self.run(*arguments)
         except AttributeError as e:
             error_msg = str(e)
@@ -170,13 +164,13 @@ class ErtScript:
     def insert_fixtures(
         self,
         func_args: MappingProxyType[str, inspect.Parameter],
-        fixtures: dict[str, Fixtures],
+        fixtures: WorkflowFixtures,
     ) -> list[Any]:
         arguments = []
         errors = []
         for val in func_args:
             if val in fixtures:
-                arguments.append(fixtures[val])
+                arguments.append(fixtures.get(val))
             else:
                 errors.append(val)
         if errors:

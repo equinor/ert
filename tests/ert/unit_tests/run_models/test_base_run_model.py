@@ -38,6 +38,7 @@ def test_base_run_model_supports_restart(minimum_case):
         templates=MagicMock(),
         hooked_workflows=MagicMock(),
         active_realizations=[True],
+        log_path=Path(""),
     )
     assert brm.support_restart
 
@@ -68,6 +69,7 @@ def test_active_realizations(initials):
         templates=MagicMock(),
         hooked_workflows=MagicMock(),
         active_realizations=initials,
+        log_path=Path(""),
     )
     brm._initial_realizations_mask = initials
     assert brm.ensemble_size == len(initials)
@@ -101,6 +103,7 @@ def test_failed_realizations(initials, completed, any_failed, failures):
         templates=MagicMock(),
         hooked_workflows=MagicMock(),
         active_realizations=initials,
+        log_path=Path(""),
     )
     brm._initial_realizations_mask = initials
     brm._completed_realizations_mask = completed
@@ -147,6 +150,7 @@ def test_check_if_runpath_exists(
         active_realizations=active_realizations_mask,
         start_iteration=start_iteration,
         total_iterations=number_of_iterations,
+        log_path=Path(""),
     )
     assert brm.check_if_runpath_exists() == expected
 
@@ -181,6 +185,7 @@ def test_get_number_of_existing_runpaths(
         templates=MagicMock(),
         hooked_workflows=MagicMock(),
         active_realizations=active_realizations_mask,
+        log_path=Path(""),
     )
 
     assert brm.get_number_of_existing_runpaths() == expected_number
@@ -228,6 +233,7 @@ def test_delete_run_path(run_path_format, active_realizations):
         templates=MagicMock(),
         hooked_workflows=MagicMock(),
         active_realizations=active_realizations,
+        log_path=Path(""),
     )
 
     brm.rm_run_path()
@@ -256,6 +262,7 @@ def test_num_cpu_is_propagated_from_config_to_ensemble(run_args):
         templates=MagicMock(),
         hooked_workflows=MagicMock(),
         active_realizations=[True],
+        log_path=Path(""),
     )
 
     run_args = run_args(config, MagicMock())
@@ -311,6 +318,7 @@ def test_get_current_status(
         templates=MagicMock(),
         hooked_workflows=MagicMock(),
         active_realizations=initial_active_realizations,
+        log_path=Path(""),
     )
 
     snapshot_dict_reals = {}
@@ -398,6 +406,7 @@ def test_get_current_status_when_rerun(
         templates=MagicMock(),
         hooked_workflows=MagicMock(),
         active_realizations=initial_active_realizations,
+        log_path=Path(""),
     )
 
     brm.restart = True
@@ -432,6 +441,7 @@ def test_get_current_status_for_new_iteration_when_realization_failed_in_previou
         templates=MagicMock(),
         hooked_workflows=MagicMock(),
         active_realizations=initial_active_realizations,
+        log_path=Path(""),
     )
 
     snapshot_dict_reals = {
@@ -485,6 +495,7 @@ def test_get_number_of_active_realizations_varies_when_rerun_or_new_iteration(
         templates=MagicMock(),
         hooked_workflows=MagicMock(),
         active_realizations=initial_active_realizations,
+        log_path=Path(""),
     )
 
     brm.active_realizations = new_active_realizations

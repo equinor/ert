@@ -56,6 +56,7 @@ from ert.substitutions import Substitutions
 from ert.trace import tracer
 from ert.workflow_runner import WorkflowRunner
 
+from ..config.workflow_fixtures import WorkflowFixtures
 from ..run_arg import RunArg
 from .event import (
     AnalysisStatusEvent,
@@ -147,6 +148,7 @@ class BaseRunModel(ABC):
         templates: list[tuple[str, str]],
         hooked_workflows: defaultdict[HookRuntime, list[Workflow]],
         active_realizations: list[bool],
+        log_path: Path,
         total_iterations: int = 1,
         start_iteration: int = 0,
         random_seed: int | None = None,
@@ -177,6 +179,7 @@ class BaseRunModel(ABC):
         self._hooked_workflows: defaultdict[HookRuntime, list[Workflow]] = (
             hooked_workflows
         )
+        self._log_path = log_path
 
         self._env_vars: dict[str, str] = env_vars
         self._env_pr_fm_step: dict[str, dict[str, Any]] = env_pr_fm_step
@@ -210,13 +213,15 @@ class BaseRunModel(ABC):
             cancel=self.cancel,
         )
 
+    def reports_dir(self, experiment_name: str) -> str:
+        return str(self._log_path / experiment_name)
+
     def log_at_startup(self) -> None:
         keys_to_drop = [
             "_end_queue",
             "_queue_config",
             "_status_queue",
             "_storage",
-            "ert_config",
             "rng",
             "run_paths",
             "substitutions",
@@ -708,11 +713,10 @@ class BaseRunModel(ABC):
     def run_workflows(
         self,
         runtime: HookRuntime,
-        storage: Storage | None = None,
-        ensemble: Ensemble | None = None,
+        fixtures: WorkflowFixtures,
     ) -> None:
         for workflow in self._hooked_workflows[runtime]:
-            WorkflowRunner(workflow, storage, ensemble).run_blocking()
+            WorkflowRunner(workflow=workflow, fixtures=fixtures).run_blocking()
 
     def _evaluate_and_postprocess(
         self,
@@ -734,7 +738,18 @@ class BaseRunModel(ABC):
             context_env=self._context_env,
         )
 
-        self.run_workflows(HookRuntime.PRE_SIMULATION, self._storage, ensemble)
+        self.run_workflows(
+            HookRuntime.PRE_SIMULATION,
+            fixtures={
+                "storage": self._storage,
+                "ensemble": ensemble,
+                "reports_dir": self.reports_dir(
+                    experiment_name=ensemble.experiment.name
+                ),
+                "random_seed": self.random_seed,
+                "run_paths": self.run_paths,
+            },
+        )
         successful_realizations = self.run_ensemble_evaluator(
             run_args,
             ensemble,
@@ -760,7 +775,18 @@ class BaseRunModel(ABC):
             f"{self.ensemble_size - num_successful_realizations}"
         )
         logger.info(f"Experiment run finished in: {self.get_runtime()}s")
-        self.run_workflows(HookRuntime.POST_SIMULATION, self._storage, ensemble)
+        self.run_workflows(
+            HookRuntime.POST_SIMULATION,
+            fixtures={
+                "storage": self._storage,
+                "ensemble": ensemble,
+                "reports_dir": self.reports_dir(
+                    experiment_name=ensemble.experiment.name
+                ),
+                "random_seed": self.random_seed,
+                "run_paths": self.run_paths,
+            },
+        )
 
         return num_successful_realizations
 
@@ -787,6 +813,7 @@ class UpdateRunModel(BaseRunModel):
         start_iteration: int,
         random_seed: int | None,
         minimum_required_realizations: int,
+        log_path: Path,
     ):
         self._analysis_settings: ESSettings = analysis_settings
         self._update_settings: UpdateSettings = update_settings
@@ -809,6 +836,7 @@ class UpdateRunModel(BaseRunModel):
             start_iteration=start_iteration,
             random_seed=random_seed,
             minimum_required_realizations=minimum_required_realizations,
+            log_path=log_path,
         )
 
     def update(
@@ -825,6 +853,17 @@ class UpdateRunModel(BaseRunModel):
                 msg="Creating posterior ensemble..",
             )
         )
+
+        workflow_fixtures: WorkflowFixtures = {
+            "storage": self._storage,
+            "ensemble": prior,
+            "observation_settings": self._update_settings,
+            "es_settings": self._analysis_settings,
+            "random_seed": self.random_seed,
+            "reports_dir": self.reports_dir(experiment_name=prior.experiment.name),
+            "run_paths": self.run_paths,
+        }
+
         posterior = self._storage.create_ensemble(
             prior.experiment,
             ensemble_size=prior.ensemble_size,
@@ -833,8 +872,14 @@ class UpdateRunModel(BaseRunModel):
             prior_ensemble=prior,
         )
         if prior.iteration == 0:
-            self.run_workflows(HookRuntime.PRE_FIRST_UPDATE, self._storage, prior)
-        self.run_workflows(HookRuntime.PRE_UPDATE, self._storage, prior)
+            self.run_workflows(
+                HookRuntime.PRE_FIRST_UPDATE,
+                fixtures=workflow_fixtures,
+            )
+        self.run_workflows(
+            HookRuntime.PRE_UPDATE,
+            fixtures=workflow_fixtures,
+        )
         try:
             smoother_update(
                 prior,
@@ -856,5 +901,8 @@ class UpdateRunModel(BaseRunModel):
                 "Update algorithm failed for iteration:"
                 f"{posterior.iteration}. The following error occurred: {e}"
             ) from e
-        self.run_workflows(HookRuntime.POST_UPDATE, self._storage, prior)
+        self.run_workflows(
+            HookRuntime.POST_UPDATE,
+            fixtures=workflow_fixtures,
+        )
         return posterior
