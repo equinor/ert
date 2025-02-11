@@ -198,7 +198,7 @@ class Job:
         )
         assert self._scheduler._events is not None
         await self._scheduler._events.put(timeout_event)
-        logger.error(
+        logger.warning(
             f"Realization {self.iens} stopped due to MAX_RUNTIME={self.real.max_runtime} seconds"
         )
         self.returncode.cancel()
