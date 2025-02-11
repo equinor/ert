@@ -77,7 +77,7 @@ class TerminalFormatter(logging.Formatter):
         return ""
 
 
-def suppresse_logs(logs_to_suppress: list[str]) -> Callable[[logging.LogRecord], bool]:
+def suppress_logs(logs_to_suppress: list[str]) -> Callable[[logging.LogRecord], bool]:
     """Suppresses logs from loggers listed in logs_to_suppress"""
 
     def filter(record: logging.LogRecord) -> bool:
