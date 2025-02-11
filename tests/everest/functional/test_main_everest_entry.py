@@ -76,6 +76,7 @@ def test_everest_entry_run(cached_example):
     assert status["status"] == ServerStatus.completed
 
 
+@pytest.mark.xdist_group("math_func/config_minimal.yml")
 def test_everest_entry_monitor_no_run(cached_example):
     _, config_file, _ = cached_example("math_func/config_minimal.yml")
     with capture_streams():
@@ -89,6 +90,7 @@ def test_everest_entry_monitor_no_run(cached_example):
     assert status["status"] == ServerStatus.never_run
 
 
+@pytest.mark.xdist_group("math_func/config_minimal.yml")
 @pytest.mark.integration_test
 def test_everest_main_export_entry(cached_example):
     # Setup command line arguments
@@ -99,6 +101,7 @@ def test_everest_main_export_entry(cached_example):
     assert "Everexport is deprecated" in out.getvalue()
 
 
+@pytest.mark.xdist_group("math_func/config_minimal.yml")
 def test_everest_main_lint_entry(cached_example):
     # Setup command line arguments
     _, config_file, _ = cached_example("math_func/config_minimal.yml")

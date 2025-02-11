@@ -336,6 +336,7 @@ if __name__ == "__main__":
     assert final_state.returncode == 0
 
 
+@pytest.mark.xdist_group(name="math_func/config_multiobj.yml")
 def test_get_opt_status(cached_example):
     _, config_file, _ = cached_example("math_func/config_multiobj.yml")
     config = EverestConfig.load_file(config_file)
