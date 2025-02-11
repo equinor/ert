@@ -203,9 +203,9 @@ os.write(fd, b'{"authtoken": "test123", "urls": ["url"]}')
 os.close(fd)
 """
 )
-def test_singleton_connect(server_script):
+def test_singleton_connect(tmp_path, server_script):
     with _DummyService.start_server(exec_args=[str(server_script)]) as server:
-        client = _DummyService.connect(timeout=30)
+        client = _DummyService.connect(project=tmp_path, timeout=30)
         assert server is client
 
 
@@ -231,7 +231,7 @@ def test_singleton_connect_early(server_script, tmp_path):
         def run(self):
             start_event.set()
             try:
-                self.client = _DummyService.connect(timeout=30)
+                self.client = _DummyService.connect(project=tmp_path, timeout=30)
             except Exception as ex:
                 self.exception = ex
             ready_event.set()

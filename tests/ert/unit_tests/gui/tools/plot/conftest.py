@@ -32,7 +32,7 @@ class MockResponse:
 @pytest.fixture
 def api(tmpdir, source_root, monkeypatch):
     @contextmanager
-    def session():
+    def session(project: str):
         yield MagicMock(get=mocked_requests_get)
 
     monkeypatch.setattr(StorageService, "session", session)
@@ -42,7 +42,7 @@ def api(tmpdir, source_root, monkeypatch):
         test_data_dir = os.path.join(test_data_root, "snake_oil")
         shutil.copytree(test_data_dir, "test_data")
         os.chdir("test_data")
-        api = PlotApi()
+        api = PlotApi(test_data_dir)
         yield api
 
 

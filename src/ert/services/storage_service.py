@@ -14,6 +14,9 @@ from ert.trace import get_traceparent
 HTTPXClientInstrumentor().instrument()
 
 
+import os
+
+
 class StorageService(BaseService):
     service_name = "storage"
 
@@ -56,7 +59,7 @@ class StorageService(BaseService):
     @classmethod
     def init_service(cls, *args: Any, **kwargs: Any) -> _Context[StorageService]:
         try:
-            service = cls.connect(timeout=0, project=kwargs.get("project"))
+            service = cls.connect(timeout=0, project=kwargs.get("project", os.getcwd()))
             # Check the server is up and running
             _ = service.fetch_url()
         except TimeoutError:
@@ -87,11 +90,11 @@ class StorageService(BaseService):
         )
 
     @classmethod
-    def session(cls, timeout: int | None = None) -> Client:
+    def session(cls, project: os.PathLike[str], timeout: int | None = None) -> Client:
         """
         Start a HTTP transaction with the server
         """
-        inst = cls.connect(timeout=timeout)
+        inst = cls.connect(timeout=timeout, project=project)
         return Client(
             conn_info=ConnInfo(
                 base_url=inst.fetch_url(), auth_token=inst.fetch_auth()[1]

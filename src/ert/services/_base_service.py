@@ -266,7 +266,7 @@ class BaseService:
     def connect(
         cls,
         *,
-        project: os.PathLike[str] | None = None,
+        project: os.PathLike[str],
         timeout: int | None = None,
     ) -> Self:
         if cls._instance is not None:
@@ -274,9 +274,8 @@ class BaseService:
             assert isinstance(cls._instance, cls)
             return cls._instance
 
-        path = Path(project) if project is not None else Path.cwd()
+        path = Path(project)
         name = f"{cls.service_name}_server.json"
-
         # Note: If the caller actually pass None, we override that here...
         if timeout is None:
             timeout = 240
