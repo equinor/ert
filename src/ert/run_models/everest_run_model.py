@@ -152,6 +152,7 @@ class EverestRunModel(BaseRunModel):
             config.ert_templates,
             config.hooked_workflows,
             active_realizations=[],  # Set dynamically in run_forward_model()
+            log_path=Path(everest_config.optimization_output_dir),
         )
         self.support_restart = False
         self._parameter_configuration = config.ensemble_config.parameter_configuration

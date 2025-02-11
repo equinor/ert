@@ -18,6 +18,7 @@ from ert.trace import tracer
 
 from ..config.analysis_config import UpdateSettings
 from ..config.analysis_module import IESSettings
+from ..config.workflow_fixtures import WorkflowFixtures
 from ..run_arg import create_run_arguments
 from .base_run_model import BaseRunModel, ErtRunError, StatusEvents
 from .event import RunModelStatusEvent, RunModelUpdateBeginEvent
@@ -110,7 +111,19 @@ class IteratedEnsembleSmoother(BaseRunModel):
         iteration: int,
         initial_mask: npt.NDArray[np.bool_],
     ) -> None:
-        self.run_workflows(HookRuntime.PRE_UPDATE, self._storage, prior_storage)
+        workflow_fixtures: WorkflowFixtures = {
+            "storage": self._storage,
+            "ensemble": prior_storage,
+            "observation_settings": self._update_settings,
+            "es_settings": self._analysis_settings,
+            "random_seed": self.random_seed,
+            "reports_dir": self.reports_dir(
+                experiment_name=prior_storage.experiment.name
+            ),
+            "run_paths": self.run_paths,
+        }
+
+        self.run_workflows(HookRuntime.PRE_UPDATE, fixtures=workflow_fixtures)
         try:
             _, self.sies_smoother = iterative_smoother_update(
                 prior_storage,
@@ -131,7 +144,7 @@ class IteratedEnsembleSmoother(BaseRunModel):
             raise ErtRunError(
                 f"Update algorithm failed with the following error: {e}"
             ) from e
-        self.run_workflows(HookRuntime.POST_UPDATE, self._storage, posterior_storage)
+        self.run_workflows(HookRuntime.POST_UPDATE, fixtures=workflow_fixtures)
 
     @tracer.start_as_current_span(f"{__name__}.run_experiment")
     def run_experiment(
@@ -139,7 +152,9 @@ class IteratedEnsembleSmoother(BaseRunModel):
     ) -> None:
         self.log_at_startup()
         self.restart = restart
-        self.run_workflows(HookRuntime.PRE_EXPERIMENT)
+        self.run_workflows(
+            HookRuntime.PRE_EXPERIMENT, fixtures={"random_seed": self.random_seed}
+        )
         target_ensemble_format = self.target_ensemble_format
         experiment = self._storage.create_experiment(
             parameters=self._parameter_configuration,
@@ -174,7 +189,17 @@ class IteratedEnsembleSmoother(BaseRunModel):
             evaluator_server_config,
         )
 
-        self.run_workflows(HookRuntime.PRE_FIRST_UPDATE, self._storage, prior)
+        workflow_fixtures: WorkflowFixtures = {
+            "storage": self._storage,
+            "ensemble": prior,
+            "observation_settings": self._update_settings,
+            "es_settings": self._analysis_settings,
+            "random_seed": self.random_seed,
+            "reports_dir": self.reports_dir(experiment_name=prior.experiment.name),
+            "run_paths": self.run_paths,
+        }
+
+        self.run_workflows(HookRuntime.PRE_FIRST_UPDATE, fixtures=workflow_fixtures)
         for prior_iter in range(self._total_iterations):
             self.send_event(
                 RunModelUpdateBeginEvent(iteration=prior_iter, run_id=prior.id)
@@ -236,7 +261,14 @@ class IteratedEnsembleSmoother(BaseRunModel):
                 )
             prior = posterior
 
-        self.run_workflows(HookRuntime.POST_EXPERIMENT)
+        self.run_workflows(
+            HookRuntime.POST_EXPERIMENT,
+            fixtures={
+                "random_seed": self.random_seed,
+                "storage": self._storage,
+                "ensemble": prior,
+            },
+        )
 
     @classmethod
     def name(cls) -> str:
