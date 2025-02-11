@@ -9,6 +9,7 @@ from everest.bin.config_branch_script import (
 from everest.config_file_loader import load_yaml
 
 
+@pytest.mark.xdist_group("math_func/config_advanced.yml")
 def test_get_controls_for_batch(cached_example):
     path, _, _ = cached_example("math_func/config_advanced.yml")
 
@@ -42,6 +43,7 @@ def test_get_controls_for_batch(cached_example):
     )
 
 
+@pytest.mark.xdist_group("math_func/config_advanced.yml")
 def test_update_controls_initial_guess(cached_example):
     path, _, _ = cached_example("math_func/config_advanced.yml")
 

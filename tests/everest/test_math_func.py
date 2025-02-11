@@ -15,6 +15,7 @@ CONFIG_FILE_MULTIOBJ = "config_multiobj.yml"
 CONFIG_FILE_ADVANCED = "config_advanced.yml"
 
 
+@pytest.mark.xdist_group("math_func/config_multiobj.yml")
 @pytest.mark.integration_test
 def test_math_func_multiobj(cached_example):
     config_path, config_file, _ = cached_example("math_func/config_multiobj.yml")
@@ -36,6 +37,7 @@ def test_math_func_multiobj(cached_example):
     )
 
 
+@pytest.mark.xdist_group("math_func/config_advanced.yml")
 @pytest.mark.integration_test
 def test_math_func_advanced(cached_example):
     config_path, config_file, _ = cached_example("math_func/config_advanced.yml")
