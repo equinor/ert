@@ -1,9 +1,11 @@
+from __future__ import annotations
+
 import io
 import logging
 from dataclasses import dataclass
 from itertools import combinations as combi
 from json.decoder import JSONDecodeError
-from typing import Any, NamedTuple
+from typing import TYPE_CHECKING, Any, NamedTuple
 from urllib.parse import quote
 
 import httpx
@@ -15,6 +17,9 @@ from pandas.errors import ParserError
 from ert.services import StorageService
 
 logger = logging.getLogger(__name__)
+
+if TYPE_CHECKING:
+    from pathlib import Path
 
 
 @dataclass(frozen=True, eq=True)
@@ -35,7 +40,8 @@ class PlotApiKeyDefinition(NamedTuple):
 
 
 class PlotApi:
-    def __init__(self) -> None:
+    def __init__(self, ens_path: Path) -> None:
+        self.ens_path = ens_path
         self._all_ensembles: list[EnsembleObject] | None = None
         self._timeout = 120
 
@@ -54,7 +60,7 @@ class PlotApi:
             return self._all_ensembles
 
         self._all_ensembles = []
-        with StorageService.session() as client:
+        with StorageService.session(project=self.ens_path) as client:
             try:
                 response = client.get("/experiments", timeout=self._timeout)
                 self._check_response(response)
@@ -103,7 +109,7 @@ class PlotApi:
 
         all_keys: dict[str, PlotApiKeyDefinition] = {}
 
-        with StorageService.session() as client:
+        with StorageService.session(project=self.ens_path) as client:
             response = client.get("/experiments", timeout=self._timeout)
             self._check_response(response)
 
@@ -164,7 +170,7 @@ class PlotApi:
         if not ensemble:
             return pd.DataFrame()
 
-        with StorageService.session() as client:
+        with StorageService.session(project=self.ens_path) as client:
             response = client.get(
                 f"/ensembles/{ensemble.id}/records/{PlotApi.escape(key)}",
                 headers={"accept": "application/x-parquet"},
@@ -197,7 +203,7 @@ class PlotApi:
             if not ensemble:
                 continue
 
-            with StorageService.session() as client:
+            with StorageService.session(project=self.ens_path) as client:
                 response = client.get(
                     f"/ensembles/{ensemble.id}/records/{PlotApi.escape(key)}/observations",
                     timeout=self._timeout,
@@ -271,7 +277,7 @@ class PlotApi:
         if not ensemble:
             return np.array([])
 
-        with StorageService.session() as client:
+        with StorageService.session(project=self.ens_path) as client:
             response = client.get(
                 f"/ensembles/{ensemble.id}/records/{PlotApi.escape(key)}/std_dev",
                 params={"z": z},

@@ -3,6 +3,7 @@ from __future__ import annotations
 import datetime
 import functools
 import webbrowser
+from pathlib import Path
 
 from PyQt6.QtCore import QCoreApplication, QEvent, QSize, Qt
 from PyQt6.QtCore import pyqtSignal as Signal
@@ -148,7 +149,9 @@ class ErtMainWindow(QMainWindow):
     def right_clicked(self) -> None:
         actor = self.sender()
         if actor and actor.property("index") == "Create plot":
-            pw = PlotWindow(self.config_file, None)
+            pw = PlotWindow(
+                self.config_file, Path(self.ert_config.ens_path).absolute(), None
+            )
             pw.show()
             self._external_plot_windows.append(pw)
 
@@ -181,7 +184,9 @@ class ErtMainWindow(QMainWindow):
             if index_name == "Create plot":
                 if self._plot_window:
                     self._plot_window.close()
-                self._plot_window = PlotWindow(self.config_file, self)
+                self._plot_window = PlotWindow(
+                    self.config_file, Path(self.ert_config.ens_path).absolute(), self
+                )
                 self.central_layout.addWidget(self._plot_window)
                 self.central_panels_map["Create plot"] = self._plot_window
 
