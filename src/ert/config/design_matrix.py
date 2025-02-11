@@ -179,6 +179,12 @@ class DesignMatrix:
             skiprows=1,
         )
         design_matrix_df.columns = param_names.to_list()
+        # categorical_columns = design_matrix_df.select_dtypes(
+        #     include=["object"]
+        # ).columns.tolist()
+        # numerical_columns = design_matrix_df.select_dtypes(
+        #     include=["number"]
+        # ).columns.tolist()
 
         if "REAL" in design_matrix_df.columns:
             if not is_integer_dtype(design_matrix_df.dtypes["REAL"]) or any(
