@@ -29,7 +29,7 @@ class Exporter:
 
         export_job_runner = WorkflowJobRunner(self.export_job)
         user_warn = export_job_runner.run(
-            fixtures={"storage": self._notifier.storage, "ert_config": self.config},
+            fixtures={"storage": self._notifier.storage},
             arguments=parameters,
         )
         if export_job_runner.hasFailed():

@@ -65,6 +65,7 @@ class ManualUpdate(UpdateRunModel):
             start_iteration=prior.iteration,
             random_seed=random_seed,
             minimum_required_realizations=minimum_required_realizations,
+            log_path=config.analysis_config.log_path,
         )
         self.prior = prior
         self.target_ensemble_format = target_ensemble

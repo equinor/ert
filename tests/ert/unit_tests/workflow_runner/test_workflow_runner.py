@@ -149,7 +149,7 @@ def test_workflow_run():
     job, args = workflow[1]
     assert job.name == "DUMP"
 
-    WorkflowRunner(workflow).run_blocking()
+    WorkflowRunner(workflow, fixtures={}).run_blocking()
 
     with open("dump1", encoding="utf-8") as f:
         assert f.read() == "dump_text_1"
@@ -169,7 +169,7 @@ def test_workflow_thread_cancel_ert_script():
 
     assert len(workflow) == 3
 
-    workflow_runner = WorkflowRunner(workflow)
+    workflow_runner = WorkflowRunner(workflow, fixtures={})
 
     assert not workflow_runner.isRunning()
 
@@ -208,7 +208,7 @@ def test_workflow_thread_cancel_external():
 
     assert len(workflow) == 3
 
-    workflow_runner = WorkflowRunner(workflow)
+    workflow_runner = WorkflowRunner(workflow, fixtures={})
 
     assert not workflow_runner.isRunning()
 
@@ -237,7 +237,7 @@ def test_workflow_failed_job():
     workflow = Workflow.from_file("dump_workflow", Substitutions(), {"DUMP": dump_job})
     assert len(workflow) == 2
 
-    workflow_runner = WorkflowRunner(workflow)
+    workflow_runner = WorkflowRunner(workflow, fixtures={})
 
     assert not workflow_runner.isRunning()
     with (
@@ -272,7 +272,7 @@ def test_workflow_success():
 
     assert len(workflow) == 2
 
-    workflow_runner = WorkflowRunner(workflow)
+    workflow_runner = WorkflowRunner(workflow, fixtures={})
 
     assert not workflow_runner.isRunning()
     with workflow_runner:
@@ -306,7 +306,7 @@ def test_workflow_stops_with_stopping_job():
         job_dict={"DUMP": job_failing_dump},
     )
 
-    runner = WorkflowRunner(workflow)
+    runner = WorkflowRunner(workflow, fixtures={})
     with pytest.raises(RuntimeError, match="Workflow job dump_failing_job failed"):
         runner.run_blocking()
 
@@ -322,4 +322,4 @@ def test_workflow_stops_with_stopping_job():
     )
 
     # Expect no error raised
-    WorkflowRunner(workflow).run_blocking()
+    WorkflowRunner(workflow, fixtures={}).run_blocking()
