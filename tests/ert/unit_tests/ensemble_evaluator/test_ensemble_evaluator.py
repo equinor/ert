@@ -154,7 +154,6 @@ async def test_when_task_prematurely_ends_raises_exception(
         await evaluator.run_and_get_successful_realizations()
 
 
-@pytest.mark.integration_test
 async def test_new_connections_are_no_problem_when_evaluator_is_closing_down(
     evaluator_to_use,
 ):
@@ -269,8 +268,8 @@ async def test_restarted_jobs_do_not_have_error_msgs(evaluator_to_use):
                 break
 
 
-@pytest.mark.integration_test
 @pytest.mark.timeout(20)
+@pytest.mark.integration_test
 async def test_new_monitor_can_pick_up_where_we_left_off(evaluator_to_use):
     evaluator = evaluator_to_use
     token = evaluator._config.token
@@ -407,11 +406,11 @@ async def test_monitor_receive_heartbeats(evaluator_to_use):
         async with Monitor(url, token) as monitor:
             await asyncio.sleep(0.5)
             await monitor.signal_done()
-    # in 0.5 second we should receive at least 2 heartbeats
-    assert received_heartbeats > 1
+    assert received_heartbeats > 1, (
+        "we should have received at least 2 heartbeats in 0.5 secs!"
+    )
 
 
-@pytest.mark.integration_test
 async def test_dispatch_endpoint_clients_can_connect_and_monitor_can_shut_down_evaluator(
     evaluator_to_use,
 ):
