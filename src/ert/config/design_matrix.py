@@ -17,6 +17,8 @@ if TYPE_CHECKING:
     from ert.config import ParameterConfig
 
 DESIGN_MATRIX_GROUP = "DESIGN_MATRIX"
+DESIGN_MATRIX_NUMERICAL = "DESIGN_MATRIX_NUMERICAL"
+DESIGN_MATRIX_CATEGORICAL = "DESIGN_MATRIX_CATEGORICAL"
 
 
 @dataclass
@@ -157,7 +159,7 @@ class DesignMatrix:
 
     def read_design_matrix(
         self,
-    ) -> tuple[list[bool], pd.DataFrame, GenKwConfig]:
+    ) -> tuple[list[bool], pd.DataFrame, GenKwConfig | None, GenKwConfig | None]:
         # Read the parameter names (first row) as strings to prevent pandas from modifying them.
         # This ensures that duplicate or empty column names are preserved exactly as they appear in the Excel sheet.
         # By doing this, we can properly validate variable names, including detecting duplicates or missing names.
@@ -179,12 +181,6 @@ class DesignMatrix:
             skiprows=1,
         )
         design_matrix_df.columns = param_names.to_list()
-        # categorical_columns = design_matrix_df.select_dtypes(
-        #     include=["object"]
-        # ).columns.tolist()
-        # numerical_columns = design_matrix_df.select_dtypes(
-        #     include=["number"]
-        # ).columns.tolist()
 
         if "REAL" in design_matrix_df.columns:
             if not is_integer_dtype(design_matrix_df.dtypes["REAL"]) or any(
@@ -204,23 +200,31 @@ class DesignMatrix:
         )
         design_matrix_df = design_matrix_df.assign(**defaults_to_use)
 
-        transform_function_definitions: list[TransformFunctionDefinition] = []
-        for parameter in design_matrix_df.columns:
-            transform_function_definitions.append(
-                TransformFunctionDefinition(
-                    name=parameter,
-                    param_name="RAW",
-                    values=[],
+        def get_parameter_configuration(type_obj: str) -> GenKwConfig | None:
+            object_columns = design_matrix_df.select_dtypes(
+                include=[
+                    "object" if type_obj == DESIGN_MATRIX_CATEGORICAL else "number"
+                ]
+            ).columns.tolist()
+            if object_columns:
+                transform_function_definitions: list[TransformFunctionDefinition] = []
+                for parameter in object_columns:
+                    transform_function_definitions.append(
+                        TransformFunctionDefinition(
+                            name=parameter,
+                            param_name="RAW",
+                            values=design_matrix_df[parameter].unique().tolist(),
+                        )
+                    )
+                return GenKwConfig(
+                    name=type_obj,
+                    forward_init=False,
+                    template_file=None,
+                    output_file=None,
+                    transform_function_definitions=transform_function_definitions,
+                    update=False,
                 )
-            )
-        parameter_configuration = GenKwConfig(
-            name=DESIGN_MATRIX_GROUP,
-            forward_init=False,
-            template_file=None,
-            output_file=None,
-            transform_function_definitions=transform_function_definitions,
-            update=False,
-        )
+            return None
 
         design_matrix_df.columns = pd.MultiIndex.from_product(
             [[DESIGN_MATRIX_GROUP], design_matrix_df.columns]
@@ -229,7 +233,8 @@ class DesignMatrix:
         return (
             [x in reals for x in range(max(reals) + 1)],
             design_matrix_df,
-            parameter_configuration,
+            get_parameter_configuration(DESIGN_MATRIX_NUMERICAL),
+            get_parameter_configuration(DESIGN_MATRIX_CATEGORICAL),
         )
 
     @staticmethod
