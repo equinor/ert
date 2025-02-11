@@ -37,6 +37,13 @@ class PluginRunner:
         ert_config = self.ert_config
         try:
             plugin = self.__plugin
+            run_paths = Runpaths(
+                jobname_format=ert_config.model_config.jobname_format_string,
+                runpath_format=ert_config.model_config.runpath_format_string,
+                filename=str(ert_config.runpath_file),
+                substitutions=ert_config.substitutions,
+                eclbase=ert_config.model_config.eclbase_format_string,
+            )
             arguments = plugin.getArguments(
                 fixtures={
                     "storage": self.storage,
@@ -46,24 +53,14 @@ class PluginRunner:
                     ),
                     "observation_settings": ert_config.analysis_config.observation_settings,
                     "es_settings": ert_config.analysis_config.es_module,
-                    "run_paths": Runpaths(
-                        jobname_format=ert_config.model_config.jobname_format_string,
-                        runpath_format=ert_config.model_config.runpath_format_string,
-                        filename=str(ert_config.runpath_file),
-                        substitutions=ert_config.substitutions,
-                        eclbase=ert_config.model_config.eclbase_format_string,
-                    ),
+                    "run_paths": run_paths,
                 }
             )
             dialog = ProcessJobDialog(plugin.getName(), plugin.getParentWindow())
             dialog.setObjectName("process_job_dialog")
 
             dialog.cancelConfirmed.connect(self.cancel)
-            fixtures = {
-                k: getattr(self, k)
-                for k in ["storage", "run_paths"]
-                if getattr(self, k)
-            }
+            fixtures = {"storage": self.storage, "run_paths": run_paths}
             workflow_job_thread = ErtThread(
                 name="ert_gui_workflow_job_thread",
                 target=self.__runWorkflowJob,
