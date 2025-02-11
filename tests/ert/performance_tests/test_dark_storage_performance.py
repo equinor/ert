@@ -32,7 +32,7 @@ T = TypeVar("T")
 @pytest.fixture(autouse=True)
 def use_testclient(monkeypatch):
     client = TestClient(app)
-    monkeypatch.setattr(StorageService, "session", lambda: client)
+    monkeypatch.setattr(StorageService, "session", lambda project: client)
 
     def test_escape(s: str) -> str:
         """
@@ -216,10 +216,11 @@ def test_direct_dark_performance_with_storage(
 
 @pytest.fixture
 def api_and_storage(monkeypatch, tmp_path):
-    with open_storage(tmp_path / "storage", mode="w") as storage:
+    ens_path = tmp_path / "storage"
+    with open_storage(ens_path, mode="w") as storage:
         monkeypatch.setenv("ERT_STORAGE_NO_TOKEN", "yup")
         monkeypatch.setenv("ERT_STORAGE_ENS_PATH", str(storage.path))
-        api = PlotApi()
+        api = PlotApi(ens_path)
         yield api, storage
     if enkf._storage is not None:
         enkf._storage.close()
@@ -233,7 +234,7 @@ def api_and_snake_oil_storage(snake_oil_case_storage, monkeypatch):
         monkeypatch.setenv("ERT_STORAGE_NO_TOKEN", "yup")
         monkeypatch.setenv("ERT_STORAGE_ENS_PATH", str(storage.path))
 
-        api = PlotApi()
+        api = PlotApi(snake_oil_case_storage.ens_path)
         yield api, storage
 
     if enkf._storage is not None:
