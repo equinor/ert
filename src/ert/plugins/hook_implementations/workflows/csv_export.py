@@ -62,7 +62,6 @@ class CSVExportJob(ErtScript):
         output_file = workflow_args[0]
         ensemble_data_as_json = None if len(workflow_args) < 2 else workflow_args[1]
         design_matrix_path = None if len(workflow_args) < 3 else workflow_args[2]
-        _ = True if len(workflow_args) < 4 else workflow_args[3]
         drop_const_cols = False if len(workflow_args) < 5 else workflow_args[4]
 
         ensemble_data_as_dict = (
