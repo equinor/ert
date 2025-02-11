@@ -4,7 +4,6 @@ import logging
 from collections.abc import Mapping, Sequence
 from typing import Any
 
-import httpx
 import requests
 from opentelemetry.instrumentation.httpx import HTTPXClientInstrumentor
 
@@ -98,16 +97,3 @@ class StorageService(BaseService):
                 base_url=inst.fetch_url(), auth_token=inst.fetch_auth()[1]
             )
         )
-
-    @classmethod
-    async def async_session(
-        cls,
-        timeout: int | None = None,  # noqa: ASYNC109
-    ) -> httpx.AsyncClient:
-        """
-        Start a HTTP transaction with the server
-        """
-        inst = cls.connect(timeout=timeout)
-        base_url = inst.fetch_url()
-        token = inst.fetch_auth()[1]
-        return httpx.AsyncClient(base_url=base_url, headers={"Token": token})
