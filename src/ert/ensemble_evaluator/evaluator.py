@@ -157,7 +157,7 @@ class EnsembleEvaluator:
                     continue
             self._complete_batch.set()
             await self._batch_processing_queue.put(batch)
-            if self._events.qsize() > 0:
+            if self._events.qsize() > 2 * self._max_batch_size:
                 logger.info(f"{self._events.qsize()} events left in queue")
 
     async def _fm_handler(self, events: Sequence[FMEvent | RealizationEvent]) -> None:
