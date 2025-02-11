@@ -12,7 +12,7 @@ from ert.plugins.plugin_manager import ErtPluginContext
 def test_executing_workflow(storage):
     with ErtPluginContext():
         with open("test_wf", "w", encoding="utf-8") as wf_file:
-            wf_file.write("EXPORT_RUNPATH")
+            wf_file.write("CSV_EXPORT test_workflow_output.csv")
 
         config_file = "poly.ert"
         with open(config_file, "a", encoding="utf-8") as file_handle:
@@ -21,4 +21,4 @@ def test_executing_workflow(storage):
         rc = ErtConfig.from_file(config_file)
         args = Namespace(name="test_wf")
         execute_workflow(rc, storage, args.name)
-        assert os.path.isfile(".ert_runpath_list")
+        assert os.path.isfile("test_workflow_output.csv")

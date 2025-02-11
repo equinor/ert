@@ -197,6 +197,7 @@ class EverestRunModel(BaseRunModel):
             ert_templates,
             hooked_workflows,
             active_realizations=[],  # Set dynamically in run_forward_model()
+            log_path=Path(everest_config.optimization_output_dir),
         )
 
     @classmethod

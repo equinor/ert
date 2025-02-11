@@ -58,6 +58,7 @@ class EnsembleSmoother(UpdateRunModel):
             total_iterations=2,
             random_seed=random_seed,
             minimum_required_realizations=minimum_required_realizations,
+            log_path=config.analysis_config.log_path,
         )
         self.target_ensemble_format = target_ensemble
         self.experiment_name = experiment_name
@@ -74,7 +75,10 @@ class EnsembleSmoother(UpdateRunModel):
     ) -> None:
         self.log_at_startup()
         self.restart = restart
-        self.run_workflows(HookRuntime.PRE_EXPERIMENT)
+        self.run_workflows(
+            HookRuntime.PRE_EXPERIMENT,
+            fixtures={"random_seed": self.random_seed},
+        )
         ensemble_format = self.target_ensemble_format
         experiment = self._storage.create_experiment(
             parameters=self._parameter_configuration,
@@ -120,7 +124,14 @@ class EnsembleSmoother(UpdateRunModel):
             posterior,
             evaluator_server_config,
         )
-        self.run_workflows(HookRuntime.POST_EXPERIMENT)
+        self.run_workflows(
+            HookRuntime.POST_EXPERIMENT,
+            fixtures={
+                "random_seed": self.random_seed,
+                "storage": self._storage,
+                "ensemble": posterior,
+            },
+        )
 
     @classmethod
     def name(cls) -> str:

@@ -85,6 +85,7 @@ class MultipleDataAssimilation(UpdateRunModel):
             start_iteration=start_iteration,
             random_seed=random_seed,
             minimum_required_realizations=minimum_required_realizations,
+            log_path=config.analysis_config.log_path,
         )
         self.support_restart = False
         self._observations = config.observations
@@ -116,7 +117,10 @@ class MultipleDataAssimilation(UpdateRunModel):
                     f"Prior ensemble with ID: {id} does not exists"
                 ) from err
         else:
-            self.run_workflows(HookRuntime.PRE_EXPERIMENT)
+            self.run_workflows(
+                HookRuntime.PRE_EXPERIMENT,
+                fixtures={"random_seed": self.random_seed},
+            )
             sim_args = {"weights": self._relative_weights}
             experiment = self._storage.create_experiment(
                 parameters=self._parameter_configuration,
@@ -171,7 +175,14 @@ class MultipleDataAssimilation(UpdateRunModel):
             )
             prior = posterior
 
-        self.run_workflows(HookRuntime.POST_EXPERIMENT)
+        self.run_workflows(
+            HookRuntime.POST_EXPERIMENT,
+            fixtures={
+                "random_seed": self.random_seed,
+                "storage": self._storage,
+                "ensemble": prior,
+            },
+        )
 
     @staticmethod
     def parse_weights(weights: str) -> list[float]:
