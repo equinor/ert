@@ -308,7 +308,8 @@ def test_retry_of_jobs_json_file_read(unused_tcp_port, tmp_path, monkeypatch, ca
 
     def create_jobs_file_after_lock():
         wait_until(
-            lambda: f"Could not find file {FORWARD_MODEL_DESCRIPTION_FILE}, retrying",
+            lambda: f"Could not find file {FORWARD_MODEL_DESCRIPTION_FILE}, retrying"
+            in caplog.text,
             interval=0.1,
             timeout=2,
         )
