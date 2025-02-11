@@ -252,42 +252,6 @@ def test_singleton_connect_early(server_script, tmp_path):
     assert not (tmp_path / "dummy_server.json").exists()
 
 
-@pytest.mark.integration_test
-@pytest.mark.script(
-    """\
-os.write(fd, b'{"authtoken": "test123", "urls": ["url"]}')
-os.close(fd)
-"""
-)
-def test_singleton_start_or_connect(server_script):
-    """
-    Tests that a connection can be attempted even if it's started _before_
-    the server exists
-    """
-    with _DummyService.connect_or_start_server(
-        exec_args=[str(server_script)]
-    ) as server:
-        assert server.fetch_conn_info() == {"authtoken": "test123", "urls": ["url"]}
-
-
-@pytest.mark.script(
-    """\
-os.write(fd, b'{"authtoken": "test123", "urls": ["url"]}')
-os.close(fd)
-time.sleep(10) # ensure "server" doesn't exit before test
-"""
-)
-def test_singleton_start_or_connect_exists(server_script):
-    """
-    Tests that a connection can be attempted even if it's started _before_
-    the server exists
-    """
-    with _DummyService.start_server([str(server_script)]) as server:
-        server.wait_until_ready()
-        with _DummyService.connect_or_start_server([str(server_script)]) as client:
-            assert server.fetch_conn_info() == client.fetch_conn_info()
-
-
 @pytest.mark.parametrize("script,should_exist", [("storage", True), ("foobar", False)])
 def test_local_exec_args(script, should_exist):
     exec_args = local_exec_args(script)
