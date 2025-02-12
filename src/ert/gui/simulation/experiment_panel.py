@@ -214,10 +214,6 @@ class ExperimentPanel(QWidget):
         simulation_widget = self._experiment_widgets[self.get_current_experiment_type()]
         return simulation_widget.get_experiment_arguments()
 
-    def getExperimentName(self) -> str:
-        """Get the experiment name as provided by the user. Defaults to run mode if not set."""
-        return self.get_experiment_arguments().experiment_name
-
     def run_experiment(self) -> None:
         args = self.get_experiment_arguments()
         QApplication.setOverrideCursor(Qt.CursorShape.WaitCursor)
@@ -301,7 +297,7 @@ class ExperimentPanel(QWidget):
 
         self._dialog = RunDialog(
             self._config_file,
-            model,
+            model.api,
             event_queue,
             self._notifier,
             self.parent(),  # type: ignore

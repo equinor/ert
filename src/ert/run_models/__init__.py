@@ -1,4 +1,4 @@
-from .base_run_model import BaseRunModel, ErtRunError, StatusEvents
+from .base_run_model import BaseRunModel, BaseRunModelAPI, ErtRunError, StatusEvents
 from .ensemble_experiment import EnsembleExperiment
 from .ensemble_smoother import EnsembleSmoother
 from .event import (
@@ -14,6 +14,7 @@ from .single_test_run import SingleTestRun
 
 __all__ = [
     "BaseRunModel",
+    "BaseRunModelAPI",
     "EnsembleExperiment",
     "EnsembleSmoother",
     "ErtRunError",

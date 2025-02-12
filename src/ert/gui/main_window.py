@@ -217,7 +217,7 @@ class ErtMainWindow(QMainWindow):
 
         run_dialog.setParent(self)
         date_time = datetime.datetime.now(datetime.UTC).strftime("%Y-%d-%m %H:%M:%S")
-        experiment_type = run_dialog._run_model.name()
+        experiment_type = run_dialog._run_model_api.experiment_name
         simulation_id = experiment_type + " : " + date_time
         self.central_panels_map[simulation_id] = run_dialog
         self.run_dialog_counter += 1
