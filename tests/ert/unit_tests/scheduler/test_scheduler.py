@@ -6,6 +6,7 @@ import shutil
 import time
 from functools import partial
 from pathlib import Path
+from unittest.mock import AsyncMock
 
 import pytest
 
@@ -729,3 +730,21 @@ async def test_message_present_in_event_on_load_failure(
         event = await sch._events.get()
 
     assert expected_error in event.message
+
+
+async def test_log_warnings_from_forward_model_is_run_once_per_ensemble(
+    tmp_path, mock_driver, monkeypatch, storage
+):
+    ensemble_size = 10
+    ensemble = storage.create_experiment().create_ensemble(
+        name="foo", ensemble_size=ensemble_size
+    )
+    realizations = [
+        create_stub_realization(ensemble, tmp_path, iens)
+        for iens in range(ensemble_size)
+    ]
+    mocked_stdouterr_parser = AsyncMock()
+    monkeypatch.setattr(job, "log_warnings_from_forward_model", mocked_stdouterr_parser)
+    sch = scheduler.Scheduler(mock_driver(), realizations)
+    await sch.execute()
+    mocked_stdouterr_parser.assert_called_once()
