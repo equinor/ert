@@ -113,7 +113,7 @@ def start_experiment(
         except:
             logging.debug(traceback.format_exc())
             time.sleep(retry)
-    raise ValueError("Failed to start experiment")
+    raise RuntimeError("Failed to start experiment")
 
 
 def extract_errors_from_file(path: str):
