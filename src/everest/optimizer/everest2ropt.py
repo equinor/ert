@@ -2,8 +2,9 @@ import logging
 import os
 from typing import Any
 
+import numpy as np
 from ropt.config.enopt import EnOptConfig, EnOptContext
-from ropt.enums import ConstraintType, PerturbationType, VariableType
+from ropt.enums import PerturbationType, VariableType
 from ropt.transforms import OptModelTransforms
 
 from everest.config import (
@@ -23,13 +24,12 @@ def _parse_controls(controls: FlattenedControls, ropt_config):
         None if type_ is None else VariableType[type_.upper()]
         for type_ in controls.types
     ]
-    indices = [idx for idx, is_enabled in enumerate(controls.enabled) if is_enabled]
     ropt_config["variables"] = {
         "types": None if all(item is None for item in control_types) else control_types,
         "initial_values": controls.initial_guesses,
         "lower_bounds": controls.lower_bounds,
         "upper_bounds": controls.upper_bounds,
-        "indices": indices if indices else None,
+        "mask": controls.enabled,
     }
 
     if "gradients" not in ropt_config:
@@ -98,15 +98,35 @@ def _parse_objectives(objective_functions: list[ObjectiveFunctionConfig], ropt_c
         ropt_config["function_estimators"] = function_estimators
 
 
+def _get_bounds(
+    constraints: list[InputConstraintConfig] | list[OutputConstraintConfig],
+) -> tuple[list[float], list[float]]:
+    lower_bounds = []
+    upper_bounds = []
+    for constr in constraints:
+        if constr.target is None:
+            lower_bounds.append(
+                -np.inf if constr.lower_bound is None else constr.lower_bound
+            )
+            upper_bounds.append(
+                np.inf if constr.upper_bound is None else constr.upper_bound
+            )
+        else:
+            if constr.lower_bound is not None or constr.upper_bound is not None:
+                raise RuntimeError(
+                    "input constraint error: target cannot be combined with bounds"
+                )
+            lower_bounds.append(constr.target)
+            upper_bounds.append(constr.target)
+    return lower_bounds, upper_bounds
+
+
 def _parse_input_constraints(
     input_constraints: list[InputConstraintConfig] | None,
     formatted_control_names: list[str],
     formatted_control_names_dotdash: list[str],
     ropt_config,
 ):
-    if not input_constraints:
-        return
-
     def _get_control_index(name: str):
         try:
             matching_index = formatted_control_names.index(name.replace("-", "."))
@@ -118,76 +138,33 @@ def _parse_input_constraints(
         # along with formatted_control_names_dotdash
         return formatted_control_names_dotdash.index(name)
 
-    coefficients_matrix = []
-    rhs_values = []
-    types = []
-
-    def _add_input_constraint(rhs_value, coefficients, constraint_type):
-        if rhs_value is not None:
+    if input_constraints:
+        coefficients_matrix = []
+        for constr in input_constraints:
+            coefficients = [0.0] * len(formatted_control_names)
+            for name, value in constr.weights.items():
+                index = _get_control_index(name)
+                coefficients[index] = value
             coefficients_matrix.append(coefficients)
-            rhs_values.append(rhs_value)
-            types.append(constraint_type)
 
-    for constr in input_constraints:
-        coefficients = [0.0] * len(formatted_control_names)
-        for name, value in constr.weights.items():
-            index = _get_control_index(name)
-            coefficients[index] = value
+        lower_bounds, upper_bounds = _get_bounds(input_constraints)
 
-        target = constr.target
-        upper_bound = constr.upper_bound
-        lower_bound = constr.lower_bound
-        if target is not None and (upper_bound is not None or lower_bound is not None):
-            raise RuntimeError(
-                "input constraint error: target cannot be combined with bounds"
-            )
-        _add_input_constraint(target, coefficients, ConstraintType.EQ)
-        _add_input_constraint(upper_bound, coefficients, ConstraintType.LE)
-        _add_input_constraint(lower_bound, coefficients, ConstraintType.GE)
-
-    ropt_config["linear_constraints"] = {
-        "coefficients": coefficients_matrix,
-        "rhs_values": rhs_values,
-        "types": types,
-    }
+        ropt_config["linear_constraints"] = {
+            "coefficients": coefficients_matrix,
+            "lower_bounds": lower_bounds,
+            "upper_bounds": upper_bounds,
+        }
 
 
 def _parse_output_constraints(
     output_constraints: list[OutputConstraintConfig] | None, ropt_config
 ):
-    if not output_constraints:
-        return
-
-    rhs_values: list[float] = []
-    types: list[ConstraintType] = []
-
-    def _add_output_constraint(
-        rhs_value: float | None, constraint_type: ConstraintType, suffix=None
-    ):
-        if rhs_value is not None:
-            rhs_values.append(rhs_value)
-            types.append(constraint_type)
-
-    for constr in output_constraints:
-        target = constr.target
-        upper_bound = constr.upper_bound
-        lower_bound = constr.lower_bound
-        if target is not None and (upper_bound is not None or lower_bound is not None):
-            raise RuntimeError(
-                "output constraint error: target cannot be combined with bounds"
-            )
-        _add_output_constraint(target, ConstraintType.EQ)
-        _add_output_constraint(
-            upper_bound, ConstraintType.LE, None if lower_bound is None else "upper"
-        )
-        _add_output_constraint(
-            lower_bound, ConstraintType.GE, None if upper_bound is None else "lower"
-        )
-
-    ropt_config["nonlinear_constraints"] = {
-        "rhs_values": rhs_values,
-        "types": types,
-    }
+    if output_constraints:
+        lower_bounds, upper_bounds = _get_bounds(output_constraints)
+        ropt_config["nonlinear_constraints"] = {
+            "lower_bounds": lower_bounds,
+            "upper_bounds": upper_bounds,
+        }
 
 
 def _parse_optimization(
@@ -282,7 +259,7 @@ def _parse_optimization(
             # filter implementing cvar:
             objective_count = len(ropt_config["objectives"]["weights"])
             constraint_count = len(
-                ropt_config.get("nonlinear_constraints", {}).get("rhs_values", [])
+                ropt_config.get("nonlinear_constraints", {}).get("lower_bounds", [])
             )
             ropt_config["objectives"]["realization_filters"] = objective_count * [0]
             if constraint_count > 0:

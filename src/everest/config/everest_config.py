@@ -657,23 +657,9 @@ and environment variables are exposed in the form 'os.NAME', for example:
 
     @property
     def constraint_names(self) -> list[str]:
-        names: list[str] = []
-
-        def _add_output_constraint(rhs_value: float | None, suffix=None):
-            if rhs_value is not None:
-                name = constr.name
-                names.append(name if suffix is None else f"{name}:{suffix}")
-
-        for constr in self.output_constraints or []:
-            _add_output_constraint(constr.target)
-            _add_output_constraint(
-                constr.upper_bound, None if constr.lower_bound is None else "upper"
-            )
-            _add_output_constraint(
-                constr.lower_bound, None if constr.upper_bound is None else "lower"
-            )
-
-        return names
+        if self.output_constraints:
+            return [constraint.name for constraint in self.output_constraints]
+        return []
 
     @property
     def result_names(self):
@@ -689,20 +675,11 @@ and environment variables are exposed in the form 'os.NAME', for example:
 
     @property
     def function_aliases(self) -> dict[str, str]:
-        aliases = {
+        return {
             objective.name: objective.alias
             for objective in self.objective_functions
             if objective.alias is not None
         }
-        constraints = self.output_constraints or []
-        for constraint in constraints:
-            if (
-                constraint.upper_bound is not None
-                and constraint.lower_bound is not None
-            ):
-                aliases[f"{constraint.name}:lower"] = constraint.name
-                aliases[f"{constraint.name}:upper"] = constraint.name
-        return aliases
 
     def to_dict(self) -> dict:
         the_dict = self.model_dump(exclude_none=True)
