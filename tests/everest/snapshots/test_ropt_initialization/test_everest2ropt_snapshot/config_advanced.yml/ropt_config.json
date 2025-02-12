@@ -37,40 +37,28 @@
         1.0
       ]
     ],
-    "rhs_values": [
-      0.4
+    "lower_bounds": [
+      null
     ],
-    "types": [
-      1
+    "upper_bounds": [
+      0.4
     ]
   },
   "nonlinear_constraints": {
-    "auto_scale": [
-      false
-    ],
     "function_estimators": null,
+    "lower_bounds": [
+      1.0
+    ],
     "realization_filters": null,
-    "rhs_values": [
-      1.0
-    ],
-    "scales": [
-      1.0
-    ],
-    "types": [
-      2
+    "upper_bounds": [
+      null
     ]
   },
   "objectives": {
-    "auto_scale": [
-      false
-    ],
     "function_estimators": [
       0
     ],
     "realization_filters": null,
-    "scales": [
-      1.0
-    ],
     "weights": [
       1.0
     ]
@@ -102,11 +90,6 @@
     }
   ],
   "variables": {
-    "indices": [
-      0,
-      1,
-      2
-    ],
     "initial_values": [
       0.25,
       0.25,
@@ -117,8 +100,11 @@
       -1.0,
       -1.0
     ],
-    "offsets": null,
-    "scales": null,
+    "mask": [
+      true,
+      true,
+      true
+    ],
     "types": [
       1,
       1,

@@ -138,8 +138,8 @@ everest = [
     "decorator",
     "resdata",
     "colorama",
-    "ropt[pandas]>=0.13,<0.14",
-    "ropt-dakota>=0.11,<0.12",
+    "ropt[pandas]>=0.14,<0.15",
+    "ropt-dakota>=0.14,<0.15",
 ]
 
 [tool.setuptools]

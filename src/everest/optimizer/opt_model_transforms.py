@@ -2,7 +2,6 @@ from collections.abc import Sequence
 
 import numpy as np
 from numpy.typing import NDArray
-from ropt.enums import ConstraintType
 from ropt.transforms import OptModelTransforms
 from ropt.transforms.base import (
     NonLinearConstraintTransform,
@@ -49,12 +48,36 @@ class ControlScaler(VariableTransform):
         return values / self._scales
 
     def transform_linear_constraints(
-        self, coefficients: NDArray[np.float64], rhs_values: NDArray[np.float64]
-    ) -> tuple[NDArray[np.float64], NDArray[np.float64]]:
-        return (
-            coefficients * self._scales,
-            rhs_values - np.matmul(coefficients, self._offsets),
-        )
+        self,
+        coefficients: NDArray[np.float64],
+        lower_bounds: NDArray[np.float64],
+        upper_bounds: NDArray[np.float64],
+    ) -> tuple[NDArray[np.float64], NDArray[np.float64], NDArray[np.float64]]:
+        r"""Transform a set of linear constraints.
+
+        The set of linear constraints can be represented by a matrix equation:
+        $\mathbf{A} \mathbf{x} = \mathbf{b}.
+
+        When rescaling variables, the linear coefficients ($\mathbf{A}$) and
+        right-hand-side values ($\mathbf{b}$) must be converted to remain
+        valid for the scaled variables:
+        $$
+        \begin{align}
+            \hat{\mathbf{A}} &= \mathbf{A} \mathbf{S} \\
+            \hat{\mathbf{b}} &= \mathbf{b} - \mathbf{A}\mathbf{o}
+        \end{align}
+        $$
+
+        where $\mathbf{S}$ is a diagonal matrix containing the variable
+        scales, and $\mathbf{o}$ is a vector containing the variable offsets.
+        """
+        if self._offsets is not None:
+            offsets = np.matmul(coefficients, self._offsets)
+            lower_bounds = lower_bounds - offsets  # noqa: PLR6104
+            upper_bounds = upper_bounds - offsets  # noqa: PLR6104
+        if self._scales is not None:
+            coefficients = coefficients * self._scales  # noqa: PLR6104
+        return coefficients, lower_bounds, upper_bounds
 
 
 class ObjectiveScaler(ObjectiveTransform):
@@ -96,28 +119,10 @@ class ConstraintScaler(NonLinearConstraintTransform):
         self._auto_scales = np.asarray(auto_scales, dtype=np.bool_)
         self._weights = np.asarray(weights, dtype=np.float64)
 
-    def transform_rhs_values(
-        self, rhs_values: NDArray[np.float64], types: NDArray[np.ubyte]
-    ) -> tuple[NDArray[np.float64], NDArray[np.ubyte]]:
-        def flip_type(constraint_type: ConstraintType) -> ConstraintType:
-            match constraint_type:
-                case ConstraintType.GE:
-                    return ConstraintType.LE
-                case ConstraintType.LE:
-                    return ConstraintType.GE
-                case _:
-                    return constraint_type
-
-        rhs_values = rhs_values / self._scales  # noqa: PLR6104
-        # Flip inequality types if self._scales < 0 in the division above:
-        types = np.fromiter(
-            (
-                flip_type(type_) if scale < 0 else type_
-                for type_, scale in zip(types, self._scales, strict=False)
-            ),
-            np.ubyte,
-        )
-        return rhs_values, types
+    def transform_bounds(
+        self, lower_bounds: NDArray[np.float64], upper_bounds: NDArray[np.float64]
+    ) -> tuple[NDArray[np.float64], NDArray[np.float64]]:
+        return lower_bounds / self._scales, upper_bounds / self._scales
 
     def forward(self, constraints: NDArray[np.float64]) -> NDArray[np.float64]:
         return constraints / self._scales
