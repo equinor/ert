@@ -43,7 +43,7 @@ def test_everest_main_entry_bad_command():
 @pytest.mark.integration_test
 @pytest.mark.xdist_group(name="starts_everest")
 def test_everest_entry_run(cached_example):
-    _, config_file, _ = cached_example("math_func/config_minimal.yml")
+    _, config_file, _, _ = cached_example("math_func/config_minimal.yml")
     # Setup command line arguments
     with capture_streams():
         start_everest(["everest", "run", config_file])
@@ -78,7 +78,7 @@ def test_everest_entry_run(cached_example):
 
 @pytest.mark.xdist_group("math_func/config_minimal.yml")
 def test_everest_entry_monitor_no_run(cached_example):
-    _, config_file, _ = cached_example("math_func/config_minimal.yml")
+    _, config_file, _, _ = cached_example("math_func/config_minimal.yml")
     with capture_streams():
         start_everest(["everest", "monitor", config_file])
 
@@ -94,7 +94,7 @@ def test_everest_entry_monitor_no_run(cached_example):
 @pytest.mark.integration_test
 def test_everest_main_export_entry(cached_example):
     # Setup command line arguments
-    _, config_file, _ = cached_example("math_func/config_minimal.yml")
+    _, config_file, _, _ = cached_example("math_func/config_minimal.yml")
     with capture_streams() as (out, _):
         start_everest(["everest", "export", str(config_file)])
 
@@ -104,7 +104,7 @@ def test_everest_main_export_entry(cached_example):
 @pytest.mark.xdist_group("math_func/config_minimal.yml")
 def test_everest_main_lint_entry(cached_example):
     # Setup command line arguments
-    _, config_file, _ = cached_example("math_func/config_minimal.yml")
+    _, config_file, _, _ = cached_example("math_func/config_minimal.yml")
     with capture_streams() as (out, err):
         start_everest(["everest", "lint", config_file])
     assert "config_minimal.yml is valid" in out.getvalue()

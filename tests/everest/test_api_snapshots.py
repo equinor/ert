@@ -62,7 +62,7 @@ def make_api_snapshot(api) -> dict[str, Any]:
     ],
 )
 def test_api_snapshots(config_file, snapshot, cached_example):
-    config_path, config_file, optimal_result_json = cached_example(
+    config_path, config_file, optimal_result_json, _ = cached_example(
         f"math_func/{config_file}"
     )
     config = EverestConfig.load_file(Path(config_path) / config_file)
@@ -101,7 +101,7 @@ def test_api_snapshots(config_file, snapshot, cached_example):
     ],
 )
 def test_api_summary_snapshot(config_file, snapshot, cached_example):
-    config_path, config_file, _ = cached_example(f"math_func/{config_file}")
+    config_path, config_file, _, _ = cached_example(f"math_func/{config_file}")
     config = EverestConfig.load_file(Path(config_path) / config_file)
 
     with open_storage(config.storage_dir, mode="w") as storage:
@@ -159,7 +159,7 @@ def test_api_summary_snapshot(config_file, snapshot, cached_example):
     ],
 )
 def test_csv_export(config_file, cached_example, snapshot):
-    config_path, config_file, _ = cached_example(f"math_func/{config_file}")
+    config_path, config_file, _, _ = cached_example(f"math_func/{config_file}")
     config = EverestConfig.load_file(Path(config_path) / config_file)
 
     api = EverestDataAPI(config)

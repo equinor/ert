@@ -11,7 +11,7 @@ from everest.everest_storage import EverestStorage
 
 @pytest.mark.xdist_group("math_func/config_minimal.yml")
 def test_config_branch_entry(cached_example):
-    path, _, _ = cached_example("math_func/config_minimal.yml")
+    path, _, _, _ = cached_example("math_func/config_minimal.yml")
 
     config_branch_entry(["config_minimal.yml", "new_restart_config.yml", "-b", "1"])
 
@@ -48,7 +48,7 @@ def test_config_branch_entry(cached_example):
 
 @pytest.mark.xdist_group("math_func/config_minimal.yml")
 def test_config_branch_preserves_config_section_order(cached_example):
-    path, _, _ = cached_example("math_func/config_minimal.yml")
+    path, _, _, _ = cached_example("math_func/config_minimal.yml")
 
     config_branch_entry(["config_minimal.yml", "new_restart_config.yml", "-b", "1"])
 
