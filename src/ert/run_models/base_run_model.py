@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import asyncio
 import copy
+import dataclasses
 import functools
 import logging
 import os
@@ -10,11 +11,11 @@ import time
 import uuid
 from abc import ABC, abstractmethod
 from collections import defaultdict
-from collections.abc import Generator, MutableSequence
+from collections.abc import Callable, Generator, MutableSequence
 from contextlib import contextmanager
 from pathlib import Path
 from queue import SimpleQueue
-from typing import TYPE_CHECKING, Any, cast
+from typing import TYPE_CHECKING, Any, Protocol, cast
 
 import numpy as np
 
@@ -115,6 +116,24 @@ def captured_logs(
         root_logger.removeHandler(handler)
 
 
+class StartSimulationsThreadFn(Protocol):
+    def __call__(
+        self, evaluator_server_config: EvaluatorServerConfig, restart: bool = False
+    ) -> None: ...
+
+
+@dataclasses.dataclass
+class BaseRunModelAPI:
+    experiment_name: str
+    queue_system: str
+    runpath_format_string: str
+    support_restart: bool
+    start_simulations_thread: StartSimulationsThreadFn
+    cancel: Callable[[], None]
+    get_runtime: Callable[[], int]
+    has_failed_realizations: Callable[[], bool]
+
+
 class BaseRunModel(ABC):
     def __init__(
         self,
@@ -180,6 +199,19 @@ class BaseRunModel(ABC):
         self.active_realizations = copy.copy(active_realizations)
         self.start_iteration = start_iteration
         self.restart = False
+
+    @property
+    def api(self) -> BaseRunModelAPI:
+        return BaseRunModelAPI(
+            experiment_name=self.name(),
+            queue_system=self._queue_config.queue_system,
+            runpath_format_string=str(self._runpath_file),
+            get_runtime=self.get_runtime,
+            start_simulations_thread=self.start_simulations_thread,
+            has_failed_realizations=self.has_failed_realizations,
+            support_restart=self.support_restart,
+            cancel=self.cancel,
+        )
 
     def log_at_startup(self) -> None:
         keys_to_drop = [

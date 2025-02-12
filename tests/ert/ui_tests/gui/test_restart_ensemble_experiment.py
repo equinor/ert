@@ -86,13 +86,12 @@ def test_restart_failed_realizations(opened_main_window_poly, qtbot):
         list_model.rowCount() == experiment_panel.config.model_config.num_realizations
     )
 
+    run_model = opened_main_window_poly._experiment_panel._model
     # Check we have failed realizations
-    assert any(run_dialog._run_model._create_mask_from_failed_realizations())
+    assert any(run_model._create_mask_from_failed_realizations())
     failed_realizations = [
         i
-        for i, mask in enumerate(
-            run_dialog._run_model._create_mask_from_failed_realizations()
-        )
+        for i, mask in enumerate(run_model._create_mask_from_failed_realizations())
         if mask
     ]
 
@@ -121,12 +120,10 @@ def test_restart_failed_realizations(opened_main_window_poly, qtbot):
     )
 
     # Second restart
-    assert any(run_dialog._run_model._create_mask_from_failed_realizations())
+    assert any(run_model._create_mask_from_failed_realizations())
     failed_realizations = [
         i
-        for i, mask in enumerate(
-            run_dialog._run_model._create_mask_from_failed_realizations()
-        )
+        for i, mask in enumerate(run_model._create_mask_from_failed_realizations())
         if mask
     ]
     assert set(failed_realizations) == (

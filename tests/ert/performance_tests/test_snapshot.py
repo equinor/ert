@@ -24,7 +24,7 @@ from tests.ert.unit_tests.gui.simulation.test_run_dialog import (  # noqa: F401
     event_queue,
     notifier,
     run_dialog,
-    run_model,
+    run_model_api,
     test_large_snapshot,
 )
 

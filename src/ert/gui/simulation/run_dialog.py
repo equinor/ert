@@ -51,7 +51,7 @@ from ert.gui.model.snapshot import (
 )
 from ert.gui.tools.file import FileDialog
 from ert.run_models import (
-    BaseRunModel,
+    BaseRunModelAPI,
     RunModelStatusEvent,
     RunModelTimeEvent,
     RunModelUpdateBeginEvent,
@@ -172,7 +172,7 @@ class RunDialog(QFrame):
     def __init__(
         self,
         config_file: str,
-        run_model: BaseRunModel,
+        run_model_api: BaseRunModelAPI,
         event_queue: SimpleQueue[StatusEvents],
         notifier: ErtNotifier,
         parent: QWidget | None = None,
@@ -185,8 +185,9 @@ class RunDialog(QFrame):
         self.setWindowFlag(Qt.WindowType.WindowContextHelpButtonHint, False)
         self.setWindowTitle(f"Experiment - {config_file} {find_ert_info()}")
 
+        self._run_model_api = run_model_api
+        self._queue_system = run_model_api.queue_system
         self._snapshot_model = SnapshotModel(self)
-        self._run_model = run_model
         self._event_queue = event_queue
         self._notifier = notifier
         self.fail_msg_box: ErtMessageBox | None = None
@@ -220,7 +221,7 @@ class RunDialog(QFrame):
         self.running_time = QLabel("")
         self.memory_usage = QLabel("")
         self.disk_space = DiskSpaceWidget(
-            get_mount_directory(run_model.run_paths._runpath_format)
+            get_mount_directory(self._run_model_api.runpath_format_string)
         )
 
         self.kill_button = QPushButton("Terminate experiment")
@@ -349,11 +350,11 @@ class RunDialog(QFrame):
             self._tab_widget.clear()
 
         evaluator_server_config = EvaluatorServerConfig(
-            use_ipc_protocol=self._run_model.queue_system == QueueSystem.LOCAL
+            use_ipc_protocol=self._queue_system == QueueSystem.LOCAL
         )
 
         def run() -> None:
-            self._run_model.start_simulations_thread(
+            self._run_model_api.start_simulations_thread(
                 evaluator_server_config=evaluator_server_config,
                 restart=restart,
             )
@@ -392,7 +393,7 @@ class RunDialog(QFrame):
         if kill_job == QMessageBox.StandardButton.Yes:
             # Normally this slot would be invoked by the signal/slot system,
             # but the worker is busy tracking the evaluation.
-            self._run_model.cancel()
+            self._run_model_api.cancel()
             self.simulation_done.emit(True, "")
         return kill_job
 
@@ -400,8 +401,8 @@ class RunDialog(QFrame):
     def _on_simulation_done(self, failed: bool, msg: str) -> None:
         self.processing_animation.hide()
         self.kill_button.setHidden(True)
-        self.restart_button.setVisible(self._run_model.has_failed_realizations())
-        self.restart_button.setEnabled(self._run_model.support_restart)
+        self.restart_button.setVisible(self._run_model_api.has_failed_realizations())
+        self.restart_button.setEnabled(self._run_model_api.support_restart)
         self._notifier.set_is_simulation_running(False)
         self.flag_simulation_done = True
         if failed:
@@ -419,7 +420,7 @@ class RunDialog(QFrame):
 
     @Slot()
     def _on_ticker(self) -> None:
-        runtime = self._run_model.get_runtime()
+        runtime = self._run_model_api.get_runtime()
         self.running_time.setText(format_running_time(runtime))
 
         maximum_memory_usage = self._snapshot_model.root.max_memory_usage
