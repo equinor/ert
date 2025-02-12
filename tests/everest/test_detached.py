@@ -337,7 +337,7 @@ if __name__ == "__main__":
 
 
 def test_get_opt_status(cached_example):
-    _, config_file, _ = cached_example("math_func/config_multiobj.yml")
+    _, config_file, _, _ = cached_example("math_func/config_multiobj.yml")
     config = EverestConfig.load_file(config_file)
 
     opts = get_opt_status(config.optimization_output_dir)

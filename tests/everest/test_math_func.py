@@ -17,7 +17,7 @@ CONFIG_FILE_ADVANCED = "config_advanced.yml"
 
 @pytest.mark.integration_test
 def test_math_func_multiobj(cached_example):
-    config_path, config_file, _ = cached_example("math_func/config_multiobj.yml")
+    config_path, config_file, _, _ = cached_example("math_func/config_multiobj.yml")
 
     config = EverestConfig.load_file(Path(config_path) / config_file)
 
@@ -38,7 +38,7 @@ def test_math_func_multiobj(cached_example):
 
 @pytest.mark.integration_test
 def test_math_func_advanced(cached_example):
-    config_path, config_file, _ = cached_example("math_func/config_advanced.yml")
+    config_path, config_file, _, _ = cached_example("math_func/config_advanced.yml")
 
     config = EverestConfig.load_file(Path(config_path) / config_file)
     storage = EverestStorage(Path(config.optimization_output_dir))

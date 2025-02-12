@@ -11,7 +11,7 @@ from everest.simulator.everest_to_ert import _everest_to_ert_config_dict
 
 
 def test_that_one_experiment_creates_one_ensemble_per_batch(cached_example):
-    _, config, _ = cached_example("math_func/config_minimal.yml")
+    _, config, _, _ = cached_example("math_func/config_minimal.yml")
     config = EverestConfig.load_file(config)
 
     batches = os.listdir(config.simulation_dir)

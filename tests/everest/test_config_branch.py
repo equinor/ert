@@ -10,7 +10,7 @@ from everest.config_file_loader import load_yaml
 
 
 def test_get_controls_for_batch(cached_example):
-    path, _, _ = cached_example("math_func/config_advanced.yml")
+    path, _, _, _ = cached_example("math_func/config_advanced.yml")
 
     assert (
         opt_controls_by_batch(Path(path) / "everest_output" / "optimization_output", 1)
@@ -43,7 +43,7 @@ def test_get_controls_for_batch(cached_example):
 
 
 def test_update_controls_initial_guess(cached_example):
-    path, _, _ = cached_example("math_func/config_advanced.yml")
+    path, _, _, _ = cached_example("math_func/config_advanced.yml")
 
     old_controls = load_yaml("config_advanced.yml")["controls"]
 
