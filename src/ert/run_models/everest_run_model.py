@@ -59,6 +59,7 @@ from everest.simulator.everest_to_ert import (
 from everest.strings import EVEREST, STORAGE_DIR
 
 from ..run_arg import RunArg, create_run_arguments
+from ..storage.everest_ensemble import EverestRealizationInfo
 from ..storage.everest_experiment import EverestExperiment
 from .base_run_model import BaseRunModel, StatusEvents
 
@@ -350,7 +351,7 @@ class EverestRunModel(BaseRunModel):
             objectives, constraints, _ = self._run_forward_model(
                 np.repeat(np.expand_dims(variables, axis=0), nreal, axis=0),
                 model_realizations,
-                [],
+                perturbations=[-1] * len(model_realizations),
             )
             if transforms.objectives.has_auto_scale:
                 transforms.objectives.calculate_auto_scales(objectives)
@@ -411,6 +412,7 @@ class EverestRunModel(BaseRunModel):
         self,
         control_values: NDArray[np.float64],
         model_realizations: list[int],
+        perturbations: list[int],
         active_control_vectors: list[bool] | None = None,
     ) -> tuple[NDArray[np.float64], NDArray[np.float64] | None, list[int]]:
         # Reset the current run status:
@@ -439,6 +441,23 @@ class EverestRunModel(BaseRunModel):
             ensemble_size=len(evaluated_control_indices),
         )
         ert_ensemble = everest_ensemble.ert_ensemble
+
+        realization_mapping: dict[int, EverestRealizationInfo] = {
+            idx: EverestRealizationInfo(
+                model_realization=model_realization,
+                perturbation=(
+                    perturbations[idx]
+                    if (perturbations is not None and perturbations[idx] >= 0)
+                    else None
+                ),
+            )
+            for idx, model_realization in enumerate(model_realizations)
+        }
+
+        # Fill in data from ROPT here
+        everest_ensemble.save_realization_mapping(
+            realization_mapping=realization_mapping
+        )
         for sim_id, controls in enumerate(sim_controls.values()):
             self._setup_sim(sim_id, controls, ert_ensemble)
 
@@ -495,7 +514,12 @@ class EverestRunModel(BaseRunModel):
         ]
         batch_id = self._batch_id  # Save the batch ID, it will be modified.
         objectives, constraints, evaluated_control_indices = self._run_forward_model(
-            control_values, model_realizations, active_control_vectors
+            control_values,
+            model_realizations,
+            evaluator_context.perturbations.tolist()
+            if evaluator_context.perturbations is not None
+            else [-1] * len(model_realizations),
+            active_control_vectors,
         )
 
         # The simulation id's are a simple enumeration over the evaluated
