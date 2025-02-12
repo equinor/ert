@@ -153,15 +153,15 @@ def _get_machine_name() -> str:
 def _sim_monitor(context_status, shared_data=None):
     assert shared_data is not None
 
-    status = context_status["status"]
+    status_ = context_status["status"]
     shared_data[SIM_PROGRESS_ENDPOINT] = {
         "batch_number": context_status["batch_number"],
         "status": {
-            "running": status.get("Running", 0),
-            "waiting": status.get("Waiting", 0),
-            "pending": status.get("Pending", 0),
-            "complete": status.get("Finished", 0),
-            "failed": status.get("Failed", 0),
+            "running": status_.get("Running", 0),
+            "waiting": status_.get("Waiting", 0),
+            "pending": status_.get("Pending", 0),
+            "complete": status_.get("Finished", 0),
+            "failed": status_.get("Failed", 0),
         },
         "progress": context_status["progress"],
     }
@@ -450,7 +450,7 @@ def _get_optimization_status(
             return ServerStatus.stopped, "Optimization aborted."
 
         case EverestExitCode.TOO_FEW_REALIZATIONS:
-            status = (
+            status_ = (
                 ServerStatus.stopped
                 if shared_data[STOP_ENDPOINT]
                 else ServerStatus.failed
@@ -458,7 +458,7 @@ def _get_optimization_status(
             messages = _failed_realizations_messages(shared_data)
             for msg in messages:
                 logging.getLogger(EVEREST).error(msg)
-            return status, "\n".join(messages)
+            return status_, "\n".join(messages)
         case _:
             return ServerStatus.completed, "Optimization completed."
 
