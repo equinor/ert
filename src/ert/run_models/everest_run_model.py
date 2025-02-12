@@ -106,6 +106,7 @@ class EverestRunModel(BaseRunModel):
         everest_config: EverestConfig,
         simulation_callback: SimulationCallback | None,
         optimization_callback: OptimizerCallback | None,
+        status_queue: queue.SimpleQueue[StatusEvents] | None = None,
     ):
         assert everest_config.log_dir is not None
         assert everest_config.optimization_output_dir is not None
@@ -141,7 +142,9 @@ class EverestRunModel(BaseRunModel):
 
         ens_path = os.path.join(everest_config.output_dir, STORAGE_DIR)
         storage = open_storage(ens_path, mode="w")
-        status_queue: queue.SimpleQueue[StatusEvents] = queue.SimpleQueue()
+
+        if status_queue is None:
+            status_queue = queue.SimpleQueue()
 
         config_dict = everest_to_ert_config_dict(everest_config)
 
@@ -254,11 +257,13 @@ class EverestRunModel(BaseRunModel):
         everest_config: EverestConfig,
         simulation_callback: SimulationCallback | None = None,
         optimization_callback: OptimizerCallback | None = None,
+        status_queue: queue.SimpleQueue[StatusEvents] | None = None,
     ) -> EverestRunModel:
         return cls(
             everest_config=everest_config,
             simulation_callback=simulation_callback,
             optimization_callback=optimization_callback,
+            status_queue=status_queue,
         )
 
     @classmethod
