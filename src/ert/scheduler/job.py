@@ -4,6 +4,7 @@ import asyncio
 import hashlib
 import logging
 import time
+from collections import Counter
 from contextlib import suppress
 from enum import StrEnum
 from pathlib import Path
@@ -15,6 +16,7 @@ from pydantic_core._pydantic_core import ValidationError
 
 from _ert.events import Id, RealizationTimeout, event_from_dict
 from ert.callbacks import forward_model_ok
+from ert.config import ForwardModelStep
 from ert.constant_filenames import ERROR_file
 from ert.load_status import LoadStatus
 from ert.storage.realization_storage_state import RealizationStorageState
@@ -139,6 +141,9 @@ class Job:
             await self._send(JobState.RUNNING)
             if self.real.max_runtime is not None and self.real.max_runtime > 0:
                 timeout_task = asyncio.create_task(self._max_runtime_task())
+            if not self._scheduler.warnings_extracted:
+                self._scheduler.warnings_extracted = True
+                await log_warnings_from_forward_model(self.real)
 
             await self.returncode
 
@@ -349,3 +354,53 @@ def log_info_from_exit_file(exit_file_path: Path) -> None:
             *filecontents
         )
     )
+
+
+async def log_warnings_from_forward_model(real: Realization) -> None:
+    """Parse all stdout and stderr files from running the forward model
+    for anything that looks like a Warning, and log it.
+
+    This is not a critical task to perform, but it is critical not to crash
+    during this process."""
+
+    max_length = 2048  # Lines will be truncated in length when logged
+
+    def line_contains_warning(line: str) -> bool:
+        return (
+            "Warning:" in line
+            or "FutureWarning" in line
+            or "DeprecationWarning" in line
+            or "UserWarning" in line
+            or ":WARNING:" in line
+            or "- WARNING - " in line
+            or "- ERROR - " in line
+        )
+
+    async def log_warnings_from_file(  # noqa
+        file: Path, iens: int, step: ForwardModelStep, step_idx: int, filetype: str
+    ) -> None:
+        captured: list[str] = []
+        for line in file.read_text(encoding="utf-8").splitlines():
+            if line_contains_warning(line):
+                captured.append(line[:max_length])
+
+        for line, counter in Counter(captured).items():
+            logger.warning(
+                f"Realization {iens} step {step.name}.{step_idx} warned {counter} time(s) in {filetype}: {line}"
+            )
+
+    with suppress(KeyError):
+        runpath = Path(real.run_arg.runpath)
+        for step_idx, step in enumerate(real.fm_steps):
+            if step.stdout_file is not None:
+                stdout_file = runpath / f"{step.stdout_file}.{step_idx}"
+                if stdout_file.exists():
+                    await log_warnings_from_file(
+                        stdout_file, real.iens, step, step_idx, "stdout"
+                    )
+            if step.stderr_file is not None:
+                stderr_file = runpath / f"{step.stderr_file}.{step_idx}"
+                if stderr_file.exists():
+                    await log_warnings_from_file(
+                        stderr_file, real.iens, step, step_idx, "stderr"
+                    )

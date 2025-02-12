@@ -9,6 +9,7 @@ import pytest
 from lxml import etree
 
 import ert
+from ert.config import ForwardModelStep
 from ert.ensemble_evaluator import Realization
 from ert.load_status import LoadStatus
 from ert.run_arg import RunArg
@@ -18,6 +19,7 @@ from ert.scheduler.job import (
     Job,
     JobState,
     log_info_from_exit_file,
+    log_warnings_from_forward_model,
 )
 
 
@@ -384,3 +386,112 @@ async def test_log_info_from_garbled_exit_file(caplog):
     logs = caplog.text
     assert "job failed with invalid XML" in logs
     assert "'this is not XML'" in logs
+
+
+@pytest.mark.usefixtures("use_tmpdir")
+@pytest.mark.parametrize(
+    "emitted_warning_str, should_be_captured",
+    [
+        ("FutureWarning: Feature XYZ is deprecated", True),
+        ("DeprecationWarning: Feature XYZ is deprecated", True),
+        ("Warning: Feature XYZ is deprecated", True),
+        ("UserWarning: No metadata, skipping file", True),
+        ("PerformanceWarning: DataFrame is highly fragmented.", True),  # Pandas
+        (
+            "2025-02-12 20:20:25,876 - semeio.forward_models.design2params.design2params - WARNING - Design matrix contains empty cells",
+            True,
+        ),
+        (
+            "2025-02-12 21:38:06,992:WARNING:fmu.sumo.uploader:Metadata upload status error exception",
+            True,
+        ),
+        (
+            # Example from RMS.stdout
+            "Warning! Log KLOGHnet was missing in well 26/3-A-2 H",
+            False,
+        ),
+        (
+            # Example from Eclipse
+            " @--WARNING  AT TIME    11525.3   DAYS    ( 8-OCT-2058):",
+            False,
+        ),
+    ],
+)
+async def test_log_warnings_from_forward_model(
+    realization, caplog, emitted_warning_str, should_be_captured
+):
+    Path(realization.run_arg.runpath).mkdir()
+    (Path(realization.run_arg.runpath) / "foo.stdout.0").write_text(
+        emitted_warning_str, encoding="utf-8"
+    )
+    (Path(realization.run_arg.runpath) / "foo.stderr.0").write_text(
+        emitted_warning_str, encoding="utf-8"
+    )
+    realization.fm_steps = [
+        ForwardModelStep(
+            name="foo",
+            executable="foo",
+            stdout_file="foo.stdout",
+            stderr_file="foo.stderr",
+        )
+    ]
+    await log_warnings_from_forward_model(realization)
+    if should_be_captured:
+        assert (
+            f"Realization 0 step foo.0 warned 1 time(s) in stdout: {emitted_warning_str}"
+            in caplog.text
+        )
+        assert (
+            f"Realization 0 step foo.0 warned 1 time(s) in stderr: {emitted_warning_str}"
+            in caplog.text
+        )
+    else:
+        assert emitted_warning_str not in caplog.text
+
+
+@pytest.mark.usefixtures("use_tmpdir")
+async def test_long_warning_from_forward_model_is_truncated(realization, caplog):
+    emitted_warning_str = "FutureWarning: Feature XYZ is deprecated " + " ".join(
+        ["foo bar"] * 2000
+    )
+    Path(realization.run_arg.runpath).mkdir()
+    (Path(realization.run_arg.runpath) / "foo.stdout.0").write_text(
+        f"{emitted_warning_str}\n{emitted_warning_str}\n{emitted_warning_str}",
+        encoding="utf-8",
+    )
+    realization.fm_steps = [
+        ForwardModelStep(
+            name="foo",
+            executable="foo",
+            stdout_file="foo.stdout",
+        )
+    ]
+    await log_warnings_from_forward_model(realization)
+    for line in caplog.text.splitlines():
+        if "Realization 0 step foo.0 warned" in line:
+            assert len(line) <= 2048 + 91
+
+
+@pytest.mark.usefixtures("use_tmpdir")
+async def test_deduplication_of_repeated_warnings_from_forward_model(
+    realization, caplog
+):
+    emitted_warning_str = "FutureWarning: Feature XYZ is deprecated"
+    Path(realization.run_arg.runpath).mkdir()
+    (Path(realization.run_arg.runpath) / "foo.stdout.0").write_text(
+        f"{emitted_warning_str}\n{emitted_warning_str}\n{emitted_warning_str}",
+        encoding="utf-8",
+    )
+    realization.fm_steps = [
+        ForwardModelStep(
+            name="foo",
+            executable="foo",
+            stdout_file="foo.stdout",
+        )
+    ]
+    await log_warnings_from_forward_model(realization)
+    assert (
+        f"Realization 0 step foo.0 warned 3 time(s) in stdout: {emitted_warning_str}"
+        in caplog.text
+    )
+    assert caplog.text.count(emitted_warning_str) == 1
