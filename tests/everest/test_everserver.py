@@ -6,9 +6,6 @@ from pathlib import Path
 from unittest.mock import patch
 
 import pytest
-import requests
-from fastapi.encoders import jsonable_encoder
-from fastapi.responses import JSONResponse
 
 from ert.run_models.everest_run_model import EverestExitCode
 from ert.scheduler.event import FinishedEvent
@@ -21,12 +18,11 @@ from everest.detached import (
     wait_for_server,
 )
 from everest.detached.jobs import everserver
+from everest.detached.jobs.everserver import ExperimentComplete
 from everest.everest_storage import EverestStorage
-from everest.simulator import JOB_FAILURE, JOB_SUCCESS
+from everest.simulator import JOB_FAILURE
 from everest.strings import (
-    OPT_FAILURE_REALIZATIONS,
     SIM_PROGRESS_ENDPOINT,
-    STOP_ENDPOINT,
 )
 
 
@@ -56,36 +52,27 @@ def configure_everserver_logger(*args, **kwargs):
     raise Exception("Configuring logger failed")
 
 
-def check_status(*args, **kwargs):
-    everest_server_status_path = str(Path(args[0]).parent / "status")
-    status = everserver_status(everest_server_status_path)
-    assert status["status"] == kwargs["status"]
-
-
-def fail_optimization(self, from_ropt=False):
-    # Patch start_optimization to raise a failed optimization callback. Also
-    # call the provided simulation callback, which has access to the shared_data
-    # variable in the eversever main function. Patch that callback to modify
-    # shared_data (see set_shared_status() below).
-    self._sim_callback(None)
-    if from_ropt:
-        self._exit_code = EverestExitCode.TOO_FEW_REALIZATIONS
-        return EverestExitCode.TOO_FEW_REALIZATIONS
-
-    raise Exception("Failed optimization")
-
-
-def set_shared_status(*args, progress, shared_data):
-    # Patch _sim_monitor with this to access the shared_data variable in the
-    # everserver main function.
-    failed = len(
-        [job for queue in progress for job in queue if job["status"] == JOB_FAILURE]
-    )
-
+def fail_experiment_run(shared_data, server_config, msg_queue):
     shared_data[SIM_PROGRESS_ENDPOINT] = {
-        "status": {"failed": failed},
-        "progress": progress,
+        "status": {"failed": 3},
+        "progress": [
+            [
+                {"name": "job1", "status": JOB_FAILURE, "error": "job 1 error 1"},
+                {"name": "job1", "status": JOB_FAILURE, "error": "job 1 error 2"},
+            ],
+            [
+                {"name": "job2", "status": JOB_FAILURE, "error": "job 2 error 1"},
+            ],
+        ],
     }
+
+    msg_queue.put(
+        ExperimentComplete(
+            msg="Failed",
+            exit_code=EverestExitCode.TOO_FEW_REALIZATIONS,
+            data=shared_data,
+        )
+    )
 
 
 @pytest.mark.integration_test
@@ -124,7 +111,7 @@ def test_hostfile_storage(change_to_tmpdir):
     "everest.detached.jobs.everserver._configure_loggers",
     side_effect=configure_everserver_logger,
 )
-def test_configure_logger_failure(_, tmp_path, change_to_tmpdir):
+def test_configure_logger_failure(_, change_to_tmpdir):
     everserver.main()
     status = everserver_status(
         ServerConfig.get_everserver_status_path("everest_output")
@@ -136,94 +123,8 @@ def test_configure_logger_failure(_, tmp_path, change_to_tmpdir):
 
 @patch("sys.argv", ["name", "--output-dir", "everest_output"])
 @patch("everest.detached.jobs.everserver._configure_loggers")
-@patch("requests.get")
-def test_status_running_complete(mocked_get, _, change_to_tmpdir):
-    def mocked_server(url, verify, auth, timeout, proxies):
-        if "/experiment_status" in url:
-            return JSONResponse(
-                everserver.ExperimentStatus(
-                    exit_code=EverestExitCode.COMPLETED
-                ).model_dump_json()
-            )
-        if "/shared_data" in url:
-            return JSONResponse(
-                jsonable_encoder(
-                    {
-                        SIM_PROGRESS_ENDPOINT: {},
-                        STOP_ENDPOINT: False,
-                    }
-                )
-            )
-        resp = requests.Response()
-        resp.status_code = 200
-        return resp
-
-    mocked_get.side_effect = mocked_server
-
-    everserver.main()
-
-    status = everserver_status(
-        ServerConfig.get_everserver_status_path("everest_output")
-    )
-
-    assert status["status"] == ServerStatus.completed
-    assert status["message"] == "Optimization completed."
-
-
-@patch("sys.argv", ["name", "--output-dir", "everest_output"])
-@patch("everest.detached.jobs.everserver._configure_loggers")
-@patch("requests.get")
-def test_status_failed_job(mocked_get, _, change_to_tmpdir):
-    def mocked_server(url, verify, auth, timeout, proxies):
-        if "/experiment_status" in url:
-            return JSONResponse(
-                everserver.ExperimentStatus(
-                    exit_code=EverestExitCode.TOO_FEW_REALIZATIONS
-                ).model_dump_json()
-            )
-        if "/shared_data" in url:
-            return JSONResponse(
-                jsonable_encoder(
-                    {
-                        SIM_PROGRESS_ENDPOINT: {
-                            "status": {"failed": 3},
-                            "progress": [
-                                [
-                                    {
-                                        "name": "job1",
-                                        "status": JOB_FAILURE,
-                                        "error": "job 1 error 1",
-                                    },
-                                    {
-                                        "name": "job1",
-                                        "status": JOB_FAILURE,
-                                        "error": "job 1 error 2",
-                                    },
-                                ],
-                                [
-                                    {
-                                        "name": "job2",
-                                        "status": JOB_SUCCESS,
-                                        "error": "",
-                                    },
-                                    {
-                                        "name": "job2",
-                                        "status": JOB_FAILURE,
-                                        "error": "job 2 error 1",
-                                    },
-                                ],
-                            ],
-                        },
-                        STOP_ENDPOINT: False,
-                    }
-                )
-            )
-        resp = requests.Response()
-        resp.status_code = 200
-        return resp
-
-    mocked_get.side_effect = mocked_server
-
+@patch("everest.detached.jobs.everserver._everserver_thread", fail_experiment_run)
+def test_status_failed_job(_, change_to_tmpdir):
     everserver.main()
 
     status = everserver_status(
@@ -232,7 +133,6 @@ def test_status_failed_job(mocked_get, _, change_to_tmpdir):
 
     # The server should fail and store a user-friendly message.
     assert status["status"] == ServerStatus.failed
-    assert OPT_FAILURE_REALIZATIONS in status["message"]
     assert "job1 Failed with: job 1 error 1" in status["message"]
     assert "job1 Failed with: job 1 error 2" in status["message"]
     assert "job2 Failed with: job 2 error 1" in status["message"]
@@ -240,40 +140,16 @@ def test_status_failed_job(mocked_get, _, change_to_tmpdir):
 
 @patch("sys.argv", ["name", "--output-dir", "everest_output"])
 @patch("everest.detached.jobs.everserver._configure_loggers")
-@patch("requests.get")
-def test_status_exception(mocked_get, mocked_logger, change_to_tmpdir):
-    def mocked_server(url, verify, auth, timeout, proxies):
-        if "/experiment_status" in url:
-            return JSONResponse(
-                everserver.ExperimentStatus(
-                    exit_code=EverestExitCode.EXCEPTION, message="Some message"
-                ).model_dump_json()
-            )
-        if "/shared_data" in url:
-            return JSONResponse(
-                jsonable_encoder(
-                    {
-                        SIM_PROGRESS_ENDPOINT: {
-                            "status": {},
-                            "progress": [],
-                        },
-                        STOP_ENDPOINT: False,
-                    }
-                )
-            )
-        resp = requests.Response()
-        resp.status_code = 200
-        return resp
+async def test_status_exception(_, change_to_tmpdir, min_config):
+    config = EverestConfig(**min_config)
 
-    mocked_get.side_effect = mocked_server
-
-    everserver.main()
+    await wait_for_server_to_complete(config)
     status = everserver_status(
         ServerConfig.get_everserver_status_path("everest_output")
     )
 
     assert status["status"] == ServerStatus.failed
-    assert "Some message" in status["message"]
+    assert "Optimization failed:" in status["message"]
 
 
 @pytest.mark.integration_test

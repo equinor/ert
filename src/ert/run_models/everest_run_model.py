@@ -98,7 +98,6 @@ class EverestExitCode(IntEnum):
     MAX_FUNCTIONS_REACHED = 3
     MAX_BATCH_NUM_REACHED = 4
     USER_ABORT = 5
-    EXCEPTION = 6
 
 
 class EverestRunModel(BaseRunModel):
