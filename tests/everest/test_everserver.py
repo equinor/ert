@@ -52,6 +52,15 @@ def configure_everserver_logger(*args, **kwargs):
     raise Exception("Configuring logger failed")
 
 
+def experiment_run(shared_data, server_config, msg_queue):
+    msg_queue.put(
+        ExperimentComplete(
+            exit_code=EverestExitCode.COMPLETED,
+            data=shared_data,
+        )
+    )
+
+
 def fail_experiment_run(shared_data, server_config, msg_queue):
     shared_data[SIM_PROGRESS_ENDPOINT] = {
         "status": {"failed": 3},
@@ -119,6 +128,20 @@ def test_configure_logger_failure(_, change_to_tmpdir):
 
     assert status["status"] == ServerStatus.failed
     assert "Exception: Configuring logger failed" in status["message"]
+
+
+@patch("sys.argv", ["name", "--output-dir", "everest_output"])
+@patch("everest.detached.jobs.everserver._configure_loggers")
+@patch("everest.detached.jobs.everserver._everserver_thread", experiment_run)
+def test_status_running_complete(_, change_to_tmpdir):
+    everserver.main()
+
+    status = everserver_status(
+        ServerConfig.get_everserver_status_path("everest_output")
+    )
+
+    assert status["status"] == ServerStatus.completed
+    assert status["message"] == "Optimization completed."
 
 
 @patch("sys.argv", ["name", "--output-dir", "everest_output"])
