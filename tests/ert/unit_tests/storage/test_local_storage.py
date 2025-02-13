@@ -701,30 +701,40 @@ def test_asof_joining_summary(tmp_path, perturb_observations, perturb_responses)
             obs_keys, iens_active_index
         )
 
+        rng = np.random.default_rng(12345678)
+
         if perturb_responses:
             perturbed_summary = summary_df.with_columns(
                 pl.when(pl.arange(0, summary_df.height) % 2 != 0)
-                .then(pl.col("time") + pl.duration(milliseconds=500))
-                .otherwise(pl.col("time") - pl.duration(milliseconds=500))
+                .then(pl.col("time") + pl.duration(milliseconds=rng.random() * 500))
+                .otherwise(
+                    pl.col("time") - pl.duration(milliseconds=rng.random() * 500)
+                )
                 .alias("time")
             )
+            perturbed_summary = perturbed_summary.sort(by="time")
             ensemble.save_response("summary", perturbed_summary, 0)
 
         if perturb_observations:
             perturbed_observations = summary_observations.with_columns(
                 pl.when(pl.arange(0, summary_observations.height) % 2 != 0)
-                .then(pl.col("time") + pl.duration(milliseconds=500))
-                .otherwise(pl.col("time") - pl.duration(milliseconds=500))
+                .then(pl.col("time") + pl.duration(milliseconds=rng.random() * 500))
+                .otherwise(
+                    pl.col("time") - pl.duration(milliseconds=rng.random() * 500)
+                )
                 .alias("time")
             )
+            perturbed_observations = perturbed_observations.sort(by="time")
             experiment.observations["summary"] = perturbed_observations
 
         obs_and_responses_perturbed = ensemble.get_observations_and_responses(
             obs_keys, iens_active_index
         )
 
-        assert obs_and_responses_exact.drop("index").equals(
-            obs_and_responses_perturbed.drop("index")
+        assert (
+            obs_and_responses_exact.sort("response_key")
+            .drop("index")
+            .equals(obs_and_responses_perturbed.sort("response_key").drop("index"))
         )
 
 
