@@ -18,6 +18,8 @@ if TYPE_CHECKING:
 
 DESIGN_MATRIX_GROUP = "DESIGN_MATRIX"
 
+from ert.shared.status.utils import convert_to_numeric
+
 
 @dataclass
 class DesignMatrix:
@@ -319,10 +321,3 @@ class DesignMatrix:
             for _, row in default_df.iterrows()
             if row[0] not in existing_parameters
         }
-
-
-def convert_to_numeric(x: str) -> str | float:
-    try:
-        return pd.to_numeric(x)
-    except ValueError:
-        return x
