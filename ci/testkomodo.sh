@@ -13,7 +13,7 @@ copy_test_files() {
 }
 
 install_test_dependencies() {
-    pip install ".[dev, everest]"
+    pip install ".[dev]"
 }
 
 run_ert_with_opm() {
