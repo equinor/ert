@@ -5,6 +5,7 @@ import logging
 import os
 import shutil
 import tempfile
+import warnings
 from argparse import ArgumentParser
 from collections.abc import Callable, Mapping, Sequence
 from itertools import chain
@@ -56,7 +57,13 @@ class ErtPluginManager(pluggy.PluginManager):
         self.add_hookspecs(ert.plugins.hook_specifications)
         if plugins is None:
             self.register(ert.plugins.hook_implementations)
-            self.load_setuptools_entrypoints(_PLUGIN_NAMESPACE)
+            with warnings.catch_warnings():
+                # If a deprecated plugin is installed, it may not be possible
+                # for the user to avoid the FutureWarning, hence it should not be
+                # displayed. Warnings should be displayed and logged when deprecated
+                # plugins are actually used, not on every startup of Ert.
+                warnings.simplefilter("ignore", category=FutureWarning)
+                self.load_setuptools_entrypoints(_PLUGIN_NAMESPACE)
         else:
             for plugin in plugins:
                 self.register(plugin)
