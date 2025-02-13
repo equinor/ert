@@ -281,7 +281,6 @@ class EnsembleEvaluator:
                 else:
                     logger.error(f"Unexpected error when listening to messages: {e}")
             except asyncio.CancelledError:
-                self._router_socket.close()
                 return
 
     async def forward_checksum(self, event: Event) -> None:
