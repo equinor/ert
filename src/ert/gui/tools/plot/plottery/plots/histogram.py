@@ -9,6 +9,7 @@ import pandas as pd
 from matplotlib.patches import Rectangle
 
 from ert.gui.tools.plot.plot_api import EnsembleObject
+from ert.shared.status.utils import convert_to_numeric
 
 from .plot_tools import PlotTools
 
@@ -87,9 +88,7 @@ def plotHistogram(
 
         if data[ensemble.name].dtype == "object":
             try:
-                data[ensemble.name] = pd.to_numeric(
-                    data[ensemble.name], errors="ignore"
-                )
+                data[ensemble.name] = convert_to_numeric(data[ensemble.name])
             except AttributeError:
                 data[ensemble.name] = data[ensemble.name].convert_objects(
                     convert_numeric=True

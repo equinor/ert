@@ -4,6 +4,8 @@ import resource
 import sys
 from pathlib import Path
 
+import pandas as pd
+
 
 def byte_with_unit(byte_count: float) -> str:
     suffixes = ["B", "KB", "MB", "GB", "TB", "PB"]
@@ -92,3 +94,10 @@ def get_mount_directory(runpath: str) -> Path:
         path = path.parent
 
     return path
+
+
+def convert_to_numeric(x: str | pd.Series) -> str | float | pd.Series:
+    try:
+        return pd.to_numeric(x)
+    except ValueError:
+        return x
