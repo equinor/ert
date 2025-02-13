@@ -20,10 +20,7 @@ from typing import TYPE_CHECKING, Any, Protocol, cast
 import numpy as np
 
 from _ert.events import EESnapshot, EESnapshotUpdate, EETerminated, Event
-from ert.analysis import (
-    ErtAnalysisError,
-    smoother_update,
-)
+from ert.analysis import ErtAnalysisError, smoother_update
 from ert.analysis.event import (
     AnalysisCompleteEvent,
     AnalysisDataEvent,
@@ -600,6 +597,7 @@ class BaseRunModel(ABC):
         )
         await evaluator._server_started
         if not (await self.run_monitor(ee_config, ensemble.iteration)):
+            await evaluator_task
             return []
 
         logger.debug("observed that model was finished, waiting tasks completion...")
@@ -609,6 +607,7 @@ class BaseRunModel(ABC):
         if not self._end_queue.empty():
             logger.debug("Run model canceled - post evaluation")
             self._end_queue.get()
+            await evaluator_task
             return []
         await evaluator_task
         ensemble.refresh_ensemble_state()
