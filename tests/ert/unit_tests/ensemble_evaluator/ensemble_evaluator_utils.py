@@ -22,6 +22,7 @@ class TestEnsemble(Ensemble):
             )
             for real_no in range(reals)
         ]
+        self._cancellable = False
         super().__init__(the_reals, {}, QueueConfig(), 0, id_)
 
     async def evaluate(self, config, _, __):
@@ -29,4 +30,4 @@ class TestEnsemble(Ensemble):
 
     @property
     def cancellable(self) -> bool:
-        return False
+        return self._cancellable

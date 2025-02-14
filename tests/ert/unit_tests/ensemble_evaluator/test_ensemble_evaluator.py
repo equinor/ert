@@ -37,6 +37,7 @@ from ert.ensemble_evaluator import (
     FMStepSnapshot,
     Monitor,
 )
+from ert.ensemble_evaluator._ensemble import LegacyEnsemble
 from ert.ensemble_evaluator.evaluator import detect_overspent_cpu
 from ert.ensemble_evaluator.state import (
     ENSEMBLE_STATE_STARTED,
@@ -672,3 +673,75 @@ async def test_snapshot_on_resubmit_is_cleared(evaluator_to_use):
             assert snapshot.get_fm_step("0", "1")["status"] == FORWARD_MODEL_STATE_INIT
 
         await monitor.signal_done()
+
+
+@pytest.mark.integration_test
+async def test_signal_cancel_does_not_cause_evaluator_dispatcher_communication_to_hang(
+    evaluator_to_use, monkeypatch
+):
+    evaluator = evaluator_to_use
+    evaluator._batching_interval = 0.4
+    evaluator._max_batch_size = 1
+
+    kill_all_jobs_event = asyncio.Event()
+    started_cancelling_ensemble = asyncio.Event()
+
+    async def mock_never_ending_ensemble_cancel(*args, **kwargs):
+        nonlocal kill_all_jobs_event, started_cancelling_ensemble
+        started_cancelling_ensemble.set()
+        await kill_all_jobs_event.wait()
+
+    monkeypatch.setattr(LegacyEnsemble, "cancel", mock_never_ending_ensemble_cancel)
+    monkeypatch.setattr(Client, "DEFAULT_MAX_RETRIES", 1)
+    monkeypatch.setattr(Client, "DEFAULT_ACK_TIMEOUT", 1)
+    token = evaluator._config.token
+    url = evaluator._config.get_uri()
+    evaluator.ensemble._cancellable = True
+    async with Monitor(url, token) as monitor:
+        async with Client(url, token=token) as dispatch:
+            event = ForwardModelStepRunning(
+                ensemble=evaluator.ensemble.id_,
+                real="0",
+                fm_step="0",
+                current_memory_usage=1000,
+            )
+            await dispatch.send(event_to_json(event))
+
+            async def try_sending_event_from_dispatcher_while_monitor_is_cancelling_ensemble():
+                await started_cancelling_ensemble.wait()
+                event = ForwardModelStepSuccess(
+                    ensemble=evaluator.ensemble.id_,
+                    real="0",
+                    fm_step="0",
+                    current_memory_usage=1000,
+                )
+                await dispatch.send(event_to_json(event))
+                kill_all_jobs_event.set()
+
+            await asyncio.wait_for(
+                asyncio.gather(
+                    try_sending_event_from_dispatcher_while_monitor_is_cancelling_ensemble(),
+                    monitor.signal_cancel(),
+                ),
+                timeout=10,
+            )
+
+        def is_completed_snapshot(snapshot: EnsembleSnapshot) -> bool:
+            try:
+                assert (
+                    snapshot.get_fm_step("0", "0").get("status")
+                    == FORWARD_MODEL_STATE_FINISHED
+                )
+                return True
+            except AssertionError:
+                return False
+
+        was_completed = False
+        final_snapshot = EnsembleSnapshot()
+        async for event in monitor.track():
+            final_snapshot.update_from_event(event)
+            if is_completed_snapshot(final_snapshot):
+                was_completed = True
+                break
+
+        assert was_completed

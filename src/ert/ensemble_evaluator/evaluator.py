@@ -356,7 +356,12 @@ class EnsembleEvaluator:
         """
         if self._ensemble.cancellable:
             logger.debug("Cancelling current ensemble")
-            await self._ensemble.cancel()
+            self._ee_tasks.append(
+                asyncio.create_task(
+                    self._ensemble.cancel(), name="ensemble_cancellation_task"
+                )
+            )
+
         else:
             logger.debug("Stopping current ensemble")
             self.stop()
@@ -407,6 +412,7 @@ class EnsembleEvaluator:
                 elif task.get_name() in {
                     "ensemble_task",
                     "listener_task",
+                    "ensemble_cancellation_task",
                 }:
                     timeout = self.CLOSE_SERVER_TIMEOUT
                 else:
