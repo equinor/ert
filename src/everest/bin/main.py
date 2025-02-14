@@ -83,7 +83,10 @@ class EverestMain:
 
     def gui(self, _: list[str]) -> None:
         """Start the graphical user interface (Removed)"""
-        print("The gui command has been removed. Please use the run command instead.")
+        print(
+            "The gui command has been removed. "
+            "Please use the run command with the --gui option instead."
+        )
 
     def export(self, args: list[str]) -> None:
         """Export data from a completed optimization case"""
