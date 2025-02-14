@@ -9,6 +9,7 @@ import signal
 import threading
 from functools import partial
 
+from _ert.threading import ErtThread
 from ert.config import ErtConfig, QueueSystem
 from everest.config import EverestConfig, ServerConfig
 from everest.detached import (
@@ -83,6 +84,11 @@ def _build_args_parser() -> argparse.ArgumentParser:
         help="Run the optimization even though results are already available",
     )
     arg_parser.add_argument(
+        "--gui",
+        action="store_true",
+        help="Spawn a GUI monitoring simulation statuses.",
+    )
+    arg_parser.add_argument(
         "--debug", action="store_true", help="Display debug information in the terminal"
     )
     arg_parser.add_argument(
@@ -155,12 +161,31 @@ async def run_everest(options: argparse.Namespace) -> None:
             config=options.config,
         )
 
-        # blocks until the run is finished
-        run_detached_monitor(
-            server_context=ServerConfig.get_server_context(options.config.output_dir),
-            optimization_output_dir=options.config.optimization_output_dir,
-            show_all_jobs=options.show_all_jobs,
-        )
+        if options.gui:
+            from everest.gui.main import run_gui  # noqa
+
+            monitor_thread = ErtThread(
+                target=run_detached_monitor,
+                name="Everest CLI monitor thread",
+                args=[
+                    ServerConfig.get_server_context(options.config.output_dir),
+                    options.config.optimization_output_dir,
+                    options.show_all_jobs,
+                ],
+                daemon=True,
+            )
+            monitor_thread.start()
+            run_gui(options.config.config_path)
+            monitor_thread.join()
+        else:
+            # blocks until the run is finished
+            run_detached_monitor(
+                server_context=ServerConfig.get_server_context(
+                    options.config.output_dir
+                ),
+                optimization_output_dir=options.config.optimization_output_dir,
+                show_all_jobs=options.show_all_jobs,
+            )
 
         server_state = everserver_status(everserver_status_path)
         server_state_info = server_state["message"]
