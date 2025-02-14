@@ -174,7 +174,7 @@ class RunDialog(QFrame):
         config_file: str,
         run_model_api: BaseRunModelAPI,
         event_queue: SimpleQueue[StatusEvents],
-        notifier: ErtNotifier,
+        notifier: ErtNotifier | None = None,
         parent: QWidget | None = None,
         output_path: Path | None = None,
     ):
@@ -379,7 +379,9 @@ class RunDialog(QFrame):
 
         self._worker_thread.start()
         simulation_thread.start()
-        self._notifier.set_is_simulation_running(True)
+
+        if self._notifier is not None:
+            self._notifier.set_is_simulation_running(True)
 
     def killJobs(self) -> QMessageBox.StandardButton:
         msg = "Are you sure you want to terminate the currently running experiment?"
@@ -402,7 +404,10 @@ class RunDialog(QFrame):
         self.kill_button.setHidden(True)
         self.restart_button.setVisible(self._run_model_api.has_failed_realizations())
         self.restart_button.setEnabled(self._run_model_api.support_restart)
-        self._notifier.set_is_simulation_running(False)
+
+        if self._notifier is not None:
+            self._notifier.set_is_simulation_running(False)
+
         self.flag_simulation_done = True
         if failed:
             self.update_total_progress(1.0, "Failed")
