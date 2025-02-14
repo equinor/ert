@@ -34,6 +34,7 @@ from _ert.events import (
     RealizationUnknown,
     RealizationWaiting,
 )
+from _ert.forward_model_runner.fm_dispatch import FORWARD_MODEL_TERMINATED_MSG
 from ert.ensemble_evaluator import identifiers as ids
 from ert.ensemble_evaluator import state
 
@@ -411,6 +412,10 @@ class EnsembleSnapshot:
         fm_step_id: str,
         fm_step: FMStepSnapshot,
     ) -> EnsembleSnapshot:
+        if (
+            previous_error := self._fm_step_snapshots[real_id, fm_step_id].get("error")
+        ) and fm_step.get("error") == FORWARD_MODEL_TERMINATED_MSG:
+            fm_step["error"] = previous_error
         self._fm_step_snapshots[real_id, fm_step_id].update(fm_step)
         return self
 

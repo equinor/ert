@@ -11,6 +11,7 @@ from datetime import datetime
 
 from _ert.forward_model_runner import reporting
 from _ert.forward_model_runner.reporting.message import (
+    Exited,
     Finish,
     Message,
     ProcessTreeStatus,
@@ -25,6 +26,7 @@ FORWARD_MODEL_DESCRIPTION_FILE = "jobs.json"
 # yielding FileNotFoundError due to synchronization issues. This constant
 # determines how long we can wait for synchronization to happen:
 FILE_RETRY_TIME = 30
+FORWARD_MODEL_TERMINATED_MSG = "Forward model was terminated"
 
 logger = logging.getLogger(__name__)
 
@@ -104,7 +106,8 @@ def _read_fm_description_file(retry=True):
 
 
 def _report_all_messages(
-    messages: Generator[Message], reporters: list[reporting.Reporter]
+    messages: Generator[Message],
+    reporters: list[reporting.Reporter],
 ) -> None:
     for msg in messages:
         logger.info(f"Forward model status: {msg}")
@@ -127,16 +130,18 @@ def _report_all_messages(
             _stop_reporters_and_sigkill(reporters)
 
 
-def _stop_reporters_and_sigkill(reporters):
-    _stop_reporters(reporters)
+def _stop_reporters_and_sigkill(reporters, exited_event: Exited | None = None):
+    _stop_reporters(reporters, exited_event)
     pgid = os.getpgid(os.getpid())
     os.killpg(pgid, signal.SIGKILL)
 
 
-def _stop_reporters(reporters: Iterable[reporting.Reporter]) -> None:
+def _stop_reporters(
+    reporters: Iterable[reporting.Reporter], exited_event: Exited | None = None
+) -> None:
     for reporter in reporters:
         if isinstance(reporter, reporting.Event):
-            reporter.stop()
+            reporter.stop(exited_event=exited_event)
 
 
 def sigterm_handler(_signo, _stack_frame):
@@ -189,7 +194,14 @@ def fm_dispatch(args):
     )
 
     fm_runner = ForwardModelRunner(fm_description)
-    signal.signal(signal.SIGTERM, lambda _, __: _stop_reporters_and_sigkill(reporters))
+
+    def sigterm_handler(_signo, _stack_frame):
+        exited_event = Exited(
+            fm_runner._currently_running_step, exit_code=1
+        ).with_error(FORWARD_MODEL_TERMINATED_MSG)
+        _stop_reporters_and_sigkill(reporters, exited_event)
+
+    signal.signal(signal.SIGTERM, sigterm_handler)
     _report_all_messages(fm_runner.run(parsed_args.steps), reporters)
 
 
