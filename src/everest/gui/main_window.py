@@ -47,7 +47,17 @@ class EverestMainWindow(QMainWindow):
     def post_init(self) -> None:
         ever_config = EverestConfig.load_file(self.config_file)
         run_model = EverestRunModel.create(ever_config)
-        run_dialog = RunDialog(self.config_file, run_model_api=run_model.api)
+
+        # To be initialized here
+        event_queue = run_model._status_queue
+
+        run_dialog = RunDialog(
+            config_file=self.config_file,
+            run_model_api=run_model.api,
+            event_queue=event_queue,
+        )
+
+        run_dialog.run_experiment()
         self.central_layout.addWidget(run_dialog)
         self._run_dialog = run_dialog
 
