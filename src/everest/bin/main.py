@@ -111,7 +111,9 @@ class EverestMain:
 
     def gui(self, args):
         """Start the graphical user interface (Removed)"""
-        print("The gui command has been removed. Please use the run command instead.")
+        from everest.gui.main import run_gui  # noqa
+
+        run_gui(args)
 
     def export(self, args):
         """Export data from a completed optimization case"""
@@ -138,3 +140,7 @@ def start_everest(args=None):
     """Main entry point for the everest application"""
     args = args or sys.argv
     EverestMain(args)
+
+
+if __name__ == "__main__":
+    start_everest()

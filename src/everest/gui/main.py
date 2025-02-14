@@ -33,7 +33,8 @@ def run_gui(args: Namespace) -> None:
     )  # Early so that QT is initialized before other imports
     app.setWindowIcon(QIcon("img:ert_icon.svg"))
 
-    config_file = args[0]
+    # Add arg parser if we are to pass more opts
+    config_file = str(next(iter(args)))
 
     with add_gui_log_handler():
         window = EverestMainWindow(config_file)
