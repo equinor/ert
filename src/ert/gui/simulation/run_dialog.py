@@ -295,6 +295,8 @@ class RunDialog(QFrame):
         self._restart = False
         self.flag_simulation_done = False
 
+        self._latest_iteration = 0
+
     def is_simulation_done(self) -> bool:
         return self.flag_simulation_done
 
@@ -311,7 +313,8 @@ class RunDialog(QFrame):
     ) -> None:
         if not parent.isValid():
             index = self._snapshot_model.index(start, 0, parent)
-            iteration = cast(IterNode, index.internalPointer()).id_
+            iteration = int(cast(IterNode, index.internalPointer()).id_)
+            self._latest_iteration = iteration
             iter_row = start
             self._iteration_progress_label.setText(
                 f"Progress for iteration {iteration}"
@@ -511,6 +514,9 @@ class RunDialog(QFrame):
     def update_total_progress(
         self, progress_value: float, iteration_label: str, iteration: int | None = None
     ) -> None:
+        if iteration is None:
+            iteration = self._latest_iteration
+
         progress = int(progress_value * 100)
         if not (0 <= progress <= 100):
             logger = logging.getLogger(__name__)
