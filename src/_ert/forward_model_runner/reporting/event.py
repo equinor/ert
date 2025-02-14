@@ -87,7 +87,9 @@ class Event(Reporter):
             # can be finished but not all the events were sent yet
             self._finished_event_timeout = 600
 
-    def stop(self):
+    def stop(self, exited_event: Exited | None = None):
+        if exited_event:
+            self._statemachine.transition(exited_event)
         self._event_queue.put(Event._sentinel)
         self._done.set()
         if self._event_publisher_thread.is_alive():

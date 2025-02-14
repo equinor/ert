@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import asyncio
 import glob
 import json
 import os
@@ -16,8 +17,10 @@ import psutil
 import pytest
 
 import _ert.forward_model_runner.fm_dispatch
+from _ert.events import event_from_json
 from _ert.forward_model_runner.fm_dispatch import (
     FORWARD_MODEL_DESCRIPTION_FILE,
+    FORWARD_MODEL_TERMINATED_MSG,
     _report_all_messages,
     _setup_reporters,
     fm_dispatch,
@@ -405,3 +408,79 @@ def test_report_all_messages_drops_reporter_on_error():
 
     _report_all_messages(iter([message1, message2]), [reporter])
     reporter.report.assert_called_once_with(message1)
+
+
+@pytest.mark.integration_test
+async def test_fm_dispatch_sends_exited_event_with_terminated_msg_on_sigterm(
+    tmp_path, unused_tcp_port
+):
+    os.chdir(tmp_path)
+    with open("dummy_executable", "w", encoding="utf-8") as f:  # noqa: ASYNC230
+        f.write(
+            """#!/usr/bin/env python
+import time
+time.sleep(180)"""
+        )
+
+    executable = os.path.realpath("dummy_executable")
+    os.chmod("dummy_executable", stat.S_IRWXU | stat.S_IRWXO | stat.S_IRWXG)
+
+    fm_description = {
+        "ens_id": "_id_",
+        "dispatch_url": f"tcp://localhost:{unused_tcp_port}",
+        "jobList": [
+            {
+                "name": "dummy_executable",
+                "executable": executable,
+                "stdout": "dummy.stdout",
+                "stderr": "dummy.stderr",
+            }
+        ],
+    }
+
+    with open(FORWARD_MODEL_DESCRIPTION_FILE, "w", encoding="utf-8") as f:  # noqa: ASYNC230
+        f.write(json.dumps(fm_description))
+
+    # macOS doesn't provide /usr/bin/setsid, so we roll our own
+    with open("setsid", "w", encoding="utf-8") as f:  # noqa: ASYNC230
+        f.write(
+            dedent(
+                """\
+            #!/usr/bin/env python
+            import os
+            import sys
+            os.setsid()
+            os.execvp(sys.argv[1], sys.argv[1:])
+            """
+            )
+        )
+    os.chmod("setsid", 0o755)
+
+    async with MockZMQServer(unused_tcp_port) as zmq_server:
+        fm_dispatch_process = Popen(  # noqa: ASYNC220
+            [
+                os.getcwd() + "/setsid",
+                "fm_dispatch.py",
+                os.getcwd(),
+            ]
+        )
+        p = psutil.Process(fm_dispatch_process.pid)
+
+        async def wait_for_msg(msg_type):
+            while True:
+                await asyncio.sleep(0.5)
+                if any(
+                    msg_type in event_from_json(msg).event_type
+                    for msg in zmq_server.messages
+                ):
+                    return
+
+        # wait for fm running
+        await asyncio.wait_for(wait_for_msg("forward_model_step.running"), timeout=10)
+        p.terminate()
+        # wait for fm_dispatch has been terminated, and sends failure message
+        await asyncio.wait_for(wait_for_msg("forward_model_step.failure"), timeout=10)
+        assert (
+            event_from_json(zmq_server.messages[-1]).error_msg
+            == FORWARD_MODEL_TERMINATED_MSG
+        )
