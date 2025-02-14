@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import glob
-import importlib
 import json
 import os
 import signal
@@ -99,15 +98,11 @@ else:
         )
     os.chmod("setsid", 0o755)
 
-    fm_dispatch_script = importlib.util.find_spec(
-        "_ert.forward_model_runner.fm_dispatch"
-    ).origin
     # (we wait for the process below)
     fm_dispatch_process = Popen(
         [
             os.getcwd() + "/setsid",
-            sys.executable,
-            fm_dispatch_script,
+            "fm_dispatch.py",
             os.getcwd(),
         ]
     )
@@ -259,15 +254,11 @@ def test_fm_dispatch_run_subset_specified_as_parameter():
         )
     os.chmod("setsid", 0o755)
 
-    fm_dispatch_script = importlib.util.find_spec(
-        "_ert.forward_model_runner.fm_dispatch"
-    ).origin
     # (we wait for the process below)
     fm_dispatch_process = Popen(
         [
             os.getcwd() + "/setsid",
-            sys.executable,
-            fm_dispatch_script,
+            "fm_dispatch.py",
             os.getcwd(),
             "step_B",
             "step_C",
