@@ -23,7 +23,7 @@ def test_export_misfit(snake_oil_default_storage, snapshot):
     )
 
 
-def test_export_misfit_no_responses_in_storage(poly_case, new_ensemble):
+def test_export_misfit_no_responses_in_storage(new_ensemble):
     with pytest.raises(StorageError, match="No responses loaded"):
         ExportMisfitDataJob().run(new_ensemble, [])
 
