@@ -150,13 +150,13 @@ class Client:
                 self.term()
                 raise
 
-            retries -= 1
             if retries > 0:
                 logger.info(f"Retrying... ({retries} attempts left)")
                 await asyncio.sleep(backoff)
                 # this call is idempotent
                 self.socket.connect(self.url)
                 backoff = min(backoff * 2, 10)  # Exponential backoff
+            retries -= 1
         raise ClientConnectionError(
             f"{self.dealer_id} Failed to send {message!r} to {self.url} after retries!"
         )
