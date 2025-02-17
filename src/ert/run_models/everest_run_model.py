@@ -454,6 +454,46 @@ class EverestRunModel(BaseRunModel):
             and (active_control_vectors is None or active_control_vectors[idx])
         ]
 
+        if not evaluated_control_indices:
+            cached_results = self._get_cached_results(
+                control_values, model_realizations
+            )
+
+            objectives = np.zeros(
+                (
+                    control_values.shape[0],
+                    len(self._everest_config.objective_names),
+                ),
+                dtype=float64,
+            )
+
+            constraints = (
+                np.zeros(
+                    (
+                        control_values.shape[0],
+                        len(self._everest_config.constraint_names),
+                    ),
+                    dtype=float64,
+                )
+                if self._everest_config.constraint_names
+                else None
+            )
+
+            for control_idx, (
+                cached_objectives,
+                cached_constraints,
+            ) in cached_results.items():
+                objectives[control_idx, ...] = cached_objectives
+                if constraints is not None:
+                    assert cached_constraints is not None
+                    constraints[control_idx, ...] = cached_constraints
+
+                # Increase the batch ID for the next evaluation:
+            self._batch_id += 1
+
+            # Return the results, together with the indices of the evaluated controls:
+            return objectives, constraints, evaluated_control_indices
+
         # Create the batch to run:
         sim_controls = self._create_simulation_controls(
             control_values, evaluated_control_indices
