@@ -553,11 +553,8 @@ and environment variables are exposed in the form 'os.NAME', for example:
         return levels.get(level.lower(), logging.INFO)
 
     @property
-    def config_directory(self) -> str | None:
-        if self.config_path is not None:
-            return str(self.config_path.parent)
-
-        return None
+    def config_directory(self) -> str:
+        return str(self.config_path.parent)
 
     @property
     def config_file(self) -> str:
