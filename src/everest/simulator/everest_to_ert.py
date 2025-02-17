@@ -142,7 +142,7 @@ def _extract_environment(
     ever_config: EverestConfig, ert_config: dict[str, Any]
 ) -> None:
     simulation_fmt = os.path.join(
-        "<BATCH_NAME>", "geo_realization_<GEO_ID>", SIMULATION_DIR
+        "batch_<ITER>", "geo_realization_<GEO_ID>", SIMULATION_DIR
     )
 
     assert ever_config.simulation_dir is not None
