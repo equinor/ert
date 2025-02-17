@@ -560,10 +560,8 @@ and environment variables are exposed in the form 'os.NAME', for example:
         return None
 
     @property
-    def config_file(self) -> str | None:
-        if self.config_path is not None:
-            return self.config_path.name
-        return None
+    def config_file(self) -> str:
+        return self.config_path.name
 
     @property
     def output_dir(self) -> str:
