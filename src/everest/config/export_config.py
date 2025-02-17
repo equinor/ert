@@ -3,7 +3,7 @@ from pydantic import BaseModel, Field, field_validator
 from everest.config.validation_utils import check_writable_filepath
 
 
-class ExportConfig(BaseModel, extra="forbid"):  # type: ignore
+class ExportConfig(BaseModel, extra="forbid"):
     csv_output_filepath: str | None = Field(
         default=None,
         description="""Specifies which file to write the export to.
@@ -36,6 +36,8 @@ class ExportConfig(BaseModel, extra="forbid"):  # type: ignore
 
     @field_validator("csv_output_filepath", mode="before")
     @classmethod
-    def validate_output_file_writable(cls, csv_output_filepath):  # pylint:disable=E0213
+    def validate_output_file_writable(
+        cls, csv_output_filepath: str | None
+    ) -> str | None:
         check_writable_filepath(csv_output_filepath)
         return csv_output_filepath
