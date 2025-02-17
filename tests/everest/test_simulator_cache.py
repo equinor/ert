@@ -7,7 +7,7 @@ from everest.config import EverestConfig
 
 
 @pytest.mark.integration_test
-def test_simulator_cache(copy_math_func_test_data_to_tmp):
+def test_simulator_cache(copy_math_func_test_data_to_tmp, benchmark):
     n_evals = 0
 
     def new_call(*args):
@@ -39,7 +39,7 @@ def test_simulator_cache(copy_math_func_test_data_to_tmp):
     # The batch_id was used as a stopping criterion, so it must be reset:
     run_model._batch_id = 0
 
-    run_model.run_experiment(evaluator_server_config)
+    benchmark(run_model.run_experiment, evaluator_server_config)
     assert n_evals == 0
     variables2 = list(run_model.result.controls.values())
     assert np.array_equal(variables1, variables2)
