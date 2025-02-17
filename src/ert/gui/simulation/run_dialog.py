@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import dataclasses
 import logging
 from pathlib import Path
 from queue import SimpleQueue
@@ -58,7 +59,12 @@ from ert.run_models import (
     RunModelUpdateEndEvent,
     StatusEvents,
 )
-from ert.run_models.event import RunModelDataEvent, RunModelErrorEvent
+from ert.run_models.event import (
+    EverestBatchResultEvent,
+    EverestStatusEvent,
+    RunModelDataEvent,
+    RunModelErrorEvent,
+)
 from ert.shared.status.utils import (
     byte_with_unit,
     file_has_content,
@@ -165,6 +171,12 @@ class FMStepOverview(QTableView):
         return super().mouseMoveEvent(e)
 
 
+@dataclasses.dataclass
+class _BatchResultInfo:
+    is_gradient: bool = False
+    is_function: bool = False
+
+
 class RunDialog(QFrame):
     simulation_done = Signal(bool, str)
     progress_update_event = Signal(dict, int)
@@ -198,6 +210,9 @@ class RunDialog(QFrame):
         self._ticker.timeout.connect(self._on_ticker)
 
         self._is_everest = is_everest
+
+        if is_everest:
+            self._batch_result_infos: list[_BatchResultInfo] = []
 
         self._total_progress_label = QLabel(
             _TOTAL_PROGRESS_TEMPLATE.format(
@@ -325,15 +340,19 @@ class RunDialog(QFrame):
             widget = RealizationWidget(iter_row)
             widget.setSnapshotModel(self._snapshot_model)
             widget.itemClicked.connect(self._select_real)
+            widget.setProperty("identifier", f"tab-iter-{iteration}")
             self._select_real(widget._real_list_model.index(0, 0))
             tab_index = self._tab_widget.addTab(
                 widget,
                 f"Realizations for iteration {iteration}"
                 if not self._is_everest
-                else f"Simulations for batch {iteration}",
+                else f"Batch {iteration}...",
             )
             if self._tab_widget.currentIndex() == self._tab_widget.count() - 2:
                 self._tab_widget.setCurrentIndex(tab_index)
+
+            if self._is_everest:
+                self._batch_result_infos.append(_BatchResultInfo())
 
     @Slot(QModelIndex)
     def _select_real(self, index: QModelIndex) -> None:
@@ -503,6 +522,27 @@ class RunDialog(QFrame):
             case RunModelErrorEvent():
                 self._get_update_widget(event.iteration).error(event)
                 event.write_as_csv(self.output_path)
+            case EverestStatusEvent():
+                print(event)
+            case EverestBatchResultEvent():
+                result_info = self._batch_result_infos[event.batch]
+
+                if event.result_type == "FunctionResult":
+                    print(f"batch={event.batch}, got a function result")
+                    result_info.is_gradient = True
+
+                if event.result_type == "GradientResult":
+                    print(f"batch={event.batch}, got a gradient result")
+                    result_info.is_function = True
+
+                tab_text = f" Batch {event.batch}: " + (
+                    "fn+∇"
+                    if (result_info.is_function and result_info.is_gradient)
+                    else "∇"
+                    if result_info.is_gradient
+                    else "fn"
+                )
+                self._tab_widget.setTabText(event.batch, tab_text)
 
     def _get_update_widget(self, iteration: int) -> UpdateWidget:
         for i in range(self._tab_widget.count()):
