@@ -6,10 +6,10 @@ import os
 import re
 import time
 import traceback
-from collections.abc import Mapping
+from collections.abc import Callable, Mapping
 from enum import Enum
 from pathlib import Path
-from typing import Literal
+from typing import Any, Literal
 
 import polars as pl
 import requests
@@ -48,7 +48,7 @@ async def start_server(
     """
     Start an Everest server running the optimization defined in the config
     """
-    driver = create_driver(config.server.queue_system)
+    driver = create_driver(config.server.queue_system)  # type: ignore
     try:
         args = [
             "--output-dir",
@@ -116,7 +116,7 @@ def start_experiment(
     raise RuntimeError("Failed to start experiment")
 
 
-def extract_errors_from_file(path: str):
+def extract_errors_from_file(path: str) -> list[str]:
     with open(path, encoding="utf-8") as f:
         content = f.read()
     return re.findall(r"(Error \w+.*)", content)
@@ -138,7 +138,7 @@ def wait_for_server(output_dir: str, timeout: int | float) -> None:
     raise RuntimeError("Failed to get reply from server within configured timeout.")
 
 
-def get_opt_status(output_folder):
+def get_opt_status(output_folder: str) -> dict[str, Any]:
     """Return a dictionary with optimization information retrieved from storage"""
     if not Path(output_folder).exists() or not os.listdir(output_folder):
         return {}
@@ -150,7 +150,8 @@ def get_opt_status(output_folder):
         # Optimization output dir exists and not empty, but still missing
         # actual stored results
         return {}
-
+    assert storage.data.objective_functions is not None
+    assert storage.data.controls is not None
     objective_names = storage.data.objective_functions["objective_name"].to_list()
     control_names = storage.data.controls["control_name"].to_list()
 
@@ -200,7 +201,9 @@ def get_opt_status(output_folder):
     }
 
 
-def wait_for_server_to_stop(server_context: tuple[str, str, tuple[str, str]], timeout):
+def wait_for_server_to_stop(
+    server_context: tuple[str, str, tuple[str, str]], timeout: int
+) -> None:
     """
     Checks everest server has stopped _HTTP_REQUEST_RETRY times. Waits
     progressively longer between each check.
@@ -220,7 +223,7 @@ def wait_for_server_to_stop(server_context: tuple[str, str, tuple[str, str]], ti
         raise Exception("Failed to stop server within configured timeout.")
 
 
-def server_is_running(url: str, cert: str, auth: tuple[str, str]):
+def server_is_running(url: str, cert: str, auth: tuple[str, str]) -> bool:
     try:
         logging.info(f"Checking server status at {url} ")
         response = requests.get(
@@ -238,8 +241,10 @@ def server_is_running(url: str, cert: str, auth: tuple[str, str]):
 
 
 def start_monitor(
-    server_context: tuple[str, str, tuple[str, str]], callback, polling_interval=5
-):
+    server_context: tuple[str, str, tuple[str, str]],
+    callback: Callable[..., dict[str, Any]],
+    polling_interval: int = 5,
+) -> None:
     """
     Checks status on Everest server and calls callback when status changes
 
@@ -250,8 +255,8 @@ def start_monitor(
     sim_endpoint = "/".join([url, SIM_PROGRESS_ENDPOINT])
     opt_endpoint = "/".join([url, OPT_PROGRESS_ENDPOINT])
 
-    sim_status: dict = {}
-    opt_status: dict = {}
+    sim_status: dict[str, Any] = {}
+    opt_status: dict[str, Any] = {}
     stop = False
 
     try:
@@ -275,12 +280,12 @@ def start_monitor(
 
 
 _EVERSERVER_JOB_PATH = str(
-    Path(importlib.util.find_spec("everest.detached").origin).parent
+    Path(importlib.util.find_spec("everest.detached").origin).parent  # type: ignore
     / os.path.join("jobs", EVEREST_SERVER_CONFIG)
 )
 
 
-_QUEUE_SYSTEMS: Mapping[Literal["LSF", "SLURM", "TORQUE"], dict] = {
+_QUEUE_SYSTEMS: Mapping[Literal["LSF", "SLURM", "TORQUE"], dict[str, Any]] = {
     "LSF": {
         "options": [("options", "LSF_RESOURCE")],
         "name": "LSF_QUEUE",
@@ -296,9 +301,9 @@ _QUEUE_SYSTEMS: Mapping[Literal["LSF", "SLURM", "TORQUE"], dict] = {
 }
 
 
-def _query_server(cert, auth, endpoint):
+def _query_server(cert: str, auth: tuple[str, str], endpoint: str) -> dict[str, Any]:
     """Retrieve data from an endpoint as a dictionary"""
-    response = requests.get(endpoint, verify=cert, auth=auth, proxies=PROXY)
+    response = requests.get(endpoint, verify=cert, auth=auth, proxies=PROXY)  # type: ignore
     response.raise_for_status()
     return response.json()
 
@@ -319,13 +324,13 @@ class ServerStatusEncoder(json.JSONEncoder):
     """Facilitates encoding and decoding the server status enum object to
     and from a json file"""
 
-    def default(self, o):
+    def default(self, o: ServerStatus | None) -> dict[str, str]:
         if type(o) is ServerStatus:
             return {"__enum__": str(o)}
         return json.JSONEncoder.default(self, o)
 
     @staticmethod
-    def decode(obj):
+    def decode(obj: dict[str, str]) -> dict[str, str]:
         if "__enum__" in obj:
             _, member = obj["__enum__"].split(".")
             return getattr(ServerStatus, member)
@@ -335,7 +340,7 @@ class ServerStatusEncoder(json.JSONEncoder):
 
 def update_everserver_status(
     everserver_status_path: str, status: ServerStatus, message: str | None = None
-):
+) -> None:
     """Update the everest server status with new status information"""
     new_status = {"status": status, "message": message}
     path = everserver_status_path
@@ -356,7 +361,7 @@ def update_everserver_status(
             json.dump(new_status, outfile, cls=ServerStatusEncoder)
 
 
-def everserver_status(everserver_status_path: str):
+def everserver_status(everserver_status_path: str) -> dict[str, Any]:
     """Returns a dictionary representing the everest server status. If the
     status file is not found we assume the server has never ran before, and will
     return a status of ServerStatus.never_run

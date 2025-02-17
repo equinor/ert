@@ -84,8 +84,8 @@ class ExperimentFailed(EverestServerMsg):
 class ExperimentRunner(threading.Thread):
     def __init__(
         self,
-        everest_config,
-        shared_data: dict,
+        everest_config: EverestConfig,
+        shared_data: dict[str, Any],
         msg_queue: SimpleQueue[EverestServerMsg],
     ):
         super().__init__()
@@ -94,7 +94,7 @@ class ExperimentRunner(threading.Thread):
         self._shared_data = shared_data
         self._msg_queue = msg_queue
 
-    def run(self):
+    def run(self) -> None:
         try:
             run_model = EverestRunModel.create(
                 self._everest_config,
@@ -150,9 +150,9 @@ def _get_machine_name() -> str:
         return "localhost"
 
 
-def _sim_monitor(context_status, shared_data=None):
-    assert shared_data is not None
-
+def _sim_monitor(
+    context_status: dict[str, Any], shared_data: dict[str, Any]
+) -> str | None:
     status_ = context_status["status"]
     shared_data[SIM_PROGRESS_ENDPOINT] = {
         "batch_number": context_status["batch_number"],
@@ -168,18 +168,23 @@ def _sim_monitor(context_status, shared_data=None):
 
     if shared_data[STOP_ENDPOINT]:
         return "stop_queue"
+    return None
 
 
-def _opt_monitor(shared_data=None):
-    assert shared_data is not None
+def _opt_monitor(shared_data: dict[str, Any]) -> str | None:
     if shared_data[STOP_ENDPOINT]:
         return "stop_optimization"
+    return None
 
 
-def _everserver_thread(shared_data, server_config, msg_queue) -> None:
+def _everserver_thread(
+    shared_data: dict[str, Any],
+    server_config: dict[str, Any],
+    msg_queue: SimpleQueue[EverestServerMsg],
+) -> None:
     # ruff: noqa: RUF029
     @asynccontextmanager
-    async def lifespan(app: FastAPI):
+    async def lifespan(app: FastAPI):  # type: ignore
         # Startup event
         msg_queue.put(ServerStarted())
         yield
@@ -271,7 +276,7 @@ def _everserver_thread(shared_data, server_config, msg_queue) -> None:
     )
 
 
-def _find_open_port(host, lower, upper) -> int:
+def _find_open_port(host: str, lower: int, upper: int) -> int:
     # Making the port selection random does not fix the problem that an
     # everserver might be assigned a port that another everserver in the process
     # of shutting down already have.
@@ -295,7 +300,9 @@ def _find_open_port(host, lower, upper) -> int:
     raise Exception(msg)
 
 
-def _write_hostfile(host_file_path, host, port, cert, auth) -> None:
+def _write_hostfile(
+    host_file_path: str, host: str, port: int, cert: str, auth: str
+) -> None:
     if not os.path.exists(os.path.dirname(host_file_path)):
         os.makedirs(os.path.dirname(host_file_path))
     data = {
@@ -314,7 +321,7 @@ def _configure_loggers(detached_dir: Path, log_dir: Path, logging_level: int) ->
     def make_handler_config(
         path: Path, log_level: str | int = "INFO"
     ) -> dict[str, Any]:
-        makedirs_if_needed(path.parent)
+        makedirs_if_needed(str(path.parent))
         return {
             "class": "logging.FileHandler",
             "formatter": "default",
@@ -348,7 +355,7 @@ def _configure_loggers(detached_dir: Path, log_dir: Path, logging_level: int) ->
     EverestPluginManager().add_log_handle_to_root()
 
 
-def main():
+def main() -> None:
     arg_parser = argparse.ArgumentParser()
     arg_parser.add_argument("--output-dir", "-o", type=str)
     arg_parser.add_argument("--logging-level", "-l", type=int, default=logging.INFO)
@@ -434,7 +441,7 @@ def main():
 
 
 def _get_optimization_status(
-    exit_code: EverestExitCode, shared_data: dict
+    exit_code: EverestExitCode, shared_data: dict[str, Any]
 ) -> tuple[ServerStatus, str]:
     match exit_code:
         case EverestExitCode.MAX_BATCH_NUM_REACHED:
@@ -463,7 +470,7 @@ def _get_optimization_status(
             return ServerStatus.completed, "Optimization completed."
 
 
-def _failed_realizations_messages(shared_data):
+def _failed_realizations_messages(shared_data: dict[str, Any]) -> list[str]:
     messages = [OPT_FAILURE_REALIZATIONS]
     failed = shared_data[SIM_PROGRESS_ENDPOINT]["status"]["failed"]
     if failed > 0:
@@ -477,7 +484,7 @@ def _failed_realizations_messages(shared_data):
     return messages
 
 
-def _generate_certificate(cert_folder: str):
+def _generate_certificate(cert_folder: str) -> tuple[str, str, bytes]:
     """Generate a private key and a certificate signed with it
 
     Both the certificate and the key are written to files in the folder given
@@ -537,7 +544,7 @@ def _generate_certificate(cert_folder: str):
     return cert_path, key_path, pw
 
 
-def _generate_authentication():
+def _generate_authentication() -> str:
     n_bytes = 128
     random_bytes = bytes(os.urandom(n_bytes))
     return b64encode(random_bytes).decode("utf-8")
