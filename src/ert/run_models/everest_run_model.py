@@ -504,6 +504,7 @@ class EverestRunModel(BaseRunModel):
         ensemble = self._experiment.create_ensemble(
             name=f"batch_{self._batch_id}",
             ensemble_size=len(evaluated_control_indices),
+            iteration=self._batch_id,
         )
         for sim_id, controls in enumerate(sim_controls.values()):
             self._setup_sim(sim_id, controls, ensemble)
@@ -701,10 +702,11 @@ class EverestRunModel(BaseRunModel):
         evaluated_control_indices: list[int],
     ) -> list[RunArg]:
         substitutions = self._substitutions
-        substitutions["<BATCH_NAME>"] = ensemble.name
         self.active_realizations = [True] * len(evaluated_control_indices)
         for sim_id, control_idx in enumerate(evaluated_control_indices):
-            substitutions[f"<GEO_ID_{sim_id}_0>"] = str(model_realizations[control_idx])
+            substitutions[f"<GEO_ID_{sim_id}_{ensemble.iteration}>"] = str(
+                model_realizations[control_idx]
+            )
         run_paths = Runpaths(
             jobname_format=self._model_config.jobname_format_string,
             runpath_format=self._model_config.runpath_format_string,

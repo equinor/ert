@@ -7,6 +7,7 @@ import yaml
 
 from ert.ensemble_evaluator.config import EvaluatorServerConfig
 from ert.run_models.everest_run_model import EverestRunModel
+from ert.storage import open_storage
 from everest.config import EverestConfig
 from everest.everest_storage import EverestStorage
 from everest.util import makedirs_if_needed
@@ -222,3 +223,11 @@ def test_math_func_auto_scaled_constraints(copy_math_func_test_data_to_tmp):
         np.fromiter(result1.controls.values(), dtype=np.float64),
         np.fromiter(result2.controls.values(), dtype=np.float64),
     )
+
+
+@pytest.mark.integration_test
+def test_ensemble_creation(cached_example):
+    cached_example("math_func/config_advanced.yml")
+    with open_storage("everest_output/simulation_results", "r") as storage:
+        ensembles = storage.ensembles
+        assert sorted(ensemble.iteration for ensemble in ensembles) == sorted(range(6))
