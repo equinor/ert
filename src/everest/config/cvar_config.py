@@ -1,7 +1,9 @@
+from typing import Any
+
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 
-class CVaRConfig(BaseModel):  # type: ignore
+class CVaRConfig(BaseModel):
     number_of_realizations: int | None = Field(
         default=None,
         description="""The number of realizations used for CVaR estimation.
@@ -25,9 +27,13 @@ This option is exclusive with the **number_of_realizations** option.
         """,
     )
 
+    model_config = ConfigDict(
+        extra="forbid",
+    )
+
     @model_validator(mode="before")
     @classmethod
-    def validate_mutex_nreals_percentile(cls, values):  # pylint: disable=E0213
+    def validate_mutex_nreals_percentile(cls, values: dict[str, Any]) -> dict[str, Any]:
         has_nreals = values.get("number_of_realizations") is not None
         has_percentile = values.get("percentile") is not None
 
@@ -38,7 +44,3 @@ This option is exclusive with the **number_of_realizations** option.
             )
 
         return values
-
-    model_config = ConfigDict(
-        extra="forbid",
-    )

@@ -5,7 +5,7 @@ from pydantic import BaseModel, Field, PositiveFloat, field_validator, model_val
 from ert.config.parsing import ConfigWarning
 
 
-class ObjectiveFunctionConfig(BaseModel, extra="forbid"):  # type: ignore
+class ObjectiveFunctionConfig(BaseModel, extra="forbid"):
     name: str = Field()
     alias: str | None = Field(
         default=None,
@@ -79,7 +79,7 @@ preferred to be maximized.
 
     @field_validator("scale")
     @classmethod
-    def validate_scale_is_not_zero(cls, scale) -> float | None:
+    def validate_scale_is_not_zero(cls, scale: float | None) -> float | None:
         if scale == 0.0:
             raise ValueError("Scale value cannot be zero")
         return scale
