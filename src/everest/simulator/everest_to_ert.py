@@ -218,7 +218,7 @@ def _fetch_everest_jobs(ever_config: EverestConfig) -> list[Any]:
     Job = collections.namedtuple("Job", ["name", "source"])
     all_jobs = everest.jobs.script_names
     for default_job in all_jobs:
-        script = everest.jobs.fetch_script(default_job)  # type: ignore
+        script = everest.jobs.fetch_script(default_job)
         job_spec_file = os.path.join(job_storage, "_" + default_job)
         with open(job_spec_file, "w", encoding="utf-8") as f:
             f.write(f"EXECUTABLE {script}")

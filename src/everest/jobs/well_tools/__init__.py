@@ -1,10 +1,11 @@
 import datetime
 import json
+from typing import Any
 
 import everest
 
 
-def well_reorder(well_data_file, well_order_file, output_file):
+def well_reorder(well_data_file: str, well_order_file: str, output_file: str) -> None:
     well_data = everest.jobs.io.load_data(well_data_file)
     well_order = everest.jobs.io.load_data(well_order_file)
     well_data.sort(key=lambda well: well_order.index(well["name"]))
@@ -13,7 +14,7 @@ def well_reorder(well_data_file, well_order_file, output_file):
         json.dump(well_data, fout)
 
 
-def well_filter(well_data_file, well_filter_file, output_file):
+def well_filter(well_data_file: str, well_filter_file: str, output_file: str) -> None:
     well_data = everest.jobs.io.load_data(well_data_file)
     well_filter = everest.jobs.io.load_data(well_filter_file)
     well_data = [
@@ -24,7 +25,9 @@ def well_filter(well_data_file, well_filter_file, output_file):
         json.dump(well_data, fout)
 
 
-def well_update(master_data_file, additional_data_files, output_file):
+def well_update(
+    master_data_file: str, additional_data_files: list[str], output_file: str
+) -> None:
     well_data = everest.jobs.io.load_data(master_data_file)
 
     for add_data_file in additional_data_files:
@@ -38,7 +41,7 @@ def well_update(master_data_file, additional_data_files, output_file):
         json.dump(well_data, fout)
 
 
-def well_set(well_data_file, new_entry_file, output_file):
+def well_set(well_data_file: str, new_entry_file: str, output_file: str) -> None:
     well_data = everest.jobs.io.load_data(well_data_file)
     new_entry = everest.jobs.io.load_data(new_entry_file)
 
@@ -67,8 +70,10 @@ def well_set(well_data_file, new_entry_file, output_file):
         json.dump(well_data, fout)
 
 
-def add_completion_date(well_data_file, start_date, output_file):
-    start_date = everest.util.str2date(start_date)
+def add_completion_date(
+    well_data_file: str, start_date_str: str, output_file: str
+) -> None:
+    start_date = everest.util.str2date(start_date_str)
     well_data = everest.jobs.io.load_data(well_data_file)
 
     prev_date = start_date
@@ -94,7 +99,9 @@ def add_completion_date(well_data_file, start_date, output_file):
         json.dump(well_data, fout)
 
 
-def _valid_operational_dates(well_entry, start_date, end_date):
+def _valid_operational_dates(
+    well_entry: Any, start_date: datetime.datetime, end_date: datetime.datetime
+) -> bool:
     drill_time = well_entry.get("drill_time", 0)
     compl_date = everest.util.str2date(well_entry["completion_date"])
     real_drill_date = compl_date - datetime.timedelta(days=drill_time)
@@ -102,9 +109,11 @@ def _valid_operational_dates(well_entry, start_date, end_date):
     return start_date <= real_drill_date <= compl_date <= end_date
 
 
-def well_opdate_filter(well_data_file, start_date, end_date, output_file):
-    start_date = everest.util.str2date(start_date)
-    end_date = everest.util.str2date(end_date)
+def well_opdate_filter(
+    well_data_file: str, start_date_str: str, end_date_str: str, output_file: str
+) -> None:
+    start_date = everest.util.str2date(start_date_str)
+    end_date = everest.util.str2date(end_date_str)
     well_data = everest.jobs.io.load_data(well_data_file)
 
     # pylint: disable=unnecessary-lambda-assignment
