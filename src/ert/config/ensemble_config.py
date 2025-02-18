@@ -16,6 +16,7 @@ from .parameter_config import ParameterConfig
 from .parsing import ConfigDict, ConfigKeys, ConfigValidationError
 from .refcase import Refcase
 from .response_config import ResponseConfig
+from .scalar_parameter import ScalarParameters
 from .summary_config import SummaryConfig
 from .surface_config import SurfaceConfig
 
@@ -47,7 +48,8 @@ class EnsembleConfig:
         default_factory=dict
     )
     parameter_configs: dict[
-        str, GenKwConfig | FieldConfig | SurfaceConfig | ExtParamConfig
+        str,
+        GenKwConfig | FieldConfig | SurfaceConfig | ExtParamConfig | ScalarParameters,
     ] = field(default_factory=dict)
     refcase: Refcase | None = None
 
@@ -134,7 +136,7 @@ class EnsembleConfig:
             return FieldConfig.from_config_list(grid_file_path, dims, field_list)
 
         parameter_configs = (
-            [GenKwConfig.from_config_list(g) for g in gen_kw_list]
+            [ScalarParameters.from_config_list(gen_kw_list)]
             + [SurfaceConfig.from_config_list(s) for s in surface_list]
             + [make_field(f) for f in field_list]
         )
@@ -180,12 +182,12 @@ class EnsembleConfig:
         config = self.response_configs["gen_data"]
         return key in config.keys
 
+    # TODO: This might not be needed but it retrieves the group names for genkw config
     def get_keylist_gen_kw(self) -> list[str]:
-        return [
-            val.name
-            for val in self.parameter_configuration
-            if isinstance(val, GenKwConfig)
-        ]
+        for val in self.parameter_configuration:
+            if isinstance(val, ScalarParameters):
+                return list(val.groups.keys())
+        return []
 
     @property
     def parameters(self) -> list[str]:

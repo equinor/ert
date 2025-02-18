@@ -2,16 +2,19 @@ from __future__ import annotations
 
 import dataclasses
 from abc import ABC, abstractmethod
+from collections.abc import Iterable
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
 import numpy as np
+import polars as pl
 import xarray as xr
 
 from ._option_dict import option_dict
 
 if TYPE_CHECKING:
     import numpy.typing as npt
+    import pandas as pd
 
     from ert.storage import Ensemble
 
@@ -54,10 +57,12 @@ class ParameterConfig(ABC):
 
     def sample_or_load(
         self,
-        real_nr: int,
+        real_nr: int | Iterable[int],
         random_seed: int,
         ensemble_size: int,
-    ) -> xr.Dataset:
+        design_matrix_df: pd.DataFrame | None = None,
+    ) -> xr.Dataset | pl.DataFrame:
+        assert isinstance(real_nr, int)
         return self.read_from_runpath(Path(), real_nr, 0)
 
     @abstractmethod
@@ -101,7 +106,7 @@ class ParameterConfig(ABC):
     @abstractmethod
     def load_parameters(
         self, ensemble: Ensemble, group: str, realizations: npt.NDArray[np.int_]
-    ) -> npt.NDArray[np.float64]:
+    ) -> npt.NDArray[np.float64] | xr.Dataset | pl.DataFrame:
         """
         Load the parameter from internal storage for the given ensemble.
         Must return array of shape (number of parameters, number of realizations).
