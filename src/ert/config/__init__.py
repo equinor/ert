@@ -31,6 +31,7 @@ from .parsing import (
 from .parsing.observations_parser import ObservationType
 from .queue_config import QueueConfig
 from .response_config import InvalidResponseFile, ResponseConfig
+from .scalar_parameter import DataSource, ScalarParameter, ScalarParameters
 from .summary_config import SummaryConfig
 from .summary_observation import SummaryObservation
 from .surface_config import SurfaceConfig
@@ -44,6 +45,7 @@ __all__ = [
     "ConfigValidationError",
     "ConfigValidationError",
     "ConfigWarning",
+    "DataSource",
     "DesignMatrix",
     "ESSettings",
     "EnkfObs",
@@ -70,6 +72,8 @@ __all__ = [
     "QueueConfig",
     "QueueSystem",
     "ResponseConfig",
+    "ScalarParameter",
+    "ScalarParameters",
     "SummaryConfig",
     "SummaryObservation",
     "SurfaceConfig",

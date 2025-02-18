@@ -16,7 +16,8 @@ import xarray as xr
 from pydantic import BaseModel
 from typing_extensions import TypedDict, deprecated
 
-from ert.config import GenKwConfig
+from ert.config import ScalarParameters
+from ert.config.scalar_parameter import SCALAR_PARAMETERS_NAME
 from ert.storage.mode import BaseMode, Mode, require_write
 
 from .realization_storage_state import RealizationStorageState
@@ -433,6 +434,7 @@ class LocalEnsemble(BaseMode):
             if not self.experiment.parameter_configuration:
                 return True
             path = self._realization_dir(realization)
+
             return all(
                 (path / (_escape_filename(parameter) + ".nc")).exists()
                 for parameter in self.experiment.parameter_configuration
@@ -563,6 +565,36 @@ class LocalEnsemble(BaseMode):
         parameters : Dataset
             Loaded xarray Dataset with parameters.
         """
+        for param in self.experiment.parameter_configuration.values():
+            if isinstance(param, ScalarParameters) and group in param.groups:
+                if isinstance(realizations, int):
+                    realizations = np.array([realizations])
+                df = self.load_parameters_scalar(
+                    scalar_name=param.name, realizations=realizations, group=group
+                )
+                reals = df.select("realization").to_numpy().flatten()
+                dataset = []
+                param_cols = [
+                    col
+                    for col in df.columns
+                    if not col.endswith(".transformed") and col != "realization"
+                ]
+                for real in reals:
+                    df_single = df.filter(pl.col("realization") == real)
+                    raw_values = df_single.select(param_cols).row(0)
+                    transformed_values = df_single.select(
+                        [f"{col}.transformed" for col in param_cols]
+                    ).row(0)
+                    ds_single = xr.Dataset(
+                        {
+                            "values": ("names", raw_values),
+                            "transformed_values": ("names", transformed_values),
+                            "names": ("names", param_cols),
+                        },
+                        coords={"realizations": real},
+                    )
+                    dataset.append(ds_single)
+                return xr.combine_nested(dataset, concat_dim="realizations")
 
         return self._load_dataset(group, realizations)
 
@@ -762,23 +794,34 @@ class LocalEnsemble(BaseMode):
             realizations = np.flatnonzero(ens_mask)
 
         dataframes = []
-        gen_kws = [
+        scalar_groups = [
             config
             for config in self.experiment.parameter_configuration.values()
-            if isinstance(config, GenKwConfig)
+            if isinstance(config, ScalarParameters)
         ]
-        if group:
-            gen_kws = [config for config in gen_kws if config.name == group]
-        for key in gen_kws:
+        for scalars in scalar_groups:
             with contextlib.suppress(KeyError):
-                da = self.load_parameters(key.name, realizations)["transformed_values"]
-                assert isinstance(da, xr.DataArray)
-                da["names"] = np.char.add(f"{key.name}:", da["names"].astype(np.str_))
-                df = da.to_dataframe().unstack(level="names")
-                df.columns = df.columns.droplevel()
-                for parameter in df.columns:
-                    if key.shouldUseLogScale(parameter.split(":")[1]):
-                        df[f"LOG10_{parameter}"] = np.log10(df[parameter])
+                df = self.load_parameters_scalar(
+                    scalar_name=scalars.name, realizations=realizations, group=group
+                )
+                if df.height != len(realizations):
+                    missing_realizations = set(realizations) - set(
+                        df["realization"].to_list()
+                    )
+                    raise IndexError(
+                        f"Missing realizations in {missing_realizations} in {scalars.name}"
+                    )
+                df = df.select(
+                    ["realization"]
+                    + [col for col in df.columns if col.endswith(".transformed")]
+                ).rename(
+                    {
+                        col: col.replace(".transformed", "")
+                        for col in df.columns
+                        if col != "realization"
+                    }
+                )
+                df = df.to_pandas().set_index("realization")
                 dataframes.append(df)
         if not dataframes:
             return pd.DataFrame()
@@ -788,6 +831,41 @@ class LocalEnsemble(BaseMode):
         dataframe.index.name = "Realization"
 
         return dataframe.sort_index(axis=1)
+
+    @require_write
+    def save_parameters_scalar(
+        self,
+        scalar_name: str,
+        realizations: npt.NDArray[np.int_],
+        dataframe: pl.DataFrame,
+    ) -> None:
+        path = self._path / f"{_escape_filename(scalar_name)}.parquet"
+        self._storage._to_parquet_transaction(
+            path, dataframe.filter(pl.col("realization").is_in(realizations))
+        )
+
+    def load_parameters_scalar(
+        self,
+        scalar_name: str = SCALAR_PARAMETERS_NAME,
+        realizations: npt.NDArray[np.int_] | None = None,
+        group: str | None = None,
+        key: str | None = None,
+    ) -> pl.DataFrame:
+        df_lazy = pl.scan_parquet(
+            self._path / f"{_escape_filename(scalar_name)}.parquet"
+        )
+        if realizations is not None:
+            df_lazy = df_lazy.filter(pl.col("realization").is_in(realizations))
+        if key is not None:
+            if key not in df_lazy.columns:
+                raise KeyError(f"No such key {key} in scalar parameters!")
+            df_lazy = df_lazy.select(["realization", key])
+        if group is not None:
+            df_lazy = df_lazy.select(
+                ["realization"]
+                + [col for col in df_lazy.columns if col.startswith(f"{group}:")]
+            )
+        return df_lazy.collect()
 
     @require_write
     def save_parameters(
@@ -888,9 +966,11 @@ class LocalEnsemble(BaseMode):
     ) -> dict[str, RealizationStorageState]:
         path = self._realization_dir(realization)
         return {
-            e: RealizationStorageState.PARAMETERS_LOADED
-            if (path / (_escape_filename(e) + ".nc")).exists()
-            else RealizationStorageState.UNDEFINED
+            e: (
+                RealizationStorageState.PARAMETERS_LOADED
+                if (path / (_escape_filename(e) + ".nc")).exists()
+                else RealizationStorageState.UNDEFINED
+            )
             for e in self.experiment.parameter_configuration
         }
 
@@ -900,9 +980,11 @@ class LocalEnsemble(BaseMode):
         response_configs = self.experiment.response_configuration
         path = self._realization_dir(realization)
         return {
-            e: RealizationStorageState.RESPONSES_LOADED
-            if (path / f"{e}.parquet").exists()
-            else RealizationStorageState.UNDEFINED
+            e: (
+                RealizationStorageState.RESPONSES_LOADED
+                if (path / f"{e}.parquet").exists()
+                else RealizationStorageState.UNDEFINED
+            )
             for e in response_configs
         }
 
@@ -1127,9 +1209,11 @@ class LocalEnsemble(BaseMode):
 
         params_wide = pl.concat(
             [
-                pdf.sort("realization").drop("realization")
-                if i > 0
-                else pdf.sort("realization")
+                (
+                    pdf.sort("realization").drop("realization")
+                    if i > 0
+                    else pdf.sort("realization")
+                )
                 for i, pdf in enumerate(param_dfs)
             ],
             how="horizontal",
