@@ -1,4 +1,3 @@
-import contextlib
 import logging
 import operator
 from collections.abc import Callable, Iterator
@@ -8,10 +7,15 @@ from uuid import UUID
 import numpy as np
 import pandas as pd
 import polars as pl
-import xarray as xr
 from polars.exceptions import ColumnNotFoundError
 
-from ert.config import Field, GenDataConfig, GenKwConfig
+from ert.config import GenDataConfig, GenKwConfig, ScalarParameters
+from ert.config.field import Field
+from ert.config.scalar_parameter import (
+    SCALAR_PARAMETERS_NAME,
+    TransLogNormalSettings,
+    TransLogUnifSettings,
+)
 from ert.storage import Ensemble, Experiment, Storage
 
 logger = logging.getLogger(__name__)
@@ -57,6 +61,23 @@ def ensemble_parameters(storage: Storage, ensemble_id: UUID) -> list[dict[str, A
                                 else f"{name}:{tf.name}"
                             ),
                             "userdata": {"data_origin": "GEN_KW"},
+                            "dimensionality": 1,
+                            "labels": [],
+                        }
+                    )
+            case ScalarParameters(name=name, scalars=scalars):
+                for param in scalars:
+                    param_list.append(
+                        {
+                            "name": (
+                                f"LOG10_{param.group_name}:{param.param_name}"
+                                if isinstance(
+                                    param.distribution,
+                                    TransLogUnifSettings | TransLogNormalSettings,
+                                )
+                                else f"{param.group_name}:{param.param_name}"
+                            ),
+                            "userdata": {"data_origin": "SCALAR_PARAMETERS"},
                             "dimensionality": 1,
                             "labels": [],
                         }
@@ -178,45 +199,37 @@ def data_for_key(
             except (ValueError, KeyError, ColumnNotFoundError):
                 return pd.DataFrame()
 
-    group = key.split(":")[0]
-    parameters = ensemble.experiment.parameter_configuration
-    if group in parameters and isinstance(gen_kw := parameters[group], GenKwConfig):
-        dataframes = []
-
-        with contextlib.suppress(KeyError):
-            try:
-                data = ensemble.load_parameters(group)
-            except ValueError as err:
-                print(f"Could not load parameter {group}: {err}")
-                return pd.DataFrame()
-
-            da = data["transformed_values"]
-            assert isinstance(da, xr.DataArray)
-            da["names"] = np.char.add(f"{gen_kw.name}:", da["names"].astype(np.str_))
-            df = da.to_dataframe().unstack(level="names")
-            df.columns = df.columns.droplevel()
-            for parameter in df.columns:
-                if gen_kw.shouldUseLogScale(parameter.split(":")[1]):
-                    df[f"LOG10_{parameter}"] = np.log10(df[parameter])
-            dataframes.append(df)
-        if not dataframes:
-            return pd.DataFrame()
-
-        dataframe = pd.concat(dataframes, axis=1)
-        dataframe.columns.name = None
-        dataframe.index.name = "Realization"
-
-        data = dataframe.sort_index(axis=1)
-        if data.empty or key not in data:
-            return pd.DataFrame()
-        data = data[key].to_frame().dropna()
-        data.columns = pd.Index([0])
-        try:
-            return data.astype(float)
-        except ValueError:
-            return data
-
-    return pd.DataFrame()
+    if (
+        scalars := ensemble.experiment.parameter_configuration.get(
+            SCALAR_PARAMETERS_NAME, None
+        )
+    ) is None:
+        return pd.DataFrame()
+    assert isinstance(scalars, ScalarParameters)
+    try:
+        data = ensemble.load_parameters_scalar(
+            SCALAR_PARAMETERS_NAME, keys=[f"{key}.transformed"]
+        )
+    except KeyError:
+        return pd.DataFrame()
+    dataframes = []
+    da = data.rename({"realization": "realizations", f"{key}.transformed": key})
+    df = da.to_pandas().reset_index().set_index("realizations")
+    if scalars.should_use_log_scale(key):
+        df[f"LOG10_{key}"] = np.log10(df[key])
+    dataframes.append(df)
+    dataframe = pd.concat(dataframes, axis=1)
+    dataframe.columns.name = None
+    dataframe.index.name = "Realization"
+    data = dataframe.sort_index(axis=1)
+    if data.empty or key not in data:
+        return pd.DataFrame()
+    data = data[key].to_frame().dropna()
+    data.columns = pd.Index([0])
+    try:
+        return data.astype(float)
+    except ValueError:
+        return data
 
 
 def _get_observations(

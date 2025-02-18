@@ -7,8 +7,13 @@ from typing import TYPE_CHECKING
 
 import numpy as np
 
-from ert.config import ConfigValidationError, HookRuntime
-from ert.enkf_main import sample_prior, save_design_matrix_to_ensemble
+from ert.config import (
+    ConfigValidationError,
+    HookRuntime,
+    ParameterConfig,
+    ScalarParameters,
+)
+from ert.enkf_main import sample_prior
 from ert.ensemble_evaluator import EvaluatorServerConfig
 from ert.storage import Ensemble, Experiment, Storage
 from ert.trace import tracer
@@ -82,17 +87,21 @@ class EnsembleExperiment(BaseRunModel):
         self.restart = restart
         # If design matrix is present, we try to merge design matrix parameters
         # to the experiment parameters and set new active realizations
-        parameters_config = self._parameter_configuration
         design_matrix = self._design_matrix
-        design_matrix_group = None
         if design_matrix is not None:
-            try:
-                parameters_config, design_matrix_group = (
-                    design_matrix.merge_with_existing_parameters(parameters_config)
-                )
-            except ConfigValidationError as exc:
-                raise ErtRunError(str(exc)) from exc
-
+            parameters_config: list[ParameterConfig] = []
+            for param in self._parameter_configuration:
+                if isinstance(param, ScalarParameters):
+                    try:
+                        new_scalar_config = (
+                            design_matrix.merge_with_existing_parameters(param)
+                        )
+                        parameters_config.append(new_scalar_config)
+                    except ConfigValidationError as exc:
+                        raise ErtRunError(str(exc)) from exc
+                else:
+                    parameters_config.append(param)
+            self._parameter_configuration = parameters_config
         if not restart:
             self.run_workflows(
                 HookRuntime.PRE_EXPERIMENT,
@@ -100,11 +109,7 @@ class EnsembleExperiment(BaseRunModel):
             )
             self.experiment = self._storage.create_experiment(
                 name=self.experiment_name,
-                parameters=(
-                    [*parameters_config, design_matrix_group]
-                    if design_matrix_group is not None
-                    else parameters_config
-                ),
+                parameters=self._parameter_configuration,
                 observations=self._observations,
                 responses=self._response_configuration,
             )
@@ -127,21 +132,15 @@ class EnsembleExperiment(BaseRunModel):
             np.array(self.active_realizations, dtype=bool),
             ensemble=self.ensemble,
         )
-
         sample_prior(
             self.ensemble,
             np.where(self.active_realizations)[0],
             parameters=[param.name for param in parameters_config],
             random_seed=self.random_seed,
+            design_matrix_df=(
+                design_matrix.design_matrix_df if design_matrix is not None else None
+            ),
         )
-
-        if design_matrix_group is not None and design_matrix is not None:
-            save_design_matrix_to_ensemble(
-                design_matrix.design_matrix_df,
-                self.ensemble,
-                np.where(self.active_realizations)[0],
-                design_matrix_group.name,
-            )
 
         self._evaluate_and_postprocess(
             run_args,

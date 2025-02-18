@@ -8,11 +8,7 @@ import xarray as xr
 import xtgeo
 from tabulate import tabulate
 
-from ert.analysis import (
-    ErtAnalysisError,
-    ObservationStatus,
-    smoother_update,
-)
+from ert.analysis import ErtAnalysisError, ObservationStatus, smoother_update
 from ert.analysis._es_update import (
     _load_observations_and_responses,
     _load_param_ensemble_array,
@@ -710,7 +706,7 @@ def test_temporary_parameter_storage_with_inactive_fields(
     for iens in range(ensemble_size):
         prior_ensemble.save_parameters(param_group, iens, fields[iens])
 
-    realization_list = list(range(ensemble_size))
+    realization_list = np.array(list(range(ensemble_size)))
     param_ensemble_array = _load_param_ensemble_array(
         prior_ensemble, param_group, realization_list
     )
@@ -729,7 +725,7 @@ def test_temporary_parameter_storage_with_inactive_fields(
     )
 
     _save_param_ensemble_array_to_disk(
-        ensemble, param_ensemble_array, param_group, realization_list
+        prior_ensemble, ensemble, param_ensemble_array, param_group, realization_list
     )
     for iens in range(prior_ensemble.ensemble_size):
         ds = xr.open_dataset(

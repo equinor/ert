@@ -10,13 +10,7 @@ from dataclasses import field
 from datetime import datetime
 from os import path
 from pathlib import Path
-from typing import (
-    Any,
-    ClassVar,
-    Self,
-    no_type_check,
-    overload,
-)
+from typing import Any, ClassVar, Self, no_type_check, overload
 
 import polars as pl
 from pydantic import ValidationError as PydanticValidationError
@@ -30,43 +24,24 @@ from ert.substitutions import Substitutions
 from ._design_matrix_validator import DesignMatrixValidator
 from .analysis_config import AnalysisConfig
 from .ensemble_config import EnsembleConfig
-from .forward_model_step import (
-    ForwardModelStep,
-    ForwardModelStepJSON,
-    ForwardModelStepPlugin,
-    ForwardModelStepValidationError,
-)
-from .gen_kw_config import GenKwConfig
+from .forward_model_step import (ForwardModelStep, ForwardModelStepJSON,
+                                 ForwardModelStepPlugin,
+                                 ForwardModelStepValidationError)
 from .model_config import ModelConfig
 from .observation_vector import ObsVector
 from .observations import EnkfObs
 from .parse_arg_types_list import parse_arg_types_list
-from .parsing import (
-    ConfigDict,
-    ConfigKeys,
-    ConfigValidationError,
-    ConfigWarning,
-    ErrorInfo,
-    ForwardModelStepKeys,
-    HistorySource,
-    HookRuntime,
-    QueueSystemWithGeneric,
-    init_forward_model_schema,
-    init_site_config_schema,
-    init_user_config_schema,
-    parse_contents,
-    read_file,
-)
-from .parsing.observations_parser import (
-    GenObsValues,
-    HistoryValues,
-    ObservationConfigError,
-    SummaryValues,
-)
-from .parsing.observations_parser import (
-    parse_content as parse_observations,
-)
+from .parsing import (ConfigDict, ConfigKeys, ConfigValidationError,
+                      ConfigWarning, ErrorInfo, ForwardModelStepKeys,
+                      HistorySource, HookRuntime, QueueSystemWithGeneric,
+                      init_forward_model_schema, init_site_config_schema,
+                      init_user_config_schema, parse_contents, read_file)
+from .parsing.observations_parser import (GenObsValues, HistoryValues,
+                                          ObservationConfigError,
+                                          SummaryValues)
+from .parsing.observations_parser import parse_content as parse_observations
 from .queue_config import QueueConfig
+from .scalar_parameter import ScalarParameters
 from .workflow import Workflow
 from .workflow_job import ErtScriptLoadFailure, WorkflowJob
 
@@ -842,33 +817,20 @@ class ErtConfig:
             raise ConfigValidationError.from_collected(errors)
 
         if dm := analysis_config.design_matrix:
-            dm_errors = []
-            dm_params = {
-                x.name
-                for x in dm.parameter_configuration.transform_function_definitions
-            }
+            dm_params = [x.param_name for x in dm.scalars]
             for group_name, config in ensemble_config.parameter_configs.items():
-                if not isinstance(config, GenKwConfig):
+                overlapping = []
+                if not isinstance(config, ScalarParameters):
                     continue
-                group_params = {x.name for x in config.transform_function_definitions}
-                if dm_params == group_params:
+                for param in config.scalars:
+                    if param.param_name in dm_params:
+                        overlapping.append(f"{param.group_name}:{param.param_name}")
+                if overlapping:
                     ConfigWarning.warn(
-                        f"Parameters {group_params} from GEN_KW group '{group_name}' "
+                        f"Parameters {overlapping} "
                         "will be overridden by design matrix. This will cause "
                         "updates to be turned off for these parameters."
                     )
-                elif intersection := dm_params & group_params:
-                    dm_errors.append(
-                        ConfigValidationError(
-                            "Only full overlaps of design matrix and "
-                            "one genkw group are supported.\n"
-                            f"design matrix parameters: {dm_params}\n"
-                            f"parameters in genkw group <{group_name}>: {group_params}\n"
-                            f"overlap between them: {intersection}"
-                        )
-                    )
-            if dm_errors:
-                raise ConfigValidationError.from_collected(dm_errors)
 
         env_vars = {}
         for key, val in config_dict.get("SETENV", []):
@@ -1085,8 +1047,9 @@ class ErtConfig:
 
     @staticmethod
     def _create_observations(
-        obs_config_content: dict[str, HistoryValues | SummaryValues | GenObsValues]
-        | None,
+        obs_config_content: (
+            dict[str, HistoryValues | SummaryValues | GenObsValues] | None
+        ),
         ensemble_config: EnsembleConfig,
         time_map: list[datetime] | None,
         history: HistorySource,

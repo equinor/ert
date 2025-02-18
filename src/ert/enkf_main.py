@@ -8,6 +8,7 @@ from datetime import datetime
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
+import numpy as np
 import orjson
 import pandas as pd
 import xarray as xr
@@ -17,13 +18,13 @@ from ert.substitutions import Substitutions, substitute_runpath_name
 from ert.utils import log_duration
 
 from .config import (
-    DESIGN_MATRIX_GROUP,
     ExtParamConfig,
     Field,
     ForwardModelStep,
     GenKwConfig,
     ModelConfig,
     ParameterConfig,
+    ScalarParameters,
     SurfaceConfig,
 )
 from .config.ert_config import create_forward_model_json
@@ -127,6 +128,8 @@ def _manifest_to_json(ensemble: Ensemble, iens: int, iter: int) -> dict[str, Any
     manifest = {}
     # Add expected parameter files to manifest
     for param_config in ensemble.experiment.parameter_configuration.values():
+        if isinstance(param_config, ScalarParameters):
+            continue
         assert isinstance(
             param_config,
             ExtParamConfig | GenKwConfig | Field | SurfaceConfig,
@@ -162,29 +165,6 @@ def _seed_sequence(seed: int | None) -> int:
     return int_seed
 
 
-def save_design_matrix_to_ensemble(
-    design_matrix_df: pd.DataFrame,
-    ensemble: Ensemble,
-    active_realizations: Iterable[int],
-    design_group_name: str = DESIGN_MATRIX_GROUP,
-) -> None:
-    assert not design_matrix_df.empty
-    for realization_nr in active_realizations:
-        row = design_matrix_df.loc[realization_nr]
-        ds = xr.Dataset(
-            {
-                "values": ("names", list(row.values)),
-                "transformed_values": ("names", list(row.values)),
-                "names": list(row.keys()),
-            }
-        )
-        ensemble.save_parameters(
-            design_group_name,
-            realization_nr,
-            ds,
-        )
-
-
 @log_duration(
     logger,
 )
@@ -193,6 +173,7 @@ def sample_prior(
     active_realizations: Iterable[int],
     parameters: list[str] | None = None,
     random_seed: int | None = None,
+    design_matrix_df: pd.DataFrame | None = None,
 ) -> None:
     """This function is responsible for getting the prior into storage,
     in the case of GEN_KW we sample the data and store it, and if INIT_FILES
@@ -211,13 +192,26 @@ def sample_prior(
         logger.info(
             f"Sampling parameter {config_node.name} for realizations {active_realizations}"
         )
-        for realization_nr in active_realizations:
-            ds = config_node.sample_or_load(
-                realization_nr,
-                random_seed=random_seed,
-                ensemble_size=ensemble.ensemble_size,
+        if isinstance(config_node, ScalarParameters):
+            df = config_node.sample_or_load(
+                active_realizations,
+                random_seed,
+                ensemble.ensemble_size,
+                design_matrix_df,
             )
-            ensemble.save_parameters(parameter, realization_nr, ds)
+            ensemble.save_parameters_scalar(
+                df, realizations=np.array(active_realizations), scalar_name=parameter
+            )
+        else:
+            for realization_nr in active_realizations:
+                ds = config_node.sample_or_load(
+                    realization_nr,
+                    random_seed,
+                    ensemble.ensemble_size,
+                    design_matrix_df,
+                )
+                assert isinstance(ds, xr.Dataset)
+                ensemble.save_parameters(parameter, realization_nr, ds)
 
     ensemble.refresh_ensemble_state()
 

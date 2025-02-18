@@ -8,12 +8,16 @@ import numpy as np
 import pandas as pd
 from pandas.api.types import is_integer_dtype
 
-from ert.config.gen_kw_config import GenKwConfig, TransformFunctionDefinition
-
 from .parsing import ConfigValidationError, ErrorInfo
+from .scalar_parameter import (
+    DataSource,
+    ScalarParameter,
+    ScalarParameters,
+    TransRawSettings,
+)
 
 if TYPE_CHECKING:
-    from ert.config import ParameterConfig
+    pass
 
 DESIGN_MATRIX_GROUP = "DESIGN_MATRIX"
 
@@ -31,7 +35,7 @@ class DesignMatrix:
             (
                 self.active_realizations,
                 self.design_matrix_df,
-                self.parameter_configuration,
+                self.scalars,
             ) = self.read_and_validate_design_matrix()
         except (ValueError, AttributeError) as exc:
             raise ConfigValidationError.with_context(
@@ -99,6 +103,20 @@ class DesignMatrix:
                         f"contains non identical columns with the same name: {non_identical_cols}!"
                     )
                 )
+            errors.append(
+                ErrorInfo(f"Design Matrices do not have unique keys {common_keys}!")
+            )
+
+        try:
+            self.design_matrix_df = pd.concat(
+                [self.design_matrix_df, dm_other.design_matrix_df], axis=1
+            )
+        except ValueError as exc:
+            errors.append(ErrorInfo(f"Error when merging design matrices {exc}!"))
+
+        for param in dm_other.scalars:
+            if param.param_name not in common_keys:
+                self.scalars.append(param)
 
         if errors:
             raise ConfigValidationError.from_collected(errors)
@@ -117,64 +135,48 @@ class DesignMatrix:
                 f"'{dm_other.xls_filename.name} ({dm_other.design_sheet} {dm_other.default_sheet})': {exc}!"
             ) from exc
 
-        for tfd in dm_other.parameter_configuration.transform_function_definitions:
-            if tfd.name not in common_keys:
-                self.parameter_configuration.transform_function_definitions.append(tfd)
-
     def merge_with_existing_parameters(
-        self, existing_parameters: list[ParameterConfig]
-    ) -> tuple[list[ParameterConfig], GenKwConfig]:
+        self, existing_scalars: ScalarParameters
+    ) -> ScalarParameters:
         """
         This method merges the design matrix parameters with the existing parameters and
-        returns the new list of existing parameters, wherein we drop GEN_KW group having a full overlap with the design matrix group.
-        GEN_KW group that was dropped will acquire a new name from the design matrix group.
-        Additionally, the ParameterConfig which is the design matrix group is returned separately.
-
+        returns the new list of existing parameters.
         Args:
-            existing_parameters (List[ParameterConfig]): List of existing parameters
+            existing_scalars (ScalarParameters): existing scalar parameters
 
-        Raises:
-            ConfigValidationError: If there is a partial overlap between the design matrix group and any existing GEN_KW group
 
         Returns:
-            tuple[List[ParameterConfig], ParameterConfig]: List of existing parameters and the dedicated design matrix group
+            ScalarParameters: new set of ScalarParameters
         """
 
-        new_param_config: list[ParameterConfig] = []
+        all_params: list[ScalarParameter] = []
 
-        design_parameter_group = self.parameter_configuration
-        design_keys = [e.name for e in design_parameter_group.transform_functions]
-
-        design_group_added = False
-        for parameter_group in existing_parameters:
-            if not isinstance(parameter_group, GenKwConfig):
-                new_param_config += [parameter_group]
+        overlap_set = set()
+        for existing_parameter in existing_scalars.scalars:
+            if existing_parameter.input_source == DataSource.DESIGN_MATRIX:
                 continue
-            existing_keys = [e.name for e in parameter_group.transform_functions]
-            if set(existing_keys) == set(design_keys):
-                if design_group_added:
-                    raise ConfigValidationError(
-                        "Multiple overlapping groups with design matrix found in existing parameters!\n"
-                        f"{design_parameter_group.name} and {parameter_group.name}"
-                    )
+            overlap = False
+            for parameter_design in self.scalars:
+                if existing_parameter.param_name == parameter_design.param_name:
+                    parameter_design.group_name = existing_parameter.group_name
+                    parameter_design.template_file = existing_parameter.template_file
+                    parameter_design.output_file = existing_parameter.output_file
+                    all_params.append(parameter_design)
+                    overlap = True
+                    overlap_set.add(existing_parameter.param_name)
+                    break
+            if not overlap:
+                all_params.append(existing_parameter)
 
-                design_parameter_group.name = parameter_group.name
-                design_parameter_group.template_file = parameter_group.template_file
-                design_parameter_group.output_file = parameter_group.output_file
-                design_group_added = True
-            elif set(design_keys) & set(existing_keys):
-                raise ConfigValidationError(
-                    "Overlapping parameter names found in design matrix!\n"
-                    f"{DESIGN_MATRIX_GROUP}:{design_keys}\n{parameter_group.name}:{existing_keys}"
-                    "\nThey need to match exactly or not at all."
-                )
-            else:
-                new_param_config += [parameter_group]
-        return new_param_config, design_parameter_group
+        for parameter_design in self.scalars:
+            if parameter_design.param_name not in overlap_set:
+                all_params.append(parameter_design)
+
+        return ScalarParameters(scalars=all_params)
 
     def read_and_validate_design_matrix(
         self,
-    ) -> tuple[list[bool], pd.DataFrame, GenKwConfig]:
+    ) -> tuple[list[bool], pd.DataFrame, list[ScalarParameter]]:
         # Read the parameter names (first row) as strings to prevent pandas from modifying them.
         # This ensures that duplicate or empty column names are preserved exactly as they appear in the Excel sheet.
         # By doing this, we can properly validate variable names, including detecting duplicates or missing names.
@@ -226,29 +228,25 @@ class DesignMatrix:
 
             design_matrix_df = pd.concat([design_matrix_df, default_df], axis=1)
 
-        transform_function_definitions: list[TransformFunctionDefinition] = []
+        scalars: list[ScalarParameter] = []
         for parameter in design_matrix_df.columns:
-            transform_function_definitions.append(
-                TransformFunctionDefinition(
-                    name=parameter,
-                    param_name="RAW",
-                    values=[],
+            scalars.append(
+                ScalarParameter(
+                    param_name=parameter,
+                    group_name=DESIGN_MATRIX_GROUP,
+                    input_source=DataSource.DESIGN_MATRIX,
+                    distribution=TransRawSettings(),
+                    template_file=None,
+                    output_file=None,
+                    update=False,
                 )
             )
-        parameter_configuration = GenKwConfig(
-            name=DESIGN_MATRIX_GROUP,
-            forward_init=False,
-            template_file=None,
-            output_file=None,
-            transform_function_definitions=transform_function_definitions,
-            update=False,
-        )
 
         reals = design_matrix_df.index.tolist()
         return (
             [x in reals for x in range(max(reals) + 1)],
             design_matrix_df,
-            parameter_configuration,
+            scalars,
         )
 
     @staticmethod

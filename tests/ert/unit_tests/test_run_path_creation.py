@@ -6,6 +6,7 @@ from textwrap import dedent
 
 import numpy as np
 import orjson
+import polars as pl
 import pytest
 import xtgeo
 
@@ -14,7 +15,7 @@ from ert.config import (
     ConfigValidationError,
     ErtConfig,
     Field,
-    GenKwConfig,
+    ScalarParameters,
     SurfaceConfig,
 )
 from ert.enkf_main import create_run_path, sample_prior
@@ -94,9 +95,9 @@ def test_jobs_json_is_backed_up(make_run_path):
     assert os.path.exists("simulations/realization-0/iter-0/jobs.json")
     make_run_path(ert_config)
     iter0_output_files = os.listdir("simulations/realization-0/iter-0/")
-    assert len([f for f in iter0_output_files if f.startswith("jobs.json")]) > 1, (
-        "No backup created for jobs.json"
-    )
+    assert (
+        len([f for f in iter0_output_files if f.startswith("jobs.json")]) > 1
+    ), "No backup created for jobs.json"
 
 
 @pytest.mark.usefixtures("use_tmpdir")
@@ -626,20 +627,33 @@ def test_assert_ertcase_replaced_in_runpath(placeholder, make_run_path):
 
 def save_zeros(prior_ensemble, num_realizations, dim_size):
     parameter_configs = prior_ensemble.experiment.parameter_configuration
-    for config_node in parameter_configs.values():
-        for realization_nr in range(num_realizations):
-            if isinstance(config_node, SurfaceConfig):
-                config_node.save_parameters(
-                    prior_ensemble, realization_nr, np.zeros(dim_size**2)
-                )
-            elif isinstance(config_node, Field):
-                config_node.save_parameters(
-                    prior_ensemble, realization_nr, np.zeros(dim_size**3)
-                )
-            elif isinstance(config_node, GenKwConfig):
-                config_node.save_parameters(prior_ensemble, realization_nr, np.zeros(1))
-            else:
-                raise ValueError(f"unexpected {config_node}")
+    for parameter, config_node in parameter_configs.items():
+        if isinstance(config_node, ScalarParameters):
+            scalar_values = {}
+            for parameter in config_node.scalars:
+                scalar_values[f"{parameter.group_name}:{parameter.param_name}"] = [
+                    0.0
+                ] * num_realizations
+                scalar_values[
+                    f"{parameter.group_name}:{parameter.param_name}.transformed"
+                ] = [0.0] * num_realizations
+
+            df = pl.DataFrame(
+                {"realization": list(range(num_realizations)), **scalar_values}
+            )
+            prior_ensemble.save_parameters_scalar(df, range(num_realizations))
+        else:
+            for realization_nr in range(num_realizations):
+                if isinstance(config_node, SurfaceConfig):
+                    config_node.save_parameters(
+                        prior_ensemble, realization_nr, np.zeros(dim_size**2)
+                    )
+                elif isinstance(config_node, Field):
+                    config_node.save_parameters(
+                        prior_ensemble, realization_nr, np.zeros(dim_size**3)
+                    )
+                else:
+                    raise ValueError(f"unexpected {config_node}")
 
 
 @pytest.mark.usefixtures("use_tmpdir")
@@ -688,8 +702,8 @@ def test_when_manifest_files_are_written_forward_model_ok_succeeds(storage, itr)
             FIELD PORO0 PARAMETER field1<ALL>.roff INIT_FILES:field1_init<ALL>.roff FORWARD_INIT:TRUE
             FIELD PORO1 PARAMETER field2<ALL>.roff INIT_FILES:%dinit<IENS><ITER>.roff
 
-            GEN_KW GEN0 gen0.txt INIT_FILES:%dgen_init<IENS><ITER>.txt
-            GEN_KW GEN1 template.txt gen_parameter.txt gen1.txt INIT_FILES:%dgen_init<IENS><ITER>.txt
+            GEN_KW GEN0 gen0.txt
+            GEN_KW GEN1 template.txt gen_parameter.txt gen1.txt
             """
         )
     )
