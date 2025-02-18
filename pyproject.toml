@@ -67,6 +67,7 @@ dependencies = [
     "xarray",
     "xtgeo >= 3.3.0",
     "fastexcel>=0.12.1",
+    "xlsxwriter>=3.2.2",
 ]
 
 [project.scripts]

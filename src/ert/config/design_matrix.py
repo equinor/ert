@@ -187,8 +187,9 @@ class DesignMatrix:
             drop_empty_cols=True,
             drop_empty_rows=True,
             raise_if_empty=False,
+            infer_schema_length=None,
             read_options={"skip_rows": 1},
-        )
+        ).with_columns(pl.col(pl.Float32, pl.Float64).fill_nan(None))
 
         if error_list := DesignMatrix._validate_design_matrix(
             design_matrix_df, param_names
@@ -266,7 +267,8 @@ class DesignMatrix:
         empties = [
             f"Row {i}, column {j}"
             for i, j in zip(
-                *np.where(design_matrix.select(pl.all().is_null())), strict=False
+                *np.where(design_matrix.select(pl.all().is_null())),
+                strict=False,
             )
         ]
         if len(empties) > 0:

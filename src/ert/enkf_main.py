@@ -167,12 +167,12 @@ def save_design_matrix_to_ensemble(
     if not set(design_matrix_df.get_column("REAL")).issubset(set(active_realizations)):
         raise KeyError("Active realizations not found in design matrix data frame.")
     for row in design_matrix_df.filter(
-        pl.col("REAL").is_in(active_realizations)
+        pl.col("REAL").is_in(pl.Series(active_realizations))
     ).to_numpy():
         ds = xr.Dataset(
             {
-                "values": ("names", row[1:]),
-                "transformed_values": ("names", row[1:]),
+                "values": ("names", list(row[1:])),
+                "transformed_values": ("names", list(row[1:])),
                 "names": param_names,
             }
         )

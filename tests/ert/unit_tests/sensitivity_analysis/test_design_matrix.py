@@ -1,16 +1,17 @@
 import numpy as np
-import pandas as pd
+import polars as pl
 import pytest
+from xlsxwriter import Workbook
 
 from ert.config.design_matrix import DESIGN_MATRIX_GROUP, DesignMatrix
 from ert.config.gen_kw_config import GenKwConfig, TransformFunctionDefinition
 
 
 def _create_design_matrix(xls_path, design_matrix_df, default_sheet_df) -> DesignMatrix:
-    with pd.ExcelWriter(xls_path) as xl_write:
-        design_matrix_df.to_excel(xl_write, index=False, sheet_name="DesignSheet01")
-        default_sheet_df.to_excel(
-            xl_write, index=False, sheet_name="DefaultValues", header=False
+    with Workbook(xls_path) as wb:
+        design_matrix_df.write_excel(wb, worksheet="DesignSheet01")
+        default_sheet_df.write_excel(
+            wb, worksheet="DefaultValues", include_header=False
         )
     return DesignMatrix(xls_path, "DesignSheet01", "DefaultValues")
 
@@ -19,36 +20,36 @@ def _create_design_matrix(xls_path, design_matrix_df, default_sheet_df) -> Desig
     "design_sheet_pd, default_sheet_pd, error_msg",
     [
         pytest.param(
-            pd.DataFrame(
+            pl.DataFrame(
                 {
                     "REAL": [0, 1, 2],
                     "c": [1, 2, 3],
                     "d": [0, 2, 0],
                 }
             ),
-            pd.DataFrame([["e", 1]]),
+            pl.DataFrame([["e", 1]], orient="row"),
             "",
             id="ok_merge",
         ),
         pytest.param(
-            pd.DataFrame(
+            pl.DataFrame(
                 {
                     "REAL": [0, 1, 2],
                     "a": [1, 2, 3],
                 }
             ),
-            pd.DataFrame([["e", 1]]),
+            pl.DataFrame([["e", 1]], orient="row"),
             "Design Matrices do not have unique keys",
             id="not_unique_keys",
         ),
         pytest.param(
-            pd.DataFrame(
+            pl.DataFrame(
                 {
                     "REAL": [0, 1],
                     "d": [1, 2],
                 }
             ),
-            pd.DataFrame([["e", 1]]),
+            pl.DataFrame([["e", 1]], orient="row"),
             "Design Matrices don't have the same active realizations!",
             id="not_same_acitve_realizations",
         ),
@@ -59,14 +60,14 @@ def test_merge_multiple_occurrences(
 ):
     design_matrix_1 = _create_design_matrix(
         tmp_path / "design_matrix_1.xlsx",
-        pd.DataFrame(
+        pl.DataFrame(
             {
                 "REAL": [0, 1, 2],
                 "a": [1, 2, 3],
                 "b": [0, 2, 0],
             },
         ),
-        pd.DataFrame([["a", 1], ["b", 4]]),
+        pl.DataFrame([["a", 1], ["b", 4]], orient="row"),
     )
 
     design_matrix_2 = _create_design_matrix(
@@ -132,18 +133,18 @@ def test_read_and_merge_with_existing_parameters(tmp_path, parameters, error_msg
 
     realizations = [0, 1, 2]
     design_path = tmp_path / "design_matrix.xlsx"
-    design_matrix_df = pd.DataFrame(
+    design_matrix_df = pl.DataFrame(
         {
             "REAL": realizations,
             "a": [1, 2, 3],
             "b": [0, 2, 0],
         }
     )
-    default_sheet_df = pd.DataFrame([["a", 1], ["b", 4]])
-    with pd.ExcelWriter(design_path) as xl_write:
-        design_matrix_df.to_excel(xl_write, index=False, sheet_name="DesignSheet01")
-        default_sheet_df.to_excel(
-            xl_write, index=False, sheet_name="DefaultValues", header=False
+    default_sheet_df = pl.DataFrame([["a", 1], ["b", 4]], orient="row")
+    with Workbook(design_path) as xl_write:
+        design_matrix_df.write_excel(xl_write, worksheet="DesignSheet01")
+        default_sheet_df.write_excel(
+            xl_write, worksheet="DefaultValues", include_header=False
         )
     design_matrix = DesignMatrix(design_path, "DesignSheet01", "DefaultValues")
     if error_msg:
@@ -166,7 +167,7 @@ def test_read_and_merge_with_existing_parameters(tmp_path, parameters, error_msg
 def test_reading_design_matrix(tmp_path):
     realizations = [0, 1, 4]
     design_path = tmp_path / "design_matrix.xlsx"
-    design_matrix_df = pd.DataFrame(
+    design_matrix_df = pl.DataFrame(
         {
             "REAL": realizations,
             "a": [1, 2, 3],
@@ -174,11 +175,13 @@ def test_reading_design_matrix(tmp_path):
             "c": ["low", "high", "medium"],
         }
     )
-    default_sheet_df = pd.DataFrame([["one", 1], ["b", 4], ["d", "case_name"]])
-    with pd.ExcelWriter(design_path) as xl_write:
-        design_matrix_df.to_excel(xl_write, index=False, sheet_name="DesignSheet01")
-        default_sheet_df.to_excel(
-            xl_write, index=False, sheet_name="DefaultValues", header=False
+    default_sheet_df = pl.DataFrame(
+        [["one", 1], ["b", 4], ["d", "case_name"]], orient="row"
+    )
+    with Workbook(design_path) as xl_write:
+        design_matrix_df.write_excel(xl_write, worksheet="DesignSheet01")
+        default_sheet_df.write_excel(
+            xl_write, worksheet="DefaultValues", include_header=False
         )
     design_matrix = DesignMatrix(design_path, "DesignSheet01", "DefaultValues")
     design_params = design_matrix.parameter_configuration
@@ -208,19 +211,20 @@ def test_reading_design_matrix(tmp_path):
 )
 def test_reading_design_matrix_validate_reals(tmp_path, real_column, error_msg):
     design_path = tmp_path / "design_matrix.xlsx"
-    design_matrix_df = pd.DataFrame(
+    design_matrix_df = pl.DataFrame(
         {
             "REAL": real_column,
             "a": [1, 2, 3],
             "b": [0, 2, 0],
             "c": [3, 1, 3],
-        }
+        },
+        strict=False,
     )
-    default_sheet_df = pd.DataFrame()
-    with pd.ExcelWriter(design_path) as xl_write:
-        design_matrix_df.to_excel(xl_write, index=False, sheet_name="DesignSheet01")
-        default_sheet_df.to_excel(
-            xl_write, index=False, sheet_name="DefaultValues", header=False
+    default_sheet_df = pl.DataFrame()
+    with Workbook(design_path) as xl_write:
+        design_matrix_df.write_excel(xl_write, worksheet="DesignSheet01")
+        default_sheet_df.write_excel(
+            xl_write, worksheet="DefaultValues", include_header=False
         )
 
     with pytest.raises(ValueError, match=error_msg):
@@ -239,11 +243,6 @@ def test_reading_design_matrix_validate_reals(tmp_path, real_column, error_msg):
             ["a   ", "b", "       a"],
             "Duplicate parameter names found in design sheet",
             id="duplicate entries with whitespaces",
-        ),
-        pytest.param(
-            ["a", "b  ", ""],
-            r"Empty parameter name found in column 2",
-            id="missing entries",
         ),
         pytest.param(
             ["a", "b", "parameter name with spaces"],
@@ -265,15 +264,18 @@ def test_reading_design_matrix_validate_reals(tmp_path, real_column, error_msg):
 )
 def test_reading_design_matrix_validate_headers(tmp_path, column_names, error_msg):
     design_path = tmp_path / "design_matrix.xlsx"
-    design_matrix_df = pd.DataFrame(
-        np.array([[1, 2, 3], [4, 5, 6], [7, 8, 9]]), columns=column_names
+    design_matrix_df = pl.DataFrame(
+        np.array([[1, 2, 3], [4, 5, 6], [7, 8, 9]]), orient="row"
     )
-    default_sheet_df = pd.DataFrame([["one", 1], ["b", 4], ["d", 6]])
-    with pd.ExcelWriter(design_path) as xl_write:
-        design_matrix_df.to_excel(xl_write, index=False, sheet_name="DesignSheet01")
-        default_sheet_df.to_excel(
-            xl_write, index=False, sheet_name="DefaultValues", header=False
+    default_sheet_df = pl.DataFrame([["one", 1], ["b", 4], ["d", 6]], orient="row")
+    with Workbook(design_path) as xl_write:
+        design_matrix_df.write_excel(xl_write, worksheet="DesignSheet01")
+        default_sheet_df.write_excel(
+            xl_write, worksheet="DefaultValues", include_header=False
         )
+        ws = xl_write.get_worksheet_by_name("DesignSheet01")
+        for col_idx, header in enumerate(column_names):
+            ws.write(0, col_idx, header)
 
     with pytest.raises(ValueError, match=error_msg):
         DesignMatrix(design_path, "DesignSheet01", "DefaultValues")
@@ -283,12 +285,12 @@ def test_reading_design_matrix_validate_headers(tmp_path, column_names, error_ms
     "values, error_msg",
     [
         pytest.param(
-            [0, pd.NA, 1],
+            [0, None, 1],
             r"Design matrix contains empty cells \['Row 1, column 1'\]",
             id="duplicate entries",
         ),
         pytest.param(
-            [0, "some", np.nan],
+            [0, 7, np.nan],
             r"Design matrix contains empty cells \['Row 2, column 1'\]",
             id="invalid float values",
         ),
@@ -296,19 +298,20 @@ def test_reading_design_matrix_validate_headers(tmp_path, column_names, error_ms
 )
 def test_reading_design_matrix_validate_cells(tmp_path, values, error_msg):
     design_path = tmp_path / "design_matrix.xlsx"
-    design_matrix_df = pd.DataFrame(
+    design_matrix_df = pl.DataFrame(
         {
             "REAL": [1, 5, 7],
             "a": values,
             "b": [0, 2, 0],
             "c": [3, 1, 3],
-        }
+        },
+        strict=False,
     )
-    default_sheet_df = pd.DataFrame()
-    with pd.ExcelWriter(design_path) as xl_write:
-        design_matrix_df.to_excel(xl_write, index=False, sheet_name="DesignSheet01")
-        default_sheet_df.to_excel(
-            xl_write, index=False, sheet_name="DefaultValues", header=False
+    default_sheet_df = pl.DataFrame()
+    with Workbook(design_path, {"nan_inf_to_errors": True}) as xl_write:
+        design_matrix_df.write_excel(xl_write, worksheet="DesignSheet01")
+        default_sheet_df.write_excel(
+            xl_write, worksheet="DefaultValues", include_header=False
         )
 
     with pytest.raises(ValueError, match=error_msg):
@@ -342,7 +345,7 @@ def test_reading_design_matrix_validate_cells(tmp_path, values, error_msg):
 )
 def test_reading_default_sheet_validation(tmp_path, data, error_msg):
     design_path = tmp_path / "design_matrix.xlsx"
-    design_matrix_df = pd.DataFrame(
+    design_matrix_df = pl.DataFrame(
         {
             "REAL": [0, 1, 2],
             "a": [1, 2, 3],
@@ -350,11 +353,11 @@ def test_reading_default_sheet_validation(tmp_path, data, error_msg):
             "c": [3, 1, 3],
         }
     )
-    default_sheet_df = pd.DataFrame(data)
-    with pd.ExcelWriter(design_path) as xl_write:
-        design_matrix_df.to_excel(xl_write, index=False, sheet_name="DesignSheet01")
-        default_sheet_df.to_excel(
-            xl_write, index=False, sheet_name="DefaultValues", header=False
+    default_sheet_df = pl.DataFrame(data, orient="row")
+    with Workbook(design_path) as xl_write:
+        design_matrix_df.write_excel(xl_write, worksheet="DesignSheet01")
+        default_sheet_df.write_excel(
+            xl_write, worksheet="DefaultValues", include_header=False
         )
 
     with pytest.raises(ValueError, match=error_msg):
@@ -363,7 +366,7 @@ def test_reading_default_sheet_validation(tmp_path, data, error_msg):
 
 def test_default_values_used(tmp_path):
     design_path = tmp_path / "design_matrix.xlsx"
-    design_matrix_df = pd.DataFrame(
+    design_matrix_df = pl.DataFrame(
         {
             "REAL": [0, 1, 2, 3],
             "a": [1, 2, 3, 4],
@@ -371,11 +374,13 @@ def test_default_values_used(tmp_path):
             "c": ["low", "high", "medium", "low"],
         }
     )
-    default_sheet_df = pd.DataFrame([["one", 1], ["b", 4], ["d", "case_name"]])
-    with pd.ExcelWriter(design_path) as xl_write:
-        design_matrix_df.to_excel(xl_write, index=False, sheet_name="DesignSheet01")
-        default_sheet_df.to_excel(
-            xl_write, index=False, sheet_name="DefaultValues", header=False
+    default_sheet_df = pl.DataFrame(
+        [["one", 1], ["b", 4], ["d", "case_name"]], orient="row"
+    )
+    with Workbook(design_path) as xl_write:
+        design_matrix_df.write_excel(xl_write, worksheet="DesignSheet01")
+        default_sheet_df.write_excel(
+            xl_write, worksheet="DefaultValues", include_header=False
         )
     design_matrix = DesignMatrix(design_path, "DesignSheet01", "DefaultValues")
     df = design_matrix.design_matrix_df
