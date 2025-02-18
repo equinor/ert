@@ -167,7 +167,6 @@ class EverestRunModel(BaseRunModel):
         substitutions = get_substitutions(
             config_dict, model_config, runpath_file, queue_config.preferred_num_cpu
         )
-
         ert_templates = read_templates(config_dict)
         _, _, hooked_workflows = workflows_from_dict(config_dict, substitutions)  # type: ignore
 
@@ -177,7 +176,7 @@ class EverestRunModel(BaseRunModel):
 
         env_vars = {}
         for key, val in config_dict.get("SETENV", []):  # type: ignore
-            env_vars[key] = val
+            env_vars[key] = substitutions.substitute(val)
 
         self.support_restart = False
         self._parameter_configuration = ensemble_config.parameter_configuration
