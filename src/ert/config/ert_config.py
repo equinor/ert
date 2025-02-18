@@ -10,13 +10,7 @@ from dataclasses import field
 from datetime import datetime
 from os import path
 from pathlib import Path
-from typing import (
-    Any,
-    ClassVar,
-    Self,
-    no_type_check,
-    overload,
-)
+from typing import Any, ClassVar, Self, no_type_check, overload
 
 import polars as pl
 from pydantic import ValidationError as PydanticValidationError
@@ -37,7 +31,6 @@ from .forward_model_step import (
     ForwardModelStepPlugin,
     ForwardModelStepValidationError,
 )
-from .gen_kw_config import GenKwConfig
 from .model_config import ModelConfig
 from .observation_vector import ObsVector
 from .observations import EnkfObs
@@ -55,22 +48,18 @@ from .parsing import (
     init_forward_model_schema,
     init_site_config_schema,
     init_user_config_schema,
-    parse_contents,
-    read_file,
 )
-from .parsing import (
-    parse as parse_config,
-)
+from .parsing import parse as parse_config
+from .parsing import parse_contents, read_file
 from .parsing.observations_parser import (
     GenObsValues,
     HistoryValues,
     ObservationConfigError,
     SummaryValues,
 )
-from .parsing.observations_parser import (
-    parse as parse_observations,
-)
+from .parsing.observations_parser import parse as parse_observations
 from .queue_config import QueueConfig
+from .scalar_parameter import ScalarParameters
 from .workflow import Workflow
 from .workflow_job import ErtScriptLoadFailure, WorkflowJob
 
@@ -869,20 +858,17 @@ class ErtConfig:
             raise ConfigValidationError.from_collected(errors)
 
         if dm := analysis_config.design_matrix:
-            dm_params = [
-                x.name
-                for x in dm.parameter_configuration.transform_function_definitions
-            ]
+            dm_params = [x.param_name for x in dm.scalars]
             for group_name, config in ensemble_config.parameter_configs.items():
                 overlapping = []
-                if not isinstance(config, GenKwConfig):
+                if not isinstance(config, ScalarParameters):
                     continue
-                for transform_definition in config.transform_function_definitions:
-                    if transform_definition.name in dm_params:
-                        overlapping.append(transform_definition.name)
+                for param in config.scalars:
+                    if param.param_name in dm_params:
+                        overlapping.append(f"{param.group_name}:{param.param_name}")
                 if overlapping:
                     ConfigWarning.warn(
-                        f"Parameters {overlapping} from GEN_KW group '{group_name}' "
+                        f"Parameters {overlapping} "
                         "will be overridden by design matrix. This will cause "
                         "updates to be turned off for these parameters."
                     )
@@ -1102,8 +1088,9 @@ class ErtConfig:
 
     @staticmethod
     def _create_observations(
-        obs_config_content: dict[str, HistoryValues | SummaryValues | GenObsValues]
-        | None,
+        obs_config_content: (
+            dict[str, HistoryValues | SummaryValues | GenObsValues] | None
+        ),
         ensemble_config: EnsembleConfig,
         time_map: list[datetime] | None,
         history: HistorySource,
