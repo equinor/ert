@@ -195,10 +195,12 @@ class DesignMatrix:
         ):
             error_msg = "\n".join(error_list)
             raise ValueError(f"Design matrix is not valid, error(s):\n{error_msg}")
-        design_matrix_df.columns = param_names
-        if "REAL" in design_matrix_df.columns:
+        design_matrix_df.columns = list(param_names)
+        if "REAL" in design_matrix_df.schema:
+            real_dt = design_matrix_df.schema.get("REAL")
+            assert real_dt is not None
             if (
-                not design_matrix_df.schema.get("REAL").is_integer()
+                not real_dt.is_integer()
                 or design_matrix_df.get_column("REAL").lt(0).any()
                 or design_matrix_df.get_column("REAL").is_duplicated().any()
             ):

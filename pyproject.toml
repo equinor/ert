@@ -37,7 +37,6 @@ dependencies = [
     "matplotlib",
     "netCDF4",
     "numpy<2",
-    "openpyxl",                                # extra dependency for pandas (excel)
     "opentelemetry-api<1.30.0",
     "opentelemetry-sdk<1.30.0",
     "opentelemetry-instrumentation-fastapi<0.51b0",
@@ -49,10 +48,10 @@ dependencies = [
     "pluggy>=1.3.0",
     "polars>=1",
     "psutil",
-    "pyarrow",                                 # extra dependency for pandas (parquet)
+    "pyarrow", # extra dependency for pandas (parquet)
     "pydantic > 2",
     "python-dateutil",
-    "python-multipart",                        # extra dependency for fastapi
+    "python-multipart", # extra dependency for fastapi
     "pyyaml",
     "pyzmq",
     "pyqt6",
@@ -60,13 +59,14 @@ dependencies = [
     "resfo",
     "scipy >= 1.10.1, < 1.15",
     "seaborn",
-    "tables",                                  # extra dependency for pandas (hdf5)
+    "tables", # extra dependency for pandas (hdf5)
     "tabulate",
     "tqdm>=4.62.0",
     "typing_extensions>=4.5",
     "uvicorn >= 0.17.0",
     "xarray",
     "xtgeo >= 3.3.0",
+    "fastexcel>=0.12.1",
 ]
 
 [project.scripts]
