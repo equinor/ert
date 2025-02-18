@@ -767,6 +767,8 @@ and environment variables are exposed in the form 'os.NAME', for example:
             parser.error(
                 f"Loading config file <{config_path}> failed with:\n{format_errors(e)}"
             )
+        except ValueError as e:
+            parser.error(f"Loading config file <{config_path}> failed with: {e}")
 
     def dump(self, fname: str | None = None) -> str | None:
         """Write a config dict to file or return it if fname is None."""
