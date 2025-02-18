@@ -198,8 +198,11 @@ def sample_prior(
         parameters = list(parameter_configs.keys())
     for parameter in parameters:
         config_node = parameter_configs[parameter]
-        if config_node.forward_init:
+        if config_node.forward_init or (
+            type(config_node) == GenKwConfig and config_node.design
+        ):
             continue
+
         logger.info(
             f"Sampling parameter {config_node.name} for realizations {active_realizations}"
         )

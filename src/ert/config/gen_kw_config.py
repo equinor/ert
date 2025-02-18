@@ -63,6 +63,7 @@ class GenKwConfig(ParameterConfig):
     output_file: str | None
     transform_function_definitions: list[TransformFunctionDefinition]
     forward_init_file: str | None = None
+    design: bool = False
 
     def __post_init__(self) -> None:
         self.transform_functions: list[TransformFunction] = []
