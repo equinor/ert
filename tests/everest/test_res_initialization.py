@@ -273,7 +273,7 @@ def test_summary_default_no_opm(copy_egg_test_data_to_tmp):
     "install_data, expected_error_msg",
     [
         (
-            {"source": "r{{ foo }}/", "link": True, "target": "bar.json"},
+            {"source": "/", "link": True, "target": "bar.json"},
             "'/' is a mount point and can't be handled",
         ),
         (

@@ -2,6 +2,7 @@
 
 import logging
 import os
+import re
 from typing import Any
 
 import jinja2
@@ -17,7 +18,7 @@ from ruamel.yaml import YAML, YAMLError
 
 BLOCK_START_STRING = "r{%"  # end string remains as '}'
 VARIABLE_START_STRING = "r{{"  # end string remains as '}}'
-
+SUBSTITUTION_PATTERN = r"(r\{\{.*?\}\})"
 
 # Jinja vars which should NOT be included in definitions portion of config.
 ERT_CONFIG_TEMPLATES = {
@@ -124,10 +125,25 @@ def yaml_file_to_substituted_config_dict(config_path: str) -> dict[str, Any]:
     definitions["os"] = _os()  # update definitions with os namespace
     with open(config_path, encoding="utf-8") as f:
         txt = "".join(f.readlines())
+
     jenv = jinja2.Environment(
         block_start_string=BLOCK_START_STRING,
         variable_start_string=VARIABLE_START_STRING,
     )
+
+    undefined = [
+        s
+        for s in re.findall(SUBSTITUTION_PATTERN, txt)
+        if not jenv.from_string(s).render(**definitions)
+    ]
+
+    if undefined:
+        more_than_one = len(undefined) > 1
+        raise ValueError(
+            f"The following key{'s' if more_than_one else ''} "
+            f"{'are' if more_than_one else 'is'} missing: {undefined} "
+            f"in the definitions section"
+        )
 
     _render_definitions(definitions, jenv)
 

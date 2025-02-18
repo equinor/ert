@@ -323,3 +323,34 @@ def test_lint_everest_models_jobs():
     config = EverestConfig.load_file(config_file).to_dict()
     # Check initial config file is valid
     assert len(EverestConfig.lint_config_dict(config)) == 0
+
+
+@pytest.mark.parametrize(
+    "target, expected",
+    [
+        [
+            "r{{key1 }}/model/r{{key2}}.txt",
+            r"The following keys are missing: \['r\{\{key1 \}\}', 'r\{\{key2\}\}'\]",
+        ],
+        [
+            "r{{ key1}}/model/file.txt",
+            r"The following key is missing: \['r\{\{ key1\}\}'\]",
+        ],
+        ["model/file.txt", ""],
+    ],
+)
+def test_undefined_substitution(min_config, change_to_tmpdir, target, expected):
+    config = min_config
+    config["install_data"] = [
+        {"source": "r{{configpath}}/../model/file.txt", "target": target}
+    ]
+
+    with open("config.yml", mode="w", encoding="utf-8") as f:
+        yaml.dump(config, f)
+    if expected:
+        with pytest.raises(ValueError, match=expected) as e:
+            yaml_file_to_substituted_config_dict("config.yml")
+
+        print(e)
+    else:
+        yaml_file_to_substituted_config_dict("config.yml")

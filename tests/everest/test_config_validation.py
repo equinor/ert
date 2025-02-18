@@ -9,6 +9,7 @@ from typing import Any
 from unittest.mock import patch
 
 import pytest
+import yaml
 from pydantic import ValidationError
 
 from ert.config import ConfigWarning
@@ -1126,3 +1127,26 @@ def test_objective_function_scaling_is_backward_compatible_with_scaling(
     else:
         assert o.auto_scale == auto_scale
         assert o.auto_normalize == auto_normalize
+
+
+def test_load_file_undefined_substitutions(min_config, change_to_tmpdir, capsys):
+    config = min_config
+    config["install_data"] = [
+        {
+            "source": "r{{configpath}}/../model/file.txt",
+            "target": "r{{undefined_key }}/run_path",
+        }
+    ]
+
+    with open("config.yml", mode="w", encoding="utf-8") as f:
+        yaml.dump(config, f)
+
+    with pytest.raises(SystemExit):
+        parser = ArgumentParser(prog="test")
+        EverestConfig.load_file_with_argparser("config.yml", parser)
+
+    captured = capsys.readouterr()
+    assert (
+        "Loading config file <config.yml> failed with: The following key is missing: ['r{{undefined_key }}']"
+        in captured.err
+    )
