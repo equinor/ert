@@ -587,7 +587,7 @@ def test_that_a_failing_job_shows_error_message_with_context(
         assert "ERT experiment failed" in label
         expected_substrings = [
             "Realization: 0 failed after reaching max submit (1)",
-            "job poly_eval failed",
+            "Step poly_eval failed",
             "Process exited with status code 1",
             "Traceback",
             "raise RuntimeError('Argh')",
