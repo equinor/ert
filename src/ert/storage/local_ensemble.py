@@ -16,7 +16,7 @@ import xarray as xr
 from pydantic import BaseModel
 from typing_extensions import TypedDict, deprecated
 
-from ert.config.gen_kw_config import GenKwConfig
+from ert.config.scalar_parameter import SCALAR_PARAMETERS_NAME, ScalarParameters
 from ert.storage.mode import BaseMode, Mode, require_write
 
 from .realization_storage_state import RealizationStorageState
@@ -433,6 +433,7 @@ class LocalEnsemble(BaseMode):
             if not self.experiment.parameter_configuration:
                 return True
             path = self._realization_dir(realization)
+
             return all(
                 (path / (_escape_filename(parameter) + ".nc")).exists()
                 for parameter in self.experiment.parameter_configuration
@@ -762,23 +763,19 @@ class LocalEnsemble(BaseMode):
             realizations = np.flatnonzero(ens_mask)
 
         dataframes = []
-        gen_kws = [
+        scalar_groups = [
             config
             for config in self.experiment.parameter_configuration.values()
-            if isinstance(config, GenKwConfig)
+            if isinstance(config, ScalarParameters)
         ]
         if group:
-            gen_kws = [config for config in gen_kws if config.name == group]
-        for key in gen_kws:
+            scalar_groups = [config for config in scalar_groups if config.name == group]
+        for scalars in scalar_groups:
             with contextlib.suppress(KeyError):
-                da = self.load_parameters(key.name, realizations)["transformed_values"]
-                assert isinstance(da, xr.DataArray)
-                da["names"] = np.char.add(f"{key.name}:", da["names"].astype(np.str_))
-                df = da.to_dataframe().unstack(level="names")
-                df.columns = df.columns.droplevel()
-                for parameter in df.columns:
-                    if key.shouldUseLogScale(parameter.split(":")[1]):
-                        df[f"LOG10_{parameter}"] = np.log10(df[parameter])
+                da = ScalarParameters.load_parameters(
+                    self, scalars.name, realizations
+                ).filter(pl.col("realization").is_in(realizations))
+                df = da.to_pandas()
                 dataframes.append(df)
         if not dataframes:
             return pd.DataFrame()
@@ -788,6 +785,32 @@ class LocalEnsemble(BaseMode):
         dataframe.index.name = "Realization"
 
         return dataframe.sort_index(axis=1)
+
+    @require_write
+    def save_parameters_scalar(
+        self, group: str, realizations: npt.NDArray[np.int_], dataframe: pl.DataFrame
+    ) -> None:
+        path = self._path / f"{_escape_filename(group)}.parquet"
+        self._storage._to_parquet_transaction(
+            path, dataframe.filter(pl.col("realization").is_in(realizations))
+        )
+
+    def load_parameters_scalar(
+        self,
+        group: str = SCALAR_PARAMETERS_NAME,
+        realizations: npt.NDArray[np.int_] | None = None,
+        key: str | None = None,
+    ) -> pl.DataFrame:
+        if realizations is None and key is None:
+            return pl.read_parquet(self._path / f"{_escape_filename(group)}.parquet")
+        elif realizations is None and key is not None:
+            df_lazy = pl.scan_parquet(self._path / f"{_escape_filename(group)}.parquet")
+            if key not in df_lazy.columns:
+                raise KeyError(f"No such key {key} in scalar parameters!")
+            return df_lazy.select(["realization", key]).collect()
+        else:
+            df_lazy = pl.scan_parquet(self._path / f"{_escape_filename(group)}.parquet")
+            return df_lazy.filter(pl.col("realization").is_in(realizations)).collect()
 
     @require_write
     def save_parameters(
@@ -888,9 +911,11 @@ class LocalEnsemble(BaseMode):
     ) -> dict[str, RealizationStorageState]:
         path = self._realization_dir(realization)
         return {
-            e: RealizationStorageState.PARAMETERS_LOADED
-            if (path / (_escape_filename(e) + ".nc")).exists()
-            else RealizationStorageState.UNDEFINED
+            e: (
+                RealizationStorageState.PARAMETERS_LOADED
+                if (path / (_escape_filename(e) + ".nc")).exists()
+                else RealizationStorageState.UNDEFINED
+            )
             for e in self.experiment.parameter_configuration
         }
 
@@ -900,9 +925,11 @@ class LocalEnsemble(BaseMode):
         response_configs = self.experiment.response_configuration
         path = self._realization_dir(realization)
         return {
-            e: RealizationStorageState.RESPONSES_LOADED
-            if (path / f"{e}.parquet").exists()
-            else RealizationStorageState.UNDEFINED
+            e: (
+                RealizationStorageState.RESPONSES_LOADED
+                if (path / f"{e}.parquet").exists()
+                else RealizationStorageState.UNDEFINED
+            )
             for e in response_configs
         }
 
