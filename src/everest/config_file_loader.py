@@ -111,10 +111,7 @@ def _render_definitions(
                 break
 
         if VARIABLE_START_STRING in definitions[key]:
-            raise ValueError(
-                """Circular dependencies in definitions. Please """
-                """resolve using everlint."""
-            )
+            raise ValueError("Circular dependencies in definitions.")
 
 
 def yaml_file_to_substituted_config_dict(config_path: str) -> dict[str, Any]:
