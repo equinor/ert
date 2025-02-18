@@ -1,10 +1,10 @@
+import math
 import warnings
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Literal
 
 import numpy as np
-import xarray as xr
 from scipy.stats import norm
 
 from .parameter_config import ParameterConfig
@@ -13,14 +13,28 @@ from .parameter_config import ParameterConfig
 
 
 @dataclass
-class TransUniformSettings:
-    name: Literal["uniform"] = "uniform"
+class TransUnifSettings:
+    name: Literal["unif"] = "unif"
     min: float = 0.0
     max: float = 1.0
 
     def trans(self, x: float) -> float:
         y = float(norm.cdf(x))
         return y * (self.max - self.min) + self.min
+
+
+@dataclass
+class TransDUnifSettings:
+    name: Literal["dunif"] = "dunif"
+    steps: int = 1000
+    min: float = 0.0
+    max: float = 1.0
+
+    def trans(self, x: float) -> float:
+        y = float(norm.cdf(x))
+        return (math.floor(y * self.steps) / (self.steps - 1)) * (
+            self.max - self.min
+        ) + self.min
 
 
 @dataclass
@@ -31,6 +45,19 @@ class TransNormalSettings:
 
     def trans(self, x: float) -> float:
         return x * self.std + self.mean
+
+
+@dataclass
+class TransTruncNormalSettings:
+    name: Literal["trunc_normal"] = "trunc_normal"
+    mean: float = 0.0
+    std: float = 1.0
+    min: float = 0.0
+    max: float = 1.0
+
+    def trans(self, x: float) -> float:
+        y = x * self.std + self.mean
+        return max(min(y, self.max), self.min)  # clamp
 
 
 @dataclass
@@ -48,6 +75,25 @@ class TransConstSettings:
 
     def trans(self, _: float) -> float:
         return self.value
+
+
+@dataclass
+class TransTriangularSettings:
+    name: Literal["triangular"] = "triangular"
+    min: float = 0.0
+    mode: float = 0.5
+    max: float = 1.0
+
+    def trans(self, x: float) -> float:
+        inv_norm_left = (self.max - self.min) * (self.mode - self.min)
+        inv_norm_right = (self.max - self.min) * (self.max - self.mode)
+        ymode = (self.mode - self.min) / (self.max - self.min)
+        y = norm.cdf(x)
+
+        if y < ymode:
+            return self.min + math.sqrt(y * inv_norm_left)
+        else:
+            return self.max - math.sqrt((1 - y) * inv_norm_right)
 
 
 @dataclass
@@ -105,16 +151,19 @@ class PolarsData:
 
 @dataclass
 class ScalarParameter(ParameterConfig):
-    name: str
+    # name: str
     group: str
     distribution: (
-        TransUniformSettings
+        TransUnifSettings
+        | TransDUnifSettings
         | TransRawSettings
         | TransConstSettings
         | TransNormalSettings
+        | TransTruncNormalSettings
         | TransErrfSettings
         | TransDerrfSettings
+        | TransTriangularSettings
     )
     active: bool
     input_source: Literal["design_matrix", "sampled"]
-    dataset_file: PolarsData | xr.Dataset
+    dataset_file: PolarsData
