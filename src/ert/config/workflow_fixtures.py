@@ -6,13 +6,14 @@ from qtpy.QtWidgets import QWidget
 from typing_extensions import TypedDict
 
 if TYPE_CHECKING:
-    from ert.config import ESSettings, UpdateSettings
+    from ert.config import ESSettings
+    from ert.config.analysis_config import UpdateSettings
     from ert.runpaths import Runpaths
     from ert.storage import Ensemble, Storage
 
 
 class WorkflowFixtures(TypedDict, total=False):
-    ensemble: Ensemble
+    ensemble: Ensemble | None
     storage: Storage
     random_seed: int | None
     reports_dir: str

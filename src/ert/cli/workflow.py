@@ -37,6 +37,7 @@ def execute_workflow(
                 substitutions=ert_config.substitutions,
                 eclbase=ert_config.model_config.eclbase_format_string,
             ),
+            "ensemble": None,
         },
     )
     runner.run_blocking()
