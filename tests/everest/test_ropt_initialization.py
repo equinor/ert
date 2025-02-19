@@ -307,7 +307,6 @@ def test_everest2ropt_snapshot(case, snapshot):
         raise TypeError(f"Object of type {type(obj)} is not JSON serializable")
 
     ropt_config["optimizer"]["output_dir"] = "not_relevant"
-    del ropt_config["original_inputs"]
 
     ropt_config_str = (
         orjson.dumps(
