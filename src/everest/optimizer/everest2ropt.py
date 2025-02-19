@@ -3,7 +3,7 @@ import os
 from typing import Any
 
 import numpy as np
-from ropt.config.enopt import EnOptConfig, EnOptContext
+from ropt.config.enopt import EnOptConfig
 from ropt.enums import PerturbationType, VariableType
 from ropt.transforms import OptModelTransforms
 
@@ -342,7 +342,4 @@ def everest2ropt(
         ropt_config=ropt_config,
     )
 
-    return EnOptConfig.model_validate(
-        ropt_config,
-        context=None if transforms is None else EnOptContext(transforms=transforms),
-    )
+    return EnOptConfig.model_validate(ropt_config, context=transforms)
