@@ -17,7 +17,7 @@ from ert.storage import Ensemble, Storage
 from ert.trace import tracer
 
 from ..config.analysis_config import UpdateSettings
-from ..config.analysis_module import IESSettings
+from ..config.analysis_module import ESSettings, IESSettings
 from ..config.workflow_fixtures import WorkflowFixtures
 from ..run_arg import create_run_arguments
 from .base_run_model import BaseRunModel, ErtRunError, StatusEvents
@@ -50,6 +50,7 @@ class IteratedEnsembleSmoother(BaseRunModel):
         analysis_config: IESSettings,
         update_settings: UpdateSettings,
         status_queue: SimpleQueue[StatusEvents],
+        log_path: Path,
     ):
         self.analysis_config = analysis_config
         self.update_settings = update_settings
@@ -82,6 +83,7 @@ class IteratedEnsembleSmoother(BaseRunModel):
             total_iterations=number_of_iterations,
             random_seed=random_seed,
             minimum_required_realizations=minimum_required_realizations,
+            log_path=log_path,
         )
         self.support_restart = False
 
@@ -114,8 +116,8 @@ class IteratedEnsembleSmoother(BaseRunModel):
         workflow_fixtures: WorkflowFixtures = {
             "storage": self._storage,
             "ensemble": prior_storage,
-            "observation_settings": self._update_settings,
-            "es_settings": self._analysis_settings,
+            "observation_settings": self.update_settings,
+            "es_settings": ESSettings(),
             "random_seed": self.random_seed,
             "reports_dir": self.reports_dir(
                 experiment_name=prior_storage.experiment.name
@@ -192,8 +194,8 @@ class IteratedEnsembleSmoother(BaseRunModel):
         workflow_fixtures: WorkflowFixtures = {
             "storage": self._storage,
             "ensemble": prior,
-            "observation_settings": self._update_settings,
-            "es_settings": self._analysis_settings,
+            "observation_settings": self.update_settings,
+            "es_settings": ESSettings(),
             "random_seed": self.random_seed,
             "reports_dir": self.reports_dir(experiment_name=prior.experiment.name),
             "run_paths": self.run_paths,

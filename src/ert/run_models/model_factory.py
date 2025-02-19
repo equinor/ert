@@ -290,6 +290,7 @@ def _setup_iterative_ensemble_smoother(
         analysis_config=config.analysis_config.ies_module,
         update_settings=update_settings,
         status_queue=status_queue,
+        log_path=config.analysis_config.log_path,
     )
 
 
