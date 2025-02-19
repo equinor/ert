@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import dataclasses
 import logging
 from pathlib import Path
 from queue import SimpleQueue
@@ -58,7 +59,12 @@ from ert.run_models import (
     RunModelUpdateEndEvent,
     StatusEvents,
 )
-from ert.run_models.event import RunModelDataEvent, RunModelErrorEvent
+from ert.run_models.event import (
+    EverestBatchResultEvent,
+    EverestStatusEvent,
+    RunModelDataEvent,
+    RunModelErrorEvent,
+)
 from ert.shared.status.utils import (
     byte_with_unit,
     file_has_content,
@@ -71,6 +77,7 @@ from .queue_emitter import QueueEmitter
 from .view import DiskSpaceWidget, ProgressWidget, RealizationWidget, UpdateWidget
 
 _TOTAL_PROGRESS_TEMPLATE = "Total progress {total_progress}% — {iteration_label}"
+_EVEREST_TOTAL_PROGRESS_TEMPLATE = "Batch {iteration} progress: {total_progress}%"
 
 
 class FMStepOverview(QTableView):
@@ -164,6 +171,12 @@ class FMStepOverview(QTableView):
         return super().mouseMoveEvent(e)
 
 
+@dataclasses.dataclass
+class _BatchResultInfo:
+    is_gradient: bool = False
+    is_function: bool = False
+
+
 class RunDialog(QFrame):
     simulation_done = Signal(bool, str)
     progress_update_event = Signal(dict, int)
@@ -174,9 +187,10 @@ class RunDialog(QFrame):
         config_file: str,
         run_model_api: BaseRunModelAPI,
         event_queue: SimpleQueue[StatusEvents],
-        notifier: ErtNotifier,
+        notifier: ErtNotifier | None = None,
         parent: QWidget | None = None,
         output_path: Path | None = None,
+        is_everest: bool | None = False,
     ):
         super().__init__(parent)
         self.output_path = output_path
@@ -194,6 +208,11 @@ class RunDialog(QFrame):
 
         self._ticker = QTimer(self)
         self._ticker.timeout.connect(self._on_ticker)
+
+        self._is_everest = is_everest
+
+        if is_everest:
+            self._batch_result_infos: list[_BatchResultInfo] = []
 
         self._total_progress_label = QLabel(
             _TOTAL_PROGRESS_TEMPLATE.format(
@@ -291,6 +310,8 @@ class RunDialog(QFrame):
         self._restart = False
         self.flag_simulation_done = False
 
+        self._latest_iteration = 0
+
     def is_simulation_done(self) -> bool:
         return self.flag_simulation_done
 
@@ -307,21 +328,31 @@ class RunDialog(QFrame):
     ) -> None:
         if not parent.isValid():
             index = self._snapshot_model.index(start, 0, parent)
-            iteration = cast(IterNode, index.internalPointer()).id_
+            iteration = int(cast(IterNode, index.internalPointer()).id_)
+            self._latest_iteration = iteration
             iter_row = start
             self._iteration_progress_label.setText(
                 f"Progress for iteration {iteration}"
+                if not self._is_everest
+                else f"Progress for batch {iteration}"
             )
 
             widget = RealizationWidget(iter_row)
             widget.setSnapshotModel(self._snapshot_model)
             widget.itemClicked.connect(self._select_real)
+            widget.setProperty("identifier", f"tab-iter-{iteration}")
             self._select_real(widget._real_list_model.index(0, 0))
             tab_index = self._tab_widget.addTab(
-                widget, f"Realizations for iteration {iteration}"
+                widget,
+                f"Realizations for iteration {iteration}"
+                if not self._is_everest
+                else f"Batch {iteration}...",
             )
             if self._tab_widget.currentIndex() == self._tab_widget.count() - 2:
                 self._tab_widget.setCurrentIndex(tab_index)
+
+            if self._is_everest:
+                self._batch_result_infos.append(_BatchResultInfo())
 
     @Slot(QModelIndex)
     def _select_real(self, index: QModelIndex) -> None:
@@ -337,7 +368,14 @@ class RunDialog(QFrame):
                     exec_hosts = real_node.data.exec_hosts
 
             self._fm_step_overview.set_realization(iter_, real)
-            text = f"Realization id {index.data(RealIens)} in iteration {index.data(IterNum)}"
+
+            if not self._is_everest:
+                text = f"Realization id {index.data(RealIens)} in iteration {index.data(IterNum)}"
+            else:
+                text = (
+                    f"Simulation {index.data(RealIens)} in batch {index.data(IterNum)}"
+                )
+
             if exec_hosts and exec_hosts != "-":
                 text += f", assigned to host: {exec_hosts}"
             self._fm_step_label.setText(text)
@@ -379,7 +417,9 @@ class RunDialog(QFrame):
 
         self._worker_thread.start()
         simulation_thread.start()
-        self._notifier.set_is_simulation_running(True)
+
+        if self._notifier is not None:
+            self._notifier.set_is_simulation_running(True)
 
     def killJobs(self) -> QMessageBox.StandardButton:
         msg = "Are you sure you want to terminate the currently running experiment?"
@@ -403,7 +443,10 @@ class RunDialog(QFrame):
         self.kill_button.setHidden(True)
         self.restart_button.setVisible(self._run_model_api.has_failed_realizations())
         self.restart_button.setEnabled(self._run_model_api.support_restart)
-        self._notifier.set_is_simulation_running(False)
+
+        if self._notifier is not None:
+            self._notifier.set_is_simulation_running(False)
+
         self.flag_simulation_done = True
         if failed:
             self.update_total_progress(1.0, "Failed")
@@ -447,7 +490,9 @@ class RunDialog(QFrame):
                         model._update_snapshot(event.snapshot, str(event.iteration))
                     else:
                         model._add_snapshot(event.snapshot, str(event.iteration))
-                self.update_total_progress(event.progress, event.iteration_label)
+                self.update_total_progress(
+                    event.progress, event.iteration_label, event.iteration
+                )
                 self._progress_widget.update_progress(status_count, realization_count)
                 self.progress_update_event.emit(status_count, realization_count)
             case SnapshotUpdateEvent(
@@ -456,7 +501,9 @@ class RunDialog(QFrame):
                 if event.snapshot is not None:
                     model._update_snapshot(event.snapshot, str(event.iteration))
                 self._progress_widget.update_progress(status_count, realization_count)
-                self.update_total_progress(event.progress, event.iteration_label)
+                self.update_total_progress(
+                    event.progress, event.iteration_label, event.iteration
+                )
                 self.progress_update_event.emit(status_count, realization_count)
             case RunModelUpdateBeginEvent(iteration=iteration):
                 widget = UpdateWidget(iteration)
@@ -476,6 +523,27 @@ class RunDialog(QFrame):
             case RunModelErrorEvent():
                 self._get_update_widget(event.iteration).error(event)
                 event.write_as_csv(self.output_path)
+            case EverestStatusEvent():
+                print(event)
+            case EverestBatchResultEvent():
+                result_info = self._batch_result_infos[event.batch]
+
+                if event.result_type == "FunctionResult":
+                    print(f"batch={event.batch}, got a function result")
+                    result_info.is_gradient = True
+
+                if event.result_type == "GradientResult":
+                    print(f"batch={event.batch}, got a gradient result")
+                    result_info.is_function = True
+
+                tab_text = f" Batch {event.batch}: " + (
+                    "fn+∇"
+                    if (result_info.is_function and result_info.is_gradient)
+                    else "∇"
+                    if result_info.is_gradient
+                    else "fn"
+                )
+                self._tab_widget.setTabText(event.batch, tab_text)
 
     def _get_update_widget(self, iteration: int) -> UpdateWidget:
         for i in range(self._tab_widget.count()):
@@ -485,18 +553,29 @@ class RunDialog(QFrame):
         raise ValueError("Could not find UpdateWidget")
 
     def update_total_progress(
-        self, progress_value: float, iteration_label: str
+        self, progress_value: float, iteration_label: str, iteration: int | None = None
     ) -> None:
+        if iteration is None:
+            iteration = self._latest_iteration
+
         progress = int(progress_value * 100)
         if not (0 <= progress <= 100):
             logger = logging.getLogger(__name__)
             logger.warning(f"Total progress bar exceeds [0-100] range: {progress}")
         self._total_progress_bar.setValue(progress)
-        self._total_progress_label.setText(
-            _TOTAL_PROGRESS_TEMPLATE.format(
-                total_progress=progress, iteration_label=iteration_label
+
+        if self._is_everest:
+            self._total_progress_label.setText(
+                _EVEREST_TOTAL_PROGRESS_TEMPLATE.format(
+                    total_progress=progress, iteration=iteration
+                )
             )
-        )
+        else:
+            self._total_progress_label.setText(
+                _TOTAL_PROGRESS_TEMPLATE.format(
+                    total_progress=progress, iteration_label=iteration_label
+                )
+            )
 
     def restart_failed_realizations(self) -> None:
         msg = QMessageBox(self)
