@@ -22,6 +22,7 @@ from pydantic import BaseModel, Field
 
 from ert.config import ErtConfig, ParameterConfig, ResponseConfig
 from ert.shared import __version__
+from ert.storage.everest_experiment import EverestExperiment
 from ert.storage.local_ensemble import LocalEnsemble
 from ert.storage.local_experiment import LocalExperiment
 from ert.storage.mode import BaseMode, Mode, require_write
@@ -588,6 +589,15 @@ class LocalStorage(BaseMode):
             dataframe.write_parquet(f.name)
             os.chmod(f.name, 0o660)
             os.rename(f.name, filename)
+
+    def create_everest_experiment(
+        self,
+        parameters: list[ParameterConfig] | None = None,
+        responses: list[ResponseConfig] | None = None,
+        name: str | None = None,
+    ) -> EverestExperiment:
+        ert_experiment = self.create_experiment(parameters, responses, name=name)
+        return EverestExperiment(ert_experiment)
 
 
 def _storage_version(path: Path) -> int:
