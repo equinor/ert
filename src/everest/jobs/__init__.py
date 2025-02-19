@@ -30,7 +30,7 @@ def _inject_scripts() -> None:
     def fetch_script_path(script_name: str) -> str:
         rel_script_path = os.path.join("scripts", script_name)
         return str(
-            Path(importlib.util.find_spec("everest.jobs").origin).parent
+            Path(importlib.util.find_spec("everest.jobs").origin).parent  # type: ignore
             / rel_script_path
         )
 
@@ -42,9 +42,9 @@ def _inject_scripts() -> None:
     globals()["_scripts"] = scripts
 
 
-def fetch_script(script_name):
-    if script_name in _scripts:  # noqa F821
-        return _scripts[script_name]  # noqa F821
+def fetch_script(script_name: str) -> str:
+    if script_name in _scripts:  # type: ignore # noqa F821
+        return _scripts[script_name]  # type: ignore # noqa F821
     else:
         raise KeyError(f"Unknown script: {script_name}")
 
