@@ -11,6 +11,9 @@ def migrate(path: Path) -> None:
 
         with open(experiment / "parameter.json", "w", encoding="utf-8") as fout:
             for param in parameters_json.values():
-                if param.get("_ert_kind") == "GenKwConfig" and "design" not in param:
-                    param["design"] = False
+                if param.get("forward_init") == True:
+                    param["source"] = "forward_init"
+                else:
+                    param["source"] = "sampled"
+                del param["forward_init"]
             fout.write(json.dumps(parameters_json, indent=4))

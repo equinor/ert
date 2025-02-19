@@ -19,7 +19,7 @@ from typing_extensions import TypedDict
 from ert.substitutions import substitute_runpath_name
 
 from ._str_to_bool import str_to_bool
-from .parameter_config import ParameterConfig, parse_config
+from .parameter_config import ParameterConfig, ParameterSource, parse_config
 from .parsing import ConfigValidationError, ConfigWarning, ErrorInfo
 
 if TYPE_CHECKING:
@@ -63,7 +63,6 @@ class GenKwConfig(ParameterConfig):
     output_file: str | None
     transform_function_definitions: list[TransformFunctionDefinition]
     forward_init_file: str | None = None
-    design: bool = False
 
     def __post_init__(self) -> None:
         self.transform_functions: list[TransformFunction] = []
@@ -195,12 +194,16 @@ class GenKwConfig(ParameterConfig):
             )
         return cls(
             name=gen_kw_key,
-            forward_init=forward_init,
             template_file=template_file,
             output_file=output_file,
             forward_init_file=init_file,
             transform_function_definitions=transform_function_definitions,
             update=update_parameter,
+            source=(
+                ParameterSource.forward_init
+                if forward_init
+                else ParameterSource.sampled
+            ),
         )
 
     def _validate(self) -> None:

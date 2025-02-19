@@ -11,7 +11,7 @@ import xarray as xr
 
 from ert.substitutions import substitute_runpath_name
 
-from .parameter_config import ParameterConfig
+from .parameter_config import ParameterConfig, ParameterSource
 
 if TYPE_CHECKING:
     import numpy.typing as npt
@@ -33,7 +33,7 @@ class ExtParamConfig(ParameterConfig):
     """
 
     input_keys: list[str] | dict[str, list[str]] = field(default_factory=list)
-    forward_init: bool = False
+    source: ParameterSource = ParameterSource.sampled
     output_file: str = ""
     forward_init_file: str = ""
     update: bool = False

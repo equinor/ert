@@ -22,7 +22,7 @@ from .gen_kw_config import GenKwConfig, PriorDict, TransformFunction
 from .lint_file import lint_file
 from .model_config import ModelConfig
 from .observations import EnkfObs
-from .parameter_config import ParameterConfig
+from .parameter_config import ParameterConfig, ParameterSource
 from .parsing import (
     ConfigValidationError,
     ConfigWarning,
@@ -72,6 +72,7 @@ __all__ = [
     "ObservationGroups",
     "ObservationType",
     "ParameterConfig",
+    "ParameterSource",
     "PriorDict",
     "QueueConfig",
     "QueueSystem",

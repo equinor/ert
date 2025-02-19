@@ -5,7 +5,7 @@ import logging
 import time
 from pathlib import Path
 
-from ert.config import InvalidResponseFile
+from ert.config import InvalidResponseFile, ParameterSource
 from ert.storage import Ensemble
 from ert.storage.realization_storage_state import RealizationStorageState
 
@@ -24,7 +24,7 @@ async def _read_parameters(
     error_msg = ""
     parameter_configuration = ensemble.experiment.parameter_configuration.values()
     for config in parameter_configuration:
-        if not config.forward_init:
+        if config.source != ParameterSource.forward_init:
             continue
         try:
             start_time = time.perf_counter()

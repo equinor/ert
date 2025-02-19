@@ -19,7 +19,14 @@ from ert.config.forward_model_step import ForwardModelStep
 from ert.config.model_config import ModelConfig
 from ert.substitutions import Substitutions, substitute_runpath_name
 
-from .config import ExtParamConfig, Field, GenKwConfig, ParameterConfig, SurfaceConfig
+from .config import (
+    ExtParamConfig,
+    Field,
+    GenKwConfig,
+    ParameterConfig,
+    ParameterSource,
+    SurfaceConfig,
+)
 from .config.design_matrix import DESIGN_MATRIX_GROUP
 from .run_arg import RunArg
 from .runpaths import Runpaths
@@ -106,7 +113,7 @@ def _generate_parameter_files(
         # For the first iteration we do not write the parameter
         # to run path, as we expect to read if after the forward
         # model has completed.
-        if node.forward_init and iteration == 0:
+        if node.source == ParameterSource.forward_init and iteration == 0:
             continue
         export_values = node.write_to_runpath(Path(run_path), iens, fs)
         if export_values:
@@ -125,7 +132,10 @@ def _manifest_to_json(ensemble: Ensemble, iens: int, iter: int) -> dict[str, Any
             param_config,
             ExtParamConfig | GenKwConfig | Field | SurfaceConfig,
         )
-        if param_config.forward_init and ensemble.iteration == 0:
+        if (
+            param_config.source == ParameterSource.forward_init
+            and ensemble.iteration == 0
+        ):
             assert param_config.forward_init_file is not None
             file_path = substitute_runpath_name(
                 param_config.forward_init_file, iens, iter
@@ -198,9 +208,10 @@ def sample_prior(
         parameters = list(parameter_configs.keys())
     for parameter in parameters:
         config_node = parameter_configs[parameter]
-        if config_node.forward_init or (
-            type(config_node) == GenKwConfig and config_node.design
-        ):
+        if config_node.source in {
+            ParameterSource.forward_init,
+            ParameterSource.design_matrix,
+        }:
             continue
 
         logger.info(

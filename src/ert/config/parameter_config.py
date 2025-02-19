@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import dataclasses
 from abc import ABC, abstractmethod
+from enum import StrEnum, auto
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
@@ -46,11 +47,17 @@ def parse_config(
     return args, kwargs
 
 
+class ParameterSource(StrEnum):
+    forward_init = auto()
+    sampled = auto()
+    design_matrix = auto()
+
+
 @dataclasses.dataclass
 class ParameterConfig(ABC):
     name: str
-    forward_init: bool
     update: bool
+    source: ParameterSource
 
     def sample_or_load(
         self,
