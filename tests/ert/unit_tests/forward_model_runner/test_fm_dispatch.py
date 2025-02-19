@@ -4,19 +4,20 @@ import asyncio
 import glob
 import json
 import os
-import signal
 import stat
 import sys
 from subprocess import Popen
 from textwrap import dedent
 from threading import Lock
-from unittest.mock import MagicMock, mock_open, patch
+from unittest.mock import MagicMock
 
 import pandas as pd
 import psutil
 import pytest
 
 import _ert.forward_model_runner.fm_dispatch
+import _ert.forward_model_runner.forward_model_step
+import _ert.forward_model_runner.reporting
 from _ert.events import event_from_json
 from _ert.forward_model_runner.fm_dispatch import (
     FORWARD_MODEL_DESCRIPTION_FILE,
@@ -27,7 +28,7 @@ from _ert.forward_model_runner.fm_dispatch import (
 )
 from _ert.forward_model_runner.forward_model_step import killed_by_oom
 from _ert.forward_model_runner.reporting import Event, Interactive, Reporter
-from _ert.forward_model_runner.reporting.message import Finish, Init, Message
+from _ert.forward_model_runner.reporting.message import Message
 from _ert.threading import ErtThread
 from tests.ert.utils import MockZMQServer, wait_until
 
@@ -335,36 +336,6 @@ def test_setup_reporters(is_interactive_run, ens_id):
     if is_interactive_run and ens_id:
         assert len(reporters) == 1
         assert any(isinstance(r, Interactive) for r in reporters)
-
-
-@pytest.mark.usefixtures("use_tmpdir")
-def test_fm_dispatch_kills_itself_after_unsuccessful_step(unused_tcp_port):
-    port = unused_tcp_port
-    jobs_json = json.dumps(
-        {"ens_id": "_id_", "dispatch_url": f"tcp://localhost:{port}"}
-    )
-
-    with (
-        patch("_ert.forward_model_runner.fm_dispatch.os.killpg") as mock_killpg,
-        patch("_ert.forward_model_runner.fm_dispatch.os.getpgid") as mock_getpgid,
-        patch(
-            "_ert.forward_model_runner.fm_dispatch.open",
-            new=mock_open(read_data=jobs_json),
-        ),
-        patch(
-            "_ert.forward_model_runner.fm_dispatch.ForwardModelRunner"
-        ) as mock_runner,
-    ):
-        mock_runner.return_value.run.return_value = [
-            Init([], 0, 0),
-            Finish().with_error("overall bad run"),
-        ]
-        mock_getpgid.return_value = 17
-
-        with MockZMQServer(port):
-            fm_dispatch(["script.py"])
-
-        mock_killpg.assert_called_with(17, signal.SIGKILL)
 
 
 @pytest.mark.skipif(sys.platform.startswith("darwin"), reason="No oom_score on MacOS")

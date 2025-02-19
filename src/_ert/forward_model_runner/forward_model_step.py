@@ -177,6 +177,8 @@ class ForwardModelStep:
                 env=self._create_environment(),
             )
             process = Process(proc.pid)
+
+            signal.signal(signal.SIGQUIT, lambda *args: proc.kill())
         except OSError as e:
             exited_message = self._handle_process_io_error_and_create_exited_message(
                 e, stderr

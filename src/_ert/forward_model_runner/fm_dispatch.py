@@ -127,13 +127,7 @@ def _report_all_messages(
                         " Removing the reporter."
                     )
         if isinstance(msg, Finish) and not msg.success():
-            _stop_reporters_and_sigkill(reporters)
-
-
-def _stop_reporters_and_sigkill(reporters, exited_event: Exited | None = None):
-    _stop_reporters(reporters, exited_event)
-    pgid = os.getpgid(os.getpid())
-    os.killpg(pgid, signal.SIGKILL)
+            os.kill(os.getpid(), signal.SIGTERM)
 
 
 def _stop_reporters(
@@ -142,11 +136,6 @@ def _stop_reporters(
     for reporter in reporters:
         if isinstance(reporter, reporting.Event):
             reporter.stop(exited_event=exited_event)
-
-
-def sigterm_handler(_signo, _stack_frame):
-    signal.signal(signal.SIGTERM, signal.SIG_DFL)
-    os.kill(0, signal.SIGTERM)
 
 
 def fm_dispatch(args):
@@ -199,7 +188,8 @@ def fm_dispatch(args):
         exited_event = Exited(
             fm_runner._currently_running_step, exit_code=1
         ).with_error(FORWARD_MODEL_TERMINATED_MSG)
-        _stop_reporters_and_sigkill(reporters, exited_event)
+        _stop_reporters(reporters, exited_event)
+        os.kill(os.getpid(), signal.SIGQUIT)
 
     signal.signal(signal.SIGTERM, sigterm_handler)
     _report_all_messages(fm_runner.run(parsed_args.steps), reporters)
@@ -207,7 +197,6 @@ def fm_dispatch(args):
 
 def main():
     os.nice(19)
-    signal.signal(signal.SIGTERM, sigterm_handler)
     try:
         fm_dispatch(sys.argv)
     except Exception as e:
