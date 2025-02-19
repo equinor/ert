@@ -71,6 +71,7 @@ class SnapshotBuilder(BaseModel):
         end_time: datetime | None = None,
         stdout: str | None = None,
         stderr: str | None = None,
+        error: str | None = None,
     ) -> "SnapshotBuilder":
         self.fm_steps[fm_step_id] = _filter_nones(
             FMStepSnapshot(
@@ -83,6 +84,7 @@ class SnapshotBuilder(BaseModel):
                 stderr=stderr,
                 current_memory_usage=current_memory_usage,
                 max_memory_usage=max_memory_usage,
+                error=error,
             )
         )
         return self

@@ -1,29 +1,20 @@
-import logging
 import os
 from pathlib import Path
 
 import pytest
 
-from ert.scheduler.event import FinishedEvent
+from everest.bin.main import start_everest
 from everest.config import (
     EverestConfig,
     ServerConfig,
 )
 from everest.config.install_job_config import InstallJobConfig
-from everest.detached import start_experiment, start_server, wait_for_server
-from everest.util import makedirs_if_needed
 
 
 @pytest.mark.timeout(240)  # Simulation might not finish
 @pytest.mark.integration_test
 @pytest.mark.xdist_group(name="starts_everest")
-async def test_logging_setup(copy_math_func_test_data_to_tmp):
-    async def server_running():
-        while True:
-            event = await driver.event_queue.get()
-            if isinstance(event, FinishedEvent) and event.iens == 0:
-                return
-
+def test_logging_setup(copy_math_func_test_data_to_tmp):
     everest_config = EverestConfig.load_file("config_minimal.yml")
     everest_config.forward_model.append("toggle_failure --fail simulation_2")
     everest_config.install_jobs.append(
@@ -36,19 +27,7 @@ async def test_logging_setup(copy_math_func_test_data_to_tmp):
 
     # start_server() loads config based on config_path, so we need to actually overwrite it
     everest_config.dump("config_minimal.yml")
-
-    makedirs_if_needed(everest_config.output_dir, roll_if_exists=True)
-    driver = await start_server(everest_config, logging.DEBUG)
-    try:
-        wait_for_server(everest_config.output_dir, 120)
-
-        start_experiment(
-            server_context=ServerConfig.get_server_context(everest_config.output_dir),
-            config=everest_config,
-        )
-    except (SystemExit, RuntimeError) as e:
-        raise e
-    await server_running()
+    start_everest(["everest", "run", "config_minimal.yml"])
 
     everest_output_path = os.path.join(os.getcwd(), "everest_output")
     everest_logs_dir_path = everest_config.log_dir
@@ -64,7 +43,7 @@ async def test_logging_setup(copy_math_func_test_data_to_tmp):
     assert os.path.exists(endpoint_log_path)
 
     assert "everest DEBUG:" in Path(everest_log_path).read_text(encoding="utf-8")
-    assert "Exception: Failing simulation_2 by request!" in Path(
+    assert "Process exited with status code 1" in Path(
         forward_model_log_path
     ).read_text(encoding="utf-8")
 

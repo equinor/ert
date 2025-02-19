@@ -7,6 +7,7 @@ from unittest.mock import patch
 
 import pytest
 
+import everest
 from ert.run_models.everest_run_model import EverestExitCode
 from ert.scheduler.event import FinishedEvent
 from everest.config import EverestConfig, ServerConfig
@@ -18,12 +19,8 @@ from everest.detached import (
     wait_for_server,
 )
 from everest.detached.jobs import everserver
-from everest.detached.jobs.everserver import ExperimentComplete
+from everest.detached.jobs.everserver import ExperimentComplete, _everserver_thread
 from everest.everest_storage import EverestStorage
-from everest.simulator import JOB_FAILURE
-from everest.strings import (
-    SIM_PROGRESS_ENDPOINT,
-)
 
 
 async def wait_for_server_to_complete(config):
@@ -61,27 +58,36 @@ def experiment_run(shared_data, server_config, msg_queue):
     )
 
 
-def fail_experiment_run(shared_data, server_config, msg_queue):
-    shared_data[SIM_PROGRESS_ENDPOINT] = {
-        "status": {"failed": 3},
-        "progress": [
-            [
-                {"name": "job1", "status": JOB_FAILURE, "error": "job 1 error 1"},
-                {"name": "job1", "status": JOB_FAILURE, "error": "job 1 error 2"},
-            ],
-            [
-                {"name": "job2", "status": JOB_FAILURE, "error": "job 2 error 1"},
-            ],
-        ],
-    }
+def check_status(*args, **kwargs):
+    everest_server_status_path = str(Path(args[0]).parent / "status")
+    status = everserver_status(everest_server_status_path)
+    assert status["status"] == kwargs["status"]
 
-    msg_queue.put(
-        ExperimentComplete(
-            msg="Failed",
-            exit_code=EverestExitCode.TOO_FEW_REALIZATIONS,
-            data=shared_data,
+
+def fail_optimization(self, from_ropt=False):
+    # Patch start_optimization to raise a failed optimization callback. Also
+    # call the provided simulation callback, which has access to the shared_data
+    # variable in the eversever main function. Patch that callback to modify
+    # shared_data (see set_shared_status() below).
+    if from_ropt:
+        self._exit_code = EverestExitCode.TOO_FEW_REALIZATIONS
+        return EverestExitCode.TOO_FEW_REALIZATIONS
+
+    raise Exception("Failed optimization")
+
+
+@pytest.fixture
+def mock_server(monkeypatch):
+    def func(exit_code: EverestExitCode, message: str = ""):
+        def server_mock(shared_data, server_config, msg_queue):
+            msg_queue.put(ExperimentComplete(exit_code=exit_code, data=shared_data))
+            _everserver_thread(shared_data, server_config, msg_queue)
+
+        monkeypatch.setattr(
+            everest.detached.jobs.everserver, "_everserver_thread", server_mock
         )
-    )
+
+    yield func
 
 
 @pytest.mark.integration_test
@@ -132,8 +138,9 @@ def test_configure_logger_failure(_, change_to_tmpdir):
 
 @patch("sys.argv", ["name", "--output-dir", "everest_output"])
 @patch("everest.detached.jobs.everserver._configure_loggers")
-@patch("everest.detached.jobs.everserver._everserver_thread", experiment_run)
-def test_status_running_complete(_, change_to_tmpdir):
+def test_status_running_complete(_, change_to_tmpdir, mock_server):
+    mock_server(EverestExitCode.COMPLETED)
+
     everserver.main()
 
     status = everserver_status(
@@ -146,8 +153,8 @@ def test_status_running_complete(_, change_to_tmpdir):
 
 @patch("sys.argv", ["name", "--output-dir", "everest_output"])
 @patch("everest.detached.jobs.everserver._configure_loggers")
-@patch("everest.detached.jobs.everserver._everserver_thread", fail_experiment_run)
-def test_status_failed_job(_, change_to_tmpdir):
+def test_status_failed_job(_, change_to_tmpdir, mock_server):
+    mock_server(EverestExitCode.TOO_FEW_REALIZATIONS)
     everserver.main()
 
     status = everserver_status(
@@ -156,9 +163,6 @@ def test_status_failed_job(_, change_to_tmpdir):
 
     # The server should fail and store a user-friendly message.
     assert status["status"] == ServerStatus.failed
-    assert "job1 Failed with: job 1 error 1" in status["message"]
-    assert "job1 Failed with: job 1 error 2" in status["message"]
-    assert "job2 Failed with: job 2 error 1" in status["message"]
 
 
 @patch("sys.argv", ["name", "--output-dir", "everest_output"])
@@ -208,7 +212,7 @@ async def test_status_max_batch_num(copy_math_func_test_data_to_tmp):
 @patch("sys.argv", ["name", "--output-dir", "everest_output"])
 async def test_status_contains_max_runtime_failure(change_to_tmpdir, min_config):
     Path("SLEEP_job").write_text("EXECUTABLE sleep", encoding="utf-8")
-    min_config["simulator"] = {"max_runtime": 2}
+    min_config["simulator"] = {"max_runtime": 1}
     min_config["forward_model"] = ["sleep 5"]
     min_config["install_jobs"] = [{"name": "sleep", "source": "SLEEP_job"}]
 
@@ -221,7 +225,4 @@ async def test_status_contains_max_runtime_failure(change_to_tmpdir, min_config)
     )
 
     assert status["status"] == ServerStatus.failed
-    assert (
-        "sleep Failed with: The run is cancelled due to reaching MAX_RUNTIME"
-        in status["message"]
-    )
+    assert "The run is cancelled due to reaching MAX_RUNTIME" in status["message"]

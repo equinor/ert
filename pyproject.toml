@@ -65,6 +65,7 @@ dependencies = [
     "tqdm>=4.62.0",
     "typing_extensions>=4.5",
     "uvicorn >= 0.17.0",
+    "websockets",
     "xarray",
     "xtgeo >= 3.3.0",
 ]
@@ -132,6 +133,7 @@ types = [
     "types-setuptools",
 ]
 everest = [
+    "websockets",
     "progressbar2",
     "ruamel.yaml",
     "fastapi",
