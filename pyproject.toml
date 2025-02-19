@@ -111,7 +111,7 @@ dev = [
     "resdata",
     "resfo",
     "rust-just",
-    "sphinx",
+    "sphinx<8.2.0",
     "sphinx-argparse",
     "sphinx-autoapi",
     "sphinx-copybutton",
