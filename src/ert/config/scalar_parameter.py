@@ -4,7 +4,7 @@ import warnings
 from dataclasses import dataclass
 from enum import StrEnum
 from pathlib import Path
-from typing import Any, Literal, Self, overload
+from typing import Any, Literal, overload
 
 import numpy as np
 from scipy.stats import norm
@@ -227,8 +227,23 @@ class ScalarParameter:
     input_source: DataSource
     # dataset_file: PolarsData | None
 
+    # return cls(
+    #     name=gen_kw_key,
+    #     forward_init=forward_init,
+    #     template_file=template_file,
+    #     output_file=output_file,
+    #     forward_init_file=init_file,
+    #     transform_function_definitions=transform_function_definitions,
+    #     update=update_parameter,
+    # )
+
+
+@dataclass
+class ScalarParameters:
+    scalar_params: dict[DataSource, list[ScalarParameter]]
+
     @classmethod
-    def from_config_list(cls, gen_kw: list[str]) -> list[Self]:
+    def from_config_list(cls, gen_kw: list[str]) -> list[ScalarParameter]:
         gen_kw_key = gen_kw[0]
 
         positional_args, options = parse_config(gen_kw, 4)
@@ -303,7 +318,7 @@ class ScalarParameter:
         if errors:
             raise ConfigValidationError.from_collected(errors)
 
-        parameter_configuration: list[Self] = []
+        parameter_configuration: list[ScalarParameter] = []
         with open(parameter_file, encoding="utf-8") as file:
             for line_number, item in enumerate(file):
                 item = item.split("--")[0]  # remove comments
@@ -318,7 +333,7 @@ class ScalarParameter:
                         )
                     else:
                         parameter_configuration.append(
-                            cls(
+                            ScalarParameter(
                                 param_name=items[1],
                                 input_source=DataSource.SAMPLED,
                                 group_name=gen_kw_key,
@@ -327,6 +342,9 @@ class ScalarParameter:
                                 output_file=output_file,
                             )
                         )
+                        # cls.all_scalar_params[DataSource.SAMPLED] += (
+                        #     parameter_configuration
+                        # )
 
         if errors:
             raise ConfigValidationError.from_collected(errors)
@@ -339,13 +357,3 @@ class ScalarParameter:
                 gen_kw[0],
             )
         return parameter_configuration
-
-        # return cls(
-        #     name=gen_kw_key,
-        #     forward_init=forward_init,
-        #     template_file=template_file,
-        #     output_file=output_file,
-        #     forward_init_file=init_file,
-        #     transform_function_definitions=transform_function_definitions,
-        #     update=update_parameter,
-        # )

@@ -16,6 +16,7 @@ from .parameter_config import ParameterConfig
 from .parsing import ConfigDict, ConfigKeys, ConfigValidationError
 from .refcase import Refcase
 from .response_config import ResponseConfig
+from .scalar_parameter import ScalarParameter
 from .summary_config import SummaryConfig
 from .surface_config import SurfaceConfig
 
@@ -124,7 +125,8 @@ class EnsembleConfig:
             return FieldConfig.from_config_list(grid_file_path, dims, field_list)
 
         parameter_configs = (
-            [GenKwConfig.from_config_list(g) for g in gen_kw_list]
+            ScalarParameter.from_config_list(g)
+            for g in gen_kw_list
             + [SurfaceConfig.from_config_list(s) for s in surface_list]
             + [make_field(f) for f in field_list]
         )

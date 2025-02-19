@@ -19,7 +19,13 @@ from ert.config.forward_model_step import ForwardModelStep
 from ert.config.model_config import ModelConfig
 from ert.substitutions import Substitutions, substitute_runpath_name
 
-from .config import ExtParamConfig, Field, GenKwConfig, ParameterConfig, SurfaceConfig
+from .config import (
+    ExtParamConfig,
+    Field,
+    GenKwConfig,
+    ParameterConfig,
+    SurfaceConfig,
+)
 from .config.design_matrix import DESIGN_MATRIX_GROUP
 from .run_arg import RunArg
 from .runpaths import Runpaths
