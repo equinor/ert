@@ -12,7 +12,7 @@ if TYPE_CHECKING:
 
 
 class WorkflowFixtures(TypedDict, total=False):
-    ensemble: Ensemble
+    ensemble: Ensemble | None
     storage: Storage
     random_seed: int | None
     reports_dir: str
