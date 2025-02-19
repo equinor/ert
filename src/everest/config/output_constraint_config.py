@@ -1,7 +1,9 @@
+from typing import Self
+
 from pydantic import BaseModel, Field, model_validator
 
 
-class OutputConstraintConfig(BaseModel, extra="forbid"):  # type: ignore
+class OutputConstraintConfig(BaseModel, extra="forbid"):
     name: str = Field(description="The unique name of the output constraint.")
     target: float | None = Field(
         default=None,
@@ -58,7 +60,7 @@ function evaluation value will be divided by 10 and bounded from above by 0.05.
     @model_validator(mode="after")
     def validate_bounds_in_place(
         self,
-    ):
+    ) -> Self:
         has_equality = self.target is not None
         has_inequality = self.upper_bound is not None or self.lower_bound is not None
         is_valid = has_equality ^ has_inequality

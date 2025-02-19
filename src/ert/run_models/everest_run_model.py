@@ -107,9 +107,6 @@ class EverestRunModel(BaseRunModel):
         optimization_callback: OptimizerCallback | None,
         status_queue: queue.SimpleQueue[StatusEvents] | None = None,
     ):
-        assert everest_config.log_dir is not None
-        assert everest_config.optimization_output_dir is not None
-
         Path(everest_config.log_dir).mkdir(parents=True, exist_ok=True)
         Path(everest_config.optimization_output_dir).mkdir(parents=True, exist_ok=True)
 

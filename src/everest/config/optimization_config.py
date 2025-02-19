@@ -1,5 +1,5 @@
 import logging
-from typing import Any
+from typing import Any, Self
 
 from pydantic import BaseModel, Field, model_validator
 
@@ -8,7 +8,7 @@ from everest.optimizer.utils import get_ropt_plugin_manager
 from everest.strings import EVEREST
 
 
-class OptimizationConfig(BaseModel, extra="forbid"):  # type: ignore
+class OptimizationConfig(BaseModel, extra="forbid"):
     algorithm: str | None = Field(
         default="optpp_q_newton",
         description="""Algorithm used by Everest.  Defaults to
@@ -199,7 +199,7 @@ The default is to use parallel evaluation if supported.
     )
 
     @model_validator(mode="after")
-    def validate_backend_and_algorithm(self):  # pylint: disable=E0213
+    def validate_backend_and_algorithm(self) -> Self:
         method = "default" if self.algorithm is None else self.algorithm
         if not get_ropt_plugin_manager().is_supported("optimizer", method):
             raise ValueError(f"Optimizer algorithm '{method}' not found")

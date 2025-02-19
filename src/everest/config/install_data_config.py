@@ -3,7 +3,7 @@ from pathlib import Path
 from pydantic import BaseModel, Field, field_validator, model_validator
 
 
-class InstallDataConfig(BaseModel, extra="forbid"):  # type: ignore
+class InstallDataConfig(BaseModel, extra="forbid"):
     source: str = Field(
         description="""
         Path to file or directory that needs to be copied or linked in the evaluation
@@ -25,15 +25,15 @@ class InstallDataConfig(BaseModel, extra="forbid"):  # type: ignore
 
     @field_validator("link", mode="before")
     @classmethod
-    def validate_link_type(cls, link):  # pylint: disable=E0213
+    def validate_link_type(cls, link: bool | None) -> bool | None:
         if link is None:
-            return link
+            return None
         if not isinstance(link, bool):
             raise ValueError(f" {link} could not be parsed to a boolean")
         return link
 
     @model_validator(mode="after")
-    def validate_target(self):
+    def validate_target(self) -> "InstallDataConfig":
         if self.target in {".", "./"}:
             self.target = Path(self.source).name
         return self

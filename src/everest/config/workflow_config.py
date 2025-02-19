@@ -1,7 +1,7 @@
 from pydantic import BaseModel, ConfigDict, Field
 
 
-class WorkflowConfig(BaseModel):  # type: ignore
+class WorkflowConfig(BaseModel):
     pre_simulation: list[str] | None = Field(
         default=None,
         description="List of workflow jobs triggered pre-simulation",

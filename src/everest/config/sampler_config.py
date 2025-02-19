@@ -1,5 +1,5 @@
 import logging
-from typing import Any
+from typing import Any, Self
 
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
@@ -7,7 +7,7 @@ from everest.optimizer.utils import get_ropt_plugin_manager
 from everest.strings import EVEREST
 
 
-class SamplerConfig(BaseModel):  # type: ignore
+class SamplerConfig(BaseModel):
     backend: str | None = Field(
         default=None,
         description="""(deprecated) The backend used by Everest for sampling points.
@@ -37,9 +37,10 @@ This dict of values is passed unchanged to the selected method in the backend.
         description="""Whether to share perturbations between realizations.
 """,
     )
+    model_config = ConfigDict(extra="forbid")
 
     @model_validator(mode="after")
-    def validate_backend_and_method(self):  # pylint: disable=E0213
+    def validate_backend_and_method(self) -> Self:
         if not get_ropt_plugin_manager().is_supported("sampler", f"{self.method}"):
             raise ValueError(f"Sampler '{self.method}' not found")
 
@@ -54,7 +55,3 @@ This dict of values is passed unchanged to the selected method in the backend.
             logging.getLogger(EVEREST).warning(message)
 
         return self
-
-    model_config = ConfigDict(
-        extra="forbid",
-    )

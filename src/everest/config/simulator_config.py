@@ -20,7 +20,7 @@ from ert.plugins import ErtPluginManager
 simulator_example = {"queue_system": {"name": "local", "max_running": 3}}
 
 
-def check_removed_config(queue_system):
+def check_removed_config(queue_system: Any) -> None:
     queue_systems = {
         "lsf": LsfQueueOptions,
         "torque": TorqueQueueOptions,
@@ -29,11 +29,11 @@ def check_removed_config(queue_system):
     }
     if isinstance(queue_system, str) and queue_system in queue_systems:
         raise ValueError(
-            f"Queue system configuration has changed, valid options for {queue_system} are: {list(queue_systems[queue_system].__dataclass_fields__.keys())}"
+            f"Queue system configuration has changed, valid options for {queue_system} are: {list(queue_systems[queue_system].__dataclass_fields__.keys())}"  # type: ignore
         )
 
 
-class SimulatorConfig(BaseModel, extra="forbid"):  # type: ignore
+class SimulatorConfig(BaseModel, extra="forbid"):
     cores_per_node: PositiveInt | None = Field(
         default=None,
         description="""defines the number of CPUs when running
@@ -90,7 +90,7 @@ class SimulatorConfig(BaseModel, extra="forbid"):  # type: ignore
 
     @field_validator("queue_system", mode="before")
     @classmethod
-    def default_local_queue(cls, v):
+    def default_local_queue(cls, v: Any) -> Any:
         if v is None:
             return LocalQueueOptions(max_running=8)
         if "activate_script" not in v and (

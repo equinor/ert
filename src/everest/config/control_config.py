@@ -218,6 +218,6 @@ sampler to use the same perturbations for each realization.
     def uniqueness(self) -> str:
         return "name"
 
-    model_config = ConfigDict(  # type: ignore
+    model_config = ConfigDict(
         extra="forbid",
     )

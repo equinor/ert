@@ -22,7 +22,7 @@ from ..strings import (
 from .simulator_config import check_removed_config
 
 
-class ServerConfig(BaseModel):  # type: ignore
+class ServerConfig(BaseModel):
     queue_system: (
         LocalQueueOptions
         | LsfQueueOptions
@@ -40,7 +40,7 @@ class ServerConfig(BaseModel):  # type: ignore
 
     @field_validator("queue_system", mode="before")
     @classmethod
-    def default_local_queue(cls, v):
+    def default_local_queue(cls, v: dict[str, Any] | None) -> dict[str, Any] | None:
         if v is None:
             return v
         elif "activate_script" not in v and ErtPluginManager().activate_script():
@@ -79,7 +79,7 @@ class ServerConfig(BaseModel):  # type: ignore
         )
 
     @staticmethod
-    def get_server_info(output_dir: str) -> dict:
+    def get_server_info(output_dir: str) -> dict[str, Any]:
         """Load server information from the hostfile"""
         host_file_path = ServerConfig.get_hostfile_path(output_dir)
         try:
