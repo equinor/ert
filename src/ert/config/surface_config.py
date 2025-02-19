@@ -12,7 +12,7 @@ from ert.substitutions import substitute_runpath_name
 
 from ._option_dict import option_dict
 from ._str_to_bool import str_to_bool
-from .parameter_config import ParameterConfig
+from .parameter_config import ParameterConfig, ParameterSource
 from .parsing import ConfigValidationError, ErrorInfo
 
 if TYPE_CHECKING:
@@ -88,7 +88,11 @@ class SurfaceConfig(ParameterConfig):
             rotation=surf.rotation,
             yflip=surf.yflip,
             name=name,
-            forward_init=forward_init,
+            source=(
+                ParameterSource.forward_init
+                if forward_init
+                else ParameterSource.sampled
+            ),
             forward_init_file=init_file,
             output_file=Path(out_file),
             base_surface_path=base_surface,

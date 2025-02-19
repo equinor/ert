@@ -16,7 +16,7 @@ import xarray as xr
 from pydantic import BaseModel
 from typing_extensions import deprecated
 
-from ert.config.gen_kw_config import GenKwConfig
+from ert.config.gen_kw_config import GenKwConfig, ParameterSource
 from ert.storage.mode import BaseMode, Mode, require_write
 
 from .realization_storage_state import RealizationStorageState
@@ -277,7 +277,7 @@ class LocalEnsemble(BaseMode):
                     / (_escape_filename(parameter.name) + ".nc")
                 ).exists()
                 for parameter in self.experiment.parameter_configuration.values()
-                if not parameter.forward_init
+                if parameter.source != ParameterSource.forward_init
             )
         ]
 
