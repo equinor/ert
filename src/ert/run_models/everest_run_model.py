@@ -271,7 +271,9 @@ class EverestRunModel(BaseRunModel):
                 case _:
                     self._exit_code = EverestExitCode.COMPLETED
 
-    def _init_transforms(self, variables: NDArray[np.float64]) -> OptModelTransforms:
+    def _init_domain_transforms(
+        self, control_variables: NDArray[np.float64]
+    ) -> OptModelTransforms:
         model_realizations = self._everest_config.model.realizations
         nreal = len(model_realizations)
         realization_weights = self._everest_config.model.realizations_weights
@@ -306,7 +308,7 @@ class EverestRunModel(BaseRunModel):
             )
 
             objectives, constraints, _ = self._run_forward_model(
-                np.repeat(np.expand_dims(variables, axis=0), nreal, axis=0),
+                np.repeat(np.expand_dims(control_variables, axis=0), nreal, axis=0),
                 model_realizations,
             )
 
@@ -332,7 +334,7 @@ class EverestRunModel(BaseRunModel):
     def _create_optimizer(self) -> BasicOptimizer:
         # Initialize the optimization model transforms. This may run one initial
         # ensemble for auto-scaling purposes:
-        transforms = self._init_transforms(
+        transforms = self._init_domain_transforms(
             np.asarray(
                 FlattenedControls(self._everest_config.controls).initial_guesses,
                 dtype=np.float64,
