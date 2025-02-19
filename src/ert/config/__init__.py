@@ -34,6 +34,7 @@ from .parsing import (
 from .parsing.observations_parser import ObservationType
 from .queue_config import QueueConfig
 from .response_config import InvalidResponseFile, ResponseConfig
+from .scalar_parameter import ScalarParameter
 from .summary_config import SummaryConfig
 from .summary_observation import SummaryObservation
 from .surface_config import SurfaceConfig
@@ -76,6 +77,7 @@ __all__ = [
     "QueueConfig",
     "QueueSystem",
     "ResponseConfig",
+    "ScalarParameter",
     "SummaryConfig",
     "SummaryObservation",
     "SurfaceConfig",
