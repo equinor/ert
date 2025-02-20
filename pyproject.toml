@@ -218,6 +218,7 @@ allowed-confusables = ["–"]
     "RUF006",  # asyncio-dangling-task
     "PLW1508", # Invalid type of environment variable default
     "RUF052",  # used-dummy-variable
+    "RUF045",  # implicit-class-var-in-dataclass
 ]
 "src/ert/dark_storage/json_schema/__init__.py" = ["F401"]
 "src/ert/dark_storage/*" = ["RUF029"] # unused-async
