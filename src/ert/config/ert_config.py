@@ -2,7 +2,6 @@
 import copy
 import json
 import logging
-import math
 import os
 import re
 from collections import defaultdict
@@ -1107,16 +1106,9 @@ def _split_string_into_sections(input: str, section_length: int) -> list[str]:
     Splits a string into sections of length section_length
     and returns it as an list.
     """
-    string_length = len(input)
     if section_length < 1:
         raise ValueError("The section_length argument must be greater or equal to 1")
-    section_index_range = math.ceil(string_length / section_length)
-    sections = []
-    for i in range(section_index_range):
-        section_start = i * section_length
-        section_end = section_start + section_length
-        sections.append(input[section_start:section_end])
-    return sections
+    return [input[i : i + section_length] for i in range(0, len(input), section_length)]
 
 
 def _get_files_in_directory(job_path, errors):
