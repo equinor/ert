@@ -40,9 +40,9 @@ dependencies = [
     "openpyxl",                                # extra dependency for pandas (excel)
     "opentelemetry-api<1.30.0",
     "opentelemetry-sdk<1.30.0",
-    "opentelemetry-instrumentation-fastapi<0.51b0",
-    "opentelemetry-instrumentation-httpx<0.51b0",
-    "opentelemetry-instrumentation-threading<0.51b0",
+    "opentelemetry-instrumentation-fastapi==0.50b0",
+    "opentelemetry-instrumentation-httpx==0.50b0",
+    "opentelemetry-instrumentation-threading==0.50b0",
     "orjson",
     "packaging",
     "pandas",
