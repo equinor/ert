@@ -80,6 +80,9 @@ def run_dialog(qtbot: QtBot, run_model_api, event_queue, notifier):
 def test_terminating_experiment_shows_a_confirmation_dialog(qtbot: QtBot, run_dialog):
     run_dialog.run_experiment()
 
+    run_dialog._run_model_api.cancel = lambda: run_dialog.simulation_done.emit(
+        True, "foo bar error"
+    )
     with qtbot.waitSignal(run_dialog.simulation_done, timeout=10000):
 
         def handle_dialog():

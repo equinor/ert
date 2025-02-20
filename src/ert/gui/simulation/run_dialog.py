@@ -394,7 +394,6 @@ class RunDialog(QFrame):
             # Normally this slot would be invoked by the signal/slot system,
             # but the worker is busy tracking the evaluation.
             self._run_model_api.cancel()
-            self.simulation_done.emit(True, "")
         return kill_job
 
     @Slot(bool, str)
