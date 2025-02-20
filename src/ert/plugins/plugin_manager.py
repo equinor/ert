@@ -63,7 +63,15 @@ class ErtPluginManager(pluggy.PluginManager):
                 # displayed. Warnings should be displayed and logged when deprecated
                 # plugins are actually used, not on every startup of Ert.
                 warnings.simplefilter("ignore", category=FutureWarning)
-                self.load_setuptools_entrypoints(_PLUGIN_NAMESPACE)
+
+                # logger.warning() statements also need to be muted:
+                logger = logging.getLogger()
+                orig_level = logger.level
+                try:
+                    logger.setLevel(logging.ERROR)
+                    self.load_setuptools_entrypoints(_PLUGIN_NAMESPACE)
+                finally:
+                    logger.setLevel(orig_level)
         else:
             for plugin in plugins:
                 self.register(plugin)
