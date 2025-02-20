@@ -41,7 +41,9 @@ continue running.
 
     @field_validator("output_folder", mode="before")
     @classmethod
-    def validate_output_folder(cls, output_folder: str | None) -> str | None:
+    def validate_output_folder(cls, output_folder: str | None) -> str:
+        if output_folder is None:
+            raise ValueError("output_folder can not be None")
         check_path_valid(output_folder)
         return output_folder
 

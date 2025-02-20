@@ -140,7 +140,7 @@ def test_extra_key(min_config):
         ),
         (
             {"environment": {"output_folder": None}},
-            "output_folder\n.* str type expected",
+            "Value error, output_folder can not be None",
         ),
         (
             {"environment": {"output_folder": "/path/with/" + chr(0) + "embeddedNULL"}},

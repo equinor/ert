@@ -36,8 +36,8 @@ class ExportConfig(BaseModel, extra="forbid"):
 
     @field_validator("csv_output_filepath", mode="before")
     @classmethod
-    def validate_output_file_writable(
-        cls, csv_output_filepath: str | None
-    ) -> str | None:
+    def validate_output_file_writable(cls, csv_output_filepath: str | None) -> str:
+        if csv_output_filepath is None:
+            raise ValueError("csv_output_filepath can not be None")
         check_writable_filepath(csv_output_filepath)
         return csv_output_filepath

@@ -145,7 +145,7 @@ def valid_range(range_value: tuple[float, float]) -> tuple[float, float]:
     return range_value
 
 
-def check_path_valid(path: str | None) -> None:
+def check_path_valid(path: str) -> None:
     if not isinstance(path, str):
         raise ValueError("str type expected")
 
@@ -161,12 +161,12 @@ def check_path_valid(path: str | None) -> None:
             raise ValueError(str(e)) from e
 
 
-def check_writable_filepath(path: str | None) -> None:
+def check_writable_filepath(path: str) -> None:
     check_path_valid(path)
 
-    if os.path.isdir(path) or not os.path.basename(path):  # type: ignore
+    if os.path.isdir(path) or not os.path.basename(path):
         raise ValueError("Invalid type")
-    if os.path.isfile(path) and not os.access(path, os.W_OK):  # type: ignore
+    if os.path.isfile(path) and not os.access(path, os.W_OK):
         raise ValueError(f"User does not have write access to {path}")
 
 
