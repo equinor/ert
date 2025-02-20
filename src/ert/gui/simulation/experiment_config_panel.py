@@ -14,7 +14,7 @@ class ExperimentConfigPanel(QWidget):
     simulationConfigurationChanged = Signal()
 
     def __init__(self, simulation_model: type[BaseRunModel]):
-        QWidget.__init__(self)
+        super().__init__()
         self.setContentsMargins(10, 10, 10, 10)
         self.__simulation_model = simulation_model
 

@@ -110,14 +110,7 @@ def _setup_ensemble_experiment(
     args: Namespace,
     status_queue: SimpleQueue[StatusEvents],
 ) -> EnsembleExperiment:
-    active_realizations = _realizations(
-        args, config.model_config.num_realizations
-    ).tolist()
-    if (
-        config.analysis_config.design_matrix is not None
-        and config.analysis_config.design_matrix.active_realizations is not None
-    ):
-        active_realizations = config.analysis_config.design_matrix.active_realizations
+    active_realizations = _get_active_realizations_list(args, config)
     experiment_name = args.experiment_name
     assert experiment_name is not None
 
@@ -154,15 +147,13 @@ def _setup_evaluate_ensemble(
     )
 
 
-def _validate_num_realizations(
-    args: Namespace, config: ErtConfig
-) -> npt.NDArray[np.bool_]:
-    active_realizations = _realizations(args, config.model_config.num_realizations)
-    if int(np.sum(active_realizations)) <= 1:
-        raise ConfigValidationError(
-            "Number of active realizations must be at least 2 for an update step"
-        )
-    return active_realizations
+def _get_active_realizations_list(args: Namespace, config: ErtConfig) -> list[bool]:
+    return (
+        config.analysis_config.design_matrix.active_realizations
+        if config.analysis_config.design_matrix is not None
+        and config.analysis_config.design_matrix.active_realizations is not None
+        else _realizations(args, config.model_config.num_realizations).tolist()
+    )
 
 
 def _setup_manual_update(
@@ -196,11 +187,18 @@ def _setup_ensemble_smoother(
     update_settings: UpdateSettings,
     status_queue: SimpleQueue[StatusEvents],
 ) -> EnsembleSmoother:
-    active_realizations = _validate_num_realizations(args, config)
+    active_realizations = _realizations(
+        args, config.model_config.num_realizations
+    ).tolist()
+    if len(active_realizations) < 2:
+        raise ConfigValidationError(
+            "Number of active realizations must be at least 2 for an update step"
+        )
+
     return EnsembleSmoother(
         target_ensemble=args.target_ensemble,
         experiment_name=getattr(args, "experiment_name", ""),
-        active_realizations=active_realizations.tolist(),
+        active_realizations=active_realizations,
         minimum_required_realizations=config.analysis_config.minimum_required_realizations,
         random_seed=config.random_seed,
         config=config,
@@ -239,10 +237,15 @@ def _setup_multiple_data_assimilation(
     status_queue: SimpleQueue[StatusEvents],
 ) -> MultipleDataAssimilation:
     restart_run, prior_ensemble = _determine_restart_info(args)
-    active_realizations = _validate_num_realizations(args, config)
+    active_realizations = _get_active_realizations_list(args, config)
+    if len(active_realizations) < 2:
+        raise ConfigValidationError(
+            "Number of active realizations must be at least 2 for an update step"
+        )
+
     return MultipleDataAssimilation(
         random_seed=config.random_seed,
-        active_realizations=active_realizations.tolist(),
+        active_realizations=active_realizations,
         target_ensemble=_iterative_ensemble_format(args),
         weights=args.weights,
         restart_run=restart_run,
