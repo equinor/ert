@@ -1150,3 +1150,39 @@ def test_load_file_undefined_substitutions(min_config, change_to_tmpdir, capsys)
         "Loading config file <config.yml> failed with: The following key is missing: ['r{{undefined_key }}']"
         in captured.err
     )
+
+
+@pytest.mark.parametrize(
+    "key, value",
+    [
+        ["csv_output_filepath", "something"],
+        ["csv_output_filepath", ""],
+        ["csv_output_filepath", None],
+        ["discard_gradient", True],
+        ["discard_gradient", None],
+        ["discard_gradient", "None"],
+        ["discard_rejected", True],
+        ["discard_rejected", None],
+        ["discard_rejected", "None"],
+        ["skip_export", True],
+        ["skip_export", None],
+        ["skip_export", "None"],
+        ["batches", [0]],
+        ["batches", []],
+        ["batches", None],
+        ["batches", "None"],
+    ],
+)
+def test_export_deprecated_keys(key, value, min_config, change_to_tmpdir):
+    config = min_config
+    config["export"] = {key: value}
+
+    with open("config.yml", mode="w", encoding="utf-8") as f:
+        yaml.dump(config, f)
+
+    parser = ArgumentParser(prog="test")
+    match_msg = (
+        f"'{key}' key is deprecated. You can safely remove it from the config file"
+    )
+    with pytest.warns(ConfigWarning, match=match_msg):
+        EverestConfig.load_file_with_argparser("config.yml", parser)

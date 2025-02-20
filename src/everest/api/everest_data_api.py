@@ -426,17 +426,11 @@ class EverestDataAPI:
 
     @property
     def everest_csv(self) -> str:
-        export_filename = (
-            self._config.export.csv_output_filepath
-            if self._config.export is not None
-            else f"{self._config.config_file}.csv"
-        )
-        assert export_filename
-
+        export_filename = f"{self._config.config_file}.csv"
         full_path = os.path.join(self.output_folder, export_filename)
 
         if not os.path.exists(full_path):
             combined_df, _, _ = self.export_dataframes()
             combined_df.write_csv(full_path)
 
-        return os.path.join(self.output_folder, export_filename)
+        return full_path
