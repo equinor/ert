@@ -37,7 +37,6 @@ from ert.gui.tools.manage_experiments import ManageExperimentsPanel
 from ert.gui.tools.manage_experiments.storage_widget import AddWidget, StorageWidget
 from ert.plugins import ErtPluginContext
 from ert.run_models import EnsembleExperiment, MultipleDataAssimilation
-from ert.services import StorageService
 from ert.storage import Storage, open_storage
 from tests.ert.unit_tests.gui.simulation.test_run_path_dialog import (
     handle_run_path_dialog,
@@ -49,10 +48,7 @@ def open_gui_with_config(config_path) -> Iterator[ErtMainWindow]:
         _open_main_window(config_path) as (
             gui,
             _,
-            config,
-        ),
-        StorageService.init_service(
-            project=os.path.abspath(config.ens_path),
+            __,
         ),
     ):
         yield gui
@@ -190,10 +186,7 @@ def esmda_has_run(_esmda_run, tmp_path, monkeypatch):
         _open_main_window(tmp_path / "poly.ert") as (
             gui,
             _,
-            config,
-        ),
-        StorageService.init_service(
-            project=os.path.abspath(config.ens_path),
+            __,
         ),
     ):
         yield gui

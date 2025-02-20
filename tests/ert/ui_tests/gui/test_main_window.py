@@ -289,113 +289,117 @@ def test_that_the_plot_window_contains_the_expected_elements(
     esmda_has_run: ErtMainWindow, qtbot
 ):
     gui = esmda_has_run
-    expected_ensembles = [
-        "es_mda : default_0",
-        "es_mda : default_1",
-        "es_mda : default_2",
-        "es_mda : default_3",
-    ]
+    with StorageService.init_service(
+        project=os.path.abspath(gui.ert_config.ens_path),
+    ):
+        expected_ensembles = [
+            "es_mda : default_0",
+            "es_mda : default_1",
+            "es_mda : default_2",
+            "es_mda : default_3",
+        ]
 
-    # Click on Create plot after esmda has run
-    button_plot_tool = gui.findChild(QToolButton, "button_Create_plot")
-    assert button_plot_tool
-    qtbot.mouseClick(button_plot_tool, Qt.MouseButton.LeftButton)
-    plot_window = wait_for_child(gui, qtbot, PlotWindow)
+        # Click on Create plot after esmda has run
+        button_plot_tool = gui.findChild(QToolButton, "button_Create_plot")
+        assert button_plot_tool
+        qtbot.mouseClick(button_plot_tool, Qt.MouseButton.LeftButton)
+        plot_window = wait_for_child(gui, qtbot, PlotWindow)
 
-    data_types = get_child(plot_window, DataTypeKeysWidget)
-    case_selection = get_child(
-        plot_window, EnsembleSelectListWidget, "ensemble_selector"
-    )
+        data_types = get_child(plot_window, DataTypeKeysWidget)
+        case_selection = get_child(
+            plot_window, EnsembleSelectListWidget, "ensemble_selector"
+        )
 
-    # Assert that the Case selection widget contains the expected ensembles
-    ensemble_names = []
-    for index in range(case_selection.count()):
-        ensemble_names.append(case_selection.item(index).text())
+        # Assert that the Case selection widget contains the expected ensembles
+        ensemble_names = []
+        for index in range(case_selection.count()):
+            ensemble_names.append(case_selection.item(index).text())
 
-    assert sorted(ensemble_names) == expected_ensembles
+        assert sorted(ensemble_names) == expected_ensembles
 
-    data_names = []
-    data_keys = data_types.data_type_keys_widget
-    for i in range(data_keys.model().rowCount()):
-        index = data_keys.model().index(i, 0)
-        data_names.append(str(index.data(Qt.ItemDataRole.DisplayRole)))
+        data_names = []
+        data_keys = data_types.data_type_keys_widget
+        for i in range(data_keys.model().rowCount()):
+            index = data_keys.model().index(i, 0)
+            data_names.append(str(index.data(Qt.ItemDataRole.DisplayRole)))
 
-    expected_data_names = [
-        "POLY_RES@0",
-        "COEFFS:a",
-        "COEFFS:b",
-        "COEFFS:c",
-    ]
-    expected_data_names.sort()
-    data_names.sort()
-    assert expected_data_names == data_names
+        expected_data_names = [
+            "POLY_RES@0",
+            "COEFFS:a",
+            "COEFFS:b",
+            "COEFFS:c",
+        ]
+        expected_data_names.sort()
+        data_names.sort()
+        assert expected_data_names == data_names
 
-    assert {
-        plot_window._central_tab.tabText(i)
-        for i in range(plot_window._central_tab.count())
-    } == {
-        "Cross ensemble statistics",
-        "Distribution",
-        "Gaussian KDE",
-        "Ensemble",
-        "Histogram",
-        "Statistics",
-        "Std Dev",
-    }
+        assert {
+            plot_window._central_tab.tabText(i)
+            for i in range(plot_window._central_tab.count())
+        } == {
+            "Cross ensemble statistics",
+            "Distribution",
+            "Gaussian KDE",
+            "Ensemble",
+            "Histogram",
+            "Statistics",
+            "Std Dev",
+        }
 
-    model = data_keys.model()
-    assert model is not None
+        model = data_keys.model()
+        assert model is not None
 
-    def click_plotter_item(pos: int) -> None:
-        center = data_keys.visualRect(model.index(pos, 0)).center()
-        viewport = data_keys.viewport()
-        center = viewport.mapToGlobal(center)
-        local_pos = viewport.mapFromGlobal(center)
-        qtbot.mouseClick(data_keys.viewport(), Qt.MouseButton.LeftButton, pos=local_pos)
+        def click_plotter_item(pos: int) -> None:
+            center = data_keys.visualRect(model.index(pos, 0)).center()
+            viewport = data_keys.viewport()
+            center = viewport.mapToGlobal(center)
+            local_pos = viewport.mapFromGlobal(center)
+            qtbot.mouseClick(
+                data_keys.viewport(), Qt.MouseButton.LeftButton, pos=local_pos
+            )
 
-    def click_tab_index(pos: int) -> None:
-        tab_bar = plot_window._central_tab.tabBar()
-        tab_center = tab_bar.tabRect(pos).center()
-        qtbot.mouseClick(tab_bar, Qt.MouseButton.LeftButton, pos=tab_center)
+        def click_tab_index(pos: int) -> None:
+            tab_bar = plot_window._central_tab.tabBar()
+            tab_center = tab_bar.tabRect(pos).center()
+            qtbot.mouseClick(tab_bar, Qt.MouseButton.LeftButton, pos=tab_center)
 
-    # make sure plotter remembers plot types selected previously
-    response_index = 0
-    gen_kw_index = 1
-    response_alternate_index = 1
-    gen_kw_alternate_index = 3
+        # make sure plotter remembers plot types selected previously
+        response_index = 0
+        gen_kw_index = 1
+        response_alternate_index = 1
+        gen_kw_alternate_index = 3
 
-    # check default selections
-    click_plotter_item(response_index)
-    assert plot_window._central_tab.currentIndex() == RESPONSE_DEFAULT
-    click_plotter_item(gen_kw_index)
-    assert plot_window._central_tab.currentIndex() == GEN_KW_DEFAULT
+        # check default selections
+        click_plotter_item(response_index)
+        assert plot_window._central_tab.currentIndex() == RESPONSE_DEFAULT
+        click_plotter_item(gen_kw_index)
+        assert plot_window._central_tab.currentIndex() == GEN_KW_DEFAULT
 
-    # alter selections
-    click_plotter_item(response_index)
-    click_tab_index(response_alternate_index)
-    click_plotter_item(gen_kw_index)
-    click_tab_index(gen_kw_alternate_index)
+        # alter selections
+        click_plotter_item(response_index)
+        click_tab_index(response_alternate_index)
+        click_plotter_item(gen_kw_index)
+        click_tab_index(gen_kw_alternate_index)
 
-    # verify previous selections still valid
-    click_plotter_item(response_index)
-    assert plot_window._central_tab.currentIndex() == response_alternate_index
-    click_plotter_item(gen_kw_index)
-    assert plot_window._central_tab.currentIndex() == gen_kw_alternate_index
+        # verify previous selections still valid
+        click_plotter_item(response_index)
+        assert plot_window._central_tab.currentIndex() == response_alternate_index
+        click_plotter_item(gen_kw_index)
+        assert plot_window._central_tab.currentIndex() == gen_kw_alternate_index
 
-    # finally click all items
-    for i in range(model.rowCount()):
-        click_plotter_item(i)
-        for tab_index in range(plot_window._central_tab.count()):
-            if not plot_window._central_tab.isTabEnabled(tab_index):
-                continue
-            click_tab_index(tab_index)
+        # finally click all items
+        for i in range(model.rowCount()):
+            click_plotter_item(i)
+            for tab_index in range(plot_window._central_tab.count()):
+                if not plot_window._central_tab.isTabEnabled(tab_index):
+                    continue
+                click_tab_index(tab_index)
 
-    plot_window.close()
+        plot_window.close()
 
 
 def test_that_the_manage_experiments_tool_can_be_used(esmda_has_run, qtbot):
     gui = esmda_has_run
-
     button_manage_experiments = gui.findChild(QToolButton, "button_Manage_experiments")
     assert button_manage_experiments
     qtbot.mouseClick(button_manage_experiments, Qt.MouseButton.LeftButton)

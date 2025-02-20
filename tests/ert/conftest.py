@@ -8,7 +8,6 @@ import sys
 from argparse import ArgumentParser
 from importlib.resources import files
 from pathlib import Path
-from unittest.mock import MagicMock
 
 import pytest
 from hypothesis import HealthCheck, settings
@@ -23,7 +22,6 @@ from ert.cli.main import run_cli
 from ert.config import ErtConfig
 from ert.ensemble_evaluator.config import EvaluatorServerConfig
 from ert.mode_definitions import ENSEMBLE_EXPERIMENT_MODE, ES_MDA_MODE
-from ert.services import StorageService
 from ert.storage import open_storage
 
 from .utils import SOURCE_DIR
@@ -239,20 +237,6 @@ def copy_minimum_case(copy_case):
 @pytest.fixture()
 def use_tmpdir(tmp_path, monkeypatch):
     monkeypatch.chdir(tmp_path)
-
-
-@pytest.fixture()
-def mock_start_server(monkeypatch):
-    start_server = MagicMock()
-    monkeypatch.setattr(StorageService, "start_server", start_server)
-    yield start_server
-
-
-@pytest.fixture()
-def mock_connect(monkeypatch):
-    connect = MagicMock()
-    monkeypatch.setattr(StorageService, "connect", connect)
-    yield connect
 
 
 @pytest.fixture(scope="session", autouse=True)
