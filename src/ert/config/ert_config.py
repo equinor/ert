@@ -787,11 +787,6 @@ class ErtConfig:
         except ConfigValidationError as err:
             errors.append(err)
 
-        try:
-            analysis_config = AnalysisConfig.from_dict(config_dict)
-        except ConfigValidationError as err:
-            errors.append(err)
-
         obs_config_file = config_dict.get(ConfigKeys.OBS_CONFIG)
         obs_config_content = []
         try:
@@ -840,8 +835,30 @@ class ErtConfig:
         except ConfigValidationError as err:
             errors.append(err)
 
+        try:
+            analysis_config = AnalysisConfig.from_dict(config_dict)
+        except ConfigValidationError as err:
+            errors.append(err)
+
         if errors:
             raise ConfigValidationError.from_collected(errors)
+
+        if dm := analysis_config.design_matrix:
+            dm_params = [
+                x.name
+                for x in dm.parameter_configuration.transform_function_definitions
+            ]
+            for group_name, config in ensemble_config.parameter_configs.items():
+                overlapping = []
+                for transform_definition in config.transform_function_definitions:
+                    if transform_definition.name in dm_params:
+                        overlapping.append(transform_definition.name)
+                if overlapping:
+                    ConfigWarning.warn(
+                        f"Parameters {overlapping} from GEN_KW group '{group_name}' "
+                        "will be overridden by design matrix. This will cause "
+                        "updates to be turned off for these parameters."
+                    )
 
         env_vars = {}
         for key, val in config_dict.get("SETENV", []):

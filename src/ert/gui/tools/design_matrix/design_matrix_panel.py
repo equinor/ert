@@ -1,6 +1,21 @@
+from typing import TYPE_CHECKING
+
 import pandas as pd
 from PyQt6.QtGui import QStandardItem, QStandardItemModel
-from PyQt6.QtWidgets import QDialog, QTableView, QVBoxLayout, QWidget
+from PyQt6.QtWidgets import (
+    QDialog,
+    QHBoxLayout,
+    QPushButton,
+    QTableView,
+    QVBoxLayout,
+    QWidget,
+)
+
+from ert.gui.ertwidgets.stringbox import StringBox
+from ert.validation import ActiveRange, RangeSubsetStringArgument
+
+if TYPE_CHECKING:
+    from ert.config.design_matrix import DesignMatrix
 
 
 class DesignMatrixPanel(QDialog):
@@ -30,15 +45,13 @@ class DesignMatrixPanel(QDialog):
 
     @staticmethod
     def create_model(design_matrix_df: pd.DataFrame) -> QStandardItemModel:
-        model = QStandardItemModel()
-
         if isinstance(design_matrix_df.columns, pd.MultiIndex):
             header_labels = [str(col[-1]) for col in design_matrix_df.columns]
         else:
             header_labels = design_matrix_df.columns.astype(str).tolist()
 
+        model = QStandardItemModel()
         model.setHorizontalHeaderLabels(header_labels)
-
         for index, _ in design_matrix_df.iterrows():
             items = [
                 QStandardItem(str(design_matrix_df.at[index, col]))
@@ -46,3 +59,38 @@ class DesignMatrixPanel(QDialog):
             ]
             model.appendRow(items)
         return model
+
+    @staticmethod
+    def show_dm_params(design_matrix: "DesignMatrix") -> None:
+        viewer = DesignMatrixPanel(
+            design_matrix.design_matrix_df,
+            design_matrix.xls_filename.name,
+        )
+        viewer.setMinimumHeight(500)
+        viewer.setMinimumWidth(1000)
+        viewer.adjustSize()
+        viewer.exec()
+
+    @staticmethod
+    def get_design_matrix_button(
+        active_realizations_field: StringBox, design_matrix: "DesignMatrix"
+    ) -> QHBoxLayout:
+        active_realizations_field.setText(
+            ActiveRange(design_matrix.active_realizations).rangestring
+        )
+        active_realizations_field.setValidator(
+            RangeSubsetStringArgument(ActiveRange(design_matrix.active_realizations))
+        )
+        show_dm_param_button = QPushButton("Show parameters")
+        show_dm_param_button.setObjectName("show-dm-parameters")
+        show_dm_param_button.setMinimumWidth(50)
+
+        button_layout = QHBoxLayout()
+        button_layout.addWidget(show_dm_param_button)
+        button_layout.addStretch()  # Add stretch to push the button to the left
+
+        show_dm_param_button.clicked.connect(
+            lambda: DesignMatrixPanel.show_dm_params(design_matrix)
+        )
+
+        return button_layout
