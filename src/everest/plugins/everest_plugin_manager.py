@@ -8,7 +8,7 @@ from everest.strings import EVEREST
 
 
 class EverestPluginManager(pluggy.PluginManager):
-    def __init__(self, plugins=None) -> None:
+    def __init__(self, plugins: list[Any] | None = None) -> None:
         super().__init__(EVEREST)
         self.add_hookspecs(hook_specs)
         if plugins is None:

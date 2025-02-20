@@ -1,5 +1,5 @@
 from collections.abc import Sequence
-from typing import Any, TypeVar
+from typing import Any
 
 from pydantic import BaseModel, ValidationError
 
@@ -7,7 +7,6 @@ from ert.config import ConfigWarning
 from everest.plugins.everest_plugin_manager import EverestPluginManager
 
 pm = EverestPluginManager()
-T = TypeVar("T", bound=BaseModel)
 
 
 def collect_forward_model_schemas() -> dict[str, Any] | None:
@@ -40,12 +39,9 @@ def check_forward_model_objective(
         )
 
 
-def parse_forward_model_file(path: str, schema: type[T], message: str) -> T:
+def parse_forward_model_file(path: str, schema: type[BaseModel], message: str) -> None:
     try:
-        res = pm.hook.parse_forward_model_schema(path=path, schema=schema)
-        if res:
-            res.pop()
-        return res
+        pm.hook.parse_forward_model_schema(path=path, schema=schema)
     except ValidationError as ve:
         raise ValueError(
             message.format(
