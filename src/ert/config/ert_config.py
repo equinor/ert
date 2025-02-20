@@ -1,6 +1,8 @@
 # mypy: ignore-errors
 import copy
+import json
 import logging
+import math
 import os
 import re
 from collections import defaultdict
@@ -22,6 +24,7 @@ from pydantic import ValidationError as PydanticValidationError
 from pydantic import field_validator
 from pydantic.dataclasses import dataclass, rebuild_dataclass
 
+from ert.config.parsing.context_values import ContextBoolEncoder
 from ert.plugins import ErtPluginManager
 from ert.substitutions import Substitutions
 
@@ -911,14 +914,24 @@ class ErtConfig:
 
     @classmethod
     def _log_config_dict(cls, content_dict: dict[str, Any]) -> None:
-        tmp_dict = content_dict.copy()
-        tmp_dict.pop("FORWARD_MODEL", None)
-        tmp_dict.pop("LOAD_WORKFLOW", None)
-        tmp_dict.pop("LOAD_WORKFLOW_JOB", None)
-        tmp_dict.pop("HOOK_WORKFLOW", None)
-        tmp_dict.pop("WORKFLOW_JOB_DIRECTORY", None)
-
-        logger.info(f"Content of the config_dict: {tmp_dict}")
+        MAX_MESSAGE_LENGTH_APP_INSIGHTS = 32768
+        max_safe_message_length = int(
+            MAX_MESSAGE_LENGTH_APP_INSIGHTS * 0.8
+        )  # The content of the message is sanitized before beeing sendt to App Insigths to make sure GDPR-rules are not violated.
+        # In doing do, the message lenght will typically increase a bit. To Avoid hiting the App Insights' hard limit of message length, the limit is set to 80%
+        config_dict_content = json.dumps(content_dict, indent=2, cls=ContextBoolEncoder)
+        config_dict_content_length = len(config_dict_content)
+        if config_dict_content_length > max_safe_message_length:
+            config_sections = _split_string_into_sections(
+                config_dict_content, max_safe_message_length
+            )
+            section_count = len(config_sections)
+            for i, section in enumerate(config_sections):
+                logger.info(
+                    f"Content of the config_dict (part {i + 1}/{section_count}): {section}"
+                )
+        else:
+            logger.info(f"Content of the config_dict: {config_dict_content}")
 
     @classmethod
     def _log_custom_forward_model_steps(cls, user_config: ConfigDict) -> None:
@@ -1087,6 +1100,23 @@ class ErtConfig:
             raise ObservationConfigError.from_collected(config_errors)
 
         return EnkfObs(obs_vectors, obs_time_list)
+
+
+def _split_string_into_sections(input: str, section_length: int) -> list[str]:
+    """
+    Splits a string into sections of length section_length
+    and returns it as an list.
+    """
+    string_length = len(input)
+    if section_length < 1:
+        raise ValueError("The section_length argument must be greater or equal to 1")
+    section_index_range = math.ceil(string_length / section_length)
+    sections = []
+    for i in range(section_index_range):
+        section_start = i * section_length
+        section_end = section_start + section_length
+        sections.append(input[section_start:section_end])
+    return sections
 
 
 def _get_files_in_directory(job_path, errors):
