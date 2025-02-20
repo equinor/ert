@@ -38,14 +38,12 @@ def test_loglevel(copy_math_func_test_data_to_tmp):
 def test_run_path(min_config, iteration, monkeypatch):
     monkeypatch.setattr(ert.run_models.everest_run_model, "open_storage", MagicMock())
 
-    model_realizations, control_indices = ([0, 2], [0, 1])
+    model_realizations = [0, 2]
     config = EverestConfig(**min_config)
     run_model = EverestRunModel.create(config)
     ensemble_mock = MagicMock()
     ensemble_mock.iteration = iteration
-    run_args = run_model._get_run_args(
-        ensemble_mock, model_realizations, control_indices
-    )
+    run_args = run_model._get_run_args(ensemble_mock, model_realizations)
     assert [
         str(Path(run_arg.runpath).relative_to(Path().absolute()))
         for run_arg in run_args

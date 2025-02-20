@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import dataclasses
 import datetime
 import functools
 import json
@@ -9,7 +10,7 @@ import queue
 import shutil
 from collections import defaultdict
 from collections.abc import Callable
-from enum import IntEnum
+from enum import IntEnum, auto
 from pathlib import Path
 from types import TracebackType
 from typing import TYPE_CHECKING, Any, Protocol
@@ -97,6 +98,23 @@ class EverestExitCode(IntEnum):
     MAX_FUNCTIONS_REACHED = 3
     MAX_BATCH_NUM_REACHED = 4
     USER_ABORT = 5
+
+
+class _EvaluationStatus(IntEnum):
+    TO_SIMULATE = auto()
+    CACHED = auto()
+    INACTIVE = auto()
+
+
+@dataclasses.dataclass
+class _EvaluationInfo:
+    control_vector: NDArray[np.float64]
+    status: _EvaluationStatus
+    flat_index: int
+    simulation_id: int | None
+    model_realization: int
+    objectives: NDArray[np.float64] | None = None
+    constraints: NDArray[np.float64] | None = None
 
 
 class EverestRunModel(BaseRunModel):
@@ -315,7 +333,7 @@ class EverestRunModel(BaseRunModel):
                 )
             )
 
-            objectives, constraints, _ = self._run_forward_model(
+            objectives, constraints = self._run_forward_model(
                 np.repeat(np.expand_dims(control_variables, axis=0), nreal, axis=0),
                 model_realizations,
             )
@@ -435,81 +453,25 @@ class EverestRunModel(BaseRunModel):
         self,
         control_values: NDArray[np.float64],
         model_realizations: list[int],
-        active_control_vectors: list[bool] | None = None,
-    ) -> tuple[NDArray[np.float64], NDArray[np.float64] | None, list[int]]:
+    ) -> tuple[NDArray[np.float64], NDArray[np.float64] | None]:
         # Reset the current run status:
         self._status = None
 
-        # Get cached_results:
-        cached_results = self._get_cached_results(control_values, model_realizations)
-
-        # Collect the indices of the controls that must be evaluated in the batch:
-        evaluated_control_indices = [
-            idx
-            for idx in range(control_values.shape[0])
-            if idx not in cached_results
-            and (active_control_vectors is None or active_control_vectors[idx])
-        ]
-
-        if not evaluated_control_indices:
-            cached_results = self._get_cached_results(
-                control_values, model_realizations
-            )
-
-            objectives = np.zeros(
-                (
-                    control_values.shape[0],
-                    len(self._everest_config.objective_names),
-                ),
-                dtype=float64,
-            )
-
-            constraints = (
-                np.zeros(
-                    (
-                        control_values.shape[0],
-                        len(self._everest_config.constraint_names),
-                    ),
-                    dtype=float64,
-                )
-                if self._everest_config.constraint_names
-                else None
-            )
-
-            for control_idx, (
-                cached_objectives,
-                cached_constraints,
-            ) in cached_results.items():
-                objectives[control_idx, ...] = cached_objectives
-                if constraints is not None:
-                    assert cached_constraints is not None
-                    constraints[control_idx, ...] = cached_constraints
-
-                # Increase the batch ID for the next evaluation:
-            self._batch_id += 1
-
-            # Return the results, together with the indices of the evaluated controls:
-            return objectives, constraints, evaluated_control_indices
-
         # Create the batch to run:
-        sim_controls = self._create_simulation_controls(
-            control_values, evaluated_control_indices
-        )
+        sim_controls = self._create_simulation_controls(control_values)
 
         # Initialize a new ensemble in storage:
         assert self._experiment is not None
         ensemble = self._experiment.create_ensemble(
             name=f"batch_{self._batch_id}",
-            ensemble_size=len(evaluated_control_indices),
+            ensemble_size=control_values.shape[0],
             iteration=self._batch_id,
         )
         for sim_id, controls in enumerate(sim_controls.values()):
             self._setup_sim(sim_id, controls, ensemble)
 
         # Evaluate the batch:
-        run_args = self._get_run_args(
-            ensemble, model_realizations, evaluated_control_indices
-        )
+        run_args = self._get_run_args(ensemble, model_realizations)
         self._context_env.update(
             {
                 "_ERT_EXPERIMENT_ID": str(ensemble.experiment_id),
@@ -526,14 +488,13 @@ class EverestRunModel(BaseRunModel):
         # Gather the results and create the result for ropt:
         results = self._gather_simulation_results(ensemble)
         objectives, constraints = self._get_objectives_and_constraints(
-            control_values, evaluated_control_indices, results, cached_results
+            control_values, results
         )
 
         # Add the results from the evaluations to the cache:
         self._add_results_to_cache(
             control_values,
             model_realizations,
-            evaluated_control_indices,
             objectives,
             constraints,
         )
@@ -542,7 +503,66 @@ class EverestRunModel(BaseRunModel):
         self._batch_id += 1
 
         # Return the results, together with the indices of the evaluated controls:
-        return objectives, constraints, evaluated_control_indices
+        return objectives, constraints
+
+    @staticmethod
+    def _create_evaluation_infos(
+        control_values: NDArray[np.float64],
+        model_realizations: list[int],
+        active_controls: list[bool],
+        simulator_cache: SimulatorCache,
+        num_objectives: int,
+        num_constraints: int,
+    ) -> list[_EvaluationInfo]:
+        inactive_objective_fill_value: NDArray[np.float64] = np.zeros(num_objectives)
+        inactive_constraints_fill_value: NDArray[np.float64] = np.zeros(num_constraints)
+        evaluation_infos = []
+
+        sim_id_counter = 0
+        for flat_index, (control_vector, model_realization, is_active) in enumerate(
+            zip(control_values, model_realizations, active_controls, strict=False)
+        ):
+            if not is_active:
+                evaluation_infos.append(
+                    _EvaluationInfo(
+                        control_vector=control_vector,
+                        status=_EvaluationStatus.INACTIVE,
+                        model_realization=model_realization,
+                        flat_index=flat_index,
+                        simulation_id=None,
+                        objectives=inactive_objective_fill_value,
+                        constraints=inactive_constraints_fill_value,
+                    )
+                )
+                continue
+
+            cached_result = simulator_cache.get(model_realization, control_vector)
+            if is_active and cached_result is not None:
+                objectives, constraints = cached_result
+                evaluation_infos.append(
+                    _EvaluationInfo(
+                        control_vector=control_vector,
+                        status=_EvaluationStatus.CACHED,
+                        model_realization=model_realization,
+                        flat_index=flat_index,
+                        simulation_id=None,
+                        objectives=objectives,
+                        constraints=constraints,
+                    )
+                )
+            elif is_active:
+                evaluation_infos.append(
+                    _EvaluationInfo(
+                        control_vector=control_vector,
+                        status=_EvaluationStatus.TO_SIMULATE,
+                        model_realization=model_realization,
+                        flat_index=flat_index,
+                        simulation_id=sim_id_counter,
+                    )
+                )
+                sim_id_counter += 1
+
+        return evaluation_infos
 
     def _forward_model_evaluator(
         self, control_values: NDArray[np.float64], evaluator_context: EvaluatorContext
@@ -566,9 +586,74 @@ class EverestRunModel(BaseRunModel):
             or bool(evaluator_context.active[evaluator_context.realizations[idx]])
             for idx in control_indices
         ]
+
+        num_objectives = len(self._everest_config.objective_names)
+        num_constraints = len(self._everest_config.constraint_names)
+
+        assert self._simulator_cache is not None
+        evaluation_infos = self._create_evaluation_infos(
+            control_values=control_values,
+            model_realizations=model_realizations,
+            active_controls=active_control_vectors,
+            num_objectives=num_objectives,
+            num_constraints=num_constraints,
+            simulator_cache=self._simulator_cache,
+        )
+
         batch_id = self._batch_id  # Save the batch ID, it will be modified.
-        objectives, constraints, evaluated_control_indices = self._run_forward_model(
-            control_values, model_realizations, active_control_vectors
+
+        control_values_to_simulate = np.array(
+            [
+                c.control_vector
+                for c in evaluation_infos
+                if c.status == _EvaluationStatus.TO_SIMULATE
+            ],
+            dtype=np.float64,
+        )
+
+        if control_values_to_simulate.shape[0] > 0:
+            sim_objectives, sim_constraints = self._run_forward_model(
+                control_values=control_values_to_simulate,
+                model_realizations=[
+                    c.model_realization
+                    for c in evaluation_infos
+                    if c.status == _EvaluationStatus.TO_SIMULATE
+                ],
+            )
+        else:
+            sim_objectives = np.array([], dtype=np.float64)
+            sim_constraints = np.array([], dtype=np.float64)
+
+            # Note: removing this causes some tests to fail, but this behavior
+            # should maybe be revised?
+            self._batch_id += 1
+
+        # Assign simulated results to corresponding evaluation infos
+        for ei in evaluation_infos:
+            if ei.simulation_id is not None:
+                ei.objectives = sim_objectives[ei.simulation_id]
+                ei.constraints = (
+                    sim_constraints[ei.simulation_id]
+                    if sim_constraints is not None
+                    else None
+                )
+
+        # At this point:
+        # cached results are attached to cached evaluations
+        # np.zeros are attached to inactive evaluations
+        # simulated results are attached to simulated evaluations
+        objectives = np.array(
+            [cs.objectives for cs in evaluation_infos],
+            dtype=np.float64,
+        )
+
+        constraints = (
+            np.array(
+                [cs.constraints for cs in evaluation_infos],
+                dtype=np.float64,
+            )
+            if num_constraints > 0
+            else None
         )
 
         # The simulation id's are a simple enumeration over the evaluated
@@ -576,14 +661,12 @@ class EverestRunModel(BaseRunModel):
         # implicitly given by there position in the evaluated_control_indices
         # list. We store for each control vector that id, or -1 if it was not
         # evaluated:
-        sim_ids = np.fromiter(
-            (
-                evaluated_control_indices.index(idx)
-                if idx in evaluated_control_indices
-                else -1
-                for idx in control_indices
-            ),
-            dtype=np.intc,
+        sim_ids = np.array(
+            [
+                ei.simulation_id if ei.simulation_id is not None else -1
+                for ei in evaluation_infos
+            ],
+            dtype=np.int32,
         )
 
         return EvaluatorResult(
@@ -609,7 +692,6 @@ class EverestRunModel(BaseRunModel):
     def _create_simulation_controls(
         self,
         control_values: NDArray[np.float64],
-        controls_to_evaluate: list[int],
     ) -> dict[int, dict[str, Any]]:
         def _create_control_dicts_for_simulation(
             controls_config: list[ControlConfig], values: NDArray[np.float64]
@@ -635,7 +717,7 @@ class EverestRunModel(BaseRunModel):
             sim_id: _create_control_dicts_for_simulation(
                 self._everest_config.controls, control_values[sim_id, :]
             )
-            for sim_id in controls_to_evaluate
+            for sim_id in range(control_values.shape[0])
         }
 
     def _setup_sim(
@@ -696,13 +778,12 @@ class EverestRunModel(BaseRunModel):
         self,
         ensemble: Ensemble,
         model_realizations: list[int],
-        evaluated_control_indices: list[int],
     ) -> list[RunArg]:
         substitutions = self._substitutions
-        self.active_realizations = [True] * len(evaluated_control_indices)
-        for sim_id, control_idx in enumerate(evaluated_control_indices):
+        self.active_realizations = [True] * len(model_realizations)
+        for sim_id, model_realization in enumerate(model_realizations):
             substitutions[f"<GEO_ID_{sim_id}_{ensemble.iteration}>"] = str(
-                model_realizations[control_idx]
+                int(model_realization)
             )
         run_paths = Runpaths(
             jobname_format=self._model_config.jobname_format_string,
@@ -762,15 +843,12 @@ class EverestRunModel(BaseRunModel):
     def _get_objectives_and_constraints(
         self,
         control_values: NDArray[np.float64],
-        evaluated_control_indices: list[int],
         results: list[dict[str, NDArray[np.float64]]],
-        cached_results: dict[int, Any],
     ) -> tuple[NDArray[np.float64], NDArray[np.float64] | None]:
         objectives = self._get_simulation_results(
             results,
             self._everest_config.objective_names,
             control_values,
-            evaluated_control_indices,
         )
 
         constraints = None
@@ -779,18 +857,7 @@ class EverestRunModel(BaseRunModel):
                 results,
                 self._everest_config.constraint_names,
                 control_values,
-                evaluated_control_indices,
             )
-
-        if self._simulator_cache is not None:
-            for control_idx, (
-                cached_objectives,
-                cached_constraints,
-            ) in cached_results.items():
-                objectives[control_idx, ...] = cached_objectives
-                if constraints is not None:
-                    assert cached_constraints is not None
-                    constraints[control_idx, ...] = cached_constraints
 
         return objectives, constraints
 
@@ -799,11 +866,10 @@ class EverestRunModel(BaseRunModel):
         results: list[dict[str, NDArray[np.float64]]],
         names: list[str],
         controls: NDArray[np.float64],
-        evaluated_control_indices: list[int],
     ) -> NDArray[np.float64]:
         values = np.zeros((controls.shape[0], len(names)), dtype=float64)
         for func_idx, name in enumerate(names):
-            values[evaluated_control_indices, func_idx] = np.fromiter(
+            values[:, func_idx] = np.fromiter(
                 (np.nan if not result else result[name][0] for result in results),
                 dtype=np.float64,
             )
@@ -813,12 +879,11 @@ class EverestRunModel(BaseRunModel):
         self,
         control_values: NDArray[np.float64],
         model_realizations: list[int],
-        evaluated_control_indices: list[int],
         objectives: NDArray[np.float64],
         constraints: NDArray[np.float64] | None,
     ) -> None:
         if self._simulator_cache is not None:
-            for sim_id in evaluated_control_indices:
+            for sim_id in range(control_values.shape[0]):
                 self._simulator_cache.add(
                     model_realizations[sim_id],
                     control_values[sim_id, ...],
