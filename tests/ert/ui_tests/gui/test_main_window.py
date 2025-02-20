@@ -690,58 +690,48 @@ def test_right_click_plot_button_opens_external_plotter(qtbot, storage, monkeypa
 def test_that_es_mda_restart_run_box_is_disabled_when_there_are_no_cases(qtbot):
     args = Mock()
     args.config = "poly.ert"
-    ert_config = ErtConfig.from_file(args.config)
-    with StorageService.init_service(
-        project=os.path.abspath(ert_config.ens_path),
-    ):
-        gui, *_ = ert.gui.main._start_initial_gui_window(args, GUILogHandler())
-        assert gui.windowTitle().startswith("ERT - poly.ert")
+    gui, *_ = ert.gui.main._start_initial_gui_window(args, GUILogHandler())
+    assert gui.windowTitle().startswith("ERT - poly.ert")
 
-        combo_box = get_child(gui, QComboBox, name="experiment_type")
-        qtbot.mouseClick(combo_box, Qt.MouseButton.LeftButton)
-        assert combo_box.count() == 6
-        combo_box.setCurrentIndex(3)
+    combo_box = get_child(gui, QComboBox, name="experiment_type")
+    qtbot.mouseClick(combo_box, Qt.MouseButton.LeftButton)
+    assert combo_box.count() == 6
+    combo_box.setCurrentIndex(3)
 
-        assert combo_box.currentText() == MultipleDataAssimilation.display_name()
+    assert combo_box.currentText() == MultipleDataAssimilation.display_name()
 
-        es_mda_panel = get_child(gui, QWidget, name="ES_MDA_panel")
-        assert es_mda_panel
+    es_mda_panel = get_child(gui, QWidget, name="ES_MDA_panel")
+    assert es_mda_panel
 
-        restart_button = get_child(
-            es_mda_panel, QCheckBox, name="restart_checkbox_esmda"
-        )
-        ensemble_selector = get_child(es_mda_panel, EnsembleSelector)
+    restart_button = get_child(es_mda_panel, QCheckBox, name="restart_checkbox_esmda")
+    ensemble_selector = get_child(es_mda_panel, EnsembleSelector)
 
-        assert restart_button
+    assert restart_button
 
-        assert len(ensemble_selector._ensemble_list()) == 0
-        assert not restart_button.isEnabled()
+    assert len(ensemble_selector._ensemble_list()) == 0
+    assert not restart_button.isEnabled()
 
-        add_experiment_manually(qtbot, gui, ensemble_name="test_ensemble")
-        assert len(ensemble_selector._ensemble_list()) == 1
+    add_experiment_manually(qtbot, gui, ensemble_name="test_ensemble")
+    assert len(ensemble_selector._ensemble_list()) == 1
 
-        assert restart_button.isEnabled()
+    assert restart_button.isEnabled()
 
 
 @pytest.mark.usefixtures("copy_poly_case")
 def test_help_menu(qtbot):
     args = Mock()
     args.config = "poly.ert"
-    ert_config = ErtConfig.from_file(args.config)
-    with StorageService.init_service(
-        project=os.path.abspath(ert_config.ens_path),
-    ):
-        gui, *_ = ert.gui.main._start_initial_gui_window(args, GUILogHandler())
-        assert gui.windowTitle().startswith("ERT - poly.ert")
-        menu_bar = gui.menuBar()
-        assert isinstance(menu_bar, QMenuBar)
-        get_child(menu_bar, QAction, name="about_action").trigger()
-        about_dialog = wait_for_child(gui, qtbot, AboutDialog)
-        assert about_dialog.windowTitle() == "About"
-        qtbot.mouseClick(
-            get_child(about_dialog, QPushButton, name="close_button"),
-            Qt.MouseButton.LeftButton,
-        )
+    gui, *_ = ert.gui.main._start_initial_gui_window(args, GUILogHandler())
+    assert gui.windowTitle().startswith("ERT - poly.ert")
+    menu_bar = gui.menuBar()
+    assert isinstance(menu_bar, QMenuBar)
+    get_child(menu_bar, QAction, name="about_action").trigger()
+    about_dialog = wait_for_child(gui, qtbot, AboutDialog)
+    assert about_dialog.windowTitle() == "About"
+    qtbot.mouseClick(
+        get_child(about_dialog, QPushButton, name="close_button"),
+        Qt.MouseButton.LeftButton,
+    )
 
 
 def test_validation_of_experiment_names_in_run_models(

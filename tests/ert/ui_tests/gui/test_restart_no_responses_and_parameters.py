@@ -17,7 +17,6 @@ from ert.gui.simulation.experiment_panel import ExperimentPanel
 from ert.gui.tools.event_viewer import GUILogHandler
 from ert.run_models import EnsembleExperiment
 from ert.run_models.evaluate_ensemble import EvaluateEnsemble
-from ert.services import StorageService
 from ert.storage import Storage, open_storage
 from ert.validation import rangestring_to_mask
 
@@ -83,10 +82,7 @@ def open_gui(tmp_path, monkeypatch, run_experiment, tmp_path_factory):
         _open_main_window(tmp_path) as (
             gui,
             _,
-            config,
-        ),
-        StorageService.init_service(
-            project=os.path.abspath(config.ens_path),
+            __,
         ),
     ):
         yield gui

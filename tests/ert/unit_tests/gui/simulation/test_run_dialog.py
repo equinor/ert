@@ -1,4 +1,3 @@
-import os
 from queue import SimpleQueue
 from unittest.mock import MagicMock, Mock, patch
 
@@ -33,7 +32,6 @@ from ert.gui.simulation.view.realization import RealizationWidget
 from ert.gui.tools.file import FileDialog
 from ert.run_models.base_run_model import BaseRunModelAPI
 from ert.run_models.ensemble_experiment import EnsembleExperiment
-from ert.services import StorageService
 from ert.storage import open_storage
 from tests.ert import SnapshotBuilder
 from tests.ert.ui_tests.gui.conftest import wait_for_child
@@ -564,9 +562,6 @@ def test_that_exception_in_base_run_model_is_handled(qtbot: QtBot, storage):
 
     ert_config = ErtConfig.from_file(config_file)
     with (
-        StorageService.init_service(
-            project=os.path.abspath(ert_config.ens_path),
-        ),
         patch.object(
             ert.run_models.SingleTestRun,
             "run_experiment",
@@ -606,9 +601,6 @@ def test_that_stdout_and_stderr_buttons_react_to_file_content(
     args_mock.config = "snake_oil.ert"
 
     with (
-        StorageService.init_service(
-            project=os.path.abspath(snake_oil_case.ens_path),
-        ),
         open_storage(snake_oil_case.ens_path, mode="w") as storage,
     ):
         gui = _setup_main_window(snake_oil_case, args_mock, GUILogHandler(), storage)
@@ -703,25 +695,22 @@ def test_that_design_matrix_show_parameters_button_is_visible(
     args_mock.config = config_file
 
     ert_config = ErtConfig.from_file(config_file)
-    with StorageService.init_service(
-        project=os.path.abspath(ert_config.ens_path),
-    ):
-        gui = _setup_main_window(ert_config, args_mock, GUILogHandler(), storage)
-        experiment_panel = gui.findChild(ExperimentPanel)
-        assert experiment_panel
+    gui = _setup_main_window(ert_config, args_mock, GUILogHandler(), storage)
+    experiment_panel = gui.findChild(ExperimentPanel)
+    assert experiment_panel
 
-        simulation_mode_combo = experiment_panel.findChild(QComboBox)
-        assert simulation_mode_combo
+    simulation_mode_combo = experiment_panel.findChild(QComboBox)
+    assert simulation_mode_combo
 
-        simulation_mode_combo.setCurrentText(EnsembleExperiment.name())
-        simulation_settings = gui.findChild(EnsembleExperimentPanel)
-        show_dm_parameters = simulation_settings.findChild(
-            QPushButton, "show-dm-parameters"
-        )
-        if design_matrix_entry:
-            assert show_dm_parameters
-        else:
-            assert show_dm_parameters is None
+    simulation_mode_combo.setCurrentText(EnsembleExperiment.name())
+    simulation_settings = gui.findChild(EnsembleExperimentPanel)
+    show_dm_parameters = simulation_settings.findChild(
+        QPushButton, "show-dm-parameters"
+    )
+    if design_matrix_entry:
+        assert show_dm_parameters
+    else:
+        assert show_dm_parameters is None
 
 
 @pytest.mark.parametrize(
