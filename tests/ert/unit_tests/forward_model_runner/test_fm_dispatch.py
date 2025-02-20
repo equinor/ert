@@ -484,3 +484,20 @@ time.sleep(180)"""
             event_from_json(zmq_server.messages[-1]).error_msg
             == FORWARD_MODEL_TERMINATED_MSG
         )
+
+
+async def test_fm_dispatch_main_signals_sigterm_on_exception(capsys):
+    def mock_fm_dispatch_raises(*args):
+        raise RuntimeError("forward model critical error")
+
+    with (
+        patch("_ert.forward_model_runner.fm_dispatch.os.killpg") as mock_killpg,
+        patch("_ert.forward_model_runner.fm_dispatch.os.getpgid") as mock_getpgid,
+        patch("_ert.forward_model_runner.fm_dispatch.fm_dispatch") as mock_fm_dispatch,
+    ):
+        mock_getpgid.return_value = 17
+        mock_fm_dispatch.side_effect = mock_fm_dispatch_raises
+        _ert.forward_model_runner.fm_dispatch.main()
+    assert "forward model critical error" in capsys.readouterr().out
+
+    mock_killpg.assert_called_with(17, signal.SIGTERM)

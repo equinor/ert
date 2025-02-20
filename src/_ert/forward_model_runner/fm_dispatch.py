@@ -144,11 +144,6 @@ def _stop_reporters(
             reporter.stop(exited_event=exited_event)
 
 
-def sigterm_handler(_signo, _stack_frame):
-    signal.signal(signal.SIGTERM, signal.SIG_DFL)
-    os.kill(0, signal.SIGTERM)
-
-
 def fm_dispatch(args):
     parser = argparse.ArgumentParser(
         description=(
@@ -207,13 +202,14 @@ def fm_dispatch(args):
 
 def main():
     os.nice(19)
-    signal.signal(signal.SIGTERM, sigterm_handler)
     try:
         fm_dispatch(sys.argv)
-    except Exception as e:
+    except Exception as exc:
+        print(f"fm_dispatch failed with {exc=}")
         pgid = os.getpgid(os.getpid())
-        os.killpg(pgid, signal.SIGTERM)
-        raise e
+        os.killpg(
+            pgid, signal.SIGTERM
+        )  # This will trigger the sigterm_handler, which shuts down the reporters and SIGKILLS any remaining processes.
 
 
 if __name__ == "__main__":
