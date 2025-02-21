@@ -12,6 +12,7 @@ import pytest
 from hypothesis import given
 from hypothesis import strategies as st
 
+from ert.config.ert_config import ErtConfig
 from ert.scheduler import SlurmDriver
 from ert.scheduler.slurm_driver import _seconds_to_slurm_time_format
 from tests.ert.utils import poll
@@ -102,6 +103,30 @@ async def test_realization_memory(memory_in_bytes):
     assert f"--mem={memory_in_bytes // 1024**2}M" in Path(
         "captured_sbatch_args"
     ).read_text(encoding="utf-8")
+
+
+@pytest.mark.usefixtures("capturing_sbatch")
+@pytest.mark.parametrize(
+    "memory_string, expected",
+    [
+        pytest.param("10Tb", "10485760M"),
+        pytest.param("10Gb", "10240M"),
+        pytest.param("10G", "10240M"),
+        pytest.param("20Mb", "20M"),
+        pytest.param("20M", "20M"),
+    ],
+)
+async def test_realization_memory_should_not_use_cluster_default_mem(
+    memory_string, expected
+):
+    memory_in_bytes = ErtConfig.from_file_contents(
+        f"NUM_REALIZATIONS 1\nREALIZATION_MEMORY {memory_string}\n"
+    ).queue_config.realization_memory
+    driver = SlurmDriver(realization_memory=memory_in_bytes)
+    await driver.submit(0, "sleep", name="myjobname")
+    assert f"--mem={expected}" in Path("captured_sbatch_args").read_text(
+        encoding="utf-8"
+    )  # This gets the cluster default if --mem=0
 
 
 @pytest.mark.usefixtures("capturing_sbatch")
