@@ -35,7 +35,8 @@ def test_loglevel(copy_math_func_test_data_to_tmp):
 
 
 @pytest.mark.parametrize("iteration", [0, 1, 2])
-def test_run_path(min_config, iteration, monkeypatch):
+def test_run_path(tmp_path, min_config, iteration, monkeypatch):
+    monkeypatch.chdir(tmp_path)
     monkeypatch.setattr(ert.run_models.everest_run_model, "open_storage", MagicMock())
 
     model_realizations, control_indices = ([0, 2], [0, 1])
