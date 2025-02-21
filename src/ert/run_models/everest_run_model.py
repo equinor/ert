@@ -16,7 +16,6 @@ from types import TracebackType
 from typing import TYPE_CHECKING, Any, Protocol
 
 import numpy as np
-from numpy import float64
 from numpy._typing import NDArray
 from ropt.enums import EventType, OptimizerExitCode
 from ropt.evaluator import EvaluatorContext, EvaluatorResult
@@ -485,11 +484,8 @@ class EverestRunModel(BaseRunModel):
         # If necessary, delete the run path:
         self._delete_runpath(run_args)
 
-        # Gather the results and create the result for ropt:
-        results = self._gather_simulation_results(ensemble)
-        objectives, constraints = self._get_objectives_and_constraints(
-            control_values, results
-        )
+        # Gather the results
+        objectives, constraints = self._gather_simulation_results(ensemble)
 
         # Add the results from the evaluations to the cache:
         self._add_results_to_cache(
@@ -823,57 +819,32 @@ class EverestRunModel(BaseRunModel):
 
     def _gather_simulation_results(
         self, ensemble: Ensemble
-    ) -> list[dict[str, NDArray[np.float64]]]:
-        results: list[dict[str, NDArray[np.float64]]] = []
+    ) -> tuple[NDArray[np.float64], NDArray[np.float64] | None]:
+        objective_aliases = self._everest_config.function_aliases
+        objective_names = self._everest_config.objective_names
+        objectives = np.zeros((ensemble.ensemble_size, len(objective_names)))
+
+        constraint_names = self._everest_config.constraint_names
+        constraints = np.zeros((ensemble.ensemble_size, len(constraint_names)))
+
         for sim_id, successful in enumerate(self.active_realizations):
             if not successful:
                 logger.error(f"Simulation {sim_id} failed.")
-                results.append({})
+                objectives[sim_id, :] = np.nan
+                constraints[sim_id, :] = np.nan
                 continue
-            d = {}
-            for key in self._everest_config.result_names:
-                data = ensemble.load_responses(key, (sim_id,))
-                d[key] = data["values"].to_numpy()
-            results.append(d)
-        for fnc_name, alias in self._everest_config.function_aliases.items():
-            for result in results:
-                result[fnc_name] = result[alias]
-        return results
 
-    def _get_objectives_and_constraints(
-        self,
-        control_values: NDArray[np.float64],
-        results: list[dict[str, NDArray[np.float64]]],
-    ) -> tuple[NDArray[np.float64], NDArray[np.float64] | None]:
-        objectives = self._get_simulation_results(
-            results,
-            self._everest_config.objective_names,
-            control_values,
-        )
+            for i, obj_name in enumerate(objective_names):
+                data = ensemble.load_responses(
+                    objective_aliases.get(obj_name, obj_name), (sim_id,)
+                )
+                objectives[sim_id, i] = data["values"].item()
 
-        constraints = None
-        if self._everest_config.output_constraints:
-            constraints = self._get_simulation_results(
-                results,
-                self._everest_config.constraint_names,
-                control_values,
-            )
+            for i, constr_name in enumerate(constraint_names):
+                data = ensemble.load_responses(constr_name, (sim_id,))
+                constraints[sim_id, i] = data["values"].item()
 
-        return objectives, constraints
-
-    @staticmethod
-    def _get_simulation_results(
-        results: list[dict[str, NDArray[np.float64]]],
-        names: list[str],
-        controls: NDArray[np.float64],
-    ) -> NDArray[np.float64]:
-        values = np.zeros((controls.shape[0], len(names)), dtype=float64)
-        for func_idx, name in enumerate(names):
-            values[:, func_idx] = np.fromiter(
-                (np.nan if not result else result[name][0] for result in results),
-                dtype=np.float64,
-            )
-        return values
+        return objectives, constraints if constraint_names else None
 
     def _add_results_to_cache(
         self,
