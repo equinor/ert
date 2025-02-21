@@ -363,6 +363,14 @@ class RunDialog(QFrame):
             name="ert_gui_simulation_thread", target=run, daemon=True
         )
 
+        self.setup_event_monitoring()
+
+        self._ticker.start(self._RUN_TIME_POLL_RATE)
+        simulation_thread.start()
+
+        self._notifier.set_is_simulation_running(True)
+
+    def setup_event_monitoring(self) -> None:
         self._worker_thread = QThread(parent=self)
 
         self._worker = QueueEmitter(self._event_queue)
@@ -370,16 +378,10 @@ class RunDialog(QFrame):
         self._worker.new_event.connect(self._on_event)
         self._worker.moveToThread(self._worker_thread)
 
-        self.destroyed.connect(lambda: _stop_worker(self._worker_thread, self._worker))
-
-        self.simulation_done.connect(self._worker.stop)
-
         self._worker_thread.started.connect(self._worker.consume_and_emit)
-        self._ticker.start(self._RUN_TIME_POLL_RATE)
-
+        self.simulation_done.connect(self._worker.stop)
+        self.destroyed.connect(lambda: _stop_worker(self._worker_thread, self._worker))
         self._worker_thread.start()
-        simulation_thread.start()
-        self._notifier.set_is_simulation_running(True)
 
     def killJobs(self) -> QMessageBox.StandardButton:
         msg = "Are you sure you want to terminate the currently running experiment?"
