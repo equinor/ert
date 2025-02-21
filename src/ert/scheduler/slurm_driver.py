@@ -67,28 +67,17 @@ class SlurmDriver(Driver):
         scancel_cmd: str = "scancel",
         sbatch_cmd: str = "sbatch",
         user: str | None = None,
-        realization_memory: int | None = 0,
         queue_name: str | None = None,
         max_runtime: float | None = None,
         squeue_timeout: float = 2,
         project_code: str | None = None,
         activate_script: str = "",
     ) -> None:
-        """
-        The argument "realization_memory" is a global keyword in Ert
-        and not queue specific. It is always supplied in bytes to
-        the driver, and forwarded to sbatch using "--mem".
-
-        In slurm, --mem==0 requests all memory on a node. In Ert,
-        zero "realization memory" is the default and means no intended
-        memory allocation.
-        """
         super().__init__(activate_script)
         self._submit_locks: dict[int, asyncio.Lock] = {}
         self._iens2jobid: dict[int, str] = {}
         self._jobs: dict[str, JobData] = {}
         self._job_error_message_by_iens: dict[int, str] = {}
-        self._realization_memory = realization_memory
 
         self._max_runtime = max_runtime
         self._queue_name = queue_name
@@ -120,6 +109,7 @@ class SlurmDriver(Driver):
         name: str = "dummy",
         runpath: Path | None = None,
         num_cpu: int | None = 1,
+        realization_memory: int | None = 0,
     ) -> list[str]:
         sbatch_with_args = [
             str(self._sbatch),
@@ -131,10 +121,10 @@ class SlurmDriver(Driver):
         ]
         if num_cpu:
             sbatch_with_args.append(f"--ntasks={num_cpu}")
-        if self._realization_memory and self._realization_memory > 0:
+        if realization_memory and realization_memory > 0:
             # In slurm, --mem==0 requests all memory on a node. In Ert,
             # zero realization memory means no intended memory allocation.
-            sbatch_with_args.append(f"--mem={self._realization_memory // 1024**2}M")
+            sbatch_with_args.append(f"--mem={realization_memory // 1024**2}M")
         if self._include_hosts:
             sbatch_with_args.append(f"--nodelist={self._include_hosts}")
         if self._exclude_hosts:
@@ -184,7 +174,10 @@ class SlurmDriver(Driver):
             raise FailedSubmit(error_message) from err
         assert script_path is not None
         script_path.chmod(script_path.stat().st_mode | stat.S_IEXEC)
-        sbatch_with_args = [*self._submit_cmd(name, runpath, num_cpu), str(script_path)]
+        sbatch_with_args = [
+            *self._submit_cmd(name, runpath, num_cpu, realization_memory),
+            str(script_path),
+        ]
 
         if iens not in self._submit_locks:
             self._submit_locks[iens] = asyncio.Lock()
