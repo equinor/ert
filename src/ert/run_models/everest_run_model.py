@@ -827,6 +827,19 @@ class EverestRunModel(BaseRunModel):
         constraint_names = self._everest_config.constraint_names
         constraints = np.zeros((ensemble.ensemble_size, len(constraint_names)))
 
+        if not any(self.active_realizations):
+            nan_objectives = np.full(
+                (ensemble.ensemble_size, len(objective_names)), fill_value=np.nan
+            )
+            nan_constraints = (
+                np.full(
+                    (ensemble.ensemble_size, len(constraint_names)), fill_value=np.nan
+                )
+                if constraint_names
+                else None
+            )
+            return nan_objectives, nan_constraints
+
         for sim_id, successful in enumerate(self.active_realizations):
             if not successful:
                 logger.error(f"Simulation {sim_id} failed.")
