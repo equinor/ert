@@ -97,8 +97,10 @@ async def test_numcpu_sets_ntasks(num_cpu):
 @pytest.mark.usefixtures("capturing_sbatch")
 @given(memory_in_bytes=st.integers(min_value=1))
 async def test_realization_memory(memory_in_bytes):
-    driver = SlurmDriver(realization_memory=memory_in_bytes)
-    await driver.submit(0, "sleep", name="myjobname")
+    driver = SlurmDriver()
+    await driver.submit(
+        0, "sleep", name="myjobname", realization_memory=memory_in_bytes
+    )
     assert f"--mem={memory_in_bytes // 1024**2}M" in Path(
         "captured_sbatch_args"
     ).read_text(encoding="utf-8")
