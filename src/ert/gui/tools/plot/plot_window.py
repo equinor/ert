@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import logging
-import time
 from typing import TYPE_CHECKING, cast
 
 import numpy as np
@@ -13,6 +12,7 @@ from PyQt6.QtCore import pyqtSlot as Slot
 from PyQt6.QtWidgets import QDockWidget, QMainWindow, QTabWidget, QWidget
 
 from ert.gui.ertwidgets import showWaitCursorWhileWaiting
+from ert.utils import log_duration
 
 from .customize import PlotCustomizer
 from .data_type_keys_widget import DataTypeKeysWidget
@@ -101,9 +101,9 @@ def open_error_dialog(title: str, content: str) -> None:
 
 
 class PlotWindow(QMainWindow):
+    @log_duration(logger, logging.INFO, "PlotWindow.__init__")
     def __init__(self, config_file: str, ens_path: Path, parent: QWidget | None):
         super().__init__(parent)
-        t = time.perf_counter()
 
         logger.info("PlotWindow __init__")
         self.setMinimumWidth(850)
@@ -178,8 +178,6 @@ class PlotWindow(QMainWindow):
         self.addDock("Plot ensemble", self._ensemble_selection_widget)
 
         self._data_type_keys_widget.selectDefault()
-
-        logger.info(f"PlotWindow __init__ done. time={time.perf_counter() - t}")
 
     @Slot(int)
     def currentTabChanged(self, index: int) -> None:
