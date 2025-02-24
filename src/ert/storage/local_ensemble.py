@@ -14,7 +14,7 @@ import numpy as np
 import pandas as pd
 import xarray as xr
 from pydantic import BaseModel
-from typing_extensions import deprecated
+from typing_extensions import TypedDict, deprecated
 
 from ert.config.gen_kw_config import GenKwConfig
 from ert.storage.mode import BaseMode, Mode, require_write
@@ -32,6 +32,11 @@ logger = logging.getLogger(__name__)
 import polars as pl
 
 
+class EverestRealizationInfo(TypedDict):
+    model_realization: int
+    perturbation: int  # -1 means it stems from unperturbed controls
+
+
 class _Index(BaseModel):
     id: UUID
     experiment_id: UUID
@@ -40,6 +45,7 @@ class _Index(BaseModel):
     name: str
     prior_ensemble_id: UUID | None
     started_at: datetime
+    everest_realization_info: dict[int, EverestRealizationInfo] | None = None
 
 
 class _Failure(BaseModel):
@@ -1040,3 +1046,42 @@ class LocalEnsemble(BaseMode):
             return pl.concat(dfs_per_response_type, how="vertical").with_columns(
                 pl.col("response_key").cast(pl.String).alias("response_key")
             )
+
+    @property
+    def everest_realization_info(self) -> dict[int, EverestRealizationInfo] | None:
+        return self._index.everest_realization_info
+
+    def save_everest_realization_info(
+        self, realization_info: dict[int, EverestRealizationInfo]
+    ) -> None:
+        if len(realization_info) != self.ensemble_size:
+            raise ValueError(
+                "Everest realization info must describe "
+                "all realizations in the ensemble, got information "
+                f"for realizations [{', '.join(map(str, realization_info))}]"
+            )
+
+        errors = []
+        for ert_realization, info in realization_info.items():
+            pert = info.get("perturbation")
+            model_realization = info.get("model_realization")
+
+            if pert is None or (pert < 0 and pert != -1):
+                errors.append(
+                    f"Invalid perturbation for "
+                    f"ert realization: {ert_realization},"
+                    f"expected -1 or a positive int"
+                )
+
+            if model_realization is None:
+                errors.append(
+                    f"Invalid model realization for ert realization {ert_realization}"
+                )
+
+        if errors:
+            raise ValueError("Bad everest realization info: " + "\n".join(errors))
+
+        self._index.everest_realization_info = realization_info
+        self._storage._write_transaction(
+            self._path / "index.json", self._index.model_dump_json().encode("utf-8")
+        )
