@@ -55,6 +55,7 @@ from everest.simulator.everest_to_ert import (
 from everest.strings import EVEREST, STORAGE_DIR
 
 from ..run_arg import RunArg, create_run_arguments
+from ..storage.local_ensemble import EverestRealizationInfo
 from .base_run_model import BaseRunModel, StatusEvents
 from .event import (
     EverestBatchResultEvent,
@@ -113,6 +114,7 @@ class _EvaluationInfo:
     flat_index: int
     simulation_id: int | None
     model_realization: int
+    perturbation: int
     objectives: NDArray[np.float64] | None = None
     constraints: NDArray[np.float64] | None = None
 
@@ -360,6 +362,7 @@ class EverestRunModel(BaseRunModel):
             objectives, constraints = self._run_forward_model(
                 np.repeat(np.expand_dims(control_variables, axis=0), nreal, axis=0),
                 model_realizations,
+                [-1] * nreal,
             )
 
             self.send_event(
@@ -477,6 +480,7 @@ class EverestRunModel(BaseRunModel):
         self,
         control_values: NDArray[np.float64],
         model_realizations: list[int],
+        perturbations: list[int],
     ) -> tuple[NDArray[np.float64], NDArray[np.float64] | None]:
         # Reset the current run status:
 
@@ -490,6 +494,19 @@ class EverestRunModel(BaseRunModel):
             ensemble_size=control_values.shape[0],
             iteration=self._batch_id,
         )
+
+        realization_info: dict[int, EverestRealizationInfo] = {
+            ert_realization: {
+                "model_realization": model_realization,
+                "perturbation": perturbation,
+            }
+            for ert_realization, (model_realization, perturbation) in enumerate(
+                zip(model_realizations, perturbations, strict=False)
+            )
+        }
+
+        ensemble.save_everest_realization_info(realization_info)
+
         for sim_id, controls in enumerate(sim_controls.values()):
             self._setup_sim(sim_id, controls, ensemble)
 
@@ -529,6 +546,7 @@ class EverestRunModel(BaseRunModel):
     def _create_evaluation_infos(
         control_values: NDArray[np.float64],
         model_realizations: list[int],
+        perturbations: list[int],
         active_controls: list[bool],
         simulator_cache: SimulatorCache,
         num_objectives: int,
@@ -539,8 +557,19 @@ class EverestRunModel(BaseRunModel):
         evaluation_infos = []
 
         sim_id_counter = 0
-        for flat_index, (control_vector, model_realization, is_active) in enumerate(
-            zip(control_values, model_realizations, active_controls, strict=False)
+        for flat_index, (
+            control_vector,
+            model_realization,
+            perturbation,
+            is_active,
+        ) in enumerate(
+            zip(
+                control_values,
+                model_realizations,
+                perturbations,
+                active_controls,
+                strict=False,
+            )
         ):
             if not is_active:
                 evaluation_infos.append(
@@ -548,6 +577,7 @@ class EverestRunModel(BaseRunModel):
                         control_vector=control_vector,
                         status=_EvaluationStatus.INACTIVE,
                         model_realization=model_realization,
+                        perturbation=perturbation,
                         flat_index=flat_index,
                         simulation_id=None,
                         objectives=inactive_objective_fill_value,
@@ -564,6 +594,7 @@ class EverestRunModel(BaseRunModel):
                         control_vector=control_vector,
                         status=_EvaluationStatus.CACHED,
                         model_realization=model_realization,
+                        perturbation=perturbation,
                         flat_index=flat_index,
                         simulation_id=None,
                         objectives=objectives,
@@ -576,6 +607,7 @@ class EverestRunModel(BaseRunModel):
                         control_vector=control_vector,
                         status=_EvaluationStatus.TO_SIMULATE,
                         model_realization=model_realization,
+                        perturbation=perturbation,
                         flat_index=flat_index,
                         simulation_id=sim_id_counter,
                     )
@@ -614,6 +646,9 @@ class EverestRunModel(BaseRunModel):
         evaluation_infos = self._create_evaluation_infos(
             control_values=control_values,
             model_realizations=model_realizations,
+            perturbations=evaluator_context.perturbations.tolist()
+            if evaluator_context.perturbations is not None
+            else [-1] * len(model_realizations),
             active_controls=active_control_vectors,
             num_objectives=num_objectives,
             num_constraints=num_constraints,
@@ -632,13 +667,13 @@ class EverestRunModel(BaseRunModel):
         )
 
         if control_values_to_simulate.shape[0] > 0:
+            sim_infos = [
+                c for c in evaluation_infos if c.status == _EvaluationStatus.TO_SIMULATE
+            ]
             sim_objectives, sim_constraints = self._run_forward_model(
                 control_values=control_values_to_simulate,
-                model_realizations=[
-                    c.model_realization
-                    for c in evaluation_infos
-                    if c.status == _EvaluationStatus.TO_SIMULATE
-                ],
+                model_realizations=[c.model_realization for c in sim_infos],
+                perturbations=[c.perturbation for c in sim_infos],
             )
         else:
             sim_objectives = np.array([], dtype=np.float64)

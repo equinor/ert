@@ -738,6 +738,73 @@ def test_asof_joining_summary(tmp_path, perturb_observations, perturb_responses)
         )
 
 
+def test_saving_everest_metadata_to_ensemble(tmp_path):
+    with open_storage(tmp_path, mode="w") as storage:
+        experiment = storage.create_experiment(
+            responses=[],
+        )
+
+        ensemble = storage.create_ensemble(
+            experiment, ensemble_size=10, iteration=0, name="prior"
+        )
+
+        assert ensemble.everest_realization_info is None
+
+        realization_info_dict = {
+            ert_realization: {"model_realization": 0, "perturbation": -1}
+            for ert_realization in range(10)
+        }
+
+        ensemble.save_everest_realization_info(realization_info_dict)
+        assert ensemble.everest_realization_info == realization_info_dict
+
+
+def test_that_saving_partial_everest_realization_info_raises_error(tmp_path):
+    with open_storage(tmp_path, mode="w") as storage:
+        experiment = storage.create_experiment()
+
+        ensemble = storage.create_ensemble(
+            experiment, ensemble_size=10, iteration=0, name="prior"
+        )
+
+        with pytest.raises(
+            ValueError,
+            match=r"Everest realization info must describe all realizations.*[0, 2].*",
+        ):
+            ensemble.save_everest_realization_info({0: {}, 2: {}})
+
+
+@pytest.mark.parametrize(
+    "bad_realization_info",
+    [
+        {
+            ert_realization: {"model_realization": None, "perturbation": -1}
+            for ert_realization in range(10)
+        },
+        {
+            ert_realization: {"model_realization": 0, "perturbation": None}
+            for ert_realization in range(10)
+        },
+        {
+            ert_realization: {"model_realization": 0, "perturbation": -2}
+            for ert_realization in range(10)
+        },
+    ],
+)
+def test_that_saving_invalid_everest_realization_info_raises_error(
+    tmp_path, bad_realization_info
+):
+    with open_storage(tmp_path, mode="w") as storage:
+        experiment = storage.create_experiment()
+
+        ensemble = storage.create_ensemble(
+            experiment, ensemble_size=10, iteration=0, name="prior"
+        )
+
+        with pytest.raises(ValueError, match="Bad everest realization info"):
+            ensemble.save_everest_realization_info(bad_realization_info)
+
+
 @dataclass
 class Ensemble:
     uuid: UUID
