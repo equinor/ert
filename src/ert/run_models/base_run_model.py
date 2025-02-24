@@ -54,6 +54,7 @@ from ert.runpaths import Runpaths
 from ert.storage import Ensemble, Storage
 from ert.substitutions import Substitutions
 from ert.trace import tracer
+from ert.utils import log_duration
 from ert.workflow_runner import WorkflowRunner
 
 from ..config.workflow_fixtures import WorkflowFixtures
@@ -693,6 +694,7 @@ class BaseRunModel(ABC):
     def get_number_of_successful_realizations(self) -> int:
         return self.active_realizations.count(True)
 
+    @log_duration(logger, logging.INFO)
     def rm_run_path(self) -> None:
         for run_path in self.paths:
             if Path(run_path).exists():
