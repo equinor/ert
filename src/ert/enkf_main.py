@@ -3,7 +3,6 @@ from __future__ import annotations
 import json
 import logging
 import os
-import time
 from collections.abc import Iterable, Mapping
 from datetime import datetime
 from pathlib import Path
@@ -18,6 +17,7 @@ from ert.config.ert_config import create_forward_model_json
 from ert.config.forward_model_step import ForwardModelStep
 from ert.config.model_config import ModelConfig
 from ert.substitutions import Substitutions, substitute_runpath_name
+from ert.utils import log_duration
 
 from .config import ExtParamConfig, Field, GenKwConfig, ParameterConfig, SurfaceConfig
 from .config.design_matrix import DESIGN_MATRIX_GROUP
@@ -179,6 +179,9 @@ def save_design_matrix_to_ensemble(
         )
 
 
+@log_duration(
+    logger,
+)
 def sample_prior(
     ensemble: Ensemble,
     active_realizations: Iterable[int],
@@ -192,7 +195,6 @@ def sample_prior(
     until after the forward model has completed.
     """
     random_seed = _seed_sequence(random_seed)
-    t = time.perf_counter()
     parameter_configs = ensemble.experiment.parameter_configuration
     if parameters is None:
         parameters = list(parameter_configs.keys())
@@ -212,9 +214,9 @@ def sample_prior(
             ensemble.save_parameters(parameter, realization_nr, ds)
 
     ensemble.refresh_ensemble_state()
-    logger.debug(f"sample_prior() time_used {(time.perf_counter() - t):.4f}s")
 
 
+@log_duration(logger, logging.INFO)
 def create_run_path(
     run_args: list[RunArg],
     ensemble: Ensemble,
@@ -230,7 +232,6 @@ def create_run_path(
 ) -> None:
     if context_env is None:
         context_env = {}
-    t = time.perf_counter()
     runpaths.set_ert_ensemble(ensemble.name)
     for run_arg in run_args:
         run_path = Path(run_arg.runpath)
@@ -301,5 +302,3 @@ def create_run_path(
     runpaths.write_runpath_list(
         [ensemble.iteration], [real.iens for real in run_args if real.active]
     )
-
-    logger.debug(f"create_run_path() time_used {(time.perf_counter() - t):.4f}s")

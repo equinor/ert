@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import logging
 import os
-import time
 from functools import cached_property
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, Self, overload
@@ -13,6 +12,7 @@ from pydantic.dataclasses import dataclass
 
 from ert.field_utils import FieldFileFormat, Shape, read_field, read_mask, save_field
 from ert.substitutions import substitute_runpath_name
+from ert.utils import log_duration
 
 from ._option_dict import option_dict
 from ._str_to_bool import str_to_bool
@@ -138,10 +138,10 @@ class Field(ParameterConfig):
 
         return np.size(self.mask) - np.count_nonzero(self.mask)
 
+    @log_duration(_logger, custom_name="load_field")
     def read_from_runpath(
         self, run_path: Path, real_nr: int, iteration: int
     ) -> xr.Dataset:
-        t = time.perf_counter()
         file_name = substitute_runpath_name(self.forward_init_file, real_nr, iteration)
         ds = xr.Dataset(
             {
@@ -159,13 +159,12 @@ class Field(ParameterConfig):
                 )
             }
         )
-        _logger.debug(f"load() time_used {(time.perf_counter() - t):.4f}s")
         return ds
 
+    @log_duration(_logger, custom_name="save_field")
     def write_to_runpath(
         self, run_path: Path, real_nr: int, ensemble: Ensemble
     ) -> None:
-        t = time.perf_counter()
         file_out = run_path.joinpath(
             substitute_runpath_name(str(self.output_file), real_nr, ensemble.iteration)
         )
@@ -178,8 +177,6 @@ class Field(ParameterConfig):
             file_out,
             self.file_format,
         )
-
-        _logger.debug(f"save() time_used {(time.perf_counter() - t):.4f}s")
 
     def save_parameters(
         self,
