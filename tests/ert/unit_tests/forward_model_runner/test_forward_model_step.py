@@ -45,8 +45,8 @@ def test_run_with_process_failing(mock_process, mock_popen, mock_check_executabl
 @pytest.mark.usefixtures("use_tmpdir")
 def test_cpu_seconds_can_detect_multiprocess():
     """Run a fm step that sets of two simultaneous processes that
-    each run for 1 and 2 seconds respectively. We should be able to detect
-    the total cpu seconds consumed to be roughly 3 seconds.
+    each run for 2 and 3 seconds respectively. We should be able to detect
+    the total cpu seconds consumed to be roughly the sum.
 
     The test is flaky in that it tries to gather cpu_seconds data while
     the subprocesses are running. On a loaded CPU this is not very robust,
@@ -72,8 +72,8 @@ def test_cpu_seconds_can_detect_multiprocess():
             textwrap.dedent(
                 """\
             #!/bin/sh
-            python busy.py 1 &
-            python busy.py 2"""
+            python busy.py 2 &
+            python busy.py 3"""
             )
         )
     executable = os.path.realpath(scriptname)
@@ -89,7 +89,7 @@ def test_cpu_seconds_can_detect_multiprocess():
     for status in fmstep.run():
         if isinstance(status, Running):
             cpu_seconds = max(cpu_seconds, status.memory_status.cpu_seconds)
-    assert 2.5 < cpu_seconds < 4.5
+    assert 3.2 < cpu_seconds < 5.5
 
 
 @pytest.mark.integration_test
