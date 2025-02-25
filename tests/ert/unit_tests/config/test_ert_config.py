@@ -1851,17 +1851,12 @@ def test_warning_is_emitted_when_malformatted_runpath():
     )
 
 
-@given(input=st.text(), section_length=st.integers(min_value=1))
+@given(input=st.text(), section_length=st.integers())
 def test_split_string_into_sections(input, section_length):
     split_string = _split_string_into_sections(input, section_length)
     assert "".join(split_string) == input
-    for section in split_string:
-        assert len(section) <= section_length
-
-
-@given(input=st.text(), section_length=st.integers(max_value=0))
-def test_split_string_into_sections_raise_error_on_invalid_section_length(
-    input, section_length
-):
-    with pytest.raises(ValueError):
-        _split_string_into_sections(input, section_length)
+    if section_length > 0:
+        for section in split_string:
+            assert len(section) <= section_length
+    else:
+        split_string = [input]

@@ -913,16 +913,15 @@ class ErtConfig:
 
     @classmethod
     def _log_config_dict(cls, content_dict: dict[str, Any]) -> None:
-        MAX_MESSAGE_LENGTH_APP_INSIGHTS = 32768
-        max_safe_message_length = int(
-            MAX_MESSAGE_LENGTH_APP_INSIGHTS * 0.8
-        )  # The content of the message is sanitized before beeing sendt to App Insigths to make sure GDPR-rules are not violated.
+        # The content of the message is sanitized before beeing sendt to App Insigths to make sure GDPR-rules are not violated.
         # In doing do, the message lenght will typically increase a bit. To Avoid hiting the App Insights' hard limit of message length, the limit is set to 80%
+        # of MAX_MESSAGE_LENGTH_APP_INSIGHTS = 32768
+        SAFE_MESSAGE_LENGTH_LIMIT = 26214  # <= MAX_MESSAGE_LENGTH_APP_INSIGHTS * 0.8
         config_dict_content = json.dumps(content_dict, indent=2, cls=ContextBoolEncoder)
         config_dict_content_length = len(config_dict_content)
-        if config_dict_content_length > max_safe_message_length:
+        if config_dict_content_length > SAFE_MESSAGE_LENGTH_LIMIT:
             config_sections = _split_string_into_sections(
-                config_dict_content, max_safe_message_length
+                config_dict_content, SAFE_MESSAGE_LENGTH_LIMIT
             )
             section_count = len(config_sections)
             for i, section in enumerate(config_sections):
@@ -1104,10 +1103,13 @@ class ErtConfig:
 def _split_string_into_sections(input: str, section_length: int) -> list[str]:
     """
     Splits a string into sections of length section_length
-    and returns it as an list.
+    and returns it as a list.
+
+    If section_length is set to 0 or less, no sectioning is performed and the entire input string
+    is returned as one section in a list
     """
     if section_length < 1:
-        raise ValueError("The section_length argument must be greater or equal to 1")
+        return [input]
     return [input[i : i + section_length] for i in range(0, len(input), section_length)]
 
 
