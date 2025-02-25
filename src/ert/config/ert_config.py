@@ -917,7 +917,15 @@ class ErtConfig:
         # In doing do, the message lenght will typically increase a bit. To Avoid hiting the App Insights' hard limit of message length, the limit is set to 80%
         # of MAX_MESSAGE_LENGTH_APP_INSIGHTS = 32768
         SAFE_MESSAGE_LENGTH_LIMIT = 26214  # <= MAX_MESSAGE_LENGTH_APP_INSIGHTS * 0.8
-        config_dict_content = json.dumps(content_dict, indent=2, cls=ContextBoolEncoder)
+        try:
+            config_dict_content = json.dumps(
+                content_dict, indent=2, cls=ContextBoolEncoder
+            )
+        except Exception as err:
+            config_dict_content = str(content_dict)
+            logger.warning(
+                f"Logging of config dict could not be formatted for enhanced readability. {err}"
+            )
         config_dict_content_length = len(config_dict_content)
         if config_dict_content_length > SAFE_MESSAGE_LENGTH_LIMIT:
             config_sections = _split_string_into_sections(
