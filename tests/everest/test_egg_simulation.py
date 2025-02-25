@@ -694,21 +694,10 @@ def test_egg_model_wells_json_output_no_none(copy_egg_test_data_to_tmp):
 def test_egg_snapshot(snapshot, copy_egg_test_data_to_tmp):
     config = EverestConfig.load_file(CONFIG_FILE)
 
-    class CBTracker:
-        def __init__(self):
-            self.called = False
-
-        def sweetcallbackofmine(self, *args, **kwargs):
-            self.called = True
-
-    cbtracker = CBTracker()
-    run_model = EverestRunModel.create(
-        config, simulation_callback=cbtracker.sweetcallbackofmine
-    )
+    run_model = EverestRunModel.create(config)
     evaluator_server_config = EvaluatorServerConfig()
     run_model.run_experiment(evaluator_server_config)
 
-    assert cbtracker.called
     best_batch = [b for b in run_model.ever_storage.data.batches if b.is_improvement][
         -1
     ]

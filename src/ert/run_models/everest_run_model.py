@@ -215,7 +215,6 @@ class EverestRunModel(BaseRunModel):
     def create(
         cls,
         everest_config: EverestConfig,
-        simulation_callback: SimulationCallback | None = None,
         optimization_callback: OptimizerCallback | None = None,
         status_queue: queue.SimpleQueue[StatusEvents] | None = None,
     ) -> EverestRunModel:
