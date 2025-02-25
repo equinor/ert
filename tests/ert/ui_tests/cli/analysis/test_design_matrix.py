@@ -5,8 +5,9 @@ from pathlib import Path
 from textwrap import dedent
 
 import numpy as np
-import pandas as pd
+import polars as pl
 import pytest
+from xlsxwriter import Workbook
 
 from ert.cli.main import ErtCliError
 from ert.config import ErtConfig
@@ -16,11 +17,11 @@ from tests.ert.ui_tests.cli.run_cli import run_cli
 
 
 def _create_design_matrix(filename, design_sheet_df, default_sheet_df=None):
-    with pd.ExcelWriter(filename) as xl_write:
-        design_sheet_df.to_excel(xl_write, index=False, sheet_name="DesignSheet01")
+    with Workbook(filename) as wb:
+        design_sheet_df.write_excel(wb, worksheet="DesignSheet01")
         if default_sheet_df is not None:
-            default_sheet_df.to_excel(
-                xl_write, index=False, sheet_name="DefaultSheet", header=False
+            default_sheet_df.write_excel(
+                wb, worksheet="DefaultSheet", include_header=False
             )
 
 
@@ -30,14 +31,14 @@ def test_run_poly_example_with_design_matrix():
     a_values = list(range(num_realizations))
     _create_design_matrix(
         "poly_design.xlsx",
-        pd.DataFrame(
+        pl.DataFrame(
             {
                 "REAL": list(range(num_realizations)),
                 "a": a_values,
                 "category": 5 * ["cat1"] + 5 * ["cat2"],
             }
         ),
-        pd.DataFrame([["b", 1], ["c", 2]]),
+        pl.DataFrame([["b", 1], ["c", 2]], orient="row"),
     )
 
     with open("poly.ert", "w", encoding="utf-8") as fout:
@@ -132,13 +133,13 @@ def test_run_poly_example_with_design_matrix_and_genkw_merge(default_values, err
     a_values = list(range(num_realizations))
     _create_design_matrix(
         "poly_design.xlsx",
-        pd.DataFrame(
+        pl.DataFrame(
             {
                 "REAL": list(range(num_realizations)),
                 "a": a_values,
             }
         ),
-        pd.DataFrame(default_values),
+        pl.DataFrame(default_values, orient="row"),
     )
 
     with open("poly.ert", "w", encoding="utf-8") as fout:
@@ -219,23 +220,23 @@ def test_run_poly_example_with_multiple_design_matrix_instances():
     a_values = list(range(num_realizations))
     _create_design_matrix(
         "poly_design_1.xlsx",
-        pd.DataFrame(
+        pl.DataFrame(
             {
                 "REAL": list(range(num_realizations)),
                 "a": a_values,
             }
         ),
-        pd.DataFrame([["b", 1], ["c", 2]]),
+        pl.DataFrame([["b", 1], ["c", 2]], orient="row"),
     )
     _create_design_matrix(
         "poly_design_2.xlsx",
-        pd.DataFrame(
+        pl.DataFrame(
             {
                 "REAL": list(range(num_realizations)),
                 "d": num_realizations * [3],
             }
         ),
-        pd.DataFrame([["g", 4]]),
+        pl.DataFrame([["g", 4]], orient="row"),
     )
 
     with open("poly.ert", "w", encoding="utf-8") as fout:
