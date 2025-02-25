@@ -1,4 +1,3 @@
-#!/usr/bin/env python
 import os
 import shutil
 import sys
@@ -29,7 +28,7 @@ def copy_file(src: str, target: str | None = None) -> None:
         raise OSError(f"Input argument:'{src}' does not correspond to an existing file")
 
 
-if __name__ == "__main__":
+def cli() -> None:
     src = sys.argv[1]
     try:
         if len(sys.argv) > 2:

@@ -1,4 +1,3 @@
-#!/usr/bin/env python
 import os
 import sys
 
@@ -32,7 +31,7 @@ def symlink(target: str, link_name: str) -> None:
     print(f"Linking '{link_name}' -> '{target}' [ cwd:{os.getcwd()} ]")
 
 
-if __name__ == "__main__":
+def cli() -> None:
     target = sys.argv[1]
     link_name = sys.argv[2]
     try:

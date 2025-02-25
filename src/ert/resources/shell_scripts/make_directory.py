@@ -1,4 +1,3 @@
-#!/usr/bin/env python
 import os
 import sys
 
@@ -18,7 +17,7 @@ def mkdir(path: str) -> None:
                 raise OSError(msg) from error
 
 
-if __name__ == "__main__":
+def cli() -> None:
     path = sys.argv[1]
     try:
         mkdir(path)

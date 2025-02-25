@@ -1,4 +1,3 @@
-#!/usr/bin/env python
 import os
 import shutil
 import sys
@@ -38,7 +37,7 @@ def copy_directory(src_path: str, target_path: str) -> None:
         )
 
 
-if __name__ == "__main__":
+def cli() -> None:
     src_path = sys.argv[1]
     target_path = sys.argv[2]
     try:

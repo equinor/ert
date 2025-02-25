@@ -18,12 +18,7 @@ class CarefulCopyFile(ForwardModelStepPlugin):
         super().__init__(
             name="CAREFUL_COPY_FILE",
             command=[
-                str(
-                    (
-                        Path(__file__)
-                        / "../../../resources/shell_scripts/careful_copy_file.py"
-                    ).resolve()
-                ),
+                "ert_careful_copy_file",
                 "<FROM>",
                 "<TO>",
             ],
@@ -56,12 +51,7 @@ class CopyDirectory(ForwardModelStepPlugin):
         super().__init__(
             name="COPY_DIRECTORY",
             command=[
-                str(
-                    (
-                        Path(__file__)
-                        / "../../../resources/shell_scripts/copy_directory.py"
-                    ).resolve()
-                ),
+                "ert_copy_dir",
                 "<FROM>",
                 "<TO>",
             ],
@@ -91,11 +81,7 @@ class CopyFile(ForwardModelStepPlugin):
         super().__init__(
             name="COPY_FILE",
             command=[
-                str(
-                    (
-                        Path(__file__) / "../../../resources/shell_scripts/copy_file.py"
-                    ).resolve()
-                ),
+                "ert_copy_file",
                 "<FROM>",
                 "<TO>",
             ],
@@ -124,12 +110,7 @@ class DeleteDirectory(ForwardModelStepPlugin):
         super().__init__(
             name="DELETE_DIRECTORY",
             command=[
-                str(
-                    (
-                        Path(__file__)
-                        / "../../../resources/shell_scripts/delete_directory.py"
-                    ).resolve()
-                ),
+                "ert_del_dir",
                 "<DIRECTORY>",
             ],
         )
@@ -166,12 +147,7 @@ class DeleteFile(ForwardModelStepPlugin):
         super().__init__(
             name="DELETE_FILE",
             command=[
-                str(
-                    (
-                        Path(__file__)
-                        / "../../../resources/shell_scripts/delete_file.py"
-                    ).resolve()
-                ),
+                "ert_del_file",
                 "<FILES>",
             ],
         )
@@ -371,12 +347,7 @@ class MakeDirectory(ForwardModelStepPlugin):
         super().__init__(
             name="MAKE_DIRECTORY",
             command=[
-                str(
-                    (
-                        Path(__file__)
-                        / "../../../resources/shell_scripts/make_directory.py"
-                    ).resolve()
-                ),
+                "ert_mkdir",
                 "<DIRECTORY>",
             ],
         )
@@ -402,11 +373,7 @@ class MakeSymlink(ForwardModelStepPlugin):
         super().__init__(
             name="MAKE_SYMLINK",
             command=[
-                str(
-                    (
-                        Path(__file__) / "../../../resources/shell_scripts/symlink.py"
-                    ).resolve()
-                ),
+                "ert_symlink",
                 "<TARGET>",
                 "<LINKNAME>",
             ],
@@ -433,11 +400,7 @@ class MoveFile(ForwardModelStepPlugin):
         super().__init__(
             name="MOVE_FILE",
             command=[
-                str(
-                    (
-                        Path(__file__) / "../../../resources/shell_scripts/move_file.py"
-                    ).resolve()
-                ),
+                "ert_mv_file",
                 "<FROM>",
                 "<TO>",
             ],
@@ -465,12 +428,7 @@ class MoveDirectory(ForwardModelStepPlugin):
         super().__init__(
             name="MOVE_DIRECTORY",
             command=[
-                str(
-                    (
-                        Path(__file__)
-                        / "../../../resources/shell_scripts/move_directory.py"
-                    ).resolve()
-                ),
+                "ert_mv_dir",
                 "<FROM>",
                 "<TO>",
             ],
@@ -497,11 +455,7 @@ class Symlink(ForwardModelStepPlugin):
         super().__init__(
             name="SYMLINK",
             command=[
-                str(
-                    (
-                        Path(__file__) / "../../../resources/shell_scripts/symlink.py"
-                    ).resolve()
-                ),
+                "ert_symlink",
                 "<TARGET>",
                 "<LINKNAME>",
             ],

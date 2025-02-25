@@ -1,4 +1,3 @@
-#!/usr/bin/env python
 import os
 import sys
 
@@ -59,7 +58,7 @@ def delete_directory(path: str) -> None:
         sys.stderr.write(f"Directory:'{path}' does not exist - delete ignored\n")
 
 
-if __name__ == "__main__":
+def cli() -> None:
     try:
         for d in sys.argv[1:]:
             delete_directory(d)

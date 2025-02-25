@@ -1,4 +1,3 @@
-#!/usr/bin/env python
 import os
 import sys
 
@@ -23,7 +22,7 @@ def delete_file(filename: str) -> None:
         sys.stderr.write(f"File: '{filename}' does not exist - delete ignored\n")
 
 
-if __name__ == "__main__":
+def cli() -> None:
     try:
         for file in sys.argv[1:]:
             delete_file(file)

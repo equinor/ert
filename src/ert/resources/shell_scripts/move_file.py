@@ -1,4 +1,3 @@
-#!/usr/bin/env python
 import os
 import shutil
 import sys
@@ -18,7 +17,7 @@ def move_file(src_file: str, target: str) -> None:
         raise OSError(f"Input argument {src_file} is not an existing file")
 
 
-if __name__ == "__main__":
+def cli() -> None:
     src = sys.argv[1]
     target = sys.argv[2]
     try:
