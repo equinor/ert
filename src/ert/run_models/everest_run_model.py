@@ -276,7 +276,8 @@ class EverestRunModel(BaseRunModel):
     ) -> None:
         self.log_at_startup()
         self._eval_server_cfg = evaluator_server_config
-        self._experiment = self._storage.create_experiment(
+
+        self._experiment = self._experiment or self._storage.create_experiment(
             name=f"EnOpt@{datetime.datetime.now().strftime('%Y-%m-%d@%H:%M:%S')}",
             parameters=self._parameter_configuration,
             responses=self._response_configuration,
