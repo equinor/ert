@@ -16,9 +16,7 @@ from hypothesis import strategies as st
 from pydantic import RootModel, TypeAdapter
 
 from ert.config import ConfigValidationError, ErtConfig, HookRuntime
-from ert.config.ert_config import (
-    create_forward_model_json,
-)
+from ert.config.ert_config import _split_string_into_sections, create_forward_model_json
 from ert.config.parsing import ConfigKeys, ConfigWarning
 from ert.config.parsing.context_values import (
     ContextBool,
@@ -1851,3 +1849,14 @@ def test_warning_is_emitted_when_malformatted_runpath():
         ("RUNPATH keyword contains no value placeholders" in str(w.message))
         for w in all_warnings
     )
+
+
+@given(input=st.text(), section_length=st.integers())
+def test_split_string_into_sections(input, section_length):
+    split_string = _split_string_into_sections(input, section_length)
+    assert "".join(split_string) == input
+    if section_length > 0:
+        for section in split_string:
+            assert len(section) <= section_length
+    else:
+        split_string = [input]
