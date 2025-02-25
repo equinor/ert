@@ -289,7 +289,7 @@ class EverestStorage:
     def _enforce_dtypes(df: pl.DataFrame) -> pl.DataFrame:
         dtypes = {
             "batch_id": pl.UInt32,
-            "perturbation": pl.UInt32,
+            "perturbation": pl.Int32,
             "realization": pl.UInt32,
             # -1 is used as a value in simulator cache.
             # thus we need signed, otherwise we could do unsigned
