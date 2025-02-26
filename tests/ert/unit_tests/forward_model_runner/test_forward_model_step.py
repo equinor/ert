@@ -43,6 +43,7 @@ def test_run_with_process_failing(mock_process, mock_popen, mock_check_executabl
 @pytest.mark.flaky(reruns=10)
 @pytest.mark.integration_test
 @pytest.mark.usefixtures("use_tmpdir")
+@pytest.mark.skip_mac_ci  # extremely unreliable on macOS
 def test_cpu_seconds_can_detect_multiprocess():
     """Run a fm step that sets of two simultaneous processes that
     each run for 2 and 3 seconds respectively. We should be able to detect
