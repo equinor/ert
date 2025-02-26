@@ -128,14 +128,14 @@ class EverestConfig(BaseModel):
         description="List of objective function specifications", min_length=1
     )
     optimization: OptimizationConfig | None = Field(
-        default=OptimizationConfig(),
+        default_factory=OptimizationConfig,
         description="Optimizer options",
     )
     model: ModelConfig = Field(
         description="Configuration of the Everest model",
     )
     environment: EnvironmentConfig | None = Field(
-        default=EnvironmentConfig(),
+        default_factory=EnvironmentConfig,
         description="The environment of Everest, specifies which folders are used "
         "for simulation and output, as well as the level of detail in Everest-logs",
     )
