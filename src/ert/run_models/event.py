@@ -43,7 +43,6 @@ class EverestStatusEvent(BaseModel):
         "START_EVALUATOR_STEP",
         "FINISHED_EVALUATOR_STEP",
     ]
-    exit_code: str | None = None
 
 
 class EverestBatchResultEvent(BaseModel):
@@ -51,7 +50,6 @@ class EverestBatchResultEvent(BaseModel):
     event_type: Literal["EverestBatchResultEvent"] = "EverestBatchResultEvent"
     everest_event: Literal["FINISHED_EVALUATION", "FINISHED_SAMPLING_EVALUATION"]
     result_type: Literal["FunctionResult", "GradientResult"]
-    exit_code: str | None = None
 
 
 class RunModelTimeEvent(RunModelEvent):

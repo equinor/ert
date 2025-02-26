@@ -348,7 +348,6 @@ class EverestRunModel(BaseRunModel):
                 EverestStatusEvent(
                     batch=None,  # Always 0, but omitting it for consistency
                     everest_event="START_SAMPLING_EVALUATION",
-                    exit_code=None,
                 )
             )
 
@@ -363,7 +362,6 @@ class EverestRunModel(BaseRunModel):
                     batch=self._batch_id,
                     everest_event="FINISHED_SAMPLING_EVALUATION",
                     result_type="FunctionResult",
-                    exit_code=None,
                 )
             )
 
@@ -407,10 +405,6 @@ class EverestRunModel(BaseRunModel):
             # The batch these results pertain to
             # If the event has results, they usually pertain to the
             # batch before self._batch_id, i.e., self._batch_id - 1
-            exit_code = everest_event.data.get("exit_code")
-            exit_code_name = (
-                None if exit_code is None else OptimizerExitCode(exit_code).name
-            )
 
             if has_results:
                 # A ROPT event may contain multiple results, here we send one
@@ -428,7 +422,6 @@ class EverestRunModel(BaseRunModel):
                                 if isinstance(r, FunctionResults)
                                 else "GradientResult"
                             ),
-                            exit_code=exit_code_name,
                         )
                     )
             else:
@@ -439,7 +432,6 @@ class EverestRunModel(BaseRunModel):
                     EverestStatusEvent(
                         batch=None,
                         everest_event=everest_event.event_type.name,
-                        exit_code=exit_code_name,
                     )
                 )
 

@@ -3,60 +3,51 @@
     {
       "batch": null,
       "event_type": "EverestStatusEvent",
-      "everest_event": "START_OPTIMIZER_STEP",
-      "exit_code": null
+      "everest_event": "START_OPTIMIZER_STEP"
     },
     {
       "batch": null,
       "event_type": "EverestStatusEvent",
-      "everest_event": "START_EVALUATION",
-      "exit_code": null
+      "everest_event": "START_EVALUATION"
     },
     {
       "batch": 0,
       "event_type": "EverestBatchResultEvent",
       "everest_event": "FINISHED_EVALUATION",
-      "exit_code": null,
       "result_type": "FunctionResult"
     },
     {
       "batch": 0,
       "event_type": "EverestBatchResultEvent",
       "everest_event": "FINISHED_EVALUATION",
-      "exit_code": null,
       "result_type": "GradientResult"
     },
     {
       "batch": null,
       "event_type": "EverestStatusEvent",
-      "everest_event": "START_EVALUATION",
-      "exit_code": null
+      "everest_event": "START_EVALUATION"
     },
     {
       "batch": 1,
       "event_type": "EverestBatchResultEvent",
       "everest_event": "FINISHED_EVALUATION",
-      "exit_code": null,
       "result_type": "FunctionResult"
     },
     {
       "batch": null,
       "event_type": "EverestStatusEvent",
-      "everest_event": "START_EVALUATION",
-      "exit_code": null
+      "everest_event": "START_EVALUATION"
     },
     {
       "batch": 2,
       "event_type": "EverestBatchResultEvent",
       "everest_event": "FINISHED_EVALUATION",
-      "exit_code": null,
       "result_type": "FunctionResult"
     },
     {
       "batch": null,
       "event_type": "EverestStatusEvent",
-      "everest_event": "FINISHED_OPTIMIZER_STEP",
-      "exit_code": "USER_ABORT"
+      "everest_event": "FINISHED_OPTIMIZER_STEP"
     }
   ],
   "num_full_snapshots": 3
