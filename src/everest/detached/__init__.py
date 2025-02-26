@@ -161,13 +161,15 @@ def get_opt_status(output_folder: str) -> dict[str, Any]:
     objective_names = storage.data.objective_functions["objective_name"].to_list()
     control_names = storage.data.controls["control_name"].to_list()
 
-    expected_objectives = pl.concat(
-        [
-            b.batch_objectives.select(objective_names)
-            for b in storage.data.batches
-            if b.batch_objectives is not None
-        ]
-    ).to_dict(as_series=False)
+    objectives = [
+        b.batch_objectives.select(objective_names)
+        for b in storage.data.batches
+        if b.batch_objectives is not None
+    ]
+
+    expected_objectives = (
+        {} if not objectives else pl.concat(objectives).to_dict(as_series=False)
+    )
 
     expected_total_objective = [
         b.batch_objectives["total_objective_value"].item()
@@ -191,16 +193,18 @@ def get_opt_status(output_folder: str) -> dict[str, Any]:
         "objective_value": expected_total_objective,
         "expected_objectives": expected_objectives,
     }
+    controls = [
+        b.realization_controls.select(control_names)
+        for b in storage.data.batches
+        if b.realization_controls is not None
+    ]
+    control_history = (
+        {} if not controls else pl.concat(controls).to_dict(as_series=False)
+    )
 
     return {
         "objective_history": expected_total_objective,
-        "control_history": pl.concat(
-            [
-                b.realization_controls.select(control_names)
-                for b in storage.data.batches
-                if b.realization_controls is not None
-            ]
-        ).to_dict(as_series=False),
+        "control_history": control_history,
         "objectives_history": expected_objectives,
         "accepted_control_indices": improvement_batches,
         "cli_monitor_data": cli_monitor_data,
