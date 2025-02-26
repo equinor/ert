@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import asyncio
+import concurrent.futures
 import copy
 import dataclasses
 import functools
@@ -86,6 +87,11 @@ class OutOfOrderSnapshotUpdateException(ValueError):
 
 class ErtRunError(Exception):
     pass
+
+
+def delete_runpath(run_path: str) -> None:
+    if os.path.exists(run_path):
+        shutil.rmtree(run_path)
 
 
 class _LogAggregration(logging.Handler):
@@ -696,9 +702,8 @@ class BaseRunModel(ABC):
 
     @log_duration(logger, logging.INFO)
     def rm_run_path(self) -> None:
-        for run_path in self.paths:
-            if Path(run_path).exists():
-                shutil.rmtree(run_path)
+        with concurrent.futures.ThreadPoolExecutor() as executor:
+            executor.map(delete_runpath, self.paths)
 
     def validate_successful_realizations_count(self) -> None:
         successful_realizations_count = self.get_number_of_successful_realizations()
