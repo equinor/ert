@@ -209,6 +209,7 @@ class OpenPBSDriver(Driver):
             ),
         ]
         logger.debug(f"Submitting to PBS with command {shlex.join(qsub_with_args)}")
+        logger.debug(f"Submit script passed on stdin: {script}")
 
         process_success, process_message = await self._execute_with_retry(
             qsub_with_args,
