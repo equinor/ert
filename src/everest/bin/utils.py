@@ -1,11 +1,13 @@
+import argparse
 import logging
 import os
 import sys
 import traceback
 from collections import defaultdict
+from collections.abc import Sequence
 from dataclasses import dataclass, field
 from itertools import groupby
-from typing import ClassVar
+from typing import Any, ClassVar
 
 import colorama
 from colorama import Fore
@@ -26,7 +28,7 @@ from everest.simulator import JOB_FAILURE, JOB_RUNNING, JOB_SUCCESS
 from everest.strings import EVEREST, OPT_PROGRESS_ID, SIM_PROGRESS_ID
 
 
-def handle_keyboard_interrupt(signal, frame, options):
+def handle_keyboard_interrupt(signal: int, _: Any, options: argparse.Namespace) -> None:
     print("\n" + "=" * 80)
     print(f"KeyboardInterrupt (ID: {signal}) has been caught. Program will exit...")
     config_file = options.config.config_file
@@ -44,11 +46,11 @@ def handle_keyboard_interrupt(signal, frame, options):
     sys.exit()
 
 
-def _get_max_width(sequence):
+def _get_max_width(sequence: list[Any]) -> int:
     return max(len(item) for item in sequence)
 
 
-def _format_list(values):
+def _format_list(values: Sequence[int]) -> str:
     """Formats a sequence of integers into a comma separated string of ranges.
 
     For instance: {1, 3, 4, 5, 7, 8, 10} -> "1, 3-5, 7-8, 10"
@@ -77,7 +79,9 @@ class JobProgress:
             JOB_FAILURE: [],  # contains failed simulation numbers i.e [5,6]
         }
     )
-    errors: defaultdict[list] = field(default_factory=lambda: defaultdict(list))
+    errors: defaultdict[str, list[int]] = field(
+        default_factory=lambda: defaultdict(list)
+    )
     STATUS_COLOR: ClassVar = {
         JOB_RUNNING: Fore.BLUE,
         JOB_SUCCESS: Fore.GREEN,
@@ -110,15 +114,15 @@ class _DetachedMonitor:
     INDENT = 2
     FLOAT_FMT = ".5g"
 
-    def __init__(self, show_all_jobs):
+    def __init__(self, show_all_jobs: bool) -> None:
         self._show_all_jobs: bool = show_all_jobs
-        self._clear_lines = 0
-        self._batches_done = set()
-        self._last_reported_batch = -1
+        self._clear_lines: int = 0
+        self._batches_done = set[int]()
+        self._last_reported_batch: int = -1
         colorama.init(autoreset=True)
         self._snapshots: dict[int, EnsembleSnapshot] = {}
 
-    def update(self, status):
+    def update(self, status: dict[str, Any]) -> None:
         try:
             if OPT_PROGRESS_ID in status:
                 opt_status = status[OPT_PROGRESS_ID]
@@ -166,7 +170,7 @@ class _DetachedMonitor:
         except:
             logging.getLogger(EVEREST).debug(traceback.format_exc())
 
-    def get_opt_progress(self, context_status):
+    def get_opt_progress(self, context_status: dict[str, Any]) -> tuple[str, int]:
         cli_monitor_data = context_status["cli_monitor_data"]
         messages = []
         first_batch = -1
@@ -179,18 +183,24 @@ class _DetachedMonitor:
                 messages.append(msg)
         return self._join_two_newlines(messages), first_batch
 
-    def _get_opt_progress_batch(self, cli_monitor_data, batch, idx):
+    def _get_opt_progress_batch(
+        self, cli_monitor_data: dict[str, Any], batch: int, idx: int
+    ) -> str:
         header = self._make_header(f"Optimization progress (Batch #{batch})")
         width = _get_max_width(cli_monitor_data["controls"][idx].keys())
         controls = self._join_one_newline_indent(
-            f"{name:>{width}}: {value:{self.FLOAT_FMT}}"
-            for name, value in cli_monitor_data["controls"][idx].items()
+            [
+                f"{name:>{width}}: {value:{self.FLOAT_FMT}}"
+                for name, value in cli_monitor_data["controls"][idx].items()
+            ]
         )
         expected_objectives = cli_monitor_data["expected_objectives"]
         width = _get_max_width(expected_objectives.keys())
         objectives = self._join_one_newline_indent(
-            f"{name:>{width}}: {value[idx]:{self.FLOAT_FMT}}"
-            for name, value in expected_objectives.items()
+            [
+                f"{name:>{width}}: {value[idx]:{self.FLOAT_FMT}}"
+                for name, value in expected_objectives.items()
+            ]
         )
         objective_value = cli_monitor_data["objective_value"][idx]
         total_objective = (
@@ -201,7 +211,7 @@ class _DetachedMonitor:
         )
 
     @staticmethod
-    def _get_progress_summary(status):
+    def _get_progress_summary(status: dict[str, int]) -> str:
         colors = [
             Fore.BLACK,
             Fore.BLACK,
@@ -217,7 +227,7 @@ class _DetachedMonitor:
         )
 
     @classmethod
-    def _get_job_states(cls, snapshot: EnsembleSnapshot, show_all_jobs: bool):
+    def _get_job_states(cls, snapshot: EnsembleSnapshot, show_all_jobs: bool) -> str:
         print_lines = []
         jobs_status = cls._get_jobs_status(snapshot)
         if not show_all_jobs:
@@ -225,7 +235,7 @@ class _DetachedMonitor:
         if jobs_status:
             max_widths = {
                 state: _get_max_width(
-                    str(len(item.status[state])) for item in jobs_status
+                    [str(len(item.status[state])) for item in jobs_status]
                 )
                 for state in [JOB_RUNNING, JOB_SUCCESS, JOB_FAILURE]
             }
@@ -247,8 +257,11 @@ class _DetachedMonitor:
     def _get_jobs_status(snapshot: EnsembleSnapshot) -> list[JobProgress]:
         job_progress = {}
         for (realization, job_idx), job in snapshot.get_all_fm_steps().items():
+            assert "name" in job and job["name"] is not None, "job name is missing"
+            name = job["name"]
             if job_idx not in job_progress:
-                job_progress[job_idx] = JobProgress(name=job["name"])
+                job_progress[job_idx] = JobProgress(name=name)
+            assert "status" in job
             status = job["status"]
             if status in {JOB_RUNNING, JOB_SUCCESS, JOB_FAILURE}:
                 job_progress[job_idx].status[status].append(int(realization))
@@ -257,27 +270,27 @@ class _DetachedMonitor:
         return list(job_progress.values())
 
     @staticmethod
-    def _filter_jobs(jobs: list[JobProgress]):
+    def _filter_jobs(jobs: list[JobProgress]) -> list[JobProgress]:
         return [job for job in jobs if job.name not in all_shell_script_fm_steps]
 
     @classmethod
-    def _join_one_newline_indent(cls, sequence):
+    def _join_one_newline_indent(cls, sequence: Sequence[str]) -> str:
         return ("\n" + " " * cls.INDENT).join(sequence)
 
     @classmethod
-    def _join_two_newlines_indent(cls, sequence):
+    def _join_two_newlines_indent(cls, sequence: Sequence[str]) -> str:
         return ("\n\n" + " " * cls.INDENT).join(sequence)
 
     @classmethod
-    def _join_two_newlines(cls, sequence):
+    def _join_two_newlines(cls, sequence: Sequence[str]) -> str:
         return "\n\n".join(sequence)
 
     @classmethod
-    def _make_header(cls, msg, color=Fore.BLACK):
+    def _make_header(cls, msg: str, color: str = Fore.BLACK) -> str:
         header = msg.center(len(msg) + 2).center(cls.WIDTH, "=")
         return f"{color}{header}{Fore.RESET}"
 
-    def _clear(self):
+    def _clear(self) -> None:
         for _ in range(self._clear_lines):
             print(colorama.Cursor.UP(), end=colorama.ansi.clear_line())
 
@@ -286,7 +299,7 @@ def run_detached_monitor(
     server_context: tuple[str, str, tuple[str, str]],
     optimization_output_dir: str,
     show_all_jobs: bool = False,
-):
+) -> None:
     monitor = _DetachedMonitor(show_all_jobs)
     start_monitor(server_context, callback=monitor.update)
     opt_status = get_opt_status(optimization_output_dir)
@@ -300,7 +313,7 @@ def report_on_previous_run(
     config_file: str,
     everserver_status_path: str,
     optimization_output_dir: str,
-):
+) -> None:
     server_state = everserver_status(everserver_status_path)
     if server_state["status"] == ServerStatus.failed:
         error_msg = server_state["message"]

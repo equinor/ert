@@ -9,13 +9,14 @@ import sys
 import threading
 import traceback
 from functools import partial
+from typing import Any
 
 from everest.config import EverestConfig, ServerConfig
 from everest.detached import server_is_running, stop_server, wait_for_server_to_stop
 from everest.util import version_info
 
 
-def kill_entry(args=None):
+def kill_entry(args: list[str] | None = None) -> None:
     """Entry point for running an optimization."""
     parser = _build_args_parser()
     options = parser.parse_args(args)
@@ -34,7 +35,7 @@ def kill_entry(args=None):
     kill_everest(options)
 
 
-def _build_args_parser():
+def _build_args_parser() -> argparse.ArgumentParser:
     """Build arg parser"""
 
     arg_parser = argparse.ArgumentParser(
@@ -53,7 +54,7 @@ def _build_args_parser():
     return arg_parser
 
 
-def _handle_keyboard_interrupt(signal, frame, after=False):
+def _handle_keyboard_interrupt(signal: int, _: Any, after: bool = False) -> None:
     if after:
         print(
             f"KeyboardInterrupt (ID: {signal}) has been caught, "
@@ -69,7 +70,7 @@ def _handle_keyboard_interrupt(signal, frame, after=False):
     sys.exit()
 
 
-def kill_everest(options):
+def kill_everest(options: argparse.Namespace) -> None:
     server_context = ServerConfig.get_server_context(options.config.output_dir)
     if not server_is_running(*server_context):
         print("Server is not running.")

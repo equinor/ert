@@ -18,38 +18,7 @@ from everest.bin.visualization_script import visualization_entry
 from everest.plugins.everest_plugin_manager import EverestPluginManager
 
 
-def _create_dump_action(dumps, extended=False):
-    # Action for aiding user, --help stype
-    class _DumpAction(argparse.Action):
-        def __init__(
-            self,
-            option_strings,
-            dest=argparse.SUPPRESS,
-            default=argparse.SUPPRESS,
-            help=None,
-        ):
-            super().__init__(
-                option_strings=option_strings,
-                dest=dest,
-                default=default,
-                nargs=0,
-                help=help,
-            )
-
-        def __call__(
-            self,
-            parser,
-            namespace,
-            values,
-            option_string=None,
-        ):
-            print(dumps(extended=extended))
-            parser.exit()
-
-    return _DumpAction
-
-
-def _build_args_parser():
+def _build_args_parser() -> argparse.ArgumentParser:
     """Build arg parser"""
     arg_parser = argparse.ArgumentParser(
         description="Tool for performing reservoir management optimization",
@@ -70,7 +39,7 @@ def _build_args_parser():
 
 
 class EverestMain:
-    def __init__(self, args):
+    def __init__(self, args: list[str]) -> None:
         parser = _build_args_parser()
         # Parse_args defaults to [1:] for args, but you need to
         # exclude the rest of the args too, or validation will fail
@@ -86,7 +55,7 @@ class EverestMain:
         getattr(self, parsed_args.command)(args[2:])
 
     @classmethod
-    def methods_help(cls):
+    def methods_help(cls) -> str:
         """Return documentation of the public methods in this class"""
         pubmets = [m for m in dir(cls) if not m.startswith("_")]
         pubmets.remove("methods_help")  # Current method should not show up in desc
@@ -97,44 +66,44 @@ class EverestMain:
         ]
         return "\n".join(doclist)
 
-    def run(self, args):
+    def run(self, args: list[str]) -> None:
         """Start an optimization case base on given config file"""
         everest_entry(args)
 
-    def monitor(self, args):
+    def monitor(self, args: list[str]) -> None:
         """Monitor a running optimization case base on given config file"""
         monitor_entry(args)
 
-    def kill(self, args):
+    def kill(self, args: list[str]) -> None:
         """Kill a running optimization case base on given config file"""
         kill_entry(args)
 
-    def gui(self, args):
+    def gui(self, _: list[str]) -> None:
         """Start the graphical user interface (Removed)"""
         print("The gui command has been removed. Please use the run command instead.")
 
-    def export(self, args):
+    def export(self, args: list[str]) -> None:
         """Export data from a completed optimization case"""
         everexport_entry(args)
 
-    def lint(self, args):
+    def lint(self, args: list[str]) -> None:
         """Validate a config file"""
         lint_entry(args)
 
-    def render(self, args):
+    def render(self, args: list[str]) -> None:
         """Display the configuration data loaded from a config file"""
         config_dump_entry(args)
 
-    def branch(self, args):
+    def branch(self, args: list[str]) -> None:
         """Construct possible restart config file"""
         config_branch_entry(args)
 
-    def results(self, args):
+    def results(self, args: list[str]) -> None:
         """Start everest visualization plugin"""
         visualization_entry(args)
 
 
-def start_everest(args=None):
+def start_everest(args: list[str] | None = None) -> None:
     """Main entry point for the everest application"""
     args = args or sys.argv
     EverestMain(args)

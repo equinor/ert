@@ -17,7 +17,7 @@ from .utils import (
 )
 
 
-def monitor_entry(args=None):
+def monitor_entry(args: list[str] | None = None) -> None:
     """Entry point for monitoring an optimization."""
     parser = _build_args_parser()
     options = parser.parse_args(args)
@@ -38,7 +38,7 @@ def monitor_entry(args=None):
     monitor_everest(options)
 
 
-def _build_args_parser():
+def _build_args_parser() -> argparse.ArgumentParser:
     """Build arg parser"""
 
     arg_parser = argparse.ArgumentParser(
@@ -62,7 +62,7 @@ def _build_args_parser():
     return arg_parser
 
 
-def monitor_everest(options):
+def monitor_everest(options: argparse.Namespace) -> None:
     config: EverestConfig = options.config
     status_path = ServerConfig.get_everserver_status_path(config.output_dir)
     server_state = everserver_status(status_path)

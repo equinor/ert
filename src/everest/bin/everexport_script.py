@@ -8,7 +8,7 @@ from everest.config import EverestConfig
 from everest.strings import EVEREST
 
 
-def everexport_entry(args=None):
+def everexport_entry(args: list[str] | None = None) -> None:
     parser = _build_args_parser()
     options = parser.parse_args(args)
     logger = logging.getLogger(EVEREST)
@@ -25,7 +25,7 @@ def everexport_entry(args=None):
     )
 
 
-def _build_args_parser():
+def _build_args_parser() -> argparse.ArgumentParser:
     """Build arg parser"""
     arg_parser = argparse.ArgumentParser(
         description="Export data from a completed optimization case",
