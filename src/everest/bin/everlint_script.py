@@ -8,7 +8,7 @@ from ert.config.parsing.config_errors import ConfigWarning
 from everest.config import EverestConfig
 
 
-def _build_args_parser():
+def _build_args_parser() -> argparse.ArgumentParser:
     """Build arg parser"""
     arg_parser = argparse.ArgumentParser(
         description="Check if a config file is valid",
@@ -28,13 +28,10 @@ def _build_args_parser():
     return arg_parser
 
 
-def lint_entry(args=None):
-    match any("-v" in arg or "--verbose" in arg for arg in args):
-        case False:
-            warnings.filterwarnings("ignore")
-            warnings.filterwarnings("default", category=ConfigWarning)
-        case True:
-            pass
+def lint_entry(args: list[str]) -> None:
+    if not any("-v" in arg or "--verbose" in arg for arg in args):
+        warnings.filterwarnings("ignore")
+        warnings.filterwarnings("default", category=ConfigWarning)
     parser = _build_args_parser()
     options = parser.parse_args(args)
     parsed_config = options.config_file
@@ -44,4 +41,4 @@ def lint_entry(args=None):
 
 
 if __name__ == "__main__":
-    lint_entry()
+    lint_entry([])

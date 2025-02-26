@@ -37,7 +37,7 @@ from .utils import (
 )
 
 
-def everest_entry(args=None):
+def everest_entry(args: list[str] | None = None) -> None:
     """Entry point for running an optimization."""
     parser = _build_args_parser()
     options = parser.parse_args(args)
@@ -59,7 +59,7 @@ def everest_entry(args=None):
     asyncio.run(run_everest(options))
 
 
-def _build_args_parser():
+def _build_args_parser() -> argparse.ArgumentParser:
     """Build arg parser"""
 
     arg_parser = argparse.ArgumentParser(
@@ -88,7 +88,7 @@ def _build_args_parser():
     return arg_parser
 
 
-async def run_everest(options):
+async def run_everest(options: argparse.Namespace) -> None:
     logger = logging.getLogger("everest_main")
     everserver_status_path = ServerConfig.get_everserver_status_path(
         options.config.output_dir
