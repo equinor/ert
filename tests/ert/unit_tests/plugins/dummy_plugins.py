@@ -3,7 +3,7 @@ from io import StringIO
 
 from opentelemetry.sdk.trace.export import BatchSpanProcessor, ConsoleSpanExporter
 
-from ert import ForwardModelStepPlugin, plugin
+from ert import ErtScript, ForwardModelStepPlugin, plugin
 
 
 @plugin(name="dummy")
@@ -41,12 +41,14 @@ def installable_workflow_jobs():
     return {"wf_job1": "/dummy/path/wf_job1", "wf_job2": "/dummy/path/wf_job2"}
 
 
-@plugin(name="dummy")
-def legacy_ertscript_workflow(config):
-    def some_func():
+class Test(ErtScript):
+    def run(self):
         pass
 
-    config.add_workflow(some_func)
+
+@plugin(name="dummy")
+def legacy_ertscript_workflow(config):
+    config.add_workflow(Test)
 
 
 @plugin(name="dummy")

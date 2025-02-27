@@ -3,10 +3,11 @@ from __future__ import annotations
 import inspect
 import logging
 import os
-import tempfile
 from argparse import ArgumentParser
 from collections.abc import Callable
-from typing import Any
+
+from ..config.ert_script import ErtScript
+from ..config.workflow_job import WorkflowJob
 
 logger = logging.getLogger(__name__)
 
@@ -17,58 +18,60 @@ class WorkflowConfigs:
     """
 
     def __init__(self) -> None:
-        self._temp_dir = tempfile.mkdtemp()
-        self._workflows: list[WorkflowConfig] = []
+        self._workflows: list[ErtScriptWorkflow] = []
 
     def add_workflow(
-        self, ert_script: type[Any], name: str | None = None
-    ) -> WorkflowConfig:
+        self, ert_script: type[ErtScript], name: str | None = None
+    ) -> ErtScriptWorkflow:
         """
 
         :param ert_script: class which inherits from ErtScript
         :param name: Optional name for workflow (default is name of class)
         :return: Instantiated workflow config.
         """
-        workflow = WorkflowConfig(ert_script, self._temp_dir, name)
+        workflow = ErtScriptWorkflow(ert_script, name)
         self._workflows.append(workflow)
         return workflow
 
-    def get_workflows(self) -> dict[str, str]:
+    def get_workflows(self) -> dict[str, ErtScriptWorkflow]:
         configs = {}
         for workflow in self._workflows:
             if workflow.name in configs:
                 logging.info(
                     f"Duplicate workflow name: {workflow.name}, "
-                    f"skipping {workflow.function_dir}"
+                    f"skipping {workflow.ert_script}"
                 )
             else:
-                configs[workflow.name] = workflow.config_path
+                configs[workflow.name] = workflow
         return configs
 
 
-class WorkflowConfig:
+class ErtScriptWorkflow(WorkflowJob):
     """
     Single workflow configuration object
-
     """
 
     def __init__(
-        self, ertscript_class: type[Any], tmpdir: str, name: str | None = None
+        self, ertscript_class: type[ErtScript], name: str | None = None
     ) -> None:
         """
         :param ertscript_class: Class inheriting from ErtScript
-        :param tmpdir: Where workflow config is generated
         :param name: Optional name for workflow, default is class name
         """
-        self.func = ertscript_class
-        self.name = self._get_func_name(ertscript_class, name)
-        self.function_dir = os.path.abspath(inspect.getfile(ertscript_class))
-        self.source_package = self._get_source_package(self.func)
-        self.config_path = self._write_workflow_config(tmpdir)
+        self.source_package = self._get_source_package(ertscript_class)
         self._description = ertscript_class.__doc__ if ertscript_class.__doc__ else ""
         self._examples: str | None = None
         self._parser: Callable[[], ArgumentParser] | None = None
         self._category = "other"
+        super().__init__(
+            name=self._get_func_name(ertscript_class, name),
+            internal=True,
+            script=os.path.abspath(inspect.getfile(ertscript_class)),
+            min_args=None,
+            max_args=None,
+            arg_types=[],
+            executable=None,
+        )
 
     @property
     def description(self) -> str:
@@ -112,17 +115,10 @@ class WorkflowConfig:
         self._category = category
 
     @staticmethod
-    def _get_func_name(func: type[Any], name: str | None) -> str:
+    def _get_func_name(func: type[ErtScript], name: str | None) -> str:
         return name if name else func.__name__
 
-    def _write_workflow_config(self, output_dir: str) -> str:
-        file_path = os.path.join(output_dir, self.name.upper())
-        with open(file_path, "w", encoding="utf-8") as f_out:
-            f_out.write("INTERNAL      True\n")
-            f_out.write(f"SCRIPT        {self.function_dir}")
-        return file_path
-
     @staticmethod
-    def _get_source_package(module: type[Any]) -> str:
+    def _get_source_package(module: type[ErtScript]) -> str:
         base, _, _ = module.__module__.partition(".")
         return base

@@ -27,6 +27,7 @@ from ert.config.parsing.context_values import ContextBoolEncoder
 from ert.plugins import ErtPluginManager
 from ert.substitutions import Substitutions
 
+from ..plugins.workflow_config import ErtScriptWorkflow
 from .analysis_config import AnalysisConfig
 from .ensemble_config import EnsembleConfig
 from .forward_model_step import (
@@ -276,13 +277,14 @@ def read_templates(config_dict) -> list[tuple[str, str]]:
 def workflows_from_dict(
     content_dict,
     substitutions,
+    installed_workflows: dict[str, ErtScriptWorkflow] | None = None,
 ):
     workflow_job_info = content_dict.get(ConfigKeys.LOAD_WORKFLOW_JOB, [])
     workflow_job_dir_info = content_dict.get(ConfigKeys.WORKFLOW_JOB_DIRECTORY, [])
     hook_workflow_info = content_dict.get(ConfigKeys.HOOK_WORKFLOW, [])
     workflow_info = content_dict.get(ConfigKeys.LOAD_WORKFLOW, [])
 
-    workflow_jobs = {}
+    workflow_jobs = copy.copy(installed_workflows) if installed_workflows else {}
     workflows = {}
     hooked_workflows = defaultdict(list)
 
@@ -532,6 +534,7 @@ class ErtConfig:
     DEFAULT_ENSPATH: ClassVar[str] = "storage"
     DEFAULT_RUNPATH_FILE: ClassVar[str] = ".ert_runpath_list"
     PREINSTALLED_FORWARD_MODEL_STEPS: ClassVar[dict[str, ForwardModelStep]] = {}
+    PREINSTALLED_WORKFLOWS: ClassVar[dict[str, ErtScriptWorkflow]] = {}
     ENV_PR_FM_STEP: ClassVar[dict[str, dict[str, Any]]] = {}
     ACTIVATE_SCRIPT: str | None = None
 
@@ -621,6 +624,7 @@ class ErtConfig:
             PREINSTALLED_FORWARD_MODEL_STEPS: ClassVar[
                 dict[str, ForwardModelStepPlugin]
             ] = preinstalled_fm_steps
+            PREINSTALLED_WORKFLOWS = pm.get_ertscript_workflows().get_workflows()
             ENV_PR_FM_STEP: ClassVar[dict[str, dict[str, Any]]] = env_pr_fm_step
             ACTIVATE_SCRIPT = pm.activate_script()
 
@@ -736,7 +740,7 @@ class ErtConfig:
 
         try:
             workflow_jobs, workflows, hooked_workflows = workflows_from_dict(
-                config_dict, substitutions
+                config_dict, substitutions, cls.PREINSTALLED_WORKFLOWS
             )
         except ConfigValidationError as e:
             errors.append(e)

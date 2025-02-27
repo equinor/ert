@@ -19,4 +19,4 @@ def test_that_we_can_disable_a_parameter():
         pytest.raises(ConfigValidationError, match="use the UPDATE:FALSE option"),
         ErtPluginContext(),
     ):
-        ErtConfig.from_file("poly.ert")
+        ErtConfig.with_plugins().from_file("poly.ert")
