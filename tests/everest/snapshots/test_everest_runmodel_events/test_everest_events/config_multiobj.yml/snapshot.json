@@ -1,53 +1,61 @@
 {
   "everest_events": [
     {
-      "batch": null,
+      "batch": 0,
       "event_type": "EverestStatusEvent",
-      "everest_event": "START_OPTIMIZER_STEP"
-    },
-    {
-      "batch": null,
-      "event_type": "EverestStatusEvent",
-      "everest_event": "START_EVALUATION"
+      "everest_event": "START_OPTIMIZER_EVALUATION"
     },
     {
       "batch": 0,
       "event_type": "EverestBatchResultEvent",
-      "everest_event": "FINISHED_EVALUATION",
+      "everest_event": "FINISHED_OPTIMIZER_EVALUATION",
       "result_type": "FunctionResult"
     },
     {
       "batch": 0,
       "event_type": "EverestBatchResultEvent",
-      "everest_event": "FINISHED_EVALUATION",
+      "everest_event": "OPTIMIZATION_RESULT",
+      "result_type": "FunctionResult"
+    },
+    {
+      "batch": 0,
+      "event_type": "EverestBatchResultEvent",
+      "everest_event": "OPTIMIZATION_RESULT",
       "result_type": "GradientResult"
     },
     {
-      "batch": null,
+      "batch": 1,
       "event_type": "EverestStatusEvent",
-      "everest_event": "START_EVALUATION"
+      "everest_event": "START_OPTIMIZER_EVALUATION"
     },
     {
       "batch": 1,
       "event_type": "EverestBatchResultEvent",
-      "everest_event": "FINISHED_EVALUATION",
+      "everest_event": "FINISHED_OPTIMIZER_EVALUATION",
       "result_type": "FunctionResult"
     },
     {
-      "batch": null,
+      "batch": 1,
+      "event_type": "EverestBatchResultEvent",
+      "everest_event": "OPTIMIZATION_RESULT",
+      "result_type": "FunctionResult"
+    },
+    {
+      "batch": 2,
       "event_type": "EverestStatusEvent",
-      "everest_event": "START_EVALUATION"
+      "everest_event": "START_OPTIMIZER_EVALUATION"
     },
     {
       "batch": 2,
       "event_type": "EverestBatchResultEvent",
-      "everest_event": "FINISHED_EVALUATION",
+      "everest_event": "FINISHED_OPTIMIZER_EVALUATION",
       "result_type": "FunctionResult"
     },
     {
-      "batch": null,
-      "event_type": "EverestStatusEvent",
-      "everest_event": "FINISHED_OPTIMIZER_STEP"
+      "batch": 2,
+      "event_type": "EverestBatchResultEvent",
+      "everest_event": "OPTIMIZATION_RESULT",
+      "result_type": "FunctionResult"
     }
   ],
   "num_full_snapshots": 3
