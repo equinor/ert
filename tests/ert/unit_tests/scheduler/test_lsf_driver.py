@@ -19,6 +19,8 @@ from hypothesis import given
 from hypothesis import strategies as st
 
 from ert.config import QueueConfig
+from ert.config.queue_config import _parse_realization_memory_str
+from ert.mode_definitions import ENSEMBLE_EXPERIMENT_MODE
 from ert.scheduler import LsfDriver, create_driver
 from ert.scheduler.driver import SIGNAL_OFFSET
 from ert.scheduler.lsf_driver import (
@@ -39,6 +41,7 @@ from ert.scheduler.lsf_driver import (
     parse_bjobs,
     parse_bjobs_exec_hosts,
 )
+from tests.ert.ui_tests.cli.run_cli import run_cli
 from tests.ert.utils import poll, wait_until
 
 from .conftest import mock_bin
@@ -1364,3 +1367,60 @@ async def test_that_kill_before_submit_is_finished_works(tmp_path, monkeypatch, 
     # a controlled fashion:
     if (tmp_path / "trap_handle_installed").exists():
         wait_until((tmp_path / "was_killed").exists, timeout=4)
+
+
+@pytest.mark.integration_test
+@pytest.mark.usefixtures("copy_poly_case")
+def test_queue_options_are_propagated_from_config_to_bsub(monkeypatch):
+    """
+    This end to end test is here to verify that queue_options are correctly
+    propagated all the way from ert config to the cluster.
+    """
+    mock_bin(monkeypatch, os.getcwd())
+    expected_queue = "foo_bar_queue"
+    expected_resource_string = "location=foo_bar_location"
+    expected_realization_memory = "9GB"
+    expected_project_code = "foo_bar_project"
+    expected_excluded_hosts = "foo_host,bar_host"
+    expected_num_cpu = 98
+
+    with open("poly.ert", "a", encoding="utf-8") as f:
+        f.write(
+            dedent(
+                f"""\
+                NUM_CPU {expected_num_cpu}
+                REALIZATION_MEMORY {expected_realization_memory}
+                QUEUE_SYSTEM LSF
+                QUEUE_OPTION LSF LSF_QUEUE {expected_queue}
+                QUEUE_OPTION LSF LSF_RESOURCE {expected_resource_string}
+                QUEUE_OPTION LSF PROJECT_CODE {expected_project_code}
+                QUEUE_OPTION LSF EXCLUDE_HOST {expected_excluded_hosts}
+                NUM_REALIZATIONS 1
+                """
+            )
+        )
+    run_cli(ENSEMBLE_EXPERIMENT_MODE, "--disable-monitoring", "poly.ert")
+    mock_jobs_dir = Path(f"{os.environ.get('PYTEST_TMP_PATH')}/mock_jobs")
+    job_dir = next(
+        mock_jobs_dir.iterdir()
+    )  # There is only one realization in this test
+    complete_command_invocation = (job_dir / "complete_command_invocation").read_text(
+        encoding="utf-8"
+    )
+
+    assert f"-q {expected_queue}" in complete_command_invocation
+    assert f"-P {expected_project_code}" in complete_command_invocation
+    assert f"-n {str(expected_num_cpu)}" in complete_command_invocation
+
+    complete_resource_requirement = (job_dir / "resource_requirement").read_text(
+        encoding="utf-8"
+    )
+    assert expected_resource_string in complete_resource_requirement
+    assert (
+        f"rusage[mem={_parse_realization_memory_str(expected_realization_memory) // 1024**2}]"
+        in complete_resource_requirement
+    )
+    assert (
+        f"""select[{" && ".join(f"hname!='{host_name}'" for host_name in expected_excluded_hosts.split(","))}]"""
+        in complete_resource_requirement
+    )
