@@ -340,6 +340,21 @@ async def test_slurm_can_retrieve_stdout_and_stderr(
     assert stdout_txt[-min(tail_chars_to_read, num_written_characters) + 2 :] in message
 
 
+@pytest.mark.integration_test
+async def test_submit_to_named_queue(tmp_path, job_name):
+    """If the environment variable _ERT_TEST_ALTERNATIVE_QUEUE is defined
+    a job will be attempted submitted to that queue.
+    * Note that what is called a "queue" in Ert is a "partition" in Slurm lingo.
+    As Ert does not keep track of which queue a job is executed in, we can only
+    test for success for the job."""
+    os.chdir(tmp_path)
+    driver = SlurmDriver(queue_name=os.getenv("_ERT_TESTS_ALTERNATIVE_QUEUE"))
+    await driver.submit(0, "sh", "-c", f"echo test > {tmp_path}/test", name=job_name)
+    await poll(driver, {0})
+
+    assert (tmp_path / "test").read_text(encoding="utf-8") == "test\n"
+
+
 @pytest.mark.usefixtures("use_tmpdir")
 async def test_submit_with_num_cpu(pytestconfig, job_name):
     if not pytestconfig.getoption("slurm"):
@@ -463,7 +478,7 @@ from ert.config.queue_config import _parse_realization_memory_str
 
 @pytest.mark.integration_test
 @pytest.mark.usefixtures("copy_poly_case")
-def test_queue_options_are_propagated_from_config_to_sbatch():
+def test_queue_options_are_propagated_from_config_to_sbatch(pytestconfig):
     """
     This end to end test is here to verify that queue_options are correctly
     propagated all the way from ert config to the cluster.
@@ -491,13 +506,17 @@ def test_queue_options_are_propagated_from_config_to_sbatch():
                 REALIZATION_MEMORY {expected_realization_memory}
                 QUEUE_SYSTEM SLURM
                 QUEUE_OPTION SLURM SBATCH {capture_sbatch_cmd.absolute()}
-                QUEUE_OPTION SLURM PARTITION {expected_partition}
-                QUEUE_OPTION SLURM INCLUDE_HOST {expected_include_hosts}
-                QUEUE_OPTION SLURM EXCLUDE_HOST {expected_exclude_hosts}
-                QUEUE_OPTION SLURM PROJECT_CODE {expected_project_code}
                 QUEUE_OPTION SLURM MAX_RUNTIME {expected_max_runtime}
                 NUM_REALIZATIONS 1
                 """
+                + (
+                    f"""QUEUE_OPTION SLURM INCLUDE_HOST {expected_include_hosts}
+                    QUEUE_OPTION SLURM PROJECT_CODE {expected_project_code}
+                    QUEUE_OPTION SLURM EXCLUDE_HOST {expected_exclude_hosts}
+                    QUEUE_OPTION SLURM PARTITION {expected_partition}"""
+                    if not pytestconfig.getoption("slurm")
+                    else ""
+                )
             )
         )
     run_cli(ENSEMBLE_EXPERIMENT_MODE, "--disable-monitoring", "poly.ert")
@@ -505,21 +524,21 @@ def test_queue_options_are_propagated_from_config_to_sbatch():
         encoding="utf-8"
     )
 
+    if not pytestconfig.getoption("slurm"):
+        assert f"--nodelist={expected_include_hosts}" in complete_command_invocation
+        assert f"--exclude={expected_exclude_hosts}" in complete_command_invocation
+        assert f"--partition={expected_partition}" in complete_command_invocation
+        assert f"--account={expected_project_code}" in complete_command_invocation
+
     assert f"--ntasks={expected_num_cpu}" in complete_command_invocation
     assert (
         f"--mem={_parse_realization_memory_str(expected_realization_memory) // 1024**2}M"
         in complete_command_invocation
     )
-
-    assert f"--nodelist={expected_include_hosts}" in complete_command_invocation
-    assert f"--exclude={expected_exclude_hosts}" in complete_command_invocation
     assert (
         f"--time={_seconds_to_slurm_time_format(expected_max_runtime)}"
         in complete_command_invocation
     )
-
-    assert f"--partition={expected_partition}" in complete_command_invocation
-    assert f"--account={expected_project_code}" in complete_command_invocation
 
 
 @pytest.mark.integration_test
@@ -552,20 +571,24 @@ async def test_submit_works_with_submit_options(
 @pytest.mark.integration_test
 @pytest.mark.usefixtures("use_tmpdir")
 @pytest.mark.parametrize(
-    "driver_options,expected_in_cmd",
+    "driver_options,expected_in_cmd,only_mocked_sbatch",
     [
-        ({"exclude_hosts": "foo_bar"}, "-exclude=foo_bar"),
-        (
-            {"queue_name": os.getenv("_ERT_TESTS_DEFAULT_QUEUE_NAME", "foo_bar_queue")},
-            f"--partition={os.getenv('_ERT_TESTS_DEFAULT_QUEUE_NAME', 'foo_bar_queue')}",
-        ),
-        ({"max_runtime": 20}, "--time=0:00:20"),
-        ({"project_code": "project_foo"}, "--account=project_foo"),
+        ({"exclude_hosts": "foo_bar"}, "--exclude=foo_bar", True),
+        ({"include_hosts": "foo_bar"}, "--nodelist=foo_bar", True),
+        ({"max_runtime": 20}, "--time=0:00:20", False),
+        ({"project_code": "project_foo"}, "--account=project_foo", True),
     ],
 )
 async def test_submit_works_with_queue_options(
-    driver_options, expected_in_cmd, job_name, intercept_sbatch_input_cmd
+    driver_options,
+    expected_in_cmd,
+    only_mocked_sbatch,
+    job_name,
+    intercept_sbatch_input_cmd,
+    pytestconfig,
 ):
+    if only_mocked_sbatch and pytestconfig.getoption("--slurm"):
+        pytest.skip("This test is only for mocked sbatch")
     driver = SlurmDriver(sbatch_cmd=intercept_sbatch_input_cmd, **driver_options)
     await driver.submit(
         0,

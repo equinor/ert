@@ -239,7 +239,7 @@ async def test_submit_sets_stderr():
 
 
 @pytest.mark.usefixtures("capturing_bsub")
-async def test_submit_with_realization_memory_with_bsub_capture():  # JONAK - CAN THIS BE REMOVED?
+async def test_submit_with_realization_memory_with_bsub_capture():
     driver = LsfDriver()
     await driver.submit(0, "sleep", realization_memory=1024**2)
     assert "-R rusage[mem=1]" in Path("captured_bsub_args").read_text(encoding="utf-8")
@@ -1204,63 +1204,6 @@ async def test_submit_with_num_cpu_with_bsub_capture():
 
 
 @pytest.mark.integration_test
-@pytest.mark.usefixtures("use_tmpdir")
-@pytest.mark.parametrize(
-    "driver_submit_option,expected_in_cmd",
-    [
-        ({"realization_memory": 50 * 1024 * 1024}, "-R rusage[mem=50]"),
-        ({"num_cpu": 2}, "-n 2"),
-    ],
-)
-async def test_submit_works_with_submit_options(
-    driver_submit_option, expected_in_cmd, job_name, intercept_bsub_input_cmd
-):
-    driver = LsfDriver(bsub_cmd=intercept_bsub_input_cmd)
-    await driver.submit(
-        0,
-        "sh",
-        "-c",
-        "echo foo",
-        name=job_name,
-        **driver_submit_option,
-    )
-    complete_command_invocation = Path("captured_bsub_args").read_text(encoding="utf-8")
-    assert expected_in_cmd in complete_command_invocation
-
-
-@pytest.mark.integration_test
-@pytest.mark.usefixtures("use_tmpdir")
-@pytest.mark.parametrize(
-    "driver_options,expected_in_cmd",
-    [
-        (
-            {"queue_name": os.getenv("_ERT_TESTS_ALTERNATIVE_QUEUE", "foo_bar_queue")},
-            f"-q {os.getenv('_ERT_TESTS_ALTERNATIVE_QUEUE', 'foo_bar_queue')}",
-        ),
-        ({"project_code": "project_foo"}, "-P project_foo"),
-        ({"exclude_hosts": "foo,bar"}, "-R select[hname!='foo' && hname!='bar']"),
-        (
-            {"resource_requirement": "select[cs && x86_64Linux]"},
-            "-R select[cs && x86_64Linux]",
-        ),
-    ],
-)
-async def test_submit_works_with_queue_options(
-    driver_options, expected_in_cmd, job_name, intercept_bsub_input_cmd
-):
-    driver = LsfDriver(bsub_cmd=intercept_bsub_input_cmd, **driver_options)
-    await driver.submit(
-        0,
-        "sh",
-        "-c",
-        "echo foo",
-        name=job_name,
-    )
-    complete_command_invocation = Path("captured_bsub_args").read_text(encoding="utf-8")
-    assert expected_in_cmd in complete_command_invocation
-
-
-@pytest.mark.integration_test
 async def test_polling_bhist_fallback(not_found_bjobs, caplog, job_name):
     caplog.set_level(logging.DEBUG)
     driver = LsfDriver()
@@ -1426,3 +1369,60 @@ def test_queue_options_are_propagated_from_config_to_bsub(intercept_bsub_input_c
         f"""select[{" && ".join(f"hname!='{host_name}'" for host_name in expected_excluded_hosts.split(","))}]"""
         in complete_command_invocation
     )
+
+
+@pytest.mark.integration_test
+@pytest.mark.usefixtures("use_tmpdir")
+@pytest.mark.parametrize(
+    "driver_submit_option,expected_in_cmd",
+    [
+        ({"realization_memory": 50 * 1024 * 1024}, "-R rusage[mem=50]"),
+        ({"num_cpu": 2}, "-n 2"),
+    ],
+)
+async def test_submit_works_with_submit_options(
+    driver_submit_option, expected_in_cmd, job_name, intercept_bsub_input_cmd
+):
+    driver = LsfDriver(bsub_cmd=intercept_bsub_input_cmd)
+    await driver.submit(
+        0,
+        "sh",
+        "-c",
+        "echo foo",
+        name=job_name,
+        **driver_submit_option,
+    )
+    complete_command_invocation = Path("captured_bsub_args").read_text(encoding="utf-8")
+    assert expected_in_cmd in complete_command_invocation
+
+
+@pytest.mark.integration_test
+@pytest.mark.usefixtures("use_tmpdir")
+@pytest.mark.parametrize(
+    "driver_options,expected_in_cmd",
+    [
+        (
+            {"queue_name": os.getenv("_ERT_TESTS_ALTERNATIVE_QUEUE", "foo_bar_queue")},
+            f"-q {os.getenv('_ERT_TESTS_ALTERNATIVE_QUEUE', 'foo_bar_queue')}",
+        ),
+        ({"project_code": "project_foo"}, "-P project_foo"),
+        ({"exclude_hosts": "foo,bar"}, "-R select[hname!='foo' && hname!='bar']"),
+        (
+            {"resource_requirement": "select[cs && x86_64Linux]"},
+            "-R select[cs && x86_64Linux]",
+        ),
+    ],
+)
+async def test_submit_works_with_queue_options(
+    driver_options, expected_in_cmd, job_name, intercept_bsub_input_cmd
+):
+    driver = LsfDriver(bsub_cmd=intercept_bsub_input_cmd, **driver_options)
+    await driver.submit(
+        0,
+        "sh",
+        "-c",
+        "echo foo",
+        name=job_name,
+    )
+    complete_command_invocation = Path("captured_bsub_args").read_text(encoding="utf-8")
+    assert expected_in_cmd in complete_command_invocation
