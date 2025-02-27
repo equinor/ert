@@ -56,6 +56,19 @@ def nonempty_string_without_whitespace():
 
 
 @pytest.fixture
+def intercept_bsub_input_cmd(tmp_path):
+    intercept_bsub_input_cmd = tmp_path / "capture_bsub_args"
+    intercept_bsub_input_cmd.write_text(
+        '#!/bin/sh\necho "$0 $@" > "captured_bsub_args"\nbsub "$@"',
+        encoding="utf-8",
+    )
+    intercept_bsub_input_cmd.chmod(
+        intercept_bsub_input_cmd.stat().st_mode | stat.S_IEXEC
+    )
+    return intercept_bsub_input_cmd
+
+
+@pytest.fixture
 def capturing_bsub(monkeypatch, tmp_path):
     monkeypatch.chdir(tmp_path)
     bin_path = Path("bin")
@@ -226,7 +239,7 @@ async def test_submit_sets_stderr():
 
 
 @pytest.mark.usefixtures("capturing_bsub")
-async def test_submit_with_realization_memory_with_bsub_capture():
+async def test_submit_with_realization_memory_with_bsub_capture():  # JONAK - CAN THIS BE REMOVED?
     driver = LsfDriver()
     await driver.submit(0, "sleep", realization_memory=1024**2)
     assert "-R rusage[mem=1]" in Path("captured_bsub_args").read_text(encoding="utf-8")
@@ -1138,32 +1151,6 @@ async def test_lsf_info_file_in_runpath(explicit_runpath, tmp_path, job_name):
     ).keys() == {"job_id"}
 
 
-@pytest.mark.integration_test
-async def test_submit_to_named_queue(tmp_path, caplog, job_name):
-    """If the environment variable _ERT_TEST_ALTERNATIVE_QUEUE is defined
-    a job will be attempted submitted to that queue.
-
-    As Ert does not keep track of which queue a job is executed in, we can only
-    test for success for the job."""
-    os.chdir(tmp_path)
-    driver = LsfDriver(queue_name=os.getenv("_ERT_TESTS_ALTERNATIVE_QUEUE"))
-    await driver.submit(0, "sh", "-c", f"echo test > {tmp_path}/test", name=job_name)
-    await poll(driver, {0})
-
-    assert (tmp_path / "test").read_text(encoding="utf-8") == "test\n"
-
-
-@pytest.mark.integration_test
-@pytest.mark.usefixtures("use_tmpdir")
-async def test_submit_with_resource_requirement(job_name):
-    resource_requirement = "select[cs && x86_64Linux]"
-    driver = LsfDriver(resource_requirement=resource_requirement)
-    await driver.submit(0, "sh", "-c", "echo test>test", name=job_name)
-    await poll(driver, {0})
-
-    assert Path("test").read_text(encoding="utf-8") == "test\n"
-
-
 @pytest.mark.usefixtures("capturing_bsub")
 async def test_submit_with_resource_requirement_with_bsub_capture():
     driver = LsfDriver(resource_requirement="select[cs && x86_64Linux]")
@@ -1218,34 +1205,59 @@ async def test_submit_with_num_cpu_with_bsub_capture():
 
 @pytest.mark.integration_test
 @pytest.mark.usefixtures("use_tmpdir")
-async def test_submit_with_realization_memory(pytestconfig, job_name):
-    if not pytestconfig.getoption("lsf"):
-        pytest.skip("Mocked LSF driver does not provide bhist")
-
-    realization_memory_bytes = 1024 * 1024
-    driver = LsfDriver()
+@pytest.mark.parametrize(
+    "driver_submit_option,expected_in_cmd",
+    [
+        ({"realization_memory": 50 * 1024 * 1024}, "-R rusage[mem=50]"),
+        ({"num_cpu": 2}, "-n 2"),
+    ],
+)
+async def test_submit_works_with_submit_options(
+    driver_submit_option, expected_in_cmd, job_name, intercept_bsub_input_cmd
+):
+    driver = LsfDriver(bsub_cmd=intercept_bsub_input_cmd)
     await driver.submit(
         0,
         "sh",
         "-c",
-        "echo test>test",
+        "echo foo",
         name=job_name,
-        realization_memory=realization_memory_bytes,
+        **driver_submit_option,
     )
-    job_id = driver._iens2jobid[0]
-    await poll(driver, {0})
+    complete_command_invocation = Path("captured_bsub_args").read_text(encoding="utf-8")
+    assert expected_in_cmd in complete_command_invocation
 
-    process = await asyncio.create_subprocess_exec(
-        "bhist",
-        "-l",
-        job_id,
-        stdout=asyncio.subprocess.PIPE,
-        stderr=asyncio.subprocess.PIPE,
+
+@pytest.mark.integration_test
+@pytest.mark.usefixtures("use_tmpdir")
+@pytest.mark.parametrize(
+    "driver_options,expected_in_cmd",
+    [
+        (
+            {"queue_name": os.getenv("_ERT_TESTS_ALTERNATIVE_QUEUE", "foo_bar_queue")},
+            f"-q {os.getenv('_ERT_TESTS_ALTERNATIVE_QUEUE', 'foo_bar_queue')}",
+        ),
+        ({"project_code": "project_foo"}, "-P project_foo"),
+        ({"exclude_hosts": "foo,bar"}, "-R select[hname!='foo' && hname!='bar']"),
+        (
+            {"resource_requirement": "select[cs && x86_64Linux]"},
+            "-R select[cs && x86_64Linux]",
+        ),
+    ],
+)
+async def test_submit_works_with_queue_options(
+    driver_options, expected_in_cmd, job_name, intercept_bsub_input_cmd
+):
+    driver = LsfDriver(bsub_cmd=intercept_bsub_input_cmd, **driver_options)
+    await driver.submit(
+        0,
+        "sh",
+        "-c",
+        "echo foo",
+        name=job_name,
     )
-    stdout, _ = await process.communicate()
-    assert "rusage[mem=1]" in stdout.decode(encoding="utf-8")
-
-    assert Path("test").read_text(encoding="utf-8") == "test\n"
+    complete_command_invocation = Path("captured_bsub_args").read_text(encoding="utf-8")
+    assert expected_in_cmd in complete_command_invocation
 
 
 @pytest.mark.integration_test
@@ -1371,7 +1383,7 @@ async def test_that_kill_before_submit_is_finished_works(tmp_path, monkeypatch, 
 
 @pytest.mark.integration_test
 @pytest.mark.usefixtures("copy_poly_case")
-def test_queue_options_are_propagated_from_config_to_bsub():
+def test_queue_options_are_propagated_from_config_to_bsub(intercept_bsub_input_cmd):
     """
     This end to end test is here to verify that queue_options are correctly
     propagated all the way from ert config to the cluster.
@@ -1383,12 +1395,6 @@ def test_queue_options_are_propagated_from_config_to_bsub():
     expected_excluded_hosts = "foo_host,bar_host"
     expected_num_cpu = 98
 
-    capture_bsub_cmd = Path("capture_bsub_args")
-    capture_bsub_cmd.write_text(
-        '#!/bin/sh\necho "$0 $@" > "captured_bsub_args"\nbsub "$@"',
-        encoding="utf-8",
-    )
-    capture_bsub_cmd.chmod(capture_bsub_cmd.stat().st_mode | stat.S_IEXEC)
     with open("poly.ert", "a", encoding="utf-8") as f:
         f.write(
             dedent(
@@ -1396,7 +1402,7 @@ def test_queue_options_are_propagated_from_config_to_bsub():
                 NUM_CPU {expected_num_cpu}
                 REALIZATION_MEMORY {expected_realization_memory}
                 QUEUE_SYSTEM LSF
-                QUEUE_OPTION LSF BSUB_CMD {capture_bsub_cmd.absolute()}
+                QUEUE_OPTION LSF BSUB_CMD {intercept_bsub_input_cmd.absolute()}
                 QUEUE_OPTION LSF LSF_QUEUE {expected_queue}
                 QUEUE_OPTION LSF LSF_RESOURCE {expected_resource_string}
                 QUEUE_OPTION LSF PROJECT_CODE {expected_project_code}

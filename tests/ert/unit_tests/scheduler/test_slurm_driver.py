@@ -29,6 +29,19 @@ def nonempty_string_without_whitespace():
 
 
 @pytest.fixture
+def intercept_sbatch_input_cmd(tmp_path):
+    intercept_sbatch_input_cmd = tmp_path / "capture_sbatch_args"
+    intercept_sbatch_input_cmd.write_text(
+        '#!/bin/sh\necho "$0 $@" > "captured_sbatch_args"\nsbatch "$@"',
+        encoding="utf-8",
+    )
+    intercept_sbatch_input_cmd.chmod(
+        intercept_sbatch_input_cmd.stat().st_mode | stat.S_IEXEC
+    )
+    return intercept_sbatch_input_cmd
+
+
+@pytest.fixture
 def capturing_sbatch(monkeypatch, tmp_path):
     monkeypatch.chdir(tmp_path)
     bin_path = Path("bin")
@@ -327,23 +340,6 @@ async def test_slurm_can_retrieve_stdout_and_stderr(
     assert stdout_txt[-min(tail_chars_to_read, num_written_characters) + 2 :] in message
 
 
-@pytest.mark.integration_test
-async def test_submit_to_named_queue(tmp_path, job_name):
-    """If the environment variable _ERT_TEST_ALTERNATIVE_QUEUE is defined
-    a job will be attempted submitted to that queue.
-
-    * Note that what is called a "queue" in Ert is a "partition" in Slurm lingo.
-
-    As Ert does not keep track of which queue a job is executed in, we can only
-    test for success for the job."""
-    os.chdir(tmp_path)
-    driver = SlurmDriver(queue_name=os.getenv("_ERT_TESTS_ALTERNATIVE_QUEUE"))
-    await driver.submit(0, "sh", "-c", f"echo test > {tmp_path}/test", name=job_name)
-    await poll(driver, {0})
-
-    assert (tmp_path / "test").read_text(encoding="utf-8") == "test\n"
-
-
 @pytest.mark.usefixtures("use_tmpdir")
 async def test_submit_with_num_cpu(pytestconfig, job_name):
     if not pytestconfig.getoption("slurm"):
@@ -524,3 +520,61 @@ def test_queue_options_are_propagated_from_config_to_sbatch():
 
     assert f"--partition={expected_partition}" in complete_command_invocation
     assert f"--account={expected_project_code}" in complete_command_invocation
+
+
+@pytest.mark.integration_test
+@pytest.mark.usefixtures("use_tmpdir")
+@pytest.mark.parametrize(
+    "driver_submit_option,expected_in_cmd",
+    [
+        ({"realization_memory": 50 * 1024 * 1024}, "--mem=50M"),
+        ({"num_cpu": 2}, "--ntasks=2"),
+    ],
+)
+async def test_submit_works_with_submit_options(
+    driver_submit_option, expected_in_cmd, job_name, intercept_sbatch_input_cmd
+):
+    driver = SlurmDriver(sbatch_cmd=intercept_sbatch_input_cmd)
+    await driver.submit(
+        0,
+        "sh",
+        "-c",
+        "echo foo",
+        name=job_name,
+        **driver_submit_option,
+    )
+    complete_command_invocation = Path("captured_sbatch_args").read_text(
+        encoding="utf-8"
+    )
+    assert expected_in_cmd in complete_command_invocation
+
+
+@pytest.mark.integration_test
+@pytest.mark.usefixtures("use_tmpdir")
+@pytest.mark.parametrize(
+    "driver_options,expected_in_cmd",
+    [
+        ({"exclude_hosts": "foo_bar"}, "-exclude=foo_bar"),
+        (
+            {"queue_name": os.getenv("_ERT_TESTS_DEFAULT_QUEUE_NAME", "foo_bar_queue")},
+            f"--partition={os.getenv('_ERT_TESTS_DEFAULT_QUEUE_NAME', 'foo_bar_queue')}",
+        ),
+        ({"max_runtime": 20}, "--time=0:00:20"),
+        ({"project_code": "project_foo"}, "--account=project_foo"),
+    ],
+)
+async def test_submit_works_with_queue_options(
+    driver_options, expected_in_cmd, job_name, intercept_sbatch_input_cmd
+):
+    driver = SlurmDriver(sbatch_cmd=intercept_sbatch_input_cmd, **driver_options)
+    await driver.submit(
+        0,
+        "sh",
+        "-c",
+        "echo foo",
+        name=job_name,
+    )
+    complete_command_invocation = Path("captured_sbatch_args").read_text(
+        encoding="utf-8"
+    )
+    assert expected_in_cmd in complete_command_invocation
