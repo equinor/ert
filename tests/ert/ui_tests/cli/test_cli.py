@@ -318,7 +318,7 @@ def test_that_setenv_sets_environment_variables_in_steps(setenv_config):
             dedent(
                 """
                     STOP_ON_FAIL True
-                    INTERNAL False
+
                     EXECUTABLE failing_script.sh
                 """
             ),
@@ -337,7 +337,7 @@ def test_that_setenv_sets_environment_variables_in_steps(setenv_config):
             dedent(
                 """
                    STOP_ON_FAIL False
-                   INTERNAL False
+
                    EXECUTABLE failing_script.sh
                 """
             ),
@@ -355,7 +355,7 @@ def test_that_setenv_sets_environment_variables_in_steps(setenv_config):
         pytest.param(
             dedent(
                 """
-                    INTERNAL False
+
                     EXECUTABLE failing_script.sh
                 """
             ),

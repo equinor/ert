@@ -1,8 +1,6 @@
 from __future__ import annotations
 
-import inspect
 import logging
-import os
 from argparse import ArgumentParser
 from collections.abc import Callable
 
@@ -65,8 +63,7 @@ class ErtScriptWorkflow(WorkflowJob):
         self._category = "other"
         super().__init__(
             name=self._get_func_name(ertscript_class, name),
-            internal=True,
-            script=os.path.abspath(inspect.getfile(ertscript_class)),
+            ert_script=ertscript_class,
             min_args=None,
             max_args=None,
             arg_types=[],

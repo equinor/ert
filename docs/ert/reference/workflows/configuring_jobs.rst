@@ -60,7 +60,6 @@ For example, if a job is defined as follows:
 
 ::
 
-    INTERNAL   FALSE
     EXECUTABLE script.sh
     STOP_ON_FAIL TRUE                   -- Tell the job to stop ert on failure
 

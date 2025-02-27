@@ -37,12 +37,10 @@ def test_that_substitution_happens_in_workflow():
     substlist["<B>"] = "b"
     job = WorkflowJob(
         name="JOB",
-        internal=False,
         min_args=None,
         max_args=None,
         arg_types=[],
         executable="echo",
-        script=None,
     )
     wf = Workflow.from_file(
         "workflow",
@@ -55,12 +53,10 @@ def test_that_substitution_happens_in_workflow():
 def get_workflow_job(name):
     return WorkflowJob(
         name=name,
-        internal=False,
         min_args=None,
         max_args=None,
         arg_types=[],
         executable=None,
-        script=None,
     )
 
 
@@ -191,12 +187,10 @@ def test_args_validation(config, expectation, min_args, max_args):
             job_dict={
                 "WORKFLOW": WorkflowJob(
                     name="WORKFLOW",
-                    internal=False,
                     min_args=min_args,
                     max_args=max_args,
                     arg_types=[],
                     executable=None,
-                    script=None,
                 ),
             },
         )

@@ -303,8 +303,8 @@ def workflows_from_dict(
             if name in workflow_jobs:
                 ConfigWarning.warn(
                     f"Duplicate workflow jobs with name {name!r}, choosing "
-                    f"{new_job.executable or new_job.script!r} over "
-                    f"{workflow_jobs[name].executable or workflow_jobs[name].script!r}",
+                    f"{new_job.executable or new_job.ert_script!r} over "
+                    f"{workflow_jobs[name].executable or workflow_jobs[name].ert_script!r}",
                     name,
                 )
             workflow_jobs[name] = new_job
@@ -325,8 +325,8 @@ def workflows_from_dict(
                 if name in workflow_jobs:
                     ConfigWarning.warn(
                         f"Duplicate workflow jobs with name {name!r}, choosing "
-                        f"{new_job.executable or new_job.script!r} over "
-                        f"{workflow_jobs[name].executable or workflow_jobs[name].script!r}",
+                        f"{new_job.executable or new_job.ert_script!r} over "
+                        f"{workflow_jobs[name].executable or workflow_jobs[name].ert_script!r}",
                         name,
                     )
                 workflow_jobs[name] = new_job
