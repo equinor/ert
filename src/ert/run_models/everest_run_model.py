@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import dataclasses
 import datetime
-import functools
 import json
 import logging
 import os
@@ -19,11 +18,10 @@ from typing import TYPE_CHECKING, Any, Protocol
 import numpy as np
 import polars as pl
 from numpy._typing import NDArray
-from ropt.enums import EventType, OptimizerExitCode
+from ropt.enums import OptimizerExitCode
 from ropt.evaluator import EvaluatorContext, EvaluatorResult
 from ropt.plan import BasicOptimizer
-from ropt.plan import Event as OptimizerEvent
-from ropt.results import FunctionResults
+from ropt.results import FunctionResults, Results
 from ropt.transforms import OptModelTransforms
 from typing_extensions import TypedDict
 
@@ -263,6 +261,22 @@ class EverestRunModel(BaseRunModel):
                 )
             )
 
+    def _handle_optimizer_results(self, results: tuple[Results, ...]) -> None:
+        self.ever_storage.on_batch_evaluation_finished(results)
+        # A ROPT event may contain multiple results, we send one event per result
+        for r in results:
+            self.send_event(
+                EverestBatchResultEvent(
+                    batch=r.batch_id,
+                    everest_event="OPTIMIZATION_RESULT",
+                    result_type=(
+                        "FunctionResult"
+                        if isinstance(r, FunctionResults)
+                        else "GradientResult"
+                    ),
+                )
+            )
+
     def run_experiment(
         self, evaluator_server_config: EvaluatorServerConfig, restart: bool = False
     ) -> None:
@@ -282,7 +296,7 @@ class EverestRunModel(BaseRunModel):
             output_dir=Path(self._everest_config.optimization_output_dir),
         )
         self.ever_storage.init(self._everest_config)
-        self.ever_storage.observe_optimizer(optimizer)
+        optimizer.set_results_callback(self._handle_optimizer_results)
 
         # Run the optimization:
         output_dir = Path(self._everest_config.optimization_output_dir)
@@ -291,6 +305,9 @@ class EverestRunModel(BaseRunModel):
             stderr=output_dir / "optimizer_output.stderr",
         ):
             optimizer_exit_code = optimizer.run().exit_code
+
+        # Store some final results.
+        self.ever_storage.on_optimization_finished()
 
         # Extract the best result from the storage.
         self._result = self.ever_storage.get_optimal_result()
@@ -378,6 +395,24 @@ class EverestRunModel(BaseRunModel):
                 transforms.nonlinear_constraints.calculate_auto_scales(constraints)
         return transforms
 
+    def _check_for_abort(self) -> bool:
+        logging.getLogger(EVEREST).debug("Optimization callback called")
+        if (
+            self._everest_config.optimization is not None
+            and self._everest_config.optimization.max_batch_num is not None
+            and (self._batch_id >= self._everest_config.optimization.max_batch_num)
+        ):
+            self._exit_code = EverestExitCode.MAX_BATCH_NUM_REACHED
+            logging.getLogger(EVEREST).info("Maximum number of batches reached")
+            return True
+        if (
+            self._opt_callback is not None
+            and self._opt_callback() == "stop_optimization"
+        ):
+            logging.getLogger(EVEREST).info("User abort requested.")
+            return True
+        return False
+
     def _create_optimizer(self) -> BasicOptimizer:
         # Initialize the optimization model transforms. This may run one initial
         # ensemble for auto-scaling purposes:
@@ -391,62 +426,13 @@ class EverestRunModel(BaseRunModel):
             enopt_config=everest2ropt(self._everest_config, transforms=transforms),
             evaluator=self._forward_model_evaluator,
             transforms=transforms,
+            everest_config=self._everest_config,
         )
 
         # Before each batch evaluation we check if we should abort:
-        optimizer.add_observer(
-            EventType.START_EVALUATION,
-            functools.partial(
-                self._on_before_forward_model_evaluation,
-                optimizer=optimizer,
-            ),
-        )
-
-        def _forward_results(everest_event: OptimizerEvent) -> None:
-            has_results = bool(everest_event.data and everest_event.data.get("results"))
-
-            if has_results:
-                # A ROPT event may contain multiple results, here we send one
-                # event per result
-                results = everest_event.data["results"]
-
-                for r in results:
-                    self.send_event(
-                        EverestBatchResultEvent(
-                            batch=r.batch_id,  # From the event, the batch that produced it.
-                            everest_event="OPTIMIZATION_RESULT",
-                            result_type=(
-                                "FunctionResult"
-                                if isinstance(r, FunctionResults)
-                                else "GradientResult"
-                            ),
-                        )
-                    )
-
-        # Send events when results are received.
-        optimizer.add_observer(EventType.FINISHED_EVALUATION, _forward_results)
+        optimizer.set_abort_callback(self._check_for_abort)
 
         return optimizer
-
-    def _on_before_forward_model_evaluation(
-        self, _: OptimizerEvent, optimizer: BasicOptimizer
-    ) -> None:
-        logging.getLogger(EVEREST).debug("Optimization callback called")
-
-        if (
-            self._everest_config.optimization is not None
-            and self._everest_config.optimization.max_batch_num is not None
-            and (self._batch_id >= self._everest_config.optimization.max_batch_num)
-        ):
-            self._exit_code = EverestExitCode.MAX_BATCH_NUM_REACHED
-            logging.getLogger(EVEREST).info("Maximum number of batches reached")
-            optimizer.abort_optimization()
-        if (
-            self._opt_callback is not None
-            and self._opt_callback() == "stop_optimization"
-        ):
-            logging.getLogger(EVEREST).info("User abort requested.")
-            optimizer.abort_optimization()
 
     def _run_forward_model(
         self,
@@ -723,6 +709,7 @@ class EverestRunModel(BaseRunModel):
                     result_type="FunctionResult",
                 )
             )
+
         else:
             sim_objectives = np.array([], dtype=np.float64)
             sim_constraints = np.array([], dtype=np.float64)
