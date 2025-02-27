@@ -60,6 +60,10 @@ class EnsembleConfig:
             [p for p in self.parameter_configs.values() if isinstance(p, GenKwConfig)]
         )
 
+        self._check_for_forward_init_in_gen_kw(
+            [p for p in self.parameter_configs.values() if isinstance(p, GenKwConfig)]
+        )
+
         self.grid_file = _get_abs_path(self.grid_file)
 
     @staticmethod
@@ -92,6 +96,12 @@ class EnsembleConfig:
             logger.info(
                 f"Found duplicate GEN_KW parameter names: {duplicates_formatted}"
             )
+
+    @staticmethod
+    def _check_for_forward_init_in_gen_kw(gen_kw_list: list[GenKwConfig]) -> None:
+        for gen_kw in gen_kw_list:
+            if gen_kw.forward_init_file is not None:
+                logger.info(f"GEN_KW uses FORWARD_INIT: {gen_kw}")
 
     @no_type_check
     @classmethod
