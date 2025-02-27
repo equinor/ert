@@ -7,8 +7,6 @@ jobid="test${RANDOM}.localhost"
 jobdir="${PYTEST_TMP_PATH:-.}/mock_jobs/${jobid}"
 mkdir -p "${jobdir}"
 
-command_invocation_file="${jobdir}/complete_command_invocation"
-echo "$0 $@" > "$command_invocation_file"
 job_env_file="${jobdir}/env"
 touch $job_env_file
 

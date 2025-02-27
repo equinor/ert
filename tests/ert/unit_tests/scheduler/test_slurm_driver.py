@@ -467,12 +467,11 @@ from ert.config.queue_config import _parse_realization_memory_str
 
 @pytest.mark.integration_test
 @pytest.mark.usefixtures("copy_poly_case")
-def test_queue_options_are_propagated_from_config_to_sbatch(monkeypatch):
+def test_queue_options_are_propagated_from_config_to_sbatch():
     """
     This end to end test is here to verify that queue_options are correctly
     propagated all the way from ert config to the cluster.
     """
-    mock_bin(monkeypatch, os.getcwd())
     expected_partition = "foo_bar_partition"
     expected_realization_memory = "9GB"
     expected_project_code = "foo_bar_project"
@@ -480,6 +479,14 @@ def test_queue_options_are_propagated_from_config_to_sbatch(monkeypatch):
     expected_include_hosts = "foohost,barhost"
     expected_max_runtime = 99
     expected_num_cpu = 98
+
+    capture_sbatch_cmd = Path("capture_sbatch_args")
+    capture_sbatch_cmd.write_text(
+        '#!/bin/sh\necho "$0 $@" > "captured_sbatch_args"\nsbatch "$@"',
+        encoding="utf-8",
+    )
+    capture_sbatch_cmd.chmod(capture_sbatch_cmd.stat().st_mode | stat.S_IEXEC)
+
     with open("poly.ert", "a", encoding="utf-8") as f:
         f.write(
             dedent(
@@ -487,6 +494,7 @@ def test_queue_options_are_propagated_from_config_to_sbatch(monkeypatch):
                 NUM_CPU {expected_num_cpu}
                 REALIZATION_MEMORY {expected_realization_memory}
                 QUEUE_SYSTEM SLURM
+                QUEUE_OPTION SLURM SBATCH {capture_sbatch_cmd.absolute()}
                 QUEUE_OPTION SLURM PARTITION {expected_partition}
                 QUEUE_OPTION SLURM INCLUDE_HOST {expected_include_hosts}
                 QUEUE_OPTION SLURM EXCLUDE_HOST {expected_exclude_hosts}
@@ -497,21 +505,22 @@ def test_queue_options_are_propagated_from_config_to_sbatch(monkeypatch):
             )
         )
     run_cli(ENSEMBLE_EXPERIMENT_MODE, "--disable-monitoring", "poly.ert")
-    mock_jobs_dir = Path(f"{os.environ.get('PYTEST_TMP_PATH')}/mock_jobs")
-    job_dir = next(
-        mock_jobs_dir.iterdir()
-    )  # There is only one realization in this test
-    complete_command_invocation = (job_dir / "complete_command_invocation").read_text(
+    complete_command_invocation = Path("captured_sbatch_args").read_text(
         encoding="utf-8"
     )
 
     assert f"--ntasks={expected_num_cpu}" in complete_command_invocation
-    assert f"--mem={_parse_realization_memory_str(expected_realization_memory) // 1024**2}M" in complete_command_invocation
+    assert (
+        f"--mem={_parse_realization_memory_str(expected_realization_memory) // 1024**2}M"
+        in complete_command_invocation
+    )
 
     assert f"--nodelist={expected_include_hosts}" in complete_command_invocation
     assert f"--exclude={expected_exclude_hosts}" in complete_command_invocation
-    assert f"--time={_seconds_to_slurm_time_format(expected_max_runtime
-    )}" in complete_command_invocation
-        
+    assert (
+        f"--time={_seconds_to_slurm_time_format(expected_max_runtime)}"
+        in complete_command_invocation
+    )
+
     assert f"--partition={expected_partition}" in complete_command_invocation
     assert f"--account={expected_project_code}" in complete_command_invocation

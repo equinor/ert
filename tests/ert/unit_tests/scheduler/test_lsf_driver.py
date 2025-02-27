@@ -1371,12 +1371,11 @@ async def test_that_kill_before_submit_is_finished_works(tmp_path, monkeypatch, 
 
 @pytest.mark.integration_test
 @pytest.mark.usefixtures("copy_poly_case")
-def test_queue_options_are_propagated_from_config_to_bsub(monkeypatch):
+def test_queue_options_are_propagated_from_config_to_bsub():
     """
     This end to end test is here to verify that queue_options are correctly
     propagated all the way from ert config to the cluster.
     """
-    mock_bin(monkeypatch, os.getcwd())
     expected_queue = "foo_bar_queue"
     expected_resource_string = "location=foo_bar_location"
     expected_realization_memory = "9GB"
@@ -1384,6 +1383,12 @@ def test_queue_options_are_propagated_from_config_to_bsub(monkeypatch):
     expected_excluded_hosts = "foo_host,bar_host"
     expected_num_cpu = 98
 
+    capture_bsub_cmd = Path("capture_bsub_args")
+    capture_bsub_cmd.write_text(
+        '#!/bin/sh\necho "$0 $@" > "captured_bsub_args"\nbsub "$@"',
+        encoding="utf-8",
+    )
+    capture_bsub_cmd.chmod(capture_bsub_cmd.stat().st_mode | stat.S_IEXEC)
     with open("poly.ert", "a", encoding="utf-8") as f:
         f.write(
             dedent(
@@ -1391,6 +1396,7 @@ def test_queue_options_are_propagated_from_config_to_bsub(monkeypatch):
                 NUM_CPU {expected_num_cpu}
                 REALIZATION_MEMORY {expected_realization_memory}
                 QUEUE_SYSTEM LSF
+                QUEUE_OPTION LSF BSUB_CMD {capture_bsub_cmd.absolute()}
                 QUEUE_OPTION LSF LSF_QUEUE {expected_queue}
                 QUEUE_OPTION LSF LSF_RESOURCE {expected_resource_string}
                 QUEUE_OPTION LSF PROJECT_CODE {expected_project_code}
@@ -1400,27 +1406,17 @@ def test_queue_options_are_propagated_from_config_to_bsub(monkeypatch):
             )
         )
     run_cli(ENSEMBLE_EXPERIMENT_MODE, "--disable-monitoring", "poly.ert")
-    mock_jobs_dir = Path(f"{os.environ.get('PYTEST_TMP_PATH')}/mock_jobs")
-    job_dir = next(
-        mock_jobs_dir.iterdir()
-    )  # There is only one realization in this test
-    complete_command_invocation = (job_dir / "complete_command_invocation").read_text(
-        encoding="utf-8"
-    )
-
+    complete_command_invocation = Path("captured_bsub_args").read_text(encoding="utf-8")
     assert f"-q {expected_queue}" in complete_command_invocation
     assert f"-P {expected_project_code}" in complete_command_invocation
-    assert f"-n {str(expected_num_cpu)}" in complete_command_invocation
+    assert f"-n {expected_num_cpu!s}" in complete_command_invocation
 
-    complete_resource_requirement = (job_dir / "resource_requirement").read_text(
-        encoding="utf-8"
-    )
-    assert expected_resource_string in complete_resource_requirement
+    assert expected_resource_string in complete_command_invocation
     assert (
         f"rusage[mem={_parse_realization_memory_str(expected_realization_memory) // 1024**2}]"
-        in complete_resource_requirement
+        in complete_command_invocation
     )
     assert (
         f"""select[{" && ".join(f"hname!='{host_name}'" for host_name in expected_excluded_hosts.split(","))}]"""
-        in complete_resource_requirement
+        in complete_command_invocation
     )

@@ -7,9 +7,7 @@ This script partially mocks the Slurm provided utility sbatch:
 import argparse
 import os
 import random
-import shlex
 import subprocess
-import sys
 from pathlib import Path
 
 
@@ -40,7 +38,6 @@ def main() -> None:
     jobdir.mkdir(parents=True, exist_ok=True)
     (jobdir / "script").write_text(args.script, encoding="utf-8")
     (jobdir / "name").write_text(args.job_name, encoding="utf-8")
-    (jobdir / "complete_command_invocation").write_text(shlex.join(sys.argv))
     env_file = jobdir / "env"
     if args.ntasks:
         env_file.write_text(

@@ -6,8 +6,6 @@ name="STDIN"
 jobid="${RANDOM}"
 jobdir="${PYTEST_TMP_PATH:-.}/mock_jobs/${jobid}"
 mkdir -p "${jobdir}"
-command_invocation_file="${jobdir}/complete_command_invocation"
-echo "$0 $@" > "$command_invocation_file"
 
 while getopts "o:e:J:q:R:n:P:" opt
 do
