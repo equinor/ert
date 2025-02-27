@@ -346,7 +346,7 @@ class EverestRunModel(BaseRunModel):
 
             self.send_event(
                 EverestStatusEvent(
-                    batch=None,  # Always 0, but omitting it for consistency
+                    batch=self._batch_id,
                     everest_event="START_SAMPLING_EVALUATION",
                 )
             )
@@ -364,6 +364,9 @@ class EverestRunModel(BaseRunModel):
                     result_type="FunctionResult",
                 )
             )
+
+            # Increase the batch ID for the next evaluation:
+            self._batch_id += 1
 
             if transforms.objectives.has_auto_scale:
                 transforms.objectives.calculate_auto_scales(objectives)
@@ -399,24 +402,19 @@ class EverestRunModel(BaseRunModel):
             ),
         )
 
-        def _forward_ropt_event(everest_event: OptimizerEvent) -> None:
+        def _forward_results(everest_event: OptimizerEvent) -> None:
             has_results = bool(everest_event.data and everest_event.data.get("results"))
-
-            # The batch these results pertain to
-            # If the event has results, they usually pertain to the
-            # batch before self._batch_id, i.e., self._batch_id - 1
 
             if has_results:
                 # A ROPT event may contain multiple results, here we send one
                 # event per result
                 results = everest_event.data["results"]
-                batch_id = results[0].batch_id
 
                 for r in results:
                     self.send_event(
                         EverestBatchResultEvent(
-                            batch=batch_id,
-                            everest_event=everest_event.event_type.name,
+                            batch=r.batch_id,  # From the event, the batch that produced it.
+                            everest_event="OPTIMIZATION_RESULT",
                             result_type=(
                                 "FunctionResult"
                                 if isinstance(r, FunctionResults)
@@ -424,20 +422,9 @@ class EverestRunModel(BaseRunModel):
                             ),
                         )
                     )
-            else:
-                # Events indicating the start of an evaluation,
-                # start of optimizer step holds no results
-                # but may still be relevant to the subscriber
-                self.send_event(
-                    EverestStatusEvent(
-                        batch=None,
-                        everest_event=everest_event.event_type.name,
-                    )
-                )
 
-        # Forward ROPT events to queue
-        for event_type in EventType:
-            optimizer.add_observer(event_type, _forward_ropt_event)
+        # Send events when results are received.
+        optimizer.add_observer(EventType.FINISHED_EVALUATION, _forward_results)
 
         return optimizer
 
@@ -512,9 +499,6 @@ class EverestRunModel(BaseRunModel):
 
         # Gather the results
         objectives, constraints = self._gather_simulation_results(ensemble)
-
-        # Increase the batch ID for the next evaluation:
-        self._batch_id += 1
 
         # Return the results, together with the indices of the evaluated controls:
         return objectives, constraints
@@ -705,8 +689,6 @@ class EverestRunModel(BaseRunModel):
             all_results=all_results,
         )
 
-        batch_id = self._batch_id  # Save the batch ID, it will be modified.
-
         control_values_to_simulate = np.array(
             [
                 c.control_vector
@@ -720,18 +702,30 @@ class EverestRunModel(BaseRunModel):
             sim_infos = [
                 c for c in evaluation_infos if c.status == _EvaluationStatus.TO_SIMULATE
             ]
+
+            self.send_event(
+                EverestStatusEvent(
+                    batch=self._batch_id,
+                    everest_event="START_OPTIMIZER_EVALUATION",
+                )
+            )
+
             sim_objectives, sim_constraints = self._run_forward_model(
                 control_values=control_values_to_simulate,
                 model_realizations=[c.model_realization for c in sim_infos],
                 perturbations=[c.perturbation for c in sim_infos],
             )
+
+            self.send_event(
+                EverestBatchResultEvent(
+                    batch=self._batch_id,
+                    everest_event="FINISHED_OPTIMIZER_EVALUATION",
+                    result_type="FunctionResult",
+                )
+            )
         else:
             sim_objectives = np.array([], dtype=np.float64)
             sim_constraints = np.array([], dtype=np.float64)
-
-            # Note: removing this causes some tests to fail, but this behavior
-            # should maybe be revised?
-            self._batch_id += 1
 
         # Assign simulated results to corresponding evaluation infos
         for ei in evaluation_infos:
@@ -774,12 +768,17 @@ class EverestRunModel(BaseRunModel):
             dtype=np.int32,
         )
 
-        return EvaluatorResult(
+        evaluator_result = EvaluatorResult(
             objectives=objectives,
             constraints=constraints,
-            batch_id=batch_id,
+            batch_id=self._batch_id,
             evaluation_ids=sim_ids,
         )
+
+        # increase the batch ID for the next evaluation:
+        self._batch_id += 1
+
+        return evaluator_result
 
     def _create_simulation_controls(
         self,
