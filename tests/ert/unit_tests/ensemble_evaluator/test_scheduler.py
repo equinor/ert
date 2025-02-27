@@ -15,12 +15,11 @@ from ert.ensemble_evaluator.config import EvaluatorServerConfig
 async def test_scheduler_receives_checksum_and_waits_for_disk_sync(
     tmpdir, make_ensemble, monkeypatch, caplog
 ):
-    num_reals = 1
-    port_range = (1024, 65535)
-
     async def rename_and_wait():
         Path("real_0/job_test_file").rename("real_0/test")
-        while "Waiting for disk synchronization" not in caplog.messages:  # noqa: ASYNC110
+        for _ in iter(
+            lambda: "Waiting for disk synchronization" not in caplog.messages, False
+        ):
             await asyncio.sleep(0.1)
         Path("real_0/test").rename("real_0/job_test_file")
 
@@ -49,18 +48,14 @@ async def test_scheduler_receives_checksum_and_waits_for_disk_sync(
             json.dump({"file": "job_test_file"}, f)
 
     with tmpdir.as_cwd():
-        ensemble = make_ensemble(monkeypatch, tmpdir, num_reals, 2)
+        ensemble = make_ensemble(monkeypatch, tmpdir, 1, 2)
 
         # Creating testing manifest file
         create_manifest_file()
         file_path = Path("real_0/job_test_file")
         file_path.write_text("test")
         # actual_md5sum = hashlib.md5(file_path.read_bytes()).hexdigest()
-        config = EvaluatorServerConfig(
-            port_range=port_range,
-            host="127.0.0.1",
-            use_token=False,
-        )
+        config = EvaluatorServerConfig(use_token=False)
         evaluator = EnsembleEvaluator(ensemble, config)
         with caplog.at_level(logging.DEBUG):
             run_task = asyncio.create_task(
