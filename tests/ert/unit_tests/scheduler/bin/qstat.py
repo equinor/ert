@@ -42,11 +42,11 @@ def main() -> None:
         print(QSTAT_HEADER, end="")
 
     for job in args.jobs:
-        name = read(jobs_path / f"{job}.name")
+        name = read(jobs_path / f"{job}/name")
         assert name is not None
 
-        pid = read(jobs_path / f"{job}.pid")
-        returncode = read(jobs_path / f"{job}.returncode")
+        pid = read(jobs_path / f"{job}/pid")
+        returncode = read(jobs_path / f"{job}/returncode")
 
         state = "Q"
         if returncode is not None:

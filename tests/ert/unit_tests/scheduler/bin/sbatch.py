@@ -7,7 +7,9 @@ This script partially mocks the Slurm provided utility sbatch:
 import argparse
 import os
 import random
+import shlex
 import subprocess
+import sys
 from pathlib import Path
 
 
@@ -20,6 +22,11 @@ def get_parser() -> argparse.ArgumentParser:
     parser.add_argument("--parsable", action="store_true")
     parser.add_argument("--output", type=str)
     parser.add_argument("--error", type=str)
+    parser.add_argument("--mem", type=str)
+    parser.add_argument("--nodelist", type=str)
+    parser.add_argument("--exclude", type=str)
+    parser.add_argument("--time", type=str)
+    parser.add_argument("--account", type=str)
     parser.add_argument("script", type=str)
     return parser
 
@@ -28,12 +35,12 @@ def main() -> None:
     args = get_parser().parse_args()
 
     jobid = random.randint(1, 2**15)
-    jobdir = Path(os.getenv("PYTEST_TMP_PATH", "."))
-    (jobdir / "mock_jobs").mkdir(parents=True, exist_ok=True)
-    (jobdir / "mock_jobs" / f"{jobid}.script").write_text(args.script, encoding="utf-8")
-    (jobdir / "mock_jobs" / f"{jobid}.name").write_text(args.job_name, encoding="utf-8")
-    env_file = jobdir / "mock_jobs" / f"{jobid}.env"
-
+    jobsdir = Path(os.getenv("PYTEST_TMP_PATH", ".")) / "mock_jobs"
+    jobdir = jobsdir / str(jobid)
+    jobdir.mkdir(parents=True, exist_ok=True)
+    (jobdir / "script").write_text(args.script, encoding="utf-8")
+    (jobdir / "name").write_text(args.job_name, encoding="utf-8")
+    env_file = jobdir / "env"
     if args.ntasks:
         env_file.write_text(
             f"export SLURM_JOB_CPUS_PER_NODE={args.ntasks}\n"
@@ -44,7 +51,7 @@ def main() -> None:
         env_file.touch()
 
     subprocess.Popen(
-        [str(Path(__file__).parent / "runner"), f"{jobdir}/mock_jobs/{jobid}"],
+        [str(Path(__file__).parent / "runner"), f"{jobdir}"],
         start_new_session=True,
         stdout=open(args.output, "w", encoding="utf-8"),  # noqa: SIM115
         stderr=open(args.error, "w", encoding="utf-8"),  # noqa: SIM115

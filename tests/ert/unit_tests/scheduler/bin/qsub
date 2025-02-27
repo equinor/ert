@@ -3,7 +3,14 @@ set -e
 
 name="STDIN"
 
-while getopts "N:r:l:o:e:" opt
+jobid="test${RANDOM}.localhost"
+jobdir="${PYTEST_TMP_PATH:-.}/mock_jobs/${jobid}"
+mkdir -p "${jobdir}"
+
+job_env_file="${jobdir}/env"
+touch $job_env_file
+
+while getopts "N:r:l:o:e:q:A:" opt
 do
     case "$opt" in
         N)
@@ -17,6 +24,12 @@ do
             ;;
         l)
             resource=$OPTARG
+            echo $resource >> $job_env_file
+            echo $resource >> "${jobdir}/resource_requirement"
+            ;;
+        q)
+            ;;
+        A)
             ;;
         *)
             echo "Unprocessed option ${opt}"
@@ -25,22 +38,16 @@ do
 done
 shift $((OPTIND-1))
 
-jobdir="${PYTEST_TMP_PATH:-.}/mock_jobs"
-jobid="test${RANDOM}.localhost"
-job_env_file="${PYTEST_TMP_PATH:-.}/mock_jobs/${jobid}.env"
 
-mkdir -p "${PYTEST_TMP_PATH:-.}/mock_jobs"
-cat <&0 > "${jobdir}/${jobid}.script"
-echo "$name" > "${PYTEST_TMP_PATH:-.}/mock_jobs/${jobid}.name"
-touch $job_env_file
+cat <&0 > "${jobdir}/script"
+echo "$name" > "${jobdir}/name"
 
-echo $resource >> $job_env_file
 num_cpu=$(echo $resource | sed 's/.*ncpus=\([[:digit:]]*\).*/\1/')
 
 [ -n $num_cpu ] && echo "export OMP_NUM_THREADS=$num_cpu" >> $job_env_file
 [ -n $num_cpu ] && echo "export NCPUS=$num_cpu" >> $job_env_file
 
-bash "$(dirname $0)/runner" "${jobdir}/${jobid}" >/dev/null 2>/dev/null &
+bash "$(dirname $0)/runner" "${jobdir}" >/dev/null 2>/dev/null &
 disown
 
 echo "$jobid"
