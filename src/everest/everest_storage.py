@@ -6,15 +6,12 @@ import os
 import traceback
 from collections.abc import Callable
 from dataclasses import dataclass, field
-from functools import partial
 from pathlib import Path
 from typing import Any, TypedDict, cast
 
 import numpy as np
 import polars as pl
-from ropt.enums import EventType
-from ropt.plan import BasicOptimizer, Event
-from ropt.results import FunctionResults, GradientResults
+from ropt.results import FunctionResults, GradientResults, Results
 
 from everest.config import EverestConfig
 from everest.strings import EVEREST
@@ -393,15 +390,6 @@ class EverestStorage:
         exp = _OptimizerOnlyExperiment(self._output_dir)
         self.data.read_from_experiment(exp)
 
-    def observe_optimizer(self, optimizer: BasicOptimizer) -> None:
-        optimizer.add_observer(
-            EventType.FINISHED_EVALUATION,
-            partial(self._on_batch_evaluation_finished),
-        )
-        optimizer.add_observer(
-            EventType.FINISHED_OPTIMIZER_STEP, self._on_optimization_finished
-        )
-
     def init(self, everest_config: EverestConfig) -> None:
         self.data.controls = pl.DataFrame(
             {
@@ -665,14 +653,16 @@ class EverestStorage:
             "perturbation_constraints": perturbation_constraints,
         }
 
-    def _on_batch_evaluation_finished(self, event: Event) -> None:
+    def on_batch_evaluation_finished(
+        self, optimizer_results: tuple[Results, ...]
+    ) -> None:
         logger.debug("Storing batch results dataframes")
 
         results: list[FunctionResults | GradientResults] = []
 
         best_value = -np.inf
         best_results = None
-        for item in event.data.get("results", []):
+        for item in optimizer_results:
             if isinstance(item, GradientResults):
                 results.append(item)
             if (
@@ -719,7 +709,7 @@ class EverestStorage:
                 )
             )
 
-    def _on_optimization_finished(self, _: Any) -> None:
+    def on_optimization_finished(self) -> None:
         logger.debug("Storing final results Everest storage")
 
         merit_values = self._get_merit_values()
