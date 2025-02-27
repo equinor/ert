@@ -17,14 +17,13 @@ from ert.ensemble_evaluator import (
 )
 from ert.resources import all_shell_script_fm_steps
 from everest.detached import (
-    OPT_PROGRESS_ID,
     ServerStatus,
     everserver_status,
     get_opt_status,
     start_monitor,
 )
 from everest.simulator import JOB_FAILURE, JOB_RUNNING, JOB_SUCCESS
-from everest.strings import EVEREST, SIM_PROGRESS_ID
+from everest.strings import EVEREST, OPT_PROGRESS_ID, SIM_PROGRESS_ID
 
 
 def handle_keyboard_interrupt(signal, frame, options):
