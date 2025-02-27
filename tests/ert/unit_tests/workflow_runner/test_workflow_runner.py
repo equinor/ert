@@ -1,9 +1,11 @@
 import os.path
-from unittest.mock import patch
+from pathlib import Path
+from unittest.mock import MagicMock, patch
 
 import pytest
 
-from ert.config import Workflow, WorkflowJob
+import ert
+from ert.config import ConfigWarning, Workflow, WorkflowJob
 from ert.substitutions import Substitutions
 from ert.workflow_runner import WorkflowJobRunner, WorkflowRunner
 from tests.ert.utils import wait_until
@@ -14,15 +16,15 @@ from .workflow_common import WorkflowCommon
 @pytest.mark.usefixtures("use_tmpdir")
 def test_read_internal_function():
     WorkflowCommon.createErtScriptsJob()
-
-    workflow_job = WorkflowJob.from_file(
-        name="SUBTRACT",
-        config_file="subtract_script_job",
-    )
+    with (
+        pytest.warns(ConfigWarning, match="Deprecated keywords, SCRIPT and INTERNAL"),
+    ):
+        workflow_job = WorkflowJob.from_file(
+            name="SUBTRACT",
+            config_file="subtract_script_job",
+        )
     assert workflow_job.name == "SUBTRACT"
-    assert workflow_job.internal
-
-    assert workflow_job.script.endswith("subtract_script.py")
+    assert workflow_job.ert_script.__name__ == "SubtractScript"
 
 
 @pytest.mark.usefixtures("use_tmpdir")
@@ -56,7 +58,7 @@ def test_run_external_job():
         config_file="dump_job",
     )
 
-    assert not job.internal
+    assert not job.ert_script
     argTypes = job.argument_types()
     assert argTypes == [str, str]
     runner = WorkflowJobRunner(job)
@@ -76,7 +78,7 @@ def test_error_handling_external_job():
         config_file="dump_failing_job",
     )
 
-    assert not job.internal
+    assert not job.ert_script
     job.argument_types()
     runner = WorkflowJobRunner(job)
     assert runner.run([]) is None
@@ -95,6 +97,30 @@ def test_run_internal_script():
     result = WorkflowJobRunner(job).run(["1", "2"])
 
     assert result == -1
+
+
+@pytest.mark.usefixtures("use_tmpdir")
+@pytest.mark.parametrize(
+    "config, expected_result",
+    [
+        (["INTERNAL FALSE"], "FALSE has no effect"),
+        (["SCRIPT scripy.py"], "SCRIPT has no effect"),
+        (["SCRIPT scripy.py", "INTERNAL TRUE"], "SCRIPT and INTERNAL"),
+    ],
+)
+def test_deprecated_keywords(config, expected_result, monkeypatch):
+    monkeypatch.setattr(ert.config.workflow_job, "ErtScript", MagicMock())
+    monkeypatch.setattr(
+        ert.config.workflow_job.WorkflowJob, "__post_init__", MagicMock()
+    )
+    with open("test_job", "w", encoding="utf-8") as f:
+        f.write("\n".join(config))
+    Path("script.py").touch()
+    with pytest.warns(ConfigWarning, match=expected_result):
+        WorkflowJob.from_file(
+            name="TEST",
+            config_file="test_job",
+        )
 
 
 @pytest.mark.usefixtures("use_tmpdir")

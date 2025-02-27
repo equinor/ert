@@ -44,7 +44,7 @@ class WorkflowJobRunner:
             elif self.__script is not None:
                 self.stop_on_fail = self.__script.stop_on_fail or False
 
-        elif not self.job.internal:
+        else:
             self.__script = ExternalErtScript(
                 self.job.executable,  # type: ignore
             )
@@ -52,9 +52,7 @@ class WorkflowJobRunner:
             if self.job.stop_on_fail is not None:
                 self.stop_on_fail = self.job.stop_on_fail
 
-        else:
-            raise UserWarning("Unknown script type!")
-        result = self.__script.initializeAndRun(  # type: ignore
+        result = self.__script.initializeAndRun(
             self.job.argument_types(), arguments, fixtures
         )
         self.__running = False
@@ -67,10 +65,8 @@ class WorkflowJobRunner:
 
     @property
     def execution_type(self) -> str:
-        if self.job.internal and self.job.script is not None:
+        if self.job.ert_script:
             return "internal python"
-        elif self.job.internal:
-            return "internal C"
         return "external"
 
     def cancel(self) -> None:

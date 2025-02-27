@@ -171,7 +171,7 @@ class EverestRunModel(BaseRunModel):
             config_dict, model_config, runpath_file, queue_config.preferred_num_cpu
         )
         ert_templates = read_templates(config_dict)
-        _, _, hooked_workflows = workflows_from_dict(config_dict, substitutions)  # type: ignore
+        _, _, hooked_workflows = workflows_from_dict(config_dict, substitutions)
 
         forward_model_steps, env_pr_fm_step = get_forward_model_steps(
             config_dict, substitutions

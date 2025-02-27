@@ -3,13 +3,13 @@ from __future__ import annotations
 import inspect
 from typing import TYPE_CHECKING, Any
 
-from ert import ErtScript
+from ert.config import ErtPlugin
 from ert.config.workflow_fixtures import WorkflowFixtures
 
 if TYPE_CHECKING:
     from PyQt6.QtWidgets import QWidget
 
-    from ert.config import ErtPlugin, WorkflowJob
+    from ert.config import WorkflowJob
     from ert.gui.ertnotifier import ErtNotifier
     from ert.storage import Ensemble, LocalStorage
 
@@ -25,8 +25,8 @@ class Plugin:
         self.__description = script.getDescription()
 
     def __loadPlugin(self) -> ErtPlugin:
-        script_obj = ErtScript.loadScriptFromFile(self.__workflow_job.script)  # type: ignore
-        script = script_obj()
+        script_obj = self.__workflow_job.ert_script
+        script = script_obj()  # type: ignore
         return script  # type: ignore
 
     def getName(self) -> str:

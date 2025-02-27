@@ -6,14 +6,12 @@ class WorkflowCommon:
     @staticmethod
     def createExternalDumpJob():
         with open("dump_job", "w", encoding="utf-8") as f:
-            f.write("INTERNAL FALSE\n")
             f.write("EXECUTABLE dump.py\n")
             f.write("MIN_ARG 2\n")
             f.write("MAX_ARG 2\n")
             f.write("ARG_TYPE 0 STRING\n")
 
         with open("dump_failing_job", "w", encoding="utf-8") as f:
-            f.write("INTERNAL FALSE\n")
             f.write("EXECUTABLE dump_failing.py\n")
 
         with open("dump.py", "w", encoding="utf-8") as f:
@@ -44,7 +42,6 @@ class WorkflowCommon:
     def createErtScriptsJob():
         with open("subtract_script.py", "w", encoding="utf-8") as f:
             f.write("from ert import ErtScript\n")
-            f.write("\n")
             f.write("class SubtractScript(ErtScript):\n")
             f.write("    def run(self, *argv):\n")
             f.write("        return argv[0] - argv[1]\n")
@@ -104,7 +101,6 @@ class WorkflowCommon:
             f.write("ARG_TYPE 1 INT\n")
 
         with open("external_wait_job", "w", encoding="utf-8") as f:
-            f.write("INTERNAL False\n")
             f.write("EXECUTABLE external_wait_job.sh\n")
             f.write("MIN_ARG 2\n")
             f.write("MAX_ARG 2\n")

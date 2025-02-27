@@ -41,13 +41,12 @@ def installable_workflow_jobs():
     return {"wf_job1": "/dummy/path/wf_job1", "wf_job2": "/dummy/path/wf_job2"}
 
 
-class Test(ErtScript):
-    def run(self):
-        pass
-
-
 @plugin(name="dummy")
 def legacy_ertscript_workflow(config):
+    class Test(ErtScript):
+        def run(self):
+            pass
+
     config.add_workflow(Test)
 
 
