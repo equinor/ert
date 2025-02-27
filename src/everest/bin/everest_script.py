@@ -141,7 +141,7 @@ async def run_everest(options: argparse.Namespace) -> None:
         logging_level = logging.DEBUG if options.debug else options.config.logging_level
         await start_server(options.config, logging_level)
         print("Waiting for server ...")
-        wait_for_server(options.config.output_dir, timeout=600)
+        wait_for_server(options.config.output_dir, timeout=600)  # 10 minutes
         print("Everest server found!")
 
         start_experiment(
