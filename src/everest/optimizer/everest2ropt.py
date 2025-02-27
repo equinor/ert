@@ -1,8 +1,10 @@
+import importlib
 import logging
 import os
 from typing import Any
 
 import numpy as np
+from pydantic import ValidationError
 from ropt.config.enopt import EnOptConfig
 from ropt.enums import PerturbationType, VariableType
 from ropt.transforms import OptModelTransforms
@@ -304,9 +306,9 @@ def _parse_environment(
         ropt_config["gradient"]["seed"] = random_seed
 
 
-def everest2ropt(
-    ever_config: EverestConfig, transforms: OptModelTransforms | None = None
-) -> EnOptConfig:
+def _everest2ropt(
+    ever_config: EverestConfig, transforms: OptModelTransforms | None
+) -> dict[str, Any]:
     """Generate a ropt configuration from an Everest one
 
     NOTE: This method is a work in progress. So far only the some of
@@ -342,4 +344,25 @@ def everest2ropt(
         ropt_config=ropt_config,
     )
 
-    return EnOptConfig.model_validate(ropt_config, context=transforms)
+    return ropt_config
+
+
+def everest2ropt(
+    ever_config: EverestConfig, transforms: OptModelTransforms | None = None
+) -> EnOptConfig:
+    ropt_dict = _everest2ropt(ever_config, transforms)
+
+    try:
+        enopt_config = EnOptConfig.model_validate(ropt_dict, context=transforms)
+    except ValidationError as exc:
+        ert_version = importlib.metadata.version("ert")
+        ropt_version = importlib.metadata.version("ropt")
+        msg = (
+            f"Validation error(s) in ropt:\n\n{exc}.\n\n"
+            "Check the everest installation, there may a be version mismatch.\n"
+            f"  (ERT: {ert_version}, ropt: {ropt_version})\n"
+            "If the everest installation is correct, please report this as a bug."
+        )
+        raise ValueError(msg) from exc
+
+    return enopt_config

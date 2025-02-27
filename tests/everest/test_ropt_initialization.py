@@ -5,9 +5,10 @@ import pytest
 from orjson import orjson
 from pydantic import ValidationError
 
+import everest.optimizer.everest2ropt as everest2ropt_patch
 from everest.config import EverestConfig
 from everest.config_file_loader import yaml_file_to_substituted_config_dict
-from everest.optimizer.everest2ropt import everest2ropt
+from everest.optimizer.everest2ropt import _everest2ropt, everest2ropt
 from everest.optimizer.opt_model_transforms import get_optimization_domain_transforms
 from tests.everest.utils import relpath
 
@@ -319,3 +320,15 @@ def test_everest2ropt_snapshot(case, snapshot):
         + "\n"
     )
     snapshot.assert_match(ropt_config_str, "ropt_config.json")
+
+
+def test_everest2ropt_validation_error(monkeypatch) -> None:
+    def _patched_everest2ropt(ever_config, _):
+        ropt_dict = _everest2ropt(ever_config, None)
+        ropt_dict["foo"] = "bar"
+        return ropt_dict
+
+    ever_config = EverestConfig.load_file(os.path.join(_CONFIG_DIR, _CONFIG_FILE))
+    monkeypatch.setattr(everest2ropt_patch, "_everest2ropt", _patched_everest2ropt)
+    with pytest.raises(ValueError, match=r"Validation error\(s\) in ropt"):
+        everest2ropt_patch.everest2ropt(ever_config)
