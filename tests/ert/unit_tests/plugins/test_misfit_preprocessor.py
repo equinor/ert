@@ -18,7 +18,7 @@ def test_that_misfit_preprocessor_raises():
         ),
         ErtPluginContext(),
     ):
-        ErtConfig.from_file("poly.ert")
+        ErtConfig.with_plugins().from_file("poly.ert")
 
 
 @pytest.mark.usefixtures("copy_poly_case")
@@ -35,4 +35,4 @@ def test_that_misfit_preprocessor_raises_with_config():
         ),
         ErtPluginContext(),
     ):
-        ErtConfig.from_file("poly.ert")
+        ErtConfig.with_plugins().from_file("poly.ert")

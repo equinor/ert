@@ -121,4 +121,4 @@ def test_export_runpath_bad_arguments(writing_setup):
 
 def test_export_runpath_job_is_loaded():
     pm = ErtPluginManager()
-    assert "EXPORT_RUNPATH" in pm.get_installable_workflow_jobs()
+    assert "EXPORT_RUNPATH" in pm.get_ertscript_workflows().get_workflows()

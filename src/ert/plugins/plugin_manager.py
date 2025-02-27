@@ -210,11 +210,7 @@ class ErtPluginManager(pluggy.PluginManager):
 
     def get_installable_workflow_jobs(self) -> dict[str, str]:
         config_workflow_jobs = self._get_config_workflow_jobs()
-        hooked_workflow_jobs = self.get_ertscript_workflows().get_workflows()
-        installable_workflow_jobs = self._merge_internal_jobs(
-            config_workflow_jobs, hooked_workflow_jobs
-        )
-        return installable_workflow_jobs
+        return config_workflow_jobs
 
     def get_site_config_content(self) -> str:
         site_config_lines = self._site_config_lines()
@@ -355,8 +351,8 @@ class ErtPluginManager(pluggy.PluginManager):
             workflow.name: {
                 "description": workflow.description,
                 "examples": workflow.examples,
-                "config_file": workflow.config_path,
                 "parser": workflow.parser,
+                "config_file": None,
                 "source_package": workflow.source_package,
                 "category": workflow.category,
             }

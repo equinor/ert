@@ -223,7 +223,7 @@ The configuration object and properties are as follows.
     :undoc-members:
 
 
-.. autoclass:: ert.plugins.workflow_config.WorkflowConfig
+.. autoclass:: ert.plugins.workflow_config.ErtScriptWorkflow
     :members:
     :undoc-members:
 

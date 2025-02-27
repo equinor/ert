@@ -1,8 +1,7 @@
 import json
 import logging
-import tempfile
 from functools import partial
-from unittest.mock import Mock, patch
+from unittest.mock import patch
 
 import pytest
 from opentelemetry.sdk.trace import TracerProvider
@@ -220,14 +219,11 @@ def test_job_documentation():
     assert pm.get_documentation_for_jobs() == expected
 
 
-def test_workflows_merge(monkeypatch, tmpdir):
+def test_workflows_merge(monkeypatch):
     expected_result = {
         "wf_job1": "/dummy/path/wf_job1",
         "wf_job2": "/dummy/path/wf_job2",
-        "some_func": str(tmpdir / "SOME_FUNC"),
     }
-    tempfile_mock = Mock(return_value=tmpdir)
-    monkeypatch.setattr(tempfile, "mkdtemp", tempfile_mock)
     pm = ErtPluginManager(plugins=[dummy_plugins])
     result = pm.get_installable_workflow_jobs()
     assert result == expected_result
