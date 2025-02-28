@@ -24,7 +24,6 @@ def main(argv):
     arg_parser.add_argument("--target-file", type=str)
     arg_parser.add_argument("--target", nargs=3, type=float)
     arg_parser.add_argument("--out", type=str)
-    arg_parser.add_argument("--scaling", nargs=4, type=float)
     arg_parser.add_argument("--realization", type=float)
     options, _ = arg_parser.parse_known_args(args=argv)
 
@@ -35,11 +34,6 @@ def main(argv):
     target = options.target if options.target else read_point(options.target_file)
     if len(target) != 3:
         raise RuntimeError("Failed parsing target")
-
-    if options.scaling is not None:
-        min_range, max_range, target_min, target_max = options.scaling
-        point = [(p - target_min) / (target_max - target_min) for p in point]
-        point = [p * (max_range - min_range) + min_range for p in point]
 
     value = compute_distance_squared(point, target)
     # If any realizations with an index > 0 are passed we make those incorrect

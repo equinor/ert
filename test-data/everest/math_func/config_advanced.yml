@@ -4,6 +4,7 @@ controls:
   - name: point
     max: 1.0
     min: -1.0
+    scaled_range: [-1, 1]
     initial_guess: 0.25
     perturbation_magnitude: 0.005
     type: generic_control

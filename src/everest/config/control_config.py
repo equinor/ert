@@ -1,3 +1,4 @@
+import logging
 from itertools import chain
 from typing import (
     Annotated,
@@ -25,6 +26,8 @@ from .validation_utils import (
 ControlVariable: TypeAlias = (
     list[ControlVariableConfig] | list[ControlVariableGuessListConfig]
 )
+
+logger = logging.getLogger(__name__)
 
 
 def _all_or_no_index(variables: ControlVariable) -> ControlVariable:
@@ -82,8 +85,8 @@ If `True`, all variables in this control group will be optimized. If set to `Fal
 the value of the variables will remain fixed.
 """,
     )
-    auto_scale: bool = Field(
-        default=False,
+    auto_scale: bool | None = Field(
+        default=None,
         description="""
 Can be set to true to re-scale controls from the range
 defined by [min, max] to the range defined by
@@ -179,11 +182,16 @@ sampler to use the same perturbations for each realization.
     def ropt_control_type(self) -> VariableType:
         return VariableType[self.control_type.upper()]
 
-    @property
-    def has_auto_scale(self) -> bool:
-        return self.auto_scale or any(
-            variable.auto_scale for variable in self.variables
-        )
+    @model_validator(mode="after")
+    def check_for_autoscale_flag(self) -> Self:
+        if self.auto_scale is not None:
+            logger.warning(
+                "auto_scale is deprecated for everest "
+                "controls, and is on by default. Please remove it"
+                "from the Everest config."
+            )
+
+        return self
 
     @model_validator(mode="after")
     def validate_variables(self) -> Self:

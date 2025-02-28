@@ -41,7 +41,6 @@ def test_everest2ropt_controls():
 def test_everest2ropt_controls_auto_scale():
     config = EverestConfig.load_file(os.path.join(_CONFIG_DIR, _CONFIG_FILE))
     controls = config.controls
-    controls[0].auto_scale = True
     controls[0].scaled_range = [0.3, 0.7]
     ropt_config = everest2ropt(
         config,
@@ -59,7 +58,7 @@ def test_everest2ropt_controls_auto_scale():
 def test_everest2ropt_variables_auto_scale():
     config = EverestConfig.load_file(os.path.join(_CONFIG_DIR, _CONFIG_FILE))
     controls = config.controls
-    controls[0].variables[1].auto_scale = True
+    controls[0].scaled_range = [0, 0.1]
     controls[0].variables[1].scaled_range = [0.3, 0.7]
     ropt_config = everest2ropt(
         config,
