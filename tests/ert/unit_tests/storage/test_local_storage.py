@@ -813,7 +813,7 @@ def test_that_all_parameters_and_gen_data_consolidation_works(tmp_path, snapshot
         response_keys = ["R1", "R2"]
 
         experiment = storage.create_experiment(
-            responses=[GenDataConfig(input_files=["R1", "R2"])],
+            responses=[GenDataConfig(keys=["R1", "R2"])],
             parameters=[ExtParamConfig(name="point", input_keys=["P1", "P2"])],
         )
 
