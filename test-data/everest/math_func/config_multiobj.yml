@@ -4,6 +4,7 @@ controls:
     type: generic_control
     min: -1.0
     max: 1.0
+    scaled_range: [-1, 1]
     initial_guess: 0
     perturbation_magnitude : 0.01
     variables:

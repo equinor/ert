@@ -29,7 +29,6 @@ class ControlScaler(VariableTransform):
         lower_bounds: Sequence[float],
         upper_bounds: Sequence[float],
         scaled_ranges: Sequence[tuple[float, float]],
-        auto_scales: Sequence[bool],
     ) -> None:
         """Transformation object to define a linear scaling.
 
@@ -41,18 +40,16 @@ class ControlScaler(VariableTransform):
              lower_bounds:  Lower bounds in the user domain.
              upper_bounds:  Upper bounds in the user domain.
              scaled_ranges: target ranges in the optimizer domain.
-             auto_scales:   Flag indicating if scaling is required.
         """
         self._scaling_factors = [
-            (ub - lb) / (sr[1] - sr[0]) if au else 1.0
-            for au, lb, ub, sr in zip(
-                auto_scales, lower_bounds, upper_bounds, scaled_ranges, strict=True
+            (ub - lb) / (sr[1] - sr[0])
+            for lb, ub, sr in zip(
+                lower_bounds, upper_bounds, scaled_ranges, strict=True
             )
         ]
         self._offsets = [
-            lb - sr[0] * sc if au else 0.0
-            for au, lb, sc, sr in zip(
-                auto_scales,
+            lb - sr[0] * sc
+            for lb, sc, sr in zip(
                 lower_bounds,
                 self._scaling_factors,
                 scaled_ranges,
@@ -381,10 +378,7 @@ def get_optimization_domain_transforms(
                 flattened_controls.lower_bounds,
                 flattened_controls.upper_bounds,
                 flattened_controls.scaled_ranges,
-                flattened_controls.auto_scales,
             )
-            if any(flattened_controls.auto_scales)
-            else None
         ),
         objectives=ObjectiveScaler(
             [

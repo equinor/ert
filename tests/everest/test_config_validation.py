@@ -1023,7 +1023,7 @@ def test_load_file_with_errors(copy_math_func_test_data_to_tmp, capsys):
         in captured.err
     )
 
-    assert "line: 16, column: 5" in captured.err
+    assert "line: 17, column: 5" in captured.err
     assert "Extra inputs are not permitted (type=extra_forbidden)" in captured.err
 
 

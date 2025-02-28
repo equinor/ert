@@ -337,9 +337,6 @@ class EverestRunModel(BaseRunModel):
             self._everest_config.output_constraints,
             realization_weights,
         )
-        # TODO: The transforms are currently needed in the forward model
-        # evaluator, but that may be removed later.
-        self._domain_transforms = transforms
 
         # If required, initialize auto-scaling:
         assert isinstance(transforms.objectives, ObjectiveScaler)
@@ -350,12 +347,6 @@ class EverestRunModel(BaseRunModel):
             transforms.nonlinear_constraints
             and transforms.nonlinear_constraints.has_auto_scale
         ):
-            # Currently the forward models expect scaled variables, so the
-            # variable transform must be applied.
-            # TODO: when the forward models expect unscaled variables, remove.
-            if transforms.variables:
-                control_variables = transforms.variables.to_optimizer(control_variables)
-
             # Run the forward model once to find the objective/constraint values
             # to compute the scales. This will add an ensemble/batch in the
             # storage that is not part of the optimization run. However, the
@@ -632,15 +623,6 @@ class EverestRunModel(BaseRunModel):
     def _forward_model_evaluator(
         self, control_values: NDArray[np.float64], evaluator_context: EvaluatorContext
     ) -> EvaluatorResult:
-        # Currently the forward models expect scaled variables, so the
-        # variable transform must be applied.
-        # TODO: when the forward models expect unscaled variables, remove. Also
-        # the self._transforms attribute can then be removed.
-        if self._domain_transforms is not None and self._domain_transforms.variables:
-            control_values = self._domain_transforms.variables.to_optimizer(
-                control_values
-            )
-
         control_indices = list(range(control_values.shape[0]))
         model_realizations = [
             self._everest_config.model.realizations[evaluator_context.realizations[idx]]
