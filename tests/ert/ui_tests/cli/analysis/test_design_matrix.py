@@ -11,7 +11,11 @@ import pytest
 
 from ert.cli.main import ErtCliError
 from ert.config import ErtConfig
-from ert.mode_definitions import ENSEMBLE_EXPERIMENT_MODE, ES_MDA_MODE
+from ert.mode_definitions import (
+    ENSEMBLE_EXPERIMENT_MODE,
+    ENSEMBLE_SMOOTHER_MODE,
+    ES_MDA_MODE,
+)
 from ert.storage import open_storage
 from tests.ert.ui_tests.cli.run_cli import run_cli
 
@@ -304,7 +308,14 @@ def test_run_poly_example_with_multiple_design_matrix_instances():
 
 
 @pytest.mark.usefixtures("copy_poly_case")
-def test_design_matrix_on_esmda():
+@pytest.mark.parametrize(
+    "experiment_mode, ensemble_name, iterations",
+    [
+        (ES_MDA_MODE, "default_", 4),
+        (ENSEMBLE_SMOOTHER_MODE, "iter-", 2),
+    ],
+)
+def test_design_matrix_on_esmda(experiment_mode, ensemble_name, iterations):
     design_path = "design_matrix.xlsx"
     reals = range(10)
     values = [random.uniform(0, 2) for _ in reals]
@@ -375,7 +386,7 @@ def test_design_matrix_on_esmda():
         f.write("c UNIFORM 0 5")
 
     run_cli(
-        ES_MDA_MODE,
+        experiment_mode,
         "--disable-monitoring",
         "poly.ert",
         "--experiment-name",
@@ -385,8 +396,8 @@ def test_design_matrix_on_esmda():
     coeffs_a_previous = None
     with open_storage(storage_path) as storage:
         experiment = storage.get_experiment_by_name("test-experiment")
-        for i in range(4):
-            ensemble = experiment.get_ensemble_by_name(f"default_{i}")
+        for i in range(iterations):
+            ensemble = experiment.get_ensemble_by_name(f"{ensemble_name}{i}")
 
             # coeffs_a should be different in all realizations
             coeffs_a = ensemble.load_parameters("COEFFS_A")["values"].values.flatten()
