@@ -903,7 +903,6 @@ def test_that_all_parameters_and_gen_data_consolidation_works(tmp_path, snapshot
         snapshot.assert_match(snapshot_str, "all_batches.json")
 
         assert pl.concat(ensemble_datas).equals(experiment_data)
-        assert True
 
 
 @dataclass
