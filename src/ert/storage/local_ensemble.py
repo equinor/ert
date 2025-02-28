@@ -1139,8 +1139,11 @@ class LocalEnsemble(BaseMode):
             on="response_key", values="values"
         )
 
-        params_and_responses = responses_wide.join(
-            params_wide, on="realization"
+        # If responses are missing for some realizations, this _left_ join will
+        # put null (polars) which maps to nan when doing .to_numpy() into the
+        # response columns for those realizations
+        params_and_responses = params_wide.join(
+            responses_wide, on="realization", how="left"
         ).with_columns(pl.lit(self.iteration).alias("batch"))
 
         assert self.everest_realization_info is not None
