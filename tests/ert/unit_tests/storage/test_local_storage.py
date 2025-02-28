@@ -807,7 +807,42 @@ def test_that_saving_invalid_everest_realization_info_raises_error(
             ensemble.save_everest_realization_info(bad_realization_info)
 
 
-def test_that_all_parameters_and_gen_data_consolidation_works(tmp_path, snapshot):
+_ensemble_realization_infos = [
+    [
+        {"model_realization": 0, "perturbation": -1},
+        {"model_realization": 5, "perturbation": -1},
+    ],
+    [
+        {"model_realization": 0, "perturbation": 0},
+        {"model_realization": 0, "perturbation": 1},
+        {"model_realization": 0, "perturbation": 2},
+        {"model_realization": 5, "perturbation": 0},
+        {"model_realization": 5, "perturbation": 1},
+        {"model_realization": 5, "perturbation": 2},
+    ],
+    [
+        {"model_realization": 0, "perturbation": -1},
+        {"model_realization": 5, "perturbation": -1},
+        {"model_realization": 0, "perturbation": 0},
+        {"model_realization": 0, "perturbation": 1},
+        {"model_realization": 0, "perturbation": 2},
+        {"model_realization": 5, "perturbation": 0},
+        {"model_realization": 5, "perturbation": 1},
+        {"model_realization": 5, "perturbation": 2},
+    ],
+]
+
+
+@pytest.mark.parametrize(
+    "ensemble_realization_infos, failed_realizations_per_batch",
+    [
+        (_ensemble_realization_infos, {}),
+        (_ensemble_realization_infos, {0: {0}, 1: {3}, 2: {0, 1, 4}}),
+    ],
+)
+def test_that_all_parameters_and_gen_data_consolidation_works(
+    ensemble_realization_infos, failed_realizations_per_batch, tmp_path, snapshot
+):
     with open_storage(tmp_path, mode="w") as storage:
         param_keys = ["P1", "P2"]
         response_keys = ["R1", "R2"]
@@ -817,33 +852,9 @@ def test_that_all_parameters_and_gen_data_consolidation_works(tmp_path, snapshot
             parameters=[ExtParamConfig(name="point", input_keys=["P1", "P2"])],
         )
 
-        ensemble_realization_infos = [
-            [
-                {"model_realization": 0, "perturbation": -1},
-                {"model_realization": 5, "perturbation": -1},
-            ],
-            [
-                {"model_realization": 0, "perturbation": 0},
-                {"model_realization": 0, "perturbation": 1},
-                {"model_realization": 0, "perturbation": 2},
-                {"model_realization": 5, "perturbation": 0},
-                {"model_realization": 5, "perturbation": 1},
-                {"model_realization": 5, "perturbation": 2},
-            ],
-            [
-                {"model_realization": 0, "perturbation": -1},
-                {"model_realization": 5, "perturbation": -1},
-                {"model_realization": 0, "perturbation": 0},
-                {"model_realization": 0, "perturbation": 1},
-                {"model_realization": 0, "perturbation": 2},
-                {"model_realization": 5, "perturbation": 0},
-                {"model_realization": 5, "perturbation": 1},
-                {"model_realization": 5, "perturbation": 2},
-            ],
-        ]
-
         ensemble_datas = []
         for batch, realization_info in enumerate(ensemble_realization_infos):
+            failed_realizations = failed_realizations_per_batch.get(batch, {})
             num_realizations = len(realization_info)
             everest_realization_info = {i: v for i, v in enumerate(realization_info)}  # noqa: C416
             ensemble = storage.create_ensemble(
@@ -864,17 +875,24 @@ def test_that_all_parameters_and_gen_data_consolidation_works(tmp_path, snapshot
                 )
                 ensemble.save_parameters("point", realization, param_data)
 
-                response_data = pl.DataFrame(
-                    {
-                        "response_key": response_keys,
-                        "values": np.array([realization * 10] * len(response_keys))
-                        + (batch / 10),
-                        "index": 0,
-                        "report_step": 0,
-                    }
-                )
+                if realization in failed_realizations:
+                    ensemble.set_failure(
+                        realization,
+                        RealizationStorageState.LOAD_FAILURE,
+                        "Failed to load responses",
+                    )
+                else:
+                    response_data = pl.DataFrame(
+                        {
+                            "response_key": response_keys,
+                            "values": np.array([realization * 10] * len(response_keys))
+                            + (batch / 10),
+                            "index": 0,
+                            "report_step": 0,
+                        }
+                    )
 
-                ensemble.save_response("gen_data", response_data, realization)
+                    ensemble.save_response("gen_data", response_data, realization)
 
             ensemble_data = ensemble.all_parameters_and_gen_data
             snapshot_str = (
