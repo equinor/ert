@@ -22,6 +22,7 @@ from PyQt6.QtWidgets import (
 
 from ert import LibresFacade
 from ert.config import ErtConfig
+from ert.config.workflow_job import ErtScriptWorkflow
 from ert.gui.about_dialog import AboutDialog
 from ert.gui.ertnotifier import ErtNotifier
 from ert.gui.find_ert_info import find_ert_info
@@ -272,7 +273,11 @@ class ErtMainWindow(QMainWindow):
 
         plugin_handler = PluginHandler(
             self.notifier,
-            [wfj for wfj in self.ert_config.workflow_jobs.values() if wfj.is_plugin()],
+            [
+                wfj
+                for wfj in self.ert_config.workflow_jobs.values()
+                if isinstance(wfj, ErtScriptWorkflow) and wfj.is_plugin()
+            ],
             self,
         )
         self.plugins_tool = PluginsTool(plugin_handler, self.notifier, self.ert_config)
