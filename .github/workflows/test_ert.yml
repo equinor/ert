@@ -16,6 +16,7 @@ env:
   ECL_SKIP_SIGNAL: 1
   ERT_PYTEST_ARGS: '-m ${{ inputs.select-string }} --cov=ert --cov=everest --cov=_ert --cov-report=xml:cov1.xml --junit-xml=junit.xml -o junit_family=legacy -v --durations=25 --benchmark-disable'
   UV_FROZEN: true
+  UV_PYTHON_PREFERENCE: only-managed
 
 jobs:
   tests-ert:
@@ -33,16 +34,17 @@ jobs:
       with:
         os: ${{ inputs.os }}
 
-    - uses: actions/setup-python@v5
-      id: setup_python
-      with:
-        python-version: ${{ inputs.python-version }}
-
     - name: Install uv
       uses: astral-sh/setup-uv@v5
       with:
         enable-cache: true
         python-version: ${{ inputs.python-version }}
+
+    - name: Set up Python
+      run: |
+        uv python list
+        uv python install
+        uv python list
 
     - name: Install ert
       run: |
