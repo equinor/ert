@@ -37,7 +37,7 @@ class WorkflowConfigs:
         :return: Instantiated workflow config.
         """
         workflow = ErtScriptWorkflow(
-            name=name,
+            name=name or ert_script.__name__,
             ert_script=ert_script,
             description=description,
             examples=examples,

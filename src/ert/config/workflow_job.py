@@ -142,7 +142,6 @@ class ErtScriptWorkflow(_WorkflowJob):
     category: str = "other"
 
     def __post_init__(self) -> None:
-        self.name = self.name or self.ert_script.__name__
         if not isinstance(self.ert_script, type):
             raise ErtScriptLoadFailure(
                 f"Failed to load {self.name}, ert_script is instance, expected "
