@@ -36,6 +36,7 @@ from .forward_model_step import (
     ForwardModelStepPlugin,
     ForwardModelStepValidationError,
 )
+from .gen_kw_config import GenKwConfig
 from .model_config import ModelConfig
 from .observation_vector import ObsVector
 from .observations import EnkfObs
@@ -838,6 +839,8 @@ class ErtConfig:
             ]
             for group_name, config in ensemble_config.parameter_configs.items():
                 overlapping = []
+                if not isinstance(config, GenKwConfig):
+                    continue
                 for transform_definition in config.transform_function_definitions:
                     if transform_definition.name in dm_params:
                         overlapping.append(transform_definition.name)
