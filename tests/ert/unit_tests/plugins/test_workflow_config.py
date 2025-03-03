@@ -7,6 +7,7 @@ import ert
 import ert.config.workflow_job
 from ert import ErtScript
 from ert.plugins import workflow_config
+from ert.plugins.workflow_config import WorkflowConfigs
 
 
 def test_workflow_config_duplicate_log_message(caplog, monkeypatch):
@@ -32,9 +33,8 @@ def test_workflow_config_duplicate_log_message(caplog, monkeypatch):
 def test_workflow_config_init_name(monkeypatch, name, expected):
     mock_func = ErtScript
     mock_func.__name__ = "default_name"
-
-    monkeypatch.setattr(ert.config.workflow_job.WorkflowJob, "__post_init__", Mock())
-    workflow = ert.config.workflow_job.ErtScriptWorkflow(mock_func, name=name)
+    configs = WorkflowConfigs()
+    workflow = configs.add_workflow(ert_script=mock_func, name=name)
 
     assert workflow.name == expected
     assert workflow.ert_script == mock_func
