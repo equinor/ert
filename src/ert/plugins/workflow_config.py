@@ -1,6 +1,8 @@
 from __future__ import annotations
 
 import logging
+from argparse import ArgumentParser
+from collections.abc import Callable
 
 from ..config.ert_script import ErtScript
 from ..config.workflow_job import ErtScriptWorkflow
@@ -17,15 +19,31 @@ class WorkflowConfigs:
         self._workflows: list[ErtScriptWorkflow] = []
 
     def add_workflow(
-        self, ert_script: type[ErtScript], name: str | None = None
+        self,
+        ert_script: type[ErtScript],
+        name: str = "",
+        description: str = "",
+        examples: str | None = None,
+        parser: Callable[[], ArgumentParser] | None = None,
+        category: str = "other",
     ) -> ErtScriptWorkflow:
         """
-
+        :param category:
+        :param parser:
+        :param examples:
+        :param description:
         :param ert_script: class which inherits from ErtScript
         :param name: Optional name for workflow (default is name of class)
         :return: Instantiated workflow config.
         """
-        workflow = ErtScriptWorkflow(name=name, ert_script=ert_script)
+        workflow = ErtScriptWorkflow(
+            name=name,
+            ert_script=ert_script,
+            description=description,
+            examples=examples,
+            parser=parser,
+            category=category,
+        )
         self._workflows.append(workflow)
         return workflow
 
