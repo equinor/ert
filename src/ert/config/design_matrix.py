@@ -8,7 +8,11 @@ import numpy as np
 import pandas as pd
 from pandas.api.types import is_integer_dtype
 
-from ert.config.gen_kw_config import GenKwConfig, TransformFunctionDefinition
+from ert.config.gen_kw_config import (
+    GenKwConfig,
+    ParameterSource,
+    TransformFunctionDefinition,
+)
 
 from ._option_dict import option_dict
 from .parsing import ConfigValidationError, ErrorInfo
@@ -211,7 +215,7 @@ class DesignMatrix:
             )
         parameter_configuration = GenKwConfig(
             name=DESIGN_MATRIX_GROUP,
-            forward_init=False,
+            source=ParameterSource.design_matrix,
             template_file=None,
             output_file=None,
             transform_function_definitions=transform_function_definitions,
