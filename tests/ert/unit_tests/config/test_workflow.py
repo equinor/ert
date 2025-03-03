@@ -40,7 +40,6 @@ def test_that_substitution_happens_in_workflow():
         min_args=None,
         max_args=None,
         arg_types=[],
-        executable="echo",
     )
     wf = Workflow.from_file(
         "workflow",
@@ -56,7 +55,6 @@ def get_workflow_job(name):
         min_args=None,
         max_args=None,
         arg_types=[],
-        executable=None,
     )
 
 
@@ -190,7 +188,6 @@ def test_args_validation(config, expectation, min_args, max_args):
                     min_args=min_args,
                     max_args=max_args,
                     arg_types=[],
-                    executable=None,
                 ),
             },
         )

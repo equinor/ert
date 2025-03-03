@@ -3,13 +3,14 @@ from textwrap import dedent
 
 import pytest
 
-from ert.config import ConfigValidationError, ConfigWarning, ErtConfig, WorkflowJob
+from ert.config import ConfigValidationError, ConfigWarning, ErtConfig
+from ert.config.workflow_job import workflow_job_from_file
 from ert.plugins import ErtPluginContext
 
 
 def test_reading_non_existent_workflow_job_raises_config_error():
     with pytest.raises(ConfigValidationError, match="No such file or directory"):
-        WorkflowJob.from_file("/tmp/does_not_exist")
+        workflow_job_from_file("/tmp/does_not_exist")
 
 
 def test_that_ert_warns_on_duplicate_workflow_jobs(tmp_path):
@@ -49,7 +50,7 @@ def test_stop_on_fail_is_parsed_external():
         f.write("MIN_ARG 1\n")
         f.write("STOP_ON_FAIL True\n")
 
-    job_internal = WorkflowJob.from_file(
+    job_internal = workflow_job_from_file(
         name="FAIL",
         config_file="fail_job",
     )

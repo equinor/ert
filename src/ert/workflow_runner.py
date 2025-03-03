@@ -6,6 +6,7 @@ from concurrent.futures import Future
 from typing import Any, Self
 
 from ert.config import Workflow, WorkflowJob
+from ert.config.workflow_job import ErtScriptWorkflow
 from ert.plugins import ErtScript, ExternalErtScript, WorkflowFixtures
 
 
@@ -37,7 +38,7 @@ class WorkflowJobRunner:
                 f"{self.job.max_args} arguments, {len(arguments)} given."
             )
 
-        if self.job.ert_script is not None:
+        if isinstance(self.job, ErtScriptWorkflow):
             self.__script = self.job.ert_script()
             if self.job.stop_on_fail is not None:
                 self.stop_on_fail = self.job.stop_on_fail
@@ -65,7 +66,7 @@ class WorkflowJobRunner:
 
     @property
     def execution_type(self) -> str:
-        if self.job.ert_script:
+        if isinstance(self.job, ErtScriptWorkflow):
             return "internal python"
         return "external"
 

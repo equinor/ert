@@ -3,6 +3,7 @@ from __future__ import annotations
 import inspect
 from typing import TYPE_CHECKING, Any
 
+from ert.config.workflow_job import ErtScriptWorkflow
 from ert.plugins import ErtPlugin, WorkflowFixtures
 
 if TYPE_CHECKING:
@@ -14,7 +15,7 @@ if TYPE_CHECKING:
 
 
 class Plugin:
-    def __init__(self, notifier: ErtNotifier, workflow_job: WorkflowJob):
+    def __init__(self, notifier: ErtNotifier, workflow_job: ErtScriptWorkflow):
         self.__notifier = notifier
         self.__workflow_job = workflow_job
         self.__parent_window: QWidget | None = None
@@ -25,8 +26,9 @@ class Plugin:
 
     def __loadPlugin(self) -> ErtPlugin:
         script_obj = self.__workflow_job.ert_script
-        script = script_obj()  # type: ignore
-        return script  # type: ignore
+        script = script_obj()
+        assert isinstance(script, ErtPlugin)
+        return script
 
     def getName(self) -> str:
         return self.__name

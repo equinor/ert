@@ -9,6 +9,7 @@ from pathlib import Path
 import pytest
 
 from ert.config import ErtConfig
+from ert.config.workflow_job import ExecutableWorkflow
 from ert.plugins import ErtPluginContext
 from tests.ert.utils import SOURCE_DIR
 
@@ -586,7 +587,7 @@ def test_shell_script_fmstep_availability(minimal_case):
 
     wf_shell_jobs = {}
     for wf_name, wf in ert_config.workflow_jobs.items():
-        if wf.executable is not None and "shell_scripts" in wf.executable:
+        if isinstance(wf, ExecutableWorkflow) and "shell_scripts" in wf.executable:
             wf_shell_jobs[wf_name] = Path(wf.executable).resolve()
 
     assert fm_shell_jobs == wf_shell_jobs
@@ -609,7 +610,7 @@ def test_shell_script_fmstep_names(minimal_case):
         ert_config = ErtConfig.with_plugins().from_file("config.ert")
     found_jobs = set()
     for wf_name, wf in ert_config.workflow_jobs.items():
-        if wf.executable is not None and "shell_scripts" in wf.executable:
+        if isinstance(wf, ExecutableWorkflow) and "shell_scripts" in wf.executable:
             assert wf_name in shell_job_names
             found_jobs.add(wf_name)
 
