@@ -4,7 +4,7 @@ import logging
 import os
 from argparse import ArgumentParser
 from collections.abc import Callable
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import TypeAlias
 
 from ..plugins.ert_plugin import ErtPlugin
@@ -24,39 +24,73 @@ logger = logging.getLogger(__name__)
 ContentTypes: TypeAlias = type[int] | type[bool] | type[float] | type[str]
 
 
+class ErtScriptLoadFailure(ValueError):
+    pass
+
+
 def workflow_job_parser(file: str) -> ConfigDict:
     schema = init_workflow_job_schema()
     return parse(file, schema=schema)
 
 
-class ErtScriptLoadFailure(ValueError):
-    pass
+def workflow_job_from_file(config_file: str, name: str | None = None) -> _WorkflowJob:
+    if not name:
+        name = os.path.basename(config_file)
+
+    content_dict = workflow_job_parser(config_file)
+    arg_types_list = _WorkflowJob._make_arg_types_list(content_dict)
+    min_args = content_dict.get("MIN_ARG")  # type: ignore
+    max_args = content_dict.get("MAX_ARG")  # type: ignore
+    script = str(content_dict.get("SCRIPT")) if "SCRIPT" in content_dict else None  # type: ignore
+    internal = (
+        bool(content_dict.get("INTERNAL")) if "INTERNAL" in content_dict else None  # type: ignore
+    )
+    if internal is False:
+        ConfigWarning.deprecation_warn(
+            "INTERNAL FALSE has no effect and can be safely removed",
+            content_dict["INTERNAL"],  # type: ignore
+        )
+    if script and not internal:
+        ConfigWarning.deprecation_warn(
+            "SCRIPT has no effect and can be safely removed",
+            content_dict["SCRIPT"],  # type: ignore
+        )
+    if script is not None and internal:
+        msg = f"Deprecated keywords, SCRIPT and INTERNAL, for {name}, loading script {script}"
+        logger.warning(msg)
+        ConfigWarning.deprecation_warn(msg, content_dict["SCRIPT"])  # type: ignore
+        try:
+            ert_script = ErtScript.loadScriptFromFile(script)
+        # Bare Exception here as we have no control
+        # of exceptions in the loaded ErtScript
+        except Exception as err:
+            raise ErtScriptLoadFailure(f"Failed to load {name}: {err}") from err
+        return ErtScriptWorkflow(
+            ert_script=ert_script,
+            name=name,
+            min_args=min_args,
+            max_args=max_args,
+            arg_types=arg_types_list,
+            stop_on_fail=content_dict.get("STOP_ON_FAIL"),  # type: ignore
+        )
+    else:
+        return ExecutableWorkflow(
+            name=name,
+            min_args=min_args,
+            max_args=max_args,
+            arg_types=arg_types_list,
+            executable=content_dict.get("EXECUTABLE"),  # type: ignore
+            stop_on_fail=content_dict.get("STOP_ON_FAIL"),  # type: ignore
+        )
 
 
 @dataclass
-class WorkflowJob:
+class _WorkflowJob:
     name: str
-    min_args: int | None
-    max_args: int | None
-    arg_types: list[SchemaItemType]
-    executable: str | None
-    ert_script: type[ErtScript] | None = None
+    min_args: int | None = None
+    max_args: int | None = None
+    arg_types: list[SchemaItemType] = field(default_factory=list)
     stop_on_fail: bool | None = None  # If not None, overrides in-file specification
-
-    def __post_init__(self) -> None:
-        match self.ert_script:
-            case None:
-                pass
-            case ert_script if not isinstance(ert_script, type):
-                raise ErtScriptLoadFailure(
-                    f"Failed to load {self.name}, ert_script is instance, expected "
-                    f"type, got {ert_script}"
-                )
-            case ert_script if not issubclass(ert_script, ErtScript):
-                raise ErtScriptLoadFailure(
-                    f"Failed to load {self.name}, script had wrong "
-                    f"type, expected ErtScript, got {ert_script}"
-                )
 
     @staticmethod
     def _make_arg_types_list(content_dict: ConfigDict) -> list[SchemaItemType]:
@@ -72,54 +106,6 @@ class WorkflowJob:
             specified_arg_types, specified_min_args, specified_max_args
         )
 
-    @classmethod
-    def from_file(cls, config_file: str, name: str | None = None) -> WorkflowJob:
-        if not name:
-            name = os.path.basename(config_file)
-
-        content_dict = workflow_job_parser(config_file)
-        arg_types_list = cls._make_arg_types_list(content_dict)
-        script = str(content_dict.get("SCRIPT")) if "SCRIPT" in content_dict else None  # type: ignore
-        internal = (
-            bool(content_dict.get("INTERNAL")) if "INTERNAL" in content_dict else None  # type: ignore
-        )
-        ert_script = None
-        if internal is False:
-            ConfigWarning.deprecation_warn(
-                "INTERNAL FALSE has no effect and can be safely removed",
-                content_dict["INTERNAL"],  # type: ignore
-            )
-        if script and not internal:
-            ConfigWarning.deprecation_warn(
-                "SCRIPT has no effect and can be safely removed",
-                content_dict["SCRIPT"],  # type: ignore
-            )
-        elif script is not None and internal:
-            msg = f"Deprecated keywords, SCRIPT and INTERNAL, for {name}, loading script {script}"
-            logger.warning(msg)
-            ConfigWarning.deprecation_warn(msg, content_dict["SCRIPT"])  # type: ignore
-            try:
-                ert_script = ErtScript.loadScriptFromFile(script)
-            # Bare Exception here as we have no control
-            # of exceptions in the loaded ErtScript
-            except Exception as err:
-                raise ErtScriptLoadFailure(f"Failed to load {name}: {err}") from err
-
-        return cls(
-            name=name,
-            min_args=content_dict.get("MIN_ARG"),  # type: ignore
-            max_args=content_dict.get("MAX_ARG"),  # type: ignore
-            arg_types=arg_types_list,
-            executable=content_dict.get("EXECUTABLE"),  # type: ignore
-            stop_on_fail=content_dict.get("STOP_ON_FAIL"),  # type: ignore
-            ert_script=ert_script,  # type: ignore
-        )
-
-    def is_plugin(self) -> bool:
-        if self.ert_script is not None:
-            return issubclass(self.ert_script, ErtPlugin)
-        return False
-
     def argument_types(self) -> list[ContentTypes]:
         def content_to_type(c: SchemaItemType | None) -> ContentTypes:
             if c == SchemaItemType.BOOL:
@@ -134,73 +120,48 @@ class WorkflowJob:
 
         return list(map(content_to_type, self.arg_types))
 
+    def is_plugin(self) -> bool:
+        return False
 
-class ErtScriptWorkflow(WorkflowJob):
+
+@dataclass
+class ExecutableWorkflow(_WorkflowJob):
+    executable: str | None = None
+
+
+@dataclass
+class ErtScriptWorkflow(_WorkflowJob):
     """
     Single workflow configuration object
     """
 
-    def __init__(
-        self, ertscript_class: type[ErtScript], name: str | None = None
-    ) -> None:
+    ert_script: type[ErtScript] = None  # type: ignore
+    description: str = ""
+    examples: str | None = None
+    parser: Callable[[], ArgumentParser] | None = None
+    category: str = "other"
+
+    def __post_init__(self) -> None:
         """
         :param ertscript_class: Class inheriting from ErtScript
         :param name: Optional name for workflow, default is class name
         """
-        self.source_package = self._get_source_package(ertscript_class)
-        self._description = ertscript_class.__doc__ or ""
-        self._examples: str | None = None
-        self._parser: Callable[[], ArgumentParser] | None = None
-        self._category = "other"
-        super().__init__(
-            name=self._get_func_name(ertscript_class, name),
-            ert_script=ertscript_class,
-            min_args=None,
-            max_args=None,
-            arg_types=[],
-            executable=None,
+        self.name = self._get_func_name(self.ert_script, self.name)
+        self.source_package = self._get_source_package(self.ert_script)
+        self.description = (
+            self.ert_script.__doc__ or self.description
         )
 
-    @property
-    def description(self) -> str:
-        """
-        A string of valid rst, will be added to the documentation
-        """
-        return self._description
-
-    @description.setter
-    def description(self, description: str) -> None:
-        self._description = description
-
-    @property
-    def examples(self) -> str | None:
-        """
-        A string of valid rst, will be added to the documentation
-        """
-        return self._examples
-
-    @examples.setter
-    def examples(self, examples: str | None) -> None:
-        self._examples = examples
-
-    @property
-    def parser(self) -> Callable[[], ArgumentParser] | None:
-        return self._parser
-
-    @parser.setter
-    def parser(self, parser: Callable[[], ArgumentParser] | None) -> None:
-        self._parser = parser
-
-    @property
-    def category(self) -> str:
-        """
-        A dot separated string
-        """
-        return self._category
-
-    @category.setter
-    def category(self, category: str) -> None:
-        self._category = category
+        if not isinstance(self.ert_script, type):
+            raise ErtScriptLoadFailure(
+                f"Failed to load {self.name}, ert_script is instance, expected "
+                f"type, got {self.ert_script}"
+            )
+        elif not issubclass(self.ert_script, ErtScript):
+            raise ErtScriptLoadFailure(
+                f"Failed to load {self.name}, script had wrong "
+                f"type, expected ErtScript, got {self.ert_script}"
+            )
 
     @staticmethod
     def _get_func_name(func: type[ErtScript], name: str | None) -> str:
@@ -210,3 +171,6 @@ class ErtScriptWorkflow(WorkflowJob):
     def _get_source_package(module: type[ErtScript]) -> str:
         base, _, _ = module.__module__.partition(".")
         return base
+
+    def is_plugin(self) -> bool:
+        return issubclass(self.ert_script, ErtPlugin)
