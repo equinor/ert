@@ -142,16 +142,7 @@ class ErtScriptWorkflow(_WorkflowJob):
     category: str = "other"
 
     def __post_init__(self) -> None:
-        """
-        :param ertscript_class: Class inheriting from ErtScript
-        :param name: Optional name for workflow, default is class name
-        """
-        self.name = self._get_func_name(self.ert_script, self.name)
-        self.source_package = self._get_source_package(self.ert_script)
-        self.description = (
-            self.ert_script.__doc__ or self.description
-        )
-
+        self.name = self.name or self.ert_script.__name__
         if not isinstance(self.ert_script, type):
             raise ErtScriptLoadFailure(
                 f"Failed to load {self.name}, ert_script is instance, expected "
@@ -163,14 +154,10 @@ class ErtScriptWorkflow(_WorkflowJob):
                 f"type, expected ErtScript, got {self.ert_script}"
             )
 
-    @staticmethod
-    def _get_func_name(func: type[ErtScript], name: str | None) -> str:
-        return name or func.__name__
-
-    @staticmethod
-    def _get_source_package(module: type[ErtScript]) -> str:
-        base, _, _ = module.__module__.partition(".")
-        return base
+        self.source_package = self.ert_script.__module__.partition(".")[2]
+        self.description = (
+            self.description or self.ert_script.__doc__  # type: ignore
+        )
 
     def is_plugin(self) -> bool:
         return issubclass(self.ert_script, ErtPlugin)
