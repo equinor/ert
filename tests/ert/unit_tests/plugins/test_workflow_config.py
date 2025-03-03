@@ -5,6 +5,7 @@ import pytest
 
 import ert
 import ert.config.workflow_job
+from ert import ErtScript
 from ert.plugins import workflow_config
 
 
@@ -29,7 +30,7 @@ def test_workflow_config_duplicate_log_message(caplog, monkeypatch):
     "name, expected", [(None, "default_name"), ("some_name", "some_name")]
 )
 def test_workflow_config_init_name(monkeypatch, name, expected):
-    mock_func = Mock
+    mock_func = ErtScript
     mock_func.__name__ = "default_name"
 
     monkeypatch.setattr(ert.config.workflow_job.WorkflowJob, "__post_init__", Mock())

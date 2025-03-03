@@ -7,7 +7,6 @@ import sys
 import traceback
 import warnings
 from abc import abstractmethod
-from collections.abc import Callable
 from types import MappingProxyType, ModuleType
 from typing import TYPE_CHECKING, Any, TypeAlias
 
@@ -193,7 +192,7 @@ class ErtScript:
     @staticmethod
     def loadScriptFromFile(
         path: str,
-    ) -> Callable[[], ErtScript]:
+    ) -> type[ErtScript]:
         module_name = f"ErtScriptModule_{ErtScript.__module_count}"
         ErtScript.__module_count += 1
 
@@ -214,7 +213,7 @@ class ErtScript:
     @staticmethod
     def __findErtScriptImplementations(
         module: ModuleType,
-    ) -> Callable[[], ErtScript]:
+    ) -> type[ErtScript]:
         result = []
         for _, member in inspect.getmembers(
             module,

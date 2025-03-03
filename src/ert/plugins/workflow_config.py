@@ -25,7 +25,7 @@ class WorkflowConfigs:
         :param name: Optional name for workflow (default is name of class)
         :return: Instantiated workflow config.
         """
-        workflow = ErtScriptWorkflow(ert_script, name)
+        workflow = ErtScriptWorkflow(name=name, ert_script=ert_script)
         self._workflows.append(workflow)
         return workflow
 

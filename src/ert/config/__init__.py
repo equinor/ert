@@ -35,7 +35,7 @@ from .summary_config import SummaryConfig
 from .summary_observation import SummaryObservation
 from .surface_config import SurfaceConfig
 from .workflow import Workflow
-from .workflow_job import WorkflowJob
+from .workflow_job import _WorkflowJob
 
 __all__ = [
     "DESIGN_MATRIX_GROUP",
@@ -77,7 +77,7 @@ __all__ = [
     "UpdateSettings",
     "WarningInfo",
     "Workflow",
-    "WorkflowJob",
+    "_WorkflowJob",
     "capture_validation",
     "field_transform",
     "lint_file",

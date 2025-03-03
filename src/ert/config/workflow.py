@@ -11,21 +11,21 @@ from .parsing.types import Defines
 if TYPE_CHECKING:
     from ert.substitutions import Substitutions
 
-    from .workflow_job import WorkflowJob
+    from .workflow_job import _WorkflowJob
 
 
 @dataclass
 class Workflow:
     src_file: str
-    cmd_list: list[tuple[WorkflowJob, Any]]
+    cmd_list: list[tuple[_WorkflowJob, Any]]
 
     def __len__(self) -> int:
         return len(self.cmd_list)
 
-    def __getitem__(self, index: int) -> tuple[WorkflowJob, Any]:
+    def __getitem__(self, index: int) -> tuple[_WorkflowJob, Any]:
         return self.cmd_list[index]
 
-    def __iter__(self) -> Iterator[tuple[WorkflowJob, Any]]:
+    def __iter__(self) -> Iterator[tuple[_WorkflowJob, Any]]:
         return iter(self.cmd_list)
 
     @classmethod
@@ -33,8 +33,8 @@ class Workflow:
         cls,
         src_file: str,
         context: Defines,
-        job_dict: dict[str, WorkflowJob],
-    ) -> list[tuple[WorkflowJob, Any]]:
+        job_dict: dict[str, _WorkflowJob],
+    ) -> list[tuple[_WorkflowJob, Any]]:
         schema = init_workflow_schema()
         config_dict = parse(src_file, schema, pre_defines=context)
 
@@ -89,7 +89,7 @@ class Workflow:
         cls,
         src_file: str,
         context: Substitutions | None,
-        job_dict: dict[str, WorkflowJob],
+        job_dict: dict[str, _WorkflowJob],
     ) -> Workflow:
         cmd_list = cls._parse_command_list(
             src_file=src_file,
