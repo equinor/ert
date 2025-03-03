@@ -19,6 +19,8 @@ from hypothesis import given
 from hypothesis import strategies as st
 
 from ert.config import QueueConfig
+from ert.config.queue_config import _parse_realization_memory_str
+from ert.mode_definitions import ENSEMBLE_EXPERIMENT_MODE
 from ert.scheduler import LsfDriver, create_driver
 from ert.scheduler.driver import SIGNAL_OFFSET
 from ert.scheduler.lsf_driver import (
@@ -39,6 +41,7 @@ from ert.scheduler.lsf_driver import (
     parse_bjobs,
     parse_bjobs_exec_hosts,
 )
+from tests.ert.ui_tests.cli.run_cli import run_cli
 from tests.ert.utils import poll, wait_until
 
 from .conftest import mock_bin
@@ -50,6 +53,19 @@ def nonempty_string_without_whitespace():
     return st.text(
         st.characters(whitelist_categories=("Lu", "Ll", "Nd", "P")), min_size=1
     )
+
+
+@pytest.fixture
+def intercept_bsub_input_cmd(tmp_path):
+    intercept_bsub_input_cmd = tmp_path / "capture_bsub_args"
+    intercept_bsub_input_cmd.write_text(
+        '#!/bin/sh\necho "$0 $@" > "captured_bsub_args"\nbsub "$@"',
+        encoding="utf-8",
+    )
+    intercept_bsub_input_cmd.chmod(
+        intercept_bsub_input_cmd.stat().st_mode | stat.S_IEXEC
+    )
+    return intercept_bsub_input_cmd
 
 
 @pytest.fixture
@@ -1135,32 +1151,6 @@ async def test_lsf_info_file_in_runpath(explicit_runpath, tmp_path, job_name):
     ).keys() == {"job_id"}
 
 
-@pytest.mark.integration_test
-async def test_submit_to_named_queue(tmp_path, caplog, job_name):
-    """If the environment variable _ERT_TEST_ALTERNATIVE_QUEUE is defined
-    a job will be attempted submitted to that queue.
-
-    As Ert does not keep track of which queue a job is executed in, we can only
-    test for success for the job."""
-    os.chdir(tmp_path)
-    driver = LsfDriver(queue_name=os.getenv("_ERT_TESTS_ALTERNATIVE_QUEUE"))
-    await driver.submit(0, "sh", "-c", f"echo test > {tmp_path}/test", name=job_name)
-    await poll(driver, {0})
-
-    assert (tmp_path / "test").read_text(encoding="utf-8") == "test\n"
-
-
-@pytest.mark.integration_test
-@pytest.mark.usefixtures("use_tmpdir")
-async def test_submit_with_resource_requirement(job_name):
-    resource_requirement = "select[cs && x86_64Linux]"
-    driver = LsfDriver(resource_requirement=resource_requirement)
-    await driver.submit(0, "sh", "-c", "echo test>test", name=job_name)
-    await poll(driver, {0})
-
-    assert Path("test").read_text(encoding="utf-8") == "test\n"
-
-
 @pytest.mark.usefixtures("capturing_bsub")
 async def test_submit_with_resource_requirement_with_bsub_capture():
     driver = LsfDriver(resource_requirement="select[cs && x86_64Linux]")
@@ -1211,38 +1201,6 @@ async def test_submit_with_num_cpu_with_bsub_capture():
     driver = LsfDriver()
     await driver.submit(0, "sleep", num_cpu=4)
     assert "-n 4" in Path("captured_bsub_args").read_text(encoding="utf-8")
-
-
-@pytest.mark.integration_test
-@pytest.mark.usefixtures("use_tmpdir")
-async def test_submit_with_realization_memory(pytestconfig, job_name):
-    if not pytestconfig.getoption("lsf"):
-        pytest.skip("Mocked LSF driver does not provide bhist")
-
-    realization_memory_bytes = 1024 * 1024
-    driver = LsfDriver()
-    await driver.submit(
-        0,
-        "sh",
-        "-c",
-        "echo test>test",
-        name=job_name,
-        realization_memory=realization_memory_bytes,
-    )
-    job_id = driver._iens2jobid[0]
-    await poll(driver, {0})
-
-    process = await asyncio.create_subprocess_exec(
-        "bhist",
-        "-l",
-        job_id,
-        stdout=asyncio.subprocess.PIPE,
-        stderr=asyncio.subprocess.PIPE,
-    )
-    stdout, _ = await process.communicate()
-    assert "rusage[mem=1]" in stdout.decode(encoding="utf-8")
-
-    assert Path("test").read_text(encoding="utf-8") == "test\n"
 
 
 @pytest.mark.integration_test
@@ -1364,3 +1322,107 @@ async def test_that_kill_before_submit_is_finished_works(tmp_path, monkeypatch, 
     # a controlled fashion:
     if (tmp_path / "trap_handle_installed").exists():
         wait_until((tmp_path / "was_killed").exists, timeout=4)
+
+
+@pytest.mark.integration_test
+@pytest.mark.usefixtures("copy_poly_case")
+def test_queue_options_are_propagated_from_config_to_bsub(intercept_bsub_input_cmd):
+    """
+    This end to end test is here to verify that queue_options are correctly
+    propagated all the way from ert config to the cluster.
+    """
+    expected_queue = "foo_bar_queue"
+    expected_resource_string = "location=foo_bar_location"
+    expected_realization_memory = "9GB"
+    expected_project_code = "foo_bar_project"
+    expected_excluded_hosts = "foo_host,bar_host"
+    expected_num_cpu = 98
+
+    with open("poly.ert", "a", encoding="utf-8") as f:
+        f.write(
+            dedent(
+                f"""\
+                NUM_CPU {expected_num_cpu}
+                REALIZATION_MEMORY {expected_realization_memory}
+                QUEUE_SYSTEM LSF
+                QUEUE_OPTION LSF BSUB_CMD {intercept_bsub_input_cmd.absolute()}
+                QUEUE_OPTION LSF LSF_QUEUE {expected_queue}
+                QUEUE_OPTION LSF LSF_RESOURCE {expected_resource_string}
+                QUEUE_OPTION LSF PROJECT_CODE {expected_project_code}
+                QUEUE_OPTION LSF EXCLUDE_HOST {expected_excluded_hosts}
+                NUM_REALIZATIONS 1
+                """
+            )
+        )
+    run_cli(ENSEMBLE_EXPERIMENT_MODE, "--disable-monitoring", "poly.ert")
+    complete_command_invocation = Path("captured_bsub_args").read_text(encoding="utf-8")
+    assert f"-q {expected_queue}" in complete_command_invocation
+    assert f"-P {expected_project_code}" in complete_command_invocation
+    assert f"-n {expected_num_cpu!s}" in complete_command_invocation
+
+    assert expected_resource_string in complete_command_invocation
+    assert (
+        f"rusage[mem={_parse_realization_memory_str(expected_realization_memory) // 1024**2}]"
+        in complete_command_invocation
+    )
+    assert (
+        f"""select[{" && ".join(f"hname!='{host_name}'" for host_name in expected_excluded_hosts.split(","))}]"""
+        in complete_command_invocation
+    )
+
+
+@pytest.mark.integration_test
+@pytest.mark.usefixtures("use_tmpdir")
+@pytest.mark.parametrize(
+    "driver_submit_option,expected_in_cmd",
+    [
+        ({"realization_memory": 50 * 1024 * 1024}, "-R rusage[mem=50]"),
+        ({"num_cpu": 2}, "-n 2"),
+    ],
+)
+async def test_submit_works_with_submit_options(
+    driver_submit_option, expected_in_cmd, job_name, intercept_bsub_input_cmd
+):
+    driver = LsfDriver(bsub_cmd=intercept_bsub_input_cmd)
+    await driver.submit(
+        0,
+        "sh",
+        "-c",
+        "echo foo",
+        name=job_name,
+        **driver_submit_option,
+    )
+    complete_command_invocation = Path("captured_bsub_args").read_text(encoding="utf-8")
+    assert expected_in_cmd in complete_command_invocation
+
+
+@pytest.mark.integration_test
+@pytest.mark.usefixtures("use_tmpdir")
+@pytest.mark.parametrize(
+    "driver_options,expected_in_cmd",
+    [
+        (
+            {"queue_name": os.getenv("_ERT_TESTS_ALTERNATIVE_QUEUE", "foo_bar_queue")},
+            f"-q {os.getenv('_ERT_TESTS_ALTERNATIVE_QUEUE', 'foo_bar_queue')}",
+        ),
+        ({"project_code": "project_foo"}, "-P project_foo"),
+        ({"exclude_hosts": "foo,bar"}, "-R select[hname!='foo' && hname!='bar']"),
+        (
+            {"resource_requirement": "select[cs && x86_64Linux]"},
+            "-R select[cs && x86_64Linux]",
+        ),
+    ],
+)
+async def test_submit_works_with_queue_options(
+    driver_options, expected_in_cmd, job_name, intercept_bsub_input_cmd
+):
+    driver = LsfDriver(bsub_cmd=intercept_bsub_input_cmd, **driver_options)
+    await driver.submit(
+        0,
+        "sh",
+        "-c",
+        "echo foo",
+        name=job_name,
+    )
+    complete_command_invocation = Path("captured_bsub_args").read_text(encoding="utf-8")
+    assert expected_in_cmd in complete_command_invocation

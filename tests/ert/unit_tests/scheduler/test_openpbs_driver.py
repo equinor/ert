@@ -14,6 +14,7 @@ from hypothesis import given
 from hypothesis import strategies as st
 
 from ert.cli.main import ErtCliError
+from ert.config.queue_config import _parse_realization_memory_str
 from ert.mode_definitions import ENSEMBLE_EXPERIMENT_MODE
 from ert.scheduler.openpbs_driver import (
     JOB_STATES,
@@ -105,6 +106,19 @@ words = st.text(
     max_size=8,
     alphabet=st.characters(min_codepoint=ord("A"), max_codepoint=ord("Z")),
 )
+
+
+@pytest.fixture
+def intercept_qsub_input_cmd(tmp_path):
+    intercept_qsub_input_cmd = tmp_path / "capture_qsub_args"
+    intercept_qsub_input_cmd.write_text(
+        '#!/bin/sh\necho "$0 $@" > "captured_qsub_args"\nqsub "$@"',
+        encoding="utf-8",
+    )
+    intercept_qsub_input_cmd.chmod(
+        intercept_qsub_input_cmd.stat().st_mode | stat.S_IEXEC
+    )
+    return intercept_qsub_input_cmd
 
 
 @pytest.fixture
@@ -606,3 +620,102 @@ def test_openpbs_driver_with_poly_example_failing_poll_fails_ert_and_propagates_
             "poly.ert",
         )
     assert "RuntimeError: Status polling failed" in caplog.text
+
+
+@pytest.mark.integration_test
+@pytest.mark.usefixtures("copy_poly_case")
+def test_queue_options_are_propagated_from_config_to_qsub():
+    """
+    This end to end test is here to verify that queue_options are correctly
+    propagated all the way from ert config to the cluster.
+    """
+    expected_queue = "foo_bar_queue"
+    expected_realization_memory = "9GB"
+    expected_project_code = "foo_bar_project"
+    expected_cluster_label = "foo_bar_cluster"
+    expected_num_cpu = 98
+
+    capture_qsub_cmd = Path("capture_qsub_args")
+    capture_qsub_cmd.write_text(
+        '#!/bin/sh\necho "$0 $@" > "captured_qsub_args"\nqsub "$@"',
+        encoding="utf-8",
+    )
+    capture_qsub_cmd.chmod(capture_qsub_cmd.stat().st_mode | stat.S_IEXEC)
+    with open("poly.ert", "a", encoding="utf-8") as f:
+        f.write(
+            dedent(
+                f"""\
+                NUM_CPU {expected_num_cpu}
+                REALIZATION_MEMORY {expected_realization_memory}
+                QUEUE_SYSTEM TORQUE
+                QUEUE_OPTION TORQUE QSUB_CMD {capture_qsub_cmd.absolute()}
+                QUEUE_OPTION TORQUE QUEUE {expected_queue}
+                QUEUE_OPTION TORQUE CLUSTER_LABEL {expected_cluster_label}
+                QUEUE_OPTION TORQUE PROJECT_CODE {expected_project_code}
+                NUM_REALIZATIONS 1
+                """
+            )
+        )
+    run_cli(ENSEMBLE_EXPERIMENT_MODE, "--disable-monitoring", "poly.ert")
+    complete_command_invocation = Path("captured_qsub_args").read_text(encoding="utf-8")
+
+    assert f"-q {expected_queue}" in complete_command_invocation
+    assert f"-A {expected_project_code}" in complete_command_invocation
+    assert (
+        f"-l ncpus={expected_num_cpu}:mem={_parse_realization_memory_str(expected_realization_memory) // 1024**2}mb"
+        in complete_command_invocation
+    )
+    assert f"-l {expected_cluster_label}" in complete_command_invocation
+
+
+@pytest.mark.integration_test
+@pytest.mark.usefixtures("use_tmpdir")
+@pytest.mark.parametrize(
+    "driver_submit_option,expected_in_cmd",
+    [
+        ({"realization_memory": 50 * 1024 * 1024}, "-l mem=50mb"),
+        ({"num_cpu": 2}, "-l ncpus=2"),
+    ],
+)
+async def test_submit_works_with_submit_options(
+    driver_submit_option, expected_in_cmd, job_name, intercept_qsub_input_cmd
+):
+    driver = OpenPBSDriver(qsub_cmd=intercept_qsub_input_cmd)
+    await driver.submit(
+        0,
+        "sh",
+        "-c",
+        "echo foo",
+        name=job_name,
+        **driver_submit_option,
+    )
+    complete_command_invocation = Path("captured_qsub_args").read_text(encoding="utf-8")
+    assert expected_in_cmd in complete_command_invocation
+
+
+@pytest.mark.integration_test
+@pytest.mark.usefixtures("use_tmpdir")
+@pytest.mark.parametrize(
+    "driver_options,expected_in_cmd",
+    [
+        (
+            {"queue_name": os.getenv("_ERT_TESTS_DEFAULT_QUEUE_NAME", "foo_bar_queue")},
+            f"-q {os.getenv('_ERT_TESTS_DEFAULT_QUEUE_NAME', 'foo_bar_queue')}",
+        ),
+        ({"project_code": "project_foo"}, "-A project_foo"),
+        ({"cluster_label": "foo_cluster"}, "-l foo_cluster"),
+    ],
+)
+async def test_submit_works_with_queue_options(
+    driver_options, expected_in_cmd, job_name, intercept_qsub_input_cmd
+):
+    driver = OpenPBSDriver(qsub_cmd=intercept_qsub_input_cmd, **driver_options)
+    await driver.submit(
+        0,
+        "sh",
+        "-c",
+        "echo foo",
+        name=job_name,
+    )
+    complete_command_invocation = Path("captured_qsub_args").read_text(encoding="utf-8")
+    assert expected_in_cmd in complete_command_invocation

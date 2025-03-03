@@ -4,7 +4,7 @@ job=$1  # NB: Includes full path
 function handle_sigterm {
     # LSF uses (128 + SIGNAL) as the returncode
     # SIGTERM=15
-    echo "143" > "${job}.returncode"
+    echo "143" > "${job}/returncode"
     for grandchild in $(pgrep -P $child_pid); do
         kill -s SIGTERM $grandchild
     done
@@ -14,17 +14,17 @@ function handle_sigterm {
 
 trap handle_sigterm SIGTERM
 
-echo "$$" > "${job}.pid"
-source "${job}.env"
-bash "${job}.script" > "${job}.stdout" 2> "${job}.stderr"  &
+echo "$$" > "${job}/pid"
+source "${job}/env"
+bash "${job}/script" > "${job}/stdout" 2> "${job}/stderr"  &
 child_pid=$!
 wait $child_pid
 
-echo "$?" > "${job}.returncode"
+echo "$?" > "${job}/returncode"
 echo "Sender: Mocked LSF system <$USER@$(hostname -s)"
 echo "Subject: Job $job:"
 echo "[..skipped in mock..]"
 echo "The output (if any) follows:"
-cat ${job}.stdout
+cat ${job}/stdout
 
-cat ${job}.stderr >&2
+cat ${job}/stderr >&2
