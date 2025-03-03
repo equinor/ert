@@ -27,7 +27,6 @@ from everest.config import EverestConfig, ServerConfig
 from everest.everest_storage import EverestStorage
 from everest.strings import (
     EVEREST_SERVER_CONFIG,
-    OPT_PROGRESS_ENDPOINT,
     SIM_PROGRESS_ID,
     START_EXPERIMENT_ENDPOINT,
     STOP_ENDPOINT,
@@ -260,8 +259,6 @@ def start_monitor(
     Monitoring stops when the server stops answering.
     """
     url, cert, auth = server_context
-    opt_endpoint = "/".join([url, OPT_PROGRESS_ENDPOINT])
-    opt_status: dict[str, Any] = {}
     stop = False
 
     ssl_context = ssl.create_default_context()
@@ -290,9 +287,6 @@ def start_monitor(
                         print(event.msg)
                     callback({SIM_PROGRESS_ID: event})
                 # Check the optimization status
-                new_opt_status = _query_server(cert, auth, opt_endpoint)
-                if new_opt_status != opt_status:
-                    opt_status = new_opt_status
                 time.sleep(polling_interval)
     except:
         logging.debug(traceback.format_exc())
