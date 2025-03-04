@@ -27,7 +27,6 @@ from ert.config.parsing.context_values import ContextBoolEncoder
 from ert.plugins import ErtPluginManager
 from ert.substitutions import Substitutions
 
-from ..plugins.workflow_config import ErtScriptWorkflow
 from .analysis_config import AnalysisConfig
 from .ensemble_config import EnsembleConfig
 from .forward_model_step import (
@@ -71,7 +70,7 @@ from .parsing.observations_parser import (
 )
 from .queue_config import QueueConfig
 from .workflow import Workflow
-from .workflow_job import ErtScriptLoadFailure, WorkflowJob
+from .workflow_job import ErtScriptLoadFailure, ErtScriptWorkflow, WorkflowJob
 
 logger = logging.getLogger(__name__)
 
