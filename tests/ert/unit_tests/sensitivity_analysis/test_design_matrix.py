@@ -81,10 +81,10 @@ def test_merge_multiple_occurrences(
         assert all(param in design_params for param in ("a", "b", "c", "d"))
         assert design_matrix_1.active_realizations == [True, True, True]
         df = design_matrix_1.design_matrix_df
-        np.testing.assert_equal(df[DESIGN_MATRIX_GROUP, "a"], np.array([1, 2, 3]))
-        np.testing.assert_equal(df[DESIGN_MATRIX_GROUP, "b"], np.array([0, 2, 0]))
-        np.testing.assert_equal(df[DESIGN_MATRIX_GROUP, "c"], np.array([1, 2, 3]))
-        np.testing.assert_equal(df[DESIGN_MATRIX_GROUP, "d"], np.array([0, 2, 0]))
+        np.testing.assert_equal(df["a"], np.array([1, 2, 3]))
+        np.testing.assert_equal(df["b"], np.array([0, 2, 0]))
+        np.testing.assert_equal(df["c"], np.array([1, 2, 3]))
+        np.testing.assert_equal(df["d"], np.array([0, 2, 0]))
 
 
 @pytest.mark.parametrize(
@@ -375,9 +375,9 @@ def test_default_values_used(tmp_path):
         )
     design_matrix = DesignMatrix(design_path, "DesignSheet01", "DefaultValues")
     df = design_matrix.design_matrix_df
-    np.testing.assert_equal(df[DESIGN_MATRIX_GROUP, "one"], np.array([1, 1, 1, 1]))
-    np.testing.assert_equal(df[DESIGN_MATRIX_GROUP, "b"], np.array([0, 2, 0, 1]))
+    np.testing.assert_equal(df["one"], np.array([1, 1, 1, 1]))
+    np.testing.assert_equal(df["b"], np.array([0, 2, 0, 1]))
     np.testing.assert_equal(
-        df[DESIGN_MATRIX_GROUP, "d"],
+        df["d"],
         np.array(["case_name", "case_name", "case_name", "case_name"]),
     )

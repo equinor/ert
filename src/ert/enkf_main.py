@@ -164,7 +164,7 @@ def save_design_matrix_to_ensemble(
 ) -> None:
     assert not design_matrix_df.empty
     for realization_nr in active_realizations:
-        row = design_matrix_df.loc[realization_nr][DESIGN_MATRIX_GROUP]
+        row = design_matrix_df.loc[realization_nr]
         ds = xr.Dataset(
             {
                 "values": ("names", list(row.values)),
