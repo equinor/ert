@@ -37,7 +37,7 @@ class EclError(RuntimeError):
                     f"{ecl_case_dir}/{ecl_case_starts_with}*.PRT"
                 ):
                     if ecl_output_has_license_error(
-                        Path(prt_file).read_text(encoding="utf-8")
+                        Path(prt_file).read_text(encoding="utf-8", errors="ignore")
                     ):
                         return True
         return False
@@ -328,7 +328,7 @@ class RunReservoirSimulator:
 
         errors = None
         bugs = None
-        with open(report_file, encoding="utf-8") as filehandle:
+        with open(report_file, encoding="utf-8", errors="ignore") as filehandle:
             for line in filehandle.readlines():
                 error_match = re.match(error_regexp, line)
                 if error_match:
@@ -351,7 +351,7 @@ class RunReservoirSimulator:
         error_e300_regexp = re.compile(error_pattern_e300, re.MULTILINE)
         slave_started_regexp = re.compile(slave_started_pattern, re.MULTILINE)
 
-        content = self.prt_path.read_text(encoding="utf-8")
+        content = self.prt_path.read_text(encoding="utf-8", errors="ignore")
 
         for regexp in [error_e100_regexp, error_e300_regexp, slave_started_regexp]:
             offset = 0
@@ -371,7 +371,7 @@ class RunReservoirSimulator:
 def tail_textfile(file_path: Path, num_chars: int) -> str:
     if not file_path.exists():
         return f"No output file {file_path}"
-    with open(file_path, encoding="utf-8") as file:
+    with open(file_path, encoding="utf-8", errors="ignore") as file:
         file.seek(0, 2)
         file_end_position = file.tell()
         seek_position = max(0, file_end_position - num_chars)
