@@ -75,11 +75,11 @@ class DesignMatrixPanel(QDialog):
     def get_design_matrix_button(
         active_realizations_field: StringBox, design_matrix: "DesignMatrix"
     ) -> QHBoxLayout:
-        active_realizations_field.setText(
-            ActiveRange(design_matrix.active_realizations).rangestring
-        )
         active_realizations_field.setValidator(
             RangeSubsetStringArgument(ActiveRange(design_matrix.active_realizations))
+        )
+        active_realizations_field.model.setValueFromMask(  # type: ignore
+            design_matrix.active_realizations
         )
         show_dm_param_button = QPushButton("Show parameters")
         show_dm_param_button.setObjectName("show-dm-parameters")
