@@ -159,6 +159,35 @@ def test_await_completed_summary_file_will_wait_for_slow_smry():
     thread.join()
 
 
+@pytest.mark.usefixtures("use_tmpdir")
+@pytest.mark.parametrize("error_count", [0, 1])
+def test_encoding_errors_in_prt_are_ignored(monkeypatch, error_count):
+    eclrun_bin = Path("bin/eclrun")
+    eclrun_bin.parent.mkdir()
+    eclrun_bin.write_text("#!/bin/sh\necho $@ > eclrun_args\nexit 0", encoding="utf-8")
+    eclrun_bin.chmod(eclrun_bin.stat().st_mode | stat.S_IEXEC)
+    monkeypatch.setenv("PATH", f"bin:{os.environ['PATH']}")
+
+    Path("EIGHTCELLS.DATA").touch()
+    Path("EIGHTCELLS.PRT").write_text(
+        f"æøå\nErrors {error_count}\nBugs 0", encoding="latin1"
+    )
+
+    with pytest.raises(SystemExit) as excinfo:
+        run_reservoirsimulator.run_reservoirsimulator(
+            [
+                "eclipse",
+                "EIGHTCELLS.DATA",
+                "--version",
+                "2019.3",
+            ]
+        )
+        raise SystemExit(0)
+
+    # when error_count is 0 or 1, this will work:
+    assert excinfo.value.code == -error_count
+
+
 @pytest.mark.parametrize("simulator", ["eclipse", "e300", "flow"])
 @pytest.mark.usefixtures("use_tmpdir")
 def test_runner_will_forward_unknown_arguments(monkeypatch, simulator):
