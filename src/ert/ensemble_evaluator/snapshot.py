@@ -6,6 +6,7 @@ from collections.abc import Mapping
 from datetime import datetime
 from typing import Any, TypeVar, cast, get_args
 
+import orjson
 from PyQt6.QtGui import QColor
 from typing_extensions import TypedDict
 
@@ -104,11 +105,11 @@ class EnsembleSnapshot:
         self._realization_snapshots: defaultdict[
             RealId,
             RealizationSnapshot,
-        ] = defaultdict(RealizationSnapshot)  # type: ignore
+        ] = defaultdict(RealizationSnapshot)
 
         self._fm_step_snapshots: defaultdict[
             tuple[RealId, FmStepId], FMStepSnapshot
-        ] = defaultdict(FMStepSnapshot)  # type: ignore
+        ] = defaultdict(FMStepSnapshot)
 
         self._ensemble_state: str | None = None
         # TODO not sure about possible values at this point, as GUI hijacks this one as
@@ -124,6 +125,16 @@ class EnsembleSnapshot:
         if not isinstance(other, EnsembleSnapshot):
             return NotImplemented
         return self.to_dict() == other.to_dict()
+
+    def deep_copy(self) -> EnsembleSnapshot:
+        new = EnsembleSnapshot()
+        new._realization_snapshots = orjson.loads(
+            orjson.dumps(self._realization_snapshots)
+        )
+        for k, v in self._fm_step_snapshots.items():
+            new._fm_step_snapshots[k] = orjson.loads(orjson.dumps(v))
+        new._ensemble_state = self._ensemble_state
+        return new
 
     @classmethod
     def from_nested_dict(cls, source: Mapping[Any, Any]) -> EnsembleSnapshot:

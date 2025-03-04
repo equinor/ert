@@ -511,7 +511,7 @@ class BaseRunModel(ABC):
                     realization_count=realization_count,
                     status_count=status,
                     iteration=iteration,
-                    snapshot=copy.deepcopy(snapshot),
+                    snapshot=snapshot.deep_copy(),
                 )
             )
         elif type(event) is EESnapshotUpdate:
@@ -535,7 +535,7 @@ class BaseRunModel(ABC):
                     realization_count=realization_count,
                     status_count=status,
                     iteration=iteration,
-                    snapshot=copy.deepcopy(snapshot),
+                    snapshot=snapshot.deep_copy(),
                 )
             )
 
