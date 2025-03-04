@@ -769,7 +769,9 @@ class ErtConfig:
                         cls.ACTIVATE_SCRIPT,
                     ]
                 )
-            queue_config = QueueConfig.from_dict(config_dict)
+            queue_config = QueueConfig.from_dict(
+                config_dict, substitutions=substitutions
+            )
 
             substitutions["<NUM_CPU>"] = str(queue_config.preferred_num_cpu)
 

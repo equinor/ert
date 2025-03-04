@@ -11,6 +11,7 @@ from typing import Annotated, Any, Literal, no_type_check
 import pydantic
 from pydantic.dataclasses import dataclass
 
+from ..substitutions import Substitutions
 from ._get_num_cpu import get_num_cpu_from_data_file
 from .parsing import (
     ConfigDict,
@@ -269,7 +270,11 @@ class QueueConfig:
 
     @no_type_check
     @classmethod
-    def from_dict(cls, config_dict: ConfigDict) -> QueueConfig:
+    def from_dict(
+        cls, config_dict: ConfigDict, substitutions: Substitutions | None = None
+    ) -> QueueConfig:
+        if substitutions is None:
+            substitutions = Substitutions()
         selected_queue_system = QueueSystem(
             config_dict.get("QUEUE_SYSTEM", QueueSystem.LOCAL)
         )
@@ -291,6 +296,23 @@ class QueueConfig:
                 logger.info(f"Parsed NUM_CPU={preferred_num_cpu} from {data_file}")
             else:
                 preferred_num_cpu = 1
+        elif ConfigKeys.RUN_TEMPLATE in config_dict:
+            for template in config_dict.get(ConfigKeys.RUN_TEMPLATE):
+                template_source = substitutions.substitute(template[0])
+                template_target = substitutions.substitute(template[1])
+                if (
+                    template_target.startswith(substitutions.substitute("<ECLBASE>"))
+                    and (
+                        num_cpu_from_template := get_num_cpu_from_data_file(
+                            template_source
+                        )
+                    )
+                    and num_cpu_from_template is not None
+                ):
+                    preferred_num_cpu = num_cpu_from_template
+                    logger.info(
+                        f"Parsed NUM_CPU={preferred_num_cpu} from {template_source}"
+                    )
 
         raw_queue_options = config_dict.get("QUEUE_OPTION", [])
         grouped_queue_options = _group_queue_options_by_queue_system(raw_queue_options)
