@@ -307,7 +307,7 @@ ECLIPSE data file. For instance, it can be used to insert include paths.
 
         -- Define the alias MY_PATH using DATA_KW. Any instances of <MY_PATH> (yes, with brackets)
         -- in the ECLIPSE data file will now be replaced with /mnt/my_own_disk/my_reservoir_model
-        -- when running the ECLIPSE jobs.
+        -- when running the ECLIPSE step.
         DATA_KW  MY_PATH  /mnt/my_own_disk/my_reservoir_model
 
 The DATA_KW keyword is optional. Note also that ERT has some built in magic strings.
@@ -420,26 +420,26 @@ INSTALL_JOB
 .. _install_job:
 
 The INSTALL_JOB keyword is used to instruct ERT how to run
-external applications and scripts, i.e. defining a job. After a job has been
+external applications and scripts, i.e. defining a step. After a step has been
 defined with INSTALL_JOB, it can be used with the FORWARD_MODEL keyword. For
 example, if you have a script which generates relative permeability curves
-from a set of parameters, it can be added as a job, allowing you to do history
+from a set of parameters, it can be added as a step, allowing you to do history
 matching and sensitivity analysis on the parameters defining the relative
 permeability curves.
 
-The INSTALL_JOB keyword takes two arguments, a job name and the name of a
-configuration file for that particular job.
+The INSTALL_JOB keyword takes two arguments, a step name and the name of a
+configuration file for that particular step.
 
 *Example:*
 
 ::
 
-        -- Define a Lomeland relative permeabilty job.
-        -- The file jobs/lomeland.txt contains a detailed
-        -- specification of the job.
-        INSTALL_JOB LOMELAND jobs/lomeland.txt
+        -- Define a Lomeland relative permeabilty step.
+        -- The file lomeland.txt contains a detailed
+        -- specification of the step.
+        INSTALL_JOB LOMELAND lomeland.txt
 
-The configuration file used to specify an external job is easy to use and very
+The configuration file used to specify an external step is easy to use and very
 flexible. It is documented in Customizing the simulation workflow in ERT.
 
 The INSTALL_JOB keyword is optional.
@@ -844,7 +844,7 @@ field as it comes out from ERT. The typical way to achieve this is:
 2. In the first iteration ERT will *not* output a file ``poro.grdecl``, but in
    the second and subsequent iterations a ``poro.grdecl`` file will be created
    by ERT - this is at the core of the ``FORWARD_INIT:True`` functionality.
-3. In the forward model there should be a job ``CAREFUL_COPY_FILE`` which will copy
+3. In the forward model there should be a step ``CAREFUL_COPY_FILE`` which will copy
    ``tmp_poro.grdecl`` *only if* ``poro.grdecl`` does not already exist. The
    rest of the forward model components should use ``poro.grdecl``.
 
@@ -1365,8 +1365,8 @@ initialize PERMX and PORO nodes from these files:
 Observe that forward model has created the file petro.grdecl and the nodes
 PORO and PERMX create the ECLIPSE input files poro.grdecl and permx.grdecl, to
 ensure that ECLIPSE finds the input files poro.grdecl and permx.grdecl the
-forward model should contain a job which will copy/convert petro.grdecl ->
-(poro.grdecl,permx.grdecl), this job should not overwrite existing versions of
+forward model should contain a step which will copy/convert petro.grdecl ->
+(poro.grdecl,permx.grdecl), this step should not overwrite existing versions of
 permx.grdecl and poro.grdecl. This extra hoops is not strictly needed in all
 cases, but strongly recommended to ensure that you have control over which
 data is used, and that everything is consistent in the case where the forward
@@ -1656,9 +1656,9 @@ FORWARD_MODEL
 
     The FORWARD_MODEL keyword is used to define how the simulations are executed.
     E.g., which version of ECLIPSE to use, which rel.perm script to run, which
-    rock physics model to use etc. Jobs (i.e. programs and scripts) that are to be
+    rock physics model to use etc. Steps (i.e. programs and scripts) that are to be
     used in the FORWARD_MODEL keyword must be defined using the INSTALL_JOB
-    keyword. A set of default jobs is available, and by default FORWARD_MODEL
+    keyword. A set of default steps is available, and by default FORWARD_MODEL
     takes the value ECLIPSE100.
 
     The FORWARD_MODEL keyword expects one keyword defined with INSTALL_JOB.
@@ -1673,7 +1673,7 @@ FORWARD_MODEL
             FORWARD_MODEL MY_RELPERM_SCRIPT
             FORWARD_MODEL ECLIPSE100
 
-    In available jobs in ERT you can see a list of the jobs which are available.
+    In available steps in ERT you can see a list of the steps which are available.
 
 JOB_SCRIPT
 ----------
@@ -1700,7 +1700,7 @@ QUEUE_SYSTEM
 ------------
 .. _queue_system:
 
-The keyword QUEUE_SYSTEM can be used to control where the simulation jobs are
+The keyword QUEUE_SYSTEM can be used to control where the forward model is
 executed. It can take the values LSF, TORQUE, SLURM and LOCAL.
 
 ::
@@ -1854,6 +1854,6 @@ forward models.
         SETENV  MY_OTHER_VAR    Hello$MY_VAR
 
 This will result in two environment variables being set in the compute side
-and available to all jobs. MY_VAR will be "World", and MY_OTHER_VAR will be
+and available to all step. MY_VAR will be "World", and MY_OTHER_VAR will be
 "HelloWorld". The variables are expanded in order on the compute side, so
 the environment where ERT is running has no impact, and is not changed.

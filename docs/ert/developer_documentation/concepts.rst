@@ -39,7 +39,7 @@ the cost of low ability to reason about the forward model, its internal data
 flow and to build tooling on top of it. Furthermore, an ERT forward model is
 today implemented as a sequential list of scripts that are executed in the same
 disk area such that data from one script can be dumped on disk and picked up by
-the next job. More on the current and future data model and run environment of
+the next step. More on the current and future data model and run environment of
 the forward model can be found in the :doc:`forward_model`.
 
 Realisation

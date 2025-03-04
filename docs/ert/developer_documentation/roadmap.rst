@@ -148,7 +148,7 @@ own elements that are to be part of the algorithmic pipeline in ERT.
 First class support for sensitivity analysis
 --------------------------------------------
 
-Today the sensitivity analysis done in ERT is done via external jobs added to
+Today the sensitivity analysis done in ERT is done via external steps added to
 the pipelines of ERT. Instead, we aim at making sensitivity analysis a first
 class citizen in ERT that lets users sample from the parameter distributions
 in a natural manner.
