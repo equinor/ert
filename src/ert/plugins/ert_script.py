@@ -214,22 +214,22 @@ class ErtScript:
     def __findErtScriptImplementations(
         module: ModuleType,
     ) -> type[ErtScript]:
-        result = []
+        result = None
         for _, member in inspect.getmembers(
             module,
             lambda member: inspect.isclass(member)
             and member.__module__ == module.__name__,
         ):
             if ErtScript in inspect.getmro(member):
-                result.append(member)
+                if result is not None:
+                    raise ValueError(
+                        f"Module {module.__name__} contains more than one ErtScript"
+                    )
+                result = member
 
-        if len(result) == 0:
+        if result is None:
             raise ValueError(f"Module {module.__name__} does not contain an ErtScript!")
-        if len(result) > 1:
-            raise ValueError(
-                f"Module {module.__name__} contains more than one ErtScript"
-            )
-        return result[0]
+        return result
 
     @staticmethod
     def validate(args: list[Any]) -> None:
