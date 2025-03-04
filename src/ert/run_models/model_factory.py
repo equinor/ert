@@ -93,7 +93,7 @@ def _setup_single_test_run(
 
 def validate_minimum_realizations(config: ErtConfig, args: Namespace) -> None:
     min_realizations_count = config.analysis_config.minimum_required_realizations
-    active_realizations = _realizations(args, config.model_config.num_realizations)
+    active_realizations = _get_active_realizations_list(args, config)
     active_realizations_count = int(np.sum(active_realizations))
     if active_realizations_count < min_realizations_count:
         config.analysis_config.minimum_required_realizations = active_realizations_count
