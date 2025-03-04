@@ -904,42 +904,19 @@ class EverestRunModel(BaseRunModel):
     ) -> tuple[NDArray[np.float64], NDArray[np.float64] | None]:
         objective_aliases = self._everest_config.function_aliases
         objective_names = self._everest_config.objective_names
-        objectives = np.zeros((ensemble.ensemble_size, len(objective_names)))
-
         constraint_names = self._everest_config.constraint_names
-        constraints = np.zeros((ensemble.ensemble_size, len(constraint_names)))
 
-        if not any(self.active_realizations):
-            nan_objectives = np.full(
-                (ensemble.ensemble_size, len(objective_names)), fill_value=np.nan
-            )
-            nan_constraints = (
-                np.full(
-                    (ensemble.ensemble_size, len(constraint_names)), fill_value=np.nan
-                )
-                if constraint_names
-                else None
-            )
-            return nan_objectives, nan_constraints
+        df = ensemble.all_parameters_and_gen_data
+        assert df is not None
 
-        for sim_id, successful in enumerate(self.active_realizations):
-            if not successful:
-                logger.error(f"Simulation {sim_id} failed.")
-                objectives[sim_id, :] = np.nan
-                constraints[sim_id, :] = np.nan
-                continue
+        for name in objective_names:
+            if name in objective_aliases:
+                alias = objective_aliases[name]
+                df = df.with_columns(pl.col(alias).alias(name))
 
-            for i, obj_name in enumerate(objective_names):
-                data = ensemble.load_responses(
-                    objective_aliases.get(obj_name, obj_name), (sim_id,)
-                )
-                objectives[sim_id, i] = data["values"].item()
-
-            for i, constr_name in enumerate(constraint_names):
-                data = ensemble.load_responses(constr_name, (sim_id,))
-                constraints[sim_id, i] = data["values"].item()
-
-        return objectives, constraints if constraint_names else None
+        objectives = df[objective_names].to_numpy()
+        constraints = df[constraint_names].to_numpy() if constraint_names else None
+        return objectives, constraints
 
     def check_if_runpath_exists(self) -> bool:
         return (
