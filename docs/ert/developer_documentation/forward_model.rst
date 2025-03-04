@@ -52,8 +52,8 @@ then picked up again on the forward model side to ensure that upgrades are not
 impacting already launched runs.
 
 After the forward model is completed, the overall status of the forward model
-is signaled by either producing a file named :code:`OK` or one named
-:code:`ERROR` in the root of the runpath. After this, response loading is
+is signaled back to the core through a network message. If it failed a file
+:code:`ERROR` is also produced at the root of the runpath. After this, response loading is
 initiated by the core. In particular, summary data is loaded from the
 configured :code:`ECLBASE` and in addition the various :code:`GEN_DATA` etc.
 responses are loaded from their configured files. If the loading of responses
