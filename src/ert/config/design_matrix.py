@@ -198,7 +198,12 @@ class DesignMatrix:
         defaults_to_use = DesignMatrix._read_defaultssheet(
             self.xls_filename, self.default_sheet, design_matrix_df.columns.to_list()
         )
-        design_matrix_df = design_matrix_df.assign(**defaults_to_use)
+        default_df = pd.DataFrame(
+            {k: [v] * len(design_matrix_df.index) for k, v in defaults_to_use.items()},
+            index=design_matrix_df.index,
+        )
+
+        design_matrix_df = pd.concat([design_matrix_df, default_df], axis=1)
 
         transform_function_definitions: list[TransformFunctionDefinition] = []
         for parameter in design_matrix_df.columns:
