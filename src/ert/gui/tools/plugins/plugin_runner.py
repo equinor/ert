@@ -5,14 +5,13 @@ from collections.abc import Callable
 from typing import TYPE_CHECKING, Any
 
 from _ert.threading import ErtThread
-from ert.config import CancelPluginException, ErtConfig
-from ert.config.workflow_fixtures import WorkflowFixtures
-from ert.runpaths import Runpaths
+from ert.config import CancelPluginException
 from ert.workflow_runner import WorkflowJobRunner
 
 from .process_job_dialog import ProcessJobDialog
 
 if TYPE_CHECKING:
+    from ert.config import ErtConfig
     from ert.storage import LocalStorage
 
     from .plugin import Plugin
@@ -23,10 +22,10 @@ class PluginRunner:
         self, plugin: Plugin, ert_config: ErtConfig, storage: LocalStorage
     ) -> None:
         super().__init__()
-
         self.ert_config = ert_config
         self.storage = storage
         self.__plugin = plugin
+
         self.__plugin_finished_callback: Callable[[], None] = lambda: None
 
         self.__result = None
@@ -34,26 +33,11 @@ class PluginRunner:
         self.poll_thread: ErtThread | None = None
 
     def run(self) -> None:
-        ert_config = self.ert_config
         try:
             plugin = self.__plugin
+
             arguments = plugin.getArguments(
-                fixtures={
-                    "storage": self.storage,
-                    "random_seed": ert_config.random_seed,
-                    "reports_dir": str(
-                        self.ert_config.analysis_config.log_path / "reports"
-                    ),
-                    "observation_settings": ert_config.analysis_config.observation_settings,
-                    "es_settings": ert_config.analysis_config.es_module,
-                    "run_paths": Runpaths(
-                        jobname_format=ert_config.model_config.jobname_format_string,
-                        runpath_format=ert_config.model_config.runpath_format_string,
-                        filename=str(ert_config.runpath_file),
-                        substitutions=ert_config.substitutions,
-                        eclbase=ert_config.model_config.eclbase_format_string,
-                    ),
-                }
+                fixtures={"storage": self.storage, "ert_config": self.ert_config}
             )
             dialog = ProcessJobDialog(plugin.getName(), plugin.getParentWindow())
             dialog.setObjectName("process_job_dialog")
@@ -61,7 +45,7 @@ class PluginRunner:
             dialog.cancelConfirmed.connect(self.cancel)
             fixtures = {
                 k: getattr(self, k)
-                for k in ["storage", "run_paths"]
+                for k in ["storage", "ert_config"]
                 if getattr(self, k)
             }
             workflow_job_thread = ErtThread(
@@ -87,7 +71,7 @@ class PluginRunner:
             print("Plugin cancelled before execution!")
 
     def __runWorkflowJob(
-        self, arguments: list[Any] | None, fixtures: WorkflowFixtures
+        self, arguments: list[Any] | None, fixtures: dict[str, Any]
     ) -> None:
         self.__result = self._runner.run(arguments, fixtures=fixtures)
 

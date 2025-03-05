@@ -66,7 +66,6 @@ class EnsembleExperiment(BaseRunModel):
             config.ert_templates,
             config.hooked_workflows,
             total_iterations=1,
-            log_path=config.analysis_config.log_path,
             active_realizations=active_realizations,
             random_seed=random_seed,
             minimum_required_realizations=minimum_required_realizations,
@@ -94,10 +93,7 @@ class EnsembleExperiment(BaseRunModel):
                 raise ErtRunError(str(exc)) from exc
 
         if not restart:
-            self.run_workflows(
-                HookRuntime.PRE_EXPERIMENT,
-                fixtures={"random_seed": self.random_seed},
-            )
+            self.run_workflows(HookRuntime.PRE_EXPERIMENT)
             self.experiment = self._storage.create_experiment(
                 name=self.experiment_name,
                 parameters=(
@@ -147,14 +143,7 @@ class EnsembleExperiment(BaseRunModel):
             self.ensemble,
             evaluator_server_config,
         )
-        self.run_workflows(
-            HookRuntime.POST_EXPERIMENT,
-            fixtures={
-                "random_seed": self.random_seed,
-                "storage": self._storage,
-                "ensemble": self.ensemble,
-            },
-        )
+        self.run_workflows(HookRuntime.POST_EXPERIMENT)
 
     @classmethod
     def name(cls) -> str:
