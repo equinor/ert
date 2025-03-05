@@ -28,10 +28,10 @@ class WorkflowConfigs:
         category: str = "other",
     ) -> ErtScriptWorkflow:
         """
-        :param category:
-        :param parser:
-        :param examples:
-        :param description:
+        :param category: dot separated string
+        :param parser: will extract information to use in documentation
+        :param examples: must be valid rst, will be added to documentation
+        :param description: must be valid rst, defaults to __doc__
         :param ert_script: class which inherits from ErtScript
         :param name: Optional name for workflow (default is name of class)
         :return: Instantiated workflow config.
