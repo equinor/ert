@@ -4,7 +4,6 @@ import inspect
 from typing import TYPE_CHECKING, Any
 
 from ert import ErtScript
-from ert.config.workflow_fixtures import WorkflowFixtures
 
 if TYPE_CHECKING:
     from qtpy.QtWidgets import QWidget
@@ -35,7 +34,7 @@ class Plugin:
     def getDescription(self) -> str:
         return self.__description
 
-    def getArguments(self, fixtures: WorkflowFixtures) -> list[Any]:
+    def getArguments(self, fixtures: dict[str, Any]) -> list[Any]:
         """
         Returns a list of arguments. Either from GUI or from arbitrary code.
         If the user for example cancels in the GUI a CancelPluginException is raised.
@@ -45,6 +44,10 @@ class Plugin:
         func_args = inspect.signature(script.getArguments).parameters
         arguments = script.insert_fixtures(func_args, fixtures)
 
+        # Part of deprecation
+        script._ert = fixtures.get("ert_config")
+        script._ensemble = fixtures.get("ensemble")
+        script._storage = fixtures.get("storage")
         return script.getArguments(*arguments)
 
     def setParentWindow(self, parent_window: QWidget | None) -> None:

@@ -15,91 +15,15 @@ from ert.run_models import (
 )
 
 EXPECTED_CALL_ORDER = [
-    call(HookRuntime.PRE_EXPERIMENT, fixtures={"random_seed": ANY}),
-    call(
-        HookRuntime.PRE_SIMULATION,
-        fixtures={
-            "storage": ANY,
-            "ensemble": ANY,
-            "reports_dir": ANY,
-            "random_seed": ANY,
-            "run_paths": ANY,
-        },
-    ),
-    call(
-        HookRuntime.POST_SIMULATION,
-        fixtures={
-            "storage": ANY,
-            "ensemble": ANY,
-            "reports_dir": ANY,
-            "random_seed": ANY,
-            "run_paths": ANY,
-        },
-    ),
-    call(
-        HookRuntime.PRE_FIRST_UPDATE,
-        fixtures={
-            "storage": ANY,
-            "ensemble": ANY,
-            "reports_dir": ANY,
-            "random_seed": ANY,
-            "es_settings": ANY,
-            "observation_settings": ANY,
-            "run_paths": ANY,
-        },
-    ),
-    call(
-        HookRuntime.PRE_UPDATE,
-        fixtures={
-            "storage": ANY,
-            "ensemble": ANY,
-            "reports_dir": ANY,
-            "random_seed": ANY,
-            "es_settings": ANY,
-            "observation_settings": ANY,
-            "run_paths": ANY,
-        },
-    ),
-    call(
-        HookRuntime.POST_UPDATE,
-        fixtures={
-            "storage": ANY,
-            "ensemble": ANY,
-            "reports_dir": ANY,
-            "random_seed": ANY,
-            "es_settings": ANY,
-            "observation_settings": ANY,
-            "run_paths": ANY,
-        },
-    ),
-    call(
-        HookRuntime.PRE_SIMULATION,
-        fixtures={
-            "storage": ANY,
-            "ensemble": ANY,
-            "reports_dir": ANY,
-            "random_seed": ANY,
-            "run_paths": ANY,
-        },
-    ),
-    call(
-        HookRuntime.POST_SIMULATION,
-        fixtures={
-            "storage": ANY,
-            "ensemble": ANY,
-            "reports_dir": ANY,
-            "random_seed": ANY,
-            "run_paths": ANY,
-        },
-    ),
-    call(
-        HookRuntime.POST_EXPERIMENT,
-        fixtures={
-            "random_seed": ANY,
-            "storage": ANY,
-            "ensemble": ANY,
-        },
-    ),
+    call(HookRuntime.PRE_EXPERIMENT),
+    call(HookRuntime.PRE_SIMULATION, ANY, ANY),
+    call(HookRuntime.POST_SIMULATION, ANY, ANY),
+    call(HookRuntime.PRE_FIRST_UPDATE, ANY, ANY),
+    call(HookRuntime.PRE_UPDATE, ANY, ANY),
+    call(HookRuntime.POST_UPDATE, ANY, ANY),
+    call(HookRuntime.PRE_SIMULATION, ANY, ANY),
+    call(HookRuntime.POST_SIMULATION, ANY, ANY),
+    call(HookRuntime.POST_EXPERIMENT),
 ]
 
 

@@ -19,7 +19,6 @@ from qtpy.QtWidgets import (
 from _ert.threading import ErtThread
 from ert.gui.ertwidgets import EnsembleSelector
 from ert.gui.tools.workflows.workflow_dialog import WorkflowDialog
-from ert.runpaths import Runpaths
 from ert.workflow_runner import WorkflowRunner
 
 if TYPE_CHECKING:
@@ -123,26 +122,10 @@ class RunWorkflowWidget(QWidget):
         )
 
         workflow = self.config.workflows[self.getCurrentWorkflowName()]
-        ensemble = self.source_ensemble_selector.currentData()
         self._workflow_runner = WorkflowRunner(
-            workflow=workflow,
-            fixtures={
-                "ensemble": ensemble,
-                "storage": self.storage,
-                "random_seed": self.config.random_seed,
-                "reports_dir": str(
-                    self.config.analysis_config.log_path / ensemble.experiment.name
-                ),
-                "observation_settings": self.config.analysis_config.observation_settings,
-                "es_settings": self.config.analysis_config.es_module,
-                "run_paths": Runpaths(
-                    jobname_format=self.config.model_config.jobname_format_string,
-                    runpath_format=self.config.model_config.runpath_format_string,
-                    filename=str(self.config.runpath_file),
-                    substitutions=self.config.substitutions,
-                    eclbase=self.config.model_config.eclbase_format_string,
-                ),
-            },
+            workflow,
+            storage=self.storage,
+            ensemble=self.source_ensemble_selector.currentData(),
         )
         self._workflow_runner.run()
 
