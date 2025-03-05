@@ -32,7 +32,7 @@ from ert.analysis.event import (
     AnalysisErrorEvent,
 )
 from ert.config import HookRuntime, QueueSystem
-from ert.config.analysis_module import BaseSettings, ESSettings
+from ert.config.analysis_module import BaseSettings
 from ert.config.forward_model_step import ForwardModelStep
 from ert.config.model_config import ModelConfig
 from ert.config.workflow import Workflow
@@ -780,7 +780,7 @@ class BaseRunModel(ABC):
 class UpdateRunModel(BaseRunModel):
     def __init__(
         self,
-        analysis_settings: ESSettings,
+        analysis_settings: BaseSettings,
         update_settings: UpdateSettings,
         storage: Storage,
         runpath_file: Path,
@@ -844,9 +844,7 @@ class UpdateRunModel(BaseRunModel):
             "storage": self._storage,
             "ensemble": prior,
             "observation_settings": self._update_settings,
-            "es_settings": ESSettings(
-                enkf_truncation=self._analysis_settings.enkf_truncation
-            ),
+            "es_settings": self._analysis_settings,
             "random_seed": self.random_seed,
             "reports_dir": self.reports_dir(experiment_name=prior.experiment.name),
             "run_paths": self.run_paths,
