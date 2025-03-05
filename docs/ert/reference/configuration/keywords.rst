@@ -130,21 +130,19 @@ DATA_FILE
 Specify the filepath to the ``.DATA`` file of Eclipse/flow.
 This does two things:
 
-1. Template the ``DATA_FILE`` using :ref:`RUN_TEMPLATE <run_template>`.
+1. Template the ``DATA_FILE`` similarly to :ref:`RUN_TEMPLATE <run_template>`.
 
-    The templated file will be named according to :ref:`ECLBASE <ECLBASE>` and
-    copied to the runpath folder. Note that support for parsing the Eclipse/flow
-    data file is limited, and using explicit templating with :ref:`RUN_TEMPLATE
-    <run_template>` is recommended where possible.
+   The templated file will be named according to :ref:`ECLBASE <ECLBASE>` and
+   copied to the runpath folder. Magic strings and DEFINEs in the template
+   contents will be replaced by their associated values.
 
-2. Implicitly set the keyword :ref:`NUM_CPU <num_cpu>`
+2. If :ref:`NUM_CPU <num_cpu>` is not set explicitly in the config, Ert will
+   search for ``PARALLEL`` in the data file and infer the number of CPUs each
+   realization will need, and update :ref:`NUM_CPU <num_cpu>` accordingly .
 
-    Ert will search for ``PARALLEL`` in the data file and infer the number of
-    CPUs each realization will need, and update :ref:`NUM_CPU <num_cpu>` accordingly.
-
-    If the Eclipse DATA file represents a coupled simulation setup, it will sum
-    the needed CPU count for each slave model from the ``SLAVES`` keyword and
-    add 1 for the parent simulation.
+   If the Eclipse DATA file represents a coupled simulation setup, it will sum
+   the needed CPU count for each slave model from the ``SLAVES`` keyword and
+   add 1 for the parent simulation.
 
 Example:
 
@@ -566,47 +564,9 @@ It is also possible to perform replacements in target file names:
     RUN_TEMPLATE template.tmpl <MY_FILE_NAME>
 
 
-
-
-If one would like to do substitutions in the ECLIPSE data file, that can be
-done like this:
-
-*Example:*
-
-::
-
-        ECLBASE BASE_ECL_NAME%d
-        RUN_TEMPLATE MY_DATA_FILE.DATA <ECLBASE>.DATA
-
-This will copy ``MY_DATA_FILE.DATA`` into the run path and name it ``BASE_ECL_NAME0.DATA``
-while doing magic string replacement in the contents.
-
-If you would like to substitute in the realization number as a part of ECLBASE using
-``<IENS>`` instead of ``%d`` is a better option:
-
-*Example:*
-
-::
-
-        ECLBASE BASE_ECL_NAME-<IENS>
-        RUN_TEMPLATE MY_DATA_FILE.DATA <ECLBASE>.DATA
-
-
-
-To control the number of CPUs that are reserved for ECLIPSE use
-``RUN_TEMPLATE`` with :ref:`NUM_CPU<num_cpu>` and keep them in sync:
-
-::
-
-        NUM_CPU 4
-        ECLBASE BASE_ECL_NAME-<IENS>
-        RUN_TEMPLATE MY_DATA_FILE.DATA <ECLBASE>.DATA
-
-In the ECLIPSE data file:
-
-::
-
-        PARALLEL <NUM_CPU>
+For templating the Eclipse or Flow DATA file, use the :ref:`DATA_FILE
+<data_file>` keyword. In addition to templating it will also ensure that Ert
+knows if the DATA file is to be executed in parallel.
 
 
 Keywords controlling the simulations

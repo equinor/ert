@@ -268,6 +268,22 @@ def read_templates(config_dict) -> list[tuple[str, str]]:
         templates.append([source_file, target_file])
 
     for template in config_dict.get(ConfigKeys.RUN_TEMPLATE, []):
+        if (
+            ConfigKeys.ECLBASE in config_dict
+            and (
+                template[1].startswith(config_dict[ConfigKeys.ECLBASE])
+                or template[1].startswith("<ECLBASE>")
+                or template[1].startswith("<ECL_BASE>")
+            )
+            and ConfigKeys.NUM_CPU not in config_dict
+        ):
+            ConfigWarning.warn(
+                "Use DATA_FILE instead of RUN_TEMPLATE for "
+                "templating the Eclipse/Flow DATA file. "
+                "This ensures correct parsing of NUM_CPU. "
+                "Alternatively set NUM_CPU explicitly and ensure "
+                "it is synced with your DATA file."
+            )
         templates.append(template)
     return templates
 

@@ -1860,3 +1860,59 @@ def test_split_string_into_sections(input, section_length):
             assert len(section) <= section_length
     else:
         split_string = [input]
+
+
+@pytest.mark.usefixtures("use_tmpdir")
+@pytest.mark.parametrize(
+    "template_target",
+    ["<ECLBASE>.DATA", "<ECL_BASE>.DATA", "foo/bar/ECLIPSEDECK-<IENS>.DATA"],
+)
+def test_warning_is_emitted_for_run_template(template_target):
+    Path("templates").mkdir()
+    Path("templates/ECLDECK.DATA").touch()
+    with pytest.warns(ConfigWarning, match="Use DATA_FILE instead of"):
+        ErtConfig.from_file_contents(
+            dedent(
+                f"""\
+                NUM_REALIZATIONS 1
+                ECLBASE foo/bar/ECLIPSEDECK-<IENS>
+                RUN_TEMPLATE templates/ECLDECK.DATA {template_target}
+                """
+            )
+        )
+
+
+@pytest.mark.usefixtures("use_tmpdir")
+@pytest.mark.parametrize("eclbase_line", ["", "ECLBASE foo/bar/DECK"])
+def test_warning_is_not_emitted_for_random_run_template(eclbase_line):
+    Path("templates").mkdir()
+    Path("templates/ECLDECK.DATA").touch()
+    with warnings.catch_warnings():
+        warnings.simplefilter("error")
+        ErtConfig.from_file_contents(
+            dedent(
+                f"""\
+                NUM_REALIZATIONS 1
+                {eclbase_line}
+                RUN_TEMPLATE templates/ECLDECK.DATA foo/bar/OTHERDECK.DATA
+                """
+            )
+        )
+
+
+@pytest.mark.usefixtures("use_tmpdir")
+def test_warning_is_not_emitted_for_when_num_cpu_is_explicit():
+    Path("templates").mkdir()
+    Path("templates/ECLDECK.DATA").touch()
+    with warnings.catch_warnings():
+        warnings.simplefilter("error")
+        ErtConfig.from_file_contents(
+            dedent(
+                """\
+                NUM_REALIZATIONS 1
+                NUM_CPU 8
+                ECLBASE foo/bar/ECLIPSEDECK-<IENS>
+                RUN_TEMPLATE templates/ECLDECK.DATA <ECLBASE>.DATA
+                """
+            )
+        )
