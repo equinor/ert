@@ -1,20 +1,16 @@
 import json
 import os
 from collections.abc import Sequence
-from typing import TYPE_CHECKING
 
-import pandas as pd
-import polars as pl
+import pandas
 
 from ert import ErtScript, LibresFacade
+from ert.config import ErtConfig
 from ert.storage import Storage
 
-if TYPE_CHECKING:
-    from ert.storage import Ensemble
 
-
-def loadDesignMatrix(filename: str) -> pd.DataFrame:
-    dm = pd.read_csv(filename, delim_whitespace=True)
+def loadDesignMatrix(filename: str) -> pandas.DataFrame:
+    dm = pandas.read_csv(filename, delim_whitespace=True)
     dm = dm.rename(columns={dm.columns[0]: "Realization"})
     dm = dm.set_index(["Realization"])
     return dm
@@ -56,6 +52,7 @@ class CSVExportJob(ErtScript):
 
     def run(
         self,
+        ert_config: ErtConfig,
         storage: Storage,
         workflow_args: Sequence[str],
     ) -> str:
@@ -64,16 +61,17 @@ class CSVExportJob(ErtScript):
         design_matrix_path = None if len(workflow_args) < 3 else workflow_args[2]
         _ = True if len(workflow_args) < 4 else workflow_args[3]
         drop_const_cols = False if len(workflow_args) < 5 else workflow_args[4]
+        facade = LibresFacade(ert_config)
 
         ensemble_data_as_dict = (
             json.loads(ensemble_data_as_json) if ensemble_data_as_json else {}
         )
 
         # Use the keys (UUIDs as strings) to get ensembles
-        ensembles: list[Ensemble] = []
+        ensembles = []
         for ensemble_id in ensemble_data_as_dict:
-            assert storage is not None
-            ensemble = storage.get_ensemble(ensemble_id)
+            assert self.storage is not None
+            ensemble = self.storage.get_ensemble(ensemble_id)
             ensembles.append(ensemble)
 
         if design_matrix_path is not None:
@@ -83,7 +81,7 @@ class CSVExportJob(ErtScript):
             if not os.path.isfile(design_matrix_path):
                 raise UserWarning("The design matrix is not a file!")
 
-        data = pd.DataFrame()
+        data = pandas.DataFrame()
 
         for ensemble in ensembles:
             if not ensemble.has_data():
@@ -98,20 +96,13 @@ class CSVExportJob(ErtScript):
                 if not design_matrix_data.empty:
                     ensemble_data = ensemble_data.join(design_matrix_data, how="outer")
 
-            misfit_data = LibresFacade.load_all_misfit_data(ensemble)
+            misfit_data = facade.load_all_misfit_data(ensemble)
             if not misfit_data.empty:
                 ensemble_data = ensemble_data.join(misfit_data, how="outer")
-            realizations = ensemble.get_realization_list_with_responses()
 
-            try:
-                summary_data = ensemble.load_responses("summary", tuple(realizations))
-            except (KeyError, ValueError):
-                summary_data = pl.DataFrame({})
-
-            if not summary_data.is_empty():
-                ensemble_data = ensemble_data.join(
-                    summary_data.to_pandas(), how="outer"
-                )
+            summary_data = ensemble.load_all_summary_data()
+            if not summary_data.empty:
+                ensemble_data = ensemble_data.join(summary_data, how="outer")
             else:
                 ensemble_data["Date"] = None
                 ensemble_data.set_index(["Date"], append=True, inplace=True)
@@ -122,9 +113,9 @@ class CSVExportJob(ErtScript):
                 ["Ensemble", "Iteration"], append=True, inplace=True
             )
 
-            data = pd.concat([data, ensemble_data])
-        if not data.empty:
-            data = data.reorder_levels(["Realization", "Iteration", "Date", "Ensemble"])
+            data = pandas.concat([data, ensemble_data])
+
+        data = data.reorder_levels(["Realization", "Iteration", "Date", "Ensemble"])
         if drop_const_cols:
             data = data.loc[:, (data != data.iloc[0]).any()]
 
