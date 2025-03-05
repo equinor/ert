@@ -33,12 +33,12 @@ def workflow_job_parser(file: str) -> ConfigDict:
     return parse(file, schema=schema)
 
 
-def workflow_job_from_file(config_file: str, name: str | None = None) -> WorkflowJob:
+def workflow_job_from_file(config_file: str, name: str | None = None) -> _WorkflowJob:
     if not name:
         name = os.path.basename(config_file)
 
     content_dict = workflow_job_parser(config_file)
-    arg_types_list = WorkflowJob._make_arg_types_list(content_dict)
+    arg_types_list = _WorkflowJob._make_arg_types_list(content_dict)
     min_args = content_dict.get("MIN_ARG")  # type: ignore
     max_args = content_dict.get("MAX_ARG")  # type: ignore
     script = str(content_dict.get("SCRIPT")) if "SCRIPT" in content_dict else None  # type: ignore
@@ -85,7 +85,7 @@ def workflow_job_from_file(config_file: str, name: str | None = None) -> Workflo
 
 
 @dataclass
-class WorkflowJob:
+class _WorkflowJob:
     name: str
     min_args: int | None = None
     max_args: int | None = None
@@ -125,12 +125,12 @@ class WorkflowJob:
 
 
 @dataclass
-class ExecutableWorkflow(WorkflowJob):
+class ExecutableWorkflow(_WorkflowJob):
     executable: str | None = None
 
 
 @dataclass
-class ErtScriptWorkflow(WorkflowJob):
+class ErtScriptWorkflow(_WorkflowJob):
     """
     Single workflow configuration object
     """
