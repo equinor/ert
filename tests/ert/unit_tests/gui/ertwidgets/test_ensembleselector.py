@@ -1,6 +1,6 @@
 import pytest
 
-from ert.config import ErtConfig, GenDataConfig, GenKwConfig
+from ert.config import GenDataConfig, GenKwConfig
 from ert.config.gen_kw_config import TransformFunctionDefinition
 from ert.gui.ertnotifier import ErtNotifier
 from ert.gui.ertwidgets.ensembleselector import EnsembleSelector
@@ -27,7 +27,7 @@ def response():
 
 @pytest.fixture
 def notifier():
-    return ErtNotifier(ErtConfig())
+    return ErtNotifier()
 
 
 def test_empty(qtbot, notifier):
