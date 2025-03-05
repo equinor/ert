@@ -74,7 +74,7 @@ from .workflow_job import (
     ErtScriptLoadFailure,
     ErtScriptWorkflow,
     ExecutableWorkflow,
-    WorkflowJob,
+    _WorkflowJob,
     workflow_job_from_file,
 )
 
@@ -561,7 +561,7 @@ class ErtConfig:
     random_seed: int | None = None
     analysis_config: AnalysisConfig = field(default_factory=AnalysisConfig)
     queue_config: QueueConfig = field(default_factory=QueueConfig)
-    workflow_jobs: dict[str, WorkflowJob] = field(default_factory=dict)
+    workflow_jobs: dict[str, _WorkflowJob] = field(default_factory=dict)
     workflows: dict[str, Workflow] = field(default_factory=dict)
     hooked_workflows: defaultdict[HookRuntime, list[Workflow]] = field(
         default_factory=lambda: defaultdict(list)

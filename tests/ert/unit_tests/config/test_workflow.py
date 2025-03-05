@@ -4,7 +4,7 @@ from contextlib import ExitStack as does_not_raise
 import pytest
 from hypothesis import given, strategies
 
-from ert.config import ConfigValidationError, Workflow, WorkflowJob
+from ert.config import ConfigValidationError, Workflow, _WorkflowJob
 from ert.substitutions import Substitutions
 
 
@@ -35,7 +35,7 @@ def test_that_substitution_happens_in_workflow():
     substlist = Substitutions()
     substlist["<A>"] = "a"
     substlist["<B>"] = "b"
-    job = WorkflowJob(
+    job = _WorkflowJob(
         name="JOB",
         min_args=None,
         max_args=None,
@@ -50,7 +50,7 @@ def test_that_substitution_happens_in_workflow():
 
 
 def get_workflow_job(name):
-    return WorkflowJob(
+    return _WorkflowJob(
         name=name,
         min_args=None,
         max_args=None,
@@ -183,7 +183,7 @@ def test_args_validation(config, expectation, min_args, max_args):
             src_file="workflow",
             context=None,
             job_dict={
-                "WORKFLOW": WorkflowJob(
+                "WORKFLOW": _WorkflowJob(
                     name="WORKFLOW",
                     min_args=min_args,
                     max_args=max_args,
