@@ -6,7 +6,7 @@ from collections import Counter
 from importlib.resources import files
 from signal import SIG_DFL, SIGINT, signal
 
-from PyQt6.QtCore import QDir
+from PyQt6.QtCore import QDir, QLoggingCategory
 from PyQt6.QtGui import QIcon
 from PyQt6.QtWidgets import QApplication, QWidget
 
@@ -40,8 +40,11 @@ def run_gui(args: Namespace, plugin_manager: ErtPluginManager | None = None) -> 
     signal(SIGINT, SIG_DFL)
 
     QDir.addSearchPath("img", str(files("ert.gui").joinpath("resources/gui/img")))
-
+    # silence "QColorSpace attempted constructed from invalid primaries" warning
+    qcolor_space_category = QLoggingCategory("QColorSpace")
+    qcolor_space_category.setFilterRules("*.warning=false")
     app = QApplication(["ert"])  # Early so that QT is initialized before other imports
+    qcolor_space_category.setFilterRules("")  # Reset the filter to re-enable warnings
     app.setWindowIcon(QIcon("img:ert_icon.svg"))
 
     with add_gui_log_handler() as log_handler:
