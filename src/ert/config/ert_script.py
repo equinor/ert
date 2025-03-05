@@ -221,7 +221,7 @@ class ErtScript:
             and member.__module__ == module.__name__,
         ):
             if ErtScript in inspect.getmro(member):
-                if result:
+                if result is not None:
                     raise ValueError(
                         f"Module {module.__name__} contains more than one ErtScript"
                     )
@@ -229,7 +229,6 @@ class ErtScript:
 
         if result is None:
             raise ValueError(f"Module {module.__name__} does not contain an ErtScript!")
-        assert issubclass(result, ErtScript)
         return result
 
     @staticmethod
