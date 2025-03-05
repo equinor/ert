@@ -88,7 +88,7 @@ class ErtMainWindow(QMainWindow):
         log_handler: GUILogHandler | None = None,
     ):
         QMainWindow.__init__(self)
-        self.notifier = ErtNotifier(config_file)
+        self.notifier = ErtNotifier()
         self.plugins_tool: PluginsTool | None = None
         self.ert_config = ert_config
         self.config_file = config_file
