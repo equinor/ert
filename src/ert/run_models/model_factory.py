@@ -187,9 +187,7 @@ def _setup_ensemble_smoother(
     update_settings: UpdateSettings,
     status_queue: SimpleQueue[StatusEvents],
 ) -> EnsembleSmoother:
-    active_realizations = _realizations(
-        args, config.model_config.num_realizations
-    ).tolist()
+    active_realizations = _get_active_realizations_list(args, config)
     if len(active_realizations) < 2:
         raise ConfigValidationError(
             "Number of active realizations must be at least 2 for an update step"

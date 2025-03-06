@@ -8,13 +8,14 @@ from typing import TYPE_CHECKING
 import numpy as np
 
 from ert.config import ErtConfig, ESSettings, HookRuntime, UpdateSettings
-from ert.enkf_main import sample_prior
+from ert.config.parsing.config_errors import ConfigValidationError
+from ert.enkf_main import sample_prior, save_design_matrix_to_ensemble
 from ert.ensemble_evaluator import EvaluatorServerConfig
 from ert.storage import Storage
 from ert.trace import tracer
 
 from ..run_arg import create_run_arguments
-from .base_run_model import StatusEvents, UpdateRunModel
+from .base_run_model import ErtRunError, StatusEvents, UpdateRunModel
 
 if TYPE_CHECKING:
     from ert.config import QueueConfig
@@ -66,6 +67,7 @@ class EnsembleSmoother(UpdateRunModel):
         self.support_restart = False
 
         self._parameter_configuration = config.ensemble_config.parameter_configuration
+        self._design_matrix = config.analysis_config.design_matrix
         self._observations = config.observations
         self._response_configuration = config.ensemble_config.response_configuration
 
@@ -74,6 +76,18 @@ class EnsembleSmoother(UpdateRunModel):
         self, evaluator_server_config: EvaluatorServerConfig, restart: bool = False
     ) -> None:
         self.log_at_startup()
+
+        parameters_config = self._parameter_configuration
+        design_matrix = self._design_matrix
+        design_matrix_group = None
+        if design_matrix is not None:
+            try:
+                parameters_config, design_matrix_group = (
+                    design_matrix.merge_with_existing_parameters(parameters_config)
+                )
+            except ConfigValidationError as exc:
+                raise ErtRunError(str(exc)) from exc
+
         self.restart = restart
         self.run_workflows(
             HookRuntime.PRE_EXPERIMENT,
@@ -81,7 +95,8 @@ class EnsembleSmoother(UpdateRunModel):
         )
         ensemble_format = self.target_ensemble_format
         experiment = self._storage.create_experiment(
-            parameters=self._parameter_configuration,
+            parameters=parameters_config
+            + ([design_matrix_group] if design_matrix_group else []),
             observations=self._observations,
             responses=self._response_configuration,
             name=self.experiment_name,
@@ -106,6 +121,13 @@ class EnsembleSmoother(UpdateRunModel):
             random_seed=self.random_seed,
         )
 
+        if design_matrix_group is not None and design_matrix is not None:
+            save_design_matrix_to_ensemble(
+                design_matrix.design_matrix_df,
+                prior,
+                np.where(self.active_realizations)[0],
+                design_matrix_group.name,
+            )
         self._evaluate_and_postprocess(
             prior_args,
             prior,
