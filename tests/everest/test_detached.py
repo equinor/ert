@@ -26,7 +26,7 @@ from everest.detached import (
     PROXY,
     ServerStatus,
     everserver_status,
-    get_opt_status,
+    get_opt_status_from_storage,
     server_is_running,
     start_server,
     stop_server,
@@ -341,7 +341,7 @@ def test_get_opt_status(cached_example):
     _, config_file, _, _ = cached_example("math_func/config_multiobj.yml")
     config = EverestConfig.load_file(config_file)
 
-    opts = get_opt_status(config.optimization_output_dir)
+    opts = get_opt_status_from_storage(config.optimization_output_dir)
 
     assert np.allclose(
         opts["objective_history"], [-2.3333, -2.3335, -2.0000], atol=1e-4

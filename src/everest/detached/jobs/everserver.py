@@ -37,7 +37,6 @@ from fastapi import (
 )
 from fastapi.encoders import jsonable_encoder
 from fastapi.responses import (
-    JSONResponse,
     PlainTextResponse,
     Response,
 )
@@ -64,7 +63,6 @@ from ert.run_models.everest_run_model import (
 from everest.config import EverestConfig, ServerConfig
 from everest.detached import (
     ServerStatus,
-    get_opt_status,
     update_everserver_status,
 )
 from everest.plugins.everest_plugin_manager import EverestPluginManager
@@ -72,7 +70,6 @@ from everest.strings import (
     DEFAULT_LOGGING_FORMAT,
     EVEREST,
     OPT_FAILURE_REALIZATIONS,
-    OPT_PROGRESS_ENDPOINT,
     OPTIMIZATION_LOG_DIR,
     OPTIMIZATION_OUTPUT_DIR,
     START_EXPERIMENT_ENDPOINT,
@@ -277,15 +274,6 @@ def _everserver_thread(
         shared_data[STOP_ENDPOINT] = True
         msg_queue.put(ServerStopped())
         return Response("Raise STOP flag succeeded. Everest initiates shutdown..", 200)
-
-    @app.get("/" + OPT_PROGRESS_ENDPOINT)
-    def get_opt_progress(
-        request: Request, credentials: HTTPBasicCredentials = Depends(security)
-    ) -> JSONResponse:
-        _log(request)
-        _check_user(credentials)
-        progress = get_opt_status(server_config["optimization_output_dir"])
-        return JSONResponse(jsonable_encoder(progress))
 
     @app.post("/" + START_EXPERIMENT_ENDPOINT)
     async def start_experiment(
