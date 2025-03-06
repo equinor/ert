@@ -1,4 +1,7 @@
 import os
+import signal
+import threading
+import time
 from pathlib import Path
 from textwrap import dedent
 
@@ -16,6 +19,8 @@ from everest.detached import ServerStatus, everserver_status
 from everest.everest_storage import EverestStorage
 
 WELL_ORDER = "everest/model/config.yml"
+CONFIG_FILE_ADVANCED = "config_advanced.yml"
+
 
 pytestmark = pytest.mark.xdist_group(name="starts_everest")
 
@@ -153,3 +158,36 @@ def test_everest_main_configdump_entry(copy_egg_test_data_to_tmp):
     assert render_dict["definitions"]["data_file"] == os.path.join(
         os.getcwd(), data_file
     )
+
+
+@pytest.mark.flaky(reruns=5)
+@pytest.mark.timeout(60)
+@pytest.mark.integration_test
+def test_stopping_local_queue_with_ctrl_c(capsys, copy_math_func_test_data_to_tmp):
+    config = EverestConfig.load_file(CONFIG_FILE_ADVANCED)
+
+    def wait_and_kill():
+        while True:
+            status = everserver_status(
+                ServerConfig.get_everserver_status_path(config.output_dir)
+            )
+            if status.get("status") == ServerStatus.running:
+                os.kill(os.getpid(), signal.SIGINT)
+                return
+            time.sleep(1)
+
+    thread = threading.Thread(target=wait_and_kill, args=())
+    thread.start()
+
+    with pytest.raises(SystemExit):
+        start_everest(["everest", "run", CONFIG_FILE_ADVANCED])
+
+    out = capsys.readouterr().out
+
+    assert "You are running your optimization locally." in out
+    assert "KeyboardInterrupt" in out
+    assert "The optimization will be stopped and the program will exit..." in out
+
+    status_path = ServerConfig.get_everserver_status_path(config.output_dir)
+    status = everserver_status(status_path)
+    assert status["status"] == ServerStatus.stopped
