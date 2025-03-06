@@ -6,6 +6,7 @@ from dataclasses import dataclass
 from typing import TYPE_CHECKING, Any
 
 from .parsing import ConfigValidationError, ErrorInfo, init_workflow_schema, parse
+from .parsing.types import Defines
 
 if TYPE_CHECKING:
     from ert.substitutions import Substitutions
@@ -31,7 +32,7 @@ class Workflow:
     def _parse_command_list(
         cls,
         src_file: str,
-        context: list[tuple[str, str]],
+        context: Defines,
         job_dict: dict[str, WorkflowJob],
     ) -> list[tuple[WorkflowJob, Any]]:
         schema = init_workflow_schema()
@@ -92,7 +93,7 @@ class Workflow:
     ) -> Workflow:
         cmd_list = cls._parse_command_list(
             src_file=src_file,
-            context=list(context.items()) if context else [],
+            context=list(map(list, context.items())) if context else [],
             job_dict=job_dict,
         )
 

@@ -1916,3 +1916,78 @@ def test_warning_is_not_emitted_for_when_num_cpu_is_explicit():
                 """
             )
         )
+
+
+@pytest.mark.usefixtures("use_tmpdir")
+def test_parsing_define_within_workflow():
+    script_file_contents = dedent(
+        """
+        SCRIPT script.py
+        ARGLIST one two
+        """
+    )
+    workflow_file_contents = dedent(
+        """
+        DEFINE <FOO> workflow_foo
+        DEFINE <FOO2> workflow_foo2
+        script <FOO> <FOO2>
+        """
+    )
+
+    workflow2_file_contents = dedent(
+        """
+        script <FOO2> <FOO>
+        """
+    )
+
+    script_file_path = os.path.join(os.getcwd(), "script")
+    workflow_file_path = os.path.join(os.getcwd(), "workflow")
+    workflow2_file_path = os.path.join(os.getcwd(), "workflow2")
+
+    with open(script_file_path, mode="w", encoding="utf-8") as fh:
+        fh.write(script_file_contents)
+
+    with open(workflow_file_path, mode="w", encoding="utf-8") as fh:
+        fh.write(workflow_file_contents)
+
+    with open(workflow2_file_path, mode="w", encoding="utf-8") as fh:
+        fh.write(workflow2_file_contents)
+
+    with open("script.py", mode="w", encoding="utf-8") as fh:
+        fh.write(
+            dedent(
+                """
+                from ert import ErtScript
+                class Script(ErtScript):
+                    def run(self, *args):
+                        pass
+                """
+            )
+        )
+    with open("config.ert", mode="w", encoding="utf-8") as fh:
+        fh.write(
+            dedent(
+                f"""
+                NUM_REALIZATIONS 1
+                DEFINE <FOO> ertconfig_foo
+                DEFINE <FOO2> ertconfig_foo2
+                LOAD_WORKFLOW_JOB {script_file_path} script
+                LOAD_WORKFLOW {workflow_file_path}
+                LOAD_WORKFLOW {workflow2_file_path}
+                """
+            )
+        )
+
+    ert_config = ErtConfig.from_file("config.ert")
+
+    # Expect overwritten defines within workflow scope
+    wf = ert_config.workflows["workflow"]
+    assert wf.cmd_list[0][1] == ["workflow_foo", "workflow_foo2"]
+
+    # Now expect the ertconfig ones, should not be overwritten
+    # by workflow 1's defines outside of its scope
+    wf2 = ert_config.workflows["workflow2"]
+    assert wf2.cmd_list[0][1] == ["ertconfig_foo2", "ertconfig_foo"]
+
+    assert ert_config.substitutions["<FOO>"] == "ertconfig_foo"
+    assert ert_config.substitutions["<FOO2>"] == "ertconfig_foo2"
