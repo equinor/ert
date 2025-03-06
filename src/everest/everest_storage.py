@@ -4,6 +4,7 @@ import json
 import logging
 import os
 import traceback
+import warnings
 from collections.abc import Callable
 from dataclasses import dataclass, field
 from pathlib import Path
@@ -372,7 +373,11 @@ class EverestStorage:
 
     @staticmethod
     def check_for_deprecated_seba_storage(config_file: str) -> None:
-        config = EverestConfig.load_file(config_file)
+        with warnings.catch_warnings(record=True) as records:
+            config = EverestConfig.load_file(config_file)
+        for r in records:
+            logging.getLogger(EVEREST).info(r.message)
+
         output_dir = Path(config.optimization_output_dir)
         if os.path.exists(output_dir / "seba.db") or os.path.exists(
             output_dir / "seba.db.backup"
