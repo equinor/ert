@@ -301,16 +301,25 @@ def test_gen_kw_distribution_errors(tmpdir, distribution, mean, std, error):
         ("MYNAME UNIFORM 0 1", None),
         ("MYNAME DUNIF 0 1 2", None),
         ("MYNAME ERRF 0 1 2 3", None),
-        ("MYNAME DERRF 0 1 2 3 4", None),
+        ("MYNAME DERRF 3 1 2 3 4", None),
         ("MYNAME LOGUNIF 0 1", None),
         ("MYNAME CONST 0", None),
         ("MYNAME RAW", None),
-        ("MYNAME UNIFORM 0 1 2", "Incorrect number of values provided"),
+        (
+            "MYNAME UNIFORM 0 1 2",
+            "Incorrect number of values: \\['0', '1', '2'\\], provided for variable MYNAME with distribution UNIFORM.",
+        ),
         ("MYNAME", "Too few instructions provided in"),
-        ("MYNAME RANDOM 0 1", "Unknown transform function provided"),
-        ("MYNAME DERRF -0 1.12345 -2.3 3.14 10E-5", None),
-        ("MYNAME DERRF -0 -14 -2.544545 10E5 10E+5", None),
-        ("MYNAME CONST no-number", "Unable to convert float number"),
+        (
+            "MYNAME RANDOM 0 1",
+            "Unknown distribution provided: RANDOM, for variable MYNAME",
+        ),
+        ("MYNAME DERRF 50 1.12345 2.3 3.14 10E-5", None),
+        ("MYNAME DERRF 100 -14 -2.544545 10E5 10E+5", None),
+        (
+            "MYNAME CONST no-number",
+            "Unable to convert 'no-number' to float number for variable MYNAME with distribution CONST.",
+        ),
         ("MYNAME      CONST    0", None),  # spaces
         ("MYNAME\t\t\tCONST\t\t0", None),  # tabs
     ],
@@ -332,9 +341,23 @@ def test_gen_kw_params_parsing(tmpdir, params, error):
             )
         if error:
             with pytest.raises(ConfigValidationError, match=error):
-                GenKwConfig._parse_transform_function_definition(tfd)
+                GenKwConfig(
+                    name="MY_PARAM",
+                    forward_init=False,
+                    update=False,
+                    template_file=None,
+                    output_file=None,
+                    transform_function_definitions=[tfd],
+                )
         else:
-            GenKwConfig._parse_transform_function_definition(tfd)
+            GenKwConfig(
+                name="MY_PARAM",
+                forward_init=False,
+                update=False,
+                template_file=None,
+                output_file=None,
+                transform_function_definitions=[tfd],
+            )
 
 
 @pytest.mark.parametrize(
@@ -406,7 +429,15 @@ def test_gen_kw_trans_func(tmpdir, params, xinput, expected):
     )
 
     with tmpdir.as_cwd():
-        tf = GenKwConfig._parse_transform_function_definition(tfd)
+        gkw = GenKwConfig(
+            name="MY_PARAM",
+            forward_init=False,
+            update=False,
+            template_file=None,
+            output_file=None,
+            transform_function_definitions=[tfd],
+        )
+        tf = gkw.transform_functions[0]
         assert abs(tf.calculate(xinput, float_args) - expected) < 10**-15
 
 

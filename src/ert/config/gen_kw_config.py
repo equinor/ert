@@ -510,26 +510,30 @@ class GenKwConfig(ParameterConfig):
             parameter_values.append(value[0])
         return np.array(parameter_values)
 
-    @staticmethod
     def _parse_transform_function_definition(
+        self,
         t: TransformFunctionDefinition,
     ) -> TransformFunction:
         if t.param_name is None and t.values is None:
-            raise ConfigValidationError(f"Too few instructions provided in: {t}")
+            raise ConfigValidationError.with_context(
+                f"Too few instructions provided in: {t}", self.name
+            )
 
         if (
             t.param_name not in DISTRIBUTION_PARAMETERS
             or t.param_name not in PRIOR_FUNCTIONS
         ):
             raise ConfigValidationError(
-                f"Unknown transform function provided: {t.param_name}"
+                f"Unknown distribution provided: {t.param_name}, for variable {t.name}",
+                self.name,
             )
 
         param_names = DISTRIBUTION_PARAMETERS[t.param_name]
 
         if len(t.values) != len(param_names):
-            raise ConfigValidationError(
-                f"Incorrect number of values provided: {t.values} "
+            raise ConfigValidationError.with_context(
+                f"Incorrect number of values: {t.values}, provided for variable {t.name} with distribution {t.param_name}.",
+                self.name,
             )
 
         param_floats = []
@@ -537,8 +541,9 @@ class GenKwConfig(ParameterConfig):
             try:
                 param_floats.append(float(p))
             except ValueError as e:
-                raise ConfigValidationError(
-                    f"Unable to convert float number: {p}"
+                raise ConfigValidationError.with_context(
+                    f"Unable to convert '{p}' to float number for variable {t.name} with distribution {t.param_name}.",
+                    self.name,
                 ) from e
 
         params = dict(zip(param_names, param_floats, strict=False))
