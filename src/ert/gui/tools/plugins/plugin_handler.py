@@ -3,12 +3,13 @@ from __future__ import annotations
 from collections.abc import Iterator
 from typing import TYPE_CHECKING
 
+from ert.config.workflow_job import ErtScriptWorkflow
+
 from .plugin import Plugin
 
 if TYPE_CHECKING:
     from PyQt6.QtWidgets import QWidget
 
-    from ert.config import WorkflowJob
     from ert.gui.ertnotifier import ErtNotifier
 
 
@@ -16,7 +17,7 @@ class PluginHandler:
     def __init__(
         self,
         notifier: ErtNotifier,
-        plugin_jobs: list[WorkflowJob],
+        plugin_jobs: list[ErtScriptWorkflow],
         parent_window: QWidget | None,
     ):
         self.__plugins = []
