@@ -25,7 +25,7 @@ except ImportError:
 
 
 def version_info() -> str:
-    return f"everest:'{ert_version}'\nropt:'{ropt_version}'\nert:'{ert_version}'"
+    return f"everest:{ert_version}, ropt:{ropt_version}, ert:{ert_version}"
 
 
 def date2str(date: datetime) -> str:

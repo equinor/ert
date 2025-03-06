@@ -10,6 +10,7 @@ import threading
 from functools import partial
 
 from ert.config.ert_config import ErtConfig
+from ert.config.parsing.queue_system import QueueSystem
 from everest.config import EverestConfig, ServerConfig
 from everest.detached import (
     ServerStatus,
@@ -43,12 +44,18 @@ def everest_entry(args: list[str] | None = None) -> None:
     options = parser.parse_args(args)
 
     if options.debug:
-        logging.getLogger().setLevel(logging.DEBUG)
+        logging.getLogger(EVEREST).setLevel(logging.DEBUG)
         # Remove the null handler if set:
         logging.getLogger().removeHandler(logging.NullHandler())
 
     logging.info(version_info())
     logging.debug(json.dumps(options.config.to_dict(), sort_keys=True, indent=2))
+
+    if options.config.server_queue_system == QueueSystem.LOCAL:
+        print(
+            "You are running your optimization locally.\n"
+            "Pressing Ctrl+C will stop the optimization and exit."
+        )
 
     if threading.current_thread() is threading.main_thread():
         signal.signal(
@@ -89,7 +96,7 @@ def _build_args_parser() -> argparse.ArgumentParser:
 
 
 async def run_everest(options: argparse.Namespace) -> None:
-    logger = logging.getLogger("everest_main")
+    logger = logging.getLogger(EVEREST)
     everserver_status_path = ServerConfig.get_everserver_status_path(
         options.config.output_dir
     )
@@ -136,7 +143,7 @@ async def run_everest(options: argparse.Namespace) -> None:
             save_config_path = os.path.join(output_dir, config_file)
             options.config.dump(save_config_path)
         except (OSError, LookupError) as e:
-            logging.getLogger(EVEREST).error(f"Failed to save optimization config: {e}")
+            logger.error(f"Failed to save optimization config: {e}")
 
         logging_level = logging.DEBUG if options.debug else options.config.logging_level
         await start_server(options.config, logging_level)
