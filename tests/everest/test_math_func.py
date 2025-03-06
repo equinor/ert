@@ -225,6 +225,7 @@ def test_math_func_auto_scaled_constraints(copy_math_func_test_data_to_tmp):
     )
 
 
+@pytest.mark.xdist_group("math_func/config_advanced.yml")
 @pytest.mark.integration_test
 def test_ensemble_creation(cached_example):
     cached_example("math_func/config_advanced.yml")
