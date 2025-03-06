@@ -250,9 +250,9 @@ def test_gen_kw_is_log_or_not(
     "distribution, mean, std, error",
     [
         ("LOGNORMAL", "0", "1", None),
-        ("LOGNORMAL", "-1", "1", ["MEAN"]),
+        ("LOGNORMAL", "-1", "1", None),
         ("LOGNORMAL", "0", "-1", ["STD"]),
-        ("LOGNORMAL", "-1", "-1", ["MEAN", "STD"]),
+        ("LOGNORMAL", "-10000", "-1", ["STD"]),
         ("NORMAL", "0", "1", None),
         ("NORMAL", "-1", "1", None),
         ("NORMAL", "0", "-1", ["STD"]),
