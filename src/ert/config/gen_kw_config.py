@@ -274,7 +274,6 @@ class GenKwConfig(ParameterConfig):
             unique_keys.add(key)
 
             if prior["function"] == "LOGNORMAL":
-                _check_non_negative_parameter("MEAN", prior)
                 _check_non_negative_parameter("STD", prior)
             elif prior["function"] == "TRIANGULAR":
                 _check_valid_triangular_parameters(prior)

@@ -95,7 +95,7 @@ LOGNORMAL: Log Normal Distribution
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 The ``LOGNORMAL`` keyword is used to assign a log normal prior to a variable. A variable is considered log normally distributed if the logarithm of that variable follows a normal distribution.
-If :math:`X` is normally distributed, then :math:`Y = e^X` is log normally distributed.
+The logarithm in question is the natural logarithm. If :math:`X` is normally distributed, then :math:`Y = e^X` is log normally distributed.
 
 Log normal priors are especially suitable for modeling positive values that exhibit a heavy tail, indicating a tendency for the quantity to occasionally take large values.
 
