@@ -9,19 +9,357 @@
       "batch": 0,
       "event_type": "EverestBatchResultEvent",
       "everest_event": "FINISHED_OPTIMIZER_EVALUATION",
-      "result_type": "FunctionResult"
+      "result_type": "FunctionResult",
+      "results": null
     },
     {
       "batch": 0,
       "event_type": "EverestBatchResultEvent",
       "everest_event": "OPTIMIZATION_RESULT",
-      "result_type": "FunctionResult"
+      "result_type": "FunctionResult",
+      "results": {
+        "batch_id": 0,
+        "constraint_info": {
+          "bound_lower": [
+            1.25,
+            1.25,
+            1.25
+          ],
+          "bound_upper": [
+            -0.75,
+            -0.75,
+            -0.75
+          ],
+          "bound_violation": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "linear_lower": [
+            null
+          ],
+          "linear_upper": [
+            -0.15
+          ],
+          "linear_violation": [
+            0.0
+          ],
+          "nonlinear_lower": [
+            0.15
+          ],
+          "nonlinear_upper": [
+            null
+          ],
+          "nonlinear_violation": [
+            0.0
+          ]
+        },
+        "control_names": [
+          "point.x.0",
+          "point.x.1",
+          "point.x.2"
+        ],
+        "evaluations": {
+          "constraints": [
+            [
+              0.25
+            ],
+            [
+              0.25
+            ]
+          ],
+          "evaluation_ids": [
+            0,
+            1
+          ],
+          "objectives": [
+            [
+              -6.1875
+            ],
+            [
+              -0.1875
+            ]
+          ],
+          "variables": [
+            0.25,
+            0.25,
+            0.25
+          ]
+        },
+        "functions": {
+          "constraints": [
+            0.25
+          ],
+          "objectives": [
+            -1.6875
+          ],
+          "weighted_objective": -1.6875
+        },
+        "metadata": {},
+        "objective_names": [
+          "distance"
+        ],
+        "plan_id": [
+          0
+        ],
+        "realizations": {
+          "constraint_weights": null,
+          "failed_realizations": [
+            false,
+            false
+          ],
+          "objective_weights": null
+        }
+      }
     },
     {
       "batch": 0,
       "event_type": "EverestBatchResultEvent",
       "everest_event": "OPTIMIZATION_RESULT",
-      "result_type": "GradientResult"
+      "result_type": "GradientResult",
+      "results": {
+        "batch_id": 0,
+        "control_names": [
+          "point.x.0",
+          "point.x.1",
+          "point.x.2"
+        ],
+        "evaluations": {
+          "perturbed_constraints": [
+            [
+              [
+                0.253828
+              ],
+              [
+                0.249969
+              ],
+              [
+                0.248531
+              ],
+              [
+                0.244271
+              ],
+              [
+                0.250644
+              ],
+              [
+                0.252331
+              ],
+              [
+                0.253385
+              ]
+            ],
+            [
+              [
+                0.248917
+              ],
+              [
+                0.241123
+              ],
+              [
+                0.240045
+              ],
+              [
+                0.247978
+              ],
+              [
+                0.248814
+              ],
+              [
+                0.245075
+              ],
+              [
+                0.246149
+              ]
+            ]
+          ],
+          "perturbed_evaluation_ids": [
+            [
+              2,
+              3,
+              4,
+              5,
+              6,
+              7,
+              8
+            ],
+            [
+              9,
+              10,
+              11,
+              12,
+              13,
+              14,
+              15
+            ]
+          ],
+          "perturbed_objectives": [
+            [
+              [
+                -6.19746
+              ],
+              [
+                -6.1979
+              ],
+              [
+                -6.16902
+              ],
+              [
+                -6.19142
+              ],
+              [
+                -6.18355
+              ],
+              [
+                -6.18455
+              ],
+              [
+                -6.18155
+              ]
+            ],
+            [
+              [
+                -0.186818
+              ],
+              [
+                -0.191715
+              ],
+              [
+                -0.19468
+              ],
+              [
+                -0.192125
+              ],
+              [
+                -0.18746
+              ],
+              [
+                -0.189341
+              ],
+              [
+                -0.188852
+              ]
+            ]
+          ],
+          "perturbed_variables": [
+            [
+              [
+                0.253828,
+                0.247517,
+                0.239746
+              ],
+              [
+                0.249969,
+                0.252633,
+                0.247436
+              ],
+              [
+                0.248531,
+                0.246518,
+                0.252336
+              ],
+              [
+                0.244271,
+                0.257228,
+                0.252833
+              ],
+              [
+                0.250644,
+                0.249406,
+                0.258399
+              ],
+              [
+                0.252331,
+                0.246925,
+                0.25071
+              ],
+              [
+                0.253385,
+                0.245517,
+                0.254311
+              ]
+            ],
+            [
+              [
+                0.248917,
+                0.251705,
+                0.250752
+              ],
+              [
+                0.241123,
+                0.24738,
+                0.253258
+              ],
+              [
+                0.240045,
+                0.243321,
+                0.252575
+              ],
+              [
+                0.247978,
+                0.250153,
+                0.242732
+              ],
+              [
+                0.248814,
+                0.251097,
+                0.250173
+              ],
+              [
+                0.245075,
+                0.256493,
+                0.244934
+              ],
+              [
+                0.246149,
+                0.258274,
+                0.243133
+              ]
+            ]
+          ],
+          "variables": [
+            0.25,
+            0.25,
+            0.25
+          ]
+        },
+        "gradients": {
+          "constraints": [
+            [
+              0.999992,
+              -0.000029,
+              -0.000035
+            ]
+          ],
+          "objectives": [
+            [
+              -0.490766,
+              -0.50191,
+              0.504245
+            ]
+          ],
+          "weighted_objective": [
+            -0.490766,
+            -0.50191,
+            0.504245
+          ]
+        },
+        "metadata": {},
+        "objective_names": [
+          "distance"
+        ],
+        "plan_id": [
+          0
+        ],
+        "realizations": {
+          "constraint_weights": null,
+          "failed_realizations": [
+            false,
+            false
+          ],
+          "objective_weights": null
+        }
+      }
     },
     {
       "batch": 1,
@@ -32,19 +370,357 @@
       "batch": 1,
       "event_type": "EverestBatchResultEvent",
       "everest_event": "FINISHED_OPTIMIZER_EVALUATION",
-      "result_type": "FunctionResult"
+      "result_type": "FunctionResult",
+      "results": null
     },
     {
       "batch": 1,
       "event_type": "EverestBatchResultEvent",
       "everest_event": "OPTIMIZATION_RESULT",
-      "result_type": "FunctionResult"
+      "result_type": "FunctionResult",
+      "results": {
+        "batch_id": 1,
+        "constraint_info": {
+          "bound_lower": [
+            1.259045,
+            1.137925,
+            1.173367
+          ],
+          "bound_upper": [
+            -0.740955,
+            -0.862075,
+            -0.826633
+          ],
+          "bound_violation": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "linear_lower": [
+            null
+          ],
+          "linear_upper": [
+            -0.226633
+          ],
+          "linear_violation": [
+            0.0
+          ],
+          "nonlinear_lower": [
+            0.159045
+          ],
+          "nonlinear_upper": [
+            null
+          ],
+          "nonlinear_violation": [
+            0.0
+          ]
+        },
+        "control_names": [
+          "point.x.0",
+          "point.x.1",
+          "point.x.2"
+        ],
+        "evaluations": {
+          "constraints": [
+            [
+              0.259045
+            ],
+            [
+              0.259045
+            ]
+          ],
+          "evaluation_ids": [
+            0,
+            1
+          ],
+          "objectives": [
+            [
+              -5.88373
+            ],
+            [
+              -0.295847
+            ]
+          ],
+          "variables": [
+            0.259045,
+            0.137925,
+            0.173367
+          ]
+        },
+        "functions": {
+          "constraints": [
+            0.259045
+          ],
+          "objectives": [
+            -1.692818
+          ],
+          "weighted_objective": -1.692818
+        },
+        "metadata": {},
+        "objective_names": [
+          "distance"
+        ],
+        "plan_id": [
+          0
+        ],
+        "realizations": {
+          "constraint_weights": null,
+          "failed_realizations": [
+            false,
+            false
+          ],
+          "objective_weights": null
+        }
+      }
     },
     {
       "batch": 1,
       "event_type": "EverestBatchResultEvent",
       "everest_event": "OPTIMIZATION_RESULT",
-      "result_type": "GradientResult"
+      "result_type": "GradientResult",
+      "results": {
+        "batch_id": 1,
+        "control_names": [
+          "point.x.0",
+          "point.x.1",
+          "point.x.2"
+        ],
+        "evaluations": {
+          "perturbed_constraints": [
+            [
+              [
+                0.261585
+              ],
+              [
+                0.262252
+              ],
+              [
+                0.261507
+              ],
+              [
+                0.249489
+              ],
+              [
+                0.256554
+              ],
+              [
+                0.26018
+              ],
+              [
+                0.255473
+              ]
+            ],
+            [
+              [
+                0.256588
+              ],
+              [
+                0.261832
+              ],
+              [
+                0.255116
+              ],
+              [
+                0.27045
+              ],
+              [
+                0.258134
+              ],
+              [
+                0.261031
+              ],
+              [
+                0.258075
+              ]
+            ]
+          ],
+          "perturbed_evaluation_ids": [
+            [
+              2,
+              3,
+              4,
+              5,
+              6,
+              7,
+              8
+            ],
+            [
+              9,
+              10,
+              11,
+              12,
+              13,
+              14,
+              15
+            ]
+          ],
+          "perturbed_objectives": [
+            [
+              [
+                -5.89403
+              ],
+              [
+                -5.91267
+              ],
+              [
+                -5.8881
+              ],
+              [
+                -5.85856
+              ],
+              [
+                -5.88937
+              ],
+              [
+                -5.90464
+              ],
+              [
+                -5.86682
+              ]
+            ],
+            [
+              [
+                -0.297209
+              ],
+              [
+                -0.297662
+              ],
+              [
+                -0.298239
+              ],
+              [
+                -0.288244
+              ],
+              [
+                -0.29481
+              ],
+              [
+                -0.293977
+              ],
+              [
+                -0.294727
+              ]
+            ]
+          ],
+          "perturbed_variables": [
+            [
+              [
+                0.261585,
+                0.137195,
+                0.167676
+              ],
+              [
+                0.262252,
+                0.144173,
+                0.177764
+              ],
+              [
+                0.261507,
+                0.137099,
+                0.175814
+              ],
+              [
+                0.249489,
+                0.138548,
+                0.163826
+              ],
+              [
+                0.256554,
+                0.143355,
+                0.178644
+              ],
+              [
+                0.26018,
+                0.142675,
+                0.171331
+              ],
+              [
+                0.255473,
+                0.137913,
+                0.180035
+              ]
+            ],
+            [
+              [
+                0.256588,
+                0.134853,
+                0.176538
+              ],
+              [
+                0.261832,
+                0.133836,
+                0.173103
+              ],
+              [
+                0.255116,
+                0.140014,
+                0.170331
+              ],
+              [
+                0.27045,
+                0.142482,
+                0.171775
+              ],
+              [
+                0.258134,
+                0.144063,
+                0.168911
+              ],
+              [
+                0.261031,
+                0.133394,
+                0.179889
+              ],
+              [
+                0.258075,
+                0.141921,
+                0.171398
+              ]
+            ]
+          ],
+          "variables": [
+            0.259045,
+            0.137925,
+            0.173367
+          ]
+        },
+        "gradients": {
+          "constraints": [
+            [
+              1.00002,
+              7e-6,
+              0.000054
+            ]
+          ],
+          "objectives": [
+            [
+              -0.522093,
+              -0.285793,
+              0.648697
+            ]
+          ],
+          "weighted_objective": [
+            -0.522093,
+            -0.285793,
+            0.648697
+          ]
+        },
+        "metadata": {},
+        "objective_names": [
+          "distance"
+        ],
+        "plan_id": [
+          0
+        ],
+        "realizations": {
+          "constraint_weights": null,
+          "failed_realizations": [
+            false,
+            false
+          ],
+          "objective_weights": null
+        }
+      }
     },
     {
       "batch": 2,
@@ -55,19 +731,357 @@
       "batch": 2,
       "event_type": "EverestBatchResultEvent",
       "everest_event": "FINISHED_OPTIMIZER_EVALUATION",
-      "result_type": "FunctionResult"
+      "result_type": "FunctionResult",
+      "results": null
     },
     {
       "batch": 2,
       "event_type": "EverestBatchResultEvent",
       "everest_event": "OPTIMIZATION_RESULT",
-      "result_type": "FunctionResult"
+      "result_type": "FunctionResult",
+      "results": {
+        "batch_id": 2,
+        "constraint_info": {
+          "bound_lower": [
+            1.318636,
+            1.005044,
+            1.133852
+          ],
+          "bound_upper": [
+            -0.681364,
+            -0.994956,
+            -0.866148
+          ],
+          "bound_violation": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "linear_lower": [
+            null
+          ],
+          "linear_upper": [
+            -0.266148
+          ],
+          "linear_violation": [
+            0.0
+          ],
+          "nonlinear_lower": [
+            0.218636
+          ],
+          "nonlinear_upper": [
+            null
+          ],
+          "nonlinear_violation": [
+            0.0
+          ]
+        },
+        "control_names": [
+          "point.x.0",
+          "point.x.1",
+          "point.x.2"
+        ],
+        "evaluations": {
+          "constraints": [
+            [
+              0.318636
+            ],
+            [
+              0.318636
+            ]
+          ],
+          "evaluation_ids": [
+            0,
+            1
+          ],
+          "objectives": [
+            [
+              -5.70666
+            ],
+            [
+              -0.411939
+            ]
+          ],
+          "variables": [
+            0.318636,
+            0.005044,
+            0.133852
+          ]
+        },
+        "functions": {
+          "constraints": [
+            0.318636
+          ],
+          "objectives": [
+            -1.735619
+          ],
+          "weighted_objective": -1.735619
+        },
+        "metadata": {},
+        "objective_names": [
+          "distance"
+        ],
+        "plan_id": [
+          0
+        ],
+        "realizations": {
+          "constraint_weights": null,
+          "failed_realizations": [
+            false,
+            false
+          ],
+          "objective_weights": null
+        }
+      }
     },
     {
       "batch": 2,
       "event_type": "EverestBatchResultEvent",
       "everest_event": "OPTIMIZATION_RESULT",
-      "result_type": "GradientResult"
+      "result_type": "GradientResult",
+      "results": {
+        "batch_id": 2,
+        "control_names": [
+          "point.x.0",
+          "point.x.1",
+          "point.x.2"
+        ],
+        "evaluations": {
+          "perturbed_constraints": [
+            [
+              [
+                0.3245
+              ],
+              [
+                0.321005
+              ],
+              [
+                0.3138
+              ],
+              [
+                0.312909
+              ],
+              [
+                0.315395
+              ],
+              [
+                0.323273
+              ],
+              [
+                0.325543
+              ]
+            ],
+            [
+              [
+                0.322396
+              ],
+              [
+                0.323642
+              ],
+              [
+                0.326895
+              ],
+              [
+                0.318373
+              ],
+              [
+                0.324008
+              ],
+              [
+                0.318889
+              ],
+              [
+                0.319148
+              ]
+            ]
+          ],
+          "perturbed_evaluation_ids": [
+            [
+              2,
+              3,
+              4,
+              5,
+              6,
+              7,
+              8
+            ],
+            [
+              9,
+              10,
+              11,
+              12,
+              13,
+              14,
+              15
+            ]
+          ],
+          "perturbed_objectives": [
+            [
+              [
+                -5.74501
+              ],
+              [
+                -5.73315
+              ],
+              [
+                -5.68863
+              ],
+              [
+                -5.69057
+              ],
+              [
+                -5.70476
+              ],
+              [
+                -5.71652
+              ],
+              [
+                -5.74079
+              ]
+            ],
+            [
+              [
+                -0.407279
+              ],
+              [
+                -0.407352
+              ],
+              [
+                -0.414022
+              ],
+              [
+                -0.412253
+              ],
+              [
+                -0.41387
+              ],
+              [
+                -0.420325
+              ],
+              [
+                -0.412578
+              ]
+            ]
+          ],
+          "perturbed_variables": [
+            [
+              [
+                0.3245,
+                0.010438,
+                0.132867
+              ],
+              [
+                0.321005,
+                0.010956,
+                0.133791
+              ],
+              [
+                0.3138,
+                0.004266,
+                0.131294
+              ],
+              [
+                0.312909,
+                0.00657,
+                0.133693
+              ],
+              [
+                0.315395,
+                0.009696,
+                0.139558
+              ],
+              [
+                0.323273,
+                0.004379,
+                0.140771
+              ],
+              [
+                0.325543,
+                0.008658,
+                0.136496
+              ]
+            ],
+            [
+              [
+                0.322396,
+                0.006764,
+                0.136058
+              ],
+              [
+                0.323642,
+                0.00386,
+                0.139313
+              ],
+              [
+                0.326895,
+                0.002527,
+                0.130435
+              ],
+              [
+                0.318373,
+                0.000479,
+                0.139801
+              ],
+              [
+                0.324008,
+                -0.00049,
+                0.136124
+              ],
+              [
+                0.318889,
+                0.001601,
+                0.127009
+              ],
+              [
+                0.319148,
+                0.006537,
+                0.130724
+              ]
+            ]
+          ],
+          "variables": [
+            0.318636,
+            0.005044,
+            0.133852
+          ]
+        },
+        "gradients": {
+          "constraints": [
+            [
+              0.999987,
+              3e-6,
+              0.000025
+            ]
+          ],
+          "objectives": [
+            [
+              -0.642813,
+              -0.00522,
+              0.731527
+            ]
+          ],
+          "weighted_objective": [
+            -0.642813,
+            -0.00522,
+            0.731527
+          ]
+        },
+        "metadata": {},
+        "objective_names": [
+          "distance"
+        ],
+        "plan_id": [
+          0
+        ],
+        "realizations": {
+          "constraint_weights": null,
+          "failed_realizations": [
+            false,
+            false
+          ],
+          "objective_weights": null
+        }
+      }
     },
     {
       "batch": 3,
@@ -78,19 +1092,357 @@
       "batch": 3,
       "event_type": "EverestBatchResultEvent",
       "everest_event": "FINISHED_OPTIMIZER_EVALUATION",
-      "result_type": "FunctionResult"
+      "result_type": "FunctionResult",
+      "results": null
     },
     {
       "batch": 3,
       "event_type": "EverestBatchResultEvent",
       "everest_event": "OPTIMIZATION_RESULT",
-      "result_type": "FunctionResult"
+      "result_type": "FunctionResult",
+      "results": {
+        "batch_id": 3,
+        "constraint_info": {
+          "bound_lower": [
+            1.241178,
+            1.030154,
+            1.245838
+          ],
+          "bound_upper": [
+            -0.758822,
+            -0.969846,
+            -0.754162
+          ],
+          "bound_violation": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "linear_lower": [
+            null
+          ],
+          "linear_upper": [
+            -0.154162
+          ],
+          "linear_violation": [
+            0.0
+          ],
+          "nonlinear_lower": [
+            0.141178
+          ],
+          "nonlinear_upper": [
+            null
+          ],
+          "nonlinear_violation": [
+            0.0
+          ]
+        },
+        "control_names": [
+          "point.x.0",
+          "point.x.1",
+          "point.x.2"
+        ],
+        "evaluations": {
+          "constraints": [
+            [
+              0.241178
+            ],
+            [
+              0.241178
+            ]
+          ],
+          "evaluation_ids": [
+            0,
+            1
+          ],
+          "objectives": [
+            [
+              -5.43767
+            ],
+            [
+              -0.352343
+            ]
+          ],
+          "variables": [
+            0.241178,
+            0.030154,
+            0.245838
+          ]
+        },
+        "functions": {
+          "constraints": [
+            0.241178
+          ],
+          "objectives": [
+            -1.623675
+          ],
+          "weighted_objective": -1.623675
+        },
+        "metadata": {},
+        "objective_names": [
+          "distance"
+        ],
+        "plan_id": [
+          0
+        ],
+        "realizations": {
+          "constraint_weights": null,
+          "failed_realizations": [
+            false,
+            false
+          ],
+          "objective_weights": null
+        }
+      }
     },
     {
       "batch": 3,
       "event_type": "EverestBatchResultEvent",
       "everest_event": "OPTIMIZATION_RESULT",
-      "result_type": "GradientResult"
+      "result_type": "GradientResult",
+      "results": {
+        "batch_id": 3,
+        "control_names": [
+          "point.x.0",
+          "point.x.1",
+          "point.x.2"
+        ],
+        "evaluations": {
+          "perturbed_constraints": [
+            [
+              [
+                0.240638
+              ],
+              [
+                0.246333
+              ],
+              [
+                0.243841
+              ],
+              [
+                0.242721
+              ],
+              [
+                0.246157
+              ],
+              [
+                0.235528
+              ],
+              [
+                0.233017
+              ]
+            ],
+            [
+              [
+                0.241773
+              ],
+              [
+                0.240129
+              ],
+              [
+                0.245971
+              ],
+              [
+                0.238301
+              ],
+              [
+                0.23809
+              ],
+              [
+                0.244367
+              ],
+              [
+                0.244028
+              ]
+            ]
+          ],
+          "perturbed_evaluation_ids": [
+            [
+              2,
+              3,
+              4,
+              5,
+              6,
+              7,
+              8
+            ],
+            [
+              9,
+              10,
+              11,
+              12,
+              13,
+              14,
+              15
+            ]
+          ],
+          "perturbed_objectives": [
+            [
+              [
+                -5.42889
+              ],
+              [
+                -5.4577
+              ],
+              [
+                -5.46955
+              ],
+              [
+                -5.45647
+              ],
+              [
+                -5.45451
+              ],
+              [
+                -5.4199
+              ],
+              [
+                -5.42188
+              ]
+            ],
+            [
+              [
+                -0.350224
+              ],
+              [
+                -0.347284
+              ],
+              [
+                -0.348786
+              ],
+              [
+                -0.357915
+              ],
+              [
+                -0.355309
+              ],
+              [
+                -0.347065
+              ],
+              [
+                -0.352566
+              ]
+            ]
+          ],
+          "perturbed_variables": [
+            [
+              [
+                0.240638,
+                0.028777,
+                0.251171
+              ],
+              [
+                0.246333,
+                0.030129,
+                0.241685
+              ],
+              [
+                0.243841,
+                0.037831,
+                0.247716
+              ],
+              [
+                0.242721,
+                0.033672,
+                0.240693
+              ],
+              [
+                0.246157,
+                0.029976,
+                0.245812
+              ],
+              [
+                0.235528,
+                0.031005,
+                0.247275
+              ],
+              [
+                0.233017,
+                0.032398,
+                0.234876
+              ]
+            ],
+            [
+              [
+                0.241773,
+                0.031525,
+                0.246873
+              ],
+              [
+                0.240129,
+                0.032753,
+                0.252147
+              ],
+              [
+                0.245971,
+                0.035034,
+                0.239113
+              ],
+              [
+                0.238301,
+                0.033491,
+                0.232049
+              ],
+              [
+                0.23809,
+                0.030466,
+                0.24261
+              ],
+              [
+                0.244367,
+                0.034342,
+                0.245287
+              ],
+              [
+                0.244028,
+                0.034103,
+                0.235455
+              ]
+            ]
+          ],
+          "variables": [
+            0.241178,
+            0.030154,
+            0.245838
+          ]
+        },
+        "gradients": {
+          "constraints": [
+            [
+              1.000024,
+              -0.000046,
+              8e-6
+            ]
+          ],
+          "objectives": [
+            [
+              -0.472762,
+              -0.078548,
+              0.515398
+            ]
+          ],
+          "weighted_objective": [
+            -0.472762,
+            -0.078548,
+            0.515398
+          ]
+        },
+        "metadata": {},
+        "objective_names": [
+          "distance"
+        ],
+        "plan_id": [
+          0
+        ],
+        "realizations": {
+          "constraint_weights": null,
+          "failed_realizations": [
+            false,
+            false
+          ],
+          "objective_weights": null
+        }
+      }
     },
     {
       "batch": 4,
@@ -101,19 +1453,357 @@
       "batch": 4,
       "event_type": "EverestBatchResultEvent",
       "everest_event": "FINISHED_OPTIMIZER_EVALUATION",
-      "result_type": "FunctionResult"
+      "result_type": "FunctionResult",
+      "results": null
     },
     {
       "batch": 4,
       "event_type": "EverestBatchResultEvent",
       "everest_event": "OPTIMIZATION_RESULT",
-      "result_type": "FunctionResult"
+      "result_type": "FunctionResult",
+      "results": {
+        "batch_id": 4,
+        "constraint_info": {
+          "bound_lower": [
+            1.150915,
+            0.996054,
+            1.369609
+          ],
+          "bound_upper": [
+            -0.849085,
+            -1.003946,
+            -0.630391
+          ],
+          "bound_violation": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "linear_lower": [
+            null
+          ],
+          "linear_upper": [
+            -0.030391
+          ],
+          "linear_violation": [
+            0.0
+          ],
+          "nonlinear_lower": [
+            0.050915
+          ],
+          "nonlinear_upper": [
+            null
+          ],
+          "nonlinear_violation": [
+            0.0
+          ]
+        },
+        "control_names": [
+          "point.x.0",
+          "point.x.1",
+          "point.x.2"
+        ],
+        "evaluations": {
+          "constraints": [
+            [
+              0.150915
+            ],
+            [
+              0.150915
+            ]
+          ],
+          "evaluation_ids": [
+            0,
+            1
+          ],
+          "objectives": [
+            [
+              -4.9807
+            ],
+            [
+              -0.392824
+            ]
+          ],
+          "variables": [
+            0.150915,
+            -0.003946,
+            0.369609
+          ]
+        },
+        "functions": {
+          "constraints": [
+            0.150915
+          ],
+          "objectives": [
+            -1.539793
+          ],
+          "weighted_objective": -1.539793
+        },
+        "metadata": {},
+        "objective_names": [
+          "distance"
+        ],
+        "plan_id": [
+          0
+        ],
+        "realizations": {
+          "constraint_weights": null,
+          "failed_realizations": [
+            false,
+            false
+          ],
+          "objective_weights": null
+        }
+      }
     },
     {
       "batch": 4,
       "event_type": "EverestBatchResultEvent",
       "everest_event": "OPTIMIZATION_RESULT",
-      "result_type": "GradientResult"
+      "result_type": "GradientResult",
+      "results": {
+        "batch_id": 4,
+        "control_names": [
+          "point.x.0",
+          "point.x.1",
+          "point.x.2"
+        ],
+        "evaluations": {
+          "perturbed_constraints": [
+            [
+              [
+                0.149173
+              ],
+              [
+                0.148923
+              ],
+              [
+                0.154842
+              ],
+              [
+                0.146431
+              ],
+              [
+                0.146139
+              ],
+              [
+                0.149327
+              ],
+              [
+                0.160831
+              ]
+            ],
+            [
+              [
+                0.156217
+              ],
+              [
+                0.151929
+              ],
+              [
+                0.150267
+              ],
+              [
+                0.143898
+              ],
+              [
+                0.150056
+              ],
+              [
+                0.145294
+              ],
+              [
+                0.156554
+              ]
+            ]
+          ],
+          "perturbed_evaluation_ids": [
+            [
+              2,
+              3,
+              4,
+              5,
+              6,
+              7,
+              8
+            ],
+            [
+              9,
+              10,
+              11,
+              12,
+              13,
+              14,
+              15
+            ]
+          ],
+          "perturbed_objectives": [
+            [
+              [
+                -4.96784
+              ],
+              [
+                -4.97055
+              ],
+              [
+                -4.99837
+              ],
+              [
+                -4.96994
+              ],
+              [
+                -4.96254
+              ],
+              [
+                -4.97115
+              ],
+              [
+                -5.00339
+              ]
+            ],
+            [
+              [
+                -0.392868
+              ],
+              [
+                -0.391979
+              ],
+              [
+                -0.390744
+              ],
+              [
+                -0.403931
+              ],
+              [
+                -0.390378
+              ],
+              [
+                -0.402559
+              ],
+              [
+                -0.389844
+              ]
+            ]
+          ],
+          "perturbed_variables": [
+            [
+              [
+                0.149173,
+                -0.006382,
+                0.368969
+              ],
+              [
+                0.148923,
+                -0.004645,
+                0.375421
+              ],
+              [
+                0.154842,
+                -0.00211,
+                0.372767
+              ],
+              [
+                0.146431,
+                -0.00295,
+                0.365675
+              ],
+              [
+                0.146139,
+                -0.004733,
+                0.369839
+              ],
+              [
+                0.149327,
+                -0.00524,
+                0.371308
+              ],
+              [
+                0.160831,
+                -0.007108,
+                0.372311
+              ]
+            ],
+            [
+              [
+                0.156217,
+                -0.006156,
+                0.364033
+              ],
+              [
+                0.151929,
+                -0.005568,
+                0.376604
+              ],
+              [
+                0.150267,
+                -0.002664,
+                0.374463
+              ],
+              [
+                0.143898,
+                -0.008875,
+                0.36521
+              ],
+              [
+                0.150056,
+                -0.00174,
+                0.372822
+              ],
+              [
+                0.145294,
+                -0.010955,
+                0.374826
+              ],
+              [
+                0.156554,
+                -0.00517,
+                0.370801
+              ]
+            ]
+          ],
+          "variables": [
+            0.150915,
+            -0.003946,
+            0.369609
+          ]
+        },
+        "gradients": {
+          "constraints": [
+            [
+              0.999972,
+              8e-6,
+              -6e-6
+            ]
+          ],
+          "objectives": [
+            [
+              -0.303694,
+              0.023144,
+              0.258342
+            ]
+          ],
+          "weighted_objective": [
+            -0.303694,
+            0.023144,
+            0.258342
+          ]
+        },
+        "metadata": {},
+        "objective_names": [
+          "distance"
+        ],
+        "plan_id": [
+          0
+        ],
+        "realizations": {
+          "constraint_weights": null,
+          "failed_realizations": [
+            false,
+            false
+          ],
+          "objective_weights": null
+        }
+      }
     },
     {
       "batch": 5,
@@ -124,19 +1814,357 @@
       "batch": 5,
       "event_type": "EverestBatchResultEvent",
       "everest_event": "FINISHED_OPTIMIZER_EVALUATION",
-      "result_type": "FunctionResult"
+      "result_type": "FunctionResult",
+      "results": null
     },
     {
       "batch": 5,
       "event_type": "EverestBatchResultEvent",
       "everest_event": "OPTIMIZATION_RESULT",
-      "result_type": "FunctionResult"
+      "result_type": "FunctionResult",
+      "results": {
+        "batch_id": 5,
+        "constraint_info": {
+          "bound_lower": [
+            1.114527,
+            1.00635,
+            1.388364
+          ],
+          "bound_upper": [
+            -0.885473,
+            -0.99365,
+            -0.611636
+          ],
+          "bound_violation": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "linear_lower": [
+            null
+          ],
+          "linear_upper": [
+            -0.011636
+          ],
+          "linear_violation": [
+            0.0
+          ],
+          "nonlinear_lower": [
+            0.014527
+          ],
+          "nonlinear_upper": [
+            null
+          ],
+          "nonlinear_violation": [
+            0.0
+          ]
+        },
+        "control_names": [
+          "point.x.0",
+          "point.x.1",
+          "point.x.2"
+        ],
+        "evaluations": {
+          "constraints": [
+            [
+              0.114527
+            ],
+            [
+              0.114527
+            ]
+          ],
+          "evaluation_ids": [
+            0,
+            1
+          ],
+          "objectives": [
+            [
+              -4.88825
+            ],
+            [
+              -0.404742
+            ]
+          ],
+          "variables": [
+            0.114527,
+            0.00635,
+            0.388364
+          ]
+        },
+        "functions": {
+          "constraints": [
+            0.114527
+          ],
+          "objectives": [
+            -1.525619
+          ],
+          "weighted_objective": -1.525619
+        },
+        "metadata": {},
+        "objective_names": [
+          "distance"
+        ],
+        "plan_id": [
+          0
+        ],
+        "realizations": {
+          "constraint_weights": null,
+          "failed_realizations": [
+            false,
+            false
+          ],
+          "objective_weights": null
+        }
+      }
     },
     {
       "batch": 5,
       "event_type": "EverestBatchResultEvent",
       "everest_event": "OPTIMIZATION_RESULT",
-      "result_type": "GradientResult"
+      "result_type": "GradientResult",
+      "results": {
+        "batch_id": 5,
+        "control_names": [
+          "point.x.0",
+          "point.x.1",
+          "point.x.2"
+        ],
+        "evaluations": {
+          "perturbed_constraints": [
+            [
+              [
+                0.101169
+              ],
+              [
+                0.104932
+              ],
+              [
+                0.116022
+              ],
+              [
+                0.12024
+              ],
+              [
+                0.11828
+              ],
+              [
+                0.120695
+              ],
+              [
+                0.114315
+              ]
+            ],
+            [
+              [
+                0.115587
+              ],
+              [
+                0.118131
+              ],
+              [
+                0.099579
+              ],
+              [
+                0.111196
+              ],
+              [
+                0.12017
+              ],
+              [
+                0.120891
+              ],
+              [
+                0.119971
+              ]
+            ]
+          ],
+          "perturbed_evaluation_ids": [
+            [
+              2,
+              3,
+              4,
+              5,
+              6,
+              7,
+              8
+            ],
+            [
+              9,
+              10,
+              11,
+              12,
+              13,
+              14,
+              15
+            ]
+          ],
+          "perturbed_objectives": [
+            [
+              [
+                -4.85243
+              ],
+              [
+                -4.8614
+              ],
+              [
+                -4.88013
+              ],
+              [
+                -4.91122
+              ],
+              [
+                -4.89451
+              ],
+              [
+                -4.91613
+              ],
+              [
+                -4.90253
+              ]
+            ],
+            [
+              [
+                -0.401972
+              ],
+              [
+                -0.403038
+              ],
+              [
+                -0.414584
+              ],
+              [
+                -0.408528
+              ],
+              [
+                -0.408708
+              ],
+              [
+                -0.405987
+              ],
+              [
+                -0.396413
+              ]
+            ]
+          ],
+          "perturbed_variables": [
+            [
+              [
+                0.101169,
+                0.008018,
+                0.379286
+              ],
+              [
+                0.104932,
+                0.00746,
+                0.385301
+              ],
+              [
+                0.116022,
+                0.002278,
+                0.391557
+              ],
+              [
+                0.12024,
+                0.007854,
+                0.38855
+              ],
+              [
+                0.11828,
+                0.004764,
+                0.393409
+              ],
+              [
+                0.120695,
+                0.008659,
+                0.384157
+              ],
+              [
+                0.114315,
+                0.011896,
+                0.396632
+              ]
+            ],
+            [
+              [
+                0.115587,
+                0.006563,
+                0.396469
+              ],
+              [
+                0.118131,
+                0.005454,
+                0.387581
+              ],
+              [
+                0.099579,
+                0.009318,
+                0.383903
+              ],
+              [
+                0.111196,
+                0.005618,
+                0.386223
+              ],
+              [
+                0.12017,
+                -0.002155,
+                0.389194
+              ],
+              [
+                0.120891,
+                0.000084,
+                0.388883
+              ],
+              [
+                0.119971,
+                0.01003,
+                0.390817
+              ]
+            ]
+          ],
+          "variables": [
+            0.114527,
+            0.00635,
+            0.388364
+          ]
+        },
+        "gradients": {
+          "constraints": [
+            [
+              0.999986,
+              -0.000013,
+              0.0
+            ]
+          ],
+          "objectives": [
+            [
+              -0.216561,
+              -0.005788,
+              0.21722
+            ]
+          ],
+          "weighted_objective": [
+            -0.216561,
+            -0.005788,
+            0.21722
+          ]
+        },
+        "metadata": {},
+        "objective_names": [
+          "distance"
+        ],
+        "plan_id": [
+          0
+        ],
+        "realizations": {
+          "constraint_weights": null,
+          "failed_realizations": [
+            false,
+            false
+          ],
+          "objective_weights": null
+        }
+      }
     }
   ],
   "num_full_snapshots": 6

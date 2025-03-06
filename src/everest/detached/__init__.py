@@ -19,7 +19,7 @@ from pydantic import ValidationError
 from websockets.sync.client import connect
 
 from ert.ensemble_evaluator import EndEvent
-from ert.run_models.event import status_event_from_json
+from ert.run_models.event import EverestBatchResultEvent, status_event_from_json
 from ert.scheduler import create_driver
 from ert.scheduler.driver import Driver, FailedSubmit
 from ert.scheduler.event import StartedEvent
@@ -27,7 +27,7 @@ from everest.config import EverestConfig, ServerConfig
 from everest.everest_storage import EverestStorage
 from everest.strings import (
     EVEREST_SERVER_CONFIG,
-    OPT_PROGRESS_ENDPOINT,
+    OPT_PROGRESS_ID,
     SIM_PROGRESS_ID,
     START_EXPERIMENT_ENDPOINT,
     STOP_ENDPOINT,
@@ -146,7 +146,7 @@ def wait_for_server(output_dir: str, timeout: int | float) -> None:
     raise RuntimeError("Failed to get reply from server within configured timeout.")
 
 
-def get_opt_status(output_folder: str) -> dict[str, Any]:
+def get_opt_status_from_storage(output_folder: str) -> dict[str, Any]:
     """Return a dictionary with optimization information retrieved from storage"""
     if not Path(output_folder).exists() or not os.listdir(output_folder):
         return {}
@@ -238,6 +238,33 @@ def server_is_running(url: str, cert: str, auth: tuple[str, str]) -> bool:
     return True
 
 
+def get_opt_status_from_batch_result_event(
+    event: EverestBatchResultEvent,
+) -> dict[str, Any]:
+    if not event.results:
+        return {}
+
+    assert event.batch is not None
+
+    functions = event.results["functions"]
+    weighted_objective = functions["weighted_objective"]
+    expected_objectives = dict(
+        zip(event.results["objective_names"], functions["objectives"], strict=False)
+    )
+
+    evaluations = event.results["evaluations"]
+    controls = dict(
+        zip(event.results["control_names"], evaluations["variables"], strict=False)
+    )
+
+    return {
+        "batch": event.batch,
+        "controls": controls,
+        "objective_value": weighted_objective,
+        "expected_objectives": expected_objectives,
+    }
+
+
 def start_monitor(
     server_context: tuple[str, str, tuple[str, str]],
     callback: Callable[..., None],
@@ -249,10 +276,6 @@ def start_monitor(
     Monitoring stops when the server stops answering.
     """
     url, cert, auth = server_context
-    opt_endpoint = "/".join([url, OPT_PROGRESS_ENDPOINT])
-    opt_status: dict[str, Any] = {}
-    stop = False
-
     ssl_context = ssl.create_default_context()
     ssl_context.load_verify_locations(cafile=cert)
     username, password = auth
@@ -265,7 +288,7 @@ def start_monitor(
             open_timeout=30,
             additional_headers={"Authorization": f"Basic {credentials}"},
         ) as websocket:
-            while not stop:
+            while True:
                 try:
                     message = websocket.recv(timeout=1.0)
                 except TimeoutError:
@@ -273,15 +296,23 @@ def start_monitor(
                 if message:
                     try:
                         event = status_event_from_json(message)
+                        if isinstance(event, EndEvent):
+                            print(event.msg)
+                        elif isinstance(event, EverestBatchResultEvent):
+                            if event.result_type == "FunctionResult":
+                                callback(
+                                    {
+                                        OPT_PROGRESS_ID: get_opt_status_from_batch_result_event(
+                                            event
+                                        )
+                                    }
+                                )
+                        else:
+                            callback({SIM_PROGRESS_ID: event})
+
                     except ValidationError as e:
                         logger.error("Error when processing event %s", exc_info=e)
-                    if isinstance(event, EndEvent):
-                        print(event.msg)
-                    callback({SIM_PROGRESS_ID: event})
-                # Check the optimization status
-                new_opt_status = _query_server(cert, auth, opt_endpoint)
-                if new_opt_status != opt_status:
-                    opt_status = new_opt_status
+
                 time.sleep(polling_interval)
     except:
         logging.debug(traceback.format_exc())
@@ -307,13 +338,6 @@ _QUEUE_SYSTEMS: Mapping[Literal["LSF", "SLURM", "TORQUE"], dict[str, Any]] = {
     },
     "TORQUE": {"options": ["cluster_label", "CLUSTER_LABEL"], "name": "QUEUE"},
 }
-
-
-def _query_server(cert: str, auth: tuple[str, str], endpoint: str) -> dict[str, Any]:
-    """Retrieve data from an endpoint as a dictionary"""
-    response = requests.get(endpoint, verify=cert, auth=auth, proxies=PROXY)  # type: ignore
-    response.raise_for_status()
-    return response.json()
 
 
 class ServerStatus(Enum):

@@ -167,14 +167,11 @@ def test_failed_jobs_monitor(
         json.dumps(jsonable_encoder(EndEvent(failed=True, msg="Failed"))),
     ]
     server_mock.return_value.__enter__.return_value = connection_mock
-    monkeypatch.setattr(everest.detached, "_query_server", MagicMock(return_value={}))
     monkeypatch.setattr(everest.detached, "connect", server_mock)
     monkeypatch.setattr(everest.detached, "ssl", MagicMock())
     patched = partial(everest.detached.start_monitor, polling_interval=0.1)
     with patch("everest.bin.utils.start_monitor", patched):
-        run_detached_monitor(
-            ("some/url", "cert", ("username", "password")), "output", False
-        )
+        run_detached_monitor(("some/url", "cert", ("username", "password")), False)
     captured = capsys.readouterr()
     expected = [
         "===================== Running forward models (Batch #0) ======================\n",
@@ -201,13 +198,12 @@ def test_monitor(
         json.dumps(jsonable_encoder(EndEvent(failed=False, msg="Experiment complete"))),
     ]
     server_mock.return_value.__enter__.return_value = connection_mock
-    monkeypatch.setattr(everest.detached, "_query_server", MagicMock(return_value={}))
     monkeypatch.setattr(everest.detached, "connect", server_mock)
     monkeypatch.setattr(everest.detached, "ssl", MagicMock())
     patched = partial(everest.detached.start_monitor, polling_interval=0.1)
     with patch("everest.bin.utils.start_monitor", patched):
         run_detached_monitor(
-            ("some/url", "cert", ("username", "password")), "output", show_all_jobs
+            ("some/url", "cert", ("username", "password")), show_all_jobs
         )
     captured = capsys.readouterr()
     expected = [
@@ -240,13 +236,12 @@ def test_forward_model_message_reaches_the_cli(
         json.dumps(jsonable_encoder(EndEvent(failed=True, msg="Failed"))),
     ]
     server_mock.return_value.__enter__.return_value = connection_mock
-    monkeypatch.setattr(everest.detached, "_query_server", MagicMock(return_value={}))
     monkeypatch.setattr(everest.detached, "connect", server_mock)
     monkeypatch.setattr(everest.detached, "ssl", MagicMock())
     patched = partial(everest.detached.start_monitor, polling_interval=0.1)
     with patch("everest.bin.utils.start_monitor", patched):
         run_detached_monitor(
-            ("some/url", "cert", ("username", "password")), "output", show_all_jobs
+            ("some/url", "cert", ("username", "password")), show_all_jobs
         )
     captured = capsys.readouterr()
     expected = [

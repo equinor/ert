@@ -195,7 +195,6 @@ async def run_everest(options: argparse.Namespace) -> None:
                 server_context=ServerConfig.get_server_context(
                     options.config.output_dir
                 ),
-                optimization_output_dir=options.config.optimization_output_dir,
                 show_all_jobs=options.show_all_jobs,
             )
 
