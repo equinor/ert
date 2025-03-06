@@ -26,7 +26,6 @@ from everest.config.server_config import ServerConfig
 from everest.detached import (
     ServerStatus,
     everserver_status,
-    get_opt_status_from_storage,
     server_is_running,
     start_monitor,
     stop_server,
@@ -367,11 +366,6 @@ def report_on_previous_run(
             f"`  everest run --new-run {config_file}`\n"
         )
     else:
-        opt_status = get_opt_status_from_storage(optimization_output_dir)
-        if opt_status.get("cli_monitor_data"):
-            monitor = _DetachedMonitor(show_all_jobs=False)
-            msg, _ = monitor.get_opt_progress(opt_status)
-            print(msg + "\n")
         print(
             f"Optimization completed.\n"
             "\nTo re-run the optimization use command:\n"
