@@ -23,7 +23,7 @@ from everest.config.server_config import ServerConfig
 from everest.detached import (
     ServerStatus,
     everserver_status,
-    get_opt_status,
+    get_opt_status_from_storage,
     server_is_running,
     start_monitor,
     stop_server,
@@ -141,15 +141,10 @@ class _DetachedMonitor:
         try:
             if OPT_PROGRESS_ID in status:
                 opt_status = status[OPT_PROGRESS_ID]
-                if opt_status and opt_status["cli_monitor_data"]:
-                    msg, batch = self.get_opt_progress(opt_status)
-                    if msg.strip():
-                        # Clear the last reported batch of simulations if it
-                        # should be after this optimization report:
-                        if self._last_reported_batch > batch:
-                            self._clear()
-                        print(msg + "\n")
-                        self._clear_lines = 0
+                if opt_status:
+                    msg = self._get_opt_progress_single_batch(opt_status)
+                    print(msg + "\n")
+                    self._clear_lines = 0
             if SIM_PROGRESS_ID in status:
                 match status[SIM_PROGRESS_ID]:
                     case FullSnapshotEvent(snapshot=snapshot, iteration=batch):
@@ -218,6 +213,32 @@ class _DetachedMonitor:
             ]
         )
         objective_value = cli_monitor_data["objective_value"][idx]
+        total_objective = (
+            f"Total normalized objective: {objective_value:{self.FLOAT_FMT}}"
+        )
+        return self._join_two_newlines_indent(
+            (header, controls, objectives, total_objective)
+        )
+
+    def _get_opt_progress_single_batch(self, cli_monitor_data: dict[str, Any]) -> str:
+        batch: int = cli_monitor_data.get("batch", 0)
+        header = self._make_header(f"Optimization progress (Batch #{batch})")
+        width = _get_max_width(cli_monitor_data["controls"].keys())
+        controls = self._join_one_newline_indent(
+            [
+                f"{name:>{width}}: {value:{self.FLOAT_FMT}}"
+                for name, value in cli_monitor_data["controls"].items()
+            ]
+        )
+        expected_objectives = cli_monitor_data["expected_objectives"]
+        width = _get_max_width(expected_objectives.keys())
+        objectives = self._join_one_newline_indent(
+            [
+                f"{name:>{width}}: {value:{self.FLOAT_FMT}}"
+                for name, value in expected_objectives.items()
+            ]
+        )
+        objective_value = cli_monitor_data["objective_value"]
         total_objective = (
             f"Total normalized objective: {objective_value:{self.FLOAT_FMT}}"
         )
@@ -323,16 +344,10 @@ class _DetachedMonitor:
 
 def run_detached_monitor(
     server_context: tuple[str, str, tuple[str, str]],
-    optimization_output_dir: str,
     show_all_jobs: bool = False,
 ) -> None:
     monitor = _DetachedMonitor(show_all_jobs)
     start_monitor(server_context, callback=monitor.update)
-    opt_status = get_opt_status(optimization_output_dir)
-    if opt_status.get("cli_monitor_data"):
-        msg, _ = monitor.get_opt_progress(opt_status)
-        if msg.strip():
-            print(f"{msg}\n")
 
 
 def report_on_previous_run(
@@ -349,7 +364,7 @@ def report_on_previous_run(
             f"`  everest run --new-run {config_file}`\n"
         )
     else:
-        opt_status = get_opt_status(optimization_output_dir)
+        opt_status = get_opt_status_from_storage(optimization_output_dir)
         if opt_status.get("cli_monitor_data"):
             monitor = _DetachedMonitor(show_all_jobs=False)
             msg, _ = monitor.get_opt_progress(opt_status)

@@ -263,8 +263,24 @@ class EverestRunModel(BaseRunModel):
 
     def _handle_optimizer_results(self, results: tuple[Results, ...]) -> None:
         self.ever_storage.on_batch_evaluation_finished(results)
+
+        def convert_ndarray(items: list[tuple[str, Any]]) -> dict[str, Any]:
+            result = {}
+            for key, value in items:
+                if isinstance(value, np.ndarray):
+                    result[key] = value.tolist()
+                else:
+                    result[key] = value
+            return result
+
         # A ROPT event may contain multiple results, we send one event per result
         for r in results:
+            assert r.batch_id is not None
+
+            result_dict = dataclasses.asdict(r, dict_factory=convert_ndarray)
+            result_dict["control_names"] = self._everest_config.formatted_control_names
+            result_dict["objective_names"] = self._everest_config.objective_names
+
             self.send_event(
                 EverestBatchResultEvent(
                     batch=r.batch_id,
@@ -274,6 +290,7 @@ class EverestRunModel(BaseRunModel):
                         if isinstance(r, FunctionResults)
                         else "GradientResult"
                     ),
+                    results=result_dict,
                 )
             )
 
