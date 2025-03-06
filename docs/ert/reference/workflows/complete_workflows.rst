@@ -21,6 +21,16 @@ support. Then we invoke the ECL_HIST example job to create a
 histogram. See documentation of :ref:`RUNPATH_FILE <ms_runpath_file>`. and
 :ref:`ERTCASE <ms_ertcase>`.
 
+:code:`DEFINE` usage in workflows
+---------------------------------
+
+Variables within workflows can be defined using the :code:`DEFINE` keyword. If a :code:`DEFINE` is already set in the ert config,
+and then re-specified within a workflow, the define within the workflow will overshadow
+the :code:`DEFINE` from the ERT config. A :code:`DEFINE` within
+the workflow will set the value of that variable **only within the scope of the workflow**, but not alter its
+value outside of the workflow.
+
+
 Loading workflows
 -----------------
 
