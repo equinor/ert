@@ -773,6 +773,23 @@ types = [
     { name = "types-tqdm" },
 ]
 
+[package.dev-dependencies]
+all = [
+    { name = "ert", extra = ["dev", "everest", "style", "types"] },
+]
+dev = [
+    { name = "ert", extra = ["dev"] },
+]
+everest = [
+    { name = "ert", extra = ["everest"] },
+]
+style = [
+    { name = "ert", extra = ["style"] },
+]
+types = [
+    { name = "ert", extra = ["types"] },
+]
+
 [package.metadata]
 requires-dist = [
     { name = "aiohttp" },
@@ -871,6 +888,18 @@ requires-dist = [
     { name = "xtgeo", specifier = ">=3.3.0" },
 ]
 provides-extras = ["dev", "style", "types", "everest"]
+
+[package.metadata.requires-dev]
+all = [
+    { name = "ert", extras = ["dev"] },
+    { name = "ert", extras = ["everest"] },
+    { name = "ert", extras = ["style"] },
+    { name = "ert", extras = ["types"] },
+]
+dev = [{ name = "ert", extras = ["dev"] }]
+everest = [{ name = "ert", extras = ["everest"] }]
+style = [{ name = "ert", extras = ["style"] }]
+types = [{ name = "ert", extras = ["types"] }]
 
 [[package]]
 name = "et-xmlfile"

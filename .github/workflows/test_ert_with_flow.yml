@@ -35,7 +35,7 @@ jobs:
 
     - name: Install ert and everest
       run: |
-        uv sync --extra everest --extra dev
+        uv sync
         uv pip install git+https://github.com/equinor/everest-models
 
     - name: Install flow

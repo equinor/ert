@@ -41,7 +41,7 @@ jobs:
 
     - name: Install ERT with style dependencies
       run: |
-        uv sync --extra style
+        uv sync
 
     - name: Run style check
       if: ${{ always() }}

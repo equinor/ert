@@ -46,7 +46,7 @@ jobs:
 
     - name: Install ert
       run: |
-        uv sync --extra everest --extra dev
+        uv sync
 
     - name: GUI Test
       if: inputs.test-type == 'gui-tests'
