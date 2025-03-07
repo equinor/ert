@@ -538,9 +538,9 @@ class EverestRunModel(BaseRunModel):
             # of our to-be-evaluated controls.
             for control_name in control_names:
                 left = (
-                    left.sort(["model_realization", control_name])
+                    left.sort([control_name, "model_realization"])
                     .join_asof(
-                        right.sort(["model_realization", control_name]),
+                        right.sort([control_name, "model_realization"]),
                         on=control_name,
                         by="model_realization",  # pre-join by model realization
                         tolerance=EPS,  # Same as np.allclose with atol=EPS
