@@ -204,6 +204,7 @@ def test_report_with_failed_reporter_but_finished_jobs(unused_tcp_port):
     assert len(mock_server.messages) == 0, "expected 0 Job running messages"
 
 
+@pytest.mark.integration_test
 def test_report_with_reconnected_reporter_but_finished_jobs(unused_tcp_port):
     # this is to show when the reporter fails but reconnects
     # reporter still manages to send events and completes fine
