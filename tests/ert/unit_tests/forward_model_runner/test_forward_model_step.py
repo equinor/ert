@@ -40,59 +40,6 @@ def test_run_with_process_failing(mock_process, mock_popen, mock_check_executabl
         next(run)
 
 
-@pytest.mark.flaky(reruns=10)
-@pytest.mark.integration_test
-@pytest.mark.usefixtures("use_tmpdir")
-@pytest.mark.skip_mac_ci  # extremely unreliable on macOS
-def test_cpu_seconds_can_detect_multiprocess():
-    """Run a fm step that sets of two simultaneous processes that
-    each run for 2 and 3 seconds respectively. We should be able to detect
-    the total cpu seconds consumed to be roughly the sum.
-
-    The test is flaky in that it tries to gather cpu_seconds data while
-    the subprocesses are running. On a loaded CPU this is not very robust,
-    but the most important catch is to be able to obtain a cpu_second
-    number that is larger than the busy-wait times of the individual
-    sub-processes.
-    """
-    pythonscript = "busy.py"
-    with open(pythonscript, "w", encoding="utf-8") as pyscript:
-        pyscript.write(
-            textwrap.dedent(
-                """\
-            import time
-            import sys
-            now = time.time()
-            while time.time() < now + int(sys.argv[1]):
-                pass"""
-            )
-        )
-    scriptname = "saturate_cpus.sh"
-    with open(scriptname, "w", encoding="utf-8") as script:
-        script.write(
-            textwrap.dedent(
-                """\
-            #!/bin/sh
-            python busy.py 2 &
-            python busy.py 3"""
-            )
-        )
-    executable = os.path.realpath(scriptname)
-    os.chmod(scriptname, stat.S_IRWXU | stat.S_IRWXO | stat.S_IRWXG)
-    fmstep = ForwardModelStep(
-        {
-            "executable": executable,
-        },
-        0,
-    )
-    fmstep.MEMORY_POLL_PERIOD = 0.05
-    cpu_seconds = 0.0
-    for status in fmstep.run():
-        if isinstance(status, Running):
-            cpu_seconds = max(cpu_seconds, status.memory_status.cpu_seconds)
-    assert 3.2 < cpu_seconds < 5.5
-
-
 @pytest.mark.integration_test
 @pytest.mark.flaky(reruns=5)
 @pytest.mark.usefixtures("use_tmpdir")
