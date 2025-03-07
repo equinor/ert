@@ -70,7 +70,6 @@ def monitor_everest(options: argparse.Namespace) -> None:
     if server_is_running(*server_context):
         run_detached_monitor(
             server_context=server_context,
-            optimization_output_dir=config.optimization_output_dir,
             show_all_jobs=options.show_all_jobs,
         )
         server_state = everserver_status(status_path)

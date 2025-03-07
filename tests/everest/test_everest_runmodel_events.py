@@ -28,11 +28,12 @@ def test_everest_events(config_file, snapshot, cached_example):
 
     full_snapshots = [e for e in events_list if isinstance(e, FullSnapshotEvent)]
     everest_events = [
-        e.model_dump()
+        e.model_dump(
+            exclude={"results"}
+        )  # the results are not that interesting in this context
         for e in events_list
         if isinstance(e, EverestStatusEvent | EverestBatchResultEvent)
     ]
-
     event_info_json = {
         "num_full_snapshots": len(full_snapshots),
         "everest_events": everest_events,
