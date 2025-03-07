@@ -140,36 +140,24 @@ and should be *installed* in the everest config file:
       1:
         phase:
           value: OIL
-        rate:
-          min: 500
-          max: 1000
         duration:
           value: 50
     PROD2:
       1:
         phase:
           value: OIL
-        rate:
-          min: 800
-          max: 1400
         duration:
           value: 50
     INJECT1:
       1:
         phase:
           value: WATER
-        rate:
-          min: 5000
-          max: 10000
         duration:
           value: 50
     INJECT2:
       1:
         phase:
           value: WATER
-        rate:
-          min: 5000
-          max: 10000
         duration:
           value: 50
 
