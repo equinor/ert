@@ -33,7 +33,7 @@ def check_removed_config(queue_system: Any) -> None:
         )
 
 
-class SimulatorConfig(BaseModelWithContextSupport, extra="forbid"):  # type: ignore
+class SimulatorConfig(BaseModelWithContextSupport, extra="forbid"):
     cores_per_node: PositiveInt | None = Field(
         default=None,
         description="""defines the number of CPUs when running

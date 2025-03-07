@@ -107,7 +107,7 @@ class HasName(Protocol):
     name: str
 
 
-class EverestConfig(BaseModelWithContextSupport):  # type: ignore
+class EverestConfig(BaseModelWithContextSupport):
     controls: Annotated[list[ControlConfig], AfterValidator(unique_items)] = Field(
         description="""Defines a list of controls.
          Controls should have unique names each control defines
@@ -678,7 +678,7 @@ and environment variables are exposed in the form 'os.NAME', for example:
         return the_dict
 
     @classmethod
-    def with_defaults(cls, **kwargs):  # type: ignore
+    def with_defaults(cls, **kwargs: Any) -> Self:
         """
         Creates an Everest config with default values. Useful for initializing a config
         without having to provide empty defaults.
@@ -699,7 +699,7 @@ and environment variables are exposed in the form 'os.NAME', for example:
             "model": {"realizations": [0]},
         }
 
-        return cls.with_plugins({**defaults, **kwargs})
+        return cls.with_plugins({**defaults, **kwargs})  # type: ignore
 
     @staticmethod
     def lint_config_dict(config: ConfigDict) -> list[ErrorDetails]:
@@ -745,12 +745,12 @@ and environment variables are exposed in the form 'os.NAME', for example:
             raise exp from error
 
     @classmethod
-    def with_plugins(cls, config_dict):
+    def with_plugins(cls, config_dict: dict[str, Any] | ConfigDict) -> Self:
         site_config = ErtConfig.read_site_config()
         ert_config: ErtConfig = ErtConfig.with_plugins().from_dict(
             config_dict=site_config
         )
-        context = {
+        context: dict[str, Any] = {
             "install_jobs": ert_config.installed_forward_model_steps,
         }
         activate_script = ErtPluginManager().activate_script()
