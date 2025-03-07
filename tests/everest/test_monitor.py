@@ -63,7 +63,7 @@ def full_snapshot_event():
             status=state.REALIZATION_STATE_PENDING,
             start_time=datetime(1999, 1, 1),
             exec_hosts="12121.121",
-            message="Some message",
+            message="",
         ),
         iteration_label="Foo",
         total_iterations=1,
@@ -125,6 +125,32 @@ def snapshot_update_failure_event():
         progress=0.5,
         realization_count=4,
         status_count={"Finished": 0, "Running": 0, "Unknown": 0, "Failed": 1},
+        iteration=0,
+    )
+    yield json.dumps(jsonable_encoder(event))
+
+
+@pytest.fixture
+def snapshot_update_event_with_fm_message():
+    event = SnapshotUpdateEvent(
+        snapshot=SnapshotBuilder(metadata=METADATA)
+        .add_fm_step(
+            fm_step_id="0",
+            name=None,
+            index="0",
+            status=state.FORWARD_MODEL_STATE_FINISHED,
+            end_time=datetime(2019, 1, 1),
+        )
+        .build(
+            real_ids=["1"],
+            status=state.REALIZATION_STATE_FINISHED,
+            message="Something went wrong!",
+        ),
+        iteration_label="Foo",
+        total_iterations=1,
+        progress=0.5,
+        realization_count=4,
+        status_count={"Finished": 1, "Running": 0, "Unknown": 0},
         iteration=0,
     )
     yield json.dumps(jsonable_encoder(event))
@@ -192,6 +218,51 @@ def test_monitor(
     ]
     if show_all_jobs:
         expected[-1:-1] = [f"{name}: 2/0/0" for name in all_shell_script_fm_steps]
+    # Ignore whitespace
+    assert captured.out.translate({ord(c): None for c in string.whitespace}) == "".join(
+        expected
+    ).translate({ord(c): None for c in string.whitespace})
+
+
+@pytest.mark.parametrize("show_all_jobs", [True, False])
+def test_forward_model_message_reaches_the_cli(
+    monkeypatch,
+    full_snapshot_event,
+    snapshot_update_event_with_fm_message,
+    capsys,
+    show_all_jobs,
+):
+    server_mock = MagicMock()
+    connection_mock = MagicMock(spec=ClientConnection)
+    connection_mock.recv.side_effect = [
+        full_snapshot_event,
+        snapshot_update_event_with_fm_message,
+        json.dumps(jsonable_encoder(EndEvent(failed=True, msg="Failed"))),
+    ]
+    server_mock.return_value.__enter__.return_value = connection_mock
+    monkeypatch.setattr(everest.detached, "_query_server", MagicMock(return_value={}))
+    monkeypatch.setattr(everest.detached, "connect", server_mock)
+    monkeypatch.setattr(everest.detached, "ssl", MagicMock())
+    patched = partial(everest.detached.start_monitor, polling_interval=0.1)
+    with patch("everest.bin.utils.start_monitor", patched):
+        run_detached_monitor(
+            ("some/url", "cert", ("username", "password")), "output", show_all_jobs
+        )
+    captured = capsys.readouterr()
+    expected = [
+        "===================== Running forward models (Batch #0) ======================\n",
+        "  Waiting: 0 | Pending: 0 | Running: 0 | Finished: 1 | Failed: 0\n",
+        "  fm_step_0: 1/1/0 | Finished: 1\n",
+        "Failed\n",
+    ]
+    expected[-1:-1] = ["Something went wrong!\n"]
+
+    if show_all_jobs:
+        expected[-1:-1] = [
+            f"{name}: 2/0/0\n Something went wrong!\n"
+            for name in all_shell_script_fm_steps
+        ]
+
     # Ignore whitespace
     assert captured.out.translate({ord(c): None for c in string.whitespace}) == "".join(
         expected

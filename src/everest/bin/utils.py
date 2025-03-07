@@ -245,6 +245,11 @@ class _DetachedMonitor:
     def _get_job_states(cls, snapshot: EnsembleSnapshot, show_all_jobs: bool) -> str:
         print_lines = []
         jobs_status = cls._get_jobs_status(snapshot)
+        forward_model_messages = [
+            v["message"].replace("status from done callback:", "Forward model error:")
+            for _, v in snapshot.reals.items()
+            if v["message"]
+        ]
         if not show_all_jobs:
             jobs_status = cls._filter_jobs(jobs_status)
         if jobs_status:
@@ -265,6 +270,10 @@ class _DetachedMonitor:
                             f"{Fore.RED}{job.name:>{width}}: Failed: {err}, realizations: {_format_list(job.errors[err])}{Fore.RESET}"
                             for err in job.errors
                         ]
+                    )
+                if forward_model_messages:
+                    print_lines.extend(
+                        [f"{Fore.RED} {message}" for message in forward_model_messages]
                     )
         return cls._join_one_newline_indent(print_lines)
 
