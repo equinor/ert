@@ -16,7 +16,6 @@ from typing import (
 
 from pydantic import (
     AfterValidator,
-    BaseModel,
     ConfigDict,
     Field,
     ValidationError,
@@ -24,9 +23,13 @@ from pydantic import (
     model_validator,
 )
 from pydantic_core import ErrorDetails
+from pydantic_core.core_schema import ValidationInfo
 from ruamel.yaml import YAML, YAMLError
 
-from ert.config import ErtConfig
+from ert.config import ErtConfig, QueueConfig
+from ert.config.parsing import BaseModelWithContextSupport
+from ert.config.parsing.base_model_context import init_context
+from ert.plugins import ErtPluginManager
 from everest.config.control_variable_config import ControlVariableGuessListConfig
 from everest.config.install_template_config import InstallTemplateConfig
 from everest.config.server_config import ServerConfig
@@ -64,18 +67,6 @@ from .output_constraint_config import OutputConstraintConfig
 from .simulator_config import SimulatorConfig, simulator_example
 from .well_config import WellConfig
 from .workflow_config import WorkflowConfig
-
-
-def _dummy_ert_config() -> ErtConfig:
-    site_config = ErtConfig.read_site_config()
-    dummy_config = {"NUM_REALIZATIONS": 1, "ENSPATH": "."}
-    dummy_config.update(site_config)  # type: ignore
-    return ErtConfig.with_plugins().from_dict(config_dict=dummy_config)
-
-
-def get_system_installed_jobs() -> list[str]:
-    """Returns list of all system installed job names"""
-    return list(_dummy_ert_config().installed_forward_model_steps.keys())
 
 
 class EverestValidationError(ValueError):
@@ -116,7 +107,7 @@ class HasName(Protocol):
     name: str
 
 
-class EverestConfig(BaseModel):
+class EverestConfig(BaseModelWithContextSupport):
     controls: Annotated[list[ControlConfig], AfterValidator(unique_items)] = Field(
         description="""Defines a list of controls.
          Controls should have unique names each control defines
@@ -175,7 +166,7 @@ and environment variables are exposed in the form 'os.NAME', for example:
         default=None, description="A list of output constraints with unique names."
     )
     install_jobs: list[InstallJobConfig] | None = Field(
-        default=None, description="A list of jobs to install"
+        default=None, description="A list of jobs to install", validate_default=True
     )
     install_workflow_jobs: list[InstallJobConfig] | None = Field(
         default=None, description="A list of workflow jobs to install"
@@ -250,7 +241,7 @@ and environment variables are exposed in the form 'os.NAME', for example:
         return self
 
     @model_validator(mode="after")
-    def validate_forward_model_job_name_installed(self) -> Self:  # pylint: disable=E0213
+    def validate_forward_model_job_name_installed(self, info: ValidationInfo) -> Self:  # pylint: disable=E0213
         install_jobs = self.install_jobs
         forward_model_jobs = self.forward_model
         if install_jobs is None:
@@ -259,7 +250,8 @@ and environment variables are exposed in the form 'os.NAME', for example:
             return self
         installed_jobs_name = [job.name for job in install_jobs]
         installed_jobs_name += list(script_names)  # default jobs
-        installed_jobs_name += get_system_installed_jobs()  # system jobs
+        if info.context:  # Add plugin jobs
+            installed_jobs_name += info.context.get("install_jobs", {}).keys()
 
         errors = []
         for fm_job in forward_model_jobs:
@@ -686,7 +678,7 @@ and environment variables are exposed in the form 'os.NAME', for example:
         return the_dict
 
     @classmethod
-    def with_defaults(cls, **kwargs):  # type: ignore
+    def with_defaults(cls, **kwargs: Any) -> Self:
         """
         Creates an Everest config with default values. Useful for initializing a config
         without having to provide empty defaults.
@@ -707,12 +699,12 @@ and environment variables are exposed in the form 'os.NAME', for example:
             "model": {"realizations": [0]},
         }
 
-        return cls.model_validate({**defaults, **kwargs})
+        return cls.with_plugins({**defaults, **kwargs})  # type: ignore
 
     @staticmethod
     def lint_config_dict(config: ConfigDict) -> list[ErrorDetails]:
         try:
-            EverestConfig.model_validate(config)
+            EverestConfig.with_plugins(config)
             return []
         except ValidationError as err:
             return err.errors()
@@ -724,8 +716,8 @@ and environment variables are exposed in the form 'os.NAME', for example:
         # more understandable
         EverestConfig.model_validate(config)
 
-    @staticmethod
-    def load_file(config_file: str) -> "EverestConfig":
+    @classmethod
+    def load_file(cls, config_file: str) -> Self:
         config_path = os.path.realpath(config_file)
 
         if not os.path.isfile(config_path):
@@ -733,7 +725,7 @@ and environment variables are exposed in the form 'os.NAME', for example:
 
         config_dict = yaml_file_to_substituted_config_dict(config_path)
         try:
-            return EverestConfig.model_validate(config_dict)
+            return cls.with_plugins(config_dict)
         except ValidationError as error:
             exp = EverestValidationError()
             file_content = []
@@ -751,6 +743,23 @@ and environment variables are exposed in the form 'os.NAME', for example:
                             exp.errors.append((e, (index + 1, pos + 1)))
                             break
             raise exp from error
+
+    @classmethod
+    def with_plugins(cls, config_dict: dict[str, Any] | ConfigDict) -> Self:
+        site_config = ErtConfig.read_site_config()
+        ert_config: ErtConfig = ErtConfig.with_plugins().from_dict(
+            config_dict=site_config
+        )
+        context: dict[str, Any] = {
+            "install_jobs": ert_config.installed_forward_model_steps,
+        }
+        activate_script = ErtPluginManager().activate_script()
+        if site_config:
+            context["queue_system"] = QueueConfig.from_dict(site_config).queue_options
+        if activate_script:
+            context["activate_script"] = activate_script
+        with init_context(context):
+            return cls(**config_dict)
 
     @staticmethod
     def load_file_with_argparser(
