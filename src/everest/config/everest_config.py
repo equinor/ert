@@ -27,6 +27,7 @@ from pydantic_core import ErrorDetails
 from ruamel.yaml import YAML, YAMLError
 
 from ert.config import ErtConfig
+from ert.config.parsing.queue_system import QueueSystem
 from everest.config.control_variable_config import ControlVariableGuessListConfig
 from everest.config.install_template_config import InstallTemplateConfig
 from everest.config.server_config import ServerConfig
@@ -788,3 +789,9 @@ and environment variables are exposed in the form 'os.NAME', for example:
             yaml.dump(stripped_conf, out)
 
         return None
+
+    @property
+    def server_queue_system(self) -> QueueSystem:
+        assert self.server is not None
+        assert self.server.queue_system is not None
+        return self.server.queue_system.name
