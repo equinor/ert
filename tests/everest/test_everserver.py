@@ -143,6 +143,7 @@ def test_configure_logger_failure(_, change_to_tmpdir):
     assert "Exception: Configuring logger failed" in status["message"]
 
 
+@pytest.mark.integration_test
 @patch("sys.argv", ["name", "--output-dir", "everest_output"])
 @patch("everest.detached.jobs.everserver._configure_loggers")
 def test_status_running_complete(_, change_to_tmpdir, mock_server):
@@ -172,6 +173,7 @@ def test_status_failed_job(_, change_to_tmpdir, mock_server):
     assert status["status"] == ServerStatus.failed
 
 
+@pytest.mark.integration_test
 @patch("sys.argv", ["name", "--output-dir", "everest_output"])
 @patch("everest.detached.jobs.everserver._configure_loggers")
 async def test_status_exception(_, change_to_tmpdir, min_config):
