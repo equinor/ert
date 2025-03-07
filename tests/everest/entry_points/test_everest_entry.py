@@ -1,67 +1,24 @@
 import logging
 import os
 from functools import partial
-from unittest.mock import patch
+from unittest.mock import MagicMock, patch
 
 import pytest
+import yaml
 
-from ert.resources import all_shell_script_fm_steps
+import everest
 from everest.bin.everest_script import everest_entry
 from everest.bin.kill_script import kill_entry
 from everest.bin.monitor_script import monitor_entry
 from everest.config import EverestConfig, ServerConfig
 from everest.detached import (
-    SIM_PROGRESS_ENDPOINT,
     ServerStatus,
     everserver_status,
     update_everserver_status,
 )
-from everest.simulator import JOB_SUCCESS
 from tests.everest.utils import capture_streams
 
 CONFIG_FILE_MINIMAL = "config_minimal.yml"
-
-
-def query_server_mock(cert, auth, endpoint):
-    url = "localhost"
-    sim_endpoint = "/".join([url, SIM_PROGRESS_ENDPOINT])
-
-    def build_job(
-        status=JOB_SUCCESS,
-        start_time="begining",
-        end_time="end",
-        name="default_job",
-        error=None,
-    ):
-        return {
-            "status": status,
-            "start_time": start_time,
-            "end_time": end_time,
-            "name": name,
-            "error": error,
-            "realization": 0,
-        }
-
-    shell_cmd_jobs = [build_job(name=command) for command in all_shell_script_fm_steps]
-    all_jobs = [
-        *shell_cmd_jobs,
-        build_job(name="make_pancakes"),
-        build_job(name="make_scrambled_eggs"),
-    ]
-    if endpoint == sim_endpoint:
-        return {
-            "status": {
-                "failed": 0,
-                "running": 0,
-                "complete": 1,
-                "pending": 0,
-                "waiting": 0,
-            },
-            "progress": [all_jobs],
-            "batch_number": "0",
-        }
-    else:
-        raise Exception("Stop! Hands in the air!")
 
 
 def run_detached_monitor_mock(status=ServerStatus.completed, error=None, **kwargs):
@@ -290,145 +247,30 @@ def test_everest_entry_monitor_no_run(
     everserver_status_mock.assert_called()
 
 
-@patch("everest.bin.everest_script.server_is_running", return_value=False)
-@patch("everest.bin.everest_script.wait_for_server")
-@patch("everest.bin.everest_script.start_server")
-@patch("everest.detached._query_server", side_effect=query_server_mock)
-@patch.object(
-    ServerConfig,
-    "get_server_context",
-    return_value=("localhost", "", ""),
-)
-@patch("everest.detached.get_opt_status", return_value={})
-@patch(
-    "everest.bin.everest_script.everserver_status",
-    return_value={"status": ServerStatus.never_run, "message": None},
-)
-@patch("everest.bin.everest_script.start_experiment")
-def test_everest_entry_show_all_jobs(
-    start_experiment_mock,
-    everserver_status_mock,
-    get_opt_status_mock,
-    get_server_context_mock,
-    query_server_mock,
-    start_server_mock,
-    wait_for_server_mock,
-    server_is_running_mock,
-    copy_math_func_test_data_to_tmp,
-):
-    """Test running everest with --show-all-jobs"""
-
-    # Test when --show-all-jobs flag is given shell command are in the list
-    # of forward model jobs
-    with capture_streams() as (out, _):
-        everest_entry([CONFIG_FILE_MINIMAL, "--show-all-jobs"])
-    for cmd in all_shell_script_fm_steps:
-        assert cmd in out.getvalue()
+@pytest.fixture(autouse=True)
+def mock_ssl(monkeypatch):
+    monkeypatch.setattr(everest.detached, "ssl", MagicMock())
 
 
-@patch("everest.bin.everest_script.server_is_running", return_value=False)
-@patch("everest.bin.everest_script.wait_for_server")
-@patch("everest.bin.everest_script.start_server")
-@patch("everest.detached._query_server", side_effect=query_server_mock)
-@patch.object(
-    ServerConfig,
-    "get_server_context",
-    return_value=("localhost", "", ""),
-)
-@patch("everest.detached.get_opt_status", return_value={})
-@patch(
-    "everest.bin.everest_script.everserver_status",
-    return_value={"status": ServerStatus.never_run, "message": None},
-)
-@patch("everest.bin.everest_script.start_experiment")
-def test_everest_entry_no_show_all_jobs(
-    start_experiment_mock,
-    everserver_status_mock,
-    get_opt_status_mock,
-    get_server_context_mock,
-    query_server_mock,
-    start_server_mock,
-    wait_for_server_mock,
-    server_is_running_mock,
-    copy_math_func_test_data_to_tmp,
-):
-    """Test running everest without --show-all-jobs"""
-
-    # Test when --show-all-jobs flag is not given the shell command are not
-    # in the list of forward model jobs
-    with capture_streams() as (out, _):
-        everest_entry([CONFIG_FILE_MINIMAL])
-    for cmd in all_shell_script_fm_steps:
-        assert cmd not in out.getvalue()
-
-    # Check the other jobs are still there
-    assert "make_pancakes" in out.getvalue()
-    assert "make_scrambled_eggs" in out.getvalue()
-
-
+@pytest.mark.parametrize("show_all_jobs", [True, False])
 @patch("everest.bin.monitor_script.server_is_running", return_value=True)
-@patch("everest.detached._query_server", side_effect=query_server_mock)
-@patch.object(
-    ServerConfig,
-    "get_server_context",
-    return_value=("localhost", "", ""),
-)
-@patch("everest.detached.get_opt_status", return_value={})
-@patch(
-    "everest.bin.monitor_script.everserver_status",
-    return_value={"status": ServerStatus.never_run, "message": None},
-)
 def test_monitor_entry_show_all_jobs(
-    everserver_status_mock,
-    get_opt_status_mock,
-    get_server_context_mock,
-    query_server_mock,
-    server_is_running_mock,
-    copy_math_func_test_data_to_tmp,
+    _,
+    monkeypatch,
+    tmp_path,
+    min_config,
+    show_all_jobs,
 ):
     """Test running everest with and without --show-all-jobs"""
-
-    # Test when --show-all-jobs flag is given shell command are in the list
-    # of forward model jobs
-
-    with capture_streams() as (out, _):
-        monitor_entry([CONFIG_FILE_MINIMAL, "--show-all-jobs"])
-    for cmd in all_shell_script_fm_steps:
-        assert cmd in out.getvalue()
-
-
-@patch("everest.bin.monitor_script.server_is_running", return_value=True)
-@patch("everest.detached._query_server", side_effect=query_server_mock)
-@patch.object(
-    ServerConfig,
-    "get_server_context",
-    return_value=("localhost", "", ""),
-)
-@patch("everest.detached.get_opt_status", return_value={})
-@patch(
-    "everest.bin.monitor_script.everserver_status",
-    return_value={"status": ServerStatus.never_run, "message": None},
-)
-def test_monitor_entry_no_show_all_jobs(
-    everserver_status_mock,
-    get_opt_status_mock,
-    get_server_context_mock,
-    query_server_mock,
-    server_is_running_mock,
-    copy_math_func_test_data_to_tmp,
-):
-    """Test running everest without --show-all-jobs"""
-
-    # Test when --show-all-jobs flag is not given the shell command are not
-    # in the list of forward model jobs
-    with capture_streams() as (out, _):
-        monitor_entry([CONFIG_FILE_MINIMAL])
-    for cmd in all_shell_script_fm_steps:
-        assert cmd not in out.getvalue()
-
-    # Check the other jobs are still there
-    assert "make_pancakes" in out.getvalue()
-    assert "make_scrambled_eggs" in out.getvalue()
+    monkeypatch.chdir(tmp_path)
+    with open("config.yml", "w", encoding="utf-8") as fout:
+        yaml.dump(min_config, fout)
+    detatched_mock = MagicMock()
+    monkeypatch.setattr(everest.bin.utils, "start_monitor", MagicMock())
+    monkeypatch.setattr(everest.bin.utils, "_DetachedMonitor", detatched_mock)
+    args = ["config.yml"] if not show_all_jobs else ["config.yml", "--show-all-jobs"]
+    monitor_entry(args)
+    detatched_mock.assert_called_once_with(show_all_jobs)
 
 
 @patch(

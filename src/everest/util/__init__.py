@@ -1,6 +1,6 @@
-import datetime
 import logging
 import os
+from datetime import UTC, datetime
 
 from ropt.version import version as ropt_version
 
@@ -15,28 +15,28 @@ try:
     from opm.io.ecl_state import EclipseState
     from opm.io.schedule import Schedule
 
-    def has_opm():
+    def has_opm() -> bool:
         return True
 
 except ImportError:
 
-    def has_opm():
+    def has_opm() -> bool:
         return False
 
 
-def version_info():
+def version_info() -> str:
     return f"everest:'{ert_version}'\nropt:'{ropt_version}'\nert:'{ert_version}'"
 
 
-def date2str(date):
-    return datetime.datetime.strftime(date, DATE_FORMAT)
+def date2str(date: datetime) -> str:
+    return datetime.strftime(date, DATE_FORMAT)
 
 
-def str2date(date_str):
-    return datetime.datetime.strptime(date_str, DATE_FORMAT)
+def str2date(date_str: str) -> datetime:
+    return datetime.strptime(date_str, DATE_FORMAT)
 
 
-def makedirs_if_needed(path, roll_if_exists=False):
+def makedirs_if_needed(path: str, roll_if_exists: bool = False) -> None:
     if os.path.isdir(path):
         if not roll_if_exists:
             return
@@ -56,16 +56,14 @@ def warn_user_that_runpath_is_nonempty() -> None:
     logging.getLogger(EVEREST).warning("Everest is running in an existing runpath")
 
 
-def _roll_dir(old_name):
+def _roll_dir(old_name: str) -> None:
     old_name = os.path.realpath(old_name)
-    new_name = old_name + datetime.datetime.now(datetime.UTC).strftime(
-        "__%Y-%m-%d_%H.%M.%S.%f"
-    )
+    new_name = old_name + datetime.now(UTC).strftime("__%Y-%m-%d_%H.%M.%S.%f")
     os.rename(old_name, new_name)
     logging.getLogger(EVEREST).info(f"renamed {old_name} to {new_name}")
 
 
-def load_deck(fname):
+def load_deck(fname: str):  # type: ignore
     """Take a .DATA file and return an opm.io.Deck."""
     if not os.path.exists(fname):
         raise OSError(f'No such data file "{fname}".')
@@ -97,7 +95,7 @@ def load_deck(fname):
     return opm.io.Parser().parse(fname, parse_context)
 
 
-def read_wellnames(fname):
+def read_wellnames(fname: str) -> list[str]:
     """Take a .DATA file and return the list of well
     names at time the first timestep from deck."""
     deck = load_deck(fname)
@@ -106,7 +104,7 @@ def read_wellnames(fname):
     return [str(well.name) for well in schedule.get_wells(0)]
 
 
-def read_groupnames(fname):
+def read_groupnames(fname: str) -> list[str]:
     """Take a .DATA file and return the list of group
     names at the first timestep from deck."""
     deck = load_deck(fname)

@@ -3,12 +3,13 @@ from __future__ import annotations
 import inspect
 from typing import TYPE_CHECKING, Any
 
-from ert import ErtScript
+from ert.config import ErtPlugin
+from ert.config.workflow_fixtures import WorkflowFixtures
 
 if TYPE_CHECKING:
     from PyQt6.QtWidgets import QWidget
 
-    from ert.config import ErtPlugin, WorkflowJob
+    from ert.config import WorkflowJob
     from ert.gui.ertnotifier import ErtNotifier
     from ert.storage import Ensemble, LocalStorage
 
@@ -24,8 +25,8 @@ class Plugin:
         self.__description = script.getDescription()
 
     def __loadPlugin(self) -> ErtPlugin:
-        script_obj = ErtScript.loadScriptFromFile(self.__workflow_job.script)  # type: ignore
-        script = script_obj()
+        script_obj = self.__workflow_job.ert_script
+        script = script_obj()  # type: ignore
         return script  # type: ignore
 
     def getName(self) -> str:
@@ -34,7 +35,7 @@ class Plugin:
     def getDescription(self) -> str:
         return self.__description
 
-    def getArguments(self, fixtures: dict[str, Any]) -> list[Any]:
+    def getArguments(self, fixtures: WorkflowFixtures) -> list[Any]:
         """
         Returns a list of arguments. Either from GUI or from arbitrary code.
         If the user for example cancels in the GUI a CancelPluginException is raised.
@@ -44,10 +45,6 @@ class Plugin:
         func_args = inspect.signature(script.getArguments).parameters
         arguments = script.insert_fixtures(func_args, fixtures)
 
-        # Part of deprecation
-        script._ert = fixtures.get("ert_config")
-        script._ensemble = fixtures.get("ensemble")
-        script._storage = fixtures.get("storage")
         return script.getArguments(*arguments)
 
     def setParentWindow(self, parent_window: QWidget | None) -> None:

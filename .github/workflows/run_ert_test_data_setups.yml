@@ -13,7 +13,7 @@ concurrency:
 
 env:
   ERT_SHOW_BACKTRACE: 1
-  UV_SYSTEM_PYTHON: 1
+  UV_FROZEN: true
 
 jobs:
   run-ert-test-data:
@@ -43,26 +43,29 @@ jobs:
 
     - name: Install uv
       uses: astral-sh/setup-uv@v5
+      with:
+        enable-cache: true
+        python-version: ${{ matrix.python-version }}
 
     - name: Install ERT and dependencies
       run: |
-        uv pip install .
+        uv sync
 
     - name: Test poly example
       run: |
         pushd test-data/ert/poly_example
-        ert test_run poly.ert
+        uv run ert test_run poly.ert
         popd
 
     - name: Test snake_oil
       run: |
         pushd test-data/ert/snake_oil
         uv pip install oil_reservoir_synthesizer resdata
-        ert test_run snake_oil.ert
+        uv run ert test_run snake_oil.ert
         popd
 
     - name: Test snake_oil_field
       run: |
         pushd test-data/ert/snake_oil_field
-        ert test_run snake_oil.ert
+        uv run ert test_run snake_oil.ert
         popd

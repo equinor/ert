@@ -9,6 +9,7 @@ import signal
 import threading
 from functools import partial
 
+from ert.config.ert_config import ErtConfig
 from everest.config import EverestConfig, ServerConfig
 from everest.detached import (
     ServerStatus,
@@ -19,7 +20,9 @@ from everest.detached import (
     wait_for_server,
 )
 from everest.everest_storage import EverestStorage
-from everest.simulator.everest_to_ert import everest_to_ert_config
+from everest.simulator.everest_to_ert import (
+    everest_to_ert_config_dict,
+)
 from everest.strings import EVEREST
 from everest.util import (
     makedirs_if_needed,
@@ -34,7 +37,7 @@ from .utils import (
 )
 
 
-def everest_entry(args=None):
+def everest_entry(args: list[str] | None = None) -> None:
     """Entry point for running an optimization."""
     parser = _build_args_parser()
     options = parser.parse_args(args)
@@ -56,7 +59,7 @@ def everest_entry(args=None):
     asyncio.run(run_everest(options))
 
 
-def _build_args_parser():
+def _build_args_parser() -> argparse.ArgumentParser:
     """Build arg parser"""
 
     arg_parser = argparse.ArgumentParser(
@@ -85,7 +88,7 @@ def _build_args_parser():
     return arg_parser
 
 
-async def run_everest(options):
+async def run_everest(options: argparse.Namespace) -> None:
     logger = logging.getLogger("everest_main")
     everserver_status_path = ServerConfig.get_everserver_status_path(
         options.config.output_dir
@@ -115,7 +118,8 @@ async def run_everest(options):
 
         # Validate ert config
         try:
-            _ = everest_to_ert_config(options.config)
+            dict = everest_to_ert_config_dict(options.config)
+            ErtConfig.with_plugins().from_dict(dict)
         except ValueError as exc:
             raise SystemExit(f"Config validation error: {exc}") from exc
 
@@ -137,7 +141,7 @@ async def run_everest(options):
         logging_level = logging.DEBUG if options.debug else options.config.logging_level
         await start_server(options.config, logging_level)
         print("Waiting for server ...")
-        wait_for_server(options.config.output_dir, timeout=600)
+        wait_for_server(options.config.output_dir, timeout=600)  # 10 minutes
         print("Everest server found!")
 
         start_experiment(

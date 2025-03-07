@@ -11,15 +11,16 @@ from everest.config_file_loader import load_yaml
 from everest.everest_storage import EverestStorage
 
 
-def _yaml_config(file_path: str, parser) -> tuple[str, str, dict[str, Any] | None]:
+def _yaml_config(
+    file_path: str, parser: argparse.ArgumentParser
+) -> tuple[str, str, dict[str, Any] | None]:
     loaded_config = EverestConfig.load_file_with_argparser(file_path, parser)
-
     assert loaded_config is not None
     opt_folder = loaded_config.optimization_output_dir
     return file_path, opt_folder, load_yaml(file_path)
 
 
-def _build_args_parser():
+def _build_args_parser() -> argparse.ArgumentParser:
     arg_parser = argparse.ArgumentParser(
         description="Create new config file with updated controls "
         "from specified simulation batch number\n"
@@ -43,10 +44,12 @@ def _build_args_parser():
     return arg_parser
 
 
-def opt_controls_by_batch(optimization_dir, batch):
+def opt_controls_by_batch(optimization_dir: str, batch: int) -> dict[str, Any] | None:
     storage = EverestStorage(Path(optimization_dir))
     storage.read_from_output_dir()
 
+    assert storage.data is not None
+    assert storage.data.controls is not None
     control_names = storage.data.controls["control_name"]
     batch_data = next((b for b in storage.data.batches if b.batch_id == batch), None)
 
@@ -62,7 +65,9 @@ def opt_controls_by_batch(optimization_dir, batch):
     return None
 
 
-def _updated_initial_guess(conf_controls, opt_controls):
+def _updated_initial_guess(
+    conf_controls: list[dict[str, Any]], opt_controls: dict[str, Any]
+) -> list[dict[str, Any]] | None:
     conf_controls = copy(conf_controls)
 
     for control in conf_controls:
@@ -96,7 +101,7 @@ def _updated_initial_guess(conf_controls, opt_controls):
     return conf_controls
 
 
-def config_branch_entry(args=None):
+def config_branch_entry(args: list[str] | None = None) -> None:
     parser = _build_args_parser()
     options = parser.parse_args(args)
     ever_config_path, optimization_dir, yml_config = options.input_config

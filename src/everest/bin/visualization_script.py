@@ -10,7 +10,7 @@ from everest.everest_storage import EverestStorage
 from everest.plugins.everest_plugin_manager import EverestPluginManager
 
 
-def _build_args_parser():
+def _build_args_parser() -> argparse.ArgumentParser:
     arg_parser = argparse.ArgumentParser(
         description="Start possible plugin containing everest visualization",
         usage="""everest results <config_file>""",
@@ -23,7 +23,7 @@ def _build_args_parser():
     return arg_parser
 
 
-def visualization_entry(args=None):
+def visualization_entry(args: list[str] | None = None) -> None:
     parser = _build_args_parser()
     options = parser.parse_args(args)
     config = options.config_file

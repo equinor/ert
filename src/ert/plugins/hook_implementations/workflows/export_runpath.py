@@ -7,7 +7,7 @@ from ert.runpaths import Runpaths
 from ert.validation import rangestring_to_list
 
 if TYPE_CHECKING:
-    from ert.config import ErtConfig
+    from ert.storage import Ensemble
 
 
 class ExportRunpathJob(ErtScript):
@@ -33,20 +33,18 @@ class ExportRunpathJob(ErtScript):
     file.
     """
 
-    def run(self, ert_config: ErtConfig, workflow_args: list[Any]) -> None:
+    def run(
+        self, run_paths: Runpaths, ensemble: Ensemble, workflow_args: list[Any]
+    ) -> None:
         args = " ".join(workflow_args).split()  # Make sure args is a list of words
-        run_paths = Runpaths(
-            jobname_format=ert_config.model_config.jobname_format_string,
-            runpath_format=ert_config.model_config.runpath_format_string,
-            filename=str(ert_config.runpath_file),
-            substitutions=ert_config.substitutions,
-            eclbase=ert_config.model_config.eclbase_format_string,
-        )
+        assert ensemble
+        iter = ensemble.iteration
+        reals = ensemble.ensemble_size
         run_paths.write_runpath_list(
             *self.get_ranges(
                 args,
-                ert_config.analysis_config.num_iterations,
-                ert_config.model_config.num_realizations,
+                iter,
+                reals,
             )
         )
 

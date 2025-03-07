@@ -268,7 +268,7 @@ def test_that_setenv_config_is_parsed_correctly(setenv_config):
 
 
 @pytest.mark.usefixtures("set_site_config")
-def test_that_setenv_sets_environment_variables_in_jobs(setenv_config):
+def test_that_setenv_sets_environment_variables_in_steps(setenv_config):
     # When running the jobs
     run_cli(
         TEST_RUN_MODE,
@@ -318,7 +318,7 @@ def test_that_setenv_sets_environment_variables_in_jobs(setenv_config):
             dedent(
                 """
                     STOP_ON_FAIL True
-                    INTERNAL False
+
                     EXECUTABLE failing_script.sh
                 """
             ),
@@ -337,7 +337,7 @@ def test_that_setenv_sets_environment_variables_in_jobs(setenv_config):
             dedent(
                 """
                    STOP_ON_FAIL False
-                   INTERNAL False
+
                    EXECUTABLE failing_script.sh
                 """
             ),
@@ -355,7 +355,7 @@ def test_that_setenv_sets_environment_variables_in_jobs(setenv_config):
         pytest.param(
             dedent(
                 """
-                    INTERNAL False
+
                     EXECUTABLE failing_script.sh
                 """
             ),
@@ -657,14 +657,14 @@ def test_that_prior_is_not_overwritten_in_ensemble_experiment(
 
 
 @pytest.mark.usefixtures("copy_poly_case")
-def test_failing_job_cli_error_message():
+def test_failing_step_cli_error_message():
     # modify poly_eval.py
     with open("poly_eval.py", mode="a", encoding="utf-8") as poly_script:
         poly_script.writelines(["    raise RuntimeError('Argh')"])
 
     expected_substrings = [
         "Realization: 0 failed after reaching max submit (1)",
-        "job poly_eval failed",
+        "Step poly_eval failed",
         "Process exited with status code 1",
         "Traceback",
         "raise RuntimeError('Argh')",

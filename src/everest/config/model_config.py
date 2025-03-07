@@ -1,9 +1,11 @@
+from typing import Any, Self
+
 from pydantic import BaseModel, Field, NonNegativeInt, model_validator
 
 from ert.config import ConfigWarning
 
 
-class ModelConfig(BaseModel, extra="forbid"):  # type: ignore
+class ModelConfig(BaseModel, extra="forbid"):
     realizations: list[NonNegativeInt] = Field(
         description="""List of realizations to use in optimization ensemble.
 
@@ -26,9 +28,9 @@ If specified, it must be a list of numeric values, one per realization.""",
 
     @model_validator(mode="before")
     @classmethod
-    def remove_deprecated(cls, values):
+    def remove_deprecated(cls, values: dict[str, Any] | None) -> dict[str, Any] | None:
         if values is None:
-            return values
+            return None
 
         if values.get("report_steps") is not None:
             ConfigWarning.warn(
@@ -38,7 +40,7 @@ If specified, it must be a list of numeric values, one per realization.""",
         return values
 
     @model_validator(mode="after")
-    def validate_realizations_weights_same_cardinaltiy(self):  # pylint: disable=E0213
+    def validate_realizations_weights_same_cardinaltiy(self) -> Self:
         weights = self.realizations_weights
         if not weights:
             return self

@@ -285,7 +285,6 @@ Or the workflow job declaration file:
 .. code-block:: text
 
     STOP_ON_FAIL True
-    INTERNAL False
     EXECUTABLE failing_script.sh
 
 See :ref:`change log <version_8_0_notes>`: for full details.

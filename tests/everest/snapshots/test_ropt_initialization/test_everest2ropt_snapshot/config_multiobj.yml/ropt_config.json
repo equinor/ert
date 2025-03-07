@@ -32,19 +32,11 @@
   "linear_constraints": null,
   "nonlinear_constraints": null,
   "objectives": {
-    "auto_scale": [
-      false,
-      false
-    ],
     "function_estimators": [
       0,
       0
     ],
     "realization_filters": null,
-    "scales": [
-      1.0,
-      1.0
-    ],
     "weights": [
       0.6666666666666666,
       0.3333333333333333
@@ -76,11 +68,6 @@
     }
   ],
   "variables": {
-    "indices": [
-      0,
-      1,
-      2
-    ],
     "initial_values": [
       0.0,
       0.0,
@@ -91,8 +78,11 @@
       -1.0,
       -1.0
     ],
-    "offsets": null,
-    "scales": null,
+    "mask": [
+      true,
+      true,
+      true
+    ],
     "types": [
       1,
       1,

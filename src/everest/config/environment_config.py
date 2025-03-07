@@ -6,7 +6,7 @@ from pydantic import BaseModel, Field, field_validator, model_validator
 from everest.config.validation_utils import check_path_valid
 
 
-class EnvironmentConfig(BaseModel, extra="forbid"):  # type: ignore
+class EnvironmentConfig(BaseModel, extra="forbid"):
     simulation_folder: str | None = Field(
         default="simulation_folder", description="Folder used for simulation by Everest"
     )
@@ -41,12 +41,14 @@ continue running.
 
     @field_validator("output_folder", mode="before")
     @classmethod
-    def validate_output_folder(cls, output_folder):  # pylint:disable=E0213
+    def validate_output_folder(cls, output_folder: str | None) -> str:
+        if output_folder is None:
+            raise ValueError("output_folder can not be None")
         check_path_valid(output_folder)
         return output_folder
 
     @model_validator(mode="after")
     def validate_random_seed(self) -> Self:
         if self.random_seed is None:
-            self.random_seed = SeedSequence().entropy
+            self.random_seed = SeedSequence().entropy  # type: ignore
         return self

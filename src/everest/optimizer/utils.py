@@ -1,3 +1,5 @@
+import importlib
+
 from ropt.plugins import PluginManager
 
 
@@ -13,4 +15,15 @@ def get_ropt_plugin_manager() -> PluginManager:
     # Note: backends can also be added via the Python entrypoints mechanism,
     # these are detected by default and do not need to be added here.
 
-    return PluginManager()
+    try:
+        return PluginManager()
+    except Exception as exc:
+        ert_version = importlib.metadata.version("ert")
+        ropt_version = importlib.metadata.version("ropt")
+        msg = (
+            f"Error while initializing ropt:\n\n{exc}.\n\n"
+            "Check the everest installation, there may a be version mismatch.\n"
+            f"  (ERT: {ert_version}, ropt: {ropt_version})\n"
+            "If the everest installation is correct, please report this as a bug."
+        )
+        raise RuntimeError(msg) from exc

@@ -28,7 +28,7 @@ from tests.ert.ui_tests.cli.analysis.test_adaptive_localization import (
 def test_init_prior(qtbot, storage):
     config = ErtConfig.from_file("poly.ert")
     config.random_seed = 1234
-    notifier = ErtNotifier(config.config_path)
+    notifier = ErtNotifier()
     notifier.set_storage(storage)
     ensemble = storage.create_experiment(
         parameters=config.ensemble_config.parameter_configuration,
@@ -62,7 +62,7 @@ def test_init_prior(qtbot, storage):
 @pytest.mark.usefixtures("copy_poly_case")
 def test_that_init_updates_the_info_tab(qtbot, storage):
     config = ErtConfig.from_file("poly.ert")
-    notifier = ErtNotifier(config.config_path)
+    notifier = ErtNotifier()
     notifier.set_storage(storage)
 
     ensemble = storage.create_experiment(
@@ -132,7 +132,7 @@ def test_experiment_view(
     config = snake_oil_case_storage
     storage = snake_oil_storage
 
-    notifier = ErtNotifier(config.config_path)
+    notifier = ErtNotifier()
     notifier.set_storage(storage)
 
     tool = ManageExperimentsPanel(
@@ -164,7 +164,7 @@ def test_ensemble_view(
     config = snake_oil_case_storage
     storage = snake_oil_storage
 
-    notifier = ErtNotifier(config.config_path)
+    notifier = ErtNotifier()
     notifier.set_storage(storage)
 
     tool = ManageExperimentsPanel(
@@ -303,7 +303,7 @@ ANALYSIS_SET_VAR OBSERVATIONS AUTO_SCALE POLY_OBS1_*
     prior_ens, _ = run_cli_ES_with_case("poly_localization_0.ert")
     config = ErtConfig.from_file("poly_localization_0.ert")
 
-    notifier = ErtNotifier(config.config_path)
+    notifier = ErtNotifier()
     with open_storage(config.ens_path, mode="w") as storage:
         notifier.set_storage(storage)
 
@@ -349,7 +349,7 @@ ANALYSIS_SET_VAR OBSERVATIONS AUTO_SCALE POLY_OBS1_*
 @pytest.mark.usefixtures("copy_poly_case")
 def test_ensemble_observations_view_on_empty_ensemble(qtbot):
     config = ErtConfig.from_file("poly.ert")
-    notifier = ErtNotifier(config.config_path)
+    notifier = ErtNotifier()
     with open_storage(config.ens_path, mode="w") as storage:
         notifier.set_storage(storage)
         storage.create_experiment(
@@ -413,7 +413,7 @@ def test_realization_view(
     config = snake_oil_case_storage
     storage = snake_oil_storage
 
-    notifier = ErtNotifier(config.config_path)
+    notifier = ErtNotifier()
     notifier.set_storage(storage)
 
     tool = ManageExperimentsPanel(

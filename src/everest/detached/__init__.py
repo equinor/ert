@@ -4,16 +4,22 @@ import json
 import logging
 import os
 import re
+import ssl
 import time
 import traceback
-from collections.abc import Mapping
+from base64 import b64encode
+from collections.abc import Callable, Mapping
 from enum import Enum
 from pathlib import Path
-from typing import Literal
+from typing import Any, Literal
 
 import polars as pl
 import requests
+from pydantic import ValidationError
+from websockets.sync.client import connect
 
+from ert.ensemble_evaluator import EndEvent
+from ert.run_models.event import status_event_from_json
 from ert.scheduler import create_driver
 from ert.scheduler.driver import Driver, FailedSubmit
 from ert.scheduler.event import StartedEvent
@@ -22,8 +28,6 @@ from everest.everest_storage import EverestStorage
 from everest.strings import (
     EVEREST_SERVER_CONFIG,
     OPT_PROGRESS_ENDPOINT,
-    OPT_PROGRESS_ID,
-    SIM_PROGRESS_ENDPOINT,
     SIM_PROGRESS_ID,
     START_EXPERIMENT_ENDPOINT,
     STOP_ENDPOINT,
@@ -40,6 +44,7 @@ PROXY = {"http": None, "https": None}
 # Information from the client side is relatively uninteresting, so we show it in
 # the default logger (stdout). Info from the server will be logged to the
 # everest.log file instead
+logger = logging.getLogger(__name__)
 
 
 async def start_server(
@@ -48,7 +53,7 @@ async def start_server(
     """
     Start an Everest server running the optimization defined in the config
     """
-    driver = create_driver(config.server.queue_system)
+    driver = create_driver(config.server.queue_system)  # type: ignore
     try:
         args = [
             "--output-dir",
@@ -113,16 +118,16 @@ def start_experiment(
         except:
             logging.debug(traceback.format_exc())
             time.sleep(retry)
-    raise ValueError("Failed to start experiment")
+    raise RuntimeError("Failed to start experiment")
 
 
-def extract_errors_from_file(path: str):
+def extract_errors_from_file(path: str) -> list[str]:
     with open(path, encoding="utf-8") as f:
         content = f.read()
     return re.findall(r"(Error \w+.*)", content)
 
 
-def wait_for_server(output_dir: str, timeout: int) -> None:
+def wait_for_server(output_dir: str, timeout: int | float) -> None:
     """
     Checks everest server has started _HTTP_REQUEST_RETRY times. Waits
     progressively longer between each check.
@@ -138,7 +143,7 @@ def wait_for_server(output_dir: str, timeout: int) -> None:
     raise RuntimeError("Failed to get reply from server within configured timeout.")
 
 
-def get_opt_status(output_folder):
+def get_opt_status(output_folder: str) -> dict[str, Any]:
     """Return a dictionary with optimization information retrieved from storage"""
     if not Path(output_folder).exists() or not os.listdir(output_folder):
         return {}
@@ -150,17 +155,20 @@ def get_opt_status(output_folder):
         # Optimization output dir exists and not empty, but still missing
         # actual stored results
         return {}
-
+    assert storage.data.objective_functions is not None
+    assert storage.data.controls is not None
     objective_names = storage.data.objective_functions["objective_name"].to_list()
     control_names = storage.data.controls["control_name"].to_list()
 
-    expected_objectives = pl.concat(
-        [
-            b.batch_objectives.select(objective_names)
-            for b in storage.data.batches
-            if b.batch_objectives is not None
-        ]
-    ).to_dict(as_series=False)
+    objectives = [
+        b.batch_objectives.select(objective_names)
+        for b in storage.data.batches
+        if b.batch_objectives is not None
+    ]
+
+    expected_objectives = (
+        {} if not objectives else pl.concat(objectives).to_dict(as_series=False)
+    )
 
     expected_total_objective = [
         b.batch_objectives["total_objective_value"].item()
@@ -184,25 +192,29 @@ def get_opt_status(output_folder):
         "objective_value": expected_total_objective,
         "expected_objectives": expected_objectives,
     }
+    controls = [
+        b.realization_controls.select(control_names)
+        for b in storage.data.batches
+        if b.realization_controls is not None
+    ]
+    control_history = (
+        {} if not controls else pl.concat(controls).to_dict(as_series=False)
+    )
 
     return {
         "objective_history": expected_total_objective,
-        "control_history": pl.concat(
-            [
-                b.realization_controls.select(control_names)
-                for b in storage.data.batches
-                if b.realization_controls is not None
-            ]
-        ).to_dict(as_series=False),
+        "control_history": control_history,
         "objectives_history": expected_objectives,
         "accepted_control_indices": improvement_batches,
         "cli_monitor_data": cli_monitor_data,
     }
 
 
-def wait_for_server_to_stop(server_context: tuple[str, str, tuple[str, str]], timeout):
+def wait_for_server_to_stop(
+    server_context: tuple[str, str, tuple[str, str]], timeout: int
+) -> None:
     """
-    Checks everest server has stoped _HTTP_REQUEST_RETRY times. Waits
+    Checks everest server has stopped _HTTP_REQUEST_RETRY times. Waits
     progressively longer between each check.
 
     Raise an exception when the timeout is reached.
@@ -220,7 +232,7 @@ def wait_for_server_to_stop(server_context: tuple[str, str, tuple[str, str]], ti
         raise Exception("Failed to stop server within configured timeout.")
 
 
-def server_is_running(url: str, cert: str, auth: tuple[str, str]):
+def server_is_running(url: str, cert: str, auth: tuple[str, str]) -> bool:
     try:
         logging.info(f"Checking server status at {url} ")
         response = requests.get(
@@ -238,49 +250,61 @@ def server_is_running(url: str, cert: str, auth: tuple[str, str]):
 
 
 def start_monitor(
-    server_context: tuple[str, str, tuple[str, str]], callback, polling_interval=5
-):
+    server_context: tuple[str, str, tuple[str, str]],
+    callback: Callable[..., None],
+    polling_interval: float = 0.1,
+) -> None:
     """
     Checks status on Everest server and calls callback when status changes
 
-    Monitoring stops when the server stops answering. It can also be
-    interrupted by returning True from the callback
+    Monitoring stops when the server stops answering.
     """
     url, cert, auth = server_context
-    sim_endpoint = "/".join([url, SIM_PROGRESS_ENDPOINT])
     opt_endpoint = "/".join([url, OPT_PROGRESS_ENDPOINT])
-
-    sim_status: dict = {}
-    opt_status: dict = {}
+    opt_status: dict[str, Any] = {}
     stop = False
 
-    try:
-        while not stop:
-            new_sim_status = _query_server(cert, auth, sim_endpoint)
-            if new_sim_status != sim_status:
-                sim_status = new_sim_status
-                ret = bool(callback({SIM_PROGRESS_ID: sim_status}))
-                stop |= ret
-            # When the API will support it query only from a certain batch on
+    ssl_context = ssl.create_default_context()
+    ssl_context.load_verify_locations(cafile=cert)
+    username, password = auth
+    credentials = b64encode(f"{username}:{password}".encode()).decode()
 
-            # Check the optimization status
-            new_opt_status = _query_server(cert, auth, opt_endpoint)
-            if new_opt_status != opt_status:
-                opt_status = new_opt_status
-                ret = bool(callback({OPT_PROGRESS_ID: opt_status}))
-                stop |= ret
-            time.sleep(polling_interval)
+    try:
+        with connect(
+            url.replace("https://", "wss://") + "/events",
+            ssl=ssl_context,
+            open_timeout=30,
+            additional_headers={"Authorization": f"Basic {credentials}"},
+        ) as websocket:
+            while not stop:
+                try:
+                    message = websocket.recv(timeout=1.0)
+                except TimeoutError:
+                    message = None
+                if message:
+                    try:
+                        event = status_event_from_json(message)
+                    except ValidationError as e:
+                        logger.error("Error when processing event %s", exc_info=e)
+                    if isinstance(event, EndEvent):
+                        print(event.msg)
+                    callback({SIM_PROGRESS_ID: event})
+                # Check the optimization status
+                new_opt_status = _query_server(cert, auth, opt_endpoint)
+                if new_opt_status != opt_status:
+                    opt_status = new_opt_status
+                time.sleep(polling_interval)
     except:
         logging.debug(traceback.format_exc())
 
 
 _EVERSERVER_JOB_PATH = str(
-    Path(importlib.util.find_spec("everest.detached").origin).parent
+    Path(importlib.util.find_spec("everest.detached").origin).parent  # type: ignore
     / os.path.join("jobs", EVEREST_SERVER_CONFIG)
 )
 
 
-_QUEUE_SYSTEMS: Mapping[Literal["LSF", "SLURM", "TORQUE"], dict] = {
+_QUEUE_SYSTEMS: Mapping[Literal["LSF", "SLURM", "TORQUE"], dict[str, Any]] = {
     "LSF": {
         "options": [("options", "LSF_RESOURCE")],
         "name": "LSF_QUEUE",
@@ -296,9 +320,9 @@ _QUEUE_SYSTEMS: Mapping[Literal["LSF", "SLURM", "TORQUE"], dict] = {
 }
 
 
-def _query_server(cert, auth, endpoint):
+def _query_server(cert: str, auth: tuple[str, str], endpoint: str) -> dict[str, Any]:
     """Retrieve data from an endpoint as a dictionary"""
-    response = requests.get(endpoint, verify=cert, auth=auth, proxies=PROXY)
+    response = requests.get(endpoint, verify=cert, auth=auth, proxies=PROXY)  # type: ignore
     response.raise_for_status()
     return response.json()
 
@@ -319,13 +343,13 @@ class ServerStatusEncoder(json.JSONEncoder):
     """Facilitates encoding and decoding the server status enum object to
     and from a json file"""
 
-    def default(self, o):
+    def default(self, o: ServerStatus | None) -> dict[str, str]:
         if type(o) is ServerStatus:
             return {"__enum__": str(o)}
         return json.JSONEncoder.default(self, o)
 
     @staticmethod
-    def decode(obj):
+    def decode(obj: dict[str, str]) -> dict[str, str]:
         if "__enum__" in obj:
             _, member = obj["__enum__"].split(".")
             return getattr(ServerStatus, member)
@@ -335,7 +359,7 @@ class ServerStatusEncoder(json.JSONEncoder):
 
 def update_everserver_status(
     everserver_status_path: str, status: ServerStatus, message: str | None = None
-):
+) -> None:
     """Update the everest server status with new status information"""
     new_status = {"status": status, "message": message}
     path = everserver_status_path
@@ -356,7 +380,7 @@ def update_everserver_status(
             json.dump(new_status, outfile, cls=ServerStatusEncoder)
 
 
-def everserver_status(everserver_status_path: str):
+def everserver_status(everserver_status_path: str) -> dict[str, Any]:
     """Returns a dictionary representing the everest server status. If the
     status file is not found we assume the server has never ran before, and will
     return a status of ServerStatus.never_run

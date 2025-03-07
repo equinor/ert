@@ -10,9 +10,8 @@ class ErtNotifier(QObject):
     storage_changed = Signal(object, name="storageChanged")
     current_ensemble_changed = Signal(object, name="currentEnsembleChanged")
 
-    def __init__(self, config_file: str):
+    def __init__(self) -> None:
         QObject.__init__(self)
-        self._config_file = config_file
         self._storage: Storage | None = None
         self._current_ensemble: Ensemble | None = None
         self._is_simulation_running = False
@@ -25,10 +24,6 @@ class ErtNotifier(QObject):
     def storage(self) -> Storage:
         assert self.is_storage_available
         return self._storage  # type: ignore
-
-    @property
-    def config_file(self) -> str:
-        return self._config_file
 
     @property
     def current_ensemble(self) -> Ensemble | None:

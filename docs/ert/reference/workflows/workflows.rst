@@ -43,37 +43,18 @@ configuration is passed to the workflow:
        def run(self, *args):
            print(f"Provided user arguments: {args}")
 
-1. If the `run` function is using `positional arguments in the `run` function. In this case no fixtures
-will be added:
-
-.. warning::
-    This is not recommended, you are adviced to use either option 1 or option 3
-
-.. code-block:: python
-
-   class MyJob(ErtScript):
-       def run(self, my_arg_1, my_arg_2):
-           print(f"Provided user arguments: {my_arg_1, my_arg_2}")
-
 .. note::
     The name of the argument is not required to be `args`, that is just convention.
 
-3. There are a number of specially named arguments the user can call which gives access to internal
+2. There are a number of specially named arguments the user can call which gives access to internal
 state of the experiment that is running:
 
-.. glossary::
 
-    ert_config
-      This gives access to the full configuration of the running experiment
+.. autoclass:: ert.config.workflow_fixtures.WorkflowFixtures
+    :members:
+    :undoc-members:
+    :exclude-members: parent, random_seed, reports_dir, observation_settings, es_setting, run_paths
 
-    storage
-      This gives access to the storage of the current session
-
-    ensemble
-      This gives access to the current ensemble, making it possible to load responses and parameters
-
-    workflow_args
-       This gives access to the arguments from the user configuration file
 
 .. note::
     The current ensemble will depend on the context. For hooked workflows the ensemble will be:

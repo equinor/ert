@@ -3,12 +3,10 @@ from __future__ import annotations
 import logging
 from concurrent import futures
 from concurrent.futures import Future
-from typing import TYPE_CHECKING, Any, Self
+from typing import Any, Self
 
-from ert.config import ErtConfig, ErtScript, ExternalErtScript, Workflow, WorkflowJob
-
-if TYPE_CHECKING:
-    from ert.storage import Ensemble, Storage
+from ert.config import ErtScript, ExternalErtScript, Workflow, WorkflowJob
+from ert.config.workflow_fixtures import WorkflowFixtures
 
 
 class WorkflowJobRunner:
@@ -21,7 +19,7 @@ class WorkflowJobRunner:
     def run(
         self,
         arguments: list[Any] | None = None,
-        fixtures: dict[str, Any] | None = None,
+        fixtures: WorkflowFixtures | None = None,
     ) -> Any:
         if arguments is None:
             arguments = []
@@ -46,7 +44,7 @@ class WorkflowJobRunner:
             elif self.__script is not None:
                 self.stop_on_fail = self.__script.stop_on_fail or False
 
-        elif not self.job.internal:
+        else:
             self.__script = ExternalErtScript(
                 self.job.executable,  # type: ignore
             )
@@ -54,10 +52,8 @@ class WorkflowJobRunner:
             if self.job.stop_on_fail is not None:
                 self.stop_on_fail = self.job.stop_on_fail
 
-        else:
-            raise UserWarning("Unknown script type!")
-        result = self.__script.initializeAndRun(  # type: ignore
-            self.job.argument_types(), arguments, fixtures=fixtures
+        result = self.__script.initializeAndRun(
+            self.job.argument_types(), arguments, fixtures
         )
         self.__running = False
 
@@ -69,10 +65,8 @@ class WorkflowJobRunner:
 
     @property
     def execution_type(self) -> str:
-        if self.job.internal and self.job.script is not None:
+        if self.job.ert_script:
             return "internal python"
-        elif self.job.internal:
-            return "internal C"
         return "external"
 
     def cancel(self) -> None:
@@ -107,14 +101,10 @@ class WorkflowRunner:
     def __init__(
         self,
         workflow: Workflow,
-        storage: Storage | None = None,
-        ensemble: Ensemble | None = None,
-        ert_config: ErtConfig | None = None,
+        fixtures: WorkflowFixtures,
     ) -> None:
         self.__workflow = workflow
-        self.storage = storage
-        self.ensemble = ensemble
-        self.ert_config = ert_config
+        self.fixtures = fixtures
 
         self.__workflow_result: bool | None = None
         self._workflow_executor = futures.ThreadPoolExecutor(max_workers=1)
@@ -150,18 +140,13 @@ class WorkflowRunner:
         # Reset status
         self.__status = {}
         self.__running = True
-        fixtures = {
-            k: getattr(self, k)
-            for k in ["storage", "ensemble", "ert_config"]
-            if getattr(self, k)
-        }
 
         for job, args in self.__workflow:
             jobrunner = WorkflowJobRunner(job)
             self.__current_job = jobrunner
             if not self.__cancelled:
                 logger.info(f"Workflow job {jobrunner.name} starting")
-                jobrunner.run(args, fixtures=fixtures)
+                jobrunner.run(args, fixtures=self.fixtures)
                 self.__status[jobrunner.name] = {
                     "stdout": jobrunner.stdoutdata(),
                     "stderr": jobrunner.stderrdata(),

@@ -5,6 +5,7 @@ import logging
 import os
 import shutil
 import tempfile
+import warnings
 from argparse import ArgumentParser
 from collections.abc import Callable, Mapping, Sequence
 from itertools import chain
@@ -56,7 +57,21 @@ class ErtPluginManager(pluggy.PluginManager):
         self.add_hookspecs(ert.plugins.hook_specifications)
         if plugins is None:
             self.register(ert.plugins.hook_implementations)
-            self.load_setuptools_entrypoints(_PLUGIN_NAMESPACE)
+            with warnings.catch_warnings():
+                # If a deprecated plugin is installed, it may not be possible
+                # for the user to avoid the FutureWarning, hence it should not be
+                # displayed. Warnings should be displayed and logged when deprecated
+                # plugins are actually used, not on every startup of Ert.
+                warnings.simplefilter("ignore", category=FutureWarning)
+
+                # logger.warning() statements also need to be muted:
+                logger = logging.getLogger()
+                orig_level = logger.level
+                try:
+                    logger.setLevel(logging.ERROR)
+                    self.load_setuptools_entrypoints(_PLUGIN_NAMESPACE)
+                finally:
+                    logger.setLevel(orig_level)
         else:
             for plugin in plugins:
                 self.register(plugin)
@@ -195,11 +210,7 @@ class ErtPluginManager(pluggy.PluginManager):
 
     def get_installable_workflow_jobs(self) -> dict[str, str]:
         config_workflow_jobs = self._get_config_workflow_jobs()
-        hooked_workflow_jobs = self.get_ertscript_workflows().get_workflows()
-        installable_workflow_jobs = self._merge_internal_jobs(
-            config_workflow_jobs, hooked_workflow_jobs
-        )
-        return installable_workflow_jobs
+        return config_workflow_jobs
 
     def get_site_config_content(self) -> str:
         site_config_lines = self._site_config_lines()
@@ -340,8 +351,8 @@ class ErtPluginManager(pluggy.PluginManager):
             workflow.name: {
                 "description": workflow.description,
                 "examples": workflow.examples,
-                "config_file": workflow.config_path,
                 "parser": workflow.parser,
+                "config_file": None,
                 "source_package": workflow.source_package,
                 "category": workflow.category,
             }

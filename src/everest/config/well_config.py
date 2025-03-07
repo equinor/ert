@@ -26,15 +26,15 @@ consider this as the earliest possible drill date.
 
     @field_validator("drill_time")
     @classmethod
-    def validate_positive_drill_time(cls, drill_time):  # pylint:disable=E0213
-        if drill_time <= 0:
+    def validate_positive_drill_time(cls, drill_time: float | None) -> float:
+        if drill_time is None or drill_time <= 0:
             raise ValueError("Drill time must be a positive number")
 
         return drill_time
 
     @field_validator("name")
     @classmethod
-    def validate_no_dots_in_well_nane(cls, well_name):  # pylint:disable=E0213
+    def validate_no_dots_in_well_nane(cls, well_name: str) -> str:
         if "." in well_name:
             raise ValueError("Well name can not contain any dots (.)")
 
@@ -42,7 +42,7 @@ consider this as the earliest possible drill date.
 
     @field_validator("drill_date")
     @classmethod
-    def validate_drill_date_is_valid_date(cls, drill_date):  # pylint:disable=E0213
+    def validate_drill_date_is_valid_date(cls, drill_date: str | None) -> None:
         try:
             if not isinstance(drill_date, str):
                 raise ValueError("invalid type str expected")

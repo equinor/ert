@@ -12,7 +12,7 @@ on:
 
 env:
   NO_PROJECT_RES: 1
-  UV_SYSTEM_PYTHON: 1
+  UV_FROZEN: true
 
 jobs:
   tests-everest:
@@ -37,32 +37,35 @@ jobs:
 
     - name: Install uv
       uses: astral-sh/setup-uv@v5
+      with:
+        enable-cache: true
+        python-version: ${{ inputs.python-version }}
 
     - name: Install Everest and dependencies
       run: |
-        uv pip install ".[dev,everest]"
+        uv sync --extra everest --extra dev
 
     - name: Run Tests Linux
       if: ${{ inputs.test-type == 'test' && runner.os != 'macOS'}}
       run: |
-        ERT_PYTEST_ARGS='--cov=ert --cov=everest --cov=_ert --cov-report=xml:cov1.xml --junit-xml=junit.xml -o junit_family=legacy --dist loadgroup -sv' just everest-tests
+        ERT_PYTEST_ARGS='--cov=ert --cov=everest --cov=_ert --cov-report=xml:cov1.xml --junit-xml=junit.xml -o junit_family=legacy --dist loadgroup -sv' uv run just everest-tests
 
     - name: Run Tests macOS
       if: ${{ inputs.test-type == 'test' && runner.os == 'macOS'}}
       run: |
-        ERT_PYTEST_ARGS='--cov=ert --cov=everest --cov=_ert --cov-report=xml:cov1.xml --junit-xml=junit.xml -o junit_family=legacy -m "not skip_mac_ci" --dist loadgroup -sv' just everest-tests
+        ERT_PYTEST_ARGS='--cov=ert --cov=everest --cov=_ert --cov-report=xml:cov1.xml --junit-xml=junit.xml -o junit_family=legacy -m "not skip_mac_ci" --dist loadgroup -sv' uv run just everest-tests
 
     - name: Build Documentation
       if: inputs.test-type == 'doc'
       run: |
         uv pip install git+https://github.com/equinor/everest-models.git
-        sphinx-build -n -v -E -W ./docs/everest ./everest_docs
+        uv run sphinx-build -n -v -E -W ./docs/everest ./everest_docs
 
     - name: Run tests requiring everest-models
       if: inputs.test-type == 'everest-models-test'
       run: |
         uv pip install git+https://github.com/equinor/everest-models.git
-        ERT_PYTEST_ARGS='--cov=ert --cov=everest --cov=_ert --cov-report=xml:cov1.xml --junit-xml=junit.xml -o junit_family=legacy -m everest_models_test --dist loadgroup' just everest-tests
+        ERT_PYTEST_ARGS='--cov=ert --cov=everest --cov=_ert --cov-report=xml:cov1.xml --junit-xml=junit.xml -o junit_family=legacy -m everest_models_test --dist loadgroup' uv run just everest-tests
 
     - name: Upload coverage to Codecov
       if: inputs.test-type != 'everest-docs-entry-test' && inputs.test-type != 'doc'

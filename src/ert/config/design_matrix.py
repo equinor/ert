@@ -18,6 +18,8 @@ if TYPE_CHECKING:
 
 DESIGN_MATRIX_GROUP = "DESIGN_MATRIX"
 
+from ert.shared.status.utils import convert_to_numeric
+
 
 @dataclass
 class DesignMatrix:
@@ -149,7 +151,7 @@ class DesignMatrix:
                 raise ConfigValidationError(
                     "Overlapping parameter names found in design matrix!\n"
                     f"{DESIGN_MATRIX_GROUP}:{design_keys}\n{parameter_group.name}:{existing_keys}"
-                    "\nThey need to much exactly or not at all."
+                    "\nThey need to match exactly or not at all."
                 )
             else:
                 new_param_config += [parameter_group]
@@ -319,10 +321,3 @@ class DesignMatrix:
             for _, row in default_df.iterrows()
             if row[0] not in existing_parameters
         }
-
-
-def convert_to_numeric(x: str) -> str | float:
-    try:
-        return pd.to_numeric(x)
-    except ValueError:
-        return x

@@ -1,20 +1,21 @@
+import logging
 from collections.abc import Sequence
-from typing import TypeVar
+from typing import Any
+
+from pydantic import BaseModel
 
 from everest.plugins import hookspec
 
-T = TypeVar("T")
-
 
 @hookspec(firstresult=True)
-def visualize_data(api):
+def visualize_data(api: Any) -> None:
     """
     :param :EverestAPI instance
     """
 
 
 @hookspec(firstresult=True)
-def default_site_config_lines():
+def default_site_config_lines() -> list[str]:  # type: ignore[empty-body]
     """
     :return: List default site config of lines to
     :rtype: List of strings
@@ -22,7 +23,7 @@ def default_site_config_lines():
 
 
 @hookspec(firstresult=True)
-def install_job_directories():
+def install_job_directories() -> list[str]:  # type: ignore[empty-body]
     """
     :return: List default site config of lines to
     :rtype: List of strings
@@ -30,7 +31,7 @@ def install_job_directories():
 
 
 @hookspec()
-def site_config_lines():
+def site_config_lines() -> list[str]:  # type: ignore[empty-body]
     """
     :return: List of lines to append to site config file
     :rtype: PluginResponse with data as list[str]
@@ -38,7 +39,7 @@ def site_config_lines():
 
 
 @hookspec(firstresult=True)
-def ecl100_config_path():
+def ecl100_config_path() -> str:  # type: ignore[empty-body]
     """
     :return: Path to ecl100 config file
     :rtype: PluginResponse with data as str
@@ -46,7 +47,7 @@ def ecl100_config_path():
 
 
 @hookspec(firstresult=True)
-def ecl300_config_path():
+def ecl300_config_path() -> str:  # type: ignore[empty-body]
     """
     :return: Path to ecl300 config file
     :rtype: PluginResponse with data as str
@@ -54,7 +55,7 @@ def ecl300_config_path():
 
 
 @hookspec(firstresult=True)
-def flow_config_path():
+def flow_config_path() -> str:  # type: ignore[empty-body]
     """
     :return: Path to flow config file
     :rtype: PluginResponse with data as str
@@ -62,14 +63,14 @@ def flow_config_path():
 
 
 @hookspec(firstresult=True)
-def lint_forward_model(job: str, args: Sequence[str]):
+def lint_forward_model(job: str, args: Sequence[str]) -> list[str]:  # type: ignore[empty-body]
     """
     Return a error string, if forward model job failed to lint.
     """
 
 
 @hookspec
-def get_forward_models_schemas():
+def get_forward_models_schemas() -> dict[str, dict[str, type[BaseModel]]]:  # type: ignore[empty-body]
     """
     Return a dictionary of forward model names and its associated: schemas.
     Example {"add_template": {"-c/--config": WellModelConfig}, ...}
@@ -77,14 +78,14 @@ def get_forward_models_schemas():
 
 
 @hookspec
-def parse_forward_model_schema(path: str, schema: type[T]):
+def parse_forward_model_schema(path: str, schema: type[BaseModel]) -> BaseModel:  # type: ignore[empty-body]
     """
     Given a path and schema type, this hook will parse the file.
     """
 
 
 @hookspec
-def installable_workflow_jobs():
+def installable_workflow_jobs() -> dict[str, Any]:  # type: ignore[empty-body]
     """
     :return: dict with workflow job names as keys and path to config as value
     :rtype: PluginResponse with data as dict[str,str]
@@ -92,7 +93,7 @@ def installable_workflow_jobs():
 
 
 @hookspec
-def add_log_handle_to_root():
+def add_log_handle_to_root() -> logging.Handler:  # type: ignore[empty-body]
     """
     Create a log handle which will be added to the root logger
     in the main entry point.
@@ -102,12 +103,12 @@ def add_log_handle_to_root():
 
 
 @hookspec
-def get_forward_model_documentations():
+def get_forward_model_documentations() -> dict[str, Any]:  # type: ignore[empty-body]
     """ """
 
 
 @hookspec(firstresult=True)
-def custom_forward_model_outputs(forward_model_steps: list[str]):
+def custom_forward_model_outputs(forward_model_steps: list[str]) -> set[str]:  # type: ignore[empty-body]
     """
     Check if the given forward model steps will output to a file maching the
     defined everest objective

@@ -4,16 +4,14 @@ import json
 import logging
 import os
 import traceback
+from collections.abc import Callable
 from dataclasses import dataclass, field
-from functools import partial
 from pathlib import Path
 from typing import Any, TypedDict, cast
 
 import numpy as np
 import polars as pl
-from ropt.enums import EventType
-from ropt.plan import BasicOptimizer, Event
-from ropt.results import FunctionResults, GradientResults
+from ropt.results import FunctionResults, GradientResults, Results
 
 from everest.config import EverestConfig
 from everest.strings import EVEREST
@@ -24,7 +22,7 @@ logger = logging.getLogger(__name__)
 @dataclass
 class OptimalResult:
     batch: int
-    controls: list[Any]
+    controls: dict[str, Any]
     total_objective: float
 
 
@@ -155,7 +153,7 @@ class OptimizationStorageData:
             self.batches.append(
                 BatchStorageData(
                     batch_id=info["batch_id"],
-                    **{
+                    **{  # type: ignore
                         df_name: try_read_df(
                             Path(ens.optimizer_mount_point) / f"{df_name}.parquet"
                         )
@@ -198,8 +196,8 @@ class _OptimizerOnlyExperiment:
     """
 
     def __init__(self, output_dir: Path) -> None:
-        self._output_dir = output_dir
-        self._ensembles = {}
+        self._output_dir: Path = output_dir
+        self._ensembles: dict[str, _OptimizerOnlyEnsemble] = {}
 
     @property
     def optimizer_mount_point(self) -> Path:
@@ -288,7 +286,7 @@ class EverestStorage:
     def _enforce_dtypes(df: pl.DataFrame) -> pl.DataFrame:
         dtypes = {
             "batch_id": pl.UInt32,
-            "perturbation": pl.UInt32,
+            "perturbation": pl.Int32,
             "realization": pl.UInt32,
             # -1 is used as a value in simulator cache.
             # thus we need signed, otherwise we could do unsigned
@@ -329,7 +327,7 @@ class EverestStorage:
         field: str,
         *,
         values: list[str],
-        select: list,
+        select: list[str],
     ) -> pl.DataFrame:
         df = pl.from_pandas(
             results.to_dataframe(field, select=values).reset_index(),
@@ -340,17 +338,23 @@ class EverestStorage:
         # retrieved from the everest configuration and were stored in the init
         # method. Here we replace the indices with those names:
         ropt_to_everest_names = {
-            "variable": self.data.controls["control_name"],
-            "objective": self.data.objective_functions["objective_name"],
+            "variable": self.data.controls["control_name"]
+            if self.data.controls is not None
+            else None,
+            "objective": self.data.objective_functions["objective_name"]
+            if self.data.objective_functions is not None
+            else None,
             "nonlinear_constraint": (
                 self.data.nonlinear_constraints["constraint_name"]
                 if self.data.nonlinear_constraints is not None
                 else None
             ),
-            "realization": self.data.realization_weights["realization"],
+            "realization": self.data.realization_weights["realization"]
+            if self.data.realization_weights is not None
+            else None,
         }
         df = df.with_columns(
-            pl.col(ropt_name).replace_strict(dict(enumerate(everest_names)))
+            pl.col(ropt_name).replace_strict(dict(enumerate(everest_names)))  # type: ignore
             for ropt_name, everest_names in ropt_to_everest_names.items()
             if ropt_name in select
         )
@@ -367,7 +371,7 @@ class EverestStorage:
         self.data.write_to_experiment(exp)
 
     @staticmethod
-    def check_for_deprecated_seba_storage(config_file: str):
+    def check_for_deprecated_seba_storage(config_file: str) -> None:
         config = EverestConfig.load_file(config_file)
         output_dir = Path(config.optimization_output_dir)
         if os.path.exists(output_dir / "seba.db") or os.path.exists(
@@ -385,15 +389,6 @@ class EverestStorage:
     def read_from_output_dir(self) -> None:
         exp = _OptimizerOnlyExperiment(self._output_dir)
         self.data.read_from_experiment(exp)
-
-    def observe_optimizer(self, optimizer: BasicOptimizer) -> None:
-        optimizer.add_observer(
-            EventType.FINISHED_EVALUATION,
-            partial(self._on_batch_evaluation_finished),
-        )
-        optimizer.add_observer(
-            EventType.FINISHED_OPTIMIZER_STEP, self._on_optimization_finished
-        )
 
     def init(self, everest_config: EverestConfig) -> None:
         self.data.controls = pl.DataFrame(
@@ -509,7 +504,7 @@ class EverestStorage:
             separator=":",
         )
 
-        realization_objectives = realization_objectives.pivot(
+        realization_objectives = realization_objectives.pivot(  # type: ignore
             values="objective_value",
             index=[
                 "batch_id",
@@ -658,14 +653,16 @@ class EverestStorage:
             "perturbation_constraints": perturbation_constraints,
         }
 
-    def _on_batch_evaluation_finished(self, event: Event) -> None:
+    def on_batch_evaluation_finished(
+        self, optimizer_results: tuple[Results, ...]
+    ) -> None:
         logger.debug("Storing batch results dataframes")
 
         results: list[FunctionResults | GradientResults] = []
 
         best_value = -np.inf
         best_results = None
-        for item in event.data.get("results", []):
+        for item in optimizer_results:
             if isinstance(item, GradientResults):
                 results.append(item)
             if (
@@ -673,14 +670,16 @@ class EverestStorage:
                 and item.functions is not None
                 and item.functions.weighted_objective > best_value
             ):
-                best_value = item.functions.weighted_objective
+                best_value = float(item.functions.weighted_objective)
                 best_results = item
 
         if best_results is not None:
             results = [best_results, *results]
 
-        batch_dicts = {}
+        batch_dicts: dict[int, Any] = {}
         for item in results:
+            assert item.batch_id is not None
+
             if item.batch_id not in batch_dicts:
                 batch_dicts[item.batch_id] = {}
 
@@ -710,7 +709,7 @@ class EverestStorage:
                 )
             )
 
-    def _on_optimization_finished(self, _) -> None:
+    def on_optimization_finished(self) -> None:
         logger.debug("Storing final results Everest storage")
 
         merit_values = self._get_merit_values()
@@ -729,6 +728,7 @@ class EverestStorage:
                 if merit_value is None:
                     continue
 
+                assert b.batch_objectives is not None
                 b.batch_objectives = b.batch_objectives.with_columns(
                     pl.lit(merit_value).alias("merit_value")
                 )
@@ -754,8 +754,9 @@ class EverestStorage:
         )
 
         def find_best_batch(
-            filter_by, sort_by
-        ) -> tuple[BatchStorageData | None, dict | None]:
+            filter_by: Callable[[BatchStorageData], bool],
+            sort_by: Callable[[BatchStorageData], Any],
+        ) -> tuple[BatchStorageData | None, dict[str, Any] | None]:
             matching_batches = [b for b in self.data.batches if filter_by(b)]
 
             if not matching_batches:
@@ -780,13 +781,16 @@ class EverestStorage:
                     b.batch_objectives is not None
                     and "merit_value" in b.batch_objectives.columns
                 ),
-                sort_by=lambda b: b.batch_objectives.select(
+                sort_by=lambda b: b.batch_objectives.select(  # type: ignore
                     pl.col("merit_value").min()
                 ).item(),
             )
 
             if batch is None:
                 return None
+
+            assert controls_dict is not None
+            assert batch.batch_objectives is not None
 
             return OptimalResult(
                 batch=batch.batch_id,
@@ -800,13 +804,16 @@ class EverestStorage:
             batch, controls_dict = find_best_batch(
                 filter_by=lambda b: b.batch_objectives is not None
                 and not b.batch_objectives.is_empty(),
-                sort_by=lambda b: -b.batch_objectives.select(
+                sort_by=lambda b: -b.batch_objectives.select(  # type: ignore
                     pl.col("total_objective_value").sample(n=1)
                 ).item(),
             )
 
             if batch is None:
                 return None
+
+            assert controls_dict is not None
+            assert batch.batch_objectives is not None
 
             return OptimalResult(
                 batch=batch.batch_id,

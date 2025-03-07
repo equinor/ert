@@ -1,3 +1,3 @@
 """
-util contains helping functions to create job statuses.
+util contains helping functions to create step statuses.
 """

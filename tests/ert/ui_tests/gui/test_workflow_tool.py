@@ -15,7 +15,6 @@ from ert.gui.tools.event_viewer import GUILogHandler
 from ert.gui.tools.workflows import RunWorkflowWidget
 from ert.plugins import ErtPluginContext
 from ert.run_models import EnsembleExperiment
-from ert.services import StorageService
 from ert.storage import Storage, open_storage
 
 from .conftest import get_child, wait_for_child
@@ -57,10 +56,7 @@ def open_gui(tmp_path, monkeypatch):
         _open_main_window(tmp_path) as (
             gui,
             _,
-            config,
-        ),
-        StorageService.init_service(
-            project=os.path.abspath(config.ens_path),
+            __,
         ),
     ):
         yield gui

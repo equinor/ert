@@ -22,6 +22,8 @@ Other factors often have to be considered. Does the reservoir have pressure supp
 For this simple example of 3 wells the number of possibilities and scenarios to be considered is equal to 3 factorial, i.e. 6 different combinations. Thus it is possible to "manually" test these 6 different drilling combinations in order to find the best possible solution. However what if you are tasked with planning 6 potential wells. This would entail 6 factorial (i.e. 720) combinations of the drilling order to be tested. Can this task of testing 720 different possible combinations be performed manually? What if you have to plan 10 wells or more? As the number of wells increase the potential number of possible combinations increases exponentially.
 Finding or obtaining the optimal order for the wells to be drilled is a tedious task. Solutions to such problems can be obtained using computationally efficient optimization techniques. So what is Optimization and these Optimization techniques?
 
+.. _opt-process-label:
+
 The optimization process
 ------------------------
 **Optimization** is the process of finding the best possible solution for a particular problem. For petroleum/reservoir engineering, such problems would primarily imply
@@ -89,6 +91,8 @@ Detailed investigations into the importance of both these features can be found 
 Note that a larger number of blue dots will increase the quality of the gradient, but the computational complexity will also increase.
 Traditionally many studies have used 10-50 perturbed controls during the optimization process to estimate the gradient.
 These studies have used a single model realization (i.e. a single geological representation) of the reservoir which may not always be an accurate representation of the real reservoir system.
+
+.. _robust-optimization-label:
 
 Robust Optimization: Stochastic Simplex Gradients (StoSAG)
 ==========================================================

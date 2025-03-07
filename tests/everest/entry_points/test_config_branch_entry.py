@@ -2,13 +2,16 @@ import difflib
 from os.path import exists
 from pathlib import Path
 
+import pytest
+
 from everest.bin.config_branch_script import config_branch_entry
 from everest.config_file_loader import load_yaml
 from everest.everest_storage import EverestStorage
 
 
+@pytest.mark.xdist_group("math_func/config_minimal.yml")
 def test_config_branch_entry(cached_example):
-    path, _, _ = cached_example("math_func/config_minimal.yml")
+    path, _, _, _ = cached_example("math_func/config_minimal.yml")
 
     config_branch_entry(["config_minimal.yml", "new_restart_config.yml", "-b", "1"])
 
@@ -43,8 +46,9 @@ def test_config_branch_entry(cached_example):
     assert new_controls_initial_guesses == control_values
 
 
+@pytest.mark.xdist_group("math_func/config_minimal.yml")
 def test_config_branch_preserves_config_section_order(cached_example):
-    path, _, _ = cached_example("math_func/config_minimal.yml")
+    path, _, _, _ = cached_example("math_func/config_minimal.yml")
 
     config_branch_entry(["config_minimal.yml", "new_restart_config.yml", "-b", "1"])
 

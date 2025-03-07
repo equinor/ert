@@ -1,0 +1,62 @@
+{
+  "everest_events": [
+    {
+      "batch": 0,
+      "event_type": "EverestStatusEvent",
+      "everest_event": "START_OPTIMIZER_EVALUATION"
+    },
+    {
+      "batch": 0,
+      "event_type": "EverestBatchResultEvent",
+      "everest_event": "FINISHED_OPTIMIZER_EVALUATION",
+      "result_type": "FunctionResult"
+    },
+    {
+      "batch": 0,
+      "event_type": "EverestBatchResultEvent",
+      "everest_event": "OPTIMIZATION_RESULT",
+      "result_type": "FunctionResult"
+    },
+    {
+      "batch": 0,
+      "event_type": "EverestBatchResultEvent",
+      "everest_event": "OPTIMIZATION_RESULT",
+      "result_type": "GradientResult"
+    },
+    {
+      "batch": 1,
+      "event_type": "EverestStatusEvent",
+      "everest_event": "START_OPTIMIZER_EVALUATION"
+    },
+    {
+      "batch": 1,
+      "event_type": "EverestBatchResultEvent",
+      "everest_event": "FINISHED_OPTIMIZER_EVALUATION",
+      "result_type": "FunctionResult"
+    },
+    {
+      "batch": 1,
+      "event_type": "EverestBatchResultEvent",
+      "everest_event": "OPTIMIZATION_RESULT",
+      "result_type": "FunctionResult"
+    },
+    {
+      "batch": 2,
+      "event_type": "EverestStatusEvent",
+      "everest_event": "START_OPTIMIZER_EVALUATION"
+    },
+    {
+      "batch": 2,
+      "event_type": "EverestBatchResultEvent",
+      "everest_event": "FINISHED_OPTIMIZER_EVALUATION",
+      "result_type": "FunctionResult"
+    },
+    {
+      "batch": 2,
+      "event_type": "EverestBatchResultEvent",
+      "everest_event": "OPTIMIZATION_RESULT",
+      "result_type": "FunctionResult"
+    }
+  ],
+  "num_full_snapshots": 3
+}

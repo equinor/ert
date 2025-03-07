@@ -6,8 +6,8 @@ from io import StringIO
 from itertools import chain
 from pathlib import Path
 from typing import (
-    TYPE_CHECKING,
     Annotated,
+    Any,
     Optional,
     Protocol,
     Self,
@@ -23,6 +23,7 @@ from pydantic import (
     field_validator,
     model_validator,
 )
+from pydantic_core import ErrorDetails
 from ruamel.yaml import YAML, YAMLError
 
 from ert.config import ErtConfig
@@ -64,36 +65,33 @@ from .simulator_config import SimulatorConfig, simulator_example
 from .well_config import WellConfig
 from .workflow_config import WorkflowConfig
 
-if TYPE_CHECKING:
-    from pydantic_core import ErrorDetails
 
-
-def _dummy_ert_config():
+def _dummy_ert_config() -> ErtConfig:
     site_config = ErtConfig.read_site_config()
     dummy_config = {"NUM_REALIZATIONS": 1, "ENSPATH": "."}
-    dummy_config.update(site_config)
+    dummy_config.update(site_config)  # type: ignore
     return ErtConfig.with_plugins().from_dict(config_dict=dummy_config)
 
 
-def get_system_installed_jobs():
+def get_system_installed_jobs() -> list[str]:
     """Returns list of all system installed job names"""
     return list(_dummy_ert_config().installed_forward_model_steps.keys())
 
 
 class EverestValidationError(ValueError):
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__()
         self.errors: list[tuple[ErrorDetails, tuple[int, int] | None]] = []
 
     @property
-    def error(self):
+    def error(self) -> list[tuple[ErrorDetails, tuple[int, int] | None]]:
         return self.errors
 
-    def __str__(self):
+    def __str__(self) -> str:
         return f"{self.errors!s}"
 
 
-def _error_loc(error_dict: "ErrorDetails") -> str:
+def _error_loc(error_dict: ErrorDetails) -> str:
     return " -> ".join(
         str(e) for e in error_dict["loc"] if e is not None and e != "__root__"
     )
@@ -118,7 +116,7 @@ class HasName(Protocol):
     name: str
 
 
-class EverestConfig(BaseModel):  # type: ignore
+class EverestConfig(BaseModel):
     controls: Annotated[list[ControlConfig], AfterValidator(unique_items)] = Field(
         description="""Defines a list of controls.
          Controls should have unique names each control defines
@@ -130,14 +128,14 @@ class EverestConfig(BaseModel):  # type: ignore
         description="List of objective function specifications", min_length=1
     )
     optimization: OptimizationConfig | None = Field(
-        default=OptimizationConfig(),
+        default_factory=OptimizationConfig,
         description="Optimizer options",
     )
     model: ModelConfig = Field(
         description="Configuration of the Everest model",
     )
     environment: EnvironmentConfig | None = Field(
-        default=EnvironmentConfig(),
+        default_factory=EnvironmentConfig,
         description="The environment of Everest, specifies which folders are used "
         "for simulation and output, as well as the level of detail in Everest-logs",
     )
@@ -145,8 +143,8 @@ class EverestConfig(BaseModel):  # type: ignore
         default_factory=list,
         description="A list of well configurations, all with unique names.",
     )
-    definitions: dict | None = Field(
-        default_factory=dict,
+    definitions: dict[str, Any] | None = Field(
+        default_factory=dict[str, Any],
         description="""Section for specifying variables.
 
 Used to specify variables that will be replaced in the file when encountered.
@@ -234,19 +232,21 @@ and environment variables are exposed in the form 'os.NAME', for example:
 
     @model_validator(mode="after")
     def validate_queue_system(self) -> Self:  # pylint: disable=E0213
+        assert self.server is not None
+        assert self.simulator is not None
         if self.server.queue_system is None:
             self.server.queue_system = copy(self.simulator.queue_system)
         if (
-            str(self.simulator.queue_system.name).lower() == "local"
-            and str(self.server.queue_system.name).lower()
-            != str(self.simulator.queue_system.name).lower()
+            str(self.simulator.queue_system.name).lower() == "local"  # type: ignore
+            and str(self.server.queue_system.name).lower()  # type: ignore
+            != str(self.simulator.queue_system.name).lower()  # type: ignore
         ):
             raise ValueError(
                 f"The simulator is using local as queue system "
-                f"while the everest server is using {self.server.queue_system.name}. "
+                f"while the everest server is using {self.server.queue_system.name}. "  # type: ignore
                 f"If the simulator is using local, so must the everest server."
             )
-        self.server.queue_system.max_running = 1
+        self.server.queue_system.max_running = 1  # type: ignore
         return self
 
     @model_validator(mode="after")
@@ -299,7 +299,11 @@ and environment variables are exposed in the form 'os.NAME', for example:
 
     @field_validator("install_templates")
     @classmethod
-    def validate_install_templates_unique_output_files(cls, install_templates):  # pylint: disable=E0213
+    def validate_install_templates_unique_output_files(
+        cls, install_templates: list[InstallTemplateConfig] | None
+    ) -> list[InstallTemplateConfig] | None:
+        if install_templates is None:
+            return None
         check_for_duplicate_names(
             [t.output_file for t in install_templates],
             "install_templates",
@@ -396,7 +400,7 @@ and environment variables are exposed in the form 'os.NAME', for example:
     def validate_maintained_forward_models(self) -> Self:
         install_data = self.install_data
 
-        with InstallDataContext(install_data, self.config_path) as context:
+        with InstallDataContext(install_data, self.config_path) as context:  # type: ignore
             for realization in self.model.realizations:
                 context.add_links_for_realization(realization)
             validate_forward_model_configs(self.forward_model, self.install_jobs)
@@ -472,7 +476,7 @@ and environment variables are exposed in the form 'os.NAME', for example:
         if environment is None or config_path is None:
             return self
 
-        check_writeable_path(environment.simulation_folder, Path(config_path))
+        check_writeable_path(environment.simulation_folder, Path(config_path))  # type: ignore
         return self
 
     # pylint: disable=E0213
@@ -553,17 +557,12 @@ and environment variables are exposed in the form 'os.NAME', for example:
         return levels.get(level.lower(), logging.INFO)
 
     @property
-    def config_directory(self) -> str | None:
-        if self.config_path is not None:
-            return str(self.config_path.parent)
-
-        return None
+    def config_directory(self) -> str:
+        return str(self.config_path.parent)
 
     @property
-    def config_file(self) -> str | None:
-        if self.config_path is not None:
-            return self.config_path.name
-        return None
+    def config_file(self) -> str:
+        return self.config_path.name
 
     @property
     def output_dir(self) -> str:
@@ -588,36 +587,33 @@ and environment variables are exposed in the form 'os.NAME', for example:
         assert self.environment is not None
         path = self.environment.simulation_folder
 
-        if os.path.isabs(path):
+        if os.path.isabs(path):  # type: ignore
             return path
 
         cfgdir = self.output_dir
         if cfgdir is None:
             return path
 
-        return os.path.join(cfgdir, path)
+        return os.path.join(cfgdir, path)  # type: ignore
 
-    def _get_output_subdirectory(self, subdirname: str):
-        if self.output_dir is None:
-            return None
-
+    def _get_output_subdirectory(self, subdirname: str) -> str:
         return os.path.join(os.path.abspath(self.output_dir), subdirname)
 
     @property
-    def optimization_output_dir(self):
+    def optimization_output_dir(self) -> str:
         """Return the path to folder with the optimization output"""
         return self._get_output_subdirectory(OPTIMIZATION_OUTPUT_DIR)
 
     @property
-    def storage_dir(self):
+    def storage_dir(self) -> str:
         return self._get_output_subdirectory(STORAGE_DIR)
 
     @property
-    def log_dir(self):
+    def log_dir(self) -> str:
         return self._get_output_subdirectory(OPTIMIZATION_LOG_DIR)
 
     @property
-    def control_names(self):
+    def control_names(self) -> list[str]:
         controls = self.controls or []
         return [control.name for control in controls]
 
@@ -657,26 +653,12 @@ and environment variables are exposed in the form 'os.NAME', for example:
 
     @property
     def constraint_names(self) -> list[str]:
-        names: list[str] = []
-
-        def _add_output_constraint(rhs_value: float | None, suffix=None):
-            if rhs_value is not None:
-                name = constr.name
-                names.append(name if suffix is None else f"{name}:{suffix}")
-
-        for constr in self.output_constraints or []:
-            _add_output_constraint(constr.target)
-            _add_output_constraint(
-                constr.upper_bound, None if constr.lower_bound is None else "upper"
-            )
-            _add_output_constraint(
-                constr.lower_bound, None if constr.upper_bound is None else "lower"
-            )
-
-        return names
+        if self.output_constraints:
+            return [constraint.name for constraint in self.output_constraints]
+        return []
 
     @property
-    def result_names(self):
+    def result_names(self) -> list[str]:
         objectives_names = [
             objective.name
             for objective in self.objective_functions
@@ -689,22 +671,13 @@ and environment variables are exposed in the form 'os.NAME', for example:
 
     @property
     def function_aliases(self) -> dict[str, str]:
-        aliases = {
+        return {
             objective.name: objective.alias
             for objective in self.objective_functions
             if objective.alias is not None
         }
-        constraints = self.output_constraints or []
-        for constraint in constraints:
-            if (
-                constraint.upper_bound is not None
-                and constraint.lower_bound is not None
-            ):
-                aliases[f"{constraint.name}:lower"] = constraint.name
-                aliases[f"{constraint.name}:upper"] = constraint.name
-        return aliases
 
-    def to_dict(self) -> dict:
+    def to_dict(self) -> dict[str, Any]:
         the_dict = self.model_dump(exclude_none=True)
 
         if "config_path" in the_dict:
@@ -713,7 +686,7 @@ and environment variables are exposed in the form 'os.NAME', for example:
         return the_dict
 
     @classmethod
-    def with_defaults(cls, **kwargs):
+    def with_defaults(cls, **kwargs):  # type: ignore
         """
         Creates an Everest config with default values. Useful for initializing a config
         without having to provide empty defaults.
@@ -737,7 +710,7 @@ and environment variables are exposed in the form 'os.NAME', for example:
         return cls.model_validate({**defaults, **kwargs})
 
     @staticmethod
-    def lint_config_dict(config: dict) -> list["ErrorDetails"]:
+    def lint_config_dict(config: ConfigDict) -> list[ErrorDetails]:
         try:
             EverestConfig.model_validate(config)
             return []
@@ -745,7 +718,7 @@ and environment variables are exposed in the form 'os.NAME', for example:
             return err.errors()
 
     @staticmethod
-    def lint_config_dict_with_raise(config: dict):
+    def lint_config_dict_with_raise(config: ConfigDict) -> None:
         # Future work: Catch the validation error
         # and reformulate the pydantic ones to make them
         # more understandable
@@ -781,7 +754,7 @@ and environment variables are exposed in the form 'os.NAME', for example:
 
     @staticmethod
     def load_file_with_argparser(
-        config_path, parser: ArgumentParser
+        config_path: str, parser: ArgumentParser
     ) -> Optional["EverestConfig"]:
         try:
             return EverestConfig.load_file(config_path)
@@ -795,6 +768,8 @@ and environment variables are exposed in the form 'os.NAME', for example:
             parser.error(
                 f"Loading config file <{config_path}> failed with:\n{format_errors(e)}"
             )
+        except ValueError as e:
+            parser.error(f"Loading config file <{config_path}> failed with: {e}")
 
     def dump(self, fname: str | None = None) -> str | None:
         """Write a config dict to file or return it if fname is None."""

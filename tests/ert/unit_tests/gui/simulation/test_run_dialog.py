@@ -1,4 +1,3 @@
-import os
 from queue import SimpleQueue
 from unittest.mock import MagicMock, Mock, patch
 
@@ -31,9 +30,8 @@ from ert.gui.simulation.experiment_panel import ExperimentPanel
 from ert.gui.simulation.run_dialog import RunDialog
 from ert.gui.simulation.view.realization import RealizationWidget
 from ert.gui.tools.file import FileDialog
-from ert.run_models import BaseRunModel
+from ert.run_models.base_run_model import BaseRunModelAPI
 from ert.run_models.ensemble_experiment import EnsembleExperiment
-from ert.services import StorageService
 from ert.storage import open_storage
 from tests.ert import SnapshotBuilder
 from tests.ert.ui_tests.gui.conftest import wait_for_child
@@ -43,15 +41,20 @@ from tests.ert.unit_tests.gui.simulation.test_run_path_dialog import (
 
 
 @pytest.fixture
-def run_model():
-    run_model = MagicMock(spec=BaseRunModel)
-    run_model.format_error.return_value = ""
-    run_model.get_runtime.return_value = 1
-    run_model.support_restart = True
+def run_model_api():
+    run_model_api = MagicMock(spec=BaseRunModelAPI)
+    run_model_api.get_runtime = MagicMock()
+    run_model_api.get_runtime.return_value = 1
+    run_model_api.support_restart = True
+    run_model_api.queue_system = "LOCAL"
+    run_model_api.cancel = MagicMock()
+    run_model_api.has_failed_realizations = MagicMock()
+    run_model_api.start_simulations_thread = MagicMock()
+
     run_paths_mock = MagicMock()
-    run_paths_mock._runpath_format = "/"
-    run_model.run_paths = run_paths_mock
-    return run_model
+    run_paths_mock._ = "/"
+    run_model_api.runpath_format_string = run_paths_mock
+    return run_model_api
 
 
 @pytest.fixture
@@ -67,15 +70,19 @@ def notifier():
 
 
 @pytest.fixture
-def run_dialog(qtbot: QtBot, run_model, event_queue, notifier):
-    run_dialog = RunDialog("mock.ert", run_model, event_queue, notifier)
+def run_dialog(qtbot: QtBot, run_model_api, event_queue, notifier):
+    run_dialog = RunDialog("mock.ert", run_model_api, event_queue, notifier)
     qtbot.addWidget(run_dialog)
     yield run_dialog
 
 
+@pytest.mark.integration_test
 def test_terminating_experiment_shows_a_confirmation_dialog(qtbot: QtBot, run_dialog):
     run_dialog.run_experiment()
 
+    run_dialog._run_model_api.cancel = lambda: run_dialog.simulation_done.emit(
+        True, "foo bar error"
+    )
     with qtbot.waitSignal(run_dialog.simulation_done, timeout=10000):
 
         def handle_dialog():
@@ -90,12 +97,13 @@ def test_terminating_experiment_shows_a_confirmation_dialog(qtbot: QtBot, run_di
 
 @pytest.mark.integration_test
 def test_run_dialog_polls_run_model_for_runtime(
-    qtbot: QtBot, run_dialog: RunDialog, run_model, notifier, event_queue
+    qtbot: QtBot, run_dialog: RunDialog, run_model_api, notifier, event_queue
 ):
     run_dialog.run_experiment()
     notifier.set_is_simulation_running.assert_called_with(True)
     qtbot.waitUntil(
-        lambda: run_model.get_runtime.called, timeout=run_dialog._RUN_TIME_POLL_RATE * 2
+        lambda: run_model_api.get_runtime.called,
+        timeout=run_dialog._RUN_TIME_POLL_RATE * 2,
     )
     event_queue.put(EndEvent(failed=False, msg=""))
     qtbot.waitUntil(lambda: run_dialog.is_simulation_done() == True)
@@ -557,9 +565,6 @@ def test_that_exception_in_base_run_model_is_handled(qtbot: QtBot, storage):
 
     ert_config = ErtConfig.from_file(config_file)
     with (
-        StorageService.init_service(
-            project=os.path.abspath(ert_config.ens_path),
-        ),
         patch.object(
             ert.run_models.SingleTestRun,
             "run_experiment",
@@ -599,9 +604,6 @@ def test_that_stdout_and_stderr_buttons_react_to_file_content(
     args_mock.config = "snake_oil.ert"
 
     with (
-        StorageService.init_service(
-            project=os.path.abspath(snake_oil_case.ens_path),
-        ),
         open_storage(snake_oil_case.ens_path, mode="w") as storage,
     ):
         gui = _setup_main_window(snake_oil_case, args_mock, GUILogHandler(), storage)
@@ -696,25 +698,22 @@ def test_that_design_matrix_show_parameters_button_is_visible(
     args_mock.config = config_file
 
     ert_config = ErtConfig.from_file(config_file)
-    with StorageService.init_service(
-        project=os.path.abspath(ert_config.ens_path),
-    ):
-        gui = _setup_main_window(ert_config, args_mock, GUILogHandler(), storage)
-        experiment_panel = gui.findChild(ExperimentPanel)
-        assert experiment_panel
+    gui = _setup_main_window(ert_config, args_mock, GUILogHandler(), storage)
+    experiment_panel = gui.findChild(ExperimentPanel)
+    assert experiment_panel
 
-        simulation_mode_combo = experiment_panel.findChild(QComboBox)
-        assert simulation_mode_combo
+    simulation_mode_combo = experiment_panel.findChild(QComboBox)
+    assert simulation_mode_combo
 
-        simulation_mode_combo.setCurrentText(EnsembleExperiment.name())
-        simulation_settings = gui.findChild(EnsembleExperimentPanel)
-        show_dm_parameters = simulation_settings.findChild(
-            QPushButton, "show-dm-parameters"
-        )
-        if design_matrix_entry:
-            assert show_dm_parameters
-        else:
-            assert show_dm_parameters is None
+    simulation_mode_combo.setCurrentText(EnsembleExperiment.name())
+    simulation_settings = gui.findChild(EnsembleExperimentPanel)
+    show_dm_parameters = simulation_settings.findChild(
+        QPushButton, "show-dm-parameters"
+    )
+    if design_matrix_entry:
+        assert show_dm_parameters
+    else:
+        assert show_dm_parameters is None
 
 
 @pytest.mark.parametrize(

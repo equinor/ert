@@ -4,7 +4,7 @@ import tempfile
 from collections import Counter
 from collections.abc import Sequence
 from pathlib import Path
-from typing import TypeVar
+from typing import Any, Self, TypeVar
 
 from pydantic import BaseModel
 
@@ -29,7 +29,7 @@ class InstallDataContext:
         self._config_dir = str(config_path.parent)
         self._cwd = os.getcwd()
 
-    def __enter__(self):
+    def __enter__(self) -> Self:
         self._temp_dir = tempfile.TemporaryDirectory()
         for data in self._install_data:
             if "<GEO_ID>" not in data.source:
@@ -38,7 +38,7 @@ class InstallDataContext:
         os.chdir(self._temp_dir.name)
         return self
 
-    def _set_symlink(self, source: str, target: str, realization: int | None):
+    def _set_symlink(self, source: str, target: str, realization: int | None) -> None:
         if realization is not None:
             source = source.replace("<GEO_ID>", str(realization))
             target = target.replace("<GEO_ID>", str(realization))
@@ -49,12 +49,12 @@ class InstallDataContext:
         tmp_target.parent.mkdir(parents=True, exist_ok=True)
         tmp_target.symlink_to(as_abs_path(source, self._config_dir))
 
-    def add_links_for_realization(self, realization: int):
+    def add_links_for_realization(self, realization: int) -> None:
         for data in self._install_data:
             if "<GEO_ID>" in data.source:
                 self._set_symlink(data.source, data.target, realization)
 
-    def __exit__(self, exc_type, exc_value, exc_tb):
+    def __exit__(self, exc_type: Any, exc_value: Any, exc_tb: Any) -> None:
         if self._temp_dir:
             self._temp_dir.cleanup()
         os.chdir(self._cwd)
@@ -139,13 +139,13 @@ def unique_items(items: Sequence[T]) -> Sequence[T]:
     return items
 
 
-def valid_range(range_value: tuple[float, float]):
+def valid_range(range_value: tuple[float, float]) -> tuple[float, float]:
     if range_value[0] >= range_value[1]:
         raise ValueError("scaled_range must be a valid range [a, b], where a < b.")
     return range_value
 
 
-def check_path_valid(path: str):
+def check_path_valid(path: str) -> None:
     if not isinstance(path, str):
         raise ValueError("str type expected")
 
@@ -161,7 +161,7 @@ def check_path_valid(path: str):
             raise ValueError(str(e)) from e
 
 
-def check_writable_filepath(path: str):
+def check_writable_filepath(path: str) -> None:
     check_path_valid(path)
 
     if os.path.isdir(path) or not os.path.basename(path):
@@ -170,7 +170,9 @@ def check_writable_filepath(path: str):
         raise ValueError(f"User does not have write access to {path}")
 
 
-def check_for_duplicate_names(names: list[str], item_name: str, key: str = "item"):
+def check_for_duplicate_names(
+    names: list[str], item_name: str, key: str = "item"
+) -> None:
     if len(set(names)) != len(names):
         histogram = {k: names.count(k) for k in set(names) if names.count(k) > 1}
         occurrences_str = ", ".join(
@@ -189,7 +191,7 @@ def as_abs_path(path: str, config_dir: str) -> str:
     return os.path.realpath(os.path.join(config_dir, path))
 
 
-def expand_geo_id_paths(path_source: str, realizations: list[int]):
+def expand_geo_id_paths(path_source: str, realizations: list[int]) -> list[str]:
     if "<GEO_ID>" in path_source:
         return [path_source.replace("<GEO_ID>", str(r)) for r in realizations]
     return [path_source]
@@ -197,7 +199,7 @@ def expand_geo_id_paths(path_source: str, realizations: list[int]):
 
 def check_path_exists(
     path_source: str, config_path: Path | None, realizations: list[int]
-):
+) -> None:
     """Check if the given path exists. If the given path contains <CONFIG_PATH>
     or GEO_ID they will be expanded and all instances of expanded paths need to exist.
     """
@@ -225,7 +227,7 @@ def check_path_exists(
             raise ValueError(f"No such file or directory {exp_path}")
 
 
-def check_writeable_path(path_source: str, config_path: Path):
+def check_writeable_path(path_source: str, config_path: Path) -> None:
     # check that the lowest existing folder is writeable
     path = as_abs_path(path_source, str(config_path.parent))
     while True:
@@ -246,14 +248,14 @@ def check_writeable_path(path_source: str, config_path: Path):
 
 def validate_forward_model_configs(
     forward_model: list[str] | None, install_jobs: list[InstallJobConfig] | None
-):
+) -> None:
     if not forward_model:
         return
 
     install_jobs = install_jobs or []
     user_defined_jobs = [job.name for job in install_jobs]
 
-    def _job_config_index(*args):
+    def _job_config_index(*args):  # type: ignore
         return next(
             (
                 i
@@ -271,11 +273,11 @@ def validate_forward_model_configs(
             job in user_defined_jobs
             or not args
             or args[0] == "schema"
-            or (schema := job_schemas.get(job)) is None
+            or (schema := job_schemas.get(job)) is None  # type: ignore
         ):
             continue
 
-        if (index := _job_config_index(*args)) is None:
+        if (index := _job_config_index(*args)) is None:  # type: ignore
             raise ValueError(f"No config file specified for job {job}")
 
         if args[0] in {"run", "lint"} and (

@@ -1,41 +1,69 @@
-from pydantic import BaseModel, Field, field_validator
+from typing import Any
 
-from everest.config.validation_utils import check_writable_filepath
+from pydantic import BaseModel, Field, model_validator
+
+from ert.config.parsing.config_errors import ConfigWarning
 
 
-class ExportConfig(BaseModel, extra="forbid"):  # type: ignore
+class ExportConfig(BaseModel, extra="forbid"):
     csv_output_filepath: str | None = Field(
         default=None,
-        description="""Specifies which file to write the export to.
-        Defaults to <config_file_name>.csv in output folder.""",
+        description="'csv_output_filepath' key is deprecated. You can safely remove it from the config file",
     )
     discard_gradient: bool | None = Field(
         default=None,
-        description="If set to True, Everest export will not contain "
-        "gradient simulation data.",
+        description="'discard_gradient' key is deprecated. You can safely remove it from the config file",
     )
     discard_rejected: bool | None = Field(
         default=None,
-        description="""If set to True, Everest export will contain only simulations
-         that have the increase_merit flag set to true.""",
+        description="'discard_rejected' key is deprecated. You can safely remove it from the config file",
     )
     keywords: list[str] | None = Field(
         default=None,
-        description="List of eclipse keywords to be exported into csv.",
+        description="List of eclipse keywords to be exported.",
     )
     batches: list[int] | None = Field(
         default=None,
-        description="list of batches to be exported, default is all batches.",
+        description="'batches' key is deprecated. You can safely remove it from the config file",
     )
     skip_export: bool | None = Field(
         default=None,
-        description="""set to True if export should not
-                     be run after the optimization case.
-                     Default value is False.""",
+        description="'skip_export' key is deprecated. You can safely remove it from the config file",
     )
 
-    @field_validator("csv_output_filepath", mode="before")
+    @model_validator(mode="before")
     @classmethod
-    def validate_output_file_writable(cls, csv_output_filepath):  # pylint:disable=E0213
-        check_writable_filepath(csv_output_filepath)
-        return csv_output_filepath
+    def deprecate_export_keys(cls, values: Any) -> Any:  # pylint: disable=E0213
+        for key in list(values.keys()):
+            match key:
+                case "csv_output_filepath":
+                    values["csv_output_filepath"] = None
+                    ConfigWarning.deprecation_warn(
+                        "'csv_output_filepath' key is deprecated."
+                        " You can safely remove it from the config file"
+                    )
+                case "discard_gradient":
+                    values["discard_gradient"] = None
+                    ConfigWarning.deprecation_warn(
+                        "'discard_gradient' key is deprecated."
+                        " You can safely remove it from the config file"
+                    )
+                case "discard_rejected":
+                    values["discard_rejected"] = None
+                    ConfigWarning.deprecation_warn(
+                        "'discard_rejected' key is deprecated."
+                        " You can safely remove it from the config file"
+                    )
+                case "batches":
+                    values["batches"] = None
+                    ConfigWarning.deprecation_warn(
+                        "'batches' key is deprecated."
+                        " You can safely remove it from the config file"
+                    )
+                case "skip_export":
+                    values["skip_export"] = None
+                    ConfigWarning.deprecation_warn(
+                        "'skip_export' key is deprecated."
+                        " You can safely remove it from the config file"
+                    )
+        return values

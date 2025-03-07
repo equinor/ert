@@ -78,6 +78,7 @@ class ForwardModelRunner:
             yield init_message
 
         for step in step_queue:
+            self._currently_running_step = step
             for status_update in step.run():
                 yield status_update
                 if not status_update.success():

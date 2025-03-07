@@ -203,9 +203,9 @@ os.write(fd, b'{"authtoken": "test123", "urls": ["url"]}')
 os.close(fd)
 """
 )
-def test_singleton_connect(server_script):
+def test_singleton_connect(tmp_path, server_script):
     with _DummyService.start_server(exec_args=[str(server_script)]) as server:
-        client = _DummyService.connect(timeout=30)
+        client = _DummyService.connect(project=tmp_path, timeout=30)
         assert server is client
 
 
@@ -231,7 +231,7 @@ def test_singleton_connect_early(server_script, tmp_path):
         def run(self):
             start_event.set()
             try:
-                self.client = _DummyService.connect(timeout=30)
+                self.client = _DummyService.connect(project=tmp_path, timeout=30)
             except Exception as ex:
                 self.exception = ex
             ready_event.set()
@@ -250,42 +250,6 @@ def test_singleton_connect_early(server_script, tmp_path):
         assert client.fetch_conn_info() == server.fetch_conn_info()
 
     assert not (tmp_path / "dummy_server.json").exists()
-
-
-@pytest.mark.integration_test
-@pytest.mark.script(
-    """\
-os.write(fd, b'{"authtoken": "test123", "urls": ["url"]}')
-os.close(fd)
-"""
-)
-def test_singleton_start_or_connect(server_script):
-    """
-    Tests that a connection can be attempted even if it's started _before_
-    the server exists
-    """
-    with _DummyService.connect_or_start_server(
-        exec_args=[str(server_script)]
-    ) as server:
-        assert server.fetch_conn_info() == {"authtoken": "test123", "urls": ["url"]}
-
-
-@pytest.mark.script(
-    """\
-os.write(fd, b'{"authtoken": "test123", "urls": ["url"]}')
-os.close(fd)
-time.sleep(10) # ensure "server" doesn't exit before test
-"""
-)
-def test_singleton_start_or_connect_exists(server_script):
-    """
-    Tests that a connection can be attempted even if it's started _before_
-    the server exists
-    """
-    with _DummyService.start_server([str(server_script)]) as server:
-        server.wait_until_ready()
-        with _DummyService.connect_or_start_server([str(server_script)]) as client:
-            assert server.fetch_conn_info() == client.fetch_conn_info()
 
 
 @pytest.mark.parametrize("script,should_exist", [("storage", True), ("foobar", False)])

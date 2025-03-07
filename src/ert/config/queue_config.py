@@ -233,9 +233,10 @@ def _raise_for_defaulted_invalid_options(queue_config_list: list[list[str]]) -> 
     # the validation system, thus we neeed to catch them expliclitly
     for queue_system, option_name, *_ in queue_config_list:
         if option_name not in valid_options[queue_system]:
-            raise ConfigValidationError(
+            raise ConfigValidationError.with_context(
                 f"Invalid QUEUE_OPTION for {queue_system}: '{option_name}'. "
-                f"Valid choices are {sorted(valid_options[queue_system])}."
+                f"Valid choices are {sorted(valid_options[queue_system])}.",
+                option_name,
             )
 
 
@@ -359,8 +360,9 @@ class QueueConfig:
 
 def _parse_realization_memory_str(realization_memory_str: str) -> int:
     if "-" in realization_memory_str:
-        raise ConfigValidationError(
-            f"Negative memory does not make sense in {realization_memory_str}"
+        raise ConfigValidationError.with_context(
+            f"Negative memory does not make sense in {realization_memory_str}",
+            realization_memory_str,
         )
 
     if realization_memory_str.isdigit():
@@ -375,8 +377,9 @@ def _parse_realization_memory_str(realization_memory_str: str) -> int:
     }
     match = re.search(r"(\d+)\s*(\w)", realization_memory_str)
     if match is None or match.group(2).lower() not in multipliers:
-        raise ConfigValidationError(
-            f"Could not understand byte unit in {realization_memory_str} {match}"
+        raise ConfigValidationError.with_context(
+            f"Could not understand byte unit in {realization_memory_str} {match}",
+            realization_memory_str,
         )
     return int(match.group(1)) * multipliers[match.group(2).lower()]
 

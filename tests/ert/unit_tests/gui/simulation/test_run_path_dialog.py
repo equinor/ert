@@ -15,7 +15,6 @@ from ert.gui.simulation.experiment_panel import ExperimentPanel
 from ert.gui.simulation.run_dialog import RunDialog
 from ert.gui.tools.event_viewer.panel import GUILogHandler
 from ert.run_models.ensemble_experiment import EnsembleExperiment
-from ert.services.storage_service import StorageService
 from ert.storage import open_storage
 
 
@@ -59,9 +58,6 @@ def test_run_path_deleted_error(
     args_mock.config = "snake_oil.ert"
 
     with (
-        StorageService.init_service(
-            project=os.path.abspath(snake_oil_case.ens_path),
-        ),
         open_storage(snake_oil_case.ens_path, mode="w") as storage,
     ):
         gui = _setup_main_window(snake_oil_case, args_mock, GUILogHandler(), storage)
@@ -108,9 +104,6 @@ def test_run_path_is_deleted(snake_oil_case_storage: ErtConfig, qtbot: QtBot):
     args_mock.config = "snake_oil.ert"
 
     with (
-        StorageService.init_service(
-            project=os.path.abspath(snake_oil_case.ens_path),
-        ),
         open_storage(snake_oil_case.ens_path, mode="w") as storage,
     ):
         gui = _setup_main_window(snake_oil_case, args_mock, GUILogHandler(), storage)
@@ -155,9 +148,6 @@ def test_run_path_is_not_deleted(snake_oil_case_storage: ErtConfig, qtbot: QtBot
     args_mock.config = "snake_oil.ert"
 
     with (
-        StorageService.init_service(
-            project=os.path.abspath(snake_oil_case.ens_path),
-        ),
         open_storage(snake_oil_case.ens_path, mode="w") as storage,
     ):
         gui = _setup_main_window(snake_oil_case, args_mock, GUILogHandler(), storage)

@@ -18,14 +18,15 @@ from ert.gui.ertwidgets import (
     TextModel,
     ValueModel,
 )
+from ert.gui.tools.design_matrix.design_matrix_panel import DesignMatrixPanel
 from ert.mode_definitions import ES_MDA_MODE
 from ert.run_models import MultipleDataAssimilation
 from ert.validation import (
+    ExperimentValidation,
     NumberListStringArgument,
     ProperNameFormatArgument,
     RangeStringArgument,
 )
-from ert.validation.proper_name_argument import ExperimentValidation
 
 from .experiment_config_panel import ExperimentConfigPanel
 
@@ -53,7 +54,7 @@ class MultipleDataAssimilationPanel(ExperimentConfigPanel):
         notifier: ErtNotifier,
         ensemble_size: int,
     ) -> None:
-        ExperimentConfigPanel.__init__(self, MultipleDataAssimilation)
+        super().__init__(MultipleDataAssimilation)
         self.notifier = notifier
 
         layout = QFormLayout()
@@ -134,6 +135,15 @@ class MultipleDataAssimilationPanel(ExperimentConfigPanel):
         self._relative_iteration_weights_box.getValidationSupport().validationChanged.connect(
             self.simulationConfigurationChanged
         )
+
+        design_matrix = analysis_config.design_matrix
+        if design_matrix is not None:
+            layout.addRow(
+                "Design Matrix",
+                DesignMatrixPanel.get_design_matrix_button(
+                    self._active_realizations_field, design_matrix
+                ),
+            )
 
         self.setLayout(layout)
 
@@ -271,7 +281,7 @@ class MultipleDataAssimilationPanel(ExperimentConfigPanel):
 
 class _ActiveLabel(QLabel):
     def __init__(self, model: ValueModel) -> None:
-        QLabel.__init__(self)
+        super().__init__()
 
         self._model = model
 

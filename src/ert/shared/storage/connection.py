@@ -7,7 +7,7 @@ from ert.services import StorageService
 
 
 def get_info(
-    project_id: os.PathLike[str] | None = None,
+    project_id: os.PathLike[str],
 ) -> dict[str, str | tuple[str, Any]]:
     client = StorageService.connect(project=project_id)
     return {

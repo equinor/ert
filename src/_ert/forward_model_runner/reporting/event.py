@@ -19,7 +19,7 @@ from _ert.events import (
 from _ert.forward_model_runner.client import Client, ClientConnectionError
 from _ert.forward_model_runner.reporting.base import Reporter
 from _ert.forward_model_runner.reporting.message import (
-    _JOB_EXIT_FAILED_STRING,
+    _STEP_EXIT_FAILED_STRING,
     Checksum,
     Exited,
     Finish,
@@ -39,7 +39,7 @@ class EventSentinel:
 
 class Event(Reporter):
     """
-    The Event reporter forwards events, coming from the running job, added with
+    The Event reporter forwards events, coming from the running step, added with
     "report" to the given connection information.
 
     An Init event must be provided as the first message, which starts reporting,
@@ -48,7 +48,7 @@ class Event(Reporter):
     If event fails to be sent (e.g. due to connection error) it does not proceed to the
     next event but instead tries to re-send the same event.
 
-    Whenever the Finish event (when all the jobs have exited) is provided
+    Whenever the Finish event (when all the steps have exited) is provided
     the reporter will try to send all remaining events for a maximum of 60 seconds
     before stopping the reporter. Any remaining events will not be sent.
     """
@@ -68,7 +68,7 @@ class Event(Reporter):
 
         self._statemachine = StateMachine()
         self._statemachine.add_handler((Init,), self._init_handler)
-        self._statemachine.add_handler((Start, Running, Exited), self._job_handler)
+        self._statemachine.add_handler((Start, Running, Exited), self._step_handler)
         self._statemachine.add_handler((Checksum,), self._checksum_handler)
         self._statemachine.add_handler((Finish,), self._finished_handler)
 
@@ -87,7 +87,9 @@ class Event(Reporter):
             # can be finished but not all the events were sent yet
             self._finished_event_timeout = 600
 
-    def stop(self):
+    def stop(self, exited_event: Exited | None = None):
+        if exited_event:
+            self._statemachine.transition(exited_event)
         self._event_queue.put(Event._sentinel)
         self._done.set()
         if self._event_publisher_thread.is_alive():
@@ -140,48 +142,48 @@ class Event(Reporter):
         self._real_id = str(msg.real_id)
         self._event_publisher_thread.start()
 
-    def _job_handler(self, msg: Start | Running | Exited):
-        assert msg.job
-        job_name = msg.job.name()
-        job_msg = {
+    def _step_handler(self, msg: Start | Running | Exited):
+        assert msg.step
+        step_name = msg.step.name()
+        step_msg = {
             "ensemble": self._ens_id,
             "real": self._real_id,
-            "fm_step": str(msg.job.index),
+            "fm_step": str(msg.step.index),
         }
         if isinstance(msg, Start):
-            logger.debug(f"Job {job_name} was successfully started")
+            logger.debug(f"Step {step_name} was successfully started")
             event = ForwardModelStepStart(
-                **job_msg,
-                std_out=str(Path(msg.job.std_out).resolve()),
-                std_err=str(Path(msg.job.std_err).resolve()),
+                **step_msg,
+                std_out=str(Path(msg.step.std_out).resolve()),
+                std_err=str(Path(msg.step.std_err).resolve()),
             )
             self._dump_event(event)
             if not msg.success():
-                logger.error(f"Job {job_name} FAILED to start")
-                event = ForwardModelStepFailure(**job_msg, error_msg=msg.error_message)
+                logger.error(f"Step {step_name} FAILED to start")
+                event = ForwardModelStepFailure(**step_msg, error_msg=msg.error_message)
                 self._dump_event(event)
 
         elif isinstance(msg, Exited):
             if msg.success():
-                logger.debug(f"Job {job_name} exited successfully")
-                self._dump_event(ForwardModelStepSuccess(**job_msg))
+                logger.debug(f"Step {step_name} exited successfully")
+                self._dump_event(ForwardModelStepSuccess(**step_msg))
             else:
                 logger.error(
-                    _JOB_EXIT_FAILED_STRING.format(
-                        job_name=msg.job.name(),
+                    _STEP_EXIT_FAILED_STRING.format(
+                        step_name=msg.step.name(),
                         exit_code=msg.exit_code,
                         error_message=msg.error_message,
                     )
                 )
                 event = ForwardModelStepFailure(
-                    **job_msg, exit_code=msg.exit_code, error_msg=msg.error_message
+                    **step_msg, exit_code=msg.exit_code, error_msg=msg.error_message
                 )
                 self._dump_event(event)
 
         elif isinstance(msg, Running):
-            logger.debug(f"{job_name} job is running")
+            logger.debug(f"{step_name} step is running")
             event = ForwardModelStepRunning(
-                **job_msg,
+                **step_msg,
                 max_memory_usage=msg.memory_status.max_rss,
                 current_memory_usage=msg.memory_status.rss,
                 cpu_seconds=msg.memory_status.cpu_seconds,

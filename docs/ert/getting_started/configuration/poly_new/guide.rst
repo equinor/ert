@@ -99,11 +99,11 @@ In the ``simulations`` folder, you'll find folders for each realization, labeled
 
 * **OK**: Indicates success. If there's an error, an ``ERROR`` file will be created instead.
 * **STATUS**: A legacy status file.
-* **jobs.json**: Defines the jobs to run.
+* **jobs.json**: Defines the forward model steps to run.
 * **logs/**: Log files useful for debugging
 * **status.json**: Used to communicate the status to ERT.
 
-Do not modify these files, either manually or through your experiments' jobs.
+Do not modify these files, either manually or through your experiments' steps.
 
 Adding a forward model
 ----------------------
@@ -162,39 +162,39 @@ The ``poly_eval.py`` script must be marked as executable to allow it to be invok
    This command changes the permissions of the file, allowing it to be executed like a program.
    Once you have run this command, the script can be run directly from the terminal or used within ERT as needed.
 
-Adding a job to the forward model
-*********************************
-To add a job to the forward model, you need to define the job in a separate file and then reference it in your configuration.
-Here's how to do it:
+Adding a step to the forward model
+**********************************
+To add a step to the forward model, you need to define the step in a separate
+file and then reference it in your configuration. Here's how to do it:
 
-1. **Define the job**: Create a file named ``POLY_EVAL`` with the following content to specify the executable:
+1. **Define the step**: Create a file named ``POLY_EVAL`` with the following content to specify the executable:
 
 .. include:: with_simple_script/POLY_EVAL
     :code:
 
-2. **Reference the job in configuration**: Open your configuration file and add these lines:
+2. **Reference the step in configuration**: Open your configuration file and add these lines:
 
 .. code-block:: shell
 
     INSTALL_JOB poly_eval POLY_EVAL
     FORWARD_MODEL poly_eval
 
-The :ref:`INSTALL_JOB <install_job>` line informs ERT about the job named ``poly_eval``
-and the file containing details of how to execute the job.
-The :ref:`FORWARD_MODEL <forward_model>` line instructs ERT to include the job as part of the forward model.
+The :ref:`INSTALL_JOB <install_job>` line informs ERT about the step named ``poly_eval``
+and the file containing details of how to execute the step.
+The :ref:`FORWARD_MODEL <forward_model>` line instructs ERT to include the step as part of the forward model.
 
 3. **Complete Configuration**: Your final configuration file should now look like this:
 
 .. include:: with_simple_script/poly.ert
     :code:
 
-For more details on configuring your own jobs, see the corresponding section on :ref:`configure_own_jobs`.
+For more details on configuring your own steps, see the corresponding section on :ref:`configure_own_steps`.
 
-By following these steps, you have added a job to the forward model, allowing ERT to execute the ``poly_eval.py`` script as part of the forward model.
+By following these steps, you have added a step to the forward model, allowing ERT to execute the ``poly_eval.py`` script as part of the forward model.
 
-Running with the new job
-************************
-With the new job added, follow these steps to run ERT and observe the results:
+Running with the new step
+*************************
+With the new step added, follow these steps to run ERT and observe the results:
 
 1. **Delete old output files**: To clear any previous results, execute the following command:
 
@@ -210,7 +210,7 @@ With the new job added, follow these steps to run ERT and observe the results:
 
 .. image:: with_simple_script/ert.png
 
-You will notice the updated configuration summary, including the newly defined job and the customized runpath.
+You will notice the updated configuration summary, including the newly defined step and the customized runpath.
 
 3. **Run the experiment**: Execute the ensemble experiment as before. Once it's complete, close all ERT windows.
 

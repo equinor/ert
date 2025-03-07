@@ -14,15 +14,91 @@ from ert.run_models import (
 )
 
 EXPECTED_CALL_ORDER = [
-    call(HookRuntime.PRE_EXPERIMENT),
-    call(HookRuntime.PRE_SIMULATION, ANY, ANY),
-    call(HookRuntime.POST_SIMULATION, ANY, ANY),
-    call(HookRuntime.PRE_FIRST_UPDATE, ANY, ANY),
-    call(HookRuntime.PRE_UPDATE, ANY, ANY),
-    call(HookRuntime.POST_UPDATE, ANY, ANY),
-    call(HookRuntime.PRE_SIMULATION, ANY, ANY),
-    call(HookRuntime.POST_SIMULATION, ANY, ANY),
-    call(HookRuntime.POST_EXPERIMENT),
+    call(HookRuntime.PRE_EXPERIMENT, fixtures={"random_seed": ANY}),
+    call(
+        HookRuntime.PRE_SIMULATION,
+        fixtures={
+            "storage": ANY,
+            "ensemble": ANY,
+            "reports_dir": ANY,
+            "random_seed": ANY,
+            "run_paths": ANY,
+        },
+    ),
+    call(
+        HookRuntime.POST_SIMULATION,
+        fixtures={
+            "storage": ANY,
+            "ensemble": ANY,
+            "reports_dir": ANY,
+            "random_seed": ANY,
+            "run_paths": ANY,
+        },
+    ),
+    call(
+        HookRuntime.PRE_FIRST_UPDATE,
+        fixtures={
+            "storage": ANY,
+            "ensemble": ANY,
+            "reports_dir": ANY,
+            "random_seed": ANY,
+            "es_settings": ANY,
+            "observation_settings": ANY,
+            "run_paths": ANY,
+        },
+    ),
+    call(
+        HookRuntime.PRE_UPDATE,
+        fixtures={
+            "storage": ANY,
+            "ensemble": ANY,
+            "reports_dir": ANY,
+            "random_seed": ANY,
+            "es_settings": ANY,
+            "observation_settings": ANY,
+            "run_paths": ANY,
+        },
+    ),
+    call(
+        HookRuntime.POST_UPDATE,
+        fixtures={
+            "storage": ANY,
+            "ensemble": ANY,
+            "reports_dir": ANY,
+            "random_seed": ANY,
+            "es_settings": ANY,
+            "observation_settings": ANY,
+            "run_paths": ANY,
+        },
+    ),
+    call(
+        HookRuntime.PRE_SIMULATION,
+        fixtures={
+            "storage": ANY,
+            "ensemble": ANY,
+            "reports_dir": ANY,
+            "random_seed": ANY,
+            "run_paths": ANY,
+        },
+    ),
+    call(
+        HookRuntime.POST_SIMULATION,
+        fixtures={
+            "storage": ANY,
+            "ensemble": ANY,
+            "reports_dir": ANY,
+            "random_seed": ANY,
+            "run_paths": ANY,
+        },
+    ),
+    call(
+        HookRuntime.POST_EXPERIMENT,
+        fixtures={
+            "random_seed": ANY,
+            "storage": ANY,
+            "ensemble": ANY,
+        },
+    ),
 ]
 
 
@@ -92,6 +168,7 @@ def test_hook_call_order_es_mda(monkeypatch):
     test_class._storage = storage_mock
     test_class.restart_run = False
     test_class.run_ensemble_evaluator = MagicMock(return_value=[0])
+    test_class._design_matrix = None
     test_class.run_experiment(MagicMock())
 
     assert run_wfs_mock.mock_calls == EXPECTED_CALL_ORDER

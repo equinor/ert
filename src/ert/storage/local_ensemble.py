@@ -14,7 +14,7 @@ import numpy as np
 import pandas as pd
 import xarray as xr
 from pydantic import BaseModel
-from typing_extensions import deprecated
+from typing_extensions import TypedDict, deprecated
 
 from ert.config.gen_kw_config import GenKwConfig
 from ert.storage.mode import BaseMode, Mode, require_write
@@ -32,6 +32,11 @@ logger = logging.getLogger(__name__)
 import polars as pl
 
 
+class EverestRealizationInfo(TypedDict):
+    model_realization: int
+    perturbation: int  # -1 means it stems from unperturbed controls
+
+
 class _Index(BaseModel):
     id: UUID
     experiment_id: UUID
@@ -40,6 +45,7 @@ class _Index(BaseModel):
     name: str
     prior_ensemble_id: UUID | None
     started_at: datetime
+    everest_realization_info: dict[int, EverestRealizationInfo] | None = None
 
 
 class _Failure(BaseModel):
@@ -1040,3 +1046,132 @@ class LocalEnsemble(BaseMode):
             return pl.concat(dfs_per_response_type, how="vertical").with_columns(
                 pl.col("response_key").cast(pl.String).alias("response_key")
             )
+
+    @property
+    def everest_realization_info(self) -> dict[int, EverestRealizationInfo] | None:
+        return self._index.everest_realization_info
+
+    def save_everest_realization_info(
+        self, realization_info: dict[int, EverestRealizationInfo]
+    ) -> None:
+        if len(realization_info) != self.ensemble_size:
+            raise ValueError(
+                "Everest realization info must describe "
+                "all realizations in the ensemble, got information "
+                f"for realizations [{', '.join(map(str, realization_info))}]"
+            )
+
+        errors = []
+        for ert_realization, info in realization_info.items():
+            pert = info.get("perturbation")
+            model_realization = info.get("model_realization")
+
+            if pert is None or (pert < 0 and pert != -1):
+                errors.append(
+                    f"Invalid perturbation for "
+                    f"ert realization: {ert_realization},"
+                    f"expected -1 or a positive int"
+                )
+
+            if model_realization is None:
+                errors.append(
+                    f"Invalid model realization for ert realization {ert_realization}"
+                )
+
+        if errors:
+            raise ValueError("Bad everest realization info: " + "\n".join(errors))
+
+        self._index.everest_realization_info = realization_info
+        self._storage._write_transaction(
+            self._path / "index.json", self._index.model_dump_json().encode("utf-8")
+        )
+
+    @property
+    def all_parameters_and_gen_data(self) -> pl.DataFrame | None:
+        """
+        Only for Everest wrt objectives/constraints,
+        disregards summary data and primary key values
+        """
+        param_dfs = []
+        for param_group in self.experiment.parameter_configuration:
+            params_pd = self.load_parameters(param_group)["values"].to_pandas()
+
+            assert isinstance(params_pd, pd.DataFrame)
+            params_pd = params_pd.reset_index()
+            param_df = pl.from_pandas(params_pd)
+
+            param_columns = [c for c in param_df.columns if c != "realizations"]
+            param_df = param_df.rename(
+                {
+                    **{
+                        c: param_group + "." + c.replace("\0", ".")
+                        for c in param_columns
+                    },
+                    "realizations": "realization",
+                }
+            )
+            param_df = param_df.cast(
+                {
+                    "realization": pl.UInt16,
+                    **{c: pl.Float64 for c in param_df.columns if c != "realization"},
+                }
+            )
+            param_dfs.append(param_df)
+
+        responses = self.load_responses(
+            "gen_data", tuple(self.get_realization_list_with_responses())
+        )
+
+        if responses is None:
+            return pl.concat(param_dfs)
+
+        params_wide = pl.concat(
+            [
+                pdf.sort("realization").drop("realization")
+                if i > 0
+                else pdf.sort("realization")
+                for i, pdf in enumerate(param_dfs)
+            ],
+            how="horizontal",
+        )
+
+        responses_wide = responses["realization", "response_key", "values"].pivot(
+            on="response_key", values="values"
+        )
+
+        # If responses are missing for some realizations, this _left_ join will
+        # put null (polars) which maps to nan when doing .to_numpy() into the
+        # response columns for those realizations
+        params_and_responses = params_wide.join(
+            responses_wide, on="realization", how="left"
+        ).with_columns(pl.lit(self.iteration).alias("batch"))
+
+        assert self.everest_realization_info is not None
+
+        model_realization_mapping = {
+            k: v["model_realization"] for k, v in self.everest_realization_info.items()
+        }
+        perturbation_mapping = {
+            k: v["perturbation"] for k, v in self.everest_realization_info.items()
+        }
+
+        params_and_responses = params_and_responses.with_columns(
+            pl.col("realization")
+            .replace(model_realization_mapping)
+            .alias("model_realization"),
+            pl.col("realization")
+            .cast(pl.Int32)
+            .replace(perturbation_mapping)
+            .alias("perturbation"),
+        )
+
+        column_order = [
+            "batch",
+            "model_realization",
+            "perturbation",
+            "realization",
+            *[c for c in responses_wide.columns if c != "realization"],
+            *[c for c in params_wide.columns if c != "realization"],
+        ]
+
+        return params_and_responses[column_order]

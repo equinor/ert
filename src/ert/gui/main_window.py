@@ -3,6 +3,7 @@ from __future__ import annotations
 import datetime
 import functools
 import webbrowser
+from pathlib import Path
 
 from PyQt6.QtCore import QCoreApplication, QEvent, QSize, Qt
 from PyQt6.QtCore import pyqtSignal as Signal
@@ -87,7 +88,7 @@ class ErtMainWindow(QMainWindow):
         log_handler: GUILogHandler | None = None,
     ):
         QMainWindow.__init__(self)
-        self.notifier = ErtNotifier(config_file)
+        self.notifier = ErtNotifier()
         self.plugins_tool: PluginsTool | None = None
         self.ert_config = ert_config
         self.config_file = config_file
@@ -148,7 +149,9 @@ class ErtMainWindow(QMainWindow):
     def right_clicked(self) -> None:
         actor = self.sender()
         if actor and actor.property("index") == "Create plot":
-            pw = PlotWindow(self.config_file, None)
+            pw = PlotWindow(
+                self.config_file, Path(self.ert_config.ens_path).absolute(), None
+            )
             pw.show()
             self._external_plot_windows.append(pw)
 
@@ -181,7 +184,9 @@ class ErtMainWindow(QMainWindow):
             if index_name == "Create plot":
                 if self._plot_window:
                     self._plot_window.close()
-                self._plot_window = PlotWindow(self.config_file, self)
+                self._plot_window = PlotWindow(
+                    self.config_file, Path(self.ert_config.ens_path).absolute(), self
+                )
                 self.central_layout.addWidget(self._plot_window)
                 self.central_panels_map["Create plot"] = self._plot_window
 
@@ -212,7 +217,7 @@ class ErtMainWindow(QMainWindow):
 
         run_dialog.setParent(self)
         date_time = datetime.datetime.now(datetime.UTC).strftime("%Y-%d-%m %H:%M:%S")
-        experiment_type = run_dialog._run_model.name()
+        experiment_type = run_dialog._run_model_api.experiment_name
         simulation_id = experiment_type + " : " + date_time
         self.central_panels_map[simulation_id] = run_dialog
         self.run_dialog_counter += 1

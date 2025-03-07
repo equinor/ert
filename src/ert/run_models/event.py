@@ -29,6 +29,26 @@ class RunModelStatusEvent(RunModelEvent):
     msg: str
 
 
+class EverestStatusEvent(BaseModel):
+    batch: int | None
+    event_type: Literal["EverestStatusEvent"] = "EverestStatusEvent"
+    everest_event: Literal[
+        "START_OPTIMIZER_EVALUATION",
+        "START_SAMPLING_EVALUATION",
+    ]
+
+
+class EverestBatchResultEvent(BaseModel):
+    batch: int
+    event_type: Literal["EverestBatchResultEvent"] = "EverestBatchResultEvent"
+    everest_event: Literal[
+        "OPTIMIZATION_RESULT",
+        "FINISHED_OPTIMIZER_EVALUATION",
+        "FINISHED_SAMPLING_EVALUATION",
+    ]
+    result_type: Literal["FunctionResult", "GradientResult"]
+
+
 class RunModelTimeEvent(RunModelEvent):
     event_type: Literal["RunModelTimeEvent"] = "RunModelTimeEvent"
     remaining_time: float
@@ -72,6 +92,8 @@ StatusEvents = (
     AnalysisStatusEvent
     | AnalysisTimeEvent
     | EndEvent
+    | EverestStatusEvent
+    | EverestBatchResultEvent
     | FullSnapshotEvent
     | SnapshotUpdateEvent
     | RunModelErrorEvent

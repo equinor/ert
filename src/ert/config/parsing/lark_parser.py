@@ -492,7 +492,7 @@ def _parse_file(file: str) -> Tree[Instruction]:
 def parse(
     file: str,
     schema: SchemaItemDict,
-    pre_defines: list[tuple[str, str]] | None = None,
+    pre_defines: Defines | None = None,
 ) -> ConfigDict:
     return _transform_tree(_parse_file(file), file, schema, pre_defines)
 
@@ -512,7 +512,7 @@ def _transform_tree(
     tree: Tree[Instruction],
     file: str,
     schema: SchemaItemDict,
-    pre_defines: list[tuple[str, str]] | None = None,
+    pre_defines: Defines | None = None,
 ) -> ConfigDict:
     filepath = os.path.normpath(os.path.abspath(file))
     config_dir = os.path.dirname(filepath)

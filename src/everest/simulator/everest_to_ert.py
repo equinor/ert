@@ -3,20 +3,38 @@ import itertools
 import json
 import logging
 import os
+from pathlib import Path
+from typing import Any
 
 import everest
 from ert.config import ErtConfig
+from ert.config.ensemble_config import EnsembleConfig
+from ert.config.ert_config import (
+    _substitutions_from_dict,
+    create_list_of_forward_model_steps_to_run,
+    installed_forward_model_steps_from_dict,
+    uppercase_subkeys_and_stringify_subvalues,
+)
+from ert.config.ext_param_config import ExtParamConfig
+from ert.config.forward_model_step import ForwardModelStep
+from ert.config.model_config import ModelConfig
 from ert.config.parsing import ConfigDict
 from ert.config.parsing import ConfigKeys as ErtConfigKeys
 from ert.plugins import ErtPluginContext
+from ert.plugins.plugin_manager import ErtPluginManager
+from ert.substitutions import Substitutions
 from everest.config import EverestConfig
+from everest.config.control_variable_config import (
+    ControlVariableConfig,
+    ControlVariableGuessListConfig,
+)
 from everest.config.install_data_config import InstallDataConfig
 from everest.config.install_job_config import InstallJobConfig
 from everest.config.simulator_config import SimulatorConfig
 from everest.strings import EVEREST, SIMULATION_DIR, STORAGE_DIR
 
 
-def _get_datafiles(ever_config: EverestConfig):
+def _get_datafiles(ever_config: EverestConfig) -> list[str]:
     ever_model = ever_config.model
     data_file = ever_model.data_file
     if data_file is None:
@@ -37,7 +55,7 @@ def _get_datafiles(ever_config: EverestConfig):
     return [data_file.replace("<GEO_ID>", str(geo_id)) for geo_id in realizations]
 
 
-def _load_all_groups(data_files):
+def _load_all_groups(data_files: list[str]) -> set[str]:
     groups = []
     for data_file in data_files:
         groups += everest.util.read_groupnames(data_file)
@@ -45,7 +63,7 @@ def _load_all_groups(data_files):
     return set(groups)
 
 
-def _load_all_wells(data_files):
+def _load_all_wells(data_files: list[str]) -> set[str]:
     wells = []
     for data_file in data_files:
         wells += everest.util.read_wellnames(data_file)
@@ -53,7 +71,9 @@ def _load_all_wells(data_files):
     return set(wells)
 
 
-def _extract_summary_keys(ever_config: EverestConfig, ert_config):
+def _extract_summary_keys(
+    ever_config: EverestConfig, ert_config: dict[str, Any]
+) -> None:
     data_files = _get_datafiles(ever_config)
     if len(data_files) == 0:
         return
@@ -81,7 +101,7 @@ def _extract_summary_keys(ever_config: EverestConfig, ert_config):
             "No group summary data will be internalized during run."
         )
         logging.getLogger("everest").warning(warn_msg.format(data_files))
-        groups = []
+        groups = set()
 
     group_keys = [
         f"{sum_key}:{gname}"
@@ -118,9 +138,11 @@ def _extract_summary_keys(ever_config: EverestConfig, ert_config):
     ert_config[ErtConfigKeys.SUMMARY] = [all_keys]
 
 
-def _extract_environment(ever_config: EverestConfig, ert_config):
+def _extract_environment(
+    ever_config: EverestConfig, ert_config: dict[str, Any]
+) -> None:
     simulation_fmt = os.path.join(
-        "<BATCH_NAME>", "geo_realization_<GEO_ID>", SIMULATION_DIR
+        "batch_<ITER>", "geo_realization_<GEO_ID>", SIMULATION_DIR
     )
 
     assert ever_config.simulation_dir is not None
@@ -136,13 +158,15 @@ def _extract_environment(ever_config: EverestConfig, ert_config):
     ert_config[ErtConfigKeys.RUNPATH_FILE] = default_runpath_file
 
 
-def _inject_simulation_defaults(ert_config, ever_config: EverestConfig):
+def _inject_simulation_defaults(
+    ert_config: dict[str, Any], ever_config: EverestConfig
+) -> None:
     """
     NOTE: This function is only to live until the effort of centralizing all
     default values is taken.
     """
 
-    def inject_default(key, value):
+    def inject_default(key: str, value: Any) -> None:
         if key not in ert_config:
             ert_config[key] = value
 
@@ -154,7 +178,7 @@ def _inject_simulation_defaults(ert_config, ever_config: EverestConfig):
     )
 
 
-def _extract_simulator(ever_config: EverestConfig, ert_config):
+def _extract_simulator(ever_config: EverestConfig, ert_config: dict[str, Any]) -> None:
     """
     Extracts simulation data from ever_config and injects it into ert_config.
     """
@@ -179,7 +203,7 @@ def _extract_simulator(ever_config: EverestConfig, ert_config):
     _inject_simulation_defaults(ert_config, ever_config)
 
 
-def _fetch_everest_jobs(ever_config: EverestConfig):
+def _fetch_everest_jobs(ever_config: EverestConfig) -> list[Any]:
     """This injects the default Everest jobs when configuring res. In the
     future, this should be reviewed when we have proper configuration
     mechanisms in place."""
@@ -204,13 +228,15 @@ def _fetch_everest_jobs(ever_config: EverestConfig):
     return ever_jobs
 
 
-def _job_to_dict(job: dict | InstallJobConfig) -> dict | InstallJobConfig:
-    if type(job) is InstallJobConfig:
+def _job_to_dict(job: dict[str, Any] | InstallJobConfig) -> dict[str, Any]:
+    if isinstance(job, InstallJobConfig):
         return job.model_dump(exclude_none=True)
     return job
 
 
-def _extract_jobs(ever_config, ert_config, path):
+def _extract_jobs(
+    ever_config: EverestConfig, ert_config: dict[str, Any], path: str
+) -> None:
     ever_jobs = [_job_to_dict(j) for j in (ever_config.install_jobs or [])]
 
     std_ever_jobs = _fetch_everest_jobs(ever_config)
@@ -237,7 +263,9 @@ def _extract_jobs(ever_config, ert_config, path):
     ert_config[ErtConfigKeys.INSTALL_JOB] = res_jobs
 
 
-def _extract_workflow_jobs(ever_config, ert_config, path):
+def _extract_workflow_jobs(
+    ever_config: EverestConfig, ert_config: dict[str, Any], path: str
+) -> None:
     workflow_jobs = [_job_to_dict(j) for j in (ever_config.install_workflow_jobs or [])]
 
     res_jobs = ert_config.get(ErtConfigKeys.LOAD_WORKFLOW_JOB, [])
@@ -252,7 +280,9 @@ def _extract_workflow_jobs(ever_config, ert_config, path):
         ert_config[ErtConfigKeys.LOAD_WORKFLOW_JOB] = res_jobs
 
 
-def _extract_workflows(ever_config, ert_config, path):
+def _extract_workflows(
+    ever_config: EverestConfig, ert_config: dict[str, Any], path: str
+) -> None:
     trigger2res = {
         "pre_simulation": "PRE_SIMULATION",
         "post_simulation": "POST_SIMULATION",
@@ -275,7 +305,7 @@ def _extract_workflows(ever_config, ert_config, path):
         ert_config[ErtConfigKeys.HOOK_WORKFLOW] = res_hooks
 
 
-def _internal_data_files(ever_config: EverestConfig):
+def _internal_data_files(ever_config: EverestConfig) -> tuple[str]:
     assert ever_config.output_dir is not None
     data_storage = os.path.join(ever_config.output_dir, ".internal_data")
     data_storage = os.path.realpath(data_storage)
@@ -297,7 +327,7 @@ def _internal_data_files(ever_config: EverestConfig):
     return (well_datafile,)
 
 
-def _expand_source_path(source, ever_config: EverestConfig):
+def _expand_source_path(source: str, ever_config: EverestConfig) -> str:
     """Expands <CONFIG_PATH> in @source and makes it absolute to config
     directory if relative.
     """
@@ -309,7 +339,7 @@ def _expand_source_path(source, ever_config: EverestConfig):
     return source
 
 
-def _is_dir_all_geo(source, ever_config: EverestConfig):
+def _is_dir_all_geo(source: str, ever_config: EverestConfig) -> bool:
     """Expands <GEO_ID> for all realizations and if:
     - all are directories, returns True,
     - all are files, returns False,
@@ -339,7 +369,7 @@ def _is_dir_all_geo(source, ever_config: EverestConfig):
     return is_dir[0]
 
 
-def _extract_data_operations(ever_config: EverestConfig):
+def _extract_data_operations(ever_config: EverestConfig) -> list[str]:
     symlink_fmt = "symlink {source} {link_name}"
     copy_dir_fmt = "copy_directory {source} {target}"
     copy_file_fmt = "copy_file {source} {target}"
@@ -367,7 +397,7 @@ def _extract_data_operations(ever_config: EverestConfig):
     return forward_model
 
 
-def _extract_templating(ever_config: EverestConfig):
+def _extract_templating(ever_config: EverestConfig) -> list[str]:
     res_input = [control.name for control in ever_config.controls]
     res_input = [fn + ".json" for fn in res_input]
     res_input += _internal_data_files(ever_config)
@@ -395,7 +425,9 @@ def _extract_templating(ever_config: EverestConfig):
     return forward_model
 
 
-def _extract_forward_model(ever_config: EverestConfig, ert_config):
+def _extract_forward_model(
+    ever_config: EverestConfig, ert_config: dict[str, Any]
+) -> None:
     forward_model = _extract_data_operations(ever_config)
     forward_model += _extract_templating(ever_config)
     forward_model += ever_config.forward_model or []
@@ -419,7 +451,7 @@ def _extract_forward_model(ever_config: EverestConfig, ert_config):
     ert_config[ErtConfigKeys.FORWARD_MODEL] = fm_steps
 
 
-def _extract_model(ever_config: EverestConfig, ert_config):
+def _extract_model(ever_config: EverestConfig, ert_config: dict[str, Any]) -> None:
     _extract_summary_keys(ever_config, ert_config)
 
     if ErtConfigKeys.NUM_REALIZATIONS not in ert_config:
@@ -431,7 +463,7 @@ def _extract_model(ever_config: EverestConfig, ert_config):
             ert_config[ErtConfigKeys.NUM_REALIZATIONS] = 1
 
 
-def _extract_seed(ever_config: EverestConfig, ert_config):
+def _extract_seed(ever_config: EverestConfig, ert_config: dict[str, Any]) -> None:
     assert ever_config.environment is not None
     random_seed = ever_config.environment.random_seed
 
@@ -439,7 +471,7 @@ def _extract_seed(ever_config: EverestConfig, ert_config):
         ert_config[ErtConfigKeys.RANDOM_SEED] = random_seed
 
 
-def _extract_results(ever_config: EverestConfig, ert_config):
+def _extract_results(ever_config: EverestConfig, ert_config: dict[str, Any]) -> None:
     objectives_names = [
         objective.name
         for objective in ever_config.objective_functions
@@ -454,8 +486,84 @@ def _extract_results(ever_config: EverestConfig, ert_config):
     ert_config[ErtConfigKeys.GEN_DATA] = gen_data
 
 
+def get_substitutions(
+    config_dict: ConfigDict, model_config: ModelConfig, runpath_file: Path, num_cpu: int
+) -> Substitutions:
+    substitutions = _substitutions_from_dict(config_dict)
+    substitutions["<RUNPATH_FILE>"] = str(runpath_file)
+    substitutions["<RUNPATH>"] = model_config.runpath_format_string
+    substitutions["<ECL_BASE>"] = model_config.eclbase_format_string
+    substitutions["<ECLBASE>"] = model_config.eclbase_format_string
+    substitutions["<NUM_CPU>"] = str(num_cpu)
+    return substitutions
+
+
+def get_forward_model_steps(
+    config_dict: ConfigDict, substitutions: Substitutions
+) -> tuple[list[ForwardModelStep], dict[str, dict[str, Any]]]:
+    installed_forward_model_steps: dict[str, ForwardModelStep] = {}
+    pm = ErtPluginManager()
+    for fm_step_subclass in pm.forward_model_steps:
+        fm_step = fm_step_subclass()  # type: ignore
+        installed_forward_model_steps[fm_step.name] = fm_step
+
+    installed_forward_model_steps.update(
+        installed_forward_model_steps_from_dict(config_dict)
+    )
+
+    env_pr_fm_step = uppercase_subkeys_and_stringify_subvalues(
+        pm.get_forward_model_configuration()
+    )
+
+    forward_model_steps = create_list_of_forward_model_steps_to_run(
+        installed_forward_model_steps,
+        substitutions,
+        config_dict,
+        installed_forward_model_steps,
+        env_pr_fm_step,
+    )
+
+    return forward_model_steps, env_pr_fm_step
+
+
+def get_ensemble_config(
+    config_dict: ConfigDict, everest_config: EverestConfig
+) -> EnsembleConfig:
+    ensemble_config = EnsembleConfig.from_dict(config_dict)
+
+    def _get_variables(
+        variables: list[ControlVariableConfig] | list[ControlVariableGuessListConfig],
+    ) -> list[str] | dict[str, list[str]]:
+        if (
+            isinstance(variables[0], ControlVariableConfig)
+            and getattr(variables[0], "index", None) is None
+        ):
+            return [var.name for var in variables]
+        result: collections.defaultdict[str, list] = collections.defaultdict(list)  # type: ignore
+        for variable in variables:
+            if isinstance(variable, ControlVariableGuessListConfig):
+                result[variable.name].extend(
+                    str(index + 1) for index, _ in enumerate(variable.initial_guess)
+                )
+            else:
+                result[variable.name].append(str(variable.index))
+        return dict(result)
+
+    # This adds an EXT_PARAM key to the ert_config, which is not a true ERT
+    # configuration key. When initializing an ERT config object, it is ignored.
+    # It is used by the Simulator object to inject ExtParamConfig nodes.
+    for control in everest_config.controls or []:
+        ensemble_config.parameter_configs[control.name] = ExtParamConfig(
+            name=control.name,
+            input_keys=_get_variables(control.variables),
+            output_file=control.name + ".json",
+        )
+
+    return ensemble_config
+
+
 def _everest_to_ert_config_dict(
-    ever_config: EverestConfig, site_config=None
+    ever_config: EverestConfig, site_config: dict[Any, Any] | None = None
 ) -> ConfigDict:
     """
     Takes as input an Everest configuration, the site-config and converts them
@@ -486,15 +594,3 @@ def everest_to_ert_config_dict(everest_config: EverestConfig) -> ConfigDict:
             everest_config, site_config=ErtConfig.read_site_config()
         )
     return config_dict
-
-
-def everest_to_ert_config(ever_config: EverestConfig) -> ErtConfig:
-    with ErtPluginContext():
-        config_dict = _everest_to_ert_config_dict(
-            ever_config, site_config=ErtConfig.read_site_config()
-        )
-        ert_config = ErtConfig.with_plugins().from_dict(config_dict=config_dict)
-    ert_config.queue_config.queue_options = ever_config.simulator.queue_system
-    ert_config.queue_config.queue_system = ever_config.simulator.queue_system.name
-
-    return ert_config

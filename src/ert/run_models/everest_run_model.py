@@ -1,50 +1,41 @@
 from __future__ import annotations
 
-import collections
+import dataclasses
 import datetime
-import functools
 import json
 import logging
 import os
 import queue
 import shutil
-from collections import defaultdict
-from collections.abc import Callable
-from enum import IntEnum
+import sys
+from collections.abc import Callable, Generator, MutableSequence
+from contextlib import contextmanager
+from enum import IntEnum, auto
 from pathlib import Path
 from types import TracebackType
 from typing import TYPE_CHECKING, Any, Protocol
 
 import numpy as np
-from numpy import float64
+import polars as pl
 from numpy._typing import NDArray
-from ropt.enums import EventType, OptimizerExitCode
+from ropt.enums import OptimizerExitCode
 from ropt.evaluator import EvaluatorContext, EvaluatorResult
 from ropt.plan import BasicOptimizer
-from ropt.plan import Event as OptimizerEvent
+from ropt.results import FunctionResults, Results
 from ropt.transforms import OptModelTransforms
 from typing_extensions import TypedDict
 
-from _ert.events import EESnapshot, EESnapshotUpdate, Event
 from ert.config import ExtParamConfig
-from ert.config.ensemble_config import EnsembleConfig
 from ert.config.ert_config import (
-    _substitutions_from_dict,
-    create_list_of_forward_model_steps_to_run,
-    installed_forward_model_steps_from_dict,
     read_templates,
-    uppercase_subkeys_and_stringify_subvalues,
     workflows_from_dict,
 )
-from ert.config.forward_model_step import ForwardModelStep
 from ert.config.model_config import ModelConfig
 from ert.config.queue_config import QueueConfig
-from ert.ensemble_evaluator import EnsembleSnapshot, EvaluatorServerConfig
-from ert.plugins.plugin_manager import ErtPluginManager
+from ert.ensemble_evaluator import EndEvent, EvaluatorServerConfig
 from ert.runpaths import Runpaths
 from ert.storage import open_storage
 from everest.config import ControlConfig, ControlVariableGuessListConfig, EverestConfig
-from everest.config.control_variable_config import ControlVariableConfig
 from everest.config.utils import FlattenedControls
 from everest.everest_storage import EverestStorage, OptimalResult
 from everest.optimizer.everest2ropt import everest2ropt
@@ -55,11 +46,19 @@ from everest.optimizer.opt_model_transforms import (
 )
 from everest.simulator.everest_to_ert import (
     everest_to_ert_config_dict,
+    get_ensemble_config,
+    get_forward_model_steps,
+    get_substitutions,
 )
 from everest.strings import EVEREST, STORAGE_DIR
 
 from ..run_arg import RunArg, create_run_arguments
+from ..storage.local_ensemble import EverestRealizationInfo
 from .base_run_model import BaseRunModel, StatusEvents
+from .event import (
+    EverestBatchResultEvent,
+    EverestStatusEvent,
+)
 
 if TYPE_CHECKING:
     from ert.storage import Ensemble, Experiment
@@ -98,22 +97,35 @@ class EverestExitCode(IntEnum):
     MAX_FUNCTIONS_REACHED = 3
     MAX_BATCH_NUM_REACHED = 4
     USER_ABORT = 5
-    EXCEPTION = 6
+
+
+class _EvaluationStatus(IntEnum):
+    TO_SIMULATE = auto()
+    CACHED = auto()
+    INACTIVE = auto()
+
+
+@dataclasses.dataclass
+class _EvaluationInfo:
+    control_vector: NDArray[np.float64]
+    status: _EvaluationStatus
+    flat_index: int
+    simulation_id: int | None
+    model_realization: int
+    perturbation: int
+    objectives: NDArray[np.float64] | None = None
+    constraints: NDArray[np.float64] | None = None
 
 
 class EverestRunModel(BaseRunModel):
     def __init__(
         self,
         everest_config: EverestConfig,
-        simulation_callback: SimulationCallback | None,
         optimization_callback: OptimizerCallback | None,
+        status_queue: queue.SimpleQueue[StatusEvents] | None = None,
     ):
-        assert everest_config.log_dir is not None
-        assert everest_config.optimization_output_dir is not None
-
         Path(everest_config.log_dir).mkdir(parents=True, exist_ok=True)
         Path(everest_config.optimization_output_dir).mkdir(parents=True, exist_ok=True)
-
         assert everest_config.environment is not None
         logging.getLogger(EVEREST).info(
             "Using random seed: %d. To deterministically reproduce this experiment, "
@@ -122,27 +134,19 @@ class EverestRunModel(BaseRunModel):
         )
 
         self._everest_config = everest_config
-        self._sim_callback = simulation_callback
         self._opt_callback = optimization_callback
         self._fm_errors: dict[int, dict[str, Any]] = {}
         self._result: OptimalResult | None = None
         self._exit_code: EverestExitCode | None = None
-        self._simulator_cache = (
-            SimulatorCache()
-            if (
-                everest_config.simulator is not None
-                and everest_config.simulator.enable_cache
-            )
-            else None
-        )
         self._experiment: Experiment | None = None
         self._eval_server_cfg: EvaluatorServerConfig | None = None
         self._batch_id: int = 0
-        self._status: SimulationStatus | None = None
 
         ens_path = os.path.join(everest_config.output_dir, STORAGE_DIR)
         storage = open_storage(ens_path, mode="w")
-        status_queue: queue.SimpleQueue[StatusEvents] = queue.SimpleQueue()
+
+        if status_queue is None:
+            status_queue = queue.SimpleQueue()
 
         config_dict = everest_to_ert_config_dict(everest_config)
 
@@ -154,74 +158,28 @@ class EverestRunModel(BaseRunModel):
         config_file: Path = Path(everest_config.config_file)
 
         model_config = ModelConfig.from_dict(config_dict)
+
         queue_config = QueueConfig.from_dict(config_dict)
+        assert everest_config.simulator is not None
+        assert everest_config.simulator.queue_system is not None
+        queue_config.queue_options = everest_config.simulator.queue_system
+        queue_config.queue_system = everest_config.simulator.queue_system.name
 
-        ensemble_config = EnsembleConfig.from_dict(config_dict)
+        ensemble_config = get_ensemble_config(config_dict, everest_config)
 
-        def _get_variables(
-            variables: list[ControlVariableConfig]
-            | list[ControlVariableGuessListConfig],
-        ) -> list[str] | dict[str, list[str]]:
-            if (
-                isinstance(variables[0], ControlVariableConfig)
-                and getattr(variables[0], "index", None) is None
-            ):
-                return [var.name for var in variables]
-            result: collections.defaultdict[str, list] = collections.defaultdict(list)  # type: ignore
-            for variable in variables:
-                if isinstance(variable, ControlVariableGuessListConfig):
-                    result[variable.name].extend(
-                        str(index + 1) for index, _ in enumerate(variable.initial_guess)
-                    )
-                else:
-                    result[variable.name].append(str(variable.index))
-            return dict(result)
-
-        # This adds an EXT_PARAM key to the ert_config, which is not a true ERT
-        # configuration key. When initializing an ERT config object, it is ignored.
-        # It is used by the Simulator object to inject ExtParamConfig nodes.
-        for control in everest_config.controls or []:
-            ensemble_config.parameter_configs[control.name] = ExtParamConfig(
-                name=control.name,
-                input_keys=_get_variables(control.variables),
-                output_file=control.name + ".json",
-            )
-
-        substitutions = _substitutions_from_dict(config_dict)
-        substitutions["<RUNPATH_FILE>"] = str(runpath_file)
-        substitutions["<RUNPATH>"] = model_config.runpath_format_string
-        substitutions["<ECL_BASE>"] = model_config.eclbase_format_string
-        substitutions["<ECLBASE>"] = model_config.eclbase_format_string
-        substitutions["<NUM_CPU>"] = str(queue_config.preferred_num_cpu)
-
+        substitutions = get_substitutions(
+            config_dict, model_config, runpath_file, queue_config.preferred_num_cpu
+        )
         ert_templates = read_templates(config_dict)
-        _, _, hooked_workflows = workflows_from_dict(config_dict, substitutions)  # type: ignore
+        _, _, hooked_workflows = workflows_from_dict(config_dict, substitutions)
 
-        installed_forward_model_steps: dict[str, ForwardModelStep] = {}
-        pm = ErtPluginManager()
-        for fm_step_subclass in pm.forward_model_steps:
-            fm_step = fm_step_subclass()  # type: ignore
-            installed_forward_model_steps[fm_step.name] = fm_step
-
-        installed_forward_model_steps.update(
-            installed_forward_model_steps_from_dict(config_dict)
-        )
-
-        env_pr_fm_step = uppercase_subkeys_and_stringify_subvalues(
-            pm.get_forward_model_configuration()
-        )
-
-        forward_model_steps = create_list_of_forward_model_steps_to_run(
-            installed_forward_model_steps,
-            substitutions,
-            config_dict,
-            installed_forward_model_steps,
-            env_pr_fm_step,
+        forward_model_steps, env_pr_fm_step = get_forward_model_steps(
+            config_dict, substitutions
         )
 
         env_vars = {}
         for key, val in config_dict.get("SETENV", []):  # type: ignore
-            env_vars[key] = val
+            env_vars[key] = substitutions.substitute(val)
 
         self.support_restart = False
         self._parameter_configuration = ensemble_config.parameter_configuration
@@ -242,19 +200,20 @@ class EverestRunModel(BaseRunModel):
             ert_templates,
             hooked_workflows,
             active_realizations=[],  # Set dynamically in run_forward_model()
+            log_path=Path(everest_config.optimization_output_dir),
         )
 
     @classmethod
     def create(
         cls,
         everest_config: EverestConfig,
-        simulation_callback: SimulationCallback | None = None,
         optimization_callback: OptimizerCallback | None = None,
+        status_queue: queue.SimpleQueue[StatusEvents] | None = None,
     ) -> EverestRunModel:
         return cls(
             everest_config=everest_config,
-            simulation_callback=simulation_callback,
             optimization_callback=optimization_callback,
+            status_queue=status_queue,
         )
 
     @classmethod
@@ -277,12 +236,54 @@ class EverestRunModel(BaseRunModel):
         config_json = json.dumps(self._everest_config, sort_keys=True, indent=2)
         return f"EverestRunModel(config={config_json})"
 
+    def start_simulations_thread(
+        self, evaluator_server_config: EvaluatorServerConfig, restart: bool = False
+    ) -> None:
+        failed = False
+        exception: Exception | None = None
+        error_messages: MutableSequence[str] = []
+        try:
+            self.run_experiment(evaluator_server_config)
+        except Exception as e:
+            failed = True
+            exception = e
+        finally:
+            if self._exit_code != EverestExitCode.COMPLETED:
+                failed = True
+            self.send_event(
+                EndEvent(
+                    failed=failed,
+                    msg=(
+                        self.format_error(exception, error_messages)
+                        if failed
+                        else "Experiment completed."
+                    ),
+                )
+            )
+
+    def _handle_optimizer_results(self, results: tuple[Results, ...]) -> None:
+        self.ever_storage.on_batch_evaluation_finished(results)
+        # A ROPT event may contain multiple results, we send one event per result
+        for r in results:
+            self.send_event(
+                EverestBatchResultEvent(
+                    batch=r.batch_id,
+                    everest_event="OPTIMIZATION_RESULT",
+                    result_type=(
+                        "FunctionResult"
+                        if isinstance(r, FunctionResults)
+                        else "GradientResult"
+                    ),
+                )
+            )
+
     def run_experiment(
         self, evaluator_server_config: EvaluatorServerConfig, restart: bool = False
     ) -> None:
         self.log_at_startup()
         self._eval_server_cfg = evaluator_server_config
-        self._experiment = self._storage.create_experiment(
+
+        self._experiment = self._experiment or self._storage.create_experiment(
             name=f"EnOpt@{datetime.datetime.now().strftime('%Y-%m-%d@%H:%M:%S')}",
             parameters=self._parameter_configuration,
             responses=self._response_configuration,
@@ -295,10 +296,18 @@ class EverestRunModel(BaseRunModel):
             output_dir=Path(self._everest_config.optimization_output_dir),
         )
         self.ever_storage.init(self._everest_config)
-        self.ever_storage.observe_optimizer(optimizer)
+        optimizer.set_results_callback(self._handle_optimizer_results)
 
         # Run the optimization:
-        optimizer_exit_code = optimizer.run().exit_code
+        output_dir = Path(self._everest_config.optimization_output_dir)
+        with redirect_optimizer_output(
+            stdout=output_dir / "optimizer_output.stdout",
+            stderr=output_dir / "optimizer_output.stderr",
+        ):
+            optimizer_exit_code = optimizer.run().exit_code
+
+        # Store some final results.
+        self.ever_storage.on_optimization_finished()
 
         # Extract the best result from the storage.
         self._result = self.ever_storage.get_optimal_result()
@@ -314,7 +323,9 @@ class EverestRunModel(BaseRunModel):
                 case _:
                     self._exit_code = EverestExitCode.COMPLETED
 
-    def _init_transforms(self, variables: NDArray[np.float64]) -> OptModelTransforms:
+    def _init_domain_transforms(
+        self, control_variables: NDArray[np.float64]
+    ) -> OptModelTransforms:
         model_realizations = self._everest_config.model.realizations
         nreal = len(model_realizations)
         realization_weights = self._everest_config.model.realizations_weights
@@ -326,6 +337,10 @@ class EverestRunModel(BaseRunModel):
             self._everest_config.output_constraints,
             realization_weights,
         )
+        # TODO: The transforms are currently needed in the forward model
+        # evaluator, but that may be removed later.
+        self._domain_transforms = transforms
+
         # If required, initialize auto-scaling:
         assert isinstance(transforms.objectives, ObjectiveScaler)
         assert transforms.nonlinear_constraints is None or isinstance(
@@ -335,14 +350,41 @@ class EverestRunModel(BaseRunModel):
             transforms.nonlinear_constraints
             and transforms.nonlinear_constraints.has_auto_scale
         ):
+            # Currently the forward models expect scaled variables, so the
+            # variable transform must be applied.
+            # TODO: when the forward models expect unscaled variables, remove.
+            if transforms.variables:
+                control_variables = transforms.variables.to_optimizer(control_variables)
+
             # Run the forward model once to find the objective/constraint values
             # to compute the scales. This will add an ensemble/batch in the
             # storage that is not part of the optimization run. However, the
             # results may be used in the optimization via the caching mechanism.
-            objectives, constraints, _ = self._run_forward_model(
-                np.repeat(np.expand_dims(variables, axis=0), nreal, axis=0),
-                model_realizations,
+
+            self.send_event(
+                EverestStatusEvent(
+                    batch=self._batch_id,
+                    everest_event="START_SAMPLING_EVALUATION",
+                )
             )
+
+            objectives, constraints = self._run_forward_model(
+                np.repeat(np.expand_dims(control_variables, axis=0), nreal, axis=0),
+                model_realizations,
+                [-1] * nreal,
+            )
+
+            self.send_event(
+                EverestBatchResultEvent(
+                    batch=self._batch_id,
+                    everest_event="FINISHED_SAMPLING_EVALUATION",
+                    result_type="FunctionResult",
+                )
+            )
+
+            # Increase the batch ID for the next evaluation:
+            self._batch_id += 1
+
             if transforms.objectives.has_auto_scale:
                 transforms.objectives.calculate_auto_scales(objectives)
             if (
@@ -353,10 +395,28 @@ class EverestRunModel(BaseRunModel):
                 transforms.nonlinear_constraints.calculate_auto_scales(constraints)
         return transforms
 
+    def _check_for_abort(self) -> bool:
+        logging.getLogger(EVEREST).debug("Optimization callback called")
+        if (
+            self._everest_config.optimization is not None
+            and self._everest_config.optimization.max_batch_num is not None
+            and (self._batch_id >= self._everest_config.optimization.max_batch_num)
+        ):
+            self._exit_code = EverestExitCode.MAX_BATCH_NUM_REACHED
+            logging.getLogger(EVEREST).info("Maximum number of batches reached")
+            return True
+        if (
+            self._opt_callback is not None
+            and self._opt_callback() == "stop_optimization"
+        ):
+            logging.getLogger(EVEREST).info("User abort requested.")
+            return True
+        return False
+
     def _create_optimizer(self) -> BasicOptimizer:
         # Initialize the optimization model transforms. This may run one initial
         # ensemble for auto-scaling purposes:
-        transforms = self._init_transforms(
+        transforms = self._init_domain_transforms(
             np.asarray(
                 FlattenedControls(self._everest_config.controls).initial_guesses,
                 dtype=np.float64,
@@ -365,77 +425,51 @@ class EverestRunModel(BaseRunModel):
         optimizer = BasicOptimizer(
             enopt_config=everest2ropt(self._everest_config, transforms=transforms),
             evaluator=self._forward_model_evaluator,
+            transforms=transforms,
+            everest_config=self._everest_config,
         )
 
         # Before each batch evaluation we check if we should abort:
-        optimizer.add_observer(
-            EventType.START_EVALUATION,
-            functools.partial(
-                self._on_before_forward_model_evaluation,
-                optimizer=optimizer,
-            ),
-        )
+        optimizer.set_abort_callback(self._check_for_abort)
 
         return optimizer
-
-    def _on_before_forward_model_evaluation(
-        self, _: OptimizerEvent, optimizer: BasicOptimizer
-    ) -> None:
-        logging.getLogger(EVEREST).debug("Optimization callback called")
-
-        if (
-            self._everest_config.optimization is not None
-            and self._everest_config.optimization.max_batch_num is not None
-            and (self._batch_id >= self._everest_config.optimization.max_batch_num)
-        ):
-            self._exit_code = EverestExitCode.MAX_BATCH_NUM_REACHED
-            logging.getLogger(EVEREST).info("Maximum number of batches reached")
-            optimizer.abort_optimization()
-        if (
-            self._opt_callback is not None
-            and self._opt_callback() == "stop_optimization"
-        ):
-            logging.getLogger(EVEREST).info("User abort requested.")
-            optimizer.abort_optimization()
 
     def _run_forward_model(
         self,
         control_values: NDArray[np.float64],
         model_realizations: list[int],
-        active_control_vectors: list[bool] | None = None,
-    ) -> tuple[NDArray[np.float64], NDArray[np.float64] | None, list[int]]:
+        perturbations: list[int],
+    ) -> tuple[NDArray[np.float64], NDArray[np.float64] | None]:
         # Reset the current run status:
-        self._status = None
-
-        # Get cached_results:
-        cached_results = self._get_cached_results(control_values, model_realizations)
-
-        # Collect the indices of the controls that must be evaluated in the batch:
-        evaluated_control_indices = [
-            idx
-            for idx in range(control_values.shape[0])
-            if idx not in cached_results
-            and (active_control_vectors is None or active_control_vectors[idx])
-        ]
 
         # Create the batch to run:
-        sim_controls = self._create_simulation_controls(
-            control_values, evaluated_control_indices
-        )
+        sim_controls = self._create_simulation_controls(control_values)
 
         # Initialize a new ensemble in storage:
         assert self._experiment is not None
         ensemble = self._experiment.create_ensemble(
             name=f"batch_{self._batch_id}",
-            ensemble_size=len(evaluated_control_indices),
+            ensemble_size=control_values.shape[0],
+            iteration=self._batch_id,
         )
+
+        realization_info: dict[int, EverestRealizationInfo] = {
+            ert_realization: {
+                "model_realization": model_realization,
+                "perturbation": perturbation,
+            }
+            for ert_realization, (model_realization, perturbation) in enumerate(
+                zip(model_realizations, perturbations, strict=False)
+            )
+        }
+
+        ensemble.save_everest_realization_info(realization_info)
+
         for sim_id, controls in enumerate(sim_controls.values()):
             self._setup_sim(sim_id, controls, ensemble)
 
         # Evaluate the batch:
-        run_args = self._get_run_args(
-            ensemble, model_realizations, evaluated_control_indices
-        )
+        run_args = self._get_run_args(ensemble, model_realizations)
         self._context_env.update(
             {
                 "_ERT_EXPERIMENT_ID": str(ensemble.experiment_id),
@@ -449,30 +483,164 @@ class EverestRunModel(BaseRunModel):
         # If necessary, delete the run path:
         self._delete_runpath(run_args)
 
-        # Gather the results and create the result for ropt:
-        results = self._gather_simulation_results(ensemble)
-        objectives, constraints = self._get_objectives_and_constraints(
-            control_values, evaluated_control_indices, results, cached_results
-        )
-
-        # Add the results from the evaluations to the cache:
-        self._add_results_to_cache(
-            control_values,
-            model_realizations,
-            evaluated_control_indices,
-            objectives,
-            constraints,
-        )
-
-        # Increase the batch ID for the next evaluation:
-        self._batch_id += 1
+        # Gather the results
+        objectives, constraints = self._gather_simulation_results(ensemble)
 
         # Return the results, together with the indices of the evaluated controls:
-        return objectives, constraints, evaluated_control_indices
+        return objectives, constraints
+
+    @staticmethod
+    def _create_evaluation_infos(
+        control_values: NDArray[np.float64],
+        model_realizations: list[int],
+        perturbations: list[int],
+        active_controls: list[bool],
+        all_results: pl.DataFrame | None,
+        control_names: list[str],
+        objective_names: list[str],
+        constraint_names: list[str],
+    ) -> list[_EvaluationInfo]:
+        inactive_objective_fill_value: NDArray[np.float64] = np.zeros(
+            len(objective_names)
+        )
+        inactive_constraints_fill_value: NDArray[np.float64] = np.zeros(
+            len(constraint_names)
+        )
+        evaluation_infos = []
+
+        cache_hits_df = None
+        if all_results is not None:
+            # Will be used to search the cache
+            controls_to_evaluate_df = pl.DataFrame(
+                {
+                    "realization": list(range(len(model_realizations))),
+                    "model_realization": pl.Series(model_realizations, dtype=pl.UInt16),
+                    **{
+                        control_name: pl.Series(control_values[:, i], dtype=pl.Float64)
+                        for i, control_name in enumerate(control_names)
+                    },
+                }
+            )
+
+            EPS = float(np.finfo(np.float32).eps)
+
+            left = all_results
+            right = controls_to_evaluate_df
+
+            # Note: asof join will approximate for floats, but
+            # only for one column at a time, this for loop
+            # will incrementally do the join, filtering out
+            # mismatching rows iteratively. If in the future, the `on` argument
+            # accepts multiple columns, we can drop this for loop.
+            # One control-value-column at a time,
+            # we filter out rows with control values
+            # that are not approximately matching the control value
+            # of our to-be-evaluated controls.
+            for control_name in control_names:
+                left = (
+                    left.sort(["model_realization", control_name])
+                    .join_asof(
+                        right.sort(["model_realization", control_name]),
+                        on=control_name,
+                        by="model_realization",  # pre-join by model realization
+                        tolerance=EPS,  # Same as np.allclose with atol=EPS
+                    )
+                    .filter(pl.col("realization_right").is_not_null())
+                )
+
+                left = left.drop([s for s in left.columns if s.endswith("_right")])
+
+                if left.is_empty():
+                    break
+
+            cache_hits_df = left if not left.is_empty() else None
+
+        sim_id_counter = 0
+        for flat_index, (
+            control_vector,
+            model_realization,
+            perturbation,
+            is_active,
+        ) in enumerate(
+            zip(
+                control_values,
+                model_realizations,
+                perturbations,
+                active_controls,
+                strict=False,
+            )
+        ):
+            if not is_active:
+                evaluation_infos.append(
+                    _EvaluationInfo(
+                        control_vector=control_vector,
+                        status=_EvaluationStatus.INACTIVE,
+                        model_realization=model_realization,
+                        perturbation=perturbation,
+                        flat_index=flat_index,
+                        simulation_id=None,
+                        objectives=inactive_objective_fill_value,
+                        constraints=inactive_constraints_fill_value,
+                    )
+                )
+                continue
+
+            if cache_hits_df is not None and not cache_hits_df.is_empty():
+                hit_row = cache_hits_df.filter(
+                    cache_hits_df["realization"] == flat_index
+                )
+
+                if not hit_row.is_empty():
+                    # Cache hit!
+                    row_dict = hit_row.to_dicts()[0]
+
+                    objectives = np.array(
+                        [row_dict[o] for o in objective_names], dtype=np.float64
+                    )
+                    constraints = np.array(
+                        [row_dict[c] for c in constraint_names], dtype=np.float64
+                    )
+
+                    evaluation_infos.append(
+                        _EvaluationInfo(
+                            control_vector=control_vector,
+                            status=_EvaluationStatus.CACHED,
+                            model_realization=model_realization,
+                            perturbation=perturbation,
+                            flat_index=flat_index,
+                            simulation_id=None,
+                            objectives=objectives,
+                            constraints=constraints,
+                        )
+                    )
+                    continue
+
+            evaluation_infos.append(
+                _EvaluationInfo(
+                    control_vector=control_vector,
+                    status=_EvaluationStatus.TO_SIMULATE,
+                    model_realization=model_realization,
+                    perturbation=perturbation,
+                    flat_index=flat_index,
+                    simulation_id=sim_id_counter,
+                )
+            )
+            sim_id_counter += 1
+
+        return evaluation_infos
 
     def _forward_model_evaluator(
         self, control_values: NDArray[np.float64], evaluator_context: EvaluatorContext
     ) -> EvaluatorResult:
+        # Currently the forward models expect scaled variables, so the
+        # variable transform must be applied.
+        # TODO: when the forward models expect unscaled variables, remove. Also
+        # the self._transforms attribute can then be removed.
+        if self._domain_transforms is not None and self._domain_transforms.variables:
+            control_values = self._domain_transforms.variables.to_optimizer(
+                control_values
+            )
+
         control_indices = list(range(control_values.shape[0]))
         model_realizations = [
             self._everest_config.model.realizations[evaluator_context.realizations[idx]]
@@ -483,9 +651,95 @@ class EverestRunModel(BaseRunModel):
             or bool(evaluator_context.active[evaluator_context.realizations[idx]])
             for idx in control_indices
         ]
-        batch_id = self._batch_id  # Save the batch ID, it will be modified.
-        objectives, constraints, evaluated_control_indices = self._run_forward_model(
-            control_values, model_realizations, active_control_vectors
+
+        num_constraints = len(self._everest_config.constraint_names)
+
+        assert self._experiment is not None
+        all_results = self._experiment.all_parameters_and_gen_data
+
+        objective_names = [
+            self._everest_config.function_aliases.get(n, n)
+            for n in self._everest_config.objective_names
+        ]
+
+        evaluation_infos = self._create_evaluation_infos(
+            control_values=control_values,
+            model_realizations=model_realizations,
+            perturbations=evaluator_context.perturbations.tolist()
+            if evaluator_context.perturbations is not None
+            else [-1] * len(model_realizations),
+            active_controls=active_control_vectors,
+            control_names=self._everest_config.formatted_control_names,
+            objective_names=objective_names,
+            constraint_names=self._everest_config.constraint_names,
+            all_results=all_results,
+        )
+
+        control_values_to_simulate = np.array(
+            [
+                c.control_vector
+                for c in evaluation_infos
+                if c.status == _EvaluationStatus.TO_SIMULATE
+            ],
+            dtype=np.float64,
+        )
+
+        if control_values_to_simulate.shape[0] > 0:
+            sim_infos = [
+                c for c in evaluation_infos if c.status == _EvaluationStatus.TO_SIMULATE
+            ]
+
+            self.send_event(
+                EverestStatusEvent(
+                    batch=self._batch_id,
+                    everest_event="START_OPTIMIZER_EVALUATION",
+                )
+            )
+
+            sim_objectives, sim_constraints = self._run_forward_model(
+                control_values=control_values_to_simulate,
+                model_realizations=[c.model_realization for c in sim_infos],
+                perturbations=[c.perturbation for c in sim_infos],
+            )
+
+            self.send_event(
+                EverestBatchResultEvent(
+                    batch=self._batch_id,
+                    everest_event="FINISHED_OPTIMIZER_EVALUATION",
+                    result_type="FunctionResult",
+                )
+            )
+
+        else:
+            sim_objectives = np.array([], dtype=np.float64)
+            sim_constraints = np.array([], dtype=np.float64)
+
+        # Assign simulated results to corresponding evaluation infos
+        for ei in evaluation_infos:
+            if ei.simulation_id is not None:
+                ei.objectives = sim_objectives[ei.simulation_id]
+                ei.constraints = (
+                    sim_constraints[ei.simulation_id]
+                    if sim_constraints is not None
+                    else None
+                )
+
+        # At this point:
+        # cached results are attached to cached evaluations
+        # np.zeros are attached to inactive evaluations
+        # simulated results are attached to simulated evaluations
+        objectives = np.array(
+            [cs.objectives for cs in evaluation_infos],
+            dtype=np.float64,
+        )
+
+        constraints = (
+            np.array(
+                [cs.constraints for cs in evaluation_infos],
+                dtype=np.float64,
+            )
+            if num_constraints > 0
+            else None
         )
 
         # The simulation id's are a simple enumeration over the evaluated
@@ -493,40 +747,29 @@ class EverestRunModel(BaseRunModel):
         # implicitly given by there position in the evaluated_control_indices
         # list. We store for each control vector that id, or -1 if it was not
         # evaluated:
-        sim_ids = np.fromiter(
-            (
-                evaluated_control_indices.index(idx)
-                if idx in evaluated_control_indices
-                else -1
-                for idx in control_indices
-            ),
-            dtype=np.intc,
+        sim_ids = np.array(
+            [
+                ei.simulation_id if ei.simulation_id is not None else -1
+                for ei in evaluation_infos
+            ],
+            dtype=np.int32,
         )
 
-        return EvaluatorResult(
+        evaluator_result = EvaluatorResult(
             objectives=objectives,
             constraints=constraints,
-            batch_id=batch_id,
+            batch_id=self._batch_id,
             evaluation_ids=sim_ids,
         )
 
-    def _get_cached_results(
-        self, control_values: NDArray[np.float64], model_realizations: list[int]
-    ) -> dict[int, Any]:
-        cached_results: dict[int, Any] = {}
-        if self._simulator_cache is not None:
-            for sim_id, model_realization in enumerate(model_realizations):
-                cached_data = self._simulator_cache.get(
-                    model_realization, control_values[sim_id, :]
-                )
-                if cached_data is not None:
-                    cached_results[sim_id] = cached_data
-        return cached_results
+        # increase the batch ID for the next evaluation:
+        self._batch_id += 1
+
+        return evaluator_result
 
     def _create_simulation_controls(
         self,
         control_values: NDArray[np.float64],
-        controls_to_evaluate: list[int],
     ) -> dict[int, dict[str, Any]]:
         def _create_control_dicts_for_simulation(
             controls_config: list[ControlConfig], values: NDArray[np.float64]
@@ -552,7 +795,7 @@ class EverestRunModel(BaseRunModel):
             sim_id: _create_control_dicts_for_simulation(
                 self._everest_config.controls, control_values[sim_id, :]
             )
-            for sim_id in controls_to_evaluate
+            for sim_id in range(control_values.shape[0])
         }
 
     def _setup_sim(
@@ -613,13 +856,13 @@ class EverestRunModel(BaseRunModel):
         self,
         ensemble: Ensemble,
         model_realizations: list[int],
-        evaluated_control_indices: list[int],
     ) -> list[RunArg]:
         substitutions = self._substitutions
-        substitutions["<BATCH_NAME>"] = ensemble.name
-        self.active_realizations = [True] * len(evaluated_control_indices)
-        for sim_id, control_idx in enumerate(evaluated_control_indices):
-            substitutions[f"<GEO_ID_{sim_id}_0>"] = str(model_realizations[control_idx])
+        self.active_realizations = [True] * len(model_realizations)
+        for sim_id, model_realization in enumerate(model_realizations):
+            substitutions[f"<GEO_ID_{sim_id}_{ensemble.iteration}>"] = str(
+                int(model_realization)
+            )
         run_paths = Runpaths(
             jobname_format=self._model_config.jobname_format_string,
             runpath_format=self._model_config.runpath_format_string,
@@ -658,89 +901,45 @@ class EverestRunModel(BaseRunModel):
 
     def _gather_simulation_results(
         self, ensemble: Ensemble
-    ) -> list[dict[str, NDArray[np.float64]]]:
-        results: list[dict[str, NDArray[np.float64]]] = []
+    ) -> tuple[NDArray[np.float64], NDArray[np.float64] | None]:
+        objective_aliases = self._everest_config.function_aliases
+        objective_names = self._everest_config.objective_names
+        objectives = np.zeros((ensemble.ensemble_size, len(objective_names)))
+
+        constraint_names = self._everest_config.constraint_names
+        constraints = np.zeros((ensemble.ensemble_size, len(constraint_names)))
+
+        if not any(self.active_realizations):
+            nan_objectives = np.full(
+                (ensemble.ensemble_size, len(objective_names)), fill_value=np.nan
+            )
+            nan_constraints = (
+                np.full(
+                    (ensemble.ensemble_size, len(constraint_names)), fill_value=np.nan
+                )
+                if constraint_names
+                else None
+            )
+            return nan_objectives, nan_constraints
+
         for sim_id, successful in enumerate(self.active_realizations):
             if not successful:
                 logger.error(f"Simulation {sim_id} failed.")
-                results.append({})
+                objectives[sim_id, :] = np.nan
+                constraints[sim_id, :] = np.nan
                 continue
-            d = {}
-            for key in self._everest_config.result_names:
-                data = ensemble.load_responses(key, (sim_id,))
-                d[key] = data["values"].to_numpy()
-            results.append(d)
-        for fnc_name, alias in self._everest_config.function_aliases.items():
-            for result in results:
-                result[fnc_name] = result[alias]
-        return results
 
-    def _get_objectives_and_constraints(
-        self,
-        control_values: NDArray[np.float64],
-        evaluated_control_indices: list[int],
-        results: list[dict[str, NDArray[np.float64]]],
-        cached_results: dict[int, Any],
-    ) -> tuple[NDArray[np.float64], NDArray[np.float64] | None]:
-        objectives = self._get_simulation_results(
-            results,
-            self._everest_config.objective_names,
-            control_values,
-            evaluated_control_indices,
-        )
-
-        constraints = None
-        if self._everest_config.output_constraints:
-            constraints = self._get_simulation_results(
-                results,
-                self._everest_config.constraint_names,
-                control_values,
-                evaluated_control_indices,
-            )
-
-        if self._simulator_cache is not None:
-            for control_idx, (
-                cached_objectives,
-                cached_constraints,
-            ) in cached_results.items():
-                objectives[control_idx, ...] = cached_objectives
-                if constraints is not None:
-                    assert cached_constraints is not None
-                    constraints[control_idx, ...] = cached_constraints
-
-        return objectives, constraints
-
-    @staticmethod
-    def _get_simulation_results(
-        results: list[dict[str, NDArray[np.float64]]],
-        names: list[str],
-        controls: NDArray[np.float64],
-        evaluated_control_indices: list[int],
-    ) -> NDArray[np.float64]:
-        values = np.zeros((controls.shape[0], len(names)), dtype=float64)
-        for func_idx, name in enumerate(names):
-            values[evaluated_control_indices, func_idx] = np.fromiter(
-                (np.nan if not result else result[name][0] for result in results),
-                dtype=np.float64,
-            )
-        return values
-
-    def _add_results_to_cache(
-        self,
-        control_values: NDArray[np.float64],
-        model_realizations: list[int],
-        evaluated_control_indices: list[int],
-        objectives: NDArray[np.float64],
-        constraints: NDArray[np.float64] | None,
-    ) -> None:
-        if self._simulator_cache is not None:
-            for sim_id in evaluated_control_indices:
-                self._simulator_cache.add(
-                    model_realizations[sim_id],
-                    control_values[sim_id, ...],
-                    objectives[sim_id, ...],
-                    None if constraints is None else constraints[sim_id, ...],
+            for i, obj_name in enumerate(objective_names):
+                data = ensemble.load_responses(
+                    objective_aliases.get(obj_name, obj_name), (sim_id,)
                 )
+                objectives[sim_id, i] = data["values"].item()
+
+            for i, constr_name in enumerate(constraint_names):
+                data = ensemble.load_responses(constr_name, (sim_id,))
+                constraints[sim_id, i] = data["values"].item()
+
+        return objectives, constraints if constraint_names else None
 
     def check_if_runpath_exists(self) -> bool:
         return (
@@ -749,132 +948,59 @@ class EverestRunModel(BaseRunModel):
             and any(os.listdir(self._everest_config.simulation_dir))
         )
 
-    def send_snapshot_event(self, event: Event, iteration: int) -> None:
-        super().send_snapshot_event(event, iteration)
-        if type(event) in {EESnapshot, EESnapshotUpdate}:
-            newstatus = self._simulation_status(self.get_current_snapshot())
-            if self._status != newstatus:  # No change in status
-                if self._sim_callback is not None:
-                    self._sim_callback(newstatus)
-                self._status = newstatus
 
-    def _simulation_status(self, snapshot: EnsembleSnapshot) -> SimulationStatus:
-        jobs_progress: list[list[JobProgress]] = []
-        prev_model_realization = None
-        jobs: list[JobProgress] = []
-        for (
-            model_realization,
-            simulation,
-        ), fm_step in snapshot.get_all_fm_steps().items():
-            if model_realization != prev_model_realization:
-                prev_model_realization = model_realization
-                if jobs:
-                    jobs_progress.append(jobs)
-                jobs = []
-            jobs.append(
-                {
-                    "name": fm_step.get("name") or "Unknown",
-                    "status": fm_step.get("status") or "Unknown",
-                    "error": fm_step.get("error", ""),
-                    "start_time": fm_step.get("start_time", None),
-                    "end_time": fm_step.get("end_time", None),
-                    "realization": model_realization,
-                    "simulation": simulation,
-                }
-            )
-            if fm_step.get("error", ""):
-                self._handle_errors(
-                    batch=self._batch_id,
-                    simulation=simulation,
-                    model_realization=model_realization,
-                    fm_name=fm_step.get("name", "Unknown"),  # type: ignore
-                    error_path=fm_step.get("stderr", ""),  # type: ignore
-                    fm_running_err=fm_step.get("error", ""),  # type: ignore
-                )
-        jobs_progress.append(jobs)
+@contextmanager
+def redirect_optimizer_output(
+    stdout: Path | None, stderr: Path | None = None
+) -> Generator[None, None, None]:
+    """This context manager redirects stdout and stderr to the given files.
 
-        return {
-            "status": self.get_current_status(),
-            "progress": jobs_progress,
-            "batch_number": self._batch_id,
-        }
+    The standard Python approach would be to redirect sys.stdout and sys.stderr,
+    or use contextlib.redirect_stdout/err. However, these may fail in cases
+    where the output is produced by C or Fortran code, as commonly used in
+    optimization backends. Therefore, the stdout and stderr file descriptors are
+    directly manipulated. It should be noted that this is not thread-safe, i.e.
+    standard output/errors may be affected in other threads in the same process.
+    However, this should not be an issue since the Everest run model does not
+    send output to stdout/stderr directly. (Note that manipulating sys.stdout or
+    using contextlib.redirect_stdout would also not be thread-safe.)
+    """
+    if stderr is None:
+        stderr = stdout
 
-    def _handle_errors(
-        self,
-        batch: int,
-        simulation: Any,
-        model_realization: str,
-        fm_name: str,
-        error_path: str,
-        fm_running_err: str,
-    ) -> None:
-        fm_id = f"b_{batch}_r_{model_realization}_s_{simulation}_{fm_name}"
-        fm_logger = logging.getLogger("forward_models")
-        if Path(error_path).is_file():
-            error_str = Path(error_path).read_text(encoding="utf-8") or fm_running_err
+    old_stdout: int | None = None
+    old_stderr: int | None = None
+    new_stdout: int | None = None
+    new_stderr: int | None = None
+
+    try:
+        sys.stdout.flush()
+        sys.stderr.flush()
+        old_stdout = os.dup(1)
+        old_stderr = os.dup(2)
+        new_stdout = (
+            os.open(os.devnull, os.O_WRONLY)
+            if stdout is None
+            else os.open(stdout, os.O_WRONLY | os.O_CREAT)
+        )
+        os.dup2(new_stdout, 1)
+        if stderr == stdout:
+            os.dup2(new_stdout, 2)
+            new_stderr = None
         else:
-            error_str = fm_running_err
-        error_hash = hash(error_str)
-        err_msg = "Batch: {} Realization: {} Simulation: {} Job: {} Failed {}".format(
-            batch, model_realization, simulation, fm_name, "\n Error: {} ID:{}"
-        )
-
-        if error_hash not in self._fm_errors:
-            error_id = len(self._fm_errors)
-            fm_logger.error(err_msg.format(error_str, error_id))
-            self._fm_errors.update({error_hash: {"error_id": error_id, "ids": [fm_id]}})
-        elif fm_id not in self._fm_errors[error_hash]["ids"]:
-            self._fm_errors[error_hash]["ids"].append(fm_id)
-            error_id = self._fm_errors[error_hash]["error_id"]
-            fm_logger.error(err_msg.format("Already reported as", error_id))
-
-
-class SimulatorCache:
-    EPS = float(np.finfo(np.float32).eps)
-
-    def __init__(self) -> None:
-        self._data: defaultdict[
-            int,
-            list[
-                tuple[
-                    NDArray[np.float64], NDArray[np.float64], NDArray[np.float64] | None
-                ]
-            ],
-        ] = defaultdict(list)
-
-    def add(
-        self,
-        realization: int,
-        control_values: NDArray[np.float64],
-        objectives: NDArray[np.float64],
-        constraints: NDArray[np.float64] | None,
-    ) -> None:
-        """Add objective and constraints for a given realization and control values.
-
-        The realization is the index of the realization in the ensemble, as specified
-        in by the realizations entry in the everest model configuration. Both the control
-        values and the realization are used as keys to retrieve the objectives and
-        constraints later.
-        """
-        self._data[realization].append(
-            (
-                control_values.copy(),
-                objectives.copy(),
-                None if constraints is None else constraints.copy(),
-            ),
-        )
-
-    def get(
-        self, realization: int, controls: NDArray[np.float64]
-    ) -> tuple[NDArray[np.float64], NDArray[np.float64] | None] | None:
-        """Get objective and constraints for a given realization and control values.
-
-        The realization is the index of the realization in the ensemble, as specified
-        in by the realizations entry in the everest model configuration. Both the control
-        values and the realization are used as keys to retrieve the objectives and
-        constraints from the cached values.
-        """
-        for control_values, objectives, constraints in self._data.get(realization, []):
-            if np.allclose(controls, control_values, rtol=0.0, atol=self.EPS):
-                return objectives, constraints
-        return None
+            new_stderr = (
+                os.open(os.devnull, os.O_WRONLY)
+                if stderr is None
+                else os.open(stderr, os.O_WRONLY | os.O_CREAT)
+            )
+            os.dup2(new_stderr, 2)
+        yield
+    finally:
+        if old_stdout is not None:
+            os.dup2(old_stdout, 1)
+        if old_stderr is not None:
+            os.dup2(old_stderr, 2)
+        if new_stdout is not None:
+            os.close(new_stdout)
+        if new_stderr is not None:
+            os.close(new_stderr)

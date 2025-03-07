@@ -9,7 +9,8 @@ from uuid import UUID
 import numpy as np
 
 from ert.config import ErtConfig, ESSettings, HookRuntime, UpdateSettings
-from ert.enkf_main import sample_prior
+from ert.config.parsing.config_errors import ConfigValidationError
+from ert.enkf_main import sample_prior, save_design_matrix_to_ensemble
 from ert.ensemble_evaluator import EvaluatorServerConfig
 from ert.storage import Ensemble, Storage
 from ert.trace import tracer
@@ -50,6 +51,8 @@ class MultipleDataAssimilation(UpdateRunModel):
         status_queue: SimpleQueue[StatusEvents],
     ):
         self._relative_weights = weights
+        self._parameter_configuration = config.ensemble_config.parameter_configuration
+        self._design_matrix = config.analysis_config.design_matrix
         self.weights = self.parse_weights(weights)
 
         self.target_ensemble_format = target_ensemble
@@ -85,6 +88,7 @@ class MultipleDataAssimilation(UpdateRunModel):
             start_iteration=start_iteration,
             random_seed=random_seed,
             minimum_required_realizations=minimum_required_realizations,
+            log_path=config.analysis_config.log_path,
         )
         self.support_restart = False
         self._observations = config.observations
@@ -96,6 +100,18 @@ class MultipleDataAssimilation(UpdateRunModel):
         self, evaluator_server_config: EvaluatorServerConfig, restart: bool = False
     ) -> None:
         self.log_at_startup()
+
+        parameters_config = self._parameter_configuration
+        design_matrix = self._design_matrix
+        design_matrix_group = None
+        if design_matrix is not None:
+            try:
+                parameters_config, design_matrix_group = (
+                    design_matrix.merge_with_existing_parameters(parameters_config)
+                )
+            except ConfigValidationError as exc:
+                raise ErtRunError(str(exc)) from exc
+
         self.restart = restart
         if self.restart_run:
             id = self.prior_ensemble_id
@@ -116,10 +132,14 @@ class MultipleDataAssimilation(UpdateRunModel):
                     f"Prior ensemble with ID: {id} does not exists"
                 ) from err
         else:
-            self.run_workflows(HookRuntime.PRE_EXPERIMENT)
+            self.run_workflows(
+                HookRuntime.PRE_EXPERIMENT,
+                fixtures={"random_seed": self.random_seed},
+            )
             sim_args = {"weights": self._relative_weights}
             experiment = self._storage.create_experiment(
-                parameters=self._parameter_configuration,
+                parameters=parameters_config
+                + ([design_matrix_group] if design_matrix_group else []),
                 observations=self._observations,
                 responses=self._response_configuration,
                 simulation_arguments=sim_args,
@@ -145,6 +165,14 @@ class MultipleDataAssimilation(UpdateRunModel):
                 np.where(self.active_realizations)[0],
                 random_seed=self.random_seed,
             )
+
+            if design_matrix_group is not None and design_matrix is not None:
+                save_design_matrix_to_ensemble(
+                    design_matrix.design_matrix_df,
+                    prior,
+                    np.where(self.active_realizations)[0],
+                    design_matrix_group.name,
+                )
             self._evaluate_and_postprocess(
                 prior_args,
                 prior,
@@ -171,7 +199,14 @@ class MultipleDataAssimilation(UpdateRunModel):
             )
             prior = posterior
 
-        self.run_workflows(HookRuntime.POST_EXPERIMENT)
+        self.run_workflows(
+            HookRuntime.POST_EXPERIMENT,
+            fixtures={
+                "random_seed": self.random_seed,
+                "storage": self._storage,
+                "ensemble": prior,
+            },
+        )
 
     @staticmethod
     def parse_weights(weights: str) -> list[float]:

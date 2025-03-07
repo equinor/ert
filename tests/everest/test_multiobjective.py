@@ -81,7 +81,6 @@ def test_multi_objectives2ropt(copy_mocked_test_data_to_tmp):
     config_dict = config.to_dict()
     ever_objs = config_dict["objective_functions"]
     ever_objs[0]["weight"] = 1.33
-    ever_objs[0]["normalization"] = 1
     ever_objs[1]["weight"] = 3.1
     assert len(EverestConfig.lint_config_dict(config_dict)) == 0
 
@@ -93,7 +92,6 @@ def test_multi_objectives2ropt(copy_mocked_test_data_to_tmp):
     assert len(enopt_config.objectives.weights) == 2
     assert enopt_config.objectives.weights[1] == ever_objs[1]["weight"] / norm
     assert enopt_config.objectives.weights[0] == ever_objs[0]["weight"] / norm
-    assert enopt_config.objectives.scales[0] == ever_objs[0]["normalization"]
 
 
 @pytest.mark.integration_test

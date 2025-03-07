@@ -28,11 +28,13 @@ from _ert.events import (
     RealizationPending,
     RealizationResubmit,
     RealizationRunning,
+    RealizationStoppedLongRunning,
     RealizationSuccess,
     RealizationTimeout,
     RealizationUnknown,
     RealizationWaiting,
 )
+from _ert.forward_model_runner.fm_dispatch import FORWARD_MODEL_TERMINATED_MSG
 from ert.ensemble_evaluator import identifiers as ids
 from ert.ensemble_evaluator import state
 
@@ -51,6 +53,7 @@ _FM_TYPE_EVENT_TO_STATUS = {
     RealizationSuccess: state.REALIZATION_STATE_FINISHED,
     RealizationUnknown: state.REALIZATION_STATE_UNKNOWN,
     RealizationTimeout: state.REALIZATION_STATE_FAILED,
+    RealizationStoppedLongRunning: state.REALIZATION_STATE_FAILED,
     RealizationResubmit: state.REALIZATION_STATE_WAITING,  # For consistency since realization will turn to waiting state when resubmitted
     ForwardModelStepStart: state.FORWARD_MODEL_STATE_START,
     ForwardModelStepRunning: state.FORWARD_MODEL_STATE_RUNNING,
@@ -285,6 +288,7 @@ class EnsembleSnapshot:
                 RealizationSuccess,
                 RealizationFailed,
                 RealizationTimeout,
+                RealizationStoppedLongRunning,
             }:
                 end_time = convert_iso8601_to_datetime(timestamp)
             if type(event) is RealizationFailed:
@@ -313,6 +317,24 @@ class EnsembleSnapshot:
                                 end_time=end_time,
                                 error="The run is cancelled due to "
                                 "reaching MAX_RUNTIME",
+                            )
+                        )
+            elif e_type is RealizationStoppedLongRunning:
+                for (
+                    fm_step_id,
+                    fm_step,
+                ) in source_snapshot.get_fm_steps_for_real(event.real).items():
+                    if fm_step.get(ids.STATUS) != state.FORWARD_MODEL_STATE_FINISHED:
+                        fm_idx = (event.real, fm_step_id)
+                        if fm_idx not in source_snapshot._fm_step_snapshots:
+                            self._fm_step_snapshots[fm_idx] = FMStepSnapshot()
+                        self._fm_step_snapshots[fm_idx].update(
+                            FMStepSnapshot(
+                                status=state.FORWARD_MODEL_STATE_FAILURE,
+                                end_time=end_time,
+                                error="The run is cancelled due to "
+                                "excessive runtime, 25% more than the average "
+                                "runtime (check keyword STOP_LONG_RUNNING)",
                             )
                         )
             elif e_type is RealizationResubmit:
@@ -390,6 +412,10 @@ class EnsembleSnapshot:
         fm_step_id: str,
         fm_step: FMStepSnapshot,
     ) -> EnsembleSnapshot:
+        if (
+            previous_error := self._fm_step_snapshots[real_id, fm_step_id].get("error")
+        ) and fm_step.get("error") == FORWARD_MODEL_TERMINATED_MSG:
+            fm_step["error"] = previous_error
         self._fm_step_snapshots[real_id, fm_step_id].update(fm_step)
         return self
 

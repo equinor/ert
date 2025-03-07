@@ -1,5 +1,6 @@
 # mypy: ignore-errors
 import copy
+import json
 import logging
 import os
 import re
@@ -22,9 +23,11 @@ from pydantic import ValidationError as PydanticValidationError
 from pydantic import field_validator
 from pydantic.dataclasses import dataclass, rebuild_dataclass
 
+from ert.config.parsing.context_values import ContextBoolEncoder
 from ert.plugins import ErtPluginManager
 from ert.substitutions import Substitutions
 
+from ..plugins.workflow_config import ErtScriptWorkflow
 from .analysis_config import AnalysisConfig
 from .ensemble_config import EnsembleConfig
 from .forward_model_step import (
@@ -33,6 +36,7 @@ from .forward_model_step import (
     ForwardModelStepPlugin,
     ForwardModelStepValidationError,
 )
+from .gen_kw_config import GenKwConfig
 from .model_config import ModelConfig
 from .observation_vector import ObsVector
 from .observations import EnkfObs
@@ -266,6 +270,22 @@ def read_templates(config_dict) -> list[tuple[str, str]]:
         templates.append([source_file, target_file])
 
     for template in config_dict.get(ConfigKeys.RUN_TEMPLATE, []):
+        if (
+            ConfigKeys.ECLBASE in config_dict
+            and (
+                template[1].startswith(config_dict[ConfigKeys.ECLBASE])
+                or template[1].startswith("<ECLBASE>")
+                or template[1].startswith("<ECL_BASE>")
+            )
+            and ConfigKeys.NUM_CPU not in config_dict
+        ):
+            ConfigWarning.warn(
+                "Use DATA_FILE instead of RUN_TEMPLATE for "
+                "templating the Eclipse/Flow DATA file. "
+                "This ensures correct parsing of NUM_CPU. "
+                "Alternatively set NUM_CPU explicitly and ensure "
+                "it is synced with your DATA file."
+            )
         templates.append(template)
     return templates
 
@@ -274,13 +294,14 @@ def read_templates(config_dict) -> list[tuple[str, str]]:
 def workflows_from_dict(
     content_dict,
     substitutions,
+    installed_workflows: dict[str, ErtScriptWorkflow] | None = None,
 ):
     workflow_job_info = content_dict.get(ConfigKeys.LOAD_WORKFLOW_JOB, [])
     workflow_job_dir_info = content_dict.get(ConfigKeys.WORKFLOW_JOB_DIRECTORY, [])
     hook_workflow_info = content_dict.get(ConfigKeys.HOOK_WORKFLOW, [])
     workflow_info = content_dict.get(ConfigKeys.LOAD_WORKFLOW, [])
 
-    workflow_jobs = {}
+    workflow_jobs = copy.copy(installed_workflows) if installed_workflows else {}
     workflows = {}
     hooked_workflows = defaultdict(list)
 
@@ -299,8 +320,8 @@ def workflows_from_dict(
             if name in workflow_jobs:
                 ConfigWarning.warn(
                     f"Duplicate workflow jobs with name {name!r}, choosing "
-                    f"{new_job.executable or new_job.script!r} over "
-                    f"{workflow_jobs[name].executable or workflow_jobs[name].script!r}",
+                    f"{new_job.executable or new_job.ert_script!r} over "
+                    f"{workflow_jobs[name].executable or workflow_jobs[name].ert_script!r}",
                     name,
                 )
             workflow_jobs[name] = new_job
@@ -321,8 +342,8 @@ def workflows_from_dict(
                 if name in workflow_jobs:
                     ConfigWarning.warn(
                         f"Duplicate workflow jobs with name {name!r}, choosing "
-                        f"{new_job.executable or new_job.script!r} over "
-                        f"{workflow_jobs[name].executable or workflow_jobs[name].script!r}",
+                        f"{new_job.executable or new_job.ert_script!r} over "
+                        f"{workflow_jobs[name].executable or workflow_jobs[name].ert_script!r}",
                         name,
                     )
                 workflow_jobs[name] = new_job
@@ -530,6 +551,7 @@ class ErtConfig:
     DEFAULT_ENSPATH: ClassVar[str] = "storage"
     DEFAULT_RUNPATH_FILE: ClassVar[str] = ".ert_runpath_list"
     PREINSTALLED_FORWARD_MODEL_STEPS: ClassVar[dict[str, ForwardModelStep]] = {}
+    PREINSTALLED_WORKFLOWS: ClassVar[dict[str, ErtScriptWorkflow]] = {}
     ENV_PR_FM_STEP: ClassVar[dict[str, dict[str, Any]]] = {}
     ACTIVATE_SCRIPT: str | None = None
 
@@ -619,6 +641,7 @@ class ErtConfig:
             PREINSTALLED_FORWARD_MODEL_STEPS: ClassVar[
                 dict[str, ForwardModelStepPlugin]
             ] = preinstalled_fm_steps
+            PREINSTALLED_WORKFLOWS = pm.get_ertscript_workflows().get_workflows()
             ENV_PR_FM_STEP: ClassVar[dict[str, dict[str, Any]]] = env_pr_fm_step
             ACTIVATE_SCRIPT = pm.activate_script()
 
@@ -734,7 +757,7 @@ class ErtConfig:
 
         try:
             workflow_jobs, workflows, hooked_workflows = workflows_from_dict(
-                config_dict, substitutions
+                config_dict, substitutions, cls.PREINSTALLED_WORKFLOWS
             )
         except ConfigValidationError as e:
             errors.append(e)
@@ -766,11 +789,6 @@ class ErtConfig:
 
             substitutions["<NUM_CPU>"] = str(queue_config.preferred_num_cpu)
 
-        except ConfigValidationError as err:
-            errors.append(err)
-
-        try:
-            analysis_config = AnalysisConfig.from_dict(config_dict)
         except ConfigValidationError as err:
             errors.append(err)
 
@@ -822,8 +840,32 @@ class ErtConfig:
         except ConfigValidationError as err:
             errors.append(err)
 
+        try:
+            analysis_config = AnalysisConfig.from_dict(config_dict)
+        except ConfigValidationError as err:
+            errors.append(err)
+
         if errors:
             raise ConfigValidationError.from_collected(errors)
+
+        if dm := analysis_config.design_matrix:
+            dm_params = [
+                x.name
+                for x in dm.parameter_configuration.transform_function_definitions
+            ]
+            for group_name, config in ensemble_config.parameter_configs.items():
+                overlapping = []
+                if not isinstance(config, GenKwConfig):
+                    continue
+                for transform_definition in config.transform_function_definitions:
+                    if transform_definition.name in dm_params:
+                        overlapping.append(transform_definition.name)
+                if overlapping:
+                    ConfigWarning.warn(
+                        f"Parameters {overlapping} from GEN_KW group '{group_name}' "
+                        "will be overridden by design matrix. This will cause "
+                        "updates to be turned off for these parameters."
+                    )
 
         env_vars = {}
         for key, val in config_dict.get("SETENV", []):
@@ -911,14 +953,31 @@ class ErtConfig:
 
     @classmethod
     def _log_config_dict(cls, content_dict: dict[str, Any]) -> None:
-        tmp_dict = content_dict.copy()
-        tmp_dict.pop("FORWARD_MODEL", None)
-        tmp_dict.pop("LOAD_WORKFLOW", None)
-        tmp_dict.pop("LOAD_WORKFLOW_JOB", None)
-        tmp_dict.pop("HOOK_WORKFLOW", None)
-        tmp_dict.pop("WORKFLOW_JOB_DIRECTORY", None)
-
-        logger.info(f"Content of the config_dict: {tmp_dict}")
+        # The content of the message is sanitized before beeing sendt to App Insigths to make sure GDPR-rules are not violated.
+        # In doing do, the message lenght will typically increase a bit. To Avoid hiting the App Insights' hard limit of message length, the limit is set to 80%
+        # of MAX_MESSAGE_LENGTH_APP_INSIGHTS = 32768
+        SAFE_MESSAGE_LENGTH_LIMIT = 26214  # <= MAX_MESSAGE_LENGTH_APP_INSIGHTS * 0.8
+        try:
+            config_dict_content = json.dumps(
+                content_dict, indent=2, cls=ContextBoolEncoder
+            )
+        except Exception as err:
+            config_dict_content = str(content_dict)
+            logger.warning(
+                f"Logging of config dict could not be formatted for enhanced readability. {err}"
+            )
+        config_dict_content_length = len(config_dict_content)
+        if config_dict_content_length > SAFE_MESSAGE_LENGTH_LIMIT:
+            config_sections = _split_string_into_sections(
+                config_dict_content, SAFE_MESSAGE_LENGTH_LIMIT
+            )
+            section_count = len(config_sections)
+            for i, section in enumerate(config_sections):
+                logger.info(
+                    f"Content of the config_dict (part {i + 1}/{section_count}): {section}"
+                )
+        else:
+            logger.info(f"Content of the config_dict: {config_dict_content}")
 
     @classmethod
     def _log_custom_forward_model_steps(cls, user_config: ConfigDict) -> None:
@@ -1087,6 +1146,19 @@ class ErtConfig:
             raise ObservationConfigError.from_collected(config_errors)
 
         return EnkfObs(obs_vectors, obs_time_list)
+
+
+def _split_string_into_sections(input: str, section_length: int) -> list[str]:
+    """
+    Splits a string into sections of length section_length
+    and returns it as a list.
+
+    If section_length is set to 0 or less, no sectioning is performed and the entire input string
+    is returned as one section in a list
+    """
+    if section_length < 1:
+        return [input]
+    return [input[i : i + section_length] for i in range(0, len(input), section_length)]
 
 
 def _get_files_in_directory(job_path, errors):

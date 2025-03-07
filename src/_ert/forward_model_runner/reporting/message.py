@@ -17,17 +17,17 @@ if TYPE_CHECKING:
         error: str
 
 
-_JOB_STATUS_SUCCESS = "Success"
-_JOB_STATUS_RUNNING = "Running"
-_JOB_STATUS_FAILURE = "Failure"
-_JOB_STATUS_WAITING = "Waiting"
+_STEP_STATUS_SUCCESS = "Success"
+_STEP_STATUS_RUNNING = "Running"
+_STEP_STATUS_FAILURE = "Failure"
+_STEP_STATUS_WAITING = "Waiting"
 
 _RUNNER_STATUS_INITIALIZED = "Initialized"
 _RUNNER_STATUS_SUCCESS = "Success"
 _RUNNER_STATUS_FAILURE = "Failure"
 
 
-_JOB_EXIT_FAILED_STRING = """Job {job_name} FAILED with code {exit_code}
+_STEP_EXIT_FAILED_STRING = """Step {step_name} FAILED with code {exit_code}
 ----------------------------------------------------------
 Error message: {error_message}
 ----------------------------------------------------------
@@ -70,9 +70,9 @@ class _MetaMessage(type):
 
 
 class Message(metaclass=_MetaMessage):
-    def __init__(self, job=None):
+    def __init__(self, step=None):
         self.timestamp = dt.now()
-        self.job: ForwardModelStep | None = job
+        self.step: ForwardModelStep | None = step
         self.error_message: str | None = None
 
     def __repr__(self):
@@ -92,7 +92,7 @@ class Message(metaclass=_MetaMessage):
 class Init(Message):
     def __init__(
         self,
-        jobs,
+        steps,
         run_id,
         ert_pid,
         ens_id=None,
@@ -100,7 +100,7 @@ class Init(Message):
         experiment_id=None,
     ):
         super().__init__()
-        self.jobs = jobs
+        self.steps = steps
         self.run_id = run_id
         self.ert_pid = ert_pid
         self.experiment_id = experiment_id
@@ -111,9 +111,6 @@ class Init(Message):
 class Finish(Message):
     def __init__(self):
         super().__init__()
-
-
-# job level messages
 
 
 class Start(Message):

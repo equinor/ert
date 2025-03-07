@@ -8,7 +8,7 @@ on:
  pull_request:
 
 env:
-  UV_SYSTEM_PYTHON: 1
+  UV_FROZEN: true
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -35,12 +35,15 @@ jobs:
 
     - name: Install uv
       uses: astral-sh/setup-uv@v5
+      with:
+        enable-cache: true
+        python-version: ${{ matrix.python-version }}
 
     - name: Install ERT with style dependencies
       run: |
-        uv pip install ".[style]"
+        uv sync --extra style
 
     - name: Run style check
       if: ${{ always() }}
       run: |
-        SKIP=no-commit-to-branch pre-commit run --all-files --show-diff-on-failure
+        SKIP=no-commit-to-branch uv run pre-commit run --all-files --show-diff-on-failure

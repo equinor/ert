@@ -175,3 +175,11 @@ todo_include_todos = True
 
 # Example configuration for intersphinx: refer to the Python standard library.
 intersphinx_mapping = {"python": ("https://docs.python.org/3", None)}
+
+# Ignore unresolved references
+nitpick_ignore = [
+    ("py:class", "ert.config.ert_script.ErtScript"),
+    ("py:class", "Ensemble"),
+    ("py:class", "ESSettings"),
+    ("py:class", "Storage"),
+]

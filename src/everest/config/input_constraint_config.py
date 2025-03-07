@@ -1,7 +1,7 @@
 from pydantic import BaseModel, Field, field_validator
 
 
-class InputConstraintConfig(BaseModel, extra="forbid"):  # type: ignore
+class InputConstraintConfig(BaseModel, extra="forbid"):
     weights: dict[str, float] = Field(
         description="""**Example**
 If we are trying to constrain only one control (i.e the z control) value:

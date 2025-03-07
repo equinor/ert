@@ -13,7 +13,7 @@ copy_test_files() {
 }
 
 install_test_dependencies() {
-    pip install ".[dev, everest]"
+    pip install ".[dev]"
 }
 
 run_ert_with_opm() {
@@ -60,36 +60,42 @@ remove_one_week_old_temp_folders () {
 make_run_path () {
     case "$1" in
         "azure")
+            mkdir -p /lustre1/users/f_scout_ci/egg_tests
             mktemp -d -p /lustre1/users/f_scout_ci/egg_tests
             ;;
         *)
+            mkdir -p /scratch/oompf/egg_tests
             mktemp -d -p /scratch/oompf/egg_tests
             ;;
     esac
 }
 
-# Run everest egg test on LSF
+
+# Run everest egg test on the cluster both onprem and azure
 run_everest_egg_test() {
 
-    # Need to copy the egg test to a directory that is accessible by the LSF cluster
-    LSF_RUNNER_ROOT=$(make_run_path "$CI_RUNNER_LABEL")
-    mkdir -p "$LSF_RUNNER_ROOT"
-    LSF_TMP_DIR=$(mktemp -d -p "$LSF_RUNNER_ROOT")
-    chmod a+rx "$LSF_TMP_DIR"
-    cp -r "${CI_SOURCE_ROOT}/test-data/everest/egg" "$LSF_TMP_DIR"
-    pushd "${LSF_TMP_DIR}/egg"
-    echo "LSF_TMP_DIR: $LSF_TMP_DIR"
+    # Need to copy the egg test to a directory that is accessible by all cluster members
+    RUNNER_ROOT=$(make_run_path "$CI_RUNNER_LABEL")
+    mkdir -p "$RUNNER_ROOT"
+    RUNNER_TMP_DIR=$(mktemp -d -p "$RUNNER_ROOT")
+    cp -r "${CI_SOURCE_ROOT}/test-data/everest/egg" "$RUNNER_TMP_DIR"
+    chmod -R a+rx "$RUNNER_TMP_DIR"
+    pushd "${RUNNER_TMP_DIR}/egg"
+    echo "RUNNER_TMP_DIR: $RUNNER_TMP_DIR"
 
-    # Need to activate a komodo version available on LSF. Not a komodoenv
     disable_komodo
     # shellcheck source=/dev/null
     source "${_KOMODO_ROOT}/${_FULL_RELEASE_NAME}/enable"
 
-
     CONFIG="everest/model/config.yml"
-    sed -i "s/name: local/name: lsf/g" "$CONFIG"
+    if [[ "$CI_RUNNER_LABEL" == "azure" ]]; then
+        sed -i "s/name: local/name: torque\n    queue: permanent_8/g" "$CONFIG"
+        export PATH=$PATH:/opt/pbs/bin
+    elif [[ "$CI_RUNNER_LABEL" == "onprem" ]]; then
+        sed -i "s/name: local/name: lsf/g" "$CONFIG"
+        export PATH=$PATH:/global/bin
+    fi
     cat "$CONFIG"
-    export PATH=$PATH:/global/bin  # LSF executables
 
     everest run "$CONFIG"
     STATUS=$?

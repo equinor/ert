@@ -149,7 +149,7 @@ def test_wait_for_server(server_is_running_mock, caplog):
     with pytest.raises(
         RuntimeError, match=r"Failed to get reply from server .* timeout"
     ):
-        wait_for_server(config.output_dir, timeout=1)
+        wait_for_server(config.output_dir, timeout=0.01)
 
     assert not caplog.messages
 
@@ -336,8 +336,9 @@ if __name__ == "__main__":
     assert final_state.returncode == 0
 
 
+@pytest.mark.xdist_group(name="math_func/config_multiobj.yml")
 def test_get_opt_status(cached_example):
-    _, config_file, _ = cached_example("math_func/config_multiobj.yml")
+    _, config_file, _, _ = cached_example("math_func/config_multiobj.yml")
     config = EverestConfig.load_file(config_file)
 
     opts = get_opt_status(config.optimization_output_dir)

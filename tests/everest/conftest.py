@@ -1,4 +1,5 @@
 import os
+import queue
 import shutil
 import tempfile
 import warnings
@@ -13,6 +14,8 @@ import yaml
 
 from ert.config import ConfigWarning
 from ert.ensemble_evaluator import EvaluatorServerConfig
+from ert.run_models import StatusEvents
+from ert.run_models.event import status_event_from_json, status_event_to_json
 from ert.run_models.everest_run_model import EverestRunModel
 from everest.config import EverestConfig
 from everest.config.control_config import ControlConfig
@@ -158,7 +161,8 @@ def cached_example(pytestconfig):
 
             shutil.copytree(config_path.parent, my_tmpdir / "everest")
             config = EverestConfig.load_file(my_tmpdir / "everest" / config_file)
-            run_model = EverestRunModel.create(config)
+            status_queue: queue.SimpleQueue[StatusEvents] = queue.SimpleQueue()
+            run_model = EverestRunModel.create(config, status_queue=status_queue)
             evaluator_server_config = EvaluatorServerConfig()
             try:
                 run_model.run_experiment(evaluator_server_config)
@@ -174,13 +178,18 @@ def cached_example(pytestconfig):
                 "total_objective": optimal_result.total_objective,
             }
 
+            events_list = []
+            while not status_queue.empty():
+                event = status_queue.get()
+                events_list.append(status_event_to_json(event))
+
             cache.set(
                 f"cached_example:{test_data_case}",
-                (str(result_path), config_file, optimal_result_json),
+                (str(result_path), config_file, optimal_result_json, events_list),
             )
 
-        result_path, config_file, optimal_result_json = cache.get(
-            f"cached_example:{test_data_case}", (None, None, None)
+        result_path, config_file, optimal_result_json, events_list_json = cache.get(
+            f"cached_example:{test_data_case}", (None, None, None, None)
         )
 
         copied_tmpdir = tempfile.mkdtemp()
@@ -188,7 +197,12 @@ def cached_example(pytestconfig):
         copied_path = str(Path(copied_tmpdir) / "everest")
         os.chdir(copied_path)
 
-        return copied_path, config_file, optimal_result_json
+        return (
+            copied_path,
+            config_file,
+            optimal_result_json,
+            [status_event_from_json(e) for e in events_list_json],
+        )
 
     return run_config
 

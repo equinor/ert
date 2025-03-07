@@ -47,6 +47,8 @@ Forward models
 To install forward model steps that you want to have available in ERT you can either
 use the simplified :code:`installable_jobs` function name, or
 :code:`installable_forward_model_steps` which gives a lot more control.
+The individual steps in a forward model were previously called "jobs" in Ert,
+and this is still partly present in the source code.
 
 .. code-block:: python
 
@@ -105,7 +107,7 @@ validated pre-experiment, you can use the ``ForwardModelStepWarning.warn(...)`` 
 
 To provide documentation for a forward model step given with
 ``installable_jobs``, use the :code:`job_documentation` name. If you are the
-plugin that provided the job with the name :code:`job_name`, then you respond
+plugin that provided the step with the name :code:`step_name`, then you respond
 with the documentation as specified, else respond with :code:`None`.
 
 .. code-block:: python
@@ -113,12 +115,12 @@ with the documentation as specified, else respond with :code:`None`.
    import ert
 
    @ert.plugin(name="my_plugin")
-   def job_documentation(job_name: str):
-       if job_name == "my_job":
+   def job_documentation(step_name: str):
+       if step_name == "my_step":
             return {
-                "description": "job description",
+                "description": "step description",
                 "examples": "...",
-                "category": "test.category.for.job",
+                "category": "test.category.for.step",
             }
 
 When creating documentation in ERT, forward model steps will be grouped by their
@@ -223,7 +225,7 @@ The configuration object and properties are as follows.
     :undoc-members:
 
 
-.. autoclass:: ert.plugins.workflow_config.WorkflowConfig
+.. autoclass:: ert.plugins.workflow_config.ErtScriptWorkflow
     :members:
     :undoc-members:
 

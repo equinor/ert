@@ -1,5 +1,4 @@
 import os
-import time
 
 import pytest
 
@@ -22,13 +21,6 @@ from _ert.forward_model_runner.reporting.message import (
 )
 from _ert.forward_model_runner.reporting.statemachine import TransitionError
 from tests.ert.utils import MockZMQServer
-
-
-def _wait_until(condition, timeout, fail_msg):
-    start = time.time()
-    while not condition():
-        assert start + timeout > time.time(), fail_msg
-        time.sleep(0.1)
 
 
 def test_report_with_successful_start_message_argument(unused_tcp_port):

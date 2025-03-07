@@ -120,14 +120,8 @@ class EnsembleEvaluator:
                     function_to_events_map[func] = []
                 function_to_events_map[func].append(event)
 
-            batch_start_time = asyncio.get_running_loop().time()
             for func, events in function_to_events_map.items():
                 await func(events)
-            processing_time = asyncio.get_running_loop().time() - batch_start_time
-            if processing_time > 0.01:
-                logger.info(
-                    f"Processed {len(batch)} events in {processing_time:.3f} seconds."
-                )
 
             self._batch_processing_queue.task_done()
 
@@ -163,7 +157,7 @@ class EnsembleEvaluator:
                     continue
             self._complete_batch.set()
             await self._batch_processing_queue.put(batch)
-            if self._events.qsize() > 0:
+            if self._events.qsize() > 2 * self._max_batch_size:
                 logger.info(f"{self._events.qsize()} events left in queue")
 
     async def _fm_handler(self, events: Sequence[FMEvent | RealizationEvent]) -> None:
@@ -287,7 +281,6 @@ class EnsembleEvaluator:
                 else:
                     logger.error(f"Unexpected error when listening to messages: {e}")
             except asyncio.CancelledError:
-                self._router_socket.close()
                 return
 
     async def forward_checksum(self, event: Event) -> None:
@@ -363,7 +356,12 @@ class EnsembleEvaluator:
         """
         if self._ensemble.cancellable:
             logger.debug("Cancelling current ensemble")
-            await self._ensemble.cancel()
+            self._ee_tasks.append(
+                asyncio.create_task(
+                    self._ensemble.cancel(), name="ensemble_cancellation_task"
+                )
+            )
+
         else:
             logger.debug("Stopping current ensemble")
             self.stop()
@@ -414,6 +412,7 @@ class EnsembleEvaluator:
                 elif task.get_name() in {
                     "ensemble_task",
                     "listener_task",
+                    "ensemble_cancellation_task",
                 }:
                     timeout = self.CLOSE_SERVER_TIMEOUT
                 else:

@@ -46,10 +46,23 @@ def make_api_snapshot(api) -> dict[str, Any]:
 
 @pytest.mark.parametrize(
     "config_file",
-    ["config_advanced.yml", "config_minimal.yml", "config_multiobj.yml"],
+    [
+        pytest.param(
+            "config_advanced.yml",
+            marks=pytest.mark.xdist_group("math_func/config_advanced.yml"),
+        ),
+        pytest.param(
+            "config_minimal.yml",
+            marks=pytest.mark.xdist_group("math_func/config_minimal.yml"),
+        ),
+        pytest.param(
+            "config_multiobj.yml",
+            marks=pytest.mark.xdist_group("math_func/config_multiobj.yml"),
+        ),
+    ],
 )
 def test_api_snapshots(config_file, snapshot, cached_example):
-    config_path, config_file, optimal_result_json = cached_example(
+    config_path, config_file, optimal_result_json, _ = cached_example(
         f"math_func/{config_file}"
     )
     config = EverestConfig.load_file(Path(config_path) / config_file)
@@ -72,10 +85,23 @@ def test_api_snapshots(config_file, snapshot, cached_example):
 @pytest.mark.integration_test
 @pytest.mark.parametrize(
     "config_file",
-    ["config_advanced.yml", "config_minimal.yml", "config_multiobj.yml"],
+    [
+        pytest.param(
+            "config_advanced.yml",
+            marks=pytest.mark.xdist_group("math_func/config_advanced.yml"),
+        ),
+        pytest.param(
+            "config_minimal.yml",
+            marks=pytest.mark.xdist_group("math_func/config_minimal.yml"),
+        ),
+        pytest.param(
+            "config_multiobj.yml",
+            marks=pytest.mark.xdist_group("math_func/config_multiobj.yml"),
+        ),
+    ],
 )
 def test_api_summary_snapshot(config_file, snapshot, cached_example):
-    config_path, config_file, _ = cached_example(f"math_func/{config_file}")
+    config_path, config_file, _, _ = cached_example(f"math_func/{config_file}")
     config = EverestConfig.load_file(Path(config_path) / config_file)
 
     with open_storage(config.storage_dir, mode="w") as storage:
@@ -117,10 +143,23 @@ def test_api_summary_snapshot(config_file, snapshot, cached_example):
 
 @pytest.mark.parametrize(
     "config_file",
-    ["config_advanced.yml", "config_minimal.yml", "config_multiobj.yml"],
+    [
+        pytest.param(
+            "config_advanced.yml",
+            marks=pytest.mark.xdist_group("math_func/config_advanced.yml"),
+        ),
+        pytest.param(
+            "config_minimal.yml",
+            marks=pytest.mark.xdist_group("math_func/config_minimal.yml"),
+        ),
+        pytest.param(
+            "config_multiobj.yml",
+            marks=pytest.mark.xdist_group("math_func/config_multiobj.yml"),
+        ),
+    ],
 )
 def test_csv_export(config_file, cached_example, snapshot):
-    config_path, config_file, _ = cached_example(f"math_func/{config_file}")
+    config_path, config_file, _, _ = cached_example(f"math_func/{config_file}")
     config = EverestConfig.load_file(Path(config_path) / config_file)
 
     api = EverestDataAPI(config)

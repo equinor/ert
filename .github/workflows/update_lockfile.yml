@@ -1,0 +1,44 @@
+name: update-lockfile
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "0 8 * * 1"
+
+jobs:
+  lock:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    strategy:
+      matrix:
+        python-version: ['3.12']
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - run: |
+          echo "\`\`\`" > uv_output.md
+          uv lock --upgrade 2>&1 | tee -a uv_output.md
+          echo "\`\`\`" >> uv_output.md
+
+      - name: Create pull request
+        uses: peter-evans/create-pull-request@v7
+        with:
+          token: ${{ secrets.LOCKFILE_UPDATE_TOKEN }}
+          commit-message: Update uv lockfile
+          title: Update uv lockfile
+          body-path: uv_output.md
+          branch: update-uv-lockfile
+          base: main
+          labels: release-notes:dependency
+          delete-branch: true
+          add-paths: uv.lock

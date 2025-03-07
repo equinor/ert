@@ -4,11 +4,11 @@ import numpy as np
 import pytest
 from orjson import orjson
 from pydantic import ValidationError
-from ropt.enums import ConstraintType
 
+import everest.optimizer.everest2ropt as everest2ropt_patch
 from everest.config import EverestConfig
 from everest.config_file_loader import yaml_file_to_substituted_config_dict
-from everest.optimizer.everest2ropt import everest2ropt
+from everest.optimizer.everest2ropt import _everest2ropt, everest2ropt
 from everest.optimizer.opt_model_transforms import get_optimization_domain_transforms
 from tests.everest.utils import relpath
 
@@ -94,14 +94,13 @@ def test_everest2ropt_controls_input_constraint():
     # constraints: LE, GE and EQ.
 
     # Check that the config is defining three input constraints.
-    assert ropt_config.linear_constraints.coefficients.shape[0] == 3
+    assert ropt_config.linear_constraints.coefficients.shape[0] == 2
 
-    # Check the input constraint types
-    exp_type = [ConstraintType.LE, ConstraintType.GE, ConstraintType.EQ]
-    assert exp_type == list(ropt_config.linear_constraints.types)
-    # Check the rhs
-    exp_rhs = [1.0, 0.0, 1.0]
-    assert exp_rhs == ropt_config.linear_constraints.rhs_values.tolist()
+    # Check the bounds:
+    exp_lower_bounds = [0.0, 1.0]
+    exp_upper_bounds = [1.0, 1.0]
+    assert exp_lower_bounds == ropt_config.linear_constraints.lower_bounds.tolist()
+    assert exp_upper_bounds == ropt_config.linear_constraints.upper_bounds.tolist()
 
 
 def test_everest2ropt_controls_input_constraint_auto_scale():
@@ -116,7 +115,8 @@ def test_everest2ropt_controls_input_constraint_auto_scale():
     min_values = ropt_config.variables.lower_bounds.copy()
     max_values = ropt_config.variables.upper_bounds.copy()
     coefficients = ropt_config.linear_constraints.coefficients
-    rhs_values = ropt_config.linear_constraints.rhs_values
+    lower_bounds = ropt_config.linear_constraints.lower_bounds
+    upper_bounds = ropt_config.linear_constraints.upper_bounds
 
     controls = config.controls
     min_values[1] = -1.0
@@ -127,7 +127,10 @@ def test_everest2ropt_controls_input_constraint_auto_scale():
     controls[0].auto_scale = True
     controls[0].scaled_range = [0.3, 0.7]
 
-    scaled_rhs_values = rhs_values - np.matmul(
+    scaled_lower_bounds = lower_bounds - np.matmul(
+        coefficients, min_values - 0.3 * (max_values - min_values) / 0.4
+    )
+    scaled_upper_bounds = upper_bounds - np.matmul(
         coefficients, min_values - 0.3 * (max_values - min_values) / 0.4
     )
     scaled_coefficients = coefficients * (max_values - min_values) / 0.4
@@ -147,8 +150,12 @@ def test_everest2ropt_controls_input_constraint_auto_scale():
         scaled_coefficients,
     )
     assert np.allclose(
-        ropt_config.linear_constraints.rhs_values[0],
-        scaled_rhs_values[0],
+        ropt_config.linear_constraints.lower_bounds[0],
+        scaled_lower_bounds[0],
+    )
+    assert np.allclose(
+        ropt_config.linear_constraints.upper_bounds[0],
+        scaled_upper_bounds[0],
     )
 
 
@@ -165,7 +172,7 @@ def test_everest2ropt_constraints():
     config = os.path.join(_CONFIG_DIR, "config_output_constraints.yml")
     config = EverestConfig.load_file(config)
     ropt_config = everest2ropt(config)
-    assert len(ropt_config.nonlinear_constraints.rhs_values) == 16
+    assert len(ropt_config.nonlinear_constraints.lower_bounds) == 16
 
 
 def test_everest2ropt_backend_options():
@@ -301,7 +308,6 @@ def test_everest2ropt_snapshot(case, snapshot):
         raise TypeError(f"Object of type {type(obj)} is not JSON serializable")
 
     ropt_config["optimizer"]["output_dir"] = "not_relevant"
-    del ropt_config["original_inputs"]
 
     ropt_config_str = (
         orjson.dumps(
@@ -314,3 +320,15 @@ def test_everest2ropt_snapshot(case, snapshot):
         + "\n"
     )
     snapshot.assert_match(ropt_config_str, "ropt_config.json")
+
+
+def test_everest2ropt_validation_error(monkeypatch) -> None:
+    def _patched_everest2ropt(ever_config, _):
+        ropt_dict = _everest2ropt(ever_config, None)
+        ropt_dict["foo"] = "bar"
+        return ropt_dict
+
+    ever_config = EverestConfig.load_file(os.path.join(_CONFIG_DIR, _CONFIG_FILE))
+    monkeypatch.setattr(everest2ropt_patch, "_everest2ropt", _patched_everest2ropt)
+    with pytest.raises(ValueError, match=r"Validation error\(s\) in ropt"):
+        everest2ropt_patch.everest2ropt(ever_config)
