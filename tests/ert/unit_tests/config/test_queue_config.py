@@ -150,9 +150,19 @@ def test_realization_memory_unit_support(memory_spec: str, expected_bytes: int):
     )
 
 
-@pytest.mark.parametrize("invalid_memory_spec", ["-1", "-1b", "b", "4ub"])
-def test_invalid_realization_memory(invalid_memory_spec: str):
-    with pytest.raises(ConfigValidationError):
+@pytest.mark.parametrize(
+    "invalid_memory_spec, error_message",
+    [
+        ("-1", "Negative memory does not make sense in -1"),
+        ("-1b", "Negative memory does not make sense in -1b"),
+        ("b", "Could not understand byte unit in b"),
+        ("4ub", "Could not understand byte unit in 4ub"),
+    ],
+)
+def test_invalid_realization_memory(invalid_memory_spec: str, error_message: str):
+    with pytest.raises(
+        ConfigValidationError, match=rf"Line 2 \(Column \d+-\d+\): {error_message}"
+    ):
         ErtConfig.from_file_contents(
             f"NUM_REALIZATIONS 1\nREALIZATION_MEMORY {invalid_memory_spec}\n"
         )
