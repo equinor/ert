@@ -46,7 +46,7 @@ class BatchStorageData:
 
     @property
     def existing_dataframes(self) -> dict[str, pl.DataFrame]:
-        return {
+        existing_dfs = {
             k: cast(pl.DataFrame, getattr(self, k))
             for k in [
                 "batch_objectives",
@@ -61,6 +61,8 @@ class BatchStorageData:
             ]
             if getattr(self, k) is not None
         }
+
+        return {k: v for k, v in existing_dfs.items() if not v.is_empty()}
 
 
 @dataclass
@@ -95,7 +97,7 @@ class OptimizationStorageData:
 
     @property
     def existing_dataframes(self) -> dict[str, pl.DataFrame]:
-        return {
+        existing_dfs = {
             k: cast(pl.DataFrame, getattr(self, k))
             for k in [
                 "controls",
@@ -106,25 +108,39 @@ class OptimizationStorageData:
             if getattr(self, k) is not None
         }
 
-    def write_to_experiment(self, experiment: _OptimizerOnlyExperiment) -> None:
+        return {k: v for k, v in existing_dfs.items() if not v.is_empty()}
+
+    def write_to_experiment(
+        self, experiment: _OptimizerOnlyExperiment, overwrite: bool | None = False
+    ) -> None:
         for df_name, df in self.existing_dataframes.items():
-            df.write_parquet(f"{experiment.optimizer_mount_point / df_name}.parquet")
+            df_path = experiment.optimizer_mount_point / f"{df_name}.parquet"
+
+            if not overwrite and df_path.exists():
+                continue
+
+            df.write_parquet(df_path)
 
         for batch_data in self.batches:
             ensemble = experiment.get_ensemble_by_name(f"batch_{batch_data.batch_id}")
-            with open(
-                ensemble.optimizer_mount_point / "batch.json", "w+", encoding="utf-8"
-            ) as f:
-                json.dump(
-                    {
-                        "batch_id": batch_data.batch_id,
-                        "is_improvement": batch_data.is_improvement,
-                    },
-                    f,
-                )
+            df_path = ensemble.optimizer_mount_point / "batch.json"
+
+            if overwrite or not df_path.exists():
+                with open(df_path, "w+", encoding="utf-8") as f:
+                    json.dump(
+                        {
+                            "batch_id": batch_data.batch_id,
+                            "is_improvement": batch_data.is_improvement,
+                        },
+                        f,
+                    )
 
             for df_key, df in batch_data.existing_dataframes.items():
-                df.write_parquet(ensemble.optimizer_mount_point / f"{df_key}.parquet")
+                df_path = ensemble.optimizer_mount_point / f"{df_key}.parquet"
+                if not overwrite and df_path.exists():
+                    continue
+
+                df.write_parquet(df_path)
 
     def read_from_experiment(self, experiment: _OptimizerOnlyExperiment) -> None:
         self.controls = pl.read_parquet(
@@ -364,11 +380,11 @@ class EverestStorage:
 
         return df
 
-    def write_to_output_dir(self) -> None:
+    def write_to_output_dir(self, overwrite: bool | None = False) -> None:
         exp = _OptimizerOnlyExperiment(self._output_dir)
 
         # csv writing mostly for dev/debugging/quick inspection
-        self.data.write_to_experiment(exp)
+        self.data.write_to_experiment(exp, overwrite)
 
     @staticmethod
     def check_for_deprecated_seba_storage(config_file: str) -> None:
@@ -709,6 +725,8 @@ class EverestStorage:
                 )
             )
 
+        self.write_to_output_dir(overwrite=False)
+
     def on_optimization_finished(self) -> None:
         logger.debug("Storing final results Everest storage")
 
@@ -742,7 +760,7 @@ class EverestStorage:
                         b.is_improvement = True
                         max_total_objective = total_objective
 
-        self.write_to_output_dir()
+        self.write_to_output_dir(overwrite=True)
 
     def get_optimal_result(self) -> OptimalResult | None:
         # Only used in tests, but re-created to ensure
