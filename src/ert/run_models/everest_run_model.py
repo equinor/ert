@@ -143,7 +143,7 @@ class EverestRunModel(BaseRunModel):
         self._batch_id: int = 0
 
         ens_path = os.path.join(everest_config.output_dir, STORAGE_DIR)
-        storage = open_storage(ens_path, mode="w")
+        storage = open_storage(ens_path, mode="r")
 
         if status_queue is None:
             status_queue = queue.SimpleQueue()
@@ -280,6 +280,16 @@ class EverestRunModel(BaseRunModel):
     def run_experiment(
         self, evaluator_server_config: EvaluatorServerConfig, restart: bool = False
     ) -> None:
+        # close read-only storage
+        self._storage.close()
+        # Reopen write-only storage
+        self._storage = open_storage(
+            os.path.join(self._everest_config.output_dir, STORAGE_DIR), mode="w"
+        )
+
+        if self._experiment is not None:
+            self._experiment = self._storage.get_experiment(self._experiment.id)
+
         self.log_at_startup()
         self._eval_server_cfg = evaluator_server_config
 
