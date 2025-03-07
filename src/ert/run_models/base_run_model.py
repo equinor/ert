@@ -28,7 +28,7 @@ from ert.analysis.event import (
     AnalysisErrorEvent,
     AnalysisEvent,
 )
-from ert.config import HookRuntime, QueueSystem, UpdateSettings
+from ert.config import HookRuntime, QueueSystem, UpdateSettings, WorkflowFixtures
 from ert.config.analysis_module import ESSettings
 from ert.config.forward_model_step import ForwardModelStep
 from ert.config.model_config import ModelConfig
@@ -58,7 +58,6 @@ from ert.trace import tracer
 from ert.utils import log_duration
 from ert.workflow_runner import WorkflowRunner
 
-from ..config.workflow_fixtures import WorkflowFixtures
 from ..run_arg import RunArg
 from .event import (
     AnalysisStatusEvent,
