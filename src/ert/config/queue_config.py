@@ -378,7 +378,7 @@ def _parse_realization_memory_str(realization_memory_str: str) -> int:
     match = re.search(r"(\d+)\s*(\w)", realization_memory_str)
     if match is None or match.group(2).lower() not in multipliers:
         raise ConfigValidationError.with_context(
-            f"Could not understand byte unit in {realization_memory_str} {match}",
+            f"Could not understand byte unit in {realization_memory_str}",
             realization_memory_str,
         )
     return int(match.group(1)) * multipliers[match.group(2).lower()]
