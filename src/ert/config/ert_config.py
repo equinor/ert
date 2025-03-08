@@ -36,7 +36,6 @@ from .forward_model_step import (
     ForwardModelStepPlugin,
     ForwardModelStepValidationError,
 )
-from .gen_kw_config import GenKwConfig
 from .model_config import ModelConfig
 from .observation_vector import ObsVector
 from .observations import EnkfObs
@@ -57,19 +56,16 @@ from .parsing import (
     parse_contents,
     read_file,
 )
-from .parsing import (
-    parse as parse_config,
-)
+from .parsing import parse as parse_config
 from .parsing.observations_parser import (
     GenObsValues,
     HistoryValues,
     ObservationConfigError,
     SummaryValues,
 )
-from .parsing.observations_parser import (
-    parse as parse_observations,
-)
+from .parsing.observations_parser import parse as parse_observations
 from .queue_config import QueueConfig
+from .scalar_parameter import ScalarParameters
 from .workflow import Workflow
 from .workflow_job import ErtScriptLoadFailure, WorkflowJob
 
@@ -849,17 +845,14 @@ class ErtConfig:
             raise ConfigValidationError.from_collected(errors)
 
         if dm := analysis_config.design_matrix:
-            dm_params = [
-                x.name
-                for x in dm.parameter_configuration.transform_function_definitions
-            ]
+            dm_params = [x.param_name for x in dm.scalars]
             for group_name, config in ensemble_config.parameter_configs.items():
                 overlapping = []
-                if not isinstance(config, GenKwConfig):
+                if not isinstance(config, ScalarParameters):
                     continue
-                for transform_definition in config.transform_function_definitions:
-                    if transform_definition.name in dm_params:
-                        overlapping.append(transform_definition.name)
+                for param in config.scalars:
+                    if param.param_name in dm_params:
+                        overlapping.append(param.param_name)
                 if overlapping:
                     ConfigWarning.warn(
                         f"Parameters {overlapping} from GEN_KW group '{group_name}' "

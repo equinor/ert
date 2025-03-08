@@ -102,7 +102,6 @@ class EnsembleExperiment(BaseRunModel):
                 else:
                     parameters_config.append(param)
             self._parameter_configuration = parameters_config
-        parameters_config = self._parameter_configuration
         if not restart:
             self.run_workflows(
                 HookRuntime.PRE_EXPERIMENT,

@@ -367,7 +367,7 @@ class ScalarParameters(ParameterConfig):
             )
             params["realization"] = real
             if design_matrix_df is not None:
-                row = design_matrix_df.loc[real]["DESIGN_MATRIX"]
+                row = design_matrix_df.loc[real]
                 for parameter in self.scalars:
                     if parameter.input_source == DataSource.DESIGN_MATRIX:
                         value = row[parameter.param_name]
