@@ -87,9 +87,9 @@ class EnsembleExperiment(BaseRunModel):
         self.restart = restart
         # If design matrix is present, we try to merge design matrix parameters
         # to the experiment parameters and set new active realizations
-        parameters_config: list[ParameterConfig] = []
         design_matrix = self._design_matrix
         if design_matrix is not None:
+            parameters_config: list[ParameterConfig] = []
             for param in self._parameter_configuration:
                 if isinstance(param, ScalarParameters):
                     try:
@@ -109,7 +109,7 @@ class EnsembleExperiment(BaseRunModel):
             )
             self.experiment = self._storage.create_experiment(
                 name=self.experiment_name,
-                parameters=parameters_config,
+                parameters=self._parameter_configuration,
                 observations=self._observations,
                 responses=self._response_configuration,
             )

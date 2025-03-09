@@ -406,8 +406,8 @@ class ScalarParameters(ParameterConfig):
         realization: int,
         data: npt.NDArray[np.float64],
     ) -> None:
-        # this function is not be used since
-        # implementation as we can't deduce which parameters are being written
+        # this function is not be used since we can't deduce
+        # which parameters are being written whithin the data array
         pass
 
     def save_updated_parameters_and_copy_remaining(
@@ -502,8 +502,8 @@ class ScalarParameters(ParameterConfig):
                 if param.template_file is not None and param.output_file is not None:
                     outfiles[group_name] = (param.template_file, param.output_file)
                     break
-
-        for group_name, (template_file, output_file) in outfiles.values():
+        print(f"DEBUG {outfiles} {data}")
+        for group_name, (template_file, output_file) in outfiles.items():
             target_file = substitute_runpath_name(
                 output_file, real_nr, ensemble.iteration
             )

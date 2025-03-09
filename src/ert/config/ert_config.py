@@ -10,13 +10,7 @@ from dataclasses import field
 from datetime import datetime
 from os import path
 from pathlib import Path
-from typing import (
-    Any,
-    ClassVar,
-    Self,
-    no_type_check,
-    overload,
-)
+from typing import Any, ClassVar, Self, no_type_check, overload
 
 import polars as pl
 from pydantic import ValidationError as PydanticValidationError
