@@ -12,6 +12,7 @@ from .plugin_manager import (
     hook_implementation,
 )
 from .plugin_response import PluginMetadata, PluginResponse
+from .workflow_config import ErtScriptWorkflow, WorkflowConfigs
 
 P = ParamSpec("P")
 
@@ -55,7 +56,9 @@ __all__ = [
     "ErtPluginContext",
     "ErtPluginManager",
     "ErtScript",
+    "ErtScriptWorkflow",
     "ExternalErtScript",
     "JobDoc",
+    "WorkflowConfigs",
     "plugin",
 ]
