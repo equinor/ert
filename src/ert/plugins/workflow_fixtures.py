@@ -16,8 +16,8 @@ class WorkflowFixtures(TypedDict, total=False):
     storage: Storage
     random_seed: int | None
     reports_dir: str
-    observation_settings: UpdateSettings
-    es_settings: ESSettings
+    observation_settings: UpdateSettings | None
+    es_settings: ESSettings | None
     run_paths: Runpaths
     workflow_args: list[Any]
     parent: QWidget | None
