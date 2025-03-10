@@ -38,6 +38,7 @@ from .summary_config import SummaryConfig
 from .summary_observation import SummaryObservation
 from .surface_config import SurfaceConfig
 from .workflow import Workflow
+from .workflow_fixtures import WorkflowFixtures
 from .workflow_job import WorkflowJob
 
 __all__ = [
@@ -83,6 +84,7 @@ __all__ = [
     "UpdateSettings",
     "WarningInfo",
     "Workflow",
+    "WorkflowFixtures",
     "WorkflowJob",
     "capture_validation",
     "field_transform",

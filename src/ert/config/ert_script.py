@@ -13,10 +13,8 @@ from typing import TYPE_CHECKING, Any, TypeAlias
 
 from typing_extensions import deprecated
 
-from ert.config.workflow_fixtures import WorkflowFixtures
-
 if TYPE_CHECKING:
-    from ert.config import ErtConfig
+    from ert.config import ErtConfig, WorkflowFixtures
     from ert.storage import Ensemble, Storage
 
     Fixtures: TypeAlias = ErtConfig | Ensemble | Storage
