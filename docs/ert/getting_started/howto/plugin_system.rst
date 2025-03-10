@@ -210,8 +210,8 @@ Full example:
            print("Hello World")
 
    @ert.plugin(name="my_plugin")
-    def legacy_ertscript_workflow(config):
-        workflow = config.add_workflow(MyJob, "MY_JOB")
+    def legacy_ertscript_workflow(config: ert.WorkflowConfigs):
+        workflow: ert.ErtScriptWorkflow = config.add_workflow(MyJob, "MY_JOB")
         workflow.parser = my_job_parser  # Optional
         workflow.description = "My job description"  # Optional
         workflow.examples = "example of use"  # Optional

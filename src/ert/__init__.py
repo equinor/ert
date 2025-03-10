@@ -15,11 +15,12 @@ from .config import (
 from .data import MeasuredData
 from .libres_facade import LibresFacade
 from .workflow_runner import WorkflowRunner
-from .plugins import plugin, ErtScript
+from .plugins import plugin, ErtScript, WorkflowConfigs, ErtScriptWorkflow
 from .scheduler import JobState
 
 __all__ = [
     "ErtScript",
+    "ErtScriptWorkflow",
     "ForwardModelStepDocumentation",
     "ForwardModelStepJSON",
     "ForwardModelStepPlugin",
@@ -28,6 +29,7 @@ __all__ = [
     "JobState",
     "LibresFacade",
     "MeasuredData",
+    "WorkflowConfigs",
     "WorkflowRunner",
     "plugin",
 ]
