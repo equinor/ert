@@ -45,6 +45,7 @@ from fastapi.security import (
     HTTPBasic,
     HTTPBasicCredentials,
 )
+from opentelemetry.trace.propagation.tracecontext import TraceContextTextMapPropagator
 from pydantic import BaseModel
 
 from ert.config.parsing.queue_system import QueueSystem
@@ -77,6 +78,7 @@ from everest.strings import (
     START_EXPERIMENT_ENDPOINT,
     STOP_ENDPOINT,
 )
+from everest.trace import tracer, tracer_provider
 from everest.util import makedirs_if_needed, version_info
 
 
@@ -424,13 +426,40 @@ def _configure_loggers(detached_dir: Path, log_dir: Path, logging_level: int) ->
     }
 
     logging.config.dictConfig(logging_config)
-    EverestPluginManager().add_log_handle_to_root()
+    plugin_manager = EverestPluginManager()
+    plugin_manager.add_log_handle_to_root()
+    plugin_manager.add_span_processor_to_trace_provider(tracer_provider)
+
+
+def get_trace_context():
+    arg_parser = argparse.ArgumentParser()
+    arg_parser.add_argument(
+        "--traceparent",
+        type=str,
+        help="Trace parent id to be used by the storage root span",
+        default=None,
+    )
+    options = arg_parser.parse_args()
+    ctx = (
+        TraceContextTextMapPropagator().extract(
+            carrier={"traceparent": options.traceparent}
+        )
+        if options.traceparent
+        else None
+    )
+    return ctx
 
 
 def main() -> None:
     arg_parser = argparse.ArgumentParser()
     arg_parser.add_argument("--output-dir", "-o", type=str)
     arg_parser.add_argument("--logging-level", "-l", type=int, default=logging.INFO)
+    arg_parser.add_argument(
+        "--traceparent",
+        type=str,
+        help="Trace parent id to be used by the storage root span",
+        default=None,
+    )
     options = arg_parser.parse_args()
 
     output_dir = options.output_dir
@@ -441,77 +470,86 @@ def main() -> None:
     host_file = ServerConfig.get_hostfile_path(output_dir)
     msg_queue: SimpleQueue[EverestServerMsg] = SimpleQueue()
 
-    try:
-        _configure_loggers(
-            detached_dir=Path(ServerConfig.get_detached_node_dir(output_dir)),
-            log_dir=Path(output_dir) / OPTIMIZATION_LOG_DIR,
-            logging_level=logging_level,
+    ctx = (
+        TraceContextTextMapPropagator().extract(
+            carrier={"traceparent": options.traceparent}
         )
+        if options.traceparent
+        else None
+    )
 
-        update_everserver_status(status_path, ServerStatus.starting)
-        logging.getLogger(EVEREST).info(version_info())
-        logging.getLogger(EVEREST).info(f"Output directory: {output_dir}")
+    with tracer.start_as_current_span("everest.server", context=ctx):
+        try:
+            _configure_loggers(
+                detached_dir=Path(ServerConfig.get_detached_node_dir(output_dir)),
+                log_dir=Path(output_dir) / OPTIMIZATION_LOG_DIR,
+                logging_level=logging_level,
+            )
 
-        authentication = _generate_authentication()
-        cert_path, key_path, key_pw = _generate_certificate(
-            ServerConfig.get_certificate_dir(output_dir)
-        )
-        host = _get_machine_name()
-        port = _find_open_port(host, lower=5000, upper=5800)
-        _write_hostfile(host_file, host, port, cert_path, authentication)
+            update_everserver_status(status_path, ServerStatus.starting)
+            logging.getLogger(EVEREST).info(version_info())
+            logging.getLogger(EVEREST).info(f"Output directory: {output_dir}")
 
-        shared_data = {
-            STOP_ENDPOINT: False,
-            "started": False,
-            "events": [],
-            "subscribers": {},
-        }
+            authentication = _generate_authentication()
+            cert_path, key_path, key_pw = _generate_certificate(
+                ServerConfig.get_certificate_dir(output_dir)
+            )
+            host = _get_machine_name()
+            port = _find_open_port(host, lower=5000, upper=5800)
+            _write_hostfile(host_file, host, port, cert_path, authentication)
 
-        server_config = {
-            "optimization_output_dir": optimization_output_dir,
-            "port": port,
-            "cert_path": cert_path,
-            "key_path": key_path,
-            "key_passwd": key_pw,
-            "authentication": authentication,
-        }
-        # Starting the server
-        everserver_instance = threading.Thread(
-            target=_everserver_thread,
-            args=(shared_data, server_config, msg_queue),
-        )
-        everserver_instance.daemon = True
-        everserver_instance.start()
+            shared_data = {
+                STOP_ENDPOINT: False,
+                "started": False,
+                "events": [],
+                "subscribers": {},
+            }
 
-        # Monitoring the server
-        while True:
-            try:
-                item = msg_queue.get(timeout=1)  # Wait for data
-                match item:
-                    case ServerStarted():
-                        update_everserver_status(status_path, ServerStatus.running)
-                    case ServerStopped():
-                        update_everserver_status(status_path, ServerStatus.stopped)
-                        return
-                    case ExperimentFailed():
-                        update_everserver_status(
-                            status_path, ServerStatus.failed, item.msg
-                        )
-                        return
-                    case ExperimentComplete():
-                        status, message = _get_optimization_status(
-                            item.exit_code, item.data
-                        )
-                        update_everserver_status(status_path, status, message)
-                        return
-            except Empty:
-                continue
-    except:
-        update_everserver_status(
-            status_path,
-            ServerStatus.failed,
-            message=traceback.format_exc(),
-        )
+            server_config = {
+                "optimization_output_dir": optimization_output_dir,
+                "port": port,
+                "cert_path": cert_path,
+                "key_path": key_path,
+                "key_passwd": key_pw,
+                "authentication": authentication,
+            }
+            # Starting the server
+            everserver_instance = threading.Thread(
+                target=_everserver_thread,
+                args=(shared_data, server_config, msg_queue),
+            )
+            everserver_instance.daemon = True
+            everserver_instance.start()
+
+            # Monitoring the server
+            while True:
+                try:
+                    item = msg_queue.get(timeout=1)  # Wait for data
+                    match item:
+                        case ServerStarted():
+                            update_everserver_status(status_path, ServerStatus.running)
+                        case ServerStopped():
+                            update_everserver_status(status_path, ServerStatus.stopped)
+                            break
+                        case ExperimentFailed():
+                            update_everserver_status(
+                                status_path, ServerStatus.failed, item.msg
+                            )
+                            break
+                        case ExperimentComplete():
+                            status, message = _get_optimization_status(
+                                item.exit_code, item.data
+                            )
+                            update_everserver_status(status_path, status, message)
+                            break
+                except Empty:
+                    continue
+        except:
+            update_everserver_status(
+                status_path,
+                ServerStatus.failed,
+                message=traceback.format_exc(),
+            )
 
 
 def _get_optimization_status(

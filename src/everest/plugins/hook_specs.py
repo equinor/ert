@@ -2,6 +2,7 @@ import logging
 from collections.abc import Sequence
 from typing import Any
 
+from opentelemetry.sdk.trace.export import BatchSpanProcessor
 from pydantic import BaseModel
 
 from everest.plugins import hookspec
@@ -99,6 +100,16 @@ def add_log_handle_to_root() -> logging.Handler:  # type: ignore[empty-body]
     in the main entry point.
     :return: A log handle that will be added to the root logger
     :rtype: logging.Handler
+    """
+
+
+@hookspec
+def add_span_processor() -> BatchSpanProcessor:  # type: ignore
+    """
+    Create a BatchSpanProcessor which will be added to the trace provider
+    in ert.
+
+    :return: A BatchSpanProcessor that will be added to the trace provider in everest
     """
 
 

@@ -16,6 +16,7 @@ from everest.bin.kill_script import kill_entry
 from everest.bin.monitor_script import monitor_entry
 from everest.bin.visualization_script import visualization_entry
 from everest.plugins.everest_plugin_manager import EverestPluginManager
+from everest.trace import tracer, tracer_provider
 
 
 def _build_args_parser() -> argparse.ArgumentParser:
@@ -48,7 +49,9 @@ class EverestMain:
             parser.error("Unrecognized command")
 
         # Setup logging from plugins:
-        EverestPluginManager().add_log_handle_to_root()
+        plugin_manager = EverestPluginManager()
+        plugin_manager.add_log_handle_to_root()
+        plugin_manager.add_span_processor_to_trace_provider(tracer_provider)
         logger = logging.getLogger(__name__)
         logger.info(f"Started everest with {parsed_args}")
         # Use dispatch pattern to invoke method with same name
@@ -103,6 +106,7 @@ class EverestMain:
         visualization_entry(args)
 
 
+@tracer.start_as_current_span("everest.application.start")
 def start_everest(args: list[str] | None = None) -> None:
     """Main entry point for the everest application"""
     args = args or sys.argv
