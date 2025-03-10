@@ -15,7 +15,7 @@ from ert.gui.ertwidgets.stringbox import StringBox
 from ert.validation import ActiveRange, RangeSubsetStringArgument
 
 if TYPE_CHECKING:
-    from ert.config.design_matrix import DesignMatrix
+    from ert.config import DesignMatrix
 
 
 class DesignMatrixPanel(QDialog):
