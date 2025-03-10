@@ -13,6 +13,7 @@ from .plugin_manager import (
 )
 from .plugin_response import PluginMetadata, PluginResponse
 from .workflow_config import ErtScriptWorkflow, WorkflowConfigs
+from .workflow_fixtures import WorkflowFixtures
 
 P = ParamSpec("P")
 
@@ -60,5 +61,6 @@ __all__ = [
     "ExternalErtScript",
     "JobDoc",
     "WorkflowConfigs",
+    "WorkflowFixtures",
     "plugin",
 ]

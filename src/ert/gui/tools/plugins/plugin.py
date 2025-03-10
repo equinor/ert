@@ -3,8 +3,7 @@ from __future__ import annotations
 import inspect
 from typing import TYPE_CHECKING, Any
 
-from ert.config.workflow_fixtures import WorkflowFixtures
-from ert.plugins import ErtPlugin
+from ert.plugins import ErtPlugin, WorkflowFixtures
 
 if TYPE_CHECKING:
     from PyQt6.QtWidgets import QWidget
