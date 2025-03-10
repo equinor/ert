@@ -11,6 +11,7 @@ import ssl
 import threading
 import traceback
 import uuid
+import warnings
 from base64 import b64decode, b64encode
 from contextlib import asynccontextmanager
 from functools import partial
@@ -286,7 +287,6 @@ def _everserver_thread(
 
     @app.post("/" + START_EXPERIMENT_ENDPOINT)
     async def start_experiment(
-        config: EverestConfig,
         request: Request,
         background_tasks: BackgroundTasks,
         credentials: HTTPBasicCredentials = Depends(security),
@@ -294,8 +294,14 @@ def _everserver_thread(
         _log(request)
         _check_user(credentials)
         if not shared_data["started"]:
-            runner = ExperimentRunner(config, shared_data, msg_queue)
             try:
+                config_dict = await request.json()
+                with warnings.catch_warnings(record=True) as records:
+                    config = EverestConfig.model_validate(config_dict)
+                for r in records:
+                    logging.getLogger("everserver").warning(r.message)
+
+                runner = ExperimentRunner(config, shared_data, msg_queue)
                 background_tasks.add_task(runner.run)
                 shared_data["started"] = True
                 return Response("Everest experiment started")
