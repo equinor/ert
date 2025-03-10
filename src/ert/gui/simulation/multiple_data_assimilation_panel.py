@@ -18,7 +18,6 @@ from ert.gui.ertwidgets import (
     TextModel,
     ValueModel,
 )
-from ert.gui.tools.design_matrix.design_matrix_panel import DesignMatrixPanel
 from ert.mode_definitions import ES_MDA_MODE
 from ert.run_models import MultipleDataAssimilation
 from ert.validation import (
@@ -28,6 +27,7 @@ from ert.validation import (
     RangeStringArgument,
 )
 
+from ._design_matrix_panel import DesignMatrixPanel
 from .experiment_config_panel import ExperimentConfigPanel
 
 if TYPE_CHECKING:
