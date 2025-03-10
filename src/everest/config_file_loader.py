@@ -3,6 +3,7 @@
 import logging
 import os
 import re
+from io import StringIO
 from typing import Any
 
 import jinja2
@@ -31,7 +32,7 @@ def load_yaml(file_name: str) -> dict[str, Any] | None:
     with open(file_name, encoding="utf-8") as input_file:
         input_data: list[str] = input_file.readlines()
         try:
-            yaml = YAML()
+            yaml = YAML(typ="safe", pure=True)
             yaml.preserve_quotes = True
             return yaml.load("".join(input_data))
         except YAMLError as exc:
@@ -118,13 +119,17 @@ def _render_definitions(
 def yaml_file_to_substituted_config_dict(config_path: str) -> dict[str, Any]:
     configuration = load_yaml(config_path)
 
+    yaml = YAML()
+    buffer = StringIO()
+    yaml.dump(configuration, buffer)
+    txt = buffer.getvalue()
+    buffer.close()
+
     definitions = _get_definitions(
         configuration=configuration,
         configpath=os.path.dirname(os.path.abspath(config_path)),
     )
     definitions["os"] = _os()  # update definitions with os namespace
-    with open(config_path, encoding="utf-8") as f:
-        txt = "".join(f.readlines())
 
     jenv = jinja2.Environment(
         block_start_string=BLOCK_START_STRING,
