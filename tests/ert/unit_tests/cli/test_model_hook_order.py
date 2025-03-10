@@ -23,6 +23,8 @@ EXPECTED_CALL_ORDER = [
             "reports_dir": ANY,
             "random_seed": ANY,
             "run_paths": ANY,
+            "es_settings": None,
+            "observation_settings": None,
         },
     ),
     call(
@@ -33,6 +35,8 @@ EXPECTED_CALL_ORDER = [
             "reports_dir": ANY,
             "random_seed": ANY,
             "run_paths": ANY,
+            "es_settings": None,
+            "observation_settings": None,
         },
     ),
     call(
@@ -79,6 +83,8 @@ EXPECTED_CALL_ORDER = [
             "reports_dir": ANY,
             "random_seed": ANY,
             "run_paths": ANY,
+            "es_settings": None,
+            "observation_settings": None,
         },
     ),
     call(
@@ -89,6 +95,8 @@ EXPECTED_CALL_ORDER = [
             "reports_dir": ANY,
             "random_seed": ANY,
             "run_paths": ANY,
+            "es_settings": None,
+            "observation_settings": None,
         },
     ),
     call(
@@ -97,6 +105,9 @@ EXPECTED_CALL_ORDER = [
             "random_seed": ANY,
             "storage": ANY,
             "ensemble": ANY,
+            "reports_dir": ANY,
+            "es_settings": None,
+            "observation_settings": None,
         },
     ),
 ]
