@@ -12,11 +12,11 @@ from ert.gui.ertwidgets import (
     StringBox,
     TextModel,
 )
-from ert.gui.tools.design_matrix.design_matrix_panel import DesignMatrixPanel
 from ert.mode_definitions import ENSEMBLE_EXPERIMENT_MODE
 from ert.run_models import EnsembleExperiment
 from ert.validation import ExperimentValidation, ProperNameArgument, RangeStringArgument
 
+from ._design_matrix_panel import DesignMatrixPanel
 from .experiment_config_panel import ExperimentConfigPanel
 
 
