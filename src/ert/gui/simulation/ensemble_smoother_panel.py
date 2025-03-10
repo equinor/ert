@@ -15,10 +15,14 @@ from ert.gui.ertwidgets import (
     TargetEnsembleModel,
     TextModel,
 )
+from ert.gui.tools.design_matrix.design_matrix_panel import DesignMatrixPanel
 from ert.mode_definitions import ENSEMBLE_SMOOTHER_MODE
 from ert.run_models import EnsembleSmoother
-from ert.validation import ProperNameFormatArgument, RangeStringArgument
-from ert.validation.proper_name_argument import ExperimentValidation
+from ert.validation import (
+    ExperimentValidation,
+    ProperNameFormatArgument,
+    RangeStringArgument,
+)
 
 from .experiment_config_panel import ExperimentConfigPanel
 
@@ -44,8 +48,8 @@ class EnsembleSmootherPanel(ExperimentConfigPanel):
     ) -> None:
         super().__init__(EnsembleSmoother)
         self.notifier = notifier
-        layout = QFormLayout()
 
+        layout = QFormLayout()
         self.setObjectName("ensemble_smoother_panel")
 
         self._experiment_name_field = StringBox(
@@ -63,6 +67,7 @@ class EnsembleSmootherPanel(ExperimentConfigPanel):
 
         runpath_label = CopyableLabel(text=run_path)
         layout.addRow("Runpath:", runpath_label)
+
         number_of_realizations_label = QLabel(f"<b>{ensemble_size}</b>")
         layout.addRow(QLabel("Number of realizations:"), number_of_realizations_label)
 
@@ -88,6 +93,15 @@ class EnsembleSmootherPanel(ExperimentConfigPanel):
         )
         self._active_realizations_field.setValidator(RangeStringArgument(ensemble_size))
         layout.addRow("Active realizations", self._active_realizations_field)
+
+        design_matrix = analysis_config.design_matrix
+        if design_matrix is not None:
+            layout.addRow(
+                "Design Matrix",
+                DesignMatrixPanel.get_design_matrix_button(
+                    self._active_realizations_field, design_matrix
+                ),
+            )
 
         self.setLayout(layout)
 

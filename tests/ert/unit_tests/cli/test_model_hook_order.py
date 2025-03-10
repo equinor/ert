@@ -134,6 +134,7 @@ def test_hook_call_order_ensemble_smoother(monkeypatch):
     )
     test_class.run_ensemble_evaluator = MagicMock(return_value=[0])
     test_class._storage = storage_mock
+    test_class._design_matrix = None
     test_class.run_experiment(MagicMock())
 
     assert run_wfs_mock.mock_calls == EXPECTED_CALL_ORDER
