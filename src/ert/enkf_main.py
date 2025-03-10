@@ -17,6 +17,7 @@ from ert.substitutions import Substitutions, substitute_runpath_name
 from ert.utils import log_duration
 
 from .config import (
+    DESIGN_MATRIX_GROUP,
     ExtParamConfig,
     Field,
     ForwardModelStep,
@@ -25,7 +26,6 @@ from .config import (
     ParameterConfig,
     SurfaceConfig,
 )
-from .config.design_matrix import DESIGN_MATRIX_GROUP
 from .config.ert_config import create_forward_model_json
 from .run_arg import RunArg
 from .runpaths import Runpaths
