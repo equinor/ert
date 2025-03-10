@@ -32,6 +32,7 @@ from everest.strings import (
     START_EXPERIMENT_ENDPOINT,
     STOP_ENDPOINT,
 )
+from everest.trace import get_traceparent
 
 # Specifies how many times to try a http request within the specified timeout.
 _HTTP_REQUEST_RETRY = 10
@@ -60,6 +61,8 @@ async def start_server(
             str(config.output_dir),
             "--logging-level",
             str(logging_level),
+            "--traceparent",
+            str(get_traceparent()),
         ]
         poll_task = asyncio.create_task(driver.poll(), name="poll_task")
         await driver.submit(0, "everserver", *args, name=Path(config.config_file).stem)
