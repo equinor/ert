@@ -108,11 +108,9 @@ class MultipleDataAssimilation(UpdateRunModel):
     ) -> None:
         self.log_at_startup()
 
-        parameters_config = self._parameter_configuration
-        design_matrix = self._design_matrix
-        parameters_config: list[ParameterConfig] = []
         design_matrix = self._design_matrix
         if design_matrix is not None:
+            parameters_config: list[ParameterConfig] = []
             for param in self._parameter_configuration:
                 if isinstance(param, ScalarParameters):
                     try:
@@ -125,7 +123,6 @@ class MultipleDataAssimilation(UpdateRunModel):
                 else:
                     parameters_config.append(param)
             self._parameter_configuration = parameters_config
-
         self.restart = restart
         if self.restart_run:
             id = self.prior_ensemble_id
@@ -152,7 +149,7 @@ class MultipleDataAssimilation(UpdateRunModel):
             )
             sim_args = {"weights": self._relative_weights}
             experiment = self._storage.create_experiment(
-                parameters=parameters_config,
+                parameters=self._parameter_configuration,
                 observations=self._observations,
                 responses=self._response_configuration,
                 simulation_arguments=sim_args,
