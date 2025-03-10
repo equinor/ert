@@ -28,11 +28,15 @@ from ert.analysis.event import (
     AnalysisErrorEvent,
     AnalysisEvent,
 )
-from ert.config import HookRuntime, QueueSystem, UpdateSettings
-from ert.config.analysis_module import ESSettings
-from ert.config.forward_model_step import ForwardModelStep
-from ert.config.model_config import ModelConfig
-from ert.config.workflow import Workflow
+from ert.config import (
+    ESSettings,
+    ForwardModelStep,
+    HookRuntime,
+    ModelConfig,
+    QueueSystem,
+    UpdateSettings,
+    Workflow,
+)
 from ert.enkf_main import _seed_sequence, create_run_path
 from ert.ensemble_evaluator import Ensemble as EEEnsemble
 from ert.ensemble_evaluator import (

@@ -4,7 +4,7 @@ from os import getuid
 from pwd import getpwuid
 from typing import TYPE_CHECKING
 
-from ert.config.parsing.queue_system import QueueSystem
+from ert.config import QueueSystem
 
 from .driver import Driver
 from .job import JobState

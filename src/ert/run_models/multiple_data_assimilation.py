@@ -8,8 +8,13 @@ from uuid import UUID
 
 import numpy as np
 
-from ert.config import ErtConfig, ESSettings, HookRuntime, UpdateSettings
-from ert.config.parsing.config_errors import ConfigValidationError
+from ert.config import (
+    ConfigValidationError,
+    ErtConfig,
+    ESSettings,
+    HookRuntime,
+    UpdateSettings,
+)
 from ert.enkf_main import sample_prior, save_design_matrix_to_ensemble
 from ert.ensemble_evaluator import EvaluatorServerConfig
 from ert.storage import Ensemble, Storage

@@ -8,10 +8,9 @@ from typing import ClassVar, Literal, NotRequired
 from pydantic import field_validator
 from typing_extensions import TypedDict, Unpack
 
-from ert.config.parsing.config_errors import ConfigWarning
 from ert.substitutions import Substitutions
 
-from .parsing import SchemaItemType
+from .parsing import ConfigWarning, SchemaItemType
 
 logger = logging.getLogger(__name__)
 

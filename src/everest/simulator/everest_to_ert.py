@@ -7,17 +7,19 @@ from pathlib import Path
 from typing import Any
 
 import everest
-from ert.config import ErtConfig
-from ert.config.ensemble_config import EnsembleConfig
+from ert.config import (
+    EnsembleConfig,
+    ErtConfig,
+    ExtParamConfig,
+    ForwardModelStep,
+    ModelConfig,
+)
 from ert.config.ert_config import (
     _substitutions_from_dict,
     create_list_of_forward_model_steps_to_run,
     installed_forward_model_steps_from_dict,
     uppercase_subkeys_and_stringify_subvalues,
 )
-from ert.config.ext_param_config import ExtParamConfig
-from ert.config.forward_model_step import ForwardModelStep
-from ert.config.model_config import ModelConfig
 from ert.config.parsing import ConfigDict
 from ert.config.parsing import ConfigKeys as ErtConfigKeys
 from ert.plugins import ErtPluginContext

@@ -27,7 +27,7 @@ from .reporting.message import (
 )
 
 if TYPE_CHECKING:
-    from ert.config.forward_model_step import ForwardModelStepJSON
+    from ert.config import ForwardModelStepJSON
 
 logger = logging.getLogger(__name__)
 

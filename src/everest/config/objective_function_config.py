@@ -2,7 +2,7 @@ from typing import Self
 
 from pydantic import BaseModel, Field, PositiveFloat, field_validator, model_validator
 
-from ert.config.parsing import ConfigWarning
+from ert.config import ConfigWarning
 
 
 class ObjectiveFunctionConfig(BaseModel, extra="forbid"):
