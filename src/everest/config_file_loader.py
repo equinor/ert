@@ -3,6 +3,7 @@
 import logging
 import os
 import re
+from io import StringIO
 from typing import Any
 
 import jinja2
@@ -27,11 +28,11 @@ ERT_CONFIG_TEMPLATES = {
 }
 
 
-def load_yaml(file_name: str) -> dict[str, Any] | None:
+def load_yaml(file_name: str, safe: bool = False) -> dict[str, Any] | None:
     with open(file_name, encoding="utf-8") as input_file:
         input_data: list[str] = input_file.readlines()
         try:
-            yaml = YAML()
+            yaml = YAML(typ="safe", pure=True) if safe else YAML()
             yaml.preserve_quotes = True
             return yaml.load("".join(input_data))
         except YAMLError as exc:
@@ -116,15 +117,21 @@ def _render_definitions(
 
 
 def yaml_file_to_substituted_config_dict(config_path: str) -> dict[str, Any]:
-    configuration = load_yaml(config_path)
+    configuration = load_yaml(config_path, safe=True)
+    if configuration is None:
+        return {}
+
+    yaml = YAML()
+    buffer = StringIO()
+    yaml.dump(configuration, buffer)
+    txt = buffer.getvalue()
+    buffer.close()
 
     definitions = _get_definitions(
         configuration=configuration,
         configpath=os.path.dirname(os.path.abspath(config_path)),
     )
     definitions["os"] = _os()  # update definitions with os namespace
-    with open(config_path, encoding="utf-8") as f:
-        txt = "".join(f.readlines())
 
     jenv = jinja2.Environment(
         block_start_string=BLOCK_START_STRING,
@@ -154,8 +161,8 @@ def yaml_file_to_substituted_config_dict(config_path: str) -> dict[str, Any]:
     yaml = YAML(typ="safe", pure=True).load(config)
 
     if not isinstance(yaml, dict):
-        yaml = {}
-
-    # Inject config path
-    yaml["config_path"] = config_path
-    return yaml
+        return {"config_path": config_path}
+    else:
+        # Inject config path
+        yaml["config_path"] = config_path
+        return yaml

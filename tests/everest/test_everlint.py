@@ -1,3 +1,4 @@
+import fileinput
 from contextlib import ExitStack as does_not_raise
 from pathlib import Path
 from textwrap import dedent
@@ -354,3 +355,28 @@ def test_undefined_substitution(min_config, change_to_tmpdir, target, expected):
         print(e)
     else:
         yaml_file_to_substituted_config_dict("config.yml")
+
+
+def test_commented_out_substitution(min_config, change_to_tmpdir):
+    config = min_config
+    config["forward_model"] = [
+        "step1 abc",
+        "step2 abc",
+        "step3 abc",
+    ]
+
+    with open("config.yml", mode="w", encoding="utf-8") as f:
+        yaml.dump(config, f)
+
+    with fileinput.input("config.yml", inplace=True) as fin:
+        for _, line in enumerate(fin):
+            if "step2 abc" in line:
+                print(" # - step2 r{{sub}} blabla")
+            else:
+                print(line, end="")
+
+    config_dict = yaml_file_to_substituted_config_dict("config.yml")
+
+    assert len(config_dict["forward_model"]) == 2
+    assert config_dict["forward_model"][0] == "step1 abc"
+    assert config_dict["forward_model"][1] == "step3 abc"
