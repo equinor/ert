@@ -13,7 +13,14 @@ import polars as pl
 import xtgeo
 from pydantic import BaseModel
 
-from ert.config import ExtParamConfig, Field, GenKwConfig, ResponseConfig, SurfaceConfig
+from ert.config import (
+    ExtParamConfig,
+    Field,
+    GenKwConfig,
+    ResponseConfig,
+    ScalarParameters,
+    SurfaceConfig,
+)
 from ert.config.parsing.context_values import ContextBoolEncoder
 from ert.storage.mode import BaseMode, Mode, require_write
 
@@ -25,6 +32,7 @@ if TYPE_CHECKING:
 _KNOWN_PARAMETER_TYPES = {
     GenKwConfig.__name__: GenKwConfig,
     SurfaceConfig.__name__: SurfaceConfig,
+    ScalarParameters.__name__: ScalarParameters,
     Field.__name__: Field,
     ExtParamConfig.__name__: ExtParamConfig,
 }
