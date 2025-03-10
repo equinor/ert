@@ -8,7 +8,7 @@ from typing import TYPE_CHECKING, Any
 import numpy as np
 import xarray as xr
 
-from ert.config._option_dict import option_dict
+from ._option_dict import option_dict
 
 if TYPE_CHECKING:
     import numpy.typing as npt

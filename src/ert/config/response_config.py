@@ -4,8 +4,8 @@ from typing import Any, Self
 
 import polars as pl
 
-from ert.config.parameter_config import CustomDict
-from ert.config.parsing import ConfigDict
+from .parameter_config import CustomDict
+from .parsing import ConfigDict
 
 
 class InvalidResponseFile(Exception):

@@ -9,8 +9,7 @@ import signal
 import threading
 from functools import partial
 
-from ert.config.ert_config import ErtConfig
-from ert.config.parsing.queue_system import QueueSystem
+from ert.config import ErtConfig, QueueSystem
 from everest.config import EverestConfig, ServerConfig
 from everest.detached import (
     ServerStatus,

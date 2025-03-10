@@ -16,7 +16,7 @@ import xarray as xr
 from pydantic import BaseModel
 from typing_extensions import TypedDict, deprecated
 
-from ert.config.gen_kw_config import GenKwConfig
+from ert.config import GenKwConfig
 from ert.storage.mode import BaseMode, Mode, require_write
 
 from .realization_storage_state import RealizationStorageState

@@ -10,8 +10,7 @@ import polars as pl
 import xarray as xr
 from polars.exceptions import ColumnNotFoundError
 
-from ert.config import GenDataConfig, GenKwConfig
-from ert.config.field import Field
+from ert.config import Field, GenDataConfig, GenKwConfig
 from ert.storage import Ensemble, Experiment, Storage
 
 logger = logging.getLogger(__name__)

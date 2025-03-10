@@ -6,7 +6,7 @@ from typing import Any, ClassVar
 from docutils import nodes
 from sphinx.util.docutils import SphinxDirective
 
-from ert.config.forward_model_step import ForwardModelStepDocumentation
+from ert.config import ForwardModelStepDocumentation
 from ert.plugins import ErtPluginManager, JobDoc
 from ert.shared._doc_utils.forward_model_documentation import _ForwardModelDocumentation
 

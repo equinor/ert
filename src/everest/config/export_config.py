@@ -2,7 +2,7 @@ from typing import Any
 
 from pydantic import BaseModel, Field, model_validator
 
-from ert.config.parsing.config_errors import ConfigWarning
+from ert.config import ConfigWarning
 
 
 class ExportConfig(BaseModel, extra="forbid"):

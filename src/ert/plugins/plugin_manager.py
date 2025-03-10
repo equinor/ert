@@ -27,7 +27,7 @@ hook_specification = pluggy.HookspecMarker(_PLUGIN_NAMESPACE)
 
 
 if TYPE_CHECKING:
-    from ert.config.forward_model_step import (
+    from ert import (
         ForwardModelStepDocumentation,
         ForwardModelStepPlugin,
     )

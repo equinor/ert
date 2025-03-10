@@ -13,13 +13,12 @@ import polars as pl
 import xtgeo
 from pydantic import BaseModel
 
-from ert.config import ExtParamConfig, Field, GenKwConfig, SurfaceConfig
+from ert.config import ExtParamConfig, Field, GenKwConfig, ResponseConfig, SurfaceConfig
 from ert.config.parsing.context_values import ContextBoolEncoder
-from ert.config.response_config import ResponseConfig
 from ert.storage.mode import BaseMode, Mode, require_write
 
 if TYPE_CHECKING:
-    from ert.config.parameter_config import ParameterConfig
+    from ert.config import ParameterConfig
     from ert.storage.local_ensemble import LocalEnsemble
     from ert.storage.local_storage import LocalStorage
 

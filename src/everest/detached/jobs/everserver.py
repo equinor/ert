@@ -47,7 +47,7 @@ from fastapi.security import (
 )
 from pydantic import BaseModel
 
-from ert.config.parsing.queue_system import QueueSystem
+from ert.config import QueueSystem
 from ert.ensemble_evaluator import (
     EndEvent,
     EnsembleSnapshot,

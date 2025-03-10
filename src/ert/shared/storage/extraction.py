@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from collections.abc import Mapping
 
-from ert.config.gen_kw_config import GenKwConfig
+from ert.config import GenKwConfig
 from ert.storage import Experiment
 
 _PRIOR_NAME_MAP = {
