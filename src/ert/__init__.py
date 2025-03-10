@@ -6,7 +6,6 @@ Ert - Ensemble Reservoir Tool - a package for reservoir modeling.
 import netCDF4 as _netcdf4  # noqa
 
 from .config import (
-    ErtScript,
     ForwardModelStepJSON,
     ForwardModelStepPlugin,
     ForwardModelStepValidationError,
@@ -16,7 +15,7 @@ from .config import (
 from .data import MeasuredData
 from .libres_facade import LibresFacade
 from .workflow_runner import WorkflowRunner
-from .plugins import plugin
+from .plugins import plugin, ErtScript
 from .scheduler import JobState
 
 __all__ = [

@@ -3,7 +3,7 @@ from unittest.mock import MagicMock
 
 import pytest
 
-from ert.config import CancelPluginException, ErtPlugin
+from ert.plugins import CancelPluginException, ErtPlugin
 
 
 # ruff: noqa: PLR6301
