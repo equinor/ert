@@ -55,6 +55,7 @@ from ert.ensemble_evaluator.state import (
     REALIZATION_STATE_FINISHED,
 )
 from ert.mode_definitions import MODULE_MODE
+from ert.plugins import WorkflowFixtures
 from ert.runpaths import Runpaths
 from ert.storage import Ensemble, Storage
 from ert.substitutions import Substitutions
@@ -62,7 +63,6 @@ from ert.trace import tracer
 from ert.utils import log_duration
 from ert.workflow_runner import WorkflowRunner
 
-from ..config.workflow_fixtures import WorkflowFixtures
 from ..run_arg import RunArg
 from .event import (
     AnalysisStatusEvent,
