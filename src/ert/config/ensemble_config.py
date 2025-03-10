@@ -137,6 +137,8 @@ class EnsembleConfig:
 
         parameter_configs = (
             [ScalarParameters.from_config_list(gen_kw_list)]
+            if gen_kw_list
+            else []
             + [SurfaceConfig.from_config_list(s) for s in surface_list]
             + [make_field(f) for f in field_list]
         )
