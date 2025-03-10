@@ -9,7 +9,7 @@ import pandas as pd
 import polars as pl
 from PyQt6.QtWidgets import QCheckBox, QWidget
 
-from ert.config import CancelPluginException, ErtPlugin
+from ert.plugins import CancelPluginException, ErtPlugin
 from ert.storage import Storage
 
 

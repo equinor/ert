@@ -1,6 +1,6 @@
 from typing import Any
 
-from ert.config.ert_script import ErtScript
+from ert import ErtScript
 from ert.config.parsing.config_errors import ConfigValidationError
 
 

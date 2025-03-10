@@ -4,8 +4,8 @@ import logging
 from argparse import ArgumentParser
 from collections.abc import Callable
 
-from ..config.ert_script import ErtScript
 from ..config.workflow_job import WorkflowJob
+from .ert_script import ErtScript
 
 logger = logging.getLogger(__name__)
 

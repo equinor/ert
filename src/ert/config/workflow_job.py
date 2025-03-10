@@ -5,8 +5,8 @@ import os
 from dataclasses import dataclass
 from typing import TypeAlias
 
-from .ert_plugin import ErtPlugin
-from .ert_script import ErtScript
+from ..plugins.ert_plugin import ErtPlugin
+from ..plugins.ert_script import ErtScript
 from .parse_arg_types_list import parse_arg_types_list
 from .parsing import (
     ConfigDict,

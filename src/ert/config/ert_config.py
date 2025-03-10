@@ -25,9 +25,9 @@ from pydantic.dataclasses import dataclass, rebuild_dataclass
 
 from ert.config.parsing.context_values import ContextBoolEncoder
 from ert.plugins import ErtPluginManager
+from ert.plugins.workflow_config import ErtScriptWorkflow
 from ert.substitutions import Substitutions
 
-from ..plugins.workflow_config import ErtScriptWorkflow
 from .analysis_config import AnalysisConfig
 from .ensemble_config import EnsembleConfig
 from .forward_model_step import (

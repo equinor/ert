@@ -2,6 +2,9 @@ from collections.abc import Callable
 from functools import wraps
 from typing import Any, ParamSpec
 
+from .ert_plugin import CancelPluginException, ErtPlugin
+from .ert_script import ErtScript
+from .external_ert_script import ExternalErtScript
 from .plugin_manager import (
     ErtPluginContext,
     ErtPluginManager,
@@ -46,4 +49,13 @@ def plugin(name: str) -> Callable[[Callable[P, Any]], Callable[P, Any]]:
     return wrapper
 
 
-__all__ = ["ErtPluginContext", "ErtPluginManager", "JobDoc", "plugin"]
+__all__ = [
+    "CancelPluginException",
+    "ErtPlugin",
+    "ErtPluginContext",
+    "ErtPluginManager",
+    "ErtScript",
+    "ExternalErtScript",
+    "JobDoc",
+    "plugin",
+]

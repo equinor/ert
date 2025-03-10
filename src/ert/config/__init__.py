@@ -4,10 +4,7 @@ from .capture_validation import capture_validation
 from .design_matrix import DesignMatrix
 from .ensemble_config import EnsembleConfig
 from .ert_config import ErtConfig
-from .ert_plugin import CancelPluginException, ErtPlugin
-from .ert_script import ErtScript
 from .ext_param_config import ExtParamConfig
-from .external_ert_script import ExternalErtScript
 from .field import Field, field_transform
 from .forward_model_step import (
     ForwardModelStep,
@@ -43,7 +40,6 @@ from .workflow_job import WorkflowJob
 __all__ = [
     "AnalysisConfig",
     "AnalysisModule",
-    "CancelPluginException",
     "ConfigValidationError",
     "ConfigValidationError",
     "ConfigWarning",
@@ -53,10 +49,7 @@ __all__ = [
     "EnsembleConfig",
     "ErrorInfo",
     "ErtConfig",
-    "ErtPlugin",
-    "ErtScript",
     "ExtParamConfig",
-    "ExternalErtScript",
     "Field",
     "ForwardModelStep",
     "ForwardModelStepDocumentation",

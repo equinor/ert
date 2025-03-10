@@ -5,8 +5,9 @@ from collections.abc import Callable
 from typing import TYPE_CHECKING, Any
 
 from _ert.threading import ErtThread
-from ert.config import CancelPluginException, ErtConfig
+from ert.config import ErtConfig
 from ert.config.workflow_fixtures import WorkflowFixtures
+from ert.plugins import CancelPluginException
 from ert.runpaths import Runpaths
 from ert.workflow_runner import WorkflowJobRunner
 
