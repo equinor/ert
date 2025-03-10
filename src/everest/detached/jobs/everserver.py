@@ -530,18 +530,18 @@ def main() -> None:
                             update_everserver_status(status_path, ServerStatus.running)
                         case ServerStopped():
                             update_everserver_status(status_path, ServerStatus.stopped)
-                            break
+                            return
                         case ExperimentFailed():
                             update_everserver_status(
                                 status_path, ServerStatus.failed, item.msg
                             )
-                            break
+                            return
                         case ExperimentComplete():
                             status, message = _get_optimization_status(
                                 item.exit_code, item.data
                             )
                             update_everserver_status(status_path, status, message)
-                            break
+                            return
                 except Empty:
                     continue
         except:
