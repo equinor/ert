@@ -22,8 +22,9 @@ CONFIG_FILE_MINIMAL = "config_minimal.yml"
 
 
 def run_detached_monitor_mock(status=ServerStatus.completed, error=None, **kwargs):
-    optimization_output = kwargs.get("optimization_output_dir")
-    path = os.path.join(optimization_output, "../detached_node_output/.session/status")
+    path = os.path.join(
+        os.getcwd(), "everest_output/detached_node_output/.session/status"
+    )
     update_everserver_status(path, status, message=error)
 
 
