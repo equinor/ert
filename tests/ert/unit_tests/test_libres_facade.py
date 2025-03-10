@@ -8,8 +8,7 @@ from pandas import ExcelWriter
 from pandas.core.frame import DataFrame
 from resdata.summary import Summary
 
-from ert.config import ErtConfig
-from ert.config.design_matrix import DESIGN_MATRIX_GROUP, DesignMatrix
+from ert.config import DESIGN_MATRIX_GROUP, DesignMatrix, ErtConfig
 from ert.enkf_main import sample_prior, save_design_matrix_to_ensemble
 from ert.libres_facade import LibresFacade
 from ert.storage import open_storage

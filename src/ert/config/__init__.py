@@ -1,7 +1,7 @@
 from .analysis_config import AnalysisConfig, ObservationGroups, UpdateSettings
 from .analysis_module import AnalysisModule, ESSettings
 from .capture_validation import capture_validation
-from .design_matrix import DesignMatrix
+from .design_matrix import DESIGN_MATRIX_GROUP, DesignMatrix
 from .ensemble_config import EnsembleConfig
 from .ert_config import ErtConfig
 from .ext_param_config import ExtParamConfig
@@ -38,6 +38,7 @@ from .workflow import Workflow
 from .workflow_job import WorkflowJob
 
 __all__ = [
+    "DESIGN_MATRIX_GROUP",
     "AnalysisConfig",
     "AnalysisModule",
     "ConfigValidationError",

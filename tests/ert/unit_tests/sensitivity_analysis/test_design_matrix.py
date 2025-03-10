@@ -2,8 +2,12 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from ert.config.design_matrix import DESIGN_MATRIX_GROUP, DesignMatrix
-from ert.config.gen_kw_config import GenKwConfig, TransformFunctionDefinition
+from ert.config import (
+    DESIGN_MATRIX_GROUP,
+    DesignMatrix,
+    GenKwConfig,
+)
+from ert.config.gen_kw_config import TransformFunctionDefinition
 
 
 def _create_design_matrix(xls_path, design_matrix_df, default_sheet_df) -> DesignMatrix:
