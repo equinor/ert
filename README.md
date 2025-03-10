@@ -46,31 +46,25 @@ pip install ert[everest]
 
 ## Developing
 
-To start developing the Python code, we suggest installing ert in editable mode
-into a [virtual environment](https://docs.python.org/3/library/venv.html) to
-isolate the install (substitute the appropriate way of sourcing venv for your shell):
+We use uv to have one synchronized development environment for all packages.
+See [installing uv](https://docs.astral.sh/uv/getting-started/installation/). We
+recommend either installing uv using your systems package manager, or creating
+a small virtual environment you intall base packages into (such as `uv` and `pre-commit`).
+
+Once uv is installed, you can get a development environment by running:
 
 ```sh
-# Create and enable a virtualenv
-python3 -m venv my_virtualenv
-source my_virtualenv/bin/activate
-
-# Update build dependencies
-pip install --upgrade pip
-
-# Download and install ert
 git clone https://github.com/equinor/ert
 cd ert
-pip install --editable ".[dev, everest]"
+uv sync --all-extras
 ```
 
 ### Test setup
 
-Additional development packages must be installed to run the test suite:
+The tests can be ran with pytest directly, but this is very slow:
 
 ```sh
-pip install -e ".[dev, everest]"
-pytest tests/
+uv run pytest tests/
 ```
 
 There are many kinds of tests in the `tests` directory, while iterating on your
@@ -78,13 +72,13 @@ code you can run a fast subset of the tests with by using the rapid checks from 
 justfile:
 
 ```sh
-just rapid-tests
+uv run just rapid-tests
 ```
 
 You can also run all of the checks in parallel with
 
 ```sh
-just check-all
+uv run just check-all
 ```
 
 [Git LFS](https://git-lfs.com/) must be installed to get all the files. This is
@@ -110,8 +104,7 @@ git submodule foreach "git lfs pull"
 
 You can build the documentation after installation by running
 ```sh
-pip install ".[dev]"
-just build-docs
+uv run just build-docs
 ```
 and then open the generated `./ert_docs/index.html` or
 `./everest_docs/index.html` in a browser.
@@ -119,7 +112,7 @@ and then open the generated `./ert_docs/index.html` or
 To automatically reload on changes you may use
 
 ```sh
-sphinx-autobuild docs docs/_build/html
+uv run sphinx-autobuild docs docs/_build/html
 ```
 
 ### Style requirements
@@ -145,13 +138,14 @@ pre-commit install --hook-type pre-push
 As a simple test of your `ert` installation, you may try to run one of the
 examples, for instance:
 
+
+```sh
+uv run just poly
 ```
-cd test-data/ert/poly_example
-# for non-gui trial run
-ert test_run poly.ert
-# for gui trial run
-ert gui poly.ert
-```
+This opens up the ert graphical user interface with a simple example using
+polynomials (see `./test-data/ert/poly_example`).
+
+Finally, test ert by starting and successfully running the experiment.
 
 ### Notes
 
@@ -161,17 +155,6 @@ error-messages. You can inspect the current limits in your shell by issuing the
 command `ulimit -a`. In order to increase maximum number of open files, run
 `ulimit -n 16384` (or some other large number) and put the command in your
 `.profile` to make it persist.
-
-## Example usage
-
-### Basic ert test
-To test if ert itself is working, go to `test-data/ert/poly_example` and start ert by running `poly.ert` with `ert gui`
-```sh
-cd test-data/ert/poly_example
-ert gui poly.ert
-```
-This opens up the ert graphical user interface.
-Finally, test ert by starting and successfully running the experiment.
 
 ### ert with a reservoir simulator
 To actually get ert to work at your site you need to configure details about
