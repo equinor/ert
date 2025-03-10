@@ -1,3 +1,4 @@
+from .base_model_context import BaseModelWithContextSupport
 from .config_dict import ConfigDict
 from .config_errors import ConfigValidationError, ConfigWarning
 from .config_keywords import ConfigKeys
@@ -18,6 +19,7 @@ from .workflow_job_schema import init_workflow_job_schema
 from .workflow_schema import init_workflow_schema
 
 __all__ = [
+    "BaseModelWithContextSupport",
     "ConfigDict",
     "ConfigKeys",
     "ConfigValidationError",
