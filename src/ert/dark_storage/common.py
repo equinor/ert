@@ -76,7 +76,7 @@ def ensemble_parameters(storage: Storage, ensemble_id: UUID) -> list[dict[str, A
                                 )
                                 else f"{param.group_name}:{param.param_name}"
                             ),
-                            "userdata": {"data_origin": "SCALARS_PARAMETERS"},
+                            "userdata": {"data_origin": "SCALAR_PARAMETERS"},
                             "dimensionality": 1,
                             "labels": [],
                         }

@@ -832,6 +832,17 @@ class LocalEnsemble(BaseMode):
             df_lazy = pl.scan_parquet(self._path / f"{_escape_filename(group)}.parquet")
             return df_lazy.filter(pl.col("realization").is_in(realizations)).collect()
 
+        assert key is not None
+        assert realizations is not None
+        df_lazy = pl.scan_parquet(self._path / f"{_escape_filename(group)}.parquet")
+        if key not in df_lazy.columns:
+            raise KeyError(f"No such key {key} in scalar parameters!")
+        return (
+            df_lazy.filter(pl.col("realization").is_in(realizations))
+            .select(["realization", key])
+            .collect()
+        )
+
     @require_write
     def save_parameters(
         self,

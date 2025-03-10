@@ -62,7 +62,7 @@ class ParameterConfig(ABC):
         ensemble_size: int,
         design_matrix_df: pd.DataFrame | None = None,
     ) -> xr.Dataset | pl.DataFrame:
-        assert isinstance(real_nr, int)
+        assert isinstance(real_nr, int | np.integer)
         return self.read_from_runpath(Path(), real_nr, 0)
 
     @abstractmethod

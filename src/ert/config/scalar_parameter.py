@@ -357,7 +357,7 @@ class ScalarParameters(ParameterConfig):
         ensemble_size: int,
         design_matrix_df: pd.DataFrame | None = None,
     ) -> pl.DataFrame:
-        if isinstance(real_nr, int):
+        if isinstance(real_nr, int | np.integer):
             real_nr = [real_nr]
         df_list = []
         for real in real_nr:
