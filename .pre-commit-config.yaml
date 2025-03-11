@@ -22,8 +22,8 @@ repos:
   hooks:
   - id: pytest
     name: pytest
-    entry: pytest
-    args: [-n, auto, tests/ert/unit_tests, tests/everest, --hypothesis-profile=fast, -m, not integration_test]
+    entry: uv
+    args: [run, --all-extras, pytest, -n, auto, tests/ert/unit_tests, tests/everest, --hypothesis-profile=fast, -m, not integration_test]
     language: system
     types: [python]
     stages: [pre-push]
