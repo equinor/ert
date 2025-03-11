@@ -1186,3 +1186,10 @@ def test_export_deprecated_keys(key, value, min_config, change_to_tmpdir):
     )
     with pytest.warns(ConfigWarning, match=match_msg):
         EverestConfig.load_file_with_argparser("config.yml", parser)
+
+
+def test_that_definitions_eclbase_flowbase_are_mutually_exclusive():
+    with pytest.raises(
+        ValueError, match="Found both eclbase and flowbase in definitions config"
+    ):
+        EverestConfig.with_defaults(definitions={"eclbase": "heh", "flowbase": "hah"})
