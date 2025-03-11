@@ -504,14 +504,14 @@ class EverestStorage:
             separator=":",
         )
 
-        realization_objectives = realization_objectives.pivot(  # type: ignore
+        realization_objectives = realization_objectives.pivot(
             values="objective_value",
             index=[
                 "batch_id",
                 "realization",
                 "simulation_id",
             ],
-            columns="objective_name",
+            on="objective_name",
         )
 
         return {
