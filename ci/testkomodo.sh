@@ -22,7 +22,7 @@ run_ert_with_opm() {
     cp -r "${CI_SOURCE_ROOT}/test-data/ert/flow_example" ert_with_opm
     pushd ert_with_opm || exit 1
 
-    ert test_run flow.ert ||
+    ert test_run --disable-monitoring flow.ert ||
         (
             # In case ert fails, print log files if they are there:
             cat spe1_out/realization-0/iter-0/STATUS || true
