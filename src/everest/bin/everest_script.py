@@ -151,10 +151,22 @@ async def run_everest(options: argparse.Namespace) -> None:
             logger.error(f"Failed to save optimization config: {e}")
 
         logging_level = logging.DEBUG if options.debug else options.config.logging_level
-        await start_server(options.config, logging_level)
+
         print("Waiting for server ...")
-        wait_for_server(options.config.output_dir, timeout=600)  # 10 minutes
+        logger.debug("Submitting everserver")
+        try:
+            await asyncio.wait_for(
+                start_server(options.config, logging_level), timeout=1800
+            )  # 30 minutes
+            logger.debug("Everserver submitted and started")
+        except TimeoutError as e:
+            logger.error("Everserver failed to start within timeout")
+            raise SystemExit("Failed to start the server") from e
+
+        logger.debug("Waiting for response from everserver")
+        wait_for_server(options.config.output_dir, timeout=60)
         print("Everest server found!")
+        logger.debug("Got response from everserver. Starting experiment")
 
         start_experiment(
             server_context=ServerConfig.get_server_context(options.config.output_dir),
@@ -186,6 +198,8 @@ async def run_everest(options: argparse.Namespace) -> None:
                 optimization_output_dir=options.config.optimization_output_dir,
                 show_all_jobs=options.show_all_jobs,
             )
+
+        logger.debug("Everest experiment finished")
 
         server_state = everserver_status(everserver_status_path)
         server_state_info = server_state["message"]
