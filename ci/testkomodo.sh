@@ -13,7 +13,7 @@ copy_test_files() {
 }
 
 install_test_dependencies() {
-    pip install ".[dev, types]"
+    pip install ".[dev]"
 }
 
 run_ert_with_opm() {
@@ -114,8 +114,8 @@ start_tests() {
 
     export ERT_PYTEST_ARGS=--eclipse-simulator
 
-    # Run all ert tests except tests evaluating memory consumption and tests requiring windows manager (GUI tests)
-    just -f "${CI_SOURCE_ROOT}"/justfile check-all
+    # Run all ert & everest tests
+    just -f "${CI_SOURCE_ROOT}"/justfile test-all
     return_code_ert_main_tests=$?
 
     # Restricting the number of threads utilized by numpy to control memory consumption, as some tests evaluate memory usage and additional threads increase it.
