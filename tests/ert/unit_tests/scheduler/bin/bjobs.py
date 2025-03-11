@@ -41,14 +41,14 @@ def main() -> None:
 
     # this is for the bjobs call looking for exit code
     if args.o.strip() == "exit_code":
-        returncode = read(jobs_path / f"{args.jobs[0]}.returncode")
+        returncode = read(jobs_path / args.jobs[0] / "returncode")
         print(returncode)
         return
 
     jobs_output: list[Job] = []
     for job in args.jobs:
-        pid = read(jobs_path / f"{job}.pid")
-        returncode = read(jobs_path / f"{job}.returncode")
+        pid = read(jobs_path / job / "pid")
+        returncode = read(jobs_path / job / "returncode")
 
         state: JobState = "PEND"
 

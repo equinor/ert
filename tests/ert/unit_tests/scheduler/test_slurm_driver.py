@@ -7,13 +7,16 @@ import string
 import sys
 from contextlib import ExitStack as does_not_raise
 from pathlib import Path
+from textwrap import dedent
 
 import pytest
 from hypothesis import given
 from hypothesis import strategies as st
 
+from ert.mode_definitions import ENSEMBLE_EXPERIMENT_MODE
 from ert.scheduler import SlurmDriver
 from ert.scheduler.slurm_driver import _seconds_to_slurm_time_format
+from tests.ert.ui_tests.cli.run_cli import run_cli
 from tests.ert.utils import poll
 
 from .conftest import mock_bin
@@ -23,6 +26,19 @@ def nonempty_string_without_whitespace():
     return st.text(
         st.characters(whitelist_categories=("Lu", "Ll", "Nd", "P")), min_size=1
     )
+
+
+@pytest.fixture
+def intercept_sbatch_input_cmd(tmp_path):
+    intercept_sbatch_input_cmd = tmp_path / "capture_sbatch_args"
+    intercept_sbatch_input_cmd.write_text(
+        '#!/bin/sh\necho "$0 $@" > "captured_sbatch_args"\nsbatch "$@"',
+        encoding="utf-8",
+    )
+    intercept_sbatch_input_cmd.chmod(
+        intercept_sbatch_input_cmd.stat().st_mode | stat.S_IEXEC
+    )
+    return intercept_sbatch_input_cmd
 
 
 @pytest.fixture
@@ -328,9 +344,7 @@ async def test_slurm_can_retrieve_stdout_and_stderr(
 async def test_submit_to_named_queue(tmp_path, job_name):
     """If the environment variable _ERT_TEST_ALTERNATIVE_QUEUE is defined
     a job will be attempted submitted to that queue.
-
     * Note that what is called a "queue" in Ert is a "partition" in Slurm lingo.
-
     As Ert does not keep track of which queue a job is executed in, we can only
     test for success for the job."""
     os.chdir(tmp_path)
@@ -457,3 +471,133 @@ async def test_slurm_uses_sacct(
 
     # Make sure sacct was tried:
     assert "scontrol failed, trying sacct" in caplog.text
+
+
+from ert.config.queue_config import _parse_realization_memory_str
+
+
+@pytest.mark.integration_test
+@pytest.mark.usefixtures("copy_poly_case")
+def test_queue_options_are_propagated_from_config_to_sbatch(pytestconfig):
+    """
+    This end to end test is here to verify that queue_options are correctly
+    propagated all the way from ert config to the cluster.
+    """
+    expected_partition = "foo_bar_partition"
+    expected_realization_memory = "9GB"
+    expected_project_code = "foo_bar_project"
+    expected_exclude_hosts = "not_foohost,not_barhost"
+    expected_include_hosts = "foohost,barhost"
+    expected_max_runtime = 99
+    expected_num_cpu = 98
+
+    capture_sbatch_cmd = Path("capture_sbatch_args")
+    capture_sbatch_cmd.write_text(
+        '#!/bin/sh\necho "$0 $@" > "captured_sbatch_args"\nsbatch "$@"',
+        encoding="utf-8",
+    )
+    capture_sbatch_cmd.chmod(capture_sbatch_cmd.stat().st_mode | stat.S_IEXEC)
+
+    with open("poly.ert", "a", encoding="utf-8") as f:
+        f.write(
+            dedent(
+                f"""\
+                NUM_CPU {expected_num_cpu}
+                REALIZATION_MEMORY {expected_realization_memory}
+                QUEUE_SYSTEM SLURM
+                QUEUE_OPTION SLURM SBATCH {capture_sbatch_cmd.absolute()}
+                QUEUE_OPTION SLURM MAX_RUNTIME {expected_max_runtime}
+                NUM_REALIZATIONS 1
+                """
+                + (
+                    f"""QUEUE_OPTION SLURM INCLUDE_HOST {expected_include_hosts}
+                    QUEUE_OPTION SLURM PROJECT_CODE {expected_project_code}
+                    QUEUE_OPTION SLURM EXCLUDE_HOST {expected_exclude_hosts}
+                    QUEUE_OPTION SLURM PARTITION {expected_partition}"""
+                    if not pytestconfig.getoption("slurm")
+                    else ""
+                )
+            )
+        )
+    run_cli(ENSEMBLE_EXPERIMENT_MODE, "--disable-monitoring", "poly.ert")
+    complete_command_invocation = Path("captured_sbatch_args").read_text(
+        encoding="utf-8"
+    )
+
+    if not pytestconfig.getoption("slurm"):
+        assert f"--nodelist={expected_include_hosts}" in complete_command_invocation
+        assert f"--exclude={expected_exclude_hosts}" in complete_command_invocation
+        assert f"--partition={expected_partition}" in complete_command_invocation
+        assert f"--account={expected_project_code}" in complete_command_invocation
+
+    assert f"--ntasks={expected_num_cpu}" in complete_command_invocation
+    assert (
+        f"--mem={_parse_realization_memory_str(expected_realization_memory) // 1024**2}M"
+        in complete_command_invocation
+    )
+    assert (
+        f"--time={_seconds_to_slurm_time_format(expected_max_runtime)}"
+        in complete_command_invocation
+    )
+
+
+@pytest.mark.integration_test
+@pytest.mark.usefixtures("use_tmpdir")
+@pytest.mark.parametrize(
+    "driver_submit_option,expected_in_cmd",
+    [
+        ({"realization_memory": 50 * 1024 * 1024}, "--mem=50M"),
+        ({"num_cpu": 2}, "--ntasks=2"),
+    ],
+)
+async def test_submit_works_with_submit_options(
+    driver_submit_option, expected_in_cmd, job_name, intercept_sbatch_input_cmd
+):
+    driver = SlurmDriver(sbatch_cmd=intercept_sbatch_input_cmd)
+    await driver.submit(
+        0,
+        "sh",
+        "-c",
+        "echo foo",
+        name=job_name,
+        **driver_submit_option,
+    )
+    complete_command_invocation = Path("captured_sbatch_args").read_text(
+        encoding="utf-8"
+    )
+    assert expected_in_cmd in complete_command_invocation
+
+
+@pytest.mark.integration_test
+@pytest.mark.usefixtures("use_tmpdir")
+@pytest.mark.parametrize(
+    "driver_options,expected_in_cmd,only_mocked_sbatch",
+    [
+        ({"exclude_hosts": "foo_bar"}, "--exclude=foo_bar", True),
+        ({"include_hosts": "foo_bar"}, "--nodelist=foo_bar", True),
+        ({"max_runtime": 20}, "--time=0:00:20", False),
+        ({"project_code": "project_foo"}, "--account=project_foo", True),
+    ],
+)
+async def test_submit_works_with_queue_options(
+    driver_options,
+    expected_in_cmd,
+    only_mocked_sbatch,
+    job_name,
+    intercept_sbatch_input_cmd,
+    pytestconfig,
+):
+    if only_mocked_sbatch and pytestconfig.getoption("--slurm"):
+        pytest.skip("This test is only for mocked sbatch")
+    driver = SlurmDriver(sbatch_cmd=intercept_sbatch_input_cmd, **driver_options)
+    await driver.submit(
+        0,
+        "sh",
+        "-c",
+        "echo foo",
+        name=job_name,
+    )
+    complete_command_invocation = Path("captured_sbatch_args").read_text(
+        encoding="utf-8"
+    )
+    assert expected_in_cmd in complete_command_invocation
