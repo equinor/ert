@@ -34,11 +34,6 @@ run_ert_with_opm() {
     popd
 }
 
-run_everest_tests() {
-    python -m pytest -n auto tests/everest -s
-    return $?
-}
-
 # Clean up everest egg tmp folders
 remove_one_week_old_temp_folders () {
     case "$1" in
@@ -117,15 +112,11 @@ start_tests() {
 
     set +e
 
-    # Run all ert tests except tests evaluating memory consumption and tests requiring windows manager (GUI tests)
-    pytest --eclipse-simulator -n auto --show-capture=stderr -v --max-worker-restart 0 \
-        -m "not limit_memory and not requires_window_manager" --benchmark-disable --dist loadgroup
-    return_code_ert_main_tests=$?
+    export ERT_PYTEST_ARGS=--eclipse-simulator
 
-    # Run all ert tests requiring windows manager (GUI tests) except tests evaluating memory consumption
-    pytest --eclipse-simulator -v --mpl \
-        -m "not limit_memory and requires_window_manager" --benchmark-disable
-    return_code_ert_gui_tests=$?
+    # Run all ert tests except tests evaluating memory consumption and tests requiring windows manager (GUI tests)
+    just check-all
+    return_code_ert_main_tests=$?
 
     # Restricting the number of threads utilized by numpy to control memory consumption, as some tests evaluate memory usage and additional threads increase it.
     export OMP_NUM_THREADS=1
@@ -147,9 +138,6 @@ start_tests() {
     run_ert_with_opm
     return_code_opm_integration_test=$?
 
-    run_everest_tests
-    return_code_everest_tests=$?
-
     run_everest_egg_test
     return_code_everest_egg_test=$?
 
@@ -159,10 +147,6 @@ start_tests() {
     # We error if one or more returncodes are nonzero
     if [ "$return_code_ert_main_tests" -ne 0 ]; then
         echo "One or more ERT tests failed."
-        return_code_combined_tests=1
-    fi
-    if [ "$return_code_ert_gui_tests" -ne 0 ]; then
-        echo "One or more ERT GUI tests failed."
         return_code_combined_tests=1
     fi
     if [ "$return_code_ert_memory_consumption_tests" -ne 0 ]; then
@@ -175,10 +159,6 @@ start_tests() {
     fi
     if [ "$return_code_opm_integration_test" -ne 0 ]; then
         echo "The ERT OPM integration test failed."
-        return_code_combined_tests=1
-    fi
-    if [ "$return_code_everest_tests" -ne 0 ]; then
-        echo "One or more Everest tests failed."
         return_code_combined_tests=1
     fi
     if [ "$return_code_everest_egg_test" -ne 0 ]; then
