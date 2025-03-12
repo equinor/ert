@@ -276,11 +276,11 @@ def test_save_parameters_to_storage_from_design_dataframe(
     c_values = np.random.default_rng().uniform(-5, 5, 10)
     design_matrix_df = DataFrame({"a": a_values, "b": b_values, "c": c_values})
     with ExcelWriter(design_path) as xl_write:
-        design_matrix_df.to_excel(xl_write, index=False, sheet_name="DesignSheet01")
+        design_matrix_df.to_excel(xl_write, index=False, sheet_name="DesignSheet")
         DataFrame().to_excel(
-            xl_write, index=False, sheet_name="DefaultValues", header=False
+            xl_write, index=False, sheet_name="DefaultSheet", header=False
         )
-    design_matrix = DesignMatrix(design_path, "DesignSheet01", "DefaultValues")
+    design_matrix = DesignMatrix(design_path, "DesignSheet", "DefaultSheet")
     with open_storage(tmp_path / "storage", mode="w") as storage:
         experiment_id = storage.create_experiment(
             parameters=[design_matrix.parameter_configuration]

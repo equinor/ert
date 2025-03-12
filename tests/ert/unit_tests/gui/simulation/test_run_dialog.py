@@ -684,7 +684,7 @@ def test_that_design_matrix_show_parameters_button_is_visible(
     )
     default_sheet_df = pd.DataFrame([["b", 1], ["c", 2]])
     with pd.ExcelWriter(xls_filename) as xl_write:
-        design_matrix_df.to_excel(xl_write, index=False, sheet_name="DesignSheet01")
+        design_matrix_df.to_excel(xl_write, index=False, sheet_name="DesignSheet")
         default_sheet_df.to_excel(
             xl_write, index=False, sheet_name="DefaultSheet", header=False
         )
@@ -693,9 +693,7 @@ def test_that_design_matrix_show_parameters_button_is_visible(
     with open(config_file, "w", encoding="utf-8") as f:
         f.write("NUM_REALIZATIONS 1")
         if design_matrix_entry:
-            f.write(
-                f"\nDESIGN_MATRIX {xls_filename} DESIGN_SHEET:DesignSheet01 DEFAULT_SHEET:DefaultSheet"
-            )
+            f.write(f"\nDESIGN_MATRIX {xls_filename}")
 
     args_mock = Mock()
     args_mock.config = config_file
