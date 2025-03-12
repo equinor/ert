@@ -13,7 +13,7 @@ import traceback
 import uuid
 from base64 import b64decode, b64encode
 from contextlib import asynccontextmanager
-from functools import partial
+from functools import lru_cache, partial
 from pathlib import Path
 from queue import Empty, SimpleQueue
 from typing import Any
@@ -185,6 +185,7 @@ class Subscriber:
         self._event.clear()
 
 
+@lru_cache
 def _get_machine_name() -> str:
     """Returns a name that can be used to identify this machine in a network
 
