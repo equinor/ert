@@ -126,40 +126,6 @@ def test_invalid_design_matrix_format_raises_validation_error():
         )
 
 
-def test_design_matrix_without_design_sheet_raises_validation_error():
-    with pytest.raises(ConfigValidationError, match="Missing required DESIGN_SHEET"):
-        AnalysisConfig.from_dict(
-            {
-                ConfigKeys.DESIGN_MATRIX: [
-                    [
-                        "my_matrix.xlsx",
-                        {
-                            "DESIGN_": "design",
-                            "DEFAULT_SHEET": "default",
-                        },
-                    ]
-                ],
-            }
-        )
-
-
-def test_design_matrix_without_default_sheet_raises_validation_error():
-    with pytest.raises(ConfigValidationError, match="Missing required DEFAULT_SHEET"):
-        AnalysisConfig.from_dict(
-            {
-                ConfigKeys.DESIGN_MATRIX: [
-                    [
-                        "my_matrix.xlsx",
-                        {
-                            "DESIGN_SHEET": "design",
-                            "DEFAULT_": "default",
-                        },
-                    ]
-                ],
-            }
-        )
-
-
 def test_invalid_min_realization_percentage_raises_config_validation_error():
     with pytest.raises(
         ConfigValidationError,

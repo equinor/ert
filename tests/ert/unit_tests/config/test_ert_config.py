@@ -2020,7 +2020,7 @@ def test_design2params_also_validates_design_matrix(tmp_path, caplog, monkeypatc
         {"DESIGN2PARAMS": mock_design2params},
     )
     ErtConfig.from_file_contents(
-        f"NUM_REALIZATIONS 1\nFORWARD_MODEL DESIGN2PARAMS(<xls_filename>={design_matrix_file}, <designsheet>=DesignSheet01,<defaultssheet>=DefaultSheet)"
+        f"NUM_REALIZATIONS 1\nFORWARD_MODEL DESIGN2PARAMS(<xls_filename>={design_matrix_file}, <designsheet>=DesignSheet,<defaultssheet>=DefaultSheet)"
     )
     assert "DESIGN_MATRIX validation of DESIGN2PARAMS" in caplog.text
 
@@ -2058,8 +2058,8 @@ def test_two_design2params_validates_design_matrix_merging(
     ErtConfig.from_file_contents(
         f"""\
             NUM_REALIZATIONS 1
-            FORWARD_MODEL DESIGN2PARAMS(<xls_filename>={design_matrix_file}, <designsheet>=DesignSheet01,<defaultssheet>=DefaultSheet)
-            FORWARD_MODEL DESIGN2PARAMS(<xls_filename>={design_matrix_file2}, <designsheet>=DesignSheet01,<defaultssheet>=DefaultSheet)
+            FORWARD_MODEL DESIGN2PARAMS(<xls_filename>={design_matrix_file}, <designsheet>=DesignSheet,<defaultssheet>=DefaultSheet)
+            FORWARD_MODEL DESIGN2PARAMS(<xls_filename>={design_matrix_file2}, <designsheet>=DesignSheet,<defaultssheet>=DefaultSheet)
             """
     )
     assert (
@@ -2112,12 +2112,34 @@ def test_three_design2params_validates_design_matrix_merging(
     ErtConfig.from_file_contents(
         f"""\
             NUM_REALIZATIONS 1
-            FORWARD_MODEL DESIGN2PARAMS(<xls_filename>={design_matrix_file}, <designsheet>=DesignSheet01,<defaultssheet>=DefaultSheet)
-            FORWARD_MODEL DESIGN2PARAMS(<xls_filename>={design_matrix_file2}, <designsheet>=DesignSheet01,<defaultssheet>=DefaultSheet)
-            FORWARD_MODEL DESIGN2PARAMS(<xls_filename>={design_matrix_file3}, <designsheet>=DesignSheet01,<defaultssheet>=DefaultSheet)
+            FORWARD_MODEL DESIGN2PARAMS(<xls_filename>={design_matrix_file}, <designsheet>=DesignSheet,<defaultssheet>=DefaultSheet)
+            FORWARD_MODEL DESIGN2PARAMS(<xls_filename>={design_matrix_file2}, <designsheet>=DesignSheet,<defaultssheet>=DefaultSheet)
+            FORWARD_MODEL DESIGN2PARAMS(<xls_filename>={design_matrix_file3}, <designsheet>=DesignSheet,<defaultssheet>=DefaultSheet)
             """
     )
     assert (
         "Design matrix merging would have failed due to: Design Matrices don't have the same active realizations"
         in caplog.text
     )
+
+
+def test_design_matrix_default_argument(tmp_path):
+    design_matrix_file = tmp_path / "my_design_matrix.xlsx"
+    _create_design_matrix(
+        design_matrix_file,
+        pd.DataFrame(
+            {
+                "REAL": [1],
+                "a": [1],
+                "category": ["cat1"],
+            }
+        ),
+        pd.DataFrame([["b", 1], ["c", 2]]),
+    )
+
+    config = ErtConfig.from_file_contents(
+        f"NUM_REALIZATIONS 1\nDESIGN_MATRIX {design_matrix_file}"
+    )
+    assert config.analysis_config.design_matrix
+    assert config.analysis_config.design_matrix.design_sheet == "DesignSheet"
+    assert config.analysis_config.design_matrix.default_sheet == "DefaultSheet"

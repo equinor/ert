@@ -22,7 +22,7 @@ from tests.ert.ui_tests.cli.run_cli import run_cli
 
 def _create_design_matrix(filename, design_sheet_df, default_sheet_df=None):
     with pd.ExcelWriter(filename) as xl_write:
-        design_sheet_df.to_excel(xl_write, index=False, sheet_name="DesignSheet01")
+        design_sheet_df.to_excel(xl_write, index=False, sheet_name="DesignSheet")
         if default_sheet_df is not None:
             default_sheet_df.to_excel(
                 xl_write, index=False, sheet_name="DefaultSheet", header=False
@@ -54,7 +54,7 @@ def test_run_poly_example_with_design_matrix():
                 NUM_REALIZATIONS 10
                 MIN_REALIZATIONS 1
                 GEN_DATA POLY_RES RESULT_FILE:poly.out
-                DESIGN_MATRIX poly_design.xlsx DESIGN_SHEET:DesignSheet01 DEFAULT_SHEET:DefaultSheet
+                DESIGN_MATRIX poly_design.xlsx
                 INSTALL_JOB poly_eval POLY_EVAL
                 FORWARD_MODEL poly_eval
                 """
@@ -156,7 +156,7 @@ def test_run_poly_example_with_design_matrix_and_genkw_merge(default_values, err
                 MIN_REALIZATIONS 1
                 GEN_DATA POLY_RES RESULT_FILE:poly.out
                 GEN_KW COEFFS my_template my_output coeff_priors
-                DESIGN_MATRIX poly_design.xlsx DESIGN_SHEET:DesignSheet01 DEFAULT_SHEET:DefaultSheet
+                DESIGN_MATRIX poly_design.xlsx DESIGN_SHEET:DesignSheet DEFAULT_SHEET:DefaultSheet
                 INSTALL_JOB poly_eval POLY_EVAL
                 FORWARD_MODEL poly_eval
                 """
@@ -268,8 +268,8 @@ def test_run_poly_example_with_multiple_design_matrix_instances():
                 NUM_REALIZATIONS 10
                 MIN_REALIZATIONS 1
                 GEN_DATA POLY_RES RESULT_FILE:poly.out
-                DESIGN_MATRIX poly_design_1.xlsx DESIGN_SHEET:DesignSheet01 DEFAULT_SHEET:DefaultSheet
-                DESIGN_MATRIX poly_design_2.xlsx DESIGN_SHEET:DesignSheet01 DEFAULT_SHEET:DefaultSheet
+                DESIGN_MATRIX poly_design_1.xlsx
+                DESIGN_MATRIX poly_design_2.xlsx
                 INSTALL_JOB poly_eval POLY_EVAL
                 FORWARD_MODEL poly_eval
                 """
@@ -358,7 +358,7 @@ def test_design_matrix_on_esmda(experiment_mode, ensemble_name, iterations):
                 GEN_KW COEFFS_B coeff_priors_b
                 GEN_KW COEFFS_C coeff_priors_c
                 GEN_DATA POLY_RES RESULT_FILE:poly.out
-                DESIGN_MATRIX design_matrix.xlsx DESIGN_SHEET:DesignSheet01 DEFAULT_SHEET:DefaultSheet
+                DESIGN_MATRIX design_matrix.xlsx
                 INSTALL_JOB poly_eval POLY_EVAL
                 FORWARD_MODEL poly_eval
                 """

@@ -43,8 +43,8 @@ class DesignMatrix:
     def from_config_list(cls, config_list: list[str | dict[str, str]]) -> DesignMatrix:
         filename = Path(cast(str, config_list[0]))
         options = cast(dict[str, str], config_list[1])
-        design_sheet = options.get("DESIGN_SHEET")
-        default_sheet = options.get("DEFAULT_SHEET")
+        design_sheet = options.get("DESIGN_SHEET", "DesignSheet")
+        default_sheet = options.get("DEFAULT_SHEET", "DefaultSheet")
         errors = []
         if filename.suffix not in {
             ".xlsx",
@@ -54,14 +54,6 @@ class DesignMatrix:
                 ErrorInfo(
                     f"DESIGN_MATRIX must be of format .xls or .xlsx; is '{filename}'"
                 ).set_context(config_list)
-            )
-        if design_sheet is None:
-            errors.append(
-                ErrorInfo("Missing required DESIGN_SHEET").set_context(config_list)
-            )
-        if default_sheet is None:
-            errors.append(
-                ErrorInfo("Missing required DEFAULT_SHEET").set_context(config_list)
             )
         if design_sheet is not None and design_sheet == default_sheet:
             errors.append(
