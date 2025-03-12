@@ -103,6 +103,7 @@ def test_that_stop_errors_on_server_down(
     )
 
 
+@pytest.mark.integration_test
 def test_that_stop_errors_on_server_up_but_endpoint_down(
     caplog, client_server_mock: tuple[FastAPI, threading.Thread, EverestClient]
 ):
