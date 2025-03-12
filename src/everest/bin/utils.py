@@ -246,9 +246,11 @@ class _DetachedMonitor:
         print_lines = []
         jobs_status = cls._get_jobs_status(snapshot)
         forward_model_messages = [
-            v["message"].replace("status from done callback:", "Forward model error:")
+            v.get("message", "").replace(  # type: ignore[union-attr]
+                "status from done callback:", "Forward model error:"
+            )
             for _, v in snapshot.reals.items()
-            if v["message"]
+            if v.get("message")
         ]
         if not show_all_jobs:
             jobs_status = cls._filter_jobs(jobs_status)
