@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import dataclasses
 import logging
 from pathlib import Path
 from queue import SimpleQueue
@@ -77,6 +76,26 @@ from .view import DiskSpaceWidget, ProgressWidget, RealizationWidget, UpdateWidg
 
 _TOTAL_PROGRESS_TEMPLATE = "Total progress {total_progress}% — {iteration_label}"
 _EVEREST_TOTAL_PROGRESS_TEMPLATE = "Batch {iteration} progress: {total_progress}%"
+
+
+def _batch_type_text(batch_id: int, batch_types: set[str]) -> str:
+    """
+    >>> _batch_type_text(1, {"FunctionResult"})
+    'Batch 1: fn'
+    >>> _batch_type_text(2, {"GradientResult"})
+    'Batch 2: ∇'
+    >>> _batch_type_text(3, {"FunctionResult", "GradientResult"})
+    'Batch 3: fn+∇'
+    """
+    type_text = ""
+    if batch_types == {"FunctionResult", "GradientResult"}:
+        type_text = "fn+∇"
+    elif batch_types == {"FunctionResult"}:
+        type_text = "fn"
+    elif batch_types == {"GradientResult"}:
+        type_text = "∇"
+
+    return f"Batch {batch_id}: {type_text}"
 
 
 class FMStepOverview(QTableView):
@@ -170,12 +189,6 @@ class FMStepOverview(QTableView):
         return super().mouseMoveEvent(e)
 
 
-@dataclasses.dataclass
-class _BatchResultInfo:
-    is_gradient: bool = False
-    is_function: bool = False
-
-
 class RunDialog(QFrame):
     simulation_done = Signal(bool, str)
     progress_update_event = Signal(dict, int)
@@ -211,7 +224,7 @@ class RunDialog(QFrame):
         self._is_everest = is_everest
 
         if is_everest:
-            self._batch_result_infos: list[_BatchResultInfo] = []
+            self._batch_result_types: list[set[str]] = []
 
         self._total_progress_label = QLabel(
             _TOTAL_PROGRESS_TEMPLATE.format(
@@ -351,7 +364,7 @@ class RunDialog(QFrame):
                 self._tab_widget.setCurrentIndex(tab_index)
 
             if self._is_everest:
-                self._batch_result_infos.append(_BatchResultInfo())
+                self._batch_result_types.append(set())
 
     @Slot(QModelIndex)
     def _select_real(self, index: QModelIndex) -> None:
@@ -519,22 +532,12 @@ class RunDialog(QFrame):
                 self._get_update_widget(event.iteration).error(event)
                 event.write_as_csv(self.output_path)
             case EverestBatchResultEvent():
-                result_info = self._batch_result_infos[event.batch]
+                batch_types = self._batch_result_types[event.batch]
+                batch_types.add(event.result_type)
 
-                if event.result_type == "FunctionResult":
-                    result_info.is_gradient = True
-
-                if event.result_type == "GradientResult":
-                    result_info.is_function = True
-
-                tab_text = f" Batch {event.batch}: " + (
-                    "fn+∇"
-                    if (result_info.is_function and result_info.is_gradient)
-                    else "∇"
-                    if result_info.is_gradient
-                    else "fn"
+                self._tab_widget.setTabText(
+                    event.batch, _batch_type_text(event.batch, batch_types)
                 )
-                self._tab_widget.setTabText(event.batch, tab_text)
 
     def _get_update_widget(self, iteration: int) -> UpdateWidget:
         for i in range(self._tab_widget.count()):
