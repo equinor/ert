@@ -222,7 +222,7 @@ def get_distribution(name: str, values: list[str]) -> Any:
         "LOGUNIF": lambda: TransLogUnifSettings(
             log_min=math.log(float(values[0])), log_max=math.log(float(values[1]))
         ),
-        "TRUNC_NORMAL": lambda: TransTruncNormalSettings(
+        "TRUNCATED_NORMAL": lambda: TransTruncNormalSettings(
             mean=float(values[0]),
             std=float(values[1]),
             min=float(values[2]),
@@ -294,6 +294,13 @@ class ScalarParameters(ParameterConfig):
             self.groups[param.group_name].append(param)
             self.hash_group_key[f"{param.group_name}:{param.param_name}"] = param
         self.update = not all(not param.update for param in self.scalars)
+
+    def __getitem__(self, key: str) -> list[ScalarParameter]:
+        if key in self.groups:
+            return list(self.groups[key])
+        elif key in self.hash_group_key:
+            return [self.hash_group_key[key]]
+        return []
 
     @staticmethod
     def _sample_value(
@@ -476,7 +483,7 @@ class ScalarParameters(ParameterConfig):
         return None
 
     def should_use_log_scale(self, key: str) -> bool:
-        return isinstance(
+        return key in self.hash_group_key and isinstance(
             self.hash_group_key[key].distribution,
             TransLogNormalSettings | TransLogUnifSettings,
         )
@@ -495,7 +502,7 @@ class ScalarParameters(ParameterConfig):
         data_dict = df.rename(
             {col: col.replace(".transformed", "") for col in df.columns}
         ).to_dict()
-        data: dict[str, dict[str, float]] = {}
+        data: dict[str, dict[str, float]] = defaultdict(dict)
         for key, values in data_dict.items():
             group_name, param_name = key.split(":")
             value = values[0]
@@ -506,12 +513,10 @@ class ScalarParameters(ParameterConfig):
             ):
                 log_value = math.log(value, 10)
 
-            # Build the nested dictionary {group: {key:value, leg10_key:log_value}}
-            if group_name not in data:
-                data[group_name] = {}
+            # Build the nested dictionary {group: {key:value}, leg10_group:{key:log_value}}
             data[group_name][param_name] = value
             if log_value:
-                data[group_name][f"log10_{param_name}"] = log_value
+                data[f"LOG10_{group_name}"][param_name] = log_value
 
         outfiles: dict[str, tuple[str, str]] = {}
         for group_name, params in self.groups.items():

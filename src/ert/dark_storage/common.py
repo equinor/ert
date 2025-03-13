@@ -199,7 +199,6 @@ def data_for_key(
             except (ValueError, KeyError, ColumnNotFoundError):
                 return pd.DataFrame()
 
-    dataframes = []
     if (
         scalars := ensemble.experiment.parameter_configuration.get(
             SCALAR_PARAMETERS_NAME, None
@@ -213,6 +212,7 @@ def data_for_key(
         )
     except KeyError:
         return pd.DataFrame()
+    dataframes = []
     da = data.rename({"realization": "realizations", f"{key}.transformed": key})
     df = da.to_pandas().reset_index().set_index("realizations")
     if scalars.should_use_log_scale(key):
