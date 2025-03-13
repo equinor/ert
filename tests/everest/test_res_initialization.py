@@ -389,10 +389,3 @@ def test_user_config_jobs_precedence(tmp_path, monkeypatch):
     )
 
     assert installed_forward_model_steps_new.get(existing_job).executable == "echo"
-
-
-def test_that_definitions_passthrough_eclbase():
-    ever_config = EverestConfig.with_defaults(definitions={"eclbase": "blorgh"})
-
-    ert_config_dict = everest_to_ert_config_dict(ever_config)
-    assert ert_config_dict["ECLBASE"] == "blorgh"
