@@ -7,9 +7,7 @@ import logging
 import os
 import queue
 import shutil
-import sys
-from collections.abc import Callable, Generator, MutableSequence
-from contextlib import contextmanager
+from collections.abc import Callable, MutableSequence
 from enum import IntEnum, auto
 from pathlib import Path
 from types import TracebackType
@@ -316,12 +314,7 @@ class EverestRunModel(BaseRunModel):
         optimizer.set_results_callback(self._handle_optimizer_results)
 
         # Run the optimization:
-        output_dir = Path(self._everest_config.optimization_output_dir)
-        with redirect_optimizer_output(
-            stdout=output_dir / "optimizer_output.stdout",
-            stderr=output_dir / "optimizer_output.stderr",
-        ):
-            optimizer_exit_code = optimizer.run().exit_code
+        optimizer_exit_code = optimizer.run().exit_code
 
         # Store some final results.
         self.ever_storage.on_optimization_finished()
@@ -946,60 +939,3 @@ class EverestRunModel(BaseRunModel):
             and os.path.exists(self._everest_config.simulation_dir)
             and any(os.listdir(self._everest_config.simulation_dir))
         )
-
-
-@contextmanager
-def redirect_optimizer_output(
-    stdout: Path | None, stderr: Path | None = None
-) -> Generator[None, None, None]:
-    """This context manager redirects stdout and stderr to the given files.
-
-    The standard Python approach would be to redirect sys.stdout and sys.stderr,
-    or use contextlib.redirect_stdout/err. However, these may fail in cases
-    where the output is produced by C or Fortran code, as commonly used in
-    optimization backends. Therefore, the stdout and stderr file descriptors are
-    directly manipulated. It should be noted that this is not thread-safe, i.e.
-    standard output/errors may be affected in other threads in the same process.
-    However, this should not be an issue since the Everest run model does not
-    send output to stdout/stderr directly. (Note that manipulating sys.stdout or
-    using contextlib.redirect_stdout would also not be thread-safe.)
-    """
-    if stderr is None:
-        stderr = stdout
-
-    old_stdout: int | None = None
-    old_stderr: int | None = None
-    new_stdout: int | None = None
-    new_stderr: int | None = None
-
-    try:
-        sys.stdout.flush()
-        sys.stderr.flush()
-        old_stdout = os.dup(1)
-        old_stderr = os.dup(2)
-        new_stdout = (
-            os.open(os.devnull, os.O_WRONLY)
-            if stdout is None
-            else os.open(stdout, os.O_WRONLY | os.O_CREAT)
-        )
-        os.dup2(new_stdout, 1)
-        if stderr == stdout:
-            os.dup2(new_stdout, 2)
-            new_stderr = None
-        else:
-            new_stderr = (
-                os.open(os.devnull, os.O_WRONLY)
-                if stderr is None
-                else os.open(stderr, os.O_WRONLY | os.O_CREAT)
-            )
-            os.dup2(new_stderr, 2)
-        yield
-    finally:
-        if old_stdout is not None:
-            os.dup2(old_stdout, 1)
-        if old_stderr is not None:
-            os.dup2(old_stderr, 2)
-        if new_stdout is not None:
-            os.close(new_stdout)
-        if new_stderr is not None:
-            os.close(new_stderr)
