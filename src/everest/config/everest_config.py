@@ -40,6 +40,9 @@ from everest.config.validation_utils import (
     validate_forward_model_configs,
 )
 from everest.jobs import script_names
+from everest.util.forward_models import (
+    validate_forward_model_step_arguments,
+)
 
 from ..config_file_loader import yaml_file_to_substituted_config_dict
 from ..strings import (
@@ -402,6 +405,14 @@ and environment variables are exposed in the form 'os.NAME', for example:
             for realization in self.model.realizations:
                 context.add_links_for_realization(realization)
             validate_forward_model_configs(self.forward_model, self.install_jobs)
+        return self
+
+    @model_validator(mode="after")
+    def validate_maintained_forward_model_step_arguments(self) -> Self:
+        if not self.forward_model:
+            return self
+        validate_forward_model_step_arguments(self.forward_model)
+
         return self
 
     @model_validator(mode="after")

@@ -118,9 +118,8 @@ def get_forward_model_documentations() -> dict[str, Any]:  # type: ignore[empty-
     """ """
 
 
-@hookspec(firstresult=True)
-def custom_forward_model_outputs(forward_model_steps: list[str]) -> set[str]:  # type: ignore[empty-body]
+@hookspec()
+def check_forward_model_arguments(forward_model_steps: list[str]) -> None:
     """
-    Check if the given forward model steps will output to a file maching the
-    defined everest objective
+    Check if the given arguments given to the forward model steps are valid
     """
