@@ -14,7 +14,7 @@ from typing import TYPE_CHECKING, Any, Literal, Self, overload
 import numpy as np
 import pandas as pd
 import polars as pl
-from pydantic import field_validator
+from pydantic import ValidationError, field_validator, model_validator
 from pydantic.dataclasses import dataclass
 from scipy.stats import norm
 
@@ -31,7 +31,17 @@ if TYPE_CHECKING:
 
 
 @dataclass
-class TransUnifSettings:
+class TransSettingsValidation:
+    @classmethod
+    def create(cls, *args, **kwargs):
+        try:
+            return cls(*args, **kwargs)
+        except ValidationError as e:
+            raise ConfigValidationError(str(e)) from e
+
+
+@dataclass
+class TransUnifSettings(TransSettingsValidation):
     name: Literal["unif"] = "unif"
     min: float = 0.0
     max: float = 1.0
@@ -42,7 +52,7 @@ class TransUnifSettings:
 
 
 @dataclass
-class TransLogUnifSettings:
+class TransLogUnifSettings(TransSettingsValidation):
     name: Literal["logunif"] = "logunif"
     log_min: float = 0.0
     log_max: float = 1.0
@@ -57,7 +67,7 @@ class TransLogUnifSettings:
 
 
 @dataclass
-class TransDUnifSettings:
+class TransDUnifSettings(TransSettingsValidation):
     name: Literal["dunif"] = "dunif"
     steps: int = 1000
     min: float = 0.0
@@ -71,7 +81,7 @@ class TransDUnifSettings:
 
 
 @dataclass
-class TransNormalSettings:
+class TransNormalSettings(TransSettingsValidation):
     name: Literal["normal"] = "normal"
     mean: float = 0.0
     std: float = 1.0
@@ -80,7 +90,7 @@ class TransNormalSettings:
     @classmethod
     def std_must_be_positive(cls, value):
         if value < 0:
-            raise ValueError(f"Negative STD {value} for normal distribution parameter")
+            raise ValueError(f"Negative STD {value} for normal distribution")
         return value
 
     def trans(self, x: float) -> float:
@@ -88,7 +98,7 @@ class TransNormalSettings:
 
 
 @dataclass
-class TransLogNormalSettings:
+class TransLogNormalSettings(TransSettingsValidation):
     name: Literal["lognormal"] = "lognormal"
     mean: float = 0.0
     std: float = 1.0
@@ -97,9 +107,7 @@ class TransLogNormalSettings:
     @classmethod
     def std_must_be_positive(cls, value):
         if value < 0:
-            raise ValueError(
-                f"Negative STD {value} for lognormal distribution parameter"
-            )
+            raise ValueError(f"Negative STD {value} for lognormal distribution")
         return value
 
     def trans(self, x: float) -> float:
@@ -108,12 +116,19 @@ class TransLogNormalSettings:
 
 
 @dataclass
-class TransTruncNormalSettings:
+class TransTruncNormalSettings(TransSettingsValidation):
     name: Literal["trunc_normal"] = "trunc_normal"
     mean: float = 0.0
     std: float = 1.0
     min: float = 0.0
     max: float = 1.0
+
+    @field_validator("std")
+    @classmethod
+    def std_must_be_positive(cls, value):
+        if value < 0:
+            raise ValueError(f"Negative STD {value} for truncated normal distribution")
+        return value
 
     def trans(self, x: float) -> float:
         y = x * self.std + self.mean
@@ -121,7 +136,7 @@ class TransTruncNormalSettings:
 
 
 @dataclass
-class TransRawSettings:
+class TransRawSettings(TransSettingsValidation):
     name: Literal["raw"] = "raw"
 
     def trans(self, x: float) -> float:
@@ -129,7 +144,7 @@ class TransRawSettings:
 
 
 @dataclass
-class TransConstSettings:
+class TransConstSettings(TransSettingsValidation):
     name: Literal["const"] = "const"
     value: float = 0.0
 
@@ -138,11 +153,23 @@ class TransConstSettings:
 
 
 @dataclass
-class TransTriangularSettings:
+class TransTriangularSettings(TransSettingsValidation):
     name: Literal["triangular"] = "triangular"
     min: float = 0.0
     mode: float = 0.5
     max: float = 1.0
+
+    @model_validator(mode="after")
+    def valid_traingular_params(self) -> TransTriangularSettings:
+        if not self.min < self.max:
+            raise ValueError(
+                f"Min {self.min} must be strictly less than the maximum {self.max}"
+            )
+        if not (self.min <= self.mode <= self.max):
+            raise ValueError(
+                f"The mode {self.mode} must be between min {self.min} and max {self.max}"
+            )
+        return self
 
     def trans(self, x: float) -> float:
         inv_norm_left = (self.max - self.min) * (self.mode - self.min)
@@ -157,7 +184,7 @@ class TransTriangularSettings:
 
 
 @dataclass
-class TransErrfSettings:
+class TransErrfSettings(TransSettingsValidation):
     name: Literal["errf"] = "errf"
     min: float = 0.0
     max: float = 1.0
@@ -175,7 +202,7 @@ class TransErrfSettings:
 
 
 @dataclass
-class TransDerrfSettings:
+class TransDerrfSettings(TransSettingsValidation):
     name: Literal["derrf"] = "derrf"
     steps: int = 1000
     min: float = 0.0
@@ -227,39 +254,39 @@ def _get_abs_path(file: str | None) -> str | None:
 
 def get_distribution(name: str, values: list[str]) -> Any:
     return {
-        "NORMAL": lambda: TransNormalSettings(
+        "NORMAL": lambda: TransNormalSettings.create(
             mean=float(values[0]), std=float(values[1])
         ),
-        "LOGNORMAL": lambda: TransLogNormalSettings(
+        "LOGNORMAL": lambda: TransLogNormalSettings.create(
             mean=float(values[0]), std=float(values[1])
         ),
-        "UNIFORM": lambda: TransUnifSettings(
+        "UNIFORM": lambda: TransUnifSettings.create(
             min=float(values[0]), max=float(values[1])
         ),
-        "LOGUNIF": lambda: TransLogUnifSettings(
+        "LOGUNIF": lambda: TransLogUnifSettings.create(
             log_min=math.log(float(values[0])), log_max=math.log(float(values[1]))
         ),
-        "TRUNCATED_NORMAL": lambda: TransTruncNormalSettings(
+        "TRUNCATED_NORMAL": lambda: TransTruncNormalSettings.create(
             mean=float(values[0]),
             std=float(values[1]),
             min=float(values[2]),
             max=float(values[3]),
         ),
-        "RAW": TransRawSettings(),
-        "CONST": lambda: TransConstSettings(value=float(values[0])),
-        "DUNIF": lambda: TransDUnifSettings(
+        "RAW": TransRawSettings.create(),
+        "CONST": lambda: TransConstSettings.create(value=float(values[0])),
+        "DUNIF": lambda: TransDUnifSettings.create(
             steps=int(values[0]), min=float(values[1]), max=float(values[2])
         ),
-        "TRIANGULAR": lambda: TransTriangularSettings(
+        "TRIANGULAR": lambda: TransTriangularSettings.create(
             min=float(values[0]), mode=float(values[1]), max=float(values[2])
         ),
-        "ERRF": lambda: TransErrfSettings(
+        "ERRF": lambda: TransErrfSettings.create(
             min=float(values[0]),
             max=float(values[1]),
             skew=float(values[2]),
             width=float(values[3]),
         ),
-        "DERRF": lambda: TransDerrfSettings(
+        "DERRF": lambda: TransDerrfSettings.create(
             steps=int(values[0]),
             min=float(values[1]),
             max=float(values[2]),
