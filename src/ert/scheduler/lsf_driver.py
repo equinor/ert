@@ -413,7 +413,7 @@ class LsfDriver(Driver):
             async with self.kill_coordinator.barrier:
                 self.kill_coordinator.instances_ready += 1
 
-                if self.kill_coordinator.instances_ready == len(self._iens2jobid):
+                if self.kill_coordinator.instances_ready == len(self._submit_locks):
                     self.kill_coordinator.barrier.notify_all()
 
                     self.kill_coordinator.kill_task = asyncio.create_task(
