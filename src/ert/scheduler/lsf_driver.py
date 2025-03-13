@@ -447,7 +447,7 @@ class LsfDriver(Driver):
 
     async def kill_all(self) -> None:
         logger.debug(
-            f"Killing realizations {self._iens2jobid.keys()} with LSF-id {self._iens2jobid.values()}"
+            f"Killing realizations {' '.join(str(i) for i in self._iens2jobid)} with LSF-id {' '.join(str(i) for i in self._iens2jobid.values())}"
         )
         bkill_with_args: list[str] = [
             str(self._bkill_cmd),
@@ -463,7 +463,10 @@ class LsfDriver(Driver):
             retry_interval=self._sleep_time_between_cmd_retries,
             return_on_msgs=(JOB_ALREADY_FINISHED_BKILL_MSG),
         )
-
+        logger.info("Sending SIGKILL in 15 seconds from now!!!")
+        logger.info(
+            f"sleep {self._sleep_time_between_bkills}; {self._bkill_cmd} -s SIGKILL {' '.join(str(i) for i in self._iens2jobid.values())}"
+        )
         await asyncio.create_subprocess_shell(
             f"sleep {self._sleep_time_between_bkills}; {self._bkill_cmd} -s SIGKILL {' '.join(str(i) for i in self._iens2jobid.values())}",
             start_new_session=True,
