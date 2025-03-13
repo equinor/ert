@@ -108,14 +108,13 @@ class MultipleDataAssimilation(UpdateRunModel):
     ) -> None:
         self.log_at_startup()
 
-        design_matrix = self._design_matrix
-        if design_matrix is not None:
+        if self._design_matrix is not None:
             parameters_config: list[ParameterConfig] = []
             for param in self._parameter_configuration:
                 if isinstance(param, ScalarParameters):
                     try:
                         new_scalar_config = (
-                            design_matrix.merge_with_existing_parameters(param)
+                            self._design_matrix.merge_with_existing_parameters(param)
                         )
                         parameters_config.append(new_scalar_config)
                     except ConfigValidationError as exc:
@@ -175,8 +174,8 @@ class MultipleDataAssimilation(UpdateRunModel):
                 np.where(self.active_realizations)[0],
                 random_seed=self.random_seed,
                 design_matrix_df=(
-                    design_matrix.design_matrix_df
-                    if design_matrix is not None
+                    self._design_matrix.design_matrix_df
+                    if self._design_matrix is not None
                     else None
                 ),
             )
