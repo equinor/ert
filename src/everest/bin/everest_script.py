@@ -164,7 +164,7 @@ async def run_everest(options: argparse.Namespace) -> None:
             raise SystemExit("Failed to start the server") from e
 
         logger.debug("Waiting for response from everserver")
-        wait_for_server(options.config.output_dir, timeout=60)
+        wait_for_server(options.config.output_dir, timeout=600)
         print("Everest server found!")
         logger.debug("Got response from everserver. Starting experiment")
 
