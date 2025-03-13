@@ -176,7 +176,10 @@ def _parse_optimization(
     has_output_constraints: bool,
     ropt_config: dict[str, Any],
 ) -> None:
-    ropt_config["optimizer"] = {}
+    ropt_config["optimizer"] = {
+        "stdout": "optimizer.stdout",
+        "stderr": "optimizer.stderr",
+    }
     if not ever_opt:
         return
 

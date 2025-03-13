@@ -49,6 +49,8 @@
     "parallel": true,
     "speculative": false,
     "split_evaluations": false,
+    "stderr": "optimizer.stderr",
+    "stdout": "optimizer.stdout",
     "tolerance": 0.001
   },
   "realization_filters": [],
