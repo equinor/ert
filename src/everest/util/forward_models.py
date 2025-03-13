@@ -19,6 +19,10 @@ def lint_forward_model_job(job: str, args: Sequence[str]) -> list[str]:
     return pm.hook.lint_forward_model(job=job, args=args)
 
 
+def validate_forward_model_step_arguments(forward_model_steps: list[str]) -> None:
+    pm.hook.check_forward_model_arguments(forward_model_steps=forward_model_steps)
+
+
 def parse_forward_model_file(path: str, schema: type[BaseModel], message: str) -> None:
     try:
         pm.hook.parse_forward_model_schema(path=path, schema=schema)
