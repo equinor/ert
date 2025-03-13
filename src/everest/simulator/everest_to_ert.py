@@ -172,8 +172,12 @@ def _inject_simulation_defaults(
         if key not in ert_config:
             ert_config[key] = value
 
-    defs = ever_config.definitions if ever_config.definitions is not None else {}
-    inject_default("ECLBASE", defs.get("eclbase", defs.get("flowbase", "eclipse/ECL")))
+    inject_default(
+        "ECLBASE",
+        (ever_config.definitions if ever_config.definitions is not None else {}).get(
+            "eclbase", "eclipse/ECL"
+        ),
+    )
 
 
 def _extract_simulator(ever_config: EverestConfig, ert_config: dict[str, Any]) -> None:
