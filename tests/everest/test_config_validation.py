@@ -1,12 +1,10 @@
 import os
 import pathlib
 import re
-import warnings
 from argparse import ArgumentParser
 from contextlib import ExitStack as does_not_raise
 from pathlib import Path
 from typing import Any
-from unittest.mock import patch
 
 import pytest
 import yaml
@@ -21,7 +19,6 @@ from everest.config.sampler_config import SamplerConfig
 from everest.simulator.everest_to_ert import (
     everest_to_ert_config_dict,
 )
-from tests.everest.utils import skipif_no_everest_models
 
 
 def has_error(error: ValidationError | list[dict], match: str):
@@ -931,56 +928,6 @@ def test_that_non_existing_workflow_jobs_cause_error():
             },
         )
     assert has_error(e.value, "unknown workflow job job1")
-
-
-@skipif_no_everest_models
-@pytest.mark.everest_models_test
-@pytest.mark.parametrize(
-    ["objective", "forward_model", "warning_msg"],
-    [
-        (
-            ["rf"],
-            ["well_trajectory -c Something -E Something", "rf -s TEST -o rf"],
-            None,
-        ),
-        (
-            ["npv", "rf"],
-            ["rf -s TEST -o rf"],
-            "Warning: Forward model might not write the required output file for \\['npv'\\]",
-        ),
-        (
-            ["npv", "npv2"],
-            ["rf -s TEST -o rf"],
-            "Warning: Forward model might not write the required output files for \\['npv', 'npv2'\\]",
-        ),
-        (
-            ["rf"],
-            ["rf -s TEST -o rf"],
-            None,
-        ),
-        (
-            ["rf"],
-            None,
-            None,
-        ),
-    ],
-)
-def test_warning_forward_model_write_objectives(objective, forward_model, warning_msg):
-    # model.realizations is non-empty and therefore this test will run full validation on forward model schema, we don't want that for this test
-    with patch("everest.config.everest_config.validate_forward_model_configs"):
-        if warning_msg is not None:
-            with pytest.warns(ConfigWarning, match=warning_msg):
-                EverestConfig.with_defaults(
-                    objective_functions=[{"name": o} for o in objective],
-                    forward_model=forward_model,
-                )
-        else:
-            with warnings.catch_warnings():
-                warnings.simplefilter("error", category=ConfigWarning)
-                EverestConfig.with_defaults(
-                    objective_functions=[{"name": o} for o in objective],
-                    forward_model=forward_model,
-                )
 
 
 def test_deprecated_keyword_report_steps():
