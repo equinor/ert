@@ -14,6 +14,7 @@ from typing import TYPE_CHECKING, Any, Literal, Self, overload
 import numpy as np
 import pandas as pd
 import polars as pl
+from pydantic import field_validator
 from pydantic.dataclasses import dataclass
 from scipy.stats import norm
 
@@ -75,6 +76,13 @@ class TransNormalSettings:
     mean: float = 0.0
     std: float = 1.0
 
+    @field_validator("std")
+    @classmethod
+    def std_must_be_positive(cls, value):
+        if value < 0:
+            raise ValueError(f"Negative STD {value} for normal distribution parameter")
+        return value
+
     def trans(self, x: float) -> float:
         return x * self.std + self.mean
 
@@ -84,6 +92,15 @@ class TransLogNormalSettings:
     name: Literal["lognormal"] = "lognormal"
     mean: float = 0.0
     std: float = 1.0
+
+    @field_validator("std")
+    @classmethod
+    def std_must_be_positive(cls, value):
+        if value < 0:
+            raise ValueError(
+                f"Negative STD {value} for lognormal distribution parameter"
+            )
+        return value
 
     def trans(self, x: float) -> float:
         # mean is the expectation of log( y )
