@@ -424,7 +424,24 @@ class LsfDriver(Driver):
                         lambda _: self.kill_coordinator.kill_completed.set()
                     )
                 else:
-                    await self.kill_coordinator.barrier.wait()
+                    try:
+                        await asyncio.wait_for(
+                            self.kill_coordinator.barrier.wait(), timeout=30
+                        )
+                    except TimeoutError:
+                        logger.warning(
+                            f"Timeout waiting for all realizations to coordinate termination. "
+                            f"Expected {len(self._iens2jobid)} but only got "
+                            f"{self.kill_coordinator.instances_ready}. "
+                            f"Proceeding with termination operation anyway."
+                        )
+                        if self.kill_coordinator.kill_task is None:
+                            self.kill_coordinator.kill_task = asyncio.create_task(
+                                self.kill_all()
+                            )
+                            self.kill_coordinator.kill_task.add_done_callback(
+                                lambda _: self.kill_coordinator.kill_completed.set()
+                            )
 
             await self.kill_coordinator.kill_completed.wait()
 
