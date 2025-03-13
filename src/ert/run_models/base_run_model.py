@@ -98,6 +98,10 @@ def delete_runpath(run_path: str) -> None:
         shutil.rmtree(run_path)
 
 
+class UserCancelled(Exception):
+    pass
+
+
 class _LogAggregration(logging.Handler):
     def __init__(self, messages: MutableSequence[str]) -> None:
         self.messages = messages
@@ -572,10 +576,11 @@ class BaseRunModel(ABC):
                             logger.debug(
                                 "observed evaluation cancelled event, exit drainer"
                             )
-                            # Allow track() to emit an EndEvent.
-                            return False
+                            raise UserCancelled(
+                                "Experiment cancelled by user during evaluation"
+                            )
                     elif type(event) is EETerminated:
-                        logger.debug("got terminator event")
+                        logger.debug("got terminated event")
 
                     if not self._end_queue.empty():
                         logger.debug("Run model canceled - during evaluation")
@@ -584,7 +589,9 @@ class BaseRunModel(ABC):
                         logger.debug(
                             "Run model canceled - during evaluation - cancel sent"
                         )
-        except BaseException as e:
+        except UserCancelled:
+            raise
+        except Exception as e:
             logger.exception(f"unexpected error: {e}")
             # We really don't know what happened...  shut down
             # the thread and get out of here. The monitor has
@@ -602,7 +609,8 @@ class BaseRunModel(ABC):
         if not self._end_queue.empty():
             logger.debug("Run model canceled - pre evaluation")
             self._end_queue.get()
-            return []
+            raise UserCancelled("Experiment cancelled by user in pre evaluation")
+
         ee_ensemble = self._build_ensemble(run_args, ensemble.experiment_id)
         evaluator = EnsembleEvaluator(
             ee_ensemble,
@@ -623,8 +631,14 @@ class BaseRunModel(ABC):
         if not self._end_queue.empty():
             logger.debug("Run model canceled - post evaluation")
             self._end_queue.get()
-            await evaluator_task
-            return []
+            try:
+                await evaluator_task
+            except Exception as e:
+                raise Exception(
+                    "Exception occured during user initiatied termination of experiment"
+                ) from e
+            raise UserCancelled("Experiment cancelled by user in post evaluation")
+
         await evaluator_task
         ensemble.refresh_ensemble_state()
 
@@ -638,10 +652,9 @@ class BaseRunModel(ABC):
         ensemble: Ensemble,
         ee_config: EvaluatorServerConfig,
     ) -> list[int]:
-        successful_realizations = asyncio.run(
+        return asyncio.run(
             self.run_ensemble_evaluator_async(run_args, ensemble, ee_config)
         )
-        return successful_realizations
 
     def _build_ensemble(
         self,
@@ -761,11 +774,16 @@ class BaseRunModel(ABC):
                 "run_paths": self.run_paths,
             },
         )
-        successful_realizations = self.run_ensemble_evaluator(
-            run_args,
-            ensemble,
-            evaluator_server_config,
-        )
+        try:
+            successful_realizations = self.run_ensemble_evaluator(
+                run_args,
+                ensemble,
+                evaluator_server_config,
+            )
+        except UserCancelled:
+            self.active_realizations = [False for _ in self.active_realizations]
+            raise
+
         starting_realizations = [real.iens for real in run_args if real.active]
         failed_realizations = list(
             set(starting_realizations) - set(successful_realizations)
