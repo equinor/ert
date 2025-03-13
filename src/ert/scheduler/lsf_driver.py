@@ -411,6 +411,7 @@ class LsfDriver(Driver):
                 return
 
             async with self.kill_coordinator.barrier:
+                await asyncio.sleep(0.1)
                 self.kill_coordinator.instances_ready += 1
 
                 if self.kill_coordinator.instances_ready == len(self._submit_locks):
