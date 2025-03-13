@@ -232,20 +232,6 @@ and environment variables are exposed in the form 'os.NAME', for example:
     model_config = ConfigDict(extra="forbid", frozen=True)
 
     @model_validator(mode="after")
-    def validate_eclbase_flowbase(self) -> Self:  # pylint: disable=E0213
-        if self.definitions is None:
-            return self
-
-        if "eclbase" in self.definitions and "flowbase" in self.definitions:
-            raise ValueError(
-                "Found both eclbase and flowbase in definitions config. "
-                "Please use only one to point to the directory containing "
-                "reservoir simulator files."
-            )
-
-        return self
-
-    @model_validator(mode="after")
     def validate_queue_system(self) -> Self:  # pylint: disable=E0213
         assert self.server is not None
         assert self.simulator is not None
