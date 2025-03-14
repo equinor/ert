@@ -146,6 +146,8 @@ class DesignMatrix:
                     )
 
                 design_parameter_group.name = parameter_group.name
+                design_parameter_group.template_file = parameter_group.template_file
+                design_parameter_group.output_file = parameter_group.output_file
                 design_group_added = True
             elif set(design_keys) & set(existing_keys):
                 raise ConfigValidationError(

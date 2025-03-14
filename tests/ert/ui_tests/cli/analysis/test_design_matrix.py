@@ -155,7 +155,7 @@ def test_run_poly_example_with_design_matrix_and_genkw_merge(default_values, err
                 NUM_REALIZATIONS 10
                 MIN_REALIZATIONS 1
                 GEN_DATA POLY_RES RESULT_FILE:poly.out
-                GEN_KW COEFFS coeff_priors
+                GEN_KW COEFFS my_template my_output coeff_priors
                 DESIGN_MATRIX poly_design.xlsx DESIGN_SHEET:DesignSheet01 DEFAULT_SHEET:DefaultSheet
                 INSTALL_JOB poly_eval POLY_EVAL
                 FORWARD_MODEL poly_eval
@@ -182,6 +182,17 @@ def test_run_poly_example_with_design_matrix_and_genkw_merge(default_values, err
                     output = [_evaluate(coeffs, x) for x in range(10)]
                     with open("poly.out", "w", encoding="utf-8") as f:
                         f.write("\\n".join(map(str, output)))
+                """
+            )
+        )
+
+    with open("my_template", "w", encoding="utf-8") as f:
+        f.write(
+            dedent(
+                """\
+                a: <a>
+                b: <b>
+                c: <c>
                 """
             )
         )
@@ -216,6 +227,11 @@ def test_run_poly_example_with_design_matrix_and_genkw_merge(default_values, err
         np.testing.assert_array_equal(params[:, 0], a_values)
         np.testing.assert_array_equal(params[:, 1], 10 * [1])
         np.testing.assert_array_equal(params[:, 2], 10 * [2])
+    with open("poly_out/realization-0/iter-0/my_output", encoding="utf-8") as f:
+        output = [line.strip() for line in f.readlines()]
+    assert output[0] == "a: 0"
+    assert output[1] == "b: 1"
+    assert output[2] == "c: 2"
 
 
 @pytest.mark.usefixtures("copy_poly_case")
