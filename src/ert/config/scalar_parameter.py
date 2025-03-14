@@ -273,31 +273,27 @@ def _get_abs_path(file: str | None) -> str | None:
 
 def get_distribution(name: str, values: list[str]) -> Any:
     return {
-        "NORMAL": lambda: TransNormalSettings.create(
-            mean=float(values[0]), std=float(values[1])
-        ),
+        "NORMAL": lambda: TransNormalSettings.create(mean=values[0], std=values[1]),
         "LOGNORMAL": lambda: TransLogNormalSettings.create(
-            mean=float(values[0]), std=float(values[1])
+            mean=values[0], std=values[1]
         ),
-        "UNIFORM": lambda: TransUnifSettings.create(
-            min=float(values[0]), max=float(values[1])
-        ),
+        "UNIFORM": lambda: TransUnifSettings.create(min=values[0], max=values[1]),
         "LOGUNIF": lambda: TransLogUnifSettings.create(
             log_min=math.log(float(values[0])), log_max=math.log(float(values[1]))
         ),
         "TRUNCATED_NORMAL": lambda: TransTruncNormalSettings.create(
-            mean=float(values[0]),
-            std=float(values[1]),
-            min=float(values[2]),
-            max=float(values[3]),
+            mean=values[0],
+            std=values[1],
+            min=values[2],
+            max=values[3],
         ),
         "RAW": TransRawSettings.create(),
-        "CONST": lambda: TransConstSettings.create(value=float(values[0])),
+        "CONST": lambda: TransConstSettings.create(value=values[0]),
         "DUNIF": lambda: TransDUnifSettings.create(
-            steps=int(values[0]), min=float(values[1]), max=float(values[2])
+            steps=values[0], min=values[1], max=values[2]
         ),
         "TRIANGULAR": lambda: TransTriangularSettings.create(
-            min=float(values[0]), mode=float(values[1]), max=float(values[2])
+            min=values[0], mode=values[1], max=values[2]
         ),
         "ERRF": lambda: TransErrfSettings.create(
             min=values[0],
@@ -305,13 +301,6 @@ def get_distribution(name: str, values: list[str]) -> Any:
             skew=values[2],
             width=values[3],
         ),
-        # "DERRF": lambda: TransDerrfSettings.create(
-        #     steps=int(values[0]),
-        #     min=float(values[1]),
-        #     max=float(values[2]),
-        #     skew=float(values[3]),
-        #     width=float(values[4]),
-        # ),
         "DERRF": lambda: TransDerrfSettings.create(
             steps=values[0],
             min=values[1],
