@@ -22,29 +22,41 @@ from ert.summary_key_type import SummaryKeyType
 from .response_config import InvalidResponseFile
 
 
-def _cell_index(
-    array_index: int, nx: PositiveInt, ny: PositiveInt
-) -> tuple[int, int, int]:
-    k = array_index // (nx * ny)
-    array_index -= k * (nx * ny)
-    j = array_index // nx
-    array_index -= j * nx
+def read_summary(
+    summary_basename: str, select_keys: Sequence[str]
+) -> tuple[datetime, list[str], Sequence[datetime], npt.NDArray[np.float32]]:
+    """Reads the timeseries for the selected keys from summary files with the given basename.
 
-    return array_index + 1, j + 1, k + 1
+    Called as read_summary("data/CASE", ["FOP*"]) it will read from files
+    data/CASE.UNSMRY & data/CASE.SMSPEC and return the tuple (start_date, keys,
+    times, values) where
 
+    * start_date is the start_date for the simulation
+    * keys is list of keys that matched the selection "FOP*" ("*" means wildcard)
+    * times is the x-axis for the time series
+    * values is an array of dimensions len(keys) * len(times) with y-axis
+    values.
 
-T = TypeVar("T")
+    Note that if formatted files are present (data/CASE.FUNSMRY and
+    data/CASE.FSMSPEC) then those will be read from. It is also possible to
+    give the simulator input file, read_summary("data/CASE.DATA", ["FOP*"]),
+    and it will then read from the corresponding summary files data/CASE.UNSMRY &
+    data/CASE.SMSPEC.
 
-
-def _check_if_missing(
-    keyword_name: str, missing_key: str, *test_vars: T | None
-) -> list[T]:
-    if any(v is None for v in test_vars):
-        raise InvalidResponseFile(
-            f"Found {keyword_name} keyword in summary "
-            f"specification without {missing_key} keyword"
+    """
+    summary, spec = _get_summary_filenames(summary_basename)
+    try:
+        date_index, start_date, date_units, keys, indices = _read_spec(
+            spec, select_keys
         )
-    return test_vars  # type: ignore
+        fetched, time_map = _read_summary(
+            summary, start_date, date_units, indices, date_index
+        )
+    except resfo.ResfoParsingError as err:
+        raise InvalidResponseFile(
+            f"Failed to read summary file {summary_basename}: {err}"
+        ) from err
+    return (start_date, keys, time_map, fetched)
 
 
 def make_summary_key(
@@ -105,6 +117,34 @@ def make_summary_key(
         case SummaryKeyType.NETWORK:
             (name,) = _check_if_missing("network", "WGNAMES", name)
             return f"{keyword}:{name}"
+
+
+__all__ = ["make_summary_key", "read_summary"]
+
+
+def _cell_index(
+    array_index: int, nx: PositiveInt, ny: PositiveInt
+) -> tuple[int, int, int]:
+    k = array_index // (nx * ny)
+    array_index -= k * (nx * ny)
+    j = array_index // nx
+    array_index -= j * nx
+
+    return array_index + 1, j + 1, k + 1
+
+
+T = TypeVar("T")
+
+
+def _check_if_missing(
+    keyword_name: str, missing_key: str, *test_vars: T | None
+) -> list[T]:
+    if any(v is None for v in test_vars):
+        raise InvalidResponseFile(
+            f"Found {keyword_name} keyword in summary "
+            f"specification without {missing_key} keyword"
+        )
+    return test_vars  # type: ignore
 
 
 class DateUnit(Enum):
@@ -169,43 +209,6 @@ def _get_summary_filenames(filepath: str) -> tuple[str, str]:
     summary = _find_file_matching("unified summary file", filepath, _is_unsmry)
     spec = _find_file_matching("smspec file", filepath, _is_smspec)
     return summary, spec
-
-
-def read_summary(
-    summary_basename: str, select_keys: Sequence[str]
-) -> tuple[datetime, list[str], Sequence[datetime], npt.NDArray[np.float32]]:
-    """Reads the timeseries for the selected keys from summary files with the given basename.
-
-    Called as read_summary("data/CASE", ["FOP*"]) it will read from files
-    data/CASE.UNSMRY & data/CASE.SMSPEC and return the tuple (start_date, keys,
-    times, values) where
-
-    * start_date is the start_date for the simulation
-    * keys is list of keys that matched the selection "FOP*" ("*" means wildcard)
-    * times is the x-axis for the time series
-    * values is an array of dimensions len(keys) * len(times) with y-axis
-    values.
-
-    Note that if formatted files are present (data/CASE.FUNSMRY and
-    data/CASE.FSMSPEC) then those will be read from. It is also possible to
-    give the simulator input file, read_summary("data/CASE.DATA", ["FOP*"]),
-    and it will then read from the corresponding summary files data/CASE.UNSMRY &
-    data/CASE.SMSPEC.
-
-    """
-    summary, spec = _get_summary_filenames(summary_basename)
-    try:
-        date_index, start_date, date_units, keys, indices = _read_spec(
-            spec, select_keys
-        )
-        fetched, time_map = _read_summary(
-            summary, start_date, date_units, indices, date_index
-        )
-    except resfo.ResfoParsingError as err:
-        raise InvalidResponseFile(
-            f"Failed to read summary file {summary_basename}: {err}"
-        ) from err
-    return (start_date, keys, time_map, fetched)
 
 
 def _key2str(key: bytes | str) -> str:
