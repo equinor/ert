@@ -312,6 +312,9 @@ class EverestDataAPI:
             )
 
         for batch in self._ever_storage.data.batches:
+            if not batch.has_data:
+                continue
+
             try_append_perturbation_dfs(
                 batch.batch_id,
                 batch.perturbation_objectives,
