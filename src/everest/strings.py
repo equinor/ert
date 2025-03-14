@@ -7,6 +7,7 @@ DEFAULT_LOGGING_FORMAT = "%(asctime)s %(name)s %(levelname)s: %(message)s"
 
 EVEREST_SERVER_CONFIG = "everserver_config"
 EVEREST = "everest"
+EVERSERVER = "everserver"
 
 HOSTFILE_NAME = "hostfile"
 

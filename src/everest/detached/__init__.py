@@ -48,9 +48,7 @@ PROXY = {"http": None, "https": None}
 logger = logging.getLogger(__name__)
 
 
-async def start_server(
-    config: EverestConfig, logging_level: int = logging.INFO
-) -> Driver:
+async def start_server(config: EverestConfig, logging_level: int) -> Driver:
     """
     Start an Everest server running the optimization defined in the config
     """
@@ -95,7 +93,7 @@ def stop_server(
             response.raise_for_status()
             return True
         except:
-            logging.debug(traceback.format_exc())
+            logger.debug(traceback.format_exc())
             time.sleep(retry)
     return False
 
@@ -119,7 +117,7 @@ def start_experiment(
             response.raise_for_status()
             return
         except:
-            logging.debug(traceback.format_exc())
+            logger.debug(traceback.format_exc())
             time.sleep(retry)
     raise RuntimeError("Failed to start experiment")
 
@@ -237,7 +235,7 @@ def wait_for_server_to_stop(
 
 def server_is_running(url: str, cert: str, auth: tuple[str, str]) -> bool:
     try:
-        logging.info(f"Checking server status at {url} ")
+        logger.info(f"Checking server status at {url} ")
         response = requests.get(
             url,
             verify=cert,
@@ -247,7 +245,7 @@ def server_is_running(url: str, cert: str, auth: tuple[str, str]) -> bool:
         )
         response.raise_for_status()
     except:
-        logging.debug(traceback.format_exc())
+        logger.debug(traceback.format_exc())
         return False
     return True
 
@@ -298,7 +296,7 @@ def start_monitor(
                     opt_status = new_opt_status
                 time.sleep(polling_interval)
     except:
-        logging.debug(traceback.format_exc())
+        logger.debug(traceback.format_exc())
 
 
 _EVERSERVER_JOB_PATH = str(
