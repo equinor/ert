@@ -102,7 +102,7 @@ def _extract_summary_keys(
             "Failed to load group names from {}. "
             "No group summary data will be internalized during run."
         )
-        logging.getLogger("everest").warning(warn_msg.format(data_files))
+        logging.getLogger(EVEREST).warning(warn_msg.format(data_files))
         groups = set()
 
     group_keys = [
