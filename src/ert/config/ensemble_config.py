@@ -54,13 +54,16 @@ class EnsembleConfig:
     refcase: Refcase | None = None
 
     def __post_init__(self) -> None:
-        self._check_for_duplicate_names(
-            [p.name for p in self.parameter_configs.values()],
-            [key for config in self.response_configs.values() for key in config.keys],
-        )
-        self._check_for_duplicate_gen_kw_param_names(
-            [p for p in self.parameter_configs.values() if isinstance(p, GenKwConfig)]
-        )
+        if self.scalars:
+            self._check_for_duplicate_names(
+                list(self.scalars.groups.keys()),
+                [
+                    key
+                    for config in self.response_configs.values()
+                    for key in config.keys
+                ],
+            )
+            self._check_for_duplicate_gen_kw_param_names(self.scalars)
 
         self._check_for_forward_init_in_gen_kw(
             [p for p in self.parameter_configs.values() if isinstance(p, GenKwConfig)]
@@ -83,10 +86,8 @@ class EnsembleConfig:
             )
 
     @staticmethod
-    def _check_for_duplicate_gen_kw_param_names(gen_kw_list: list[GenKwConfig]) -> None:
-        gen_kw_param_count = Counter(
-            keyword.name for p in gen_kw_list for keyword in p.transform_functions
-        )
+    def _check_for_duplicate_gen_kw_param_names(scalars: ScalarParameters) -> None:
+        gen_kw_param_count = Counter(param.param_name for param in scalars.scalars)
         duplicate_gen_kw_names = [
             (n, c) for n, c in gen_kw_param_count.items() if c > 1
         ]
