@@ -133,7 +133,8 @@ class RunWorkflowWidget(QWidget):
                 "storage": self.storage,
                 "random_seed": self.config.random_seed,
                 "reports_dir": str(
-                    self.config.analysis_config.log_path / ensemble.experiment.name
+                    self.config.analysis_config.log_path
+                    / (ensemble.experiment.name if ensemble is not None else "")
                 ),
                 "observation_settings": self.config.analysis_config.observation_settings,
                 "es_settings": self.config.analysis_config.es_module,
