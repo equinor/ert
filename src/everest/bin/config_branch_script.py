@@ -51,13 +51,21 @@ def opt_controls_by_batch(optimization_dir: str, batch: int) -> dict[str, Any] |
     assert storage.data is not None
     assert storage.data.controls is not None
     control_names = storage.data.controls["control_name"]
-    batch_data = next((b for b in storage.data.batches if b.batch_id == batch), None)
+    batch_data = next(
+        (
+            b
+            for b in storage.data.batches
+            if b.batch_id == batch and b.realization_controls is not None
+        ),
+        None,
+    )
 
     if batch_data:
         # It is currently assumed that the batch provided is not a perturbation-only
         # batch.
         # All geo-realizations should have the same unperturbed control values per batch
         # hence it does not matter which realization we select the controls for
+        assert batch_data.realization_controls is not None
         return batch_data.realization_controls.select(
             control_names.to_list()
         ).to_dicts()[0]
