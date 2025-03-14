@@ -665,7 +665,7 @@ def test_suggestion_on_empty_parameter_file(tmp_path):
             "3.0",
             "3.0",
             "3.0",
-            "Minimum 3.0 must be strictly less than the maxiumum 3.0",
+            "Minimum 3.0 must be strictly less than the maximum 3.0",
         ),
         ("TRIANGULAR", "-1", "0", "1", None),
         (
