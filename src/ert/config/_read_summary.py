@@ -1,3 +1,9 @@
+"""
+Functions for reading reservoir simulator summary files. See
+[OPM flow 2024.04 manual Appendix F.9](https://opm-project.org/?page_id=955)
+for specification of the file format
+"""
+
 from __future__ import annotations
 
 import fnmatch
