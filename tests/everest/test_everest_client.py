@@ -1,10 +1,10 @@
 import logging
 import ssl
 import threading
-import time
 from pathlib import Path
 
 import pytest
+import requests
 import uvicorn
 from fastapi import FastAPI
 from starlette.responses import Response
@@ -15,6 +15,7 @@ from everest.detached import wait_for_server
 from everest.detached.jobs.everserver import _find_open_port
 from everest.gui.everest_client import EverestClient
 from everest.strings import STOP_ENDPOINT
+from tests.ert.utils import wait_until
 
 
 @pytest.fixture
@@ -23,6 +24,10 @@ def client_server_mock() -> tuple[FastAPI, threading.Thread, EverestClient]:
     host = "127.0.0.1"
     port = _find_open_port(host, lower=5000, upper=5800)
     server_url = f"http://{host}:{port}"
+
+    @server_app.get("alive")
+    def alive():
+        return Response("Hello", status_code=200)
 
     server = uvicorn.Server(
         uvicorn.Config(server_app, host=host, port=port, log_level="info")
@@ -41,7 +46,23 @@ def client_server_mock() -> tuple[FastAPI, threading.Thread, EverestClient]:
         ssl_context=ssl.create_default_context(),
     )
 
-    yield server_app, server_thread, everest_client
+    def wait_until_alive(timeout=60, sleep_between_retries=1) -> None:
+        def ping_server() -> bool:
+            try:
+                requests.get(
+                    f"{server_url}/alive",
+                    verify="N/A",
+                    auth=("", ""),
+                    proxies={"http": None, "https": None},  # type: ignore
+                )
+
+                return True
+            except requests.exceptions.ConnectionError:
+                return False
+
+        wait_until(ping_server, timeout=timeout, interval=sleep_between_retries)
+
+    yield server_app, server_thread, everest_client, wait_until_alive
 
     if server_thread.is_alive():
         server.should_exit = True
@@ -51,14 +72,14 @@ def client_server_mock() -> tuple[FastAPI, threading.Thread, EverestClient]:
 def test_that_stop_invokes_correct_endpoint(
     caplog, client_server_mock: tuple[FastAPI, threading.Thread, EverestClient]
 ):
-    server_app, server_thread, client = client_server_mock
+    server_app, server_thread, client, wait_until_alive = client_server_mock
 
     @server_app.post(f"/{STOP_ENDPOINT}")
     def stop():
         return Response("STOP..", 200)
 
     server_thread.start()
-    time.sleep(0.1)
+    wait_until_alive()
 
     with caplog.at_level(logging.INFO):
         client.stop()
@@ -70,14 +91,14 @@ def test_that_stop_invokes_correct_endpoint(
 def test_that_stop_errors_on_non_ok_httpcode(
     caplog, client_server_mock: tuple[FastAPI, threading.Thread, EverestClient]
 ):
-    server_app, server_thread, client = client_server_mock
+    server_app, server_thread, client, wait_until_alive = client_server_mock
 
     @server_app.post(f"/{STOP_ENDPOINT}")
     def stop():
         return Response("STOP..", 505)
 
     server_thread.start()
-    time.sleep(0.1)
+    wait_until_alive()
 
     with caplog.at_level(logging.ERROR):
         client.stop()
@@ -92,7 +113,7 @@ def test_that_stop_errors_on_non_ok_httpcode(
 def test_that_stop_errors_on_server_down(
     caplog, client_server_mock: tuple[FastAPI, threading.Thread, EverestClient]
 ):
-    _, _, client = client_server_mock
+    _, _, client, _ = client_server_mock
 
     with caplog.at_level(logging.ERROR):
         client.stop()
@@ -107,10 +128,10 @@ def test_that_stop_errors_on_server_down(
 def test_that_stop_errors_on_server_up_but_endpoint_down(
     caplog, client_server_mock: tuple[FastAPI, threading.Thread, EverestClient]
 ):
-    _, server_thread, client = client_server_mock
+    _, server_thread, client, wait_until_alive = client_server_mock
 
     server_thread.start()
-    time.sleep(0.1)
+    wait_until_alive()
 
     with caplog.at_level(logging.ERROR):
         client.stop()
