@@ -224,7 +224,7 @@ class GenKwConfig(ParameterConfig):
             if not (xmin < xmax):
                 errors.append(
                     ErrorInfo(
-                        f"Minimum {xmin} must be strictly less than the maxiumum {xmax}"
+                        f"Minimum {xmin} must be strictly less than the maximum {xmax}"
                         f" for {dist} distributed parameter {key}",
                     ).set_context(self.name)
                 )
