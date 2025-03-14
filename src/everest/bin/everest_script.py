@@ -25,7 +25,7 @@ from everest.everest_storage import EverestStorage
 from everest.simulator.everest_to_ert import (
     everest_to_ert_config_dict,
 )
-from everest.strings import EVEREST
+from everest.strings import DEFAULT_LOGGING_FORMAT
 from everest.util import (
     makedirs_if_needed,
     version_info,
@@ -38,6 +38,8 @@ from .utils import (
     run_detached_monitor,
 )
 
+logger = logging.getLogger(__name__)
+
 
 def everest_entry(args: list[str] | None = None) -> None:
     """Entry point for running an optimization."""
@@ -45,12 +47,13 @@ def everest_entry(args: list[str] | None = None) -> None:
     options = parser.parse_args(args)
 
     if options.debug:
-        logging.getLogger(EVEREST).setLevel(logging.DEBUG)
-        # Remove the null handler if set:
-        logging.getLogger().removeHandler(logging.NullHandler())
+        handler = logging.StreamHandler()
+        formatter = logging.Formatter(DEFAULT_LOGGING_FORMAT)
+        handler.setFormatter(formatter)
+        logger.addHandler(handler)
+        logger.setLevel(logging.DEBUG)
 
-    logging.info(version_info())
-    logging.debug(json.dumps(options.config.to_dict(), sort_keys=True, indent=2))
+    logger.debug(version_info())
 
     if options.config.server_queue_system == QueueSystem.LOCAL:
         print(
@@ -107,7 +110,6 @@ def _build_args_parser() -> argparse.ArgumentParser:
 
 
 async def run_everest(options: argparse.Namespace) -> None:
-    logger = logging.getLogger(EVEREST)
     everserver_status_path = ServerConfig.get_everserver_status_path(
         options.config.output_dir
     )
@@ -127,10 +129,11 @@ async def run_everest(options: argparse.Namespace) -> None:
         )
     elif server_state["status"] == ServerStatus.never_run or options.new_run:
         config_dict = options.config.to_dict()
-        logger.info(f"Running everest with config info\n {config_dict}")
+        logger.debug("Running everest with the following config:")
+        logger.debug(json.dumps(config_dict, sort_keys=True, indent=2))
         for fm_job in options.config.forward_model or []:
             job_name = fm_job.split()[0]
-            logger.info(f"Everest forward model contains job {job_name}")
+            logger.debug(f"Everest forward model contains job {job_name}")
 
         makedirs_if_needed(options.config.output_dir, roll_if_exists=True)
 
@@ -160,7 +163,7 @@ async def run_everest(options: argparse.Namespace) -> None:
 
         logging_level = logging.DEBUG if options.debug else options.config.logging_level
 
-        print("Waiting for server ...")
+        print("Adding everest server to queue ...")
         logger.debug("Submitting everserver")
         try:
             await asyncio.wait_for(
@@ -171,6 +174,7 @@ async def run_everest(options: argparse.Namespace) -> None:
             logger.error("Everserver failed to start within timeout")
             raise SystemExit("Failed to start the server") from e
 
+        print("Waiting for server ...")
         logger.debug("Waiting for response from everserver")
         wait_for_server(options.config.output_dir, timeout=600)
         print("Everest server found!")
@@ -213,7 +217,7 @@ async def run_everest(options: argparse.Namespace) -> None:
             logger.error(f"Everest run failed with: {server_state_info}")
             raise SystemExit(server_state_info)
         if server_state_info is not None:
-            logger.info(f"Everest run finished with: {server_state_info}")
+            logger.debug(f"Everest run finished with: {server_state_info}")
             print(server_state_info)
     else:
         report_on_previous_run(

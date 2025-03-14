@@ -90,9 +90,8 @@ run_everest_egg_test() {
         sed -i "s/name: local/name: lsf/g" "$CONFIG"
         export PATH=$PATH:/global/bin
     fi
-    cat "$CONFIG"
 
-    everest run "$CONFIG" --skip-prompt
+    everest run "$CONFIG" --skip-prompt --debug
     STATUS=$?
     popd
 
