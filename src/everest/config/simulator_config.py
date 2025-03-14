@@ -78,15 +78,6 @@ class SimulatorConfig(BaseModel, extra="forbid"):
     resumbit_limit defines the number of times we will resubmit a failing forward model.
     If not specified, a default value of 1 will be used.""",
     )
-    enable_cache: bool = Field(
-        default=True,
-        description="""Enable forward model result caching.
-
-        If enabled, objective and constraint function results are cached for
-        each realization. If the optimizer requests an evaluation that has
-        already been done before, these cached values will be re-used without
-        running the forward model again.""",
-    )
 
     @field_validator("queue_system", mode="before")
     @classmethod
