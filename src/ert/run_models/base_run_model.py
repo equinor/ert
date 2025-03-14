@@ -752,6 +752,8 @@ class BaseRunModel(ABC):
         self.run_workflows(
             HookRuntime.PRE_SIMULATION,
             fixtures={
+                "observation_settings": None,
+                "es_settings": None,
                 "storage": self._storage,
                 "ensemble": ensemble,
                 "reports_dir": self.reports_dir(
@@ -789,6 +791,8 @@ class BaseRunModel(ABC):
         self.run_workflows(
             HookRuntime.POST_SIMULATION,
             fixtures={
+                "observation_settings": None,
+                "es_settings": None,
                 "storage": self._storage,
                 "ensemble": ensemble,
                 "reports_dir": self.reports_dir(

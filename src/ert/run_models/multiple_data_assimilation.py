@@ -207,7 +207,10 @@ class MultipleDataAssimilation(UpdateRunModel):
         self.run_workflows(
             HookRuntime.POST_EXPERIMENT,
             fixtures={
+                "es_settings": None,
+                "observation_settings": None,
                 "random_seed": self.random_seed,
+                "reports_dir": self.reports_dir(experiment_name=prior.experiment.name),
                 "storage": self._storage,
                 "ensemble": prior,
             },
