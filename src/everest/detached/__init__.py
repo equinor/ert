@@ -163,43 +163,29 @@ def get_opt_status(output_folder: str) -> dict[str, Any]:
     objective_names = storage.data.objective_functions["objective_name"].to_list()
     control_names = storage.data.controls["control_name"].to_list()
 
-    objectives = [
-        b.batch_objectives.select(objective_names)
-        for b in storage.data.batches
-        if b.batch_objectives is not None
-    ]
+    batches = [b for b in storage.data.batches if b.batch_objectives is not None]
+
+    objectives = [b.batch_objectives.select(objective_names) for b in batches]
 
     expected_objectives = (
         {} if not objectives else pl.concat(objectives).to_dict(as_series=False)
     )
 
     expected_total_objective = [
-        b.batch_objectives["total_objective_value"].item()
-        for b in storage.data.batches
-        if b.batch_objectives is not None
+        b.batch_objectives["total_objective_value"].item() for b in batches
     ]
 
-    improvement_batches = [b.batch_id for b in storage.data.batches if b.is_improvement]
+    improvement_batches = [b.batch_id for b in batches if b.is_improvement]
 
     cli_monitor_data = {
-        "batches": [
-            b.batch_id
-            for b in storage.data.batches
-            if b.realization_controls is not None and b.batch_objectives is not None
-        ],
+        "batches": [b.batch_id for b in batches],
         "controls": [
-            b.realization_controls.select(control_names).to_dicts()[0]
-            for b in storage.data.batches
-            if b.realization_controls is not None
+            b.realization_controls.select(control_names).to_dicts()[0] for b in batches
         ],
         "objective_value": expected_total_objective,
         "expected_objectives": expected_objectives,
     }
-    controls = [
-        b.realization_controls.select(control_names)
-        for b in storage.data.batches
-        if b.realization_controls is not None
-    ]
+    controls = [b.realization_controls.select(control_names) for b in batches]
     control_history = (
         {} if not controls else pl.concat(controls).to_dict(as_series=False)
     )
