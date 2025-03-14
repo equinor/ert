@@ -73,7 +73,7 @@ optimization:
   speculative: true
 
 environment:
-  log_level: debug
+  log_level: info
   random_seed: 999
   simulation_folder: scratch/advanced/
   output_folder: everest_output/

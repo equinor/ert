@@ -62,9 +62,6 @@ if TYPE_CHECKING:
     from ert.storage import Ensemble, Experiment
 
 
-logger = logging.getLogger(__name__)
-
-
 class SimulationStatus(TypedDict):
     status: dict[str, int]
     progress: list[list[JobProgress]]
@@ -922,7 +919,7 @@ class EverestRunModel(BaseRunModel):
 
         for sim_id, successful in enumerate(self.active_realizations):
             if not successful:
-                logger.error(f"Simulation {sim_id} failed.")
+                logging.getLogger(EVEREST).error(f"Simulation {sim_id} failed.")
                 objectives[sim_id, :] = np.nan
                 constraints[sim_id, :] = np.nan
                 continue
