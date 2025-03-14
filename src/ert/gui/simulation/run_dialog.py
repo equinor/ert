@@ -101,7 +101,7 @@ def _batch_type_text(batch_id: int, batch_types: set[str]) -> str:
 class FMStepOverview(QTableView):
     def __init__(self, snapshot_model: SnapshotModel, parent: QWidget | None) -> None:
         super().__init__(parent)
-
+        self.setPalette(parent.palette())
         self._fm_step_model = FMStepListProxyModel(self, 0, 0)
         self._fm_step_model.setSourceModel(snapshot_model)
 
@@ -131,8 +131,11 @@ class FMStepOverview(QTableView):
         vertical_header = self.verticalHeader()
         assert vertical_header is not None
         vertical_header.setMinimumWidth(20)
+        vertical_header.setVisible(True)
         self.setMinimumHeight(140)
         self.setMouseTracking(True)
+        vertical_header.setPalette(self.palette())
+        horizontal_header.setPalette(self.palette())
 
     @Slot(int, int)
     def set_realization(self, iter_: int, real: int) -> None:
@@ -205,6 +208,7 @@ class RunDialog(QFrame):
         is_everest: bool | None = False,
     ):
         super().__init__(parent)
+        self.setPalette(parent.palette())
         self.output_path = output_path
         self.setAttribute(Qt.WidgetAttribute.WA_DeleteOnClose)
         self.setWindowFlags(Qt.WindowType.Window)
@@ -234,6 +238,11 @@ class RunDialog(QFrame):
         )
 
         self._total_progress_bar = QProgressBar(self)
+        self._total_progress_bar.setStyleSheet(
+            "QProgressBar::chunk {background-color:"
+            + self.palette().highlight().color().name()
+            + ";}"
+        )
         self._total_progress_bar.setRange(0, 100)
         self._total_progress_bar.setTextVisible(False)
 
@@ -248,7 +257,6 @@ class RunDialog(QFrame):
         self._fm_step_label = QLabel(self)
         self._fm_step_label.setObjectName("fm_step_label")
         self._fm_step_overview = FMStepOverview(self._snapshot_model, self)
-
         self.running_time = QLabel("")
         self.memory_usage = QLabel("")
         self.disk_space = DiskSpaceWidget(

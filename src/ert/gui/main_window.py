@@ -8,13 +8,22 @@ from pathlib import Path
 from PyQt6.QtCore import QCoreApplication, QEvent, QSize, Qt
 from PyQt6.QtCore import pyqtSignal as Signal
 from PyQt6.QtCore import pyqtSlot as Slot
-from PyQt6.QtGui import QAction, QCloseEvent, QCursor, QIcon, QMouseEvent
+from PyQt6.QtGui import (
+    QAction,
+    QCloseEvent,
+    QColor,
+    QCursor,
+    QIcon,
+    QMouseEvent,
+    QPalette,
+)
 from PyQt6.QtWidgets import (
     QButtonGroup,
     QFrame,
     QHBoxLayout,
     QMainWindow,
     QMenu,
+    QMessageBox,
     QToolButton,
     QVBoxLayout,
     QWidget,
@@ -36,6 +45,17 @@ from ert.gui.tools.plugins import PluginHandler, PluginsTool
 from ert.gui.tools.workflows import WorkflowsTool
 from ert.plugins import ErtPluginManager
 from ert.trace import get_trace_id
+
+
+def is_high_contrast_mode() -> bool:
+    return (
+        QCoreApplication.instance()
+        .palette()
+        .color(QPalette.ColorRole.Window)
+        .lightness()
+        > 245
+    )
+
 
 BUTTON_STYLE_SHEET: str = """
     QToolButton {
@@ -112,7 +132,18 @@ class ErtMainWindow(QMainWindow):
             self.side_frame.setStyleSheet("background-color: rgb(64, 64, 64);")
         else:
             self.side_frame.setStyleSheet("background-color: lightgray;")
-
+        self.apply_palette()
+        if is_high_contrast_mode():
+            msg_box = QMessageBox()
+            msg_box.setText(
+                "High contrast mode detected. This is not supported by Ert and features may not work as expected."
+            )
+            msg_box.setWindowTitle("Warning")
+            msg_box.setStyleSheet(
+                "QMessageBox {color: black; background-color: white;} QLabel {color: black;} QPushButton {color: black;}"
+            )
+            msg_box.update()
+            msg_box.exec()
         self.vbox_layout = QVBoxLayout(self.side_frame)
         self.side_frame.setLayout(self.vbox_layout)
 
@@ -260,6 +291,7 @@ class ErtMainWindow(QMainWindow):
             self.notifier,
             self.config_file,
             self.facade.get_ensemble_size(),
+            self,
         )
         experiment_panel.experiment_started.connect(
             lambda _: self.results_button.setChecked(True)
@@ -293,7 +325,19 @@ class ErtMainWindow(QMainWindow):
         button.setStyleSheet(
             BUTTON_STYLE_SHEET_DARK
         ) if self.is_dark_mode() else button.setStyleSheet(BUTTON_STYLE_SHEET_LIGHT)
-
+        if is_high_contrast_mode():
+            button.setStyleSheet("""QToolButton {
+        border-radius: 10px;
+        background-color: rgba(255, 255, 255, 0);
+        color: black;
+        padding-top: 5px;
+        padding-bottom: 10px;
+    }
+    QToolButton::menu-indicator {
+        right: 10px; bottom: 5px;
+    }
+    QToolButton:hover {background-color: rgba(50, 50, 50, 50);}
+    QToolButton:checked {background-color: rgba(50, 50, 50, 120);}""")
         pad = 45
         icon_size = QSize(button.size().width() - pad, button.size().height() - pad)
         button.setIconSize(icon_size)
@@ -375,3 +419,18 @@ class ErtMainWindow(QMainWindow):
     def __showAboutMessage(self) -> None:
         diag = AboutDialog(self)
         diag.show()
+
+    def apply_palette(self):
+        palette = QPalette()
+        for group in [QPalette.ColorGroup.All]:
+            palette.setColor(group, QPalette.ColorRole.Window, QColor("white"))
+            palette.setColor(group, QPalette.ColorRole.WindowText, QColor("black"))
+            palette.setColor(group, QPalette.ColorRole.Button, QColor("white"))
+            palette.setColor(group, QPalette.ColorRole.ButtonText, QColor("black"))
+            palette.setColor(group, QPalette.ColorRole.Base, QColor("white"))
+            palette.setColor(group, QPalette.ColorRole.Text, QColor("black"))
+            palette.setColor(group, QPalette.ColorRole.Highlight, QColor(70, 140, 230))
+            palette.setColor(
+                group, QPalette.ColorRole.HighlightedText, QColor("white")
+            )  # The Qt default
+        self.setPalette(palette)
