@@ -172,17 +172,19 @@ def _get_summary_filenames(filepath: str) -> tuple[str, str]:
 
 
 def read_summary(
-    filepath: str, fetch_keys: Sequence[str]
-) -> tuple[datetime, list[str], Sequence[datetime], Any]:
-    summary, spec = _get_summary_filenames(filepath)
+    summary_basename: str, select_keys: Sequence[str]
+) -> tuple[datetime, list[str], Sequence[datetime], npt.NDArray[np.float32]]:
+    summary, spec = _get_summary_filenames(summary_basename)
     try:
-        date_index, start_date, date_units, keys, indices = _read_spec(spec, fetch_keys)
+        date_index, start_date, date_units, keys, indices = _read_spec(
+            spec, select_keys
+        )
         fetched, time_map = _read_summary(
             summary, start_date, date_units, indices, date_index
         )
     except resfo.ResfoParsingError as err:
         raise InvalidResponseFile(
-            f"Failed to read summary file {filepath}: {err}"
+            f"Failed to read summary file {summary_basename}: {err}"
         ) from err
     return (start_date, keys, time_map, fetched)
 
