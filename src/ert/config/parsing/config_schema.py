@@ -257,7 +257,7 @@ def install_job_directory_keyword() -> SchemaItem:
 def design_matrix_keyword() -> SchemaItem:
     return SchemaItem(
         kw=ConfigKeys.DESIGN_MATRIX,
-        argc_min=3,
+        argc_min=1,
         argc_max=3,
         type_map=[
             SchemaItemType.EXISTING_PATH,

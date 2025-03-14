@@ -10,6 +10,7 @@ from pathlib import Path
 from textwrap import dedent
 from unittest.mock import MagicMock
 
+import pandas as pd
 import pytest
 from hypothesis import HealthCheck, assume, given, settings
 from hypothesis import strategies as st
@@ -29,6 +30,7 @@ from ert.config.parsing.context_values import (
 from ert.config.parsing.queue_system import QueueSystem
 from ert.plugins import ErtPluginManager
 from ert.shared import ert_share_path
+from tests.ert.ui_tests.cli.analysis.test_design_matrix import _create_design_matrix
 
 from .config_dict_generator import config_generators
 
@@ -1991,3 +1993,25 @@ def test_parsing_define_within_workflow():
 
     assert ert_config.substitutions["<FOO>"] == "ertconfig_foo"
     assert ert_config.substitutions["<FOO2>"] == "ertconfig_foo2"
+
+
+def test_design_matrix_default_argument(tmp_path):
+    design_matrix_file = tmp_path / "my_design_matrix.xlsx"
+    _create_design_matrix(
+        design_matrix_file,
+        pd.DataFrame(
+            {
+                "REAL": [1],
+                "a": [1],
+                "category": ["cat1"],
+            }
+        ),
+        pd.DataFrame([["b", 1], ["c", 2]]),
+    )
+
+    config = ErtConfig.from_file_contents(
+        f"NUM_REALIZATIONS 1\nDESIGN_MATRIX {design_matrix_file}"
+    )
+    assert config.analysis_config.design_matrix
+    assert config.analysis_config.design_matrix.design_sheet == "DesignSheet"
+    assert config.analysis_config.design_matrix.default_sheet == "DefaultSheet"

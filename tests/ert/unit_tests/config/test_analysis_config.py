@@ -122,30 +122,63 @@ def test_invalid_design_matrix_format_raises_validation_error():
         )
 
 
-def test_design_matrix_without_design_sheet_raises_validation_error():
-    with pytest.raises(ConfigValidationError, match="Missing required DESIGN_SHEET"):
+def test_design_matrix_with_unknown_argument_uses_default(tmp_path, monkeypatch):
+    monkeypatch.chdir(tmp_path)
+    with pd.ExcelWriter("my_design_matrix.xlsx") as xl_write:
+        design_matrix_df = pd.DataFrame(
+            {
+                "REAL": [0, 1, 2],
+                "a": [1, 2, 3],
+                "b": [0, 2, 0],
+            }
+        )
+        default_sheet_df = pd.DataFrame([["a", 1], ["b", 4]])
+        design_matrix_df.to_excel(xl_write, index=False, sheet_name="DesignSheet")
+        default_sheet_df.to_excel(
+            xl_write, index=False, sheet_name="my_default_sheet", header=False
+        )
+    assert (
         AnalysisConfig.from_dict(
             {
+                ConfigKeys.NUM_REALIZATIONS: 3,
                 ConfigKeys.DESIGN_MATRIX: [
                     [
-                        "my_matrix.xlsx",
-                        "DESIGN_:design",
-                        "DEFAULT_SHEET:default",
+                        os.path.abspath("my_design_matrix.xlsx"),
+                        "foo_argument:bar",
+                        "DEFAULT_SHEET:my_default_sheet",
                     ]
                 ],
             }
+        ).design_matrix.design_sheet
+        == "DesignSheet"
+    )
+
+
+def test_design_matrix_with_too_many_arguments_fails(tmp_path, monkeypatch):
+    monkeypatch.chdir(tmp_path)
+    with pd.ExcelWriter("my_design_matrix.xlsx") as xl_write:
+        design_matrix_df = pd.DataFrame(
+            {
+                "REAL": [0, 1, 2],
+                "a": [1, 2, 3],
+                "b": [0, 2, 0],
+            }
         )
-
-
-def test_design_matrix_without_default_sheet_raises_validation_error():
-    with pytest.raises(ConfigValidationError, match="Missing required DEFAULT_SHEET"):
+        default_sheet_df = pd.DataFrame([["a", 1], ["b", 4]])
+        design_matrix_df.to_excel(xl_write, index=False, sheet_name="DesignSheet")
+        default_sheet_df.to_excel(
+            xl_write, index=False, sheet_name="my_default_sheet", header=False
+        )
+    with pytest.raises(ConfigValidationError, match="Invalid argument 'too_many'"):
         AnalysisConfig.from_dict(
             {
+                ConfigKeys.NUM_REALIZATIONS: 3,
                 ConfigKeys.DESIGN_MATRIX: [
                     [
-                        "my_matrix.xlsx",
-                        "DESIGN_SHEET:design",
-                        "DEFAULT_:default",
+                        os.path.abspath("my_design_matrix.xlsx"),
+                        "too_many",
+                        "positional_arguments",
+                        "DEFAULT_SHEET:my_default_sheet",
                     ]
                 ],
             }
