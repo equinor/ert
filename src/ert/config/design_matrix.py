@@ -33,7 +33,7 @@ class DesignMatrix:
                 self.active_realizations,
                 self.design_matrix_df,
                 self.parameter_configuration,
-            ) = self.read_design_matrix()
+            ) = self.read_and_validate_design_matrix()
         except (ValueError, AttributeError) as exc:
             raise ConfigValidationError.with_context(
                 f"Error reading design matrix {self.xls_filename}: {exc}",
@@ -159,7 +159,7 @@ class DesignMatrix:
                 new_param_config += [parameter_group]
         return new_param_config, design_parameter_group
 
-    def read_design_matrix(
+    def read_and_validate_design_matrix(
         self,
     ) -> tuple[list[bool], pd.DataFrame, GenKwConfig]:
         # Read the parameter names (first row) as strings to prevent pandas from modifying them.
