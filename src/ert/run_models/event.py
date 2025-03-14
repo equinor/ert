@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from pathlib import Path
-from typing import Annotated, Literal
+from typing import Annotated, Any, Literal
 from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict, Field, TypeAdapter
@@ -47,6 +47,7 @@ class EverestBatchResultEvent(BaseModel):
         "FINISHED_SAMPLING_EVALUATION",
     ]
     result_type: Literal["FunctionResult", "GradientResult"]
+    results: dict[str, Any] | None = None
 
 
 class RunModelTimeEvent(RunModelEvent):
