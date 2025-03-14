@@ -637,7 +637,7 @@ def test_suggestion_on_empty_parameter_file(tmp_path):
             "3.0",
             "3.0",
             "3.0",
-            "Minimum 3.0 must be strictly less than the maxiumum 3.0",
+            "Minimum 3.0 must be strictly less than the maximum 3.0",
         ),
         ("TRIANGULAR", "-1", "0", "1", None),
         (
@@ -697,7 +697,7 @@ def test_validation_triangular_distribution(
             "3",
             "-1",
             "2",
-            "NBINS 0.0 must be a positive integer larger than 1 for DERRF distributed parameter MY_KEYWORD",
+            "NBINS 0 must be a positive integer larger than 1 for DERRF distribution",
         ),
         (
             "DERRF",
@@ -706,7 +706,7 @@ def test_validation_triangular_distribution(
             "3",
             "-1",
             "2",
-            "NBINS -5.0 must be a positive integer larger than 1 for DERRF distributed parameter MY_KEYWORD",
+            "NBINS -5 must be a positive integer larger than 1 for DERRF distribution",
         ),
         (
             "DERRF",
@@ -715,7 +715,7 @@ def test_validation_triangular_distribution(
             "3",
             "-1",
             "2",
-            "NBINS 1.5 must be a positive integer larger than 1 for DERRF distributed parameter MY_KEYWORD",
+            "NBINS 1 must be a positive integer larger than 1 for DERRF distribution",
         ),
         (
             "DERRF",
@@ -724,7 +724,7 @@ def test_validation_triangular_distribution(
             "-1",
             "-1",
             "2",
-            "The minimum 3.0 must be less than the maximum -1.0 for DERRF distributed parameter MY_KEYWORD",
+            "The minimum 3.0 must be less than the maximum -1.0 for DERRF distribution",
         ),
         (
             "DERRF",
@@ -733,7 +733,7 @@ def test_validation_triangular_distribution(
             "1",
             "-1",
             "2",
-            "The minimum 1.0 must be less than the maximum 1.0 for DERRF distributed parameter MY_KEYWORD",
+            "The minimum 1.0 must be less than the maximum 1.0 for DERRF distribution",
         ),
         (
             "DERRF",
@@ -742,7 +742,7 @@ def test_validation_triangular_distribution(
             "3",
             "-1",
             "0",
-            "The width 0.0 must be greater than 0 for DERRF distributed parameter MY_KEYWORD",
+            "The width 0.0 must be greater than 0 for DERRF distribution",
         ),
         (
             "DERRF",
@@ -751,7 +751,7 @@ def test_validation_triangular_distribution(
             "3",
             "-1",
             "-2",
-            "The width -2.0 must be greater than 0 for DERRF distributed parameter MY_KEYWORD",
+            "The width -2.0 must be greater than 0 for DERRF distribution",
         ),
         (
             "DERRF",

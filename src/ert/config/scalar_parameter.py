@@ -9,12 +9,12 @@ from collections.abc import Iterable
 from enum import StrEnum
 from hashlib import sha256
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, Literal, Self, overload
+from typing import TYPE_CHECKING, Annotated, Any, Literal, Self, overload
 
 import numpy as np
 import pandas as pd
 import polars as pl
-from pydantic import ValidationError, field_validator, model_validator
+from pydantic import Field, ValidationError, field_validator, model_validator
 from pydantic.dataclasses import dataclass
 from scipy.stats import norm
 
@@ -37,7 +37,8 @@ class TransSettingsValidation:
         try:
             return cls(*args, **kwargs)
         except ValidationError as e:
-            raise ConfigValidationError(str(e)) from e
+            simplified_msg = "; ".join(err["msg"] for err in e.errors())
+            raise ConfigValidationError(simplified_msg) from e
 
 
 @dataclass
@@ -160,14 +161,14 @@ class TransTriangularSettings(TransSettingsValidation):
     max: float = 1.0
 
     @model_validator(mode="after")
-    def valid_traingular_params(self) -> TransTriangularSettings:
+    def valid_traingular_params(self):
         if not self.min < self.max:
             raise ValueError(
-                f"Min {self.min} must be strictly less than the maximum {self.max}"
+                f"Minimum {self.min} must be strictly less than the maximum {self.max}"
             )
         if not (self.min <= self.mode <= self.max):
             raise ValueError(
-                f"The mode {self.mode} must be between min {self.min} and max {self.max}"
+                f"The mode {self.mode} must be between the minimum {self.min} and maximum {self.max}"
             )
         return self
 
@@ -204,15 +205,33 @@ class TransErrfSettings(TransSettingsValidation):
 @dataclass
 class TransDerrfSettings(TransSettingsValidation):
     name: Literal["derrf"] = "derrf"
-    steps: int = 1000
+    steps: float = 1000.0
     min: float = 0.0
     max: float = 1.0
     skew: float = 0.0
     width: float = 1.0
 
+    @model_validator(mode="after")
+    def valid_derrf_params(self):
+        steps_float = float(self.steps)
+        if not steps_float.is_integer() or not (int(steps_float) > 1):
+            raise ValueError(
+                f"NBINS {int(self.steps)} must be a positive integer larger than 1 for DERRF distribution"
+            )
+        self.steps = int(self.steps)
+        if not (self.min < self.max):
+            raise ValueError(
+                f"The minimum {self.min} must be less than the maximum {self.max} for DERRF distribution"
+            )
+        if not (self.width > 0):
+            raise ValueError(
+                f"The width {self.width} must be greater than 0 for DERRF distribution"
+            )
+        return self
+
     def trans(self, x: float) -> float:
-        q_values = np.linspace(start=0, stop=1, num=self.steps)
-        q_checks = np.linspace(start=0, stop=1, num=self.steps + 1)[1:]
+        q_values = np.linspace(start=0, stop=1, num=int(self.steps))
+        q_checks = np.linspace(start=0, stop=1, num=int(self.steps + 1))[1:]
         y = TransErrfSettings(min=0, max=1, skew=self.skew, width=self.width).trans(x)
         bin_index = np.digitize(y, q_checks, right=True)
         y_binned = q_values[bin_index]
@@ -281,17 +300,24 @@ def get_distribution(name: str, values: list[str]) -> Any:
             min=float(values[0]), mode=float(values[1]), max=float(values[2])
         ),
         "ERRF": lambda: TransErrfSettings.create(
-            min=float(values[0]),
-            max=float(values[1]),
-            skew=float(values[2]),
-            width=float(values[3]),
+            min=values[0],
+            max=values[1],
+            skew=values[2],
+            width=values[3],
         ),
+        # "DERRF": lambda: TransDerrfSettings.create(
+        #     steps=int(values[0]),
+        #     min=float(values[1]),
+        #     max=float(values[2]),
+        #     skew=float(values[3]),
+        #     width=float(values[4]),
+        # ),
         "DERRF": lambda: TransDerrfSettings.create(
-            steps=int(values[0]),
-            min=float(values[1]),
-            max=float(values[2]),
-            skew=float(values[3]),
-            width=float(values[4]),
+            steps=values[0],
+            min=values[1],
+            max=values[2],
+            skew=values[3],
+            width=values[4],
         ),
     }[name]()
 
@@ -307,7 +333,7 @@ class ScalarParameter:
     output_file: str | None
     param_name: str
     group_name: str
-    distribution: (
+    distribution: Annotated[
         TransUnifSettings
         | TransLogNormalSettings
         | TransLogUnifSettings
@@ -318,8 +344,10 @@ class ScalarParameter:
         | TransTruncNormalSettings
         | TransErrfSettings
         | TransDerrfSettings
-        | TransTriangularSettings
-    )
+        | TransTriangularSettings,
+        Field(discriminator="name"),
+    ]
+
     input_source: DataSource
     update: bool = True
 
@@ -662,6 +690,8 @@ class ScalarParameters(ParameterConfig):
                         gen_kw,
                     )
                 )
+            if errors:
+                raise ConfigValidationError.from_collected(errors)
 
             with open(parameter_file, encoding="utf-8") as file:
                 for line_number, item in enumerate(file):
