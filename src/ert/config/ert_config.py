@@ -23,6 +23,7 @@ from pydantic import ValidationError as PydanticValidationError
 from pydantic import field_validator
 from pydantic.dataclasses import dataclass, rebuild_dataclass
 
+from ert.config.design_matrix import DesignMatrix
 from ert.config.parsing.context_values import ContextBoolEncoder
 from ert.plugins import ErtPluginManager
 from ert.plugins.workflow_config import ErtScriptWorkflow
@@ -459,7 +460,7 @@ def create_list_of_forward_model_steps_to_run(
     env_pr_fm_step: dict[str, dict[str, Any]],
 ) -> list[ForwardModelStep]:
     errors = []
-    fm_steps = []
+    fm_steps: list[ForwardModelStep] = []
 
     env_vars = {}
     for key, val in config_dict.get("SETENV", []):
@@ -511,6 +512,12 @@ def create_list_of_forward_model_steps_to_run(
             fm_steps.append(fm_step)
 
     for fm_step in fm_steps:
+        if fm_step.name == "DESIGN2PARAMS":
+            xls_filename = fm_step.private_args.get("<xls_filename>")
+            designsheet = fm_step.private_args.get("<designsheet>")
+            defaultsheet = fm_step.private_args.get("<defaultssheet>")
+            validate_ert_design_matrix(xls_filename, designsheet, defaultsheet)
+
         if fm_step.name in preinstalled_forward_model_steps:
             try:
                 substituted_json = create_forward_model_json(
@@ -1251,6 +1258,21 @@ def _forward_model_step_from_config_file(
         required_keywords=content_dict.get("REQUIRED", []),
         default_mapping=default_mapping,
     )
+
+
+def validate_ert_design_matrix(xlsfilename, designsheetname, defaultssheetname):
+    try:
+        ert_design_matrix = DesignMatrix(
+            xlsfilename, designsheetname, defaultssheetname
+        )
+        if ert_design_matrix_error := ert_design_matrix._validate_design_matrix(
+            ert_design_matrix
+        ):
+            raise Exception("\n".join(ert_design_matrix_error))
+    except Exception as err:
+        logger.warning(
+            f"DESIGN_MATRIX validation of DESIGN2PARAMS would have failed with: {err!s}"
+        )
 
 
 # Due to circular dependency in type annotations between ErtConfig -> WorkflowJob -> ErtScript -> ErtConfig
