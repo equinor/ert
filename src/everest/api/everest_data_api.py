@@ -285,15 +285,19 @@ class EverestDataAPI:
                     target[batch.batch_id] = []  # type: ignore
                 target[batch_id].append(df)  # type: ignore
 
-        def try_append_batch_dfs(batch_id: int, *dfs: pl.DataFrame) -> None:
+        def try_append_batch_dfs(batch_id: int, *dfs: pl.DataFrame | None) -> None:
             for df_ in dfs:
                 _try_append_df(batch_id, df_, batch_dfs_to_join)
 
-        def try_append_realization_dfs(batch_id: int, *dfs: pl.DataFrame) -> None:
+        def try_append_realization_dfs(
+            batch_id: int, *dfs: pl.DataFrame | None
+        ) -> None:
             for df_ in dfs:
                 _try_append_df(batch_id, df_, realization_dfs_to_join)
 
-        def try_append_perturbation_dfs(batch_id: int, *dfs: pl.DataFrame) -> None:
+        def try_append_perturbation_dfs(
+            batch_id: int, *dfs: pl.DataFrame | None
+        ) -> None:
             for df_ in dfs:
                 _try_append_df(batch_id, df_, perturbation_dfs_to_join)
 
@@ -310,15 +314,15 @@ class EverestDataAPI:
         for batch in self._ever_storage.data.batches:
             try_append_perturbation_dfs(
                 batch.batch_id,
-                batch.perturbation_objectives,  # type: ignore
-                batch.perturbation_constraints,  # type: ignore
+                batch.perturbation_objectives,
+                batch.perturbation_constraints,
             )
 
             try_append_realization_dfs(
                 batch.batch_id,
-                batch.realization_objectives,  # type: ignore
+                batch.realization_objectives,
                 batch.realization_controls,
-                batch.realization_constraints,  # type: ignore
+                batch.realization_constraints,
             )
 
             if batch.batch_objective_gradient is not None:
@@ -334,8 +338,8 @@ class EverestDataAPI:
 
             try_append_batch_dfs(
                 batch.batch_id,
-                batch.batch_objectives,  # type: ignore
-                batch.batch_constraints,  # type: ignore
+                batch.batch_objectives,
+                batch.batch_constraints,
             )
 
         def _join_by_batch(
