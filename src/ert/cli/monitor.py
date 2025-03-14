@@ -89,7 +89,7 @@ class Monitor:
                     self._print_progress(event)
                 case EndEvent() as event:
                     self._print_result(event.failed, event.msg)
-                    self._print_job_errors()
+                    self._print_step_errors()
                     return event
                 case (
                     RunModelDataEvent()
@@ -98,17 +98,17 @@ class Monitor:
                 ):
                     event.write_as_csv(output_path)
 
-    def _print_job_errors(self) -> None:
-        failed_jobs: dict[str | None, int] = {}
+    def _print_step_errors(self) -> None:
+        failed_steps: dict[str | None, int] = {}
         for snapshot in self._snapshots.values():
             for real in snapshot.reals.values():
-                for job in real["fm_steps"].values():
-                    if job.get(ids.STATUS) == FORWARD_MODEL_STATE_FAILURE:
-                        err = job.get(ids.ERROR)
-                        result = failed_jobs.get(err, 0)
-                        failed_jobs[err] = result + 1
-        for error, number_of_jobs in failed_jobs.items():
-            print(f"{number_of_jobs} jobs failed due to the error: {error}")
+                for step in real["fm_steps"].values():
+                    if step.get(ids.STATUS) == FORWARD_MODEL_STATE_FAILURE:
+                        err = step.get(ids.ERROR)
+                        result = failed_steps.get(err, 0)
+                        failed_steps[err] = result + 1
+        for error, number_of_steps in failed_steps.items():
+            print(f"{number_of_steps} steps failed due to the error: {error}")
 
     def _get_legends(self) -> str:
         statuses = ""
