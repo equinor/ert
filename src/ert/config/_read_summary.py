@@ -174,6 +174,25 @@ def _get_summary_filenames(filepath: str) -> tuple[str, str]:
 def read_summary(
     summary_basename: str, select_keys: Sequence[str]
 ) -> tuple[datetime, list[str], Sequence[datetime], npt.NDArray[np.float32]]:
+    """Reads the timeseries for the selected keys from summary files with the given basename.
+
+    Called as read_summary("data/CASE", ["FOP*"]) it will read from files
+    data/CASE.UNSMRY & data/CASE.SMSPEC and return the tuple (start_date, keys,
+    times, values) where
+
+    * start_date is the start_date for the simulation
+    * keys is list of keys that matched the selection "FOP*" ("*" means wildcard)
+    * times is the x-axis for the time series
+    * values is an array of dimensions len(keys) * len(times) with y-axis
+    values.
+
+    Note that if formatted files are present (data/CASE.FUNSMRY and
+    data/CASE.FSMSPEC) then those will be read from. It is also possible to
+    give the simulator input file, read_summary("data/CASE.DATA", ["FOP*"]),
+    and it will then read from the corresponding summary files data/CASE.UNSMRY &
+    data/CASE.SMSPEC.
+
+    """
     summary, spec = _get_summary_filenames(summary_basename)
     try:
         date_index, start_date, date_units, keys, indices = _read_spec(
