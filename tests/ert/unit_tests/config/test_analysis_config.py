@@ -133,7 +133,7 @@ def test_design_matrix_with_unknown_argument_uses_default(tmp_path, monkeypatch)
             }
         )
         default_sheet_df = pd.DataFrame([["a", 1], ["b", 4]])
-        design_matrix_df.to_excel(xl_write, index=False, sheet_name="DesignSheet01")
+        design_matrix_df.to_excel(xl_write, index=False, sheet_name="DesignSheet")
         default_sheet_df.to_excel(
             xl_write, index=False, sheet_name="my_default_sheet", header=False
         )
@@ -150,8 +150,39 @@ def test_design_matrix_with_unknown_argument_uses_default(tmp_path, monkeypatch)
                 ],
             }
         ).design_matrix.design_sheet
-        == "DesignSheet01"
+        == "DesignSheet"
     )
+
+
+def test_design_matrix_with_too_many_arguments_fails(tmp_path, monkeypatch):
+    monkeypatch.chdir(tmp_path)
+    with pd.ExcelWriter("my_design_matrix.xlsx") as xl_write:
+        design_matrix_df = pd.DataFrame(
+            {
+                "REAL": [0, 1, 2],
+                "a": [1, 2, 3],
+                "b": [0, 2, 0],
+            }
+        )
+        default_sheet_df = pd.DataFrame([["a", 1], ["b", 4]])
+        design_matrix_df.to_excel(xl_write, index=False, sheet_name="DesignSheet")
+        default_sheet_df.to_excel(
+            xl_write, index=False, sheet_name="my_default_sheet", header=False
+        )
+    with pytest.raises(ConfigValidationError, match="Invalid argument 'too_many'"):
+        AnalysisConfig.from_dict(
+            {
+                ConfigKeys.NUM_REALIZATIONS: 3,
+                ConfigKeys.DESIGN_MATRIX: [
+                    [
+                        os.path.abspath("my_design_matrix.xlsx"),
+                        "too_many",
+                        "positional_arguments",
+                        "DEFAULT_SHEET:my_default_sheet",
+                    ]
+                ],
+            }
+        )
 
 
 def test_invalid_min_realization_percentage_raises_config_validation_error():

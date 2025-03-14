@@ -44,8 +44,8 @@ class DesignMatrix:
     def from_config_list(cls, config_list: list[str]) -> DesignMatrix:
         filename = Path(config_list[0])
         options = option_dict(config_list, 1)
-        design_sheet = options.get("DESIGN_SHEET", "DesignSheet01")
-        default_sheet = options.get("DEFAULT_SHEET", "DefaultValues")
+        design_sheet = options.get("DESIGN_SHEET", "DesignSheet")
+        default_sheet = options.get("DEFAULT_SHEET", "DefaultSheet")
         errors = []
         if filename.suffix not in {
             ".xlsx",

@@ -2013,5 +2013,5 @@ def test_design_matrix_default_argument(tmp_path):
         f"NUM_REALIZATIONS 1\nDESIGN_MATRIX {design_matrix_file}"
     )
     assert config.analysis_config.design_matrix
-    assert config.analysis_config.design_matrix.design_sheet == "DesignSheet01"
-    assert config.analysis_config.design_matrix.default_sheet == "DefaultValues"
+    assert config.analysis_config.design_matrix.design_sheet == "DesignSheet"
+    assert config.analysis_config.design_matrix.default_sheet == "DefaultSheet"
