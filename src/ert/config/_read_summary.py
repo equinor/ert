@@ -70,6 +70,16 @@ def make_summary_key(
     lj: int | None = None,
     lk: int | None = None,
 ) -> str:
+    """Converts values found in the summary file to the summary_key format.
+
+    Ert and some other applications use a colon separated format to specify
+    summary parameters. For instance:
+
+    >>> make_summary_key(keyword="WOPR", name="WELL1")
+    'WOPR:WELL1'
+    >>> make_summary_key(keyword="BOPR", number=4, nx=2, ny=2)
+    'BOPR:2,2,1'
+    """
     try:
         sum_type = SummaryKeyType.from_keyword(keyword)
     except Exception as err:
