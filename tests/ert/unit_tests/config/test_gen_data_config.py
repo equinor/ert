@@ -16,7 +16,6 @@ from ert.config import ConfigValidationError, GenDataConfig, InvalidResponseFile
         ("UNORDERED_RESULTS", [5, 2, 3, 7, 1]),
     ],
 )
-@pytest.mark.usefixtures("use_tmpdir")
 def test_report_step_list_is_ordered(name: str, report_steps: list[int]):
     gdc = GenDataConfig(keys=[name], report_steps_list=[report_steps])
     assert gdc.keys == [name]
