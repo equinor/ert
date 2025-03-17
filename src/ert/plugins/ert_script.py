@@ -106,6 +106,14 @@ class ErtScript:
         Override to perform cleanup after a run.
         """
 
+    @property
+    def requested_fixtures(self) -> set[str]:
+        return {
+            k
+            for k, v in inspect.signature(self.run).parameters.items()
+            if k in WorkflowFixtures.__annotations__ and k != "workflow_args"
+        }
+
     def initializeAndRun(
         self,
         argument_types: list[type[Any]],
