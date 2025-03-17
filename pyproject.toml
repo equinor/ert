@@ -163,7 +163,6 @@ markers = [
     "script",
     "slow",
     "everest_models_test",
-    "integration_test",
     "skip_mac_ci",
 ]
 log_cli = "false"
