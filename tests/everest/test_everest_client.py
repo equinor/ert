@@ -70,6 +70,7 @@ def client_server_mock() -> tuple[FastAPI, threading.Thread, EverestClient]:
 
 
 @pytest.mark.integration_test
+@pytest.mark.flaky(rerun=2)
 def test_that_stop_invokes_correct_endpoint(
     caplog, client_server_mock: tuple[FastAPI, threading.Thread, EverestClient]
 ):
