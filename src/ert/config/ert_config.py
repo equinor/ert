@@ -60,6 +60,7 @@ from .parsing import (
 from .parsing import (
     parse as parse_config,
 )
+from .parsing.hook_runtime import fixtures_per_runtime
 from .parsing.observations_parser import (
     GenObsValues,
     HistoryValues,
@@ -395,10 +396,48 @@ def workflows_from_dict(
             )
             continue
 
+        wf = workflows[hook_name]
+        available_fixtures = fixtures_per_runtime[mode]
+        for job, _ in wf.cmd_list:
+            if job.ert_script is None:
+                continue
+
+            ert_script_instance = job.ert_script()
+            requested_fixtures = ert_script_instance.requested_fixtures
+
+            # Look for requested fixtures that are not available for the given
+            # mode
+            missing_fixtures = requested_fixtures - available_fixtures
+
+            if missing_fixtures:
+                ok_modes = [
+                    m
+                    for m in HookRuntime
+                    if not requested_fixtures - fixtures_per_runtime[m]
+                ]
+
+                message_start = (
+                    f"Workflow job {job.name} .run function expected "
+                    f"fixtures: {missing_fixtures}, which are not available "
+                    f"in the fixtures for the runtime {mode}: {available_fixtures}. "
+                )
+                message_end = (
+                    f"It would work in these runtimes: {', '.join(map(str, ok_modes))}"
+                    if len(ok_modes) > 0
+                    else "This fixture is not available in any of the runtimes."
+                )
+
+                errors.append(
+                    ErrorInfo(message=message_start + message_end).set_context(
+                        hook_name
+                    )
+                )
+
         hooked_workflows[mode].append(workflows[hook_name])
 
     if errors:
         raise ConfigValidationError.from_collected(errors)
+
     return workflow_jobs, workflows, hooked_workflows
 
 
