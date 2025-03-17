@@ -16,7 +16,8 @@ from hypothesis import HealthCheck, assume, given, settings
 from hypothesis import strategies as st
 from pydantic import RootModel, TypeAdapter
 
-from ert.config import ConfigValidationError, ErtConfig, HookRuntime
+from ert import ErtScript, ErtScriptWorkflow
+from ert.config import ConfigValidationError, ErtConfig, ESSettings, HookRuntime
 from ert.config.ert_config import _split_string_into_sections, create_forward_model_json
 from ert.config.forward_model_step import ForwardModelStep
 from ert.config.parsing import ConfigKeys, ConfigWarning
@@ -31,6 +32,7 @@ from ert.config.parsing.context_values import (
 from ert.config.parsing.queue_system import QueueSystem
 from ert.plugins import ErtPluginManager
 from ert.shared import ert_share_path
+from ert.storage import LocalEnsemble, Storage
 from tests.ert.ui_tests.cli.analysis.test_design_matrix import _create_design_matrix
 
 from .config_dict_generator import config_generators
@@ -2139,6 +2141,176 @@ def test_run_template_raises_configvalidationerror_with_more_than_two_arguments(
             """
             )
         )
+
+
+@pytest.mark.usefixtures("use_tmpdir")
+def test_ert_script_hook_pre_experiment_but_asks_for_storage():
+    workflow_file_path = os.path.join(os.getcwd(), "workflow")
+    with open(workflow_file_path, mode="w", encoding="utf-8") as fh:
+        fh.write("TEST_SCRIPT")
+
+    with open("config.ert", mode="w", encoding="utf-8") as fh:
+        fh.write(
+            dedent(
+                f"""
+                NUM_REALIZATIONS 1
+
+                LOAD_WORKFLOW {workflow_file_path} workflow_alias
+                HOOK_WORKFLOW workflow_alias PRE_EXPERIMENT
+                """
+            )
+        )
+
+    class SomeScript(ErtScript):
+        def run(self, storage: Storage):
+            pass
+
+    wfjob = ErtScriptWorkflow(
+        name="TEST_SCRIPT",
+        ertscript_class=SomeScript,
+    )
+    ErtConfig.PREINSTALLED_WORKFLOWS = {"TEST_SCRIPT": wfjob}
+
+    with pytest.raises(
+        ConfigValidationError,
+        match=r"Workflow job TEST_SCRIPT.*"
+        r"expected fixtures.*storage.*",
+    ):
+        ErtConfig.from_file("config.ert")
+
+
+@pytest.mark.usefixtures("use_tmpdir")
+def test_ert_script_hook_pre_experiment_but_asks_for_ensemble():
+    workflow_file_path = os.path.join(os.getcwd(), "workflow")
+    with open(workflow_file_path, mode="w", encoding="utf-8") as fh:
+        fh.write("TEST_SCRIPT")
+
+    with open("config.ert", mode="w", encoding="utf-8") as fh:
+        fh.write(
+            dedent(
+                f"""
+                NUM_REALIZATIONS 1
+
+                LOAD_WORKFLOW {workflow_file_path} workflow_alias
+                HOOK_WORKFLOW workflow_alias PRE_EXPERIMENT
+                """
+            )
+        )
+
+    class SomeScript(ErtScript):
+        def run(self, ensemble: LocalEnsemble):
+            pass
+
+    wfjob = ErtScriptWorkflow(
+        name="TEST_SCRIPT",
+        ertscript_class=SomeScript,
+    )
+    ErtConfig.PREINSTALLED_WORKFLOWS = {"TEST_SCRIPT": wfjob}
+
+    with pytest.raises(
+        ConfigValidationError,
+        match=r"Workflow job TEST_SCRIPT.*"
+        r"expected fixtures.*ensemble.*",
+    ):
+        ErtConfig.from_file("config.ert")
+
+
+@pytest.mark.usefixtures("use_tmpdir")
+def test_ert_script_hook_pre_experiment_but_asks_for_random_seed():
+    workflow_file_path = os.path.join(os.getcwd(), "workflow")
+    with open(workflow_file_path, mode="w", encoding="utf-8") as fh:
+        fh.write("TEST_SCRIPT")
+
+    with open("config.ert", mode="w", encoding="utf-8") as fh:
+        fh.write(
+            dedent(
+                f"""
+                NUM_REALIZATIONS 1
+
+                LOAD_WORKFLOW {workflow_file_path} workflow_alias
+                HOOK_WORKFLOW workflow_alias PRE_EXPERIMENT
+                """
+            )
+        )
+
+    class SomeScript(ErtScript):
+        def run(self, random_seed: int):
+            pass
+
+    wfjob = ErtScriptWorkflow(
+        name="TEST_SCRIPT",
+        ertscript_class=SomeScript,
+    )
+    ErtConfig.PREINSTALLED_WORKFLOWS = {"TEST_SCRIPT": wfjob}
+
+    ErtConfig.from_file("config.ert")
+
+
+@pytest.mark.usefixtures("use_tmpdir")
+def test_ert_script_hook_pre_experiment_essettings_fails():
+    workflow_file_path = os.path.join(os.getcwd(), "workflow")
+    with open(workflow_file_path, mode="w", encoding="utf-8") as fh:
+        fh.write("TEST_SCRIPT")
+
+    with open("config.ert", mode="w", encoding="utf-8") as fh:
+        fh.write(
+            dedent(
+                f"""
+                NUM_REALIZATIONS 1
+
+                LOAD_WORKFLOW {workflow_file_path} workflow_alias
+                HOOK_WORKFLOW workflow_alias PRE_EXPERIMENT
+                """
+            )
+        )
+
+    class SomeScript(ErtScript):
+        def run(self, es_settings: ESSettings):
+            pass
+
+    wfjob = ErtScriptWorkflow(
+        name="TEST_SCRIPT",
+        ertscript_class=SomeScript,
+    )
+    ErtConfig.PREINSTALLED_WORKFLOWS = {"TEST_SCRIPT": wfjob}
+
+    with pytest.raises(
+        ConfigValidationError,
+        match=r".*It would work in these runtimes: PRE_UPDATE, POST_UPDATE, PRE_FIRST_UPDATE.*",
+    ):
+        ErtConfig.from_file("config.ert")
+
+
+@pytest.mark.usefixtures("use_tmpdir")
+def test_ert_script_hook_valid_essettings_succeed():
+    workflow_file_path = os.path.join(os.getcwd(), "workflow")
+    with open(workflow_file_path, mode="w", encoding="utf-8") as fh:
+        fh.write("TEST_SCRIPT")
+
+    with open("config.ert", mode="w", encoding="utf-8") as fh:
+        fh.write(
+            dedent(
+                f"""
+                NUM_REALIZATIONS 1
+
+                LOAD_WORKFLOW {workflow_file_path} workflow_alias
+                HOOK_WORKFLOW workflow_alias PRE_UPDATE
+                HOOK_WORKFLOW workflow_alias POST_UPDATE
+                HOOK_WORKFLOW workflow_alias PRE_FIRST_UPDATE
+                """
+            )
+        )
+
+    class SomeScript(ErtScript):
+        def run(self, es_settings: ESSettings):
+            pass
+
+    wfjob = ErtScriptWorkflow(
+        name="TEST_SCRIPT",
+        ertscript_class=SomeScript,
+    )
+    ErtConfig.PREINSTALLED_WORKFLOWS = {"TEST_SCRIPT": wfjob}
+    ErtConfig.from_file("config.ert")
 
 
 def test_queue_options_are_joined_after_option_name():
