@@ -1,4 +1,5 @@
 import argparse
+import json
 import logging
 import os
 import sys
@@ -7,6 +8,8 @@ from collections import defaultdict
 from collections.abc import Sequence
 from dataclasses import dataclass, field
 from itertools import groupby
+from pathlib import Path
+from textwrap import dedent
 from typing import Any, ClassVar
 
 import colorama
@@ -375,3 +378,48 @@ def report_on_previous_run(
             f"  `everest run --new-run {config_file}`\n"
             f"Results are stored in {optimization_output_dir}"
         )
+
+
+def _read_user_preferences(user_info_path: Path) -> dict[str, dict[str, Any]]:
+    try:
+        if user_info_path.exists():
+            with open(user_info_path, encoding="utf-8") as f:
+                return json.load(f)
+
+        user_info = {EVEREST: {"show_scaling_warning": True}}
+        with open(user_info_path, mode="w", encoding="utf-8") as f:
+            json.dump(user_info, f, ensure_ascii=False, indent=4)
+        return user_info
+    except json.decoder.JSONDecodeError:
+        return {EVEREST: {}}
+
+
+def show_scaled_controls_warning() -> None:
+    user_info_path = Path(os.getenv("HOME", "")) / ".ert"
+    user_info = _read_user_preferences(user_info_path)
+    everest_pref = user_info.get(EVEREST, {})
+
+    if not everest_pref.get("show_scaling_warning", True):
+        return
+
+    user_input = input(
+        dedent("""
+        From Everest version: 14.0.3, Everest will output auto-scaled control values.
+        Control values should now be specified in real-world units instead of the optimizer's internal scale.
+        The 'scaled_range' property can still be used to configure the optimizer's range for each control.
+
+        [Enter] to continue.
+        [  Y  ] to stop showing this message again.
+        [  N  ] to abort.
+        """)
+    ).lower()
+    match user_input:
+        case "y":
+            everest_pref["show_scaling_warning"] = False
+            try:
+                with open(user_info_path, mode="w", encoding="utf-8") as f:
+                    json.dump(user_info, f, ensure_ascii=False, indent=4)
+            except Exception as e:
+                logging.getLogger(EVEREST).error(str(e))
+        case "n":
+            raise SystemExit(0)
