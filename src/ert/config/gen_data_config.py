@@ -45,7 +45,7 @@ class GenDataConfig(ResponseConfig):
         return expected_files
 
     @classmethod
-    def from_config_dict(cls, config_dict: ConfigDict) -> Self | None:
+    def from_config_dict(cls, config_dict: ConfigDict) -> Self:
         gen_data_list = config_dict.get("GEN_DATA", [])  # type: ignore
 
         keys = []
