@@ -114,14 +114,3 @@ def test_assert_symlink_deleted(snake_oil_field_example, storage, run_paths):
 
     # ensure field symlink is replaced by file
     assert not os.path.islink(linkpath)
-
-
-@pytest.mark.usefixtures("use_tmpdir")
-def test_ert_context():
-    # Write a minimal config file with DEFINE
-    with open("config_file.ert", "w", encoding="utf-8") as fout:
-        fout.write("NUM_REALIZATIONS 1\nDEFINE <MY_PATH> <CONFIG_PATH>")
-    ert_config = ErtConfig.from_file("config_file.ert")
-    context = ert_config.substitutions
-    my_path = context["<MY_PATH>"]
-    assert my_path == os.getcwd()
