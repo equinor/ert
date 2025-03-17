@@ -11,6 +11,7 @@ from functools import partial
 
 from _ert.threading import ErtThread
 from ert.config import ErtConfig, QueueSystem
+from everest.bin.utils import show_scaled_controls_warning
 from everest.config import EverestConfig, ServerConfig
 from everest.detached import (
     ServerStatus,
@@ -96,6 +97,11 @@ def _build_args_parser() -> argparse.ArgumentParser:
         action="store_true",
         help="Display all jobs executed from the forward model",
     )
+    arg_parser.add_argument(
+        "--skip-prompt",
+        action="store_true",
+        help="Flag used to disable user prompts that will stop execution.",
+    )
 
     return arg_parser
 
@@ -141,6 +147,8 @@ async def run_everest(options: argparse.Namespace) -> None:
             and any(os.listdir(options.config.simulation_dir))
         ):
             warn_user_that_runpath_is_nonempty()
+        if not options.skip_prompt:
+            show_scaled_controls_warning()
 
         try:
             output_dir = options.config.output_dir

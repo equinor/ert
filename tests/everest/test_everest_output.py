@@ -44,7 +44,7 @@ def test_save_running_config(_, _1, _2, _3, _4, _5, copy_math_func_test_data_to_
     # optimization already run, notify the user
     file_name = "config_minimal.yml"
     config = EverestConfig.load_file(file_name)
-    everest_entry([file_name])
+    everest_entry([file_name, "--skip-prompt"])
     saved_config_path = os.path.join(config.output_dir, file_name)
 
     assert os.path.exists(saved_config_path)

@@ -92,7 +92,7 @@ run_everest_egg_test() {
     fi
     cat "$CONFIG"
 
-    everest run "$CONFIG"
+    everest run "$CONFIG" --skip-prompt
     STATUS=$?
     popd
 

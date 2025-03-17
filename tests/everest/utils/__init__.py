@@ -132,7 +132,7 @@ def create_cached_mocked_test_case(request, monkeypatch) -> pathlib.Path:
         monkeypatch.chdir(cache_path)
         shutil.copytree(config_path, "mocked_run")
         monkeypatch.chdir("mocked_run")
-        start_everest(["everest", "run", config_file])
+        start_everest(["everest", "run", config_file, "--skip-prompt"])
         config = EverestConfig.load_file(config_file)
         status = everserver_status(
             ServerConfig.get_everserver_status_path(config.output_dir)
