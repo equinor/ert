@@ -60,7 +60,7 @@ class GenDataConfig(ResponseConfig):
 
             if res_file is None:
                 raise ConfigValidationError.with_context(
-                    f"Missing or unsupported RESULT_FILE for GEN_DATA key {name!r}",
+                    f"Missing RESULT_FILE for GEN_DATA key {name!r}",
                     name,
                 )
             try:
