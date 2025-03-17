@@ -38,7 +38,7 @@ def test_gen_data_default_report_step():
         ),
         pytest.param(
             "",
-            "Missing or unsupported RESULT_FILE for GEN_DATA",
+            "Missing RESULT_FILE for GEN_DATA",
             id="No RESULT_FILE key",
         ),
         pytest.param(
