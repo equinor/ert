@@ -17,7 +17,7 @@ from ert.config import ConfigValidationError, GenDataConfig, InvalidResponseFile
     ],
 )
 @pytest.mark.usefixtures("use_tmpdir")
-def test_gen_data_config(name: str, report_steps: list[int]):
+def test_report_step_list_is_ordered(name: str, report_steps: list[int]):
     gdc = GenDataConfig(keys=[name], report_steps_list=[report_steps])
     assert gdc.keys == [name]
     assert gdc.report_steps_list[0] == sorted(report_steps)
@@ -28,83 +28,41 @@ def test_gen_data_default_report_step():
     assert not gen_data_default_step.report_steps_list[0][0]
 
 
-@pytest.mark.parametrize(
-    "result_file, error_message",
-    [
-        pytest.param(
-            "RESULT_FILE:",
-            "Invalid argument 'RESULT_FILE:'",
-            id="RESULT_FILE key but no file",
-        ),
-        pytest.param(
-            "",
-            "Missing RESULT_FILE for GEN_DATA",
-            id="No RESULT_FILE key",
-        ),
-        pytest.param(
-            "RESULT_FILE:/tmp",
-            "The RESULT_FILE:/tmp setting for RES is invalid",
-            id="No RESULT_FILE key",
-        ),
-        pytest.param(
-            "RESULT_FILE:poly_%d.out",
-            None,
-            id="This should not fail",
-        ),
-    ],
-)
-def test_malformed_or_missing_gen_data_result_file(result_file, error_message):
-    config_line = f"RES {result_file} REPORT_STEPS:0 INPUT_FORMAT:ASCII"
-    if error_message:
-        with pytest.raises(
-            ConfigValidationError,
-            match=error_message,
-        ):
-            GenDataConfig.from_config_dict({"GEN_DATA": [config_line.split()]})
-    else:
-        GenDataConfig.from_config_dict({"GEN_DATA": [config_line.split()]})
+def test_empty_result_file_gives_validation_error():
+    with pytest.raises(ConfigValidationError, match="Invalid argument 'RESULT_FILE:'"):
+        GenDataConfig.from_config_dict({"GEN_DATA": [["NAME", "RESULT_FILE:"]]})
 
 
-@pytest.mark.parametrize(
-    "report_step_arg, error_message",
-    [
-        pytest.param(
-            "H",
-            "must be a valid range string",
-            id="Invalid REPORT_STEPS argument",
-        ),
-        pytest.param(
-            "H,1-3",
-            "must be a valid range string",
-            id="Invalid REPORT_STEPS argument",
-        ),
-        pytest.param(
-            "invalid-range-argument",
-            "must be a valid range string",
-            id="Invalid REPORT_STEPS argument",
-        ),
-        pytest.param(
-            "1-2,5-8",
-            None,
-            id="This should not fail",
-        ),
-        pytest.param(
-            "1",
-            None,
-            id="This should not fail",
-        ),
-    ],
-)
-def test_malformed_report_step_argument(report_step_arg, error_message):
-    config_line = f"POLY_RES RESULT_FILE:poly_%d.out REPORT_STEPS:{report_step_arg}"
-    if error_message:
-        with pytest.raises(
-            ConfigValidationError,
-            match=error_message,
-        ):
-            GenDataConfig.from_config_dict({"GEN_DATA": [config_line.split()]})
-    else:
-        GenDataConfig.from_config_dict({"GEN_DATA": [config_line.split()]})
+def test_unset_result_file_gives_validation_error():
+    with pytest.raises(ConfigValidationError, match="Missing RESULT_FILE for GEN_DATA"):
+        GenDataConfig.from_config_dict({"GEN_DATA": [["NAME"]]})
+
+
+def test_invalid_result_file_gives_validation_error():
+    with pytest.raises(ConfigValidationError, match=r"RESULT_FILE:/tmp .* is invalid"):
+        GenDataConfig.from_config_dict({"GEN_DATA": [["NAME", "RESULT_FILE:/tmp"]]})
+
+
+def test_result_file_is_appended_to_input_files():
+    gen_data = GenDataConfig.from_config_dict(
+        {"GEN_DATA": [["NAME", "RESULT_FILE:%d.out", "REPORT_STEPS:1"]]}
+    )
+    assert "%d.out" in gen_data.input_files
+
+
+@pytest.mark.parametrize("not_a_range", ["H", "H,1-3", "invalid-range-argument"])
+def test_non_range_report_step_gives_validation_error(not_a_range):
+    with pytest.raises(ConfigValidationError, match="must be a valid range string"):
+        GenDataConfig.from_config_dict(
+            {"GEN_DATA": [["NAME", "RESULT_FILE:%d", f"REPORT_STEPS:{not_a_range}"]]}
+        )
+
+
+def test_report_step_option_sets_the_report_steps_property():
+    gen_data = GenDataConfig.from_config_dict(
+        {"GEN_DATA": [["NAME", "RESULT_FILE:%d", "REPORT_STEPS:1-2,5-8"]]}
+    )
+    assert gen_data.report_steps_list == [[1, 2, 5, 6, 7, 8]]
 
 
 def test_that_invalid_gendata_outfile_error_propagates(tmp_path):
