@@ -152,6 +152,8 @@ class ExperimentRunner:
                     sub.notify()
 
                 if isinstance(item, EndEvent):
+                    # Wait for subscribers to receive final events
+                    await asyncio.sleep(5)
                     break
                 await asyncio.sleep(0.1)
             await simulation_future
