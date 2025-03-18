@@ -19,7 +19,7 @@ def label_testcase(request):
     return request.param
 
 
-def test_copy_clickbtn(qtbot, tmpdir, monkeypatch, label_testcase):
+def test_copy_clickbtn(qtbot, label_testcase):
     label_markup, label = label_testcase
     copyable_label = CopyableLabel(label_markup)
     wrapper_widget = QWidget()
