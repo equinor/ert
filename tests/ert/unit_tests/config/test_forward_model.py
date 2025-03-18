@@ -774,17 +774,7 @@ def test_that_plugin_forward_model_validation_accepts_valid_args(tmp_path):
     )
 
 
-def test_that_plugin_forward_model_raises_pre_realization_validation_error(tmp_path):
-    (tmp_path / "test.ert").write_text(
-        dedent(
-            """
-            NUM_REALIZATIONS  1
-            FORWARD_MODEL FM1(<arg1>=never,<arg2>=world,<arg3>=derpyderp)
-            FORWARD_MODEL FM2
-            """
-        )
-    )
-
+def test_that_plugin_forward_model_raises_pre_realization_validation_error():
     class FM1(ForwardModelStepPlugin):
         def __init__(self):
             super().__init__(
@@ -814,8 +804,14 @@ def test_that_plugin_forward_model_raises_pre_realization_validation_error(tmp_p
 
             return fm_json
 
-    config = ErtConfig.with_plugins(forward_model_step_classes=[FM1, FM2]).from_file(
-        tmp_path / "test.ert"
+    config = ErtConfig.with_plugins(
+        forward_model_step_classes=[FM1, FM2]
+    ).from_file_contents(
+        """
+            NUM_REALIZATIONS  1
+            FORWARD_MODEL FM1(<arg1>=never,<arg2>=world,<arg3>=derpyderp)
+            FORWARD_MODEL FM2
+            """
     )
     assert isinstance(config.forward_model_steps[0], FM1)
     assert config.forward_model_steps[0].name == "FM1"
@@ -838,17 +834,7 @@ def test_that_plugin_forward_model_raises_pre_realization_validation_error(tmp_p
         )
 
 
-def test_that_plugin_forward_model_raises_pre_experiment_validation_error_early(
-    tmp_path,
-):
-    (tmp_path / "test.ert").write_text(
-        """
-        NUM_REALIZATIONS 1
-        FORWARD_MODEL FM1(<arg1>=never,<arg2>=world,<arg3>=derpyderp)
-        FORWARD_MODEL FM2
-        """
-    )
-
+def test_that_plugin_forward_model_raises_pre_experiment_validation_error_early():
     class InvalidFightingStyle(ForwardModelStepValidationError):
         pass
 
@@ -876,29 +862,18 @@ def test_that_plugin_forward_model_raises_pre_experiment_validation_error_early(
             raise ForwardModelStepValidationError("well that's nice")
 
     with pytest.raises(ConfigValidationError, match=r".*hamster style.*that's nice.*"):
-        _ = ErtConfig.with_plugins(forward_model_step_classes=[FM1, FM2]).from_file(
-            tmp_path / "test.ert"
-        )
-
-
-def test_that_pre_run_substitution_forward_model_json_is_created_for_plugin_fms(
-    tmp_path,
-):
-    (tmp_path / "test.ert").write_text(
-        dedent(
+        _ = ErtConfig.with_plugins(
+            forward_model_step_classes=[FM1, FM2]
+        ).from_file_contents(
             """
-        NUM_REALIZATIONS  1
-
-        DEFINE <yo> dear
-        DEFINE <dawg> good
-        DEFINE <iherdulike> solonius
-        DEFINE <some_var> schmidt
-
-        FORWARD_MODEL FM1(<arg1>=<yo>,<arg2>=<dawg>,<arg3>=<iherdulike>)
-        """
+            NUM_REALIZATIONS 1
+            FORWARD_MODEL FM1(<arg1>=never,<arg2>=world,<arg3>=derpyderp)
+            FORWARD_MODEL FM2
+            """
         )
-    )
 
+
+def test_that_pre_run_substitution_forward_model_json_is_created_for_plugin_fms():
     class FM1(ForwardModelStepPlugin):
         def __init__(self):
             super().__init__(
@@ -938,20 +913,21 @@ def test_that_pre_run_substitution_forward_model_json_is_created_for_plugin_fms(
                 "<arg3>": "solonius",
             }
 
-    ErtConfig.with_plugins(forward_model_step_classes=[FM1]).from_file(
-        tmp_path / "test.ert"
-    )
-
-
-def test_that_plugin_forward_model_unexpected_errors_show_as_warnings(tmp_path):
-    (tmp_path / "test.ert").write_text(
+    ErtConfig.with_plugins(forward_model_step_classes=[FM1]).from_file_contents(
         """
         NUM_REALIZATIONS  1
-        FORWARD_MODEL FMWithAssertionError(<arg1>=never,<arg2>=world,<arg3>=derpyderp)
-        FORWARD_MODEL FMWithFMStepValidationError
+
+        DEFINE <yo> dear
+        DEFINE <dawg> good
+        DEFINE <iherdulike> solonius
+        DEFINE <some_var> schmidt
+
+        FORWARD_MODEL FM1(<arg1>=<yo>,<arg2>=<dawg>,<arg3>=<iherdulike>)
         """
     )
 
+
+def test_that_plugin_forward_model_unexpected_errors_show_as_warnings():
     class FMWithAssertionError(ForwardModelStepPlugin):
         def __init__(self):
             super().__init__(name="FMWithAssertionError", command=["the_executable.sh"])
@@ -978,4 +954,10 @@ def test_that_plugin_forward_model_unexpected_errors_show_as_warnings(tmp_path):
                 FMWithFMStepValidationError,
                 FMWithAssertionError,
             ]
-        ).from_file(tmp_path / "test.ert")
+        ).from_file_contents(
+            """
+            NUM_REALIZATIONS  1
+            FORWARD_MODEL FMWithAssertionError(<arg1>=never,<arg2>=world,<arg3>=derpyderp)
+            FORWARD_MODEL FMWithFMStepValidationError
+            """
+        )
