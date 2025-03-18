@@ -3,6 +3,7 @@ import itertools
 import json
 import logging
 import os
+import traceback
 from pathlib import Path
 from typing import Any
 
@@ -112,13 +113,16 @@ def _extract_summary_keys(
 
     try:
         data_wells = list(_load_all_wells(data_files))
-    except Exception:
+    except Exception as e:
         warn_msg = (
             "Failed to load well names from {}. "
             "Only well data for wells specified in config file will be "
-            "internalized during run."
+            "internalized during run. Full error: {}"
         )
-        logging.getLogger(EVEREST).warning(warn_msg.format(data_files))
+        tb = traceback.format_exception(e)
+        trimmed_tb = "".join(tb[: min(len(tb), 10)])
+        full_message = warn_msg.format(data_files, trimmed_tb)
+        logging.getLogger(EVEREST).warning(full_message)
         data_wells = []
 
     everest_wells = [well.name for well in ever_config.wells]
