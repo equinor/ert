@@ -18,6 +18,7 @@ jobs:
   benchmarks:
     name: Run benchmarks
     runs-on: ubuntu-latest
+    timeout-minutes: 40
     steps:
       - uses: actions/checkout@v4
       - uses: ./.github/actions/install_dependencies_qt

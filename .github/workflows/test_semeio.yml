@@ -17,7 +17,7 @@ concurrency:
 jobs:
   test-semeio:
     name: Test Semeio
-    timeout-minutes: 40
+    timeout-minutes: 20
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
