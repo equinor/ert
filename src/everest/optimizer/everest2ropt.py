@@ -22,10 +22,7 @@ from everest.strings import EVEREST
 
 
 def _parse_controls(controls: FlattenedControls, ropt_config: dict[str, Any]) -> None:
-    control_types = [
-        None if type_ is None else VariableType[type_.upper()]
-        for type_ in controls.types
-    ]
+    control_types = [VariableType[type_.upper()] for type_ in controls.types]
     ropt_config["variables"] = {
         "types": None if all(item is None for item in control_types) else control_types,
         "initial_values": controls.initial_guesses,

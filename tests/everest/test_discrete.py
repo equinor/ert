@@ -24,7 +24,6 @@ def test_discrete_optimizer(copy_math_func_test_data_to_tmp):
                 "type": "generic_control",
                 "min": 0,
                 "max": 10,
-                "scaled_range": [0, 10],
                 "control_type": "integer",
                 "initial_guess": 0,
                 "variables": [{"name": "x"}, {"name": "y"}],

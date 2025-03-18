@@ -38,7 +38,7 @@ initial value.
         default=None,
         description="""
 Can be set to true to re-scale variable from the range
-defined by [min, max] to the range defined by scaled_range (default [0, 1])
+defined by [min, max] to the range defined by scaled_range (default [0, 1]).
 """,
     )
     scaled_range: Annotated[tuple[float, float] | None, AfterValidator(valid_range)] = (
@@ -48,7 +48,7 @@ defined by [min, max] to the range defined by scaled_range (default [0, 1])
 Can be used to set the range of the variable values
 after scaling (default = [0, 1]).
 
-This option has no effect if auto_scale is not set.
+This option has no effect on discrete controls.
 """,
         )
     )

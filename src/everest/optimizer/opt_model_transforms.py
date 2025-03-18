@@ -1,4 +1,5 @@
 from collections.abc import Sequence
+from typing import Literal
 
 import numpy as np
 from numpy.typing import NDArray
@@ -29,6 +30,7 @@ class ControlScaler(VariableTransform):
         lower_bounds: Sequence[float],
         upper_bounds: Sequence[float],
         scaled_ranges: Sequence[tuple[float, float]],
+        control_types: list[Literal["real", "integer"]],
     ) -> None:
         """Transformation object to define a linear scaling.
 
@@ -40,19 +42,21 @@ class ControlScaler(VariableTransform):
              lower_bounds:  Lower bounds in the user domain.
              upper_bounds:  Upper bounds in the user domain.
              scaled_ranges: target ranges in the optimizer domain.
+             control_types: Types of the controls, real or integer.
         """
         self._scaling_factors = [
-            (ub - lb) / (sr[1] - sr[0])
-            for lb, ub, sr in zip(
-                lower_bounds, upper_bounds, scaled_ranges, strict=True
+            (ub - lb) / (sr[1] - sr[0]) if ct == "real" else 1.0
+            for lb, ub, sr, ct in zip(
+                lower_bounds, upper_bounds, scaled_ranges, control_types, strict=True
             )
         ]
         self._offsets = [
-            lb - sr[0] * sc
-            for lb, sc, sr in zip(
+            lb - sr[0] * sc if ct == "real" else 0.0
+            for lb, sc, sr, ct in zip(
                 lower_bounds,
                 self._scaling_factors,
                 scaled_ranges,
+                control_types,
                 strict=True,
             )
         ]
@@ -378,6 +382,7 @@ def get_optimization_domain_transforms(
                 flattened_controls.lower_bounds,
                 flattened_controls.upper_bounds,
                 flattened_controls.scaled_ranges,
+                flattened_controls.types,
             )
         ),
         objectives=ObjectiveScaler(
