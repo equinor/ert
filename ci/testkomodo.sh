@@ -146,7 +146,7 @@ start_tests() {
     return_code_combined_tests=0
     # We error if one or more returncodes are nonzero
     if [ "$return_code_ert_main_tests" -ne 0 ]; then
-        echo "One or more ERT tests failed."
+        echo "One or more ERT and/or Everest tests failed."
         return_code_combined_tests=1
     fi
     if [ "$return_code_ert_memory_consumption_tests" -ne 0 ]; then
