@@ -11,7 +11,7 @@ from starlette.responses import Response
 
 from everest.bin.everest_script import everest_entry
 from everest.config import EverestConfig, ServerConfig
-from everest.detached import wait_for_server
+from everest.detached import server_is_running
 from everest.detached.jobs.everserver import _find_open_port
 from everest.gui.everest_client import EverestClient
 from everest.strings import STOP_ENDPOINT
@@ -160,7 +160,13 @@ def test_that_multiple_everest_clients_can_connect_to_server(cached_example):
     )
 
     everest_main_thread.start()
-    wait_for_server(ever_config.output_dir, 60)
+
+    def everserver_is_running():
+        return server_is_running(
+            *ServerConfig.get_server_context(ever_config.output_dir)
+        )
+
+    wait_until(everserver_is_running, interval=1, timeout=20)
 
     server_context = ServerConfig.get_server_context(ever_config.output_dir)
     url, cert, auth = server_context
