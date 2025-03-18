@@ -220,16 +220,16 @@ class EverestDataAPI:
         storage = open_storage(self._config.storage_dir, "r")
         experiment = next(storage.experiments)
         for batch_id in batches:
-            ensemble = experiment.get_ensemble_by_name(f"batch_{batch_id}")
             try:
+                ensemble = experiment.get_ensemble_by_name(f"batch_{batch_id}")
                 summary = ensemble.load_responses(
                     key="summary",
                     realizations=tuple(self.simulations),
                 )
             except (ValueError, KeyError):
-                summary = pl.DataFrame()
+                summary = None
 
-            if not summary.is_empty():
+            if summary is not None:
                 summary = summary.pivot(
                     on="response_key", index=["realization", "time"], sort_columns=True
                 )
@@ -253,7 +253,7 @@ class EverestDataAPI:
                 realizations = realizations.cast(pl.Int64, strict=False)
                 summary = summary.with_columns(realizations)
 
-            data_frames.append(summary)
+                data_frames.append(summary)
         storage.close()
         return pl.concat(data_frames)
 
