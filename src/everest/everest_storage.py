@@ -325,7 +325,7 @@ class EverestStorage:
             "perturbed_variables": "perturbed_control_value",
             "perturbed_objectives": "perturbed_objective_value",
             "perturbed_constraints": "perturbed_constraint_value",
-            "evaluation_ids": "simulation_id",
+            "evaluation_info.sim_ids": "simulation_id",
         }
         return df.rename({k: v for k, v in renames.items() if k in df.columns})
 
@@ -338,7 +338,6 @@ class EverestStorage:
             # -1 is used as a value in simulator cache.
             # thus we need signed, otherwise we could do unsigned
             "simulation_id": pl.Int32,
-            "perturbed_evaluation_ids": pl.Int32,
             "objective_name": pl.String,
             "control_name": pl.String,
             "constraint_name": pl.String,
@@ -496,7 +495,7 @@ class EverestStorage:
         realization_objectives = self._ropt_to_df(
             results,
             "evaluations",
-            values=["objectives", "evaluation_ids"],
+            values=["objectives", "evaluation_info.sim_ids"],
             select=["batch_id", "realization", "objective"],
         )
 
@@ -504,7 +503,7 @@ class EverestStorage:
             realization_constraints = self._ropt_to_df(
                 results,
                 "evaluations",
-                values=["constraints", "evaluation_ids"],
+                values=["constraints", "evaluation_info.sim_ids"],
                 select=["batch_id", "realization", "nonlinear_constraint"],
             )
 
@@ -539,7 +538,7 @@ class EverestStorage:
         realization_controls = self._ropt_to_df(
             results,
             "evaluations",
-            values=["variables", "evaluation_ids"],
+            values=["variables", "evaluation_info.sim_ids"],
             select=["batch_id", "variable", "realization"],
         )
 
@@ -585,7 +584,7 @@ class EverestStorage:
                     "variables",
                     "perturbed_variables",
                     "perturbed_objectives",
-                    "perturbed_evaluation_ids",
+                    "evaluation_info.sim_ids",
                 ]
                 + (["perturbed_constraints"] if have_perturbed_constraints else [])
             ),
@@ -668,7 +667,7 @@ class EverestStorage:
             perturbation_constraints = None
 
         perturbation_objectives = perturbation_objectives.drop(
-            "perturbed_evaluation_ids", "control_value"
+            "simulation_id", "control_value"
         )
 
         perturbation_objectives = perturbation_objectives.pivot(

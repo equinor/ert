@@ -7,7 +7,7 @@ import logging
 import os
 import queue
 import shutil
-from collections.abc import Callable, MutableSequence
+from collections.abc import Callable, Iterable, Mapping, MutableSequence
 from enum import IntEnum, auto
 from pathlib import Path
 from types import TracebackType
@@ -262,11 +262,13 @@ class EverestRunModel(BaseRunModel):
     def _handle_optimizer_results(self, results: tuple[Results, ...]) -> None:
         self.ever_storage.on_batch_evaluation_finished(results)
 
-        def convert_ndarray(items: list[tuple[str, Any]]) -> dict[str, Any]:
+        def convert_ndarray(items: Iterable[tuple[str, Any]]) -> dict[str, Any]:
             result = {}
             for key, value in items:
                 if isinstance(value, np.ndarray):
                     result[key] = value.tolist()
+                elif isinstance(value, Mapping):
+                    result[key] = convert_ndarray(value.items())
                 else:
                     result[key] = value
             return result
@@ -751,7 +753,7 @@ class EverestRunModel(BaseRunModel):
             objectives=objectives,
             constraints=constraints,
             batch_id=self._batch_id,
-            evaluation_ids=sim_ids,
+            evaluation_info={"sim_ids": sim_ids},
         )
 
         # increase the batch ID for the next evaluation:
