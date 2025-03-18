@@ -20,7 +20,14 @@ from typing import TYPE_CHECKING, Any, Protocol, cast
 
 import numpy as np
 
-from _ert.events import EESnapshot, EESnapshotUpdate, EETerminated, Event
+from _ert.events import (
+    EESnapshot,
+    EESnapshotUpdate,
+    EETerminated,
+    EEUserCancel,
+    EEUserDone,
+    Event,
+)
 from ert.analysis import ErtAnalysisError, smoother_update
 from ert.analysis.event import (
     AnalysisCompleteEvent,
@@ -42,9 +49,9 @@ from ert.ensemble_evaluator import Ensemble as EEEnsemble
 from ert.ensemble_evaluator import (
     EnsembleEvaluator,
     EvaluatorServerConfig,
-    Monitor,
     Realization,
 )
+from ert.ensemble_evaluator.evaluator import EventSentinel
 from ert.ensemble_evaluator.identifiers import STATUS
 from ert.ensemble_evaluator.snapshot import EnsembleSnapshot
 from ert.ensemble_evaluator.state import (
@@ -546,29 +553,50 @@ class BaseRunModel(ABC):
             )
 
     async def run_monitor(
-        self, ee_config: EvaluatorServerConfig, iteration: int
+        self,
+        iteration: int,
+        evaluator: EnsembleEvaluator,
+        monitor_queue: asyncio.Queue[Event | EventSentinel],
     ) -> bool:
         try:
-            logger.debug("connecting to new monitor...")
-            async with Monitor(ee_config.get_uri(), ee_config.token) as monitor:
-                logger.debug("connected")
-                async for event in monitor.track(heartbeat_interval=0.1):
-                    if type(event) in {
-                        EESnapshot,
-                        EESnapshotUpdate,
+            heartbeat_interval_: float | None = 0.1
+            receiver_timeout: float = 60.0
+            closetracker_received: bool = False
+
+            while True:
+                try:
+                    event = await asyncio.wait_for(
+                        monitor_queue.get(), timeout=heartbeat_interval_
+                    )
+                except TimeoutError:
+                    if closetracker_received:
+                        logger.error("Evaluator did not send the TERMINATED event!")
+                        break
+                    event = None
+                if isinstance(event, EventSentinel):
+                    closetracker_received = True
+                    heartbeat_interval_ = receiver_timeout
+                    logger.debug("JONAK - received sentinel")
+                    continue
+                if type(event) in {
+                    EESnapshot,
+                    EESnapshotUpdate,
+                }:
+                    event = cast(EESnapshot | EESnapshotUpdate, event)
+
+                    self.send_snapshot_event(event, iteration)
+
+                    if event.snapshot.get(STATUS) in {
+                        ENSEMBLE_STATE_STOPPED,
+                        ENSEMBLE_STATE_FAILED,
                     }:
-                        event = cast(EESnapshot | EESnapshotUpdate, event)
+                        logger.debug("observed evaluation stopped event, signal done")
+                        await monitor_queue.put(EventSentinel())
+                        logger.debug("monitor informing server monitor is done...")
 
-                        self.send_snapshot_event(event, iteration)
-
-                        if event.snapshot.get(STATUS) in {
-                            ENSEMBLE_STATE_STOPPED,
-                            ENSEMBLE_STATE_FAILED,
-                        }:
-                            logger.debug(
-                                "observed evaluation stopped event, signal done"
-                            )
-                            await monitor.signal_done()
+                        done_event = EEUserDone()
+                        await evaluator.handle_client_event(done_event)
+                        logger.debug("monitor informed server monitor is done")
 
                         if event.snapshot.get(STATUS) == ENSEMBLE_STATE_CANCELLED:
                             logger.debug(
@@ -610,15 +638,13 @@ class BaseRunModel(ABC):
             raise UserCancelled("Experiment cancelled by user in pre evaluation")
 
         ee_ensemble = self._build_ensemble(run_args, ensemble.experiment_id)
-        evaluator = EnsembleEvaluator(
-            ee_ensemble,
-            ee_config,
-        )
+        monitor_queue = asyncio.Queue()
+        evaluator = EnsembleEvaluator(ee_ensemble, ee_config, monitor_queue)
         evaluator_task = asyncio.create_task(
             evaluator.run_and_get_successful_realizations()
         )
         await evaluator._server_started
-        if not (await self.run_monitor(ee_config, ensemble.iteration)):
+        if not (await self.run_monitor(ensemble.iteration, evaluator, monitor_queue)):
             await evaluator_task
             return []
 
