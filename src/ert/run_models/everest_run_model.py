@@ -248,7 +248,11 @@ class EverestRunModel(BaseRunModel):
             failed = True
             exception = e
         finally:
-            if self._exit_code != EverestExitCode.COMPLETED:
+            if self._exit_code not in {
+                EverestExitCode.COMPLETED,
+                EverestExitCode.MAX_FUNCTIONS_REACHED,
+                EverestExitCode.MAX_BATCH_NUM_REACHED,
+            }:
                 failed = True
             self.send_event(
                 EndEvent(
