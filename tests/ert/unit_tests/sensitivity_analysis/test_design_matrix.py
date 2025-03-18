@@ -154,17 +154,20 @@ def test_read_and_merge_with_existing_parameters(tmp_path, parameters, error_msg
         with pytest.raises(ValueError, match=error_msg):
             design_matrix.merge_with_existing_parameters(extra_genkw_config)
     elif len(parameters) == 1:
-        new_config_parameters, design_group = (
-            design_matrix.merge_with_existing_parameters(extra_genkw_config)
+        new_config_parameters = design_matrix.merge_with_existing_parameters(
+            extra_genkw_config
         )
-        assert len(new_config_parameters) == 0
-        assert design_group.name == "COEFFS"
+        assert len(new_config_parameters) == 1
+        assert design_matrix.group_name == "COEFFS"
+        assert new_config_parameters[0].name == "COEFFS"
     elif len(parameters) == 2:
-        new_config_parameters, design_group = (
-            design_matrix.merge_with_existing_parameters(extra_genkw_config)
+        new_config_parameters = design_matrix.merge_with_existing_parameters(
+            extra_genkw_config
         )
-        assert len(new_config_parameters) == 2
-        assert design_group.name == DESIGN_MATRIX_GROUP
+        assert len(new_config_parameters) == 3
+        assert design_matrix.group_name == DESIGN_MATRIX_GROUP
+        param_group_names = [param.name for param in new_config_parameters]
+        assert param_group_names == ["COEFFS", "COEFFS2", DESIGN_MATRIX_GROUP]
 
 
 def test_reading_design_matrix(tmp_path):

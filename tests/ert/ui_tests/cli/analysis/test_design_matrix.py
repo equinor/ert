@@ -9,8 +9,7 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from ert.cli.main import ErtCliError
-from ert.config import ErtConfig
+from ert.config import ConfigValidationError, ErtConfig
 from ert.mode_definitions import (
     ENSEMBLE_EXPERIMENT_MODE,
     ENSEMBLE_SMOOTHER_MODE,
@@ -202,7 +201,7 @@ def test_run_poly_example_with_design_matrix_and_genkw_merge(default_values, err
     )
 
     if error_msg:
-        with pytest.raises(ErtCliError, match=error_msg):
+        with pytest.raises(ConfigValidationError, match=error_msg):
             run_cli(
                 ENSEMBLE_EXPERIMENT_MODE,
                 "--disable-monitoring",

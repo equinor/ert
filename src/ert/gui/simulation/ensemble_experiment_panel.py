@@ -4,7 +4,7 @@ from PyQt6.QtCore import Qt
 from PyQt6.QtCore import pyqtSlot as Slot
 from PyQt6.QtWidgets import QFormLayout, QLabel, QWidget
 
-from ert.config import AnalysisConfig
+from ert.config import DesignMatrix
 from ert.gui.ertnotifier import ErtNotifier
 from ert.gui.ertwidgets import (
     ActiveRealizationsModel,
@@ -31,10 +31,10 @@ class Arguments:
 class EnsembleExperimentPanel(ExperimentConfigPanel):
     def __init__(
         self,
-        analysis_config: AnalysisConfig,
         ensemble_size: int,
         run_path: str,
         notifier: ErtNotifier,
+        design_matrix: DesignMatrix | None,
     ):
         super().__init__(EnsembleExperiment)
         self.notifier = notifier
@@ -82,7 +82,6 @@ class EnsembleExperimentPanel(ExperimentConfigPanel):
         )
         layout.addRow("Active realizations", self._active_realizations_field)
 
-        design_matrix = analysis_config.design_matrix
         if design_matrix is not None:
             layout.addRow(
                 "Design Matrix",

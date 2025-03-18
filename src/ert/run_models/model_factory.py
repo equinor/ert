@@ -149,9 +149,9 @@ def _setup_evaluate_ensemble(
 
 def _get_active_realizations_list(args: Namespace, config: ErtConfig) -> list[bool]:
     return (
-        config.analysis_config.design_matrix.active_realizations
-        if config.analysis_config.design_matrix is not None
-        and config.analysis_config.design_matrix.active_realizations is not None
+        config.ensemble_config.design_matrix.active_realizations
+        if config.ensemble_config.design_matrix is not None
+        and config.ensemble_config.design_matrix.active_realizations is not None
         else _realizations(args, config.model_config.num_realizations).tolist()
     )
 

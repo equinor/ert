@@ -31,7 +31,7 @@ from ._design_matrix_panel import DesignMatrixPanel
 from .experiment_config_panel import ExperimentConfigPanel
 
 if TYPE_CHECKING:
-    from ert.config import AnalysisConfig
+    from ert.config import AnalysisConfig, DesignMatrix
     from ert.gui.ertwidgets import ValueModel
 
 
@@ -53,6 +53,7 @@ class MultipleDataAssimilationPanel(ExperimentConfigPanel):
         run_path: str,
         notifier: ErtNotifier,
         ensemble_size: int,
+        design_matrix: DesignMatrix | None,
     ) -> None:
         super().__init__(MultipleDataAssimilation)
         self.notifier = notifier
@@ -136,7 +137,6 @@ class MultipleDataAssimilationPanel(ExperimentConfigPanel):
             self.simulationConfigurationChanged
         )
 
-        design_matrix = analysis_config.design_matrix
         if design_matrix is not None:
             layout.addRow(
                 "Design Matrix",

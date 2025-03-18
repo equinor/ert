@@ -133,8 +133,9 @@ class ExperimentPanel(QWidget):
             True,
         )
         analysis_config = config.analysis_config
+        design_matrix = config.ensemble_config.design_matrix
         self.addExperimentConfigPanel(
-            EnsembleExperimentPanel(analysis_config, ensemble_size, run_path, notifier),
+            EnsembleExperimentPanel(ensemble_size, run_path, notifier, design_matrix),
             True,
         )
         self.addExperimentConfigPanel(
@@ -148,12 +149,14 @@ class ExperimentPanel(QWidget):
 
         self.addExperimentConfigPanel(
             MultipleDataAssimilationPanel(
-                analysis_config, run_path, notifier, ensemble_size
+                analysis_config, run_path, notifier, ensemble_size, design_matrix
             ),
             experiment_type_valid,
         )
         self.addExperimentConfigPanel(
-            EnsembleSmootherPanel(analysis_config, run_path, notifier, ensemble_size),
+            EnsembleSmootherPanel(
+                analysis_config, run_path, notifier, ensemble_size, design_matrix
+            ),
             experiment_type_valid,
         )
         self.addExperimentConfigPanel(

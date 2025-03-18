@@ -859,7 +859,7 @@ class ErtConfig:
         if errors:
             raise ConfigValidationError.from_collected(errors)
 
-        if dm := analysis_config.design_matrix:
+        if dm := ensemble_config.design_matrix:
             dm_params = [
                 x.name
                 for x in dm.parameter_configuration.transform_function_definitions

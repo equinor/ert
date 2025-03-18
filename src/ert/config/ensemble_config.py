@@ -8,6 +8,7 @@ from typing import no_type_check, overload
 
 from ert.field_utils import get_shape
 
+from .design_matrix import DesignMatrix
 from .ext_param_config import ExtParamConfig
 from .field import Field as FieldConfig
 from .gen_data_config import GenDataConfig
@@ -50,6 +51,7 @@ class EnsembleConfig:
         str, GenKwConfig | FieldConfig | SurfaceConfig | ExtParamConfig
     ] = field(default_factory=dict)
     refcase: Refcase | None = None
+    design_matrix: DesignMatrix | None = None
 
     def __post_init__(self) -> None:
         self._check_for_duplicate_names(
@@ -110,6 +112,7 @@ class EnsembleConfig:
         gen_kw_list = config_dict.get(ConfigKeys.GEN_KW, [])
         surface_list = config_dict.get(ConfigKeys.SURFACE, [])
         field_list = config_dict.get(ConfigKeys.FIELD, [])
+        design_matrix_lists = config_dict.get(ConfigKeys.DESIGN_MATRIX, [])
         dims = None
         if grid_file_path is not None:
             try:
@@ -139,6 +142,20 @@ class EnsembleConfig:
             + [make_field(f) for f in field_list]
         )
 
+        design_matrices = [
+            DesignMatrix.from_config_list(design_matrix_list)
+            for design_matrix_list in design_matrix_lists
+        ]
+        design_matrix: DesignMatrix | None = None
+        if design_matrices:
+            design_matrix = design_matrices[0]
+            for dm_other in design_matrices[1:]:
+                design_matrix.merge_with_other(dm_other)
+        if design_matrix is not None:
+            parameter_configs = design_matrix.merge_with_existing_parameters(
+                parameter_configs
+            )
+
         response_configs: list[ResponseConfig] = []
 
         for config_cls in _KNOWN_RESPONSE_TYPES:
@@ -156,6 +173,7 @@ class EnsembleConfig:
                 parameter.name: parameter for parameter in parameter_configs
             },
             refcase=refcase,
+            design_matrix=design_matrix,
         )
 
     def __getitem__(self, key: str) -> ParameterConfig | ResponseConfig:

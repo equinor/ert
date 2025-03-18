@@ -26,6 +26,7 @@ class DesignMatrix:
     xls_filename: Path
     design_sheet: str
     default_sheet: str
+    group_name: str = DESIGN_MATRIX_GROUP
 
     def __post_init__(self) -> None:
         try:
@@ -110,7 +111,7 @@ class DesignMatrix:
 
     def merge_with_existing_parameters(
         self, existing_parameters: list[ParameterConfig]
-    ) -> tuple[list[ParameterConfig], GenKwConfig]:
+    ) -> list[ParameterConfig]:
         """
         This method merges the design matrix parameters with the existing parameters and
         returns the new list of existing parameters, wherein we drop GEN_KW group having a full overlap with the design matrix group.
@@ -146,6 +147,7 @@ class DesignMatrix:
                     )
 
                 design_parameter_group.name = parameter_group.name
+                self.group_name = parameter_group.name
                 design_parameter_group.template_file = parameter_group.template_file
                 design_parameter_group.output_file = parameter_group.output_file
                 design_group_added = True
@@ -157,7 +159,7 @@ class DesignMatrix:
                 )
             else:
                 new_param_config += [parameter_group]
-        return new_param_config, design_parameter_group
+        return [*new_param_config, design_parameter_group]
 
     def read_and_validate_design_matrix(
         self,

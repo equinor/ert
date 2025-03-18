@@ -27,7 +27,7 @@ from ._design_matrix_panel import DesignMatrixPanel
 from .experiment_config_panel import ExperimentConfigPanel
 
 if TYPE_CHECKING:
-    from ert.config import AnalysisConfig
+    from ert.config import AnalysisConfig, DesignMatrix
 
 
 @dataclass
@@ -45,6 +45,7 @@ class EnsembleSmootherPanel(ExperimentConfigPanel):
         run_path: str,
         notifier: ErtNotifier,
         ensemble_size: int,
+        design_matrix: DesignMatrix | None,
     ) -> None:
         super().__init__(EnsembleSmoother)
         self.notifier = notifier
@@ -94,7 +95,6 @@ class EnsembleSmootherPanel(ExperimentConfigPanel):
         self._active_realizations_field.setValidator(RangeStringArgument(ensemble_size))
         layout.addRow("Active realizations", self._active_realizations_field)
 
-        design_matrix = analysis_config.design_matrix
         if design_matrix is not None:
             layout.addRow(
                 "Design Matrix",
