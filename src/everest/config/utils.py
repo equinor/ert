@@ -1,5 +1,5 @@
 from collections.abc import Generator
-from typing import Any
+from typing import Any, Literal
 
 from .control_config import ControlConfig
 from .control_variable_config import (
@@ -33,8 +33,8 @@ class FlattenedControls:
             self._controls.extend(variables)
 
         self.names = [control["name"] for control in self._controls]
-        self.types = [
-            None if control["control_type"] is None else control["control_type"]
+        self.types: list[Literal["real", "integer"]] = [
+            "real" if control["control_type"] is None else control["control_type"]
             for control in self._controls
         ]
         self.initial_guesses = [control["initial_guess"] for control in self._controls]

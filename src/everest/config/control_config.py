@@ -150,7 +150,7 @@ NOTE: In most cases this should not be configured, and the default value should 
 Can be used to set the range of the control values
 after scaling (default = [0, 1]).
 
-This option has no effect if auto_scale is not set.
+This option has no effect on discrete controls.
         """,
         )
     )
