@@ -131,7 +131,7 @@ class RunWorkflowWidget(QWidget):
             fixtures={
                 "ensemble": ensemble,
                 "storage": self.storage,
-                "random_seed": self.config.random_seed,
+                "random_seed": self.config.random_seed or 1234,
                 "reports_dir": str(
                     self.config.analysis_config.log_path
                     / (ensemble.experiment.name if ensemble is not None else "")

@@ -13,7 +13,19 @@ from .plugin_manager import (
 )
 from .plugin_response import PluginMetadata, PluginResponse
 from .workflow_config import ErtScriptWorkflow, WorkflowConfigs
-from .workflow_fixtures import WorkflowFixtures
+from .workflow_fixtures import (
+    HookedWorkflowFixtures,
+    PostExperimentFixtures,
+    PostSimulationFixtures,
+    PostUpdateFixtures,
+    PreExperimentFixtures,
+    PreFirstUpdateFixtures,
+    PreSimulationFixtures,
+    PreUpdateFixtures,
+    WorkflowFixtures,
+    all_hooked_workflow_fixtures,
+    fixtures_per_hook,
+)
 
 P = ParamSpec("P")
 
@@ -59,8 +71,18 @@ __all__ = [
     "ErtScript",
     "ErtScriptWorkflow",
     "ExternalErtScript",
+    "HookedWorkflowFixtures",
     "JobDoc",
+    "PostExperimentFixtures",
+    "PostSimulationFixtures",
+    "PostUpdateFixtures",
+    "PreExperimentFixtures",
+    "PreFirstUpdateFixtures",
+    "PreSimulationFixtures",
+    "PreUpdateFixtures",
     "WorkflowConfigs",
     "WorkflowFixtures",
+    "all_hooked_workflow_fixtures",
+    "fixtures_per_hook",
     "plugin",
 ]
