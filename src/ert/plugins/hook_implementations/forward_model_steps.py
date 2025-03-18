@@ -349,7 +349,7 @@ class Flow(ForwardModelStepPlugin):
 
     FORWARD_MODEL FLOW(<ECLBASE>, <VERSION>=xxx, <OPTS>="--ignore-errors")
 
-The :code:`OPTS` argument is optional and can be removed. :code>`ECLBASE` can
+The :code:`OPTS` argument is optional and can be removed. :code:`ECLBASE` can
 also be defaulted. Multiple options can be supplied by separating them
 with a space.
 
