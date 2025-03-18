@@ -141,8 +141,9 @@ def cached_example(pytestconfig):
     cache = pytestconfig.cache
 
     def run_config(test_data_case: str):
+        test_data_name = test_data_case.replace("/", ".")
         if cache.get(f"cached_example:{test_data_case}", None) is None:
-            my_tmpdir = Path(tempfile.mkdtemp())
+            my_tmpdir = cache.mkdir("cached_example_case" + test_data_name)
             config_path = (
                 Path(__file__) / f"../../../test-data/everest/{test_data_case}"
             ).resolve()
