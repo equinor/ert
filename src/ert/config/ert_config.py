@@ -18,7 +18,7 @@ from pydantic import ValidationError as PydanticValidationError
 from pydantic import field_validator
 from pydantic.dataclasses import dataclass, rebuild_dataclass
 
-from ert.plugins import ErtPluginManager
+from ert.plugins import ErtPluginManager, fixtures_per_hook
 from ert.substitutions import Substitutions
 
 from ._design_matrix_validator import DesignMatrixValidator
@@ -52,7 +52,6 @@ from .parsing import (
     parse_contents,
     read_file,
 )
-from .parsing.hook_runtime import fixtures_per_runtime
 from .parsing.observations_parser import (
     GenObsValues,
     HistoryValues,
@@ -445,7 +444,7 @@ def create_and_hook_workflows(
             continue
 
         wf = workflows[hook_name]
-        available_fixtures = fixtures_per_runtime[mode]
+        available_fixtures = fixtures_per_hook[mode]
         for job, _ in wf.cmd_list:
             if not hasattr(job, "ert_script") or job.ert_script is None:
                 continue
@@ -461,7 +460,7 @@ def create_and_hook_workflows(
                 ok_modes = [
                     m
                     for m in HookRuntime
-                    if not requested_fixtures - fixtures_per_runtime[m]
+                    if not requested_fixtures - fixtures_per_hook[m]
                 ]
 
                 message_start = (
@@ -485,7 +484,6 @@ def create_and_hook_workflows(
 
     if errors:
         raise ConfigValidationError.from_collected(errors)
-
 
     return workflows, hooked_workflows
 
