@@ -15,7 +15,7 @@ jobs:
   actionlint:
     runs-on: ubuntu-latest
     name: Check all workflow files
-    timeout-minutes: 60
+    timeout-minutes: 10
     steps:
       - uses: actions/checkout@v4
       - name: Download actionlint

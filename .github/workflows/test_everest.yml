@@ -17,7 +17,7 @@ env:
 jobs:
   tests-everest:
     name: Run everest tests
-    timeout-minutes: 60
+    timeout-minutes: 30
     runs-on: ${{ inputs.os }}
 
     steps:
