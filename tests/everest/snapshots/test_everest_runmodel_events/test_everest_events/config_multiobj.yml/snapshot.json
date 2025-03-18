@@ -49,9 +49,11 @@
         ],
         "evaluations": {
           "constraints": null,
-          "evaluation_ids": [
-            0
-          ],
+          "evaluation_info": {
+            "sim_ids": [
+              0
+            ]
+          },
           "objectives": [
             [
               -0.75,
@@ -77,9 +79,6 @@
           "distance_p",
           "distance_q"
         ],
-        "plan_id": [
-          0
-        ],
         "realizations": {
           "constraint_weights": null,
           "failed_realizations": [
@@ -102,16 +101,18 @@
           "point.z"
         ],
         "evaluations": {
-          "perturbed_constraints": null,
-          "perturbed_evaluation_ids": [
-            [
-              1,
-              2,
-              3,
-              4,
-              5
+          "evaluation_info": {
+            "sim_ids": [
+              [
+                1,
+                2,
+                3,
+                4,
+                5
+              ]
             ]
-          ],
+          },
+          "perturbed_constraints": null,
           "perturbed_objectives": [
             [
               [
@@ -196,9 +197,6 @@
           "distance_p",
           "distance_q"
         ],
-        "plan_id": [
-          0
-        ],
         "realizations": {
           "constraint_weights": null,
           "failed_realizations": [
@@ -257,9 +255,11 @@
         ],
         "evaluations": {
           "constraints": null,
-          "evaluation_ids": [
-            0
-          ],
+          "evaluation_info": {
+            "sim_ids": [
+              0
+            ]
+          },
           "objectives": [
             [
               -0.765646,
@@ -284,9 +284,6 @@
         "objective_names": [
           "distance_p",
           "distance_q"
-        ],
-        "plan_id": [
-          0
         ],
         "realizations": {
           "constraint_weights": null,
@@ -346,9 +343,11 @@
         ],
         "evaluations": {
           "constraints": null,
-          "evaluation_ids": [
-            0
-          ],
+          "evaluation_info": {
+            "sim_ids": [
+              0
+            ]
+          },
           "objectives": [
             [
               -0.507785,
@@ -373,9 +372,6 @@
         "objective_names": [
           "distance_p",
           "distance_q"
-        ],
-        "plan_id": [
-          0
         ],
         "realizations": {
           "constraint_weights": null,
