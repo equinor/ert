@@ -2142,8 +2142,8 @@ def test_run_template_raises_configvalidationerror_with_more_than_two_arguments(
         )
 
 
-@pytest.mark.usefixtures("use_tmpdir")
-def test_ert_script_hook_pre_experiment_but_asks_for_storage():
+@pytest.fixture
+def setup_workflow_file():
     workflow_file_path = os.path.join(os.getcwd(), "workflow")
     with open(workflow_file_path, mode="w", encoding="utf-8") as fh:
         fh.write("TEST_SCRIPT")
@@ -2152,14 +2152,17 @@ def test_ert_script_hook_pre_experiment_but_asks_for_storage():
         fh.write(
             dedent(
                 f"""
-                NUM_REALIZATIONS 1
+                    NUM_REALIZATIONS 1
 
-                LOAD_WORKFLOW {workflow_file_path} workflow_alias
-                HOOK_WORKFLOW workflow_alias PRE_EXPERIMENT
-                """
+                    LOAD_WORKFLOW {workflow_file_path} workflow_alias
+                    HOOK_WORKFLOW workflow_alias PRE_EXPERIMENT
+                    """
             )
         )
 
+
+@pytest.mark.usefixtures("use_tmpdir", "setup_workflow_file")
+def test_ert_script_hook_pre_experiment_but_asks_for_storage():
     class SomeScript(ErtScript):
         def run(self, storage: Storage):
             pass
@@ -2178,24 +2181,8 @@ def test_ert_script_hook_pre_experiment_but_asks_for_storage():
         ErtConfig.from_file("config.ert")
 
 
-@pytest.mark.usefixtures("use_tmpdir")
+@pytest.mark.usefixtures("use_tmpdir", "setup_workflow_file")
 def test_ert_script_hook_pre_experiment_but_asks_for_ensemble():
-    workflow_file_path = os.path.join(os.getcwd(), "workflow")
-    with open(workflow_file_path, mode="w", encoding="utf-8") as fh:
-        fh.write("TEST_SCRIPT")
-
-    with open("config.ert", mode="w", encoding="utf-8") as fh:
-        fh.write(
-            dedent(
-                f"""
-                NUM_REALIZATIONS 1
-
-                LOAD_WORKFLOW {workflow_file_path} workflow_alias
-                HOOK_WORKFLOW workflow_alias PRE_EXPERIMENT
-                """
-            )
-        )
-
     class SomeScript(ErtScript):
         def run(self, ensemble: LocalEnsemble):
             pass
@@ -2214,24 +2201,8 @@ def test_ert_script_hook_pre_experiment_but_asks_for_ensemble():
         ErtConfig.from_file("config.ert")
 
 
-@pytest.mark.usefixtures("use_tmpdir")
+@pytest.mark.usefixtures("use_tmpdir", "setup_workflow_file")
 def test_ert_script_hook_pre_experiment_but_asks_for_random_seed():
-    workflow_file_path = os.path.join(os.getcwd(), "workflow")
-    with open(workflow_file_path, mode="w", encoding="utf-8") as fh:
-        fh.write("TEST_SCRIPT")
-
-    with open("config.ert", mode="w", encoding="utf-8") as fh:
-        fh.write(
-            dedent(
-                f"""
-                NUM_REALIZATIONS 1
-
-                LOAD_WORKFLOW {workflow_file_path} workflow_alias
-                HOOK_WORKFLOW workflow_alias PRE_EXPERIMENT
-                """
-            )
-        )
-
     class SomeScript(ErtScript):
         def run(self, random_seed: int):
             pass
@@ -2245,24 +2216,8 @@ def test_ert_script_hook_pre_experiment_but_asks_for_random_seed():
     ErtConfig.from_file("config.ert")
 
 
-@pytest.mark.usefixtures("use_tmpdir")
+@pytest.mark.usefixtures("use_tmpdir", "setup_workflow_file")
 def test_ert_script_hook_pre_experiment_essettings_fails():
-    workflow_file_path = os.path.join(os.getcwd(), "workflow")
-    with open(workflow_file_path, mode="w", encoding="utf-8") as fh:
-        fh.write("TEST_SCRIPT")
-
-    with open("config.ert", mode="w", encoding="utf-8") as fh:
-        fh.write(
-            dedent(
-                f"""
-                NUM_REALIZATIONS 1
-
-                LOAD_WORKFLOW {workflow_file_path} workflow_alias
-                HOOK_WORKFLOW workflow_alias PRE_EXPERIMENT
-                """
-            )
-        )
-
     class SomeScript(ErtScript):
         def run(self, es_settings: ESSettings):
             pass
