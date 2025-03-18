@@ -181,7 +181,6 @@ async def run_everest(options: argparse.Namespace) -> None:
                 name="Everest CLI monitor thread",
                 args=[
                     ServerConfig.get_server_context(options.config.output_dir),
-                    options.config.optimization_output_dir,
                     options.show_all_jobs,
                 ],
                 daemon=True,
