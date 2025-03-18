@@ -7,13 +7,14 @@ from typing import TYPE_CHECKING
 
 import numpy as np
 
-from ert.config import ErtConfig, ESSettings, HookRuntime, UpdateSettings
+from ert.config import ErtConfig, ESSettings, UpdateSettings
 from ert.config.parsing.config_errors import ConfigValidationError
 from ert.enkf_main import sample_prior, save_design_matrix_to_ensemble
 from ert.ensemble_evaluator import EvaluatorServerConfig
 from ert.storage import Storage
 from ert.trace import tracer
 
+from ..plugins import PostExperimentFixtures, PreExperimentFixtures
 from ..run_arg import create_run_arguments
 from .base_run_model import ErtRunError, StatusEvents, UpdateRunModel
 
@@ -76,7 +77,6 @@ class EnsembleSmoother(UpdateRunModel):
         self, evaluator_server_config: EvaluatorServerConfig, restart: bool = False
     ) -> None:
         self.log_at_startup()
-
         parameters_config = self._parameter_configuration
         design_matrix = self._design_matrix
         design_matrix_group = None
@@ -94,8 +94,7 @@ class EnsembleSmoother(UpdateRunModel):
 
         self.restart = restart
         self.run_workflows(
-            HookRuntime.PRE_EXPERIMENT,
-            fixtures={"random_seed": self.random_seed},
+            fixtures=PreExperimentFixtures(random_seed=self.random_seed),
         )
         ensemble_format = self.target_ensemble_format
         experiment = self._storage.create_experiment(
@@ -152,12 +151,11 @@ class EnsembleSmoother(UpdateRunModel):
             evaluator_server_config,
         )
         self.run_workflows(
-            HookRuntime.POST_EXPERIMENT,
-            fixtures={
-                "random_seed": self.random_seed,
-                "storage": self._storage,
-                "ensemble": posterior,
-            },
+            fixtures=PostExperimentFixtures(
+                random_seed=self.random_seed,
+                storage=self._storage,
+                ensemble=posterior,
+            ),
         )
 
     @classmethod

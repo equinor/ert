@@ -56,7 +56,14 @@ from ert.ensemble_evaluator.state import (
 )
 from ert.exceptions import ErtError
 from ert.mode_definitions import MODULE_MODE
-from ert.plugins import WorkflowFixtures
+from ert.plugins import (
+    HookedWorkflowFixtures,
+    PostSimulationFixtures,
+    PostUpdateFixtures,
+    PreFirstUpdateFixtures,
+    PreSimulationFixtures,
+    PreUpdateFixtures,
+)
 from ert.runpaths import Runpaths
 from ert.storage import Ensemble, Storage
 from ert.substitutions import Substitutions
@@ -64,6 +71,9 @@ from ert.trace import tracer
 from ert.utils import log_duration
 from ert.workflow_runner import WorkflowRunner
 
+from ..plugins.workflow_fixtures import (
+    create_workflow_fixtures_from_hooked,
+)
 from ..run_arg import RunArg
 from .event import (
     AnalysisStatusEvent,
@@ -745,11 +755,13 @@ class BaseRunModel(ABC):
     @tracer.start_as_current_span(f"{__name__}.run_workflows")
     def run_workflows(
         self,
-        runtime: HookRuntime,
-        fixtures: WorkflowFixtures,
+        fixtures: HookedWorkflowFixtures,
     ) -> None:
-        for workflow in self._hooked_workflows[runtime]:
-            WorkflowRunner(workflow=workflow, fixtures=fixtures).run_blocking()
+        for workflow in self._hooked_workflows[fixtures.hook]:
+            WorkflowRunner(
+                workflow=workflow,
+                fixtures=create_workflow_fixtures_from_hooked(fixtures),
+            ).run_blocking()
 
     def _evaluate_and_postprocess(
         self,
@@ -772,16 +784,13 @@ class BaseRunModel(ABC):
         )
 
         self.run_workflows(
-            HookRuntime.PRE_SIMULATION,
-            fixtures={
-                "storage": self._storage,
-                "ensemble": ensemble,
-                "reports_dir": self.reports_dir(
-                    experiment_name=ensemble.experiment.name
-                ),
-                "random_seed": self.random_seed,
-                "run_paths": self.run_paths,
-            },
+            fixtures=PreSimulationFixtures(
+                storage=self._storage,
+                ensemble=ensemble,
+                reports_dir=self.reports_dir(experiment_name=ensemble.experiment.name),
+                random_seed=self.random_seed,
+                run_paths=self.run_paths,
+            ),
         )
         try:
             successful_realizations = self.run_ensemble_evaluator(
@@ -814,16 +823,13 @@ class BaseRunModel(ABC):
         )
         logger.info(f"Experiment run finished in: {self.get_runtime()}s")
         self.run_workflows(
-            HookRuntime.POST_SIMULATION,
-            fixtures={
-                "storage": self._storage,
-                "ensemble": ensemble,
-                "reports_dir": self.reports_dir(
-                    experiment_name=ensemble.experiment.name
-                ),
-                "random_seed": self.random_seed,
-                "run_paths": self.run_paths,
-            },
+            fixtures=PostSimulationFixtures(
+                storage=self._storage,
+                ensemble=ensemble,
+                reports_dir=self.reports_dir(experiment_name=ensemble.experiment.name),
+                random_seed=self.random_seed,
+                run_paths=self.run_paths,
+            ),
         )
 
         return num_successful_realizations
@@ -892,15 +898,15 @@ class UpdateRunModel(BaseRunModel):
             )
         )
 
-        workflow_fixtures: WorkflowFixtures = {
-            "storage": self._storage,
-            "ensemble": prior,
-            "observation_settings": self._update_settings,
-            "es_settings": self._analysis_settings,
-            "random_seed": self.random_seed,
-            "reports_dir": self.reports_dir(experiment_name=prior.experiment.name),
-            "run_paths": self.run_paths,
-        }
+        pre_first_update_fixtures = PreFirstUpdateFixtures(
+            storage=self._storage,
+            ensemble=prior,
+            observation_settings=self._update_settings,
+            es_settings=self._analysis_settings,
+            random_seed=self.random_seed,
+            reports_dir=self.reports_dir(experiment_name=prior.experiment.name),
+            run_paths=self.run_paths,
+        )
 
         posterior = self._storage.create_ensemble(
             prior.experiment,
@@ -911,12 +917,18 @@ class UpdateRunModel(BaseRunModel):
         )
         if prior.iteration == 0:
             self.run_workflows(
-                HookRuntime.PRE_FIRST_UPDATE,
-                fixtures=workflow_fixtures,
+                fixtures=pre_first_update_fixtures,
             )
+
+        update_args_dict = {
+            field.name: getattr(pre_first_update_fixtures, field.name)
+            for field in dataclasses.fields(pre_first_update_fixtures)
+        }
+
         self.run_workflows(
-            HookRuntime.PRE_UPDATE,
-            fixtures=workflow_fixtures,
+            fixtures=PreUpdateFixtures(
+                **{**update_args_dict, "hook": HookRuntime.PRE_UPDATE}
+            ),
         )
         try:
             smoother_update(
@@ -939,8 +951,10 @@ class UpdateRunModel(BaseRunModel):
                 "Update algorithm failed for iteration:"
                 f"{posterior.iteration}. The following error occurred: {e}"
             ) from e
+
         self.run_workflows(
-            HookRuntime.POST_UPDATE,
-            fixtures=workflow_fixtures,
+            fixtures=PostUpdateFixtures(
+                **{**update_args_dict, "hook": HookRuntime.POST_UPDATE}
+            ),
         )
         return posterior

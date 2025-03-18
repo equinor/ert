@@ -7,7 +7,11 @@ from typing import Any, Self
 
 from ert.config import Workflow
 from ert.config.workflow_job import ErtScriptWorkflow, _WorkflowJob
-from ert.plugins import ErtScript, ExternalErtScript, WorkflowFixtures
+from ert.plugins import (
+    ErtScript,
+    ExternalErtScript,
+    WorkflowFixtures,
+)
 
 
 class WorkflowJobRunner:
