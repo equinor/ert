@@ -7,7 +7,7 @@ import logging
 import os
 import queue
 import shutil
-from collections.abc import Callable, Iterable, Mapping, MutableSequence
+from collections.abc import Callable, MutableSequence
 from enum import IntEnum, auto
 from pathlib import Path
 from types import TracebackType
@@ -35,7 +35,10 @@ from ert.runpaths import Runpaths
 from ert.storage import open_storage
 from everest.config import ControlConfig, ControlVariableGuessListConfig, EverestConfig
 from everest.config.utils import FlattenedControls
-from everest.everest_storage import EverestStorage, OptimalResult
+from everest.everest_storage import (
+    EverestStorage,
+    OptimalResult,
+)
 from everest.optimizer.everest2ropt import everest2ropt
 from everest.optimizer.opt_model_transforms import (
     ConstraintScaler,
@@ -262,35 +265,25 @@ class EverestRunModel(BaseRunModel):
     def _handle_optimizer_results(self, results: tuple[Results, ...]) -> None:
         self.ever_storage.on_batch_evaluation_finished(results)
 
-        def convert_ndarray(items: Iterable[tuple[str, Any]]) -> dict[str, Any]:
-            result = {}
-            for key, value in items:
-                if isinstance(value, np.ndarray):
-                    result[key] = value.tolist()
-                elif isinstance(value, Mapping):
-                    result[key] = convert_ndarray(value.items())
-                else:
-                    result[key] = value
-            return result
-
-        # A ROPT event may contain multiple results, we send one event per result
         for r in results:
-            assert r.batch_id is not None
-
-            result_dict = dataclasses.asdict(r, dict_factory=convert_ndarray)
-            result_dict["control_names"] = self._everest_config.formatted_control_names
-            result_dict["objective_names"] = self._everest_config.objective_names
+            storage_batches = (
+                self.ever_storage.data.batches_with_function_results
+                if isinstance(r, FunctionResults)
+                else self.ever_storage.data.batches_with_gradient_results
+            )
+            batch_data = next(
+                (b for b in storage_batches if b.batch_id == r.batch_id),
+                None,
+            )
 
             self.send_event(
                 EverestBatchResultEvent(
                     batch=r.batch_id,
                     everest_event="OPTIMIZATION_RESULT",
-                    result_type=(
-                        "FunctionResult"
-                        if isinstance(r, FunctionResults)
-                        else "GradientResult"
-                    ),
-                    results=result_dict,
+                    result_type="FunctionResult"
+                    if isinstance(r, FunctionResults)
+                    else "GradientResult",
+                    results=batch_data.to_dict() if batch_data else None,
                 )
             )
 
