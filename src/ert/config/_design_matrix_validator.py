@@ -10,7 +10,7 @@ class DesignMatrixValidator:
     def __init__(self) -> None:
         self.design_matrices: list[DesignMatrix] = []
 
-    def validate_ert_design_matrix(self, private_args: dict[str, str]) -> None:
+    def validate_design_matrix(self, private_args: dict[str, str]) -> None:
         try:
             xlsfilename = Path(private_args["<xls_filename>"])
             designsheet = private_args["<designsheet>"]

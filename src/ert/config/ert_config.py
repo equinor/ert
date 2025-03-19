@@ -505,7 +505,7 @@ def create_list_of_forward_model_steps_to_run(
     dm_validator = DesignMatrixValidator()
     for fm_step in fm_steps:
         if fm_step.name == "DESIGN2PARAMS":
-            dm_validator.validate_ert_design_matrix(fm_step.private_args)
+            dm_validator.validate_design_matrix(fm_step.private_args)
 
         if fm_step.name in preinstalled_forward_model_steps:
             try:
