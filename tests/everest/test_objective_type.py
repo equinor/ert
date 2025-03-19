@@ -13,11 +13,12 @@ def test_objective_type(copy_math_func_test_data_to_tmp):
         **config.model_dump(exclude_none=True),
         "objective_functions": [
             {"name": "distance", "weight": 1.0},
-            {"name": "stddev", "weight": 1.0, "type": "stddev", "alias": "distance"},
+            {"name": "stddev", "weight": 1.0, "type": "stddev"},
         ],
         "model": {"realizations": [0, 1]},
         "forward_model": [
-            "distance3 --point-file point.json --realization <GEO_ID> --target 0.5 0.5 0.5 --out distance"
+            "distance3 --point-file point.json --realization <GEO_ID> --target 0.5 0.5 0.5 --out distance",
+            "distance3 --point-file point.json --realization <GEO_ID> --target 0.5 0.5 0.5 --out stddev",
         ],
     }
     config = EverestConfig.model_validate(config_dict)
