@@ -173,8 +173,8 @@ class EverestDataAPI:
     def gradient_values(self) -> list[dict[str, Any]]:
         all_batch_data = [
             b.batch_objective_gradient
-            for b in self._ever_storage.data.batches
-            if b.batch_objective_gradient is not None and b.is_improvement
+            for b in self._ever_storage.data.batches_with_gradient_results
+            if b.is_improvement  # Note: This part might not be sensible
         ]
         if not all_batch_data:
             return []
