@@ -52,7 +52,7 @@ remove_one_week_old_temp_folders () {
 }
 
 
-make_run_path () {
+make_egg_runpath () {
     case "$1" in
         "azure")
             mkdir -p /lustre1/users/f_scout_ci/egg_tests
@@ -70,13 +70,11 @@ make_run_path () {
 run_everest_egg_test() {
 
     # Need to copy the egg test to a directory that is accessible by all cluster members
-    RUNNER_ROOT=$(make_run_path "$CI_RUNNER_LABEL")
-    mkdir -p "$RUNNER_ROOT"
-    RUNNER_TMP_DIR=$(mktemp -d -p "$RUNNER_ROOT")
-    cp -r "${CI_SOURCE_ROOT}/test-data/everest/egg" "$RUNNER_TMP_DIR"
-    chmod -R a+rx "$RUNNER_TMP_DIR"
-    pushd "${RUNNER_TMP_DIR}/egg"
-    echo "RUNNER_TMP_DIR: $RUNNER_TMP_DIR"
+    EGG_RUNPATH=$(make_egg_runpath "$CI_RUNNER_LABEL")
+    cp -r "${CI_SOURCE_ROOT}/test-data/everest/egg" "$EGG_RUNPATH"
+    chmod -R a+rx "$EGG_RUNPATH"
+    pushd "${EGG_RUNPATH}/egg"
+    echo "EGG_RUNPATH: $EGG_RUNPATH"
 
     disable_komodo
     # shellcheck source=/dev/null
