@@ -21,58 +21,80 @@ controls:
   -
     name: well_rate
     type: generic_control
-    min: 0
-    max: 1
-    perturbation_magnitude: 0.15
+    perturbation_magnitude: 150
     variables:
       -
         name: PROD1
         index: 1
-        initial_guess: 0.2
+        initial_guess: 600
+        min: 500
+        max: 1000
       -
         name: PROD2
         index: 1
-        initial_guess: 0.6
+        initial_guess: 1160
+        min: 800
+        max: 1400
       -
         name: PROD3
         index: 1
-        initial_guess: 0.2
+        initial_guess: 600
+        min: 500
+        max: 1000
       -
         name: PROD4
         index: 1
-        initial_guess: 0.6
+        initial_guess: 1160
+        min: 800
+        max: 1400
       -
         name: INJECT1
         index: 1
-        initial_guess: 0.6
+        initial_guess: 8000
+        min: 5000
+        max: 10000
       -
         name: INJECT2
         index: 1
-        initial_guess: 0.6
+        initial_guess: 8000
+        min: 5000
+        max: 10000
       -
         name: INJECT3
         index: 1
-        initial_guess: 0.6
+        initial_guess: 8000
+        min: 5000
+        max: 10000
       -
         name: INJECT4
         index: 1
-        initial_guess: 0.6
+        initial_guess: 8000
+        min: 5000
+        max: 10000
       -
         name: INJECT5
         index: 1
-        initial_guess: 0.6
+        initial_guess: 8000
+        min: 5000
+        max: 10000
       -
         name: INJECT6
         index: 1
-        initial_guess: 0.6
+        initial_guess: 8000
+        min: 5000
+        max: 10000
       -
         name: INJECT7
         index: 1
-        initial_guess: 0.6
+        initial_guess: 8000
+        min: 5000
+        max: 10000
       -
         name: INJECT8
         index: 1
-        initial_guess: 0.6
+        initial_guess: 8000
+        min: 5000
+        max: 10000
 
 objective_functions:
   - name: rf
