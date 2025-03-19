@@ -29,7 +29,6 @@ from ert.substitutions import Substitutions
 
 from ._fm_logger import FMLogger
 from .analysis_config import AnalysisConfig
-from .design_matrix import DesignMatrix
 from .ensemble_config import EnsembleConfig
 from .forward_model_step import (
     ForwardModelStep,
@@ -504,16 +503,14 @@ def create_list_of_forward_model_steps_to_run(
         fm_steps.append(fm_step)
 
     fm_logger = FMLogger()
-    design_matrices: list[DesignMatrix] = []
     for fm_step in fm_steps:
         if fm_step.name == "DESIGN2PARAMS":
             xls_filename = fm_step.private_args.get("<xls_filename>")
             designsheet = fm_step.private_args.get("<designsheet>")
             defaultsheet = fm_step.private_args.get("<defaultssheet>")
-            if design_matrix := fm_logger.validate_ert_design_matrix(
+            fm_logger.validate_ert_design_matrix(
                 xls_filename, designsheet, defaultsheet
-            ):
-                design_matrices.append(design_matrix)
+            )
 
         if fm_step.name in preinstalled_forward_model_steps:
             try:
@@ -543,7 +540,7 @@ def create_list_of_forward_model_steps_to_run(
                     f"Unexpected plugin forward model exception: {e!s}",
                     context=fm_step.name,
                 )
-    fm_logger.validate_design_matrix_merge(design_matrices)
+    fm_logger.validate_design_matrix_merge()
 
     if errors:
         raise ConfigValidationError.from_collected(errors)
