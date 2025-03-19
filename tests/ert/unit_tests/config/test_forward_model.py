@@ -961,3 +961,18 @@ def test_that_plugin_forward_model_unexpected_errors_show_as_warnings():
             FORWARD_MODEL FMWithFMStepValidationError
             """
         )
+
+
+@pytest.mark.usefixtures("use_tmpdir")
+def test_that_required_keywords_in_forward_model_are_validated():
+    Path("step").write_text("EXECUTABLE echo\nREQUIRED MESSAGE", encoding="utf-8")
+    with pytest.raises(
+        ConfigValidationError, match="Required keyword MESSAGE not found"
+    ):
+        ErtConfig.from_file_contents(
+            """
+           NUM_REALIZATIONS 1
+           INSTALL_JOB step step
+           FORWARD_MODEL step
+           """
+        )
