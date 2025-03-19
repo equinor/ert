@@ -7,18 +7,6 @@ from ert.config import ConfigWarning
 
 class ObjectiveFunctionConfig(BaseModel, extra="forbid"):
     name: str = Field()
-    alias: str | None = Field(
-        default=None,
-        description="""
-alias can be set to the name of another objective function, directing everest
-to copy the value of that objective into the current objective. This is useful
-when used together with the **type** option, for instance to construct an objective
-function that consist of the sum of the mean and standard-deviation over the
-realizations of the same objective. In such a case, add a second objective with
-**type** equal to "stddev" and set **alias** to the name of the first objective to make
-sure that the standard deviation is calculated over the values of that objective.
-""",
-    )
     weight: PositiveFloat | None = Field(
         default=None,
         description="""

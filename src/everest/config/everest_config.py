@@ -515,20 +515,6 @@ and environment variables are exposed in the form 'os.NAME', for example:
             )
         return functions
 
-    @field_validator("objective_functions")
-    @no_type_check
-    @classmethod
-    def validate_objective_function_aliases_valid(cls, functions):
-        objective_names = [function.name for function in functions]
-
-        aliases = [
-            function.alias for function in functions if function.alias is not None
-        ]
-        for alias in aliases:
-            if alias not in objective_names:
-                raise ValueError(f"Invalid alias {alias}")
-        return functions
-
     @field_validator("config_path")
     @no_type_check
     @classmethod
@@ -660,23 +646,11 @@ and environment variables are exposed in the form 'os.NAME', for example:
 
     @property
     def result_names(self) -> list[str]:
-        objectives_names = [
-            objective.name
-            for objective in self.objective_functions
-            if objective.alias is None
-        ]
+        objectives_names = [objective.name for objective in self.objective_functions]
         constraint_names = [
             constraint.name for constraint in (self.output_constraints or [])
         ]
         return objectives_names + constraint_names
-
-    @property
-    def function_aliases(self) -> dict[str, str]:
-        return {
-            objective.name: objective.alias
-            for objective in self.objective_functions
-            if objective.alias is not None
-        }
 
     def to_dict(self) -> dict[str, Any]:
         the_dict = self.model_dump(exclude_none=True)

@@ -827,24 +827,6 @@ def test_that_objective_function_weight_defined_for_all_or_no_function():
     )
 
 
-def test_that_objective_function_aliases_are_consistent():
-    with pytest.raises(ValueError) as e:
-        EverestConfig.with_defaults(
-            objective_functions=[
-                {"name": "npv"},
-                {"name": "npv2", "alias": "bad_one"},
-            ]
-        )
-    assert has_error(e.value, "Invalid alias (.*)")
-
-    EverestConfig.with_defaults(
-        objective_functions=[
-            {"name": "npv"},
-            {"name": "npv2", "alias": "npv"},
-        ]
-    )
-
-
 def test_that_install_templates_must_have_unique_names(change_to_tmpdir):
     for f in ["hey", "hesy", "heyyy"]:
         pathlib.Path(f).write_text(f, encoding="utf-8")

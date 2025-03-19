@@ -653,11 +653,6 @@ class EverestRunModel(BaseRunModel):
         assert self._experiment is not None
         all_results = self._experiment.all_parameters_and_gen_data
 
-        objective_names = [
-            self._everest_config.function_aliases.get(n, n)
-            for n in self._everest_config.objective_names
-        ]
-
         evaluation_infos = self._create_evaluation_infos(
             control_values=control_values,
             model_realizations=model_realizations,
@@ -666,7 +661,7 @@ class EverestRunModel(BaseRunModel):
             else [-1] * len(model_realizations),
             active_controls=active_control_vectors,
             control_names=self._everest_config.formatted_control_names,
-            objective_names=objective_names,
+            objective_names=self._everest_config.objective_names,
             constraint_names=self._everest_config.constraint_names,
             all_results=all_results,
         )
@@ -898,7 +893,6 @@ class EverestRunModel(BaseRunModel):
     def _gather_simulation_results(
         self, ensemble: Ensemble
     ) -> tuple[NDArray[np.float64], NDArray[np.float64] | None]:
-        objective_aliases = self._everest_config.function_aliases
         objective_names = self._everest_config.objective_names
         objectives = np.zeros((ensemble.ensemble_size, len(objective_names)))
 
@@ -926,9 +920,7 @@ class EverestRunModel(BaseRunModel):
                 continue
 
             for i, obj_name in enumerate(objective_names):
-                data = ensemble.load_responses(
-                    objective_aliases.get(obj_name, obj_name), (sim_id,)
-                )
+                data = ensemble.load_responses(obj_name, (sim_id,))
                 objectives[sim_id, i] = data["values"].item()
 
             for i, constr_name in enumerate(constraint_names):
