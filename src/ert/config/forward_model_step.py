@@ -185,7 +185,6 @@ class ForwardModelStep:
         Raises ConfigValidationError if not all required keywords are in
         private_args
         """
-        print(self.required_keywords)
         missing_keywords = set(self.required_keywords).difference(self.private_args)
         if missing_keywords:
             plural = "s" if len(missing_keywords) > 1 else ""
