@@ -6,7 +6,7 @@ from .design_matrix import DesignMatrix
 logger = logging.getLogger(__name__)
 
 
-class FMLogger:
+class DesignMatrixValidator:
     def __init__(self) -> None:
         self.design_matrices: list[DesignMatrix] = []
 

@@ -27,7 +27,7 @@ from ert.plugins import ErtPluginManager
 from ert.plugins.workflow_config import ErtScriptWorkflow
 from ert.substitutions import Substitutions
 
-from ._fm_logger import FMLogger
+from ._design_matrix_validator import DesignMatrixValidator
 from .analysis_config import AnalysisConfig
 from .ensemble_config import EnsembleConfig
 from .forward_model_step import (
@@ -502,13 +502,13 @@ def create_list_of_forward_model_steps_to_run(
             continue
         fm_steps.append(fm_step)
 
-    fm_logger = FMLogger()
+    dm_validator = DesignMatrixValidator()
     for fm_step in fm_steps:
         if fm_step.name == "DESIGN2PARAMS":
             xls_filename = fm_step.private_args.get("<xls_filename>")
             designsheet = fm_step.private_args.get("<designsheet>")
             defaultsheet = fm_step.private_args.get("<defaultssheet>")
-            fm_logger.validate_ert_design_matrix(
+            dm_validator.validate_ert_design_matrix(
                 xls_filename, designsheet, defaultsheet
             )
 
@@ -540,7 +540,7 @@ def create_list_of_forward_model_steps_to_run(
                     f"Unexpected plugin forward model exception: {e!s}",
                     context=fm_step.name,
                 )
-    fm_logger.validate_design_matrix_merge()
+    dm_validator.validate_design_matrix_merge()
 
     if errors:
         raise ConfigValidationError.from_collected(errors)
