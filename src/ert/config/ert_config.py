@@ -27,7 +27,7 @@ from ert.plugins import ErtPluginManager
 from ert.plugins.workflow_config import ErtScriptWorkflow
 from ert.substitutions import Substitutions
 
-from ._fm_logger import validate_ert_design_matrix
+from ._fm_logger import FMLogger
 from .analysis_config import AnalysisConfig
 from .design_matrix import DesignMatrix
 from .ensemble_config import EnsembleConfig
@@ -509,7 +509,7 @@ def create_list_of_forward_model_steps_to_run(
             xls_filename = fm_step.private_args.get("<xls_filename>")
             designsheet = fm_step.private_args.get("<designsheet>")
             defaultsheet = fm_step.private_args.get("<defaultssheet>")
-            if design_matrix := validate_ert_design_matrix(
+            if design_matrix := FMLogger.validate_ert_design_matrix(
                 xls_filename, designsheet, defaultsheet
             ):
                 design_matrices.append(design_matrix)
