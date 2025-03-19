@@ -543,15 +543,7 @@ def create_list_of_forward_model_steps_to_run(
                     f"Unexpected plugin forward model exception: {e!s}",
                     context=fm_step.name,
                 )
-    try:
-        main_design_matrix: DesignMatrix | None = None
-        for design_matrix in design_matrices:
-            if main_design_matrix is None:
-                main_design_matrix = design_matrix
-            else:
-                main_design_matrix = main_design_matrix.merge_with_other(design_matrix)
-    except Exception as exc:
-        logger.warning(f"Design matrix merging would have failed due to: {exc}")
+    fm_logger.validate_design_matrix_merge(design_matrices)
 
     if errors:
         raise ConfigValidationError.from_collected(errors)
