@@ -575,7 +575,10 @@ def test_that_exception_in_base_run_model_is_handled(qtbot: QtBot, storage):
         qtbot.addWidget(gui)
         run_experiment = gui.findChild(QToolButton, name="run_experiment")
 
+        handler_done = False
+
         def handle_error_dialog(run_dialog):
+            nonlocal handler_done
             qtbot.waitUntil(
                 lambda: run_dialog.fail_msg_box is not None,
                 timeout=20000,
@@ -585,6 +588,7 @@ def test_that_exception_in_base_run_model_is_handled(qtbot: QtBot, storage):
             text = error_dialog.details_text.toPlainText()
             assert "I failed :(" in text
             qtbot.mouseClick(error_dialog.box.buttons()[0], Qt.MouseButton.LeftButton)
+            handler_done = True
 
         simulation_mode_combo = gui.findChild(QComboBox)
         simulation_mode_combo.setCurrentText("Single realization test-run")
@@ -593,6 +597,7 @@ def test_that_exception_in_base_run_model_is_handled(qtbot: QtBot, storage):
 
         QTimer.singleShot(100, lambda: handle_error_dialog(run_dialog))
         qtbot.waitUntil(lambda: run_dialog.is_simulation_done() == True, timeout=100000)
+        qtbot.waitUntil(lambda: handler_done, timeout=100000)
 
 
 @pytest.mark.integration_test
