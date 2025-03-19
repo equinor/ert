@@ -149,6 +149,14 @@ def cached_example(pytestconfig):
             ).resolve()
             config_file = config_path.name
 
+            # This assumes no parallel runs for the same example,
+            # which must be ensured by using xdist loadgroups
+            if (my_tmpdir / "everest").exists():
+                # Last run managed to create the folder
+                # but failed to populate the cache due to
+                # some failure in running the experiment
+                shutil.rmtree(my_tmpdir / "everest")
+
             shutil.copytree(config_path.parent, my_tmpdir / "everest")
             config = EverestConfig.load_file(my_tmpdir / "everest" / config_file)
             status_queue: queue.SimpleQueue[StatusEvents] = queue.SimpleQueue()
