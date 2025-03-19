@@ -23,13 +23,12 @@ from pydantic import ValidationError as PydanticValidationError
 from pydantic import field_validator
 from pydantic.dataclasses import dataclass, rebuild_dataclass
 
-from ert.config.design_matrix import DesignMatrix
-from ert.config.parsing.context_values import ContextBoolEncoder
 from ert.plugins import ErtPluginManager
 from ert.plugins.workflow_config import ErtScriptWorkflow
 from ert.substitutions import Substitutions
 
 from .analysis_config import AnalysisConfig
+from .design_matrix import DesignMatrix
 from .ensemble_config import EnsembleConfig
 from .forward_model_step import (
     ForwardModelStep,
@@ -61,6 +60,7 @@ from .parsing import (
 from .parsing import (
     parse as parse_config,
 )
+from .parsing.context_values import ContextBoolEncoder
 from .parsing.observations_parser import (
     GenObsValues,
     HistoryValues,
