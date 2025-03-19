@@ -22,9 +22,7 @@ class EverestDataAPI:
     @property
     def batches(self) -> list[int]:
         return sorted(
-            b.batch_id
-            for b in self._ever_storage.data.batches
-            if b.batch_objectives is not None
+            b.batch_id for b in self._ever_storage.data.batches_with_function_results
         )
 
     @property
@@ -57,10 +55,10 @@ class EverestDataAPI:
 
     @property
     def realizations(self) -> list[int]:
-        if self._ever_storage.data.batches[0].realization_objectives is None:
+        if not self._ever_storage.data.batches_with_function_results:
             return []
         return sorted(
-            self._ever_storage.data.batches[0]
+            self._ever_storage.data.batches_with_function_results[0]
             .realization_objectives["realization"]
             .unique()
             .to_list()
@@ -68,10 +66,10 @@ class EverestDataAPI:
 
     @property
     def simulations(self) -> list[int]:
-        if self._ever_storage.data.batches[0].realization_objectives is None:
+        if not self._ever_storage.data.batches_with_function_results:
             return []
         return sorted(
-            self._ever_storage.data.batches[0]
+            self._ever_storage.data.batches_with_function_results[0]
             .realization_objectives["simulation_id"]
             .unique()
             .to_list()
@@ -92,10 +90,7 @@ class EverestDataAPI:
             else []
         )
         new = []
-        for batch in self._ever_storage.data.batches:
-            if batch.realization_controls is None:
-                continue
-
+        for batch in self._ever_storage.data.batches_with_function_results:
             for controls_dict in batch.realization_controls.to_dicts():
                 for name in all_control_names:
                     new.append(
@@ -111,10 +106,7 @@ class EverestDataAPI:
     @property
     def objective_values(self) -> list[dict[str, Any]]:
         obj_values = []
-        for b in self._ever_storage.data.batches:
-            if b.realization_objectives is None:
-                continue
-
+        for b in self._ever_storage.data.batches_with_function_results:
             for (
                 geo_realization,
                 simulation_id,
@@ -147,13 +139,10 @@ class EverestDataAPI:
     def single_objective_values(self) -> list[dict[str, Any]]:
         batch_datas = pl.concat(
             [
-                b.batch_objectives.select(  # type: ignore
-                    c
-                    for c in b.batch_objectives.columns  # type: ignore
-                    if c != "merit_value"
+                b.batch_objectives.select(
+                    c for c in b.batch_objectives.columns if c != "merit_value"
                 ).with_columns(pl.lit(1 if b.is_improvement else 0).alias("accepted"))
-                for b in self._ever_storage.data.batches
-                if b.realization_controls is not None
+                for b in self._ever_storage.data.batches_with_function_results
             ]
         )
         objectives = self._ever_storage.data.objective_functions
