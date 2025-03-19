@@ -24,4 +24,5 @@ def test_migrate_gen_kw(setup_case):
         param_info = json.loads(
             (experiment._path / "parameter.json").read_text(encoding="utf-8")
         )
-    assert "COEFFS" in param_info
+    assert "SCALAR_PARAMETERS" in param_info
+    print(param_info["SCALAR_PARAMETERS"])
