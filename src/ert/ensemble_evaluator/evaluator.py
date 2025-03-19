@@ -4,6 +4,7 @@ import asyncio
 import datetime
 import logging
 import traceback
+from collections import defaultdict
 from collections.abc import Awaitable, Callable, Iterable, Sequence
 from enum import Enum
 from typing import Any, get_args
@@ -68,10 +69,6 @@ class EnsembleEvaluator:
         self._ee_tasks: list[asyncio.Task[None]] = []
         self._server_done: asyncio.Event = asyncio.Event()
 
-        # batching section
-        self._batch_processing_queue: asyncio.Queue[
-            list[tuple[EVENT_HANDLER, Event]]
-        ] = asyncio.Queue()
         self._max_batch_size: int = 500
         self._batching_interval: float = 0.5
         self._complete_batch: asyncio.Event = asyncio.Event()
@@ -112,20 +109,6 @@ class EnsembleEvaluator:
         await self._events_to_send.put(event)
 
     async def _process_event_buffer(self) -> None:
-        while True:
-            batch = await self._batch_processing_queue.get()
-            function_to_events_map: dict[EVENT_HANDLER, list[Event]] = {}
-            for func, event in batch:
-                if func not in function_to_events_map:
-                    function_to_events_map[func] = []
-                function_to_events_map[func].append(event)
-
-            for func, events in function_to_events_map.items():
-                await func(events)
-
-            self._batch_processing_queue.task_done()
-
-    async def _batch_events_into_buffer(self) -> None:
         event_handler: dict[type[Event], EVENT_HANDLER] = {}
 
         def set_event_handler(event_types: set[type[Event]], func: Any) -> None:
@@ -139,26 +122,30 @@ class EnsembleEvaluator:
         set_event_handler({EnsembleFailed}, self._failed_handler)
 
         while True:
-            batch: list[tuple[EVENT_HANDLER, Event]] = []
+            function_to_events_map: dict[EVENT_HANDLER, list[Event]] = defaultdict(list)
+            events_in_batch_count = 0
             start_time = asyncio.get_running_loop().time()
             while (
-                len(batch) < self._max_batch_size
+                events_in_batch_count < self._max_batch_size
                 and asyncio.get_running_loop().time() - start_time
                 < self._batching_interval
             ):
-                self._complete_batch.clear()
                 try:
                     event = self._events.get_nowait()
+                    events_in_batch_count += 1
+                    self._complete_batch.clear()
                     function = event_handler[type(event)]
-                    batch.append((function, event))
+                    function_to_events_map[function].append(event)
                     self._events.task_done()
                 except asyncio.QueueEmpty:
                     await asyncio.sleep(0.1)
                     continue
-            self._complete_batch.set()
-            await self._batch_processing_queue.put(batch)
             if self._events.qsize() > 2 * self._max_batch_size:
                 logger.info(f"{self._events.qsize()} events left in queue")
+
+            for func, events in function_to_events_map.items():
+                await func(events)
+            self._complete_batch.set()
 
     async def _fm_handler(self, events: Sequence[FMEvent | RealizationEvent]) -> None:
         await self._append_message(self.ensemble.update_snapshot(events))
@@ -323,7 +310,6 @@ class EnsembleEvaluator:
                 )
             await self._events.join()
             await self._complete_batch.wait()
-            await self._batch_processing_queue.join()
             event = EETerminated(ensemble=self._ensemble.id_)
             await self._events_to_send.put(event)
             await self._events_to_send.join()
@@ -373,9 +359,6 @@ class EnsembleEvaluator:
         await self._server_started
         self._ee_tasks += [
             asyncio.create_task(self._do_heartbeat_clients(), name="heartbeat_task"),
-            asyncio.create_task(
-                self._batch_events_into_buffer(), name="dispatcher_task"
-            ),
             asyncio.create_task(self._process_event_buffer(), name="processing_task"),
             asyncio.create_task(self._publisher(), name="publisher_task"),
             asyncio.create_task(self.listen_for_messages(), name="listener_task"),
