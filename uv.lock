@@ -800,7 +800,7 @@ requires-dist = [
     { name = "mypy", marker = "extra == 'types'" },
     { name = "nbsphinx", marker = "extra == 'dev'" },
     { name = "netcdf4" },
-    { name = "numpy", specifier = "<2" },
+    { name = "numpy" },
     { name = "oil-reservoir-synthesizer", marker = "extra == 'dev'" },
     { name = "openpyxl" },
     { name = "opentelemetry-api" },
