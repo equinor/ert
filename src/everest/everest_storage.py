@@ -73,6 +73,13 @@ class BatchStorageData:
             for df_name in self.BATCH_DATAFRAMES
         )
 
+    @property
+    def has_function_results(self) -> bool:
+        return any(
+            (self._path / f"{df_name}.parquet").exists()
+            for df_name in _FunctionResults.__annotations__
+        )
+
     @staticmethod
     def _read_df_if_exists(path: Path) -> pl.DataFrame | None:
         if path.exists():
@@ -151,6 +158,26 @@ class BatchStorageData:
             )
 
 
+class FunctionBatchStorageData(BatchStorageData):
+    @property
+    def realization_controls(self) -> pl.DataFrame:
+        df = super().realization_controls
+        assert df is not None
+        return df
+
+    @property
+    def batch_objectives(self) -> pl.DataFrame:
+        df = super().batch_objectives
+        assert df is not None
+        return df
+
+    @property
+    def realization_objectives(self) -> pl.DataFrame:
+        df = super().realization_objectives
+        assert df is not None
+        return df
+
+
 class OptimizationStorageData:
     EXPERIMENT_DATAFRAMES: ClassVar[list[str]] = [
         "controls",
@@ -162,6 +189,14 @@ class OptimizationStorageData:
     def __init__(self, path: Path) -> None:
         self._path = path
         self.batches: list[BatchStorageData] = []
+
+    @property
+    def batches_with_function_results(self) -> list[FunctionBatchStorageData]:
+        return [
+            FunctionBatchStorageData(b._path)
+            for b in self.batches
+            if b.has_function_results
+        ]
 
     @property
     def controls(self) -> pl.DataFrame | None:
@@ -192,8 +227,8 @@ class OptimizationStorageData:
         dummy_df = next(
             (
                 b.realization_controls
-                for b in self.batches
-                if b.batch_id == batch_id and b.realization_controls is not None
+                for b in self.batches_with_function_results
+                if b.batch_id == batch_id
             ),
             None,
         )
@@ -794,9 +829,7 @@ class EverestStorage:
             # batches with merit_flag , which means that it was an improvement
             self.data.batches[0].write_metadata(is_improvement=True)
 
-            improvement_batches = [
-                b for b in self.data.batches if b.batch_objectives is not None
-            ][1:]
+            improvement_batches = self.data.batches_with_function_results[1:]
             for i, b in enumerate(improvement_batches):
                 merit_value = next(
                     (m.value for m in merit_values if (m.iter - 1) == i), None
@@ -804,7 +837,6 @@ class EverestStorage:
                 if merit_value is None:
                     continue
 
-                assert b.batch_objectives is not None
                 b.save_dataframes(
                     {
                         "batch_objectives": b.batch_objectives.with_columns(
@@ -815,34 +847,33 @@ class EverestStorage:
                 b.write_metadata(is_improvement=True)
         else:
             max_total_objective = -np.inf
-            for b in self.data.batches:
-                if b.batch_objectives is not None:
-                    total_objective = b.batch_objectives["total_objective_value"].item()
-                    if total_objective > max_total_objective:
-                        b.write_metadata(is_improvement=True)
-                        max_total_objective = total_objective
+            for b in self.data.batches_with_function_results:
+                total_objective = b.batch_objectives["total_objective_value"].item()
+                if total_objective > max_total_objective:
+                    b.write_metadata(is_improvement=True)
+                    max_total_objective = total_objective
 
     def get_optimal_result(self) -> OptimalResult | None:
         # Only used in tests, but re-created to ensure
         # same behavior as w/ old SEBA setup
         has_merit = any(
             "merit_value" in b.batch_objectives.columns
-            for b in self.data.batches
-            if b.batch_objectives is not None
+            for b in self.data.batches_with_function_results
         )
 
-        def find_best_batch(
-            filter_by: Callable[[BatchStorageData], bool],
-            sort_by: Callable[[BatchStorageData], Any],
-        ) -> tuple[BatchStorageData | None, dict[str, Any] | None]:
-            matching_batches = [b for b in self.data.batches if filter_by(b)]
+        def find_best_fn_eval_batch(
+            filter_by: Callable[[FunctionBatchStorageData], bool],
+            sort_by: Callable[[FunctionBatchStorageData], Any],
+        ) -> tuple[FunctionBatchStorageData, dict[str, Any]] | None:
+            matching_batches = [
+                b for b in self.data.batches_with_function_results if filter_by(b)
+            ]
 
             if not matching_batches:
-                return None, None
+                return None
 
             matching_batches.sort(key=sort_by)
             batch = matching_batches[0]
-            assert batch.realization_controls is not None
             controls_dict = batch.realization_controls.drop(
                 [
                     "batch_id",
@@ -855,21 +886,17 @@ class EverestStorage:
 
         if has_merit:
             # Minimize merit
-            batch, controls_dict = find_best_batch(
-                filter_by=lambda b: (
-                    b.batch_objectives is not None
-                    and "merit_value" in b.batch_objectives.columns
-                ),
-                sort_by=lambda b: b.batch_objectives.select(  # type: ignore
+            result = find_best_fn_eval_batch(
+                filter_by=lambda b: "merit_value" in b.batch_objectives.columns,
+                sort_by=lambda b: b.batch_objectives.select(
                     pl.col("merit_value").min()
                 ).item(),
             )
 
-            if batch is None:
+            if result is None:
                 return None
 
-            assert controls_dict is not None
-            assert batch.batch_objectives is not None
+            batch, controls_dict = result
 
             return OptimalResult(
                 batch=batch.batch_id,
@@ -880,19 +907,17 @@ class EverestStorage:
             )
         else:
             # Maximize objective
-            batch, controls_dict = find_best_batch(
-                filter_by=lambda b: b.batch_objectives is not None
-                and not b.batch_objectives.is_empty(),
-                sort_by=lambda b: -b.batch_objectives.select(  # type: ignore
+            result = find_best_fn_eval_batch(
+                filter_by=lambda b: not b.batch_objectives.is_empty(),
+                sort_by=lambda b: -b.batch_objectives.select(
                     pl.col("total_objective_value").sample(n=1)
                 ).item(),
             )
 
-            if batch is None:
+            if result is None:
                 return None
 
-            assert controls_dict is not None
-            assert batch.batch_objectives is not None
+            batch, controls_dict = result
 
             return OptimalResult(
                 batch=batch.batch_id,
