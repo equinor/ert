@@ -2143,3 +2143,20 @@ def test_design_matrix_default_argument(tmp_path):
     assert config.analysis_config.design_matrix
     assert config.analysis_config.design_matrix.design_sheet == "DesignSheet"
     assert config.analysis_config.design_matrix.default_sheet == "DefaultSheet"
+
+
+@pytest.mark.usefixtures("use_tmpdir")
+def test_run_template_raises_configvalidationerror_with_more_than_two_arguments():
+    Path("template.txt").touch()
+    Path("input.txt").touch()
+    with pytest.raises(
+        ConfigValidationError, match="RUN_TEMPLATE must have maximum 2 arguments"
+    ):
+        ErtConfig.from_file_contents(
+            dedent(
+                """\
+            NUM_REALIZATIONS 1
+            RUN_TEMPLATE template.txt input.txt excess_argument
+            """
+            )
+        )

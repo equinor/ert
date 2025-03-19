@@ -34,7 +34,7 @@ def run_template_keyword() -> SchemaItem:
     return SchemaItem(
         kw=ConfigKeys.RUN_TEMPLATE,
         argc_min=2,
-        argc_max=None,
+        argc_max=2,
         type_map=[SchemaItemType.EXISTING_PATH],
         multi_occurrence=True,
     )
