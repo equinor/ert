@@ -25,6 +25,7 @@ from ert.ensemble_evaluator.event import (
 )
 from ert.gui.ertnotifier import ErtNotifier
 from ert.gui.main import GUILogHandler, _setup_main_window
+from ert.gui.main_window import ErtMainWindow
 from ert.gui.simulation.ensemble_experiment_panel import EnsembleExperimentPanel
 from ert.gui.simulation.experiment_panel import ExperimentPanel
 from ert.gui.simulation.run_dialog import RunDialog
@@ -809,3 +810,81 @@ def test_forward_model_overview_label_selected_on_tab_change(
 
     qt_bot_click_tab_index(1)
     assert "Realization id 1 in iteration 1" in fm_step_label.text()
+
+
+def handle_warning_box(
+    gui: ErtMainWindow,
+    qtbot: QtBot,
+    expected_warning: str,
+):
+    wb = gui.findChildren(QMessageBox, "Warning_box_run_experiment")
+    wb = wb[-1] if wb else None
+
+    if wb is not None:
+        assert wb
+        assert isinstance(wb, QMessageBox)
+        message = wb.informativeText()
+
+        ok_button = wb.button(QMessageBox.StandardButton.Ok)
+        assert ok_button is not None
+
+        qtbot.mouseClick(ok_button, Qt.MouseButton.LeftButton)
+
+        assert message == expected_warning
+
+
+@pytest.mark.integration_test
+@pytest.mark.usefixtures("use_tmpdir")
+def test_warning_when_active_realizations_differ_from_num_realizations(
+    qtbot: QtBot, storage
+):
+    xls_filename = "design_matrix.xlsx"
+    design_matrix_df = pd.DataFrame(
+        {
+            "REAL": [0, 5, 7],
+            "a": [0, 1, 2],
+        }
+    )
+    default_sheet_df = pd.DataFrame([["b", 1], ["c", 2]])
+    with pd.ExcelWriter(xls_filename) as xl_write:
+        design_matrix_df.to_excel(xl_write, index=False, sheet_name="DesignSheet")
+        default_sheet_df.to_excel(
+            xl_write, index=False, sheet_name="DefaultSheet", header=False
+        )
+
+    config_file = "minimal_config.ert"
+    with open(config_file, "w", encoding="utf-8") as f:
+        f.write("NUM_REALIZATIONS 1")
+        f.write(
+            f"\nDESIGN_MATRIX {xls_filename} DESIGN_SHEET:DesignSheet DEFAULT_SHEET:DefaultSheet"
+        )
+
+    args_mock = Mock()
+    args_mock.config = config_file
+
+    ert_config = ErtConfig.from_file(config_file)
+    gui = _setup_main_window(ert_config, args_mock, GUILogHandler(), storage)
+    experiment_panel = gui.findChild(ExperimentPanel)
+    assert experiment_panel
+
+    simulation_mode_combo = experiment_panel.findChild(QComboBox)
+    assert simulation_mode_combo
+
+    simulation_mode_combo.setCurrentText(EnsembleExperiment.name())
+    run_experiment = experiment_panel.findChild(QToolButton, name="run_experiment")
+    assert run_experiment
+
+    QTimer.singleShot(
+        1000,
+        lambda: handle_warning_box(
+            gui,
+            qtbot,
+            expected_warning="- The ensemble size is set to 3 instead of 1 (NUM_REALIZATIONS) due to the 'REAL' entries in the DESIGN_MATRIX.",
+        ),
+    )
+    qtbot.mouseClick(run_experiment, Qt.MouseButton.LeftButton)
+
+    qtbot.waitUntil(lambda: gui.findChild(RunDialog) is not None, timeout=5000)
+    run_dialog = gui.findChild(RunDialog)
+
+    qtbot.waitUntil(lambda: run_dialog.is_simulation_done() == True, timeout=10000)

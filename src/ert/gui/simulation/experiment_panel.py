@@ -20,6 +20,7 @@ from PyQt6.QtWidgets import (
     QWidget,
 )
 
+from ert.config import capture_validation
 from ert.gui.ertnotifier import ErtNotifier
 from ert.run_models import BaseRunModel, StatusEvents, create_model
 
@@ -219,12 +220,26 @@ class ExperimentPanel(QWidget):
         QApplication.setOverrideCursor(Qt.CursorShape.WaitCursor)
         event_queue: SimpleQueue[StatusEvents] = SimpleQueue()
         try:
-            model = create_model(
-                self.config,
-                self._notifier.storage,
-                args,
-                event_queue,
-            )
+            with capture_validation() as validation_messages:
+                model = create_model(
+                    self.config,
+                    self._notifier.storage,
+                    args,
+                    event_queue,
+                )
+            if validation_messages.warnings:
+                QApplication.restoreOverrideCursor()
+                warn_box = QMessageBox(self)
+                warn_box.setIcon(QMessageBox.Icon.Warning)
+                warn_box.setWindowTitle("WARNING:")
+                warn_box.setObjectName("Warning_box_run_experiment")
+                warn_box.setInformativeText(
+                    "- " + "\n- ".join(str(e) for e in validation_messages.warnings)
+                )
+                warn_box.setStandardButtons(QMessageBox.StandardButton.Ok)
+                warn_box.setWindowModality(Qt.WindowModality.ApplicationModal)
+                warn_box.exec()
+                QApplication.setOverrideCursor(Qt.CursorShape.WaitCursor)
 
         except ValueError as e:
             QMessageBox.warning(
