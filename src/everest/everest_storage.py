@@ -187,12 +187,6 @@ class FunctionBatchStorageData(BatchStorageData):
 
 class GradientBatchStorageData(BatchStorageData):
     @property
-    def batch_objective_gradient(self) -> pl.DataFrame:
-        df = super().batch_objective_gradient
-        assert df is not None
-        return df
-
-    @property
     def perturbation_objectives(self) -> pl.DataFrame:
         df = super().perturbation_objectives
         assert df is not None
