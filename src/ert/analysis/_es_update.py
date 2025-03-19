@@ -150,7 +150,7 @@ def _expand_wildcards(
     """
     matches = []
     for pattern in patterns:
-        matches.extend([val for val in input_list if fnmatch(val, pattern)])
+        matches.extend([str(val) for val in input_list if fnmatch(val, pattern)])
     return sorted(set(matches))
 
 
