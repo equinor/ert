@@ -27,6 +27,7 @@ from ert.plugins import ErtPluginManager
 from ert.plugins.workflow_config import ErtScriptWorkflow
 from ert.substitutions import Substitutions
 
+from ._fm_logger import validate_ert_design_matrix
 from .analysis_config import AnalysisConfig
 from .design_matrix import DesignMatrix
 from .ensemble_config import EnsembleConfig
@@ -1262,17 +1263,6 @@ def _forward_model_step_from_config_file(
         required_keywords=content_dict.get("REQUIRED", []),
         default_mapping=default_mapping,
     )
-
-
-def validate_ert_design_matrix(
-    xlsfilename, designsheetname, defaultssheetname
-) -> DesignMatrix | None:
-    try:
-        return DesignMatrix(xlsfilename, designsheetname, defaultssheetname)
-    except Exception as exc:
-        logger.warning(
-            f"DESIGN_MATRIX validation of DESIGN2PARAMS would have failed with: {exc!s}"
-        )
 
 
 # Due to circular dependency in type annotations between ErtConfig -> WorkflowJob -> ErtScript -> ErtConfig
