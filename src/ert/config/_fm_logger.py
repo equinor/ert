@@ -18,8 +18,9 @@ class FMLogger:
                 f"DESIGN_MATRIX validation of DESIGN2PARAMS would have failed with: {exc!s}"
             )
 
-    @staticmethod
-    def validate_design_matrix_merge(design_matrices: Sequence[DesignMatrix]) -> None:
+    def validate_design_matrix_merge(
+        self, design_matrices: Sequence[DesignMatrix]
+    ) -> None:
         try:
             main_design_matrix: DesignMatrix | None = None
             for design_matrix in design_matrices:
