@@ -30,8 +30,6 @@ class DesignMatrixValidator:
                 if main_design_matrix is None:
                     main_design_matrix = design_matrix
                 else:
-                    main_design_matrix = main_design_matrix.merge_with_other(
-                        design_matrix
-                    )
+                    main_design_matrix.merge_with_other(design_matrix)
         except Exception as exc:
             logger.warning(f"Design matrix merging would have failed due to: {exc}")
