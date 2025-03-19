@@ -31,6 +31,13 @@ from .parsing import (
 from .parsing.observations_parser import ObservationType
 from .queue_config import QueueConfig
 from .response_config import InvalidResponseFile, ResponseConfig
+from .scalar_parameter import (
+    SCALAR_PARAMETERS_NAME,
+    DataSource,
+    ScalarParameter,
+    ScalarParameters,
+    get_distribution,
+)
 from .summary_config import SummaryConfig
 from .summary_observation import SummaryObservation
 from .surface_config import SurfaceConfig
@@ -39,11 +46,13 @@ from .workflow_job import WorkflowJob
 
 __all__ = [
     "DESIGN_MATRIX_GROUP",
+    "SCALAR_PARAMETERS_NAME",
     "AnalysisConfig",
     "AnalysisModule",
     "ConfigValidationError",
     "ConfigValidationError",
     "ConfigWarning",
+    "DataSource",
     "DesignMatrix",
     "ESSettings",
     "EnkfObs",
@@ -70,6 +79,8 @@ __all__ = [
     "QueueConfig",
     "QueueSystem",
     "ResponseConfig",
+    "ScalarParameter",
+    "ScalarParameters",
     "SummaryConfig",
     "SummaryObservation",
     "SurfaceConfig",
@@ -80,5 +91,6 @@ __all__ = [
     "WorkflowJob",
     "capture_validation",
     "field_transform",
+    "get_distribution",
     "lint_file",
 ]
