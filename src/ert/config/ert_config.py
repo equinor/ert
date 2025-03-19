@@ -495,21 +495,12 @@ def create_list_of_forward_model_steps_to_run(
                 case val:
                     fm_step.arglist.append(val)
 
-        should_add_step = True
-
-        if fm_step.required_keywords:
-            for req in fm_step.required_keywords:
-                if req not in fm_step.private_args:
-                    errors.append(
-                        ConfigValidationError.with_context(
-                            f"Required keyword {req} not found for forward model step {fm_step_name}",
-                            fm_step_name,
-                        )
-                    )
-                    should_add_step = False
-
-        if should_add_step:
-            fm_steps.append(fm_step)
+        try:
+            fm_step.check_required_keywords()
+        except ConfigValidationError as err:
+            errors.append(err)
+            continue
+        fm_steps.append(fm_step)
 
     design_matrices: list[DesignMatrix] = []
     for fm_step in fm_steps:
