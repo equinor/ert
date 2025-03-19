@@ -80,6 +80,13 @@ class BatchStorageData:
             for df_name in _FunctionResults.__annotations__
         )
 
+    @property
+    def has_gradient_results(self) -> bool:
+        return any(
+            (self._path / f"{df_name}.parquet").exists()
+            for df_name in _GradientResults.__annotations__
+        )
+
     @staticmethod
     def _read_df_if_exists(path: Path) -> pl.DataFrame | None:
         if path.exists():
@@ -178,6 +185,20 @@ class FunctionBatchStorageData(BatchStorageData):
         return df
 
 
+class GradientBatchStorageData(BatchStorageData):
+    @property
+    def batch_objective_gradient(self) -> pl.DataFrame:
+        df = super().batch_objective_gradient
+        assert df is not None
+        return df
+
+    @property
+    def perturbation_objectives(self) -> pl.DataFrame:
+        df = super().perturbation_objectives
+        assert df is not None
+        return df
+
+
 class OptimizationStorageData:
     EXPERIMENT_DATAFRAMES: ClassVar[list[str]] = [
         "controls",
@@ -196,6 +217,14 @@ class OptimizationStorageData:
             FunctionBatchStorageData(b._path)
             for b in self.batches
             if b.has_function_results
+        ]
+
+    @property
+    def batches_with_gradient_results(self) -> list[GradientBatchStorageData]:
+        return [
+            GradientBatchStorageData(b._path)
+            for b in self.batches
+            if b.has_gradient_results
         ]
 
     @property
