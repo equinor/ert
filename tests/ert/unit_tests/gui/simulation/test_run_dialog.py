@@ -564,12 +564,10 @@ def test_that_exception_in_base_run_model_is_handled(qtbot: QtBot, storage):
     args_mock.config = config_file
 
     ert_config = ErtConfig.from_file(config_file)
-    with (
-        patch.object(
-            ert.run_models.SingleTestRun,
-            "run_experiment",
-            MagicMock(side_effect=ValueError("I failed :(")),
-        ),
+    with patch.object(
+        ert.run_models.SingleTestRun,
+        "run_experiment",
+        MagicMock(side_effect=ValueError("I failed :(")),
     ):
         gui = _setup_main_window(ert_config, args_mock, GUILogHandler(), storage)
         qtbot.addWidget(gui)
