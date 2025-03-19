@@ -93,6 +93,7 @@ def _setup_single_test_run(
 
 def validate_minimum_realizations(config: ErtConfig, args: Namespace) -> None:
     min_realizations_count = config.analysis_config.minimum_required_realizations
+    num_realization = config.model_config.num_realizations
     active_realizations = _get_active_realizations_list(args, config)
     active_realizations_count = int(np.sum(active_realizations))
     if active_realizations_count < min_realizations_count:
@@ -101,6 +102,15 @@ def validate_minimum_realizations(config: ErtConfig, args: Namespace) -> None:
             "MIN_REALIZATIONS was set to the current number of active realizations "
             f"({active_realizations_count}) as it is lower than the MIN_REALIZATIONS "
             f"({min_realizations_count}) that was specified in the config file."
+        )
+    if (
+        active_realizations_count != num_realization
+        and config.analysis_config.design_matrix is not None
+        and config.analysis_config.design_matrix.active_realizations is not None
+    ):
+        ConfigWarning.warn(
+            f"The ensemble size is set to {active_realizations_count} instead of "
+            f"{num_realization} (NUM_REALIZATIONS) due to the 'REAL' entries in the DESIGN_MATRIX."
         )
 
 
