@@ -268,7 +268,7 @@ class _OptimizerOnlyExperiment:
         return self._ensembles[name]
 
 
-class _EvaluationResults(TypedDict):
+class _FunctionResults(TypedDict):
     realization_controls: pl.DataFrame
     batch_objectives: pl.DataFrame
     realization_objectives: pl.DataFrame
@@ -489,7 +489,7 @@ class EverestStorage:
             }
         )
 
-    def _store_function_results(self, results: FunctionResults) -> _EvaluationResults:
+    def _store_function_results(self, results: FunctionResults) -> _FunctionResults:
         # We could select only objective values,
         # but we select all to also get the constraint values (if they exist)
         realization_objectives = self._ropt_to_df(
