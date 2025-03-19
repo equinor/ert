@@ -548,6 +548,7 @@ class EverestRunModel(BaseRunModel):
                         on=control_name,
                         by="model_realization",  # pre-join by model realization
                         tolerance=EPS,  # Same as np.allclose with atol=EPS
+                        check_sortedness=False,  # Ref: https://github.com/pola-rs/polars/issues/21693
                     )
                     .filter(pl.col("realization_right").is_not_null())
                 )
