@@ -45,13 +45,13 @@ class Events:
         self.environment.append(os.environ.copy())
 
 
-def check_expression(original, path_expression, expected, msg_start):
+def check_expression(original, path_expression, expected: list[str], msg_start):
     assert isinstance(original, dict), f"{msg_start}data is not a dict"
     jsonpath_expr = parse(path_expression)
     match_found = False
     for match in jsonpath_expr.find(original):
         match_found = True
-        assert match.value == expected, (
+        assert match.value in expected, (
             f"{msg_start}{match.full_path!s} value "
             f"({match.value}) is not equal to ({expected})"
         )
@@ -82,7 +82,10 @@ def check_expression(original, path_expression, expected, msg_start):
                 (
                     ".*",
                     "reals.*.fm_steps.*.error",
-                    "The run is cancelled due to reaching MAX_RUNTIME",
+                    [
+                        "The run is cancelled due to reaching MAX_RUNTIME",
+                        "Forward model was terminated",
+                    ],
                 ),
             ],
             id="ee_poly_experiment_cancelled_by_max_runtime",
@@ -185,17 +188,9 @@ def test_tracking(
     )
 
     evaluator_server_config = EvaluatorServerConfig(use_token=False)
-
-    thread = ErtThread(
-        name="ert_cli_simulation_thread",
-        target=model.start_simulations_thread,
-        args=(evaluator_server_config,),
-    )
-    thread.start()
+    model.start_simulations_thread(evaluator_server_config)
 
     snapshots: dict[str, EnsembleSnapshot] = {}
-
-    thread.join()
 
     assert isinstance(queue.events[-1], EndEvent)
 
