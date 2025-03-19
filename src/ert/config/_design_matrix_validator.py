@@ -10,12 +10,13 @@ class DesignMatrixValidator:
     def __init__(self) -> None:
         self.design_matrices: list[DesignMatrix] = []
 
-    def validate_ert_design_matrix(
-        self, xlsfilename: Path, designsheetname: str, defaultssheetname: str
-    ) -> None:
+    def validate_ert_design_matrix(self, private_args: dict[str, str]) -> None:
         try:
+            xlsfilename = Path(private_args["<xls_filename>"])
+            designsheet = private_args["<designsheet>"]
+            defaultsheet = private_args["<defaultssheet>"]
             self.design_matrices.append(
-                DesignMatrix(xlsfilename, designsheetname, defaultssheetname)
+                DesignMatrix(xlsfilename, designsheet, defaultsheet)
             )
         except Exception as exc:
             logger.warning(
