@@ -964,10 +964,27 @@ def test_that_plugin_forward_model_unexpected_errors_show_as_warnings():
 
 
 @pytest.mark.usefixtures("use_tmpdir")
-def test_that_required_keywords_in_forward_model_are_validated():
+def test_that_one_required_keyword_in_forward_model_is_validated():
     Path("step").write_text("EXECUTABLE echo\nREQUIRED MESSAGE", encoding="utf-8")
     with pytest.raises(
         ConfigValidationError, match="Required keyword MESSAGE not found"
+    ):
+        ErtConfig.from_file_contents(
+            """
+           NUM_REALIZATIONS 1
+           INSTALL_JOB step step
+           FORWARD_MODEL step
+           """
+        )
+
+
+@pytest.mark.usefixtures("use_tmpdir")
+def test_that_all_required_keywords_in_forward_model_are_validated():
+    Path("step").write_text(
+        "EXECUTABLE echo\nREQUIRED MESSAGE1 MESSAGE2", encoding="utf-8"
+    )
+    with pytest.raises(
+        ConfigValidationError, match="Required keywords MESSAGE1, MESSAGE2 not found"
     ):
         ErtConfig.from_file_contents(
             """
