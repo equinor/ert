@@ -175,62 +175,44 @@ def test_that_empty_observations_file_causes_exception():
         ErtConfig.from_dict({"OBS_CONFIG": ("obs_conf", "")})
 
 
-def test_that_having_no_refcase_but_history_observations_causes_exception(tmpdir):
-    with tmpdir.as_cwd():
-        config = dedent(
-            """
-        ECLBASE my_name%d
-        NUM_REALIZATIONS 10
-        OBS_CONFIG observations
-        """
+def test_that_having_no_refcase_but_history_observations_causes_exception():
+    with pytest.raises(
+        expected_exception=ConfigValidationError,
+        match="REFCASE is required for HISTORY_OBSERVATION",
+    ):
+        ErtConfig.from_dict(
+            {
+                "ECLBASE": "my_name%d",
+                "OBS_CONFIG": ("obsconf", "HISTORY_OBSERVATION FOPR;"),
+            }
         )
-        with open("config.ert", "w", encoding="utf-8") as fh:
-            fh.writelines(config)
-        with open("observations", "w", encoding="utf-8") as fo:
-            fo.writelines("HISTORY_OBSERVATION FOPR;")
-        with open("time_map.txt", "w", encoding="utf-8") as fo:
-            fo.writelines("2023-02-01")
-
-        with pytest.raises(
-            expected_exception=ConfigValidationError,
-            match="REFCASE is required for HISTORY_OBSERVATION",
-        ):
-            ErtConfig.from_file("config.ert")
 
 
 def test_that_index_list_is_read(tmpdir):
     with tmpdir.as_cwd():
-        with open("config.ert", "w", encoding="utf-8") as fh:
-            fh.writelines(
-                dedent(
-                    """
-                    JOBNAME my_name%d
-                    NUM_REALIZATIONS 10
-                    OBS_CONFIG observations
-                    GEN_DATA RES RESULT_FILE:out_%d REPORT_STEPS:0 INPUT_FORMAT:ASCII
-                    TIME_MAP time_map.txt
-                    """
-                )
-            )
         with open("obs_data.txt", "w", encoding="utf-8") as fh:
             for i in range(5):
                 fh.write(f"{float(i)} 0.1\n")
-        with open("time_map.txt", "w", encoding="utf-8") as fo:
-            fo.writelines("2017-11-09")
-        with open("observations", "w", encoding="utf-8") as fo:
-            fo.writelines(
-                dedent(
+        observations = ErtConfig.from_dict(
+            {
+                "GEN_DATA": [
+                    [
+                        "RES",
+                        {"RESULT_FILE": "out"},
+                    ]
+                ],
+                "OBS_CONFIG": (
+                    "obsconf",
                     """
                     GENERAL_OBSERVATION OBS {
                        DATA       = RES;
                        INDEX_LIST = 0,2,4,6,8;
-                       DATE       = 2017-11-09;
                        OBS_FILE   = obs_data.txt;
                     };""",
-                )
-            )
-
-        observations = ErtConfig.from_file("config.ert").enkf_obs
+                ),
+                "TIME_MAP": ("tm.txt", "2017-11-09"),
+            }
+        ).enkf_obs
         assert observations["OBS"].observations[0].indices == [0, 2, 4, 6, 8]
 
 
