@@ -40,14 +40,14 @@ def run_simulator():
 @pytest.mark.parametrize(
     "extra_config, expected",
     [
-        pytest.param("", 2.0, id="Default, equals REFCASE_HISTORY"),
+        pytest.param({}, 2.0, id="Default, equals REFCASE_HISTORY"),
         pytest.param(
-            "HISTORY_SOURCE REFCASE_HISTORY",
+            {"HISTORY_SOURCE": "REFCASE_HISTORY"},
             2.0,
             id="Expect to read the H post-fixed value, i.e. FOPRH",
         ),
         pytest.param(
-            "HISTORY_SOURCE REFCASE_SIMULATED",
+            {"HISTORY_SOURCE": "REFCASE_SIMULATED"},
             1.0,
             id="Expect to read the actual value, i.e. FOPR",
         ),
@@ -55,20 +55,15 @@ def run_simulator():
 )
 @pytest.mark.usefixtures("use_tmpdir")
 def test_that_correct_key_observation_is_loaded(extra_config, expected):
-    config_text = dedent(
-        """
-        NUM_REALIZATIONS 1
-        ECLBASE my_case%d
-        REFCASE MY_REFCASE
-        OBS_CONFIG observations_config
-        """
-    )
-    Path("observations_config").write_text(
-        "HISTORY_OBSERVATION FOPR;", encoding="utf-8"
-    )
-    Path("config.ert").write_text(config_text + extra_config, encoding="utf-8")
     run_simulator()
-    observations = ErtConfig.from_file("config.ert").enkf_obs
+    observations = ErtConfig.from_dict(
+        {
+            "ECLBASE": "my_case%d",
+            "REFCASE": "MY_REFCASE",
+            "OBS_CONFIG": ("obsconf", "HISTORY_OBSERVATION FOPR;"),
+            **extra_config,
+        }
+    ).enkf_obs
     assert [obs.value for obs in observations["FOPR"]] == [expected]
 
 
