@@ -57,13 +57,9 @@ def test_model_config_jobname_and_eclbase(extra_config, expected):
     assert ModelConfig.from_dict(config_dict).jobname_format_string == expected
 
 
-def test_that_invalid_time_map_file_raises_config_validation_error(tmpdir):
-    with tmpdir.as_cwd():
-        with open("time_map.txt", "w", encoding="utf-8") as fo:
-            fo.writelines("invalid")
-
-        with pytest.raises(ConfigValidationError, match="Could not read timemap file"):
-            _ = ModelConfig.from_dict({ConfigKeys.TIME_MAP: "time_map.txt"})
+def test_that_invalid_time_map_file_raises_config_validation_error():
+    with pytest.raises(ConfigValidationError, match="Could not read timemap file"):
+        _ = ModelConfig.from_dict({ConfigKeys.TIME_MAP: ("time_map.txt", "invalid")})
 
 
 @pytest.mark.parametrize(
