@@ -476,7 +476,9 @@ class ScalarParameters(ParameterConfig):
     def load_parameters(
         ensemble: Ensemble, group: str, realizations: npt.NDArray[np.int_]
     ) -> pl.DataFrame:
-        return ensemble.load_parameters_scalar(group, realizations)
+        return ensemble.load_parameters_scalar(
+            groups=[group], realizations=realizations
+        )
 
     def save_parameters(
         self,
@@ -511,7 +513,6 @@ class ScalarParameters(ParameterConfig):
         self,
         source_ensemble: Ensemble,
         target_ensemble: Ensemble,
-        group: str,
         realizations: npt.NDArray[np.int_],
         data: npt.NDArray[np.float64],
     ) -> None:
@@ -521,7 +522,7 @@ class ScalarParameters(ParameterConfig):
             if param.update
         ]
         df = source_ensemble.load_parameters_scalar(
-            scalar_name=group, realizations=realizations
+            scalar_name=self.name, realizations=realizations
         )
         df_updates = pl.DataFrame(
             {
@@ -536,40 +537,41 @@ class ScalarParameters(ParameterConfig):
                 },
             }
         )
-        df = df.update(df_updates, on="realization")
-        target_ensemble.save_parameters_scalar(group, realizations, df)
-
-    def save_parameters_groups(
-        self,
-        ensemble: Ensemble,
-        groups: list[str],
-        realizations: npt.NDArray[np.int_],
-        data: npt.NDArray[np.float64],
-    ) -> None:
-        params_to_save = [
-            f"{param.group_name}:{param.param_name}"
-            for group in groups
-            for param in self.groups[group]
-        ]
-        try:
-            df = ensemble.load_parameters_scalar(realizations=realizations)
-        except KeyError:
-            df = pl.DataFrame()
-        df_updates = pl.DataFrame(
-            {
-                "realization": realizations,
-                **{col: data[i, :] for i, col in enumerate(params_to_save)},
-                **{
-                    f"{col}.transformed": [
-                        self.hash_group_key[col].distribution.trans(v)
-                        for v in data[i, :]
-                    ]
-                    for i, col in enumerate(params_to_save)
-                },
-            }
+        target_ensemble.save_parameters_scalar(
+            df.update(df_updates, on="realization"), realizations
         )
-        df = df.update(df_updates, on="realization")
-        ensemble.save_parameters_scalar(self.name, realizations, df)
+
+    # def save_parameters_groups(
+    #     self,
+    #     ensemble: Ensemble,
+    #     groups: list[str],
+    #     realizations: npt.NDArray[np.int_],
+    #     data: npt.NDArray[np.float64],
+    # ) -> None:
+    #     params_to_save = [
+    #         f"{param.group_name}:{param.param_name}"
+    #         for group in groups
+    #         for param in self.groups[group]
+    #     ]
+    #     try:
+    #         df = ensemble.load_parameters_scalar(realizations=realizations)
+    #     except KeyError:
+    #         df = pl.DataFrame()
+    #     df_updates = pl.DataFrame(
+    #         {
+    #             "realization": realizations,
+    #             **{col: data[i, :] for i, col in enumerate(params_to_save)},
+    #             **{
+    #                 f"{col}.transformed": [
+    #                     self.hash_group_key[col].distribution.trans(v)
+    #                     for v in data[i, :]
+    #                 ]
+    #                 for i, col in enumerate(params_to_save)
+    #             },
+    #         }
+    #     )
+    #     df = df.update(df_updates, on="realization")
+    #     ensemble.save_parameters_scalar(self.name, realizations, df)
 
     def __len__(self) -> int:
         return len(self.scalars)

@@ -18,7 +18,6 @@ from ert.substitutions import Substitutions, substitute_runpath_name
 from ert.utils import log_duration
 
 from .config import (
-    DESIGN_MATRIX_GROUP,
     ExtParamConfig,
     Field,
     ForwardModelStep,
@@ -194,14 +193,14 @@ def sample_prior(
             f"Sampling parameter {config_node.name} for realizations {active_realizations}"
         )
         if isinstance(config_node, ScalarParameters):
-            ds = config_node.sample_or_load(
+            df = config_node.sample_or_load(
                 active_realizations,
                 random_seed,
                 ensemble.ensemble_size,
                 design_matrix_df,
             )
             ensemble.save_parameters_scalar(
-                parameter, np.array(active_realizations), ds
+                df, realizations=np.array(active_realizations), scalar_name=parameter
             )
         else:
             for realization_nr in active_realizations:

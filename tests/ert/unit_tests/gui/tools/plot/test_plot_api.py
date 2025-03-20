@@ -4,7 +4,6 @@ from textwrap import dedent
 from urllib.parse import quote
 
 import httpx
-import numpy as np
 import pandas as pd
 import polars as pl
 import pytest
@@ -13,7 +12,6 @@ from pandas.testing import assert_frame_equal
 from starlette.testclient import TestClient
 
 from ert.config import (
-    SCALAR_PARAMETERS_NAME,
     GenKwConfig,
     ScalarParameters,
     SummaryConfig,
@@ -276,11 +274,10 @@ def test_plot_api_handles_empty_gen_kw(api_and_storage):
     assert api.data_for_key(str(ensemble.id), key).empty
 
     ensemble.save_parameters_scalar(
-        scalar_name=SCALAR_PARAMETERS_NAME,
-        realizations=np.array([1.0]),
         dataframe=pl.DataFrame(
             [{"realization": 1, f"{key}:{name}": 1.0, f"{key}:{name}.transformed": 1.0}]
         ),
+        realizations=[1.0],
     )
 
     assert api.data_for_key(str(ensemble.id), key + ":" + name).to_csv() == dedent(

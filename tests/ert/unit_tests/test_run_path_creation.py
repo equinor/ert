@@ -643,9 +643,7 @@ def save_zeros(prior_ensemble, num_realizations, dim_size):
             df = pl.DataFrame(
                 {"realization": list(range(num_realizations)), **scalar_values}
             )
-            prior_ensemble.save_parameters_scalar(
-                "SCALAR_PARAMETERS", np.arange(num_realizations), df
-            )
+            prior_ensemble.save_parameters_scalar(df, range(num_realizations))
         else:
             for realization_nr in range(num_realizations):
                 if isinstance(config_node, SurfaceConfig):

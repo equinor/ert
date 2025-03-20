@@ -3,7 +3,7 @@ from __future__ import annotations
 import contextlib
 import logging
 import os
-from collections.abc import Iterable
+from collections.abc import Collection, Iterable
 from datetime import datetime
 from functools import cache, lru_cache
 from pathlib import Path
@@ -845,20 +845,26 @@ class LocalEnsemble(BaseMode):
     @require_write
     def save_parameters_scalar(
         self,
-        scalar_name: str,
-        realizations: npt.NDArray[np.int_],
         dataframe: pl.DataFrame,
+        realizations: Collection[int] | None = None,
+        scalar_name: str = SCALAR_PARAMETERS_NAME,
     ) -> None:
+        try:
+            df = self.load_parameters_scalar(realizations=realizations)
+        except KeyError:
+            df = pl.DataFrame()
         path = self._path / f"{_escape_filename(scalar_name)}.parquet"
-        self._storage._to_parquet_transaction(
-            path, dataframe.filter(pl.col("realization").is_in(realizations))
-        )
+        df_update = dataframe
+        if realizations is not None:
+            df_update = dataframe.filter(pl.col("realization").is_in(realizations))
+        df = df.update(df_update)
+        self._storage._to_parquet_transaction(path, df)
 
     def load_parameters_scalar(
         self,
         scalar_name: str = SCALAR_PARAMETERS_NAME,
-        realizations: npt.NDArray[np.int_] | None = None,
-        group: str | None = None,
+        realizations: Collection[int] | None = None,
+        groups: list[str] | None = None,
         key: str | None = None,
     ) -> pl.DataFrame:
         scalar_path = self._path / f"{_escape_filename(scalar_name)}.parquet"
@@ -871,10 +877,13 @@ class LocalEnsemble(BaseMode):
             if key not in df_lazy.columns:
                 raise KeyError(f"No such key {key} in scalar parameters!")
             df_lazy = df_lazy.select(["realization", key])
-        if group is not None:
+        if groups is not None:
+
+            def in_group(col: str) -> bool:
+                return any(col.startswith(f"{group}:") for group in groups)
+
             df_lazy = df_lazy.select(
-                ["realization"]
-                + [col for col in df_lazy.columns if col.startswith(f"{group}:")]
+                ["realization"] + [col for col in df_lazy.columns if in_group(col)]
             )
         return df_lazy.collect()
 

@@ -120,7 +120,6 @@ def _save_param_ensemble_array_to_disk(
         config_node.save_updated_parameters_and_copy_remaining(
             source_ensemble,
             target_ensemble,
-            param_group,
             iens_active_index,
             param_ensemble_array,
         )
