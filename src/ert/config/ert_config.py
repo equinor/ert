@@ -1,8 +1,8 @@
 # mypy: ignore-errors
 import copy
-import json
 import logging
 import os
+import pprint
 import re
 from collections import defaultdict
 from collections.abc import Sequence
@@ -60,7 +60,6 @@ from .parsing import (
 from .parsing import (
     parse as parse_config,
 )
-from .parsing.context_values import ContextBoolEncoder
 from .parsing.observations_parser import (
     GenObsValues,
     HistoryValues,
@@ -955,9 +954,7 @@ class ErtConfig:
         # of MAX_MESSAGE_LENGTH_APP_INSIGHTS = 32768
         SAFE_MESSAGE_LENGTH_LIMIT = 26214  # <= MAX_MESSAGE_LENGTH_APP_INSIGHTS * 0.8
         try:
-            config_dict_content = json.dumps(
-                content_dict, indent=2, cls=ContextBoolEncoder
-            )
+            config_dict_content = pprint.pformat(content_dict)
         except Exception as err:
             config_dict_content = str(content_dict)
             logger.warning(
