@@ -23,12 +23,11 @@ from pydantic import ValidationError as PydanticValidationError
 from pydantic import field_validator
 from pydantic.dataclasses import dataclass, rebuild_dataclass
 
-from ert.config.design_matrix import DesignMatrix
-from ert.config.parsing.context_values import ContextBoolEncoder
 from ert.plugins import ErtPluginManager
 from ert.plugins.workflow_config import ErtScriptWorkflow
 from ert.substitutions import Substitutions
 
+from ._design_matrix_validator import DesignMatrixValidator
 from .analysis_config import AnalysisConfig
 from .ensemble_config import EnsembleConfig
 from .forward_model_step import (
@@ -61,6 +60,7 @@ from .parsing import (
 from .parsing import (
     parse as parse_config,
 )
+from .parsing.context_values import ContextBoolEncoder
 from .parsing.observations_parser import (
     GenObsValues,
     HistoryValues,
@@ -502,16 +502,10 @@ def create_list_of_forward_model_steps_to_run(
             continue
         fm_steps.append(fm_step)
 
-    design_matrices: list[DesignMatrix] = []
+    dm_validator = DesignMatrixValidator()
     for fm_step in fm_steps:
         if fm_step.name == "DESIGN2PARAMS":
-            xls_filename = fm_step.private_args.get("<xls_filename>")
-            designsheet = fm_step.private_args.get("<designsheet>")
-            defaultsheet = fm_step.private_args.get("<defaultssheet>")
-            if design_matrix := validate_ert_design_matrix(
-                xls_filename, designsheet, defaultsheet
-            ):
-                design_matrices.append(design_matrix)
+            dm_validator.validate_design_matrix(fm_step.private_args)
 
         if fm_step.name in preinstalled_forward_model_steps:
             try:
@@ -541,15 +535,7 @@ def create_list_of_forward_model_steps_to_run(
                     f"Unexpected plugin forward model exception: {e!s}",
                     context=fm_step.name,
                 )
-    try:
-        main_design_matrix: DesignMatrix | None = None
-        for design_matrix in design_matrices:
-            if main_design_matrix is None:
-                main_design_matrix = design_matrix
-            else:
-                main_design_matrix = main_design_matrix.merge_with_other(design_matrix)
-    except Exception as exc:
-        logger.warning(f"Design matrix merging would have failed due to: {exc}")
+    dm_validator.validate_design_matrix_merge()
 
     if errors:
         raise ConfigValidationError.from_collected(errors)
@@ -1262,17 +1248,6 @@ def _forward_model_step_from_config_file(
         required_keywords=content_dict.get("REQUIRED", []),
         default_mapping=default_mapping,
     )
-
-
-def validate_ert_design_matrix(
-    xlsfilename, designsheetname, defaultssheetname
-) -> DesignMatrix | None:
-    try:
-        return DesignMatrix(xlsfilename, designsheetname, defaultssheetname)
-    except Exception as exc:
-        logger.warning(
-            f"DESIGN_MATRIX validation of DESIGN2PARAMS would have failed with: {exc!s}"
-        )
 
 
 # Due to circular dependency in type annotations between ErtConfig -> WorkflowJob -> ErtScript -> ErtConfig

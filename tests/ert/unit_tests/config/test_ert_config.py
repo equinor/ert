@@ -2025,7 +2025,7 @@ def test_design2params_also_validates_design_matrix(tmp_path, caplog, monkeypatc
     assert "DESIGN_MATRIX validation of DESIGN2PARAMS" in caplog.text
 
 
-def test_multiple_design2params_also_validates_design_matrix_merging(
+def test_two_design2params_validates_design_matrix_merging(
     tmp_path, caplog, monkeypatch
 ):
     design_matrix_file = tmp_path / "my_design_matrix.xlsx"
@@ -2060,6 +2060,61 @@ def test_multiple_design2params_also_validates_design_matrix_merging(
             NUM_REALIZATIONS 1
             FORWARD_MODEL DESIGN2PARAMS(<xls_filename>={design_matrix_file}, <designsheet>=DesignSheet01,<defaultssheet>=DefaultSheet)
             FORWARD_MODEL DESIGN2PARAMS(<xls_filename>={design_matrix_file2}, <designsheet>=DesignSheet01,<defaultssheet>=DefaultSheet)
+            """
+    )
+    assert (
+        "Design matrix merging would have failed due to: Design Matrices don't have the same active realizations"
+        in caplog.text
+    )
+
+
+def test_three_design2params_validates_design_matrix_merging(
+    tmp_path, caplog, monkeypatch
+):
+    design_matrix_file = tmp_path / "my_design_matrix.xlsx"
+    design_matrix_file2 = tmp_path / "my_design_matrix2.xlsx"
+    design_matrix_file3 = tmp_path / "my_design_matrix3.xlsx"
+    _create_design_matrix(
+        design_matrix_file,
+        pd.DataFrame(
+            {
+                "REAL": [0, 1],
+                "letters": ["x", "y"],
+            }
+        ),
+        pd.DataFrame([["a", 1], ["c", 2]]),
+    )
+    _create_design_matrix(
+        design_matrix_file2,
+        pd.DataFrame(
+            {
+                "REAL": [0, 1],
+                "weirdly": ["x", "y"],
+            }
+        ),
+        pd.DataFrame([["b", 1], ["d", 2]]),
+    )
+    _create_design_matrix(
+        design_matrix_file3,
+        pd.DataFrame({"REAL": [1, 2], "numbers": [99, 98]}),
+        pd.DataFrame(),
+    )
+    mock_design2params = ForwardModelStep(
+        "DESIGN2PARAMS",
+        "/usr/bin/env",
+        arglist=["<IENS>", "<xls_filename>", "<designsheet>", "<defaultssheet>"],
+    )
+    monkeypatch.setattr(
+        ErtConfig,
+        "PREINSTALLED_FORWARD_MODEL_STEPS",
+        {"DESIGN2PARAMS": mock_design2params},
+    )
+    ErtConfig.from_file_contents(
+        f"""\
+            NUM_REALIZATIONS 1
+            FORWARD_MODEL DESIGN2PARAMS(<xls_filename>={design_matrix_file}, <designsheet>=DesignSheet01,<defaultssheet>=DefaultSheet)
+            FORWARD_MODEL DESIGN2PARAMS(<xls_filename>={design_matrix_file2}, <designsheet>=DesignSheet01,<defaultssheet>=DefaultSheet)
+            FORWARD_MODEL DESIGN2PARAMS(<xls_filename>={design_matrix_file3}, <designsheet>=DesignSheet01,<defaultssheet>=DefaultSheet)
             """
     )
     assert (
