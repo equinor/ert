@@ -2,7 +2,12 @@ from dataclasses import dataclass
 
 from PyQt6.QtCore import Qt
 from PyQt6.QtCore import pyqtSlot as Slot
-from PyQt6.QtWidgets import QFormLayout, QLabel, QWidget
+from PyQt6.QtWidgets import (
+    QFormLayout,
+    QHBoxLayout,
+    QLabel,
+    QWidget,
+)
 
 from ert.config import AnalysisConfig
 from ert.gui.ertnotifier import ErtNotifier
@@ -70,8 +75,15 @@ class EnsembleExperimentPanel(ExperimentConfigPanel):
         runpath_label = CopyableLabel(text=run_path)
         layout.addRow("Runpath:", runpath_label)
 
+        number_of_realizations_container = QWidget()
+        number_of_realizations_layout = QHBoxLayout(number_of_realizations_container)
+        number_of_realizations_layout.setContentsMargins(0, 0, 0, 0)
         number_of_realizations_label = QLabel(f"<b>{ensemble_size}</b>")
-        layout.addRow(QLabel("Number of realizations:"), number_of_realizations_label)
+        number_of_realizations_layout.addWidget(number_of_realizations_label)
+
+        layout.addRow(
+            QLabel("Number of realizations:"), number_of_realizations_container
+        )
 
         self._active_realizations_field = StringBox(
             ActiveRealizationsModel(ensemble_size),  # type: ignore
@@ -87,7 +99,10 @@ class EnsembleExperimentPanel(ExperimentConfigPanel):
             layout.addRow(
                 "Design Matrix",
                 DesignMatrixPanel.get_design_matrix_button(
-                    self._active_realizations_field, design_matrix
+                    self._active_realizations_field,
+                    design_matrix,
+                    number_of_realizations_label,
+                    ensemble_size,
                 ),
             )
 
