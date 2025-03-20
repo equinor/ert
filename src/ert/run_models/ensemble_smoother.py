@@ -118,6 +118,7 @@ class EnsembleSmoother(UpdateRunModel):
         sample_prior(
             prior,
             np.where(self.active_realizations)[0],
+            parameters=[param.name for param in parameters_config],
             random_seed=self.random_seed,
         )
 

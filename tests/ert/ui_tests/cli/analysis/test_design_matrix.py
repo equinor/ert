@@ -1,4 +1,5 @@
 import json
+import logging
 import os
 import random
 import stat
@@ -10,7 +11,7 @@ import pandas as pd
 import pytest
 
 from ert.cli.main import ErtCliError
-from ert.config import ErtConfig
+from ert.config import DESIGN_MATRIX_GROUP, ErtConfig
 from ert.mode_definitions import (
     ENSEMBLE_EXPERIMENT_MODE,
     ENSEMBLE_SMOOTHER_MODE,
@@ -30,7 +31,8 @@ def _create_design_matrix(filename, design_sheet_df, default_sheet_df=None):
 
 
 @pytest.mark.usefixtures("copy_poly_case")
-def test_run_poly_example_with_design_matrix():
+def test_run_poly_example_with_design_matrix(caplog):
+    caplog.set_level(logging.INFO)
     num_realizations = 10
     a_values = list(range(num_realizations))
     _create_design_matrix(
@@ -96,6 +98,7 @@ def test_run_poly_example_with_design_matrix():
         "--experiment-name",
         "test-experiment",
     )
+    assert f"Sampling parameter {DESIGN_MATRIX_GROUP}" not in caplog.text
     storage_path = ErtConfig.from_file("poly.ert").ens_path
     config_path = ErtConfig.from_file("poly.ert").config_path
     with open_storage(storage_path) as storage:
