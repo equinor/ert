@@ -8,6 +8,7 @@ from pydantic import ConfigDict, Field, NonNegativeInt, PositiveInt
 from pydantic.dataclasses import dataclass
 
 from ._option_dict import option_dict, parse_variable_options
+from ._read_file import read_file
 from .config_errors import ConfigValidationError
 from .context_values import (
     ContextBool,
@@ -148,22 +149,30 @@ class SchemaItem:
                         token,
                     )
 
-            case SchemaItemType.PATH | SchemaItemType.EXISTING_PATH:
+            case (
+                SchemaItemType.PATH
+                | SchemaItemType.EXISTING_PATH
+                | SchemaItemType.EXISTING_PATH_INLINE
+            ):
                 path: str | None = str(token)
                 if not os.path.isabs(token):
                     path = os.path.normpath(
                         os.path.join(os.path.dirname(token.filename), token)
                     )
-                if val_type == SchemaItemType.EXISTING_PATH and not os.path.exists(
-                    str(path)
-                ):
+                if val_type in {
+                    SchemaItemType.EXISTING_PATH,
+                    SchemaItemType.EXISTING_PATH_INLINE,
+                } and not os.path.exists(str(path)):
                     err = f'Cannot find file or directory "{token.value}". '
                     if path != token:
                         err += f"The configured value was {path!r} "
                     raise ConfigValidationError.with_context(err, token)
 
                 assert isinstance(path, str)
-                return ContextString(path, token, keyword)
+                if val_type == SchemaItemType.EXISTING_PATH_INLINE:
+                    return [ContextString(path, token, keyword), read_file(path)]
+                else:
+                    return ContextString(path, token, keyword)
             case SchemaItemType.EXECUTABLE:
                 absolute_path: str | None
                 is_command = False
