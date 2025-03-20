@@ -5,7 +5,7 @@ from typing import TYPE_CHECKING, Any
 
 from PyQt6.QtCore import pyqtSlot as Slot
 from PyQt6.QtGui import QFont
-from PyQt6.QtWidgets import QCheckBox, QFormLayout, QLabel, QWidget
+from PyQt6.QtWidgets import QCheckBox, QFormLayout, QHBoxLayout, QLabel, QWidget
 
 from ert.gui.ertnotifier import ErtNotifier
 from ert.gui.ertwidgets import (
@@ -76,8 +76,15 @@ class MultipleDataAssimilationPanel(ExperimentConfigPanel):
         runpath_label = CopyableLabel(text=run_path)
         layout.addRow("Runpath:", runpath_label)
 
+        number_of_realizations_container = QWidget()
+        number_of_realizations_layout = QHBoxLayout(number_of_realizations_container)
+        number_of_realizations_layout.setContentsMargins(0, 0, 0, 0)
         number_of_realizations_label = QLabel(f"<b>{ensemble_size}</b>")
-        layout.addRow(QLabel("Number of realizations:"), number_of_realizations_label)
+        number_of_realizations_layout.addWidget(number_of_realizations_label)
+
+        layout.addRow(
+            QLabel("Number of realizations:"), number_of_realizations_container
+        )
 
         self._target_ensemble_format_model = TargetEnsembleModel(
             analysis_config, notifier
@@ -141,7 +148,10 @@ class MultipleDataAssimilationPanel(ExperimentConfigPanel):
             layout.addRow(
                 "Design Matrix",
                 DesignMatrixPanel.get_design_matrix_button(
-                    self._active_realizations_field, design_matrix
+                    self._active_realizations_field,
+                    design_matrix,
+                    number_of_realizations_label,
+                    ensemble_size,
                 ),
             )
 
