@@ -966,7 +966,9 @@ class LocalEnsemble(BaseMode):
             self.experiment._update_response_keys(response_type, response_keys)
 
     def calculate_std_dev_for_parameter(self, parameter_group: str) -> xr.Dataset:
-        if parameter_group not in self.experiment.parameter_configuration:
+        if parameter_group not in self.experiment.parameter_configuration or not (
+            self.experiment.scalars and parameter_group in self.experiment.scalars
+        ):
             raise ValueError(f"{parameter_group} is not registered to the experiment.")
 
         ds = self.load_parameters(parameter_group)

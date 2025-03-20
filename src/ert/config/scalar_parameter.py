@@ -370,6 +370,9 @@ class ScalarParameters(ParameterConfig):
             return [self.hash_group_key[key]]
         return []
 
+    def __contains__(self, group_name: str) -> bool:
+        return group_name in self.groups
+
     @staticmethod
     def _sample_value(
         parameters: list[ScalarParameter],

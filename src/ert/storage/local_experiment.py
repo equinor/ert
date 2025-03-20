@@ -14,6 +14,7 @@ import xtgeo
 from pydantic import BaseModel
 
 from ert.config import (
+    SCALAR_PARAMETERS_NAME,
     ExtParamConfig,
     Field,
     GenKwConfig,
@@ -292,6 +293,13 @@ class LocalExperiment(BaseMode):
             param_type = data.pop("_ert_kind")
             params[data["name"]] = _KNOWN_PARAMETER_TYPES[param_type](**data)
         return params
+
+    @property
+    def scalars(self) -> ScalarParameters | None:
+        param = self.parameter_configuration.get(SCALAR_PARAMETERS_NAME, None)
+        if isinstance(param, ScalarParameters):
+            return param
+        return None
 
     @property
     def response_configuration(self) -> dict[str, ResponseConfig]:
