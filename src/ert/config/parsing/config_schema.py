@@ -188,9 +188,9 @@ def gen_kw_keyword() -> SchemaItem:
         options_after=Varies(4),
         type_map=[
             None,
-            SchemaItemType.EXISTING_PATH,
+            SchemaItemType.EXISTING_PATH_INLINE,
             SchemaItemType.STRING,
-            SchemaItemType.EXISTING_PATH,
+            SchemaItemType.EXISTING_PATH_INLINE,
         ],
         multi_occurrence=True,
     )

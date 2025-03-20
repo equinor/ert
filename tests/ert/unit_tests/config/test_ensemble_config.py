@@ -113,7 +113,6 @@ def test_that_files_for_refcase_exists(existing_suffix, expected_suffix):
 @pytest.mark.usefixtures("use_tmpdir")
 def test_ensemble_config_duplicate_node_names():
     duplicate_name = "Test_name"
-    Path("MULTFLT.TXT").write_text("a UNIFORM 0 1", encoding="utf-8")
     Path("FAULT_TEMPLATE").write_text("", encoding="utf-8")
     config_dict = {
         ConfigKeys.GEN_DATA: [
@@ -129,9 +128,9 @@ def test_ensemble_config_duplicate_node_names():
         ConfigKeys.GEN_KW: [
             [
                 duplicate_name,
-                "FAULT_TEMPLATE",
+                ("FAULT_TEMPLATE", ""),
                 "MULTFLT.INC",
-                "MULTFLT.TXT",
+                ("MULTFLT.TXT", "a UNIFORM 0 1"),
                 {"FORWARD_INIT": "FALSE"},
             ]
         ],
@@ -169,23 +168,21 @@ def test_that_empty_grid_file_raises(tmpdir):
 
 @pytest.mark.usefixtures("use_tmpdir")
 def test_logging_of_duplicate_gen_kw_parameter_names(caplog):
-    Path("MULTFLT1.TXT").write_text("a UNIFORM 0 1\nc UNIFORM 2 5", encoding="utf-8")
-    Path("MULTFLT2.TXT").write_text("a UNIFORM 0 1\nc UNIFORM 4 7", encoding="utf-8")
     Path("FAULT_TEMPLATE").write_text("", encoding="utf-8")
     config_dict = {
         ConfigKeys.GEN_KW: [
             [
                 "test_group1",
-                "FAULT_TEMPLATE",
+                ("FAULT_TEMPLATE", ""),
                 "MULTFLT.INC",
-                "MULTFLT1.TXT",
+                ("MULTFLT1.TXT", "a UNIFORM 0 1\nc UNIFORM 2 5"),
                 {"FORWARD_INIT": "FALSE"},
             ],
             [
                 "test_group2",
-                "FAULT_TEMPLATE",
+                ("FAULT_TEMPLATE", ""),
                 "MULTFLT.INC",
-                "MULTFLT2.TXT",
+                ("MULTFLT2.TXT", "a UNIFORM 0 1\nc UNIFORM 4 7"),
                 {"FORWARD_INIT": "FALSE"},
             ],
         ],

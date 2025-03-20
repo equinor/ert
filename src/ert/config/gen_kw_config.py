@@ -97,15 +97,15 @@ class GenKwConfig(ParameterConfig):
         errors = []
 
         if len(positional_args) == 2:
-            parameter_file = _get_abs_path(positional_args[1])
-            parameter_file_context = positional_args[1]
+            parameter_file_contents = positional_args[1][1]
+            parameter_file_context = positional_args[1][0]
             template_file = None
             output_file = None
         elif len(positional_args) == 4:
             output_file = positional_args[2]
-            parameter_file = _get_abs_path(positional_args[3])
-            parameter_file_context = positional_args[3]
-            template_file = _get_abs_path(positional_args[1])
+            parameter_file_contents = positional_args[3][1]
+            parameter_file_context = positional_args[3][0]
+            template_file = _get_abs_path(positional_args[1][0])
             if not os.path.isfile(template_file):
                 errors.append(
                     ConfigValidationError.with_context(
@@ -113,11 +113,7 @@ class GenKwConfig(ParameterConfig):
                     )
                 )
             elif Path(template_file).stat().st_size == 0:
-                token = (
-                    parameter_file_context.token
-                    if hasattr(parameter_file_context, "token")
-                    else parameter_file_context
-                )
+                token = getattr(parameter_file_context, "token", parameter_file_context)
                 ConfigWarning.deprecation_warn(
                     f"The template file for GEN_KW ({gen_kw_key}) is empty. If templating is not needed, you "
                     f"can use GEN_KW with just the distribution file instead: GEN_KW {gen_kw_key} {token}",
@@ -127,19 +123,6 @@ class GenKwConfig(ParameterConfig):
         else:
             raise ConfigValidationError(
                 f"Unexpected positional arguments: {positional_args}"
-            )
-        if not os.path.isfile(parameter_file):
-            errors.append(
-                ConfigValidationError.with_context(
-                    f"No such parameter file: {parameter_file}", parameter_file_context
-                )
-            )
-        elif Path(parameter_file).stat().st_size == 0:
-            errors.append(
-                ConfigValidationError.with_context(
-                    f"No parameters specified in {parameter_file}",
-                    parameter_file_context,
-                )
             )
 
         if forward_init:
@@ -162,26 +145,32 @@ class GenKwConfig(ParameterConfig):
             raise ConfigValidationError.from_collected(errors)
 
         transform_function_definitions: list[TransformFunctionDefinition] = []
-        with open(parameter_file, encoding="utf-8") as file:
-            for line_number, item in enumerate(file):
-                item = item.split("--")[0]  # remove comments
-                if item.strip():  # only lines with content
-                    items = item.split()
-                    if len(items) < 2:
-                        errors.append(
-                            ConfigValidationError.with_context(
-                                f"Too few values on line {line_number} in parameter file {parameter_file}",
-                                gen_kw,
-                            )
+        for line_number, item in enumerate(parameter_file_contents.splitlines()):
+            item = item.split("--")[0]  # remove comments
+            if item.strip():  # only lines with content
+                items = item.split()
+                if len(items) < 2:
+                    errors.append(
+                        ConfigValidationError.with_context(
+                            f"Too few values on line {line_number} in parameter file {parameter_file_context}",
+                            gen_kw,
                         )
-                    else:
-                        transform_function_definitions.append(
-                            TransformFunctionDefinition(
-                                name=items[0],
-                                param_name=items[1],
-                                values=items[2:],
-                            )
+                    )
+                else:
+                    transform_function_definitions.append(
+                        TransformFunctionDefinition(
+                            name=items[0],
+                            param_name=items[1],
+                            values=items[2:],
                         )
+                    )
+        if not transform_function_definitions:
+            errors.append(
+                ConfigValidationError.with_context(
+                    f"No parameters specified in {parameter_file_context}",
+                    parameter_file_context,
+                )
+            )
 
         if errors:
             raise ConfigValidationError.from_collected(errors)

@@ -549,26 +549,14 @@ def test_gen_kw_config_validation():
     with open("template.txt", "w", encoding="utf-8") as f:
         f.write("Hello")
 
-    with open("parameters.txt", "w", encoding="utf-8") as f:
-        f.write("KEY  UNIFORM 0 1 \n")
-
-    with open("parameters_with_comments.txt", "w", encoding="utf-8") as f:
-        f.write("KEY1  UNIFORM 0 1 -- COMMENT\n")
-        f.write("\n\n")  # Two blank lines
-        f.write("KEY2  UNIFORM 0 1\n")
-        f.write("--KEY3  \n")
-        f.write("---KEY3  \n")
-        f.write("------------  \n")
-        f.write("KEY3  UNIFORM 0 1\n")
-
     EnsembleConfig.from_dict(
         config_dict={
             ConfigKeys.GEN_KW: [
                 [
                     "KEY",
-                    "template.txt",
+                    ("template.txt", "Hello"),
                     "nothing_here.txt",
-                    "parameters.txt",
+                    ("parameters.txt", "KEY  UNIFORM 0 1 \n"),
                     {},
                 ]
             ],
@@ -580,12 +568,26 @@ def test_gen_kw_config_validation():
             ConfigKeys.GEN_KW: [
                 [
                     "KEY",
-                    "template.txt",
+                    ("template.txt", "hello.txt"),
                     "nothing_here.txt",
-                    "parameters_with_comments.txt",
+                    (
+                        "parameters_with_comments.txt",
+                        dedent(
+                            """\
+                            KEY1  UNIFORM 0 1 -- COMMENT
+
+
+                            KEY2  UNIFORM 0 1
+                            --KEY3
+                            ---KEY3
+                            ------------
+                            KEY3  UNIFORM 0 1
+                            """
+                        ),
+                    ),
                     {},
-                ]
-            ],
+                ],
+            ]
         }
     )
 
@@ -600,23 +602,6 @@ def test_gen_kw_config_validation():
                         make_context_string("no_template_here.txt", "config.ert"),
                         "nothing_here.txt",
                         "parameters.txt",
-                        {},
-                    ]
-                ],
-            }
-        )
-
-    with pytest.raises(
-        ConfigValidationError, match=r"config.ert.* No such parameter file"
-    ):
-        EnsembleConfig.from_dict(
-            config_dict={
-                ConfigKeys.GEN_KW: [
-                    [
-                        "KEY",
-                        "template.txt",
-                        "nothing_here.txt",
-                        make_context_string("no_parameter_here.txt", "config.ert"),
                         {},
                     ]
                 ],
@@ -643,7 +628,6 @@ def test_incorrect_values_in_forward_init_file_fails(tmp_path):
 
 @pytest.mark.usefixtures("use_tmpdir")
 def test_suggestion_on_empty_parameter_file(tmp_path):
-    Path("coeffs.txt").write_text("a UNIFORM 0 1", encoding="utf-8")
     Path("empty_template.txt").write_text("", encoding="utf-8")
     with pytest.warns(UserWarning, match="GEN_KW KEY coeffs.txt"):
         EnsembleConfig.from_dict(
@@ -651,9 +635,12 @@ def test_suggestion_on_empty_parameter_file(tmp_path):
                 ConfigKeys.GEN_KW: [
                     [
                         "KEY",
-                        "empty_template.txt",
+                        ("empty_template.txt", ""),
                         "output.txt",
-                        make_context_string("coeffs.txt", "config.ert"),
+                        (
+                            make_context_string("coeffs.txt", "config.ert"),
+                            "a UNIFORM 0 1",
+                        ),
                         {},
                     ]
                 ],
