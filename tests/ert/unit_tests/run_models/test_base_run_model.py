@@ -403,7 +403,7 @@ async def test_terminate_in_pre_evaluation():
     with pytest.raises(
         UserCancelled, match="Experiment cancelled by user in pre evaluation"
     ):
-        await brm.run_ensemble_evaluator_async(MagicMock(), AsyncMock(), AsyncMock())
+        await brm.run_ensemble_evaluator_async(AsyncMock(), AsyncMock(), AsyncMock())
 
 
 @patch("ert.run_models.base_run_model.EnsembleEvaluator")
@@ -429,4 +429,4 @@ async def test_terminate_in_post_evaluation(evaluator):
         UserCancelled,
         match="Experiment cancelled by user in post evaluation",
     ):
-        await brm.run_ensemble_evaluator_async(MagicMock(), AsyncMock(), AsyncMock())
+        await brm.run_ensemble_evaluator_async(AsyncMock(), AsyncMock(), AsyncMock())
