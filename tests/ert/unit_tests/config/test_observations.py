@@ -267,40 +267,28 @@ def test_that_missing_obs_file_raises_exception():
         )
 
 
-def test_that_missing_time_map_raises_exception(tmpdir):
-    with tmpdir.as_cwd():
-        with open("config.ert", "w", encoding="utf-8") as fh:
-            fh.writelines(
-                dedent(
-                    """
-                    JOBNAME my_name%d
-                    NUM_REALIZATIONS 10
-                    OBS_CONFIG observations
-                    GEN_DATA RES RESULT_FILE:out_%d REPORT_STEPS:0 INPUT_FORMAT:ASCII
-                    """
-                )
-            )
-        with open("obs_data.txt", "w", encoding="utf-8") as fh:
-            fh.write("1 0.1\n")
-        with open("observations", "w", encoding="utf-8") as fo:
-            fo.writelines(
-                dedent(
+def test_that_missing_time_map_raises_exception():
+    with pytest.raises(
+        expected_exception=ConfigValidationError,
+        match="TIME_MAP",
+    ):
+        ErtConfig.from_dict(
+            {
+                "GEN_DATA": [["RES", {"RESULT_FILE": "out"}]],
+                "OBS_CONFIG": (
+                    "obsconf",
                     """
                     GENERAL_OBSERVATION OBS {
                        DATA       = RES;
-                       INDEX_LIST = 0,2,4,6,8;
+                       INDEX_LIST = 0;
                        DATE       = 2017-11-09;
-                       OBS_FILE   = obs_data.txt;
+                       VALUE      = 0.0;
+                       ERROR      = 0.0;
                     };
                     """,
-                )
-            )
-
-        with pytest.raises(
-            expected_exception=ConfigValidationError,
-            match="TIME_MAP",
-        ):
-            ErtConfig.from_file("config.ert")
+                ),
+            }
+        )
 
 
 def test_that_badly_formatted_obs_file_shows_informative_error_message(tmpdir):
