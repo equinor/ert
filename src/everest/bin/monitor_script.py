@@ -56,7 +56,7 @@ def _build_args_parser() -> argparse.ArgumentParser:
     arg_parser.add_argument(
         "--show-all-jobs",
         action="store_true",
-        help="Display all jobs executed from the forward model",
+        help="This option no longer has an effect, and will be removed in a future version",
     )
 
     return arg_parser
@@ -68,10 +68,7 @@ def monitor_everest(options: argparse.Namespace) -> None:
     server_state = everserver_status(status_path)
     server_context = ServerConfig.get_server_context(config.output_dir)
     if server_is_running(*server_context):
-        run_detached_monitor(
-            server_context=server_context,
-            show_all_jobs=options.show_all_jobs,
-        )
+        run_detached_monitor(server_context=server_context)
         server_state = everserver_status(status_path)
         if server_state["status"] == ServerStatus.failed:
             raise SystemExit(server_state["message"])

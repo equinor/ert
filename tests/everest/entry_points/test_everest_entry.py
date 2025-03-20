@@ -4,7 +4,6 @@ from functools import partial
 from unittest.mock import MagicMock, patch
 
 import pytest
-import yaml
 
 import everest
 from everest.bin.everest_script import everest_entry
@@ -251,27 +250,6 @@ def test_everest_entry_monitor_no_run(
 @pytest.fixture(autouse=True)
 def mock_ssl(monkeypatch):
     monkeypatch.setattr(everest.detached, "ssl", MagicMock())
-
-
-@pytest.mark.parametrize("show_all_jobs", [True, False])
-@patch("everest.bin.monitor_script.server_is_running", return_value=True)
-def test_monitor_entry_show_all_jobs(
-    _,
-    monkeypatch,
-    tmp_path,
-    min_config,
-    show_all_jobs,
-):
-    """Test running everest with and without --show-all-jobs"""
-    monkeypatch.chdir(tmp_path)
-    with open("config.yml", "w", encoding="utf-8") as fout:
-        yaml.dump(min_config, fout)
-    detatched_mock = MagicMock()
-    monkeypatch.setattr(everest.bin.utils, "start_monitor", MagicMock())
-    monkeypatch.setattr(everest.bin.utils, "_DetachedMonitor", detatched_mock)
-    args = ["config.yml"] if not show_all_jobs else ["config.yml", "--show-all-jobs"]
-    monitor_entry(args)
-    detatched_mock.assert_called_once_with(show_all_jobs)
 
 
 @patch(
