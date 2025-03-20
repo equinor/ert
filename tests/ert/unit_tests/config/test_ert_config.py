@@ -1629,20 +1629,34 @@ def test_no_timemap_or_refcase_provides_clear_error():
         )
 
 
-@pytest.mark.usefixtures("copy_snake_oil_case")
 def test_that_multiple_errors_are_shown_when_validating_observation_config():
-    with fileinput.input("observations/observations.txt", inplace=True) as fin:
-        for line_number, line in enumerate(fin, 1):
-            if line_number in {13, 32}:
-                continue
-            print(line, end="")
-
     with pytest.raises(ConfigValidationError) as err:
-        _ = ErtConfig.from_file("snake_oil.ert")
+        ErtConfig.from_dict(
+            {
+                "GEN_DATA": [["GD", {"RESULT_FILE": "%d", "REPORT_STEPS": "1"}]],
+                "OBS_CONFIG": (
+                    "obs_config",
+                    """
+                    SUMMARY_OBSERVATION SUM1
+                    {
+                        VALUE   = 0.7;
+                        ERROR   = 0.07;
+                        DATE    = 2010-12-26;
+                    };
 
+                    SUMMARY_OBSERVATION SUM2
+                    {
+                        ERROR   = 0.05;
+                        DATE    = 2011-12-21;
+                        KEY     = WOPR:OP1;
+                    };
+                    """,
+                ),
+            }
+        )
     expected_errors = [
-        'Line 11 (Column 21-32): Missing item "VALUE" in WOPR_OP1_36',
-        'Line 26 (Column 21-33): Missing item "KEY" in WOPR_OP1_108',
+        'Line 2 (Column 41-45): Missing item "KEY" in SUM1',
+        'Line 9 (Column 41-45): Missing item "VALUE" in SUM2',
     ]
 
     for error in expected_errors:
