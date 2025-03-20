@@ -174,9 +174,15 @@ def test_initialize_random_seed(
         # to the first, except that it uses the random seed from the first
         os.makedirs("second")
         os.chdir("second")
-        random_seed = next(
-            message for message in caplog.messages if message.startswith("RANDOM_SEED")
-        ).split()[1]
+        random_seed = (
+            next(
+                message
+                for message in caplog.messages
+                if message.startswith("To repeat this experiment")
+            )
+            .splitlines()[1]
+            .split()[1]
+        )
         if check_random_seed:
             config += f"RANDOM_SEED {random_seed}"
         with open("config_2.ert", mode="w", encoding="utf-8") as fh:
