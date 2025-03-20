@@ -46,6 +46,8 @@ config = GenerationConfiguration(
     show_breadcrumbs=False,
     examples_as_yaml=True,
     with_footer=False,
+    collapse_long_descriptions=False,
+    collapse_long_examples=False,
 )
 with open("config_schema.json", "w", encoding="utf-8") as fout:
     json.dump(EverestConfig.model_json_schema(), fout)
