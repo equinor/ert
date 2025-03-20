@@ -293,42 +293,28 @@ def test_that_missing_time_map_raises_exception():
 
 def test_that_badly_formatted_obs_file_shows_informative_error_message(tmpdir):
     with tmpdir.as_cwd():
-        with open("config.ert", "w", encoding="utf-8") as fh:
-            fh.writelines(
-                dedent(
-                    """
-                    JOBNAME my_name%d
-                    NUM_REALIZATIONS 10
-                    OBS_CONFIG observations
-                    GEN_DATA RES RESULT_FILE:out_%d REPORT_STEPS:0 INPUT_FORMAT:ASCII
-                    TIME_MAP time_map.txt
-                    """
-                )
-            )
         with open("obs_data.txt", "w", encoding="utf-8") as fh:
             fh.write("not_an_int 0.1\n")
-        with open("time_map.txt", "w", encoding="utf-8") as fo:
-            fo.writelines("2017-11-09")
-        with open("observations", "w", encoding="utf-8") as fo:
-            fo.writelines(
-                dedent(
-                    """
-                    GENERAL_OBSERVATION OBS {
-                       DATA       = RES;
-                       INDEX_LIST = 0,2,4,6,8;
-                       DATE    = 2017-11-09;
-                       OBS_FILE   = obs_data.txt;
-                    };
-                    """,
-                )
-            )
-
         with pytest.raises(
             expected_exception=ConfigValidationError,
-            match=r"Failed to read OBS_FILE .*/obs_data.txt: could not convert"
+            match=r"Failed to read OBS_FILE obs_data.txt: could not convert"
             " string 'not_an_int' to float64 at row 0, column 1",
         ):
-            ErtConfig.from_file("config.ert")
+            ErtConfig.from_dict(
+                {
+                    "GEN_DATA": [["RES", {"RESULT_FILE": "out"}]],
+                    "OBS_CONFIG": (
+                        "obsconf",
+                        """
+                        GENERAL_OBSERVATION OBS {
+                           DATA       = RES;
+                           INDEX_LIST = 0,2,4,6,8;
+                           OBS_FILE   = obs_data.txt;
+                        };
+                        """,
+                    ),
+                }
+            )
 
 
 def test_that_giving_both_index_file_and_index_list_raises_an_exception(tmpdir):
