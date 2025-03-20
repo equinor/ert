@@ -307,7 +307,10 @@ class ErtConfigValues:
             ConfigKeys.RUNPATH: self.runpath,
             ConfigKeys.ENSPATH: self.enspath,
             ConfigKeys.TIME_MAP: self.time_map,
-            ConfigKeys.OBS_CONFIG: self.obs_config,
+            ConfigKeys.OBS_CONFIG: (
+                self.obs_config,
+                "\n".join(str(o) for o in self.observations),
+            ),
             ConfigKeys.HISTORY_SOURCE: self.history_source,
             ConfigKeys.REFCASE: self.refcase,
             ConfigKeys.GEN_KW_EXPORT_NAME: self.gen_kw_export_name,
@@ -756,7 +759,7 @@ def to_config_file(filename, config_values):
                         f"{keyword} {setting[0]} {setting[1]}"
                         + (f" {setting[2]}\n" if len(setting) == 3 else "\n")
                     )
-            elif keyword == ConfigKeys.TIME_MAP:
+            elif keyword in {ConfigKeys.TIME_MAP, ConfigKeys.OBS_CONFIG}:
                 config.write(f"{keyword} {keyword_value[0]}\n")
             else:
                 config.write(f"{keyword} {keyword_value}\n")

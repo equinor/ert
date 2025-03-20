@@ -160,11 +160,7 @@ def test_unopenable_observation_config_fails_gracefully():
     observation_config_abs_path = os.path.join(os.getcwd(), observation_config_rel_path)
     os.chmod(observation_config_abs_path, 0x0)
 
-    with pytest.raises(
-        ValueError,
-        match="Do not have permission to open observation config file "
-        f"{observation_config_abs_path!r}",
-    ):
+    with pytest.raises(ConfigValidationError, match="Permission denied:"):
         run_cli(TEST_RUN_MODE, config_file_name)
 
 

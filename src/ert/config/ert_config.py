@@ -67,7 +67,7 @@ from .parsing.observations_parser import (
     SummaryValues,
 )
 from .parsing.observations_parser import (
-    parse as parse_observations,
+    parse_content as parse_observations,
 )
 from .queue_config import QueueConfig
 from .workflow import Workflow
@@ -788,30 +788,27 @@ class ErtConfig:
         except ConfigValidationError as err:
             errors.append(err)
 
-        obs_config_file = config_dict.get(ConfigKeys.OBS_CONFIG)
-        obs_config_content = []
+        obs_config_args = config_dict.get(ConfigKeys.OBS_CONFIG)
+        obs_configs = []
         try:
-            if obs_config_file:
-                if path.isfile(obs_config_file) and path.getsize(obs_config_file) == 0:
+            if obs_config_args:
+                obs_config_file, obs_config_file_contents = obs_config_args
+                obs_configs = parse_observations(
+                    obs_config_file_contents, obs_config_file
+                )
+                if not obs_configs:
                     raise ObservationConfigError.with_context(
                         f"Empty observations file: {obs_config_file}",
                         obs_config_file,
                     )
-                if not os.access(obs_config_file, os.R_OK):
-                    raise ObservationConfigError.with_context(
-                        "Do not have permission to open observation"
-                        f" config file {obs_config_file!r}",
-                        obs_config_file,
-                    )
-                obs_config_content = parse_observations(obs_config_file)
         except ObservationConfigError as err:
             errors.append(err)
 
         try:
-            if obs_config_content:
+            if obs_configs:
                 summary_obs = {
                     obs[1].key
-                    for obs in obs_config_content
+                    for obs in obs_configs
                     if isinstance(obs[1], HistoryValues | SummaryValues)
                 }
                 if summary_obs:
@@ -822,7 +819,7 @@ class ErtConfig:
             ensemble_config = EnsembleConfig.from_dict(config_dict=config_dict)
             if model_config:
                 observations = cls._create_observations(
-                    obs_config_content,
+                    obs_configs,
                     ensemble_config,
                     model_config.time_map,
                     model_config.history_source,
@@ -888,7 +885,7 @@ class ErtConfig:
             ),
             model_config=model_config,
             user_config_file=config_file_path,
-            observation_config=obs_config_content,
+            observation_config=obs_configs,
             enkf_obs=observations,
         )
 

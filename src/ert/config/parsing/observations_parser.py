@@ -107,11 +107,17 @@ def parse(filename: str) -> ConfContent:
     filepath = os.path.normpath(os.path.abspath(filename))
     with open(filepath, encoding="utf-8") as f:
         return _validate_conf_content(
-            os.path.dirname(filename), _parse_content(f.read(), filename)
+            os.path.dirname(filename), _parse_content_list(f.read(), filename)
         )
 
 
-def _parse_content(
+def parse_content(content: str, filename: str) -> ConfContent:
+    return _validate_conf_content(
+        os.path.dirname(filename), _parse_content_list(content, filename)
+    )
+
+
+def _parse_content_list(
     content: str, filename: str
 ) -> list[
     SimpleHistoryDeclaration
