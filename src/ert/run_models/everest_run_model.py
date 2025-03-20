@@ -494,6 +494,62 @@ class EverestRunModel(BaseRunModel):
         return objectives, constraints
 
     @staticmethod
+    def find_cached_results(
+        control_values: NDArray[np.float64],
+        model_realizations: list[int],
+        all_results: pl.DataFrame | None,
+        control_names: list[str],
+    ) -> pl.DataFrame | None:
+        if all_results is None:
+            return None
+        # Will be used to search the cache
+        controls_to_evaluate_df = pl.DataFrame(
+            {
+                "realization": list(range(len(model_realizations))),
+                "model_realization": pl.Series(model_realizations, dtype=pl.UInt16),
+                **{
+                    control_name: pl.Series(control_values[:, i], dtype=pl.Float64)
+                    for i, control_name in enumerate(control_names)
+                },
+            }
+        )
+
+        EPS = float(np.finfo(np.float32).eps)
+
+        left = all_results
+        right = controls_to_evaluate_df
+
+        # Note: asof join will approximate for floats, but
+        # only for one column at a time, this for loop
+        # will incrementally do the join, filtering out
+        # mismatching rows iteratively. If in the future, the `on` argument
+        # accepts multiple columns, we can drop this for loop.
+        # One control-value-column at a time,
+        # we filter out rows with control values
+        # that are not approximately matching the control value
+        # of our to-be-evaluated controls.
+        for control_name in control_names:
+            left = (
+                left.sort(["model_realization", control_name])
+                .join_asof(
+                    right.sort(["model_realization", control_name]),
+                    on=control_name,
+                    by="model_realization",  # pre-join by model realization
+                    tolerance=EPS,  # Same as np.allclose with atol=EPS
+                    check_sortedness=False,
+                    # Ref: https://github.com/pola-rs/polars/issues/21693
+                )
+                .filter(pl.col("realization_right").is_not_null())
+            )
+
+            left = left.drop([s for s in left.columns if s.endswith("_right")])
+
+            if left.is_empty():
+                break
+
+        return left if not left.is_empty() else None
+
+    @staticmethod
     def _create_evaluation_infos(
         control_values: NDArray[np.float64],
         model_realizations: list[int],
@@ -512,53 +568,9 @@ class EverestRunModel(BaseRunModel):
         )
         evaluation_infos = []
 
-        cache_hits_df = None
-        if all_results is not None:
-            # Will be used to search the cache
-            controls_to_evaluate_df = pl.DataFrame(
-                {
-                    "realization": list(range(len(model_realizations))),
-                    "model_realization": pl.Series(model_realizations, dtype=pl.UInt16),
-                    **{
-                        control_name: pl.Series(control_values[:, i], dtype=pl.Float64)
-                        for i, control_name in enumerate(control_names)
-                    },
-                }
-            )
-
-            EPS = float(np.finfo(np.float32).eps)
-
-            left = all_results
-            right = controls_to_evaluate_df
-
-            # Note: asof join will approximate for floats, but
-            # only for one column at a time, this for loop
-            # will incrementally do the join, filtering out
-            # mismatching rows iteratively. If in the future, the `on` argument
-            # accepts multiple columns, we can drop this for loop.
-            # One control-value-column at a time,
-            # we filter out rows with control values
-            # that are not approximately matching the control value
-            # of our to-be-evaluated controls.
-            for control_name in control_names:
-                left = (
-                    left.sort(["model_realization", control_name])
-                    .join_asof(
-                        right.sort(["model_realization", control_name]),
-                        on=control_name,
-                        by="model_realization",  # pre-join by model realization
-                        tolerance=EPS,  # Same as np.allclose with atol=EPS
-                        check_sortedness=False,  # Ref: https://github.com/pola-rs/polars/issues/21693
-                    )
-                    .filter(pl.col("realization_right").is_not_null())
-                )
-
-                left = left.drop([s for s in left.columns if s.endswith("_right")])
-
-                if left.is_empty():
-                    break
-
-            cache_hits_df = left if not left.is_empty() else None
+        cache_hits_df = EverestRunModel.find_cached_results(
+            control_values, model_realizations, all_results, control_names
+        )
 
         sim_id_counter = 0
         for flat_index, (
