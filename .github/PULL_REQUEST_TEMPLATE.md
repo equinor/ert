@@ -19,7 +19,7 @@ _Short description of the approach_
 - [ ] **New behavior or changes to existing untested code**: Ensured that unit tests are added (See [Ground Rules](https://github.com/equinor/ert/blob/main/CONTRIBUTING.md#ground-rules)).
 - [ ] **Large PR**: Prepare changes in small commits for more convenient review
 - [ ] **Bug fix**: Add regression test for the bug
-- [ ] **Bug fix**: Create Backport PR to latest release
+- [ ] **Bug fix**: Add backport label to latest release (format: 'backport release-branch-name')
 
 <!--
 Adding labels helps the maintainers when writing release notes. This is the [list of release note labels](https://github.com/equinor/ert/labels?q=release-notes).
