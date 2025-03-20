@@ -245,35 +245,26 @@ def test_that_index_file_is_read(tmpdir):
         assert observations["OBS"].observations[0].indices == [0, 2, 4, 6, 8]
 
 
-def test_that_missing_obs_file_raises_exception(tmpdir):
-    with tmpdir.as_cwd():
-        with open("config.ert", "w", encoding="utf-8") as fh:
-            fh.writelines(
-                dedent(
+def test_that_missing_obs_file_raises_exception():
+    with pytest.raises(
+        expected_exception=ConfigValidationError,
+        match="did not resolve to a valid path:\n OBS_FILE",
+    ):
+        ErtConfig.from_dict(
+            {
+                "OBS_CONFIG": (
+                    "obsconf",
                     """
-                    JOBNAME my_name%d
-                    NUM_REALIZATIONS 10
-                    OBS_CONFIG observations
-                    """
+                    GENERAL_OBSERVATION OBS {
+                       DATA       = RES;
+                       INDEX_LIST = 0,2,4,6,8;
+                       RESTART    = 0;
+                       OBS_FILE   = does_not_exist/at_all;
+                    };
+                    """,
                 )
-            )
-        with open("observations", "w", encoding="utf-8") as fo:
-            fo.writelines(
-                """
-                GENERAL_OBSERVATION OBS {
-                   DATA       = RES;
-                   INDEX_LIST = 0,2,4,6,8;
-                   RESTART    = 0;
-                   OBS_FILE   = obs_data.txt;
-                };
-                """
-            )
-
-        with pytest.raises(
-            expected_exception=ConfigValidationError,
-            match="did not resolve to a valid path:\n OBS_FILE",
-        ):
-            ErtConfig.from_file("config.ert")
+            }
+        )
 
 
 def test_that_missing_time_map_raises_exception(tmpdir):
