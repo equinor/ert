@@ -1,4 +1,5 @@
 import logging
+import re
 from collections.abc import Callable, Iterator, Sequence
 from itertools import chain
 
@@ -115,3 +116,28 @@ def test_add_logging_handle(plugin_manager):
 
     pm = plugin_manager(Plugin())
     assert pm.hook.add_log_handle_to_root() == [handle]
+
+
+def test_logging_from_plugin(caplog, plugin_manager):
+    handle = logging.StreamHandler()
+
+    logging.getLogger("my.test").addHandler(handle)
+
+    class Plugin:
+        @hookimpl
+        def add_log_handle_to_root(self):
+            return handle
+
+        def log(self):
+            logging.getLogger("my.plugin").info("Hello from plugin")
+
+    pm = plugin_manager(Plugin())
+    pm.hook.add_log_handle_to_root()
+
+    caplog.set_level(logging.DEBUG)
+
+    logging.getLogger("my.test").debug("Hello from my test")
+    Plugin().log()
+
+    assert re.search(r"DEBUG.*my\.test:.*Hello from my test", caplog.text)
+    assert re.search(r"INFO.*my\.plugin:.*Hello from plugin", caplog.text)
