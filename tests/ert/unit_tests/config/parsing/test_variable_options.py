@@ -1,6 +1,6 @@
 import pytest
 
-from ert.config._option_dict import parse_variable_options
+from ert.config.parsing._option_dict import parse_variable_options
 
 
 @pytest.mark.parametrize(

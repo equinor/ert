@@ -268,8 +268,8 @@ class ErtConfigValues:
     history_source: HistorySource
     refcase: str
     gen_kw_export_name: str
-    field: list[tuple[str, ...]]
-    gen_data: list[tuple[str, ...]]
+    field: list[tuple[str, str, str, dict[str, str]]]
+    gen_data: list[tuple[str, dict[str, str]]]
     max_submit: PositiveInt
     num_cpu: PositiveInt
     queue_system: Literal["LSF", "LOCAL", "TORQUE", "SLURM"]
@@ -387,9 +387,13 @@ def ert_config_values(draw, use_eclbase=booleans):
         small_list(
             st.tuples(
                 st.builds(lambda x: f"GEN_DATA-{x}", words),
-                st.builds(lambda x: f"RESULT_FILE:{x}", format_result_file_name),
-                st.just("INPUT_FORMAT:ASCII"),
-                st.builds(lambda x: f"REPORT_STEPS:{x}", report_steps()),
+                st.fixed_dictionaries(
+                    {
+                        "RESULT_FILE": format_result_file_name,
+                        "INPUT_FORMAT": st.just("ASCII"),
+                        "REPORT_STEPS": report_steps(),
+                    }
+                ),
             ),
             unique_by=lambda tup: tup[0],
         )
@@ -471,12 +475,16 @@ def ert_config_values(draw, use_eclbase=booleans):
                     st.builds(lambda w: "FIELD-" + w, words),
                     st.just("PARAMETER"),
                     field_output_names(),
-                    st.builds(lambda x: f"FORWARD_INIT:{x}", booleans),
-                    st.builds(lambda x: f"INIT_TRANSFORM:{x}", transforms),
-                    st.builds(lambda x: f"OUTPUT_TRANSFORM:{x}", transforms),
-                    st.builds(lambda x: f"MIN:{x}", small_floats),
-                    st.builds(lambda x: f"MAX:{x}", small_floats),
-                    st.builds(lambda x: f"INIT_FILES:{x}", file_names),
+                    st.fixed_dictionaries(
+                        {
+                            "FORWARD_INIT": st.builds(str, booleans),
+                            "INIT_TRANSFORM": transforms,
+                            "OUTPUT_TRANSFORM": transforms,
+                            "MIN": st.builds(str, small_floats),
+                            "MAX": st.builds(str, small_floats),
+                            "INIT_FILES": file_names,
+                        }
+                    ),
                 ),
                 unique_by=lambda element: element[0],
             ),
@@ -716,13 +724,25 @@ def to_config_file(filename, config_values):
                         f"({', '.join(f'{a}={b}' for a, b in job_args)})\n"
                     )
             elif keyword == ConfigKeys.FIELD:
-                # keyword_value is a list of dicts, each defining a field
-                for field_vals in keyword_value:
-                    config.write(" ".join([keyword, *field_vals]) + "\n")
+                for line in keyword_value:
+                    config.write(keyword)
+                    config.write(" ")
+                    config.write(line[0])
+                    config.write(" ")
+                    config.write(line[1])
+                    config.write(" ")
+                    config.write(line[2])
+                    config.write(" ")
+                    config.write(" ".join(f"{k}:{v}" for k, v in line[3].items()))
+                    config.write("\n")
             elif keyword == ConfigKeys.GEN_DATA:
-                # keyword_value is a list of dicts, each defining a field
-                for gen_data_entry in keyword_value:
-                    config.write(" ".join([keyword, *gen_data_entry]) + "\n")
+                for line in keyword_value:
+                    config.write(keyword)
+                    config.write(" ")
+                    config.write(line[0])
+                    config.write(" ")
+                    config.write(" ".join(f"{k}:{v}" for k, v in line[1].items()))
+                    config.write("\n")
             elif keyword == ConfigKeys.INSTALL_JOB_DIRECTORY:
                 for install_dir in keyword_value:
                     config.write(f"{keyword} {install_dir}\n")

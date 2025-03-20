@@ -6,7 +6,12 @@ import hypothesis.strategies as st
 import pytest
 from hypothesis import given
 
-from ert.config import ConfigValidationError, GenDataConfig, InvalidResponseFile
+from ert.config import (
+    ConfigValidationError,
+    ErtConfig,
+    GenDataConfig,
+    InvalidResponseFile,
+)
 
 
 @pytest.mark.parametrize(
@@ -29,22 +34,24 @@ def test_gen_data_default_report_step():
 
 def test_empty_result_file_gives_validation_error():
     with pytest.raises(ConfigValidationError, match="Invalid argument 'RESULT_FILE:'"):
-        GenDataConfig.from_config_dict({"GEN_DATA": [["NAME", "RESULT_FILE:"]]})
+        ErtConfig.from_file_contents("NUM_REALIZATIONS 1\nGEN_DATA NAME RESULT_FILE:")
 
 
 def test_unset_result_file_gives_validation_error():
     with pytest.raises(ConfigValidationError, match="Missing RESULT_FILE for GEN_DATA"):
-        GenDataConfig.from_config_dict({"GEN_DATA": [["NAME"]]})
+        GenDataConfig.from_config_dict({"GEN_DATA": [["NAME", {}]]})
 
 
 def test_invalid_result_file_gives_validation_error():
     with pytest.raises(ConfigValidationError, match=r"RESULT_FILE:/tmp .* is invalid"):
-        GenDataConfig.from_config_dict({"GEN_DATA": [["NAME", "RESULT_FILE:/tmp"]]})
+        GenDataConfig.from_config_dict(
+            {"GEN_DATA": [["NAME", {"RESULT_FILE": "/tmp"}]]}
+        )
 
 
 def test_result_file_is_appended_to_input_files():
     gen_data = GenDataConfig.from_config_dict(
-        {"GEN_DATA": [["NAME", "RESULT_FILE:%d.out", "REPORT_STEPS:1"]]}
+        {"GEN_DATA": [["NAME", {"RESULT_FILE": "%d.out", "REPORT_STEPS": "1"}]]}
     )
     assert "%d.out" in gen_data.input_files
 
@@ -53,13 +60,13 @@ def test_result_file_is_appended_to_input_files():
 def test_non_range_report_step_gives_validation_error(not_a_range):
     with pytest.raises(ConfigValidationError, match="must be a valid range string"):
         GenDataConfig.from_config_dict(
-            {"GEN_DATA": [["NAME", "RESULT_FILE:%d", f"REPORT_STEPS:{not_a_range}"]]}
+            {"GEN_DATA": [["NAME", {"RESULT_FILE": "%d", "REPORT_STEPS": not_a_range}]]}
         )
 
 
 def test_report_step_option_sets_the_report_steps_property():
     gen_data = GenDataConfig.from_config_dict(
-        {"GEN_DATA": [["NAME", "RESULT_FILE:%d", "REPORT_STEPS:1-2,5-8"]]}
+        {"GEN_DATA": [["NAME", {"RESULT_FILE": "%d", "REPORT_STEPS": "1-2,5-8"}]]}
     )
     assert gen_data.report_steps_list == [[1, 2, 5, 6, 7, 8]]
 

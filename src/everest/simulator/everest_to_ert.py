@@ -484,7 +484,7 @@ def _extract_results(ever_config: EverestConfig, ert_config: dict[str, Any]) -> 
     ]
     gen_data = ert_config.get(ErtConfigKeys.GEN_DATA, [])
     for name in objectives_names + constraint_names:
-        gen_data.append((name, f"RESULT_FILE:{name}"))
+        gen_data.append((name, {"RESULT_FILE": name}))
     ert_config[ErtConfigKeys.GEN_DATA] = gen_data
 
 

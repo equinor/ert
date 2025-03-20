@@ -88,9 +88,11 @@ def test_init_files_must_contain_placeholder_when_not_forward_init():
         SurfaceConfig.from_config_list(
             [
                 "TOP",
-                "INIT_FILES:path/surf.irap",
-                "OUTPUT_FILE:path/not_surface",
-                "BASE_SURFACE:surface/small_out.irap",
+                {
+                    "INIT_FILES": "path/surf.irap",
+                    "OUTPUT_FILE": "path/not_surface",
+                    "BASE_SURFACE": "surface/small_out.irap",
+                },
             ]
         )
 
@@ -103,9 +105,11 @@ def test_when_base_surface_does_not_exist_gives_config_error():
         SurfaceConfig.from_config_list(
             [
                 "TOP",
-                "INIT_FILES:path/%dsurf.irap",
-                "OUTPUT_FILE:path/not_surface",
-                "BASE_SURFACE:surface/small_out.irap",
+                {
+                    "INIT_FILES": "path/%dsurf.irap",
+                    "OUTPUT_FILE": "path/not_surface",
+                    "BASE_SURFACE": "surface/small_out.irap",
+                },
             ]
         )
 
@@ -115,7 +119,7 @@ def test_surface_without_output_file_gives_config_error():
         ConfigValidationError,
         match="Missing required OUTPUT_FILE",
     ):
-        SurfaceConfig.from_config_list(["TOP"])
+        SurfaceConfig.from_config_list(["TOP", {}])
 
 
 def test_surface_without_init_file_gives_config_error():
@@ -123,7 +127,7 @@ def test_surface_without_init_file_gives_config_error():
         ConfigValidationError,
         match="Missing required INIT_FILES",
     ):
-        SurfaceConfig.from_config_list(["TOP"])
+        SurfaceConfig.from_config_list(["TOP", {}])
 
 
 def test_surface_without_base_surface_gives_config_error():
@@ -131,13 +135,13 @@ def test_surface_without_base_surface_gives_config_error():
         ConfigValidationError,
         match="Missing required BASE_SURFACE",
     ):
-        SurfaceConfig.from_config_list(["TOP"])
+        SurfaceConfig.from_config_list(["TOP", {}])
 
 
 @pytest.mark.usefixtures("use_tmpdir")
 @pytest.mark.parametrize(
     "forward_init_option, expected_forward_init",
-    [(["FORWARD_INIT:False"], False), (["FORWARD_INIT:True"], True), ([], False)],
+    [({"FORWARD_INIT": "False"}, False), ({"FORWARD_INIT": "True"}, True), ({}, False)],
 )
 def test_config_file_line_sets_the_corresponding_properties(
     forward_init_option, expected_forward_init
@@ -156,10 +160,12 @@ def test_config_file_line_sets_the_corresponding_properties(
     surface_config = SurfaceConfig.from_config_list(
         [
             "TOP",
-            "BASE_SURFACE:base_surface.irap",
-            "OUTPUT_FILE:out.txt",
-            "INIT_FILES:%dsurf.irap",
-            *forward_init_option,
+            {
+                "BASE_SURFACE": "base_surface.irap",
+                "OUTPUT_FILE": "out.txt",
+                "INIT_FILES": "%dsurf.irap",
+                **forward_init_option,
+            },
         ],
     )
 
@@ -185,8 +191,10 @@ def test_invalid_surface_files_gives_config_error():
         _ = SurfaceConfig.from_config_list(
             [
                 "TOP",
-                "BASE_SURFACE:base_surface.irap",
-                "OUTPUT_FILE:out.txt",
-                "INIT_FILES:%dsurf.irap",
+                {
+                    "BASE_SURFACE": "base_surface.irap",
+                    "OUTPUT_FILE": "out.txt",
+                    "INIT_FILES": "%dsurf.irap",
+                },
             ]
         )

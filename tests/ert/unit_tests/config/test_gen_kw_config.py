@@ -66,7 +66,7 @@ def test_short_definition_raises_config_error(tmp_path):
             [
                 "GEN",
                 str(parameter_file),
-                "INIT_FILES:%dgen_init.txt",
+                {"INIT_FILES": "%dgen_init.txt"},
             ]
         )
 
@@ -569,6 +569,7 @@ def test_gen_kw_config_validation():
                     "template.txt",
                     "nothing_here.txt",
                     "parameters.txt",
+                    {},
                 ]
             ],
         }
@@ -582,6 +583,7 @@ def test_gen_kw_config_validation():
                     "template.txt",
                     "nothing_here.txt",
                     "parameters_with_comments.txt",
+                    {},
                 ]
             ],
         }
@@ -598,6 +600,7 @@ def test_gen_kw_config_validation():
                         make_context_string("no_template_here.txt", "config.ert"),
                         "nothing_here.txt",
                         "parameters.txt",
+                        {},
                     ]
                 ],
             }
@@ -614,6 +617,7 @@ def test_gen_kw_config_validation():
                         "template.txt",
                         "nothing_here.txt",
                         make_context_string("no_parameter_here.txt", "config.ert"),
+                        {},
                     ]
                 ],
             }
@@ -650,6 +654,7 @@ def test_suggestion_on_empty_parameter_file(tmp_path):
                         "empty_template.txt",
                         "output.txt",
                         make_context_string("coeffs.txt", "config.ert"),
+                        {},
                     ]
                 ],
             }

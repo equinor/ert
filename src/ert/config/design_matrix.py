@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from pathlib import Path
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, cast
 
 import numpy as np
 import pandas as pd
@@ -10,7 +10,6 @@ from pandas.api.types import is_integer_dtype
 
 from ert.config.gen_kw_config import GenKwConfig, TransformFunctionDefinition
 
-from ._option_dict import option_dict
 from .parsing import ConfigValidationError, ErrorInfo
 
 if TYPE_CHECKING:
@@ -41,9 +40,9 @@ class DesignMatrix:
             ) from exc
 
     @classmethod
-    def from_config_list(cls, config_list: list[str]) -> DesignMatrix:
-        filename = Path(config_list[0])
-        options = option_dict(config_list, 1)
+    def from_config_list(cls, config_list: list[str | dict[str, str]]) -> DesignMatrix:
+        filename = Path(cast(str, config_list[0]))
+        options = cast(dict[str, str], config_list[1])
         design_sheet = options.get("DESIGN_SHEET")
         default_sheet = options.get("DEFAULT_SHEET")
         errors = []

@@ -119,9 +119,11 @@ def test_ensemble_config_duplicate_node_names():
         ConfigKeys.GEN_DATA: [
             [
                 duplicate_name,
-                "INPUT_FORMAT:ASCII",
-                "RESULT_FILE:snake_oil_opr_diff_%d.txt",
-                "REPORT_STEPS:0,1,2,199",
+                {
+                    "INPUT_FORMAT": "ASCII",
+                    "RESULT_FILE": "snake_oil_opr_diff_%d.txt",
+                    "REPORT_STEPS": "0,1,2,199",
+                },
             ],
         ],
         ConfigKeys.GEN_KW: [
@@ -130,7 +132,7 @@ def test_ensemble_config_duplicate_node_names():
                 "FAULT_TEMPLATE",
                 "MULTFLT.INC",
                 "MULTFLT.TXT",
-                "FORWARD_INIT:FALSE",
+                {"FORWARD_INIT": "FALSE"},
             ]
         ],
     }
@@ -177,14 +179,14 @@ def test_logging_of_duplicate_gen_kw_parameter_names(caplog):
                 "FAULT_TEMPLATE",
                 "MULTFLT.INC",
                 "MULTFLT1.TXT",
-                "FORWARD_INIT:FALSE",
+                {"FORWARD_INIT": "FALSE"},
             ],
             [
                 "test_group2",
                 "FAULT_TEMPLATE",
                 "MULTFLT.INC",
                 "MULTFLT2.TXT",
-                "FORWARD_INIT:FALSE",
+                {"FORWARD_INIT": "FALSE"},
             ],
         ],
     }
