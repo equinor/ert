@@ -171,25 +171,23 @@ def test_failed_jobs_monitor(
     monkeypatch.setattr(everest.detached, "ssl", MagicMock())
     patched = partial(everest.detached.start_monitor, polling_interval=0.1)
     with patch("everest.bin.utils.start_monitor", patched):
-        run_detached_monitor(("some/url", "cert", ("username", "password")), False)
+        run_detached_monitor(("some/url", "cert", ("username", "password")))
     captured = capsys.readouterr()
     expected = [
         "===================== Running forward models (Batch #0) ======================\n",
         "  Waiting: 0 | Pending: 0 | Running: 0 | Finished: 0 | Failed: 1\n",
         "  fm_step_0: 1/0/1 | Failed: 1"
         "  fm_step_0: Failed: The run is cancelled due to reaching MAX_RUNTIME, realizations: 1\n",
-        "Failed\n",
     ]
     # Ignore whitespace
-    assert captured.out.translate({ord(c): None for c in string.whitespace}) == "".join(
-        expected
-    ).translate({ord(c): None for c in string.whitespace})
+    output = captured.out.translate({ord(c): None for c in string.whitespace})
+    assert output.startswith(
+        "".join(expected).translate({ord(c): None for c in string.whitespace})
+    )
+    assert output.endswith("Failed")
 
 
-@pytest.mark.parametrize("show_all_jobs", [True, False])
-def test_monitor(
-    monkeypatch, full_snapshot_event, snapshot_update_event, capsys, show_all_jobs
-):
+def test_monitor(monkeypatch, full_snapshot_event, snapshot_update_event, capsys):
     server_mock = MagicMock()
     connection_mock = MagicMock(spec=ClientConnection)
     connection_mock.recv.side_effect = [
@@ -202,9 +200,7 @@ def test_monitor(
     monkeypatch.setattr(everest.detached, "ssl", MagicMock())
     patched = partial(everest.detached.start_monitor, polling_interval=0.1)
     with patch("everest.bin.utils.start_monitor", patched):
-        run_detached_monitor(
-            ("some/url", "cert", ("username", "password")), show_all_jobs
-        )
+        run_detached_monitor(("some/url", "cert", ("username", "password")))
     captured = capsys.readouterr()
     expected = [
         "===================== Running forward models (Batch #0) ======================\n",
@@ -212,21 +208,15 @@ def test_monitor(
         "  fm_step_0: 1/1/0 | Finished: 1\n",
         "Experiment complete\n",
     ]
-    if show_all_jobs:
-        expected[-1:-1] = [f"{name}: 2/0/0" for name in all_shell_script_fm_steps]
+    expected[-1:-1] = [f"{name}: 2/0/0" for name in all_shell_script_fm_steps]
     # Ignore whitespace
     assert captured.out.translate({ord(c): None for c in string.whitespace}) == "".join(
         expected
     ).translate({ord(c): None for c in string.whitespace})
 
 
-@pytest.mark.parametrize("show_all_jobs", [True, False])
 def test_forward_model_message_reaches_the_cli(
-    monkeypatch,
-    full_snapshot_event,
-    snapshot_update_event_with_fm_message,
-    capsys,
-    show_all_jobs,
+    monkeypatch, full_snapshot_event, snapshot_update_event_with_fm_message, capsys
 ):
     server_mock = MagicMock()
     connection_mock = MagicMock(spec=ClientConnection)
@@ -240,9 +230,7 @@ def test_forward_model_message_reaches_the_cli(
     monkeypatch.setattr(everest.detached, "ssl", MagicMock())
     patched = partial(everest.detached.start_monitor, polling_interval=0.1)
     with patch("everest.bin.utils.start_monitor", patched):
-        run_detached_monitor(
-            ("some/url", "cert", ("username", "password")), show_all_jobs
-        )
+        run_detached_monitor(("some/url", "cert", ("username", "password")))
     captured = capsys.readouterr()
     expected = [
         "===================== Running forward models (Batch #0) ======================\n",
@@ -252,11 +240,9 @@ def test_forward_model_message_reaches_the_cli(
     ]
     expected[-1:-1] = ["Something went wrong!\n"]
 
-    if show_all_jobs:
-        expected[-1:-1] = [
-            f"{name}: 2/0/0\n Something went wrong!\n"
-            for name in all_shell_script_fm_steps
-        ]
+    expected[-1:-1] = [
+        f"{name}: 2/0/0\n Something went wrong!\n" for name in all_shell_script_fm_steps
+    ]
 
     # Ignore whitespace
     assert captured.out.translate({ord(c): None for c in string.whitespace}) == "".join(

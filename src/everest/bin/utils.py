@@ -21,7 +21,6 @@ from ert.ensemble_evaluator import (
     FullSnapshotEvent,
     SnapshotUpdateEvent,
 )
-from ert.resources import all_shell_script_fm_steps
 from everest.config.server_config import ServerConfig
 from everest.detached import (
     ServerStatus,
@@ -131,8 +130,7 @@ class _DetachedMonitor:
     INDENT = 2
     FLOAT_FMT = ".5g"
 
-    def __init__(self, show_all_jobs: bool) -> None:
-        self._show_all_jobs: bool = show_all_jobs
+    def __init__(self) -> None:
         self._clear_lines: int = 0
         self._batches_done = set[int]()
         self._last_reported_batch: int = -1
@@ -164,7 +162,7 @@ class _DetachedMonitor:
                             )
                             summary = self._get_progress_summary(event.status_count)
                             job_states = self._get_job_states(
-                                self._snapshots[batch_number], self._show_all_jobs
+                                self._snapshots[batch_number]
                             )
                             msg = (
                                 self._join_two_newlines_indent(
@@ -265,7 +263,7 @@ class _DetachedMonitor:
         )
 
     @classmethod
-    def _get_job_states(cls, snapshot: EnsembleSnapshot, show_all_jobs: bool) -> str:
+    def _get_job_states(cls, snapshot: EnsembleSnapshot) -> str:
         print_lines = []
         jobs_status = cls._get_jobs_status(snapshot)
         forward_model_messages = [
@@ -275,8 +273,6 @@ class _DetachedMonitor:
             for _, v in snapshot.reals.items()
             if v.get("message")
         ]
-        if not show_all_jobs:
-            jobs_status = cls._filter_jobs(jobs_status)
         if jobs_status:
             max_widths = {
                 state: _get_max_width(
@@ -318,10 +314,6 @@ class _DetachedMonitor:
                 job_progress[job_idx].errors[error].append(int(realization))
         return list(job_progress.values())
 
-    @staticmethod
-    def _filter_jobs(jobs: list[JobProgress]) -> list[JobProgress]:
-        return [job for job in jobs if job.name not in all_shell_script_fm_steps]
-
     @classmethod
     def _join_one_newline_indent(cls, sequence: Sequence[str]) -> str:
         return ("\n" + " " * cls.INDENT).join(sequence)
@@ -344,11 +336,8 @@ class _DetachedMonitor:
             print(colorama.Cursor.UP(), end=colorama.ansi.clear_line())
 
 
-def run_detached_monitor(
-    server_context: tuple[str, str, tuple[str, str]],
-    show_all_jobs: bool = False,
-) -> None:
-    monitor = _DetachedMonitor(show_all_jobs)
+def run_detached_monitor(server_context: tuple[str, str, tuple[str, str]]) -> None:
+    monitor = _DetachedMonitor()
     start_monitor(server_context, callback=monitor.update)
 
 

@@ -98,7 +98,7 @@ def _build_args_parser() -> argparse.ArgumentParser:
     arg_parser.add_argument(
         "--show-all-jobs",
         action="store_true",
-        help="Display all jobs executed from the forward model",
+        help="This option no longer has an effect, and will be removed in a future version",
     )
     arg_parser.add_argument(
         "--skip-prompt",
@@ -191,10 +191,7 @@ async def run_everest(options: argparse.Namespace) -> None:
             monitor_thread = ErtThread(
                 target=run_detached_monitor,
                 name="Everest CLI monitor thread",
-                args=[
-                    ServerConfig.get_server_context(options.config.output_dir),
-                    options.show_all_jobs,
-                ],
+                args=[ServerConfig.get_server_context(options.config.output_dir)],
                 daemon=True,
             )
             monitor_thread.start()
@@ -205,8 +202,7 @@ async def run_everest(options: argparse.Namespace) -> None:
             run_detached_monitor(
                 server_context=ServerConfig.get_server_context(
                     options.config.output_dir
-                ),
-                show_all_jobs=options.show_all_jobs,
+                )
             )
 
         logger.debug("Everest experiment finished")
