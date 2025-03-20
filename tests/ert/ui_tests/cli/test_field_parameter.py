@@ -11,9 +11,7 @@ import pytest
 import resfo
 import xtgeo
 
-from ert.analysis import (
-    smoother_update,
-)
+from ert.analysis import smoother_update
 from ert.config import ErtConfig, ESSettings, UpdateSettings
 from ert.mode_definitions import ENSEMBLE_SMOOTHER_MODE
 from ert.storage import open_storage
