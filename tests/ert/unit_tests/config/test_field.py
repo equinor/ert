@@ -6,7 +6,7 @@ import xtgeo
 
 from ert.config import ConfigValidationError, ConfigWarning, Field
 from ert.config.field import TRANSFORM_FUNCTIONS
-from ert.config.parsing import init_user_config_schema, parse
+from ert.config.parsing import init_user_config_schema, parse_contents
 from ert.enkf_main import sample_prior
 from ert.field_utils import Shape, read_field
 
@@ -71,17 +71,17 @@ def egrid_file(tmp_path, grid_shape):
 
 
 @pytest.fixture
-def parse_field_line(tmp_path, grid_shape, egrid_file):
-    config_file = tmp_path / "test.ert"
-
+def parse_field_line(grid_shape, egrid_file):
     def make_field(field_line):
-        config_file.write_text(
-            "NUM_REALIZATIONS 1\nGRID " + egrid_file + "\n" + field_line + "\n",
-            encoding="utf-8",
+        return Field.from_config_list(
+            egrid_file,
+            grid_shape,
+            parse_contents(
+                f"NUM_REALIZATIONS 1\nGRID {egrid_file}\n" + field_line,
+                init_user_config_schema(),
+                "test.ert",
+            )["FIELD"][0],
         )
-        parsed = parse(str(config_file), init_user_config_schema(), None)
-
-        return Field.from_config_list(parsed["GRID"], grid_shape, parsed["FIELD"][0])
 
     return make_field
 
