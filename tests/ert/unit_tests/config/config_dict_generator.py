@@ -263,7 +263,7 @@ class ErtConfigValues:
     jobname: str | None
     runpath: str
     enspath: str
-    time_map: str
+    time_map: tuple[str, str]
     obs_config: str
     history_source: HistorySource
     refcase: str
@@ -284,7 +284,6 @@ class ErtConfigValues:
     refcase_smspec: Smspec
     refcase_unsmry: Unsmry
     egrid: EGrid
-    datetimes: list[datetime.datetime]
 
     def to_config_dict(self, config_file, cwd, all_defines=True):
         result = {
@@ -465,7 +464,10 @@ def ert_config_values(draw, use_eclbase=booleans):
             ),
             runpath=st.just("runpath-" + draw(format_runpath_file_name)),
             enspath=st.just(draw(words) + ".enspath"),
-            time_map=st.builds(lambda fn: fn + ".timemap", file_names),
+            time_map=st.tuples(
+                st.builds(lambda fn: fn + ".timemap", file_names),
+                st.just("\n".join(dt.date().isoformat() for dt in dates)),
+            ),
             obs_config=st.just("obs-config-" + draw(file_names)),
             history_source=st.just(HistorySource.REFCASE_SIMULATED),
             refcase=st.just("refcase/" + draw(file_names)),
@@ -509,7 +511,6 @@ def ert_config_values(draw, use_eclbase=booleans):
             refcase_smspec=st.just(smspec),
             refcase_unsmry=st.just(unsmry),
             egrid=egrids,
-            datetimes=st.just(dates),
         )
     )
 
@@ -595,7 +596,7 @@ def config_generators(draw, use_eclbase=booleans):
         [
             config_values.data_file,
             config_values.job_script,
-            config_values.time_map,
+            config_values.time_map[0],
             config_values.obs_config,
         ]
     )
@@ -683,11 +684,9 @@ def config_generators(draw, use_eclbase=booleans):
                 os.mkdir("./refcase")
             config_values.refcase_smspec.to_file(f"./refcase/{summary_basename}.SMSPEC")
             config_values.refcase_unsmry.to_file(f"./refcase/{summary_basename}.UNSMRY")
-            with open(config_values.time_map, "w", encoding="utf-8") as fh:
-                for dt in config_values.datetimes:
-                    fh.write(dt.date().isoformat() + "\n")
-
             config_values.egrid.to_file(config_values.grid_file)
+            with open(config_values.time_map[0], "w", encoding="utf-8") as fh:
+                fh.write(config_values.time_map[1])
 
             if config_file_name is not None:
                 to_config_file(config_file_name, config_values)
@@ -757,5 +756,7 @@ def to_config_file(filename, config_values):
                         f"{keyword} {setting[0]} {setting[1]}"
                         + (f" {setting[2]}\n" if len(setting) == 3 else "\n")
                     )
+            elif keyword == ConfigKeys.TIME_MAP:
+                config.write(f"{keyword} {keyword_value[0]}\n")
             else:
                 config.write(f"{keyword} {keyword_value}\n")

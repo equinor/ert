@@ -331,5 +331,9 @@ def existing_path_keyword(keyword: str) -> SchemaItem:
     return SchemaItem(kw=keyword, type_map=[SchemaItemType.EXISTING_PATH])
 
 
+def existing_path_inline_keyword(keyword: str) -> SchemaItem:
+    return SchemaItem(kw=keyword, type_map=[SchemaItemType.EXISTING_PATH_INLINE])
+
+
 def single_arg_keyword(keyword: str) -> SchemaItem:
     return SchemaItem(kw=keyword, argc_max=1, argc_min=1)

@@ -4,6 +4,7 @@ from .config_schema_deprecations import deprecated_keywords_list
 from .config_schema_item import (
     SchemaItem,
     Varies,
+    existing_path_inline_keyword,
     existing_path_keyword,
     float_keyword,
     int_keyword,
@@ -349,7 +350,7 @@ def init_user_config_schema() -> ConfigSchemaDict:
         data_kw_keyword(),
         define_keyword(),
         existing_path_keyword(ConfigKeys.OBS_CONFIG),
-        existing_path_keyword(ConfigKeys.TIME_MAP),
+        existing_path_inline_keyword(ConfigKeys.TIME_MAP),
         single_arg_keyword(ConfigKeys.GEN_KW_EXPORT_NAME),
         history_source_keyword(),
         path_keyword(ConfigKeys.RUNPATH_FILE),
