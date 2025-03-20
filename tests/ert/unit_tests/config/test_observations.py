@@ -319,45 +319,29 @@ def test_that_badly_formatted_obs_file_shows_informative_error_message(tmpdir):
 
 def test_that_giving_both_index_file_and_index_list_raises_an_exception(tmpdir):
     with tmpdir.as_cwd():
-        with open("config.ert", "w", encoding="utf-8") as fh:
-            fh.writelines(
-                dedent(
-                    """
-                    JOBNAME my_name%d
-                    NUM_REALIZATIONS 10
-                    OBS_CONFIG observations
-                    GEN_DATA RES RESULT_FILE:out_%d REPORT_STEPS:0 INPUT_FORMAT:ASCII
-                    TIME_MAP time_map.txt
-                    """
-                )
-            )
         with open("obs_idx.txt", "w", encoding="utf-8") as fh:
             fh.write("0\n2\n4\n6\n8")
-        with open("obs_data.txt", "w", encoding="utf-8") as fh:
-            for i in range(9):
-                fh.write(f"{float(i)} 0.1\n")
-        with open("time_map.txt", "w", encoding="utf-8") as fo:
-            fo.writelines("2017-11-09")
-        with open("observations", "w", encoding="utf-8") as fo:
-            fo.writelines(
-                dedent(
-                    """
-                    GENERAL_OBSERVATION OBS {
-                       DATA       = RES;
-                       INDEX_LIST = 0,2,4,6,8;
-                       INDEX_FILE = obs_idx.txt;
-                       DATE    = 2017-11-09;
-                       OBS_FILE   = obs_data.txt;
-                    };
-                    """,
-                )
-            )
-
         with pytest.raises(
             expected_exception=ConfigValidationError,
             match="both INDEX_FILE and INDEX_LIST",
         ):
-            ErtConfig.from_file("config.ert")
+            ErtConfig.from_dict(
+                {
+                    "GEN_DATA": [["RES", {"RESULT_FILE": "out"}]],
+                    "OBS_CONFIG": (
+                        "obsconf",
+                        """
+                        GENERAL_OBSERVATION OBS {
+                           DATA       = RES;
+                           INDEX_LIST = 0,2,4,6,8;
+                           INDEX_FILE = obs_idx.txt;
+                           VALUE      = 0.0;
+                           ERROR      = 0.1;
+                        };
+                        """,
+                    ),
+                }
+            )
 
 
 def run_sim(start_date, keys=None, values=None, days=None):
