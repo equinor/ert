@@ -167,25 +167,12 @@ def test_gen_obs_invalid_observation_std(std):
         )
 
 
-def test_that_empty_observations_file_causes_exception(tmpdir):
-    with tmpdir.as_cwd():
-        config = dedent(
-            """
-        JOBNAME my_name%d
-        NUM_REALIZATIONS 10
-        OBS_CONFIG observations
-        """
-        )
-        with open("config.ert", "w", encoding="utf-8") as fh:
-            fh.writelines(config)
-        with open("observations", "w", encoding="utf-8") as fh:
-            fh.writelines("")
-
-        with pytest.raises(
-            expected_exception=ConfigValidationError,
-            match="Empty observations file",
-        ):
-            ErtConfig.from_file("config.ert")
+def test_that_empty_observations_file_causes_exception():
+    with pytest.raises(
+        expected_exception=ConfigValidationError,
+        match="Empty observations file",
+    ):
+        ErtConfig.from_dict({"OBS_CONFIG": ("obs_conf", "")})
 
 
 def test_that_having_no_refcase_but_history_observations_causes_exception(tmpdir):
