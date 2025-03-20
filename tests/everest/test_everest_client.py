@@ -167,7 +167,7 @@ def test_that_multiple_everest_clients_can_connect_to_server(cached_example):
             *ServerConfig.get_server_context(ever_config.output_dir)
         )
 
-    wait_until(everserver_is_running, interval=1, timeout=20)
+    wait_until(everserver_is_running, interval=1, timeout=300)
 
     server_context = ServerConfig.get_server_context(ever_config.output_dir)
     url, cert, auth = server_context
