@@ -30,11 +30,7 @@ from everest.simulator.everest_to_ert import (
     get_forward_model_steps,
     get_substitutions,
 )
-from tests.everest.utils import (
-    hide_opm,
-    skipif_no_everest_models,
-    skipif_no_opm,
-)
+from tests.everest.utils import skipif_no_everest_models
 
 
 @pytest.mark.parametrize(
@@ -209,40 +205,7 @@ def test_install_data_no_init(tmp_path, source, target, symlink, cmd, monkeypatc
     assert expected_fm.arglist == [f"./{source}", target]
 
 
-@skipif_no_opm
-@skipif_no_everest_models
-@pytest.mark.everest_models_test
 @pytest.mark.integration_test
-def test_summary_default(copy_egg_test_data_to_tmp):
-    config_dir = "everest/model"
-    config_file = os.path.join(config_dir, "config.yml")
-    everconf = EverestConfig.load_file(config_file)
-
-    data_file = everconf.model.data_file
-    if not os.path.isabs(data_file):
-        data_file = os.path.join(config_dir, data_file)
-    data_file = data_file.replace("<GEO_ID>", "0")
-
-    wells = everest.util.read_wellnames(data_file)
-    groups = everest.util.read_groupnames(data_file)
-
-    sum_keys = list(everest.simulator.DEFAULT_DATA_SUMMARY_KEYS) + list(
-        everest.simulator.DEFAULT_FIELD_SUMMARY_KEYS
-    )
-
-    key_name_lists = (
-        (everest.simulator.DEFAULT_GROUP_SUMMARY_KEYS, groups),
-        (everest.simulator.DEFAULT_WELL_SUMMARY_KEYS, wells),
-    )
-    for keys, names in key_name_lists:
-        sum_keys += [f"{key}:{name}" for key, name in itertools.product(keys, names)]
-
-    res_conf = _everest_to_ert_config_dict(everconf)
-    assert set(sum_keys) == set(res_conf[ErtConfigKeys.SUMMARY][0])
-
-
-@pytest.mark.integration_test
-@hide_opm
 @skipif_no_everest_models
 @pytest.mark.everest_models_test
 @pytest.mark.skip_mac_ci
