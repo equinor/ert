@@ -25,6 +25,11 @@ class ContextBool:
     def __eq__(self, other: object) -> bool:
         return bool(self) == bool(other)
 
+    def __repr__(self) -> str:
+        if bool(self.val):
+            return "True"
+        return "False"
+
     @no_type_check
     def __deepcopy__(self, memo):
         new_instance = ContextBool(bool(self), self.token, self.keyword_token)
