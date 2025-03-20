@@ -51,8 +51,8 @@ class ManualUpdatePanel(ExperimentConfigPanel):
         runpath_label = CopyableLabel(text=run_path)
         layout.addRow("Runpath:", runpath_label)
 
-        number_of_realizations_label = QLabel(f"<b>{ensemble_size}</b>")
-        layout.addRow(QLabel("Number of realizations:"), number_of_realizations_label)
+        ensemble_size_label = QLabel(f"<b>{ensemble_size}</b>")
+        layout.addRow(QLabel("Ensemble size:"), ensemble_size_label)
 
         self._ensemble_format_model = TargetEnsembleModel(analysis_config, notifier)
         self._ensemble_format_field = StringBox(
