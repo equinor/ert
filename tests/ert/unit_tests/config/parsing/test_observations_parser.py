@@ -12,7 +12,7 @@ from ert.config.parsing.observations_parser import (
     ObservationType,
     Segment,
     SummaryValues,
-    _parse_content,
+    _parse_content_list,
     _validate_conf_content,
     observations_parser,
 )
@@ -24,7 +24,9 @@ observation_contents = stlark.from_lark(observations_parser)
 @given(observation_contents)
 def test_parsing_contents_succeeds_or_gives_config_error(contents):
     with suppress(ObservationConfigError):
-        _ = _validate_conf_content(".", _parse_content(contents, "observations.txt"))
+        _ = _validate_conf_content(
+            ".", _parse_content_list(contents, "observations.txt")
+        )
 
 
 @pytest.fixture
@@ -70,7 +72,7 @@ def file_contents():
 
 
 def test_parse(file_contents):
-    assert _parse_content(
+    assert _parse_content_list(
         file_contents,
         "",
     ) == [
@@ -121,11 +123,11 @@ def test_that_unexpected_character_gives_observation_config_error():
         ObservationConfigError,
         match=r"Line 1.*include a;",
     ):
-        _parse_content(content="include a;", filename="")
+        _parse_content_list(content="include a;", filename="")
 
 
 def test_that_double_comments_are_handled():
-    assert _parse_content(
+    assert _parse_content_list(
         """
             SUMMARY_OBSERVATION -- foo -- bar -- baz
                         FOPR;
@@ -141,7 +143,7 @@ def test_validate(file_contents):
     print(
         _validate_conf_content(
             "",
-            _parse_content(
+            _parse_content_list(
                 file_contents,
                 "",
             ),
@@ -149,7 +151,7 @@ def test_validate(file_contents):
     )
     assert _validate_conf_content(
         "",
-        _parse_content(
+        _parse_content_list(
             file_contents,
             "",
         ),

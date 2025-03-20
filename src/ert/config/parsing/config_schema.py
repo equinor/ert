@@ -349,7 +349,7 @@ def init_user_config_schema() -> ConfigSchemaDict:
         forward_model_keyword(),
         data_kw_keyword(),
         define_keyword(),
-        existing_path_keyword(ConfigKeys.OBS_CONFIG),
+        existing_path_inline_keyword(ConfigKeys.OBS_CONFIG),
         existing_path_inline_keyword(ConfigKeys.TIME_MAP),
         single_arg_keyword(ConfigKeys.GEN_KW_EXPORT_NAME),
         history_source_keyword(),
