@@ -30,7 +30,7 @@ ERT_CONFIG_TEMPLATES = {
 }
 
 
-def load_yaml(file_name: str, safe: bool = False) -> dict[str, Any] | None:
+def load_yaml(file_name: str, safe: bool = False) -> dict[str, Any]:
     with open(file_name, encoding="utf-8") as input_file:
         input_data: list[str] = input_file.readlines()
         try:
@@ -46,8 +46,8 @@ def load_yaml(file_name: str, safe: bool = False) -> dict[str, Any] | None:
                         input_data[mark.line], " " * mark.column
                     )
                 ) from exc
-
-        return None
+            else:
+                raise YAMLError(str(exc)) from exc
 
 
 def _get_definitions(
