@@ -15,7 +15,12 @@ def parse_variable_options(
     of positional arguments vary.
     """
     offset = next(
-        (i for i, val in enumerate(line) if len(val.split(":")) == 2), max_positionals
+        (
+            i
+            for i, val in enumerate(line)
+            if isinstance(val, str) and len(val.split(":")) == 2
+        ),
+        max_positionals,
     )
     kwargs = option_dict(line, offset)
     args = line[:offset]
