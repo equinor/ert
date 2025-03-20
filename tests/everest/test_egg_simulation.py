@@ -13,9 +13,7 @@ from everest.config import EverestConfig
 from everest.simulator.everest_to_ert import _everest_to_ert_config_dict
 from tests.everest.utils import (
     everest_default_jobs,
-    hide_opm,
     skipif_no_everest_models,
-    skipif_no_opm,
 )
 
 CONFIG_FILE = "everest/model/config.yml"
@@ -552,23 +550,6 @@ def _generate_exp_ert_config(config_path, output_dir):
     }
 
 
-@pytest.mark.integration_test
-@skipif_no_opm
-def test_egg_model_convert(copy_egg_test_data_to_tmp):
-    config = EverestConfig.load_file(CONFIG_FILE)
-    ert_config = _everest_to_ert_config_dict(config)
-
-    # configpath isn't specified in config_file so it should be inferred
-    # to be at the directory of the config file.
-    output_dir = config.output_dir
-    config_path = os.path.dirname(os.path.abspath(CONFIG_FILE))
-    exp_ert_config = _generate_exp_ert_config(config_path, output_dir)
-    sort_res_summary(exp_ert_config)
-    sort_res_summary(ert_config)
-    assert exp_ert_config == ert_config
-
-
-@hide_opm
 @skipif_no_everest_models
 @pytest.mark.everest_models_test
 def test_egg_model_convert_no_opm(copy_egg_test_data_to_tmp):
@@ -613,7 +594,6 @@ def test_opm_fail_default_summary_keys(copy_egg_test_data_to_tmp):
 
 @skipif_no_everest_models
 @pytest.mark.everest_models_test
-@skipif_no_opm
 def test_opm_fail_explicit_summary_keys(copy_egg_test_data_to_tmp):
     extra_sum_keys = [
         "GOIR:PRODUC",
@@ -671,7 +651,6 @@ def test_init_egg_model(copy_egg_test_data_to_tmp):
 @pytest.mark.integration_test
 @skipif_no_everest_models
 @pytest.mark.everest_models_test
-@skipif_no_opm
 def test_egg_model_wells_json_output_no_none(copy_egg_test_data_to_tmp):
     config = EverestConfig.load_file(CONFIG_FILE)
     _ = _everest_to_ert_config_dict(config)

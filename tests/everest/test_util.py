@@ -13,9 +13,7 @@ from everest.detached import ServerStatus
 from everest.strings import EVEREST, SERVER_STATUS
 from tests.everest.utils import (
     capture_streams,
-    hide_opm,
     relpath,
-    skipif_no_opm,
 )
 
 EGG_DATA = relpath(
@@ -23,30 +21,6 @@ EGG_DATA = relpath(
     "realizations/realization-0/eclipse/model/EGG.DATA",
 )
 SPE1_DATA = relpath("test_data/eclipse/SPE1.DATA")
-
-
-@skipif_no_opm
-def test_loadwells():
-    wells = util.read_wellnames(SPE1_DATA)
-    assert wells == ["PROD", "INJ"]
-
-
-@skipif_no_opm
-def test_loadgroups():
-    groups = util.read_groupnames(EGG_DATA)
-    assert {"FIELD", "PRODUC", "INJECT"} == set(groups)
-
-
-@hide_opm
-def test_loadwells_no_opm():
-    with pytest.raises(RuntimeError):
-        util.read_wellnames(SPE1_DATA)
-
-
-@hide_opm
-def test_loadgroups_no_opm():
-    with pytest.raises(RuntimeError):
-        util.read_groupnames(EGG_DATA)
 
 
 def test_get_values(change_to_tmpdir):

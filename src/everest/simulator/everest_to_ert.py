@@ -57,22 +57,6 @@ def _get_datafiles(ever_config: EverestConfig) -> list[str]:
     return [data_file.replace("<GEO_ID>", str(geo_id)) for geo_id in realizations]
 
 
-def _load_all_groups(data_files: list[str]) -> set[str]:
-    groups = []
-    for data_file in data_files:
-        groups += everest.util.read_groupnames(data_file)
-
-    return set(groups)
-
-
-def _load_all_wells(data_files: list[str]) -> set[str]:
-    wells = []
-    for data_file in data_files:
-        wells += everest.util.read_wellnames(data_file)
-
-    return set(wells)
-
-
 def _extract_summary_keys(
     ever_config: EverestConfig, ert_config: dict[str, Any]
 ) -> None:
@@ -82,7 +66,6 @@ def _extract_summary_keys(
 
     data_keys = everest.simulator.DEFAULT_DATA_SUMMARY_KEYS
     field_keys = everest.simulator.DEFAULT_FIELD_SUMMARY_KEYS
-    group_sum_keys = everest.simulator.DEFAULT_GROUP_SUMMARY_KEYS
     well_sum_keys = everest.simulator.DEFAULT_WELL_SUMMARY_KEYS
     user_specified_keys = (
         []
@@ -95,47 +78,14 @@ def _extract_summary_keys(
     if user_specified_keys is None:
         user_specified_keys = []
 
-    try:
-        groups = _load_all_groups(data_files)
-    except Exception:
-        warn_msg = (
-            "Failed to load group names from {}. "
-            "No group summary data will be internalized during run."
-        )
-        logging.getLogger(EVEREST).warning(warn_msg.format(data_files))
-        groups = set()
-
-    group_keys = [
-        f"{sum_key}:{gname}"
-        for (sum_key, gname) in itertools.product(group_sum_keys, groups)
-    ]
-
-    try:
-        data_wells = list(_load_all_wells(data_files))
-    except Exception:
-        warn_msg = (
-            "Failed to load well names from {}. "
-            "Only well data for wells specified in config file will be "
-            "internalized during run."
-        )
-        logging.getLogger(EVEREST).warning(warn_msg.format(data_files))
-        data_wells = []
-
-    everest_wells = [well.name for well in ever_config.wells]
-    wells = list(set(data_wells + everest_wells))
+    wells = [well.name for well in ever_config.wells]
 
     well_keys = [
         f"{sum_key}:{wname}"
         for (sum_key, wname) in itertools.product(well_sum_keys, wells)
     ]
 
-    all_keys = (
-        list(data_keys)
-        + list(field_keys)
-        + group_keys
-        + well_keys
-        + user_specified_keys
-    )
+    all_keys = data_keys + field_keys + well_keys + user_specified_keys
     all_keys = list(set(all_keys))
     ert_config[ErtConfigKeys.SUMMARY] = [all_keys]
 
