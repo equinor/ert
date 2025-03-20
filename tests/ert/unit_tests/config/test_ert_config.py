@@ -1605,27 +1605,28 @@ def test_that_context_types_are_json_serializable():
     assert isinstance(r["context_list"], list)
 
 
-@pytest.mark.usefixtures("copy_snake_oil_case")
 def test_no_timemap_or_refcase_provides_clear_error():
-    with fileinput.input("snake_oil.ert", inplace=True) as fin:
-        for line in fin:
-            if line.startswith("REFCASE"):
-                continue
-            if line.startswith("TIME_MAP"):
-                continue
-            print(line, end="")
-
-    with fileinput.input("observations/observations.txt", inplace=True) as fin:
-        for line in fin:
-            if line.startswith("HISTORY_OBSERVATION"):
-                continue
-            print(line, end="")
-
     with pytest.raises(
         ConfigValidationError,
-        match="Missing REFCASE or TIME_MAP for observations: WPR_DIFF_1",
+        match="Missing REFCASE or TIME_MAP for observations: GDO",
     ):
-        ErtConfig.from_file("snake_oil.ert")
+        ErtConfig.from_dict(
+            {
+                "GEN_DATA": [["GD", {"RESULT_FILE": "%d", "REPORT_STEPS": "1"}]],
+                "OBS_CONFIG": (
+                    "obs_config",
+                    """
+                    GENERAL_OBSERVATION GDO {
+                       DATA       = GD;
+                       INDEX_LIST = 0;
+                       DATE       = 2015-06-13;
+                       VALUE      = 0.0;
+                       ERROR      = 0.1;
+                    };
+                    """,
+                ),
+            }
+        )
 
 
 @pytest.mark.usefixtures("copy_snake_oil_case")
