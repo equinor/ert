@@ -196,7 +196,8 @@ def _tree_to_dict(
         try:
             args = constraints.join_args(args)
             args = _substitute_args(args, constraints, defines)
-            value_list = constraints.apply_constraints(args, kw, cwd)
+            option_args = list(constraints.parse_options(args))
+            value_list = constraints.apply_constraints(option_args, kw, cwd)
 
             arglist = config_dict.get(kw, [])
             if kw == "DEFINE":
@@ -241,8 +242,8 @@ def _substitute_args(
     defines: Defines,
 ) -> ParsedArgList:
     def substitute_arglist_tuple(
-        tup: tuple[FileContextToken],
-    ) -> tuple[FileContextToken]:
+        tup: tuple[FileContextToken, FileContextToken],
+    ) -> tuple[FileContextToken, FileContextToken]:
         key, value = tup
         substituted_value = _substitute_token(defines, value, constraints.expand_envvar)
 

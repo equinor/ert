@@ -94,8 +94,10 @@ def test_and_benchmark_adaptive_localization_with_fields(
             param_group,
             param_group,
             "param.GRDECL",
-            "INIT_FILES:param_%d.GRDECL",
-            "FORWARD_INIT:False",
+            {
+                "INIT_FILES": "param_%d.GRDECL",
+                "FORWARD_INIT": "False",
+            },
         ],
     )
 

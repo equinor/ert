@@ -548,7 +548,7 @@ def _generate_exp_ert_config(config_path, output_dir):
         ErtConfigKeys.ECLBASE: "eclipse/model/EGG",
         ErtConfigKeys.RANDOM_SEED: 123456,
         ErtConfigKeys.SUMMARY: SUM_KEYS,
-        ErtConfigKeys.GEN_DATA: [("rf", "RESULT_FILE:rf")],
+        ErtConfigKeys.GEN_DATA: [("rf", {"RESULT_FILE": "rf"})],
     }
 
 

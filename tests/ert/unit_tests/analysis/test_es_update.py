@@ -673,8 +673,10 @@ def test_temporary_parameter_storage_with_inactive_fields(
             param_group,
             param_group,
             "param.GRDECL",
-            "INIT_FILES:param_%d.GRDECL",
-            "FORWARD_INIT:False",
+            {
+                "INIT_FILES": "param_%d.GRDECL",
+                "FORWARD_INIT": "False",
+            },
         ],
     )
 
