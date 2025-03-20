@@ -218,35 +218,30 @@ def test_that_index_list_is_read(tmpdir):
 
 def test_that_index_file_is_read(tmpdir):
     with tmpdir.as_cwd():
-        with open("config.ert", "w", encoding="utf-8") as fh:
-            fh.writelines(
-                dedent(
-                    """
-                    JOBNAME my_name%d
-                    NUM_REALIZATIONS 10
-                    OBS_CONFIG observations
-                    GEN_DATA RES RESULT_FILE:out
-                    """
-                )
-            )
         with open("obs_idx.txt", "w", encoding="utf-8") as fh:
             fh.write("0\n2\n4\n6\n8")
         with open("obs_data.txt", "w", encoding="utf-8") as fh:
             for i in range(5):
                 fh.write(f"{float(i)} 0.1\n")
-        with open("observations", "w", encoding="utf-8") as fo:
-            fo.writelines(
-                dedent(
+        observations = ErtConfig.from_dict(
+            {
+                "GEN_DATA": [
+                    [
+                        "RES",
+                        {"RESULT_FILE": "out"},
+                    ]
+                ],
+                "OBS_CONFIG": (
+                    "obsconf",
                     """
                     GENERAL_OBSERVATION OBS {
                        DATA       = RES;
                        INDEX_FILE = obs_idx.txt;
                        OBS_FILE   = obs_data.txt;
                     };""",
-                )
-            )
-
-        observations = ErtConfig.from_file("config.ert").enkf_obs
+                ),
+            }
+        ).enkf_obs
         assert observations["OBS"].observations[0].indices == [0, 2, 4, 6, 8]
 
 
