@@ -11,6 +11,7 @@ from PyQt6.QtWidgets import (
     QMessageBox,
     QPushButton,
     QToolButton,
+    QWidget,
 )
 from pytestqt.qtbot import QtBot
 
@@ -26,12 +27,20 @@ from ert.ensemble_evaluator.event import (
 from ert.gui.ertnotifier import ErtNotifier
 from ert.gui.main import GUILogHandler, _setup_main_window
 from ert.gui.simulation.ensemble_experiment_panel import EnsembleExperimentPanel
+from ert.gui.simulation.ensemble_smoother_panel import EnsembleSmootherPanel
 from ert.gui.simulation.experiment_panel import ExperimentPanel
+from ert.gui.simulation.multiple_data_assimilation_panel import (
+    MultipleDataAssimilationPanel,
+)
 from ert.gui.simulation.run_dialog import RunDialog
 from ert.gui.simulation.view.realization import RealizationWidget
 from ert.gui.tools.file import FileDialog
+from ert.run_models import (
+    EnsembleExperiment,
+    EnsembleSmoother,
+    MultipleDataAssimilation,
+)
 from ert.run_models.base_run_model import BaseRunModelAPI
-from ert.run_models.ensemble_experiment import EnsembleExperiment
 from ert.storage import open_storage
 from tests.ert import SnapshotBuilder
 from tests.ert.ui_tests.gui.conftest import wait_for_child
@@ -810,3 +819,60 @@ def test_forward_model_overview_label_selected_on_tab_change(
 
     qt_bot_click_tab_index(1)
     assert "Realization id 1 in iteration 1" in fm_step_label.text()
+
+
+@pytest.mark.integration_test
+@pytest.mark.usefixtures("use_tmpdir")
+@pytest.mark.parametrize(
+    "experiment_mode, experiment_mode_panel",
+    [
+        (EnsembleExperiment, EnsembleExperimentPanel),
+        (EnsembleSmoother, EnsembleSmootherPanel),
+        (MultipleDataAssimilation, MultipleDataAssimilationPanel),
+    ],
+)
+def test_that_design_matrix_alters_num_realizations_field(
+    qtbot: QtBot, storage, experiment_mode, experiment_mode_panel
+):
+    xls_filename = "design_matrix.xlsx"
+    design_matrix_df = pd.DataFrame(
+        {
+            "REAL": list(range(3)),
+            "a": [0, 1, 2],
+        }
+    )
+    default_sheet_df = pd.DataFrame([["b", 1], ["c", 2]])
+    with pd.ExcelWriter(xls_filename) as xl_write:
+        design_matrix_df.to_excel(xl_write, index=False, sheet_name="DesignSheet")
+        default_sheet_df.to_excel(
+            xl_write, index=False, sheet_name="DefaultSheet", header=False
+        )
+
+    config_file = "minimal_config.ert"
+    with open(config_file, "w", encoding="utf-8") as f:
+        f.write("NUM_REALIZATIONS 10")
+        f.write(f"\nDESIGN_MATRIX {xls_filename}")
+
+    args_mock = Mock()
+    args_mock.config = config_file
+
+    ert_config = ErtConfig.from_file(config_file)
+    gui = _setup_main_window(ert_config, args_mock, GUILogHandler(), storage)
+    experiment_panel = gui.findChild(ExperimentPanel)
+    assert experiment_panel
+
+    simulation_mode_combo = experiment_panel.findChild(QComboBox)
+    assert simulation_mode_combo
+
+    simulation_mode_combo.setCurrentText(experiment_mode.name())
+    simulation_settings = gui.findChild(experiment_mode_panel)
+    num_realizations_label = simulation_settings.findChild(QWidget, "num_reals_label")
+    assert num_realizations_label
+    assert num_realizations_label.text() == "<b>3</b>"
+
+    # Verify that the warning icon has the correct tooltip
+    warning_icon = gui.findChild(QLabel, "warning_icon_num_realizations_design_matrix")
+    assert (
+        warning_icon.toolTip()
+        == "Number of realizations changed from 10 to 3 due to 'REAL' column in design matrix"
+    )
