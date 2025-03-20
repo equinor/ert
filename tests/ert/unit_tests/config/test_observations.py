@@ -78,27 +78,22 @@ def test_that_correct_key_observation_is_loaded(extra_config, expected):
 )
 @pytest.mark.usefixtures("use_tmpdir")
 def test_date_parsing_in_observations(datestring, errors):
-    config_text = dedent(
-        """
-        NUM_REALIZATIONS 1
-        ECLBASE my_case%d
-        REFCASE MY_REFCASE
-        OBS_CONFIG observations_config
-        """
-    )
-    Path("observations_config").write_text(
-        "SUMMARY_OBSERVATION FOPR_1 "
-        f"{{ KEY=FOPR; VALUE=1; ERROR=1; DATE={datestring}; }};",
-        encoding="utf-8",
-    )
-    Path("config.ert").write_text(config_text, encoding="utf-8")
+    config_dict = {
+        "ECLBASE": "my_case%d",
+        "REFCASE": "MY_REFCASE",
+        "OBS_CONFIG": (
+            "obsconf",
+            "SUMMARY_OBSERVATION FOPR_1 "
+            f"{{ KEY=FOPR; VALUE=1; ERROR=1; DATE={datestring}; }};",
+        ),
+    }
     run_simulator()
     if errors:
         with pytest.raises(ValueError, match="Please use ISO date format"):
-            ErtConfig.from_file("config.ert")
+            ErtConfig.from_dict(config_dict)
     else:
         with pytest.warns(ConfigWarning, match="Please use ISO date format"):
-            ErtConfig.from_file("config.ert")
+            ErtConfig.from_dict(config_dict)
 
 
 @pytest.mark.usefixtures("use_tmpdir")
