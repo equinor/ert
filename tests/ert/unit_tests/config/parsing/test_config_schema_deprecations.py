@@ -1,4 +1,5 @@
 import warnings
+from pathlib import Path
 
 import pytest
 
@@ -194,4 +195,17 @@ def test_that_suggester_gives_job_prefix_migration():
     ):
         ErtConfig.from_file_contents(
             "NUM_REALIZATIONS 1\nQUEUE_OPTION TORQUE JOB_PREFIX foo\n"
+        )
+
+
+@pytest.mark.usefixtures("use_tmpdir")
+def test_that_gen_kw_with_init_files_warns():
+    Path("coeff_priors").write_text("a UNIFORM 0 1", encoding="utf-8")
+    Path("init_file").write_text("a 0.4", encoding="utf-8")
+    with pytest.warns(
+        ConfigWarning,
+        match="GEN_KW with INIT_FILES is deprecated, and will be removed in the next version.",
+    ):
+        ErtConfig.from_file_contents(
+            "NUM_REALIZATIONS 1\nGEN_KW COEFFS coeff_priors INIT_FILES:init_file%d"
         )
