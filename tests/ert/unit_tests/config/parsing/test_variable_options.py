@@ -1,6 +1,6 @@
 import pytest
 
-from ert.config.parameter_config import parse_config
+from ert.config._option_dict import parse_variable_options
 
 
 @pytest.mark.parametrize(
@@ -25,12 +25,12 @@ from ert.config.parameter_config import parse_config
     ],
 )
 def test_parse_config(input_config, expected):
-    assert parse_config(*input_config) == expected
+    assert parse_variable_options(*input_config) == expected
 
 
 def test_positional_after_named():
     with pytest.raises(ValueError, match="Invalid argument 'positional'"):
-        parse_config(
+        parse_variable_options(
             [
                 "NAME",
                 "template.txt",

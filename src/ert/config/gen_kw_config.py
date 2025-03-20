@@ -18,8 +18,9 @@ from typing_extensions import TypedDict
 
 from ert.substitutions import substitute_runpath_name
 
+from ._option_dict import parse_variable_options
 from ._str_to_bool import str_to_bool
-from .parameter_config import ParameterConfig, parse_config
+from .parameter_config import ParameterConfig
 from .parsing import ConfigValidationError, ConfigWarning, ErrorInfo
 
 if TYPE_CHECKING:
@@ -89,7 +90,7 @@ class GenKwConfig(ParameterConfig):
     def from_config_list(cls, gen_kw: list[str]) -> Self:
         gen_kw_key = gen_kw[0]
 
-        positional_args, options = parse_config(gen_kw, 4)
+        positional_args, options = parse_variable_options(gen_kw, 4)
         forward_init = str_to_bool(options.get("FORWARD_INIT", "FALSE"))
         init_file = _get_abs_path(options.get("INIT_FILES"))
         update_parameter = str_to_bool(options.get("UPDATE", "TRUE"))

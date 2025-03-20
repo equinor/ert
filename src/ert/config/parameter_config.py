@@ -8,8 +8,6 @@ from typing import TYPE_CHECKING, Any
 import numpy as np
 import xarray as xr
 
-from ._option_dict import option_dict
-
 if TYPE_CHECKING:
     import numpy.typing as npt
 
@@ -28,22 +26,6 @@ class CustomDict(dict):  # type: ignore
             if isinstance(value, set):
                 data[i] = (key, list(value))
         super().__init__(data)
-
-
-def parse_config(
-    config: list[str], max_positionals: int
-) -> tuple[list[str], dict[str, str]]:
-    """
-    This function is responsible for taking a config line and splitting it
-    into positional arguments and named arguments in cases were the number
-    of positional arguments vary.
-    """
-    offset = next(
-        (i for i, val in enumerate(config) if len(val.split(":")) == 2), max_positionals
-    )
-    kwargs = option_dict(config, offset)
-    args = config[:offset]
-    return args, kwargs
 
 
 @dataclasses.dataclass

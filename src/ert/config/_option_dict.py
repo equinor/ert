@@ -6,6 +6,22 @@ from .parsing import ConfigValidationError
 logger = logging.getLogger(__name__)
 
 
+def parse_variable_options(
+    config: list[str], max_positionals: int
+) -> tuple[list[str], dict[str, str]]:
+    """
+    This function is responsible for taking a config line and splitting it
+    into positional arguments and named arguments in cases were the number
+    of positional arguments vary.
+    """
+    offset = next(
+        (i for i, val in enumerate(config) if len(val.split(":")) == 2), max_positionals
+    )
+    kwargs = option_dict(config, offset)
+    args = config[:offset]
+    return args, kwargs
+
+
 def option_dict(option_list: Sequence[str], offset: int) -> dict[str, str]:
     """Gets the list of options given to a keywords such as GEN_DATA.
 
