@@ -411,10 +411,6 @@ def test_gen_kw_params_parsing(tmpdir, params, error):
     ],
 )
 def test_gen_kw_trans_func(tmpdir, params, xinput, expected):
-    """
-    This test data was generated using c++ transfer functions, and is used solely
-    to verify that implementation in python is equal to c++.
-    """
     args = params.split()[2:]
     float_args = []
     for a in args:
