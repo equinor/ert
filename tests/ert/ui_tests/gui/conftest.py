@@ -352,17 +352,13 @@ def load_results_manually(qtbot, gui, ensemble_name="default"):
     gui.load_results_tool.trigger()
 
 
-def add_experiment_manually(
-    qtbot, gui, experiment_name="My_experiment", ensemble_name="default"
+def add_experiment_in_manage_experiment_dialog(
+    qtbot,
+    manage_experiment_dialog,
+    experiment_name="My_experiment",
+    ensemble_name="default",
 ):
-    button_manage_experiments = gui.findChild(QToolButton, "button_Manage_experiments")
-    assert button_manage_experiments
-    qtbot.mouseClick(button_manage_experiments, Qt.MouseButton.LeftButton)
-    experiments_panel = gui.findChild(ManageExperimentsPanel)
-
-    # Open the create new experiment tab
-    experiments_panel.setCurrentIndex(0)
-    current_tab = experiments_panel.currentWidget()
+    current_tab = manage_experiment_dialog.currentWidget()
     assert current_tab.objectName() == "create_new_ensemble_tab"
     storage_widget = get_child(current_tab, StorageWidget)
 
@@ -376,6 +372,20 @@ def add_experiment_manually(
     add_widget = get_child(storage_widget, AddWidget)
     qtbot.mouseClick(add_widget.addButton, Qt.MouseButton.LeftButton)
 
+
+def add_experiment_manually(
+    qtbot, gui, experiment_name="My_experiment", ensemble_name="default"
+):
+    button_manage_experiments = gui.findChild(QToolButton, "button_Manage_experiments")
+    assert button_manage_experiments
+    qtbot.mouseClick(button_manage_experiments, Qt.MouseButton.LeftButton)
+    experiments_panel = gui.findChild(ManageExperimentsPanel)
+
+    # Open the create new experiment tab
+    experiments_panel.setCurrentIndex(0)
+    add_experiment_in_manage_experiment_dialog(
+        qtbot, experiments_panel, experiment_name, ensemble_name
+    )
     experiments_panel.close()
 
 
