@@ -103,26 +103,6 @@ def _extract_environment(
     ert_config[ErtConfigKeys.RUNPATH_FILE] = default_runpath_file
 
 
-def _inject_simulation_defaults(
-    ert_config: dict[str, Any], ever_config: EverestConfig
-) -> None:
-    """
-    NOTE: This function is only to live until the effort of centralizing all
-    default values is taken.
-    """
-
-    def inject_default(key: str, value: Any) -> None:
-        if key not in ert_config:
-            ert_config[key] = value
-
-    inject_default(
-        "ECLBASE",
-        (ever_config.definitions if ever_config.definitions is not None else {}).get(
-            "eclbase", "eclipse/ECL"
-        ),
-    )
-
-
 def _extract_simulator(ever_config: EverestConfig, ert_config: dict[str, Any]) -> None:
     """
     Extracts simulation data from ever_config and injects it into ert_config.
@@ -144,8 +124,6 @@ def _extract_simulator(ever_config: EverestConfig, ert_config: dict[str, Any]) -
     num_fm_cpu = ever_simulation.cores_per_node
     if num_fm_cpu is not None:
         ert_config[ErtConfigKeys.NUM_CPU] = num_fm_cpu
-
-    _inject_simulation_defaults(ert_config, ever_config)
 
 
 def _fetch_everest_jobs(ever_config: EverestConfig) -> list[Any]:
@@ -206,6 +184,8 @@ def _extract_jobs(
         res_jobs.append(new_job)
 
     ert_config[ErtConfigKeys.INSTALL_JOB] = res_jobs
+    if eclbase := ever_config.definitions.get("eclbase"):
+        ert_config["ECLBASE"] = eclbase
 
 
 def _extract_workflow_jobs(
@@ -525,7 +505,11 @@ def _everest_to_ert_config_dict(
     _extract_model(ever_config, ert_config)
     _extract_seed(ever_config, ert_config)
     _extract_results(ever_config, ert_config)
-
+    if ert_config.get("SUMMARY") and not ert_config.get("ECLBASE"):
+        raise ValueError(
+            "When specifying model -> data_file, also need to configure definitions -> eclbase, this will trigger "
+            "loading of summary data from the forward model"
+        )
     return ert_config
 
 

@@ -144,7 +144,7 @@ class EverestConfig(BaseModel):
         default_factory=list,
         description="A list of well configurations, all with unique names.",
     )
-    definitions: dict[str, Any] | None = Field(
+    definitions: dict[str, Any] = Field(
         default_factory=dict[str, Any],
         description="""Section for specifying variables.
 
