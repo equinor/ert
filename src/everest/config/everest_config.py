@@ -128,7 +128,7 @@ class EverestConfig(BaseModel):
     objective_functions: list[ObjectiveFunctionConfig] = Field(
         description="List of objective function specifications", min_length=1
     )
-    optimization: OptimizationConfig | None = Field(
+    optimization: OptimizationConfig = Field(
         default_factory=OptimizationConfig,
         description="Optimizer options",
     )

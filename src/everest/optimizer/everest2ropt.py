@@ -279,7 +279,7 @@ def _parse_optimization(
 
 def _parse_model(
     ever_model: ModelConfig | None,
-    ever_opt: OptimizationConfig | None,
+    ever_opt: OptimizationConfig,
     ropt_config: dict[str, Any],
 ) -> None:
     if not ever_model:
@@ -293,8 +293,8 @@ def _parse_model(
     ropt_config["realizations"] = {
         "weights": ever_reals_weights,
     }
-    min_real_succ = ever_opt.min_realizations_success if ever_opt else None
-    if min_real_succ is not None:
+
+    if min_real_succ := ever_opt.min_realizations_success:
         ropt_config["realizations"]["realization_min_success"] = min_real_succ
 
 
