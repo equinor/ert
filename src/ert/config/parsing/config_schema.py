@@ -132,7 +132,7 @@ def install_job_keyword() -> SchemaItem:
         argc_min=2,
         argc_max=2,
         multi_occurrence=True,
-        type_map=[None, SchemaItemType.EXISTING_PATH],
+        type_map=[None, SchemaItemType.EXISTING_PATH_INLINE],
     )
 
 
