@@ -6,7 +6,7 @@ from typing import TYPE_CHECKING, Any
 
 from _ert.threading import ErtThread
 from ert.config import ErtConfig
-from ert.plugins import CancelPluginException, WorkflowFixtures
+from ert.plugins import CancelPluginException, HookedWorkflowFixtures
 from ert.runpaths import Runpaths
 from ert.workflow_runner import WorkflowJobRunner
 
@@ -84,7 +84,7 @@ class PluginRunner:
             print("Plugin cancelled before execution!")
 
     def __runWorkflowJob(
-        self, arguments: list[Any] | None, fixtures: WorkflowFixtures
+        self, arguments: list[Any] | None, fixtures: HookedWorkflowFixtures
     ) -> None:
         self.__result = self._runner.run(arguments, fixtures=fixtures)
 

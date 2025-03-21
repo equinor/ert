@@ -55,7 +55,7 @@ from ert.ensemble_evaluator.state import (
     REALIZATION_STATE_FINISHED,
 )
 from ert.mode_definitions import MODULE_MODE
-from ert.plugins import WorkflowFixtures
+from ert.plugins import HookedWorkflowFixtures
 from ert.runpaths import Runpaths
 from ert.storage import Ensemble, Storage
 from ert.substitutions import Substitutions
@@ -737,7 +737,7 @@ class BaseRunModel(ABC):
     def run_workflows(
         self,
         runtime: HookRuntime,
-        fixtures: WorkflowFixtures,
+        fixtures: HookedWorkflowFixtures,
     ) -> None:
         for workflow in self._hooked_workflows[runtime]:
             WorkflowRunner(workflow=workflow, fixtures=fixtures).run_blocking()
@@ -883,7 +883,7 @@ class UpdateRunModel(BaseRunModel):
             )
         )
 
-        workflow_fixtures: WorkflowFixtures = {
+        workflow_fixtures: HookedWorkflowFixtures = {
             "storage": self._storage,
             "ensemble": prior,
             "observation_settings": self._update_settings,
