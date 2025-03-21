@@ -197,7 +197,7 @@ and environment variables are exposed in the form 'os.NAME', for example:
         evaluated.
 """,
     )
-    server: ServerConfig | None = Field(
+    server: ServerConfig = Field(
         default_factory=ServerConfig,
         description="""Defines Everest server settings, i.e., which queue system,
             queue name and queue options are used for the everest server.
@@ -215,7 +215,7 @@ and environment variables are exposed in the form 'os.NAME', for example:
             requirements of the forward models.
 """,
     )
-    simulator: SimulatorConfig | None = Field(
+    simulator: SimulatorConfig = Field(
         default_factory=SimulatorConfig,
         description="Simulation settings",
         examples=[simulator_example],
