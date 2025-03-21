@@ -1117,8 +1117,8 @@ def test_export_deprecated_keys(key, value, min_config, change_to_tmpdir):
         EverestConfig.load_file_with_argparser("config.yml", parser)
 
 
-def test_valid_init_of_summary_loading(tmp_path):
-    a_file = tmp_path / "a_file"
+def test_valid_init_of_summary_loading(change_to_tmpdir):
+    a_file = Path("a_file")
     a_file.touch()
     config = EverestConfig.with_defaults(
         model={"data_file": str(a_file), "realizations": [0]}
