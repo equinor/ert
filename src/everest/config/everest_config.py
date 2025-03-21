@@ -163,8 +163,8 @@ and environment variables are exposed in the form 'os.NAME', for example:
 | ...
     """,
     )
-    input_constraints: list[InputConstraintConfig] | None = Field(
-        default=None, description="List of input constraints"
+    input_constraints: list[InputConstraintConfig] = Field(
+        default_factory=list, description="List of input constraints"
     )
     output_constraints: list[OutputConstraintConfig] | None = Field(
         default=None, description="A list of output constraints with unique names."

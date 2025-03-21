@@ -12,10 +12,7 @@ def test_input_constraint_initialization():
     cfg_dir = relpath("test_data", "mocked_test_case")
     cfg = relpath(cfg_dir, "config_input_constraints.yml")
     config = EverestConfig.load_file(cfg)
-    # Check that an input constraint has been defined
-    assert config.input_constraints is not None
     # Check that it is a list with two values
-    assert isinstance(config.input_constraints, list)
     assert len(config.input_constraints) == 2
     # Get the first input constraint
     input_constraint = config.input_constraints[0]
