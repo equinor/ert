@@ -1470,16 +1470,17 @@ def test_validate_no_logs_when_overwriting_with_same_value(caplog):
     with open("step_file", "w", encoding="utf-8") as fout:
         fout.write("EXECUTABLE echo\nARGLIST <VAR1> <VAR2> <VAR3>\n")
 
-    with open("config_file.ert", "w", encoding="utf-8") as fout:
-        fout.write("NUM_REALIZATIONS 1\n")
-        fout.write("DEFINE <VAR1> 10\n")
-        fout.write("DEFINE <VAR2> 20\n")
-        fout.write("DEFINE <VAR3> 55\n")
-        fout.write("INSTALL_JOB step_name step_file\n")
-        fout.write("FORWARD_MODEL step_name(<VAR1>=10, <VAR2>=<VAR2>, <VAR3>=5)\n")
-
     with caplog.at_level(logging.INFO):
-        ert_config = ErtConfig.from_file("config_file.ert")
+        ert_config = ErtConfig.from_file_contents(
+            """
+            NUM_REALIZATIONS 1
+            DEFINE <VAR1> 10
+            DEFINE <VAR2> 20
+            DEFINE <VAR3> 55
+            INSTALL_JOB step_name step_file
+            FORWARD_MODEL step_name(<VAR1>=10, <VAR2>=<VAR2>, <VAR3>=5)
+            """
+        )
         create_forward_model_json(
             context=ert_config.substitutions,
             forward_model_steps=ert_config.forward_model_steps,
