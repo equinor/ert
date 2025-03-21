@@ -46,17 +46,6 @@ from ert.gui.tools.workflows import WorkflowsTool
 from ert.plugins import ErtPluginManager
 from ert.trace import get_trace_id
 
-
-def is_high_contrast_mode() -> bool:
-    return (
-        QCoreApplication.instance()
-        .palette()
-        .color(QPalette.ColorRole.Window)
-        .lightness()
-        > 245
-    )
-
-
 BUTTON_STYLE_SHEET: str = """
     QToolButton {
         border-radius: 10px;
@@ -133,7 +122,7 @@ class ErtMainWindow(QMainWindow):
         else:
             self.side_frame.setStyleSheet("background-color: lightgray;")
         self.apply_palette()
-        if is_high_contrast_mode():
+        if self.is_high_contrast_mode():
             msg_box = QMessageBox()
             msg_box.setText(
                 "High contrast mode detected. This is not supported by Ert and features may not work as expected."
@@ -324,8 +313,10 @@ class ErtMainWindow(QMainWindow):
 
         button.setStyleSheet(
             BUTTON_STYLE_SHEET_DARK
-        ) if self.is_dark_mode() else button.setStyleSheet(BUTTON_STYLE_SHEET_LIGHT)
-        if is_high_contrast_mode():
+        ) if self.is_dark_mode() and not self.is_high_contrast_mode() else button.setStyleSheet(
+            BUTTON_STYLE_SHEET_LIGHT
+        )
+        if False:  # is_high_contrast_mode():
             button.setStyleSheet("""QToolButton {
         border-radius: 10px;
         background-color: rgba(255, 255, 255, 0);
@@ -434,3 +425,6 @@ class ErtMainWindow(QMainWindow):
                 group, QPalette.ColorRole.HighlightedText, QColor("white")
             )  # The Qt default
         self.setPalette(palette)
+
+    def is_high_contrast_mode(self) -> bool:
+        return self.palette().color(QPalette.ColorRole.Window).lightness() > 245
