@@ -453,32 +453,6 @@ def test_that_loading_summary_obs_with_days_is_within_tolerance(
 def test_that_having_observations_on_starting_date_errors(tmpdir):
     date = datetime(2014, 9, 10)
     with tmpdir.as_cwd():
-        config = dedent(
-            """
-        NUM_REALIZATIONS 2
-
-        ECLBASE ECLIPSE_CASE
-        REFCASE ECLIPSE_CASE
-        OBS_CONFIG observations
-        """
-        )
-        observations = dedent(
-            f"""
-        SUMMARY_OBSERVATION FOPR_1
-        {{
-        VALUE   = 0.1;
-        ERROR   = 0.05;
-        DATE    = {date.isoformat()};
-        KEY     = FOPR;
-        }};
-        """
-        )
-
-        with open("config.ert", "w", encoding="utf-8") as fh:
-            fh.writelines(config)
-        with open("observations", "w", encoding="utf-8") as fh:
-            fh.writelines(observations)
-
         # We create a reference case
         run_sim(date)
 
@@ -486,7 +460,24 @@ def test_that_having_observations_on_starting_date_errors(tmpdir):
             ConfigValidationError,
             match="not possible to use summary observations from the start",
         ):
-            ErtConfig.from_file("config.ert")
+            ErtConfig.from_dict(
+                {
+                    "ECLBASE": "ECLIPSE_CASE",
+                    "REFCASE": "ECLIPSE_CASE",
+                    "OBS_CONFIG": (
+                        "obsconf",
+                        f"""
+                            SUMMARY_OBSERVATION FOPR_1
+                            {{
+                            VALUE   = 0.1;
+                            ERROR   = 0.05;
+                            DATE    = {date.isoformat()};
+                            KEY     = FOPR;
+                            }};
+                            """,
+                    ),
+                }
+            )
 
 
 @pytest.mark.filterwarnings(
