@@ -78,7 +78,7 @@ optimization. This may be ignored if the algorithm that is used does not support
 different control types.
 """,
     )
-    enabled: bool | None = Field(
+    enabled: bool = Field(
         default=True,
         description="""
 If `True`, all variables in this control group will be optimized. If set to `False`
