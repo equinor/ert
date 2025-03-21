@@ -12,7 +12,6 @@ from ropt.transforms import OptModelTransforms
 from everest.config import (
     EverestConfig,
     InputConstraintConfig,
-    ModelConfig,
     ObjectiveFunctionConfig,
     OptimizationConfig,
     OutputConstraintConfig,
@@ -272,30 +271,6 @@ def _parse_optimization(
             ropt_optimizer["split_evaluations"] = True
 
 
-def _parse_model(
-    ever_model: ModelConfig,
-    ever_opt: OptimizationConfig,
-    ropt_config: dict[str, Any],
-) -> None:
-    if not ever_model:
-        return
-
-    ropt_config["realizations"] = {
-        "weights": ever_model.realizations_weights,
-    }
-
-    if min_real_succ := ever_opt.min_realizations_success:
-        ropt_config["realizations"]["realization_min_success"] = min_real_succ
-
-
-def _parse_environment(
-    optimization_output_dir: str, random_seed: int | None, ropt_config: dict[str, Any]
-) -> None:
-    ropt_config["optimizer"]["output_dir"] = os.path.abspath(optimization_output_dir)
-    if random_seed is not None:
-        ropt_config["gradient"]["seed"] = random_seed
-
-
 def _everest2ropt(
     ever_config: EverestConfig, transforms: OptModelTransforms | None
 ) -> dict[str, Any]:
@@ -321,16 +296,17 @@ def _everest2ropt(
         has_output_constraints=ever_config.output_constraints is not None,
         ropt_config=ropt_config,
     )
-    _parse_model(
-        ever_model=ever_config.model,
-        ever_opt=ever_config.optimization,
-        ropt_config=ropt_config,
+
+    ropt_config["realizations"] = {
+        "weights": ever_config.model.realizations_weights,
+    }
+    if min_real_succ := ever_config.optimization.min_realizations_success:
+        ropt_config["realizations"]["realization_min_success"] = min_real_succ
+
+    ropt_config["optimizer"]["output_dir"] = os.path.abspath(
+        ever_config.optimization_output_dir
     )
-    _parse_environment(
-        optimization_output_dir=ever_config.optimization_output_dir,
-        random_seed=ever_config.environment.random_seed,
-        ropt_config=ropt_config,
-    )
+    ropt_config["gradient"]["seed"] = ever_config.environment.random_seed
 
     return ropt_config
 
