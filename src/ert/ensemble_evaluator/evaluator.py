@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import asyncio
-import datetime
 import logging
 import traceback
 from collections.abc import Awaitable, Callable, Iterable, Sequence
@@ -466,10 +465,11 @@ def detect_overspent_cpu(num_cpu: int, real_id: str, fm_step: FMStepSnapshot) ->
     """Produces a message warning about misconfiguration of NUM_CPU if
     so is detected. Returns an empty string if everything is ok."""
     allowed_overspending = 1.05
-    now = datetime.datetime.now()
-    duration = (
-        (fm_step.get(ids.END_TIME) or now) - (fm_step.get(ids.START_TIME) or now)
-    ).total_seconds()
+    start_time = fm_step.get(ids.START_TIME)
+    end_time = fm_step.get(ids.END_TIME)
+    if start_time is None or end_time is None:
+        return ""
+    duration = (end_time - start_time).total_seconds()
     if duration <= 0:
         return ""
     cpu_seconds = fm_step.get(ids.CPU_SECONDS) or 0.0
