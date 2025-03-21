@@ -129,7 +129,7 @@ def test_math_func_auto_scaled_controls(copy_math_func_test_data_to_tmp):
     # Arrange
     config = EverestConfig.load_file("config_minimal.yml")
     config.controls[0].auto_scale = True
-    config.controls[0].scaled_range = [0.3, 0.7]
+    config.controls[0].scaled_range = (0.3, 0.7)
 
     # Convergence is slower that's why more batches and start closer to final solution?
     config.controls[0].initial_guess = 0.2

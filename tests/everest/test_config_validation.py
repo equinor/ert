@@ -796,6 +796,7 @@ def test_that_existing_install_job_with_non_existing_executable_errors(
         ("normalization", 0.1, None),
     ],
 )
+@pytest.mark.filterwarnings("ignore:normalization key is deprecated")
 def test_that_objective_function_attrs_are_valid(key, value, expected_error):
     if expected_error:
         with pytest.raises(ValueError) as e:
@@ -1035,6 +1036,8 @@ def test_deprecated_objective_function_auto_normalize():
         (0.42, 0.24, True, False),
     ],
 )
+@pytest.mark.filterwarnings("ignore:normalization key is deprecated")
+@pytest.mark.filterwarnings("ignore:auto_normalize key is deprecated")
 def test_objective_function_scaling_is_backward_compatible_with_scaling(
     normalization, scale, auto_normalize, auto_scale
 ):

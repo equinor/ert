@@ -5,7 +5,6 @@ definitions:
 
 export:
   keywords: ['FOIP', 'FOPT']
-  csv_output_filepath: path/to/relative/folder
 
 wells:
   - { name: w00}

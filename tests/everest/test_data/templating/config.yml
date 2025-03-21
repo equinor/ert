@@ -19,7 +19,7 @@ objective_functions:
 
 
 optimization:
-  algorithm: conmin_mfd
+  algorithm: optpp_q_newton
   max_iterations: 1
 
 

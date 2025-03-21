@@ -11,7 +11,7 @@ def test_optimization_config(copy_test_data_to_tmp):
     full_config_dict = EverestConfig.load_file(cfg)
 
     optim_config = full_config_dict.optimization
-    assert optim_config.algorithm == "conmin_mfd"
+    assert optim_config.algorithm == "optpp_q_newton"
     assert optim_config.perturbation_num == 20
     assert optim_config.max_iterations == 10
     assert optim_config.max_function_evaluations == 1000
