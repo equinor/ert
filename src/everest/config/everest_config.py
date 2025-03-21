@@ -174,8 +174,8 @@ and environment variables are exposed in the form 'os.NAME', for example:
         description="A list of jobs to install",
         validate_default=True,
     )
-    install_workflow_jobs: list[InstallJobConfig] | None = Field(
-        default=None, description="A list of workflow jobs to install"
+    install_workflow_jobs: list[InstallJobConfig] = Field(
+        default_factory=list, description="A list of workflow jobs to install"
     )
     install_data: list[InstallDataConfig] | None = Field(
         default=None,

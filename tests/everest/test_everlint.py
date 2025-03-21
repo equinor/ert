@@ -164,7 +164,7 @@ def test_invalid_subconfig(extra_config, min_config, expected):
 
 
 def test_no_list(min_config):
-    min_config["install_data"] = None
+    min_config["install_data"] = []
     errors = EverestConfig.lint_config_dict(min_config)
     assert len(errors) == 0
 
