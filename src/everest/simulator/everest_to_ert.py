@@ -161,7 +161,7 @@ def _job_to_dict(job: dict[str, Any] | InstallJobConfig) -> dict[str, Any]:
 def _extract_jobs(
     ever_config: EverestConfig, ert_config: dict[str, Any], path: str
 ) -> None:
-    ever_jobs = [_job_to_dict(j) for j in (ever_config.install_jobs or [])]
+    ever_jobs = [_job_to_dict(j) for j in ever_config.install_jobs]
 
     std_ever_jobs = _fetch_everest_jobs(ever_config)
 
