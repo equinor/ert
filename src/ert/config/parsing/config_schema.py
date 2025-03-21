@@ -169,6 +169,7 @@ def queue_option_keyword() -> SchemaItem:
         kw=ConfigKeys.QUEUE_OPTION,
         argc_min=2,
         argc_max=None,
+        join_after=2,
         type_map=[QueueSystemWithGeneric, SchemaItemType.STRING, SchemaItemType.STRING],
         multi_occurrence=True,
     )
