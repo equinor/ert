@@ -2175,3 +2175,16 @@ def test_run_template_raises_configvalidationerror_with_more_than_two_arguments(
             """
             )
         )
+
+
+def test_queue_options_are_joined_after_option_name():
+    assert (
+        ErtConfig.from_file_contents(
+            """
+            NUM_REALIZATIONS 1
+            QUEUE_SYSTEM LSF
+            QUEUE_OPTION LSF LSF_RESOURCE select[bigmachine && Linux]
+            """
+        ).queue_config.queue_options.lsf_resource
+        == "select[bigmachine && Linux]"
+    )
