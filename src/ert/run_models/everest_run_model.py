@@ -505,7 +505,7 @@ class EverestRunModel(BaseRunModel):
         # Will be used to search the cache
         controls_to_evaluate_df = pl.DataFrame(
             {
-                "realization": list(range(len(model_realizations))),
+                "flat_index": list(range(len(model_realizations))),
                 "model_realization": pl.Series(model_realizations, dtype=pl.UInt16),
                 **{
                     control_name: pl.Series(control_values[:, i], dtype=pl.Float64)
@@ -529,19 +529,20 @@ class EverestRunModel(BaseRunModel):
         # that are not approximately matching the control value
         # of our to-be-evaluated controls.
         for control_name in control_names:
-            left = (
-                left.sort(["model_realization", control_name])
-                .join_asof(
-                    right.sort(["model_realization", control_name]),
-                    on=control_name,
-                    by="model_realization",  # pre-join by model realization
-                    tolerance=EPS,  # Same as np.allclose with atol=EPS
-                    strategy="nearest",
-                    check_sortedness=False,
-                    # Ref: https://github.com/pola-rs/polars/issues/21693
-                )
-                .filter(pl.col("realization_right").is_not_null())
+            if "flat_index" in left.columns:
+                left = left.drop("flat_index")
+
+            left = left.sort(["model_realization", control_name]).join_asof(
+                right.sort(["model_realization", control_name]),
+                on=control_name,
+                by="model_realization",  # pre-join by model realization
+                tolerance=EPS,  # Same as np.allclose with atol=EPS
+                strategy="nearest",
+                check_sortedness=False,
+                # Ref: https://github.com/pola-rs/polars/issues/21693
             )
+
+            left = left.filter(pl.col("flat_index").is_not_null())
 
             left = left.drop([s for s in left.columns if s.endswith("_right")])
 
@@ -605,7 +606,7 @@ class EverestRunModel(BaseRunModel):
 
             if cache_hits_df is not None and not cache_hits_df.is_empty():
                 hit_row = cache_hits_df.filter(
-                    cache_hits_df["realization"] == flat_index
+                    cache_hits_df["flat_index"] == flat_index
                 )
 
                 if not hit_row.is_empty():
