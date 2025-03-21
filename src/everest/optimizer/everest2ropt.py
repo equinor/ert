@@ -122,7 +122,7 @@ def _get_bounds(
 
 
 def _parse_input_constraints(
-    input_constraints: list[InputConstraintConfig] | None,
+    input_constraints: list[InputConstraintConfig],
     formatted_control_names: list[str],
     formatted_control_names_dotdash: list[str],
     ropt_config: dict[str, Any],
