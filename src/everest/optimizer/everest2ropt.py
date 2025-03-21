@@ -277,7 +277,7 @@ def _parse_optimization(
 
 
 def _parse_model(
-    ever_model: ModelConfig | None,
+    ever_model: ModelConfig,
     ever_opt: OptimizationConfig,
     ropt_config: dict[str, Any],
 ) -> None:
