@@ -212,8 +212,8 @@ and environment variables are exposed in the form 'os.NAME', for example:
         description="Simulation settings",
         examples=[simulator_example],
     )
-    forward_model: list[str] | None = Field(
-        default=None, description="List of jobs to run"
+    forward_model: list[str] = Field(
+        default_factory=list, description="List of jobs to run"
     )
     workflows: WorkflowConfig | None = Field(
         default=None, description="Workflows to run during optimization"
@@ -334,10 +334,7 @@ and environment variables are exposed in the form 'os.NAME', for example:
         if workflows is None:
             return self
 
-        install_workflow_jobs = self.install_workflow_jobs
-        if install_workflow_jobs is None:
-            install_workflow_jobs = []
-        installed_jobs_name = [job.name for job in install_workflow_jobs]
+        installed_jobs_name = [job.name for job in self.install_workflow_jobs]
 
         errors = []
         workflows_dict = workflows.model_dump()
