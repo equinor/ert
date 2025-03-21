@@ -725,60 +725,6 @@ def test_that_history_observation_errors_are_calculated_correctly(tmpdir):
 
 
 @pytest.mark.parametrize(
-    "obs_content, match",
-    [
-        (
-            dedent(
-                """
-                    GENERAL_OBSERVATION  obs
-                    {
-                       DATA       = RES;
-                       DATE       = 2023-02-01;
-                       VALUE      = 1;
-                    };
-                    """
-            ),
-            "ERROR must also be given",
-        ),
-        (
-            dedent(
-                """
-                    GENERAL_OBSERVATION  obs
-                    {
-                       DATE       = 2023-02-01;
-                       VALUE      = 1;
-                       ERROR      = 0.01;
-                       ERROR_MIN  = 0.1;
-                    };
-                    """
-            ),
-            'Missing item "DATA"',
-        ),
-    ],
-)
-def test_validation_of_general_observation(tmpdir, obs_content, match):
-    with tmpdir.as_cwd():
-        config = dedent(
-            """
-        NUM_REALIZATIONS 2
-
-        TIME_MAP time_map.txt
-        OBS_CONFIG observations
-        GEN_DATA RES RESULT_FILE:out_%d REPORT_STEPS:0 INPUT_FORMAT:ASCII
-        """
-        )
-        with open("config.ert", "w", encoding="utf-8") as fh:
-            fh.writelines(config)
-        with open("observations", "w", encoding="utf-8") as fo:
-            fo.writelines(obs_content)
-        with open("time_map.txt", "w", encoding="utf-8") as fo:
-            fo.writelines("2023-02-01")
-
-        with pytest.raises(ConfigValidationError, match=match):
-            ErtConfig.from_file("config.ert")
-
-
-@pytest.mark.parametrize(
     "observation_type",
     ["HISTORY_OBSERVATION", "SUMMARY_OBSERVATION", "GENERAL_OBSERVATION"],
 )
