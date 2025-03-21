@@ -30,66 +30,17 @@ def _create_design_matrix(filename, design_sheet_df, default_sheet_df=None):
             )
 
 
-@pytest.mark.usefixtures("copy_poly_case")
-def test_run_poly_example_with_design_matrix(caplog):
+def test_run_poly_example_with_design_matrix(copy_poly_case_with_design_matrix, caplog):
     caplog.set_level(logging.INFO)
     num_realizations = 10
     a_values = list(range(num_realizations))
-    _create_design_matrix(
-        "poly_design.xlsx",
-        pd.DataFrame(
-            {
-                "REAL": list(range(num_realizations)),
-                "a": a_values,
-                "category": 5 * ["cat1"] + 5 * ["cat2"],
-            }
-        ),
-        pd.DataFrame([["b", 1], ["c", 2]]),
-    )
-
-    with open("poly.ert", "w", encoding="utf-8") as fout:
-        fout.write(
-            dedent(
-                """\
-                QUEUE_OPTION LOCAL MAX_RUNNING 10
-                RUNPATH poly_out/realization-<IENS>/iter-<ITER>
-                NUM_REALIZATIONS 10
-                MIN_REALIZATIONS 1
-                GEN_DATA POLY_RES RESULT_FILE:poly.out
-                DESIGN_MATRIX poly_design.xlsx
-                INSTALL_JOB poly_eval POLY_EVAL
-                FORWARD_MODEL poly_eval
-                """
-            )
-        )
-
-    with open("poly_eval.py", "w", encoding="utf-8") as f:
-        f.write(
-            dedent(
-                """\
-                #!/usr/bin/env python
-                import json
-
-                def _load_coeffs(filename):
-                    with open(filename, encoding="utf-8") as f:
-                        return json.load(f)["DESIGN_MATRIX"]
-
-                def _evaluate(coeffs, x):
-                    assert coeffs["category"] in ["cat1", "cat2"]
-                    return coeffs["a"] * x**2 + coeffs["b"] * x + coeffs["c"]
-
-                if __name__ == "__main__":
-                    coeffs = _load_coeffs("parameters.json")
-                    output = [_evaluate(coeffs, x) for x in range(10)]
-                    with open("poly.out", "w", encoding="utf-8") as f:
-                        f.write("\\n".join(map(str, output)))
-                """
-            )
-        )
-    os.chmod(
-        "poly_eval.py",
-        os.stat("poly_eval.py").st_mode | stat.S_IXUSR | stat.S_IXGRP | stat.S_IXOTH,
-    )
+    design_dict = {
+        "REAL": list(range(num_realizations)),
+        "a": a_values,
+        "category": 5 * ["cat1"] + 5 * ["cat2"],
+    }
+    default_list = [["b", 1], ["c", 2]]
+    copy_poly_case_with_design_matrix(design_dict, default_list)
 
     run_cli(
         ENSEMBLE_EXPERIMENT_MODE,

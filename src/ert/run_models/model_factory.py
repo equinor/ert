@@ -133,11 +133,11 @@ def _setup_evaluate_ensemble(
     args: Namespace,
     status_queue: SimpleQueue[StatusEvents],
 ) -> EvaluateEnsemble:
-    active_realizations = _realizations(args, config.model_config.num_realizations)
+    active_realizations = _get_active_realizations_list(args, config)
 
     return EvaluateEnsemble(
         random_seed=config.random_seed,
-        active_realizations=active_realizations.tolist(),
+        active_realizations=active_realizations,
         ensemble_id=args.ensemble_id,
         minimum_required_realizations=config.analysis_config.minimum_required_realizations,
         config=config,
