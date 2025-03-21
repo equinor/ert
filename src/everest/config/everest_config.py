@@ -477,7 +477,7 @@ and environment variables are exposed in the form 'os.NAME', for example:
         if environment is None or config_path is None:
             return self
 
-        check_writeable_path(environment.simulation_folder, Path(config_path))  # type: ignore
+        check_writeable_path(environment.simulation_folder, Path(config_path))
         return self
 
     # pylint: disable=E0213
@@ -569,14 +569,14 @@ and environment variables are exposed in the form 'os.NAME', for example:
     def simulation_dir(self) -> str | None:
         path = self.environment.simulation_folder
 
-        if os.path.isabs(path):  # type: ignore
+        if os.path.isabs(path):
             return path
 
         cfgdir = self.output_dir
         if cfgdir is None:
             return path
 
-        return os.path.join(cfgdir, path)  # type: ignore
+        return os.path.join(cfgdir, path)
 
     def _get_output_subdirectory(self, subdirname: str) -> str:
         return os.path.join(os.path.abspath(self.output_dir), subdirname)
