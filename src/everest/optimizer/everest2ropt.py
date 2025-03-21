@@ -183,8 +183,7 @@ def _parse_optimization(
     ropt_optimizer = ropt_config["optimizer"]
     ropt_gradient = ropt_config["gradient"]
 
-    algorithm = ever_opt.algorithm or "optpp_q_newton"
-    ropt_optimizer["method"] = f"{algorithm}"
+    ropt_optimizer["method"] = ever_opt.algorithm
 
     alg_max_iter = ever_opt.max_iterations
     if alg_max_iter:
