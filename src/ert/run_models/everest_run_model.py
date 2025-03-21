@@ -549,7 +549,13 @@ class EverestRunModel(BaseRunModel):
             if left.is_empty():
                 break
 
-        return left if not left.is_empty() else None
+        return (
+            left.rename({"realization": "simulation_id"}).drop(
+                "model_realization", "perturbation"
+            )
+            if not left.is_empty()
+            else None
+        )
 
     @staticmethod
     def _create_evaluation_infos(
