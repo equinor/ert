@@ -1,13 +1,14 @@
 from typing import Self
 
 from pydantic import BaseModel, Field, PositiveFloat, field_validator, model_validator
+from pydantic.json_schema import SkipJsonSchema
 
 from ert.config import ConfigWarning
 
 
 class ObjectiveFunctionConfig(BaseModel, extra="forbid"):
     name: str = Field()
-    weight: PositiveFloat | None = Field(
+    weight: PositiveFloat | SkipJsonSchema[None] = Field(
         default=None,
         description="""
 weight determines the importance of an objective function relative to the other
@@ -18,13 +19,13 @@ Note that, in case the weights do not sum up to 1, they are normalized before be
 used in the optimization process.
 """,
     )
-    normalization: float | None = Field(
+    normalization: float | SkipJsonSchema[None] = Field(
         default=None,
         description="""
     normalization key is deprecated and has been replaced with scale
 """,
     )
-    scale: float | None = Field(
+    scale: float | SkipJsonSchema[None] = Field(
         default=None,
         description="""
     scale is a division factor defined per objective function.
@@ -36,13 +37,13 @@ used in the optimization process.
     the weighted sum that Everest tries to optimize.
     """,
     )
-    auto_normalize: bool | None = Field(
+    auto_normalize: bool | SkipJsonSchema[None] = Field(
         default=None,
         description="""
     auto_normalize key is deprecated has been replaced with auto_scale.
     """,
     )
-    auto_scale: bool | None = Field(
+    auto_scale: bool | SkipJsonSchema[None] = Field(
         default=None,
         description="""
 auto_normalize can be set to true to automatically
@@ -51,7 +52,7 @@ determine the scaling factor from the objective value in batch 0.
 If scale is also set, the automatic value is divided by its value.
 """,
     )
-    type: str | None = Field(
+    type: str | SkipJsonSchema[None] = Field(
         default=None,
         description="""
 type can be set to the name of a method that should be applied to calculate a

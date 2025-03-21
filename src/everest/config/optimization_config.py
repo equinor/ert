@@ -2,6 +2,7 @@ import logging
 from typing import Any, Self
 
 from pydantic import BaseModel, Field, model_validator
+from pydantic.json_schema import SkipJsonSchema
 
 from everest.config.cvar_config import CVaRConfig
 from everest.optimizer.utils import get_ropt_plugin_manager
@@ -15,7 +16,7 @@ class OptimizationConfig(BaseModel, extra="forbid"):
 optpp_q_newton, a quasi-Newton algorithm in Dakota's OPT PP library.
 """,
     )
-    convergence_tolerance: float | None = Field(
+    convergence_tolerance: float | SkipJsonSchema[None] = Field(
         default=None,
         description="""Defines the threshold value on relative change
 in the objective function that indicates convergence.
@@ -34,7 +35,7 @@ iteration.
 
 (From the Dakota Manual.)""",
     )
-    backend: str | None = Field(
+    backend: str | SkipJsonSchema[None] = Field(
         default=None,
         description="""(deprecated) The optimization backend used.".
 
@@ -43,7 +44,7 @@ The Dakota backend is the default, and can be assumed to be installed. The SciPy
 backend is optional, and will only be available if SciPy is installed on the
 system.""",
     )
-    backend_options: dict[str, Any] | None = Field(
+    backend_options: dict[str, Any] | SkipJsonSchema[None] = Field(
         default=None,
         description="""Dict of optional parameters for the optimizer backend.
 This dict of values is passed unchanged to the selected algorithm in the backend.
@@ -52,7 +53,7 @@ Note that the default Dakota backend ignores this option, because it requires a
 list of strings rather than a dictionary. For setting Dakota backend options, see
 the 'option' keyword.""",
     )
-    constraint_tolerance: float | None = Field(
+    constraint_tolerance: float | SkipJsonSchema[None] = Field(
         default=None,
         description="""Determines the maximum allowable value of
 infeasibility that any constraint in an optimization problem may possess and
@@ -67,7 +68,7 @@ being violated.
 
 (From the Dakota Manual.)""",
     )
-    cvar: CVaRConfig | None = Field(
+    cvar: CVaRConfig | SkipJsonSchema[None] = Field(
         default=None,
         description="""Directs the optimizer to use CVaR estimation.
 
@@ -80,7 +81,7 @@ either the **number_of_realizations** option, or the **percentile** option,
 which are mutually exclusive.
 """,
     )
-    max_batch_num: int | None = Field(
+    max_batch_num: int | SkipJsonSchema[None] = Field(
         default=None,
         gt=0,
         description="""Limits the number of batches of simulations
@@ -88,7 +89,7 @@ during optimization, where 0 represents unlimited simulation batches.
 When max_batch_num is specified and the current batch index is greater than
 max_batch_num an exception is raised.""",
     )
-    max_function_evaluations: int | None = Field(
+    max_function_evaluations: int | SkipJsonSchema[None] = Field(
         default=None,
         gt=0,
         description="""Limits the maximum number of function evaluations.
@@ -99,7 +100,7 @@ will allow before convergence is obtained.
 See max_iterations for a description.
 """,
     )
-    max_iterations: int | None = Field(
+    max_iterations: int | SkipJsonSchema[None] = Field(
         default=None,
         gt=0,
         description="""Limits the maximum number of iterations.
@@ -108,7 +109,7 @@ The difference between an iteration and a batch is that an iteration corresponds
 a complete accepted batch (i.e., a batch that provides an improvement in the
 objective function while satisfying all constraints).""",
     )
-    min_pert_success: int | None = Field(
+    min_pert_success: int | SkipJsonSchema[None] = Field(
         default=None,
         gt=0,
         description="""specifies the minimum number of successfully completed
@@ -126,7 +127,7 @@ and a message is produced.  In the special case of robust optimization case with
 `perturbation_num: 1` the maximum allowed value is the number of realizations specified
 by realizations instead.""",
     )
-    min_realizations_success: int | None = Field(
+    min_realizations_success: int | SkipJsonSchema[None] = Field(
         default=None,
         ge=0,
         description="""Minimum number of realizations
@@ -152,7 +153,7 @@ if all realizations failed. Most algorithms are not capable of this and will adj
 the value to be equal to one.
 """,
     )
-    options: list[str] | dict[str, Any] | None = Field(
+    options: list[str] | dict[str, Any] | SkipJsonSchema[None] = Field(
         default=None,
         description="""specifies non-validated, optional
 passthrough parameters for the optimizer
@@ -162,7 +163,7 @@ passthrough parameters for the optimizer
 | - retry_if_fail
 | - classical_search 1""",
     )
-    perturbation_num: int | None = Field(
+    perturbation_num: int | SkipJsonSchema[None] = Field(
         default=None,
         gt=0,
         description="""The number of perturbed control vectors per realization.
@@ -170,7 +171,7 @@ passthrough parameters for the optimizer
 The number of simulation runs used for estimating the gradient is equal to the
 the product of perturbation_num and model.realizations.""",
     )
-    speculative: bool | None = Field(
+    speculative: bool | SkipJsonSchema[None] = Field(
         default=None,
         description="""specifies whether to enable speculative computation.
 
@@ -184,7 +185,7 @@ shorter wall clock time. The speculative specification is applicable only when
 parallelism in the gradient calculations can be exploited by Dakota (it will be
 ignored for vendor numerical gradients).  (From the Dakota Manual.)""",
     )
-    parallel: bool | None = Field(
+    parallel: bool | SkipJsonSchema[None] = Field(
         default=None,
         description="""whether to allow parallel function evaluation.
 

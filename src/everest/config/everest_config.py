@@ -23,6 +23,7 @@ from pydantic import (
     field_validator,
     model_validator,
 )
+from pydantic.json_schema import SkipJsonSchema
 from pydantic_core import ErrorDetails
 from ruamel.yaml import YAML, YAMLError
 
@@ -169,33 +170,34 @@ and environment variables are exposed in the form 'os.NAME', for example:
 | ...
     """,
     )
-    input_constraints: list[InputConstraintConfig] | None = Field(
-        default=None, description="List of input constraints"
+    input_constraints: list[InputConstraintConfig] = Field(
+        default_factory=list, description="List of input constraints"
     )
-    output_constraints: list[OutputConstraintConfig] | None = Field(
-        default=None, description="A list of output constraints with unique names."
+    output_constraints: list[OutputConstraintConfig] = Field(
+        default_factory=list,
+        description="A list of output constraints with unique names.",
     )
-    install_jobs: list[InstallJobConfig] | None = Field(
-        default=None, description="A list of jobs to install"
+    install_jobs: list[InstallJobConfig] = Field(
+        default_factory=list, description="A list of jobs to install"
     )
-    install_workflow_jobs: list[InstallJobConfig] | None = Field(
-        default=None, description="A list of workflow jobs to install"
+    install_workflow_jobs: list[InstallJobConfig] = Field(
+        default_factory=list, description="A list of workflow jobs to install"
     )
-    install_data: list[InstallDataConfig] | None = Field(
-        default=None,
+    install_data: list[InstallDataConfig] = Field(
+        default_factory=list,
         description="""A list of install data elements from the install_data config
         section. Each item marks what folders or paths need to be copied or linked
         in order for the evaluation jobs to run.""",
     )
-    install_templates: list[InstallTemplateConfig] | None = Field(
-        default=None,
+    install_templates: list[InstallTemplateConfig] = Field(
+        default_factory=list,
         description="""Allow the user to define the workflow establishing the model
         chain for the purpose of sensitivity analysis, enabling the relationship
         between sensitivity input variables and quantities of interests to be
         evaluated.
 """,
     )
-    server: ServerConfig | None = Field(
+    server: ServerConfig = Field(
         default_factory=ServerConfig,
         description="""Defines Everest server settings, i.e., which queue system,
             queue name and queue options are used for the everest server.
@@ -213,18 +215,18 @@ and environment variables are exposed in the form 'os.NAME', for example:
             requirements of the forward models.
 """,
     )
-    simulator: SimulatorConfig | None = Field(
+    simulator: SimulatorConfig = Field(
         default_factory=SimulatorConfig,
         description="Simulation settings",
         examples=[simulator_example],
     )
-    forward_model: list[str] | None = Field(
-        default=None, description="List of jobs to run"
+    forward_model: list[str] = Field(
+        default_factory=list, description="List of jobs to run"
     )
     workflows: WorkflowConfig | None = Field(
         default=None, description="Workflows to run during optimization"
     )
-    export: ExportConfig | None = Field(
+    export: ExportConfig | SkipJsonSchema[None] = Field(
         default=None,
         description="Settings to control the exports of a optimization run by everest.",
     )
@@ -233,8 +235,6 @@ and environment variables are exposed in the form 'os.NAME', for example:
 
     @model_validator(mode="after")
     def validate_queue_system(self) -> Self:  # pylint: disable=E0213
-        assert self.server is not None
-        assert self.simulator is not None
         if self.server.queue_system is None:
             self.server.queue_system = copy(self.simulator.queue_system)
         if (
@@ -254,8 +254,6 @@ and environment variables are exposed in the form 'os.NAME', for example:
     def validate_forward_model_job_name_installed(self) -> Self:  # pylint: disable=E0213
         install_jobs = self.install_jobs
         forward_model_jobs = self.forward_model
-        if install_jobs is None:
-            install_jobs = []
         if not forward_model_jobs:
             return self
         installed_jobs_name = [job.name for job in install_jobs]
@@ -278,10 +276,7 @@ and environment variables are exposed in the form 'os.NAME', for example:
         if workflows is None:
             return self
 
-        install_workflow_jobs = self.install_workflow_jobs
-        if install_workflow_jobs is None:
-            install_workflow_jobs = []
-        installed_jobs_name = [job.name for job in install_workflow_jobs]
+        installed_jobs_name = [job.name for job in self.install_workflow_jobs]
 
         errors = []
         workflows_dict = workflows.model_dump()
@@ -401,7 +396,7 @@ and environment variables are exposed in the form 'os.NAME', for example:
     def validate_maintained_forward_models(self) -> Self:
         install_data = self.install_data
 
-        with InstallDataContext(install_data, self.config_path) as context:  # type: ignore
+        with InstallDataContext(install_data, self.config_path) as context:
             for realization in self.model.realizations:
                 context.add_links_for_realization(realization)
             validate_forward_model_configs(self.forward_model, self.install_jobs)
@@ -635,16 +630,12 @@ and environment variables are exposed in the form 'os.NAME', for example:
 
     @property
     def constraint_names(self) -> list[str]:
-        if self.output_constraints:
-            return [constraint.name for constraint in self.output_constraints]
-        return []
+        return [constraint.name for constraint in self.output_constraints]
 
     @property
     def result_names(self) -> list[str]:
         objectives_names = [objective.name for objective in self.objective_functions]
-        constraint_names = [
-            constraint.name for constraint in (self.output_constraints or [])
-        ]
+        constraint_names = [constraint.name for constraint in self.output_constraints]
         return objectives_names + constraint_names
 
     def to_dict(self) -> dict[str, Any]:
