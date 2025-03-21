@@ -560,37 +560,27 @@ def test_that_out_of_bounds_segments_are_truncated(tmpdir, start, stop, message)
 )
 def test_that_history_observations_are_loaded(tmpdir, keys, with_ext):
     with tmpdir.as_cwd():
-        config = dedent(
-            f"""
-        NUM_REALIZATIONS 2
-
-        ECLBASE ECLIPSE_CASE
-        REFCASE ECLIPSE_CASE{".DATA" if with_ext else ""}
-        OBS_CONFIG observations
-        """
-        )
-        with open("config.ert", "w", encoding="utf-8") as fh:
-            fh.writelines(config)
         key, _, wname = keys[0]
         local_name = key if wname is None else (key + ":" + wname)
-        with open("observations", "w", encoding="utf-8") as fo:
-            fo.writelines(
-                dedent(
-                    f"""
-                    HISTORY_OBSERVATION  {local_name}
-                    {{
-                       ERROR       = 0.20;
-                       ERROR_MODE  = RELMIN;
-                       ERROR_MIN   = 100;
-                    }};
-                    """
-                )
-            )
-        with open("time_map.txt", "w", encoding="utf-8") as fo:
-            fo.writelines("2023-02-01")
         run_sim(datetime(2014, 9, 10), keys)
 
-        ert_config = ErtConfig.from_file("config.ert")
+        ert_config = ErtConfig.from_dict(
+            {
+                "ECLBASE": "ECLIPSE_CASE",
+                "REFCASE": f"ECLIPSE_CASE{'.DATA' if with_ext else ''}",
+                "OBS_CONFIG": (
+                    "obsconf",
+                    f"""
+                        HISTORY_OBSERVATION  {local_name}
+                        {{
+                           ERROR       = 0.20;
+                           ERROR_MODE  = RELMIN;
+                           ERROR_MIN   = 100;
+                        }};
+                        """,
+                ),
+            }
+        )
 
         observations = ert_config.enkf_obs
         assert [o.observation_key for o in observations] == [local_name]
