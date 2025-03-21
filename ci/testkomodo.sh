@@ -89,7 +89,7 @@ run_everest_egg_test() {
         export PATH=$PATH:/global/bin
     fi
 
-    everest run "$CONFIG" --skip-prompt --debug
+    everest run "$CONFIG" --skip-prompt --debug --disable-monitoring
     STATUS=$?
     popd
 
