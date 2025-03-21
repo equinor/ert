@@ -32,7 +32,7 @@ class _ComboBoxItemWidget(QWidget):
         super().__init__(parent)
         layout = QVBoxLayout()
         layout.setSpacing(5)
-        # self.setPalette(parent.palette())
+        self.setPalette(parent.palette())
         self.label = QLabel(label, self)
         pd_top = "0px" if group else "5px"
         if group:
