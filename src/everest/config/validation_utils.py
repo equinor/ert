@@ -247,7 +247,7 @@ def check_writeable_path(path_source: str, config_path: Path) -> None:
 
 
 def validate_forward_model_configs(
-    forward_model: list[str] | None, install_jobs: list[InstallJobConfig] | None
+    forward_model: list[str], install_jobs: list[InstallJobConfig] | None
 ) -> None:
     if not forward_model:
         return
