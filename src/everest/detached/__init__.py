@@ -64,11 +64,15 @@ async def start_server(config: EverestConfig, logging_level: int) -> Driver:
         await driver.submit(0, "everserver", *args, name=Path(config.config_file).stem)
     except FailedSubmit as err:
         raise ValueError(f"Failed to submit Everserver with error: {err}") from err
+
     status = await driver.event_queue.get()
     if not isinstance(status, StartedEvent):
         poll_task.cancel()
         raise ValueError(f"Everserver not started as expected, got status: {status}")
     poll_task.cancel()
+    logger.debug(
+        f"Everserver started. Items left in queue: {driver.event_queue.qsize()}"
+    )
     return driver
 
 
@@ -166,7 +170,9 @@ def wait_for_server_to_stop(
 
 def server_is_running(url: str, cert: str, auth: tuple[str, str]) -> bool:
     try:
-        logger.info(f"Checking server status at {url} ")
+        logger.debug(f"Checking server status at {url} ")
+        if "None:None" in url:
+            return False
         response = requests.get(
             url,
             verify=cert,
@@ -175,7 +181,7 @@ def server_is_running(url: str, cert: str, auth: tuple[str, str]) -> bool:
             proxies=PROXY,  # type: ignore
         )
         response.raise_for_status()
-    except:
+    except Exception:
         logger.debug(traceback.format_exc())
         return False
     return True
