@@ -10,7 +10,7 @@ class EnvironmentConfig(BaseModel, extra="forbid"):
     simulation_folder: str = Field(
         default="simulation_folder", description="Folder used for simulation by Everest"
     )
-    output_folder: str | None = Field(
+    output_folder: str = Field(
         default="everest_output", description="Folder for outputs of Everest"
     )
     log_level: Literal["debug", "info", "warning", "error", "critical"] | None = Field(
