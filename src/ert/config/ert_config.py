@@ -842,23 +842,33 @@ class ErtConfig:
             raise ConfigValidationError.from_collected(errors)
 
         if dm := analysis_config.design_matrix:
-            dm_params = [
+            dm_errors = []
+            dm_params = {
                 x.name
                 for x in dm.parameter_configuration.transform_function_definitions
-            ]
+            }
             for group_name, config in ensemble_config.parameter_configs.items():
-                overlapping = []
                 if not isinstance(config, GenKwConfig):
                     continue
-                for transform_definition in config.transform_function_definitions:
-                    if transform_definition.name in dm_params:
-                        overlapping.append(transform_definition.name)
-                if overlapping:
+                group_params = {x.name for x in config.transform_function_definitions}
+                if dm_params == group_params:
                     ConfigWarning.warn(
-                        f"Parameters {overlapping} from GEN_KW group '{group_name}' "
+                        f"Parameters {group_params} from GEN_KW group '{group_name}' "
                         "will be overridden by design matrix. This will cause "
                         "updates to be turned off for these parameters."
                     )
+                elif intersection := dm_params & group_params:
+                    dm_errors.append(
+                        ConfigValidationError(
+                            "Only full overlaps of design matrix and "
+                            "one genkw group are supported.\n"
+                            f"design matrix parameters: {dm_params}\n"
+                            f"parameters in genkw group <{group_name}>: {group_params}\n"
+                            f"overlap between them: {intersection}"
+                        )
+                    )
+            if dm_errors:
+                raise ConfigValidationError.from_collected(dm_errors)
 
         env_vars = {}
         for key, val in config_dict.get("SETENV", []):
