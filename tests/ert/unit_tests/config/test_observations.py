@@ -798,21 +798,17 @@ def test_that_segment_defaults_are_applied(tmpdir):
 
 def test_that_summary_default_error_min_is_applied(tmpdir):
     with tmpdir.as_cwd():
-        with open("config.ert", "w", encoding="utf-8") as fh:
-            fh.writelines(
-                dedent(
-                    """
-                    NUM_REALIZATIONS 2
+        run_sim(
+            datetime(2014, 9, 10),
+            [("FOPR", "SM3/DAY", None), ("FOPRH", "SM3/DAY", None)],
+        )
 
-                    ECLBASE ECLIPSE_CASE
-                    REFCASE ECLIPSE_CASE
-                    OBS_CONFIG observations
-                    """
-                )
-            )
-        with open("observations", "w", encoding="utf-8") as fo:
-            fo.writelines(
-                dedent(
+        observations = ErtConfig.from_dict(
+            {
+                "ECLBASE": "ECLIPSE_CASE",
+                "REFCASE": "ECLIPSE_CASE",
+                "OBS_CONFIG": (
+                    "obsconf",
                     """
                     SUMMARY_OBSERVATION FOPR
                     {
@@ -822,15 +818,10 @@ def test_that_summary_default_error_min_is_applied(tmpdir):
                         RESTART = 1;
                         ERROR_MODE = RELMIN;
                     };
-                    """
-                )
-            )
-        run_sim(
-            datetime(2014, 9, 10),
-            [("FOPR", "SM3/DAY", None), ("FOPRH", "SM3/DAY", None)],
-        )
-
-        observations = ErtConfig.from_file("config.ert").enkf_obs
+                    """,
+                ),
+            }
+        ).enkf_obs
 
         # default error_min is 0.1
         assert observations["FOPR"].observations[datetime(2014, 9, 11)].std == 0.1
