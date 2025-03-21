@@ -441,3 +441,36 @@ def test_that_common_observation_error_validation_is_handled(
 def test_that_summary_observation_validation_is_handled(obs_content, match):
     with pytest.raises(ObservationConfigError, match=match):
         parse_content(obs_content, filename="")
+
+
+@pytest.mark.parametrize(
+    "obs_content, match",
+    [
+        (
+            """
+            GENERAL_OBSERVATION  obs
+            {
+               DATA       = RES;
+               DATE       = 2023-02-01;
+               VALUE      = 1;
+            };
+            """,
+            "ERROR must also be given",
+        ),
+        (
+            """
+            GENERAL_OBSERVATION  obs
+            {
+               DATE       = 2023-02-01;
+               VALUE      = 1;
+               ERROR      = 0.01;
+               ERROR_MIN  = 0.1;
+            };
+            """,
+            'Missing item "DATA"',
+        ),
+    ],
+)
+def test_validation_of_general_observation(obs_content, match):
+    with pytest.raises(ObservationConfigError, match=match):
+        parse_content(obs_content, "")
