@@ -321,7 +321,16 @@ class ErtConfigValues:
             ConfigKeys.QUEUE_SYSTEM: self.queue_system,
             ConfigKeys.QUEUE_OPTION: self.queue_option,
             ConfigKeys.ANALYSIS_SET_VAR: self.analysis_set_var,
-            ConfigKeys.INSTALL_JOB: self.install_job,
+            ConfigKeys.INSTALL_JOB: [
+                (
+                    name,
+                    (
+                        fn,
+                        f"EXECUTABLE script/{name}.exe\nMIN_ARG 0\nMAX_ARG 1\n",
+                    ),
+                )
+                for name, fn in self.install_job
+            ],
             ConfigKeys.INSTALL_JOB_DIRECTORY: self.install_job_directory,
             ConfigKeys.RANDOM_SEED: self.random_seed,
             ConfigKeys.SETENV: self.setenv,
@@ -614,13 +623,14 @@ def config_generators(draw, use_eclbase=booleans):
     should_be_executable_files = [config_values.job_script]
     should_exist_directories = config_values.install_job_directory
 
-    def generate_job_config(job_path):
-        return job_path, draw(file_names) + ".exe"
+    def generate_job_config(job_path, name):
+        return job_path, name + ".exe"
 
     should_exist_job_configs = [
-        generate_job_config(job_path) for _, job_path in config_values.install_job
+        generate_job_config(job_path, name)
+        for name, job_path in config_values.install_job
     ] + [
-        generate_job_config(job_dir + "/" + draw(file_names))
+        generate_job_config(job_dir + "/" + draw(file_names), draw(file_names))
         for job_dir in config_values.install_job_directory
     ]
 
@@ -713,7 +723,6 @@ def to_config_file(filename, config_values):
             ConfigKeys.RUN_TEMPLATE,
             ConfigKeys.DATA_KW,
             ConfigKeys.DEFINE,
-            ConfigKeys.INSTALL_JOB,
         ]
         for keyword, keyword_value in config_dict.items():
             if keyword in tuple_value_keywords:
@@ -761,5 +770,8 @@ def to_config_file(filename, config_values):
                     )
             elif keyword in {ConfigKeys.TIME_MAP, ConfigKeys.OBS_CONFIG}:
                 config.write(f"{keyword} {keyword_value[0]}\n")
+            elif keyword == ConfigKeys.INSTALL_JOB:
+                for fm in keyword_value:
+                    config.write(f"{keyword} {fm[0]} {fm[1][0]}\n")
             else:
                 config.write(f"{keyword} {keyword_value}\n")

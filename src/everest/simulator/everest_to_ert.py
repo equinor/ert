@@ -20,7 +20,7 @@ from ert.config.ert_config import (
     installed_forward_model_steps_from_dict,
     uppercase_subkeys_and_stringify_subvalues,
 )
-from ert.config.parsing import ConfigDict
+from ert.config.parsing import ConfigDict, read_file
 from ert.config.parsing import ConfigKeys as ErtConfigKeys
 from ert.plugins import ErtPluginContext
 from ert.plugins.plugin_manager import ErtPluginManager
@@ -177,10 +177,8 @@ def _extract_jobs(
 
     res_jobs = ert_config.get(ErtConfigKeys.INSTALL_JOB, [])
     for job in ever_jobs:
-        new_job = (
-            job["name"],
-            os.path.join(path, job["source"]),
-        )
+        source_path = os.path.join(path, job["source"])
+        new_job = (job["name"], (source_path, read_file(source_path)))
         res_jobs.append(new_job)
 
     ert_config[ErtConfigKeys.INSTALL_JOB] = res_jobs

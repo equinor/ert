@@ -57,9 +57,6 @@ from .parsing import (
     parse_contents,
     read_file,
 )
-from .parsing import (
-    parse as parse_config,
-)
 from .parsing.observations_parser import (
     GenObsValues,
     HistoryValues,
@@ -406,11 +403,13 @@ def workflows_from_dict(
 def installed_forward_model_steps_from_dict(config_dict) -> dict[str, ForwardModelStep]:
     errors = []
     fm_steps = {}
-    for fm_step in config_dict.get(ConfigKeys.INSTALL_JOB, []):
-        name = fm_step[0]
-        fm_step_config_file = path.abspath(fm_step[1])
+    for name, (fm_step_config_file, config_contents) in config_dict.get(
+        ConfigKeys.INSTALL_JOB, []
+    ):
+        fm_step_config_file = path.abspath(fm_step_config_file)
         try:
-            new_fm_step = _forward_model_step_from_config_file(
+            new_fm_step = _forward_model_step_from_config_contents(
+                config_contents,
                 name=name,
                 config_file=fm_step_config_file,
             )
@@ -430,8 +429,9 @@ def installed_forward_model_steps_from_dict(config_dict) -> dict[str, ForwardMod
             if not path.isfile(file_name):
                 continue
             try:
-                new_fm_step = _forward_model_step_from_config_file(
-                    config_file=file_name
+                config_contents = read_file(file_name)
+                new_fm_step = _forward_model_step_from_config_contents(
+                    config_contents, config_file=file_name
                 )
             except ConfigValidationError as e:
                 errors.append(e)
@@ -972,7 +972,9 @@ class ErtConfig:
 
     @classmethod
     def _log_custom_forward_model_steps(cls, user_config: ConfigDict) -> None:
-        for fm_step, fm_step_filename in user_config.get(ConfigKeys.INSTALL_JOB, []):
+        for fm_step, (fm_step_filename, _) in user_config.get(
+            ConfigKeys.INSTALL_JOB, []
+        ):
             fm_configuration = EMPTY_LINES.sub(
                 "\n", (Path(fm_step_filename).read_text(encoding="utf-8").strip())
             )
@@ -1200,15 +1202,17 @@ def uppercase_subkeys_and_stringify_subvalues(
 
 
 @no_type_check
-def _forward_model_step_from_config_file(
-    config_file: str, name: str | None = None
+def _forward_model_step_from_config_contents(
+    config_contents: str, config_file: str, name: str | None = None
 ) -> "ForwardModelStep":
     if name is None:
         name = os.path.basename(config_file)
 
     schema = init_forward_model_schema()
 
-    content_dict = parse_config(file=config_file, schema=schema, pre_defines=[])
+    content_dict = parse_contents(
+        config_contents, file_name=config_file, schema=schema, pre_defines=[]
+    )
 
     specified_arg_types: list[tuple[int, str]] = content_dict.get(
         ForwardModelStepKeys.ARG_TYPE, []

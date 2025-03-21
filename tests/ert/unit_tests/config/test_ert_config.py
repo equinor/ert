@@ -792,18 +792,12 @@ def test_fm_step_config_via_plugin_ends_up_json_data(monkeypatch, anystring):
         "get_forward_model_configuration",
         MagicMock(return_value={"SOME_STEP": {"FOO": anystring}}),
     )
-    Path("SOME_STEP").write_text("EXECUTABLE /bin/ls", encoding="utf-8")
-    Path("config.ert").write_text(
-        dedent(
-            """
-            NUM_REALIZATIONS 1
-            INSTALL_JOB SOME_STEP SOME_STEP
-            FORWARD_MODEL SOME_STEP()
-            """
-        ),
-        encoding="utf-8",
+    ert_config = ErtConfig.with_plugins().from_dict(
+        {
+            "INSTALL_JOB": [["SOME_STEP", ("SOME_STEP", "EXECUTABLE fm_dispatch.py")]],
+            "FORWARD_MODEL": [["SOME_STEP"]],
+        }
     )
-    ert_config = ErtConfig.with_plugins().from_file("config.ert")
     step_json = create_forward_model_json(
         context=ert_config.substitutions,
         forward_model_steps=ert_config.forward_model_steps,
@@ -821,18 +815,14 @@ def test_fm_step_config_via_plugin_does_not_leak_to_other_step(monkeypatch):
         "get_forward_model_configuration",
         MagicMock(return_value={"SOME_STEP": {"FOO": "bar"}}),
     )
-    Path("SOME_OTHER_STEP").write_text("EXECUTABLE /bin/ls", encoding="utf-8")
-    Path("config.ert").write_text(
-        dedent(
-            """
-            NUM_REALIZATIONS 1
-            INSTALL_JOB SOME_OTHER_STEP SOME_OTHER_STEP
-            FORWARD_MODEL SOME_OTHER_STEP()
-            """
-        ),
-        encoding="utf-8",
+    ert_config = ErtConfig.with_plugins().from_dict(
+        {
+            "INSTALL_JOB": [
+                ["SOME_OTHER_STEP", ("SOME_OTHER_STEP", "EXECUTABLE fm_dispatch.py")]
+            ],
+            "FORWARD_MODEL": [["SOME_OTHER_STEP"]],
+        }
     )
-    ert_config = ErtConfig.with_plugins().from_file("config.ert")
     step_json = create_forward_model_json(
         context=ert_config.substitutions,
         forward_model_steps=ert_config.forward_model_steps,
@@ -851,18 +841,12 @@ def test_fm_step_config_via_plugin_has_key_names_uppercased(monkeypatch):
         "get_forward_model_configuration",
         MagicMock(return_value={"SOME_STEP": {"foo": "bar"}}),
     )
-    Path("SOME_STEP").write_text("EXECUTABLE /bin/ls", encoding="utf-8")
-    Path("config.ert").write_text(
-        dedent(
-            """
-            NUM_REALIZATIONS 1
-            INSTALL_JOB SOME_STEP SOME_STEP
-            FORWARD_MODEL SOME_STEP()
-            """
-        ),
-        encoding="utf-8",
+    ert_config = ErtConfig.with_plugins().from_dict(
+        {
+            "INSTALL_JOB": [["SOME_STEP", ("SOME_STEP", "EXECUTABLE fm_dispatch.py")]],
+            "FORWARD_MODEL": [["SOME_STEP"]],
+        }
     )
-    ert_config = ErtConfig.with_plugins().from_file("config.ert")
     step_json = create_forward_model_json(
         context=ert_config.substitutions,
         forward_model_steps=ert_config.forward_model_steps,
@@ -881,18 +865,12 @@ def test_fm_step_config_via_plugin_stringifies_python_objects(monkeypatch):
         "get_forward_model_configuration",
         MagicMock(return_value={"SOME_STEP": {"FOO": {"a_dict_as_value": 1}}}),
     )
-    Path("SOME_STEP").write_text("EXECUTABLE /bin/ls", encoding="utf-8")
-    Path("config.ert").write_text(
-        dedent(
-            """
-            NUM_REALIZATIONS 1
-            INSTALL_JOB SOME_STEP SOME_STEP
-            FORWARD_MODEL SOME_STEP()
-            """
-        ),
-        encoding="utf-8",
+    ert_config = ErtConfig.with_plugins().from_dict(
+        {
+            "INSTALL_JOB": [["SOME_STEP", ("SOME_STEP", "EXECUTABLE fm_dispatch.py")]],
+            "FORWARD_MODEL": [["SOME_STEP"]],
+        }
     )
-    ert_config = ErtConfig.with_plugins().from_file("config.ert")
     step_json = create_forward_model_json(
         context=ert_config.substitutions,
         forward_model_steps=ert_config.forward_model_steps,
@@ -917,19 +895,13 @@ def test_fm_step_config_via_plugin_is_overridden_by_setenv(monkeypatch):
             }
         ),
     )
-    Path("SOME_STEP").write_text("EXECUTABLE /bin/ls", encoding="utf-8")
-    Path("config.ert").write_text(
-        dedent(
-            """
-            NUM_REALIZATIONS 1
-            SETENV FOO bar_from_setenv
-            INSTALL_JOB SOME_STEP SOME_STEP
-            FORWARD_MODEL SOME_STEP()
-            """
-        ),
-        encoding="utf-8",
+    ert_config = ErtConfig.with_plugins().from_dict(
+        {
+            "INSTALL_JOB": [["SOME_STEP", ("SOME_STEP", "EXECUTABLE fm_dispatch.py")]],
+            "SETENV": [["FOO", "bar_from_setenv"]],
+            "FORWARD_MODEL": [["SOME_STEP"]],
+        }
     )
-    ert_config = ErtConfig.with_plugins().from_file("config.ert")
     step_json = create_forward_model_json(
         context=ert_config.substitutions,
         forward_model_steps=ert_config.forward_model_steps,
@@ -1477,22 +1449,14 @@ def test_parsing_workflow_with_multiple_args():
     assert ert_config is not None
 
 
-@pytest.mark.usefixtures("use_tmpdir")
 def test_validate_job_args_no_warning(caplog, recwarn):
     caplog.set_level(logging.WARNING)
-
-    with open("job_file", "w", encoding="utf-8") as fout:
-        fout.write("EXECUTABLE echo\nARGLIST <ECLBASE> <RUNPATH>\n")
-
-    with open("config_file.ert", "w", encoding="utf-8") as fout:
-        # Write a minimal config file
-        fout.write("NUM_REALIZATIONS 1\n")
-        fout.write("INSTALL_JOB job_name job_file\n")
-        fout.write(
-            "FORWARD_MODEL job_name(<ECLBASE>=A/<ECLBASE>, <RUNPATH>=<RUNPATH>/x)\n"
-        )
-
-    ErtConfig.from_file("config_file.ert")
+    ErtConfig.from_dict(
+        {
+            "INSTALL_JOB": [["name", ("file", "EXECUTABLE echo\nARGLIST <ECLBASE>\n")]],
+            "FORWARD_MODEL": [["name", [("<ECLBASE>=", "A/<ECLBASE>")]]],
+        }
+    )
 
     # Check no warning is logged when config contains
     # forward model step with <ECLBASE> and <RUNPATH> as arguments
@@ -1506,16 +1470,17 @@ def test_validate_no_logs_when_overwriting_with_same_value(caplog):
     with open("step_file", "w", encoding="utf-8") as fout:
         fout.write("EXECUTABLE echo\nARGLIST <VAR1> <VAR2> <VAR3>\n")
 
-    with open("config_file.ert", "w", encoding="utf-8") as fout:
-        fout.write("NUM_REALIZATIONS 1\n")
-        fout.write("DEFINE <VAR1> 10\n")
-        fout.write("DEFINE <VAR2> 20\n")
-        fout.write("DEFINE <VAR3> 55\n")
-        fout.write("INSTALL_JOB step_name step_file\n")
-        fout.write("FORWARD_MODEL step_name(<VAR1>=10, <VAR2>=<VAR2>, <VAR3>=5)\n")
-
     with caplog.at_level(logging.INFO):
-        ert_config = ErtConfig.from_file("config_file.ert")
+        ert_config = ErtConfig.from_file_contents(
+            """
+            NUM_REALIZATIONS 1
+            DEFINE <VAR1> 10
+            DEFINE <VAR2> 20
+            DEFINE <VAR3> 55
+            INSTALL_JOB step_name step_file
+            FORWARD_MODEL step_name(<VAR1>=10, <VAR2>=<VAR2>, <VAR3>=5)
+            """
+        )
         create_forward_model_json(
             context=ert_config.substitutions,
             forward_model_steps=ert_config.forward_model_steps,
@@ -1798,22 +1763,16 @@ def test_general_option_in_local_config_has_priority_over_site_config():
     assert config.queue_config.queue_system == QueueSystem.TORQUE
 
 
-@pytest.mark.usefixtures("use_tmpdir")
 def test_warning_raised_when_summary_key_and_no_simulation_job_present():
-    with open("job_file", "w", encoding="utf-8") as fout:
-        fout.write("EXECUTABLE echo\nARGLIST <ECLBASE> <RUNPATH>\n")
-
-    with open("config_file.ert", "w", encoding="utf-8") as fout:
-        # Write a minimal config file
-        fout.write("NUM_REALIZATIONS 1\n")
-        fout.write("SUMMARY *\n")
-        fout.write("ECLBASE RESULT_SUMMARY\n")
-        fout.write("INSTALL_JOB job_name job_file\n")
-        fout.write(
-            "FORWARD_MODEL job_name(<ECLBASE>=A/<ECLBASE>, <RUNPATH>=<RUNPATH>/x)\n"
-        )
     with warnings.catch_warnings(record=True) as all_warnings:
-        ErtConfig.from_file("config_file.ert")
+        ErtConfig.from_dict(
+            {
+                "SUMMARY": ["*"],
+                "ECLBASE": "RESULT_SUMMARY",
+                "INSTALL_JOB": [["name", ("file", "EXECUTABLE echo")]],
+                "FORWARD_MODEL": [["name"]],
+            }
+        )
 
     assert any(
         str(w.message)
@@ -1824,33 +1783,28 @@ def test_warning_raised_when_summary_key_and_no_simulation_job_present():
 
 
 @pytest.mark.parametrize(
-    "job_name, key",
+    "job_name",
     [
-        ("eclipse", "FORWARD_MODEL"),
-        ("eclipse100", "FORWARD_MODEL"),
-        ("flow", "FORWARD_MODEL"),
-        ("FLOW", "FORWARD_MODEL"),
-        ("ECLIPSE100", "FORWARD_MODEL"),
+        "eclipse",
+        "eclipse100",
+        "flow",
+        "FLOW",
+        "ECLIPSE100",
     ],
 )
 @pytest.mark.usefixtures("use_tmpdir")
-def test_no_warning_when_summary_key_and_simulation_job_present(job_name, key):
-    with open("job_file", "w", encoding="utf-8") as fout:
-        fout.write("EXECUTABLE echo\nARGLIST <ECLBASE> <RUNPATH>\n")
-
-    with open("config_file.ert", "w", encoding="utf-8") as fout:
-        # Write a minimal config file
-        fout.write("NUM_REALIZATIONS 1\n")
-        fout.write("SUMMARY *\n")
-        fout.write("ECLBASE RESULT_SUMMARY\n")
-
-        fout.write(f"INSTALL_JOB {job_name} job_file\n")
-        fout.write(f"{key} {job_name} (<ECLBASE>=A/<ECLBASE>, <RUNPATH>=<RUNPATH>/x)\n")
-    # Check no warning is logged when config contains
+def test_no_warning_when_summary_key_and_simulation_job_present(job_name):
     # forward model step with <ECLBASE> and <RUNPATH> as arguments
     with warnings.catch_warnings():
         warnings.simplefilter("error", category=ConfigWarning)
-        ErtConfig.from_file("config_file.ert")
+        ErtConfig.from_dict(
+            {
+                "SUMMARY": ["*"],
+                "ECLBASE": "RESULT_SUMMARY",
+                "INSTALL_JOB": [[job_name, ("file", "EXECUTABLE echo")]],
+                "FORWARD_MODEL": [[job_name]],
+            }
+        )
 
 
 def test_warning_is_emitted_when_malformatted_runpath():

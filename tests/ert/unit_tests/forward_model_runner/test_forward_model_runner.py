@@ -10,7 +10,7 @@ from _ert.forward_model_runner.reporting.message import Checksum, Exited, Start
 from _ert.forward_model_runner.runner import ForwardModelRunner
 from ert.config import ErtConfig, ForwardModelStep
 from ert.config.ert_config import (
-    _forward_model_step_from_config_file,
+    _forward_model_step_from_config_contents,
     create_forward_model_json,
 )
 from ert.substitutions import Substitutions
@@ -191,11 +191,14 @@ def test_env_var_available_inside_step_context():
         )
     os.chmod("run_me.py", stat.S_IEXEC + stat.S_IREAD)
 
-    with open("RUN_ENV", "w", encoding="utf-8") as f:
-        f.write("EXECUTABLE run_me.py\n")
-        f.write("ENV TEST_ENV 123\n")
-
-    step = _forward_model_step_from_config_file(name=None, config_file="RUN_ENV")
+    step = _forward_model_step_from_config_contents(
+        """
+        EXECUTABLE run_me.py
+        ENV TEST_ENV 123
+        """,
+        name=None,
+        config_file="RUN_ENV",
+    )
     with open("jobs.json", mode="w", encoding="utf-8") as fptr:
         ert_config = ErtConfig(forward_model_steps=[step])
         json.dump(
@@ -239,10 +242,9 @@ def test_default_env_variables_available_inside_fm_step_context():
         )
     os.chmod("run_me.py", stat.S_IEXEC + stat.S_IREAD)
 
-    with open("RUN_ENV", "w", encoding="utf-8") as f:
-        f.write("EXECUTABLE run_me.py\n")
-
-    step = _forward_model_step_from_config_file(name=None, config_file="RUN_ENV")
+    step = _forward_model_step_from_config_contents(
+        "EXECUTABLE run_me.py", name=None, config_file="RUN_ENV"
+    )
     with open("jobs.json", mode="w", encoding="utf-8") as fptr:
         ert_config = ErtConfig(
             forward_model_steps=[step],
