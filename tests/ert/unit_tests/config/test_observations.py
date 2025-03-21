@@ -672,20 +672,21 @@ def test_that_report_step_mismatch_warns():
 
 def test_that_history_observation_errors_are_calculated_correctly(tmpdir):
     with tmpdir.as_cwd():
-        config = dedent(
-            """
-        NUM_REALIZATIONS 2
-
-        ECLBASE ECLIPSE_CASE
-        REFCASE ECLIPSE_CASE
-        OBS_CONFIG observations
-        """
+        run_sim(
+            datetime(2014, 9, 10),
+            [
+                (k, "SM3/DAY", None)
+                for k in ["FOPR", "FWPR", "FOPRH", "FWPRH", "FGPR", "FGPRH"]
+            ],
+            {"FOPRH": 20, "FGPRH": 15, "FWPRH": 25},
         )
-        with open("config.ert", "w", encoding="utf-8") as fh:
-            fh.writelines(config)
-        with open("observations", "w", encoding="utf-8") as fo:
-            fo.writelines(
-                dedent(
+
+        ert_config = ErtConfig.from_dict(
+            {
+                "ECLBASE": "ECLIPSE_CASE",
+                "REFCASE": "ECLIPSE_CASE",
+                "OBS_CONFIG": (
+                    "obsconf",
                     """
                     HISTORY_OBSERVATION  FOPR
                     {
@@ -703,21 +704,10 @@ def test_that_history_observation_errors_are_calculated_correctly(tmpdir):
                        ERROR_MODE  = RELMIN;
                        ERROR_MIN = 10000;
                     };
-                    """
-                )
-            )
-        with open("time_map.txt", "w", encoding="utf-8") as fo:
-            fo.writelines("2023-02-01")
-        run_sim(
-            datetime(2014, 9, 10),
-            [
-                (k, "SM3/DAY", None)
-                for k in ["FOPR", "FWPR", "FOPRH", "FWPRH", "FGPR", "FGPRH"]
-            ],
-            {"FOPRH": 20, "FGPRH": 15, "FWPRH": 25},
+                    """,
+                ),
+            }
         )
-
-        ert_config = ErtConfig.from_file("config.ert")
 
         observations = ert_config.enkf_obs
 
