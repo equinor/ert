@@ -13,7 +13,7 @@ class EnvironmentConfig(BaseModel, extra="forbid"):
     output_folder: str = Field(
         default="everest_output", description="Folder for outputs of Everest"
     )
-    log_level: Literal["debug", "info", "warning", "error", "critical"] | None = Field(
+    log_level: Literal["debug", "info", "warning", "error", "critical"] = Field(
         default="info",
         description="""Defines the verbosity of logs output by Everest.
 
