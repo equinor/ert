@@ -407,7 +407,9 @@ def installed_forward_model_steps_from_dict(config_dict) -> dict[str, ForwardMod
         name = fm_step[0]
         fm_step_config_file = path.abspath(fm_step[1])
         try:
-            new_fm_step = _forward_model_step_from_config_file(
+            config_contents = read_file(fm_step_config_file)
+            new_fm_step = _forward_model_step_from_config_contents(
+                config_contents,
                 name=name,
                 config_file=fm_step_config_file,
             )
@@ -427,8 +429,9 @@ def installed_forward_model_steps_from_dict(config_dict) -> dict[str, ForwardMod
             if not path.isfile(file_name):
                 continue
             try:
-                new_fm_step = _forward_model_step_from_config_file(
-                    config_file=file_name
+                config_contents = read_file(file_name)
+                new_fm_step = _forward_model_step_from_config_contents(
+                    config_contents, config_file=file_name
                 )
             except ConfigValidationError as e:
                 errors.append(e)
@@ -1197,15 +1200,14 @@ def uppercase_subkeys_and_stringify_subvalues(
 
 
 @no_type_check
-def _forward_model_step_from_config_file(
-    config_file: str, name: str | None = None
+def _forward_model_step_from_config_contents(
+    config_contents: str, config_file: str, name: str | None = None
 ) -> "ForwardModelStep":
     if name is None:
         name = os.path.basename(config_file)
 
     schema = init_forward_model_schema()
 
-    config_contents = read_file(config_file)
     content_dict = parse_contents(
         config_contents, file_name=config_file, schema=schema, pre_defines=[]
     )
