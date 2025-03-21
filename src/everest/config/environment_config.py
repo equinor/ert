@@ -35,9 +35,7 @@ critical: A serious error, indicating that the program itself may be unable to
 continue running.
 """,
     )
-    random_seed: int | None = Field(
-        default=None, description="Random seed (must be positive)"
-    )
+    random_seed: int = Field(default=None, description="Random seed (must be positive)")  # type: ignore
 
     @field_validator("output_folder", mode="before")
     @classmethod
@@ -50,5 +48,5 @@ continue running.
     @model_validator(mode="after")
     def validate_random_seed(self) -> Self:
         if self.random_seed is None:
-            self.random_seed = SeedSequence().entropy  # type: ignore
+            self.random_seed = SeedSequence().entropy
         return self
