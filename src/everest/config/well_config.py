@@ -1,13 +1,14 @@
 from datetime import datetime
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator
+from pydantic.json_schema import SkipJsonSchema
 
 from everest.strings import DATE_FORMAT
 
 
 class WellConfig(BaseModel):
     name: str = Field(description="The unique name of the well")
-    drill_date: str | None = Field(
+    drill_date: str | SkipJsonSchema[None] = Field(
         None,
         description="""Ideal date to drill a well.
 
@@ -15,7 +16,7 @@ The interpretation of this is up to the forward model. The standard tooling will
 consider this as the earliest possible drill date.
 """,
     )
-    drill_time: float | None = Field(
+    drill_time: float | SkipJsonSchema[None] = Field(
         None,
         description="""specifies the time it takes
  to drill the well under consideration.""",

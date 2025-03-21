@@ -2,13 +2,14 @@ import logging
 from typing import Any, Self
 
 from pydantic import BaseModel, ConfigDict, Field, model_validator
+from pydantic.json_schema import SkipJsonSchema
 
 from everest.optimizer.utils import get_ropt_plugin_manager
 from everest.strings import EVEREST
 
 
 class SamplerConfig(BaseModel):
-    backend: str | None = Field(
+    backend: str | SkipJsonSchema[None] = Field(
         default=None,
         description="""(deprecated) The backend used by Everest for sampling points.
 
@@ -17,7 +18,7 @@ estimate the gradient. The default is the built-in 'scipy' backend.
 
 """,
     )
-    options: dict[str, Any] | None = Field(
+    options: dict[str, Any] | SkipJsonSchema[None] = Field(
         default=None,
         alias="backend_options",
         description="""
@@ -27,12 +28,12 @@ This dict of values is passed unchanged to the selected method in the backend.
 
 """,
     )
-    method: str | None = Field(
+    method: str | SkipJsonSchema[None] = Field(
         default=None,
         description="""The sampling method or distribution used by the sampler backend.
 """,
     )
-    shared: bool | None = Field(
+    shared: bool | SkipJsonSchema[None] = Field(
         default=None,
         description="""Whether to share perturbations between realizations.
 """,

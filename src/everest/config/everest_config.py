@@ -23,6 +23,7 @@ from pydantic import (
     field_validator,
     model_validator,
 )
+from pydantic.json_schema import SkipJsonSchema
 from pydantic_core import ErrorDetails
 from ruamel.yaml import YAML, YAMLError
 
@@ -224,7 +225,7 @@ and environment variables are exposed in the form 'os.NAME', for example:
     workflows: WorkflowConfig | None = Field(
         default=None, description="Workflows to run during optimization"
     )
-    export: ExportConfig | None = Field(
+    export: ExportConfig | SkipJsonSchema[None] = Field(
         default=None,
         description="Settings to control the exports of a optimization run by everest.",
     )

@@ -9,6 +9,7 @@ from typing import (
 )
 
 from pydantic import AfterValidator, BaseModel, ConfigDict, Field, model_validator
+from pydantic.json_schema import SkipJsonSchema
 from ropt.enums import PerturbationType, VariableType
 
 from .control_variable_config import (
@@ -61,7 +62,7 @@ Only two allowed control types are accepted
         AfterValidator(_all_or_no_index),
         AfterValidator(unique_items),
     ] = Field(description="List of control variables", min_length=1)
-    initial_guess: float | None = Field(
+    initial_guess: float | SkipJsonSchema[None] = Field(
         default=None,
         description="""
 Initial guess for the control group all control variables with initial_guess not
@@ -85,7 +86,7 @@ If `True`, all variables in this control group will be optimized. If set to `Fal
 the value of the variables will remain fixed.
 """,
     )
-    auto_scale: bool | None = Field(
+    auto_scale: bool | SkipJsonSchema[None] = Field(
         default=None,
         description="""
 Can be set to true to re-scale controls from the range
@@ -93,7 +94,7 @@ defined by [min, max] to the range defined by
 scaled_range (default [0, 1]).
         """,
     )
-    min: float | None = Field(
+    min: float | SkipJsonSchema[None] = Field(
         default=None,
         description="""
 Defines left-side value in the control group range [min, max].
@@ -103,7 +104,7 @@ The initial guess for both the group and the individual variables needs to be co
 in the resulting [min, max] range
 """,
     )
-    max: float | None = Field(
+    max: float | SkipJsonSchema[None] = Field(
         default=None,
         description="""
 Defines right-side value in the control group range [min, max].
@@ -127,7 +128,7 @@ NOTE: currently the dynamic range is computed with respect to all controls, so
  ranges might have unintended effects.
         """,
     )
-    perturbation_magnitude: float | None = Field(
+    perturbation_magnitude: float | SkipJsonSchema[None] = Field(
         default=None,
         description="""
 Specifies the perturbation magnitude for a set of controls of a certain type.
@@ -143,18 +144,18 @@ of values also cause issues.
 NOTE: In most cases this should not be configured, and the default value should be used.
         """,
     )
-    scaled_range: Annotated[tuple[float, float] | None, AfterValidator(valid_range)] = (
-        Field(
-            default=None,
-            description="""
+    scaled_range: Annotated[
+        tuple[float, float] | SkipJsonSchema[None], AfterValidator(valid_range)
+    ] = Field(
+        default=None,
+        description="""
 Can be used to set the range of the control values
 after scaling (default = [0, 1]).
 
 This option has no effect on discrete controls.
         """,
-        )
     )
-    sampler: SamplerConfig | None = Field(
+    sampler: SamplerConfig | SkipJsonSchema[None] = Field(
         default=None,
         description="""
 A sampler specification section applies to a group of controls, or to an

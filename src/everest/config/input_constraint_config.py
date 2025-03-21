@@ -1,4 +1,5 @@
 from pydantic import BaseModel, Field, field_validator
+from pydantic.json_schema import SkipJsonSchema
 
 
 class InputConstraintConfig(BaseModel, extra="forbid"):
@@ -16,7 +17,7 @@ Only control values (x, y, z) that satisfy the following equation will be allowe
 `x-0 * 0 + y-1 * 0 + z-2 * 1  > 0.2`
 """,
     )
-    target: float | None = Field(
+    target: float | SkipJsonSchema[None] = Field(
         default=None,
         description="""**Example**
 | input_constraints:
@@ -30,7 +31,7 @@ Only control values (x, y, z) that satisfy the following equation will be allowe
 `x-0 * 1 + y-1 * 2 + z-2 * 3  = 4`
 """,
     )
-    lower_bound: float | None = Field(
+    lower_bound: float | SkipJsonSchema[None] = Field(
         default=None,
         description="""**Example**
 | input_constraints:
@@ -45,7 +46,7 @@ equation will be allowed:
 `x-0 * 1 + y-1 * 2 + z-2 * 3  >= 4`
 """,
     )
-    upper_bound: float | None = Field(
+    upper_bound: float | SkipJsonSchema[None] = Field(
         default=None,
         description="""**Example**
 | input_constraints:

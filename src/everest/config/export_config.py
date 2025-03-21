@@ -1,20 +1,21 @@
 from typing import Any
 
 from pydantic import BaseModel, Field, model_validator
+from pydantic.json_schema import SkipJsonSchema
 
 from ert.config import ConfigWarning
 
 
 class ExportConfig(BaseModel, extra="forbid"):
-    csv_output_filepath: str | None = Field(
+    csv_output_filepath: str | SkipJsonSchema[None] = Field(
         default=None,
         description="'csv_output_filepath' key is deprecated. You can safely remove it from the config file",
     )
-    discard_gradient: bool | None = Field(
+    discard_gradient: bool | SkipJsonSchema[None] = Field(
         default=None,
         description="'discard_gradient' key is deprecated. You can safely remove it from the config file",
     )
-    discard_rejected: bool | None = Field(
+    discard_rejected: bool | SkipJsonSchema[None] = Field(
         default=None,
         description="'discard_rejected' key is deprecated. You can safely remove it from the config file",
     )
@@ -22,11 +23,11 @@ class ExportConfig(BaseModel, extra="forbid"):
         default_factory=list,
         description="List of eclipse keywords to be exported.",
     )
-    batches: list[int] | None = Field(
+    batches: list[int] | SkipJsonSchema[None] = Field(
         default=None,
         description="'batches' key is deprecated. You can safely remove it from the config file",
     )
-    skip_export: bool | None = Field(
+    skip_export: bool | SkipJsonSchema[None] = Field(
         default=None,
         description="'skip_export' key is deprecated. You can safely remove it from the config file",
     )

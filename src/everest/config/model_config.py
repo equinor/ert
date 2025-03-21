@@ -1,6 +1,7 @@
 from typing import Any, Self
 
 from pydantic import BaseModel, Field, NonNegativeInt, model_validator
+from pydantic.json_schema import SkipJsonSchema
 
 from ert.config import ConfigWarning
 
@@ -12,7 +13,7 @@ class ModelConfig(BaseModel, extra="forbid"):
 Typically, this is a list [0, 1, ..., n-1] of all realizations in the ensemble.""",
         min_length=1,
     )
-    data_file: str | None = Field(
+    data_file: str | SkipJsonSchema[None] = Field(
         default=None,
         description="""Path to the eclipse data file used for optimization.
         The path can contain r{{geo_id}}.
