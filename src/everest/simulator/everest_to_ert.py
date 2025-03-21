@@ -353,7 +353,7 @@ def _extract_forward_model(
 ) -> None:
     forward_model = _extract_data_operations(ever_config)
     forward_model += _extract_templating(ever_config)
-    forward_model += ever_config.forward_model or []
+    forward_model += ever_config.forward_model
 
     fm_steps = ert_config.get(ErtConfigKeys.FORWARD_MODEL, [])
     for job in forward_model:

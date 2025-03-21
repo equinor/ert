@@ -54,6 +54,7 @@ def test_read_file(tmp_path, monkeypatch):
         "controls",
         "objective_functions",
         "environment",
+        "forward_model",
         "model",
         "simulator",
         "optimization",
