@@ -57,9 +57,6 @@ from .parsing import (
     parse_contents,
     read_file,
 )
-from .parsing import (
-    parse as parse_config,
-)
 from .parsing.observations_parser import (
     GenObsValues,
     HistoryValues,
@@ -1218,7 +1215,10 @@ def _forward_model_step_from_config_file(
 
     schema = init_forward_model_schema()
 
-    content_dict = parse_config(file=config_file, schema=schema, pre_defines=[])
+    config_contents = read_file(config_file)
+    content_dict = parse_contents(
+        config_contents, file_name=config_file, schema=schema, pre_defines=[]
+    )
 
     specified_arg_types: list[tuple[int, str]] = content_dict.get(
         ForwardModelStepKeys.ARG_TYPE, []
