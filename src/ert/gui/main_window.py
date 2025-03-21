@@ -82,6 +82,9 @@ class SidebarToolButton(QToolButton):
     def __init__(self, parent):
         super().__init__(parent)
         self.setPalette(parent.palette())
+        font = self.font()
+        font.setPixelSize(12)
+        self.setFont(font)
 
     def mousePressEvent(self, event: QMouseEvent | None) -> None:
         if event:
@@ -322,19 +325,6 @@ class ErtMainWindow(QMainWindow):
         ) if self.is_dark_mode() and not self.is_high_contrast_mode() else button.setStyleSheet(
             BUTTON_STYLE_SHEET_LIGHT
         )
-        if False:  # is_high_contrast_mode():
-            button.setStyleSheet("""QToolButton {
-        border-radius: 10px;
-        background-color: rgba(255, 255, 255, 0);
-        color: black;
-        padding-top: 5px;
-        padding-bottom: 10px;
-    }
-    QToolButton::menu-indicator {
-        right: 10px; bottom: 5px;
-    }
-    QToolButton:hover {background-color: rgba(50, 50, 50, 50);}
-    QToolButton:checked {background-color: rgba(50, 50, 50, 120);}""")
         pad = 45
         icon_size = QSize(button.size().width() - pad, button.size().height() - pad)
         button.setIconSize(icon_size)
