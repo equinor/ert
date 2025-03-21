@@ -27,6 +27,7 @@ from ert.plugins import ErtPluginManager
 from ert.plugins.workflow_config import ErtScriptWorkflow
 from ert.substitutions import Substitutions
 
+from ..plugins.workflow_fixtures import get_available_fixtures_for_runtime
 from ._design_matrix_validator import DesignMatrixValidator
 from .analysis_config import AnalysisConfig
 from .ensemble_config import EnsembleConfig
@@ -60,7 +61,6 @@ from .parsing import (
 from .parsing import (
     parse as parse_config,
 )
-from .parsing.hook_runtime import fixtures_per_runtime
 from .parsing.observations_parser import (
     GenObsValues,
     HistoryValues,
@@ -397,7 +397,7 @@ def workflows_from_dict(
             continue
 
         wf = workflows[hook_name]
-        available_fixtures = fixtures_per_runtime[mode]
+        available_fixtures = get_available_fixtures_for_runtime(hook_name)
         for job, _ in wf.cmd_list:
             if job.ert_script is None:
                 continue
@@ -413,7 +413,7 @@ def workflows_from_dict(
                 ok_modes = [
                     m
                     for m in HookRuntime
-                    if not requested_fixtures - fixtures_per_runtime[m]
+                    if not requested_fixtures - get_available_fixtures_for_runtime(m)
                 ]
 
                 message_start = (
