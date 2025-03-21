@@ -483,3 +483,26 @@ def test_validation_of_general_observation(obs_content, match):
 def test_that_unknown_key_is_handled(observation_type):
     with pytest.raises(ObservationConfigError, match="Unknown SMERROR"):
         parse_content(f"{observation_type} FOPR {{SMERROR=0.1;DATA=key;}};", "")
+
+
+def test_unexpected_character_handling():
+    with pytest.raises(
+        ObservationConfigError,
+        match=r"Did not expect character: \$ \(on line 4: *ERROR *\$"
+        r" 0.20;\). Expected one of {'EQUAL'}",
+    ) as err_record:
+        parse_content(
+            """
+            GENERAL_OBSERVATION GEN_OBS
+            {
+               ERROR       $ 0.20;
+            };
+            """,
+            "",
+        )
+
+    err = err_record.value.errors[0]
+    assert err.line == 4
+    assert err.end_line == 4
+    assert err.column == 28
+    assert err.end_column == 29
