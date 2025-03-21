@@ -18,8 +18,8 @@ class ExportConfig(BaseModel, extra="forbid"):
         default=None,
         description="'discard_rejected' key is deprecated. You can safely remove it from the config file",
     )
-    keywords: list[str] | None = Field(
-        default=None,
+    keywords: list[str] = Field(
+        default_factory=list,
         description="List of eclipse keywords to be exported.",
     )
     batches: list[int] | None = Field(
