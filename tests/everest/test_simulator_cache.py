@@ -1,4 +1,5 @@
 import numpy as np
+import polars as pl
 import pytest
 
 from ert.ensemble_evaluator import EvaluatorServerConfig
@@ -43,3 +44,78 @@ def test_simulator_cache(copy_math_func_test_data_to_tmp):
     assert n_invocations == 0
     variables2 = list(run_model.result.controls.values())
     assert np.array_equal(variables1, variables2)
+
+
+def test_cached_result_lookup():
+    control_values_to_evaluate = np.array(
+        [
+            [0.5, 0.5, 0.5],  # 0
+            [0.4, 0.4, 0.4],  # 2
+            [0.3, 0.3, 0.3],  # 3
+            [0.2, 0.2, 0.2],  # 4
+            [0.1, 0.1, 0.1],  # 5
+        ]
+    )
+
+    model_realizations_to_evaluate = [0, 2, 3, 4, 5]
+
+    # Shuffling some to make some hits be function evaluations, and some perturbations
+    all_results = pl.DataFrame(
+        {
+            "batch": [0, 0, 0, 0, 0],
+            "model_realization": [5, 0, 2, 4, 3],
+            "perturbation": [-1, 0, 1, 2, 3],
+            "realization": [0, 1, 2, 3, 4],
+            "distance": np.random.default_rng(666).normal(loc=0.5, size=5, scale=0.1),
+            "point.x": ([0.1, 0.5, 0.4, 0.3, 0.2]),
+            "point.y": ([0.1, 0.5, 0.4, 0.3, 0.2]),
+            "point.z": ([0.1, 0.5, 0.4, 0.3, 0.2]),
+        },
+        schema={
+            "batch": pl.Int32,
+            "model_realization": pl.UInt16,
+            "perturbation": pl.Int32,
+            "realization": pl.UInt16,
+            "distance": pl.Float32,
+            "point.x": pl.Float64,
+            "point.y": pl.Float64,
+            "point.z": pl.Float64,
+        },
+    )
+
+    cache_hits = EverestRunModel.find_cached_results(
+        control_values_to_evaluate,
+        model_realizations_to_evaluate,
+        all_results,
+        ["point.x", "point.y", "point.z"],
+    )
+
+    # The cache hit is basically a mapping from
+    # flat_index, which is the index of the control to be evaluated
+    # (flat_index and simulation_id are both implicitly associated with
+    # a model realization and perturbation)
+    # to (batch, simulation_id)
+    interesting_columns = [
+        "flat_index",
+        "batch",
+        "simulation_id",
+    ]
+    assert cache_hits.select(interesting_columns).sort(
+        interesting_columns
+    ).to_dicts() == [
+        {
+            "batch": 0,
+            "simulation_id": 1,
+            "flat_index": 0,
+        },
+        {
+            "batch": 0,
+            "simulation_id": 2,
+            "flat_index": 1,
+        },
+        {
+            "batch": 0,
+            "simulation_id": 0,
+            "flat_index": 4,
+        },
+    ]
