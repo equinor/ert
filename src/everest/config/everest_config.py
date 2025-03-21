@@ -235,8 +235,6 @@ and environment variables are exposed in the form 'os.NAME', for example:
 
     @model_validator(mode="after")
     def validate_queue_system(self) -> Self:  # pylint: disable=E0213
-        assert self.server is not None
-        assert self.simulator is not None
         if self.server.queue_system is None:
             self.server.queue_system = copy(self.simulator.queue_system)
         if (
