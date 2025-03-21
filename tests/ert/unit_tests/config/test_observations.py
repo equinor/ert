@@ -637,21 +637,25 @@ def test_that_missing_ensemble_key_warns():
         )
 
 
-def test_that_report_step_mismatch_warns(tmpdir):
-    with tmpdir.as_cwd():
-        config = dedent(
-            """
-        JOBNAME my_name%d
-        NUM_REALIZATIONS 10
-        OBS_CONFIG observations
-        GEN_DATA RES INPUT_FORMAT:ASCII REPORT_STEPS:1 RESULT_FILE:file%d
-        """
-        )
-        with open("config.ert", "w", encoding="utf-8") as fh:
-            fh.writelines(config)
-        with open("observations", "w", encoding="utf-8") as fo:
-            fo.writelines(
-                dedent(
+def test_that_report_step_mismatch_warns():
+    with pytest.warns(
+        ConfigWarning,
+        match="is not configured to load from report step",
+    ):
+        ErtConfig.from_dict(
+            {
+                "GEN_DATA": [
+                    [
+                        "RES",
+                        {
+                            "INPUT_FORMAT": "ASCII",
+                            "REPORT_STEPS": "1",
+                            "RESULT_FILE": "file%d",
+                        },
+                    ]
+                ],
+                "OBS_CONFIG": (
+                    "obsconf",
                     """
                     GENERAL_OBSERVATION OBS {
                        DATA       = RES;
@@ -659,15 +663,11 @@ def test_that_report_step_mismatch_warns(tmpdir):
                        RESTART    = 0;
                        VALUE   = 1;
                        ERROR   = 1;
-                    };""",
-                )
-            )
-
-        with pytest.warns(
-            ConfigWarning,
-            match="is not configured to load from report step",
-        ):
-            ErtConfig.from_file("config.ert")
+                    };
+                    """,
+                ),
+            }
+        )
 
 
 def test_that_history_observation_errors_are_calculated_correctly(tmpdir):
