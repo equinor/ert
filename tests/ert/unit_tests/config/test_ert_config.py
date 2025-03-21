@@ -1790,33 +1790,28 @@ def test_warning_raised_when_summary_key_and_no_simulation_job_present():
 
 
 @pytest.mark.parametrize(
-    "job_name, key",
+    "job_name",
     [
-        ("eclipse", "FORWARD_MODEL"),
-        ("eclipse100", "FORWARD_MODEL"),
-        ("flow", "FORWARD_MODEL"),
-        ("FLOW", "FORWARD_MODEL"),
-        ("ECLIPSE100", "FORWARD_MODEL"),
+        "eclipse",
+        "eclipse100",
+        "flow",
+        "FLOW",
+        "ECLIPSE100",
     ],
 )
 @pytest.mark.usefixtures("use_tmpdir")
-def test_no_warning_when_summary_key_and_simulation_job_present(job_name, key):
-    with open("job_file", "w", encoding="utf-8") as fout:
-        fout.write("EXECUTABLE echo\nARGLIST <ECLBASE> <RUNPATH>\n")
-
-    with open("config_file.ert", "w", encoding="utf-8") as fout:
-        # Write a minimal config file
-        fout.write("NUM_REALIZATIONS 1\n")
-        fout.write("SUMMARY *\n")
-        fout.write("ECLBASE RESULT_SUMMARY\n")
-
-        fout.write(f"INSTALL_JOB {job_name} job_file\n")
-        fout.write(f"{key} {job_name} (<ECLBASE>=A/<ECLBASE>, <RUNPATH>=<RUNPATH>/x)\n")
-    # Check no warning is logged when config contains
+def test_no_warning_when_summary_key_and_simulation_job_present(job_name):
     # forward model step with <ECLBASE> and <RUNPATH> as arguments
     with warnings.catch_warnings():
         warnings.simplefilter("error", category=ConfigWarning)
-        ErtConfig.from_file("config_file.ert")
+        ErtConfig.from_dict(
+            {
+                "SUMMARY": ["*"],
+                "ECLBASE": "RESULT_SUMMARY",
+                "INSTALL_JOB": [[job_name, ("file", "EXECUTABLE echo")]],
+                "FORWARD_MODEL": [[job_name]],
+            }
+        )
 
 
 def test_warning_is_emitted_when_malformatted_runpath():
