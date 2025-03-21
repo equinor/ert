@@ -57,6 +57,7 @@ def test_read_file(tmp_path, monkeypatch):
         "forward_model",
         "install_data",
         "install_jobs",
+        "install_templates",
         "install_workflow_jobs",
         "model",
         "simulator",
