@@ -185,20 +185,16 @@ def _parse_optimization(
 
     ropt_optimizer["method"] = ever_opt.algorithm
 
-    alg_max_iter = ever_opt.max_iterations
-    if alg_max_iter:
+    if alg_max_iter := ever_opt.max_iterations:
         ropt_optimizer["max_iterations"] = alg_max_iter
 
-    alg_max_eval = ever_opt.max_function_evaluations
-    if alg_max_eval:
+    if alg_max_eval := ever_opt.max_function_evaluations:
         ropt_optimizer["max_functions"] = alg_max_eval
 
-    alg_conv_tol = ever_opt.convergence_tolerance or None
-    if alg_conv_tol:
+    if alg_conv_tol := ever_opt.convergence_tolerance:
         ropt_optimizer["tolerance"] = alg_conv_tol
 
-    alg_grad_spec = ever_opt.speculative or None
-    if alg_grad_spec:
+    if alg_grad_spec := ever_opt.speculative:
         ropt_optimizer["speculative"] = alg_grad_spec
 
     # Handle the backend options. Due to historical reasons there two keywords:
