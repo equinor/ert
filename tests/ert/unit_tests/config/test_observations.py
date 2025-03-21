@@ -614,20 +614,15 @@ def test_that_different_length_values_fail(tmpdir):
             )
 
 
-def test_that_missing_ensemble_key_warns(tmpdir):
-    with tmpdir.as_cwd():
-        config = dedent(
-            """
-        JOBNAME my_name%d
-        NUM_REALIZATIONS 10
-        OBS_CONFIG observations
-        """
-        )
-        with open("config.ert", "w", encoding="utf-8") as fh:
-            fh.writelines(config)
-        with open("observations", "w", encoding="utf-8") as fo:
-            fo.writelines(
-                dedent(
+def test_that_missing_ensemble_key_warns():
+    with pytest.warns(
+        ConfigWarning,
+        match="No GEN_DATA with name: RES found",
+    ):
+        ErtConfig.from_dict(
+            {
+                "OBS_CONFIG": (
+                    "obsconf",
                     """
                     GENERAL_OBSERVATION OBS {
                        DATA       = RES;
@@ -635,15 +630,11 @@ def test_that_missing_ensemble_key_warns(tmpdir):
                        RESTART    = 0;
                        VALUE   = 1;
                        ERROR   = 1;
-                    };""",
-                )
-            )
-
-        with pytest.warns(
-            ConfigWarning,
-            match="No GEN_DATA with name: RES found",
-        ):
-            ErtConfig.from_file("config.ert")
+                    };
+                    """,
+                ),
+            }
+        )
 
 
 def test_that_report_step_mismatch_warns(tmpdir):
