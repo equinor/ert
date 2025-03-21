@@ -815,18 +815,14 @@ def test_fm_step_config_via_plugin_does_not_leak_to_other_step(monkeypatch):
         "get_forward_model_configuration",
         MagicMock(return_value={"SOME_STEP": {"FOO": "bar"}}),
     )
-    Path("SOME_OTHER_STEP").write_text("EXECUTABLE /bin/ls", encoding="utf-8")
-    Path("config.ert").write_text(
-        dedent(
-            """
-            NUM_REALIZATIONS 1
-            INSTALL_JOB SOME_OTHER_STEP SOME_OTHER_STEP
-            FORWARD_MODEL SOME_OTHER_STEP()
-            """
-        ),
-        encoding="utf-8",
+    ert_config = ErtConfig.with_plugins().from_dict(
+        {
+            "INSTALL_JOB": [
+                ["SOME_OTHER_STEP", ("SOME_OTHER_STEP", "EXECUTABLE fm_dispatch.py")]
+            ],
+            "FORWARD_MODEL": [["SOME_OTHER_STEP"]],
+        }
     )
-    ert_config = ErtConfig.with_plugins().from_file("config.ert")
     step_json = create_forward_model_json(
         context=ert_config.substitutions,
         forward_model_steps=ert_config.forward_model_steps,
