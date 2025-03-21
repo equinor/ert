@@ -285,10 +285,12 @@ def _parse_model(
     if not ever_model:
         return
 
-    ever_reals = ever_model.realizations or []
-    ever_reals_weights = ever_model.realizations_weights
-    if ever_reals_weights is None:
-        ever_reals_weights = [1.0 / len(ever_reals)] * len(ever_reals)
+    ever_reals = ever_model.realizations
+    ever_reals_weights = (
+        [1.0 / len(ever_reals)] * len(ever_reals)
+        if not ever_model.realizations_weights
+        else ever_model.realizations_weights
+    )
 
     ropt_config["realizations"] = {
         "weights": ever_reals_weights,
