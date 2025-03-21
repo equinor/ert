@@ -724,36 +724,6 @@ def test_that_history_observation_errors_are_calculated_correctly(tmpdir):
         assert observations["FWPR"].observations[datetime(2014, 9, 11)].std == 10000
 
 
-@pytest.mark.parametrize(
-    "observation_type",
-    ["HISTORY_OBSERVATION", "SUMMARY_OBSERVATION", "GENERAL_OBSERVATION"],
-)
-def test_that_unknown_key_in_is_handled(tmpdir, observation_type):
-    with tmpdir.as_cwd():
-        config = dedent(
-            """
-        NUM_REALIZATIONS 2
-
-        ECLBASE ECLIPSE_CASE
-        REFCASE ECLIPSE_CASE
-        OBS_CONFIG observations
-        """
-        )
-        with open("config.ert", "w", encoding="utf-8") as fh:
-            fh.writelines(config)
-        with open("observations", "w", encoding="utf-8") as fo:
-            fo.writelines(f"{observation_type} FOPR {{SMERROR=0.1;DATA=key;}};")
-        with open("time_map.txt", "w", encoding="utf-8") as fo:
-            fo.writelines("2023-02-01")
-        run_sim(
-            datetime(2014, 9, 10),
-            [("FOPR", "SM3/DAY", None), ("FOPRH", "SM3/DAY", None)],
-        )
-
-        with pytest.raises(ConfigValidationError, match="Unknown SMERROR"):
-            ErtConfig.from_file("config.ert")
-
-
 def test_validation_of_duplicate_names(tmpdir):
     with tmpdir.as_cwd():
         config = dedent(

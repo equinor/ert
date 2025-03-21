@@ -474,3 +474,12 @@ def test_that_summary_observation_validation_is_handled(obs_content, match):
 def test_validation_of_general_observation(obs_content, match):
     with pytest.raises(ObservationConfigError, match=match):
         parse_content(obs_content, "")
+
+
+@pytest.mark.parametrize(
+    "observation_type",
+    ["HISTORY_OBSERVATION", "SUMMARY_OBSERVATION", "GENERAL_OBSERVATION"],
+)
+def test_that_unknown_key_is_handled(observation_type):
+    with pytest.raises(ObservationConfigError, match="Unknown SMERROR"):
+        parse_content(f"{observation_type} FOPR {{SMERROR=0.1;DATA=key;}};", "")
