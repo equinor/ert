@@ -3,7 +3,7 @@ from __future__ import annotations
 import inspect
 from typing import TYPE_CHECKING, Any
 
-from ert.plugins import ErtPlugin, WorkflowFixtures
+from ert.plugins import ErtPlugin, HookedWorkflowFixtures
 
 if TYPE_CHECKING:
     from PyQt6.QtWidgets import QWidget
@@ -34,7 +34,7 @@ class Plugin:
     def getDescription(self) -> str:
         return self.__description
 
-    def getArguments(self, fixtures: WorkflowFixtures) -> list[Any]:
+    def getArguments(self, fixtures: HookedWorkflowFixtures) -> list[Any]:
         """
         Returns a list of arguments. Either from GUI or from arbitrary code.
         If the user for example cancels in the GUI a CancelPluginException is raised.

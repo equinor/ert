@@ -6,7 +6,7 @@ from concurrent.futures import Future
 from typing import Any, Self
 
 from ert.config import Workflow, WorkflowJob
-from ert.plugins import ErtScript, ExternalErtScript, WorkflowFixtures
+from ert.plugins import ErtScript, ExternalErtScript, HookedWorkflowFixtures
 
 
 class WorkflowJobRunner:
@@ -19,7 +19,7 @@ class WorkflowJobRunner:
     def run(
         self,
         arguments: list[Any] | None = None,
-        fixtures: WorkflowFixtures | None = None,
+        fixtures: HookedWorkflowFixtures | None = None,
     ) -> Any:
         if arguments is None:
             arguments = []
@@ -101,7 +101,7 @@ class WorkflowRunner:
     def __init__(
         self,
         workflow: Workflow,
-        fixtures: WorkflowFixtures,
+        fixtures: HookedWorkflowFixtures,
     ) -> None:
         self.__workflow = workflow
         self.fixtures = fixtures

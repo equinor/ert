@@ -9,11 +9,15 @@ import warnings
 from abc import abstractmethod
 from collections.abc import Callable
 from types import MappingProxyType, ModuleType
-from typing import TYPE_CHECKING, Any, TypeAlias
+from typing import TYPE_CHECKING, Any, TypeAlias, cast
 
 from typing_extensions import deprecated
 
-from .workflow_fixtures import WorkflowFixtures
+from .workflow_fixtures import (
+    HookedWorkflowFixtures,
+    WorkflowFixtures,
+    all_hooked_workflow_fixtures,
+)
 
 if TYPE_CHECKING:
     from ert.config import ErtConfig
@@ -112,16 +116,23 @@ class ErtScript:
         return {
             k
             for k, v in inspect.signature(self.run).parameters.items()
-            if k in WorkflowFixtures.__annotations__ and k != "workflow_args"
+            if k in all_hooked_workflow_fixtures
         }
 
     def initializeAndRun(
         self,
         argument_types: list[type[Any]],
         argument_values: list[str],
-        fixtures: WorkflowFixtures | None = None,
+        fixtures: WorkflowFixtures | HookedWorkflowFixtures | None = None,
     ) -> Any:
-        fixtures = {} if fixtures is None else fixtures
+        fixtures_without_hook = {**(fixtures or {})}
+
+        if "hook" in fixtures_without_hook:
+            fixtures_without_hook.pop("hook")
+
+        complete_fixtures: WorkflowFixtures = cast(
+            WorkflowFixtures, fixtures_without_hook
+        )
         arguments = []
         for index, arg_value in enumerate(argument_values):
             arg_type = argument_types[index] if index < len(argument_types) else str
@@ -130,14 +141,15 @@ class ErtScript:
                 arguments.append(arg_type(arg_value))
             else:
                 arguments.append(None)
-        fixtures["workflow_args"] = arguments
+
+        complete_fixtures["workflow_args"] = arguments
         try:
             func_args = inspect.signature(self.run).parameters
-            # If the user has specified *args, we skip injecting fixtures, and just
+            # If the user has specified *args, we skip injecting complete_fixtures, and just
             # pass the user configured arguments
             if not any(p.kind == p.VAR_POSITIONAL for p in func_args.values()):
                 try:
-                    arguments = self.insert_fixtures(func_args, fixtures)
+                    arguments = self.insert_fixtures(func_args, complete_fixtures)
                 except ValueError as e:
                     # This is here for backwards compatibility, the user does not have *argv
                     # but positional arguments. Can not be mixed with using fixtures.
