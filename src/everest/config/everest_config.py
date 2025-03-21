@@ -169,8 +169,10 @@ and environment variables are exposed in the form 'os.NAME', for example:
     output_constraints: list[OutputConstraintConfig] | None = Field(
         default=None, description="A list of output constraints with unique names."
     )
-    install_jobs: list[InstallJobConfig] | None = Field(
-        default=None, description="A list of jobs to install", validate_default=True
+    install_jobs: list[InstallJobConfig] = Field(
+        default_factory=list,
+        description="A list of jobs to install",
+        validate_default=True,
     )
     install_workflow_jobs: list[InstallJobConfig] | None = Field(
         default=None, description="A list of workflow jobs to install"
@@ -248,8 +250,6 @@ and environment variables are exposed in the form 'os.NAME', for example:
     def validate_forward_model_job_name_installed(self, info: ValidationInfo) -> Self:
         install_jobs = self.install_jobs
         forward_model_jobs = self.forward_model
-        if install_jobs is None:
-            install_jobs = []
         if not forward_model_jobs:
             return self
         installed_jobs_name = [job.name for job in install_jobs]

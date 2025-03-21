@@ -247,12 +247,11 @@ def check_writeable_path(path_source: str, config_path: Path) -> None:
 
 
 def validate_forward_model_configs(
-    forward_model: list[str], install_jobs: list[InstallJobConfig] | None
+    forward_model: list[str], install_jobs: list[InstallJobConfig]
 ) -> None:
     if not forward_model:
         return
 
-    install_jobs = install_jobs or []
     user_defined_jobs = [job.name for job in install_jobs]
 
     def _job_config_index(*args):  # type: ignore
