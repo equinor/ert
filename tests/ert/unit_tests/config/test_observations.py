@@ -367,12 +367,10 @@ def run_sim(start_date, keys=None, values=None, days=None):
 @pytest.mark.parametrize(
     "time_map_statement, time_map_creator",
     [
-        ("REFCASE ECLIPSE_CASE", lambda: run_sim(datetime(2014, 9, 10))),
+        ({"REFCASE": "ECLIPSE_CASE"}, lambda: run_sim(datetime(2014, 9, 10))),
         (
-            "TIME_MAP time_map.txt",
-            lambda: Path("time_map.txt").write_text(
-                "2014-09-10\n2014-09-11\n", encoding="utf-8"
-            ),
+            {"TIME_MAP": ("time_map.txt", "2014-09-10\n2014-09-11\n")},
+            lambda: None,
         ),
     ],
 )
@@ -429,37 +427,27 @@ def test_that_loading_summary_obs_with_days_is_within_tolerance(
     time_map_creator,
 ):
     with tmpdir.as_cwd():
-        config = dedent(
-            f"""
-        NUM_REALIZATIONS 2
-
-        ECLBASE ECLIPSE_CASE
-        {time_map_statement}
-        OBS_CONFIG observations
-        """
-        )
-        observations = dedent(
-            f"""
-        SUMMARY_OBSERVATION FOPR_1
-        {{
-        VALUE   = 0.1;
-        ERROR   = 0.05;
-        {time_unit} = {time_delta};
-        KEY     = FOPR;
-        }};
-        """
-        )
-
-        with open("config.ert", "w", encoding="utf-8") as fh:
-            fh.writelines(config)
-        with open("observations", "w", encoding="utf-8") as fh:
-            fh.writelines(observations)
-
-        # We create a reference case
         time_map_creator()
 
         with expectation:
-            ErtConfig.from_file("config.ert")
+            ErtConfig.from_dict(
+                {
+                    "ECLBASE": "ECLIPSE_CASE",
+                    "OBS_CONFIG": (
+                        "obsconf",
+                        f"""
+                        SUMMARY_OBSERVATION FOPR_1
+                        {{
+                        VALUE   = 0.1;
+                        ERROR   = 0.05;
+                        {time_unit} = {time_delta};
+                        KEY     = FOPR;
+                        }};
+                        """,
+                    ),
+                    **time_map_statement,
+                }
+            )
 
 
 def test_that_having_observations_on_starting_date_errors(tmpdir):
