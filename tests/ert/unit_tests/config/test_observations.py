@@ -724,57 +724,6 @@ def test_that_history_observation_errors_are_calculated_correctly(tmpdir):
         assert observations["FWPR"].observations[datetime(2014, 9, 11)].std == 10000
 
 
-@pytest.mark.parametrize("obs_type", ["HISTORY_OBSERVATION", "SUMMARY_OBSERVATION"])
-@pytest.mark.parametrize(
-    "obs_content, match",
-    [
-        (
-            "ERROR = -1;",
-            'Failed to validate "-1"',
-        ),
-        (
-            "ERROR_MODE=RELMIN; ERROR_MIN = -1; ERROR=1.0;",
-            'Failed to validate "-1"',
-        ),
-        (
-            "ERROR_MODE = NOT_ABS; ERROR=1.0;",
-            'Failed to validate "NOT_ABS"',
-        ),
-    ],
-)
-def test_that_common_observation_error_validation_is_handled(
-    tmpdir, obs_type, obs_content, match
-):
-    with tmpdir.as_cwd():
-        additional = (
-            ""
-            if obs_type == "HISTORY_OBSERVATION"
-            else "RESTART = 1; VALUE=1.0; KEY = FOPR;"
-        )
-        run_sim(
-            datetime(2014, 9, 10),
-            [("FOPR", "SM3/DAY", None), ("FOPRH", "SM3/DAY", None)],
-        )
-
-        with pytest.raises(ConfigValidationError, match=match):
-            ErtConfig.from_dict(
-                {
-                    "ECLBASE": "ECLIPSE_CASE",
-                    "REFCASE": "ECLIPSE_CASE",
-                    "OBS_CONFIG": (
-                        "obsconf",
-                        f"""
-                        {obs_type}  FOPR
-                        {{
-                            {obs_content}
-                            {additional}
-                        }};
-                        """,
-                    ),
-                }
-            )
-
-
 @pytest.mark.parametrize(
     "obs_content, match",
     [

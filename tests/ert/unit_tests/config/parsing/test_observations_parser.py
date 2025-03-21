@@ -15,6 +15,7 @@ from ert.config.parsing.observations_parser import (
     _parse_content_list,
     _validate_conf_content,
     observations_parser,
+    parse_content,
 )
 
 observation_contents = stlark.from_lark(observations_parser)
@@ -213,3 +214,42 @@ def test_validate(file_contents):
             ),
         ),
     ]
+
+
+@pytest.mark.parametrize("obs_type", ["HISTORY_OBSERVATION", "SUMMARY_OBSERVATION"])
+@pytest.mark.parametrize(
+    "obs_content, match",
+    [
+        (
+            "ERROR = -1;",
+            'Failed to validate "-1"',
+        ),
+        (
+            "ERROR_MODE=RELMIN; ERROR_MIN = -1; ERROR=1.0;",
+            'Failed to validate "-1"',
+        ),
+        (
+            "ERROR_MODE = NOT_ABS; ERROR=1.0;",
+            'Failed to validate "NOT_ABS"',
+        ),
+    ],
+)
+def test_that_common_observation_error_validation_is_handled(
+    obs_type, obs_content, match
+):
+    additional = (
+        ""
+        if obs_type == "HISTORY_OBSERVATION"
+        else "RESTART = 1; VALUE=1.0; KEY = FOPR;"
+    )
+    with pytest.raises(ObservationConfigError, match=match):
+        parse_content(
+            f"""
+                        {obs_type}  FOPR
+                        {{
+                            {obs_content}
+                            {additional}
+                        }};
+                        """,
+            "",
+        )
