@@ -9,7 +9,7 @@ from everest.strings import EVEREST
 
 
 class OptimizationConfig(BaseModel, extra="forbid"):
-    algorithm: str | None = Field(
+    algorithm: str = Field(
         default="optpp_q_newton",
         description="""Algorithm used by Everest.  Defaults to
 optpp_q_newton, a quasi-Newton algorithm in Dakota's OPT PP library.

@@ -245,12 +245,9 @@ def test_everest2ropt_arbitrary_backend_options():
     assert ropt_config.optimizer.options["a"] == [1]
 
 
-def test_everest2ropt_no_algorithm_name(copy_test_data_to_tmp):
-    config = EverestConfig.load_file(
-        os.path.join("valid_config_file", "valid_yaml_config_no_algorithm.yml")
-    )
-
-    config.optimization.algorithm = None
+def test_everest2ropt_default_algorithm_name(min_config):
+    config = EverestConfig(**min_config)
+    assert not min_config.get("optimization")
     ropt_config = everest2ropt(config)
     assert ropt_config.optimizer.method == "optpp_q_newton"
 
