@@ -143,7 +143,7 @@ install_jobs:
 
 
 optimization:
-  algorithm: conmin_mfd
+  algorithm: optpp_q_newton
   max_iterations: 2
   max_function_evaluations: 2
   perturbation_num: 2

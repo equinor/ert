@@ -33,7 +33,7 @@ install_jobs:
     source: jobs/RES_MOCK
 
 optimization:
-  algorithm: conmin_mfd
+  algorithm: optpp_q_newton
   perturbation_num: 20
   max_iterations: 10
   max_function_evaluations: 1000
