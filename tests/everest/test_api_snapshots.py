@@ -231,3 +231,12 @@ def test_csv_export(config_file, cached_example, snapshot):
         _sort_df(batch_df.with_columns(pl.col(pl.Float64).round(4))).write_csv(),
         "batch_df.csv",
     )
+
+
+@pytest.mark.xdist_group("math_func/config_minimal.yml")
+def test_that_summary_returns_empty_df_when_missing_data(cached_example):
+    config_path, config_file, _, _ = cached_example("math_func/config_minimal.yml")
+
+    config = EverestConfig.load_file(Path(config_path) / config_file)
+    api = EverestDataAPI(config)
+    assert api.summary_values().is_empty()

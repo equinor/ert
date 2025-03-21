@@ -245,7 +245,7 @@ class EverestDataAPI:
 
                 data_frames.append(summary)
         storage.close()
-        return pl.concat(data_frames)
+        return pl.concat(data_frames) if data_frames else pl.DataFrame()
 
     @property
     def output_folder(self) -> str:
