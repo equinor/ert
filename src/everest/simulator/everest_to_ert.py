@@ -68,15 +68,8 @@ def _extract_summary_keys(
     field_keys = everest.simulator.DEFAULT_FIELD_SUMMARY_KEYS
     well_sum_keys = everest.simulator.DEFAULT_WELL_SUMMARY_KEYS
     user_specified_keys = (
-        []
-        if ever_config.export is None or ever_config.export.keywords is None
-        else ever_config.export.keywords
+        [] if ever_config.export is None else ever_config.export.keywords
     )
-
-    # Makes it work w/ new config setup, default will be empty list
-    # when old way of doing it is phased out
-    if user_specified_keys is None:
-        user_specified_keys = []
 
     wells = [well.name for well in ever_config.wells]
 
