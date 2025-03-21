@@ -38,17 +38,13 @@ run_ert_with_opm() {
 remove_one_week_old_temp_folders () {
     case "$1" in
         "azure")
-            runner_root="/lustre1/users/f_scout_ci/egg_tests"
+            RUNNER_ROOT="/lustre1/users/f_scout_ci/egg_tests"
             ;;
         *)
-            runner_root="/scratch/oompf/egg_tests"
+            RUNNER_ROOT="/scratch/oompf/egg_tests"
             ;;
     esac
-    old_directories=$(find $runner_root -maxdepth 1 -mtime +7 -user f_scout_ci -type d 2>/dev/null || true)
-    if [[ -n "$old_directories" ]] ; then
-        echo "Host: $(hostname -s), removing the following dirs: $old_directories"
-        rm -rf "$old_directories" || true
-    fi
+    find "$RUNNER_ROOT" -maxdepth 1 -mtime +7 -user f_scout_ci -type d -exec rm -r {} \;
 }
 
 
