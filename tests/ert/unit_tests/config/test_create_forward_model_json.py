@@ -9,7 +9,7 @@ import pytest
 
 from ert.config import ErtConfig, ForwardModelStep
 from ert.config.ert_config import (
-    _forward_model_step_from_config_file,
+    _forward_model_step_from_config_contents,
     create_forward_model_json,
 )
 from ert.substitutions import Substitutions
@@ -144,13 +144,13 @@ def _generate_step(
         str_none_sensitive(max_running_minutes),
     ]
 
-    with open(config_file, "w", encoding="utf-8") as conf:
-        for key, val in zip(forward_model_keywords, values, strict=False):
-            if key == "ENV" and val:
-                for k, v in val.items():
-                    conf.write(f"{key} {k} {v}\n")
-            elif val is not None:
-                conf.write(f"{key} {val}\n")
+    config_contents = ""
+    for key, val in zip(forward_model_keywords, values, strict=False):
+        if key == "ENV" and val:
+            for k, v in val.items():
+                config_contents += f"{key} {k} {v}\n"
+        elif val is not None:
+            config_contents += f"{key} {val}\n"
 
     with open(executable, "w", encoding="utf-8"):
         pass
@@ -158,7 +158,7 @@ def _generate_step(
     mode |= stat.S_IXUSR | stat.S_IXGRP
     os.chmod(executable, stat.S_IMODE(mode))
 
-    return _forward_model_step_from_config_file(config_file, name)
+    return _forward_model_step_from_config_contents(config_contents, config_file, name)
 
 
 def empty_list_if_none(list_):
