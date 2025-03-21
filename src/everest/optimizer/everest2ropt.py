@@ -338,9 +338,7 @@ def _everest2ropt(
     )
     _parse_environment(
         optimization_output_dir=ever_config.optimization_output_dir,
-        random_seed=ever_config.environment.random_seed
-        if ever_config.environment
-        else None,
+        random_seed=ever_config.environment.random_seed,
         ropt_config=ropt_config,
     )
 

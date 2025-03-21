@@ -135,7 +135,7 @@ class EverestConfig(BaseModel):
     model: ModelConfig = Field(
         description="Configuration of the Everest model",
     )
-    environment: EnvironmentConfig | None = Field(
+    environment: EnvironmentConfig = Field(
         default_factory=EnvironmentConfig,
         description="The environment of Everest, specifies which folders are used "
         "for simulation and output, as well as the level of detail in Everest-logs",
@@ -529,10 +529,7 @@ and environment variables are exposed in the form 'os.NAME', for example:
 
     @property
     def logging_level(self) -> int:
-        level = self.environment.log_level if self.environment is not None else "info"
-
-        if level is None:
-            level = "info"
+        level = self.environment.log_level
 
         levels = {
             "debug": logging.DEBUG,  # 10
@@ -553,7 +550,6 @@ and environment variables are exposed in the form 'os.NAME', for example:
 
     @property
     def output_dir(self) -> str:
-        assert self.environment is not None
         path = self.environment.output_folder
 
         if path is None:
@@ -571,7 +567,6 @@ and environment variables are exposed in the form 'os.NAME', for example:
 
     @property
     def simulation_dir(self) -> str | None:
-        assert self.environment is not None
         path = self.environment.simulation_folder
 
         if os.path.isabs(path):  # type: ignore
