@@ -150,6 +150,9 @@ def test_default_installed_jobs(tmp_path, monkeypatch):
     assert [c.name for c in forward_model_steps[1:]] == jobs
 
 
+@pytest.mark.filterwarnings(
+    "ignore:Config contains a SUMMARY key but no forward model steps"
+)
 def test_combined_wells_everest_to_ert(tmp_path, monkeypatch):
     monkeypatch.chdir(tmp_path)
     Path("my_file").touch()
