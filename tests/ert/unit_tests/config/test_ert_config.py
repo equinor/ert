@@ -865,18 +865,12 @@ def test_fm_step_config_via_plugin_stringifies_python_objects(monkeypatch):
         "get_forward_model_configuration",
         MagicMock(return_value={"SOME_STEP": {"FOO": {"a_dict_as_value": 1}}}),
     )
-    Path("SOME_STEP").write_text("EXECUTABLE /bin/ls", encoding="utf-8")
-    Path("config.ert").write_text(
-        dedent(
-            """
-            NUM_REALIZATIONS 1
-            INSTALL_JOB SOME_STEP SOME_STEP
-            FORWARD_MODEL SOME_STEP()
-            """
-        ),
-        encoding="utf-8",
+    ert_config = ErtConfig.with_plugins().from_dict(
+        {
+            "INSTALL_JOB": [["SOME_STEP", ("SOME_STEP", "EXECUTABLE fm_dispatch.py")]],
+            "FORWARD_MODEL": [["SOME_STEP"]],
+        }
     )
-    ert_config = ErtConfig.with_plugins().from_file("config.ert")
     step_json = create_forward_model_json(
         context=ert_config.substitutions,
         forward_model_steps=ert_config.forward_model_steps,
