@@ -389,7 +389,6 @@ def _extract_model(ever_config: EverestConfig, ert_config: dict[str, Any]) -> No
 
 
 def _extract_seed(ever_config: EverestConfig, ert_config: dict[str, Any]) -> None:
-    assert ever_config.environment is not None
     random_seed = ever_config.environment.random_seed
 
     if random_seed:
