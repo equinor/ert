@@ -403,11 +403,11 @@ def workflows_from_dict(
 def installed_forward_model_steps_from_dict(config_dict) -> dict[str, ForwardModelStep]:
     errors = []
     fm_steps = {}
-    for fm_step in config_dict.get(ConfigKeys.INSTALL_JOB, []):
-        name = fm_step[0]
-        fm_step_config_file = path.abspath(fm_step[1])
+    for name, (fm_step_config_file, config_contents) in config_dict.get(
+        ConfigKeys.INSTALL_JOB, []
+    ):
+        fm_step_config_file = path.abspath(fm_step_config_file)
         try:
-            config_contents = read_file(fm_step_config_file)
             new_fm_step = _forward_model_step_from_config_contents(
                 config_contents,
                 name=name,
@@ -972,7 +972,9 @@ class ErtConfig:
 
     @classmethod
     def _log_custom_forward_model_steps(cls, user_config: ConfigDict) -> None:
-        for fm_step, fm_step_filename in user_config.get(ConfigKeys.INSTALL_JOB, []):
+        for fm_step, (fm_step_filename, _) in user_config.get(
+            ConfigKeys.INSTALL_JOB, []
+        ):
             fm_configuration = EMPTY_LINES.sub(
                 "\n", (Path(fm_step_filename).read_text(encoding="utf-8").strip())
             )
