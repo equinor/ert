@@ -1,6 +1,7 @@
 import datetime
 import shutil
 
+import numpy as np
 import polars as pl
 import pytest
 from PyQt6.QtCore import Qt
@@ -22,6 +23,73 @@ from ert.storage.realization_storage_state import RealizationStorageState
 from tests.ert.ui_tests.cli.analysis.test_adaptive_localization import (
     run_cli_ES_with_case,
 )
+
+from .conftest import add_experiment_in_manage_experiment_dialog
+
+
+def test_design_matrix_in_manage_experiments_panel(
+    copy_poly_case_with_design_matrix, qtbot, storage
+):
+    num_realizations = 10
+    a_values = list(range(num_realizations))
+    design_dict = {
+        "REAL": list(range(num_realizations)),
+        "a": a_values,
+    }
+    default_list = [["b", 1], ["c", 2]]
+    copy_poly_case_with_design_matrix(design_dict, default_list)
+    config = ErtConfig.from_file("poly.ert")
+    notifier = ErtNotifier()
+    notifier.set_storage(storage)
+    assert config.ensemble_config.parameter_configuration == []
+    assert config.analysis_config.design_matrix is not None
+    ensemble = storage.create_experiment(
+        parameters=[config.analysis_config.design_matrix.parameter_configuration],
+        responses=config.ensemble_config.response_configuration,
+        name="my-experiment",
+    ).create_ensemble(
+        ensemble_size=config.model_config.num_realizations,
+        name="my-design",
+    )
+    notifier.set_current_ensemble(ensemble)
+    assert all(
+        RealizationStorageState.UNDEFINED in s for s in ensemble.get_ensemble_state()
+    )
+
+    tool = ManageExperimentsPanel(
+        config, notifier, config.model_config.num_realizations
+    )
+    qtbot.mouseClick(
+        tool.findChild(QPushButton, name="initialize_from_scratch_button"),
+        Qt.MouseButton.LeftButton,
+    )
+    assert (
+        RealizationStorageState.PARAMETERS_LOADED in s
+        for s in ensemble.get_ensemble_state()
+    )
+    params = ensemble.load_parameters("DESIGN_MATRIX")["values"]
+    np.testing.assert_array_equal(params[:, 0], a_values)
+    np.testing.assert_array_equal(params[:, 1], np.ones(num_realizations))
+    np.testing.assert_array_equal(params[:, 2], 2 * np.ones(num_realizations))
+
+    add_experiment_in_manage_experiment_dialog(
+        qtbot, tool, experiment_name="my-experiment-2", ensemble_name="my-design-2"
+    )
+    experiments = list(storage.experiments)
+    assert len(experiments) == 2
+    assert experiments[0].name == "my-experiment"
+    assert experiments[1].name == "my-experiment-2"
+    ensemble = experiments[1].get_ensemble_by_name("my-design-2")
+    assert "DESIGN_MATRIX" in experiments[1].parameter_configuration
+    assert {
+        t["name"]
+        for t in experiments[1]
+        .parameter_configuration["DESIGN_MATRIX"]
+        .transform_function_definitions
+    } == {"a", "b", "c"}
+    assert all(
+        RealizationStorageState.UNDEFINED in s for s in ensemble.get_ensemble_state()
+    )
 
 
 @pytest.mark.usefixtures("copy_poly_case")
