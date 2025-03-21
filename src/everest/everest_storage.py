@@ -184,6 +184,22 @@ class FunctionBatchStorageData(BatchStorageData):
         assert df is not None
         return df
 
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            "controls": self.realization_controls.drop(
+                "batch_id", "realization", "simulation_id"
+            ).to_dicts()[0],
+            "objectives": self.batch_objectives.drop(
+                "batch_id", "total_objective_value"
+            ).to_dicts()[0],
+            "total_objective_value": self.batch_objectives[
+                "total_objective_value"
+            ].item(),
+            "realization_objectives": self.realization_objectives.drop(
+                "batch_id"
+            ).to_dicts(),
+        }
+
 
 class GradientBatchStorageData(BatchStorageData):
     @property
@@ -191,6 +207,43 @@ class GradientBatchStorageData(BatchStorageData):
         df = super().perturbation_objectives
         assert df is not None
         return df
+
+    def to_dict(self) -> dict[str, Any]:
+        objective_gradient = (
+            self.batch_objective_gradient.drop("batch_id")
+            .sort("control_name")
+            .to_dicts()
+            if self.batch_objective_gradient is not None
+            else None
+        )
+
+        perturbation_objectives = (
+            self.perturbation_objectives.drop("batch_id")
+            .sort("realization", "perturbation")
+            .to_dicts()
+        )
+        constraint_gradient_dicts = (
+            self.batch_constraint_gradient.drop("batch_id")
+            .sort("control_name")
+            .to_dicts()
+            if self.batch_constraint_gradient is not None
+            else None
+        )
+
+        perturbation_gradient_dicts = (
+            self.perturbation_constraints.drop("batch_id")
+            .sort("realization", "perturbation")
+            .to_dicts()
+            if self.perturbation_constraints is not None
+            else None
+        )
+
+        return {
+            "objective_gradient_values": objective_gradient,
+            "perturbation_objectives": perturbation_objectives,
+            "constraint_gradient": constraint_gradient_dicts,
+            "perturbation_constraints": perturbation_gradient_dicts,
+        }
 
 
 class OptimizationStorageData:

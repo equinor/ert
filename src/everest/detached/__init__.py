@@ -189,22 +189,11 @@ def get_opt_status_from_batch_result_event(
 
     assert event.batch is not None
 
-    functions = event.results["functions"]
-    weighted_objective = functions["weighted_objective"]
-    expected_objectives = dict(
-        zip(event.results["objective_names"], functions["objectives"], strict=False)
-    )
-
-    evaluations = event.results["evaluations"]
-    controls = dict(
-        zip(event.results["control_names"], evaluations["variables"], strict=False)
-    )
-
     return {
         "batch": event.batch,
-        "controls": controls,
-        "objective_value": weighted_objective,
-        "expected_objectives": expected_objectives,
+        "controls": event.results["controls"],
+        "objective_value": event.results["total_objective_value"],
+        "expected_objectives": event.results["objectives"],
     }
 
 

@@ -18,71 +18,22 @@
       "everest_event": "OPTIMIZATION_RESULT",
       "result_type": "FunctionResult",
       "results": {
-        "batch_id": 0,
-        "constraint_info": {
-          "bound_lower": [
-            1.1,
-            1.1,
-            1.1
-          ],
-          "bound_upper": [
-            -0.9,
-            -0.9,
-            -0.9
-          ],
-          "bound_violation": [
-            0.0,
-            0.0,
-            0.0
-          ],
-          "linear_lower": null,
-          "linear_upper": null,
-          "linear_violation": null,
-          "nonlinear_lower": null,
-          "nonlinear_upper": null,
-          "nonlinear_violation": null
+        "controls": {
+          "point.x": 0.1,
+          "point.y": 0.1,
+          "point.z": 0.1
         },
-        "control_names": [
-          "point.x",
-          "point.y",
-          "point.z"
+        "objectives": {
+          "distance": -0.48
+        },
+        "realization_objectives": [
+          {
+            "distance": -0.48,
+            "realization": 0,
+            "simulation_id": 0
+          }
         ],
-        "evaluations": {
-          "constraints": null,
-          "evaluation_info": {
-            "sim_ids": [
-              0
-            ]
-          },
-          "objectives": [
-            [
-              -0.48
-            ]
-          ],
-          "variables": [
-            0.1,
-            0.1,
-            0.1
-          ]
-        },
-        "functions": {
-          "constraints": null,
-          "objectives": [
-            -0.48
-          ],
-          "weighted_objective": -0.48
-        },
-        "metadata": {},
-        "objective_names": [
-          "distance"
-        ],
-        "realizations": {
-          "constraint_weights": null,
-          "failed_realizations": [
-            false
-          ],
-          "objective_weights": null
-        }
+        "total_objective_value": -0.48
       }
     },
     {
@@ -91,105 +42,67 @@
       "everest_event": "OPTIMIZATION_RESULT",
       "result_type": "GradientResult",
       "results": {
-        "batch_id": 0,
-        "control_names": [
-          "point.x",
-          "point.y",
-          "point.z"
-        ],
-        "evaluations": {
-          "evaluation_info": {
-            "sim_ids": [
-              [
-                1,
-                2,
-                3,
-                4,
-                5
-              ]
-            ]
+        "constraint_gradient": null,
+        "objective_gradient_values": [
+          {
+            "control_name": "point.x",
+            "distance": 0.800386,
+            "distance.total": 0.800386
           },
-          "perturbed_constraints": null,
-          "perturbed_objectives": [
-            [
-              [
-                -0.480058
-              ],
-              [
-                -0.478648
-              ],
-              [
-                -0.48033
-              ],
-              [
-                -0.481403
-              ],
-              [
-                -0.478786
-              ]
-            ]
-          ],
-          "perturbed_variables": [
-            [
-              [
-                0.099011,
-                0.099632,
-                0.101288
-              ],
-              [
-                0.100194,
-                0.10092,
-                0.100577
-              ],
-              [
-                0.099364,
-                0.100542,
-                0.099683
-              ],
-              [
-                0.099678,
-                0.100097,
-                0.098474
-              ],
-              [
-                0.101192,
-                0.099329,
-                0.101
-              ]
-            ]
-          ],
-          "variables": [
-            0.1,
-            0.1,
-            0.1
-          ]
-        },
-        "gradients": {
-          "constraints": null,
-          "objectives": [
-            [
-              0.800386,
-              0.800548,
-              0.799338
-            ]
-          ],
-          "weighted_objective": [
-            0.800386,
-            0.800548,
-            0.799338
-          ]
-        },
-        "metadata": {},
-        "objective_names": [
-          "distance"
+          {
+            "control_name": "point.y",
+            "distance": 0.800548,
+            "distance.total": 0.800548
+          },
+          {
+            "control_name": "point.z",
+            "distance": 0.799338,
+            "distance.total": 0.799338
+          }
         ],
-        "realizations": {
-          "constraint_weights": null,
-          "failed_realizations": [
-            false
-          ],
-          "objective_weights": null
-        }
+        "perturbation_constraints": null,
+        "perturbation_objectives": [
+          {
+            "distance": -0.480058,
+            "perturbation": 0,
+            "point.x": 0.099011,
+            "point.y": 0.099632,
+            "point.z": 0.101288,
+            "realization": 0
+          },
+          {
+            "distance": -0.478648,
+            "perturbation": 1,
+            "point.x": 0.100194,
+            "point.y": 0.10092,
+            "point.z": 0.100577,
+            "realization": 0
+          },
+          {
+            "distance": -0.48033,
+            "perturbation": 2,
+            "point.x": 0.099364,
+            "point.y": 0.100542,
+            "point.z": 0.099683,
+            "realization": 0
+          },
+          {
+            "distance": -0.481403,
+            "perturbation": 3,
+            "point.x": 0.099678,
+            "point.y": 0.100097,
+            "point.z": 0.098474,
+            "realization": 0
+          },
+          {
+            "distance": -0.478786,
+            "perturbation": 4,
+            "point.x": 0.101192,
+            "point.y": 0.099329,
+            "point.z": 0.101,
+            "realization": 0
+          }
+        ]
       }
     },
     {
@@ -210,71 +123,22 @@
       "everest_event": "OPTIMIZATION_RESULT",
       "result_type": "FunctionResult",
       "results": {
-        "batch_id": 1,
-        "constraint_info": {
-          "bound_lower": [
-            1.900386,
-            1.900548,
-            1.899338
-          ],
-          "bound_upper": [
-            -0.099614,
-            -0.099452,
-            -0.100662
-          ],
-          "bound_violation": [
-            0.0,
-            0.0,
-            0.0
-          ],
-          "linear_lower": null,
-          "linear_upper": null,
-          "linear_violation": null,
-          "nonlinear_lower": null,
-          "nonlinear_upper": null,
-          "nonlinear_violation": null
+        "controls": {
+          "point.x": 0.900386,
+          "point.y": 0.900548,
+          "point.z": 0.899338
         },
-        "control_names": [
-          "point.x",
-          "point.y",
-          "point.z"
+        "objectives": {
+          "distance": -0.480218
+        },
+        "realization_objectives": [
+          {
+            "distance": -0.480218,
+            "realization": 0,
+            "simulation_id": 0
+          }
         ],
-        "evaluations": {
-          "constraints": null,
-          "evaluation_info": {
-            "sim_ids": [
-              0
-            ]
-          },
-          "objectives": [
-            [
-              -0.480218
-            ]
-          ],
-          "variables": [
-            0.900386,
-            0.900548,
-            0.899338
-          ]
-        },
-        "functions": {
-          "constraints": null,
-          "objectives": [
-            -0.480218
-          ],
-          "weighted_objective": -0.480218
-        },
-        "metadata": {},
-        "objective_names": [
-          "distance"
-        ],
-        "realizations": {
-          "constraint_weights": null,
-          "failed_realizations": [
-            false
-          ],
-          "objective_weights": null
-        }
+        "total_objective_value": -0.480218
       }
     },
     {
@@ -295,71 +159,22 @@
       "everest_event": "OPTIMIZATION_RESULT",
       "result_type": "FunctionResult",
       "results": {
-        "batch_id": 2,
-        "constraint_info": {
-          "bound_lower": [
-            1.500148,
-            1.500228,
-            1.499624
-          ],
-          "bound_upper": [
-            -0.499852,
-            -0.499772,
-            -0.500376
-          ],
-          "bound_violation": [
-            0.0,
-            0.0,
-            0.0
-          ],
-          "linear_lower": null,
-          "linear_upper": null,
-          "linear_violation": null,
-          "nonlinear_lower": null,
-          "nonlinear_upper": null,
-          "nonlinear_violation": null
+        "controls": {
+          "point.x": 0.500148,
+          "point.y": 0.500228,
+          "point.z": 0.499624
         },
-        "control_names": [
-          "point.x",
-          "point.y",
-          "point.z"
+        "objectives": {
+          "distance": -0.0
+        },
+        "realization_objectives": [
+          {
+            "distance": -0.0,
+            "realization": 0,
+            "simulation_id": 0
+          }
         ],
-        "evaluations": {
-          "constraints": null,
-          "evaluation_info": {
-            "sim_ids": [
-              0
-            ]
-          },
-          "objectives": [
-            [
-              -0.0
-            ]
-          ],
-          "variables": [
-            0.500148,
-            0.500228,
-            0.499624
-          ]
-        },
-        "functions": {
-          "constraints": null,
-          "objectives": [
-            -0.0
-          ],
-          "weighted_objective": -0.0
-        },
-        "metadata": {},
-        "objective_names": [
-          "distance"
-        ],
-        "realizations": {
-          "constraint_weights": null,
-          "failed_realizations": [
-            false
-          ],
-          "objective_weights": null
-        }
+        "total_objective_value": -0.0
       }
     },
     {
@@ -380,105 +195,67 @@
       "everest_event": "OPTIMIZATION_RESULT",
       "result_type": "GradientResult",
       "results": {
-        "batch_id": 3,
-        "control_names": [
-          "point.x",
-          "point.y",
-          "point.z"
-        ],
-        "evaluations": {
-          "evaluation_info": {
-            "sim_ids": [
-              [
-                0,
-                1,
-                2,
-                3,
-                4
-              ]
-            ]
+        "constraint_gradient": null,
+        "objective_gradient_values": [
+          {
+            "control_name": "point.x",
+            "distance": -0.00259,
+            "distance.total": -0.00259
           },
-          "perturbed_constraints": null,
-          "perturbed_objectives": [
-            [
-              [
-                -4e-6
-              ],
-              [
-                -7e-6
-              ],
-              [
-                -5e-6
-              ],
-              [
-                -2e-6
-              ],
-              [
-                -2e-6
-              ]
-            ]
-          ],
-          "perturbed_variables": [
-            [
-              [
-                0.500284,
-                0.50176,
-                0.498964
-              ],
-              [
-                0.499836,
-                0.500566,
-                0.497416
-              ],
-              [
-                0.500976,
-                0.50177,
-                0.50075
-              ],
-              [
-                0.500903,
-                0.500082,
-                0.500906
-              ],
-              [
-                0.501222,
-                0.500621,
-                0.499629
-              ]
-            ]
-          ],
-          "variables": [
-            0.500148,
-            0.500228,
-            0.499624
-          ]
-        },
-        "gradients": {
-          "constraints": null,
-          "objectives": [
-            [
-              -0.00259,
-              -0.002198,
-              0.002055
-            ]
-          ],
-          "weighted_objective": [
-            -0.00259,
-            -0.002198,
-            0.002055
-          ]
-        },
-        "metadata": {},
-        "objective_names": [
-          "distance"
+          {
+            "control_name": "point.y",
+            "distance": -0.002198,
+            "distance.total": -0.002198
+          },
+          {
+            "control_name": "point.z",
+            "distance": 0.002055,
+            "distance.total": 0.002055
+          }
         ],
-        "realizations": {
-          "constraint_weights": null,
-          "failed_realizations": [
-            false
-          ],
-          "objective_weights": null
-        }
+        "perturbation_constraints": null,
+        "perturbation_objectives": [
+          {
+            "distance": -4e-6,
+            "perturbation": 0,
+            "point.x": 0.500284,
+            "point.y": 0.50176,
+            "point.z": 0.498964,
+            "realization": 0
+          },
+          {
+            "distance": -7e-6,
+            "perturbation": 1,
+            "point.x": 0.499836,
+            "point.y": 0.500566,
+            "point.z": 0.497416,
+            "realization": 0
+          },
+          {
+            "distance": -5e-6,
+            "perturbation": 2,
+            "point.x": 0.500976,
+            "point.y": 0.50177,
+            "point.z": 0.50075,
+            "realization": 0
+          },
+          {
+            "distance": -2e-6,
+            "perturbation": 3,
+            "point.x": 0.500903,
+            "point.y": 0.500082,
+            "point.z": 0.500906,
+            "realization": 0
+          },
+          {
+            "distance": -2e-6,
+            "perturbation": 4,
+            "point.x": 0.501222,
+            "point.y": 0.500621,
+            "point.z": 0.499629,
+            "realization": 0
+          }
+        ]
       }
     }
   ],
