@@ -341,6 +341,12 @@ def run_detached_monitor(server_context: tuple[str, str, tuple[str, str]]) -> No
     start_monitor(server_context, callback=monitor.update)
 
 
+def run_empty_detached_monitor(
+    server_context: tuple[str, str, tuple[str, str]],
+) -> None:
+    start_monitor(server_context, callback=lambda _: None)
+
+
 def report_on_previous_run(
     config_file: str,
     everserver_status_path: str,

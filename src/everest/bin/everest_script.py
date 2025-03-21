@@ -36,6 +36,7 @@ from .utils import (
     handle_keyboard_interrupt,
     report_on_previous_run,
     run_detached_monitor,
+    run_empty_detached_monitor,
 )
 
 logger = logging.getLogger(__name__)
@@ -105,7 +106,11 @@ def _build_args_parser() -> argparse.ArgumentParser:
         action="store_true",
         help="Flag used to disable user prompts that will stop execution.",
     )
-
+    arg_parser.add_argument(
+        "--disable-monitoring",
+        action="store_true",
+        help="Flag used to disable monitoring of the optimization run.",
+    )
     return arg_parser
 
 
@@ -189,7 +194,9 @@ async def run_everest(options: argparse.Namespace) -> None:
             from everest.gui.main import run_gui  # noqa
 
             monitor_thread = ErtThread(
-                target=run_detached_monitor,
+                target=run_empty_detached_monitor
+                if options.disable_monitoring
+                else run_detached_monitor,
                 name="Everest CLI monitor thread",
                 args=[ServerConfig.get_server_context(options.config.output_dir)],
                 daemon=True,
@@ -197,8 +204,14 @@ async def run_everest(options: argparse.Namespace) -> None:
             monitor_thread.start()
             run_gui(options.config.config_path)
             monitor_thread.join()
+        # blocks until the run is finished
+        elif options.disable_monitoring:
+            run_empty_detached_monitor(
+                server_context=ServerConfig.get_server_context(
+                    options.config.output_dir
+                )
+            )
         else:
-            # blocks until the run is finished
             run_detached_monitor(
                 server_context=ServerConfig.get_server_context(
                     options.config.output_dir
