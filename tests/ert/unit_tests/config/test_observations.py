@@ -726,30 +726,6 @@ def test_that_history_observation_errors_are_calculated_correctly(tmpdir):
 
 def test_validation_of_duplicate_names(tmpdir):
     with tmpdir.as_cwd():
-        config = dedent(
-            """
-        NUM_REALIZATIONS 2
-
-        ECLBASE ECLIPSE_CASE
-        REFCASE ECLIPSE_CASE
-        OBS_CONFIG observations
-        """
-        )
-        with open("config.ert", "w", encoding="utf-8") as fh:
-            fh.writelines(config)
-        with open("observations", "w", encoding="utf-8") as fo:
-            fo.writelines(
-                """SUMMARY_OBSERVATION FOPR {
-                       KEY     = FOPR;
-                       RESTART = 1;
-                       VALUE   = 1.0;
-                       ERROR   = 0.1;
-                    };
-                    HISTORY_OBSERVATION FOPR;
-            """
-            )
-        with open("time_map.txt", "w", encoding="utf-8") as fo:
-            fo.writelines("2023-02-01")
         run_sim(
             datetime(2014, 9, 10),
             [("FOPR", "SM3/DAY", None), ("FOPRH", "SM3/DAY", None)],
@@ -758,7 +734,24 @@ def test_validation_of_duplicate_names(tmpdir):
         with pytest.raises(
             ConfigValidationError, match="Duplicate observation name FOPR"
         ):
-            ErtConfig.from_file("config.ert")
+            ErtConfig.from_dict(
+                {
+                    "ECLBASE": "ECLIPSE_CASE",
+                    "REFCASE": "ECLIPSE_CASE",
+                    "OBS_CONFIG": (
+                        "obsconf",
+                        """
+                            SUMMARY_OBSERVATION FOPR {
+                               KEY     = FOPR;
+                               RESTART = 1;
+                               VALUE   = 1.0;
+                               ERROR   = 0.1;
+                            };
+                            HISTORY_OBSERVATION FOPR;
+                        """,
+                    ),
+                }
+            )
 
 
 def test_that_segment_defaults_are_applied(tmpdir):
