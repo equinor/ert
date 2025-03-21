@@ -37,6 +37,7 @@ class _ComboBoxItemWidget(QWidget):
         pd_top = "0px" if group else "5px"
         if group:
             self.group = QLabel(group, self)
+            self.group.setPalette(self.palette())
             self.group.setStyleSheet(
                 """
                 padding-top: 5px;
@@ -46,7 +47,7 @@ class _ComboBoxItemWidget(QWidget):
             """
             )
             layout.addWidget(self.group)
-
+        self.label.setPalette(self.palette())
         self.label.setStyleSheet(
             f"""
             padding-top:{pd_top};
@@ -56,6 +57,7 @@ class _ComboBoxItemWidget(QWidget):
         """
         )
         self.description = QLabel(description, self)
+        self.description.setPalette(self.palette())
         self.description.setStyleSheet(
             """
             padding-bottom: 10px;
