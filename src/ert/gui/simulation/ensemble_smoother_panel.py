@@ -4,7 +4,7 @@ from dataclasses import dataclass
 from typing import TYPE_CHECKING
 
 from PyQt6.QtCore import pyqtSlot as Slot
-from PyQt6.QtWidgets import QFormLayout, QLabel, QWidget
+from PyQt6.QtWidgets import QFormLayout, QHBoxLayout, QLabel, QWidget
 
 from ert.gui.ertnotifier import ErtNotifier
 from ert.gui.ertwidgets import (
@@ -68,8 +68,13 @@ class EnsembleSmootherPanel(ExperimentConfigPanel):
         runpath_label = CopyableLabel(text=run_path)
         layout.addRow("Runpath:", runpath_label)
 
-        number_of_realizations_label = QLabel(f"<b>{ensemble_size}</b>")
-        layout.addRow(QLabel("Number of realizations:"), number_of_realizations_label)
+        ensemble_size_container = QWidget()
+        ensemble_size_layout = QHBoxLayout(ensemble_size_container)
+        ensemble_size_layout.setContentsMargins(0, 0, 0, 0)
+        ensemble_size_label = QLabel(f"<b>{ensemble_size}</b>")
+        ensemble_size_layout.addWidget(ensemble_size_label)
+
+        layout.addRow(QLabel("Ensemble size:"), ensemble_size_container)
 
         self._ensemble_format_model = TargetEnsembleModel(analysis_config, notifier)
         self._ensemble_format_field = StringBox(
@@ -99,7 +104,10 @@ class EnsembleSmootherPanel(ExperimentConfigPanel):
             layout.addRow(
                 "Design Matrix",
                 DesignMatrixPanel.get_design_matrix_button(
-                    self._active_realizations_field, design_matrix
+                    self._active_realizations_field,
+                    design_matrix,
+                    ensemble_size_label,
+                    ensemble_size,
                 ),
             )
 
