@@ -1,7 +1,7 @@
 from typing import Any
 
 from PyQt6.QtCore import QModelIndex, QPoint, QSize
-from PyQt6.QtGui import QColor, QRegion
+from PyQt6.QtGui import QColor, QPalette, QRegion
 from PyQt6.QtWidgets import (
     QComboBox,
     QLabel,
@@ -32,41 +32,36 @@ class _ComboBoxItemWidget(QWidget):
         super().__init__(parent)
         layout = QVBoxLayout()
         layout.setSpacing(5)
-        self.setStyleSheet("background: rgba(0,0,0,1);")
-        self.label = QLabel(label)
-        color = "color: rgba(192,192,192,80);" if not enabled else ";"
+        self.setPalette(parent.palette())
+        self.label = QLabel(label, self)
         pd_top = "0px" if group else "5px"
         if group:
-            self.group = QLabel(group)
+            self.group = QLabel(group, self)
+            self.group.setPalette(self.palette())
             self.group.setStyleSheet(
-                f"""
-                {color}
+                """
                 padding-top: 5px;
                 padding-left: 2px;
-                background: rgba(0,0,0,0);
                 font-style: italic;
                 font-size: 14px;
             """
             )
             layout.addWidget(self.group)
-
+        self.label.setPalette(self.palette())
         self.label.setStyleSheet(
             f"""
-            {color}
             padding-top:{pd_top};
             padding-left: 10px;
-            background: rgba(0,0,0,0);
             font-weight: bold;
             font-size: 13px;
         """
         )
-        self.description = QLabel(description)
+        self.description = QLabel(description, self)
+        self.description.setPalette(self.palette())
         self.description.setStyleSheet(
-            f"""
-            {color}
+            """
             padding-bottom: 10px;
             padding-left: 15px;
-            background: rgba(0,0,0,0);
             font-style: italic;
             font-size: 12px;
         """
@@ -76,8 +71,26 @@ class _ComboBoxItemWidget(QWidget):
         layout.setContentsMargins(0, 0, 0, 1)
         self.setLayout(layout)
 
+    def set_palette(self):
+        palette = QPalette()
+        for group in [QPalette.ColorGroup.All]:
+            palette.setColor(group, QPalette.ColorRole.Window, QColor("white"))
+            palette.setColor(group, QPalette.ColorRole.WindowText, QColor("black"))
+            palette.setColor(group, QPalette.ColorRole.Button, QColor("white"))
+            palette.setColor(group, QPalette.ColorRole.ButtonText, QColor("black"))
+            palette.setColor(group, QPalette.ColorRole.Base, QColor("white"))
+            palette.setColor(group, QPalette.ColorRole.Text, QColor("black"))
+            palette.setColor(group, QPalette.ColorRole.Highlight, QColor("pink"))
+            palette.setColor(
+                group, QPalette.ColorRole.HighlightedText, QColor("white")
+            )  # The Qt default
+        self.setPalette(palette)
+
 
 class _ComboBoxWithDescriptionDelegate(QStyledItemDelegate):
+    def __init__(self, parent: Any) -> None:
+        super().__init__(parent)
+
     def paint(self, painter: Any, option: Any, index: Any) -> None:
         painter.save()
 
@@ -96,7 +109,9 @@ class _ComboBoxWithDescriptionDelegate(QStyledItemDelegate):
                 color = COLOR_HIGHLIGHT_DARK
             painter.fillRect(option.rect, color)
 
-        widget = _ComboBoxItemWidget(label, description, is_enabled, group=group)
+        widget = _ComboBoxItemWidget(
+            label, description, is_enabled, group=group, parent=self.parent()
+        )
         widget.setStyle(option.widget.style())
         widget.resize(option.rect.size())
 
@@ -110,14 +125,17 @@ class _ComboBoxWithDescriptionDelegate(QStyledItemDelegate):
         group = index.data(GROUP_TITLE_ROLE)
         adjustment = QSize(0, 20) if group else QSize(0, 0)
 
-        widget = _ComboBoxItemWidget(label, description, group)
+        widget = _ComboBoxItemWidget(
+            label, description, group=group, parent=self.parent()
+        )
         return widget.sizeHint() + adjustment
 
 
 class QComboBoxWithDescription(QComboBox):
     def __init__(self, parent: QWidget | None = None) -> None:
         super().__init__(parent)
-        self.setItemDelegate(_ComboBoxWithDescriptionDelegate(self))
+        self.setPalette(parent.palette())
+        self.setItemDelegate(_ComboBoxWithDescriptionDelegate(parent))
 
     def addDescriptionItem(
         self, label: str, description: Any, group: str | None = None

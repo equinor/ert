@@ -8,13 +8,22 @@ from pathlib import Path
 from PyQt6.QtCore import QCoreApplication, QEvent, QSize, Qt
 from PyQt6.QtCore import pyqtSignal as Signal
 from PyQt6.QtCore import pyqtSlot as Slot
-from PyQt6.QtGui import QAction, QCloseEvent, QCursor, QIcon, QMouseEvent
+from PyQt6.QtGui import (
+    QAction,
+    QCloseEvent,
+    QColor,
+    QCursor,
+    QIcon,
+    QMouseEvent,
+    QPalette,
+)
 from PyQt6.QtWidgets import (
     QButtonGroup,
     QFrame,
     QHBoxLayout,
     QMainWindow,
     QMenu,
+    QMessageBox,
     QToolButton,
     QVBoxLayout,
     QWidget,
@@ -43,6 +52,7 @@ BUTTON_STYLE_SHEET: str = """
         background-color: rgba(255, 255, 255, 0);
         padding-top: 5px;
         padding-bottom: 10px;
+        font-size: 12px;
     }
     QToolButton::menu-indicator {
         right: 10px; bottom: 5px;
@@ -68,6 +78,13 @@ BUTTON_STYLE_SHEET_DARK: str = (
 
 class SidebarToolButton(QToolButton):
     right_clicked = Signal()
+
+    def __init__(self, parent):
+        super().__init__(parent)
+        self.setPalette(parent.palette())
+        font = self.font()
+        font.setPixelSize(12)
+        self.setFont(font)
 
     def mousePressEvent(self, event: QMouseEvent | None) -> None:
         if event:
@@ -104,7 +121,9 @@ class ErtMainWindow(QMainWindow):
         self.central_layout.setSpacing(0)
         self.central_widget.setLayout(self.central_layout)
         self.facade = LibresFacade(self.ert_config)
+        self.apply_palette()
         self.side_frame = QFrame(self)
+        self.side_frame.setPalette(self.palette())
         self.button_group = QButtonGroup(self.side_frame)
         self._external_plot_windows: list[PlotWindow] = []
 
@@ -112,7 +131,17 @@ class ErtMainWindow(QMainWindow):
             self.side_frame.setStyleSheet("background-color: rgb(64, 64, 64);")
         else:
             self.side_frame.setStyleSheet("background-color: lightgray;")
-
+        if self.is_high_contrast_mode():
+            msg_box = QMessageBox()
+            msg_box.setText(
+                "High contrast mode detected. This is not supported by Ert and features may not work as expected."
+            )
+            msg_box.setWindowTitle("Warning")
+            msg_box.setStyleSheet(
+                "QMessageBox {color: black; background-color: white;} QLabel {color: black;} QPushButton {color: black;}"
+            )
+            msg_box.update()
+            msg_box.exec()
         self.vbox_layout = QVBoxLayout(self.side_frame)
         self.side_frame.setLayout(self.vbox_layout)
 
@@ -260,6 +289,7 @@ class ErtMainWindow(QMainWindow):
             self.notifier,
             self.config_file,
             self.facade.get_ensemble_size(),
+            self,
         )
         experiment_panel.experiment_started.connect(
             lambda _: self.results_button.setChecked(True)
@@ -292,8 +322,9 @@ class ErtMainWindow(QMainWindow):
 
         button.setStyleSheet(
             BUTTON_STYLE_SHEET_DARK
-        ) if self.is_dark_mode() else button.setStyleSheet(BUTTON_STYLE_SHEET_LIGHT)
-
+        ) if self.is_dark_mode() and not self.is_high_contrast_mode() else button.setStyleSheet(
+            BUTTON_STYLE_SHEET_LIGHT
+        )
         pad = 45
         icon_size = QSize(button.size().width() - pad, button.size().height() - pad)
         button.setIconSize(icon_size)
@@ -375,3 +406,21 @@ class ErtMainWindow(QMainWindow):
     def __showAboutMessage(self) -> None:
         diag = AboutDialog(self)
         diag.show()
+
+    def apply_palette(self):
+        palette = QPalette()
+        for group in [QPalette.ColorGroup.All]:
+            palette.setColor(group, QPalette.ColorRole.Window, QColor("white"))
+            palette.setColor(group, QPalette.ColorRole.WindowText, QColor("black"))
+            palette.setColor(group, QPalette.ColorRole.Button, QColor("white"))
+            palette.setColor(group, QPalette.ColorRole.ButtonText, QColor("black"))
+            palette.setColor(group, QPalette.ColorRole.Base, QColor("white"))
+            palette.setColor(group, QPalette.ColorRole.Text, QColor("black"))
+            palette.setColor(group, QPalette.ColorRole.Highlight, QColor(70, 140, 230))
+            palette.setColor(
+                group, QPalette.ColorRole.HighlightedText, QColor("white")
+            )  # The Qt default
+        self.setPalette(palette)
+
+    def is_high_contrast_mode(self) -> bool:
+        return self.palette().color(QPalette.ColorRole.Window).lightness() > 245
