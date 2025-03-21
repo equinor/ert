@@ -78,8 +78,8 @@ class EnsembleExperimentPanel(ExperimentConfigPanel):
         ensemble_size_container = QWidget()
         ensemble_size_layout = QHBoxLayout(ensemble_size_container)
         ensemble_size_layout.setContentsMargins(0, 0, 0, 0)
-        ensemble_size_label = QLabel(f"<b>{ensemble_size}</b>")
-        ensemble_size_layout.addWidget(ensemble_size_label)
+        self.ensemble_size_label = QLabel(f"<b>{ensemble_size}</b>")
+        ensemble_size_layout.addWidget(self.ensemble_size_label)
 
         layout.addRow(QLabel("Ensemble size:"), ensemble_size_container)
 
@@ -99,12 +99,16 @@ class EnsembleExperimentPanel(ExperimentConfigPanel):
                 DesignMatrixPanel.get_design_matrix_button(
                     self._active_realizations_field,
                     design_matrix,
-                    ensemble_size_label,
+                    self.ensemble_size_label,
                     ensemble_size,
                 ),
             )
 
         self.setLayout(layout)
+
+        self._active_realizations_field.textChanged.connect(
+            self._update_ensemble_size_from_active_realizations
+        )
 
         self._active_realizations_field.getValidationSupport().validationChanged.connect(
             self.simulationConfigurationChanged
@@ -127,6 +131,12 @@ class EnsembleExperimentPanel(ExperimentConfigPanel):
         self._experiment_name_field.setPlaceholderText(
             self.notifier.storage.get_unique_experiment_name(ENSEMBLE_EXPERIMENT_MODE)
         )
+
+    def _update_ensemble_size_from_active_realizations(self):
+        current_ensemble_size = len(
+            self._active_realizations_field.model.getActiveRealizationsMask()
+        )
+        self.ensemble_size_label.setText(f"<b>{current_ensemble_size}<b>")
 
     def isConfigurationValid(self) -> bool:
         self.blockSignals(True)
