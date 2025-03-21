@@ -183,8 +183,8 @@ and environment variables are exposed in the form 'os.NAME', for example:
         section. Each item marks what folders or paths need to be copied or linked
         in order for the evaluation jobs to run.""",
     )
-    install_templates: list[InstallTemplateConfig] | None = Field(
-        default=None,
+    install_templates: list[InstallTemplateConfig] = Field(
+        default_factory=list,
         description="""Allow the user to define the workflow establishing the model
         chain for the purpose of sensitivity analysis, enabling the relationship
         between sensitivity input variables and quantities of interests to be
