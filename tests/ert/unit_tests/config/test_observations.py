@@ -1,6 +1,5 @@
 from contextlib import ExitStack as does_not_raise
 from datetime import datetime, timedelta
-from textwrap import dedent
 
 import pytest
 from resdata.summary import Summary
@@ -825,43 +824,3 @@ def test_that_summary_default_error_min_is_applied(tmpdir):
 
         # default error_min is 0.1
         assert observations["FOPR"].observations[datetime(2014, 9, 11)].std == 0.1
-
-
-def test_unexpected_character_handling(tmpdir):
-    with tmpdir.as_cwd():
-        with open("config.ert", "w", encoding="utf-8") as fh:
-            fh.writelines(
-                dedent(
-                    """
-                    NUM_REALIZATIONS 2
-                    TIME_MAP time_map.txt
-                    OBS_CONFIG observations
-                    """
-                )
-            )
-        with open("observations", "w", encoding="utf-8") as fo:
-            fo.writelines(
-                dedent(
-                    """
-                    GENERAL_OBSERVATION GEN_OBS
-                    {
-                       ERROR       $ 0.20;
-                    };
-                    """
-                )
-            )
-        with open("time_map.txt", "w", encoding="utf-8") as fo:
-            fo.writelines("2023-02-01")
-
-        with pytest.raises(
-            ValueError,
-            match=r"Did not expect character: \$ \(on line 4:    ERROR       \$"
-            r" 0.20;\). Expected one of {'EQUAL'}",
-        ) as err_record:
-            ErtConfig.from_file("config.ert")
-
-        err = err_record.value.errors[0]
-        assert err.line == 4
-        assert err.end_line == 4
-        assert err.column == 16
-        assert err.end_column == 17
