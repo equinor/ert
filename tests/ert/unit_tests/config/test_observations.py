@@ -746,41 +746,33 @@ def test_that_common_observation_error_validation_is_handled(
     tmpdir, obs_type, obs_content, match
 ):
     with tmpdir.as_cwd():
-        config = dedent(
-            """
-        NUM_REALIZATIONS 2
-
-        ECLBASE ECLIPSE_CASE
-        REFCASE ECLIPSE_CASE
-        OBS_CONFIG observations
-        """
+        additional = (
+            ""
+            if obs_type == "HISTORY_OBSERVATION"
+            else "RESTART = 1; VALUE=1.0; KEY = FOPR;"
         )
-        with open("config.ert", "w", encoding="utf-8") as fh:
-            fh.writelines(config)
-        with open("observations", "w", encoding="utf-8") as fo:
-            additional = (
-                ""
-                if obs_type == "HISTORY_OBSERVATION"
-                else "RESTART = 1; VALUE=1.0; KEY = FOPR;"
-            )
-            fo.writelines(
-                f"""
-                    {obs_type}  FOPR
-                    {{
-                        {obs_content}
-                        {additional}
-                    }};
-            """
-            )
-        with open("time_map.txt", "w", encoding="utf-8") as fo:
-            fo.writelines("2023-02-01")
         run_sim(
             datetime(2014, 9, 10),
             [("FOPR", "SM3/DAY", None), ("FOPRH", "SM3/DAY", None)],
         )
 
         with pytest.raises(ConfigValidationError, match=match):
-            ErtConfig.from_file("config.ert")
+            ErtConfig.from_dict(
+                {
+                    "ECLBASE": "ECLIPSE_CASE",
+                    "REFCASE": "ECLIPSE_CASE",
+                    "OBS_CONFIG": (
+                        "obsconf",
+                        f"""
+                        {obs_type}  FOPR
+                        {{
+                            {obs_content}
+                            {additional}
+                        }};
+                        """,
+                    ),
+                }
+            )
 
 
 @pytest.mark.parametrize(
