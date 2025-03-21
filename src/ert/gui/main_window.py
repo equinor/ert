@@ -52,6 +52,7 @@ BUTTON_STYLE_SHEET: str = """
         background-color: rgba(255, 255, 255, 0);
         padding-top: 5px;
         padding-bottom: 10px;
+        font-size: 12px;
     }
     QToolButton::menu-indicator {
         right: 10px; bottom: 5px;
@@ -77,6 +78,10 @@ BUTTON_STYLE_SHEET_DARK: str = (
 
 class SidebarToolButton(QToolButton):
     right_clicked = Signal()
+
+    def __init__(self, parent):
+        super().__init__(parent)
+        self.setPalette(parent.palette())
 
     def mousePressEvent(self, event: QMouseEvent | None) -> None:
         if event:
@@ -113,7 +118,9 @@ class ErtMainWindow(QMainWindow):
         self.central_layout.setSpacing(0)
         self.central_widget.setLayout(self.central_layout)
         self.facade = LibresFacade(self.ert_config)
+        self.apply_palette()
         self.side_frame = QFrame(self)
+        self.side_frame.setPalette(self.palette())
         self.button_group = QButtonGroup(self.side_frame)
         self._external_plot_windows: list[PlotWindow] = []
 
@@ -121,7 +128,6 @@ class ErtMainWindow(QMainWindow):
             self.side_frame.setStyleSheet("background-color: rgb(64, 64, 64);")
         else:
             self.side_frame.setStyleSheet("background-color: lightgray;")
-        self.apply_palette()
         if self.is_high_contrast_mode():
             msg_box = QMessageBox()
             msg_box.setText(
