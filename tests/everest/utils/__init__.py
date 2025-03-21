@@ -5,6 +5,7 @@ import pathlib
 import shutil
 import sys
 from io import StringIO
+from pathlib import Path
 
 import pytest
 
@@ -89,7 +90,12 @@ def everest_default_jobs(output_dir):
     return [
         (
             script_name,
-            os.path.join(output_dir, ".jobs", f"_{script_name}"),
+            (
+                os.path.join(output_dir, ".jobs", f"_{script_name}"),
+                Path(os.path.join(output_dir, ".jobs", f"_{script_name}")).read_text(
+                    encoding="utf-8"
+                ),
+            ),
         )
         for script_name in script_names
     ]
