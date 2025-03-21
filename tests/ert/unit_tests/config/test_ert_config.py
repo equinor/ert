@@ -895,19 +895,13 @@ def test_fm_step_config_via_plugin_is_overridden_by_setenv(monkeypatch):
             }
         ),
     )
-    Path("SOME_STEP").write_text("EXECUTABLE /bin/ls", encoding="utf-8")
-    Path("config.ert").write_text(
-        dedent(
-            """
-            NUM_REALIZATIONS 1
-            SETENV FOO bar_from_setenv
-            INSTALL_JOB SOME_STEP SOME_STEP
-            FORWARD_MODEL SOME_STEP()
-            """
-        ),
-        encoding="utf-8",
+    ert_config = ErtConfig.with_plugins().from_dict(
+        {
+            "INSTALL_JOB": [["SOME_STEP", ("SOME_STEP", "EXECUTABLE fm_dispatch.py")]],
+            "SETENV": [["FOO", "bar_from_setenv"]],
+            "FORWARD_MODEL": [["SOME_STEP"]],
+        }
     )
-    ert_config = ErtConfig.with_plugins().from_file("config.ert")
     step_json = create_forward_model_json(
         context=ert_config.substitutions,
         forward_model_steps=ert_config.forward_model_steps,
