@@ -517,45 +517,37 @@ def test_that_having_observations_on_starting_date_errors(tmpdir):
 )
 def test_that_out_of_bounds_segments_are_truncated(tmpdir, start, stop, message):
     with tmpdir.as_cwd():
-        config = dedent(
-            """
-        NUM_REALIZATIONS 2
-
-        ECLBASE ECLIPSE_CASE
-        REFCASE ECLIPSE_CASE
-        OBS_CONFIG observations
-        """
-        )
-        with open("config.ert", "w", encoding="utf-8") as fh:
-            fh.writelines(config)
-        with open("observations", "w", encoding="utf-8") as fo:
-            fo.writelines(
-                dedent(
-                    f"""
-                    HISTORY_OBSERVATION FOPR
-                    {{
-                       ERROR       = 0.20;
-                       ERROR_MODE  = RELMIN;
-                       ERROR_MIN   = 100;
-
-                       SEGMENT FIRST_YEAR
-                       {{
-                          START = {start};
-                          STOP  = {stop};
-                          ERROR = 0.50;
-                          ERROR_MODE = REL;
-                       }};
-                    }};
-                    """
-                )
-            )
         run_sim(
             datetime(2014, 9, 10),
             [("FOPR", "SM3/DAY", None), ("FOPRH", "SM3/DAY", None)],
         )
 
         with pytest.warns(ConfigWarning, match=message):
-            ErtConfig.from_file("config.ert")
+            ErtConfig.from_dict(
+                {
+                    "ECLBASE": "ECLIPSE_CASE",
+                    "REFCASE": "ECLIPSE_CASE",
+                    "OBS_CONFIG": (
+                        "obsconf",
+                        f"""
+                        HISTORY_OBSERVATION FOPR
+                        {{
+                           ERROR       = 0.20;
+                           ERROR_MODE  = RELMIN;
+                           ERROR_MIN   = 100;
+
+                           SEGMENT FIRST_YEAR
+                           {{
+                              START = {start};
+                              STOP  = {stop};
+                              ERROR = 0.50;
+                              ERROR_MODE = REL;
+                           }};
+                        }};
+                        """,
+                    ),
+                }
+            )
 
 
 @pytest.mark.parametrize("with_ext", [True, False])
