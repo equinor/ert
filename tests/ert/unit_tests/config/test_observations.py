@@ -1,6 +1,5 @@
 from contextlib import ExitStack as does_not_raise
 from datetime import datetime, timedelta
-from pathlib import Path
 from textwrap import dedent
 
 import pytest
@@ -588,22 +587,31 @@ def test_that_history_observations_are_loaded(tmpdir, keys, with_ext):
         assert observations[local_name].observations[datetime(2014, 9, 11)].std == 100.0
 
 
-def test_that_different_length_values_fail(monkeypatch, copy_snake_oil_case_storage):
-    obs_file = Path.cwd() / "observations" / "observations.txt"
-    observations = """
-        \nGENERAL_OBSERVATION CUSTOM_DIFF_1
-    {
-       DATA       = SNAKE_OIL_WPR_DIFF;
-       INDEX_LIST = 200;  -- shorter than number of points
-       RESTART    = 199;
-       OBS_FILE   = wpr_diff_obs.txt;
-    };
-        """
-    with obs_file.open(mode="a") as fin:
-        fin.write(observations)
-
-    with pytest.raises(ConfigValidationError, match="must be of equal length"):
-        ErtConfig.from_file("snake_oil.ert")
+def test_that_different_length_values_fail(tmpdir):
+    with tmpdir.as_cwd():
+        with open("obs_data.txt", "w", encoding="utf-8") as fh:
+            for i in range(5):
+                fh.write(f"{float(i)} 0.1\n")
+        with pytest.raises(ConfigValidationError, match="must be of equal length"):
+            ErtConfig.from_dict(
+                {
+                    "GEN_DATA": [
+                        [
+                            "RES",
+                            {"RESULT_FILE": "out"},
+                        ]
+                    ],
+                    "OBS_CONFIG": (
+                        "obsconf",
+                        """
+                    GENERAL_OBSERVATION OBS {
+                       DATA       = RES;
+                       INDEX_LIST = 200; -- shorter than number of points
+                       OBS_FILE   = obs_data.txt;
+                    };""",
+                    ),
+                }
+            )
 
 
 def test_that_missing_ensemble_key_warns(tmpdir):
