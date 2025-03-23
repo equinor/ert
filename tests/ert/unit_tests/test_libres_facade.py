@@ -275,7 +275,7 @@ def test_load_scalar_parameters(storage, tmpdir, snapshot):
             design_matrix_df=ert_config.analysis_config.design_matrix.design_matrix_df,
         )
         assert (
-            ensemble.load_parameters_scalar(key="DESIGN_MATRIX:a")[
+            ensemble.load_parameters_scalar(keys=["DESIGN_MATRIX:a"])[
                 "DESIGN_MATRIX:a"
             ].to_list()
             == [1.0] * 10

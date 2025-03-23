@@ -208,7 +208,7 @@ def data_for_key(
     assert isinstance(scalars, ScalarParameters)
     try:
         data = ensemble.load_parameters_scalar(
-            SCALAR_PARAMETERS_NAME, key=f"{key}.transformed"
+            SCALAR_PARAMETERS_NAME, keys=[f"{key}.transformed"]
         )
     except KeyError:
         return pd.DataFrame()

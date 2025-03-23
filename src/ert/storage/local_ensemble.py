@@ -577,7 +577,7 @@ class LocalEnsemble(BaseMode):
                 if isinstance(realizations, int):
                     realizations = np.array([realizations])
                 df = self.load_parameters_scalar(
-                    scalar_name=param.name, realizations=realizations, group=group
+                    scalar_name=param.name, realizations=realizations, groups=[group]
                 )
                 reals = df.select("realization").to_numpy().flatten()
                 dataset = []
@@ -812,7 +812,7 @@ class LocalEnsemble(BaseMode):
         for scalars in scalar_groups:
             with contextlib.suppress(KeyError):
                 df = self.load_parameters_scalar(
-                    scalar_name=scalars.name, realizations=realizations, group=group
+                    scalar_name=scalars.name, realizations=realizations, groups=[group]
                 )
                 if df.height != len(realizations):
                     missing_realizations = set(realizations) - set(
@@ -865,18 +865,20 @@ class LocalEnsemble(BaseMode):
         scalar_name: str = SCALAR_PARAMETERS_NAME,
         realizations: Collection[int] | None = None,
         groups: list[str] | None = None,
-        key: str | None = None,
+        keys: list[str] | None = None,
     ) -> pl.DataFrame:
         scalar_path = self._path / f"{_escape_filename(scalar_name)}.parquet"
         if not scalar_path.exists():
             raise KeyError(f"No scalar dataset in storage for ensemble {self.name}")
         df_lazy = pl.scan_parquet(scalar_path)
+        if "realization" not in df_lazy.columns:
+            raise KeyError("No realization column in scalar parameters")
         if realizations is not None:
             df_lazy = df_lazy.filter(pl.col("realization").is_in(realizations))
-        if key is not None:
-            if key not in df_lazy.columns:
-                raise KeyError(f"No such key {key} in scalar parameters!")
-            df_lazy = df_lazy.select(["realization", key])
+        if keys is not None:
+            if any((key not in df_lazy.columns) for key in keys):
+                raise KeyError(f"No such key {keys} in scalar parameters!")
+            df_lazy = df_lazy.select(["realization", *keys])
         if groups is not None:
 
             def in_group(col: str) -> bool:
