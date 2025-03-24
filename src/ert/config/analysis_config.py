@@ -181,10 +181,16 @@ class AnalysisConfig:
             for design_matrix_config_list in design_matrix_config_lists
         ]
         design_matrix: DesignMatrix | None = None
+
         if design_matrices:
             design_matrix = design_matrices[0]
             for dm_other in design_matrices[1:]:
-                design_matrix.merge_with_other(dm_other)
+                if design_matrix != dm_other:
+                    design_matrix.merge_with_other(dm_other)
+                else:
+                    logger.warning(
+                        f"Duplicate DESIGN_MATRIX entries {dm_other}, only reading once."
+                    )
         config = cls(
             minimum_required_realizations=min_realization,
             update_log_path=config_dict.get(ConfigKeys.UPDATE_LOG_PATH, "update_log"),
