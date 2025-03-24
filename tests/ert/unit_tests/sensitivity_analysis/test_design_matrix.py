@@ -26,7 +26,7 @@ def _create_design_matrix(xls_path, design_matrix_df, default_sheet_df) -> Desig
             pd.DataFrame(
                 {
                     "REAL": [0, 1, 2],
-                    "c": [1, 2, 3],
+                    "c": [9, 10, 11.1],
                     "d": [0, 2, 0],
                 }
             ),
@@ -37,12 +37,24 @@ def _create_design_matrix(xls_path, design_matrix_df, default_sheet_df) -> Desig
         pytest.param(
             pd.DataFrame(
                 {
-                    "REAL": [0, 1, 2],
                     "a": [1, 2, 3],
+                    "c": [9, 10, 11.1],
+                    "d": [0, 2, 0],
                 }
             ),
             pd.DataFrame([["e", 1]]),
-            "Design Matrices do not have unique keys",
+            "",
+            id="ok_merge_with_identical_columns",
+        ),
+        pytest.param(
+            pd.DataFrame(
+                {
+                    "REAL": [0, 1, 2],
+                    "a": [1, 2, 4],
+                }
+            ),
+            pd.DataFrame([["e", 1]]),
+            r"Design Matrices .* and .* contains non identical columns with the same name: \{'a'\}!",
             id="not_unique_keys",
         ),
         pytest.param(
@@ -53,7 +65,7 @@ def _create_design_matrix(xls_path, design_matrix_df, default_sheet_df) -> Desig
                 }
             ),
             pd.DataFrame([["e", 1]]),
-            "Design Matrices don't have the same active realizations!",
+            r"Design Matrices .* and .* do not have the same active realizations!",
             id="not_same_acitve_realizations",
         ),
     ],
@@ -87,7 +99,7 @@ def test_merge_multiple_occurrences(
         df = design_matrix_1.design_matrix_df
         np.testing.assert_equal(df["a"], np.array([1, 2, 3]))
         np.testing.assert_equal(df["b"], np.array([0, 2, 0]))
-        np.testing.assert_equal(df["c"], np.array([1, 2, 3]))
+        np.testing.assert_equal(df["c"], np.array([9, 10, 11.1]))
         np.testing.assert_equal(df["d"], np.array([0, 2, 0]))
 
 
