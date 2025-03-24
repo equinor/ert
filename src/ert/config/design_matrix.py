@@ -167,12 +167,12 @@ class DesignMatrix:
             .iloc[0]
             .apply(lambda x: x.strip() if isinstance(x, str) else x)
         )
-        design_matrix_df = DesignMatrix._read_excel(
-            self.xls_filename,
-            self.design_sheet,
+        design_matrix_df = pd.read_excel(
+            io=self.xls_filename,
+            sheet_name=self.design_sheet,
             header=None,
             skiprows=1,
-        )
+        ).dropna(axis=1, how="all")
         design_matrix_df.columns = param_names.to_list()
 
         if "REAL" in design_matrix_df.columns:
@@ -224,29 +224,6 @@ class DesignMatrix:
         )
 
     @staticmethod
-    def _read_excel(
-        file_name: Path | str,
-        sheet_name: str,
-        usecols: list[int] | None = None,
-        header: int | None = 0,
-        skiprows: int | None = None,
-        dtype: str | None = None,
-    ) -> pd.DataFrame:
-        """
-        Reads an Excel file into a DataFrame, with options to filter columns and rows,
-        and automatically drops columns that contain only NaN values.
-        """
-        df = pd.read_excel(
-            io=file_name,
-            sheet_name=sheet_name,
-            usecols=usecols,
-            header=header,
-            skiprows=skiprows,
-            dtype=dtype,
-        )
-        return df.dropna(axis=1, how="all")
-
-    @staticmethod
     def _validate_design_matrix(design_matrix: pd.DataFrame) -> list[str]:
         """
         Validate user inputted design matrix
@@ -291,12 +268,12 @@ class DesignMatrix:
 
         :raises: ValueError if defaults sheet is non-empty but non-parsable
         """
-        default_df = DesignMatrix._read_excel(
-            xls_filename,
-            defaults_sheetname,
+        default_df = pd.read_excel(
+            io=xls_filename,
+            sheet_name=defaults_sheetname,
             header=None,
             dtype="string",
-        )
+        ).dropna(axis=1, how="all")
         if default_df.empty:
             return {}
         if len(default_df.columns) < 2:
