@@ -94,7 +94,6 @@ class ManualUpdatePanel(ExperimentConfigPanel):
         return (
             self._active_realizations_field.isValid()
             and self._ensemble_selector.currentIndex() != -1
-            and self._active_realizations_field.isValid()
         )
 
     def get_experiment_arguments(self) -> Arguments:
