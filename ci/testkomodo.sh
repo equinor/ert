@@ -17,7 +17,7 @@ install_test_dependencies() {
 }
 
 run_ert_with_opm() {
-    pushd "${CI_TEST_ROOT}"
+    pushd "${CI_TEST_ROOT}" || exit 1
 
     cp -r "${CI_SOURCE_ROOT}/test-data/ert/flow_example" ert_with_opm
     pushd ert_with_opm || exit 1
@@ -31,7 +31,7 @@ run_ert_with_opm() {
             cat spe1_out/realization-0/iter-0/FLOW.stdout.0 || true
             cat logs/ert-log* || true
         )
-    popd
+    popd || exit 1
 }
 
 # Clean up everest egg tmp folders
@@ -73,7 +73,7 @@ run_everest_egg_test() {
     EGG_RUNPATH=$(make_egg_runpath "$CI_RUNNER_LABEL")
     cp -r "${CI_SOURCE_ROOT}/test-data/everest/egg" "$EGG_RUNPATH"
     chmod -R a+rx "$EGG_RUNPATH"
-    pushd "${EGG_RUNPATH}/egg"
+    pushd "${EGG_RUNPATH}/egg" || exit 1
     echo "EGG_RUNPATH: $EGG_RUNPATH"
 
     disable_komodo
@@ -91,7 +91,7 @@ run_everest_egg_test() {
 
     everest run "$CONFIG" --skip-prompt --debug --disable-monitoring
     STATUS=$?
-    popd
+    popd || exit 1
 
     remove_one_week_old_temp_folders "$CI_RUNNER_LABEL"
 
@@ -101,67 +101,41 @@ run_everest_egg_test() {
 
 
 start_tests() {
-    export NO_PROXY=localhost,127.0.0.1
-
-    export ECL_SKIP_SIGNAL=ON
-
-    pushd "${CI_TEST_ROOT}"/tests/ert
-
     set +e
 
+    export NO_PROXY=localhost,127.0.0.1
+    export ECL_SKIP_SIGNAL=ON
     export ERT_PYTEST_ARGS=--eclipse-simulator
 
-    # Run all ert & everest tests
-    just -f "${CI_SOURCE_ROOT}"/justfile test-all
-    return_code_ert_main_tests=$?
+    pushd "${CI_TEST_ROOT}"/tests/ert || exit 1
 
-    # Restricting the number of threads utilized by numpy to control memory consumption, as some tests evaluate memory usage and additional threads increase it.
-    export OMP_NUM_THREADS=1
+    if [ "$CI_SUBSYSTEM_TEST" == "ert" ]; then
+      just -f "${CI_SOURCE_ROOT}"/justfile ert-tests
+      return $?
+    elif [ "$CI_SUBSYSTEM_TEST" == "everest" ]; then
+      just -f "${CI_SOURCE_ROOT}"/justfile everest-tests
+      return $?
+    elif [ "$CI_SUBSYSTEM_TEST" == "everest-egg" ]; then
+      run_everest_egg_test
+      return $?
+    elif [ "$CI_SUBSYSTEM_TEST" == "ert-limit-memory" ]; then
+      # Restricting the number of threads utilized by numpy to control memory consumption, as some tests evaluate memory usage and additional threads increase it.
+      export OMP_NUM_THREADS=1
 
-    # Run ert tests that evaluates memory consumption
-    pytest -n 2 --durations=0 -m "limit_memory" --memray
-    return_code_ert_memory_consumption_tests=$?
-
-    unset OMP_NUM_THREADS
-
-    # Run ert scheduler tests on the actual cluster (defined by $_ERT_TESTS_QUEUE_SYSTEM)
-    basetemp=$(mktemp -d -p "$_ERT_TESTS_SHARED_TMP")
-    pytest --timeout=3600 -v --"$_ERT_TESTS_QUEUE_SYSTEM" --basetemp="$basetemp" unit_tests/scheduler
-    return_code_ert_scheduler_tests=$?
-    rm -rf "$basetemp" || true
-
-    popd
-
-    run_ert_with_opm
-    return_code_opm_integration_test=$?
-
-    run_everest_egg_test
-    return_code_everest_egg_test=$?
-
-    set -e
-
-    return_code_combined_tests=0
-    # We error if one or more returncodes are nonzero
-    if [ "$return_code_ert_main_tests" -ne 0 ]; then
-        echo "One or more ERT and/or Everest tests failed."
-        return_code_combined_tests=1
+      # Run ert tests that evaluates memory consumption
+      pytest -n 2 --durations=0 -m "limit_memory" --memray
+      return $?
+    elif [ "$CI_SUBSYSTEM_TEST" == "ert-queue-system" ]; then
+      basetemp=$(mktemp -d -p "$_ERT_TESTS_SHARED_TMP")
+      pytest --timeout=3600 -v --"$_ERT_TESTS_QUEUE_SYSTEM" --basetemp="$basetemp" unit_tests/scheduler
+      return_code_ert_scheduler_tests=$?
+      rm -rf "$basetemp" || true
+      return $return_code_ert_scheduler_tests
+    elif [ "$CI_SUBSYSTEM_TEST" == "opm-integration" ]; then
+      run_ert_with_opm
+      return $?
     fi
-    if [ "$return_code_ert_memory_consumption_tests" -ne 0 ]; then
-        echo "One or more ERT memory consumption tests failed."
-        return_code_combined_tests=1
-    fi
-    if [ "$return_code_ert_scheduler_tests" -ne 0 ]; then
-        echo "One or more ERT scheduler tests failed."
-        return_code_combined_tests=1
-    fi
-    if [ "$return_code_opm_integration_test" -ne 0 ]; then
-        echo "The ERT OPM integration test failed."
-        return_code_combined_tests=1
-    fi
-    if [ "$return_code_everest_egg_test" -ne 0 ]; then
-        echo "Everest egg tests failed."
-        return_code_combined_tests=1
-    fi
-    return $return_code_combined_tests
 
+    echo "Error: Variable $CI_SUBSYSTEM_TEST did not match any testable subsystem"
+    return 1
 }
