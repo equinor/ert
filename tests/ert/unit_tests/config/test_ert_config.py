@@ -2078,7 +2078,8 @@ def test_two_design2params_validates_design_matrix_merging(
             """
     )
     assert (
-        "Design matrix merging would have failed due to: Design Matrices don't have the same active realizations"
+        f"Design matrix merging would have failed due to: Design Matrices '{design_matrix_file.name} (DesignSheet DefaultSheet)' "
+        f"and '{design_matrix_file2.name} (DesignSheet DefaultSheet)' do not have the same active realizations"
         in caplog.text
     )
 
@@ -2133,7 +2134,8 @@ def test_three_design2params_validates_design_matrix_merging(
             """
     )
     assert (
-        "Design matrix merging would have failed due to: Design Matrices don't have the same active realizations"
+        f"Design matrix merging would have failed due to: Design Matrices '{design_matrix_file.name} (DesignSheet DefaultSheet)' "
+        f"and '{design_matrix_file3.name} (DesignSheet DefaultSheet)' do not have the same active realizations"
         in caplog.text
     )
 
