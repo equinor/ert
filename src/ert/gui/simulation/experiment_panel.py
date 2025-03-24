@@ -20,6 +20,9 @@ from PyQt6.QtWidgets import (
     QWidget,
 )
 
+from _ert.threading import ErtThread
+from ert.config import QueueSystem
+from ert.ensemble_evaluator import EvaluatorServerConfig
 from ert.gui.ertnotifier import ErtNotifier
 from ert.run_models import BaseRunModel, StatusEvents, create_model
 
@@ -46,6 +49,20 @@ def create_md_table(kv: dict[str, str], output: str) -> str:
         output += f"| {k} | {v} |\n"
     output += "\n"
     return output
+
+
+def get_simulation_thread(model: Any, restart: bool = False) -> ErtThread:
+    evaluator_server_config = EvaluatorServerConfig(
+        use_ipc_protocol=model.api.queue_system == QueueSystem.LOCAL
+    )
+
+    def run() -> None:
+        model.api.start_simulations_thread(
+            evaluator_server_config=evaluator_server_config,
+            restart=restart,
+        )
+
+    return ErtThread(name="ert_gui_simulation_thread", target=run, daemon=True)
 
 
 class ExperimentPanel(QWidget):
@@ -306,7 +323,18 @@ class ExperimentPanel(QWidget):
         self.experiment_started.emit(self._dialog)
         self._simulation_done = False
         self.run_button.setEnabled(self._simulation_done)
-        self._dialog.run_experiment()
+
+        def start_simulation_thread(restart: bool = False) -> None:
+            simulation_thread = get_simulation_thread(self._model, restart)
+            self._dialog.setup_event_monitoring(restart)
+            simulation_thread.start()
+            self._notifier.set_is_simulation_running(True)
+
+        def restart() -> None:
+            start_simulation_thread(restart=True)
+
+        self._dialog.restart_experiment.connect(restart)
+        start_simulation_thread(restart=False)
 
         def simulation_done_handler() -> None:
             self._simulation_done = True

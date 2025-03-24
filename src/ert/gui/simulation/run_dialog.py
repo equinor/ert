@@ -28,11 +28,8 @@ from PyQt6.QtWidgets import (
     QWidget,
 )
 
-from _ert.threading import ErtThread
-from ert.config import QueueSystem
 from ert.ensemble_evaluator import (
     EndEvent,
-    EvaluatorServerConfig,
     FullSnapshotEvent,
     SnapshotUpdateEvent,
 )
@@ -192,6 +189,7 @@ class FMStepOverview(QTableView):
 class RunDialog(QFrame):
     simulation_done = Signal(bool, str)
     progress_update_event = Signal(dict, int)
+    restart_experiment = Signal()
     _RUN_TIME_POLL_RATE = 1000
 
     def __init__(
@@ -392,35 +390,12 @@ class RunDialog(QFrame):
                 text += f", assigned to host: {exec_hosts}"
             self._fm_step_label.setText(text)
 
-    def run_experiment(self, restart: bool = False) -> None:
-        self._restart = restart
+    def setup_event_monitoring(self, restart: bool = False) -> None:
         self.flag_simulation_done = False
         if restart is False:
             self._snapshot_model.reset()
             self._tab_widget.clear()
 
-        evaluator_server_config = EvaluatorServerConfig(
-            use_ipc_protocol=self._queue_system == QueueSystem.LOCAL
-        )
-
-        def run() -> None:
-            self._run_model_api.start_simulations_thread(
-                evaluator_server_config=evaluator_server_config,
-                restart=restart,
-            )
-
-        simulation_thread = ErtThread(
-            name="ert_gui_simulation_thread", target=run, daemon=True
-        )
-
-        self.setup_event_monitoring()
-
-        self._ticker.start(self._RUN_TIME_POLL_RATE)
-        simulation_thread.start()
-
-        self._notifier.set_is_simulation_running(True)
-
-    def setup_event_monitoring(self) -> None:
         self._worker_thread = QThread(parent=self)
 
         self._worker = QueueEmitter(self._event_queue)
@@ -432,6 +407,7 @@ class RunDialog(QFrame):
         self.simulation_done.connect(self._worker.stop)
         self.destroyed.connect(lambda: _stop_worker(self._worker_thread, self._worker))
         self._worker_thread.start()
+        self._ticker.start(self._RUN_TIME_POLL_RATE)
 
     def killJobs(self) -> QMessageBox.StandardButton:
         msg = "Are you sure you want to terminate the currently running experiment?"
@@ -588,7 +564,8 @@ class RunDialog(QFrame):
         if result == QMessageBox.StandardButton.Ok:
             self.restart_button.setVisible(False)
             self.kill_button.setVisible(True)
-            self.run_experiment(restart=True)
+            self._restart = True
+            self.restart_experiment.emit()
 
 
 # Cannot use a non-static method here as

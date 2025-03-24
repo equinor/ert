@@ -1,5 +1,4 @@
-from queue import SimpleQueue
-from unittest.mock import MagicMock, Mock, patch
+from unittest.mock import MagicMock, Mock, call, patch
 
 import pandas as pd
 import pytest
@@ -23,14 +22,12 @@ from ert.ensemble_evaluator.event import (
     FullSnapshotEvent,
     SnapshotUpdateEvent,
 )
-from ert.gui.ertnotifier import ErtNotifier
 from ert.gui.main import GUILogHandler, _setup_main_window
 from ert.gui.simulation.ensemble_experiment_panel import EnsembleExperimentPanel
 from ert.gui.simulation.experiment_panel import ExperimentPanel
 from ert.gui.simulation.run_dialog import RunDialog
 from ert.gui.simulation.view.realization import RealizationWidget
 from ert.gui.tools.file import FileDialog
-from ert.run_models.base_run_model import BaseRunModelAPI
 from ert.run_models.ensemble_experiment import EnsembleExperiment
 from ert.storage import open_storage
 from tests.ert import SnapshotBuilder
@@ -41,82 +38,21 @@ from tests.ert.unit_tests.gui.simulation.test_run_path_dialog import (
 
 
 @pytest.fixture
-def run_model_api():
-    run_model_api = MagicMock(spec=BaseRunModelAPI)
-    run_model_api.get_runtime = MagicMock()
-    run_model_api.get_runtime.return_value = 1
-    run_model_api.support_restart = True
-    run_model_api.queue_system = "LOCAL"
-    run_model_api.cancel = MagicMock()
-    run_model_api.has_failed_realizations = MagicMock()
-    run_model_api.start_simulations_thread = MagicMock()
+def event_queue(events):
+    async def _add_event(self, *_):
+        for event in events:
+            self.send_event(event)
+        return [0]
 
-    run_paths_mock = MagicMock()
-    run_paths_mock._ = "/"
-    run_model_api.runpath_format_string = run_paths_mock
-    return run_model_api
+    with patch(
+        "ert.run_models.base_run_model.BaseRunModel.run_ensemble_evaluator_async",
+        _add_event,
+    ):
+        yield
 
 
 @pytest.fixture
-def event_queue():
-    return SimpleQueue()
-
-
-@pytest.fixture
-def notifier():
-    notifier = MagicMock(spec=ErtNotifier)
-    notifier.is_simulation_running = False
-    return notifier
-
-
-@pytest.fixture
-def run_dialog(qtbot: QtBot, run_model_api, event_queue, notifier):
-    run_dialog = RunDialog("mock.ert", run_model_api, event_queue, notifier)
-    qtbot.addWidget(run_dialog)
-    yield run_dialog
-
-
-@pytest.mark.integration_test
-def test_terminating_experiment_shows_a_confirmation_dialog(qtbot: QtBot, run_dialog):
-    run_dialog.run_experiment()
-
-    run_dialog._run_model_api.cancel = lambda: run_dialog.simulation_done.emit(
-        True, "foo bar error"
-    )
-    with qtbot.waitSignal(run_dialog.simulation_done, timeout=10000):
-
-        def handle_dialog():
-            terminate_dialog = wait_for_child(run_dialog, qtbot, QMessageBox)
-            dialog_buttons = terminate_dialog.findChild(QDialogButtonBox).buttons()
-            yes_button = next(b for b in dialog_buttons if "Yes" in b.text())
-            qtbot.mouseClick(yes_button, Qt.MouseButton.LeftButton)
-
-        QTimer.singleShot(100, handle_dialog)
-        qtbot.mouseClick(run_dialog.kill_button, Qt.MouseButton.LeftButton)
-
-
-@pytest.mark.integration_test
-def test_run_dialog_polls_run_model_for_runtime(
-    qtbot: QtBot, run_dialog: RunDialog, run_model_api, notifier, event_queue
-):
-    run_dialog.run_experiment()
-    notifier.set_is_simulation_running.assert_called_with(True)
-    qtbot.waitUntil(
-        lambda: run_model_api.get_runtime.called,
-        timeout=run_dialog._RUN_TIME_POLL_RATE * 2,
-    )
-    event_queue.put(EndEvent(failed=False, msg=""))
-    qtbot.waitUntil(lambda: run_dialog.is_simulation_done() == True)
-
-
-@pytest.mark.integration_test
-def test_large_snapshot(
-    large_snapshot,
-    qtbot: QtBot,
-    run_dialog: RunDialog,
-    event_queue,
-    timeout_per_iter=5000,
-):
+def event_queue_large_snapshot(large_snapshot):
     events = [
         FullSnapshotEvent(
             snapshot=large_snapshot,
@@ -139,10 +75,91 @@ def test_large_snapshot(
         EndEvent(failed=False, msg=""),
     ]
 
-    run_dialog.run_experiment()
-    for event in events:
-        event_queue.put(event)
+    async def _add_event(self, *_):
+        for event in events:
+            self.send_event(event)
+        return [0]
 
+    with patch(
+        "ert.run_models.base_run_model.BaseRunModel.run_ensemble_evaluator_async",
+        _add_event,
+    ):
+        yield
+
+
+@pytest.fixture
+def mock_set_is_simulation_running():
+    mock = MagicMock()
+    with patch(
+        "ert.gui.main_window.ErtNotifier.set_is_simulation_running", mock
+    ) as _mock:
+        yield _mock
+
+
+@pytest.fixture
+def mock_get_runtime():
+    mock = MagicMock()
+    with patch("ert.run_models.base_run_model.BaseRunModel.get_runtime", mock) as _mock:
+        _mock.return_value = 10
+        yield _mock
+
+
+@pytest.fixture
+def run_dialog(qtbot: QtBot, use_tmpdir, storage):
+    config_file = "minimal_config.ert"
+    with open(config_file, "w", encoding="utf-8") as f:
+        f.write("NUM_REALIZATIONS 1")
+    args_mock = Mock()
+    args_mock.config = config_file
+    ert_config = ErtConfig.from_file(config_file)
+    gui = _setup_main_window(ert_config, args_mock, GUILogHandler(), storage)
+    qtbot.addWidget(gui)
+    experiment_panel = gui.findChild(ExperimentPanel)
+    assert experiment_panel
+    simulation_mode_combo = experiment_panel.findChild(QComboBox)
+    assert simulation_mode_combo
+    simulation_mode_combo.setCurrentText(EnsembleExperiment.name())
+    simulation_settings = gui.findChild(EnsembleExperimentPanel)
+    simulation_settings._experiment_name_field.setText("new_experiment_name")
+    run_experiment = experiment_panel.findChild(QToolButton, name="run_experiment")
+    assert run_experiment
+    qtbot.mouseClick(run_experiment, Qt.MouseButton.LeftButton)
+    qtbot.waitUntil(lambda: gui.findChild(RunDialog) is not None, timeout=5000)
+    run_dialog = gui.findChild(RunDialog)
+    assert run_dialog
+    yield run_dialog
+
+
+@pytest.mark.integration_test
+def test_terminating_experiment_shows_a_confirmation_dialog(qtbot: QtBot, run_dialog):
+    with qtbot.waitSignal(run_dialog.simulation_done, timeout=10000):
+
+        def handle_dialog():
+            terminate_dialog = wait_for_child(run_dialog, qtbot, QMessageBox)
+            dialog_buttons = terminate_dialog.findChild(QDialogButtonBox).buttons()
+            yes_button = next(b for b in dialog_buttons if "Yes" in b.text())
+            qtbot.mouseClick(yes_button, Qt.MouseButton.LeftButton)
+
+        QTimer.singleShot(100, handle_dialog)
+        qtbot.mouseClick(run_dialog.kill_button, Qt.MouseButton.LeftButton)
+
+
+@pytest.mark.integration_test
+def test_run_dialog_polls_run_model_for_runtime(
+    qtbot, mock_set_is_simulation_running, mock_get_runtime, run_dialog: RunDialog
+):
+    qtbot.waitUntil(lambda: run_dialog.is_simulation_done() == True)
+    mock_get_runtime.assert_any_call()
+    mock_set_is_simulation_running.assert_has_calls([call(True), call(False)])
+
+
+@pytest.mark.integration_test
+def test_large_snapshot(
+    event_queue_large_snapshot,
+    qtbot: QtBot,
+    run_dialog: RunDialog,
+    timeout_per_iter=5000,
+):
     qtbot.waitUntil(
         lambda: run_dialog._total_progress_bar.value() == 100,
         timeout=timeout_per_iter * 3,
@@ -340,11 +357,7 @@ def test_large_snapshot(
         ),
     ],
 )
-def test_run_dialog(events, tab_widget_count, qtbot: QtBot, run_dialog, event_queue):
-    run_dialog.run_experiment()
-    for event in events:
-        event_queue.put(event)
-
+def test_run_dialog(events, event_queue, tab_widget_count, qtbot: QtBot, run_dialog):
     qtbot.waitUntil(
         lambda: run_dialog._tab_widget.count() == tab_widget_count, timeout=5000
     )
@@ -418,12 +431,8 @@ def test_run_dialog(events, tab_widget_count, qtbot: QtBot, run_dialog, event_qu
     ],
 )
 def test_run_dialog_memory_usage_showing(
-    events, tab_widget_count, qtbot: QtBot, event_queue, run_dialog
+    events, event_queue, tab_widget_count, qtbot: QtBot, run_dialog
 ):
-    run_dialog.run_experiment()
-    for event in events:
-        event_queue.put(event)
-
     qtbot.waitUntil(
         lambda: run_dialog._tab_widget.count() == tab_widget_count, timeout=5000
     )
@@ -523,12 +532,8 @@ def test_run_dialog_memory_usage_showing(
     ],
 )
 def test_run_dialog_fm_label_show_correct_info(
-    events, tab_widget_count, expected_host_info, qtbot: QtBot, event_queue, run_dialog
+    events, event_queue, tab_widget_count, expected_host_info, qtbot: QtBot, run_dialog
 ):
-    run_dialog.run_experiment()
-    for event in events:
-        event_queue.put(event)
-
     qtbot.waitUntil(
         lambda: run_dialog._tab_widget.count() == tab_widget_count, timeout=5000
     )
@@ -766,12 +771,8 @@ def test_that_design_matrix_show_parameters_button_is_visible(
     ],
 )
 def test_forward_model_overview_label_selected_on_tab_change(
-    events, tab_widget_count, qtbot: QtBot, event_queue, run_dialog
+    events, event_queue, tab_widget_count, qtbot: QtBot, run_dialog
 ):
-    run_dialog.run_experiment()
-    for event in events:
-        event_queue.put(event)
-
     def qt_bot_click_realization(realization_index: int, iteration: int) -> None:
         view = run_dialog._tab_widget.widget(iteration)._real_view
         model_index = view.model().index(realization_index, 0)
