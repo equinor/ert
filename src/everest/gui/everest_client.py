@@ -17,6 +17,8 @@ from _ert.threading import ErtThread
 from ert.ensemble_evaluator import EvaluatorServerConfig
 from ert.run_models import BaseRunModelAPI
 from ert.run_models.event import StatusEvents, status_event_from_json
+from everest.config.everest_config import EverestConfig
+from everest.config.server_config import ServerConfig
 from everest.strings import (
     START_EXPERIMENT_ENDPOINT,
     STOP_ENDPOINT,
@@ -28,20 +30,19 @@ logger = logging.getLogger(__name__)
 class EverestClient:
     def __init__(
         self,
-        url: str,
-        cert_file: str,
-        username: str,
-        password: str,
-        ssl_context: ssl.SSLContext,
+        output_dir: str,
+        config_file: str,
     ):
-        self._url = url
-        self._cert = cert_file
-        self._username = username
-        self._password = password
-        self._ssl_context = ssl_context
+        self._config_file = config_file
+        server_context = ServerConfig.get_server_context(output_dir)
+        self._url, self._cert, auth = server_context
 
-        self._stop_endpoint = "/".join([url, STOP_ENDPOINT])
-        self._start_endpoint = "/".join([url, START_EXPERIMENT_ENDPOINT])
+        self._ssl_context = ssl.create_default_context()
+        self._ssl_context.load_verify_locations(cafile=self._cert)
+        self._username, self._password = auth
+
+        self._stop_endpoint = "/".join([self._url, STOP_ENDPOINT])
+        self._start_endpoint = "/".join([self._url, START_EXPERIMENT_ENDPOINT])
 
         self._is_alive = False
 
@@ -91,9 +92,17 @@ class EverestClient:
 
         return event_queue, monitor_thread
 
-    def create_run_model_api(
-        self, queue_system: str, runpath_format_string: str
-    ) -> BaseRunModelAPI:
+    def create_run_model_api(self) -> BaseRunModelAPI:
+        ever_config = EverestConfig.load_file(self._config_file)
+
+        assert ever_config.simulator is not None
+        assert ever_config.simulator.queue_system is not None
+        queue_system = ever_config.simulator.queue_system.name
+
+        sim_dir = ever_config.simulation_dir
+        assert sim_dir is not None
+        runpath_format_string = sim_dir
+
         def start_fn(
             evaluator_server_config: EvaluatorServerConfig, restart: bool = False
         ) -> None:

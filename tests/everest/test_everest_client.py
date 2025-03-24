@@ -2,6 +2,7 @@ import logging
 import ssl
 import threading
 from pathlib import Path
+from unittest.mock import MagicMock
 
 import pytest
 import requests
@@ -9,6 +10,7 @@ import uvicorn
 from fastapi import FastAPI
 from starlette.responses import Response
 
+import everest
 from everest.bin.everest_script import everest_entry
 from everest.config import EverestConfig, ServerConfig
 from everest.detached import server_is_running
@@ -19,7 +21,7 @@ from tests.ert.utils import wait_until
 
 
 @pytest.fixture
-def client_server_mock() -> tuple[FastAPI, threading.Thread, EverestClient]:
+def client_server_mock(monkeypatch) -> tuple[FastAPI, threading.Thread, EverestClient]:
     server_app = FastAPI()
     host = "127.0.0.1"
     port = _find_open_port(host, lower=5000, upper=5800)
@@ -33,18 +35,24 @@ def client_server_mock() -> tuple[FastAPI, threading.Thread, EverestClient]:
         uvicorn.Config(server_app, host=host, port=port, log_level="info")
     )
 
+    server_config_mock = MagicMock()
+    server_config_mock.return_value = (server_url, "N/A", ("", ""))
+    monkeypatch.setattr(
+        everest.config.server_config.ServerConfig,
+        "get_server_context",
+        server_config_mock,
+    )
+
+    ssl_mock = MagicMock()
+    ssl_mock.return_value = ssl.create_default_context()
+    monkeypatch.setattr(ssl.SSLContext, "load_verify_locations", ssl_mock)
+
     server_thread = threading.Thread(
         target=server.run,
         daemon=True,
     )
 
-    everest_client = EverestClient(
-        url=server_url,
-        cert_file="N/A",
-        username="",
-        password="",
-        ssl_context=ssl.create_default_context(),
-    )
+    everest_client = EverestClient(output_dir="N/A", config_file="N/A")
 
     def wait_until_alive(timeout=60, sleep_between_retries=1) -> None:
         def ping_server() -> bool:
@@ -169,21 +177,10 @@ def test_that_multiple_everest_clients_can_connect_to_server(cached_example):
 
     wait_until(everserver_is_running, interval=1, timeout=300)
 
-    server_context = ServerConfig.get_server_context(ever_config.output_dir)
-    url, cert, auth = server_context
-
-    ssl_context = ssl.create_default_context()
-    ssl_context.load_verify_locations(cafile=cert)
-    username, password = auth
-
     client_event_queues = []
     for _ in range(5):
         client = EverestClient(
-            url=url,
-            cert_file=cert,
-            username=username,
-            password=password,
-            ssl_context=ssl_context,
+            output_dir=ever_config.output_dir, config_file=ever_config.config_path
         )
 
         # Connect to the websockets endpoint
