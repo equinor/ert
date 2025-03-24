@@ -1,3 +1,4 @@
+import logging
 import os.path
 from textwrap import dedent
 
@@ -56,6 +57,50 @@ def test_analysis_config_from_file_is_same_as_from_dict(monkeypatch, tmp_path):
                 ]
             ],
         }
+    )
+
+
+def test_merging_ignores_identical_design_matrices(tmp_path, monkeypatch, caplog):
+    caplog.set_level(logging.WARNING)
+    with pd.ExcelWriter(tmp_path / "my_design_matrix.xlsx") as xl_write:
+        design_matrix_df = pd.DataFrame(
+            {
+                "REAL": [0, 1, 2],
+                "a": [1, 2, 3],
+                "b": [0, 2, 0],
+            }
+        )
+        default_sheet_df = pd.DataFrame()
+        design_matrix_df.to_excel(xl_write, index=False, sheet_name="my_sheet")
+        default_sheet_df.to_excel(
+            xl_write, index=False, sheet_name="my_default_sheet", header=False
+        )
+    monkeypatch.chdir(tmp_path)
+    AnalysisConfig.from_dict(
+        {
+            ConfigKeys.NUM_REALIZATIONS: 3,
+            ConfigKeys.DESIGN_MATRIX: [
+                [
+                    "my_design_matrix.xlsx",
+                    {
+                        "DESIGN_SHEET": "my_sheet",
+                        "DEFAULT_SHEET": "my_default_sheet",
+                    },
+                ],
+                [
+                    "my_design_matrix.xlsx",
+                    {
+                        "DESIGN_SHEET": "my_sheet",
+                        "DEFAULT_SHEET": "my_default_sheet",
+                    },
+                ],
+            ],
+        }
+    )
+    assert (
+        "Duplicate DESIGN_MATRIX entries DesignMatrix(xls_filename=PosixPath('my_design_matrix.xlsx'), "
+        "design_sheet='my_sheet', default_sheet='my_default_sheet'), only reading once."
+        in caplog.text
     )
 
 
