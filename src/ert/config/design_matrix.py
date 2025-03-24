@@ -75,29 +75,52 @@ class DesignMatrix:
         errors = []
         if self.active_realizations != dm_other.active_realizations:
             errors.append(
-                ErrorInfo("Design Matrices don't have the same active realizations!")
+                ErrorInfo(
+                    f"Design Matrices '{self.xls_filename.name} ({self.design_sheet} {self.default_sheet})' and "
+                    f"'{dm_other.xls_filename.name} ({dm_other.design_sheet} {dm_other.default_sheet})' do not "
+                    "have the same active realizations!"
+                )
             )
 
         common_keys = set(self.design_matrix_df.columns) & set(
             dm_other.design_matrix_df.columns
         )
+        non_identical_cols = set()
         if common_keys:
-            errors.append(
-                ErrorInfo(f"Design Matrices do not have unique keys {common_keys}!")
-            )
-
-        try:
-            self.design_matrix_df = pd.concat(
-                [self.design_matrix_df, dm_other.design_matrix_df], axis=1
-            )
-        except ValueError as exc:
-            errors.append(ErrorInfo(f"Error when merging design matrices {exc}!"))
-
-        for tfd in dm_other.parameter_configuration.transform_function_definitions:
-            self.parameter_configuration.transform_function_definitions.append(tfd)
+            for key in common_keys:
+                if not self.design_matrix_df[key].equals(
+                    dm_other.design_matrix_df[key]
+                ):
+                    non_identical_cols.add(key)
+            if non_identical_cols:
+                errors.append(
+                    ErrorInfo(
+                        f"Design Matrices '{self.xls_filename.name} ({self.design_sheet} {self.default_sheet})' and "
+                        f"'{dm_other.xls_filename.name} ({dm_other.design_sheet} {dm_other.default_sheet})' "
+                        f"contains non identical columns with the same name: {non_identical_cols}!"
+                    )
+                )
 
         if errors:
             raise ConfigValidationError.from_collected(errors)
+
+        try:
+            self.design_matrix_df = pd.concat(
+                [
+                    self.design_matrix_df,
+                    dm_other.design_matrix_df.drop(list(common_keys), axis=1),
+                ],
+                axis=1,
+            )
+        except ValueError as exc:
+            raise ConfigValidationError(
+                f"Error when merging design matrices '{self.xls_filename.name} ({self.design_sheet} {self.default_sheet})' and "
+                f"'{dm_other.xls_filename.name} ({dm_other.design_sheet} {dm_other.default_sheet})': {exc}!"
+            ) from exc
+
+        for tfd in dm_other.parameter_configuration.transform_function_definitions:
+            if tfd.name not in common_keys:
+                self.parameter_configuration.transform_function_definitions.append(tfd)
 
     def merge_with_existing_parameters(
         self, existing_parameters: list[ParameterConfig]
