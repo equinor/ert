@@ -2,7 +2,8 @@ from dataclasses import dataclass
 
 import numpy as np
 from PyQt6.QtCore import Qt
-from PyQt6.QtWidgets import QFormLayout, QLabel
+from PyQt6.QtCore import pyqtSlot as Slot
+from PyQt6.QtWidgets import QFormLayout, QLabel, QWidget
 
 from ert.config import AnalysisConfig
 from ert.gui.ertnotifier import ErtNotifier
@@ -113,3 +114,8 @@ class ManualUpdatePanel(ExperimentConfigPanel):
             responses = ensemble.get_realization_mask_with_responses()
             mask = np.logical_and(parameters, responses)
             self._active_realizations_field.model.setValueFromMask(mask)  # type: ignore
+
+    @Slot(QWidget)
+    def experimentTypeChanged(self, w: QWidget) -> None:
+        if isinstance(w, ManualUpdatePanel):
+            self._realizations_from_fs()
