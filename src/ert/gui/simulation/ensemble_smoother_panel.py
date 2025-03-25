@@ -15,8 +15,8 @@ from ert.gui.ertwidgets import (
     TargetEnsembleModel,
     TextModel,
 )
-from ert.mode_definitions import ENSEMBLE_SMOOTHER_MODE
-from ert.run_models import EnsembleSmoother
+from ert.mode_definitions import ENSEMBLE_INFORMATION_FILTER, ENSEMBLE_SMOOTHER_MODE
+from ert.run_models import EnsembleInformationFilter, EnsembleSmoother
 from ert.validation import (
     ExperimentValidation,
     ProperNameFormatArgument,
@@ -45,8 +45,11 @@ class EnsembleSmootherPanel(ExperimentConfigPanel):
         run_path: str,
         notifier: ErtNotifier,
         ensemble_size: int,
+        use_enif: bool = False,
     ) -> None:
-        super().__init__(EnsembleSmoother)
+        super().__init__(
+            EnsembleSmoother if not use_enif else EnsembleInformationFilter
+        )
         self.notifier = notifier
 
         layout = QFormLayout()
@@ -136,7 +139,7 @@ class EnsembleSmootherPanel(ExperimentConfigPanel):
 
     def get_experiment_arguments(self) -> Arguments:
         arguments = Arguments(
-            mode=ENSEMBLE_SMOOTHER_MODE,
+            mode=ENSEMBLE_INFORMATION_FILTER,
             target_ensemble=self._ensemble_format_model.getValue(),  # type: ignore
             realizations=self._active_realizations_field.text(),
             experiment_name=self._experiment_name_field.get_text,

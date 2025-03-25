@@ -4,6 +4,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import TYPE_CHECKING, Self, cast
 
+import networkx as nx
 import numpy as np
 import xarray as xr
 import xtgeo
@@ -18,6 +19,27 @@ if TYPE_CHECKING:
     import numpy.typing as npt
 
     from ert.storage import Ensemble
+
+
+def create_flattened_2d_graph(px: int, py: int) -> nx.Graph:
+    """Graph created with nodes numbered from 0 to px*py
+    corresponds to the "vectorization" or flattening of
+    a 2D cube with shape (px,py) in the same way as
+    reshaping such a surface into a one-dimensional array.
+    The indexing scheme used to create the graph reflects
+    this flattening process"""
+
+    G = nx.Graph()
+    for i in range(px):
+        for j in range(py):
+            index = i * py + j  # Flatten the 2D index to a single index
+            # Connect to the right neighbor
+            if j < py - 1:
+                G.add_edge(index, index + 1)
+            # Connect to the bottom neighbor
+            if i < px - 1:
+                G.add_edge(index, index + py)
+    return G
 
 
 @dataclass
@@ -167,3 +189,8 @@ class SurfaceConfig(ParameterConfig):
         ds = ensemble.load_parameters(group, realizations)
         ensemble_size = len(ds.realizations)
         return ds["values"].values.reshape(ensemble_size, -1).T
+
+    def load_parameter_graph(
+        self, ensemble: Ensemble, group: str, realizations: npt.NDArray[np.int_]
+    ) -> nx.Graph:  # type: ignore
+        return create_flattened_2d_graph(px=self.ncol, py=self.nrow)

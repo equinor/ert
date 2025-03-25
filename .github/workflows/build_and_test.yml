@@ -42,6 +42,7 @@ jobs:
       test-type: ${{ matrix.test-type }}
     secrets: inherit
 
+
   test-linux-everest:
     strategy:
       fail-fast: false
@@ -133,6 +134,10 @@ jobs:
         filter: tree:0
 
     - uses: ./.github/actions/install_dependencies_qt
+      with:
+        os: ${{ matrix.os }}
+
+    - uses: ./.github/actions/install_dependencies_scikit_sparse
       with:
         os: ${{ matrix.os }}
 

@@ -1,0 +1,1 @@
+git+https://github.com/equinor/GraphSPME.git#subdirectory=python-package@master#egg=Package

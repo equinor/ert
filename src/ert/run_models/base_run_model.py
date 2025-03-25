@@ -63,6 +63,7 @@ from ert.trace import tracer
 from ert.utils import log_duration
 from ert.workflow_runner import WorkflowRunner
 
+from ..analysis._es_update import enif_update
 from ..run_arg import RunArg
 from .event import (
     AnalysisStatusEvent,
@@ -869,7 +870,11 @@ class UpdateRunModel(BaseRunModel):
         )
 
     def update(
-        self, prior: Ensemble, posterior_name: str, weight: float = 1.0
+        self,
+        prior: Ensemble,
+        posterior_name: str,
+        weight: float = 1.0,
+        use_enif: bool = False,
     ) -> Ensemble:
         self.validate_successful_realizations_count()
         self.send_event(
@@ -910,21 +915,38 @@ class UpdateRunModel(BaseRunModel):
             fixtures=workflow_fixtures,
         )
         try:
-            smoother_update(
-                prior,
-                posterior,
-                update_settings=self._update_settings,
-                es_settings=self._analysis_settings,
-                parameters=prior.experiment.update_parameters,
-                observations=prior.experiment.observation_keys,
-                global_scaling=weight,
-                rng=self.rng,
-                progress_callback=functools.partial(
-                    self.send_smoother_event,
-                    prior.iteration,
-                    prior.id,
-                ),
-            )
+            if not use_enif:
+                smoother_update(
+                    prior,
+                    posterior,
+                    update_settings=self._update_settings,
+                    es_settings=self._analysis_settings,
+                    parameters=prior.experiment.update_parameters,
+                    observations=prior.experiment.observation_keys,
+                    global_scaling=weight,
+                    rng=self.rng,
+                    progress_callback=functools.partial(
+                        self.send_smoother_event,
+                        prior.iteration,
+                        prior.id,
+                    ),
+                )
+            else:
+                enif_update(
+                    prior,
+                    posterior,
+                    update_settings=self._update_settings,
+                    es_settings=self._analysis_settings,
+                    parameters=prior.experiment.update_parameters,
+                    observations=prior.experiment.observation_keys,
+                    global_scaling=weight,
+                    rng=self.rng,
+                    progress_callback=functools.partial(
+                        self.send_smoother_event,
+                        prior.iteration,
+                        prior.id,
+                    ),
+                )
         except ErtAnalysisError as e:
             raise ErtRunError(
                 "Update algorithm failed for iteration:"

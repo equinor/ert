@@ -26,6 +26,7 @@ from ert.config import ConfigValidationError, ErtConfig, lint_file
 from ert.logging import LOGGING_CONFIG
 from ert.mode_definitions import (
     ENSEMBLE_EXPERIMENT_MODE,
+    ENSEMBLE_INFORMATION_FILTER,
     ENSEMBLE_SMOOTHER_MODE,
     ES_MDA_MODE,
     TEST_RUN_MODE,
@@ -420,6 +421,39 @@ def get_ert_parser(parser: ArgumentParser | None = None) -> ArgumentParser:
         help="Name of the experiment",
     )
 
+    # enif_parser
+    enif_description = (
+        "Run experiments in cli while performing one update"
+        " on the parameters by using the ensemble information filter algorithm."
+    )
+    enif_parser = subparsers.add_parser(
+        ENSEMBLE_INFORMATION_FILTER,
+        description=enif_description,
+        help=enif_description,
+    )
+    enif_parser.add_argument(
+        "--target-ensemble",
+        type=valid_name_format,
+        default="iter-%d",
+        dest="target_ensemble",
+        help="Name of the ensemble where the results for the "
+        "updated parameters will be stored.",
+    )
+    enif_parser.add_argument(
+        "--realizations",
+        type=valid_realizations,
+        help="These are the realizations that will be used to perform experiments."
+        "For example, if 'Number of realizations:50 and Active realizations is 0-9', "
+        "then only realizations 0,1,2,3,...,9 will be used to perform experiments "
+        "while realizations 10,11, 12,...,49 will be excluded",
+    )
+    enif_parser.add_argument(
+        "--experiment-name",
+        type=str,
+        default="enif",
+        help="Name of the experiment",
+    )
+
     # es_mda_parser
     es_mda_description = f"Run '{ES_MDA_MODE}' in cli"
     es_mda_parser = subparsers.add_parser(
@@ -506,6 +540,7 @@ def get_ert_parser(parser: ArgumentParser | None = None) -> ArgumentParser:
         test_run_parser,
         ensemble_experiment_parser,
         ensemble_smoother_parser,
+        enif_parser,
         es_mda_parser,
         workflow_parser,
     ]:

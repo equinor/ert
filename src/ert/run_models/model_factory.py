@@ -9,6 +9,7 @@ import numpy as np
 from ert.config import ConfigValidationError, ConfigWarning, ErtConfig, UpdateSettings
 from ert.mode_definitions import (
     ENSEMBLE_EXPERIMENT_MODE,
+    ENSEMBLE_INFORMATION_FILTER,
     ENSEMBLE_SMOOTHER_MODE,
     ES_MDA_MODE,
     EVALUATE_ENSEMBLE_MODE,
@@ -19,6 +20,7 @@ from ert.validation import ActiveRange
 
 from .base_run_model import BaseRunModel
 from .ensemble_experiment import EnsembleExperiment
+from .ensemble_information_filter import EnsembleInformationFilter
 from .ensemble_smoother import EnsembleSmoother
 from .evaluate_ensemble import EvaluateEnsemble
 from .manual_update import ManualUpdate
@@ -59,6 +61,10 @@ def create_model(
     if args.mode == ENSEMBLE_SMOOTHER_MODE:
         return _setup_ensemble_smoother(
             config, storage, args, update_settings, status_queue
+        )
+    if args.mode == ENSEMBLE_INFORMATION_FILTER:
+        return _setup_ensemble_smoother(
+            config, storage, args, update_settings, status_queue, use_enif=True
         )
     if args.mode == ES_MDA_MODE:
         return _setup_multiple_data_assimilation(
@@ -186,14 +192,15 @@ def _setup_ensemble_smoother(
     args: Namespace,
     update_settings: UpdateSettings,
     status_queue: SimpleQueue[StatusEvents],
-) -> EnsembleSmoother:
+    use_enif: bool = False,
+) -> EnsembleSmoother | EnsembleInformationFilter:
     active_realizations = _get_active_realizations_list(args, config)
     if len(active_realizations) < 2:
         raise ConfigValidationError(
             "Number of active realizations must be at least 2 for an update step"
         )
 
-    return EnsembleSmoother(
+    return (EnsembleSmoother if not use_enif else EnsembleInformationFilter)(
         target_ensemble=args.target_ensemble,
         experiment_name=getattr(args, "experiment_name", ""),
         active_realizations=active_realizations,

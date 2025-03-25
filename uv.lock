@@ -1,5 +1,4 @@
 version = 1
-revision = 1
 requires-python = ">=3.11, <3.13"
 resolution-markers = [
     "python_full_version >= '3.12'",
@@ -671,6 +670,8 @@ dependencies = [
     { name = "dnspython" },
     { name = "fastapi" },
     { name = "filelock" },
+    { name = "graphite-maps" },
+    { name = "graphspme" },
     { name = "httpx" },
     { name = "humanize" },
     { name = "iterative-ensemble-smoother" },
@@ -679,6 +680,7 @@ dependencies = [
     { name = "lxml" },
     { name = "matplotlib" },
     { name = "netcdf4" },
+    { name = "networkx" },
     { name = "numpy" },
     { name = "openpyxl" },
     { name = "opentelemetry-api" },
@@ -701,6 +703,7 @@ dependencies = [
     { name = "pyzmq" },
     { name = "requests" },
     { name = "resfo" },
+    { name = "scikit-sparse" },
     { name = "scipy" },
     { name = "seaborn" },
     { name = "tables" },
@@ -764,6 +767,7 @@ types = [
     { name = "types-decorator" },
     { name = "types-docutils" },
     { name = "types-lxml" },
+    { name = "types-networkx" },
     { name = "types-psutil" },
     { name = "types-python-dateutil" },
     { name = "types-pyyaml" },
@@ -783,6 +787,8 @@ requires-dist = [
     { name = "fastapi", marker = "extra == 'everest'" },
     { name = "filelock" },
     { name = "furo", marker = "extra == 'dev'" },
+    { name = "graphite-maps", git = "https://github.com/equinor/graphite-maps.git" },
+    { name = "graphspme", git = "https://github.com/equinor/GraphSPME.git?subdirectory=python-package" },
     { name = "httpx" },
     { name = "humanize" },
     { name = "hypothesis", marker = "extra == 'dev'", specifier = ">=6.85,!=6.102.0,!=6.112.3" },
@@ -798,6 +804,7 @@ requires-dist = [
     { name = "mypy", marker = "extra == 'types'" },
     { name = "nbsphinx", marker = "extra == 'dev'" },
     { name = "netcdf4" },
+    { name = "networkx" },
     { name = "numpy", specifier = "<2.2" },
     { name = "oil-reservoir-synthesizer", marker = "extra == 'dev'" },
     { name = "openpyxl" },
@@ -843,6 +850,7 @@ requires-dist = [
     { name = "ropt-dakota", marker = "extra == 'everest'", specifier = ">=0.17,<0.18" },
     { name = "ruamel-yaml", marker = "extra == 'everest'" },
     { name = "rust-just", marker = "extra == 'dev'" },
+    { name = "scikit-sparse" },
     { name = "scipy", specifier = ">=1.10.1,<1.15" },
     { name = "seaborn" },
     { name = "sphinx", marker = "extra == 'dev'", specifier = "<8.2.0" },
@@ -856,6 +864,7 @@ requires-dist = [
     { name = "types-decorator", marker = "extra == 'types'" },
     { name = "types-docutils", marker = "extra == 'types'" },
     { name = "types-lxml", marker = "extra == 'types'" },
+    { name = "types-networkx", marker = "extra == 'types'" },
     { name = "types-psutil", marker = "extra == 'types'" },
     { name = "types-python-dateutil", marker = "extra == 'types'" },
     { name = "types-pyyaml", marker = "extra == 'types'" },
@@ -869,7 +878,6 @@ requires-dist = [
     { name = "xarray" },
     { name = "xtgeo", specifier = ">=3.3.0" },
 ]
-provides-extras = ["dev", "style", "types", "everest"]
 
 [[package]]
 name = "et-xmlfile"
@@ -1016,6 +1024,29 @@ dependencies = [
 sdist = { url = "https://files.pythonhosted.org/packages/a0/e2/d351d69a9a9e4badb4a5be062c2d0e87bd9e6c23b5e57337fef14bef34c8/furo-2024.8.6.tar.gz", hash = "sha256:b63e4cee8abfc3136d3bc03a3d45a76a850bada4d6374d24c1716b0e01394a01", size = 1661506 }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/27/48/e791a7ed487dbb9729ef32bb5d1af16693d8925f4366befef54119b2e576/furo-2024.8.6-py3-none-any.whl", hash = "sha256:6cd97c58b47813d3619e63e9081169880fbe331f0ca883c871ff1f3f11814f5c", size = 341333 },
+]
+
+[[package]]
+name = "graphite-maps"
+version = "0.1.0"
+source = { git = "https://github.com/equinor/graphite-maps.git#32c64ec746952123ba369f59e83fa8e39429d58b" }
+dependencies = [
+    { name = "matplotlib" },
+    { name = "networkx" },
+    { name = "scikit-learn" },
+    { name = "scikit-sparse" },
+    { name = "scipy" },
+    { name = "tqdm" },
+]
+
+[[package]]
+name = "graphspme"
+version = "0.0.2b1.dev11+gf11786f"
+source = { git = "https://github.com/equinor/GraphSPME.git?subdirectory=python-package#f11786f41ded85b48296080c8141aa6c12c2db61" }
+dependencies = [
+    { name = "numpy" },
+    { name = "pybind11" },
+    { name = "scipy" },
 ]
 
 [[package]]
@@ -2100,6 +2131,15 @@ wheels = [
 ]
 
 [[package]]
+name = "networkx"
+version = "3.4.2"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/fd/1d/06475e1cd5264c0b870ea2cc6fdb3e37177c1e565c43f56ff17a10e3937f/networkx-3.4.2.tar.gz", hash = "sha256:307c3669428c5362aab27c8a1260aa8f47c4e91d3891f48be0141738d8d053e1", size = 2151368 }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/b9/54/dd730b32ea14ea797530a4479b2ed46a6fb250f682a9cfb997e968bf0261/networkx-3.4.2-py3-none-any.whl", hash = "sha256:df5d4365b724cf81b8c6a7312509d0c22386097011ad1abe274afd5e9d3bbc5f", size = 1723263 },
+]
+
+[[package]]
 name = "nodeenv"
 version = "1.9.1"
 source = { registry = "https://pypi.org/simple" }
@@ -2672,6 +2712,15 @@ wheels = [
     { url = "https://files.pythonhosted.org/packages/fe/4f/a2c0ed309167ef436674782dfee4a124570ba64299c551e38d3fdaf0a17b/pyarrow-19.0.1-cp312-cp312-manylinux_2_28_aarch64.whl", hash = "sha256:d383591f3dcbe545f6cc62daaef9c7cdfe0dff0fb9e1c8121101cabe9098cfa6", size = 40507986 },
     { url = "https://files.pythonhosted.org/packages/27/2e/29bb28a7102a6f71026a9d70d1d61df926887e36ec797f2e6acfd2dd3867/pyarrow-19.0.1-cp312-cp312-manylinux_2_28_x86_64.whl", hash = "sha256:b4c4156a625f1e35d6c0b2132635a237708944eb41df5fbe7d50f20d20c17832", size = 42087026 },
     { url = "https://files.pythonhosted.org/packages/16/33/2a67c0f783251106aeeee516f4806161e7b481f7d744d0d643d2f30230a5/pyarrow-19.0.1-cp312-cp312-win_amd64.whl", hash = "sha256:5bd1618ae5e5476b7654c7b55a6364ae87686d4724538c24185bbb2952679960", size = 25250108 },
+]
+
+[[package]]
+name = "pybind11"
+version = "2.13.6"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/d2/c1/72b9622fcb32ff98b054f724e213c7f70d6898baa714f4516288456ceaba/pybind11-2.13.6.tar.gz", hash = "sha256:ba6af10348c12b24e92fa086b39cfba0eff619b61ac77c406167d813b096d39a", size = 218403 }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/13/2f/0f24b288e2ce56f51c920137620b4434a38fd80583dbbe24fc2a1656c388/pybind11-2.13.6-py3-none-any.whl", hash = "sha256:237c41e29157b962835d356b370ededd57594a26d5894a795960f0047cb5caf5", size = 243282 },
 ]
 
 [[package]]
@@ -3343,6 +3392,40 @@ wheels = [
 ]
 
 [[package]]
+name = "scikit-learn"
+version = "1.6.1"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "joblib" },
+    { name = "numpy" },
+    { name = "scipy" },
+    { name = "threadpoolctl" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/9e/a5/4ae3b3a0755f7b35a280ac90b28817d1f380318973cff14075ab41ef50d9/scikit_learn-1.6.1.tar.gz", hash = "sha256:b4fc2525eca2c69a59260f583c56a7557c6ccdf8deafdba6e060f94c1c59738e", size = 7068312 }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/6c/2a/e291c29670795406a824567d1dfc91db7b699799a002fdaa452bceea8f6e/scikit_learn-1.6.1-cp311-cp311-macosx_10_9_x86_64.whl", hash = "sha256:72abc587c75234935e97d09aa4913a82f7b03ee0b74111dcc2881cba3c5a7b33", size = 12102620 },
+    { url = "https://files.pythonhosted.org/packages/25/92/ee1d7a00bb6b8c55755d4984fd82608603a3cc59959245068ce32e7fb808/scikit_learn-1.6.1-cp311-cp311-macosx_12_0_arm64.whl", hash = "sha256:b3b00cdc8f1317b5f33191df1386c0befd16625f49d979fe77a8d44cae82410d", size = 11116234 },
+    { url = "https://files.pythonhosted.org/packages/30/cd/ed4399485ef364bb25f388ab438e3724e60dc218c547a407b6e90ccccaef/scikit_learn-1.6.1-cp311-cp311-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:dc4765af3386811c3ca21638f63b9cf5ecf66261cc4815c1db3f1e7dc7b79db2", size = 12592155 },
+    { url = "https://files.pythonhosted.org/packages/a8/f3/62fc9a5a659bb58a03cdd7e258956a5824bdc9b4bb3c5d932f55880be569/scikit_learn-1.6.1-cp311-cp311-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:25fc636bdaf1cc2f4a124a116312d837148b5e10872147bdaf4887926b8c03d8", size = 13497069 },
+    { url = "https://files.pythonhosted.org/packages/a1/a6/c5b78606743a1f28eae8f11973de6613a5ee87366796583fb74c67d54939/scikit_learn-1.6.1-cp311-cp311-win_amd64.whl", hash = "sha256:fa909b1a36e000a03c382aade0bd2063fd5680ff8b8e501660c0f59f021a6415", size = 11139809 },
+    { url = "https://files.pythonhosted.org/packages/0a/18/c797c9b8c10380d05616db3bfb48e2a3358c767affd0857d56c2eb501caa/scikit_learn-1.6.1-cp312-cp312-macosx_10_13_x86_64.whl", hash = "sha256:926f207c804104677af4857b2c609940b743d04c4c35ce0ddc8ff4f053cddc1b", size = 12104516 },
+    { url = "https://files.pythonhosted.org/packages/c4/b7/2e35f8e289ab70108f8cbb2e7a2208f0575dc704749721286519dcf35f6f/scikit_learn-1.6.1-cp312-cp312-macosx_12_0_arm64.whl", hash = "sha256:2c2cae262064e6a9b77eee1c8e768fc46aa0b8338c6a8297b9b6759720ec0ff2", size = 11167837 },
+    { url = "https://files.pythonhosted.org/packages/a4/f6/ff7beaeb644bcad72bcfd5a03ff36d32ee4e53a8b29a639f11bcb65d06cd/scikit_learn-1.6.1-cp312-cp312-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:1061b7c028a8663fb9a1a1baf9317b64a257fcb036dae5c8752b2abef31d136f", size = 12253728 },
+    { url = "https://files.pythonhosted.org/packages/29/7a/8bce8968883e9465de20be15542f4c7e221952441727c4dad24d534c6d99/scikit_learn-1.6.1-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:2e69fab4ebfc9c9b580a7a80111b43d214ab06250f8a7ef590a4edf72464dd86", size = 13147700 },
+    { url = "https://files.pythonhosted.org/packages/62/27/585859e72e117fe861c2079bcba35591a84f801e21bc1ab85bce6ce60305/scikit_learn-1.6.1-cp312-cp312-win_amd64.whl", hash = "sha256:70b1d7e85b1c96383f872a519b3375f92f14731e279a7b4c6cfd650cf5dffc52", size = 11110613 },
+]
+
+[[package]]
+name = "scikit-sparse"
+version = "0.4.15"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "numpy" },
+    { name = "scipy" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/8e/d6/b8da5eba54ab7ca452e4ae3352d3ee05b8bc3102dddc039a358e9e6d3a5e/scikit_sparse-0.4.15.tar.gz", hash = "sha256:a0b1ef1bbe9e28e5c6d2838c63c62e094a8098d11a736771edac55ccc5f9eabe", size = 214398 }
+
+[[package]]
 name = "scipy"
 version = "1.14.1"
 source = { registry = "https://pypi.org/simple" }
@@ -3744,6 +3827,15 @@ wheels = [
 ]
 
 [[package]]
+name = "threadpoolctl"
+version = "3.6.0"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/b7/4d/08c89e34946fce2aec4fbb45c9016efd5f4d7f24af8e5d93296e935631d8/threadpoolctl-3.6.0.tar.gz", hash = "sha256:8ab8b4aa3491d812b623328249fab5302a68d2d71745c8a4c719a2fcaba9f44e", size = 21274 }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/32/d5/f9a850d79b0851d1d4ef6456097579a9005b31fea68726a4ae5f2d82ddd9/threadpoolctl-3.6.0-py3-none-any.whl", hash = "sha256:43a0b8fd5a2928500110039e43a5eed8480b918967083ea48dc3ab9f13c4a7fb", size = 18638 },
+]
+
+[[package]]
 name = "tinycss2"
 version = "1.4.0"
 source = { registry = "https://pypi.org/simple" }
@@ -3863,6 +3955,18 @@ dependencies = [
 sdist = { url = "https://files.pythonhosted.org/packages/78/18/68b393281eecab7fec4aa9452e52217ad0580ba93f1b8f585d1274e95a24/types_lxml-2025.3.4.tar.gz", hash = "sha256:aee7e89b33d9fd3656aa4ef3ea4073fcef82f430e2c02ab7b803abce78fb2f94", size = 141112 }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/32/3a/411f44d0d0256b14aa4f4875563a7fc040ea0d27d9d3c0d6771b25bd59b9/types_lxml-2025.3.4-py3-none-any.whl", hash = "sha256:ef94bd705ca0f4b613ea4c72d614c3d456d833df4034e9b488f9f8ae000bed0e", size = 91543 },
+]
+
+[[package]]
+name = "types-networkx"
+version = "3.4.2.20250319"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "numpy" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/41/ba/ddc3510d544cd919d751876abda8ff9da356d5064e1f9a9e9b3b92863b0c/types_networkx-3.4.2.20250319.tar.gz", hash = "sha256:514b373c21f03fef94d71ca7182026ae73773fe3d4eaaf9139e9bdd78f5361c5", size = 55227 }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/23/23/13414ead12ee55491c25e75029b5bfce41990bc01071a1e2e07f1c642178/types_networkx-3.4.2.20250319-py3-none-any.whl", hash = "sha256:95266a3b4ee04779638231a8ef4c312e745f3eeab9da242614d03ad0bfbb0cc9", size = 137574 },
 ]
 
 [[package]]

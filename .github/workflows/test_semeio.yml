@@ -33,6 +33,10 @@ jobs:
       with:
         os: ubuntu-latest
 
+    - uses: ./.github/actions/install_dependencies_scikit_sparse
+      with:
+        os: ubuntu-latest
+
     - name: Set up Python
       uses: actions/setup-python@v5
       with:

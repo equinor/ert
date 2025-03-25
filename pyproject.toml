@@ -68,6 +68,10 @@ dependencies = [
     "websockets",
     "xarray",
     "xtgeo >= 3.3.0",
+    "networkx",
+    "graphite-maps@git+https://github.com/equinor/graphite-maps.git",
+    "scikit-sparse",
+    "graphspme@git+https://github.com/equinor/GraphSPME.git#subdirectory=python-package"
 ]
 
 [project.scripts]
@@ -131,6 +135,7 @@ types = [
     "types-tqdm",
     "types-psutil",
     "types-setuptools",
+    "types-networkx",
 ]
 everest = [
     "websockets",
@@ -147,6 +152,8 @@ everest = [
 [tool.setuptools]
 package-dir = { "" = "src" }
 platforms = ["all"]
+dynamic = { dependencies = { file = ["requirements.txt"] } }
+
 
 [tool.setuptools.package-data]
 everest = ["data/**/*", "*.tmpl", "detached/jobs/everserver"]

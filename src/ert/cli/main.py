@@ -16,6 +16,7 @@ from ert.config import ErtConfig, QueueSystem
 from ert.ensemble_evaluator import EndEvent, EvaluatorServerConfig
 from ert.mode_definitions import (
     ENSEMBLE_EXPERIMENT_MODE,
+    ENSEMBLE_INFORMATION_FILTER,
     ENSEMBLE_SMOOTHER_MODE,
     ES_MDA_MODE,
     TEST_RUN_MODE,
@@ -66,6 +67,7 @@ def run_cli(args: Namespace, plugin_manager: ErtPluginManager | None = None) -> 
 
     if args.mode in {
         ENSEMBLE_SMOOTHER_MODE,
+        ENSEMBLE_INFORMATION_FILTER,
         ES_MDA_MODE,
     }:
         if not ert_config.ensemble_config.parameter_configs:

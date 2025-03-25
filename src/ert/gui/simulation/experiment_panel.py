@@ -153,7 +153,15 @@ class ExperimentPanel(QWidget):
             experiment_type_valid,
         )
         self.addExperimentConfigPanel(
-            EnsembleSmootherPanel(analysis_config, run_path, notifier, ensemble_size),
+            EnsembleSmootherPanel(
+                analysis_config, run_path, notifier, ensemble_size, use_enif=False
+            ),
+            experiment_type_valid,
+        )
+        self.addExperimentConfigPanel(
+            EnsembleSmootherPanel(
+                analysis_config, run_path, notifier, ensemble_size, use_enif=True
+            ),
             experiment_type_valid,
         )
         self.addExperimentConfigPanel(
