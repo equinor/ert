@@ -146,7 +146,6 @@ def test_that_stop_errors_on_server_up_but_endpoint_down(
 
 @pytest.mark.integration_test
 @pytest.mark.xdist_group("math_func/config_minimal.yml")
-@pytest.mark.flaky(rerun=3)
 def test_that_multiple_everest_clients_can_connect_to_server(cached_example):
     # We use a cached run for the reference list of received events
     path, config_file, _, server_events_list = cached_example(
@@ -178,6 +177,7 @@ def test_that_multiple_everest_clients_can_connect_to_server(cached_example):
     username, password = auth
 
     client_event_queues = []
+    monitor_threads = []
     for _ in range(5):
         client = EverestClient(
             url=url,
@@ -190,10 +190,14 @@ def test_that_multiple_everest_clients_can_connect_to_server(cached_example):
         # Connect to the websockets endpoint
         client_event_queue, monitor_thread = client.setup_event_queue_from_ws_endpoint()
         client_event_queues.append(client_event_queue)
+        monitor_threads.append(monitor_thread)
         monitor_thread.start()
 
     # Wait until the server has finished running the simulation
     everest_main_thread.join()
+    for _thread in monitor_threads:
+        if _thread.is_alive():
+            _thread.join(timeout=5)
 
     # Expect all the clients to hold the same events
     client_event_lists = []

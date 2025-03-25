@@ -166,9 +166,10 @@ class ExperimentRunner:
 
                 if isinstance(item, EndEvent):
                     # Wait for subscribers to receive final events
-                    await asyncio.sleep(5)
+                    for sub in self._shared_data.subscribers.values():
+                        await sub.is_done()
+
                     break
-                await asyncio.sleep(0.1)
             await simulation_future
             assert run_model.exit_code is not None
             self._msg_queue.put(
@@ -200,13 +201,20 @@ class Subscriber:
     def __init__(self) -> None:
         self.index = 0
         self._event = asyncio.Event()
+        self._done = asyncio.Event()
 
     def notify(self) -> None:
         self._event.set()
 
+    def done(self):
+        self._done.set()
+
     async def wait_for_event(self) -> None:
         await self._event.wait()
         self._event.clear()
+
+    async def is_done(self) -> None:
+        await self._done.wait()
 
 
 @lru_cache
@@ -372,17 +380,21 @@ def _everserver_thread(
         await websocket.accept()
         _check_authentication(websocket.headers.get("Authorization"))
         subscriber_id = str(uuid.uuid4())
-        while True:
-            event = await get_event(subscriber_id=subscriber_id)
-            await websocket.send_json(jsonable_encoder(event))
-            await asyncio.sleep(0.1)
-            if isinstance(event, EndEvent):
-                # Give some time for subscribers to get events
-                await asyncio.sleep(5)
-                break
-        logging.getLogger(EVERSERVER).info(
-            f"Subscriber {subscriber_id} done. Closing websocket"
-        )
+        try:
+            while True:
+                event = await get_event(subscriber_id=subscriber_id)
+                await websocket.send_json(jsonable_encoder(event))
+                if isinstance(event, EndEvent):
+                    break
+        except Exception as e:
+            logging.getLogger(EVERSERVER).exception(str(e))
+        finally:
+            logging.getLogger(EVERSERVER).info(
+                f"Subscriber {subscriber_id} done. Closing websocket"
+            )
+            # Give some time for subscribers to get events
+            await asyncio.sleep(5)
+            shared_data.subscribers[subscriber_id].done()
 
     async def get_event(subscriber_id: str) -> StatusEvents:
         """
