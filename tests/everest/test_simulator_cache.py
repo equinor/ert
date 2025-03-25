@@ -1,14 +1,19 @@
+from queue import SimpleQueue
+
 import numpy as np
 import polars as pl
 import pytest
+from orjson import orjson
 
 from ert.ensemble_evaluator import EvaluatorServerConfig
+from ert.run_models import StatusEvents
+from ert.run_models.event import EverestCacheHitEvent
 from ert.run_models.everest_run_model import EverestRunModel
 from everest.config import EverestConfig
 
 
 @pytest.mark.integration_test
-def test_simulator_cache(copy_math_func_test_data_to_tmp):
+def test_simulator_cache(copy_math_func_test_data_to_tmp, snapshot):
     n_invocations = 0
 
     def new_call(*args):
@@ -19,9 +24,11 @@ def test_simulator_cache(copy_math_func_test_data_to_tmp):
 
     config = EverestConfig.load_file("config_minimal.yml")
     config_dict = config.model_dump(exclude_none=True)
+    config_dict["optimization"]["max_batch_num"] = 5
     config = EverestConfig.model_validate(config_dict)
 
-    run_model = EverestRunModel.create(config)
+    status_queue: SimpleQueue[StatusEvents] = SimpleQueue()
+    run_model = EverestRunModel.create(config, status_queue=status_queue)
     evaluator_server_config = EvaluatorServerConfig()
 
     # Modify the forward model function to track number of calls:
@@ -38,12 +45,33 @@ def test_simulator_cache(copy_math_func_test_data_to_tmp):
     n_invocations = 0
 
     # The batch_id was used as a stopping criterion, so it must be reset:
-    run_model._batch_id = 0
+    # Note: We expect batch N to take cached results from batch N-1
+    # as should be reflected by the snapshot
+    run_model._batch_id = 1
 
     run_model.run_experiment(evaluator_server_config)
     assert n_invocations == 0
     variables2 = list(run_model.result.controls.values())
     assert np.array_equal(variables1, variables2)
+
+    events_list = []
+    while not status_queue.empty():
+        event = status_queue.get()
+        events_list.append(event)
+
+    cache_hit_events = [e for e in events_list if isinstance(e, EverestCacheHitEvent)]
+    cache_hit_event_dicts = [e.model_dump() for e in cache_hit_events]
+
+    snapshot.assert_match(
+        orjson.dumps(
+            cache_hit_event_dicts,
+            option=orjson.OPT_NON_STR_KEYS | orjson.OPT_INDENT_2,
+        )
+        .decode("utf-8")
+        .strip()
+        + "\n",
+        "cache_hit_events.json",
+    )
 
 
 def test_cached_result_lookup():
