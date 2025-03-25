@@ -1,0 +1,117 @@
+[
+  {
+    "batch": 1,
+    "event_type": "EverestCacheHitEvent",
+    "data": [
+      {
+        "source_batch_id": 0,
+        "source_simulation_id": 4,
+        "target_evaluation_id": 4,
+        "target_perturbation": 3,
+        "model_realization": 0
+      },
+      {
+        "source_batch_id": 0,
+        "source_simulation_id": 3,
+        "target_evaluation_id": 3,
+        "target_perturbation": 2,
+        "model_realization": 0
+      },
+      {
+        "source_batch_id": 0,
+        "source_simulation_id": 0,
+        "target_evaluation_id": 0,
+        "target_perturbation": -1,
+        "model_realization": 0
+      },
+      {
+        "source_batch_id": 0,
+        "source_simulation_id": 2,
+        "target_evaluation_id": 2,
+        "target_perturbation": 1,
+        "model_realization": 0
+      },
+      {
+        "source_batch_id": 0,
+        "source_simulation_id": 5,
+        "target_evaluation_id": 5,
+        "target_perturbation": 4,
+        "model_realization": 0
+      },
+      {
+        "source_batch_id": 0,
+        "source_simulation_id": 1,
+        "target_evaluation_id": 1,
+        "target_perturbation": 0,
+        "model_realization": 0
+      }
+    ]
+  },
+  {
+    "batch": 2,
+    "event_type": "EverestCacheHitEvent",
+    "data": [
+      {
+        "source_batch_id": 1,
+        "source_simulation_id": 0,
+        "target_evaluation_id": 0,
+        "target_perturbation": -1,
+        "model_realization": 0
+      }
+    ]
+  },
+  {
+    "batch": 3,
+    "event_type": "EverestCacheHitEvent",
+    "data": [
+      {
+        "source_batch_id": 2,
+        "source_simulation_id": 0,
+        "target_evaluation_id": 0,
+        "target_perturbation": -1,
+        "model_realization": 0
+      }
+    ]
+  },
+  {
+    "batch": 4,
+    "event_type": "EverestCacheHitEvent",
+    "data": [
+      {
+        "source_batch_id": 3,
+        "source_simulation_id": 1,
+        "target_evaluation_id": 1,
+        "target_perturbation": 1,
+        "model_realization": 0
+      },
+      {
+        "source_batch_id": 3,
+        "source_simulation_id": 0,
+        "target_evaluation_id": 0,
+        "target_perturbation": 0,
+        "model_realization": 0
+      },
+      {
+        "source_batch_id": 3,
+        "source_simulation_id": 4,
+        "target_evaluation_id": 4,
+        "target_perturbation": 4,
+        "model_realization": 0
+      },
+      {
+        "source_batch_id": 3,
+        "source_simulation_id": 2,
+        "target_evaluation_id": 2,
+        "target_perturbation": 2,
+        "model_realization": 0
+      },
+      {
+        "source_batch_id": 3,
+        "source_simulation_id": 3,
+        "target_evaluation_id": 3,
+        "target_perturbation": 3,
+        "model_realization": 0
+      }
+    ]
+  }
+]
