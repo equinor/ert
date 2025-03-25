@@ -1,10 +1,11 @@
 from typing import Any
 
 from pydantic import BaseModel, ConfigDict, Field, model_validator
+from pydantic.json_schema import SkipJsonSchema
 
 
 class CVaRConfig(BaseModel):
-    number_of_realizations: int | None = Field(
+    number_of_realizations: int | SkipJsonSchema[None] = Field(
         default=None,
         description="""The number of realizations used for CVaR estimation.
 
@@ -13,7 +14,7 @@ Sets the number of realizations that is used to calculate the total objective.
 This option is exclusive with the **percentile** option.
 """,
     )
-    percentile: float | None = Field(
+    percentile: float | SkipJsonSchema[None] = Field(
         default=None,
         ge=0.0,
         le=1.0,

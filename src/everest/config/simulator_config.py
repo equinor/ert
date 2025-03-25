@@ -8,6 +8,7 @@ from pydantic import (
     field_validator,
     model_validator,
 )
+from pydantic.json_schema import SkipJsonSchema
 
 from ert.config.queue_config import (
     LocalQueueOptions,
@@ -34,7 +35,7 @@ def check_removed_config(queue_system: Any) -> None:
 
 
 class SimulatorConfig(BaseModel, extra="forbid"):
-    cores_per_node: PositiveInt | None = Field(
+    cores_per_node: PositiveInt | SkipJsonSchema[None] = Field(
         default=None,
         description="""defines the number of CPUs when running
      the forward models. This can for example be used in conjunction with the Eclipse
@@ -43,12 +44,12 @@ class SimulatorConfig(BaseModel, extra="forbid"):
 
     This number is specified in Ert as NUM_CPU.""",
     )
-    delete_run_path: bool | None = Field(
+    delete_run_path: bool | SkipJsonSchema[None] = Field(
         default=None,
         description="Whether the batch folder for a successful simulation "
         "needs to be deleted.",
     )
-    max_runtime: NonNegativeInt | None = Field(
+    max_runtime: NonNegativeInt | SkipJsonSchema[None] = Field(
         default=None,
         description="""Maximum allowed running time of a forward model. When
         set, a job is only allowed to run for max_runtime seconds.
@@ -67,7 +68,7 @@ class SimulatorConfig(BaseModel, extra="forbid"):
         discriminator="name",
         validate_default=True,
     )
-    resubmit_limit: NonNegativeInt | None = Field(
+    resubmit_limit: NonNegativeInt | SkipJsonSchema[None] = Field(
         default=None,
         description="""
         Defines how many times should the queue system retry a forward model.

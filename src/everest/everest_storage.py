@@ -579,7 +579,7 @@ class EverestStorage:
                     "constraint_name": everest_config.constraint_names,
                 }
             )
-            if everest_config.output_constraints is not None
+            if everest_config.output_constraints
             else None
         )
 

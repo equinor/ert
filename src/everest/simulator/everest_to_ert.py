@@ -160,7 +160,7 @@ def _job_to_dict(job: dict[str, Any] | InstallJobConfig) -> dict[str, Any]:
 def _extract_jobs(
     ever_config: EverestConfig, ert_config: dict[str, Any], path: str
 ) -> None:
-    ever_jobs = [_job_to_dict(j) for j in (ever_config.install_jobs or [])]
+    ever_jobs = [_job_to_dict(j) for j in ever_config.install_jobs]
 
     std_ever_jobs = _fetch_everest_jobs(ever_config)
 
@@ -355,7 +355,7 @@ def _extract_forward_model(
 ) -> None:
     forward_model = _extract_data_operations(ever_config)
     forward_model += _extract_templating(ever_config)
-    forward_model += ever_config.forward_model or []
+    forward_model += ever_config.forward_model
 
     fm_steps = ert_config.get(ErtConfigKeys.FORWARD_MODEL, [])
     for job in forward_model:
@@ -398,7 +398,7 @@ def _extract_seed(ever_config: EverestConfig, ert_config: dict[str, Any]) -> Non
 def _extract_results(ever_config: EverestConfig, ert_config: dict[str, Any]) -> None:
     objectives_names = [objective.name for objective in ever_config.objective_functions]
     constraint_names = [
-        constraint.name for constraint in (ever_config.output_constraints or [])
+        constraint.name for constraint in ever_config.output_constraints
     ]
     gen_data = ert_config.get(ErtConfigKeys.GEN_DATA, [])
     for name in objectives_names + constraint_names:

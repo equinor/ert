@@ -8,6 +8,7 @@ from pydantic import (
     NonNegativeInt,
     PositiveFloat,
 )
+from pydantic.json_schema import SkipJsonSchema
 from ropt.enums import VariableType
 
 from .sampler_config import SamplerConfig
@@ -20,39 +21,39 @@ class _ControlVariable(BaseModel):
     name: Annotated[str, AfterValidator(no_dots_in_string)] = Field(
         description="Control variable name"
     )
-    control_type: Literal["real", "integer"] | None = Field(
+    control_type: Literal["real", "integer"] | SkipJsonSchema[None] = Field(
         default=None,
         description="""
 The type of control. Set to "integer" for discrete optimization. This may be
 ignored if the algorithm that is used does not support different control types.
 """,
     )
-    enabled: bool | None = Field(
+    enabled: bool | SkipJsonSchema[None] = Field(
         default=None,
         description="""
 If `True`, the variable will be optimized, otherwise it will be fixed to the
 initial value.
 """,
     )
-    auto_scale: bool | None = Field(
+    auto_scale: bool | SkipJsonSchema[None] = Field(
         default=None,
         description="""
 Can be set to true to re-scale variable from the range
 defined by [min, max] to the range defined by scaled_range (default [0, 1]).
 """,
     )
-    scaled_range: Annotated[tuple[float, float] | None, AfterValidator(valid_range)] = (
-        Field(
-            default=None,
-            description="""
+    scaled_range: Annotated[
+        tuple[float, float] | SkipJsonSchema[None], AfterValidator(valid_range)
+    ] = Field(
+        default=None,
+        description="""
 Can be used to set the range of the variable values
 after scaling (default = [0, 1]).
 
 This option has no effect on discrete controls.
 """,
-        )
     )
-    min: float | None = Field(
+    min: float | SkipJsonSchema[None] = Field(
         default=None,
         description="""
 Minimal value allowed for the variable
@@ -60,7 +61,7 @@ Minimal value allowed for the variable
 initial_guess is required to be greater than this value.
 """,
     )
-    max: float | None = Field(
+    max: float | SkipJsonSchema[None] = Field(
         default=None,
         description="""
     Max value allowed for the variable
@@ -68,7 +69,7 @@ initial_guess is required to be greater than this value.
     initial_guess is required to be less than this value.
     """,
     )
-    perturbation_magnitude: PositiveFloat | None = Field(
+    perturbation_magnitude: PositiveFloat | SkipJsonSchema[None] = Field(
         default=None,
         description="""
 Specifies the perturbation magnitude for this particular variable.
@@ -79,24 +80,24 @@ how long rate applies for) & value (the actual rate).
 NOTE: In most cases this should not be configured, and the default value should be used.
 """,
     )
-    sampler: SamplerConfig | None = Field(
+    sampler: SamplerConfig | SkipJsonSchema[None] = Field(
         default=None, description="The backend used by Everest for sampling points"
     )
 
     @property
-    def ropt_control_type(self) -> VariableType | None:
+    def ropt_control_type(self) -> VariableType | SkipJsonSchema[None]:
         return VariableType[self.control_type.upper()] if self.control_type else None
 
 
 class ControlVariableConfig(_ControlVariable):
     model_config = ConfigDict(title="variable control")
-    initial_guess: float | None = Field(
+    initial_guess: float | SkipJsonSchema[None] = Field(
         default=None,
         description="""
 Starting value for the control variable, if given needs to be in the interval [min, max]
 """,
     )
-    index: NonNegativeInt | None = Field(
+    index: NonNegativeInt | SkipJsonSchema[None] = Field(
         default=None,
         description="""
 Index should be given either for all of the variables or for none of them
