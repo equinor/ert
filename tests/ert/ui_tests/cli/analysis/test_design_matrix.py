@@ -10,8 +10,8 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from ert.cli.main import ErtCliError
 from ert.config import DESIGN_MATRIX_GROUP, ErtConfig
+from ert.config.parsing.config_errors import ConfigValidationError
 from ert.mode_definitions import (
     ENSEMBLE_EXPERIMENT_MODE,
     ENSEMBLE_SMOOTHER_MODE,
@@ -132,7 +132,10 @@ def test_run_poly_example_with_design_matrix(caplog):
     "default_values, error_msg",
     [
         ([["b", 1], ["c", 2]], None),
-        ([["b", 1]], "Overlapping parameter names found in design matrix!"),
+        (
+            [["b", 1]],
+            "Only full overlaps of design matrix and one genkw group are supported.",
+        ),
     ],
 )
 def test_run_poly_example_with_design_matrix_and_genkw_merge(default_values, error_msg):
@@ -205,7 +208,7 @@ def test_run_poly_example_with_design_matrix_and_genkw_merge(default_values, err
     )
 
     if error_msg:
-        with pytest.raises(ErtCliError, match=error_msg):
+        with pytest.raises(ConfigValidationError, match=error_msg):
             run_cli(
                 ENSEMBLE_EXPERIMENT_MODE,
                 "--disable-monitoring",
