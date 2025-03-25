@@ -26,6 +26,7 @@ from ert.run_models import BaseRunModel, StatusEvents, create_model
 from ..summarypanel import SummaryPanel
 from .combobox_with_description import QComboBoxWithDescription
 from .ensemble_experiment_panel import EnsembleExperimentPanel
+from .ensemble_information_filter_panel import EnsembleInformationFilterPanel
 from .ensemble_smoother_panel import EnsembleSmootherPanel
 from .evaluate_ensemble_panel import EvaluateEnsemblePanel
 from .experiment_config_panel import ExperimentConfigPanel
@@ -154,6 +155,12 @@ class ExperimentPanel(QWidget):
         )
         self.addExperimentConfigPanel(
             EnsembleSmootherPanel(analysis_config, run_path, notifier, ensemble_size),
+            experiment_type_valid,
+        )
+        self.addExperimentConfigPanel(
+            EnsembleInformationFilterPanel(
+                analysis_config, run_path, notifier, ensemble_size
+            ),
             experiment_type_valid,
         )
         self.addExperimentConfigPanel(

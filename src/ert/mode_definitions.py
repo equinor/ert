@@ -1,4 +1,5 @@
 ENSEMBLE_SMOOTHER_MODE = "ensemble_smoother"
+ENIF_MODE = "ensemble_information_filter"
 ENSEMBLE_EXPERIMENT_MODE = "ensemble_experiment"
 ES_MDA_MODE = "es_mda"
 TEST_RUN_MODE = "test_run"

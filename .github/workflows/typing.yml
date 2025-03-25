@@ -39,6 +39,10 @@ jobs:
         enable-cache: true
         python-version: ${{ matrix.python-version }}
 
+    - uses: ./.github/actions/install_dependencies_scikit_sparse
+      with:
+        os: ubuntu-latest
+
     - name: Install ERT and dependencies
       run: |
         uv sync --extra everest --extra dev --extra types

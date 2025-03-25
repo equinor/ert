@@ -30,6 +30,10 @@ jobs:
       with:
         os: ${{ inputs.os }}
 
+    - uses: ./.github/actions/install_dependencies_scikit_sparse
+      with:
+        os: ${{ inputs.os }}
+
     - name: Set up Python ${{ inputs.python-version }}
       uses: actions/setup-python@v5
       with:
