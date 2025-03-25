@@ -5,6 +5,7 @@ from typing import Annotated, Any, Literal
 from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict, Field, TypeAdapter
+from typing_extensions import TypedDict
 
 from ert.analysis import (
     AnalysisStatusEvent,
@@ -36,6 +37,20 @@ class EverestStatusEvent(BaseModel):
         "START_OPTIMIZER_EVALUATION",
         "START_SAMPLING_EVALUATION",
     ]
+
+
+class _CacheHitInfo(TypedDict):
+    source_batch_id: int
+    source_simulation_id: int
+    target_evaluation_id: int
+    target_perturbation: int
+    model_realization: int
+
+
+class EverestCacheHitEvent(BaseModel):
+    batch: int | None
+    event_type: Literal["EverestCacheHitEvent"] = "EverestCacheHitEvent"
+    data: list[_CacheHitInfo]
 
 
 class EverestBatchResultEvent(BaseModel):
@@ -95,6 +110,7 @@ StatusEvents = (
     | EndEvent
     | EverestStatusEvent
     | EverestBatchResultEvent
+    | EverestCacheHitEvent
     | FullSnapshotEvent
     | SnapshotUpdateEvent
     | RunModelErrorEvent

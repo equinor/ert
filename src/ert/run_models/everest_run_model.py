@@ -58,6 +58,7 @@ from ..storage.local_ensemble import EverestRealizationInfo
 from .base_run_model import BaseRunModel, StatusEvents
 from .event import (
     EverestBatchResultEvent,
+    EverestCacheHitEvent,
     EverestStatusEvent,
 )
 
@@ -559,7 +560,7 @@ class EverestRunModel(BaseRunModel):
         control_names: list[str],
         objective_names: list[str],
         constraint_names: list[str],
-    ) -> list[_EvaluationInfo]:
+    ) -> tuple[list[_EvaluationInfo], pl.DataFrame | None]:
         inactive_objective_fill_value: NDArray[np.float64] = np.zeros(
             len(objective_names)
         )
@@ -644,7 +645,13 @@ class EverestRunModel(BaseRunModel):
             )
             sim_id_counter += 1
 
-        return evaluation_infos
+        cache_hits = (
+            cache_hits_df[["batch", "simulation_id", "flat_index"]]
+            if cache_hits_df is not None and not cache_hits_df.is_empty()
+            else None
+        )
+
+        return evaluation_infos, cache_hits
 
     def _forward_model_evaluator(
         self, control_values: NDArray[np.float64], evaluator_context: EvaluatorContext
@@ -665,7 +672,7 @@ class EverestRunModel(BaseRunModel):
         assert self._experiment is not None
         all_results = self._experiment.all_parameters_and_gen_data
 
-        evaluation_infos = self._create_evaluation_infos(
+        evaluation_infos, cache_hits_df = self._create_evaluation_infos(
             control_values=control_values,
             model_realizations=model_realizations,
             perturbations=evaluator_context.perturbations.tolist()
@@ -677,6 +684,41 @@ class EverestRunModel(BaseRunModel):
             constraint_names=self._everest_config.constraint_names,
             all_results=all_results,
         )
+
+        if cache_hits_df is not None and not cache_hits_df.is_empty():
+            perturbations = (
+                evaluator_context.perturbations
+                if evaluator_context.perturbations is not None
+                else [-1] * len(model_realizations)
+            )
+            event_data = (
+                cache_hits_df.with_columns(
+                    pl.col("flat_index")
+                    .map_elements(
+                        # Assume none of the evals are perturbations if there is no
+                        # evaluator_context.perturbations
+                        lambda i: perturbations[i],
+                        return_dtype=pl.Int32,
+                    )
+                    .alias("target_perturbation"),
+                    pl.col("flat_index")
+                    .map_elements(
+                        lambda i: evaluator_context.realizations[i],
+                        return_dtype=pl.Int32,
+                    )
+                    .alias("model_realization"),  # Same for source and target
+                )
+                .rename(
+                    {
+                        "batch": "source_batch_id",
+                        "simulation_id": "source_simulation_id",
+                        "flat_index": "target_evaluation_id",
+                    }
+                )
+                .to_dicts()
+            )
+
+            self.send_event(EverestCacheHitEvent(batch=self._batch_id, data=event_data))
 
         control_values_to_simulate = np.array(
             [
