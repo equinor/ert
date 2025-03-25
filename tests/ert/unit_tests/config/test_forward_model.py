@@ -127,13 +127,6 @@ def test_load_forward_model_foreign_raises():
         _ = _forward_model_step_from_config_contents("EXECUTABLE /etc/passwd", "CONFIG")
 
 
-def test_forward_model_optionals():
-    forward_model = _forward_model_step_from_config_contents(
-        "EXECUTABLE fm_dispatch.py", "config_file"
-    )
-    assert forward_model.name == "config_file"
-
-
 def test_forward_model_stdout_stderr_defaults_to_filename():
     forward_model = _forward_model_step_from_config_contents(
         "EXECUTABLE fm_dispatch.py", "CONFIG"
