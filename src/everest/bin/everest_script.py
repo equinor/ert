@@ -44,12 +44,17 @@ def everest_entry(args: list[str] | None = None) -> None:
     parser = _build_args_parser()
     options = parser.parse_args(args)
 
-    if options.debug:
-        handler = logging.StreamHandler()
-        formatter = logging.Formatter(DEFAULT_LOGGING_FORMAT)
-        handler.setFormatter(formatter)
-        logger.addHandler(handler)
-        logger.setLevel(logging.DEBUG)
+    handler = logging.StreamHandler()
+    formatter = logging.Formatter(DEFAULT_LOGGING_FORMAT)
+    handler.setFormatter(formatter)
+
+    root_logger = logging.root
+    root_logger.addHandler(handler)
+    root_logger.setLevel(
+        logging.DEBUG if options.debug else options.config.logging_level
+    )
+
+    logger.setLevel(logging.DEBUG if options.debug else options.config.logging_level)
 
     logger.debug(version_info())
 

@@ -15,6 +15,7 @@ from typing import Any, Literal
 
 import requests
 from pydantic import ValidationError
+from websockets import ConnectionClosedError, ConnectionClosedOK
 from websockets.sync.client import connect
 
 from ert.ensemble_evaluator import EndEvent
@@ -68,11 +69,15 @@ async def start_server(config: EverestConfig, logging_level: int) -> Driver:
         await driver.submit(0, "everserver", *args, name=Path(config.config_file).stem)
     except FailedSubmit as err:
         raise ValueError(f"Failed to submit Everserver with error: {err}") from err
+
     status = await driver.event_queue.get()
     if not isinstance(status, StartedEvent):
         poll_task.cancel()
         raise ValueError(f"Everserver not started as expected, got status: {status}")
     poll_task.cancel()
+    logger.debug(
+        f"Everserver started. Items left in queue: {driver.event_queue.qsize()}"
+    )
     return driver
 
 
@@ -170,7 +175,9 @@ def wait_for_server_to_stop(
 
 def server_is_running(url: str, cert: str, auth: tuple[str, str]) -> bool:
     try:
-        logger.info(f"Checking server status at {url} ")
+        logger.debug(f"Checking server status at {url} ")
+        if "None:None" in url:
+            return False
         response = requests.get(
             url,
             verify=cert,
@@ -179,7 +186,7 @@ def server_is_running(url: str, cert: str, auth: tuple[str, str]) -> bool:
             proxies=PROXY,  # type: ignore
         )
         response.raise_for_status()
-    except:
+    except Exception:
         logger.debug(traceback.format_exc())
         return False
     return True
@@ -227,29 +234,32 @@ def start_monitor(
             while True:
                 try:
                     message = websocket.recv(timeout=1.0)
+                    event = status_event_from_json(message)
+                    if isinstance(event, EndEvent):
+                        print(event.msg)
+                    elif isinstance(event, EverestCacheHitEvent):
+                        callback({OPT_PROGRESS_ID: {"cache_hits": event}})
+                    elif isinstance(event, EverestBatchResultEvent):
+                        if event.result_type == "FunctionResult":
+                            callback(
+                                {
+                                    OPT_PROGRESS_ID: get_opt_status_from_batch_result_event(
+                                        event
+                                    )
+                                }
+                            )
+                    else:
+                        callback({SIM_PROGRESS_ID: event})
                 except TimeoutError:
-                    message = None
-                if message:
-                    try:
-                        event = status_event_from_json(message)
-                        if isinstance(event, EndEvent):
-                            print(event.msg)
-                        elif isinstance(event, EverestCacheHitEvent):
-                            callback({OPT_PROGRESS_ID: {"cache_hits": event}})
-                        elif isinstance(event, EverestBatchResultEvent):
-                            if event.result_type == "FunctionResult":
-                                callback(
-                                    {
-                                        OPT_PROGRESS_ID: get_opt_status_from_batch_result_event(
-                                            event
-                                        )
-                                    }
-                                )
-                        else:
-                            callback({SIM_PROGRESS_ID: event})
-
-                    except ValidationError as e:
-                        logger.error("Error when processing event %s", exc_info=e)
+                    pass
+                except ConnectionClosedOK:
+                    logger.debug("Connection closed")
+                    break
+                except ConnectionClosedError:
+                    logger.debug("Connection closed")
+                    break
+                except ValidationError as e:
+                    logger.error("Error when processing event %s", exc_info=e)
 
                 time.sleep(polling_interval)
     except:
