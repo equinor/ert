@@ -166,6 +166,10 @@ class ExperimentRunner:
             )
         except Exception as e:
             self._msg_queue.put(ExperimentFailed(msg=str(e)))
+        finally:
+            logging.getLogger(EVERSERVER).info(
+                f"ExperimentRunner done. Items left in queue: {status_queue.qsize()}"
+            )
 
 
 class Subscriber:
@@ -313,6 +317,9 @@ def _everserver_thread(
                 # Give some time for subscribers to get events
                 await asyncio.sleep(5)
                 break
+        logging.getLogger(EVERSERVER).info(
+            f"Subscriber {subscriber_id} done. Closing websocket"
+        )
 
     async def get_event(subscriber_id: str) -> StatusEvents:
         """
@@ -405,11 +412,21 @@ def _configure_loggers(detached_dir: Path, log_dir: Path, logging_level: int) ->
             ),
         },
         "loggers": {
-            EVERSERVER: {"handlers": ["endpoint_log"], "level": logging_level},
-            EVEREST: {"handlers": ["everest_log"], "level": logging_level},
+            "root": {"handlers": ["endpoint_log"], "level": logging_level},
+            EVERSERVER: {
+                "handlers": ["endpoint_log"],
+                "level": logging_level,
+                "propagate": False,
+            },
+            EVEREST: {
+                "handlers": ["everest_log"],
+                "level": logging_level,
+                "propagate": False,
+            },
             "forward_models": {
                 "handlers": ["forward_models_log"],
                 "level": logging_level,
+                "propagate": False,
             },
             "ert.scheduler.job": {
                 "handlers": ["forward_models_log"],
@@ -551,7 +568,9 @@ def main() -> None:
             )
             logging.getLogger(EVERSERVER).exception("Everserver failed")
         finally:
-            logging.getLogger(EVERSERVER).info("Everserver stopped")
+            logging.getLogger(EVERSERVER).info(
+                f"Everserver stopped. Items left in queue: {msg_queue.qsize()}"
+            )
 
 
 def _get_optimization_status(
