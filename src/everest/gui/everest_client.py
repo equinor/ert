@@ -12,6 +12,7 @@ from pathlib import Path
 import requests
 from pydantic import ValidationError
 from requests import HTTPError
+from websockets.exceptions import ConnectionClosedError
 from websockets.sync.client import connect
 
 from _ert.threading import ErtThread
@@ -108,6 +109,8 @@ class EverestClient:
                                 )
 
                         time.sleep(refresh_interval)
+            except ConnectionClosedError:
+                logger.debug("Connetion closed by server")
             except Exception:
                 logger.debug(traceback.format_exc())
 
