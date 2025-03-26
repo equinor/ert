@@ -25,7 +25,7 @@ optimization:
 
 install_jobs:
   - name: distance3
-    source: jobs/DISTANCE3
+    executable: jobs/distance3.py
 
 model:
   realizations: [0]

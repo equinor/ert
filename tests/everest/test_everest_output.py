@@ -4,24 +4,18 @@ from unittest.mock import patch
 
 import pytest
 
-from ert.config import ErtConfig
 from ert.storage import open_storage
 from everest.bin.everest_script import everest_entry
 from everest.config import EverestConfig
 from everest.detached import ServerStatus
-from everest.simulator.everest_to_ert import _everest_to_ert_config_dict
 
 
 @pytest.mark.xdist_group("math_func/config_minimal.yml")
 def test_that_one_experiment_creates_one_ensemble_per_batch(cached_example):
     _, config, _, _ = cached_example("math_func/config_minimal.yml")
     config = EverestConfig.load_file(config)
-
     batches = os.listdir(config.simulation_dir)
-    ert_config = ErtConfig.with_plugins().from_dict(_everest_to_ert_config_dict(config))
-    enspath = ert_config.ens_path
-
-    with open_storage(enspath, mode="r") as storage:
+    with open_storage(config.storage_dir, mode="r") as storage:
         experiments = [*storage.experiments]
         assert len(experiments) == 1
         experiment = experiments[0]

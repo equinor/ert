@@ -6,6 +6,7 @@ import ssl
 from base64 import b64encode
 from dataclasses import dataclass
 from pathlib import Path
+from shutil import which
 from unittest.mock import MagicMock, patch
 
 import pytest
@@ -220,10 +221,9 @@ async def test_status_max_batch_num(copy_math_func_test_data_to_tmp):
 @pytest.mark.timeout(240)
 @patch("sys.argv", ["name", "--output-dir", "everest_output"])
 async def test_status_contains_max_runtime_failure(change_to_tmpdir, min_config):
-    Path("SLEEP_job").write_text("EXECUTABLE sleep", encoding="utf-8")
     min_config["simulator"] = {"max_runtime": 1}
     min_config["forward_model"] = ["sleep 5"]
-    min_config["install_jobs"] = [{"name": "sleep", "source": "SLEEP_job"}]
+    min_config["install_jobs"] = [{"name": "sleep", "executable": which("sleep")}]
 
     config = EverestConfig(**min_config)
 

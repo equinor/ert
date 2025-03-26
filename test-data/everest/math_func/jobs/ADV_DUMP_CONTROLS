@@ -1,4 +1,0 @@
-EXECUTABLE  adv_dump_controls.py
-
-MIN_ARG 1
-MAX_ARG 3

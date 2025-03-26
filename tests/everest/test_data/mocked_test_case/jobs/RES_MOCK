@@ -1,6 +1,0 @@
-EXECUTABLE  res_mock.py
-STDOUT RES_MOCK.stdout
-STDERR RES_MOCK.stderr
-
-MIN_ARG 1
-MAX_ARG 1

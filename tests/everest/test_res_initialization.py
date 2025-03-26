@@ -10,7 +10,6 @@ import yaml
 from ruamel.yaml import YAML
 
 import everest
-from ert.config import ConfigWarning
 from ert.config.ensemble_config import EnsembleConfig
 from ert.config.ert_config import (
     workflows_from_dict,

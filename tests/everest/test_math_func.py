@@ -75,7 +75,7 @@ def test_remove_run_path(copy_math_func_test_data_to_tmp):
         config_yaml = yaml.safe_load(file)
         config_yaml["simulator"] = {"delete_run_path": True}
         config_yaml["install_jobs"].append(
-            {"name": "toggle_failure", "source": "jobs/FAIL_SIMULATION"}
+            {"name": "toggle_failure", "executable": "jobs/fail_simulation.py"}
         )
         config_yaml["forward_model"].append("toggle_failure --fail simulation_2")
     with open("config.yml", "w", encoding="utf-8") as fout:

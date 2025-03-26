@@ -133,13 +133,13 @@ objective_functions:
 install_jobs:
   -
     name: well_order
-    source: jobs/WELL_ORDER_MOCK
+    executable: jobs/well_order_mock.py
   -
     name: npv_function
-    source: jobs/NPV_FUNCTION_MOCK
+    executable: jobs/npv_function_mock.py
   -
     name: oil_prod_rate
-    source: jobs/OIL_PROD_RATE_MOCK
+    executable: jobs/oil_prod_rate_mock.py
 
 
 optimization:
