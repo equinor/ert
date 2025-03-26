@@ -10,7 +10,7 @@ import threading
 from functools import partial
 
 from _ert.threading import ErtThread
-from ert.config import ErtConfig, QueueSystem
+from ert.config import QueueSystem
 from everest.bin.utils import show_scaled_controls_warning
 from everest.config import EverestConfig, ServerConfig
 from everest.detached import (
@@ -22,9 +22,6 @@ from everest.detached import (
     wait_for_server,
 )
 from everest.everest_storage import EverestStorage
-from everest.simulator.everest_to_ert import (
-    everest_to_ert_config_dict,
-)
 from everest.strings import DEFAULT_LOGGING_FORMAT
 from everest.util import (
     makedirs_if_needed,
@@ -141,13 +138,6 @@ async def run_everest(options: argparse.Namespace) -> None:
             logger.debug(f"Everest forward model contains job {job_name}")
 
         makedirs_if_needed(options.config.output_dir, roll_if_exists=True)
-
-        # Validate ert config
-        try:
-            dict = everest_to_ert_config_dict(options.config)
-            ErtConfig.with_plugins().from_dict(dict)
-        except ValueError as exc:
-            raise SystemExit(f"Config validation error: {exc}") from exc
 
         if (
             options.config.simulation_dir is not None

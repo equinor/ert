@@ -20,7 +20,7 @@ from ert.config.ert_config import (
     installed_forward_model_steps_from_dict,
     uppercase_subkeys_and_stringify_subvalues,
 )
-from ert.config.parsing import ConfigDict, read_file
+from ert.config.parsing import ConfigDict, ConfigWarning, read_file
 from ert.config.parsing import ConfigKeys as ErtConfigKeys
 from ert.plugins import ErtPluginContext
 from ert.plugins.plugin_manager import ErtPluginManager
@@ -177,9 +177,10 @@ def _extract_jobs(
 
     res_jobs = ert_config.get(ErtConfigKeys.INSTALL_JOB, [])
     for job in ever_jobs:
-        source_path = os.path.join(path, job["source"])
-        new_job = (job["name"], (source_path, read_file(source_path)))
-        res_jobs.append(new_job)
+        if job.get("source") is not None:
+            source_path = os.path.join(path, job["source"])
+            new_job = (job["name"], (source_path, read_file(source_path)))
+            res_jobs.append(new_job)
 
     ert_config[ErtConfigKeys.INSTALL_JOB] = res_jobs
     if eclbase := ever_config.definitions.get("eclbase"):
@@ -416,9 +417,9 @@ def get_substitutions(
     return substitutions
 
 
-def get_forward_model_steps(
-    config_dict: ConfigDict, substitutions: Substitutions
-) -> tuple[list[ForwardModelStep], dict[str, dict[str, Any]]]:
+def _get_installed_forward_model_steps(
+    ever_config: EverestConfig, config_dict: ConfigDict
+) -> dict[str, ForwardModelStep]:
     installed_forward_model_steps: dict[str, ForwardModelStep] = {}
     pm = ErtPluginManager()
     for fm_step_subclass in pm.forward_model_steps:
@@ -429,6 +430,32 @@ def get_forward_model_steps(
         installed_forward_model_steps_from_dict(config_dict)
     )
 
+    for job in ever_config.install_jobs or []:
+        if job.executable:
+            if job.name in installed_forward_model_steps:
+                ConfigWarning.warn(
+                    f"Duplicate forward model with name {job.name!r}, "
+                    f"overriding it with {job.executable!r}.",
+                    job.name,
+                )
+            executable = Path(job.executable)
+            if not executable.is_absolute():
+                executable = ever_config.config_directory / executable
+            installed_forward_model_steps[job.name] = ForwardModelStep(
+                name=job.name, executable=str(executable)
+            )
+
+    return installed_forward_model_steps
+
+
+def get_forward_model_steps(
+    ever_config: EverestConfig, config_dict: ConfigDict, substitutions: Substitutions
+) -> tuple[list[ForwardModelStep], dict[str, dict[str, Any]]]:
+    installed_forward_model_steps = _get_installed_forward_model_steps(
+        ever_config, config_dict
+    )
+
+    pm = ErtPluginManager()
     env_pr_fm_step = uppercase_subkeys_and_stringify_subvalues(
         pm.get_forward_model_configuration()
     )

@@ -273,6 +273,24 @@ and environment variables are exposed in the form 'os.NAME', for example:
         return self
 
     @model_validator(mode="after")
+    def validate_install_jobs(self) -> Self:  # pylint: disable=E0213
+        if self.install_jobs is None:
+            return self
+        for job in self.install_jobs:
+            if job.executable is None:
+                logging.getLogger(EVEREST).warning(
+                    "`install_jobs: source` is deprecated, use `install_jobs: executable` instead."
+                )
+                print("`install_jobs: source` is deprecated, instead you should use:")
+                print(
+                    "install_jobs:\n"
+                    "  - name: job-name\n"
+                    "    executable: path-to-executable\n"
+                )
+            break
+        return self
+
+    @model_validator(mode="after")
     def validate_workflow_name_installed(self) -> Self:  # pylint: disable=E0213
         workflows = self.workflows
         if workflows is None:

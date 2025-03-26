@@ -120,8 +120,8 @@ def test_extra_key(min_config):
             "No such file or directory",
         ),
         (
-            {"install_jobs": [{"source": None, "name": "not_relevant"}]},
-            "source\n.* should be a valid string",
+            {"install_jobs": [{"executable": 1, "name": "not_relevant"}]},
+            "executable\n.* should be a valid string",
         ),
         (
             {"forward_model": ["not_a_job"]},
