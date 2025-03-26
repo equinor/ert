@@ -13,7 +13,7 @@ from typing import (
     TypeVar,
 )
 
-import graphspme as gspme
+import graphspme as gspme  # type: ignore
 import iterative_ensemble_smoother as ies
 import networkx as nx
 import numpy as np
@@ -21,10 +21,10 @@ import polars as pl
 import psutil
 import scipy
 import scipy as sp
-from graphite_maps.enif import EnIF
-from graphite_maps.linear_regression import linear_boost_ic_regression
+from graphite_maps.enif import EnIF  # type: ignore
+from graphite_maps.linear_regression import linear_boost_ic_regression  # type: ignore
 from iterative_ensemble_smoother.experimental import AdaptiveESMDA
-from sklearn.preprocessing import StandardScaler
+from sklearn.preprocessing import StandardScaler  # type: ignore
 
 from ert.config import ESSettings, GenKwConfig, ObservationGroups, UpdateSettings
 
@@ -826,9 +826,7 @@ def analysis_EnIF(
 
     if num_obs == 0:
         msg = "No active observations for update step"
-        progress_callback(
-            AnalysisErrorEvent(error_msg=msg, smoother_snapshot=smoother_snapshot)
-        )
+        progress_callback(AnalysisErrorEvent(error_msg=msg, data=smoother_snapshot))
         raise ErtAnalysisError(msg)
 
     if module.localization:
@@ -935,7 +933,7 @@ def analysis_EnIF(
             )
 
             # Matrix representation of graph
-            Z = nx.to_scipy_sparse_array(graph_u_sub)
+            Z = nx.to_scipy_sparse_array(graph_u_sub)  # type: ignore
             Z.data[:] = 1
             Z = Z.tolil()
             Z.setdiag(1)
