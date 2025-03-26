@@ -2,11 +2,11 @@ from __future__ import annotations
 
 from collections import OrderedDict
 from queue import SimpleQueue
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, cast
 
 from PyQt6.QtCore import QSize, Qt
 from PyQt6.QtCore import pyqtSignal as Signal
-from PyQt6.QtGui import QAction, QIcon, QStandardItemModel
+from PyQt6.QtGui import QAction, QIcon, QPalette, QStandardItemModel
 from PyQt6.QtWidgets import (
     QApplication,
     QCheckBox,
@@ -21,6 +21,13 @@ from PyQt6.QtWidgets import (
 )
 
 from ert.gui.ertnotifier import ErtNotifier
+
+
+def is_high_contrast_mode() -> bool:
+    app = cast(QWidget, QApplication.instance())
+    return app.palette().color(QPalette.ColorRole.Window).lightness() > 245
+
+
 from ert.run_models import BaseRunModel, StatusEvents, create_model
 
 from ..summarypanel import SummaryPanel
@@ -58,8 +65,9 @@ class ExperimentPanel(QWidget):
         notifier: ErtNotifier,
         config_file: str,
         ensemble_size: int,
+        parent: QWidget | None = None,
     ):
-        QWidget.__init__(self)
+        QWidget.__init__(self, parent)
         self._notifier = notifier
         self.config = config
         run_path = config.model_config.runpath_format_string
@@ -267,6 +275,11 @@ class ExperimentPanel(QWidget):
             msg_box.setDefaultButton(QMessageBox.StandardButton.No)
 
             msg_box.setWindowModality(Qt.WindowModality.ApplicationModal)
+            if is_high_contrast_mode():
+                msg_box.setStyleSheet("""QMessageBox {color: black; background-color: white;} QLabel {color: black;} QPushButton {color: black;} QCheckBox {
+        color: black;
+    }""")
+                msg_box.update()
 
             msg_box_res = msg_box.exec()
             if msg_box_res == QMessageBox.StandardButton.No:
@@ -300,7 +313,7 @@ class ExperimentPanel(QWidget):
             model.api,
             event_queue,
             self._notifier,
-            self.parent(),  # type: ignore
+            cast(QWidget, self.parent()),
             output_path=self.config.analysis_config.log_path,
         )
         self.experiment_started.emit(self._dialog)
