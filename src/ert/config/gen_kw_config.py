@@ -299,11 +299,11 @@ class GenKwConfig(ParameterConfig):
 
     def load_parameter_graph(
         self, ensemble: Ensemble, group: str, realizations: npt.NDArray[np.int_]
-    ) -> nx.Graph:
+    ) -> nx.Graph[int]:
         sample = ensemble.load_parameters(group, realizations)["values"].values
         _, p = sample.shape
         # Create a graph with no edges
-        graph_independence = nx.Graph()
+        graph_independence: nx.Graph[int] = nx.Graph()
         graph_independence.add_nodes_from(range(p))
         return graph_independence
 

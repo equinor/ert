@@ -27,7 +27,7 @@ if TYPE_CHECKING:
 _logger = logging.getLogger(__name__)
 
 
-def create_flattened_cube_graph(px: int, py: int, pz: int) -> nx.Graph:
+def create_flattened_cube_graph(px: int, py: int, pz: int) -> nx.Graph[int]:
     """graph created with nodes numbered from 0 to px*py*pz
     corresponds to the "vectorization" or flattening of
     a 3D cube with shape (px,py,pz) in the same way as
@@ -35,7 +35,7 @@ def create_flattened_cube_graph(px: int, py: int, pz: int) -> nx.Graph:
     The indexing scheme used to create the graph reflects
     this flattening process"""
 
-    G = nx.Graph()
+    G: nx.Graph[int] = nx.Graph()
     for x in range(px):
         for y in range(py):
             for z in range(pz):
@@ -57,7 +57,9 @@ def create_flattened_cube_graph(px: int, py: int, pz: int) -> nx.Graph:
     return G
 
 
-def adjust_graph_for_masking(G: nx.Graph, mask: npt.NDArray[np.bool_]):
+def adjust_graph_for_masking(
+    G: nx.Graph[int], mask: npt.NDArray[np.bool_]
+) -> nx.Graph[int]:
     """
     Adjust the graph G according to the masking indices.
     Removes nodes specified by the mask and relabels the remaining nodes

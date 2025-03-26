@@ -93,7 +93,7 @@ class ParameterConfig(ABC):
     @abstractmethod
     def load_parameter_graph(
         self, ensemble: Ensemble, group: str, realizations: npt.NDArray[np.int_]
-    ) -> nx.Graph:
+    ) -> nx.Graph[int]:
         """
         Load the graph encoding Markov properties on the parameter `group`
         Often a neighbourhood graph.
