@@ -127,7 +127,7 @@ everest_config.yml::
     install_jobs:
       -
         name: distance3d
-        source: jobs/DISTANCE3d
+        executable: jobs/distance3d.py
 
 
 **Details**
@@ -136,7 +136,7 @@ The custom job can be *installed* by adding information regarding it in the **in
 
 ``name``: the name the job, the same name will be used in the forward model section.
 
-``source``: the file path to the job's config file.
+``executable``: the file path to the job's executable.
 
 
 Model definition
@@ -237,7 +237,7 @@ everest_config.yml::
     install_jobs:
       -
         name: distance3d
-        source: jobs/DISTANCE3D
+        executable: jobs/distance3.py
 
     model:
       realizations: [0]
@@ -265,16 +265,11 @@ Creating the folders and files::
 
     ~/everest_example$: mkdir jobs
     ~/everest_example$: cd jobs
-    ~/everest_example/jobs$: touch DISTANCE3D
     ~/everest_example/jobs$: touch distance3d.py
     ~/everest_example/jobs$: chmod 777 distance3d.py
 
 ``chmod +x distance3d.py``: command is used to change the access permissions for the file ``distance3d.py``, such that execution of the file is
 allowed.
-
-DISTANCE3D::
-
-    EXECUTABLE  distance3d.py
 
 distance3d.py::
 
