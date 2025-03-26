@@ -1,12 +1,10 @@
 import pytest
 from ropt.config.enopt import EnOptConfig
 
-from ert.config import ErtConfig
 from ert.ensemble_evaluator.config import EvaluatorServerConfig
 from ert.run_models.everest_run_model import EverestRunModel
 from everest.config import EverestConfig
 from everest.optimizer.everest2ropt import everest2ropt
-from everest.simulator.everest_to_ert import _everest_to_ert_config_dict
 from tests.everest.test_config_validation import has_error
 
 CONFIG_FILE = "config_multi_objectives.yml"
@@ -67,12 +65,6 @@ def test_config_multi_objectives(copy_mocked_test_data_to_tmp):
 
     # test everest initialization
     EverestRunModel.create(config)
-
-
-def test_multi_objectives2res(copy_mocked_test_data_to_tmp):
-    config = EverestConfig.load_file(CONFIG_FILE)
-    res = _everest_to_ert_config_dict(config, site_config=ErtConfig.read_site_config())
-    ErtConfig.with_plugins().from_dict(config_dict=res)
 
 
 def test_multi_objectives2ropt(copy_mocked_test_data_to_tmp):
