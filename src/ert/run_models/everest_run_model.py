@@ -685,13 +685,14 @@ class EverestRunModel(BaseRunModel):
             all_results=all_results,
         )
 
+        cache_hits_dict: list[dict[str, Any]] = []
         if cache_hits_df is not None and not cache_hits_df.is_empty():
             perturbations = (
                 evaluator_context.perturbations
                 if evaluator_context.perturbations is not None
                 else [-1] * len(model_realizations)
             )
-            event_data = (
+            cache_hits_dict = (
                 cache_hits_df.with_columns(
                     pl.col("flat_index")
                     .map_elements(
@@ -718,7 +719,9 @@ class EverestRunModel(BaseRunModel):
                 .to_dicts()
             )
 
-            self.send_event(EverestCacheHitEvent(batch=self._batch_id, data=event_data))
+            self.send_event(
+                EverestCacheHitEvent(batch=self._batch_id, data=cache_hits_dict)
+            )
 
         control_values_to_simulate = np.array(
             [
@@ -787,24 +790,34 @@ class EverestRunModel(BaseRunModel):
             else None
         )
 
-        # The simulation id's are a simple enumeration over the evaluated
-        # forward models. For the evaluated controls they are therefore
-        # implicitly given by there position in the evaluated_control_indices
-        # list. We store for each control vector that id, or -1 if it was not
-        # evaluated:
-        sim_ids = np.array(
-            [
-                ei.simulation_id if ei.simulation_id is not None else -1
-                for ei in evaluation_infos
-            ],
-            dtype=np.int32,
-        )
+        # Also return for each control vector the simulation id and source batch.
+        sim_ids = []
+        source_batch_ids = []
+        for ei in evaluation_infos:
+            match ei.status:
+                case _EvaluationStatus.TO_SIMULATE:
+                    sim_ids.append(ei.simulation_id)
+                    source_batch_ids.append(self._batch_id)
+                case _EvaluationStatus.CACHED:
+                    sim_id, batch_id = next(
+                        (item["source_simulation_id"], item["source_batch_id"])
+                        for item in cache_hits_dict
+                        if item["target_evaluation_id"] == ei.flat_index
+                    )
+                    sim_ids.append(sim_id)
+                    source_batch_ids.append(batch_id)
+                case _EvaluationStatus.INACTIVE:
+                    sim_ids.append(-1)
+                    source_batch_ids.append(-1)
 
         evaluator_result = EvaluatorResult(
             objectives=objectives,
             constraints=constraints,
             batch_id=self._batch_id,
-            evaluation_info={"sim_ids": sim_ids},
+            evaluation_info={
+                "sim_ids": np.array(sim_ids, dtype=np.int32),
+                "source_batch_ids": np.array(source_batch_ids, dtype=np.int32),
+            },
         )
 
         # increase the batch ID for the next evaluation:
