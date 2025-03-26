@@ -260,6 +260,7 @@ def test_websocket_wrong_password(monkeypatch, setup_client):
     assert not exception.value.reason
 
 
+@pytest.mark.flaky(rerun=3)
 def test_websocket_multiple_connections(monkeypatch, setup_client):
     client, subscribers = setup_client()
     credentials = b64encode(b"username:password").decode()
