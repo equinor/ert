@@ -76,7 +76,7 @@ def adjust_graph_for_masking(
 
     # Step 2: Relabel remaining nodes to 0, 1, 2, ..., G.number_of_nodes - 1
     new_labels = {old_label: new_label for new_label, old_label in enumerate(G.nodes())}
-    G = nx.relabel_nodes(G, new_labels, copy=False)
+    G = nx.relabel_nodes(G, new_labels, copy=True)
 
     return G
 

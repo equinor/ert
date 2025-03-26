@@ -1,0 +1,29 @@
+{
+  "directed": false,
+  "multigraph": false,
+  "graph": {},
+  "nodes": [],
+  "links": [],
+  "mask": [
+    [
+      [
+        true,
+        true
+      ],
+      [
+        true,
+        true
+      ]
+    ],
+    [
+      [
+        true,
+        true
+      ],
+      [
+        true,
+        true
+      ]
+    ]
+  ]
+}
