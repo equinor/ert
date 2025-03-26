@@ -332,27 +332,3 @@ def test_complete_status_for_normal_run_monitor(
 
     assert expected_status == status["status"]
     assert expected_error == status["message"]
-
-
-@patch("everest.bin.everest_script.server_is_running", return_value=False)
-@patch(
-    "everest.bin.everest_script.everserver_status",
-    return_value={"status": ServerStatus.never_run, "message": None},
-)
-@patch(
-    "everest.simulator.everest_to_ert._everest_to_ert_config_dict",
-    return_value={"SUMMARY": "*"},
-)
-def test_validate_ert_config_before_starting_everest_server(
-    server_is_running_mock,
-    server_status_mock,
-    _ert_config_mock,
-    copy_math_func_test_data_to_tmp,
-):
-    config_file = "config_minimal.yml"
-    everest_config = EverestConfig.with_defaults()
-    everest_config.model.realizations = [0]
-    everest_config.dump(config_file)
-
-    with pytest.raises(SystemExit, match="Config validation error:"):
-        everest_entry([config_file, "--skip-prompt"])

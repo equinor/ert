@@ -172,7 +172,7 @@ class EverestRunModel(BaseRunModel):
         _, _, hooked_workflows = workflows_from_dict(config_dict, substitutions)
 
         forward_model_steps, env_pr_fm_step = get_forward_model_steps(
-            config_dict, substitutions
+            everest_config, config_dict, substitutions
         )
 
         env_vars = {}
