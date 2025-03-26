@@ -35,6 +35,9 @@ class PluginsTool(Tool):
         self.__plugins = {}
 
         self.menu = QMenu("&Plugins")
+        self.menu.setStyleSheet(
+            "QMenu {color: black;} QMenu::item:selected {background-color: rgba(70, 140, 235, 50);}"
+        )
         for plugin in plugin_handler:
             plugin_runner = PluginRunner(plugin, ert_config, notifier.storage)
             plugin_runner.setPluginFinishedCallback(self.trigger)

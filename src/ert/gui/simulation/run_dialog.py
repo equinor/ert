@@ -8,7 +8,7 @@ from typing import cast
 from PyQt6.QtCore import QModelIndex, QSize, Qt, QThread, QTimer
 from PyQt6.QtCore import pyqtSignal as Signal
 from PyQt6.QtCore import pyqtSlot as Slot
-from PyQt6.QtGui import QMouseEvent, QMovie, QTextCursor, QTextOption
+from PyQt6.QtGui import QColor, QMouseEvent, QMovie, QTextCursor, QTextOption
 from PyQt6.QtWidgets import (
     QAbstractItemView,
     QDialog,
@@ -234,6 +234,11 @@ class RunDialog(QFrame):
         )
 
         self._total_progress_bar = QProgressBar(self)
+        self._total_progress_bar.setStyleSheet(
+            "QProgressBar::chunk {background-color:"
+            + QColor(70, 140, 230).name()
+            + ";}"
+        )
         self._total_progress_bar.setRange(0, 100)
         self._total_progress_bar.setTextVisible(False)
 
