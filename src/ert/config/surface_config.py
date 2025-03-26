@@ -21,7 +21,7 @@ if TYPE_CHECKING:
     from ert.storage import Ensemble
 
 
-def create_flattened_2d_graph(px: int, py: int) -> nx.Graph:
+def create_flattened_2d_graph(px: int, py: int) -> nx.Graph[int]:
     """Graph created with nodes numbered from 0 to px*py
     corresponds to the "vectorization" or flattening of
     a 2D cube with shape (px,py) in the same way as
@@ -29,7 +29,7 @@ def create_flattened_2d_graph(px: int, py: int) -> nx.Graph:
     The indexing scheme used to create the graph reflects
     this flattening process"""
 
-    G = nx.Graph()
+    G: nx.Graph[int] = nx.Graph()
     for i in range(px):
         for j in range(py):
             index = i * py + j  # Flatten the 2D index to a single index
