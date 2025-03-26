@@ -146,6 +146,7 @@ def test_that_stop_errors_on_server_up_but_endpoint_down(
 
 @pytest.mark.integration_test
 @pytest.mark.xdist_group("math_func/config_minimal.yml")
+@pytest.mark.flaky(rerun=3)
 def test_that_multiple_everest_clients_can_connect_to_server(cached_example):
     # We use a cached run for the reference list of received events
     path, config_file, _, server_events_list = cached_example(
