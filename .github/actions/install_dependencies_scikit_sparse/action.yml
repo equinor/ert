@@ -13,6 +13,4 @@ runs:
         sudo apt-get update
         sudo apt-get install libsuitesparse-dev
         sudo dpkg -L libsuitesparse-dev | grep -E "include|lib"
-
-        sudo apt-get install libeigen3-dev
       shell: bash
