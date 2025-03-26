@@ -672,7 +672,6 @@ dependencies = [
     { name = "fastapi" },
     { name = "filelock" },
     { name = "graphite-maps" },
-    { name = "graphspme" },
     { name = "httpx" },
     { name = "humanize" },
     { name = "iterative-ensemble-smoother" },
@@ -789,7 +788,6 @@ requires-dist = [
     { name = "filelock" },
     { name = "furo", marker = "extra == 'dev'" },
     { name = "graphite-maps", git = "https://github.com/equinor/graphite-maps.git" },
-    { name = "graphspme", git = "https://github.com/equinor/GraphSPME.git?subdirectory=python-package" },
     { name = "httpx" },
     { name = "humanize" },
     { name = "hypothesis", marker = "extra == 'dev'", specifier = ">=6.85,!=6.102.0,!=6.112.3" },
@@ -1039,16 +1037,6 @@ dependencies = [
     { name = "scikit-sparse" },
     { name = "scipy" },
     { name = "tqdm" },
-]
-
-[[package]]
-name = "graphspme"
-version = "0.0.2b1.dev11+gf11786f"
-source = { git = "https://github.com/equinor/GraphSPME.git?subdirectory=python-package#f11786f41ded85b48296080c8141aa6c12c2db61" }
-dependencies = [
-    { name = "numpy" },
-    { name = "pybind11" },
-    { name = "scipy" },
 ]
 
 [[package]]
@@ -2714,15 +2702,6 @@ wheels = [
     { url = "https://files.pythonhosted.org/packages/fe/4f/a2c0ed309167ef436674782dfee4a124570ba64299c551e38d3fdaf0a17b/pyarrow-19.0.1-cp312-cp312-manylinux_2_28_aarch64.whl", hash = "sha256:d383591f3dcbe545f6cc62daaef9c7cdfe0dff0fb9e1c8121101cabe9098cfa6", size = 40507986 },
     { url = "https://files.pythonhosted.org/packages/27/2e/29bb28a7102a6f71026a9d70d1d61df926887e36ec797f2e6acfd2dd3867/pyarrow-19.0.1-cp312-cp312-manylinux_2_28_x86_64.whl", hash = "sha256:b4c4156a625f1e35d6c0b2132635a237708944eb41df5fbe7d50f20d20c17832", size = 42087026 },
     { url = "https://files.pythonhosted.org/packages/16/33/2a67c0f783251106aeeee516f4806161e7b481f7d744d0d643d2f30230a5/pyarrow-19.0.1-cp312-cp312-win_amd64.whl", hash = "sha256:5bd1618ae5e5476b7654c7b55a6364ae87686d4724538c24185bbb2952679960", size = 25250108 },
-]
-
-[[package]]
-name = "pybind11"
-version = "2.13.6"
-source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/d2/c1/72b9622fcb32ff98b054f724e213c7f70d6898baa714f4516288456ceaba/pybind11-2.13.6.tar.gz", hash = "sha256:ba6af10348c12b24e92fa086b39cfba0eff619b61ac77c406167d813b096d39a", size = 218403 }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/13/2f/0f24b288e2ce56f51c920137620b4434a38fd80583dbbe24fc2a1656c388/pybind11-2.13.6-py3-none-any.whl", hash = "sha256:237c41e29157b962835d356b370ededd57594a26d5894a795960f0047cb5caf5", size = 243282 },
 ]
 
 [[package]]
