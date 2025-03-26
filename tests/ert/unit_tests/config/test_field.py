@@ -1,6 +1,9 @@
 import os
 from pathlib import Path
 
+import networkx as nx
+import numpy as np
+import orjson
 import pytest
 import xtgeo
 
@@ -54,6 +57,95 @@ def test_write_to_runpath_produces_the_transformed_field_in_storage(
                 Path(f"export/with/path/{real}"), real, prior_ensemble
             )
         assert not os.path.isfile(f"export/with/path/{real}/permx.grdecl")
+
+
+@pytest.fixture
+def snake_oil_field_config(snake_oil_field_example, storage):
+    ensemble_config = snake_oil_field_example.ensemble_config
+    field_config = ensemble_config["PERMX"]
+    experiment = storage.create_experiment(
+        parameters=ensemble_config.parameter_configuration
+    )
+    ensemble = storage.create_ensemble(experiment, name="prior", ensemble_size=5)
+
+    # Downscale for smaller snapshots
+    field_config.nx = 2
+    field_config.ny = 2
+    field_config.nz = 2
+
+    field_config.save_experiment_data(experiment._path)
+    os.remove(field_config.mask_file)
+    np.save(field_config.mask_file, np.full((2, 2, 2), False, dtype=bool))
+
+    return field_config, ensemble
+
+
+def create_graph_snapshot(field_config, ensemble):
+    graph = field_config.load_parameter_graph(
+        ensemble, "PERMX", np.array(range(ensemble.ensemble_size))
+    )
+    mask = field_config.mask
+
+    return (
+        orjson.dumps(
+            {**nx.node_link_data(graph), "mask": mask.tolist()},
+            option=orjson.OPT_INDENT_2,
+        )
+        .decode("utf-8")
+        .strip()
+        + "\n"
+    )
+
+
+def test_field_grid_mask_correspondence_all_false(snake_oil_field_config, snapshot):
+    field_config, ensemble = snake_oil_field_config
+
+    field_config.mask[:, :, :] = False
+    snapshot.assert_match(create_graph_snapshot(field_config, ensemble), "graph.json")
+
+
+def test_field_grid_mask_correspondence_all_true(snake_oil_field_config, snapshot):
+    field_config, ensemble = snake_oil_field_config
+
+    field_config.mask[:, :, :] = True
+    snapshot.assert_match(create_graph_snapshot(field_config, ensemble), "graph.json")
+
+
+def test_field_grid_mask_correspondence_one_false(snake_oil_field_config, snapshot):
+    field_config, ensemble = snake_oil_field_config
+
+    field_config.mask[:, :, :] = True
+    field_config.mask[1, 1, 1] = False
+
+    snapshot.assert_match(create_graph_snapshot(field_config, ensemble), "graph.json")
+
+
+def test_field_grid_mask_correspondence_one_true(snake_oil_field_config, snapshot):
+    field_config, ensemble = snake_oil_field_config
+
+    field_config.mask[1, 1, 1] = True
+    snapshot.assert_match(create_graph_snapshot(field_config, ensemble), "graph.json")
+
+
+def test_field_grid_mask_correspondence_slice_x_true(snake_oil_field_config, snapshot):
+    field_config, ensemble = snake_oil_field_config
+
+    field_config.mask[0, :, :] = True
+    snapshot.assert_match(create_graph_snapshot(field_config, ensemble), "graph.json")
+
+
+def test_field_grid_mask_correspondence_slice_y_true(snake_oil_field_config, snapshot):
+    field_config, ensemble = snake_oil_field_config
+
+    field_config.mask[:, 0, :] = True
+    snapshot.assert_match(create_graph_snapshot(field_config, ensemble), "graph.json")
+
+
+def test_field_grid_mask_correspondence_slice_z_true(snake_oil_field_config, snapshot):
+    field_config, ensemble = snake_oil_field_config
+
+    field_config.mask[:, :, 0] = True
+    snapshot.assert_match(create_graph_snapshot(field_config, ensemble), "graph.json")
 
 
 @pytest.fixture
