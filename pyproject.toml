@@ -71,7 +71,6 @@ dependencies = [
     "networkx",
     "graphite-maps@git+https://github.com/equinor/graphite-maps.git",
     "scikit-sparse",
-    "graphspme@git+https://github.com/equinor/GraphSPME.git#subdirectory=python-package"
 ]
 
 [project.scripts]
