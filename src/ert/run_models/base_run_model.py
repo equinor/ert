@@ -941,6 +941,7 @@ class UpdateRunModel(BaseRunModel):
                     observations=prior.experiment.observation_keys,
                     global_scaling=weight,
                     rng=self.rng,
+                    random_seed=self.random_seed,
                     progress_callback=functools.partial(
                         self.send_smoother_event,
                         prior.iteration,

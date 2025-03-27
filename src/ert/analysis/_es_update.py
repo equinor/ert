@@ -733,6 +733,7 @@ def enif_update(
     parameters: Iterable[str],
     update_settings: UpdateSettings,
     es_settings: ESSettings,
+    random_seed: int | None = None,
     rng: np.random.Generator | None = None,
     progress_callback: Callable[[AnalysisEvent], None] | None = None,
     global_scaling: float = 1.0,
@@ -755,8 +756,7 @@ def enif_update(
         analysis_EnIF(
             parameters,
             observations,
-            rng,
-            es_settings,
+            random_seed,
             update_settings.alpha,
             update_settings.std_cutoff,
             global_scaling,
@@ -794,8 +794,7 @@ def enif_update(
 def analysis_EnIF(
     parameters: Iterable[str],
     observations: Iterable[str],
-    rng: np.random.Generator,
-    module: ESSettings,
+    random_seed: int | None,
     alpha: float,
     std_cutoff: float,
     global_scaling: float,
@@ -933,6 +932,7 @@ def analysis_EnIF(
         update_indices=update_indices,
         iterative=True,
         verbose_level=5,
+        seed=random_seed,
     )
     X_full = X_full_scaler.inverse_transform(X_full).T
 
