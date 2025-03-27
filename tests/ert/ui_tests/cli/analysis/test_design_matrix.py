@@ -225,8 +225,8 @@ def test_run_poly_example_with_multiple_design_matrix_instances():
                 NUM_REALIZATIONS 10
                 MIN_REALIZATIONS 1
                 GEN_DATA POLY_RES RESULT_FILE:poly.out
-                DESIGN_MATRIX poly_design_1.xlsx
-                DESIGN_MATRIX poly_design_2.xlsx
+                DESIGN_MATRIX poly_design_1.xlsx DEFAULT_SHEET:DefaultSheet
+                DESIGN_MATRIX poly_design_2.xlsx DEFAULT_SHEET:DefaultSheet
                 INSTALL_JOB poly_eval POLY_EVAL
                 FORWARD_MODEL poly_eval
                 """
@@ -300,7 +300,6 @@ def test_design_matrix_on_esmda(experiment_mode, ensemble_name, iterations):
                 "b": values,
             }
         ),
-        pd.DataFrame([]),
     )
 
     with open("poly.ert", "w", encoding="utf-8") as f:
