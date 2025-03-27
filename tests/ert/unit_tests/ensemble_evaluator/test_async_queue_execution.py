@@ -5,6 +5,7 @@ from ert.scheduler import Scheduler, create_driver
 
 @pytest.mark.asyncio
 @pytest.mark.timeout(60)
+@pytest.mark.integration_test
 async def test_happy_path(
     tmpdir,
     make_ensemble,

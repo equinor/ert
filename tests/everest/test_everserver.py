@@ -159,6 +159,7 @@ def test_status_running_complete(_, change_to_tmpdir, mock_server):
     assert status["message"] == "Optimization completed."
 
 
+@pytest.mark.integration_test
 @patch("sys.argv", ["name", "--output-dir", "everest_output"])
 @patch("everest.detached.jobs.everserver._configure_loggers")
 def test_status_failed_job(_, change_to_tmpdir, mock_server):

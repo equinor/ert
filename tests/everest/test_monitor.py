@@ -187,6 +187,7 @@ def test_failed_jobs_monitor(
     assert output.endswith("Failed")
 
 
+@pytest.mark.integration_test
 def test_monitor(monkeypatch, full_snapshot_event, snapshot_update_event, capsys):
     server_mock = MagicMock()
     connection_mock = MagicMock(spec=ClientConnection)
