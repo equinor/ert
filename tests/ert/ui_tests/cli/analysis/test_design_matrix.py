@@ -397,3 +397,35 @@ def test_design_matrix_on_esmda():
             # ceffs_b should be overridden by design matrix and be the same for all realizations
             coeffs_b = ensemble.load_parameters("COEFFS_B")["values"].values.flatten()
             assert values == pytest.approx(coeffs_b, 0.0001)
+
+
+def test_run_poly_example_with_design_matrix_selective_realizations(
+    copy_poly_case_with_design_matrix,
+):
+    num_realizations = 5
+    a_values = list(range(num_realizations))
+    design_dict = {
+        "REAL": [0, 3, 5, 6, 10],
+        "a": a_values,
+        "category": 2 * ["cat1"] + 3 * ["cat2"],
+    }
+    default_list = [["b", 1], ["c", 2]]
+    copy_poly_case_with_design_matrix(design_dict, default_list)
+
+    run_cli(
+        ENSEMBLE_EXPERIMENT_MODE,
+        "--disable-monitoring",
+        "poly.ert",
+        "--experiment-name",
+        "test-experiment",
+        "--realizations",
+        "0,10",
+    )
+    config_path = ErtConfig.from_file("poly.ert").config_path
+    print(config_path)
+
+    realizations_run = os.listdir(Path(config_path) / "poly_out")
+    assert len(realizations_run) == 2
+    assert "realization-0" in realizations_run
+    assert "realization-10" in realizations_run
+    assert "realization-5" not in realizations_run
