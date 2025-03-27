@@ -148,12 +148,18 @@ def _setup_evaluate_ensemble(
 
 
 def _get_active_realizations_list(args: Namespace, config: ErtConfig) -> list[bool]:
-    return (
-        config.analysis_config.design_matrix.active_realizations
-        if config.analysis_config.design_matrix is not None
+    ensemble_size = config.model_config.num_realizations
+    if (
+        config.analysis_config.design_matrix is not None
         and config.analysis_config.design_matrix.active_realizations is not None
-        else _realizations(args, config.model_config.num_realizations).tolist()
-    )
+    ):
+        if args.realizations is None:
+            return config.analysis_config.design_matrix.active_realizations
+        else:
+            ensemble_size = len(
+                config.analysis_config.design_matrix.active_realizations
+            )
+    return _realizations(args, ensemble_size).tolist()
 
 
 def _setup_manual_update(
