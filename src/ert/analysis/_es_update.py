@@ -807,11 +807,6 @@ def analysis_EnIF(
 ) -> None:
     iens_active_index = np.flatnonzero(ens_mask)
 
-    def adaptive_localization_progress_callback(
-        iterable: Sequence[T],
-    ) -> TimedIterator[T]:
-        return TimedIterator(iterable, progress_callback)
-
     progress_callback(AnalysisStatusEvent(msg="Loading observations and responses.."))
     (
         S,
