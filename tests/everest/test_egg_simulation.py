@@ -1,8 +1,8 @@
-import io
 import json
 import os
 
-import polars as pl
+import numpy as np
+import pandas as pd
 import pytest
 
 from ert.config import ErtConfig
@@ -681,19 +681,30 @@ def test_egg_snapshot(snapshot, copy_egg_test_data_to_tmp):
         -1
     ]
 
-    def _df_to_string(df: pl.DataFrame):
-        strbuf = io.StringIO()
-        schema = df.schema
-        df.with_columns(
-            pl.col(c) for c in df.columns if schema[c] == pl.Float32
-        ).write_csv(strbuf)
+    best_controls = best_batch.realization_controls
+    best_objectives_csv = best_batch.perturbation_objectives
+    best_objective_gradients_csv = best_batch.batch_objective_gradient
 
-        return strbuf.getvalue()
+    def _is_close(data, snapshot_name):
+        data = data.to_pandas()
+        snapshot_data = pd.read_csv(snapshot.snapshot_dir / snapshot_name)
+        if data.shape != snapshot_data.shape or not all(
+            data.columns == snapshot_data.columns
+        ):
+            raise ValueError(
+                f"Dataframes have different structures for {snapshot_name}"
+                f"{data}\n\n{snapshot_data}"
+            )
+        tolerance = 1e-15
+        comparison = data.select_dtypes(include=[float, int]).apply(
+            lambda col: np.isclose(col, snapshot_data[col.name], atol=tolerance)
+        )
 
-    best_objectives_csv = _df_to_string(best_batch.perturbation_objectives)
-    best_objective_gradients_csv = _df_to_string(best_batch.batch_objective_gradient)
-    best_controls = _df_to_string(best_batch.realization_controls)
+        # Check if all values match within the tolerance
+        assert comparison.all().all(), (
+            f"Values do not match for {snapshot_name} \n{data}\n\n{snapshot_data}"
+        )
 
-    snapshot.assert_match(best_controls, "best_controls")
-    snapshot.assert_match(best_objectives_csv, "best_objectives_csv")
-    snapshot.assert_match(best_objective_gradients_csv, "best_objective_gradients_csv")
+    _is_close(best_controls, "best_controls")
+    _is_close(best_objectives_csv, "best_objectives_csv")
+    _is_close(best_objective_gradients_csv, "best_objective_gradients_csv")
