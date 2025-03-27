@@ -22,6 +22,7 @@ from everest.detached import (
     wait_for_server,
 )
 from everest.everest_storage import EverestStorage
+from everest.gui.everest_client import EverestClient
 from everest.simulator.everest_to_ert import (
     everest_to_ert_config_dict,
 )
@@ -194,6 +195,11 @@ async def run_everest(options: argparse.Namespace) -> None:
         if options.gui:
             from everest.gui.main import run_gui  # noqa
 
+            client = EverestClient(
+                output_dir=options.config.output_dir,
+                config_file=options.config.config_path,
+            )
+
             monitor_thread = ErtThread(
                 target=run_empty_detached_monitor
                 if options.disable_monitoring
@@ -203,7 +209,7 @@ async def run_everest(options: argparse.Namespace) -> None:
                 daemon=True,
             )
             monitor_thread.start()
-            run_gui(options.config.config_path)
+            run_gui(client, options.config.config_path)
             monitor_thread.join()
         elif options.disable_monitoring:
             run_empty_detached_monitor(

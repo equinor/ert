@@ -7,10 +7,13 @@ from PyQt6.QtCore import QDir
 from PyQt6.QtGui import QIcon
 from PyQt6.QtWidgets import QApplication
 
+from ert.gui.ertnotifier import ErtNotifier
+from ert.gui.simulation.run_dialog import RunDialog
+from everest.gui.everest_client import EverestClient
 from everest.gui.main_window import EverestMainWindow
 
 
-def run_gui(config_file: str) -> None:
+def run_gui(client: EverestClient, config_file: str) -> None:
     # Replace Python's exception handler for SIGINT with the system default.
     #
     # Python's SIGINT handler is the one that raises KeyboardInterrupt. This is
@@ -31,10 +34,28 @@ def run_gui(config_file: str) -> None:
 
     # Add arg parser if we are to pass more opts
 
-    window = EverestMainWindow(config_file)
-    window.run()
-    window.adjustSize()
-    window.show()
-    window.activateWindow()
-    window.raise_()
+    main_window = EverestMainWindow(window_title=f"Everest - {config_file}")
+    main_window.adjustSize()
+    main_window.show()
+    main_window.activateWindow()
+    main_window.raise_()
+
+    run_model_api = client.create_run_model_api()
+    event_queue, event_monitor_thread = client.setup_event_queue_from_ws_endpoint(
+        refresh_interval=0.02, open_timeout=40, websocket_recv_timeout=1.0
+    )
+
+    run_dialog = RunDialog(
+        config_file=config_file,
+        run_model_api=run_model_api,
+        event_queue=event_queue,
+        is_everest=True,
+        notifier=ErtNotifier(),
+    )
+
+    main_window.central_layout.addWidget(run_dialog)
+
+    event_monitor_thread.start()
+    run_dialog.setup_event_monitoring()
+
     app.exec()
