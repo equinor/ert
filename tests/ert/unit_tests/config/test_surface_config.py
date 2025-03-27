@@ -272,7 +272,7 @@ def test_surface_parameter_graph(shape, expected_nodes, expected_links):
         base_surface_path="0",
     )
 
-    g = config.load_parameter_graph(None, None, None)
+    g = config.load_parameter_graph()
     data = nx.node_link_data(g)
     assert data["nodes"] == expected_nodes
     assert data["links"] == expected_links
