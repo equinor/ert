@@ -23,7 +23,21 @@ from graphite_maps.enif import EnIF  # type: ignore
 from graphite_maps.linear_regression import linear_boost_ic_regression  # type: ignore
 from graphite_maps.precision_estimation import fit_precision_cholesky  # type: ignore
 from iterative_ensemble_smoother.experimental import AdaptiveESMDA
+
+# x----x----x----x----x----x----x----x----x----x----x----x----x
+# Temp: Keep edit to spmatrix until fixup is done in graphite-maps
+from scipy.sparse import spmatrix
 from sklearn.preprocessing import StandardScaler  # type: ignore
+
+
+# Patch spmatrix to add A as an alias for .toarray()
+@property
+def A(self):
+    return self.toarray()
+
+
+spmatrix.A = A
+# x----x----x----x----x----x----x----x----x----x----x----x----x
 
 from ert.config import ESSettings, GenKwConfig, ObservationGroups, UpdateSettings
 
