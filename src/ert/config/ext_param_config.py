@@ -133,9 +133,7 @@ class ExtParamConfig(ParameterConfig):
             }
         )
 
-    def load_parameter_graph(
-        self, ensemble: Ensemble, group: str, realizations: npt.NDArray[np.int_]
-    ) -> nx.Graph[int]:
+    def load_parameter_graph(self) -> nx.Graph[int]:
         raise NotImplementedError()
 
     def __len__(self) -> int:
