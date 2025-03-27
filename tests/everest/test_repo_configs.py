@@ -1,5 +1,6 @@
 import os
 
+import pytest
 from ropt.exceptions import ConfigError as ROptConfigError
 
 from everest.config_file_loader import yaml_file_to_substituted_config_dict
@@ -14,6 +15,7 @@ def _get_all_files(folder):
     ]
 
 
+@pytest.mark.integration_test
 def test_all_repo_configs():
     repo_dir = os.path.join(os.path.dirname(__file__), "..")
     repo_dir = os.path.realpath(repo_dir)

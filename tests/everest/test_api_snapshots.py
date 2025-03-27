@@ -189,6 +189,7 @@ def test_api_summary_snapshot_missing_batch(snapshot, cached_example):
     )
 
 
+@pytest.mark.integration_test
 @pytest.mark.parametrize(
     "config_file",
     [

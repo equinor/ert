@@ -57,6 +57,7 @@ def test_create_run_args_separate_base_and_name(prior_ensemble, run_paths):
     assert substitutions.get("<ECLBASE>") == "base<IENS>"
 
 
+@pytest.mark.integration_test
 def test_assert_symlink_deleted(snake_oil_field_example, storage, run_paths):
     ert_config = snake_oil_field_example
     experiment_id = storage.create_experiment(

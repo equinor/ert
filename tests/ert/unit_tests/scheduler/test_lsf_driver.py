@@ -1028,6 +1028,7 @@ async def test_bjobs_exec_host_logs_only_once(tmp_path, job_name, caplog):
     assert caplog.text.count("was assigned to host:") == 1
 
 
+@pytest.mark.integration_test
 async def test_lsf_stdout_file(tmp_path, job_name):
     os.chdir(tmp_path)
     driver = LsfDriver()
@@ -1043,6 +1044,7 @@ async def test_lsf_stdout_file(tmp_path, job_name):
     assert "yay" in lsf_stdout
 
 
+@pytest.mark.integration_test
 async def test_lsf_dumps_stderr_to_file(tmp_path, job_name):
     os.chdir(tmp_path)
     driver = LsfDriver()
