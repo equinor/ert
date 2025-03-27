@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import functools
 import logging
-import pickle
 import time
 from collections.abc import Callable, Iterable, Sequence
 from fnmatch import fnmatch
@@ -883,27 +882,6 @@ def analysis_EnIF(
         shape=(num_obs, num_obs),
         format="csc",
     )
-
-    with open("./X_full.pkl", "wb") as file:
-        pickle.dump(X_full, file)
-
-    with open("./prec_u.pkl", "wb") as file:
-        pickle.dump(Prec_u, file)
-
-    with open("./S.pkl", "wb") as file:
-        pickle.dump(S, file)
-
-    with open("./observation_values.pkl", "wb") as file:
-        pickle.dump(observation_values, file)
-
-    with open("./Prec_eps.pkl", "wb") as file:
-        pickle.dump(Prec_eps, file)
-
-    with open("./observation_errors.pkl", "wb") as file:
-        pickle.dump(observation_errors, file)
-
-    with open("./H.pkl", "wb") as file:
-        pickle.dump(H, file)
 
     # Initialize EnIF object with full precision matrices
     gtmap = EnIF(
