@@ -190,7 +190,5 @@ class SurfaceConfig(ParameterConfig):
         ensemble_size = len(ds.realizations)
         return ds["values"].values.reshape(ensemble_size, -1).T
 
-    def load_parameter_graph(
-        self, ensemble: Ensemble, group: str, realizations: npt.NDArray[np.int_]
-    ) -> nx.Graph:  # type: ignore
+    def load_parameter_graph(self) -> nx.Graph:  # type: ignore
         return create_flattened_2d_graph(px=self.ncol, py=self.nrow)

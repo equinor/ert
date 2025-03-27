@@ -873,9 +873,7 @@ def analysis_EnIF(
         X_local_scaler = StandardScaler()
         X_scaled = X_local_scaler.fit_transform(X_local.T)
 
-        graph_u_sub = config_node.load_parameter_graph(
-            source_ensemble, param_group, iens_active_index
-        )
+        graph_u_sub = config_node.load_parameter_graph()
 
         # This will work for dim(X_scaled) on order O(n^5)
         Prec_u_sub, *_ = fit_precision_cholesky(X_scaled, graph_u_sub, verbose_level=2)

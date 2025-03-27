@@ -300,9 +300,7 @@ class Field(ParameterConfig):
             )
         return np.load(self.mask_file)
 
-    def load_parameter_graph(
-        self, ensemble: Ensemble, group: str, realizations: npt.NDArray[np.int_]
-    ) -> nx.Graph:  # type: ignore
+    def load_parameter_graph(self) -> nx.Graph:  # type: ignore
         parameter_graph = create_flattened_cube_graph(
             px=self.nx, py=self.ny, pz=self.nz
         )
