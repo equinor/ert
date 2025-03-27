@@ -31,8 +31,8 @@ from sklearn.preprocessing import StandardScaler  # type: ignore
 
 
 # Patch spmatrix to add A as an alias for .toarray()
-@property
-def A(self):
+@property  # type: ignore
+def A(self):  # type: ignore
     return self.toarray()
 
 
