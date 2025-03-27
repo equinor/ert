@@ -24,7 +24,7 @@ from ert.shared.status.utils import convert_to_numeric
 class DesignMatrix:
     xls_filename: Path
     design_sheet: str
-    default_sheet: str
+    default_sheet: str | None
 
     def __post_init__(self) -> None:
         try:
@@ -44,7 +44,7 @@ class DesignMatrix:
         filename = Path(cast(str, config_list[0]))
         options = cast(dict[str, str], config_list[1])
         design_sheet = options.get("DESIGN_SHEET", "DesignSheet")
-        default_sheet = options.get("DEFAULT_SHEET", "DefaultSheet")
+        default_sheet = options.get("DEFAULT_SHEET", None)
         errors = []
         if filename.suffix not in {
             ".xlsx",
@@ -64,7 +64,6 @@ class DesignMatrix:
         if errors:
             raise ConfigValidationError.from_collected(errors)
         assert design_sheet is not None
-        assert default_sheet is not None
         return cls(
             xls_filename=filename,
             design_sheet=design_sheet,
@@ -211,15 +210,21 @@ class DesignMatrix:
             error_msg = "\n".join(error_list)
             raise ValueError(f"Design matrix is not valid, error(s):\n{error_msg}")
 
-        defaults_to_use = DesignMatrix._read_defaultssheet(
-            self.xls_filename, self.default_sheet, design_matrix_df.columns.to_list()
-        )
-        default_df = pd.DataFrame(
-            {k: [v] * len(design_matrix_df.index) for k, v in defaults_to_use.items()},
-            index=design_matrix_df.index,
-        )
+        if self.default_sheet is not None:
+            defaults_to_use = DesignMatrix._read_defaultssheet(
+                self.xls_filename,
+                self.default_sheet,
+                design_matrix_df.columns.to_list(),
+            )
+            default_df = pd.DataFrame(
+                {
+                    k: [v] * len(design_matrix_df.index)
+                    for k, v in defaults_to_use.items()
+                },
+                index=design_matrix_df.index,
+            )
 
-        design_matrix_df = pd.concat([design_matrix_df, default_df], axis=1)
+            design_matrix_df = pd.concat([design_matrix_df, default_df], axis=1)
 
         transform_function_definitions: list[TransformFunctionDefinition] = []
         for parameter in design_matrix_df.columns:
