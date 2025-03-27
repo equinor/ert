@@ -22,6 +22,10 @@ jobs:
       with:
         os: ${{ inputs.os }}
 
+    - uses: ./.github/actions/install_dependencies_scikit_sparse
+      with:
+        os: ${{ inputs.os }}
+
     - uses: actions/setup-python@v5
       id: setup_python
       with:

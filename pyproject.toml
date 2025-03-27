@@ -68,6 +68,9 @@ dependencies = [
     "websockets",
     "xarray",
     "xtgeo >= 3.3.0",
+    "networkx",
+    "graphite-maps@git+https://github.com/equinor/graphite-maps.git",
+    "scikit-sparse",
 ]
 
 [project.scripts]
@@ -131,6 +134,7 @@ types = [
     "types-tqdm",
     "types-psutil",
     "types-setuptools",
+    "types-networkx",
 ]
 everest = [
     "websockets",

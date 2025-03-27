@@ -36,6 +36,10 @@ jobs:
       with:
         os: ${{ matrix.os }}
 
+    - uses: ./.github/actions/install_dependencies_scikit_sparse
+      with:
+        os: ${{ matrix.os }}
+
     - name: Set up Python ${{ matrix.python-version }}
       uses: actions/setup-python@v5
       with:
