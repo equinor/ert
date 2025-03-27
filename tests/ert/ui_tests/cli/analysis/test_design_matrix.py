@@ -10,6 +10,7 @@ import numpy as np
 import pandas as pd
 import pytest
 
+from ert.cli.main import ErtCliError
 from ert.config import DESIGN_MATRIX_GROUP, ErtConfig
 from ert.config.parsing.config_errors import ConfigValidationError
 from ert.mode_definitions import (
@@ -412,3 +413,43 @@ def test_run_poly_example_with_design_matrix_selective_realizations(
     assert "realization-0" in realizations_run
     assert "realization-10" in realizations_run
     assert "realization-5" not in realizations_run
+
+
+@pytest.mark.usefixtures("copy_poly_case")
+@pytest.mark.parametrize(
+    "experiment_mode",
+    [
+        (ES_MDA_MODE),
+        (ENSEMBLE_SMOOTHER_MODE),
+    ],
+)
+def test_design_matrix_on_esmda_fail_without_updateable_parameters(
+    copy_poly_case_with_design_matrix, experiment_mode
+):
+    reals = range(10)
+    copy_poly_case_with_design_matrix(
+        {"REAL": list(reals), "a": [random.uniform(0, 2) for _ in reals]},
+        [["b", 1], ["c", 2]],
+    )
+
+    with open("poly.ert", "a", encoding="utf-8") as f:
+        f.write(
+            dedent(
+                """\
+                GEN_KW COEFFS coeff_priors
+                OBS_CONFIG observations
+                """
+            )
+        )
+
+    with pytest.raises(
+        ErtCliError,
+        match="No parameters to update as all parameters were set to update:false!",
+    ):
+        run_cli(
+            experiment_mode,
+            "--disable-monitoring",
+            "poly.ert",
+            "--experiment-name",
+            "test-experiment",
+        )
