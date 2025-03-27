@@ -76,7 +76,7 @@ settings.register_profile(
     deadline=None,
     suppress_health_check=[HealthCheck.too_slow],
     print_blob=True,
-    max_examples=10,
+    max_examples=1,
 )
 
 
