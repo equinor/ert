@@ -220,7 +220,7 @@ def copy_poly_case_with_design_matrix(copy_case):
                     NUM_REALIZATIONS {num_realizations}
                     MIN_REALIZATIONS 1
                     GEN_DATA POLY_RES RESULT_FILE:poly.out
-                    DESIGN_MATRIX poly_design.xlsx
+                    DESIGN_MATRIX poly_design.xlsx DEFAULT_SHEET:DefaultSheet
                     INSTALL_JOB poly_eval POLY_EVAL
                     FORWARD_MODEL poly_eval
                     """
