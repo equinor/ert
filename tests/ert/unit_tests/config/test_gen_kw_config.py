@@ -3,6 +3,7 @@ import re
 from pathlib import Path
 from textwrap import dedent
 
+import networkx as nx
 import pytest
 from lark import Token
 
@@ -785,3 +786,27 @@ def test_validation_derrf_distribution(
                 GenKwConfig.from_config_list(config_list)
         else:
             GenKwConfig.from_config_list(config_list)
+
+
+@pytest.mark.parametrize("num_tfs", [0, 1, 3, 8, 15, 40, 100, 1000])
+def test_genkw_paramgraph_transformfn_node_correspondence(num_tfs):
+    config = GenKwConfig(
+        name="COEFFS",
+        forward_init=True,
+        update=True,
+        template_file="N/A",
+        output_file="N/A",
+        transform_function_definitions=[
+            TransformFunctionDefinition(
+                name=f"tf_{i}", param_name="UNIFORM", values=[0, 1]
+            )
+            for i in range(num_tfs)
+        ],
+    )
+
+    graph = config.load_parameter_graph()
+
+    data = nx.node_link_data(graph)
+    assert data["links"] == []
+
+    assert data["nodes"] == [{"id": i} for i in range(num_tfs)]
