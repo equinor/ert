@@ -12,7 +12,6 @@ from typing import TYPE_CHECKING, Any
 
 from lxml import etree
 from opentelemetry.trace import Status, StatusCode
-from pydantic_core._pydantic_core import ValidationError
 
 from _ert.events import Id, RealizationTimeout, event_from_dict
 from ert.callbacks import forward_model_ok
@@ -328,10 +327,8 @@ class Job:
             self._end_time = time.time()
             await self._scheduler.completed_jobs.put(self.iens)
 
-        try:
-            msg = event_from_dict(event_dict)
-        except ValidationError:
-            raise
+        msg = event_from_dict(event_dict)
+
         await self._scheduler._events.put(msg)
 
 
