@@ -934,13 +934,17 @@ class LocalEnsemble(BaseMode):
                             )
                         )
                     elif "time" in pivoted:
-                        joined = observations_for_type.join_asof(
-                            pivoted,
-                            by=[
-                                "response_key",
-                                *[k for k in response_cls.primary_key if k != "time"],
-                            ],
+                        by_cols = [
+                            "response_key",
+                            *[k for k in response_cls.primary_key if k != "time"],
+                        ]
+                        joined = observations_for_type.sort(
+                            by=[*by_cols, "time"]
+                        ).join_asof(
+                            pivoted.sort(by=[*by_cols, "time"]),
+                            by=by_cols,
                             on="time",
+                            check_sortedness=False,  # Ref: https://github.com/pola-rs/polars/issues/21693
                             strategy="nearest",
                             tolerance="1s",
                         )
