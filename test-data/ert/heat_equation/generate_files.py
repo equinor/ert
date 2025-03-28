@@ -125,17 +125,17 @@ if __name__ == "__main__":
     )
 
     with open("observations", "w", encoding="utf-8") as fout:
-        for obs_time in obs_times:
-            fout.write(
-                dedent(
-                    f"""
+        fout.writelines(
+            dedent(
+                f"""
             GENERAL_OBSERVATION MY_OBS_{obs_time} {{
                 DATA       = MY_RESPONSE;
                 RESTART    = {obs_time};
                 OBS_FILE   = obs_{obs_time}.txt;
             }};"""
-                )
             )
+            for obs_time in obs_times
+        )
 
     for obs_time in obs_times:
         with open(f"obs_{obs_time}.txt", "w", encoding="utf-8") as fobs:

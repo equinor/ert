@@ -98,5 +98,4 @@ if __name__ == "__main__":
     index = sorted((obs.x, obs.y) for obs in obs_coordinates)
     for time_step in obs_times:
         with open(f"gen_data_{time_step}.out", "w", encoding="utf-8") as f:
-            for i in index:
-                f.write(f"{response[time_step][i]}\n")
+            f.writelines(f"{response[time_step][i]}\n" for i in index)

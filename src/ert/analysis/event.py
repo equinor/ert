@@ -51,8 +51,7 @@ class DataSection:
         df = pd.DataFrame(self.data, columns=self.header)
         with open(f_path.with_suffix(".report"), "w", encoding="utf-8") as fout:
             if self.extra:
-                for k, v in self.extra.items():
-                    fout.write(f"{k}: {v}\n")
+                fout.writelines(f"{k}: {v}\n" for k, v in self.extra.items())
             fout.write(df.to_markdown(tablefmt="simple_outline", floatfmt=".4f"))
         df.to_csv(f_path.with_suffix(".csv"))
 
