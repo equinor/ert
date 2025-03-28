@@ -18,6 +18,8 @@ from PyQt6.QtWidgets import (
 from ert.gui.ertwidgets.stringbox import StringBox
 from ert.validation import ActiveRange, RangeSubsetStringArgument
 
+from ..ertwidgets.models import ActiveRealizationsModel
+
 if TYPE_CHECKING:
     from ert.config import DesignMatrix
 
@@ -83,10 +85,11 @@ class DesignMatrixPanel(QDialog):
         active_realizations_field.setValidator(
             RangeSubsetStringArgument(ActiveRange(design_matrix.active_realizations))
         )
+        assert isinstance(active_realizations_field.model, ActiveRealizationsModel)
         active_realizations_field.model.ensemble_size = len(
             design_matrix.active_realizations
         )
-        active_realizations_field.model.setValueFromMask(  # type: ignore
+        active_realizations_field.model.setValueFromMask(
             design_matrix.active_realizations
         )
         show_dm_param_button = QPushButton("Show parameters")

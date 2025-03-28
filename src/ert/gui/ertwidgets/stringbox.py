@@ -10,7 +10,7 @@ from .validationsupport import ValidationSupport
 if TYPE_CHECKING:
     from ert.validation import ArgumentDefinition
 
-    from .models import TextModel
+    from .models import ActiveRealizationsModel, TextModel
 
 
 class StringBox(QLineEdit):
@@ -19,7 +19,7 @@ class StringBox(QLineEdit):
 
     def __init__(
         self,
-        model: TextModel,
+        model: TextModel | ActiveRealizationsModel,
         default_string: str = "",
         continuous_update: bool = False,
         placeholder_text: str = "",
@@ -98,7 +98,7 @@ class StringBox(QLineEdit):
         self.setText(str(text))
 
     @property
-    def model(self) -> TextModel:
+    def model(self) -> TextModel | ActiveRealizationsModel:
         return self._model
 
     def setValidator(self, validator: ArgumentDefinition) -> None:  # type: ignore

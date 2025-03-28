@@ -57,7 +57,7 @@ class LoadResultsPanel(QWidget):
         ensemble_size = self._facade.get_ensemble_size()
         self._active_realizations_model = ActiveRealizationsModel(ensemble_size)
         self._active_realizations_field = StringBox(
-            self._active_realizations_model,  # type: ignore
+            self._active_realizations_model,
             "load_results_manually/Realizations",
         )
         self._active_realizations_field.textChanged.connect(self.text_change)
