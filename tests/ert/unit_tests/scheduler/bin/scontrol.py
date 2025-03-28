@@ -56,7 +56,7 @@ def main() -> None:
         print(f"   JobState={state}")
         if returncode:
             print(f"   ExitCode={returncode}:0")
-        print("")
+        print()
 
 
 if __name__ == "__main__":
