@@ -287,7 +287,6 @@ def _everserver_thread(
 
     @app.post("/" + START_EXPERIMENT_ENDPOINT)
     async def start_experiment(
-        config: EverestConfig,
         request: Request,
         background_tasks: BackgroundTasks,
         credentials: HTTPBasicCredentials = Depends(security),
@@ -295,6 +294,8 @@ def _everserver_thread(
         _log(request)
         _check_user(credentials)
         if not shared_data["started"]:
+            request_data = await request.json()
+            config = EverestConfig.with_plugins(request_data)
             runner = ExperimentRunner(config, shared_data, msg_queue)
             try:
                 background_tasks.add_task(runner.run)
