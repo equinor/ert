@@ -178,7 +178,7 @@ def fixture_copy_case(tmp_path_factory, source_root, monkeypatch):
         shutil.copytree(
             os.path.join(source_root, "test-data/ert", path),
             tmp_path / "test_data",
-            ignore=shutil.ignore_patterns("storage"),
+            ignore=shutil.ignore_patterns("storage", "poly_out"),
         )
         monkeypatch.chdir(tmp_path / "test_data")
 
