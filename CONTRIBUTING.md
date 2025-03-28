@@ -77,6 +77,9 @@ Some tips and tricks:
             <Function test_that_history_observation_errors_are_calculated_correctly>
 ```
 
+These fillers fail to add meaning. What does "working correctly" entail? What
+is "expected"? How is it "handled"?
+
 * Answers the question: what is correct behavior?
 
 ```
