@@ -99,7 +99,7 @@ def rangestring_to_list(rangestring: str) -> list[int]:
     [1, 2]
 
     """
-    result = set()
+    result: set[int] = set()
     if not rangestring:
         return []
     for _range in rangestring.split(","):
@@ -109,8 +109,7 @@ def rangestring_to_list(rangestring: str) -> list[int]:
             start, end = map(int, _range.strip().split("-"))
             if end < start:
                 raise ValueError(f"Range {start}-{end} has invalid direction")
-            for value in range(start, end + 1):
-                result.add(value)
+            result.update(range(start, end + 1))
         elif _range:
             result.add(int(_range))
     return list(result)
