@@ -1,8 +1,14 @@
+import contextlib
 from dataclasses import dataclass
 
 from PyQt6.QtCore import Qt
 from PyQt6.QtCore import pyqtSlot as Slot
-from PyQt6.QtWidgets import QFormLayout, QLabel, QWidget
+from PyQt6.QtWidgets import (
+    QFormLayout,
+    QHBoxLayout,
+    QLabel,
+    QWidget,
+)
 
 from ert.config import AnalysisConfig
 from ert.gui.ertnotifier import ErtNotifier
@@ -70,12 +76,19 @@ class EnsembleExperimentPanel(ExperimentConfigPanel):
         runpath_label = CopyableLabel(text=run_path)
         layout.addRow("Runpath:", runpath_label)
 
-        number_of_realizations_label = QLabel(f"<b>{ensemble_size}</b>")
-        layout.addRow(QLabel("Number of realizations:"), number_of_realizations_label)
+        ensemble_size_container = QWidget()
+        ensemble_size_layout = QHBoxLayout(ensemble_size_container)
+        ensemble_size_layout.setContentsMargins(0, 0, 0, 0)
+        self.ensemble_size_label = QLabel(f"<b>{ensemble_size}</b>")
+        ensemble_size_layout.addWidget(self.ensemble_size_label)
 
+        layout.addRow(QLabel("Ensemble size:"), ensemble_size_container)
+
+        self._active_realizations_format_model = ActiveRealizationsModel(ensemble_size)
         self._active_realizations_field = StringBox(
-            ActiveRealizationsModel(ensemble_size),  # type: ignore
-            "config/simulation/active_realizations",
+            self._active_realizations_format_model,
+            self._active_realizations_format_model.getDefaultValue(),
+            continuous_update=True,
         )
         self._active_realizations_field.setValidator(
             RangeStringArgument(ensemble_size),
@@ -87,11 +100,18 @@ class EnsembleExperimentPanel(ExperimentConfigPanel):
             layout.addRow(
                 "Design Matrix",
                 DesignMatrixPanel.get_design_matrix_button(
-                    self._active_realizations_field, design_matrix
+                    self._active_realizations_field,
+                    design_matrix,
+                    self.ensemble_size_label,
+                    ensemble_size,
                 ),
             )
 
         self.setLayout(layout)
+
+        self._active_realizations_field.textChanged.connect(
+            self._update_ensemble_size_from_active_realizations
+        )
 
         self._active_realizations_field.getValidationSupport().validationChanged.connect(
             self.simulationConfigurationChanged
@@ -114,6 +134,16 @@ class EnsembleExperimentPanel(ExperimentConfigPanel):
         self._experiment_name_field.setPlaceholderText(
             self.notifier.storage.get_unique_experiment_name(ENSEMBLE_EXPERIMENT_MODE)
         )
+
+    def _update_ensemble_size_from_active_realizations(self) -> None:
+        with contextlib.suppress(ValueError):
+            if isinstance(
+                self._active_realizations_field.model, ActiveRealizationsModel
+            ):
+                current_ensemble_size = sum(
+                    self._active_realizations_field.model.getActiveRealizationsMask()
+                )
+                self.ensemble_size_label.setText(f"<b>{current_ensemble_size}</b>")
 
     def isConfigurationValid(self) -> bool:
         self.blockSignals(True)

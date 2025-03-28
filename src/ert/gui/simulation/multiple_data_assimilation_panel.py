@@ -1,11 +1,12 @@
 from __future__ import annotations
 
+import contextlib
 from dataclasses import dataclass
 from typing import TYPE_CHECKING, Any
 
 from PyQt6.QtCore import pyqtSlot as Slot
 from PyQt6.QtGui import QFont
-from PyQt6.QtWidgets import QCheckBox, QFormLayout, QLabel, QWidget
+from PyQt6.QtWidgets import QCheckBox, QFormLayout, QHBoxLayout, QLabel, QWidget
 
 from ert.gui.ertnotifier import ErtNotifier
 from ert.gui.ertwidgets import (
@@ -76,8 +77,13 @@ class MultipleDataAssimilationPanel(ExperimentConfigPanel):
         runpath_label = CopyableLabel(text=run_path)
         layout.addRow("Runpath:", runpath_label)
 
-        number_of_realizations_label = QLabel(f"<b>{ensemble_size}</b>")
-        layout.addRow(QLabel("Number of realizations:"), number_of_realizations_label)
+        ensemble_size_container = QWidget()
+        ensemble_size_layout = QHBoxLayout(ensemble_size_container)
+        ensemble_size_layout.setContentsMargins(0, 0, 0, 0)
+        self.ensemble_size_label = QLabel(f"<b>{ensemble_size}</b>")
+        ensemble_size_layout.addWidget(self.ensemble_size_label)
+
+        layout.addRow(QLabel("Ensemble size:"), ensemble_size_container)
 
         self._target_ensemble_format_model = TargetEnsembleModel(
             analysis_config, notifier
@@ -101,8 +107,9 @@ class MultipleDataAssimilationPanel(ExperimentConfigPanel):
 
         self._active_realizations_model = ActiveRealizationsModel(ensemble_size)
         self._active_realizations_field = StringBox(
-            self._active_realizations_model,  # type: ignore
-            "config/simulation/active_realizations",
+            self._active_realizations_model,
+            self._active_realizations_model.getDefaultValue(),
+            continuous_update=True,
         )
         self._active_realizations_field.setObjectName("active_realizations_box")
         self._active_realizations_field.setValidator(RangeStringArgument(ensemble_size))
@@ -123,6 +130,9 @@ class MultipleDataAssimilationPanel(ExperimentConfigPanel):
         self._ensemble_selector.currentIndexChanged.connect(self.update_experiment_name)
         layout.addRow("Restart from:", self._ensemble_selector)
 
+        self._active_realizations_field.textChanged.connect(
+            self._update_ensemble_size_from_active_realizations
+        )
         self._experiment_name_field.getValidationSupport().validationChanged.connect(
             self.simulationConfigurationChanged
         )
@@ -141,7 +151,10 @@ class MultipleDataAssimilationPanel(ExperimentConfigPanel):
             layout.addRow(
                 "Design Matrix",
                 DesignMatrixPanel.get_design_matrix_button(
-                    self._active_realizations_field, design_matrix
+                    self._active_realizations_field,
+                    design_matrix,
+                    self.ensemble_size_label,
+                    ensemble_size,
                 ),
             )
 
@@ -184,6 +197,16 @@ class MultipleDataAssimilationPanel(ExperimentConfigPanel):
 
         self._evaluate_weights_box_enabled()
 
+    def _update_ensemble_size_from_active_realizations(self) -> None:
+        with contextlib.suppress(ValueError):
+            if isinstance(
+                self._active_realizations_field.model, ActiveRealizationsModel
+            ):
+                current_ensemble_size = sum(
+                    self._active_realizations_field.model.getActiveRealizationsMask()
+                )
+                self.ensemble_size_label.setText(f"<b>{current_ensemble_size}</b>")
+
     def _evaluate_weights_box_enabled(self) -> None:
         self._relative_iteration_weights_box.setEnabled(
             not self._restart_box.isChecked()
@@ -204,7 +227,9 @@ class MultipleDataAssimilationPanel(ExperimentConfigPanel):
             self._realizations_from_fs()
         else:
             # If box is unchecked we reset to the default mask
-            self._active_realizations_field.model.setValue(value="")
+            self._active_realizations_field.model.setValue(
+                self._active_realizations_field.model.getDefaultValue()
+            )
 
     def _createInputForWeights(self, layout: QFormLayout) -> None:
         relative_iteration_weights_model = ValueModel(self.weights)
