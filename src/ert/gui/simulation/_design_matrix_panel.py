@@ -83,6 +83,9 @@ class DesignMatrixPanel(QDialog):
         active_realizations_field.setValidator(
             RangeSubsetStringArgument(ActiveRange(design_matrix.active_realizations))
         )
+        active_realizations_field.model.ensemble_size = len(
+            design_matrix.active_realizations
+        )
         active_realizations_field.model.setValueFromMask(  # type: ignore
             design_matrix.active_realizations
         )
@@ -97,7 +100,7 @@ class DesignMatrixPanel(QDialog):
         show_dm_param_button.clicked.connect(
             lambda: DesignMatrixPanel.show_dm_params(design_matrix)
         )
-        dm_ensemble_size = len(design_matrix.active_realizations)
+        dm_ensemble_size = sum(design_matrix.active_realizations)
         if dm_ensemble_size != ensemble_size:
             ensemble_size_label.setText(f"<b>{dm_ensemble_size}</b>")
             parent_widget = ensemble_size_label.parent()

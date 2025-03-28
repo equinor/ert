@@ -1,3 +1,4 @@
+import contextlib
 from dataclasses import dataclass
 
 from PyQt6.QtCore import Qt
@@ -83,9 +84,11 @@ class EnsembleExperimentPanel(ExperimentConfigPanel):
 
         layout.addRow(QLabel("Ensemble size:"), ensemble_size_container)
 
+        self._active_realizations_format_model = ActiveRealizationsModel(ensemble_size)
         self._active_realizations_field = StringBox(
-            ActiveRealizationsModel(ensemble_size),  # type: ignore
-            "config/simulation/active_realizations",
+            self._active_realizations_format_model,  # type: ignore
+            self._active_realizations_format_model.getDefaultValue(),
+            continuous_update=True,
         )
         self._active_realizations_field.setValidator(
             RangeStringArgument(ensemble_size),
@@ -132,11 +135,12 @@ class EnsembleExperimentPanel(ExperimentConfigPanel):
             self.notifier.storage.get_unique_experiment_name(ENSEMBLE_EXPERIMENT_MODE)
         )
 
-    def _update_ensemble_size_from_active_realizations(self):
-        current_ensemble_size = len(
-            self._active_realizations_field.model.getActiveRealizationsMask()
-        )
-        self.ensemble_size_label.setText(f"<b>{current_ensemble_size}<b>")
+    def _update_ensemble_size_from_active_realizations(self) -> None:
+        with contextlib.suppress(ValueError):
+            current_ensemble_size = sum(
+                self._active_realizations_field.model.getActiveRealizationsMask()
+            )
+            self.ensemble_size_label.setText(f"<b>{current_ensemble_size}</b>")
 
     def isConfigurationValid(self) -> bool:
         self.blockSignals(True)
