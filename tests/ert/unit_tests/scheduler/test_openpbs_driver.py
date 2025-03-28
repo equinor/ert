@@ -265,7 +265,7 @@ async def test_faulty_qstat(monkeypatch, tmp_path, qstat_script, started_expecte
 @pytest.mark.usefixtures("capturing_qsub")
 async def test_full_resource_string(realization_memory, num_cpu, cluster_label):
     driver = OpenPBSDriver(
-        cluster_label=cluster_label if cluster_label else None,
+        cluster_label=cluster_label or None,
     )
     await driver.submit(
         0, "sleep", num_cpu=num_cpu, realization_memory=realization_memory

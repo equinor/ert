@@ -584,7 +584,7 @@ async def test_that_bsub_will_retry_and_fail(
     driver._sleep_time_between_cmd_retries = 0.0
     match_str = (
         f"failed after 2 attempts with exit code {exit_code}.*"
-        f'error: "{error_msg if error_msg else "<empty>"}"'
+        f'error: "{error_msg or "<empty>"}"'
         if exit_code != 199
         else 'failed with exit code 199.*error: "Not recognized"'
     )
