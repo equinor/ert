@@ -107,7 +107,8 @@ class MultipleDataAssimilationPanel(ExperimentConfigPanel):
         self._active_realizations_model = ActiveRealizationsModel(ensemble_size)
         self._active_realizations_field = StringBox(
             self._active_realizations_model,
-            "config/simulation/active_realizations",
+            self._active_realizations_model.getDefaultValue(),
+            continuous_update=True,
         )
         self._active_realizations_field.setObjectName("active_realizations_box")
         self._active_realizations_field.setValidator(RangeStringArgument(ensemble_size))
@@ -212,7 +213,9 @@ class MultipleDataAssimilationPanel(ExperimentConfigPanel):
             self._realizations_from_fs()
         else:
             # If box is unchecked we reset to the default mask
-            self._active_realizations_field.model.setValue(value="")
+            self._active_realizations_field.model.setValue(
+                self._active_realizations_field.model.getDefaultValue()
+            )
 
     def _createInputForWeights(self, layout: QFormLayout) -> None:
         relative_iteration_weights_model = ValueModel(self.weights)
