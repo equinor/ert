@@ -14,7 +14,7 @@ import numpy as np
 import pandas as pd
 import xarray as xr
 from pydantic import BaseModel
-from typing_extensions import TypedDict, deprecated
+from typing_extensions import TypedDict
 
 from ert.config import GenKwConfig
 from ert.storage.mode import BaseMode, Mode, require_write
@@ -674,58 +674,6 @@ class LocalEnsemble(BaseMode):
             loaded.append(df)
 
         return pl.concat(loaded) if loaded else pl.DataFrame().lazy()
-
-    @deprecated("Use load_responses")
-    def load_all_summary_data(
-        self,
-        keys: list[str] | None = None,
-        realization_index: int | None = None,
-    ) -> pd.DataFrame:
-        """
-        Load all summary data for realizations into pandas DataFrame.
-
-        Parameters
-        ----------
-        keys : list of str, optional
-            list of keys to load. If None, all keys are loaded.
-        realization_index : int, optional
-
-        Returns
-        -------
-        summary_data : DataFrame
-            Loaded pandas DataFrame with summary data.
-        """
-
-        realizations = self.get_realization_list_with_responses()
-        if realization_index is not None:
-            if realization_index not in realizations:
-                raise IndexError(f"No such realization {realization_index}")
-            realizations = [realization_index]
-
-        try:
-            df_pl = self.load_responses("summary", tuple(realizations))
-
-        except (ValueError, KeyError):
-            return pd.DataFrame()
-        df_pl = df_pl.pivot(
-            on="response_key", index=["realization", "time"], sort_columns=True
-        )
-        df_pl = df_pl.rename({"time": "Date", "realization": "Realization"})
-
-        df_pandas = (
-            df_pl.to_pandas()
-            .set_index(["Realization", "Date"])
-            .sort_values(by=["Date", "Realization"])
-        )
-
-        if keys:
-            summary_keys = self.experiment.response_type_to_response_keys["summary"]
-            summary_keys = sorted(
-                [key for key in keys if key in summary_keys]
-            )  # ignore keys that doesn't exist
-            return df_pandas[summary_keys]
-
-        return df_pandas
 
     def load_all_gen_kw_data(
         self,
