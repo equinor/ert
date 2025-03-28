@@ -734,7 +734,7 @@ and environment variables are exposed in the form 'os.NAME', for example:
             raise exp from error
 
     @classmethod
-    def with_plugins(cls, config_dict):
+    def with_plugins(cls, config_dict: dict[str, Any] | ConfigDict) -> Self:
         site_config = ErtConfig.read_site_config()
         ert_config: ErtConfig = ErtConfig.with_plugins().from_dict(
             config_dict=site_config
