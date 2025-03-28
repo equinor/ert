@@ -146,7 +146,6 @@ class SurfaceConfig(ParameterConfig):
     def save_parameters(
         self,
         ensemble: Ensemble,
-        group: str,
         realization: int,
         data: npt.NDArray[np.float64],
     ) -> None:
@@ -158,12 +157,11 @@ class SurfaceConfig(ParameterConfig):
                 )
             }
         )
-        ensemble.save_parameters(group, realization, ds)
+        ensemble.save_parameters(self.name, realization, ds)
 
-    @staticmethod
     def load_parameters(
-        ensemble: Ensemble, group: str, realizations: npt.NDArray[np.int_]
+        self, ensemble: Ensemble, realizations: npt.NDArray[np.int_]
     ) -> npt.NDArray[np.float64]:
-        ds = ensemble.load_parameters(group, realizations)
+        ds = ensemble.load_parameters(self.name, realizations)
         ensemble_size = len(ds.realizations)
         return ds["values"].values.reshape(ensemble_size, -1).T
