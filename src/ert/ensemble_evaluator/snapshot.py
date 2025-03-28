@@ -4,9 +4,10 @@ import logging
 from collections import Counter, defaultdict
 from collections.abc import Mapping
 from datetime import datetime
-from typing import Any, TypeVar, cast, get_args
+from typing import TYPE_CHECKING, Any, TypeVar, cast, get_args
 
-from PyQt6.QtGui import QColor
+if TYPE_CHECKING:
+    from PyQt6.QtGui import QColor
 from typing_extensions import TypedDict
 
 from _ert.events import (
