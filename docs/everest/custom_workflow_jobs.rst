@@ -13,16 +13,7 @@ The standard template to install a job inside the config file is as follows:
     install_workflow_jobs:
       -
         name: <name used inside config>
-        source: <path to job config file>
-
-Where the job config file contains a reference to an executable file:
-
-.. code-block:: bash
-
-    EXECUTABLE <executable_file_path>
-
-This file should point to the location of the executable file relative to the job config file.
-In this case it is next to the script.
+        executable: <path to job executable>
 
 Workflows can then be specified to run the installed jobs for specific triggers:
 
