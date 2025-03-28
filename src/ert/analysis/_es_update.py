@@ -129,7 +129,7 @@ def _load_param_ensemble_array(
     iens_active_index: npt.NDArray[np.int_],
 ) -> npt.NDArray[np.float64]:
     config_node = ensemble.experiment.parameter_configuration[param_group]
-    return config_node.load_parameters(ensemble, param_group, iens_active_index)
+    return config_node.load_parameters(ensemble, iens_active_index)
 
 
 def _expand_wildcards(

@@ -82,7 +82,7 @@ class ParameterConfig(ABC):
 
     @abstractmethod
     def load_parameters(
-        self, ensemble: Ensemble, group: str, realizations: npt.NDArray[np.int_]
+        self, ensemble: Ensemble, realizations: npt.NDArray[np.int_]
     ) -> npt.NDArray[np.float64]:
         """
         Load the parameter from internal storage for the given ensemble.
