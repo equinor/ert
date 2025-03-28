@@ -227,5 +227,4 @@ if __name__ == "__main__":
     time_map = runSimulator(simulator, history_simulator, report_step_count)
 
     with open("time_map.txt", "w", encoding="utf-8") as f:
-        for t in time_map:
-            f.write(f"{t}\n")
+        f.writelines(f"{t}\n" for t in time_map)

@@ -189,8 +189,7 @@ def test_that_having_no_refcase_but_history_observations_causes_exception():
 def test_that_index_list_is_read(tmpdir):
     with tmpdir.as_cwd():
         with open("obs_data.txt", "w", encoding="utf-8") as fh:
-            for i in range(5):
-                fh.write(f"{float(i)} 0.1\n")
+            fh.writelines(f"{float(i)} 0.1\n" for i in range(5))
         observations = ErtConfig.from_dict(
             {
                 "GEN_DATA": [
@@ -219,8 +218,7 @@ def test_that_index_file_is_read(tmpdir):
         with open("obs_idx.txt", "w", encoding="utf-8") as fh:
             fh.write("0\n2\n4\n6\n8")
         with open("obs_data.txt", "w", encoding="utf-8") as fh:
-            for i in range(5):
-                fh.write(f"{float(i)} 0.1\n")
+            fh.writelines(f"{float(i)} 0.1\n" for i in range(5))
         observations = ErtConfig.from_dict(
             {
                 "GEN_DATA": [
@@ -589,8 +587,7 @@ def test_that_history_observations_are_loaded(tmpdir, keys, with_ext):
 def test_that_different_length_values_fail(tmpdir):
     with tmpdir.as_cwd():
         with open("obs_data.txt", "w", encoding="utf-8") as fh:
-            for i in range(5):
-                fh.write(f"{float(i)} 0.1\n")
+            fh.writelines(f"{float(i)} 0.1\n" for i in range(5))
         with pytest.raises(ConfigValidationError, match="must be of equal length"):
             ErtConfig.from_dict(
                 {

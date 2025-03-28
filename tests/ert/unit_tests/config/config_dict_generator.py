@@ -727,14 +727,16 @@ def to_config_file(filename, config_values):
         ]
         for keyword, keyword_value in config_dict.items():
             if keyword in tuple_value_keywords:
-                for tuple_key, tuple_value in keyword_value:
-                    config.write(f"{keyword} {tuple_key} {tuple_value}\n")
+                config.writelines(
+                    f"{keyword} {tuple_key} {tuple_value}\n"
+                    for tuple_key, tuple_value in keyword_value
+                )
             elif keyword == ConfigKeys.FORWARD_MODEL:
-                for job_name, job_args in keyword_value:
-                    config.write(
-                        f"{keyword} {job_name}"
-                        f"({', '.join(f'{a}={b}' for a, b in job_args)})\n"
-                    )
+                config.writelines(
+                    f"{keyword} {job_name}"
+                    f"({', '.join(f'{a}={b}' for a, b in job_args)})\n"
+                    for job_name, job_args in keyword_value
+                )
             elif keyword == ConfigKeys.FIELD:
                 for line in keyword_value:
                     config.write(keyword)
@@ -756,23 +758,25 @@ def to_config_file(filename, config_values):
                     config.write(" ".join(f"{k}:{v}" for k, v in line[1].items()))
                     config.write("\n")
             elif keyword == ConfigKeys.INSTALL_JOB_DIRECTORY:
-                for install_dir in keyword_value:
-                    config.write(f"{keyword} {install_dir}\n")
+                config.writelines(
+                    f"{keyword} {install_dir}\n" for install_dir in keyword_value
+                )
             elif keyword == ConfigKeys.ANALYSIS_SET_VAR:
-                for statement in keyword_value:
-                    config.write(
-                        f"{keyword} {statement[0]} {statement[1]} {statement[2]}\n"
-                    )
+                config.writelines(
+                    f"{keyword} {statement[0]} {statement[1]} {statement[2]}\n"
+                    for statement in keyword_value
+                )
             elif keyword == ConfigKeys.QUEUE_OPTION:
-                for setting in keyword_value:
-                    config.write(
-                        f"{keyword} {setting[0]} {setting[1]}"
-                        + (f" {setting[2]}\n" if len(setting) == 3 else "\n")
-                    )
+                config.writelines(
+                    f"{keyword} {setting[0]} {setting[1]}"
+                    + (f" {setting[2]}\n" if len(setting) == 3 else "\n")
+                    for setting in keyword_value
+                )
             elif keyword in {ConfigKeys.TIME_MAP, ConfigKeys.OBS_CONFIG}:
                 config.write(f"{keyword} {keyword_value[0]}\n")
             elif keyword == ConfigKeys.INSTALL_JOB:
-                for fm in keyword_value:
-                    config.write(f"{keyword} {fm[0]} {fm[1][0]}\n")
+                config.writelines(
+                    f"{keyword} {fm[0]} {fm[1][0]}\n" for fm in keyword_value
+                )
             else:
                 config.write(f"{keyword} {keyword_value}\n")
