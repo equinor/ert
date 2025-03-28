@@ -8,6 +8,104 @@ The following is a set of guidelines for contributing to ERT.
    can see how to set that up [here](https://pre-commit.com/).
 2. All code must be testable and unit tested.
 
+
+## Test Naming
+
+We strive to, but often fail, to use test names that are meaningful. Ideally,
+the output of `pytest --collect-only tests/` should tell you all you need to know
+about why the test is present and what it tests for.
+
+Good examples:
+```
+<Dir ert>
+  <Package tests>
+    <Package ert>
+      <Package ui_tests>
+        <Package cli>
+          <Package analysis>
+            <Module test_adaptive_localization.py>
+              <Function test_that_adaptive_localization_with_cutoff_1_equals_ensemble_prior>
+              <Function test_that_adaptive_localization_works_with_a_single_observation>
+              <Function test_that_adaptive_localization_works_with_multiple_observations>
+              <Function test_that_adaptive_localization_with_cutoff_0_equals_ESupdate>
+              <Function test_that_posterior_generalized_variance_increases_in_cutoff>
+            ...
+        <Package config>
+          <Package parsing>
+              ...
+              <Function test_that_missing_arglist_does_not_affect_subsequent_calls>
+              <Function test_that_setenv_does_not_expand_envvar>
+              <Function test_that_realisation_is_a_alias_of_realization>
+              <Function test_that_new_line_can_be_escaped>
+              <Function test_that_unknown_queue_option_gives_error_message>
+```
+
+Bad examples:
+
+```
+<Dir ert>
+  <Package tests>
+    <Package ert>
+      <Package unit_tests>
+        <Package cli>
+          <Module test_cli_monitor.py>
+            <Function test_color_always>
+            <Function test_legends>
+            <Function test_result_success>
+            <Function test_result_failure>
+            <Function test_print_progress>
+        <Package config>
+          <Package parsing>
+            <Module test_config_schema_deprecations.py>
+              <Function test_is_angle_bracketed>
+          <Module test_summary_config.py>
+            <Function test_bad_user_config_file_error_message>
+```
+
+Some tips and tricks:
+
+* Avoid smells such as "works", "correctly", "as_expected", "are_handled", etc.
+
+```
+            <Function test_forward_model_job[This style of args works without infinite substitution loop.]>
+            <Function test_that_arglist_is_parsed_correctly>
+            <Function test_that_history_observation_errors_are_calculated_correctly>
+            <Function test_that_double_comments_are_handled>
+            <Function test_that_quotations_in_forward_model_arglist_are_handled_correctly>
+            <Function test_that_the_manage_experiments_tool_can_be_used>
+            <Function test_that_parsing_workflows_gives_expected>
+            <Function test_that_history_observation_errors_are_calculated_correctly>
+```
+
+* Answers the question: what is correct behavior?
+
+```
+            <Function test_that_config_path_substitution_is_the_name_of_the_configs_directory>
+            <Function test_when_forward_model_contains_multiple_steps_just_one_checksum_status_is_given>
+```
+
+* You can rely on file name (and directory name) to provide context
+
+```
+          <Module test_create_forward_model_json.py>
+            <Function test_that_values_with_brackets_are_omitted>
+            <Function test_that_executables_in_path_are_not_made_realpath>
+```
+
+* You can provide context of parameters with `id=`:
+
+```
+            <Function test_get_number_of_active_realizations_varies_when_rerun_or_new_iteration[rerun_so_total_realization_count_is_not_affected_by_previous_failed_realizations]>
+            <Function test_get_number_of_active_realizations_varies_when_rerun_or_new_iteration[new_iteration_so_total_realization_count_is_only_previously_successful_realizations]>
+```
+
+However, sometimes it is best to split those up:
+
+```
+            <Function test_number_of_active_realizations_for_reruns_is_unaffected_by_previous_failed_realizations>
+            <Function test_number_of_active_realizations_for_new_iteration_is_previously_successful_realizations>
+```
+
 ## Test categories
 
 Tests that are in the `tests/ert/unit_tests` directory and are
