@@ -1,3 +1,4 @@
+import contextlib
 from dataclasses import dataclass
 
 import numpy as np
@@ -51,8 +52,8 @@ class ManualUpdatePanel(ExperimentConfigPanel):
         runpath_label = CopyableLabel(text=run_path)
         layout.addRow("Runpath:", runpath_label)
 
-        ensemble_size_label = QLabel(f"<b>{ensemble_size}</b>")
-        layout.addRow(QLabel("Ensemble size:"), ensemble_size_label)
+        self.ensemble_size_label = QLabel(f"<b>{ensemble_size}</b>")
+        layout.addRow(QLabel("Ensemble size:"), self.ensemble_size_label)
 
         self._ensemble_format_model = TargetEnsembleModel(analysis_config, notifier)
         self._ensemble_format_field = StringBox(
@@ -69,9 +70,11 @@ class ManualUpdatePanel(ExperimentConfigPanel):
         self._analysis_module_edit.setObjectName("ensemble_smoother_edit")
         layout.addRow("Analysis module:", self._analysis_module_edit)
 
+        self._active_realizations_model = ActiveRealizationsModel(ensemble_size)
         self._active_realizations_field = StringBox(
-            ActiveRealizationsModel(ensemble_size, show_default=False),
-            "config/simulation/active_realizations",
+            self._active_realizations_model,
+            self._active_realizations_model.getDefaultValue(),
+            continuous_update=True,
         )
         self._realizations_validator = EnsembleRealizationsArgument(
             self._ensemble_selector.selected_ensemble, max_value=ensemble_size
@@ -80,6 +83,9 @@ class ManualUpdatePanel(ExperimentConfigPanel):
         self._realizations_from_fs()
         layout.addRow("Active realizations", self._active_realizations_field)
 
+        self._active_realizations_field.textChanged.connect(
+            self._update_ensemble_size_from_active_realizations
+        )
         self._active_realizations_field.getValidationSupport().validationChanged.connect(
             self.simulationConfigurationChanged
         )
@@ -103,6 +109,16 @@ class ManualUpdatePanel(ExperimentConfigPanel):
             realizations=self._active_realizations_field.text(),
             target_ensemble=self._ensemble_format_model.getValue(),  # type: ignore
         )
+
+    def _update_ensemble_size_from_active_realizations(self) -> None:
+        with contextlib.suppress(ValueError):
+            if isinstance(
+                self._active_realizations_field.model, ActiveRealizationsModel
+            ):
+                current_ensemble_size = sum(
+                    self._active_realizations_field.model.getActiveRealizationsMask()
+                )
+                self.ensemble_size_label.setText(f"<b>{current_ensemble_size}</b>")
 
     def _realizations_from_fs(self) -> None:
         ensemble = self._ensemble_selector.selected_ensemble

@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import contextlib
 from dataclasses import dataclass
 from typing import TYPE_CHECKING, Any
 
@@ -79,8 +80,8 @@ class MultipleDataAssimilationPanel(ExperimentConfigPanel):
         ensemble_size_container = QWidget()
         ensemble_size_layout = QHBoxLayout(ensemble_size_container)
         ensemble_size_layout.setContentsMargins(0, 0, 0, 0)
-        ensemble_size_label = QLabel(f"<b>{ensemble_size}</b>")
-        ensemble_size_layout.addWidget(ensemble_size_label)
+        self.ensemble_size_label = QLabel(f"<b>{ensemble_size}</b>")
+        ensemble_size_layout.addWidget(self.ensemble_size_label)
 
         layout.addRow(QLabel("Ensemble size:"), ensemble_size_container)
 
@@ -129,6 +130,9 @@ class MultipleDataAssimilationPanel(ExperimentConfigPanel):
         self._ensemble_selector.currentIndexChanged.connect(self.update_experiment_name)
         layout.addRow("Restart from:", self._ensemble_selector)
 
+        self._active_realizations_field.textChanged.connect(
+            self._update_ensemble_size_from_active_realizations
+        )
         self._experiment_name_field.getValidationSupport().validationChanged.connect(
             self.simulationConfigurationChanged
         )
@@ -149,7 +153,7 @@ class MultipleDataAssimilationPanel(ExperimentConfigPanel):
                 DesignMatrixPanel.get_design_matrix_button(
                     self._active_realizations_field,
                     design_matrix,
-                    ensemble_size_label,
+                    self.ensemble_size_label,
                     ensemble_size,
                 ),
             )
@@ -192,6 +196,16 @@ class MultipleDataAssimilationPanel(ExperimentConfigPanel):
             )
 
         self._evaluate_weights_box_enabled()
+
+    def _update_ensemble_size_from_active_realizations(self) -> None:
+        with contextlib.suppress(ValueError):
+            if isinstance(
+                self._active_realizations_field.model, ActiveRealizationsModel
+            ):
+                current_ensemble_size = sum(
+                    self._active_realizations_field.model.getActiveRealizationsMask()
+                )
+                self.ensemble_size_label.setText(f"<b>{current_ensemble_size}</b>")
 
     def _evaluate_weights_box_enabled(self) -> None:
         self._relative_iteration_weights_box.setEnabled(
