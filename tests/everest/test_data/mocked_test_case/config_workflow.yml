@@ -33,7 +33,7 @@ install_jobs:
 install_workflow_jobs:
   -
     name: test_wf
-    source: jobs/TEST_WF
+    executable: jobs/test_wf.py
 
 model:
   realizations: [0, 1]
