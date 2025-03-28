@@ -211,7 +211,7 @@ def test_well_update(change_to_tmpdir):
     )
     output_file = "ordered_well_data.json"
 
-    for idx, _ in enumerate(additional_data_files):
+    for idx in range(len(additional_data_files)):
         add_data_files = additional_data_files[: idx + 1]
         merge_well_data = _dump_merge_data(
             well_data_file,

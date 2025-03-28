@@ -369,7 +369,7 @@ def test_commented_out_substitution(min_config, change_to_tmpdir):
         yaml.dump(config, f)
 
     with fileinput.input("config.yml", inplace=True) as fin:
-        for _, line in enumerate(fin):
+        for line in fin:
             if "step2 abc" in line:
                 print(" # - step2 r{{sub}} blabla")
             else:
