@@ -489,9 +489,7 @@ def test_write_runpath_file(storage, itr, run_paths):
     exp_runpaths = list(map(os.path.realpath, exp_runpaths))
 
     with open(runpath_list_path, encoding="utf-8") as f:
-        dumped_runpaths = list(
-            zip(*[line.split() for line in f.readlines()], strict=False)
-        )[1]
+        dumped_runpaths = list(zip(*[line.split() for line in f], strict=False))[1]
 
     assert list(exp_runpaths) == list(dumped_runpaths)
 
