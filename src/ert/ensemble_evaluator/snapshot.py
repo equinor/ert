@@ -366,7 +366,7 @@ class EnsembleSnapshot:
                 end_time = convert_iso8601_to_datetime(timestamp)
 
                 if type(event) is ForwardModelStepFailure:
-                    error = event.error_msg if event.error_msg else ""
+                    error = event.error_msg or ""
                 else:
                     # Make sure error msg from previous failed run is replaced
                     error = ""

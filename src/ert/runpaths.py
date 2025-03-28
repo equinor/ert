@@ -91,7 +91,7 @@ class Runpaths:
             for iteration in iteration_numbers:
                 for realization in realization_numbers:
                     job_name_or_eclbase = self._substitutions.substitute_real_iter(
-                        self._eclbase if self._eclbase else self._jobname_format,
+                        self._eclbase or self._jobname_format,
                         realization,
                         iteration,
                     )

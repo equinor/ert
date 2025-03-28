@@ -57,7 +57,7 @@ class _Legend(QWidget):
         layout.setContentsMargins(0, 0, 0, 0)
 
         self.legend_marker = _LegendMarker(color)
-        self.legend_marker.setToolTip(legend if legend else "")
+        self.legend_marker.setToolTip(legend or "")
 
         layout.addWidget(self.legend_marker)
         self.legend_label = QLabel(legend)
@@ -128,7 +128,7 @@ class DataTypeKeysWidget(QWidget):
         self.data_type_keys_widget.setCurrentIndex(self.filter_model.index(0, 0))
 
     def setSearchString(self, filter_: str | None) -> None:
-        self.filter_model.setFilterFixedString(filter_ if filter_ else "")
+        self.filter_model.setFilterFixedString(filter_ or "")
 
     def showFilterPopup(self) -> None:
         self.__filter_popup.show()
