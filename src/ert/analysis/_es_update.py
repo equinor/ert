@@ -301,8 +301,8 @@ def _load_observations_and_responses(
                 obs_scaling=obs_scaling,
                 response_mean=response_mean,
                 response_std=response_std,
-                response_mean_mask=response_mean_mask,
-                response_std_mask=response_std_mask,
+                response_mean_mask=bool(response_mean_mask),
+                response_std_mask=bool(response_std_mask),
                 index=index,
             )
         )
