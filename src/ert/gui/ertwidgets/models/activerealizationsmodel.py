@@ -22,11 +22,11 @@ class ActiveRealizationsModel(ValueModel):
     def setValueFromMask(self, mask: Collection[bool | int]) -> None:
         self.setValue(mask_to_rangestring(mask))
 
-    def getDefaultValue(self) -> str | None:
+    def getDefaultValue(self) -> str:
         if self.show_default:
             size = self.ensemble_size
             return f"0-{size - 1:d}"
-        return None
+        return ""
 
     def getActiveRealizationsMask(self) -> list[bool]:
         return ActiveRange(rangestring=self.getValue(), length=self.ensemble_size).mask

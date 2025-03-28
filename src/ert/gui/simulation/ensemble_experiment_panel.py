@@ -86,7 +86,7 @@ class EnsembleExperimentPanel(ExperimentConfigPanel):
 
         self._active_realizations_format_model = ActiveRealizationsModel(ensemble_size)
         self._active_realizations_field = StringBox(
-            self._active_realizations_format_model,  # type: ignore
+            self._active_realizations_format_model,
             self._active_realizations_format_model.getDefaultValue(),
             continuous_update=True,
         )
@@ -137,10 +137,13 @@ class EnsembleExperimentPanel(ExperimentConfigPanel):
 
     def _update_ensemble_size_from_active_realizations(self) -> None:
         with contextlib.suppress(ValueError):
-            current_ensemble_size = sum(
-                self._active_realizations_field.model.getActiveRealizationsMask()
-            )
-            self.ensemble_size_label.setText(f"<b>{current_ensemble_size}</b>")
+            if isinstance(
+                self._active_realizations_field.model, ActiveRealizationsModel
+            ):
+                current_ensemble_size = sum(
+                    self._active_realizations_field.model.getActiveRealizationsMask()
+                )
+                self.ensemble_size_label.setText(f"<b>{current_ensemble_size}</b>")
 
     def isConfigurationValid(self) -> bool:
         self.blockSignals(True)

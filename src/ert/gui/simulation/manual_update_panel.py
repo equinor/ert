@@ -70,7 +70,7 @@ class ManualUpdatePanel(ExperimentConfigPanel):
         layout.addRow("Analysis module:", self._analysis_module_edit)
 
         self._active_realizations_field = StringBox(
-            ActiveRealizationsModel(ensemble_size, show_default=False),  # type: ignore
+            ActiveRealizationsModel(ensemble_size, show_default=False),
             "config/simulation/active_realizations",
         )
         self._realizations_validator = EnsembleRealizationsArgument(
