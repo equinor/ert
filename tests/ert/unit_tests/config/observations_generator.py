@@ -235,43 +235,43 @@ def observations(draw, ensemble_keys, summary_keys, std_cutoff, start_date):
             general_observations(ensemble_keys, std_cutoff, unique_names)
         )
     if summary_keys is not None:
-        observation_generators.append(
-            summary_observations(summary_keys, std_cutoff, unique_names, dates)
-        )
-        observation_generators.append(
-            st.builds(
-                HistoryObservation,
-                error=st.floats(
-                    min_value=std_cutoff,
-                    max_value=1e20,
-                    allow_nan=False,
-                    allow_infinity=False,
-                ),
-                segment=st.lists(
-                    st.builds(
-                        Segment,
-                        name=names,
-                        start=st.integers(min_value=1, max_value=10),
-                        stop=st.integers(min_value=1, max_value=10),
-                        error=st.floats(
-                            min_value=0.01,
-                            max_value=1e20,
-                            allow_nan=False,
-                            allow_infinity=False,
-                            exclude_min=True,
-                        ),
-                        error_min=st.floats(
-                            min_value=0.0,
-                            max_value=1e20,
-                            allow_nan=False,
-                            allow_infinity=False,
-                            exclude_min=True,
-                        ),
+        observation_generators.extend(
+            (
+                summary_observations(summary_keys, std_cutoff, unique_names, dates),
+                st.builds(
+                    HistoryObservation,
+                    error=st.floats(
+                        min_value=std_cutoff,
+                        max_value=1e20,
+                        allow_nan=False,
+                        allow_infinity=False,
                     ),
-                    max_size=2,
+                    segment=st.lists(
+                        st.builds(
+                            Segment,
+                            name=names,
+                            start=st.integers(min_value=1, max_value=10),
+                            stop=st.integers(min_value=1, max_value=10),
+                            error=st.floats(
+                                min_value=0.01,
+                                max_value=1e20,
+                                allow_nan=False,
+                                allow_infinity=False,
+                                exclude_min=True,
+                            ),
+                            error_min=st.floats(
+                                min_value=0.0,
+                                max_value=1e20,
+                                allow_nan=False,
+                                allow_infinity=False,
+                                exclude_min=True,
+                            ),
+                        ),
+                        max_size=2,
+                    ),
+                    name=unique_summary_names,
                 ),
-                name=unique_summary_names,
-            ),
+            )
         )
     return draw(
         st.lists(
