@@ -12,7 +12,7 @@ class ActiveRealizationsModel(ValueModel):
         self._custom = False
 
     def setValue(self, value: str | None) -> None:
-        if not value or not value.strip() or value == self.getDefaultValue():
+        if value == self.getDefaultValue():
             self._custom = False
             ValueModel.setValue(self, self.getDefaultValue())
         else:
