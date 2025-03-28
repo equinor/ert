@@ -202,6 +202,8 @@ select = [
     "UP",    # pyupgrade
     "ICN",   # flake8-import-conventions
     "PIE",   # flake8-pie
+    "TRY203", 
+    "TRY300",
 ]
 preview = true
 ignore = [

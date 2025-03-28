@@ -68,14 +68,11 @@ async def wait_for_server_to_complete(config):
                 return
 
     driver = await start_server(config, logging.DEBUG)
-    try:
-        wait_for_server(config.output_dir, 120)
-        start_experiment(
-            server_context=ServerConfig.get_server_context(config.output_dir),
-            config=config,
-        )
-    except (SystemExit, RuntimeError) as e:
-        raise e
+    wait_for_server(config.output_dir, 120)
+    start_experiment(
+        server_context=ServerConfig.get_server_context(config.output_dir),
+        config=config,
+    )
     await server_running()
 
 
