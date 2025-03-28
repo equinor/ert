@@ -353,7 +353,7 @@ class GenKwConfig(ParameterConfig):
         )
 
         log10_data = {
-            tf.name: math.log(data[tf.name], 10)
+            tf.name: math.log10(data[tf.name])
             for tf in self.transform_functions
             if tf.use_log
         }
