@@ -186,7 +186,7 @@ def test_run_poly_example_with_design_matrix_and_genkw_merge(default_values, err
         np.testing.assert_array_equal(params[:, 1], 10 * [1])
         np.testing.assert_array_equal(params[:, 2], 10 * [2])
     with open("poly_out/realization-0/iter-0/my_output", encoding="utf-8") as f:
-        output = [line.strip() for line in f.readlines()]
+        output = [line.strip() for line in f]
     assert output[0] == "a: 0"
     assert output[1] == "b: 1"
     assert output[2] == "c: 2"

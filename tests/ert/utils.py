@@ -36,7 +36,7 @@ def source_dir() -> Path:
         # This is to find root dir for git worktrees
         elif (current_path / ".git").is_file():
             with open(current_path / ".git", encoding="utf-8") as f:
-                for line in f.readlines():
+                for line in f:
                     if "gitdir:" in line:
                         return current_path
 
