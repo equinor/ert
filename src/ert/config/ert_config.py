@@ -24,7 +24,6 @@ from pydantic import field_validator
 from pydantic.dataclasses import dataclass, rebuild_dataclass
 
 from ert.plugins import ErtPluginManager
-from ert.plugins.workflow_config import ErtScriptWorkflow
 from ert.substitutions import Substitutions
 
 from ._design_matrix_validator import DesignMatrixValidator
@@ -68,7 +67,13 @@ from .parsing.observations_parser import (
 )
 from .queue_config import QueueConfig
 from .workflow import Workflow
-from .workflow_job import ErtScriptLoadFailure, WorkflowJob
+from .workflow_job import (
+    ErtScriptLoadFailure,
+    ErtScriptWorkflow,
+    ExecutableWorkflow,
+    _WorkflowJob,
+    workflow_job_from_file,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -306,19 +311,29 @@ def workflows_from_dict(
 
     for workflow_job in workflow_job_info:
         try:
-            # WorkflowJob.fromFile only throws error if a
+            # workflow_job_from_file only throws error if a
             # non-readable file is provided.
             # Non-existing files are caught by the new parser
-            new_job = WorkflowJob.from_file(
+            new_job = workflow_job_from_file(
                 config_file=workflow_job[0],
                 name=None if len(workflow_job) == 1 else workflow_job[1],
             )
             name = new_job.name
             if name in workflow_jobs:
+                prop = (
+                    new_job.executable
+                    if isinstance(new_job, ExecutableWorkflow)
+                    else new_job.ert_script
+                )
+                old_prop = (
+                    workflow_jobs[name].executable
+                    if isinstance(workflow_jobs[name], ExecutableWorkflow)
+                    else workflow_jobs[name].ert_script
+                )
                 ConfigWarning.warn(
                     f"Duplicate workflow jobs with name {name!r}, choosing "
-                    f"{new_job.executable or new_job.ert_script!r} over "
-                    f"{workflow_jobs[name].executable or workflow_jobs[name].ert_script!r}",
+                    f"{prop!r} over "
+                    f"{old_prop!r}",
                     name,
                 )
             workflow_jobs[name] = new_job
@@ -334,7 +349,7 @@ def workflows_from_dict(
     for job_path in workflow_job_dir_info:
         for file_name in _get_files_in_directory(job_path, errors):
             try:
-                new_job = WorkflowJob.from_file(config_file=file_name)
+                new_job = workflow_job_from_file(config_file=file_name)
                 name = new_job.name
                 if name in workflow_jobs:
                     ConfigWarning.warn(
@@ -365,7 +380,7 @@ def workflows_from_dict(
                 workflow_jobs,
             )
             for job, args in workflow:
-                if job.ert_script:
+                if isinstance(job, ErtScriptWorkflow):
                     try:
                         job.ert_script.validate(args)
                     except ConfigValidationError as err:
@@ -558,7 +573,7 @@ class ErtConfig:
     random_seed: int | None = None
     analysis_config: AnalysisConfig = field(default_factory=AnalysisConfig)
     queue_config: QueueConfig = field(default_factory=QueueConfig)
-    workflow_jobs: dict[str, WorkflowJob] = field(default_factory=dict)
+    workflow_jobs: dict[str, _WorkflowJob] = field(default_factory=dict)
     workflows: dict[str, Workflow] = field(default_factory=dict)
     hooked_workflows: defaultdict[HookRuntime, list[Workflow]] = field(
         default_factory=lambda: defaultdict(list)
