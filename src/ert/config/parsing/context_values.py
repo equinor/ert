@@ -69,7 +69,7 @@ class ContextFloat(float):
         return new_instance
 
 
-class ContextString(str):
+class ContextString(str):  # noqa: FURB189
     @classmethod
     def from_token(cls, token: FileContextToken) -> "ContextString":
         return cls(val=str(token), token=token, keyword_token=token)
@@ -92,7 +92,7 @@ class ContextString(str):
 T = TypeVar("T")
 
 
-class ContextList(list[T]):
+class ContextList(list[T]):  # noqa: FURB189
     keyword_token: FileContextToken
 
     def __init__(self, token: FileContextToken) -> None:
