@@ -255,12 +255,14 @@ class Scheduler:
         ]
 
         if min_required_realizations > 0:
-            scheduling_tasks.append(
-                asyncio.create_task(
-                    self._stop_long_running_jobs(min_required_realizations)
+            scheduling_tasks.extend(
+                (
+                    asyncio.create_task(
+                        self._stop_long_running_jobs(min_required_realizations)
+                    ),
+                    asyncio.create_task(self._update_avg_job_runtime()),
                 )
             )
-            scheduling_tasks.append(asyncio.create_task(self._update_avg_job_runtime()))
 
         sem = asyncio.BoundedSemaphore(self._max_running or len(self._jobs))
         # this lock is to assure that no more than 1 task
