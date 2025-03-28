@@ -225,9 +225,10 @@ async def test_restarted_jobs_do_not_have_error_msgs(evaluator_to_use):
                     == FORWARD_MODEL_STATE_FAILURE
                 )
                 assert snapshot.get_fm_step("0", "0")["error"] == "error"
-                return True
             except AssertionError:
                 return False
+            else:
+                return True
 
         final_snapshot = EnsembleSnapshot()
         async for event in monitor.track():
@@ -258,9 +259,10 @@ async def test_restarted_jobs_do_not_have_error_msgs(evaluator_to_use):
                     == FORWARD_MODEL_STATE_FINISHED
                 )
                 assert not snapshot.get_fm_step("0", "0")["error"]
-                return True
             except AssertionError:
                 return False
+            else:
+                return True
 
         final_snapshot = EnsembleSnapshot()
         async for event in new_monitor.track():
@@ -328,9 +330,10 @@ async def test_new_monitor_can_pick_up_where_we_left_off(evaluator_to_use):
                     snapshot.get_fm_step("1", "1")["status"]
                     == FORWARD_MODEL_STATE_RUNNING
                 )
-                return True
             except AssertionError:
                 return False
+            else:
+                return True
 
         async for event in monitor.track():
             final_snapshot = final_snapshot.update_from_event(event)
@@ -373,9 +376,10 @@ async def test_new_monitor_can_pick_up_where_we_left_off(evaluator_to_use):
                 final_snapshot.get_fm_step("1", "1")["status"]
                 == FORWARD_MODEL_STATE_FAILURE
             )
-            return True
         except AssertionError:
             return False
+        else:
+            return True
 
     # reconnect new monitor
     async with Monitor(url, token) as new_monitor:
@@ -489,9 +493,10 @@ async def test_dispatch_endpoint_clients_can_connect_and_monitor_can_shut_down_e
                         snapshot.get_fm_step("1", "1").get("status")
                         == FORWARD_MODEL_STATE_FAILURE
                     )
-                    return True
                 except AssertionError:
                     return False
+                else:
+                    return True
 
             async for event in events:
                 snapshot.update_from_event(event)
@@ -732,9 +737,10 @@ async def test_signal_cancel_does_not_cause_evaluator_dispatcher_communication_t
                     snapshot.get_fm_step("0", "0").get("status")
                     == FORWARD_MODEL_STATE_FINISHED
                 )
-                return True
             except AssertionError:
                 return False
+            else:
+                return True
 
         was_completed = False
         final_snapshot = EnsembleSnapshot()

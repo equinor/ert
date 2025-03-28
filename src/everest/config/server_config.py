@@ -89,10 +89,11 @@ class ServerConfig(BaseModel):
             data = json.loads(json_string)
             if set(data.keys()) != {"host", "port", "cert", "auth"}:
                 raise RuntimeError("Malformed hostfile")
-            return data
         except FileNotFoundError:
             # No host file
             return {"host": None, "port": None, "cert": None, "auth": None}
+        else:
+            return data
 
     @staticmethod
     def get_detached_node_dir(output_dir: str) -> str:

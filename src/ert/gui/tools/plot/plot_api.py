@@ -84,10 +84,11 @@ class PlotApi:
                                 hidden=ensemble_name.startswith("."),
                             )
                         )
-                return self._all_ensembles
             except IndexError as exc:
                 logging.exception(exc)
                 raise exc
+            else:
+                return self._all_ensembles
 
     @staticmethod
     def _check_response(response: httpx._models.Response) -> None:
