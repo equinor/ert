@@ -147,7 +147,7 @@ class LocalExperiment(BaseMode):
                     output_path / f"{response_type}", dataset
                 )
 
-        simulation_data = simulation_arguments if simulation_arguments else {}
+        simulation_data = simulation_arguments or {}
         storage._write_transaction(
             path / cls._metadata_file,
             json.dumps(simulation_data, cls=ContextBoolEncoder).encode("utf-8"),

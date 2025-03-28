@@ -259,10 +259,10 @@ def test_that_reading_summaries_returns_the_contents_of_the_file(
     smspec.to_file(tmp_path / f"TEST.{format_specifier}SMSPEC", format)
     (_, keys, time_map, data) = read_summary(str(tmp_path / "TEST"), ["*"])
 
-    local_name = smspec.lgrs if smspec.lgrs else []
-    lis = smspec.numlx if smspec.numlx else []
-    ljs = smspec.numly if smspec.numly else []
-    lks = smspec.numlz if smspec.numlz else []
+    local_name = smspec.lgrs or []
+    lis = smspec.numlx or []
+    ljs = smspec.numly or []
+    lks = smspec.numlz or []
     keys_in_smspec = [
         make_summary_key(*x[:3], smspec.nx, smspec.ny, *x[3:])
         for x in zip_longest(

@@ -27,11 +27,11 @@ def main(argv):
     arg_parser.add_argument("--out", type=str)
     options, _ = arg_parser.parse_known_args(args=argv)
 
-    point = options.point if options.point else read_point(options.point_file)
+    point = options.point or read_point(options.point_file)
     if len(point) != 3:
         raise RuntimeError("Failed parsing point")
 
-    target = options.target if options.target else read_point(options.target_file)
+    target = options.target or read_point(options.target_file)
     if len(target) != 3:
         raise RuntimeError("Failed parsing target")
 

@@ -10,7 +10,7 @@ def main(argv):
     arg_parser.add_argument("-m", "--message", type=str)
     options, _ = arg_parser.parse_known_args(args=argv)
 
-    msg = options.message if options.message else "test"
+    msg = options.message or "test"
     with open(options.out, "w", encoding="utf-8") as f:
         f.write(f"{msg}\n")
 

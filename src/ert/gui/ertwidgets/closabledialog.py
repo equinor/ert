@@ -15,7 +15,7 @@ class ClosableDialog(QDialog):
         self, title: str | None, widget: QWidget, parent: QWidget | None = None
     ) -> None:
         QDialog.__init__(self, parent)
-        self.setWindowTitle(title if title else "")
+        self.setWindowTitle(title or "")
         self.setModal(True)
         self.setWindowFlag(Qt.WindowType.CustomizeWindowHint, True)
         self.setWindowFlag(Qt.WindowType.WindowContextHelpButtonHint, False)

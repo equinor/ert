@@ -343,9 +343,7 @@ class LocalEnsemble(BaseMode):
 
         filename: Path = self._realization_dir(realization) / self._error_log_name
         os.makedirs(os.path.dirname(filename), exist_ok=True)
-        error = _Failure(
-            type=failure_type, message=message if message else "", time=datetime.now()
-        )
+        error = _Failure(type=failure_type, message=message or "", time=datetime.now())
         self._storage._write_transaction(
             filename, error.model_dump_json(indent=2).encode("utf-8")
         )

@@ -23,7 +23,7 @@ def log_duration(
             t = time.perf_counter()
             result = func(*args, **kwargs)
             elapsed_time = time.perf_counter() - t
-            name = custom_name if custom_name else f"{func.__name__}()"
+            name = custom_name or f"{func.__name__}()"
             logger.log(logging_level, f"{name} time_used={elapsed_time:.4f}s")
             return result
 

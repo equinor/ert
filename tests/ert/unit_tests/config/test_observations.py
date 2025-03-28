@@ -344,7 +344,7 @@ def run_sim(start_date, keys=None, values=None, days=None):
     """
     Create a summary file, the contents of which are not important
     """
-    keys = keys if keys else [("FOPR", "SM3/DAY", None)]
+    keys = keys or [("FOPR", "SM3/DAY", None)]
     values = {} if values is None else values
     days = [1] if days is None else days
     summary = Summary.writer("ECLIPSE_CASE", start_date, 3, 3, 3)
