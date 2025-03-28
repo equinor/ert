@@ -72,7 +72,6 @@ class ParameterConfig(ABC):
     def save_parameters(
         self,
         ensemble: Ensemble,
-        group: str,
         realization: int,
         data: npt.NDArray[np.float64],
     ) -> None:

@@ -382,7 +382,6 @@ class GenKwConfig(ParameterConfig):
     def save_parameters(
         self,
         ensemble: Ensemble,
-        group: str,
         realization: int,
         data: npt.NDArray[np.float64],
     ) -> None:
@@ -396,7 +395,7 @@ class GenKwConfig(ParameterConfig):
                 "names": [e.name for e in self.transform_functions],
             }
         )
-        ensemble.save_parameters(group, realization, ds)
+        ensemble.save_parameters(self.name, realization, ds)
 
     def load_parameters(
         self, ensemble: Ensemble, realizations: npt.NDArray[np.int_]
