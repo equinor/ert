@@ -55,10 +55,10 @@ def client_server_mock() -> tuple[FastAPI, threading.Thread, EverestClient]:
                     auth=("", ""),
                     proxies={"http": None, "https": None},  # type: ignore
                 )
-
-                return True
             except requests.exceptions.ConnectionError:
                 return False
+            else:
+                return True
 
         wait_until(ping_server, timeout=timeout, interval=sleep_between_retries)
 

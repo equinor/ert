@@ -365,9 +365,10 @@ def _find_open_port(host: str, lower: int, upper: int) -> int:
             sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             sock.bind((host, port))
             sock.close()
-            return port
         except OSError:
             logging.getLogger(EVERSERVER).info(f"Port {port} for host {host} is taken")
+        else:
+            return port
     msg = f"Failed 10 times to get a random port in the range {lower}-{upper} on {host}. Giving up."
     logging.getLogger(EVERSERVER).exception(msg)
     raise Exception(msg)

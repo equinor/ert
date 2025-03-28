@@ -411,9 +411,10 @@ def _read_user_preferences(user_info_path: Path) -> dict[str, dict[str, Any]]:
         user_info = {EVEREST: {"show_scaling_warning": True}}
         with open(user_info_path, mode="w", encoding="utf-8") as f:
             json.dump(user_info, f, ensure_ascii=False, indent=4)
-        return user_info
     except json.decoder.JSONDecodeError:
         return {EVEREST: {}}
+    else:
+        return user_info
 
 
 def show_scaled_controls_warning() -> None:
