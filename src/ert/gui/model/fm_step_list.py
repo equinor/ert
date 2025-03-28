@@ -87,7 +87,7 @@ class FMStepListProxyModel(QAbstractProxyModel):
                 header = FM_STEP_COLUMNS[section]
                 if header in {ids.STDOUT, ids.STDERR}:
                     return header.upper()
-                elif header in {ids.MAX_MEMORY_USAGE}:
+                elif header == ids.MAX_MEMORY_USAGE:
                     header = header.replace("_", " ")
                 return header.capitalize()
             if orientation == Qt.Orientation.Vertical:
