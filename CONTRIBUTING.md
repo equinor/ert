@@ -11,7 +11,7 @@ The following is a set of guidelines for contributing to ERT.
 
 ## Test Naming
 
-We strive to, but often fail, to use test names that are meaningful. Ideally,
+We strive to use test names that are meaningful. Ideally,
 the output of `pytest --collect-only tests/` should tell you all you need to know
 about why the test is present and what it tests for.
 
