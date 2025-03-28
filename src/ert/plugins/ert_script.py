@@ -13,7 +13,10 @@ from typing import TYPE_CHECKING, Any, TypeAlias
 
 from typing_extensions import deprecated
 
-from .workflow_fixtures import WorkflowFixtures
+from .workflow_fixtures import (
+    WorkflowFixtures,
+    all_hooked_workflow_fixtures,
+)
 
 if TYPE_CHECKING:
     from ert.config import ErtConfig
@@ -106,6 +109,14 @@ class ErtScript:
         """
         Override to perform cleanup after a run.
         """
+
+    @property
+    def requested_fixtures(self) -> set[str]:
+        return {
+            k
+            for k, v in inspect.signature(self.run).parameters.items()
+            if k in all_hooked_workflow_fixtures
+        }
 
     def initializeAndRun(
         self,

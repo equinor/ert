@@ -20,6 +20,7 @@ from ert.ensemble_evaluator import EvaluatorServerConfig
 from ert.storage import Ensemble, Storage
 from ert.trace import tracer
 
+from ..plugins import PostExperimentFixtures, PreExperimentFixtures
 from ..run_arg import create_run_arguments
 from .base_run_model import ErtRunError, StatusEvents, UpdateRunModel
 
@@ -139,7 +140,7 @@ class MultipleDataAssimilation(UpdateRunModel):
         else:
             self.run_workflows(
                 HookRuntime.PRE_EXPERIMENT,
-                fixtures={"random_seed": self.random_seed},
+                fixtures=PreExperimentFixtures(random_seed=self.random_seed),
             )
             sim_args = {"weights": self._relative_weights}
             experiment = self._storage.create_experiment(
@@ -207,11 +208,11 @@ class MultipleDataAssimilation(UpdateRunModel):
 
         self.run_workflows(
             HookRuntime.POST_EXPERIMENT,
-            fixtures={
-                "random_seed": self.random_seed,
-                "storage": self._storage,
-                "ensemble": prior,
-            },
+            fixtures=PostExperimentFixtures(
+                random_seed=self.random_seed,
+                storage=self._storage,
+                ensemble=prior,
+            ),
         )
 
     @staticmethod
