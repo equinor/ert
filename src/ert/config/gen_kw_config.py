@@ -362,8 +362,7 @@ class GenKwConfig(ParameterConfig):
             target_file = substitute_runpath_name(
                 self.output_file, real_nr, ensemble.iteration
             )
-            if target_file.startswith("/"):
-                target_file = target_file[1:]
+            target_file = target_file.removeprefix("/")
             (run_path / target_file).parent.mkdir(exist_ok=True, parents=True)
             template_file_path = (
                 ensemble.experiment.mount_point / Path(self.template_file).name
