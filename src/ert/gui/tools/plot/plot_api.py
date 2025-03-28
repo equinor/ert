@@ -164,8 +164,7 @@ class PlotApi:
         ensemble. The row index is the realization number, and the columns are an index
         over the indexes/dates"""
 
-        if key.startswith("LOG10_"):
-            key = key[6:]
+        key = key.removeprefix("LOG10_")
 
         ensemble = self._get_ensemble_by_id(ensemble_id)
         if not ensemble:

@@ -108,8 +108,7 @@ def data_for_key(
     given ensemble. The row index is the realization number, and the columns are an
     index over the indexes/dates"""
 
-    if key.startswith("LOG10_"):
-        key = key[6:]
+    key = key.removeprefix("LOG10_")
 
     response_key_to_response_type = ensemble.experiment.response_key_to_response_type
 
