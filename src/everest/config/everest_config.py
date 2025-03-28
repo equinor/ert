@@ -701,9 +701,10 @@ and environment variables are exposed in the form 'os.NAME', for example:
     def lint_config_dict(config: ConfigDict) -> list[ErrorDetails]:
         try:
             EverestConfig.model_validate(config)
-            return []
         except ValidationError as err:
             return err.errors()
+        else:
+            return []
 
     @staticmethod
     def lint_config_dict_with_raise(config: ConfigDict) -> None:
