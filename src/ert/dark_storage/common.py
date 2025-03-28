@@ -1,5 +1,6 @@
 import contextlib
 import logging
+import operator
 from collections.abc import Callable, Iterator
 from typing import Any
 from uuid import UUID
@@ -16,7 +17,7 @@ from ert.storage import Ensemble, Experiment, Storage
 logger = logging.getLogger(__name__)
 
 response_key_to_displayed_key: dict[str, Callable[[tuple[Any, ...]], str]] = {
-    "summary": lambda t: t[0],
+    "summary": operator.itemgetter(0),
     "gen_data": lambda t: f"{t[0]}@{t[1]}",
 }
 

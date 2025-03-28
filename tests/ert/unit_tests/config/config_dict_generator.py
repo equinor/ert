@@ -1,5 +1,6 @@
 import contextlib
 import datetime
+import operator
 import os
 import os.path
 import stat
@@ -406,7 +407,7 @@ def ert_config_values(draw, use_eclbase=booleans):
                     }
                 ),
             ),
-            unique_by=lambda tup: tup[0],
+            unique_by=operator.itemgetter(0),
         )
     )
     sum_keys = draw(small_list(summary_variables(), min_size=1))
@@ -500,7 +501,7 @@ def ert_config_values(draw, use_eclbase=booleans):
                         }
                     ),
                 ),
-                unique_by=lambda element: element[0],
+                unique_by=operator.itemgetter(0),
             ),
             gen_data=st.just(gen_data),
             max_submit=positives,
