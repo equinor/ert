@@ -194,6 +194,7 @@ select = [
     "B",     # flake-8-bugbear
     "SIM",   # flake-8-simplify
     "F",     # pyflakes
+    "FURB",  # refurb
     "PL",    # pylint
     "NPY",   # numpy specific rules
     "C4",    # flake8-comprehensions
@@ -202,11 +203,13 @@ select = [
     "UP",    # pyupgrade
     "ICN",   # flake8-import-conventions
     "PIE",   # flake8-pie
-    "TRY203", 
+    "TRY203",
     "TRY300",
 ]
 preview = true
 ignore = [
+    "FURB103", # write-hole-file
+    "FURB101", # read-whole-file
     "PLW2901", # redefined-loop-name
     "PLR2004", # magic-value-comparison
     "PLR0915", # too-many-statements
