@@ -666,7 +666,7 @@ and environment variables are exposed in the form 'os.NAME', for example:
         return the_dict
 
     @classmethod
-    def with_defaults(cls, **kwargs):  # type: ignore
+    def with_defaults(cls, **kwargs: Any) -> Self:
         """
         Creates an Everest config with default values. Useful for initializing a config
         without having to provide empty defaults.
