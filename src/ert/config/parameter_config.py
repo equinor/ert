@@ -14,7 +14,7 @@ if TYPE_CHECKING:
     from ert.storage import Ensemble
 
 
-class CustomDict(dict):  # type: ignore
+class CustomDict(dict):  # type: ignore  # noqa: FURB189
     """Used for converting types that can not be serialized
     directly to json
     """
