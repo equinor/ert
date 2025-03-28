@@ -554,8 +554,14 @@ def test_es_mda(snapshot):
         keys=[f"iter-{iter}" for iter in range(len(data))],
         names=("Iteration", "Realization"),
     )
+
+    numpy_suffix = ""
+    if np.__version__.startswith("1."):
+        numpy_suffix = "_numpy1"
+
     snapshot.assert_match(
-        result.to_csv(float_format="%.12g"), "es_mda_integration_snapshot"
+        result.to_csv(float_format="%.12g"),
+        f"es_mda_integration_snapshot{numpy_suffix}",
     )
 
 
