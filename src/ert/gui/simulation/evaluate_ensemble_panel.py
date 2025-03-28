@@ -1,3 +1,4 @@
+import contextlib
 from dataclasses import dataclass
 
 import numpy as np
@@ -41,12 +42,14 @@ class EvaluateEnsemblePanel(ExperimentConfigPanel):
         runpath_label = CopyableLabel(text=run_path)
         layout.addRow("Runpath:", runpath_label)
 
-        ensemble_size_label = QLabel(f"<b>{ensemble_size}</b>")
-        layout.addRow(QLabel("Ensemble size:"), ensemble_size_label)
+        self.ensemble_size_label = QLabel(f"<b>{ensemble_size}</b>")
+        layout.addRow(QLabel("Ensemble size:"), self.ensemble_size_label)
 
+        self._active_realizations_model = ActiveRealizationsModel(ensemble_size)
         self._active_realizations_field = StringBox(
-            ActiveRealizationsModel(ensemble_size, show_default=False),
-            "config/simulation/active_realizations",
+            self._active_realizations_model,
+            self._active_realizations_model.getDefaultValue(),
+            continuous_update=True,
         )
         self._realizations_validator = EnsembleRealizationsArgument(
             self._ensemble_selector.selected_ensemble, max_value=ensemble_size
@@ -57,6 +60,9 @@ class EvaluateEnsemblePanel(ExperimentConfigPanel):
 
         self.setLayout(layout)
 
+        self._active_realizations_field.textChanged.connect(
+            self._update_ensemble_size_from_active_realizations
+        )
         self._active_realizations_field.getValidationSupport().validationChanged.connect(
             self.simulationConfigurationChanged
         )
@@ -71,6 +77,16 @@ class EvaluateEnsemblePanel(ExperimentConfigPanel):
             self._active_realizations_field.isValid()
             and self._ensemble_selector.currentIndex() != -1
         )
+
+    def _update_ensemble_size_from_active_realizations(self) -> None:
+        with contextlib.suppress(ValueError):
+            if isinstance(
+                self._active_realizations_field.model, ActiveRealizationsModel
+            ):
+                current_ensemble_size = sum(
+                    self._active_realizations_field.model.getActiveRealizationsMask()
+                )
+                self.ensemble_size_label.setText(f"<b>{current_ensemble_size}</b>")
 
     def get_experiment_arguments(self) -> Arguments:
         return Arguments(
