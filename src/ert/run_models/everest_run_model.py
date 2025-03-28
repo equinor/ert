@@ -25,8 +25,9 @@ from typing_extensions import TypedDict
 
 from ert.config import ExtParamConfig
 from ert.config.ert_config import (
+    create_and_hook_workflows,
     read_templates,
-    workflows_from_dict,
+    workflow_jobs_from_dict,
 )
 from ert.config.model_config import ModelConfig
 from ert.config.queue_config import QueueConfig
@@ -50,6 +51,7 @@ from everest.simulator.everest_to_ert import (
     get_ensemble_config,
     get_forward_model_steps,
     get_substitutions,
+    get_workflow_jobs,
 )
 from everest.strings import EVEREST, STORAGE_DIR
 
@@ -169,7 +171,14 @@ class EverestRunModel(BaseRunModel):
             config_dict, model_config, runpath_file, queue_config.preferred_num_cpu
         )
         ert_templates = read_templates(config_dict)
-        _, _, hooked_workflows = workflows_from_dict(config_dict, substitutions)
+
+        workflow_jobs = get_workflow_jobs(everest_config)
+        deprecated_workflow_jobs = workflow_jobs_from_dict(config_dict)
+        if deprecated_workflow_jobs := workflow_jobs_from_dict(config_dict):
+            workflow_jobs.update(deprecated_workflow_jobs)
+        _, hooked_workflows = create_and_hook_workflows(  # type: ignore[no-untyped-call]
+            config_dict, workflow_jobs, substitutions
+        )
 
         forward_model_steps, env_pr_fm_step = get_forward_model_steps(
             everest_config, config_dict, substitutions

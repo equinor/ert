@@ -652,7 +652,9 @@ def test_that_model_data_file_exists(change_to_tmpdir):
         ("install_workflow_jobs",),
     ],
 )
-def test_that_non_existing_install_job_errors(install_keyword, change_to_tmpdir):
+def test_that_non_existing_install_job_errors_deprecated(
+    install_keyword, change_to_tmpdir
+):
     os.makedirs("config_dir")
     with open("config_dir/test.yml", "w", encoding="utf-8") as f:
         f.write(" ")
@@ -676,7 +678,7 @@ def test_that_non_existing_install_job_errors(install_keyword, change_to_tmpdir)
         ("install_workflow_jobs",),
     ],
 )
-def test_that_existing_install_job_with_malformed_executable_errors(
+def test_that_existing_install_job_with_malformed_executable_errors_deprecated(
     install_keyword, change_to_tmpdir
 ):
     with open("malformed.ert", "w+", encoding="utf-8") as f:
@@ -718,7 +720,7 @@ def test_that_existing_install_job_with_malformed_executable_errors(
         ("install_workflow_jobs",),
     ],
 )
-def test_that_existing_install_job_with_non_executable_executable_errors(
+def test_that_existing_install_job_with_non_executable_executable_errors_deprecated(
     install_keyword, change_to_tmpdir
 ):
     with open("exec.ert", "w+", encoding="utf-8") as f:
@@ -757,7 +759,37 @@ def test_that_existing_install_job_with_non_executable_executable_errors(
         ("install_workflow_jobs",),
     ],
 )
-def test_that_existing_install_job_with_non_existing_executable_errors(
+def test_that_existing_install_job_with_non_executable_executable_errors(
+    install_keyword, change_to_tmpdir
+):
+    with open("non_executable", "w+", encoding="utf-8") as f:
+        f.write("bla")
+
+    os.chmod("non_executable", os.stat("non_executable").st_mode & ~0o111)
+    assert not os.access("non_executable", os.X_OK)
+
+    with pytest.raises(ValidationError, match="File not executable"):
+        EverestConfig.with_defaults(
+            model={
+                "realizations": [1, 2, 3],
+            },
+            config_path=Path("."),
+            **{
+                install_keyword: [
+                    {"name": "test", "executable": "non_executable"},
+                ]
+            },
+        )
+
+
+@pytest.mark.parametrize(
+    ["install_keyword"],
+    [
+        ("install_jobs",),
+        ("install_workflow_jobs",),
+    ],
+)
+def test_that_existing_install_job_with_non_existing_executable_errors_deprecated(
     install_keyword, change_to_tmpdir
 ):
     with open("exec.ert", "w+", encoding="utf-8") as f:
@@ -783,6 +815,32 @@ def test_that_existing_install_job_with_non_existing_executable_errors(
     with pytest.raises(ConfigValidationError, match="Could not find executable"):
         dict = everest_to_ert_config_dict(config)
         ErtConfig.from_dict(dict)
+
+
+@pytest.mark.parametrize(
+    ["install_keyword"],
+    [
+        ("install_jobs",),
+        ("install_workflow_jobs",),
+    ],
+)
+def test_that_existing_install_job_with_non_existing_executable_errors(
+    install_keyword, change_to_tmpdir
+):
+    assert not os.access("non_executable", os.X_OK)
+
+    with pytest.raises(ValidationError, match="Could not find executable"):
+        EverestConfig.with_defaults(
+            model={
+                "realizations": [1, 2, 3],
+            },
+            config_path=Path("."),
+            **{
+                install_keyword: [
+                    {"name": "test", "executable": "non_executable"},
+                ]
+            },
+        )
 
 
 @pytest.mark.parametrize(
@@ -902,10 +960,8 @@ def test_that_missing_required_fields_cause_error():
 def test_that_non_existing_workflow_jobs_cause_error():
     with pytest.raises(ValidationError) as e:
         EverestConfig.with_defaults(
-            install_workflow_jobs=[{"name": "job0", "source": "jobs/JOB"}],
             workflows={
                 "pre_simulation": [
-                    "job0 -i in -o out",
                     "job1 -i out -o result",
                 ]
             },
