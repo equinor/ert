@@ -54,9 +54,8 @@ def find_conn_info() -> ConnInfo:
 
     try:
         conn_info = ConnInfo.parse_obj(json.loads(conn_str))
+    except (json.JSONDecodeError, ValidationError) as e:
+        raise RuntimeError("Invalid storage connection configuration") from e
+    else:
         _CACHED_CONN_INFO = conn_info
         return conn_info
-    except json.JSONDecodeError as e:
-        raise RuntimeError("Invalid storage conneciton configuration") from e
-    except ValidationError as e:
-        raise RuntimeError("Invalid storage conneciton configuration") from e

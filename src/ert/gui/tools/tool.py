@@ -39,7 +39,7 @@ class Tool:
         self.__action.setParent(parent)
 
     def parent(self) -> QObject:
-        return self.__parent if self.__parent else QObject()
+        return self.__parent or QObject()
 
     def isEnabled(self) -> bool:
         return self.__enabled

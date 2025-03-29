@@ -1,4 +1,5 @@
 import io
+import operator
 from collections.abc import Mapping
 from typing import Annotated, Any
 from urllib.parse import unquote
@@ -40,7 +41,7 @@ async def get_record_observations(
     obs_keys = get_observation_keys_for_response(ensemble, response_name)
     obss = get_observations_for_obs_keys(ensemble, obs_keys)
 
-    obss.sort(key=lambda x: x["name"])
+    obss.sort(key=operator.itemgetter("name"))
     if not obss:
         return []
 

@@ -126,11 +126,10 @@ def _substitute(
 
 def _replace_strings(substitutions: Mapping[str, str], string: str) -> str | None:
     start = 0
-    parts = []
+    parts: list[str] = []
     for match in _PATTERN.finditer(string):
         if (val := substitutions.get(match[0])) and val is not None:
-            parts.append(string[start : match.start()])
-            parts.append(val)
+            parts.extend((string[start : match.start()], val))
             start = match.end()
     if not parts:
         return None

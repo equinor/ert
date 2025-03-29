@@ -112,7 +112,7 @@ class StringBox(QLineEdit):
 
     @property
     def get_text(self) -> str:
-        return self.text() if self.text() else self.placeholderText()
+        return self.text() or self.placeholderText()
 
     def enable_validation(self, enabled: bool) -> None:
         self._enable_validation = enabled

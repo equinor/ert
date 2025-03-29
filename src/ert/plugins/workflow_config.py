@@ -57,7 +57,7 @@ class ErtScriptWorkflow(WorkflowJob):
         :param name: Optional name for workflow, default is class name
         """
         self.source_package = self._get_source_package(ertscript_class)
-        self._description = ertscript_class.__doc__ if ertscript_class.__doc__ else ""
+        self._description = ertscript_class.__doc__ or ""
         self._examples: str | None = None
         self._parser: Callable[[], ArgumentParser] | None = None
         self._category = "other"
@@ -113,7 +113,7 @@ class ErtScriptWorkflow(WorkflowJob):
 
     @staticmethod
     def _get_func_name(func: type[ErtScript], name: str | None) -> str:
-        return name if name else func.__name__
+        return name or func.__name__
 
     @staticmethod
     def _get_source_package(module: type[ErtScript]) -> str:

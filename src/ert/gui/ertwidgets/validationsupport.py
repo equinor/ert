@@ -88,7 +88,7 @@ class ValidationSupport(QObject):
             if not self.isValid():
                 self._error_popup.presentError(
                     self._validation_target,
-                    self._validation_message if self._validation_message else "",
+                    self._validation_message or "",
                 )
 
         validation_target.enterEvent = enterEvent  # type: ignore[method-assign]

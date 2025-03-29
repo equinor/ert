@@ -99,7 +99,7 @@ class TextBox(QTextEdit):
 
     @property
     def get_text(self) -> str:
-        return self.toPlainText() if self.toPlainText() else self.placeholderText()
+        return self.toPlainText() or self.placeholderText()
 
     def enable_validation(self, enabled: bool) -> None:
         self._enable_validation = enabled

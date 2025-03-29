@@ -133,7 +133,7 @@ class AnalysisConfig:
                     )
                 )
                 continue
-            if var_name in {"INVERSION"}:
+            if var_name == "INVERSION":
                 if value in inversion_str_map[module_name]:
                     new_value = inversion_str_map[module_name][value]
                     ConfigWarning.warn(

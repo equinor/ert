@@ -1,5 +1,6 @@
 import contextlib
 import logging
+import operator
 from collections.abc import Callable, Iterator
 from typing import Any
 from uuid import UUID
@@ -16,7 +17,7 @@ from ert.storage import Ensemble, Experiment, Storage
 logger = logging.getLogger(__name__)
 
 response_key_to_displayed_key: dict[str, Callable[[tuple[Any, ...]], str]] = {
-    "summary": lambda t: t[0],
+    "summary": operator.itemgetter(0),
     "gen_data": lambda t: f"{t[0]}@{t[1]}",
 }
 
@@ -107,8 +108,7 @@ def data_for_key(
     given ensemble. The row index is the realization number, and the columns are an
     index over the indexes/dates"""
 
-    if key.startswith("LOG10_"):
-        key = key[6:]
+    key = key.removeprefix("LOG10_")
 
     response_key_to_response_type = ensemble.experiment.response_key_to_response_type
 

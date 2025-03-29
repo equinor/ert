@@ -98,10 +98,11 @@ def stop_server(
                 proxies=PROXY,  # type: ignore
             )
             response.raise_for_status()
-            return True
         except:
             logger.debug(traceback.format_exc())
             time.sleep(retry)
+        else:
+            return True
     return False
 
 
@@ -122,10 +123,11 @@ def start_experiment(
                 json=config.to_dict(),
             )
             response.raise_for_status()
-            return
         except:
             logger.debug(traceback.format_exc())
             time.sleep(retry)
+        else:
+            return
     raise RuntimeError("Failed to start experiment")
 
 

@@ -130,9 +130,10 @@ def _parse_input_constraints(
     def _get_control_index(name: str) -> int:
         try:
             matching_index = formatted_control_names.index(name.replace("-", "."))
-            return matching_index
         except ValueError:
             pass
+        else:
+            return matching_index
 
         # Dash is deprecated, should eventually be removed
         # along with formatted_control_names_dotdash

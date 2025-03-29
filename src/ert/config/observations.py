@@ -202,18 +202,19 @@ class EnkfObs:
             except ValueError:
                 try:
                     date = datetime.strptime(date_str, "%d/%m/%Y")
-                    ConfigWarning.warn(
-                        f"Deprecated time format {date_str}."
-                        " Please use ISO date format YYYY-MM-DD",
-                        date_str,
-                    )
-                    return date, f"DATE={date_str}"
                 except ValueError as err:
                     raise ObservationConfigError.with_context(
                         f"Unsupported date format {date_str}."
                         " Please use ISO date format",
                         date_str,
                     ) from err
+                else:
+                    ConfigWarning.warn(
+                        f"Deprecated time format {date_str}."
+                        " Please use ISO date format YYYY-MM-DD",
+                        date_str,
+                    )
+                    return date, f"DATE={date_str}"
 
         if date_dict.days is not None:
             days = date_dict.days

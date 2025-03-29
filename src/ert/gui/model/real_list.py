@@ -60,7 +60,7 @@ class RealListModel(QAbstractProxyModel):
         return 1
 
     def rowCount(self, parent: QModelIndex | None = None) -> int:
-        parent = parent if parent else QModelIndex()
+        parent = parent or QModelIndex()
         if not parent.isValid():
             source_model = self.sourceModel()
             assert source_model is not None
@@ -81,7 +81,7 @@ class RealListModel(QAbstractProxyModel):
     def index(
         self, row: int, column: int, parent: QModelIndex | None = None
     ) -> QModelIndex:
-        parent = parent if parent else QModelIndex()
+        parent = parent or QModelIndex()
         if not parent.isValid():
             real_index = self.mapToSource(self.createIndex(row, 0, parent))
             return self.createIndex(row, column, real_index.data(NodeRole))
@@ -92,7 +92,7 @@ class RealListModel(QAbstractProxyModel):
         # Reimplemented, since in the source model, the realizations have
         # children (i.e. valid indices.). Realizations do not have children in
         # this model.
-        parent = parent if parent else QModelIndex()
+        parent = parent or QModelIndex()
         if not parent.isValid():
             source_model = self.sourceModel()
             assert source_model is not None

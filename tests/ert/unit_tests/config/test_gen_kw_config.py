@@ -1,3 +1,4 @@
+import math
 import os
 import re
 from pathlib import Path
@@ -402,7 +403,7 @@ def test_gen_kw_params_parsing(tmpdir, params, error):
         ("MYNAME LOGNORMAL 0 1", 0.0, 1.00000000000000000000),
         ("MYNAME LOGNORMAL 0 1", 0.3, 1.34985880757600318347),
         ("MYNAME LOGNORMAL 0 1", 0.7, 2.01375270747047663278),
-        ("MYNAME LOGNORMAL 0 1", 1.0, 2.71828182845904509080),
+        ("MYNAME LOGNORMAL 0 1", 1.0, math.e),
         ("MYNAME ERRF 1 2 0.1 0.1", -1.0, 1.00000000000000000000),
         ("MYNAME ERRF 1 2 0.1 0.1", 0.0, 1.84134474606854281475),
         ("MYNAME ERRF 1 2 0.1 0.1", 0.3, 1.99996832875816688002),
