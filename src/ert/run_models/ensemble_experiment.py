@@ -135,7 +135,6 @@ class EnsembleExperiment(BaseRunModel):
         sample_prior(
             self.ensemble,
             np.where(self.active_realizations)[0],
-            parameters=[param.name for param in parameters_config],
             random_seed=self.random_seed,
             design_matrix_df=(
                 design_matrix.design_matrix_df if design_matrix is not None else None
