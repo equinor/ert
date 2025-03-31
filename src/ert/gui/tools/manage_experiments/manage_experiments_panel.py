@@ -13,8 +13,8 @@ from PyQt6.QtWidgets import (
     QWidget,
 )
 
-from ert.config import ConfigValidationError
-from ert.enkf_main import sample_prior, save_design_matrix_to_ensemble
+from ert.config import ConfigValidationError, ParameterConfig, ScalarParameters
+from ert.enkf_main import sample_prior
 from ert.gui.ertwidgets import (
     CheckList,
     EnsembleSelector,
@@ -90,36 +90,38 @@ class ManageExperimentsPanel(QTabWidget):
         center_layout = QHBoxLayout()
         design_matrix = self.ert_config.analysis_config.design_matrix
         parameters_config = self.ert_config.ensemble_config.parameter_configuration
-        design_matrix_group = None
         realizations: Collection[int] = range(
             self.ert_config.model_config.num_realizations
         )
         if design_matrix is not None:
-            try:
-                parameters_config, design_matrix_group = (
-                    design_matrix.merge_with_existing_parameters(parameters_config)
-                )
-                realizations = [
-                    real
-                    for real, active in enumerate(design_matrix.active_realizations)
-                    if active
-                ]
-            except ConfigValidationError as exc:
-                QMessageBox.warning(
-                    self,
-                    "Warning",
-                    (
-                        "The following issues were found when merging GenKW "
-                        f'with design matrix parameters: "{exc}"'
-                    ),
-                )
-                return
+            new_parameters_config: list[ParameterConfig] = []
+            for param in parameters_config:
+                if isinstance(param, ScalarParameters):
+                    try:
+                        new_scalar_config = (
+                            design_matrix.merge_with_existing_parameters(param)
+                        )
+                        new_parameters_config.append(new_scalar_config)
+                    except ConfigValidationError as exc:
+                        QMessageBox.warning(
+                            self,
+                            "Warning",
+                            (
+                                "The following issues were found when merging GenKW "
+                                f'with design matrix parameters: "{exc}"'
+                            ),
+                        )
+                        return
+                else:
+                    new_parameters_config.append(param)
+            parameters_config = new_parameters_config
+            realizations = [
+                real
+                for real, active in enumerate(design_matrix.active_realizations)
+                if active
+            ]
 
-        parameter_model = SelectableListModel(
-            [p.name for p in parameters_config] + [design_matrix_group.name]
-            if design_matrix_group
-            else self.ert_config.ensemble_config.parameters
-        )
+        parameter_model = SelectableListModel([p.name for p in parameters_config])
         parameter_check_list = CheckList(parameter_model, "Parameters")
         parameter_check_list.setMinimumWidth(500)
         center_layout.addWidget(parameter_check_list)
@@ -140,23 +142,16 @@ class ManageExperimentsPanel(QTabWidget):
         def initialize_from_scratch(_: bool) -> None:
             parameters = parameter_model.getSelectedItems()
             active_realizations = [int(i) for i in members_model.getSelectedItems()]
-            if (
-                design_matrix is not None
-                and design_matrix_group is not None
-                and design_matrix_group.name in parameters
-            ):
-                parameters.remove(design_matrix_group.name)
-                save_design_matrix_to_ensemble(
-                    design_matrix.design_matrix_df,
-                    ensemble_selector.currentData(),
-                    active_realizations,
-                    design_group_name=design_matrix_group.name,
-                )
             sample_prior(
                 ensemble=ensemble_selector.currentData(),
                 active_realizations=active_realizations,
                 parameters=parameters,
                 random_seed=self.ert_config.random_seed,
+                design_matrix_df=(
+                    design_matrix.design_matrix_df
+                    if design_matrix is not None
+                    else None
+                ),
             )
 
         def update_button_state() -> None:
