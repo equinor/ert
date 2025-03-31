@@ -24,7 +24,6 @@ from ert.run_models import (
 
 EXPECTED_CALL_ORDER = [
     call(
-        cls.hook,
         fixtures=cls(**dict.fromkeys(fixtures_per_hook[cls.hook], ANY), hook=cls.hook),
     )
     for cls in [

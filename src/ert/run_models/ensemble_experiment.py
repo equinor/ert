@@ -7,7 +7,7 @@ from typing import TYPE_CHECKING
 
 import numpy as np
 
-from ert.config import ConfigValidationError, HookRuntime
+from ert.config import ConfigValidationError
 from ert.enkf_main import sample_prior, save_design_matrix_to_ensemble
 from ert.ensemble_evaluator import EvaluatorServerConfig
 from ert.storage import Ensemble, Experiment, Storage
@@ -96,7 +96,6 @@ class EnsembleExperiment(BaseRunModel):
 
         if not restart:
             self.run_workflows(
-                HookRuntime.PRE_EXPERIMENT,
                 fixtures=PreExperimentFixtures(random_seed=self.random_seed),
             )
             self.experiment = self._storage.create_experiment(
@@ -150,7 +149,6 @@ class EnsembleExperiment(BaseRunModel):
             evaluator_server_config,
         )
         self.run_workflows(
-            HookRuntime.POST_EXPERIMENT,
             fixtures=PostExperimentFixtures(
                 random_seed=self.random_seed,
                 storage=self._storage,

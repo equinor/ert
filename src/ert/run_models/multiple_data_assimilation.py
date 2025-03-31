@@ -12,7 +12,6 @@ from ert.config import (
     ConfigValidationError,
     ErtConfig,
     ESSettings,
-    HookRuntime,
     UpdateSettings,
 )
 from ert.enkf_main import sample_prior, save_design_matrix_to_ensemble
@@ -143,7 +142,6 @@ class MultipleDataAssimilation(UpdateRunModel):
                 ) from err
         else:
             self.run_workflows(
-                HookRuntime.PRE_EXPERIMENT,
                 fixtures=PreExperimentFixtures(random_seed=self.random_seed),
             )
             sim_args = {"weights": self._relative_weights}
@@ -211,7 +209,6 @@ class MultipleDataAssimilation(UpdateRunModel):
             prior = posterior
 
         self.run_workflows(
-            HookRuntime.POST_EXPERIMENT,
             fixtures=PostExperimentFixtures(
                 random_seed=self.random_seed,
                 storage=self._storage,

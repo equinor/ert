@@ -744,10 +744,9 @@ class BaseRunModel(ABC):
     @tracer.start_as_current_span(f"{__name__}.run_workflows")
     def run_workflows(
         self,
-        runtime: HookRuntime,
         fixtures: HookedWorkflowFixtures,
     ) -> None:
-        for workflow in self._hooked_workflows[runtime]:
+        for workflow in self._hooked_workflows[fixtures.hook]:
             WorkflowRunner(
                 workflow=workflow,
                 fixtures=create_workflow_fixtures_from_hooked(fixtures),
@@ -774,7 +773,6 @@ class BaseRunModel(ABC):
         )
 
         self.run_workflows(
-            HookRuntime.PRE_SIMULATION,
             fixtures=PreSimulationFixtures(
                 storage=self._storage,
                 ensemble=ensemble,
@@ -814,7 +812,6 @@ class BaseRunModel(ABC):
         )
         logger.info(f"Experiment run finished in: {self.get_runtime()}s")
         self.run_workflows(
-            HookRuntime.POST_SIMULATION,
             fixtures=PostSimulationFixtures(
                 storage=self._storage,
                 ensemble=ensemble,
@@ -909,7 +906,6 @@ class UpdateRunModel(BaseRunModel):
         )
         if prior.iteration == 0:
             self.run_workflows(
-                HookRuntime.PRE_FIRST_UPDATE,
                 fixtures=pre_first_update_fixtures,
             )
 
@@ -919,7 +915,6 @@ class UpdateRunModel(BaseRunModel):
         }
 
         self.run_workflows(
-            HookRuntime.PRE_UPDATE,
             fixtures=PreUpdateFixtures(
                 **{**update_args_dict, "hook": HookRuntime.PRE_UPDATE}
             ),
@@ -947,7 +942,6 @@ class UpdateRunModel(BaseRunModel):
             ) from e
 
         self.run_workflows(
-            HookRuntime.POST_UPDATE,
             fixtures=PostUpdateFixtures(
                 **{**update_args_dict, "hook": HookRuntime.POST_UPDATE}
             ),
