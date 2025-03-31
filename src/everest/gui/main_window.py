@@ -66,9 +66,7 @@ class EverestMainWindow(QMainWindow):
         sim_dir = ever_config.simulation_dir
 
         assert sim_dir is not None
-        run_model_api = client.create_run_model_api(
-            ever_config.simulator.queue_system.name, runpath_format_string=sim_dir
-        )
+        run_model_api = client.create_run_model_api(runpath_format_string=sim_dir)
         event_queue, event_monitor_thread = client.setup_event_queue_from_ws_endpoint(
             refresh_interval=0.02, open_timeout=40, websocket_recv_timeout=1.0
         )

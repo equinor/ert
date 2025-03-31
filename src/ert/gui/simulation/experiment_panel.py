@@ -52,10 +52,10 @@ def create_md_table(kv: dict[str, str], output: str) -> str:
     return output
 
 
-def get_simulation_thread(model: Any, restart: bool = False) -> ErtThread:
-    evaluator_server_config = EvaluatorServerConfig(
-        use_ipc_protocol=model.api.queue_system == QueueSystem.LOCAL
-    )
+def get_simulation_thread(
+    model: Any, restart: bool = False, use_ipc_protocol: bool = False
+) -> ErtThread:
+    evaluator_server_config = EvaluatorServerConfig(use_ipc_protocol=use_ipc_protocol)
 
     def run() -> None:
         model.api.start_simulations_thread(
@@ -326,7 +326,12 @@ class ExperimentPanel(QWidget):
         self.run_button.setEnabled(self._simulation_done)
 
         def start_simulation_thread(restart: bool = False) -> None:
-            simulation_thread = get_simulation_thread(self._model, restart)
+            simulation_thread = get_simulation_thread(
+                self._model,
+                restart,
+                use_ipc_protocol=self.config.queue_config.queue_system
+                == QueueSystem.LOCAL,
+            )
             self._dialog.setup_event_monitoring(restart)
             simulation_thread.start()
             self._notifier.set_is_simulation_running(True)

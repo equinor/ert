@@ -91,9 +91,7 @@ class EverestClient:
 
         return event_queue, monitor_thread
 
-    def create_run_model_api(
-        self, queue_system: str, runpath_format_string: str
-    ) -> BaseRunModelAPI:
+    def create_run_model_api(self, runpath_format_string: str) -> BaseRunModelAPI:
         def start_fn(
             evaluator_server_config: EvaluatorServerConfig, restart: bool = False
         ) -> None:
@@ -101,7 +99,6 @@ class EverestClient:
 
         return BaseRunModelAPI(
             experiment_name="Everest Experiment",
-            queue_system=queue_system,
             runpath_format_string=runpath_format_string,
             support_restart=False,
             start_simulations_thread=start_fn,
