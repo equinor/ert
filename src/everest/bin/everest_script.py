@@ -198,7 +198,7 @@ async def run_everest(options: argparse.Namespace) -> None:
                 daemon=True,
             )
             monitor_thread.start()
-            run_gui(options.config.config_path)
+            run_gui(options.config)
             monitor_thread.join()
         elif options.disable_monitoring:
             run_empty_detached_monitor(
