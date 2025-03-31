@@ -94,22 +94,6 @@ class TimedIterator(Generic[T]):
         return result
 
 
-def _all_parameters(
-    ensemble: Ensemble,
-    iens_active_index: npt.NDArray[np.int_],
-) -> npt.NDArray[np.float64]:
-    """Return all parameters in assimilation problem"""
-
-    param_groups = list(ensemble.experiment.parameter_configuration.keys())
-
-    param_arrays = [
-        ensemble.load_parameters_numpy(param_group, iens_active_index)
-        for param_group in param_groups
-    ]
-
-    return np.vstack(param_arrays)
-
-
 def _save_param_ensemble_array_to_disk(
     ensemble: Ensemble,
     param_ensemble_array: npt.NDArray[np.float64],
