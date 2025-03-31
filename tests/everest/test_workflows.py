@@ -6,9 +6,8 @@ import pytest
 from ert.ensemble_evaluator.config import EvaluatorServerConfig
 from ert.run_models.everest_run_model import EverestRunModel
 from everest.config import EverestConfig
-from tests.everest.utils import relpath, skipif_no_everest_models
+from tests.everest.utils import skipif_no_everest_models
 
-CONFIG_DIR = relpath("test_data", "mocked_test_case")
 CONFIG_FILE = "config_workflow.yml"
 
 
