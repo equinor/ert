@@ -12,8 +12,6 @@ from pathlib import Path
 import pytest
 from hypothesis import HealthCheck, settings
 from hypothesis import strategies as st
-from PyQt6.QtCore import QDir
-from PyQt6.QtWidgets import QApplication
 
 import _ert.forward_model_runner.fm_dispatch
 from _ert.threading import set_signal_handler
@@ -55,6 +53,8 @@ def _reraise_thread_exceptions_on_main_thread():
 @pytest.fixture
 def _qt_add_search_paths(qapp):
     "Ensure that icons and such are found by the tests"
+    from PyQt6.QtCore import QDir  # noqa
+
     QDir.addSearchPath("img", str(files("ert.gui").joinpath("resources/gui/img")))
 
 
@@ -264,6 +264,8 @@ def _qt_excepthook(monkeypatch):
     occurs inside a Qt slot.
 
     """
+    from PyQt6.QtWidgets import QApplication  # noqa
+
     next_excepthook = sys.excepthook
 
     def excepthook(cls, exc, tb):
