@@ -145,6 +145,7 @@ class BaseRunModelAPI:
     cancel: Callable[[], None]
     get_runtime: Callable[[], int]
     has_failed_realizations: Callable[[], bool]
+    config_file: str
 
 
 class BaseRunModel(ABC):
@@ -226,6 +227,7 @@ class BaseRunModel(ABC):
             has_failed_realizations=self.has_failed_realizations,
             support_restart=self.support_restart,
             cancel=self.cancel,
+            config_file=str(self._user_config_file),
         )
 
     def reports_dir(self, experiment_name: str) -> str:

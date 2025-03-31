@@ -92,7 +92,7 @@ class EverestClient:
         return event_queue, monitor_thread
 
     def create_run_model_api(
-        self, queue_system: str, runpath_format_string: str
+        self, queue_system: str, runpath_format_string: str, config_file: str
     ) -> BaseRunModelAPI:
         def start_fn(
             evaluator_server_config: EvaluatorServerConfig, restart: bool = False
@@ -108,6 +108,7 @@ class EverestClient:
             cancel=self.stop,
             get_runtime=lambda: -1,  # Not currently shown in Everest gui
             has_failed_realizations=lambda: False,
+            config_file=config_file,
         )
 
     def stop(self) -> None:
