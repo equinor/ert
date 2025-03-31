@@ -26,6 +26,7 @@ from ert.ensemble_evaluator import EvaluatorServerConfig
 from ert.gui.ertnotifier import ErtNotifier
 from ert.run_models import BaseRunModel, StatusEvents, create_model
 
+from ..find_ert_info import find_ert_info
 from ..summarypanel import SummaryPanel
 from .combobox_with_description import QComboBoxWithDescription
 from .ensemble_experiment_panel import EnsembleExperimentPanel
@@ -313,7 +314,7 @@ class ExperimentPanel(QWidget):
                 QApplication.restoreOverrideCursor()
 
         self._dialog = RunDialog(
-            self._config_file,
+            f"Experiment - {self._config_file} {find_ert_info()}",
             model.api,
             event_queue,
             self._notifier,
