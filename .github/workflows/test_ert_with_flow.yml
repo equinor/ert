@@ -59,7 +59,7 @@ jobs:
       run: |
         pushd test-data/ert/flow_example
         perl -p -i -e 's/NUM_REALIZATIONS\s*12/NUM_REALIZATIONS 2/g' flow.ert
-        uv run ert ensemble_experiment flow.ert
+        uv run ert ensemble_experiment --disable-monitoring flow.ert
         popd
 
     - name: Run Everest on an example configuration with flow
