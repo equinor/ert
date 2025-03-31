@@ -209,7 +209,6 @@ class RunDialog(QFrame):
         self.setWindowTitle(title)
 
         self._run_model_api = run_model_api
-        self._queue_system = run_model_api.queue_system
         self._snapshot_model = SnapshotModel(self)
         self._event_queue = event_queue
         self._notifier = notifier
