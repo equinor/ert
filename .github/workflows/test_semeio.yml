@@ -9,6 +9,7 @@ on: [pull_request]
 
 env:
   UV_FROZEN: true
+  OMP_NUM_THREADS: 1
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
