@@ -1,20 +1,14 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, cast
+from typing import TYPE_CHECKING
 
 import ert
-from ert.plugins import ErtScript
 
 from .csv_export import CSVExportJob
 from .disable_parameters import DisableParametersUpdate
 from .export_misfit_data import ExportMisfitDataJob
 from .export_runpath import ExportRunpathJob
-
-try:
-    from .gen_data_rft_export import GenDataRFTCSVExportJob
-except ImportError:
-    GenDataRFTCSVExportJob = cast(type[ErtScript], ErtScript)
-
+from .gen_data_rft_export import GenDataRFTCSVExportJob
 from .misfit_preprocessor import MisfitPreprocessor
 
 if TYPE_CHECKING:
