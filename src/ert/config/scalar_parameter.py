@@ -9,7 +9,7 @@ from collections.abc import Iterable
 from enum import StrEnum
 from hashlib import sha256
 from pathlib import Path
-from typing import TYPE_CHECKING, Annotated, Any, Literal, Self, overload
+from typing import TYPE_CHECKING, Annotated, Any, Literal, Self, cast, overload
 
 import numpy as np
 import pandas as pd
@@ -21,7 +21,7 @@ from scipy.stats import norm
 from ert.substitutions import substitute_runpath_name
 
 from ._str_to_bool import str_to_bool
-from .parameter_config import ParameterConfig, parse_config
+from .parameter_config import ParameterConfig
 from .parsing import ConfigValidationError, ConfigWarning
 
 if TYPE_CHECKING:
@@ -614,7 +614,7 @@ class ScalarParameters(ParameterConfig):
             if param.input_source == DataSource.SAMPLED and isinstance(
                 param.distribution, TransLogNormalSettings | TransLogUnifSettings
             ):
-                log_value = math.log(value, 10)
+                log_value = math.log10(value)
 
             # Build the nested dictionary {group: {key:value}, leg10_group:{key:log_value}}
             data[group_name][param_name] = value
@@ -631,8 +631,7 @@ class ScalarParameters(ParameterConfig):
             target_file = substitute_runpath_name(
                 output_file, real_nr, ensemble.iteration
             )
-            if target_file.startswith("/"):
-                target_file = target_file[1:]
+            target_file = target_file.removeprefix("/")
             (run_path / target_file).parent.mkdir(exist_ok=True, parents=True)
             template_file_path = (
                 ensemble.experiment.mount_point / Path(template_file).name
@@ -652,7 +651,8 @@ class ScalarParameters(ParameterConfig):
 
         for gen_kw in gen_kw_list:
             gen_kw_key = gen_kw[0]
-            positional_args, options = parse_config(gen_kw, 4)
+            options = cast(dict[str, str], gen_kw[-1])
+            positional_args = cast(list[str], gen_kw[:-1])
             forward_init = str_to_bool(options.get("FORWARD_INIT", "FALSE"))
             init_file = _get_abs_path(options.get("INIT_FILES"))
             update_parameter = str_to_bool(options.get("UPDATE", "TRUE"))
