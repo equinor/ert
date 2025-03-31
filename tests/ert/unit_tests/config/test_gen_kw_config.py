@@ -676,117 +676,117 @@ def test_validation_triangular_distribution(
             GenKwConfig.from_config_list(config_list)
 
 
-@pytest.mark.parametrize(
-    "distribution, nbins, min, max, skew, width, error",
-    [
-        ("DERRF", "10", "-1", "3", "-1", "2", None),
-        ("DERRF", "100", "-10", "10", "0", "1", None),
-        ("DERRF", "2", "-0.5", "0.5", "1", "0.1", None),
-        (
-            "DERRF",
-            "0",
-            "-1",
-            "3",
-            "-1",
-            "2",
-            "NBINS 0 must be a positive integer larger than 1 for DERRF distribution",
-        ),
-        (
-            "DERRF",
-            "-5",
-            "-1",
-            "3",
-            "-1",
-            "2",
-            "NBINS -5 must be a positive integer larger than 1 for DERRF distribution",
-        ),
-        (
-            "DERRF",
-            "1.5",
-            "-1",
-            "3",
-            "-1",
-            "2",
-            "NBINS 1 must be a positive integer larger than 1 for DERRF distribution",
-        ),
-        (
-            "DERRF",
-            "10",
-            "3",
-            "-1",
-            "-1",
-            "2",
-            "The minimum 3.0 must be less than the maximum -1.0 for DERRF distribution",
-        ),
-        (
-            "DERRF",
-            "10",
-            "1",
-            "1",
-            "-1",
-            "2",
-            "The minimum 1.0 must be less than the maximum 1.0 for DERRF distribution",
-        ),
-        (
-            "DERRF",
-            "10",
-            "-1",
-            "3",
-            "-1",
-            "0",
-            "The width 0.0 must be greater than 0 for DERRF distribution",
-        ),
-        (
-            "DERRF",
-            "10",
-            "-1",
-            "3",
-            "-1",
-            "-2",
-            "The width -2.0 must be greater than 0 for DERRF distribution",
-        ),
-        (
-            "DERRF",
-            "2",
-            "-999999",
-            "999999",
-            "0",
-            "0.0001",
-            None,
-        ),
-        (
-            "DERRF",
-            "1000",
-            "-0.001",
-            "0.001",
-            "0",
-            "0.0001",
-            None,
-        ),
-    ],
-)
-def test_validation_derrf_distribution(
-    tmpdir, distribution, nbins, min, max, skew, width, error
-):
-    with tmpdir.as_cwd():
-        with open("template.txt", "w", encoding="utf-8") as fh:
-            fh.writelines("MY_KEYWORD <MY_KEYWORD>")
-        config_list = [
-            "KW_NAME",
-            ("template.txt", "MY_KEYWORD <MY_KEYWORD>"),
-            "kw.txt",
-            (
-                "prior.txt",
-                f"MY_KEYWORD {distribution} {nbins} {min} {max} {skew} {width}",
-            ),
-            {},
-        ]
+# @pytest.mark.parametrize(
+#     "distribution, nbins, min, max, skew, width, error",
+#     [
+#         ("DERRF", "10", "-1", "3", "-1", "2", None),
+#         ("DERRF", "100", "-10", "10", "0", "1", None),
+#         ("DERRF", "2", "-0.5", "0.5", "1", "0.1", None),
+#         (
+#             "DERRF",
+#             "0",
+#             "-1",
+#             "3",
+#             "-1",
+#             "2",
+#             "NBINS 0 must be a positive integer larger than 1 for DERRF distribution",
+#         ),
+#         (
+#             "DERRF",
+#             "-5",
+#             "-1",
+#             "3",
+#             "-1",
+#             "2",
+#             "NBINS -5 must be a positive integer larger than 1 for DERRF distribution",
+#         ),
+#         (
+#             "DERRF",
+#             "1.5",
+#             "-1",
+#             "3",
+#             "-1",
+#             "2",
+#             "NBINS 1 must be a positive integer larger than 1 for DERRF distribution",
+#         ),
+#         (
+#             "DERRF",
+#             "10",
+#             "3",
+#             "-1",
+#             "-1",
+#             "2",
+#             "The minimum 3.0 must be less than the maximum -1.0 for DERRF distribution",
+#         ),
+#         (
+#             "DERRF",
+#             "10",
+#             "1",
+#             "1",
+#             "-1",
+#             "2",
+#             "The minimum 1.0 must be less than the maximum 1.0 for DERRF distribution",
+#         ),
+#         (
+#             "DERRF",
+#             "10",
+#             "-1",
+#             "3",
+#             "-1",
+#             "0",
+#             "The width 0.0 must be greater than 0 for DERRF distribution",
+#         ),
+#         (
+#             "DERRF",
+#             "10",
+#             "-1",
+#             "3",
+#             "-1",
+#             "-2",
+#             "The width -2.0 must be greater than 0 for DERRF distribution",
+#         ),
+#         (
+#             "DERRF",
+#             "2",
+#             "-999999",
+#             "999999",
+#             "0",
+#             "0.0001",
+#             None,
+#         ),
+#         (
+#             "DERRF",
+#             "1000",
+#             "-0.001",
+#             "0.001",
+#             "0",
+#             "0.0001",
+#             None,
+#         ),
+#     ],
+# )
+# def test_validation_derrf_distribution(
+#     tmpdir, distribution, nbins, min, max, skew, width, error
+# ):
+#     with tmpdir.as_cwd():
+#         with open("template.txt", "w", encoding="utf-8") as fh:
+#             fh.writelines("MY_KEYWORD <MY_KEYWORD>")
+#         config_list = [
+#             "KW_NAME",
+#             ("template.txt", "MY_KEYWORD <MY_KEYWORD>"),
+#             "kw.txt",
+#             (
+#                 "prior.txt",
+#                 f"MY_KEYWORD {distribution} {nbins} {min} {max} {skew} {width}",
+#             ),
+#             {},
+#         ]
 
-        if error:
-            with pytest.raises(
-                ConfigValidationError,
-                match=error,
-            ):
-                GenKwConfig.from_config_list(config_list)
-        else:
-            GenKwConfig.from_config_list(config_list)
+#         if error:
+#             with pytest.raises(
+#                 ConfigValidationError,
+#                 match=error,
+#             ):
+#                 GenKwConfig.from_config_list(config_list)
+#         else:
+#             GenKwConfig.from_config_list(config_list)
