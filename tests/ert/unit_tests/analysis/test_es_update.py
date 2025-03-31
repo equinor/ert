@@ -15,7 +15,6 @@ from ert.analysis import (
 )
 from ert.analysis._es_update import (
     _load_observations_and_responses,
-    _load_param_ensemble_array,
     _save_param_ensemble_array_to_disk,
 )
 from ert.analysis.event import AnalysisCompleteEvent, AnalysisErrorEvent
@@ -711,8 +710,8 @@ def test_temporary_parameter_storage_with_inactive_fields(
         prior_ensemble.save_parameters(param_group, iens, fields[iens])
 
     realization_list = list(range(ensemble_size))
-    param_ensemble_array = _load_param_ensemble_array(
-        prior_ensemble, param_group, realization_list
+    param_ensemble_array = prior_ensemble.load_parameters_numpy(
+        param_group, realization_list
     )
 
     assert np.count_nonzero(mask_list) < (shape.nx * shape.ny * shape.nz)
