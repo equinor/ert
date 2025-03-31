@@ -74,7 +74,7 @@ class EverestMainWindow(QMainWindow):
         )
 
         run_dialog = RunDialog(
-            config_file=self.config_file,
+            title=self.config_file,
             run_model_api=run_model_api,
             event_queue=event_queue,
             is_everest=True,

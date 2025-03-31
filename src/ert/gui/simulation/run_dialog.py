@@ -67,7 +67,6 @@ from ert.shared.status.utils import (
     get_mount_directory,
 )
 
-from ..find_ert_info import find_ert_info
 from .queue_emitter import QueueEmitter
 from .view import DiskSpaceWidget, ProgressWidget, RealizationWidget, UpdateWidget
 
@@ -194,7 +193,7 @@ class RunDialog(QFrame):
 
     def __init__(
         self,
-        config_file: str,
+        title: str,
         run_model_api: BaseRunModelAPI,
         event_queue: SimpleQueue[StatusEvents],
         notifier: ErtNotifier,
@@ -207,7 +206,7 @@ class RunDialog(QFrame):
         self.setAttribute(Qt.WidgetAttribute.WA_DeleteOnClose)
         self.setWindowFlags(Qt.WindowType.Window)
         self.setWindowFlag(Qt.WindowType.WindowContextHelpButtonHint, False)
-        self.setWindowTitle(f"Experiment - {config_file} {find_ert_info()}")
+        self.setWindowTitle(title)
 
         self._run_model_api = run_model_api
         self._queue_system = run_model_api.queue_system
