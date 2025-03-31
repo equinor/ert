@@ -2169,7 +2169,7 @@ def test_ert_script_hook_pre_experiment_but_asks_for_storage():
 
     wfjob = ErtScriptWorkflow(
         name="TEST_SCRIPT",
-        ertscript_class=SomeScript,
+        ert_script=SomeScript,
     )
     ErtConfig.PREINSTALLED_WORKFLOWS = {"TEST_SCRIPT": wfjob}
 
@@ -2189,7 +2189,7 @@ def test_ert_script_hook_pre_experiment_but_asks_for_ensemble():
 
     wfjob = ErtScriptWorkflow(
         name="TEST_SCRIPT",
-        ertscript_class=SomeScript,
+        ert_script=SomeScript,
     )
     ErtConfig.PREINSTALLED_WORKFLOWS = {"TEST_SCRIPT": wfjob}
 
@@ -2209,7 +2209,7 @@ def test_ert_script_hook_pre_experiment_but_asks_for_random_seed():
 
     wfjob = ErtScriptWorkflow(
         name="TEST_SCRIPT",
-        ertscript_class=SomeScript,
+        ert_script=SomeScript,
     )
     ErtConfig.PREINSTALLED_WORKFLOWS = {"TEST_SCRIPT": wfjob}
 
@@ -2224,7 +2224,7 @@ def test_ert_script_hook_pre_experiment_essettings_fails():
 
     wfjob = ErtScriptWorkflow(
         name="TEST_SCRIPT",
-        ertscript_class=SomeScript,
+        ert_script=SomeScript,
     )
     ErtConfig.PREINSTALLED_WORKFLOWS = {"TEST_SCRIPT": wfjob}
 
@@ -2261,7 +2261,7 @@ def test_ert_script_hook_valid_essettings_succeed():
 
     wfjob = ErtScriptWorkflow(
         name="TEST_SCRIPT",
-        ertscript_class=SomeScript,
+        ert_script=SomeScript,
     )
     ErtConfig.PREINSTALLED_WORKFLOWS = {"TEST_SCRIPT": wfjob}
     ErtConfig.from_file("config.ert")
