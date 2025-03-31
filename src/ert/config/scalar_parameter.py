@@ -650,7 +650,7 @@ class ScalarParameters(ParameterConfig):
         scalars: list[ScalarParameter] = []
 
         for gen_kw in gen_kw_list:
-            gen_kw_key = gen_kw[0]
+            gen_kw_key = cast(str, gen_kw[0])
             options = cast(dict[str, str], gen_kw[-1])
             positional_args = cast(list[str], gen_kw[:-1])
             forward_init = str_to_bool(options.get("FORWARD_INIT", "FALSE"))
@@ -658,15 +658,15 @@ class ScalarParameters(ParameterConfig):
             update_parameter = str_to_bool(options.get("UPDATE", "TRUE"))
 
             if len(positional_args) == 2:
-                parameter_file = _get_abs_path(positional_args[1])
-                parameter_file_context = positional_args[1]
+                parameter_file_contents = positional_args[1][1]
+                parameter_file_context = positional_args[1][0]
                 template_file = None
                 output_file = None
             elif len(positional_args) == 4:
                 output_file = positional_args[2]
-                parameter_file = _get_abs_path(positional_args[3])
-                parameter_file_context = positional_args[3]
-                template_file = _get_abs_path(positional_args[1])
+                parameter_file_contents = positional_args[3][1]
+                parameter_file_context = positional_args[3][0]
+                template_file = _get_abs_path(positional_args[1][0])
                 if not os.path.isfile(template_file):
                     errors.append(
                         ConfigValidationError.with_context(
@@ -675,10 +675,8 @@ class ScalarParameters(ParameterConfig):
                         )
                     )
                 elif Path(template_file).stat().st_size == 0:
-                    token = (
-                        parameter_file_context.token
-                        if hasattr(parameter_file_context, "token")
-                        else parameter_file_context
+                    token = getattr(
+                        parameter_file_context, "token", parameter_file_context
                     )
                     ConfigWarning.deprecation_warn(
                         f"The template file for GEN_KW ({gen_kw_key}) is empty. If templating is not needed, you "
@@ -689,20 +687,6 @@ class ScalarParameters(ParameterConfig):
             else:
                 raise ConfigValidationError(
                     f"Unexpected positional arguments: {positional_args}"
-                )
-            if not os.path.isfile(parameter_file):
-                errors.append(
-                    ConfigValidationError.with_context(
-                        f"No such parameter file: {parameter_file}",
-                        parameter_file_context,
-                    )
-                )
-            elif Path(parameter_file).stat().st_size == 0:
-                errors.append(
-                    ConfigValidationError.with_context(
-                        f"No parameters specified in {parameter_file}",
-                        parameter_file_context,
-                    )
                 )
 
             if forward_init:
@@ -724,30 +708,38 @@ class ScalarParameters(ParameterConfig):
             if errors:
                 raise ConfigValidationError.from_collected(errors)
 
-            with open(parameter_file, encoding="utf-8") as file:
-                for line_number, item in enumerate(file):
-                    item = item.split("--")[0]  # remove comments
-                    if item.strip():  # only lines with content
-                        items = item.split()
-                        if len(items) < 2:
-                            errors.append(
-                                ConfigValidationError.with_context(
-                                    f"Too few values on line {line_number} in parameter file {parameter_file}",
-                                    gen_kw,
-                                )
+            scalars_added = False
+            for line_number, item in enumerate(parameter_file_contents.splitlines()):
+                item = item.split("--")[0]  # remove comments
+                if item.strip():  # only lines with content
+                    items = item.split()
+                    if len(items) < 2:
+                        errors.append(
+                            ConfigValidationError.with_context(
+                                f"Too few values on line {line_number} in parameter file {parameter_file_context}",
+                                gen_kw,
                             )
-                        else:
-                            scalars.append(
-                                ScalarParameter(
-                                    param_name=items[0],
-                                    input_source=DataSource.SAMPLED,
-                                    group_name=gen_kw_key,
-                                    distribution=get_distribution(items[1], items[2:]),
-                                    template_file=template_file,
-                                    output_file=output_file,
-                                    update=update_parameter,
-                                )
+                        )
+                    else:
+                        scalars.append(
+                            ScalarParameter(
+                                param_name=items[0],
+                                input_source=DataSource.SAMPLED,
+                                group_name=gen_kw_key,
+                                distribution=get_distribution(items[1], items[2:]),
+                                template_file=template_file,
+                                output_file=output_file,
+                                update=update_parameter,
                             )
+                        )
+                        scalars_added = True
+            if not scalars_added:
+                errors.append(
+                    ConfigValidationError.with_context(
+                        f"No parameters specified in {parameter_file_context}",
+                        parameter_file_context,
+                    )
+                )
 
             if gen_kw_key == "PRED" and update_parameter:
                 ConfigWarning.warn(
@@ -756,6 +748,7 @@ class ScalarParameters(ParameterConfig):
                     "to exclude this from updates, set UPDATE:FALSE.\n",
                     gen_kw[0],
                 )
+
         if errors:
             raise ConfigValidationError.from_collected(errors)
 
