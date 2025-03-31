@@ -13,9 +13,14 @@ The following is a set of guidelines for contributing to ERT.
 
 We strive to use test names that are meaningful. Ideally,
 the output of `pytest --collect-only tests/` should tell you all you need to know
-about why the test is present and what it tests for.
+about why the test is present and what it tests for. We do this for three reasons:
 
-Good examples:
+
+1. So that failure log messages are easy to understand;
+2. So that the tests purpose is not lost when the code is updated;
+3. To keep a record of intent for changes to the code
+
+Good name examples:
 ```
 <Dir ert>
   <Package tests>
@@ -40,7 +45,7 @@ Good examples:
               <Function test_that_unknown_queue_option_gives_error_message>
 ```
 
-Bad examples:
+Bad name examples:
 
 ```
 <Dir ert>
