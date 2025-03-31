@@ -16,6 +16,7 @@ env:
   ECL_SKIP_SIGNAL: 1
   ERT_PYTEST_ARGS: '-m ${{ inputs.select-string }} --cov=ert --cov=everest --cov=_ert --cov-report=xml:cov1.xml --junit-xml=junit.xml -o junit_family=legacy -v --durations=25 --benchmark-disable'
   UV_FROZEN: true
+  OMP_NUM_THREADS: 1
 
 jobs:
   tests-ert:

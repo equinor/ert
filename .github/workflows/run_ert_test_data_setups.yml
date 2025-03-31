@@ -14,6 +14,7 @@ concurrency:
 env:
   ERT_SHOW_BACKTRACE: 1
   UV_FROZEN: true
+  OMP_NUM_THREADS: 1
 
 jobs:
   run-ert-test-data:
