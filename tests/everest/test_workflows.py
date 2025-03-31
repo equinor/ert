@@ -12,7 +12,7 @@ CONFIG_FILE = "config_workflow.yml"
 
 
 @pytest.mark.integration_test
-def test_workflow_run(copy_mocked_test_data_to_tmp):
+def test_workflow_will_run_during_experiment(copy_mocked_test_data_to_tmp):
     config = EverestConfig.load_file(CONFIG_FILE)
 
     run_model = EverestRunModel.create(config)
