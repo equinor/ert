@@ -645,7 +645,7 @@ class ScalarParameters(ParameterConfig):
         return data
 
     @classmethod
-    def from_config_list(cls, gen_kw_list: list[list[str]]) -> Self:
+    def from_config_list(cls, gen_kw_list: list[list[str | dict[str, str]]]) -> Self:
         errors = []
         scalars: list[ScalarParameter] = []
 
@@ -698,13 +698,13 @@ class ScalarParameters(ParameterConfig):
                     )
                 )
 
-            if init_file:
+            if init_file and "%" not in init_file:
                 errors.append(
                     ConfigValidationError.with_context(
-                        "Loading GEN_KW from init_files is not longer supported!",
-                        gen_kw,
+                        "Loading GEN_KW from files requires %d in file format", gen_kw
                     )
                 )
+
             if errors:
                 raise ConfigValidationError.from_collected(errors)
 

@@ -447,10 +447,17 @@ def test_gen_kw_objects_equal(tmpdir):
         with open("template.txt", "w", encoding="utf-8") as fh:
             fh.writelines("MY_KEYWORD <MY_KEYWORD>")
 
-        ert_config = ErtConfig.from_file("config.ert")
+        # ert_config = ErtConfig.from_file("config.ert")
 
-        assert ert_config.ensemble_config.scalars is not None
-        g1 = ert_config.ensemble_config.scalars["KW_NAME"][0]
+        # assert ert_config.ensemble_config.scalars is not None
+        gen_kw_var = [
+            "KW_NAME",
+            ("template.txt", "MY_KEYWORD <MY_KEYWORD>"),
+            "kw.txt",
+            ("prior.txt", "MY_KEYWORD UNIFORM 1 2"),
+            {},
+        ]
+        g1 = ScalarParameters.from_config_list([gen_kw_var]).groups["KW_NAME"][0]
         assert g1.param_name == "MY_KEYWORD"
 
         g2 = ScalarParameter(
