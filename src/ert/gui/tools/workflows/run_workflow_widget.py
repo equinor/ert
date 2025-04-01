@@ -139,11 +139,11 @@ class RunWorkflowWidget(QWidget):
                 "observation_settings": self.config.analysis_config.observation_settings,
                 "es_settings": self.config.analysis_config.es_module,
                 "run_paths": Runpaths(
-                    jobname_format=self.config.model_config.jobname_format_string,
-                    runpath_format=self.config.model_config.runpath_format_string,
+                    jobname_format=self.config.runpath_config.jobname_format_string,
+                    runpath_format=self.config.runpath_config.runpath_format_string,
                     filename=str(self.config.runpath_file),
                     substitutions=self.config.substitutions,
-                    eclbase=self.config.model_config.eclbase_format_string,
+                    eclbase=self.config.runpath_config.eclbase_format_string,
                 ),
             },
         )

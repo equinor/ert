@@ -72,7 +72,7 @@ def test_update_report(
     prior_ens = experiment.get_ensemble_by_name("default_0")
     posterior_ens = snake_oil_storage.create_ensemble(
         prior_ens.experiment_id,
-        ensemble_size=ert_config.model_config.num_realizations,
+        ensemble_size=ert_config.runpath_config.num_realizations,
         iteration=1,
         name="new_ensemble",
         prior_ensemble=prior_ens,
@@ -105,7 +105,7 @@ def test_update_report_with_exception_in_analysis_ES(
     prior_ens = experiment.get_ensemble_by_name("default_0")
     posterior_ens = snake_oil_storage.create_ensemble(
         prior_ens.experiment_id,
-        ensemble_size=ert_config.model_config.num_realizations,
+        ensemble_size=ert_config.runpath_config.num_realizations,
         iteration=1,
         name="new_ensemble",
         prior_ensemble=prior_ens,
@@ -151,7 +151,7 @@ def test_update_report_with_different_observation_status_from_smoother_update(
 
     posterior_ens = snake_oil_storage.create_ensemble(
         prior_ens.experiment_id,
-        ensemble_size=ert_config.model_config.num_realizations,
+        ensemble_size=ert_config.runpath_config.num_realizations,
         iteration=1,
         name="new_ensemble",
         prior_ensemble=prior_ens,
@@ -458,7 +458,7 @@ def test_update_snapshot(
     prior_ens = experiment.get_ensemble_by_name("default_0")
     posterior_ens = snake_oil_storage.create_ensemble(
         prior_ens.experiment_id,
-        ensemble_size=ert_config.model_config.num_realizations,
+        ensemble_size=ert_config.runpath_config.num_realizations,
         iteration=1,
         name="posterior",
         prior_ensemble=prior_ens,
@@ -617,7 +617,7 @@ def test_update_only_using_subset_observations(
     prior_ens = experiment.get_ensemble_by_name("default_0")
     posterior_ens = snake_oil_storage.create_ensemble(
         prior_ens.experiment_id,
-        ensemble_size=ert_config.model_config.num_realizations,
+        ensemble_size=ert_config.runpath_config.num_realizations,
         iteration=1,
         name="new_ensemble",
         prior_ensemble=prior_ens,

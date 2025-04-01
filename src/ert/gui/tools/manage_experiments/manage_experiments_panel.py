@@ -92,7 +92,7 @@ class ManageExperimentsPanel(QTabWidget):
         parameters_config = self.ert_config.ensemble_config.parameter_configuration
         design_matrix_group = None
         realizations: Collection[int] = range(
-            self.ert_config.model_config.num_realizations
+            self.ert_config.runpath_config.num_realizations
         )
         if design_matrix is not None:
             try:

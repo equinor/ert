@@ -66,7 +66,7 @@ def test_assert_symlink_deleted(snake_oil_field_example, storage, run_paths):
     prior_ensemble = storage.create_ensemble(
         experiment_id,
         name="prior",
-        ensemble_size=ert_config.model_config.num_realizations,
+        ensemble_size=ert_config.runpath_config.num_realizations,
     )
 
     # create directory structure

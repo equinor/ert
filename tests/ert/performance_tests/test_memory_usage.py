@@ -85,7 +85,7 @@ def fill_storage_with_data(poly_template: Path, ert_config: ErtConfig) -> None:
         )
         source = storage.create_ensemble(experiment_id, name="prior", ensemble_size=100)
 
-        realizations = list(range(ert_config.model_config.num_realizations))
+        realizations = list(range(ert_config.runpath_config.num_realizations))
         for real in realizations:
             gendatas = []
             gen_obs = ert_config.observations["gen_data"]

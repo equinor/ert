@@ -37,8 +37,8 @@ def prior_ensemble(storage):
 def run_paths():
     def func(ert_config: ErtConfig):
         return Runpaths(
-            jobname_format=ert_config.model_config.jobname_format_string,
-            runpath_format=ert_config.model_config.runpath_format_string,
+            jobname_format=ert_config.runpath_config.jobname_format_string,
+            runpath_format=ert_config.runpath_config.runpath_format_string,
             filename=str(ert_config.runpath_file),
             substitutions=ert_config.substitutions,
         )
@@ -54,7 +54,7 @@ def run_args(run_paths):
         active_realizations: int | None = None,
     ) -> list[RunArg]:
         active_realizations = (
-            ert_config.model_config.num_realizations
+            ert_config.runpath_config.num_realizations
             if active_realizations is None
             else active_realizations
         )

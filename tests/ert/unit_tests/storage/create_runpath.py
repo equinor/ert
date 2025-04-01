@@ -24,13 +24,13 @@ def create_runpath(
         ensemble = storage.create_ensemble(
             experiment_id,
             name="default",
-            ensemble_size=ert_config.model_config.num_realizations,
+            ensemble_size=ert_config.runpath_config.num_realizations,
             iteration=iteration,
         )
 
     runpaths = Runpaths(
-        jobname_format=ert_config.model_config.jobname_format_string,
-        runpath_format=ert_config.model_config.runpath_format_string,
+        jobname_format=ert_config.runpath_config.jobname_format_string,
+        runpath_format=ert_config.runpath_config.runpath_format_string,
         filename=str(ert_config.runpath_file),
         substitutions=ert_config.substitutions,
     )

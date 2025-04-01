@@ -44,7 +44,7 @@ def create_model(
         "Initiating experiment",
         extra={
             "mode": args.mode,
-            "ensemble_size": config.model_config.num_realizations,
+            "ensemble_size": config.runpath_config.num_realizations,
         },
     )
     update_settings = config.analysis_config.observation_settings
@@ -148,7 +148,7 @@ def _setup_evaluate_ensemble(
 
 
 def _get_active_realizations_list(args: Namespace, config: ErtConfig) -> list[bool]:
-    ensemble_size = config.model_config.num_realizations
+    ensemble_size = config.runpath_config.num_realizations
     if (
         config.analysis_config.design_matrix is not None
         and config.analysis_config.design_matrix.active_realizations is not None
@@ -169,7 +169,7 @@ def _setup_manual_update(
     update_settings: UpdateSettings,
     status_queue: SimpleQueue[StatusEvents],
 ) -> ManualUpdate:
-    active_realizations = _realizations(args, config.model_config.num_realizations)
+    active_realizations = _realizations(args, config.runpath_config.num_realizations)
 
     return ManualUpdate(
         random_seed=config.random_seed,

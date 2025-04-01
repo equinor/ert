@@ -271,7 +271,7 @@ def run_experiment_fixture(request):
             list_model = realization_widget._real_view.model()
             assert (
                 list_model.rowCount()
-                == experiment_panel.config.model_config.num_realizations
+                == experiment_panel.config.runpath_config.num_realizations
             )
 
     return func

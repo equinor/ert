@@ -56,7 +56,7 @@ def test_restart_failed_realizations(opened_main_window_poly, qtbot):
         )
 
     experiment_panel = gui.findChild(ExperimentPanel)
-    num_reals = experiment_panel.config.model_config.num_realizations
+    num_reals = experiment_panel.config.runpath_config.num_realizations
 
     failing_reals_first_try = {*random.sample(range(num_reals), 10)}
     write_poly_eval(failing_reals=failing_reals_first_try)
@@ -83,7 +83,7 @@ def test_restart_failed_realizations(opened_main_window_poly, qtbot):
     list_model = realization_widget._real_view.model()
     assert list_model
     assert (
-        list_model.rowCount() == experiment_panel.config.model_config.num_realizations
+        list_model.rowCount() == experiment_panel.config.runpath_config.num_realizations
     )
 
     run_model = opened_main_window_poly._experiment_panel._model
@@ -116,7 +116,7 @@ def test_restart_failed_realizations(opened_main_window_poly, qtbot):
     list_model = realization_widget._real_view.model()
     assert list_model
     assert (
-        list_model.rowCount() == experiment_panel.config.model_config.num_realizations
+        list_model.rowCount() == experiment_panel.config.runpath_config.num_realizations
     )
 
     # Second restart
@@ -145,5 +145,5 @@ def test_restart_failed_realizations(opened_main_window_poly, qtbot):
     list_model = realization_widget._real_view.model()
     assert list_model
     assert (
-        list_model.rowCount() == experiment_panel.config.model_config.num_realizations
+        list_model.rowCount() == experiment_panel.config.runpath_config.num_realizations
     )

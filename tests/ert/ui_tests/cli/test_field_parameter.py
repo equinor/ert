@@ -282,7 +282,7 @@ def test_field_param_update_using_heat_equation_zero_var_params_and_adaptive_loc
 
         new_posterior = storage.create_ensemble(
             new_experiment,
-            ensemble_size=config.model_config.num_realizations,
+            ensemble_size=config.runpath_config.num_realizations,
             iteration=1,
             name="new_ensemble",
             prior_ensemble=new_prior,
