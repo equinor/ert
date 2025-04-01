@@ -6,6 +6,7 @@ from .validation_status import ValidationStatus
 
 if TYPE_CHECKING:
     from ert.storage import Ensemble
+    from ert.storage.realization_storage_state import RealizationStorageState
 
 
 class EnsembleRealizationsArgument(RangeStringArgument):
@@ -14,27 +15,35 @@ class EnsembleRealizationsArgument(RangeStringArgument):
     )
 
     def __init__(
-        self, ensemble: "Ensemble", max_value: int | None, **kwargs: bool
+        self,
+        ensemble: "Ensemble",
+        max_value: int | None,
+        required_realization_storage_state: "RealizationStorageState",
+        **kwargs: bool,
     ) -> None:
         super().__init__(max_value, **kwargs)
         self.__ensemble = ensemble
+        self._required_realization_storage_state: RealizationStorageState = (
+            required_realization_storage_state
+        )
 
     def set_ensemble(self, ensemble: "Ensemble") -> None:
         self.__ensemble = ensemble
 
     def validate(self, token: str) -> ValidationStatus:
-        if not token:
-            return ValidationStatus()
-
         validation_status = super().validate(token)
         if not validation_status:
             return validation_status
         attempted_realizations = rangestring_to_list(token)
 
         invalid_realizations = []
-        initialized_realization_ids = self.__ensemble.is_initalized()
+        found_realization_ids = [
+            index
+            for index, state in enumerate(self.__ensemble.get_ensemble_state())
+            if self._required_realization_storage_state in state
+        ]
         for realization in attempted_realizations:
-            if realization not in initialized_realization_ids:
+            if realization not in found_realization_ids:
                 invalid_realizations.append(realization)
 
         if invalid_realizations:
