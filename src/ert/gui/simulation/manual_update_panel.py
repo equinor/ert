@@ -18,6 +18,7 @@ from ert.gui.ertwidgets import (
 from ert.gui.simulation.experiment_config_panel import ExperimentConfigPanel
 from ert.mode_definitions import MANUAL_UPDATE_MODE
 from ert.run_models.manual_update import ManualUpdate
+from ert.storage.realization_storage_state import RealizationStorageState
 from ert.validation import EnsembleRealizationsArgument, ProperNameFormatArgument
 
 
@@ -72,9 +73,12 @@ class ManualUpdatePanel(ExperimentConfigPanel):
         self._active_realizations_field = StringBox(
             ActiveRealizationsModel(ensemble_size, show_default=False),  # type: ignore
             "config/simulation/active_realizations",
+            continuous_update=True,
         )
         self._realizations_validator = EnsembleRealizationsArgument(
-            self._ensemble_selector.selected_ensemble, max_value=ensemble_size
+            self._ensemble_selector.selected_ensemble,
+            max_value=ensemble_size,
+            required_realization_storage_state=RealizationStorageState.RESPONSES_LOADED,
         )
         self._active_realizations_field.setValidator(self._realizations_validator)
         self._realizations_from_fs()
