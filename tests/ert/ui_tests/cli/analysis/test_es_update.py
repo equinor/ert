@@ -4,19 +4,35 @@ from pathlib import Path
 from textwrap import dedent
 
 import numpy as np
+import numpy.typing as npt
 import polars as pl
 import pytest
 from scipy.ndimage import gaussian_filter
 from xtgeo import RegularSurface, surface_from_file
 
 from ert import LibresFacade
-from ert.analysis._es_update import _all_parameters
 from ert.config import ErtConfig, GenKwConfig
 from ert.config.gen_kw_config import TransformFunctionDefinition
 from ert.mode_definitions import ENSEMBLE_SMOOTHER_MODE
-from ert.storage import open_storage
+from ert.storage import Ensemble, open_storage
 from ert.storage.realization_storage_state import RealizationStorageState
 from tests.ert.ui_tests.cli.run_cli import run_cli
+
+
+def _all_parameters(
+    ensemble: Ensemble,
+    iens_active_index: npt.NDArray[np.int_],
+) -> npt.NDArray[np.float64]:
+    """Return all parameters in assimilation problem"""
+
+    param_groups = list(ensemble.experiment.parameter_configuration.keys())
+
+    param_arrays = [
+        ensemble.load_parameters_numpy(param_group, iens_active_index)
+        for param_group in param_groups
+    ]
+
+    return np.vstack(param_arrays)
 
 
 @pytest.fixture

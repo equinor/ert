@@ -94,22 +94,6 @@ class TimedIterator(Generic[T]):
         return result
 
 
-def _all_parameters(
-    ensemble: Ensemble,
-    iens_active_index: npt.NDArray[np.int_],
-) -> npt.NDArray[np.float64]:
-    """Return all parameters in assimilation problem"""
-
-    param_groups = list(ensemble.experiment.parameter_configuration.keys())
-
-    param_arrays = [
-        _load_param_ensemble_array(ensemble, param_group, iens_active_index)
-        for param_group in param_groups
-    ]
-
-    return np.vstack(param_arrays)
-
-
 def _save_param_ensemble_array_to_disk(
     ensemble: Ensemble,
     param_ensemble_array: npt.NDArray[np.float64],
@@ -119,15 +103,6 @@ def _save_param_ensemble_array_to_disk(
     config_node = ensemble.experiment.parameter_configuration[param_group]
     for i, realization in enumerate(iens_active_index):
         config_node.save_parameters(ensemble, realization, param_ensemble_array[:, i])
-
-
-def _load_param_ensemble_array(
-    ensemble: Ensemble,
-    param_group: str,
-    iens_active_index: npt.NDArray[np.int_],
-) -> npt.NDArray[np.float64]:
-    config_node = ensemble.experiment.parameter_configuration[param_group]
-    return config_node.load_parameters(ensemble, iens_active_index)
 
 
 def _expand_wildcards(
@@ -540,9 +515,10 @@ def analysis_ES(
         cross_correlations_accumulator.append(cross_correlations_of_batch)
 
     for param_group in parameters:
-        param_ensemble_array = _load_param_ensemble_array(
-            source_ensemble, param_group, iens_active_index
+        param_ensemble_array = source_ensemble.load_parameters_numpy(
+            param_group, iens_active_index
         )
+
         if module.localization:
             config_node = source_ensemble.experiment.parameter_configuration[
                 param_group
@@ -607,8 +583,8 @@ def analysis_ES(
         progress_callback(AnalysisStatusEvent(msg=log_msg))
         start = time.time()
 
-        _save_param_ensemble_array_to_disk(
-            target_ensemble, param_ensemble_array, param_group, iens_active_index
+        target_ensemble.save_parameters_numpy(
+            param_ensemble_array, param_group, iens_active_index
         )
         logger.info(
             f"Storing data for {param_group} completed in {(time.time() - start) / 60} minutes"
