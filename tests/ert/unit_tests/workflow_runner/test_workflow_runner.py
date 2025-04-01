@@ -1,10 +1,10 @@
 import os.path
 from pathlib import Path
-from unittest.mock import MagicMock, patch
+from textwrap import dedent
+from unittest.mock import patch
 
 import pytest
 
-import ert
 from ert.config import ConfigWarning, Workflow
 from ert.config.workflow_job import (
     ErtScriptWorkflow,
@@ -103,23 +103,28 @@ def test_run_internal_script():
     assert result == -1
 
 
-@pytest.mark.usefixtures("use_tmpdir")
 @pytest.mark.parametrize(
     "config, expected_result",
     [
         (["INTERNAL FALSE"], "FALSE has no effect"),
-        (["SCRIPT scripy.py"], "SCRIPT has no effect"),
-        (["SCRIPT scripy.py", "INTERNAL TRUE"], "SCRIPT and INTERNAL"),
+        (["SCRIPT script.py"], "SCRIPT has no effect"),
+        (["SCRIPT script.py", "INTERNAL TRUE"], "SCRIPT and INTERNAL"),
     ],
 )
-def test_deprecated_keywords(config, expected_result, monkeypatch):
-    monkeypatch.setattr(ert.config.workflow_job, "ErtScript", MagicMock())
-    monkeypatch.setattr(
-        ert.config.workflow_job.ErtScriptWorkflow, "__post_init__", MagicMock()
-    )
+def test_deprecated_keywords(config, expected_result, monkeypatch, tmp_path):
+    monkeypatch.chdir(tmp_path)
     with open("test_job", "w", encoding="utf-8") as f:
         f.write("\n".join(config))
-    Path("script.py").touch()
+    Path("script.py").write_text(
+        dedent("""
+    from ert import ErtScript
+
+    class Test(ErtScript):
+        def run():
+            pass
+    """),
+        encoding="utf-8",
+    )
     with pytest.warns(ConfigWarning, match=expected_result):
         workflow_job_from_file(
             name="TEST",

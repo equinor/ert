@@ -4,8 +4,10 @@ import logging
 import os
 from argparse import ArgumentParser
 from collections.abc import Callable
-from dataclasses import dataclass, field
-from typing import TypeAlias
+from dataclasses import field
+from typing import Self, TypeAlias
+
+from pydantic import BaseModel, model_validator
 
 from ..plugins.ert_plugin import ErtPlugin
 from ..plugins.ert_script import ErtScript
@@ -74,7 +76,7 @@ def workflow_job_from_file(config_file: str, name: str | None = None) -> _Workfl
             min_args=min_args,
             max_args=max_args,
             arg_types=arg_types_list,
-            stop_on_fail=content_dict.get("STOP_ON_FAIL"),  # type: ignore
+            stop_on_fail=bool(content_dict.get("STOP_ON_FAIL")),  # type: ignore
         )
     else:
         return ExecutableWorkflow(
@@ -83,12 +85,11 @@ def workflow_job_from_file(config_file: str, name: str | None = None) -> _Workfl
             max_args=max_args,
             arg_types=arg_types_list,
             executable=content_dict.get("EXECUTABLE"),  # type: ignore
-            stop_on_fail=content_dict.get("STOP_ON_FAIL"),  # type: ignore
+            stop_on_fail=bool(content_dict.get("STOP_ON_FAIL")),  # type: ignore
         )
 
 
-@dataclass
-class _WorkflowJob:
+class _WorkflowJob(BaseModel):
     name: str
     min_args: int | None = None
     max_args: int | None = None
@@ -127,12 +128,10 @@ class _WorkflowJob:
         return False
 
 
-@dataclass
 class ExecutableWorkflow(_WorkflowJob):
     executable: str | None = None
 
 
-@dataclass
 class ErtScriptWorkflow(_WorkflowJob):
     """
     Single workflow configuration object
@@ -144,7 +143,8 @@ class ErtScriptWorkflow(_WorkflowJob):
     parser: Callable[[], ArgumentParser] | None = None
     category: str = "other"
 
-    def __post_init__(self) -> None:
+    @model_validator(mode="after")
+    def validate_types(self) -> Self:
         if not isinstance(self.ert_script, type):
             raise ErtScriptLoadFailure(
                 f"Failed to load {self.name}, ert_script is instance, expected "
@@ -156,10 +156,14 @@ class ErtScriptWorkflow(_WorkflowJob):
                 f"type, expected ErtScript, got {self.ert_script}"
             )
 
-        self.source_package = self.ert_script.__module__.partition(".")[2]
         self.description = (
             self.description or self.ert_script.__doc__  # type: ignore
         )
+        return self
+
+    @property
+    def source_package(self) -> str:
+        return self.ert_script.__module__.partition(".")[2]
 
     def is_plugin(self) -> bool:
         return issubclass(self.ert_script, ErtPlugin)

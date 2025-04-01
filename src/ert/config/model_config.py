@@ -6,8 +6,7 @@ import os.path
 import shutil
 from typing import no_type_check
 
-from pydantic import field_validator
-from pydantic.dataclasses import dataclass
+from pydantic import BaseModel, field_validator
 
 from ert.shared.status.utils import byte_with_unit, get_mount_directory
 
@@ -32,8 +31,7 @@ MINIMUM_BYTES_LEFT_ON_DISK_THRESHOLD = 200 * 1000**3  # 200 GB
 # and used space in percentage is greater than FULL_DISK_PERCENTAGE_THRESHOLD
 
 
-@dataclass
-class ModelConfig:
+class ModelConfig(BaseModel):
     num_realizations: int = 1
     runpath_format_string: str = DEFAULT_RUNPATH
     jobname_format_string: str = DEFAULT_JOBNAME_FORMAT

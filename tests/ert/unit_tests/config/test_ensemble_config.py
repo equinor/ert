@@ -137,7 +137,7 @@ def test_ensemble_config_duplicate_node_names():
     }
     with (
         pytest.raises(
-            ConfigValidationError,
+            ValueError,
             match="GEN_KW and GEN_DATA contained duplicate name: Test_name",
         ),
         pytest.warns(match="The template file .* is empty"),
