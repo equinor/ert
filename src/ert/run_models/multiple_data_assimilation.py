@@ -81,7 +81,7 @@ class MultipleDataAssimilation(UpdateRunModel):
             Path(config.user_config_file),
             config.env_vars,
             config.env_pr_fm_step,
-            config.model_config,
+            config.runpath_config,
             queue_config,
             config.forward_model_steps,
             status_queue,

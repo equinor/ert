@@ -48,7 +48,7 @@ def test_design_matrix_in_manage_experiments_panel(
         responses=config.ensemble_config.response_configuration,
         name="my-experiment",
     ).create_ensemble(
-        ensemble_size=config.model_config.num_realizations,
+        ensemble_size=config.runpath_config.num_realizations,
         name="my-design",
     )
     notifier.set_current_ensemble(ensemble)
@@ -57,7 +57,7 @@ def test_design_matrix_in_manage_experiments_panel(
     )
 
     tool = ManageExperimentsPanel(
-        config, notifier, config.model_config.num_realizations
+        config, notifier, config.runpath_config.num_realizations
     )
     qtbot.mouseClick(
         tool.findChild(QPushButton, name="initialize_from_scratch_button"),
@@ -103,7 +103,7 @@ def test_init_prior(qtbot, storage):
         responses=config.ensemble_config.response_configuration,
         name="my-experiment",
     ).create_ensemble(
-        ensemble_size=config.model_config.num_realizations,
+        ensemble_size=config.runpath_config.num_realizations,
         name="prior",
     )
     notifier.set_current_ensemble(ensemble)
@@ -112,7 +112,7 @@ def test_init_prior(qtbot, storage):
     )
 
     tool = ManageExperimentsPanel(
-        config, notifier, config.model_config.num_realizations
+        config, notifier, config.runpath_config.num_realizations
     )
     qtbot.mouseClick(
         tool.findChild(QPushButton, name="initialize_from_scratch_button"),
@@ -139,12 +139,12 @@ def test_that_init_updates_the_info_tab(qtbot, storage):
         observations=config.observations,
         name="my-experiment",
     ).create_ensemble(
-        ensemble_size=config.model_config.num_realizations, name="default"
+        ensemble_size=config.runpath_config.num_realizations, name="default"
     )
     notifier.set_current_ensemble(ensemble)
 
     tool = ManageExperimentsPanel(
-        config, notifier, config.model_config.num_realizations
+        config, notifier, config.runpath_config.num_realizations
     )
 
     html_edit = tool.findChild(QTextEdit, name="ensemble_state_text")
@@ -204,7 +204,7 @@ def test_experiment_view(
     notifier.set_storage(storage)
 
     tool = ManageExperimentsPanel(
-        config, notifier, config.model_config.num_realizations
+        config, notifier, config.runpath_config.num_realizations
     )
 
     # select the experiment
@@ -236,7 +236,7 @@ def test_ensemble_view(
     notifier.set_storage(storage)
 
     tool = ManageExperimentsPanel(
-        config, notifier, config.model_config.num_realizations
+        config, notifier, config.runpath_config.num_realizations
     )
 
     # select the ensemble
@@ -376,7 +376,7 @@ ANALYSIS_SET_VAR OBSERVATIONS AUTO_SCALE POLY_OBS1_*
         notifier.set_storage(storage)
 
         tool = ManageExperimentsPanel(
-            config, notifier, config.model_config.num_realizations
+            config, notifier, config.runpath_config.num_realizations
         )
 
         assert prior_ens.name
@@ -439,11 +439,11 @@ def test_ensemble_observations_view_on_empty_ensemble(qtbot):
                 ),
             },
         ).create_ensemble(
-            name="test", ensemble_size=config.model_config.num_realizations
+            name="test", ensemble_size=config.runpath_config.num_realizations
         )
 
         tool = ManageExperimentsPanel(
-            config, notifier, config.model_config.num_realizations
+            config, notifier, config.runpath_config.num_realizations
         )
 
         # select the ensemble
@@ -485,7 +485,7 @@ def test_realization_view(
     notifier.set_storage(storage)
 
     tool = ManageExperimentsPanel(
-        config, notifier, config.model_config.num_realizations
+        config, notifier, config.runpath_config.num_realizations
     )
 
     # select the realization

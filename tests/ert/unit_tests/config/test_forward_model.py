@@ -250,7 +250,7 @@ def test_parsing_forward_model_with_double_dash_is_possible():
         FORWARD_MODEL COPY_FILE(<FROM>=foo,<TO>=something/hello--there.txt)
         """
     )
-    assert res_config.model_config.jobname_format_string == "job_<IENS>--hei"
+    assert res_config.runpath_config.jobname_format_string == "job_<IENS>--hei"
     assert (
         res_config.forward_model_steps[0].private_args["<TO>"]
         == "something/hello--there.txt"
@@ -295,7 +295,7 @@ def test_that_comments_are_ignored():
         FORWARD_MODEL COPY_FILE(<FROM>=foo,<TO>=something/hello--there.txt)--foo
         """
     )
-    assert res_config.model_config.jobname_format_string == "job_<IENS>--hei"
+    assert res_config.runpath_config.jobname_format_string == "job_<IENS>--hei"
     assert (
         res_config.forward_model_steps[0].private_args["<TO>"]
         == "something/hello--there.txt"

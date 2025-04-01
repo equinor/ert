@@ -349,7 +349,7 @@ def test_that_sampling_prior_makes_initialized_fs(storage):
             parameters=ert_config.ensemble_config.parameter_configuration
         ),
         name="prior",
-        ensemble_size=ert_config.model_config.num_realizations,
+        ensemble_size=ert_config.runpath_config.num_realizations,
     )
 
     assert not prior_ensemble.is_initalized()
@@ -439,7 +439,7 @@ def test_write_runpath_file(storage, itr, run_paths):
             """
         )
     )
-    num_realizations = ert_config.model_config.num_realizations
+    num_realizations = ert_config.runpath_config.num_realizations
     experiment_id = storage.create_experiment(
         parameters=ert_config.ensemble_config.parameter_configuration
     )
@@ -703,11 +703,11 @@ def test_when_manifest_files_are_written_forward_model_ok_succeeds(storage, itr)
     )
 
     run_paths = Runpaths(
-        jobname_format=config.model_config.jobname_format_string,
-        runpath_format=config.model_config.runpath_format_string,
+        jobname_format=config.runpath_config.jobname_format_string,
+        runpath_format=config.runpath_config.runpath_format_string,
         filename=str(config.runpath_file),
         substitutions=config.substitutions,
-        eclbase=config.model_config.eclbase_format_string,
+        eclbase=config.runpath_config.eclbase_format_string,
     )
 
     if itr == 0:

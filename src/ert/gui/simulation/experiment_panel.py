@@ -80,7 +80,7 @@ class ExperimentPanel(QWidget):
         QWidget.__init__(self)
         self._notifier = notifier
         self.config = config
-        run_path = config.model_config.runpath_format_string
+        run_path = config.runpath_config.runpath_format_string
         self._config_file = config_file
 
         self.setObjectName("experiment_panel")

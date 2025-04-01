@@ -31,11 +31,11 @@ def writing_setup(setup_case):
                 ExportRunpathJob(),
             ),
             Runpaths(
-                jobname_format=config.model_config.jobname_format_string,
-                runpath_format=config.model_config.runpath_format_string,
+                jobname_format=config.runpath_config.jobname_format_string,
+                runpath_format=config.runpath_config.runpath_format_string,
                 filename=str(config.runpath_file),
                 substitutions=config.substitutions,
-                eclbase=config.model_config.eclbase_format_string,
+                eclbase=config.runpath_config.eclbase_format_string,
             ),
         )
 

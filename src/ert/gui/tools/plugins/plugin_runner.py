@@ -38,11 +38,11 @@ class PluginRunner:
         try:
             plugin = self.__plugin
             run_paths = Runpaths(
-                jobname_format=ert_config.model_config.jobname_format_string,
-                runpath_format=ert_config.model_config.runpath_format_string,
+                jobname_format=ert_config.runpath_config.jobname_format_string,
+                runpath_format=ert_config.runpath_config.runpath_format_string,
                 filename=str(ert_config.runpath_file),
                 substitutions=ert_config.substitutions,
-                eclbase=ert_config.model_config.eclbase_format_string,
+                eclbase=ert_config.runpath_config.eclbase_format_string,
             )
             arguments = plugin.getArguments(
                 fixtures={

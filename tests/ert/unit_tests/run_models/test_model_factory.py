@@ -258,7 +258,7 @@ def test_multiple_data_assimilation_restart_paths(
     storage_mock = MagicMock()
     ensemble_mock = MagicMock()
     ensemble_mock.iteration = restart_from_iteration
-    config = ErtConfig(model_config=ModelConfig(num_realizations=2))
+    config = ErtConfig(runpath_config=ModelConfig(num_realizations=2))
     storage_mock.get_ensemble.return_value = ensemble_mock
     model = model_factory._setup_multiple_data_assimilation(
         config, storage_mock, args, MagicMock(), MagicMock()
@@ -276,7 +276,7 @@ def test_multiple_data_assimilation_restart_paths(
     ],
 )
 def test_num_realizations_specified_incorrectly_raises(analysis_mode):
-    config = ErtConfig(model_config=ModelConfig(num_realizations=1))
+    config = ErtConfig(runpath_config=ModelConfig(num_realizations=1))
     args = Namespace(
         realizations="0",
         weights="6,4,2",
@@ -315,7 +315,7 @@ def test_evaluate_ensemble_paths(
     storage_mock = MagicMock()
     ensemble_mock = MagicMock()
     ensemble_mock.iteration = ensemble_iteration
-    config = ErtConfig(model_config=ModelConfig(num_realizations=2))
+    config = ErtConfig(runpath_config=ModelConfig(num_realizations=2))
     storage_mock.get_ensemble.return_value = ensemble_mock
     model = EvaluateEnsemble(
         [True], 1, str(uuid1(0)), 1234, config, storage_mock, MagicMock(), MagicMock()

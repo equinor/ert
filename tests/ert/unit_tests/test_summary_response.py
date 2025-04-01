@@ -36,7 +36,7 @@ def test_load_summary_response_restart_not_zero(
         ensemble = storage.create_ensemble(
             experiment_id,
             name="prior",
-            ensemble_size=ert_config.model_config.num_realizations,
+            ensemble_size=ert_config.runpath_config.num_realizations,
         )
 
         create_run_path(
@@ -55,7 +55,7 @@ def test_load_summary_response_restart_not_zero(
         shutil.copy(test_path / "PRED_RUN.UNSMRY", sim_path / "PRED_RUN.UNSMRY")
 
         LibresFacade.load_from_run_path(
-            ert_config.model_config.runpath_format_string, ensemble, [0]
+            ert_config.runpath_config.runpath_format_string, ensemble, [0]
         )
 
         df = ensemble.load_responses("summary", (0,))

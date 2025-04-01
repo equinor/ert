@@ -99,15 +99,15 @@ class LibresFacade:
         ]
 
     def get_ensemble_size(self) -> int:
-        return self.config.model_config.num_realizations
+        return self.config.runpath_config.num_realizations
 
     @property
     def run_path(self) -> str:
-        return self.config.model_config.runpath_format_string
+        return self.config.runpath_config.runpath_format_string
 
     @property
     def resolved_run_path(self) -> str:
-        return str(Path(self.config.model_config.runpath_format_string).resolve())
+        return str(Path(self.config.runpath_config.runpath_format_string).resolve())
 
     @staticmethod
     def load_from_run_path(

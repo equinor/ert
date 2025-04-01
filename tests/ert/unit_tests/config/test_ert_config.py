@@ -382,8 +382,8 @@ def test_that_double_comments_are_handled():
         JOBNAME &SUM$VAR@12@#£¤<
         """
     )
-    assert ert_config.model_config.num_realizations == 1
-    assert ert_config.model_config.jobname_format_string == "&SUM$VAR@12@#£¤<"
+    assert ert_config.runpath_config.num_realizations == 1
+    assert ert_config.runpath_config.jobname_format_string == "&SUM$VAR@12@#£¤<"
 
 
 def test_that_strings_escape_comments():
@@ -393,7 +393,7 @@ def test_that_strings_escape_comments():
         JOBNAME " -- "
         """
     )
-    assert ert_config.model_config.jobname_format_string == " -- "
+    assert ert_config.runpath_config.jobname_format_string == " -- "
 
 
 @pytest.mark.filterwarnings("ignore:.*Unknown keyword.*:ert.config.ConfigWarning")
@@ -422,7 +422,7 @@ def test_ert_config_parses_date():
     expected_run_path = f"{expected_storage}/runpath/realization-<IENS>/iter-<ITER>"
     expected_ens_path = f"{expected_storage}/ensemble"
     assert ert_config.ens_path == expected_ens_path
-    assert ert_config.model_config.runpath_format_string == expected_run_path
+    assert ert_config.runpath_config.runpath_format_string == expected_run_path
 
 
 def test_that_subst_list_is_given_default_runpath_file():
@@ -487,7 +487,7 @@ def test_that_parsing_ert_config_result_in_expected_values(
             config_values.runpath_file
         )
         assert (
-            ert_config.model_config.num_realizations == config_values.num_realizations
+            ert_config.runpath_config.num_realizations == config_values.num_realizations
         )
 
 
@@ -667,7 +667,7 @@ def test_char_in_unquoted_is_allowed(c):
             """
         )
     )
-    assert f"path{c}a/b" in ert_config.model_config.runpath_format_string
+    assert f"path{c}a/b" in ert_config.runpath_config.runpath_format_string
 
 
 @pytest.mark.usefixtures("use_tmpdir")
@@ -1197,7 +1197,7 @@ def test_that_include_statements_work():
         fh.write(test_include_contents)
 
     ert_config = ErtConfig.from_file(test_config_file_name)
-    assert ert_config.model_config.jobname_format_string == "included"
+    assert ert_config.runpath_config.jobname_format_string == "included"
 
 
 @pytest.mark.usefixtures("use_tmpdir")
@@ -1320,7 +1320,8 @@ def test_that_substitution_happens_for_include():
 
     ert_config = ErtConfig.from_file(test_config_file_name)
     assert (
-        "my_silly_runpath<ITER>-<IENS>" in ert_config.model_config.runpath_format_string
+        "my_silly_runpath<ITER>-<IENS>"
+        in ert_config.runpath_config.runpath_format_string
     )
 
 
@@ -1348,7 +1349,7 @@ def test_that_defines_in_included_files_has_immediate_effect():
         fh.write(test_include_contents)
 
     ert_config = ErtConfig.from_file(test_config_file_name)
-    assert "baz-<ITER>-<IENS>" in ert_config.model_config.runpath_format_string
+    assert "baz-<ITER>-<IENS>" in ert_config.runpath_config.runpath_format_string
 
 
 @pytest.mark.usefixtures("use_tmpdir", "set_site_config")
@@ -1673,7 +1674,7 @@ def test_using_relative_path_to_eclbase_sets_jobname_to_basename():
     assert (
         ErtConfig.from_file_contents(
             "NUM_REALIZATIONS 100\nECLBASE dir/eclbase_%d"
-        ).model_config.jobname_format_string
+        ).runpath_config.jobname_format_string
         == "eclbase_<IENS>"
     )
 

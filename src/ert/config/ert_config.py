@@ -579,7 +579,7 @@ class ErtConfig:
         default_factory=dict
     )
     forward_model_steps: list[ForwardModelStep] = field(default_factory=list)
-    model_config: ModelConfig = field(default_factory=ModelConfig)
+    runpath_config: ModelConfig = field(default_factory=ModelConfig)
     user_config_file: str = "no_config"
     config_path: str = field(init=False)
     observation_config: list[
@@ -903,7 +903,7 @@ class ErtConfig:
                 substitutions,
                 config_dict,
             ),
-            model_config=model_config,
+            runpath_config=model_config,
             user_config_file=config_file_path,
             observation_config=obs_configs,
             enkf_obs=observations,

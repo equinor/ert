@@ -627,7 +627,7 @@ def test_that_prior_is_not_overwritten_in_ensemble_experiment(
     caplog,
 ):
     ert_config = ErtConfig.from_file("poly.ert")
-    num_realizations = ert_config.model_config.num_realizations
+    num_realizations = ert_config.runpath_config.num_realizations
     with open_storage(ert_config.ens_path, mode="w") as storage:
         experiment_id = storage.create_experiment(
             ert_config.ensemble_config.parameter_configuration, name="test-experiment"

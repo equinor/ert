@@ -77,7 +77,7 @@ def test_run_path_deleted_error(
 
         # Add something to the runpath
         run_path = Path(
-            snake_oil_case.model_config.runpath_format_string.replace(
+            snake_oil_case.runpath_config.runpath_format_string.replace(
                 "<IENS>", "0"
             ).replace("<ITER>", "0")
         )
@@ -122,7 +122,7 @@ def test_run_path_is_deleted(snake_oil_case_storage: ErtConfig, qtbot: QtBot):
         assert isinstance(run_experiment, QToolButton)
 
         run_path = Path(
-            snake_oil_case.model_config.runpath_format_string.replace(
+            snake_oil_case.runpath_config.runpath_format_string.replace(
                 "<IENS>", "0"
             ).replace("<ITER>", "0")
         )
@@ -166,7 +166,7 @@ def test_run_path_is_not_deleted(snake_oil_case_storage: ErtConfig, qtbot: QtBot
         assert isinstance(run_experiment, QToolButton)
 
         run_path = Path(
-            snake_oil_case.model_config.runpath_format_string.replace("<IENS>", "0")
+            snake_oil_case.runpath_config.runpath_format_string.replace("<IENS>", "0")
         ).parent
         with open(run_path / "dummy", "w", encoding="utf-8") as dummy_file:
             dummy_file.close()

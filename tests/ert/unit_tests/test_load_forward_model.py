@@ -25,7 +25,7 @@ def setup_case(storage, use_tmpdir, run_args, run_paths):
                 responses=ert_config.ensemble_config.response_configuration
             ),
             name="prior",
-            ensemble_size=ert_config.model_config.num_realizations,
+            ensemble_size=ert_config.runpath_config.num_realizations,
         )
         create_run_path(
             run_args=run_args(ert_config, prior_ensemble),
@@ -154,7 +154,7 @@ def test_load_forward_model_summary(
     )
     with caplog.at_level(logging.ERROR):
         loaded = LibresFacade.load_from_run_path(
-            ert_config.model_config.runpath_format_string, prior_ensemble, [0]
+            ert_config.runpath_config.runpath_format_string, prior_ensemble, [0]
         )
     expected_loaded, expected_log_message = expected
     assert loaded == expected_loaded
@@ -242,7 +242,7 @@ def test_loading_gen_data_without_restart(storage, run_paths, run_args):
             responses=ert_config.ensemble_config.response_configuration
         ),
         name="prior",
-        ensemble_size=ert_config.model_config.num_realizations,
+        ensemble_size=ert_config.runpath_config.num_realizations,
     )
 
     create_run_path(
@@ -306,7 +306,7 @@ def test_loading_from_any_available_iter(storage, run_paths, run_args, itr):
             responses=ert_config.ensemble_config.response_configuration
         ),
         name="prior",
-        ensemble_size=ert_config.model_config.num_realizations,
+        ensemble_size=ert_config.runpath_config.num_realizations,
         iteration=itr if itr is not None else 0,
     )
 
