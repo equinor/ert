@@ -3,8 +3,9 @@ from __future__ import annotations
 import logging
 import os
 from collections import Counter
-from dataclasses import dataclass, field
-from typing import no_type_check, overload
+from typing import Self, no_type_check, overload
+
+from pydantic import BaseModel, Field, model_validator
 
 from ert.field_utils import get_shape
 
@@ -40,18 +41,18 @@ def _get_abs_path(file: str | None) -> str | None:
     return file
 
 
-@dataclass
-class EnsembleConfig:
+class EnsembleConfig(BaseModel):
     grid_file: str | None = None
-    response_configs: dict[str, SummaryConfig | GenDataConfig] = field(
+    response_configs: dict[str, SummaryConfig | GenDataConfig] = Field(
         default_factory=dict
     )
     parameter_configs: dict[
         str, GenKwConfig | FieldConfig | SurfaceConfig | ExtParamConfig
-    ] = field(default_factory=dict)
+    ] = Field(default_factory=dict)
     refcase: Refcase | None = None
 
-    def __post_init__(self) -> None:
+    @model_validator(mode="after")
+    def set_derived_fields(self) -> Self:
         self._check_for_duplicate_names(
             [p.name for p in self.parameter_configs.values()],
             [key for config in self.response_configs.values() for key in config.keys],
@@ -61,6 +62,7 @@ class EnsembleConfig:
         )
 
         self.grid_file = _get_abs_path(self.grid_file)
+        return self
 
     @staticmethod
     def _check_for_duplicate_names(

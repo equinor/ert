@@ -3,15 +3,13 @@ from __future__ import annotations
 import os
 from collections.abc import Iterator
 from dataclasses import dataclass
-from typing import TYPE_CHECKING, Any
+from typing import Any
+
+from ert.substitutions import Substitutions
 
 from .parsing import ConfigValidationError, ErrorInfo, init_workflow_schema, parse
 from .parsing.types import Defines
-
-if TYPE_CHECKING:
-    from ert.substitutions import Substitutions
-
-    from .workflow_job import _WorkflowJob
+from .workflow_job import _WorkflowJob
 
 
 @dataclass

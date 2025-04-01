@@ -34,7 +34,7 @@ def create_base_run_model(**kwargs):
         "user_config_file": MagicMock(spec=Path),
         "env_vars": MagicMock(spec=dict),
         "env_pr_fm_step": MagicMock(spec=dict),
-        "model_config": MagicMock(spec=ModelConfig),
+        "model_config": ModelConfig(),
         "queue_config": MagicMock(spec=SimpleQueue),
         "forward_model_steps": MagicMock(spec=dict),
         "status_queue": MagicMock(spec=SimpleQueue),

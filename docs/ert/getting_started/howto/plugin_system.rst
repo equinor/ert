@@ -228,6 +228,7 @@ The configuration object and properties are as follows.
 .. autoclass:: ert.plugins.workflow_config.ErtScriptWorkflow
     :members:
     :undoc-members:
+    :exclude-members: model_config, validate_types
 
 Logging configuration
 ~~~~~~~~~~~~~~~~~~~~~

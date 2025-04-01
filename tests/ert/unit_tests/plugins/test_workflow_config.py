@@ -3,8 +3,6 @@ from unittest.mock import Mock
 
 import pytest
 
-import ert
-import ert.config.workflow_job
 from ert import ErtScript
 from ert.plugins import workflow_config
 from ert.plugins.workflow_config import WorkflowConfigs
@@ -12,7 +10,7 @@ from ert.plugins.workflow_config import WorkflowConfigs
 
 def test_workflow_config_duplicate_log_message(caplog, monkeypatch):
     def get_mock_config():
-        workflow_mock = Mock(spec=ert.config.workflow_job.ErtScriptWorkflow)
+        workflow_mock = Mock()
         workflow_mock.name = "same_name"
         return workflow_mock
 

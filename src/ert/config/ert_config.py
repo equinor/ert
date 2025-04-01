@@ -6,7 +6,6 @@ import pprint
 import re
 from collections import defaultdict
 from collections.abc import Mapping, Sequence
-from dataclasses import field
 from datetime import datetime
 from os import path
 from pathlib import Path
@@ -14,9 +13,8 @@ from typing import Any, ClassVar, Self, no_type_check, overload
 
 import polars as pl
 from numpy.random import SeedSequence
+from pydantic import BaseModel, Field, field_validator, model_validator
 from pydantic import ValidationError as PydanticValidationError
-from pydantic import field_validator
-from pydantic.dataclasses import dataclass, rebuild_dataclass
 
 from ert.plugins import ErtPluginManager, fixtures_per_hook
 from ert.substitutions import Substitutions
@@ -661,40 +659,53 @@ def create_list_of_forward_model_steps_to_run(
     return fm_steps
 
 
-@dataclass
-class ErtConfig:
+class ErtConfig(BaseModel):
     DEFAULT_ENSPATH: ClassVar[str] = "storage"
     DEFAULT_RUNPATH_FILE: ClassVar[str] = ".ert_runpath_list"
     PREINSTALLED_FORWARD_MODEL_STEPS: ClassVar[dict[str, ForwardModelStep]] = {}
     PREINSTALLED_WORKFLOWS: ClassVar[dict[str, ErtScriptWorkflow]] = {}
     ENV_PR_FM_STEP: ClassVar[dict[str, dict[str, Any]]] = {}
-    ACTIVATE_SCRIPT: str | None = None
+    ACTIVATE_SCRIPT: ClassVar[str | None] = None
 
-    substitutions: Substitutions = field(default_factory=Substitutions)
-    ensemble_config: EnsembleConfig = field(default_factory=EnsembleConfig)
+    substitutions: Substitutions = Field(default_factory=Substitutions)
+    ensemble_config: EnsembleConfig = Field(default_factory=EnsembleConfig)
     ens_path: str = DEFAULT_ENSPATH
-    env_vars: dict[str, str] = field(default_factory=dict)
-    random_seed: int = field(default_factory=lambda: _seed_sequence(None))
-    analysis_config: AnalysisConfig = field(default_factory=AnalysisConfig)
-    queue_config: QueueConfig = field(default_factory=QueueConfig)
-    workflow_jobs: dict[str, _WorkflowJob] = field(default_factory=dict)
-    workflows: dict[str, Workflow] = field(default_factory=dict)
-    hooked_workflows: defaultdict[HookRuntime, list[Workflow]] = field(
+    env_vars: dict[str, str] = Field(default_factory=dict)
+    random_seed: int = Field(default_factory=lambda: _seed_sequence(None))
+    analysis_config: AnalysisConfig = Field(default_factory=AnalysisConfig)
+    queue_config: QueueConfig = Field(default_factory=QueueConfig)
+    workflow_jobs: dict[str, _WorkflowJob] = Field(default_factory=dict)
+    workflows: dict[str, Workflow] = Field(default_factory=dict)
+    hooked_workflows: defaultdict[HookRuntime, list[Workflow]] = Field(
         default_factory=lambda: defaultdict(list)
     )
     runpath_file: Path = Path(DEFAULT_RUNPATH_FILE)
-    ert_templates: list[tuple[str, str]] = field(default_factory=list)
-    installed_forward_model_steps: dict[str, ForwardModelStep] = field(
+    ert_templates: list[tuple[str, str]] = Field(default_factory=list)
+    installed_forward_model_steps: dict[str, ForwardModelStep] = Field(
         default_factory=dict
     )
-    forward_model_steps: list[ForwardModelStep] = field(default_factory=list)
-    runpath_config: ModelConfig = field(default_factory=ModelConfig)
+
+    forward_model_steps: list[ForwardModelStep] = Field(default_factory=list)
+    runpath_config: ModelConfig = Field(default_factory=ModelConfig)
     user_config_file: str = "no_config"
-    config_path: str = field(init=False)
+    config_path: str = Field(init=False, default="")
     observation_config: list[
         tuple[str, HistoryValues | SummaryValues | GenObsValues]
-    ] = field(default_factory=list)
-    enkf_obs: EnkfObs = field(default_factory=EnkfObs)
+    ] = Field(default_factory=list)
+    enkf_obs: EnkfObs = Field(default_factory=EnkfObs)
+
+    @model_validator(mode="after")
+    def set_fields(self):
+        self.config_path = (
+            path.dirname(path.abspath(self.user_config_file))
+            if self.user_config_file
+            else os.getcwd()
+        )
+        return self
+
+    @property
+    def observations(self) -> dict[str, pl.DataFrame]:
+        return self.enkf_obs.datasets
 
     @field_validator("substitutions", mode="before")
     @classmethod
@@ -725,14 +736,6 @@ class ErtConfig:
 
         return True
 
-    def __post_init__(self) -> None:
-        self.config_path = (
-            path.dirname(path.abspath(self.user_config_file))
-            if self.user_config_file
-            else os.getcwd()
-        )
-        self.observations: dict[str, pl.DataFrame] = self.enkf_obs.datasets
-
     @staticmethod
     def with_plugins(
         forward_model_step_classes: list[type[ForwardModelStepPlugin]] | None = None,
@@ -760,6 +763,9 @@ class ErtConfig:
             ENV_PR_FM_STEP: ClassVar[dict[str, dict[str, Any]]] = env_pr_fm_step
             ACTIVATE_SCRIPT = pm.activate_script()
 
+        from datetime import datetime  # noqa
+
+        ErtConfigWithPlugins.model_rebuild()
         assert issubclass(ErtConfigWithPlugins, ErtConfig)
         return ErtConfigWithPlugins
 
@@ -1338,7 +1344,6 @@ def _substitutions_from_dict(config_dict) -> Substitutions:
     return Substitutions(subst_list)
 
 
-@staticmethod
 def uppercase_subkeys_and_stringify_subvalues(
     nested_dict: dict[str, dict[str, Any]],
 ) -> dict[str, dict[str, str]]:
@@ -1399,4 +1404,4 @@ def _forward_model_step_from_config_contents(
 
 # Due to circular dependency in type annotations between
 # ErtConfig -> WorkflowJob -> ErtScript -> ErtConfig
-rebuild_dataclass(ErtConfig)
+ErtConfig.model_rebuild()

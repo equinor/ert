@@ -179,6 +179,8 @@ intersphinx_mapping = {"python": ("https://docs.python.org/3", None)}
 # Ignore unresolved references
 nitpick_ignore = [
     ("py:class", "ert.plugins.ert_script.ErtScript"),
+    ("py:class", "ErtScript"),
+    ("py:class", "ArgumentParser"),
     ("py:class", "Ensemble"),
     ("py:class", "ESSettings"),
     ("py:class", "Storage"),
