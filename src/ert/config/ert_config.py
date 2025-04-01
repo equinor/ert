@@ -235,7 +235,6 @@ def create_forward_model_json(
     }
 
 
-@staticmethod
 def check_non_utf_chars(file_path: str) -> None:
     try:
         with open(file_path, encoding="utf-8") as f:
@@ -259,7 +258,6 @@ def check_non_utf_chars(file_path: str) -> None:
         ) from e
 
 
-@staticmethod
 def read_templates(config_dict) -> list[tuple[str, str]]:
     templates = []
     if ConfigKeys.DATA_FILE in config_dict and ConfigKeys.ECLBASE in config_dict:
@@ -292,7 +290,6 @@ def read_templates(config_dict) -> list[tuple[str, str]]:
     return templates
 
 
-@staticmethod
 def workflows_from_dict(
     content_dict,
     substitutions,
@@ -414,7 +411,6 @@ def workflows_from_dict(
     return workflow_jobs, workflows, hooked_workflows
 
 
-@staticmethod
 def installed_forward_model_steps_from_dict(config_dict) -> dict[str, ForwardModelStep]:
     errors = []
     fm_steps = {}
@@ -465,7 +461,6 @@ def installed_forward_model_steps_from_dict(config_dict) -> dict[str, ForwardMod
     return fm_steps
 
 
-@staticmethod
 def create_list_of_forward_model_steps_to_run(
     installed_steps: dict[str, ForwardModelStep],
     substitutions: Substitutions,
