@@ -76,7 +76,7 @@ def test_missing_runpath_has_isolated_failures(
 
             QTimer.singleShot(100, handle_message_box(run_dialog))
             qtbot.waitUntil(
-                lambda dialog=run_dialog: dialog.is_simulation_done() == True,
+                lambda dialog=run_dialog: dialog.is_simulation_done() is True,
                 timeout=200000,
             )
             assert (
@@ -130,7 +130,7 @@ def test_missing_runpath_does_not_show_waiting_bar(
 
             QTimer.singleShot(100, handle_message_box(run_dialog))
             qtbot.waitUntil(
-                lambda dialog=run_dialog: dialog.is_simulation_done() == True,
+                lambda dialog=run_dialog: dialog.is_simulation_done() is True,
                 timeout=200000,
             )
             assert not run_dialog._progress_widget._waiting_progress_bar.isVisible()

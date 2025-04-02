@@ -697,7 +697,7 @@ def test_scheduler_create_openpbs_driver():
     driver = create_driver(queue_config.queue_options)
     assert isinstance(driver, OpenPBSDriver)
     assert driver._queue_name == queue_name
-    assert driver._keep_qsub_output == True if keep_qsub_output == "True" else False
+    assert driver._keep_qsub_output is True if keep_qsub_output == "True" else False
     assert driver._cluster_label == cluster_label
     assert driver._job_prefix == job_prefix
     assert str(driver._qsub_cmd) == qsub_cmd

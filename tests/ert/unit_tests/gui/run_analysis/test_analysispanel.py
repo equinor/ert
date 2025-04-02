@@ -24,9 +24,9 @@ def panel_with_localization_on(qtbot: QtBot):
 
 def test_that_turning_on_localization_is_saved(panel_with_localization_on):
     settings = ESSettings()
-    assert settings.localization == False
+    assert settings.localization is False
     settings, _ = panel_with_localization_on(settings, 123)
-    assert settings.localization == True
+    assert settings.localization is True
 
 
 @pytest.mark.parametrize(

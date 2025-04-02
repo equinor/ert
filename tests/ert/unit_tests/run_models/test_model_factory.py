@@ -207,7 +207,7 @@ def test_setup_multiple_data_assimilation(storage):
     )
     assert model.target_ensemble_format == "test_case_%d"
     assert model.prior_ensemble_id == "b272fe09-83ac-4744-b667-9a0a5415420b"
-    assert model.restart_run == False
+    assert model.restart_run is False
 
 
 @pytest.mark.parametrize(
