@@ -266,9 +266,18 @@ wherein coeff_priors
 
 the :ref:`GEN_KW <gen_kw>` group COEFFS would remain, but the values would be read from the design matrix while update is disabled for COEFFS.
 Notice that this requires a full overlap of parameter names.
-In case of only partial overlap, this is considered not complainant and will yield a validation error.
-
+The case with only a partial overlap will result in a validation error.
 An example of a partial overlap is when GEN_KW contains parameters a,b,c,d,e and the design matrix contains a,b,c,d.
+Additionally, the overlap needs to be present only in a single GEN_KW group, which means that having for instance:
+
+::
+
+        GEN_KW COEFFS1 coeff_priors_1 -- defining parameters a,b,c
+        GEN_KW COEFFS2 coeff_priors_2 -- defining parameters d,e
+
+would also yield validation error, even the union of parameters overlaps the design matrix parameters.
+In such cases consider to comment out GEN_KW definitions and thus only the design parameters will be used.
+
 
 In case there is no overlap with a GEN_KW group, the GEN_KW group will be sampled normally.
 
