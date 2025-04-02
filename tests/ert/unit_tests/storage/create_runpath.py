@@ -50,7 +50,7 @@ def create_runpath(
         forward_model_steps=ert_config.forward_model_steps,
         substitutions=ert_config.substitutions,
         templates=ert_config.ert_templates,
-        model_config=ert_config.model_config,
+        parameters_file="parameters",
         runpaths=runpaths,
     )
     return ert_config.ensemble_config, ensemble

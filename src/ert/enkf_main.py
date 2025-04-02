@@ -22,7 +22,6 @@ from .config import (
     Field,
     ForwardModelStep,
     GenKwConfig,
-    ModelConfig,
     ParameterConfig,
     SurfaceConfig,
 )
@@ -232,7 +231,7 @@ def create_run_path(
     forward_model_steps: list[ForwardModelStep],
     substitutions: Substitutions,
     templates: list[tuple[str, str]],
-    model_config: ModelConfig,
+    parameters_file: str,
     runpaths: Runpaths,
     context_env: dict[str, str] | None = None,
 ) -> None:
@@ -269,7 +268,7 @@ def create_run_path(
 
             _generate_parameter_files(
                 ensemble.experiment.parameter_configuration.values(),
-                model_config.gen_kw_export_name,
+                parameters_file,
                 run_path,
                 run_arg.iens,
                 ensemble,

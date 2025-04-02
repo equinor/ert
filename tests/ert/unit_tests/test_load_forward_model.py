@@ -36,7 +36,7 @@ def setup_case(storage, use_tmpdir, run_args, run_paths):
             forward_model_steps=ert_config.forward_model_steps,
             substitutions=ert_config.substitutions,
             templates=ert_config.ert_templates,
-            model_config=ert_config.model_config,
+            parameters_file="parameters",
             runpaths=run_paths(ert_config),
         )
         return prior_ensemble
@@ -149,7 +149,7 @@ def test_load_forward_model_summary(
         forward_model_steps=ert_config.forward_model_steps,
         substitutions=ert_config.substitutions,
         templates=ert_config.ert_templates,
-        model_config=ert_config.model_config,
+        parameters_file="parameters",
         runpaths=run_paths(ert_config),
     )
     with caplog.at_level(logging.ERROR):
@@ -254,7 +254,7 @@ def test_loading_gen_data_without_restart(storage, run_paths, run_args):
         forward_model_steps=ert_config.forward_model_steps,
         substitutions=ert_config.substitutions,
         templates=ert_config.ert_templates,
-        model_config=ert_config.model_config,
+        parameters_file="parameters",
         runpaths=run_paths(ert_config),
     )
     run_path = Path("simulations/realization-0/iter-0/")
@@ -319,7 +319,7 @@ def test_loading_from_any_available_iter(storage, run_paths, run_args, itr):
         forward_model_steps=ert_config.forward_model_steps,
         substitutions=ert_config.substitutions,
         templates=ert_config.ert_templates,
-        model_config=ert_config.model_config,
+        parameters_file="parameters",
         runpaths=run_paths(ert_config),
     )
     run_path = Path(f"simulations/realization-0/iter-{itr if itr is not None else 0}/")

@@ -755,7 +755,7 @@ class BaseRunModel(ABC):
             forward_model_steps=self._forward_model_steps,
             substitutions=self._substitutions,
             templates=self._templates,
-            model_config=self._model_config,
+            parameters_file=self._model_config.gen_kw_export_name,
             runpaths=self.run_paths,
             context_env=self._context_env,
         )
