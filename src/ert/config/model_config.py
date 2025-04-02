@@ -4,7 +4,6 @@ import contextlib
 import logging
 import os.path
 import shutil
-from datetime import datetime
 from typing import no_type_check
 
 from pydantic import field_validator
@@ -21,23 +20,6 @@ from .parsing import (
 )
 
 logger = logging.getLogger(__name__)
-
-
-def _read_time_map(file_contents: str) -> list[datetime]:
-    def str_to_datetime(date_str: str) -> datetime:
-        try:
-            return datetime.fromisoformat(date_str)
-        except ValueError:
-            logger.warning(
-                "DD/MM/YYYY date format is deprecated"
-                ", please use ISO date format YYYY-MM-DD."
-            )
-            return datetime.strptime(date_str, "%d/%m/%Y")
-
-    dates = []
-    for line in file_contents.splitlines():
-        dates.append(str_to_datetime(line.strip()))
-    return dates
 
 
 DEFAULT_HISTORY_SOURCE = HistorySource.REFCASE_HISTORY
@@ -60,7 +42,6 @@ class ModelConfig:
     jobname_format_string: str = DEFAULT_JOBNAME_FORMAT
     eclbase_format_string: str = DEFAULT_ECLBASE_FORMAT
     gen_kw_export_name: str = DEFAULT_GEN_KW_EXPORT_NAME
-    time_map: list[datetime] | None = None
 
     @field_validator("runpath_format_string", mode="before")
     @classmethod
@@ -124,16 +105,6 @@ class ModelConfig:
     @no_type_check
     @classmethod
     def from_dict(cls, config_dict: ConfigDict) -> ModelConfig:
-        time_map_args = config_dict.get(ConfigKeys.TIME_MAP)
-        time_map = None
-        if time_map_args is not None:
-            time_map_file, time_map_contents = time_map_args
-            try:
-                time_map = _read_time_map(time_map_contents)
-            except ValueError as err:
-                raise ConfigValidationError.with_context(
-                    f"Could not read timemap file {time_map_file}: {err}", time_map_file
-                ) from err
         return cls(
             num_realizations=config_dict.get(ConfigKeys.NUM_REALIZATIONS, 1),
             history_source=config_dict.get(
@@ -153,7 +124,6 @@ class ModelConfig:
             gen_kw_export_name=config_dict.get(
                 ConfigKeys.GEN_KW_EXPORT_NAME, DEFAULT_GEN_KW_EXPORT_NAME
             ),
-            time_map=time_map,
         )
 
 

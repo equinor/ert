@@ -4,7 +4,7 @@ from unittest.mock import patch
 import pytest
 
 from ert.config import ModelConfig
-from ert.config.parsing import ConfigKeys, ConfigValidationError, ConfigWarning
+from ert.config.parsing import ConfigWarning
 
 
 def test_default_model_config_run_path():
@@ -55,11 +55,6 @@ def test_suggested_deprecated_model_config_run_path():
 def test_model_config_jobname_and_eclbase(extra_config, expected):
     config_dict = {"NUM_REALIZATIONS": 1, "ENSPATH": "Ensemble", **extra_config}
     assert ModelConfig.from_dict(config_dict).jobname_format_string == expected
-
-
-def test_that_invalid_time_map_file_raises_config_validation_error():
-    with pytest.raises(ConfigValidationError, match="Could not read timemap file"):
-        _ = ModelConfig.from_dict({ConfigKeys.TIME_MAP: ("time_map.txt", "invalid")})
 
 
 @pytest.mark.parametrize(

@@ -213,6 +213,11 @@ def test_that_index_list_is_read(tmpdir):
         assert observations["OBS"].observations[0].indices == [0, 2, 4, 6, 8]
 
 
+def test_that_invalid_time_map_file_raises_config_validation_error():
+    with pytest.raises(ConfigValidationError, match="Could not read timemap file"):
+        _ = ErtConfig.from_dict({"TIME_MAP": ("time_map.txt", "invalid")})
+
+
 def test_that_index_file_is_read(tmpdir):
     with tmpdir.as_cwd():
         with open("obs_idx.txt", "w", encoding="utf-8") as fh:
