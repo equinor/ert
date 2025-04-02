@@ -576,7 +576,7 @@ class BaseRunModel(ABC):
                 if isinstance(event, EventSentinel):
                     closetracker_received = True
                     heartbeat_interval_ = receiver_timeout
-                    logger.debug("JONAK - received sentinel")
+                    print("JONAK - received sentinel")
                     continue
                 if type(event) in {
                     EESnapshot,
@@ -590,10 +590,11 @@ class BaseRunModel(ABC):
                         ENSEMBLE_STATE_STOPPED,
                         ENSEMBLE_STATE_FAILED,
                     }:
+                        print("Ensemble was stopped")
                         logger.debug("observed evaluation stopped event, signal done")
-                        await monitor_queue.put(EventSentinel())
                         logger.debug("monitor informing server monitor is done...")
 
+                        await monitor_queue.put(EventSentinel())
                         done_event = EEUserDone()
                         await evaluator.handle_client_event(done_event)
                         logger.debug("monitor informed server monitor is done")
@@ -607,11 +608,17 @@ class BaseRunModel(ABC):
                             )
                     elif type(event) is EETerminated:
                         logger.debug("got terminated event")
+                        break
 
                     if not self._end_queue.empty():
+                        print("RUN MODEL WAS CANCELLED")
                         logger.debug("Run model canceled - during evaluation")
                         self._end_queue.get()
-                        await monitor.signal_cancel()
+                        logger.debug(f"monitor-{self._id} asking server to cancel...")
+                        cancel_event = EEUserCancel(monitor=self._id)
+                        await evaluator.handle_client_event(cancel_event)
+                        await monitor_queue.put(EventSentinel())
+                        logger.debug(f"monitor-{self._id} asked server to cancel")
                         logger.debug(
                             "Run model canceled - during evaluation - cancel sent"
                         )

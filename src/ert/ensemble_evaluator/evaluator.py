@@ -200,10 +200,12 @@ class EnsembleEvaluator:
 
     async def handle_client_event(self, event: EEEvent) -> None:
         if type(event) is EEUserCancel:
+            print("EE GOT CANCEL EVENT")
             logger.debug("Client asked to cancel.")
             await self._signal_cancel()
             self._clients_empty.set()
         elif type(event) is EEUserDone:
+            print("EE GOT USER DONE EVENT")
             logger.debug("Client signalled done.")
             self.stop()
             self._clients_empty.set()
