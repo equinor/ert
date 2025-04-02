@@ -1119,7 +1119,7 @@ class ErtConfig:
         config_errors: list[ErrorInfo] = []
         for obs_name, values in obs_config_content:
             try:
-                if type(values) == HistoryValues:
+                if type(values) is HistoryValues:
                     obs_vectors.update(
                         **EnkfObs._handle_history_observation(
                             ensemble_config,
@@ -1129,7 +1129,7 @@ class ErtConfig:
                             time_len,
                         )
                     )
-                elif type(values) == SummaryValues:
+                elif type(values) is SummaryValues:
                     obs_vectors.update(
                         **EnkfObs._handle_summary_observation(
                             values,
@@ -1138,7 +1138,7 @@ class ErtConfig:
                             bool(ensemble_config.refcase),
                         )
                     )
-                elif type(values) == GenObsValues:
+                elif type(values) is GenObsValues:
                     obs_vectors.update(
                         **EnkfObs._handle_general_observation(
                             ensemble_config,
