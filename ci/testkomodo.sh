@@ -89,6 +89,11 @@ run_everest_egg_test() {
     STATUS=$?
     popd || exit 1
 
+    if [ $STATUS -ne 0 ]; then
+        echo "Everest egg test failed. Running everest kill"
+        everest kill "$CONFIG"
+    fi
+
     remove_one_week_old_temp_folders "$CI_RUNNER_LABEL"
 
     return $STATUS
