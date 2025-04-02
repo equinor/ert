@@ -230,7 +230,7 @@ class LegacyEnsemble:
         except asyncio.CancelledError:
             print("Cancelling evaluator task!")
 
-    async def _evaluate_inner(  # pylint: disable=too-many-branches
+    async def _evaluate_inner(
         self,
         event_unary_send: Callable[[Event], Awaitable[None]],
         scheduler_queue: asyncio.Queue[Event] | None = None,

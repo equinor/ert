@@ -33,7 +33,7 @@ class ExportConfig(BaseModel, extra="forbid"):
 
     @model_validator(mode="before")
     @classmethod
-    def deprecate_export_keys(cls, values: Any) -> Any:  # pylint: disable=E0213
+    def deprecate_export_keys(cls, values: Any) -> Any:
         for key in list(values.keys()):
             match key:
                 case "csv_output_filepath":

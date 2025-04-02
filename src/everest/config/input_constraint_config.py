@@ -62,7 +62,6 @@ Only control values (x, y, z) that satisfy the following equation will be allowe
 
     @field_validator("weights")
     @classmethod
-    # pylint: disable=E0213
     def validate_weights_not_empty(cls, weights: dict[str, float]) -> dict[str, float]:
         if weights is None or weights == {}:
             raise ValueError("Input weight data required for input constraints")

@@ -70,7 +70,6 @@ def test_read_file(tmp_path, monkeypatch):
 
 def test_valid_config_file(copy_test_data_to_tmp, monkeypatch):
     monkeypatch.chdir("valid_config_file")
-    # pylint: disable=unsupported-membership-test
     parser = MockParser()
 
     config = EverestConfig.load_file_with_argparser(
@@ -142,4 +141,4 @@ Found 1 validation error:
 
 
     * Value error, job = 'add_templates'\t-c/--config = {template_config_path}
-\t\ttemplates: {template_path} -> Path does not point to a file (type=value_error)""" in parser.get_error()  # pylint: disable=E1135
+\t\ttemplates: {template_path} -> Path does not point to a file (type=value_error)""" in parser.get_error()

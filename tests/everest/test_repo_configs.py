@@ -30,7 +30,6 @@ def test_all_repo_configs():
         "everest",
         "tests",
     )
-    # pylint: disable=unnecessary-lambda-assignment
     config_folders = map(lambda fn: os.path.join(repo_dir, fn), config_folders)  # noqa E731
 
     def is_yaml(fn):
