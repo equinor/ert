@@ -48,7 +48,7 @@ def test_load_summary_response_restart_not_zero(
             env_pr_fm_step=ert_config.env_pr_fm_step,
             substitutions=ert_config.substitutions,
             templates=ert_config.ert_templates,
-            model_config=ert_config.model_config,
+            parameters_file="parameters",
             runpaths=run_paths(ert_config),
         )
         shutil.copy(test_path / "PRED_RUN.SMSPEC", sim_path / "PRED_RUN.SMSPEC")

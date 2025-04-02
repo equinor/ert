@@ -53,7 +53,7 @@ def make_run_path(run_paths, run_args, storage):
             env_pr_fm_step=ert_config.env_pr_fm_step,
             substitutions=ert_config.substitutions,
             templates=ert_config.ert_templates,
-            model_config=ert_config.model_config,
+            parameters_file="parameters",
             runpaths=runpaths,
         )
         return prior_ensemble, runargs, runpaths
@@ -139,7 +139,7 @@ def test_that_run_template_replace_symlink_does_not_write_to_source(
         forward_model_steps=ert_config.forward_model_steps,
         substitutions=ert_config.substitutions,
         templates=ert_config.ert_templates,
-        model_config=ert_config.model_config,
+        parameters_file="parameters",
         runpaths=run_paths(ert_config),
     )
     assert (run_path / "result.txt").read_text(
@@ -468,7 +468,7 @@ def test_write_runpath_file(storage, itr, run_paths):
         forward_model_steps=ert_config.forward_model_steps,
         substitutions=ert_config.substitutions,
         templates=ert_config.ert_templates,
-        model_config=ert_config.model_config,
+        parameters_file="parameters",
         runpaths=run_path,
     )
 
@@ -730,7 +730,7 @@ def test_when_manifest_files_are_written_forward_model_ok_succeeds(storage, itr)
         forward_model_steps=config.forward_model_steps,
         substitutions=config.substitutions,
         templates=config.ert_templates,
-        model_config=config.model_config,
+        parameters_file="parameters",
         runpaths=run_paths,
     )
 
