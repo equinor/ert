@@ -13,6 +13,7 @@ from ert.config.parsing import BaseModelWithContextSupport
 from ert.config.queue_config import (
     LocalQueueOptions,
     LsfQueueOptions,
+    QueueOptions,
     SlurmQueueOptions,
     TorqueQueueOptions,
 )
@@ -21,7 +22,7 @@ simulator_example = {"queue_system": {"name": "local", "max_running": 3}}
 
 
 def check_removed_config(queue_system: Any) -> None:
-    queue_systems = {
+    queue_systems: dict[str, type[QueueOptions]] = {
         "lsf": LsfQueueOptions,
         "torque": TorqueQueueOptions,
         "slurm": SlurmQueueOptions,
