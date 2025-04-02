@@ -844,9 +844,8 @@ class ErtConfig:
                         [key] for key in summary_obs if key not in summary_keys
                     ]
             ensemble_config = EnsembleConfig.from_dict(config_dict=config_dict)
-            time_map_args = config_dict.get(ConfigKeys.TIME_MAP)
             time_map = None
-            if time_map_args is not None:
+            if time_map_args := config_dict.get(ConfigKeys.TIME_MAP):
                 time_map_file, time_map_contents = time_map_args
                 try:
                     time_map = _read_time_map(time_map_contents)
