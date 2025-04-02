@@ -68,7 +68,6 @@ def test_config_multi_objectives(copy_mocked_test_data_to_tmp):
 
 
 def test_multi_objectives2ropt(copy_mocked_test_data_to_tmp):
-    # pylint: disable=unbalanced-tuple-unpacking
     config = EverestConfig.load_file(CONFIG_FILE)
     config_dict = config.to_dict()
     ever_objs = config_dict["objective_functions"]

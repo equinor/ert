@@ -509,7 +509,7 @@ class LocalStorage(BaseMode):
                         from_version, from_version + 1, migration.info
                     )
 
-        except Exception as e:  # pylint: disable=broad-exception-caught
+        except Exception as e:
             logger.error(
                 f"Migrating storage at {self.path} failed with: {e}", stack_info=True
             )

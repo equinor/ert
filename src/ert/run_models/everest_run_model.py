@@ -955,7 +955,7 @@ class EverestRunModel(BaseRunModel):
                             f"Failed to remove {path}, {sys_info}"
                         )
 
-                    shutil.rmtree(path_to_delete, onerror=onerror)  # pylint: disable=deprecated-argument
+                    shutil.rmtree(path_to_delete, onerror=onerror)
 
     def _gather_simulation_results(
         self, ensemble: Ensemble

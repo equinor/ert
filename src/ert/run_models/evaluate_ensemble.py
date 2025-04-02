@@ -24,7 +24,6 @@ if TYPE_CHECKING:
 logger = logging.getLogger(__name__)
 
 
-# pylint: disable=too-many-arguments
 class EvaluateEnsemble(BaseRunModel):
     """
     This workflow will evaluate ensembles which have parameters, but no simulation has been performed, so there are no responses.<br>

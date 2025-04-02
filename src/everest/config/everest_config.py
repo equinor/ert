@@ -223,7 +223,7 @@ and environment variables are exposed in the form 'os.NAME', for example:
     model_config = ConfigDict(extra="forbid", frozen=True)
 
     @model_validator(mode="after")
-    def validate_queue_system(self) -> Self:  # pylint: disable=E0213
+    def validate_queue_system(self) -> Self:
         assert self.server is not None
         assert self.simulator is not None
         if self.server.queue_system is None:
@@ -242,7 +242,7 @@ and environment variables are exposed in the form 'os.NAME', for example:
         return self
 
     @model_validator(mode="after")
-    def validate_forward_model_job_name_installed(self, info: ValidationInfo) -> Self:  # pylint: disable=E0213
+    def validate_forward_model_job_name_installed(self, info: ValidationInfo) -> Self:
         install_jobs = self.install_jobs
         forward_model_jobs = self.forward_model
         if install_jobs is None:
@@ -265,7 +265,7 @@ and environment variables are exposed in the form 'os.NAME', for example:
         return self
 
     @model_validator(mode="after")
-    def validate_install_jobs(self) -> Self:  # pylint: disable=E0213
+    def validate_install_jobs(self) -> Self:
         if self.install_jobs is None:
             return self
         for job in self.install_jobs:
@@ -283,7 +283,7 @@ and environment variables are exposed in the form 'os.NAME', for example:
         return self
 
     @model_validator(mode="after")
-    def validate_workflow_name_installed(self) -> Self:  # pylint: disable=E0213
+    def validate_workflow_name_installed(self) -> Self:
         workflows = self.workflows
         if workflows is None:
             return self
@@ -353,7 +353,7 @@ and environment variables are exposed in the form 'os.NAME', for example:
         return self
 
     @model_validator(mode="after")
-    def validate_cvar_nreals_interval(self) -> Self:  # pylint: disable=E0213
+    def validate_cvar_nreals_interval(self) -> Self:
         optimization = self.optimization
         if not optimization:
             return self
@@ -396,7 +396,7 @@ and environment variables are exposed in the form 'os.NAME', for example:
         return self
 
     @model_validator(mode="after")
-    def validate_model_data_file_exists(self) -> Self:  # pylint: disable=E0213
+    def validate_model_data_file_exists(self) -> Self:
         model = self.model
         if not model:
             return self
@@ -426,7 +426,6 @@ and environment variables are exposed in the form 'os.NAME', for example:
         return self
 
     @model_validator(mode="after")
-    # pylint: disable=E0213
     def validate_input_constraints_weight_definition(self) -> Self:
         input_constraints = self.input_constraints
         if not input_constraints:
@@ -463,7 +462,7 @@ and environment variables are exposed in the form 'os.NAME', for example:
         return self
 
     @model_validator(mode="after")
-    def validate_variable_name_match_well_name(self) -> Self:  # pylint: disable=E0213
+    def validate_variable_name_match_well_name(self) -> Self:
         controls = self.controls
         wells = self.wells
         if controls is None or wells is None:
@@ -490,7 +489,6 @@ and environment variables are exposed in the form 'os.NAME', for example:
         check_writeable_path(environment.simulation_folder, Path(config_path))
         return self
 
-    # pylint: disable=E0213
     @field_validator("wells")
     @no_type_check
     @classmethod
@@ -498,7 +496,6 @@ and environment variables are exposed in the form 'os.NAME', for example:
         check_for_duplicate_names([w.name for w in wells], "well", "name")
         return wells
 
-    # pylint: disable=E0213
     @field_validator("output_constraints")
     @no_type_check
     @classmethod
