@@ -16,13 +16,11 @@ from .parsing import (
     ConfigKeys,
     ConfigValidationError,
     ConfigWarning,
-    HistorySource,
 )
 
 logger = logging.getLogger(__name__)
 
 
-DEFAULT_HISTORY_SOURCE = HistorySource.REFCASE_HISTORY
 DEFAULT_RUNPATH = "simulations/realization-<IENS>/iter-<ITER>"
 DEFAULT_GEN_KW_EXPORT_NAME = "parameters"
 DEFAULT_JOBNAME_FORMAT = "<CONFIG_FILE>-<IENS>"
@@ -37,7 +35,6 @@ MINIMUM_BYTES_LEFT_ON_DISK_THRESHOLD = 200 * 1000**3  # 200 GB
 @dataclass
 class ModelConfig:
     num_realizations: int = 1
-    history_source: HistorySource = DEFAULT_HISTORY_SOURCE
     runpath_format_string: str = DEFAULT_RUNPATH
     jobname_format_string: str = DEFAULT_JOBNAME_FORMAT
     eclbase_format_string: str = DEFAULT_ECLBASE_FORMAT
@@ -107,9 +104,6 @@ class ModelConfig:
     def from_dict(cls, config_dict: ConfigDict) -> ModelConfig:
         return cls(
             num_realizations=config_dict.get(ConfigKeys.NUM_REALIZATIONS, 1),
-            history_source=config_dict.get(
-                ConfigKeys.HISTORY_SOURCE, DEFAULT_HISTORY_SOURCE
-            ),
             runpath_format_string=config_dict.get(ConfigKeys.RUNPATH, DEFAULT_RUNPATH),
             jobname_format_string=config_dict.get(
                 ConfigKeys.JOBNAME,
