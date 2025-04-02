@@ -75,8 +75,6 @@ class EnsembleEvaluator:
         self._batching_interval: float = 0.5
         self._complete_batch: asyncio.Event = asyncio.Event()
         self._server_started: asyncio.Future[None] = asyncio.Future()
-        self._clients_empty: asyncio.Event = asyncio.Event()
-        self._clients_empty.set()
         self._dispatchers_connected: set[bytes] = set()
         self._dispatchers_empty: asyncio.Event = asyncio.Event()
         self._dispatchers_empty.set()
@@ -200,12 +198,12 @@ class EnsembleEvaluator:
             print("EE GOT CANCEL EVENT")
             logger.debug("Client asked to cancel.")
             await self._signal_cancel()
-            self._clients_empty.set()
+            # self._clients_empty.set()
         elif type(event) is EEUserDone:
             print("EE GOT USER DONE EVENT")
             logger.debug("Client signalled done.")
             self.stop()
-            self._clients_empty.set()
+            # self._clients_empty.set()
 
     async def handle_dispatch(self, dealer: bytes, frame: bytes) -> None:
         if frame == CONNECT_MSG:
@@ -292,12 +290,7 @@ class EnsembleEvaluator:
             await self._batch_processing_queue.join()
             event = EETerminated(ensemble=self._ensemble.id_)
             await self._monitor_queue.put(event)
-            try:
-                await asyncio.wait_for(self._clients_empty.wait(), timeout=5)
-            except TimeoutError:
-                logger.warning(
-                    "Not all clients were disconnected when closing zmq server!"
-                )
+            print("PUT EETerminated")
             logger.debug("Async server exiting.")
         finally:
             try:
@@ -371,6 +364,7 @@ class EnsembleEvaluator:
                     self.log_exception(task_exception, task.get_name())
                     raise task_exception
                 elif task.get_name() == "server_task":
+                    print("EXITED MONITOR AN DHANDLE TASKS")
                     return
                 elif task.get_name() in {
                     "ensemble_task",
@@ -404,7 +398,6 @@ class EnsembleEvaluator:
             await self._monitor_and_handle_tasks()
         finally:
             self._server_done.set()
-            self._clients_empty.set()
             self._dispatchers_empty.set()
             for task in self._ee_tasks:
                 if not task.done():

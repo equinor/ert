@@ -567,6 +567,7 @@ class BaseRunModel(ABC):
                     event = await asyncio.wait_for(
                         evaluator._monitor_queue.get(), timeout=heartbeat_interval_
                     )
+                    evaluator._monitor_queue.task_done()
                 except TimeoutError:
                     if closetracker_received:
                         logger.error("Evaluator did not send the TERMINATED event!")
@@ -593,10 +594,10 @@ class BaseRunModel(ABC):
                         logger.debug("observed evaluation stopped event, signal done")
                         logger.debug("monitor informing server monitor is done...")
 
-                        await evaluator._monitor_queue.put(EventSentinel())
                         done_event = EEUserDone()
                         await evaluator.handle_client_event(done_event)
                         logger.debug("monitor informed server monitor is done")
+                        await evaluator._monitor_queue.put(EventSentinel())
 
                         if event.snapshot.get(STATUS) == ENSEMBLE_STATE_CANCELLED:
                             logger.debug(
@@ -605,22 +606,20 @@ class BaseRunModel(ABC):
                             raise UserCancelled(
                                 "Experiment cancelled by user during evaluation"
                             )
-                    elif type(event) is EETerminated:
-                        logger.debug("got terminated event")
-                        break
+                elif type(event) is EETerminated:
+                    logger.debug("got terminated event")
+                    break
 
-                    if not self._end_queue.empty():
-                        print("RUN MODEL WAS CANCELLED")
-                        logger.debug("Run model canceled - during evaluation")
-                        self._end_queue.get()
-                        logger.debug(f"monitor-{self._id} asking server to cancel...")
-                        cancel_event = EEUserCancel(monitor=self._id)
-                        await evaluator.handle_client_event(cancel_event)
-                        await evaluator._monitor_queue.put(EventSentinel())
-                        logger.debug(f"monitor-{self._id} asked server to cancel")
-                        logger.debug(
-                            "Run model canceled - during evaluation - cancel sent"
-                        )
+                if not self._end_queue.empty():
+                    print("RUN MODEL WAS CANCELLED")
+                    logger.debug("Run model canceled - during evaluation")
+                    self._end_queue.get()
+                    logger.debug("monitor asking server to cancel...")
+                    cancel_event = EEUserCancel()
+                    await evaluator.handle_client_event(cancel_event)
+                    await evaluator._monitor_queue.put(EventSentinel())
+                    logger.debug("monitor asked server to cancel")
+                    logger.debug("Run model canceled - during evaluation - cancel sent")
         except UserCancelled:
             raise
         except Exception as e:
@@ -663,9 +662,11 @@ class BaseRunModel(ABC):
             try:
                 await evaluator_task
             except Exception as e:
+                print(f"1: {e!s}")
                 raise Exception(
                     "Exception occured during user initiatied termination of experiment"
                 ) from e
+            print("RAISING USER_CANCELLED")
             raise UserCancelled("Experiment cancelled by user in post evaluation")
 
         await evaluator_task
