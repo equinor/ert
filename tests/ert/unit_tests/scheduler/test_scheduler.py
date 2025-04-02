@@ -163,7 +163,7 @@ async def test_add_dispatch_information_to_jobs_file(
         assert content["real_id"] == realization.iens
         assert content["dispatch_url"] == test_ee_uri
         assert content["ee_token"] == test_ee_token
-        assert type(content["jobList"]) == list
+        assert type(content["jobList"]) is list
         assert len(content["jobList"]) == 0
 
 

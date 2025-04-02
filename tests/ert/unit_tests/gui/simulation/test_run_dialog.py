@@ -449,7 +449,7 @@ def test_run_dialog_memory_usage_showing(
 
     # This is the container of realization boxes
     realization_box = run_dialog._tab_widget.widget(0)
-    assert type(realization_box) == RealizationWidget
+    assert type(realization_box) is RealizationWidget
     # Click the first realization box
     qtbot.mouseClick(realization_box, Qt.MouseButton.LeftButton)
     fm_step_model = run_dialog._fm_step_overview.model()
@@ -550,7 +550,7 @@ def test_run_dialog_fm_label_show_correct_info(
 
     # This is the container of realization boxes
     realization_box = run_dialog._tab_widget.widget(0)
-    assert type(realization_box) == RealizationWidget
+    assert type(realization_box) is RealizationWidget
     # Click the first realization box
     qtbot.mouseClick(realization_box, Qt.MouseButton.LeftButton)
     fm_step_model = run_dialog._fm_step_overview.model()
