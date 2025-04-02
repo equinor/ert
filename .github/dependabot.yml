@@ -13,6 +13,6 @@ updates:
     allow:
       - dependency-type: "all"
     groups:
-      - all-deps:
+      all-deps:
         patterns:
           - "*"
