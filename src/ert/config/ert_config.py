@@ -86,6 +86,23 @@ def site_config_location() -> str | None:
     return None
 
 
+def _read_time_map(file_contents: str) -> list[datetime]:
+    def str_to_datetime(date_str: str) -> datetime:
+        try:
+            return datetime.fromisoformat(date_str)
+        except ValueError:
+            logger.warning(
+                "DD/MM/YYYY date format is deprecated"
+                ", please use ISO date format YYYY-MM-DD."
+            )
+            return datetime.strptime(date_str, "%d/%m/%Y")
+
+    dates = []
+    for line in file_contents.splitlines():
+        dates.append(str_to_datetime(line.strip()))
+    return dates
+
+
 def create_forward_model_json(
     context: Substitutions,
     forward_model_steps: list[ForwardModelStep],
@@ -827,11 +844,23 @@ class ErtConfig:
                         [key] for key in summary_obs if key not in summary_keys
                     ]
             ensemble_config = EnsembleConfig.from_dict(config_dict=config_dict)
+            time_map_args = config_dict.get(ConfigKeys.TIME_MAP)
+            time_map = None
+            if time_map_args is not None:
+                time_map_file, time_map_contents = time_map_args
+                try:
+                    time_map = _read_time_map(time_map_contents)
+                except ValueError as err:
+                    raise ConfigValidationError.with_context(
+                        f"Could not read timemap file {time_map_file}: {err}",
+                        time_map_file,
+                    ) from err
+
             if model_config:
                 observations = cls._create_observations(
                     obs_configs,
                     ensemble_config,
-                    model_config.time_map,
+                    time_map,
                     model_config.history_source,
                 )
             else:
