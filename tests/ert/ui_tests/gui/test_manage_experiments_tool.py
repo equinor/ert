@@ -408,9 +408,9 @@ ANALYSIS_SET_VAR OBSERVATIONS AUTO_SCALE POLY_OBS1_*
 
         # Check that a scaled observation is plotted
         assert any(
-            l
-            for l in ensemble_widget._figure.get_axes()[0].get_lines()
-            if "Scaled observation" in l.get_xdata()
+            line
+            for line in ensemble_widget._figure.get_axes()[0].get_lines()
+            if "Scaled observation" in line.get_xdata()
         )
 
 
