@@ -477,7 +477,7 @@ def get_ert_parser(parser: ArgumentParser | None = None) -> ArgumentParser:
     )
     es_mda_parser.add_argument(
         "--restart-ensemble-id",
-        type=valid_name,  ## validate UUID
+        type=valid_name,  # validate UUID
         default=None,
         dest="restart_ensemble_id",
         help="UUID of the ensemble where the results for the experiment "
