@@ -574,18 +574,18 @@ async def test_ensure_multi_level_events_in_order(evaluator_to_use):
         snapshot_event_received = False
         async for event in monitor.track():
             if isinstance(event, EETerminated):
-                assert snapshot_event_received == True
+                assert snapshot_event_received is True
                 final_event_was_EETerminated = True
                 assert ensemble_state == ENSEMBLE_STATE_STOPPED
             if type(event) in {EESnapshot, EESnapshotUpdate}:
                 # if we get an snapshot event than this need to be valid
-                assert final_event_was_EETerminated == False
+                assert final_event_was_EETerminated is False
                 snapshot_event_received = True
                 if "reals" in event.snapshot:
                     assert ensemble_state == ENSEMBLE_STATE_STARTED
                 ensemble_state = event.snapshot.get("status", ensemble_state)
-        assert final_event_was_EETerminated == True
-        assert snapshot_event_received == True
+        assert final_event_was_EETerminated is True
+        assert snapshot_event_received is True
 
 
 @given(

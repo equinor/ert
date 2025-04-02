@@ -157,7 +157,7 @@ def test_terminating_experiment_shows_a_confirmation_dialog(qtbot: QtBot, run_di
 def test_run_dialog_polls_run_model_for_runtime(
     qtbot, mock_set_is_simulation_running, mock_get_runtime, run_dialog: RunDialog
 ):
-    qtbot.waitUntil(lambda: run_dialog.is_simulation_done() == True)
+    qtbot.waitUntil(lambda: run_dialog.is_simulation_done() is True)
     mock_get_runtime.assert_any_call()
     mock_set_is_simulation_running.assert_has_calls([call(True), call(False)])
 
@@ -177,7 +177,7 @@ def test_large_snapshot(
         lambda: run_dialog._tab_widget.count() == 2, timeout=timeout_per_iter
     )
     qtbot.waitUntil(
-        lambda: run_dialog.is_simulation_done() == True, timeout=timeout_per_iter
+        lambda: run_dialog.is_simulation_done() is True, timeout=timeout_per_iter
     )
 
 
@@ -370,7 +370,7 @@ def test_run_dialog(events, event_queue, tab_widget_count, qtbot: QtBot, run_dia
     qtbot.waitUntil(
         lambda: run_dialog._tab_widget.count() == tab_widget_count, timeout=5000
     )
-    qtbot.waitUntil(lambda: run_dialog.is_simulation_done() == True, timeout=5000)
+    qtbot.waitUntil(lambda: run_dialog.is_simulation_done() is True, timeout=5000)
 
 
 @pytest.mark.parametrize(
@@ -445,7 +445,7 @@ def test_run_dialog_memory_usage_showing(
     qtbot.waitUntil(
         lambda: run_dialog._tab_widget.count() == tab_widget_count, timeout=5000
     )
-    qtbot.waitUntil(lambda: run_dialog.is_simulation_done() == True, timeout=5000)
+    qtbot.waitUntil(lambda: run_dialog.is_simulation_done() is True, timeout=5000)
 
     # This is the container of realization boxes
     realization_box = run_dialog._tab_widget.widget(0)
@@ -546,7 +546,7 @@ def test_run_dialog_fm_label_show_correct_info(
     qtbot.waitUntil(
         lambda: run_dialog._tab_widget.count() == tab_widget_count, timeout=5000
     )
-    qtbot.waitUntil(lambda: run_dialog.is_simulation_done() == True, timeout=5000)
+    qtbot.waitUntil(lambda: run_dialog.is_simulation_done() is True, timeout=5000)
 
     # This is the container of realization boxes
     realization_box = run_dialog._tab_widget.widget(0)
@@ -608,7 +608,7 @@ def test_that_exception_in_base_run_model_is_handled(qtbot: QtBot, storage):
         run_dialog = wait_for_child(gui, qtbot, RunDialog)
 
         QTimer.singleShot(100, lambda: handle_error_dialog(run_dialog))
-        qtbot.waitUntil(lambda: run_dialog.is_simulation_done() == True, timeout=100000)
+        qtbot.waitUntil(lambda: run_dialog.is_simulation_done() is True, timeout=100000)
         qtbot.waitUntil(lambda: handler_done, timeout=100000)
 
 
@@ -642,7 +642,7 @@ def test_that_stdout_and_stderr_buttons_react_to_file_content(
         qtbot.waitUntil(lambda: gui.findChild(RunDialog) is not None, timeout=5000)
         run_dialog = gui.findChild(RunDialog)
 
-        qtbot.waitUntil(lambda: run_dialog.is_simulation_done() == True, timeout=100000)
+        qtbot.waitUntil(lambda: run_dialog.is_simulation_done() is True, timeout=100000)
 
         fm_step_overview = run_dialog._fm_step_overview
         qtbot.waitUntil(lambda: not fm_step_overview.isHidden(), timeout=20000)
@@ -800,7 +800,7 @@ def test_forward_model_overview_label_selected_on_tab_change(
     qtbot.waitUntil(
         lambda: run_dialog._tab_widget.count() == tab_widget_count, timeout=5000
     )
-    qtbot.waitUntil(lambda: run_dialog.is_simulation_done() == True, timeout=5000)
+    qtbot.waitUntil(lambda: run_dialog.is_simulation_done() is True, timeout=5000)
 
     qt_bot_click_tab_index(0)
     fm_step_label = run_dialog.findChild(QLabel, name="fm_step_label")

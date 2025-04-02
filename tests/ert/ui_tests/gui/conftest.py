@@ -260,7 +260,7 @@ def run_experiment_fixture(request):
             # then click it
             run_dialog = wait_for_child(gui, qtbot, RunDialog, timeout=10000)
             qtbot.waitUntil(
-                lambda: run_dialog.is_simulation_done() == True, timeout=200000
+                lambda: run_dialog.is_simulation_done() is True, timeout=200000
             )
             qtbot.waitUntil(lambda: run_dialog._tab_widget.currentWidget() is not None)
 

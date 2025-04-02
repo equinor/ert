@@ -2121,7 +2121,7 @@ def test_design_matrix_default_argument(tmp_path):
     )
     assert config.analysis_config.design_matrix
     assert config.analysis_config.design_matrix.design_sheet == "DesignSheet"
-    assert config.analysis_config.design_matrix.default_sheet == None
+    assert config.analysis_config.design_matrix.default_sheet is None
 
 
 @pytest.mark.usefixtures("use_tmpdir")
