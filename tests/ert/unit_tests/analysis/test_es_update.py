@@ -792,7 +792,9 @@ def test_that_autoscaling_applies_to_scaled_errors(storage):
         alpha = 1
         std_cutoff = 0.05
         global_std_scaling = 1
-        progress_callback = lambda _: None
+
+        def progress_callback(_):
+            return None
 
         experiment = storage.create_experiment(name="dummyexp")
         ensemble = experiment.create_ensemble(name="dummy", ensemble_size=10)

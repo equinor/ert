@@ -101,14 +101,15 @@ def _os() -> Os:
 def _render_definitions(
     definitions: dict[str, Any], jinja_env: jinja2.Environment
 ) -> None:
-    # pylint: disable=unnecessary-lambda-assignment
-    render = lambda s, d: jinja_env.from_string(s).render(**d)
+    def render(s: str, d: dict[str, Any]) -> str:
+        return jinja_env.from_string(s).render(**d)
+
     for key in definitions:  # noqa: PLC0206
         if not isinstance(definitions[key], str):
             continue
 
         for _idx in range(len(definitions) + 1):
-            new_val = render(definitions[key], definitions)  # type: ignore
+            new_val = render(definitions[key], definitions)
             if definitions[key] != new_val:
                 definitions[key] = new_val
             else:
