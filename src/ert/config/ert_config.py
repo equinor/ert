@@ -854,21 +854,14 @@ class ErtConfig:
                         f"Could not read timemap file {time_map_file}: {err}",
                         time_map_file,
                     ) from err
-            if model_config:
-                observations = cls._create_observations(
-                    obs_configs,
-                    ensemble_config,
-                    time_map,
-                    config_dict.get(
-                        ConfigKeys.HISTORY_SOURCE, HistorySource.REFCASE_HISTORY
-                    ),
-                )
-            else:
-                errors.append(
-                    ConfigValidationError(
-                        "Not possible to validate observations without valid model config"
-                    )
-                )
+            observations = cls._create_observations(
+                obs_configs,
+                ensemble_config,
+                time_map,
+                config_dict.get(
+                    ConfigKeys.HISTORY_SOURCE, HistorySource.REFCASE_HISTORY
+                ),
+            )
         except ConfigValidationError as err:
             errors.append(err)
 
