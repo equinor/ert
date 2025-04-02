@@ -118,9 +118,7 @@ def _save_param_ensemble_array_to_disk(
 ) -> None:
     config_node = ensemble.experiment.parameter_configuration[param_group]
     for i, realization in enumerate(iens_active_index):
-        config_node.save_parameters(
-            ensemble, param_group, realization, param_ensemble_array[:, i]
-        )
+        config_node.save_parameters(ensemble, realization, param_ensemble_array[:, i])
 
 
 def _load_param_ensemble_array(
@@ -129,7 +127,7 @@ def _load_param_ensemble_array(
     iens_active_index: npt.NDArray[np.int_],
 ) -> npt.NDArray[np.float64]:
     config_node = ensemble.experiment.parameter_configuration[param_group]
-    return config_node.load_parameters(ensemble, param_group, iens_active_index)
+    return config_node.load_parameters(ensemble, iens_active_index)
 
 
 def _expand_wildcards(
@@ -150,7 +148,7 @@ def _expand_wildcards(
     """
     matches = []
     for pattern in patterns:
-        matches.extend([val for val in input_list if fnmatch(val, pattern)])
+        matches.extend([str(val) for val in input_list if fnmatch(val, pattern)])
     return sorted(set(matches))
 
 
@@ -301,8 +299,8 @@ def _load_observations_and_responses(
                 obs_scaling=obs_scaling,
                 response_mean=response_mean,
                 response_std=response_std,
-                response_mean_mask=response_mean_mask,
-                response_std_mask=response_std_mask,
+                response_mean_mask=bool(response_mean_mask),
+                response_std_mask=bool(response_std_mask),
                 index=index,
             )
         )

@@ -195,6 +195,7 @@ def test_no_parameters_json():
 
 
 @pytest.mark.usefixtures("use_tmpdir")
+@pytest.mark.integration_test
 def test_template_executable():
     with open("template", "w", encoding="utf-8") as template_file:
         template_file.write(

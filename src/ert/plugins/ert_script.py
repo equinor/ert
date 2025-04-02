@@ -7,7 +7,6 @@ import sys
 import traceback
 import warnings
 from abc import abstractmethod
-from collections.abc import Callable
 from types import MappingProxyType, ModuleType
 from typing import TYPE_CHECKING, Any, TypeAlias
 
@@ -193,7 +192,7 @@ class ErtScript:
     @staticmethod
     def loadScriptFromFile(
         path: str,
-    ) -> Callable[[], ErtScript]:
+    ) -> type[ErtScript]:
         module_name = f"ErtScriptModule_{ErtScript.__module_count}"
         ErtScript.__module_count += 1
 
@@ -214,23 +213,23 @@ class ErtScript:
     @staticmethod
     def __findErtScriptImplementations(
         module: ModuleType,
-    ) -> Callable[[], ErtScript]:
-        result = []
+    ) -> type[ErtScript]:
+        result = None
         for _, member in inspect.getmembers(
             module,
             lambda member: inspect.isclass(member)
             and member.__module__ == module.__name__,
         ):
             if ErtScript in inspect.getmro(member):
-                result.append(member)
+                if result is not None:
+                    raise ValueError(
+                        f"Module {module.__name__} contains more than one ErtScript"
+                    )
+                result = member
 
-        if len(result) == 0:
+        if result is None:
             raise ValueError(f"Module {module.__name__} does not contain an ErtScript!")
-        if len(result) > 1:
-            raise ValueError(
-                f"Module {module.__name__} contains more than one ErtScript"
-            )
-        return result[0]
+        return result
 
     @staticmethod
     def validate(args: list[Any]) -> None:

@@ -18,7 +18,6 @@ from .parsing import (
     ConfigValidationError,
     ConfigWarning,
     HistorySource,
-    read_file,
 )
 
 logger = logging.getLogger(__name__)
@@ -125,15 +124,12 @@ class ModelConfig:
     @no_type_check
     @classmethod
     def from_dict(cls, config_dict: ConfigDict) -> ModelConfig:
-        time_map_file = config_dict.get(ConfigKeys.TIME_MAP)
-        time_map_file = (
-            os.path.abspath(time_map_file) if time_map_file is not None else None
-        )
+        time_map_args = config_dict.get(ConfigKeys.TIME_MAP)
         time_map = None
-        if time_map_file is not None:
-            file_contents = read_file(time_map_file)
+        if time_map_args is not None:
+            time_map_file, time_map_contents = time_map_args
             try:
-                time_map = _read_time_map(file_contents)
+                time_map = _read_time_map(time_map_contents)
             except ValueError as err:
                 raise ConfigValidationError.with_context(
                     f"Could not read timemap file {time_map_file}: {err}", time_map_file

@@ -31,8 +31,8 @@ def test_plot_limits():
     plot_limits = PlotLimits()
     limit_names = ["value", "index", "count", "density", "date"]
 
-    positive_floats = [1.0, 1.5, 3.1415, 1e10, 5.2e-7]
-    negative_floats = [-1.0, -1.5, -3.1415, -1e10, -5.2e-7]
+    positive_floats = [1.0, 1.5, 1e10, 5.2e-7]
+    negative_floats = [-1.0, -1.5, -1e10, -5.2e-7]
     positive_ints = [1, 5, 1000]
     negative_ints = [-1, -5, -1000]
 

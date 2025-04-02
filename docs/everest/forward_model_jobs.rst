@@ -206,7 +206,7 @@ If the file is to be modified by a custom job, the everest config should contain
     install_jobs:
       -
         name: custom_job
-        source: jobs/CUSTOM_JOB_CONFIG
+        executable: jobs/custom_job.exe
 
     forward_model:
       - well_constraints  -i files/well_readydate.json -c files/wc_config.yml -rc well_rate.json -o wc_wells.json

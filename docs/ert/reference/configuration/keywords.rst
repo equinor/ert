@@ -28,6 +28,7 @@ Keyword name                                                            Required
 :ref:`DATA_FILE <data_file>`                                            NO                                                                      Provide an ECLIPSE data file for the problem
 :ref:`DATA_KW <data_kw>`                                                NO                                                                      Replace strings in ECLIPSE .DATA files
 :ref:`DEFINE <define>`                                                  NO                                                                      Define keywords with config scope
+:ref:`DESIGN_MATRIX <design_matrix>`                                    NO                                                                      Add design matrix parameters from a spreadsheet
 :ref:`ECLBASE <eclbase>`                                                NO                                                                      Define a name for the ECLIPSE simulations.
 :ref:`STD_CUTOFF <std_cutoff>`                                          NO                                      1e-6                            Determines the threshold for ensemble variation in a measurement
 :ref:`ENKF_ALPHA <enkf_alpha>`                                          NO                                      3.0                             Parameter controlling outlier behaviour in EnKF algorithm
@@ -154,6 +155,132 @@ Example:
 .. note::
     See the :ref:`DATA_KW <data_kw>` keyword which can be used to utilize more template
     functionality in the Eclipse/flow datafile.
+
+
+DESIGN_MATRIX
+-------------
+.. _design_matrix:
+
+DESIGN_MATRIX is used to read and validate parameters given in XLSX-format.
+:code:`DESIGN_MATRIX` supports 1 positional argument, which points to a XLSL file.
+
+*Example:*
+
+::
+
+        DESIGN_MATRIX poly_design.xlsx
+
+
+Additionally, there are two optional named arguments:
+
+::
+
+        DESIGN_MATRIX <file> DESIGN_SHEET:<name_of_design_sheet> DEFAULT_SHEET:<name_of_default_sheet>
+
+where:
+
+1. DESIGN_SHEET:<name_of_design_sheet> - the name of the :ref:`design_sheet` (defaults to DesignSheet)
+
+2. DEFAULT_SHEET:<name_of_default_sheet> - the name of the :ref:`default_sheet`, which if not present will not be included
+
+
+*Example:*
+
+::
+
+        DESIGN_MATRIX poly_design.xlsx DESIGN_SHEET:DesignSheet DEFAULT_SHEET:DefaultSheet
+
+
+The XLSL file must contain a design sheet, where in the columns represents different parameters and rows represent realizations.
+
+
+*Example of a design sheet:*
+
+.. _design_sheet:
+
+.. list-table:: design sheet
+   :widths: 30 30 30 30
+   :header-rows: 1
+
+   * - REAL
+     - a
+     - b
+     - c
+   * - 0
+     - 1
+     - 1
+     - 2
+   * - 1
+     - 1
+     - 1
+     - 2
+   * - 3
+     - 1
+     - 1
+     - 3
+
+
+The XLSL file can optionally contain a default sheet, where there are two columns, the first column specifies parameter names and the second
+default values distributed across all the realizations defined by :ref:`design_sheet`. In the following example the realization 0,1 and 3 will
+contain parameters d and e, where d=0 and e=1 for all of the them.
+
+*Example of a default sheet:*
+
+.. _default_sheet:
+
+.. list-table:: default sheet
+   :widths: 100 100
+   :width: 60%
+
+   * - d
+     - 0
+   * - e
+     - 1
+
+If the :ref:`design_sheet` contains column `REAL`, ert will automatically set the active realizations to what is
+specified in `REAL` column; i.e.; 0,1 and 3 in the example. If the `REAL` column is not present, ert will enumerate individual rows
+as realization; i.e. 0,1 and 2 in the example.
+
+Multiple :code:`DESIGN_MATRIX` keywords can be added to the configuration file and ert will validate that
+ - the realizations overlap on each instance of the keyword.
+ - the parameter names are either unique or the values need to be the same for the overlapping parameters in the different instances of the keyword.
+
+The combination with :ref:`GEN_KW <gen_kw>` parameters is supported. In case of overlapping names, eg. the ert config would contain:
+
+::
+
+        GEN_KW COEFFS coeff_priors
+        DESIGN_MATRIX poly_design.xlsl DESIGN_SHEET:DesignSheet DEFAULT_SHEET:DefaultSheet
+
+
+wherein coeff_priors
+
+::
+
+        a UNIFORM 0 1
+        b UNIFORM 0 2
+        c UNIFORM 0 5
+        d UNIFORM 0 2
+        e UNIFORM 0 5
+
+
+the :ref:`GEN_KW <gen_kw>` group COEFFS would remain, but the values would be read from the design matrix while update is disabled for COEFFS.
+Notice that this requires a full overlap of parameter names.
+The case with only a partial overlap will result in a validation error.
+An example of a partial overlap is when GEN_KW contains parameters a,b,c,d,e and the design matrix contains a,b,c,d.
+Additionally, the overlap needs to be present only in a single GEN_KW group, which means that having for instance:
+
+::
+
+        GEN_KW COEFFS1 coeff_priors_1 -- defining parameters a,b,c
+        GEN_KW COEFFS2 coeff_priors_2 -- defining parameters d,e
+
+would also yield validation error, even the union of parameters overlaps the design matrix parameters.
+In such cases consider to comment out GEN_KW definitions and thus only the design parameters will be used.
+
+
+In case there is no overlap with a GEN_KW group, the GEN_KW group will be sampled normally.
+
 
 ECLBASE
 -------

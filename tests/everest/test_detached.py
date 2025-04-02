@@ -4,12 +4,12 @@ import stat
 from pathlib import Path
 from unittest.mock import MagicMock, patch
 
-import numpy as np
 import pytest
 import requests
+import yaml
 
 import everest
-from ert.config import ErtConfig
+from ert.config import QueueSystem
 from ert.config.queue_config import (
     LocalQueueOptions,
     LsfQueueOptions,
@@ -22,23 +22,15 @@ from everest.config import EverestConfig, InstallJobConfig
 from everest.config.server_config import ServerConfig
 from everest.config.simulator_config import SimulatorConfig
 from everest.detached import (
-    _EVERSERVER_JOB_PATH,
     PROXY,
     ServerStatus,
     everserver_status,
-    get_opt_status,
     server_is_running,
     start_server,
     stop_server,
     update_everserver_status,
     wait_for_server,
     wait_for_server_to_stop,
-)
-from everest.strings import (
-    DEFAULT_OUTPUT_DIR,
-    DETACHED_NODE_DIR,
-    EVEREST_SERVER_CONFIG,
-    SIMULATION_DIR,
 )
 from everest.util import makedirs_if_needed
 
@@ -60,11 +52,9 @@ async def test_https_requests(copy_math_func_test_data_to_tmp):
     expected_server_status = ServerStatus.never_run
     assert expected_server_status == everserver_status(status_path)["status"]
     makedirs_if_needed(everest_config.output_dir, roll_if_exists=True)
-    await start_server(everest_config)
-    try:
-        wait_for_server(everest_config.output_dir, 240)
-    except SystemExit as e:
-        raise e
+    await start_server(everest_config, logging_level=logging.INFO)
+
+    wait_for_server(everest_config.output_dir, 240)
 
     server_status = everserver_status(status_path)
     assert server_status["status"] in {ServerStatus.running, ServerStatus.starting}
@@ -154,43 +144,11 @@ def test_wait_for_server(server_is_running_mock, caplog):
     assert not caplog.messages
 
 
-def _get_reference_config():
-    everest_config = EverestConfig.load_file("config_minimal.yml")
-    reference_config = ErtConfig.read_site_config()
-    cwd = os.getcwd()
-    reference_config.update(
-        {
-            "INSTALL_JOB": [(EVEREST_SERVER_CONFIG, _EVERSERVER_JOB_PATH)],
-            "QUEUE_SYSTEM": "LOCAL",
-            "JOBNAME": EVEREST_SERVER_CONFIG,
-            "MAX_SUBMIT": 1,
-            "NUM_REALIZATIONS": 1,
-            "RUNPATH": os.path.join(
-                cwd,
-                DEFAULT_OUTPUT_DIR,
-                DETACHED_NODE_DIR,
-                SIMULATION_DIR,
-            ),
-            "FORWARD_MODEL": [
-                [
-                    EVEREST_SERVER_CONFIG,
-                    "--config-file",
-                    os.path.join(cwd, "config_minimal.yml"),
-                ],
-            ],
-            "ENSPATH": os.path.join(
-                cwd, DEFAULT_OUTPUT_DIR, DETACHED_NODE_DIR, EVEREST_SERVER_CONFIG
-            ),
-            "RUNPATH_FILE": os.path.join(
-                cwd, DEFAULT_OUTPUT_DIR, DETACHED_NODE_DIR, ".res_runpath_list"
-            ),
-        }
-    )
-    return everest_config, reference_config
-
-
-def test_detached_mode_config_base(copy_math_func_test_data_to_tmp):
-    everest_config, _ = _get_reference_config()
+def test_detached_mode_config_base(min_config, monkeypatch, tmp_path):
+    monkeypatch.chdir(tmp_path)
+    with open("config.yml", "w", encoding="utf-8") as fout:
+        yaml.dump(min_config, fout)
+    everest_config = EverestConfig.load_file("config.yml")
     assert everest_config.simulator.queue_system == LocalQueueOptions(max_running=8)
 
 
@@ -281,12 +239,68 @@ def test_generate_queue_options_use_simulator_values(
     queue_options, expected_result, monkeypatch
 ):
     monkeypatch.setattr(
-        everest.config.server_config.ErtPluginManager,
+        everest.config.everest_config.ErtPluginManager,
         "activate_script",
         MagicMock(return_value=activate_script()),
     )
     config = EverestConfig.with_defaults(simulator={"queue_system": queue_options})
     assert config.server.queue_system == expected_result
+
+
+@pytest.mark.parametrize("use_plugin", (True, False))
+@pytest.mark.parametrize(
+    "queue_options",
+    [
+        {"name": "slurm", "activate_script": "From user"},
+        {"name": "slurm"},
+    ],
+)
+def test_queue_options_site_config(queue_options, use_plugin, monkeypatch, min_config):
+    plugin_result = "From plugin"
+    if "activate_script" in queue_options:
+        expected_result = queue_options["activate_script"]
+    elif use_plugin:
+        expected_result = plugin_result
+    else:
+        expected_result = activate_script()
+
+    if use_plugin:
+        monkeypatch.setattr(
+            everest.config.everest_config.ErtPluginManager,
+            "activate_script",
+            MagicMock(return_value=plugin_result),
+        )
+    config = EverestConfig.with_plugins(
+        {"simulator": {"queue_system": queue_options}} | min_config
+    )
+    assert config.simulator.queue_system.activate_script == expected_result
+
+
+@pytest.mark.parametrize("use_plugin", (True, False))
+@pytest.mark.parametrize(
+    "queue_options",
+    [
+        {"queue_system": {"name": "slurm"}},
+        {},
+    ],
+)
+def test_simulator_queue_system_site_config(
+    queue_options, use_plugin, monkeypatch, min_config
+):
+    if queue_options:
+        expected_result = SlurmQueueOptions  # User specified
+    elif use_plugin:
+        expected_result = LsfQueueOptions  # Mock site config
+    else:
+        expected_result = LocalQueueOptions  # Default value
+    if use_plugin:
+        monkeypatch.setattr(
+            everest.config.everest_config.ErtConfig,
+            "read_site_config",
+            MagicMock(return_value={"QUEUE_SYSTEM": QueueSystem.LSF}),
+        )
+    config = EverestConfig.with_plugins({"simulator": queue_options} | min_config)
+    assert isinstance(config.simulator.queue_system, expected_result)
 
 
 @pytest.mark.timeout(5)  # Simulation might not finish
@@ -334,80 +348,3 @@ if __name__ == "__main__":
     driver = await start_server(everest_config, logging_level=logging.DEBUG)
     final_state = await server_running()
     assert final_state.returncode == 0
-
-
-@pytest.mark.xdist_group(name="math_func/config_multiobj.yml")
-def test_get_opt_status(cached_example):
-    _, config_file, _, _ = cached_example("math_func/config_multiobj.yml")
-    config = EverestConfig.load_file(config_file)
-
-    opts = get_opt_status(config.optimization_output_dir)
-
-    assert np.allclose(
-        opts["objective_history"], [-2.3333, -2.3335, -2.0000], atol=1e-4
-    )
-
-    assert np.allclose(
-        opts["control_history"]["point.x"],
-        [0.0, -0.004202181916184627, -0.0021007888698514315],
-        atol=1e-4,
-    )
-    assert np.allclose(
-        opts["control_history"]["point.y"],
-        [0.0, -0.011298196942730383, -0.0056482862617779715],
-        atol=1e-4,
-    )
-    assert np.allclose(
-        opts["control_history"]["point.z"], [0.0, 1.0, 0.4999281115746754], atol=1e-4
-    )
-
-    assert np.allclose(
-        opts["objectives_history"]["distance_p"],
-        [-0.75, -0.7656459808349609, -0.5077850222587585],
-        atol=1e-4,
-    )
-    assert np.allclose(
-        opts["objectives_history"]["distance_q"],
-        [-4.75, -4.703639984130859, -4.476789951324463],
-        atol=1e-4,
-    )
-
-    assert opts["accepted_control_indices"] == [0, 2]
-
-    cmond = opts["cli_monitor_data"]
-
-    assert cmond["batches"] == [0, 1, 2]
-    assert cmond["controls"][0]["point.x"] == 0.0
-    assert cmond["controls"][0]["point.y"] == 0.0
-    assert cmond["controls"][0]["point.z"] == 0.0
-
-    assert np.allclose(
-        cmond["controls"][1]["point.x"], -0.004202181916184627, atol=1e-4
-    )
-    assert np.allclose(
-        cmond["controls"][1]["point.y"], -0.011298196942730383, atol=1e-4
-    )
-    assert np.allclose(cmond["controls"][1]["point.z"], 1.0, atol=1e-4)
-    assert np.allclose(
-        cmond["controls"][2]["point.x"], -0.0021007888698514315, atol=1e-4
-    )
-    assert np.allclose(
-        cmond["controls"][2]["point.y"], -0.0056482862617779715, atol=1e-4
-    )
-    assert np.allclose(cmond["controls"][2]["point.z"], 0.4999281115746754, atol=1e-4)
-
-    assert np.allclose(
-        cmond["objective_value"],
-        [-2.333333333333333, -2.333525975545247, -2.000048339366913],
-        atol=1e-4,
-    )
-    assert np.allclose(
-        cmond["expected_objectives"]["distance_p"],
-        [-0.75, -0.7656459808349609, -0.5077850222587585],
-        atol=1e-4,
-    )
-    assert np.allclose(
-        cmond["expected_objectives"]["distance_q"],
-        [-4.75, -4.703639984130859, -4.476789951324463],
-        atol=1e-4,
-    )

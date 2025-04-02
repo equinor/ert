@@ -1,8 +1,8 @@
 # mypy: ignore-errors
 import copy
-import json
 import logging
 import os
+import pprint
 import re
 from collections import defaultdict
 from collections.abc import Sequence
@@ -23,11 +23,10 @@ from pydantic import ValidationError as PydanticValidationError
 from pydantic import field_validator
 from pydantic.dataclasses import dataclass, rebuild_dataclass
 
-from ert.config.parsing.context_values import ContextBoolEncoder
 from ert.plugins import ErtPluginManager
-from ert.plugins.workflow_config import ErtScriptWorkflow
 from ert.substitutions import Substitutions
 
+from ._design_matrix_validator import DesignMatrixValidator
 from .analysis_config import AnalysisConfig
 from .ensemble_config import EnsembleConfig
 from .forward_model_step import (
@@ -57,9 +56,6 @@ from .parsing import (
     parse_contents,
     read_file,
 )
-from .parsing import (
-    parse as parse_config,
-)
 from .parsing.observations_parser import (
     GenObsValues,
     HistoryValues,
@@ -67,11 +63,17 @@ from .parsing.observations_parser import (
     SummaryValues,
 )
 from .parsing.observations_parser import (
-    parse as parse_observations,
+    parse_content as parse_observations,
 )
 from .queue_config import QueueConfig
 from .workflow import Workflow
-from .workflow_job import ErtScriptLoadFailure, WorkflowJob
+from .workflow_job import (
+    ErtScriptLoadFailure,
+    ErtScriptWorkflow,
+    ExecutableWorkflow,
+    _WorkflowJob,
+    workflow_job_from_file,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -309,19 +311,29 @@ def workflows_from_dict(
 
     for workflow_job in workflow_job_info:
         try:
-            # WorkflowJob.fromFile only throws error if a
+            # workflow_job_from_file only throws error if a
             # non-readable file is provided.
             # Non-existing files are caught by the new parser
-            new_job = WorkflowJob.from_file(
+            new_job = workflow_job_from_file(
                 config_file=workflow_job[0],
                 name=None if len(workflow_job) == 1 else workflow_job[1],
             )
             name = new_job.name
             if name in workflow_jobs:
+                prop = (
+                    new_job.executable
+                    if isinstance(new_job, ExecutableWorkflow)
+                    else new_job.ert_script
+                )
+                old_prop = (
+                    workflow_jobs[name].executable
+                    if isinstance(workflow_jobs[name], ExecutableWorkflow)
+                    else workflow_jobs[name].ert_script
+                )
                 ConfigWarning.warn(
                     f"Duplicate workflow jobs with name {name!r}, choosing "
-                    f"{new_job.executable or new_job.ert_script!r} over "
-                    f"{workflow_jobs[name].executable or workflow_jobs[name].ert_script!r}",
+                    f"{prop!r} over "
+                    f"{old_prop!r}",
                     name,
                 )
             workflow_jobs[name] = new_job
@@ -337,7 +349,7 @@ def workflows_from_dict(
     for job_path in workflow_job_dir_info:
         for file_name in _get_files_in_directory(job_path, errors):
             try:
-                new_job = WorkflowJob.from_file(config_file=file_name)
+                new_job = workflow_job_from_file(config_file=file_name)
                 name = new_job.name
                 if name in workflow_jobs:
                     ConfigWarning.warn(
@@ -368,7 +380,7 @@ def workflows_from_dict(
                 workflow_jobs,
             )
             for job, args in workflow:
-                if job.ert_script:
+                if isinstance(job, ErtScriptWorkflow):
                     try:
                         job.ert_script.validate(args)
                     except ConfigValidationError as err:
@@ -406,11 +418,13 @@ def workflows_from_dict(
 def installed_forward_model_steps_from_dict(config_dict) -> dict[str, ForwardModelStep]:
     errors = []
     fm_steps = {}
-    for fm_step in config_dict.get(ConfigKeys.INSTALL_JOB, []):
-        name = fm_step[0]
-        fm_step_config_file = path.abspath(fm_step[1])
+    for name, (fm_step_config_file, config_contents) in config_dict.get(
+        ConfigKeys.INSTALL_JOB, []
+    ):
+        fm_step_config_file = path.abspath(fm_step_config_file)
         try:
-            new_fm_step = _forward_model_step_from_config_file(
+            new_fm_step = _forward_model_step_from_config_contents(
+                config_contents,
                 name=name,
                 config_file=fm_step_config_file,
             )
@@ -430,8 +444,9 @@ def installed_forward_model_steps_from_dict(config_dict) -> dict[str, ForwardMod
             if not path.isfile(file_name):
                 continue
             try:
-                new_fm_step = _forward_model_step_from_config_file(
-                    config_file=file_name
+                config_contents = read_file(file_name)
+                new_fm_step = _forward_model_step_from_config_contents(
+                    config_contents, config_file=file_name
                 )
             except ConfigValidationError as e:
                 errors.append(e)
@@ -459,7 +474,7 @@ def create_list_of_forward_model_steps_to_run(
     env_pr_fm_step: dict[str, dict[str, Any]],
 ) -> list[ForwardModelStep]:
     errors = []
-    fm_steps = []
+    fm_steps: list[ForwardModelStep] = []
 
     env_vars = {}
     for key, val in config_dict.get("SETENV", []):
@@ -494,23 +509,18 @@ def create_list_of_forward_model_steps_to_run(
                 case val:
                     fm_step.arglist.append(val)
 
-        should_add_step = True
+        try:
+            fm_step.check_required_keywords()
+        except ConfigValidationError as err:
+            errors.append(err)
+            continue
+        fm_steps.append(fm_step)
 
-        if fm_step.required_keywords:
-            for req in fm_step.required_keywords:
-                if req not in fm_step.private_args:
-                    errors.append(
-                        ConfigValidationError.with_context(
-                            f"Required keyword {req} not found for forward model step {fm_step_name}",
-                            fm_step_name,
-                        )
-                    )
-                    should_add_step = False
-
-        if should_add_step:
-            fm_steps.append(fm_step)
-
+    dm_validator = DesignMatrixValidator()
     for fm_step in fm_steps:
+        if fm_step.name == "DESIGN2PARAMS":
+            dm_validator.validate_design_matrix(fm_step.private_args)
+
         if fm_step.name in preinstalled_forward_model_steps:
             try:
                 substituted_json = create_forward_model_json(
@@ -539,6 +549,7 @@ def create_list_of_forward_model_steps_to_run(
                     f"Unexpected plugin forward model exception: {e!s}",
                     context=fm_step.name,
                 )
+    dm_validator.validate_design_matrix_merge()
 
     if errors:
         raise ConfigValidationError.from_collected(errors)
@@ -562,7 +573,7 @@ class ErtConfig:
     random_seed: int | None = None
     analysis_config: AnalysisConfig = field(default_factory=AnalysisConfig)
     queue_config: QueueConfig = field(default_factory=QueueConfig)
-    workflow_jobs: dict[str, WorkflowJob] = field(default_factory=dict)
+    workflow_jobs: dict[str, _WorkflowJob] = field(default_factory=dict)
     workflows: dict[str, Workflow] = field(default_factory=dict)
     hooked_workflows: defaultdict[HookRuntime, list[Workflow]] = field(
         default_factory=lambda: defaultdict(list)
@@ -792,30 +803,27 @@ class ErtConfig:
         except ConfigValidationError as err:
             errors.append(err)
 
-        obs_config_file = config_dict.get(ConfigKeys.OBS_CONFIG)
-        obs_config_content = []
+        obs_config_args = config_dict.get(ConfigKeys.OBS_CONFIG)
+        obs_configs = []
         try:
-            if obs_config_file:
-                if path.isfile(obs_config_file) and path.getsize(obs_config_file) == 0:
+            if obs_config_args:
+                obs_config_file, obs_config_file_contents = obs_config_args
+                obs_configs = parse_observations(
+                    obs_config_file_contents, obs_config_file
+                )
+                if not obs_configs:
                     raise ObservationConfigError.with_context(
                         f"Empty observations file: {obs_config_file}",
                         obs_config_file,
                     )
-                if not os.access(obs_config_file, os.R_OK):
-                    raise ObservationConfigError.with_context(
-                        "Do not have permission to open observation"
-                        f" config file {obs_config_file!r}",
-                        obs_config_file,
-                    )
-                obs_config_content = parse_observations(obs_config_file)
         except ObservationConfigError as err:
             errors.append(err)
 
         try:
-            if obs_config_content:
+            if obs_configs:
                 summary_obs = {
                     obs[1].key
-                    for obs in obs_config_content
+                    for obs in obs_configs
                     if isinstance(obs[1], HistoryValues | SummaryValues)
                 }
                 if summary_obs:
@@ -826,7 +834,7 @@ class ErtConfig:
             ensemble_config = EnsembleConfig.from_dict(config_dict=config_dict)
             if model_config:
                 observations = cls._create_observations(
-                    obs_config_content,
+                    obs_configs,
                     ensemble_config,
                     model_config.time_map,
                     model_config.history_source,
@@ -849,23 +857,33 @@ class ErtConfig:
             raise ConfigValidationError.from_collected(errors)
 
         if dm := analysis_config.design_matrix:
-            dm_params = [
+            dm_errors = []
+            dm_params = {
                 x.name
                 for x in dm.parameter_configuration.transform_function_definitions
-            ]
+            }
             for group_name, config in ensemble_config.parameter_configs.items():
-                overlapping = []
                 if not isinstance(config, GenKwConfig):
                     continue
-                for transform_definition in config.transform_function_definitions:
-                    if transform_definition.name in dm_params:
-                        overlapping.append(transform_definition.name)
-                if overlapping:
+                group_params = {x.name for x in config.transform_function_definitions}
+                if dm_params == group_params:
                     ConfigWarning.warn(
-                        f"Parameters {overlapping} from GEN_KW group '{group_name}' "
+                        f"Parameters {group_params} from GEN_KW group '{group_name}' "
                         "will be overridden by design matrix. This will cause "
                         "updates to be turned off for these parameters."
                     )
+                elif intersection := dm_params & group_params:
+                    dm_errors.append(
+                        ConfigValidationError(
+                            "Only full overlaps of design matrix and "
+                            "one genkw group are supported.\n"
+                            f"design matrix parameters: {dm_params}\n"
+                            f"parameters in genkw group <{group_name}>: {group_params}\n"
+                            f"overlap between them: {intersection}"
+                        )
+                    )
+            if dm_errors:
+                raise ConfigValidationError.from_collected(dm_errors)
 
         env_vars = {}
         for key, val in config_dict.get("SETENV", []):
@@ -892,7 +910,7 @@ class ErtConfig:
             ),
             model_config=model_config,
             user_config_file=config_file_path,
-            observation_config=obs_config_content,
+            observation_config=obs_configs,
             enkf_obs=observations,
         )
 
@@ -958,9 +976,7 @@ class ErtConfig:
         # of MAX_MESSAGE_LENGTH_APP_INSIGHTS = 32768
         SAFE_MESSAGE_LENGTH_LIMIT = 26214  # <= MAX_MESSAGE_LENGTH_APP_INSIGHTS * 0.8
         try:
-            config_dict_content = json.dumps(
-                content_dict, indent=2, cls=ContextBoolEncoder
-            )
+            config_dict_content = pprint.pformat(content_dict)
         except Exception as err:
             config_dict_content = str(content_dict)
             logger.warning(
@@ -981,7 +997,9 @@ class ErtConfig:
 
     @classmethod
     def _log_custom_forward_model_steps(cls, user_config: ConfigDict) -> None:
-        for fm_step, fm_step_filename in user_config.get(ConfigKeys.INSTALL_JOB, []):
+        for fm_step, (fm_step_filename, _) in user_config.get(
+            ConfigKeys.INSTALL_JOB, []
+        ):
             fm_configuration = EMPTY_LINES.sub(
                 "\n", (Path(fm_step_filename).read_text(encoding="utf-8").strip())
             )
@@ -1209,15 +1227,17 @@ def uppercase_subkeys_and_stringify_subvalues(
 
 
 @no_type_check
-def _forward_model_step_from_config_file(
-    config_file: str, name: str | None = None
+def _forward_model_step_from_config_contents(
+    config_contents: str, config_file: str, name: str | None = None
 ) -> "ForwardModelStep":
     if name is None:
         name = os.path.basename(config_file)
 
     schema = init_forward_model_schema()
 
-    content_dict = parse_config(file=config_file, schema=schema, pre_defines=[])
+    content_dict = parse_contents(
+        config_contents, file_name=config_file, schema=schema, pre_defines=[]
+    )
 
     specified_arg_types: list[tuple[int, str]] = content_dict.get(
         ForwardModelStepKeys.ARG_TYPE, []

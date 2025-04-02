@@ -1,4 +1,5 @@
 import json
+import shutil
 from datetime import datetime, timedelta
 from pathlib import Path
 from typing import Any
@@ -141,6 +142,54 @@ def test_api_summary_snapshot(config_file, snapshot, cached_example):
     )
 
 
+@pytest.mark.integration_test
+@pytest.mark.xdist_group("math_func/config_minimal.yml")
+def test_api_summary_snapshot_missing_batch(snapshot, cached_example):
+    config_path, config_file, _, _ = cached_example("math_func/config_minimal.yml")
+    config = EverestConfig.load_file(Path(config_path) / config_file)
+
+    with open_storage(config.storage_dir, mode="w") as storage:
+        # Save some summary data to each ensemble
+        experiment = next(storage.experiments)
+
+        response_config = experiment.response_configuration
+        response_config["summary"] = SummaryConfig(keys=["*"])
+
+        experiment._storage._write_transaction(
+            experiment._path / experiment._responses_file,
+            json.dumps(
+                {c.response_type: c.to_dict() for c in response_config.values()},
+                default=str,
+                indent=2,
+            ).encode("utf-8"),
+        )
+
+        smry_data = pl.DataFrame(
+            {
+                "response_key": ["FOPR", "FOPR", "WOPR", "WOPR", "FOPT", "FOPT"],
+                "time": pl.Series(
+                    [datetime(2000, 1, 1) + timedelta(days=i) for i in range(6)]
+                ).dt.cast_time_unit("ms"),
+                "values": pl.Series([0.2, 0.2, 1.0, 1.1, 3.3, 3.3], dtype=pl.Float32),
+            }
+        )
+        for ens in experiment.ensembles:
+            for real in range(ens.ensemble_size):
+                ens.save_response("summary", smry_data.clone(), real)
+
+        # Now delete one ensemble
+        ensemble_to_delete = experiment.get_ensemble_by_name("batch_1")
+        shutil.rmtree(ensemble_to_delete._path)
+
+    api = EverestDataAPI(config)
+    dicts = api.summary_values().to_dicts()
+    snapshot.assert_match(
+        orjson.dumps(dicts, option=orjson.OPT_INDENT_2).decode("utf-8").strip() + "\n",
+        "snapshot.json",
+    )
+
+
+@pytest.mark.integration_test
 @pytest.mark.parametrize(
     "config_file",
     [
@@ -183,3 +232,12 @@ def test_csv_export(config_file, cached_example, snapshot):
         _sort_df(batch_df.with_columns(pl.col(pl.Float64).round(4))).write_csv(),
         "batch_df.csv",
     )
+
+
+@pytest.mark.xdist_group("math_func/config_minimal.yml")
+def test_that_summary_returns_empty_df_when_missing_data(cached_example):
+    config_path, config_file, _, _ = cached_example("math_func/config_minimal.yml")
+
+    config = EverestConfig.load_file(Path(config_path) / config_file)
+    api = EverestDataAPI(config)
+    assert api.summary_values().is_empty()

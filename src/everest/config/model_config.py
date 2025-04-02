@@ -19,8 +19,8 @@ Typically, this is a list [0, 1, ..., n-1] of all realizations in the ensemble."
 
 NOTE: Without a data file no well or group specific summary data will be exported.""",
     )
-    realizations_weights: list[float] | None = Field(
-        default=None,
+    realizations_weights: list[float] = Field(
+        default_factory=list,
         description="""List of weights, one per realization.
 
 If specified, it must be a list of numeric values, one per realization.""",
@@ -43,8 +43,10 @@ If specified, it must be a list of numeric values, one per realization.""",
     def validate_realizations_weights_same_cardinaltiy(self) -> Self:
         weights = self.realizations_weights
         if not weights:
+            self.realizations_weights = [1.0 / len(self.realizations)] * len(
+                self.realizations
+            )
             return self
-
         if len(weights) != len(self.realizations):
             raise ValueError(
                 "Specified realizations_weights must have one"

@@ -21,7 +21,7 @@ def load_args(filename: str, column_names: list[str] | None = None) -> pd.DataFr
     rows = 0
     columns = 0
     with open(filename, encoding="utf-8") as fileH:
-        for line in fileH.readlines():
+        for line in fileH:
             rows += 1
             columns = max(columns, len(line.split()))
 
@@ -36,7 +36,7 @@ def load_args(filename: str, column_names: list[str] | None = None) -> pd.DataFr
 
     row = 0
     with open(filename, encoding="utf-8") as fileH:
-        for line in fileH.readlines():
+        for line in fileH:
             tmp = line.split()
             for column in range(columns):
                 data[row][column] = float(tmp[column])

@@ -141,12 +141,21 @@ def cached_example(pytestconfig):
     cache = pytestconfig.cache
 
     def run_config(test_data_case: str):
+        test_data_name = test_data_case.replace("/", ".")
         if cache.get(f"cached_example:{test_data_case}", None) is None:
-            my_tmpdir = Path(tempfile.mkdtemp())
+            my_tmpdir = cache.mkdir("cached_example_case" + test_data_name)
             config_path = (
                 Path(__file__) / f"../../../test-data/everest/{test_data_case}"
             ).resolve()
             config_file = config_path.name
+
+            # This assumes no parallel runs for the same example,
+            # which must be ensured by using xdist loadgroups
+            if (my_tmpdir / "everest").exists():
+                # Last run managed to create the folder
+                # but failed to populate the cache due to
+                # some failure in running the experiment
+                shutil.rmtree(my_tmpdir / "everest")
 
             shutil.copytree(config_path.parent, my_tmpdir / "everest")
             config = EverestConfig.load_file(my_tmpdir / "everest" / config_file)

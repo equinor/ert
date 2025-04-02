@@ -13,21 +13,24 @@ from enum import Enum
 from pathlib import Path
 from typing import Any, Literal
 
-import polars as pl
 import requests
 from pydantic import ValidationError
+from websockets import ConnectionClosedError, ConnectionClosedOK
 from websockets.sync.client import connect
 
 from ert.ensemble_evaluator import EndEvent
-from ert.run_models.event import status_event_from_json
+from ert.run_models.event import (
+    EverestBatchResultEvent,
+    EverestCacheHitEvent,
+    status_event_from_json,
+)
 from ert.scheduler import create_driver
 from ert.scheduler.driver import Driver, FailedSubmit
 from ert.scheduler.event import StartedEvent
 from everest.config import EverestConfig, ServerConfig
-from everest.everest_storage import EverestStorage
 from everest.strings import (
     EVEREST_SERVER_CONFIG,
-    OPT_PROGRESS_ENDPOINT,
+    OPT_PROGRESS_ID,
     SIM_PROGRESS_ID,
     START_EXPERIMENT_ENDPOINT,
     STOP_ENDPOINT,
@@ -48,9 +51,7 @@ PROXY = {"http": None, "https": None}
 logger = logging.getLogger(__name__)
 
 
-async def start_server(
-    config: EverestConfig, logging_level: int = logging.INFO
-) -> Driver:
+async def start_server(config: EverestConfig, logging_level: int) -> Driver:
     """
     Start an Everest server running the optimization defined in the config
     """
@@ -68,11 +69,15 @@ async def start_server(
         await driver.submit(0, "everserver", *args, name=Path(config.config_file).stem)
     except FailedSubmit as err:
         raise ValueError(f"Failed to submit Everserver with error: {err}") from err
+
     status = await driver.event_queue.get()
     if not isinstance(status, StartedEvent):
         poll_task.cancel()
         raise ValueError(f"Everserver not started as expected, got status: {status}")
     poll_task.cancel()
+    logger.debug(
+        f"Everserver started. Items left in queue: {driver.event_queue.qsize()}"
+    )
     return driver
 
 
@@ -93,10 +98,11 @@ def stop_server(
                 proxies=PROXY,  # type: ignore
             )
             response.raise_for_status()
-            return True
         except:
-            logging.debug(traceback.format_exc())
+            logger.debug(traceback.format_exc())
             time.sleep(retry)
+        else:
+            return True
     return False
 
 
@@ -117,10 +123,11 @@ def start_experiment(
                 json=config.to_dict(),
             )
             response.raise_for_status()
-            return
         except:
-            logging.debug(traceback.format_exc())
+            logger.debug(traceback.format_exc())
             time.sleep(retry)
+        else:
+            return
     raise RuntimeError("Failed to start experiment")
 
 
@@ -144,73 +151,6 @@ def wait_for_server(output_dir: str, timeout: int | float) -> None:
         else:
             time.sleep(sleep_time_increment * (2**retry_count))
     raise RuntimeError("Failed to get reply from server within configured timeout.")
-
-
-def get_opt_status(output_folder: str) -> dict[str, Any]:
-    """Return a dictionary with optimization information retrieved from storage"""
-    if not Path(output_folder).exists() or not os.listdir(output_folder):
-        return {}
-
-    storage = EverestStorage(Path(output_folder))
-    try:
-        storage.read_from_output_dir()
-    except FileNotFoundError:
-        # Optimization output dir exists and not empty, but still missing
-        # actual stored results
-        return {}
-    assert storage.data.objective_functions is not None
-    assert storage.data.controls is not None
-    objective_names = storage.data.objective_functions["objective_name"].to_list()
-    control_names = storage.data.controls["control_name"].to_list()
-
-    objectives = [
-        b.batch_objectives.select(objective_names)
-        for b in storage.data.batches
-        if b.batch_objectives is not None
-    ]
-
-    expected_objectives = (
-        {} if not objectives else pl.concat(objectives).to_dict(as_series=False)
-    )
-
-    expected_total_objective = [
-        b.batch_objectives["total_objective_value"].item()
-        for b in storage.data.batches
-        if b.batch_objectives is not None
-    ]
-
-    improvement_batches = [b.batch_id for b in storage.data.batches if b.is_improvement]
-
-    cli_monitor_data = {
-        "batches": [
-            b.batch_id
-            for b in storage.data.batches
-            if b.realization_controls is not None and b.batch_objectives is not None
-        ],
-        "controls": [
-            b.realization_controls.select(control_names).to_dicts()[0]
-            for b in storage.data.batches
-            if b.realization_controls is not None
-        ],
-        "objective_value": expected_total_objective,
-        "expected_objectives": expected_objectives,
-    }
-    controls = [
-        b.realization_controls.select(control_names)
-        for b in storage.data.batches
-        if b.realization_controls is not None
-    ]
-    control_history = (
-        {} if not controls else pl.concat(controls).to_dict(as_series=False)
-    )
-
-    return {
-        "objective_history": expected_total_objective,
-        "control_history": control_history,
-        "objectives_history": expected_objectives,
-        "accepted_control_indices": improvement_batches,
-        "cli_monitor_data": cli_monitor_data,
-    }
 
 
 def wait_for_server_to_stop(
@@ -237,7 +177,9 @@ def wait_for_server_to_stop(
 
 def server_is_running(url: str, cert: str, auth: tuple[str, str]) -> bool:
     try:
-        logging.info(f"Checking server status at {url} ")
+        logger.debug(f"Checking server status at {url} ")
+        if "None:None" in url:
+            return False
         response = requests.get(
             url,
             verify=cert,
@@ -246,10 +188,26 @@ def server_is_running(url: str, cert: str, auth: tuple[str, str]) -> bool:
             proxies=PROXY,  # type: ignore
         )
         response.raise_for_status()
-    except:
-        logging.debug(traceback.format_exc())
+    except Exception:
+        logger.debug(traceback.format_exc())
         return False
     return True
+
+
+def get_opt_status_from_batch_result_event(
+    event: EverestBatchResultEvent,
+) -> dict[str, Any]:
+    if not event.results:
+        return {}
+
+    assert event.batch is not None
+
+    return {
+        "batch": event.batch,
+        "controls": event.results["controls"],
+        "objective_value": event.results["total_objective_value"],
+        "expected_objectives": event.results["objectives"],
+    }
 
 
 def start_monitor(
@@ -263,10 +221,6 @@ def start_monitor(
     Monitoring stops when the server stops answering.
     """
     url, cert, auth = server_context
-    opt_endpoint = "/".join([url, OPT_PROGRESS_ENDPOINT])
-    opt_status: dict[str, Any] = {}
-    stop = False
-
     ssl_context = ssl.create_default_context()
     ssl_context.load_verify_locations(cafile=cert)
     username, password = auth
@@ -279,26 +233,39 @@ def start_monitor(
             open_timeout=30,
             additional_headers={"Authorization": f"Basic {credentials}"},
         ) as websocket:
-            while not stop:
+            while True:
                 try:
                     message = websocket.recv(timeout=1.0)
-                except TimeoutError:
-                    message = None
-                if message:
-                    try:
-                        event = status_event_from_json(message)
-                    except ValidationError as e:
-                        logger.error("Error when processing event %s", exc_info=e)
+                    event = status_event_from_json(message)
                     if isinstance(event, EndEvent):
                         print(event.msg)
-                    callback({SIM_PROGRESS_ID: event})
-                # Check the optimization status
-                new_opt_status = _query_server(cert, auth, opt_endpoint)
-                if new_opt_status != opt_status:
-                    opt_status = new_opt_status
+                    elif isinstance(event, EverestCacheHitEvent):
+                        callback({OPT_PROGRESS_ID: {"cache_hits": event}})
+                    elif isinstance(event, EverestBatchResultEvent):
+                        if event.result_type == "FunctionResult":
+                            callback(
+                                {
+                                    OPT_PROGRESS_ID: get_opt_status_from_batch_result_event(
+                                        event
+                                    )
+                                }
+                            )
+                    else:
+                        callback({SIM_PROGRESS_ID: event})
+                except TimeoutError:
+                    pass
+                except ConnectionClosedOK:
+                    logger.debug("Connection closed")
+                    break
+                except ConnectionClosedError:
+                    logger.debug("Connection closed")
+                    break
+                except ValidationError as e:
+                    logger.error("Error when processing event %s", exc_info=e)
+
                 time.sleep(polling_interval)
     except:
-        logging.debug(traceback.format_exc())
+        logger.debug(traceback.format_exc())
 
 
 _EVERSERVER_JOB_PATH = str(
@@ -321,13 +288,6 @@ _QUEUE_SYSTEMS: Mapping[Literal["LSF", "SLURM", "TORQUE"], dict[str, Any]] = {
     },
     "TORQUE": {"options": ["cluster_label", "CLUSTER_LABEL"], "name": "QUEUE"},
 }
-
-
-def _query_server(cert: str, auth: tuple[str, str], endpoint: str) -> dict[str, Any]:
-    """Retrieve data from an endpoint as a dictionary"""
-    response = requests.get(endpoint, verify=cert, auth=auth, proxies=PROXY)  # type: ignore
-    response.raise_for_status()
-    return response.json()
 
 
 class ServerStatus(Enum):

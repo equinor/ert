@@ -63,7 +63,7 @@ deprecated_keywords_list = [
             "dimension set using ENKF_NCOMP keyword. "
             "This can be safely removed.",
         ),
-        check=lambda line: str(line[1]) in {"ENKF_FORCE_NCOMP"},
+        check=lambda line: str(line[1]) == "ENKF_FORCE_NCOMP",
     ),
     DeprecationInfo(
         keyword="RUNPATH",
@@ -194,5 +194,12 @@ deprecated_keywords_list = [
         "has any effect. It has been used in the as a lightweight alternative of "
         "FORWARD_MODEL. Please use FORWARD_MODEL keyword instead:\n"
         f"FORWARD_MODEL {' '.join(args) if args else ''}",
+    ),
+    DeprecationInfo(
+        keyword="GEN_KW",
+        message=(
+            "GEN_KW with INIT_FILES is deprecated, and will be removed in the next version. "
+        ),
+        check=lambda line: any("INIT_FILES" in str(v) for v in line),
     ),
 ]

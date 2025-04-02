@@ -64,16 +64,16 @@ objective_functions:
 install_jobs:
   -
     name: well_order
-    source: jobs/WELL_ORDER_MOCK
+    executable: jobs/well_order_mock.py
   -
     name: npv_function
-    source: jobs/NPV_FUNCTION_MOCK
+    executable: jobs/npv_function_mock.py
   -
     name: res_mock
-    source: jobs/RES_MOCK
+    executable: jobs/res_mock.py
 
 optimization:
-  algorithm: conmin_mfd
+  algorithm: optpp_q_newton
   perturbation_num: 20
   max_iterations: 10
   max_function_evaluations: 1000

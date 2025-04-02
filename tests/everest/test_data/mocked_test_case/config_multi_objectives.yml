@@ -60,16 +60,16 @@ optimization:
 install_jobs:
   -
     name: well_order
-    source: jobs/WELL_ORDER_MOCK
+    executable: jobs/well_order_mock.py
   -
     name: res_mock
-    source: jobs/RES_MOCK
+    executable: jobs/res_mock.py
   -
     name: npv_function
-    source: jobs/NPV_FUNCTION_MOCK
+    executable: jobs/npv_function_mock.py
   -
     name: fpr_diff
-    source: jobs/FPR_DIFF_MOCK
+    executable: jobs/fpr_diff_mock.py
 
 
 model:

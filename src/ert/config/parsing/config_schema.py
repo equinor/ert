@@ -3,6 +3,8 @@ from .config_keywords import ConfigKeys
 from .config_schema_deprecations import deprecated_keywords_list
 from .config_schema_item import (
     SchemaItem,
+    Varies,
+    existing_path_inline_keyword,
     existing_path_keyword,
     float_keyword,
     int_keyword,
@@ -33,7 +35,7 @@ def run_template_keyword() -> SchemaItem:
     return SchemaItem(
         kw=ConfigKeys.RUN_TEMPLATE,
         argc_min=2,
-        argc_max=None,
+        argc_max=2,
         type_map=[SchemaItemType.EXISTING_PATH],
         multi_occurrence=True,
     )
@@ -130,7 +132,7 @@ def install_job_keyword() -> SchemaItem:
         argc_min=2,
         argc_max=2,
         multi_occurrence=True,
-        type_map=[None, SchemaItemType.EXISTING_PATH],
+        type_map=[None, SchemaItemType.EXISTING_PATH_INLINE],
     )
 
 
@@ -185,11 +187,12 @@ def gen_kw_keyword() -> SchemaItem:
         kw=ConfigKeys.GEN_KW,
         argc_min=2,
         argc_max=6,
+        options_after=Varies(4),
         type_map=[
             None,
-            SchemaItemType.EXISTING_PATH,
+            SchemaItemType.EXISTING_PATH_INLINE,
             SchemaItemType.STRING,
-            SchemaItemType.EXISTING_PATH,
+            SchemaItemType.EXISTING_PATH_INLINE,
         ],
         multi_occurrence=True,
     )
@@ -210,8 +213,9 @@ def surface_keyword() -> SchemaItem:
     return SchemaItem(
         kw=ConfigKeys.SURFACE,
         required_set=False,
-        argc_min=4,
-        argc_max=5,
+        argc_min=2,
+        argc_max=2,
+        options_after=1,
         multi_occurrence=True,
     )
 
@@ -225,6 +229,7 @@ def field_keyword() -> SchemaItem:
         kw=ConfigKeys.FIELD,
         argc_min=3,
         argc_max=None,
+        options_after=3,
         required_children=[ConfigKeys.GRID],
         multi_occurrence=True,
     )
@@ -234,6 +239,7 @@ def gen_data_keyword() -> SchemaItem:
     return SchemaItem(
         kw=ConfigKeys.GEN_DATA,
         argc_max=None,
+        options_after=1,
         multi_occurrence=True,
     )
 
@@ -257,13 +263,14 @@ def install_job_directory_keyword() -> SchemaItem:
 def design_matrix_keyword() -> SchemaItem:
     return SchemaItem(
         kw=ConfigKeys.DESIGN_MATRIX,
-        argc_min=3,
+        argc_min=1,
         argc_max=3,
         type_map=[
             SchemaItemType.EXISTING_PATH,
             SchemaItemType.STRING,
             SchemaItemType.STRING,
         ],
+        options_after=1,
         multi_occurrence=True,
     )
 
@@ -343,8 +350,8 @@ def init_user_config_schema() -> ConfigSchemaDict:
         forward_model_keyword(),
         data_kw_keyword(),
         define_keyword(),
-        existing_path_keyword(ConfigKeys.OBS_CONFIG),
-        existing_path_keyword(ConfigKeys.TIME_MAP),
+        existing_path_inline_keyword(ConfigKeys.OBS_CONFIG),
+        existing_path_inline_keyword(ConfigKeys.TIME_MAP),
         single_arg_keyword(ConfigKeys.GEN_KW_EXPORT_NAME),
         history_source_keyword(),
         path_keyword(ConfigKeys.RUNPATH_FILE),

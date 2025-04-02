@@ -329,7 +329,7 @@ class RunReservoirSimulator:
         errors = None
         bugs = None
         with open(report_file, encoding="utf-8", errors="ignore") as filehandle:
-            for line in filehandle.readlines():
+            for line in filehandle:
                 error_match = re.match(error_regexp, line)
                 if error_match:
                     errors = int(error_match.group(1))

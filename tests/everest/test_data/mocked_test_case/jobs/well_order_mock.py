@@ -10,7 +10,7 @@ def create_file(order, template_file, target_file):
         open(target_file, "w", encoding="utf-8") as writeH,
         open(template_file, encoding="utf-8") as readH,
     ):
-        for line in readH.readlines():
+        for line in readH:
             match_obj = re.search(r"(__[A-Z]+_[0-9]__)", line)
             if match_obj:
                 new_well = order.popitem(False)[0]
@@ -25,7 +25,7 @@ def well_value(w):
 def load_well_order(well_order_file):
     well_list = []
     with open(well_order_file, encoding="utf-8") as f:
-        for line in f.readlines():
+        for line in f:
             well, rest = line.split()
             well_list.append((well, float(rest)))
 

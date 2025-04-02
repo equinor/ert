@@ -8,7 +8,7 @@ from collections.abc import Callable
 from dataclasses import dataclass
 from hashlib import sha256
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, Self, overload
+from typing import TYPE_CHECKING, Any, Self, cast, overload
 
 import numpy as np
 import pandas as pd
@@ -19,7 +19,7 @@ from typing_extensions import TypedDict
 from ert.substitutions import substitute_runpath_name
 
 from ._str_to_bool import str_to_bool
-from .parameter_config import ParameterConfig, parse_config
+from .parameter_config import ParameterConfig
 from .parsing import ConfigValidationError, ConfigWarning, ErrorInfo
 
 if TYPE_CHECKING:
@@ -86,25 +86,26 @@ class GenKwConfig(ParameterConfig):
         return len(self.transform_functions)
 
     @classmethod
-    def from_config_list(cls, gen_kw: list[str]) -> Self:
-        gen_kw_key = gen_kw[0]
+    def from_config_list(cls, gen_kw: list[str | dict[str, str]]) -> Self:
+        gen_kw_key = cast(str, gen_kw[0])
 
-        positional_args, options = parse_config(gen_kw, 4)
+        options = cast(dict[str, str], gen_kw[-1])
+        positional_args = cast(list[str], gen_kw[:-1])
         forward_init = str_to_bool(options.get("FORWARD_INIT", "FALSE"))
         init_file = _get_abs_path(options.get("INIT_FILES"))
         update_parameter = str_to_bool(options.get("UPDATE", "TRUE"))
         errors = []
 
         if len(positional_args) == 2:
-            parameter_file = _get_abs_path(positional_args[1])
-            parameter_file_context = positional_args[1]
+            parameter_file_contents = positional_args[1][1]
+            parameter_file_context = positional_args[1][0]
             template_file = None
             output_file = None
         elif len(positional_args) == 4:
             output_file = positional_args[2]
-            parameter_file = _get_abs_path(positional_args[3])
-            parameter_file_context = positional_args[3]
-            template_file = _get_abs_path(positional_args[1])
+            parameter_file_contents = positional_args[3][1]
+            parameter_file_context = positional_args[3][0]
+            template_file = _get_abs_path(positional_args[1][0])
             if not os.path.isfile(template_file):
                 errors.append(
                     ConfigValidationError.with_context(
@@ -112,11 +113,7 @@ class GenKwConfig(ParameterConfig):
                     )
                 )
             elif Path(template_file).stat().st_size == 0:
-                token = (
-                    parameter_file_context.token
-                    if hasattr(parameter_file_context, "token")
-                    else parameter_file_context
-                )
+                token = getattr(parameter_file_context, "token", parameter_file_context)
                 ConfigWarning.deprecation_warn(
                     f"The template file for GEN_KW ({gen_kw_key}) is empty. If templating is not needed, you "
                     f"can use GEN_KW with just the distribution file instead: GEN_KW {gen_kw_key} {token}",
@@ -126,19 +123,6 @@ class GenKwConfig(ParameterConfig):
         else:
             raise ConfigValidationError(
                 f"Unexpected positional arguments: {positional_args}"
-            )
-        if not os.path.isfile(parameter_file):
-            errors.append(
-                ConfigValidationError.with_context(
-                    f"No such parameter file: {parameter_file}", parameter_file_context
-                )
-            )
-        elif Path(parameter_file).stat().st_size == 0:
-            errors.append(
-                ConfigValidationError.with_context(
-                    f"No parameters specified in {parameter_file}",
-                    parameter_file_context,
-                )
             )
 
         if forward_init:
@@ -161,26 +145,32 @@ class GenKwConfig(ParameterConfig):
             raise ConfigValidationError.from_collected(errors)
 
         transform_function_definitions: list[TransformFunctionDefinition] = []
-        with open(parameter_file, encoding="utf-8") as file:
-            for line_number, item in enumerate(file):
-                item = item.split("--")[0]  # remove comments
-                if item.strip():  # only lines with content
-                    items = item.split()
-                    if len(items) < 2:
-                        errors.append(
-                            ConfigValidationError.with_context(
-                                f"Too few values on line {line_number} in parameter file {parameter_file}",
-                                gen_kw,
-                            )
+        for line_number, item in enumerate(parameter_file_contents.splitlines()):
+            item = item.split("--")[0]  # remove comments
+            if item.strip():  # only lines with content
+                items = item.split()
+                if len(items) < 2:
+                    errors.append(
+                        ConfigValidationError.with_context(
+                            f"Too few values on line {line_number} in parameter file {parameter_file_context}",
+                            gen_kw,
                         )
-                    else:
-                        transform_function_definitions.append(
-                            TransformFunctionDefinition(
-                                name=items[0],
-                                param_name=items[1],
-                                values=items[2:],
-                            )
+                    )
+                else:
+                    transform_function_definitions.append(
+                        TransformFunctionDefinition(
+                            name=items[0],
+                            param_name=items[1],
+                            values=items[2:],
                         )
+                    )
+        if not transform_function_definitions:
+            errors.append(
+                ConfigValidationError.with_context(
+                    f"No parameters specified in {parameter_file_context}",
+                    parameter_file_context,
+                )
+            )
 
         if errors:
             raise ConfigValidationError.from_collected(errors)
@@ -190,7 +180,7 @@ class GenKwConfig(ParameterConfig):
                 "GEN_KW PRED used to hold a special meaning and be "
                 "excluded from being updated.\n If the intention was "
                 "to exclude this from updates, set UPDATE:FALSE.\n",
-                gen_kw[0],
+                gen_kw_key,
             )
         return cls(
             name=gen_kw_key,
@@ -363,7 +353,7 @@ class GenKwConfig(ParameterConfig):
         )
 
         log10_data = {
-            tf.name: math.log(data[tf.name], 10)
+            tf.name: math.log10(data[tf.name])
             for tf in self.transform_functions
             if tf.use_log
         }
@@ -372,8 +362,7 @@ class GenKwConfig(ParameterConfig):
             target_file = substitute_runpath_name(
                 self.output_file, real_nr, ensemble.iteration
             )
-            if target_file.startswith("/"):
-                target_file = target_file[1:]
+            target_file = target_file.removeprefix("/")
             (run_path / target_file).parent.mkdir(exist_ok=True, parents=True)
             template_file_path = (
                 ensemble.experiment.mount_point / Path(self.template_file).name
@@ -392,7 +381,6 @@ class GenKwConfig(ParameterConfig):
     def save_parameters(
         self,
         ensemble: Ensemble,
-        group: str,
         realization: int,
         data: npt.NDArray[np.float64],
     ) -> None:
@@ -406,13 +394,12 @@ class GenKwConfig(ParameterConfig):
                 "names": [e.name for e in self.transform_functions],
             }
         )
-        ensemble.save_parameters(group, realization, ds)
+        ensemble.save_parameters(self.name, realization, ds)
 
-    @staticmethod
     def load_parameters(
-        ensemble: Ensemble, group: str, realizations: npt.NDArray[np.int_]
+        self, ensemble: Ensemble, realizations: npt.NDArray[np.int_]
     ) -> npt.NDArray[np.float64]:
-        return ensemble.load_parameters(group, realizations)["values"].values.T
+        return ensemble.load_parameters(self.name, realizations)["values"].values.T
 
     def shouldUseLogScale(self, keyword: str) -> bool:
         for tf in self.transform_functions:

@@ -2,7 +2,7 @@ import dataclasses
 import os
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Self
+from typing import Self, cast
 
 import numpy as np
 import polars as pl
@@ -10,7 +10,6 @@ import polars as pl
 from ert.substitutions import substitute_runpath_name
 from ert.validation import rangestring_to_list
 
-from ._option_dict import option_dict
 from .parsing import ConfigDict, ConfigValidationError, ErrorInfo
 from .response_config import InvalidResponseFile, ResponseConfig
 from .responses_index import responses_index
@@ -45,7 +44,7 @@ class GenDataConfig(ResponseConfig):
         return expected_files
 
     @classmethod
-    def from_config_dict(cls, config_dict: ConfigDict) -> Self | None:
+    def from_config_dict(cls, config_dict: ConfigDict) -> Self:
         gen_data_list = config_dict.get("GEN_DATA", [])  # type: ignore
 
         keys = []
@@ -53,14 +52,14 @@ class GenDataConfig(ResponseConfig):
         report_steps = []
 
         for gen_data in gen_data_list:
-            options = option_dict(gen_data, 1)
+            options = cast(dict[str, str], gen_data[1])
             name = gen_data[0]
             res_file = options.get("RESULT_FILE")
             report_steps_value = options.get("REPORT_STEPS", "")
 
             if res_file is None:
                 raise ConfigValidationError.with_context(
-                    f"Missing or unsupported RESULT_FILE for GEN_DATA key {name!r}",
+                    f"Missing RESULT_FILE for GEN_DATA key {name!r}",
                     name,
                 )
             try:
@@ -76,13 +75,10 @@ class GenDataConfig(ResponseConfig):
 
             report_steps_ = sorted(report_steps_) if report_steps_ else None
             if os.path.isabs(res_file):
-                result_file_context = next(
-                    x for x in gen_data if x.startswith("RESULT_FILE:")
-                )
                 raise ConfigValidationError.with_context(
                     f"The RESULT_FILE:{res_file} setting for {name} is "
                     f"invalid - must be a relative path",
-                    result_file_context,
+                    name,
                 )
 
             if report_steps_ is None and "%d" in res_file:
@@ -95,14 +91,11 @@ class GenDataConfig(ResponseConfig):
                 )
 
             if report_steps_ is not None and "%d" not in res_file:
-                result_file_context = next(
-                    x for x in gen_data if x.startswith("RESULT_FILE:")
-                )
                 raise ConfigValidationError.from_info(
                     ErrorInfo(
                         message=f"When configuring REPORT_STEPS:{report_steps_} "
                         "RESULT_FILES must be configured using %d"
-                    ).set_context_keyword(result_file_context)
+                    ).set_context_keyword(name)
                 )
 
             keys.append(name)

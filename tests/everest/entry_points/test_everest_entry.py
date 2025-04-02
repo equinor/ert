@@ -4,7 +4,6 @@ from functools import partial
 from unittest.mock import MagicMock, patch
 
 import pytest
-import yaml
 
 import everest
 from everest.bin.everest_script import everest_entry
@@ -22,8 +21,9 @@ CONFIG_FILE_MINIMAL = "config_minimal.yml"
 
 
 def run_detached_monitor_mock(status=ServerStatus.completed, error=None, **kwargs):
-    optimization_output = kwargs.get("optimization_output_dir")
-    path = os.path.join(optimization_output, "../detached_node_output/.session/status")
+    path = os.path.join(
+        os.getcwd(), "everest_output/detached_node_output/.session/status"
+    )
     update_everserver_status(path, status, message=error)
 
 
@@ -46,7 +46,7 @@ def test_everest_entry_debug(
 ):
     """Test running everest with --debug"""
     with caplog.at_level(logging.DEBUG):
-        everest_entry([CONFIG_FILE_MINIMAL, "--debug"])
+        everest_entry([CONFIG_FILE_MINIMAL, "--debug", "--skip"])
     logstream = "\n".join(caplog.messages)
     start_server_mock.assert_called_once()
     wait_for_server_mock.assert_called_once()
@@ -78,7 +78,7 @@ def test_everest_entry(
     copy_math_func_test_data_to_tmp,
 ):
     """Test running everest in detached mode"""
-    everest_entry([CONFIG_FILE_MINIMAL])
+    everest_entry([CONFIG_FILE_MINIMAL, "--skip"])
     start_server_mock.assert_called_once()
     wait_for_server_mock.assert_called_once()
     start_monitor_mock.assert_called_once()
@@ -107,7 +107,7 @@ def test_everest_entry_detached_already_run(
     """Test everest detached, when an optimization has already run"""
     # optimization already run, notify the user
     with capture_streams() as (out, _):
-        everest_entry([CONFIG_FILE_MINIMAL])
+        everest_entry([CONFIG_FILE_MINIMAL, "--skip-prompt"])
     assert "--new-run" in out.getvalue()
     start_server_mock.assert_not_called()
     start_monitor_mock.assert_not_called()
@@ -121,7 +121,7 @@ def test_everest_entry_detached_already_run(
     everserver_status_mock.assert_not_called()
 
     # forcefully re-run the case
-    everest_entry([CONFIG_FILE_MINIMAL, "--new-run"])
+    everest_entry([CONFIG_FILE_MINIMAL, "--new-run", "--skip-prompt"])
     start_server_mock.assert_called_once()
     start_monitor_mock.assert_called_once()
     everserver_status_mock.assert_called()
@@ -175,7 +175,7 @@ def test_everest_entry_detached_running(
     """Test everest detached, optimization is running"""
     # can't start a new run if one is already running
     with capture_streams() as (out, _):
-        everest_entry([CONFIG_FILE_MINIMAL, "--new-run"])
+        everest_entry([CONFIG_FILE_MINIMAL, "--new-run", "--skip-prompt"])
     assert "everest kill" in out.getvalue()
     assert "everest monitor" in out.getvalue()
     start_server_mock.assert_not_called()
@@ -198,7 +198,7 @@ def test_everest_entry_detached_running(
     # if already running, nothing happens
     assert "everest kill" in out.getvalue()
     assert "everest monitor" in out.getvalue()
-    everest_entry([CONFIG_FILE_MINIMAL])
+    everest_entry([CONFIG_FILE_MINIMAL, "--skip-prompt"])
     start_server_mock.assert_not_called()
     server_is_running_mock_everest_script.assert_called_once()
     everserver_status_mock.assert_called()
@@ -252,27 +252,6 @@ def mock_ssl(monkeypatch):
     monkeypatch.setattr(everest.detached, "ssl", MagicMock())
 
 
-@pytest.mark.parametrize("show_all_jobs", [True, False])
-@patch("everest.bin.monitor_script.server_is_running", return_value=True)
-def test_monitor_entry_show_all_jobs(
-    _,
-    monkeypatch,
-    tmp_path,
-    min_config,
-    show_all_jobs,
-):
-    """Test running everest with and without --show-all-jobs"""
-    monkeypatch.chdir(tmp_path)
-    with open("config.yml", "w", encoding="utf-8") as fout:
-        yaml.dump(min_config, fout)
-    detatched_mock = MagicMock()
-    monkeypatch.setattr(everest.bin.utils, "start_monitor", MagicMock())
-    monkeypatch.setattr(everest.bin.utils, "_DetachedMonitor", detatched_mock)
-    args = ["config.yml"] if not show_all_jobs else ["config.yml", "--show-all-jobs"]
-    monitor_entry(args)
-    detatched_mock.assert_called_once_with(show_all_jobs)
-
-
 @patch(
     "everest.bin.everest_script.run_detached_monitor",
     side_effect=partial(
@@ -292,7 +271,7 @@ def test_exception_raised_when_server_run_fails(
     copy_math_func_test_data_to_tmp,
 ):
     with pytest.raises(SystemExit, match="Reality was ripped to shreds!"):
-        everest_entry([CONFIG_FILE_MINIMAL])
+        everest_entry([CONFIG_FILE_MINIMAL, "--skip-prompt"])
 
 
 @patch("everest.bin.monitor_script.server_is_running", return_value=True)
@@ -325,7 +304,7 @@ def test_complete_status_for_normal_run(
     start_monitor_mock,
     copy_math_func_test_data_to_tmp,
 ):
-    everest_entry([CONFIG_FILE_MINIMAL])
+    everest_entry([CONFIG_FILE_MINIMAL, "--skip-prompt"])
     config = EverestConfig.load_file(CONFIG_FILE_MINIMAL)
     status_path = ServerConfig.get_everserver_status_path(config.output_dir)
     status = everserver_status(status_path)
@@ -353,27 +332,3 @@ def test_complete_status_for_normal_run_monitor(
 
     assert expected_status == status["status"]
     assert expected_error == status["message"]
-
-
-@patch("everest.bin.everest_script.server_is_running", return_value=False)
-@patch(
-    "everest.bin.everest_script.everserver_status",
-    return_value={"status": ServerStatus.never_run, "message": None},
-)
-@patch(
-    "everest.simulator.everest_to_ert._everest_to_ert_config_dict",
-    return_value={"SUMMARY": "*"},
-)
-def test_validate_ert_config_before_starting_everest_server(
-    server_is_running_mock,
-    server_status_mock,
-    _ert_config_mock,
-    copy_math_func_test_data_to_tmp,
-):
-    config_file = "config_minimal.yml"
-    everest_config = EverestConfig.with_defaults()
-    everest_config.model.realizations = [0]
-    everest_config.dump(config_file)
-
-    with pytest.raises(SystemExit, match="Config validation error:"):
-        everest_entry([config_file])

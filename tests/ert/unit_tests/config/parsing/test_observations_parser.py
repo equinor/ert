@@ -12,9 +12,10 @@ from ert.config.parsing.observations_parser import (
     ObservationType,
     Segment,
     SummaryValues,
-    _parse_content,
+    _parse_content_list,
     _validate_conf_content,
     observations_parser,
+    parse_content,
 )
 
 observation_contents = stlark.from_lark(observations_parser)
@@ -24,7 +25,9 @@ observation_contents = stlark.from_lark(observations_parser)
 @given(observation_contents)
 def test_parsing_contents_succeeds_or_gives_config_error(contents):
     with suppress(ObservationConfigError):
-        _ = _validate_conf_content(".", _parse_content(contents, "observations.txt"))
+        _ = _validate_conf_content(
+            ".", _parse_content_list(contents, "observations.txt")
+        )
 
 
 @pytest.fixture
@@ -70,7 +73,7 @@ def file_contents():
 
 
 def test_parse(file_contents):
-    assert _parse_content(
+    assert _parse_content_list(
         file_contents,
         "",
     ) == [
@@ -121,11 +124,11 @@ def test_that_unexpected_character_gives_observation_config_error():
         ObservationConfigError,
         match=r"Line 1.*include a;",
     ):
-        _parse_content(content="include a;", filename="")
+        _parse_content_list(content="include a;", filename="")
 
 
 def test_that_double_comments_are_handled():
-    assert _parse_content(
+    assert _parse_content_list(
         """
             SUMMARY_OBSERVATION -- foo -- bar -- baz
                         FOPR;
@@ -141,7 +144,7 @@ def test_validate(file_contents):
     print(
         _validate_conf_content(
             "",
-            _parse_content(
+            _parse_content_list(
                 file_contents,
                 "",
             ),
@@ -149,7 +152,7 @@ def test_validate(file_contents):
     )
     assert _validate_conf_content(
         "",
-        _parse_content(
+        _parse_content_list(
             file_contents,
             "",
         ),
@@ -211,3 +214,295 @@ def test_validate(file_contents):
             ),
         ),
     ]
+
+
+@pytest.mark.parametrize("obs_type", ["HISTORY_OBSERVATION", "SUMMARY_OBSERVATION"])
+@pytest.mark.parametrize(
+    "obs_content, match",
+    [
+        (
+            "ERROR = -1;",
+            'Failed to validate "-1"',
+        ),
+        (
+            "ERROR_MODE=RELMIN; ERROR_MIN = -1; ERROR=1.0;",
+            'Failed to validate "-1"',
+        ),
+        (
+            "ERROR_MODE = NOT_ABS; ERROR=1.0;",
+            'Failed to validate "NOT_ABS"',
+        ),
+    ],
+)
+def test_that_common_observation_error_validation_is_handled(
+    obs_type, obs_content, match
+):
+    additional = (
+        ""
+        if obs_type == "HISTORY_OBSERVATION"
+        else "RESTART = 1; VALUE=1.0; KEY = FOPR;"
+    )
+    with pytest.raises(ObservationConfigError, match=match):
+        parse_content(
+            f"""
+                        {obs_type}  FOPR
+                        {{
+                            {obs_content}
+                            {additional}
+                        }};
+                        """,
+            "",
+        )
+
+
+@pytest.mark.parametrize(
+    "obs_content, match",
+    [
+        (
+            """
+            SUMMARY_OBSERVATION  FOPR
+            {
+               DAYS       = -1;
+            };
+            """,
+            'Failed to validate "-1"',
+        ),
+        (
+            """
+            SUMMARY_OBSERVATION  FOPR
+            {
+               VALUE       = exactly_1;
+            };
+            """,
+            'Failed to validate "exactly_1"',
+        ),
+        (
+            """
+            SUMMARY_OBSERVATION  FOPR
+            {
+               DAYS       = 1;
+            };
+            """,
+            'Missing item "VALUE"',
+        ),
+        (
+            """
+            SUMMARY_OBSERVATION  FOPR
+            {
+               KEY        = FOPR;
+               VALUE      = 2.0;
+               DAYS       = 1;
+            };
+            """,
+            'Missing item "ERROR"',
+        ),
+        (
+            """
+            SUMMARY_OBSERVATION  FOPR
+            {
+               VALUE = 1;
+               ERROR = 0.1;
+            };
+            """,
+            'Missing item "KEY"',
+        ),
+        (
+            """
+            HISTORY_OBSERVATION  FOPR
+            {
+               ERROR      = 0.1;
+
+               SEGMENT SEG
+               {
+                  STOP  = 1;
+                  ERROR = 0.50;
+               };
+            };
+            """,
+            'Missing item "START"',
+        ),
+        (
+            """
+            HISTORY_OBSERVATION  FOPR
+            {
+               ERROR      = 0.1;
+
+               SEGMENT SEG
+               {
+                  START  = 1;
+                  ERROR = 0.50;
+               };
+            };
+            """,
+            'Missing item "STOP"',
+        ),
+        (
+            """
+            HISTORY_OBSERVATION  FOPR
+            {
+               ERROR      = 0.1;
+
+               SEGMENT SEG
+               {
+                  START = 0;
+                  STOP  = 3.2;
+                  ERROR = 0.50;
+               };
+            };
+            """,
+            'Failed to validate "3.2"',
+        ),
+        (
+            """
+            HISTORY_OBSERVATION  FOPR
+            {
+               ERROR      = 0.1;
+
+               SEGMENT SEG
+               {
+                  START = 1.1;
+                  STOP  = 0;
+                  ERROR = 0.50;
+               };
+            };
+            """,
+            'Failed to validate "1.1"',
+        ),
+        (
+            """
+            HISTORY_OBSERVATION  FOPR
+            {
+               ERROR      = 0.1;
+
+               SEGMENT SEG
+               {
+                  START = 1;
+                  STOP  = 0;
+                  ERROR = -1;
+               };
+            };
+            """,
+            'Failed to validate "-1"',
+        ),
+        (
+            """
+            HISTORY_OBSERVATION  FOPR
+            {
+               ERROR      = 0.1;
+
+               SEGMENT SEG
+               {
+                  START = 1;
+                  STOP  = 0;
+                  ERROR = 0.1;
+                  ERROR_MIN = -1;
+               };
+            };
+            """,
+            'Failed to validate "-1"',
+        ),
+        (
+            """
+            SUMMARY_OBSERVATION  FOPR
+            {
+               RESTART = -1;
+            };
+            """,
+            'Failed to validate "-1"',
+        ),
+        (
+            """
+            SUMMARY_OBSERVATION  FOPR
+            {
+               RESTART = minus_one;
+            };
+            """,
+            'Failed to validate "minus_one"',
+        ),
+        (
+            """
+                HISTORY_OBSERVATION  FOPR
+                {
+                   ERROR      = 0.1;
+
+                   SEGMENT SEG
+                   {
+                      START = 1;
+                      STOP  = 0;
+                      ERROR = 0.1;
+                      ERROR_MODE = NOT_ABS;
+                   };
+                };
+                """,
+            'Failed to validate "NOT_ABS"',
+        ),
+    ],
+)
+def test_that_summary_observation_validation_is_handled(obs_content, match):
+    with pytest.raises(ObservationConfigError, match=match):
+        parse_content(obs_content, filename="")
+
+
+@pytest.mark.parametrize(
+    "obs_content, match",
+    [
+        (
+            """
+            GENERAL_OBSERVATION  obs
+            {
+               DATA       = RES;
+               DATE       = 2023-02-01;
+               VALUE      = 1;
+            };
+            """,
+            "ERROR must also be given",
+        ),
+        (
+            """
+            GENERAL_OBSERVATION  obs
+            {
+               DATE       = 2023-02-01;
+               VALUE      = 1;
+               ERROR      = 0.01;
+               ERROR_MIN  = 0.1;
+            };
+            """,
+            'Missing item "DATA"',
+        ),
+    ],
+)
+def test_validation_of_general_observation(obs_content, match):
+    with pytest.raises(ObservationConfigError, match=match):
+        parse_content(obs_content, "")
+
+
+@pytest.mark.parametrize(
+    "observation_type",
+    ["HISTORY_OBSERVATION", "SUMMARY_OBSERVATION", "GENERAL_OBSERVATION"],
+)
+def test_that_unknown_key_is_handled(observation_type):
+    with pytest.raises(ObservationConfigError, match="Unknown SMERROR"):
+        parse_content(f"{observation_type} FOPR {{SMERROR=0.1;DATA=key;}};", "")
+
+
+def test_unexpected_character_handling():
+    with pytest.raises(
+        ObservationConfigError,
+        match=r"Did not expect character: \$ \(on line 4: *ERROR *\$"
+        r" 0.20;\). Expected one of {'EQUAL'}",
+    ) as err_record:
+        parse_content(
+            """
+            GENERAL_OBSERVATION GEN_OBS
+            {
+               ERROR       $ 0.20;
+            };
+            """,
+            "",
+        )
+
+    err = err_record.value.errors[0]
+    assert err.line == 4
+    assert err.end_line == 4
+    assert err.column == 28
+    assert err.end_column == 29

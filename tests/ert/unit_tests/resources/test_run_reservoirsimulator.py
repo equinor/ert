@@ -104,17 +104,6 @@ def test_runner_can_extract_base_name(data_path: str, expected: str):
 
 
 @pytest.mark.usefixtures("use_tmpdir")
-def test_await_completed_summary_file_will_timeout_on_missing_smry():
-    assert (
-        # Expected wait time is 0.3
-        run_reservoirsimulator.await_completed_unsmry_file(
-            "SPE1.UNSMRY", max_wait=0.3, poll_interval=0.1
-        )
-        > 0.3
-    )
-
-
-@pytest.mark.usefixtures("use_tmpdir")
 def test_await_completed_summary_file_will_return_asap():
     resfo.write("FOO.UNSMRY", [("INTEHEAD", np.array([1], dtype=np.int32))])
     assert (

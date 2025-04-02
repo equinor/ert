@@ -301,6 +301,7 @@ def generate_random_text(size):
 
 
 @pytest.mark.parametrize("tail_chars_to_read", [(5), (50), (500), (700)])
+@pytest.mark.integration_test
 async def test_slurm_can_retrieve_stdout_and_stderr(
     tmp_path, job_name, tail_chars_to_read
 ):

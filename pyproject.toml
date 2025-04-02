@@ -36,7 +36,7 @@ dependencies = [
     "lxml",
     "matplotlib",
     "netCDF4",
-    "numpy<2",
+    "numpy<2.2",
     "openpyxl",                                # extra dependency for pandas (excel)
     "opentelemetry-api",
     "opentelemetry-sdk",
@@ -140,8 +140,8 @@ everest = [
     "decorator",
     "resdata",
     "colorama",
-    "ropt[pandas]>=0.16,<0.17",
-    "ropt-dakota>=0.16,<0.17",
+    "ropt[pandas]>=0.17,<0.18",
+    "ropt-dakota>=0.17,<0.18",
 ]
 
 [tool.setuptools]
@@ -154,6 +154,16 @@ everest = ["data/**/*", "*.tmpl", "detached/jobs/everserver"]
 
 [tool.pytest.ini_options]
 addopts = "-ra --strict-markers"
+norecursedirs = [
+    "*.egg",
+    ".*",
+    "tests/ert/unit_tests/gui/plottery/baseline",
+    "tests/ert/unit_tests/storage/snapshots",
+    "tests/ert/unit_tests/snapshots",
+    "tests/everest/snapshots",
+    "tests/everest/test_data",
+    "tests/ert/unit_tests/scheduler/bin"
+]
 markers = [
     "integration_test",
     "out_of_memory",
@@ -163,7 +173,6 @@ markers = [
     "script",
     "slow",
     "everest_models_test",
-    "integration_test",
     "skip_mac_ci",
 ]
 log_cli = "false"
@@ -185,6 +194,7 @@ select = [
     "B",     # flake-8-bugbear
     "SIM",   # flake-8-simplify
     "F",     # pyflakes
+    "FURB",  # refurb
     "PL",    # pylint
     "NPY",   # numpy specific rules
     "C4",    # flake8-comprehensions
@@ -193,9 +203,13 @@ select = [
     "UP",    # pyupgrade
     "ICN",   # flake8-import-conventions
     "PIE",   # flake8-pie
+    "TRY203",
+    "TRY300",
 ]
 preview = true
 ignore = [
+    "FURB103", # write-hole-file
+    "FURB101", # read-whole-file
     "PLW2901", # redefined-loop-name
     "PLR2004", # magic-value-comparison
     "PLR0915", # too-many-statements

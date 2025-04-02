@@ -1,12 +1,14 @@
 import os
 import shutil
-from collections.abc import Mapping
+from collections.abc import Mapping, Sequence
 from enum import EnumType
 from typing import TypeVar
 
 from pydantic import ConfigDict, Field, NonNegativeInt, PositiveInt
 from pydantic.dataclasses import dataclass
 
+from ._option_dict import option_dict, parse_variable_options
+from ._read_file import read_file
 from .config_errors import ConfigValidationError
 from .context_values import (
     ContextBool,
@@ -22,6 +24,11 @@ from .schema_item_type import SchemaItemType
 from .types import MaybeWithContext
 
 T = TypeVar("T")
+
+
+@dataclass
+class Varies:
+    max_positionals: int
 
 
 @dataclass(config=ConfigDict(arbitrary_types_allowed=True))
@@ -41,6 +48,8 @@ class SchemaItem:
     deprecation_info: list[DeprecationInfo] = Field(default_factory=list)
     # if positive, arguments after this count will be concatenated with a " " between
     join_after: PositiveInt | None = None
+    # if positive, arguments after this count will be interpreted as options
+    options_after: PositiveInt | Varies | None = None
     # if true, will accumulate many values set for key, otherwise each entry will
     # overwrite any previous value set
     multi_occurrence: bool = False
@@ -140,22 +149,30 @@ class SchemaItem:
                         token,
                     )
 
-            case SchemaItemType.PATH | SchemaItemType.EXISTING_PATH:
+            case (
+                SchemaItemType.PATH
+                | SchemaItemType.EXISTING_PATH
+                | SchemaItemType.EXISTING_PATH_INLINE
+            ):
                 path: str | None = str(token)
                 if not os.path.isabs(token):
                     path = os.path.normpath(
                         os.path.join(os.path.dirname(token.filename), token)
                     )
-                if val_type == SchemaItemType.EXISTING_PATH and not os.path.exists(
-                    str(path)
-                ):
+                if val_type in {
+                    SchemaItemType.EXISTING_PATH,
+                    SchemaItemType.EXISTING_PATH_INLINE,
+                } and not os.path.exists(str(path)):
                     err = f'Cannot find file or directory "{token.value}". '
                     if path != token:
                         err += f"The configured value was {path!r} "
                     raise ConfigValidationError.with_context(err, token)
 
                 assert isinstance(path, str)
-                return ContextString(path, token, keyword)
+                if val_type == SchemaItemType.EXISTING_PATH_INLINE:
+                    return [ContextString(path, token, keyword), read_file(path)]
+                else:
+                    return ContextString(path, token, keyword)
             case SchemaItemType.EXECUTABLE:
                 absolute_path: str | None
                 is_command = False
@@ -274,6 +291,17 @@ class SchemaItem:
             return new_line
         return line
 
+    def parse_options(
+        self, line: Sequence[FileContextToken]
+    ) -> Sequence[FileContextToken | dict[FileContextToken, FileContextToken]]:
+        n = self.options_after
+        if isinstance(n, Varies):
+            args, kwargs = parse_variable_options(list(line), n.max_positionals)
+            return [*args, kwargs]  # type: ignore
+        if n is not None:
+            return [*line[0:n], option_dict(line, n)]  # type: ignore
+        return line
+
 
 def float_keyword(keyword: str) -> SchemaItem:
     return SchemaItem(kw=keyword, type_map=[SchemaItemType.FLOAT])
@@ -301,6 +329,10 @@ def path_keyword(keyword: str) -> SchemaItem:
 
 def existing_path_keyword(keyword: str) -> SchemaItem:
     return SchemaItem(kw=keyword, type_map=[SchemaItemType.EXISTING_PATH])
+
+
+def existing_path_inline_keyword(keyword: str) -> SchemaItem:
+    return SchemaItem(kw=keyword, type_map=[SchemaItemType.EXISTING_PATH_INLINE])
 
 
 def single_arg_keyword(keyword: str) -> SchemaItem:

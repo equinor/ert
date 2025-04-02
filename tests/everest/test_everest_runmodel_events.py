@@ -5,6 +5,16 @@ from ert.ensemble_evaluator import FullSnapshotEvent
 from ert.run_models.event import EverestBatchResultEvent, EverestStatusEvent
 
 
+def round_floats(obj, decimals=6):
+    if isinstance(obj, float):
+        return round(obj, decimals)
+    elif isinstance(obj, list):
+        return [round_floats(item, decimals) for item in obj]
+    elif isinstance(obj, dict):
+        return {key: round_floats(value, decimals) for key, value in obj.items()}
+    return obj
+
+
 @pytest.mark.integration_test
 @pytest.mark.parametrize(
     "config_file",
@@ -32,14 +42,16 @@ def test_everest_events(config_file, snapshot, cached_example):
         for e in events_list
         if isinstance(e, EverestStatusEvent | EverestBatchResultEvent)
     ]
-
     event_info_json = {
         "num_full_snapshots": len(full_snapshots),
         "everest_events": everest_events,
     }
 
     snapshot_str = (
-        orjson.dumps(event_info_json, option=orjson.OPT_INDENT_2 | orjson.OPT_SORT_KEYS)
+        orjson.dumps(
+            round_floats(event_info_json),
+            option=orjson.OPT_INDENT_2 | orjson.OPT_SORT_KEYS,
+        )
         .decode("utf-8")
         .strip()
         + "\n"

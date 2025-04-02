@@ -7,9 +7,7 @@ import logging
 import os
 import queue
 import shutil
-import sys
-from collections.abc import Callable, Generator, MutableSequence
-from contextlib import contextmanager
+from collections.abc import Callable, MutableSequence
 from enum import IntEnum, auto
 from pathlib import Path
 from types import TracebackType
@@ -37,7 +35,10 @@ from ert.runpaths import Runpaths
 from ert.storage import open_storage
 from everest.config import ControlConfig, ControlVariableGuessListConfig, EverestConfig
 from everest.config.utils import FlattenedControls
-from everest.everest_storage import EverestStorage, OptimalResult
+from everest.everest_storage import (
+    EverestStorage,
+    OptimalResult,
+)
 from everest.optimizer.everest2ropt import everest2ropt
 from everest.optimizer.opt_model_transforms import (
     ConstraintScaler,
@@ -57,14 +58,12 @@ from ..storage.local_ensemble import EverestRealizationInfo
 from .base_run_model import BaseRunModel, StatusEvents
 from .event import (
     EverestBatchResultEvent,
+    EverestCacheHitEvent,
     EverestStatusEvent,
 )
 
 if TYPE_CHECKING:
     from ert.storage import Ensemble, Experiment
-
-
-logger = logging.getLogger(__name__)
 
 
 class SimulationStatus(TypedDict):
@@ -126,7 +125,6 @@ class EverestRunModel(BaseRunModel):
     ):
         Path(everest_config.log_dir).mkdir(parents=True, exist_ok=True)
         Path(everest_config.optimization_output_dir).mkdir(parents=True, exist_ok=True)
-        assert everest_config.environment is not None
         logging.getLogger(EVEREST).info(
             "Using random seed: %d. To deterministically reproduce this experiment, "
             "add the above random seed to your configuration file.",
@@ -174,7 +172,7 @@ class EverestRunModel(BaseRunModel):
         _, _, hooked_workflows = workflows_from_dict(config_dict, substitutions)
 
         forward_model_steps, env_pr_fm_step = get_forward_model_steps(
-            config_dict, substitutions
+            everest_config, config_dict, substitutions
         )
 
         env_vars = {}
@@ -248,7 +246,11 @@ class EverestRunModel(BaseRunModel):
             failed = True
             exception = e
         finally:
-            if self._exit_code != EverestExitCode.COMPLETED:
+            if self._exit_code not in {
+                EverestExitCode.COMPLETED,
+                EverestExitCode.MAX_FUNCTIONS_REACHED,
+                EverestExitCode.MAX_BATCH_NUM_REACHED,
+            }:
                 failed = True
             self.send_event(
                 EndEvent(
@@ -263,17 +265,26 @@ class EverestRunModel(BaseRunModel):
 
     def _handle_optimizer_results(self, results: tuple[Results, ...]) -> None:
         self.ever_storage.on_batch_evaluation_finished(results)
-        # A ROPT event may contain multiple results, we send one event per result
+
         for r in results:
+            storage_batches = (
+                self.ever_storage.data.batches_with_function_results
+                if isinstance(r, FunctionResults)
+                else self.ever_storage.data.batches_with_gradient_results
+            )
+            batch_data = next(
+                (b for b in storage_batches if b.batch_id == r.batch_id),
+                None,
+            )
+
             self.send_event(
                 EverestBatchResultEvent(
                     batch=r.batch_id,
                     everest_event="OPTIMIZATION_RESULT",
-                    result_type=(
-                        "FunctionResult"
-                        if isinstance(r, FunctionResults)
-                        else "GradientResult"
-                    ),
+                    result_type="FunctionResult"
+                    if isinstance(r, FunctionResults)
+                    else "GradientResult",
+                    results=batch_data.to_dict() if batch_data else None,
                 )
             )
 
@@ -299,12 +310,7 @@ class EverestRunModel(BaseRunModel):
         optimizer.set_results_callback(self._handle_optimizer_results)
 
         # Run the optimization:
-        output_dir = Path(self._everest_config.optimization_output_dir)
-        with redirect_optimizer_output(
-            stdout=output_dir / "optimizer_output.stdout",
-            stderr=output_dir / "optimizer_output.stderr",
-        ):
-            optimizer_exit_code = optimizer.run().exit_code
+        optimizer_exit_code = optimizer.run().exit_code
 
         # Store some final results.
         self.ever_storage.on_optimization_finished()
@@ -481,6 +487,70 @@ class EverestRunModel(BaseRunModel):
         return objectives, constraints
 
     @staticmethod
+    def find_cached_results(
+        control_values: NDArray[np.float64],
+        model_realizations: list[int],
+        all_results: pl.DataFrame | None,
+        control_names: list[str],
+    ) -> pl.DataFrame | None:
+        if all_results is None:
+            return None
+        # Will be used to search the cache
+        controls_to_evaluate_df = pl.DataFrame(
+            {
+                "flat_index": list(range(len(model_realizations))),
+                "model_realization": pl.Series(model_realizations, dtype=pl.UInt16),
+                **{
+                    control_name: pl.Series(control_values[:, i], dtype=pl.Float64)
+                    for i, control_name in enumerate(control_names)
+                },
+            }
+        )
+
+        EPS = float(np.finfo(np.float32).eps)
+
+        left = all_results
+        right = controls_to_evaluate_df
+
+        # Note: asof join will approximate for floats, but
+        # only for one column at a time, this for loop
+        # will incrementally do the join, filtering out
+        # mismatching rows iteratively. If in the future, the `on` argument
+        # accepts multiple columns, we can drop this for loop.
+        # One control-value-column at a time,
+        # we filter out rows with control values
+        # that are not approximately matching the control value
+        # of our to-be-evaluated controls.
+        for control_name in control_names:
+            if "flat_index" in left.columns:
+                left = left.drop("flat_index")
+
+            left = left.sort(["model_realization", control_name]).join_asof(
+                right.sort(["model_realization", control_name]),
+                on=control_name,
+                by="model_realization",  # pre-join by model realization
+                tolerance=EPS,  # Same as np.allclose with atol=EPS
+                strategy="nearest",
+                check_sortedness=False,
+                # Ref: https://github.com/pola-rs/polars/issues/21693
+            )
+
+            left = left.filter(pl.col("flat_index").is_not_null())
+
+            left = left.drop([s for s in left.columns if s.endswith("_right")])
+
+            if left.is_empty():
+                break
+
+        return (
+            left.rename({"realization": "simulation_id"}).drop(
+                "model_realization", "perturbation"
+            )
+            if not left.is_empty()
+            else None
+        )
+
+    @staticmethod
     def _create_evaluation_infos(
         control_values: NDArray[np.float64],
         model_realizations: list[int],
@@ -490,7 +560,7 @@ class EverestRunModel(BaseRunModel):
         control_names: list[str],
         objective_names: list[str],
         constraint_names: list[str],
-    ) -> list[_EvaluationInfo]:
+    ) -> tuple[list[_EvaluationInfo], pl.DataFrame | None]:
         inactive_objective_fill_value: NDArray[np.float64] = np.zeros(
             len(objective_names)
         )
@@ -499,52 +569,9 @@ class EverestRunModel(BaseRunModel):
         )
         evaluation_infos = []
 
-        cache_hits_df = None
-        if all_results is not None:
-            # Will be used to search the cache
-            controls_to_evaluate_df = pl.DataFrame(
-                {
-                    "realization": list(range(len(model_realizations))),
-                    "model_realization": pl.Series(model_realizations, dtype=pl.UInt16),
-                    **{
-                        control_name: pl.Series(control_values[:, i], dtype=pl.Float64)
-                        for i, control_name in enumerate(control_names)
-                    },
-                }
-            )
-
-            EPS = float(np.finfo(np.float32).eps)
-
-            left = all_results
-            right = controls_to_evaluate_df
-
-            # Note: asof join will approximate for floats, but
-            # only for one column at a time, this for loop
-            # will incrementally do the join, filtering out
-            # mismatching rows iteratively. If in the future, the `on` argument
-            # accepts multiple columns, we can drop this for loop.
-            # One control-value-column at a time,
-            # we filter out rows with control values
-            # that are not approximately matching the control value
-            # of our to-be-evaluated controls.
-            for control_name in control_names:
-                left = (
-                    left.sort(["model_realization", control_name])
-                    .join_asof(
-                        right.sort(["model_realization", control_name]),
-                        on=control_name,
-                        by="model_realization",  # pre-join by model realization
-                        tolerance=EPS,  # Same as np.allclose with atol=EPS
-                    )
-                    .filter(pl.col("realization_right").is_not_null())
-                )
-
-                left = left.drop([s for s in left.columns if s.endswith("_right")])
-
-                if left.is_empty():
-                    break
-
-            cache_hits_df = left if not left.is_empty() else None
+        cache_hits_df = EverestRunModel.find_cached_results(
+            control_values, model_realizations, all_results, control_names
+        )
 
         sim_id_counter = 0
         for flat_index, (
@@ -578,7 +605,7 @@ class EverestRunModel(BaseRunModel):
 
             if cache_hits_df is not None and not cache_hits_df.is_empty():
                 hit_row = cache_hits_df.filter(
-                    cache_hits_df["realization"] == flat_index
+                    cache_hits_df["flat_index"] == flat_index
                 )
 
                 if not hit_row.is_empty():
@@ -618,7 +645,13 @@ class EverestRunModel(BaseRunModel):
             )
             sim_id_counter += 1
 
-        return evaluation_infos
+        cache_hits = (
+            cache_hits_df[["batch", "simulation_id", "flat_index"]]
+            if cache_hits_df is not None and not cache_hits_df.is_empty()
+            else None
+        )
+
+        return evaluation_infos, cache_hits
 
     def _forward_model_evaluator(
         self, control_values: NDArray[np.float64], evaluator_context: EvaluatorContext
@@ -639,12 +672,7 @@ class EverestRunModel(BaseRunModel):
         assert self._experiment is not None
         all_results = self._experiment.all_parameters_and_gen_data
 
-        objective_names = [
-            self._everest_config.function_aliases.get(n, n)
-            for n in self._everest_config.objective_names
-        ]
-
-        evaluation_infos = self._create_evaluation_infos(
+        evaluation_infos, cache_hits_df = self._create_evaluation_infos(
             control_values=control_values,
             model_realizations=model_realizations,
             perturbations=evaluator_context.perturbations.tolist()
@@ -652,10 +680,48 @@ class EverestRunModel(BaseRunModel):
             else [-1] * len(model_realizations),
             active_controls=active_control_vectors,
             control_names=self._everest_config.formatted_control_names,
-            objective_names=objective_names,
+            objective_names=self._everest_config.objective_names,
             constraint_names=self._everest_config.constraint_names,
             all_results=all_results,
         )
+
+        cache_hits_dict: list[dict[str, Any]] = []
+        if cache_hits_df is not None and not cache_hits_df.is_empty():
+            perturbations = (
+                evaluator_context.perturbations
+                if evaluator_context.perturbations is not None
+                else [-1] * len(model_realizations)
+            )
+            cache_hits_dict = (
+                cache_hits_df.with_columns(
+                    pl.col("flat_index")
+                    .map_elements(
+                        # Assume none of the evals are perturbations if there is no
+                        # evaluator_context.perturbations
+                        lambda i: perturbations[i],
+                        return_dtype=pl.Int32,
+                    )
+                    .alias("target_perturbation"),
+                    pl.col("flat_index")
+                    .map_elements(
+                        lambda i: evaluator_context.realizations[i],
+                        return_dtype=pl.Int32,
+                    )
+                    .alias("model_realization"),  # Same for source and target
+                )
+                .rename(
+                    {
+                        "batch": "source_batch_id",
+                        "simulation_id": "source_simulation_id",
+                        "flat_index": "target_evaluation_id",
+                    }
+                )
+                .to_dicts()
+            )
+
+            self.send_event(
+                EverestCacheHitEvent(batch=self._batch_id, data=cache_hits_dict)
+            )
 
         control_values_to_simulate = np.array(
             [
@@ -724,24 +790,34 @@ class EverestRunModel(BaseRunModel):
             else None
         )
 
-        # The simulation id's are a simple enumeration over the evaluated
-        # forward models. For the evaluated controls they are therefore
-        # implicitly given by there position in the evaluated_control_indices
-        # list. We store for each control vector that id, or -1 if it was not
-        # evaluated:
-        sim_ids = np.array(
-            [
-                ei.simulation_id if ei.simulation_id is not None else -1
-                for ei in evaluation_infos
-            ],
-            dtype=np.int32,
-        )
+        # Also return for each control vector the simulation id and source batch.
+        sim_ids = []
+        source_batch_ids = []
+        for ei in evaluation_infos:
+            match ei.status:
+                case _EvaluationStatus.TO_SIMULATE:
+                    sim_ids.append(ei.simulation_id)
+                    source_batch_ids.append(self._batch_id)
+                case _EvaluationStatus.CACHED:
+                    sim_id, batch_id = next(
+                        (item["source_simulation_id"], item["source_batch_id"])
+                        for item in cache_hits_dict
+                        if item["target_evaluation_id"] == ei.flat_index
+                    )
+                    sim_ids.append(sim_id)
+                    source_batch_ids.append(batch_id)
+                case _EvaluationStatus.INACTIVE:
+                    sim_ids.append(-1)
+                    source_batch_ids.append(-1)
 
         evaluator_result = EvaluatorResult(
             objectives=objectives,
             constraints=constraints,
             batch_id=self._batch_id,
-            evaluation_ids=sim_ids,
+            evaluation_info={
+                "sim_ids": np.array(sim_ids, dtype=np.int32),
+                "source_batch_ids": np.array(source_batch_ids, dtype=np.int32),
+            },
         )
 
         # increase the batch ID for the next evaluation:
@@ -884,7 +960,6 @@ class EverestRunModel(BaseRunModel):
     def _gather_simulation_results(
         self, ensemble: Ensemble
     ) -> tuple[NDArray[np.float64], NDArray[np.float64] | None]:
-        objective_aliases = self._everest_config.function_aliases
         objective_names = self._everest_config.objective_names
         objectives = np.zeros((ensemble.ensemble_size, len(objective_names)))
 
@@ -906,15 +981,13 @@ class EverestRunModel(BaseRunModel):
 
         for sim_id, successful in enumerate(self.active_realizations):
             if not successful:
-                logger.error(f"Simulation {sim_id} failed.")
+                logging.getLogger(EVEREST).error(f"Simulation {sim_id} failed.")
                 objectives[sim_id, :] = np.nan
                 constraints[sim_id, :] = np.nan
                 continue
 
             for i, obj_name in enumerate(objective_names):
-                data = ensemble.load_responses(
-                    objective_aliases.get(obj_name, obj_name), (sim_id,)
-                )
+                data = ensemble.load_responses(obj_name, (sim_id,))
                 objectives[sim_id, i] = data["values"].item()
 
             for i, constr_name in enumerate(constraint_names):
@@ -929,60 +1002,3 @@ class EverestRunModel(BaseRunModel):
             and os.path.exists(self._everest_config.simulation_dir)
             and any(os.listdir(self._everest_config.simulation_dir))
         )
-
-
-@contextmanager
-def redirect_optimizer_output(
-    stdout: Path | None, stderr: Path | None = None
-) -> Generator[None, None, None]:
-    """This context manager redirects stdout and stderr to the given files.
-
-    The standard Python approach would be to redirect sys.stdout and sys.stderr,
-    or use contextlib.redirect_stdout/err. However, these may fail in cases
-    where the output is produced by C or Fortran code, as commonly used in
-    optimization backends. Therefore, the stdout and stderr file descriptors are
-    directly manipulated. It should be noted that this is not thread-safe, i.e.
-    standard output/errors may be affected in other threads in the same process.
-    However, this should not be an issue since the Everest run model does not
-    send output to stdout/stderr directly. (Note that manipulating sys.stdout or
-    using contextlib.redirect_stdout would also not be thread-safe.)
-    """
-    if stderr is None:
-        stderr = stdout
-
-    old_stdout: int | None = None
-    old_stderr: int | None = None
-    new_stdout: int | None = None
-    new_stderr: int | None = None
-
-    try:
-        sys.stdout.flush()
-        sys.stderr.flush()
-        old_stdout = os.dup(1)
-        old_stderr = os.dup(2)
-        new_stdout = (
-            os.open(os.devnull, os.O_WRONLY)
-            if stdout is None
-            else os.open(stdout, os.O_WRONLY | os.O_CREAT)
-        )
-        os.dup2(new_stdout, 1)
-        if stderr == stdout:
-            os.dup2(new_stdout, 2)
-            new_stderr = None
-        else:
-            new_stderr = (
-                os.open(os.devnull, os.O_WRONLY)
-                if stderr is None
-                else os.open(stderr, os.O_WRONLY | os.O_CREAT)
-            )
-            os.dup2(new_stderr, 2)
-        yield
-    finally:
-        if old_stdout is not None:
-            os.dup2(old_stdout, 1)
-        if old_stderr is not None:
-            os.dup2(old_stderr, 2)
-        if new_stdout is not None:
-            os.close(new_stdout)
-        if new_stderr is not None:
-            os.close(new_stderr)

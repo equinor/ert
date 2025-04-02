@@ -126,6 +126,7 @@ async def test_unexpected_close_after_connection_successful(
     await websocket_server_task
 
 
+@pytest.mark.integration_test
 @pytest.mark.parametrize(
     "correct_server_key",
     [

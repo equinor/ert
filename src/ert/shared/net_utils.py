@@ -94,7 +94,6 @@ def _bind_socket(host: str, port: int) -> socket.socket:
         family = get_family(host=host)
         sock = socket.socket(family=family, type=socket.SOCK_STREAM)
         sock.bind((host, port))
-        return sock
     except socket.gaierror as err_info:
         raise InvalidHostException(
             f"Trying to bind socket with what looks like "
@@ -108,14 +107,17 @@ def _bind_socket(host: str, port: int) -> socket.socket:
                 f"Port {port} already in use."
             ) from err_info
         raise OSError(f"Unknown `OSError` while binding port {port}") from err_info
+    else:
+        return sock
 
 
 def get_family(host: str) -> socket.AddressFamily:
     try:
         socket.inet_pton(socket.AF_INET6, host)
-        return socket.AF_INET6
     except OSError:
         return socket.AF_INET
+    else:
+        return socket.AF_INET6
 
 
 # See https://stackoverflow.com/a/28950776

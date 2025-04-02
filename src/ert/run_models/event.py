@@ -1,10 +1,11 @@
 from __future__ import annotations
 
 from pathlib import Path
-from typing import Annotated, Literal
+from typing import Annotated, Any, Literal
 from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict, Field, TypeAdapter
+from typing_extensions import TypedDict
 
 from ert.analysis import (
     AnalysisStatusEvent,
@@ -38,6 +39,20 @@ class EverestStatusEvent(BaseModel):
     ]
 
 
+class _CacheHitInfo(TypedDict):
+    source_batch_id: int
+    source_simulation_id: int
+    target_evaluation_id: int
+    target_perturbation: int
+    model_realization: int
+
+
+class EverestCacheHitEvent(BaseModel):
+    batch: int | None
+    event_type: Literal["EverestCacheHitEvent"] = "EverestCacheHitEvent"
+    data: list[_CacheHitInfo]
+
+
 class EverestBatchResultEvent(BaseModel):
     batch: int
     event_type: Literal["EverestBatchResultEvent"] = "EverestBatchResultEvent"
@@ -47,6 +62,7 @@ class EverestBatchResultEvent(BaseModel):
         "FINISHED_SAMPLING_EVALUATION",
     ]
     result_type: Literal["FunctionResult", "GradientResult"]
+    results: dict[str, Any] | None = None
 
 
 class RunModelTimeEvent(RunModelEvent):
@@ -94,6 +110,7 @@ StatusEvents = (
     | EndEvent
     | EverestStatusEvent
     | EverestBatchResultEvent
+    | EverestCacheHitEvent
     | FullSnapshotEvent
     | SnapshotUpdateEvent
     | RunModelErrorEvent

@@ -1,3 +1,4 @@
+import math
 import os
 import re
 from pathlib import Path
@@ -9,12 +10,11 @@ from lark import Token
 from ert.config import (
     ConfigValidationError,
     ConfigWarning,
-    EnsembleConfig,
     ErtConfig,
     GenKwConfig,
 )
 from ert.config.gen_kw_config import TransformFunctionDefinition
-from ert.config.parsing import ConfigKeys, ContextString
+from ert.config.parsing import ContextString
 from ert.config.parsing.file_context_token import FileContextToken
 from ert.enkf_main import create_run_path, sample_prior
 
@@ -66,7 +66,7 @@ def test_short_definition_raises_config_error(tmp_path):
             [
                 "GEN",
                 str(parameter_file),
-                "INIT_FILES:%dgen_init.txt",
+                {"INIT_FILES": "%dgen_init.txt"},
             ]
         )
 
@@ -263,22 +263,21 @@ def test_gen_kw_is_log_or_not(
 )
 def test_gen_kw_distribution_errors(tmpdir, distribution, mean, std, error):
     with tmpdir.as_cwd():
-        config = dedent(
-            """
-        JOBNAME my_name%d
-        NUM_REALIZATIONS 1
-        GEN_KW KW_NAME template.txt kw.txt prior.txt
-        """
-        )
-        with open("config.ert", "w", encoding="utf-8") as fh:
-            fh.writelines(config)
         with open("template.txt", "w", encoding="utf-8") as fh:
             fh.writelines("MY_KEYWORD <MY_KEYWORD>")
-        with open("prior.txt", "w", encoding="utf-8") as fh:
-            if distribution == "TRUNCATED_NORMAL":
-                fh.writelines(f"MY_KEYWORD {distribution} {mean} {std} -1 1")
-            else:
-                fh.writelines(f"MY_KEYWORD {distribution} {mean} {std}")
+
+        if distribution == "TRUNCATED_NORMAL":
+            distribution_line = f"MY_KEYWORD {distribution} {mean} {std} -1 1"
+        else:
+            distribution_line = f"MY_KEYWORD {distribution} {mean} {std}"
+
+        config_list = [
+            "KW_NAME",
+            ("template.txt", "MY_KEYWORD <MY_KEYWORD>"),
+            "kw.txt",
+            ("prior.txt", distribution_line),
+            {},
+        ]
 
         if error:
             for e in error:
@@ -286,9 +285,9 @@ def test_gen_kw_distribution_errors(tmpdir, distribution, mean, std, error):
                     ConfigValidationError,
                     match=f"Negative {e} {mean if e == 'MEAN' else std}",
                 ):
-                    ErtConfig.from_file("config.ert")
+                    GenKwConfig.from_config_list(config_list)
         else:
-            ErtConfig.from_file("config.ert")
+            GenKwConfig.from_config_list(config_list)
 
 
 @pytest.mark.parametrize(
@@ -404,7 +403,7 @@ def test_gen_kw_params_parsing(tmpdir, params, error):
         ("MYNAME LOGNORMAL 0 1", 0.0, 1.00000000000000000000),
         ("MYNAME LOGNORMAL 0 1", 0.3, 1.34985880757600318347),
         ("MYNAME LOGNORMAL 0 1", 0.7, 2.01375270747047663278),
-        ("MYNAME LOGNORMAL 0 1", 1.0, 2.71828182845904509080),
+        ("MYNAME LOGNORMAL 0 1", 1.0, math.e),
         ("MYNAME ERRF 1 2 0.1 0.1", -1.0, 1.00000000000000000000),
         ("MYNAME ERRF 1 2 0.1 0.1", 0.0, 1.84134474606854281475),
         ("MYNAME ERRF 1 2 0.1 0.1", 0.3, 1.99996832875816688002),
@@ -413,10 +412,6 @@ def test_gen_kw_params_parsing(tmpdir, params, error):
     ],
 )
 def test_gen_kw_trans_func(tmpdir, params, xinput, expected):
-    """
-    This test data was generated using c++ transfer functions, and is used solely
-    to verify that implementation in python is equal to c++.
-    """
     args = params.split()[2:]
     float_args = []
     for a in args:
@@ -443,25 +438,18 @@ def test_gen_kw_trans_func(tmpdir, params, xinput, expected):
 
 def test_gen_kw_objects_equal(tmpdir):
     with tmpdir.as_cwd():
-        config = dedent(
-            """
-        JOBNAME my_name%d
-        NUM_REALIZATIONS 1
-        GEN_KW KW_NAME template.txt kw.txt prior.txt
-        """
-        )
-        with open("config.ert", "w", encoding="utf-8") as fh:
-            fh.writelines(config)
         with open("template.txt", "w", encoding="utf-8") as fh:
             fh.writelines("MY_KEYWORD <MY_KEYWORD>")
-        with open("prior.txt", "w", encoding="utf-8") as fh:
-            fh.writelines("MY_KEYWORD UNIFORM 1 2")
-        with open("empty.txt", "w", encoding="utf-8") as fh:
-            fh.writelines("")
 
-        ert_config = ErtConfig.from_file("config.ert")
-
-        g1 = ert_config.ensemble_config["KW_NAME"]
+        g1 = GenKwConfig.from_config_list(
+            [
+                "KW_NAME",
+                ("template.txt", "MY_KEYWORD <MY_KEYWORD>"),
+                "kw.txt",
+                ("prior.txt", "MY_KEYWORD UNIFORM 1 2"),
+                {},
+            ]
+        )
         assert g1.transform_functions[0].name == "MY_KEYWORD"
 
         tfd = TransformFunctionDefinition(
@@ -549,74 +537,51 @@ def test_gen_kw_config_validation():
     with open("template.txt", "w", encoding="utf-8") as f:
         f.write("Hello")
 
-    with open("parameters.txt", "w", encoding="utf-8") as f:
-        f.write("KEY  UNIFORM 0 1 \n")
-
-    with open("parameters_with_comments.txt", "w", encoding="utf-8") as f:
-        f.write("KEY1  UNIFORM 0 1 -- COMMENT\n")
-        f.write("\n\n")  # Two blank lines
-        f.write("KEY2  UNIFORM 0 1\n")
-        f.write("--KEY3  \n")
-        f.write("---KEY3  \n")
-        f.write("------------  \n")
-        f.write("KEY3  UNIFORM 0 1\n")
-
-    EnsembleConfig.from_dict(
-        config_dict={
-            ConfigKeys.GEN_KW: [
-                [
-                    "KEY",
-                    "template.txt",
-                    "nothing_here.txt",
-                    "parameters.txt",
-                ]
-            ],
-        }
+    GenKwConfig.from_config_list(
+        [
+            "KEY",
+            ("template.txt", "Hello"),
+            "nothing_here.txt",
+            ("parameters.txt", "KEY  UNIFORM 0 1 \n"),
+            {},
+        ]
     )
 
-    EnsembleConfig.from_dict(
-        config_dict={
-            ConfigKeys.GEN_KW: [
-                [
-                    "KEY",
-                    "template.txt",
-                    "nothing_here.txt",
-                    "parameters_with_comments.txt",
-                ]
-            ],
-        }
+    GenKwConfig.from_config_list(
+        [
+            "KEY",
+            ("template.txt", "hello.txt"),
+            "nothing_here.txt",
+            (
+                "parameters_with_comments.txt",
+                dedent(
+                    """\
+                            KEY1  UNIFORM 0 1 -- COMMENT
+
+
+                            KEY2  UNIFORM 0 1
+                            --KEY3
+                            ---KEY3
+                            ------------
+                            KEY3  UNIFORM 0 1
+                            """
+                ),
+            ),
+            {},
+        ],
     )
 
     with pytest.raises(
         ConfigValidationError, match=r"config.ert.* No such template file"
     ):
-        EnsembleConfig.from_dict(
-            config_dict={
-                ConfigKeys.GEN_KW: [
-                    [
-                        "KEY",
-                        make_context_string("no_template_here.txt", "config.ert"),
-                        "nothing_here.txt",
-                        "parameters.txt",
-                    ]
-                ],
-            }
-        )
-
-    with pytest.raises(
-        ConfigValidationError, match=r"config.ert.* No such parameter file"
-    ):
-        EnsembleConfig.from_dict(
-            config_dict={
-                ConfigKeys.GEN_KW: [
-                    [
-                        "KEY",
-                        "template.txt",
-                        "nothing_here.txt",
-                        make_context_string("no_parameter_here.txt", "config.ert"),
-                    ]
-                ],
-            }
+        GenKwConfig.from_config_list(
+            [
+                "KEY",
+                make_context_string("no_template_here.txt", "config.ert"),
+                "nothing_here.txt",
+                "parameters.txt",
+                {},
+            ]
         )
 
 
@@ -638,21 +603,20 @@ def test_incorrect_values_in_forward_init_file_fails(tmp_path):
 
 
 @pytest.mark.usefixtures("use_tmpdir")
-def test_suggestion_on_empty_parameter_file(tmp_path):
-    Path("coeffs.txt").write_text("a UNIFORM 0 1", encoding="utf-8")
+def test_suggestion_on_empty_parameter_file():
     Path("empty_template.txt").write_text("", encoding="utf-8")
     with pytest.warns(UserWarning, match="GEN_KW KEY coeffs.txt"):
-        EnsembleConfig.from_dict(
-            config_dict={
-                ConfigKeys.GEN_KW: [
-                    [
-                        "KEY",
-                        "empty_template.txt",
-                        "output.txt",
-                        make_context_string("coeffs.txt", "config.ert"),
-                    ]
-                ],
-            }
+        GenKwConfig.from_config_list(
+            [
+                "KEY",
+                ("empty_template.txt", ""),
+                "output.txt",
+                (
+                    make_context_string("coeffs.txt", "config.ert"),
+                    "a UNIFORM 0 1",
+                ),
+                {},
+            ]
         )
 
 
@@ -688,28 +652,24 @@ def test_validation_triangular_distribution(
     tmpdir, distribution, min, mode, max, error
 ):
     with tmpdir.as_cwd():
-        config = dedent(
-            """
-        JOBNAME my_name%d
-        NUM_REALIZATIONS 1
-        GEN_KW KW_NAME template.txt kw.txt prior.txt
-        """
-        )
-        with open("config.ert", "w", encoding="utf-8") as fh:
-            fh.writelines(config)
         with open("template.txt", "w", encoding="utf-8") as fh:
             fh.writelines("MY_KEYWORD <MY_KEYWORD>")
-        with open("prior.txt", "w", encoding="utf-8") as fh:
-            fh.writelines(f"MY_KEYWORD {distribution} {min} {mode} {max}")
+        config_list = [
+            "KW_NAME",
+            ("template.txt", "MY_KEYWORD <MY_KEYWORD>"),
+            "kw.txt",
+            ("prior.txt", f"MY_KEYWORD {distribution} {min} {mode} {max}"),
+            {},
+        ]
 
         if error:
             with pytest.raises(
                 ConfigValidationError,
                 match=error,
             ):
-                ErtConfig.from_file("config.ert")
+                GenKwConfig.from_config_list(config_list)
         else:
-            ErtConfig.from_file("config.ert")
+            GenKwConfig.from_config_list(config_list)
 
 
 @pytest.mark.parametrize(
@@ -805,27 +765,24 @@ def test_validation_derrf_distribution(
     tmpdir, distribution, nbins, min, max, skew, width, error
 ):
     with tmpdir.as_cwd():
-        config = dedent(
-            """
-        JOBNAME my_name%d
-        NUM_REALIZATIONS 1
-        GEN_KW KW_NAME template.txt kw.txt prior.txt
-        """
-        )
-        with open("config.ert", "w", encoding="utf-8") as fh:
-            fh.writelines(config)
         with open("template.txt", "w", encoding="utf-8") as fh:
             fh.writelines("MY_KEYWORD <MY_KEYWORD>")
-        with open("prior.txt", "w", encoding="utf-8") as fh:
-            fh.writelines(
-                f"MY_KEYWORD {distribution} {nbins} {min} {max} {skew} {width}"
-            )
+        config_list = [
+            "KW_NAME",
+            ("template.txt", "MY_KEYWORD <MY_KEYWORD>"),
+            "kw.txt",
+            (
+                "prior.txt",
+                f"MY_KEYWORD {distribution} {nbins} {min} {max} {skew} {width}",
+            ),
+            {},
+        ]
 
         if error:
             with pytest.raises(
                 ConfigValidationError,
                 match=error,
             ):
-                ErtConfig.from_file("config.ert")
+                GenKwConfig.from_config_list(config_list)
         else:
-            ErtConfig.from_file("config.ert")
+            GenKwConfig.from_config_list(config_list)

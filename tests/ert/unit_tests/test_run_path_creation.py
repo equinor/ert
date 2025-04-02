@@ -489,9 +489,7 @@ def test_write_runpath_file(storage, itr, run_paths):
     exp_runpaths = list(map(os.path.realpath, exp_runpaths))
 
     with open(runpath_list_path, encoding="utf-8") as f:
-        dumped_runpaths = list(
-            zip(*[line.split() for line in f.readlines()], strict=False)
-        )[1]
+        dumped_runpaths = list(zip(*[line.split() for line in f], strict=False))[1]
 
     assert list(exp_runpaths) == list(dumped_runpaths)
 
@@ -628,20 +626,18 @@ def test_assert_ertcase_replaced_in_runpath(placeholder, make_run_path):
 
 def save_zeros(prior_ensemble, num_realizations, dim_size):
     parameter_configs = prior_ensemble.experiment.parameter_configuration
-    for parameter, config_node in parameter_configs.items():
+    for config_node in parameter_configs.values():
         for realization_nr in range(num_realizations):
             if isinstance(config_node, SurfaceConfig):
                 config_node.save_parameters(
-                    prior_ensemble, parameter, realization_nr, np.zeros(dim_size**2)
+                    prior_ensemble, realization_nr, np.zeros(dim_size**2)
                 )
             elif isinstance(config_node, Field):
                 config_node.save_parameters(
-                    prior_ensemble, parameter, realization_nr, np.zeros(dim_size**3)
+                    prior_ensemble, realization_nr, np.zeros(dim_size**3)
                 )
             elif isinstance(config_node, GenKwConfig):
-                config_node.save_parameters(
-                    prior_ensemble, parameter, realization_nr, np.zeros(1)
-                )
+                config_node.save_parameters(prior_ensemble, realization_nr, np.zeros(1))
             else:
                 raise ValueError(f"unexpected {config_node}")
 

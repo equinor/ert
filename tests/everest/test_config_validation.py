@@ -796,6 +796,7 @@ def test_that_existing_install_job_with_non_existing_executable_errors(
         ("normalization", 0.1, None),
     ],
 )
+@pytest.mark.filterwarnings("ignore:normalization key is deprecated")
 def test_that_objective_function_attrs_are_valid(key, value, expected_error):
     if expected_error:
         with pytest.raises(ValueError) as e:
@@ -823,24 +824,6 @@ def test_that_objective_function_weight_defined_for_all_or_no_function():
         objective_functions=[
             {"name": "npv", "weight": 0.7},
             {"name": "npv2", "weight": 0.3},
-        ]
-    )
-
-
-def test_that_objective_function_aliases_are_consistent():
-    with pytest.raises(ValueError) as e:
-        EverestConfig.with_defaults(
-            objective_functions=[
-                {"name": "npv"},
-                {"name": "npv2", "alias": "bad_one"},
-            ]
-        )
-    assert has_error(e.value, "Invalid alias (.*)")
-
-    EverestConfig.with_defaults(
-        objective_functions=[
-            {"name": "npv"},
-            {"name": "npv2", "alias": "npv"},
         ]
     )
 
@@ -1053,6 +1036,8 @@ def test_deprecated_objective_function_auto_normalize():
         (0.42, 0.24, True, False),
     ],
 )
+@pytest.mark.filterwarnings("ignore:normalization key is deprecated")
+@pytest.mark.filterwarnings("ignore:auto_normalize key is deprecated")
 def test_objective_function_scaling_is_backward_compatible_with_scaling(
     normalization, scale, auto_normalize, auto_scale
 ):
@@ -1133,3 +1118,13 @@ def test_export_deprecated_keys(key, value, min_config, change_to_tmpdir):
     )
     with pytest.warns(ConfigWarning, match=match_msg):
         EverestConfig.load_file_with_argparser("config.yml", parser)
+
+
+def test_valid_init_of_summary_loading(change_to_tmpdir):
+    a_file = Path("a_file")
+    a_file.touch()
+    config = EverestConfig.with_defaults(
+        model={"data_file": str(a_file), "realizations": [0]}
+    )
+    with pytest.raises(ValueError, match="definitions -> eclbase"):
+        everest_to_ert_config_dict(config)

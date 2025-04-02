@@ -9,19 +9,304 @@
       "batch": 0,
       "event_type": "EverestBatchResultEvent",
       "everest_event": "FINISHED_OPTIMIZER_EVALUATION",
-      "result_type": "FunctionResult"
+      "result_type": "FunctionResult",
+      "results": null
     },
     {
       "batch": 0,
       "event_type": "EverestBatchResultEvent",
       "everest_event": "OPTIMIZATION_RESULT",
-      "result_type": "FunctionResult"
+      "result_type": "FunctionResult",
+      "results": {
+        "controls": {
+          "point.x.0": 0.25,
+          "point.x.1": 0.25,
+          "point.x.2": 0.25
+        },
+        "objectives": {
+          "distance": -1.6875
+        },
+        "realization_objectives": [
+          {
+            "distance": -6.1875,
+            "realization": 0,
+            "simulation_id": 0
+          },
+          {
+            "distance": -0.1875,
+            "realization": 2,
+            "simulation_id": 1
+          }
+        ],
+        "total_objective_value": -1.6875
+      }
     },
     {
       "batch": 0,
       "event_type": "EverestBatchResultEvent",
       "everest_event": "OPTIMIZATION_RESULT",
-      "result_type": "GradientResult"
+      "result_type": "GradientResult",
+      "results": {
+        "constraint_gradient": [
+          {
+            "control_name": "point.x.0",
+            "x-0_coord": 0.999992
+          },
+          {
+            "control_name": "point.x.1",
+            "x-0_coord": -0.000029
+          },
+          {
+            "control_name": "point.x.2",
+            "x-0_coord": -0.000035
+          }
+        ],
+        "objective_gradient_values": [
+          {
+            "control_name": "point.x.0",
+            "distance": -0.490766,
+            "distance.total": -0.490766
+          },
+          {
+            "control_name": "point.x.1",
+            "distance": -0.50191,
+            "distance.total": -0.50191
+          },
+          {
+            "control_name": "point.x.2",
+            "distance": 0.504245,
+            "distance.total": 0.504245
+          }
+        ],
+        "perturbation_constraints": [
+          {
+            "perturbation": 0,
+            "point.x.0": 0.253828,
+            "point.x.1": 0.247517,
+            "point.x.2": 0.239746,
+            "realization": 0,
+            "x-0_coord": 0.253828
+          },
+          {
+            "perturbation": 1,
+            "point.x.0": 0.249969,
+            "point.x.1": 0.252633,
+            "point.x.2": 0.247436,
+            "realization": 0,
+            "x-0_coord": 0.249969
+          },
+          {
+            "perturbation": 2,
+            "point.x.0": 0.248531,
+            "point.x.1": 0.246518,
+            "point.x.2": 0.252336,
+            "realization": 0,
+            "x-0_coord": 0.248531
+          },
+          {
+            "perturbation": 3,
+            "point.x.0": 0.244271,
+            "point.x.1": 0.257228,
+            "point.x.2": 0.252833,
+            "realization": 0,
+            "x-0_coord": 0.244271
+          },
+          {
+            "perturbation": 4,
+            "point.x.0": 0.250644,
+            "point.x.1": 0.249406,
+            "point.x.2": 0.258399,
+            "realization": 0,
+            "x-0_coord": 0.250644
+          },
+          {
+            "perturbation": 5,
+            "point.x.0": 0.252331,
+            "point.x.1": 0.246925,
+            "point.x.2": 0.25071,
+            "realization": 0,
+            "x-0_coord": 0.252331
+          },
+          {
+            "perturbation": 6,
+            "point.x.0": 0.253385,
+            "point.x.1": 0.245517,
+            "point.x.2": 0.254311,
+            "realization": 0,
+            "x-0_coord": 0.253385
+          },
+          {
+            "perturbation": 0,
+            "point.x.0": 0.248917,
+            "point.x.1": 0.251705,
+            "point.x.2": 0.250752,
+            "realization": 2,
+            "x-0_coord": 0.248917
+          },
+          {
+            "perturbation": 1,
+            "point.x.0": 0.241123,
+            "point.x.1": 0.24738,
+            "point.x.2": 0.253258,
+            "realization": 2,
+            "x-0_coord": 0.241123
+          },
+          {
+            "perturbation": 2,
+            "point.x.0": 0.240045,
+            "point.x.1": 0.243321,
+            "point.x.2": 0.252575,
+            "realization": 2,
+            "x-0_coord": 0.240045
+          },
+          {
+            "perturbation": 3,
+            "point.x.0": 0.247978,
+            "point.x.1": 0.250153,
+            "point.x.2": 0.242732,
+            "realization": 2,
+            "x-0_coord": 0.247978
+          },
+          {
+            "perturbation": 4,
+            "point.x.0": 0.248814,
+            "point.x.1": 0.251097,
+            "point.x.2": 0.250173,
+            "realization": 2,
+            "x-0_coord": 0.248814
+          },
+          {
+            "perturbation": 5,
+            "point.x.0": 0.245075,
+            "point.x.1": 0.256493,
+            "point.x.2": 0.244934,
+            "realization": 2,
+            "x-0_coord": 0.245075
+          },
+          {
+            "perturbation": 6,
+            "point.x.0": 0.246149,
+            "point.x.1": 0.258274,
+            "point.x.2": 0.243133,
+            "realization": 2,
+            "x-0_coord": 0.246149
+          }
+        ],
+        "perturbation_objectives": [
+          {
+            "distance": -6.19746,
+            "perturbation": 0,
+            "point.x.0": 0.253828,
+            "point.x.1": 0.247517,
+            "point.x.2": 0.239746,
+            "realization": 0
+          },
+          {
+            "distance": -6.1979,
+            "perturbation": 1,
+            "point.x.0": 0.249969,
+            "point.x.1": 0.252633,
+            "point.x.2": 0.247436,
+            "realization": 0
+          },
+          {
+            "distance": -6.16902,
+            "perturbation": 2,
+            "point.x.0": 0.248531,
+            "point.x.1": 0.246518,
+            "point.x.2": 0.252336,
+            "realization": 0
+          },
+          {
+            "distance": -6.19142,
+            "perturbation": 3,
+            "point.x.0": 0.244271,
+            "point.x.1": 0.257228,
+            "point.x.2": 0.252833,
+            "realization": 0
+          },
+          {
+            "distance": -6.18355,
+            "perturbation": 4,
+            "point.x.0": 0.250644,
+            "point.x.1": 0.249406,
+            "point.x.2": 0.258399,
+            "realization": 0
+          },
+          {
+            "distance": -6.18455,
+            "perturbation": 5,
+            "point.x.0": 0.252331,
+            "point.x.1": 0.246925,
+            "point.x.2": 0.25071,
+            "realization": 0
+          },
+          {
+            "distance": -6.18155,
+            "perturbation": 6,
+            "point.x.0": 0.253385,
+            "point.x.1": 0.245517,
+            "point.x.2": 0.254311,
+            "realization": 0
+          },
+          {
+            "distance": -0.186818,
+            "perturbation": 0,
+            "point.x.0": 0.248917,
+            "point.x.1": 0.251705,
+            "point.x.2": 0.250752,
+            "realization": 2
+          },
+          {
+            "distance": -0.191715,
+            "perturbation": 1,
+            "point.x.0": 0.241123,
+            "point.x.1": 0.24738,
+            "point.x.2": 0.253258,
+            "realization": 2
+          },
+          {
+            "distance": -0.19468,
+            "perturbation": 2,
+            "point.x.0": 0.240045,
+            "point.x.1": 0.243321,
+            "point.x.2": 0.252575,
+            "realization": 2
+          },
+          {
+            "distance": -0.192125,
+            "perturbation": 3,
+            "point.x.0": 0.247978,
+            "point.x.1": 0.250153,
+            "point.x.2": 0.242732,
+            "realization": 2
+          },
+          {
+            "distance": -0.18746,
+            "perturbation": 4,
+            "point.x.0": 0.248814,
+            "point.x.1": 0.251097,
+            "point.x.2": 0.250173,
+            "realization": 2
+          },
+          {
+            "distance": -0.189341,
+            "perturbation": 5,
+            "point.x.0": 0.245075,
+            "point.x.1": 0.256493,
+            "point.x.2": 0.244934,
+            "realization": 2
+          },
+          {
+            "distance": -0.188852,
+            "perturbation": 6,
+            "point.x.0": 0.246149,
+            "point.x.1": 0.258274,
+            "point.x.2": 0.243133,
+            "realization": 2
+          }
+        ]
+      }
     },
     {
       "batch": 1,
@@ -32,19 +317,304 @@
       "batch": 1,
       "event_type": "EverestBatchResultEvent",
       "everest_event": "FINISHED_OPTIMIZER_EVALUATION",
-      "result_type": "FunctionResult"
+      "result_type": "FunctionResult",
+      "results": null
     },
     {
       "batch": 1,
       "event_type": "EverestBatchResultEvent",
       "everest_event": "OPTIMIZATION_RESULT",
-      "result_type": "FunctionResult"
+      "result_type": "FunctionResult",
+      "results": {
+        "controls": {
+          "point.x.0": 0.259045,
+          "point.x.1": 0.137925,
+          "point.x.2": 0.173367
+        },
+        "objectives": {
+          "distance": -1.692818
+        },
+        "realization_objectives": [
+          {
+            "distance": -5.88373,
+            "realization": 0,
+            "simulation_id": 0
+          },
+          {
+            "distance": -0.295847,
+            "realization": 2,
+            "simulation_id": 1
+          }
+        ],
+        "total_objective_value": -1.692818
+      }
     },
     {
       "batch": 1,
       "event_type": "EverestBatchResultEvent",
       "everest_event": "OPTIMIZATION_RESULT",
-      "result_type": "GradientResult"
+      "result_type": "GradientResult",
+      "results": {
+        "constraint_gradient": [
+          {
+            "control_name": "point.x.0",
+            "x-0_coord": 1.00002
+          },
+          {
+            "control_name": "point.x.1",
+            "x-0_coord": 7e-6
+          },
+          {
+            "control_name": "point.x.2",
+            "x-0_coord": 0.000054
+          }
+        ],
+        "objective_gradient_values": [
+          {
+            "control_name": "point.x.0",
+            "distance": -0.522093,
+            "distance.total": -0.522093
+          },
+          {
+            "control_name": "point.x.1",
+            "distance": -0.285793,
+            "distance.total": -0.285793
+          },
+          {
+            "control_name": "point.x.2",
+            "distance": 0.648697,
+            "distance.total": 0.648697
+          }
+        ],
+        "perturbation_constraints": [
+          {
+            "perturbation": 0,
+            "point.x.0": 0.261585,
+            "point.x.1": 0.137195,
+            "point.x.2": 0.167676,
+            "realization": 0,
+            "x-0_coord": 0.261585
+          },
+          {
+            "perturbation": 1,
+            "point.x.0": 0.262252,
+            "point.x.1": 0.144173,
+            "point.x.2": 0.177764,
+            "realization": 0,
+            "x-0_coord": 0.262252
+          },
+          {
+            "perturbation": 2,
+            "point.x.0": 0.261507,
+            "point.x.1": 0.137099,
+            "point.x.2": 0.175814,
+            "realization": 0,
+            "x-0_coord": 0.261507
+          },
+          {
+            "perturbation": 3,
+            "point.x.0": 0.249489,
+            "point.x.1": 0.138548,
+            "point.x.2": 0.163826,
+            "realization": 0,
+            "x-0_coord": 0.249489
+          },
+          {
+            "perturbation": 4,
+            "point.x.0": 0.256554,
+            "point.x.1": 0.143355,
+            "point.x.2": 0.178644,
+            "realization": 0,
+            "x-0_coord": 0.256554
+          },
+          {
+            "perturbation": 5,
+            "point.x.0": 0.26018,
+            "point.x.1": 0.142675,
+            "point.x.2": 0.171331,
+            "realization": 0,
+            "x-0_coord": 0.26018
+          },
+          {
+            "perturbation": 6,
+            "point.x.0": 0.255473,
+            "point.x.1": 0.137913,
+            "point.x.2": 0.180035,
+            "realization": 0,
+            "x-0_coord": 0.255473
+          },
+          {
+            "perturbation": 0,
+            "point.x.0": 0.256588,
+            "point.x.1": 0.134853,
+            "point.x.2": 0.176538,
+            "realization": 2,
+            "x-0_coord": 0.256588
+          },
+          {
+            "perturbation": 1,
+            "point.x.0": 0.261832,
+            "point.x.1": 0.133836,
+            "point.x.2": 0.173103,
+            "realization": 2,
+            "x-0_coord": 0.261832
+          },
+          {
+            "perturbation": 2,
+            "point.x.0": 0.255116,
+            "point.x.1": 0.140014,
+            "point.x.2": 0.170331,
+            "realization": 2,
+            "x-0_coord": 0.255116
+          },
+          {
+            "perturbation": 3,
+            "point.x.0": 0.27045,
+            "point.x.1": 0.142482,
+            "point.x.2": 0.171775,
+            "realization": 2,
+            "x-0_coord": 0.27045
+          },
+          {
+            "perturbation": 4,
+            "point.x.0": 0.258134,
+            "point.x.1": 0.144063,
+            "point.x.2": 0.168911,
+            "realization": 2,
+            "x-0_coord": 0.258134
+          },
+          {
+            "perturbation": 5,
+            "point.x.0": 0.261031,
+            "point.x.1": 0.133394,
+            "point.x.2": 0.179889,
+            "realization": 2,
+            "x-0_coord": 0.261031
+          },
+          {
+            "perturbation": 6,
+            "point.x.0": 0.258075,
+            "point.x.1": 0.141921,
+            "point.x.2": 0.171398,
+            "realization": 2,
+            "x-0_coord": 0.258075
+          }
+        ],
+        "perturbation_objectives": [
+          {
+            "distance": -5.89403,
+            "perturbation": 0,
+            "point.x.0": 0.261585,
+            "point.x.1": 0.137195,
+            "point.x.2": 0.167676,
+            "realization": 0
+          },
+          {
+            "distance": -5.91267,
+            "perturbation": 1,
+            "point.x.0": 0.262252,
+            "point.x.1": 0.144173,
+            "point.x.2": 0.177764,
+            "realization": 0
+          },
+          {
+            "distance": -5.8881,
+            "perturbation": 2,
+            "point.x.0": 0.261507,
+            "point.x.1": 0.137099,
+            "point.x.2": 0.175814,
+            "realization": 0
+          },
+          {
+            "distance": -5.85856,
+            "perturbation": 3,
+            "point.x.0": 0.249489,
+            "point.x.1": 0.138548,
+            "point.x.2": 0.163826,
+            "realization": 0
+          },
+          {
+            "distance": -5.88937,
+            "perturbation": 4,
+            "point.x.0": 0.256554,
+            "point.x.1": 0.143355,
+            "point.x.2": 0.178644,
+            "realization": 0
+          },
+          {
+            "distance": -5.90464,
+            "perturbation": 5,
+            "point.x.0": 0.26018,
+            "point.x.1": 0.142675,
+            "point.x.2": 0.171331,
+            "realization": 0
+          },
+          {
+            "distance": -5.86682,
+            "perturbation": 6,
+            "point.x.0": 0.255473,
+            "point.x.1": 0.137913,
+            "point.x.2": 0.180035,
+            "realization": 0
+          },
+          {
+            "distance": -0.297209,
+            "perturbation": 0,
+            "point.x.0": 0.256588,
+            "point.x.1": 0.134853,
+            "point.x.2": 0.176538,
+            "realization": 2
+          },
+          {
+            "distance": -0.297662,
+            "perturbation": 1,
+            "point.x.0": 0.261832,
+            "point.x.1": 0.133836,
+            "point.x.2": 0.173103,
+            "realization": 2
+          },
+          {
+            "distance": -0.298239,
+            "perturbation": 2,
+            "point.x.0": 0.255116,
+            "point.x.1": 0.140014,
+            "point.x.2": 0.170331,
+            "realization": 2
+          },
+          {
+            "distance": -0.288244,
+            "perturbation": 3,
+            "point.x.0": 0.27045,
+            "point.x.1": 0.142482,
+            "point.x.2": 0.171775,
+            "realization": 2
+          },
+          {
+            "distance": -0.29481,
+            "perturbation": 4,
+            "point.x.0": 0.258134,
+            "point.x.1": 0.144063,
+            "point.x.2": 0.168911,
+            "realization": 2
+          },
+          {
+            "distance": -0.293977,
+            "perturbation": 5,
+            "point.x.0": 0.261031,
+            "point.x.1": 0.133394,
+            "point.x.2": 0.179889,
+            "realization": 2
+          },
+          {
+            "distance": -0.294727,
+            "perturbation": 6,
+            "point.x.0": 0.258075,
+            "point.x.1": 0.141921,
+            "point.x.2": 0.171398,
+            "realization": 2
+          }
+        ]
+      }
     },
     {
       "batch": 2,
@@ -55,19 +625,304 @@
       "batch": 2,
       "event_type": "EverestBatchResultEvent",
       "everest_event": "FINISHED_OPTIMIZER_EVALUATION",
-      "result_type": "FunctionResult"
+      "result_type": "FunctionResult",
+      "results": null
     },
     {
       "batch": 2,
       "event_type": "EverestBatchResultEvent",
       "everest_event": "OPTIMIZATION_RESULT",
-      "result_type": "FunctionResult"
+      "result_type": "FunctionResult",
+      "results": {
+        "controls": {
+          "point.x.0": 0.318636,
+          "point.x.1": 0.005044,
+          "point.x.2": 0.133852
+        },
+        "objectives": {
+          "distance": -1.735619
+        },
+        "realization_objectives": [
+          {
+            "distance": -5.70666,
+            "realization": 0,
+            "simulation_id": 0
+          },
+          {
+            "distance": -0.411939,
+            "realization": 2,
+            "simulation_id": 1
+          }
+        ],
+        "total_objective_value": -1.735619
+      }
     },
     {
       "batch": 2,
       "event_type": "EverestBatchResultEvent",
       "everest_event": "OPTIMIZATION_RESULT",
-      "result_type": "GradientResult"
+      "result_type": "GradientResult",
+      "results": {
+        "constraint_gradient": [
+          {
+            "control_name": "point.x.0",
+            "x-0_coord": 0.999987
+          },
+          {
+            "control_name": "point.x.1",
+            "x-0_coord": 3e-6
+          },
+          {
+            "control_name": "point.x.2",
+            "x-0_coord": 0.000025
+          }
+        ],
+        "objective_gradient_values": [
+          {
+            "control_name": "point.x.0",
+            "distance": -0.642813,
+            "distance.total": -0.642813
+          },
+          {
+            "control_name": "point.x.1",
+            "distance": -0.00522,
+            "distance.total": -0.00522
+          },
+          {
+            "control_name": "point.x.2",
+            "distance": 0.731527,
+            "distance.total": 0.731527
+          }
+        ],
+        "perturbation_constraints": [
+          {
+            "perturbation": 0,
+            "point.x.0": 0.3245,
+            "point.x.1": 0.010438,
+            "point.x.2": 0.132867,
+            "realization": 0,
+            "x-0_coord": 0.3245
+          },
+          {
+            "perturbation": 1,
+            "point.x.0": 0.321005,
+            "point.x.1": 0.010956,
+            "point.x.2": 0.133791,
+            "realization": 0,
+            "x-0_coord": 0.321005
+          },
+          {
+            "perturbation": 2,
+            "point.x.0": 0.3138,
+            "point.x.1": 0.004266,
+            "point.x.2": 0.131294,
+            "realization": 0,
+            "x-0_coord": 0.3138
+          },
+          {
+            "perturbation": 3,
+            "point.x.0": 0.312909,
+            "point.x.1": 0.00657,
+            "point.x.2": 0.133693,
+            "realization": 0,
+            "x-0_coord": 0.312909
+          },
+          {
+            "perturbation": 4,
+            "point.x.0": 0.315395,
+            "point.x.1": 0.009696,
+            "point.x.2": 0.139558,
+            "realization": 0,
+            "x-0_coord": 0.315395
+          },
+          {
+            "perturbation": 5,
+            "point.x.0": 0.323273,
+            "point.x.1": 0.004379,
+            "point.x.2": 0.140771,
+            "realization": 0,
+            "x-0_coord": 0.323273
+          },
+          {
+            "perturbation": 6,
+            "point.x.0": 0.325543,
+            "point.x.1": 0.008658,
+            "point.x.2": 0.136496,
+            "realization": 0,
+            "x-0_coord": 0.325543
+          },
+          {
+            "perturbation": 0,
+            "point.x.0": 0.322396,
+            "point.x.1": 0.006764,
+            "point.x.2": 0.136058,
+            "realization": 2,
+            "x-0_coord": 0.322396
+          },
+          {
+            "perturbation": 1,
+            "point.x.0": 0.323642,
+            "point.x.1": 0.00386,
+            "point.x.2": 0.139313,
+            "realization": 2,
+            "x-0_coord": 0.323642
+          },
+          {
+            "perturbation": 2,
+            "point.x.0": 0.326895,
+            "point.x.1": 0.002527,
+            "point.x.2": 0.130435,
+            "realization": 2,
+            "x-0_coord": 0.326895
+          },
+          {
+            "perturbation": 3,
+            "point.x.0": 0.318373,
+            "point.x.1": 0.000479,
+            "point.x.2": 0.139801,
+            "realization": 2,
+            "x-0_coord": 0.318373
+          },
+          {
+            "perturbation": 4,
+            "point.x.0": 0.324008,
+            "point.x.1": -0.00049,
+            "point.x.2": 0.136124,
+            "realization": 2,
+            "x-0_coord": 0.324008
+          },
+          {
+            "perturbation": 5,
+            "point.x.0": 0.318889,
+            "point.x.1": 0.001601,
+            "point.x.2": 0.127009,
+            "realization": 2,
+            "x-0_coord": 0.318889
+          },
+          {
+            "perturbation": 6,
+            "point.x.0": 0.319148,
+            "point.x.1": 0.006537,
+            "point.x.2": 0.130724,
+            "realization": 2,
+            "x-0_coord": 0.319148
+          }
+        ],
+        "perturbation_objectives": [
+          {
+            "distance": -5.74501,
+            "perturbation": 0,
+            "point.x.0": 0.3245,
+            "point.x.1": 0.010438,
+            "point.x.2": 0.132867,
+            "realization": 0
+          },
+          {
+            "distance": -5.73315,
+            "perturbation": 1,
+            "point.x.0": 0.321005,
+            "point.x.1": 0.010956,
+            "point.x.2": 0.133791,
+            "realization": 0
+          },
+          {
+            "distance": -5.68863,
+            "perturbation": 2,
+            "point.x.0": 0.3138,
+            "point.x.1": 0.004266,
+            "point.x.2": 0.131294,
+            "realization": 0
+          },
+          {
+            "distance": -5.69057,
+            "perturbation": 3,
+            "point.x.0": 0.312909,
+            "point.x.1": 0.00657,
+            "point.x.2": 0.133693,
+            "realization": 0
+          },
+          {
+            "distance": -5.70476,
+            "perturbation": 4,
+            "point.x.0": 0.315395,
+            "point.x.1": 0.009696,
+            "point.x.2": 0.139558,
+            "realization": 0
+          },
+          {
+            "distance": -5.71652,
+            "perturbation": 5,
+            "point.x.0": 0.323273,
+            "point.x.1": 0.004379,
+            "point.x.2": 0.140771,
+            "realization": 0
+          },
+          {
+            "distance": -5.74079,
+            "perturbation": 6,
+            "point.x.0": 0.325543,
+            "point.x.1": 0.008658,
+            "point.x.2": 0.136496,
+            "realization": 0
+          },
+          {
+            "distance": -0.407279,
+            "perturbation": 0,
+            "point.x.0": 0.322396,
+            "point.x.1": 0.006764,
+            "point.x.2": 0.136058,
+            "realization": 2
+          },
+          {
+            "distance": -0.407352,
+            "perturbation": 1,
+            "point.x.0": 0.323642,
+            "point.x.1": 0.00386,
+            "point.x.2": 0.139313,
+            "realization": 2
+          },
+          {
+            "distance": -0.414022,
+            "perturbation": 2,
+            "point.x.0": 0.326895,
+            "point.x.1": 0.002527,
+            "point.x.2": 0.130435,
+            "realization": 2
+          },
+          {
+            "distance": -0.412253,
+            "perturbation": 3,
+            "point.x.0": 0.318373,
+            "point.x.1": 0.000479,
+            "point.x.2": 0.139801,
+            "realization": 2
+          },
+          {
+            "distance": -0.41387,
+            "perturbation": 4,
+            "point.x.0": 0.324008,
+            "point.x.1": -0.00049,
+            "point.x.2": 0.136124,
+            "realization": 2
+          },
+          {
+            "distance": -0.420325,
+            "perturbation": 5,
+            "point.x.0": 0.318889,
+            "point.x.1": 0.001601,
+            "point.x.2": 0.127009,
+            "realization": 2
+          },
+          {
+            "distance": -0.412578,
+            "perturbation": 6,
+            "point.x.0": 0.319148,
+            "point.x.1": 0.006537,
+            "point.x.2": 0.130724,
+            "realization": 2
+          }
+        ]
+      }
     },
     {
       "batch": 3,
@@ -78,19 +933,304 @@
       "batch": 3,
       "event_type": "EverestBatchResultEvent",
       "everest_event": "FINISHED_OPTIMIZER_EVALUATION",
-      "result_type": "FunctionResult"
+      "result_type": "FunctionResult",
+      "results": null
     },
     {
       "batch": 3,
       "event_type": "EverestBatchResultEvent",
       "everest_event": "OPTIMIZATION_RESULT",
-      "result_type": "FunctionResult"
+      "result_type": "FunctionResult",
+      "results": {
+        "controls": {
+          "point.x.0": 0.241178,
+          "point.x.1": 0.030154,
+          "point.x.2": 0.245838
+        },
+        "objectives": {
+          "distance": -1.623675
+        },
+        "realization_objectives": [
+          {
+            "distance": -5.43767,
+            "realization": 0,
+            "simulation_id": 0
+          },
+          {
+            "distance": -0.352343,
+            "realization": 2,
+            "simulation_id": 1
+          }
+        ],
+        "total_objective_value": -1.623675
+      }
     },
     {
       "batch": 3,
       "event_type": "EverestBatchResultEvent",
       "everest_event": "OPTIMIZATION_RESULT",
-      "result_type": "GradientResult"
+      "result_type": "GradientResult",
+      "results": {
+        "constraint_gradient": [
+          {
+            "control_name": "point.x.0",
+            "x-0_coord": 1.000024
+          },
+          {
+            "control_name": "point.x.1",
+            "x-0_coord": -0.000046
+          },
+          {
+            "control_name": "point.x.2",
+            "x-0_coord": 8e-6
+          }
+        ],
+        "objective_gradient_values": [
+          {
+            "control_name": "point.x.0",
+            "distance": -0.472762,
+            "distance.total": -0.472762
+          },
+          {
+            "control_name": "point.x.1",
+            "distance": -0.078548,
+            "distance.total": -0.078548
+          },
+          {
+            "control_name": "point.x.2",
+            "distance": 0.515398,
+            "distance.total": 0.515398
+          }
+        ],
+        "perturbation_constraints": [
+          {
+            "perturbation": 0,
+            "point.x.0": 0.240638,
+            "point.x.1": 0.028777,
+            "point.x.2": 0.251171,
+            "realization": 0,
+            "x-0_coord": 0.240638
+          },
+          {
+            "perturbation": 1,
+            "point.x.0": 0.246333,
+            "point.x.1": 0.030129,
+            "point.x.2": 0.241685,
+            "realization": 0,
+            "x-0_coord": 0.246333
+          },
+          {
+            "perturbation": 2,
+            "point.x.0": 0.243841,
+            "point.x.1": 0.037831,
+            "point.x.2": 0.247716,
+            "realization": 0,
+            "x-0_coord": 0.243841
+          },
+          {
+            "perturbation": 3,
+            "point.x.0": 0.242721,
+            "point.x.1": 0.033672,
+            "point.x.2": 0.240693,
+            "realization": 0,
+            "x-0_coord": 0.242721
+          },
+          {
+            "perturbation": 4,
+            "point.x.0": 0.246157,
+            "point.x.1": 0.029976,
+            "point.x.2": 0.245812,
+            "realization": 0,
+            "x-0_coord": 0.246157
+          },
+          {
+            "perturbation": 5,
+            "point.x.0": 0.235528,
+            "point.x.1": 0.031005,
+            "point.x.2": 0.247275,
+            "realization": 0,
+            "x-0_coord": 0.235528
+          },
+          {
+            "perturbation": 6,
+            "point.x.0": 0.233017,
+            "point.x.1": 0.032398,
+            "point.x.2": 0.234876,
+            "realization": 0,
+            "x-0_coord": 0.233017
+          },
+          {
+            "perturbation": 0,
+            "point.x.0": 0.241773,
+            "point.x.1": 0.031525,
+            "point.x.2": 0.246873,
+            "realization": 2,
+            "x-0_coord": 0.241773
+          },
+          {
+            "perturbation": 1,
+            "point.x.0": 0.240129,
+            "point.x.1": 0.032753,
+            "point.x.2": 0.252147,
+            "realization": 2,
+            "x-0_coord": 0.240129
+          },
+          {
+            "perturbation": 2,
+            "point.x.0": 0.245971,
+            "point.x.1": 0.035034,
+            "point.x.2": 0.239113,
+            "realization": 2,
+            "x-0_coord": 0.245971
+          },
+          {
+            "perturbation": 3,
+            "point.x.0": 0.238301,
+            "point.x.1": 0.033491,
+            "point.x.2": 0.232049,
+            "realization": 2,
+            "x-0_coord": 0.238301
+          },
+          {
+            "perturbation": 4,
+            "point.x.0": 0.23809,
+            "point.x.1": 0.030466,
+            "point.x.2": 0.24261,
+            "realization": 2,
+            "x-0_coord": 0.23809
+          },
+          {
+            "perturbation": 5,
+            "point.x.0": 0.244367,
+            "point.x.1": 0.034342,
+            "point.x.2": 0.245287,
+            "realization": 2,
+            "x-0_coord": 0.244367
+          },
+          {
+            "perturbation": 6,
+            "point.x.0": 0.244028,
+            "point.x.1": 0.034103,
+            "point.x.2": 0.235455,
+            "realization": 2,
+            "x-0_coord": 0.244028
+          }
+        ],
+        "perturbation_objectives": [
+          {
+            "distance": -5.42889,
+            "perturbation": 0,
+            "point.x.0": 0.240638,
+            "point.x.1": 0.028777,
+            "point.x.2": 0.251171,
+            "realization": 0
+          },
+          {
+            "distance": -5.4577,
+            "perturbation": 1,
+            "point.x.0": 0.246333,
+            "point.x.1": 0.030129,
+            "point.x.2": 0.241685,
+            "realization": 0
+          },
+          {
+            "distance": -5.46955,
+            "perturbation": 2,
+            "point.x.0": 0.243841,
+            "point.x.1": 0.037831,
+            "point.x.2": 0.247716,
+            "realization": 0
+          },
+          {
+            "distance": -5.45647,
+            "perturbation": 3,
+            "point.x.0": 0.242721,
+            "point.x.1": 0.033672,
+            "point.x.2": 0.240693,
+            "realization": 0
+          },
+          {
+            "distance": -5.45451,
+            "perturbation": 4,
+            "point.x.0": 0.246157,
+            "point.x.1": 0.029976,
+            "point.x.2": 0.245812,
+            "realization": 0
+          },
+          {
+            "distance": -5.4199,
+            "perturbation": 5,
+            "point.x.0": 0.235528,
+            "point.x.1": 0.031005,
+            "point.x.2": 0.247275,
+            "realization": 0
+          },
+          {
+            "distance": -5.42188,
+            "perturbation": 6,
+            "point.x.0": 0.233017,
+            "point.x.1": 0.032398,
+            "point.x.2": 0.234876,
+            "realization": 0
+          },
+          {
+            "distance": -0.350224,
+            "perturbation": 0,
+            "point.x.0": 0.241773,
+            "point.x.1": 0.031525,
+            "point.x.2": 0.246873,
+            "realization": 2
+          },
+          {
+            "distance": -0.347284,
+            "perturbation": 1,
+            "point.x.0": 0.240129,
+            "point.x.1": 0.032753,
+            "point.x.2": 0.252147,
+            "realization": 2
+          },
+          {
+            "distance": -0.348786,
+            "perturbation": 2,
+            "point.x.0": 0.245971,
+            "point.x.1": 0.035034,
+            "point.x.2": 0.239113,
+            "realization": 2
+          },
+          {
+            "distance": -0.357915,
+            "perturbation": 3,
+            "point.x.0": 0.238301,
+            "point.x.1": 0.033491,
+            "point.x.2": 0.232049,
+            "realization": 2
+          },
+          {
+            "distance": -0.355309,
+            "perturbation": 4,
+            "point.x.0": 0.23809,
+            "point.x.1": 0.030466,
+            "point.x.2": 0.24261,
+            "realization": 2
+          },
+          {
+            "distance": -0.347065,
+            "perturbation": 5,
+            "point.x.0": 0.244367,
+            "point.x.1": 0.034342,
+            "point.x.2": 0.245287,
+            "realization": 2
+          },
+          {
+            "distance": -0.352566,
+            "perturbation": 6,
+            "point.x.0": 0.244028,
+            "point.x.1": 0.034103,
+            "point.x.2": 0.235455,
+            "realization": 2
+          }
+        ]
+      }
     },
     {
       "batch": 4,
@@ -101,19 +1241,304 @@
       "batch": 4,
       "event_type": "EverestBatchResultEvent",
       "everest_event": "FINISHED_OPTIMIZER_EVALUATION",
-      "result_type": "FunctionResult"
+      "result_type": "FunctionResult",
+      "results": null
     },
     {
       "batch": 4,
       "event_type": "EverestBatchResultEvent",
       "everest_event": "OPTIMIZATION_RESULT",
-      "result_type": "FunctionResult"
+      "result_type": "FunctionResult",
+      "results": {
+        "controls": {
+          "point.x.0": 0.150915,
+          "point.x.1": -0.003946,
+          "point.x.2": 0.369609
+        },
+        "objectives": {
+          "distance": -1.539793
+        },
+        "realization_objectives": [
+          {
+            "distance": -4.9807,
+            "realization": 0,
+            "simulation_id": 0
+          },
+          {
+            "distance": -0.392824,
+            "realization": 2,
+            "simulation_id": 1
+          }
+        ],
+        "total_objective_value": -1.539793
+      }
     },
     {
       "batch": 4,
       "event_type": "EverestBatchResultEvent",
       "everest_event": "OPTIMIZATION_RESULT",
-      "result_type": "GradientResult"
+      "result_type": "GradientResult",
+      "results": {
+        "constraint_gradient": [
+          {
+            "control_name": "point.x.0",
+            "x-0_coord": 0.999972
+          },
+          {
+            "control_name": "point.x.1",
+            "x-0_coord": 8e-6
+          },
+          {
+            "control_name": "point.x.2",
+            "x-0_coord": -6e-6
+          }
+        ],
+        "objective_gradient_values": [
+          {
+            "control_name": "point.x.0",
+            "distance": -0.303694,
+            "distance.total": -0.303694
+          },
+          {
+            "control_name": "point.x.1",
+            "distance": 0.023144,
+            "distance.total": 0.023144
+          },
+          {
+            "control_name": "point.x.2",
+            "distance": 0.258342,
+            "distance.total": 0.258342
+          }
+        ],
+        "perturbation_constraints": [
+          {
+            "perturbation": 0,
+            "point.x.0": 0.149173,
+            "point.x.1": -0.006382,
+            "point.x.2": 0.368969,
+            "realization": 0,
+            "x-0_coord": 0.149173
+          },
+          {
+            "perturbation": 1,
+            "point.x.0": 0.148923,
+            "point.x.1": -0.004645,
+            "point.x.2": 0.375421,
+            "realization": 0,
+            "x-0_coord": 0.148923
+          },
+          {
+            "perturbation": 2,
+            "point.x.0": 0.154842,
+            "point.x.1": -0.00211,
+            "point.x.2": 0.372767,
+            "realization": 0,
+            "x-0_coord": 0.154842
+          },
+          {
+            "perturbation": 3,
+            "point.x.0": 0.146431,
+            "point.x.1": -0.00295,
+            "point.x.2": 0.365675,
+            "realization": 0,
+            "x-0_coord": 0.146431
+          },
+          {
+            "perturbation": 4,
+            "point.x.0": 0.146139,
+            "point.x.1": -0.004733,
+            "point.x.2": 0.369839,
+            "realization": 0,
+            "x-0_coord": 0.146139
+          },
+          {
+            "perturbation": 5,
+            "point.x.0": 0.149327,
+            "point.x.1": -0.00524,
+            "point.x.2": 0.371308,
+            "realization": 0,
+            "x-0_coord": 0.149327
+          },
+          {
+            "perturbation": 6,
+            "point.x.0": 0.160831,
+            "point.x.1": -0.007108,
+            "point.x.2": 0.372311,
+            "realization": 0,
+            "x-0_coord": 0.160831
+          },
+          {
+            "perturbation": 0,
+            "point.x.0": 0.156217,
+            "point.x.1": -0.006156,
+            "point.x.2": 0.364033,
+            "realization": 2,
+            "x-0_coord": 0.156217
+          },
+          {
+            "perturbation": 1,
+            "point.x.0": 0.151929,
+            "point.x.1": -0.005568,
+            "point.x.2": 0.376604,
+            "realization": 2,
+            "x-0_coord": 0.151929
+          },
+          {
+            "perturbation": 2,
+            "point.x.0": 0.150267,
+            "point.x.1": -0.002664,
+            "point.x.2": 0.374463,
+            "realization": 2,
+            "x-0_coord": 0.150267
+          },
+          {
+            "perturbation": 3,
+            "point.x.0": 0.143898,
+            "point.x.1": -0.008875,
+            "point.x.2": 0.36521,
+            "realization": 2,
+            "x-0_coord": 0.143898
+          },
+          {
+            "perturbation": 4,
+            "point.x.0": 0.150056,
+            "point.x.1": -0.00174,
+            "point.x.2": 0.372822,
+            "realization": 2,
+            "x-0_coord": 0.150056
+          },
+          {
+            "perturbation": 5,
+            "point.x.0": 0.145294,
+            "point.x.1": -0.010955,
+            "point.x.2": 0.374826,
+            "realization": 2,
+            "x-0_coord": 0.145294
+          },
+          {
+            "perturbation": 6,
+            "point.x.0": 0.156554,
+            "point.x.1": -0.00517,
+            "point.x.2": 0.370801,
+            "realization": 2,
+            "x-0_coord": 0.156554
+          }
+        ],
+        "perturbation_objectives": [
+          {
+            "distance": -4.96784,
+            "perturbation": 0,
+            "point.x.0": 0.149173,
+            "point.x.1": -0.006382,
+            "point.x.2": 0.368969,
+            "realization": 0
+          },
+          {
+            "distance": -4.97055,
+            "perturbation": 1,
+            "point.x.0": 0.148923,
+            "point.x.1": -0.004645,
+            "point.x.2": 0.375421,
+            "realization": 0
+          },
+          {
+            "distance": -4.99837,
+            "perturbation": 2,
+            "point.x.0": 0.154842,
+            "point.x.1": -0.00211,
+            "point.x.2": 0.372767,
+            "realization": 0
+          },
+          {
+            "distance": -4.96994,
+            "perturbation": 3,
+            "point.x.0": 0.146431,
+            "point.x.1": -0.00295,
+            "point.x.2": 0.365675,
+            "realization": 0
+          },
+          {
+            "distance": -4.96254,
+            "perturbation": 4,
+            "point.x.0": 0.146139,
+            "point.x.1": -0.004733,
+            "point.x.2": 0.369839,
+            "realization": 0
+          },
+          {
+            "distance": -4.97115,
+            "perturbation": 5,
+            "point.x.0": 0.149327,
+            "point.x.1": -0.00524,
+            "point.x.2": 0.371308,
+            "realization": 0
+          },
+          {
+            "distance": -5.00339,
+            "perturbation": 6,
+            "point.x.0": 0.160831,
+            "point.x.1": -0.007108,
+            "point.x.2": 0.372311,
+            "realization": 0
+          },
+          {
+            "distance": -0.392868,
+            "perturbation": 0,
+            "point.x.0": 0.156217,
+            "point.x.1": -0.006156,
+            "point.x.2": 0.364033,
+            "realization": 2
+          },
+          {
+            "distance": -0.391979,
+            "perturbation": 1,
+            "point.x.0": 0.151929,
+            "point.x.1": -0.005568,
+            "point.x.2": 0.376604,
+            "realization": 2
+          },
+          {
+            "distance": -0.390744,
+            "perturbation": 2,
+            "point.x.0": 0.150267,
+            "point.x.1": -0.002664,
+            "point.x.2": 0.374463,
+            "realization": 2
+          },
+          {
+            "distance": -0.403931,
+            "perturbation": 3,
+            "point.x.0": 0.143898,
+            "point.x.1": -0.008875,
+            "point.x.2": 0.36521,
+            "realization": 2
+          },
+          {
+            "distance": -0.390378,
+            "perturbation": 4,
+            "point.x.0": 0.150056,
+            "point.x.1": -0.00174,
+            "point.x.2": 0.372822,
+            "realization": 2
+          },
+          {
+            "distance": -0.402559,
+            "perturbation": 5,
+            "point.x.0": 0.145294,
+            "point.x.1": -0.010955,
+            "point.x.2": 0.374826,
+            "realization": 2
+          },
+          {
+            "distance": -0.389844,
+            "perturbation": 6,
+            "point.x.0": 0.156554,
+            "point.x.1": -0.00517,
+            "point.x.2": 0.370801,
+            "realization": 2
+          }
+        ]
+      }
     },
     {
       "batch": 5,
@@ -124,19 +1549,304 @@
       "batch": 5,
       "event_type": "EverestBatchResultEvent",
       "everest_event": "FINISHED_OPTIMIZER_EVALUATION",
-      "result_type": "FunctionResult"
+      "result_type": "FunctionResult",
+      "results": null
     },
     {
       "batch": 5,
       "event_type": "EverestBatchResultEvent",
       "everest_event": "OPTIMIZATION_RESULT",
-      "result_type": "FunctionResult"
+      "result_type": "FunctionResult",
+      "results": {
+        "controls": {
+          "point.x.0": 0.114527,
+          "point.x.1": 0.00635,
+          "point.x.2": 0.388364
+        },
+        "objectives": {
+          "distance": -1.525619
+        },
+        "realization_objectives": [
+          {
+            "distance": -4.88825,
+            "realization": 0,
+            "simulation_id": 0
+          },
+          {
+            "distance": -0.404742,
+            "realization": 2,
+            "simulation_id": 1
+          }
+        ],
+        "total_objective_value": -1.525619
+      }
     },
     {
       "batch": 5,
       "event_type": "EverestBatchResultEvent",
       "everest_event": "OPTIMIZATION_RESULT",
-      "result_type": "GradientResult"
+      "result_type": "GradientResult",
+      "results": {
+        "constraint_gradient": [
+          {
+            "control_name": "point.x.0",
+            "x-0_coord": 0.999986
+          },
+          {
+            "control_name": "point.x.1",
+            "x-0_coord": -0.000013
+          },
+          {
+            "control_name": "point.x.2",
+            "x-0_coord": 0.0
+          }
+        ],
+        "objective_gradient_values": [
+          {
+            "control_name": "point.x.0",
+            "distance": -0.216561,
+            "distance.total": -0.216561
+          },
+          {
+            "control_name": "point.x.1",
+            "distance": -0.005788,
+            "distance.total": -0.005788
+          },
+          {
+            "control_name": "point.x.2",
+            "distance": 0.21722,
+            "distance.total": 0.21722
+          }
+        ],
+        "perturbation_constraints": [
+          {
+            "perturbation": 0,
+            "point.x.0": 0.101169,
+            "point.x.1": 0.008018,
+            "point.x.2": 0.379286,
+            "realization": 0,
+            "x-0_coord": 0.101169
+          },
+          {
+            "perturbation": 1,
+            "point.x.0": 0.104932,
+            "point.x.1": 0.00746,
+            "point.x.2": 0.385301,
+            "realization": 0,
+            "x-0_coord": 0.104932
+          },
+          {
+            "perturbation": 2,
+            "point.x.0": 0.116022,
+            "point.x.1": 0.002278,
+            "point.x.2": 0.391557,
+            "realization": 0,
+            "x-0_coord": 0.116022
+          },
+          {
+            "perturbation": 3,
+            "point.x.0": 0.12024,
+            "point.x.1": 0.007854,
+            "point.x.2": 0.38855,
+            "realization": 0,
+            "x-0_coord": 0.12024
+          },
+          {
+            "perturbation": 4,
+            "point.x.0": 0.11828,
+            "point.x.1": 0.004764,
+            "point.x.2": 0.393409,
+            "realization": 0,
+            "x-0_coord": 0.11828
+          },
+          {
+            "perturbation": 5,
+            "point.x.0": 0.120695,
+            "point.x.1": 0.008659,
+            "point.x.2": 0.384157,
+            "realization": 0,
+            "x-0_coord": 0.120695
+          },
+          {
+            "perturbation": 6,
+            "point.x.0": 0.114315,
+            "point.x.1": 0.011896,
+            "point.x.2": 0.396632,
+            "realization": 0,
+            "x-0_coord": 0.114315
+          },
+          {
+            "perturbation": 0,
+            "point.x.0": 0.115587,
+            "point.x.1": 0.006563,
+            "point.x.2": 0.396469,
+            "realization": 2,
+            "x-0_coord": 0.115587
+          },
+          {
+            "perturbation": 1,
+            "point.x.0": 0.118131,
+            "point.x.1": 0.005454,
+            "point.x.2": 0.387581,
+            "realization": 2,
+            "x-0_coord": 0.118131
+          },
+          {
+            "perturbation": 2,
+            "point.x.0": 0.099579,
+            "point.x.1": 0.009318,
+            "point.x.2": 0.383903,
+            "realization": 2,
+            "x-0_coord": 0.099579
+          },
+          {
+            "perturbation": 3,
+            "point.x.0": 0.111196,
+            "point.x.1": 0.005618,
+            "point.x.2": 0.386223,
+            "realization": 2,
+            "x-0_coord": 0.111196
+          },
+          {
+            "perturbation": 4,
+            "point.x.0": 0.12017,
+            "point.x.1": -0.002155,
+            "point.x.2": 0.389194,
+            "realization": 2,
+            "x-0_coord": 0.12017
+          },
+          {
+            "perturbation": 5,
+            "point.x.0": 0.120891,
+            "point.x.1": 0.000084,
+            "point.x.2": 0.388883,
+            "realization": 2,
+            "x-0_coord": 0.120891
+          },
+          {
+            "perturbation": 6,
+            "point.x.0": 0.119971,
+            "point.x.1": 0.01003,
+            "point.x.2": 0.390817,
+            "realization": 2,
+            "x-0_coord": 0.119971
+          }
+        ],
+        "perturbation_objectives": [
+          {
+            "distance": -4.85243,
+            "perturbation": 0,
+            "point.x.0": 0.101169,
+            "point.x.1": 0.008018,
+            "point.x.2": 0.379286,
+            "realization": 0
+          },
+          {
+            "distance": -4.8614,
+            "perturbation": 1,
+            "point.x.0": 0.104932,
+            "point.x.1": 0.00746,
+            "point.x.2": 0.385301,
+            "realization": 0
+          },
+          {
+            "distance": -4.88013,
+            "perturbation": 2,
+            "point.x.0": 0.116022,
+            "point.x.1": 0.002278,
+            "point.x.2": 0.391557,
+            "realization": 0
+          },
+          {
+            "distance": -4.91122,
+            "perturbation": 3,
+            "point.x.0": 0.12024,
+            "point.x.1": 0.007854,
+            "point.x.2": 0.38855,
+            "realization": 0
+          },
+          {
+            "distance": -4.89451,
+            "perturbation": 4,
+            "point.x.0": 0.11828,
+            "point.x.1": 0.004764,
+            "point.x.2": 0.393409,
+            "realization": 0
+          },
+          {
+            "distance": -4.91613,
+            "perturbation": 5,
+            "point.x.0": 0.120695,
+            "point.x.1": 0.008659,
+            "point.x.2": 0.384157,
+            "realization": 0
+          },
+          {
+            "distance": -4.90253,
+            "perturbation": 6,
+            "point.x.0": 0.114315,
+            "point.x.1": 0.011896,
+            "point.x.2": 0.396632,
+            "realization": 0
+          },
+          {
+            "distance": -0.401972,
+            "perturbation": 0,
+            "point.x.0": 0.115587,
+            "point.x.1": 0.006563,
+            "point.x.2": 0.396469,
+            "realization": 2
+          },
+          {
+            "distance": -0.403038,
+            "perturbation": 1,
+            "point.x.0": 0.118131,
+            "point.x.1": 0.005454,
+            "point.x.2": 0.387581,
+            "realization": 2
+          },
+          {
+            "distance": -0.414584,
+            "perturbation": 2,
+            "point.x.0": 0.099579,
+            "point.x.1": 0.009318,
+            "point.x.2": 0.383903,
+            "realization": 2
+          },
+          {
+            "distance": -0.408528,
+            "perturbation": 3,
+            "point.x.0": 0.111196,
+            "point.x.1": 0.005618,
+            "point.x.2": 0.386223,
+            "realization": 2
+          },
+          {
+            "distance": -0.408708,
+            "perturbation": 4,
+            "point.x.0": 0.12017,
+            "point.x.1": -0.002155,
+            "point.x.2": 0.389194,
+            "realization": 2
+          },
+          {
+            "distance": -0.405987,
+            "perturbation": 5,
+            "point.x.0": 0.120891,
+            "point.x.1": 0.000084,
+            "point.x.2": 0.388883,
+            "realization": 2
+          },
+          {
+            "distance": -0.396413,
+            "perturbation": 6,
+            "point.x.0": 0.119971,
+            "point.x.1": 0.01003,
+            "point.x.2": 0.390817,
+            "realization": 2
+          }
+        ]
+      }
     }
   ],
   "num_full_snapshots": 6

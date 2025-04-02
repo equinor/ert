@@ -5,26 +5,14 @@ import pathlib
 import shutil
 import sys
 from io import StringIO
-from unittest import mock
+from pathlib import Path
 
-import decorator
 import pytest
 
 from everest.bin.main import start_everest
 from everest.config import EverestConfig, ServerConfig
 from everest.detached import ServerStatus, everserver_status
 from everest.jobs import script_names
-from everest.util import has_opm
-
-
-def skipif_no_opm(function):
-    """Decorator to skip a test if opm is not available
-
-    If this decorator is used on a test, there should be a corresponding
-    test that verifies the expected behavior in case opm is not available
-    (use the hide_opm decorator)
-    """
-    return pytest.mark.skipif(not has_opm(), reason="OPM not found")(function)
 
 
 def skipif_no_everest_models(function):
@@ -32,16 +20,6 @@ def skipif_no_everest_models(function):
     spec = importlib.util.find_spec("everest_models")
     not_found = spec is None
     return pytest.mark.skipif(not_found, reason="everest-models not found")(function)
-
-
-def hide_opm(function):
-    """Decorator for faking that the opm module is not present"""
-
-    def wrapper(function, *args, **kwargs):
-        with mock.patch("everest.util.has_opm", return_value=False):
-            return function(*args, **kwargs)
-
-    return decorator.decorator(wrapper, function)
 
 
 def relpath(*path):
@@ -112,7 +90,12 @@ def everest_default_jobs(output_dir):
     return [
         (
             script_name,
-            os.path.join(output_dir, ".jobs", f"_{script_name}"),
+            (
+                os.path.join(output_dir, ".jobs", f"_{script_name}"),
+                Path(os.path.join(output_dir, ".jobs", f"_{script_name}")).read_text(
+                    encoding="utf-8"
+                ),
+            ),
         )
         for script_name in script_names
     ]
@@ -132,7 +115,7 @@ def create_cached_mocked_test_case(request, monkeypatch) -> pathlib.Path:
         monkeypatch.chdir(cache_path)
         shutil.copytree(config_path, "mocked_run")
         monkeypatch.chdir("mocked_run")
-        start_everest(["everest", "run", config_file])
+        start_everest(["everest", "run", config_file, "--skip-prompt"])
         config = EverestConfig.load_file(config_file)
         status = everserver_status(
             ServerConfig.get_everserver_status_path(config.output_dir)

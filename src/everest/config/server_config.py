@@ -2,7 +2,7 @@ import json
 import os
 from typing import Any
 
-from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
+from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 from ert.config.queue_config import (
     LocalQueueOptions,
@@ -10,7 +10,6 @@ from ert.config.queue_config import (
     SlurmQueueOptions,
     TorqueQueueOptions,
 )
-from ert.plugins import ErtPluginManager
 
 from ..strings import (
     CERTIFICATE_DIR,
@@ -37,15 +36,6 @@ class ServerConfig(BaseModel):
     model_config = ConfigDict(
         extra="forbid",
     )
-
-    @field_validator("queue_system", mode="before")
-    @classmethod
-    def default_local_queue(cls, v: dict[str, Any] | None) -> dict[str, Any] | None:
-        if v is None:
-            return v
-        elif "activate_script" not in v and ErtPluginManager().activate_script():
-            v["activate_script"] = ErtPluginManager().activate_script()
-        return v
 
     @model_validator(mode="before")
     @classmethod
@@ -89,10 +79,11 @@ class ServerConfig(BaseModel):
             data = json.loads(json_string)
             if set(data.keys()) != {"host", "port", "cert", "auth"}:
                 raise RuntimeError("Malformed hostfile")
-            return data
         except FileNotFoundError:
             # No host file
             return {"host": None, "port": None, "cert": None, "auth": None}
+        else:
+            return data
 
     @staticmethod
     def get_detached_node_dir(output_dir: str) -> str:

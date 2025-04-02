@@ -62,7 +62,7 @@ class FileDialog(QDialog):
             self._mb = QMessageBox(
                 QMessageBox.Icon.Critical,
                 "Error opening file",
-                error.strerror if error.strerror else "",
+                error.strerror or "",
                 QMessageBox.StandardButton.Ok,
                 self,
             )

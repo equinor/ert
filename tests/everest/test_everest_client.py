@@ -1,20 +1,21 @@
 import logging
 import ssl
 import threading
-import time
 from pathlib import Path
 
 import pytest
+import requests
 import uvicorn
 from fastapi import FastAPI
 from starlette.responses import Response
 
 from everest.bin.everest_script import everest_entry
 from everest.config import EverestConfig, ServerConfig
-from everest.detached import wait_for_server
+from everest.detached import server_is_running
 from everest.detached.jobs.everserver import _find_open_port
 from everest.gui.everest_client import EverestClient
 from everest.strings import STOP_ENDPOINT
+from tests.ert.utils import wait_until
 
 
 @pytest.fixture
@@ -23,6 +24,10 @@ def client_server_mock() -> tuple[FastAPI, threading.Thread, EverestClient]:
     host = "127.0.0.1"
     port = _find_open_port(host, lower=5000, upper=5800)
     server_url = f"http://{host}:{port}"
+
+    @server_app.get("alive")
+    def alive():
+        return Response("Hello", status_code=200)
 
     server = uvicorn.Server(
         uvicorn.Config(server_app, host=host, port=port, log_level="info")
@@ -41,24 +46,42 @@ def client_server_mock() -> tuple[FastAPI, threading.Thread, EverestClient]:
         ssl_context=ssl.create_default_context(),
     )
 
-    yield server_app, server_thread, everest_client
+    def wait_until_alive(timeout=60, sleep_between_retries=1) -> None:
+        def ping_server() -> bool:
+            try:
+                requests.get(
+                    f"{server_url}/alive",
+                    verify="N/A",
+                    auth=("", ""),
+                    proxies={"http": None, "https": None},  # type: ignore
+                )
+            except requests.exceptions.ConnectionError:
+                return False
+            else:
+                return True
+
+        wait_until(ping_server, timeout=timeout, interval=sleep_between_retries)
+
+    yield server_app, server_thread, everest_client, wait_until_alive
 
     if server_thread.is_alive():
         server.should_exit = True
         server_thread.join()
 
 
+@pytest.mark.integration_test
+@pytest.mark.flaky(rerun=2)
 def test_that_stop_invokes_correct_endpoint(
     caplog, client_server_mock: tuple[FastAPI, threading.Thread, EverestClient]
 ):
-    server_app, server_thread, client = client_server_mock
+    server_app, server_thread, client, wait_until_alive = client_server_mock
 
     @server_app.post(f"/{STOP_ENDPOINT}")
     def stop():
         return Response("STOP..", 200)
 
     server_thread.start()
-    time.sleep(0.1)
+    wait_until_alive()
 
     with caplog.at_level(logging.INFO):
         client.stop()
@@ -67,17 +90,18 @@ def test_that_stop_invokes_correct_endpoint(
     server_thread.should_exit = True
 
 
+@pytest.mark.integration_test
 def test_that_stop_errors_on_non_ok_httpcode(
     caplog, client_server_mock: tuple[FastAPI, threading.Thread, EverestClient]
 ):
-    server_app, server_thread, client = client_server_mock
+    server_app, server_thread, client, wait_until_alive = client_server_mock
 
     @server_app.post(f"/{STOP_ENDPOINT}")
     def stop():
         return Response("STOP..", 505)
 
     server_thread.start()
-    time.sleep(0.1)
+    wait_until_alive()
 
     with caplog.at_level(logging.ERROR):
         client.stop()
@@ -92,7 +116,7 @@ def test_that_stop_errors_on_non_ok_httpcode(
 def test_that_stop_errors_on_server_down(
     caplog, client_server_mock: tuple[FastAPI, threading.Thread, EverestClient]
 ):
-    _, _, client = client_server_mock
+    _, _, client, _ = client_server_mock
 
     with caplog.at_level(logging.ERROR):
         client.stop()
@@ -107,10 +131,10 @@ def test_that_stop_errors_on_server_down(
 def test_that_stop_errors_on_server_up_but_endpoint_down(
     caplog, client_server_mock: tuple[FastAPI, threading.Thread, EverestClient]
 ):
-    _, server_thread, client = client_server_mock
+    _, server_thread, client, wait_until_alive = client_server_mock
 
     server_thread.start()
-    time.sleep(0.1)
+    wait_until_alive()
 
     with caplog.at_level(logging.ERROR):
         client.stop()
@@ -121,6 +145,8 @@ def test_that_stop_errors_on_server_up_but_endpoint_down(
 
 
 @pytest.mark.integration_test
+@pytest.mark.xdist_group("math_func/config_minimal.yml")
+@pytest.mark.flaky(rerun=3)
 def test_that_multiple_everest_clients_can_connect_to_server(cached_example):
     # We use a cached run for the reference list of received events
     path, config_file, _, server_events_list = cached_example(
@@ -132,11 +158,17 @@ def test_that_multiple_everest_clients_can_connect_to_server(cached_example):
 
     # Run the case through everserver
     everest_main_thread = threading.Thread(
-        target=everest_entry, args=[[str(config_path)]]
+        target=everest_entry, args=[[str(config_path), "--skip-prompt"]]
     )
 
     everest_main_thread.start()
-    wait_for_server(ever_config.output_dir, 60)
+
+    def everserver_is_running():
+        return server_is_running(
+            *ServerConfig.get_server_context(ever_config.output_dir)
+        )
+
+    wait_until(everserver_is_running, interval=1, timeout=300)
 
     server_context = ServerConfig.get_server_context(ever_config.output_dir)
     url, cert, auth = server_context

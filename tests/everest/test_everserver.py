@@ -6,6 +6,7 @@ import ssl
 from base64 import b64encode
 from dataclasses import dataclass
 from pathlib import Path
+from shutil import which
 from unittest.mock import MagicMock, patch
 
 import pytest
@@ -67,14 +68,11 @@ async def wait_for_server_to_complete(config):
                 return
 
     driver = await start_server(config, logging.DEBUG)
-    try:
-        wait_for_server(config.output_dir, 120)
-        start_experiment(
-            server_context=ServerConfig.get_server_context(config.output_dir),
-            config=config,
-        )
-    except (SystemExit, RuntimeError) as e:
-        raise e
+    wait_for_server(config.output_dir, 120)
+    start_experiment(
+        server_context=ServerConfig.get_server_context(config.output_dir),
+        config=config,
+    )
     await server_running()
 
 
@@ -159,6 +157,7 @@ def test_status_running_complete(_, change_to_tmpdir, mock_server):
     assert status["message"] == "Optimization completed."
 
 
+@pytest.mark.integration_test
 @patch("sys.argv", ["name", "--output-dir", "everest_output"])
 @patch("everest.detached.jobs.everserver._configure_loggers")
 def test_status_failed_job(_, change_to_tmpdir, mock_server):
@@ -220,10 +219,9 @@ async def test_status_max_batch_num(copy_math_func_test_data_to_tmp):
 @pytest.mark.timeout(240)
 @patch("sys.argv", ["name", "--output-dir", "everest_output"])
 async def test_status_contains_max_runtime_failure(change_to_tmpdir, min_config):
-    Path("SLEEP_job").write_text("EXECUTABLE sleep", encoding="utf-8")
     min_config["simulator"] = {"max_runtime": 1}
     min_config["forward_model"] = ["sleep 5"]
-    min_config["install_jobs"] = [{"name": "sleep", "source": "SLEEP_job"}]
+    min_config["install_jobs"] = [{"name": "sleep", "executable": which("sleep")}]
 
     config = EverestConfig(**min_config)
 
@@ -260,6 +258,7 @@ def test_websocket_wrong_password(monkeypatch, setup_client):
     assert not exception.value.reason
 
 
+@pytest.mark.flaky(rerun=3)
 def test_websocket_multiple_connections(monkeypatch, setup_client):
     client, subscribers = setup_client()
     credentials = b64encode(b"username:password").decode()

@@ -1,3 +1,4 @@
+import json
 import os.path
 from pathlib import Path
 from unittest.mock import patch
@@ -5,16 +6,13 @@ from unittest.mock import patch
 import pytest
 
 from everest import util
-from everest.bin.utils import report_on_previous_run
+from everest.bin.utils import report_on_previous_run, show_scaled_controls_warning
 from everest.config import EverestConfig, ServerConfig
-from everest.config.everest_config import get_system_installed_jobs
 from everest.detached import ServerStatus
-from everest.strings import SERVER_STATUS
+from everest.strings import EVEREST, SERVER_STATUS
 from tests.everest.utils import (
     capture_streams,
-    hide_opm,
     relpath,
-    skipif_no_opm,
 )
 
 EGG_DATA = relpath(
@@ -22,30 +20,6 @@ EGG_DATA = relpath(
     "realizations/realization-0/eclipse/model/EGG.DATA",
 )
 SPE1_DATA = relpath("test_data/eclipse/SPE1.DATA")
-
-
-@skipif_no_opm
-def test_loadwells():
-    wells = util.read_wellnames(SPE1_DATA)
-    assert wells == ["PROD", "INJ"]
-
-
-@skipif_no_opm
-def test_loadgroups():
-    groups = util.read_groupnames(EGG_DATA)
-    assert {"FIELD", "PRODUC", "INJECT"} == set(groups)
-
-
-@hide_opm
-def test_loadwells_no_opm():
-    with pytest.raises(RuntimeError):
-        util.read_wellnames(SPE1_DATA)
-
-
-@hide_opm
-def test_loadgroups_no_opm():
-    with pytest.raises(RuntimeError):
-        util.read_groupnames(EGG_DATA)
 
 
 def test_get_values(change_to_tmpdir):
@@ -131,13 +105,6 @@ def test_get_everserver_status_path(copy_math_func_test_data_to_tmp):
     assert path == expected_path
 
 
-def test_get_system_installed_job_names():
-    job_names = get_system_installed_jobs()
-    assert job_names is not None
-    assert isinstance(job_names, list)
-    assert len(job_names) > 0
-
-
 @patch(
     "everest.bin.utils.everserver_status",
     return_value={"status": ServerStatus.failed, "message": "mock error"},
@@ -156,3 +123,169 @@ def test_report_on_previous_run(_, change_to_tmpdir):
         )
     lines = [line.strip() for line in out.getvalue().split("\n")]
     assert lines[0] == "Optimization run failed, with error: mock error"
+
+
+@pytest.mark.parametrize(
+    "user_reply, existing_value, result",
+    [
+        ("Y", True, False),
+        ("y", True, False),
+        ("N", True, True),
+        ("n", True, True),
+        ("NA", False, False),
+    ],
+)
+def test_show_scaled_controls_warning_user_info_file_present(
+    change_to_tmpdir, monkeypatch, user_reply, existing_value, result
+):
+    monkeypatch.setenv("HOME", os.getcwd())
+    if existing_value:
+        monkeypatch.setattr("builtins.input", lambda _: user_reply)
+
+    user_info = {EVEREST: {"show_scaling_warning": existing_value}}
+
+    with open(".ert", "w", encoding="utf-8") as f:
+        json.dump(user_info, f)
+    if user_reply.lower() == "n":
+        with pytest.raises(SystemExit):
+            show_scaled_controls_warning()
+    else:
+        show_scaled_controls_warning()
+    with open(".ert", encoding="utf-8") as f:
+        user_info = json.load(f)
+    assert user_info.get(EVEREST).get("show_scaling_warning") == result
+
+
+@pytest.mark.parametrize(
+    "user_reply, result",
+    [
+        ("Y", False),
+        ("y", False),
+        ("anything else", True),
+        ("", True),
+        ("N", True),
+        ("n", True),
+    ],
+)
+def test_show_scaled_controls_warning_no_user_info_file_present(
+    change_to_tmpdir, monkeypatch, user_reply, result
+):
+    monkeypatch.setenv("HOME", os.getcwd())
+    monkeypatch.setattr("builtins.input", lambda _: user_reply)
+
+    assert not Path(".ert").exists()
+
+    if user_reply.lower() == "n":
+        with pytest.raises(SystemExit):
+            show_scaled_controls_warning()
+    else:
+        show_scaled_controls_warning()
+
+    assert Path(".ert").exists()
+
+    with open(".ert", encoding="utf-8") as f:
+        user_info = json.load(f)
+
+    assert user_info.get(EVEREST), "Expected everest key"
+    assert user_info.get(EVEREST).get("show_scaling_warning") == result
+
+
+@pytest.mark.parametrize(
+    "user_reply, result",
+    [
+        ("Y", False),
+        ("y", False),
+        ("anything else", None),
+        ("", None),
+        ("N", None),
+        ("n", None),
+    ],
+)
+def test_show_scaled_controls_warning_error_reading_from_user_info(
+    change_to_tmpdir, monkeypatch, user_reply, result
+):
+    monkeypatch.setenv("HOME", os.getcwd())
+    monkeypatch.setattr("builtins.input", lambda _: user_reply)
+
+    Path(".ert").write_text("{ not valid json ", encoding="utf-8")
+
+    with (
+        pytest.raises(json.decoder.JSONDecodeError),
+        open(".ert", encoding="utf-8") as f,
+    ):
+        json.load(f)
+
+    if user_reply.lower() == "n":
+        with pytest.raises(SystemExit):
+            show_scaled_controls_warning()
+    elif user_reply.lower() == "y":
+        show_scaled_controls_warning()
+
+        with open(".ert", encoding="utf-8") as f:
+            user_info = json.load(f)
+        assert user_info.get(EVEREST).get("show_scaling_warning") == result
+    else:
+        show_scaled_controls_warning()
+
+
+@pytest.mark.parametrize(
+    "user_reply",
+    [
+        "Y",
+        "y",
+        "",
+        "N",
+        "n",
+        "anything else",
+    ],
+)
+def test_show_scaled_controls_warning_error_writing_user_info(
+    change_to_tmpdir, monkeypatch, user_reply
+):
+    monkeypatch.setenv("HOME", os.getcwd())
+    monkeypatch.setattr("builtins.input", lambda _: user_reply)
+
+    Path(".ert").touch()
+    os.chmod(Path(".ert"), 0o444)
+    if user_reply.lower() == "n":
+        with pytest.raises(SystemExit):
+            show_scaled_controls_warning()
+    elif user_reply.lower() == "y":
+        show_scaled_controls_warning()
+
+
+@pytest.mark.parametrize(
+    "user_reply, existing_value, result",
+    [
+        ("Y", True, False),
+        ("y", True, False),
+        ("N", True, True),
+        ("n", True, True),
+        ("NA", False, False),
+    ],
+)
+def test_show_scaled_controls_warning_preserves_extra_keys(
+    change_to_tmpdir, monkeypatch, user_reply, existing_value, result
+):
+    monkeypatch.setenv("HOME", os.getcwd())
+    if existing_value:
+        monkeypatch.setattr("builtins.input", lambda _: user_reply)
+
+    user_info = {
+        EVEREST: {"show_scaling_warning": existing_value},
+        "ert": {"test_key": 42},
+    }
+
+    with open(".ert", "w", encoding="utf-8") as f:
+        json.dump(user_info, f)
+
+    if user_reply.lower() == "n":
+        with pytest.raises(SystemExit):
+            show_scaled_controls_warning()
+    else:
+        show_scaled_controls_warning()
+
+    with open(".ert", encoding="utf-8") as f:
+        user_info = json.load(f)
+    assert user_info.get(EVEREST).get("show_scaling_warning") == result
+    assert user_info.get("ert").get("test_key") == 42

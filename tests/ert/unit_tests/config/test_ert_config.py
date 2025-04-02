@@ -10,6 +10,7 @@ from pathlib import Path
 from textwrap import dedent
 from unittest.mock import MagicMock
 
+import pandas as pd
 import pytest
 from hypothesis import HealthCheck, assume, given, settings
 from hypothesis import strategies as st
@@ -17,6 +18,7 @@ from pydantic import RootModel, TypeAdapter
 
 from ert.config import ConfigValidationError, ErtConfig, HookRuntime
 from ert.config.ert_config import _split_string_into_sections, create_forward_model_json
+from ert.config.forward_model_step import ForwardModelStep
 from ert.config.parsing import ConfigKeys, ConfigWarning
 from ert.config.parsing.context_values import (
     ContextBool,
@@ -29,6 +31,7 @@ from ert.config.parsing.context_values import (
 from ert.config.parsing.queue_system import QueueSystem
 from ert.plugins import ErtPluginManager
 from ert.shared import ert_share_path
+from tests.ert.ui_tests.cli.analysis.test_design_matrix import _create_design_matrix
 
 from .config_dict_generator import config_generators
 
@@ -789,18 +792,12 @@ def test_fm_step_config_via_plugin_ends_up_json_data(monkeypatch, anystring):
         "get_forward_model_configuration",
         MagicMock(return_value={"SOME_STEP": {"FOO": anystring}}),
     )
-    Path("SOME_STEP").write_text("EXECUTABLE /bin/ls", encoding="utf-8")
-    Path("config.ert").write_text(
-        dedent(
-            """
-            NUM_REALIZATIONS 1
-            INSTALL_JOB SOME_STEP SOME_STEP
-            FORWARD_MODEL SOME_STEP()
-            """
-        ),
-        encoding="utf-8",
+    ert_config = ErtConfig.with_plugins().from_dict(
+        {
+            "INSTALL_JOB": [["SOME_STEP", ("SOME_STEP", "EXECUTABLE fm_dispatch.py")]],
+            "FORWARD_MODEL": [["SOME_STEP"]],
+        }
     )
-    ert_config = ErtConfig.with_plugins().from_file("config.ert")
     step_json = create_forward_model_json(
         context=ert_config.substitutions,
         forward_model_steps=ert_config.forward_model_steps,
@@ -818,18 +815,14 @@ def test_fm_step_config_via_plugin_does_not_leak_to_other_step(monkeypatch):
         "get_forward_model_configuration",
         MagicMock(return_value={"SOME_STEP": {"FOO": "bar"}}),
     )
-    Path("SOME_OTHER_STEP").write_text("EXECUTABLE /bin/ls", encoding="utf-8")
-    Path("config.ert").write_text(
-        dedent(
-            """
-            NUM_REALIZATIONS 1
-            INSTALL_JOB SOME_OTHER_STEP SOME_OTHER_STEP
-            FORWARD_MODEL SOME_OTHER_STEP()
-            """
-        ),
-        encoding="utf-8",
+    ert_config = ErtConfig.with_plugins().from_dict(
+        {
+            "INSTALL_JOB": [
+                ["SOME_OTHER_STEP", ("SOME_OTHER_STEP", "EXECUTABLE fm_dispatch.py")]
+            ],
+            "FORWARD_MODEL": [["SOME_OTHER_STEP"]],
+        }
     )
-    ert_config = ErtConfig.with_plugins().from_file("config.ert")
     step_json = create_forward_model_json(
         context=ert_config.substitutions,
         forward_model_steps=ert_config.forward_model_steps,
@@ -848,18 +841,12 @@ def test_fm_step_config_via_plugin_has_key_names_uppercased(monkeypatch):
         "get_forward_model_configuration",
         MagicMock(return_value={"SOME_STEP": {"foo": "bar"}}),
     )
-    Path("SOME_STEP").write_text("EXECUTABLE /bin/ls", encoding="utf-8")
-    Path("config.ert").write_text(
-        dedent(
-            """
-            NUM_REALIZATIONS 1
-            INSTALL_JOB SOME_STEP SOME_STEP
-            FORWARD_MODEL SOME_STEP()
-            """
-        ),
-        encoding="utf-8",
+    ert_config = ErtConfig.with_plugins().from_dict(
+        {
+            "INSTALL_JOB": [["SOME_STEP", ("SOME_STEP", "EXECUTABLE fm_dispatch.py")]],
+            "FORWARD_MODEL": [["SOME_STEP"]],
+        }
     )
-    ert_config = ErtConfig.with_plugins().from_file("config.ert")
     step_json = create_forward_model_json(
         context=ert_config.substitutions,
         forward_model_steps=ert_config.forward_model_steps,
@@ -878,18 +865,12 @@ def test_fm_step_config_via_plugin_stringifies_python_objects(monkeypatch):
         "get_forward_model_configuration",
         MagicMock(return_value={"SOME_STEP": {"FOO": {"a_dict_as_value": 1}}}),
     )
-    Path("SOME_STEP").write_text("EXECUTABLE /bin/ls", encoding="utf-8")
-    Path("config.ert").write_text(
-        dedent(
-            """
-            NUM_REALIZATIONS 1
-            INSTALL_JOB SOME_STEP SOME_STEP
-            FORWARD_MODEL SOME_STEP()
-            """
-        ),
-        encoding="utf-8",
+    ert_config = ErtConfig.with_plugins().from_dict(
+        {
+            "INSTALL_JOB": [["SOME_STEP", ("SOME_STEP", "EXECUTABLE fm_dispatch.py")]],
+            "FORWARD_MODEL": [["SOME_STEP"]],
+        }
     )
-    ert_config = ErtConfig.with_plugins().from_file("config.ert")
     step_json = create_forward_model_json(
         context=ert_config.substitutions,
         forward_model_steps=ert_config.forward_model_steps,
@@ -914,19 +895,13 @@ def test_fm_step_config_via_plugin_is_overridden_by_setenv(monkeypatch):
             }
         ),
     )
-    Path("SOME_STEP").write_text("EXECUTABLE /bin/ls", encoding="utf-8")
-    Path("config.ert").write_text(
-        dedent(
-            """
-            NUM_REALIZATIONS 1
-            SETENV FOO bar_from_setenv
-            INSTALL_JOB SOME_STEP SOME_STEP
-            FORWARD_MODEL SOME_STEP()
-            """
-        ),
-        encoding="utf-8",
+    ert_config = ErtConfig.with_plugins().from_dict(
+        {
+            "INSTALL_JOB": [["SOME_STEP", ("SOME_STEP", "EXECUTABLE fm_dispatch.py")]],
+            "SETENV": [["FOO", "bar_from_setenv"]],
+            "FORWARD_MODEL": [["SOME_STEP"]],
+        }
     )
-    ert_config = ErtConfig.with_plugins().from_file("config.ert")
     step_json = create_forward_model_json(
         context=ert_config.substitutions,
         forward_model_steps=ert_config.forward_model_steps,
@@ -1474,26 +1449,25 @@ def test_parsing_workflow_with_multiple_args():
     assert ert_config is not None
 
 
-@pytest.mark.usefixtures("use_tmpdir")
-def test_validate_job_args_no_warning(caplog, recwarn):
+@pytest.mark.parametrize("parameter", ["<ECLBASE>", "<RUNPATH>"])
+def test_no_warning_given_when_using_parameters_defined_by_ert_in_forward_model_steps(
+    caplog, recwarn, parameter
+):
+    """
+    This is a regression test for a bug where users would get a warning when
+    they used the parameters <ECLBASE> or <RUNPATH> as these were defined
+    after the arguments to the forward model step was checked.
+
+    """
     caplog.set_level(logging.WARNING)
-
-    with open("job_file", "w", encoding="utf-8") as fout:
-        fout.write("EXECUTABLE echo\nARGLIST <ECLBASE> <RUNPATH>\n")
-
-    with open("config_file.ert", "w", encoding="utf-8") as fout:
-        # Write a minimal config file
-        fout.write("NUM_REALIZATIONS 1\n")
-        fout.write("INSTALL_JOB job_name job_file\n")
-        fout.write(
-            "FORWARD_MODEL job_name(<ECLBASE>=A/<ECLBASE>, <RUNPATH>=<RUNPATH>/x)\n"
-        )
-
-    ErtConfig.from_file("config_file.ert")
-
-    # Check no warning is logged when config contains
-    # forward model step with <ECLBASE> and <RUNPATH> as arguments
-    assert not caplog.text
+    ErtConfig.from_dict(
+        {
+            "INSTALL_JOB": [
+                ["name", ("file", f"EXECUTABLE echo\nARGLIST {parameter}")]
+            ],
+            "FORWARD_MODEL": [["name", [(f"{parameter}=", f"A/{parameter}")]]],
+        }
+    )
     for w in recwarn:
         assert not issubclass(w.category, ConfigWarning)
 
@@ -1503,16 +1477,17 @@ def test_validate_no_logs_when_overwriting_with_same_value(caplog):
     with open("step_file", "w", encoding="utf-8") as fout:
         fout.write("EXECUTABLE echo\nARGLIST <VAR1> <VAR2> <VAR3>\n")
 
-    with open("config_file.ert", "w", encoding="utf-8") as fout:
-        fout.write("NUM_REALIZATIONS 1\n")
-        fout.write("DEFINE <VAR1> 10\n")
-        fout.write("DEFINE <VAR2> 20\n")
-        fout.write("DEFINE <VAR3> 55\n")
-        fout.write("INSTALL_JOB step_name step_file\n")
-        fout.write("FORWARD_MODEL step_name(<VAR1>=10, <VAR2>=<VAR2>, <VAR3>=5)\n")
-
     with caplog.at_level(logging.INFO):
-        ert_config = ErtConfig.from_file("config_file.ert")
+        ert_config = ErtConfig.from_file_contents(
+            """
+            NUM_REALIZATIONS 1
+            DEFINE <VAR1> 10
+            DEFINE <VAR2> 20
+            DEFINE <VAR3> 55
+            INSTALL_JOB step_name step_file
+            FORWARD_MODEL step_name(<VAR1>=10, <VAR2>=<VAR2>, <VAR3>=5)
+            """
+        )
         create_forward_model_json(
             context=ert_config.substitutions,
             forward_model_steps=ert_config.forward_model_steps,
@@ -1602,43 +1577,58 @@ def test_that_context_types_are_json_serializable():
     assert isinstance(r["context_list"], list)
 
 
-@pytest.mark.usefixtures("copy_snake_oil_case")
 def test_no_timemap_or_refcase_provides_clear_error():
-    with fileinput.input("snake_oil.ert", inplace=True) as fin:
-        for line in fin:
-            if line.startswith("REFCASE"):
-                continue
-            if line.startswith("TIME_MAP"):
-                continue
-            print(line, end="")
-
-    with fileinput.input("observations/observations.txt", inplace=True) as fin:
-        for line in fin:
-            if line.startswith("HISTORY_OBSERVATION"):
-                continue
-            print(line, end="")
-
     with pytest.raises(
         ConfigValidationError,
-        match="Missing REFCASE or TIME_MAP for observations: WPR_DIFF_1",
+        match="Missing REFCASE or TIME_MAP for observations: GDO",
     ):
-        ErtConfig.from_file("snake_oil.ert")
+        ErtConfig.from_dict(
+            {
+                "GEN_DATA": [["GD", {"RESULT_FILE": "%d", "REPORT_STEPS": "1"}]],
+                "OBS_CONFIG": (
+                    "obs_config",
+                    """
+                    GENERAL_OBSERVATION GDO {
+                       DATA       = GD;
+                       INDEX_LIST = 0;
+                       DATE       = 2015-06-13;
+                       VALUE      = 0.0;
+                       ERROR      = 0.1;
+                    };
+                    """,
+                ),
+            }
+        )
 
 
-@pytest.mark.usefixtures("copy_snake_oil_case")
 def test_that_multiple_errors_are_shown_when_validating_observation_config():
-    with fileinput.input("observations/observations.txt", inplace=True) as fin:
-        for line_number, line in enumerate(fin, 1):
-            if line_number in {13, 32}:
-                continue
-            print(line, end="")
-
     with pytest.raises(ConfigValidationError) as err:
-        _ = ErtConfig.from_file("snake_oil.ert")
+        ErtConfig.from_dict(
+            {
+                "GEN_DATA": [["GD", {"RESULT_FILE": "%d", "REPORT_STEPS": "1"}]],
+                "OBS_CONFIG": (
+                    "obs_config",
+                    """
+                    SUMMARY_OBSERVATION SUM1
+                    {
+                        VALUE   = 0.7;
+                        ERROR   = 0.07;
+                        DATE    = 2010-12-26;
+                    };
 
+                    SUMMARY_OBSERVATION SUM2
+                    {
+                        ERROR   = 0.05;
+                        DATE    = 2011-12-21;
+                        KEY     = WOPR:OP1;
+                    };
+                    """,
+                ),
+            }
+        )
     expected_errors = [
-        'Line 11 (Column 21-32): Missing item "VALUE" in WOPR_OP1_36',
-        'Line 26 (Column 21-33): Missing item "KEY" in WOPR_OP1_108',
+        'Line 2 (Column 41-45): Missing item "KEY" in SUM1',
+        'Line 9 (Column 41-45): Missing item "VALUE" in SUM2',
     ]
 
     for error in expected_errors:
@@ -1780,22 +1770,16 @@ def test_general_option_in_local_config_has_priority_over_site_config():
     assert config.queue_config.queue_system == QueueSystem.TORQUE
 
 
-@pytest.mark.usefixtures("use_tmpdir")
 def test_warning_raised_when_summary_key_and_no_simulation_job_present():
-    with open("job_file", "w", encoding="utf-8") as fout:
-        fout.write("EXECUTABLE echo\nARGLIST <ECLBASE> <RUNPATH>\n")
-
-    with open("config_file.ert", "w", encoding="utf-8") as fout:
-        # Write a minimal config file
-        fout.write("NUM_REALIZATIONS 1\n")
-        fout.write("SUMMARY *\n")
-        fout.write("ECLBASE RESULT_SUMMARY\n")
-        fout.write("INSTALL_JOB job_name job_file\n")
-        fout.write(
-            "FORWARD_MODEL job_name(<ECLBASE>=A/<ECLBASE>, <RUNPATH>=<RUNPATH>/x)\n"
-        )
     with warnings.catch_warnings(record=True) as all_warnings:
-        ErtConfig.from_file("config_file.ert")
+        ErtConfig.from_dict(
+            {
+                "SUMMARY": ["*"],
+                "ECLBASE": "RESULT_SUMMARY",
+                "INSTALL_JOB": [["name", ("file", "EXECUTABLE echo")]],
+                "FORWARD_MODEL": [["name"]],
+            }
+        )
 
     assert any(
         str(w.message)
@@ -1806,33 +1790,28 @@ def test_warning_raised_when_summary_key_and_no_simulation_job_present():
 
 
 @pytest.mark.parametrize(
-    "job_name, key",
+    "job_name",
     [
-        ("eclipse", "FORWARD_MODEL"),
-        ("eclipse100", "FORWARD_MODEL"),
-        ("flow", "FORWARD_MODEL"),
-        ("FLOW", "FORWARD_MODEL"),
-        ("ECLIPSE100", "FORWARD_MODEL"),
+        "eclipse",
+        "eclipse100",
+        "flow",
+        "FLOW",
+        "ECLIPSE100",
     ],
 )
 @pytest.mark.usefixtures("use_tmpdir")
-def test_no_warning_when_summary_key_and_simulation_job_present(job_name, key):
-    with open("job_file", "w", encoding="utf-8") as fout:
-        fout.write("EXECUTABLE echo\nARGLIST <ECLBASE> <RUNPATH>\n")
-
-    with open("config_file.ert", "w", encoding="utf-8") as fout:
-        # Write a minimal config file
-        fout.write("NUM_REALIZATIONS 1\n")
-        fout.write("SUMMARY *\n")
-        fout.write("ECLBASE RESULT_SUMMARY\n")
-
-        fout.write(f"INSTALL_JOB {job_name} job_file\n")
-        fout.write(f"{key} {job_name} (<ECLBASE>=A/<ECLBASE>, <RUNPATH>=<RUNPATH>/x)\n")
-    # Check no warning is logged when config contains
+def test_no_warning_when_summary_key_and_simulation_job_present(job_name):
     # forward model step with <ECLBASE> and <RUNPATH> as arguments
     with warnings.catch_warnings():
         warnings.simplefilter("error", category=ConfigWarning)
-        ErtConfig.from_file("config_file.ert")
+        ErtConfig.from_dict(
+            {
+                "SUMMARY": ["*"],
+                "ECLBASE": "RESULT_SUMMARY",
+                "INSTALL_JOB": [[job_name, ("file", "EXECUTABLE echo")]],
+                "FORWARD_MODEL": [[job_name]],
+            }
+        )
 
 
 def test_warning_is_emitted_when_malformatted_runpath():
@@ -1991,3 +1970,184 @@ def test_parsing_define_within_workflow():
 
     assert ert_config.substitutions["<FOO>"] == "ertconfig_foo"
     assert ert_config.substitutions["<FOO2>"] == "ertconfig_foo2"
+
+
+def test_design2params_also_validates_design_matrix(tmp_path, caplog, monkeypatch):
+    design_matrix_file = tmp_path / "my_design_matrix.xlsx"
+    _create_design_matrix(
+        design_matrix_file,
+        pd.DataFrame(
+            {
+                "REAL": ["not_a_valid_real"],
+                "a": [1],
+                "category": ["cat1"],
+            }
+        ),
+        pd.DataFrame([["b", 1], ["c", 2]]),
+    )
+    mock_design2params = ForwardModelStep(
+        "DESIGN2PARAMS",
+        "/usr/bin/env",
+        arglist=["<IENS>", "<xls_filename>", "<designsheet>", "<defaultssheet>"],
+    )
+    monkeypatch.setattr(
+        ErtConfig,
+        "PREINSTALLED_FORWARD_MODEL_STEPS",
+        {"DESIGN2PARAMS": mock_design2params},
+    )
+    ErtConfig.from_file_contents(
+        f"NUM_REALIZATIONS 1\nFORWARD_MODEL DESIGN2PARAMS(<xls_filename>={design_matrix_file}, <designsheet>=DesignSheet,<defaultssheet>=DefaultSheet)"
+    )
+    assert "DESIGN_MATRIX validation of DESIGN2PARAMS" in caplog.text
+
+
+def test_two_design2params_validates_design_matrix_merging(
+    tmp_path, caplog, monkeypatch
+):
+    design_matrix_file = tmp_path / "my_design_matrix.xlsx"
+    design_matrix_file2 = tmp_path / "my_design_matrix2.xlsx"
+    _create_design_matrix(
+        design_matrix_file,
+        pd.DataFrame(
+            {
+                "REAL": [0, 1],
+                "letters": ["x", "y"],
+            }
+        ),
+        pd.DataFrame([["a", 1], ["c", 2]]),
+    )
+    _create_design_matrix(
+        design_matrix_file2,
+        pd.DataFrame({"REAL": [1, 2], "numbers": [99, 98]}),
+        pd.DataFrame(),
+    )
+    mock_design2params = ForwardModelStep(
+        "DESIGN2PARAMS",
+        "/usr/bin/env",
+        arglist=["<IENS>", "<xls_filename>", "<designsheet>", "<defaultssheet>"],
+    )
+    monkeypatch.setattr(
+        ErtConfig,
+        "PREINSTALLED_FORWARD_MODEL_STEPS",
+        {"DESIGN2PARAMS": mock_design2params},
+    )
+    ErtConfig.from_file_contents(
+        f"""\
+            NUM_REALIZATIONS 1
+            FORWARD_MODEL DESIGN2PARAMS(<xls_filename>={design_matrix_file}, <designsheet>=DesignSheet,<defaultssheet>=DefaultSheet)
+            FORWARD_MODEL DESIGN2PARAMS(<xls_filename>={design_matrix_file2}, <designsheet>=DesignSheet,<defaultssheet>=DefaultSheet)
+            """
+    )
+    assert (
+        f"Design matrix merging would have failed due to: Design Matrices '{design_matrix_file.name} (DesignSheet DefaultSheet)' "
+        f"and '{design_matrix_file2.name} (DesignSheet DefaultSheet)' do not have the same active realizations"
+        in caplog.text
+    )
+
+
+def test_three_design2params_validates_design_matrix_merging(
+    tmp_path, caplog, monkeypatch
+):
+    design_matrix_file = tmp_path / "my_design_matrix.xlsx"
+    design_matrix_file2 = tmp_path / "my_design_matrix2.xlsx"
+    design_matrix_file3 = tmp_path / "my_design_matrix3.xlsx"
+    _create_design_matrix(
+        design_matrix_file,
+        pd.DataFrame(
+            {
+                "REAL": [0, 1],
+                "letters": ["x", "y"],
+            }
+        ),
+        pd.DataFrame([["a", 1], ["c", 2]]),
+    )
+    _create_design_matrix(
+        design_matrix_file2,
+        pd.DataFrame(
+            {
+                "REAL": [0, 1],
+                "weirdly": ["x", "y"],
+            }
+        ),
+        pd.DataFrame([["b", 1], ["d", 2]]),
+    )
+    _create_design_matrix(
+        design_matrix_file3,
+        pd.DataFrame({"REAL": [1, 2], "numbers": [99, 98]}),
+        pd.DataFrame(),
+    )
+    mock_design2params = ForwardModelStep(
+        "DESIGN2PARAMS",
+        "/usr/bin/env",
+        arglist=["<IENS>", "<xls_filename>", "<designsheet>", "<defaultssheet>"],
+    )
+    monkeypatch.setattr(
+        ErtConfig,
+        "PREINSTALLED_FORWARD_MODEL_STEPS",
+        {"DESIGN2PARAMS": mock_design2params},
+    )
+    ErtConfig.from_file_contents(
+        f"""\
+            NUM_REALIZATIONS 1
+            FORWARD_MODEL DESIGN2PARAMS(<xls_filename>={design_matrix_file}, <designsheet>=DesignSheet,<defaultssheet>=DefaultSheet)
+            FORWARD_MODEL DESIGN2PARAMS(<xls_filename>={design_matrix_file2}, <designsheet>=DesignSheet,<defaultssheet>=DefaultSheet)
+            FORWARD_MODEL DESIGN2PARAMS(<xls_filename>={design_matrix_file3}, <designsheet>=DesignSheet,<defaultssheet>=DefaultSheet)
+            """
+    )
+    assert (
+        f"Design matrix merging would have failed due to: Design Matrices '{design_matrix_file.name} (DesignSheet DefaultSheet)' "
+        f"and '{design_matrix_file3.name} (DesignSheet DefaultSheet)' do not have the same active realizations"
+        in caplog.text
+    )
+
+
+def test_design_matrix_default_argument(tmp_path):
+    design_matrix_file = tmp_path / "my_design_matrix.xlsx"
+    _create_design_matrix(
+        design_matrix_file,
+        pd.DataFrame(
+            {
+                "REAL": [1],
+                "a": [1],
+                "category": ["cat1"],
+            }
+        ),
+        pd.DataFrame([["b", 1], ["c", 2]]),
+    )
+
+    config = ErtConfig.from_file_contents(
+        f"NUM_REALIZATIONS 1\nDESIGN_MATRIX {design_matrix_file}"
+    )
+    assert config.analysis_config.design_matrix
+    assert config.analysis_config.design_matrix.design_sheet == "DesignSheet"
+    assert config.analysis_config.design_matrix.default_sheet == None
+
+
+@pytest.mark.usefixtures("use_tmpdir")
+def test_run_template_raises_configvalidationerror_with_more_than_two_arguments():
+    Path("template.txt").touch()
+    Path("input.txt").touch()
+    with pytest.raises(
+        ConfigValidationError, match="RUN_TEMPLATE must have maximum 2 arguments"
+    ):
+        ErtConfig.from_file_contents(
+            dedent(
+                """\
+            NUM_REALIZATIONS 1
+            RUN_TEMPLATE template.txt input.txt excess_argument
+            """
+            )
+        )
+
+
+def test_queue_options_are_joined_after_option_name():
+    assert (
+        ErtConfig.from_file_contents(
+            """
+            NUM_REALIZATIONS 1
+            QUEUE_SYSTEM LSF
+            QUEUE_OPTION LSF LSF_RESOURCE select[bigmachine && Linux]
+            """
+        ).queue_config.queue_options.lsf_resource
+        == "select[bigmachine && Linux]"
+    )

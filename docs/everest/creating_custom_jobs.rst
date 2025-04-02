@@ -13,16 +13,9 @@ The standard template to install a job inside the config file is as follows:
     install_jobs:
     -
         name: <name used inside config>
-        source: <path to job config file>
+        executable: <path to job executable>
 
-Where the job config file is a file calls a python file. These scripts generally only contain one line:
-
-.. code-block:: bash
-
-    EXECUTABLE <python_file_path>.py
-
-This file should point to the location of the python file relative to the job config file.
-In this case the python file is next to the script.
+Where the `executable` field may be an absolute path, or relative to the location of the config file.
 
 --------
 Examples

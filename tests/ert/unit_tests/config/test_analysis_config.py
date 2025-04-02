@@ -1,3 +1,4 @@
+import logging
 import os.path
 from textwrap import dedent
 
@@ -15,6 +16,7 @@ from ert.config import (
 from ert.config.parsing import ConfigKeys, ConfigWarning
 
 
+@pytest.mark.integration_test
 def test_analysis_config_from_file_is_same_as_from_dict(monkeypatch, tmp_path):
     with pd.ExcelWriter(tmp_path / "my_design_matrix.xlsx") as xl_write:
         design_matrix_df = pd.DataFrame(
@@ -49,11 +51,57 @@ def test_analysis_config_from_file_is_same_as_from_dict(monkeypatch, tmp_path):
             ConfigKeys.DESIGN_MATRIX: [
                 [
                     os.path.abspath("my_design_matrix.xlsx"),
-                    "DESIGN_SHEET:my_sheet",
-                    "DEFAULT_SHEET:my_default_sheet",
+                    {
+                        "DESIGN_SHEET": "my_sheet",
+                        "DEFAULT_SHEET": "my_default_sheet",
+                    },
                 ]
             ],
         }
+    )
+
+
+def test_merging_ignores_identical_design_matrices(tmp_path, monkeypatch, caplog):
+    caplog.set_level(logging.WARNING)
+    with pd.ExcelWriter(tmp_path / "my_design_matrix.xlsx") as xl_write:
+        design_matrix_df = pd.DataFrame(
+            {
+                "REAL": [0, 1, 2],
+                "a": [1, 2, 3],
+                "b": [0, 2, 0],
+            }
+        )
+        default_sheet_df = pd.DataFrame()
+        design_matrix_df.to_excel(xl_write, index=False, sheet_name="my_sheet")
+        default_sheet_df.to_excel(
+            xl_write, index=False, sheet_name="my_default_sheet", header=False
+        )
+    monkeypatch.chdir(tmp_path)
+    AnalysisConfig.from_dict(
+        {
+            ConfigKeys.NUM_REALIZATIONS: 3,
+            ConfigKeys.DESIGN_MATRIX: [
+                [
+                    "my_design_matrix.xlsx",
+                    {
+                        "DESIGN_SHEET": "my_sheet",
+                        "DEFAULT_SHEET": "my_default_sheet",
+                    },
+                ],
+                [
+                    "my_design_matrix.xlsx",
+                    {
+                        "DESIGN_SHEET": "my_sheet",
+                        "DEFAULT_SHEET": "my_default_sheet",
+                    },
+                ],
+            ],
+        }
+    )
+    assert (
+        "Duplicate DESIGN_MATRIX entries DesignMatrix(xls_filename=PosixPath('my_design_matrix.xlsx'), "
+        "design_sheet='my_sheet', default_sheet='my_default_sheet'), only reading once."
+        in caplog.text
     )
 
 
@@ -114,39 +162,11 @@ def test_invalid_design_matrix_format_raises_validation_error():
                 ConfigKeys.DESIGN_MATRIX: [
                     [
                         "my_matrix.txt",
-                        "DESIGN_SHEET:sheet1",
-                        "DEFAULT_SHEET:sheet2",
+                        {
+                            "DESIGN_SHEET": "sheet1",
+                            "DEFAULT_SHEET": "sheet2",
+                        },
                     ],
-                ],
-            }
-        )
-
-
-def test_design_matrix_without_design_sheet_raises_validation_error():
-    with pytest.raises(ConfigValidationError, match="Missing required DESIGN_SHEET"):
-        AnalysisConfig.from_dict(
-            {
-                ConfigKeys.DESIGN_MATRIX: [
-                    [
-                        "my_matrix.xlsx",
-                        "DESIGN_:design",
-                        "DEFAULT_SHEET:default",
-                    ]
-                ],
-            }
-        )
-
-
-def test_design_matrix_without_default_sheet_raises_validation_error():
-    with pytest.raises(ConfigValidationError, match="Missing required DEFAULT_SHEET"):
-        AnalysisConfig.from_dict(
-            {
-                ConfigKeys.DESIGN_MATRIX: [
-                    [
-                        "my_matrix.xlsx",
-                        "DESIGN_SHEET:design",
-                        "DEFAULT_:default",
-                    ]
                 ],
             }
         )

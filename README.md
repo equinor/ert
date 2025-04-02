@@ -12,9 +12,8 @@
 ert - Ensemble based Reservoir Tool - is designed for running
 ensembles of dynamical models such as reservoir models,
 in order to do sensitivity analysis and data assimilation.
-ert supports data assimilation using the Ensemble Smoother (ES),
-Ensemble Smoother with Multiple Data Assimilation (ES-MDA) and
-Iterative Ensemble Smoother (IES).
+ert supports data assimilation using the Ensemble Smoother (ES) and
+Ensemble Smoother with Multiple Data Assimilation (ES-MDA).
 
 ## Installation
 

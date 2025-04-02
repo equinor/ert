@@ -584,7 +584,7 @@ async def test_that_bsub_will_retry_and_fail(
     driver._sleep_time_between_cmd_retries = 0.0
     match_str = (
         f"failed after 2 attempts with exit code {exit_code}.*"
-        f'error: "{error_msg if error_msg else "<empty>"}"'
+        f'error: "{error_msg or "<empty>"}"'
         if exit_code != 199
         else 'failed with exit code 199.*error: "Not recognized"'
     )
@@ -1028,6 +1028,7 @@ async def test_bjobs_exec_host_logs_only_once(tmp_path, job_name, caplog):
     assert caplog.text.count("was assigned to host:") == 1
 
 
+@pytest.mark.integration_test
 async def test_lsf_stdout_file(tmp_path, job_name):
     os.chdir(tmp_path)
     driver = LsfDriver()
@@ -1043,6 +1044,7 @@ async def test_lsf_stdout_file(tmp_path, job_name):
     assert "yay" in lsf_stdout
 
 
+@pytest.mark.integration_test
 async def test_lsf_dumps_stderr_to_file(tmp_path, job_name):
     os.chdir(tmp_path)
     driver = LsfDriver()

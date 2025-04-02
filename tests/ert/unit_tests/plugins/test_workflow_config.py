@@ -4,12 +4,15 @@ from unittest.mock import Mock
 import pytest
 
 import ert
+import ert.config.workflow_job
+from ert import ErtScript
 from ert.plugins import workflow_config
+from ert.plugins.workflow_config import WorkflowConfigs
 
 
 def test_workflow_config_duplicate_log_message(caplog, monkeypatch):
     def get_mock_config():
-        workflow_mock = Mock(spec=workflow_config.ErtScriptWorkflow)
+        workflow_mock = Mock(spec=ert.config.workflow_job.ErtScriptWorkflow)
         workflow_mock.name = "same_name"
         return workflow_mock
 
@@ -28,11 +31,10 @@ def test_workflow_config_duplicate_log_message(caplog, monkeypatch):
     "name, expected", [(None, "default_name"), ("some_name", "some_name")]
 )
 def test_workflow_config_init_name(monkeypatch, name, expected):
-    mock_func = Mock
+    mock_func = ErtScript
     mock_func.__name__ = "default_name"
-
-    monkeypatch.setattr(ert.config.workflow_job.WorkflowJob, "__post_init__", Mock())
-    workflow = workflow_config.ErtScriptWorkflow(mock_func, name=name)
+    configs = WorkflowConfigs()
+    workflow = configs.add_workflow(ert_script=mock_func, name=name)
 
     assert workflow.name == expected
     assert workflow.ert_script == mock_func

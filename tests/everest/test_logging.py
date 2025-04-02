@@ -27,7 +27,7 @@ def test_logging_setup(copy_math_func_test_data_to_tmp):
 
     # start_server() loads config based on config_path, so we need to actually overwrite it
     everest_config.dump("config_minimal.yml")
-    start_everest(["everest", "run", "config_minimal.yml"])
+    start_everest(["everest", "run", "config_minimal.yml", "--skip-prompt"])
 
     everest_output_path = os.path.join(os.getcwd(), "everest_output")
     everest_logs_dir_path = everest_config.log_dir
@@ -42,7 +42,9 @@ def test_logging_setup(copy_math_func_test_data_to_tmp):
     assert os.path.exists(everest_log_path)
     assert os.path.exists(endpoint_log_path)
 
-    assert "everest DEBUG:" in Path(everest_log_path).read_text(encoding="utf-8")
+    assert "everest.detached.jobs.everserver INFO: Output directory:" in Path(
+        everest_log_path
+    ).read_text(encoding="utf-8")
     assert "Process exited with status code 1" in Path(
         forward_model_log_path
     ).read_text(encoding="utf-8")

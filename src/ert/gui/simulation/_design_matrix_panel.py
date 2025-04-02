@@ -1,11 +1,15 @@
 from typing import TYPE_CHECKING
 
 import pandas as pd
+from PyQt6.QtCore import Qt
 from PyQt6.QtGui import QStandardItem, QStandardItemModel
 from PyQt6.QtWidgets import (
+    QApplication,
     QDialog,
     QHBoxLayout,
+    QLabel,
     QPushButton,
+    QStyle,
     QTableView,
     QVBoxLayout,
     QWidget,
@@ -45,10 +49,7 @@ class DesignMatrixPanel(QDialog):
 
     @staticmethod
     def create_model(design_matrix_df: pd.DataFrame) -> QStandardItemModel:
-        if isinstance(design_matrix_df.columns, pd.MultiIndex):
-            header_labels = [str(col[-1]) for col in design_matrix_df.columns]
-        else:
-            header_labels = design_matrix_df.columns.astype(str).tolist()
+        header_labels = design_matrix_df.columns.astype(str).tolist()
 
         model = QStandardItemModel()
         model.setHorizontalHeaderLabels(header_labels)
@@ -58,6 +59,7 @@ class DesignMatrixPanel(QDialog):
                 for col in design_matrix_df.columns
             ]
             model.appendRow(items)
+        model.setVerticalHeaderLabels(design_matrix_df.index.astype(str).tolist())
         return model
 
     @staticmethod
@@ -73,7 +75,10 @@ class DesignMatrixPanel(QDialog):
 
     @staticmethod
     def get_design_matrix_button(
-        active_realizations_field: StringBox, design_matrix: "DesignMatrix"
+        active_realizations_field: StringBox,
+        design_matrix: "DesignMatrix",
+        number_of_realizations_label: QLabel,
+        ensemble_size: int,
     ) -> QHBoxLayout:
         active_realizations_field.setValidator(
             RangeSubsetStringArgument(ActiveRange(design_matrix.active_realizations))
@@ -92,5 +97,32 @@ class DesignMatrixPanel(QDialog):
         show_dm_param_button.clicked.connect(
             lambda: DesignMatrixPanel.show_dm_params(design_matrix)
         )
+        dm_num_reals = len(design_matrix.active_realizations)
+        if dm_num_reals != ensemble_size:
+            number_of_realizations_label.setText(f"<b>{dm_num_reals}</b>")
+            parent_widget = number_of_realizations_label.parent()
+
+            if isinstance(parent_widget, QWidget) and (
+                layout := parent_widget.layout()
+            ):
+                warning_icon = QLabel()
+                warning_icon.setObjectName(
+                    "warning_icon_num_realizations_design_matrix"
+                )
+                style = QApplication.style()
+                if style is not None:
+                    warning_icon.setPixmap(
+                        style.standardIcon(
+                            QStyle.StandardPixmap.SP_MessageBoxWarning
+                        ).pixmap(16, 16)
+                    )
+                layout.addWidget(warning_icon)
+                layout.setSpacing(2)
+                layout.setAlignment(Qt.AlignmentFlag.AlignLeft)
+
+                warning_icon.setToolTip(
+                    f"Number of realizations changed from {ensemble_size} to {dm_num_reals} due to 'REAL' column in design matrix"
+                )
+                warning_icon.show()
 
         return button_layout

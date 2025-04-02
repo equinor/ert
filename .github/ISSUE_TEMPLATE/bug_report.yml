@@ -22,7 +22,7 @@ body:
   - type: textarea
     id: reproduce
     attributes:
-      label: steps to reproduce
+      label: Steps to reproduce
       description: Detailed desription of how to reproduce the failure.
       render: Python
     validations:
@@ -35,12 +35,12 @@ body:
       description: |
         Please check of the environments where this behavior has been observed.
       options:
-        - label: python 3.11
-        - label: python 3.12
-        - label: macosx
-        - label: rhel7
-        - label: rhel8
-        - label: local queue
-        - label: lsf queue
-        - label: slurm queue
-        - label: openPBS queue
+        - label: Python 3.11
+        - label: Python 3.12
+        - label: macOS
+        - label: RHEL8
+        - label: RHEL9
+        - label: Local queue
+        - label: LSF queue
+        - label: Slurm queue
+        - label: OpenPBS queue

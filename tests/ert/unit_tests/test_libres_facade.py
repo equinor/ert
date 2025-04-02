@@ -1,4 +1,3 @@
-import logging
 from datetime import datetime, timedelta
 from textwrap import dedent
 
@@ -54,33 +53,12 @@ def test_keyword_type_checks_missing_key(snake_oil_default_storage):
 @pytest.mark.filterwarnings("ignore:.*Use load_responses.*:DeprecationWarning")
 def test_data_fetching_missing_key(empty_case):
     data = [
-        empty_case.load_all_summary_data(["nokey"]),
         empty_case.load_all_gen_kw_data("nokey", None),
     ]
 
     for dataframe in data:
         assert isinstance(dataframe, DataFrame)
         assert dataframe.empty
-
-
-@pytest.mark.filterwarnings("ignore:.*Use load_responses.*:DeprecationWarning")
-def test_summary_data_verify_indices_and_values(
-    caplog, snake_oil_default_storage, snapshot
-):
-    with caplog.at_level(logging.WARNING):
-        data = snake_oil_default_storage.load_all_summary_data(["FOPR"])
-        data = data.unstack(level="Realization")
-        snapshot.assert_match(
-            data.iloc[:5].to_csv(),
-            "summary_head.csv",
-        )
-        snapshot.assert_match(
-            data.iloc[-5:].to_csv(),
-            "summary_tail.csv",
-        )
-
-        assert data.shape == (200, 5)
-        assert "contains duplicate timestamps" not in caplog.text
 
 
 @pytest.mark.usefixtures("use_tmpdir")
@@ -98,44 +76,6 @@ def test_gen_kw_log_appended_extra():
         fh.writelines("MY_KEYWORD <MY_KEYWORD>")
     with open("prior.txt", "w", encoding="utf-8") as fh:
         fh.writelines("MY_KEYWORD LOGNORMAL 1 2")
-
-
-@pytest.mark.filterwarnings("ignore:.*Use load_responses.*:DeprecationWarning")
-def test_summary_collector(
-    monkeypatch, snake_oil_case_storage, snake_oil_default_storage, snapshot
-):
-    monkeypatch.setenv("TZ", "CET")  # The ert_statoil case was generated in CET
-
-    data = snake_oil_default_storage.load_all_summary_data()
-    data = data.drop(["TIME"], axis=1)
-    snapshot.assert_match(
-        data.iloc[:4].round(4).to_csv(),
-        "summary_collector_1.csv",
-    )
-    assert data.shape == (1000, 44)
-    with pytest.raises(KeyError):
-        # realization 60:
-        _ = data.loc[60]
-
-    data = snake_oil_default_storage.load_all_summary_data(["WWCT:OP1", "WWCT:OP2"])
-    snapshot.assert_match(data.iloc[:4].to_csv(), "summary_collector_2.csv")
-    assert data.shape == (1000, 2)
-    with pytest.raises(KeyError):
-        _ = data["FOPR"]
-
-    realization_index = 4
-    data = snake_oil_default_storage.load_all_summary_data(
-        ["WWCT:OP1", "WWCT:OP2"],
-        realization_index=realization_index,
-    )
-    snapshot.assert_match(data.iloc[:4].to_csv(), "summary_collector_3.csv")
-    assert data.shape == (200, 2)
-    non_existing_realization_index = 150
-    with pytest.raises(IndexError):
-        _ = snake_oil_default_storage.load_all_summary_data(
-            ["WWCT:OP1", "WWCT:OP2"],
-            realization_index=non_existing_realization_index,
-        )
 
 
 def test_misfit_collector(snake_oil_case_storage, snake_oil_default_storage, snapshot):
@@ -276,11 +216,11 @@ def test_save_parameters_to_storage_from_design_dataframe(
     c_values = np.random.default_rng().uniform(-5, 5, 10)
     design_matrix_df = DataFrame({"a": a_values, "b": b_values, "c": c_values})
     with ExcelWriter(design_path) as xl_write:
-        design_matrix_df.to_excel(xl_write, index=False, sheet_name="DesignSheet01")
+        design_matrix_df.to_excel(xl_write, index=False, sheet_name="DesignSheet")
         DataFrame().to_excel(
-            xl_write, index=False, sheet_name="DefaultValues", header=False
+            xl_write, index=False, sheet_name="DefaultSheet", header=False
         )
-    design_matrix = DesignMatrix(design_path, "DesignSheet01", "DefaultValues")
+    design_matrix = DesignMatrix(design_path, "DesignSheet", "DefaultSheet")
     with open_storage(tmp_path / "storage", mode="w") as storage:
         experiment_id = storage.create_experiment(
             parameters=[design_matrix.parameter_configuration]

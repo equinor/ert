@@ -137,11 +137,12 @@ class Client:
                     await asyncio.wait_for(
                         self._ack_event.wait(), timeout=self._ack_timeout
                     )
-                    return
                 except TimeoutError:
                     logger.warning(
                         f"{self.dealer_id} failed to get acknowledgment on the {message!r}. Resending."
                     )
+                else:
+                    return
             except zmq.ZMQError as exc:
                 logger.debug(
                     f"{self.dealer_id} connection to evaluator went down, reconnecting: {exc}"

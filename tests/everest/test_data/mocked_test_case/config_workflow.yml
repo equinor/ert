@@ -28,7 +28,7 @@ optimization:
 install_jobs:
   -
     name: failure_filter
-    source: jobs/FAILURE_FILTER
+    executable: jobs/failure_filter.py
 
 install_workflow_jobs:
   -

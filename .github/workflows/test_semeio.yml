@@ -9,6 +9,7 @@ on: [pull_request]
 
 env:
   UV_FROZEN: true
+  OMP_NUM_THREADS: 1
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -17,7 +18,7 @@ concurrency:
 jobs:
   test-semeio:
     name: Test Semeio
-    timeout-minutes: 40
+    timeout-minutes: 20
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false

@@ -350,6 +350,7 @@ def test_find_unsmry(paths_to_touch, basepath, expectation):
         assert str(run_reservoirsimulator.find_unsmry(Path(basepath))) == expectation
 
 
+@pytest.mark.integration_test
 @pytest.mark.usefixtures("use_tmpdir")
 def test_await_completed_summary_file_will_timeout_on_missing_smry():
     assert (
@@ -361,6 +362,7 @@ def test_await_completed_summary_file_will_timeout_on_missing_smry():
     )
 
 
+@pytest.mark.integration_test
 @pytest.mark.usefixtures("use_tmpdir")
 def test_await_completed_summary_file_will_return_asap():
     resfo.write("FOO.UNSMRY", [("INTEHEAD", np.array([1], dtype=np.int32))])

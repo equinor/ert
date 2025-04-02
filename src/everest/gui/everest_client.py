@@ -18,7 +18,6 @@ from ert.ensemble_evaluator import EvaluatorServerConfig
 from ert.run_models import BaseRunModelAPI
 from ert.run_models.event import StatusEvents, status_event_from_json
 from everest.strings import (
-    OPT_PROGRESS_ENDPOINT,
     START_EXPERIMENT_ENDPOINT,
     STOP_ENDPOINT,
 )
@@ -41,7 +40,6 @@ class EverestClient:
         self._password = password
         self._ssl_context = ssl_context
 
-        self._progress_endpoint = "/".join([url, OPT_PROGRESS_ENDPOINT])
         self._stop_endpoint = "/".join([url, STOP_ENDPOINT])
         self._start_endpoint = "/".join([url, START_EXPERIMENT_ENDPOINT])
 
@@ -93,9 +91,7 @@ class EverestClient:
 
         return event_queue, monitor_thread
 
-    def create_run_model_api(
-        self, queue_system: str, runpath_format_string: str
-    ) -> BaseRunModelAPI:
+    def create_run_model_api(self, runpath_format_string: str) -> BaseRunModelAPI:
         def start_fn(
             evaluator_server_config: EvaluatorServerConfig, restart: bool = False
         ) -> None:
@@ -103,7 +99,6 @@ class EverestClient:
 
         return BaseRunModelAPI(
             experiment_name="Everest Experiment",
-            queue_system=queue_system,
             runpath_format_string=runpath_format_string,
             support_restart=False,
             start_simulations_thread=start_fn,

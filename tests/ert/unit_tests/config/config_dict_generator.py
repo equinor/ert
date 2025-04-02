@@ -1,12 +1,13 @@
 import contextlib
 import datetime
+import operator
 import os
 import os.path
 import stat
 from collections import defaultdict
-from dataclasses import dataclass, fields
+from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Literal
+from typing import Any, Literal, get_args, get_origin
 from warnings import filterwarnings
 
 import hypothesis.strategies as st
@@ -127,37 +128,52 @@ queue_systems_and_options = {
 
 def valid_queue_options(queue_system: str):
     return [
-        field.name.upper()
-        for field in fields(
-            queue_systems_and_options[QueueSystemWithGeneric(queue_system)]
-        )
-        if field.name != "name"
+        name.upper()
+        for name in queue_systems_and_options[
+            QueueSystemWithGeneric(queue_system)
+        ].model_fields
+        if name != "name"
     ]
+
+
+def has_base_type(
+    field_type, base_type: type[int] | bool | type[str] | type[float]
+) -> bool:
+    if field_type is base_type:
+        return True
+    origin = get_origin(field_type)
+    if origin:
+        args = get_args(field_type)
+        if any(arg is base_type for arg in args):
+            return True
+        return any(has_base_type(arg, base_type) for arg in args)
+    return False
 
 
 queue_options_by_type: dict[str, dict[str, list[str]]] = defaultdict(dict)
 for system, options in queue_systems_and_options.items():
     queue_options_by_type["string"][system.name] = [
-        field.name.upper()
-        for field in fields(options)
-        if ("String" in field.type or "str" in field.type)
-        and "memory" not in field.name
+        name.upper()
+        for name, field in options.model_fields.items()
+        if has_base_type(field.annotation, str) and "memory" not in name
     ]
     queue_options_by_type["bool"][system.name] = [
-        field.name.upper() for field in fields(options) if field.type == "bool"
+        name.upper()
+        for name, field in options.model_fields.items()
+        if has_base_type(field.annotation, bool)
     ]
     queue_options_by_type["posint"][system.name] = [
-        field.name.upper()
-        for field in fields(options)
-        if "PositiveInt" in field.type or "NonNegativeInt" in field.type
+        name.upper()
+        for name, field in options.model_fields.items()
+        if has_base_type(field.annotation, int)
     ]
     queue_options_by_type["posfloat"][system.name] = [
-        field.name.upper()
-        for field in fields(options)
-        if "NonNegativeFloat" in field.type or "PositiveFloat" in field.type
+        name.upper()
+        for name, field in options.model_fields.items()
+        if has_base_type(field.annotation, float)
     ]
     queue_options_by_type["memory"][system.name] = [
-        field.name.upper() for field in fields(options) if "memory" in field.name
+        name.upper() for name in options.model_fields if "memory" in name
     ]
 
 
@@ -263,13 +279,13 @@ class ErtConfigValues:
     jobname: str | None
     runpath: str
     enspath: str
-    time_map: str
+    time_map: tuple[str, str]
     obs_config: str
     history_source: HistorySource
     refcase: str
     gen_kw_export_name: str
-    field: list[tuple[str, ...]]
-    gen_data: list[tuple[str, ...]]
+    field: list[tuple[str, str, str, dict[str, str]]]
+    gen_data: list[tuple[str, dict[str, str]]]
     max_submit: PositiveInt
     num_cpu: PositiveInt
     queue_system: Literal["LSF", "LOCAL", "TORQUE", "SLURM"]
@@ -284,7 +300,6 @@ class ErtConfigValues:
     refcase_smspec: Smspec
     refcase_unsmry: Unsmry
     egrid: EGrid
-    datetimes: list[datetime.datetime]
 
     def to_config_dict(self, config_file, cwd, all_defines=True):
         result = {
@@ -308,7 +323,10 @@ class ErtConfigValues:
             ConfigKeys.RUNPATH: self.runpath,
             ConfigKeys.ENSPATH: self.enspath,
             ConfigKeys.TIME_MAP: self.time_map,
-            ConfigKeys.OBS_CONFIG: self.obs_config,
+            ConfigKeys.OBS_CONFIG: (
+                self.obs_config,
+                "\n".join(str(o) for o in self.observations),
+            ),
             ConfigKeys.HISTORY_SOURCE: self.history_source,
             ConfigKeys.REFCASE: self.refcase,
             ConfigKeys.GEN_KW_EXPORT_NAME: self.gen_kw_export_name,
@@ -319,7 +337,16 @@ class ErtConfigValues:
             ConfigKeys.QUEUE_SYSTEM: self.queue_system,
             ConfigKeys.QUEUE_OPTION: self.queue_option,
             ConfigKeys.ANALYSIS_SET_VAR: self.analysis_set_var,
-            ConfigKeys.INSTALL_JOB: self.install_job,
+            ConfigKeys.INSTALL_JOB: [
+                (
+                    name,
+                    (
+                        fn,
+                        f"EXECUTABLE script/{name}.exe\nMIN_ARG 0\nMAX_ARG 1\n",
+                    ),
+                )
+                for name, fn in self.install_job
+            ],
             ConfigKeys.INSTALL_JOB_DIRECTORY: self.install_job_directory,
             ConfigKeys.RANDOM_SEED: self.random_seed,
             ConfigKeys.SETENV: self.setenv,
@@ -387,11 +414,15 @@ def ert_config_values(draw, use_eclbase=booleans):
         small_list(
             st.tuples(
                 st.builds(lambda x: f"GEN_DATA-{x}", words),
-                st.builds(lambda x: f"RESULT_FILE:{x}", format_result_file_name),
-                st.just("INPUT_FORMAT:ASCII"),
-                st.builds(lambda x: f"REPORT_STEPS:{x}", report_steps()),
+                st.fixed_dictionaries(
+                    {
+                        "RESULT_FILE": format_result_file_name,
+                        "INPUT_FORMAT": st.just("ASCII"),
+                        "REPORT_STEPS": report_steps(),
+                    }
+                ),
             ),
-            unique_by=lambda tup: tup[0],
+            unique_by=operator.itemgetter(0),
         )
     )
     sum_keys = draw(small_list(summary_variables(), min_size=1))
@@ -461,7 +492,10 @@ def ert_config_values(draw, use_eclbase=booleans):
             ),
             runpath=st.just("runpath-" + draw(format_runpath_file_name)),
             enspath=st.just(draw(words) + ".enspath"),
-            time_map=st.builds(lambda fn: fn + ".timemap", file_names),
+            time_map=st.tuples(
+                st.builds(lambda fn: fn + ".timemap", file_names),
+                st.just("\n".join(dt.date().isoformat() for dt in dates)),
+            ),
             obs_config=st.just("obs-config-" + draw(file_names)),
             history_source=st.just(HistorySource.REFCASE_SIMULATED),
             refcase=st.just("refcase/" + draw(file_names)),
@@ -471,14 +505,18 @@ def ert_config_values(draw, use_eclbase=booleans):
                     st.builds(lambda w: "FIELD-" + w, words),
                     st.just("PARAMETER"),
                     field_output_names(),
-                    st.builds(lambda x: f"FORWARD_INIT:{x}", booleans),
-                    st.builds(lambda x: f"INIT_TRANSFORM:{x}", transforms),
-                    st.builds(lambda x: f"OUTPUT_TRANSFORM:{x}", transforms),
-                    st.builds(lambda x: f"MIN:{x}", small_floats),
-                    st.builds(lambda x: f"MAX:{x}", small_floats),
-                    st.builds(lambda x: f"INIT_FILES:{x}", file_names),
+                    st.fixed_dictionaries(
+                        {
+                            "FORWARD_INIT": st.builds(str, booleans),
+                            "INIT_TRANSFORM": transforms,
+                            "OUTPUT_TRANSFORM": transforms,
+                            "MIN": st.builds(str, small_floats),
+                            "MAX": st.builds(str, small_floats),
+                            "INIT_FILES": file_names,
+                        }
+                    ),
                 ),
-                unique_by=lambda element: element[0],
+                unique_by=operator.itemgetter(0),
             ),
             gen_data=st.just(gen_data),
             max_submit=positives,
@@ -501,7 +539,6 @@ def ert_config_values(draw, use_eclbase=booleans):
             refcase_smspec=st.just(smspec),
             refcase_unsmry=st.just(unsmry),
             egrid=egrids,
-            datetimes=st.just(dates),
         )
     )
 
@@ -587,7 +624,7 @@ def config_generators(draw, use_eclbase=booleans):
         [
             config_values.data_file,
             config_values.job_script,
-            config_values.time_map,
+            config_values.time_map[0],
             config_values.obs_config,
         ]
     )
@@ -602,13 +639,14 @@ def config_generators(draw, use_eclbase=booleans):
     should_be_executable_files = [config_values.job_script]
     should_exist_directories = config_values.install_job_directory
 
-    def generate_job_config(job_path):
-        return job_path, draw(file_names) + ".exe"
+    def generate_job_config(job_path, name):
+        return job_path, name + ".exe"
 
     should_exist_job_configs = [
-        generate_job_config(job_path) for _, job_path in config_values.install_job
+        generate_job_config(job_path, name)
+        for name, job_path in config_values.install_job
     ] + [
-        generate_job_config(job_dir + "/" + draw(file_names))
+        generate_job_config(job_dir + "/" + draw(file_names), draw(file_names))
         for job_dir in config_values.install_job_directory
     ]
 
@@ -675,11 +713,9 @@ def config_generators(draw, use_eclbase=booleans):
                 os.mkdir("./refcase")
             config_values.refcase_smspec.to_file(f"./refcase/{summary_basename}.SMSPEC")
             config_values.refcase_unsmry.to_file(f"./refcase/{summary_basename}.UNSMRY")
-            with open(config_values.time_map, "w", encoding="utf-8") as fh:
-                for dt in config_values.datetimes:
-                    fh.write(dt.date().isoformat() + "\n")
-
             config_values.egrid.to_file(config_values.grid_file)
+            with open(config_values.time_map[0], "w", encoding="utf-8") as fh:
+                fh.write(config_values.time_map[1])
 
             if config_file_name is not None:
                 to_config_file(config_file_name, config_values)
@@ -703,39 +739,59 @@ def to_config_file(filename, config_values):
             ConfigKeys.RUN_TEMPLATE,
             ConfigKeys.DATA_KW,
             ConfigKeys.DEFINE,
-            ConfigKeys.INSTALL_JOB,
         ]
         for keyword, keyword_value in config_dict.items():
             if keyword in tuple_value_keywords:
-                for tuple_key, tuple_value in keyword_value:
-                    config.write(f"{keyword} {tuple_key} {tuple_value}\n")
+                config.writelines(
+                    f"{keyword} {tuple_key} {tuple_value}\n"
+                    for tuple_key, tuple_value in keyword_value
+                )
             elif keyword == ConfigKeys.FORWARD_MODEL:
-                for job_name, job_args in keyword_value:
-                    config.write(
-                        f"{keyword} {job_name}"
-                        f"({', '.join(f'{a}={b}' for a, b in job_args)})\n"
-                    )
+                config.writelines(
+                    f"{keyword} {job_name}"
+                    f"({', '.join(f'{a}={b}' for a, b in job_args)})\n"
+                    for job_name, job_args in keyword_value
+                )
             elif keyword == ConfigKeys.FIELD:
-                # keyword_value is a list of dicts, each defining a field
-                for field_vals in keyword_value:
-                    config.write(" ".join([keyword, *field_vals]) + "\n")
+                for line in keyword_value:
+                    config.write(keyword)
+                    config.write(" ")
+                    config.write(line[0])
+                    config.write(" ")
+                    config.write(line[1])
+                    config.write(" ")
+                    config.write(line[2])
+                    config.write(" ")
+                    config.write(" ".join(f"{k}:{v}" for k, v in line[3].items()))
+                    config.write("\n")
             elif keyword == ConfigKeys.GEN_DATA:
-                # keyword_value is a list of dicts, each defining a field
-                for gen_data_entry in keyword_value:
-                    config.write(" ".join([keyword, *gen_data_entry]) + "\n")
+                for line in keyword_value:
+                    config.write(keyword)
+                    config.write(" ")
+                    config.write(line[0])
+                    config.write(" ")
+                    config.write(" ".join(f"{k}:{v}" for k, v in line[1].items()))
+                    config.write("\n")
             elif keyword == ConfigKeys.INSTALL_JOB_DIRECTORY:
-                for install_dir in keyword_value:
-                    config.write(f"{keyword} {install_dir}\n")
+                config.writelines(
+                    f"{keyword} {install_dir}\n" for install_dir in keyword_value
+                )
             elif keyword == ConfigKeys.ANALYSIS_SET_VAR:
-                for statement in keyword_value:
-                    config.write(
-                        f"{keyword} {statement[0]} {statement[1]} {statement[2]}\n"
-                    )
+                config.writelines(
+                    f"{keyword} {statement[0]} {statement[1]} {statement[2]}\n"
+                    for statement in keyword_value
+                )
             elif keyword == ConfigKeys.QUEUE_OPTION:
-                for setting in keyword_value:
-                    config.write(
-                        f"{keyword} {setting[0]} {setting[1]}"
-                        + (f" {setting[2]}\n" if len(setting) == 3 else "\n")
-                    )
+                config.writelines(
+                    f"{keyword} {setting[0]} {setting[1]}"
+                    + (f" {setting[2]}\n" if len(setting) == 3 else "\n")
+                    for setting in keyword_value
+                )
+            elif keyword in {ConfigKeys.TIME_MAP, ConfigKeys.OBS_CONFIG}:
+                config.write(f"{keyword} {keyword_value[0]}\n")
+            elif keyword == ConfigKeys.INSTALL_JOB:
+                config.writelines(
+                    f"{keyword} {fm[0]} {fm[1][0]}\n" for fm in keyword_value
+                )
             else:
                 config.write(f"{keyword} {keyword_value}\n")

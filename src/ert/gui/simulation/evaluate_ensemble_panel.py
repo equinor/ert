@@ -2,7 +2,8 @@ from dataclasses import dataclass
 
 import numpy as np
 from PyQt6.QtCore import Qt
-from PyQt6.QtWidgets import QFormLayout, QLabel
+from PyQt6.QtCore import pyqtSlot as Slot
+from PyQt6.QtWidgets import QFormLayout, QLabel, QWidget
 
 from ert.gui.ertnotifier import ErtNotifier
 from ert.gui.ertwidgets import (
@@ -69,7 +70,6 @@ class EvaluateEnsemblePanel(ExperimentConfigPanel):
         return (
             self._active_realizations_field.isValid()
             and self._ensemble_selector.currentIndex() != -1
-            and self._active_realizations_field.isValid()
         )
 
     def get_experiment_arguments(self) -> Arguments:
@@ -91,3 +91,8 @@ class EvaluateEnsemblePanel(ExperimentConfigPanel):
                 parameters, np.logical_or(missing_responses, failures)
             )
             self._active_realizations_field.model.setValueFromMask(mask)  # type: ignore
+
+    @Slot(QWidget)
+    def experimentTypeChanged(self, w: QWidget) -> None:
+        if isinstance(w, EvaluateEnsemblePanel):
+            self._realizations_from_fs()

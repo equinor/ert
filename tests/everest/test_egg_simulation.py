@@ -1,8 +1,8 @@
-import io
 import json
 import os
 
-import polars as pl
+import numpy as np
+import pandas as pd
 import pytest
 
 from ert.config import ErtConfig
@@ -13,9 +13,7 @@ from everest.config import EverestConfig
 from everest.simulator.everest_to_ert import _everest_to_ert_config_dict
 from tests.everest.utils import (
     everest_default_jobs,
-    hide_opm,
     skipif_no_everest_models,
-    skipif_no_opm,
 )
 
 CONFIG_FILE = "everest/model/config.yml"
@@ -548,27 +546,10 @@ def _generate_exp_ert_config(config_path, output_dir):
         ErtConfigKeys.ECLBASE: "eclipse/model/EGG",
         ErtConfigKeys.RANDOM_SEED: 123456,
         ErtConfigKeys.SUMMARY: SUM_KEYS,
-        ErtConfigKeys.GEN_DATA: [("rf", "RESULT_FILE:rf")],
+        ErtConfigKeys.GEN_DATA: [("rf", {"RESULT_FILE": "rf"})],
     }
 
 
-@pytest.mark.integration_test
-@skipif_no_opm
-def test_egg_model_convert(copy_egg_test_data_to_tmp):
-    config = EverestConfig.load_file(CONFIG_FILE)
-    ert_config = _everest_to_ert_config_dict(config)
-
-    # configpath isn't specified in config_file so it should be inferred
-    # to be at the directory of the config file.
-    output_dir = config.output_dir
-    config_path = os.path.dirname(os.path.abspath(CONFIG_FILE))
-    exp_ert_config = _generate_exp_ert_config(config_path, output_dir)
-    sort_res_summary(exp_ert_config)
-    sort_res_summary(ert_config)
-    assert exp_ert_config == ert_config
-
-
-@hide_opm
 @skipif_no_everest_models
 @pytest.mark.everest_models_test
 def test_egg_model_convert_no_opm(copy_egg_test_data_to_tmp):
@@ -613,7 +594,6 @@ def test_opm_fail_default_summary_keys(copy_egg_test_data_to_tmp):
 
 @skipif_no_everest_models
 @pytest.mark.everest_models_test
-@skipif_no_opm
 def test_opm_fail_explicit_summary_keys(copy_egg_test_data_to_tmp):
     extra_sum_keys = [
         "GOIR:PRODUC",
@@ -632,7 +612,7 @@ def test_opm_fail_explicit_summary_keys(copy_egg_test_data_to_tmp):
     if config.export is None:
         config_dict = config.model_dump(exclude_none=True)
         config_dict["export"] = {"keywords": extra_sum_keys}
-        config = EverestConfig.model_validate(config_dict)
+        config = EverestConfig.with_plugins(config_dict)
 
     assert len(EverestConfig.lint_config_dict(config.to_dict())) == 0
 
@@ -671,7 +651,6 @@ def test_init_egg_model(copy_egg_test_data_to_tmp):
 @pytest.mark.integration_test
 @skipif_no_everest_models
 @pytest.mark.everest_models_test
-@skipif_no_opm
 def test_egg_model_wells_json_output_no_none(copy_egg_test_data_to_tmp):
     config = EverestConfig.load_file(CONFIG_FILE)
     _ = _everest_to_ert_config_dict(config)
@@ -702,19 +681,30 @@ def test_egg_snapshot(snapshot, copy_egg_test_data_to_tmp):
         -1
     ]
 
-    def _df_to_string(df: pl.DataFrame):
-        strbuf = io.StringIO()
-        schema = df.schema
-        df.with_columns(
-            pl.col(c) for c in df.columns if schema[c] == pl.Float32
-        ).write_csv(strbuf)
+    best_controls = best_batch.realization_controls
+    best_objectives_csv = best_batch.perturbation_objectives
+    best_objective_gradients_csv = best_batch.batch_objective_gradient
 
-        return strbuf.getvalue()
+    def _is_close(data, snapshot_name):
+        data = data.to_pandas()
+        snapshot_data = pd.read_csv(snapshot.snapshot_dir / snapshot_name)
+        if data.shape != snapshot_data.shape or not all(
+            data.columns == snapshot_data.columns
+        ):
+            raise ValueError(
+                f"Dataframes have different structures for {snapshot_name}"
+                f"{data}\n\n{snapshot_data}"
+            )
+        tolerance = 1e-15
+        comparison = data.select_dtypes(include=[float, int]).apply(
+            lambda col: np.isclose(col, snapshot_data[col.name], atol=tolerance)
+        )
 
-    best_objectives_csv = _df_to_string(best_batch.perturbation_objectives)
-    best_objective_gradients_csv = _df_to_string(best_batch.batch_objective_gradient)
-    best_controls = _df_to_string(best_batch.realization_controls)
+        # Check if all values match within the tolerance
+        assert comparison.all().all(), (
+            f"Values do not match for {snapshot_name} \n{data}\n\n{snapshot_data}"
+        )
 
-    snapshot.assert_match(best_controls, "best_controls")
-    snapshot.assert_match(best_objectives_csv, "best_objectives_csv")
-    snapshot.assert_match(best_objective_gradients_csv, "best_objective_gradients_csv")
+    _is_close(best_controls, "best_controls")
+    _is_close(best_objectives_csv, "best_objectives_csv")
+    _is_close(best_objective_gradients_csv, "best_objective_gradients_csv")

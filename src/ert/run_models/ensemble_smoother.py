@@ -85,6 +85,10 @@ class EnsembleSmoother(UpdateRunModel):
                 parameters_config, design_matrix_group = (
                     design_matrix.merge_with_existing_parameters(parameters_config)
                 )
+                if not any(p.update for p in parameters_config):
+                    raise ConfigValidationError(
+                        "No parameters to update as all parameters were set to update:false!",
+                    )
             except ConfigValidationError as exc:
                 raise ErtRunError(str(exc)) from exc
 
@@ -118,6 +122,7 @@ class EnsembleSmoother(UpdateRunModel):
         sample_prior(
             prior,
             np.where(self.active_realizations)[0],
+            parameters=[param.name for param in parameters_config],
             random_seed=self.random_seed,
         )
 

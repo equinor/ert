@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from pathlib import Path
-from typing import TYPE_CHECKING, Self
+from typing import TYPE_CHECKING, Self, cast
 
 import numpy as np
 import xarray as xr
@@ -10,7 +10,6 @@ import xtgeo
 
 from ert.substitutions import substitute_runpath_name
 
-from ._option_dict import option_dict
 from ._str_to_bool import str_to_bool
 from .parameter_config import ParameterConfig
 from .parsing import ConfigValidationError, ErrorInfo
@@ -36,9 +35,9 @@ class SurfaceConfig(ParameterConfig):
     base_surface_path: str
 
     @classmethod
-    def from_config_list(cls, surface: list[str]) -> Self:
-        options = option_dict(surface, 1)
-        name = surface[0]
+    def from_config_list(cls, surface: list[str | dict[str, str]]) -> Self:
+        name = cast(str, surface[0])
+        options = cast(dict[str, str], surface[1])
         init_file = options.get("INIT_FILES")
         out_file = options.get("OUTPUT_FILE")
         base_surface = options.get("BASE_SURFACE")
@@ -147,7 +146,6 @@ class SurfaceConfig(ParameterConfig):
     def save_parameters(
         self,
         ensemble: Ensemble,
-        group: str,
         realization: int,
         data: npt.NDArray[np.float64],
     ) -> None:
@@ -159,12 +157,11 @@ class SurfaceConfig(ParameterConfig):
                 )
             }
         )
-        ensemble.save_parameters(group, realization, ds)
+        ensemble.save_parameters(self.name, realization, ds)
 
-    @staticmethod
     def load_parameters(
-        ensemble: Ensemble, group: str, realizations: npt.NDArray[np.int_]
+        self, ensemble: Ensemble, realizations: npt.NDArray[np.int_]
     ) -> npt.NDArray[np.float64]:
-        ds = ensemble.load_parameters(group, realizations)
+        ds = ensemble.load_parameters(self.name, realizations)
         ensemble_size = len(ds.realizations)
         return ds["values"].values.reshape(ensemble_size, -1).T

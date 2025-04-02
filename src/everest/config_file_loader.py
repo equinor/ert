@@ -9,6 +9,8 @@ from typing import Any
 import jinja2
 from ruamel.yaml import YAML, YAMLError
 
+from everest.strings import EVEREST
+
 # Since YAML interprets '{' as start of a dict, we need to prefix it with
 # something to make reading possible.
 #
@@ -28,7 +30,7 @@ ERT_CONFIG_TEMPLATES = {
 }
 
 
-def load_yaml(file_name: str, safe: bool = False) -> dict[str, Any] | None:
+def load_yaml(file_name: str, safe: bool = False) -> dict[str, Any]:
     with open(file_name, encoding="utf-8") as input_file:
         input_data: list[str] = input_file.readlines()
         try:
@@ -44,8 +46,8 @@ def load_yaml(file_name: str, safe: bool = False) -> dict[str, Any] | None:
                         input_data[mark.line], " " * mark.column
                     )
                 ) from exc
-
-        return None
+            else:
+                raise YAMLError(str(exc)) from exc
 
 
 def _get_definitions(
@@ -55,19 +57,19 @@ def _get_definitions(
     if configuration:
         if "definitions" not in configuration:
             msg = "No {} node found in configuration file"
-            logging.debug(msg.format("definitions"))
+            logging.getLogger(EVEREST).debug(msg.format("definitions"))
         else:
             defs = configuration.get("definitions", {})
 
         for key, val in ERT_CONFIG_TEMPLATES.items():
             if key in defs:
-                logging.warning(
+                logging.getLogger(EVEREST).warning(
                     f"Internal key {key} specified by user as {defs[key]}. "
                     f"Overriding as {val}"
                 )
             defs[key] = f"<{val}>"  # ert uses <GEO_ID> as format
     else:
-        logging.warning("Empty configuration file provided!")
+        logging.getLogger(EVEREST).warning("Empty configuration file provided!")
 
     # If user didn't define a config path, we can insert it here.
     defs["configpath"] = defs.get("configpath", configpath)

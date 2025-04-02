@@ -52,7 +52,7 @@ def test_everest_entry_run(cached_example):
     _, config_file, _, _ = cached_example("math_func/config_minimal.yml")
     # Setup command line arguments
     with capture_streams():
-        start_everest(["everest", "run", config_file])
+        start_everest(["everest", "run", config_file, "--skip-prompt"])
 
     config = EverestConfig.load_file(config_file)
     status = everserver_status(
@@ -180,7 +180,7 @@ def test_stopping_local_queue_with_ctrl_c(capsys, copy_math_func_test_data_to_tm
     thread.start()
 
     with pytest.raises(SystemExit):
-        start_everest(["everest", "run", CONFIG_FILE_ADVANCED])
+        start_everest(["everest", "run", CONFIG_FILE_ADVANCED, "--skip-prompt"])
 
     out = capsys.readouterr().out
 

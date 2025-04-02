@@ -1,0 +1,30 @@
+name: Backport merged pull request
+on:
+  pull_request_target:
+    types:
+      - closed
+      - labeled
+permissions:
+  contents: write # so it can comment
+  pull-requests: write # so it can create pull requests
+jobs:
+  backport:
+    name: Backport pull request
+    runs-on: ubuntu-latest
+    # Don't run on closed unmerged pull requests
+    if: >
+      github.event.pull_request.merged
+      && (
+        github.event.action == 'closed'
+        || (
+          github.event.action == 'labeled'
+          && contains(github.event.label.name, 'backport')
+        )
+      )
+    steps:
+      - uses: actions/checkout@v4
+      - name: Create backport pull requests
+        uses: korthout/backport-action@v3
+        with:
+          add_author_as_assignee: true
+          github_token: ${{ secrets.LOCKFILE_UPDATE_TOKEN }}

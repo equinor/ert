@@ -10,7 +10,7 @@ from typing_extensions import TypedDict, Unpack
 
 from ert.substitutions import Substitutions
 
-from .parsing import ConfigWarning, SchemaItemType
+from .parsing import ConfigValidationError, ConfigWarning, SchemaItemType
 
 logger = logging.getLogger(__name__)
 
@@ -179,6 +179,20 @@ class ForwardModelStep:
         It will be called for every joblist.json created.
         """
         return fm_step_json
+
+    def check_required_keywords(self) -> None:
+        """
+        Raises ConfigValidationError if not all required keywords are in
+        private_args
+        """
+        missing_keywords = set(self.required_keywords).difference(self.private_args)
+        if missing_keywords:
+            plural = "s" if len(missing_keywords) > 1 else ""
+            raise ConfigValidationError.with_context(
+                f"Required keyword{plural} {', '.join(sorted(missing_keywords))} "
+                f"not found for forward model step {self.name}",
+                self.name,
+            )
 
     def __post_init__(self) -> None:
         # We unescape backslash here to keep backwards compatability ie. If

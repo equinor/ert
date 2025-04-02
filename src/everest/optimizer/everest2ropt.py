@@ -12,7 +12,6 @@ from ropt.transforms import OptModelTransforms
 from everest.config import (
     EverestConfig,
     InputConstraintConfig,
-    ModelConfig,
     ObjectiveFunctionConfig,
     OptimizationConfig,
     OutputConstraintConfig,
@@ -22,10 +21,7 @@ from everest.strings import EVEREST
 
 
 def _parse_controls(controls: FlattenedControls, ropt_config: dict[str, Any]) -> None:
-    control_types = [
-        None if type_ is None else VariableType[type_.upper()]
-        for type_ in controls.types
-    ]
+    control_types = [VariableType[type_.upper()] for type_ in controls.types]
     ropt_config["variables"] = {
         "types": None if all(item is None for item in control_types) else control_types,
         "initial_values": controls.initial_guesses,
@@ -134,9 +130,10 @@ def _parse_input_constraints(
     def _get_control_index(name: str) -> int:
         try:
             matching_index = formatted_control_names.index(name.replace("-", "."))
-            return matching_index
         except ValueError:
             pass
+        else:
+            return matching_index
 
         # Dash is deprecated, should eventually be removed
         # along with formatted_control_names_dotdash
@@ -176,30 +173,28 @@ def _parse_optimization(
     has_output_constraints: bool,
     ropt_config: dict[str, Any],
 ) -> None:
-    ropt_config["optimizer"] = {}
+    ropt_config["optimizer"] = {
+        "stdout": "optimizer.stdout",
+        "stderr": "optimizer.stderr",
+    }
     if not ever_opt:
         return
 
     ropt_optimizer = ropt_config["optimizer"]
     ropt_gradient = ropt_config["gradient"]
 
-    algorithm = ever_opt.algorithm or "optpp_q_newton"
-    ropt_optimizer["method"] = f"{algorithm}"
+    ropt_optimizer["method"] = ever_opt.algorithm
 
-    alg_max_iter = ever_opt.max_iterations
-    if alg_max_iter:
+    if alg_max_iter := ever_opt.max_iterations:
         ropt_optimizer["max_iterations"] = alg_max_iter
 
-    alg_max_eval = ever_opt.max_function_evaluations
-    if alg_max_eval:
+    if alg_max_eval := ever_opt.max_function_evaluations:
         ropt_optimizer["max_functions"] = alg_max_eval
 
-    alg_conv_tol = ever_opt.convergence_tolerance or None
-    if alg_conv_tol:
+    if alg_conv_tol := ever_opt.convergence_tolerance:
         ropt_optimizer["tolerance"] = alg_conv_tol
 
-    alg_grad_spec = ever_opt.speculative or None
-    if alg_grad_spec:
+    if alg_grad_spec := ever_opt.speculative:
         ropt_optimizer["speculative"] = alg_grad_spec
 
     # Handle the backend options. Due to historical reasons there two keywords:
@@ -277,35 +272,6 @@ def _parse_optimization(
             ropt_optimizer["split_evaluations"] = True
 
 
-def _parse_model(
-    ever_model: ModelConfig | None,
-    ever_opt: OptimizationConfig | None,
-    ropt_config: dict[str, Any],
-) -> None:
-    if not ever_model:
-        return
-
-    ever_reals = ever_model.realizations or []
-    ever_reals_weights = ever_model.realizations_weights
-    if ever_reals_weights is None:
-        ever_reals_weights = [1.0 / len(ever_reals)] * len(ever_reals)
-
-    ropt_config["realizations"] = {
-        "weights": ever_reals_weights,
-    }
-    min_real_succ = ever_opt.min_realizations_success if ever_opt else None
-    if min_real_succ is not None:
-        ropt_config["realizations"]["realization_min_success"] = min_real_succ
-
-
-def _parse_environment(
-    optimization_output_dir: str, random_seed: int | None, ropt_config: dict[str, Any]
-) -> None:
-    ropt_config["optimizer"]["output_dir"] = os.path.abspath(optimization_output_dir)
-    if random_seed is not None:
-        ropt_config["gradient"]["seed"] = random_seed
-
-
 def _everest2ropt(
     ever_config: EverestConfig, transforms: OptModelTransforms | None
 ) -> dict[str, Any]:
@@ -331,18 +297,17 @@ def _everest2ropt(
         has_output_constraints=ever_config.output_constraints is not None,
         ropt_config=ropt_config,
     )
-    _parse_model(
-        ever_model=ever_config.model,
-        ever_opt=ever_config.optimization,
-        ropt_config=ropt_config,
+
+    ropt_config["realizations"] = {
+        "weights": ever_config.model.realizations_weights,
+    }
+    if min_real_succ := ever_config.optimization.min_realizations_success:
+        ropt_config["realizations"]["realization_min_success"] = min_real_succ
+
+    ropt_config["optimizer"]["output_dir"] = os.path.abspath(
+        ever_config.optimization_output_dir
     )
-    _parse_environment(
-        optimization_output_dir=ever_config.optimization_output_dir,
-        random_seed=ever_config.environment.random_seed
-        if ever_config.environment
-        else None,
-        ropt_config=ropt_config,
-    )
+    ropt_config["gradient"]["seed"] = ever_config.environment.random_seed
 
     return ropt_config
 

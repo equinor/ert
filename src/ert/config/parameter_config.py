@@ -8,15 +8,13 @@ from typing import TYPE_CHECKING, Any
 import numpy as np
 import xarray as xr
 
-from ._option_dict import option_dict
-
 if TYPE_CHECKING:
     import numpy.typing as npt
 
     from ert.storage import Ensemble
 
 
-class CustomDict(dict):  # type: ignore
+class CustomDict(dict):  # type: ignore  # noqa: FURB189
     """Used for converting types that can not be serialized
     directly to json
     """
@@ -28,22 +26,6 @@ class CustomDict(dict):  # type: ignore
             if isinstance(value, set):
                 data[i] = (key, list(value))
         super().__init__(data)
-
-
-def parse_config(
-    config: list[str], max_positionals: int
-) -> tuple[list[str], dict[str, str]]:
-    """
-    This function is responsible for taking a config line and splitting it
-    into positional arguments and named arguments in cases were the number
-    of positional arguments vary.
-    """
-    offset = next(
-        (i for i, val in enumerate(config) if len(val.split(":")) == 2), max_positionals
-    )
-    kwargs = option_dict(config, offset)
-    args = config[:offset]
-    return args, kwargs
 
 
 @dataclasses.dataclass
@@ -90,7 +72,6 @@ class ParameterConfig(ABC):
     def save_parameters(
         self,
         ensemble: Ensemble,
-        group: str,
         realization: int,
         data: npt.NDArray[np.float64],
     ) -> None:
@@ -100,7 +81,7 @@ class ParameterConfig(ABC):
 
     @abstractmethod
     def load_parameters(
-        self, ensemble: Ensemble, group: str, realizations: npt.NDArray[np.int_]
+        self, ensemble: Ensemble, realizations: npt.NDArray[np.int_]
     ) -> npt.NDArray[np.float64]:
         """
         Load the parameter from internal storage for the given ensemble.

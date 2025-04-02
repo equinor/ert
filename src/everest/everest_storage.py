@@ -5,9 +5,10 @@ import logging
 import os
 import traceback
 from collections.abc import Callable
-from dataclasses import dataclass, field
+from dataclasses import dataclass
+from functools import cached_property
 from pathlib import Path
-from typing import Any, TypedDict, cast
+from typing import Any, ClassVar, TypedDict
 
 import numpy as np
 import polars as pl
@@ -30,10 +31,8 @@ def try_read_df(path: Path) -> pl.DataFrame | None:
     return pl.read_parquet(path) if path.exists() else None
 
 
-@dataclass
-class BatchStorageData:
-    batch_id: int
-    realization_controls: pl.DataFrame
+class BatchDataframes(TypedDict, total=False):
+    realization_controls: pl.DataFrame | None
     batch_objectives: pl.DataFrame | None
     realization_objectives: pl.DataFrame | None
     batch_constraints: pl.DataFrame | None
@@ -42,34 +41,260 @@ class BatchStorageData:
     perturbation_objectives: pl.DataFrame | None
     batch_constraint_gradient: pl.DataFrame | None
     perturbation_constraints: pl.DataFrame | None
-    is_improvement: bool | None = False
+
+
+class OptimizationDataframes(TypedDict, total=False):
+    controls: pl.DataFrame | None
+    objective_functions: pl.DataFrame | None
+    nonlinear_constraints: pl.DataFrame | None
+    realization_weights: pl.DataFrame | None
+
+
+class BatchStorageData:
+    BATCH_DATAFRAMES: ClassVar[list[str]] = [
+        "realization_controls",
+        "batch_objectives",
+        "realization_objectives",
+        "batch_constraints",
+        "realization_constraints",
+        "batch_objective_gradient",
+        "perturbation_objectives",
+        "batch_constraint_gradient",
+        "perturbation_constraints",
+    ]
+
+    def __init__(self, path: Path):
+        self._path = path
 
     @property
-    def existing_dataframes(self) -> dict[str, pl.DataFrame]:
+    def has_data(self) -> bool:
+        return any(
+            (self._path / f"{df_name}.parquet").exists()
+            for df_name in self.BATCH_DATAFRAMES
+        )
+
+    @property
+    def has_function_results(self) -> bool:
+        return any(
+            (self._path / f"{df_name}.parquet").exists()
+            for df_name in _FunctionResults.__annotations__
+        )
+
+    @property
+    def has_gradient_results(self) -> bool:
+        return any(
+            (self._path / f"{df_name}.parquet").exists()
+            for df_name in _GradientResults.__annotations__
+        )
+
+    @staticmethod
+    def _read_df_if_exists(path: Path) -> pl.DataFrame | None:
+        if path.exists():
+            return pl.read_parquet(path)
+        return None
+
+    @property
+    def realization_controls(self) -> pl.DataFrame | None:
+        return self._read_df_if_exists(self._path / "realization_controls.parquet")
+
+    @property
+    def batch_objectives(self) -> pl.DataFrame | None:
+        return self._read_df_if_exists(self._path / "batch_objectives.parquet")
+
+    @property
+    def realization_objectives(self) -> pl.DataFrame | None:
+        return self._read_df_if_exists(self._path / "realization_objectives.parquet")
+
+    @property
+    def batch_constraints(self) -> pl.DataFrame | None:
+        return self._read_df_if_exists(self._path / "batch_constraints.parquet")
+
+    @property
+    def realization_constraints(self) -> pl.DataFrame | None:
+        return self._read_df_if_exists(self._path / "realization_constraints.parquet")
+
+    @property
+    def batch_objective_gradient(self) -> pl.DataFrame | None:
+        return self._read_df_if_exists(self._path / "batch_objective_gradient.parquet")
+
+    @property
+    def perturbation_objectives(self) -> pl.DataFrame | None:
+        return self._read_df_if_exists(self._path / "perturbation_objectives.parquet")
+
+    @property
+    def batch_constraint_gradient(self) -> pl.DataFrame | None:
+        return self._read_df_if_exists(self._path / "batch_constraint_gradient.parquet")
+
+    @property
+    def perturbation_constraints(self) -> pl.DataFrame | None:
+        return self._read_df_if_exists(self._path / "perturbation_constraints.parquet")
+
+    def save_dataframes(self, dataframes: BatchDataframes) -> None:
+        for df_name in self.BATCH_DATAFRAMES:
+            df = dataframes.get(df_name)
+            if isinstance(df, pl.DataFrame):
+                df.write_parquet(self._path / f"{df_name}.parquet")
+
+    @cached_property
+    def is_improvement(self) -> bool:
+        with open(self._path / "batch.json", encoding="utf-8") as f:
+            info = json.load(f)
+
+        return bool(info["is_improvement"])
+
+    @cached_property
+    def batch_id(self) -> bool:
+        with open(self._path / "batch.json", encoding="utf-8") as f:
+            info = json.load(f)
+
+        return info["batch_id"]
+
+    def write_metadata(self, is_improvement: bool) -> None:
+        # Clear the cached prop for the new value to take place
+        if "is_improvement" in self.__dict__:
+            del self.is_improvement
+
+        with open(self._path / "batch.json", encoding="utf-8") as f:
+            info = json.load(f)
+            info["is_improvement"] = is_improvement
+
+        with open(self._path / "batch.json", "w", encoding="utf-8") as f:
+            json.dump(
+                info,
+                f,
+            )
+
+
+class FunctionBatchStorageData(BatchStorageData):
+    @property
+    def realization_controls(self) -> pl.DataFrame:
+        df = super().realization_controls
+        assert df is not None
+        return df
+
+    @property
+    def batch_objectives(self) -> pl.DataFrame:
+        df = super().batch_objectives
+        assert df is not None
+        return df
+
+    @property
+    def realization_objectives(self) -> pl.DataFrame:
+        df = super().realization_objectives
+        assert df is not None
+        return df
+
+    def to_dict(self) -> dict[str, Any]:
         return {
-            k: cast(pl.DataFrame, getattr(self, k))
-            for k in [
-                "batch_objectives",
-                "batch_objective_gradient",
-                "batch_constraints",
-                "batch_constraint_gradient",
-                "realization_controls",
-                "realization_objectives",
-                "realization_constraints",
-                "perturbation_objectives",
-                "perturbation_constraints",
-            ]
-            if getattr(self, k) is not None
+            "controls": self.realization_controls.drop(
+                "batch_id", "realization", "simulation_id"
+            ).to_dicts()[0],
+            "objectives": self.batch_objectives.drop(
+                "batch_id", "total_objective_value"
+            ).to_dicts()[0],
+            "total_objective_value": self.batch_objectives[
+                "total_objective_value"
+            ].item(),
+            "realization_objectives": self.realization_objectives.drop(
+                "batch_id"
+            ).to_dicts(),
         }
 
 
-@dataclass
+class GradientBatchStorageData(BatchStorageData):
+    @property
+    def perturbation_objectives(self) -> pl.DataFrame:
+        df = super().perturbation_objectives
+        assert df is not None
+        return df
+
+    def to_dict(self) -> dict[str, Any]:
+        objective_gradient = (
+            self.batch_objective_gradient.drop("batch_id")
+            .sort("control_name")
+            .to_dicts()
+            if self.batch_objective_gradient is not None
+            else None
+        )
+
+        perturbation_objectives = (
+            self.perturbation_objectives.drop("batch_id")
+            .sort("realization", "perturbation")
+            .to_dicts()
+        )
+        constraint_gradient_dicts = (
+            self.batch_constraint_gradient.drop("batch_id")
+            .sort("control_name")
+            .to_dicts()
+            if self.batch_constraint_gradient is not None
+            else None
+        )
+
+        perturbation_gradient_dicts = (
+            self.perturbation_constraints.drop("batch_id")
+            .sort("realization", "perturbation")
+            .to_dicts()
+            if self.perturbation_constraints is not None
+            else None
+        )
+
+        return {
+            "objective_gradient_values": objective_gradient,
+            "perturbation_objectives": perturbation_objectives,
+            "constraint_gradient": constraint_gradient_dicts,
+            "perturbation_constraints": perturbation_gradient_dicts,
+        }
+
+
 class OptimizationStorageData:
-    batches: list[BatchStorageData] = field(default_factory=list)
-    controls: pl.DataFrame | None = None
-    objective_functions: pl.DataFrame | None = None
-    nonlinear_constraints: pl.DataFrame | None = None
-    realization_weights: pl.DataFrame | None = None
+    EXPERIMENT_DATAFRAMES: ClassVar[list[str]] = [
+        "controls",
+        "objective_functions",
+        "nonlinear_constraints",
+        "realization_weights",
+    ]
+
+    def __init__(self, path: Path) -> None:
+        self._path = path
+        self.batches: list[BatchStorageData] = []
+
+    @property
+    def batches_with_function_results(self) -> list[FunctionBatchStorageData]:
+        return [
+            FunctionBatchStorageData(b._path)
+            for b in self.batches
+            if b.has_function_results
+        ]
+
+    @property
+    def batches_with_gradient_results(self) -> list[GradientBatchStorageData]:
+        return [
+            GradientBatchStorageData(b._path)
+            for b in self.batches
+            if b.has_gradient_results
+        ]
+
+    @property
+    def controls(self) -> pl.DataFrame | None:
+        return pl.read_parquet(self._path / "controls.parquet")
+
+    @property
+    def objective_functions(self) -> pl.DataFrame | None:
+        return pl.read_parquet(self._path / "objective_functions.parquet")
+
+    @property
+    def nonlinear_constraints(self) -> pl.DataFrame | None:
+        return try_read_df(self._path / "nonlinear_constraints.parquet")
+
+    @property
+    def realization_weights(self) -> pl.DataFrame | None:
+        return pl.read_parquet(self._path / "realization_weights.parquet")
+
+    def save_dataframes(self, dataframes: OptimizationDataframes) -> None:
+        for df_name in self.EXPERIMENT_DATAFRAMES:
+            df = dataframes.get(df_name)
+            if isinstance(df, pl.DataFrame):
+                df.write_parquet(self._path / f"{df_name}.parquet")
 
     def simulation_to_geo_realization_map(self, batch_id: int) -> dict[int, int]:
         """
@@ -78,8 +303,8 @@ class OptimizationStorageData:
         dummy_df = next(
             (
                 b.realization_controls
-                for b in self.batches
-                if b.batch_id == batch_id and b.realization_controls is not None
+                for b in self.batches_with_function_results
+                if b.batch_id == batch_id
             ),
             None,
         )
@@ -93,83 +318,11 @@ class OptimizationStorageData:
 
         return mapping
 
-    @property
-    def existing_dataframes(self) -> dict[str, pl.DataFrame]:
-        return {
-            k: cast(pl.DataFrame, getattr(self, k))
-            for k in [
-                "controls",
-                "objective_functions",
-                "nonlinear_constraints",
-                "realization_weights",
-            ]
-            if getattr(self, k) is not None
-        }
-
-    def write_to_experiment(self, experiment: _OptimizerOnlyExperiment) -> None:
-        for df_name, df in self.existing_dataframes.items():
-            df.write_parquet(f"{experiment.optimizer_mount_point / df_name}.parquet")
-
-        for batch_data in self.batches:
-            ensemble = experiment.get_ensemble_by_name(f"batch_{batch_data.batch_id}")
-            with open(
-                ensemble.optimizer_mount_point / "batch.json", "w+", encoding="utf-8"
-            ) as f:
-                json.dump(
-                    {
-                        "batch_id": batch_data.batch_id,
-                        "is_improvement": batch_data.is_improvement,
-                    },
-                    f,
-                )
-
-            for df_key, df in batch_data.existing_dataframes.items():
-                df.write_parquet(ensemble.optimizer_mount_point / f"{df_key}.parquet")
-
     def read_from_experiment(self, experiment: _OptimizerOnlyExperiment) -> None:
-        self.controls = pl.read_parquet(
-            experiment.optimizer_mount_point / "controls.parquet"
-        )
-        self.objective_functions = pl.read_parquet(
-            experiment.optimizer_mount_point / "objective_functions.parquet"
-        )
-
-        if (
-            experiment.optimizer_mount_point / "nonlinear_constraints.parquet"
-        ).exists():
-            self.nonlinear_constraints = pl.read_parquet(
-                experiment.optimizer_mount_point / "nonlinear_constraints.parquet"
-            )
-
-        if (experiment.optimizer_mount_point / "realization_weights.parquet").exists():
-            self.realization_weights = pl.read_parquet(
-                experiment.optimizer_mount_point / "realization_weights.parquet"
-            )
-
         for ens in experiment.ensembles.values():
-            with open(ens.optimizer_mount_point / "batch.json", encoding="utf-8") as f:
-                info = json.load(f)
-
             self.batches.append(
                 BatchStorageData(
-                    batch_id=info["batch_id"],
-                    **{  # type: ignore
-                        df_name: try_read_df(
-                            Path(ens.optimizer_mount_point) / f"{df_name}.parquet"
-                        )
-                        for df_name in [
-                            "batch_objectives",
-                            "batch_objective_gradient",
-                            "batch_constraints",
-                            "batch_constraint_gradient",
-                            "realization_controls",
-                            "realization_objectives",
-                            "realization_constraints",
-                            "perturbation_objectives",
-                            "perturbation_constraints",
-                        ]
-                    },
-                    is_improvement=info["is_improvement"],
+                    path=ens.optimizer_mount_point,
                 )
             )
 
@@ -208,6 +361,9 @@ class _OptimizerOnlyExperiment:
 
     @property
     def ensembles(self) -> dict[str, _OptimizerOnlyEnsemble]:
+        if not Path(self._output_dir / "ensembles").exists():
+            return {}
+
         return {
             str(d): _OptimizerOnlyEnsemble(self._output_dir / "ensembles" / d)
             for d in os.listdir(self._output_dir / "ensembles")
@@ -223,7 +379,7 @@ class _OptimizerOnlyExperiment:
         return self._ensembles[name]
 
 
-class _EvaluationResults(TypedDict):
+class _FunctionResults(TypedDict):
     realization_controls: pl.DataFrame
     batch_objectives: pl.DataFrame
     realization_objectives: pl.DataFrame
@@ -253,7 +409,9 @@ class EverestStorage:
         self._gradient_ensemble_id = 0
 
         self._output_dir = output_dir
-        self.data = OptimizationStorageData()
+        self._experiment = _OptimizerOnlyExperiment(self._output_dir)
+
+        self.data = OptimizationStorageData(self._experiment.optimizer_mount_point)
 
     @staticmethod
     def _rename_ropt_df_columns(df: pl.DataFrame) -> pl.DataFrame:
@@ -278,7 +436,7 @@ class EverestStorage:
             "perturbed_variables": "perturbed_control_value",
             "perturbed_objectives": "perturbed_objective_value",
             "perturbed_constraints": "perturbed_constraint_value",
-            "evaluation_ids": "simulation_id",
+            "evaluation_info.sim_ids": "simulation_id",
         }
         return df.rename({k: v for k, v in renames.items() if k in df.columns})
 
@@ -291,7 +449,6 @@ class EverestStorage:
             # -1 is used as a value in simulator cache.
             # thus we need signed, otherwise we could do unsigned
             "simulation_id": pl.Int32,
-            "perturbed_evaluation_ids": pl.Int32,
             "objective_name": pl.String,
             "control_name": pl.String,
             "constraint_name": pl.String,
@@ -364,12 +521,6 @@ class EverestStorage:
 
         return df
 
-    def write_to_output_dir(self) -> None:
-        exp = _OptimizerOnlyExperiment(self._output_dir)
-
-        # csv writing mostly for dev/debugging/quick inspection
-        self.data.write_to_experiment(exp)
-
     @staticmethod
     def check_for_deprecated_seba_storage(config_file: str) -> None:
         config = EverestConfig.load_file(config_file)
@@ -391,7 +542,7 @@ class EverestStorage:
         self.data.read_from_experiment(exp)
 
     def init(self, everest_config: EverestConfig) -> None:
-        self.data.controls = pl.DataFrame(
+        controls = pl.DataFrame(
             {
                 "control_name": pl.Series(
                     everest_config.formatted_control_names, dtype=pl.String
@@ -408,7 +559,7 @@ class EverestStorage:
             ),
             dtype=np.float64,
         )
-        self.data.objective_functions = pl.DataFrame(
+        objective_functions = pl.DataFrame(
             {
                 "objective_name": everest_config.objective_names,
                 "weight": pl.Series(weights / sum(weights), dtype=pl.Float64),
@@ -422,16 +573,17 @@ class EverestStorage:
             }
         )
 
-        if everest_config.output_constraints is not None:
-            self.data.nonlinear_constraints = pl.DataFrame(
+        nonlinear_constraints = (
+            pl.DataFrame(
                 {
                     "constraint_name": everest_config.constraint_names,
                 }
             )
-        else:
-            self.data.nonlinear_constraints = None
+            if everest_config.output_constraints is not None
+            else None
+        )
 
-        self.data.realization_weights = pl.DataFrame(
+        realization_weights = pl.DataFrame(
             {
                 "realization": pl.Series(
                     everest_config.model.realizations, dtype=pl.UInt32
@@ -439,13 +591,22 @@ class EverestStorage:
             }
         )
 
-    def _store_function_results(self, results: FunctionResults) -> _EvaluationResults:
+        self.data.save_dataframes(
+            {
+                "controls": controls,
+                "objective_functions": objective_functions,
+                "nonlinear_constraints": nonlinear_constraints,
+                "realization_weights": realization_weights,
+            }
+        )
+
+    def _store_function_results(self, results: FunctionResults) -> _FunctionResults:
         # We could select only objective values,
         # but we select all to also get the constraint values (if they exist)
         realization_objectives = self._ropt_to_df(
             results,
             "evaluations",
-            values=["objectives", "evaluation_ids"],
+            values=["objectives", "evaluation_info.sim_ids"],
             select=["batch_id", "realization", "objective"],
         )
 
@@ -453,7 +614,7 @@ class EverestStorage:
             realization_constraints = self._ropt_to_df(
                 results,
                 "evaluations",
-                values=["constraints", "evaluation_ids"],
+                values=["constraints", "evaluation_info.sim_ids"],
                 select=["batch_id", "realization", "nonlinear_constraint"],
             )
 
@@ -488,7 +649,7 @@ class EverestStorage:
         realization_controls = self._ropt_to_df(
             results,
             "evaluations",
-            values=["variables", "evaluation_ids"],
+            values=["variables", "evaluation_info.sim_ids"],
             select=["batch_id", "variable", "realization"],
         )
 
@@ -534,7 +695,7 @@ class EverestStorage:
                     "variables",
                     "perturbed_variables",
                     "perturbed_objectives",
-                    "perturbed_evaluation_ids",
+                    "evaluation_info.sim_ids",
                 ]
                 + (["perturbed_constraints"] if have_perturbed_constraints else [])
             ),
@@ -617,7 +778,7 @@ class EverestStorage:
             perturbation_constraints = None
 
         perturbation_objectives = perturbation_objectives.drop(
-            "perturbed_evaluation_ids", "control_value"
+            "simulation_id", "control_value"
         )
 
         perturbation_objectives = perturbation_objectives.pivot(
@@ -692,22 +853,48 @@ class EverestStorage:
                 batch_dicts[item.batch_id].update(gradient_results)
 
         for batch_id, batch_dict in batch_dicts.items():
-            self.data.batches.append(
-                BatchStorageData(
-                    batch_id=batch_id,
-                    realization_controls=batch_dict.get("realization_controls"),
-                    batch_objectives=batch_dict.get("batch_objectives"),
-                    realization_objectives=batch_dict.get("realization_objectives"),
-                    batch_constraints=batch_dict.get("batch_constraints"),
-                    realization_constraints=batch_dict.get("realization_constraints"),
-                    batch_objective_gradient=batch_dict.get("batch_objective_gradient"),
-                    perturbation_objectives=batch_dict.get("perturbation_objectives"),
-                    batch_constraint_gradient=batch_dict.get(
+            target_ensemble = self._experiment.get_ensemble_by_name(f"batch_{batch_id}")
+
+            with open(
+                target_ensemble.optimizer_mount_point / "batch.json",
+                "w+",
+                encoding="utf-8",
+            ) as f:
+                json.dump(
+                    {
+                        "batch_id": batch_id,
+                        "is_improvement": False,
+                    },
+                    f,
+                )
+
+            batch_data = BatchStorageData(path=target_ensemble.optimizer_mount_point)
+
+            batch_data.save_dataframes(
+                {
+                    "realization_controls": batch_dict.get("realization_controls"),
+                    "batch_objectives": batch_dict.get("batch_objectives"),
+                    "realization_objectives": batch_dict.get("realization_objectives"),
+                    "batch_constraints": batch_dict.get("batch_constraints"),
+                    "realization_constraints": batch_dict.get(
+                        "realization_constraints"
+                    ),
+                    "batch_objective_gradient": batch_dict.get(
+                        "batch_objective_gradient"
+                    ),
+                    "perturbation_objectives": batch_dict.get(
+                        "perturbation_objectives"
+                    ),
+                    "batch_constraint_gradient": batch_dict.get(
                         "batch_constraint_gradient"
                     ),
-                    perturbation_constraints=batch_dict.get("perturbation_constraints"),
-                )
+                    "perturbation_constraints": batch_dict.get(
+                        "perturbation_constraints"
+                    ),
+                }
             )
+
+            self.data.batches.append(batch_data)
 
     def on_optimization_finished(self) -> None:
         logger.debug("Storing final results Everest storage")
@@ -716,11 +903,9 @@ class EverestStorage:
         if merit_values:
             # NOTE: Batch 0 is always an "accepted batch", and "accepted batches" are
             # batches with merit_flag , which means that it was an improvement
-            self.data.batches[0].is_improvement = True
+            self.data.batches[0].write_metadata(is_improvement=True)
 
-            improvement_batches = [
-                b for b in self.data.batches if b.batch_objectives is not None
-            ][1:]
+            improvement_batches = self.data.batches_with_function_results[1:]
             for i, b in enumerate(improvement_batches):
                 merit_value = next(
                     (m.value for m in merit_values if (m.iter - 1) == i), None
@@ -728,39 +913,40 @@ class EverestStorage:
                 if merit_value is None:
                     continue
 
-                assert b.batch_objectives is not None
-                b.batch_objectives = b.batch_objectives.with_columns(
-                    pl.lit(merit_value).alias("merit_value")
+                b.save_dataframes(
+                    {
+                        "batch_objectives": b.batch_objectives.with_columns(
+                            pl.lit(merit_value).alias("merit_value")
+                        )
+                    }
                 )
-                b.is_improvement = True
+                b.write_metadata(is_improvement=True)
         else:
             max_total_objective = -np.inf
-            for b in self.data.batches:
-                if b.batch_objectives is not None:
-                    total_objective = b.batch_objectives["total_objective_value"].item()
-                    if total_objective > max_total_objective:
-                        b.is_improvement = True
-                        max_total_objective = total_objective
-
-        self.write_to_output_dir()
+            for b in self.data.batches_with_function_results:
+                total_objective = b.batch_objectives["total_objective_value"].item()
+                if total_objective > max_total_objective:
+                    b.write_metadata(is_improvement=True)
+                    max_total_objective = total_objective
 
     def get_optimal_result(self) -> OptimalResult | None:
         # Only used in tests, but re-created to ensure
         # same behavior as w/ old SEBA setup
         has_merit = any(
             "merit_value" in b.batch_objectives.columns
-            for b in self.data.batches
-            if b.batch_objectives is not None
+            for b in self.data.batches_with_function_results
         )
 
-        def find_best_batch(
-            filter_by: Callable[[BatchStorageData], bool],
-            sort_by: Callable[[BatchStorageData], Any],
-        ) -> tuple[BatchStorageData | None, dict[str, Any] | None]:
-            matching_batches = [b for b in self.data.batches if filter_by(b)]
+        def find_best_fn_eval_batch(
+            filter_by: Callable[[FunctionBatchStorageData], bool],
+            sort_by: Callable[[FunctionBatchStorageData], Any],
+        ) -> tuple[FunctionBatchStorageData, dict[str, Any]] | None:
+            matching_batches = [
+                b for b in self.data.batches_with_function_results if filter_by(b)
+            ]
 
             if not matching_batches:
-                return None, None
+                return None
 
             matching_batches.sort(key=sort_by)
             batch = matching_batches[0]
@@ -776,21 +962,17 @@ class EverestStorage:
 
         if has_merit:
             # Minimize merit
-            batch, controls_dict = find_best_batch(
-                filter_by=lambda b: (
-                    b.batch_objectives is not None
-                    and "merit_value" in b.batch_objectives.columns
-                ),
-                sort_by=lambda b: b.batch_objectives.select(  # type: ignore
+            result = find_best_fn_eval_batch(
+                filter_by=lambda b: "merit_value" in b.batch_objectives.columns,
+                sort_by=lambda b: b.batch_objectives.select(
                     pl.col("merit_value").min()
                 ).item(),
             )
 
-            if batch is None:
+            if result is None:
                 return None
 
-            assert controls_dict is not None
-            assert batch.batch_objectives is not None
+            batch, controls_dict = result
 
             return OptimalResult(
                 batch=batch.batch_id,
@@ -801,19 +983,17 @@ class EverestStorage:
             )
         else:
             # Maximize objective
-            batch, controls_dict = find_best_batch(
-                filter_by=lambda b: b.batch_objectives is not None
-                and not b.batch_objectives.is_empty(),
-                sort_by=lambda b: -b.batch_objectives.select(  # type: ignore
+            result = find_best_fn_eval_batch(
+                filter_by=lambda b: not b.batch_objectives.is_empty(),
+                sort_by=lambda b: -b.batch_objectives.select(
                     pl.col("total_objective_value").sample(n=1)
                 ).item(),
             )
 
-            if batch is None:
+            if result is None:
                 return None
 
-            assert controls_dict is not None
-            assert batch.batch_objectives is not None
+            batch, controls_dict = result
 
             return OptimalResult(
                 batch=batch.batch_id,

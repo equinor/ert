@@ -69,6 +69,8 @@ _QCOLORS = {
     state.COLOR_NOT_ACTIVE: QColor(*state.COLOR_NOT_ACTIVE),
 }
 
+_warn_once = True
+
 
 def _estimate_duration(
     start_time: datetime, end_time: datetime | None = None
@@ -429,6 +431,16 @@ class SnapshotModel(QAbstractItemModel):
                 )
                 # There is no method for truncating microseconds, so we remove them
                 delta -= timedelta(microseconds=delta.microseconds)
+                if delta < timedelta():
+                    global _warn_once  # noqa: PLW0603
+                    if _warn_once:
+                        _warn_once = False
+                        logger.warning(
+                            "Negative duration in snapshot encountered. "
+                            f"start_time={start_time} end_time={node.data.get(ids.END_TIME)} "
+                            f"delta={delta}"
+                        )
+                    delta = timedelta()
                 return str(delta)
 
             return node.data.get(data_name)

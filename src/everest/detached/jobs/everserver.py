@@ -3,6 +3,7 @@ import asyncio
 import datetime
 import json
 import logging
+import logging.config
 import os
 import queue
 import random
@@ -37,7 +38,6 @@ from fastapi import (
 )
 from fastapi.encoders import jsonable_encoder
 from fastapi.responses import (
-    JSONResponse,
     PlainTextResponse,
     Response,
 )
@@ -64,15 +64,14 @@ from ert.run_models.everest_run_model import (
 from everest.config import EverestConfig, ServerConfig
 from everest.detached import (
     ServerStatus,
-    get_opt_status,
     update_everserver_status,
 )
 from everest.plugins.everest_plugin_manager import EverestPluginManager
 from everest.strings import (
     DEFAULT_LOGGING_FORMAT,
     EVEREST,
+    EVERSERVER,
     OPT_FAILURE_REALIZATIONS,
-    OPT_PROGRESS_ENDPOINT,
     OPTIMIZATION_LOG_DIR,
     OPTIMIZATION_OUTPUT_DIR,
     START_EXPERIMENT_ENDPOINT,
@@ -80,6 +79,8 @@ from everest.strings import (
 )
 from everest.trace import tracer, tracer_provider
 from everest.util import makedirs_if_needed, version_info
+
+logger = logging.getLogger(__name__)
 
 
 class EverestServerMsg(BaseModel):
@@ -152,6 +153,8 @@ class ExperimentRunner:
                     sub.notify()
 
                 if isinstance(item, EndEvent):
+                    # Wait for subscribers to receive final events
+                    await asyncio.sleep(5)
                     break
                 await asyncio.sleep(0.1)
             await simulation_future
@@ -163,6 +166,10 @@ class ExperimentRunner:
             )
         except Exception as e:
             self._msg_queue.put(ExperimentFailed(msg=str(e)))
+        finally:
+            logging.getLogger(EVERSERVER).info(
+                f"ExperimentRunner done. Items left in queue: {status_queue.qsize()}"
+            )
 
 
 class Subscriber:
@@ -209,7 +216,7 @@ def _get_machine_name() -> str:
         # to socket fqdn which are using /etc/hosts to retrieve this name
         return socket.getfqdn()
     except socket.gaierror:
-        logging.debug(traceback.format_exc())
+        logging.getLogger(EVERSERVER).debug(traceback.format_exc())
         return "localhost"
 
 
@@ -256,7 +263,7 @@ def _everserver_thread(
             )
 
     def _log(request: Request) -> None:
-        logging.getLogger("everserver").info(
+        logging.getLogger(EVERSERVER).info(
             f"{request.scope['path']} entered from {request.client.host if request.client else 'unknown host'} with HTTP {request.method}"
         )
 
@@ -278,18 +285,8 @@ def _everserver_thread(
         msg_queue.put(ServerStopped())
         return Response("Raise STOP flag succeeded. Everest initiates shutdown..", 200)
 
-    @app.get("/" + OPT_PROGRESS_ENDPOINT)
-    def get_opt_progress(
-        request: Request, credentials: HTTPBasicCredentials = Depends(security)
-    ) -> JSONResponse:
-        _log(request)
-        _check_user(credentials)
-        progress = get_opt_status(server_config["optimization_output_dir"])
-        return JSONResponse(jsonable_encoder(progress))
-
     @app.post("/" + START_EXPERIMENT_ENDPOINT)
     async def start_experiment(
-        config: EverestConfig,
         request: Request,
         background_tasks: BackgroundTasks,
         credentials: HTTPBasicCredentials = Depends(security),
@@ -297,6 +294,8 @@ def _everserver_thread(
         _log(request)
         _check_user(credentials)
         if not shared_data["started"]:
+            request_data = await request.json()
+            config = EverestConfig.with_plugins(request_data)
             runner = ExperimentRunner(config, shared_data, msg_queue)
             try:
                 background_tasks.add_task(runner.run)
@@ -319,6 +318,9 @@ def _everserver_thread(
                 # Give some time for subscribers to get events
                 await asyncio.sleep(5)
                 break
+        logging.getLogger(EVERSERVER).info(
+            f"Subscriber {subscriber_id} done. Closing websocket"
+        )
 
     async def get_event(subscriber_id: str) -> StatusEvents:
         """
@@ -364,13 +366,12 @@ def _find_open_port(host: str, lower: int, upper: int) -> int:
             sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             sock.bind((host, port))
             sock.close()
-            return port
         except OSError:
-            logging.getLogger("everserver").info(
-                f"Port {port} for host {host} is taken"
-            )
+            logging.getLogger(EVERSERVER).info(f"Port {port} for host {host} is taken")
+        else:
+            return port
     msg = f"Failed 10 times to get a random port in the range {lower}-{upper} on {host}. Giving up."
-    logging.getLogger("everserver").exception(msg)
+    logging.getLogger(EVERSERVER).exception(msg)
     raise Exception(msg)
 
 
@@ -392,9 +393,7 @@ def _write_hostfile(
 
 
 def _configure_loggers(detached_dir: Path, log_dir: Path, logging_level: int) -> None:
-    def make_handler_config(
-        path: Path, log_level: str | int = "INFO"
-    ) -> dict[str, Any]:
+    def make_handler_config(path: Path, log_level: int) -> dict[str, Any]:
         makedirs_if_needed(str(path.parent))
         return {
             "class": "logging.FileHandler",
@@ -405,21 +404,37 @@ def _configure_loggers(detached_dir: Path, log_dir: Path, logging_level: int) ->
 
     logging_config = {
         "version": 1,
-        "disable_existing_loggers": False,
         "handlers": {
-            "root": {"level": "NOTSET", "class": "logging.NullHandler"},
-            "everserver": make_handler_config(detached_dir / "endpoint.log"),
-            "everest": make_handler_config(log_dir / "everest.log", logging_level),
-            "forward_models": make_handler_config(
+            "endpoint_log": make_handler_config(
+                detached_dir / "endpoint.log", logging_level
+            ),
+            "everest_log": make_handler_config(log_dir / "everest.log", logging_level),
+            "forward_models_log": make_handler_config(
                 log_dir / "forward_models.log", logging_level
             ),
         },
         "loggers": {
-            "": {"handlers": ["root"], "level": "NOTSET"},
-            "everserver": {"handlers": ["everserver"]},
-            "everest": {"handlers": ["everest"]},
-            "forward_models": {"handlers": ["forward_models"]},
-            "ert.scheduler.job": {"handlers": ["forward_models"], "propagate": False},
+            "root": {"handlers": ["endpoint_log"], "level": logging_level},
+            EVERSERVER: {
+                "handlers": ["endpoint_log"],
+                "level": logging_level,
+                "propagate": False,
+            },
+            EVEREST: {
+                "handlers": ["everest_log"],
+                "level": logging_level,
+                "propagate": False,
+            },
+            "forward_models": {
+                "handlers": ["forward_models_log"],
+                "level": logging_level,
+                "propagate": False,
+            },
+            "ert.scheduler.job": {
+                "handlers": ["forward_models_log"],
+                "propagate": False,
+                "level": logging_level,
+            },
         },
         "formatters": {
             "default": {"format": DEFAULT_LOGGING_FORMAT},
@@ -427,6 +442,7 @@ def _configure_loggers(detached_dir: Path, log_dir: Path, logging_level: int) ->
     }
 
     logging.config.dictConfig(logging_config)
+
     plugin_manager = EverestPluginManager()
     plugin_manager.add_log_handle_to_root()
     plugin_manager.add_span_processor_to_trace_provider(tracer_provider)
@@ -465,7 +481,6 @@ def main() -> None:
 
     output_dir = options.output_dir
     optimization_output_dir = str(Path(output_dir).absolute() / OPTIMIZATION_OUTPUT_DIR)
-    logging_level = options.logging_level
 
     status_path = ServerConfig.get_everserver_status_path(output_dir)
     host_file = ServerConfig.get_hostfile_path(output_dir)
@@ -479,17 +494,18 @@ def main() -> None:
         else None
     )
 
-    with tracer.start_as_current_span("everest.server", context=ctx):
+    with tracer.start_as_current_span("everest.everserver", context=ctx):
         try:
             _configure_loggers(
                 detached_dir=Path(ServerConfig.get_detached_node_dir(output_dir)),
                 log_dir=Path(output_dir) / OPTIMIZATION_LOG_DIR,
-                logging_level=logging_level,
+                logging_level=options.logging_level,
             )
 
+            logging.getLogger(EVERSERVER).info("Everserver starting ...")
             update_everserver_status(status_path, ServerStatus.starting)
-            logging.getLogger(EVEREST).info(version_info())
-            logging.getLogger(EVEREST).info(f"Output directory: {output_dir}")
+            logger.info(version_info())
+            logger.info(f"Output directory: {output_dir}")
 
             authentication = _generate_authentication()
             cert_path, key_path, key_pw = _generate_certificate(
@@ -523,6 +539,7 @@ def main() -> None:
             everserver_instance.start()
 
             # Monitoring the server
+            logging.getLogger(EVERSERVER).info("Everserver started")
             while True:
                 try:
                     item = msg_queue.get(timeout=1)  # Wait for data
@@ -550,6 +567,11 @@ def main() -> None:
                 status_path,
                 ServerStatus.failed,
                 message=traceback.format_exc(),
+            )
+            logging.getLogger(EVERSERVER).exception("Everserver failed")
+        finally:
+            logging.getLogger(EVERSERVER).info(
+                f"Everserver stopped. Items left in queue: {msg_queue.qsize()}"
             )
 
 

@@ -20,7 +20,7 @@ from ert.config.ert_config import (
     installed_forward_model_steps_from_dict,
     uppercase_subkeys_and_stringify_subvalues,
 )
-from ert.config.parsing import ConfigDict
+from ert.config.parsing import ConfigDict, ConfigWarning, read_file
 from ert.config.parsing import ConfigKeys as ErtConfigKeys
 from ert.plugins import ErtPluginContext
 from ert.plugins.plugin_manager import ErtPluginManager
@@ -57,22 +57,6 @@ def _get_datafiles(ever_config: EverestConfig) -> list[str]:
     return [data_file.replace("<GEO_ID>", str(geo_id)) for geo_id in realizations]
 
 
-def _load_all_groups(data_files: list[str]) -> set[str]:
-    groups = []
-    for data_file in data_files:
-        groups += everest.util.read_groupnames(data_file)
-
-    return set(groups)
-
-
-def _load_all_wells(data_files: list[str]) -> set[str]:
-    wells = []
-    for data_file in data_files:
-        wells += everest.util.read_wellnames(data_file)
-
-    return set(wells)
-
-
 def _extract_summary_keys(
     ever_config: EverestConfig, ert_config: dict[str, Any]
 ) -> None:
@@ -82,60 +66,19 @@ def _extract_summary_keys(
 
     data_keys = everest.simulator.DEFAULT_DATA_SUMMARY_KEYS
     field_keys = everest.simulator.DEFAULT_FIELD_SUMMARY_KEYS
-    group_sum_keys = everest.simulator.DEFAULT_GROUP_SUMMARY_KEYS
     well_sum_keys = everest.simulator.DEFAULT_WELL_SUMMARY_KEYS
     user_specified_keys = (
-        []
-        if ever_config.export is None or ever_config.export.keywords is None
-        else ever_config.export.keywords
+        [] if ever_config.export is None else ever_config.export.keywords
     )
 
-    # Makes it work w/ new config setup, default will be empty list
-    # when old way of doing it is phased out
-    if user_specified_keys is None:
-        user_specified_keys = []
-
-    try:
-        groups = _load_all_groups(data_files)
-    except Exception:
-        warn_msg = (
-            "Failed to load group names from {}. "
-            "No group summary data will be internalized during run."
-        )
-        logging.getLogger("everest").warning(warn_msg.format(data_files))
-        groups = set()
-
-    group_keys = [
-        f"{sum_key}:{gname}"
-        for (sum_key, gname) in itertools.product(group_sum_keys, groups)
-    ]
-
-    try:
-        data_wells = list(_load_all_wells(data_files))
-    except Exception:
-        warn_msg = (
-            "Failed to load well names from {}. "
-            "Only well data for wells specified in config file will be "
-            "internalized during run."
-        )
-        logging.getLogger(EVEREST).warning(warn_msg.format(data_files))
-        data_wells = []
-
-    everest_wells = [well.name for well in ever_config.wells]
-    wells = list(set(data_wells + everest_wells))
+    wells = [well.name for well in ever_config.wells]
 
     well_keys = [
         f"{sum_key}:{wname}"
         for (sum_key, wname) in itertools.product(well_sum_keys, wells)
     ]
 
-    all_keys = (
-        list(data_keys)
-        + list(field_keys)
-        + group_keys
-        + well_keys
-        + user_specified_keys
-    )
+    all_keys = data_keys + field_keys + well_keys + user_specified_keys
     all_keys = list(set(all_keys))
     ert_config[ErtConfigKeys.SUMMARY] = [all_keys]
 
@@ -160,26 +103,6 @@ def _extract_environment(
     ert_config[ErtConfigKeys.RUNPATH_FILE] = default_runpath_file
 
 
-def _inject_simulation_defaults(
-    ert_config: dict[str, Any], ever_config: EverestConfig
-) -> None:
-    """
-    NOTE: This function is only to live until the effort of centralizing all
-    default values is taken.
-    """
-
-    def inject_default(key: str, value: Any) -> None:
-        if key not in ert_config:
-            ert_config[key] = value
-
-    inject_default(
-        "ECLBASE",
-        (ever_config.definitions if ever_config.definitions is not None else {}).get(
-            "eclbase", "eclipse/ECL"
-        ),
-    )
-
-
 def _extract_simulator(ever_config: EverestConfig, ert_config: dict[str, Any]) -> None:
     """
     Extracts simulation data from ever_config and injects it into ert_config.
@@ -201,8 +124,6 @@ def _extract_simulator(ever_config: EverestConfig, ert_config: dict[str, Any]) -
     num_fm_cpu = ever_simulation.cores_per_node
     if num_fm_cpu is not None:
         ert_config[ErtConfigKeys.NUM_CPU] = num_fm_cpu
-
-    _inject_simulation_defaults(ert_config, ever_config)
 
 
 def _fetch_everest_jobs(ever_config: EverestConfig) -> list[Any]:
@@ -256,13 +177,14 @@ def _extract_jobs(
 
     res_jobs = ert_config.get(ErtConfigKeys.INSTALL_JOB, [])
     for job in ever_jobs:
-        new_job = (
-            job["name"],
-            os.path.join(path, job["source"]),
-        )
-        res_jobs.append(new_job)
+        if job.get("source") is not None:
+            source_path = os.path.join(path, job["source"])
+            new_job = (job["name"], (source_path, read_file(source_path)))
+            res_jobs.append(new_job)
 
     ert_config[ErtConfigKeys.INSTALL_JOB] = res_jobs
+    if eclbase := ever_config.definitions.get("eclbase"):
+        ert_config["ECLBASE"] = eclbase
 
 
 def _extract_workflow_jobs(
@@ -466,7 +388,6 @@ def _extract_model(ever_config: EverestConfig, ert_config: dict[str, Any]) -> No
 
 
 def _extract_seed(ever_config: EverestConfig, ert_config: dict[str, Any]) -> None:
-    assert ever_config.environment is not None
     random_seed = ever_config.environment.random_seed
 
     if random_seed:
@@ -474,17 +395,13 @@ def _extract_seed(ever_config: EverestConfig, ert_config: dict[str, Any]) -> Non
 
 
 def _extract_results(ever_config: EverestConfig, ert_config: dict[str, Any]) -> None:
-    objectives_names = [
-        objective.name
-        for objective in ever_config.objective_functions
-        if objective.alias is None
-    ]
+    objectives_names = [objective.name for objective in ever_config.objective_functions]
     constraint_names = [
         constraint.name for constraint in (ever_config.output_constraints or [])
     ]
     gen_data = ert_config.get(ErtConfigKeys.GEN_DATA, [])
     for name in objectives_names + constraint_names:
-        gen_data.append((name, f"RESULT_FILE:{name}"))
+        gen_data.append((name, {"RESULT_FILE": name}))
     ert_config[ErtConfigKeys.GEN_DATA] = gen_data
 
 
@@ -500,9 +417,9 @@ def get_substitutions(
     return substitutions
 
 
-def get_forward_model_steps(
-    config_dict: ConfigDict, substitutions: Substitutions
-) -> tuple[list[ForwardModelStep], dict[str, dict[str, Any]]]:
+def _get_installed_forward_model_steps(
+    ever_config: EverestConfig, config_dict: ConfigDict
+) -> dict[str, ForwardModelStep]:
     installed_forward_model_steps: dict[str, ForwardModelStep] = {}
     pm = ErtPluginManager()
     for fm_step_subclass in pm.forward_model_steps:
@@ -513,6 +430,32 @@ def get_forward_model_steps(
         installed_forward_model_steps_from_dict(config_dict)
     )
 
+    for job in ever_config.install_jobs or []:
+        if job.executable:
+            if job.name in installed_forward_model_steps:
+                ConfigWarning.warn(
+                    f"Duplicate forward model with name {job.name!r}, "
+                    f"overriding it with {job.executable!r}.",
+                    job.name,
+                )
+            executable = Path(job.executable)
+            if not executable.is_absolute():
+                executable = ever_config.config_directory / executable
+            installed_forward_model_steps[job.name] = ForwardModelStep(
+                name=job.name, executable=str(executable)
+            )
+
+    return installed_forward_model_steps
+
+
+def get_forward_model_steps(
+    ever_config: EverestConfig, config_dict: ConfigDict, substitutions: Substitutions
+) -> tuple[list[ForwardModelStep], dict[str, dict[str, Any]]]:
+    installed_forward_model_steps = _get_installed_forward_model_steps(
+        ever_config, config_dict
+    )
+
+    pm = ErtPluginManager()
     env_pr_fm_step = uppercase_subkeys_and_stringify_subvalues(
         pm.get_forward_model_configuration()
     )
@@ -586,7 +529,11 @@ def _everest_to_ert_config_dict(
     _extract_model(ever_config, ert_config)
     _extract_seed(ever_config, ert_config)
     _extract_results(ever_config, ert_config)
-
+    if ert_config.get("SUMMARY") and not ert_config.get("ECLBASE"):
+        raise ValueError(
+            "When specifying model -> data_file, also need to configure definitions -> eclbase, this will trigger "
+            "loading of summary data from the forward model"
+        )
     return ert_config
 
 

@@ -1,27 +1,28 @@
 from typing import Any
 
 from pydantic import (
-    BaseModel,
     Field,
     NonNegativeInt,
     PositiveInt,
     field_validator,
     model_validator,
 )
+from pydantic_core.core_schema import ValidationInfo
 
+from ert.config.parsing import BaseModelWithContextSupport
 from ert.config.queue_config import (
     LocalQueueOptions,
     LsfQueueOptions,
+    QueueOptions,
     SlurmQueueOptions,
     TorqueQueueOptions,
 )
-from ert.plugins import ErtPluginManager
 
 simulator_example = {"queue_system": {"name": "local", "max_running": 3}}
 
 
 def check_removed_config(queue_system: Any) -> None:
-    queue_systems = {
+    queue_systems: dict[str, type[QueueOptions]] = {
         "lsf": LsfQueueOptions,
         "torque": TorqueQueueOptions,
         "slurm": SlurmQueueOptions,
@@ -29,11 +30,11 @@ def check_removed_config(queue_system: Any) -> None:
     }
     if isinstance(queue_system, str) and queue_system in queue_systems:
         raise ValueError(
-            f"Queue system configuration has changed, valid options for {queue_system} are: {list(queue_systems[queue_system].__dataclass_fields__.keys())}"  # type: ignore
+            f"Queue system configuration has changed, valid options for {queue_system} are: {list(queue_systems[queue_system].model_fields.keys())}"
         )
 
 
-class SimulatorConfig(BaseModel, extra="forbid"):
+class SimulatorConfig(BaseModelWithContextSupport, extra="forbid"):
     cores_per_node: PositiveInt | None = Field(
         default=None,
         description="""defines the number of CPUs when running
@@ -78,25 +79,15 @@ class SimulatorConfig(BaseModel, extra="forbid"):
     resumbit_limit defines the number of times we will resubmit a failing forward model.
     If not specified, a default value of 1 will be used.""",
     )
-    enable_cache: bool = Field(
-        default=True,
-        description="""Enable forward model result caching.
-
-        If enabled, objective and constraint function results are cached for
-        each realization. If the optimizer requests an evaluation that has
-        already been done before, these cached values will be re-used without
-        running the forward model again.""",
-    )
 
     @field_validator("queue_system", mode="before")
     @classmethod
-    def default_local_queue(cls, v: Any) -> Any:
+    def default_local_queue(cls, v: Any, info: ValidationInfo) -> Any:
         if v is None:
-            return LocalQueueOptions(max_running=8)
-        if "activate_script" not in v and (
-            active_script := ErtPluginManager().activate_script()
-        ):
-            v["activate_script"] = active_script
+            options = None
+            if info.context:
+                options = info.context.get("queue_system")
+            return options or LocalQueueOptions(max_running=8)
         return v
 
     @model_validator(mode="before")

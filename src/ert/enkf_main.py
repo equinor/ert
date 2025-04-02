@@ -153,9 +153,9 @@ def _seed_sequence(seed: int | None) -> int:
         int_seed = SeedSequence().entropy
         logger.info(
             "To repeat this experiment, "
-            "add the following random seed to your config file:"
+            "add the following random seed to your config file:\n"
+            f"RANDOM_SEED {int_seed}"
         )
-        logger.info(f"RANDOM_SEED {int_seed}")
     else:
         int_seed = seed
     assert isinstance(int_seed, int)

@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from pathlib import Path
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, cast
 
 import numpy as np
 import pandas as pd
@@ -10,7 +10,6 @@ from pandas.api.types import is_integer_dtype
 
 from ert.config.gen_kw_config import GenKwConfig, TransformFunctionDefinition
 
-from ._option_dict import option_dict
 from .parsing import ConfigValidationError, ErrorInfo
 
 if TYPE_CHECKING:
@@ -25,7 +24,7 @@ from ert.shared.status.utils import convert_to_numeric
 class DesignMatrix:
     xls_filename: Path
     design_sheet: str
-    default_sheet: str
+    default_sheet: str | None
 
     def __post_init__(self) -> None:
         try:
@@ -33,7 +32,7 @@ class DesignMatrix:
                 self.active_realizations,
                 self.design_matrix_df,
                 self.parameter_configuration,
-            ) = self.read_design_matrix()
+            ) = self.read_and_validate_design_matrix()
         except (ValueError, AttributeError) as exc:
             raise ConfigValidationError.with_context(
                 f"Error reading design matrix {self.xls_filename}: {exc}",
@@ -41,11 +40,11 @@ class DesignMatrix:
             ) from exc
 
     @classmethod
-    def from_config_list(cls, config_list: list[str]) -> DesignMatrix:
-        filename = Path(config_list[0])
-        options = option_dict(config_list, 1)
-        design_sheet = options.get("DESIGN_SHEET")
-        default_sheet = options.get("DEFAULT_SHEET")
+    def from_config_list(cls, config_list: list[str | dict[str, str]]) -> DesignMatrix:
+        filename = Path(cast(str, config_list[0]))
+        options = cast(dict[str, str], config_list[1])
+        design_sheet = options.get("DESIGN_SHEET", "DesignSheet")
+        default_sheet = options.get("DEFAULT_SHEET", None)
         errors = []
         if filename.suffix not in {
             ".xlsx",
@@ -56,14 +55,6 @@ class DesignMatrix:
                     f"DESIGN_MATRIX must be of format .xls or .xlsx; is '{filename}'"
                 ).set_context(config_list)
             )
-        if design_sheet is None:
-            errors.append(
-                ErrorInfo("Missing required DESIGN_SHEET").set_context(config_list)
-            )
-        if default_sheet is None:
-            errors.append(
-                ErrorInfo("Missing required DEFAULT_SHEET").set_context(config_list)
-            )
         if design_sheet is not None and design_sheet == default_sheet:
             errors.append(
                 ErrorInfo(
@@ -73,7 +64,6 @@ class DesignMatrix:
         if errors:
             raise ConfigValidationError.from_collected(errors)
         assert design_sheet is not None
-        assert default_sheet is not None
         return cls(
             xls_filename=filename,
             design_sheet=design_sheet,
@@ -84,29 +74,52 @@ class DesignMatrix:
         errors = []
         if self.active_realizations != dm_other.active_realizations:
             errors.append(
-                ErrorInfo("Design Matrices don't have the same active realizations!")
+                ErrorInfo(
+                    f"Design Matrices '{self.xls_filename.name} ({self.design_sheet} {self.default_sheet})' and "
+                    f"'{dm_other.xls_filename.name} ({dm_other.design_sheet} {dm_other.default_sheet})' do not "
+                    "have the same active realizations!"
+                )
             )
 
         common_keys = set(self.design_matrix_df.columns) & set(
             dm_other.design_matrix_df.columns
         )
+        non_identical_cols = set()
         if common_keys:
-            errors.append(
-                ErrorInfo(f"Design Matrices do not have unique keys {common_keys}!")
-            )
-
-        try:
-            self.design_matrix_df = pd.concat(
-                [self.design_matrix_df, dm_other.design_matrix_df], axis=1
-            )
-        except ValueError as exc:
-            errors.append(ErrorInfo(f"Error when merging design matrices {exc}!"))
-
-        for tfd in dm_other.parameter_configuration.transform_function_definitions:
-            self.parameter_configuration.transform_function_definitions.append(tfd)
+            for key in common_keys:
+                if not self.design_matrix_df[key].equals(
+                    dm_other.design_matrix_df[key]
+                ):
+                    non_identical_cols.add(key)
+            if non_identical_cols:
+                errors.append(
+                    ErrorInfo(
+                        f"Design Matrices '{self.xls_filename.name} ({self.design_sheet} {self.default_sheet})' and "
+                        f"'{dm_other.xls_filename.name} ({dm_other.design_sheet} {dm_other.default_sheet})' "
+                        f"contains non identical columns with the same name: {non_identical_cols}!"
+                    )
+                )
 
         if errors:
             raise ConfigValidationError.from_collected(errors)
+
+        try:
+            self.design_matrix_df = pd.concat(
+                [
+                    self.design_matrix_df,
+                    dm_other.design_matrix_df.drop(list(common_keys), axis=1),
+                ],
+                axis=1,
+            )
+        except ValueError as exc:
+            raise ConfigValidationError(
+                f"Error when merging design matrices '{self.xls_filename.name} ({self.design_sheet} {self.default_sheet})' and "
+                f"'{dm_other.xls_filename.name} ({dm_other.design_sheet} {dm_other.default_sheet})': {exc}!"
+            ) from exc
+
+        for tfd in dm_other.parameter_configuration.transform_function_definitions:
+            if tfd.name not in common_keys:
+                self.parameter_configuration.transform_function_definitions.append(tfd)
 
     def merge_with_existing_parameters(
         self, existing_parameters: list[ParameterConfig]
@@ -159,7 +172,7 @@ class DesignMatrix:
                 new_param_config += [parameter_group]
         return new_param_config, design_parameter_group
 
-    def read_design_matrix(
+    def read_and_validate_design_matrix(
         self,
     ) -> tuple[list[bool], pd.DataFrame, GenKwConfig]:
         # Read the parameter names (first row) as strings to prevent pandas from modifying them.
@@ -176,12 +189,12 @@ class DesignMatrix:
             .iloc[0]
             .apply(lambda x: x.strip() if isinstance(x, str) else x)
         )
-        design_matrix_df = DesignMatrix._read_excel(
-            self.xls_filename,
-            self.design_sheet,
+        design_matrix_df = pd.read_excel(
+            io=self.xls_filename,
+            sheet_name=self.design_sheet,
             header=None,
             skiprows=1,
-        )
+        ).dropna(axis=1, how="all")
         design_matrix_df.columns = param_names.to_list()
 
         if "REAL" in design_matrix_df.columns:
@@ -197,15 +210,21 @@ class DesignMatrix:
             error_msg = "\n".join(error_list)
             raise ValueError(f"Design matrix is not valid, error(s):\n{error_msg}")
 
-        defaults_to_use = DesignMatrix._read_defaultssheet(
-            self.xls_filename, self.default_sheet, design_matrix_df.columns.to_list()
-        )
-        default_df = pd.DataFrame(
-            {k: [v] * len(design_matrix_df.index) for k, v in defaults_to_use.items()},
-            index=design_matrix_df.index,
-        )
+        if self.default_sheet is not None:
+            defaults_to_use = DesignMatrix._read_defaultssheet(
+                self.xls_filename,
+                self.default_sheet,
+                design_matrix_df.columns.to_list(),
+            )
+            default_df = pd.DataFrame(
+                {
+                    k: [v] * len(design_matrix_df.index)
+                    for k, v in defaults_to_use.items()
+                },
+                index=design_matrix_df.index,
+            )
 
-        design_matrix_df = pd.concat([design_matrix_df, default_df], axis=1)
+            design_matrix_df = pd.concat([design_matrix_df, default_df], axis=1)
 
         transform_function_definitions: list[TransformFunctionDefinition] = []
         for parameter in design_matrix_df.columns:
@@ -231,29 +250,6 @@ class DesignMatrix:
             design_matrix_df,
             parameter_configuration,
         )
-
-    @staticmethod
-    def _read_excel(
-        file_name: Path | str,
-        sheet_name: str,
-        usecols: list[int] | None = None,
-        header: int | None = 0,
-        skiprows: int | None = None,
-        dtype: str | None = None,
-    ) -> pd.DataFrame:
-        """
-        Reads an Excel file into a DataFrame, with options to filter columns and rows,
-        and automatically drops columns that contain only NaN values.
-        """
-        df = pd.read_excel(
-            io=file_name,
-            sheet_name=sheet_name,
-            usecols=usecols,
-            header=header,
-            skiprows=skiprows,
-            dtype=dtype,
-        )
-        return df.dropna(axis=1, how="all")
 
     @staticmethod
     def _validate_design_matrix(design_matrix: pd.DataFrame) -> list[str]:
@@ -300,12 +296,12 @@ class DesignMatrix:
 
         :raises: ValueError if defaults sheet is non-empty but non-parsable
         """
-        default_df = DesignMatrix._read_excel(
-            xls_filename,
-            defaults_sheetname,
+        default_df = pd.read_excel(
+            io=xls_filename,
+            sheet_name=defaults_sheetname,
             header=None,
             dtype="string",
-        )
+        ).dropna(axis=1, how="all")
         if default_df.empty:
             return {}
         if len(default_df.columns) < 2:

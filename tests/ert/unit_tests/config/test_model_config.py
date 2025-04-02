@@ -7,19 +7,19 @@ from ert.config import ModelConfig
 from ert.config.parsing import ConfigKeys, ConfigValidationError, ConfigWarning
 
 
-def test_default_model_config_run_path(tmpdir):
+def test_default_model_config_run_path():
     mc = ModelConfig(num_realizations=1)
     assert mc.runpath_format_string == "simulations/realization-<IENS>/iter-<ITER>"
 
 
-def test_invalid_model_config_run_path(tmpdir):
+def test_invalid_model_config_run_path():
     mc = ModelConfig(
         num_realizations=1, runpath_format_string="realization-no-specifier"
     )
     assert mc.runpath_format_string == "realization-no-specifier"
 
 
-def test_suggested_deprecated_model_config_run_path(tmpdir):
+def test_suggested_deprecated_model_config_run_path():
     runpath = "simulations/realization-%d/iter-%d"
     suggested_path = "simulations/realization-<IENS>/iter-<ITER>"
     mc = ModelConfig(num_realizations=1, runpath_format_string=runpath)
@@ -57,13 +57,9 @@ def test_model_config_jobname_and_eclbase(extra_config, expected):
     assert ModelConfig.from_dict(config_dict).jobname_format_string == expected
 
 
-def test_that_invalid_time_map_file_raises_config_validation_error(tmpdir):
-    with tmpdir.as_cwd():
-        with open("time_map.txt", "w", encoding="utf-8") as fo:
-            fo.writelines("invalid")
-
-        with pytest.raises(ConfigValidationError, match="Could not read timemap file"):
-            _ = ModelConfig.from_dict({ConfigKeys.TIME_MAP: "time_map.txt"})
+def test_that_invalid_time_map_file_raises_config_validation_error():
+    with pytest.raises(ConfigValidationError, match="Could not read timemap file"):
+        _ = ModelConfig.from_dict({ConfigKeys.TIME_MAP: ("time_map.txt", "invalid")})
 
 
 @pytest.mark.parametrize(

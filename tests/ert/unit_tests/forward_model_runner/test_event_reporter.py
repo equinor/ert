@@ -162,11 +162,8 @@ def test_report_inconsistent_events(unused_tcp_port):
     url = f"tcp://{host}:{unused_tcp_port}"
     reporter = Event(evaluator_url=url)
 
-    with (
-        pytest.raises(
-            TransitionError,
-            match=r"Illegal transition None -> \(MessageType<Finish>,\)",
-        ),
+    with pytest.raises(
+        TransitionError, match=r"Illegal transition None -> \(MessageType<Finish>,\)"
     ):
         reporter.report(Finish())
 

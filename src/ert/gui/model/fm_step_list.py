@@ -87,7 +87,7 @@ class FMStepListProxyModel(QAbstractProxyModel):
                 header = FM_STEP_COLUMNS[section]
                 if header in {ids.STDOUT, ids.STDERR}:
                     return header.upper()
-                elif header in {ids.MAX_MEMORY_USAGE}:
+                elif header == ids.MAX_MEMORY_USAGE:
                     header = header.replace("_", " ")
                 return header.capitalize()
             if orientation == Qt.Orientation.Vertical:
@@ -99,7 +99,7 @@ class FMStepListProxyModel(QAbstractProxyModel):
         return FM_STEP_COLUMN_SIZE
 
     def rowCount(self, parent: QModelIndex | None = None) -> int:
-        parent = parent if parent else QModelIndex()
+        parent = parent or QModelIndex()
         if not parent.isValid():
             source_model = self.sourceModel()
             assert source_model is not None
@@ -120,7 +120,7 @@ class FMStepListProxyModel(QAbstractProxyModel):
     def index(
         self, row: int, column: int, parent: QModelIndex | None = None
     ) -> QModelIndex:
-        parent = parent if parent else QModelIndex()
+        parent = parent or QModelIndex()
         if not parent.isValid():
             job_index = self.mapToSource(self.createIndex(row, column, parent))
             return self.createIndex(row, column, job_index.data(NodeRole))

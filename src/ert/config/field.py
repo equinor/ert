@@ -4,7 +4,7 @@ import logging
 import os
 from functools import cached_property
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, Self, overload
+from typing import TYPE_CHECKING, Any, Self, cast, overload
 
 import numpy as np
 import xarray as xr
@@ -14,7 +14,6 @@ from ert.field_utils import FieldFileFormat, Shape, read_field, read_mask, save_
 from ert.substitutions import substitute_runpath_name
 from ert.utils import log_duration
 
-from ._option_dict import option_dict
 from ._str_to_bool import str_to_bool
 from .parameter_config import ParameterConfig
 from .parsing import ConfigValidationError, ConfigWarning
@@ -47,11 +46,12 @@ class Field(ParameterConfig):
         cls,
         grid_file_path: str,
         dims: Shape,
-        config_list: list[str],
+        config_list: list[str | dict[str, str]],
     ) -> Self:
-        name = config_list[0]
-        out_file = Path(config_list[2])
-        options = option_dict(config_list, 3)
+        name = cast(str, config_list[0])
+        out_file_name = cast(str, config_list[2])
+        out_file = Path(out_file_name)
+        options = cast(dict[str, str], config_list[3])
         init_transform = options.get("INIT_TRANSFORM")
         forward_init = str_to_bool(options.get("FORWARD_INIT", "FALSE"))
         output_transform = options.get("OUTPUT_TRANSFORM")
@@ -89,7 +89,7 @@ class Field(ParameterConfig):
                 ConfigValidationError.with_context(
                     f"Missing extension for field output file '{out_file}', "
                     f"valid formats are: {[f.name for f in FieldFileFormat]}",
-                    config_list[2],
+                    out_file_name,
                 )
             )
         file_format = None
@@ -100,7 +100,7 @@ class Field(ParameterConfig):
                 ConfigValidationError.with_context(
                     f"Unknown file format for output file: {out_file.suffix!r},"
                     f" valid formats: {[f.name for f in FieldFileFormat]}",
-                    config_list[2],
+                    out_file_name,
                 )
             )
         if init_files is None:
@@ -181,7 +181,6 @@ class Field(ParameterConfig):
     def save_parameters(
         self,
         ensemble: Ensemble,
-        group: str,
         realization: int,
         data: npt.NDArray[np.float64],
     ) -> None:
@@ -193,12 +192,12 @@ class Field(ParameterConfig):
         ma[~ma.mask] = data
         ma = ma.reshape(self.mask.shape)  # type: ignore
         ds = xr.Dataset({"values": (["x", "y", "z"], ma.filled())})  # type: ignore
-        ensemble.save_parameters(group, realization, ds)
+        ensemble.save_parameters(self.name, realization, ds)
 
     def load_parameters(
-        self, ensemble: Ensemble, group: str, realizations: npt.NDArray[np.int_]
+        self, ensemble: Ensemble, realizations: npt.NDArray[np.int_]
     ) -> npt.NDArray[np.float64]:
-        ds = ensemble.load_parameters(group, realizations)
+        ds = ensemble.load_parameters(self.name, realizations)
         ensemble_size = len(ds.realizations)
         da = xr.DataArray(
             [

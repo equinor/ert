@@ -37,9 +37,9 @@ output_constraints:
 
 install_jobs:
   - name: adv_distance3
-    source: jobs/ADV_DISTANCE3
+    executable: jobs/adv_distance3.py
   - name: adv_dump_controls
-    source: jobs/ADV_DUMP_CONTROLS
+    executable: jobs/adv_dump_controls.py
 
 
 forward_model:
@@ -73,7 +73,7 @@ optimization:
   speculative: true
 
 environment:
-  log_level: debug
+  log_level: info
   random_seed: 999
   simulation_folder: scratch/advanced/
   output_folder: everest_output/

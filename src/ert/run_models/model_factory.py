@@ -133,11 +133,11 @@ def _setup_evaluate_ensemble(
     args: Namespace,
     status_queue: SimpleQueue[StatusEvents],
 ) -> EvaluateEnsemble:
-    active_realizations = _realizations(args, config.model_config.num_realizations)
+    active_realizations = _get_active_realizations_list(args, config)
 
     return EvaluateEnsemble(
         random_seed=config.random_seed,
-        active_realizations=active_realizations.tolist(),
+        active_realizations=active_realizations,
         ensemble_id=args.ensemble_id,
         minimum_required_realizations=config.analysis_config.minimum_required_realizations,
         config=config,
@@ -148,12 +148,18 @@ def _setup_evaluate_ensemble(
 
 
 def _get_active_realizations_list(args: Namespace, config: ErtConfig) -> list[bool]:
-    return (
-        config.analysis_config.design_matrix.active_realizations
-        if config.analysis_config.design_matrix is not None
+    ensemble_size = config.model_config.num_realizations
+    if (
+        config.analysis_config.design_matrix is not None
         and config.analysis_config.design_matrix.active_realizations is not None
-        else _realizations(args, config.model_config.num_realizations).tolist()
-    )
+    ):
+        if args.realizations is None:
+            return config.analysis_config.design_matrix.active_realizations
+        else:
+            ensemble_size = len(
+                config.analysis_config.design_matrix.active_realizations
+            )
+    return _realizations(args, ensemble_size).tolist()
 
 
 def _setup_manual_update(

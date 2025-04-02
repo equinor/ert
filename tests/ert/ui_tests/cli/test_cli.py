@@ -160,11 +160,7 @@ def test_unopenable_observation_config_fails_gracefully():
     observation_config_abs_path = os.path.join(os.getcwd(), observation_config_rel_path)
     os.chmod(observation_config_abs_path, 0x0)
 
-    with pytest.raises(
-        ValueError,
-        match="Do not have permission to open observation config file "
-        f"{observation_config_abs_path!r}",
-    ):
+    with pytest.raises(ConfigValidationError, match="Permission denied:"):
         run_cli(TEST_RUN_MODE, config_file_name)
 
 
@@ -558,8 +554,14 @@ def test_es_mda(snapshot):
         keys=[f"iter-{iter}" for iter in range(len(data))],
         names=("Iteration", "Realization"),
     )
+
+    numpy_suffix = ""
+    if np.__version__.startswith("1."):
+        numpy_suffix = "_numpy1"
+
     snapshot.assert_match(
-        result.to_csv(float_format="%.12g"), "es_mda_integration_snapshot"
+        result.to_csv(float_format="%.12g"),
+        f"es_mda_integration_snapshot{numpy_suffix}",
     )
 
 

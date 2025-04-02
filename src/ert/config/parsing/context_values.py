@@ -25,6 +25,11 @@ class ContextBool:
     def __eq__(self, other: object) -> bool:
         return bool(self) == bool(other)
 
+    def __repr__(self) -> str:
+        if bool(self.val):
+            return "True"
+        return "False"
+
     @no_type_check
     def __deepcopy__(self, memo):
         new_instance = ContextBool(bool(self), self.token, self.keyword_token)
@@ -64,7 +69,7 @@ class ContextFloat(float):
         return new_instance
 
 
-class ContextString(str):
+class ContextString(str):  # noqa: FURB189
     @classmethod
     def from_token(cls, token: FileContextToken) -> "ContextString":
         return cls(val=str(token), token=token, keyword_token=token)
@@ -87,7 +92,7 @@ class ContextString(str):
 T = TypeVar("T")
 
 
-class ContextList(list[T]):
+class ContextList(list[T]):  # noqa: FURB189
     keyword_token: FileContextToken
 
     def __init__(self, token: FileContextToken) -> None:

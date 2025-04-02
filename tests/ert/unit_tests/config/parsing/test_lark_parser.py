@@ -3,7 +3,12 @@ from textwrap import dedent
 
 import pytest
 
-from ert.config.parsing import ConfigValidationError, init_user_config_schema, parse
+from ert.config.parsing import (
+    ConfigValidationError,
+    init_user_config_schema,
+    parse,
+    parse_contents,
+)
 
 
 def touch(filename):
@@ -11,82 +16,60 @@ def touch(filename):
         fh.write(" ")
 
 
-@pytest.mark.usefixtures("use_tmpdir")
 def test_that_missing_arglist_does_not_affect_subsequent_calls():
     """
     Check that the summary without arglist causes a ConfigValidationError and
     not an error from appending to None parsed from SUMMARY w/o arglist
     """
-    with open("config.ert", mode="w", encoding="utf-8") as fh:
-        fh.write(
-            dedent(
-                """
-                NUM_REALIZATIONS 1
-                SUMMARY
-                SUMMARY B 2
-                """
-            )
-        )
-
     with pytest.raises(ConfigValidationError, match="must have at least"):
-        _ = parse("config.ert", schema=init_user_config_schema())
-
-
-@pytest.mark.usefixtures("use_tmpdir")
-def test_that_setenv_does_not_expand_envvar():
-    with open("config.ert", mode="w", encoding="utf-8") as fh:
-        fh.write(
-            dedent(
-                """
-                NUM_REALIZATIONS 1
-                SETENV PATH $PATH:added
-                """
-            )
+        _ = parse_contents(
+            """
+            NUM_REALIZATIONS 1
+            SUMMARY
+            SUMMARY B 2
+            """,
+            file_name="config.ert",
+            schema=init_user_config_schema(),
         )
 
-    config = parse("config.ert", schema=init_user_config_schema())
+
+def test_that_setenv_does_not_expand_envvar():
+    config = parse_contents(
+        """
+        NUM_REALIZATIONS 1
+        SETENV PATH $PATH:added
+        """,
+        file_name="config.ert",
+        schema=init_user_config_schema(),
+    )
     # then res config should read the SETENV as is
     assert config["SETENV"] == [["PATH", "$PATH:added"]]
 
 
-@pytest.mark.usefixtures("use_tmpdir")
 def test_that_realisation_is_a_alias_of_realization():
-    with open("config.ert", mode="w", encoding="utf-8") as fh:
-        fh.write(
-            dedent(
-                """
-                NUM_REALISATIONS 1
-                """
-            )
-        )
-
-    config = parse("config.ert", schema=init_user_config_schema())
+    config = parse_contents(
+        "NUM_REALIZATIONS 1", file_name="config.ert", schema=init_user_config_schema()
+    )
     assert config["NUM_REALIZATIONS"] == 1
 
 
-@pytest.mark.usefixtures("use_tmpdir")
 def test_that_new_line_can_be_escaped():
-    with open("config.ert", mode="w", encoding="utf-8") as fh:
-        fh.write(
-            dedent(
-                """
-                NUM_REALIZATIONS \
-                        1
-                """
-            )
-        )
-
-    config = parse("config.ert", schema=init_user_config_schema())
+    config = parse_contents(
+        """
+        NUM_REALIZATIONS \
+                1
+        """,
+        file_name="config.ert",
+        schema=init_user_config_schema(),
+    )
     assert config["NUM_REALIZATIONS"] == 1
 
 
 @pytest.mark.filterwarnings(
     "ignore:.*Using DEFINE with substitution strings that are not of the form '<KEY>'.*:ert.config.ConfigWarning"
 )
-@pytest.mark.usefixtures("use_tmpdir")
 def test_that_redefines_are_applied_correctly_as_forward_model_args():
-    test_config_file_name = "test.ert"
-    test_config_contents = dedent(
+    config_dict = parse_contents(
         """
         NUM_REALIZATIONS  1
         DEFINE <A> 2
@@ -106,12 +89,11 @@ def test_that_redefines_are_applied_correctly_as_forward_model_args():
         DEFINE B <A>
         DEFINE C <A>
 
-        """
+        """,
+        file_name="config.ert",
+        schema=init_user_config_schema(),
     )
-    with open(test_config_file_name, "w", encoding="utf-8") as fh:
-        fh.write(test_config_contents)
 
-    config_dict = parse(file=test_config_file_name, schema=init_user_config_schema())
     defines = config_dict["DEFINE"]
 
     assert ["<A>", "2"] not in defines
@@ -122,18 +104,17 @@ def test_that_redefines_are_applied_correctly_as_forward_model_args():
     assert ["C", "3"] in defines
 
 
-def test_include_non_existing_file(tmpdir):
-    with tmpdir.as_cwd():
-        config = """
-        JOBNAME my_name%d
-        NUM_REALIZATIONS 1
-        INCLUDE does_not_exists
-        """
-        with open("config.ert", mode="w", encoding="utf-8") as fh:
-            fh.writelines(config)
-
-        with pytest.raises(ConfigValidationError, match=r"No such file or directory"):
-            _ = parse("config.ert", schema=init_user_config_schema())
+def test_include_non_existing_file():
+    with pytest.raises(ConfigValidationError, match=r"No such file or directory"):
+        parse_contents(
+            """
+            JOBNAME my_name%d
+            NUM_REALIZATIONS 1
+            INCLUDE does_not_exists
+            """,
+            file_name="config.ert",
+            schema=init_user_config_schema(),
+        )
 
 
 def test_invalid_user_config():
@@ -141,15 +122,15 @@ def test_invalid_user_config():
         _ = parse("this/is/not/a/file", schema=init_user_config_schema())
 
 
-def test_that_unknown_queue_option_gives_error_message(tmp_path):
-    test_user_config = tmp_path / "user_config.ert"
-
-    test_user_config.write_text("QUEUE_OPTION UNKNOWN_QUEUE unsetoption")
-
+def test_that_unknown_queue_option_gives_error_message():
     with pytest.raises(
         ConfigValidationError, match="'QUEUE_OPTION' argument 1 must be one of"
     ):
-        _ = parse(str(test_user_config), schema=init_user_config_schema())
+        _ = parse_contents(
+            "QUEUE_OPTION UNKNOWN_QUEUE unsetoption",
+            file_name="config.ert",
+            schema=init_user_config_schema(),
+        )
 
 
 @pytest.mark.usefixtures("use_tmpdir")
@@ -177,56 +158,41 @@ def test_include_cyclical_raises_error():
         _ = parse(test_config_file_name, schema=init_user_config_schema())
 
 
-@pytest.mark.usefixtures("use_tmpdir")
 def test_that_giving_incorrect_queue_name_in_queue_option_fails():
-    test_config_file_name = "test.ert"
-    test_config_contents = dedent(
-        """
-        NUM_REALIZATIONS  1
-        QUEUE_OPTION VOCAL MAX_RUNNING 50
-        """
-    )
-    with open(test_config_file_name, "w", encoding="utf-8") as fh:
-        fh.write(test_config_contents)
-
     with pytest.raises(ConfigValidationError, match="VOCAL"):
-        _ = parse(test_config_file_name, schema=init_user_config_schema())
+        _ = parse_contents(
+            """
+            NUM_REALIZATIONS  1
+            QUEUE_OPTION VOCAL MAX_RUNNING 50
+            """,
+            file_name="config.ert",
+            schema=init_user_config_schema(),
+        )
 
 
 @pytest.mark.usefixtures("use_tmpdir")
 def test_that_giving_no_keywords_fails_gracefully():
-    test_config_file_name = "test.ert"
-    with open(test_config_file_name, "w", encoding="utf-8") as fh:
-        fh.write("")
-
     with pytest.raises(ConfigValidationError, match="must be set"):
-        _ = parse(test_config_file_name, schema=init_user_config_schema())
+        _ = parse_contents("", file_name="config.ert", schema=init_user_config_schema())
 
 
-def test_num_realizations_required_in_config_file(tmp_path, monkeypatch):
-    monkeypatch.chdir(tmp_path)
-    config_file_name = "config.ert"
-    config_file_contents = "ENSPATH storage"
-    with open(config_file_name, mode="w", encoding="utf-8") as fh:
-        fh.write(config_file_contents)
+def test_num_realizations_required_in_config_file():
     with pytest.raises(ConfigValidationError, match=r"NUM_REALIZATIONS must be set.*"):
-        _ = parse(config_file_name, schema=init_user_config_schema())
+        _ = parse_contents(
+            "ENSPATH storage", file_name="config.ert", schema=init_user_config_schema()
+        )
 
 
-@pytest.mark.usefixtures("use_tmpdir")
 def test_that_invalid_boolean_values_are_handled_gracefully():
-    test_config_file_name = "test.ert"
-    test_config_contents = dedent(
-        """
-        NUM_REALIZATIONS  1
-        STOP_LONG_RUNNING NOT_YES
-        """
-    )
-    with open(test_config_file_name, "w", encoding="utf-8") as fh:
-        fh.write(test_config_contents)
-
     with pytest.raises(ConfigValidationError, match="boolean"):
-        _ = parse(test_config_file_name, schema=init_user_config_schema())
+        _ = parse_contents(
+            """
+            NUM_REALIZATIONS  1
+            STOP_LONG_RUNNING NOT_YES
+            """,
+            file_name="config.ert",
+            schema=init_user_config_schema(),
+        )
 
 
 @pytest.mark.usefixtures("use_tmpdir")
@@ -237,7 +203,8 @@ def test_not_executable_job_script_fails_gracefully():
     script_name = "not-executable-script.py"
     touch(script_name)
     config_file_contents = dedent(
-        f"""NUM_REALIZATIONS 1
+        f"""\
+         NUM_REALIZATIONS 1
          JOB_SCRIPT {script_name}
          """
     )
@@ -262,7 +229,8 @@ def test_not_executable_job_script_somewhere_in_PATH_fails_gracefully(monkeypatc
     os.chmod(path_location, 0x0)
     monkeypatch.setenv("PATH", path_location, ":")
     config_file_contents = dedent(
-        f"""NUM_REALIZATIONS 1
+        f"""\
+         NUM_REALIZATIONS 1
          JOB_SCRIPT {script_name}
          """
     )
@@ -277,42 +245,34 @@ def test_not_executable_job_script_somewhere_in_PATH_fails_gracefully(monkeypatc
     os.chmod(path_location, 0x775)
 
 
-@pytest.mark.usefixtures("use_tmpdir")
 def test_that_giving_non_int_values_give_config_validation_error():
-    test_config_file_name = "test.ert"
-    test_config_contents = dedent(
-        """
-        NUM_REALIZATIONS  hello
-        """
-    )
-    with open(test_config_file_name, "w", encoding="utf-8") as fh:
-        fh.write(test_config_contents)
-
     with pytest.raises(ConfigValidationError, match="integer"):
-        _ = parse(test_config_file_name, schema=init_user_config_schema())
+        _ = parse_contents(
+            """
+            NUM_REALIZATIONS hello
+            """,
+            file_name="config.ert",
+            schema=init_user_config_schema(),
+        )
 
 
-@pytest.mark.usefixtures("use_tmpdir")
 def test_that_giving_non_float_values_give_config_validation_error():
-    test_config_file_name = "test.ert"
-    test_config_contents = dedent(
-        """
-        NUM_REALIZATIONS  1
-        ENKF_ALPHA  hello
-        """
-    )
-    with open(test_config_file_name, "w", encoding="utf-8") as fh:
-        fh.write(test_config_contents)
-
     with pytest.raises(ConfigValidationError, match="number"):
-        _ = parse(test_config_file_name, schema=init_user_config_schema())
+        _ = parse_contents(
+            """
+            NUM_REALIZATIONS  1
+            ENKF_ALPHA  hello
+            """,
+            file_name="config.ert",
+            schema=init_user_config_schema(),
+        )
 
 
 @pytest.mark.usefixtures("use_tmpdir")
 def test_that_giving_non_executable_gives_config_validation_error():
     test_config_file_name = "test.ert"
     test_config_contents = dedent(
-        """
+        """\
         NUM_REALIZATIONS  1
         JOB_SCRIPT  not-an-executable-anyone-would-have-on-their-laptop
         """
@@ -324,33 +284,25 @@ def test_that_giving_non_executable_gives_config_validation_error():
         _ = parse(test_config_file_name, schema=init_user_config_schema())
 
 
-@pytest.mark.usefixtures("use_tmpdir")
 def test_that_giving_too_many_arguments_gives_config_validation_error():
-    test_config_file_name = "test.ert"
-    test_config_contents = dedent(
-        """
-        NUM_REALIZATIONS  1
-        ENKF_ALPHA 1.0 2.0 3.0
-        """
-    )
-    with open(test_config_file_name, "w", encoding="utf-8") as fh:
-        fh.write(test_config_contents)
-
     with pytest.raises(ConfigValidationError, match="maximum 1 arguments"):
-        _ = parse(test_config_file_name, schema=init_user_config_schema())
+        _ = parse_contents(
+            """
+            NUM_REALIZATIONS  1
+            ENKF_ALPHA 1.0 2.0 3.0
+            """,
+            file_name="config.ert",
+            schema=init_user_config_schema(),
+        )
 
 
-@pytest.mark.usefixtures("use_tmpdir")
 def test_that_giving_too_few_arguments_gives_config_validation_error():
-    test_config_file_name = "test.ert"
-    test_config_contents = dedent(
-        """
-        NUM_REALIZATIONS  1
-        ENKF_ALPHA
-        """
-    )
-    with open(test_config_file_name, "w", encoding="utf-8") as fh:
-        fh.write(test_config_contents)
-
     with pytest.raises(ConfigValidationError, match="at least 1 arguments"):
-        _ = parse(test_config_file_name, schema=init_user_config_schema())
+        _ = parse_contents(
+            """
+            NUM_REALIZATIONS  1
+            ENKF_ALPHA
+            """,
+            file_name="config.ert",
+            schema=init_user_config_schema(),
+        )

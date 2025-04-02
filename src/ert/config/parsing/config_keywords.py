@@ -56,3 +56,6 @@ class ConfigKeys(StrEnum):
     CONFIG_DIRECTORY = "CONFIG_DIRECTORY"
     SUBMIT_SLEEP = "SUBMIT_SLEEP"
     MAX_RUNNING = "MAX_RUNNING"
+
+    def __repr__(self) -> str:
+        return f"{self.value!r}"

@@ -1,4 +1,5 @@
 import argparse
+import json
 import logging
 import os
 import sys
@@ -7,6 +8,8 @@ from collections import defaultdict
 from collections.abc import Sequence
 from dataclasses import dataclass, field
 from itertools import groupby
+from pathlib import Path
+from textwrap import dedent
 from typing import Any, ClassVar
 
 import colorama
@@ -18,12 +21,10 @@ from ert.ensemble_evaluator import (
     FullSnapshotEvent,
     SnapshotUpdateEvent,
 )
-from ert.resources import all_shell_script_fm_steps
 from everest.config.server_config import ServerConfig
 from everest.detached import (
     ServerStatus,
     everserver_status,
-    get_opt_status,
     server_is_running,
     start_monitor,
     stop_server,
@@ -129,8 +130,7 @@ class _DetachedMonitor:
     INDENT = 2
     FLOAT_FMT = ".5g"
 
-    def __init__(self, show_all_jobs: bool) -> None:
-        self._show_all_jobs: bool = show_all_jobs
+    def __init__(self) -> None:
         self._clear_lines: int = 0
         self._batches_done = set[int]()
         self._last_reported_batch: int = -1
@@ -141,13 +141,41 @@ class _DetachedMonitor:
         try:
             if OPT_PROGRESS_ID in status:
                 opt_status = status[OPT_PROGRESS_ID]
-                if opt_status and opt_status["cli_monitor_data"]:
-                    msg, batch = self.get_opt_progress(opt_status)
-                    if msg.strip():
-                        # Clear the last reported batch of simulations if it
-                        # should be after this optimization report:
-                        if self._last_reported_batch > batch:
-                            self._clear()
+                if opt_status:
+                    if "cache_hits" in opt_status:
+                        event = opt_status["cache_hits"]
+
+                        cache_hits = event.data
+                        header = self._make_header(
+                            f"({len(cache_hits)}) cache_hit(s) for batch #{event.batch})",
+                            Fore.GREEN,
+                        )
+
+                        cache_hit_strs = []
+                        for c in event.data:
+                            pert = c["target_perturbation"]
+                            real = c["model_realization"]
+                            src_sim_id = c["source_simulation_id"]
+                            src_batch = c["source_batch_id"]
+
+                            start = (
+                                f"Perturbation {pert} for realization {real}"
+                                if pert != -1
+                                else f"Function evaluation for realization {real}"
+                            )
+                            end = f": re-using results from simulation {src_sim_id} of batch {src_batch}."
+
+                            cache_hit_strs.append(start + end)
+
+                        msg = self._join_one_newline_indent(
+                            (
+                                header,
+                                *cache_hit_strs,
+                            )
+                        )
+                        print(msg + "\n")
+                    else:
+                        msg = self._get_opt_progress_single_batch(opt_status)
                         print(msg + "\n")
                         self._clear_lines = 0
             if SIM_PROGRESS_ID in status:
@@ -167,7 +195,7 @@ class _DetachedMonitor:
                             )
                             summary = self._get_progress_summary(event.status_count)
                             job_states = self._get_job_states(
-                                self._snapshots[batch_number], self._show_all_jobs
+                                self._snapshots[batch_number]
                             )
                             msg = (
                                 self._join_two_newlines_indent(
@@ -225,6 +253,32 @@ class _DetachedMonitor:
             (header, controls, objectives, total_objective)
         )
 
+    def _get_opt_progress_single_batch(self, cli_monitor_data: dict[str, Any]) -> str:
+        batch: int = cli_monitor_data.get("batch", 0)
+        header = self._make_header(f"Optimization progress (Batch #{batch})")
+        width = _get_max_width(cli_monitor_data["controls"].keys())
+        controls = self._join_one_newline_indent(
+            [
+                f"{name:>{width}}: {value:{self.FLOAT_FMT}}"
+                for name, value in cli_monitor_data["controls"].items()
+            ]
+        )
+        expected_objectives = cli_monitor_data["expected_objectives"]
+        width = _get_max_width(expected_objectives.keys())
+        objectives = self._join_one_newline_indent(
+            [
+                f"{name:>{width}}: {value:{self.FLOAT_FMT}}"
+                for name, value in expected_objectives.items()
+            ]
+        )
+        objective_value = cli_monitor_data["objective_value"]
+        total_objective = (
+            f"Total normalized objective: {objective_value:{self.FLOAT_FMT}}"
+        )
+        return self._join_two_newlines_indent(
+            (header, controls, objectives, total_objective)
+        )
+
     @staticmethod
     def _get_progress_summary(status: dict[str, int]) -> str:
         colors = [
@@ -242,7 +296,7 @@ class _DetachedMonitor:
         )
 
     @classmethod
-    def _get_job_states(cls, snapshot: EnsembleSnapshot, show_all_jobs: bool) -> str:
+    def _get_job_states(cls, snapshot: EnsembleSnapshot) -> str:
         print_lines = []
         jobs_status = cls._get_jobs_status(snapshot)
         forward_model_messages = [
@@ -252,8 +306,6 @@ class _DetachedMonitor:
             for _, v in snapshot.reals.items()
             if v.get("message")
         ]
-        if not show_all_jobs:
-            jobs_status = cls._filter_jobs(jobs_status)
         if jobs_status:
             max_widths = {
                 state: _get_max_width(
@@ -295,10 +347,6 @@ class _DetachedMonitor:
                 job_progress[job_idx].errors[error].append(int(realization))
         return list(job_progress.values())
 
-    @staticmethod
-    def _filter_jobs(jobs: list[JobProgress]) -> list[JobProgress]:
-        return [job for job in jobs if job.name not in all_shell_script_fm_steps]
-
     @classmethod
     def _join_one_newline_indent(cls, sequence: Sequence[str]) -> str:
         return ("\n" + " " * cls.INDENT).join(sequence)
@@ -321,18 +369,15 @@ class _DetachedMonitor:
             print(colorama.Cursor.UP(), end=colorama.ansi.clear_line())
 
 
-def run_detached_monitor(
-    server_context: tuple[str, str, tuple[str, str]],
-    optimization_output_dir: str,
-    show_all_jobs: bool = False,
-) -> None:
-    monitor = _DetachedMonitor(show_all_jobs)
+def run_detached_monitor(server_context: tuple[str, str, tuple[str, str]]) -> None:
+    monitor = _DetachedMonitor()
     start_monitor(server_context, callback=monitor.update)
-    opt_status = get_opt_status(optimization_output_dir)
-    if opt_status.get("cli_monitor_data"):
-        msg, _ = monitor.get_opt_progress(opt_status)
-        if msg.strip():
-            print(f"{msg}\n")
+
+
+def run_empty_detached_monitor(
+    server_context: tuple[str, str, tuple[str, str]],
+) -> None:
+    start_monitor(server_context, callback=lambda _: None)
 
 
 def report_on_previous_run(
@@ -349,14 +394,55 @@ def report_on_previous_run(
             f"`  everest run --new-run {config_file}`\n"
         )
     else:
-        opt_status = get_opt_status(optimization_output_dir)
-        if opt_status.get("cli_monitor_data"):
-            monitor = _DetachedMonitor(show_all_jobs=False)
-            msg, _ = monitor.get_opt_progress(opt_status)
-            print(msg + "\n")
         print(
             f"Optimization completed.\n"
             "\nTo re-run the optimization use command:\n"
             f"  `everest run --new-run {config_file}`\n"
             f"Results are stored in {optimization_output_dir}"
         )
+
+
+def _read_user_preferences(user_info_path: Path) -> dict[str, dict[str, Any]]:
+    try:
+        if user_info_path.exists():
+            with open(user_info_path, encoding="utf-8") as f:
+                return json.load(f)
+
+        user_info = {EVEREST: {"show_scaling_warning": True}}
+        with open(user_info_path, mode="w", encoding="utf-8") as f:
+            json.dump(user_info, f, ensure_ascii=False, indent=4)
+    except json.decoder.JSONDecodeError:
+        return {EVEREST: {}}
+    else:
+        return user_info
+
+
+def show_scaled_controls_warning() -> None:
+    user_info_path = Path(os.getenv("HOME", "")) / ".ert"
+    user_info = _read_user_preferences(user_info_path)
+    everest_pref = user_info.get(EVEREST, {})
+
+    if not everest_pref.get("show_scaling_warning", True):
+        return
+
+    user_input = input(
+        dedent("""
+        From Everest version: 14.0.3, Everest will output auto-scaled control values.
+        Control values should now be specified in real-world units instead of the optimizer's internal scale.
+        The 'scaled_range' property can still be used to configure the optimizer's range for each control.
+
+        [Enter] to continue.
+        [  Y  ] to stop showing this message again.
+        [  N  ] to abort.
+        """)
+    ).lower()
+    match user_input:
+        case "y":
+            everest_pref["show_scaling_warning"] = False
+            try:
+                with open(user_info_path, mode="w", encoding="utf-8") as f:
+                    json.dump(user_info, f, ensure_ascii=False, indent=4)
+            except Exception as e:
+                logging.getLogger(EVEREST).error(str(e))
+        case "n":
+            raise SystemExit(0)
