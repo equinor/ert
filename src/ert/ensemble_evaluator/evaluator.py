@@ -57,7 +57,6 @@ class EnsembleEvaluator:
         self,
         ensemble: Ensemble,
         config: EvaluatorServerConfig,
-        monitor_queue: asyncio.Queue[Event | EventSentinel] | None = None,
     ) -> None:
         self._config: EvaluatorServerConfig = config
         self._ensemble: Ensemble = ensemble
@@ -81,9 +80,7 @@ class EnsembleEvaluator:
         self._dispatchers_connected: set[bytes] = set()
         self._dispatchers_empty: asyncio.Event = asyncio.Event()
         self._dispatchers_empty.set()
-        self._monitor_queue: asyncio.Queue[Event | EventSentinel] = (
-            monitor_queue or asyncio.Queue()
-        )
+        self._monitor_queue: asyncio.Queue[Event | EventSentinel] = asyncio.Queue()
         current_snapshot_dict = self._ensemble.snapshot.to_dict()
         event: Event = EESnapshot(
             snapshot=current_snapshot_dict,

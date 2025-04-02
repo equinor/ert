@@ -556,7 +556,6 @@ class BaseRunModel(ABC):
         self,
         iteration: int,
         evaluator: EnsembleEvaluator,
-        monitor_queue: asyncio.Queue[Event | EventSentinel],
     ) -> bool:
         try:
             heartbeat_interval_: float | None = 0.1
@@ -566,7 +565,7 @@ class BaseRunModel(ABC):
             while True:
                 try:
                     event = await asyncio.wait_for(
-                        monitor_queue.get(), timeout=heartbeat_interval_
+                        evaluator._monitor_queue.get(), timeout=heartbeat_interval_
                     )
                 except TimeoutError:
                     if closetracker_received:
@@ -594,7 +593,7 @@ class BaseRunModel(ABC):
                         logger.debug("observed evaluation stopped event, signal done")
                         logger.debug("monitor informing server monitor is done...")
 
-                        await monitor_queue.put(EventSentinel())
+                        await evaluator._monitor_queue.put(EventSentinel())
                         done_event = EEUserDone()
                         await evaluator.handle_client_event(done_event)
                         logger.debug("monitor informed server monitor is done")
@@ -617,7 +616,7 @@ class BaseRunModel(ABC):
                         logger.debug(f"monitor-{self._id} asking server to cancel...")
                         cancel_event = EEUserCancel(monitor=self._id)
                         await evaluator.handle_client_event(cancel_event)
-                        await monitor_queue.put(EventSentinel())
+                        await evaluator._monitor_queue.put(EventSentinel())
                         logger.debug(f"monitor-{self._id} asked server to cancel")
                         logger.debug(
                             "Run model canceled - during evaluation - cancel sent"
@@ -645,13 +644,12 @@ class BaseRunModel(ABC):
             raise UserCancelled("Experiment cancelled by user in pre evaluation")
 
         ee_ensemble = self._build_ensemble(run_args, ensemble.experiment_id)
-        monitor_queue = asyncio.Queue()
-        evaluator = EnsembleEvaluator(ee_ensemble, ee_config, monitor_queue)
+        evaluator = EnsembleEvaluator(ee_ensemble, ee_config)
         evaluator_task = asyncio.create_task(
             evaluator.run_and_get_successful_realizations()
         )
         await evaluator._server_started
-        if not (await self.run_monitor(ensemble.iteration, evaluator, monitor_queue)):
+        if not (await self.run_monitor(ensemble.iteration, evaluator)):
             await evaluator_task
             return []
 
