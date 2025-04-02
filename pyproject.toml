@@ -69,7 +69,6 @@ dependencies = [
     "xarray",
     "xtgeo >= 3.3.0",
     "networkx",
-    "graphite-maps@git+https://github.com/equinor/graphite-maps.git"
 ]
 
 [project.scripts]
