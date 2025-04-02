@@ -116,8 +116,9 @@ def well_opdate_filter(
     end_date = everest.util.str2date(end_date_str)
     well_data = everest.jobs.io.load_data(well_data_file)
 
-    # pylint: disable=unnecessary-lambda-assignment
-    valid = lambda well: _valid_operational_dates(well, start_date, end_date)
+    def valid(well: Any) -> bool:
+        return _valid_operational_dates(well, start_date, end_date)
+
     well_data = list(filter(valid, well_data))
 
     with everest.jobs.io.safe_open(output_file, "w") as fout:
