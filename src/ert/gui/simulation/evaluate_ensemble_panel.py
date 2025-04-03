@@ -47,7 +47,6 @@ class EvaluateEnsemblePanel(ExperimentConfigPanel):
 
         self._active_realizations_field = StringBox(
             ActiveRealizationsModel(ensemble_size, show_default=False),  # type: ignore
-            "config/simulation/active_realizations",
             continuous_update=True,
         )
         self._realizations_validator = EnsembleRealizationsArgument(

@@ -108,7 +108,9 @@ class StringBox(QLineEdit):
         return self._validation
 
     def isValid(self) -> bool:
-        return self._validation.isValid()
+        return (
+            bool(self.text() or self.placeholderText()) and self._validation.isValid()
+        )
 
     @property
     def get_text(self) -> str:
