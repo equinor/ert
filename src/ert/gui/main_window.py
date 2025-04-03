@@ -4,17 +4,20 @@ import datetime
 import functools
 import webbrowser
 from pathlib import Path
+from typing import cast
 
 from PyQt6.QtCore import QCoreApplication, QEvent, QSize, Qt
 from PyQt6.QtCore import pyqtSignal as Signal
 from PyQt6.QtCore import pyqtSlot as Slot
-from PyQt6.QtGui import QAction, QCloseEvent, QCursor, QIcon, QMouseEvent
+from PyQt6.QtGui import QAction, QCloseEvent, QCursor, QIcon, QMouseEvent, QPalette
 from PyQt6.QtWidgets import (
+    QApplication,
     QButtonGroup,
     QFrame,
     QHBoxLayout,
     QMainWindow,
     QMenu,
+    QMessageBox,
     QToolButton,
     QVBoxLayout,
     QWidget,
@@ -112,6 +115,18 @@ class ErtMainWindow(QMainWindow):
             self.side_frame.setStyleSheet("background-color: rgb(64, 64, 64);")
         else:
             self.side_frame.setStyleSheet("background-color: lightgray;")
+
+        if is_high_contrast_mode():
+            msg_box = QMessageBox()
+            msg_box.setText(
+                "High contrast mode detected. This is not supported by Ert and some features may not work as expected."
+            )
+            msg_box.setWindowTitle("Warning")
+            msg_box.setStyleSheet(
+                "QMessageBox {color: black; background-color: white;} QLabel {color: black;} QPushButton {color: black;}"
+            )
+            msg_box.update()
+            msg_box.exec()
 
         self.vbox_layout = QVBoxLayout(self.side_frame)
         self.side_frame.setLayout(self.vbox_layout)
@@ -375,3 +390,8 @@ class ErtMainWindow(QMainWindow):
     def __showAboutMessage(self) -> None:
         diag = AboutDialog(self)
         diag.show()
+
+
+def is_high_contrast_mode() -> bool:
+    app = cast(QWidget, QApplication.instance())
+    return app.palette().color(QPalette.ColorRole.Window).lightness() > 245
