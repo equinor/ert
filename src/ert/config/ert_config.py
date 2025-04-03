@@ -308,19 +308,14 @@ def read_templates(config_dict) -> list[tuple[str, str]]:
     return templates
 
 
-def workflows_from_dict(
+def workflow_jobs_from_dict(
     content_dict,
-    substitutions,
     installed_workflows: dict[str, ErtScriptWorkflow] | None = None,
 ):
     workflow_job_info = content_dict.get(ConfigKeys.LOAD_WORKFLOW_JOB, [])
     workflow_job_dir_info = content_dict.get(ConfigKeys.WORKFLOW_JOB_DIRECTORY, [])
-    hook_workflow_info = content_dict.get(ConfigKeys.HOOK_WORKFLOW, [])
-    workflow_info = content_dict.get(ConfigKeys.LOAD_WORKFLOW, [])
 
     workflow_jobs = copy.copy(installed_workflows) if installed_workflows else {}
-    workflows = {}
-    hooked_workflows = defaultdict(list)
 
     errors = []
 
@@ -385,6 +380,18 @@ def workflows_from_dict(
     if errors:
         raise ConfigValidationError.from_collected(errors)
 
+    return workflow_jobs
+
+
+def create_and_hook_workflows(content_dict, workflow_jobs, substitutions):
+    hook_workflow_info = content_dict.get(ConfigKeys.HOOK_WORKFLOW, [])
+    workflow_info = content_dict.get(ConfigKeys.LOAD_WORKFLOW, [])
+
+    workflows = {}
+    hooked_workflows = defaultdict(list)
+
+    errors = []
+
     for work in workflow_info:
         filename = path.basename(work[0]) if len(work) == 1 else work[1]
         try:
@@ -426,6 +433,21 @@ def workflows_from_dict(
 
     if errors:
         raise ConfigValidationError.from_collected(errors)
+
+    return workflows, hooked_workflows
+
+
+@staticmethod
+def workflows_from_dict(
+    content_dict,
+    substitutions,
+    installed_workflows: dict[str, ErtScriptWorkflow] | None = None,
+):
+    workflow_jobs = copy.copy(installed_workflows) if installed_workflows else {}
+    workflow_jobs = workflow_jobs_from_dict(content_dict, workflow_jobs)
+    workflows, hooked_workflows = create_and_hook_workflows(
+        content_dict, workflow_jobs, substitutions
+    )
     return workflow_jobs, workflows, hooked_workflows
 
 
