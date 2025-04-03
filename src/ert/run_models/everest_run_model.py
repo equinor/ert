@@ -175,7 +175,7 @@ class EverestRunModel(BaseRunModel):
         workflow_jobs = get_workflow_jobs(everest_config)
         if deprecated_workflow_jobs := workflow_jobs_from_dict(config_dict):
             workflow_jobs.update(deprecated_workflow_jobs)
-        _, hooked_workflows = create_and_hook_workflows(  # type: ignore[no-untyped-call]
+        _, hooked_workflows = create_and_hook_workflows(
             config_dict, workflow_jobs, substitutions
         )
 
