@@ -6,8 +6,9 @@ from pathlib import Path
 import pytest
 
 from _ert.events import EESnapshot, EESnapshotUpdate, ForwardModelStepChecksum
-from ert.ensemble_evaluator import EnsembleEvaluator, Monitor, identifiers, state
+from ert.ensemble_evaluator import EnsembleEvaluator, identifiers, state
 from ert.ensemble_evaluator.config import EvaluatorServerConfig
+from ert.scheduler.event import Event
 
 
 @pytest.mark.integration_test
@@ -23,25 +24,21 @@ async def test_scheduler_receives_checksum_and_waits_for_disk_sync(
             await asyncio.sleep(0.1)
         Path("real_0/test").rename("real_0/job_test_file")
 
-    async def _run_monitor():
-        async with Monitor(config.get_uri(), config.token) as monitor:
-            async for event in monitor.track():
-                if type(event) is ForwardModelStepChecksum:
-                    # Monitor got the checksum message renaming the file
-                    # before the scheduler gets the same message
-                    try:
-                        await asyncio.wait_for(rename_and_wait(), timeout=5)
-                    except TimeoutError:
-                        await monitor.signal_done()
-                if type(event) in {
-                    EESnapshot,
-                    EESnapshotUpdate,
-                } and event.snapshot.get(identifiers.STATUS) in {
-                    state.ENSEMBLE_STATE_FAILED,
-                    state.ENSEMBLE_STATE_STOPPED,
-                }:
-                    await monitor.signal_done()
-        return True
+    async def _handle_events(events_to_brm: asyncio.Queue[Event]):
+        while True:
+            event = await events_to_brm.get()
+            if type(event) is ForwardModelStepChecksum:
+                # Monitor got the checksum message renaming the file
+                # before the scheduler gets the same message
+                await asyncio.wait_for(rename_and_wait(), timeout=5)
+            if type(event) in {
+                EESnapshot,
+                EESnapshotUpdate,
+            } and event.snapshot.get(identifiers.STATUS) in {
+                state.ENSEMBLE_STATE_FAILED,
+                state.ENSEMBLE_STATE_STOPPED,
+            }:
+                return
 
     def create_manifest_file():
         with open("real_0/manifest.json", mode="w", encoding="utf-8") as f:
@@ -56,13 +53,16 @@ async def test_scheduler_receives_checksum_and_waits_for_disk_sync(
         file_path.write_text("test")
         # actual_md5sum = hashlib.md5(file_path.read_bytes()).hexdigest()
         config = EvaluatorServerConfig(use_token=False)
-        evaluator = EnsembleEvaluator(ensemble, config)
+        events_to_brm = asyncio.Queue()
+        evaluator = EnsembleEvaluator(
+            ensemble, config, send_to_brm=events_to_brm.put_nowait
+        )
         with caplog.at_level(logging.DEBUG):
             run_task = asyncio.create_task(
                 evaluator.run_and_get_successful_realizations()
             )
             await evaluator._server_started
-            await _run_monitor()
+            await asyncio.wait_for(_handle_events(events_to_brm), timeout=10)
             await run_task
         assert "Waiting for disk synchronization" in caplog.messages
         assert f"File {file_path.absolute()} checksum successful." in caplog.messages

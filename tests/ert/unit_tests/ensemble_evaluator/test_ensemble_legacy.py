@@ -1,21 +1,27 @@
 import asyncio
 import os
-from contextlib import asynccontextmanager
+from collections.abc import AsyncGenerator, Callable
+from contextlib import _AsyncGeneratorContextManager, asynccontextmanager
 from unittest.mock import MagicMock
 
 import pytest
 
-from _ert.events import EESnapshot, EESnapshotUpdate, EETerminated
+from _ert.events import EESnapshot, EESnapshotUpdate, EETerminated, Event
 from ert.config import QueueConfig
-from ert.ensemble_evaluator import EnsembleEvaluator, Monitor, identifiers, state
+from ert.ensemble_evaluator import EnsembleEvaluator, identifiers, state
+from ert.ensemble_evaluator._ensemble import LegacyEnsemble
 from ert.ensemble_evaluator.config import EvaluatorServerConfig
 from ert.scheduler import Scheduler
 
 
 @pytest.fixture
-def evaluator_to_use():
+def evaluator_to_use() -> Callable[
+    ..., _AsyncGeneratorContextManager[EnsembleEvaluator, None]
+]:
     @asynccontextmanager
-    async def run_evaluator(ensemble, ee_config):
+    async def _run_evaluator(
+        ensemble: LegacyEnsemble, ee_config: EvaluatorServerConfig
+    ) -> asyncio.Generator[EnsembleEvaluator, asyncio.Any, None]:
         evaluator = EnsembleEvaluator(ensemble, ee_config)
         run_task = asyncio.create_task(evaluator.run_and_get_successful_realizations())
         await evaluator._server_started
@@ -25,24 +31,37 @@ def evaluator_to_use():
             evaluator.stop()
             await run_task
 
-    return run_evaluator
+    return _run_evaluator
+
+
+@asynccontextmanager
+async def run_evaluator(
+    ensemble: LegacyEnsemble, ee_config: EvaluatorServerConfig, callback
+) -> AsyncGenerator[[], EnsembleEvaluator]:
+    evaluator = EnsembleEvaluator(ensemble, ee_config, callback)
+    run_task = asyncio.create_task(evaluator.run_and_get_successful_realizations())
+    await evaluator._server_started
+    try:
+        yield evaluator
+    finally:
+        evaluator.stop()
+        await run_task
 
 
 @pytest.mark.integration_test
 @pytest.mark.timeout(60)
 @pytest.mark.asyncio
-async def test_run_legacy_ensemble(
-    tmpdir, make_ensemble, monkeypatch, evaluator_to_use
-):
+async def test_run_legacy_ensemble(tmpdir, make_ensemble, monkeypatch):
     num_reals = 2
     with tmpdir.as_cwd():
         ensemble = make_ensemble(monkeypatch, tmpdir, num_reals, 2)
         config = EvaluatorServerConfig(use_token=False)
+        events_to_brm: asyncio.Queue[Event] = asyncio.Queue()
         async with (
-            evaluator_to_use(ensemble, config) as evaluator,
-            Monitor(config.get_uri(), config.token) as monitor,
+            run_evaluator(ensemble, config, events_to_brm.put_nowait) as evaluator,
         ):
-            async for event in monitor.track():
+            while True:
+                event = await events_to_brm.get()
                 if type(event) in {
                     EESnapshotUpdate,
                     EESnapshot,
@@ -50,7 +69,7 @@ async def test_run_legacy_ensemble(
                     state.ENSEMBLE_STATE_FAILED,
                     state.ENSEMBLE_STATE_STOPPED,
                 }:
-                    await monitor.signal_done()
+                    break
             assert evaluator._ensemble.status == state.ENSEMBLE_STATE_STOPPED
             assert len(evaluator._ensemble.get_successful_realizations()) == num_reals
 
