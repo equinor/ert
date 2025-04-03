@@ -10,6 +10,7 @@ import yaml
 from ruamel.yaml import YAML
 
 import everest
+from ert.config import ConfigWarning
 from ert.config.ensemble_config import EnsembleConfig
 from ert.config.ert_config import create_and_hook_workflows, workflows_from_dict
 from ert.config.model_config import ModelConfig
@@ -323,6 +324,25 @@ def test_workflow_job(tmp_path, monkeypatch):
     workflow_jobs = get_workflow_jobs(ever_config)
     jobs = workflow_jobs.get("test")
     assert jobs.executable == which("echo")
+
+
+def test_workflow_job_override(tmp_path, monkeypatch):
+    monkeypatch.chdir(tmp_path)
+    echo = which("echo")
+    workflow_jobs = [
+        {"name": "test", "executable": which("true")},
+        {"name": "test", "executable": echo},
+    ]
+    ever_config = EverestConfig.with_defaults(
+        install_workflow_jobs=workflow_jobs, model={"realizations": [0]}
+    )
+    with pytest.warns(
+        ConfigWarning,
+        match=f"Duplicate workflow job with name 'test', overriding it with {echo!r}.",
+    ):
+        workflow_jobs = get_workflow_jobs(ever_config)
+    jobs = workflow_jobs.get("test")
+    assert jobs.executable == echo
 
 
 def test_workflows_deprecated(tmp_path, monkeypatch):
