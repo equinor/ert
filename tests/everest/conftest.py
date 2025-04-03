@@ -4,13 +4,15 @@ import shutil
 import tempfile
 from collections.abc import Callable, Iterator
 from copy import deepcopy
+from functools import partial
 from pathlib import Path
 from textwrap import dedent
-from unittest.mock import MagicMock
+from unittest.mock import MagicMock, patch
 
 import pytest
 import yaml
 
+import ert
 from ert.ensemble_evaluator import EvaluatorServerConfig
 from ert.run_models import StatusEvents
 from ert.run_models.event import status_event_from_json, status_event_to_json
@@ -237,3 +239,10 @@ def mock_server(monkeypatch):
     monkeypatch.setattr(everserver, "_find_open_port", lambda *args, **kwargs: 42)
     monkeypatch.setattr(everserver, "_write_hostfile", MagicMock())
     monkeypatch.setattr(everserver, "_everserver_thread", MagicMock())
+
+
+@pytest.fixture()
+def no_plugins():
+    patched = partial(ert.config.ert_config.ErtPluginManager, plugins=[])
+    with patch("ert.config.ert_config.ErtPluginManager", patched):
+        yield

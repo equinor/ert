@@ -144,6 +144,7 @@ def test_wait_for_server(server_is_running_mock, caplog):
     assert not caplog.messages
 
 
+@pytest.mark.usefixtures("no_plugins")
 def test_detached_mode_config_base(min_config, monkeypatch, tmp_path):
     monkeypatch.chdir(tmp_path)
     with open("config.yml", "w", encoding="utf-8") as fout:
@@ -247,6 +248,7 @@ def test_generate_queue_options_use_simulator_values(
     assert config.server.queue_system == expected_result
 
 
+@pytest.mark.usefixtures("no_plugins")
 @pytest.mark.parametrize("use_plugin", (True, False))
 @pytest.mark.parametrize(
     "queue_options",
