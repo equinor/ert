@@ -1,3 +1,4 @@
+from collections.abc import Iterable
 from typing import TYPE_CHECKING
 
 from .range_string_argument import RangeStringArgument
@@ -18,13 +19,13 @@ class EnsembleRealizationsArgument(RangeStringArgument):
         self,
         ensemble: "Ensemble",
         max_value: int | None,
-        required_realization_storage_state: "RealizationStorageState",
+        required_realization_storage_states: Iterable["RealizationStorageState"],
         **kwargs: bool,
     ) -> None:
         super().__init__(max_value, **kwargs)
         self.__ensemble = ensemble
-        self._required_realization_storage_state: RealizationStorageState = (
-            required_realization_storage_state
+        self._required_realization_storage_states: Iterable[RealizationStorageState] = (
+            required_realization_storage_states
         )
 
     def set_ensemble(self, ensemble: "Ensemble") -> None:
@@ -40,7 +41,7 @@ class EnsembleRealizationsArgument(RangeStringArgument):
         found_realization_ids = [
             index
             for index, state in enumerate(self.__ensemble.get_ensemble_state())
-            if self._required_realization_storage_state in state
+            if set(self._required_realization_storage_states).issubset(state)
         ]
         for realization in attempted_realizations:
             if realization not in found_realization_ids:
