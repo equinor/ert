@@ -12,8 +12,16 @@ CONFIG_FILE = "config_workflow.yml"
 
 
 @pytest.mark.integration_test
-def test_workflow_will_run_during_experiment(copy_mocked_test_data_to_tmp):
+@pytest.mark.parametrize("test_deprecated", [True, False])
+def test_workflow_will_run_during_experiment(
+    copy_mocked_test_data_to_tmp, test_deprecated
+):
     config = EverestConfig.load_file(CONFIG_FILE)
+    if test_deprecated:
+        config_dict = config.model_dump(exclude_none=True)
+        del config_dict["install_workflow_jobs"][0]["executable"]
+        config_dict["install_workflow_jobs"][0]["source"] = "jobs/TEST_WF"
+        config = EverestConfig.model_validate(config_dict)
 
     run_model = EverestRunModel.create(config)
     evaluator_server_config = EvaluatorServerConfig()

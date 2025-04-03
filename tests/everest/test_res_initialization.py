@@ -11,9 +11,7 @@ from ruamel.yaml import YAML
 
 import everest
 from ert.config.ensemble_config import EnsembleConfig
-from ert.config.ert_config import (
-    workflows_from_dict,
-)
+from ert.config.ert_config import create_and_hook_workflows, workflows_from_dict
 from ert.config.model_config import ModelConfig
 from ert.config.parsing import ConfigKeys as ErtConfigKeys
 from ert.config.queue_config import (
@@ -30,6 +28,7 @@ from everest.simulator.everest_to_ert import (
     everest_to_ert_config_dict,
     get_forward_model_steps,
     get_substitutions,
+    get_workflow_jobs,
 )
 from tests.everest.utils import skipif_no_everest_models
 
@@ -295,7 +294,7 @@ def test_install_data_with_invalid_templates(
     assert expected_error_msg in str(exc_info.value)
 
 
-def test_workflow_job(tmp_path, monkeypatch):
+def test_workflow_job_deprecated(tmp_path, monkeypatch):
     monkeypatch.chdir(tmp_path)
     Path("TEST").write_text("EXECUTABLE echo", encoding="utf-8")
     workflow_jobs = [{"name": "test", "source": "TEST"}]
@@ -315,7 +314,18 @@ def test_workflow_job(tmp_path, monkeypatch):
     assert jobs.executable == "echo"
 
 
-def test_workflows(tmp_path, monkeypatch):
+def test_workflow_job(tmp_path, monkeypatch):
+    monkeypatch.chdir(tmp_path)
+    workflow_jobs = [{"name": "test", "executable": which("echo")}]
+    ever_config = EverestConfig.with_defaults(
+        install_workflow_jobs=workflow_jobs, model={"realizations": [0]}
+    )
+    workflow_jobs = get_workflow_jobs(ever_config)
+    jobs = workflow_jobs.get("test")
+    assert jobs.executable == which("echo")
+
+
+def test_workflows_deprecated(tmp_path, monkeypatch):
     monkeypatch.chdir(tmp_path)
     Path("TEST").write_text("EXECUTABLE echo", encoding="utf-8")
     workflow_jobs = [{"name": "my_test", "source": "TEST"}]
@@ -337,6 +347,29 @@ def test_workflows(tmp_path, monkeypatch):
     jobs = workflows.get("pre_simulation")
     assert jobs.cmd_list[0][0].name == "my_test"
     assert jobs.cmd_list[0][0].executable == "echo"
+
+
+def test_workflows(tmp_path, monkeypatch):
+    monkeypatch.chdir(tmp_path)
+    workflow_jobs = [{"name": "my_test", "executable": which("echo")}]
+    workflow = {"pre_simulation": ["my_test"]}
+    ever_config = EverestConfig.with_defaults(
+        workflows=workflow,
+        model={"realizations": [0]},
+        install_workflow_jobs=workflow_jobs,
+    )
+    config_dict = everest_to_ert_config_dict(ever_config)
+    substitutions = get_substitutions(
+        config_dict=config_dict,
+        model_config=ModelConfig(),
+        runpath_file=MagicMock(),
+        num_cpu=0,
+    )
+    workflow_jobs = get_workflow_jobs(ever_config)
+    workflows, _ = create_and_hook_workflows(config_dict, workflow_jobs, substitutions)
+    jobs = workflows.get("pre_simulation")
+    assert jobs.cmd_list[0][0].name == "my_test"
+    assert jobs.cmd_list[0][0].executable == which("echo")
 
 
 def test_user_config_jobs_precedence(tmp_path, monkeypatch):
