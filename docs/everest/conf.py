@@ -15,6 +15,11 @@ import os
 import sys
 from importlib import metadata
 
+from json_schema_for_humans.generate import generate_from_filename
+from json_schema_for_humans.generation_configuration import GenerationConfiguration
+
+from everest.config import EverestConfig
+
 sys.path.append(os.path.abspath("_ext"))
 
 # -- Project information -----------------------------------------------------
@@ -34,10 +39,6 @@ version = ".".join(dist_version.split(".")[:2])
 # The full version, including alpha/beta/rc tags
 release = dist_version
 
-from json_schema_for_humans.generate import generate_from_filename
-from json_schema_for_humans.generation_configuration import GenerationConfiguration
-
-from everest.config import EverestConfig
 
 config = GenerationConfiguration(
     copy_css=False,

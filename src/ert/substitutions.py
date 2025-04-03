@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import logging
 import re
+from collections import UserDict
 from collections.abc import Mapping
 from typing import Any
 
@@ -11,9 +12,6 @@ from pydantic_core import core_schema
 
 logger = logging.getLogger(__name__)
 _PATTERN = re.compile(r"<[^<>]+>")
-
-
-from collections import UserDict
 
 
 class Substitutions(UserDict[str, str]):

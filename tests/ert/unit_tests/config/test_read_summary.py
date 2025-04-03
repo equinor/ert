@@ -1,3 +1,4 @@
+from array import array
 from datetime import datetime, timedelta
 from itertools import zip_longest
 
@@ -357,9 +358,6 @@ def test_empty_keywords_in_summary_files_raises_informative_errors(tmp_path):
 
     with pytest.raises(InvalidResponseFile, match="Got empty summary keyword"):
         read_summary(str(tmp_path / "test"), ["*"])
-
-
-from array import array
 
 
 def test_missing_names_keywords_in_summary_files_raises_informative_errors(

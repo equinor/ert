@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import logging
+import os
 from collections.abc import Mapping, Sequence
 from typing import Any
 
@@ -12,9 +13,6 @@ from ert.services._base_service import BaseService, _Context, local_exec_args
 from ert.trace import get_traceparent
 
 HTTPXClientInstrumentor().instrument()
-
-
-import os
 
 
 class StorageService(BaseService):

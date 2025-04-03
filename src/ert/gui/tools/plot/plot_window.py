@@ -9,9 +9,20 @@ from httpx import RequestError
 from pandas import DataFrame
 from PyQt6.QtCore import Qt
 from PyQt6.QtCore import pyqtSlot as Slot
-from PyQt6.QtWidgets import QDockWidget, QMainWindow, QTabWidget, QWidget
+from PyQt6.QtWidgets import (
+    QApplication,
+    QDialog,
+    QDockWidget,
+    QHBoxLayout,
+    QLabel,
+    QMainWindow,
+    QTabWidget,
+    QTextEdit,
+    QVBoxLayout,
+    QWidget,
+)
 
-from ert.gui.ertwidgets import showWaitCursorWhileWaiting
+from ert.gui.ertwidgets import CopyButton, showWaitCursorWhileWaiting
 from ert.utils import log_duration
 
 from .customize import PlotCustomizer
@@ -42,18 +53,8 @@ RESPONSE_DEFAULT = 0
 GEN_KW_DEFAULT = 2
 STD_DEV_DEFAULT = 6
 
+
 logger = logging.getLogger(__name__)
-
-from PyQt6.QtWidgets import (
-    QApplication,
-    QDialog,
-    QHBoxLayout,
-    QLabel,
-    QTextEdit,
-    QVBoxLayout,
-)
-
-from ert.gui.ertwidgets import CopyButton
 
 if TYPE_CHECKING:
     from pathlib import Path

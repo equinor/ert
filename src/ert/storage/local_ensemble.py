@@ -12,6 +12,7 @@ from uuid import UUID
 
 import numpy as np
 import pandas as pd
+import polars as pl
 import xarray as xr
 from pydantic import BaseModel
 from typing_extensions import TypedDict
@@ -28,8 +29,6 @@ if TYPE_CHECKING:
     from ert.storage.local_storage import LocalStorage
 
 logger = logging.getLogger(__name__)
-
-import polars as pl
 
 
 class EverestRealizationInfo(TypedDict):

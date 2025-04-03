@@ -189,6 +189,7 @@ line-length = 88
 
 [tool.ruff.lint]
 select = [
+    "E",     # pycodestyle
     "W",     # pycodestyle
     "I",     # isort
     "B",     # flake-8-bugbear
@@ -210,6 +211,7 @@ select = [
 ]
 preview = true
 ignore = [
+    "E501",    # line-too-long
     "FURB103", # write-hole-file
     "FURB101", # read-whole-file
     "G004",    # logging-f-string
@@ -241,6 +243,7 @@ allowed-confusables = ["–"]
 ]
 "src/ert/dark_storage/json_schema/__init__.py" = ["F401"]
 "src/ert/dark_storage/*" = ["RUF029"] # unused-async
+"*.ipynb" = ["E402"]
 
 
 [tool.ruff.lint.pylint]

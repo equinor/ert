@@ -15,6 +15,7 @@ from ert.gui.simulation.run_dialog import RunDialog
 from ert.gui.tools.export.export_panel import ExportDialog
 from ert.libres_facade import LibresFacade
 from ert.run_models import EnsembleExperiment
+from ert.storage import open_storage
 
 from .conftest import get_child, wait_for_child
 
@@ -104,9 +105,6 @@ def run_experiment_via_gui(gui, qtbot):
     run_dialog = wait_for_child(gui, qtbot, RunDialog)
     qtbot.waitUntil(lambda: run_dialog.is_simulation_done() is True, timeout=20000)
     qtbot.waitUntil(lambda: run_dialog._tab_widget.currentWidget() is not None)
-
-
-from ert.storage import open_storage
 
 
 def test_that_export_tool_does_not_produce_duplicate_data(

@@ -1,11 +1,12 @@
-from __future__ import annotations
-
 """
 The following test generates different kind of parameters
 and places their configuration in the config file. Then an
 ensemble experiment is ran and we assert that each realization
 was passed the parameters correctly in the runpath.
 """
+
+from __future__ import annotations
+
 from abc import abstractmethod
 from dataclasses import dataclass
 from datetime import datetime

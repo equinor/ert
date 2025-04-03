@@ -6,6 +6,7 @@ from functools import partial
 from unittest.mock import MagicMock, patch
 
 import pytest
+from fastapi.encoders import jsonable_encoder
 from websockets.sync.client import ClientConnection
 
 import everest
@@ -26,9 +27,6 @@ METADATA = EnsembleSnapshotMetadata(
     sorted_real_ids=[],
     sorted_fm_step_ids=defaultdict(list),
 )
-
-
-from fastapi.encoders import jsonable_encoder
 
 
 @pytest.fixture
