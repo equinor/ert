@@ -22,6 +22,7 @@ from ert.config.ert_config import (
 )
 from ert.config.parsing import ConfigDict, ConfigWarning, read_file
 from ert.config.parsing import ConfigKeys as ErtConfigKeys
+from ert.config.workflow_job import ExecutableWorkflow
 from ert.plugins import ErtPluginContext
 from ert.plugins.plugin_manager import ErtPluginManager
 from ert.substitutions import Substitutions
@@ -194,11 +195,9 @@ def _extract_workflow_jobs(
 
     res_jobs = ert_config.get(ErtConfigKeys.LOAD_WORKFLOW_JOB, [])
     for job in workflow_jobs:
-        new_job = (
-            os.path.join(path, job["source"]),
-            job["name"],
-        )
-        res_jobs.append(new_job)
+        if job.get("source") is not None:
+            new_job = (os.path.join(path, job["source"]), job["name"])
+            res_jobs.append(new_job)
 
     if res_jobs:
         ert_config[ErtConfigKeys.LOAD_WORKFLOW_JOB] = res_jobs
@@ -469,6 +468,29 @@ def get_forward_model_steps(
     )
 
     return forward_model_steps, env_pr_fm_step
+
+
+def get_workflow_jobs(ever_config: EverestConfig) -> dict[str, ExecutableWorkflow]:
+    workflow_jobs: dict[str, ExecutableWorkflow] = {}
+    for job in ever_config.install_workflow_jobs or []:
+        if job.executable is not None:
+            if job.name in workflow_jobs:
+                ConfigWarning.warn(
+                    f"Duplicate workflow job with name {job.name!r}, "
+                    f"overriding it with {job.executable!r}.",
+                    job.name,
+                )
+            executable = Path(job.executable)
+            if not executable.is_absolute():
+                executable = ever_config.config_directory / executable
+            workflow_jobs[job.name] = ExecutableWorkflow(
+                name=job.name,
+                min_args=None,
+                max_args=None,
+                arg_types=[],
+                executable=str(executable),
+            )
+    return workflow_jobs
 
 
 def get_ensemble_config(

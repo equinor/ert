@@ -283,7 +283,56 @@ and environment variables are exposed in the form 'os.NAME', for example:
         return self
 
     @model_validator(mode="after")
-    def validate_workflow_name_installed(self) -> Self:
+    def validate_install_workflow_jobs(self) -> Self:  # pylint: disable=E0213
+        if self.install_workflow_jobs is None:
+            return self
+        for job in self.install_workflow_jobs:
+            if job.executable is None:
+                logging.getLogger(EVEREST).warning(
+                    "`install_workflow_jobs: source` is deprecated, use `install_workflow_jobs: executable` instead."
+                )
+                print(
+                    "`install_workflow_jobs: source` is deprecated, instead you should use:"
+                )
+                print(
+                    "install_workflow_jobs:\n"
+                    "  - name: job-name\n"
+                    "    executable: path-to-executable\n"
+                )
+            break
+        return self
+
+    @model_validator(mode="after")
+    def validate_job_executables(self) -> Self:  # pylint: disable=E0213
+        def _check_jobs(jobs: list[InstallJobConfig]) -> list[str]:
+            errors = []
+            for job in jobs:
+                if job.executable is None:
+                    continue
+                executable = Path(job.executable)
+                if not executable.is_absolute():
+                    executable = self.config_directory / executable
+                if not executable.exists():
+                    errors.append(f"Could not find executable: {job.executable!r}")
+                if executable.is_dir():
+                    errors.append(
+                        f"Expected executable file, but {job.executable!r} is a directory"
+                    )
+                if not os.access(executable, os.X_OK):
+                    errors.append("File not executable: {job.executable!r}")
+            return errors
+
+        errors = []
+        if self.install_jobs is not None:
+            errors.extend(_check_jobs(self.install_jobs))
+        if self.install_workflow_jobs is not None:
+            errors.extend(_check_jobs(self.install_workflow_jobs))
+        if len(errors) > 0:  # Note: python3.11 ExceptionGroup will solve this nicely
+            raise ValueError(errors)
+        return self
+
+    @model_validator(mode="after")
+    def validate_workflow_name_installed(self) -> Self:  # pylint: disable=E0213
         workflows = self.workflows
         if workflows is None:
             return self
