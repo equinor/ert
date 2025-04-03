@@ -20,7 +20,12 @@ from PyQt6.QtWidgets import (
     QWidget,
 )
 
-from ert.config import ConfigValidationError, ErtConfig
+from ert.config import (
+    ConfigValidationError,
+    ErtConfig,
+    ParameterConfig,
+    ScalarParameters,
+)
 from ert.gui.ertnotifier import ErtNotifier
 from ert.gui.ertwidgets.create_experiment_dialog import CreateExperimentDialog
 from ert.storage import Ensemble, Experiment
@@ -151,28 +156,31 @@ class StorageWidget(QWidget):
         if create_experiment_dialog.exec():
             parameters_config = self._ert_config.ensemble_config.parameter_configuration
             design_matrix = self._ert_config.analysis_config.design_matrix
-            design_matrix_group = None
             if design_matrix is not None:
-                try:
-                    parameters_config, design_matrix_group = (
-                        design_matrix.merge_with_existing_parameters(parameters_config)
-                    )
-                except ConfigValidationError as exc:
-                    QMessageBox.warning(
-                        self,
-                        "Warning",
-                        (
-                            "The following issues were found when merging GenKW "
-                            f'with design matrix parameters: "{exc}"'
-                        ),
-                    )
-                    return
+                new_parameters_config: list[ParameterConfig] = []
+                for param in parameters_config:
+                    if isinstance(param, ScalarParameters):
+                        try:
+                            new_scalar_config = (
+                                design_matrix.merge_with_existing_parameters(param)
+                            )
+                            new_parameters_config.append(new_scalar_config)
+                        except ConfigValidationError as exc:
+                            QMessageBox.warning(
+                                self,
+                                "Warning",
+                                (
+                                    "The following issues were found when merging GenKW "
+                                    f'with design matrix parameters: "{exc}"'
+                                ),
+                            )
+                            return
+                    else:
+                        new_parameters_config.append(param)
+                parameters_config = new_parameters_config
+
             ensemble = self._notifier.storage.create_experiment(
-                parameters=(
-                    [*parameters_config, design_matrix_group]
-                    if design_matrix_group is not None
-                    else parameters_config
-                ),
+                parameters=parameters_config,
                 responses=self._ert_config.ensemble_config.response_configuration,
                 observations=self._ert_config.enkf_obs.datasets,
                 name=create_experiment_dialog.experiment_name,

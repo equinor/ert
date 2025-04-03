@@ -5,12 +5,7 @@ import logging
 import time
 from collections.abc import Callable, Iterable, Sequence
 from fnmatch import fnmatch
-from typing import (
-    TYPE_CHECKING,
-    Generic,
-    Self,
-    TypeVar,
-)
+from typing import TYPE_CHECKING, Generic, Self, TypeVar
 
 import iterative_ensemble_smoother as ies
 import numpy as np
@@ -19,7 +14,13 @@ import psutil
 import scipy
 from iterative_ensemble_smoother.experimental import AdaptiveESMDA
 
-from ert.config import ESSettings, GenKwConfig, ObservationGroups, UpdateSettings
+from ert.config import (
+    ESSettings,
+    GenKwConfig,
+    ObservationGroups,
+    ScalarParameters,
+    UpdateSettings,
+)
 
 from . import misfit_preprocessor
 from .event import (
@@ -31,10 +32,7 @@ from .event import (
     AnalysisTimeEvent,
     DataSection,
 )
-from .snapshots import (
-    ObservationAndResponseSnapshot,
-    SmootherSnapshot,
-)
+from .snapshots import ObservationAndResponseSnapshot, SmootherSnapshot
 
 if TYPE_CHECKING:
     import numpy.typing as npt
@@ -111,14 +109,25 @@ def _all_parameters(
 
 
 def _save_param_ensemble_array_to_disk(
-    ensemble: Ensemble,
+    source_ensemble: Ensemble,
+    target_ensemble: Ensemble,
     param_ensemble_array: npt.NDArray[np.float64],
     param_group: str,
     iens_active_index: npt.NDArray[np.int_],
 ) -> None:
-    config_node = ensemble.experiment.parameter_configuration[param_group]
-    for i, realization in enumerate(iens_active_index):
-        config_node.save_parameters(ensemble, realization, param_ensemble_array[:, i])
+    config_node = target_ensemble.experiment.parameter_configuration[param_group]
+    if isinstance(config_node, ScalarParameters):
+        config_node.save_updated_parameters_and_copy_remaining(
+            source_ensemble,
+            target_ensemble,
+            iens_active_index,
+            param_ensemble_array,
+        )
+    else:
+        for i, realization in enumerate(iens_active_index):
+            config_node.save_parameters(
+                target_ensemble, realization, param_ensemble_array[:, i]
+            )
 
 
 def _load_param_ensemble_array(
@@ -127,7 +136,11 @@ def _load_param_ensemble_array(
     iens_active_index: npt.NDArray[np.int_],
 ) -> npt.NDArray[np.float64]:
     config_node = ensemble.experiment.parameter_configuration[param_group]
-    return config_node.load_parameters(ensemble, iens_active_index)
+    if isinstance(config_node, ScalarParameters):
+        return config_node.load_parameters_to_update(ensemble, iens_active_index)
+    dataset = config_node.load_parameters(ensemble, iens_active_index)
+    assert isinstance(dataset, np.ndarray), "dataset is not an numpy array"
+    return dataset
 
 
 def _expand_wildcards(
@@ -606,9 +619,12 @@ def analysis_ES(
         logger.info(log_msg)
         progress_callback(AnalysisStatusEvent(msg=log_msg))
         start = time.time()
-
         _save_param_ensemble_array_to_disk(
-            target_ensemble, param_ensemble_array, param_group, iens_active_index
+            source_ensemble,
+            target_ensemble,
+            param_ensemble_array,
+            param_group,
+            iens_active_index,
         )
         logger.info(
             f"Storing data for {param_group} completed in {(time.time() - start) / 60} minutes"

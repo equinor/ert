@@ -1,6 +1,6 @@
 from typing_extensions import TypedDict
 
-from ert.config import ErtConfig, Field, GenKwConfig, SurfaceConfig
+from ert.config import ErtConfig, Field, GenKwConfig, ScalarParameters, SurfaceConfig
 
 
 class ObservationCount(TypedDict):
@@ -32,6 +32,10 @@ class ErtSummary:
                 case SurfaceConfig(ncol=ncol, nrow=nrow):
                     parameters.append(f"{key} ({ncol}, {nrow})")
                     count += len(config)
+                case ScalarParameters():
+                    for group in config.groups:
+                        parameters.append(f"{group} ({len(config.groups[group])})")
+                        count += len(config.groups[group])
         return sorted(parameters, key=lambda k: k.lower()), count
 
     def getObservations(self) -> list[ObservationCount]:

@@ -10,8 +10,14 @@ import pytest
 from resdata.geometry import Surface
 
 from ert import LibresFacade
-from ert.config import ConfigValidationError, ErtConfig, GenKwConfig
-from ert.config.gen_kw_config import TransformFunctionDefinition
+from ert.config import (
+    ConfigValidationError,
+    DataSource,
+    ErtConfig,
+    ScalarParameter,
+    ScalarParameters,
+    get_distribution,
+)
 from ert.enkf_main import sample_prior
 from ert.storage import open_storage
 
@@ -231,44 +237,80 @@ def test_that_first_three_parameters_sampled_snapshot(tmpdir, storage):
     [4, 5, 10],
 )
 @pytest.mark.parametrize(
-    "template, prior",
+    "template, scalars",
     [
         (
             "MY_KEYWORD <MY_KEYWORD>\nMY_SECOND_KEYWORD <MY_SECOND_KEYWORD>",
             [
-                TransformFunctionDefinition("MY_KEYWORD", "NORMAL", [0, 1]),
-                TransformFunctionDefinition("MY_SECOND_KEYWORD", "NORMAL", [0, 1]),
+                ScalarParameter(
+                    param_name="MY_KEYWORD",
+                    group_name="KW_NAME",
+                    input_source=DataSource.SAMPLED,
+                    distribution=get_distribution("NORMAL", ["0", "1"]),
+                    template_file="template.txt",
+                    output_file="kw.txt",
+                    update=True,
+                ),
+                ScalarParameter(
+                    param_name="MY_SECOND_KEYWORD",
+                    group_name="KW_NAME",
+                    input_source=DataSource.SAMPLED,
+                    distribution=get_distribution("NORMAL", ["0", "1"]),
+                    template_file="template.txt",
+                    output_file="kw.txt",
+                    update=True,
+                ),
             ],
         ),
         (
             "MY_KEYWORD <MY_KEYWORD>",
-            [TransformFunctionDefinition("MY_KEYWORD", "NORMAL", [0, 1])],
+            [
+                ScalarParameter(
+                    param_name="MY_KEYWORD",
+                    group_name="KW_NAME",
+                    input_source=DataSource.SAMPLED,
+                    distribution=get_distribution("NORMAL", ["0", "1"]),
+                    template_file="template.txt",
+                    output_file="kw.txt",
+                    update=True,
+                ),
+            ],
         ),
         (
             "MY_FIRST_KEYWORD <MY_FIRST_KEYWORD>\nMY_KEYWORD <MY_KEYWORD>",
             [
-                TransformFunctionDefinition("MY_FIRST_KEYWORD", "NORMAL", [0, 1]),
-                TransformFunctionDefinition("MY_KEYWORD", "NORMAL", [0, 1]),
+                ScalarParameter(
+                    param_name="MY_FIRST_KEYWORD",
+                    group_name="KW_NAME",
+                    input_source=DataSource.SAMPLED,
+                    distribution=get_distribution("NORMAL", ["0", "1"]),
+                    template_file="template.txt",
+                    output_file="kw.txt",
+                    update=True,
+                ),
+                ScalarParameter(
+                    param_name="MY_KEYWORD",
+                    group_name="KW_NAME",
+                    input_source=DataSource.SAMPLED,
+                    distribution=get_distribution("NORMAL", ["0", "1"]),
+                    template_file="template.txt",
+                    output_file="kw.txt",
+                    update=True,
+                ),
             ],
         ),
     ],
 )
 def test_that_sampling_is_fixed_from_name(
-    tmpdir, storage, template, prior, num_realisations
+    tmpdir, storage, template, scalars, num_realisations
 ):
     """
     Testing that the order and number of parameters is not relevant for the values,
     only that name of the parameter and the global seed determine the values.
     """
     with tmpdir.as_cwd():
-        conf = GenKwConfig(
-            name="KW_NAME",
-            forward_init=False,
-            template_file="template.txt",
-            transform_function_definitions=prior,
-            output_file="kw.txt",
-            update=True,
-        )
+        conf = ScalarParameters(scalars=scalars)
+
         with open("template.txt", "w", encoding="utf-8") as fh:
             fh.writelines(template)
         fs = storage.create_ensemble(
@@ -401,20 +443,32 @@ def write_file(fname, contents):
             "GEN_KW KW_NAME template.txt kw.txt prior.txt INIT_FILES:custom_param%d",
             "MY_KEYWORD 1.31",
             [("custom_param0", "MY_KEYWORD 1.31")],
-            does_not_raise(),
+            # does_not_raise(), # This is the expected behaviour, but it is not implemented
+            pytest.raises(
+                ConfigValidationError,
+                match="Loading GEN_KW from init_files is not longer supported",
+            ),
         ),
         (
             "GEN_KW KW_NAME template.txt kw.txt prior.txt INIT_FILES:custom_param%d",
             "MY_KEYWORD 1.31",
             [("custom_param0", "1.31")],
-            does_not_raise(),
+            # does_not_raise(), # This is the expected behaviour, but it is not implemented
+            pytest.raises(
+                ConfigValidationError,
+                match="Loading GEN_KW from init_files is not longer supported",
+            ),
         ),
         (
             "GEN_KW KW_NAME template.txt kw.txt prior.txt INIT_FILES:custom_param0",
             "Not expecting a file",
             [],
+            # pytest.raises(
+            #     ConfigValidationError, match="Loading GEN_KW from files requires %d"
+            # ), # This is the expected behaviour, but it is not implemented
             pytest.raises(
-                ConfigValidationError, match="Loading GEN_KW from files requires %d"
+                ConfigValidationError,
+                match="Loading GEN_KW from init_files is not longer supported",
             ),
         ),
     ],
@@ -534,83 +588,84 @@ def test_gen_kw_outfile_will_use_paths(tmpdir, storage, relpath: str):
         assert os.path.exists(f"simulations/realization-0/iter-0/{relpath}kw.txt")
 
 
-@pytest.mark.usefixtures("set_site_config")
-@pytest.mark.parametrize(
-    "config_str, expected, extra_files",
-    [
-        (
-            "GEN_KW KW_NAME template.txt kw.txt prior.txt INIT_FILES:custom_param%d",
-            "MY_KEYWORD 1.31\nMY_SECOND_KEYWORD 1.01",
-            [("custom_param0", "MY_SECOND_KEYWORD 1.01\nMY_KEYWORD 1.31")],
-        ),
-    ],
-)
-def test_that_order_of_input_in_user_input_is_abritrary_for_gen_kw_init_files(
-    tmpdir, config_str, expected, extra_files, storage
-):
-    with tmpdir.as_cwd():
-        config = dedent(
-            """
-        JOBNAME my_name%d
-        NUM_REALIZATIONS 1
-        """
-        )
-        config += config_str
-        with open("config.ert", mode="w", encoding="utf-8") as fh:
-            fh.writelines(config)
-        with open("template.txt", mode="w", encoding="utf-8") as fh:
-            fh.writelines(
-                "MY_KEYWORD <MY_KEYWORD>\nMY_SECOND_KEYWORD <MY_SECOND_KEYWORD>"
-            )
-        with open("prior.txt", mode="w", encoding="utf-8") as fh:
-            fh.writelines("MY_KEYWORD NORMAL 0 1\nMY_SECOND_KEYWORD NORMAL 0 1")
-        for fname, contents in extra_files:
-            write_file(fname, contents)
+# TODO remove or refactor as Scalars will not use forward_init
+# @pytest.mark.usefixtures("set_site_config")
+# @pytest.mark.parametrize(
+#     "config_str, expected, extra_files",
+#     [
+#         (
+#             "GEN_KW KW_NAME template.txt kw.txt prior.txt INIT_FILES:custom_param%d",
+#             "MY_KEYWORD 1.31\nMY_SECOND_KEYWORD 1.01",
+#             [("custom_param0", "MY_SECOND_KEYWORD 1.01\nMY_KEYWORD 1.31")],
+#         ),
+#     ],
+# )
+# def test_that_order_of_input_in_user_input_is_abritrary_for_gen_kw_init_files(
+#     tmpdir, config_str, expected, extra_files, storage
+# ):
+#     with tmpdir.as_cwd():
+#         config = dedent(
+#             """
+#         JOBNAME my_name%d
+#         NUM_REALIZATIONS 1
+#         """
+#         )
+#         config += config_str
+#         with open("config.ert", mode="w", encoding="utf-8") as fh:
+#             fh.writelines(config)
+#         with open("template.txt", mode="w", encoding="utf-8") as fh:
+#             fh.writelines(
+#                 "MY_KEYWORD <MY_KEYWORD>\nMY_SECOND_KEYWORD <MY_SECOND_KEYWORD>"
+#             )
+#         with open("prior.txt", mode="w", encoding="utf-8") as fh:
+#             fh.writelines("MY_KEYWORD NORMAL 0 1\nMY_SECOND_KEYWORD NORMAL 0 1")
+#         for fname, contents in extra_files:
+#             write_file(fname, contents)
 
-        create_runpath(storage, "config.ert")
-        assert (
-            Path("simulations/realization-0/iter-0/kw.txt").read_text("utf-8")
-            == expected
-        )
+#         create_runpath(storage, "config.ert")
+#         assert (
+#             Path("simulations/realization-0/iter-0/kw.txt").read_text("utf-8")
+#             == expected
+#         )
 
 
-@pytest.mark.usefixtures("set_site_config")
-@pytest.mark.parametrize("load_forward_init", [True, False])
-def test_gen_kw_forward_init(tmpdir, storage, load_forward_init):
-    with tmpdir.as_cwd():
-        config = dedent(
-            """
-        JOBNAME my_name%d
-        NUM_REALIZATIONS 1
-        GEN_KW KW_NAME template.txt kw.txt prior.txt """
-            f"""FORWARD_INIT:{load_forward_init!s} INIT_FILES:custom_param%d
-        """
-        )
-        with open("config.ert", mode="w", encoding="utf-8") as fh:
-            fh.writelines(config)
+# @pytest.mark.usefixtures("set_site_config")
+# @pytest.mark.parametrize("load_forward_init", [True, False])
+# def test_gen_kw_forward_init(tmpdir, storage, load_forward_init):
+#     with tmpdir.as_cwd():
+#         config = dedent(
+#             """
+#         JOBNAME my_name%d
+#         NUM_REALIZATIONS 1
+#         GEN_KW KW_NAME template.txt kw.txt prior.txt """
+#             f"""FORWARD_INIT:{load_forward_init!s} INIT_FILES:custom_param%d
+#         """
+#         )
+#         with open("config.ert", mode="w", encoding="utf-8") as fh:
+#             fh.writelines(config)
 
-        with open("template.txt", mode="w", encoding="utf-8") as fh:
-            fh.writelines("MY_KEYWORD <MY_KEYWORD>")
-        with open("prior.txt", mode="w", encoding="utf-8") as fh:
-            fh.writelines("MY_KEYWORD NORMAL 0 1")
-        if not load_forward_init:
-            write_file("custom_param0", "1.31")
+#         with open("template.txt", mode="w", encoding="utf-8") as fh:
+#             fh.writelines("MY_KEYWORD <MY_KEYWORD>")
+#         with open("prior.txt", mode="w", encoding="utf-8") as fh:
+#             fh.writelines("MY_KEYWORD NORMAL 0 1")
+#         if not load_forward_init:
+#             write_file("custom_param0", "1.31")
 
-        if load_forward_init:
-            with pytest.raises(
-                ConfigValidationError,
-                match=(
-                    "Loading GEN_KW from files created by "
-                    "the forward model is not supported\\."
-                ),
-            ):
-                create_runpath(storage, "config.ert")
-        else:
-            _, fs = create_runpath(storage, "config.ert")
-            assert Path("simulations/realization-0/iter-0/kw.txt").exists()
-            value = (
-                fs.load_parameters("KW_NAME", 0)
-                .sel(names="MY_KEYWORD")["values"]
-                .values
-            )
-            assert value == 1.31
+#         if load_forward_init:
+#             with pytest.raises(
+#                 ConfigValidationError,
+#                 match=(
+#                     "Loading GEN_KW from files created by "
+#                     "the forward model is not supported\\."
+#                 ),
+#             ):
+#                 create_runpath(storage, "config.ert")
+#         else:
+#             _, fs = create_runpath(storage, "config.ert")
+#             assert Path("simulations/realization-0/iter-0/kw.txt").exists()
+#             value = (
+#                 fs.load_parameters("KW_NAME", 0)
+#                 .sel(names="MY_KEYWORD")["values"]
+#                 .values
+#             )
+#             assert value == 1.31

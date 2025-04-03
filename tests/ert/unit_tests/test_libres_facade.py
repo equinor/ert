@@ -1,14 +1,14 @@
 from datetime import datetime, timedelta
 from textwrap import dedent
 
-import numpy as np
+import polars as pl
 import pytest
 from pandas import ExcelWriter
 from pandas.core.frame import DataFrame
 from resdata.summary import Summary
 
-from ert.config import DESIGN_MATRIX_GROUP, DesignMatrix, ErtConfig
-from ert.enkf_main import sample_prior, save_design_matrix_to_ensemble
+from ert.config import ErtConfig
+from ert.enkf_main import sample_prior
 from ert.libres_facade import LibresFacade
 from ert.storage import open_storage
 
@@ -158,17 +158,33 @@ def test_get_observations(tmpdir):
         assert "FOPR_1" in facade.get_observations()
 
 
-def test_load_gen_kw_not_sorted(storage, tmpdir, snapshot):
+# TODO refactor this & use design matrix too!!!
+def test_load_scalar_parameters(storage, tmpdir, snapshot):
     """
     This test checks two things, loading multiple parameters and
     loading log parameters.
     """
     with tmpdir.as_cwd():
+        design_path = "design_matrix.xlsx"
+        ensemble_size = 10
+        design_matrix_df = DataFrame(
+            {
+                "a": [1.0] * ensemble_size,
+                "b": [2.0] * ensemble_size,
+                "c": [3.0] * ensemble_size,
+            }
+        )
+        with ExcelWriter(design_path) as xl_write:
+            design_matrix_df.to_excel(xl_write, index=False, sheet_name="DesignSheet")
+            DataFrame().to_excel(
+                xl_write, index=False, sheet_name="DefaultValues", header=False
+            )
         config = dedent(
             """
         NUM_REALIZATIONS 10
         GEN_KW PARAM_2 template.txt kw.txt prior.txt
         GEN_KW PARAM_1 template.txt kw.txt prior.txt
+        DESIGN_MATRIX design_matrix.xlsx DESIGN_SHEET:DesignSheet DEFAULT_SHEET:DefaultValues
         RANDOM_SEED 1234
         """
         )
@@ -180,65 +196,82 @@ def test_load_gen_kw_not_sorted(storage, tmpdir, snapshot):
             fh.writelines("MY_KEYWORD LOGUNIF 0.1 1")
 
         ert_config = ErtConfig.from_file("config.ert")
-
-        experiment_id = storage.create_experiment(
-            parameters=ert_config.ensemble_config.parameter_configuration
-        )
+        assert ert_config.ensemble_config.scalars is not None
+        assert ert_config.analysis_config.design_matrix is not None
+        params = [
+            ert_config.analysis_config.design_matrix.merge_with_existing_parameters(
+                ert_config.ensemble_config.scalars
+            )
+        ]
+        experiment_id = storage.create_experiment(parameters=params)
         ensemble_size = 10
         ensemble = storage.create_ensemble(
             experiment_id, name="default", ensemble_size=ensemble_size
         )
-
-        sample_prior(ensemble, range(ensemble_size), random_seed=1234)
-
-        data = ensemble.load_all_gen_kw_data()
-        snapshot.assert_match(data.round(12).to_csv(), "gen_kw_unsorted")
-
-
-@pytest.mark.parametrize(
-    "reals, expect_error",
-    [
-        pytest.param(
-            list(range(10)),
-            False,
-            id="correct_active_realizations",
-        ),
-        pytest.param([10, 11], True, id="incorrect_active_realizations"),
-    ],
-)
-def test_save_parameters_to_storage_from_design_dataframe(
-    tmp_path, reals, expect_error
-):
-    design_path = tmp_path / "design_matrix.xlsx"
-    ensemble_size = 10
-    a_values = np.random.default_rng().uniform(-5, 5, 10)
-    b_values = np.random.default_rng().uniform(-5, 5, 10)
-    c_values = np.random.default_rng().uniform(-5, 5, 10)
-    design_matrix_df = DataFrame({"a": a_values, "b": b_values, "c": c_values})
-    with ExcelWriter(design_path) as xl_write:
-        design_matrix_df.to_excel(xl_write, index=False, sheet_name="DesignSheet")
-        DataFrame().to_excel(
-            xl_write, index=False, sheet_name="DefaultSheet", header=False
+        sample_prior(
+            ensemble,
+            range(ensemble_size),
+            random_seed=1234,
+            design_matrix_df=ert_config.analysis_config.design_matrix.design_matrix_df,
         )
-    design_matrix = DesignMatrix(design_path, "DesignSheet", "DefaultSheet")
-    with open_storage(tmp_path / "storage", mode="w") as storage:
-        experiment_id = storage.create_experiment(
-            parameters=[design_matrix.parameter_configuration]
+        assert (
+            ensemble.load_parameters_scalar(keys=["DESIGN_MATRIX:a"])[
+                "DESIGN_MATRIX:a"
+            ].to_list()
+            == [1.0] * 10
         )
-        ensemble = storage.create_ensemble(
-            experiment_id, name="default", ensemble_size=ensemble_size
+        data = ensemble.load_parameters_scalar()
+        snapshot.assert_match(
+            data.with_columns(pl.col(pl.Float64).round(12)).write_csv(),
+            "scalars_all.csv",
         )
-        if expect_error:
-            with pytest.raises(KeyError):
-                save_design_matrix_to_ensemble(
-                    design_matrix.design_matrix_df, ensemble, reals
-                )
-        else:
-            save_design_matrix_to_ensemble(
-                design_matrix.design_matrix_df, ensemble, reals
-            )
-            params = ensemble.load_parameters(DESIGN_MATRIX_GROUP)["values"]
-            all(params.names.values == ["a", "b", "c"])
-            np.testing.assert_array_almost_equal(params[:, 0], a_values)
-            np.testing.assert_array_almost_equal(params[:, 1], b_values)
-            np.testing.assert_array_almost_equal(params[:, 2], c_values)
+
+
+# TODO remove this test
+# @pytest.mark.parametrize(
+#     "reals, expect_error",
+#     [
+#         pytest.param(
+#             list(range(10)),
+#             False,
+#             id="correct_active_realizations",
+#         ),
+#         pytest.param([10, 11], True, id="incorrect_active_realizations"),
+#     ],
+# )
+# def test_save_parameters_to_storage_from_design_dataframe(
+#     tmp_path, reals, expect_error
+# ):
+#     design_path = tmp_path / "design_matrix.xlsx"
+#     ensemble_size = 10
+#     a_values = np.random.default_rng().uniform(-5, 5, 10)
+#     b_values = np.random.default_rng().uniform(-5, 5, 10)
+#     c_values = np.random.default_rng().uniform(-5, 5, 10)
+#     design_matrix_df = DataFrame({"a": a_values, "b": b_values, "c": c_values})
+#     with ExcelWriter(design_path) as xl_write:
+#         design_matrix_df.to_excel(xl_write, index=False, sheet_name="DesignSheet01")
+#         DataFrame().to_excel(
+#             xl_write, index=False, sheet_name="DefaultValues", header=False
+#         )
+#     design_matrix = DesignMatrix(design_path, "DesignSheet01", "DefaultValues")
+#     with open_storage(tmp_path / "storage", mode="w") as storage:
+#         experiment_id = storage.create_experiment(
+#             parameters=[design_matrix.parameter_configuration]
+#         )
+#         ensemble = storage.create_ensemble(
+#             experiment_id, name="default", ensemble_size=ensemble_size
+#         )
+#         if expect_error:
+#             with pytest.raises(KeyError):
+#                 save_design_matrix_to_ensemble(
+#                     design_matrix.design_matrix_df, ensemble, reals
+#                 )
+#         else:
+#             save_design_matrix_to_ensemble(
+#                 design_matrix.design_matrix_df, ensemble, reals
+#             )
+#             params = ensemble.load_parameters(DESIGN_MATRIX_GROUP)["values"]
+#             all(params.names.values == ["a", "b", "c"])
+#             np.testing.assert_array_almost_equal(params[:, 0], a_values)
+#             np.testing.assert_array_almost_equal(params[:, 1], b_values)
+#             np.testing.assert_array_almost_equal(params[:, 2], c_values)

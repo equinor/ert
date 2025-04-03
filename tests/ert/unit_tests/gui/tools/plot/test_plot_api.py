@@ -11,7 +11,11 @@ import xarray as xr
 from pandas.testing import assert_frame_equal
 from starlette.testclient import TestClient
 
-from ert.config import GenKwConfig, SummaryConfig
+from ert.config import (
+    GenKwConfig,
+    ScalarParameters,
+    SummaryConfig,
+)
 from ert.dark_storage import enkf
 from ert.dark_storage.app import app
 from ert.gui.tools.plot.plot_api import PlotApi, PlotApiKeyDefinition
@@ -258,13 +262,9 @@ def test_plot_api_handles_empty_gen_kw(api_and_storage):
     name = "<poro>"
     experiment = storage.create_experiment(
         parameters=[
-            GenKwConfig(
-                name=key,
-                forward_init=False,
+            ScalarParameters(
                 update=False,
-                template_file=None,
-                output_file=None,
-                transform_function_definitions=[],
+                scalars=[],
             ),
         ],
         responses=[],
@@ -272,17 +272,14 @@ def test_plot_api_handles_empty_gen_kw(api_and_storage):
     )
     ensemble = storage.create_ensemble(experiment.id, ensemble_size=10)
     assert api.data_for_key(str(ensemble.id), key).empty
-    ensemble.save_parameters(
-        key,
-        1,
-        xr.Dataset(
-            {
-                "values": ("names", [1.0]),
-                "transformed_values": ("names", [1.0]),
-                "names": [name],
-            }
+
+    ensemble.save_parameters_scalar(
+        dataframe=pl.DataFrame(
+            [{"realization": 1, f"{key}:{name}": 1.0, f"{key}:{name}.transformed": 1.0}]
         ),
+        realizations=[1.0],
     )
+
     assert api.data_for_key(str(ensemble.id), key + ":" + name).to_csv() == dedent(
         """\
         Realization,0
