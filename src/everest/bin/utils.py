@@ -210,7 +210,7 @@ class _DetachedMonitor:
                             self._last_reported_batch = max(
                                 self._last_reported_batch, batch
                             )
-        except:
+        except Exception:
             logging.getLogger(EVEREST).debug(traceback.format_exc())
 
     def get_opt_progress(self, context_status: dict[str, Any]) -> tuple[str, int]:

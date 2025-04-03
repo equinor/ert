@@ -98,7 +98,7 @@ def stop_server(
                 proxies=PROXY,  # type: ignore
             )
             response.raise_for_status()
-        except:
+        except Exception:
             logger.debug(traceback.format_exc())
             time.sleep(retry)
         else:
@@ -123,7 +123,7 @@ def start_experiment(
                 json=config.to_dict(),
             )
             response.raise_for_status()
-        except:
+        except Exception:
             logger.debug(traceback.format_exc())
             time.sleep(retry)
         else:
@@ -264,7 +264,7 @@ def start_monitor(
                     logger.error("Error when processing event %s", exc_info=e)
 
                 time.sleep(polling_interval)
-    except:
+    except Exception:
         logger.debug(traceback.format_exc())
 
 
