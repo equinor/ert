@@ -30,7 +30,8 @@ from ert.storage.local_storage import local_storage_set_ert_config
 
 
 class ErtCliError(Exception):
-    pass
+    """Used for exception where the Ert command line interface should
+    exit with a nonzero return code"""
 
 
 def run_cli(args: Namespace, plugin_manager: ErtPluginManager | None = None) -> None:
