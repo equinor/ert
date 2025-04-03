@@ -264,9 +264,7 @@ def test_that_sampling_is_fixed_from_name(
         conf = GenKwConfig(
             name="KW_NAME",
             forward_init=False,
-            template_file="template.txt",
             transform_function_definitions=prior,
-            output_file="kw.txt",
             update=True,
         )
         with open("template.txt", "w", encoding="utf-8") as fh:
@@ -505,15 +503,15 @@ def test_gen_kw_templating(
 
 @pytest.mark.usefixtures("set_site_config")
 @pytest.mark.parametrize(
-    "relpath",
+    "relpath, err_msg",
     [
-        "somepath/",
+        ("somepath/", ""),
         # This test was added to show current behaviour for Ert.
         # If absolute paths should be possible to be used like this is up for debate.
-        "/tmp/somepath/",  # ert removes leading '/'
+        ("/tmp/somepath/", "Output file cannot have an absolute path"),
     ],
 )
-def test_gen_kw_outfile_will_use_paths(tmpdir, storage, relpath: str):
+def test_gen_kw_outfile_will_use_paths(tmpdir, storage, relpath: str, err_msg: str):
     with tmpdir.as_cwd():
         config = dedent(
             f"""
@@ -530,8 +528,15 @@ def test_gen_kw_outfile_will_use_paths(tmpdir, storage, relpath: str):
         with open("prior.txt", mode="w", encoding="utf-8") as fh:
             fh.writelines("MY_KEYWORD NORMAL 0 1")
         relpath = relpath.removeprefix("/")
-        create_runpath(storage, "config.ert")
-        assert os.path.exists(f"simulations/realization-0/iter-0/{relpath}kw.txt")
+        if err_msg:
+            with pytest.raises(
+                ConfigValidationError,
+                match=err_msg,
+            ):
+                create_runpath(storage, "config.ert")
+        else:
+            create_runpath(storage, "config.ert")
+            assert os.path.exists(f"simulations/realization-0/iter-0/{relpath}kw.txt")
 
 
 @pytest.mark.usefixtures("set_site_config")
