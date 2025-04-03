@@ -5,7 +5,7 @@ from uuid import UUID
 import humanize
 from PyQt6.QtCore import QAbstractItemModel, QModelIndex, QObject, Qt
 from PyQt6.QtCore import pyqtSlot as Slot
-from PyQt6.QtGui import QBrush, QColor
+from PyQt6.QtWidgets import QApplication
 from typing_extensions import override
 
 from ert.storage import Ensemble, Experiment, Storage
@@ -126,7 +126,9 @@ class ExperimentModel:
                 return self._experiment_type or "None"
         elif role == Qt.ItemDataRole.ForegroundRole:
             if col == _Column.TYPE and not self._experiment_type:
-                return QBrush(QColor("transparent"))
+                qapp = QApplication.instance()
+                assert isinstance(qapp, QApplication)
+                return qapp.palette().mid()
 
         return None
 

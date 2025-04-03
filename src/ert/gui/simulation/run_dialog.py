@@ -230,9 +230,6 @@ class RunDialog(QFrame):
         )
 
         self._total_progress_bar = QProgressBar(self)
-        self._total_progress_bar.setStyleSheet(
-            "QProgressBar::chunk {background-color: rgb(70,140,230);}"
-        )
         self._total_progress_bar.setRange(0, 100)
         self._total_progress_bar.setTextVisible(False)
 

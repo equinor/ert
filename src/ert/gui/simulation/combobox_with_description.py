@@ -1,4 +1,4 @@
-from typing import Any, cast
+from typing import Any
 
 from PyQt6.QtCore import QModelIndex, QPoint, QSize
 from PyQt6.QtGui import QColor, QRegion
@@ -32,11 +32,12 @@ class _ComboBoxItemWidget(QWidget):
         super().__init__(parent)
         layout = QVBoxLayout()
         layout.setSpacing(5)
-        self.label = QLabel(label, self)
-        color = "color: rgba(192,192,192,80);" if not enabled else "color: black;"
+        self.setStyleSheet("background: rgba(0,0,0,1);")
+        self.label = QLabel(label)
+        color = "color: rgba(192,192,192,80);" if not enabled else ";"
         pd_top = "0px" if group else "5px"
         if group:
-            self.group = QLabel(group, self)
+            self.group = QLabel(group)
             self.group.setStyleSheet(
                 f"""
                 {color}
@@ -59,7 +60,7 @@ class _ComboBoxItemWidget(QWidget):
             font-size: 13px;
         """
         )
-        self.description = QLabel(description, self)
+        self.description = QLabel(description)
         self.description.setStyleSheet(
             f"""
             {color}
@@ -77,9 +78,6 @@ class _ComboBoxItemWidget(QWidget):
 
 
 class _ComboBoxWithDescriptionDelegate(QStyledItemDelegate):
-    def __init__(self, parent: Any) -> None:
-        super().__init__(parent)
-
     def paint(self, painter: Any, option: Any, index: Any) -> None:
         painter.save()
 
@@ -94,20 +92,11 @@ class _ComboBoxWithDescriptionDelegate(QStyledItemDelegate):
             or option.state & QStyle.StateFlag.State_MouseOver
         ):
             color = COLOR_HIGHLIGHT_LIGHT
-            if (
-                option.palette.text().color().value() > 150
-                or option.palette.window().color().lightness() > 245
-            ):
+            if option.palette.text().color().value() > 150:
                 color = COLOR_HIGHLIGHT_DARK
             painter.fillRect(option.rect, color)
 
-        widget = _ComboBoxItemWidget(
-            label,
-            description,
-            is_enabled,
-            group=group,
-            parent=cast(QWidget, self.parent()),
-        )
+        widget = _ComboBoxItemWidget(label, description, is_enabled, group=group)
         widget.setStyle(option.widget.style())
         widget.resize(option.rect.size())
 
@@ -121,16 +110,14 @@ class _ComboBoxWithDescriptionDelegate(QStyledItemDelegate):
         group = index.data(GROUP_TITLE_ROLE)
         adjustment = QSize(0, 20) if group else QSize(0, 0)
 
-        widget = _ComboBoxItemWidget(
-            label, description, group=group, parent=cast(QWidget, self.parent())
-        )
+        widget = _ComboBoxItemWidget(label, description, group)
         return widget.sizeHint() + adjustment
 
 
 class QComboBoxWithDescription(QComboBox):
     def __init__(self, parent: QWidget | None = None) -> None:
         super().__init__(parent)
-        self.setItemDelegate(_ComboBoxWithDescriptionDelegate(parent))
+        self.setItemDelegate(_ComboBoxWithDescriptionDelegate(self))
 
     def addDescriptionItem(
         self, label: str, description: Any, group: str | None = None

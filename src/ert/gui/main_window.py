@@ -8,20 +8,13 @@ from pathlib import Path
 from PyQt6.QtCore import QCoreApplication, QEvent, QSize, Qt
 from PyQt6.QtCore import pyqtSignal as Signal
 from PyQt6.QtCore import pyqtSlot as Slot
-from PyQt6.QtGui import (
-    QAction,
-    QCloseEvent,
-    QCursor,
-    QIcon,
-    QMouseEvent,
-)
+from PyQt6.QtGui import QAction, QCloseEvent, QCursor, QIcon, QMouseEvent
 from PyQt6.QtWidgets import (
     QButtonGroup,
     QFrame,
     QHBoxLayout,
     QMainWindow,
     QMenu,
-    QMessageBox,
     QToolButton,
     QVBoxLayout,
     QWidget,
@@ -34,7 +27,6 @@ from ert.gui.about_dialog import AboutDialog
 from ert.gui.ertnotifier import ErtNotifier
 from ert.gui.find_ert_info import find_ert_info
 from ert.gui.simulation import ExperimentPanel
-from ert.gui.simulation.experiment_panel import is_high_contrast_mode
 from ert.gui.simulation.run_dialog import RunDialog
 from ert.gui.tools.event_viewer import EventViewerTool, GUILogHandler
 from ert.gui.tools.export import ExportTool
@@ -117,23 +109,11 @@ class ErtMainWindow(QMainWindow):
         self.button_group = QButtonGroup(self.side_frame)
         self._external_plot_windows: list[PlotWindow] = []
 
-        self.setStyleSheet("QWidget { color: black; }")
         if self.is_dark_mode():
             self.side_frame.setStyleSheet("background-color: rgb(64, 64, 64);")
         else:
             self.side_frame.setStyleSheet("background-color: lightgray;")
 
-        if is_high_contrast_mode():
-            msg_box = QMessageBox()
-            msg_box.setText(
-                "High contrast mode detected. This is not supported by Ert and some features may not work as expected."
-            )
-            msg_box.setWindowTitle("Warning")
-            msg_box.setStyleSheet(
-                "QMessageBox {color: black; background-color: white;} QLabel {color: black;} QPushButton {color: black;}"
-            )
-            msg_box.update()
-            msg_box.exec()
         self.vbox_layout = QVBoxLayout(self.side_frame)
         self.side_frame.setLayout(self.vbox_layout)
 
@@ -161,11 +141,6 @@ class ErtMainWindow(QMainWindow):
         self.central_widget.setMinimumHeight(800)
         self.setCentralWidget(self.central_widget)
 
-        menu_bar = self.menuBar()
-        assert menu_bar is not None
-        menu_bar.setStyleSheet(
-            "QMenuBar {color: black;} QMenuBar::item:selected {background-color: rgb(70, 140, 235); color: white;} QMenu::item:disabled {color: rgb(170,170,170);}  QMenu::item:selected {background-color: rgb(70, 140, 235); color: white;}"
-        )
         self.__add_tools_menu()
         self.__add_help_menu()
 
@@ -322,9 +297,8 @@ class ErtMainWindow(QMainWindow):
 
         button.setStyleSheet(
             BUTTON_STYLE_SHEET_DARK
-        ) if self.is_dark_mode() and not is_high_contrast_mode() else button.setStyleSheet(
-            BUTTON_STYLE_SHEET_LIGHT
-        )
+        ) if self.is_dark_mode() else button.setStyleSheet(BUTTON_STYLE_SHEET_LIGHT)
+
         pad = 45
         icon_size = QSize(button.size().width() - pad, button.size().height() - pad)
         button.setIconSize(icon_size)
