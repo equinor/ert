@@ -594,11 +594,11 @@ class BaseRunModel(ABC):
                         logger.debug("got terminated event")
 
                     if not self._end_queue.empty():
-                        logger.debug("Run model canceled - during evaluation")
+                        logger.debug("Run model cancelled - during evaluation")
                         self._end_queue.get()
                         await monitor.signal_cancel()
                         logger.debug(
-                            "Run model canceled - during evaluation - cancel sent"
+                            "Run model cancelled - during evaluation - cancel sent"
                         )
         except UserCancelled:
             raise
@@ -618,7 +618,7 @@ class BaseRunModel(ABC):
         ee_config: EvaluatorServerConfig,
     ) -> list[int]:
         if not self._end_queue.empty():
-            logger.debug("Run model canceled - pre evaluation")
+            logger.debug("Run model cancelled - pre evaluation")
             self._end_queue.get()
             raise UserCancelled("Experiment cancelled by user in pre evaluation")
 
@@ -640,7 +640,7 @@ class BaseRunModel(ABC):
         logger.debug("tasks complete")
 
         if not self._end_queue.empty():
-            logger.debug("Run model canceled - post evaluation")
+            logger.debug("Run model cancelled - post evaluation")
             self._end_queue.get()
             try:
                 await evaluator_task
