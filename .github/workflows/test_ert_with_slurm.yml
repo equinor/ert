@@ -84,11 +84,11 @@ jobs:
       run: |
         set -e
         export _ERT_TESTS_ALTERNATIVE_QUEUE=AlternativeQ
-        uv run pytest tests/ert/unit_tests/scheduler/test_{generic,slurm}_driver.py -sv --slurm \
+        uv run pytest tests/ert/unit_tests/scheduler/test_{generic,slurm}_driver.py -sv -p no:pytest-qt --slurm \
           -n 8 --durations=10 -k "not (LsfDriver or LocalDriver or OpenPBSDriver)"
         scontrol show job
 
-        uv run pytest tests/ert/ui_tests/cli/test_missing_runpath.py --slurm
+        uv run pytest tests/ert/ui_tests/cli/test_missing_runpath.py -p no:pytest-qt --slurm
 
     - name: Test poly-example on slurm
       run: |
