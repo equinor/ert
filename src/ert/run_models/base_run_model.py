@@ -409,8 +409,8 @@ class BaseRunModel(ABC):
             self._completed_realizations_mask = []
             failed = True
             exception = e
-        except UserWarning:
-            pass
+        except UserWarning as e:
+            logger.exception(e)
         except Exception as e:
             failed = True
             exception = e
