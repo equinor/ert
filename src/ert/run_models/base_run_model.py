@@ -54,6 +54,7 @@ from ert.ensemble_evaluator.state import (
     REALIZATION_STATE_FAILED,
     REALIZATION_STATE_FINISHED,
 )
+from ert.exceptions import ErtError
 from ert.mode_definitions import MODULE_MODE
 from ert.plugins import WorkflowFixtures
 from ert.runpaths import Runpaths
@@ -91,6 +92,18 @@ class OutOfOrderSnapshotUpdateException(ValueError):
 
 class ErtRunError(Exception):
     pass
+
+
+class TooFewRealizationsSucceeded(ErtError):
+    def __init__(
+        self, successful_realizations: int, required_realizations: int
+    ) -> None:
+        self.message = (
+            f"Number of successful realizations ({successful_realizations}) is less "
+            "than the specified MIN_REALIZATIONS"
+            f"({required_realizations})"
+        )
+        super().__init__(self.message)
 
 
 def delete_runpath(run_path: str) -> None:
@@ -725,10 +738,8 @@ class BaseRunModel(ABC):
         min_realization_count = self.minimum_required_realizations
 
         if successful_realizations_count < min_realization_count:
-            raise ValueError(
-                f"Number of successful realizations ({successful_realizations_count}) is less "
-                f"than the specified MIN_REALIZATIONS"
-                f"({min_realization_count})"
+            raise TooFewRealizationsSucceeded(
+                successful_realizations_count, min_realization_count
             )
 
     @tracer.start_as_current_span(f"{__name__}.run_workflows")
