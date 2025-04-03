@@ -2,11 +2,7 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from ert.config import (
-    DESIGN_MATRIX_GROUP,
-    DesignMatrix,
-    GenKwConfig,
-)
+from ert.config import DESIGN_MATRIX_GROUP, DesignMatrix, GenKwConfig
 from ert.config.gen_kw_config import TransformFunctionDefinition
 
 
@@ -142,12 +138,10 @@ def test_read_and_merge_with_existing_parameters(tmp_path, parameters, error_msg
                 GenKwConfig(
                     name=group_name,
                     forward_init=False,
-                    template_file="",
                     transform_function_definitions=[
                         TransformFunctionDefinition(param, "UNIFORM", [0, 1])
                         for param in parameters[group_name]
                     ],
-                    output_file="kw.txt",
                     update=True,
                 )
             )

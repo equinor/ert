@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import math
 import os
-import shutil
 import warnings
 from collections.abc import Callable
 from dataclasses import dataclass
@@ -15,8 +14,6 @@ import pandas as pd
 import xarray as xr
 from scipy.stats import norm
 from typing_extensions import TypedDict
-
-from ert.substitutions import substitute_runpath_name
 
 from ._str_to_bool import str_to_bool
 from .parameter_config import ParameterConfig
@@ -59,10 +56,7 @@ class TransformFunctionDefinition:
 
 @dataclass
 class GenKwConfig(ParameterConfig):
-    template_file: str | None
-    output_file: str | None
     transform_function_definitions: list[TransformFunctionDefinition]
-    forward_init_file: str | None = None
 
     def __post_init__(self) -> None:
         self.transform_functions: list[TransformFunction] = []
@@ -86,31 +80,19 @@ class GenKwConfig(ParameterConfig):
         return len(self.transform_functions)
 
     @classmethod
-    def from_config_list(cls, gen_kw: list[str | dict[str, str]]) -> Self:
+    def templates_from_config(
+        cls, gen_kw: list[str | dict[str, str]]
+    ) -> tuple[str, str] | None:
         gen_kw_key = cast(str, gen_kw[0])
-
-        options = cast(dict[str, str], gen_kw[-1])
         positional_args = cast(list[str], gen_kw[:-1])
-        forward_init = str_to_bool(options.get("FORWARD_INIT", "FALSE"))
-        init_file = _get_abs_path(options.get("INIT_FILES"))
-        update_parameter = str_to_bool(options.get("UPDATE", "TRUE"))
-        errors = []
 
-        if len(positional_args) == 2:
-            parameter_file_contents = positional_args[1][1]
-            parameter_file_context = positional_args[1][0]
-            template_file = None
-            output_file = None
-        elif len(positional_args) == 4:
+        if len(positional_args) == 4:
             output_file = positional_args[2]
-            parameter_file_contents = positional_args[3][1]
             parameter_file_context = positional_args[3][0]
             template_file = _get_abs_path(positional_args[1][0])
             if not os.path.isfile(template_file):
-                errors.append(
-                    ConfigValidationError.with_context(
-                        f"No such template file: {template_file}", positional_args[1]
-                    )
+                raise ConfigValidationError.with_context(
+                    f"No such template file: {template_file}", positional_args[1]
                 )
             elif Path(template_file).stat().st_size == 0:
                 token = getattr(parameter_file_context, "token", parameter_file_context)
@@ -121,30 +103,34 @@ class GenKwConfig(ParameterConfig):
                     f"instead: GEN_KW {gen_kw_key} {token}",
                     positional_args[1],
                 )
+            if output_file.startswith("/"):
+                raise ConfigValidationError.with_context(
+                    f"Output file cannot have an absolute path {output_file}",
+                    positional_args[2],
+                )
+            return template_file, output_file
+        return None
+
+    @classmethod
+    def from_config_list(cls, gen_kw: list[str | dict[str, str]]) -> Self:
+        gen_kw_key = cast(str, gen_kw[0])
+
+        options = cast(dict[str, str], gen_kw[-1])
+        positional_args = cast(list[str], gen_kw[:-1])
+        update_parameter = str_to_bool(options.get("UPDATE", "TRUE"))
+        errors = []
+
+        if len(positional_args) == 2:
+            parameter_file_contents = positional_args[1][1]
+            parameter_file_context = positional_args[1][0]
+        elif len(positional_args) == 4:
+            parameter_file_contents = positional_args[3][1]
+            parameter_file_context = positional_args[3][0]
 
         else:
             raise ConfigValidationError(
                 f"Unexpected positional arguments: {positional_args}"
             )
-
-        if forward_init:
-            errors.append(
-                ConfigValidationError.with_context(
-                    "Loading GEN_KW from files created by the forward "
-                    "model is not supported.",
-                    gen_kw,
-                )
-            )
-
-        if init_file and "%" not in init_file:
-            errors.append(
-                ConfigValidationError.with_context(
-                    "Loading GEN_KW from files requires %d in file format", gen_kw
-                )
-            )
-
-        if errors:
-            raise ConfigValidationError.from_collected(errors)
 
         transform_function_definitions: list[TransformFunctionDefinition] = []
         for line_number, item in enumerate(parameter_file_contents.splitlines()):
@@ -187,10 +173,7 @@ class GenKwConfig(ParameterConfig):
             )
         return cls(
             name=gen_kw_key,
-            forward_init=forward_init,
-            template_file=template_file,
-            output_file=output_file,
-            forward_init_file=init_file,
+            forward_init=False,
             transform_function_definitions=transform_function_definitions,
             update=update_parameter,
         )
@@ -281,9 +264,6 @@ class GenKwConfig(ParameterConfig):
     def sample_or_load(
         self, real_nr: int, random_seed: int, ensemble_size: int
     ) -> xr.Dataset:
-        if self.forward_init_file:
-            return self.read_from_runpath(Path(), real_nr, 0)
-
         keys = [e.name for e in self.transform_functions]
         parameter_value = self._sample_value(
             self.name,
@@ -306,22 +286,7 @@ class GenKwConfig(ParameterConfig):
         real_nr: int,
         iteration: int,
     ) -> xr.Dataset:
-        keys = [e.name for e in self.transform_functions]
-        if not self.forward_init_file:
-            raise ValueError("loading gen_kw values requires forward_init_file")
-
-        parameter_value = self._values_from_file(
-            substitute_runpath_name(self.forward_init_file, real_nr, iteration),
-            keys,
-        )
-
-        return xr.Dataset(
-            {
-                "values": ("names", parameter_value),
-                "transformed_values": ("names", self.transform(parameter_value)),
-                "names": keys,
-            }
-        )
+        return xr.Dataset()
 
     def write_to_runpath(
         self,
@@ -362,21 +327,6 @@ class GenKwConfig(ParameterConfig):
             if tf.use_log
         }
 
-        if self.template_file is not None and self.output_file is not None:
-            target_file = substitute_runpath_name(
-                self.output_file, real_nr, ensemble.iteration
-            )
-            target_file = target_file.removeprefix("/")
-            (run_path / target_file).parent.mkdir(exist_ok=True, parents=True)
-            template_file_path = (
-                ensemble.experiment.mount_point / Path(self.template_file).name
-            )
-            with open(template_file_path, encoding="utf-8") as f:
-                template = f.read()
-            for key, value in data.items():
-                template = template.replace(f"<{key}>", f"{value:.6g}")
-            with open(run_path / target_file, "w", encoding="utf-8") as f:
-                f.write(template)
         if log10_data:
             return {self.name: data, f"LOG10_{self.name}": log10_data}
         else:
@@ -552,14 +502,6 @@ class GenKwConfig(ParameterConfig):
             parameter_list=params,
             calc_func=PRIOR_FUNCTIONS[t.param_name],
         )
-
-    def save_experiment_data(self, experiment_path: Path) -> None:
-        if self.template_file:
-            incoming_template_file_path = Path(self.template_file)
-            template_file_path = Path(
-                experiment_path / incoming_template_file_path.name
-            )
-            shutil.copyfile(incoming_template_file_path, template_file_path)
 
 
 @dataclass

@@ -57,8 +57,6 @@ def create_experiment_args(
 ) -> ExperimentInfo:
     gen_kw_config = GenKwConfig(
         name="all_my_parameters_live_here",
-        template_file=None,
-        output_file=None,
         forward_init=False,
         update=True,
         transform_function_definitions=[

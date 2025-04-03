@@ -18,7 +18,8 @@ def create_runpath(
 
     if ensemble is None:
         experiment_id = storage.create_experiment(
-            ert_config.ensemble_config.parameter_configuration
+            ert_config.ensemble_config.parameter_configuration,
+            templates=ert_config.ert_templates,
         )
         ensemble = storage.create_ensemble(
             experiment_id,

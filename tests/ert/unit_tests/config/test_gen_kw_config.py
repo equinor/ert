@@ -1,5 +1,4 @@
 import math
-import os
 import re
 from pathlib import Path
 from textwrap import dedent
@@ -7,12 +6,7 @@ from textwrap import dedent
 import pytest
 from lark import Token
 
-from ert.config import (
-    ConfigValidationError,
-    ConfigWarning,
-    ErtConfig,
-    GenKwConfig,
-)
+from ert.config import ConfigValidationError, ConfigWarning, ErtConfig, GenKwConfig
 from ert.config.gen_kw_config import TransformFunctionDefinition
 from ert.config.parsing import ContextString
 from ert.config.parsing.file_context_token import FileContextToken
@@ -24,13 +18,11 @@ def test_gen_kw_config():
     conf = GenKwConfig(
         name="KEY",
         forward_init=False,
-        template_file="",
         transform_function_definitions=[
             TransformFunctionDefinition("KEY1", "UNIFORM", [0, 1]),
             TransformFunctionDefinition("KEY2", "UNIFORM", [0, 1]),
             TransformFunctionDefinition("KEY3", "UNIFORM", [0, 1]),
         ],
-        output_file="kw.txt",
         update=True,
     )
     assert len(conf.transform_functions) == 3
@@ -45,14 +37,12 @@ def test_gen_kw_config_duplicate_keys_raises():
         GenKwConfig(
             name="KEY",
             forward_init=False,
-            template_file="",
             transform_function_definitions=[
                 TransformFunctionDefinition("KEY1", "UNIFORM", [0, 1]),
                 TransformFunctionDefinition("KEY2", "UNIFORM", [0, 1]),
                 TransformFunctionDefinition("KEY2", "UNIFORM", [0, 1]),
                 TransformFunctionDefinition("KEY3", "UNIFORM", [0, 1]),
             ],
-            output_file="kw.txt",
             update=True,
         )
 
@@ -75,7 +65,6 @@ def test_gen_kw_config_get_priors():
     conf = GenKwConfig(
         name="KW_NAME",
         forward_init=False,
-        template_file="template.txt",
         transform_function_definitions=[
             TransformFunctionDefinition("KEY1", "NORMAL", ["0", "1"]),
             TransformFunctionDefinition("KEY2", "LOGNORMAL", ["2", "3"]),
@@ -90,7 +79,6 @@ def test_gen_kw_config_get_priors():
             TransformFunctionDefinition("KEY9", "LOGUNIF", ["0", "1"]),
             TransformFunctionDefinition("KEY10", "CONST", ["10"]),
         ],
-        output_file="param.txt",
         update=True,
     )
     priors = conf.get_priors()
@@ -345,8 +333,6 @@ def test_gen_kw_params_parsing(tmpdir, params, error):
                     name="MY_PARAM",
                     forward_init=False,
                     update=False,
-                    template_file=None,
-                    output_file=None,
                     transform_function_definitions=[tfd],
                 )
         else:
@@ -354,8 +340,6 @@ def test_gen_kw_params_parsing(tmpdir, params, error):
                 name="MY_PARAM",
                 forward_init=False,
                 update=False,
-                template_file=None,
-                output_file=None,
                 transform_function_definitions=[tfd],
             )
 
@@ -429,8 +413,6 @@ def test_gen_kw_trans_func(tmpdir, params, xinput, expected):
             name="MY_PARAM",
             forward_init=False,
             update=False,
-            template_file=None,
-            output_file=None,
             transform_function_definitions=[tfd],
         )
         tf = gkw.transform_functions[0]
@@ -445,8 +427,6 @@ def test_gen_kw_objects_equal(tmpdir):
         g1 = GenKwConfig.from_config_list(
             [
                 "KW_NAME",
-                ("template.txt", "MY_KEYWORD <MY_KEYWORD>"),
-                "kw.txt",
                 ("prior.txt", "MY_KEYWORD UNIFORM 1 2"),
                 {},
             ]
@@ -460,56 +440,13 @@ def test_gen_kw_objects_equal(tmpdir):
         g2 = GenKwConfig(
             name="KW_NAME",
             forward_init=False,
-            template_file="template.txt",
             transform_function_definitions=[tfd],
-            output_file="kw.txt",
             update=True,
         )
         assert g1.name == g2.name
-        assert os.path.abspath(g1.template_file) == os.path.abspath(g2.template_file)
         assert (
             g1.transform_function_definitions[0] == g2.transform_function_definitions[0]
         )
-        assert g1.output_file == g2.output_file
-        assert g1.forward_init_file == g2.forward_init_file
-
-        g3 = GenKwConfig(
-            name="KW_NAME2",
-            forward_init=False,
-            template_file="template.txt",
-            transform_function_definitions=[tfd],
-            output_file="kw.txt",
-            update=True,
-        )
-        g4 = GenKwConfig(
-            name="KW_NAME",
-            forward_init=False,
-            template_file="empty.txt",
-            transform_function_definitions=[tfd],
-            output_file="kw.txt",
-            update=True,
-        )
-        g5 = GenKwConfig(
-            name="KW_NAME",
-            forward_init=False,
-            template_file="template.txt",
-            transform_function_definitions=[],
-            output_file="kw.txt",
-            update=True,
-        )
-        g6 = GenKwConfig(
-            name="KW_NAME",
-            forward_init=False,
-            template_file="template.txt",
-            transform_function_definitions=[],
-            output_file="empty.txt",
-            update=True,
-        )
-
-        assert g1 != g3
-        assert g1 != g4
-        assert g1 != g5
-        assert g1 != g6
 
 
 @pytest.mark.usefixtures("use_tmpdir")
@@ -541,8 +478,6 @@ def test_gen_kw_config_validation():
     GenKwConfig.from_config_list(
         [
             "KEY",
-            ("template.txt", "Hello"),
-            "nothing_here.txt",
             ("parameters.txt", "KEY  UNIFORM 0 1 \n"),
             {},
         ]
@@ -551,8 +486,6 @@ def test_gen_kw_config_validation():
     GenKwConfig.from_config_list(
         [
             "KEY",
-            ("template.txt", "hello.txt"),
-            "nothing_here.txt",
             (
                 "parameters_with_comments.txt",
                 dedent(
@@ -575,7 +508,7 @@ def test_gen_kw_config_validation():
     with pytest.raises(
         ConfigValidationError, match=r"config.ert.* No such template file"
     ):
-        GenKwConfig.from_config_list(
+        GenKwConfig.templates_from_config(
             [
                 "KEY",
                 make_context_string("no_template_here.txt", "config.ert"),
@@ -586,28 +519,11 @@ def test_gen_kw_config_validation():
         )
 
 
-def test_incorrect_values_in_forward_init_file_fails(tmp_path):
-    (tmp_path / "forward_init_1").write_text("incorrect", encoding="utf-8")
-    with pytest.raises(
-        ValueError,
-        match=f"{tmp_path / 'forward_init_1'} did not contain numbers, got object",
-    ):
-        GenKwConfig(
-            "GEN_KW",
-            True,
-            True,
-            None,
-            None,
-            [],
-            str(tmp_path / "forward_init_%d"),
-        ).read_from_runpath(tmp_path, 1, 0)
-
-
 @pytest.mark.usefixtures("use_tmpdir")
 def test_suggestion_on_empty_parameter_file():
     Path("empty_template.txt").write_text("", encoding="utf-8")
     with pytest.warns(UserWarning, match="GEN_KW KEY coeffs.txt"):
-        GenKwConfig.from_config_list(
+        GenKwConfig.templates_from_config(
             [
                 "KEY",
                 ("empty_template.txt", ""),

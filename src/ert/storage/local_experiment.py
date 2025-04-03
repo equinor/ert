@@ -272,24 +272,23 @@ class LocalExperiment(BaseMode):
 
     @property
     def templates_configuration(self) -> list[tuple[str, str]]:
+        templates: list[tuple[str, str]] = []
         try:
-            templates: list[tuple[str, str]] = []
             with open(self.mount_point / self._templates_file, encoding="utf-8") as f:
                 templates = json.load(f)
-            templates_with_content: list[tuple[str, str]] = []
-            for source_file, target_file in templates:
-                try:
-                    file_content = (self.mount_point / source_file).read_text("utf-8")
-                    templates_with_content.append((file_content, target_file))
-                except UnicodeDecodeError as e:
-                    raise ValueError(
-                        f"Unsupported non UTF-8 character found in file: {source_file}"
-                    ) from e
-                return templates_with_content
         except (FileNotFoundError, json.JSONDecodeError):
-            pass
             # If the file is missing or broken, we return an empty list
-        return []
+            pass
+        templates_with_content: list[tuple[str, str]] = []
+        for source_file, target_file in templates:
+            try:
+                file_content = (self.mount_point / source_file).read_text("utf-8")
+                templates_with_content.append((file_content, target_file))
+            except UnicodeDecodeError as e:
+                raise ValueError(
+                    f"Unsupported non UTF-8 character found in file: {source_file}"
+                ) from e
+        return templates_with_content
 
     @property
     def response_info(self) -> dict[str, Any]:
