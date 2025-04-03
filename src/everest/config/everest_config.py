@@ -736,6 +736,7 @@ and environment variables are exposed in the form 'os.NAME', for example:
     @classmethod
     def with_plugins(cls, config_dict: dict[str, Any] | ConfigDict) -> Self:
         site_config = ErtConfig.read_site_config()
+        has_site_config = bool(site_config)  # site_config gets mutated by next call
         ert_config: ErtConfig = ErtConfig.with_plugins().from_dict(
             config_dict=site_config
         )
@@ -743,7 +744,7 @@ and environment variables are exposed in the form 'os.NAME', for example:
             "install_jobs": ert_config.installed_forward_model_steps,
         }
         activate_script = ErtPluginManager().activate_script()
-        if site_config:
+        if has_site_config:
             context["queue_system"] = QueueConfig.from_dict(site_config).queue_options
         if activate_script:
             context["activate_script"] = activate_script
