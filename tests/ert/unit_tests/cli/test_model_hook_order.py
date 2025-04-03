@@ -3,7 +3,16 @@ from unittest.mock import ANY, MagicMock, call
 
 import pytest
 
-from ert.config import HookRuntime
+from ert.plugins import (
+    PostExperimentFixtures,
+    PostSimulationFixtures,
+    PostUpdateFixtures,
+    PreExperimentFixtures,
+    PreFirstUpdateFixtures,
+    PreSimulationFixtures,
+    PreUpdateFixtures,
+    fixtures_per_hook,
+)
 from ert.run_models import (
     BaseRunModel,
     EnsembleSmoother,
@@ -14,91 +23,20 @@ from ert.run_models import (
 )
 
 EXPECTED_CALL_ORDER = [
-    call(HookRuntime.PRE_EXPERIMENT, fixtures={"random_seed": ANY}),
     call(
-        HookRuntime.PRE_SIMULATION,
-        fixtures={
-            "storage": ANY,
-            "ensemble": ANY,
-            "reports_dir": ANY,
-            "random_seed": ANY,
-            "run_paths": ANY,
-        },
-    ),
-    call(
-        HookRuntime.POST_SIMULATION,
-        fixtures={
-            "storage": ANY,
-            "ensemble": ANY,
-            "reports_dir": ANY,
-            "random_seed": ANY,
-            "run_paths": ANY,
-        },
-    ),
-    call(
-        HookRuntime.PRE_FIRST_UPDATE,
-        fixtures={
-            "storage": ANY,
-            "ensemble": ANY,
-            "reports_dir": ANY,
-            "random_seed": ANY,
-            "es_settings": ANY,
-            "observation_settings": ANY,
-            "run_paths": ANY,
-        },
-    ),
-    call(
-        HookRuntime.PRE_UPDATE,
-        fixtures={
-            "storage": ANY,
-            "ensemble": ANY,
-            "reports_dir": ANY,
-            "random_seed": ANY,
-            "es_settings": ANY,
-            "observation_settings": ANY,
-            "run_paths": ANY,
-        },
-    ),
-    call(
-        HookRuntime.POST_UPDATE,
-        fixtures={
-            "storage": ANY,
-            "ensemble": ANY,
-            "reports_dir": ANY,
-            "random_seed": ANY,
-            "es_settings": ANY,
-            "observation_settings": ANY,
-            "run_paths": ANY,
-        },
-    ),
-    call(
-        HookRuntime.PRE_SIMULATION,
-        fixtures={
-            "storage": ANY,
-            "ensemble": ANY,
-            "reports_dir": ANY,
-            "random_seed": ANY,
-            "run_paths": ANY,
-        },
-    ),
-    call(
-        HookRuntime.POST_SIMULATION,
-        fixtures={
-            "storage": ANY,
-            "ensemble": ANY,
-            "reports_dir": ANY,
-            "random_seed": ANY,
-            "run_paths": ANY,
-        },
-    ),
-    call(
-        HookRuntime.POST_EXPERIMENT,
-        fixtures={
-            "random_seed": ANY,
-            "storage": ANY,
-            "ensemble": ANY,
-        },
-    ),
+        fixtures=cls(**dict.fromkeys(fixtures_per_hook[cls.hook], ANY), hook=cls.hook),
+    )
+    for cls in [
+        PreExperimentFixtures,
+        PreSimulationFixtures,
+        PostSimulationFixtures,
+        PreFirstUpdateFixtures,
+        PreUpdateFixtures,
+        PostUpdateFixtures,
+        PreSimulationFixtures,
+        PostSimulationFixtures,
+        PostExperimentFixtures,
+    ]
 ]
 
 
