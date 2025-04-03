@@ -34,6 +34,7 @@ from everest.simulator.everest_to_ert import (
 from tests.everest.utils import skipif_no_everest_models
 
 
+@pytest.mark.usefixtures("no_plugins")
 @pytest.mark.parametrize(
     "config, config_class",
     [
@@ -363,6 +364,7 @@ def test_user_config_jobs_precedence(tmp_path, monkeypatch):
     )
 
 
+@pytest.mark.usefixtures("no_plugins")
 def test_that_queue_settings_are_taken_from_site_config(
     min_config, monkeypatch, tmp_path
 ):
