@@ -73,7 +73,7 @@ class _EnsembleStateTracker:
             logger.warning(self._msg, self._state, ENSEMBLE_STATE_STOPPED)
         self._state = ENSEMBLE_STATE_STOPPED
 
-    def _handle_canceled(self) -> None:
+    def _handle_cancelled(self) -> None:
         if self._state != ENSEMBLE_STATE_STARTED:
             logger.warning(self._msg, self._state, ENSEMBLE_STATE_CANCELLED)
         self._state = ENSEMBLE_STATE_CANCELLED
@@ -83,7 +83,7 @@ class _EnsembleStateTracker:
         self.add_handle(ENSEMBLE_STATE_STARTED, self._handle_started)
         self.add_handle(ENSEMBLE_STATE_FAILED, self._handle_failed)
         self.add_handle(ENSEMBLE_STATE_STOPPED, self._handle_stopped)
-        self.add_handle(ENSEMBLE_STATE_CANCELLED, self._handle_canceled)
+        self.add_handle(ENSEMBLE_STATE_CANCELLED, self._handle_cancelled)
 
     def update_state(self, state_: str) -> str:
         if state_ not in self._handles:
