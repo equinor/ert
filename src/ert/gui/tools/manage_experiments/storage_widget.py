@@ -99,12 +99,6 @@ class StorageWidget(QWidget):
         self.setMinimumWidth(500)
 
         self._tree_view = QTreeView(self)
-        self._tree_view.setStyleSheet("""
-                                      QTreeView::item::selected {
-                                          background-color: rgb(70,140,230);
-                                          color: white;
-                                      }
-                                      """)
         storage_model = StorageModel(self._notifier.storage)
         notifier.storage_changed.connect(storage_model.reloadStorage)
         notifier.ertChanged.connect(
