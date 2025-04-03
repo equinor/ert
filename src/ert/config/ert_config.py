@@ -5,18 +5,12 @@ import os
 import pprint
 import re
 from collections import defaultdict
-from collections.abc import Sequence
+from collections.abc import Mapping, Sequence
 from dataclasses import field
 from datetime import datetime
 from os import path
 from pathlib import Path
-from typing import (
-    Any,
-    ClassVar,
-    Self,
-    no_type_check,
-    overload,
-)
+from typing import Any, ClassVar, Self, no_type_check, overload
 
 import polars as pl
 from pydantic import ValidationError as PydanticValidationError
@@ -309,9 +303,9 @@ def read_templates(config_dict) -> list[tuple[str, str]]:
 
 
 def workflow_jobs_from_dict(
-    content_dict,
+    content_dict: ConfigDict,
     installed_workflows: dict[str, ErtScriptWorkflow] | None = None,
-):
+) -> dict[str, _WorkflowJob]:
     workflow_job_info = content_dict.get(ConfigKeys.LOAD_WORKFLOW_JOB, [])
     workflow_job_dir_info = content_dict.get(ConfigKeys.WORKFLOW_JOB_DIRECTORY, [])
 
@@ -383,7 +377,11 @@ def workflow_jobs_from_dict(
     return workflow_jobs
 
 
-def create_and_hook_workflows(content_dict, workflow_jobs, substitutions):
+def create_and_hook_workflows(
+    content_dict: ConfigDict,
+    workflow_jobs: dict[str, _WorkflowJob],
+    substitutions: Substitutions,
+) -> tuple[dict[str, Workflow], defaultdict[HookRuntime, list[Workflow]]]:
     hook_workflow_info = content_dict.get(ConfigKeys.HOOK_WORKFLOW, [])
     workflow_info = content_dict.get(ConfigKeys.LOAD_WORKFLOW, [])
 
@@ -439,10 +437,14 @@ def create_and_hook_workflows(content_dict, workflow_jobs, substitutions):
 
 @staticmethod
 def workflows_from_dict(
-    content_dict,
-    substitutions,
-    installed_workflows: dict[str, ErtScriptWorkflow] | None = None,
-):
+    content_dict: ConfigDict,
+    substitutions: Substitutions,
+    installed_workflows: Mapping[str, _WorkflowJob] | None = None,
+) -> tuple[
+    dict[str, _WorkflowJob],
+    dict[str, Workflow],
+    defaultdict[HookRuntime, list[Workflow]],
+]:
     workflow_jobs = copy.copy(installed_workflows) if installed_workflows else {}
     workflow_jobs = workflow_jobs_from_dict(content_dict, workflow_jobs)
     workflows, hooked_workflows = create_and_hook_workflows(
