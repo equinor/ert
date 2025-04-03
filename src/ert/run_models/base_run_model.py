@@ -646,7 +646,7 @@ class BaseRunModel(ABC):
                 await evaluator_task
             except Exception as e:
                 raise Exception(
-                    "Exception occured during user initiatied termination of experiment"
+                    "Exception occured during user initiated termination of experiment"
                 ) from e
             raise UserCancelled("Experiment cancelled by user in post evaluation")
 
