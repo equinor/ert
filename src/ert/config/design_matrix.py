@@ -238,8 +238,6 @@ class DesignMatrix:
         parameter_configuration = GenKwConfig(
             name=DESIGN_MATRIX_GROUP,
             forward_init=False,
-            template_file=None,
-            output_file=None,
             transform_function_definitions=transform_function_definitions,
             update=False,
         )
