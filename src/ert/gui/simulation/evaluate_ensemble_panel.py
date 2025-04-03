@@ -52,7 +52,9 @@ class EvaluateEnsemblePanel(ExperimentConfigPanel):
         self._realizations_validator = EnsembleRealizationsArgument(
             self._ensemble_selector.selected_ensemble,
             max_value=ensemble_size,
-            required_realization_storage_state=RealizationStorageState.PARAMETERS_LOADED,
+            required_realization_storage_states=[
+                RealizationStorageState.PARAMETERS_LOADED
+            ],
         )
         self._active_realizations_field.setValidator(self._realizations_validator)
         self._realizations_from_fs()
