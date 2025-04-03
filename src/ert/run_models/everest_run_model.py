@@ -173,7 +173,6 @@ class EverestRunModel(BaseRunModel):
         ert_templates = read_templates(config_dict)
 
         workflow_jobs = get_workflow_jobs(everest_config)
-        deprecated_workflow_jobs = workflow_jobs_from_dict(config_dict)
         if deprecated_workflow_jobs := workflow_jobs_from_dict(config_dict):
             workflow_jobs.update(deprecated_workflow_jobs)
         _, hooked_workflows = create_and_hook_workflows(  # type: ignore[no-untyped-call]
