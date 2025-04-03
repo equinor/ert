@@ -9,6 +9,7 @@ import pandas as pd
 from pandas.api.types import is_integer_dtype
 
 from ert.config.gen_kw_config import GenKwConfig, TransformFunctionDefinition
+from ert.shared.status.utils import convert_to_numeric
 
 from .parsing import ConfigValidationError, ErrorInfo
 
@@ -16,8 +17,6 @@ if TYPE_CHECKING:
     from ert.config import ParameterConfig
 
 DESIGN_MATRIX_GROUP = "DESIGN_MATRIX"
-
-from ert.shared.status.utils import convert_to_numeric
 
 
 @dataclass

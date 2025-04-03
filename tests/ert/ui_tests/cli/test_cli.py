@@ -31,6 +31,7 @@ from ert.mode_definitions import (
     ES_MDA_MODE,
     TEST_RUN_MODE,
 )
+from ert.scheduler.driver import Driver
 from ert.scheduler.job import Job
 from ert.storage import open_storage
 
@@ -712,9 +713,6 @@ def test_exclude_parameter_from_update():
     assert log_paths
     assert (log_paths[0] / "Report.report").exists()
     assert (log_paths[0] / "Report.csv").exists()
-
-
-from ert.scheduler.driver import Driver
 
 
 @pytest.mark.timeout(15)

@@ -6,20 +6,6 @@ from typing import Any
 from collections.abc import Callable
 
 
-def showWaitCursorWhileWaiting(func: Callable[..., Any]) -> Callable[..., Any]:
-    """A function decorator to show the wait cursor while the function is working."""
-
-    def wrapper(*arg: Any) -> Any:
-        QApplication.setOverrideCursor(QCursor(Qt.CursorShape.WaitCursor))
-        try:
-            res = func(*arg)
-            return res
-        finally:
-            QApplication.restoreOverrideCursor()
-
-    return wrapper
-
-
 from .closabledialog import ClosableDialog
 from .analysismoduleedit import AnalysisModuleEdit
 from .searchbox import SearchBox
@@ -41,6 +27,21 @@ from .models import (
 from .copyablelabel import CopyableLabel
 from .message_box import ErtMessageBox
 from .copy_button import CopyButton
+
+
+def showWaitCursorWhileWaiting(func: Callable[..., Any]) -> Callable[..., Any]:
+    """A function decorator to show the wait cursor while the function is working."""
+
+    def wrapper(*arg: Any) -> Any:
+        QApplication.setOverrideCursor(QCursor(Qt.CursorShape.WaitCursor))
+        try:
+            res = func(*arg)
+            return res
+        finally:
+            QApplication.restoreOverrideCursor()
+
+    return wrapper
+
 
 __all__ = [
     "ActiveRealizationsModel",

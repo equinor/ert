@@ -5,6 +5,8 @@ from dataclasses import dataclass
 from datetime import datetime
 from typing import Any, no_type_check
 
+import polars as pl
+
 from ert.substitutions import substitute_runpath_name
 
 from ._read_summary import read_summary
@@ -15,7 +17,6 @@ from .response_config import InvalidResponseFile, ResponseConfig
 from .responses_index import responses_index
 
 logger = logging.getLogger(__name__)
-import polars as pl
 
 
 @dataclass

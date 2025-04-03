@@ -7,9 +7,9 @@ import pytest
 from ert.config import ErtConfig
 from ert.mode_definitions import ENSEMBLE_SMOOTHER_MODE
 from ert.storage import open_storage
+from tests.ert.ui_tests.cli.run_cli import run_cli
 
 random_seed_line = "RANDOM_SEED 1234\n\n"
-from tests.ert.ui_tests.cli.run_cli import run_cli
 
 
 def run_cli_ES_with_case(poly_config):
