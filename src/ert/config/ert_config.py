@@ -29,6 +29,7 @@ from ert.substitutions import Substitutions
 
 from ._design_matrix_validator import DesignMatrixValidator
 from .analysis_config import AnalysisConfig
+from .design_matrix import DESIGN_MATRIX_GROUP
 from .ensemble_config import EnsembleConfig
 from .forward_model_step import (
     ForwardModelStep,
@@ -848,6 +849,12 @@ class ErtConfig:
                 if not isinstance(config, GenKwConfig):
                     continue
                 group_params = {x.name for x in config.transform_function_definitions}
+                if group_name == DESIGN_MATRIX_GROUP:
+                    dm_errors.append(
+                        ConfigValidationError(
+                            f"Cannot have GEN_KW with group name {DESIGN_MATRIX_GROUP} when using DESIGN_MATRIX keyword."
+                        )
+                    )
                 if dm_params == group_params:
                     ConfigWarning.warn(
                         f"Parameters {group_params} from GEN_KW group '{group_name}' "
