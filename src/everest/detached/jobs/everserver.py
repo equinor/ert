@@ -97,7 +97,8 @@ class ServerStopped(EverestServerMsg):
 
 class ExperimentComplete(EverestServerMsg):
     exit_code: EverestExitCode
-    data: dict[str, Any]
+    events: list[StatusEvents]
+    server_stopped: bool
 
 
 class ExperimentFailed(EverestServerMsg):
@@ -161,7 +162,9 @@ class ExperimentRunner:
             assert run_model.exit_code is not None
             self._msg_queue.put(
                 ExperimentComplete(
-                    exit_code=run_model.exit_code, data=self._shared_data
+                    exit_code=run_model.exit_code,
+                    events=self._shared_data["events"],
+                    server_stopped=self._shared_data["stop"],
                 )
             )
         except Exception as e:
@@ -556,7 +559,7 @@ def main() -> None:
                             return
                         case ExperimentComplete():
                             status, message = _get_optimization_status(
-                                item.exit_code, item.data
+                                item.exit_code, item.events, item.server_stopped
                             )
                             update_everserver_status(status_path, status, message)
                             return
@@ -576,7 +579,7 @@ def main() -> None:
 
 
 def _get_optimization_status(
-    exit_code: EverestExitCode, shared_data: dict[str, Any]
+    exit_code: EverestExitCode, events: list[StatusEvents], server_stopped: bool
 ) -> tuple[ServerStatus, str]:
     match exit_code:
         case EverestExitCode.MAX_BATCH_NUM_REACHED:
@@ -592,12 +595,8 @@ def _get_optimization_status(
             return ServerStatus.stopped, "Optimization aborted."
 
         case EverestExitCode.TOO_FEW_REALIZATIONS:
-            status_ = (
-                ServerStatus.stopped
-                if shared_data[STOP_ENDPOINT]
-                else ServerStatus.failed
-            )
-            messages = _failed_realizations_messages(shared_data)
+            status_ = ServerStatus.stopped if server_stopped else ServerStatus.failed
+            messages = _failed_realizations_messages(events)
             for msg in messages:
                 logging.getLogger(EVEREST).error(msg)
             return status_, "\n".join(messages)
@@ -605,9 +604,9 @@ def _get_optimization_status(
             return ServerStatus.completed, "Optimization completed."
 
 
-def _failed_realizations_messages(shared_data: dict[str, Any]) -> list[str]:
+def _failed_realizations_messages(events: list[StatusEvents]) -> list[str]:
     snapshots: dict[int, EnsembleSnapshot] = {}
-    for event in shared_data["events"]:
+    for event in events:
         if isinstance(event, FullSnapshotEvent) and event.snapshot:
             snapshots[event.iteration] = event.snapshot
         elif isinstance(event, SnapshotUpdateEvent) and event.snapshot:

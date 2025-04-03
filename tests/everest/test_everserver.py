@@ -85,7 +85,13 @@ def configure_everserver_logger(*args, **kwargs):
 def mock_server(monkeypatch):
     def func(exit_code: EverestExitCode, message: str = ""):
         def server_mock(shared_data, server_config, msg_queue):
-            msg_queue.put(ExperimentComplete(exit_code=exit_code, data=shared_data))
+            msg_queue.put(
+                ExperimentComplete(
+                    exit_code=exit_code,
+                    events=shared_data["events"],
+                    server_stopped=shared_data["stop"],
+                )
+            )
             _everserver_thread(shared_data, server_config, msg_queue)
 
         monkeypatch.setattr(
