@@ -192,6 +192,7 @@ select = [
     "W",     # pycodestyle
     "I",     # isort
     "B",     # flake-8-bugbear
+    "G",     # logging
     "SIM",   # flake-8-simplify
     "F",     # pyflakes
     "FURB",  # refurb
@@ -210,6 +211,7 @@ preview = true
 ignore = [
     "FURB103", # write-hole-file
     "FURB101", # read-whole-file
+    "G004",    # logging-f-string
     "PLW2901", # redefined-loop-name
     "PLR2004", # magic-value-comparison
     "PLR0915", # too-many-statements
