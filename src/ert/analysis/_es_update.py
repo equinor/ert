@@ -157,6 +157,57 @@ def _expand_wildcards(
     return sorted(set(matches))
 
 
+def _create_update_snapshot(
+    obs_keys: Iterable[str],
+    observations: Iterable[float],
+    errors: Iterable[float],
+    scaling: Iterable[float],
+    ens_mean: Iterable[float],
+    ens_std: Iterable[float],
+    ens_mean_mask: Iterable[bool],
+    ens_std_mask: Iterable[bool],
+    indexes: Iterable[str],
+) -> list[ObservationAndResponseSnapshot]:
+    update_snapshot = []
+    for (
+        obs_name,
+        obs_val,
+        obs_std,
+        obs_scaling,
+        response_mean,
+        response_std,
+        response_mean_mask,
+        response_std_mask,
+        index,
+    ) in zip(
+        obs_keys,
+        observations,
+        errors,
+        scaling,
+        ens_mean,
+        ens_std,
+        ens_mean_mask,
+        ens_std_mask,
+        indexes,
+        strict=False,
+    ):
+        update_snapshot.append(
+            ObservationAndResponseSnapshot(
+                obs_name=obs_name,
+                obs_val=obs_val,
+                obs_std=obs_std,
+                obs_scaling=obs_scaling,
+                response_mean=response_mean,
+                response_std=response_std,
+                response_mean_mask=bool(response_mean_mask),
+                response_std_mask=bool(response_std_mask),
+                index=index,
+            )
+        )
+
+    return update_snapshot
+
+
 def _load_observations_and_responses(
     ensemble: Ensemble,
     alpha: float,
@@ -273,18 +324,7 @@ def _load_observations_and_responses(
             logger.warning(msg)
             print(msg)
 
-    update_snapshot = []
-    for (
-        obs_name,
-        obs_val,
-        obs_std,
-        obs_scaling,
-        response_mean,
-        response_std,
-        response_mean_mask,
-        response_std_mask,
-        index,
-    ) in zip(
+    update_snapshot = _create_update_snapshot(
         obs_keys,
         observations,
         errors,
@@ -294,21 +334,7 @@ def _load_observations_and_responses(
         ens_mean_mask,
         ens_std_mask,
         indexes,
-        strict=False,
-    ):
-        update_snapshot.append(
-            ObservationAndResponseSnapshot(
-                obs_name=obs_name,
-                obs_val=obs_val,
-                obs_std=obs_std,
-                obs_scaling=obs_scaling,
-                response_mean=response_mean,
-                response_std=response_std,
-                response_mean_mask=bool(response_mean_mask),
-                response_std_mask=bool(response_std_mask),
-                index=index,
-            )
-        )
+    )
 
     for missing_obs in obs_keys[~obs_mask]:
         logger.warning(f"Deactivating observation: {missing_obs}")
