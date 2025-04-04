@@ -1,5 +1,6 @@
 import argparse
 import asyncio
+import dataclasses
 import datetime
 import json
 import logging
@@ -105,11 +106,19 @@ class ExperimentFailed(EverestServerMsg):
     pass
 
 
+@dataclasses.dataclass
+class ExperimentRunnerState:
+    stop: bool = False  # STOP_ENDPOINT
+    started: bool = False
+    events: list[StatusEvents] = dataclasses.field(default_factory=list)
+    subscribers: dict[str, "Subscriber"] = dataclasses.field(default_factory=dict)
+
+
 class ExperimentRunner:
     def __init__(
         self,
         everest_config: EverestConfig,
-        shared_data: dict[str, Any],
+        shared_data: ExperimentRunnerState,
         msg_queue: SimpleQueue[EverestServerMsg],
     ):
         super().__init__()
@@ -140,7 +149,7 @@ class ExperimentRunner:
                 lambda: run_model.start_simulations_thread(evaluator_server_config),
             )
             while True:
-                if self._shared_data[STOP_ENDPOINT]:
+                if self._shared_data.stop:
                     run_model.cancel()
                     raise ValueError("Optimization aborted")
                 try:
@@ -149,8 +158,8 @@ class ExperimentRunner:
                     await asyncio.sleep(0.01)
                     continue
 
-                self._shared_data["events"].append(item)
-                for sub in self._shared_data["subscribers"].values():
+                self._shared_data.events.append(item)
+                for sub in self._shared_data.subscribers.values():
                     sub.notify()
 
                 if isinstance(item, EndEvent):
@@ -163,8 +172,8 @@ class ExperimentRunner:
             self._msg_queue.put(
                 ExperimentComplete(
                     exit_code=run_model.exit_code,
-                    events=self._shared_data["events"],
-                    server_stopped=self._shared_data["stop"],
+                    events=self._shared_data.events,
+                    server_stopped=self._shared_data.stop,
                 )
             )
         except Exception as e:
@@ -223,14 +232,14 @@ def _get_machine_name() -> str:
         return "localhost"
 
 
-def _opt_monitor(shared_data: dict[str, Any]) -> str | None:
-    if shared_data[STOP_ENDPOINT]:
+def _opt_monitor(shared_data: ExperimentRunnerState) -> str | None:
+    if shared_data.stop:
         return "stop_optimization"
     return None
 
 
 def _everserver_thread(
-    shared_data: dict[str, Any],
+    shared_data: ExperimentRunnerState,
     server_config: dict[str, Any],
     msg_queue: SimpleQueue[EverestServerMsg],
 ) -> None:
@@ -284,7 +293,7 @@ def _everserver_thread(
     ) -> Response:
         _log(request)
         _check_user(credentials)
-        shared_data[STOP_ENDPOINT] = True
+        shared_data.stop = True
         msg_queue.put(ServerStopped())
         return Response("Raise STOP flag succeeded. Everest initiates shutdown..", 200)
 
@@ -296,13 +305,13 @@ def _everserver_thread(
     ) -> Response:
         _log(request)
         _check_user(credentials)
-        if not shared_data["started"]:
+        if not shared_data.started:
             request_data = await request.json()
             config = EverestConfig.with_plugins(request_data)
             runner = ExperimentRunner(config, shared_data, msg_queue)
             try:
                 background_tasks.add_task(runner.run)
-                shared_data["started"] = True
+                shared_data.started = True
                 return Response("Everest experiment started")
             except Exception as e:
                 return Response(f"Could not start experiment: {e!s}", status_code=501)
@@ -331,14 +340,14 @@ def _everserver_thread(
         and returns the event. If the subscriber is up to date it will
         wait until we wake up the subscriber using notify
         """
-        if subscriber_id not in shared_data["subscribers"]:
-            shared_data["subscribers"][subscriber_id] = Subscriber()
-        subscriber = shared_data["subscribers"][subscriber_id]
+        if subscriber_id not in shared_data.subscribers:
+            shared_data.subscribers[subscriber_id] = Subscriber()
+        subscriber = shared_data.subscribers[subscriber_id]
 
-        while subscriber.index >= len(shared_data["events"]):
+        while subscriber.index >= len(shared_data.events):
             await subscriber.wait_for_event()
 
-        event = shared_data["events"][subscriber.index]
+        event = shared_data.events[subscriber.index]
         subscriber.index += 1
         return event
 
@@ -518,12 +527,7 @@ def main() -> None:
             port = _find_open_port(host, lower=5000, upper=5800)
             _write_hostfile(host_file, host, port, cert_path, authentication)
 
-            shared_data = {
-                STOP_ENDPOINT: False,
-                "started": False,
-                "events": [],
-                "subscribers": {},
-            }
+            shared_data = ExperimentRunnerState()
 
             server_config = {
                 "optimization_output_dir": optimization_output_dir,
@@ -548,16 +552,23 @@ def main() -> None:
                     item = msg_queue.get(timeout=1)  # Wait for data
                     match item:
                         case ServerStarted():
+                            print("ServerStarted")
                             update_everserver_status(status_path, ServerStatus.running)
                         case ServerStopped():
+                            print("ServerStopped")
                             update_everserver_status(status_path, ServerStatus.stopped)
                             return
                         case ExperimentFailed():
+                            print("ExperimentFailed")
+                            print(ServerStatus.failed)
+                            print(item)
+                            print(item.msg)
                             update_everserver_status(
                                 status_path, ServerStatus.failed, item.msg
                             )
                             return
                         case ExperimentComplete():
+                            print("ExperimentComplete")
                             status, message = _get_optimization_status(
                                 item.exit_code, item.events, item.server_stopped
                             )
@@ -688,3 +699,7 @@ def _generate_authentication() -> str:
     n_bytes = 128
     random_bytes = bytes(os.urandom(n_bytes))
     return b64encode(random_bytes).decode("utf-8")
+
+
+if __name__ == "__main__":
+    main()
