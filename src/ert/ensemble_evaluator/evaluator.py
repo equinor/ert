@@ -28,6 +28,7 @@ from _ert.events import (
     EnsembleStarted,
     EnsembleSucceeded,
     Event,
+    EventForBrm,
     FMEvent,
     ForwardModelStepChecksum,
     RealizationEvent,
@@ -60,7 +61,7 @@ class EnsembleEvaluator:
         self,
         ensemble: Ensemble,
         config: EvaluatorServerConfig,
-        send_to_brm: Callable[[Event], None],
+        event_handler: Callable[[EventForBrm], None] = lambda _: _,
     ) -> None:
         self._config: EvaluatorServerConfig = config
         self._ensemble: Ensemble = ensemble
@@ -83,19 +84,20 @@ class EnsembleEvaluator:
         self._dispatchers_empty: asyncio.Event = asyncio.Event()
         self._dispatchers_empty.set()
         current_snapshot_dict = self._ensemble.snapshot.to_dict()
-        self._send_to_brm = send_to_brm
-        event: Event = EESnapshot(
+        self._handle_event = event_handler
+        event = EESnapshot(
             snapshot=current_snapshot_dict,
             ensemble=self.ensemble.id_,
         )
-        self._send_to_brm(event)
+        self._handle_event(event)
         self._monitoring_result: asyncio.Future[bool] = asyncio.Future()
+        self._is_done = asyncio.Event()  # This would be the equivalent of EETerminatedEvent - Should we use that instead?
 
     async def _append_message(self, snapshot_update_event: EnsembleSnapshot) -> None:
         event = EESnapshotUpdate(
             snapshot=snapshot_update_event.to_dict(), ensemble=self._ensemble.id_
         )
-        self._send_to_brm(event)
+        self._handle_event(event)
         if event.snapshot.get(ids.STATUS) in {
             ENSEMBLE_STATE_STOPPED,
             ENSEMBLE_STATE_FAILED,
@@ -215,11 +217,12 @@ class EnsembleEvaluator:
     def ensemble(self) -> Ensemble:
         return self._ensemble
 
-    def cancel_gracefully(self) -> None:
+    def cancel_gracefully_synced(self) -> None:
+        self._ee_tasks.append(self._running_loop.create_task(self.cancel_gracefully()))
+
+    async def cancel_gracefully(self):
         cancel_event = EEUserCancel()
-        self._ee_tasks.append(
-            self._running_loop.create_task(self.handle_client_event(cancel_event))
-        )
+        await self.handle_client_event(cancel_event)
 
     async def handle_client_event(self, event: EEEvent) -> None:
         if type(event) is EEUserCancel:
@@ -277,9 +280,9 @@ class EnsembleEvaluator:
             except asyncio.CancelledError:
                 return
 
-    async def forward_checksum(self, event: Event) -> None:
+    async def forward_checksum(self, event: ForwardModelStepChecksum) -> None:
         # clients still need to receive events via ws
-        self._send_to_brm(event)
+        self._handle_event(event)
         await self._manifest_queue.put(event)
 
     async def _server(self) -> None:
@@ -347,11 +350,12 @@ class EnsembleEvaluator:
         """
         if self._ensemble.cancellable:
             logger.debug("Cancelling current ensemble")
-            self._ee_tasks.append(
-                asyncio.create_task(
-                    self._ensemble.cancel(), name="ensemble_cancellation_task"
-                )
-            )
+            await self._ensemble.cancel()
+            # self._ee_tasks.append( WILL THIS CAUSE PROBLEMS? WHO KNOWS!
+            #    asyncio.create_task(
+            #        self._ensemble.cancel(), name="ensemble_cancellation_task"
+            #    )
+            # )
 
         else:
             logger.debug("Stopping current ensemble")
@@ -443,6 +447,7 @@ class EnsembleEvaluator:
                     logger.error(str(result))
                     raise RuntimeError(result) from result
         logger.debug("Evaluator is done")
+        self._is_done.set()
         return self._ensemble.get_successful_realizations()
 
     @staticmethod

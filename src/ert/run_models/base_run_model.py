@@ -315,7 +315,7 @@ class BaseRunModel(ABC):
 
     def cancel(self) -> None:
         self._cancelled = True
-        self._ensemble_evaluator.cancel_gracefully()
+        self._ensemble_evaluator.cancel_gracefully_synced()
 
     def has_failed_realizations(self) -> bool:
         return any(self._create_mask_from_failed_realizations())

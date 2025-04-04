@@ -217,7 +217,7 @@ EnsembleEvent = EnsembleStarted | EnsembleSucceeded | EnsembleFailed | EnsembleC
 EEEvent = EESnapshot | EESnapshotUpdate | EETerminated | EEUserCancel | EEUserDone
 
 Event = FMEvent | ForwardModelStepChecksum | RealizationEvent | EEEvent | EnsembleEvent
-
+EventForBrm = EESnapshot | EESnapshotUpdate | ForwardModelStepChecksum
 DispatchEvent = FMEvent | ForwardModelStepChecksum | RealizationEvent | EnsembleEvent
 
 _DISPATCH_EVENTS_ANNOTATION = Annotated[
