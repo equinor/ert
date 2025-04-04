@@ -18,6 +18,10 @@ jobs:
     steps:
     - uses: actions/checkout@v4
 
+    - uses: ./.github/actions/install_dependencies_qt
+      with:
+        os: ${{ inputs.os }}
+
     - uses: actions/setup-python@v5
       id: setup_python
       with:
@@ -31,7 +35,6 @@ jobs:
 
     - name: Install ert
       run: |
-        # it should be possible to run this test without needing any qt dependencies
         uv sync --extra dev
 
     - name: Install and setup slurm
@@ -84,11 +87,11 @@ jobs:
       run: |
         set -e
         export _ERT_TESTS_ALTERNATIVE_QUEUE=AlternativeQ
-        uv run pytest tests/ert/unit_tests/scheduler/test_{generic,slurm}_driver.py -sv -p no:pytest-qt --slurm \
+        uv run pytest tests/ert/unit_tests/scheduler/test_{generic,slurm}_driver.py -sv --slurm \
           -n 8 --durations=10 -k "not (LsfDriver or LocalDriver or OpenPBSDriver)"
         scontrol show job
 
-        uv run pytest tests/ert/ui_tests/cli/test_missing_runpath.py -p no:pytest-qt --slurm
+        uv run pytest tests/ert/ui_tests/cli/test_missing_runpath.py --slurm
 
     - name: Test poly-example on slurm
       run: |

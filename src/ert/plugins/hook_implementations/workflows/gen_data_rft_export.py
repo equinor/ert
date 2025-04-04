@@ -4,17 +4,15 @@ import contextlib
 import json
 import os
 from collections.abc import Sequence
-from typing import TYPE_CHECKING, Any
+from typing import Any
 
 import numpy as np
 import pandas as pd
 import polars as pl
+from PyQt6.QtWidgets import QWidget
 
 from ert.plugins import CancelPluginException, ErtPlugin
 from ert.storage import Storage
-
-if TYPE_CHECKING:
-    from PyQt6.QtWidgets import QWidget
 
 
 def load_args(filename: str, column_names: list[str] | None = None) -> pd.DataFrame:
