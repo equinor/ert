@@ -448,7 +448,6 @@ class LocalStorage(BaseMode):
     @require_write
     def _migrate(self, version: int) -> None:
         from ert.storage.migration import (  # noqa: PLC0415
-            to2,
             to3,
             to4,
             to5,
@@ -456,6 +455,7 @@ class LocalStorage(BaseMode):
             to7,
             to8,
             to9,
+            to10,
         )
 
         try:
@@ -475,7 +475,8 @@ class LocalStorage(BaseMode):
 
                 logger.info("Blockfs storage backed up")
                 print(
-                    dedent(f"""
+                    dedent(
+                        f"""
                     Detected outdated storage (blockfs), which is no longer supported
                     by ERT. Its contents are copied to:
 
@@ -494,13 +495,14 @@ class LocalStorage(BaseMode):
                     This is not guaranteed to work. Other than setting the custom
                     ENSPATH, the ERT config should ideally be the same as it was
                     when the old blockfs storage was created.
-                """)
+                """
+                    )
                 )
                 return None
 
             elif version < _LOCAL_STORAGE_VERSION:
                 migrations = list(
-                    enumerate([to2, to3, to4, to5, to6, to7, to8, to9], start=1)
+                    enumerate([to3, to4, to5, to6, to7, to8, to9, to10], start=1)
                 )
                 for from_version, migration in migrations[version - 1 :]:
                     print(f"* Updating storage to version: {from_version + 1}")

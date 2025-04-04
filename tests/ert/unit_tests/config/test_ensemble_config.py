@@ -142,6 +142,7 @@ def test_ensemble_config_duplicate_node_names():
         ),
         pytest.warns(match="The template file .* is empty"),
     ):
+        _ = EnsembleConfig.get_gen_kw_templates(config_dict)
         EnsembleConfig.from_dict(config_dict=config_dict)
 
 

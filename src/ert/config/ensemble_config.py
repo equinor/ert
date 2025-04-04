@@ -104,6 +104,16 @@ class EnsembleConfig:
                 logger.info(f"GEN_KW uses FORWARD_INIT: {gen_kw}")
 
     @no_type_check
+    @staticmethod
+    def get_gen_kw_templates(config_dict: ConfigDict) -> list[tuple[str, str]]:
+        gen_kw_list = config_dict.get(ConfigKeys.GEN_KW, [])
+        return [
+            template
+            for g in gen_kw_list
+            if (template := GenKwConfig.templates_from_config(g)) is not None
+        ]
+
+    @no_type_check
     @classmethod
     def from_dict(cls, config_dict: ConfigDict) -> EnsembleConfig:
         grid_file_path = config_dict.get(ConfigKeys.GRID)
