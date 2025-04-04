@@ -41,6 +41,7 @@ def create_base_run_model(**kwargs):
         "templates": MagicMock(spec=dict),
         "hooked_workflows": MagicMock(spec=dict),
         "active_realizations": MagicMock(spec=list),
+        "random_seed": 123,
         "log_path": Path(""),
     }
     return BaseRunModel(**(default_args | kwargs))

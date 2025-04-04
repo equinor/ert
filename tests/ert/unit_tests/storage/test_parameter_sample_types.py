@@ -166,7 +166,7 @@ def test_initialize_random_seed(
             fh.writelines("MY_KEYWORD <MY_KEYWORD>")
         with open("prior.txt", mode="w", encoding="utf-8") as fh:
             fh.writelines("MY_KEYWORD NORMAL 0 1")
-        create_runpath(storage, "config.ert", random_seed=None)
+        create_runpath(storage, "config.ert")
         # We read the first parameter value as a reference value
         expected = Path("simulations/realization-0/iter-0/kw.txt").read_text("utf-8")
 
@@ -192,7 +192,7 @@ def test_initialize_random_seed(
         with open("prior.txt", mode="w", encoding="utf-8") as fh:
             fh.writelines("MY_KEYWORD NORMAL 0 1")
 
-        create_runpath(storage, "config_2.ert", random_seed=int(random_seed))
+        create_runpath(storage, "config_2.ert")
         with expectation:
             assert (
                 Path("simulations/realization-0/iter-0/kw.txt").read_text("utf-8")

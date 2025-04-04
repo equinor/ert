@@ -77,7 +77,11 @@ def test_assert_symlink_deleted(snake_oil_field_example, storage, run_paths):
         prior_ensemble,
     )
 
-    sample_prior(prior_ensemble, range(prior_ensemble.ensemble_size))
+    sample_prior(
+        prior_ensemble,
+        range(prior_ensemble.ensemble_size),
+        random_seed=ert_config.random_seed,
+    )
     create_run_path(
         run_args=run_args,
         ensemble=prior_ensemble,

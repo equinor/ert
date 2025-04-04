@@ -12,7 +12,6 @@ def create_runpath(
     *,
     ensemble: Ensemble | None = None,
     iteration=0,
-    random_seed: int | None = 1234,
 ) -> tuple[ErtConfig, Ensemble]:
     active_mask = [True] if active_mask is None else active_mask
     ert_config = ErtConfig.from_file(config)
@@ -39,7 +38,7 @@ def create_runpath(
     sample_prior(
         ensemble,
         [i for i, active in enumerate(active_mask) if active],
-        random_seed=random_seed,
+        random_seed=ert_config.random_seed,
     )
     create_run_path(
         run_args=run_args,

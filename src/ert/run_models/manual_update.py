@@ -28,7 +28,7 @@ class ManualUpdate(UpdateRunModel):
         target_ensemble: str,
         active_realizations: list[bool],
         minimum_required_realizations: int,
-        random_seed: int | None,
+        random_seed: int,
         config: ErtConfig,
         storage: Storage,
         queue_config: QueueConfig,
