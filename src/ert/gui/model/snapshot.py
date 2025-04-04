@@ -57,16 +57,21 @@ FM_STEP_COLUMNS: Final[Sequence[str]] = [
 ]
 FM_STEP_COLUMN_SIZE: Final[int] = len(FM_STEP_COLUMNS)
 
-COLOR_FINISHED: Final[QColor] = QColor(*state.COLOR_FINISHED)
+_QCOLORS: Final = {
+    state.REALIZATION_STATE_FINISHED: QColor(*state.COLOR_FINISHED),
+    state.REALIZATION_STATE_FAILED: QColor(*state.COLOR_FAILED),
+    state.REALIZATION_STATE_RUNNING: QColor(*state.COLOR_RUNNING),
+    state.REALIZATION_STATE_PENDING: QColor(*state.COLOR_PENDING),
+    state.REALIZATION_STATE_WAITING: QColor(*state.COLOR_WAITING),
+    state.REALIZATION_STATE_UNKNOWN: QColor(*state.COLOR_UNKNOWN),
+}
 
-_QCOLORS = {
-    state.COLOR_WAITING: QColor(*state.COLOR_WAITING),
-    state.COLOR_PENDING: QColor(*state.COLOR_PENDING),
-    state.COLOR_RUNNING: QColor(*state.COLOR_RUNNING),
-    state.COLOR_FAILED: QColor(*state.COLOR_FAILED),
-    state.COLOR_UNKNOWN: QColor(*state.COLOR_UNKNOWN),
-    state.COLOR_FINISHED: QColor(*state.COLOR_FINISHED),
-    state.COLOR_NOT_ACTIVE: QColor(*state.COLOR_NOT_ACTIVE),
+FORWARD_MODEL_STATE_TO_COLOR: Final = {
+    state.FORWARD_MODEL_STATE_INIT: QColor(*state.COLOR_PENDING),
+    state.FORWARD_MODEL_STATE_START: QColor(*state.COLOR_RUNNING),
+    state.FORWARD_MODEL_STATE_RUNNING: QColor(*state.COLOR_RUNNING),
+    state.FORWARD_MODEL_STATE_FINISHED: QColor(*state.COLOR_FINISHED),
+    state.FORWARD_MODEL_STATE_FAILURE: QColor(*state.COLOR_FAILED),
 }
 
 _warn_once = True
@@ -106,18 +111,14 @@ class SnapshotModel(QAbstractItemModel):
 
         for real_id, real in reals.items():
             if status := real.get("status"):
-                metadata["real_status_colors"][real_id] = _QCOLORS[
-                    state.REAL_STATE_TO_COLOR[status]
-                ]
+                metadata["real_status_colors"][real_id] = status
 
         metadata["sorted_real_ids"] = sorted(reals.keys(), key=int)
         metadata["sorted_fm_step_ids"] = defaultdict(list)
 
         for (real_id, fm_step_id), fm_step_status in fm_step_snapshots.items():
             metadata["sorted_fm_step_ids"][real_id].append(fm_step_id)
-            metadata["aggr_fm_step_status_colors"][real_id][fm_step_id] = _QCOLORS[
-                state.FORWARD_MODEL_STATE_TO_COLOR[fm_step_status]
-            ]
+            metadata["aggr_fm_step_status_colors"][real_id][fm_step_id] = fm_step_status
 
         ensemble.merge_metadata(metadata)
         return ensemble
@@ -360,11 +361,15 @@ class SnapshotModel(QAbstractItemModel):
             finished_count = sum(
                 1
                 for color in node.data.fm_step_status_color_by_id.values()
-                if color == COLOR_FINISHED
+                if color == state.FORWARD_MODEL_STATE_FINISHED
             )
 
-            queue_color = node.data.real_status_color
+            queue_color = QColor()
+            if node.data.real_status_color:
+                queue_color = _QCOLORS.get(node.data.real_status_color, QColor())
+
             return queue_color, finished_count, total_count
+
         if role == RealLabelHint:
             return node.id_
         if role == RealIens:
@@ -404,7 +409,9 @@ class SnapshotModel(QAbstractItemModel):
 
         if role == Qt.ItemDataRole.BackgroundRole:
             return (
-                node.parent.data.fm_step_status_color_by_id[node_id]
+                FORWARD_MODEL_STATE_TO_COLOR[
+                    node.parent.data.fm_step_status_color_by_id[node_id]
+                ]
                 if node.parent
                 else None
             )

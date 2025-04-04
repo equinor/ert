@@ -6,7 +6,6 @@ from collections.abc import Mapping
 from datetime import datetime
 from typing import Any, TypeVar, cast, get_args
 
-from PyQt6.QtGui import QColor
 from typing_extensions import TypedDict
 
 from _ert.events import (
@@ -85,10 +84,10 @@ FmStepId = str
 
 
 class EnsembleSnapshotMetadata(TypedDict):
-    # contains the QColor used in the GUI for each fm_step
-    aggr_fm_step_status_colors: defaultdict[RealId, dict[FmStepId, QColor]]
-    # contains the QColor used in the GUI for each real
-    real_status_colors: dict[RealId, QColor]
+    # contains state mapped to QColor used in the GUI for each fm_step
+    aggr_fm_step_status_colors: defaultdict[RealId, dict[FmStepId, str]]
+    # contains state mapped to QColor used in the GUI for each real
+    real_status_colors: dict[RealId, str]
     sorted_real_ids: list[RealId]
     sorted_fm_step_ids: defaultdict[RealId, list[FmStepId]]
 
