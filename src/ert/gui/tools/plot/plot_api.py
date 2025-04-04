@@ -85,7 +85,7 @@ class PlotApi:
                             )
                         )
             except IndexError as exc:
-                logging.exception(exc)
+                logger.exception(exc)
                 raise exc
             else:
                 return self._all_ensembles

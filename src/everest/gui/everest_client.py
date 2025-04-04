@@ -81,7 +81,7 @@ class EverestClient:
 
                         time.sleep(refresh_interval)
             except:
-                logging.debug(traceback.format_exc())
+                logger.debug(traceback.format_exc())
 
         monitor_thread = ErtThread(
             name="everest_gui_event_monitor",
