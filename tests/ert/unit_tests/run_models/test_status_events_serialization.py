@@ -24,8 +24,8 @@ from ert.run_models.event import (
 from tests.ert import SnapshotBuilder
 
 METADATA = EnsembleSnapshotMetadata(
-    aggr_fm_step_status_colors=defaultdict(dict),
-    real_status_colors={},
+    fm_step_status=defaultdict(dict),
+    real_status={},
     sorted_real_ids=[],
     sorted_fm_step_ids=defaultdict(list),
 )

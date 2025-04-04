@@ -3,8 +3,6 @@ from __future__ import annotations
 from abc import ABC
 from dataclasses import dataclass, field
 
-from PyQt6.QtGui import QColor
-
 from ert.ensemble_evaluator.snapshot import FMStepSnapshot
 
 
@@ -73,8 +71,8 @@ class IterNode(_NodeBase):
 class RealNodeData:
     status: str | None = None
     active: bool | None = False
-    fm_step_status_color_by_id: dict[str, QColor] = field(default_factory=dict)
-    real_status_color: QColor | None = None
+    fm_step_status_by_id: dict[str, str] = field(default_factory=dict)
+    real_status: str | None = None
     current_memory_usage: int | None = None
     max_memory_usage: int | None = None
     exec_hosts: str | None = None
