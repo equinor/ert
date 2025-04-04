@@ -17,7 +17,12 @@ import numpy as np
 import polars as pl
 import psutil
 import scipy
+import scipy as sp
+from graphite_maps.enif import EnIF  # type: ignore
+from graphite_maps.linear_regression import linear_boost_ic_regression  # type: ignore
+from graphite_maps.precision_estimation import fit_precision_cholesky  # type: ignore
 from iterative_ensemble_smoother.experimental import AdaptiveESMDA
+from sklearn.preprocessing import StandardScaler  # type: ignore
 
 from ert.config import ESSettings, GenKwConfig, ObservationGroups, UpdateSettings
 
@@ -152,6 +157,57 @@ def _expand_wildcards(
     return sorted(set(matches))
 
 
+def _create_update_snapshot(
+    obs_keys: Iterable[str],
+    observations: Iterable[float],
+    errors: Iterable[float],
+    scaling: Iterable[float],
+    ens_mean: Iterable[float],
+    ens_std: Iterable[float],
+    ens_mean_mask: Iterable[bool],
+    ens_std_mask: Iterable[bool],
+    indexes: Iterable[str],
+) -> list[ObservationAndResponseSnapshot]:
+    update_snapshot = []
+    for (
+        obs_name,
+        obs_val,
+        obs_std,
+        obs_scaling,
+        response_mean,
+        response_std,
+        response_mean_mask,
+        response_std_mask,
+        index,
+    ) in zip(
+        obs_keys,
+        observations,
+        errors,
+        scaling,
+        ens_mean,
+        ens_std,
+        ens_mean_mask,
+        ens_std_mask,
+        indexes,
+        strict=False,
+    ):
+        update_snapshot.append(
+            ObservationAndResponseSnapshot(
+                obs_name=obs_name,
+                obs_val=obs_val,
+                obs_std=obs_std,
+                obs_scaling=obs_scaling,
+                response_mean=response_mean,
+                response_std=response_std,
+                response_mean_mask=bool(response_mean_mask),
+                response_std_mask=bool(response_std_mask),
+                index=index,
+            )
+        )
+
+    return update_snapshot
+
+
 def _load_observations_and_responses(
     ensemble: Ensemble,
     alpha: float,
@@ -268,18 +324,7 @@ def _load_observations_and_responses(
             logger.warning(msg)
             print(msg)
 
-    update_snapshot = []
-    for (
-        obs_name,
-        obs_val,
-        obs_std,
-        obs_scaling,
-        response_mean,
-        response_std,
-        response_mean_mask,
-        response_std_mask,
-        index,
-    ) in zip(
+    update_snapshot = _create_update_snapshot(
         obs_keys,
         observations,
         errors,
@@ -289,21 +334,7 @@ def _load_observations_and_responses(
         ens_mean_mask,
         ens_std_mask,
         indexes,
-        strict=False,
-    ):
-        update_snapshot.append(
-            ObservationAndResponseSnapshot(
-                obs_name=obs_name,
-                obs_val=obs_val,
-                obs_std=obs_std,
-                obs_scaling=obs_scaling,
-                response_mean=response_mean,
-                response_std=response_std,
-                response_mean_mask=bool(response_mean_mask),
-                response_std_mask=bool(response_std_mask),
-                index=index,
-            )
-        )
+    )
 
     for missing_obs in obs_keys[~obs_mask]:
         logger.warning(f"Deactivating observation: {missing_obs}")
@@ -702,3 +733,231 @@ def smoother_update(
         )
     )
     return smoother_snapshot
+
+
+def enif_update(
+    prior_storage: Ensemble,
+    posterior_storage: Ensemble,
+    observations: Iterable[str],
+    parameters: Iterable[str],
+    update_settings: UpdateSettings,
+    es_settings: ESSettings,
+    random_seed: int | None = None,
+    rng: np.random.Generator | None = None,
+    progress_callback: Callable[[AnalysisEvent], None] | None = None,
+    global_scaling: float = 1.0,
+) -> SmootherSnapshot:
+    if not progress_callback:
+        progress_callback = noop_progress_callback
+    if rng is None:
+        rng = np.random.default_rng()
+
+    ens_mask = prior_storage.get_realization_mask_with_responses()
+
+    smoother_snapshot = _create_smoother_snapshot(
+        prior_storage.name,
+        posterior_storage.name,
+        update_settings,
+        global_scaling,
+    )
+
+    try:
+        analysis_EnIF(
+            parameters,
+            observations,
+            random_seed,
+            smoother_snapshot,
+            ens_mask,
+            prior_storage,
+            posterior_storage,
+            progress_callback,
+        )
+    except Exception as e:
+        progress_callback(
+            AnalysisErrorEvent(
+                error_msg=str(e),
+                data=DataSection(
+                    header=smoother_snapshot.header,
+                    data=smoother_snapshot.csv,
+                    extra=smoother_snapshot.extra,
+                ),
+            )
+        )
+        raise e
+    progress_callback(
+        AnalysisCompleteEvent(
+            data=DataSection(
+                header=smoother_snapshot.header,
+                data=smoother_snapshot.csv,
+                extra=smoother_snapshot.extra,
+            )
+        )
+    )
+    return smoother_snapshot
+
+
+def analysis_EnIF(
+    parameters: Iterable[str],
+    observations: Iterable[str],
+    random_seed: int | None,
+    smoother_snapshot: SmootherSnapshot,
+    ens_mask: npt.NDArray[np.bool_],
+    source_ensemble: Ensemble,
+    target_ensemble: Ensemble,
+    progress_callback: Callable[[AnalysisEvent], None],
+) -> None:
+    iens_active_index = np.flatnonzero(ens_mask)
+
+    progress_callback(AnalysisStatusEvent(msg="Loading observations and responses.."))
+    observations_and_responses = source_ensemble.get_observations_and_responses(
+        observations,
+        iens_active_index,
+    )
+
+    observations_and_responses = observations_and_responses.sort(
+        by=["observation_key", "index"]
+    )
+
+    S = observations_and_responses.select(
+        observations_and_responses.columns[5:]
+    ).to_numpy()
+    observation_values = (
+        observations_and_responses.select("observations").to_numpy().reshape((-1,))
+    )
+    observation_errors = (
+        observations_and_responses.select("std").to_numpy().reshape((-1,))
+    )
+    obs_keys = (
+        observations_and_responses.select("observation_key").to_numpy().reshape((-1,))
+    )
+    indexes = observations_and_responses.select("index").to_numpy().reshape((-1,))
+
+    num_obs = len(observation_values)
+
+    smoother_snapshot.update_step_snapshots = _create_update_snapshot(
+        obs_keys=obs_keys,
+        observations=observation_values,
+        errors=observation_errors,
+        scaling=np.ones((num_obs,)),
+        ens_mean=S.mean(axis=1),
+        ens_std=S.std(ddof=0, axis=1, dtype=np.float64).astype(np.float32),
+        ens_mean_mask=np.ones(num_obs),
+        ens_std_mask=np.ones(num_obs),
+        indexes=indexes,
+    )
+
+    if num_obs == 0:
+        msg = "No active observations for update step"
+        progress_callback(AnalysisErrorEvent(error_msg=msg, data=smoother_snapshot))
+        raise ErtAnalysisError(msg)
+
+    ### EnIF ###
+    start_enif = time.time()
+
+    # Load all parameters at once
+    X_full = _all_parameters(
+        ensemble=source_ensemble,
+        iens_active_index=iens_active_index,
+    )
+    print(f"full parameter matrix shape: {X_full.shape}")
+
+    X_full_scaler = StandardScaler()
+    X_full_scaled = X_full_scaler.fit_transform(X_full.T)
+    print(f"Scaled X_full has shape: {X_full_scaled.shape}")
+
+    # Call fit: Learn sparse linear map only
+    H = linear_boost_ic_regression(
+        U=X_full_scaled,
+        Y=S.T,
+        learning_rate=1.0,
+        effective_dimension=0,
+        verbose_level=5,
+    )
+
+    # Learn the precision matrix block-sparse over parameter groups
+    Prec_u = sp.sparse.csc_matrix((0, 0), dtype=float)
+    for param_group in parameters:
+        print(f"loading parameter group {param_group}")
+        config_node = source_ensemble.experiment.parameter_configuration[param_group]
+        X_local = _load_param_ensemble_array(
+            source_ensemble, param_group, iens_active_index
+        )
+        X_local_scaler = StandardScaler()
+        X_scaled = X_local_scaler.fit_transform(X_local.T)
+
+        graph_u_sub = config_node.load_parameter_graph()
+
+        # This will work for dim(X_scaled) on order O(n^5)
+        Prec_u_sub, *_ = fit_precision_cholesky(X_scaled, graph_u_sub, verbose_level=2)
+
+        # Add to block-diagonal full precision
+        Prec_u = sp.sparse.block_diag((Prec_u, Prec_u_sub), format="csc")
+
+    # Precision of observation errors
+    Prec_eps = sp.sparse.diags(
+        [1.0 / observation_errors**2],
+        offsets=[0],
+        shape=(num_obs, num_obs),
+        format="csc",
+    )
+
+    # Initialize EnIF object with full precision matrices
+    gtmap = EnIF(
+        Prec_u=Prec_u,
+        Prec_eps=Prec_eps,
+        H=H,
+    )
+
+    update_indices = gtmap.get_update_indices(
+        neighbor_propagation_order=15, verbose_level=1
+    )
+
+    # Call transport? might have to do some coding here
+    # Perhaps use an iterative solver instead of direct spsolve or similar
+    X_full = gtmap.transport(
+        X_full_scaled,
+        S.T,
+        observation_values,
+        update_indices=update_indices,
+        iterative=True,
+        verbose_level=5,
+        seed=random_seed,
+    )
+    X_full = X_full_scaler.inverse_transform(X_full).T
+
+    # Iterate over parameters to store the updated ensemble
+    parameters_updated = 0
+    for param_group in parameters:
+        log_msg = f"Storing data for {param_group}.."
+        logger.info(log_msg)
+        progress_callback(AnalysisStatusEvent(msg=log_msg))
+        start = time.time()
+
+        param_ensemble_array = _load_param_ensemble_array(
+            source_ensemble, param_group, iens_active_index
+        )
+        parameters_to_update = param_ensemble_array.shape[0]
+        param_group_indices = np.arange(
+            parameters_updated, parameters_updated + parameters_to_update
+        )
+        _save_param_ensemble_array_to_disk(
+            target_ensemble,
+            X_full[param_group_indices, :],
+            param_group,
+            iens_active_index,
+        )
+        parameters_updated += parameters_to_update
+
+        logger.info(
+            f"Storing data for {param_group} completed in {(time.time() - start) / 60} minutes"
+        )
+        _copy_unupdated_parameters(
+            list(source_ensemble.experiment.parameter_configuration.keys()),
+            parameters,
+            iens_active_index,
+            source_ensemble,
+            target_ensemble,
+        )
+
+    stop_enif = time.time()
+    print(f"EnIF total update time: {stop_enif - start_enif} seconds")

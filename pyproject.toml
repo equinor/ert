@@ -68,6 +68,7 @@ dependencies = [
     "websockets",
     "xarray",
     "xtgeo >= 3.3.0",
+    "networkx",
 ]
 
 [project.scripts]
@@ -131,6 +132,7 @@ types = [
     "types-tqdm",
     "types-psutil",
     "types-setuptools",
+    "types-networkx",
 ]
 everest = [
     "websockets",

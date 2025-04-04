@@ -679,6 +679,7 @@ dependencies = [
     { name = "lxml" },
     { name = "matplotlib" },
     { name = "netcdf4" },
+    { name = "networkx" },
     { name = "numpy" },
     { name = "openpyxl" },
     { name = "opentelemetry-api" },
@@ -764,6 +765,7 @@ types = [
     { name = "types-decorator" },
     { name = "types-docutils" },
     { name = "types-lxml" },
+    { name = "types-networkx" },
     { name = "types-psutil" },
     { name = "types-python-dateutil" },
     { name = "types-pyyaml" },
@@ -798,6 +800,7 @@ requires-dist = [
     { name = "mypy", marker = "extra == 'types'" },
     { name = "nbsphinx", marker = "extra == 'dev'" },
     { name = "netcdf4" },
+    { name = "networkx" },
     { name = "numpy", specifier = "<2.2" },
     { name = "oil-reservoir-synthesizer", marker = "extra == 'dev'" },
     { name = "openpyxl" },
@@ -856,6 +859,7 @@ requires-dist = [
     { name = "types-decorator", marker = "extra == 'types'" },
     { name = "types-docutils", marker = "extra == 'types'" },
     { name = "types-lxml", marker = "extra == 'types'" },
+    { name = "types-networkx", marker = "extra == 'types'" },
     { name = "types-psutil", marker = "extra == 'types'" },
     { name = "types-python-dateutil", marker = "extra == 'types'" },
     { name = "types-pyyaml", marker = "extra == 'types'" },
@@ -2097,6 +2101,15 @@ wheels = [
     { url = "https://files.pythonhosted.org/packages/2d/1a/32b7427aaf62fed3d4e4456f874b25ce39373dbddf6cfde9edbcfc2417fc/netCDF4-1.7.2-cp312-cp312-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:cb95b11804fe051897d1f2044b05d82a1847bc2549631cdd2f655dde7de77a9c", size = 9377415 },
     { url = "https://files.pythonhosted.org/packages/fd/bf/5e671495c8bdf6b628e091aa8980793579474a10e51bc6ba302a3af6a778/netCDF4-1.7.2-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:f9d8a848373723f41ef662590b4f5e1832227501c9fd4513e8ad8da58c269977", size = 9260579 },
     { url = "https://files.pythonhosted.org/packages/d4/57/0a0bcdebcfaf72e96e7bcaa512f80ee096bf71945a3318d38253338e9c25/netCDF4-1.7.2-cp312-cp312-win_amd64.whl", hash = "sha256:568ea369e00b581302d77fc5fd0b8f78e520c7e08d0b5af5219ba51f3f1cd694", size = 6991523 },
+]
+
+[[package]]
+name = "networkx"
+version = "3.4.2"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/fd/1d/06475e1cd5264c0b870ea2cc6fdb3e37177c1e565c43f56ff17a10e3937f/networkx-3.4.2.tar.gz", hash = "sha256:307c3669428c5362aab27c8a1260aa8f47c4e91d3891f48be0141738d8d053e1", size = 2151368 }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/b9/54/dd730b32ea14ea797530a4479b2ed46a6fb250f682a9cfb997e968bf0261/networkx-3.4.2-py3-none-any.whl", hash = "sha256:df5d4365b724cf81b8c6a7312509d0c22386097011ad1abe274afd5e9d3bbc5f", size = 1723263 },
 ]
 
 [[package]]
@@ -3885,6 +3898,18 @@ dependencies = [
 sdist = { url = "https://files.pythonhosted.org/packages/84/01/9e45ccd26ca36982ef505174a6e5f661abb68565fa27c77d2e56a3f0e9f5/types_lxml-2025.3.30.tar.gz", hash = "sha256:ea4da0d2b61a73e114e14e2dcca1f62671182d80016a483369c553a24ba8f163", size = 152963 }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/0d/a4/97b5427717f6499bdc093228b695e7ff8a2972c9e47e2492c30a21cc85e0/types_lxml-2025.3.30-py3-none-any.whl", hash = "sha256:310b0ddf9e2104c8684362445808adf8a2cf41cf102d4ea0d16ced413cc46f66", size = 93216 },
+]
+
+[[package]]
+name = "types-networkx"
+version = "3.4.2.20250319"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "numpy" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/41/ba/ddc3510d544cd919d751876abda8ff9da356d5064e1f9a9e9b3b92863b0c/types_networkx-3.4.2.20250319.tar.gz", hash = "sha256:514b373c21f03fef94d71ca7182026ae73773fe3d4eaaf9139e9bdd78f5361c5", size = 55227 }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/23/23/13414ead12ee55491c25e75029b5bfce41990bc01071a1e2e07f1c642178/types_networkx-3.4.2.20250319-py3-none-any.whl", hash = "sha256:95266a3b4ee04779638231a8ef4c312e745f3eeab9da242614d03ad0bfbb0cc9", size = 137574 },
 ]
 
 [[package]]
