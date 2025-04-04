@@ -264,9 +264,7 @@ def test_that_sampling_is_fixed_from_name(
         conf = GenKwConfig(
             name="KW_NAME",
             forward_init=False,
-            # template_file="template.txt",
             transform_function_definitions=prior,
-            # output_file="kw.txt",
             update=True,
         )
         with open("template.txt", "w", encoding="utf-8") as fh:
