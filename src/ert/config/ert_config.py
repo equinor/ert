@@ -597,6 +597,7 @@ def create_list_of_forward_model_steps_to_run(
 @dataclass
 class ErtConfig:
     DEFAULT_ENSPATH: ClassVar[str] = "storage"
+    DEFAULT_RANDOM_SEED: ClassVar[int] = 123456789
     DEFAULT_RUNPATH_FILE: ClassVar[str] = ".ert_runpath_list"
     PREINSTALLED_FORWARD_MODEL_STEPS: ClassVar[dict[str, ForwardModelStep]] = {}
     PREINSTALLED_WORKFLOWS: ClassVar[dict[str, ErtScriptWorkflow]] = {}
@@ -607,7 +608,7 @@ class ErtConfig:
     ensemble_config: EnsembleConfig = field(default_factory=EnsembleConfig)
     ens_path: str = DEFAULT_ENSPATH
     env_vars: dict[str, str] = field(default_factory=dict)
-    random_seed: int | None = None
+    random_seed: int = DEFAULT_RANDOM_SEED
     analysis_config: AnalysisConfig = field(default_factory=AnalysisConfig)
     queue_config: QueueConfig = field(default_factory=QueueConfig)
     workflow_jobs: dict[str, _WorkflowJob] = field(default_factory=dict)
@@ -942,7 +943,9 @@ class ErtConfig:
             ensemble_config=ensemble_config,
             ens_path=config_dict.get(ConfigKeys.ENSPATH, ErtConfig.DEFAULT_ENSPATH),
             env_vars=env_vars,
-            random_seed=config_dict.get(ConfigKeys.RANDOM_SEED),
+            random_seed=config_dict.get(
+                ConfigKeys.RANDOM_SEED, ErtConfig.DEFAULT_RANDOM_SEED
+            ),
             analysis_config=analysis_config,
             queue_config=queue_config,
             workflow_jobs=workflow_jobs,
