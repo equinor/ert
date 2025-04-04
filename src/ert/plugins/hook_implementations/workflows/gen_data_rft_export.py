@@ -1,16 +1,20 @@
+from __future__ import annotations
+
 import contextlib
 import json
 import os
 from collections.abc import Sequence
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 import numpy as np
 import pandas as pd
 import polars as pl
-from PyQt6.QtWidgets import QCheckBox, QWidget
 
 from ert.plugins import CancelPluginException, ErtPlugin
 from ert.storage import Storage
+
+if TYPE_CHECKING:
+    from PyQt6.QtWidgets import QWidget
 
 
 def load_args(filename: str, column_names: list[str] | None = None) -> pd.DataFrame:
@@ -205,6 +209,9 @@ class GenDataRFTCSVExportJob(ErtPlugin):
 
     def getArguments(self, parent: QWidget, storage: Storage) -> list[Any]:  # type: ignore
         # Importing ert.gui on-demand saves ~0.5 seconds off `from ert import __main__`
+        # This also avoids needing qt dependencies for cli usage
+        from PyQt6.QtWidgets import QCheckBox  # noqa: PLC0415
+
         from ert.gui.ertwidgets import (  # noqa: PLC0415
             CustomDialog,
             ListEditBox,

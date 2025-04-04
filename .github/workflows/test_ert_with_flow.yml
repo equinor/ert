@@ -18,10 +18,6 @@ jobs:
     steps:
     - uses: actions/checkout@v4
 
-    - uses: ./.github/actions/install_dependencies_qt
-      with:
-        os: ${{ inputs.os }}
-
     - uses: actions/setup-python@v5
       id: setup_python
       with:
@@ -35,6 +31,7 @@ jobs:
 
     - name: Install ert and everest
       run: |
+        # it should be possible to run this test without needing any qt dependencies
         uv sync --extra everest --extra dev
         uv pip install git+https://github.com/equinor/everest-models
 
@@ -53,7 +50,7 @@ jobs:
     - name: Run integration tests towards OPM flow without flowrun
       run: |
         set -e
-        uv run pytest tests/ert/unit_tests/resources/test_run_flow_simulator.py
+        uv run pytest tests/ert/unit_tests/resources/test_run_flow_simulator.py -p no:pytest-qt
 
     - name: Run Ert on an example configuration with flow
       run: |
