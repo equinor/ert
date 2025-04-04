@@ -1,7 +1,9 @@
 import os
 
+import pytest
 from ruamel.yaml import YAML
 
+from ert.config.parsing.config_errors import ConfigWarning
 from everest.config import EverestConfig
 from tests.everest.utils import relpath
 
@@ -37,7 +39,7 @@ def test_input_constraint_initialization():
     assert exp_weights == [input_constraint.weights[v] for v in exp_vars]
 
 
-def test_input_constraint_control_references(tmp_path, capsys):
+def test_input_constraint_control_references(tmp_path, capsys, caplog):
     os.chdir(tmp_path)
     controls_config = [
         {
@@ -106,11 +108,10 @@ def test_input_constraint_control_references(tmp_path, capsys):
     out1 = capsys.readouterr().out
     assert "Deprecated input control name" not in out1
 
-    EverestConfig.load_file("config_warns.yml")
-    out2 = capsys.readouterr().out
+    with pytest.warns(
+        ConfigWarning,
+        match="Deprecated input control name: .* reference in input constraint.",
+    ):
+        EverestConfig.load_file("config_warns.yml")
 
-    assert all(
-        f"Deprecated input control name: {control_ref} reference in input constraint."
-        in out2
-        for control_ref in input_constraints_config_deprecated[0]["weights"]
-    )
+    assert not capsys.readouterr().out
