@@ -29,6 +29,7 @@ from ruamel.yaml import YAML, YAMLError
 from ert.config import ErtConfig, QueueConfig
 from ert.config.parsing import BaseModelWithContextSupport
 from ert.config.parsing.base_model_context import init_context
+from ert.config.parsing.config_errors import ConfigWarning
 from ert.config.parsing.queue_system import QueueSystem
 from ert.plugins import ErtPluginManager
 from everest.config.control_variable_config import ControlVariableGuessListConfig
@@ -50,7 +51,6 @@ from everest.util.forward_models import (
 from ..config_file_loader import yaml_file_to_substituted_config_dict
 from ..strings import (
     DEFAULT_OUTPUT_DIR,
-    EVEREST,
     OPTIMIZATION_LOG_DIR,
     OPTIMIZATION_OUTPUT_DIR,
     STORAGE_DIR,
@@ -270,11 +270,8 @@ and environment variables are exposed in the form 'os.NAME', for example:
             return self
         for job in self.install_jobs:
             if job.executable is None:
-                logging.getLogger(EVEREST).warning(
-                    "`install_jobs: source` is deprecated, use `install_jobs: executable` instead."
-                )
-                print("`install_jobs: source` is deprecated, instead you should use:")
-                print(
+                ConfigWarning.deprecation_warn(
+                    "`install_jobs: source` is deprecated, instead you should use:\n"
                     "install_jobs:\n"
                     "  - name: job-name\n"
                     "    executable: path-to-executable\n"
@@ -288,13 +285,8 @@ and environment variables are exposed in the form 'os.NAME', for example:
             return self
         for job in self.install_workflow_jobs:
             if job.executable is None:
-                logging.getLogger(EVEREST).warning(
-                    "`install_workflow_jobs: source` is deprecated, use `install_workflow_jobs: executable` instead."
-                )
-                print(
-                    "`install_workflow_jobs: source` is deprecated, instead you should use:"
-                )
-                print(
+                ConfigWarning.deprecation_warn(
+                    "`install_workflow_jobs: source` is deprecated, instead you should use:\n"
                     "install_workflow_jobs:\n"
                     "  - name: job-name\n"
                     "    executable: path-to-executable\n"
@@ -490,10 +482,7 @@ and environment variables are exposed in the form 'os.NAME', for example:
         for input_const in input_constraints:
             for key in input_const.weights:
                 if key in control_names_deprecated and key not in control_names:
-                    logging.getLogger(EVEREST).warning(
-                        f"Deprecated reference to control: {key} in input constraint."
-                    )
-                    print(
+                    ConfigWarning.deprecation_warn(
                         f"Deprecated input control name: {key} "
                         f"reference in input constraint. This format is deprecated, "
                         f"please use only '.' as delimiters: {key.replace('-', '.')}"
