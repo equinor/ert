@@ -187,12 +187,10 @@ class EETerminated(BaseEvent):
 
 class EEUserCancel(BaseEvent):
     event_type: Id.EE_USER_CANCEL_TYPE = Id.EE_USER_CANCEL
-    monitor: str
 
 
 class EEUserDone(BaseEvent):
     event_type: Id.EE_USER_DONE_TYPE = Id.EE_USER_DONE
-    monitor: str
 
 
 FMEvent = (
@@ -219,7 +217,7 @@ EnsembleEvent = EnsembleStarted | EnsembleSucceeded | EnsembleFailed | EnsembleC
 EEEvent = EESnapshot | EESnapshotUpdate | EETerminated | EEUserCancel | EEUserDone
 
 Event = FMEvent | ForwardModelStepChecksum | RealizationEvent | EEEvent | EnsembleEvent
-
+EventForBrm = EESnapshot | EESnapshotUpdate | ForwardModelStepChecksum
 DispatchEvent = FMEvent | ForwardModelStepChecksum | RealizationEvent | EnsembleEvent
 
 _DISPATCH_EVENTS_ANNOTATION = Annotated[
