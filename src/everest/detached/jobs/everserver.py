@@ -565,7 +565,7 @@ def main() -> None:
                             return
                 except Empty:
                     continue
-        except:
+        except Exception:
             update_everserver_status(
                 status_path,
                 ServerStatus.failed,

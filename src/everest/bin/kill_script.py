@@ -87,7 +87,7 @@ def kill_everest(options: argparse.Namespace) -> None:
         print("Waiting for server to stop ...")
         wait_for_server_to_stop(server_context, timeout=60)
         print("Server stopped.")
-    except:
+    except Exception:
         logging.debug(traceback.format_exc())
         print(
             "Server is still running after 60 seconds, "

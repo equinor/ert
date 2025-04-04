@@ -54,6 +54,7 @@ from ert.ensemble_evaluator.state import (
     REALIZATION_STATE_FAILED,
     REALIZATION_STATE_FINISHED,
 )
+from ert.exceptions import ErtError
 from ert.mode_definitions import MODULE_MODE
 from ert.plugins import WorkflowFixtures
 from ert.runpaths import Runpaths
@@ -91,6 +92,18 @@ class OutOfOrderSnapshotUpdateException(ValueError):
 
 class ErtRunError(Exception):
     pass
+
+
+class TooFewRealizationsSucceeded(ErtError):
+    def __init__(
+        self, successful_realizations: int, required_realizations: int
+    ) -> None:
+        self.message = (
+            f"Number of successful realizations ({successful_realizations}) is less "
+            "than the specified MIN_REALIZATIONS"
+            f"({required_realizations})"
+        )
+        super().__init__(self.message)
 
 
 def delete_runpath(run_path: str) -> None:
@@ -396,8 +409,8 @@ class BaseRunModel(ABC):
             self._completed_realizations_mask = []
             failed = True
             exception = e
-        except UserWarning:
-            pass
+        except UserWarning as e:
+            logger.exception(e)
         except Exception as e:
             failed = True
             exception = e
@@ -581,11 +594,11 @@ class BaseRunModel(ABC):
                         logger.debug("got terminated event")
 
                     if not self._end_queue.empty():
-                        logger.debug("Run model canceled - during evaluation")
+                        logger.debug("Run model cancelled - during evaluation")
                         self._end_queue.get()
                         await monitor.signal_cancel()
                         logger.debug(
-                            "Run model canceled - during evaluation - cancel sent"
+                            "Run model cancelled - during evaluation - cancel sent"
                         )
         except UserCancelled:
             raise
@@ -605,7 +618,7 @@ class BaseRunModel(ABC):
         ee_config: EvaluatorServerConfig,
     ) -> list[int]:
         if not self._end_queue.empty():
-            logger.debug("Run model canceled - pre evaluation")
+            logger.debug("Run model cancelled - pre evaluation")
             self._end_queue.get()
             raise UserCancelled("Experiment cancelled by user in pre evaluation")
 
@@ -627,13 +640,13 @@ class BaseRunModel(ABC):
         logger.debug("tasks complete")
 
         if not self._end_queue.empty():
-            logger.debug("Run model canceled - post evaluation")
+            logger.debug("Run model cancelled - post evaluation")
             self._end_queue.get()
             try:
                 await evaluator_task
             except Exception as e:
                 raise Exception(
-                    "Exception occured during user initiatied termination of experiment"
+                    "Exception occured during user initiated termination of experiment"
                 ) from e
             raise UserCancelled("Experiment cancelled by user in post evaluation")
 
@@ -725,10 +738,8 @@ class BaseRunModel(ABC):
         min_realization_count = self.minimum_required_realizations
 
         if successful_realizations_count < min_realization_count:
-            raise ValueError(
-                f"Number of successful realizations ({successful_realizations_count}) is less "
-                f"than the specified MIN_REALIZATIONS"
-                f"({min_realization_count})"
+            raise TooFewRealizationsSucceeded(
+                successful_realizations_count, min_realization_count
             )
 
     @tracer.start_as_current_span(f"{__name__}.run_workflows")
