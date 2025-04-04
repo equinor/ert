@@ -766,15 +766,11 @@ def enif_update(
             parameters,
             observations,
             random_seed,
-            update_settings.alpha,
-            update_settings.std_cutoff,
-            global_scaling,
             smoother_snapshot,
             ens_mask,
             prior_storage,
             posterior_storage,
             progress_callback,
-            update_settings.auto_scale_observations,
         )
     except Exception as e:
         progress_callback(
@@ -804,39 +800,51 @@ def analysis_EnIF(
     parameters: Iterable[str],
     observations: Iterable[str],
     random_seed: int | None,
-    alpha: float,
-    std_cutoff: float,
-    global_scaling: float,
     smoother_snapshot: SmootherSnapshot,
     ens_mask: npt.NDArray[np.bool_],
     source_ensemble: Ensemble,
     target_ensemble: Ensemble,
     progress_callback: Callable[[AnalysisEvent], None],
-    auto_scale_observations: list[ObservationGroups] | None,
 ) -> None:
     iens_active_index = np.flatnonzero(ens_mask)
 
     progress_callback(AnalysisStatusEvent(msg="Loading observations and responses.."))
-    (
-        S,
-        (
-            observation_values,
-            observation_errors,
-            update_snapshot,
-        ),
-    ) = _load_observations_and_responses(
-        source_ensemble,
-        alpha,
-        std_cutoff,
-        global_scaling,
-        iens_active_index,
+    observations_and_responses = source_ensemble.get_observations_and_responses(
         observations,
-        auto_scale_observations,
-        progress_callback,
+        iens_active_index,
     )
+
+    observations_and_responses = observations_and_responses.sort(
+        by=["observation_key", "index"]
+    )
+
+    S = observations_and_responses.select(
+        observations_and_responses.columns[5:]
+    ).to_numpy()
+    observation_values = (
+        observations_and_responses.select("observations").to_numpy().reshape((-1,))
+    )
+    observation_errors = (
+        observations_and_responses.select("std").to_numpy().reshape((-1,))
+    )
+    obs_keys = (
+        observations_and_responses.select("observation_key").to_numpy().reshape((-1,))
+    )
+    indexes = observations_and_responses.select("index").to_numpy().reshape((-1,))
+
     num_obs = len(observation_values)
 
-    smoother_snapshot.update_step_snapshots = update_snapshot
+    smoother_snapshot.update_step_snapshots = _create_update_snapshot(
+        obs_keys=obs_keys,
+        observations=observation_values,
+        errors=observation_errors,
+        scaling=np.ones((num_obs,)),
+        ens_mean=S.mean(axis=1),
+        ens_std=S.std(ddof=0, axis=1, dtype=np.float64).astype(np.float32),
+        ens_mean_mask=np.ones(num_obs),
+        ens_std_mask=np.ones(num_obs),
+        indexes=indexes,
+    )
 
     if num_obs == 0:
         msg = "No active observations for update step"
