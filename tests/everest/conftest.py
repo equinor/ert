@@ -13,6 +13,7 @@ import pytest
 import yaml
 
 import ert
+import everest
 from ert.ensemble_evaluator import EvaluatorServerConfig
 from ert.run_models import StatusEvents
 from ert.run_models.event import status_event_from_json, status_event_to_json
@@ -244,5 +245,11 @@ def mock_server(monkeypatch):
 @pytest.fixture()
 def no_plugins():
     patched = partial(ert.config.ert_config.ErtPluginManager, plugins=[])
-    with patch("ert.config.ert_config.ErtPluginManager", patched):
+    patched_everest = partial(
+        everest.config.everest_config.ErtPluginManager, plugins=[]
+    )
+    with (
+        patch("ert.config.ert_config.ErtPluginManager", patched),
+        patch("everest.config.everest_config.ErtPluginManager", patched_everest),
+    ):
         yield

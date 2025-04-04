@@ -1,6 +1,7 @@
 import logging
 import os
 import stat
+from functools import partial
 from pathlib import Path
 from unittest.mock import MagicMock, patch
 
@@ -9,6 +10,7 @@ import requests
 import yaml
 
 import everest
+from ert import plugin
 from ert.config import QueueSystem
 from ert.config.queue_config import (
     LocalQueueOptions,
@@ -208,6 +210,7 @@ def test_find_queue_system(config: EverestConfig, expected_result):
     assert result.queue_system.name == expected_result
 
 
+@pytest.mark.usefixtures("no_plugins")
 def test_generate_queue_options_no_config():
     config = EverestConfig.with_defaults()
     assert config.server.queue_system == LocalQueueOptions(max_running=1)
@@ -248,7 +251,6 @@ def test_generate_queue_options_use_simulator_values(
     assert config.server.queue_system == expected_result
 
 
-@pytest.mark.usefixtures("no_plugins")
 @pytest.mark.parametrize("use_plugin", (True, False))
 @pytest.mark.parametrize(
     "queue_options",
@@ -266,15 +268,24 @@ def test_queue_options_site_config(queue_options, use_plugin, monkeypatch, min_c
     else:
         expected_result = activate_script()
 
+    plugins = []
     if use_plugin:
-        monkeypatch.setattr(
-            everest.config.everest_config.ErtPluginManager,
-            "activate_script",
-            MagicMock(return_value=plugin_result),
-        )
-    config = EverestConfig.with_plugins(
-        {"simulator": {"queue_system": queue_options}} | min_config
+
+        class ActivatePlugin:
+            @plugin(name="first")
+            def activate_script(self):
+                return plugin_result
+
+        plugins = [ActivatePlugin()]
+    patched_everest = partial(
+        everest.config.everest_config.ErtPluginManager, plugins=plugins
     )
+    with (
+        patch("everest.config.everest_config.ErtPluginManager", patched_everest),
+    ):
+        config = EverestConfig.with_plugins(
+            {"simulator": {"queue_system": queue_options}} | min_config
+        )
     assert config.simulator.queue_system.activate_script == expected_result
 
 
