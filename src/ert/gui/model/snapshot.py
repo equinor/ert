@@ -103,22 +103,22 @@ class SnapshotModel(QAbstractItemModel):
             return None
 
         metadata = EnsembleSnapshotMetadata(
-            aggr_fm_step_status_colors=defaultdict(dict),
-            real_status_colors={},
+            fm_step_status=defaultdict(dict),
+            real_status={},
             sorted_real_ids=[],
             sorted_fm_step_ids=defaultdict(),
         )
 
         for real_id, real in reals.items():
             if status := real.get("status"):
-                metadata["real_status_colors"][real_id] = status
+                metadata["real_status"][real_id] = status
 
         metadata["sorted_real_ids"] = sorted(reals.keys(), key=int)
         metadata["sorted_fm_step_ids"] = defaultdict(list)
 
         for (real_id, fm_step_id), fm_step_status in fm_step_snapshots.items():
             metadata["sorted_fm_step_ids"][real_id].append(fm_step_id)
-            metadata["aggr_fm_step_status_colors"][real_id][fm_step_id] = fm_step_status
+            metadata["fm_step_status"][real_id][fm_step_id] = fm_step_status
 
         ensemble.merge_metadata(metadata)
         return ensemble
@@ -154,12 +154,12 @@ class SnapshotModel(QAbstractItemModel):
                     data.status = real_status
                 if real_exec_hosts := real.get("exec_hosts"):
                     data.exec_hosts = real_exec_hosts
-                for real_fm_step_id, color in (
-                    metadata["aggr_fm_step_status_colors"].get(real_id, {}).items()
+                for real_fm_step_id, status in (
+                    metadata["fm_step_status"].get(real_id, {}).items()
                 ):
-                    data.fm_step_status_color_by_id[real_fm_step_id] = color
-                if real_id in metadata["real_status_colors"]:
-                    data.real_status_color = metadata["real_status_colors"][real_id]
+                    data.fm_step_status_by_id[real_fm_step_id] = status
+                if real_id in metadata["real_status"]:
+                    data.real_status = metadata["real_status"][real_id]
                 reals_changed.append(real_node.row())
                 if msg := real.get("message"):
                     data.message = msg
@@ -227,12 +227,10 @@ class SnapshotModel(QAbstractItemModel):
                     status=real.get("status"),
                     active=real.get("active"),
                     exec_hosts=real.get("exec_hosts"),
-                    fm_step_status_color_by_id=metadata.get(
-                        "aggr_fm_step_status_colors", defaultdict(None)
+                    fm_step_status_by_id=metadata.get(
+                        "fm_step_status", defaultdict(None)
                     )[real_id],
-                    real_status_color=metadata.get(
-                        "real_status_colors", defaultdict(None)
-                    )[real_id],
+                    real_status=metadata.get("real_status", defaultdict(None))[real_id],
                     message=real.get("message"),
                 ),
             )
@@ -357,16 +355,16 @@ class SnapshotModel(QAbstractItemModel):
     @staticmethod
     def _real_data(node: RealNode, role: int) -> Any:
         if role == FMStepColorHint:
-            total_count = len(node.data.fm_step_status_color_by_id)
+            total_count = len(node.data.fm_step_status_by_id)
             finished_count = sum(
                 1
-                for color in node.data.fm_step_status_color_by_id.values()
+                for color in node.data.fm_step_status_by_id.values()
                 if color == state.FORWARD_MODEL_STATE_FINISHED
             )
 
             queue_color = QColor()
-            if node.data.real_status_color:
-                queue_color = _QCOLORS.get(node.data.real_status_color, QColor())
+            if node.data.real_status:
+                queue_color = _QCOLORS.get(node.data.real_status, QColor())
 
             return queue_color, finished_count, total_count
 
@@ -410,7 +408,7 @@ class SnapshotModel(QAbstractItemModel):
         if role == Qt.ItemDataRole.BackgroundRole:
             return (
                 FORWARD_MODEL_STATE_TO_COLOR[
-                    node.parent.data.fm_step_status_color_by_id[node_id]
+                    node.parent.data.fm_step_status_by_id[node_id]
                 ]
                 if node.parent
                 else None
