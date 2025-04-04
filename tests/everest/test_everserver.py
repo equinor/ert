@@ -27,7 +27,11 @@ from everest.detached import (
     wait_for_server,
 )
 from everest.detached.jobs import everserver
-from everest.detached.jobs.everserver import ExperimentComplete, _everserver_thread
+from everest.detached.jobs.everserver import (
+    ExperimentComplete,
+    ExperimentRunnerState,
+    _everserver_thread,
+)
 from everest.everest_storage import EverestStorage
 
 
@@ -45,10 +49,7 @@ def setup_client(monkeypatch):
         monkeypatch.setattr(everest.detached.jobs.everserver, "uvicorn", uvicorn_mock)
         subscribers = {}
         _everserver_thread(
-            {
-                "subscribers": subscribers,
-                "events": events,
-            },
+            ExperimentRunnerState(events=events, subscribers=subscribers),
             server_config_mock,
             MagicMock(),
         )
@@ -88,8 +89,8 @@ def mock_server(monkeypatch):
             msg_queue.put(
                 ExperimentComplete(
                     exit_code=exit_code,
-                    events=shared_data["events"],
-                    server_stopped=shared_data["stop"],
+                    events=shared_data.events,
+                    server_stopped=shared_data.stop,
                 )
             )
             _everserver_thread(shared_data, server_config, msg_queue)
