@@ -558,7 +558,7 @@ class BaseRunModel(ABC):
         evaluator = EnsembleEvaluator(
             ee_ensemble,
             ee_config,
-            send_to_brm=functools.partial(
+            event_handler=functools.partial(
                 self.send_snapshot_event, iteration=ensemble.iteration
             ),
         )
