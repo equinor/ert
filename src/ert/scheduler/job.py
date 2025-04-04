@@ -343,13 +343,11 @@ def log_info_from_exit_file(exit_file_path: Path) -> None:
             f"job failed with invalid XML ERROR file, contents '{raw_xml_contents}'"
         )
         return
-    filecontents: list[str] = []
-    for element in ["step", "reason", "stderr_file", "stderr"]:
-        filecontents.append(str(exit_file.findtext(element)))
     logger.error(
-        "Step {} failed with: '{}'\n\tstderr file: '{}',\n\tits contents:{}".format(
-            *filecontents
-        )
+        f"Step {exit_file.findtext('step')} failed with: "
+        f"'{exit_file.findtext('reason')}'\n\t"
+        f"stderr file: '{exit_file.findtext('stderr_file')}',\n\t"
+        f"its contents:{exit_file.findtext('stderr')}"
     )
 
 

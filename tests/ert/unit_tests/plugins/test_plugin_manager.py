@@ -250,7 +250,7 @@ def test_add_logging_handle(tmpdir):
     with tmpdir.as_cwd():
         pm = ErtPluginManager(plugins=[dummy_plugins])
         pm.add_logging_handle_to_root(logging.getLogger())
-        logging.critical("I should write this to spam.log")
+        logging.critical("I should write this to spam.log")  # noqa: LOG015
         with open("spam.log", encoding="utf-8") as fin:
             result = fin.read()
         assert "I should write this to spam.log" in result

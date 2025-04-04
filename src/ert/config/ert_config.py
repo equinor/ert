@@ -1014,7 +1014,7 @@ class ErtConfig:
                 continue
             config_context += line + "\n"
         logger.info(
-            f"Content of the configuration file ({config_file}):\n" + config_context
+            f"Content of the configuration file ({config_file}):\n{config_context}"
         )
 
     @classmethod

@@ -139,7 +139,7 @@ class _Proc(threading.Thread):
 
         except Exception as e:
             print(str(e))
-            self.logger.error(e, exc_info=True)
+            self.logger.exception(e)
 
         finally:
             self._ensure_delete_conn_info()

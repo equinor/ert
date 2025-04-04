@@ -294,7 +294,6 @@ class LegacyEnsemble:
                         traceback.format_exception(None, exc, exc.__traceback__)
                     )
                 ),
-                exc_info=True,
             )
             await event_unary_send(event_creator(Id.ENSEMBLE_FAILED))
             return

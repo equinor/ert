@@ -51,7 +51,7 @@ class WorkflowConfigs:
         configs = {}
         for workflow in self._workflows:
             if workflow.name in configs:
-                logging.info(
+                logger.info(
                     f"Duplicate workflow name: {workflow.name}, "
                     f"skipping {workflow.ert_script}"
                 )

@@ -374,7 +374,7 @@ def _find_open_port(host: str, lower: int, upper: int) -> int:
         else:
             return port
     msg = f"Failed 10 times to get a random port in the range {lower}-{upper} on {host}. Giving up."
-    logging.getLogger(EVERSERVER).exception(msg)
+    logging.getLogger(EVERSERVER).error(msg)
     raise Exception(msg)
 
 

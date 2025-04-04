@@ -15,6 +15,8 @@ from everest.config import EverestConfig, ServerConfig
 from everest.detached import server_is_running, stop_server, wait_for_server_to_stop
 from everest.util import version_info
 
+logger = logging.getLogger(__name__)
+
 
 def kill_entry(args: list[str] | None = None) -> None:
     """Entry point for running an optimization."""
@@ -22,12 +24,12 @@ def kill_entry(args: list[str] | None = None) -> None:
     options = parser.parse_args(args)
 
     if options.debug:
-        logging.getLogger().setLevel(logging.DEBUG)
+        logger.setLevel(logging.DEBUG)
         # Remove the null handler if set:
-        logging.getLogger().removeHandler(logging.NullHandler())
+        logger.removeHandler(logging.NullHandler())
 
-    logging.info(version_info())
-    logging.debug(json.dumps(options.config.to_dict(), sort_keys=True, indent=2))
+    logger.info(version_info())
+    logger.debug(json.dumps(options.config.to_dict(), sort_keys=True, indent=2))
 
     if threading.current_thread() is threading.main_thread():
         signal.signal(signal.SIGINT, partial(_handle_keyboard_interrupt))
@@ -88,7 +90,7 @@ def kill_everest(options: argparse.Namespace) -> None:
         wait_for_server_to_stop(server_context, timeout=60)
         print("Server stopped.")
     except:
-        logging.debug(traceback.format_exc())
+        logger.debug(traceback.format_exc())
         print(
             "Server is still running after 60 seconds, "
             "you may have to kill the server manually"
