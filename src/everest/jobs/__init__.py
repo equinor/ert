@@ -2,27 +2,14 @@ import importlib
 import os
 from pathlib import Path
 
-from everest.jobs import io, templating, well_tools
+from everest.jobs import io, templating
 
-from .recovery_factor import recovery_factor
-
-script_names = (
-    "render",
-    "recovery_factor",
-    "wdreorder",
-    "wdfilter",
-    "wdupdate",
-    "wdset",
-    "wdcompl",
-    "wddatefilter",
-)
+script_names = ("render",)
 
 __all__ = [
     "io",
-    "recovery_factor",
     "script_names",
     "templating",
-    "well_tools",
 ]
 
 

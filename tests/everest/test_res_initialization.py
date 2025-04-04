@@ -117,13 +117,6 @@ def test_default_installed_jobs(tmp_path, monkeypatch):
     monkeypatch.chdir(tmp_path)
     jobs = [
         "render",
-        "recovery_factor",
-        "wdreorder",
-        "wdfilter",
-        "wdupdate",
-        "wdset",
-        "wdcompl",
-        "wddatefilter",
         "make_directory",
         "copy_directory",
         "copy_file",
@@ -394,7 +387,7 @@ def test_workflows(tmp_path, monkeypatch):
 
 def test_user_config_jobs_precedence(tmp_path, monkeypatch):
     monkeypatch.chdir(tmp_path)
-    existing_job = "recovery_factor"
+    existing_job = "copy_file"
     ever_config = EverestConfig.with_defaults(model={"realizations": [0]})
     config_dict = everest_to_ert_config_dict(ever_config)
     installed_forward_model_steps = _get_installed_forward_model_steps(
