@@ -2,11 +2,10 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any
 
+from PyQt6.QtWidgets import QWidget
 from typing_extensions import TypedDict
 
 if TYPE_CHECKING:
-    from PyQt6.QtWidgets import QWidget
-
     from ert.config import ESSettings, UpdateSettings
     from ert.runpaths import Runpaths
     from ert.storage import Ensemble, Storage
