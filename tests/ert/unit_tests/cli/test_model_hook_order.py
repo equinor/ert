@@ -120,7 +120,6 @@ def test_hook_call_order_ensemble_smoother(monkeypatch):
     run_wfs_mock = MagicMock()
     monkeypatch.setattr(ensemble_smoother, "sample_prior", MagicMock())
     monkeypatch.setattr(base_run_model, "smoother_update", MagicMock())
-    monkeypatch.setattr(base_run_model, "_seed_sequence", MagicMock(return_value=0))
     monkeypatch.setattr(base_run_model.BaseRunModel, "run_workflows", run_wfs_mock)
 
     ens_mock = MagicMock()
@@ -130,7 +129,17 @@ def test_hook_call_order_ensemble_smoother(monkeypatch):
     storage_mock.create_ensemble.return_value = ens_mock
 
     test_class = EnsembleSmoother(
-        *[MagicMock()] * 11,
+        target_ensemble=MagicMock(),
+        experiment_name=MagicMock(),
+        active_realizations=MagicMock(),
+        minimum_required_realizations=MagicMock(),
+        random_seed=0,
+        config=MagicMock(),
+        storage=MagicMock(),
+        queue_config=MagicMock(),
+        es_settings=MagicMock(),
+        update_settings=MagicMock(),
+        status_queue=MagicMock(),
     )
     test_class.run_ensemble_evaluator = MagicMock(return_value=[0])
     test_class._storage = storage_mock
@@ -155,7 +164,6 @@ def test_hook_call_order_es_mda(monkeypatch):
         MagicMock(return_value=[1]),
     )
     monkeypatch.setattr(base_run_model, "smoother_update", MagicMock())
-    monkeypatch.setattr(base_run_model, "_seed_sequence", MagicMock(return_value=0))
     monkeypatch.setattr(base_run_model.BaseRunModel, "run_workflows", run_wfs_mock)
 
     ens_mock = MagicMock()
@@ -164,7 +172,20 @@ def test_hook_call_order_es_mda(monkeypatch):
     storage_mock = MagicMock()
     storage_mock.create_ensemble.return_value = ens_mock
     test_class = MultipleDataAssimilation(
-        *[MagicMock()] * 14,
+        target_ensemble=MagicMock(),
+        experiment_name=MagicMock(),
+        restart_run=MagicMock(),
+        prior_ensemble_id=MagicMock(),
+        active_realizations=MagicMock(),
+        minimum_required_realizations=MagicMock(),
+        random_seed=0,
+        weights=MagicMock(),
+        config=MagicMock(),
+        storage=MagicMock(),
+        queue_config=MagicMock(),
+        es_settings=MagicMock(),
+        update_settings=MagicMock(),
+        status_queue=MagicMock(),
     )
     test_class._storage = storage_mock
     test_class.restart_run = False

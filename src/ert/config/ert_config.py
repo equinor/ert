@@ -73,12 +73,28 @@ from .workflow_job import (
 logger = logging.getLogger(__name__)
 
 EMPTY_LINES = re.compile(r"\n[\s\n]*\n")
+from numpy.random import SeedSequence
 
 
 def site_config_location() -> str | None:
     if "ERT_SITE_CONFIG" in os.environ:
         return os.environ["ERT_SITE_CONFIG"]
     return None
+
+
+def _seed_sequence(seed: int | None) -> int:
+    # Set up RNG
+    if seed is None:
+        int_seed = SeedSequence().entropy
+        logger.info(
+            "To repeat this experiment, "
+            "add the following random seed to your config file:\n"
+            f"RANDOM_SEED {int_seed}"
+        )
+    else:
+        int_seed = seed
+    assert isinstance(int_seed, int)
+    return int_seed
 
 
 def _read_time_map(file_contents: str) -> list[datetime]:
@@ -607,7 +623,7 @@ class ErtConfig:
     ensemble_config: EnsembleConfig = field(default_factory=EnsembleConfig)
     ens_path: str = DEFAULT_ENSPATH
     env_vars: dict[str, str] = field(default_factory=dict)
-    random_seed: int | None = None
+    random_seed: int = field(default_factory=lambda: _seed_sequence(None))
     analysis_config: AnalysisConfig = field(default_factory=AnalysisConfig)
     queue_config: QueueConfig = field(default_factory=QueueConfig)
     workflow_jobs: dict[str, _WorkflowJob] = field(default_factory=dict)
@@ -942,7 +958,7 @@ class ErtConfig:
             ensemble_config=ensemble_config,
             ens_path=config_dict.get(ConfigKeys.ENSPATH, ErtConfig.DEFAULT_ENSPATH),
             env_vars=env_vars,
-            random_seed=config_dict.get(ConfigKeys.RANDOM_SEED),
+            random_seed=_seed_sequence(config_dict.get(ConfigKeys.RANDOM_SEED)),
             analysis_config=analysis_config,
             queue_config=queue_config,
             workflow_jobs=workflow_jobs,

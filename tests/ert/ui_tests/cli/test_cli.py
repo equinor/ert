@@ -636,7 +636,7 @@ def test_that_prior_is_not_overwritten_in_ensemble_experiment(
         ensemble = storage.create_ensemble(
             experiment_id, name="iter-0", ensemble_size=num_realizations
         )
-        sample_prior(ensemble, prior_mask)
+        sample_prior(ensemble, prior_mask, ert_config.random_seed)
         experiment = storage.get_experiment_by_name("test-experiment")
         prior_values = experiment.get_ensemble_by_name(ensemble.name).load_parameters(
             "COEFFS"

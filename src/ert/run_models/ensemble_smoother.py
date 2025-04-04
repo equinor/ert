@@ -31,7 +31,7 @@ class EnsembleSmoother(UpdateRunModel):
         experiment_name: str,
         active_realizations: list[bool],
         minimum_required_realizations: int,
-        random_seed: int | None,
+        random_seed: int,
         config: ErtConfig,
         storage: Storage,
         queue_config: QueueConfig,

@@ -11,7 +11,6 @@ from typing import TYPE_CHECKING, Any
 import orjson
 import pandas as pd
 import xarray as xr
-from numpy.random import SeedSequence
 
 from ert.substitutions import Substitutions, substitute_runpath_name
 from ert.utils import log_duration
@@ -146,21 +145,6 @@ def _manifest_to_json(ensemble: Ensemble, iens: int, iter: int) -> dict[str, Any
     return manifest
 
 
-def _seed_sequence(seed: int | None) -> int:
-    # Set up RNG
-    if seed is None:
-        int_seed = SeedSequence().entropy
-        logger.info(
-            "To repeat this experiment, "
-            "add the following random seed to your config file:\n"
-            f"RANDOM_SEED {int_seed}"
-        )
-    else:
-        int_seed = seed
-    assert isinstance(int_seed, int)
-    return int_seed
-
-
 def save_design_matrix_to_ensemble(
     design_matrix_df: pd.DataFrame,
     ensemble: Ensemble,
@@ -190,8 +174,8 @@ def save_design_matrix_to_ensemble(
 def sample_prior(
     ensemble: Ensemble,
     active_realizations: Iterable[int],
+    random_seed: int,
     parameters: list[str] | None = None,
-    random_seed: int | None = None,
 ) -> None:
     """This function is responsible for getting the prior into storage,
     in the case of GEN_KW we sample the data and store it, and if INIT_FILES
@@ -199,7 +183,6 @@ def sample_prior(
     is set the state is set to INITIALIZED, but no parameters are saved to storage
     until after the forward model has completed.
     """
-    random_seed = _seed_sequence(random_seed)
     parameter_configs = ensemble.experiment.parameter_configuration
     if parameters is None:
         parameters = list(parameter_configs.keys())

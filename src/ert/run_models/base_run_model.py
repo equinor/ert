@@ -37,7 +37,7 @@ from ert.config import (
     UpdateSettings,
     Workflow,
 )
-from ert.enkf_main import _seed_sequence, create_run_path
+from ert.enkf_main import create_run_path
 from ert.ensemble_evaluator import Ensemble as EEEnsemble
 from ert.ensemble_evaluator import (
     EnsembleEvaluator,
@@ -176,9 +176,9 @@ class BaseRunModel(ABC):
         hooked_workflows: defaultdict[HookRuntime, list[Workflow]],
         active_realizations: list[bool],
         log_path: Path,
+        random_seed: int,
         total_iterations: int = 1,
         start_iteration: int = 0,
-        random_seed: int | None = None,
         minimum_required_realizations: int = 0,
     ):
         """
@@ -195,7 +195,7 @@ class BaseRunModel(ABC):
         self.support_restart: bool = True
         self._storage = storage
         self._context_env: dict[str, str] = {}
-        self.random_seed: int = _seed_sequence(random_seed)
+        self.random_seed = random_seed
         self.rng = np.random.default_rng(self.random_seed)
         self._substitutions: Substitutions = substitutions
         self._model_config: ModelConfig = model_config
@@ -849,7 +849,7 @@ class UpdateRunModel(BaseRunModel):
         active_realizations: list[bool],
         total_iterations: int,
         start_iteration: int,
-        random_seed: int | None,
+        random_seed: int,
         minimum_required_realizations: int,
         log_path: Path,
     ):

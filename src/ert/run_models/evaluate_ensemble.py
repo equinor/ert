@@ -37,7 +37,7 @@ class EvaluateEnsemble(BaseRunModel):
         active_realizations: list[bool],
         minimum_required_realizations: int,
         ensemble_id: str,
-        random_seed: int | None,
+        random_seed: int,
         config: ErtConfig,
         storage: Storage,
         queue_config: QueueConfig,

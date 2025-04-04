@@ -27,7 +27,7 @@ class SingleTestRun(EnsembleExperiment):
         self,
         ensemble_name: str,
         experiment_name: str,
-        random_seed: int | None,
+        random_seed: int,
         config: ErtConfig,
         storage: Storage,
         status_queue: SimpleQueue[StatusEvents],

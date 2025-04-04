@@ -205,6 +205,7 @@ class EverestRunModel(BaseRunModel):
             substitutions,
             ert_templates,
             hooked_workflows,
+            random_seed=123,  # No-op as far as Everest is concerned
             active_realizations=[],  # Set dynamically in run_forward_model()
             log_path=Path(everest_config.optimization_output_dir),
         )

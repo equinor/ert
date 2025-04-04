@@ -41,7 +41,7 @@ def make_run_path(run_paths, run_args, storage):
         prior_ensemble = storage.create_ensemble(
             experiment_id, name="prior", ensemble_size=1
         )
-        sample_prior(prior_ensemble, [0])
+        sample_prior(prior_ensemble, [0], 123)
         runargs = run_args(ert_config, prior_ensemble, 1)
         runpaths = run_paths(ert_config)
         create_run_path(
@@ -353,7 +353,7 @@ def test_that_sampling_prior_makes_initialized_fs(storage):
     )
 
     assert not prior_ensemble.is_initalized()
-    sample_prior(prior_ensemble, [0])
+    sample_prior(prior_ensemble, [0], 123)
     assert prior_ensemble.is_initalized()
 
 
@@ -453,7 +453,7 @@ def test_write_runpath_file(storage, itr, run_paths):
     for i in range(num_realizations):
         global_substitutions[f"<GEO_ID_{i}_{itr}>"] = str(10 * i)
     run_path = run_paths(ert_config)
-    sample_prior(prior_ensemble, [i for i, active in enumerate(mask) if active])
+    sample_prior(prior_ensemble, [i for i, active in enumerate(mask) if active], 123)
     run_args = create_run_arguments(
         run_path,
         [True, True],
@@ -711,7 +711,7 @@ def test_when_manifest_files_are_written_forward_model_ok_succeeds(storage, itr)
     )
 
     if itr == 0:
-        sample_prior(prior_ensemble, range(num_realizations))
+        sample_prior(prior_ensemble, range(num_realizations), 123)
     else:
         save_zeros(prior_ensemble, num_realizations, dim_size=dim_size)
 

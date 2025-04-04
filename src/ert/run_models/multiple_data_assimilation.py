@@ -46,7 +46,7 @@ class MultipleDataAssimilation(UpdateRunModel):
         prior_ensemble_id: str,
         active_realizations: list[bool],
         minimum_required_realizations: int,
-        random_seed: int | None,
+        random_seed: int,
         weights: str,
         config: ErtConfig,
         storage: Storage,
