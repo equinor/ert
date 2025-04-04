@@ -110,8 +110,6 @@ class EnsembleSnapshot:
         ] = defaultdict(FMStepSnapshot)  # type: ignore
 
         self._ensemble_state: str | None = None
-        # TODO not sure about possible values at this point, as GUI hijacks this one as
-        # well
         self._metadata = EnsembleSnapshotMetadata(
             fm_step_status=defaultdict(dict),
             real_status={},
