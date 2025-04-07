@@ -157,17 +157,19 @@ async def test_job_run_sends_expected_events(
 
     await assert_scheduler_events(
         scheduler,
-        (
-            [
-                JobState.WAITING,
-                JobState.SUBMITTING,
-                JobState.PENDING,
-                JobState.RUNNING,
-                JobState.RESUBMITTING,
-            ]
-            * max_submit
-        )[:-1]
-        + [expected_final_event],
+        [
+            *(
+                [
+                    JobState.WAITING,
+                    JobState.SUBMITTING,
+                    JobState.PENDING,
+                    JobState.RUNNING,
+                    JobState.RESUBMITTING,
+                ]
+                * max_submit
+            )[:-1],
+            expected_final_event,
+        ],
     )
     scheduler.driver.submit.assert_called_with(
         realization.iens,
