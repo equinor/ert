@@ -2,10 +2,15 @@ from __future__ import annotations
 
 import logging
 import os
+import sys
+import time
+import traceback
+import types
 from collections import Counter
 from importlib.resources import files
 from signal import SIG_DFL, SIGINT, signal
 
+from opentelemetry.trace import Status, StatusCode
 from PyQt6.QtCore import QDir
 from PyQt6.QtGui import QIcon
 from PyQt6.QtWidgets import QApplication, QWidget
@@ -25,11 +30,16 @@ from ert.plugins import ErtPluginManager
 from ert.services import StorageService
 from ert.storage import ErtStorageException, Storage, open_storage
 from ert.storage.local_storage import local_storage_set_ert_config
+from ert.trace import trace, tracer
 
 from .suggestor import Suggestor
 
+logger = logging.getLogger(__name__)
 
+
+@tracer.start_as_current_span("ert.application.gui")
 def run_gui(args: Namespace, plugin_manager: ErtPluginManager | None = None) -> int:
+    span = trace.get_current_span()
     # Replace Python's exception handler for SIGINT with the system default.
     #
     # Python's SIGINT handler is the one that raises KeyboardInterrupt. This is
@@ -40,6 +50,41 @@ def run_gui(args: Namespace, plugin_manager: ErtPluginManager | None = None) -> 
     signal(SIGINT, SIG_DFL)
 
     QDir.addSearchPath("img", str(files("ert.gui").joinpath("resources/gui/img")))
+
+    sys._excepthook = sys.excepthook  # type: ignore
+
+    def custom_exception_hook(
+        exctype: type[BaseException],
+        value: BaseException,
+        tb: types.TracebackType | None,
+    ) -> None:
+        """A custom exception hook is needed in order to fully propagate spans and logs
+        through OpenTelemetry when exceptions happen in the Qt event loop.
+
+        Note: Any exception occuring in this function will deadlock the application."""
+        span.set_status(Status(StatusCode.ERROR))
+        span.record_exception(value)
+        span.end()
+        trace.get_tracer_provider().force_flush()  # type: ignore
+
+        traceback_str = traceback.format_exception(exctype, value, tb)
+        logger.exception(f"ERT GUI crashed unexpectedly with: {value}\n{traceback_str}")  # noqa: LOG004
+
+        def recursive_logger_flush(logger: logging.Logger) -> None:
+            for handler in logger.handlers:
+                handler.flush()
+            if logger.parent is not None:
+                recursive_logger_flush(logger.parent)
+
+        recursive_logger_flush(logger)
+
+        # Pass on exception to original exception handler and exit
+        sys._excepthook(exctype, value, traceback)  # type: ignore
+
+        time.sleep(2)  # This gives a cleaner shutdown, but not required for logging
+        os._exit(1)
+
+    sys.excepthook = custom_exception_hook
 
     app = QApplication(["ert"])  # Early so that QT is initialized before other imports
     app.setWindowIcon(QIcon("img:ert_icon.svg"))
