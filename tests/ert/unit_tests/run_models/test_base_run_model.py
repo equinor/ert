@@ -1,14 +1,15 @@
 import asyncio
 import os
 import uuid
+from collections.abc import Callable
 from pathlib import Path
 from queue import SimpleQueue
-from types import MethodType
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
 from ert.config import ErtConfig, ModelConfig
+from ert.ensemble_evaluator.evaluator import EnsembleEvaluator
 from ert.ensemble_evaluator.snapshot import EnsembleSnapshot
 from ert.run_models import BaseRunModel
 from ert.run_models.base_run_model import UserCancelled
@@ -399,7 +400,7 @@ def test_get_number_of_active_realizations_varies_when_rerun_or_new_iteration(
 
 async def test_terminate_in_pre_evaluation():
     brm = create_base_run_model()
-    brm._end_queue.put("terminate")
+    brm._cancelled = True
     with pytest.raises(
         UserCancelled, match="Experiment cancelled by user in pre evaluation"
     ):
@@ -407,7 +408,7 @@ async def test_terminate_in_pre_evaluation():
 
 
 @patch("ert.run_models.base_run_model.EnsembleEvaluator")
-async def test_terminate_in_post_evaluation(evaluator):
+async def test_terminate_in_post_evaluation(evaluator: Callable[[], EnsembleEvaluator]):
     async def mocked_run_and_get_successful_realizations() -> list[int]:
         return list(range(5))
 
@@ -416,15 +417,16 @@ async def test_terminate_in_post_evaluation(evaluator):
     )
     evaluator()._server_started = asyncio.Future()
     evaluator()._server_started.set_result(None)
+    # evaluator()._monitoring_result = asyncio.Future()
+    # evaluator()._monitoring_result.set_result(True)
+    brm = create_base_run_model()
 
-    async def run_monitor_successfully_but_terminate(
-        self, ee_config, iteration: int
-    ) -> bool:
-        self._end_queue.put("terminate")
+    async def set_cancelled_and_set_future_success(*args) -> bool:
+        print("HELLO FROM MOCK")
+        brm._cancelled = True
         return True
 
-    brm = create_base_run_model()
-    brm.run_monitor = MethodType(run_monitor_successfully_but_terminate, brm)
+    brm._wait_for_evaluator_result = set_cancelled_and_set_future_success
     with pytest.raises(
         UserCancelled,
         match="Experiment cancelled by user in post evaluation",

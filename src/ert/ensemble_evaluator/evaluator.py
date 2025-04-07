@@ -4,15 +4,23 @@ import asyncio
 import logging
 import traceback
 from collections.abc import Awaitable, Callable, Iterable, Sequence
-from enum import Enum
 from typing import Any, get_args
+
+
+class EventSentinel:
+    pass
+
+
+class UserCancelled(Exception):
+    pass
+
 
 import zmq.asyncio
 
 from _ert.events import (
+    EEEvent,
     EESnapshot,
     EESnapshotUpdate,
-    EETerminated,
     EEUserCancel,
     EEUserDone,
     EnsembleCancelled,
@@ -20,19 +28,16 @@ from _ert.events import (
     EnsembleStarted,
     EnsembleSucceeded,
     Event,
+    EventForBrm,
     FMEvent,
     ForwardModelStepChecksum,
     RealizationEvent,
     dispatch_event_from_json,
-    event_from_json,
-    event_to_json,
 )
 from _ert.forward_model_runner.client import (
     ACK_MSG,
     CONNECT_MSG,
     DISCONNECT_MSG,
-    HEARTBEAT_MSG,
-    HEARTBEAT_TIMEOUT,
 )
 from ert.ensemble_evaluator import identifiers as ids
 
@@ -51,22 +56,22 @@ logger = logging.getLogger(__name__)
 EVENT_HANDLER = Callable[[list[Event]], Awaitable[None]]
 
 
-class HeartbeatEvent(Enum):
-    event = HEARTBEAT_MSG
-
-
 class EnsembleEvaluator:
-    def __init__(self, ensemble: Ensemble, config: EvaluatorServerConfig):
+    def __init__(
+        self,
+        ensemble: Ensemble,
+        config: EvaluatorServerConfig,
+        event_handler: Callable[[EventForBrm], None] | None = None,
+    ) -> None:
         self._config: EvaluatorServerConfig = config
         self._ensemble: Ensemble = ensemble
 
         self._events: asyncio.Queue[Event] = asyncio.Queue()
-        self._events_to_send: asyncio.Queue[Event | HeartbeatEvent] = asyncio.Queue()
         self._manifest_queue: asyncio.Queue[Any] = asyncio.Queue()
 
         self._ee_tasks: list[asyncio.Task[None]] = []
         self._server_done: asyncio.Event = asyncio.Event()
-
+        self._running_loop = asyncio.get_running_loop()
         # batching section
         self._batch_processing_queue: asyncio.Queue[
             list[tuple[EVENT_HANDLER, Event]]
@@ -75,40 +80,43 @@ class EnsembleEvaluator:
         self._batching_interval: float = 0.5
         self._complete_batch: asyncio.Event = asyncio.Event()
         self._server_started: asyncio.Future[None] = asyncio.Future()
-        self._clients_connected: set[bytes] = set()
-        self._clients_empty: asyncio.Event = asyncio.Event()
-        self._clients_empty.set()
         self._dispatchers_connected: set[bytes] = set()
         self._dispatchers_empty: asyncio.Event = asyncio.Event()
         self._dispatchers_empty.set()
-
-    async def _do_heartbeat_clients(self) -> None:
-        while True:
-            if self._clients_connected:
-                await self._events_to_send.put(HeartbeatEvent.event)
-                await asyncio.sleep(HEARTBEAT_TIMEOUT)
-            else:
-                await asyncio.sleep(0.1)
-
-    async def _publisher(self) -> None:
-        while True:
-            event = await self._events_to_send.get()
-            for identity in self._clients_connected:
-                if isinstance(event, HeartbeatEvent):
-                    await self._router_socket.send_multipart(
-                        [identity, b"", event.value]
-                    )
-                else:
-                    await self._router_socket.send_multipart(
-                        [identity, b"", event_to_json(event).encode("utf-8")]
-                    )
-            self._events_to_send.task_done()
+        current_snapshot_dict = self._ensemble.snapshot.to_dict()
+        self._handle_event = event_handler
+        event = EESnapshot(
+            snapshot=current_snapshot_dict,
+            ensemble=self.ensemble.id_,
+        )
+        if self._handle_event:
+            self._handle_event(event)
+        self._monitoring_result: asyncio.Future[bool] = asyncio.Future()
+        self._is_done = asyncio.Event()  # This would be the equivalent of EETerminatedEvent - Should we use that instead?
 
     async def _append_message(self, snapshot_update_event: EnsembleSnapshot) -> None:
         event = EESnapshotUpdate(
             snapshot=snapshot_update_event.to_dict(), ensemble=self._ensemble.id_
         )
-        await self._events_to_send.put(event)
+        if self._handle_event:
+            self._handle_event(event)
+        if event.snapshot.get(ids.STATUS) in {
+            ENSEMBLE_STATE_STOPPED,
+            ENSEMBLE_STATE_FAILED,
+        }:
+            print("Ensemble was stopped")
+            logger.debug("observed evaluation stopped event, signal done")
+            logger.debug("monitor informing server monitor is done...")
+
+            done_event = EEUserDone()
+            await self.handle_client_event(done_event)
+            logger.debug("monitor informed server monitor is done")
+
+            if event.snapshot.get(ids.STATUS) == ENSEMBLE_STATE_CANCELLED:
+                logger.debug("observed evaluation cancelled event, exit drainer")
+                self._monitoring_result.set_exception(
+                    UserCancelled("Experiment cancelled by user during evaluation")
+                )
 
     async def _process_event_buffer(self) -> None:
         while True:
@@ -211,32 +219,26 @@ class EnsembleEvaluator:
     def ensemble(self) -> Ensemble:
         return self._ensemble
 
-    async def handle_client(self, dealer: bytes, frame: bytes) -> None:
-        if frame == CONNECT_MSG:
-            if dealer in self._clients_connected:
-                logger.warning(f"{dealer!r} wants to reconnect.")
-            self._clients_connected.add(dealer)
-            self._clients_empty.clear()
-            current_snapshot_dict = self._ensemble.snapshot.to_dict()
-            event: Event = EESnapshot(
-                snapshot=current_snapshot_dict,
-                ensemble=self.ensemble.id_,
-            )
-            await self._router_socket.send_multipart(
-                [dealer, b"", event_to_json(event).encode("utf-8")]
-            )
-        elif frame == DISCONNECT_MSG:
-            self._clients_connected.discard(dealer)
-            if not self._clients_connected:
-                self._clients_empty.set()
-        else:
-            event = event_from_json(frame.decode("utf-8"))
-            if type(event) is EEUserCancel:
-                logger.debug("Client asked to cancel.")
-                await self._signal_cancel()
-            elif type(event) is EEUserDone:
-                logger.debug("Client signalled done.")
-                self.stop()
+    def cancel_gracefully_synced(self) -> None:
+        self._ee_tasks.append(self._running_loop.create_task(self.cancel_gracefully()))
+
+    async def cancel_gracefully(self) -> None:
+        cancel_event = EEUserCancel()
+        await self.handle_client_event(cancel_event)
+
+    async def handle_client_event(self, event: EEEvent) -> None:
+        if type(event) is EEUserCancel:
+            print("EE GOT CANCEL EVENT")
+            logger.debug("Client asked to cancel.")
+            await self._signal_cancel()
+            self._monitoring_result.set_result(False)
+            # self._clients_empty.set()
+        elif type(event) is EEUserDone:
+            print("EE GOT USER DONE EVENT")
+            logger.debug("Client signalled done.")
+            self.stop()
+            self._monitoring_result.set_result(True)
+            # self._clients_empty.set()
 
     async def handle_dispatch(self, dealer: bytes, frame: bytes) -> None:
         if frame == CONNECT_MSG:
@@ -266,9 +268,7 @@ class EnsembleEvaluator:
                 dealer, _, frame = await self._router_socket.recv_multipart()
                 await self._router_socket.send_multipart([dealer, b"", ACK_MSG])
                 sender = dealer.decode("utf-8")
-                if sender.startswith("client"):
-                    await self.handle_client(dealer, frame)
-                elif sender.startswith("dispatch"):
+                if sender.startswith("dispatch"):
                     await self.handle_dispatch(dealer, frame)
                 else:
                     logger.info(f"Connection attempt to unknown sender: {sender}.")
@@ -282,9 +282,10 @@ class EnsembleEvaluator:
             except asyncio.CancelledError:
                 return
 
-    async def forward_checksum(self, event: Event) -> None:
+    async def forward_checksum(self, event: ForwardModelStepChecksum) -> None:
         # clients still need to receive events via ws
-        await self._events_to_send.put(event)
+        if self._handle_event:
+            self._handle_event(event)
         await self._manifest_queue.put(event)
 
     async def _server(self) -> None:
@@ -323,11 +324,8 @@ class EnsembleEvaluator:
             await self._events.join()
             await self._complete_batch.wait()
             await self._batch_processing_queue.join()
-            event = EETerminated(ensemble=self._ensemble.id_)
-            await self._events_to_send.put(event)
-            await self._events_to_send.join()
             try:
-                await asyncio.wait_for(self._clients_empty.wait(), timeout=5)
+                await asyncio.wait_for(self._monitoring_result, timeout=5)
             except TimeoutError:
                 logger.warning(
                     "Not all clients were disconnected when closing zmq server!"
@@ -355,11 +353,12 @@ class EnsembleEvaluator:
         """
         if self._ensemble.cancellable:
             logger.debug("Cancelling current ensemble")
-            self._ee_tasks.append(
-                asyncio.create_task(
-                    self._ensemble.cancel(), name="ensemble_cancellation_task"
-                )
-            )
+            await self._ensemble.cancel()
+            # self._ee_tasks.append( WILL THIS CAUSE PROBLEMS? WHO KNOWS!
+            #    asyncio.create_task(
+            #        self._ensemble.cancel(), name="ensemble_cancellation_task"
+            #    )
+            # )
 
         else:
             logger.debug("Stopping current ensemble")
@@ -371,12 +370,10 @@ class EnsembleEvaluator:
         self._ee_tasks = [asyncio.create_task(self._server(), name="server_task")]
         await self._server_started
         self._ee_tasks += [
-            asyncio.create_task(self._do_heartbeat_clients(), name="heartbeat_task"),
             asyncio.create_task(
                 self._batch_events_into_buffer(), name="dispatcher_task"
             ),
             asyncio.create_task(self._process_event_buffer(), name="processing_task"),
-            asyncio.create_task(self._publisher(), name="publisher_task"),
             asyncio.create_task(self.listen_for_messages(), name="listener_task"),
             asyncio.create_task(
                 self._ensemble.evaluate(
@@ -407,6 +404,7 @@ class EnsembleEvaluator:
                     self.log_exception(task_exception, task.get_name())
                     raise task_exception
                 elif task.get_name() == "server_task":
+                    print("EXITED MONITOR AN DHANDLE TASKS")
                     return
                 elif task.get_name() in {
                     "ensemble_task",
@@ -440,7 +438,6 @@ class EnsembleEvaluator:
             await self._monitor_and_handle_tasks()
         finally:
             self._server_done.set()
-            self._clients_empty.set()
             self._dispatchers_empty.set()
             for task in self._ee_tasks:
                 if not task.done():
@@ -453,6 +450,7 @@ class EnsembleEvaluator:
                     logger.error(str(result))
                     raise RuntimeError(result) from result
         logger.debug("Evaluator is done")
+        self._is_done.set()
         return self._ensemble.get_successful_realizations()
 
     @staticmethod
