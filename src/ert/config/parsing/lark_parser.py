@@ -4,7 +4,15 @@ import os
 import os.path
 from typing import Self
 
-from lark import Discard, Lark, Token, Transformer, Tree, UnexpectedToken
+from lark import (
+    Discard,
+    Lark,
+    Token,
+    Transformer,
+    Tree,
+    UnexpectedCharacters,
+    UnexpectedToken,
+)
 
 from ._read_file import read_file
 from .config_dict import ConfigDict
@@ -424,6 +432,22 @@ def _parse_contents(content: str, file: str) -> Tree[Instruction]:
         unexpected_token = e.token
         allowed = e.expected
         message = f"Did not expect token: {unexpected_token}. Expected one of {allowed}"
+        raise ConfigValidationError.from_info(
+            ErrorInfo(
+                message=message,
+                line=e.line,
+                end_line=e.line + 1,
+                column=e.column,
+                end_column=e.column + 1,
+                filename=file,
+            )
+        ) from e
+    except UnexpectedCharacters as e:
+        unexpected_char = e.char
+        allowed = e.allowed
+        message = (
+            f"Did not expect character: {unexpected_char}. Expected one of {allowed}"
+        )
         raise ConfigValidationError.from_info(
             ErrorInfo(
                 message=message,
