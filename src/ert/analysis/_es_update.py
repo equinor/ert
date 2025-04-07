@@ -870,8 +870,6 @@ def analysis_EnIF(
     H = linear_boost_ic_regression(
         U=X_full_scaled,
         Y=S.T,
-        learning_rate=1.0,
-        effective_dimension=0,
         verbose_level=5,
     )
 
