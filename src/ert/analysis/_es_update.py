@@ -813,7 +813,7 @@ def analysis_EnIF(
     observations_and_responses = source_ensemble.get_observations_and_responses(
         observations,
         iens_active_index,
-    )
+    ).filter(pl.any_horizontal([pl.col(c).is_nan() for c in iens_active_index]))
 
     observations_and_responses = observations_and_responses.sort(
         by=["observation_key", "index"]
