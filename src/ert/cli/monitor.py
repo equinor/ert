@@ -16,7 +16,6 @@ from ert.ensemble_evaluator import (
 )
 from ert.ensemble_evaluator import identifiers as ids
 from ert.ensemble_evaluator.state import (
-    ALL_REALIZATION_STATES,
     COLOR_FAILED,
     COLOR_FINISHED,
     FORWARD_MODEL_STATE_FAILURE,
@@ -115,7 +114,7 @@ class Monitor:
         latest_snapshot = self._snapshots[max(self._snapshots.keys())]
         total_count = len(latest_snapshot.reals)
         aggregate = latest_snapshot.aggregate_real_states()
-        for state_ in ALL_REALIZATION_STATES:
+        for state_ in REAL_STATE_TO_COLOR:
             count = aggregate[state_]
             countstring = f"{count}/{total_count}"
             out = (
