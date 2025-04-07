@@ -83,18 +83,16 @@ def main() -> None:
 
     jobs_output: list[Job] = []
     for job in args.jobs:
-        job_name: str = read(jobs_path / f"{job}.name") or "_"
+        job_name: str = read(jobs_path / job / "name") or "_"
         assert job_name is not None
 
-        submit_time_millis: int = int(
-            os.path.getctime(jobs_path / f"{job}.name") * 1000
-        )
+        submit_time_millis: int = int(os.path.getctime(jobs_path / job / "name") * 1000)
         pending_time_millis = int(read(jobs_path / "pendingtimemillis") or 0)
         run_start_time_millis: int = submit_time_millis + pending_time_millis
         end_time_millis: int = int(time.time() * 1000)
-        if (jobs_path / f"{job}.returncode").exists():
+        if (jobs_path / job / "returncode").exists():
             end_time_millis = int(
-                os.path.getctime(jobs_path / f"{job}.returncode") * 1000
+                os.path.getctime(jobs_path / job / "returncode") * 1000
             )
             if not args.l:
                 print("bhist says job is done")
