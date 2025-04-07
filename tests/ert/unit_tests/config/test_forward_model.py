@@ -414,6 +414,19 @@ def test_that_quotations_in_forward_model_arglist_are_handled_correctly():
     assert res_config.forward_model_steps[2].private_args["<FILE>"] == "file.txt"
 
 
+@pytest.mark.parametrize("quote_mismatched_arg", ['"A', 'A"', '"A""', '"'])
+def test_unmatched_quotes_in_step_arg_gives_config_validation_error(
+    quote_mismatched_arg,
+):
+    with pytest.raises(ConfigValidationError, match="Did not expect character"):
+        ErtConfig.with_plugins().from_file_contents(
+            f"""
+            NUM_REALIZATIONS 1
+            FORWARD_MODEL COPY_FILE(<FROM>={quote_mismatched_arg})
+            """
+        )
+
+
 def test_that_positional_forward_model_args_gives_config_validation_error():
     with pytest.raises(ConfigValidationError, match="Did not expect token: <IENS>"):
         _ = ErtConfig.from_file_contents(
