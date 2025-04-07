@@ -5,7 +5,6 @@ from uuid import UUID
 import humanize
 from PyQt6.QtCore import QAbstractItemModel, QModelIndex, QObject, Qt
 from PyQt6.QtCore import pyqtSlot as Slot
-from PyQt6.QtWidgets import QApplication
 from typing_extensions import override
 
 from ert.storage import Ensemble, Experiment, Storage
@@ -14,14 +13,12 @@ from ert.storage import Ensemble, Experiment, Storage
 class _Column(IntEnum):
     NAME = 0
     TIME = 1
-    TYPE = 2
 
 
 _NUM_COLUMNS = max(_Column).value + 1
 _COLUMN_TEXT = {
     0: "Name",
     1: "Created at",
-    2: "Type",
 }
 
 
@@ -95,7 +92,6 @@ class ExperimentModel:
         self._parent = parent
         self._id = experiment.id
         self._name = experiment.name
-        self._experiment_type = experiment.metadata.get("ensemble_type")
         self._children: list[EnsembleModel] = []
 
     def add_ensemble(self, ensemble: EnsembleModel) -> None:
@@ -122,13 +118,6 @@ class ExperimentModel:
                     if self._children
                     else "None"
                 )
-            if col == _Column.TYPE:
-                return self._experiment_type or "None"
-        elif role == Qt.ItemDataRole.ForegroundRole:
-            if col == _Column.TYPE and not self._experiment_type:
-                qapp = QApplication.instance()
-                assert isinstance(qapp, QApplication)
-                return qapp.palette().mid()
 
         return None
 
