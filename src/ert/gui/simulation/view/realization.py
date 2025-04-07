@@ -28,7 +28,7 @@ from ert.gui.model.snapshot import (
     CallbackStatusMessageRole,
     FMStepColorHint,
     MemoryUsageRole,
-    RealLabelHint,
+    RealIens,
 )
 from ert.shared.status.utils import byte_with_unit
 
@@ -107,7 +107,7 @@ class RealizationDelegate(QStyledItemDelegate):
     ) -> None:
         if painter is None:
             return
-        text = index.data(RealLabelHint)
+        text = index.data(RealIens)
         selected_color, finished_count, total_count = tuple(index.data(FMStepColorHint))
 
         painter.save()
