@@ -14,8 +14,8 @@ from ert.analysis import (
     smoother_update,
 )
 from ert.analysis._es_update import (
-    _load_observations_and_responses,
     _load_param_ensemble_array,
+    _preprocess_observations_and_responses,
     _save_param_ensemble_array_to_disk,
 )
 from ert.analysis.event import AnalysisCompleteEvent, AnalysisErrorEvent
@@ -738,7 +738,7 @@ def test_temporary_parameter_storage_with_inactive_fields(
         np.testing.assert_array_equal(ds["values"].values[0], fields[iens]["values"])
 
 
-def _mock_load_observations_and_responses(
+def _mock_preprocess_observations_and_responses(
     observations_and_responses,
     alpha,
     std_cutoff,
@@ -748,7 +748,7 @@ def _mock_load_observations_and_responses(
     ensemble,
 ):
     """
-    Runs through _load_observations_and_responses with mocked values for
+    Runs through _preprocess_observations_and_responses with mocked values for
      _get_observations_and_responses
     """
     with patch(
@@ -756,7 +756,7 @@ def _mock_load_observations_and_responses(
     ) as mock_obs_n_responses:
         mock_obs_n_responses.return_value = observations_and_responses
 
-        return _load_observations_and_responses(
+        return _preprocess_observations_and_responses(
             ensemble=ensemble,
             alpha=alpha,
             std_cutoff=std_cutoff,
@@ -800,18 +800,20 @@ def test_that_autoscaling_applies_to_scaled_errors(storage):
 
         experiment = storage.create_experiment(name="dummyexp")
         ensemble = experiment.create_ensemble(name="dummy", ensemble_size=10)
-        _, (_, scaled_errors_with_autoscale, _) = _mock_load_observations_and_responses(
-            observations_and_responses,
-            alpha=alpha,
-            std_cutoff=std_cutoff,
-            global_std_scaling=global_std_scaling,
-            auto_scale_observations=[["obs1*"]],
-            progress_callback=progress_callback,
-            ensemble=ensemble,
+        _, (_, scaled_errors_with_autoscale, _) = (
+            _mock_preprocess_observations_and_responses(
+                observations_and_responses,
+                alpha=alpha,
+                std_cutoff=std_cutoff,
+                global_std_scaling=global_std_scaling,
+                auto_scale_observations=[["obs1*"]],
+                progress_callback=progress_callback,
+                ensemble=ensemble,
+            )
         )
 
         _, (_, scaled_errors_without_autoscale, _) = (
-            _mock_load_observations_and_responses(
+            _mock_preprocess_observations_and_responses(
                 observations_and_responses,
                 alpha=alpha,
                 std_cutoff=std_cutoff,
@@ -840,7 +842,7 @@ def test_that_autoscaling_ignores_typos_in_observation_names(storage, caplog):
 
     experiment = storage.create_experiment(name="dummyexp")
     ensemble = experiment.create_ensemble(name="dummy", ensemble_size=10)
-    _mock_load_observations_and_responses(
+    _mock_preprocess_observations_and_responses(
         observations_and_responses,
         alpha=1,
         std_cutoff=0.05,

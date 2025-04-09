@@ -332,7 +332,7 @@ def _create_update_snapshots(
     return update_snapshot
 
 
-def _load_observations_and_responses(
+def _preprocess_observations_and_responses(
     ensemble: Ensemble,
     alpha: float,
     std_cutoff: float,
@@ -575,7 +575,7 @@ def analysis_ES(
             observation_errors,
             update_snapshot,
         ),
-    ) = _load_observations_and_responses(
+    ) = _preprocess_observations_and_responses(
         source_ensemble,
         alpha,
         std_cutoff,
