@@ -55,7 +55,7 @@ async def test_scheduler_receives_checksum_and_waits_for_disk_sync(
         config = EvaluatorServerConfig(use_token=False)
         events_to_brm = asyncio.Queue()
         evaluator = EnsembleEvaluator(
-            ensemble, config, send_to_brm=events_to_brm.put_nowait
+            ensemble, config, event_handler=events_to_brm.put_nowait
         )
         with caplog.at_level(logging.DEBUG):
             run_task = asyncio.create_task(

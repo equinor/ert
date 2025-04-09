@@ -61,7 +61,7 @@ class EnsembleEvaluator:
         self,
         ensemble: Ensemble,
         config: EvaluatorServerConfig,
-        event_handler: Callable[[EventForBrm], None] = lambda _: _,
+        event_handler: Callable[[EventForBrm], None] | None = None,
     ) -> None:
         self._config: EvaluatorServerConfig = config
         self._ensemble: Ensemble = ensemble
@@ -89,7 +89,8 @@ class EnsembleEvaluator:
             snapshot=current_snapshot_dict,
             ensemble=self.ensemble.id_,
         )
-        self._handle_event(event)
+        if self._handle_event:
+            self._handle_event(event)
         self._monitoring_result: asyncio.Future[bool] = asyncio.Future()
         self._is_done = asyncio.Event()  # This would be the equivalent of EETerminatedEvent - Should we use that instead?
 
@@ -97,7 +98,8 @@ class EnsembleEvaluator:
         event = EESnapshotUpdate(
             snapshot=snapshot_update_event.to_dict(), ensemble=self._ensemble.id_
         )
-        self._handle_event(event)
+        if self._handle_event:
+            self._handle_event(event)
         if event.snapshot.get(ids.STATUS) in {
             ENSEMBLE_STATE_STOPPED,
             ENSEMBLE_STATE_FAILED,
@@ -220,7 +222,7 @@ class EnsembleEvaluator:
     def cancel_gracefully_synced(self) -> None:
         self._ee_tasks.append(self._running_loop.create_task(self.cancel_gracefully()))
 
-    async def cancel_gracefully(self):
+    async def cancel_gracefully(self) -> None:
         cancel_event = EEUserCancel()
         await self.handle_client_event(cancel_event)
 
@@ -282,7 +284,8 @@ class EnsembleEvaluator:
 
     async def forward_checksum(self, event: ForwardModelStepChecksum) -> None:
         # clients still need to receive events via ws
-        self._handle_event(event)
+        if self._handle_event:
+            self._handle_event(event)
         await self._manifest_queue.put(event)
 
     async def _server(self) -> None:
@@ -399,6 +402,7 @@ class EnsembleEvaluator:
             for task in done:
                 if task_exception := task.exception():
                     self.log_exception(task_exception, task.get_name())
+                    # self._monitoring_result.set_exception(task_exception)
                     raise task_exception
                 elif task.get_name() == "server_task":
                     print("EXITED MONITOR AN DHANDLE TASKS")
@@ -409,6 +413,8 @@ class EnsembleEvaluator:
                     "ensemble_cancellation_task",
                 }:
                     timeout = self.CLOSE_SERVER_TIMEOUT
+                    self._monitoring_result.set_result(False)
+                    print("WAS HERE")
                 else:
                     msg = (
                         f"Something went wrong, {task.get_name()} is done prematurely!"
