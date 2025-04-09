@@ -14,8 +14,10 @@ from ert.analysis import (
     smoother_update,
 )
 from ert.analysis._es_update import (
-    _load_observations_and_responses,
+    _compute_observation_statuses,
     _load_param_ensemble_array,
+    _OutlierColumns,
+    _preprocess_observations_and_responses,
     _save_param_ensemble_array_to_disk,
 )
 from ert.analysis.event import AnalysisCompleteEvent, AnalysisErrorEvent
@@ -133,15 +135,19 @@ def test_update_report_with_exception_in_analysis_ES(
 
 
 @pytest.mark.parametrize(
-    "update_settings",
+    "update_settings, num_overspread, num_collapsed, num_nan, num_active",
     [
-        UpdateSettings(alpha=0.1),
-        UpdateSettings(std_cutoff=0.1),
-        UpdateSettings(alpha=0.1, std_cutoff=0.1),
+        (UpdateSettings(alpha=0.1), 169, 0, 0, 41),
+        (UpdateSettings(std_cutoff=0.1), 0, 73, 0, 137),
+        (UpdateSettings(alpha=0.1, std_cutoff=0.1), 113, 73, 0, 24),
     ],
 )
 def test_update_report_with_different_observation_status_from_smoother_update(
     update_settings,
+    num_overspread,
+    num_collapsed,
+    num_nan,
+    num_active,
     snake_oil_case_storage,
     snake_oil_storage,
 ):
@@ -168,35 +174,30 @@ def test_update_report_with_different_observation_status_from_smoother_update(
         progress_callback=events.append,
     )
 
-    outliers = len(
-        [e for e in ss.update_step_snapshots if e.status == ObservationStatus.OUTLIER]
+    assert (
+        num_overspread
+        == ss.observations_and_responses.filter(
+            pl.col("status") == ObservationStatus.OUTLIER
+        ).height
     )
-    std_cutoff = len(
-        [
-            e
-            for e in ss.update_step_snapshots
-            if e.status == ObservationStatus.STD_CUTOFF
-        ]
+    assert (
+        num_collapsed
+        == ss.observations_and_responses.filter(
+            pl.col("status") == ObservationStatus.STD_CUTOFF
+        ).height
     )
-    missing = len(
-        [
-            e
-            for e in ss.update_step_snapshots
-            if e.status == ObservationStatus.MISSING_RESPONSE
-        ]
+    assert (
+        num_nan
+        == ss.observations_and_responses.filter(
+            pl.col("status") == ObservationStatus.MISSING_RESPONSE
+        ).height
     )
-    active = len(ss.update_step_snapshots) - outliers - std_cutoff - missing
-
-    update_event = next(e for e in events if isinstance(e, AnalysisCompleteEvent))
-    data_section = update_event.data
-    assert data_section.extra["Active observations"] == str(active)
-    assert data_section.extra["Deactivated observations - missing respons(es)"] == str(
-        missing
+    assert (
+        num_active
+        == ss.observations_and_responses.filter(
+            pl.col("status") == ObservationStatus.ACTIVE
+        ).height
     )
-    assert data_section.extra[
-        "Deactivated observations - ensemble_std > STD_CUTOFF"
-    ] == str(std_cutoff)
-    assert data_section.extra["Deactivated observations - outliers"] == str(outliers)
 
 
 def test_update_handles_precision_loss_in_std_dev(tmp_path):
@@ -313,11 +314,9 @@ def test_update_handles_precision_loss_in_std_dev(tmp_path):
         )
 
         assert (
-            sum(
-                1
-                for e in ss.update_step_snapshots
-                if e.status == ObservationStatus.STD_CUTOFF
-            )
+            ss.observations_and_responses.filter(
+                pl.col("status") == ObservationStatus.STD_CUTOFF
+            ).height
             == 1
         )
 
@@ -599,9 +598,9 @@ def test_smoother_snapshot_alpha(
             rng=rng,
         )
         assert result_snapshot.alpha == alpha
-        assert [
-            step.status for step in result_snapshot.update_step_snapshots
-        ] == expected
+        assert (
+            result_snapshot.observations_and_responses["status"].to_list() == expected
+        )
 
 
 def test_update_only_using_subset_observations(
@@ -738,7 +737,7 @@ def test_temporary_parameter_storage_with_inactive_fields(
         np.testing.assert_array_equal(ds["values"].values[0], fields[iens]["values"])
 
 
-def _mock_load_observations_and_responses(
+def _mock_preprocess_observations_and_responses(
     observations_and_responses,
     alpha,
     std_cutoff,
@@ -748,7 +747,7 @@ def _mock_load_observations_and_responses(
     ensemble,
 ):
     """
-    Runs through _load_observations_and_responses with mocked values for
+    Runs through _preprocess_observations_and_responses with mocked values for
      _get_observations_and_responses
     """
     with patch(
@@ -756,7 +755,7 @@ def _mock_load_observations_and_responses(
     ) as mock_obs_n_responses:
         mock_obs_n_responses.return_value = observations_and_responses
 
-        return _load_observations_and_responses(
+        return _preprocess_observations_and_responses(
             ensemble=ensemble,
             alpha=alpha,
             std_cutoff=std_cutoff,
@@ -800,18 +799,25 @@ def test_that_autoscaling_applies_to_scaled_errors(storage):
 
         experiment = storage.create_experiment(name="dummyexp")
         ensemble = experiment.create_ensemble(name="dummy", ensemble_size=10)
-        _, (_, scaled_errors_with_autoscale, _) = _mock_load_observations_and_responses(
-            observations_and_responses,
-            alpha=alpha,
-            std_cutoff=std_cutoff,
-            global_std_scaling=global_std_scaling,
-            auto_scale_observations=[["obs1*"]],
-            progress_callback=progress_callback,
-            ensemble=ensemble,
+
+        scaled_errors_with_autoscale = (
+            _mock_preprocess_observations_and_responses(
+                observations_and_responses,
+                alpha=alpha,
+                std_cutoff=std_cutoff,
+                global_std_scaling=global_std_scaling,
+                auto_scale_observations=[["obs1*"]],
+                progress_callback=progress_callback,
+                ensemble=ensemble,
+            )
+            .filter(pl.col("status") == ObservationStatus.ACTIVE)[
+                _OutlierColumns.scaled_std
+            ]
+            .to_list()
         )
 
-        _, (_, scaled_errors_without_autoscale, _) = (
-            _mock_load_observations_and_responses(
+        scaled_errors_without_autoscale = (
+            _mock_preprocess_observations_and_responses(
                 observations_and_responses,
                 alpha=alpha,
                 std_cutoff=std_cutoff,
@@ -820,10 +826,106 @@ def test_that_autoscaling_applies_to_scaled_errors(storage):
                 progress_callback=progress_callback,
                 ensemble=ensemble,
             )
+            .filter(pl.col("status") == ObservationStatus.ACTIVE)[
+                _OutlierColumns.scaled_std
+            ]
+            .to_list()
         )
 
-        assert scaled_errors_with_autoscale.tolist() == [2, 6]
-        assert scaled_errors_without_autoscale.tolist() == [1, 2]
+        assert scaled_errors_with_autoscale == [2, 6]
+        assert scaled_errors_without_autoscale == [1, 2]
+
+
+@pytest.mark.parametrize(
+    "nan_responses,overspread_responses,collapsed_responses",
+    [
+        pytest.param(set(), set(), set(), id="all ok"),
+        pytest.param({0}, set(), set(), id="one nan response"),
+        pytest.param(set(), {0}, set(), id="one overspread response"),
+        pytest.param(set(), set(), {0}, id="one collapsed response"),
+        pytest.param(set(range(10)), set(), set(), id="all nan responses"),
+        pytest.param(set(), set(range(10)), set(), id="all overspread responses"),
+        pytest.param(set(), set(), set(range(10)), id="all collapsed responses"),
+        pytest.param({0}, {1}, {2}, id="all collapsed responses"),
+        pytest.param({0, 2}, {1, 4}, {3, 8}, id="Mixed failures with some ok"),
+        pytest.param({0, 3, 6, 9}, {1, 4, 7}, {2, 5, 8}, id="All mixed failures"),
+    ],
+)
+def test_compute_observation_statuses(
+    nan_responses,
+    overspread_responses,
+    collapsed_responses,
+):
+    alpha = 0.1
+    global_std_scaling = 1
+    std_cutoff = 0.05
+    num_reals = 10
+    num_observations = 10
+
+    rng = np.random.default_rng(42)
+
+    responses_per_real = np.zeros((num_observations, num_reals), dtype=np.float32)
+    observations = np.array(range(num_reals))
+    observation_keys = [f"obs_{i}" for i in range(num_observations)]
+    observation_errors = np.array([1] * num_reals)
+
+    for obs_index in nan_responses:
+        responses_per_real[obs_index, :] = np.nan
+
+    for obs_index in overspread_responses:
+        for real in range(num_reals):
+            # Make the responses deviate ALOT from the observation
+            # (Approximating to JUST ABOVE the cutoff would require some more logic)
+            # Also ensure mean deviates from obs to avoid collapse
+            responses_per_real[obs_index, real] += 3333 if real % 2 == 0 else -6666
+
+    for obs_index in collapsed_responses:
+        responses = (
+            rng.standard_normal(num_reals) * (std_cutoff - 1e-6)
+            + observations[obs_index]
+        )
+        responses_per_real[obs_index, :] = responses
+
+    active_observations = (
+        set(range(num_observations))
+        - nan_responses
+        - overspread_responses
+        - collapsed_responses
+    )
+    for obs_index in active_observations:
+        for real in range(num_reals):
+            responses_per_real[obs_index, real] = observations[obs_index] + 1.5 * (
+                -std_cutoff if real % 2 == 0 else std_cutoff
+            )
+
+    df = pl.DataFrame(
+        {
+            "observation_key": observation_keys,
+            "observations": pl.Series(observations, dtype=pl.Float32),
+            "std": pl.Series(observation_errors, dtype=pl.Float32),
+            **{
+                str(i): pl.Series(responses_per_real[:, i], dtype=pl.Float32)
+                for i in range(num_reals)
+            },
+        }
+    )
+
+    df_with_statuses = _compute_observation_statuses(
+        df,
+        global_std_scaling=global_std_scaling,
+        std_cutoff=std_cutoff,
+        alpha=alpha,
+        active_realizations=[str(i) for i in range(num_reals)],
+    )
+
+    expected_statuses = np.array(
+        [ObservationStatus.ACTIVE] * len(observation_keys), dtype="U20"
+    )
+    expected_statuses[list(nan_responses)] = str(ObservationStatus.MISSING_RESPONSE)
+    expected_statuses[list(overspread_responses)] = str(ObservationStatus.OUTLIER)
+    expected_statuses[list(collapsed_responses)] = str(ObservationStatus.STD_CUTOFF)
+
+    assert expected_statuses.tolist() == df_with_statuses["status"].to_list()
 
 
 def test_that_autoscaling_ignores_typos_in_observation_names(storage, caplog):
@@ -840,7 +942,7 @@ def test_that_autoscaling_ignores_typos_in_observation_names(storage, caplog):
 
     experiment = storage.create_experiment(name="dummyexp")
     ensemble = experiment.create_ensemble(name="dummy", ensemble_size=10)
-    _mock_load_observations_and_responses(
+    _mock_preprocess_observations_and_responses(
         observations_and_responses,
         alpha=1,
         std_cutoff=0.05,
@@ -987,16 +1089,12 @@ def test_gen_data_missing(storage, uniform_parameter, obs):
         ESSettings(),
         progress_callback=events.append,
     )
-    assert [step.status for step in update_snapshot.update_step_snapshots] == [
+
+    assert update_snapshot.observations_and_responses["status"].to_list() == [
         ObservationStatus.ACTIVE,
         ObservationStatus.ACTIVE,
         ObservationStatus.MISSING_RESPONSE,
     ]
-
-    update_event = next(e for e in events if isinstance(e, AnalysisCompleteEvent))
-    data_section = update_event.data
-    assert data_section.extra["Active observations"] == "2"
-    assert data_section.extra["Deactivated observations - missing respons(es)"] == "1"
 
 
 @pytest.mark.usefixtures("use_tmpdir")
