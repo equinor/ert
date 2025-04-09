@@ -761,7 +761,9 @@ def _mock_load_observations_and_responses(
             alpha=alpha,
             std_cutoff=std_cutoff,
             global_std_scaling=global_std_scaling,
-            iens_active_index=np.array([True] * len(observations_and_responses)),
+            iens_active_index=np.array(
+                [int(c) for c in observations_and_responses.columns[5:]]
+            ),
             selected_observations=observations_and_responses.select("observation_key"),
             auto_scale_observations=auto_scale_observations,
             progress_callback=progress_callback,
