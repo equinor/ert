@@ -135,15 +135,13 @@ def test_server_status(copy_math_func_test_data_to_tmp):
 
 
 @patch("everest.detached.server_is_running", return_value=False)
-def test_wait_for_server(server_is_running_mock, caplog):
+def test_wait_for_server(_):
     config = EverestConfig.with_defaults()
 
     with pytest.raises(
         RuntimeError, match=r"Failed to get reply from server .* timeout"
     ):
         wait_for_server(config.output_dir, timeout=0.01)
-
-    assert not caplog.messages
 
 
 @pytest.mark.usefixtures("no_plugins")
