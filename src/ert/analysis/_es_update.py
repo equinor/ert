@@ -301,6 +301,37 @@ def _auto_scale_observations(
         return None, None
 
 
+def _create_update_snapshots(
+    observations_and_responses: pl.Dataframe, active_realizations: list[str]
+) -> list[ObservationAndResponseSnapshot]:
+    update_snapshot = []
+    # Note: Nan detection used to be implicitly done with mean/std masking in numpy
+    # this logic will be simplified by having only one "status" flag in the dataframe,
+    # ref: comment in _find_outliers
+    for row in (
+        observations_and_responses.with_columns(
+            (~(pl.col("has_nan") | pl.col("is_overspread"))).alias(
+                "response_mean_mask"
+            ),
+            (~(pl.col("has_nan") | pl.col("is_collapsed"))).alias("response_std_mask"),
+        )
+        .drop("scaled_std", "has_nan", *active_realizations)
+        .rename(
+            {
+                "observation_key": "obs_name",
+                "observations": "obs_val",
+                "std": "obs_std",
+                "ens_mean": "response_mean",
+            }
+        )
+        .drop("is_overspread", "is_collapsed")
+        .to_dicts()
+    ):
+        update_snapshot.append(ObservationAndResponseSnapshot(**row))
+
+    return update_snapshot
+
+
 def _load_observations_and_responses(
     ensemble: Ensemble,
     alpha: float,
@@ -375,28 +406,9 @@ def _load_observations_and_responses(
                 pl.Series(updated_std_scales).alias("obs_scaling")
             ).with_columns((pl.col("obs_scaling") * pl.col("std")).alias("scaled_std"))
 
-    update_snapshot = []
-    for row in (
-        observations_and_responses.with_columns(
-            (~(pl.col("has_nan") | pl.col("is_overspread"))).alias(
-                "response_mean_mask"
-            ),
-            (~(pl.col("has_nan") | pl.col("is_collapsed"))).alias("response_std_mask"),
-        )
-        .drop("scaled_std", "has_nan", *map(str, iens_active_index))
-        .rename(
-            {
-                "observation_key": "obs_name",
-                "observations": "obs_val",
-                "std": "obs_std",
-                "ens_mean": "response_mean",
-            }
-        )
-        .drop("is_overspread", "is_collapsed")
-        .to_dicts()
-    ):
-        update_snapshot.append(ObservationAndResponseSnapshot(**row))
-
+    update_snapshot = _create_update_snapshots(
+        observations_and_responses, realization_responses
+    )
     missing_obs = sorted(set(obs_keys[~obs_mask]))
     if missing_obs:
         logger.warning("Deactivating observations: {missing_obs}")
