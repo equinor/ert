@@ -30,7 +30,6 @@ logger = logging.getLogger(__name__)
 UserRole = Qt.ItemDataRole.UserRole
 NodeRole = UserRole + 1
 FMStepColorHint = UserRole + 2
-RealLabelHint = UserRole + 4
 ProgressRole = UserRole + 5
 FileRole = UserRole + 6
 RealIens = UserRole + 7
@@ -367,9 +366,6 @@ class SnapshotModel(QAbstractItemModel):
                 queue_color = _QCOLORS.get(node.data.real_status, QColor())
 
             return queue_color, finished_count, total_count
-
-        if role == RealLabelHint:
-            return node.id_
         if role == RealIens:
             return node.id_
         if role == IterNum:
