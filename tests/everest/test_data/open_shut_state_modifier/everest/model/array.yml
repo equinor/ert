@@ -54,7 +54,7 @@ optimization:
   perturbation_num: 2
   speculative: True
   max_batch_num: 2
-  backend_options:
+  options:
     maxiter: 100
 
 model:

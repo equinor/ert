@@ -81,11 +81,6 @@ optimization:
   constraint_tolerance: 1.0e-7
   speculative: false
   max_batch_num: 10
-  options:
-    - '131.3 = No'
-    - 'LOG HIGH'
-    - 'Dostuff: 1'
-    - speculate
 
 environment:
   random_seed: 1234

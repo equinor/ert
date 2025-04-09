@@ -201,7 +201,8 @@ The default is to use parallel evaluation if supported.
     @model_validator(mode="after")
     def validate_backend_and_algorithm(self) -> Self:
         method = "default" if self.algorithm is None else self.algorithm
-        if not get_ropt_plugin_manager().is_supported("optimizer", method):
+        plugin_manager = get_ropt_plugin_manager()
+        if not plugin_manager.is_supported("optimizer", method):
             raise ValueError(f"Optimizer algorithm '{method}' not found")
 
         if self.backend is not None:
@@ -213,5 +214,9 @@ The default is to use parallel evaluation if supported.
             )
             print(message)
             logging.getLogger(EVEREST).warning(message)
+
+        plugin_manager.get_plugin("optimizer", method).validate_options(
+            method, self.options or self.backend_options
+        )
 
         return self

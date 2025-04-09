@@ -42,10 +42,8 @@ optimization:
   speculative: false
   max_batch_num: 10
   options:
-    - '131.3 = No'
-    - 'LOG HIGH'
-    - 'Dostuff: 1'
-    - speculate
+    - max_iterations = 0
+    - merit_function el_bakry
 
 environment:
   random_seed: 1234
