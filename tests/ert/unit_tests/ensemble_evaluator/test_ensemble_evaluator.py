@@ -56,7 +56,6 @@ from .ensemble_evaluator_utils import TestEnsemble
 @pytest.mark.parametrize(
     "task, error_msg",
     [
-        ("_batch_events_into_buffer", "Batcher failed!"),
         ("_process_event_buffer", "Batch processing failed!"),
         ("_publisher", "Publisher failed!"),
     ],
@@ -133,7 +132,6 @@ async def test_no_config_raises_valueerror_when_running():
 @pytest.mark.parametrize(
     ("task, task_name"),
     [
-        ("_batch_events_into_buffer", "dispatcher_task"),
         ("_process_event_buffer", "processing_task"),
         ("_publisher", "publisher_task"),
     ],
