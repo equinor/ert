@@ -10,7 +10,6 @@ from .event import (
     AnalysisTimeEvent,
 )
 from .snapshots import (
-    ObservationAndResponseSnapshot,
     ObservationStatus,
     SmootherSnapshot,
 )
@@ -22,7 +21,6 @@ __all__ = [
     "AnalysisStatusEvent",
     "AnalysisTimeEvent",
     "ErtAnalysisError",
-    "ObservationAndResponseSnapshot",
     "ObservationStatus",
     "SmootherSnapshot",
     "smoother_update",

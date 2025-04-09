@@ -4,6 +4,7 @@ import functools
 import logging
 import time
 from collections.abc import Callable, Iterable, Sequence
+from enum import StrEnum
 from fnmatch import fnmatch
 from typing import (
     TYPE_CHECKING,
@@ -32,7 +33,7 @@ from .event import (
     DataSection,
 )
 from .snapshots import (
-    ObservationAndResponseSnapshot,
+    ObservationStatus,
     SmootherSnapshot,
 )
 
@@ -153,7 +154,163 @@ def _expand_wildcards(
     return sorted(set(matches))
 
 
-def _load_observations_and_responses(
+class _OutlierColumns(StrEnum):
+    response_std = "response_std"
+    ens_mean = "response_mean"
+    obs_scaling = "obs_error_scaling"
+    scaled_std = "scaled_obs_error"
+
+
+def _compute_observation_statuses(
+    observations_and_responses: pl.DataFrame,
+    global_std_scaling: float,
+    std_cutoff: float,
+    alpha: float,
+    active_realizations: list[str],
+) -> pl.DataFrame:
+    """
+    Computes and adds columns (named in _OutlierColumns) for:
+     * response mean
+     * response standard deviation
+     * observation error scaling
+     * scaled observation errors
+     * status of (the responses of) each observation,
+       corresponding to ObservationStatus
+    """
+    responses = observations_and_responses.select(active_realizations)
+    response_stds = responses.with_columns(
+        pl.concat_list("*").list.std(ddof=0).alias(_OutlierColumns.response_std)
+    )[_OutlierColumns.response_std]
+
+    with_outlier_info = (
+        observations_and_responses.with_columns(
+            responses.mean_horizontal().alias(_OutlierColumns.ens_mean),
+            response_stds,
+            # Inflating measurement errors by a factor sqrt(global_std_scaling) as shown
+            # in for example evensen2018 - Analysis of iterative ensemble smoothers for
+            # solving inverse problems.
+            # `global_std_scaling` is 1.0 for ES.
+            pl.lit(np.sqrt(global_std_scaling), dtype=pl.Float64).alias(
+                _OutlierColumns.obs_scaling
+            ),
+        )
+        .with_columns(
+            (pl.col("std") * pl.col(_OutlierColumns.obs_scaling)).alias(
+                _OutlierColumns.scaled_std
+            )
+        )
+        .with_columns(
+            pl.when(
+                pl.any_horizontal(
+                    [
+                        pl.col(c).is_nan() | pl.col(c).is_null()
+                        for c in active_realizations
+                    ]
+                )
+            )
+            .then(pl.lit(ObservationStatus.MISSING_RESPONSE))
+            .when(pl.col(_OutlierColumns.response_std) <= std_cutoff)
+            .then(pl.lit(ObservationStatus.STD_CUTOFF))
+            .when(
+                abs(pl.col("observations") - pl.col(_OutlierColumns.ens_mean))
+                > alpha
+                * (
+                    pl.col(_OutlierColumns.response_std)
+                    + pl.col(_OutlierColumns.scaled_std)
+                )
+            )
+            .then(pl.lit(ObservationStatus.OUTLIER))
+            .otherwise(pl.lit(ObservationStatus.ACTIVE))
+            .alias("status")
+        )
+    )
+
+    return with_outlier_info
+
+
+def _auto_scale_observations(
+    observations_and_responses: pl.DataFrame,
+    auto_scale_observations: list[ObservationGroups],
+    obs_mask: npt.NDArray[np.bool_],
+    active_realizations: list[str],
+    progress_callback: Callable[[AnalysisEvent], None],
+) -> tuple[npt.NDArray[np.float64], pl.DataFrame] | tuple[None, None]:
+    """
+    Performs 'Auto Scaling' to mitigate issues with correlated observations,
+    and saves computed scaling factors across input groups to ERT storage.
+    """
+    scaling_factors_dfs = []
+
+    scaling_factors_updated = (
+        observations_and_responses[_OutlierColumns.obs_scaling].to_numpy().copy()
+    )
+
+    obs_keys = observations_and_responses["observation_key"].to_numpy().astype(str)
+    for input_group in auto_scale_observations:
+        group = _expand_wildcards(obs_keys, input_group)
+        logger.info(f"Scaling observation group: {group}")
+        obs_group_mask = np.isin(obs_keys, group) & obs_mask
+        if not any(obs_group_mask):
+            logger.error(f"No observations active for group: {input_group}")
+            continue
+
+        data_for_obs = observations_and_responses.filter(obs_group_mask)
+        scaling_factors, clusters, nr_components = misfit_preprocessor.main(
+            data_for_obs.select(active_realizations).to_numpy(),
+            data_for_obs.select(_OutlierColumns.scaled_std).to_numpy(),
+        )
+
+        scaling_factors_updated[obs_group_mask] *= scaling_factors
+
+        scaling_factors_dfs.append(
+            pl.DataFrame(
+                {
+                    "input_group": [", ".join(input_group)] * len(scaling_factors),
+                    "index": data_for_obs["index"],
+                    "obs_key": data_for_obs["observation_key"],
+                    "scaling_factor": pl.Series(scaling_factors, dtype=pl.Float32),
+                }
+            )
+        )
+
+        progress_callback(
+            AnalysisDataEvent(
+                name="Auto scale: " + ", ".join(input_group),
+                data=DataSection(
+                    header=[
+                        "Observation",
+                        "Index",
+                        "Cluster",
+                        "Nr components",
+                        "Scaling factor",
+                    ],
+                    data=np.array(
+                        (
+                            data_for_obs["observation_key"].to_numpy(),
+                            data_for_obs["index"],
+                            clusters,
+                            nr_components.astype(int),
+                            scaling_factors,
+                        )
+                    ).T,  # type: ignore
+                ),
+            )
+        )
+
+    if scaling_factors_dfs:
+        return scaling_factors_updated, pl.concat(scaling_factors_dfs)
+    else:
+        msg = (
+            "WARNING: Could not auto-scale the "
+            f"observations {auto_scale_observations}. "
+            f"No match with existing active observations {obs_keys}"
+        )
+        logger.warning(msg)
+        print(msg)
+        return None, None
+
+
+def _preprocess_observations_and_responses(
     ensemble: Ensemble,
     alpha: float,
     std_cutoff: float,
@@ -162,14 +319,7 @@ def _load_observations_and_responses(
     selected_observations: Iterable[str],
     auto_scale_observations: list[ObservationGroups] | None,
     progress_callback: Callable[[AnalysisEvent], None],
-) -> tuple[
-    npt.NDArray[np.float64],
-    tuple[
-        npt.NDArray[np.float64],
-        npt.NDArray[np.float64],
-        list[ObservationAndResponseSnapshot],
-    ],
-]:
+) -> pl.DataFrame:
     observations_and_responses = ensemble.get_observations_and_responses(
         selected_observations,
         iens_active_index,
@@ -179,143 +329,55 @@ def _load_observations_and_responses(
         by=["observation_key", "index"]
     )
 
-    S = observations_and_responses.select(
-        observations_and_responses.columns[5:]
-    ).to_numpy()
-    observations = (
-        observations_and_responses.select("observations").to_numpy().reshape((-1,))
-    )
-    errors = observations_and_responses.select("std").to_numpy().reshape((-1,))
-    obs_keys = (
-        observations_and_responses.select("observation_key").to_numpy().reshape((-1,))
-    )
-    indexes = observations_and_responses.select("index").to_numpy().reshape((-1,))
+    realization_responses = [str(i) for i in iens_active_index]
 
-    # Inflating measurement errors by a factor sqrt(global_std_scaling) as shown
-    # in for example evensen2018 - Analysis of iterative ensemble smoothers for
-    # solving inverse problems.
-    # `global_std_scaling` is 1.0 for ES.
-    scaling = np.sqrt(global_std_scaling) * np.ones_like(errors)
-    scaled_errors = errors * scaling
+    observations_and_responses = _compute_observation_statuses(
+        observations_and_responses,
+        global_std_scaling,
+        std_cutoff,
+        alpha,
+        realization_responses,
+    )
 
-    # Identifies non-outlier observations based on responses.
-    ens_mean = S.mean(axis=1)
-    ens_std = S.std(ddof=0, axis=1, dtype=np.float64).astype(np.float32)
-    ens_std_mask = ens_std > std_cutoff
-    ens_mean_mask = abs(observations - ens_mean) <= alpha * (ens_std + scaled_errors)
-    obs_mask = np.logical_and(ens_mean_mask, ens_std_mask)
+    obs_mask = (
+        observations_and_responses.select(pl.col("status") == ObservationStatus.ACTIVE)
+        .to_numpy()
+        .flatten()
+    )
 
     if auto_scale_observations:
-        scaling_factors_dfs = []
+        updated_std_scales, scaling_factors_df = _auto_scale_observations(
+            observations_and_responses,
+            auto_scale_observations,
+            obs_mask,
+            realization_responses,
+            progress_callback,
+        )
 
-        for input_group in auto_scale_observations:
-            group = _expand_wildcards(obs_keys, input_group)
-            logger.info(f"Scaling observation group: {group}")
-            obs_group_mask = np.isin(obs_keys, group) & obs_mask
-            if not any(obs_group_mask):
-                logger.error(f"No observations active for group: {input_group}")
-                continue
-            scaling_factors, clusters, nr_components = misfit_preprocessor.main(
-                S[obs_group_mask], scaled_errors[obs_group_mask]
-            )
-            scaling[obs_group_mask] *= scaling_factors
-
-            scaling_factors_dfs.append(
-                pl.DataFrame(
-                    {
-                        "input_group": [", ".join(input_group)] * len(scaling_factors),
-                        "index": indexes[obs_group_mask],
-                        "obs_key": obs_keys[obs_group_mask],
-                        "scaling_factor": pl.Series(scaling_factors, dtype=pl.Float32),
-                    }
-                )
-            )
-
-            progress_callback(
-                AnalysisDataEvent(
-                    name="Auto scale: " + ", ".join(input_group),
-                    data=DataSection(
-                        header=[
-                            "Observation",
-                            "Index",
-                            "Cluster",
-                            "Nr components",
-                            "Scaling factor",
-                        ],
-                        data=np.array(
-                            (
-                                obs_keys[obs_group_mask],
-                                indexes[obs_group_mask],
-                                clusters,
-                                nr_components.astype(int),
-                                scaling_factors,
-                            )
-                        ).T,  # type: ignore
-                    ),
-                )
-            )
-
-        if scaling_factors_dfs:
-            scaling_factors_df = pl.concat(scaling_factors_dfs)
+        if updated_std_scales is not None and scaling_factors_df is not None:
             ensemble.save_observation_scaling_factors(scaling_factors_df)
 
             # Recompute with updated scales
-            scaled_errors = errors * scaling
-        else:
-            msg = (
-                "WARNING: Could not auto-scale the "
-                f"observations {auto_scale_observations}. "
-                f"No match with existing active observations {obs_keys}"
+            observations_and_responses = observations_and_responses.with_columns(
+                pl.Series(updated_std_scales).alias(_OutlierColumns.obs_scaling)
+            ).with_columns(
+                (pl.col(_OutlierColumns.obs_scaling) * pl.col("std")).alias(
+                    _OutlierColumns.scaled_std
+                )
             )
-            logger.warning(msg)
-            print(msg)
 
-    update_snapshot = []
-    for (
-        obs_name,
-        obs_val,
-        obs_std,
-        obs_scaling,
-        response_mean,
-        response_std,
-        response_mean_mask,
-        response_std_mask,
-        index,
-    ) in zip(
-        obs_keys,
-        observations,
-        errors,
-        scaling,
-        ens_mean,
-        ens_std,
-        ens_mean_mask,
-        ens_std_mask,
-        indexes,
-        strict=False,
-    ):
-        update_snapshot.append(
-            ObservationAndResponseSnapshot(
-                obs_name=obs_name,
-                obs_val=obs_val,
-                obs_std=obs_std,
-                obs_scaling=obs_scaling,
-                response_mean=response_mean,
-                response_std=response_std,
-                response_mean_mask=bool(response_mean_mask),
-                response_std_mask=bool(response_std_mask),
-                index=index,
-            )
-        )
-
-    missing_obs = sorted(set(obs_keys[~obs_mask]))
-    if missing_obs:
-        logger.warning("Deactivating observations: {missing_obs}")
-
-    return S[obs_mask], (
-        observations[obs_mask],
-        scaled_errors[obs_mask],
-        update_snapshot,
+    missing_observations = (
+        observations_and_responses.filter(pl.col("status") != "active")[
+            "observation_key"
+        ]
+        .unique()
+        .to_list()
     )
+    missing_observations.sort()
+
+    logger.warning(f"Deactivating observations: {missing_observations}")
+
+    return observations_and_responses
 
 
 def _split_by_batchsize(
@@ -456,15 +518,7 @@ def analysis_ES(
     ) -> TimedIterator[T]:
         return TimedIterator(iterable, progress_callback)
 
-    progress_callback(AnalysisStatusEvent(msg="Loading observations and responses.."))
-    (
-        S,
-        (
-            observation_values,
-            observation_errors,
-            update_snapshot,
-        ),
-    ) = _load_observations_and_responses(
+    preprocessed_data = _preprocess_observations_and_responses(
         source_ensemble,
         alpha,
         std_cutoff,
@@ -474,9 +528,31 @@ def analysis_ES(
         auto_scale_observations,
         progress_callback,
     )
+
+    filtered_data = preprocessed_data.filter(
+        pl.col("status") == ObservationStatus.ACTIVE
+    )
+
+    S = filtered_data.select([*map(str, iens_active_index)]).to_numpy(order="c")
+    observation_values = filtered_data["observations"].to_numpy()
+    observation_errors = filtered_data[_OutlierColumns.scaled_std].to_numpy()
+
+    progress_callback(AnalysisStatusEvent(msg="Loading observations and responses.."))
     num_obs = len(observation_values)
 
-    smoother_snapshot.update_step_snapshots = update_snapshot
+    smoother_snapshot.observations_and_responses = preprocessed_data.drop(
+        [*map(str, iens_active_index), "response_key"]
+    ).select(
+        "observation_key",
+        "index",
+        "observations",
+        "std",
+        "obs_error_scaling",
+        "scaled_obs_error",
+        "response_mean",
+        "response_std",
+        "status",
+    )
 
     if num_obs == 0:
         msg = "No active observations for update step"
@@ -641,22 +717,6 @@ def analysis_ES(
         )
 
 
-def _create_smoother_snapshot(
-    prior_name: str,
-    posterior_name: str,
-    update_settings: UpdateSettings,
-    global_scaling: float,
-) -> SmootherSnapshot:
-    return SmootherSnapshot(
-        source_ensemble_name=prior_name,
-        target_ensemble_name=posterior_name,
-        alpha=update_settings.alpha,
-        std_cutoff=update_settings.std_cutoff,
-        global_scaling=global_scaling,
-        update_step_snapshots=[],
-    )
-
-
 def smoother_update(
     prior_storage: Ensemble,
     posterior_storage: Ensemble,
@@ -675,11 +735,12 @@ def smoother_update(
 
     ens_mask = prior_storage.get_realization_mask_with_responses()
 
-    smoother_snapshot = _create_smoother_snapshot(
-        prior_storage.name,
-        posterior_storage.name,
-        update_settings,
-        global_scaling,
+    smoother_snapshot = SmootherSnapshot(
+        source_ensemble_name=prior_storage.name,
+        target_ensemble_name=posterior_storage.name,
+        alpha=update_settings.alpha,
+        std_cutoff=update_settings.std_cutoff,
+        global_scaling=global_scaling,
     )
 
     try:
