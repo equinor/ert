@@ -179,34 +179,69 @@ def _load_observations_and_responses(
         by=["observation_key", "index"]
     )
 
-    S = observations_and_responses.select(
-        observations_and_responses.columns[5:]
-    ).to_numpy()
-    observations = (
-        observations_and_responses.select("observations").to_numpy().reshape((-1,))
-    )
-    errors = observations_and_responses.select("std").to_numpy().reshape((-1,))
-    obs_keys = (
-        observations_and_responses.select("observation_key").to_numpy().reshape((-1,))
-    )
-    indexes = observations_and_responses.select("index").to_numpy().reshape((-1,))
+    realization_responses = list(map(str, iens_active_index))
+    responses = observations_and_responses.select(realization_responses)
+    response_stds = responses.with_columns(
+        pl.concat_list("*").list.std(ddof=0).alias("response_std")
+    )["response_std"]
 
-    # Inflating measurement errors by a factor sqrt(global_std_scaling) as shown
-    # in for example evensen2018 - Analysis of iterative ensemble smoothers for
-    # solving inverse problems.
-    # `global_std_scaling` is 1.0 for ES.
-    scaling = np.sqrt(global_std_scaling) * np.ones_like(errors)
-    scaled_errors = errors * scaling
+    observations_and_responses = (
+        observations_and_responses.with_columns(
+            responses.mean_horizontal().alias("ens_mean"),
+            pl.any_horizontal(
+                [
+                    pl.col(str(c)).is_nan() | pl.col(str(c)).is_null()
+                    for c in iens_active_index
+                ]
+            ).alias("has_nan"),
+            response_stds,
+            # Inflating measurement errors by a factor sqrt(global_std_scaling) as shown
+            # in for example evensen2018 - Analysis of iterative ensemble smoothers for
+            # solving inverse problems.
+            # `global_std_scaling` is 1.0 for ES.
+            pl.lit(np.sqrt(global_std_scaling), dtype=pl.Float64).alias("obs_scaling"),
+        )
+        # Note: Casting to float32 gives slightly different snapshots for some tests
+        # should be updated in standalone PR
+        .with_columns((pl.col("std") * pl.col("obs_scaling")).alias("scaled_std"))
+        .with_columns(  # Note: These should be consolidated to one column,
+            # indicating the status, can be either:
+            # "collapsed", "overspread", "nan", or "ok"
+            # and piped forward into the snapshot
+            (pl.col("response_std") <= std_cutoff).alias("is_collapsed"),
+            (
+                abs(pl.col("observations") - pl.col("ens_mean"))
+                > alpha * (pl.col("response_std") + pl.col("scaled_std"))
+            ).alias("is_overspread"),
+        )
+    )
 
-    # Identifies non-outlier observations based on responses.
-    ens_mean = S.mean(axis=1)
-    ens_std = S.std(ddof=0, axis=1, dtype=np.float64).astype(np.float32)
-    ens_std_mask = ens_std > std_cutoff
-    ens_mean_mask = abs(observations - ens_mean) <= alpha * (ens_std + scaled_errors)
-    obs_mask = np.logical_and(ens_mean_mask, ens_std_mask)
+    observations_and_responses = observations_and_responses.with_columns(
+        [
+            pl.col(pl.Float64).fill_null(float("nan")),
+            pl.col(pl.Float32).fill_null(float("nan")),
+            pl.col(pl.Boolean).fill_null(False),
+        ]
+    )
+
+    obs_mask = (
+        observations_and_responses.select(
+            (
+                ~pl.col("is_collapsed") & ~pl.col("is_overspread") & ~pl.col("has_nan")
+            ).alias("obs_mask")
+        )
+        .select("obs_mask")
+        .to_numpy()
+        .flatten()
+    )
+    obs_keys = observations_and_responses["observation_key"].to_numpy()
 
     if auto_scale_observations:
         scaling_factors_dfs = []
+
+        scaling_factors_updated = (
+            observations_and_responses["obs_scaling"].to_numpy().copy()
+        )
 
         for input_group in auto_scale_observations:
             group = _expand_wildcards(obs_keys, input_group)
@@ -215,17 +250,23 @@ def _load_observations_and_responses(
             if not any(obs_group_mask):
                 logger.error(f"No observations active for group: {input_group}")
                 continue
+
+            data_for_obs = observations_and_responses.filter(obs_group_mask)
             scaling_factors, clusters, nr_components = misfit_preprocessor.main(
-                S[obs_group_mask], scaled_errors[obs_group_mask]
+                data_for_obs.select(realization_responses).to_numpy(),
+                data_for_obs.select("scaled_std").to_numpy(),
             )
-            scaling[obs_group_mask] *= scaling_factors
+
+            # This is the current main justification for keeping
+            # some of the logic as numpy instead of polars.
+            scaling_factors_updated[obs_group_mask] *= scaling_factors
 
             scaling_factors_dfs.append(
                 pl.DataFrame(
                     {
                         "input_group": [", ".join(input_group)] * len(scaling_factors),
-                        "index": indexes[obs_group_mask],
-                        "obs_key": obs_keys[obs_group_mask],
+                        "index": data_for_obs["index"],
+                        "obs_key": data_for_obs["observation_key"],
                         "scaling_factor": pl.Series(scaling_factors, dtype=pl.Float32),
                     }
                 )
@@ -244,8 +285,8 @@ def _load_observations_and_responses(
                         ],
                         data=np.array(
                             (
-                                obs_keys[obs_group_mask],
-                                indexes[obs_group_mask],
+                                data_for_obs["observation_key"].to_numpy(),
+                                data_for_obs["index"],
                                 clusters,
                                 nr_components.astype(int),
                                 scaling_factors,
@@ -260,7 +301,9 @@ def _load_observations_and_responses(
             ensemble.save_observation_scaling_factors(scaling_factors_df)
 
             # Recompute with updated scales
-            scaled_errors = errors * scaling
+            observations_and_responses = observations_and_responses.with_columns(
+                pl.Series(scaling_factors_updated).alias("obs_scaling")
+            ).with_columns((pl.col("obs_scaling") * pl.col("std")).alias("scaled_std"))
         else:
             msg = (
                 "WARNING: Could not auto-scale the "
@@ -271,49 +314,43 @@ def _load_observations_and_responses(
             print(msg)
 
     update_snapshot = []
-    for (
-        obs_name,
-        obs_val,
-        obs_std,
-        obs_scaling,
-        response_mean,
-        response_std,
-        response_mean_mask,
-        response_std_mask,
-        index,
-    ) in zip(
-        obs_keys,
-        observations,
-        errors,
-        scaling,
-        ens_mean,
-        ens_std,
-        ens_mean_mask,
-        ens_std_mask,
-        indexes,
-        strict=False,
-    ):
-        update_snapshot.append(
-            ObservationAndResponseSnapshot(
-                obs_name=obs_name,
-                obs_val=obs_val,
-                obs_std=obs_std,
-                obs_scaling=obs_scaling,
-                response_mean=response_mean,
-                response_std=response_std,
-                response_mean_mask=bool(response_mean_mask),
-                response_std_mask=bool(response_std_mask),
-                index=index,
-            )
+    for row in (
+        observations_and_responses.with_columns(
+            (~(pl.col("has_nan") | pl.col("is_overspread"))).alias(
+                "response_mean_mask"
+            ),
+            (~(pl.col("has_nan") | pl.col("is_collapsed"))).alias("response_std_mask"),
         )
+        .drop("scaled_std", "has_nan", *map(str, iens_active_index))
+        .rename(
+            {
+                "observation_key": "obs_name",
+                "observations": "obs_val",
+                "std": "obs_std",
+                "ens_mean": "response_mean",
+            }
+        )
+        .drop("is_overspread", "is_collapsed")
+        .to_dicts()
+    ):
+        update_snapshot.append(ObservationAndResponseSnapshot(**row))
 
     missing_obs = sorted(set(obs_keys[~obs_mask]))
     if missing_obs:
         logger.warning("Deactivating observations: {missing_obs}")
 
-    return S[obs_mask], (
-        observations[obs_mask],
-        scaled_errors[obs_mask],
+    processed_data = observations_and_responses.filter(obs_mask)
+
+    # Note: Not doing .ascontiguousarray yields different
+    # snapshots in test_update_snapshot. Not sure if due to downstream bug in the
+    # update.
+    # Could be removed & update snapshots in separate PR.
+    # Numerically it is exactly the same as the old S
+    return np.ascontiguousarray(
+        processed_data.select(realization_responses).to_numpy()
+    ), (
+        processed_data["observations"].to_numpy(),
+        processed_data["scaled_std"].to_numpy(),
         update_snapshot,
     )
 
