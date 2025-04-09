@@ -11,6 +11,7 @@ import random
 import socket
 import ssl
 import threading
+import time
 import traceback
 import uuid
 from base64 import b64decode, b64encode
@@ -78,6 +79,7 @@ from everest.strings import (
     OPTIMIZATION_OUTPUT_DIR,
     SIMULATION_DIR_ENDPOINT,
     START_EXPERIMENT_ENDPOINT,
+    START_TIME_ENDPOINT,
     STOP_ENDPOINT,
 )
 from everest.trace import tracer, tracer_provider
@@ -115,6 +117,7 @@ class ExperimentRunnerState:
     events: list[StatusEvents] = dataclasses.field(default_factory=list)
     subscribers: dict[str, "Subscriber"] = dataclasses.field(default_factory=dict)
     config_path: str | None = None
+    start_time_unix: int | None = None
 
 
 class ExperimentRunner:
@@ -319,6 +322,10 @@ def _everserver_thread(
                 # Assume only one unique running experiment per everserver instance
                 # Ideally, we should return the experiment ID in the response here
                 shared_data.config_path = config.config_path
+
+                # Assume client and server is always in the same timezone
+                # so disregard timestamps
+                shared_data.start_time_unix = int(time.time())
                 return Response("Everest experiment started")
             except Exception as e:
                 return Response(f"Could not start experiment: {e!s}", status_code=501)
@@ -346,6 +353,17 @@ def _everserver_thread(
 
         sim_dir = EverestConfig.from_file(shared_data.config_path).simulation_dir
         return Response(sim_dir, status_code=200)
+
+    @app.get("/" + START_TIME_ENDPOINT)
+    async def start_time(
+        request: Request, credentials: HTTPBasicCredentials = Depends(security)
+    ) -> Response:
+        _log(request)
+        _check_user(credentials)
+        if not shared_data.started:
+            return Response("No experiment started", status_code=404)
+
+        return Response(str(shared_data.start_time_unix), status_code=200)
 
     @app.websocket("/events")
     async def websocket_endpoint(websocket: WebSocket) -> None:

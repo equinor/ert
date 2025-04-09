@@ -22,6 +22,7 @@ from everest.strings import (
     CONFIG_PATH_ENDPOINT,
     SIMULATION_DIR_ENDPOINT,
     START_EXPERIMENT_ENDPOINT,
+    START_TIME_ENDPOINT,
     STOP_ENDPOINT,
 )
 
@@ -47,8 +48,10 @@ class EverestClient:
         self._start_endpoint = "/".join([url, START_EXPERIMENT_ENDPOINT])
         self._config_path_endpoint = "/".join([url, CONFIG_PATH_ENDPOINT])
         self._simulation_dir_endpoint = "/".join([url, SIMULATION_DIR_ENDPOINT])
+        self._start_time_endpoint = "/".join([url, START_TIME_ENDPOINT])
 
         self._is_alive = False
+        self._start_time: int | None = None
 
     @property
     def simulation_dir(self) -> str:
@@ -69,6 +72,19 @@ class EverestClient:
         ).text
 
         return Path(config_path).name
+
+    def get_runtime(self) -> int:
+        if self._start_time is None:
+            response = requests.get(
+                self._start_time_endpoint,
+                verify=self._cert,
+                auth=(self._username, self._password),
+                proxies={"http": None, "https": None},  # type: ignore
+            )
+            start_time = int(response.text)
+            self._start_time = start_time
+
+        return int(time.time()) - self._start_time
 
     @property
     def credentials(self) -> str:
@@ -128,7 +144,7 @@ class EverestClient:
             support_restart=False,
             start_simulations_thread=start_fn,
             cancel=self.stop,
-            get_runtime=lambda: -1,  # Not currently shown in Everest gui
+            get_runtime=self.get_runtime,
             has_failed_realizations=lambda: False,
         )
 
