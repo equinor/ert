@@ -6,12 +6,12 @@ from PyQt6.QtCore import (
     QItemSelectionModel,
     QModelIndex,
     QObject,
-    QPointF,
+    QPoint,
     QSize,
     Qt,
 )
 from PyQt6.QtCore import pyqtSignal as Signal
-from PyQt6.QtGui import QColor, QMouseEvent, QPainter, QPalette, QPen
+from PyQt6.QtGui import QColor, QHelpEvent, QPainter, QPalette, QPen
 from PyQt6.QtWidgets import (
     QAbstractItemView,
     QListView,
@@ -96,7 +96,7 @@ class RealizationDelegate(QStyledItemDelegate):
         super().__init__(parent)
         self._size = size
         parent.installEventFilter(self)
-        self.adjustment_point_for_job_rect_margin = QPointF(-20, -20)
+        self.adjustment_point_for_job_rect_margin = QPoint(-20, -20)
         self._color_black = QColor(0, 0, 0, 180)
         self._color_progress = QColor(50, 173, 230, 200)
         self._color_lightgray = QColor("LightGray").lighter(120)
@@ -154,10 +154,8 @@ class RealizationDelegate(QStyledItemDelegate):
         return self._size
 
     def eventFilter(self, object: QObject | None, event: QEvent | None) -> bool:
-        if event and event.type() == QEvent.Type.ToolTip and type(event) is QMouseEvent:
-            mouse_pos = (
-                event.position() + self.adjustment_point_for_job_rect_margin
-            ).toPoint()
+        if isinstance(event, QHelpEvent) and event.type() == QEvent.Type.ToolTip:
+            mouse_pos = event.pos() + self.adjustment_point_for_job_rect_margin
             parent: RealizationWidget = cast(RealizationWidget, self.parent())
             view = parent._real_view
             index = view.indexAt(mouse_pos)
