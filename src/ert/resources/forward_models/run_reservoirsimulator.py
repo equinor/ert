@@ -422,7 +422,7 @@ def run_reservoirsimulator(args: list[str]) -> None:
                 forwarded_args=forwarded_args,
             ).run_flow()
 
-    except EclError as msg:
+    except (EclError, subprocess.CalledProcessError) as msg:
         print(msg, file=sys.stderr)
         sys.exit(-1)
 

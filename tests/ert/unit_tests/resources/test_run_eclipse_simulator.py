@@ -267,6 +267,24 @@ def test_failed_run_gives_nonzero_returncode_and_exception(monkeypatch):
 @pytest.mark.integration_test
 @pytest.mark.requires_eclipse
 @pytest.mark.usefixtures("use_tmpdir", "e100_env")
+def test_failing_eclipse_gives_system_exit(monkeypatch):
+    deck = Path("MOCKED_DECK.DATA")
+    deck.touch()
+    return_value_with_code = mock.MagicMock()
+    return_value_with_code.returncode = 1
+    monkeypatch.setattr(
+        "subprocess.run", mock.MagicMock(return_value=return_value_with_code)
+    )
+
+    with pytest.raises(SystemExit):
+        run_reservoirsimulator.run_reservoirsimulator(
+            ["eclipse", deck.name, "--version", "foo"]
+        )
+
+
+@pytest.mark.integration_test
+@pytest.mark.requires_eclipse
+@pytest.mark.usefixtures("use_tmpdir", "e100_env")
 def test_run_reservoirsimulator_ignores_errors_in_deck_when_requested(source_root):
     shutil.copy(
         source_root / "test-data/ert/eclipse/SPE1_ERROR.DATA",
