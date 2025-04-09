@@ -32,8 +32,7 @@ from everest.strings import (
     EVEREST_SERVER_CONFIG,
     OPT_PROGRESS_ID,
     SIM_PROGRESS_ID,
-    START_EXPERIMENT_ENDPOINT,
-    STOP_ENDPOINT,
+    EverEndpoints,
 )
 from everest.trace import get_traceparent
 
@@ -90,7 +89,7 @@ def stop_server(
     for retry in range(retries):
         try:
             url, cert, auth = server_context
-            stop_endpoint = "/".join([url, STOP_ENDPOINT])
+            stop_endpoint = "/".join([url, EverEndpoints.stop])
             response = requests.post(
                 stop_endpoint,
                 verify=cert,
@@ -114,7 +113,7 @@ def start_experiment(
     for retry in range(retries):
         try:
             url, cert, auth = server_context
-            start_endpoint = "/".join([url, START_EXPERIMENT_ENDPOINT])
+            start_endpoint = "/".join([url, EverEndpoints.start_experiment])
             response = requests.post(
                 start_endpoint,
                 verify=cert,

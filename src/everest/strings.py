@@ -1,3 +1,5 @@
+from enum import StrEnum
+
 CERTIFICATE_DIR = "cert"
 
 DATE_FORMAT = "%Y-%m-%d"
@@ -28,9 +30,12 @@ SIMULATOR_START = "start"
 SIMULATOR_UPDATE = "update"
 SIMULATOR_END = "end"
 SIM_PROGRESS_ID = "simulation_progress"
-STOP_ENDPOINT = "stop"
 STORAGE_DIR = "simulation_results"
-START_EXPERIMENT_ENDPOINT = "start_experiment"
-CONFIG_PATH_ENDPOINT = "config_path"
-SIMULATION_DIR_ENDPOINT = "simulation_dir"
-START_TIME_ENDPOINT = "start_time_unix"
+
+
+class EverEndpoints(StrEnum):
+    stop = "stop"
+    start_experiment = "start_experiment"
+    config_path = "config_path"
+    simulation_dir = "simulation_dir"
+    start_time = "start_time_unix"

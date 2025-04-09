@@ -70,17 +70,13 @@ from everest.detached import (
 )
 from everest.plugins.everest_plugin_manager import EverestPluginManager
 from everest.strings import (
-    CONFIG_PATH_ENDPOINT,
     DEFAULT_LOGGING_FORMAT,
     EVEREST,
     EVERSERVER,
     OPT_FAILURE_REALIZATIONS,
     OPTIMIZATION_LOG_DIR,
     OPTIMIZATION_OUTPUT_DIR,
-    SIMULATION_DIR_ENDPOINT,
-    START_EXPERIMENT_ENDPOINT,
-    START_TIME_ENDPOINT,
-    STOP_ENDPOINT,
+    EverEndpoints,
 )
 from everest.trace import tracer, tracer_provider
 from everest.util import makedirs_if_needed, version_info
@@ -112,7 +108,7 @@ class ExperimentFailed(EverestServerMsg):
 
 @dataclasses.dataclass
 class ExperimentRunnerState:
-    stop: bool = False  # STOP_ENDPOINT
+    stop: bool = False
     started: bool = False
     events: list[StatusEvents] = dataclasses.field(default_factory=list)
     subscribers: dict[str, "Subscriber"] = dataclasses.field(default_factory=dict)
@@ -293,7 +289,7 @@ def _everserver_thread(
         _check_user(credentials)
         return PlainTextResponse("Everest is running")
 
-    @app.post("/" + STOP_ENDPOINT)
+    @app.post("/" + EverEndpoints.stop)
     def stop(
         request: Request, credentials: HTTPBasicCredentials = Depends(security)
     ) -> Response:
@@ -303,7 +299,7 @@ def _everserver_thread(
         msg_queue.put(ServerStopped())
         return Response("Raise STOP flag succeeded. Everest initiates shutdown..", 200)
 
-    @app.post("/" + START_EXPERIMENT_ENDPOINT)
+    @app.post("/" + EverEndpoints.start_experiment)
     async def start_experiment(
         request: Request,
         background_tasks: BackgroundTasks,
@@ -331,7 +327,7 @@ def _everserver_thread(
                 return Response(f"Could not start experiment: {e!s}", status_code=501)
         return Response("Everest experiment is running")
 
-    @app.get("/" + CONFIG_PATH_ENDPOINT)
+    @app.get("/" + EverEndpoints.config_path)
     async def config_path(
         request: Request, credentials: HTTPBasicCredentials = Depends(security)
     ) -> Response:
@@ -342,7 +338,7 @@ def _everserver_thread(
 
         return Response(str(shared_data.config_path), status_code=200)
 
-    @app.get("/" + SIMULATION_DIR_ENDPOINT)
+    @app.get("/" + EverEndpoints.simulation_dir)
     async def simulation_dir(
         request: Request, credentials: HTTPBasicCredentials = Depends(security)
     ) -> Response:
@@ -354,7 +350,7 @@ def _everserver_thread(
         sim_dir = EverestConfig.from_file(shared_data.config_path).simulation_dir
         return Response(sim_dir, status_code=200)
 
-    @app.get("/" + START_TIME_ENDPOINT)
+    @app.get("/" + EverEndpoints.start_time)
     async def start_time(
         request: Request, credentials: HTTPBasicCredentials = Depends(security)
     ) -> Response:

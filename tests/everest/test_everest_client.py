@@ -14,7 +14,7 @@ from everest.config import EverestConfig, ServerConfig
 from everest.detached import server_is_running
 from everest.detached.jobs.everserver import _find_open_port
 from everest.gui.everest_client import EverestClient
-from everest.strings import STOP_ENDPOINT
+from everest.strings import EverEndpoints
 from tests.ert.utils import wait_until
 
 
@@ -76,7 +76,7 @@ def test_that_stop_invokes_correct_endpoint(
 ):
     server_app, server_thread, client, wait_until_alive = client_server_mock
 
-    @server_app.post(f"/{STOP_ENDPOINT}")
+    @server_app.post(f"/{EverEndpoints.stop}")
     def stop():
         return Response("STOP..", 200)
 
@@ -96,7 +96,7 @@ def test_that_stop_errors_on_non_ok_httpcode(
 ):
     server_app, server_thread, client, wait_until_alive = client_server_mock
 
-    @server_app.post(f"/{STOP_ENDPOINT}")
+    @server_app.post(f"/{EverEndpoints.stop}")
     def stop():
         return Response("STOP..", 505)
 
