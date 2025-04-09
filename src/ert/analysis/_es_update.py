@@ -4,6 +4,7 @@ import functools
 import logging
 import time
 from collections.abc import Callable, Iterable, Sequence
+from enum import StrEnum
 from fnmatch import fnmatch
 from typing import (
     TYPE_CHECKING,
@@ -153,6 +154,71 @@ def _expand_wildcards(
     return sorted(set(matches))
 
 
+class _OutlierColumns(StrEnum):
+    response_std = "response_std"
+    ens_mean = "ens_mean"
+    obs_scaling = "obs_scaling"
+    scaled_std = "scaled_std"
+    is_collapsed = "is_collapsed"
+    is_overspread = "is_overspread"
+    has_nan = "has_nan"
+
+
+def _find_outliers(
+    observations_and_responses: pl.DataFrame,
+    global_std_scaling: float,
+    std_cutoff: float,
+    alpha: float,
+    active_realizations: list[str],
+) -> pl.DataFrame:
+    responses = observations_and_responses.select(active_realizations)
+    response_stds = responses.with_columns(
+        pl.concat_list("*").list.std(ddof=0).alias(_OutlierColumns.response_std)
+    )[_OutlierColumns.response_std]
+
+    with_outlier_info = (
+        observations_and_responses.with_columns(
+            responses.mean_horizontal().alias(_OutlierColumns.ens_mean),
+            pl.any_horizontal(
+                [pl.col(c).is_nan() | pl.col(c).is_null() for c in active_realizations]
+            ).alias(_OutlierColumns.has_nan),
+            response_stds,
+            # Inflating measurement errors by a factor sqrt(global_std_scaling) as shown
+            # in for example evensen2018 - Analysis of iterative ensemble smoothers for
+            # solving inverse problems.
+            # `global_std_scaling` is 1.0 for ES.
+            pl.lit(np.sqrt(global_std_scaling), dtype=pl.Float64).alias(
+                _OutlierColumns.obs_scaling
+            ),
+        )
+        # Note: Casting to float32 gives slightly different snapshots for some tests
+        # should be updated in standalone PR
+        .with_columns(
+            (pl.col("std") * pl.col(_OutlierColumns.obs_scaling)).alias(
+                _OutlierColumns.scaled_std
+            )
+        )
+        .with_columns(  # Note: These should be consolidated to one column,
+            # indicating the status, can be either:
+            # "collapsed", "overspread", "nan", or "ok"
+            # and piped forward into the snapshot
+            (pl.col(_OutlierColumns.response_std) <= std_cutoff).alias(
+                _OutlierColumns.is_collapsed
+            ),
+            (
+                abs(pl.col("observations") - pl.col(_OutlierColumns.ens_mean))
+                > alpha
+                * (
+                    pl.col(_OutlierColumns.response_std)
+                    + pl.col(_OutlierColumns.scaled_std)
+                )
+            ).alias(_OutlierColumns.is_overspread),
+        )
+    )
+
+    return with_outlier_info
+
+
 def _load_observations_and_responses(
     ensemble: Ensemble,
     alpha: float,
@@ -180,42 +246,15 @@ def _load_observations_and_responses(
     )
 
     realization_responses = list(map(str, iens_active_index))
-    responses = observations_and_responses.select(realization_responses)
-    response_stds = responses.with_columns(
-        pl.concat_list("*").list.std(ddof=0).alias("response_std")
-    )["response_std"]
 
-    observations_and_responses = (
-        observations_and_responses.with_columns(
-            responses.mean_horizontal().alias("ens_mean"),
-            pl.any_horizontal(
-                [
-                    pl.col(str(c)).is_nan() | pl.col(str(c)).is_null()
-                    for c in iens_active_index
-                ]
-            ).alias("has_nan"),
-            response_stds,
-            # Inflating measurement errors by a factor sqrt(global_std_scaling) as shown
-            # in for example evensen2018 - Analysis of iterative ensemble smoothers for
-            # solving inverse problems.
-            # `global_std_scaling` is 1.0 for ES.
-            pl.lit(np.sqrt(global_std_scaling), dtype=pl.Float64).alias("obs_scaling"),
-        )
-        # Note: Casting to float32 gives slightly different snapshots for some tests
-        # should be updated in standalone PR
-        .with_columns((pl.col("std") * pl.col("obs_scaling")).alias("scaled_std"))
-        .with_columns(  # Note: These should be consolidated to one column,
-            # indicating the status, can be either:
-            # "collapsed", "overspread", "nan", or "ok"
-            # and piped forward into the snapshot
-            (pl.col("response_std") <= std_cutoff).alias("is_collapsed"),
-            (
-                abs(pl.col("observations") - pl.col("ens_mean"))
-                > alpha * (pl.col("response_std") + pl.col("scaled_std"))
-            ).alias("is_overspread"),
-        )
+    # Will add _OutlierColumns to the dataframe
+    observations_and_responses = _find_outliers(
+        observations_and_responses,
+        global_std_scaling,
+        std_cutoff,
+        alpha,
+        realization_responses,
     )
-
     observations_and_responses = observations_and_responses.with_columns(
         [
             pl.col(pl.Float64).fill_null(float("nan")),
