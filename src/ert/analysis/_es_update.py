@@ -415,14 +415,12 @@ def _preprocess_observations_and_responses(
 
     processed_data = observations_and_responses.filter(obs_mask)
 
-    # Note: Not doing .ascontiguousarray yields different
+    # Note: Not doing C-order (polars default is fortran) yields different
     # snapshots in test_update_snapshot. Not sure if due to downstream bug in the
     # update.
     # Could be removed & update snapshots in separate PR.
     # Numerically it is exactly the same as the old S
-    return np.ascontiguousarray(
-        processed_data.select(realization_responses).to_numpy()
-    ), (
+    return processed_data.select(realization_responses).to_numpy(order="c"), (
         processed_data["observations"].to_numpy(),
         processed_data["scaled_std"].to_numpy(),
         update_snapshot,
