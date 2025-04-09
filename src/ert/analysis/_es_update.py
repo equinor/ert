@@ -219,6 +219,88 @@ def _find_outliers(
     return with_outlier_info
 
 
+def _auto_scale_observations(
+    observations_and_responses: pl.DataFrame,
+    auto_scale_observations: list[ObservationGroups],
+    obs_mask: npt.NDArray[np.bool_],
+    active_realizations: list[str],
+    progress_callback: Callable[[AnalysisEvent], None],
+) -> tuple[npt.NDArray[np.float64], pl.DataFrame] | tuple[None, None]:
+    scaling_factors_dfs = []
+
+    scaling_factors_updated = (
+        observations_and_responses["obs_scaling"].to_numpy().copy()
+    )
+
+    obs_keys = observations_and_responses["observation_key"].to_numpy().astype(str)
+    for input_group in auto_scale_observations:
+        group = _expand_wildcards(obs_keys, input_group)
+        logger.info(f"Scaling observation group: {group}")
+        obs_group_mask = np.isin(obs_keys, group) & obs_mask
+        if not any(obs_group_mask):
+            logger.error(f"No observations active for group: {input_group}")
+            continue
+
+        data_for_obs = observations_and_responses.filter(obs_group_mask)
+        scaling_factors, clusters, nr_components = misfit_preprocessor.main(
+            data_for_obs.select(active_realizations).to_numpy(),
+            data_for_obs.select("scaled_std").to_numpy(),
+        )
+
+        # This is the current main justification for keeping
+        # some of the logic as numpy instead of polars.
+        scaling_factors_updated[obs_group_mask] *= scaling_factors
+
+        scaling_factors_dfs.append(
+            pl.DataFrame(
+                {
+                    "input_group": [", ".join(input_group)] * len(scaling_factors),
+                    "index": data_for_obs["index"],
+                    "obs_key": data_for_obs["observation_key"],
+                    "scaling_factor": pl.Series(scaling_factors, dtype=pl.Float32),
+                }
+            )
+        )
+
+        # Note: Should be lifted out of this function,
+        # the necessary info should (ideally) be available in the returned dataframe
+        progress_callback(
+            AnalysisDataEvent(
+                name="Auto scale: " + ", ".join(input_group),
+                data=DataSection(
+                    header=[
+                        "Observation",
+                        "Index",
+                        "Cluster",
+                        "Nr components",
+                        "Scaling factor",
+                    ],
+                    data=np.array(
+                        (
+                            data_for_obs["observation_key"].to_numpy(),
+                            data_for_obs["index"],
+                            clusters,
+                            nr_components.astype(int),
+                            scaling_factors,
+                        )
+                    ).T,  # type: ignore
+                ),
+            )
+        )
+
+    if scaling_factors_dfs:
+        return scaling_factors_updated, pl.concat(scaling_factors_dfs)
+    else:
+        msg = (
+            "WARNING: Could not auto-scale the "
+                f"observations {auto_scale_observations}. "
+            f"No match with existing active observations {obs_keys}"
+        )
+        logger.warning(msg)
+        print(msg)
+        return None, None
+
+
 def _load_observations_and_responses(
     ensemble: Ensemble,
     alpha: float,
@@ -276,81 +358,22 @@ def _load_observations_and_responses(
     obs_keys = observations_and_responses["observation_key"].to_numpy()
 
     if auto_scale_observations:
-        scaling_factors_dfs = []
-
-        scaling_factors_updated = (
-            observations_and_responses["obs_scaling"].to_numpy().copy()
+        updated_std_scales, scaling_factors_df = _auto_scale_observations(
+            observations_and_responses,
+            auto_scale_observations,
+            obs_mask,
+            realization_responses,
+            progress_callback,
         )
 
-        for input_group in auto_scale_observations:
-            group = _expand_wildcards(obs_keys, input_group)
-            logger.info(f"Scaling observation group: {group}")
-            obs_group_mask = np.isin(obs_keys, group) & obs_mask
-            if not any(obs_group_mask):
-                logger.error(f"No observations active for group: {input_group}")
-                continue
-
-            data_for_obs = observations_and_responses.filter(obs_group_mask)
-            scaling_factors, clusters, nr_components = misfit_preprocessor.main(
-                data_for_obs.select(realization_responses).to_numpy(),
-                data_for_obs.select("scaled_std").to_numpy(),
-            )
-
-            # This is the current main justification for keeping
-            # some of the logic as numpy instead of polars.
-            scaling_factors_updated[obs_group_mask] *= scaling_factors
-
-            scaling_factors_dfs.append(
-                pl.DataFrame(
-                    {
-                        "input_group": [", ".join(input_group)] * len(scaling_factors),
-                        "index": data_for_obs["index"],
-                        "obs_key": data_for_obs["observation_key"],
-                        "scaling_factor": pl.Series(scaling_factors, dtype=pl.Float32),
-                    }
-                )
-            )
-
-            progress_callback(
-                AnalysisDataEvent(
-                    name="Auto scale: " + ", ".join(input_group),
-                    data=DataSection(
-                        header=[
-                            "Observation",
-                            "Index",
-                            "Cluster",
-                            "Nr components",
-                            "Scaling factor",
-                        ],
-                        data=np.array(
-                            (
-                                data_for_obs["observation_key"].to_numpy(),
-                                data_for_obs["index"],
-                                clusters,
-                                nr_components.astype(int),
-                                scaling_factors,
-                            )
-                        ).T,  # type: ignore
-                    ),
-                )
-            )
-
-        if scaling_factors_dfs:
-            scaling_factors_df = pl.concat(scaling_factors_dfs)
+        if updated_std_scales is not None and scaling_factors_df is not None:
             ensemble.save_observation_scaling_factors(scaling_factors_df)
 
+            # return scaling_factors_updated, scaling_factors_df
             # Recompute with updated scales
             observations_and_responses = observations_and_responses.with_columns(
-                pl.Series(scaling_factors_updated).alias("obs_scaling")
+                pl.Series(updated_std_scales).alias("obs_scaling")
             ).with_columns((pl.col("obs_scaling") * pl.col("std")).alias("scaled_std"))
-        else:
-            msg = (
-                "WARNING: Could not auto-scale the "
-                f"observations {auto_scale_observations}. "
-                f"No match with existing active observations {obs_keys}"
-            )
-            logger.warning(msg)
-            print(msg)
 
     update_snapshot = []
     for row in (
