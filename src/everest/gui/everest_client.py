@@ -18,13 +18,7 @@ from _ert.threading import ErtThread
 from ert.ensemble_evaluator import EvaluatorServerConfig
 from ert.run_models import BaseRunModelAPI
 from ert.run_models.event import StatusEvents, status_event_from_json
-from everest.strings import (
-    CONFIG_PATH_ENDPOINT,
-    SIMULATION_DIR_ENDPOINT,
-    START_EXPERIMENT_ENDPOINT,
-    START_TIME_ENDPOINT,
-    STOP_ENDPOINT,
-)
+from everest.strings import EverEndpoints
 
 logger = logging.getLogger(__name__)
 
@@ -44,45 +38,38 @@ class EverestClient:
         self._password = password
         self._ssl_context = ssl_context
 
-        self._stop_endpoint = "/".join([url, STOP_ENDPOINT])
-        self._start_endpoint = "/".join([url, START_EXPERIMENT_ENDPOINT])
-        self._config_path_endpoint = "/".join([url, CONFIG_PATH_ENDPOINT])
-        self._simulation_dir_endpoint = "/".join([url, SIMULATION_DIR_ENDPOINT])
-        self._start_time_endpoint = "/".join([url, START_TIME_ENDPOINT])
-
         self._is_alive = False
         self._start_time: int | None = None
 
-    @property
-    def simulation_dir(self) -> str:
+    def _http_get(self, endpoint: EverEndpoints) -> requests.Response:
         return requests.get(
-            self._simulation_dir_endpoint,
+            "/".join([self._url, endpoint]),
             verify=self._cert,
             auth=(self._username, self._password),
             proxies={"http": None, "https": None},  # type: ignore
-        ).text
+        )
+
+    def _http_post(self, endpoint: EverEndpoints) -> requests.Response:
+        return requests.post(
+            "/".join([self._url, endpoint]),
+            verify=self._cert,
+            auth=(self._username, self._password),
+            proxies={"http": None, "https": None},  # type: ignore
+        )
+
+    @property
+    def simulation_dir(self) -> str:
+        return self._http_get(EverEndpoints.simulation_dir).text
 
     @property
     def config_filename(self) -> str:
-        config_path = requests.get(
-            self._config_path_endpoint,
-            verify=self._cert,
-            auth=(self._username, self._password),
-            proxies={"http": None, "https": None},  # type: ignore
-        ).text
+        config_path = self._http_get(EverEndpoints.config_path).text
 
         return Path(config_path).name
 
     def get_runtime(self) -> int:
         if self._start_time is None:
-            response = requests.get(
-                self._start_time_endpoint,
-                verify=self._cert,
-                auth=(self._username, self._password),
-                proxies={"http": None, "https": None},  # type: ignore
-            )
-            start_time = int(response.text)
-            self._start_time = start_time
+            self._start_time = int(self._http_get(EverEndpoints.start_time).text)
 
         return int(time.time()) - self._start_time
 
@@ -150,19 +137,15 @@ class EverestClient:
 
     def stop(self) -> None:
         try:
-            response = requests.post(
-                self._stop_endpoint,
-                verify=self._cert,
-                auth=(self._username, self._password),
-                proxies={"http": None, "https": None},  # type: ignore
-            )
+            response = self._http_post(EverEndpoints.stop)
 
             if response.status_code == 200:
                 logger.info("Cancelled experiment from Everest")
                 print("Successfully cancelled experiment")
             else:
                 logger.error(
-                    f"Failed to cancel Everest experiment: POST @ {self._stop_endpoint}, "
+                    f"Failed to cancel Everest experiment: "
+                    f"POST @ {self._url}/{EverEndpoints.stop}, "
                     f"server responded with status {response.status_code}: "
                     f"{HTTPStatus(response.status_code).phrase}"
                 )
