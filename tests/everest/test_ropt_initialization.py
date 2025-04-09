@@ -297,8 +297,8 @@ def test_everest2ropt_snapshot(case, snapshot):
 
 
 def test_everest2ropt_validation_error(monkeypatch) -> None:
-    def _patched_everest2ropt(ever_config, _):
-        ropt_dict = _everest2ropt(ever_config, None)
+    def _patched_everest2ropt(ever_config):
+        ropt_dict = _everest2ropt(ever_config)
         ropt_dict["foo"] = "bar"
         return ropt_dict
 

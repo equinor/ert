@@ -272,9 +272,7 @@ def _parse_optimization(
             ropt_optimizer["split_evaluations"] = True
 
 
-def _everest2ropt(
-    ever_config: EverestConfig, transforms: OptModelTransforms | None
-) -> dict[str, Any]:
+def _everest2ropt(ever_config: EverestConfig) -> dict[str, Any]:
     """Generate a ropt configuration from an Everest one
 
     NOTE: This method is a work in progress. So far only the some of
@@ -315,7 +313,7 @@ def _everest2ropt(
 def everest2ropt(
     ever_config: EverestConfig, transforms: OptModelTransforms | None = None
 ) -> EnOptConfig:
-    ropt_dict = _everest2ropt(ever_config, transforms)
+    ropt_dict = _everest2ropt(ever_config)
 
     try:
         enopt_config = EnOptConfig.model_validate(ropt_dict, context=transforms)
