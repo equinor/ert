@@ -69,12 +69,14 @@ from everest.detached import (
 )
 from everest.plugins.everest_plugin_manager import EverestPluginManager
 from everest.strings import (
+    CONFIG_PATH_ENDPOINT,
     DEFAULT_LOGGING_FORMAT,
     EVEREST,
     EVERSERVER,
     OPT_FAILURE_REALIZATIONS,
     OPTIMIZATION_LOG_DIR,
     OPTIMIZATION_OUTPUT_DIR,
+    SIMULATION_DIR_ENDPOINT,
     START_EXPERIMENT_ENDPOINT,
     STOP_ENDPOINT,
 )
@@ -112,6 +114,7 @@ class ExperimentRunnerState:
     started: bool = False
     events: list[StatusEvents] = dataclasses.field(default_factory=list)
     subscribers: dict[str, "Subscriber"] = dataclasses.field(default_factory=dict)
+    config_path: str | None = None
 
 
 class ExperimentRunner:
@@ -312,10 +315,37 @@ def _everserver_thread(
             try:
                 background_tasks.add_task(runner.run)
                 shared_data.started = True
+
+                # Assume only one unique running experiment per everserver instance
+                # Ideally, we should return the experiment ID in the response here
+                shared_data.config_path = config.config_path
                 return Response("Everest experiment started")
             except Exception as e:
                 return Response(f"Could not start experiment: {e!s}", status_code=501)
         return Response("Everest experiment is running")
+
+    @app.get("/" + CONFIG_PATH_ENDPOINT)
+    async def config_path(
+        request: Request, credentials: HTTPBasicCredentials = Depends(security)
+    ) -> Response:
+        _log(request)
+        _check_user(credentials)
+        if not shared_data.started:
+            return Response("No experiment started", status_code=404)
+
+        return Response(str(shared_data.config_path), status_code=200)
+
+    @app.get("/" + SIMULATION_DIR_ENDPOINT)
+    async def simulation_dir(
+        request: Request, credentials: HTTPBasicCredentials = Depends(security)
+    ) -> Response:
+        _log(request)
+        _check_user(credentials)
+        if not shared_data.started:
+            return Response("No experiment started", status_code=404)
+
+        sim_dir = EverestConfig.from_file(shared_data.config_path).simulation_dir
+        return Response(sim_dir, status_code=200)
 
     @app.websocket("/events")
     async def websocket_endpoint(websocket: WebSocket) -> None:

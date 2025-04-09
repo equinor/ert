@@ -7,6 +7,7 @@ import time
 import traceback
 from base64 import b64encode
 from http import HTTPStatus
+from pathlib import Path
 
 import requests
 from pydantic import ValidationError
@@ -18,6 +19,8 @@ from ert.ensemble_evaluator import EvaluatorServerConfig
 from ert.run_models import BaseRunModelAPI
 from ert.run_models.event import StatusEvents, status_event_from_json
 from everest.strings import (
+    CONFIG_PATH_ENDPOINT,
+    SIMULATION_DIR_ENDPOINT,
     START_EXPERIMENT_ENDPOINT,
     STOP_ENDPOINT,
 )
@@ -42,8 +45,30 @@ class EverestClient:
 
         self._stop_endpoint = "/".join([url, STOP_ENDPOINT])
         self._start_endpoint = "/".join([url, START_EXPERIMENT_ENDPOINT])
+        self._config_path_endpoint = "/".join([url, CONFIG_PATH_ENDPOINT])
+        self._simulation_dir_endpoint = "/".join([url, SIMULATION_DIR_ENDPOINT])
 
         self._is_alive = False
+
+    @property
+    def simulation_dir(self) -> str:
+        return requests.get(
+            self._simulation_dir_endpoint,
+            verify=self._cert,
+            auth=(self._username, self._password),
+            proxies={"http": None, "https": None},  # type: ignore
+        ).text
+
+    @property
+    def config_filename(self) -> str:
+        config_path = requests.get(
+            self._config_path_endpoint,
+            verify=self._cert,
+            auth=(self._username, self._password),
+            proxies={"http": None, "https": None},  # type: ignore
+        ).text
+
+        return Path(config_path).name
 
     @property
     def credentials(self) -> str:
@@ -91,15 +116,15 @@ class EverestClient:
 
         return event_queue, monitor_thread
 
-    def create_run_model_api(self, runpath_format_string: str) -> BaseRunModelAPI:
+    def create_run_model_api(self) -> BaseRunModelAPI:
         def start_fn(
             evaluator_server_config: EvaluatorServerConfig, restart: bool = False
         ) -> None:
             pass
 
         return BaseRunModelAPI(
-            experiment_name="Everest Experiment",
-            runpath_format_string=runpath_format_string,
+            experiment_name=self.config_filename,
+            runpath_format_string=self.simulation_dir,
             support_restart=False,
             start_simulations_thread=start_fn,
             cancel=self.stop,

@@ -10,7 +10,7 @@ from PyQt6.QtWidgets import QApplication
 from everest.gui.main_window import EverestMainWindow
 
 
-def run_gui(config_file: str) -> None:
+def run_gui(output_dir: str) -> None:
     # Replace Python's exception handler for SIGINT with the system default.
     #
     # Python's SIGINT handler is the one that raises KeyboardInterrupt. This is
@@ -31,7 +31,7 @@ def run_gui(config_file: str) -> None:
 
     # Add arg parser if we are to pass more opts
 
-    window = EverestMainWindow(config_file)
+    window = EverestMainWindow(output_dir)
     window.run()
     window.adjustSize()
     window.show()
