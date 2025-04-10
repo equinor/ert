@@ -14,4 +14,5 @@ def migrate(path: Path) -> None:
                 if param["_ert_kind"] == "GenKwConfig":
                     param.pop("template_file", None)
                     param.pop("output_file", None)
+                    param.pop("forward_init_file", None)
             fout.write(json.dumps(parameters_json, indent=4))
