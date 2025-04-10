@@ -169,7 +169,7 @@ class File(Reporter):
 
     @staticmethod
     def _dump_error_file(fm_step, error_msg):
-        with open(ERROR_file, "a", encoding="utf-8") as file:
+        with open(ERROR_file, "w", encoding="utf-8") as file:
             file.write("<error>\n")
             file.write(
                 f"  <time>{time.strftime(TIME_FORMAT, time.localtime())}</time>\n"
