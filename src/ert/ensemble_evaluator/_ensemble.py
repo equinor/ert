@@ -16,9 +16,7 @@ from _ert.events import (
     FMEvent,
     ForwardModelStepFailure,
     ForwardModelStepSuccess,
-    event_to_json,
 )
-from _ert.forward_model_runner.client import Client
 from ert.config import ForwardModelStep, QueueConfig
 from ert.run_arg import RunArg
 from ert.scheduler import Scheduler, create_driver
@@ -185,14 +183,9 @@ class LegacyEnsemble:
 
         return snapshot_mutate_event
 
-    async def send_event(
-        self,
-        event: Event,
-        retries: int = 10,
-    ) -> None:
-        assert self._config is not None
-        async with Client(self._config.get_uri(), token=self._config.token) as client:
-            await client.send(event_to_json(event), retries)
+    async def send_event(self, event: Event) -> None:
+        if self.outbound_event_queue is not None:
+            await self.outbound_event_queue.put(event)
 
     async def evaluate(
         self,
@@ -209,6 +202,7 @@ class LegacyEnsemble:
         the final result of executing all its jobs through a scheduler and driver.
         """
         self._config = config
+        self.outbound_event_queue = scheduler_queue
 
         if not self.id_:
             raise ValueError("Ensemble id not set")
