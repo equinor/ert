@@ -15,7 +15,10 @@ class _NodeBase(ABC):
 def _repr(node: RootNode | IterNode | RealNode | ForwardModelStepNode) -> str:
     parent = "no " if node.parent is None else ""
     children = "no " if not node.children else f"{len(node.children)} "
-    return f"Node<{type(node).__name__}>@{node.id_} with {parent}parent and {children}children"
+    return (
+        f"Node<{type(node).__name__}>@{node.id_} "
+        f"with {parent}parent and {children}children"
+    )
 
 
 def _row(node: RootNode | IterNode | RealNode | ForwardModelStepNode) -> int:

@@ -207,9 +207,9 @@ def main():
     except Exception as exc:
         print(f"fm_dispatch failed with {exc=}")
         pgid = os.getpgid(os.getpid())
-        os.killpg(
-            pgid, signal.SIGTERM
-        )  # This will trigger the sigterm_handler, which shuts down the reporters and SIGKILLS any remaining processes.
+        os.killpg(pgid, signal.SIGTERM)
+        # This will trigger the sigterm_handler, which shuts down the reporters
+        # and SIGKILLS any remaining processes.
 
 
 if __name__ == "__main__":

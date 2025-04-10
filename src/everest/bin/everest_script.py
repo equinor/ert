@@ -77,7 +77,10 @@ def _build_args_parser() -> argparse.ArgumentParser:
     """Build arg parser"""
 
     arg_parser = argparse.ArgumentParser(
-        description="Everest console runner, start an optimization case based on a given config file",
+        description=(
+            "Everest console runner, start an "
+            "optimization case based on a given config file"
+        ),
         usage="everest run <config_file> [arguments]",
     )
     arg_parser.add_argument(
@@ -101,7 +104,10 @@ def _build_args_parser() -> argparse.ArgumentParser:
     arg_parser.add_argument(
         "--show-all-jobs",
         action="store_true",
-        help="This option no longer has an effect, and will be removed in a future version",
+        help=(
+            "This option no longer has an effect, "
+            "and will be removed in a future version"
+        ),
     )
     arg_parser.add_argument(
         "--skip-prompt",
@@ -111,7 +117,10 @@ def _build_args_parser() -> argparse.ArgumentParser:
     arg_parser.add_argument(
         "--disable-monitoring",
         action="store_true",
-        help="Disable monitoring of the optimization run. This will reduce the output to the terminal.",
+        help=(
+            "Disable monitoring of the optimization run. "
+            "This will reduce the output to the terminal."
+        ),
     )
     return arg_parser
 

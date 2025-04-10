@@ -12,7 +12,8 @@ logger = logging.getLogger(__name__)
 
 def get_machine_name() -> str:
     warnings.warn(
-        "get_machine_name has been moved from ert.ensemble_evaluator.config to ert.shared",
+        "get_machine_name has been moved from "
+        "ert.ensemble_evaluator.config to ert.shared",
         DeprecationWarning,
         stacklevel=2,
     )

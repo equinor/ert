@@ -39,7 +39,8 @@ class MockDriver(LocalDriver):
                 return result
             else:
                 raise TypeError(
-                    f"MockDriver's wait() function must return a bool, int or None, not {type(result)}"
+                    "MockDriver's wait() function must return "
+                    f"a bool, int or None, not {type(result)}"
                 )
         return 0
 

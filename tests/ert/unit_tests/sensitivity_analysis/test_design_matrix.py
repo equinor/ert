@@ -54,7 +54,10 @@ def _create_design_matrix(xls_path, design_matrix_df, default_sheet_df) -> Desig
                 }
             ),
             pd.DataFrame([["e", 1]]),
-            r"Design Matrices .* and .* contains non identical columns with the same name: \{'a'\}!",
+            (
+                "Design Matrices .* and .* contains non "
+                r"identical columns with the same name: \{'a'\}!"
+            ),
             id="not_unique_keys",
         ),
         pytest.param(
@@ -123,7 +126,10 @@ def test_merge_multiple_occurrences(
         ),
         pytest.param(
             {"COEFFS": ["a", "b"], "COEFFS2": ["a", "b"]},
-            "Multiple overlapping groups with design matrix found in existing parameters!",
+            (
+                "Multiple overlapping groups with design matrix "
+                "found in existing parameters!"
+            ),
             id="ValidationErrorMultipleGroups",
         ),
     ],
@@ -270,7 +276,10 @@ def test_reading_design_matrix_validate_reals(tmp_path, real_column, error_msg):
         pytest.param(["a", "b", "3"], "Numeric parameter name found in column 2"),
         pytest.param(
             ["a", "b c d e", 33],
-            r"Multiple words in parameter name found in column 1 \(b c d e\)\.\nNumeric parameter name found in column 2",
+            (
+                "Multiple words in parameter name found in column 1 "
+                r"\(b c d e\)\.\nNumeric parameter name found in column 2"
+            ),
             id="multiple errors",
         ),
     ],

@@ -121,7 +121,8 @@ class DesignMatrixPanel(QDialog):
                 layout.setAlignment(Qt.AlignmentFlag.AlignLeft)
 
                 warning_icon.setToolTip(
-                    f"Number of realizations changed from {ensemble_size} to {dm_num_reals} due to 'REAL' column in design matrix"
+                    f"Number of realizations changed from {ensemble_size} "
+                    f"to {dm_num_reals} due to 'REAL' column in design matrix"
                 )
                 warning_icon.show()
 

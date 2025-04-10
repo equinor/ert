@@ -66,7 +66,10 @@ class StdDevPlot:
                     mean_value = np.mean(data)
                     max_value = np.max(data)
 
-                    annotation_text = f"Min: {min_value:.2f}\nMean: {mean_value:.2f}\nMax: {max_value:.2f}"
+                    annotation_text = (
+                        f"Min: {min_value:.2f}\n"
+                        f"Mean: {mean_value:.2f}\nMax: {max_value:.2f}"
+                    )
                     ax_box.annotate(
                         annotation_text,
                         xy=(1, 1),  # Changed from (0, 1) to (1, 1)

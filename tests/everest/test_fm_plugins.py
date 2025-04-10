@@ -93,16 +93,15 @@ def test_lint_forward_model_hook(plugin_manager):
 
     pm = plugin_manager(Plugin())
 
-    assert (
-        next(
-            chain.from_iterable(
-                pm.hook.lint_forward_model(
-                    job="some_forward_model",
-                    args=["--config", "path/to/somewhere"],
-                )
+    assert next(
+        chain.from_iterable(
+            pm.hook.lint_forward_model(
+                job="some_forward_model",
+                args=["--config", "path/to/somewhere"],
             )
         )
-        == "Mocked error message: some_forward_model -> ['--config', 'path/to/somewhere']"
+    ) == (
+        "Mocked error message: some_forward_model -> ['--config', 'path/to/somewhere']"
     )
 
 

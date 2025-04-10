@@ -375,7 +375,7 @@ def workflow_jobs_from_dict(
                     ConfigWarning.warn(
                         f"Duplicate workflow jobs with name {name!r}, choosing "
                         f"{new_job.executable or new_job.ert_script!r} over "
-                        f"{workflow_jobs[name].executable or workflow_jobs[name].ert_script!r}",
+                        f"{workflow_jobs[name].executable or workflow_jobs[name].ert_script!r}",  # noqa: E501
                         name,
                     )
                 workflow_jobs[name] = new_job
@@ -585,8 +585,9 @@ def create_list_of_forward_model_steps_to_run(
         except KeyError:
             errors.append(
                 ConfigValidationError.with_context(
-                    f"Could not find forward model step {fm_step_name!r} in list"
-                    f" of installed forward model steps: {list(installed_steps.keys())!r}",
+                    f"Could not find forward model step {fm_step_name!r} in list "
+                    "of installed forward model steps: "
+                    f"{list(installed_steps.keys())!r}",
                     fm_step_name,
                 )
             )
@@ -964,7 +965,8 @@ class ErtConfig:
                 if group_name == DESIGN_MATRIX_GROUP:
                     dm_errors.append(
                         ConfigValidationError(
-                            f"Cannot have GEN_KW with group name {DESIGN_MATRIX_GROUP} when using DESIGN_MATRIX keyword."
+                            f"Cannot have GEN_KW with group name {DESIGN_MATRIX_GROUP} "
+                            "when using DESIGN_MATRIX keyword."
                         )
                     )
                 if dm_params == group_params:
@@ -979,7 +981,8 @@ class ErtConfig:
                             "Only full overlaps of design matrix and "
                             "one genkw group are supported.\n"
                             f"design matrix parameters: {dm_params}\n"
-                            f"parameters in genkw group <{group_name}>: {group_params}\n"
+                            f"parameters in genkw group <{group_name}>: "
+                            f"{group_params}\n"
                             f"overlap between them: {intersection}"
                         )
                     )
@@ -1072,16 +1075,19 @@ class ErtConfig:
 
     @classmethod
     def _log_config_dict(cls, content_dict: dict[str, Any]) -> None:
-        # The content of the message is sanitized before beeing sendt to App Insigths to make sure GDPR-rules are not violated.
-        # In doing do, the message lenght will typically increase a bit. To Avoid hiting the App Insights' hard limit of message length, the limit is set to 80%
-        # of MAX_MESSAGE_LENGTH_APP_INSIGHTS = 32768
+        # The content of the message is sanitized before beeing sendt to App Insights
+        # to make sure GDPR-rules are not violated. In doing do, the message length
+        # will typically increase a bit. To Avoid hiting the App Insights' hard limit
+        # of message length, the limit is set to 80% of
+        # MAX_MESSAGE_LENGTH_APP_INSIGHTS = 32768
         SAFE_MESSAGE_LENGTH_LIMIT = 26214  # <= MAX_MESSAGE_LENGTH_APP_INSIGHTS * 0.8
         try:
             config_dict_content = pprint.pformat(content_dict)
         except Exception as err:
             config_dict_content = str(content_dict)
             logger.warning(
-                f"Logging of config dict could not be formatted for enhanced readability. {err}"
+                "Logging of config dict could not be formatted for "
+                f"enhanced readability. {err}"
             )
         config_dict_content_length = len(config_dict_content)
         if config_dict_content_length > SAFE_MESSAGE_LENGTH_LIMIT:
@@ -1091,7 +1097,8 @@ class ErtConfig:
             section_count = len(config_sections)
             for i, section in enumerate(config_sections):
                 logger.info(
-                    f"Content of the config_dict (part {i + 1}/{section_count}): {section}"
+                    "Content of the config_dict "
+                    f"(part {i + 1}/{section_count}): {section}"
                 )
         else:
             logger.info(f"Content of the config_dict: {config_dict_content}")
@@ -1252,7 +1259,9 @@ class ErtConfig:
                 else:
                     config_errors.append(
                         ErrorInfo(
-                            message=f"Unknown ObservationType {type(values)} for {obs_name}"
+                            message=(
+                                f"Unknown ObservationType {type(values)} for {obs_name}"
+                            )
                         ).set_context(obs_name)
                     )
                     continue
@@ -1269,11 +1278,10 @@ class ErtConfig:
 
 def _split_string_into_sections(input: str, section_length: int) -> list[str]:
     """
-    Splits a string into sections of length section_length
-    and returns it as a list.
+    Splits a string into sections of length section_length and returns it as a list.
 
-    If section_length is set to 0 or less, no sectioning is performed and the entire input string
-    is returned as one section in a list
+    If section_length is set to 0 or less, no sectioning is performed and the entire
+    input string is returned as one section in a list
     """
     if section_length < 1:
         return [input]
@@ -1374,5 +1382,6 @@ def _forward_model_step_from_config_contents(
     )
 
 
-# Due to circular dependency in type annotations between ErtConfig -> WorkflowJob -> ErtScript -> ErtConfig
+# Due to circular dependency in type annotations between
+# ErtConfig -> WorkflowJob -> ErtScript -> ErtConfig
 rebuild_dataclass(ErtConfig)

@@ -116,7 +116,8 @@ class Client:
                     await self.process_message(raw_msg.decode("utf-8"))
             except zmq.ZMQError as exc:
                 logger.debug(
-                    f"{self.dealer_id} connection to evaluator went down, reconnecting: {exc}"
+                    f"{self.dealer_id} connection to evaluator went down, "
+                    f"reconnecting: {exc}"
                 )
                 await asyncio.sleep(0)
                 self.socket.connect(self.url)
@@ -139,13 +140,15 @@ class Client:
                     )
                 except TimeoutError:
                     logger.warning(
-                        f"{self.dealer_id} failed to get acknowledgment on the {message!r}. Resending."
+                        f"{self.dealer_id} failed to get acknowledgment on "
+                        f"the {message!r}. Resending."
                     )
                 else:
                     return
             except zmq.ZMQError as exc:
                 logger.debug(
-                    f"{self.dealer_id} connection to evaluator went down, reconnecting: {exc}"
+                    f"{self.dealer_id} connection to evaluator went down, "
+                    f"reconnecting: {exc}"
                 )
             except asyncio.CancelledError:
                 self.term()

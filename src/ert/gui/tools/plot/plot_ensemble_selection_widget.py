@@ -67,7 +67,9 @@ class EnsembleSelectListWidget(QListWidget):
             self.addItem(it)
             self._ensemble_count += 1
             it.setToolTip(
-                f"{ensemble.experiment_name} : {ensemble.name}\nToggle up to 5 plots or reorder by drag & drop\nOrder determines draw order and color"
+                f"{ensemble.experiment_name} : {ensemble.name}\n"
+                "Toggle up to 5 plots or reorder by drag & drop\n"
+                "Order determines draw order and color"
             )
 
         if (viewport := self.viewport()) is not None:

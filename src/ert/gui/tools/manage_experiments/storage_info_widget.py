@@ -307,7 +307,10 @@ class _EnsembleWidget(QWidget):
             html = "<table>"
             assert self._ensemble is not None
             for state_index, state in enumerate(self._ensemble.get_ensemble_state()):
-                html += f"<tr><td width=30>{state_index:d}.</td><td>{', '.join([s.name for s in state])}</td></tr>"
+                html += (
+                    f"<tr><td width=30>{state_index:d}.</td>"
+                    f"<td>{', '.join([s.name for s in state])}</td></tr>"
+                )
             html += "</table>"
             self._state_text_edit.setHtml(html)
 
@@ -410,7 +413,8 @@ class _RealizationWidget(QWidget):
     def setRealization(self, ensemble: Ensemble, realization: int) -> None:
         realization_state = ensemble.get_ensemble_state()[realization]
         self._state_label.setText(
-            f"Realization state: {', '.join(sorted([s.name for s in realization_state]))}"
+            "Realization state: "
+            f"{', '.join(sorted([s.name for s in realization_state]))}"
         )
 
         html = "<table>"

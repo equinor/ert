@@ -211,7 +211,8 @@ class DeprecatedAction(argparse.Action):
             f"Use {self.alternative_option} instead." if self.alternative_option else ""
         )
         warnings.warn(
-            f"{option_string} is deprecated and will be removed in future versions. {alternative_msg}",
+            f"{option_string} is deprecated and will be removed in "
+            f"future versions. {alternative_msg}",
             stacklevel=1,
         )
         setattr(namespace, self.dest, values)

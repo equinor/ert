@@ -80,7 +80,8 @@ def get_ert_memory_usage() -> int:
     usage = resource.getrusage(resource.RUSAGE_SELF)
     rss_scale = 1
     if sys.platform == "darwin":
-        # macOS apparently outputs the maxrss value as bytes rather than kilobytes as on Linux.
+        # macOS apparently outputs the maxrss value as bytes
+        # rather than kilobytes as on Linux.
         # https://stackoverflow.com/questions/59913657/strange-values-of-get-rusage-maxrss-on-macos-and-linux
         rss_scale = 1000
 

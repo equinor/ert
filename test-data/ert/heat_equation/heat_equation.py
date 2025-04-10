@@ -82,8 +82,9 @@ if __name__ == "__main__":
     else:
         cond = resfo.read("cond.bgrdecl")[0][1].reshape(nx, nx)
 
-    # The update may give non-physical parameter values, which here means negative heat conductivity.
-    # Setting negative values to a small positive value but not zero because we want to be able to divide by them.
+    # The update may give non-physical parameter values, which here means
+    # negative heat conductivity. Setting negative values to a small positive
+    # value but not zero because we want to be able to divide by them.
     cond = cond.clip(min=1e-8)
 
     # Calculate maximum `dt`.

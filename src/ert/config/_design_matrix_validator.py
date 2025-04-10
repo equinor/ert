@@ -20,7 +20,8 @@ class DesignMatrixValidator:
             )
         except Exception as exc:
             logger.warning(
-                f"DESIGN_MATRIX validation of DESIGN2PARAMS would have failed with: {exc!s}"
+                "DESIGN_MATRIX validation of DESIGN2PARAMS would have "
+                f"failed with: {exc!s}"
             )
 
     def validate_design_matrix_merge(self) -> None:

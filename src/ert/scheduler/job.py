@@ -134,7 +134,8 @@ class Job:
             logger.info(
                 f"Pending time for realization {self.iens} "
                 f"was {pending_time:.2f} seconds "
-                f"(num_cpu={self.real.num_cpu} realization_memory={self.real.realization_memory})"
+                f"(num_cpu={self.real.num_cpu} "
+                f"realization_memory={self.real.realization_memory})"
             )
 
             await self._send(JobState.RUNNING)
@@ -203,7 +204,8 @@ class Job:
         assert self._scheduler._events is not None
         await self._scheduler._events.put(timeout_event)
         logger.warning(
-            f"Realization {self.iens} stopped due to MAX_RUNTIME={self.real.max_runtime} seconds"
+            f"Realization {self.iens} stopped due to "
+            f"MAX_RUNTIME={self.real.max_runtime} seconds"
         )
         self.returncode.cancel()
 
@@ -381,7 +383,8 @@ async def log_warnings_from_forward_model(real: Realization) -> None:
 
         for line, counter in Counter(captured).items():
             logger.warning(
-                f"Realization {iens} step {step.name}.{step_idx} warned {counter} time(s) in {filetype}: {line}"
+                f"Realization {iens} step {step.name}.{step_idx} "
+                f"warned {counter} time(s) in {filetype}: {line}"
             )
 
     with suppress(KeyError):

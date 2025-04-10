@@ -56,7 +56,10 @@ def workflow_job_from_file(config_file: str, name: str | None = None) -> _Workfl
             content_dict["SCRIPT"],  # type: ignore
         )
     if script is not None and internal:
-        msg = f"Deprecated keywords, SCRIPT and INTERNAL, for {name}, loading script {script}"
+        msg = (
+            "Deprecated keywords, SCRIPT and INTERNAL, "
+            f"for {name}, loading script {script}"
+        )
         logger.warning(msg)
         ConfigWarning.deprecation_warn(msg, content_dict["SCRIPT"])  # type: ignore
         try:

@@ -274,7 +274,10 @@ class FieldParameter(Parameter):
         # If forward_init, a forward model step is expected to produce the
         # init file. The following COPY_FILE is that forward model step.
         if self.forward_init:
-            decl += f'\nFORWARD_MODEL COPY_FILE(<FROM>="../../../{self.out_filename}",<TO>=.)'
+            decl += (
+                "\nFORWARD_MODEL COPY_FILE("
+                f'<FROM>="../../../{self.out_filename}",<TO>=.)'
+            )
         return decl
 
     def create_file(self, io_source: IoProvider, num_realizations: int):

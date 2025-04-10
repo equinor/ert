@@ -64,8 +64,9 @@ class GenDataRFTCSVExportJob(ErtPlugin):
 
     Optional arguments:
 
-     ensemble_data_as_json: a comma separated list of ensembles to export (no spaces allowed)
-                if no list is provided the current ensemble is exported
+     ensemble_data_as_json: a comma separated list of ensembles to
+         export (no spaces allowed). If no list is provided the current
+         ensemble is exported
 
     """
 

@@ -120,7 +120,10 @@ def check_expression(original, path_expression, expected: list[str], msg_start):
         ),
         pytest.param(
             "",
-            '    import os\n    if os.getcwd().split("/")[-2].split("-")[1] == "0": sys.exit(1)',
+            (
+                "    import os\n"
+                '    if os.getcwd().split("/")[-2].split("-")[1] == "0": sys.exit(1)'
+            ),
             [
                 ENSEMBLE_SMOOTHER_MODE,
                 "--realizations",

@@ -44,7 +44,7 @@ def test_restart_failed_realizations(opened_main_window_poly, qtbot):
                         output = [_evaluate(coeffs, x) for x in range(10)]
                         with open("poly.out", "w", encoding="utf-8") as f:
                             f.write("\\n".join(map(str, output)))
-                    """
+                    """  # noqa: E501
                 )
             )
         os.chmod(

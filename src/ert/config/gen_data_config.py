@@ -68,8 +68,8 @@ class GenDataConfig(ResponseConfig):
                 )
             except ValueError as e:
                 raise ConfigValidationError.with_context(
-                    f"The REPORT_STEPS setting: {report_steps_value} for {name} is invalid"
-                    ' - must be a valid range string: e.g.: "0-1, 4-6, 8"',
+                    f"The REPORT_STEPS setting: {report_steps_value} for {name} is "
+                    'invalid - must be a valid range string: e.g.: "0-1, 4-6, 8"',
                     gen_data,
                 ) from e
 
@@ -169,8 +169,8 @@ class GenDataConfig(ResponseConfig):
         if errors:
             if all(isinstance(err, FileNotFoundError) for err in errors):
                 raise FileNotFoundError(
-                    "Could not find one or more files/directories while reading GEN_DATA"
-                    f" {self.name}: {','.join([str(err) for err in errors])}"
+                    "Could not find one or more files/directories while reading "
+                    f"GEN_DATA {self.name}: {','.join([str(err) for err in errors])}"
                 )
             else:
                 raise InvalidResponseFile(

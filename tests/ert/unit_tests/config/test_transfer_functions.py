@@ -172,8 +172,9 @@ def test_that_triangular_is_within_bounds(x, args):
 @given(valid_triangular_params())
 def test_mode_behavior(args):
     """
-    When the CDF value of x (from the normal distribution) corresponds to the relative position of the mode in the triangular distribution,
-    the output of trans_triangular should be the mode (_mode) of the triangular distribution.
+    When the CDF value of x (from the normal distribution) corresponds to the relative
+    position of the mode in the triangular distribution, the output of trans_triangular
+    should be the mode (_mode) of the triangular distribution.
     """
     mode, min_, max_ = args
     ymode = (mode - min_) / (max_ - min_)
@@ -186,8 +187,9 @@ def test_mode_behavior(args):
 @given(valid_triangular_params())
 def test_that_triangular_is_symmetric_around_mode(args):
     """
-    For values of x equidistant from the CDF value at the mode, the outputs should be symmetrically placed around the mode.
-    This property holds if the triangular distribution is symmetric.
+    For values of x equidistant from the CDF value at the mode, the outputs should be
+    symmetrically placed around the mode. This property holds if the triangular
+    distribution is symmetric.
     """
     mode, min_, max_ = args
 

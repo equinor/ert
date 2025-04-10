@@ -137,17 +137,20 @@ def test_suggester_gives_update_settings_migration():
         ("<KEY1> x1", None),
         (
             "A B",
-            "Using .* with substitution strings that are not of the form '<KEY>' is deprecated. "
+            "Using .* with substitution strings that are not of the form "
+            "'<KEY>' is deprecated. "
             "Please change A to <A>",
         ),
         (
             "<A<B>> C",
-            "Using .* with substitution strings that are not of the form '<KEY>' is deprecated. "
+            "Using .* with substitution strings that are not of the form "
+            "'<KEY>' is deprecated. "
             "Please change <A<B>> to <AB>",
         ),
         (
             "<A><B> C",
-            "Using .* with substitution strings that are not of the form '<KEY>' is deprecated. "
+            "Using .* with substitution strings that are not of the "
+            "form '<KEY>' is deprecated. "
             "Please change <A><B> to <AB>",
         ),
     ],
@@ -204,7 +207,10 @@ def test_that_gen_kw_with_init_files_warns():
     Path("init_file").write_text("a 0.4", encoding="utf-8")
     with pytest.warns(
         ConfigWarning,
-        match="GEN_KW with INIT_FILES is deprecated, and will be removed in the next version.",
+        match=(
+            "GEN_KW with INIT_FILES is deprecated, and will be "
+            "removed in the next version."
+        ),
     ):
         ErtConfig.from_file_contents(
             "NUM_REALIZATIONS 1\nGEN_KW COEFFS coeff_priors INIT_FILES:init_file%d"

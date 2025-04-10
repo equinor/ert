@@ -348,7 +348,8 @@ class LocalExperiment(BaseMode):
         responses_configuration = self.response_configuration
         if response_type not in responses_configuration:
             raise KeyError(
-                f"Response type {response_type} does not exist in current responses.json"
+                f"Response type {response_type} does not "
+                "exist in current responses.json"
             )
 
         return responses_configuration[response_type].has_finalized_keys
@@ -365,7 +366,8 @@ class LocalExperiment(BaseMode):
         responses_configuration = self.response_configuration
         if response_type not in responses_configuration:
             raise KeyError(
-                f"Response type {response_type} does not exist in current responses.json"
+                f"Response type {response_type} does not "
+                "exist in current responses.json"
             )
 
         config = responses_configuration[response_type]

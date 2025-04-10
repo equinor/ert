@@ -1005,9 +1005,9 @@ def test_load_file_with_errors(copy_math_func_test_data_to_tmp, capsys):
 
     assert "line: 5, column: 10" in captured.err
     assert (
-        "Input should be a valid number, unable to parse string as a number (type=float_parsing)"
-        in captured.err
-    )
+        "Input should be a valid number, "
+        "unable to parse string as a number (type=float_parsing)"
+    ) in captured.err
 
     assert "line: 17, column: 5" in captured.err
     assert "Extra inputs are not permitted (type=extra_forbidden)" in captured.err
@@ -1021,7 +1021,10 @@ def test_load_file_with_errors(copy_math_func_test_data_to_tmp, capsys):
             [],
             [
                 "controls\n  List should have at least 1 item after validation, not 0",
-                "objective_functions\n  List should have at least 1 item after validation, not 0",
+                (
+                    "objective_functions\n  "
+                    "List should have at least 1 item after validation, not 0"
+                ),
             ],
         ),
         (
@@ -1135,9 +1138,9 @@ def test_load_file_undefined_substitutions(min_config, change_to_tmpdir, capsys)
 
     captured = capsys.readouterr()
     assert (
-        "Loading config file <config.yml> failed with: The following key is missing: ['r{{undefined_key }}']"
-        in captured.err
-    )
+        "Loading config file <config.yml> failed with: "
+        "The following key is missing: ['r{{undefined_key }}']"
+    ) in captured.err
 
 
 @pytest.mark.parametrize(

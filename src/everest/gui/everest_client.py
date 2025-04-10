@@ -153,12 +153,14 @@ class EverestClient:
 
         except requests.exceptions.ConnectionError as e:
             logger.error(
-                f"Connection error when cancelling Everest experiment: {''.join(traceback.format_exception(e))}"
+                "Connection error when cancelling Everest "
+                f"experiment: {''.join(traceback.format_exception(e))}"
             )
             print("Failed to cancel experiment")
 
         except HTTPError as e:
             logger.error(
-                f"HTTP error when cancelling Everest experiment: {''.join(traceback.format_exception(e))}"
+                "HTTP error when cancelling Everest "
+                f"experiment: {''.join(traceback.format_exception(e))}"
             )
             print("Failed to cancel experiment")

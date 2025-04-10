@@ -311,7 +311,8 @@ async def test_faulty_bsub_produces_error_log(monkeypatch, tmp_path):
 
 @pytest.mark.timeout(10)
 @pytest.mark.parametrize(
-    "mocked_iens2jobid, iens_to_kill, bkill_returncode, bkill_stdout, bkill_stderr, expected_logged_error",
+    "mocked_iens2jobid, iens_to_kill, "
+    "bkill_returncode, bkill_stdout, bkill_stderr, expected_logged_error",
     [
         pytest.param(
             {"1": "11"},
@@ -595,7 +596,8 @@ async def test_that_bsub_will_retry_and_fail(
 @pytest.mark.parametrize(
     ("exit_code, error_msg"),
     [
-        # All these have been manually obtained on the command line by perturbing the command arguments to bsub:
+        # All these have been manually obtained on the command line by
+        # perturbing the command arguments to bsub:
         (255, "No such queue. Job not submitted"),
         (255, "Too many processors requested. Job not submitted."),
         (255, 'Error near "select" : duplicate section. Job not submitted.'),
@@ -607,7 +609,8 @@ async def test_that_bsub_will_retry_and_fail(
         (
             255,
             "Error with <select[rhel < 8 && cs & x86_64Linux] rusage[mem=50]>:"
-            " '&' cannot be used in the resource requirement section. Job not submitted.",
+            " '&' cannot be used in the resource requirement section. "
+            "Job not submitted.",
         ),
         (255, "Error in rusage section. Job not submitted."),
     ],
@@ -721,14 +724,20 @@ async def test_that_bsub_will_retry_and_succeed(
             "select[location=='cloud']",
             ["linrgs12-foo", "linrgs13-bar"],
             None,
-            "select[location=='cloud' && hname!='linrgs12-foo' && hname!='linrgs13-bar']",
+            (
+                "select[location=='cloud' && hname!='linrgs12-foo' "
+                "&& hname!='linrgs13-bar']"
+            ),
             id="existing_select",
         ),
         pytest.param(
             "select[location=='cloud']",
             ["linrgs12-foo", "linrgs13-bar"],
             20 * 1024**3,
-            "select[location=='cloud' && hname!='linrgs12-foo' && hname!='linrgs13-bar'] rusage[mem=20480]",
+            (
+                "select[location=='cloud' && hname!='linrgs12-foo' && "
+                "hname!='linrgs13-bar'] rusage[mem=20480]"
+            ),
             id="multiple_selects_with_realization_memory",
         ),
         pytest.param(
@@ -1294,7 +1303,8 @@ async def test_that_kill_before_submit_is_finished_works(tmp_path, monkeypatch, 
     to a realization right after it has been submitted (as in driver.submit()).
 
     The bug intended to catch is if the driver gives up on killing before submission
-    is not done yet, it is important not to let the realization through in that scenario.
+    is not done yet, it is important not to let the realization through in that
+    scenario.
     """
     monkeypatch.chdir(tmp_path)
 

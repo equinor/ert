@@ -182,7 +182,8 @@ class EnsembleEvaluator:
                 logger.warning(cpu_message)
 
         logger.info(
-            f"Ensemble ran with maximum memory usage for a single realization job: {max_memory_usage}"
+            "Ensemble ran with maximum memory usage for a "
+            f"single realization job: {max_memory_usage}"
         )
 
         await self._append_message(self.ensemble.update_snapshot(events))

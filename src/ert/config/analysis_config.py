@@ -103,8 +103,8 @@ class AnalysisConfig:
         for module_name, var_name, value in analysis_set_var:
             if module_name == "IES_ENKF":
                 ConfigWarning.warn(
-                    f"{module_name} has been removed and has no effect, valid options are:\n"
-                    "ANALYSIS_SET_VAR STD_ENKF ..."
+                    f"{module_name} has been removed and has no effect, valid "
+                    "options are:\nANALYSIS_SET_VAR STD_ENKF ..."
                 )
                 continue
             if module_name == "OBSERVATIONS":
@@ -115,8 +115,8 @@ class AnalysisConfig:
                 else:
                     all_errors.append(
                         ConfigValidationError(
-                            f"Unknown variable: {var_name} for: ANALYSIS_SET_VAR OBSERVATIONS {var_name}"
-                            "Valid options: AUTO_SCALE"
+                            f"Unknown variable: {var_name} for: ANALYSIS_SET_VAR "
+                            f"OBSERVATIONS {var_name}\nValid options: AUTO_SCALE"
                         )
                     )
                 continue
@@ -128,8 +128,9 @@ class AnalysisConfig:
             if var_name in deprecated_inversion_keys:
                 all_errors.append(
                     ConfigValidationError(
-                        f"Keyword {var_name} has been replaced by INVERSION and has no effect."
-                        "\n\nPlease see https://ert.readthedocs.io/en/latest/reference/configuration/keywords.html#inversion-algorithm "
+                        f"Keyword {var_name} has been replaced by INVERSION and "
+                        "has no effect.\n\nPlease see "
+                        "https://ert.readthedocs.io/en/latest/reference/configuration/keywords.html#inversion-algorithm "  # noqa: E501
                         "for documentation how to use this instead."
                     )
                 )
@@ -150,16 +151,18 @@ class AnalysisConfig:
             except KeyError:
                 all_errors.append(
                     ConfigValidationError(
-                        f"Invalid configuration: ANALYSIS_SET_VAR {module_name} {var_name}"
+                        "Invalid configuration: ANALYSIS_SET_VAR "
+                        f"{module_name} {var_name}"
                     )
                 )
 
         if errors:
             all_errors.append(
                 ConfigValidationError(
-                    f"The {', '.join(errors)} keyword(s) has been removed and functionality "
-                    "replaced with the ENKF_TRUNCATION keyword. Please see "
-                    "https://ert.readthedocs.io/en/latest/reference/configuration/keywords.html#enkf-truncation "
+                    f"The {', '.join(errors)} keyword(s) has been removed and "
+                    "functionality replaced with the ENKF_TRUNCATION keyword. "
+                    "Please see "
+                    "https://ert.readthedocs.io/en/latest/reference/configuration/keywords.html#enkf-truncation "  # noqa: E501
                     "for documentation how to use this instead."
                 )
             )
@@ -190,7 +193,8 @@ class AnalysisConfig:
                     design_matrix.merge_with_other(dm_other)
                 else:
                     logger.warning(
-                        f"Duplicate DESIGN_MATRIX entries {dm_other}, only reading once."
+                        f"Duplicate DESIGN_MATRIX entries {dm_other}, "
+                        "only reading once."
                     )
         config = cls(
             minimum_required_realizations=min_realization,

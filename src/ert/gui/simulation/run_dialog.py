@@ -378,7 +378,10 @@ class RunDialog(QFrame):
             self._fm_step_overview.set_realization(iter_, real)
 
             if not self._is_everest:
-                text = f"Realization id {index.data(RealIens)} in iteration {index.data(IterNum)}"
+                text = (
+                    f"Realization id {index.data(RealIens)} in "
+                    f"iteration {index.data(IterNum)}"
+                )
             else:
                 text = (
                     f"Simulation {index.data(RealIens)} in batch {index.data(IterNum)}"
@@ -454,7 +457,8 @@ class RunDialog(QFrame):
 
         if maximum_memory_usage:
             self.memory_usage.setText(
-                f"Maximal realization memory usage: {byte_with_unit(maximum_memory_usage)}"
+                "Maximal realization memory usage: "
+                f"{byte_with_unit(maximum_memory_usage)}"
             )
 
     @Slot(object)

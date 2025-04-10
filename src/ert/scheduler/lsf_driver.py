@@ -413,7 +413,8 @@ class LsfDriver(Driver):
                 return_on_msgs=(JOB_ALREADY_FINISHED_BKILL_MSG),
             )
             await asyncio.create_subprocess_shell(
-                f"sleep {self._sleep_time_between_bkills}; {self._bkill_cmd} -s SIGKILL {job_id}",
+                f"sleep {self._sleep_time_between_bkills}; "
+                f"{self._bkill_cmd} -s SIGKILL {job_id}",
                 start_new_session=True,
                 stdout=asyncio.subprocess.DEVNULL,
                 stderr=asyncio.subprocess.DEVNULL,
@@ -454,7 +455,8 @@ class LsfDriver(Driver):
                 # bjobs may give nonzero return code even when it is providing
                 # at least some correct information
                 logger.warning(
-                    f"bjobs gave returncode {process.returncode} and error {stderr.decode()}"
+                    f"bjobs gave returncode {process.returncode} "
+                    f"and error {stderr.decode()}"
                 )
             bjobs_states = _parse_jobs_dict(parse_bjobs(stdout.decode(errors="ignore")))
             self.update_and_log_exec_hosts(
@@ -484,7 +486,8 @@ class LsfDriver(Driver):
 
             if missing_in_bhist_and_bjobs and self._bhist_cache is not None:
                 logger.debug(
-                    f"bhist did not give status for job_ids {missing_in_bhist_and_bjobs}, giving up for now."
+                    "bhist did not give status for job_ids "
+                    f"{missing_in_bhist_and_bjobs}, giving up for now."
                 )
             await asyncio.sleep(self._poll_period)
 
@@ -495,7 +498,8 @@ class LsfDriver(Driver):
         iens = self._jobs[job_id].iens
         if isinstance(new_state, IgnoredJobstates):
             logger.debug(
-                f"Job ID '{job_id}' for {iens=} is of unknown job state '{new_state.job_state}'"
+                f"Job ID '{job_id}' for {iens=} is of unknown "
+                f"job state '{new_state.job_state}'"
             )
             return
 
@@ -640,7 +644,8 @@ class LsfDriver(Driver):
         for job_id, exec_hosts in bjobs_exec_hosts.items():
             if self._jobs[job_id].exec_hosts == "-" and exec_hosts != "-":
                 logger.info(
-                    f"Realization {self._jobs[job_id].iens} was assigned to host: {exec_hosts}"
+                    f"Realization {self._jobs[job_id].iens} "
+                    f"was assigned to host: {exec_hosts}"
                 )
                 self._jobs[job_id].exec_hosts = exec_hosts
 

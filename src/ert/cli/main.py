@@ -60,8 +60,8 @@ def run_cli(args: Namespace, plugin_manager: ErtPluginManager | None = None) -> 
         WORKFLOW_MODE,
     }:
         raise ErtCliError(
-            f"To run {args.mode}, observations are needed. \n"
-            f"Please add an observation file to {args.config}. Example: \n"
+            f"To run {args.mode}, observations are needed.\n"
+            f"Please add an observation file to {args.config}. Example:\n"
             f"'OBS_CONFIG observation_file.txt'."
         )
 
@@ -71,8 +71,8 @@ def run_cli(args: Namespace, plugin_manager: ErtPluginManager | None = None) -> 
     }:
         if not ert_config.ensemble_config.parameter_configs:
             raise ErtCliError(
-                f"To run {args.mode}, GEN_KW, FIELD or SURFACE parameters are needed. \n"
-                f"Please add to file {args.config}"
+                f"To run {args.mode}, GEN_KW, FIELD or SURFACE parameters are "
+                f"needed.\nPlease add to file {args.config}"
             )
         if not any(
             p.update for p in ert_config.ensemble_config.parameter_configs.values()
@@ -119,7 +119,8 @@ def run_cli(args: Namespace, plugin_manager: ErtPluginManager | None = None) -> 
             "might be overwritten.\n"
             "- Previously generated files might "
             "be used if not configured correctly.\n"
-            f"- {model.get_number_of_existing_runpaths()} out of {model.get_number_of_active_realizations()} realizations "
+            f"- {model.get_number_of_existing_runpaths()} out of "
+            f"{model.get_number_of_active_realizations()} realizations "
             "are running in existing runpaths.\n"
         )
         logger.warning("ERT is running in an existing runpath")

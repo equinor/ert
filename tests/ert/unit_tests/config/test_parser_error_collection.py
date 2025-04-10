@@ -217,7 +217,10 @@ def test_that_disallowed_argument_is_located_1fn():
             line=1,
             column=14,
             end_column=19,
-            match=r"argument 1 must be one of \['LSF', 'LOCAL', 'TORQUE', 'SLURM', 'GENERIC'\]",
+            match=(
+                "argument 1 must be one of "
+                r"\['LSF', 'LOCAL', 'TORQUE', 'SLURM', 'GENERIC'\]"
+            ),
         ),
     )
 
@@ -479,7 +482,10 @@ def test_queue_option_max_running_non_int():
             line=4,
             column=32,
             end_column=33,
-            match=r"Input should be a valid integer, unable to parse string as an integer",
+            match=(
+                r"Input should be a valid integer, "
+                "unable to parse string as an integer"
+            ),
         ),
     )
 

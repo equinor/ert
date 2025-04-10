@@ -9,7 +9,7 @@ from typing import Any
 
 QSTAT_HEADER = (
     "Job id                         Name            User             Time Use S Queue\n"
-    "-----------------------------  --------------- ---------------  -------- - ---------------\n"
+    "-----------------------------  --------------- ---------------  -------- - ---------------\n"  # noqa: E501
 )
 
 
@@ -70,7 +70,8 @@ def main() -> None:
             queue = "mocked"
 
             print(
-                f"{job:30.30}  {name:15.15} {user:15.15}  {time:8.8} {state:1.1} {queue:5.5}"
+                f"{job:30.30}  {name:15.15} {user:15.15}  "
+                f"{time:8.8} {state:1.1} {queue:5.5}"
             )
 
     if args.F == "json":

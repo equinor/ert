@@ -687,7 +687,10 @@ def test_that_private_over_global_args_does_not_give_logging_message_for_argpass
             ),
             "DEFINE <ENV> $ENV\nFORWARD_MODEL job_name(<ARG>=<ENV>)",
             ["env_value"],
-            id="Test that the environment variable $ENV is put into the forward model step",
+            id=(
+                "Test that the environment variable $ENV "
+                "is put into the forward model step"
+            ),
         ),
     ],
 )
@@ -738,7 +741,9 @@ def test_that_executables_in_path_are_not_made_realpath(tmp_path):
 
     config_file = tmp_path / "config.ert"
     config_file.write_text(
-        'NUM_REALIZATIONS 1\nINSTALL_JOB echo echo_job\nFORWARD_MODEL echo(<MSG>="hello")\n'
+        "NUM_REALIZATIONS 1\n"
+        "INSTALL_JOB echo echo_job\n"
+        'FORWARD_MODEL echo(<MSG>="hello")\n'
     )
 
     ert_config = ErtConfig.from_file(str(config_file))

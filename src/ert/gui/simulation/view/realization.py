@@ -54,7 +54,8 @@ class RealizationWidget(QWidget):
         self._real_view.setResizeMode(QListView.ResizeMode.Adjust)
         self._real_view.setUniformItemSizes(True)
         self._real_view.setStyleSheet(
-            f"QListView {{ background-color: {self.palette().color(QPalette.ColorRole.Window).name()}; }}"
+            f"QListView {{ background-color: "
+            f"{self.palette().color(QPalette.ColorRole.Window).name()}; }}"
         )
 
         self._real_view.clicked.connect(self._item_clicked)

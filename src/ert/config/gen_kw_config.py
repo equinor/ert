@@ -115,8 +115,10 @@ class GenKwConfig(ParameterConfig):
             elif Path(template_file).stat().st_size == 0:
                 token = getattr(parameter_file_context, "token", parameter_file_context)
                 ConfigWarning.deprecation_warn(
-                    f"The template file for GEN_KW ({gen_kw_key}) is empty. If templating is not needed, you "
-                    f"can use GEN_KW with just the distribution file instead: GEN_KW {gen_kw_key} {token}",
+                    f"The template file for GEN_KW ({gen_kw_key}) is empty. "
+                    "If templating is not needed, you "
+                    "can use GEN_KW with just the distribution file "
+                    f"instead: GEN_KW {gen_kw_key} {token}",
                     positional_args[1],
                 )
 
@@ -152,7 +154,8 @@ class GenKwConfig(ParameterConfig):
                 if len(items) < 2:
                     errors.append(
                         ConfigValidationError.with_context(
-                            f"Too few values on line {line_number} in parameter file {parameter_file_context}",
+                            f"Too few values on line {line_number} in parameter "
+                            f"file {parameter_file_context}",
                             gen_kw,
                         )
                     )
@@ -221,7 +224,8 @@ class GenKwConfig(ParameterConfig):
             if not (xmin <= xmode <= xmax):
                 errors.append(
                     ErrorInfo(
-                        f"The mode {xmode} must be between the minimum {xmin} and maximum {xmax}"
+                        f"The mode {xmode} must be between the minimum "
+                        f"{xmin} and maximum {xmax}"
                         f" for {dist} distributed parameter {key}",
                     ).set_context(self.name)
                 )
@@ -461,25 +465,30 @@ class GenKwConfig(ParameterConfig):
         Generate a sample value for each key in a parameter group.
 
         The sampling is reproducible and dependent on a global seed combined
-        with the parameter group name and individual key names. The 'realization' parameter
-        determines the specific sample point from the distribution for each parameter.
+        with the parameter group name and individual key names. The 'realization'
+        parameter determines the specific sample point from the distribution for each
+        parameter.
 
         Parameters:
-        - parameter_group_name (str): The name of the parameter group, used to ensure unique RNG
-        seeds for different groups.
-        - keys (list[str]): A list of parameter keys for which the sample values are generated.
+        - parameter_group_name (str): The name of the parameter group, used to ensure
+        unique RNG seeds for different groups.
+        - keys (list[str]): A list of parameter keys for which the sample values are
+        generated.
         - global_seed (str): A global seed string used for RNG seed generation to ensure
         reproducibility across runs.
-        - realization (int): An integer used to advance the RNG to a specific point in its
-        sequence, effectively selecting the 'realization'-th sample from the distribution.
+        - realization (int): An integer used to advance the RNG to a specific point in
+        its sequence, effectively selecting the 'realization'-th sample from the
+        distribution.
 
         Returns:
-        - npt.NDArray[np.double]: An array of sample values, one for each key in the provided list.
+        - npt.NDArray[np.double]: An array of sample values, one for each key in the
+        provided list.
 
         Note:
-        The method uses SHA-256 for hash generation and numpy's default random number generator
-        for sampling. The RNG state is advanced to the 'realization' point before generating
-        a single sample, enhancing efficiency by avoiding the generation of large, unused sample sets.
+        The method uses SHA-256 for hash generation and numpy's default random number
+        generator for sampling. The RNG state is advanced to the 'realization' point
+        before generating a single sample, enhancing efficiency by avoiding the
+        generation of large, unused sample sets.
         """
         parameter_values = []
         for key in keys:
@@ -519,7 +528,8 @@ class GenKwConfig(ParameterConfig):
 
         if len(t.values) != len(param_names):
             raise ConfigValidationError.with_context(
-                f"Incorrect number of values: {t.values}, provided for variable {t.name} with distribution {t.param_name}.",
+                f"Incorrect number of values: {t.values}, provided for variable "
+                f"{t.name} with distribution {t.param_name}.",
                 self.name,
             )
 
@@ -529,7 +539,8 @@ class GenKwConfig(ParameterConfig):
                 param_floats.append(float(p))
             except ValueError as e:
                 raise ConfigValidationError.with_context(
-                    f"Unable to convert '{p}' to float number for variable {t.name} with distribution {t.param_name}.",
+                    f"Unable to convert '{p}' to float number for variable "
+                    f"{t.name} with distribution {t.param_name}.",
                     self.name,
                 ) from e
 
@@ -612,7 +623,8 @@ class TransformFunction:
         result = min_ + y_binned * (max_ - min_)
         if result > max_ or result < min_:
             warnings.warn(
-                "trans_derff suffered from catastrophic loss of precision, clamping to min,max",
+                "trans_derff suffered from catastrophic loss of precision, "
+                "clamping to min,max",
                 stacklevel=1,
             )
             return np.clip(result, min_, max_)

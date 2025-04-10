@@ -99,7 +99,8 @@ class SchemaItem:
                     return ContextBool(False, token, keyword)
                 else:
                     raise ConfigValidationError.with_context(
-                        f"{self.kw!r} must have a boolean value as argument {index + 1!r}",
+                        f"{self.kw!r} must have a boolean "
+                        f"value as argument {index + 1!r}",
                         token,
                     )
             case SchemaItemType.POSITIVE_INT:
@@ -107,14 +108,16 @@ class SchemaItem:
                     val = int(token)
                 except ValueError as e:
                     raise ConfigValidationError.with_context(
-                        f"{self.kw!r} must have an integer value as argument {index + 1!r}",
+                        f"{self.kw!r} must have an integer "
+                        f"value as argument {index + 1!r}",
                         token,
                     ) from e
                 if val > 0:
                     return ContextInt(val, token, keyword)
                 else:
                     raise ConfigValidationError.with_context(
-                        f"{self.kw!r} must have a positive integer value as argument {index + 1!r}",
+                        f"{self.kw!r} must have a positive integer "
+                        f"value as argument {index + 1!r}",
                         token,
                     )
             case SchemaItemType.INT:
@@ -122,7 +125,8 @@ class SchemaItem:
                     return ContextInt(int(token), token, keyword)
                 except ValueError as e:
                     raise ConfigValidationError.with_context(
-                        f"{self.kw!r} must have an integer value as argument {index + 1!r}",
+                        f"{self.kw!r} must have an integer "
+                        f"value as argument {index + 1!r}",
                         token,
                     ) from e
             case SchemaItemType.FLOAT:
@@ -145,7 +149,8 @@ class SchemaItem:
                     return ContextFloat(fval, token, keyword)
                 else:
                     raise ConfigValidationError.with_context(
-                        f"{self.kw!r} must have a positive float value as argument {index + 1!r}",
+                        f"{self.kw!r} must have a positive float "
+                        f"value as argument {index + 1!r}",
                         token,
                     )
 
@@ -192,7 +197,8 @@ class SchemaItem:
 
                 if os.path.isdir(absolute_path):
                     raise ConfigValidationError.with_context(
-                        f"Expected executable file, but {token.value!r} is a directory.",
+                        "Expected executable file, "
+                        f"but {token.value!r} is a directory.",
                         token,
                     )
 

@@ -223,7 +223,7 @@ class LibresFacade:
                 "reports_dir": (
                     self.config.analysis_config.log_path / ensemble.experiment.name
                 ),
-                "observation_settings": self.config.analysis_config.observation_settings,
+                "observation_settings": self.config.analysis_config.observation_settings,  # noqa: E501
                 "es_settings": self.config.analysis_config.es_module,
                 "random_seed": self.config.random_seed,
             },

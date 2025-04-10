@@ -114,7 +114,8 @@ def test_run_poly_example_with_design_matrix_and_genkw_merge(default_values, err
                 MIN_REALIZATIONS 1
                 GEN_DATA POLY_RES RESULT_FILE:poly.out
                 GEN_KW COEFFS my_template my_output coeff_priors
-                DESIGN_MATRIX poly_design.xlsx DESIGN_SHEET:DesignSheet DEFAULT_SHEET:DefaultSheet
+                DESIGN_MATRIX poly_design.xlsx DESIGN_SHEET:DesignSheet \
+                    DEFAULT_SHEET:DefaultSheet
                 INSTALL_JOB poly_eval POLY_EVAL
                 FORWARD_MODEL poly_eval
                 """
@@ -343,7 +344,7 @@ def test_design_matrix_on_esmda(experiment_mode, ensemble_name, iterations):
                     output = [_evaluate(coeffs, x) for x in range(10)]
                     with open("poly.out", "w", encoding="utf-8") as f:
                         f.write("\\n".join(map(str, output)))
-                """
+                """  # noqa: E501
             )
         )
     os.chmod(
@@ -378,7 +379,8 @@ def test_design_matrix_on_esmda(experiment_mode, ensemble_name, iterations):
                 assert not np.array_equal(coeffs_a, coeffs_a_previous)
             coeffs_a_previous = coeffs_a
 
-            # ceffs_b should be overridden by design matrix and be the same for all realizations
+            # coeffs_b should be overridden by design matrix and be the
+            # same for all realizations
             coeffs_b = ensemble.load_parameters("COEFFS_B")["values"].values.flatten()
             assert values == pytest.approx(coeffs_b, 0.0001)
 

@@ -203,7 +203,8 @@ class ErtPluginManager(pluggy.PluginManager):
             return ""
         if len(plugin_responses) > 1:
             raise ValueError(
-                f"Only one activate script is allowed, got {[plugin.plugin_metadata.plugin_name for plugin in plugin_responses]}"
+                f"Only one activate script is allowed, got"
+                f"{[plugin.plugin_metadata.plugin_name for plugin in plugin_responses]}"
             )
         else:
             return plugin_responses[0].data

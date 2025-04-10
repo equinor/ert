@@ -8,7 +8,11 @@ import xarray as xr
 from ert.config.parsing.context_values import ContextBoolEncoder
 from ert.storage.local_experiment import _Index
 
-info = "Adding update property to parameters, creating an empty metadata file, storing summary data as 32 bit float and removing template_file_path"
+info = (
+    "Adding update property to parameters, "
+    "creating an empty metadata file, "
+    "storing summary data as 32 bit float and removing template_file_path"
+)
 
 
 def migrate(path: Path) -> None:

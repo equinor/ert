@@ -11,7 +11,10 @@ from everest.config import EverestConfig
 def _build_args_parser() -> argparse.ArgumentParser:
     """Build arg parser"""
     arg_parser = argparse.ArgumentParser(
-        description="Display the configuration data loaded from a config file after replacing templated arguments.",
+        description=(
+            "Display the configuration data loaded from a "
+            "config file after replacing templated arguments."
+        ),
         usage="""everest show <config_file>""",
     )
     arg_parser.add_argument(

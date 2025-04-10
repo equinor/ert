@@ -90,7 +90,10 @@ def _error_loc(error_dict: ErrorDetails) -> str:
 
 
 def format_errors(validation_error: EverestValidationError) -> str:
-    msg = f"Found {len(validation_error.errors)} validation error{'s' if len(validation_error.errors) > 1 else ''}:\n\n"
+    msg = (
+        f"Found {len(validation_error.errors)} validation "
+        f"error{'s' if len(validation_error.errors) > 1 else ''}:\n\n"
+    )
     error_map = {}
     for error, pos in validation_error.errors:
         if pos:
@@ -286,7 +289,8 @@ and environment variables are exposed in the form 'os.NAME', for example:
         for job in self.install_workflow_jobs:
             if job.executable is None:
                 ConfigWarning.deprecation_warn(
-                    "`install_workflow_jobs: source` is deprecated, instead you should use:\n"
+                    "`install_workflow_jobs: source` is deprecated, "
+                    "instead you should use:\n"
                     "install_workflow_jobs:\n"
                     "  - name: job-name\n"
                     "    executable: path-to-executable\n"
@@ -308,7 +312,8 @@ and environment variables are exposed in the form 'os.NAME', for example:
                     errors.append(f"Could not find executable: {job.executable!r}")
                 if executable.is_dir():
                     errors.append(
-                        f"Expected executable file, but {job.executable!r} is a directory"
+                        "Expected executable file, "
+                        f"but {job.executable!r} is a directory"
                     )
                 if not os.access(executable, os.X_OK):
                     errors.append("File not executable: {job.executable!r}")

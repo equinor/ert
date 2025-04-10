@@ -25,7 +25,8 @@ def test_logging_setup(copy_math_func_test_data_to_tmp):
     everest_config.optimization.min_realizations_success = 1
     everest_config.optimization.perturbation_num = 2
 
-    # start_server() loads config based on config_path, so we need to actually overwrite it
+    # start_server() loads config based on config_path, so we need to actually
+    # overwrite it
     everest_config.dump("config_minimal.yml")
     start_everest(["everest", "run", "config_minimal.yml", "--skip-prompt"])
 

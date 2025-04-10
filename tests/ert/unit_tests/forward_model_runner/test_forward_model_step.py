@@ -64,7 +64,14 @@ def test_memory_usage_counts_grandchildren():
             if counter > 0:
                 parent = os.fork()
                 if not parent:
-                    os.execv(sys.argv[-3], [sys.argv[-3], str(counter - 1), str(blobsize)])
+                    os.execv(
+                        sys.argv[-3],
+                        [
+                            sys.argv[-3],
+                            str(counter - 1),
+                            str(blobsize)
+                        ]
+                        )
             time.sleep(3)"""  # Too low sleep will make the test faster but flaky
             )
         )

@@ -136,7 +136,7 @@ class RunWorkflowWidget(QWidget):
                     self.config.analysis_config.log_path
                     / (ensemble.experiment.name if ensemble is not None else "")
                 ),
-                "observation_settings": self.config.analysis_config.observation_settings,
+                "observation_settings": self.config.analysis_config.observation_settings,  # noqa: E501
                 "es_settings": self.config.analysis_config.es_module,
                 "run_paths": Runpaths(
                     jobname_format=self.config.runpath_config.jobname_format_string,

@@ -47,7 +47,8 @@ async def test_https_requests(copy_math_func_test_data_to_tmp):
     everest_config.install_jobs.append(
         InstallJobConfig(name="sleep", source="SLEEP_job")
     )
-    # start_server() loads config based on config_path, so we need to actually overwrite it
+    # start_server() loads config based on config_path, so we need to actually
+    # overwrite it
     everest_config.dump("config_minimal.yml")
 
     status_path = ServerConfig.get_everserver_status_path(everest_config.output_dir)

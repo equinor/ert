@@ -74,8 +74,9 @@ class DesignMatrix:
         if self.active_realizations != dm_other.active_realizations:
             errors.append(
                 ErrorInfo(
-                    f"Design Matrices '{self.xls_filename.name} ({self.design_sheet} {self.default_sheet})' and "
-                    f"'{dm_other.xls_filename.name} ({dm_other.design_sheet} {dm_other.default_sheet})' do not "
+                    f"Design Matrices '{self.xls_filename.name} ({self.design_sheet} "
+                    f"{self.default_sheet})' and '{dm_other.xls_filename.name} "
+                    f"({dm_other.design_sheet} {dm_other.default_sheet})' do not "
                     "have the same active realizations!"
                 )
             )
@@ -93,9 +94,12 @@ class DesignMatrix:
             if non_identical_cols:
                 errors.append(
                     ErrorInfo(
-                        f"Design Matrices '{self.xls_filename.name} ({self.design_sheet} {self.default_sheet})' and "
-                        f"'{dm_other.xls_filename.name} ({dm_other.design_sheet} {dm_other.default_sheet})' "
-                        f"contains non identical columns with the same name: {non_identical_cols}!"
+                        f"Design Matrices '{self.xls_filename.name} "
+                        f"({self.design_sheet} {self.default_sheet})' and "
+                        f"'{dm_other.xls_filename.name} ({dm_other.design_sheet} "
+                        f"{dm_other.default_sheet})' "
+                        "contains non identical columns with the same name: "
+                        f"{non_identical_cols}!"
                     )
                 )
 
@@ -112,8 +116,10 @@ class DesignMatrix:
             )
         except ValueError as exc:
             raise ConfigValidationError(
-                f"Error when merging design matrices '{self.xls_filename.name} ({self.design_sheet} {self.default_sheet})' and "
-                f"'{dm_other.xls_filename.name} ({dm_other.design_sheet} {dm_other.default_sheet})': {exc}!"
+                f"Error when merging design matrices "
+                f"'{self.xls_filename.name} ({self.design_sheet} {self.default_sheet})'"
+                f" and '{dm_other.xls_filename.name} ({dm_other.design_sheet} "
+                f"{dm_other.default_sheet})': {exc}!"
             ) from exc
 
         for tfd in dm_other.parameter_configuration.transform_function_definitions:
@@ -125,18 +131,21 @@ class DesignMatrix:
     ) -> tuple[list[ParameterConfig], GenKwConfig]:
         """
         This method merges the design matrix parameters with the existing parameters and
-        returns the new list of existing parameters, wherein we drop GEN_KW group having a full overlap with the design matrix group.
-        GEN_KW group that was dropped will acquire a new name from the design matrix group.
-        Additionally, the ParameterConfig which is the design matrix group is returned separately.
+        returns the new list of existing parameters, wherein we drop GEN_KW group having
+        a full overlap with the design matrix group. GEN_KW group that was dropped will
+        acquire a new name from the design matrix group. Additionally, the
+        ParameterConfig which is the design matrix group is returned separately.
 
         Args:
             existing_parameters (List[ParameterConfig]): List of existing parameters
 
         Raises:
-            ConfigValidationError: If there is a partial overlap between the design matrix group and any existing GEN_KW group
+            ConfigValidationError: If there is a partial overlap between the design
+            matrix group and any existing GEN_KW group
 
         Returns:
-            tuple[List[ParameterConfig], ParameterConfig]: List of existing parameters and the dedicated design matrix group
+            tuple[List[ParameterConfig], ParameterConfig]: List of existing parameters
+            and the dedicated design matrix group
         """
 
         new_param_config: list[ParameterConfig] = []
@@ -153,7 +162,8 @@ class DesignMatrix:
             if set(existing_keys) == set(design_keys):
                 if design_group_added:
                     raise ConfigValidationError(
-                        "Multiple overlapping groups with design matrix found in existing parameters!\n"
+                        "Multiple overlapping groups with design matrix found in "
+                        "existing parameters!\n"
                         f"{design_parameter_group.name} and {parameter_group.name}"
                     )
 
@@ -174,9 +184,11 @@ class DesignMatrix:
     def read_and_validate_design_matrix(
         self,
     ) -> tuple[list[bool], pd.DataFrame, GenKwConfig]:
-        # Read the parameter names (first row) as strings to prevent pandas from modifying them.
-        # This ensures that duplicate or empty column names are preserved exactly as they appear in the Excel sheet.
-        # By doing this, we can properly validate variable names, including detecting duplicates or missing names.
+        # Read the parameter names (first row) as strings to prevent pandas from
+        # modifying them. This ensures that duplicate or empty column names are
+        # preserved exactly as they appear in the Excel sheet. By doing this, we
+        # can properly validate variable names, including detecting duplicates or
+        # missing names.
         param_names = (
             pd.read_excel(
                 self.xls_filename,
@@ -274,7 +286,8 @@ class DesignMatrix:
                 errors.append(f"Empty parameter name found in column {column_num}.")
             elif len(param_name.split()) > 1:
                 errors.append(
-                    f"Multiple words in parameter name found in column {column_num} ({param_name})."
+                    "Multiple words in parameter name found in column "
+                    f"{column_num} ({param_name})."
                 )
             elif param_name.isnumeric():
                 errors.append(f"Numeric parameter name found in column {column_num}.")

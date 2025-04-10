@@ -32,7 +32,8 @@ class FMStepListProxyModel(QAbstractProxyModel):
 
     @Slot(int, int)
     def set_real(self, iter_: int, real: int) -> None:
-        """Called when the user clicks a specific realization in the run_dialog window."""
+        """Called when the user clicks a specific realization in
+        the run_dialog window."""
         self._disconnect()
         self.modelAboutToBeReset.emit()
         self._iter = iter_

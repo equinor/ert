@@ -20,7 +20,8 @@ class MisfitPreprocessor(ErtScript):
             # This means the user has configured a config file to the workflow
             # so we can assume they have customized the obs groups
             message += (
-                "example: ANALYSIS_SET_VAR OBSERVATIONS AUTO_SCALE 'obs_*'  -- all observations starting with obs_"
+                "example: ANALYSIS_SET_VAR OBSERVATIONS AUTO_SCALE 'obs_*'  "
+                "-- all observations starting with obs_"
                 "Add multiple entries to set up multiple groups"
             )
         raise ConfigValidationError(message)

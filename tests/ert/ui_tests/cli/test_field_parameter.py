@@ -67,9 +67,11 @@ def test_parameter_update_with_inactive_cells_xtgeo_grdecl(tmpdir):
             """
             NUM_REALIZATIONS 5
             OBS_CONFIG observations
-            FIELD MY_PARAM PARAMETER my_param.grdecl INIT_FILES:my_param.grdecl FORWARD_INIT:True
+            FIELD MY_PARAM PARAMETER my_param.grdecl \
+                INIT_FILES:my_param.grdecl FORWARD_INIT:True
             GRID MY_EGRID.EGRID
-            GEN_DATA MY_RESPONSE RESULT_FILE:gen_data_%d.out REPORT_STEPS:0 INPUT_FORMAT:ASCII
+            GEN_DATA MY_RESPONSE RESULT_FILE:gen_data_%d.out \
+                REPORT_STEPS:0 INPUT_FORMAT:ASCII
             INSTALL_JOB poly_eval POLY_EVAL
             FORWARD_MODEL poly_eval
         """
@@ -226,7 +228,8 @@ if __name__ == "__main__":
 def test_field_param_update_using_heat_equation_zero_var_params_and_adaptive_loc(
     heat_equation_storage,
 ):
-    """Test field parameter updates with zero-variance regions and adaptive localization.
+    """Test field parameter updates with zero-variance regions and adaptive
+    localization.
 
     This test verifies the behavior of the ensemble smoother update when dealing with
     field parameters that contain regions of zero variance (constant values across all

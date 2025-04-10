@@ -87,7 +87,8 @@ class EnsembleSmoother(UpdateRunModel):
                 )
                 if not any(p.update for p in parameters_config):
                     raise ConfigValidationError(
-                        "No parameters to update as all parameters were set to update:false!",
+                        "No parameters to update as all "
+                        "parameters were set to update:false!",
                     )
             except ConfigValidationError as exc:
                 raise ErtRunError(str(exc)) from exc

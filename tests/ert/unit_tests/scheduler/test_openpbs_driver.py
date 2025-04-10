@@ -41,7 +41,7 @@ pytestmark = pytest.mark.xdist_group("openpbs")
 
 QSTAT_HEADER = (
     "Job id                         Name            User             Time Use S Queue\n"
-    "-----------------------------  --------------- ---------------  -------- - ---------------\n"
+    "-----------------------------  --------------- ---------------  -------- - ---------------\n"  # noqa: E501
 )
 QSTAT_HEADER_FORMAT = "%-30s %-15s %-15s %-8s %-1s %-5s"
 
@@ -184,7 +184,8 @@ async def test_cluster_label():
     "qstat_script, started_expected",
     [
         pytest.param(
-            f"echo '{QSTAT_HEADER}';printf '{QSTAT_HEADER_FORMAT}' 1 foo someuser 0 R normal; exit 0",
+            f"echo '{QSTAT_HEADER}';printf '{QSTAT_HEADER_FORMAT}' "
+            "1 foo someuser 0 R normal; exit 0",
             True,
             id="all-good",
         ),
@@ -212,14 +213,16 @@ async def test_cluster_label():
             id="unknown_jobstate_token_from_pbs",  # Never observed
         ),
         pytest.param(
-            f"echo '{QSTAT_HEADER}'; printf '{QSTAT_HEADER_FORMAT}' 1 foo someuser 0 R normal; "
+            f"echo '{QSTAT_HEADER}'; printf '{QSTAT_HEADER_FORMAT}' "
+            "1 foo someuser 0 R normal; "
             "echo 'qstat: Unknown Job Id 2' >&2 ; exit 153",
             # If we have some success and some failures, actual command returns 153
             True,
             id="error_for_irrelevant_job_id",
         ),
         pytest.param(
-            f"echo '{QSTAT_HEADER}'; printf '{QSTAT_HEADER_FORMAT}' 2 foo someuser 0 R normal",
+            f"echo '{QSTAT_HEADER}'; printf '{QSTAT_HEADER_FORMAT}' "
+            "2 foo someuser 0 R normal",
             False,
             id="wrong-job-id",
         ),
@@ -465,7 +468,7 @@ def _mock_flaky_qstat(error_message_to_output: str):
                 echo "{error_message_to_output}" >&2
                 exit 2
             fi
-        """
+        """  # noqa: E501
         )
     )
     qstat_path.chmod(qstat_path.stat().st_mode | stat.S_IEXEC)
@@ -572,7 +575,7 @@ async def mock_failure(message, *args, **kwargs):
 
 @pytest.mark.integration_test
 @pytest.mark.usefixtures("copy_poly_case")
-def test_openpbs_driver_with_poly_example_failing_submit_fails_ert_and_propagates_exception_to_user(
+def test_openpbs_driver_with_poly_example_failing_submit_fails_ert_and_propagates_exception_to_user(  # noqa: E501
     monkeypatch, caplog, queue_name_config
 ):
     monkeypatch.setattr(
@@ -591,7 +594,7 @@ def test_openpbs_driver_with_poly_example_failing_submit_fails_ert_and_propagate
 
 @pytest.mark.integration_test
 @pytest.mark.usefixtures("copy_poly_case")
-def test_openpbs_driver_with_poly_example_failing_poll_fails_ert_and_propagates_exception_to_user(
+def test_openpbs_driver_with_poly_example_failing_poll_fails_ert_and_propagates_exception_to_user(  # noqa: E501
     monkeypatch, caplog, queue_name_config
 ):
     monkeypatch.setattr(
