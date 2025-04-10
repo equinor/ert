@@ -4,7 +4,7 @@ import json
 import logging
 import os
 from pathlib import Path
-from typing import Any
+from typing import Any, cast
 
 import everest
 from ert.config import (
@@ -31,44 +31,36 @@ from everest.config.control_variable_config import (
     ControlVariableConfig,
     ControlVariableGuessListConfig,
 )
+from everest.config.forward_model_config import SummaryResults
 from everest.config.install_data_config import InstallDataConfig
 from everest.config.install_job_config import InstallJobConfig
 from everest.config.simulator_config import SimulatorConfig
 from everest.strings import EVEREST, SIMULATION_DIR, STORAGE_DIR
 
 
-def _get_datafiles(ever_config: EverestConfig) -> list[str]:
-    ever_model = ever_config.model
-    data_file = ever_model.data_file
-    if data_file is None:
-        return []
-
-    # Make absolute path
-    if os.path.relpath(data_file):
-        config_path = ever_config.config_directory
-        assert isinstance(config_path, str)
-        data_file = os.path.join(config_path, data_file)
-    data_file = os.path.realpath(data_file)
-
-    # Render all iterations
-    realizations = ever_model.realizations
-    if not realizations:
-        return [data_file]
-
-    return [data_file.replace("<GEO_ID>", str(geo_id)) for geo_id in realizations]
-
-
 def _extract_summary_keys(
     ever_config: EverestConfig, ert_config: dict[str, Any]
 ) -> None:
-    data_files = _get_datafiles(ever_config)
-    if len(data_files) == 0:
-        return
+    summary_fms = [
+        fm
+        for fm in ever_config.forward_model
+        if fm.results is not None and fm.results.type == "summary"
+    ]
+
+    if not summary_fms:
+        return None
+
+    summary_fm = summary_fms[0]
+    assert summary_fm.results is not None
+
+    smry_results = cast(SummaryResults, summary_fm.results)
+
+    requested_keys: list[str] = ["*"] if smry_results.keys == "*" else smry_results.keys
 
     data_keys = everest.simulator.DEFAULT_DATA_SUMMARY_KEYS
     field_keys = everest.simulator.DEFAULT_FIELD_SUMMARY_KEYS
     well_sum_keys = everest.simulator.DEFAULT_WELL_SUMMARY_KEYS
-    user_specified_keys = (
+    deprecated_user_specified_keys = (
         [] if ever_config.export is None else ever_config.export.keywords
     )
 
@@ -79,9 +71,11 @@ def _extract_summary_keys(
         for (sum_key, wname) in itertools.product(well_sum_keys, wells)
     ]
 
-    all_keys = data_keys + field_keys + well_keys + user_specified_keys
-    all_keys = list(set(all_keys))
+    all_keys = data_keys + field_keys + well_keys + deprecated_user_specified_keys
+
+    all_keys = list(set(all_keys + requested_keys))
     ert_config[ErtConfigKeys.SUMMARY] = [all_keys]
+    ert_config[ErtConfigKeys.ECLBASE] = smry_results.file_name
 
 
 def _extract_environment(
@@ -187,8 +181,6 @@ def _extract_jobs(
             res_jobs.append(new_job)
 
     ert_config[ErtConfigKeys.INSTALL_JOB] = res_jobs
-    if eclbase := ever_config.definitions.get("eclbase"):
-        ert_config["ECLBASE"] = eclbase
 
 
 def _extract_workflow_jobs(
@@ -356,7 +348,7 @@ def _extract_forward_model(
 ) -> None:
     forward_model = _extract_data_operations(ever_config)
     forward_model += _extract_templating(ever_config)
-    forward_model += ever_config.forward_model
+    forward_model += ever_config.forward_model_step_commands
 
     fm_steps = ert_config.get(ErtConfigKeys.FORWARD_MODEL, [])
     for job in forward_model:
@@ -401,8 +393,15 @@ def _extract_results(ever_config: EverestConfig, ert_config: dict[str, Any]) -> 
     constraint_names = [
         constraint.name for constraint in ever_config.output_constraints
     ]
+
+    gen_data_files = [
+        fm.results.file_name
+        for fm in (ever_config.forward_model or [])
+        if fm.results is not None and fm.results.type == "gen_data"
+    ]
+
     gen_data = ert_config.get(ErtConfigKeys.GEN_DATA, [])
-    for name in objectives_names + constraint_names:
+    for name in set(objectives_names + constraint_names + gen_data_files):
         gen_data.append((name, {"RESULT_FILE": name}))
     ert_config[ErtConfigKeys.GEN_DATA] = gen_data
 
@@ -554,12 +553,7 @@ def _everest_to_ert_config_dict(
     _extract_model(ever_config, ert_config)
     _extract_seed(ever_config, ert_config)
     _extract_results(ever_config, ert_config)
-    if ert_config.get("SUMMARY") and not ert_config.get("ECLBASE"):
-        raise ValueError(
-            "When specifying model -> data_file, also need to "
-            "configure definitions -> eclbase, this will trigger "
-            "loading of summary data from the forward model"
-        )
+
     return ert_config
 
 

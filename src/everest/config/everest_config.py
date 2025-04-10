@@ -58,6 +58,9 @@ from ..strings import (
 from .control_config import ControlConfig
 from .environment_config import EnvironmentConfig
 from .export_config import ExportConfig
+from .forward_model_config import (
+    ForwardModelStepConfig,
+)
 from .input_constraint_config import InputConstraintConfig
 from .install_data_config import InstallDataConfig
 from .install_job_config import InstallJobConfig
@@ -215,7 +218,7 @@ and environment variables are exposed in the form 'os.NAME', for example:
         description="Simulation settings",
         examples=[simulator_example],
     )
-    forward_model: list[str] = Field(
+    forward_model: list[ForwardModelStepConfig] = Field(
         default_factory=list, description="List of jobs to run"
     )
     workflows: WorkflowConfig = Field(
@@ -246,6 +249,19 @@ and environment variables are exposed in the form 'os.NAME', for example:
         self.server.queue_system.max_running = 1  # type: ignore
         return self
 
+    @field_validator("forward_model", mode="before")
+    @classmethod
+    def consolidate_forward_model_formats(
+        cls, forward_model_steps: list[dict[str, Any] | str]
+    ) -> list[dict[str, Any]]:
+        def format_fm(fm: str | dict[str, Any]) -> dict[str, Any]:
+            if isinstance(fm, dict):
+                return fm
+
+            return {"job": fm, "results": None}
+
+        return [format_fm(fm) for fm in forward_model_steps]
+
     @model_validator(mode="after")
     def validate_forward_model_job_name_installed(self, info: ValidationInfo) -> Self:
         install_jobs = self.install_jobs
@@ -259,7 +275,7 @@ and environment variables are exposed in the form 'os.NAME', for example:
 
         errors = []
         for fm_job in forward_model_jobs:
-            job_name = fm_job.split()[0]
+            job_name = fm_job.job.split()[0]
             if job_name not in installed_jobs_name:
                 errors.append(f"unknown job {job_name}")
 
@@ -453,14 +469,17 @@ and environment variables are exposed in the form 'os.NAME', for example:
         with InstallDataContext(install_data, self.config_path) as context:
             for realization in self.model.realizations:
                 context.add_links_for_realization(realization)
-            validate_forward_model_configs(self.forward_model, self.install_jobs)
+            validate_forward_model_configs(
+                self.forward_model_step_commands, self.install_jobs
+            )
         return self
 
     @model_validator(mode="after")
     def validate_maintained_forward_model_step_arguments(self) -> Self:
         if not self.forward_model:
             return self
-        validate_forward_model_step_arguments(self.forward_model)
+
+        validate_forward_model_step_arguments(self.forward_model_step_commands)
 
         return self
 
@@ -679,6 +698,10 @@ and environment variables are exposed in the form 'os.NAME', for example:
     @property
     def constraint_names(self) -> list[str]:
         return [constraint.name for constraint in self.output_constraints]
+
+    @property
+    def forward_model_step_commands(self) -> list[str]:
+        return [fm.job for fm in self.forward_model]
 
     @property
     def result_names(self) -> list[str]:
