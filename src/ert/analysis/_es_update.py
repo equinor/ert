@@ -20,7 +20,9 @@ import scipy
 import scipy as sp
 from graphite_maps.enif import EnIF  # type: ignore
 from graphite_maps.linear_regression import linear_boost_ic_regression  # type: ignore
-from graphite_maps.precision_estimation import fit_precision_cholesky  # type: ignore
+from graphite_maps.precision_estimation import (
+    fit_precision_cholesky_approximate,  # type: ignore
+)
 from iterative_ensemble_smoother.experimental import AdaptiveESMDA
 from sklearn.preprocessing import StandardScaler  # type: ignore
 
@@ -852,7 +854,7 @@ def analysis_EnIF(
         progress_callback(AnalysisErrorEvent(error_msg=msg, data=smoother_snapshot))
         raise ErtAnalysisError(msg)
 
-    ### EnIF ###
+    # EnIF ###
     start_enif = time.time()
 
     # Load all parameters at once
@@ -887,7 +889,13 @@ def analysis_EnIF(
         graph_u_sub = config_node.load_parameter_graph()
 
         # This will work for dim(X_scaled) on order O(n^5)
-        Prec_u_sub, *_ = fit_precision_cholesky(X_scaled, graph_u_sub, verbose_level=2)
+        Prec_u_sub = fit_precision_cholesky_approximate(
+            X_scaled,
+            graph_u_sub,
+            neighbourhood_expansion=2,
+            verbose_level=2,
+            use_tqdm=True,
+        )
 
         # Add to block-diagonal full precision
         Prec_u = sp.sparse.block_diag((Prec_u, Prec_u_sub), format="csc")
