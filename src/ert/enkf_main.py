@@ -131,6 +131,7 @@ def _manifest_to_json(ensemble: Ensemble, iens: int, iter: int) -> dict[str, Any
             ExtParamConfig | GenKwConfig | Field | SurfaceConfig,
         )
         if param_config.forward_init and ensemble.iteration == 0:
+            assert not isinstance(param_config, GenKwConfig)
             assert param_config.forward_init_file is not None
             file_path = substitute_runpath_name(
                 param_config.forward_init_file, iens, iter
