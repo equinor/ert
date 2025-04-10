@@ -3,9 +3,8 @@ from __future__ import annotations
 import asyncio
 import logging
 import traceback
-from collections.abc import Awaitable, Callable, Sequence
+from collections.abc import Callable, Sequence
 from dataclasses import dataclass
-from functools import partialmethod
 from typing import Any
 
 from _ert.events import (
@@ -186,12 +185,11 @@ class LegacyEnsemble:
 
     async def send_event(
         self,
-        url: str,
         event: Event,
-        token: str | None = None,
         retries: int = 10,
     ) -> None:
-        async with Client(url, token) as client:
+        assert self._config is not None
+        async with Client(self._config.get_uri(), token=self._config.token) as client:
             await client.send(event_to_json(event), retries)
 
     def generate_event_creator(self) -> Callable[[Id.ENSEMBLE_TYPES], Event]:
@@ -210,51 +208,21 @@ class LegacyEnsemble:
         scheduler_queue: asyncio.Queue[Event] | None = None,
         manifest_queue: asyncio.Queue[Event] | None = None,
     ) -> None:
-        self._config = config
-        ce_unary_send_method_name = "_ce_unary_send"
-        setattr(
-            self.__class__,
-            ce_unary_send_method_name,
-            partialmethod(
-                self.__class__.send_event,
-                self._config.get_uri(),
-                token=self._config.token,
-            ),
-        )
-        try:
-            await self._evaluate_inner(
-                event_unary_send=getattr(self, ce_unary_send_method_name),
-                scheduler_queue=scheduler_queue,
-                manifest_queue=manifest_queue,
-            )
-        except asyncio.CancelledError:
-            print("Cancelling evaluator task!")
-
-    async def _evaluate_inner(
-        self,
-        event_unary_send: Callable[[Event], Awaitable[None]],
-        scheduler_queue: asyncio.Queue[Event] | None = None,
-        manifest_queue: asyncio.Queue[Event] | None = None,
-    ) -> None:
         """
-        This (inner) coroutine does the actual work of evaluating the ensemble. It
+        This method does the actual work of evaluating the ensemble. It
         prepares and executes the necessary bookkeeping, prepares and executes
-        the JobQueue, and dispatches pertinent events.
+        the driver and scheduler, and dispatches pertinent events.
 
         Before returning, it always dispatches an Event describing
-        the final result of executing all its jobs through a JobQueue.
-
-        event_unary_send determines how Events are dispatched. This
-        is a function (or bound method) that only takes an Event as a positional
-        argument.
+        the final result of executing all its jobs through a scheduler and driver.
         """
+        self._config = config
         event_creator = self.generate_event_creator()
 
         if not self.id_:
             raise ValueError("Ensemble id not set")
         if not self._config:
             raise ValueError("no config")  # mypy
-
         try:
             driver = create_driver(self._queue_config.queue_options)
             self._scheduler = Scheduler(
@@ -270,7 +238,7 @@ class LegacyEnsemble:
                 ee_token=self._config.token,
             )
 
-            await event_unary_send(event_creator(Id.ENSEMBLE_STARTED))
+            await self.send_event(event_creator(Id.ENSEMBLE_STARTED))
 
             min_required_realizations = (
                 self.min_required_realizations
@@ -282,7 +250,7 @@ class LegacyEnsemble:
             result = await self._scheduler.execute(min_required_realizations)
         except PermissionError as error:
             logger.exception(f"Unexpected exception in ensemble: \n {error!s}")
-            await event_unary_send(event_creator(Id.ENSEMBLE_FAILED))
+            await self.send_event(event_creator(Id.ENSEMBLE_FAILED))
             return
         except Exception as exc:
             logger.exception(
@@ -292,11 +260,13 @@ class LegacyEnsemble:
                     )
                 ),
             )
-            await event_unary_send(event_creator(Id.ENSEMBLE_FAILED))
+            await self.send_event(event_creator(Id.ENSEMBLE_FAILED))
             return
-
-        # Dispatch final result from evaluator - FAILED, CANCEL or STOPPED
-        await event_unary_send(event_creator(result))
+        except asyncio.CancelledError:
+            print("Cancelling evaluator task!")
+            return
+        # Dispatch final result from evaluator - SUCCEEDED or CANCEL
+        await self.send_event(event_creator(result))
 
     @property
     def cancellable(self) -> bool:
