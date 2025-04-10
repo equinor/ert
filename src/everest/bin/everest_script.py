@@ -149,7 +149,7 @@ async def run_everest(options: argparse.Namespace) -> None:
         config_dict = options.config.to_dict()
         logger.debug("Running everest with the following config:")
         logger.debug(json.dumps(config_dict, sort_keys=True, indent=2))
-        for fm_job in options.config.forward_model:
+        for fm_job in options.config.forward_model_step_commands:
             job_name = fm_job.split()[0]
             logger.debug(f"Everest forward model contains job {job_name}")
 
