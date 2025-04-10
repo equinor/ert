@@ -69,6 +69,7 @@ dependencies = [
     "xarray",
     "xtgeo >= 3.3.0",
     "networkx",
+    "graphite-maps"
 ]
 
 [project.scripts]
