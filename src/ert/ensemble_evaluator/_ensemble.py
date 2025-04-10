@@ -269,9 +269,6 @@ class LegacyEnsemble:
                 ee_uri=self._config.get_uri(),
                 ee_token=self._config.token,
             )
-            logger.info(
-                f"Experiment ran on ORCHESTRATOR: scheduler on {self._queue_config.queue_system} queue"
-            )
 
             await event_unary_send(event_creator(Id.ENSEMBLE_STARTED))
 
