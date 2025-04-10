@@ -1,4 +1,3 @@
-import functools
 import logging
 import os
 import socket
@@ -25,7 +24,6 @@ from _ert.forward_model_runner.util import data as data_util
 TIME_FORMAT = "%H:%M:%S"
 logger = logging.getLogger(__name__)
 memory_logger = logging.getLogger("_ert.forward_model_memory_profiler")
-append = functools.partial(open, mode="a")
 
 LOG_file = "JOB_LOG"
 ERROR_file = "ERROR"
@@ -128,7 +126,7 @@ class File(Reporter):
 
     @staticmethod
     def _write_status_file(msg: str) -> None:
-        with append(file=STATUS_file) as status_file:
+        with open(STATUS_file, "a", encoding="utf-8") as status_file:
             status_file.write(msg)
 
     def _init_status_file(self):
@@ -164,14 +162,14 @@ class File(Reporter):
 
     @staticmethod
     def _add_log_line(step):
-        with append(file=LOG_file) as f:
+        with open(LOG_file, "a", encoding="utf-8") as f:
             args = " ".join(step.step_data["argList"])
             time_str = time.strftime(TIME_FORMAT, time.localtime())
             f.write(f"{time_str}  Calling: {step.step_data['executable']} {args}\n")
 
     @staticmethod
     def _dump_error_file(fm_step, error_msg):
-        with append(ERROR_file) as file:
+        with open(ERROR_file, "a", encoding="utf-8") as file:
             file.write("<error>\n")
             file.write(
                 f"  <time>{time.strftime(TIME_FORMAT, time.localtime())}</time>\n"
