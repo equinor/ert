@@ -839,8 +839,8 @@ requires-dist = [
     { name = "resdata", marker = "extra == 'everest'" },
     { name = "resfo" },
     { name = "resfo", marker = "extra == 'dev'" },
-    { name = "ropt", extras = ["pandas"], marker = "extra == 'everest'", specifier = ">=0.18,<0.19" },
-    { name = "ropt-dakota", marker = "extra == 'everest'", specifier = ">=0.18,<0.19" },
+    { name = "ropt", extras = ["pandas"], marker = "extra == 'everest'", specifier = ">=0.19,<0.20" },
+    { name = "ropt-dakota", marker = "extra == 'everest'", specifier = ">=0.19,<0.20" },
     { name = "ruamel-yaml", marker = "extra == 'everest'" },
     { name = "rust-just", marker = "extra == 'dev'" },
     { name = "scipy", specifier = ">=1.10.1,<1.15" },
@@ -3229,16 +3229,16 @@ wheels = [
 
 [[package]]
 name = "ropt"
-version = "0.18.1"
+version = "0.19.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "numpy" },
     { name = "pydantic" },
     { name = "scipy" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/f8/f7/c3db84aa3fb678e4197023907ed722a85b1d2593ecdb269102e8187f0b17/ropt-0.18.1.tar.gz", hash = "sha256:a28d54df07ba218dd4902fad7edec059188cf7500f8e80a6dceca36728a73daa", size = 133006 }
+sdist = { url = "https://files.pythonhosted.org/packages/a6/55/bd2aeba018f2fad01f6191fb925d9ab69711cc0ec730faf191d08272d5bb/ropt-0.19.0.tar.gz", hash = "sha256:5f9f6659e6a91f72d1c89408c7cf6569498f71ecc47779639024e0efe8179c09", size = 134086 }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/4b/8d/3c3493da1224bbc08c469fa82378b5d0cd4b12c1c11aaf094fd473a15783/ropt-0.18.1-py3-none-any.whl", hash = "sha256:e58836e8809c7cdaa97ec3253b4a62f484611d2ce8c232cd6196976dcaa6787b", size = 139014 },
+    { url = "https://files.pythonhosted.org/packages/d7/a5/c8e17251b6051b15530a764f17e544d7b23e8ba75c98186d0341e8db14f6/ropt-0.19.0-py3-none-any.whl", hash = "sha256:5acdb9f19a8fcf76a9881bd934a84e2754f8db725a80324cb7df905279a1499b", size = 139931 },
 ]
 
 [package.optional-dependencies]
@@ -3248,15 +3248,15 @@ pandas = [
 
 [[package]]
 name = "ropt-dakota"
-version = "0.18.1"
+version = "0.19.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "carolina" },
     { name = "numpy" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/2b/7f/a20e96c638cb224d5b2abfc3579b11817a8ca24851c54db4aaf3f1402c8e/ropt_dakota-0.18.1.tar.gz", hash = "sha256:0f3a725dced71a182f64047447df8f0068bab51c1bf812b59f7f4e38d86c9bbe", size = 28778 }
+sdist = { url = "https://files.pythonhosted.org/packages/9b/aa/5731453d2039a934a44388f5410434d08d60bcc9f717ae92be97437aa267/ropt_dakota-0.19.0.tar.gz", hash = "sha256:2487a41e804f06e32d77c7f8761bd96fd630bdf724912988e500f937592d897f", size = 28789 }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/8d/93/d4c9bb1399ff592ecdf53e85936bb3596385182b48b29368cd8d1a8b1502/ropt_dakota-0.18.1-py3-none-any.whl", hash = "sha256:87f824e5b70739f89bab9cf89c70f8fb2c07985cd68b5deb2f6e88e06f5f7632", size = 21441 },
+    { url = "https://files.pythonhosted.org/packages/c2/3b/69462c61c5239b0d5113b5762901702609ba8fc59f9470c6ae9d5090d0db/ropt_dakota-0.19.0-py3-none-any.whl", hash = "sha256:8b1046fea6098d99fa91b576c9507e5b0ee0cc20ca7ed559410393f6c817b0e8", size = 21443 },
 ]
 
 [[package]]

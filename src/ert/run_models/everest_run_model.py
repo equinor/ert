@@ -331,6 +331,8 @@ class EverestRunModel(BaseRunModel):
             match optimizer_exit_code:
                 case OptimizerExitCode.MAX_FUNCTIONS_REACHED:
                     self._exit_code = EverestExitCode.MAX_FUNCTIONS_REACHED
+                case OptimizerExitCode.MAX_BATCHES_REACHED:
+                    self._exit_code = EverestExitCode.MAX_BATCH_NUM_REACHED
                 case OptimizerExitCode.USER_ABORT:
                     self._exit_code = EverestExitCode.USER_ABORT
                 case OptimizerExitCode.TOO_FEW_REALIZATIONS:
@@ -403,14 +405,6 @@ class EverestRunModel(BaseRunModel):
 
     def _check_for_abort(self) -> bool:
         logging.getLogger(EVEREST).debug("Optimization callback called")
-        if (
-            self._everest_config.optimization is not None
-            and self._everest_config.optimization.max_batch_num is not None
-            and (self._batch_id >= self._everest_config.optimization.max_batch_num)
-        ):
-            self._exit_code = EverestExitCode.MAX_BATCH_NUM_REACHED
-            logging.getLogger(EVEREST).info("Maximum number of batches reached")
-            return True
         if (
             self._opt_callback is not None
             and self._opt_callback() == "stop_optimization"
