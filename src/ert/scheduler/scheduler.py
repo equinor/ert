@@ -17,9 +17,8 @@ from pydantic.dataclasses import dataclass
 from _ert.events import (
     Event,
     ForwardModelStepChecksum,
-    Id,
+    RealizationFailed,
     RealizationStoppedLongRunning,
-    event_from_dict,
 )
 
 from .driver import Driver
@@ -244,7 +243,18 @@ class Scheduler:
     async def execute(
         self,
         min_required_realizations: int = 0,
-    ) -> Id.ENSEMBLE_SUCCEEDED_TYPE | Id.ENSEMBLE_CANCELLED_TYPE:
+    ) -> bool:
+        """Run all the jobs in the scheduler, and wait for them to finish.
+
+        Args:
+            min_required_realizations (int, optional): The minimum amount of
+            realizations that have to be completed before stopping
+            long-running jobs. Defaults to 0.
+
+        Returns:
+            bool: Returns True if the scheduler ran successfully, False if it
+            was cancelled.
+        """
         scheduling_tasks = [
             asyncio.create_task(self._publisher(), name="publisher_task"),
             asyncio.create_task(
@@ -286,14 +296,11 @@ class Scheduler:
             else:
                 failure = job.real.run_arg.ensemble_storage.get_failure(iens)
                 await self._events.put(
-                    event_from_dict(
-                        {
-                            "ensemble": self._ens_id,
-                            "event_type": Id.REALIZATION_FAILURE,
-                            "queue_event_type": JobState.FAILED,
-                            "message": failure.message if failure else None,
-                            "real": str(iens),
-                        }
+                    RealizationFailed(
+                        ensemble=self._ens_id,
+                        real=str(iens),
+                        queue_event_type=JobState.FAILED,
+                        message=failure.message if failure else None,
                     )
                 )
         logger.info("All tasks started")
@@ -312,9 +319,9 @@ class Scheduler:
 
         if self._cancelled:
             logger.debug("Scheduler has been cancelled, jobs are stopped.")
-            return Id.ENSEMBLE_CANCELLED
+            return False
 
-        return Id.ENSEMBLE_SUCCEEDED
+        return True
 
     async def _process_event_queue(self) -> None:
         while True:

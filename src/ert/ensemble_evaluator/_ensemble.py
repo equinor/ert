@@ -8,12 +8,14 @@ from dataclasses import dataclass
 from typing import Any
 
 from _ert.events import (
+    EnsembleCancelled,
+    EnsembleFailed,
+    EnsembleStarted,
+    EnsembleSucceeded,
     Event,
     FMEvent,
     ForwardModelStepFailure,
     ForwardModelStepSuccess,
-    Id,
-    event_from_dict,
     event_to_json,
 )
 from _ert.forward_model_runner.client import Client
@@ -192,16 +194,6 @@ class LegacyEnsemble:
         async with Client(self._config.get_uri(), token=self._config.token) as client:
             await client.send(event_to_json(event), retries)
 
-    def generate_event_creator(self) -> Callable[[Id.ENSEMBLE_TYPES], Event]:
-        def event_builder(status: str) -> Event:
-            event = {
-                "event_type": status,
-                "ensemble": self.id_,
-            }
-            return event_from_dict(event)
-
-        return event_builder
-
     async def evaluate(
         self,
         config: EvaluatorServerConfig,
@@ -217,7 +209,6 @@ class LegacyEnsemble:
         the final result of executing all its jobs through a scheduler and driver.
         """
         self._config = config
-        event_creator = self.generate_event_creator()
 
         if not self.id_:
             raise ValueError("Ensemble id not set")
@@ -238,7 +229,7 @@ class LegacyEnsemble:
                 ee_token=self._config.token,
             )
 
-            await self.send_event(event_creator(Id.ENSEMBLE_STARTED))
+            await self.send_event(EnsembleStarted(ensemble=self.id_))
 
             min_required_realizations = (
                 self.min_required_realizations
@@ -247,10 +238,12 @@ class LegacyEnsemble:
             )
 
             self._scheduler.add_dispatch_information_to_jobs_file()
-            result = await self._scheduler.execute(min_required_realizations)
+            scheduler_finished_successfully = await self._scheduler.execute(
+                min_required_realizations
+            )
         except PermissionError as error:
             logger.exception(f"Unexpected exception in ensemble: \n {error!s}")
-            await self.send_event(event_creator(Id.ENSEMBLE_FAILED))
+            await self.send_event(EnsembleFailed(ensemble=self.id_))
             return
         except Exception as exc:
             logger.exception(
@@ -260,13 +253,16 @@ class LegacyEnsemble:
                     )
                 ),
             )
-            await self.send_event(event_creator(Id.ENSEMBLE_FAILED))
+            await self.send_event(EnsembleFailed(ensemble=self.id_))
             return
         except asyncio.CancelledError:
             print("Cancelling evaluator task!")
             return
-        # Dispatch final result from evaluator - SUCCEEDED or CANCEL
-        await self.send_event(event_creator(result))
+        # Dispatch final result from evaluator - SUCCEEDED or CANCELLED
+        if scheduler_finished_successfully:
+            await self.send_event(EnsembleSucceeded(ensemble=self.id_))
+        else:
+            await self.send_event(EnsembleCancelled(ensemble=self.id_))
 
     @property
     def cancellable(self) -> bool:

@@ -8,12 +8,21 @@ from collections import Counter
 from contextlib import suppress
 from enum import StrEnum
 from pathlib import Path
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING
 
 from lxml import etree
 from opentelemetry.trace import Status, StatusCode
 
-from _ert.events import Id, RealizationTimeout, event_from_dict
+from _ert.events import (
+    RealizationEvent,
+    RealizationFailed,
+    RealizationPending,
+    RealizationResubmit,
+    RealizationRunning,
+    RealizationSuccess,
+    RealizationTimeout,
+    RealizationWaiting,
+)
 from ert.callbacks import forward_model_ok
 from ert.config import ForwardModelStep
 from ert.constant_filenames import ERROR_file
@@ -41,19 +50,6 @@ class JobState(StrEnum):
     COMPLETED = "COMPLETED"
     FAILED = "FAILED"
     ABORTED = "ABORTED"
-
-
-_queue_jobstate_event_type = {
-    JobState.WAITING: Id.REALIZATION_WAITING,
-    JobState.SUBMITTING: Id.REALIZATION_WAITING,
-    JobState.RESUBMITTING: Id.REALIZATION_RESUBMIT,
-    JobState.PENDING: Id.REALIZATION_PENDING,
-    JobState.RUNNING: Id.REALIZATION_RUNNING,
-    JobState.ABORTING: Id.REALIZATION_FAILURE,
-    JobState.COMPLETED: Id.REALIZATION_SUCCESS,
-    JobState.FAILED: Id.REALIZATION_FAILURE,
-    JobState.ABORTED: Id.REALIZATION_FAILURE,
-}
 
 
 class Job:
@@ -310,28 +306,37 @@ class Job:
         log_info_from_exit_file(Path(self.real.run_arg.runpath) / ERROR_file)
 
     async def _send(self, state: JobState) -> None:
-        event_dict: dict[str, Any] = {
-            "ensemble": self._scheduler._ens_id,
-            "event_type": _queue_jobstate_event_type[state],
-            "queue_event_type": state,
-            "real": str(self.iens),
-            "exec_hosts": self.exec_hosts,
-        }
+        event: RealizationEvent | None = None
+        match state:
+            case JobState.WAITING | JobState.SUBMITTING:
+                event = RealizationWaiting(real=str(self.iens))
+            case JobState.RESUBMITTING:
+                event = RealizationResubmit(real=str(self.iens))
+            case JobState.PENDING:
+                event = RealizationPending(real=str(self.iens))
+            case JobState.RUNNING:
+                event = RealizationRunning(real=str(self.iens))
+            case JobState.FAILED:
+                event = RealizationFailed(real=str(self.iens))
+                event.message = self._message
+                await self._handle_failure()
+            case JobState.ABORTING:
+                event = RealizationFailed(real=str(self.iens))
+            case JobState.ABORTED:
+                event = RealizationFailed(real=str(self.iens))
+                await self._handle_aborted()
+            case JobState.COMPLETED:
+                event = RealizationSuccess(real=str(self.iens))
+                self._end_time = time.time()
+                await self._scheduler.completed_jobs.put(self.iens)
+
         self.state = state
-        if state == JobState.FAILED:
-            event_dict["message"] = self._message
-            await self._handle_failure()
+        if event is not None:
+            event.ensemble = self._scheduler._ens_id
+            event.queue_event_type = state
+            event.exec_hosts = self.exec_hosts
 
-        elif state == JobState.ABORTED:
-            await self._handle_aborted()
-
-        elif state == JobState.COMPLETED:
-            self._end_time = time.time()
-            await self._scheduler.completed_jobs.put(self.iens)
-
-        msg = event_from_dict(event_dict)
-
-        await self._scheduler._events.put(msg)
+            await self._scheduler._events.put(event)
 
 
 def log_info_from_exit_file(exit_file_path: Path) -> None:

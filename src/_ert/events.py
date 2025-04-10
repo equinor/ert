@@ -241,10 +241,6 @@ def event_from_json(raw_msg: str | bytes) -> Event:
     return EventAdapter.validate_json(raw_msg)
 
 
-def event_from_dict(dict_msg: dict[str, Any]) -> Event:
-    return EventAdapter.validate_python(dict_msg)
-
-
 def event_to_json(event: Event) -> str:
     return event.model_dump_json()
 

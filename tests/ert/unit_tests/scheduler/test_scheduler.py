@@ -11,7 +11,6 @@ from unittest.mock import AsyncMock
 import pytest
 
 from _ert.events import (
-    Id,
     RealizationFailed,
     RealizationStoppedLongRunning,
     RealizationTimeout,
@@ -78,7 +77,7 @@ def create_stub_realization(ensemble, base_path: Path, iens) -> Realization:
 
 async def test_empty(mock_driver):
     sch = scheduler.Scheduler(mock_driver())
-    assert await sch.execute() == Id.ENSEMBLE_SUCCEEDED
+    assert await sch.execute()
 
 
 async def test_single_job(realization, mock_driver):
@@ -91,7 +90,7 @@ async def test_single_job(realization, mock_driver):
 
     sch = scheduler.Scheduler(driver, [realization])
 
-    assert await sch.execute() == Id.ENSEMBLE_SUCCEEDED
+    assert await sch.execute()
     assert await future == realization.iens
 
 
@@ -183,7 +182,7 @@ async def test_that_max_submit_was_reached(realization, max_submit, mock_driver)
 
     sch._max_submit = max_submit
 
-    assert await sch.execute() == Id.ENSEMBLE_SUCCEEDED
+    assert await sch.execute()
     assert retries == max_submit
 
 
@@ -197,7 +196,7 @@ async def test_that_max_submit_is_not_reached_on_success(realization, mock_drive
     driver = mock_driver(init=init)
     sch = scheduler.Scheduler(driver, [realization], max_submit=5)
 
-    assert await sch.execute() == Id.ENSEMBLE_SUCCEEDED
+    assert await sch.execute()
     assert retries == 1
 
 
@@ -214,9 +213,9 @@ async def test_max_runtime(realization, mock_driver, caplog):
 
     sch = scheduler.Scheduler(mock_driver(wait=wait), [realization])
 
-    result = await asyncio.create_task(sch.execute())
+    scheduler_finished_successfully = await asyncio.create_task(sch.execute())
     assert wait_started.is_set()
-    assert result == Id.ENSEMBLE_SUCCEEDED
+    assert scheduler_finished_successfully
 
     timeouteventfound = False
     while not timeouteventfound and not sch._events.empty():
@@ -244,8 +243,7 @@ async def test_no_resubmit_on_max_runtime_kill(realization, mock_driver):
     sch = scheduler.Scheduler(
         mock_driver(init=init, wait=wait), [realization], max_submit=2
     )
-    result = await sch.execute()
-    assert result == Id.ENSEMBLE_SUCCEEDED
+    assert await sch.execute()
 
     assert retries == 1
 
@@ -277,7 +275,7 @@ async def test_max_running(max_running, mock_driver, storage, tmp_path):
         mock_driver(wait=wait), realizations, max_running=max_running
     )
 
-    assert await sch.execute() == Id.ENSEMBLE_SUCCEEDED
+    assert await sch.execute()
 
     currently_running = 0
     max_running_observed = 0
@@ -332,11 +330,10 @@ async def test_max_runtime_while_killing(realization, mock_driver):
     # happen just because we have two things killing the realization).
 
     assert timeouteventfound
-    await scheduler_task
 
     # The result from execute is that we were cancelled, not stopped
     # as if the timeout happened before kill_all_jobs()
-    assert scheduler_task.result() == Id.ENSEMBLE_CANCELLED
+    assert not await scheduler_task
 
 
 @pytest.mark.timeout(6)
@@ -367,8 +364,7 @@ async def test_that_job_does_not_retry_when_killed_by_scheduler(
     await kill_me.wait()
     await sch.cancel_all_jobs()
 
-    await scheduler_task
-    assert scheduler_task.result() == Id.ENSEMBLE_CANCELLED
+    assert not await scheduler_task
     assert retries == 1, "Job was resubmitted after killing"
     event = None
     while not sch._events.empty():
@@ -444,8 +440,7 @@ async def test_that_failed_realization_will_not_be_cancelled(
     await started.wait()
     await sch.cancel_all_jobs()
 
-    await scheduler_task
-    assert scheduler_task.result() == Id.ENSEMBLE_CANCELLED
+    assert not await scheduler_task
 
     assert kill_called == (not should_fail)
 
@@ -482,7 +477,7 @@ async def test_that_long_running_jobs_were_stopped(
         max_running=ensemble_size,
     )
 
-    assert await sch.execute(min_required_realizations=5) == Id.ENSEMBLE_SUCCEEDED
+    assert await sch.execute(min_required_realizations=5)
 
     stop_long_running_events_found = 0
     while not sch._events.empty():
