@@ -19,9 +19,8 @@ from _ert.events import (
     ForwardModelStepFailure,
     ForwardModelStepRunning,
     ForwardModelStepSuccess,
-    Id,
+    RealizationResubmit,
     RealizationSuccess,
-    event_from_dict,
     event_to_json,
 )
 from _ert.forward_model_runner.client import (
@@ -664,14 +663,14 @@ async def test_snapshot_on_resubmit_is_cleared(evaluator_to_use):
             assert (
                 snapshot.get_fm_step("0", "1")["status"] == FORWARD_MODEL_STATE_FAILURE
             )
-            event_dict = {
-                "ensemble": str(evaluator._ensemble.id_),
-                "event_type": Id.REALIZATION_RESUBMIT,
-                "queue_event_type": JobState.RESUBMITTING,
-                "real": "0",
-                "exec_hosts": "something",
-            }
-            await evaluator._events.put(event_from_dict(event_dict))
+            await evaluator._events.put(
+                RealizationResubmit(
+                    ensemble=evaluator.ensemble.id_,
+                    queue_event_type=JobState.RESUBMITTING,
+                    real="0",
+                    exec_hosts="something",
+                )
+            )
             event = await anext(events)
             snapshot = EnsembleSnapshot.from_nested_dict(event.snapshot)
             assert snapshot.get_fm_step("0", "0")["status"] == FORWARD_MODEL_STATE_INIT
