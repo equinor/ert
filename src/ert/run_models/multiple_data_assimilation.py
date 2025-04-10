@@ -116,7 +116,8 @@ class MultipleDataAssimilation(UpdateRunModel):
                 )
                 if not any(p.update for p in parameters_config):
                     raise ConfigValidationError(
-                        "No parameters to update as all parameters were set to update:false!",
+                        "No parameters to update as all parameters "
+                        "were set to update:false!",
                     )
             except ConfigValidationError as exc:
                 raise ErtRunError(str(exc)) from exc
@@ -133,7 +134,8 @@ class MultipleDataAssimilation(UpdateRunModel):
                 assert isinstance(prior, Ensemble)
                 if self.start_iteration != prior.iteration + 1:
                     raise ValueError(
-                        f"Experiment misconfigured, got starting iteration: {self.start_iteration},"
+                        "Experiment misconfigured, got starting "
+                        f"iteration: {self.start_iteration},"
                         f"restart iteration = {prior.iteration + 1}"
                     )
             except (KeyError, ValueError) as err:

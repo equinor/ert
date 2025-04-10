@@ -53,7 +53,8 @@ _FM_TYPE_EVENT_TO_STATUS = {
     RealizationUnknown: state.REALIZATION_STATE_UNKNOWN,
     RealizationTimeout: state.REALIZATION_STATE_FAILED,
     RealizationStoppedLongRunning: state.REALIZATION_STATE_FAILED,
-    RealizationResubmit: state.REALIZATION_STATE_WAITING,  # For consistency since realization will turn to waiting state when resubmitted
+    # For consistency since realization will turn to waiting state when resubmitted:
+    RealizationResubmit: state.REALIZATION_STATE_WAITING,
     ForwardModelStepStart: state.FORWARD_MODEL_STATE_START,
     ForwardModelStepRunning: state.FORWARD_MODEL_STATE_RUNNING,
     ForwardModelStepSuccess: state.FORWARD_MODEL_STATE_FINISHED,
@@ -93,9 +94,10 @@ class EnsembleSnapshotMetadata(TypedDict):
 
 
 class EnsembleSnapshot:
-    """The snapshot class is how we communicate the state of the ensemble between ensemble_evaluator and monitors.
-    We start with an empty snapshot and as realizations progress, we send smaller snapshots only
-    containing the changes which are then merged into the initial snapshot. In case a connection
+    """The snapshot class is how we communicate the state of the ensemble between
+    ensemble_evaluator and monitors. We start with an empty snapshot and as
+    realizations progress, we send smaller snapshots only containing the changes
+    which are then merged into the initial snapshot. In case a connection
     is dropped, we can send the entire snapshot.
     """
 

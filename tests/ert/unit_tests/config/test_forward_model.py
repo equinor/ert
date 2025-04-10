@@ -310,9 +310,12 @@ def test_that_quotations_in_forward_model_arglist_are_handled_correctly():
     res_config = ErtConfig.with_plugins().from_file_contents(
         """
         NUM_REALIZATIONS  1
-        FORWARD_MODEL COPY_FILE(<FROM>='some, thing', <TO>="some stuff", <FILE>=file.txt)
-        FORWARD_MODEL COPY_FILE(<FROM>='some, thing', <TO>='some stuff', <FILE>=file.txt)
-        FORWARD_MODEL COPY_FILE(<FROM>="some, thing", <TO>="some stuff", <FILE>=file.txt)
+        FORWARD_MODEL COPY_FILE(<FROM>='some, thing', <TO>="some stuff", \
+            <FILE>=file.txt)
+        FORWARD_MODEL COPY_FILE(<FROM>='some, thing', <TO>='some stuff', \
+            <FILE>=file.txt)
+        FORWARD_MODEL COPY_FILE(<FROM>="some, thing", <TO>="some stuff", \
+            <FILE>=file.txt)
         """
     )
 
@@ -510,7 +513,10 @@ def test_that_we_can_point_to_a_custom_eclrun_when_checking_versions(eclipse_v):
     )
     with pytest.raises(
         ConfigValidationError,
-        match=rf".*Unavailable {eclipse_v} version 2034.1. Available versions: \[\'2036.1.*",
+        match=(
+            rf".*Unavailable {eclipse_v} version 2034.1. "
+            rf"Available versions: \[\'2036.1.*"
+        ),
     ):
         ErtConfig.with_plugins().from_file(config_file_name)
 
@@ -885,7 +891,8 @@ def test_that_plugin_forward_model_unexpected_errors_show_as_warnings():
         ).from_file_contents(
             """
             NUM_REALIZATIONS  1
-            FORWARD_MODEL FMWithAssertionError(<arg1>=never,<arg2>=world,<arg3>=derpyderp)
+            FORWARD_MODEL FMWithAssertionError(<arg1>=never,<arg2>=world,\
+               <arg3>=derpyderp)
             FORWARD_MODEL FMWithFMStepValidationError
             """
         )

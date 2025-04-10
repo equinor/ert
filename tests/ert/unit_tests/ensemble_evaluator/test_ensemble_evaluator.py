@@ -416,7 +416,7 @@ async def test_monitor_receive_heartbeats(evaluator_to_use):
     )
 
 
-async def test_dispatch_endpoint_clients_can_connect_and_monitor_can_shut_down_evaluator(
+async def test_dispatch_endpoint_clients_can_connect_and_monitor_can_shut_down_evaluator(  # noqa: E501
     evaluator_to_use,
 ):
     evaluator = evaluator_to_use
@@ -712,7 +712,7 @@ async def test_signal_cancel_does_not_cause_evaluator_dispatcher_communication_t
             )
             await dispatch.send(event_to_json(event))
 
-            async def try_sending_event_from_dispatcher_while_monitor_is_cancelling_ensemble():
+            async def try_sending_event_from_dispatcher_while_monitor_is_cancelling_ensemble():  # noqa: E501
                 await started_cancelling_ensemble.wait()
                 event = ForwardModelStepSuccess(
                     ensemble=evaluator.ensemble.id_,

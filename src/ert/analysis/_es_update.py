@@ -134,7 +134,8 @@ def _expand_wildcards(
     input_list: npt.NDArray[np.str_], patterns: list[str]
 ) -> list[str]:
     """
-    Returns a sorted list of unique strings from `input_list` that match any of the specified wildcard patterns.
+    Returns a sorted list of unique strings from `input_list` that match any
+    of the specified wildcard patterns.
 
     Examples:
         >>> _expand_wildcards(np.array(["apple", "apricot", "banana"]), ["apricot", "apricot"])
@@ -145,7 +146,7 @@ def _expand_wildcards(
         ['deer', 'dog']
         >>> _expand_wildcards(np.array(["apple", "APPLE", "Apple"]), ["apple"])
         ['apple']
-    """
+    """  # noqa: E501
     matches = []
     for pattern in patterns:
         matches.extend([str(val) for val in input_list if fnmatch(val, pattern)])
@@ -262,7 +263,8 @@ def _load_observations_and_responses(
             scaled_errors = errors * scaling
         else:
             msg = (
-                f"WARNING: Could not auto-scale the observations {auto_scale_observations}. "
+                "WARNING: Could not auto-scale the "
+                f"observations {auto_scale_observations}. "
                 f"No match with existing active observations {obs_keys}"
             )
             logger.warning(msg)
@@ -346,13 +348,13 @@ def _split_by_batchsize(
 
 
 def _calculate_adaptive_batch_size(num_params: int, num_obs: int) -> int:
-    """Calculate adaptive batch size to optimize memory usage during Adaptive Localization
-    Adaptive Localization calculates the cross-covariance between parameters and responses.
-    Cross-covariance is a matrix with shape num_params x num_obs which may be larger than memory.
-    Therefore, a batching algorithm is used where only a subset of parameters is used when
-    calculating cross-covariance.
-    This function calculates a batch size that can fit into the available memory, accounting
-    for a safety margin.
+    """Calculate adaptive batch size to optimize memory usage during Adaptive
+    Localization. Adaptive Localization calculates the cross-covariance between
+    parameters and responses. Cross-covariance is a matrix with shape num_params
+    x num_obs which may be larger than memory. Therefore, a batching algorithm is
+    used where only a subset of parameters is used when calculating cross-covariance.
+    This function calculates a batch size that can fit into the available memory,
+    accounting for a safety margin.
 
     Derivation of formula:
     ---------------------
@@ -362,8 +364,8 @@ def _calculate_adaptive_batch_size(num_params: int, num_obs: int) -> int:
     We want (required_memory < available_memory) so:
     num_params < available_memory / (num_obs * bytes_in_float32)
 
-    The available memory is checked using the `psutil` library, which provides information about
-    system memory usage.
+    The available memory is checked using the `psutil` library, which provides
+    information about system memory usage.
     From `psutil` documentation:
     - available:
         the memory that can be given instantly to processes without the
@@ -395,29 +397,34 @@ def _copy_unupdated_parameters(
     target_ensemble: Ensemble,
 ) -> None:
     """
-    Copies parameter groups that have not been updated from a source ensemble to a target ensemble.
-    This function ensures that all realizations in the target ensemble have a complete set of parameters,
-    including those that were not updated.
-    This is necessary because users can choose not to update parameters but may still want to analyse them.
+    Copies parameter groups that have not been updated from a source ensemble to a
+    target ensemble. This function ensures that all realizations in the target ensemble
+    have a complete set of parameters, including those that were not updated.
+    This is necessary because users can choose not to update parameters but may still
+    want to analyse them.
 
     Parameters:
-    all_parameter_groups (list[str]): A list of all parameter groups.
-    updated_parameter_groups (list[str]): A list of parameter groups that have already been updated.
-    iens_active_index (npt.NDArray[np.int_]): An array of indices for the active realizations in the
-                                              target ensemble.
-    source_ensemble (Ensemble): The file system of the source ensemble, from which parameters are copied.
-    target_ensemble (Ensemble): The file system of the target ensemble, to which parameters are saved.
+        all_parameter_groups (list[str]): A list of all parameter groups.
+        updated_parameter_groups (list[str]): A list of parameter groups that have
+            already been updated.
+        iens_active_index (npt.NDArray[np.int_]): An array of indices for the active
+            realizations in the target ensemble.
+        source_ensemble (Ensemble): The file system of the source ensemble, from which
+            parameters are copied.
+        target_ensemble (Ensemble): The file system of the target ensemble, to which
+            parameters are saved.
 
     Returns:
-    None: The function does not return any value but updates the target file system by copying over
-    the parameters.
+        None: The function does not return any value but updates the target file system
+            by copying over the parameters.
     """
     # Identify parameter groups that have not been updated
     not_updated_parameter_groups = list(
         set(all_parameter_groups) - set(updated_parameter_groups)
     )
 
-    # Copy the non-updated parameter groups from source to target for each active realization
+    # Copy the non-updated parameter groups from source to target
+    # for each active realization
     for parameter_group in not_updated_parameter_groups:
         for realization in iens_active_index:
             ds = source_ensemble.load_parameters(parameter_group, realization)
@@ -487,7 +494,8 @@ def analysis_ES(
     smoother_es = ies.ESMDA(
         covariance=observation_errors**2,
         observations=observation_values,
-        alpha=1,  # The user is responsible for scaling observation covariance (esmda usage)
+        # The user is responsible for scaling observation covariance (esmda usage):
+        alpha=1,
         seed=rng,
         inversion=module.inversion,
     )
@@ -517,7 +525,8 @@ def analysis_ES(
         except scipy.linalg.LinAlgError as err:
             msg = (
                 "Failed while computing transition matrix, "
-                f"this might be due to outlier values in one or more realizations: {err}"
+                "this might be due to outlier values in one "
+                f"or more realizations: {err}"
             )
             progress_callback(
                 AnalysisErrorEvent(
@@ -551,7 +560,11 @@ def analysis_ES(
             batch_size = _calculate_adaptive_batch_size(num_params, num_obs)
             batches = _split_by_batchsize(np.arange(0, num_params), batch_size)
 
-            log_msg = f"Running localization on {num_params} parameters, {num_obs} responses, {ensemble_size} realizations and {len(batches)} batches"
+            log_msg = (
+                f"Running localization on {num_params} parameters, "
+                f"{num_obs} responses, {ensemble_size} realizations "
+                f"and {len(batches)} batches"
+            )
             logger.info(log_msg)
             progress_callback(AnalysisStatusEvent(msg=log_msg))
 
@@ -571,7 +584,9 @@ def analysis_ES(
                         X=X_local,
                         Y=S,
                         D=D,
-                        alpha=1.0,  # The user is responsible for scaling observation covariance (esmda usage)
+                        # The user is responsible for scaling observation covariance
+                        # (esmda usage):
+                        alpha=1.0,
                         correlation_threshold=module.correlation_threshold,
                         cov_YY=cov_YY,
                         progress_callback=adaptive_localization_progress_callback,
@@ -593,7 +608,8 @@ def analysis_ES(
                         parameter_names[: cross_correlations_.shape[0]],
                     )
             logger.info(
-                f"Adaptive Localization of {param_group} completed in {(time.time() - start) / 60} minutes"
+                f"Adaptive Localization of {param_group} completed "
+                f"in {(time.time() - start) / 60} minutes"
             )
 
         else:
@@ -611,7 +627,8 @@ def analysis_ES(
             target_ensemble, param_ensemble_array, param_group, iens_active_index
         )
         logger.info(
-            f"Storing data for {param_group} completed in {(time.time() - start) / 60} minutes"
+            f"Storing data for {param_group} completed in "
+            f"{(time.time() - start) / 60} minutes"
         )
 
         _copy_unupdated_parameters(

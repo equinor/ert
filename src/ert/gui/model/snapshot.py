@@ -438,7 +438,8 @@ class SnapshotModel(QAbstractItemModel):
                         _warn_once = False
                         logger.warning(
                             "Negative duration in snapshot encountered. "
-                            f"start_time={start_time} end_time={node.data.get(ids.END_TIME)} "
+                            f"start_time={start_time} "
+                            f"end_time={node.data.get(ids.END_TIME)} "
                             f"delta={delta}"
                         )
                     delta = timedelta()

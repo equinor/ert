@@ -30,7 +30,9 @@ def check_removed_config(queue_system: Any) -> None:
     }
     if isinstance(queue_system, str) and queue_system in queue_systems:
         raise ValueError(
-            f"Queue system configuration has changed, valid options for {queue_system} are: {list(queue_systems[queue_system].model_fields.keys())}"
+            "Queue system configuration has changed, valid options "
+            f"for {queue_system} "
+            f"are: {list(queue_systems[queue_system].model_fields.keys())}"
         )
 
 

@@ -534,7 +534,8 @@ class EverestStorage:
             )
             raise SystemExit(
                 f"Trying to open old storage @ {output_dir}/seba.db."
-                f"This storage can only be opened with an ert[everest] version <= 12.1.2"
+                "This storage can only be opened with an "
+                "ert[everest] version <= 12.1.2"
             )
 
     def read_from_output_dir(self) -> None:

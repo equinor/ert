@@ -202,8 +202,8 @@ def test_await_completed_summary_file_does_not_time_out_on_nosim_with_mpi(source
     )
     # The timeout will not happen since find_unsmry() returns None.
 
-    # There is no assert on runtime because we cannot predict how long the Eclipse license
-    # checkout takes.
+    # There is no assert on runtime because we cannot predict how long the Eclipse
+    # license checkout takes.
 
 
 @pytest.mark.integration_test
@@ -222,8 +222,9 @@ def test_run_reservoirsimulator_on_nosim_with_mpi_and_existing_unsmry_file(sourc
     run_reservoirsimulator.run_reservoirsimulator(
         ["eclipse", "SPE1.DATA", "--version", "2019.3", "--num-cpu=2"]
     )
-    # There is no assert on runtime because we cannot predict how long the Eclipse license
-    # checkout takes, otherwise we should assert that there is no await for unsmry completion.
+    # There is no assert on runtime because we cannot predict how long the
+    # Eclipse license checkout takes, otherwise we should assert that there
+    # is no await for unsmry completion.
     assert Path("SPE1.OK").exists()
 
 

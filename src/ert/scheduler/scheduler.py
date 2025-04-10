@@ -98,7 +98,8 @@ class Scheduler:
         self._cancelled = False
         if max_submit < 0:
             raise ValueError(
-                "max_submit needs to be a positive number. The zero value can be used internally for testing purposes only!"
+                "max_submit needs to be a positive number. "
+                "The zero value can be used internally for testing purposes only!"
             )
         self._max_submit = max_submit
         self._max_running = max_running
@@ -220,7 +221,8 @@ class Scheduler:
                         )
                     )
                     logger.error(
-                        f"Exception in scheduler task {task.get_name()}: {task_exception}\n"
+                        f"Exception in scheduler task {task.get_name()}: "
+                        f"{task_exception}\n"
                         f"Traceback: {exc_traceback}"
                     )
                     if task in scheduling_tasks:

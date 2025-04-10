@@ -51,7 +51,8 @@ def killed_by_oom(pids: set[int]) -> bool:
         if dmesg_result.returncode != 0:
             logger.warning(
                 "Could not use dmesg to check for OOM kill, "
-                f"returncode {dmesg_result.returncode} and stderr: {dmesg_result.stderr}"
+                f"returncode {dmesg_result.returncode} "
+                f"and stderr: {dmesg_result.stderr}"
             )
             return False
     except FileNotFoundError:
@@ -75,7 +76,8 @@ def killed_by_oom(pids: set[int]) -> bool:
         rhel8_message = f"Killed process {pid}"
         if rhel7_message in oom_lines or rhel8_message in oom_lines:
             logger.warning(
-                f"Found OOM trace in dmesg: {oom_lines}, assuming OOM is the cause of realization kill."
+                f"Found OOM trace in dmesg: {oom_lines}, "
+                "assuming OOM is the cause of realization kill."
             )
             return True
     return False
@@ -262,8 +264,8 @@ class ForwardModelStep:
         exit_code: int,
         fm_step_pids: set[int],
     ) -> Exited:
-        # All child pids for the forward model step. Need to track these in order to be able
-        # to detect OOM kills in case of failure.
+        # All child pids for the forward model step. Need to track these in order
+        # to be able to detect OOM kills in case of failure.
         exited_message = Exited(self, exit_code)
 
         if killed_by_oom(fm_step_pids):

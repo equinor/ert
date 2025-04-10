@@ -56,7 +56,7 @@ slave_started_pattern = (
 )
 a_slave_failed_pattern = r"\s@\s+SLAVE RUN.*HAS STOPPED WITH AN ERROR CONDITION.\s*"
 slave_run_paths = r"^\s@\s+STARTING SLAVE\s+[^ ]+RUNNING \([^ ]\)\s*$"
-slave_run_paths = r"\s@\s+STARTING SLAVE .* RUNNING (\w+)\s*^\s@\s+ON HOST.*IN DIRECTORY\s*^\s@\s+(.*)"
+slave_run_paths = r"\s@\s+STARTING SLAVE .* RUNNING (\w+)\s*^\s@\s+ON HOST.*IN DIRECTORY\s*^\s@\s+(.*)"  # noqa: E501
 
 
 def find_unsmry(basepath: Path) -> Path | None:
@@ -305,9 +305,12 @@ class RunReservoirSimulator:
             ]
             if result.errors != len(error_messages):
                 extra_message = (
-                    f"\n\nWarning, mismatch between stated Error count ({result.errors}) "
-                    f"and number of ERROR messages found in PRT ({len(error_messages)})."
-                    f"\n\nTail ({tail_length} bytes) of PRT-file {self.prt_path}:\n\n"
+                    "\n\nWarning, mismatch between stated "
+                    f"Error count ({result.errors}) "
+                    "and number of ERROR messages found "
+                    f"in PRT ({len(error_messages)})."
+                    f"\n\nTail ({tail_length} bytes) of "
+                    f"PRT-file {self.prt_path}:\n\n"
                 ) + tail_textfile(self.prt_path, 5000)
 
             raise EclError(

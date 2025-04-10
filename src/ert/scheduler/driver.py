@@ -10,7 +10,8 @@ from pathlib import Path
 from .event import Event
 
 SIGNAL_OFFSET = 128
-"""Bash and other shells add an offset of 128 to the signal value when a process exited due to a signal"""
+"""Bash and other shells add an offset of 128 to the signal
+value when a process exited due to a signal"""
 
 
 def create_submit_script(
@@ -128,14 +129,16 @@ class Driver(ABC):
             if process.returncode == 0:
                 if retry_on_empty_stdout and not stdout:
                     logger.warning(
-                        f'Command "{shlex.join(cmd_with_args)}" gave exit code 0 but empty stdout, '
-                        "will retry. "
-                        f'stderr: "{stderr.decode(errors="ignore").strip() or "<empty>"}"'
+                        f'Command "{shlex.join(cmd_with_args)}" gave '
+                        "exit code 0 but empty stdout, "
+                        "will retry. stderr: "
+                        f'"{stderr.decode(errors="ignore").strip() or "<empty>"}"'
                     )
                 else:
                     if log_to_debug:
                         logger.debug(
-                            f'Command "{shlex.join(cmd_with_args)}" succeeded with {outputs}'
+                            f'Command "{shlex.join(cmd_with_args)}" '
+                            f"succeeded with {outputs}"
                         )
                     return True, stdout.decode(errors="ignore").strip()
             elif return_on_msgs and any(
@@ -153,7 +156,8 @@ class Driver(ABC):
             elif process.returncode in accept_codes:
                 if log_to_debug:
                     logger.debug(
-                        f'Command "{shlex.join(cmd_with_args)}" succeeded with {outputs}'
+                        f'Command "{shlex.join(cmd_with_args)}" '
+                        f"succeeded with {outputs}"
                     )
                 return True, stderr.decode(errors="ignore").strip()
             else:
@@ -165,7 +169,8 @@ class Driver(ABC):
             if i < (total_attempts - 1):
                 await asyncio.sleep(retry_interval)
         error_message = (
-            f'Command "{shlex.join(cmd_with_args)}" failed after {total_attempts} attempts '
+            f'Command "{shlex.join(cmd_with_args)}" failed '
+            f"after {total_attempts} attempts "
             f"with {outputs}"
         )
         logger.error(error_message)

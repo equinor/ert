@@ -398,7 +398,8 @@ def test_that_data_file_sets_num_cpu(eclipse_data, expected_cpus):
 
 
 @pytest.mark.filterwarnings(
-    "ignore:.*RUNPATH keyword contains deprecated value placeholders.*:ert.config.ConfigWarning"
+    "ignore:.*RUNPATH keyword contains deprecated value "
+    "placeholders.*:ert.config.ConfigWarning"
 )
 @pytest.mark.usefixtures("use_tmpdir")
 def test_that_deprecated_runpath_substitution_remain_valid(make_run_path):
@@ -574,7 +575,8 @@ def test_num_cpu_subst(append, numcpu, make_run_path):
     ],
 )
 @pytest.mark.filterwarnings(
-    "ignore:.*RUNPATH keyword contains deprecated value placeholders.*:ert.config.ConfigWarning"
+    "ignore:.*RUNPATH keyword contains deprecated "
+    "value placeholders.*:ert.config.ConfigWarning"
 )
 @pytest.mark.usefixtures("use_tmpdir")
 def test_that_runpaths_are_raised_when_invalid(run_path, expected_raise, msg):
@@ -682,14 +684,18 @@ def test_when_manifest_files_are_written_forward_model_ok_succeeds(storage, itr)
 
             GEN_DATA GENDATA RESULT_FILE:gen_data<ALL>.txt
 
-            SURFACE SURF1 OUTPUT_FILE:surf1_output<ALL>.irap BASE_SURFACE:base.irap FORWARD_INIT:True INIT_FILES:surf1_init<ALL>.irap
-            SURFACE SURF2 OUTPUT_FILE:surf2_output<ALL>.irap BASE_SURFACE:base.irap INIT_FILES:%dinit<IENS><ITER>.irap
+            SURFACE SURF1 OUTPUT_FILE:surf1_output<ALL>.irap BASE_SURFACE:base.irap \
+                FORWARD_INIT:True INIT_FILES:surf1_init<ALL>.irap
+            SURFACE SURF2 OUTPUT_FILE:surf2_output<ALL>.irap BASE_SURFACE:base.irap \
+                INIT_FILES:%dinit<IENS><ITER>.irap
 
-            FIELD PORO0 PARAMETER field1<ALL>.roff INIT_FILES:field1_init<ALL>.roff FORWARD_INIT:TRUE
+            FIELD PORO0 PARAMETER field1<ALL>.roff INIT_FILES:field1_init<ALL>.roff \
+                FORWARD_INIT:TRUE
             FIELD PORO1 PARAMETER field2<ALL>.roff INIT_FILES:%dinit<IENS><ITER>.roff
 
             GEN_KW GEN0 gen0.txt INIT_FILES:%dgen_init<IENS><ITER>.txt
-            GEN_KW GEN1 template.txt gen_parameter.txt gen1.txt INIT_FILES:%dgen_init<IENS><ITER>.txt
+            GEN_KW GEN1 template.txt gen_parameter.txt gen1.txt \
+                INIT_FILES:%dgen_init<IENS><ITER>.txt
             """
         )
     )

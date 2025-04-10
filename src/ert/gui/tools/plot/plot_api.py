@@ -193,9 +193,9 @@ class PlotApi:
 
     def observations_for_key(self, ensemble_ids: list[str], key: str) -> pd.DataFrame:
         """Returns a pandas DataFrame with the datapoints for a given observation key
-        for a given ensembles. The row index is the realization number, and the column index
-        is a multi-index with (obs_key, index/date, obs_index), where index/date is
-        used to relate the observation to the data point it relates to, and obs_index
+        for a given ensembles. The row index is the realization number, and the column
+        index is a multi-index with (obs_key, index/date, obs_index), where index/date
+        is used to relate the observation to the data point it relates to, and obs_index
         is the index for the observation itself"""
         all_observations = pd.DataFrame()
         for ensemble_id in ensemble_ids:
@@ -220,7 +220,8 @@ class PlotApi:
                     # but this should really be revised
                 except (KeyError, IndexError, JSONDecodeError) as e:
                     raise httpx.RequestError(
-                        f"Observation schema might have changed key={key},  ensemble_name={ensemble.name}, e={e}"
+                        f"Observation schema might have changed key={key}, "
+                        f"ensemble_name={ensemble.name}, e={e}"
                     ) from e
 
                 for obs in observations:

@@ -306,7 +306,8 @@ def test_gen_kw_distribution_errors(tmpdir, distribution, mean, std, error):
         ("MYNAME RAW", None),
         (
             "MYNAME UNIFORM 0 1 2",
-            "Incorrect number of values: \\['0', '1', '2'\\], provided for variable MYNAME with distribution UNIFORM.",
+            "Incorrect number of values: \\['0', '1', '2'\\], "
+            "provided for variable MYNAME with distribution UNIFORM.",
         ),
         ("MYNAME", "Too few instructions provided in"),
         (
@@ -317,7 +318,8 @@ def test_gen_kw_distribution_errors(tmpdir, distribution, mean, std, error):
         ("MYNAME DERRF 100 -14 -2.544545 10E5 10E+5", None),
         (
             "MYNAME CONST no-number",
-            "Unable to convert 'no-number' to float number for variable MYNAME with distribution CONST.",
+            "Unable to convert 'no-number' to float number for "
+            "variable MYNAME with distribution CONST.",
         ),
         ("MYNAME      CONST    0", None),  # spaces
         ("MYNAME\t\t\tCONST\t\t0", None),  # tabs
@@ -685,7 +687,8 @@ def test_validation_triangular_distribution(
             "3",
             "-1",
             "2",
-            "NBINS 0.0 must be a positive integer larger than 1 for DERRF distributed parameter MY_KEYWORD",
+            "NBINS 0.0 must be a positive integer larger than 1 for "
+            "DERRF distributed parameter MY_KEYWORD",
         ),
         (
             "DERRF",
@@ -694,7 +697,8 @@ def test_validation_triangular_distribution(
             "3",
             "-1",
             "2",
-            "NBINS -5.0 must be a positive integer larger than 1 for DERRF distributed parameter MY_KEYWORD",
+            "NBINS -5.0 must be a positive integer larger than 1 for "
+            "DERRF distributed parameter MY_KEYWORD",
         ),
         (
             "DERRF",
@@ -703,7 +707,8 @@ def test_validation_triangular_distribution(
             "3",
             "-1",
             "2",
-            "NBINS 1.5 must be a positive integer larger than 1 for DERRF distributed parameter MY_KEYWORD",
+            "NBINS 1.5 must be a positive integer larger than 1 for "
+            "DERRF distributed parameter MY_KEYWORD",
         ),
         (
             "DERRF",
@@ -712,7 +717,8 @@ def test_validation_triangular_distribution(
             "-1",
             "-1",
             "2",
-            "The minimum 3.0 must be less than the maximum -1.0 for DERRF distributed parameter MY_KEYWORD",
+            "The minimum 3.0 must be less than the maximum -1.0 for "
+            "DERRF distributed parameter MY_KEYWORD",
         ),
         (
             "DERRF",
@@ -721,7 +727,8 @@ def test_validation_triangular_distribution(
             "1",
             "-1",
             "2",
-            "The minimum 1.0 must be less than the maximum 1.0 for DERRF distributed parameter MY_KEYWORD",
+            "The minimum 1.0 must be less than the maximum 1.0 for "
+            "DERRF distributed parameter MY_KEYWORD",
         ),
         (
             "DERRF",
@@ -730,7 +737,8 @@ def test_validation_triangular_distribution(
             "3",
             "-1",
             "0",
-            "The width 0.0 must be greater than 0 for DERRF distributed parameter MY_KEYWORD",
+            "The width 0.0 must be greater than 0 for "
+            "DERRF distributed parameter MY_KEYWORD",
         ),
         (
             "DERRF",
@@ -739,7 +747,8 @@ def test_validation_triangular_distribution(
             "3",
             "-1",
             "-2",
-            "The width -2.0 must be greater than 0 for DERRF distributed parameter MY_KEYWORD",
+            "The width -2.0 must be greater than 0 for "
+            "DERRF distributed parameter MY_KEYWORD",
         ),
         (
             "DERRF",

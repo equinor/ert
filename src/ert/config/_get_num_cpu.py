@@ -136,7 +136,8 @@ def _get_num_cpu(
                         slaves_num_cpu += int(parameters[4])
     except Exception as err:
         ConfigWarning.warn(
-            f"Failed to read NUM_CPU from {data_file_name} Line {parser.line_number}: {err}",
+            f"Failed to read NUM_CPU from {data_file_name} Line "
+            f"{parser.line_number}: {err}",
             data_file_name or "",
         )
 

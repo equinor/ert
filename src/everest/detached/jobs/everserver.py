@@ -278,7 +278,9 @@ def _everserver_thread(
 
     def _log(request: Request) -> None:
         logging.getLogger(EVERSERVER).info(
-            f"{request.scope['path']} entered from {request.client.host if request.client else 'unknown host'} with HTTP {request.method}"
+            f"{request.scope['path']} entered from "
+            f"{request.client.host if request.client else 'unknown host'} "
+            f"with HTTP {request.method}"
         )
 
     @app.get("/")
@@ -426,7 +428,10 @@ def _find_open_port(host: str, lower: int, upper: int) -> int:
             logging.getLogger(EVERSERVER).info(f"Port {port} for host {host} is taken")
         else:
             return port
-    msg = f"Failed 10 times to get a random port in the range {lower}-{upper} on {host}. Giving up."
+    msg = (
+        f"Failed 10 times to get a random port in the range {lower}-{upper} on {host}. "
+        "Giving up."
+    )
     logging.getLogger(EVERSERVER).error(msg)
     raise Exception(msg)
 

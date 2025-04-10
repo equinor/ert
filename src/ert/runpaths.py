@@ -100,5 +100,6 @@ class Runpaths:
                     )
 
                     filehandle.write(
-                        f"{realization:03d}  {runpath}  {job_name_or_eclbase}  {iteration:03d}\n"
+                        f"{realization:03d}  {runpath}  "
+                        f"{job_name_or_eclbase}  {iteration:03d}\n"
                     )

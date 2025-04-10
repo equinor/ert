@@ -40,9 +40,10 @@ def get_nr_primary_components(
     data_matrix = responses - responses.mean(axis=0)
     _, singulars, _ = np.linalg.svd(data_matrix.astype(float), full_matrices=False)
     # Calculate cumulative variance ratio:
-    # Squared singular values are proportional to variance explained by each principal component.
-    # We compute the cumulative sum of these, then divide by their total sum to get the
-    # cumulative proportion of variance explained by each successive component.
+    # Squared singular values are proportional to variance explained by each principal
+    # component. We compute the cumulative sum of these, then divide by their total
+    # sum to get the cumulative proportion of variance explained by each successive
+    # component.
     variance_ratio = np.cumsum(singulars**2) / np.sum(singulars**2)
     return len([1 for i in variance_ratio[:-1] if i < threshold])
 
@@ -53,7 +54,8 @@ def cluster_responses(
 ) -> npt.NDArray[np.int_]:
     """
     Cluster responses using hierarchical clustering based on Spearman correlation.
-    Observations that tend to vary similarly across different simulation runs will be clustered together.
+    Observations that tend to vary similarly across different simulation runs will
+    be clustered together.
     """
     correlation = spearmanr(responses).statistic
     if isinstance(correlation, np.float64):
@@ -67,11 +69,13 @@ def main(
     obs_errors: npt.NDArray[np.float64],
 ) -> tuple[npt.NDArray[np.float64], npt.NDArray[np.int_], npt.NDArray[np.int_]]:
     """
-    Perform 'Auto Scaling' to mitigate issues with correlated observations in ensemble smoothers.
+    Perform 'Auto Scaling' to mitigate issues with correlated observations in ensemble
+    smoothers.
 
-    This method was developed internally to address challenges with correlated observations
-    in ensemble smoothers, which can lead to overconfident updates. Originally named
-    'Misfit Preprocessor', it was renamed to 'Auto Scaling' as it doesn't calculate misfits.
+    This method was developed internally to address challenges with correlated
+    observations in ensemble smoothers, which can lead to overconfident updates.
+    Originally named 'Misfit Preprocessor', it was renamed to 'Auto Scaling' as
+    it doesn't calculate misfits.
 
     The procedure involves several steps:
 
@@ -94,26 +98,28 @@ def main(
         Based on the dimensionality estimated by PCA,
         a hierarchical clustering is performed using the Spearman correlation
         matrix of the scaled responses.
-        Clustering is done to identify groups of observations with similar variation patterns.
-        Using the number of principal components as the number of clusters is not a widely
-        common technique in clustering analysis.
-        Potential rationale (the creator of method did not document the reasoning behind the method):
+        Clustering is done to identify groups of observations with similar variation
+        patterns. Using the number of principal components as the number of clusters
+        is not a widely common technique in clustering analysis.
+        Potential rationale (the creator of method did not document the reasoning
+        behind the method):
         The number of principal components to explain 95% of the variance can be seen as
         an estimate of the intrinsic dimensionality of the data.
-        Using this as the number of clusters assumes that each major direction of variance
-        could correspond to a distinct cluster.
-        This methods allows the number of clusters to be data-driven rather than pre-determined,
-        which can be advantageous in some scenarios.
-        One potential issue is that data can have a certain number of significant dimension but
-        a different number of natural clusters.
+        Using this as the number of clusters assumes that each major direction of
+        variance could correspond to a distinct cluster.
+        This methods allows the number of clusters to be data-driven rather than
+        pre-determined, which can be advantageous in some scenarios.
+        One potential issue is that data can have a certain number of significant
+        dimension but a different number of natural clusters.
     4. Cluster-Based PCA and Scaling:
-        For each cluster, PCA is performed to determine the number of principal components that
-        explain a specified percentage of variance within that cluster.
-        A scaling factor for the observation errors is then calculated as the square root
-        of the ratio of the number of observations in the cluster to the number of principal components.
-        The specific formula used is not a standard approach, but may nevertheless be reasonable.
-        The ratio of observations to principal components is somewhat analogous to degress of freedom
-        in statistical analyses. Scaling by a function of this ratio could be seen as an attempt
+        For each cluster, PCA is performed to determine the number of principal
+        components that explain a specified percentage of variance within that cluster.
+        A scaling factor for the observation errors is then calculated as the square
+        root of the ratio of the number of observations in the cluster to the number
+        of principal components. The specific formula used is not a standard approach,
+        but may nevertheless be reasonable. The ratio of observations to principal
+        components is somewhat analogous to degress of freedom in statistical analyses.
+        Scaling by a function of this ratio could be seen as an attempt
         to adjust for the effective sample size.
 
     Parameters:
@@ -128,7 +134,8 @@ def main(
     Tuple[npt.NDArray[np.float_], npt.NDArray[np.int_], npt.NDArray[np.int_]]
         - scale_factors: Array of scaling factors for observation errors
         - clusters: Array of cluster assignments for each observation
-        - nr_components: Array of the number of principal components for each observation
+        - nr_components: Array of the number of principal components for each
+          observation
     """
     logger.info("Scaling observation errors based on response correlations")
     scale_factors = np.ones(len(obs_errors))

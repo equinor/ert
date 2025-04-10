@@ -8,15 +8,24 @@ from ert.config import ConfigWarning
 class ExportConfig(BaseModel, extra="forbid"):
     csv_output_filepath: str | None = Field(
         default=None,
-        description="'csv_output_filepath' key is deprecated. You can safely remove it from the config file",
+        description=(
+            "'csv_output_filepath' key is deprecated. "
+            "You can safely remove it from the config file"
+        ),
     )
     discard_gradient: bool | None = Field(
         default=None,
-        description="'discard_gradient' key is deprecated. You can safely remove it from the config file",
+        description=(
+            "'discard_gradient' key is deprecated. "
+            "You can safely remove it from the config file"
+        ),
     )
     discard_rejected: bool | None = Field(
         default=None,
-        description="'discard_rejected' key is deprecated. You can safely remove it from the config file",
+        description=(
+            "'discard_rejected' key is deprecated. "
+            "You can safely remove it from the config file"
+        ),
     )
     keywords: list[str] = Field(
         default_factory=list,
@@ -24,11 +33,16 @@ class ExportConfig(BaseModel, extra="forbid"):
     )
     batches: list[int] | None = Field(
         default=None,
-        description="'batches' key is deprecated. You can safely remove it from the config file",
+        description=(
+            "'batches' key is deprecated. You can safely remove it from the config file"
+        ),
     )
     skip_export: bool | None = Field(
         default=None,
-        description="'skip_export' key is deprecated. You can safely remove it from the config file",
+        description=(
+            "'skip_export' key is deprecated. "
+            "You can safely remove it from the config file"
+        ),
     )
 
     @model_validator(mode="before")

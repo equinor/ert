@@ -180,10 +180,12 @@ def create_poly_with_field(field_dim: tuple[int, int, int], realisations: int):
             NUM_REALIZATIONS {realisations}
             OBS_CONFIG observations
 
-            FIELD MY_PARAM PARAMETER my_param.bgrdecl INIT_FILES:my_param.bgrdecl FORWARD_INIT:True
+            FIELD MY_PARAM PARAMETER my_param.bgrdecl \
+                INIT_FILES:my_param.bgrdecl FORWARD_INIT:True
             GRID MY_EGRID.EGRID
 
-            GEN_DATA MY_RESPONSE RESULT_FILE:gen_data_%d.out REPORT_STEPS:0 INPUT_FORMAT:ASCII
+            GEN_DATA MY_RESPONSE RESULT_FILE:gen_data_%d.out \
+                REPORT_STEPS:0 INPUT_FORMAT:ASCII
             INSTALL_JOB poly_eval POLY_EVAL
             FORWARD_MODEL poly_eval
             """

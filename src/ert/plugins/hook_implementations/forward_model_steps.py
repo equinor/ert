@@ -74,9 +74,10 @@ class CopyDirectory(ForwardModelStepPlugin):
             description="""
 The job copies the directory :code:`<FROM>` to the target :code:`<TO>`. If
 :code:`<TO>` points to a non-existing directory structure, it will be
-created first. If the :code:`<TO>` folder already exist it creates a new directory within the existing one.
-E.g. :code:`COPY_DIRECTORY (<FROM>=foo, <TO>=bar)` creates :code:`bar/foo` if the directory
-:code:`bar` already exists. If :code:`bar` does not exist it becomes a copy of :code:`foo`.
+created first. If the :code:`<TO>` folder already exist it creates a new
+directory within the existing one. E.g. :code:`COPY_DIRECTORY (<FROM>=foo, <TO>=bar)`
+creates :code:`bar/foo` if the directory :code:`bar` already exists. If :code:`bar`
+does not exist it becomes a copy of :code:`foo`.
             """,
             examples="""
 .. code-block:: bash
@@ -106,10 +107,11 @@ class CopyFile(ForwardModelStepPlugin):
         return ForwardModelStepDocumentation(
             category="utility.file_system",
             description="""
-Copies file from :code:`<FROM>` to :code:`<TO>`. If no directory is specified in :code:`<TO>`,
-the file will be copied to :code:`RUNPATH`. If the :code:`<TO>` argument includes a directory component,
-that directory will be created. Unlike the standard :code:`cp` command, this job will automatically
-create any missing directories in the destination path.
+Copies file from :code:`<FROM>` to :code:`<TO>`. If no directory is specified
+in :code:`<TO>`, the file will be copied to :code:`RUNPATH`. If the :code:`<TO>`
+argument includes a directory component, that directory will be created. Unlike
+the standard :code:`cp` command, this job will automatically create any missing
+directories in the destination path.
 """,
             examples="""
 .. code-block:: bash
@@ -238,20 +240,23 @@ class Eclipse100(ForwardModelStepPlugin):
         return ForwardModelStepDocumentation(
             category="simulators.reservoir",
             examples="""
-The version, number of cpu, and whether or not to ignore errors and whether or not to produce `YOUR_CASE_NAME.h5` output files can
-be configured in the configuration file when adding the job, as such:
+The version, number of cpu, and whether or not to ignore errors and whether
+or not to produce `YOUR_CASE_NAME.h5` output files can be configured in the
+configuration file when adding the job, as such:
 
 
 .. code-block:: bash
 
-    FORWARD_MODEL ECLIPSE100(<ECLBASE>, <VERSION>=xxxx, <OPTS>={"--ignore-errors", "--summary-conversion"})
+    FORWARD_MODEL ECLIPSE100(<ECLBASE>, <VERSION>=xxxx, \
+        <OPTS>={"--ignore-errors", "--summary-conversion"})
 
 The :code:`OPTS` argument is optional and can be removed, fully or partially.
 In absence of :code:`--ignore-errors` eclipse will fail on errors.
 Adding the flag :code:`--ignore-errors` will result in eclipse ignoring errors.
 
-And in absence of :code:`--summary-conversions` eclipse will run without producing `YOUR_CASE_NAME.h5` output files.
-Add flag :code:`--summary-conversions` to produce `YOUR_CASE_NAME.h5` output files.
+And in absence of :code:`--summary-conversions` eclipse will run without producing
+`YOUR_CASE_NAME.h5` output files. Add flag :code:`--summary-conversions` to produce
+`YOUR_CASE_NAME.h5` output files.
 """,
         )
 
@@ -582,7 +587,8 @@ By invoking the :code:`FORWARD_MODEL` as such:
 
 .. code-block:: bash
 
-    FORWARD_MODEL TEMPLATE_RENDER(<INPUT_FILES>=my_input.json, <TEMPLATE_FILE>=tmpl.jinja, <OUTPUT_FILE>=output_file)
+    FORWARD_MODEL TEMPLATE_RENDER(<INPUT_FILES>=my_input.json, \
+        <TEMPLATE_FILE>=tmpl.jinja, <OUTPUT_FILE>=output_file)
 """,
         )
 

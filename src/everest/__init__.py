@@ -7,7 +7,8 @@ try:
     from .loader import load
 except Exception as e:
     print(
-        f"Error during initialization: {e}\nPlease make sure that everest is installed correctly and that all dependencies are updated."
+        f"Error during initialization: {e}\nPlease make sure that "
+        "everest is installed correctly and that all dependencies are updated."
     )
     import sys
 

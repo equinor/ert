@@ -250,7 +250,8 @@ def api_and_snake_oil_storage(snake_oil_case_storage, monkeypatch):
         (1000, 100, 100, 1500),  # 809MiB local, 879MiB linux-3.11, xr: 1107MiB
         # (Cases below are more realistic at up to 200realizations)
         # Not to be run these on GHA runners
-        # (2000, 100, 100, 1950),  # 1607MiB local, 1716MiB linux3.12, 1863 on linux3.11, xr: 2186MiB
+        # (2000, 100, 100, 1950),
+        #   1607MiB local, 1716MiB linux3.12, 1863 on linux3.11, xr: 2186MiB
         # (2, 5803, 11787, 5500),  # 4657MiB local, xr: 10115MiB
         # (10, 5803, 11787, 13500),  # 10036MiB local, 12803MiB mac-3.12, xr: 46715MiB
     ],

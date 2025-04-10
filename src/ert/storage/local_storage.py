@@ -103,7 +103,9 @@ class LocalStorage(BaseMode):
 
         if version > _LOCAL_STORAGE_VERSION:
             raise RuntimeError(
-                f"Cannot open storage '{self.path}': Storage version {version} is newer than the current version {_LOCAL_STORAGE_VERSION}, upgrade ert to continue, or run with a different ENSPATH"
+                f"Cannot open storage '{self.path}': Storage version {version} "
+                f"is newer than the current version {_LOCAL_STORAGE_VERSION}, "
+                "upgrade ert to continue, or run with a different ENSPATH"
             )
         if self.can_write:
             self._acquire_lock()
@@ -114,7 +116,8 @@ class LocalStorage(BaseMode):
             self._save_index()
         elif version < _LOCAL_STORAGE_VERSION:
             raise RuntimeError(
-                f"Cannot open storage '{self.path}' in read-only mode: Storage version {version} is too old. Run ert to initiate migration."
+                f"Cannot open storage '{self.path}' in read-only mode: "
+                f"Storage version {version} is too old. Run ert to initiate migration."
             )
         self.refresh()
 

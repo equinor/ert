@@ -141,4 +141,4 @@ Found 1 validation error:
 
 
     * Value error, job = 'add_templates'\t-c/--config = {template_config_path}
-\t\ttemplates: {template_path} -> Path does not point to a file (type=value_error)""" in parser.get_error()
+\t\ttemplates: {template_path} -> Path does not point to a file (type=value_error)""" in parser.get_error()  # noqa: E501

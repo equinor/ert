@@ -244,7 +244,7 @@ def start_monitor(
                         if event.result_type == "FunctionResult":
                             callback(
                                 {
-                                    OPT_PROGRESS_ID: get_opt_status_from_batch_result_event(
+                                    OPT_PROGRESS_ID: get_opt_status_from_batch_result_event(  # noqa: E501
                                         event
                                     )
                                 }

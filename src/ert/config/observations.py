@@ -333,7 +333,7 @@ class EnkfObs:
                 "It is unfortunately not possible to use summary "
                 "observations from the start of the simulation. "
                 f"Problem with observation {obs_key}"
-                f"{' at ' + str(cls._get_time(summary_dict, time_map[0])) if summary_dict.restart is None else ''}",
+                f"{' at ' + str(cls._get_time(summary_dict, time_map[0])) if summary_dict.restart is None else ''}",  # noqa: E501
                 obs_key,
             )
         return {
@@ -415,7 +415,8 @@ class EnkfObs:
         response_key = general_observation.data
         if not ensemble_config.hasNodeGenData(response_key):
             ConfigWarning.warn(
-                f"No GEN_DATA with name: {response_key} found - ignoring observation {obs_key}",
+                f"No GEN_DATA with name: {response_key} found - "
+                f"ignoring observation {obs_key}",
                 response_key,
             )
             return {}

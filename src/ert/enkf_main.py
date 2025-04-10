@@ -191,7 +191,8 @@ def sample_prior(
         if config_node.forward_init:
             continue
         logger.info(
-            f"Sampling parameter {config_node.name} for realizations {active_realizations}"
+            f"Sampling parameter {config_node.name} "
+            f"for realizations {active_realizations}"
         )
         for realization_nr in active_realizations:
             ds = config_node.sample_or_load(

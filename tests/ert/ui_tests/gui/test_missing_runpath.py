@@ -100,7 +100,8 @@ def test_missing_runpath_does_not_show_waiting_bar(
     tmp_path, run_experiment, qtbot, monkeypatch
 ):
     """
-    This is a regression test for the gui showing waiting progress bar on ensemble failure
+    This is a regression test for the gui showing waiting
+    progress bar on ensemble failure
     """
     monkeypatch.chdir(tmp_path)
     write_config(tmp_path, "LOCAL")

@@ -205,7 +205,8 @@ class ExperimentPanel(QWidget):
             assert sim_item is not None
             sim_item.setEnabled(False)
             sim_item.setToolTip(
-                "Both observations and parameters must be defined.\nThere must be parameters to update."
+                "Both observations and parameters must be defined.\n"
+                "There must be parameters to update."
             )
             style = self.style()
             assert style is not None
@@ -270,7 +271,8 @@ class ExperimentPanel(QWidget):
                 "might be overwritten.\n"
                 "- Previously generated files might "
                 "be used if not configured correctly.\n"
-                f"- {model.get_number_of_existing_runpaths()} out of {model.get_number_of_active_realizations()} realizations "
+                f"- {model.get_number_of_existing_runpaths()} out "
+                f"of {model.get_number_of_active_realizations()} realizations "
                 "are running in existing runpaths.\n"
                 "Are you sure you want to continue?"
             )

@@ -173,7 +173,7 @@ def test_unopenable_observation_config_fails_gracefully():
     ],
 )
 @pytest.mark.usefixtures("copy_poly_case")
-def test_that_the_model_raises_exception_if_successful_realizations_less_than_minimum_realizations(
+def test_that_the_model_raises_exception_if_successful_realizations_less_than_minimum_realizations(  # noqa: E501
     mode,
 ):
     with (
@@ -912,7 +912,8 @@ async def test_that_killed_ert_does_not_leave_storage_server_process():
                 storage_server_has_shutdown.set()
             await asyncio.sleep(0.1)
         print(
-            f"Waiting for killed ert:{ert_subprocess.pid} to stop storage:{storage_process.pid}"
+            f"Waiting for killed ert:{ert_subprocess.pid} "
+            f"to stop storage:{storage_process.pid}"
         )
 
     await asyncio.wait_for(_wait_for_storage_process_to_shut_down(), timeout=90)

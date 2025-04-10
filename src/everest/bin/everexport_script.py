@@ -21,7 +21,8 @@ def everexport_entry(args: list[str] | None = None) -> None:
 
     logger.info("Everexport deprecation warning seen")
     print(
-        f"Everexport is deprecated, optimization results already exist @ {config.optimization_output_dir}"
+        "Everexport is deprecated, optimization results "
+        f"already exist @ {config.optimization_output_dir}"
     )
 
 

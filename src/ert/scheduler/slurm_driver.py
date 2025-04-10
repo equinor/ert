@@ -251,7 +251,8 @@ class SlurmDriver(Driver):
             stdout, stderr = await process.communicate()
             if process.returncode:
                 logger.warning(
-                    f"squeue gave returncode {process.returncode} and error {stderr.decode()}"
+                    f"squeue gave returncode {process.returncode} "
+                    f"and error {stderr.decode()}"
                 )
             squeue_states = dict(_parse_squeue_output(stdout.decode(errors="ignore")))
 
@@ -282,7 +283,8 @@ class SlurmDriver(Driver):
 
             if missing_in_squeue_and_scontrol:
                 logger.debug(
-                    f"scontrol did not give status for job_ids {missing_in_squeue_and_scontrol}, giving up for now."
+                    "scontrol did not give status for job_ids "
+                    f"{missing_in_squeue_and_scontrol}, giving up for now."
                 )
             await asyncio.sleep(self._poll_period)
 
@@ -375,7 +377,8 @@ class SlurmDriver(Driver):
             return _parse_scontrol_output(stdout.decode(errors="ignore"))
         except Exception as err:
             logger.warning(
-                f"Could not parse scontrol stdout {stdout.decode(errors='ignore')}: {err}"
+                "Could not parse scontrol stdout "
+                f"{stdout.decode(errors='ignore')}: {err}"
             )
         return None
 

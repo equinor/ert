@@ -406,7 +406,10 @@ def test_copy_directory_errors_when_source_directory_does_not_exist():
     not_existing = "does/not/exist"
     with pytest.raises(
         OSError,
-        match=f"Input argument: '{not_existing}' does not correspond to an existing directory",
+        match=(
+            f"Input argument: '{not_existing}' does not correspond "
+            "to an existing directory"
+        ),
     ):
         copy_directory(not_existing, "target")
 
@@ -417,7 +420,10 @@ def test_copy_directory_errors_when_source_directory_is_file():
     Path("file").write_text(textfilename, encoding="utf-8")
     with pytest.raises(
         OSError,
-        match=f"Input argument: '{textfilename}' does not correspond to an existing directory",
+        match=(
+            f"Input argument: '{textfilename}' does not correspond "
+            "to an existing directory"
+        ),
     ):
         copy_directory(textfilename, "target")
 

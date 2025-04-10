@@ -147,7 +147,8 @@ class _DetachedMonitor:
 
                         cache_hits = event.data
                         header = self._make_header(
-                            f"({len(cache_hits)}) cache_hit(s) for batch #{event.batch})",
+                            f"({len(cache_hits)}) cache_hit(s) for "
+                            f"batch #{event.batch})",
                             Fore.GREEN,
                         )
 
@@ -163,7 +164,10 @@ class _DetachedMonitor:
                                 if pert != -1
                                 else f"Function evaluation for realization {real}"
                             )
-                            end = f": re-using results from simulation {src_sim_id} of batch {src_batch}."
+                            end = (
+                                ": re-using results from simulation "
+                                f"{src_sim_id} of batch {src_batch}."
+                            )
 
                             cache_hit_strs.append(start + end)
 
@@ -321,7 +325,8 @@ class _DetachedMonitor:
                 if job.errors:
                     print_lines.extend(
                         [
-                            f"{Fore.RED}{job.name:>{width}}: Failed: {err}, realizations: {_format_list(job.errors[err])}{Fore.RESET}"
+                            f"{Fore.RED}{job.name:>{width}}: Failed: {err}, "
+                            f"realizations: {_format_list(job.errors[err])}{Fore.RESET}"
                             for err in job.errors
                         ]
                     )
@@ -428,8 +433,9 @@ def show_scaled_controls_warning() -> None:
     user_input = input(
         dedent("""
         From Everest version: 14.0.3, Everest will output auto-scaled control values.
-        Control values should now be specified in real-world units instead of the optimizer's internal scale.
-        The 'scaled_range' property can still be used to configure the optimizer's range for each control.
+        Control values should now be specified in real-world units instead of the
+        optimizer's internal scale. The 'scaled_range' property can still be used
+        to configure the optimizer's range for each control.
 
         [Enter] to continue.
         [  Y  ] to stop showing this message again.

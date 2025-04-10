@@ -873,7 +873,7 @@ def test_that_design_matrix_alters_num_realizations_field(
 
     # Verify that the warning icon has the correct tooltip
     warning_icon = gui.findChild(QLabel, "warning_icon_num_realizations_design_matrix")
-    assert (
-        warning_icon.toolTip()
-        == "Number of realizations changed from 10 to 3 due to 'REAL' column in design matrix"
+    assert warning_icon.toolTip() == (
+        "Number of realizations changed from 10 to 3 due "
+        "to 'REAL' column in design matrix"
     )

@@ -25,7 +25,8 @@ def test_and_benchmark_adaptive_localization_with_fields(
     num_ensemble = 25
 
     # Create a tridiagonal matrix that maps responses to parameters.
-    # Being tridiagonal, it ensures that each response is influenced only by its neighboring parameters.
+    # Being tridiagonal, it ensures that each response is influenced
+    # only by its neighboring parameters.
     diagonal = np.ones(min(num_parameters, num_observations))
     A = sp.sparse.diags(
         [diagonal, diagonal, diagonal],

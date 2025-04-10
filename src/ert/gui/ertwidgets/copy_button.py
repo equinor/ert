@@ -31,7 +31,8 @@ class CopyButton(QPushButton):
             QMessageBox.critical(
                 None,
                 "Error",
-                "Cannot copy text to clipboard because your system does not have a clipboard",
+                "Cannot copy text to clipboard because your "
+                "system does not have a clipboard",
                 QMessageBox.StandardButton.Ok,
             )
         self.setIcon(QIcon("img:check.svg"))

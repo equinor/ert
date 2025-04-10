@@ -89,7 +89,8 @@ class SummaryConfig(ResponseConfig):
             )
             if not simulation_step_exists:
                 ConfigWarning.warn(
-                    "Config contains a SUMMARY key but no forward model steps known to generate a summary file"
+                    "Config contains a SUMMARY key but no forward model "
+                    "steps known to generate a summary file"
                 )
             return cls(
                 name="summary",

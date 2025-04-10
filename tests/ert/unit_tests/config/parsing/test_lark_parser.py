@@ -66,7 +66,8 @@ def test_that_new_line_can_be_escaped():
 
 
 @pytest.mark.filterwarnings(
-    "ignore:.*Using DEFINE with substitution strings that are not of the form '<KEY>'.*:ert.config.ConfigWarning"
+    "ignore:.*Using DEFINE with substitution strings that are not of "
+    "the form '<KEY>'.*:ert.config.ConfigWarning"
 )
 def test_that_redefines_are_applied_correctly_as_forward_model_args():
     config_dict = parse_contents(

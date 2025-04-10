@@ -47,18 +47,21 @@ class ModelConfig:
             x in runpath_format_string for x in ["<ITER>", "<IENS>"]
         ):
             raise ConfigValidationError(
-                f"RUNPATH cannot combine deprecated and new style placeholders: `{runpath_format_string}`. Valid example `{DEFAULT_RUNPATH}`"
+                "RUNPATH cannot combine deprecated and new style placeholders: "
+                f"`{runpath_format_string}`. Valid example `{DEFAULT_RUNPATH}`"
             )
         # do not allow multiple occurrences
         for kw in ["<ITER>", "<IENS>"]:
             if runpath_format_string.count(kw) > 1:
                 raise ConfigValidationError(
-                    f"RUNPATH cannot contain multiple {kw} placeholders: `{runpath_format_string}`. Valid example `{DEFAULT_RUNPATH}`"
+                    f"RUNPATH cannot contain multiple {kw} placeholders: "
+                    f"`{runpath_format_string}`. Valid example `{DEFAULT_RUNPATH}`"
                 )
         # do not allow too many placeholders
         if runpath_format_string.count("%d") > 2:
             raise ConfigValidationError(
-                f"RUNPATH cannot contain more than two value placeholders: `{runpath_format_string}`. Valid example `{DEFAULT_RUNPATH}`"
+                "RUNPATH cannot contain more than two value placeholders: "
+                f"`{runpath_format_string}`. Valid example `{DEFAULT_RUNPATH}`"
             )
         result = _replace_runpath_format(runpath_format_string)
         if not any(x in result for x in ["<ITER>", "<IENS>"]):
@@ -78,8 +81,9 @@ class ModelConfig:
                 and free_space < MINIMUM_BYTES_LEFT_ON_DISK_THRESHOLD
             ):
                 msg = (
-                    f"Low disk space: {byte_with_unit(free_space)} free on {mount_dir!s}."
-                    " Consider freeing up some space to ensure successful simulation runs."
+                    f"Low disk space: {byte_with_unit(free_space)} "
+                    f"free on {mount_dir!s}. Consider freeing up some "
+                    "space to ensure successful simulation runs."
                 )
                 ConfigWarning.warn(msg)
         return result

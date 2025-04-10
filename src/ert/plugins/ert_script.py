@@ -78,7 +78,8 @@ class ErtScript:
     @property
     def ensemble(self) -> None:
         warnings.warn(
-            "The ensemble property is deprecated, use the fixture to the run function instead",
+            "The ensemble property is deprecated, "
+            "use the fixture to the run function instead",
             DeprecationWarning,
             stacklevel=1,
         )
@@ -88,7 +89,8 @@ class ErtScript:
     @property
     def storage(self) -> None:
         warnings.warn(
-            "The storage property is deprecated, use the fixture to the run function instead",
+            "The storage property is deprecated, "
+            "use the fixture to the run function instead",
             DeprecationWarning,
             stacklevel=1,
         )
@@ -141,8 +143,9 @@ class ErtScript:
                 try:
                     arguments = self.insert_fixtures(func_args, fixtures)
                 except ValueError as e:
-                    # This is here for backwards compatibility, the user does not have *argv
-                    # but positional arguments. Can not be mixed with using fixtures.
+                    # This is here for backwards compatibility, the user does
+                    # not have *argv but positional arguments. Can not be
+                    # mixed with using fixtures.
                     logger.warning(
                         f"Mixture of fixtures and positional arguments, err: {e}"
                     )

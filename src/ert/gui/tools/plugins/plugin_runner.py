@@ -51,7 +51,7 @@ class PluginRunner:
                     "reports_dir": str(
                         self.ert_config.analysis_config.log_path / "reports"
                     ),
-                    "observation_settings": ert_config.analysis_config.observation_settings,
+                    "observation_settings": ert_config.analysis_config.observation_settings,  # noqa: E501
                     "es_settings": ert_config.analysis_config.es_module,
                     "run_paths": run_paths,
                 }

@@ -94,7 +94,9 @@ def test_that_saving_empty_responses_fails_nicely(tmp_path):
         # Test for entirely empty dataset
         with pytest.raises(
             ValueError,
-            match="Dataset for response group 'RESPONSE' must contain a 'values' variable",
+            match=(
+                "Dataset for response group 'RESPONSE' must contain a 'values' variable"
+            ),
         ):
             ensemble.save_response("RESPONSE", pl.DataFrame(), 0)
 
@@ -110,7 +112,10 @@ def test_that_saving_empty_responses_fails_nicely(tmp_path):
 
         with pytest.raises(
             ValueError,
-            match="Responses RESPONSE are empty\\. Cannot proceed with saving to storage\\.",
+            match=(
+                "Responses RESPONSE are empty\\. "
+                "Cannot proceed with saving to storage\\."
+            ),
         ):
             ensemble.save_response("RESPONSE", empty_data, 0)
 
@@ -178,7 +183,10 @@ def test_that_saving_empty_parameters_fails_nicely(tmp_path):
         # Test for entirely empty dataset
         with pytest.raises(
             ValueError,
-            match="Dataset for parameter group 'PARAMETER' must contain a 'values' variable",
+            match=(
+                "Dataset for parameter group 'PARAMETER' "
+                "must contain a 'values' variable"
+            ),
         ):
             prior.save_parameters("PARAMETER", 0, xr.Dataset())
 
@@ -192,7 +200,10 @@ def test_that_saving_empty_parameters_fails_nicely(tmp_path):
         )
         with pytest.raises(
             ValueError,
-            match="Parameters PARAMETER are empty\\. Cannot proceed with saving to storage\\.",
+            match=(
+                "Parameters PARAMETER are empty\\. "
+                "Cannot proceed with saving to storage\\."
+            ),
         ):
             prior.save_parameters("PARAMETER", 0, empty_data)
 
@@ -371,7 +382,12 @@ def test_that_open_storage_in_read_mode_with_newer_version_throws_exception(
 
     with pytest.raises(
         ErtStorageException,
-        match=f"Cannot open storage '{tmp_path}': Storage version {_LOCAL_STORAGE_VERSION + 1} is newer than the current version {_LOCAL_STORAGE_VERSION}, upgrade ert to continue, or run with a different ENSPATH",
+        match=(
+            f"Cannot open storage '{tmp_path}': "
+            f"Storage version {_LOCAL_STORAGE_VERSION + 1} is newer than "
+            f"the current version {_LOCAL_STORAGE_VERSION}, upgrade ert "
+            "to continue, or run with a different ENSPATH"
+        ),
     ):
         open_storage(tmp_path, mode="r")
 
@@ -385,7 +401,10 @@ def test_that_open_storage_in_read_mode_with_older_version_throws_exception(
 
     with pytest.raises(
         ErtStorageException,
-        match=f"Cannot open storage '{tmp_path}' in read-only mode: Storage version {_LOCAL_STORAGE_VERSION - 1} is too old",
+        match=(
+            f"Cannot open storage '{tmp_path}' in read-only mode: "
+            f"Storage version {_LOCAL_STORAGE_VERSION - 1} is too old"
+        ),
     ):
         open_storage(tmp_path, mode="r")
 
@@ -399,7 +418,12 @@ def test_that_open_storage_in_write_mode_with_newer_version_throws_exception(
 
     with pytest.raises(
         ErtStorageException,
-        match=f"Cannot open storage '{tmp_path}': Storage version {_LOCAL_STORAGE_VERSION + 1} is newer than the current version {_LOCAL_STORAGE_VERSION}, upgrade ert to continue, or run with a different ENSPATH",
+        match=(
+            f"Cannot open storage '{tmp_path}': "
+            f"Storage version {_LOCAL_STORAGE_VERSION + 1} "
+            f"is newer than the current version {_LOCAL_STORAGE_VERSION}, "
+            "upgrade ert to continue, or run with a different ENSPATH"
+        ),
     ):
         open_storage(tmp_path, mode="w")
 
@@ -419,7 +443,8 @@ def test_get_unique_experiment_name(snake_oil_storage):
     with patch(
         "ert.storage.local_storage.LocalStorage.experiments", new_callable=PropertyMock
     ) as experiments:
-        # Its not possible to do MagicMock(name="experiment_name") therefore the workaround below
+        # Its not possible to do MagicMock(name="experiment_name") therefore
+        # the workaround below
         names = [
             "experiment",
             "experiment_1",
@@ -966,7 +991,7 @@ class StatefulStorageTest(RuleBasedStateMachine):
     the same action storage api endpoint: self.storage.create_experiment), and which
     parameters are applied (e.g. v1 is in the grid bundle and is created by the rule
     state.create_grid).
-    """
+    """  # noqa: E501
 
     def __init__(self):
         super().__init__()

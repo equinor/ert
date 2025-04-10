@@ -38,7 +38,8 @@ def test_analysis_config_from_file_is_same_as_from_dict(monkeypatch, tmp_path):
                 NUM_REALIZATIONS 3
                 MIN_REALIZATIONS 3
                 ANALYSIS_SET_VAR STD_ENKF ENKF_TRUNCATION 0.8
-                DESIGN_MATRIX my_design_matrix.xlsx DESIGN_SHEET:my_sheet DEFAULT_SHEET:my_default_sheet
+                DESIGN_MATRIX my_design_matrix.xlsx DESIGN_SHEET:my_sheet \
+                    DEFAULT_SHEET:my_default_sheet
                 """
         )
     ).analysis_config == AnalysisConfig.from_dict(
@@ -99,14 +100,17 @@ def test_merging_ignores_identical_design_matrices(tmp_path, monkeypatch, caplog
         }
     )
     assert (
-        "Duplicate DESIGN_MATRIX entries DesignMatrix(xls_filename=PosixPath('my_design_matrix.xlsx'), "
-        "design_sheet='my_sheet', default_sheet='my_default_sheet'), only reading once."
-        in caplog.text
+        "Duplicate DESIGN_MATRIX entries "
+        "DesignMatrix(xls_filename="
+        "PosixPath('my_design_matrix.xlsx'), "
+        "design_sheet='my_sheet', "
+        "default_sheet='my_default_sheet'), only reading once." in caplog.text
     )
 
 
 @pytest.mark.filterwarnings(
-    "ignore:.*MIN_REALIZATIONS set to more than NUM_REALIZATIONS.*:ert.config.ConfigWarning"
+    "ignore:.*MIN_REALIZATIONS set to more "
+    "than NUM_REALIZATIONS.*:ert.config.ConfigWarning"
 )
 @pytest.mark.parametrize(
     "num_realization, min_realizations, expected_min_real",
@@ -312,7 +316,9 @@ def test_num_realizations_0_means_all():
 
 def test_incorrect_variable_deprecation_warning():
     with pytest.warns(
-        match="Using 1 is deprecated, use:\nANALYSIS_SET_VAR STD_ENKF INVERSION SUBSPACE"
+        match=(
+            "Using 1 is deprecated, use:\nANALYSIS_SET_VAR STD_ENKF INVERSION SUBSPACE"
+        )
     ):
         AnalysisConfig.from_dict(
             {

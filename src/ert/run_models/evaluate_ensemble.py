@@ -26,10 +26,11 @@ logger = logging.getLogger(__name__)
 
 class EvaluateEnsemble(BaseRunModel):
     """
-    This workflow will evaluate ensembles which have parameters, but no simulation has been performed, so there are no responses.<br>
-    This can be used in instances where the parameters are sampled manually, or after performing a manual update step.<br>
-    The workflow will always read parameter and response configuration from the stored ensemble,<br>
-    and will not reflect any changes to the user configuration on disk.<br>
+    This workflow will evaluate ensembles which have parameters, but no simulation
+    has been performed, so there are no responses. This can be used in instances
+    where the parameters are sampled manually, or after performing a manual update step.
+    The workflow will always read parameter and response configuration from the stored
+    ensemble, and will not reflect any changes to the user configuration on disk.
     """
 
     def __init__(

@@ -81,8 +81,9 @@ def test_active_realizations_esmda(opened_main_window_poly, qtbot):
 def test_custom_weights_stored_and_retrieved_from_metadata_esmda(
     opened_main_window_minimal_realizations, qtbot
 ):
-    """This tests verifies that weights are stored in the metadata.json file when running esmda
-    and that the content is read back and populated in the GUI when enabling restart functionality.
+    """This tests verifies that weights are stored in the metadata.json file
+    when running esmda and that the content is read back and populated in the
+    GUI when enabling restart functionality.
     """
     gui = opened_main_window_minimal_realizations
 

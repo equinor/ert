@@ -71,7 +71,8 @@ class UpdateLogTable(QTableWidget):
                 QMessageBox.critical(
                     None,
                     "Error",
-                    "Cannot copy text to clipboard because your system does not have a clipboard",
+                    "Cannot copy text to clipboard because your "
+                    "system does not have a clipboard",
                     QMessageBox.StandardButton.Ok,
                 )
         else:
@@ -162,11 +163,13 @@ class UpdateWidget(QWidget):
 
     @Slot(RunModelUpdateEndEvent)
     def end(self, event: RunModelUpdateEndEvent) -> None:
+        seconds_spent = timedelta(seconds=time.perf_counter() - self._start_time)
         self._progress_msg.setText(
-            f"Update completed ({humanize.precisedelta(timedelta(seconds=time.perf_counter() - self._start_time))})"
+            f"Update completed ({humanize.precisedelta(seconds_spent)})"
         )
         self._progress_bar.setStyleSheet(
-            f"QProgressBar::chunk {{ background: {QColor(*state.COLOR_FINISHED).name()}; }}"
+            f"QProgressBar::chunk {{ background: "
+            f"{QColor(*state.COLOR_FINISHED).name()}; }}"
         )
         self._progress_bar.setMinimum(0)
         self._progress_bar.setMaximum(1)
@@ -193,11 +196,13 @@ class UpdateWidget(QWidget):
         if event.error_msg:
             self._insert_status_message(f"Error: {event.error_msg}")
 
+        seconds_spent = timedelta(seconds=time.perf_counter() - self._start_time)
         self._progress_msg.setText(
-            f"Update failed ({humanize.precisedelta(timedelta(seconds=time.perf_counter() - self._start_time))})"
+            f"Update failed ({humanize.precisedelta(seconds_spent)})"
         )
         self._progress_bar.setStyleSheet(
-            f"QProgressBar::chunk {{ background: {QColor(*state.COLOR_FAILED).name()}; }}"
+            f"QProgressBar::chunk {{ "
+            f"background: {QColor(*state.COLOR_FAILED).name()}; }}"
         )
         self._progress_bar.setMinimum(0)
         self._progress_bar.setMaximum(1)

@@ -447,7 +447,8 @@ class LocalEnsemble(BaseMode):
             realization : int
                 Realization index.
             key : str, optional
-                Response key to filter realizations. If None, all responses are considered.
+                Response key to filter realizations. If None, all
+                responses are considered.
 
             Returns
             -------
@@ -568,7 +569,8 @@ class LocalEnsemble(BaseMode):
 
         if not input_path.exists():
             raise FileNotFoundError(
-                f"No cross-correlation data available at '{input_path}'. Make sure to run the update with "
+                f"No cross-correlation data available at '{input_path}'. "
+                "Make sure to run the update with "
                 "Adaptive Localization enabled."
             )
         logger.info("Loading cross correlations")
@@ -757,7 +759,8 @@ class LocalEnsemble(BaseMode):
         """
         if "values" not in dataset.variables:
             raise ValueError(
-                f"Dataset for parameter group '{group}' must contain a 'values' variable"
+                f"Dataset for parameter group '{group}' "
+                "must contain a 'values' variable"
             )
         if dataset["values"].size == 0:
             raise ValueError(
@@ -799,7 +802,8 @@ class LocalEnsemble(BaseMode):
 
         if len(data) == 0:
             raise ValueError(
-                f"Responses {response_type} are empty. Cannot proceed with saving to storage."
+                f"Responses {response_type} are empty. "
+                "Cannot proceed with saving to storage."
             )
 
         if "realization" not in data.columns:
@@ -856,7 +860,8 @@ class LocalEnsemble(BaseMode):
         selected_observations: Iterable[str],
         iens_active_index: npt.NDArray[np.int_],
     ) -> pl.DataFrame:
-        """Fetches and aligns selected observations with their corresponding simulated responses from an ensemble."""
+        """Fetches and aligns selected observations with their
+        corresponding simulated responses from an ensemble."""
         observations_by_type = self.experiment.observations
 
         with pl.StringCache():

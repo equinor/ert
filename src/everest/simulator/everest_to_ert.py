@@ -553,7 +553,8 @@ def _everest_to_ert_config_dict(
     _extract_results(ever_config, ert_config)
     if ert_config.get("SUMMARY") and not ert_config.get("ECLBASE"):
         raise ValueError(
-            "When specifying model -> data_file, also need to configure definitions -> eclbase, this will trigger "
+            "When specifying model -> data_file, also need to "
+            "configure definitions -> eclbase, this will trigger "
             "loading of summary data from the forward model"
         )
     return ert_config

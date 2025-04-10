@@ -194,8 +194,8 @@ def test_custom_forward_models_are_logged(caplog):
     with caplog.at_level(logging.INFO):
         ErtConfig.from_file("config.ert")
     assert (
-        f"Custom forward_model_step foo_fm installed as: -- A comment\nEXECUTABLE {localhack}"
-        in caplog.messages
+        "Custom forward_model_step foo_fm installed as: "
+        f"-- A comment\nEXECUTABLE {localhack}" in caplog.messages
     )
     assert (
         sum("Custom forward_model_step" in logmessage for logmessage in caplog.messages)
@@ -1502,11 +1502,20 @@ def test_validate_no_logs_when_overwriting_with_same_value(caplog):
         )
 
     assert (
-        "Private arg '<VAR3>':'5' chosen over global '55' in forward model step step_name"
+        (
+            "Private arg '<VAR3>':'5' chosen over global '55' "
+            "in forward model step step_name"
+        )
         in caplog.text
-        and "Private arg '<VAR1>':'10' chosen over global '10' in forward model step step_name"
+        and (
+            "Private arg '<VAR1>':'10' chosen over global '10' "
+            "in forward model step step_name"
+        )
         not in caplog.text
-        and "Private arg '<VAR2>':'20' chosen over global '20' in forward model step step_name"
+        and (
+            "Private arg '<VAR2>':'20' chosen over global '20' "
+            "in forward model step step_name"
+        )
         not in caplog.text
     )
 
@@ -1786,7 +1795,10 @@ def test_warning_raised_when_summary_key_and_no_simulation_job_present():
 
     assert any(
         str(w.message)
-        == "Config contains a SUMMARY key but no forward model steps known to generate a summary file"
+        == (
+            "Config contains a SUMMARY key but no forward model "
+            "steps known to generate a summary file"
+        )
         for w in all_warnings
         if isinstance(w.message, ConfigWarning)
     )
@@ -1999,7 +2011,10 @@ def test_design2params_also_validates_design_matrix(tmp_path, caplog, monkeypatc
         {"DESIGN2PARAMS": mock_design2params},
     )
     ErtConfig.from_file_contents(
-        f"NUM_REALIZATIONS 1\nFORWARD_MODEL DESIGN2PARAMS(<xls_filename>={design_matrix_file}, <designsheet>=DesignSheet,<defaultssheet>=DefaultSheet)"
+        f"""\
+            NUM_REALIZATIONS 1
+            FORWARD_MODEL DESIGN2PARAMS(<xls_filename>={design_matrix_file}, \\
+                <designsheet>=DesignSheet,<defaultssheet>=DefaultSheet)"""
     )
     assert "DESIGN_MATRIX validation of DESIGN2PARAMS" in caplog.text
 
@@ -2037,14 +2052,17 @@ def test_two_design2params_validates_design_matrix_merging(
     ErtConfig.from_file_contents(
         f"""\
             NUM_REALIZATIONS 1
-            FORWARD_MODEL DESIGN2PARAMS(<xls_filename>={design_matrix_file}, <designsheet>=DesignSheet,<defaultssheet>=DefaultSheet)
-            FORWARD_MODEL DESIGN2PARAMS(<xls_filename>={design_matrix_file2}, <designsheet>=DesignSheet,<defaultssheet>=DefaultSheet)
+            FORWARD_MODEL DESIGN2PARAMS(<xls_filename>={design_matrix_file}, \\
+                <designsheet>=DesignSheet,<defaultssheet>=DefaultSheet)
+            FORWARD_MODEL DESIGN2PARAMS(<xls_filename>={design_matrix_file2}, \\
+                <designsheet>=DesignSheet,<defaultssheet>=DefaultSheet)
             """
     )
     assert (
-        f"Design matrix merging would have failed due to: Design Matrices '{design_matrix_file.name} (DesignSheet DefaultSheet)' "
-        f"and '{design_matrix_file2.name} (DesignSheet DefaultSheet)' do not have the same active realizations"
-        in caplog.text
+        "Design matrix merging would have failed due to: "
+        f"Design Matrices '{design_matrix_file.name} (DesignSheet DefaultSheet)' "
+        f"and '{design_matrix_file2.name} (DesignSheet DefaultSheet)' "
+        "do not have the same active realizations" in caplog.text
     )
 
 
@@ -2092,15 +2110,19 @@ def test_three_design2params_validates_design_matrix_merging(
     ErtConfig.from_file_contents(
         f"""\
             NUM_REALIZATIONS 1
-            FORWARD_MODEL DESIGN2PARAMS(<xls_filename>={design_matrix_file}, <designsheet>=DesignSheet,<defaultssheet>=DefaultSheet)
-            FORWARD_MODEL DESIGN2PARAMS(<xls_filename>={design_matrix_file2}, <designsheet>=DesignSheet,<defaultssheet>=DefaultSheet)
-            FORWARD_MODEL DESIGN2PARAMS(<xls_filename>={design_matrix_file3}, <designsheet>=DesignSheet,<defaultssheet>=DefaultSheet)
+            FORWARD_MODEL DESIGN2PARAMS(<xls_filename>={design_matrix_file}, \\
+                <designsheet>=DesignSheet,<defaultssheet>=DefaultSheet)
+            FORWARD_MODEL DESIGN2PARAMS(<xls_filename>={design_matrix_file2}, \\
+                <designsheet>=DesignSheet,<defaultssheet>=DefaultSheet)
+            FORWARD_MODEL DESIGN2PARAMS(<xls_filename>={design_matrix_file3}, \\
+                <designsheet>=DesignSheet,<defaultssheet>=DefaultSheet)
             """
     )
     assert (
-        f"Design matrix merging would have failed due to: Design Matrices '{design_matrix_file.name} (DesignSheet DefaultSheet)' "
-        f"and '{design_matrix_file3.name} (DesignSheet DefaultSheet)' do not have the same active realizations"
-        in caplog.text
+        "Design matrix merging would have failed due to: Design Matrices "
+        f"'{design_matrix_file.name} (DesignSheet DefaultSheet)' "
+        f"and '{design_matrix_file3.name} (DesignSheet DefaultSheet)' "
+        "do not have the same active realizations" in caplog.text
     )
 
 
@@ -2231,7 +2253,10 @@ def test_ert_script_hook_pre_experiment_essettings_fails():
 
     with pytest.raises(
         ConfigValidationError,
-        match=r".*It would work in these runtimes: PRE_UPDATE, POST_UPDATE, PRE_FIRST_UPDATE.*",
+        match=(
+            r".*It would work in these runtimes: "
+            r"PRE_UPDATE, POST_UPDATE, PRE_FIRST_UPDATE.*"
+        ),
     ):
         ErtConfig.from_file("config.ert")
 
@@ -2297,7 +2322,8 @@ def test_validation_error_on_gen_kw_with_design_matrix_group_name(tmp_path):
         fh.write("a CONST 0")
     with pytest.raises(
         ConfigValidationError,
-        match="Cannot have GEN_KW with group name DESIGN_MATRIX when using DESIGN_MATRIX keyword\\.",
+        match="Cannot have GEN_KW with group name DESIGN_MATRIX "
+        "when using DESIGN_MATRIX keyword\\.",
     ):
         ErtConfig.from_file_contents(
             f"""\

@@ -120,11 +120,13 @@ class ErtMainWindow(QMainWindow):
         if is_high_contrast_mode():
             msg_box = QMessageBox()
             msg_box.setText(
-                "High contrast mode detected. This is not supported by Ert and some features may not work as expected."
+                "High contrast mode detected. This is not supported by Ert "
+                "and some features may not work as expected."
             )
             msg_box.setWindowTitle("Warning")
             msg_box.setStyleSheet(
-                "QMessageBox {color: black; background-color: white;} QLabel {color: black;} QPushButton {color: black;}"
+                "QMessageBox {color: black; background-color: white;} "
+                "QLabel {color: black;} QPushButton {color: black;}"
             )
             msg_box.update()
             msg_box.exec()

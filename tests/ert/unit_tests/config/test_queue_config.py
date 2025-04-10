@@ -80,7 +80,9 @@ def test_that_an_invalid_queue_system_provided_raises_validation_error(
     possible to try to use it"""
     with pytest.raises(
         expected_exception=ConfigValidationError,
-        match=f"'QUEUE_SYSTEM' argument 1 must be one of .* was '{invalid_queue_system}'",
+        match=(
+            f"'QUEUE_SYSTEM' argument 1 must be one of .* was '{invalid_queue_system}'"
+        ),
     ):
         ErtConfig.from_file_contents(
             f"NUM_REALIZATIONS 1\nQUEUE_SYSTEM {invalid_queue_system}\n"

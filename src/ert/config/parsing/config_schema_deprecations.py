@@ -183,22 +183,23 @@ deprecated_keywords_list = [
     ),
     DeprecationInfo(
         keyword="QUEUE_OPTION",
-        message="Memory requirements in LSF should now be set using REALIZATION_MEMORY and not"
-        " through the LSF_RESOURCE option.",
+        message="Memory requirements in LSF should now be set using REALIZATION_MEMORY "
+        "and not through the LSF_RESOURCE option.",
         check=lambda line: "LSF_RESOURCE" in line
         and "mem=" in cast(list[str], line)[-1],
     ),
     DeprecationInfo(
         keyword="SIMULATION_JOB",
-        message=lambda args: "The SIMULATION_JOB keyword has been removed and no longer "
-        "has any effect. It has been used in the as a lightweight alternative of "
-        "FORWARD_MODEL. Please use FORWARD_MODEL keyword instead:\n"
+        message=lambda args: "The SIMULATION_JOB keyword has been removed and no "
+        "longer has any effect. It has been used in the as a lightweight alternative "
+        "of FORWARD_MODEL. Please use FORWARD_MODEL keyword instead:\n"
         f"FORWARD_MODEL {' '.join(args) if args else ''}",
     ),
     DeprecationInfo(
         keyword="GEN_KW",
         message=(
-            "GEN_KW with INIT_FILES is deprecated, and will be removed in the next version. "
+            "GEN_KW with INIT_FILES is deprecated, "
+            "and will be removed in the next version. "
         ),
         check=lambda line: any("INIT_FILES" in str(v) for v in line),
     ),

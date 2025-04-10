@@ -57,8 +57,8 @@ class Workflow:
                 elif job.min_args is not None and job.min_args > len(instructions):
                     errors.append(
                         ErrorInfo(
-                            f"Job with name: {job_name} does not have enough arguments, "
-                            f"expected at least: {job.min_args}, got: {instructions}"
+                            f"Job with name: {job_name} does not have enough arguments,"
+                            f" expected at least: {job.min_args}, got: {instructions}"
                         ).set_context(job_name_with_context)
                     )
                     continue

@@ -45,7 +45,10 @@ def test_that_the_model_warns_when_active_realizations_less_min_realizations(
 
     with pytest.warns(
         ConfigWarning,
-        match=r"MIN_REALIZATIONS was set to the current number of active realizations \(5\)",
+        match=(
+            "MIN_REALIZATIONS was set to the current "
+            r"number of active realizations \(5\)"
+        ),
     ):
         _ = model_factory.create_model(
             ErtConfig.from_file_contents(
@@ -78,7 +81,7 @@ def test_iterative_ensemble_format_is_set_by_target_ensemble():
     )
 
 
-def test_iterative_ensemble_format_defaults_to_current_when_no_target_ensemble_is_given():
+def test_iterative_ensemble_format_defaults_to_current_when_no_target_ensemble_is_given():  # noqa: E501
     assert (
         model_factory._iterative_ensemble_format(
             Namespace(current_ensemble="current", target_ensemble=None)

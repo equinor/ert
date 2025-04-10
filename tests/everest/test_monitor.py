@@ -172,10 +172,10 @@ def test_failed_jobs_monitor(
         run_detached_monitor(("some/url", "cert", ("username", "password")))
     captured = capsys.readouterr()
     expected = [
-        "===================== Running forward models (Batch #0) ======================\n",
+        "===================== Running forward models (Batch #0) ======================\n",  # noqa: E501
         "  Waiting: 0 | Pending: 0 | Running: 0 | Finished: 0 | Failed: 1\n",
         "  fm_step_0: 1/0/1 | Failed: 1"
-        "  fm_step_0: Failed: The run is cancelled due to reaching MAX_RUNTIME, realizations: 1\n",
+        "  fm_step_0: Failed: The run is cancelled due to reaching MAX_RUNTIME, realizations: 1\n",  # noqa: E501
     ]
     # Ignore whitespace
     output = captured.out.translate({ord(c): None for c in string.whitespace})
@@ -202,7 +202,7 @@ def test_monitor(monkeypatch, full_snapshot_event, snapshot_update_event, capsys
         run_detached_monitor(("some/url", "cert", ("username", "password")))
     captured = capsys.readouterr()
     expected = [
-        "===================== Running forward models (Batch #0) ======================\n",
+        "===================== Running forward models (Batch #0) ======================\n",  # noqa: E501
         "  Waiting: 0 | Pending: 0 | Running: 0 | Finished: 1 | Failed: 0\n",
         "  fm_step_0: 1/1/0 | Finished: 1\n",
         "Experiment complete\n",
@@ -232,7 +232,7 @@ def test_forward_model_message_reaches_the_cli(
         run_detached_monitor(("some/url", "cert", ("username", "password")))
     captured = capsys.readouterr()
     expected = [
-        "===================== Running forward models (Batch #0) ======================\n",
+        "===================== Running forward models (Batch #0) ======================\n",  # noqa: E501
         "  Waiting: 0 | Pending: 0 | Running: 0 | Finished: 1 | Failed: 0\n",
         "  fm_step_0: 1/1/0 | Finished: 1\n",
         "Failed\n",

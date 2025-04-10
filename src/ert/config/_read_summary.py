@@ -31,7 +31,8 @@ from .response_config import InvalidResponseFile
 def read_summary(
     summary_basename: str, select_keys: Sequence[str]
 ) -> tuple[datetime, list[str], Sequence[datetime], npt.NDArray[np.float32]]:
-    """Reads the timeseries for the selected keys from summary files with the given basename.
+    """Reads the timeseries for the selected keys from summary files with the
+    given basename.
 
     Called as read_summary("data/CASE", ["FOP*"]) it will read from files
     data/CASE.UNSMRY & data/CASE.SMSPEC and return the tuple (start_date, keys,
