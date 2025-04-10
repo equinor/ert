@@ -13,6 +13,7 @@ from pathlib import Path
 from typing import Any, ClassVar, Self, no_type_check, overload
 
 import polars as pl
+from numpy.random import SeedSequence
 from pydantic import ValidationError as PydanticValidationError
 from pydantic import field_validator
 from pydantic.dataclasses import dataclass, rebuild_dataclass
@@ -73,7 +74,6 @@ from .workflow_job import (
 logger = logging.getLogger(__name__)
 
 EMPTY_LINES = re.compile(r"\n[\s\n]*\n")
-from numpy.random import SeedSequence
 
 
 def site_config_location() -> str | None:
