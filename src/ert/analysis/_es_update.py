@@ -33,7 +33,7 @@ from .event import (
     DataSection,
 )
 from .snapshots import (
-    ObservationAndResponseSnapshot,
+    ObservationStatus,
     SmootherSnapshot,
 )
 
@@ -156,15 +156,12 @@ def _expand_wildcards(
 
 class _OutlierColumns(StrEnum):
     response_std = "response_std"
-    ens_mean = "ens_mean"
-    obs_scaling = "obs_scaling"
-    scaled_std = "scaled_std"
-    is_collapsed = "is_collapsed"
-    is_overspread = "is_overspread"
-    has_nan = "has_nan"
+    ens_mean = "response_mean"
+    obs_scaling = "obs_error_scaling"
+    scaled_std = "scaled_obs_error"
 
 
-def _find_outliers(
+def _compute_response_statuses(
     observations_and_responses: pl.DataFrame,
     global_std_scaling: float,
     std_cutoff: float,
@@ -179,9 +176,6 @@ def _find_outliers(
     with_outlier_info = (
         observations_and_responses.with_columns(
             responses.mean_horizontal().alias(_OutlierColumns.ens_mean),
-            pl.any_horizontal(
-                [pl.col(c).is_nan() | pl.col(c).is_null() for c in active_realizations]
-            ).alias(_OutlierColumns.has_nan),
             response_stds,
             # Inflating measurement errors by a factor sqrt(global_std_scaling) as shown
             # in for example evensen2018 - Analysis of iterative ensemble smoothers for
@@ -198,21 +192,29 @@ def _find_outliers(
                 _OutlierColumns.scaled_std
             )
         )
-        .with_columns(  # Note: These should be consolidated to one column,
-            # indicating the status, can be either:
-            # "collapsed", "overspread", "nan", or "ok"
-            # and piped forward into the snapshot
-            (pl.col(_OutlierColumns.response_std) <= std_cutoff).alias(
-                _OutlierColumns.is_collapsed
-            ),
-            (
+        .with_columns(
+            pl.when(
+                pl.any_horizontal(
+                    [
+                        pl.col(c).is_nan() | pl.col(c).is_null()
+                        for c in active_realizations
+                    ]
+                )
+            )
+            .then(pl.lit(ObservationStatus.MISSING_RESPONSE))
+            .when(pl.col(_OutlierColumns.response_std) <= std_cutoff)
+            .then(pl.lit(ObservationStatus.STD_CUTOFF))
+            .when(
                 abs(pl.col("observations") - pl.col(_OutlierColumns.ens_mean))
                 > alpha
                 * (
                     pl.col(_OutlierColumns.response_std)
                     + pl.col(_OutlierColumns.scaled_std)
                 )
-            ).alias(_OutlierColumns.is_overspread),
+            )
+            .then(pl.lit(ObservationStatus.OUTLIER))
+            .otherwise(pl.lit(ObservationStatus.ACTIVE))
+            .alias("status")
         )
     )
 
@@ -229,7 +231,7 @@ def _auto_scale_observations(
     scaling_factors_dfs = []
 
     scaling_factors_updated = (
-        observations_and_responses["obs_scaling"].to_numpy().copy()
+        observations_and_responses[_OutlierColumns.obs_scaling].to_numpy().copy()
     )
 
     obs_keys = observations_and_responses["observation_key"].to_numpy().astype(str)
@@ -244,7 +246,7 @@ def _auto_scale_observations(
         data_for_obs = observations_and_responses.filter(obs_group_mask)
         scaling_factors, clusters, nr_components = misfit_preprocessor.main(
             data_for_obs.select(active_realizations).to_numpy(),
-            data_for_obs.select("scaled_std").to_numpy(),
+            data_for_obs.select(_OutlierColumns.scaled_std).to_numpy(),
         )
 
         # This is the current main justification for keeping
@@ -293,43 +295,12 @@ def _auto_scale_observations(
     else:
         msg = (
             "WARNING: Could not auto-scale the "
-                f"observations {auto_scale_observations}. "
+            f"observations {auto_scale_observations}. "
             f"No match with existing active observations {obs_keys}"
         )
         logger.warning(msg)
         print(msg)
         return None, None
-
-
-def _create_update_snapshots(
-    observations_and_responses: pl.Dataframe, active_realizations: list[str]
-) -> list[ObservationAndResponseSnapshot]:
-    update_snapshot = []
-    # Note: Nan detection used to be implicitly done with mean/std masking in numpy
-    # this logic will be simplified by having only one "status" flag in the dataframe,
-    # ref: comment in _find_outliers
-    for row in (
-        observations_and_responses.with_columns(
-            (~(pl.col("has_nan") | pl.col("is_overspread"))).alias(
-                "response_mean_mask"
-            ),
-            (~(pl.col("has_nan") | pl.col("is_collapsed"))).alias("response_std_mask"),
-        )
-        .drop("scaled_std", "has_nan", *active_realizations)
-        .rename(
-            {
-                "observation_key": "obs_name",
-                "observations": "obs_val",
-                "std": "obs_std",
-                "ens_mean": "response_mean",
-            }
-        )
-        .drop("is_overspread", "is_collapsed")
-        .to_dicts()
-    ):
-        update_snapshot.append(ObservationAndResponseSnapshot(**row))
-
-    return update_snapshot
 
 
 def _preprocess_observations_and_responses(
@@ -341,14 +312,7 @@ def _preprocess_observations_and_responses(
     selected_observations: Iterable[str],
     auto_scale_observations: list[ObservationGroups] | None,
     progress_callback: Callable[[AnalysisEvent], None],
-) -> tuple[
-    npt.NDArray[np.float64],
-    tuple[
-        npt.NDArray[np.float64],
-        npt.NDArray[np.float64],
-        list[ObservationAndResponseSnapshot],
-    ],
-]:
+) -> pl.DataFrame:
     observations_and_responses = ensemble.get_observations_and_responses(
         selected_observations,
         iens_active_index,
@@ -360,8 +324,7 @@ def _preprocess_observations_and_responses(
 
     realization_responses = list(map(str, iens_active_index))
 
-    # Will add _OutlierColumns to the dataframe
-    observations_and_responses = _find_outliers(
+    observations_and_responses = _compute_response_statuses(
         observations_and_responses,
         global_std_scaling,
         std_cutoff,
@@ -372,21 +335,14 @@ def _preprocess_observations_and_responses(
         [
             pl.col(pl.Float64).fill_null(float("nan")),
             pl.col(pl.Float32).fill_null(float("nan")),
-            pl.col(pl.Boolean).fill_null(False),
         ]
     )
 
     obs_mask = (
-        observations_and_responses.select(
-            (
-                ~pl.col("is_collapsed") & ~pl.col("is_overspread") & ~pl.col("has_nan")
-            ).alias("obs_mask")
-        )
-        .select("obs_mask")
+        observations_and_responses.select(pl.col("status") == "active")
         .to_numpy()
         .flatten()
     )
-    obs_keys = observations_and_responses["observation_key"].to_numpy()
 
     if auto_scale_observations:
         updated_std_scales, scaling_factors_df = _auto_scale_observations(
@@ -403,28 +359,24 @@ def _preprocess_observations_and_responses(
             # return scaling_factors_updated, scaling_factors_df
             # Recompute with updated scales
             observations_and_responses = observations_and_responses.with_columns(
-                pl.Series(updated_std_scales).alias("obs_scaling")
-            ).with_columns((pl.col("obs_scaling") * pl.col("std")).alias("scaled_std"))
+                pl.Series(updated_std_scales).alias(_OutlierColumns.obs_scaling)
+            ).with_columns(
+                (pl.col(_OutlierColumns.obs_scaling) * pl.col("std")).alias(
+                    _OutlierColumns.scaled_std
+                )
+            )
 
-    update_snapshot = _create_update_snapshots(
-        observations_and_responses, realization_responses
-    )
-    missing_obs = sorted(set(obs_keys[~obs_mask]))
-    if missing_obs:
-        logger.warning("Deactivating observations: {missing_obs}")
+    missing_observations = observations_and_responses.filter(
+        pl.col("status") != "active"
+    )["observation_key", "status"]
+    for missing_obs in missing_observations.to_dicts():
+        logger.warning(
+            f"Deactivating observation: "
+            f"{missing_obs['observation_key']}, "
+            f"status: {missing_obs['status']}"
+        )
 
-    processed_data = observations_and_responses.filter(obs_mask)
-
-    # Note: Not doing C-order (polars default is fortran) yields different
-    # snapshots in test_update_snapshot. Not sure if due to downstream bug in the
-    # update.
-    # Could be removed & update snapshots in separate PR.
-    # Numerically it is exactly the same as the old S
-    return processed_data.select(realization_responses).to_numpy(order="c"), (
-        processed_data["observations"].to_numpy(),
-        processed_data["scaled_std"].to_numpy(),
-        update_snapshot,
-    )
+    return observations_and_responses
 
 
 def _split_by_batchsize(
@@ -565,15 +517,7 @@ def analysis_ES(
     ) -> TimedIterator[T]:
         return TimedIterator(iterable, progress_callback)
 
-    progress_callback(AnalysisStatusEvent(msg="Loading observations and responses.."))
-    (
-        S,
-        (
-            observation_values,
-            observation_errors,
-            update_snapshot,
-        ),
-    ) = _preprocess_observations_and_responses(
+    preprocessed_data = _preprocess_observations_and_responses(
         source_ensemble,
         alpha,
         std_cutoff,
@@ -583,9 +527,24 @@ def analysis_ES(
         auto_scale_observations,
         progress_callback,
     )
+
+    filtered_data = preprocessed_data.filter(pl.col("status") == "active")
+
+    # Note: Not doing C-order (polars default is fortran) yields different
+    # snapshots in test_update_snapshot. Not sure if due to downstream bug in the
+    # update.
+    # Could be removed & update snapshots in separate PR.
+    # Numerically it is exactly the same as the old S
+    S = filtered_data.select([*map(str, iens_active_index)]).to_numpy(order="c")
+    observation_values = filtered_data["observations"].to_numpy()
+    observation_errors = filtered_data[_OutlierColumns.scaled_std].to_numpy()
+
+    progress_callback(AnalysisStatusEvent(msg="Loading observations and responses.."))
     num_obs = len(observation_values)
 
-    smoother_snapshot.update_step_snapshots = update_snapshot
+    smoother_snapshot.observations_and_responses = preprocessed_data.drop(
+        [*map(str, iens_active_index)]
+    )
 
     if num_obs == 0:
         msg = "No active observations for update step"
@@ -750,22 +709,6 @@ def analysis_ES(
         )
 
 
-def _create_smoother_snapshot(
-    prior_name: str,
-    posterior_name: str,
-    update_settings: UpdateSettings,
-    global_scaling: float,
-) -> SmootherSnapshot:
-    return SmootherSnapshot(
-        source_ensemble_name=prior_name,
-        target_ensemble_name=posterior_name,
-        alpha=update_settings.alpha,
-        std_cutoff=update_settings.std_cutoff,
-        global_scaling=global_scaling,
-        update_step_snapshots=[],
-    )
-
-
 def smoother_update(
     prior_storage: Ensemble,
     posterior_storage: Ensemble,
@@ -784,11 +727,12 @@ def smoother_update(
 
     ens_mask = prior_storage.get_realization_mask_with_responses()
 
-    smoother_snapshot = _create_smoother_snapshot(
-        prior_storage.name,
-        posterior_storage.name,
-        update_settings,
-        global_scaling,
+    smoother_snapshot = SmootherSnapshot(
+        source_ensemble_name=prior_storage.name,
+        target_ensemble_name=posterior_storage.name,
+        alpha=update_settings.alpha,
+        std_cutoff=update_settings.std_cutoff,
+        global_scaling=global_scaling,
     )
 
     try:

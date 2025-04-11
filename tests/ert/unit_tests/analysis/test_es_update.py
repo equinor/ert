@@ -15,6 +15,7 @@ from ert.analysis import (
 )
 from ert.analysis._es_update import (
     _load_param_ensemble_array,
+    _OutlierColumns,
     _preprocess_observations_and_responses,
     _save_param_ensemble_array_to_disk,
 )
@@ -133,15 +134,19 @@ def test_update_report_with_exception_in_analysis_ES(
 
 
 @pytest.mark.parametrize(
-    "update_settings",
+    "update_settings, num_overspread, num_collapsed, num_nan, num_active",
     [
-        UpdateSettings(alpha=0.1),
-        UpdateSettings(std_cutoff=0.1),
-        UpdateSettings(alpha=0.1, std_cutoff=0.1),
+        (UpdateSettings(alpha=0.1), 169, 0, 0, 41),
+        (UpdateSettings(std_cutoff=0.1), 0, 73, 0, 137),
+        (UpdateSettings(alpha=0.1, std_cutoff=0.1), 113, 73, 0, 24),
     ],
 )
 def test_update_report_with_different_observation_status_from_smoother_update(
     update_settings,
+    num_overspread,
+    num_collapsed,
+    num_nan,
+    num_active,
     snake_oil_case_storage,
     snake_oil_storage,
 ):
@@ -168,35 +173,30 @@ def test_update_report_with_different_observation_status_from_smoother_update(
         progress_callback=events.append,
     )
 
-    outliers = len(
-        [e for e in ss.update_step_snapshots if e.status == ObservationStatus.OUTLIER]
+    assert (
+        num_overspread
+        == ss.observations_and_responses.filter(
+            pl.col("status") == ObservationStatus.OUTLIER
+        ).height
     )
-    std_cutoff = len(
-        [
-            e
-            for e in ss.update_step_snapshots
-            if e.status == ObservationStatus.STD_CUTOFF
-        ]
+    assert (
+        num_collapsed
+        == ss.observations_and_responses.filter(
+            pl.col("status") == ObservationStatus.STD_CUTOFF
+        ).height
     )
-    missing = len(
-        [
-            e
-            for e in ss.update_step_snapshots
-            if e.status == ObservationStatus.MISSING_RESPONSE
-        ]
+    assert (
+        num_nan
+        == ss.observations_and_responses.filter(
+            pl.col("status") == ObservationStatus.MISSING_RESPONSE
+        ).height
     )
-    active = len(ss.update_step_snapshots) - outliers - std_cutoff - missing
-
-    update_event = next(e for e in events if isinstance(e, AnalysisCompleteEvent))
-    data_section = update_event.data
-    assert data_section.extra["Active observations"] == str(active)
-    assert data_section.extra["Deactivated observations - missing respons(es)"] == str(
-        missing
+    assert (
+        num_active
+        == ss.observations_and_responses.filter(
+            pl.col("status") == ObservationStatus.ACTIVE
+        ).height
     )
-    assert data_section.extra[
-        "Deactivated observations - ensemble_std > STD_CUTOFF"
-    ] == str(std_cutoff)
-    assert data_section.extra["Deactivated observations - outliers"] == str(outliers)
 
 
 def test_update_handles_precision_loss_in_std_dev(tmp_path):
@@ -313,11 +313,9 @@ def test_update_handles_precision_loss_in_std_dev(tmp_path):
         )
 
         assert (
-            sum(
-                1
-                for e in ss.update_step_snapshots
-                if e.status == ObservationStatus.STD_CUTOFF
-            )
+            ss.observations_and_responses.filter(
+                pl.col("status") == ObservationStatus.STD_CUTOFF
+            ).height
             == 1
         )
 
@@ -599,9 +597,9 @@ def test_smoother_snapshot_alpha(
             rng=rng,
         )
         assert result_snapshot.alpha == alpha
-        assert [
-            step.status for step in result_snapshot.update_step_snapshots
-        ] == expected
+        assert (
+            result_snapshot.observations_and_responses["status"].to_list() == expected
+        )
 
 
 def test_update_only_using_subset_observations(
@@ -800,7 +798,8 @@ def test_that_autoscaling_applies_to_scaled_errors(storage):
 
         experiment = storage.create_experiment(name="dummyexp")
         ensemble = experiment.create_ensemble(name="dummy", ensemble_size=10)
-        _, (_, scaled_errors_with_autoscale, _) = (
+
+        scaled_errors_with_autoscale = (
             _mock_preprocess_observations_and_responses(
                 observations_and_responses,
                 alpha=alpha,
@@ -810,9 +809,11 @@ def test_that_autoscaling_applies_to_scaled_errors(storage):
                 progress_callback=progress_callback,
                 ensemble=ensemble,
             )
+            .filter(pl.col("status") == "active")[_OutlierColumns.scaled_std]
+            .to_list()
         )
 
-        _, (_, scaled_errors_without_autoscale, _) = (
+        scaled_errors_without_autoscale = (
             _mock_preprocess_observations_and_responses(
                 observations_and_responses,
                 alpha=alpha,
@@ -822,10 +823,12 @@ def test_that_autoscaling_applies_to_scaled_errors(storage):
                 progress_callback=progress_callback,
                 ensemble=ensemble,
             )
+            .filter(pl.col("status") == "active")[_OutlierColumns.scaled_std]
+            .to_list()
         )
 
-        assert scaled_errors_with_autoscale.tolist() == [2, 6]
-        assert scaled_errors_without_autoscale.tolist() == [1, 2]
+        assert scaled_errors_with_autoscale == [2, 6]
+        assert scaled_errors_without_autoscale == [1, 2]
 
 
 def test_that_autoscaling_ignores_typos_in_observation_names(storage, caplog):
@@ -989,16 +992,12 @@ def test_gen_data_missing(storage, uniform_parameter, obs):
         ESSettings(),
         progress_callback=events.append,
     )
-    assert [step.status for step in update_snapshot.update_step_snapshots] == [
+
+    assert update_snapshot.observations_and_responses["status"].to_list() == [
         ObservationStatus.ACTIVE,
         ObservationStatus.ACTIVE,
         ObservationStatus.MISSING_RESPONSE,
     ]
-
-    update_event = next(e for e in events if isinstance(e, AnalysisCompleteEvent))
-    data_section = update_event.data
-    assert data_section.extra["Active observations"] == "2"
-    assert data_section.extra["Deactivated observations - missing respons(es)"] == "1"
 
 
 @pytest.mark.usefixtures("use_tmpdir")
