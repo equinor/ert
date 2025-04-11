@@ -398,8 +398,13 @@ def _extract_results(ever_config: EverestConfig, ert_config: dict[str, Any]) -> 
     constraint_names = [
         constraint.name for constraint in (ever_config.output_constraints or [])
     ]
+
+    gen_data_files = [
+        fm.results.file_name for fm in ever_config.get_forward_model_steps("gen_data")
+    ]
+
     gen_data = ert_config.get(ErtConfigKeys.GEN_DATA, [])
-    for name in objectives_names + constraint_names:
+    for name in set(objectives_names + constraint_names + gen_data_files):
         gen_data.append((name, {"RESULT_FILE": name}))
     ert_config[ErtConfigKeys.GEN_DATA] = gen_data
 
