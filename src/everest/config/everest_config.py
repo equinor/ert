@@ -281,6 +281,22 @@ and environment variables are exposed in the form 'os.NAME', for example:
         ]
 
     @model_validator(mode="after")
+    def validate_at_most_one_summary_forward_model(self, info: ValidationInfo) -> Self:
+        summary_fms = [
+            fm
+            for fm in self.forward_model
+            if isinstance(fm, ForwardModelStepConfig)
+            and fm.results is not None
+            and fm.results.type == "summary"
+        ]
+        if len(summary_fms) > 1:
+            raise ValueError(
+                f"Found ({len(summary_fms)}) "
+                f"forward model steps producing summary data. "
+                f"Only one summary-producing forward model step is supported."
+            )
+
+    @model_validator(mode="after")
     def validate_install_jobs(self) -> Self:
         if self.install_jobs is None:
             return self
