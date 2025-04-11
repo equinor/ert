@@ -12,13 +12,6 @@ class ModelConfig(BaseModel, extra="forbid"):
 Typically, this is a list [0, 1, ..., n-1] of all realizations in the ensemble.""",
         min_length=1,
     )
-    data_file: str | None = Field(
-        default=None,
-        description="""Path to the eclipse data file used for optimization.
-        The path can contain r{{geo_id}}.
-
-NOTE: Without a data file no well or group specific summary data will be exported.""",
-    )
     realizations_weights: list[float] = Field(
         default_factory=list,
         description="""List of weights, one per realization.

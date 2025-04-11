@@ -109,7 +109,6 @@ optimization:
 
 model:
   realizations: [0, 1, 2]
-  data_file: ../../eclipse/include/realizations/realization-r{{realization}}/eclipse/model/EGG.DATA
 
 environment:
   simulation_folder: egg_simulations
@@ -121,8 +120,7 @@ simulator:
     max_running: 3
 
 install_data:
-  -
-    source: r{{ configpath }}/../../eclipse/include/realizations/realization-r{{ realization }}/eclipse
+  - source: r{{ configpath }}/../../eclipse/include/realizations/realization-r{{ realization }}/eclipse
     target: eclipse
   -
     source: r{{ configpath }}/../input/files

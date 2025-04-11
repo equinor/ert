@@ -151,12 +151,11 @@ def test_everest_main_configdump_entry(copy_egg_test_data_to_tmp):
     render_dict = yaml.load(out.getvalue())
 
     # Test whether the config file is correctly rendered with jinja
-    data_file = (
-        "everest/model/../../eclipse/include/realizations/"
-        "realization-<GEO_ID>/eclipse/model/EGG.DATA"
-    )
-    assert render_dict["definitions"]["data_file"] == os.path.join(
-        os.getcwd(), data_file
+    assert (
+        Path(render_dict["install_data"][0]["source"])
+        == Path(os.getcwd())
+        / "everest/model/../../eclipse/include/"
+        "realizations/realization-<GEO_ID>/eclipse"
     )
 
 

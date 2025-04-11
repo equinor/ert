@@ -496,25 +496,6 @@ def test_that_install_data_source_exists(change_to_tmpdir):
     )
 
 
-def test_that_model_data_file_exists(change_to_tmpdir):
-    os.makedirs("config_dir")
-    with open("config_dir/test.yml", "w", encoding="utf-8") as f:
-        f.write(" ")
-
-    with pytest.raises(ValueError, match="No such file or directory"):
-        EverestConfig.with_defaults(
-            model={"realizations": [1, 2, 3], "data_file": "relative/path"},
-            config_path=Path("config_dir/test.yml"),
-        )
-
-    os.makedirs("config_dir/relative/path")
-
-    EverestConfig.with_defaults(
-        model={"realizations": [1, 2, 3], "data_file": "relative/path"},
-        config_path=Path("config_dir/test.yml"),
-    )
-
-
 @pytest.mark.parametrize(
     ["install_keyword"],
     [
@@ -999,13 +980,3 @@ def test_export_deprecated_keys(key, value, min_config, change_to_tmpdir):
     )
     with pytest.warns(ConfigWarning, match=match_msg):
         EverestConfig.load_file_with_argparser("config.yml", parser)
-
-
-def test_valid_init_of_summary_loading(change_to_tmpdir):
-    a_file = Path("a_file")
-    a_file.touch()
-    config = EverestConfig.with_defaults(
-        model={"data_file": str(a_file), "realizations": [0]}
-    )
-    with pytest.raises(ValueError, match="definitions -> eclbase"):
-        everest_to_ert_config_dict(config)

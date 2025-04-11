@@ -1,7 +1,5 @@
 definitions:
   eclbase: eclipse/model/EGG
-  realization_folder: r{{configpath}}/../../eclipse/include/realizations/realization-r{{realization}}/eclipse
-  data_file: r{{realization_folder}}/model/EGG.DATA
 
 wells:
   - { name: PROD1 }
@@ -111,7 +109,6 @@ optimization:
 
 model:
   realizations: [0, 1, 2]
-  data_file: r{{data_file}}
 
 environment:
   simulation_folder: egg_simulations
@@ -123,11 +120,9 @@ simulator:
     max_running: 3
 
 install_data:
-  -
-    source: r{{realization_folder}}
+  - source: r{{ configpath }}/../../eclipse/include/realizations/realization-r{{ realization }}/eclipse
     target: eclipse
-  -
-    source: r{{ configpath }}/../input/files
+  - source: r{{ configpath }}/../input/files
     target: files
     link: true
 
@@ -136,5 +131,8 @@ forward_model:
   - well_constraints  -i files/well_readydate.json -c files/wc_config.yml -rc well_rate.json -o wc_wells.json
   - add_templates     -i wc_wells.json -c files/at_config.yml -o at_wells.json
   - schmerge          -s eclipse/include/schedule/schedule.tmpl -i at_wells.json -o eclipse/include/schedule/schedule.sch
-  - eclipse100 r{{eclbase}}.DATA --version 2020.2
-  - rf                -s r{{ eclbase }} -o rf
+  - job: eclipse100 r{{ eclbase }}.DATA --version 2020.2
+    results:
+      file_name: r{{ eclbase }}
+      type: summary
+  - rf -s r{{ eclbase }} -o rf
