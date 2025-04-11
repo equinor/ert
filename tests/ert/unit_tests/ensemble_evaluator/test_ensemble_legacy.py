@@ -114,11 +114,16 @@ async def test_queue_config_properties_propagated_to_scheduler(
     monkeypatch.setattr(QueueConfig, "max_running", 44)
     ensemble._queue_config.max_submit = 55
 
-    async def dummy_unary_send(_):
+    async def mock_send_event_method(*args, **kwargs):
         return
 
+    monkeypatch.setattr(
+        "ert.ensemble_evaluator._ensemble.LegacyEnsemble.send_event",
+        mock_send_event_method,
+    )
+
     # The function under test:
-    await ensemble._evaluate_inner(dummy_unary_send)
+    await ensemble.evaluate(config=MagicMock())
 
     # Assert properties successfully propagated:
     assert Scheduler.__init__.call_args.kwargs["submit_sleep"] == 33
