@@ -64,6 +64,7 @@
     ]
   },
   "optimizer": {
+    "max_batches": null,
     "max_functions": null,
     "max_iterations": null,
     "method": "optpp_q_newton",

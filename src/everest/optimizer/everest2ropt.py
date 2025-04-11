@@ -191,6 +191,9 @@ def _parse_optimization(
     if alg_max_eval := ever_opt.max_function_evaluations:
         ropt_optimizer["max_functions"] = alg_max_eval
 
+    if max_batches := ever_opt.max_batch_num:
+        ropt_optimizer["max_batches"] = max_batches
+
     if alg_conv_tol := ever_opt.convergence_tolerance:
         ropt_optimizer["tolerance"] = alg_conv_tol
 
