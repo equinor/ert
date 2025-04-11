@@ -34,6 +34,19 @@ def prior_ensemble(storage):
 
 
 @pytest.fixture
+def prior_ensemble_args(storage):
+    def _create_prior_ensemble(
+        ensemble_name="prior", ensemble_size=100, **experiment_params
+    ):
+        experiment_id = storage.create_experiment(**experiment_params)
+        return storage.create_ensemble(
+            experiment_id, name=ensemble_name, ensemble_size=ensemble_size
+        )
+
+    return _create_prior_ensemble
+
+
+@pytest.fixture
 def run_paths():
     def func(ert_config: ErtConfig):
         return Runpaths(

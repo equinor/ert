@@ -192,6 +192,7 @@ class EverestRunModel(BaseRunModel):
         self._parameter_configuration = ensemble_config.parameter_configuration
         self._parameter_configs = ensemble_config.parameter_configs
         self._response_configuration = ensemble_config.response_configuration
+        self._templates = ert_templates
 
         super().__init__(
             storage,
@@ -204,7 +205,6 @@ class EverestRunModel(BaseRunModel):
             forward_model_steps,
             status_queue,
             substitutions,
-            ert_templates,
             hooked_workflows,
             random_seed=123,  # No-op as far as Everest is concerned
             active_realizations=[],  # Set dynamically in run_forward_model()

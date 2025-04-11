@@ -52,6 +52,7 @@ class EnsembleExperiment(BaseRunModel):
         self._observations = config.observations
         self._parameter_configuration = config.ensemble_config.parameter_configuration
         self._response_configuration = config.ensemble_config.response_configuration
+        self._templates = config.ert_templates
 
         super().__init__(
             storage,
@@ -64,7 +65,6 @@ class EnsembleExperiment(BaseRunModel):
             config.forward_model_steps,
             status_queue,
             config.substitutions,
-            config.ert_templates,
             config.hooked_workflows,
             total_iterations=1,
             log_path=config.analysis_config.log_path,
@@ -107,6 +107,7 @@ class EnsembleExperiment(BaseRunModel):
                 ),
                 observations=self._observations,
                 responses=self._response_configuration,
+                templates=self._templates,
             )
             self.ensemble = self._storage.create_ensemble(
                 self.experiment,

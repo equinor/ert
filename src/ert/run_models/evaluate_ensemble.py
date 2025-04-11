@@ -60,7 +60,6 @@ class EvaluateEnsemble(BaseRunModel):
             config.forward_model_steps,
             status_queue,
             config.substitutions,
-            config.ert_templates,
             config.hooked_workflows,
             start_iteration=self.ensemble.iteration,
             total_iterations=1,

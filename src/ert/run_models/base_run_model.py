@@ -183,7 +183,6 @@ class BaseRunModel(ABC):
         forward_model_steps: list[ForwardModelStep],
         status_queue: SimpleQueue[StatusEvents],
         substitutions: Substitutions,
-        templates: list[tuple[str, str]],
         hooked_workflows: defaultdict[HookRuntime, list[Workflow]],
         active_realizations: list[bool],
         log_path: Path,
@@ -213,7 +212,6 @@ class BaseRunModel(ABC):
         self._runpath_file: Path = runpath_file
         self._forward_model_steps: list[ForwardModelStep] = forward_model_steps
         self._user_config_file: Path = user_config_file
-        self._templates: list[tuple[str, str]] = templates
         self._hooked_workflows: defaultdict[HookRuntime, list[Workflow]] = (
             hooked_workflows
         )
@@ -788,7 +786,6 @@ class BaseRunModel(ABC):
             env_pr_fm_step=self._env_pr_fm_step,
             forward_model_steps=self._forward_model_steps,
             substitutions=self._substitutions,
-            templates=self._templates,
             parameters_file=self._model_config.gen_kw_export_name,
             runpaths=self.run_paths,
             context_env=self._context_env,
@@ -861,7 +858,6 @@ class UpdateRunModel(BaseRunModel):
         forward_model_steps: list[ForwardModelStep],
         status_queue: SimpleQueue[StatusEvents],
         substitutions: Substitutions,
-        templates: list[tuple[str, str]],
         hooked_workflows: defaultdict[HookRuntime, list[Workflow]],
         active_realizations: list[bool],
         total_iterations: int,
@@ -884,7 +880,6 @@ class UpdateRunModel(BaseRunModel):
             forward_model_steps,
             status_queue,
             substitutions,
-            templates,
             hooked_workflows,
             active_realizations=active_realizations,
             total_iterations=total_iterations,

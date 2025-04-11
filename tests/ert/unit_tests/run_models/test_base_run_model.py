@@ -38,7 +38,6 @@ def create_base_run_model(**kwargs):
         "forward_model_steps": MagicMock(spec=dict),
         "status_queue": MagicMock(spec=SimpleQueue),
         "substitutions": MagicMock(spec=Substitutions),
-        "templates": MagicMock(spec=dict),
         "hooked_workflows": MagicMock(spec=dict),
         "active_realizations": MagicMock(spec=list),
         "random_seed": 123,

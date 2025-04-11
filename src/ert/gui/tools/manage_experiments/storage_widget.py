@@ -176,6 +176,7 @@ class StorageWidget(QWidget):
                 responses=self._ert_config.ensemble_config.response_configuration,
                 observations=self._ert_config.enkf_obs.datasets,
                 name=create_experiment_dialog.experiment_name,
+                templates=self._ert_config.ert_templates,
             ).create_ensemble(
                 name=create_experiment_dialog.ensemble_name,
                 ensemble_size=self._ensemble_size,

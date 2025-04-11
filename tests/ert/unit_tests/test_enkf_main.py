@@ -90,7 +90,6 @@ def test_assert_symlink_deleted(snake_oil_field_example, storage, run_paths):
         env_vars=ert_config.env_vars,
         env_pr_fm_step=ert_config.env_pr_fm_step,
         substitutions=ert_config.substitutions,
-        templates=ert_config.ert_templates,
         parameters_file="parameters",
         runpaths=runpaths,
     )
@@ -112,7 +111,6 @@ def test_assert_symlink_deleted(snake_oil_field_example, storage, run_paths):
         env_vars=ert_config.env_vars,
         env_pr_fm_step=ert_config.env_pr_fm_step,
         substitutions=ert_config.substitutions,
-        templates=ert_config.ert_templates,
         parameters_file="parameters",
         runpaths=runpaths,
     )

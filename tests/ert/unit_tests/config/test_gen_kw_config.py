@@ -235,7 +235,6 @@ def test_gen_kw_is_log_or_not(
             env_vars=ert_config.env_vars,
             env_pr_fm_step=ert_config.env_pr_fm_step,
             substitutions=ert_config.substitutions,
-            templates=ert_config.ert_templates,
             parameters_file="parameters",
         )
         assert re.match(
