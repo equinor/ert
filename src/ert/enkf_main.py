@@ -214,7 +214,6 @@ def create_run_path(
     env_pr_fm_step: dict[str, dict[str, Any]],
     forward_model_steps: list[ForwardModelStep],
     substitutions: Substitutions,
-    templates: list[tuple[str, str]],
     parameters_file: str,
     runpaths: Runpaths,
     context_env: dict[str, str] | None = None,
@@ -226,19 +225,15 @@ def create_run_path(
         run_path = Path(run_arg.runpath)
         if run_arg.active:
             run_path.mkdir(parents=True, exist_ok=True)
-            for source_file, target_file in templates:
+            for (
+                source_file_content,
+                target_file,
+            ) in ensemble.experiment.templates_configuration:
                 target_file = substitutions.substitute_real_iter(
                     target_file, run_arg.iens, ensemble.iteration
                 )
-                try:
-                    file_content = Path(source_file).read_text("utf-8")
-                except UnicodeDecodeError as e:
-                    raise ValueError(
-                        f"Unsupported non UTF-8 character found in file: {source_file}"
-                    ) from e
-
                 result = substitutions.substitute_real_iter(
-                    file_content,
+                    source_file_content,
                     run_arg.iens,
                     ensemble.iteration,
                 )

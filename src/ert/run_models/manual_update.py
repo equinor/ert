@@ -56,7 +56,6 @@ class ManualUpdate(UpdateRunModel):
             config.forward_model_steps,
             status_queue,
             config.substitutions,
-            config.ert_templates,
             config.hooked_workflows,
             active_realizations=active_realizations,
             total_iterations=1,

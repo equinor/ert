@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import shutil
 from collections.abc import Generator
 from datetime import datetime
 from functools import cached_property
@@ -47,6 +48,7 @@ class LocalExperiment(BaseMode):
     _parameter_file = Path("parameter.json")
     _responses_file = Path("responses.json")
     _metadata_file = Path("metadata.json")
+    _templates_file = Path("templates.json")
 
     def __init__(
         self,
@@ -86,6 +88,7 @@ class LocalExperiment(BaseMode):
         observations: dict[str, pl.DataFrame] | None = None,
         simulation_arguments: dict[Any, Any] | None = None,
         name: str | None = None,
+        templates: list[tuple[str, str]] | None = None,
     ) -> LocalExperiment:
         """
         Create a new LocalExperiment and store its configuration data.
@@ -108,6 +111,8 @@ class LocalExperiment(BaseMode):
             Simulation arguments for the experiment.
         name : str, optional
             Experiment name. Defaults to current date if None.
+        templates : list of tuple[str, str], optional
+            Run templates for the experiment. Defaults to None.
 
         Returns
         -------
@@ -129,6 +134,23 @@ class LocalExperiment(BaseMode):
             path / cls._parameter_file,
             json.dumps(parameter_data, indent=2).encode("utf-8"),
         )
+
+        if templates:
+            templates_path = path / "templates"
+            templates_path.mkdir(parents=True, exist_ok=True)
+            templates_abs: list[tuple[str, str]] = []
+            for idx, (src, dst) in enumerate(templates):
+                incoming_template = Path(src)
+                template_file_path = (
+                    templates_path
+                    / f"{incoming_template.stem}_{idx}{incoming_template.suffix}"
+                )
+                shutil.copyfile(incoming_template, template_file_path)
+                templates_abs.append((str(template_file_path.relative_to(path)), dst))
+            storage._write_transaction(
+                path / cls._templates_file,
+                json.dumps(templates_abs).encode("utf-8"),
+            )
 
         response_data = {}
         for response in responses or []:
@@ -247,6 +269,27 @@ class LocalExperiment(BaseMode):
         with open(self.mount_point / self._parameter_file, encoding="utf-8") as f:
             info = json.load(f)
         return info
+
+    @property
+    def templates_configuration(self) -> list[tuple[str, str]]:
+        try:
+            templates: list[tuple[str, str]] = []
+            with open(self.mount_point / self._templates_file, encoding="utf-8") as f:
+                templates = json.load(f)
+            templates_with_content: list[tuple[str, str]] = []
+            for source_file, target_file in templates:
+                try:
+                    file_content = (self.mount_point / source_file).read_text("utf-8")
+                    templates_with_content.append((file_content, target_file))
+                except UnicodeDecodeError as e:
+                    raise ValueError(
+                        f"Unsupported non UTF-8 character found in file: {source_file}"
+                    ) from e
+                return templates_with_content
+        except (FileNotFoundError, json.JSONDecodeError):
+            pass
+            # If the file is missing or broken, we return an empty list
+        return []
 
     @property
     def response_info(self) -> dict[str, Any]:

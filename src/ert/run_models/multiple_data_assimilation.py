@@ -86,7 +86,6 @@ class MultipleDataAssimilation(UpdateRunModel):
             config.forward_model_steps,
             status_queue,
             config.substitutions,
-            config.ert_templates,
             config.hooked_workflows,
             active_realizations=active_realizations,
             total_iterations=total_iterations,
@@ -99,6 +98,7 @@ class MultipleDataAssimilation(UpdateRunModel):
         self._observations = config.observations
         self._parameter_configuration = config.ensemble_config.parameter_configuration
         self._response_configuration = config.ensemble_config.response_configuration
+        self._templates = config.ert_templates
 
     @tracer.start_as_current_span(f"{__name__}.run_experiment")
     def run_experiment(
@@ -154,6 +154,7 @@ class MultipleDataAssimilation(UpdateRunModel):
                 responses=self._response_configuration,
                 simulation_arguments=sim_args,
                 name=self.experiment_name,
+                templates=self._templates,
             )
 
             prior = self._storage.create_ensemble(

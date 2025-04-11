@@ -53,7 +53,6 @@ class EnsembleSmoother(UpdateRunModel):
             config.forward_model_steps,
             status_queue,
             config.substitutions,
-            config.ert_templates,
             config.hooked_workflows,
             active_realizations=active_realizations,
             start_iteration=0,
@@ -71,6 +70,7 @@ class EnsembleSmoother(UpdateRunModel):
         self._design_matrix = config.analysis_config.design_matrix
         self._observations = config.observations
         self._response_configuration = config.ensemble_config.response_configuration
+        self._templates = config.ert_templates
 
     @tracer.start_as_current_span(f"{__name__}.run_experiment")
     def run_experiment(
@@ -104,6 +104,7 @@ class EnsembleSmoother(UpdateRunModel):
             observations=self._observations,
             responses=self._response_configuration,
             name=self.experiment_name,
+            templates=self._templates,
         )
 
         self.set_env_key("_ERT_EXPERIMENT_ID", str(experiment.id))

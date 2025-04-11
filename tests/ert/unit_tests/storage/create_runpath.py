@@ -48,7 +48,6 @@ def create_runpath(
         env_pr_fm_step=ert_config.env_pr_fm_step,
         forward_model_steps=ert_config.forward_model_steps,
         substitutions=ert_config.substitutions,
-        templates=ert_config.ert_templates,
         parameters_file="parameters",
         runpaths=runpaths,
     )

@@ -47,7 +47,6 @@ def test_load_summary_response_restart_not_zero(
             env_vars=ert_config.env_vars,
             env_pr_fm_step=ert_config.env_pr_fm_step,
             substitutions=ert_config.substitutions,
-            templates=ert_config.ert_templates,
             parameters_file="parameters",
             runpaths=run_paths(ert_config),
         )

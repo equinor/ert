@@ -36,7 +36,8 @@ ENSPATH storage
 def make_run_path(run_paths, run_args, storage):
     def func(ert_config):
         experiment_id = storage.create_experiment(
-            parameters=ert_config.ensemble_config.parameter_configuration
+            parameters=ert_config.ensemble_config.parameter_configuration,
+            templates=ert_config.ert_templates,
         )
         prior_ensemble = storage.create_ensemble(
             experiment_id, name="prior", ensemble_size=1
@@ -52,7 +53,6 @@ def make_run_path(run_paths, run_args, storage):
             env_vars=ert_config.env_vars,
             env_pr_fm_step=ert_config.env_pr_fm_step,
             substitutions=ert_config.substitutions,
-            templates=ert_config.ert_templates,
             parameters_file="parameters",
             runpaths=runpaths,
         )
@@ -101,7 +101,7 @@ def test_jobs_json_is_backed_up(make_run_path):
 
 @pytest.mark.usefixtures("use_tmpdir")
 def test_that_run_template_replace_symlink_does_not_write_to_source(
-    prior_ensemble, run_args, run_paths
+    prior_ensemble_args, run_args, run_paths
 ):
     """This test is meant to test that we can have a symlinked file in the
     run path before we do replacement on a target file with the same name,
@@ -121,6 +121,7 @@ def test_that_run_template_replace_symlink_does_not_write_to_source(
             """
         )
     )
+    prior_ensemble = prior_ensemble_args(templates=ert_config.ert_templates)
     run_arg = run_args(ert_config, prior_ensemble)
     run_path = Path(run_arg[0].runpath)
     os.makedirs(run_path)
@@ -138,7 +139,6 @@ def test_that_run_template_replace_symlink_does_not_write_to_source(
         env_pr_fm_step=ert_config.env_pr_fm_step,
         forward_model_steps=ert_config.forward_model_steps,
         substitutions=ert_config.substitutions,
-        templates=ert_config.ert_templates,
         parameters_file="parameters",
         runpaths=run_paths(ert_config),
     )
@@ -293,10 +293,12 @@ def test_that_error_is_raised_when_data_file_is_badly_encoded(make_run_path):
     Path("MY_DATA_FILE.DATA").write_text(
         "ä I WANT TO REPLACE:<DATE>", encoding="iso-8859-1"
     )
-
+    err_str = (
+        "Unsupported non UTF-8 character found in file: templates/MY_DATA_FILE_0.DATA"
+    )
     with pytest.raises(
         ValueError,
-        match=r"Unsupported non UTF-8 character found in file: .*MY_DATA_FILE.DATA",
+        match=err_str,
     ):
         make_run_path(ert_config)
 
@@ -468,7 +470,6 @@ def test_write_runpath_file(storage, itr, run_paths):
         env_pr_fm_step=ert_config.env_pr_fm_step,
         forward_model_steps=ert_config.forward_model_steps,
         substitutions=ert_config.substitutions,
-        templates=ert_config.ert_templates,
         parameters_file="parameters",
         runpaths=run_path,
     )
@@ -735,7 +736,6 @@ def test_when_manifest_files_are_written_forward_model_ok_succeeds(storage, itr)
         env_pr_fm_step=config.env_pr_fm_step,
         forward_model_steps=config.forward_model_steps,
         substitutions=config.substitutions,
-        templates=config.ert_templates,
         parameters_file="parameters",
         runpaths=run_paths,
     )

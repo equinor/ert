@@ -35,7 +35,6 @@ def setup_case(storage, use_tmpdir, run_args, run_paths):
             env_pr_fm_step=ert_config.env_pr_fm_step,
             forward_model_steps=ert_config.forward_model_steps,
             substitutions=ert_config.substitutions,
-            templates=ert_config.ert_templates,
             parameters_file="parameters",
             runpaths=run_paths(ert_config),
         )
@@ -148,7 +147,6 @@ def test_load_forward_model_summary(
         env_pr_fm_step=ert_config.env_pr_fm_step,
         forward_model_steps=ert_config.forward_model_steps,
         substitutions=ert_config.substitutions,
-        templates=ert_config.ert_templates,
         parameters_file="parameters",
         runpaths=run_paths(ert_config),
     )
@@ -253,7 +251,6 @@ def test_loading_gen_data_without_restart(storage, run_paths, run_args):
         env_pr_fm_step=ert_config.env_pr_fm_step,
         forward_model_steps=ert_config.forward_model_steps,
         substitutions=ert_config.substitutions,
-        templates=ert_config.ert_templates,
         parameters_file="parameters",
         runpaths=run_paths(ert_config),
     )
@@ -318,7 +315,6 @@ def test_loading_from_any_available_iter(storage, run_paths, run_args, itr):
         env_pr_fm_step=ert_config.env_pr_fm_step,
         forward_model_steps=ert_config.forward_model_steps,
         substitutions=ert_config.substitutions,
-        templates=ert_config.ert_templates,
         parameters_file="parameters",
         runpaths=run_paths(ert_config),
     )
