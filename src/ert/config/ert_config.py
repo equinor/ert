@@ -58,9 +58,7 @@ from .parsing.observations_parser import (
     ObservationConfigError,
     SummaryValues,
 )
-from .parsing.observations_parser import (
-    parse_content as parse_observations,
-)
+from .parsing.observations_parser import parse_content as parse_observations
 from .queue_config import QueueConfig
 from .workflow import Workflow
 from .workflow_job import (
@@ -315,6 +313,7 @@ def read_templates(config_dict) -> list[tuple[str, str]]:
                 "it is synced with your DATA file."
             )
         templates.append(template)
+    templates.extend(EnsembleConfig.get_gen_kw_templates(config_dict))
     return templates
 
 
@@ -1201,8 +1200,9 @@ class ErtConfig:
 
     @staticmethod
     def _create_observations(
-        obs_config_content: dict[str, HistoryValues | SummaryValues | GenObsValues]
-        | None,
+        obs_config_content: (
+            dict[str, HistoryValues | SummaryValues | GenObsValues] | None
+        ),
         ensemble_config: EnsembleConfig,
         time_map: list[datetime] | None,
         history: HistorySource,

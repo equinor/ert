@@ -264,9 +264,7 @@ def test_that_sampling_is_fixed_from_name(
         conf = GenKwConfig(
             name="KW_NAME",
             forward_init=False,
-            template_file="template.txt",
             transform_function_definitions=prior,
-            output_file="kw.txt",
             update=True,
         )
         with open("template.txt", "w", encoding="utf-8") as fh:
@@ -397,26 +395,6 @@ def write_file(fname, contents):
             [],
             does_not_raise(),
         ),
-        (
-            "GEN_KW KW_NAME template.txt kw.txt prior.txt INIT_FILES:custom_param%d",
-            "MY_KEYWORD 1.31",
-            [("custom_param0", "MY_KEYWORD 1.31")],
-            does_not_raise(),
-        ),
-        (
-            "GEN_KW KW_NAME template.txt kw.txt prior.txt INIT_FILES:custom_param%d",
-            "MY_KEYWORD 1.31",
-            [("custom_param0", "1.31")],
-            does_not_raise(),
-        ),
-        (
-            "GEN_KW KW_NAME template.txt kw.txt prior.txt INIT_FILES:custom_param0",
-            "Not expecting a file",
-            [],
-            pytest.raises(
-                ConfigValidationError, match="Loading GEN_KW from files requires %d"
-            ),
-        ),
     ],
 )
 def test_gen_kw(storage, tmpdir, config_str, expected, extra_files, expectation):
@@ -505,15 +483,15 @@ def test_gen_kw_templating(
 
 @pytest.mark.usefixtures("set_site_config")
 @pytest.mark.parametrize(
-    "relpath",
+    "relpath, err_msg",
     [
-        "somepath/",
+        ("somepath/", ""),
         # This test was added to show current behaviour for Ert.
         # If absolute paths should be possible to be used like this is up for debate.
-        "/tmp/somepath/",  # ert removes leading '/'
+        ("/tmp/somepath/", "Output file cannot have an absolute path"),
     ],
 )
-def test_gen_kw_outfile_will_use_paths(tmpdir, storage, relpath: str):
+def test_gen_kw_outfile_will_use_paths(tmpdir, storage, relpath: str, err_msg: str):
     with tmpdir.as_cwd():
         config = dedent(
             f"""
@@ -530,87 +508,12 @@ def test_gen_kw_outfile_will_use_paths(tmpdir, storage, relpath: str):
         with open("prior.txt", mode="w", encoding="utf-8") as fh:
             fh.writelines("MY_KEYWORD NORMAL 0 1")
         relpath = relpath.removeprefix("/")
-        create_runpath(storage, "config.ert")
-        assert os.path.exists(f"simulations/realization-0/iter-0/{relpath}kw.txt")
-
-
-@pytest.mark.usefixtures("set_site_config")
-@pytest.mark.parametrize(
-    "config_str, expected, extra_files",
-    [
-        (
-            "GEN_KW KW_NAME template.txt kw.txt prior.txt INIT_FILES:custom_param%d",
-            "MY_KEYWORD 1.31\nMY_SECOND_KEYWORD 1.01",
-            [("custom_param0", "MY_SECOND_KEYWORD 1.01\nMY_KEYWORD 1.31")],
-        ),
-    ],
-)
-def test_that_order_of_input_in_user_input_is_abritrary_for_gen_kw_init_files(
-    tmpdir, config_str, expected, extra_files, storage
-):
-    with tmpdir.as_cwd():
-        config = dedent(
-            """
-        JOBNAME my_name%d
-        NUM_REALIZATIONS 1
-        """
-        )
-        config += config_str
-        with open("config.ert", mode="w", encoding="utf-8") as fh:
-            fh.writelines(config)
-        with open("template.txt", mode="w", encoding="utf-8") as fh:
-            fh.writelines(
-                "MY_KEYWORD <MY_KEYWORD>\nMY_SECOND_KEYWORD <MY_SECOND_KEYWORD>"
-            )
-        with open("prior.txt", mode="w", encoding="utf-8") as fh:
-            fh.writelines("MY_KEYWORD NORMAL 0 1\nMY_SECOND_KEYWORD NORMAL 0 1")
-        for fname, contents in extra_files:
-            write_file(fname, contents)
-
-        create_runpath(storage, "config.ert")
-        assert (
-            Path("simulations/realization-0/iter-0/kw.txt").read_text("utf-8")
-            == expected
-        )
-
-
-@pytest.mark.usefixtures("set_site_config")
-@pytest.mark.parametrize("load_forward_init", [True, False])
-def test_gen_kw_forward_init(tmpdir, storage, load_forward_init):
-    with tmpdir.as_cwd():
-        config = dedent(
-            """
-        JOBNAME my_name%d
-        NUM_REALIZATIONS 1
-        GEN_KW KW_NAME template.txt kw.txt prior.txt """
-            f"""FORWARD_INIT:{load_forward_init!s} INIT_FILES:custom_param%d
-        """
-        )
-        with open("config.ert", mode="w", encoding="utf-8") as fh:
-            fh.writelines(config)
-
-        with open("template.txt", mode="w", encoding="utf-8") as fh:
-            fh.writelines("MY_KEYWORD <MY_KEYWORD>")
-        with open("prior.txt", mode="w", encoding="utf-8") as fh:
-            fh.writelines("MY_KEYWORD NORMAL 0 1")
-        if not load_forward_init:
-            write_file("custom_param0", "1.31")
-
-        if load_forward_init:
+        if err_msg:
             with pytest.raises(
                 ConfigValidationError,
-                match=(
-                    "Loading GEN_KW from files created by "
-                    "the forward model is not supported\\."
-                ),
+                match=err_msg,
             ):
                 create_runpath(storage, "config.ert")
         else:
-            _, fs = create_runpath(storage, "config.ert")
-            assert Path("simulations/realization-0/iter-0/kw.txt").exists()
-            value = (
-                fs.load_parameters("KW_NAME", 0)
-                .sel(names="MY_KEYWORD")["values"]
-                .values
-            )
-            assert value == 1.31
+            create_runpath(storage, "config.ert")
+            assert os.path.exists(f"simulations/realization-0/iter-0/{relpath}kw.txt")

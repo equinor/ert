@@ -30,6 +30,14 @@ class Substitutions(UserDict[str, str]):
         """
         return _substitute(self, to_substitute, context, max_iterations, warn_max_iter)
 
+    def substitute_parameters(
+        self, to_substitute: str, data: dict[str, dict[str, float]]
+    ) -> str:
+        for values in data.values():
+            for key, value in values.items():
+                to_substitute = to_substitute.replace(f"<{key}>", f"{value:.6g}")
+        return to_substitute
+
     def substitute_real_iter(
         self, to_substitute: str, realization: int, iteration: int
     ) -> str:
