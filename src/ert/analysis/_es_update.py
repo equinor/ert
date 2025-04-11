@@ -305,8 +305,9 @@ def _load_observations_and_responses(
             )
         )
 
-    for missing_obs in obs_keys[~obs_mask]:
-        logger.warning(f"Deactivating observation: {missing_obs}")
+    missing_obs = sorted(set(obs_keys[~obs_mask]))
+    if missing_obs:
+        logger.warning("Deactivating observations: {missing_obs}")
 
     return S[obs_mask], (
         observations[obs_mask],
