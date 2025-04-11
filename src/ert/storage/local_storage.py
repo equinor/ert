@@ -307,6 +307,7 @@ class LocalStorage(BaseMode):
         observations: dict[str, pl.DataFrame] | None = None,
         simulation_arguments: dict[Any, Any] | None = None,
         name: str | None = None,
+        ert_templates: list[tuple[str, str]] | None = None,
     ) -> LocalExperiment:
         """
         Creates a new experiment in the storage.
@@ -323,6 +324,8 @@ class LocalStorage(BaseMode):
             The simulation arguments for the experiment.
         name : str, optional
             The name of the experiment.
+        ert_templates : list of tuple[str, str], optional
+            Run templates for the experiment. Defaults to None.
 
         Returns
         -------
@@ -343,6 +346,7 @@ class LocalStorage(BaseMode):
             observations=observations,
             simulation_arguments=simulation_arguments,
             name=name,
+            ert_templates=ert_templates,
         )
 
         self._experiments[exp.id] = exp
@@ -478,7 +482,8 @@ class LocalStorage(BaseMode):
 
                 logger.info("Blockfs storage backed up")
                 print(
-                    dedent(f"""
+                    dedent(
+                        f"""
                     Detected outdated storage (blockfs), which is no longer supported
                     by ERT. Its contents are copied to:
 
@@ -497,7 +502,8 @@ class LocalStorage(BaseMode):
                     This is not guaranteed to work. Other than setting the custom
                     ENSPATH, the ERT config should ideally be the same as it was
                     when the old blockfs storage was created.
-                """)
+                """
+                    )
                 )
                 return None
 

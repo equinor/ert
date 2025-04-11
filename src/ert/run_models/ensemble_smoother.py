@@ -104,6 +104,7 @@ class EnsembleSmoother(UpdateRunModel):
             observations=self._observations,
             responses=self._response_configuration,
             name=self.experiment_name,
+            ert_templates=self._templates,
         )
 
         self.set_env_key("_ERT_EXPERIMENT_ID", str(experiment.id))

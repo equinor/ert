@@ -47,6 +47,7 @@ class LocalExperiment(BaseMode):
     _parameter_file = Path("parameter.json")
     _responses_file = Path("responses.json")
     _metadata_file = Path("metadata.json")
+    _ert_templates_file = Path("templates.json")
 
     def __init__(
         self,
@@ -86,6 +87,7 @@ class LocalExperiment(BaseMode):
         observations: dict[str, pl.DataFrame] | None = None,
         simulation_arguments: dict[Any, Any] | None = None,
         name: str | None = None,
+        ert_templates: list[tuple[str, str]] | None = None,
     ) -> LocalExperiment:
         """
         Create a new LocalExperiment and store its configuration data.
@@ -108,6 +110,8 @@ class LocalExperiment(BaseMode):
             Simulation arguments for the experiment.
         name : str, optional
             Experiment name. Defaults to current date if None.
+        ert_templates : list of tuple[str, str], optional
+            Run templates for the experiment. Defaults to None.
 
         Returns
         -------
@@ -128,6 +132,11 @@ class LocalExperiment(BaseMode):
         storage._write_transaction(
             path / cls._parameter_file,
             json.dumps(parameter_data, indent=2).encode("utf-8"),
+        )
+
+        storage._write_transaction(
+            path / cls._ert_templates_file,
+            json.dumps(ert_templates).encode("utf-8"),
         )
 
         response_data = {}

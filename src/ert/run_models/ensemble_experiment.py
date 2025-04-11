@@ -107,6 +107,7 @@ class EnsembleExperiment(BaseRunModel):
                 ),
                 observations=self._observations,
                 responses=self._response_configuration,
+                ert_templates=self._templates,
             )
             self.ensemble = self._storage.create_ensemble(
                 self.experiment,
