@@ -430,7 +430,8 @@ SUM_KEYS_NO_OPM = [
     "WPI:PROD2",
 ]
 SUM_KEYS = [
-    SUM_KEYS_NO_OPM
+    ["*"]
+    + SUM_KEYS_NO_OPM
     + [
         vector + ":" + group
         for vector in [
@@ -481,8 +482,7 @@ def _generate_exp_ert_config(config_path, output_dir):
             [
                 "copy_directory",
                 [
-                    f"{config_path}/../../eclipse/include/"
-                    "realizations/realization-<GEO_ID>/eclipse",
+                    f"{config_path}/../../eclipse/include/realizations/realization-<GEO_ID>/eclipse",
                     "eclipse",
                 ],
             ],
@@ -562,7 +562,7 @@ def test_egg_model_convert_no_opm(copy_egg_test_data_to_tmp):
     output_dir = config.output_dir
     config_path = os.path.dirname(os.path.abspath(CONFIG_FILE))
     exp_ert_config = _generate_exp_ert_config(config_path, output_dir)
-    exp_ert_config[ErtConfigKeys.SUMMARY][0] = SUM_KEYS_NO_OPM
+    exp_ert_config[ErtConfigKeys.SUMMARY][0] = ["*", *SUM_KEYS_NO_OPM]
     sort_res_summary(exp_ert_config)
     sort_res_summary(ert_config)
     assert exp_ert_config == ert_config
@@ -575,8 +575,6 @@ def test_opm_fail_default_summary_keys(copy_egg_test_data_to_tmp):
 
     config = EverestConfig.load_file(CONFIG_FILE)
     # The Everest config file will fail to load as an Eclipse data file
-    config.model.data_file = os.path.realpath(CONFIG_FILE)
-
     ert_config = _everest_to_ert_config_dict(config)
 
     # configpath isn't specified in config_file so it should be inferred
@@ -608,7 +606,6 @@ def test_opm_fail_explicit_summary_keys(copy_egg_test_data_to_tmp):
 
     config = EverestConfig.load_file(CONFIG_FILE)
     # The Everest config file will fail to load as an Eclipse data file
-    config.model.data_file = os.path.realpath(CONFIG_FILE)
     config.export.keywords = extra_sum_keys
 
     ert_config = _everest_to_ert_config_dict(config)

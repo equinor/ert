@@ -1,5 +1,5 @@
 import itertools
-import os
+import stat
 from pathlib import Path
 from shutil import which
 from textwrap import dedent
@@ -154,12 +154,21 @@ def test_default_installed_jobs(tmp_path, monkeypatch):
 def test_combined_wells_everest_to_ert(tmp_path, monkeypatch):
     monkeypatch.chdir(tmp_path)
     Path("my_file").touch()
+    Path("my_executable").touch(mode=stat.S_IEXEC)
     ever_config = EverestConfig.with_defaults(
         **yaml.safe_load(
             dedent("""
-    model: {"realizations": [0], data_file: my_file}
+    model: {"realizations": [0]}
     wells: [{ name: fakename}]
     definitions: {eclbase: my_test_case}
+    install_jobs:
+      - name: nothing
+        executable: my_executable
+    forward_model:
+      - job: nothing
+        results:
+          file_name: something
+          type: summary
     """)
         )
     )
@@ -212,11 +221,19 @@ def test_install_data_no_init(tmp_path, source, target, symlink, cmd, monkeypatc
 @skipif_no_everest_models
 @pytest.mark.everest_models_test
 @pytest.mark.skip_mac_ci
-def test_summary_default_no_opm(copy_egg_test_data_to_tmp):
-    config_dir = "everest/model"
-    config_file = os.path.join(config_dir, "config.yml")
-    everconf = EverestConfig.load_file(config_file)
-
+def test_summary_default_no_opm():
+    everconf = EverestConfig.with_defaults(
+        forward_model=[
+            {
+                "job": "eclipse100 eclipse/model/EgG.DATA --version 2020.2",
+                "results": {
+                    "file_name": "eclipse/model/EGG",
+                    "type": "summary",
+                    "keys": ["*"],
+                },
+            }
+        ]
+    )
     # Read wells from the config instead of using opm
     wells = [w.name for w in everconf.wells]
     sum_keys = (
@@ -232,7 +249,7 @@ def test_summary_default_no_opm(copy_egg_test_data_to_tmp):
     sum_keys = [list(set(sum_keys))]
     res_conf = _everest_to_ert_config_dict(everconf)
 
-    assert set(sum_keys[0]) == set(res_conf[ErtConfigKeys.SUMMARY][0])
+    assert set(sum_keys[0]) == set(res_conf[ErtConfigKeys.SUMMARY][0]) - {"*"}
 
 
 @pytest.mark.parametrize(
@@ -436,6 +453,35 @@ def test_that_queue_settings_are_taken_from_site_config(
     assert queue_config.queue_options == LsfQueueOptions(
         lsf_queue="my_queue", lsf_resource="my_resource"
     )
+
+
+def test_passthrough_explicit_summary_keys():
+    custom_sum_keys = [
+        "GOIR:PRODUC",
+        "GOIT:INJECT",
+        "GOIT:PRODUC",
+        "GWPR:INJECT",
+        "GWPR:PRODUC",
+        "GWPT:INJECT",
+        "GWPT:PRODUC",
+        "GWIR:INJECT",
+    ]
+
+    config = EverestConfig.with_defaults(
+        forward_model=[
+            {
+                "job": "eclipse100 eclipse/model/EgG.DATA --version 2020.2",
+                "results": {
+                    "file_name": "eclipse/model/EGG",
+                    "type": "summary",
+                    "keys": custom_sum_keys,
+                },
+            }
+        ]
+    )
+
+    ert_config = _everest_to_ert_config_dict(config)
+    assert set(custom_sum_keys).issubset(set(ert_config[ErtConfigKeys.SUMMARY][0]))
 
 
 @pytest.mark.usefixtures("no_plugins")

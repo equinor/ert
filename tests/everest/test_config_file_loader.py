@@ -62,10 +62,7 @@ def test_configpath_in_defs(copy_mocked_test_data_to_tmp):
     defs = {
         "numeric_key": 1,
         "bool_key": True,
-        "eclbase": "MOCKED_TEST_CASE",
         "local_jobs_folder": os.path.join(os.getcwd(), "jobs"),
-        "refcase_folder": os.path.join(os.getcwd(), "eclipse/refcase"),
-        "spe1_datafile": os.path.join(os.getcwd(), "eclipse/refcase/SPE1.DATA"),
     }
     assert defs == config.definitions
 
@@ -92,10 +89,7 @@ def test_dependent_definitions(copy_mocked_test_data_to_tmp):
     defs = {
         "numeric_key": 1,
         "bool_key": True,
-        "eclbase": "MOCKED_TEST_CASE",
         "local_jobs_folder": os.path.join(os.getcwd(), "jobs"),
-        "refcase_folder": os.path.join(os.getcwd(), "eclipse/refcase"),
-        "spe1_datafile": os.path.join(os.getcwd(), "eclipse/refcase/SPE1.DATA"),
     }
     defs.update({x: os.getcwd() for x in string.ascii_lowercase})
     assert defs == config.definitions

@@ -5,6 +5,7 @@ from copy import copy
 from io import StringIO
 from itertools import chain
 from pathlib import Path
+from textwrap import dedent
 from typing import (
     Annotated,
     Any,
@@ -284,6 +285,24 @@ and environment variables are exposed in the form 'os.NAME', for example:
         return self
 
     @model_validator(mode="after")
+    def validate_at_most_one_summary_forward_model(self, _: ValidationInfo) -> Self:
+        summary_fms = [
+            fm
+            for fm in self.forward_model
+            if isinstance(fm, ForwardModelStepConfig)
+            and fm.results is not None
+            and fm.results.type == "summary"
+        ]
+        if len(summary_fms) > 1:
+            raise ValueError(
+                f"Found ({len(summary_fms)}) "
+                f"forward model steps producing summary data. "
+                f"Only one summary-producing forward model step is supported."
+            )
+
+        return self
+
+    @model_validator(mode="after")
     def validate_install_jobs(self) -> Self:
         if self.install_jobs is None:
             return self
@@ -377,6 +396,26 @@ and environment variables are exposed in the form 'os.NAME', for example:
         )
         return install_templates
 
+    @model_validator(mode="before")
+    @classmethod
+    def validate_no_data_file(cls, values: dict[str, Any]) -> dict[str, Any]:
+        data_file = values.get("model", {}).get("data_file", None)
+        eclbase = values.get("definitions", {}).get("eclbase", "<name_of_smspec>")
+
+        if data_file is not None:
+            message = f"""
+model.data_file is deprecated and will have no effect
+to read summary data from forward model, do:
+(replace flow with your chosen simulator forward model)
+  forward_model:
+    - job: flow
+      results:
+        file_name: {eclbase}
+        type: summary
+        keys: ['FOPR', 'WOPR']"""
+            raise ValueError(dedent(message.strip()))
+        return values
+
     @model_validator(mode="after")
     def validate_install_templates_are_existing_files(self) -> Self:
         install_templates = self.install_templates
@@ -447,18 +486,6 @@ and environment variables are exposed in the form 'os.NAME', for example:
                 check_path_exists(
                     install_data_cfg.source, config_path, model.realizations
                 )
-
-        return self
-
-    @model_validator(mode="after")
-    def validate_model_data_file_exists(self) -> Self:
-        model = self.model
-        if not model:
-            return self
-        config_path = self.config_path
-
-        if model.data_file is not None:
-            check_path_exists(model.data_file, config_path, model.realizations)
 
         return self
 

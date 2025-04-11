@@ -1,10 +1,7 @@
 definitions:
     numeric_key: 1
     bool_key: True
-    eclbase: MOCKED_TEST_CASE
     local_jobs_folder: r{{configpath}}/jobs
-    refcase_folder: r{{configpath}}/eclipse/refcase
-    spe1_datafile: r{{refcase_folder}}/SPE1.DATA
 
 wells:
   - { name: w00}
@@ -55,20 +52,24 @@ install_jobs:
     name: controls_sum
     executable: r{{local_jobs_folder}}/controls_sum.py
 
+install_data:
+  - source: r{{configpath}}/eclipse/refcase/SPE1.DATA
+    target: MOCKED_TEST_CASE/SPE1.DATA
+
 simulator:
   max_runtime: 3600
 
 model:
   realizations: r{{ range(2) | list() }}
-  # NOTE: This is not a related datafile, just needed one to get eclipse
-  # export in tests. Can be replaced by any other datafile of your preferance.
-  data_file: r{{spe1_datafile}}
-
 
 forward_model:
   - well_order well_order.json SCHEDULE.INC ordered_wells.json
-  - res_mock r{{ eclbase }}
-  - npv_function r{{ eclbase }} npv_function
+  - job: res_mock MOCKED_TEST_CASE
+    results:
+      file_name: MOCKED_TEST_CASE
+      type: summary
+
+  - npv_function MOCKED_TEST_CASE npv_function
   - controls_sum group
 
 environment:

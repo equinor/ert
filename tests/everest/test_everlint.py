@@ -223,12 +223,11 @@ def test_bool_validation(value, valid, min_config, tmp_path, monkeypatch):
 
 def test_invalid_wells(tmp_path, monkeypatch):
     monkeypatch.chdir(tmp_path)
-    Path("my_file").touch()
     with pytest.raises(ValidationError, match="can not contain any dots"):
         EverestConfig.with_defaults(
             **yaml.safe_load(
                 dedent("""
-    model: {"realizations": [0], data_file: my_file}
+    model: {"realizations": [0] }
     wells: [{ name: fakename.fake}]
     definitions: {eclbase: my_test_case}
     """)
@@ -398,3 +397,30 @@ def test_commented_out_substitution(min_config, change_to_tmpdir):
     assert len(config_dict["forward_model"]) == 2
     assert config_dict["forward_model"][0] == "step1 abc"
     assert config_dict["forward_model"][1] == "step3 abc"
+
+
+def test_eclbase_datafile_deprecation_message():
+    lints = EverestConfig.lint_config_dict(
+        {
+            "definitions": {
+                "eclbase": "/project/somewhere/everest/input/eclipse/include/EGGS"
+            },
+            "model": {"data_file": "the_data_file"},
+        }
+    )
+    message = str(lints[0]["ctx"]["error"])
+
+    assert (
+        message
+        == """
+model.data_file is deprecated and will have no effect
+to read summary data from forward model, do:
+(replace flow with your chosen simulator forward model)
+  forward_model:
+    - job: flow
+      results:
+        file_name: /project/somewhere/everest/input/eclipse/include/EGGS
+        type: summary
+        keys: ['FOPR', 'WOPR']
+""".strip()
+    )
