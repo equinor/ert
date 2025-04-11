@@ -286,7 +286,7 @@ def test_min_realization_is_set_from_corresponding_keyword(value):
 
 def test_giving_larger_min_than_num_realizations_warns():
     with pytest.warns(
-        ConfigWarning, match="MIN_REALIZATIONS set to more than NUM_REALIZATIONS"
+        ConfigWarning, match="MIN_REALIZATIONS is set to more than NUM_REALIZATIONS"
     ):
         _ = AnalysisConfig.from_dict(
             {

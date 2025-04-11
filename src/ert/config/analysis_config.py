@@ -69,8 +69,9 @@ class AnalysisConfig:
 
         if min_realization > num_realization:
             ConfigWarning.warn(
-                "MIN_REALIZATIONS set to more than NUM_REALIZATIONS, "
-                "will set required to successful realizations to 100%. "
+                "MIN_REALIZATIONS is set to more than NUM_REALIZATIONS. "
+                "Will continue with required number of successful "
+                "realizations set to NUM_REALIZATIONS. "
                 "For more flexibility, you can use e.g. 'MIN_REALIZATIONS 80%'.",
                 min_realization_str,
             )
