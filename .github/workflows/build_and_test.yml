@@ -137,10 +137,6 @@ jobs:
       with:
         os: ${{ matrix.os }}
 
-    - uses: ./.github/actions/install_dependencies_scikit_sparse
-      with:
-        os: ${{ matrix.os }}
-
     - name: Install pandoc
       run: |
         sudo apt install pandoc
