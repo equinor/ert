@@ -154,6 +154,7 @@ class MultipleDataAssimilation(UpdateRunModel):
                 responses=self._response_configuration,
                 simulation_arguments=sim_args,
                 name=self.experiment_name,
+                ert_templates=self._templates,
             )
 
             prior = self._storage.create_ensemble(
