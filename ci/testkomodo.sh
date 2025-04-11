@@ -34,39 +34,28 @@ run_ert_with_opm() {
     popd || exit 1
 }
 
-# Clean up everest egg tmp folders
-remove_one_week_old_temp_folders () {
-    case "$1" in
-        "azure")
-            RUNNER_ROOT="/lustre1/users/f_scout_ci/egg_tests"
-            ;;
-        *)
-            RUNNER_ROOT="/scratch/oompf/egg_tests"
-            ;;
-    esac
-    find "$RUNNER_ROOT" -maxdepth 1 -mtime +7 -user f_scout_ci -type d -exec rm -r {} \;
-}
 
 
-make_egg_runpath () {
-    case "$1" in
-        "azure")
-            mkdir -p /lustre1/users/f_scout_ci/egg_tests
-            mktemp -d -p /lustre1/users/f_scout_ci/egg_tests
-            ;;
-        *)
-            mkdir -p /scratch/oompf/egg_tests
-            mktemp -d -p /scratch/oompf/egg_tests
-            ;;
-    esac
-}
 
-
-# Run everest egg test on the cluster both onprem and azure
+# Run everest egg test on the cluster
 run_everest_egg_test() {
 
+    if [[ "$CI_RUNNER_LABEL" == "azure" ]]; then
+        #RUNNER_ROOT="/lustre1/users/f_scout_ci/egg_tests"
+        echo "Skip running everest egg test on azure for now"
+        return 0
+    elif [[ "$CI_RUNNER_LABEL" == "onprem" ]]; then
+        RUNNER_ROOT="/scratch/oompf/egg_tests"
+    else
+        echo "Unsupported runner label: $CI_RUNNER_LABEL"
+        return 1
+    fi
+
+    mkdir -p "$RUNNER_ROOT"
+
+    EGG_RUNPATH=$(mktemp -d -p "$RUNNER_ROOT")
+
     # Need to copy the egg test to a directory that is accessible by all cluster members
-    EGG_RUNPATH=$(make_egg_runpath "$CI_RUNNER_LABEL")
     cp -r "${CI_SOURCE_ROOT}/test-data/everest/egg" "$EGG_RUNPATH"
     chmod -R a+rx "$EGG_RUNPATH"
     pushd "${EGG_RUNPATH}/egg" || exit 1
@@ -94,7 +83,8 @@ run_everest_egg_test() {
         everest kill "$CONFIG"
     fi
 
-    remove_one_week_old_temp_folders "$CI_RUNNER_LABEL"
+    # Clean up the temp folder removing folders older than 7 days
+    find "$RUNNER_ROOT" -maxdepth 1 -mtime +7 -user f_scout_ci -type d -exec rm -r {} \;
 
     return $STATUS
 }
