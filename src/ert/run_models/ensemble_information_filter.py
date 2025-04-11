@@ -14,6 +14,7 @@ from ert.ensemble_evaluator import EvaluatorServerConfig
 from ert.storage import Storage
 from ert.trace import tracer
 
+from ..plugins import PostExperimentFixtures, PreExperimentFixtures
 from ..run_arg import create_run_arguments
 from .base_run_model import ErtRunError, StatusEvents, UpdateRunModel
 
@@ -90,8 +91,7 @@ class EnsembleInformationFilter(UpdateRunModel):
 
         self.restart = restart
         self.run_workflows(
-            HookRuntime.PRE_EXPERIMENT,
-            fixtures={"random_seed": self.random_seed},
+            PreExperimentFixtures(random_seed=self.random_seed),
         )
         ensemble_format = self.target_ensemble_format
         experiment = self._storage.create_experiment(
@@ -149,11 +149,11 @@ class EnsembleInformationFilter(UpdateRunModel):
         )
         self.run_workflows(
             HookRuntime.POST_EXPERIMENT,
-            fixtures={
-                "random_seed": self.random_seed,
-                "storage": self._storage,
-                "ensemble": posterior,
-            },
+            fixtures=PostExperimentFixtures(
+                random_seed=self.random_seed,
+                storage=self._storage,
+                ensemble=posterior,
+            ),
         )
 
     @classmethod
