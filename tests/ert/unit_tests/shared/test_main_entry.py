@@ -25,6 +25,7 @@ def test_main_logging(monkeypatch, caplog):
     assert "Traceback" in caplog.text
 
 
+@pytest.mark.usefixtures("use_tmpdir")
 def test_main_logging_argparse(monkeypatch, caplog):
     monkeypatch.setattr(logging.config, "dictConfig", MagicMock())
     monkeypatch.setattr(main, "valid_file", MagicMock(return_value=True))
