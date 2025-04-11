@@ -48,13 +48,14 @@ forward_model:
     results:
       file_name: distance
       type: gen_data
+      keys: "*"
   # Expect no objective, but should generate gen_data in ERT storage
   - job: adv_distance3 --point-file point.json --target-file data/r{{ realization}}/target.json --out distance_nonobj
     results:
       file_name: distance_nonobj
       type: gen_data
   # Write the value of each control to a separate file
-  - adv_dump_controls --controls-file point.json --out-suffix _coord
+  - job: adv_dump_controls --controls-file point.json --out-suffix _coord
 # Left this  here for testing/debugging purposes
 # - job: sleep --min 0.1 --max 5 --fail-chance 0.5
 
