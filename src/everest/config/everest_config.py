@@ -8,6 +8,7 @@ from pathlib import Path
 from typing import (
     Annotated,
     Any,
+    Literal,
     Optional,
     Protocol,
     Self,
@@ -58,6 +59,7 @@ from ..strings import (
 from .control_config import ControlConfig
 from .environment_config import EnvironmentConfig
 from .export_config import ExportConfig
+from .forward_model_config import ForwardModelStepConfig
 from .input_constraint_config import InputConstraintConfig
 from .install_data_config import InstallDataConfig
 from .install_job_config import InstallJobConfig
@@ -212,7 +214,7 @@ and environment variables are exposed in the form 'os.NAME', for example:
         description="Simulation settings",
         examples=[simulator_example],
     )
-    forward_model: list[str] | None = Field(
+    forward_model: list[str | ForwardModelStepConfig] | None = Field(
         default=None, description="List of jobs to run"
     )
     workflows: WorkflowConfig | None = Field(
@@ -259,13 +261,43 @@ and environment variables are exposed in the form 'os.NAME', for example:
 
         errors = []
         for fm_job in forward_model_jobs:
-            job_name = fm_job.split()[0]
+            job_str_with_args = (
+                fm_job.job if isinstance(fm_job, ForwardModelStepConfig) else fm_job
+            )
+            job_name = job_str_with_args.split()[0]
             if job_name not in installed_jobs_name:
                 errors.append(f"unknown job {job_name}")
 
         if len(errors) > 0:  # Note: python3.11 ExceptionGroup will solve this nicely
             raise ValueError(errors)
         return self
+
+    def get_forward_model_steps(
+        self, result_type: Literal["gen_data", "summary"]
+    ) -> list[ForwardModelStepConfig]:
+        return [
+            fm
+            for fm in self.forward_model
+            if isinstance(fm, ForwardModelStepConfig)
+            and fm.results is not None
+            and fm.results.type == result_type
+        ]
+
+    @model_validator(mode="after")
+    def validate_at_most_one_summary_forward_model(self, info: ValidationInfo) -> Self:
+        summary_fms = [
+            fm
+            for fm in self.forward_model
+            if isinstance(fm, ForwardModelStepConfig)
+            and fm.results is not None
+            and fm.results.type == "summary"
+        ]
+        if len(summary_fms) > 1:
+            raise ValueError(
+                f"Found ({len(summary_fms)}) "
+                f"forward model steps producing summary data. "
+                f"Only one summary-producing forward model step is supported."
+            )
 
     @model_validator(mode="after")
     def validate_install_jobs(self) -> Self:
@@ -460,14 +492,17 @@ and environment variables are exposed in the form 'os.NAME', for example:
         with InstallDataContext(install_data, self.config_path) as context:  # type: ignore
             for realization in self.model.realizations:
                 context.add_links_for_realization(realization)
-            validate_forward_model_configs(self.forward_model, self.install_jobs)
+            validate_forward_model_configs(
+                self.forward_model_step_commands, self.install_jobs
+            )
         return self
 
     @model_validator(mode="after")
     def validate_maintained_forward_model_step_arguments(self) -> Self:
         if not self.forward_model:
             return self
-        validate_forward_model_step_arguments(self.forward_model)
+
+        validate_forward_model_step_arguments(self.forward_model_step_commands)
 
         return self
 
@@ -688,6 +723,16 @@ and environment variables are exposed in the form 'os.NAME', for example:
         if self.output_constraints:
             return [constraint.name for constraint in self.output_constraints]
         return []
+
+    @property
+    def forward_model_step_commands(self) -> list[str]:
+        if self.forward_model is None:
+            return []
+
+        return [
+            fm.job if isinstance(fm, ForwardModelStepConfig) else fm
+            for fm in self.forward_model
+        ]
 
     @property
     def result_names(self) -> list[str]:

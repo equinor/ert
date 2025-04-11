@@ -61,25 +61,29 @@ def _get_datafiles(ever_config: EverestConfig) -> list[str]:
 def _extract_summary_keys(
     ever_config: EverestConfig, ert_config: dict[str, Any]
 ) -> None:
-    data_files = _get_datafiles(ever_config)
-    if len(data_files) == 0:
-        return
+    summary_fms = get_forward_model_steps(type="summary")
+    summary_fm = summary_fms[0]
+    requested_keys = summary_fm.results.keys
 
-    data_keys = everest.simulator.DEFAULT_DATA_SUMMARY_KEYS
-    field_keys = everest.simulator.DEFAULT_FIELD_SUMMARY_KEYS
-    well_sum_keys = everest.simulator.DEFAULT_WELL_SUMMARY_KEYS
-    user_specified_keys = (
-        [] if ever_config.export is None else ever_config.export.keywords
-    )
+    if "*" in requested_keys:
+        data_keys = everest.simulator.DEFAULT_DATA_SUMMARY_KEYS
+        field_keys = everest.simulator.DEFAULT_FIELD_SUMMARY_KEYS
+        well_sum_keys = everest.simulator.DEFAULT_WELL_SUMMARY_KEYS
+        deprecated_user_specified_keys = (
+            [] if ever_config.export is None else ever_config.export.keywords
+        )
 
-    wells = [well.name for well in ever_config.wells]
+        wells = [well.name for well in ever_config.wells]
 
-    well_keys = [
-        f"{sum_key}:{wname}"
-        for (sum_key, wname) in itertools.product(well_sum_keys, wells)
-    ]
+        well_keys = [
+            f"{sum_key}:{wname}"
+            for (sum_key, wname) in itertools.product(well_sum_keys, wells)
+        ]
 
-    all_keys = data_keys + field_keys + well_keys + user_specified_keys
+        all_keys = data_keys + field_keys + well_keys + deprecated_user_specified_keys
+    else:
+        all_keys = requested_keys
+
     all_keys = list(set(all_keys))
     ert_config[ErtConfigKeys.SUMMARY] = [all_keys]
 
@@ -353,7 +357,7 @@ def _extract_forward_model(
 ) -> None:
     forward_model = _extract_data_operations(ever_config)
     forward_model += _extract_templating(ever_config)
-    forward_model += ever_config.forward_model or []
+    forward_model += ever_config.forward_model_step_commands or []
 
     fm_steps = ert_config.get(ErtConfigKeys.FORWARD_MODEL, [])
     for job in forward_model:
@@ -398,8 +402,13 @@ def _extract_results(ever_config: EverestConfig, ert_config: dict[str, Any]) -> 
     constraint_names = [
         constraint.name for constraint in (ever_config.output_constraints or [])
     ]
+
+    gen_data_files = [
+        fm.results.file_name for fm in ever_config.get_forward_model_steps("gen_data")
+    ]
+
     gen_data = ert_config.get(ErtConfigKeys.GEN_DATA, [])
-    for name in objectives_names + constraint_names:
+    for name in set(objectives_names + constraint_names + gen_data_files):
         gen_data.append((name, {"RESULT_FILE": name}))
     ert_config[ErtConfigKeys.GEN_DATA] = gen_data
 
