@@ -126,6 +126,26 @@ with the documentation as specified, else respond with :code:`None`.
 When creating documentation in ERT, forward model steps will be grouped by their
 main categories (ie. the category listed before the first dot).
 
+Forward model configuration
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Forward model steps can be configured through the plugin system by using the ``forward_model_configuration`` hook:
+
+.. code-block:: python
+
+   import ert
+
+   @ert.plugin(name="my_plugin")
+   def forward_model_configuration():
+        return {
+            "forward_model_step_name": {
+                "config_key" : <config value>
+            },
+        }
+
+``<config value>`` can be of any python type, but will be exported to env by calling ``str(<config value>)``.
+
+
 Workflow job
 ~~~~~~~~~~~~
 
