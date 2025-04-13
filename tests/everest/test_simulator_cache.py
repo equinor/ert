@@ -24,7 +24,7 @@ def test_simulator_cache(copy_math_func_test_data_to_tmp, snapshot):
 
     config = EverestConfig.load_file("config_minimal.yml")
     config_dict = config.model_dump(exclude_none=True)
-    config_dict["optimization"]["max_batch_num"] = 5
+    config_dict["optimization"]["max_batch_num"] = 4
     config = EverestConfig.model_validate(config_dict)
 
     status_queue: SimpleQueue[StatusEvents] = SimpleQueue()
