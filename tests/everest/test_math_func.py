@@ -193,7 +193,7 @@ def test_math_func_auto_scaled_constraints(copy_math_func_test_data_to_tmp):
 
     # control number of batches, no need for full convergence:
     config_dict["optimization"]["convergence_tolerance"] = 1e-10
-    config_dict["optimization"]["max_batch_num"] = 3
+    config_dict["optimization"]["max_batch_num"] = 2
 
     # Run with auto_scaling:
     config_dict["environment"]["output_folder"] = "output_auto_scale"
@@ -209,8 +209,6 @@ def test_math_func_auto_scaled_constraints(copy_math_func_test_data_to_tmp):
     config_dict["environment"]["output_folder"] = "output_manual_scale"
     config_dict["output_constraints"][0]["auto_scale"] = False
     config_dict["output_constraints"][0]["scale"] = 0.25  # x(0)
-    # We need one batch less, no auto-scaling:
-    config_dict["optimization"]["max_batch_num"] -= 1
     config = EverestConfig.model_validate(config_dict)
     run_model = EverestRunModel.create(config)
     evaluator_server_config = EvaluatorServerConfig()
