@@ -80,7 +80,7 @@ class EnsembleSmoother(UpdateRunModel):
         parameters_config = self._parameter_configuration
         design_matrix = self._design_matrix
         design_matrix_group = None
-        if design_matrix is not None:
+        if design_matrix is not None and not restart:
             try:
                 parameters_config, design_matrix_group = (
                     design_matrix.merge_with_existing_parameters(parameters_config)
