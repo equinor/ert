@@ -238,6 +238,7 @@ class Eclipse100(ForwardModelStepPlugin):
     @staticmethod
     def documentation() -> ForwardModelStepDocumentation | None:
         return ForwardModelStepDocumentation(
+            description="The Eclipse 100 black-oil reservoir simulator from SLB",
             category="simulators.reservoir",
             examples="""
 The version, number of cpu, and whether or not to ignore errors and whether
@@ -304,6 +305,7 @@ class Eclipse300(ForwardModelStepPlugin):
     @staticmethod
     def documentation() -> ForwardModelStepDocumentation | None:
         return ForwardModelStepDocumentation(
+            description="The Eclipse 300 compositional reservoir simulator from SLB",
             category="simulators.reservoir",
             examples="""
 The version, number of cpu and whether or not to ignore errors can
