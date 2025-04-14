@@ -34,6 +34,8 @@ from ert.shared.status.utils import byte_with_unit
 
 
 class RealizationWidget(QWidget):
+    triggeredTooltipTextDisplay = Signal(str)
+
     def __init__(self, it: int, parent: QWidget | None = None) -> None:
         super().__init__(parent)
 
@@ -170,6 +172,7 @@ class RealizationDelegate(QStyledItemDelegate):
                 if callback_error_msg := index.data(CallbackStatusMessageRole):
                     tooltip_text += callback_error_msg
                 if tooltip_text:
+                    parent.triggeredTooltipTextDisplay.emit(tooltip_text)
                     QToolTip.showText(view.mapToGlobal(mouse_pos), tooltip_text)
                     return True
 
