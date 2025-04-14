@@ -7,6 +7,7 @@ import logging
 import os
 import queue
 import shutil
+import traceback
 from collections.abc import Callable, MutableSequence
 from enum import IntEnum, auto
 from pathlib import Path
@@ -249,11 +250,14 @@ class EverestRunModel(BaseRunModel):
         failed = False
         exception: Exception | None = None
         error_messages: MutableSequence[str] = []
+        traceback_str: str | None = None
         try:
             self.run_experiment(evaluator_server_config)
         except Exception as e:
             failed = True
             exception = e
+            traceback_str = traceback.format_exc()
+            raise
         finally:
             if self._exit_code not in {
                 EverestExitCode.COMPLETED,
@@ -265,7 +269,11 @@ class EverestRunModel(BaseRunModel):
                 EndEvent(
                     failed=failed,
                     msg=(
-                        self.format_error(exception, error_messages)
+                        self.format_error(
+                            exception=exception,
+                            error_messages=error_messages,
+                            traceback=traceback_str,
+                        )
                         if failed
                         else "Experiment completed."
                     ),

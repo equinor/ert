@@ -227,8 +227,7 @@ async def run_everest(options: argparse.Namespace) -> None:
         server_state = everserver_status(everserver_status_path)
         server_state_info = server_state["message"]
         if server_state["status"] == ServerStatus.failed:
-            logger.error(f"Everest run failed with: {server_state_info}")
-            raise SystemExit(server_state_info)
+            raise SystemExit(f"Everest run failed with: {server_state_info}")
         if server_state_info is not None:
             logger.debug(f"Everest run finished with: {server_state_info}")
             print(server_state_info)
