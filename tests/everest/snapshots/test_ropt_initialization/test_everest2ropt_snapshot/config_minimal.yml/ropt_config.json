@@ -11,6 +11,7 @@
       3,
       3
     ],
+    "evaluation_policy": "auto",
     "merge_realizations": false,
     "number_of_perturbations": 5,
     "perturbation_magnitudes": [
@@ -48,8 +49,6 @@
     "options": {},
     "output_dir": "not_relevant",
     "parallel": true,
-    "speculative": false,
-    "split_evaluations": false,
     "stderr": "optimizer.stderr",
     "stdout": "optimizer.stdout",
     "tolerance": 0.001

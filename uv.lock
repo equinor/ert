@@ -3229,16 +3229,16 @@ wheels = [
 
 [[package]]
 name = "ropt"
-version = "0.19.1"
+version = "0.19.2"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "numpy" },
     { name = "pydantic" },
     { name = "scipy" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/16/a5/ce636fe0f0af7f4cc66774ab5736f051afae8f3e8773cace2ee4ba859f7a/ropt-0.19.1.tar.gz", hash = "sha256:6021a472132e63697c7764f871b1ee41446702093909ebaea71fd853db9bbe9d", size = 144875 }
+sdist = { url = "https://files.pythonhosted.org/packages/54/d9/c7805ac8c10cc3703592d35cc5b2d72ae0a788f02b77688315275047864e/ropt-0.19.2.tar.gz", hash = "sha256:7f8f57176645cb7fa7b21b64d8a7e6c04a7f0c49b773ae5801521cc41c962732", size = 145440 }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/03/c6/70e7b2f011b4aec4a23bbe51d8b708cd59a2d89d3a68ca9cd215b8a962c6/ropt-0.19.1-py3-none-any.whl", hash = "sha256:b6952eff2c7ec3bc74c9d0de8a065651a4ceaf802f09bcbb956cba66fb5fdfd0", size = 154573 },
+    { url = "https://files.pythonhosted.org/packages/a9/c0/95e7f9b376a7d50b4ee39837461480e0aafb06dab4cca1e991a378c644a5/ropt-0.19.2-py3-none-any.whl", hash = "sha256:980878983ce4a9932356c2718cd8a492d5736b7c9c8f64b399e1bfd2590bb282", size = 154850 },
 ]
 
 [package.optional-dependencies]
@@ -3248,15 +3248,15 @@ pandas = [
 
 [[package]]
 name = "ropt-dakota"
-version = "0.19.0"
+version = "0.19.1"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "carolina" },
     { name = "numpy" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/9b/aa/5731453d2039a934a44388f5410434d08d60bcc9f717ae92be97437aa267/ropt_dakota-0.19.0.tar.gz", hash = "sha256:2487a41e804f06e32d77c7f8761bd96fd630bdf724912988e500f937592d897f", size = 28789 }
+sdist = { url = "https://files.pythonhosted.org/packages/75/8c/cb0c4b324a1d2ef32c7748e363b0a2007f4621d55675163e967f73f744ff/ropt_dakota-0.19.1.tar.gz", hash = "sha256:ee47d7cb537d20117206ce44654919c27eb69d679e477ae07be90901414b3d43", size = 28757 }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/c2/3b/69462c61c5239b0d5113b5762901702609ba8fc59f9470c6ae9d5090d0db/ropt_dakota-0.19.0-py3-none-any.whl", hash = "sha256:8b1046fea6098d99fa91b576c9507e5b0ee0cc20ca7ed559410393f6c817b0e8", size = 21443 },
+    { url = "https://files.pythonhosted.org/packages/66/73/c945773185a7305a2573a35d1703becae9a3457bb2bad873a837e5151799/ropt_dakota-0.19.1-py3-none-any.whl", hash = "sha256:1d974c04a7d3d803d40a0428b5e02d9caae5647f75d4df912b8173046628c31a", size = 21393 },
 ]
 
 [[package]]

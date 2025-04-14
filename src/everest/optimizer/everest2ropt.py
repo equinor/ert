@@ -197,8 +197,8 @@ def _parse_optimization(
     if alg_conv_tol := ever_opt.convergence_tolerance:
         ropt_optimizer["tolerance"] = alg_conv_tol
 
-    if alg_grad_spec := ever_opt.speculative:
-        ropt_optimizer["speculative"] = alg_grad_spec
+    if ever_opt.speculative:
+        ropt_gradient["evaluation_policy"] = "speculative"
 
     # Handle the backend options. Due to historical reasons there two keywords:
     # "options" is used to pass a list of string, "backend_options" is used to
@@ -272,7 +272,7 @@ def _parse_optimization(
             ropt_config["realization_filters"] = [cvar_config]
             # For efficiency, function and gradient evaluations should be split
             # so that no unnecessary gradients are calculated:
-            ropt_optimizer["split_evaluations"] = True
+            ropt_gradient["evaluation_policy"] = "separate"
 
 
 def _everest2ropt(ever_config: EverestConfig) -> dict[str, Any]:
