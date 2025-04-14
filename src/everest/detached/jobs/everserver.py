@@ -179,7 +179,10 @@ class ExperimentRunner:
                 )
             )
         except Exception as e:
-            self._msg_queue.put(ExperimentFailed(msg=str(e)))
+            logging.getLogger(EVERSERVER).exception(e)
+            self._msg_queue.put(
+                ExperimentFailed(msg=f"Exception: {e}\n{traceback.format_exc()}")
+            )
         finally:
             logging.getLogger(EVERSERVER).info(
                 f"ExperimentRunner done. Items left in queue: {status_queue.qsize()}"
@@ -326,6 +329,7 @@ def _everserver_thread(
                 shared_data.start_time_unix = int(time.time())
                 return Response("Everest experiment started")
             except Exception as e:
+                logging.getLogger(EVERSERVER).exception(e)
                 return Response(f"Could not start experiment: {e!s}", status_code=501)
         return Response("Everest experiment is running")
 
@@ -618,13 +622,13 @@ def main() -> None:
                             return
                 except Empty:
                     continue
-        except Exception:
+        except Exception as e:
             update_everserver_status(
                 status_path,
                 ServerStatus.failed,
                 message=traceback.format_exc(),
             )
-            logging.getLogger(EVERSERVER).exception("Everserver failed")
+            logging.getLogger(EVERSERVER).exception(e)
         finally:
             logging.getLogger(EVERSERVER).info(
                 f"Everserver stopped. Items left in queue: {msg_queue.qsize()}"

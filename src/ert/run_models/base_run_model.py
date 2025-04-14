@@ -9,6 +9,7 @@ import logging
 import os
 import shutil
 import time
+import traceback
 import uuid
 from abc import ABC, abstractmethod
 from collections import defaultdict
@@ -396,6 +397,7 @@ class BaseRunModel(ABC):
         failed = False
         exception: Exception | None = None
         error_messages: MutableSequence[str] = []
+        traceback_str: str | None = None
         try:
             self.start_time = int(time.time())
             self.stop_time = None
@@ -419,20 +421,25 @@ class BaseRunModel(ABC):
             self._completed_realizations_mask = []
             failed = True
             exception = e
+            traceback_str = traceback.format_exc()
         except UserWarning as e:
             logger.exception(e)
         except Exception as e:
             failed = True
             exception = e
+            traceback_str = traceback.format_exc()
         finally:
             self._clean_env_context()
             self.stop_time = int(time.time())
-
             self.send_event(
                 EndEvent(
                     failed=failed,
                     msg=(
-                        self.format_error(exception, error_messages)
+                        self.format_error(
+                            exception=exception,
+                            error_messages=error_messages,
+                            traceback=traceback_str,
+                        )
                         if failed
                         else "Experiment completed."
                     ),
@@ -448,12 +455,16 @@ class BaseRunModel(ABC):
 
     @staticmethod
     def format_error(
-        exception: Exception | None, error_messages: MutableSequence[str]
+        exception: Exception | None,
+        error_messages: MutableSequence[str],
+        traceback: str | None,
     ) -> str:
         msg = "\n".join(error_messages)
         if exception is None:
             return msg
-        return f"{exception}\n{msg}"
+        if traceback is None:
+            return f"{exception}\n{msg}"
+        return f"{exception}\n{traceback}\n{msg}"
 
     def get_runtime(self) -> int:
         if self.start_time is None:
