@@ -601,23 +601,16 @@ def main() -> None:
                     item = msg_queue.get(timeout=1)  # Wait for data
                     match item:
                         case ServerStarted():
-                            print("ServerStarted")
                             update_everserver_status(status_path, ServerStatus.running)
                         case ServerStopped():
-                            print("ServerStopped")
                             update_everserver_status(status_path, ServerStatus.stopped)
                             return
                         case ExperimentFailed():
-                            print("ExperimentFailed")
-                            print(ServerStatus.failed)
-                            print(item)
-                            print(item.msg)
                             update_everserver_status(
                                 status_path, ServerStatus.failed, item.msg
                             )
                             return
                         case ExperimentComplete():
-                            print("ExperimentComplete")
                             status, message = _get_optimization_status(
                                 item.exit_code, item.events, item.server_stopped
                             )
