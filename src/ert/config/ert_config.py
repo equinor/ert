@@ -16,7 +16,7 @@ import polars as pl
 from numpy.random import SeedSequence
 from pydantic import ValidationError as PydanticValidationError
 from pydantic import field_validator
-from pydantic.dataclasses import dataclass, rebuild_dataclass
+from pydantic.dataclasses import dataclass
 
 from ert.plugins import ErtPluginManager, fixtures_per_hook
 from ert.substitutions import Substitutions
@@ -1380,8 +1380,3 @@ def _forward_model_step_from_config_contents(
         required_keywords=content_dict.get("REQUIRED", []),
         default_mapping=default_mapping,
     )
-
-
-# Due to circular dependency in type annotations between
-# ErtConfig -> WorkflowJob -> ErtScript -> ErtConfig
-rebuild_dataclass(ErtConfig)
