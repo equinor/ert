@@ -46,8 +46,8 @@ class SimulatorConfig(BaseModelWithContextSupport, extra="forbid"):
 
     This number is specified in Ert as NUM_CPU.""",
     )
-    delete_run_path: bool | None = Field(
-        default=None,
+    delete_run_path: bool = Field(
+        default=False,
         description="Whether the batch folder for a successful simulation "
         "needs to be deleted.",
     )
