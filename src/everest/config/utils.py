@@ -34,8 +34,7 @@ class FlattenedControls:
 
         self.names = [control["name"] for control in self._controls]
         self.types: list[Literal["real", "integer"]] = [
-            "real" if control["control_type"] is None else control["control_type"]
-            for control in self._controls
+            control["control_type"] for control in self._controls
         ]
         self.initial_guesses = [control["initial_guess"] for control in self._controls]
         self.lower_bounds = [control["min"] for control in self._controls]
