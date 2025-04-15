@@ -74,16 +74,17 @@ def test_well_drilling_times(mocked_config):
     wells = config["wells"]
 
     wells[0]["drill_time"] = -4
-    with pytest.raises(ValueError, match="Drill time must be a positive number"):
+    with pytest.raises(ValueError, match=r"drill_time\n.*should be greater than 0"):
         EverestConfig(**config)
 
     wells[0]["drill_time"] = 0
-    with pytest.raises(ValueError, match="Drill time must be a positive number"):
+    with pytest.raises(ValueError, match=r"drill_time\n.*should be greater than 0"):
         EverestConfig(**config)
 
     wells[0]["drill_time"] = "seventeen"
-    with pytest.raises(ValueError, match="Input should be a valid number"):
+    with pytest.raises(ValueError, match="Input should be a valid integer"):
         EverestConfig(**config)
 
     wells[0]["drill_time"] = 3.7
-    assert not EverestConfig.lint_config_dict(config)
+    with pytest.raises(ValueError, match="got a number with a fractional part"):
+        EverestConfig(**config)

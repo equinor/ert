@@ -78,7 +78,7 @@ def test_that_negative_drill_time_raises_error():
 
     assert has_error(
         e.value,
-        match="(.*)must be a positive number",
+        match="should be greater than 0",
     )
 
 

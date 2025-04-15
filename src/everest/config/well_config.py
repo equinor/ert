@@ -1,6 +1,12 @@
 from datetime import datetime
 
-from pydantic import BaseModel, ConfigDict, Field, field_validator
+from pydantic import (
+    BaseModel,
+    ConfigDict,
+    Field,
+    PositiveInt,
+    field_validator,
+)
 
 from everest.strings import DATE_FORMAT
 
@@ -15,7 +21,7 @@ The interpretation of this is up to the forward model. The standard tooling will
 consider this as the earliest possible drill date.
 """,
     )
-    drill_time: float | None = Field(
+    drill_time: PositiveInt | None = Field(
         None,
         description="""specifies the time it takes
  to drill the well under consideration.""",
@@ -23,14 +29,6 @@ consider this as the earliest possible drill date.
     model_config = ConfigDict(
         extra="forbid",
     )
-
-    @field_validator("drill_time")
-    @classmethod
-    def validate_positive_drill_time(cls, drill_time: float | None) -> float:
-        if drill_time is None or drill_time <= 0:
-            raise ValueError("Drill time must be a positive number")
-
-        return drill_time
 
     @field_validator("name")
     @classmethod
