@@ -607,7 +607,7 @@ def main() -> None:
         with ErtPluginContext(
             logger=logging.getLogger(), trace_provider=tracer_provider
         ) as context:
-            logger.info(f"Running ert with {args}")
+            logger.info(f"Running ert with {args} in {os.getcwd()}")
             args.func(args, context.plugin_manager)
     except (ErtCliError, ErtStorageException) as err:
         span.set_status(Status(StatusCode.ERROR))
