@@ -1,7 +1,8 @@
 from datetime import datetime as dt
 
 import pytest
-from PyQt6.QtCore import QModelIndex, QSize, Qt
+from PyQt6.QtCore import QCoreApplication, QEvent, QModelIndex, QSize, Qt
+from PyQt6.QtGui import QHelpEvent
 from PyQt6.QtWidgets import QStyledItemDelegate, QStyleOptionViewItem
 
 from ert.ensemble_evaluator.snapshot import (
@@ -116,3 +117,39 @@ def test_selection_success(large_snapshot, qtbot):
             Qt.MouseButton.LeftButton,
             pos=selection_rect.center(),
         )
+
+
+@pytest.mark.integration_test
+def test_realization_hover_yields_tooltip(full_snapshot, qtbot):
+    it = 0
+    widget = RealizationWidget(it)
+
+    qtbot.addWidget(widget)
+
+    model = SnapshotModel()
+    model._add_snapshot(SnapshotModel.prerender(full_snapshot), str(it))
+    widget.setSnapshotModel(model)
+    model._update_snapshot(full_snapshot, str(it))
+
+    widget.resize(800, 600)
+    widget.move(0, 0)
+
+    with qtbot.waitActive(widget, timeout=5000):
+        widget.show()
+
+    realization_selection_id = 22  # randomly selected realization
+    selection_rect = widget._real_view.rectForIndex(
+        widget._real_list_model.index(realization_selection_id, 0, QModelIndex())
+    )
+
+    help_event = QHelpEvent(
+        QEvent.Type.ToolTip,
+        selection_rect.center(),
+        widget.mapToGlobal(selection_rect.center()),
+    )
+
+    with qtbot.waitSignal(widget.triggeredTooltipTextDisplay, timeout=2000) as tooltip:
+        QCoreApplication.postEvent(widget._real_view.viewport(), help_event)
+
+    assert tooltip.signal_triggered
+    assert "Maximum memory" in tooltip.args[0]
