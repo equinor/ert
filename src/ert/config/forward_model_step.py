@@ -50,7 +50,7 @@ class ForwardModelStepJSON(TypedDict):
         environment: Dictionary of environment variables to inject into the
             environment of the forward model step run
         max_running_minutes: Maximum runtime in minutes. If the forward model step
-            takes longer than this, the job is requested to be cancelled.
+            takes longer than this, the step is requested to be cancelled.
     """
 
     name: str
@@ -116,7 +116,7 @@ class ForwardModelStep:
             a forward model step's execution.
             This file is used for the legacy ERT queue driver, and may be deprecated.
         max_running_minutes: Maximum runtime in minutes. If the forward model step
-            takes longer than this, the job is requested to be cancelled.
+            takes longer than this, the step is requested to be cancelled.
         min_arg: The minimum number of arguments
         max_arg: The maximum number of arguments
         arglist: The arglist with which the executable is invoked
@@ -175,8 +175,8 @@ class ForwardModelStep:
         self, fm_step_json: ForwardModelStepJSON
     ) -> ForwardModelStepJSON:
         """
-        Used to validate/modify the job JSON to be run by the forward model step runner.
-        It will be called for every joblist.json created.
+        Used to validate/modify the step JSON to be run by the forward model step
+        runner. It will be called for every joblist.json created.
         """
         return fm_step_json
 
