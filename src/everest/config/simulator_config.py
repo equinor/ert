@@ -70,8 +70,8 @@ class SimulatorConfig(BaseModelWithContextSupport, extra="forbid"):
         discriminator="name",
         validate_default=True,
     )
-    resubmit_limit: NonNegativeInt | None = Field(
-        default=None,
+    resubmit_limit: NonNegativeInt = Field(
+        default=1,
         description="""
         Defines how many times should the queue system retry a forward model.
 
