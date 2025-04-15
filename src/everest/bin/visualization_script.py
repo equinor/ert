@@ -28,7 +28,7 @@ def visualization_entry(args: list[str] | None = None) -> None:
     options = parser.parse_args(args)
     config = options.config_file
 
-    EverestStorage.check_for_deprecated_seba_storage(config.config_path)
+    EverestStorage.check_for_deprecated_seba_storage(config.optimization_output_dir)
     server_state = everserver_status(
         ServerConfig.get_everserver_status_path(config.output_dir)
     )
