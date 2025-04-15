@@ -39,10 +39,7 @@ class FlattenedControls:
         self.initial_guesses = [control["initial_guess"] for control in self._controls]
         self.lower_bounds = [control["min"] for control in self._controls]
         self.upper_bounds = [control["max"] for control in self._controls]
-        self.scaled_ranges = [
-            (0.0, 1.0) if control["scaled_range"] is None else control["scaled_range"]
-            for control in self._controls
-        ]
+        self.scaled_ranges = [control["scaled_range"] for control in self._controls]
         self.enabled = [control["enabled"] for control in self._controls]
         self.perturbation_magnitudes = [
             control["perturbation_magnitude"] for control in self._controls
