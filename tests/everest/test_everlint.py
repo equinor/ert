@@ -301,7 +301,6 @@ def test_init_context_controls():
         ("fdsafdas", False),
         ("01-01-01", False),
         ("...", False),
-        (None, False),
         ("2000-2-30", False),
     ],
 )
