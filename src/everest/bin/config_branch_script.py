@@ -105,8 +105,9 @@ def _updated_initial_guess(
 def config_branch_entry(args: list[str] | None = None) -> None:
     parser = _build_args_parser()
     options = parser.parse_args(args)
-    ever_config_path, optimization_dir, yml_config = options.input_config
-    EverestStorage.check_for_deprecated_seba_storage(ever_config_path)
+    _, optimization_dir, yml_config = options.input_config
+
+    EverestStorage.check_for_deprecated_seba_storage(optimization_dir)
 
     opt_controls = opt_controls_by_batch(optimization_dir, options.batch)
     if opt_controls is None:

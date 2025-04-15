@@ -33,7 +33,9 @@ def monitor_entry(args: list[str] | None = None) -> None:
             partial(handle_keyboard_interrupt, options=options),
         )
 
-    EverestStorage.check_for_deprecated_seba_storage(options.config.config_path)
+    EverestStorage.check_for_deprecated_seba_storage(
+        options.config.optimization_output_dir
+    )
 
     monitor_everest(options)
 

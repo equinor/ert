@@ -315,7 +315,13 @@ class EverestRunModel(BaseRunModel):
         self.ever_storage = EverestStorage(
             output_dir=Path(self._everest_config.optimization_output_dir),
         )
-        self.ever_storage.init(self._everest_config)
+
+        self.ever_storage.init(
+            formatted_control_names=self._everest_config.formatted_control_names,
+            objective_functions=self._everest_config.objective_functions,
+            output_constraints=self._everest_config.output_constraints,
+            realizations=self._everest_config.model.realizations,
+        )
         optimizer.set_results_callback(self._handle_optimizer_results)
 
         # Run the optimization:

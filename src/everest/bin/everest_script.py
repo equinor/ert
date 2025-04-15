@@ -131,7 +131,9 @@ async def run_everest(options: argparse.Namespace) -> None:
     )
 
     if not options.new_run:
-        EverestStorage.check_for_deprecated_seba_storage(options.config.config_path)
+        EverestStorage.check_for_deprecated_seba_storage(
+            options.config.optimization_output_dir
+        )
 
     server_state = everserver_status(everserver_status_path)
     if server_is_running(*ServerConfig.get_server_context(options.config.output_dir)):

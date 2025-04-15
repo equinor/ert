@@ -14,7 +14,8 @@ import numpy as np
 import polars as pl
 from ropt.results import FunctionResults, GradientResults, Results
 
-from everest.config import EverestConfig
+from everest.config.objective_function_config import ObjectiveFunctionConfig
+from everest.config.output_constraint_config import OutputConstraintConfig
 from everest.strings import EVEREST
 
 logger = logging.getLogger(__name__)
@@ -522,11 +523,10 @@ class EverestStorage:
         return df
 
     @staticmethod
-    def check_for_deprecated_seba_storage(config_file: str) -> None:
-        config = EverestConfig.load_file(config_file)
-        output_dir = Path(config.optimization_output_dir)
-        if os.path.exists(output_dir / "seba.db") or os.path.exists(
-            output_dir / "seba.db.backup"
+    def check_for_deprecated_seba_storage(output_dir: str) -> None:
+        if (
+            Path(Path(output_dir) / "seba.db").exists()
+            or Path(Path(output_dir) / "seba.db.backup").exists()
         ):
             trace = "\n".join(traceback.format_stack())
             logging.getLogger(EVEREST).error(
@@ -542,32 +542,34 @@ class EverestStorage:
         exp = _OptimizerOnlyExperiment(self._output_dir)
         self.data.read_from_experiment(exp)
 
-    def init(self, everest_config: EverestConfig) -> None:
+    def init(
+        self,
+        formatted_control_names: list[str],
+        objective_functions: list[ObjectiveFunctionConfig],
+        output_constraints: list[OutputConstraintConfig] | None,
+        realizations: list[int],
+    ) -> None:
         controls = pl.DataFrame(
             {
-                "control_name": pl.Series(
-                    everest_config.formatted_control_names, dtype=pl.String
-                ),
+                "control_name": pl.Series(formatted_control_names, dtype=pl.String),
             }
         )
 
         # TODO: The weight and normalization keys are only used by the everest api,
         # with everviz. They should be removed in the long run.
         weights = np.fromiter(
-            (
-                1.0 if obj.weight is None else obj.weight
-                for obj in everest_config.objective_functions
-            ),
+            (1.0 if obj.weight is None else obj.weight for obj in objective_functions),
             dtype=np.float64,
         )
-        objective_functions = pl.DataFrame(
+
+        objective_functions_dataframe = pl.DataFrame(
             {
-                "objective_name": everest_config.objective_names,
+                "objective_name": [objective.name for objective in objective_functions],
                 "weight": pl.Series(weights / sum(weights), dtype=pl.Float64),
                 "scale": pl.Series(
                     [
                         1.0 if obj.scale is None else obj.scale
-                        for obj in everest_config.objective_functions
+                        for obj in objective_functions
                     ],
                     dtype=pl.Float64,
                 ),
@@ -577,25 +579,25 @@ class EverestStorage:
         nonlinear_constraints = (
             pl.DataFrame(
                 {
-                    "constraint_name": everest_config.constraint_names,
+                    "constraint_name": [
+                        constraint.name for constraint in output_constraints
+                    ],
                 }
             )
-            if everest_config.output_constraints is not None
+            if output_constraints is not None
             else None
         )
 
         realization_weights = pl.DataFrame(
             {
-                "realization": pl.Series(
-                    everest_config.model.realizations, dtype=pl.UInt32
-                ),
+                "realization": pl.Series(realizations, dtype=pl.UInt32),
             }
         )
 
         self.data.save_dataframes(
             {
                 "controls": controls,
-                "objective_functions": objective_functions,
+                "objective_functions": objective_functions_dataframe,
                 "nonlinear_constraints": nonlinear_constraints,
                 "realization_weights": realization_weights,
             }
