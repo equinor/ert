@@ -1859,7 +1859,7 @@ def test_split_string_into_sections(input, section_length):
 @pytest.mark.usefixtures("use_tmpdir")
 @pytest.mark.parametrize(
     "template_target",
-    ["<ECLBASE>.DATA", "<ECL_BASE>.DATA", "foo/bar/ECLIPSEDECK-<IENS>.DATA"],
+    ["<ECLBASE>.DATA", "foo/bar/ECLIPSEDECK-<IENS>.DATA"],
 )
 def test_warning_is_emitted_for_run_template(template_target):
     Path("templates").mkdir()
@@ -1871,6 +1871,24 @@ def test_warning_is_emitted_for_run_template(template_target):
                 NUM_REALIZATIONS 1
                 ECLBASE foo/bar/ECLIPSEDECK-<IENS>
                 RUN_TEMPLATE templates/ECLDECK.DATA {template_target}
+                """
+            )
+        )
+
+
+@pytest.mark.usefixtures("use_tmpdir")
+def test_warning_is_emitted_for_ecl_base_in_run_template():
+    Path("templates").mkdir()
+    Path("templates/ECLDECK.DATA").touch()
+    with pytest.warns(
+        ConfigWarning, match="Substitution template <ECL_BASE> is deprecated"
+    ):
+        ErtConfig.from_file_contents(
+            dedent(
+                """\
+                NUM_REALIZATIONS 1
+                ECLBASE foo/bar/ECLIPSEDECK-<IENS>
+                RUN_TEMPLATE templates/ECLDECK.DATA <ECL_BASE>.DATA
                 """
             )
         )

@@ -36,7 +36,7 @@ The value of a variable can be set in three different ways:
       realization: <GEO_ID>
       configpath: <CONFIG_PATH>
       runpath_file: <RUNPATH_FILE>
-      eclbase: <ECL_BASE>
+      eclbase: <ECLBASE>
 
    These variables do not need to be defined by the user, although their values
    can be overridden in the ``definitions`` section. However, this is not

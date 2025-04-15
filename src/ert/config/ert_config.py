@@ -75,6 +75,11 @@ logger = logging.getLogger(__name__)
 
 EMPTY_LINES = re.compile(r"\n[\s\n]*\n")
 
+ECL_BASE_DEPRECATION_MSG = (
+    "Substitution template <ECL_BASE> is deprecated and "
+    "will be removed in the future. Please use <ECLBASE> instead."
+)
+
 
 def site_config_location() -> str | None:
     if "ERT_SITE_CONFIG" in os.environ:
@@ -298,6 +303,8 @@ def read_templates(config_dict) -> list[tuple[str, str]]:
         templates.append([source_file, target_file])
 
     for template in config_dict.get(ConfigKeys.RUN_TEMPLATE, []):
+        if template[1].startswith("<ECL_BASE>"):
+            ConfigWarning.warn(ECL_BASE_DEPRECATION_MSG)
         if (
             ConfigKeys.ECLBASE in config_dict
             and (
@@ -613,6 +620,11 @@ def create_list_of_forward_model_steps_to_run(
             dm_validator.validate_design_matrix(fm_step.private_args)
 
         if fm_step.name in preinstalled_forward_model_steps:
+            if "<ECL_BASE>" in str(fm_step):
+                ConfigWarning.warn(
+                    ECL_BASE_DEPRECATION_MSG,
+                    context=fm_step.name,
+                )
             try:
                 substituted_json = create_forward_model_json(
                     run_id=None,
