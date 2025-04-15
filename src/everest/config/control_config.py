@@ -143,16 +143,14 @@ of values also cause issues.
 NOTE: In most cases this should not be configured, and the default value should be used.
         """,
     )
-    scaled_range: Annotated[tuple[float, float] | None, AfterValidator(valid_range)] = (
-        Field(
-            default=None,
-            description="""
+    scaled_range: Annotated[tuple[float, float], AfterValidator(valid_range)] = Field(
+        default=(0.0, 1.0),
+        description="""
 Can be used to set the range of the control values
 after scaling (default = [0, 1]).
 
 This option has no effect on discrete controls.
         """,
-        )
     )
     sampler: SamplerConfig | None = Field(
         default=None,
