@@ -524,10 +524,9 @@ class EverestStorage:
 
     @staticmethod
     def check_for_deprecated_seba_storage(output_dir: str) -> None:
-        if (
-            Path(Path(output_dir) / "seba.db").exists()
-            or Path(Path(output_dir) / "seba.db.backup").exists()
-        ):
+        if (Path(output_dir) / "seba.db").exists() or (
+            Path(output_dir) / "seba.db.backup"
+        ).exists():
             trace = "\n".join(traceback.format_stack())
             logging.getLogger(EVEREST).error(
                 f"Tried opening old seba storage.Traceback: {trace}"
