@@ -337,9 +337,7 @@ and environment variables are exposed in the form 'os.NAME', for example:
         errors = []
         workflows_dict = workflows.model_dump()
         for trigger in ("pre_simulation", "post_simulation"):
-            trigger_jobs = workflows_dict.get(trigger)
-            if trigger_jobs is None:
-                continue
+            trigger_jobs = workflows_dict.get(trigger) or []
             for workflow_job in trigger_jobs:
                 job_name = workflow_job.split()[0]
                 if job_name not in installed_jobs_name:
