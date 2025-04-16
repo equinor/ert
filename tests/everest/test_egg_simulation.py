@@ -610,10 +610,10 @@ def test_opm_fail_explicit_summary_keys(copy_egg_test_data_to_tmp):
     config = EverestConfig.load_file(CONFIG_FILE)
     # The Everest config file will fail to load as an Eclipse data file
     config.model.data_file = os.path.realpath(CONFIG_FILE)
-    if config.export is None:
-        config_dict = config.model_dump(exclude_none=True)
-        config_dict["export"] = {"keywords": extra_sum_keys}
-        config = EverestConfig.with_plugins(config_dict)
+
+    config_dict = config.model_dump(exclude_none=True)
+    config_dict["export"] = {"keywords": extra_sum_keys}
+    config = EverestConfig.with_plugins(config_dict)
 
     assert len(EverestConfig.lint_config_dict(config.to_dict())) == 0
 
