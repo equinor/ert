@@ -37,34 +37,9 @@ from everest.config.simulator_config import SimulatorConfig
 from everest.strings import EVEREST, SIMULATION_DIR, STORAGE_DIR
 
 
-def _get_datafiles(ever_config: EverestConfig) -> list[str]:
-    ever_model = ever_config.model
-    data_file = ever_model.data_file
-    if data_file is None:
-        return []
-
-    # Make absolute path
-    if os.path.relpath(data_file):
-        config_path = ever_config.config_directory
-        assert isinstance(config_path, str)
-        data_file = os.path.join(config_path, data_file)
-    data_file = os.path.realpath(data_file)
-
-    # Render all iterations
-    realizations = ever_model.realizations
-    if not realizations:
-        return [data_file]
-
-    return [data_file.replace("<GEO_ID>", str(geo_id)) for geo_id in realizations]
-
-
 def _extract_summary_keys(
     ever_config: EverestConfig, ert_config: dict[str, Any]
 ) -> None:
-    data_files = _get_datafiles(ever_config)
-    if len(data_files) == 0:
-        return
-
     data_keys = everest.simulator.DEFAULT_DATA_SUMMARY_KEYS
     field_keys = everest.simulator.DEFAULT_FIELD_SUMMARY_KEYS
     well_sum_keys = everest.simulator.DEFAULT_WELL_SUMMARY_KEYS

@@ -441,17 +441,14 @@ and environment variables are exposed in the form 'os.NAME', for example:
 
         return self
 
-    @model_validator(mode="after")
-    def validate_model_data_file_exists(self) -> Self:
-        model = self.model
-        if not model:
-            return self
-        config_path = self.config_path
-
-        if model.data_file is not None:
-            check_path_exists(model.data_file, config_path, model.realizations)
-
-        return self
+    @model_validator(mode="before")
+    def validate_no_data_file(self, values: dict[str, Any]) -> dict[str, Any]:
+        if "model" in values and "data_file" in values:
+            raise KeyError(
+                "model.data_file is deprecated and will have no effect."
+                "Use install_data instead."
+            )
+        return values
 
     @model_validator(mode="after")
     def validate_maintained_forward_models(self) -> Self:
