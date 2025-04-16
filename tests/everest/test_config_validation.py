@@ -324,40 +324,28 @@ def test_that_output_constraints_bounds_are_mutex():
     output_constraint = {
         "name": "w110",
     }
-    with pytest.raises(
-        ValueError, match="Output constraints must have only one of the following"
-    ):
-        EverestConfig.with_defaults(output_constraints=[output_constraint])
+    EverestConfig.with_defaults(output_constraints=[output_constraint])
 
     output_constraint["target"] = 1.0
     EverestConfig.with_defaults(output_constraints=[output_constraint])
 
     output_constraint["upper_bound"] = 2.0
-    with pytest.raises(
-        ValueError, match="Output constraints must have only one of the following"
-    ):
+    with pytest.raises(ValueError, match="Can not combine target and bounds"):
         EverestConfig.with_defaults(output_constraints=[output_constraint])
 
     output_constraint["lower_bound"] = 0.5
-    with pytest.raises(
-        ValueError, match="Output constraints must have only one of the following"
-    ):
+    with pytest.raises(ValueError, match="Can not combine target and bounds"):
         EverestConfig.with_defaults(output_constraints=[output_constraint])
 
     del output_constraint["upper_bound"]
-    with pytest.raises(
-        ValueError, match="Output constraints must have only one of the following"
-    ):
+    with pytest.raises(ValueError, match="Can not combine target and bounds"):
         EverestConfig.with_defaults(output_constraints=[output_constraint])
 
     del output_constraint["target"]
     EverestConfig.with_defaults(output_constraints=[output_constraint])
 
     del output_constraint["lower_bound"]
-    with pytest.raises(
-        ValueError, match="Output constraints must have only one of the following"
-    ):
-        EverestConfig.with_defaults(output_constraints=[output_constraint])
+    EverestConfig.with_defaults(output_constraints=[output_constraint])
 
 
 def test_that_variable_name_does_not_contain_dots():

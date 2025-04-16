@@ -1,4 +1,4 @@
-from typing import Self
+from typing import Any
 
 import numpy as np
 from pydantic import BaseModel, Field, model_validator
@@ -58,18 +58,13 @@ function evaluation value will be divided by 10 and bounded from above by 0.05.
 """,
     )
 
-    @model_validator(mode="after")
-    def validate_bounds_in_place(
-        self,
-    ) -> Self:
-        has_equality = self.target is not None
-        has_inequality = self.upper_bound is not None or self.lower_bound is not None
-        is_valid = has_equality ^ has_inequality
-
-        if not is_valid:
-            raise ValueError(
-                "Output constraints must have only one of the following: { target },"
-                " or { upper and/or lower bound }"
-            )
-
-        return self
+    @model_validator(mode="before")
+    @classmethod
+    def validate_target_or_bounds(cls, values: dict[str, Any]) -> dict[str, Any]:
+        if "target" in values and ("lower_bound" in values or "upper_bound" in values):
+            raise ValueError("Can not combine target and bounds")
+        elif not any(
+            ("target" in values, "lower_bound" in values, "upper_bound" in values)
+        ):
+            raise ValueError("Must provide target or lower_bound/upper_bound")
+        return values

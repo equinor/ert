@@ -152,7 +152,7 @@ def test_that_invalid_keys_are_linted():
         "export": {"dicsard_rejjecteded": "Tru"},
         "server": {"extrude_host": 49},
         "simulator": {"core_per_node": 49},
-        "output_constraints": [{"name": "oc", "nam": 2}],
+        "output_constraints": [{"name": "oc", "nam": 2, "target": 2}],
         "input_constraints": [{"nom": 3}],
         "install_data": [{"datta": "durr"}],
         "install_jobs": [{"jerb": "jebr"}],
