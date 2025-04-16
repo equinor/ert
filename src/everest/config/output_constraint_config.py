@@ -35,8 +35,8 @@ where b is the lower bound, f is a function of the control vector x, and c is
 the scale (scale).
 """,
     )
-    upper_bound: float | None = Field(
-        default=None,
+    upper_bound: float = Field(
+        default=np.inf,
         description="""Defines the upper bound (less than or equal) constraint:
 
 (f(x) - b) / c <= 0,

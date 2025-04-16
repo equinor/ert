@@ -3,7 +3,6 @@ import logging
 import os
 from typing import Any
 
-import numpy as np
 from pydantic import ValidationError
 from ropt.config.enopt import EnOptConfig
 from ropt.enums import PerturbationType, VariableType
@@ -106,9 +105,7 @@ def _get_bounds(
     for constr in constraints:
         if constr.target is None:
             lower_bounds.append(constr.lower_bound)
-            upper_bounds.append(
-                np.inf if constr.upper_bound is None else constr.upper_bound
-            )
+            upper_bounds.append(constr.upper_bound)
         else:
             if constr.lower_bound is not None or constr.upper_bound is not None:
                 raise RuntimeError(
