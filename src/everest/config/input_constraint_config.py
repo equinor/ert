@@ -46,8 +46,8 @@ equation will be allowed:
 `x-0 * 1 + y-1 * 2 + z-2 * 3  >= 4`
 """,
     )
-    upper_bound: float | None = Field(
-        default=None,
+    upper_bound: float = Field(
+        default=np.inf,
         description="""**Example**
 | input_constraints:
 | - weights:
