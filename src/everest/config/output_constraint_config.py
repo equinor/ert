@@ -1,5 +1,6 @@
 from typing import Self
 
+import numpy as np
 from pydantic import BaseModel, Field, model_validator
 
 
@@ -23,8 +24,8 @@ determine the scaling factor from the constraint value in batch 0.
 
 If scale is also set, the automatic value is multiplied by its value.""",
     )
-    lower_bound: float | None = Field(
-        default=None,
+    lower_bound: float = Field(
+        default=-np.inf,
         description="""Defines the lower bound
 (greater than or equal) constraint
 

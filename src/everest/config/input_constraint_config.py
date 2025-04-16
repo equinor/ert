@@ -1,3 +1,4 @@
+import numpy as np
 from pydantic import BaseModel, Field, field_validator
 
 
@@ -30,8 +31,8 @@ Only control values (x, y, z) that satisfy the following equation will be allowe
 `x-0 * 1 + y-1 * 2 + z-2 * 3  = 4`
 """,
     )
-    lower_bound: float | None = Field(
-        default=None,
+    lower_bound: float = Field(
+        default=-np.inf,
         description="""**Example**
 | input_constraints:
 | - weights:
