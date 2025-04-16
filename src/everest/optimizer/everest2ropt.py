@@ -105,9 +105,7 @@ def _get_bounds(
     upper_bounds = []
     for constr in constraints:
         if constr.target is None:
-            lower_bounds.append(
-                -np.inf if constr.lower_bound is None else constr.lower_bound
-            )
+            lower_bounds.append(constr.lower_bound)
             upper_bounds.append(
                 np.inf if constr.upper_bound is None else constr.upper_bound
             )
