@@ -107,10 +107,6 @@ def _get_bounds(
             lower_bounds.append(constr.lower_bound)
             upper_bounds.append(constr.upper_bound)
         else:
-            if constr.lower_bound is not None or constr.upper_bound is not None:
-                raise RuntimeError(
-                    "input constraint error: target cannot be combined with bounds"
-                )
             lower_bounds.append(constr.target)
             upper_bounds.append(constr.target)
     return lower_bounds, upper_bounds

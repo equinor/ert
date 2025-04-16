@@ -45,7 +45,7 @@ def test_constraints_init(copy_mocked_test_data_to_tmp):
             [
                 {"name": "some_name"},
             ],
-            "Output constraints must have only one of the following",
+            "Must provide target or lower_bound/upper_bound",
         ),
         (
             [
@@ -58,11 +58,11 @@ def test_constraints_init(copy_mocked_test_data_to_tmp):
             [
                 {"name": "some_name", "upper_bound": 5000, "target": 5000},
             ],
-            r"one of the following: { target }, or { upper and/or lower bound }",
+            r"Can not combine target and bounds",
         ),
         (
             [
-                {"name": "some_name", "upper_bund": 2},
+                {"name": "some_name", "lower_bound": 10, "upper_bund": 2},
             ],
             "Extra inputs are not permitted",
         ),
