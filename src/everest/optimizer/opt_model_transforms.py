@@ -420,10 +420,7 @@ def get_optimization_domain_transforms(
                 1.0 if constraint.scale is None else constraint.scale
                 for constraint in constraints
             ],
-            [
-                False if constraint.auto_scale is None else constraint.auto_scale
-                for constraint in constraints
-            ],
+            [constraint.auto_scale for constraint in constraints],
             weights,
         )
         if constraints

@@ -16,8 +16,8 @@ scale (scale).
 
 """,
     )
-    auto_scale: bool | None = Field(
-        default=None,
+    auto_scale: bool = Field(
+        default=False,
         description="""If set to true, Everest will automatically
 determine the scaling factor from the constraint value in batch 0.
 
