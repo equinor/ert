@@ -220,8 +220,8 @@ and environment variables are exposed in the form 'os.NAME', for example:
     workflows: WorkflowConfig | None = Field(
         default=None, description="Workflows to run during optimization"
     )
-    export: ExportConfig | None = Field(
-        default=None,
+    export: ExportConfig = Field(
+        default_factory=ExportConfig,
         description="Settings to control the exports of a optimization run by everest.",
     )
     config_path: Path = Field()
