@@ -311,8 +311,8 @@ class ExperimentPanel(QWidget):
         def simulation_done_handler() -> None:
             self._simulation_done = True
             self.run_button.setEnabled(self._simulation_done)
-            self.toggleExperimentType()
             self._notifier.emitErtChange()
+            self.toggleExperimentType()
 
         self._dialog.simulation_done.connect(simulation_done_handler)
 
