@@ -4,8 +4,6 @@ from ert import ErtScript
 
 from .workflow_common import WorkflowCommon
 
-# ruff: noqa: PLR6301
-
 
 def test_failing_ert_script_provide_user_warning():
     class FailingScript(ErtScript):
