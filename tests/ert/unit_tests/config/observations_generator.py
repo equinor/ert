@@ -7,8 +7,6 @@ import hypothesis.strategies as st
 from hypothesis import assume
 from pydantic import PositiveFloat
 
-# ruff: noqa: PLR6301
-
 
 class ErrorMode(Enum):
     REL = auto()
