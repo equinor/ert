@@ -51,30 +51,39 @@ def test_that_get_nr_primary_components_is_according_to_theory():
     assert get_nr_primary_components(Y, threshold_3 + 0.01) == 3
 
 
-@pytest.mark.parametrize("nr_observations", [4, 10, 100])
+@pytest.mark.parametrize("nr_observations", [4, 7, 12])
 @pytest.mark.integration_test
 def test_misfit_preprocessor(nr_observations):
-    """We create two independent parameters, a and b.
-    Using the linear function y = ax.
-    a has multiple observations, which are all strongly correlated, while
-    b only has 1 observation. We expect the a observations to be scaled,
-    and the b observation to be left alone"""
+    """We create three independent parameters: a, b and c.
+    a has multiple observations, which are all strongly correlated
+    (of form (1+i)*a, i =(0, 1, ...)), while b and c only has 1 observation.
+    We expect the a observations to be scaled in one group,
+    and then the b and c observation to be scaled together.
+    b and c are scaled together due to the way one chooses pca components:
+    max(len([1 for i in variance_ratio[:-1] if i < 0.95]), 1),
+    since one does not include the component that crosses the threshold one
+    gets one less component then one might expect.
+    And the pca components decide the number of clusters for scaling.
+    """
     rng = np.random.default_rng(1234)
     nr_realizations = 1000
+    nr_correlated_obs = nr_observations - 2
     Y = np.ones((nr_observations, nr_realizations))
     parameters_a = rng.standard_normal(nr_realizations)
     parameters_b = rng.standard_normal(nr_realizations)
-    for i in range(nr_observations - 1):
-        Y[i] = i + 1 * parameters_a
-    Y[-1] = 5 + 1 * parameters_b
-    obs_errors = Y.mean(axis=1)
+    parameters_c = rng.standard_normal(nr_realizations)
+    for i in range(nr_correlated_obs):
+        Y[i] = (1 + i) * parameters_a
+    Y[-1] = 5 + parameters_b
+    Y[-2] = 10 + parameters_c
+    obs_errors = Y.std(axis=1)
     Y_original = Y.copy()
     obs_error_copy = obs_errors.copy()
     result, *_ = main(Y, obs_errors)
     np.testing.assert_equal(
         result,
         np.array(
-            (nr_observations - 1) * [np.sqrt((nr_observations - 1) / 1.0)] + [1.0]
+            nr_correlated_obs * [np.sqrt(nr_correlated_obs / 1.0)] + 2 * [np.sqrt(2)]
         ),
     )
     # Check that we don`t modify the input data
