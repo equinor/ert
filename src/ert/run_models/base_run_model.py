@@ -529,8 +529,11 @@ class BaseRunModel(ABC):
             realization_progress = float(done_realizations) / len(
                 self.active_realizations
             )
+
+            current_it_offset = current_iter - min(list(self._iter_snapshot.keys()))
+
             current_progress = (
-                (current_iter + realization_progress) / self._total_iterations
+                (current_it_offset + realization_progress) / self._total_iterations
                 if self._total_iterations != 1
                 else realization_progress
             )
