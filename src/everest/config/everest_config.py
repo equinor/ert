@@ -218,8 +218,9 @@ and environment variables are exposed in the form 'os.NAME', for example:
     forward_model: list[str] = Field(
         default_factory=list, description="List of jobs to run"
     )
-    workflows: WorkflowConfig | None = Field(
-        default=None, description="Workflows to run during optimization"
+    workflows: WorkflowConfig = Field(
+        default_factory=WorkflowConfig,
+        description="Workflows to run during optimization",
     )
     export: ExportConfig = Field(
         default_factory=ExportConfig,
@@ -330,8 +331,6 @@ and environment variables are exposed in the form 'os.NAME', for example:
     @model_validator(mode="after")
     def validate_workflow_name_installed(self) -> Self:  # pylint: disable=E0213
         workflows = self.workflows
-        if workflows is None:
-            return self
 
         installed_jobs_name = [job.name for job in self.install_workflow_jobs]
 
