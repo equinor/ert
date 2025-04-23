@@ -25,7 +25,7 @@ jobs:
       - uses: actions/checkout@v4
       - name: Generate token
         id: generate-token
-        uses: actions/create-github-app-token@v1
+        uses: actions/create-github-app-token@v2
         with:
           app-id: ${{ vars.SCOUT_TEAM_APP_ID }}
           private-key: ${{ secrets.SCOUT_TEAM_APP_PRIVATE_KEY }}
