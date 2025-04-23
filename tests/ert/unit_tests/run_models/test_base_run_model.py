@@ -1,4 +1,5 @@
 import asyncio
+import math
 import os
 import uuid
 from pathlib import Path
@@ -430,3 +431,97 @@ async def test_terminate_in_post_evaluation(evaluator):
         match="Experiment cancelled by user in post evaluation",
     ):
         await brm.run_ensemble_evaluator_async(AsyncMock(), AsyncMock(), AsyncMock())
+
+
+@pytest.mark.parametrize(
+    "real_status_dict, current_iteration, start_iteration,"
+    " total_iterations, expected_result",
+    [
+        pytest.param(
+            {"0": "Finished", "1": "Running", "2": "Failed"},
+            1,
+            1,
+            1,
+            0.67,
+            id="progress_with_single_offset_iteration",
+        ),
+        pytest.param(
+            {"0": "Finished", "1": "Running", "2": "Running"},
+            0,
+            0,
+            1,
+            0.33,
+            id="progress_with_partial_completed",
+        ),
+        pytest.param(
+            {"0": "Running", "1": "Running", "2": "Running"},
+            0,
+            0,
+            1,
+            0.0,
+            id="progress_with_none_finished",
+        ),
+        pytest.param(
+            {"0": "Finished", "1": "Failed", "2": "Finished"},
+            0,
+            0,
+            1,
+            1.0,
+            id="progress_with_all_completed",
+        ),
+        pytest.param(
+            {"0": "Finished", "1": "Finished", "2": "Running"},
+            2,
+            2,
+            3,
+            0.22,
+            id="progress_with_extended_offset_iterations",
+        ),
+        pytest.param(
+            {"0": "Finished", "1": "Finished", "2": "Running"},
+            3,
+            2,
+            3,
+            0.55,
+            id="progress_with_extended_offset_iterations",
+        ),
+        pytest.param(
+            {"0": "Finished", "1": "Finished", "2": "Running"},
+            5,
+            3,
+            7,
+            0.38,
+            id="progress_with_another_extended_offset_iterations",
+        ),
+    ],
+)
+def test_progress_calculations(
+    real_status_dict: dict[str, str],
+    current_iteration: int,
+    start_iteration: int,
+    total_iterations: int,
+    expected_result: float,
+):
+    brm = create_base_run_model(
+        start_iteration=start_iteration,
+        total_iterations=total_iterations,
+        active_realizations=[True] * len(real_status_dict),
+    )
+
+    for i in range(start_iteration, start_iteration + total_iterations):
+        snapshot_dict_reals = {}
+
+        for index, realization_status in real_status_dict.items():
+            status = realization_status if i == current_iteration else "Finished"
+            snapshot_dict_reals[index] = {"status": status}
+
+        iter_snapshot = EnsembleSnapshot.from_nested_dict(
+            {"reals": snapshot_dict_reals}
+        )
+        brm._iter_snapshot[i] = iter_snapshot
+
+        if i == current_iteration:
+            break
+
+    progress = brm.calculate_current_progress()
+    assert math.isclose(progress, expected_result, abs_tol=0.1)
