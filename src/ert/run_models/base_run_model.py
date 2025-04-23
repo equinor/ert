@@ -511,12 +511,11 @@ class BaseRunModel(ABC):
 
         return max_memory_consumption
 
-    def _current_progress(self) -> tuple[float, int]:
+    def calculate_current_progress(self) -> float:
         current_iter = max(list(self._iter_snapshot.keys()))
         done_realizations = self.active_realizations.count(False)
         all_realizations = self._iter_snapshot[current_iter].reals
         current_progress = 0.0
-        realization_count = self.get_number_of_active_realizations()
 
         if all_realizations:
             for real in all_realizations.values():
@@ -529,19 +528,23 @@ class BaseRunModel(ABC):
             realization_progress = float(done_realizations) / len(
                 self.active_realizations
             )
+
+            current_it_offset = current_iter - min(list(self._iter_snapshot.keys()))
+
             current_progress = (
-                (current_iter + realization_progress) / self._total_iterations
+                (current_it_offset + realization_progress) / self._total_iterations
                 if self._total_iterations != 1
                 else realization_progress
             )
 
-        return current_progress, realization_count
+        return current_progress
 
     def send_snapshot_event(self, event: Event, iteration: int) -> None:
         if type(event) is EESnapshot:
             snapshot = EnsembleSnapshot.from_nested_dict(event.snapshot)
             self._iter_snapshot[iteration] = snapshot
-            current_progress, realization_count = self._current_progress()
+            current_progress = self.calculate_current_progress()
+            realization_count = self.get_number_of_active_realizations()
             status = self.get_current_status()
             self.send_event(
                 FullSnapshotEvent(
@@ -565,7 +568,8 @@ class BaseRunModel(ABC):
                 event, source_snapshot=self._iter_snapshot[iteration]
             )
             self._iter_snapshot[iteration].merge_snapshot(snapshot)
-            current_progress, realization_count = self._current_progress()
+            current_progress = self.calculate_current_progress()
+            realization_count = self.get_number_of_active_realizations()
             status = self.get_current_status()
             self.send_event(
                 SnapshotUpdateEvent(
