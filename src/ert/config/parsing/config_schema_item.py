@@ -248,7 +248,6 @@ class SchemaItem:
         cwd: str,
     ) -> T | MaybeWithContext | ContextList[T | MaybeWithContext | None] | None:
         errors: list[ErrorInfo | ConfigValidationError] = []
-
         args_with_context: ContextList[T | MaybeWithContext | None] = ContextList(
             token=keyword
         )
@@ -292,7 +291,7 @@ class SchemaItem:
         if n is not None and n < len(line):
             joined = FileContextToken.join_tokens(line[n:], " ")
             new_line = line[0:n]
-            if len(joined) > 0:
+            if joined is not None:
                 new_line.append(joined)
             return new_line
         return line
