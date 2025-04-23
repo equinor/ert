@@ -196,6 +196,7 @@ class AnalysisConfig:
                         f"Duplicate DESIGN_MATRIX entries {dm_other}, "
                         "only reading once."
                     )
+            logger.info("Running ERT with DESIGN_MATRIX")
         config = cls(
             minimum_required_realizations=min_realization,
             update_log_path=config_dict.get(ConfigKeys.UPDATE_LOG_PATH, "update_log"),
