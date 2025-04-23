@@ -6,6 +6,7 @@ from textwrap import dedent
 from PyQt6.QtCore import Qt, QTimer
 from PyQt6.QtWidgets import QComboBox, QMessageBox, QWidget
 
+from ert.gui.ertwidgets import StringBox
 from ert.gui.simulation.experiment_panel import ExperimentPanel
 from ert.gui.simulation.run_dialog import RunDialog
 from ert.gui.simulation.view import RealizationWidget
@@ -147,3 +148,139 @@ def test_restart_failed_realizations(opened_main_window_poly, qtbot):
     assert (
         list_model.rowCount() == experiment_panel.config.model_config.num_realizations
     )
+
+
+def test_restart_failed_realizations_evaluate_ensemble(
+    ensemble_experiment_has_run_no_failure, qtbot
+):
+    """This runs an evaluate ensemble with some failing realizations, and then
+    restarts and checks that only the failed realizations are running.
+    """
+    gui = ensemble_experiment_has_run_no_failure
+
+    def write_poly_eval(failing_reals: set[int]):
+        with open("poly_eval.py", "w", encoding="utf-8") as f:
+            f.write(
+                dedent(
+                    f"""\
+                    #!/usr/bin/env python
+                    import numpy as np
+                    import sys
+                    import json
+                    import os
+
+                    def _load_coeffs(filename):
+                        with open(filename, encoding="utf-8") as f:
+                            return json.load(f)["COEFFS"]
+
+                    def _evaluate(coeffs, x):
+                        return coeffs["a"] * x**2 + coeffs["b"] * x + coeffs["c"]
+
+                    if __name__ == "__main__":
+                        if int(os.getenv("_ERT_REALIZATION_NUMBER")) in {failing_reals!s}:
+                            sys.exit(1)
+                        coeffs = _load_coeffs("parameters.json")
+                        output = [_evaluate(coeffs, x) for x in range(10)]
+                        with open("poly.out", "w", encoding="utf-8") as f:
+                            f.write("\\n".join(map(str, output)))
+                    """
+                )
+            )
+        os.chmod(
+            "poly_eval.py",
+            os.stat("poly_eval.py").st_mode
+            | stat.S_IXUSR
+            | stat.S_IXGRP
+            | stat.S_IXOTH,
+        )
+
+    experiment_panel = gui.findChild(ExperimentPanel)
+    num_reals = experiment_panel.config.model_config.num_realizations
+
+    failing_reals_first_try = {*random.sample(range(num_reals), 10)}
+    write_poly_eval(failing_reals=failing_reals_first_try)
+
+    # Select correct experiment in the simulation panel
+    assert isinstance(experiment_panel, ExperimentPanel)
+    simulation_mode_combo = experiment_panel.findChild(QComboBox)
+    assert isinstance(simulation_mode_combo, QComboBox)
+    simulation_mode_combo.setCurrentText("Evaluate ensemble")
+
+    evaluate_ensemble_panel = gui.findChild(QWidget, name="Evaluate_parameters_panel")
+    active_real_field = evaluate_ensemble_panel.findChild(StringBox)
+    active_real_field.setText(f"0-{num_reals - 1}")
+
+    # Click start simulation and agree to the message
+    run_experiment = experiment_panel.findChild(QWidget, name="run_experiment")
+
+    def handle_run_path_dialog(
+        gui,
+        qtbot,
+    ):
+        mb = gui.findChildren(QMessageBox, "RUN_PATH_WARNING_BOX")
+        mb = mb[-1] if mb else None
+
+        if mb is not None:
+            assert mb
+            assert isinstance(mb, QMessageBox)
+
+            qtbot.mouseClick(mb.buttons()[0], Qt.MouseButton.LeftButton)
+
+    QTimer.singleShot(1000, lambda: handle_run_path_dialog(gui, qtbot))
+    qtbot.mouseClick(run_experiment, Qt.MouseButton.LeftButton)
+    # The Run dialog opens, wait until restart appears and the tab is ready
+    run_dialog = wait_for_child(gui, qtbot, RunDialog)
+    qtbot.waitUntil(lambda: run_dialog.is_simulation_done() is True, timeout=60000)
+    qtbot.waitUntil(lambda: run_dialog._tab_widget.currentWidget() is not None)
+
+    # Assert that the number of boxes in the detailed view is
+    # equal to the number of realizations
+    realization_widget = run_dialog._tab_widget.currentWidget()
+    assert isinstance(realization_widget, RealizationWidget)
+    list_model = realization_widget._real_view.model()
+    assert list_model
+    assert (
+        list_model.rowCount() == experiment_panel.config.model_config.num_realizations
+    )
+
+    run_model = gui._experiment_panel._model
+    # Check we have failed realizations
+    assert any(run_model._create_mask_from_failed_realizations())
+    failed_realizations = [
+        i
+        for i, mask in enumerate(run_model._create_mask_from_failed_realizations())
+        if mask
+    ]
+
+    assert set(failed_realizations) == failing_reals_first_try
+
+    def handle_dialog():
+        message_box = gui.findChildren(QMessageBox, name="restart_prompt")[-1]
+        qtbot.mouseClick(message_box.buttons()[0], Qt.MouseButton.LeftButton)
+
+    failing_reals_second_try = {*random.sample(list(failing_reals_first_try), 5)}
+    write_poly_eval(failing_reals=failing_reals_second_try)
+    QTimer.singleShot(500, handle_dialog)
+    qtbot.mouseClick(run_dialog.restart_button, Qt.MouseButton.LeftButton)
+
+    qtbot.waitUntil(lambda: run_dialog.is_simulation_done() is True, timeout=60000)
+    qtbot.waitUntil(lambda: run_dialog._tab_widget.currentWidget() is not None)
+
+    # We expect to have the same amount of realizations in list_model
+    # since we reuse the snapshot_model
+    realization_widget = run_dialog._tab_widget.currentWidget()
+    assert isinstance(realization_widget, RealizationWidget)
+    list_model = realization_widget._real_view.model()
+    assert list_model
+    assert (
+        list_model.rowCount() == experiment_panel.config.model_config.num_realizations
+    )
+
+    # Second restart
+    assert any(run_model._create_mask_from_failed_realizations())
+    failed_realizations = [
+        i
+        for i, mask in enumerate(run_model._create_mask_from_failed_realizations())
+        if mask
+    ]
+    assert set(failed_realizations) == failing_reals_second_try

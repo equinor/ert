@@ -76,6 +76,8 @@ class EvaluateEnsemble(BaseRunModel):
     ) -> None:
         self.log_at_startup()
         self.restart = restart
+        if self.restart:
+            self.active_realizations = self._create_mask_from_failed_realizations()
         ensemble = self.ensemble
         experiment = ensemble.experiment
         self.set_env_key("_ERT_EXPERIMENT_ID", str(experiment.id))
