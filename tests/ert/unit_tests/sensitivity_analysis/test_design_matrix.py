@@ -190,7 +190,9 @@ def test_reading_design_matrix(tmp_path):
             "c": ["low", "high", "medium"],
         }
     )
-    default_sheet_df = pd.DataFrame([["one", 1], ["b", 4], ["d", "case_name"]])
+    default_sheet_df = pd.DataFrame(
+        [["one", 1, ""], ["b", 4, ""], ["d", "case_name", 3]]
+    )
     with pd.ExcelWriter(design_path) as xl_write:
         design_matrix_df.to_excel(xl_write, index=False, sheet_name="DesignSheet")
         default_sheet_df.to_excel(
