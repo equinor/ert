@@ -528,5 +528,5 @@ def test_progress_calculations(
         if i == current_iteration:
             break
 
-    progress, _ = brm._current_progress()
+    progress = brm.calculate_current_progress()
     assert math.isclose(progress, expected_result, abs_tol=0.1)
