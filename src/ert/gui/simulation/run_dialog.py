@@ -232,6 +232,7 @@ class RunDialog(QFrame):
         self._total_progress_bar = QProgressBar(self)
         self._total_progress_bar.setRange(0, 100)
         self._total_progress_bar.setTextVisible(False)
+        self._total_progress_bar_calculated_value = -1
 
         self._iteration_progress_label = QLabel(self)
         self._progress_widget = ProgressWidget()
@@ -531,9 +532,14 @@ class RunDialog(QFrame):
             iteration = self._latest_iteration
 
         progress = int(progress_value * 100)
-        if not (0 <= progress <= 100):
+
+        if (
+            progress < 0 or progress > 100
+        ) and progress != self._total_progress_bar_calculated_value:
             logger = logging.getLogger(__name__)
             logger.warning(f"Total progress bar exceeds [0-100] range: {progress}")
+            self._total_progress_bar_calculated_value = progress
+
         self._total_progress_bar.setValue(progress)
 
         if self._is_everest:
