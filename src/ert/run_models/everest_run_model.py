@@ -119,6 +119,9 @@ class _EvaluationInfo:
     constraints: NDArray[np.float64] | None = None
 
 
+logger = logging.getLogger(EVEREST)
+
+
 class EverestRunModel(BaseRunModel):
     def __init__(
         self,
@@ -128,7 +131,7 @@ class EverestRunModel(BaseRunModel):
     ):
         Path(everest_config.log_dir).mkdir(parents=True, exist_ok=True)
         Path(everest_config.optimization_output_dir).mkdir(parents=True, exist_ok=True)
-        logging.getLogger(EVEREST).info(
+        logger.info(
             "Using random seed: %d. To deterministically reproduce this experiment, "
             "add the above random seed to your configuration file.",
             everest_config.environment.random_seed,
@@ -252,11 +255,13 @@ class EverestRunModel(BaseRunModel):
         error_messages: MutableSequence[str] = []
         traceback_str: str | None = None
         try:
+            logger.debug("Starting Everest simulations thread")
             self.run_experiment(evaluator_server_config)
         except Exception as e:
             failed = True
             exception = e
             traceback_str = traceback.format_exc()
+            logger.error(f"Experiment failed with exception:\n{traceback_str}")
             raise
         finally:
             if self._exit_code not in {
@@ -354,6 +359,10 @@ class EverestRunModel(BaseRunModel):
                 case _:
                     self._exit_code = EverestExitCode.COMPLETED
 
+        logger.debug(
+            f"Everest experiment finished with exit code {self._exit_code.name}"
+        )
+
     def _init_domain_transforms(
         self, control_variables: NDArray[np.float64]
     ) -> OptModelTransforms:
@@ -390,6 +399,7 @@ class EverestRunModel(BaseRunModel):
                 )
             )
 
+            logger.debug(f"Running sampling forward model for batch {self._batch_id}")
             objectives, constraints = self._run_forward_model(
                 np.repeat(np.expand_dims(control_variables, axis=0), nreal, axis=0),
                 model_realizations,
@@ -418,12 +428,12 @@ class EverestRunModel(BaseRunModel):
         return transforms
 
     def _check_for_abort(self) -> bool:
-        logging.getLogger(EVEREST).debug("Optimization callback called")
+        logger.debug("Optimization callback called")
         if (
             self._opt_callback is not None
             and self._opt_callback() == "stop_optimization"
         ):
-            logging.getLogger(EVEREST).info("User abort requested.")
+            logger.info("User abort requested.")
             return True
         return False
 
@@ -673,6 +683,7 @@ class EverestRunModel(BaseRunModel):
     def _forward_model_evaluator(
         self, control_values: NDArray[np.float64], evaluator_context: EvaluatorContext
     ) -> EvaluatorResult:
+        logger.debug(f"Evaluating batch {self._batch_id}")
         control_indices = list(range(control_values.shape[0]))
         model_realizations = [
             self._everest_config.model.realizations[evaluator_context.realizations[idx]]
@@ -736,6 +747,7 @@ class EverestRunModel(BaseRunModel):
                 .to_dicts()
             )
 
+            logger.debug(f"Found {len(cache_hits_dict)} cache_hits: {cache_hits_dict}")
             self.send_event(
                 EverestCacheHitEvent(batch=self._batch_id, data=cache_hits_dict)
             )
@@ -761,6 +773,7 @@ class EverestRunModel(BaseRunModel):
                 )
             )
 
+            logger.debug(f"Running forward model for batch {self._batch_id}")
             sim_objectives, sim_constraints = self._run_forward_model(
                 control_values=control_values_to_simulate,
                 model_realizations=[c.model_realization for c in sim_infos],
@@ -952,7 +965,7 @@ class EverestRunModel(BaseRunModel):
         )
 
     def _delete_runpath(self, run_args: list[RunArg]) -> None:
-        logging.getLogger(EVEREST).debug("Simulation callback called")
+        logger.debug("Simulation callback called")
         if (
             self._everest_config.simulator is not None
             and self._everest_config.simulator.delete_run_path
@@ -968,9 +981,7 @@ class EverestRunModel(BaseRunModel):
                             type[BaseException], BaseException, TracebackType
                         ],
                     ) -> None:
-                        logging.getLogger(EVEREST).debug(
-                            f"Failed to remove {path}, {sys_info}"
-                        )
+                        logger.debug(f"Failed to remove {path}, {sys_info}")
 
                     shutil.rmtree(path_to_delete, onerror=onerror)
 
@@ -998,7 +1009,7 @@ class EverestRunModel(BaseRunModel):
 
         for sim_id, successful in enumerate(self.active_realizations):
             if not successful:
-                logging.getLogger(EVEREST).error(f"Simulation {sim_id} failed.")
+                logger.error(f"Simulation {sim_id} failed.")
                 objectives[sim_id, :] = np.nan
                 constraints[sim_id, :] = np.nan
                 continue

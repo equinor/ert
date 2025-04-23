@@ -605,6 +605,7 @@ class EverestStorage:
     def _store_function_results(self, results: FunctionResults) -> _FunctionResults:
         # We could select only objective values,
         # but we select all to also get the constraint values (if they exist)
+        logger.debug("Storing function results")
         realization_objectives = self._ropt_to_df(
             results,
             "evaluations",
@@ -686,6 +687,7 @@ class EverestStorage:
         }
 
     def _store_gradient_results(self, results: GradientResults) -> _GradientResults:
+        logger.debug("Storing gradient results")
         have_perturbed_constraints = (
             results.evaluations.perturbed_constraints is not None
         )
