@@ -213,8 +213,8 @@ def _extract_workflows(
     res_hooks = ert_config.get(ErtConfigKeys.HOOK_WORKFLOW, [])
 
     for ever_trigger, res_trigger in trigger2res.items():
-        jobs = getattr(ever_config.workflows, ever_trigger, None)
-        if jobs is not None:
+        jobs = getattr(ever_config.workflows, ever_trigger, [])
+        if jobs:
             name = os.path.join(path, f".{ever_trigger}.workflow")
             with open(name, "w", encoding="utf-8") as fp:
                 fp.writelines(jobs)
