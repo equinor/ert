@@ -467,7 +467,7 @@ def test_that_install_data_allows_runpath_root_as_target(
     config = EverestConfig.with_defaults(
         install_data=[data],
         config_path=Path("config_dir/test.yml"),
-        model=ModelConfig(realizations=[0]),
+        model={"realizations": [0]},
     )
 
     for install_data_config in config.install_data:
