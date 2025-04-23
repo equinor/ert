@@ -318,6 +318,7 @@ class DesignMatrix:
             return {}
         if len(default_df.columns) < 2:
             raise ValueError("Defaults sheet must have at least two columns")
+        default_df = default_df.iloc[:, 0:2]
         empty_cells = [
             f"Row {default_df.index[i]}, column {default_df.columns[j]}"
             for i, j in zip(*np.where(pd.isna(default_df)), strict=False)
