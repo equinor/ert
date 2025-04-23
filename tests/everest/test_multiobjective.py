@@ -5,7 +5,6 @@ from ert.ensemble_evaluator.config import EvaluatorServerConfig
 from ert.run_models.everest_run_model import EverestRunModel
 from everest.config import EverestConfig
 from everest.optimizer.everest2ropt import everest2ropt
-from tests.everest.test_config_validation import has_error
 
 CONFIG_FILE = "config_multi_objectives.yml"
 
@@ -18,11 +17,12 @@ def test_config_multi_objectives(copy_mocked_test_data_to_tmp):
     assert len(obj_funcs) == 2
 
     obj_funcs[0]["weight"] = 1.0
-    assert has_error(
-        EverestConfig.lint_config_dict(config_dict),
+    with pytest.raises(
+        ValueError,
         match="Weight should be given either for all of the"
         " objectives or for none of them",
-    )  # weight given only for some obj
+    ):
+        EverestConfig(**config_dict)  # weight given only for some obj
 
     obj_funcs[1]["weight"] = 3
     assert (
@@ -30,30 +30,22 @@ def test_config_multi_objectives(copy_mocked_test_data_to_tmp):
     )  # weight given for all the objectivs
 
     obj_funcs.append({"weight": 1, "scale": 1})
-    assert has_error(
-        EverestConfig.lint_config_dict(config_dict),
-        match="Field required",
-    )  # no name
+    with pytest.raises(ValueError, match="Field required"):
+        EverestConfig(**config_dict)  # no name
 
     obj_funcs[-1]["name"] = " test_obj"
     obj_funcs[-1]["weight"] = -0.3
-    assert has_error(
-        EverestConfig.lint_config_dict(config_dict),
-        match="Input should be greater than 0",
-    )  # negative weight
+    with pytest.raises(ValueError, match="Input should be greater than 0"):
+        EverestConfig(**config_dict)  # negative weight
 
     obj_funcs[-1]["weight"] = 0
-    assert has_error(
-        EverestConfig.lint_config_dict(config_dict),
-        match="Input should be greater than 0",
-    )  # 0 weight
+    with pytest.raises(ValueError, match="Input should be greater than 0"):
+        EverestConfig(**config_dict)  # 0 weight
 
     obj_funcs[-1]["weight"] = 1
     obj_funcs[-1]["scale"] = 0
-    assert has_error(
-        EverestConfig.lint_config_dict(config_dict),
-        match="Scale value cannot be zero",
-    )  # 0 scale
+    with pytest.raises(ValueError, match="Scale value cannot be zero"):
+        EverestConfig(**config_dict)  # 0 scale
 
     obj_funcs[-1]["scale"] = -125
     assert (

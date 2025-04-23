@@ -21,16 +21,6 @@ from everest.simulator.everest_to_ert import (
 )
 
 
-def has_error(error: ValidationError | list[dict], match: str):
-    messages = (
-        [error_dict["msg"] for error_dict in error.errors()]
-        if isinstance(error, ValidationError)
-        else [e["msg"] for e in error]
-    )
-    pattern = re.compile(f"(.*){match}")
-    return any(re.match(pattern, m) for m in messages)
-
-
 def all_errors(error: ValidationError, match: str):
     messages = [error_dict["msg"] for error_dict in error.errors()]
     instances = []
@@ -40,10 +30,8 @@ def all_errors(error: ValidationError, match: str):
 
 
 def test_that_sampler_config_with_wrong_method():
-    with pytest.raises(ValueError) as e:
+    with pytest.raises(ValueError, match=r"Sampler (.*) not found"):
         SamplerConfig(backend="scipy", method="hey")
-
-    assert has_error(e.value, match="Sampler (.*) not found")
 
 
 def test_that_duplicate_well_names_raise_error():
@@ -96,15 +84,13 @@ def test_that_negative_drill_time_raises_error():
 
 def test_that_cvar_attrs_are_mutex():
     cvar = {"percentile": 0.1, "number_of_realizations": 3}
-    with pytest.raises(ValueError) as e:
+    with pytest.raises(ValueError, match="Invalid CVaR section"):
         EverestConfig.with_defaults(optimization={"cvar": cvar})
-
-    assert has_error(e.value, match="Invalid CVaR section")
 
 
 @pytest.mark.parametrize("nreals", [-1, 0, 8])
 def test_that_cvar_nreals_interval_outside_range_errors(nreals):
-    with pytest.raises(ValueError) as e:
+    with pytest.raises(ValueError, match=f"number_of_realizations: \\(got {nreals}"):
         EverestConfig.with_defaults(
             optimization={
                 "cvar": {
@@ -113,11 +99,6 @@ def test_that_cvar_nreals_interval_outside_range_errors(nreals):
             },
             model={"realizations": [1, 2, 3, 4, 5, 6]},
         )
-
-    assert has_error(
-        e.value,
-        match=f"number_of_realizations: \\(got {nreals}",
-    )
 
 
 @pytest.mark.parametrize("nreals", [1, 2, 3, 4, 5])
@@ -133,12 +114,10 @@ def test_that_cvar_nreals_valid_doesnt_error(nreals):
 
 
 def test_that_max_runtime_errors_only_on_negative():
-    with pytest.raises(ValueError) as e:
+    with pytest.raises(ValueError, match=r".*greater than or equal to 0"):
         EverestConfig.with_defaults(simulator={"max_runtime": -1})
 
     EverestConfig.with_defaults(simulator={"max_runtime": 0})
-
-    assert has_error(e.value, match=".*greater than or equal to 0")
 
 
 def test_that_invalid_queue_system_errors():
@@ -177,7 +156,7 @@ def test_that_cores_per_node_errors_only_on_lt0(cores, expected_error):
 
 
 def test_that_duplicate_control_names_raise_error():
-    with pytest.raises(ValueError) as e:
+    with pytest.raises(ValueError, match=r"(.*)`name` must be unique"):
         EverestConfig.with_defaults(
             controls=[
                 {
@@ -201,11 +180,9 @@ def test_that_duplicate_control_names_raise_error():
             ],
         )
 
-    assert has_error(e.value, match="(.*)`name` must be unique")
-
 
 def test_that_dot_not_in_control_names():
-    with pytest.raises(ValueError) as e:
+    with pytest.raises(ValueError, match=r"(.*)can not contain any dots"):
         EverestConfig.with_defaults(
             controls=[
                 {
@@ -221,14 +198,11 @@ def test_that_dot_not_in_control_names():
             ]
         )
 
-    assert has_error(
-        e.value,
-        match="(.*)can not contain any dots",
-    )
-
 
 def test_that_scaled_range_is_valid_range():
-    with pytest.raises(ValueError) as e:
+    with pytest.raises(
+        ValueError, match=r"(.*)must be a valid range \[a, b\], where a < b."
+    ):
         EverestConfig.with_defaults(
             controls=[
                 {
@@ -244,11 +218,6 @@ def test_that_scaled_range_is_valid_range():
                 }
             ]
         )
-
-    assert has_error(
-        e.value,
-        match=r"(.*)must be a valid range \[a, b\], where a < b.",
-    )
 
 
 @pytest.mark.parametrize(
@@ -337,7 +306,7 @@ def test_that_invalid_control_initial_guess_outside_bounds(
     ),
 )
 def test_that_invalid_control_unique_entry(variables, unique_key):
-    with pytest.raises(ValueError) as e:
+    with pytest.raises(ValueError, match=f"(.*)`{unique_key}` must be unique"):
         EverestConfig.with_defaults(
             controls=[
                 {
@@ -350,14 +319,12 @@ def test_that_invalid_control_unique_entry(variables, unique_key):
             ]
         )
 
-    assert has_error(
-        e.value,
-        match=f"(.*)`{unique_key}` must be unique",
-    )
-
 
 def test_that_invalid_control_undefined_fields():
-    with pytest.raises(ValueError) as e:
+    with pytest.raises(
+        ValueError,
+        match=r"define min.* value.*define max*. value.*define initial_guess.* value",
+    ):
         EverestConfig.with_defaults(
             controls=[
                 {
@@ -370,15 +337,11 @@ def test_that_invalid_control_undefined_fields():
             ]
         )
 
-    for case in ["min", "max", "initial_guess"]:
-        assert has_error(
-            e.value,
-            match=f"(.*)must define {case} value either at control level or variable",
-        )
-
 
 def test_that_control_variables_index_is_defined_for_all_variables():
-    with pytest.raises(ValueError) as e:
+    with pytest.raises(
+        ValueError, match="given either for all of the variables or for none of them"
+    ):
         EverestConfig.with_defaults(
             controls=[
                 {
@@ -394,14 +357,9 @@ def test_that_control_variables_index_is_defined_for_all_variables():
             ]
         )
 
-    assert has_error(
-        e.value,
-        match="(.*)given either for all of the variables or for none of them",
-    )
-
 
 def test_that_duplicate_output_constraint_names_raise_error():
-    with pytest.raises(ValueError) as e:
+    with pytest.raises(ValueError, match="Output constraint names must be unique"):
         EverestConfig.with_defaults(
             output_constraints=[
                 {"target": 0.3, "name": "c110"},
@@ -416,62 +374,50 @@ def test_that_duplicate_output_constraint_names_raise_error():
             ],
         )
 
-    assert has_error(e.value, match="Output constraint names must be unique")
-
 
 def test_that_output_constraints_bounds_are_mutex():
     output_constraint = {
         "name": "w110",
     }
-    with pytest.raises(ValueError) as e:
+    with pytest.raises(
+        ValueError, match="Output constraints must have only one of the following"
+    ):
         EverestConfig.with_defaults(output_constraints=[output_constraint])
-
-    assert has_error(
-        e.value, match="Output constraints must have only one of the following"
-    )
 
     output_constraint["target"] = 1.0
     EverestConfig.with_defaults(output_constraints=[output_constraint])
 
     output_constraint["upper_bound"] = 2.0
-    with pytest.raises(ValueError) as e:
+    with pytest.raises(
+        ValueError, match="Output constraints must have only one of the following"
+    ):
         EverestConfig.with_defaults(output_constraints=[output_constraint])
-
-    assert has_error(
-        e.value, match="Output constraints must have only one of the following"
-    )
 
     output_constraint["lower_bound"] = 0.5
-    with pytest.raises(ValueError) as e:
+    with pytest.raises(
+        ValueError, match="Output constraints must have only one of the following"
+    ):
         EverestConfig.with_defaults(output_constraints=[output_constraint])
-
-    assert has_error(
-        e.value, match="Output constraints must have only one of the following"
-    )
 
     del output_constraint["upper_bound"]
-    with pytest.raises(ValueError) as e:
+    with pytest.raises(
+        ValueError, match="Output constraints must have only one of the following"
+    ):
         EverestConfig.with_defaults(output_constraints=[output_constraint])
 
-    assert has_error(
-        e.value, match="Output constraints must have only one of the following"
-    )
     del output_constraint["target"]
     EverestConfig.with_defaults(output_constraints=[output_constraint])
 
     del output_constraint["lower_bound"]
-    with pytest.raises(ValueError) as e:
+    with pytest.raises(
+        ValueError, match="Output constraints must have only one of the following"
+    ):
         EverestConfig.with_defaults(output_constraints=[output_constraint])
-
-    assert has_error(
-        e.value, match="Output constraints must have only one of the following"
-    )
 
 
 def test_that_variable_name_does_not_contain_dots():
-    with pytest.raises(ValueError) as e:
+    with pytest.raises(ValueError, match=r"(.*)can not contain any dots"):
         ControlVariableConfig(name="invalid.name")
-    assert has_error(e.value, match="(.*)can not contain any dots")
 
 
 @pytest.mark.parametrize(
@@ -479,11 +425,10 @@ def test_that_variable_name_does_not_contain_dots():
 )
 def test_that_variable_index_is_non_negative(index_val, expected_error):
     if expected_error:
-        with pytest.raises(ValueError) as e:
+        with pytest.raises(
+            ValueError, match=r"(.*)Input should be greater than or equal to 0"
+        ):
             ControlVariableConfig(name="var", index=index_val)
-        assert has_error(
-            e.value, match="(.*)Input should be greater than or equal to 0"
-        )
     else:
         ControlVariableConfig(name="var", index=index_val)
 
@@ -493,41 +438,36 @@ def test_that_variable_index_is_non_negative(index_val, expected_error):
 )
 def test_that_variable_perturbation_is_positive(perturbation, expected_error):
     if expected_error:
-        with pytest.raises(ValueError) as e:
+        with pytest.raises(ValueError, match=r"(.*)Input should be greater than 0"):
             ControlVariableConfig(name="var", perturbation_magnitude=perturbation)
-        assert has_error(e.value, match="(.*)Input should be greater than 0")
     else:
         ControlVariableConfig(name="var", perturbation_magnitude=perturbation)
 
 
 def test_that_model_realizations_accept_only_positive_ints():
-    with pytest.raises(ValueError) as e:
+    with pytest.raises(ValueError, match="Input should be greater than or equal to 0"):
         EverestConfig.with_defaults(model={"realizations": [-1, 1, 2, 3]})
-
-    assert has_error(e.value, match="Input should be greater than or equal to 0")
 
     EverestConfig.with_defaults(model={"realizations": [0, 1, 2, 3]})
 
 
 def test_that_model_realizations_weights_must_correspond_to_realizations():
-    with pytest.raises(ValueError) as e:
+    with pytest.raises(
+        ValueError, match="Specified realizations_weights must have one weight per"
+    ):
         EverestConfig.with_defaults(
             model={"realizations": [1, 2, 3], "realizations_weights": [1, 2]}
         )
-    assert has_error(
-        e.value, match="Specified realizations_weights must have one weight per"
-    )
 
-    with pytest.raises(ValueError) as e:
+    with pytest.raises(
+        ValueError, match="Specified realizations_weights must have one weight per"
+    ):
         EverestConfig.with_defaults(
             model={
                 "realizations": [1, 2, 3],
                 "realizations_weights": [1, 2, 3, 4],
             }
         )
-    assert has_error(
-        e.value, match="Specified realizations_weights must have one weight per"
-    )
 
     EverestConfig.with_defaults(model={"realizations": [1, 2, 3]})
     EverestConfig.with_defaults(
@@ -536,10 +476,8 @@ def test_that_model_realizations_weights_must_correspond_to_realizations():
 
 
 def test_that_missing_optimization_algorithm_errors():
-    with pytest.raises(ValueError) as e:
+    with pytest.raises(ValueError, match="Optimizer algorithm 'ddlygldt' not found"):
         EverestConfig.with_defaults(optimization={"algorithm": "ddlygldt"})
-
-    assert has_error(e.value, match="Optimizer algorithm 'ddlygldt' not found")
 
 
 @pytest.mark.parametrize(
@@ -553,24 +491,20 @@ def test_that_missing_optimization_algorithm_errors():
     ],
 )
 def test_that_some_optimization_attrs_must_be_positive(optimizer_attr):
-    with pytest.raises(ValueError) as e:
+    with pytest.raises(ValueError, match=r"(.*)Input should be greater than 0"):
         EverestConfig.with_defaults(optimization={optimizer_attr: -1})
 
-    assert has_error(e.value, match="(.*)Input should be greater than 0")
-
-    with pytest.raises(ValueError) as e:
+    with pytest.raises(ValueError, match=r"(.*)Input should be greater than 0"):
         EverestConfig.with_defaults(optimization={optimizer_attr: 0})
-
-    assert has_error(e.value, match="(.*)Input should be greater than 0")
 
     EverestConfig.with_defaults(optimization={optimizer_attr: 1})
 
 
 def test_that_min_realizations_success_is_nonnegative():
-    with pytest.raises(ValueError) as e:
+    with pytest.raises(
+        ValueError, match=r"(.*)Input should be greater than or equal to 0"
+    ):
         EverestConfig.with_defaults(optimization={"min_realizations_success": -1})
-
-    assert has_error(e.value, match="(.*)Input should be greater than or equal to 0")
 
     EverestConfig.with_defaults(optimization={"min_realizations_success": 0})
 
@@ -610,12 +544,11 @@ def test_that_install_data_source_exists(change_to_tmpdir):
     with open("config_dir/test.yml", "w", encoding="utf-8") as f:
         f.write(" ")
 
-    with pytest.raises(ValueError) as e:
+    with pytest.raises(ValueError, match="No such file or directory"):
         EverestConfig.with_defaults(
             install_data=[data],
             config_path=Path("config_dir/test.yml"),
         )
-    assert has_error(e.value, match="No such file or directory")
 
     os.makedirs("config_dir/relative/path")
     EverestConfig.with_defaults(
@@ -629,13 +562,11 @@ def test_that_model_data_file_exists(change_to_tmpdir):
     with open("config_dir/test.yml", "w", encoding="utf-8") as f:
         f.write(" ")
 
-    with pytest.raises(ValueError) as e:
+    with pytest.raises(ValueError, match="No such file or directory"):
         EverestConfig.with_defaults(
             model={"realizations": [1, 2, 3], "data_file": "relative/path"},
             config_path=Path("config_dir/test.yml"),
         )
-
-    assert has_error(e.value, match="No such file or directory")
 
     os.makedirs("config_dir/relative/path")
 
@@ -857,26 +788,24 @@ def test_that_existing_install_job_with_non_existing_executable_errors(
 @pytest.mark.filterwarnings("ignore:normalization key is deprecated")
 def test_that_objective_function_attrs_are_valid(key, value, expected_error):
     if expected_error:
-        with pytest.raises(ValueError) as e:
+        with pytest.raises(ValueError, match=expected_error):
             EverestConfig.with_defaults(
                 objective_functions=[{"name": "npv", key: value}]
             )
-        assert has_error(e.value, expected_error)
     else:
         EverestConfig.with_defaults(objective_functions=[{"name": "npv", key: value}])
 
 
 def test_that_objective_function_weight_defined_for_all_or_no_function():
-    with pytest.raises(ValueError) as e:
+    with pytest.raises(
+        ValueError, match=r"(.*) either for all of the objectives or for none of them"
+    ):
         EverestConfig.with_defaults(
             objective_functions=[
                 {"name": "npv", "weight": 0.7},
                 {"name": "npv2"},
             ]
         )
-    assert has_error(
-        e.value, "(.*) either for all of the objectives or for none of them"
-    )
 
     EverestConfig.with_defaults(
         objective_functions=[
@@ -890,7 +819,11 @@ def test_that_install_templates_must_have_unique_names(change_to_tmpdir):
     for f in ["hey", "hesy", "heyyy"]:
         pathlib.Path(f).write_text(f, encoding="utf-8")
 
-    with pytest.raises(ValueError) as e:
+    with pytest.raises(
+        ValueError,
+        match=r"Install_templates output_files "
+        "must be unique. (.*) outputf \\(2 occurrences\\)",
+    ):
         EverestConfig.with_defaults(
             install_templates=[
                 {"template": "heyyy", "output_file": "outputf"},
@@ -898,11 +831,6 @@ def test_that_install_templates_must_have_unique_names(change_to_tmpdir):
             ]
         )
 
-    assert has_error(
-        e.value,
-        match="Install_templates output_files "
-        "must be unique. (.*) outputf \\(2 occurrences\\)",
-    )
     print("Install_templates templates must be unique")
 
     EverestConfig.with_defaults(
@@ -917,7 +845,7 @@ def test_that_install_template_template_must_be_existing_file(change_to_tmpdir):
     os.makedirs("config_dir")
     with open("config_dir/test.yml", "w", encoding="utf-8") as f:
         f.write(" ")
-    with pytest.raises(ValueError) as e:
+    with pytest.raises(ValueError, match=r"No.*file.*hello.*No.*file.*hey"):
         EverestConfig.with_defaults(
             install_templates=[
                 {"template": "hello", "output_file": "output"},
@@ -925,9 +853,6 @@ def test_that_install_template_template_must_be_existing_file(change_to_tmpdir):
             ],
             config_path=Path("config_dir/test.yml"),
         )
-
-    assert has_error(e.value, "No such file or directory.*hey")
-    assert has_error(e.value, "No such file or directory.*hello")
 
 
 def test_that_missing_required_fields_cause_error():
@@ -958,7 +883,7 @@ def test_that_missing_required_fields_cause_error():
 
 
 def test_that_non_existing_workflow_jobs_cause_error():
-    with pytest.raises(ValidationError) as e:
+    with pytest.raises(ValidationError, match="unknown workflow job job1"):
         EverestConfig.with_defaults(
             workflows={
                 "pre_simulation": [
@@ -966,7 +891,6 @@ def test_that_non_existing_workflow_jobs_cause_error():
                 ]
             },
         )
-    assert has_error(e.value, "unknown workflow job job1")
 
 
 def test_deprecated_keyword_report_steps():
