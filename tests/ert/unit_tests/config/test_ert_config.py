@@ -1204,6 +1204,18 @@ def test_that_define_statements_with_more_than_one_argument():
     assert ert_config.substitutions.get("<TEST2>") == "111 222 333 444 555"
 
 
+def test_that_define_statements_works_with_empty_string():
+    ert_config = ErtConfig.from_file_contents(
+        dedent(
+            """
+            NUM_REALIZATIONS  1
+            DEFINE <TEST1> ""
+            """
+        )
+    )
+    assert ert_config.substitutions.get("<TEST1>") == ""  # noqa
+
+
 @pytest.mark.usefixtures("use_tmpdir")
 def test_that_include_statements_work():
     test_config_file_name = "test.ert"

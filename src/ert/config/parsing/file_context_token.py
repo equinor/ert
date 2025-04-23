@@ -65,7 +65,7 @@ class FileContextToken(Token):
         return FileContextToken(
             Token(
                 type=first.type,
-                value=separator.join(tokens),
+                value=separator.join(tokens) if tokens else None,
                 start_pos=min_start_pos,
                 line=min_line,
                 column=min_column,
