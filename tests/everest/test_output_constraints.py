@@ -9,8 +9,6 @@ from ert.run_models.everest_run_model import EverestRunModel
 from everest.config import EverestConfig
 from everest.optimizer.everest2ropt import everest2ropt
 
-from .test_config_validation import has_error
-
 CONFIG_FILE = "config_output_constraints.yml"
 
 
@@ -44,15 +42,17 @@ def test_constraints_init(copy_mocked_test_data_to_tmp):
 
 def test_wrong_output_constr_def(copy_mocked_test_data_to_tmp):
     # No RHS
-    errors = EverestConfig.lint_config_dict(
-        {
-            "wells": [{"name": "w07"}],
-            "output_constraints": [
+    with pytest.raises(
+        ValueError, match="Output constraints must have only one of the following"
+    ):
+        EverestConfig(
+            wells=[{"name": "w07"}],
+            output_constraints=[
                 {"name": "some_name"},
             ],
-            "config_path": "/",
-            "forward_model": [],
-            "controls": [
+            config_path="/",
+            forward_model=[],
+            controls=[
                 {
                     "name": "well_order",
                     "type": "well_control",
@@ -61,28 +61,23 @@ def test_wrong_output_constr_def(copy_mocked_test_data_to_tmp):
                     "variables": [{"name": "w07", "initial_guess": 0.0633}],
                 }
             ],
-            "environment": {"simulation_folder": "/tmp/everest"},
-            "optimization": {"algorithm": "optpp_q_newton"},
-            "model": {"realizations": [0]},
-            "objective_functions": [{"name": "npv_function"}],
-        }
-    )
-
-    assert has_error(
-        errors, match="Output constraints must have only one of the following"
-    )
+            environment={"simulation_folder": "/tmp/everest"},
+            optimization={"algorithm": "optpp_q_newton"},
+            model={"realizations": [0]},
+            objective_functions=[{"name": "npv_function"}],
+        )
 
     # Same name
-    errors = EverestConfig.lint_config_dict(
-        {
-            "wells": [{"name": "w07"}],
-            "output_constraints": [
+    with pytest.raises(ValueError, match="Output constraint names must be unique"):
+        EverestConfig(
+            wells=[{"name": "w07"}],
+            output_constraints=[
                 {"name": "same_name", "upper_bound": 5000},
                 {"name": "same_name", "upper_bound": 5000},
             ],
-            "config_path": "/",
-            "forward_model": [],
-            "controls": [
+            config_path="/",
+            forward_model=[],
+            controls=[
                 {
                     "name": "well_order",
                     "type": "well_control",
@@ -91,24 +86,26 @@ def test_wrong_output_constr_def(copy_mocked_test_data_to_tmp):
                     "variables": [{"name": "w07", "initial_guess": 0.0633}],
                 }
             ],
-            "environment": {"simulation_folder": "/tmp/everest"},
-            "optimization": {"algorithm": "optpp_q_newton"},
-            "model": {"realizations": [0]},
-            "objective_functions": [{"name": "npv_function"}],
-        }
-    )
-    assert has_error(errors, match="Output constraint names must be unique")
+            environment={"simulation_folder": "/tmp/everest"},
+            optimization={"algorithm": "optpp_q_newton"},
+            model={"realizations": [0]},
+            objective_functions=[{"name": "npv_function"}],
+        )
 
     # Two RHS
-    errors = EverestConfig.lint_config_dict(
-        {
-            "wells": [{"name": "w07"}],
-            "output_constraints": [
+    with pytest.raises(
+        ValueError,
+        match=r"Output constraints must have only one of the following:"
+        " { target }, or { upper and/or lower bound }",
+    ):
+        EverestConfig(
+            wells=[{"name": "w07"}],
+            output_constraints=[
                 {"name": "some_name", "upper_bound": 5000, "target": 5000},
             ],
-            "config_path": "/",
-            "forward_model": [],
-            "controls": [
+            config_path="/",
+            forward_model=[],
+            controls=[
                 {
                     "name": "well_order",
                     "type": "well_control",
@@ -117,17 +114,11 @@ def test_wrong_output_constr_def(copy_mocked_test_data_to_tmp):
                     "variables": [{"name": "w07", "initial_guess": 0.0633}],
                 }
             ],
-            "environment": {"simulation_folder": "/tmp/everest"},
-            "optimization": {"algorithm": "optpp_q_newton"},
-            "model": {"realizations": [0]},
-            "objective_functions": [{"name": "npv_function"}],
-        }
-    )
-    assert has_error(
-        errors,
-        match="Output constraints must have only one of the following:"
-        " { target }, or { upper and/or lower bound }",
-    )
+            environment={"simulation_folder": "/tmp/everest"},
+            optimization={"algorithm": "optpp_q_newton"},
+            model={"realizations": [0]},
+            objective_functions=[{"name": "npv_function"}],
+        )
 
     # Wrong RHS attribute
     wrong_rhs_config = {
@@ -154,19 +145,19 @@ def test_wrong_output_constr_def(copy_mocked_test_data_to_tmp):
 
     wrong_rhs_config["output_constraints"][0]["upper_bund"] = 5000
 
-    errors = EverestConfig.lint_config_dict(wrong_rhs_config)
-    assert has_error(errors, match="Extra inputs are not permitted")
+    with pytest.raises(ValueError, match="Extra inputs are not permitted"):
+        EverestConfig(**wrong_rhs_config)
 
     # Wrong RHS type
-    errors = EverestConfig.lint_config_dict(
-        {
-            "wells": [{"name": "w07"}],
-            "output_constraints": [
+    with pytest.raises(ValueError, match="unable to parse string as a number"):
+        EverestConfig(
+            wells=[{"name": "w07"}],
+            output_constraints=[
                 {"name": "some_name", "upper_bound": "2ooo"},
             ],
-            "config_path": "/",
-            "forward_model": [],
-            "controls": [
+            config_path="/",
+            forward_model=[],
+            controls=[
                 {
                     "name": "well_order",
                     "type": "well_control",
@@ -175,13 +166,11 @@ def test_wrong_output_constr_def(copy_mocked_test_data_to_tmp):
                     "variables": [{"name": "w07", "initial_guess": 0.0633}],
                 }
             ],
-            "environment": {"simulation_folder": "/tmp/everest"},
-            "optimization": {"algorithm": "optpp_q_newton"},
-            "model": {"realizations": [0]},
-            "objective_functions": [{"name": "npv_function"}],
-        }
-    )
-    assert has_error(errors, "unable to parse string as a number")
+            environment={"simulation_folder": "/tmp/everest"},
+            optimization={"algorithm": "optpp_q_newton"},
+            model={"realizations": [0]},
+            objective_functions=[{"name": "npv_function"}],
+        )
 
 
 def test_upper_bound_output_constraint_def(copy_mocked_test_data_to_tmp):

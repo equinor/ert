@@ -22,14 +22,12 @@ def test_unrecognized_keys(mocked_config):
     wells = config["wells"]
 
     wells[0]["unexpected_key"] = 7
-    assert has_error(
-        EverestConfig.lint_config_dict(config), match="Extra inputs are not permitted"
-    )
+    with pytest.raises(ValueError, match="Extra inputs are not permitted"):
+        EverestConfig(**config)
     wells[0].pop("unexpected_key")
     wells[0][14] = 7
-    assert has_error(
-        EverestConfig.lint_config_dict(config), match=".*Keys should be strings"
-    )
+    with pytest.raises(ValueError, match=r".*Keys should be strings"):
+        EverestConfig(**config)
 
     wells[0].pop(14)
     assert len(EverestConfig.lint_config_dict(config)) == 0
@@ -76,21 +74,16 @@ def test_well_drilling_times(mocked_config):
     wells = config["wells"]
 
     wells[0]["drill_time"] = -4
-    assert has_error(
-        EverestConfig.lint_config_dict(config),
-        match="Drill time must be a positive number",
-    )
+    with pytest.raises(ValueError, match="Drill time must be a positive number"):
+        EverestConfig(**config)
 
     wells[0]["drill_time"] = 0
-    assert has_error(
-        EverestConfig.lint_config_dict(config),
-        match="Drill time must be a positive number",
-    )
+    with pytest.raises(ValueError, match="Drill time must be a positive number"):
+        EverestConfig(**config)
+
     wells[0]["drill_time"] = "seventeen"
-    assert has_error(
-        EverestConfig.lint_config_dict(config),
-        match="Input should be a valid number",
-    )
+    with pytest.raises(ValueError, match="Input should be a valid number"):
+        EverestConfig(**config)
 
     wells[0]["drill_time"] = 3.7
     assert not EverestConfig.lint_config_dict(config)

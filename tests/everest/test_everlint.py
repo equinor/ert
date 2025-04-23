@@ -9,7 +9,6 @@ from pydantic import ValidationError
 
 from everest.config import EverestConfig
 from everest.config_file_loader import yaml_file_to_substituted_config_dict
-from tests.everest.test_config_validation import has_error
 from tests.everest.utils import relpath
 
 
@@ -221,8 +220,8 @@ def test_well_ref_validation(min_config):
     config = min_config
     variables = config["controls"][0]["variables"]
     variables.append({"name": "a.new.well", "initial_guess": 0.2})
-    errors = EverestConfig.lint_config_dict(config)
-    has_error(errors, match="(.*) name can not contain any dots")
+    with pytest.raises(ValueError, match="name can not contain any dots"):
+        EverestConfig(**config)
 
 
 def test_control_ref_validation(min_config):
