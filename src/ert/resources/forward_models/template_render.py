@@ -99,8 +99,12 @@ def render_template(
 
     _assert_input(all_input_files, template_file, output_file)
 
+    if dir := os.path.dirname(output_file):
+        os.makedirs(dir, exist_ok=True)
+
     template = _load_template(template_file)
     data = _load_input(all_input_files)
+
     with open(output_file, "w", encoding="utf-8") as fout:
         fout.write(template.render(**data))
 

@@ -2,7 +2,7 @@
 
 import argparse
 
-import everest
+from ert.resources.forward_models.template_render import render_template
 
 
 def _build_argument_parser() -> argparse.ArgumentParser:
@@ -35,7 +35,7 @@ def main():
     arg_parser = _build_argument_parser()
     args = arg_parser.parse_args()
 
-    everest.jobs.templating.render(
+    render_template(
         args.input_files,
         args.template_file,
         args.output,

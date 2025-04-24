@@ -2,6 +2,7 @@ import json
 import os
 import subprocess
 
+import jinja2
 import pytest
 from ruamel.yaml import YAML
 
@@ -9,16 +10,25 @@ import everest
 from ert.ensemble_evaluator.config import EvaluatorServerConfig
 from ert.run_models.everest_run_model import EverestRunModel
 from everest.config import EverestConfig
+from tests.ert.unit_tests.resources._import_from_location import import_from_location
+from tests.ert.utils import SOURCE_DIR
 
 TMPL_CONFIG_FILE = "config.yml"
 TMPL_WELL_DRILL_FILE = os.path.join("templates", "well_drill_info.tmpl")
 TMPL_DUAL_INPUT_FILE = os.path.join("templates", "dual_input.tmpl")
-
 MATH_CONFIG_FILE = "config_minimal.yml"
+
+template_render = import_from_location(
+    "template_render",
+    os.path.join(
+        SOURCE_DIR,
+        "src/ert/resources/forward_models/template_render.py",
+    ),
+)
 
 
 def test_render_invalid(copy_template_test_data_to_tmp):
-    render = everest.jobs.templating.render
+    render = template_render.render_template
 
     prod_wells = {f"PROD{idx:d}": 0.3 * idx for idx in range(4)}
     prod_in = "well_drill_prod.json"
@@ -27,7 +37,7 @@ def test_render_invalid(copy_template_test_data_to_tmp):
 
     wells_out = "wells.out"
 
-    with pytest.raises(TypeError):
+    with pytest.raises(jinja2.exceptions.UndefinedError):
         render(None, TMPL_WELL_DRILL_FILE, wells_out)
 
     with pytest.raises(ValueError):
@@ -44,7 +54,7 @@ def test_render_invalid(copy_template_test_data_to_tmp):
 
 
 def test_render(copy_template_test_data_to_tmp):
-    render = everest.jobs.templating.render
+    render = template_render.render_template
 
     wells = {f"PROD{idx:d}": 0.2 * idx for idx in range(1, 5)}
     wells.update({f"INJ{idx:d}": 1 - 0.2 * idx for idx in range(1, 5)})
@@ -74,7 +84,7 @@ def test_render(copy_template_test_data_to_tmp):
 
 
 def test_render_multiple_input(copy_template_test_data_to_tmp):
-    render = everest.jobs.templating.render
+    render = template_render.render_template
 
     wells_north = {f"PROD{idx:d}": 0.2 * idx for idx in range(1, 5)}
     wells_north_in = "well_drill_north.json"
@@ -153,7 +163,7 @@ def test_well_order_template(change_to_tmpdir):
         json.dump(well_order, fout)
 
     output_file = "well_order_list.json"
-    everest.jobs.templating.render(
+    template_render.render_template(
         data_file,
         order_tmpl,
         output_file,
