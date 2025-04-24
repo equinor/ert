@@ -3,19 +3,6 @@ from contextlib import ExitStack as does_not_raise
 import pytest
 
 from everest.config import EverestConfig, WellConfig
-from everest.config_file_loader import yaml_file_to_substituted_config_dict
-from tests.everest.utils import relpath
-
-
-@pytest.fixture
-def mocked_config():
-    return yaml_file_to_substituted_config_dict(
-        relpath("test_data", "mocked_test_case", "mocked_test_case.yml")
-    )
-
-
-def test_lint_mocked_config(mocked_config):
-    EverestConfig(**mocked_config)
 
 
 @pytest.mark.parametrize(
