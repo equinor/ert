@@ -33,7 +33,7 @@ def test_optimization_config(copy_test_data_to_tmp):
 
 def test_optimization_config_options(copy_test_data_to_tmp):
     config = EverestConfig.load_file("mocked_test_case/mocked_test_case.yml")
-    config_dict = config.model_dump(exclude_none=True)
+    config_dict = config.to_dict()
 
     config_dict["optimization"]["options"] = [
         "max_iterations = 0",

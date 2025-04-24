@@ -18,7 +18,7 @@ def test_workflow_will_run_during_experiment(
 ):
     config = EverestConfig.load_file(CONFIG_FILE)
     if test_deprecated:
-        config_dict = config.model_dump(exclude_none=True)
+        config_dict = config.to_dict()
         del config_dict["install_workflow_jobs"][0]["executable"]
         config_dict["install_workflow_jobs"][0]["source"] = "jobs/TEST_WF"
         config = EverestConfig.model_validate(config_dict)
