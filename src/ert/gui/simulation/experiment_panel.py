@@ -323,6 +323,7 @@ class ExperimentPanel(QWidget):
             self.parent(),  # type: ignore
             output_path=self.config.analysis_config.log_path,
         )
+        self._dialog.set_queue_system_name(model.queue_system)
         self.experiment_started.emit(self._dialog)
         self._simulation_done = False
         self.run_button.setEnabled(self._simulation_done)

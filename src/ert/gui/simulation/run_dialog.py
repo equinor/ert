@@ -28,6 +28,7 @@ from PyQt6.QtWidgets import (
     QWidget,
 )
 
+from ert.config.parsing.queue_system import QueueSystem
 from ert.ensemble_evaluator import (
     EndEvent,
     FullSnapshotEvent,
@@ -247,6 +248,7 @@ class RunDialog(QFrame):
         self._fm_step_overview = FMStepOverview(self._snapshot_model, self)
 
         self.running_time = QLabel("")
+        self.queue_system = QLabel("")
         self.memory_usage = QLabel("")
         self.disk_space = DiskSpaceWidget(
             get_mount_directory(self._run_model_api.runpath_format_string)
@@ -266,19 +268,28 @@ class RunDialog(QFrame):
         self.processing_animation.setFixedSize(QSize(size, size))
         self.processing_animation.setMovie(spin_movie)
 
+        footer_layout = QHBoxLayout()
+        footer_layout.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        running_time_layout = QHBoxLayout()
+        running_time_layout.addWidget(self.processing_animation)
+        running_time_layout.addWidget(self.running_time)
+        footer_layout.addLayout(running_time_layout)
+
+        footer_layout.addStretch()
+        footer_layout.addWidget(self.queue_system)
+
+        footer_layout.addStretch()
+        footer_layout.addWidget(self.memory_usage)
+        footer_layout.addWidget(self.disk_space)
+
+        footer_layout.addStretch()
         button_layout = QHBoxLayout()
-        button_layout.addWidget(self.processing_animation)
-        button_layout.addWidget(self.running_time)
-        button_layout.addStretch()
-        button_layout.addWidget(self.memory_usage)
-        button_layout.addStretch()
-        button_layout.addWidget(self.disk_space)
-        button_layout.addStretch()
         button_layout.addWidget(self.kill_button)
         button_layout.addWidget(self.restart_button)
+        footer_layout.addLayout(button_layout)
 
-        button_widget_container = QWidget()
-        button_widget_container.setLayout(button_layout)
+        footer_widget_container = QWidget()
+        footer_widget_container.setLayout(footer_layout)
 
         layout = QVBoxLayout()
         layout.addWidget(self._total_progress_label)
@@ -307,7 +318,7 @@ class RunDialog(QFrame):
 
         adjustable_splitter_layout.addWidget(self.fm_step_frame)
         layout.addWidget(adjustable_splitter_layout)
-        layout.addWidget(button_widget_container)
+        layout.addWidget(footer_widget_container)
 
         self.setLayout(layout)
 
@@ -455,7 +466,6 @@ class RunDialog(QFrame):
         maximum_memory_usage = self._snapshot_model.root.max_memory_usage
 
         self.disk_space.update_status()
-
         if maximum_memory_usage:
             self.memory_usage.setText(
                 "Maximal realization memory usage: "
@@ -574,6 +584,18 @@ class RunDialog(QFrame):
             self.kill_button.setVisible(True)
             self._restart = True
             self.restart_experiment.emit()
+
+    def set_queue_system_name(self, queue_system: QueueSystem) -> None:
+        match queue_system:
+            case QueueSystem.LSF:
+                formatted_queue_system = "LSF"
+            case QueueSystem.LOCAL:
+                formatted_queue_system = "Local"
+            case QueueSystem.TORQUE:
+                formatted_queue_system = "Torque/OpenPBS"
+            case QueueSystem.SLURM:
+                formatted_queue_system = "Slurm"
+        self.queue_system.setText(f"Queue system: {formatted_queue_system}")
 
 
 # Cannot use a non-static method here as
