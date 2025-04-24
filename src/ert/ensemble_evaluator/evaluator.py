@@ -61,7 +61,7 @@ class EnsembleEvaluator:
         self._ensemble: Ensemble = ensemble
 
         self._events: asyncio.Queue[Event] = asyncio.Queue()
-        self._events_to_send: asyncio.Queue[Event | HeartbeatEvent] = asyncio.Queue()
+        self._events_to_send: asyncio.Queue[Event] = asyncio.Queue()
         self._manifest_queue: asyncio.Queue[Any] = asyncio.Queue()
 
         self._ee_tasks: list[asyncio.Task[None]] = []
@@ -82,17 +82,14 @@ class EnsembleEvaluator:
         self._dispatchers_empty: asyncio.Event = asyncio.Event()
         self._dispatchers_empty.set()
 
-    async def _do_heartbeat_clients(self) -> None:
-        while True:
-            if self._clients_connected:
-                await self._events_to_send.put(HeartbeatEvent.event)
-                await asyncio.sleep(HEARTBEAT_TIMEOUT)
-            else:
-                await asyncio.sleep(0.1)
-
     async def _publisher(self) -> None:
         while True:
-            event = await self._events_to_send.get()
+            try:
+                event = await asyncio.wait_for(
+                    self._events_to_send.get(), timeout=HEARTBEAT_TIMEOUT
+                )
+            except TimeoutError:
+                event = HeartbeatEvent.event
             for identity in self._clients_connected:
                 if isinstance(event, HeartbeatEvent):
                     await self._router_socket.send_multipart(
@@ -102,7 +99,8 @@ class EnsembleEvaluator:
                     await self._router_socket.send_multipart(
                         [identity, b"", event_to_json(event).encode("utf-8")]
                     )
-            self._events_to_send.task_done()
+            if not isinstance(event, HeartbeatEvent):
+                self._events_to_send.task_done()
 
     async def _append_message(self, snapshot_update_event: EnsembleSnapshot) -> None:
         event = EESnapshotUpdate(
@@ -372,7 +370,6 @@ class EnsembleEvaluator:
         self._ee_tasks = [asyncio.create_task(self._server(), name="server_task")]
         await self._server_started
         self._ee_tasks += [
-            asyncio.create_task(self._do_heartbeat_clients(), name="heartbeat_task"),
             asyncio.create_task(
                 self._batch_events_into_buffer(), name="dispatcher_task"
             ),

@@ -95,23 +95,15 @@ class Client:
         raise NotImplementedError("Only monitor can receive messages!")
 
     async def _receiver(self) -> None:
-        last_heartbeat_time: float | None = None
         while True:
             try:
-                _, raw_msg = await self.socket.recv_multipart()
+                _, raw_msg = await asyncio.wait_for(
+                    self.socket.recv_multipart(), timeout=2 * HEARTBEAT_TIMEOUT
+                )
                 if raw_msg == ACK_MSG:
                     self._ack_event.set()
                 elif raw_msg == HEARTBEAT_MSG:
-                    if (
-                        last_heartbeat_time
-                        and (asyncio.get_running_loop().time() - last_heartbeat_time)
-                        > 2 * HEARTBEAT_TIMEOUT
-                    ):
-                        await self.socket.send_multipart([b"", CONNECT_MSG])
-                        logger.warning(
-                            f"{self.dealer_id} heartbeat failed - reconnecting."
-                        )
-                    last_heartbeat_time = asyncio.get_running_loop().time()
+                    continue
                 else:
                     await self.process_message(raw_msg.decode("utf-8"))
             except zmq.ZMQError as exc:
@@ -121,6 +113,13 @@ class Client:
                 )
                 await asyncio.sleep(0)
                 self.socket.connect(self.url)
+            except TimeoutError:
+                await self.socket.send_multipart([b"", CONNECT_MSG])
+                logger.warning(
+                    f"""{self.dealer_id} did not receive any events within the
+                    timeout period, there might be issues with the connection.
+                    Reconnecting..."""
+                )
 
     async def send(self, message: str | bytes, retries: int | None = None) -> None:
         self._ack_event.clear()
