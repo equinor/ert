@@ -367,7 +367,7 @@ def _preprocess_observations_and_responses(
             )
 
     missing_observations = (
-        observations_and_responses.filter(pl.col("status") != "active")[
+        observations_and_responses.filter(pl.col("status") != ObservationStatus.ACTIVE)[
             "observation_key"
         ]
         .unique()
@@ -375,7 +375,8 @@ def _preprocess_observations_and_responses(
     )
     missing_observations.sort()
 
-    logger.warning(f"Deactivating observations: {missing_observations}")
+    if len(missing_observations) > 0:
+        logger.warning(f"Deactivating observations: {missing_observations}")
 
     return observations_and_responses
 
