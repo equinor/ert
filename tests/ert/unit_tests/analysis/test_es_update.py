@@ -852,9 +852,7 @@ def test_that_autoscaling_applies_to_scaled_errors(storage):
     ],
 )
 def test_compute_observation_statuses(
-    nan_responses,
-    overspread_responses,
-    collapsed_responses,
+    nan_responses, overspread_responses, collapsed_responses, caplog
 ):
     alpha = 0.1
     global_std_scaling = 1
@@ -955,6 +953,67 @@ def test_that_autoscaling_ignores_typos_in_observation_names(storage, caplog):
     assert "Could not auto-scale the observations" in logged_messages
     assert "OOPS" in logged_messages
     assert "obs1_1" in logged_messages
+
+
+def test_that_deactivated_observations_are_logged(storage, caplog):
+    observations_and_responses = pl.DataFrame(
+        {
+            "response_key": ["RESPONSE", "RESPONSE", "RESPONSE", "RESPONSE"],
+            "index": ["rs00", "rs0", "rs0", "rs1"],
+            "observation_key": ["obs1_1", "obs1_2", "obs2", "obs3"],
+            "observations": pl.Series([2, 4, 3, 3], dtype=pl.Float32),
+            "std": pl.Series([1, 2, 1, 1], dtype=pl.Float32),
+            "1": pl.Series([1, 4, 7, 8], dtype=pl.Float32),
+        }
+    )
+
+    experiment = storage.create_experiment(name="dummyexp")
+    ensemble = experiment.create_ensemble(name="dummy", ensemble_size=10)
+    _mock_preprocess_observations_and_responses(
+        observations_and_responses,
+        alpha=1,
+        std_cutoff=11111,
+        global_std_scaling=1,
+        auto_scale_observations=None,
+        progress_callback=lambda _: None,
+        ensemble=ensemble,
+    )
+    assert (
+        "Deactivating observations: ['obs1_1', 'obs1_2', 'obs2', 'obs3']"
+        in caplog.messages
+    )
+
+
+def test_that_activate_observations_are_not_logged_as_deactivated(storage, caplog):
+    observations_and_responses = pl.DataFrame(
+        {
+            "response_key": ["RESPONSE", "RESPONSE", "RESPONSE", "RESPONSE"],
+            "index": ["rs00", "rs0", "rs0", "rs1"],
+            "observation_key": ["obs1_1", "obs1_2", "obs2", "obs3"],
+            "observations": pl.Series([2, 4, 3, 3], dtype=pl.Float32),
+            "std": pl.Series([1, 2, 1, 1], dtype=pl.Float32),
+            "1": pl.Series([1, 4, 7, 8], dtype=pl.Float32),
+            "3": pl.Series([1.1, 4.2, 7.5, 8.1], dtype=pl.Float32),
+            "4": pl.Series([1.4, 4.3, 7.2, 7.4], dtype=pl.Float32),
+            "5": pl.Series([1.4, 3.9, 6.8, 7.2], dtype=pl.Float32),
+            "6": pl.Series([1.2, 4.1, 7.4, 9.1], dtype=pl.Float32),
+            "8": pl.Series([1.9, 4.9, 7.1, 8.3], dtype=pl.Float32),
+            "9": pl.Series([0.8, 3.5, 6.6, 7.9], dtype=pl.Float32),
+        }
+    )
+
+    experiment = storage.create_experiment(name="dummyexp")
+    ensemble = experiment.create_ensemble(name="dummy", ensemble_size=10)
+    _mock_preprocess_observations_and_responses(
+        observations_and_responses,
+        alpha=100,
+        std_cutoff=0,
+        global_std_scaling=1,
+        auto_scale_observations=None,
+        progress_callback=lambda _: None,
+        ensemble=ensemble,
+    )
+    assert not any("Deactivating observations" in m for m in caplog.messages)
 
 
 def test_gen_data_obs_data_mismatch(storage, uniform_parameter):
