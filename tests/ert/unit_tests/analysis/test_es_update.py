@@ -778,7 +778,8 @@ def _mock_preprocess_observations_and_responses(
 
         return _preprocess_observations_and_responses(
             ensemble=ensemble,
-            observation_settings=observation_settings,
+            outlier_settings=observation_settings.outlier_settings,
+            auto_scale_observations=observation_settings.auto_scale_observations,
             global_std_scaling=global_std_scaling,
             iens_active_index=np.array(
                 [int(c) for c in observations_and_responses.columns[5:]]

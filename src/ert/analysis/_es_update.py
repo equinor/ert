@@ -171,9 +171,9 @@ class _OutlierColumns(StrEnum):
 
 def _compute_observation_statuses(
     observations_and_responses: pl.DataFrame,
-    global_std_scaling: float,
-    outlier_settings: OutlierSettings,
     active_realizations: list[str],
+    global_std_scaling: float,
+    outlier_settings: OutlierSettings | None = None,
 ) -> pl.DataFrame:
     """
     Computes and adds columns (named in _OutlierColumns) for:
@@ -184,55 +184,63 @@ def _compute_observation_statuses(
      * status of (the responses of) each observation,
        corresponding to ObservationStatus
     """
+
+    df_with_status = observations_and_responses
+
+    obs_has_null_response_ = pl.any_horizontal(
+        [pl.col(c).is_nan() | pl.col(c).is_null() for c in active_realizations]
+    )
+
+    if outlier_settings is None:
+        return df_with_status.with_columns(
+            pl.when(obs_has_null_response_)
+            .then(pl.lit(ObservationStatus.MISSING_RESPONSE))
+            .otherwise(pl.lit(ObservationStatus.ACTIVE))
+            .alias("status")
+        )
+
+    assert global_std_scaling is not None
+
     responses = observations_and_responses.select(active_realizations)
     response_stds = responses.with_columns(
         pl.concat_list("*").list.std(ddof=0).alias(_OutlierColumns.response_std)
     )[_OutlierColumns.response_std]
 
-    with_outlier_info = (
-        observations_and_responses.with_columns(
-            responses.mean_horizontal().alias(_OutlierColumns.ens_mean),
-            response_stds,
-            # Inflating measurement errors by a factor sqrt(global_std_scaling) as shown
-            # in for example evensen2018 - Analysis of iterative ensemble smoothers for
-            # solving inverse problems.
-            # `global_std_scaling` is 1.0 for ES.
-            pl.lit(np.sqrt(global_std_scaling), dtype=pl.Float64).alias(
-                _OutlierColumns.obs_scaling
-            ),
-        )
-        .with_columns(
-            (pl.col("std") * pl.col(_OutlierColumns.obs_scaling)).alias(
-                _OutlierColumns.scaled_std
-            )
-        )
-        .with_columns(
-            pl.when(
-                pl.any_horizontal(
-                    [
-                        pl.col(c).is_nan() | pl.col(c).is_null()
-                        for c in active_realizations
-                    ]
-                )
-            )
-            .then(pl.lit(ObservationStatus.MISSING_RESPONSE))
-            .when(pl.col(_OutlierColumns.response_std) <= outlier_settings.std_cutoff)
-            .then(pl.lit(ObservationStatus.STD_CUTOFF))
-            .when(
-                abs(pl.col("observations") - pl.col(_OutlierColumns.ens_mean))
-                > outlier_settings.alpha
-                * (
-                    pl.col(_OutlierColumns.response_std)
-                    + pl.col(_OutlierColumns.scaled_std)
-                )
-            )
-            .then(pl.lit(ObservationStatus.OUTLIER))
-            .otherwise(pl.lit(ObservationStatus.ACTIVE))
-            .alias("status")
+    df_with_status = df_with_status.with_columns(
+        responses.mean_horizontal().alias(_OutlierColumns.ens_mean),
+        response_stds,
+        # Inflating measurement errors by a factor sqrt(global_std_scaling) as shown
+        # in for example evensen2018 - Analysis of iterative ensemble smoothers for
+        # solving inverse problems.
+        # `global_std_scaling` is 1.0 for ES.
+        pl.lit(np.sqrt(global_std_scaling), dtype=pl.Float64).alias(
+            _OutlierColumns.obs_scaling
+        ),
+    ).with_columns(
+        (pl.col("std") * pl.col(_OutlierColumns.obs_scaling)).alias(
+            _OutlierColumns.scaled_std
         )
     )
 
-    return with_outlier_info
+    df_with_status = df_with_status.with_columns(
+        pl.when(obs_has_null_response_)
+        .then(pl.lit(ObservationStatus.MISSING_RESPONSE))
+        .when(pl.col(_OutlierColumns.response_std) <= outlier_settings.std_cutoff)
+        .then(pl.lit(ObservationStatus.STD_CUTOFF))
+        .when(
+            abs(pl.col("observations") - pl.col(_OutlierColumns.ens_mean))
+            > outlier_settings.alpha
+            * (
+                pl.col(_OutlierColumns.response_std)
+                + pl.col(_OutlierColumns.scaled_std)
+            )
+        )
+        .then(pl.lit(ObservationStatus.OUTLIER))
+        .otherwise(pl.lit(ObservationStatus.ACTIVE))
+        .alias("status")
+    )
+
+    return df_with_status
 
 
 def _auto_scale_observations(
@@ -321,11 +329,12 @@ def _auto_scale_observations(
 
 def _preprocess_observations_and_responses(
     ensemble: Ensemble,
-    observation_settings: ObservationSettings,
-    global_std_scaling: float,
     iens_active_index: npt.NDArray[np.int_],
+    global_std_scaling: float,
     selected_observations: Iterable[str],
-    progress_callback: Callable[[AnalysisEvent], None],
+    outlier_settings: OutlierSettings | None = None,
+    auto_scale_observations: list[ObservationGroups] | None = None,
+    progress_callback: Callable[[AnalysisEvent], None] | None = None,
 ) -> pl.DataFrame:
     observations_and_responses = ensemble.get_observations_and_responses(
         selected_observations,
@@ -339,10 +348,10 @@ def _preprocess_observations_and_responses(
     realization_responses = [str(i) for i in iens_active_index]
 
     observations_and_responses = _compute_observation_statuses(
-        observations_and_responses,
-        global_std_scaling,
-        observation_settings.outlier_settings,
-        realization_responses,
+        observations_and_responses=observations_and_responses,
+        active_realizations=realization_responses,
+        global_std_scaling=global_std_scaling,
+        outlier_settings=outlier_settings,
     )
 
     obs_mask = (
@@ -351,10 +360,11 @@ def _preprocess_observations_and_responses(
         .flatten()
     )
 
-    if observation_settings.auto_scale_observations:
+    if auto_scale_observations:
+        assert progress_callback is not None
         updated_std_scales, scaling_factors_df = _auto_scale_observations(
             observations_and_responses,
-            observation_settings.auto_scale_observations,
+            auto_scale_observations,
             obs_mask,
             realization_responses,
             progress_callback,
@@ -524,12 +534,13 @@ def analysis_ES(
         return TimedIterator(iterable, progress_callback)
 
     preprocessed_data = _preprocess_observations_and_responses(
-        source_ensemble,
-        observation_settings,
-        global_scaling,
-        iens_active_index,
-        observations,
-        progress_callback,
+        ensemble=source_ensemble,
+        outlier_settings=observation_settings.outlier_settings,
+        auto_scale_observations=observation_settings.auto_scale_observations,
+        iens_active_index=iens_active_index,
+        global_std_scaling=global_scaling,
+        selected_observations=observations,
+        progress_callback=progress_callback,
     )
 
     filtered_data = preprocessed_data.filter(
