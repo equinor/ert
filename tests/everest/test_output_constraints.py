@@ -1,5 +1,3 @@
-import os
-
 import numpy as np
 import pytest
 from ropt.config.enopt import EnOptConfig
@@ -46,50 +44,18 @@ def test_wrong_output_constr_def(copy_mocked_test_data_to_tmp):
         ValueError, match="Output constraints must have only one of the following"
     ):
         EverestConfig(
-            wells=[{"name": "w07"}],
             output_constraints=[
                 {"name": "some_name"},
             ],
-            config_path="/",
-            forward_model=[],
-            controls=[
-                {
-                    "name": "well_order",
-                    "type": "well_control",
-                    "min": 0,
-                    "max": 1,
-                    "variables": [{"name": "w07", "initial_guess": 0.0633}],
-                }
-            ],
-            environment={"simulation_folder": "/tmp/everest"},
-            optimization={"algorithm": "optpp_q_newton"},
-            model={"realizations": [0]},
-            objective_functions=[{"name": "npv_function"}],
         )
 
     # Same name
     with pytest.raises(ValueError, match="Output constraint names must be unique"):
         EverestConfig(
-            wells=[{"name": "w07"}],
             output_constraints=[
                 {"name": "same_name", "upper_bound": 5000},
                 {"name": "same_name", "upper_bound": 5000},
             ],
-            config_path="/",
-            forward_model=[],
-            controls=[
-                {
-                    "name": "well_order",
-                    "type": "well_control",
-                    "min": 0,
-                    "max": 1,
-                    "variables": [{"name": "w07", "initial_guess": 0.0633}],
-                }
-            ],
-            environment={"simulation_folder": "/tmp/everest"},
-            optimization={"algorithm": "optpp_q_newton"},
-            model={"realizations": [0]},
-            objective_functions=[{"name": "npv_function"}],
         )
 
     # Two RHS
@@ -99,48 +65,17 @@ def test_wrong_output_constr_def(copy_mocked_test_data_to_tmp):
         " { target }, or { upper and/or lower bound }",
     ):
         EverestConfig(
-            wells=[{"name": "w07"}],
             output_constraints=[
                 {"name": "some_name", "upper_bound": 5000, "target": 5000},
             ],
-            config_path="/",
-            forward_model=[],
-            controls=[
-                {
-                    "name": "well_order",
-                    "type": "well_control",
-                    "min": 0,
-                    "max": 1,
-                    "variables": [{"name": "w07", "initial_guess": 0.0633}],
-                }
-            ],
-            environment={"simulation_folder": "/tmp/everest"},
-            optimization={"algorithm": "optpp_q_newton"},
             model={"realizations": [0]},
-            objective_functions=[{"name": "npv_function"}],
         )
 
     # Wrong RHS attribute
     wrong_rhs_config = {
-        "wells": [{"name": "w07"}],
         "output_constraints": [
             {"name": "some_name", "target": 2},
         ],
-        "config_path": "/",
-        "forward_model": [],
-        "controls": [
-            {
-                "name": "well_order",
-                "type": "well_control",
-                "min": 0,
-                "max": 1,
-                "variables": [{"name": "w07", "initial_guess": 0.0633}],
-            }
-        ],
-        "environment": {"simulation_folder": "/tmp/everest"},
-        "optimization": {"algorithm": "optpp_q_newton"},
-        "model": {"realizations": [0]},
-        "objective_functions": [{"name": "npv_function"}],
     }
 
     wrong_rhs_config["output_constraints"][0]["upper_bund"] = 5000
@@ -151,25 +86,9 @@ def test_wrong_output_constr_def(copy_mocked_test_data_to_tmp):
     # Wrong RHS type
     with pytest.raises(ValueError, match="unable to parse string as a number"):
         EverestConfig(
-            wells=[{"name": "w07"}],
             output_constraints=[
                 {"name": "some_name", "upper_bound": "2ooo"},
             ],
-            config_path="/",
-            forward_model=[],
-            controls=[
-                {
-                    "name": "well_order",
-                    "type": "well_control",
-                    "min": 0,
-                    "max": 1,
-                    "variables": [{"name": "w07", "initial_guess": 0.0633}],
-                }
-            ],
-            environment={"simulation_folder": "/tmp/everest"},
-            optimization={"algorithm": "optpp_q_newton"},
-            model={"realizations": [0]},
-            objective_functions=[{"name": "npv_function"}],
         )
 
 
@@ -178,25 +97,9 @@ def test_upper_bound_output_constraint_def(copy_mocked_test_data_to_tmp):
         f.write(" ")
 
     config = EverestConfig.with_defaults(
-        wells=[{"name": "w07"}],
         output_constraints=[
             {"name": "some_name", "upper_bound": 5000, "scale": 1.0},
         ],
-        config_path=os.getcwd() + "/conf_file",
-        forward_model=[],
-        controls=[
-            {
-                "name": "group_0",
-                "type": "well_control",
-                "min": 0,
-                "max": 1,
-                "variables": [{"name": "w07", "initial_guess": 0.0633}],
-            }
-        ],
-        environment={"simulation_folder": "/tmp/everest"},
-        optimization={"algorithm": "optpp_q_newton"},
-        model={"realizations": [0]},
-        objective_functions=[{"name": "npv_function"}],
     )
 
     # Check ropt conversion
