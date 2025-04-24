@@ -119,7 +119,9 @@ def _save_param_ensemble_array_to_disk(
 ) -> None:
     config_node = ensemble.experiment.parameter_configuration[param_group]
     for i, realization in enumerate(iens_active_index):
-        config_node.save_parameters(ensemble, realization, param_ensemble_array[:, i])
+        config_node.save_parameters(
+            ensemble, int(realization), param_ensemble_array[:, i]
+        )
 
 
 def _load_param_ensemble_array(

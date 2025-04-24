@@ -47,7 +47,7 @@ def create_run_arguments(
                 iteration,
                 run_path,
                 job_name,
-                active,
+                bool(active),
             )
         )
     return run_args

@@ -132,7 +132,6 @@ class EnkfObs:
         refcase = ensemble_config.refcase
         if refcase is None:
             raise ObservationConfigError("REFCASE is required for HISTORY_OBSERVATION")
-        error = history_observation.error
 
         if history_type == HistorySource.REFCASE_HISTORY:
             local_key = history_key(summary_key)
@@ -182,7 +181,9 @@ class EnkfObs:
             )
         data: dict[int | datetime, GenObservation | SummaryObservation] = {}
         for date, error, value in zip(refcase.dates, std_dev, values, strict=False):
-            data[date] = SummaryObservation(summary_key, summary_key, value, error)
+            data[date] = SummaryObservation(
+                summary_key, summary_key, value, float(error)
+            )
 
         return {
             summary_key: ObsVector(
