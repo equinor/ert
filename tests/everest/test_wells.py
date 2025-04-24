@@ -45,9 +45,25 @@ def test_lint_mocked_config(mocked_config):
             {"name": "a.b"},
             pytest.raises(ValueError, match=r"Well name can not contain any dots (.)"),
         ),
+        (
+            {"name": "well_well", "drill_time": -4},
+            pytest.raises(ValueError, match=r"drill_time\n.*should be greater than 0"),
+        ),
+        (
+            {"name": "well_well", "drill_time": 0},
+            pytest.raises(ValueError, match=r"drill_time\n.*should be greater than 0"),
+        ),
+        (
+            {"name": "well_well", "drill_time": "seventeen"},
+            pytest.raises(ValueError, match="Input should be a valid integer"),
+        ),
+        (
+            {"name": "well_well", "drill_time": 1.1},
+            pytest.raises(ValueError, match="got a number with a fractional part"),
+        ),
     ],
 )
-def test_unrecognized_keys(config, expectation):
+def test_well_config(config, expectation):
     with expectation:
         WellConfig(**config)
 
@@ -56,24 +72,3 @@ def test_that_well_names_must_be_unique(min_config):
     min_config["wells"] = [{"name": "well_well"}, {"name": "well_well"}]
     with pytest.raises(ValueError, match="Well names must be unique"):
         EverestConfig(**min_config)
-
-
-def test_well_drilling_times(mocked_config):
-    config = mocked_config
-    wells = config["wells"]
-
-    wells[0]["drill_time"] = -4
-    with pytest.raises(ValueError, match=r"drill_time\n.*should be greater than 0"):
-        EverestConfig(**config)
-
-    wells[0]["drill_time"] = 0
-    with pytest.raises(ValueError, match=r"drill_time\n.*should be greater than 0"):
-        EverestConfig(**config)
-
-    wells[0]["drill_time"] = "seventeen"
-    with pytest.raises(ValueError, match="Input should be a valid integer"):
-        EverestConfig(**config)
-
-    wells[0]["drill_time"] = 3.7
-    with pytest.raises(ValueError, match="got a number with a fractional part"):
-        EverestConfig(**config)
