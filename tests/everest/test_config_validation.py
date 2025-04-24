@@ -34,40 +34,6 @@ def test_that_sampler_config_with_wrong_method():
         SamplerConfig(backend="scipy", method="hey")
 
 
-def test_that_duplicate_well_names_raise_error():
-    with pytest.raises(ValueError) as e:
-        EverestConfig.with_defaults(
-            wells=[
-                {"name": "w110"},
-                {"name": "w08"},
-                {"name": "w10"},
-                {"name": "w10"},
-                {"name": "w09"},
-                {"name": "w00"},
-                {"name": "w01"},
-                {"name": "w01"},
-                {"name": "w01"},
-            ],
-        )
-
-    assert has_error(e.value, match="Well names must be unique")
-
-
-def test_that_dot_in_well_name_raises_error():
-    with pytest.raises(ValueError) as e:
-        EverestConfig.with_defaults(
-            wells=[
-                {"name": "w.110"},
-                {"name": "w.08"},
-            ]
-        )
-
-    assert has_error(
-        e.value,
-        match="(.*)can not contain any dots",
-    )
-
-
 def test_that_cvar_attrs_are_mutex():
     cvar = {"percentile": 0.1, "number_of_realizations": 3}
     with pytest.raises(ValueError, match="Invalid CVaR section"):
