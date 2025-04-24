@@ -1,8 +1,8 @@
 import pytest
 
+from ert.tests.everest.test_config_validation import has_error
 from everest.config import EverestConfig
 from everest.config_file_loader import yaml_file_to_substituted_config_dict
-from tests.everest.test_config_validation import has_error
 from tests.everest.utils import relpath
 
 
@@ -41,7 +41,6 @@ def test_well_names(mocked_config):
     assert len(wells) == 16
 
     well_name_0 = wells[0]["name"]
-    well_name_1 = wells[1]["name"]
 
     # Make sure controls do not interfere with error checking
     controls = config["controls"][0]["variables"]
@@ -56,11 +55,6 @@ def test_well_names(mocked_config):
     wells[0]["drill_time"] = 1  # incomplete well definition
     assert has_error(EverestConfig.lint_config_dict(config), match="Field required")
 
-    wells[0]["name"] = well_name_1  # not unique name
-    assert has_error(
-        EverestConfig.lint_config_dict(config), match="Well names must be unique"
-    )
-
     wells[0]["name"] = "a.b"  # can't have dots in well name
     assert has_error(
         EverestConfig.lint_config_dict(config),
@@ -69,6 +63,12 @@ def test_well_names(mocked_config):
 
     wells[0]["name"] = well_name_0
     assert not EverestConfig.lint_config_dict(config)
+
+
+def test_that_well_names_must_be_unique(min_config):
+    min_config["wells"] = [{"name": "well_well"}, {"name": "well_well"}]
+    with pytest.raises(ValueError, match="Well names must be unique"):
+        EverestConfig(**min_config)
 
 
 def test_well_drilling_times(mocked_config):
