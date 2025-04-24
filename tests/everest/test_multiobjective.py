@@ -1,3 +1,5 @@
+from contextlib import ExitStack as does_not_raise
+
 import pytest
 from ropt.config.enopt import EnOptConfig
 
@@ -9,54 +11,56 @@ from everest.optimizer.everest2ropt import everest2ropt
 CONFIG_FILE = "config_multi_objectives.yml"
 
 
-def test_config_multi_objectives(copy_mocked_test_data_to_tmp):
-    config = EverestConfig.load_file(CONFIG_FILE)
-    config_dict = config.to_dict()
+@pytest.mark.parametrize(
+    "config, expectation",
+    [
+        (
+            [{"name": "c1", "weight": 1.0}, {"name": "c2"}],
+            pytest.raises(
+                ValueError,
+                match="Weight should be given either for all of the"
+                " objectives or for none of them",
+            ),
+        ),
+        (
+            [{"weight": 1.0}],
+            pytest.raises(
+                ValueError,
+                match="Field required",
+            ),
+        ),
+        (
+            [{"name": "c1", "weight": -1.0}],
+            pytest.raises(
+                ValueError,
+                match="Input should be greater than 0",
+            ),
+        ),
+        (
+            [{"name": "c1", "weight": 0}],
+            pytest.raises(
+                ValueError,
+                match="Input should be greater than 0",
+            ),
+        ),
+        (
+            [{"name": "c1", "scale": 0}],
+            pytest.raises(
+                ValueError,
+                match="Scale value cannot be zero",
+            ),
+        ),
+        (
+            [{"name": "c1", "scale": -125}],
+            does_not_raise(),
+        ),
+    ],
+)
+def test_config_multi_objectives(min_config, config, expectation, tmp_path):
+    min_config["objective_functions"] = config
 
-    obj_funcs = config_dict["objective_functions"]
-    assert len(obj_funcs) == 2
-
-    obj_funcs[0]["weight"] = 1.0
-    with pytest.raises(
-        ValueError,
-        match="Weight should be given either for all of the"
-        " objectives or for none of them",
-    ):
-        EverestConfig(**config_dict)  # weight given only for some obj
-
-    obj_funcs[1]["weight"] = 3
-    assert (
-        len(EverestConfig.lint_config_dict(config_dict)) == 0
-    )  # weight given for all the objectivs
-
-    obj_funcs.append({"weight": 1, "scale": 1})
-    with pytest.raises(ValueError, match="Field required"):
-        EverestConfig(**config_dict)  # no name
-
-    obj_funcs[-1]["name"] = " test_obj"
-    obj_funcs[-1]["weight"] = -0.3
-    with pytest.raises(ValueError, match="Input should be greater than 0"):
-        EverestConfig(**config_dict)  # negative weight
-
-    obj_funcs[-1]["weight"] = 0
-    with pytest.raises(ValueError, match="Input should be greater than 0"):
-        EverestConfig(**config_dict)  # 0 weight
-
-    obj_funcs[-1]["weight"] = 1
-    obj_funcs[-1]["scale"] = 0
-    with pytest.raises(ValueError, match="Scale value cannot be zero"):
-        EverestConfig(**config_dict)  # 0 scale
-
-    obj_funcs[-1]["scale"] = -125
-    assert (
-        len(EverestConfig.lint_config_dict(config_dict)) == 0
-    )  # negative normalization is ok)
-
-    obj_funcs.pop()
-    assert len(EverestConfig.lint_config_dict(config_dict)) == 0
-
-    # test everest initialization
-    EverestRunModel.create(config)
+    with expectation:
+        EverestConfig(**min_config)
 
 
 def test_multi_objectives2ropt(copy_mocked_test_data_to_tmp):
