@@ -33,6 +33,18 @@ def test_lint_mocked_config(mocked_config):
             {"name": "well_well"},
             does_not_raise(),
         ),
+        (
+            {},
+            pytest.raises(ValueError, match="Field required"),
+        ),
+        (
+            {"drill_time": 10},
+            pytest.raises(ValueError, match="Field required"),
+        ),
+        (
+            {"name": "a.b"},
+            pytest.raises(ValueError, match=r"Well name can not contain any dots (.)"),
+        ),
     ],
 )
 def test_unrecognized_keys(config, expectation):
