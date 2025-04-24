@@ -12,7 +12,7 @@ from collections.abc import Callable, MutableSequence
 from enum import IntEnum, auto
 from pathlib import Path
 from types import TracebackType
-from typing import TYPE_CHECKING, Any, Protocol
+from typing import TYPE_CHECKING, Any, Protocol, cast
 
 import numpy as np
 import polars as pl
@@ -602,7 +602,7 @@ class EverestRunModel(BaseRunModel):
 
         sim_id_counter = 0
         for flat_index, (
-            control_vector,
+            control_row,
             model_realization,
             perturbation,
             is_active,
@@ -615,6 +615,7 @@ class EverestRunModel(BaseRunModel):
                 strict=False,
             )
         ):
+            control_vector = cast(NDArray[np.float64], control_row)
             if not is_active:
                 evaluation_infos.append(
                     _EvaluationInfo(
@@ -677,7 +678,6 @@ class EverestRunModel(BaseRunModel):
             if cache_hits_df is not None and not cache_hits_df.is_empty()
             else None
         )
-
         return evaluation_infos, cache_hits
 
     def _forward_model_evaluator(
