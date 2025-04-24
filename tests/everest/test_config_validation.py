@@ -314,15 +314,8 @@ def test_that_duplicate_output_constraint_names_raise_error():
     with pytest.raises(ValueError, match="Output constraint names must be unique"):
         EverestConfig.with_defaults(
             output_constraints=[
-                {"target": 0.3, "name": "c110"},
-                {"target": 0.3, "name": "c08"},
-                {"target": 0.3, "name": "c10"},
-                {"target": 0.3, "name": "c10"},
-                {"target": 0.3, "name": "c09"},
-                {"target": 0.3, "name": "c00"},
-                {"target": 0.3, "name": "c01"},
-                {"target": 0.3, "name": "c01"},
-                {"target": 0.3, "name": "c01"},
+                {"target": 0.3, "name": "a"},
+                {"target": 0.3, "name": "a"},
             ],
         )
 
