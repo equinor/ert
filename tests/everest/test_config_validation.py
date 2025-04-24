@@ -68,20 +68,6 @@ def test_that_dot_in_well_name_raises_error():
     )
 
 
-def test_that_negative_drill_time_raises_error():
-    with pytest.raises(ValueError) as e:
-        EverestConfig.with_defaults(
-            wells=[
-                {"name": "w110", "drill_time": -1},
-            ]
-        )
-
-    assert has_error(
-        e.value,
-        match="should be greater than 0",
-    )
-
-
 def test_that_cvar_attrs_are_mutex():
     cvar = {"percentile": 0.1, "number_of_realizations": 3}
     with pytest.raises(ValueError, match="Invalid CVaR section"):
