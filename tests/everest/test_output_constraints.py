@@ -71,17 +71,12 @@ def test_wrong_output_constr_def(copy_mocked_test_data_to_tmp):
             model={"realizations": [0]},
         )
 
-    # Wrong RHS attribute
-    wrong_rhs_config = {
-        "output_constraints": [
-            {"name": "some_name", "target": 2},
-        ],
-    }
-
-    wrong_rhs_config["output_constraints"][0]["upper_bund"] = 5000
-
     with pytest.raises(ValueError, match="Extra inputs are not permitted"):
-        EverestConfig(**wrong_rhs_config)
+        EverestConfig(
+            output_constraints=[
+                {"name": "some_name", "upper_bund": 2},
+            ],
+        )
 
     # Wrong RHS type
     with pytest.raises(ValueError, match="unable to parse string as a number"):
