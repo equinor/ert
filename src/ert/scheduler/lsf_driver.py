@@ -35,7 +35,7 @@ JobState = Literal[
 
 class KillCoordinator:
     def __init__(self) -> None:
-        self.instances_ready = 0
+        self.instances_ready = set()
         self.barrier = asyncio.Condition()
         self.kill_completed = asyncio.Event()
         self.kill_task: asyncio.Task[None] | None = None
@@ -412,9 +412,9 @@ class LsfDriver(Driver):
 
             async with self.kill_coordinator.barrier:
                 await asyncio.sleep(0.1)
-                self.kill_coordinator.instances_ready += 1
+                self.kill_coordinator.instances_ready.add(iens)
 
-                if self.kill_coordinator.instances_ready == len(self._submit_locks):
+                if self.kill_coordinator.instances_ready == set(self._submit_locks):
                     self.kill_coordinator.barrier.notify_all()
 
                     self.kill_coordinator.kill_task = asyncio.create_task(
@@ -433,8 +433,8 @@ class LsfDriver(Driver):
                         logger.warning(
                             f"Timeout waiting for all realizations to"
                             " coordinate termination. "
-                            f"Expected {len(self._iens2jobid)} but only got "
-                            f"{self.kill_coordinator.instances_ready}. "
+                            f"Expected {len(self._submit_locks)} but only got "
+                            f"{len(self.kill_coordinator.instances_ready)}. "
                             f"Proceeding with termination operation anyway."
                         )
                         if self.kill_coordinator.kill_task is None:
