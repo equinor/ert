@@ -38,52 +38,46 @@ def test_constraints_init(copy_mocked_test_data_to_tmp):
     assert [cn.scale for cn in constr] == 16 * [7500]
 
 
-def test_wrong_output_constr_def(copy_mocked_test_data_to_tmp):
-    # No RHS
-    with pytest.raises(
-        ValueError, match="Output constraints must have only one of the following"
-    ):
-        EverestConfig(
-            output_constraints=[
+@pytest.mark.parametrize(
+    "config, error",
+    [
+        (
+            [
                 {"name": "some_name"},
             ],
-        )
-
-    # Same name
-    with pytest.raises(ValueError, match="Output constraint names must be unique"):
-        EverestConfig(
-            output_constraints=[
+            "Output constraints must have only one of the following",
+        ),
+        (
+            [
                 {"name": "same_name", "upper_bound": 5000},
                 {"name": "same_name", "upper_bound": 5000},
             ],
-        )
-
-    # Two RHS
-    with pytest.raises(
-        ValueError,
-        match=r"Output constraints must have only one of the following:"
-        " { target }, or { upper and/or lower bound }",
-    ):
-        EverestConfig(
-            output_constraints=[
+            "Output constraint names must be unique",
+        ),
+        (
+            [
                 {"name": "some_name", "upper_bound": 5000, "target": 5000},
             ],
-            model={"realizations": [0]},
-        )
-
-    with pytest.raises(ValueError, match="Extra inputs are not permitted"):
-        EverestConfig(
-            output_constraints=[
+            r"one of the following: { target }, or { upper and/or lower bound }",
+        ),
+        (
+            [
                 {"name": "some_name", "upper_bund": 2},
             ],
-        )
-
-    # Wrong RHS type
-    with pytest.raises(ValueError, match="unable to parse string as a number"):
-        EverestConfig(
-            output_constraints=[
+            "Extra inputs are not permitted",
+        ),
+        (
+            [
                 {"name": "some_name", "upper_bound": "2ooo"},
             ],
+            "unable to parse string as a number",
+        ),
+    ],
+)
+def test_output_constraint_config(config, error):
+    with pytest.raises(ValueError, match=error):
+        EverestConfig(
+            output_constraints=config,
         )
 
 
