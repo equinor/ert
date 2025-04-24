@@ -4,7 +4,6 @@ import asyncio
 import logging
 import traceback
 from collections.abc import Awaitable, Callable, Iterable, Sequence
-from enum import Enum
 from typing import Any, get_args
 
 import zmq.asyncio
@@ -51,8 +50,11 @@ logger = logging.getLogger(__name__)
 EVENT_HANDLER = Callable[[list[Event]], Awaitable[None]]
 
 
-class HeartbeatEvent(Enum):
-    event = HEARTBEAT_MSG
+class _HeartbeatEvent:
+    value = HEARTBEAT_MSG
+
+
+HeartbeatEvent = _HeartbeatEvent()
 
 
 class EnsembleEvaluator:
@@ -85,13 +87,13 @@ class EnsembleEvaluator:
     async def _publisher(self) -> None:
         while True:
             try:
-                event = await asyncio.wait_for(
+                event: Event | _HeartbeatEvent = await asyncio.wait_for(
                     self._events_to_send.get(), timeout=HEARTBEAT_TIMEOUT
                 )
             except TimeoutError:
-                event = HeartbeatEvent.event
+                event = HeartbeatEvent
             for identity in self._clients_connected:
-                if isinstance(event, HeartbeatEvent):
+                if isinstance(event, _HeartbeatEvent):
                     await self._router_socket.send_multipart(
                         [identity, b"", event.value]
                     )
@@ -99,7 +101,7 @@ class EnsembleEvaluator:
                     await self._router_socket.send_multipart(
                         [identity, b"", event_to_json(event).encode("utf-8")]
                     )
-            if not isinstance(event, HeartbeatEvent):
+            if not isinstance(event, _HeartbeatEvent):
                 self._events_to_send.task_done()
 
     async def _append_message(self, snapshot_update_event: EnsembleSnapshot) -> None:

@@ -114,11 +114,14 @@ class Client:
                 await asyncio.sleep(0)
                 self.socket.connect(self.url)
             except TimeoutError:
+                if not self._ack_event.is_set():
+                    continue  # We are already reconnecting
                 await self.socket.send_multipart([b"", CONNECT_MSG])
+                print("RECONNECT")
                 logger.warning(
-                    f"""{self.dealer_id} did not receive any events within the
-                    timeout period, there might be issues with the connection.
-                    Reconnecting..."""
+                    f"{self.dealer_id} did not receive any events within the "
+                    "timeout period - there might be issues with the connection. "
+                    "Reconnecting..."
                 )
 
     async def send(self, message: str | bytes, retries: int | None = None) -> None:

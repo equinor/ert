@@ -53,7 +53,9 @@ async def test_retry(unused_tcp_port):
     assert mock_server.messages.count("test_3") == 1
 
 
-async def test_reconnect_when_missing_heartbeat(unused_tcp_port, monkeypatch):
+async def test_reconnect_when_no_events_within_heartbeat_timeout(
+    unused_tcp_port, monkeypatch
+):
     host = "localhost"
     url = f"tcp://{host}:{unused_tcp_port}"
 
@@ -71,7 +73,7 @@ async def test_reconnect_when_missing_heartbeat(unused_tcp_port, monkeypatch):
     assert len(mock_server.dealers) == 0
 
     # when reconnection happens CONNECT message is sent again
-    assert mock_server.messages.count("CONNECT") == 2
+    assert mock_server.messages.count("CONNECT") > 2
     assert mock_server.messages.count("DISCONNECT") == 1
     assert "start" in mock_server.messages
     assert "stop" in mock_server.messages

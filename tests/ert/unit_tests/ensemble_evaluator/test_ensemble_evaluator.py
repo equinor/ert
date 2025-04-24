@@ -1,5 +1,6 @@
 import asyncio
 import datetime
+from contextlib import asynccontextmanager
 from functools import partial
 from typing import cast
 from unittest.mock import patch
@@ -33,6 +34,7 @@ from _ert.forward_model_runner.client import (
 from ert.ensemble_evaluator import (
     EnsembleEvaluator,
     EnsembleSnapshot,
+    EvaluatorServerConfig,
     FMStepSnapshot,
     Monitor,
 )
@@ -170,16 +172,33 @@ async def test_new_connections_are_no_problem_when_evaluator_is_closing_down(
     await new_connection_task
 
 
+def setup_evaluator(ee_config: EvaluatorServerConfig) -> EnsembleEvaluator:
+    ensemble = TestEnsemble(0, 2, 2, id_="0")
+    evaluator = EnsembleEvaluator(ensemble, ee_config)
+    evaluator._batching_interval = 0.5  # batching can be faster for tests
+    return evaluator
+
+
 @pytest.fixture(name="evaluator_to_use")
 async def evaluator_to_use_fixture(make_ee_config):
-    ensemble = TestEnsemble(0, 2, 2, id_="0")
-    evaluator = EnsembleEvaluator(ensemble, make_ee_config(use_token=False))
-    evaluator._batching_interval = 0.5  # batching can be faster for tests
+    evaluator = setup_evaluator(make_ee_config(use_token=False))
     run_task = asyncio.create_task(evaluator.run_and_get_successful_realizations())
     await evaluator._server_started
     yield evaluator
     evaluator.stop()
     await run_task
+
+
+@asynccontextmanager
+async def evaluator_to_use_context(make_ee_config):
+    try:
+        evaluator = setup_evaluator(make_ee_config(use_token=False))
+        run_task = asyncio.create_task(evaluator.run_and_get_successful_realizations())
+        await evaluator._server_started
+        yield evaluator
+    finally:
+        evaluator.stop()
+        await run_task
 
 
 @pytest.mark.integration_test
@@ -391,28 +410,28 @@ async def test_new_monitor_can_pick_up_where_we_left_off(evaluator_to_use):
 
 @patch("ert.ensemble_evaluator.evaluator.HEARTBEAT_TIMEOUT", 0.1)
 @pytest.mark.integration_test
-async def test_monitor_receive_heartbeats(evaluator_to_use):
-    evaluator = evaluator_to_use
-    token = evaluator._config.token
-    url = evaluator._config.get_uri()
-    received_heartbeats = 0
+async def test_monitor_receive_heartbeats_if_no_events_to_publish(make_ee_config):
+    async with evaluator_to_use_context(make_ee_config) as evaluator:
+        token = evaluator._config.token
+        url = evaluator._config.get_uri()
+        received_heartbeats = 0
 
-    async def mock_receiver(self):
-        nonlocal received_heartbeats
-        while True:
-            _, raw_msg = await self.socket.recv_multipart()
-            if raw_msg == ACK_MSG:
-                self._ack_event.set()
-            elif raw_msg == HEARTBEAT_MSG:
-                received_heartbeats += 1
+        async def mock_receiver(self):
+            nonlocal received_heartbeats
+            while True:
+                _, raw_msg = await self.socket.recv_multipart()
+                if raw_msg == ACK_MSG:
+                    self._ack_event.set()
+                elif raw_msg == HEARTBEAT_MSG:
+                    received_heartbeats += 1
 
-    with patch.object(Monitor, "_receiver", mock_receiver):
-        async with Monitor(url, token) as monitor:
-            await asyncio.sleep(0.5)
-            await monitor.signal_done()
-    assert received_heartbeats > 1, (
-        "we should have received at least 2 heartbeats in 0.5 secs!"
-    )
+        with patch.object(Monitor, "_receiver", mock_receiver):
+            async with Monitor(url, token) as monitor:
+                await asyncio.sleep(0.5)
+                await monitor.signal_done()
+        assert received_heartbeats > 2, (
+            "we should have received at least 2 heartbeats in 0.5 secs!"
+        )
 
 
 async def test_dispatch_endpoint_clients_can_connect_and_monitor_can_shut_down_evaluator(  # noqa: E501
