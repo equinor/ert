@@ -21,8 +21,8 @@ The interpretation of this is up to the forward model. The standard tooling will
 consider this as the earliest possible drill date.
 """,
     )
-    drill_time: PositiveInt | None = Field(
-        None,
+    drill_time: PositiveInt = Field(
+        0,
         description="""specifies the time it takes
  to drill the well under consideration.""",
     )

@@ -52,10 +52,10 @@ def test_controls_initialization():
         ValidationError,
         match=r"Subfield\(s\) `name` must be unique",
     ):
-        EverestConfig.model_validate(config.model_dump(exclude_none=True))
+        EverestConfig.model_validate(config.to_dict())
 
     config.controls[1].name = exp_grp_name + "_new"
-    EverestConfig.model_validate(config.model_dump(exclude_none=True))
+    EverestConfig.model_validate(config.to_dict())
 
 
 def _perturb_control_zero(
@@ -144,7 +144,7 @@ def test_variable_name_index_validation(copy_test_data_to_tmp):
 
     config.controls[0].variables[1].name = "w01"
     config_dict = {
-        **config.model_dump(exclude_none=True),
+        **config.to_dict(),
         "input_constraints": [
             {"upper_bound": 1, "lower_bound": 0, "weights": {"group.w00": 0.1}}
         ],
@@ -160,7 +160,7 @@ def test_variable_name_index_validation(copy_test_data_to_tmp):
     # Index and name unique and valid and input constraints are specifying
     # index
     config_dict = {
-        **config.model_dump(exclude_none=True),
+        **config.to_dict(),
         "input_constraints": [
             {"upper_bound": 1, "lower_bound": 0, "weights": {"group.w00-0": 0.1}}
         ],
@@ -207,7 +207,7 @@ def test_control_variable_name():
     underscore in a variable name will not behave nicely..
     """
     config = EverestConfig.load_file(mocked_config)
-    EverestConfig.model_validate(config.model_dump(exclude_none=True))
+    EverestConfig.model_validate(config.to_dict())
 
     illegal_name = "illegal.name.due.to.dots"
     config.controls[0].variables[0].name = illegal_name
@@ -215,13 +215,13 @@ def test_control_variable_name():
         ValidationError,
         match="Variable name can not contain any dots",
     ):
-        EverestConfig.model_validate(config.model_dump(exclude_none=True))
+        EverestConfig.model_validate(config.to_dict())
 
     weirdo_name = "something/with-symbols_=/()*&%$#!"
     new_config = EverestConfig.load_file(mocked_config)
     new_config.wells.append(WellConfig(name=weirdo_name))
     new_config.controls[0].variables[0].name = weirdo_name
-    EverestConfig.model_validate(new_config.model_dump(exclude_none=True))
+    EverestConfig.model_validate(new_config.to_dict())
 
 
 def test_control_none_well_variable_name():

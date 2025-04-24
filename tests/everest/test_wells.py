@@ -1,8 +1,10 @@
+import json
 from contextlib import ExitStack as does_not_raise
 
 import pytest
 
 from everest.config import EverestConfig, WellConfig
+from everest.simulator.everest_to_ert import everest_to_ert_config_dict
 
 
 @pytest.mark.parametrize(
@@ -59,3 +61,20 @@ def test_that_well_names_must_be_unique(min_config):
     min_config["wells"] = [{"name": "well_well"}, {"name": "well_well"}]
     with pytest.raises(ValueError, match="Well names must be unique"):
         EverestConfig(**min_config)
+
+
+@pytest.mark.parametrize(
+    "config",
+    [
+        [{"name": "test", "drill_time": 10}],
+        pytest.param([{"name": "test"}], id="Default value not in result"),
+    ],
+)
+def test_well_config_to_file(min_config, monkeypatch, tmp_path, config):
+    monkeypatch.chdir(tmp_path)
+    min_config["wells"] = config
+    ever_config = EverestConfig(**min_config)
+    everest_to_ert_config_dict(ever_config)
+    with open("everest_output/.internal_data/wells.json", encoding="utf-8") as fin:
+        wells_json = json.load(fin)
+    assert wells_json == config

@@ -691,7 +691,7 @@ and environment variables are exposed in the form 'os.NAME', for example:
         return objectives_names + constraint_names
 
     def to_dict(self) -> dict[str, Any]:
-        the_dict = self.model_dump(exclude_none=True)
+        the_dict = self.model_dump(exclude_none=True, exclude_unset=True)
 
         if "config_path" in the_dict:
             the_dict["config_path"] = str(the_dict["config_path"])
