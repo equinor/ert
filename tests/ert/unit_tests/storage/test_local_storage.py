@@ -212,11 +212,9 @@ def test_that_loading_parameter_via_response_api_fails(tmp_path):
     uniform_parameter = GenKwConfig(
         name="PARAMETER",
         forward_init=False,
-        template_file="",
         transform_function_definitions=[
             TransformFunctionDefinition("KEY1", "UNIFORM", [0, 1]),
         ],
-        output_file="kw.txt",
         update=True,
     )
     with open_storage(tmp_path, mode="w") as storage:
@@ -485,9 +483,7 @@ parameter_configs = st.lists(
     st.one_of(
         st.builds(
             GenKwConfig,
-            template_file=st.just(None),
             name=st.text(),
-            output_file=st.just(None),
             update=st.booleans(),
             forward_init=st.booleans(),
             transform_function_definitions=st.just([]),

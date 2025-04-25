@@ -7,7 +7,6 @@ from pathlib import Path
 import numpy as np
 import polars as pl
 import pytest
-from packaging import version
 
 from ert.analysis import ErtAnalysisError, smoother_update
 from ert.config import ErtConfig, ESSettings, ObservationSettings
@@ -146,18 +145,7 @@ def test_that_storage_matches(
 
         # We need to normalize some irrelevant details:
         experiment.parameter_configuration["PORO"].mask_file = ""
-        if version.parse(ert_version).major == 5:
-            # In this version we were not saving the full parameter
-            # configuration, so it had to be recreated by what was
-            # in ErtConfig at the time of migration, hence the new
-            # path
-            experiment.parameter_configuration[
-                "BPR"
-            ].template_file = experiment.parameter_configuration[
-                "BPR"
-            ].template_file.replace(
-                str(tmp_path), "/home/eivind/Projects/ert/test-data"
-            )
+        assert experiment.templates_configuration == [("\nBPR:<BPR>\n", "params.txt")]
         snapshot.assert_match(
             str(dict(sorted(experiment.parameter_configuration.items()))) + "\n",
             "parameters",

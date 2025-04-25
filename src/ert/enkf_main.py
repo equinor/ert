@@ -90,7 +90,7 @@ def _generate_parameter_files(
     iens: int,
     fs: Ensemble,
     iteration: int,
-) -> None:
+) -> dict[str, dict[str, float]]:
     """
     Generate parameter files that are placed in each runtime directory for
     forward-model jobs to consume.
@@ -119,6 +119,7 @@ def _generate_parameter_files(
 
     _value_export_txt(run_path, export_base_name, exports)
     _value_export_json(run_path, export_base_name, exports)
+    return exports
 
 
 def _manifest_to_json(ensemble: Ensemble, iens: int, iter: int) -> dict[str, Any]:
@@ -225,6 +226,14 @@ def create_run_path(
         run_path = Path(run_arg.runpath)
         if run_arg.active:
             run_path.mkdir(parents=True, exist_ok=True)
+            param_data = _generate_parameter_files(
+                ensemble.experiment.parameter_configuration.values(),
+                parameters_file,
+                run_path,
+                run_arg.iens,
+                ensemble,
+                ensemble.iteration,
+            )
             for (
                 source_file_content,
                 target_file,
@@ -237,6 +246,10 @@ def create_run_path(
                     run_arg.iens,
                     ensemble.iteration,
                 )
+                result = substitutions.substitute_parameters(
+                    result,
+                    param_data,
+                )
                 target = run_path / target_file
                 if not target.parent.exists():
                     os.makedirs(
@@ -244,15 +257,6 @@ def create_run_path(
                         exist_ok=True,
                     )
                 target.write_text(result)
-
-            _generate_parameter_files(
-                ensemble.experiment.parameter_configuration.values(),
-                parameters_file,
-                run_path,
-                run_arg.iens,
-                ensemble,
-                ensemble.iteration,
-            )
 
             path = run_path / "jobs.json"
             _backup_if_existing(path)
