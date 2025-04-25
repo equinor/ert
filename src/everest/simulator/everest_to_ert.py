@@ -394,7 +394,7 @@ def _extract_seed(ever_config: EverestConfig, ert_config: dict[str, Any]) -> Non
 def _extract_results(ever_config: EverestConfig, ert_config: dict[str, Any]) -> None:
     objectives_names = [objective.name for objective in ever_config.objective_functions]
     constraint_names = [
-        constraint.name for constraint in (ever_config.output_constraints or [])
+        constraint.name for constraint in ever_config.output_constraints
     ]
     gen_data = ert_config.get(ErtConfigKeys.GEN_DATA, [])
     for name in objectives_names + constraint_names:

@@ -583,7 +583,7 @@ class EverestStorage:
                     ],
                 }
             )
-            if output_constraints is not None
+            if output_constraints
             else None
         )
 
