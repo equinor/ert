@@ -12,7 +12,7 @@ CONFIG_FILE = "config_output_constraints.yml"
 
 def test_constraints_init(copy_mocked_test_data_to_tmp):
     config = EverestConfig.load_file(CONFIG_FILE)
-    constr = list(config.output_constraints or [])
+    constr = config.output_constraints
 
     constr_names = [cn.name for cn in constr]
     assert constr_names == [

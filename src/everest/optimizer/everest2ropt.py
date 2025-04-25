@@ -158,7 +158,7 @@ def _parse_input_constraints(
 
 
 def _parse_output_constraints(
-    output_constraints: list[OutputConstraintConfig] | None, ropt_config: dict[str, Any]
+    output_constraints: list[OutputConstraintConfig], ropt_config: dict[str, Any]
 ) -> None:
     if output_constraints:
         lower_bounds, upper_bounds = _get_bounds(output_constraints)
@@ -295,7 +295,7 @@ def _everest2ropt(ever_config: EverestConfig) -> dict[str, Any]:
     _parse_output_constraints(ever_config.output_constraints, ropt_config)
     _parse_optimization(
         ever_opt=ever_config.optimization,
-        has_output_constraints=ever_config.output_constraints is not None,
+        has_output_constraints=bool(ever_config.output_constraints),
         ropt_config=ropt_config,
     )
 

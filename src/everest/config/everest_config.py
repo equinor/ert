@@ -166,8 +166,9 @@ and environment variables are exposed in the form 'os.NAME', for example:
     input_constraints: list[InputConstraintConfig] = Field(
         default_factory=list, description="List of input constraints"
     )
-    output_constraints: list[OutputConstraintConfig] | None = Field(
-        default=None, description="A list of output constraints with unique names."
+    output_constraints: list[OutputConstraintConfig] = Field(
+        default_factory=list,
+        description="A list of output constraints with unique names.",
     )
     install_jobs: list[InstallJobConfig] = Field(
         default_factory=list,
@@ -678,16 +679,12 @@ and environment variables are exposed in the form 'os.NAME', for example:
 
     @property
     def constraint_names(self) -> list[str]:
-        if self.output_constraints:
-            return [constraint.name for constraint in self.output_constraints]
-        return []
+        return [constraint.name for constraint in self.output_constraints]
 
     @property
     def result_names(self) -> list[str]:
         objectives_names = [objective.name for objective in self.objective_functions]
-        constraint_names = [
-            constraint.name for constraint in (self.output_constraints or [])
-        ]
+        constraint_names = [constraint.name for constraint in self.output_constraints]
         return objectives_names + constraint_names
 
     def to_dict(self) -> dict[str, Any]:
