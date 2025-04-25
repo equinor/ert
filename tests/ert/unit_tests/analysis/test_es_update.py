@@ -39,11 +39,9 @@ def uniform_parameter():
     return GenKwConfig(
         name="PARAMETER",
         forward_init=False,
-        template_file="",
         transform_function_definitions=[
             TransformFunctionDefinition("KEY1", "UNIFORM", [0, 1]),
         ],
-        output_file="kw.txt",
         update=True,
     )
 
@@ -236,8 +234,6 @@ def test_update_handles_precision_loss_in_std_dev(tmp_path):
         name="COEFFS",
         forward_init=False,
         update=True,
-        template_file=None,
-        output_file=None,
         transform_function_definitions=[
             TransformFunctionDefinition(
                 name="coeff_0", param_name="CONST", values=["0.1"]
@@ -357,8 +353,6 @@ def test_update_raises_on_singular_matrix(tmp_path):
         name="COEFFS",
         forward_init=False,
         update=True,
-        template_file=None,
-        output_file=None,
         transform_function_definitions=[
             TransformFunctionDefinition(
                 name="coeff_0", param_name="CONST", values=["0.1"]
@@ -1189,11 +1183,9 @@ def test_update_subset_parameters(storage, uniform_parameter, obs):
     no_update_param = GenKwConfig(
         name="EXTRA_PARAMETER",
         forward_init=False,
-        template_file="",
         transform_function_definitions=[
             TransformFunctionDefinition("KEY1", "UNIFORM", [0, 1]),
         ],
-        output_file=None,
         update=False,
     )
     resp = GenDataConfig(keys=["RESPONSE"])

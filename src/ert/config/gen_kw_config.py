@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import math
 import os
-import shutil
 import warnings
 from collections.abc import Callable
 from dataclasses import dataclass
@@ -59,8 +58,6 @@ class TransformFunctionDefinition:
 
 @dataclass
 class GenKwConfig(ParameterConfig):
-    template_file: str | None
-    output_file: str | None
     transform_function_definitions: list[TransformFunctionDefinition]
     forward_init_file: str | None = None
 
@@ -86,6 +83,38 @@ class GenKwConfig(ParameterConfig):
         return len(self.transform_functions)
 
     @classmethod
+    def templates_from_config(
+        cls, gen_kw: list[str | dict[str, str]]
+    ) -> tuple[str, str] | None:
+        gen_kw_key = cast(str, gen_kw[0])
+        positional_args = cast(list[str], gen_kw[:-1])
+
+        if len(positional_args) == 4:
+            output_file = positional_args[2]
+            parameter_file_context = positional_args[3][0]
+            template_file = _get_abs_path(positional_args[1][0])
+            if not os.path.isfile(template_file):
+                raise ConfigValidationError.with_context(
+                    f"No such template file: {template_file}", positional_args[1]
+                )
+            elif Path(template_file).stat().st_size == 0:
+                token = getattr(parameter_file_context, "token", parameter_file_context)
+                ConfigWarning.deprecation_warn(
+                    f"The template file for GEN_KW ({gen_kw_key}) is empty. "
+                    "If templating is not needed, you "
+                    "can use GEN_KW with just the distribution file "
+                    f"instead: GEN_KW {gen_kw_key} {token}",
+                    positional_args[1],
+                )
+            if output_file.startswith("/"):
+                raise ConfigValidationError.with_context(
+                    f"Output file cannot have an absolute path {output_file}",
+                    positional_args[2],
+                )
+            return template_file, output_file
+        return None
+
+    @classmethod
     def from_config_list(cls, gen_kw: list[str | dict[str, str]]) -> Self:
         gen_kw_key = cast(str, gen_kw[0])
 
@@ -99,29 +128,9 @@ class GenKwConfig(ParameterConfig):
         if len(positional_args) == 2:
             parameter_file_contents = positional_args[1][1]
             parameter_file_context = positional_args[1][0]
-            template_file = None
-            output_file = None
         elif len(positional_args) == 4:
-            output_file = positional_args[2]
             parameter_file_contents = positional_args[3][1]
             parameter_file_context = positional_args[3][0]
-            template_file = _get_abs_path(positional_args[1][0])
-            if not os.path.isfile(template_file):
-                errors.append(
-                    ConfigValidationError.with_context(
-                        f"No such template file: {template_file}", positional_args[1]
-                    )
-                )
-            elif Path(template_file).stat().st_size == 0:
-                token = getattr(parameter_file_context, "token", parameter_file_context)
-                ConfigWarning.deprecation_warn(
-                    f"The template file for GEN_KW ({gen_kw_key}) is empty. "
-                    "If templating is not needed, you "
-                    "can use GEN_KW with just the distribution file "
-                    f"instead: GEN_KW {gen_kw_key} {token}",
-                    positional_args[1],
-                )
-
         else:
             raise ConfigValidationError(
                 f"Unexpected positional arguments: {positional_args}"
@@ -188,8 +197,6 @@ class GenKwConfig(ParameterConfig):
         return cls(
             name=gen_kw_key,
             forward_init=forward_init,
-            template_file=template_file,
-            output_file=output_file,
             forward_init_file=init_file,
             transform_function_definitions=transform_function_definitions,
             update=update_parameter,
@@ -362,21 +369,6 @@ class GenKwConfig(ParameterConfig):
             if tf.use_log
         }
 
-        if self.template_file is not None and self.output_file is not None:
-            target_file = substitute_runpath_name(
-                self.output_file, real_nr, ensemble.iteration
-            )
-            target_file = target_file.removeprefix("/")
-            (run_path / target_file).parent.mkdir(exist_ok=True, parents=True)
-            template_file_path = (
-                ensemble.experiment.mount_point / Path(self.template_file).name
-            )
-            with open(template_file_path, encoding="utf-8") as f:
-                template = f.read()
-            for key, value in data.items():
-                template = template.replace(f"<{key}>", f"{value:.6g}")
-            with open(run_path / target_file, "w", encoding="utf-8") as f:
-                f.write(template)
         if log10_data:
             return {self.name: data, f"LOG10_{self.name}": log10_data}
         else:
@@ -552,14 +544,6 @@ class GenKwConfig(ParameterConfig):
             parameter_list=params,
             calc_func=PRIOR_FUNCTIONS[t.param_name],
         )
-
-    def save_experiment_data(self, experiment_path: Path) -> None:
-        if self.template_file:
-            incoming_template_file_path = Path(self.template_file)
-            template_file_path = Path(
-                experiment_path / incoming_template_file_path.name
-            )
-            shutil.copyfile(incoming_template_file_path, template_file_path)
 
 
 @dataclass

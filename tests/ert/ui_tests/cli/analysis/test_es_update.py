@@ -24,11 +24,9 @@ def uniform_parameter():
     return GenKwConfig(
         name="PARAMETER",
         forward_init=False,
-        template_file="",
         transform_function_definitions=[
             TransformFunctionDefinition("KEY1", "UNIFORM", [0, 1]),
         ],
-        output_file="kw.txt",
         update=True,
     )
 
