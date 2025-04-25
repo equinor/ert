@@ -347,39 +347,44 @@ class LsfDriver(Driver):
         if iens not in self._submit_locks:
             self._submit_locks[iens] = asyncio.Lock()
 
-        async with self._submit_locks[iens]:
-            logger.debug(f"Submitting to LSF with command {shlex.join(bsub_with_args)}")
-            process_success, process_message = await self._execute_with_retry(
-                bsub_with_args,
-                retry_on_empty_stdout=True,
-                retry_codes=(FLAKY_SSH_RETURNCODE,),
-                total_attempts=self._max_bsub_attempts,
-                retry_interval=self._sleep_time_between_cmd_retries,
-                error_on_msgs=BSUB_FAILURE_MESSAGES,
-            )
-            if not process_success:
-                self._job_error_message_by_iens[iens] = process_message
-                raise FailedSubmit(process_message)
-
-            match = re.search(
-                r"Job <([0-9]+)> is submitted to .*queue", process_message
-            )
-            if match is None:
-                raise FailedSubmit(
-                    f"Could not understand '{process_message}' from bsub"
+        async def protected_submit_job() -> None:
+            async with self._submit_locks[iens]:
+                logger.debug(
+                    f"Submitting to LSF with command {shlex.join(bsub_with_args)}"
                 )
-            job_id = match[1]
-            logger.info(f"Realization {iens} accepted by LSF, got id {job_id}")
+                process_success, process_message = await self._execute_with_retry(
+                    bsub_with_args,
+                    retry_on_empty_stdout=True,
+                    retry_codes=(FLAKY_SSH_RETURNCODE,),
+                    total_attempts=self._max_bsub_attempts,
+                    retry_interval=self._sleep_time_between_cmd_retries,
+                    error_on_msgs=BSUB_FAILURE_MESSAGES,
+                )
+                if not process_success:
+                    self._job_error_message_by_iens[iens] = process_message
+                    raise FailedSubmit(process_message)
 
-            (Path(runpath) / LSF_INFO_JSON_FILENAME).write_text(
-                json.dumps({"job_id": job_id}), encoding="utf-8"
-            )
-            self._jobs[job_id] = JobData(
-                iens=iens,
-                job_state=QueuedJob(job_state="PEND"),
-                submitted_timestamp=time.time(),
-            )
-            self._iens2jobid[iens] = job_id
+                match = re.search(
+                    r"Job <([0-9]+)> is submitted to .*queue", process_message
+                )
+                if match is None:
+                    raise FailedSubmit(
+                        f"Could not understand '{process_message}' from bsub"
+                    )
+                job_id = match[1]
+                logger.info(f"Realization {iens} accepted by LSF, got id {job_id}")
+
+                (Path(runpath) / LSF_INFO_JSON_FILENAME).write_text(
+                    json.dumps({"job_id": job_id}), encoding="utf-8"
+                )
+                self._jobs[job_id] = JobData(
+                    iens=iens,
+                    job_state=QueuedJob(job_state="PEND"),
+                    submitted_timestamp=time.time(),
+                )
+                self._iens2jobid[iens] = job_id
+
+        await asyncio.shield(protected_submit_job())
 
     async def kill(self, iens: int, kill_sem: asyncio.BoundedSemaphore) -> None:
         async with kill_sem:
@@ -392,8 +397,8 @@ class LsfDriver(Driver):
             async with self._submit_locks[iens]:
                 if iens not in self._iens2jobid:
                     logger.error(
-                        f"LSF kill failed, realization {iens} was not ",
-                        " submitted properly",
+                        f"LSF kill failed, realization {iens} was not "
+                        "submitted properly",
                     )
                     return
 
