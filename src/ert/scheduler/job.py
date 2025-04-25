@@ -98,9 +98,11 @@ class Job:
             return time.time() - self._start_time
         return 0
 
-    async def _submit_and_run_once(self, sem: asyncio.BoundedSemaphore) -> None:
+    async def _submit_and_run_once(
+        self, run_sem: asyncio.BoundedSemaphore, kill_sem: asyncio.BoundedSemaphore
+    ) -> None:
         await self._send(JobState.WAITING)
-        await sem.acquire()
+        await run_sem.acquire()
         timeout_task: asyncio.Task[None] | None = None
 
         try:
@@ -148,19 +150,20 @@ class Job:
 
         except asyncio.CancelledError:
             await self._send(JobState.ABORTING)
-            await self.driver.kill(self.iens)
+            await self.driver.kill(self.iens, kill_sem)
             with suppress(asyncio.CancelledError):
                 self.returncode.cancel()
             await self._send(JobState.ABORTED)
         finally:
             if timeout_task and not timeout_task.done():
                 timeout_task.cancel()
-            sem.release()
+            run_sem.release()
 
     @tracer.start_as_current_span(f"{__name__}.run")
     async def run(
         self,
-        sem: asyncio.BoundedSemaphore,
+        run_sem: asyncio.BoundedSemaphore,
+        kill_sem: asyncio.BoundedSemaphore,
         forward_model_ok_lock: asyncio.Lock,
         checksum_lock: asyncio.Lock,
         max_submit: int = 1,
@@ -169,7 +172,7 @@ class Job:
         current_span.set_attribute("ert.realization_number", self.iens)
         self._requested_max_submit = max_submit
         for attempt in range(max_submit):
-            await self._submit_and_run_once(sem)
+            await self._submit_and_run_once(run_sem, kill_sem)
 
             if self.returncode.cancelled() or self._scheduler._cancelled:
                 break

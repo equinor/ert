@@ -381,52 +381,54 @@ class LsfDriver(Driver):
             )
             self._iens2jobid[iens] = job_id
 
-    async def kill(self, iens: int) -> None:
-        if iens not in self._submit_locks:
-            logger.error(
-                f"LSF kill failed, realization {iens} has never been submitted"
-            )
-            return
-
-        async with self._submit_locks[iens]:
-            if iens not in self._iens2jobid:
+    async def kill(self, iens: int, kill_sem: asyncio.BoundedSemaphore) -> None:
+        async with kill_sem:
+            if iens not in self._submit_locks:
                 logger.error(
-                    f"LSF kill failed, realization {iens} was not submitted properly"
+                    f"LSF kill failed, realization {iens} has never been submitted"
                 )
                 return
 
-            job_id = self._iens2jobid[iens]
-
-            logger.debug(f"Killing realization {iens} with LSF-id {job_id}")
-            bkill_with_args: list[str] = [
-                str(self._bkill_cmd),
-                "-s",
-                "SIGTERM",
-                job_id,
-            ]
-
-            _, process_message = await self._execute_with_retry(
-                bkill_with_args,
-                retry_codes=(FLAKY_SSH_RETURNCODE,),
-                total_attempts=3,
-                retry_interval=self._sleep_time_between_cmd_retries,
-                return_on_msgs=(JOB_ALREADY_FINISHED_BKILL_MSG),
-            )
-            await asyncio.create_subprocess_shell(
-                f"sleep {self._sleep_time_between_bkills}; "
-                f"{self._bkill_cmd} -s SIGKILL {job_id}",
-                start_new_session=True,
-                stdout=asyncio.subprocess.DEVNULL,
-                stderr=asyncio.subprocess.DEVNULL,
-            )
-
-            if not re.search(
-                f"Job <{job_id}> is being (terminated|signaled)", process_message
-            ):
-                if JOB_ALREADY_FINISHED_BKILL_MSG in process_message:
-                    logger.debug(f"LSF kill failed with: {process_message}")
+            async with self._submit_locks[iens]:
+                if iens not in self._iens2jobid:
+                    logger.error(
+                        f"LSF kill failed, realization {iens} was not ",
+                        " submitted properly",
+                    )
                     return
-                logger.error(f"LSF kill failed with: {process_message}")
+
+                job_id = self._iens2jobid[iens]
+
+                logger.debug(f"Killing realization {iens} with LSF-id {job_id}")
+                bkill_with_args: list[str] = [
+                    str(self._bkill_cmd),
+                    "-s",
+                    "SIGTERM",
+                    job_id,
+                ]
+
+                _, process_message = await self._execute_with_retry(
+                    bkill_with_args,
+                    retry_codes=(FLAKY_SSH_RETURNCODE,),
+                    total_attempts=3,
+                    retry_interval=self._sleep_time_between_cmd_retries,
+                    return_on_msgs=(JOB_ALREADY_FINISHED_BKILL_MSG),
+                )
+                await asyncio.create_subprocess_shell(
+                    f"sleep {self._sleep_time_between_bkills}; "
+                    f"{self._bkill_cmd} -s SIGKILL {job_id}",
+                    start_new_session=True,
+                    stdout=asyncio.subprocess.DEVNULL,
+                    stderr=asyncio.subprocess.DEVNULL,
+                )
+
+                if not re.search(
+                    f"Job <{job_id}> is being (terminated|signaled)", process_message
+                ):
+                    if JOB_ALREADY_FINISHED_BKILL_MSG in process_message:
+                        logger.debug(f"LSF kill failed with: {process_message}")
+                        return
+                    logger.error(f"LSF kill failed with: {process_message}")
 
     async def poll(self) -> None:
         while True:

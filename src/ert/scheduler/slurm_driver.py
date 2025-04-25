@@ -207,27 +207,30 @@ class SlurmDriver(Driver):
             )
             self._iens2jobid[iens] = job_id
 
-    async def kill(self, iens: int) -> None:
-        if iens not in self._submit_locks:
-            logger.error(f"scancel failed, realization {iens} has never been submitted")
-            return
-
-        async with self._submit_locks[iens]:
-            if iens not in self._iens2jobid:
+    async def kill(self, iens: int, kill_sem: asyncio.BoundedSemaphore) -> None:
+        async with kill_sem:
+            if iens not in self._submit_locks:
                 logger.error(
-                    f"scancel failed, realization {iens} was not submitted properly"
+                    f"scancel failed, realization {iens} has never been submitted"
                 )
                 return
 
-            job_id = self._iens2jobid[iens]
+            async with self._submit_locks[iens]:
+                if iens not in self._iens2jobid:
+                    logger.error(
+                        f"scancel failed, realization {iens} was not submitted properly"
+                    )
+                    return
 
-            logger.debug(f"Killing realization {iens} with SLURM-id {job_id}")
-            await self._execute_with_retry(
-                [
-                    self._scancel,
-                    str(job_id),
-                ]
-            )
+                job_id = self._iens2jobid[iens]
+
+                logger.debug(f"Killing realization {iens} with SLURM-id {job_id}")
+                await self._execute_with_retry(
+                    [
+                        self._scancel,
+                        str(job_id),
+                    ]
+                )
 
     async def poll(self) -> None:
         while True:

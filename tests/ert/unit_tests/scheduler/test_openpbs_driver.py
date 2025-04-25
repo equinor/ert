@@ -403,7 +403,7 @@ async def test_that_qdel_will_retry_and_succeed(
     driver._max_pbs_cmd_attempts = 2
     driver._retry_pbs_cmd_interval = 0.2
     driver._iens2jobid[0] = 111
-    await driver.kill(0)
+    await driver.kill(0, asyncio.Semaphore())
     assert "TRIED" in (bin_path / "script_try").read_text()
     if exit_code == QDEL_JOB_HAS_FINISHED:
         # the job has been already qdel-ed so no need to retry
@@ -530,7 +530,7 @@ async def test_that_kill_does_not_log_error_for_finished_realization(
 
     driver.poll = mock_poll
     await driver.poll()
-    await driver.kill(0)
+    await driver.kill(0, asyncio.Semaphore())
 
     assert "kill" not in capsys.readouterr().out
     assert "kill" not in capsys.readouterr().err

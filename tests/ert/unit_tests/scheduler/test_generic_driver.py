@@ -108,7 +108,7 @@ async def test_kill_gives_correct_state(driver: Driver, tmp_path, request):
 
     async def started(iens):
         nonlocal driver
-        await driver.kill(iens)
+        await driver.kill(iens, asyncio.Semaphore())
 
     async def finished(iens, returncode):
         assert iens == 0
@@ -158,7 +158,7 @@ async def test_kill_actually_kills(driver: Driver, tmp_path, pytestconfig):
 
     async def kill_job_once_started(iens):
         nonlocal driver
-        await driver.kill(iens)
+        await driver.kill(iens, asyncio.Semaphore())
 
     async def mark_as_finished(iens, code):
         nonlocal finished

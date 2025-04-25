@@ -39,21 +39,24 @@ class LocalDriver(Driver):
         with suppress(KeyError):
             self._sent_finished_events.remove(iens)
 
-    async def kill(self, iens: int) -> None:
-        try:
-            self._tasks[iens].cancel()
-            logger.info(f"Killing realization {iens}")
-            with contextlib.suppress(asyncio.CancelledError):
-                await self._tasks[iens]
-            del self._tasks[iens]
-            await self._dispatch_finished_event(iens, signal.SIGTERM + SIGNAL_OFFSET)
+    async def kill(self, iens: int, kill_sem: asyncio.BoundedSemaphore) -> None:
+        async with kill_sem:
+            try:
+                self._tasks[iens].cancel()
+                logger.info(f"Killing realization {iens}")
+                with contextlib.suppress(asyncio.CancelledError):
+                    await self._tasks[iens]
+                del self._tasks[iens]
+                await self._dispatch_finished_event(
+                    iens, signal.SIGTERM + SIGNAL_OFFSET
+                )
 
-        except KeyError:
-            logger.info(f"Realization {iens} is already killed")
-            return
-        except Exception as err:
-            logger.error(f"Killing realization {iens} failed with error {err}")
-            raise err
+            except KeyError:
+                logger.info(f"Realization {iens} is already killed")
+                return
+            except Exception as err:
+                logger.error(f"Killing realization {iens} failed with error {err}")
+                raise err
 
     async def finish(self) -> None:
         results = await asyncio.gather(*self._tasks.values(), return_exceptions=True)
