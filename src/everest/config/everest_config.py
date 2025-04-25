@@ -209,7 +209,7 @@ and environment variables are exposed in the form 'os.NAME', for example:
             requirements of the forward models.
 """,
     )
-    simulator: SimulatorConfig | None = Field(
+    simulator: SimulatorConfig = Field(
         default_factory=SimulatorConfig,
         description="Simulation settings",
         examples=[simulator_example],
@@ -230,7 +230,6 @@ and environment variables are exposed in the form 'os.NAME', for example:
     @model_validator(mode="after")
     def validate_queue_system(self) -> Self:
         assert self.server is not None
-        assert self.simulator is not None
         if self.server.queue_system is None:
             self.server.queue_system = copy(self.simulator.queue_system)
         if (
