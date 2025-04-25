@@ -191,7 +191,7 @@ and environment variables are exposed in the form 'os.NAME', for example:
         evaluated.
 """,
     )
-    server: ServerConfig | None = Field(
+    server: ServerConfig = Field(
         default_factory=ServerConfig,
         description="""Defines Everest server settings, i.e., which queue system,
             queue name and queue options are used for the everest server.
@@ -229,7 +229,6 @@ and environment variables are exposed in the form 'os.NAME', for example:
 
     @model_validator(mode="after")
     def validate_queue_system(self) -> Self:
-        assert self.server is not None
         if self.server.queue_system is None:
             self.server.queue_system = copy(self.simulator.queue_system)
         if (
