@@ -453,7 +453,7 @@ and environment variables are exposed in the form 'os.NAME', for example:
     def validate_maintained_forward_models(self) -> Self:
         install_data = self.install_data
 
-        with InstallDataContext(install_data, self.config_path) as context:  # type: ignore
+        with InstallDataContext(install_data, self.config_path) as context:
             for realization in self.model.realizations:
                 context.add_links_for_realization(realization)
             validate_forward_model_configs(self.forward_model, self.install_jobs)
