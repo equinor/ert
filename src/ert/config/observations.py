@@ -269,15 +269,15 @@ class EnkfObs:
         except IndexError as err:
             raise ObservationConfigError.with_context(
                 f"Could not find {time} ({date_str}) in "
-                f"the time map for observations {obs_name}"
+                f"the time map for observations {obs_name}. "
                 + (
                     "The time map is set from the REFCASE keyword. Either "
                     "the REFCASE has an incorrect/missing date, or the observation "
                     "is given an incorrect date.)"
                     if has_refcase
-                    else " (The time map is set from the TIME_MAP "
+                    else "(The time map is set from the TIME_MAP "
                     "keyword. Either the time map file has an "
-                    "incorrect/missing date, or the  observation is given an "
+                    "incorrect/missing date, or the observation is given an "
                     "incorrect date."
                 ),
                 obs_name,
