@@ -137,19 +137,15 @@ def main(
         - nr_components: Array of the number of principal components for each
           observation
     """
-    logger.info("Scaling observation errors based on response correlations")
     scale_factors = np.ones(len(obs_errors))
     nr_components = np.ones(len(obs_errors), dtype=int)
-
     scaled_responses = responses / obs_errors.reshape(-1, 1)
 
     if len(obs_errors) <= 2:
-        # Either observations are not correlated, or only correlated
-        # each other
+        logger.info("Observations not correlated or only correlated each other")
         return scale_factors, np.ones(len(obs_errors), dtype=int), nr_components
 
     prim_components = get_nr_primary_components(scaled_responses.T, threshold=0.95)
-
     clusters = cluster_responses(scaled_responses.T, nr_clusters=prim_components)
 
     for cluster in np.unique(clusters):
