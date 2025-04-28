@@ -320,32 +320,38 @@ def test_that_duplicate_output_constraint_names_raise_error():
         )
 
 
-def test_that_output_constraints_bounds_are_mutex():
-    output_constraint = {
-        "name": "w110",
-    }
-    EverestConfig.with_defaults(output_constraints=[output_constraint])
-
-    output_constraint["target"] = 1.0
-    EverestConfig.with_defaults(output_constraints=[output_constraint])
-
-    output_constraint["upper_bound"] = 2.0
-    with pytest.raises(ValueError, match="Can not combine target and bounds"):
-        EverestConfig.with_defaults(output_constraints=[output_constraint])
-
-    output_constraint["lower_bound"] = 0.5
-    with pytest.raises(ValueError, match="Can not combine target and bounds"):
-        EverestConfig.with_defaults(output_constraints=[output_constraint])
-
-    del output_constraint["upper_bound"]
-    with pytest.raises(ValueError, match="Can not combine target and bounds"):
-        EverestConfig.with_defaults(output_constraints=[output_constraint])
-
-    del output_constraint["target"]
-    EverestConfig.with_defaults(output_constraints=[output_constraint])
-
-    del output_constraint["lower_bound"]
-    EverestConfig.with_defaults(output_constraints=[output_constraint])
+@pytest.mark.parametrize(
+    "constraint, expectation",
+    [
+        (
+            {
+                "name": "w110",
+            },
+            pytest.raises(
+                ValueError, match="Must provide target or lower_bound/upper_bound"
+            ),
+        ),
+        (
+            {"name": "w110", "target": 1.0},
+            does_not_raise(),
+        ),
+        (
+            {"name": "w110", "lower_bound": 0.0, "upper_bound": 1.0},
+            does_not_raise(),
+        ),
+        (
+            {"name": "w110", "target": 1.0, "lower_bound": 0.0},
+            pytest.raises(ValueError, match="Can not combine target and bounds"),
+        ),
+        (
+            {"name": "w110", "target": 1.0, "upper_bound": 2.0},
+            pytest.raises(ValueError, match="Can not combine target and bounds"),
+        ),
+    ],
+)
+def test_that_output_constraints_bounds_are_mutex(constraint, expectation):
+    with expectation:
+        EverestConfig.with_defaults(output_constraints=[constraint])
 
 
 def test_that_variable_name_does_not_contain_dots():
