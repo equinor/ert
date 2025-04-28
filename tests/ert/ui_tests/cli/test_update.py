@@ -120,7 +120,7 @@ def test_update_lowers_generalized_variance_or_deactivates_observations(
     distributions: list[tuple[str, list[float]]],
     data,
 ):
-    indecies = data.draw(
+    indices = data.draw(
         st.lists(
             st.integers(min_value=0, max_value=num_points - 1),
             min_size=1,
@@ -131,15 +131,15 @@ def test_update_lowers_generalized_variance_or_deactivates_observations(
     values = data.draw(
         st.lists(
             st.floats(min_value=-10.0, max_value=10.0),
-            min_size=len(indecies),
-            max_size=len(indecies),
+            min_size=len(indices),
+            max_size=len(indices),
         )
     )
     errs = data.draw(
         st.lists(
             st.floats(min_value=0.1, max_value=0.5),
-            min_size=len(indecies),
-            max_size=len(indecies),
+            min_size=len(indices),
+            max_size=len(indices),
         )
     )
     num_groups = data.draw(st.integers(min_value=1, max_value=num_points))
@@ -174,9 +174,7 @@ def test_update_lowers_generalized_variance_or_deactivates_observations(
                 encoding="utf-8",
             )
             Path(f"index_{i}.txt").write_text(
-                "\n".join(
-                    f"{x}" for x in indecies[i * per_group : (i + 1) * per_group]
-                ),
+                "\n".join(f"{x}" for x in indices[i * per_group : (i + 1) * per_group]),
                 encoding="utf-8",
             )
 
