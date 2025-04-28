@@ -120,5 +120,6 @@ jobs:
         rm -f ert.*.whl
         rm -f codecov.SHA*
         rm -f codecov
+        rm -f .coverage.*
         git status --porcelain
         test -z "$(git status --porcelain)"
