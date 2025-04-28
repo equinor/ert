@@ -12,7 +12,7 @@ from hypothesis import assume
 from hypothesis.stateful import rule
 from starlette.testclient import TestClient
 
-from ert.dark_storage import enkf
+from ert.dark_storage import common
 from ert.dark_storage.app import app
 from tests.ert.unit_tests.storage.test_local_storage import StatefulStorageTest
 
@@ -97,9 +97,9 @@ class DarkStorageStateTest(StatefulStorageTest):
 
     def teardown(self):
         super().teardown()
-        if enkf._storage is not None:
-            enkf._storage.close()
-        enkf._storage = None
+        if common._storage is not None:
+            common._storage.close()
+        common._storage = None
         gc.collect()
         if self.prev_no_token is not None:
             os.environ["ERT_STORAGE_NO_TOKEN"] = self.prev_no_token

@@ -3,8 +3,7 @@ from uuid import UUID
 from fastapi import APIRouter, Body, Depends
 
 from ert.dark_storage import json_schema as js
-from ert.dark_storage.common import get_all_observations
-from ert.dark_storage.enkf import get_storage
+from ert.dark_storage.common import get_all_observations, get_storage
 from ert.storage import Storage
 
 router = APIRouter(tags=["ensemble"])

@@ -12,7 +12,7 @@ from pandas.testing import assert_frame_equal
 from starlette.testclient import TestClient
 
 from ert.config import GenKwConfig, SummaryConfig
-from ert.dark_storage import enkf
+from ert.dark_storage import common
 from ert.dark_storage.app import app
 from ert.gui.tools.plot.plot_api import PlotApi, PlotApiKeyDefinition
 from ert.services import StorageService
@@ -190,9 +190,9 @@ def api_and_storage(monkeypatch, tmp_path):
         monkeypatch.setenv("ERT_STORAGE_ENS_PATH", str(storage.path))
         api = PlotApi(ens_path)
         yield api, storage
-    if enkf._storage is not None:
-        enkf._storage.close()
-    enkf._storage = None
+    if common._storage is not None:
+        common._storage.close()
+    common._storage = None
     gc.collect()
 
 

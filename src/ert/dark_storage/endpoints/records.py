@@ -16,9 +16,9 @@ from ert.dark_storage.common import (
     gen_data_display_keys,
     get_observation_keys_for_response,
     get_observations_for_obs_keys,
+    get_storage,
     response_key_to_displayed_key,
 )
-from ert.dark_storage.enkf import get_storage
 from ert.storage import Storage
 
 router = APIRouter(tags=["record"])

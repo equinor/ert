@@ -12,9 +12,9 @@ from ert.dark_storage.common import (
     data_for_key,
     get_observation_keys_for_response,
     get_observations_for_obs_keys,
+    get_storage,
 )
 from ert.dark_storage.compute.misfits import calculate_misfits_from_pandas
-from ert.dark_storage.enkf import get_storage
 from ert.storage import Storage
 
 router = APIRouter(tags=["misfits"])
