@@ -10,7 +10,7 @@ from starlette.testclient import TestClient
 
 from ert.__main__ import ert_parser
 from ert.cli.main import run_cli
-from ert.dark_storage import enkf
+from ert.dark_storage import common
 from ert.dark_storage.app import app
 from ert.mode_definitions import ENSEMBLE_SMOOTHER_MODE
 
@@ -69,10 +69,10 @@ def env(monkeypatch):
     monkeypatch.setenv("ERT_STORAGE_NO_TOKEN", "yup")
 
 
-def reset_enkf():
-    if enkf._storage is not None:
-        enkf._storage.close()
-    enkf._storage = None
+def reset_dark_storage():
+    if common._storage is not None:
+        common._storage.close()
+    common._storage = None
     gc.collect()
 
 
@@ -82,7 +82,7 @@ def dark_storage_app_(monkeypatch):
     monkeypatch.setenv("ERT_STORAGE_ENS_PATH", "storage")
 
     yield app
-    reset_enkf()
+    reset_dark_storage()
 
 
 @pytest.fixture

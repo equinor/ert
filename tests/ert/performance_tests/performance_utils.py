@@ -13,7 +13,6 @@ from jinja2 import Environment, FileSystemLoader
 from numpy import array
 from resdata.summary import Summary
 
-from ert.dark_storage import enkf
 from ert.dark_storage.app import app
 
 
@@ -136,20 +135,12 @@ def make_poly_template(folder, source_folder, **kwargs):
     )
 
 
-def reset_enkf():
-    enkf.ids = {}
-    enkf._config = None
-    enkf._ert = None
-    enkf._libres_facade = None
-
-
 @contextlib.contextmanager
 def dark_storage_app(monkeypatch):
     monkeypatch.setenv("ERT_STORAGE_NO_TOKEN", "yup")
     monkeypatch.setenv("ERT_STORAGE_RES_CONFIG", "poly.ert")
 
     yield app
-    reset_enkf()
 
 
 if __name__ == "__main__":

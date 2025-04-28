@@ -17,7 +17,7 @@ from httpx import RequestError
 from starlette.testclient import TestClient
 
 from ert.config import ErtConfig, SummaryConfig
-from ert.dark_storage import enkf
+from ert.dark_storage import common
 from ert.dark_storage.app import app
 from ert.dark_storage.endpoints import ensembles, experiments, records
 from ert.gui.tools.plot.plot_api import PlotApi
@@ -221,9 +221,9 @@ def api_and_storage(monkeypatch, tmp_path):
         monkeypatch.setenv("ERT_STORAGE_ENS_PATH", str(storage.path))
         api = PlotApi(ens_path)
         yield api, storage
-    if enkf._storage is not None:
-        enkf._storage.close()
-    enkf._storage = None
+    if common._storage is not None:
+        common._storage.close()
+    common._storage = None
     gc.collect()
 
 
@@ -236,9 +236,9 @@ def api_and_snake_oil_storage(snake_oil_case_storage, monkeypatch):
         api = PlotApi(snake_oil_case_storage.ens_path)
         yield api, storage
 
-    if enkf._storage is not None:
-        enkf._storage.close()
-    enkf._storage = None
+    if common._storage is not None:
+        common._storage.close()
+    common._storage = None
     gc.collect()
 
 

@@ -1,6 +1,7 @@
 import contextlib
 import logging
 import operator
+import os
 from collections.abc import Callable, Iterator
 from typing import Any
 from uuid import UUID
@@ -12,9 +13,25 @@ import xarray as xr
 from polars.exceptions import ColumnNotFoundError
 
 from ert.config import Field, GenDataConfig, GenKwConfig
-from ert.storage import Ensemble, Experiment, Storage
+from ert.dark_storage.exceptions import InternalServerError
+from ert.storage import Ensemble, Experiment, Storage, open_storage
 
 logger = logging.getLogger(__name__)
+
+
+_storage: Storage | None = None
+
+
+def get_storage() -> Storage:
+    global _storage
+    if _storage is None:
+        try:
+            return (_storage := open_storage(os.environ["ERT_STORAGE_ENS_PATH"]))
+        except RuntimeError as err:
+            raise InternalServerError(f"{err!s}") from err
+    _storage.refresh()
+    return _storage
+
 
 response_key_to_displayed_key: dict[str, Callable[[tuple[Any, ...]], str]] = {
     "summary": operator.itemgetter(0),
