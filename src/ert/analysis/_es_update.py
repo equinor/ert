@@ -248,11 +248,13 @@ def _auto_scale_observations(
     obs_keys = observations_and_responses["observation_key"].to_numpy().astype(str)
     for input_group in auto_scale_observations:
         group = _expand_wildcards(obs_keys, input_group)
-        logger.info(f"Scaling observation group: {group}")
         obs_group_mask = np.isin(obs_keys, group) & obs_mask
+
         if not any(obs_group_mask):
             logger.error(f"No observations active for group: {input_group}")
             continue
+
+        logger.info(f"Scaling observation group: {group}")
 
         data_for_obs = observations_and_responses.filter(obs_group_mask)
         scaling_factors, clusters, nr_components = misfit_preprocessor.main(
