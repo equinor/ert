@@ -719,9 +719,6 @@ def test_that_existing_install_job_with_non_existing_executable_errors(
         ("weight", 0.0, "(.*)Input should be greater than 0"),
         ("weight", -1.0, "(.*)Input should be greater than 0"),
         ("weight", 0.1, None),
-        ("normalization", 0.0, "(.*) value cannot be zero"),
-        ("normalization", -1.0, None),
-        ("normalization", 0.1, None),
     ],
 )
 @pytest.mark.filterwarnings("ignore:normalization key is deprecated")
@@ -931,56 +928,18 @@ def test_warning_empty_controls_and_objectives(controls, objectives, error_msg):
 
 
 def test_deprecated_objective_function_normalization():
-    with pytest.warns(
-        ConfigWarning, match="normalization key is deprecated .* replaced with scale"
+    with pytest.raises(
+        ValueError, match=r"normalization is deprecated .* replaced with scale"
     ):
         ObjectiveFunctionConfig(name="test", normalization=10)
 
 
 def test_deprecated_objective_function_auto_normalize():
-    with pytest.warns(
-        ConfigWarning,
-        match="auto_normalize key is deprecated .* replaced with auto_scale",
+    with pytest.raises(
+        ValueError,
+        match=r"auto_normalize is deprecated .* replaced with auto_scale",
     ):
         ObjectiveFunctionConfig(name="test", auto_normalize=True)
-
-
-@pytest.mark.parametrize(
-    "normalization, scale, auto_normalize, auto_scale",
-    [
-        (None, None, None, None),
-        (0.2, None, None, None),
-        (0.42, 0.24, None, None),
-        (None, 0.24, None, None),
-        (None, None, True, None),
-        (None, None, True, False),
-        (None, None, None, False),
-        (0.42, 0.24, True, False),
-    ],
-)
-@pytest.mark.filterwarnings("ignore:normalization key is deprecated")
-@pytest.mark.filterwarnings("ignore:auto_normalize key is deprecated")
-def test_objective_function_scaling_is_backward_compatible_with_scaling(
-    normalization, scale, auto_normalize, auto_scale
-):
-    o = ObjectiveFunctionConfig(
-        name="test",
-        normalization=normalization,
-        auto_normalize=auto_normalize,
-        scale=scale,
-        auto_scale=auto_scale,
-    )
-    if scale is None and normalization is not None:
-        assert o.scale == 1 / o.normalization
-    else:
-        assert o.scale == scale
-        assert o.normalization == normalization
-
-    if auto_scale is None and auto_normalize is not None:
-        assert o.auto_scale == o.auto_normalize
-    else:
-        assert o.auto_scale == auto_scale
-        assert o.auto_normalize == auto_normalize
 
 
 def test_load_file_undefined_substitutions(min_config, change_to_tmpdir, capsys):

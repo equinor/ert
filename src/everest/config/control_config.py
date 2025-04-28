@@ -85,14 +85,6 @@ If `True`, all variables in this control group will be optimized. If set to `Fal
 the value of the variables will remain fixed.
 """,
     )
-    auto_scale: bool | None = Field(
-        default=None,
-        description="""
-Can be set to true to re-scale controls from the range
-defined by [min, max] to the range defined by
-scaled_range (default [0, 1]).
-        """,
-    )
     min: float | None = Field(
         default=None,
         description="""
@@ -180,16 +172,14 @@ sampler to use the same perturbations for each realization.
     def ropt_control_type(self) -> VariableType:
         return VariableType[self.control_type.upper()]
 
-    @model_validator(mode="after")
-    def check_for_autoscale_flag(self) -> Self:
-        if self.auto_scale is not None:
-            logger.warning(
-                "auto_scale is deprecated for everest "
-                "controls, and is on by default. Please remove it"
-                "from the Everest config."
+    @model_validator(mode="before")
+    @classmethod
+    def check_for_autoscale_flag(cls, values: dict[str, Any]) -> dict[str, Any]:
+        if "auto_scale" in values:
+            raise ValueError(
+                "auto_scale is deprecated for everest controls, and is on by default."
             )
-
-        return self
+        return values
 
     @model_validator(mode="after")
     def validate_variables(self) -> Self:
