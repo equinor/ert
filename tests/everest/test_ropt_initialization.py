@@ -101,7 +101,6 @@ def test_everest2ropt_controls_input_constraint_auto_scale():
     for idx in range(3):
         controls[0].variables[idx].min = min_values[idx]
         controls[0].variables[idx].max = max_values[idx]
-    controls[0].auto_scale = True
     controls[0].scaled_range = [0.3, 0.7]
 
     scaled_lower_bounds = lower_bounds - np.matmul(
