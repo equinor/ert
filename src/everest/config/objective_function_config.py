@@ -1,8 +1,6 @@
-from typing import Self
+from typing import Any
 
 from pydantic import BaseModel, Field, PositiveFloat, field_validator, model_validator
-
-from ert.config import ConfigWarning
 
 
 class ObjectiveFunctionConfig(BaseModel, extra="forbid"):
@@ -18,12 +16,6 @@ Note that, in case the weights do not sum up to 1, they are normalized before be
 used in the optimization process.
 """,
     )
-    normalization: float | None = Field(
-        default=None,
-        description="""
-    normalization key is deprecated and has been replaced with scale
-""",
-    )
     scale: float | None = Field(
         default=None,
         description="""
@@ -34,12 +26,6 @@ used in the optimization process.
     that the scaling is set so that all the scaled objectives have the same order
     of magnitude. Ultimately, the scaled objectives are used in computing
     the weighted sum that Everest tries to optimize.
-    """,
-    )
-    auto_normalize: bool | None = Field(
-        default=None,
-        description="""
-    auto_normalize key is deprecated has been replaced with auto_scale.
     """,
     )
     auto_scale: bool | None = Field(
@@ -72,24 +58,18 @@ preferred to be maximized.
             raise ValueError("Scale value cannot be zero")
         return scale
 
-    @model_validator(mode="after")
-    def deprecate_normalization(self) -> Self:
-        if self.normalization is not None:
-            ConfigWarning.deprecation_warn(
-                "normalization key is deprecated and has been replaced with scale"
-            )
-        if self.auto_normalize is not None:
-            ConfigWarning.deprecation_warn(
-                "auto_normalize key is deprecated and has been replaced with auto_scale"
-            )
-        return self
-
-    @model_validator(mode="after")
-    def make_scale_backwards_compatible(self) -> Self:
-        if self.scale is None and self.normalization is not None:
-            if self.normalization == 0.0:
-                raise ValueError("Scale value cannot be zero")
-            self.scale = 1 / self.normalization
-        if self.auto_scale is None and self.auto_normalize is not None:
-            self.auto_scale = self.auto_normalize
-        return self
+    @model_validator(mode="before")
+    @classmethod
+    def deprecate_normalization(cls, values: dict[str, Any]) -> dict[str, Any]:
+        errors = []
+        for key, replace in (
+            ("normalization", "scale"),
+            ("auto_normalize", "auto_scale"),
+        ):
+            if key in values:
+                errors.append(
+                    f"{key} is deprecated and has been replaced with {replace}"
+                )
+        if errors:
+            raise ValueError(errors)
+        return values
