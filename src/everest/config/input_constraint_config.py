@@ -4,61 +4,38 @@ from pydantic import BaseModel, Field, field_validator
 
 class InputConstraintConfig(BaseModel, extra="forbid"):
     weights: dict[str, float] = Field(
-        description="""**Example**
-If we are trying to constrain only one control (i.e the z control) value:
-| input_constraints:
-| - weights:
-|   point_3D.x.0: 0
-|   point_3D.y.1: 0
-|   point_3D.z.2: 1
-| upper_bound: 0.2
-
-Only control values (x, y, z) that satisfy the following equation will be allowed:
-`x-0 * 0 + y-1 * 0 + z-2 * 1  > 0.2`
+        examples=[
+            {
+                "weights": [
+                    {"point_3D.x.0": 0},
+                    {"point_3D.y.1": 0},
+                    {"point_3D.z.2": 1},
+                ],
+                "upper_bound": 0.2,
+            }
+        ],
+        description="""If we are trying to constrain only one control (i.e the z
+    control) value, with an upper bound of 0.2, only control values (x, y, z) that
+    satisfy the following equation will be allowed: `x-0 * 0 + y-1 * 0 + z-2 * 1  > 0.2`
 """,
     )
     target: float | None = Field(
         default=None,
-        description="""**Example**
-| input_constraints:
-| - weights:
-|   point_3D.x.0: 1
-|   point_3D.y.1: 2
-|   point_3D.z.2: 3
-| target: 4
-
-Only control values (x, y, z) that satisfy the following equation will be allowed:
-`x-0 * 1 + y-1 * 2 + z-2 * 3  = 4`
-""",
+        description="""Only control values that satisfy the following
+        equation will be allowed: sum of (<control> * weight) = target
+        """,
     )
     lower_bound: float = Field(
         default=-np.inf,
-        description="""**Example**
-| input_constraints:
-| - weights:
-|   point_3D.x.0: 1
-|   point_3D.y.1: 2
-|   point_3D.z.2: 3
-| lower_bound: 4
-
-Only control values (x, y, z) that satisfy the following
-equation will be allowed:
-`x-0 * 1 + y-1 * 2 + z-2 * 3  >= 4`
+        description="""Only control values that satisfy the following
+        equation will be allowed: sum of (<control> * weight) >= lower_bound`
 """,
     )
     upper_bound: float = Field(
         default=np.inf,
-        description="""**Example**
-| input_constraints:
-| - weights:
-|   point_3D.x.0: 1
-|   point_3D.y.1: 2
-|   point_3D.z.2: 3
-| upper_bound: 4
-
-Only control values (x, y, z) that satisfy the following equation will be allowed:
-`x-0 * 1 + y-1 * 2 + z-2 * 3  <= 4`
-""",
+        description="""Only control values that satisfy the following
+         equation will be allowed: sum of (<control> * weight) <= upper_bound`
+        """,
     )
 
     @field_validator("weights")
