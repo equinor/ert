@@ -18,9 +18,6 @@ from ert.data._measured_data import ObservationError, ResponseError
 from .plugins import ErtPluginContext
 
 if TYPE_CHECKING:
-    from ert.config import (
-        EnkfObs,
-    )
     from ert.storage import Ensemble, Storage
 
 
@@ -43,8 +40,44 @@ class LibresFacade:
     def run_path(self) -> str:
         return self.config.runpath_config.runpath_format_string
 
-    def get_observations(self) -> EnkfObs:
-        return self.config.enkf_obs
+    @property
+    def resolved_run_path(self) -> str:
+        return str(Path(self.config.runpath_config.runpath_format_string).resolve())
+
+    @staticmethod
+    def load_from_run_path(
+        run_path_format: str,
+        ensemble: Ensemble,
+        active_realizations: list[int],
+    ) -> int:
+        """Returns the number of loaded realizations"""
+        pool = ThreadPool(processes=8)
+
+        async_result = [
+            pool.apply_async(
+                _load_realization_from_run_path,
+                (
+                    run_path_format.replace("<IENS>", str(realization)).replace(
+                        "<ITER>", "0"
+                    ),
+                    realization,
+                    ensemble,
+                ),
+            )
+            for realization in active_realizations
+        ]
+
+        loaded = 0
+        for t in async_result:
+            ((status, message), iens) = t.get()
+
+            if status == LoadStatus.LOAD_SUCCESSFUL:
+                loaded += 1
+            else:
+                _logger.error(f"Realization: {iens}, load failure: {message}")
+
+        ensemble.refresh_ensemble_state()
+        return loaded
 
     def get_data_key_for_obs_key(self, observation_key: str) -> str:
         obs = self.config.enkf_obs[observation_key]
