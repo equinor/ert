@@ -30,21 +30,27 @@ class LibresFacade:
 
     @property
     def enspath(self) -> str:
+        # Note: only used in tests, ert-internal-examples
+        # semeio ahmanalysis tests, 2do remove?
         return self.config.ens_path
 
     def get_ensemble_size(self) -> int:
+        # Note: ErtMainWindow on init
+        # 2do get it somehow else / expose through endpoint
         return self.config.runpath_config.num_realizations
 
     @property
-    def run_path(self) -> str:
+    def run_path(self) -> str:  # Note: Only used in ert_internal_examples
         return self.config.runpath_config.runpath_format_string
 
     @property
-    def resolved_run_path(self) -> str:
+    def resolved_run_path(
+        self,
+    ) -> str:  # Note: LoadResultsPanel, 2do expose through endpoint?
         return str(Path(self.config.runpath_config.runpath_format_string).resolve())
 
     @staticmethod
-    def load_from_run_path(
+    def load_from_run_path(  # Note: LoadResultsPanel, 2do expose as endpoint?
         run_path_format: str,
         ensemble: Ensemble,
         active_realizations: list[int],
@@ -78,6 +84,9 @@ class LibresFacade:
         ensemble.refresh_ensemble_state()
         return loaded
 
+    # 2do move logic to LocalEnsemble?
+    # Related to removing MeasuredData and pointing to
+    # LocalEnsemble.get_observations_and_responses instead
     @staticmethod
     def load_all_misfit_data(ensemble: Ensemble) -> DataFrame:
         """Loads all misfit data for a given ensemble.
@@ -125,6 +134,7 @@ class LibresFacade:
 
         return misfit
 
+    # Only used in semeio tests, 2do update semeio tests and remove?
     def run_ertscript(  # type: ignore
         self,
         ertscript,
