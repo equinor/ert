@@ -6,7 +6,8 @@ import traceback
 import uuid
 from collections.abc import AsyncGenerator, Awaitable, Callable, Iterable, Sequence
 from enum import Enum
-from typing import Any, Final, Self, get_args
+from queue import SimpleQueue
+from typing import Any, Final, Self, cast, get_args
 
 import zmq.asyncio
 
@@ -51,6 +52,10 @@ EVENT_HANDLER = Callable[[list[Event]], Awaitable[None]]
 
 class HeartbeatEvent(Enum):
     event = HEARTBEAT_MSG
+
+
+class UserCancelled(Exception):
+    pass
 
 
 class EventSentinel:
@@ -556,6 +561,59 @@ class EnsembleEvaluator:
     async def __aenter__(self) -> Self:
         await self.monitor_connect()
         return self
+
+    async def run_monitor(
+        self, end_queue: SimpleQueue[str], send_snapshot_event: Callable[[Event], None]
+    ) -> bool:
+        try:
+            logger.debug("connecting to new monitor...")
+            async with self as monitor:
+                logger.debug("connected")
+                async for event in monitor.track(heartbeat_interval=0.1):
+                    if type(event) in {
+                        EESnapshot,
+                        EESnapshotUpdate,
+                    }:
+                        event = cast(EESnapshot | EESnapshotUpdate, event)
+
+                        send_snapshot_event(event)
+
+                        if event.snapshot.get(ids.STATUS) in {
+                            ENSEMBLE_STATE_STOPPED,
+                            ENSEMBLE_STATE_FAILED,
+                        }:
+                            logger.debug(
+                                "observed evaluation stopped event, signal done"
+                            )
+                            await monitor.signal_done()
+
+                        if event.snapshot.get(ids.STATUS) == ENSEMBLE_STATE_CANCELLED:
+                            logger.debug(
+                                "observed evaluation cancelled event, exit drainer"
+                            )
+                            raise UserCancelled(
+                                "Experiment cancelled by user during evaluation"
+                            )
+                    elif type(event) is EETerminated:
+                        logger.debug("got terminated event")
+
+                    if not end_queue.empty():
+                        logger.debug("Run model cancelled - during evaluation")
+                        end_queue.get()
+                        await monitor.signal_cancel()
+                        logger.debug(
+                            "Run model cancelled - during evaluation - cancel sent"
+                        )
+        except UserCancelled:
+            raise
+        except Exception as e:
+            logger.exception(f"unexpected error: {e}")
+            # We really don't know what happened...  shut down
+            # the thread and get out of here. The monitor has
+            # been stopped by the ctx-mgr
+            return False
+
+        return True
 
 
 def detect_overspent_cpu(num_cpu: int, real_id: str, fm_step: FMStepSnapshot) -> str:
