@@ -65,7 +65,13 @@ class EventSentinel:
 class EnsembleEvaluator:
     _sentinel: Final = EventSentinel()
 
-    def __init__(self, ensemble: Ensemble, config: EvaluatorServerConfig):
+    def __init__(
+        self,
+        ensemble: Ensemble,
+        config: EvaluatorServerConfig,
+        end_queue: SimpleQueue[str],
+        send_snapshot_event: Callable[[Event], None] | None = None,
+    ) -> None:
         self._config: EvaluatorServerConfig = config
         self._ensemble: Ensemble = ensemble
 
@@ -95,7 +101,8 @@ class EnsembleEvaluator:
         self._monitor_to_ee_queue: asyncio.Queue[EEUserCancel | EEUserDone | bytes] = (
             asyncio.Queue()
         )
-
+        self.send_snapshot_event_callback = send_snapshot_event
+        self._end_queue = end_queue
         # Monitor portion
         self._monitor_id = str(uuid.uuid1()).split("-", maxsplit=1)[0]
         self._monitor_event_queue: asyncio.Queue[Event | EventSentinel] = (
@@ -103,6 +110,10 @@ class EnsembleEvaluator:
         )
         self._monitor_receiver_timeout: float = 60.0
         self._receiver_task: asyncio.Task[None] | None = None
+
+    def send_snapshot_event(self, event: Event) -> None:
+        if self.send_snapshot_event_callback:
+            self.send_snapshot_event_callback(event)
 
     async def _publisher(self) -> None:
         while True:
@@ -562,48 +573,41 @@ class EnsembleEvaluator:
         await self.monitor_connect()
         return self
 
-    async def run_monitor(
-        self, end_queue: SimpleQueue[str], send_snapshot_event: Callable[[Event], None]
-    ) -> bool:
+    async def handle_events(self, event: Event | None) -> None:
+        if type(event) in {
+            EESnapshot,
+            EESnapshotUpdate,
+        }:
+            event = cast(EESnapshot | EESnapshotUpdate, event)
+
+            self.send_snapshot_event(event)
+
+            if event.snapshot.get(ids.STATUS) in {
+                ENSEMBLE_STATE_STOPPED,
+                ENSEMBLE_STATE_FAILED,
+            }:
+                logger.debug("observed evaluation stopped event, signal done")
+                await self.signal_done()
+
+            if event.snapshot.get(ids.STATUS) == ENSEMBLE_STATE_CANCELLED:
+                logger.debug("observed evaluation cancelled event, exit drainer")
+                raise UserCancelled("Experiment cancelled by user during evaluation")
+        elif type(event) is EETerminated:
+            logger.debug("got terminated event")
+
+        if not self._end_queue.empty():
+            logger.debug("Run model cancelled - during evaluation")
+            self._end_queue.get()
+            await self.signal_cancel()
+            logger.debug("Run model cancelled - during evaluation - cancel sent")
+
+    async def run_monitor(self) -> bool:
         try:
             logger.debug("connecting to new monitor...")
             async with self as monitor:
                 logger.debug("connected")
                 async for event in monitor.track(heartbeat_interval=0.1):
-                    if type(event) in {
-                        EESnapshot,
-                        EESnapshotUpdate,
-                    }:
-                        event = cast(EESnapshot | EESnapshotUpdate, event)
-
-                        send_snapshot_event(event)
-
-                        if event.snapshot.get(ids.STATUS) in {
-                            ENSEMBLE_STATE_STOPPED,
-                            ENSEMBLE_STATE_FAILED,
-                        }:
-                            logger.debug(
-                                "observed evaluation stopped event, signal done"
-                            )
-                            await monitor.signal_done()
-
-                        if event.snapshot.get(ids.STATUS) == ENSEMBLE_STATE_CANCELLED:
-                            logger.debug(
-                                "observed evaluation cancelled event, exit drainer"
-                            )
-                            raise UserCancelled(
-                                "Experiment cancelled by user during evaluation"
-                            )
-                    elif type(event) is EETerminated:
-                        logger.debug("got terminated event")
-
-                    if not end_queue.empty():
-                        logger.debug("Run model cancelled - during evaluation")
-                        end_queue.get()
-                        await monitor.signal_cancel()
-                        logger.debug(
-                            "Run model cancelled - during evaluation - cancel sent"
-                        )
+                    await self.handle_events(event)
         except UserCancelled:
             raise
         except Exception as e:

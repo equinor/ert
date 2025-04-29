@@ -588,19 +588,16 @@ class BaseRunModel(ABC):
         evaluator = EnsembleEvaluator(
             ee_ensemble,
             ee_config,
+            end_queue=self._end_queue,
+            send_snapshot_event=functools.partial(
+                self.send_snapshot_event, iteration=ensemble.iteration
+            ),
         )
         evaluator_task = asyncio.create_task(
             evaluator.run_and_get_successful_realizations()
         )
         await evaluator._server_started
-        if not (
-            await evaluator.run_monitor(
-                end_queue=self._end_queue,
-                send_snapshot_event=functools.partial(
-                    self.send_snapshot_event, iteration=ensemble.iteration
-                ),
-            )
-        ):
+        if not (await evaluator.run_monitor()):
             await evaluator_task
             return []
 
