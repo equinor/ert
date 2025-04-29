@@ -401,9 +401,11 @@ class EverestRunModel(BaseRunModel):
 
             logger.debug(f"Running sampling forward model for batch {self._batch_id}")
             objectives, constraints = self._run_forward_model(
-                np.repeat(np.expand_dims(control_variables, axis=0), nreal, axis=0),
-                model_realizations,
-                [-1] * nreal,
+                sim_to_control_vector=np.repeat(
+                    np.expand_dims(control_variables, axis=0), nreal, axis=0
+                ),
+                sim_to_model_realization=model_realizations,
+                sim_to_perturbation=[-1] * nreal,
             )
 
             self.send_event(
@@ -460,20 +462,20 @@ class EverestRunModel(BaseRunModel):
 
     def _run_forward_model(
         self,
-        control_values: NDArray[np.float64],
-        model_realizations: list[int],
-        perturbations: list[int],
+        sim_to_control_vector: NDArray[np.float64],
+        sim_to_model_realization: list[int],
+        sim_to_perturbation: list[int],
     ) -> tuple[NDArray[np.float64], NDArray[np.float64] | None]:
         # Reset the current run status:
 
         # Create the batch to run:
-        sim_controls = self._create_simulation_controls(control_values)
+        sim_controls = self._create_simulation_controls(sim_to_control_vector)
 
         # Initialize a new ensemble in storage:
         assert self._experiment is not None
         ensemble = self._experiment.create_ensemble(
             name=f"batch_{self._batch_id}",
-            ensemble_size=control_values.shape[0],
+            ensemble_size=sim_to_control_vector.shape[0],
             iteration=self._batch_id,
         )
 
@@ -483,7 +485,11 @@ class EverestRunModel(BaseRunModel):
                 "perturbation": perturbation,
             }
             for ert_realization, (model_realization, perturbation) in enumerate(
-                zip(model_realizations, perturbations, strict=False)
+                zip(
+                    sim_to_model_realization,
+                    sim_to_perturbation,
+                    strict=False,
+                )
             )
         }
 
@@ -493,7 +499,7 @@ class EverestRunModel(BaseRunModel):
             self._setup_sim(sim_id, controls, ensemble)
 
         # Evaluate the batch:
-        run_args = self._get_run_args(ensemble, model_realizations)
+        run_args = self._get_run_args(ensemble, sim_to_model_realization)
         self._context_env.update(
             {
                 "_ERT_EXPERIMENT_ID": str(ensemble.experiment_id),
@@ -775,9 +781,9 @@ class EverestRunModel(BaseRunModel):
 
             logger.debug(f"Running forward model for batch {self._batch_id}")
             sim_objectives, sim_constraints = self._run_forward_model(
-                control_values=control_values_to_simulate,
-                model_realizations=[c.model_realization for c in sim_infos],
-                perturbations=[c.perturbation for c in sim_infos],
+                sim_to_control_vector=control_values_to_simulate,
+                sim_to_model_realization=[c.model_realization for c in sim_infos],
+                sim_to_perturbation=[c.perturbation for c in sim_infos],
             )
 
             self.send_event(
@@ -943,11 +949,11 @@ class EverestRunModel(BaseRunModel):
     def _get_run_args(
         self,
         ensemble: Ensemble,
-        model_realizations: list[int],
+        sim_to_model_realization: list[int],
     ) -> list[RunArg]:
         substitutions = self._substitutions
-        self.active_realizations = [True] * len(model_realizations)
-        for sim_id, model_realization in enumerate(model_realizations):
+        self.active_realizations = [True] * len(sim_to_model_realization)
+        for sim_id, model_realization in enumerate(sim_to_model_realization):
             substitutions[f"<GEO_ID_{sim_id}_{ensemble.iteration}>"] = str(
                 int(model_realization)
             )
