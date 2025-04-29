@@ -85,9 +85,10 @@ class EnsembleEvaluator:
         self._dispatchers_empty.set()
 
     async def _publisher(self) -> None:
+        event: Event | _HeartbeatEvent
         while True:
             try:
-                event: Event | _HeartbeatEvent = await asyncio.wait_for(
+                event = await asyncio.wait_for(
                     self._events_to_send.get(), timeout=HEARTBEAT_TIMEOUT
                 )
             except TimeoutError:
