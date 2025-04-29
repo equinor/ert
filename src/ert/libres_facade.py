@@ -36,10 +36,6 @@ class LibresFacade:
     def enspath(self) -> str:
         return self.config.ens_path
 
-    @property
-    def user_config_file(self) -> str | None:
-        return self.config.user_config_file
-
     def get_ensemble_size(self) -> int:
         return self.config.runpath_config.num_realizations
 
