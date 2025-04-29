@@ -20,7 +20,13 @@ import psutil
 import scipy
 from iterative_ensemble_smoother.experimental import AdaptiveESMDA
 
-from ert.config import ESSettings, GenKwConfig, ObservationGroups, UpdateSettings
+from ert.config import (
+    ESSettings,
+    GenKwConfig,
+    ObservationGroups,
+    OutlierSettings,
+    UpdateSettings,
+)
 
 from . import misfit_preprocessor
 from .event import (
@@ -164,8 +170,7 @@ class _OutlierColumns(StrEnum):
 def _compute_observation_statuses(
     observations_and_responses: pl.DataFrame,
     global_std_scaling: float,
-    std_cutoff: float,
-    alpha: float,
+    outlier_settings: OutlierSettings,
     active_realizations: list[str],
 ) -> pl.DataFrame:
     """
@@ -209,11 +214,11 @@ def _compute_observation_statuses(
                 )
             )
             .then(pl.lit(ObservationStatus.MISSING_RESPONSE))
-            .when(pl.col(_OutlierColumns.response_std) <= std_cutoff)
+            .when(pl.col(_OutlierColumns.response_std) <= outlier_settings.std_cutoff)
             .then(pl.lit(ObservationStatus.STD_CUTOFF))
             .when(
                 abs(pl.col("observations") - pl.col(_OutlierColumns.ens_mean))
-                > alpha
+                > outlier_settings.alpha
                 * (
                     pl.col(_OutlierColumns.response_std)
                     + pl.col(_OutlierColumns.scaled_std)
@@ -312,12 +317,10 @@ def _auto_scale_observations(
 
 def _preprocess_observations_and_responses(
     ensemble: Ensemble,
-    alpha: float,
-    std_cutoff: float,
+    observation_settings: UpdateSettings,
     global_std_scaling: float,
     iens_active_index: npt.NDArray[np.int_],
     selected_observations: Iterable[str],
-    auto_scale_observations: list[ObservationGroups] | None,
     progress_callback: Callable[[AnalysisEvent], None],
 ) -> pl.DataFrame:
     observations_and_responses = ensemble.get_observations_and_responses(
@@ -334,8 +337,7 @@ def _preprocess_observations_and_responses(
     observations_and_responses = _compute_observation_statuses(
         observations_and_responses,
         global_std_scaling,
-        std_cutoff,
-        alpha,
+        observation_settings.outlier_settings,
         realization_responses,
     )
 
@@ -345,10 +347,10 @@ def _preprocess_observations_and_responses(
         .flatten()
     )
 
-    if auto_scale_observations:
+    if observation_settings.auto_scale_observations:
         updated_std_scales, scaling_factors_df = _auto_scale_observations(
             observations_and_responses,
-            auto_scale_observations,
+            observation_settings.auto_scale_observations,
             obs_mask,
             realization_responses,
             progress_callback,
@@ -500,15 +502,13 @@ def analysis_ES(
     observations: Iterable[str],
     rng: np.random.Generator,
     module: ESSettings,
-    alpha: float,
-    std_cutoff: float,
+    observation_settings: UpdateSettings,
     global_scaling: float,
     smoother_snapshot: SmootherSnapshot,
     ens_mask: npt.NDArray[np.bool_],
     source_ensemble: Ensemble,
     target_ensemble: Ensemble,
     progress_callback: Callable[[AnalysisEvent], None],
-    auto_scale_observations: list[ObservationGroups] | None,
 ) -> None:
     iens_active_index = np.flatnonzero(ens_mask)
 
@@ -521,12 +521,10 @@ def analysis_ES(
 
     preprocessed_data = _preprocess_observations_and_responses(
         source_ensemble,
-        alpha,
-        std_cutoff,
+        observation_settings,
         global_scaling,
         iens_active_index,
         observations,
-        auto_scale_observations,
         progress_callback,
     )
 
@@ -739,8 +737,8 @@ def smoother_update(
     smoother_snapshot = SmootherSnapshot(
         source_ensemble_name=prior_storage.name,
         target_ensemble_name=posterior_storage.name,
-        alpha=update_settings.alpha,
-        std_cutoff=update_settings.std_cutoff,
+        alpha=update_settings.outlier_settings.alpha,
+        std_cutoff=update_settings.outlier_settings.std_cutoff,
         global_scaling=global_scaling,
     )
 
@@ -750,15 +748,13 @@ def smoother_update(
             observations,
             rng,
             es_settings,
-            update_settings.alpha,
-            update_settings.std_cutoff,
+            update_settings,
             global_scaling,
             smoother_snapshot,
             ens_mask,
             prior_storage,
             posterior_storage,
             progress_callback,
-            update_settings.auto_scale_observations,
         )
     except Exception as e:
         progress_callback(

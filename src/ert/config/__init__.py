@@ -1,4 +1,9 @@
-from .analysis_config import AnalysisConfig, ObservationGroups, UpdateSettings
+from .analysis_config import (
+    AnalysisConfig,
+    ObservationGroups,
+    OutlierSettings,
+    UpdateSettings,
+)
 from .analysis_module import AnalysisModule, ESSettings
 from .capture_validation import capture_validation
 from .design_matrix import DESIGN_MATRIX_GROUP, DesignMatrix
@@ -65,6 +70,7 @@ __all__ = [
     "ModelConfig",
     "ObservationGroups",
     "ObservationType",
+    "OutlierSettings",
     "ParameterConfig",
     "PriorDict",
     "QueueConfig",
