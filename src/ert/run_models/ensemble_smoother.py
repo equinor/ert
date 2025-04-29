@@ -7,7 +7,7 @@ from typing import TYPE_CHECKING
 
 import numpy as np
 
-from ert.config import ErtConfig, ESSettings, UpdateSettings
+from ert.config import ErtConfig, ESSettings, ObservationSettings
 from ert.config.parsing.config_errors import ConfigValidationError
 from ert.enkf_main import sample_prior, save_design_matrix_to_ensemble
 from ert.ensemble_evaluator import EvaluatorServerConfig
@@ -37,7 +37,7 @@ class EnsembleSmoother(UpdateRunModel):
         storage: Storage,
         queue_config: QueueConfig,
         es_settings: ESSettings,
-        update_settings: UpdateSettings,
+        update_settings: ObservationSettings,
         status_queue: SimpleQueue[StatusEvents],
     ):
         super().__init__(

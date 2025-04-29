@@ -6,7 +6,7 @@ from queue import SimpleQueue
 from typing import TYPE_CHECKING
 from uuid import UUID
 
-from ert.config import ErtConfig, ESSettings, UpdateSettings
+from ert.config import ErtConfig, ESSettings, ObservationSettings
 from ert.ensemble_evaluator import EvaluatorServerConfig
 from ert.storage import Storage
 
@@ -33,7 +33,7 @@ class ManualUpdate(UpdateRunModel):
         storage: Storage,
         queue_config: QueueConfig,
         es_settings: ESSettings,
-        update_settings: UpdateSettings,
+        update_settings: ObservationSettings,
         status_queue: SimpleQueue[StatusEvents],
     ):
         try:

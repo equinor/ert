@@ -12,7 +12,7 @@ from typing_extensions import TypedDict
 from ert.config.parsing.hook_runtime import HookRuntime
 
 if TYPE_CHECKING:
-    from ert.config import ESSettings, UpdateSettings
+    from ert.config import ESSettings, ObservationSettings
     from ert.runpaths import Runpaths
     from ert.storage import Ensemble, Storage
 
@@ -54,7 +54,7 @@ class PreFirstUpdateFixtures:
     storage: Storage
     ensemble: Ensemble
     es_settings: ESSettings
-    observation_settings: UpdateSettings
+    observation_settings: ObservationSettings
     hook: HookRuntime = HookRuntime.PRE_FIRST_UPDATE
 
 
@@ -77,7 +77,7 @@ class WorkflowFixtures(TypedDict, total=False):
     storage: Storage
     ensemble: Ensemble | None
     es_settings: ESSettings
-    observation_settings: UpdateSettings
+    observation_settings: ObservationSettings
 
 
 def create_workflow_fixtures_from_hooked(

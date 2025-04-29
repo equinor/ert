@@ -26,8 +26,8 @@ from ert.config import (
     Field,
     GenDataConfig,
     GenKwConfig,
+    ObservationSettings,
     OutlierSettings,
-    UpdateSettings,
 )
 from ert.config.gen_kw_config import TransformFunctionDefinition
 from ert.field_utils import Shape
@@ -93,7 +93,7 @@ def test_update_report(
         posterior_ens,
         experiment.observation_keys,
         ert_config.ensemble_config.parameters,
-        UpdateSettings(auto_scale_observations=misfit_preprocess),
+        ObservationSettings(auto_scale_observations=misfit_preprocess),
         ESSettings(inversion="subspace"),
         progress_callback=events.append,
     )
@@ -129,7 +129,7 @@ def test_update_report_with_exception_in_analysis_ES(
             posterior_ens,
             experiment.observation_keys,
             ert_config.ensemble_config.parameters,
-            UpdateSettings(outlier_settings=OutlierSettings(alpha=0.0000000001)),
+            ObservationSettings(outlier_settings=OutlierSettings(alpha=0.0000000001)),
             ESSettings(inversion="subspace"),
             progress_callback=events.append,
         )
@@ -144,16 +144,24 @@ def test_update_report_with_exception_in_analysis_ES(
 @pytest.mark.parametrize(
     "update_settings, num_overspread, num_collapsed, num_nan, num_active",
     [
-        (UpdateSettings(outlier_settings=OutlierSettings(alpha=0.1)), 169, 0, 0, 41),
         (
-            UpdateSettings(outlier_settings=OutlierSettings(std_cutoff=0.1)),
+            ObservationSettings(outlier_settings=OutlierSettings(alpha=0.1)),
+            169,
+            0,
+            0,
+            41,
+        ),
+        (
+            ObservationSettings(outlier_settings=OutlierSettings(std_cutoff=0.1)),
             0,
             73,
             0,
             137,
         ),
         (
-            UpdateSettings(outlier_settings=OutlierSettings(alpha=0.1, std_cutoff=0.1)),
+            ObservationSettings(
+                outlier_settings=OutlierSettings(alpha=0.1, std_cutoff=0.1)
+            ),
             113,
             73,
             0,
@@ -327,7 +335,7 @@ def test_update_handles_precision_loss_in_std_dev(tmp_path):
             posterior,
             experiment.observation_keys,
             ["COEFFS"],
-            UpdateSettings(auto_scale_observations=[["OBS*"]]),
+            ObservationSettings(auto_scale_observations=[["OBS*"]]),
             ESSettings(),
             progress_callback=events.append,
         )
@@ -441,7 +449,7 @@ def test_update_raises_on_singular_matrix(tmp_path):
                 posterior,
                 experiment.observation_keys,
                 ["COEFFS"],
-                UpdateSettings(auto_scale_observations=[["OBS*"]]),
+                ObservationSettings(auto_scale_observations=[["OBS*"]]),
                 ESSettings(),
                 rng=np.random.default_rng(1234),
             )
@@ -490,7 +498,7 @@ def test_update_snapshot(
         posterior_ens,
         experiment.observation_keys,
         list(ert_config.ensemble_config.parameters),
-        UpdateSettings(),
+        ObservationSettings(),
         ESSettings(inversion="subspace"),
         rng=rng,
     )
@@ -612,7 +620,7 @@ def test_smoother_snapshot_alpha(
             posterior_storage,
             observations=["OBSERVATION"],
             parameters=["PARAMETER"],
-            update_settings=UpdateSettings(
+            update_settings=ObservationSettings(
                 outlier_settings=OutlierSettings(alpha=alpha)
             ),
             es_settings=ESSettings(inversion="subspace"),
@@ -649,7 +657,7 @@ def test_update_only_using_subset_observations(
         posterior_ens,
         ["WPR_DIFF_1"],
         ert_config.ensemble_config.parameters,
-        UpdateSettings(),
+        ObservationSettings(),
         ESSettings(),
         progress_callback=events.append,
     )
@@ -819,7 +827,7 @@ def test_that_autoscaling_applies_to_scaled_errors(storage):
         scaled_errors_with_autoscale = (
             _mock_preprocess_observations_and_responses(
                 observations_and_responses,
-                observation_settings=UpdateSettings(
+                observation_settings=ObservationSettings(
                     outlier_settings=outlier_settings,
                     auto_scale_observations=[["obs1*"]],
                 ),
@@ -836,7 +844,7 @@ def test_that_autoscaling_applies_to_scaled_errors(storage):
         scaled_errors_without_autoscale = (
             _mock_preprocess_observations_and_responses(
                 observations_and_responses,
-                observation_settings=UpdateSettings(
+                observation_settings=ObservationSettings(
                     outlier_settings=outlier_settings, auto_scale_observations=[]
                 ),
                 global_std_scaling=global_std_scaling,
@@ -959,7 +967,7 @@ def test_that_autoscaling_ignores_typos_in_observation_names(storage, caplog):
     ensemble = experiment.create_ensemble(name="dummy", ensemble_size=10)
     _mock_preprocess_observations_and_responses(
         observations_and_responses,
-        observation_settings=UpdateSettings(
+        observation_settings=ObservationSettings(
             outlier_settings=OutlierSettings(alpha=1, std_cutoff=0.05),
             auto_scale_observations=[["OOOPS1*"]],
         ),
@@ -989,7 +997,7 @@ def test_that_deactivated_observations_are_logged(storage, caplog):
     ensemble = experiment.create_ensemble(name="dummy", ensemble_size=10)
     _mock_preprocess_observations_and_responses(
         observations_and_responses,
-        observation_settings=UpdateSettings(
+        observation_settings=ObservationSettings(
             outlier_settings=OutlierSettings(alpha=1, std_cutoff=11111),
             auto_scale_observations=None,
         ),
@@ -1025,7 +1033,7 @@ def test_that_activate_observations_are_not_logged_as_deactivated(storage, caplo
     ensemble = experiment.create_ensemble(name="dummy", ensemble_size=10)
     _mock_preprocess_observations_and_responses(
         observations_and_responses,
-        observation_settings=UpdateSettings(
+        observation_settings=ObservationSettings(
             outlier_settings=OutlierSettings(alpha=100, std_cutoff=0),
             auto_scale_observations=None,
         ),
@@ -1104,7 +1112,7 @@ def test_gen_data_obs_data_mismatch(storage, uniform_parameter):
             posterior_ens,
             ["OBSERVATION"],
             ["PARAMETER"],
-            UpdateSettings(),
+            ObservationSettings(),
             ESSettings(),
         )
 
@@ -1164,7 +1172,7 @@ def test_gen_data_missing(storage, uniform_parameter, obs):
         posterior_ens,
         ["OBSERVATION"],
         ["PARAMETER"],
-        UpdateSettings(),
+        ObservationSettings(),
         ESSettings(),
         progress_callback=events.append,
     )
@@ -1251,7 +1259,7 @@ def test_update_subset_parameters(storage, uniform_parameter, obs):
         posterior_ens,
         ["OBSERVATION"],
         ["PARAMETER"],
-        UpdateSettings(),
+        ObservationSettings(),
         ESSettings(),
     )
     assert prior.load_parameters("EXTRA_PARAMETER", 0)["values"].equals(

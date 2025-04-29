@@ -14,7 +14,7 @@ import xtgeo
 from ert.analysis import (
     smoother_update,
 )
-from ert.config import ErtConfig, ESSettings, UpdateSettings
+from ert.config import ErtConfig, ESSettings, ObservationSettings
 from ert.mode_definitions import ENSEMBLE_SMOOTHER_MODE
 from ert.storage import open_storage
 
@@ -298,7 +298,7 @@ def test_field_param_update_using_heat_equation_zero_var_params_and_adaptive_loc
                 new_posterior,
                 experiment.observation_keys,
                 config.ensemble_config.parameters,
-                UpdateSettings(),
+                ObservationSettings(),
                 ESSettings(localization=True),
             )
 

@@ -12,7 +12,7 @@ from ert.config import (
     ConfigValidationError,
     ErtConfig,
     ESSettings,
-    UpdateSettings,
+    ObservationSettings,
 )
 from ert.enkf_main import sample_prior, save_design_matrix_to_ensemble
 from ert.ensemble_evaluator import EvaluatorServerConfig
@@ -52,7 +52,7 @@ class MultipleDataAssimilation(UpdateRunModel):
         storage: Storage,
         queue_config: QueueConfig,
         es_settings: ESSettings,
-        update_settings: UpdateSettings,
+        update_settings: ObservationSettings,
         status_queue: SimpleQueue[StatusEvents],
     ):
         self._relative_weights = weights

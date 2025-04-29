@@ -10,7 +10,7 @@ import pytest
 from packaging import version
 
 from ert.analysis import ErtAnalysisError, smoother_update
-from ert.config import ErtConfig, ESSettings, UpdateSettings
+from ert.config import ErtConfig, ESSettings, ObservationSettings
 from ert.storage import open_storage
 from ert.storage.local_storage import (
     _LOCAL_STORAGE_VERSION,
@@ -467,7 +467,7 @@ def test_that_manual_update_from_migrated_storage_works(
                 posterior_ens,
                 list(experiment.observation_keys),
                 list(ert_config.ensemble_config.parameters),
-                UpdateSettings(),
+                ObservationSettings(),
                 ESSettings(),
             )
 

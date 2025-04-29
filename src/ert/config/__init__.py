@@ -1,8 +1,8 @@
 from .analysis_config import (
     AnalysisConfig,
     ObservationGroups,
+    ObservationSettings,
     OutlierSettings,
-    UpdateSettings,
 )
 from .analysis_module import AnalysisModule, ESSettings
 from .capture_validation import capture_validation
@@ -69,6 +69,7 @@ __all__ = [
     "InvalidResponseFile",
     "ModelConfig",
     "ObservationGroups",
+    "ObservationSettings",
     "ObservationType",
     "OutlierSettings",
     "ParameterConfig",
@@ -80,7 +81,6 @@ __all__ = [
     "SummaryObservation",
     "SurfaceConfig",
     "TransformFunction",
-    "UpdateSettings",
     "WarningInfo",
     "Workflow",
     "_WorkflowJob",

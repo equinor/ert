@@ -30,7 +30,7 @@ class OutlierSettings:
 
 
 @dataclass
-class UpdateSettings:
+class ObservationSettings:
     outlier_settings: OutlierSettings = field(default_factory=OutlierSettings)
     auto_scale_observations: list[ObservationGroups] = field(default_factory=list)
 
@@ -40,7 +40,9 @@ class AnalysisConfig:
     minimum_required_realizations: int = 0
     update_log_path: str | Path = "update_log"
     es_module: ESSettings = field(default_factory=ESSettings)
-    observation_settings: UpdateSettings = field(default_factory=UpdateSettings)
+    observation_settings: ObservationSettings = field(
+        default_factory=ObservationSettings
+    )
     num_iterations: int = 1
     design_matrix: DesignMatrix | None = None
 
@@ -174,7 +176,7 @@ class AnalysisConfig:
                 "std_cutoff": config_dict.get(ConfigKeys.STD_CUTOFF, 1e-6),
             }
 
-            obs_settings = UpdateSettings(
+            obs_settings = ObservationSettings(
                 outlier_settings=OutlierSettings(**outlier_settings),
                 auto_scale_observations=auto_scale_observations,
             )
