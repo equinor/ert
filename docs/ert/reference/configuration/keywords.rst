@@ -1150,11 +1150,10 @@ Keyword arguments:
 
 ::
 
-        GEN_KW  ... UPDATE:TRUE/FALSE INIT_FILES:path/to/file_%d
+        GEN_KW  ... UPDATE:TRUE/FALSE
 
 Where the :code:`UPDATE` keyword argument specifies whether a parameter group should be included during the
 history matching process. It must be set to either TRUE or FALSE. The parameters are still sampled in the prior.
-where :code:`INIT_FILES` :ref:`allows sampling parameters outside of ert <gen_kw_init_files>`:
 
 A configuration example is shown below:
 
@@ -1297,54 +1296,6 @@ defined in the file ``MULTFLT.txt``:
         FAULT1   LOGUNIF   0.00001   0.1
         FAULT2   UNIFORM   0.00      1.0
 
-
-.. _gen_kw_init_files:
-
-**Loading GEN_KW values from an external file**
-
-The default use of the GEN_KW keyword is to let the ERT application sample
-random values for the elements in the GEN_KW instance, but it is also possible
-to tell ERT to load a precreated set of data files, this can for instance be
-used as a component in an experimental design based workflow. When using
-external files to initialize the GEN_KW instances you supply an extra keyword
-``INIT_FILES:/path/to/priors/files%d`` which tells where the prior files are:
-
-::
-
-        GEN_KW  MY-FAULTS   MULTFLT.tmpl   MULTFLT.INC   MULTFLT.txt    INIT_FILES:priors/multflt/faults%d
-
-In the example above you must prepare files ``priors/multflt/faults0``,
-``priors/multflt/faults1``, ... ``priors/multflt/faultsn`` which ERT
-will load when you initialize the case. The format of the GEN_KW input
-files can be of two varieties:
-
-1. The files can be plain ASCII text files with a list of numbers:
-
-::
-
-        1.25
-        2.67
-
-The numbers will be assigned to parameters in the order found in the
-``MULTFLT.txt`` file.
-
-2. Alternatively values and keywords can be interleaved as in:
-
-::
-
-        FAULT1 1.25
-        FAULT2 2.56
-
-in this case the ordering can differ in the init files and the parameter file.
-
-The heritage of the ERT program is based on the EnKF algorithm, and the EnKF
-algorithm evolves around Gaussian variables - internally the GEN_KW variables
-are assumed to be samples from the N(0,1) distribution, and the distributions
-specified in the parameters file are based on transformations starting with a
-N(0,1) distributed variable. The slightly awkward consequence of this is that
-to let your sampled values pass through ERT unmodified you must configure the
-distribution NORMAL 0 1 in the parameter file; alternatively if you do not
-intend to update the GEN_KW variable you can use the distribution RAW.
 
 .. _gen_kw_template_file:
 

@@ -15,8 +15,6 @@ import xarray as xr
 from scipy.stats import norm
 from typing_extensions import TypedDict
 
-from ert.substitutions import substitute_runpath_name
-
 from ._str_to_bool import str_to_bool
 from .parameter_config import ParameterConfig
 from .parsing import ConfigValidationError, ConfigWarning, ErrorInfo
@@ -59,7 +57,6 @@ class TransformFunctionDefinition:
 @dataclass
 class GenKwConfig(ParameterConfig):
     transform_function_definitions: list[TransformFunctionDefinition]
-    forward_init_file: str | None = None
 
     def __post_init__(self) -> None:
         self.transform_functions: list[TransformFunction] = []
@@ -120,10 +117,15 @@ class GenKwConfig(ParameterConfig):
 
         options = cast(dict[str, str], gen_kw[-1])
         positional_args = cast(list[str], gen_kw[:-1])
-        forward_init = str_to_bool(options.get("FORWARD_INIT", "FALSE"))
-        init_file = _get_abs_path(options.get("INIT_FILES"))
-        update_parameter = str_to_bool(options.get("UPDATE", "TRUE"))
         errors = []
+        update_parameter = str_to_bool(options.get("UPDATE", "TRUE"))
+        if _get_abs_path(options.get("INIT_FILES")):
+            raise ConfigValidationError.with_context(
+                "INIT_FILES with GEN_KW has been removed. "
+                f"Please remove INIT_FILES from the GEN_KW {gen_kw_key} config. "
+                "Alternatively, use DESIGN_MATRIX to load parameters from files.",
+                gen_kw,
+            )
 
         if len(positional_args) == 2:
             parameter_file_contents = positional_args[1][1]
@@ -135,25 +137,6 @@ class GenKwConfig(ParameterConfig):
             raise ConfigValidationError(
                 f"Unexpected positional arguments: {positional_args}"
             )
-
-        if forward_init:
-            errors.append(
-                ConfigValidationError.with_context(
-                    "Loading GEN_KW from files created by the forward "
-                    "model is not supported.",
-                    gen_kw,
-                )
-            )
-
-        if init_file and "%" not in init_file:
-            errors.append(
-                ConfigValidationError.with_context(
-                    "Loading GEN_KW from files requires %d in file format", gen_kw
-                )
-            )
-
-        if errors:
-            raise ConfigValidationError.from_collected(errors)
 
         transform_function_definitions: list[TransformFunctionDefinition] = []
         for line_number, item in enumerate(parameter_file_contents.splitlines()):
@@ -196,8 +179,7 @@ class GenKwConfig(ParameterConfig):
             )
         return cls(
             name=gen_kw_key,
-            forward_init=forward_init,
-            forward_init_file=init_file,
+            forward_init=False,
             transform_function_definitions=transform_function_definitions,
             update=update_parameter,
         )
@@ -288,9 +270,6 @@ class GenKwConfig(ParameterConfig):
     def sample_or_load(
         self, real_nr: int, random_seed: int, ensemble_size: int
     ) -> xr.Dataset:
-        if self.forward_init_file:
-            return self.read_from_runpath(Path(), real_nr, 0)
-
         keys = [e.name for e in self.transform_functions]
         parameter_value = self._sample_value(
             self.name,
@@ -313,22 +292,7 @@ class GenKwConfig(ParameterConfig):
         real_nr: int,
         iteration: int,
     ) -> xr.Dataset:
-        keys = [e.name for e in self.transform_functions]
-        if not self.forward_init_file:
-            raise ValueError("loading gen_kw values requires forward_init_file")
-
-        parameter_value = self._values_from_file(
-            substitute_runpath_name(self.forward_init_file, real_nr, iteration),
-            keys,
-        )
-
-        return xr.Dataset(
-            {
-                "values": ("names", parameter_value),
-                "transformed_values": ("names", self.transform(parameter_value)),
-                "names": keys,
-            }
-        )
+        raise NotImplementedError()
 
     def write_to_runpath(
         self,

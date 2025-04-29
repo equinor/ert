@@ -56,7 +56,7 @@ def test_short_definition_raises_config_error(tmp_path):
             [
                 "GEN",
                 str(parameter_file),
-                {"INIT_FILES": "%dgen_init.txt"},
+                {},
             ]
         )
 
@@ -447,7 +447,6 @@ def test_gen_kw_objects_equal(tmpdir):
         assert (
             g1.transform_function_definitions[0] == g2.transform_function_definitions[0]
         )
-        assert g1.forward_init_file == g2.forward_init_file
 
 
 @pytest.mark.usefixtures("use_tmpdir")
@@ -522,21 +521,6 @@ def test_gen_kw_config_validation():
                 {},
             ]
         )
-
-
-def test_incorrect_values_in_forward_init_file_fails(tmp_path):
-    (tmp_path / "forward_init_1").write_text("incorrect", encoding="utf-8")
-    with pytest.raises(
-        ValueError,
-        match=f"{tmp_path / 'forward_init_1'} did not contain numbers, got object",
-    ):
-        GenKwConfig(
-            "GEN_KW",
-            True,
-            True,
-            [],
-            str(tmp_path / "forward_init_%d"),
-        ).read_from_runpath(tmp_path, 1, 0)
 
 
 @pytest.mark.usefixtures("use_tmpdir")
