@@ -65,7 +65,6 @@ class LibresFacade:
         progress_callback: Callable[[AnalysisEvent], None] | None = None,
         global_std_scaling: float = 1.0,
         rng: np.random.Generator | None = None,
-        misfit_process: bool = False,
     ) -> SmootherSnapshot:
         if rng is None:
             rng = np.random.default_rng()
