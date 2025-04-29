@@ -20,14 +20,14 @@ def test_random_seed(tmp_path, monkeypatch, random_seed):
     if random_seed:
         config["environment"] = {"random_seed": random_seed}
     ever_config = EverestConfig.with_defaults(**config)
-    dict = everest_to_ert_config_dict(ever_config)
+    dictionary = everest_to_ert_config_dict(ever_config)
 
     if random_seed is None:
         assert ever_config.environment.random_seed > 0
-        assert dict[ErtConfigKeys.RANDOM_SEED] > 0
+        assert dictionary[ErtConfigKeys.RANDOM_SEED] > 0
     else:
         assert ever_config.environment.random_seed == random_seed
-        assert dict[ErtConfigKeys.RANDOM_SEED] == random_seed
+        assert dictionary[ErtConfigKeys.RANDOM_SEED] == random_seed
 
 
 def test_read_file(tmp_path, monkeypatch):

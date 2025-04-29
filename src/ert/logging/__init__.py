@@ -80,10 +80,10 @@ class TerminalFormatter(logging.Formatter):
 def suppress_logs(logs_to_suppress: list[str]) -> Callable[[logging.LogRecord], bool]:
     """Suppresses logs from loggers listed in logs_to_suppress"""
 
-    def filter(record: logging.LogRecord) -> bool:
+    def log_filter(record: logging.LogRecord) -> bool:
         for log_name in logs_to_suppress:
             if record.name.startswith(log_name):
                 return False
         return True
 
-    return filter
+    return log_filter

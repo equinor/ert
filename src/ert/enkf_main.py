@@ -121,7 +121,7 @@ def _generate_parameter_files(
     _value_export_json(run_path, export_base_name, exports)
 
 
-def _manifest_to_json(ensemble: Ensemble, iens: int, iter: int) -> dict[str, Any]:
+def _manifest_to_json(ensemble: Ensemble, iens: int, iter_: int) -> dict[str, Any]:
     manifest = {}
     # Add expected parameter files to manifest
     for param_config in ensemble.experiment.parameter_configuration.values():
@@ -132,14 +132,14 @@ def _manifest_to_json(ensemble: Ensemble, iens: int, iter: int) -> dict[str, Any
         if param_config.forward_init and ensemble.iteration == 0:
             assert param_config.forward_init_file is not None
             file_path = substitute_runpath_name(
-                param_config.forward_init_file, iens, iter
+                param_config.forward_init_file, iens, iter_
             )
             manifest[param_config.name] = file_path
     # Add expected response files to manifest
     for response_config in ensemble.experiment.response_configuration.values():
         for input_file in response_config.expected_input_files:
             manifest[f"{response_config.response_type}_{input_file}"] = (
-                substitute_runpath_name(input_file, iens, iter)
+                substitute_runpath_name(input_file, iens, iter_)
             )
 
     return manifest

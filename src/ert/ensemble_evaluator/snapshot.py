@@ -466,5 +466,5 @@ def _realization_dict_to_realization_snapshot(
 T = TypeVar("T", RealizationSnapshot, FMStepSnapshot)
 
 
-def _filter_nones(input: T) -> T:
-    return cast(T, {k: v for k, v in input.items() if v is not None})
+def _filter_nones(data: T) -> T:
+    return cast(T, {k: v for k, v in data.items() if v is not None})

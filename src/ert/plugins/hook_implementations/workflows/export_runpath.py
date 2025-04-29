@@ -38,12 +38,12 @@ class ExportRunpathJob(ErtScript):
     ) -> None:
         args = " ".join(workflow_args).split()  # Make sure args is a list of words
         assert ensemble
-        iter = ensemble.iteration
+        iter_ = ensemble.iteration
         reals = ensemble.ensemble_size
         run_paths.write_runpath_list(
             *self.get_ranges(
                 args,
-                iter,
+                iter_,
                 reals,
             )
         )

@@ -94,7 +94,7 @@ async def _write_responses_to_storage(
 async def forward_model_ok(
     run_path: str,
     realization: int,
-    iter: int,
+    iter_: int,
     ensemble: Ensemble,
 ) -> LoadResult:
     parameters_result = LoadResult(LoadStatus.LOAD_SUCCESSFUL, "")
@@ -102,11 +102,11 @@ async def forward_model_ok(
     try:
         # We only read parameters after the prior, after that, ERT
         # handles parameters
-        if iter == 0:
+        if iter_ == 0:
             parameters_result = await _read_parameters(
                 run_path,
                 realization,
-                iter,
+                iter_,
                 ensemble,
             )
 

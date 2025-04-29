@@ -446,8 +446,8 @@ def _tail_textfile(file_path: Path, num_chars: int) -> str:
 def _parse_squeue_output(output: str) -> Iterator[tuple[str, SqueueInfo]]:
     for line in output.split("\n"):
         if line:
-            id, status = line.split()
-            yield id, SqueueInfo(JobStatus[status])
+            id_, status = line.split()
+            yield id_, SqueueInfo(JobStatus[status])
 
 
 def _seconds_to_slurm_time_format(seconds: float) -> str:

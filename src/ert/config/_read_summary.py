@@ -206,15 +206,17 @@ def _is_smspec(base: str, path: str) -> bool:
 def _find_file_matching(
     kind: str, case: str, predicate: Callable[[str, str], bool]
 ) -> str:
-    dir, base = os.path.split(case)
-    candidates = list(filter(lambda x: predicate(base, x), os.listdir(dir or ".")))
+    directory, base = os.path.split(case)
+    candidates = list(
+        filter(lambda x: predicate(base, x), os.listdir(directory or "."))
+    )
     if not candidates:
         raise FileNotFoundError(f"Could not find any {kind} matching case path {case}")
     if len(candidates) > 1:
         raise FileNotFoundError(
             f"Ambiguous reference to {kind} in {case}, could be any of {candidates}"
         )
-    return os.path.join(dir, candidates[0])
+    return os.path.join(directory, candidates[0])
 
 
 def _get_summary_filenames(filepath: str) -> tuple[str, str]:
@@ -297,13 +299,13 @@ def _read_spec(
     )
     if spec.lower().endswith("fsmspec"):
         mode = "rt"
-        format = resfo.Format.FORMATTED
+        assumed_format = resfo.Format.FORMATTED
     else:
         mode = "rb"
-        format = resfo.Format.UNFORMATTED
+        assumed_format = resfo.Format.UNFORMATTED
 
     with open(spec, mode) as fp:
-        for entry in resfo.lazy_read(fp, format):
+        for entry in resfo.lazy_read(fp, assumed_format):
             if all(p is not None for p in [date, n, nx, ny, *arrays.values()]):
                 break
             kw = entry.read_keyword()
@@ -450,10 +452,10 @@ def _read_summary(
 ) -> tuple[npt.NDArray[np.float32], list[datetime]]:
     if summary.lower().endswith("funsmry"):
         mode = "rt"
-        format = resfo.Format.FORMATTED
+        assumed_format = resfo.Format.FORMATTED
     else:
         mode = "rb"
-        format = resfo.Format.UNFORMATTED
+        assumed_format = resfo.Format.UNFORMATTED
 
     last_params = None
     values: list[npt.NDArray[np.float32]] = []
@@ -477,7 +479,7 @@ def _read_summary(
             last_params = None
 
     with open(summary, mode) as fp:
-        for entry in resfo.lazy_read(fp, format):
+        for entry in resfo.lazy_read(fp, assumed_format):
             kw = entry.read_keyword()
             if kw == "PARAMS  ":
                 last_params = entry

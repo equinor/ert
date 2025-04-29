@@ -261,7 +261,7 @@ class Job:
         callback_status, status_msg = await forward_model_ok(
             run_path=self.real.run_arg.runpath,
             realization=self.real.run_arg.iens,
-            iter=self.real.run_arg.itr,
+            iter_=self.real.run_arg.itr,
             ensemble=self.real.run_arg.ensemble_storage,
         )
         if self._message:

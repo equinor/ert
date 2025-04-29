@@ -65,25 +65,25 @@ class IoLibrary(Enum):
     RESDATA = auto()
 
 
-def extension(format: FieldFileFormat):
+def extension(format_: FieldFileFormat):
     """The file extension of a given field file format"""
-    if format in ROFF_FORMATS:
+    if format_ in ROFF_FORMATS:
         return "roff"
-    return format.value
+    return format_.value
 
 
 def xtgeo_fformat(
-    format: FieldFileFormat,
+    format_: FieldFileFormat,
 ) -> Literal["roff", "roffasc", "grdecl", "bgrdecl"]:
     """Converts the FieldFileFormat to the corresponding xtgeo 'fformat' value.
 
     See xtgeo.GridProperty.to_file
     """
-    if format == FieldFileFormat.ROFF_BINARY:
+    if format_ == FieldFileFormat.ROFF_BINARY:
         return "roff"
-    elif format == FieldFileFormat.ROFF_ASCII:
+    elif format_ == FieldFileFormat.ROFF_ASCII:
         return "roffasc"
-    return format.value
+    return format_.value
 
 
 class IoProvider:

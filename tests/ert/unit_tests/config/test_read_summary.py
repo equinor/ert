@@ -251,13 +251,13 @@ def test_local_well_summary_format_have_cell_index_and_name(keyword, name, lgr_n
 
 @given(summaries(), st.sampled_from(resfo.Format))
 def test_that_reading_summaries_returns_the_contents_of_the_file(
-    tmp_path_factory, summary, format
+    tmp_path_factory, summary, format_
 ):
     tmp_path = tmp_path_factory.mktemp("summary")
-    format_specifier = "F" if format == resfo.Format.FORMATTED else ""
+    format_specifier = "F" if format_ == resfo.Format.FORMATTED else ""
     smspec, unsmry = summary
-    unsmry.to_file(tmp_path / f"TEST.{format_specifier}UNSMRY", format)
-    smspec.to_file(tmp_path / f"TEST.{format_specifier}SMSPEC", format)
+    unsmry.to_file(tmp_path / f"TEST.{format_specifier}UNSMRY", format_)
+    smspec.to_file(tmp_path / f"TEST.{format_specifier}SMSPEC", format_)
     (_, keys, time_map, data) = read_summary(str(tmp_path / "TEST"), ["*"])
 
     local_name = smspec.lgrs or []

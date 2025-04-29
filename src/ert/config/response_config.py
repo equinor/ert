@@ -23,7 +23,7 @@ class ResponseConfig(ABC):
     has_finalized_keys: bool = False
 
     @abstractmethod
-    def read_from_file(self, run_path: str, iens: int, iter: int) -> pl.DataFrame:
+    def read_from_file(self, run_path: str, iens: int, iter_: int) -> pl.DataFrame:
         """Reads the data for the response from run_path.
 
         Raises:
