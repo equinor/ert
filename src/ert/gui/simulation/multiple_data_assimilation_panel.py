@@ -103,7 +103,7 @@ class MultipleDataAssimilationPanel(ExperimentConfigPanel):
         self._createInputForWeights(layout)
 
         self._analysis_module_edit = AnalysisModuleEdit(
-            analysis_config.es_module, ensemble_size
+            analysis_config.es_settings, ensemble_size
         )
         layout.addRow("Analysis module:", self._analysis_module_edit)
 

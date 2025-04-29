@@ -89,7 +89,7 @@ class EnsembleSmootherPanel(ExperimentConfigPanel):
         layout.addRow("Ensemble format:", self._ensemble_format_field)
 
         self._analysis_module_edit = AnalysisModuleEdit(
-            analysis_config.es_module, ensemble_size
+            analysis_config.es_settings, ensemble_size
         )
         self._analysis_module_edit.setObjectName("ensemble_smoother_edit")
         layout.addRow("Analysis module:", self._analysis_module_edit)

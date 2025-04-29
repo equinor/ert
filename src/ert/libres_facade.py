@@ -74,7 +74,7 @@ class LibresFacade:
             observations,
             parameters,
             self.config.analysis_config.observation_settings,
-            self.config.analysis_config.es_module,
+            self.config.analysis_config.es_settings,
             rng,
             progress_callback,
             global_std_scaling,
@@ -223,7 +223,7 @@ class LibresFacade:
                     self.config.analysis_config.log_path / ensemble.experiment.name
                 ),
                 "observation_settings": self.config.analysis_config.observation_settings,  # noqa: E501
-                "es_settings": self.config.analysis_config.es_module,
+                "es_settings": self.config.analysis_config.es_settings,
                 "random_seed": self.config.random_seed,
             },
             **kwargs,
