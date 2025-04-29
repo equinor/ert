@@ -13,7 +13,6 @@ from pandas import DataFrame
 from ert.analysis import AnalysisEvent, SmootherSnapshot, smoother_update
 from ert.config import (
     ErtConfig,
-    Field,
     ObservationType,
 )
 from ert.data import MeasuredData
@@ -73,12 +72,8 @@ class LibresFacade:
     def user_config_file(self) -> str | None:
         return self.config.user_config_file
 
-    def get_field_parameters(self) -> list[str]:
-        return [
-            val.name
-            for val in self.config.ensemble_config.parameter_configuration
-            if isinstance(val, Field)
-        ]
+    def get_ensemble_size(self) -> int:
+        return self.config.runpath_config.num_realizations
 
     @property
     def run_path(self) -> str:
