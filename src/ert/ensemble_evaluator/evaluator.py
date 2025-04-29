@@ -3,9 +3,10 @@ from __future__ import annotations
 import asyncio
 import logging
 import traceback
-from collections.abc import Awaitable, Callable, Iterable, Sequence
+import uuid
+from collections.abc import AsyncGenerator, Awaitable, Callable, Iterable, Sequence
 from enum import Enum
-from typing import Any, get_args
+from typing import Any, Final, Self, get_args
 
 import zmq.asyncio
 
@@ -24,15 +25,12 @@ from _ert.events import (
     ForwardModelStepChecksum,
     RealizationEvent,
     dispatch_event_from_json,
-    event_from_json,
-    event_to_json,
 )
 from _ert.forward_model_runner.client import (
     ACK_MSG,
     CONNECT_MSG,
     DISCONNECT_MSG,
     HEARTBEAT_MSG,
-    HEARTBEAT_TIMEOUT,
 )
 from ert.ensemble_evaluator import identifiers as ids
 
@@ -55,13 +53,19 @@ class HeartbeatEvent(Enum):
     event = HEARTBEAT_MSG
 
 
+class EventSentinel:
+    pass
+
+
 class EnsembleEvaluator:
+    _sentinel: Final = EventSentinel()
+
     def __init__(self, ensemble: Ensemble, config: EvaluatorServerConfig):
         self._config: EvaluatorServerConfig = config
         self._ensemble: Ensemble = ensemble
 
         self._events: asyncio.Queue[Event] = asyncio.Queue()
-        self._events_to_send: asyncio.Queue[Event | HeartbeatEvent] = asyncio.Queue()
+        self._events_to_send: asyncio.Queue[Event] = asyncio.Queue()
         self._manifest_queue: asyncio.Queue[Any] = asyncio.Queue()
 
         self._ee_tasks: list[asyncio.Task[None]] = []
@@ -82,26 +86,24 @@ class EnsembleEvaluator:
         self._dispatchers_empty: asyncio.Event = asyncio.Event()
         self._dispatchers_empty.set()
 
-    async def _do_heartbeat_clients(self) -> None:
-        while True:
-            if self._clients_connected:
-                await self._events_to_send.put(HeartbeatEvent.event)
-                await asyncio.sleep(HEARTBEAT_TIMEOUT)
-            else:
-                await asyncio.sleep(0.1)
+        self._ee_to_monitor_queue: asyncio.Queue[Event] = asyncio.Queue()
+        self._monitor_to_ee_queue: asyncio.Queue[EEUserCancel | EEUserDone | bytes] = (
+            asyncio.Queue()
+        )
+
+        # Monitor portion
+        self._monitor_id = str(uuid.uuid1()).split("-", maxsplit=1)[0]
+        self._monitor_event_queue: asyncio.Queue[Event | EventSentinel] = (
+            asyncio.Queue()
+        )
+        self._monitor_receiver_timeout: float = 60.0
+        self._receiver_task: asyncio.Task[None] | None = None
 
     async def _publisher(self) -> None:
         while True:
             event = await self._events_to_send.get()
-            for identity in self._clients_connected:
-                if isinstance(event, HeartbeatEvent):
-                    await self._router_socket.send_multipart(
-                        [identity, b"", event.value]
-                    )
-                else:
-                    await self._router_socket.send_multipart(
-                        [identity, b"", event_to_json(event).encode("utf-8")]
-                    )
+            if not self._clients_empty.is_set():
+                await self._ee_to_monitor_queue.put(event)
             self._events_to_send.task_done()
 
     async def _append_message(self, snapshot_update_event: EnsembleSnapshot) -> None:
@@ -212,32 +214,29 @@ class EnsembleEvaluator:
     def ensemble(self) -> Ensemble:
         return self._ensemble
 
-    async def handle_client(self, dealer: bytes, frame: bytes) -> None:
-        if frame == CONNECT_MSG:
-            if dealer in self._clients_connected:
-                logger.warning(f"{dealer!r} wants to reconnect.")
-            self._clients_connected.add(dealer)
-            self._clients_empty.clear()
-            current_snapshot_dict = self._ensemble.snapshot.to_dict()
-            event: Event = EESnapshot(
-                snapshot=current_snapshot_dict,
-                ensemble=self.ensemble.id_,
-            )
-            await self._router_socket.send_multipart(
-                [dealer, b"", event_to_json(event).encode("utf-8")]
-            )
-        elif frame == DISCONNECT_MSG:
-            self._clients_connected.discard(dealer)
-            if not self._clients_connected:
-                self._clients_empty.set()
-        else:
-            event = event_from_json(frame.decode("utf-8"))
-            if type(event) is EEUserCancel:
-                logger.debug("Client asked to cancel.")
-                await self._signal_cancel()
-            elif type(event) is EEUserDone:
-                logger.debug("Client signalled done.")
-                self.stop()
+    async def disconnect_client(self) -> None:
+        self._clients_empty.set()
+
+    async def connect_client(self) -> None:
+        self._clients_empty.clear()
+        current_snapshot_dict = self._ensemble.snapshot.to_dict()
+        event: Event = EESnapshot(
+            snapshot=current_snapshot_dict,
+            ensemble=self.ensemble.id_,
+        )
+        await self._ee_to_monitor_queue.put(event)
+
+    async def handle_client(self, event: EEUserCancel | EEUserDone | bytes) -> None:
+        if type(event) is EEUserCancel:
+            logger.debug("Client asked to cancel.")
+            await self._signal_cancel()
+        elif type(event) is EEUserDone:
+            logger.debug("Client signalled done.")
+            self.stop()
+        elif event == CONNECT_MSG:
+            await self.connect_client()
+        elif event == DISCONNECT_MSG:
+            await self.disconnect_client()
 
     async def handle_dispatch(self, dealer: bytes, frame: bytes) -> None:
         if frame == CONNECT_MSG:
@@ -261,15 +260,31 @@ class EnsembleEvaluator:
             else:
                 await self._events.put(event)
 
+    async def _from_monitor_to_ee_message_handling(self) -> None:
+        while True:
+            try:
+                client_event = await self._monitor_to_ee_queue.get()
+                await self.handle_client(client_event)
+            except asyncio.CancelledError:
+                return
+
     async def listen_for_messages(self) -> None:
+        try:
+            listening_tasks = [
+                asyncio.create_task(self._listen_for_messages()),
+                asyncio.create_task(self._from_monitor_to_ee_message_handling()),
+            ]
+            await asyncio.gather(*listening_tasks)
+        except asyncio.CancelledError:
+            return
+
+    async def _listen_for_messages(self) -> None:
         while True:
             try:
                 dealer, _, frame = await self._router_socket.recv_multipart()
                 await self._router_socket.send_multipart([dealer, b"", ACK_MSG])
                 sender = dealer.decode("utf-8")
-                if sender.startswith("client"):
-                    await self.handle_client(dealer, frame)
-                elif sender.startswith("dispatch"):
+                if sender.startswith("dispatch"):
                     await self.handle_dispatch(dealer, frame)
                 else:
                     logger.info(f"Connection attempt to unknown sender: {sender}.")
@@ -372,7 +387,6 @@ class EnsembleEvaluator:
         self._ee_tasks = [asyncio.create_task(self._server(), name="server_task")]
         await self._server_started
         self._ee_tasks += [
-            asyncio.create_task(self._do_heartbeat_clients(), name="heartbeat_task"),
             asyncio.create_task(
                 self._batch_events_into_buffer(), name="dispatcher_task"
             ),
@@ -460,6 +474,88 @@ class EnsembleEvaluator:
     def _get_ens_id(source: str) -> str:
         # the ens_id will be found at /ert/ensemble/ens_id/...
         return source.split("/")[3]
+
+    async def track(
+        self, heartbeat_interval: float | None = None
+    ) -> AsyncGenerator[Event | None, None]:
+        """Yield events from the internal event queue with optional heartbeats.
+
+        Heartbeats are represented by None being yielded.
+
+        Heartbeats stops being emitted after a CloseTrackerEvent is found."""
+        heartbeat_interval_: float | None = heartbeat_interval
+        closetracker_received: bool = False
+        while True:
+            try:
+                event = await asyncio.wait_for(
+                    self._monitor_event_queue.get(), timeout=heartbeat_interval_
+                )
+            except TimeoutError:
+                if closetracker_received:
+                    logger.error("Evaluator did not send the TERMINATED event!")
+                    break
+                event = None
+            if isinstance(event, EventSentinel):
+                closetracker_received = True
+                heartbeat_interval_ = self._monitor_receiver_timeout
+            else:
+                yield event
+                if type(event) is EETerminated:
+                    logger.debug(
+                        f"monitor-{self._monitor_id} client received terminated"
+                    )
+                    break
+            if event is not None:
+                self._monitor_event_queue.task_done()
+
+    async def signal_cancel(self) -> None:
+        await self._monitor_event_queue.put(EnsembleEvaluator._sentinel)
+        logger.debug(f"monitor-{self._monitor_id} asking server to cancel...")
+        cancel_event = EEUserCancel(monitor=self._monitor_id)
+        await self.send(cancel_event)
+        logger.debug(f"monitor-{self._monitor_id} asked server to cancel")
+
+    async def signal_done(self) -> None:
+        await self._monitor_event_queue.put(EnsembleEvaluator._sentinel)
+        logger.debug(f"monitor-{self._monitor_id} informing server monitor is done...")
+
+        done_event = EEUserDone(monitor=self._monitor_id)
+        await self.send(done_event)
+        logger.debug(f"monitor-{self._monitor_id} informed server monitor is done")
+
+    async def process_message(self, event: Event) -> None:
+        await self._monitor_event_queue.put(event)
+
+    async def send(self, event: EEUserDone | EEUserCancel) -> None:
+        await self._monitor_to_ee_queue.put(event)
+
+    async def _monitor_receiver(self) -> None:
+        while True:
+            event = await self._ee_to_monitor_queue.get()
+            await self.process_message(event)
+
+    async def monitor_connect(self) -> None:
+        await self._monitor_term_receiver_task()
+        self._receiver_task = asyncio.create_task(self._monitor_receiver())
+        await self._monitor_to_ee_queue.put(CONNECT_MSG)
+        # await self.connect_client()
+
+    async def _monitor_term_receiver_task(self) -> None:
+        if self._receiver_task and not self._receiver_task.done():
+            self._receiver_task.cancel()
+            await asyncio.gather(self._receiver_task, return_exceptions=True)
+            self._receiver_task = None
+
+    async def __aexit__(
+        self, exc_type: Any, exc_value: Any, exc_traceback: Any
+    ) -> None:
+        await self._monitor_to_ee_queue.put(DISCONNECT_MSG)
+        # await self.disconnect_client()
+        await self._monitor_term_receiver_task()
+
+    async def __aenter__(self) -> Self:
+        await self.monitor_connect()
+        return self
 
 
 def detect_overspent_cpu(num_cpu: int, real_id: str, fm_step: FMStepSnapshot) -> str:

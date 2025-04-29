@@ -43,7 +43,6 @@ from ert.ensemble_evaluator import Ensemble as EEEnsemble
 from ert.ensemble_evaluator import (
     EnsembleEvaluator,
     EvaluatorServerConfig,
-    Monitor,
     Realization,
 )
 from ert.ensemble_evaluator.identifiers import STATUS
@@ -581,12 +580,10 @@ class BaseRunModel(ABC):
                 )
             )
 
-    async def run_monitor(
-        self, ee_config: EvaluatorServerConfig, iteration: int
-    ) -> bool:
+    async def run_monitor(self, evaluator: EnsembleEvaluator, iteration: int) -> bool:
         try:
             logger.debug("connecting to new monitor...")
-            async with Monitor(ee_config.get_uri(), ee_config.token) as monitor:
+            async with evaluator as monitor:
                 logger.debug("connected")
                 async for event in monitor.track(heartbeat_interval=0.1):
                     if type(event) in {
@@ -654,7 +651,7 @@ class BaseRunModel(ABC):
             evaluator.run_and_get_successful_realizations()
         )
         await evaluator._server_started
-        if not (await self.run_monitor(ee_config, ensemble.iteration)):
+        if not (await self.run_monitor(evaluator, ensemble.iteration)):
             await evaluator_task
             return []
 
