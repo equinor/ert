@@ -185,7 +185,7 @@ def _setup_manual_update(
         config=config,
         storage=storage,
         queue_config=config.queue_config,
-        es_settings=config.analysis_config.es_module,
+        es_settings=config.analysis_config.es_settings,
         update_settings=update_settings,
         status_queue=status_queue,
     )
@@ -213,7 +213,7 @@ def _setup_ensemble_smoother(
         config=config,
         storage=storage,
         queue_config=config.queue_config,
-        es_settings=config.analysis_config.es_module,
+        es_settings=config.analysis_config.es_settings,
         update_settings=update_settings,
         status_queue=status_queue,
     )
@@ -264,7 +264,7 @@ def _setup_multiple_data_assimilation(
         config=config,
         storage=storage,
         queue_config=config.queue_config,
-        es_settings=config.analysis_config.es_module,
+        es_settings=config.analysis_config.es_settings,
         update_settings=update_settings,
         status_queue=status_queue,
     )

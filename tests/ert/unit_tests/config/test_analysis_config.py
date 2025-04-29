@@ -208,7 +208,7 @@ def test_valid_min_realization(value, expected):
     "analysis_config", [AnalysisConfig(), AnalysisConfig.from_dict({})]
 )
 def test_analysis_config_modules(analysis_config):
-    assert isinstance(analysis_config.es_module, ESSettings)
+    assert isinstance(analysis_config.es_settings, ESSettings)
 
 
 def test_unknown_variable_raises_validation_error():

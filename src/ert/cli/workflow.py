@@ -29,7 +29,7 @@ def execute_workflow(
             "random_seed": ert_config.random_seed,
             "reports_dir": str(ert_config.analysis_config.log_path),
             "observation_settings": ert_config.analysis_config.observation_settings,
-            "es_settings": ert_config.analysis_config.es_module,
+            "es_settings": ert_config.analysis_config.es_settings,
             "run_paths": Runpaths(
                 jobname_format=ert_config.runpath_config.jobname_format_string,
                 runpath_format=ert_config.runpath_config.runpath_format_string,

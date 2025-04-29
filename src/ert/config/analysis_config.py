@@ -39,7 +39,7 @@ class ObservationSettings:
 class AnalysisConfig:
     minimum_required_realizations: int = 0
     update_log_path: str | Path = "update_log"
-    es_module: ESSettings = field(default_factory=ESSettings)
+    es_settings: ESSettings = field(default_factory=ESSettings)
     observation_settings: ObservationSettings = field(
         default_factory=ObservationSettings
     )
@@ -211,7 +211,7 @@ class AnalysisConfig:
             minimum_required_realizations=min_realization,
             update_log_path=config_dict.get(ConfigKeys.UPDATE_LOG_PATH, "update_log"),
             observation_settings=obs_settings,
-            es_module=es_settings,
+            es_settings=es_settings,
             design_matrix=design_matrix,
         )
         return config
