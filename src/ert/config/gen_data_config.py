@@ -109,7 +109,7 @@ class GenDataConfig(ResponseConfig):
             report_steps_list=report_steps,
         )
 
-    def read_from_file(self, run_path: str, iens: int, iter: int) -> pl.DataFrame:
+    def read_from_file(self, run_path: str, iens: int, iter_: int) -> pl.DataFrame:
         def _read_file(filename: Path, report_step: int) -> pl.DataFrame:
             try:
                 data = np.loadtxt(filename, ndmin=1)
@@ -143,14 +143,14 @@ class GenDataConfig(ResponseConfig):
             datasets_per_report_step = []
             if report_steps is None:
                 try:
-                    filename = substitute_runpath_name(input_file, iens, iter)
+                    filename = substitute_runpath_name(input_file, iens, iter_)
                     datasets_per_report_step.append(_read_file(run_path_ / filename, 0))
                 except (InvalidResponseFile, FileNotFoundError) as err:
                     errors.append(err)
             else:
                 for report_step in report_steps:
                     filename = substitute_runpath_name(
-                        input_file % report_step, iens, iter
+                        input_file % report_step, iens, iter_
                     )
                     try:
                         datasets_per_report_step.append(

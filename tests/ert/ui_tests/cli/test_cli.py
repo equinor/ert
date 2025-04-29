@@ -552,7 +552,7 @@ def test_es_mda(snapshot):
             data.append(ensemble.load_all_gen_kw_data())
     result = pd.concat(
         data,
-        keys=[f"iter-{iter}" for iter in range(len(data))],
+        keys=[f"iter-{iter_}" for iter_ in range(len(data))],
         names=("Iteration", "Realization"),
     )
 

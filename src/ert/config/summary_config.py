@@ -37,8 +37,8 @@ class SummaryConfig(ResponseConfig):
         base = self.input_files[0]
         return [f"{base}.UNSMRY", f"{base}.SMSPEC"]
 
-    def read_from_file(self, run_path: str, iens: int, iter: int) -> pl.DataFrame:
-        filename = substitute_runpath_name(self.input_files[0], iens, iter)
+    def read_from_file(self, run_path: str, iens: int, iter_: int) -> pl.DataFrame:
+        filename = substitute_runpath_name(self.input_files[0], iens, iter_)
         _, keys, time_map, data = read_summary(f"{run_path}/{filename}", self.keys)
         if len(data) == 0 or len(keys) == 0:
             # https://github.com/equinor/ert/issues/6974

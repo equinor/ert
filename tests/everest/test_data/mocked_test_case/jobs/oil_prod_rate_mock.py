@@ -17,11 +17,11 @@ def main(argv):
     # Main script starts here
     times = sys.argv[2:]
 
-    sum = {}
-    sum["FOPR"] = 17 * [6000]
+    summary = {}
+    summary["FOPR"] = 17 * [6000]
 
     for i in range(len(times)):
-        val = sum.get("FOPR")[i]
+        val = summary.get("FOPR")[i]
         save_return_value(val, f"oil_prod_rate_{i:03d}")
 
     with open("OIL_PROD_RATE_OK", "w", encoding="utf-8") as f:

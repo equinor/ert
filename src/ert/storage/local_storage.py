@@ -476,8 +476,8 @@ class LocalStorage(BaseMode):
                 bkup_path = self.path / "_blockfs_backup"
                 dirs = set(os.listdir(self.path)) - {"storage.lock"}
                 os.mkdir(bkup_path)
-                for dir in dirs:
-                    shutil.move(self.path / dir, bkup_path / dir)
+                for directory in dirs:
+                    shutil.move(self.path / directory, bkup_path / directory)
 
                 self._index = self._load_index()
 

@@ -49,9 +49,9 @@ class PlotApi:
     def escape(s: str) -> str:
         return quote(quote(s, safe=""))
 
-    def _get_ensemble_by_id(self, id: str) -> EnsembleObject | None:
+    def _get_ensemble_by_id(self, id_: str) -> EnsembleObject | None:
         for ensemble in self.get_all_ensembles():
-            if ensemble.id == id:
+            if ensemble.id == id_:
                 return ensemble
         return None
 

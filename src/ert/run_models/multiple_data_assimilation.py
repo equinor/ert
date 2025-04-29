@@ -124,9 +124,9 @@ class MultipleDataAssimilation(UpdateRunModel):
 
         self.restart = restart
         if self.restart_run:
-            id = self.prior_ensemble_id
+            id_ = self.prior_ensemble_id
             try:
-                ensemble_id = UUID(id)
+                ensemble_id = UUID(id_)
                 prior = self._storage.get_ensemble(ensemble_id)
                 experiment = prior.experiment
                 self.set_env_key("_ERT_EXPERIMENT_ID", str(experiment.id))
@@ -140,7 +140,7 @@ class MultipleDataAssimilation(UpdateRunModel):
                     )
             except (KeyError, ValueError) as err:
                 raise ErtRunError(
-                    f"Prior ensemble with ID: {id} does not exists"
+                    f"Prior ensemble with ID: {id_} does not exists"
                 ) from err
         else:
             self.run_workflows(

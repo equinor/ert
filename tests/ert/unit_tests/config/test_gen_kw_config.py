@@ -558,7 +558,7 @@ def test_suggestion_on_empty_parameter_file():
 
 
 @pytest.mark.parametrize(
-    "distribution, min, mode, max, error",
+    "distribution, minimum, mode, maximum, error",
     [
         ("TRIANGULAR", "0", "2", "3", None),
         (
@@ -586,7 +586,7 @@ def test_suggestion_on_empty_parameter_file():
     ],
 )
 def test_validation_triangular_distribution(
-    tmpdir, distribution, min, mode, max, error
+    tmpdir, distribution, minimum, mode, maximum, error
 ):
     with tmpdir.as_cwd():
         with open("template.txt", "w", encoding="utf-8") as fh:
@@ -595,7 +595,7 @@ def test_validation_triangular_distribution(
             "KW_NAME",
             ("template.txt", "MY_KEYWORD <MY_KEYWORD>"),
             "kw.txt",
-            ("prior.txt", f"MY_KEYWORD {distribution} {min} {mode} {max}"),
+            ("prior.txt", f"MY_KEYWORD {distribution} {minimum} {mode} {maximum}"),
             {},
         ]
 
@@ -610,7 +610,7 @@ def test_validation_triangular_distribution(
 
 
 @pytest.mark.parametrize(
-    "distribution, nbins, min, max, skew, width, error",
+    "distribution, nbins, minimum, maximum, skew, width, error",
     [
         ("DERRF", "10", "-1", "3", "-1", "2", None),
         ("DERRF", "100", "-10", "10", "0", "1", None),
@@ -706,7 +706,7 @@ def test_validation_triangular_distribution(
     ],
 )
 def test_validation_derrf_distribution(
-    tmpdir, distribution, nbins, min, max, skew, width, error
+    tmpdir, distribution, nbins, minimum, maximum, skew, width, error
 ):
     with tmpdir.as_cwd():
         with open("template.txt", "w", encoding="utf-8") as fh:
@@ -717,7 +717,7 @@ def test_validation_derrf_distribution(
             "kw.txt",
             (
                 "prior.txt",
-                f"MY_KEYWORD {distribution} {nbins} {min} {max} {skew} {width}",
+                f"MY_KEYWORD {distribution} {nbins} {minimum} {maximum} {skew} {width}",
             ),
             {},
         ]

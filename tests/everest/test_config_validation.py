@@ -543,8 +543,8 @@ def test_that_non_existing_install_job_errors_deprecated(
     )
 
     with pytest.raises(ConfigValidationError, match="No such file or directory:"):
-        dict = everest_to_ert_config_dict(config)
-        ErtConfig.from_dict(dict)
+        dictionary = everest_to_ert_config_dict(config)
+        ErtConfig.from_dict(dictionary)
 
 
 @pytest.mark.parametrize(
@@ -585,8 +585,8 @@ def test_that_existing_install_job_with_malformed_executable_errors_deprecated(
     with pytest.raises(
         ConfigValidationError, match="EXECUTABLE must have at least 1 arguments"
     ):
-        dict = everest_to_ert_config_dict(config)
-        ErtConfig.from_dict(dict)
+        dictionary = everest_to_ert_config_dict(config)
+        ErtConfig.from_dict(dictionary)
 
 
 @pytest.mark.parametrize(
@@ -624,8 +624,8 @@ def test_that_existing_install_job_with_non_executable_executable_errors_depreca
     )
 
     with pytest.raises(ConfigValidationError, match="File not executable"):
-        dict = everest_to_ert_config_dict(config)
-        ErtConfig.from_dict(dict)
+        dictionary = everest_to_ert_config_dict(config)
+        ErtConfig.from_dict(dictionary)
 
 
 @pytest.mark.parametrize(
@@ -689,8 +689,8 @@ def test_that_existing_install_job_with_non_existing_executable_errors_deprecate
     )
 
     with pytest.raises(ConfigValidationError, match="Could not find executable"):
-        dict = everest_to_ert_config_dict(config)
-        ErtConfig.from_dict(dict)
+        dictionary = everest_to_ert_config_dict(config)
+        ErtConfig.from_dict(dictionary)
 
 
 @pytest.mark.parametrize(

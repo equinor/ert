@@ -189,6 +189,7 @@ line-length = 88
 
 [tool.ruff.lint]
 select = [
+    "A",     # flake8-builtins
     "E",     # pycodestyle
     "W",     # pycodestyle
     "I",     # isort

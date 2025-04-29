@@ -1289,7 +1289,7 @@ class ErtConfig:
         return EnkfObs(obs_vectors, obs_time_list)
 
 
-def _split_string_into_sections(input: str, section_length: int) -> list[str]:
+def _split_string_into_sections(string: str, section_length: int) -> list[str]:
     """
     Splits a string into sections of length section_length and returns it as a list.
 
@@ -1297,8 +1297,10 @@ def _split_string_into_sections(input: str, section_length: int) -> list[str]:
     input string is returned as one section in a list
     """
     if section_length < 1:
-        return [input]
-    return [input[i : i + section_length] for i in range(0, len(input), section_length)]
+        return [string]
+    return [
+        string[i : i + section_length] for i in range(0, len(string), section_length)
+    ]
 
 
 def _get_files_in_directory(job_path, errors):

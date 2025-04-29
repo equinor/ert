@@ -26,12 +26,12 @@ sum_mock["TIME"] = [
 ]
 
 
-def compute_npv(sum):
-    fopt = sum.get("FOPT")
-    fwpt = sum.get("FWPT")
-    fgpt = sum.get("FGPT")
-    fwit = sum.get("FWIT")
-    elapsedtime = sum.get("TIME")
+def compute_npv(summary):
+    fopt = summary.get("FOPT")
+    fwpt = summary.get("FWPT")
+    fgpt = summary.get("FGPT")
+    fwit = summary.get("FWIT")
+    elapsedtime = summary.get("TIME")
 
     with open("debug.txt", "w", encoding="utf-8") as f:
         DCF = compute_dcf(fopt[0], fwpt[0], fgpt[0], fwit[0], elapsedtime[0])

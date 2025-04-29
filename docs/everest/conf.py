@@ -25,7 +25,7 @@ sys.path.append(os.path.abspath("_ext"))
 # -- Project information -----------------------------------------------------
 
 project = "Everest"
-copyright = "2024, Equinor & TNO"
+copyright = "2024, Equinor & TNO"  # noqa: A001
 author = "Equinor & TNO"
 
 
