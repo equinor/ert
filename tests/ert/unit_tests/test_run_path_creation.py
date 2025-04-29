@@ -666,7 +666,6 @@ def test_when_manifest_files_are_written_forward_model_ok_succeeds(storage, itr)
             name="PORO1",
             values=np.zeros((dim_size, dim_size, dim_size)),
         ).to_file(f"{i}init{i}0.roff", fformat="roff")
-        Path(f"{i}gen_init{i}0.txt").write_text("PARMA 1.0\n", encoding="utf-8")
     Path("gen0.txt").write_text("PARMA NORMAL 0 1\n", encoding="utf-8")
     Path("gen1.txt").write_text("PARMA NORMAL 0 1\n", encoding="utf-8")
     Path("template.txt").write_text("<PARMA>", encoding="utf-8")
@@ -694,9 +693,8 @@ def test_when_manifest_files_are_written_forward_model_ok_succeeds(storage, itr)
                 FORWARD_INIT:TRUE
             FIELD PORO1 PARAMETER field2<ALL>.roff INIT_FILES:%dinit<IENS><ITER>.roff
 
-            GEN_KW GEN0 gen0.txt INIT_FILES:%dgen_init<IENS><ITER>.txt
-            GEN_KW GEN1 template.txt gen_parameter.txt gen1.txt \
-                INIT_FILES:%dgen_init<IENS><ITER>.txt
+            GEN_KW GEN0 gen0.txt
+            GEN_KW GEN1 template.txt gen_parameter.txt gen1.txt
             """
         )
     )

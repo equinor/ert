@@ -195,12 +195,4 @@ deprecated_keywords_list = [
         "of FORWARD_MODEL. Please use FORWARD_MODEL keyword instead:\n"
         f"FORWARD_MODEL {' '.join(args) if args else ''}",
     ),
-    DeprecationInfo(
-        keyword="GEN_KW",
-        message=(
-            "GEN_KW with INIT_FILES is deprecated, "
-            "and will be removed in the next version. "
-        ),
-        check=lambda line: any("INIT_FILES" in str(v) for v in line),
-    ),
 ]
