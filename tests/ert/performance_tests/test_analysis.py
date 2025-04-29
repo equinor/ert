@@ -8,7 +8,7 @@ import xtgeo
 from scipy.ndimage import gaussian_filter
 
 from ert.analysis import smoother_update
-from ert.config import ESSettings, Field, GenDataConfig, UpdateSettings
+from ert.config import ESSettings, Field, GenDataConfig, ObservationSettings
 from ert.field_utils import Shape
 
 
@@ -156,7 +156,7 @@ def test_and_benchmark_adaptive_localization_with_fields(
         posterior_ensemble,
         ["OBSERVATION"],
         [param_group],
-        UpdateSettings(),
+        ObservationSettings(),
         ESSettings(localization=True),
     )
     benchmark(smoother_update_run)

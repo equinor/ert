@@ -6,7 +6,12 @@ from typing import TYPE_CHECKING
 
 import numpy as np
 
-from ert.config import ConfigValidationError, ConfigWarning, ErtConfig, UpdateSettings
+from ert.config import (
+    ConfigValidationError,
+    ConfigWarning,
+    ErtConfig,
+    ObservationSettings,
+)
 from ert.mode_definitions import (
     ENSEMBLE_EXPERIMENT_MODE,
     ENSEMBLE_SMOOTHER_MODE,
@@ -166,7 +171,7 @@ def _setup_manual_update(
     config: ErtConfig,
     storage: Storage,
     args: Namespace,
-    update_settings: UpdateSettings,
+    update_settings: ObservationSettings,
     status_queue: SimpleQueue[StatusEvents],
 ) -> ManualUpdate:
     active_realizations = _realizations(args, config.runpath_config.num_realizations)
@@ -190,7 +195,7 @@ def _setup_ensemble_smoother(
     config: ErtConfig,
     storage: Storage,
     args: Namespace,
-    update_settings: UpdateSettings,
+    update_settings: ObservationSettings,
     status_queue: SimpleQueue[StatusEvents],
 ) -> EnsembleSmoother:
     active_realizations = _get_active_realizations_list(args, config)
@@ -237,7 +242,7 @@ def _setup_multiple_data_assimilation(
     config: ErtConfig,
     storage: Storage,
     args: Namespace,
-    update_settings: UpdateSettings,
+    update_settings: ObservationSettings,
     status_queue: SimpleQueue[StatusEvents],
 ) -> MultipleDataAssimilation:
     restart_run, prior_ensemble = _determine_restart_info(args)

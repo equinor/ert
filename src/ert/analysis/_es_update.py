@@ -24,8 +24,8 @@ from ert.config import (
     ESSettings,
     GenKwConfig,
     ObservationGroups,
+    ObservationSettings,
     OutlierSettings,
-    UpdateSettings,
 )
 
 from . import misfit_preprocessor
@@ -317,7 +317,7 @@ def _auto_scale_observations(
 
 def _preprocess_observations_and_responses(
     ensemble: Ensemble,
-    observation_settings: UpdateSettings,
+    observation_settings: ObservationSettings,
     global_std_scaling: float,
     iens_active_index: npt.NDArray[np.int_],
     selected_observations: Iterable[str],
@@ -502,7 +502,7 @@ def analysis_ES(
     observations: Iterable[str],
     rng: np.random.Generator,
     module: ESSettings,
-    observation_settings: UpdateSettings,
+    observation_settings: ObservationSettings,
     global_scaling: float,
     smoother_snapshot: SmootherSnapshot,
     ens_mask: npt.NDArray[np.bool_],
@@ -721,7 +721,7 @@ def smoother_update(
     posterior_storage: Ensemble,
     observations: Iterable[str],
     parameters: Iterable[str],
-    update_settings: UpdateSettings,
+    update_settings: ObservationSettings,
     es_settings: ESSettings,
     rng: np.random.Generator | None = None,
     progress_callback: Callable[[AnalysisEvent], None] | None = None,

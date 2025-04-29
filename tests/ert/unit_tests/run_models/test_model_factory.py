@@ -11,7 +11,7 @@ from ert.config import (
     ConfigWarning,
     ErtConfig,
     ModelConfig,
-    UpdateSettings,
+    ObservationSettings,
 )
 from ert.mode_definitions import (
     ENSEMBLE_SMOOTHER_MODE,
@@ -176,7 +176,7 @@ def test_setup_ensemble_smoother(storage):
             target_ensemble="test_case",
             experiment_name=None,
         ),
-        UpdateSettings(),
+        ObservationSettings(),
         queue.SimpleQueue(),
     )
     assert isinstance(model, EnsembleSmoother)
@@ -199,7 +199,7 @@ def test_setup_multiple_data_assimilation(storage):
             experiment_name="My-experiment",
             starting_iteration=0,
         ),
-        UpdateSettings(),
+        ObservationSettings(),
         queue.SimpleQueue(),
     )
     assert isinstance(model, MultipleDataAssimilation)

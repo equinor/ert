@@ -34,8 +34,8 @@ from ert.config import (
     ForwardModelStep,
     HookRuntime,
     ModelConfig,
+    ObservationSettings,
     QueueSystem,
-    UpdateSettings,
     Workflow,
 )
 from ert.enkf_main import create_run_path
@@ -851,7 +851,7 @@ class UpdateRunModel(BaseRunModel):
     def __init__(
         self,
         analysis_settings: ESSettings,
-        update_settings: UpdateSettings,
+        update_settings: ObservationSettings,
         storage: Storage,
         runpath_file: Path,
         user_config_file: Path,
@@ -871,7 +871,7 @@ class UpdateRunModel(BaseRunModel):
         log_path: Path,
     ):
         self._analysis_settings: ESSettings = analysis_settings
-        self._update_settings: UpdateSettings = update_settings
+        self._update_settings: ObservationSettings = update_settings
 
         super().__init__(
             storage,
