@@ -21,7 +21,14 @@ from ert.analysis._es_update import (
     _save_param_ensemble_array_to_disk,
 )
 from ert.analysis.event import AnalysisCompleteEvent, AnalysisErrorEvent
-from ert.config import ESSettings, Field, GenDataConfig, GenKwConfig, UpdateSettings
+from ert.config import (
+    ESSettings,
+    Field,
+    GenDataConfig,
+    GenKwConfig,
+    OutlierSettings,
+    UpdateSettings,
+)
 from ert.config.gen_kw_config import TransformFunctionDefinition
 from ert.field_utils import Shape
 from ert.storage import open_storage
@@ -122,7 +129,7 @@ def test_update_report_with_exception_in_analysis_ES(
             posterior_ens,
             experiment.observation_keys,
             ert_config.ensemble_config.parameters,
-            UpdateSettings(alpha=0.0000000001),
+            UpdateSettings(outlier_settings=OutlierSettings(alpha=0.0000000001)),
             ESSettings(inversion="subspace"),
             progress_callback=events.append,
         )
@@ -137,9 +144,21 @@ def test_update_report_with_exception_in_analysis_ES(
 @pytest.mark.parametrize(
     "update_settings, num_overspread, num_collapsed, num_nan, num_active",
     [
-        (UpdateSettings(alpha=0.1), 169, 0, 0, 41),
-        (UpdateSettings(std_cutoff=0.1), 0, 73, 0, 137),
-        (UpdateSettings(alpha=0.1, std_cutoff=0.1), 113, 73, 0, 24),
+        (UpdateSettings(outlier_settings=OutlierSettings(alpha=0.1)), 169, 0, 0, 41),
+        (
+            UpdateSettings(outlier_settings=OutlierSettings(std_cutoff=0.1)),
+            0,
+            73,
+            0,
+            137,
+        ),
+        (
+            UpdateSettings(outlier_settings=OutlierSettings(alpha=0.1, std_cutoff=0.1)),
+            113,
+            73,
+            0,
+            24,
+        ),
     ],
 )
 def test_update_report_with_different_observation_status_from_smoother_update(
@@ -593,7 +612,9 @@ def test_smoother_snapshot_alpha(
             posterior_storage,
             observations=["OBSERVATION"],
             parameters=["PARAMETER"],
-            update_settings=UpdateSettings(alpha=alpha),
+            update_settings=UpdateSettings(
+                outlier_settings=OutlierSettings(alpha=alpha)
+            ),
             es_settings=ESSettings(inversion="subspace"),
             rng=rng,
         )
@@ -739,10 +760,8 @@ def test_temporary_parameter_storage_with_inactive_fields(
 
 def _mock_preprocess_observations_and_responses(
     observations_and_responses,
-    alpha,
-    std_cutoff,
+    observation_settings,
     global_std_scaling,
-    auto_scale_observations,
     progress_callback,
     ensemble,
 ):
@@ -757,14 +776,12 @@ def _mock_preprocess_observations_and_responses(
 
         return _preprocess_observations_and_responses(
             ensemble=ensemble,
-            alpha=alpha,
-            std_cutoff=std_cutoff,
+            observation_settings=observation_settings,
             global_std_scaling=global_std_scaling,
             iens_active_index=np.array(
                 [int(c) for c in observations_and_responses.columns[5:]]
             ),
             selected_observations=observations_and_responses.select("observation_key"),
-            auto_scale_observations=auto_scale_observations,
             progress_callback=progress_callback,
         )
 
@@ -790,8 +807,7 @@ def test_that_autoscaling_applies_to_scaled_errors(storage):
             }
         )
 
-        alpha = 1
-        std_cutoff = 0.05
+        outlier_settings = OutlierSettings(alpha=1, std_cutoff=0.05)
         global_std_scaling = 1
 
         def progress_callback(_):
@@ -803,10 +819,11 @@ def test_that_autoscaling_applies_to_scaled_errors(storage):
         scaled_errors_with_autoscale = (
             _mock_preprocess_observations_and_responses(
                 observations_and_responses,
-                alpha=alpha,
-                std_cutoff=std_cutoff,
+                observation_settings=UpdateSettings(
+                    outlier_settings=outlier_settings,
+                    auto_scale_observations=[["obs1*"]],
+                ),
                 global_std_scaling=global_std_scaling,
-                auto_scale_observations=[["obs1*"]],
                 progress_callback=progress_callback,
                 ensemble=ensemble,
             )
@@ -819,10 +836,10 @@ def test_that_autoscaling_applies_to_scaled_errors(storage):
         scaled_errors_without_autoscale = (
             _mock_preprocess_observations_and_responses(
                 observations_and_responses,
-                alpha=alpha,
-                std_cutoff=std_cutoff,
+                observation_settings=UpdateSettings(
+                    outlier_settings=outlier_settings, auto_scale_observations=[]
+                ),
                 global_std_scaling=global_std_scaling,
-                auto_scale_observations=[],
                 progress_callback=progress_callback,
                 ensemble=ensemble,
             )
@@ -857,6 +874,7 @@ def test_compute_observation_statuses(
     alpha = 0.1
     global_std_scaling = 1
     std_cutoff = 0.05
+
     num_reals = 10
     num_observations = 10
 
@@ -911,8 +929,7 @@ def test_compute_observation_statuses(
     df_with_statuses = _compute_observation_statuses(
         df,
         global_std_scaling=global_std_scaling,
-        std_cutoff=std_cutoff,
-        alpha=alpha,
+        outlier_settings=OutlierSettings(alpha=alpha, std_cutoff=std_cutoff),
         active_realizations=[str(i) for i in range(num_reals)],
     )
 
@@ -942,10 +959,11 @@ def test_that_autoscaling_ignores_typos_in_observation_names(storage, caplog):
     ensemble = experiment.create_ensemble(name="dummy", ensemble_size=10)
     _mock_preprocess_observations_and_responses(
         observations_and_responses,
-        alpha=1,
-        std_cutoff=0.05,
+        observation_settings=UpdateSettings(
+            outlier_settings=OutlierSettings(alpha=1, std_cutoff=0.05),
+            auto_scale_observations=[["OOOPS1*"]],
+        ),
         global_std_scaling=1,
-        auto_scale_observations=[["OOOPS1*"]],
         progress_callback=lambda _: None,
         ensemble=ensemble,
     )
@@ -971,10 +989,11 @@ def test_that_deactivated_observations_are_logged(storage, caplog):
     ensemble = experiment.create_ensemble(name="dummy", ensemble_size=10)
     _mock_preprocess_observations_and_responses(
         observations_and_responses,
-        alpha=1,
-        std_cutoff=11111,
+        observation_settings=UpdateSettings(
+            outlier_settings=OutlierSettings(alpha=1, std_cutoff=11111),
+            auto_scale_observations=None,
+        ),
         global_std_scaling=1,
-        auto_scale_observations=None,
         progress_callback=lambda _: None,
         ensemble=ensemble,
     )
@@ -1006,10 +1025,11 @@ def test_that_activate_observations_are_not_logged_as_deactivated(storage, caplo
     ensemble = experiment.create_ensemble(name="dummy", ensemble_size=10)
     _mock_preprocess_observations_and_responses(
         observations_and_responses,
-        alpha=100,
-        std_cutoff=0,
+        observation_settings=UpdateSettings(
+            outlier_settings=OutlierSettings(alpha=100, std_cutoff=0),
+            auto_scale_observations=None,
+        ),
         global_std_scaling=1,
-        auto_scale_observations=None,
         progress_callback=lambda _: None,
         ensemble=ensemble,
     )

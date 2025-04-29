@@ -222,7 +222,10 @@ def test_unknown_variable_raises_validation_error():
 
 def test_default_alpha_is_set():
     default_alpha = 3.0
-    assert AnalysisConfig.from_dict({}).observation_settings.alpha == default_alpha
+    assert (
+        AnalysisConfig.from_dict({}).observation_settings.outlier_settings.alpha
+        == default_alpha
+    )
 
 
 @given(st.floats(allow_nan=False, allow_infinity=False))
@@ -230,7 +233,7 @@ def test_alpha_is_set_from_corresponding_key(value):
     assert (
         AnalysisConfig.from_dict(
             {ConfigKeys.ENKF_ALPHA: value}
-        ).observation_settings.alpha
+        ).observation_settings.outlier_settings.alpha
         == value
     )
 
@@ -238,14 +241,14 @@ def test_alpha_is_set_from_corresponding_key(value):
 @given(st.floats(allow_nan=False, allow_infinity=False))
 def test_analysis_config_alpha_set_and_get(value):
     analysis_config = AnalysisConfig()
-    analysis_config.observation_settings.alpha = value
-    assert analysis_config.observation_settings.alpha == value
+    analysis_config.observation_settings.outlier_settings.alpha = value
+    assert analysis_config.observation_settings.outlier_settings.alpha == value
 
 
 def test_default_std_cutoff_is_set():
     default_std_cutoff = 1e-6
     assert (
-        AnalysisConfig.from_dict({}).observation_settings.std_cutoff
+        AnalysisConfig.from_dict({}).observation_settings.outlier_settings.std_cutoff
         == default_std_cutoff
     )
 
@@ -255,7 +258,7 @@ def test_std_cutoff_is_set_from_corresponding_key(value):
     assert (
         AnalysisConfig.from_dict(
             {ConfigKeys.STD_CUTOFF: value}
-        ).observation_settings.std_cutoff
+        ).observation_settings.outlier_settings.std_cutoff
         == value
     )
 

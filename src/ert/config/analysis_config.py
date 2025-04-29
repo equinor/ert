@@ -24,9 +24,14 @@ ObservationGroups = list[str]
 
 
 @dataclass
+class OutlierSettings:
+    alpha: float = field(default=3.0)
+    std_cutoff: PositiveFloat = field(default=1e-6)
+
+
+@dataclass
 class UpdateSettings:
-    std_cutoff: PositiveFloat = 1e-6
-    alpha: float = 3.0
+    outlier_settings: OutlierSettings = field(default_factory=OutlierSettings)
     auto_scale_observations: list[ObservationGroups] = field(default_factory=list)
 
 
@@ -81,11 +86,8 @@ class AnalysisConfig:
         design_matrix_config_lists = config_dict.get(ConfigKeys.DESIGN_MATRIX, [])
 
         options: dict[str, dict[str, Any]] = {"STD_ENKF": {}}
-        observation_settings: dict[str, Any] = {
-            "alpha": config_dict.get(ConfigKeys.ENKF_ALPHA, 3.0),
-            "std_cutoff": config_dict.get(ConfigKeys.STD_CUTOFF, 1e-6),
-            "auto_scale_observations": [],
-        }
+
+        auto_scale_observations: list[str] = []
         analysis_set_var = config_dict.get(ConfigKeys.ANALYSIS_SET_VAR, [])
         inversion_str_map: Final = {
             "STD_ENKF": {
@@ -109,9 +111,7 @@ class AnalysisConfig:
                 continue
             if module_name == "OBSERVATIONS":
                 if var_name == "AUTO_SCALE":
-                    observation_settings["auto_scale_observations"].append(
-                        value.split(",")
-                    )
+                    auto_scale_observations.append(value.split(","))
                 else:
                     all_errors.append(
                         ConfigValidationError(
@@ -169,7 +169,15 @@ class AnalysisConfig:
 
         try:
             es_settings = ESSettings(**options["STD_ENKF"])
-            obs_settings = UpdateSettings(**observation_settings)
+            outlier_settings: dict[str, Any] = {
+                "alpha": config_dict.get(ConfigKeys.ENKF_ALPHA, 3.0),
+                "std_cutoff": config_dict.get(ConfigKeys.STD_CUTOFF, 1e-6),
+            }
+
+            obs_settings = UpdateSettings(
+                outlier_settings=OutlierSettings(**outlier_settings),
+                auto_scale_observations=auto_scale_observations,
+            )
         except ValidationError as err:
             for error in err.errors():
                 error["loc"] = tuple(
