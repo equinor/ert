@@ -4,7 +4,7 @@ import asyncio
 import logging
 import traceback
 import uuid
-from collections.abc import AsyncGenerator, Awaitable, Callable, Iterable, Sequence
+from collections.abc import Awaitable, Callable, Iterable, Sequence
 from enum import Enum
 from queue import SimpleQueue
 from typing import Any, Final, Self, cast, get_args
@@ -491,9 +491,7 @@ class EnsembleEvaluator:
         # the ens_id will be found at /ert/ensemble/ens_id/...
         return source.split("/")[3]
 
-    async def track(
-        self, heartbeat_interval: float | None = None
-    ) -> AsyncGenerator[Event | None, None]:
+    async def track(self, heartbeat_interval: float | None = None) -> None:
         """Yield events from the internal event queue with optional heartbeats.
 
         Heartbeats are represented by None being yielded.
@@ -515,7 +513,7 @@ class EnsembleEvaluator:
                 closetracker_received = True
                 heartbeat_interval_ = self._monitor_receiver_timeout
             else:
-                yield event
+                await self.handle_events(event)
                 if type(event) is EETerminated:
                     logger.debug(
                         f"monitor-{self._monitor_id} client received terminated"
@@ -539,16 +537,20 @@ class EnsembleEvaluator:
         await self.send(done_event)
         logger.debug(f"monitor-{self._monitor_id} informed server monitor is done")
 
-    async def process_message(self, event: Event) -> None:
-        await self._monitor_event_queue.put(event)
-
     async def send(self, event: EEUserDone | EEUserCancel) -> None:
         await self._monitor_to_ee_queue.put(event)
 
     async def _monitor_receiver(self) -> None:
+        self._run_monitor_receiver = True
         while True:
-            event = await self._ee_to_monitor_queue.get()
-            await self.process_message(event)
+            event = (
+                await self._ee_to_monitor_queue.get()
+            )  # These two queues might be joinable.
+            # If so, we can remove this co-routine.
+            await self._monitor_event_queue.put(
+                event
+            )  # The issue is then - what do we terminate??
+            # The actual EE client-publisher maybe?
 
     async def monitor_connect(self) -> None:
         await self._monitor_term_receiver_task()
@@ -605,9 +607,8 @@ class EnsembleEvaluator:
         try:
             logger.debug("connecting to new monitor...")
             async with self as monitor:
-                logger.debug("connected")
-                async for event in monitor.track(heartbeat_interval=0.1):
-                    await self.handle_events(event)
+                await monitor.track(heartbeat_interval=0.1)
+
         except UserCancelled:
             raise
         except Exception as e:
