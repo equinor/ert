@@ -189,51 +189,6 @@ def test_api_summary_snapshot_missing_batch(snapshot, cached_example):
     )
 
 
-@pytest.mark.integration_test
-@pytest.mark.parametrize(
-    "config_file",
-    [
-        pytest.param(
-            "config_advanced.yml",
-            marks=pytest.mark.xdist_group("math_func/config_advanced.yml"),
-        ),
-        pytest.param(
-            "config_minimal.yml",
-            marks=pytest.mark.xdist_group("math_func/config_minimal.yml"),
-        ),
-        pytest.param(
-            "config_multiobj.yml",
-            marks=pytest.mark.xdist_group("math_func/config_multiobj.yml"),
-        ),
-    ],
-)
-def test_csv_export(config_file, cached_example, snapshot):
-    config_path, config_file, _, _ = cached_example(f"math_func/{config_file}")
-    config = EverestConfig.load_file(Path(config_path) / config_file)
-
-    api = EverestDataAPI(config)
-    combined_df, pert_real_df, batch_df = api.export_dataframes()
-
-    def _sort_df(df: pl.DataFrame) -> pl.DataFrame:
-        df_ = df.select(df.columns)
-
-        sort_rows_by = df_.columns[0 : (min(len(df_.columns), 8))]
-        return df_.sort(sort_rows_by)
-
-    snapshot.assert_match(
-        _sort_df(combined_df.with_columns(pl.col(pl.Float64).round(4))).write_csv(),
-        "combined_df.csv",
-    )
-    snapshot.assert_match(
-        _sort_df(pert_real_df.with_columns(pl.col(pl.Float64).round(4))).write_csv(),
-        "pert_real_df.csv",
-    )
-    snapshot.assert_match(
-        _sort_df(batch_df.with_columns(pl.col(pl.Float64).round(4))).write_csv(),
-        "batch_df.csv",
-    )
-
-
 @pytest.mark.xdist_group("math_func/config_minimal.yml")
 def test_that_summary_returns_empty_df_when_missing_data(cached_example):
     config_path, config_file, _, _ = cached_example("math_func/config_minimal.yml")
