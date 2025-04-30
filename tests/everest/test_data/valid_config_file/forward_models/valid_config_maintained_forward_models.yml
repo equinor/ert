@@ -61,7 +61,7 @@ install_data:
 
 forward_model:
   - drill_planner -i wells.json -c drill_planner_config.yml -opt well_order.json -o wells_dp_result.json
-  - select_wells -i wells_dp_result.json -o wells_sw_result.json file well_number.json -r 0 6 -s 0 1
+  - select_wells -i wells_dp_result.json -o wells_sw_result.json file well_number.json
   - add_templates -i wells_sw_result.json -c configs/template_config.yml -o wells_tmpl_result.json
   - schmerge -i wells_tmpl_result.json -s input/model/WELLSELECT.SCH -o input/model/SCHEDULE_OPT.SCH
   - npv -s something.UNSMRY -o npv_0 -c prices.yml -sd 2022-10-01 -ed 2040-01-01 -i files/a7_readydate.json'
