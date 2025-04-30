@@ -347,7 +347,7 @@ class LsfDriver(Driver):
         if iens not in self._submit_locks:
             self._submit_locks[iens] = asyncio.Lock()
 
-        async def protected_submit_job():
+        async def protected_submit_job() -> None:
             async with self._submit_locks[iens]:
                 logger.debug(
                     f"Submitting to LSF with command {shlex.join(bsub_with_args)}"
