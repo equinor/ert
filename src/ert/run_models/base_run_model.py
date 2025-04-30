@@ -597,7 +597,7 @@ class BaseRunModel(ABC):
             evaluator.run_and_get_successful_realizations()
         )
 
-        if not (await evaluator._monitoring_result):
+        if not (await self.monitor_evaluator(evaluator)):
             await evaluator_task
             return []
 
@@ -618,6 +618,9 @@ class BaseRunModel(ABC):
         ensemble.refresh_ensemble_state()
 
         return evaluator_task.result()
+
+    async def monitor_evaluator(self, evaluator: EnsembleEvaluator) -> bool:
+        return await evaluator._monitoring_result
 
     # This function needs to be there for the sake of testing that expects sync ee run
     @tracer.start_as_current_span(f"{__name__}.run_ensemble_evaluator")
