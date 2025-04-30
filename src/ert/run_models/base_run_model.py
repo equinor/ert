@@ -17,11 +17,11 @@ from collections.abc import Callable, Generator, MutableSequence
 from contextlib import contextmanager
 from pathlib import Path
 from queue import SimpleQueue
-from typing import TYPE_CHECKING, Any, Protocol, cast
+from typing import TYPE_CHECKING, Any, Protocol
 
 import numpy as np
 
-from _ert.events import EESnapshot, EESnapshotUpdate, EETerminated, Event
+from _ert.events import EESnapshot, EESnapshotUpdate, Event
 from ert.analysis import ErtAnalysisError, smoother_update
 from ert.analysis.event import (
     AnalysisCompleteEvent,
@@ -43,15 +43,11 @@ from ert.ensemble_evaluator import Ensemble as EEEnsemble
 from ert.ensemble_evaluator import (
     EnsembleEvaluator,
     EvaluatorServerConfig,
-    Monitor,
     Realization,
 )
-from ert.ensemble_evaluator.identifiers import STATUS
+from ert.ensemble_evaluator.evaluator import UserCancelled
 from ert.ensemble_evaluator.snapshot import EnsembleSnapshot
 from ert.ensemble_evaluator.state import (
-    ENSEMBLE_STATE_CANCELLED,
-    ENSEMBLE_STATE_FAILED,
-    ENSEMBLE_STATE_STOPPED,
     REALIZATION_STATE_FAILED,
     REALIZATION_STATE_FINISHED,
 )
@@ -120,10 +116,6 @@ class TooFewRealizationsSucceeded(ErtError):
 def delete_runpath(run_path: str) -> None:
     if os.path.exists(run_path):
         shutil.rmtree(run_path)
-
-
-class UserCancelled(Exception):
-    pass
 
 
 class _LogAggregration(logging.Handler):
@@ -581,59 +573,6 @@ class BaseRunModel(ABC):
                 )
             )
 
-    async def run_monitor(
-        self, ee_config: EvaluatorServerConfig, iteration: int
-    ) -> bool:
-        try:
-            logger.debug("connecting to new monitor...")
-            async with Monitor(ee_config.get_uri(), ee_config.token) as monitor:
-                logger.debug("connected")
-                async for event in monitor.track(heartbeat_interval=0.1):
-                    if type(event) in {
-                        EESnapshot,
-                        EESnapshotUpdate,
-                    }:
-                        event = cast(EESnapshot | EESnapshotUpdate, event)
-
-                        self.send_snapshot_event(event, iteration)
-
-                        if event.snapshot.get(STATUS) in {
-                            ENSEMBLE_STATE_STOPPED,
-                            ENSEMBLE_STATE_FAILED,
-                        }:
-                            logger.debug(
-                                "observed evaluation stopped event, signal done"
-                            )
-                            await monitor.signal_done()
-
-                        if event.snapshot.get(STATUS) == ENSEMBLE_STATE_CANCELLED:
-                            logger.debug(
-                                "observed evaluation cancelled event, exit drainer"
-                            )
-                            raise UserCancelled(
-                                "Experiment cancelled by user during evaluation"
-                            )
-                    elif type(event) is EETerminated:
-                        logger.debug("got terminated event")
-
-                    if not self._end_queue.empty():
-                        logger.debug("Run model cancelled - during evaluation")
-                        self._end_queue.get()
-                        await monitor.signal_cancel()
-                        logger.debug(
-                            "Run model cancelled - during evaluation - cancel sent"
-                        )
-        except UserCancelled:
-            raise
-        except Exception as e:
-            logger.exception(f"unexpected error: {e}")
-            # We really don't know what happened...  shut down
-            # the thread and get out of here. The monitor has
-            # been stopped by the ctx-mgr
-            return False
-
-        return True
-
     async def run_ensemble_evaluator_async(
         self,
         run_args: list[RunArg],
@@ -649,17 +588,19 @@ class BaseRunModel(ABC):
         evaluator = EnsembleEvaluator(
             ee_ensemble,
             ee_config,
+            end_queue=self._end_queue,
+            snapshot_event_handler=functools.partial(
+                self.send_snapshot_event, iteration=ensemble.iteration
+            ),
         )
         evaluator_task = asyncio.create_task(
             evaluator.run_and_get_successful_realizations()
         )
-        await evaluator._server_started
-        if not (await self.run_monitor(ee_config, ensemble.iteration)):
+
+        if not (await self.monitor_evaluator(evaluator)):
             await evaluator_task
             return []
 
-        logger.debug("observed that model was finished, waiting tasks completion...")
-        # The model has finished, we indicate this by sending a DONE
         logger.debug("tasks complete")
 
         if not self._end_queue.empty():
@@ -677,6 +618,9 @@ class BaseRunModel(ABC):
         ensemble.refresh_ensemble_state()
 
         return evaluator_task.result()
+
+    async def monitor_evaluator(self, evaluator: EnsembleEvaluator) -> bool:
+        return await evaluator._monitoring_result
 
     # This function needs to be there for the sake of testing that expects sync ee run
     @tracer.start_as_current_span(f"{__name__}.run_ensemble_evaluator")
