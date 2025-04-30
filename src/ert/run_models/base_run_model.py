@@ -424,6 +424,9 @@ class BaseRunModel(ABC):
             traceback_str = traceback.format_exc()
         except UserWarning as e:
             logger.exception(e)
+        except UserCancelled as e:
+            failed = True
+            exception = e
         except Exception as e:
             failed = True
             exception = e

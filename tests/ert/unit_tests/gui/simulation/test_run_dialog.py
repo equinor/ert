@@ -23,6 +23,7 @@ from ert.ensemble_evaluator.event import (
     FullSnapshotEvent,
     SnapshotUpdateEvent,
 )
+from ert.gui.ertwidgets.message_box import ErtMessageBox
 from ert.gui.main import GUILogHandler, _setup_main_window
 from ert.gui.simulation.ensemble_experiment_panel import EnsembleExperimentPanel
 from ert.gui.simulation.ensemble_smoother_panel import EnsembleSmootherPanel
@@ -151,6 +152,11 @@ def test_terminating_experiment_shows_a_confirmation_dialog(qtbot: QtBot, run_di
 
         QTimer.singleShot(100, handle_dialog)
         qtbot.mouseClick(run_dialog.kill_button, Qt.MouseButton.LeftButton)
+    terminate_info = wait_for_child(run_dialog, qtbot, ErtMessageBox)
+    assert (
+        terminate_info.details_text.toPlainText()
+        == "Experiment cancelled by user during evaluation\n"
+    )
 
 
 @pytest.mark.integration_test
