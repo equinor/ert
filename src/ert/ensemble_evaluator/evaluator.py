@@ -95,8 +95,6 @@ class EnsembleEvaluator:
         self._dispatchers_empty: asyncio.Event = asyncio.Event()
         self._dispatchers_empty.set()
 
-        self._ee_to_monitor_queue: asyncio.Queue[Event] = asyncio.Queue()
-        self._monitor_to_ee_queue: asyncio.Queue[bytes] = asyncio.Queue()
         self.send_snapshot_event_callback = send_snapshot_event
         self._end_queue = end_queue
         # Monitor portion
@@ -105,9 +103,9 @@ class EnsembleEvaluator:
             asyncio.Queue()
         )
         self._monitor_receiver_timeout: float = 60.0
-        self._receiver_task: asyncio.Task[None] | None = None
         self._monitoring_task: asyncio.Task[bool] | None = None
         self._monitoring_result: asyncio.Future[bool] = asyncio.Future()
+        self._monitor_is_disconnected = False
 
     def send_snapshot_event(self, event: Event) -> None:
         if self.send_snapshot_event_callback:
@@ -116,8 +114,8 @@ class EnsembleEvaluator:
     async def _publisher(self) -> None:
         while True:
             event = await self._events_to_send.get()
-            if not self._clients_empty.is_set():
-                await self._ee_to_monitor_queue.put(event)
+            if not self._clients_empty.is_set() and not self._monitor_is_disconnected:
+                await self._monitor_event_queue.put(event)
             self._events_to_send.task_done()
 
     async def _append_message(self, snapshot_update_event: EnsembleSnapshot) -> None:
@@ -228,9 +226,6 @@ class EnsembleEvaluator:
     def ensemble(self) -> Ensemble:
         return self._ensemble
 
-    async def disconnect_client(self) -> None:
-        self._clients_empty.set()
-
     async def connect_client(self) -> None:
         self._clients_empty.clear()
         current_snapshot_dict = self._ensemble.snapshot.to_dict()
@@ -238,13 +233,11 @@ class EnsembleEvaluator:
             snapshot=current_snapshot_dict,
             ensemble=self.ensemble.id_,
         )
-        await self._ee_to_monitor_queue.put(event)
+        await self._monitor_event_queue.put(event)
 
     async def handle_client(self, event: bytes) -> None:
         if event == CONNECT_MSG:
             await self.connect_client()
-        elif event == DISCONNECT_MSG:
-            await self.disconnect_client()
 
     async def handle_dispatch(self, dealer: bytes, frame: bytes) -> None:
         if frame == CONNECT_MSG:
@@ -268,25 +261,7 @@ class EnsembleEvaluator:
             else:
                 await self._events.put(event)
 
-    async def _from_monitor_to_ee_message_handling(self) -> None:
-        while True:
-            try:
-                client_event = await self._monitor_to_ee_queue.get()
-                await self.handle_client(client_event)
-            except asyncio.CancelledError:
-                return
-
     async def listen_for_messages(self) -> None:
-        try:
-            listening_tasks = [
-                asyncio.create_task(self._listen_for_messages()),
-                asyncio.create_task(self._from_monitor_to_ee_message_handling()),
-            ]
-            await asyncio.gather(*listening_tasks)
-        except asyncio.CancelledError:
-            return
-
-    async def _listen_for_messages(self) -> None:
         while True:
             try:
                 dealer, _, frame = await self._router_socket.recv_multipart()
@@ -528,39 +503,13 @@ class EnsembleEvaluator:
         logger.debug("Client signalled done.")
         self.stop()
 
-    async def _monitor_receiver(self) -> None:
-        self._run_monitor_receiver = True
-        while True:
-            event = (
-                await self._ee_to_monitor_queue.get()
-            )  # These two queues might be joinable.
-            # If so, we can remove this co-routine.
-            await self._monitor_event_queue.put(
-                event
-            )  # The issue is then - what do we terminate??
-            # The actual EE client-publisher maybe?
-
-    async def monitor_connect(self) -> None:
-        await self._monitor_term_receiver_task()
-        self._receiver_task = asyncio.create_task(self._monitor_receiver())
-        await self._monitor_to_ee_queue.put(CONNECT_MSG)
-        # await self.connect_client()
-
-    async def _monitor_term_receiver_task(self) -> None:
-        if self._receiver_task and not self._receiver_task.done():
-            self._receiver_task.cancel()
-            await asyncio.gather(self._receiver_task, return_exceptions=True)
-            self._receiver_task = None
-
     async def __aexit__(
         self, exc_type: Any, exc_value: Any, exc_traceback: Any
     ) -> None:
-        await self._monitor_to_ee_queue.put(DISCONNECT_MSG)
-        # await self.disconnect_client()
-        await self._monitor_term_receiver_task()
+        self._clients_empty.set()
 
     async def __aenter__(self) -> Self:
-        await self.monitor_connect()
+        await self.connect_client()
         return self
 
     async def handle_events(self, event: Event | None) -> None:
