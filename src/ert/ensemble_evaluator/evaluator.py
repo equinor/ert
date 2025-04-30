@@ -15,8 +15,6 @@ from _ert.events import (
     EESnapshot,
     EESnapshotUpdate,
     EETerminated,
-    EEUserCancel,
-    EEUserDone,
     EnsembleCancelled,
     EnsembleFailed,
     EnsembleStarted,
@@ -98,9 +96,7 @@ class EnsembleEvaluator:
         self._dispatchers_empty.set()
 
         self._ee_to_monitor_queue: asyncio.Queue[Event] = asyncio.Queue()
-        self._monitor_to_ee_queue: asyncio.Queue[EEUserCancel | EEUserDone | bytes] = (
-            asyncio.Queue()
-        )
+        self._monitor_to_ee_queue: asyncio.Queue[bytes] = asyncio.Queue()
         self.send_snapshot_event_callback = send_snapshot_event
         self._end_queue = end_queue
         # Monitor portion
@@ -110,6 +106,8 @@ class EnsembleEvaluator:
         )
         self._monitor_receiver_timeout: float = 60.0
         self._receiver_task: asyncio.Task[None] | None = None
+        self._monitoring_task: asyncio.Task[bool] | None = None
+        self._monitoring_result: asyncio.Future[bool] = asyncio.Future()
 
     def send_snapshot_event(self, event: Event) -> None:
         if self.send_snapshot_event_callback:
@@ -242,14 +240,8 @@ class EnsembleEvaluator:
         )
         await self._ee_to_monitor_queue.put(event)
 
-    async def handle_client(self, event: EEUserCancel | EEUserDone | bytes) -> None:
-        if type(event) is EEUserCancel:
-            logger.debug("Client asked to cancel.")
-            await self._signal_cancel()
-        elif type(event) is EEUserDone:
-            logger.debug("Client signalled done.")
-            self.stop()
-        elif event == CONNECT_MSG:
+    async def handle_client(self, event: bytes) -> None:
+        if event == CONNECT_MSG:
             await self.connect_client()
         elif event == DISCONNECT_MSG:
             await self.disconnect_client()
@@ -416,6 +408,7 @@ class EnsembleEvaluator:
                 name="ensemble_task",
             ),
         ]
+        self._monitoring_task = asyncio.create_task(self.run_monitor())
 
     CLOSE_SERVER_TIMEOUT = 60
 
@@ -522,23 +515,18 @@ class EnsembleEvaluator:
             if event is not None:
                 self._monitor_event_queue.task_done()
 
-    async def signal_cancel(self) -> None:
+    async def _monitor_signal_cancel(self) -> None:
         await self._monitor_event_queue.put(EnsembleEvaluator._sentinel)
         logger.debug(f"monitor-{self._monitor_id} asking server to cancel...")
-        cancel_event = EEUserCancel(monitor=self._monitor_id)
-        await self.send(cancel_event)
         logger.debug(f"monitor-{self._monitor_id} asked server to cancel")
+        logger.debug("Client asked to cancel.")
+        await self._signal_cancel()
 
     async def signal_done(self) -> None:
         await self._monitor_event_queue.put(EnsembleEvaluator._sentinel)
-        logger.debug(f"monitor-{self._monitor_id} informing server monitor is done...")
-
-        done_event = EEUserDone(monitor=self._monitor_id)
-        await self.send(done_event)
         logger.debug(f"monitor-{self._monitor_id} informed server monitor is done")
-
-    async def send(self, event: EEUserDone | EEUserCancel) -> None:
-        await self._monitor_to_ee_queue.put(event)
+        logger.debug("Client signalled done.")
+        self.stop()
 
     async def _monitor_receiver(self) -> None:
         self._run_monitor_receiver = True
@@ -600,25 +588,26 @@ class EnsembleEvaluator:
         if not self._end_queue.empty():
             logger.debug("Run model cancelled - during evaluation")
             self._end_queue.get()
-            await self.signal_cancel()
+            await self._monitor_signal_cancel()
             logger.debug("Run model cancelled - during evaluation - cancel sent")
 
-    async def run_monitor(self) -> bool:
+    async def run_monitor(self) -> None:
         try:
             logger.debug("connecting to new monitor...")
             async with self as monitor:
                 await monitor.track(heartbeat_interval=0.1)
 
-        except UserCancelled:
+        except UserCancelled as e:
+            self._monitoring_result.set_exception(e)
             raise
         except Exception as e:
             logger.exception(f"unexpected error: {e}")
             # We really don't know what happened...  shut down
             # the thread and get out of here. The monitor has
             # been stopped by the ctx-mgr
-            return False
+            self._monitoring_result.set_result(False)
 
-        return True
+        self._monitoring_result.set_result(True)
 
 
 def detect_overspent_cpu(num_cpu: int, real_id: str, fm_step: FMStepSnapshot) -> str:

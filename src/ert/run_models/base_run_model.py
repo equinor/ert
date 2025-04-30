@@ -596,8 +596,8 @@ class BaseRunModel(ABC):
         evaluator_task = asyncio.create_task(
             evaluator.run_and_get_successful_realizations()
         )
-        await evaluator._server_started
-        if not (await evaluator.run_monitor()):
+        await evaluator._server_started  # Might not we needed anymore
+        if not (await evaluator._monitoring_result):
             await evaluator_task
             return []
 
