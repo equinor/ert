@@ -589,20 +589,18 @@ class BaseRunModel(ABC):
             ee_ensemble,
             ee_config,
             end_queue=self._end_queue,
-            send_snapshot_event=functools.partial(
+            snapshot_event_handler=functools.partial(
                 self.send_snapshot_event, iteration=ensemble.iteration
             ),
         )
         evaluator_task = asyncio.create_task(
             evaluator.run_and_get_successful_realizations()
         )
-        await evaluator._server_started  # Might not we needed anymore
+
         if not (await evaluator._monitoring_result):
             await evaluator_task
             return []
 
-        logger.debug("observed that model was finished, waiting tasks completion...")
-        # The model has finished, we indicate this by sending a DONE
         logger.debug("tasks complete")
 
         if not self._end_queue.empty():
