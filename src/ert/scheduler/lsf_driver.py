@@ -397,8 +397,8 @@ class LsfDriver(Driver):
             async with self._submit_locks[iens]:
                 if iens not in self._iens2jobid:
                     logger.error(
-                        f"LSF kill failed, realization {iens} was not ",
-                        " submitted properly",
+                        f"LSF kill failed, realization {iens} was not "
+                        "submitted properly",
                     )
                     return
 
