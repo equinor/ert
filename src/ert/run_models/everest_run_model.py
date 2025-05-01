@@ -340,6 +340,12 @@ class EverestRunModel(BaseRunModel):
 
         # Store some final results.
         self.ever_storage.on_optimization_finished()
+        if (
+            optimizer_exit_code is not OptimizerExitCode.UNKNOWN
+            and optimizer_exit_code is not OptimizerExitCode.TOO_FEW_REALIZATIONS
+            and optimizer_exit_code is not OptimizerExitCode.USER_ABORT
+        ):
+            self.ever_storage.export_everest_opt_results_to_csv()
 
         # Extract the best result from the storage.
         self._result = self.ever_storage.get_optimal_result()
