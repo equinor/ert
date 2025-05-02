@@ -75,12 +75,12 @@ def test_progress_state_color_order(qtbot):
     progress_widget = ProgressWidget()
     qtbot.addWidget(progress_widget)
     expected_color_order = [
+        "Unknown",
         "Finished",
         "Failed",
         "Running",
         "Pending",
         "Waiting",
-        "Unknown",
     ]
 
     for i in range(len(expected_color_order)):
