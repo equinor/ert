@@ -466,12 +466,14 @@ def detect_overspent_cpu(num_cpu: int, real_id: str, fm_step: FMStepSnapshot) ->
     """Produces a message warning about misconfiguration of NUM_CPU if
     so is detected. Returns an empty string if everything is ok."""
     allowed_overspending = 1.05
+    minimum_wallclock_time_seconds = 30  # Information is only polled every 5 sec
+
     start_time = fm_step.get(ids.START_TIME)
     end_time = fm_step.get(ids.END_TIME)
     if start_time is None or end_time is None:
         return ""
     duration = (end_time - start_time).total_seconds()
-    if duration <= 0:
+    if duration <= minimum_wallclock_time_seconds:
         return ""
     cpu_seconds = fm_step.get(ids.CPU_SECONDS) or 0.0
     parallelization_obtained = cpu_seconds / duration
