@@ -77,7 +77,7 @@ def run_gui(args: Namespace, plugin_manager: ErtPluginManager | None = None) -> 
         except RuntimeError:
             traceback_str = None
 
-        logger.exception(f"ERT GUI crashed unexpectedly with: {value}\n{traceback_str}")  # noqa: LOG004
+        logger.exception(f"ERT GUI crashed unexpectedly with: {value}\n{traceback_str}")
 
         def recursive_logger_flush(logger: logging.Logger) -> None:
             for handler in logger.handlers:
