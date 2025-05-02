@@ -63,11 +63,20 @@ def run_gui(args: Namespace, plugin_manager: ErtPluginManager | None = None) -> 
 
         Note: Any exception occuring in this function will deadlock the application."""
         span.set_status(Status(StatusCode.ERROR))
-        span.record_exception(value)
+        try:
+            span.record_exception(value)
+        except RuntimeError:
+            # At least a NameError will yield a non-computable traceback
+            value.__traceback__ = None
+            span.record_exception(value)
         span.end()
-        trace.get_tracer_provider().force_flush()  # type: ignore
 
-        traceback_str = traceback.format_exception(exctype, value, tb)
+        trace.get_tracer_provider().force_flush()  # type: ignore
+        try:
+            traceback_str = traceback.format_exception(exctype, value, tb)
+        except RuntimeError:
+            traceback_str = None
+
         logger.exception(f"ERT GUI crashed unexpectedly with: {value}\n{traceback_str}")  # noqa: LOG004
 
         def recursive_logger_flush(logger: logging.Logger) -> None:
