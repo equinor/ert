@@ -23,7 +23,6 @@ from PyQt6.QtWidgets import (
     QWidget,
 )
 
-from ert import LibresFacade
 from ert.config import ErtConfig
 from ert.config.workflow_job import ErtScriptWorkflow
 from ert.gui.about_dialog import AboutDialog
@@ -107,7 +106,6 @@ class ErtMainWindow(QMainWindow):
         self.central_layout.setContentsMargins(0, 0, 0, 0)
         self.central_layout.setSpacing(0)
         self.central_widget.setLayout(self.central_layout)
-        self.facade = LibresFacade(self.ert_config)
         self.side_frame = QFrame(self)
         self.button_group = QButtonGroup(self.side_frame)
         self._external_plot_windows: list[PlotWindow] = []
@@ -277,7 +275,6 @@ class ErtMainWindow(QMainWindow):
             self.ert_config,
             self.notifier,
             self.config_file,
-            self.facade.get_ensemble_size(),
         )
         experiment_panel.experiment_started.connect(
             lambda _: self.results_button.setChecked(True)
@@ -378,7 +375,7 @@ class ErtMainWindow(QMainWindow):
         self.workflows_tool.setParent(self)
         tools_menu.addAction(self.workflows_tool.getAction())
 
-        self.load_results_tool = LoadResultsTool(self.facade, self.notifier)
+        self.load_results_tool = LoadResultsTool(self.ert_config, self.notifier)
         self.load_results_tool.setParent(self)
         tools_menu.addAction(self.load_results_tool.getAction())
 

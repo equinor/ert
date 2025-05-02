@@ -278,7 +278,7 @@ def test_that_the_states_are_set_correctly():
     storage = open_storage(facade.enspath, mode="w")
     experiment = storage.get_experiment_by_name("ensemble-experiment")
     ensemble = experiment.get_ensemble_by_name("default_0")
-    ensemble_size = facade.get_ensemble_size()
+    ensemble_size = ensemble.ensemble_size
 
     new_ensemble = storage.create_ensemble(
         experiment=ensemble.experiment, ensemble_size=ensemble_size

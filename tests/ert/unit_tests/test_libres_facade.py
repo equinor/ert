@@ -27,9 +27,7 @@ def storage(facade):
 @pytest.fixture
 def empty_case(facade, storage):
     experiment_id = storage.create_experiment()
-    return storage.create_ensemble(
-        experiment_id, name="new_case", ensemble_size=facade.get_ensemble_size()
-    )
+    return storage.create_ensemble(experiment_id, name="new_case", ensemble_size=25)
 
 
 def test_keyword_type_checks(snake_oil_default_storage):

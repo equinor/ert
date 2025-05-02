@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import warnings
 from collections.abc import Callable, Iterable
-from pathlib import Path
 from typing import (
     TYPE_CHECKING,
     Any,
@@ -81,16 +80,9 @@ class LibresFacade:
             if isinstance(val, Field)
         ]
 
-    def get_ensemble_size(self) -> int:
-        return self.config.runpath_config.num_realizations
-
     @property
     def run_path(self) -> str:
         return self.config.runpath_config.runpath_format_string
-
-    @property
-    def resolved_run_path(self) -> str:
-        return str(Path(self.config.runpath_config.runpath_format_string).resolve())
 
     def get_observations(self) -> EnkfObs:
         return self.config.enkf_obs

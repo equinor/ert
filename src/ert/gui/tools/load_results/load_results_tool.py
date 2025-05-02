@@ -2,16 +2,15 @@ from typing import Any
 
 from PyQt6.QtGui import QIcon
 
+from ert.config.ert_config import ErtConfig
 from ert.gui.ertnotifier import ErtNotifier
 from ert.gui.ertwidgets import ClosableDialog
 from ert.gui.tools import Tool
 from ert.gui.tools.load_results import LoadResultsPanel
-from ert.libres_facade import LibresFacade
 
 
 class LoadResultsTool(Tool):
-    def __init__(self, facade: LibresFacade, notifier: ErtNotifier) -> None:
-        self.facade = facade
+    def __init__(self, config: ErtConfig, notifier: ErtNotifier) -> None:
         super().__init__(
             "Load results manually",
             QIcon("img:upload.svg"),
@@ -19,10 +18,11 @@ class LoadResultsTool(Tool):
         self._import_widget: LoadResultsPanel | None = None
         self._dialog: ClosableDialog | None = None
         self._notifier = notifier
+        self._config = config
 
     def trigger(self) -> None:
         if self._import_widget is None:
-            self._import_widget = LoadResultsPanel(self.facade, self._notifier)
+            self._import_widget = LoadResultsPanel(self._config, self._notifier)
             self._import_widget.panelConfigurationChanged.connect(
                 self.validationStatusChanged
             )

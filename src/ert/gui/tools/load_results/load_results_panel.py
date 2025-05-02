@@ -1,9 +1,12 @@
 from __future__ import annotations
 
+from pathlib import Path
+
 from PyQt6.QtCore import Qt
 from PyQt6.QtCore import pyqtSignal as Signal
 from PyQt6.QtWidgets import QFormLayout, QLabel, QMessageBox, QWidget
 
+from ert.config.ert_config import ErtConfig
 from ert.gui.ertnotifier import ErtNotifier
 from ert.gui.ertwidgets import (
     ActiveRealizationsModel,
@@ -14,7 +17,6 @@ from ert.gui.ertwidgets import (
     TextBox,
     TextModel,
 )
-from ert.libres_facade import LibresFacade
 from ert.run_models.base_run_model import captured_logs
 from ert.storage.local_ensemble import load_parameters_and_responses_from_runpath
 from ert.validation import RangeStringArgument, StringDefinition
@@ -23,14 +25,17 @@ from ert.validation import RangeStringArgument, StringDefinition
 class LoadResultsPanel(QWidget):
     panelConfigurationChanged = Signal()
 
-    def __init__(self, facade: LibresFacade, notifier: ErtNotifier):
-        self._facade = facade
+    def __init__(self, config: ErtConfig, notifier: ErtNotifier):
         QWidget.__init__(self)
 
         self.setMinimumWidth(500)
         self.setMinimumHeight(200)
         self._dynamic = False
         self._notifier = notifier
+
+        self._resolved_run_path = str(
+            Path(config.runpath_config.runpath_format_string).resolve()
+        )
 
         self.setWindowTitle("Load results manually")
         self.activateWindow()
@@ -55,7 +60,7 @@ class LoadResultsPanel(QWidget):
         layout.addRow("Load into ensemble:", ensemble_selector)
         self._ensemble_selector = ensemble_selector
 
-        ensemble_size = self._facade.get_ensemble_size()
+        ensemble_size = config.runpath_config.num_realizations
         self._active_realizations_model = ActiveRealizationsModel(ensemble_size)
         self._active_realizations_field = StringBox(
             self._active_realizations_model,  # type: ignore
@@ -81,7 +86,7 @@ class LoadResultsPanel(QWidget):
 
     def readCurrentRunPath(self) -> str:
         current_ensemble = self._notifier.current_ensemble_name
-        run_path = self._facade.resolved_run_path
+        run_path = self._resolved_run_path
         run_path = run_path.replace("<ERTCASE>", current_ensemble)
         run_path = run_path.replace("<ERT-CASE>", current_ensemble)
         return run_path

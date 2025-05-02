@@ -75,7 +75,6 @@ class ExperimentPanel(QWidget):
         config: ErtConfig,
         notifier: ErtNotifier,
         config_file: str,
-        ensemble_size: int,
     ):
         QWidget.__init__(self)
         self._notifier = notifier
@@ -150,6 +149,8 @@ class ExperimentPanel(QWidget):
             SingleTestRunPanel(run_path, notifier),
             True,
         )
+
+        ensemble_size = config.runpath_config.num_realizations
         analysis_config = config.analysis_config
         self.addExperimentConfigPanel(
             EnsembleExperimentPanel(analysis_config, ensemble_size, run_path, notifier),
