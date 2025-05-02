@@ -163,6 +163,26 @@ def test_invalid_subconfig(extra_config, min_config, expected):
         EverestConfig(**min_config)
 
 
+@pytest.mark.parametrize(
+    "link, source, target",
+    [
+        (True, "test_dir", "../test"),
+        (False, "test_dir", "../test"),
+        (True, "test_dir/my_file", "../test/test_file"),
+        (False, "test_dir/my_file", "../test/test_file"),
+    ],
+)
+def test_linking_outside_runpath(
+    link, source, target, tmp_path, monkeypatch, min_config
+):
+    monkeypatch.chdir(tmp_path)
+    Path.mkdir(Path("test_dir"))
+    Path("test_dir/my_file").touch()
+    min_config["install_data"] = [{"source": source, "target": target, "link": link}]
+    with pytest.raises(ValidationError, match="Target location outside of runpath"):
+        EverestConfig(**min_config)
+
+
 def test_no_list(min_config):
     min_config["install_data"] = []
     errors = EverestConfig.lint_config_dict(min_config)

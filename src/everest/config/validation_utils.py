@@ -42,6 +42,10 @@ class InstallDataContext:
         if realization is not None:
             source = source.replace("<GEO_ID>", str(realization))
             target = target.replace("<GEO_ID>", str(realization))
+        if target.startswith("../"):
+            raise ValueError(
+                f"Target location outside of runpath {target} not allowed!"
+            )
 
         tmp_target = Path(self._temp_dir.name) / Path(target)
         if tmp_target.exists():
