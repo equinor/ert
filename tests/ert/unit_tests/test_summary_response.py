@@ -2,9 +2,9 @@ import shutil
 from pathlib import Path
 from textwrap import dedent
 
-from ert import LibresFacade
 from ert.config import ErtConfig
 from ert.enkf_main import create_run_path
+from ert.storage.local_ensemble import load_parameters_and_responses_from_runpath
 
 
 def test_load_summary_response_restart_not_zero(
@@ -53,7 +53,7 @@ def test_load_summary_response_restart_not_zero(
         shutil.copy(test_path / "PRED_RUN.SMSPEC", sim_path / "PRED_RUN.SMSPEC")
         shutil.copy(test_path / "PRED_RUN.UNSMRY", sim_path / "PRED_RUN.UNSMRY")
 
-        LibresFacade.load_from_run_path(
+        load_parameters_and_responses_from_runpath(
             ert_config.runpath_config.runpath_format_string, ensemble, [0]
         )
 

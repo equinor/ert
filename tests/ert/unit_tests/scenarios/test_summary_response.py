@@ -9,11 +9,11 @@ import pandas as pd
 import pytest
 from resdata.summary import Summary
 
-from ert import LibresFacade
 from ert.analysis import ErtAnalysisError, smoother_update
 from ert.config import ErtConfig, ESSettings, ObservationSettings
 from ert.data import MeasuredData
 from ert.enkf_main import sample_prior
+from ert.storage.local_ensemble import load_parameters_and_responses_from_runpath
 
 
 @pytest.fixture
@@ -76,7 +76,7 @@ def create_responses(prior_ensemble, response_times):
         os.chdir(sim_path)
         run_sim(response_time, rng.standard_normal(), fname=f"ECLIPSE_CASE_{i}")
     os.chdir(cwd)
-    LibresFacade.load_from_run_path(
+    load_parameters_and_responses_from_runpath(
         str(base_path), prior_ensemble, range(len(response_times))
     )
 

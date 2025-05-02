@@ -1,6 +1,6 @@
-from ert import LibresFacade
 from ert.config import ErtConfig
 from ert.storage import open_storage
+from ert.storage.local_ensemble import load_parameters_and_responses_from_runpath
 
 
 def test_load_from_context(benchmark, template_config):
@@ -13,7 +13,7 @@ def test_load_from_context(benchmark, template_config):
         )
         expected_reals = template_config["reals"]
         loaded_reals = benchmark(
-            LibresFacade.load_from_run_path,
+            load_parameters_and_responses_from_runpath,
             config.runpath_config.runpath_format_string,
             load_into,
             list(range(expected_reals)),

@@ -12,9 +12,9 @@ from ert.config.ert_config import _forward_model_step_from_config_contents
 from ert.config.queue_config import LocalQueueOptions
 from ert.ensemble_evaluator._ensemble import LegacyEnsemble
 from ert.ensemble_evaluator.config import EvaluatorServerConfig
-from ert.load_status import LoadStatus
 from ert.run_arg import RunArg
 from ert.storage import Ensemble
+from ert.storage.load_status import LoadStatus
 from tests.ert import SnapshotBuilder
 
 

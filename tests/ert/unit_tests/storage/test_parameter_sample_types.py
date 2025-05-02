@@ -9,11 +9,11 @@ import numpy as np
 import pytest
 from resdata.geometry import Surface
 
-from ert import LibresFacade
 from ert.config import ConfigValidationError, ErtConfig, GenKwConfig
 from ert.config.gen_kw_config import TransformFunctionDefinition
 from ert.enkf_main import sample_prior
 from ert.storage import open_storage
+from ert.storage.local_ensemble import load_parameters_and_responses_from_runpath
 
 from .create_runpath import create_runpath
 
@@ -96,7 +96,7 @@ def test_surface_param(
         # We try to load the parameters from the forward model, this would fail if
         # forward init was not set correctly
         assert (
-            LibresFacade.load_from_run_path(
+            load_parameters_and_responses_from_runpath(
                 "simulations/realization-<IENS>/iter-0", fs, [0]
             )
             == expect_num_loaded
