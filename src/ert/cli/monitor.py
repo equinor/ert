@@ -114,7 +114,7 @@ class Monitor:
         latest_snapshot = self._snapshots[max(self._snapshots.keys())]
         total_count = len(latest_snapshot.reals)
         aggregate = latest_snapshot.aggregate_real_states()
-        for state_ in REAL_STATE_TO_COLOR:
+        for state_ in reversed(REAL_STATE_TO_COLOR):
             count = aggregate[state_]
             countstring = f"{count}/{total_count}"
             out = (
