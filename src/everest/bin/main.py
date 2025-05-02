@@ -14,7 +14,8 @@ from everest.bin.everlint_script import lint_entry
 from everest.bin.kill_script import kill_entry
 from everest.bin.monitor_script import monitor_entry
 from everest.bin.visualization_script import visualization_entry
-from everest.trace import tracer
+from everest.plugins.everest_plugin_manager import EverestPluginManager
+from everest.trace import tracer, tracer_provider
 
 
 def _build_args_parser() -> argparse.ArgumentParser:
@@ -45,6 +46,11 @@ class EverestMain:
         parsed_args = parser.parse_args(args[1:2])
         if not hasattr(self, parsed_args.command):
             parser.error("Unrecognized command")
+
+        # Setup logging from plugins:
+        plugin_manager = EverestPluginManager()
+        plugin_manager.add_log_handle_to_root()
+        plugin_manager.add_span_processor_to_trace_provider(tracer_provider)
 
         # Use dispatch pattern to invoke method with same name
         getattr(self, parsed_args.command)(args[2:])
