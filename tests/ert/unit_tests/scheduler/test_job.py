@@ -11,7 +11,6 @@ from lxml import etree
 import ert
 from ert.config import ForwardModelStep
 from ert.ensemble_evaluator import Realization
-from ert.load_status import LoadStatus
 from ert.run_arg import RunArg
 from ert.run_models.base_run_model import captured_logs
 from ert.scheduler import Scheduler
@@ -21,6 +20,7 @@ from ert.scheduler.job import (
     log_info_from_exit_file,
     log_warnings_from_forward_model,
 )
+from ert.storage.load_status import LoadStatus
 
 
 def create_scheduler():

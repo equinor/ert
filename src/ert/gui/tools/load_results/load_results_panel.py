@@ -16,6 +16,7 @@ from ert.gui.ertwidgets import (
 )
 from ert.libres_facade import LibresFacade
 from ert.run_models.base_run_model import captured_logs
+from ert.storage.local_ensemble import load_parameters_and_responses_from_runpath
 from ert.validation import RangeStringArgument, StringDefinition
 
 
@@ -97,12 +98,14 @@ class LoadResultsPanel(QWidget):
         ]
         QApplication.setOverrideCursor(Qt.CursorShape.WaitCursor)
         messages: list[str] = []
+        loaded: int = 0
         with captured_logs(messages):
-            loaded = self._facade.load_from_run_path(
-                run_path_format=self._run_path_text.get_text,
-                ensemble=self._notifier.current_ensemble,  # type: ignore
-                active_realizations=active_realizations,
-            )
+            if ensemble := self._notifier.current_ensemble:
+                loaded = load_parameters_and_responses_from_runpath(
+                    run_path_format=self._run_path_text.get_text,
+                    ensemble=ensemble,
+                    active_realizations=active_realizations,
+                )
         QApplication.restoreOverrideCursor()
 
         if loaded == realizations.count(True):

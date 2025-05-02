@@ -3,10 +3,10 @@ from __future__ import annotations
 import os
 from pathlib import Path
 
-from ert.storage.local_ensemble import LocalEnsemble
-from ert.storage.local_experiment import LocalExperiment
-from ert.storage.local_storage import LocalStorage
-from ert.storage.mode import Mode, ModeLiteral
+from .local_ensemble import LocalEnsemble
+from .local_experiment import LocalExperiment
+from .local_storage import LocalStorage
+from .mode import Mode, ModeLiteral
 
 # Alias types. The Local* variants are meant to co-exist with Remote* classes
 # that connect to a remote ERT Storage Server, as well as an in-memory Memory*

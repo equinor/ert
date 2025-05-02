@@ -12,6 +12,7 @@ from ert.config import ErtConfig
 from ert.enkf_main import create_run_path
 from ert.libres_facade import LibresFacade
 from ert.storage import open_storage
+from ert.storage.local_ensemble import load_parameters_and_responses_from_runpath
 
 
 @pytest.fixture()
@@ -79,7 +80,7 @@ def test_load_forward_model(snake_oil_default_storage):
         experiment = storage.get_experiment_by_name("ensemble-experiment")
         default = experiment.get_ensemble_by_name("default_0")
 
-        loaded = LibresFacade.load_from_run_path(
+        loaded = load_parameters_and_responses_from_runpath(
             "storage/snake_oil/runpath/realization-<IENS>/iter-<ITER>",
             default,
             [realisation_number],
@@ -151,7 +152,7 @@ def test_load_forward_model_summary(
         runpaths=run_paths(ert_config),
     )
     with caplog.at_level(logging.ERROR):
-        loaded = LibresFacade.load_from_run_path(
+        loaded = load_parameters_and_responses_from_runpath(
             ert_config.runpath_config.runpath_format_string, prior_ensemble, [0]
         )
     expected_loaded, expected_log_message = expected
@@ -177,7 +178,7 @@ def test_load_forward_model_gen_data(setup_case):
     with open(run_path / "response_0.out_active", "w", encoding="utf-8") as fout:
         fout.write("\n".join(["1", "0", "1"]))
 
-    LibresFacade.load_from_run_path(str(run_path), prior_ensemble, [0])
+    load_parameters_and_responses_from_runpath(str(run_path), prior_ensemble, [0])
     df = prior_ensemble.load_responses("gen_data", (0,))
     filter_cond = pl.col("report_step").eq(0), pl.col("values").is_not_nan()
     assert df.filter(filter_cond)["values"].to_list() == [1.0, 3.0]
@@ -198,7 +199,7 @@ def test_single_valued_gen_data_with_active_info_is_loaded(setup_case):
     with open(run_path / "response_0.out_active", "w", encoding="utf-8") as fout:
         fout.write("\n".join(["1"]))
 
-    LibresFacade.load_from_run_path(str(run_path), prior_ensemble, [0])
+    load_parameters_and_responses_from_runpath(str(run_path), prior_ensemble, [0])
     df = prior_ensemble.load_responses("RESPONSE", (0,))
     assert df["values"].to_list() == [1.0]
 
@@ -218,7 +219,7 @@ def test_that_all_deactivated_values_are_loaded(setup_case):
     with open(run_path / "response_0.out_active", "w", encoding="utf-8") as fout:
         fout.write("\n".join(["0"]))
 
-    LibresFacade.load_from_run_path(str(run_path), prior_ensemble, [0])
+    load_parameters_and_responses_from_runpath(str(run_path), prior_ensemble, [0])
     response = prior_ensemble.load_responses("RESPONSE", (0,))
     assert np.isnan(response[0]["values"].to_list())
     assert len(response) == 1
@@ -260,7 +261,7 @@ def test_loading_gen_data_without_restart(storage, run_paths, run_args):
     with open(run_path / "response.out_active", "w", encoding="utf-8") as fout:
         fout.write("\n".join(["1", "0", "1"]))
 
-    LibresFacade.load_from_run_path(str(run_path), prior_ensemble, [0])
+    load_parameters_and_responses_from_runpath(str(run_path), prior_ensemble, [0])
     df = prior_ensemble.load_responses("RESPONSE", (0,))
     df_no_nans = df.filter(pl.col("values").is_not_nan())
     assert df_no_nans["values"].to_list() == [1.0, 3.0]
@@ -282,7 +283,7 @@ def test_that_the_states_are_set_correctly():
     new_ensemble = storage.create_ensemble(
         experiment=ensemble.experiment, ensemble_size=ensemble_size
     )
-    LibresFacade.load_from_run_path(
+    load_parameters_and_responses_from_runpath(
         facade.run_path, new_ensemble, list(range(ensemble_size))
     )
     assert not new_ensemble.is_initalized()
@@ -324,13 +325,12 @@ def test_loading_from_any_available_iter(storage, run_paths, run_args, itr):
     with open(run_path / "response.out_active", "w", encoding="utf-8") as fout:
         fout.write("\n".join(["1", "0", "1"]))
 
-    facade = LibresFacade(ert_config)
     run_path_format = str(
         Path(
             f"simulations/realization-<IENS>/iter-{itr if itr is not None else 0}"
         ).resolve()
     )
-    facade.load_from_run_path(run_path_format, prior_ensemble, [0])
+    load_parameters_and_responses_from_runpath(run_path_format, prior_ensemble, [0])
     df = prior_ensemble.load_responses("RESPONSE", (0,))
     df_no_nans = df.filter(pl.col("values").is_not_nan())
     assert df_no_nans["values"].to_list() == [1.0, 3.0]

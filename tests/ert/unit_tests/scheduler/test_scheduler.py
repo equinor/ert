@@ -17,10 +17,10 @@ from _ert.events import (
 )
 from ert.config import QueueConfig, QueueSystem
 from ert.ensemble_evaluator import Realization
-from ert.load_status import LoadResult, LoadStatus
 from ert.run_arg import RunArg
 from ert.scheduler import LsfDriver, OpenPBSDriver, create_driver, job, scheduler
 from ert.scheduler.job import JobState
+from ert.storage.load_status import LoadResult, LoadStatus
 
 
 def create_jobs_json(realization: Realization) -> None:
