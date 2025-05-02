@@ -9,7 +9,6 @@ import orjson
 import pytest
 import xtgeo
 
-from ert.callbacks import forward_model_ok
 from ert.config import (
     ConfigValidationError,
     ErtConfig,
@@ -18,9 +17,10 @@ from ert.config import (
     SurfaceConfig,
 )
 from ert.enkf_main import create_run_path, sample_prior
-from ert.load_status import LoadStatus
 from ert.run_arg import create_run_arguments
 from ert.runpaths import Runpaths
+from ert.storage.load_status import LoadStatus
+from ert.storage.local_ensemble import forward_model_ok
 from tests.ert.unit_tests.config.egrid_generator import simple_grid
 from tests.ert.unit_tests.config.summary_generator import simple_smspec, simple_unsmry
 

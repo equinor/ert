@@ -23,13 +23,13 @@ from _ert.events import (
     RealizationTimeout,
     RealizationWaiting,
 )
-from ert.callbacks import forward_model_ok
 from ert.config import ForwardModelStep
 from ert.constant_filenames import ERROR_file
-from ert.load_status import LoadStatus
 from ert.storage.realization_storage_state import RealizationStorageState
 from ert.trace import trace, tracer
 
+from ..storage.load_status import LoadStatus
+from ..storage.local_ensemble import forward_model_ok
 from .driver import Driver, FailedSubmit
 
 if TYPE_CHECKING:

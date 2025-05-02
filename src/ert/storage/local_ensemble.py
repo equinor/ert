@@ -1,8 +1,10 @@
 from __future__ import annotations
 
+import asyncio
 import contextlib
 import logging
 import os
+import time
 from collections.abc import Iterable
 from datetime import datetime
 from functools import cache, lru_cache
@@ -17,9 +19,10 @@ import xarray as xr
 from pydantic import BaseModel
 from typing_extensions import TypedDict
 
-from ert.config import GenKwConfig
+from ert.config import GenKwConfig, InvalidResponseFile
 from ert.storage.mode import BaseMode, Mode, require_write
 
+from .load_status import LoadResult, LoadStatus
 from .realization_storage_state import RealizationStorageState
 
 if TYPE_CHECKING:
@@ -1125,3 +1128,128 @@ class LocalEnsemble(BaseMode):
         ]
 
         return params_and_responses[column_order]
+
+
+async def _read_parameters(
+    run_path: str,
+    realization: int,
+    iteration: int,
+    ensemble: LocalEnsemble,
+) -> LoadResult:
+    result = LoadResult(LoadStatus.LOAD_SUCCESSFUL, "")
+    error_msg = ""
+    parameter_configuration = ensemble.experiment.parameter_configuration.values()
+    for config in parameter_configuration:
+        if not config.forward_init:
+            continue
+        try:
+            start_time = time.perf_counter()
+            logger.debug(f"Starting to load parameter: {config.name}")
+            ds = config.read_from_runpath(Path(run_path), realization, iteration)
+            await asyncio.sleep(0)
+            logger.debug(
+                f"Loaded {config.name}",
+                extra={"Time": f"{(time.perf_counter() - start_time):.4f}s"},
+            )
+            start_time = time.perf_counter()
+            ensemble.save_parameters(config.name, realization, ds)
+            await asyncio.sleep(0)
+            logger.debug(
+                f"Saved {config.name} to storage",
+                extra={"Time": f"{(time.perf_counter() - start_time):.4f}s"},
+            )
+        except Exception as err:
+            error_msg += str(err)
+            result = LoadResult(LoadStatus.LOAD_FAILURE, error_msg)
+            logger.warning(f"Failed to load: {realization}", exc_info=err)
+    return result
+
+
+async def _write_responses_to_storage(
+    run_path: str,
+    realization: int,
+    ensemble: LocalEnsemble,
+) -> LoadResult:
+    errors = []
+    response_configs = ensemble.experiment.response_configuration.values()
+    for config in response_configs:
+        try:
+            start_time = time.perf_counter()
+            logger.debug(f"Starting to load response: {config.response_type}")
+            try:
+                ds = config.read_from_file(run_path, realization, ensemble.iteration)
+            except (FileNotFoundError, InvalidResponseFile) as err:
+                errors.append(str(err))
+                logger.warning(f"Failed to write: {realization}: {err}")
+                continue
+            await asyncio.sleep(0)
+            logger.debug(
+                f"Loaded {config.response_type}",
+                extra={"Time": f"{(time.perf_counter() - start_time):.4f}s"},
+            )
+            start_time = time.perf_counter()
+            ensemble.save_response(config.response_type, ds, realization)
+            await asyncio.sleep(0)
+            logger.debug(
+                f"Saved {config.response_type} to storage",
+                extra={"Time": f"{(time.perf_counter() - start_time):.4f}s"},
+            )
+        except Exception as err:
+            errors.append(str(err))
+            logger.exception(
+                f"Unexpected exception while writing response to storage {realization}",
+                exc_info=err,
+            )
+            continue
+
+    if errors:
+        return LoadResult(LoadStatus.LOAD_FAILURE, "\n".join(errors))
+    return LoadResult(LoadStatus.LOAD_SUCCESSFUL, "")
+
+
+async def forward_model_ok(
+    run_path: str,
+    realization: int,
+    iter_: int,
+    ensemble: LocalEnsemble,
+) -> LoadResult:
+    parameters_result = LoadResult(LoadStatus.LOAD_SUCCESSFUL, "")
+    response_result = LoadResult(LoadStatus.LOAD_SUCCESSFUL, "")
+    try:
+        # We only read parameters after the prior, after that, ERT
+        # handles parameters
+        if iter_ == 0:
+            parameters_result = await _read_parameters(
+                run_path,
+                realization,
+                iter_,
+                ensemble,
+            )
+
+        if parameters_result.status == LoadStatus.LOAD_SUCCESSFUL:
+            response_result = await _write_responses_to_storage(
+                run_path,
+                realization,
+                ensemble,
+            )
+
+    except Exception as err:
+        logger.exception(
+            f"Failed to load results for realization {realization}",
+            exc_info=err,
+        )
+        parameters_result = LoadResult(
+            LoadStatus.LOAD_FAILURE,
+            f"Failed to load results for realization {realization}, failed with: {err}",
+        )
+
+    final_result = parameters_result
+    if response_result.status != LoadStatus.LOAD_SUCCESSFUL:
+        final_result = response_result
+        ensemble.set_failure(
+            realization, RealizationStorageState.LOAD_FAILURE, final_result.message
+        )
+    elif ensemble.has_failure(realization):
+        ensemble.unset_failure(realization)
+
+    return final_result

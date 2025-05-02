@@ -15,7 +15,6 @@ import numpy as np
 from pandas import DataFrame
 
 from ert.analysis import AnalysisEvent, SmootherSnapshot, smoother_update
-from ert.callbacks import forward_model_ok
 from ert.config import (
     ErtConfig,
     Field,
@@ -23,9 +22,10 @@ from ert.config import (
 )
 from ert.data import MeasuredData
 from ert.data._measured_data import ObservationError, ResponseError
-from ert.load_status import LoadResult, LoadStatus
 
 from .plugins import ErtPluginContext
+from .storage.load_status import LoadResult, LoadStatus
+from .storage.local_ensemble import forward_model_ok
 
 _logger = logging.getLogger(__name__)
 
