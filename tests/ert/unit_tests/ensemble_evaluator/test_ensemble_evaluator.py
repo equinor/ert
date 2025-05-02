@@ -604,7 +604,7 @@ def test_overspent_cpu_is_logged(
             cpu_seconds=cpu_seconds,
         ),
     )
-    if duration > 0 and cpu_seconds / duration > num_cpu * 1.05:
+    if duration > 30 and cpu_seconds / duration > num_cpu * 1.05:
         assert "Misconfigured NUM_CPU" in message
     else:
         assert "NUM_CPU" not in message
