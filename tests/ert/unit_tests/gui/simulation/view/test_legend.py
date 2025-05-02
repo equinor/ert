@@ -69,3 +69,20 @@ def test_progress_state_width_correct(qtbot, status: dict[str, int]):
         assert progress_marker
         count = status.get(state, 0)
         assert progress_marker.width() == pytest.approx(base_width * count)
+
+
+def test_progress_state_color_order(qtbot):
+    progress_widget = ProgressWidget()
+    qtbot.addWidget(progress_widget)
+    expected_color_order = [
+        "Finished",
+        "Failed",
+        "Running",
+        "Pending",
+        "Waiting",
+        "Unknown",
+    ]
+
+    for i in range(len(expected_color_order)):
+        item = progress_widget._horizontal_layout.itemAt(i).widget()
+        assert isinstance(item, QLabel) and expected_color_order[i] in item.objectName()
