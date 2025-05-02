@@ -175,7 +175,7 @@ class SchemaItem:
 
                 assert isinstance(path, str)
                 if val_type == SchemaItemType.EXISTING_PATH_INLINE:
-                    return [ContextString(path, token, keyword), read_file(path)]
+                    return [ContextString(path, token, keyword), read_file(path, token)]
                 else:
                     return ContextString(path, token, keyword)
             case SchemaItemType.EXECUTABLE:

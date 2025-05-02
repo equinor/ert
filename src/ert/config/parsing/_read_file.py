@@ -1,15 +1,16 @@
 import os
 
 from .config_errors import ConfigValidationError, ErrorInfo
+from .file_context_token import FileContextToken
 
 
-def read_file(file: str) -> str:
+def read_file(file: str, token: FileContextToken | None = None) -> str:
     file = os.path.normpath(os.path.abspath(file))
     try:
         with open(file, encoding="utf-8") as f:
             return f.read()
     except OSError as err:
-        raise ConfigValidationError.with_context(str(err), file) from err
+        raise ConfigValidationError.with_context(str(err), token or file) from err
     except UnicodeDecodeError as e:
         error_words = str(e).split(" ")
         hex_str = error_words[error_words.index("byte") + 1]
