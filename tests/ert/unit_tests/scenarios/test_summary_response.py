@@ -13,11 +13,7 @@ from ert.analysis import ErtAnalysisError, smoother_update
 from ert.config import ErtConfig, ESSettings, ObservationSettings
 from ert.data import MeasuredData
 from ert.enkf_main import sample_prior
-<<<<<<< HEAD
 from ert.storage.local_ensemble import load_parameters_and_responses_from_runpath
-=======
-from ert.libres_facade import load_from_run_path
->>>>>>> d60845367 (Move load_from_run_path out of LibresFacade class)
 
 
 @pytest.fixture

@@ -277,7 +277,6 @@ class ErtMainWindow(QMainWindow):
             self.ert_config,
             self.notifier,
             self.config_file,
-            self.facade.get_ensemble_size(),
         )
         experiment_panel.experiment_started.connect(
             lambda _: self.results_button.setChecked(True)

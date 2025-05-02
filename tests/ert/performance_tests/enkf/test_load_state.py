@@ -1,5 +1,4 @@
 from ert.config import ErtConfig
-from ert.libres_facade import load_from_run_path
 from ert.storage import open_storage
 from ert.storage.local_ensemble import load_parameters_and_responses_from_runpath
 

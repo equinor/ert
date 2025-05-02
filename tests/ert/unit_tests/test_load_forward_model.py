@@ -10,7 +10,7 @@ from resdata.summary import Summary
 
 from ert.config import ErtConfig
 from ert.enkf_main import create_run_path
-from ert.libres_facade import LibresFacade, load_from_run_path
+from ert.libres_facade import LibresFacade
 from ert.storage import open_storage
 from ert.storage.local_ensemble import load_parameters_and_responses_from_runpath
 
@@ -152,11 +152,7 @@ def test_load_forward_model_summary(
         runpaths=run_paths(ert_config),
     )
     with caplog.at_level(logging.ERROR):
-<<<<<<< HEAD
         loaded = load_parameters_and_responses_from_runpath(
-=======
-        loaded = load_from_run_path(
->>>>>>> d60845367 (Move load_from_run_path out of LibresFacade class)
             ert_config.runpath_config.runpath_format_string, prior_ensemble, [0]
         )
     expected_loaded, expected_log_message = expected
@@ -182,11 +178,7 @@ def test_load_forward_model_gen_data(setup_case):
     with open(run_path / "response_0.out_active", "w", encoding="utf-8") as fout:
         fout.write("\n".join(["1", "0", "1"]))
 
-<<<<<<< HEAD
     load_parameters_and_responses_from_runpath(str(run_path), prior_ensemble, [0])
-=======
-    load_from_run_path(str(run_path), prior_ensemble, [0])
->>>>>>> d60845367 (Move load_from_run_path out of LibresFacade class)
     df = prior_ensemble.load_responses("gen_data", (0,))
     filter_cond = pl.col("report_step").eq(0), pl.col("values").is_not_nan()
     assert df.filter(filter_cond)["values"].to_list() == [1.0, 3.0]
@@ -207,11 +199,7 @@ def test_single_valued_gen_data_with_active_info_is_loaded(setup_case):
     with open(run_path / "response_0.out_active", "w", encoding="utf-8") as fout:
         fout.write("\n".join(["1"]))
 
-<<<<<<< HEAD
     load_parameters_and_responses_from_runpath(str(run_path), prior_ensemble, [0])
-=======
-    load_from_run_path(str(run_path), prior_ensemble, [0])
->>>>>>> d60845367 (Move load_from_run_path out of LibresFacade class)
     df = prior_ensemble.load_responses("RESPONSE", (0,))
     assert df["values"].to_list() == [1.0]
 
@@ -231,11 +219,7 @@ def test_that_all_deactivated_values_are_loaded(setup_case):
     with open(run_path / "response_0.out_active", "w", encoding="utf-8") as fout:
         fout.write("\n".join(["0"]))
 
-<<<<<<< HEAD
     load_parameters_and_responses_from_runpath(str(run_path), prior_ensemble, [0])
-=======
-    load_from_run_path(str(run_path), prior_ensemble, [0])
->>>>>>> d60845367 (Move load_from_run_path out of LibresFacade class)
     response = prior_ensemble.load_responses("RESPONSE", (0,))
     assert np.isnan(response[0]["values"].to_list())
     assert len(response) == 1
@@ -277,11 +261,7 @@ def test_loading_gen_data_without_restart(storage, run_paths, run_args):
     with open(run_path / "response.out_active", "w", encoding="utf-8") as fout:
         fout.write("\n".join(["1", "0", "1"]))
 
-<<<<<<< HEAD
     load_parameters_and_responses_from_runpath(str(run_path), prior_ensemble, [0])
-=======
-    load_from_run_path(str(run_path), prior_ensemble, [0])
->>>>>>> d60845367 (Move load_from_run_path out of LibresFacade class)
     df = prior_ensemble.load_responses("RESPONSE", (0,))
     df_no_nans = df.filter(pl.col("values").is_not_nan())
     assert df_no_nans["values"].to_list() == [1.0, 3.0]
@@ -298,18 +278,14 @@ def test_that_the_states_are_set_correctly():
     storage = open_storage(facade.enspath, mode="w")
     experiment = storage.get_experiment_by_name("ensemble-experiment")
     ensemble = experiment.get_ensemble_by_name("default_0")
-    ensemble_size = facade.get_ensemble_size()
+    ensemble_size = ensemble.ensemble_size
 
     new_ensemble = storage.create_ensemble(
         experiment=ensemble.experiment, ensemble_size=ensemble_size
     )
-<<<<<<< HEAD
     load_parameters_and_responses_from_runpath(
         facade.run_path, new_ensemble, list(range(ensemble_size))
     )
-=======
-    load_from_run_path(facade.run_path, new_ensemble, list(range(ensemble_size)))
->>>>>>> d60845367 (Move load_from_run_path out of LibresFacade class)
     assert not new_ensemble.is_initalized()
     assert new_ensemble.has_data()
 
@@ -354,11 +330,7 @@ def test_loading_from_any_available_iter(storage, run_paths, run_args, itr):
             f"simulations/realization-<IENS>/iter-{itr if itr is not None else 0}"
         ).resolve()
     )
-<<<<<<< HEAD
     load_parameters_and_responses_from_runpath(run_path_format, prior_ensemble, [0])
-=======
-    load_from_run_path(run_path_format, prior_ensemble, [0])
->>>>>>> d60845367 (Move load_from_run_path out of LibresFacade class)
     df = prior_ensemble.load_responses("RESPONSE", (0,))
     df_no_nans = df.filter(pl.col("values").is_not_nan())
     assert df_no_nans["values"].to_list() == [1.0, 3.0]
