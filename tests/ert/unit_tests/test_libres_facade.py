@@ -20,7 +20,7 @@ def facade(snake_oil_case):
 
 @pytest.fixture
 def storage(facade):
-    with open_storage(facade.enspath, mode="w") as storage:
+    with open_storage("storage/snake_oil/ensemble", mode="w") as storage:
         yield storage
 
 

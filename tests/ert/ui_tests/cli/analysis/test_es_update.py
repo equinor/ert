@@ -9,7 +9,6 @@ import pytest
 from scipy.ndimage import gaussian_filter
 from xtgeo import RegularSurface, surface_from_file
 
-from ert import LibresFacade
 from ert.analysis._update_commons import _all_parameters
 from ert.config import ErtConfig, GenKwConfig
 from ert.config.gen_kw_config import TransformFunctionDefinition
@@ -56,8 +55,7 @@ def test_that_posterior_has_lower_variance_than_prior():
         "--experiment-name",
         "es-test",
     )
-    facade = LibresFacade.from_config_file("poly.ert")
-    with open_storage(facade.enspath) as storage:
+    with open_storage("storage") as storage:
         experiment = storage.get_experiment_by_name("es-test")
         prior_ensemble = experiment.get_ensemble_by_name("iter-0")
         df_default = prior_ensemble.load_all_gen_kw_data()
