@@ -478,12 +478,15 @@ def _read_summary(
             # dates.append(start_date + unit.make_delta(float(vals[date_index])))
             last_params = None
 
-    with open(summary, mode) as fp:
-        for entry in resfo.lazy_read(fp, assumed_format):
-            kw = entry.read_keyword()
-            if kw == "PARAMS  ":
-                last_params = entry
-            if kw == "SEQHDR  ":
-                read_params()
-        read_params()
+    try:
+        with open(summary, mode) as fp:
+            for entry in resfo.lazy_read(fp, assumed_format):
+                kw = entry.read_keyword()
+                if kw == "PARAMS  ":
+                    last_params = entry
+                if kw == "SEQHDR  ":
+                    read_params()
+            read_params()
+    except ValueError as e:
+        raise InvalidResponseFile(f"Unable to read summary data from {summary}") from e
     return np.array(values, dtype=np.float32).T, dates

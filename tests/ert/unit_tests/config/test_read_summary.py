@@ -14,6 +14,8 @@ from ert.summary_key_type import SummaryKeyType
 
 from .summary_generator import (
     inter_region_summary_variables,
+    simple_smspec,
+    simple_unsmry,
     summaries,
     summary_variables,
 )
@@ -339,6 +341,18 @@ def test_that_incorrect_summary_files_raises_informative_errors(
 
     with pytest.raises(InvalidResponseFile, match=error_message):
         read_summary(str(tmp_path / "test"), ["*"])
+
+
+def test_truncated_summary_file_raises_invalidresponsefile(tmp_path_factory):
+    tmp_path = tmp_path_factory.mktemp("summary")
+    simple_unsmry().to_file(tmp_path / "TEST.UNSMRY")
+    simple_smspec().to_file(tmp_path / "TEST.SMSPEC")
+
+    with open(tmp_path / "TEST.UNSMRY", "ba") as unsmry_file:
+        unsmry_file.truncate(100)  # 112 bytes is the un-truncated size
+
+    with pytest.raises(InvalidResponseFile, match="Unable to read summary data from"):
+        read_summary(str(tmp_path / "TEST"), ["*"])
 
 
 def test_mess_values_in_summary_files_raises_informative_errors(tmp_path):
