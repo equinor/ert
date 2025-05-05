@@ -41,21 +41,21 @@ def workflow_job_from_file(config_file: str, name: str | None = None) -> _Workfl
 
     content_dict = workflow_job_parser(config_file)
     arg_types_list = _WorkflowJob._make_arg_types_list(content_dict)
-    min_args = content_dict.get("MIN_ARG")  # type: ignore
-    max_args = content_dict.get("MAX_ARG")  # type: ignore
-    script = str(content_dict.get("SCRIPT")) if "SCRIPT" in content_dict else None  # type: ignore
+    min_args = content_dict.get("MIN_ARG")
+    max_args = content_dict.get("MAX_ARG")
+    script = str(content_dict.get("SCRIPT")) if "SCRIPT" in content_dict else None
     internal = (
-        bool(content_dict.get("INTERNAL")) if "INTERNAL" in content_dict else None  # type: ignore
+        bool(content_dict.get("INTERNAL")) if "INTERNAL" in content_dict else None
     )
     if internal is False:
         ConfigWarning.deprecation_warn(
             "INTERNAL FALSE has no effect and can be safely removed",
-            content_dict["INTERNAL"],  # type: ignore
+            content_dict["INTERNAL"],
         )
     if script and not internal:
         ConfigWarning.deprecation_warn(
             "SCRIPT has no effect and can be safely removed",
-            content_dict["SCRIPT"],  # type: ignore
+            content_dict["SCRIPT"],
         )
     if script is not None and internal:
         msg = (
@@ -63,7 +63,7 @@ def workflow_job_from_file(config_file: str, name: str | None = None) -> _Workfl
             f"for {name}, loading script {script}"
         )
         logger.warning(msg)
-        ConfigWarning.deprecation_warn(msg, content_dict["SCRIPT"])  # type: ignore
+        ConfigWarning.deprecation_warn(msg, content_dict["SCRIPT"])
         try:
             ert_script = ErtScript.loadScriptFromFile(script)
         # Bare Exception here as we have no control
@@ -76,7 +76,7 @@ def workflow_job_from_file(config_file: str, name: str | None = None) -> _Workfl
             min_args=min_args,
             max_args=max_args,
             arg_types=arg_types_list,
-            stop_on_fail=bool(content_dict.get("STOP_ON_FAIL")),  # type: ignore
+            stop_on_fail=bool(content_dict.get("STOP_ON_FAIL")),
         )
     else:
         return ExecutableWorkflow(
@@ -84,8 +84,8 @@ def workflow_job_from_file(config_file: str, name: str | None = None) -> _Workfl
             min_args=min_args,
             max_args=max_args,
             arg_types=arg_types_list,
-            executable=content_dict.get("EXECUTABLE"),  # type: ignore
-            stop_on_fail=bool(content_dict.get("STOP_ON_FAIL")),  # type: ignore
+            executable=content_dict.get("EXECUTABLE"),
+            stop_on_fail=bool(content_dict.get("STOP_ON_FAIL")),
         )
 
 

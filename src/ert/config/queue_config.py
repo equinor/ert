@@ -89,9 +89,9 @@ class QueueOptions(
 
     def add_global_queue_options(self, config_dict: ConfigDict) -> None:
         for name, generic_option in QueueOptions.model_fields.items():
-            if (
-                generic_value := config_dict.get(name.upper(), None)  # type: ignore
-            ) and self.__dict__[name] == generic_option.default:
+            if (generic_value := config_dict.get(name.upper(), None)) and self.__dict__[
+                name
+            ] == generic_option.default:
                 try:
                     setattr(self, name, generic_value)
                 except pydantic.ValidationError as exception:
