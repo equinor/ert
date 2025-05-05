@@ -10,7 +10,7 @@ from scipy.ndimage import gaussian_filter
 from xtgeo import RegularSurface, surface_from_file
 
 from ert import LibresFacade
-from ert.analysis._es_update import _all_parameters
+from ert.analysis._update_commons import _all_parameters
 from ert.config import ErtConfig, GenKwConfig
 from ert.config.gen_kw_config import TransformFunctionDefinition
 from ert.mode_definitions import ENSEMBLE_SMOOTHER_MODE

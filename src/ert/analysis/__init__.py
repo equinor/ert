@@ -1,7 +1,6 @@
-from ._es_update import (
-    ErtAnalysisError,
-    smoother_update,
-)
+from ._enif_update import enif_update
+from ._es_update import smoother_update
+from ._update_commons import ErtAnalysisError
 from .event import (
     AnalysisErrorEvent,
     AnalysisEvent,
@@ -23,5 +22,6 @@ __all__ = [
     "ErtAnalysisError",
     "ObservationStatus",
     "SmootherSnapshot",
+    "enif_update",
     "smoother_update",
 ]

@@ -21,6 +21,189 @@ from ert.storage import open_storage
 from .run_cli import run_cli
 
 
+def test_field_param_update_using_heat_equation_enif(heat_equation_storage_enif):
+    config = ErtConfig.from_file("config.ert")
+    with open_storage(config.ens_path, mode="w") as storage:
+        experiment = storage.get_experiment_by_name("enif")
+        [prior, posterior] = experiment.ensembles
+
+        prior_result = prior.load_parameters("COND")["values"]
+
+        param_config = config.ensemble_config.parameter_configs["COND"]
+        assert len(prior_result.x) == param_config.nx
+        assert len(prior_result.y) == param_config.ny
+        assert len(prior_result.z) == param_config.nz
+
+        posterior_result = posterior.load_parameters("COND")["values"]
+        prior_covariance = np.cov(
+            prior_result.values.reshape(
+                prior.ensemble_size, param_config.nx * param_config.ny * param_config.nz
+            ),
+            rowvar=False,
+        )
+        posterior_covariance = np.cov(
+            posterior_result.values.reshape(
+                posterior.ensemble_size,
+                param_config.nx * param_config.ny * param_config.nz,
+            ),
+            rowvar=False,
+        )
+        # Check that generalized variance is reduced by update step.
+        assert np.trace(prior_covariance) > np.trace(posterior_covariance)
+
+    # Check that fields in the runpath are different between iterations
+    cond_iter0 = resfo.read("simulations/realization-0/iter-0/cond.bgrdecl")[0][1]
+    cond_iter1 = resfo.read("simulations/realization-0/iter-1/cond.bgrdecl")[0][1]
+    assert (cond_iter0 != cond_iter1).all()
+
+
+def _compare_ensemble_params(
+    actual: pl.DataFrame,
+    reference_path: Path,
+    index_columns: list[str],
+    outlier_threshold: float = 1e-6,
+    outlier_percentage_max: float = 0.05,
+    outlier_deviation_max: float = 1e-1,
+    update_snapshot: bool = False,
+) -> pl.DataFrame:
+    if not reference_path.exists():
+        if update_snapshot:
+            actual.write_csv(reference_path)
+            raise AssertionError(f"Snapshot @ {reference_path} changed")
+        else:
+            raise AssertionError(
+                f"No snapshot @ {reference_path} found. "
+                "Run with --snapshot-update to create a new snapshot."
+            )
+
+    expected = pl.read_csv(reference_path)
+    if actual.shape != expected.shape:
+        raise ValueError("DataFrames must have the same shape")
+
+    actual_numbers = actual.drop(index_columns)
+    expected_numbers = expected.drop(index_columns)
+    columns = actual_numbers.columns
+
+    diff_df = actual_numbers - expected_numbers
+
+    # Truncate small differences to zero
+    truncated_df = diff_df.select(
+        [
+            (
+                pl.col(c).map_elements(
+                    lambda x: 0.0
+                    if abs(x) < outlier_threshold
+                    else (abs(x) - outlier_threshold)
+                )
+            ).alias(c)
+            for c in columns
+        ]
+    )
+
+    # Compute per-row percentage of non-zero (i.e., outlier) values
+    outlier_percentage = truncated_df.select(
+        [
+            pl.concat_list(columns)
+            .map_elements(lambda row: sum(1 for x in row if x != 0.0) / len(row))
+            .alias("outlier_percentage")
+        ]
+    )["outlier_percentage"]
+
+    max_deviance = truncated_df.select(
+        [
+            pl.concat_list(columns)
+            .map_elements(lambda row: max(x for x in row))
+            .alias("max_deviance")
+        ]
+    )["max_deviance"]
+
+    unacceptable_n_outliers = (outlier_percentage > outlier_percentage_max).any()
+    unacceptable_outlier_deviation = (max_deviance > outlier_deviation_max).any()
+
+    _schema = expected.schema
+
+    def round_and_cast_(df: pl.DataFrame) -> pl.DataFrame:
+        return df.cast(_schema).with_columns(
+            pl.col(pl.Float64).round(int(1 / outlier_threshold))
+        )
+
+    if update_snapshot and not round_and_cast_(expected).equals(
+        round_and_cast_(expected)
+    ):
+        actual.write_csv(reference_path)
+        raise AssertionError(f"Snapshot @ {reference_path} changed!")
+
+    if unacceptable_n_outliers or unacceptable_outlier_deviation:
+        summary_table = actual.with_columns(outlier_percentage, max_deviance)
+        realizations = sorted(map(int, set(actual.columns) - set(index_columns)))
+
+        summary_str = "\n".join(
+            [
+                "".join(
+                    [f"{i}: ".rjust(6)]
+                    + ["x" if row[str(r)] > 0 else " " for r in realizations]
+                    + [f"  outliers: {100 * row['outlier_percentage']:.1f}%, ".rjust(4)]
+                    + [f"max deviance={row['max_deviance']:.2e}"]
+                )
+                for i, row in enumerate(
+                    summary_table.filter(
+                        (outlier_percentage > outlier_percentage_max)
+                        | (max_deviance > outlier_deviation_max)
+                    ).to_dicts()
+                )
+            ]
+        )
+
+        raise AssertionError(
+            f"Changes in snapshot detected.\n"
+            f"Max row-wise outlier percentage: {max(outlier_percentage) * 100}%\n"
+            f"Max param deviation from reference: {max(max_deviance)}\n"
+            f":\n{summary_str}"
+        )
+
+
+def test_field_param_update_using_heat_equation_enif_snapshot(
+    heat_equation_storage_enif, snapshot, request
+):
+    config = ErtConfig.from_file("config.ert")
+    with open_storage(config.ens_path, mode="w") as storage:
+        experiment = storage.get_experiment_by_name("enif")
+        prior = experiment.get_ensemble_by_name("iter-0")
+        posterior = experiment.get_ensemble_by_name("iter-1")
+
+        prior_result = prior.load_parameters("COND")["values"]
+
+        param_config = config.ensemble_config.parameter_configs["COND"]
+        assert len(prior_result.x) == param_config.nx
+        assert len(prior_result.y) == param_config.ny
+        assert len(prior_result.z) == param_config.nz
+
+        data = []
+        for i, ens in enumerate([prior, posterior]):
+            field_data = ens.load_parameters("COND")
+            field_df = pl.from_pandas(
+                field_data.to_dataframe().reset_index()
+            ).with_columns(pl.lit(i).alias("iteration"))
+            field_df = field_df.with_columns(pl.col(pl.Float64).cast(pl.Float32))
+            data.append(
+                field_df.select("iteration", "realizations", "x", "y", "z", "values")
+            )
+
+        result = pl.concat(data)
+        result = result.sort(["iteration", "realizations", "x", "y", "z"])
+        result = result.pivot(on=["realizations"], values="values", sort_columns=True)
+
+        _compare_ensemble_params(
+            actual=result,
+            reference_path=snapshot.snapshot_dir / "enif_heat_snapshot.csv",
+            outlier_threshold=0.01,
+            index_columns=result.columns[:4],
+            outlier_percentage_max=0.03,
+            outlier_deviation_max=0.1,
+            update_snapshot=bool(request.config.getoption("--snapshot-update")),
+        )
+
+
 def test_field_param_update_using_heat_equation(heat_equation_storage):
     config = ErtConfig.from_file("config.ert")
     with open_storage(config.ens_path, mode="w") as storage:

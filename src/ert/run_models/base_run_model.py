@@ -897,7 +897,10 @@ class UpdateRunModel(BaseRunModel):
         )
 
     def update(
-        self, prior: Ensemble, posterior_name: str, weight: float = 1.0
+        self,
+        prior: Ensemble,
+        posterior_name: str,
+        weight: float = 1.0,
     ) -> Ensemble:
         self.validate_successful_realizations_count()
         self.send_event(

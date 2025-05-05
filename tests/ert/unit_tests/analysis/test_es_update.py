@@ -13,7 +13,7 @@ from ert.analysis import (
     ObservationStatus,
     smoother_update,
 )
-from ert.analysis._es_update import (
+from ert.analysis._update_commons import (
     _compute_observation_statuses,
     _load_param_ensemble_array,
     _OutlierColumns,

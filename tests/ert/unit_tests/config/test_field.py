@@ -1,6 +1,8 @@
 import os
 from pathlib import Path
 
+import networkx as nx
+import numpy as np
 import pytest
 import xtgeo
 
@@ -8,7 +10,7 @@ from ert.config import ConfigValidationError, ConfigWarning, Field
 from ert.config.field import TRANSFORM_FUNCTIONS
 from ert.config.parsing import init_user_config_schema, parse_contents
 from ert.enkf_main import sample_prior
-from ert.field_utils import Shape, read_field
+from ert.field_utils import FieldFileFormat, Shape, read_field
 
 
 def test_write_to_runpath_produces_the_transformed_field_in_storage(
@@ -54,6 +56,120 @@ def test_write_to_runpath_produces_the_transformed_field_in_storage(
                 Path(f"export/with/path/{real}"), real, prior_ensemble
             )
         assert not os.path.isfile(f"export/with/path/{real}/permx.grdecl")
+
+
+def create_dummy_field(nx, ny, nz, mask):
+    np.save(Path("grid_mask.npy"), mask)
+
+    return Field(
+        name="some_name",
+        forward_init=True,
+        update=True,
+        nx=nx,
+        ny=ny,
+        nz=nz,
+        file_format=FieldFileFormat.ROFF,
+        output_transformation=None,
+        input_transformation=None,
+        truncation_min=None,
+        truncation_max=None,
+        forward_init_file="no_nees",
+        output_file="no_nees",
+        grid_file="no_nees",
+        mask_file=Path("grid_mask.npy"),
+    )
+
+
+def _n_lattice_edges(nx, ny, nz):
+    return ((nx - 1) * ny * nz) + (nx * (ny - 1) * nz) + (nx * ny * (nz - 1))
+
+
+def test_field_grid_mask_correspondence_all_false(monkeypatch, tmp_path):
+    monkeypatch.chdir(tmp_path)
+
+    nx = 3
+    ny = 3
+    nz = 3
+    mask = np.zeros((nx, ny, nz), dtype=bool)
+    mask[:, :, :] = False
+
+    field_config = create_dummy_field(nx=nx, ny=ny, nz=nz, mask=mask)
+    graph = field_config.load_parameter_graph()
+
+    # Expect nx*ny*nz lattice graph
+    assert graph.number_of_nodes() == nx * ny * nz
+    assert graph.number_of_edges() == _n_lattice_edges(nx, ny, nz)
+
+
+def test_field_grid_mask_correspondence_all_true(monkeypatch, tmp_path):
+    monkeypatch.chdir(tmp_path)
+    mask = np.ones((3, 3, 3), dtype=bool)
+    field_config = create_dummy_field(nx=3, ny=3, nz=3, mask=mask)
+    assert nx.node_link_data(field_config.load_parameter_graph())["links"] == []
+
+
+def test_field_grid_mask_correspondence_one_false(monkeypatch, tmp_path):
+    monkeypatch.chdir(tmp_path)
+    mask = np.ones((3, 3, 3), dtype=bool)
+    mask[1, 1, 1] = False
+    field_config = create_dummy_field(nx=3, ny=3, nz=3, mask=mask)
+    assert nx.node_link_data(field_config.load_parameter_graph())["links"] == []
+
+
+def test_field_grid_mask_correspondence_one_true(monkeypatch, tmp_path):
+    monkeypatch.chdir(tmp_path)
+
+    nx = 3
+    ny = 3
+    nz = 3
+
+    mask = np.zeros((nx, ny, nz), dtype=bool)
+    mask[1, 1, 1] = True
+    field_config = create_dummy_field(nx=nx, ny=ny, nz=nz, mask=mask)
+    graph = field_config.load_parameter_graph()
+
+    # Expect lattice but minus 1 node and 6 links
+    assert graph.number_of_nodes() == nx * ny * nz - 1
+    assert graph.number_of_edges() == _n_lattice_edges(nx, ny, nz) - 6
+
+
+def test_field_grid_mask_correspondence_slice_x_true(monkeypatch, tmp_path):
+    monkeypatch.chdir(tmp_path)
+    mask = np.zeros((3, 3, 3), dtype=bool)
+    mask[1, :, :] = True
+    field_config = create_dummy_field(nx=3, ny=3, nz=3, mask=mask)
+    graph = field_config.load_parameter_graph()
+    assert nx.number_connected_components(graph) == 2
+    for component in nx.connected_components(graph):
+        subgraph = graph.subgraph(component)
+        assert subgraph.number_of_nodes() == 3 * 3
+        assert subgraph.number_of_edges() == _n_lattice_edges(3, 3, 1)
+
+
+def test_field_grid_mask_correspondence_slice_y_true(monkeypatch, tmp_path):
+    monkeypatch.chdir(tmp_path)
+    mask = np.zeros((3, 3, 3), dtype=bool)
+    mask[:, 1, :] = True
+    field_config = create_dummy_field(nx=3, ny=3, nz=3, mask=mask)
+    graph = field_config.load_parameter_graph()
+    assert nx.number_connected_components(graph) == 2
+    for component in nx.connected_components(graph):
+        subgraph = graph.subgraph(component)
+        assert subgraph.number_of_nodes() == 3 * 3
+        assert subgraph.number_of_edges() == _n_lattice_edges(3, 3, 1)
+
+
+def test_field_grid_mask_correspondence_slice_z_true(monkeypatch, tmp_path):
+    monkeypatch.chdir(tmp_path)
+    mask = np.zeros((3, 3, 3), dtype=bool)
+    mask[:, :, 1] = True
+    field_config = create_dummy_field(nx=3, ny=3, nz=3, mask=mask)
+    graph = field_config.load_parameter_graph()
+    assert nx.number_connected_components(graph) == 2
+    for component in nx.connected_components(graph):
+        subgraph = graph.subgraph(component)
+        assert subgraph.number_of_nodes() == 3 * 3
+        assert subgraph.number_of_edges() == _n_lattice_edges(3, 3, 1)
 
 
 @pytest.fixture

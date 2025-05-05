@@ -24,7 +24,7 @@ from ert.__main__ import ert_parser
 from ert.cli.main import run_cli
 from ert.config import ErtConfig
 from ert.ensemble_evaluator.config import EvaluatorServerConfig
-from ert.mode_definitions import ENSEMBLE_EXPERIMENT_MODE, ES_MDA_MODE
+from ert.mode_definitions import ENIF_MODE, ENSEMBLE_EXPERIMENT_MODE, ES_MDA_MODE
 from ert.storage import open_storage
 
 from .utils import SOURCE_DIR
@@ -157,6 +157,11 @@ def snake_oil_case_storage(copy_snake_oil_case_storage):
 
 @pytest.fixture()
 def heat_equation_storage(copy_heat_equation_storage):
+    return ErtConfig.from_file("config.ert")
+
+
+@pytest.fixture()
+def heat_equation_storage_enif(copy_heat_equation_storage_enif):
     return ErtConfig.from_file("config.ert")
 
 
@@ -300,6 +305,13 @@ def copy_heat_equation_storage(_shared_heat_equation, tmp_path, monkeypatch):
     monkeypatch.chdir("heat_equation")
 
 
+@pytest.fixture
+def copy_heat_equation_storage_enif(_shared_heat_equation_enif, tmp_path, monkeypatch):
+    monkeypatch.chdir(tmp_path)
+    shutil.copytree(_shared_heat_equation_enif, "heat_equation_enif")
+    monkeypatch.chdir("heat_equation_enif")
+
+
 @pytest.fixture()
 def copy_minimum_case(copy_case):
     copy_case("simple_config")
@@ -392,6 +404,26 @@ def _run_heat_equation(source_root):
     run_cli(parsed)
 
 
+def _run_heat_equation_enif(source_root):
+    shutil.copytree(
+        os.path.join(source_root, "test-data", "ert", "heat_equation"), "test_data"
+    )
+    os.chdir("test_data")
+    with open("config.ert", "a", encoding="utf-8") as fh:
+        fh.write("QUEUE_OPTION LOCAL MAX_RUNNING 12\n")
+    parser = ArgumentParser(prog="test_main")
+    parsed = ert_parser(
+        parser,
+        [
+            ENIF_MODE,
+            "--disable-monitoring",
+            "config.ert",
+        ],
+    )
+
+    run_cli(parsed)
+
+
 @pytest.fixture
 def _shared_snake_oil_case(request, monkeypatch, source_root):
     """This fixture will run the snake_oil case to populate storage,
@@ -422,6 +454,24 @@ def _shared_heat_equation(request, monkeypatch, source_root):
     monkeypatch.chdir(snake_path)
     if not os.listdir(snake_path):
         _run_heat_equation(source_root)
+    else:
+        monkeypatch.chdir("test_data")
+
+    yield os.getcwd()
+
+
+@pytest.fixture
+def _shared_heat_equation_enif(request, monkeypatch, source_root):
+    """This fixture will run the heat_equation case to populate storage,
+    this is quite slow, but the results will be cached. If something comes
+    out of sync, clear the cache and start again.
+    """
+    snake_path = request.config.cache.mkdir(
+        "heat_equation_data_enif" + os.environ.get("PYTEST_XDIST_WORKER", "")
+    )
+    monkeypatch.chdir(snake_path)
+    if not os.listdir(snake_path):
+        _run_heat_equation_enif(source_root)
     else:
         monkeypatch.chdir("test_data")
 

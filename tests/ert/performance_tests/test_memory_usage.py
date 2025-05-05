@@ -13,7 +13,7 @@ import py
 import pytest
 import xtgeo
 
-from ert.analysis import smoother_update
+from ert.analysis import enif_update, smoother_update
 from ert.config import ErtConfig, ESSettings, ObservationSettings
 from ert.enkf_main import sample_prior
 from ert.mode_definitions import ENSEMBLE_SMOOTHER_MODE
@@ -71,6 +71,32 @@ def test_memory_smoothing(poly_template):
 
     stats = memray._memray.compute_statistics(str(poly_template / "memray.bin"))
     assert stats.peak_memory_allocated < 1024**2 * 300
+
+
+def test_memory_enif_update(poly_template):
+    ert_config = ErtConfig.from_file("poly.ert")
+    fill_storage_with_data(poly_template, ert_config)
+    with open_storage(poly_template / "ensembles", mode="w") as storage:
+        experiment = storage.get_experiment_by_name("test-experiment")
+        prior_ens = experiment.get_ensemble_by_name("prior")
+        posterior_ens = storage.create_ensemble(
+            prior_ens.experiment_id,
+            ensemble_size=prior_ens.ensemble_size,
+            iteration=1,
+            name="posterior",
+            prior_ensemble=prior_ens,
+        )
+        with memray.Tracker(poly_template / "memray.bin"):
+            enif_update(
+                prior_ens,
+                posterior_ens,
+                list(experiment.observation_keys),
+                list(ert_config.ensemble_config.parameters),
+                1234567,
+            )
+
+    stats = memray._memray.compute_statistics(str(poly_template / "memray.bin"))
+    assert stats.peak_memory_allocated < 1024**2 * 1000  # Uses around 850mb
 
 
 def fill_storage_with_data(poly_template: Path, ert_config: ErtConfig) -> None:
