@@ -86,7 +86,10 @@ def find_available_socket(
         except PortAlreadyInUseException:
             continue
 
-    raise NoPortsInRangeException(f"No available ports in range {port_range}.")
+    raise NoPortsInRangeException(
+        f"No available ports in range {port_range}. "
+        "Perhaps you are running too many instances of Ert."
+    )
 
 
 def _bind_socket(host: str, port: int) -> socket.socket:
