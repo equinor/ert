@@ -72,10 +72,9 @@ def test_load_forward_model(snake_oil_default_storage):
     """
     Checking that we are able to load from forward model
     """
-    facade = LibresFacade.from_config_file("snake_oil.ert")
     realisation_number = 0
 
-    with open_storage(facade.enspath, mode="w") as storage:
+    with open_storage("storage/snake_oil/ensemble", mode="w") as storage:
         # 'load_from_forward_model' requires the ensemble to be writeable...
         experiment = storage.get_experiment_by_name("ensemble-experiment")
         default = experiment.get_ensemble_by_name("default_0")
@@ -275,7 +274,7 @@ def test_that_the_states_are_set_correctly():
     we expect only summary and gen_data to be copied and not parameters.
     """
     facade = LibresFacade.from_config_file("snake_oil.ert")
-    storage = open_storage(facade.enspath, mode="w")
+    storage = open_storage("storage/snake_oil/ensemble", mode="w")
     experiment = storage.get_experiment_by_name("ensemble-experiment")
     ensemble = experiment.get_ensemble_by_name("default_0")
     ensemble_size = facade.get_ensemble_size()
