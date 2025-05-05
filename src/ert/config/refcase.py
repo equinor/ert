@@ -35,11 +35,11 @@ class Refcase:
     @classmethod
     def from_config_dict(cls, config_dict: ConfigDict) -> Self | None:
         data = None
-        refcase_file_path = config_dict.get(ConfigKeys.REFCASE)  # type: ignore
+        refcase_file_path = config_dict.get(ConfigKeys.REFCASE)
         if refcase_file_path is not None:
             try:
                 start_date, refcase_keys, time_map, data = read_summary(
-                    refcase_file_path, ["*"]
+                    str(refcase_file_path), ["*"]
                 )
             except Exception as err:
                 raise ConfigValidationError(f"Could not read refcase: {err}") from err

@@ -1,5 +1,6 @@
 import dataclasses
 import os
+from collections.abc import Iterable
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Self, cast
@@ -45,7 +46,8 @@ class GenDataConfig(ResponseConfig):
 
     @classmethod
     def from_config_dict(cls, config_dict: ConfigDict) -> Self:
-        gen_data_list = config_dict.get("GEN_DATA", [])  # type: ignore
+        gen_data_list = config_dict.get("GEN_DATA", [])
+        assert isinstance(gen_data_list, Iterable)
 
         keys = []
         input_files = []
