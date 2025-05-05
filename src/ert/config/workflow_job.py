@@ -94,7 +94,7 @@ class _WorkflowJob(BaseModel):
     min_args: int | None = None
     max_args: int | None = None
     arg_types: list[SchemaItemType] = field(default_factory=list)
-    stop_on_fail: bool | None = None  # If not None, overrides in-file specification
+    stop_on_fail: bool = False
 
     @staticmethod
     def _make_arg_types_list(content_dict: ConfigDict) -> list[SchemaItemType]:
