@@ -141,7 +141,6 @@ everest = [
     "ruamel.yaml",
     "fastapi",
     "decorator",
-    "resdata",
     "colorama",
     "ropt[pandas]>=0.20.1,<0.21",
     "ropt-dakota>=0.20,<0.21",
