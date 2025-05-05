@@ -13,6 +13,7 @@ from ert.config import (
     ObservationSettings,
 )
 from ert.mode_definitions import (
+    ENIF_MODE,
     ENSEMBLE_EXPERIMENT_MODE,
     ENSEMBLE_SMOOTHER_MODE,
     ES_MDA_MODE,
@@ -24,6 +25,7 @@ from ert.validation import ActiveRange
 
 from .base_run_model import BaseRunModel
 from .ensemble_experiment import EnsembleExperiment
+from .ensemble_information_filter import EnsembleInformationFilter
 from .ensemble_smoother import EnsembleSmoother
 from .evaluate_ensemble import EvaluateEnsemble
 from .manual_update import ManualUpdate
@@ -63,6 +65,10 @@ def create_model(
         return _setup_evaluate_ensemble(config, storage, args, status_queue)
     if args.mode == ENSEMBLE_SMOOTHER_MODE:
         return _setup_ensemble_smoother(
+            config, storage, args, update_settings, status_queue
+        )
+    if args.mode == ENIF_MODE:
+        return _setup_ensemble_information_filter(
             config, storage, args, update_settings, status_queue
         )
     if args.mode == ES_MDA_MODE:
@@ -205,6 +211,34 @@ def _setup_ensemble_smoother(
         )
 
     return EnsembleSmoother(
+        target_ensemble=args.target_ensemble,
+        experiment_name=getattr(args, "experiment_name", ""),
+        active_realizations=active_realizations,
+        minimum_required_realizations=config.analysis_config.minimum_required_realizations,
+        random_seed=config.random_seed,
+        config=config,
+        storage=storage,
+        queue_config=config.queue_config,
+        es_settings=config.analysis_config.es_settings,
+        update_settings=update_settings,
+        status_queue=status_queue,
+    )
+
+
+def _setup_ensemble_information_filter(
+    config: ErtConfig,
+    storage: Storage,
+    args: Namespace,
+    update_settings: ObservationSettings,
+    status_queue: SimpleQueue[StatusEvents],
+) -> EnsembleInformationFilter:
+    active_realizations = _get_active_realizations_list(args, config)
+    if len(active_realizations) < 2:
+        raise ConfigValidationError(
+            "Number of active realizations must be at least 2 for an update step"
+        )
+
+    return EnsembleInformationFilter(
         target_ensemble=args.target_ensemble,
         experiment_name=getattr(args, "experiment_name", ""),
         active_realizations=active_realizations,

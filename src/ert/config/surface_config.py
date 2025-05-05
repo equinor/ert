@@ -4,6 +4,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import TYPE_CHECKING, Self, cast
 
+import networkx as nx
 import numpy as np
 import xarray as xr
 import xtgeo
@@ -11,6 +12,7 @@ import xtgeo
 from ert.substitutions import substitute_runpath_name
 
 from ._str_to_bool import str_to_bool
+from .field import create_flattened_cube_graph
 from .parameter_config import ParameterConfig
 from .parsing import ConfigValidationError, ErrorInfo
 
@@ -165,3 +167,13 @@ class SurfaceConfig(ParameterConfig):
         ds = ensemble.load_parameters(self.name, realizations)
         ensemble_size = len(ds.realizations)
         return ds["values"].values.reshape(ensemble_size, -1).T
+
+    def load_parameter_graph(self) -> nx.Graph[int]:
+        """Graph created with nodes numbered from 0 to px*py
+        corresponds to the "vectorization" or flattening of
+        a 2D cube with shape (px,py) in the same way as
+        reshaping such a surface into a one-dimensional array.
+        The indexing scheme used to create the graph reflects
+        this flattening process"""
+
+        return create_flattened_cube_graph(px=self.ncol, py=self.nrow, pz=1)

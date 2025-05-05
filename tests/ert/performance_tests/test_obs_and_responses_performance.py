@@ -7,7 +7,7 @@ import numpy as np
 import polars as pl
 import pytest
 
-from ert.analysis import smoother_update
+from ert.analysis import enif_update, smoother_update
 from ert.config import (
     ESSettings,
     GenDataConfig,
@@ -531,6 +531,40 @@ def test_speed_performance_of_doing_es_update(setup_es_benchmark, benchmark):
             [gen_kw_name],
             ObservationSettings(),
             ESSettings(),
+        )
+
+    benchmark(run)
+
+
+def test_memory_performance_of_doing_enif_update(setup_es_benchmark, tmp_path):
+    _, prior, posterior, gen_kw_name, expected_performance = setup_es_benchmark
+    with memray.Tracker(tmp_path / "memray.bin"):
+        enif_update(
+            prior,
+            posterior,
+            prior.experiment.observation_keys,
+            [gen_kw_name],
+            12345,
+        )
+
+    stats = memray._memray.compute_statistics(str(tmp_path / "memray.bin"))
+    mem_usage_mb = stats.total_memory_allocated / (1024**2)
+    assert mem_usage_mb < expected_performance.memory_limit_mb
+
+
+def test_speed_performance_of_doing_enif_update(setup_es_benchmark, benchmark):
+    alias, prior, posterior, gen_kw_name, _ = setup_es_benchmark
+
+    if alias != "small":
+        pytest.skip()
+
+    def run():
+        enif_update(
+            prior,
+            posterior,
+            prior.experiment.observation_keys,
+            [gen_kw_name],
+            123456789,
         )
 
     benchmark(run)

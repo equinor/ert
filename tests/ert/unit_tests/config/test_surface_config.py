@@ -1,5 +1,6 @@
 from pathlib import Path
 
+import networkx as nx
 import numpy as np
 import pytest
 import xtgeo
@@ -198,3 +199,80 @@ def test_invalid_surface_files_gives_config_error():
                 },
             ]
         )
+
+
+@pytest.mark.parametrize(
+    "shape,expected_nodes,expected_links",
+    [
+        ((0, 0), [], []),
+        ((1, 0), [], []),
+        ((0, 1), [], []),
+        ((1, 1), [], []),  # Q: (unrealistic edge case) should it be 1 node?
+        ((1, 2), [{"id": 0}, {"id": 1}], [{"source": 0, "target": 1}]),
+        (
+            (10, 1),
+            [{"id": i} for i in range(10)],
+            [
+                {"source": 0, "target": 1},
+                {"source": 1, "target": 2},
+                {"source": 2, "target": 3},
+                {"source": 3, "target": 4},
+                {"source": 4, "target": 5},
+                {"source": 5, "target": 6},
+                {"source": 6, "target": 7},
+                {"source": 7, "target": 8},
+                {"source": 8, "target": 9},
+            ],
+        ),
+        (
+            (3, 3),
+            [
+                {"id": 0},
+                {"id": 1},
+                {"id": 3},
+                {"id": 2},
+                {"id": 4},
+                {"id": 5},
+                {"id": 6},
+                {"id": 7},
+                {"id": 8},
+            ],
+            [
+                {"source": 0, "target": 1},
+                {"source": 0, "target": 3},
+                {"source": 1, "target": 2},
+                {"source": 1, "target": 4},
+                {"source": 3, "target": 4},
+                {"source": 3, "target": 6},
+                {"source": 2, "target": 5},
+                {"source": 4, "target": 5},
+                {"source": 4, "target": 7},
+                {"source": 5, "target": 8},
+                {"source": 6, "target": 7},
+                {"source": 7, "target": 8},
+            ],
+        ),
+    ],
+)
+def test_surface_parameter_graph(shape, expected_nodes, expected_links):
+    config = SurfaceConfig(
+        "surf",
+        forward_init=False,
+        update=True,
+        ncol=shape[0],
+        nrow=shape[1],
+        xori=0,
+        yori=0,
+        xinc=0,
+        yinc=0,
+        rotation=0,
+        yflip=0,
+        forward_init_file="0",
+        output_file=Path("0"),
+        base_surface_path="0",
+    )
+
+    g = config.load_parameter_graph()
+    data = nx.node_link_data(g)
+    assert data["nodes"] == expected_nodes
+    assert data["links"] == expected_links

@@ -6,6 +6,7 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import TYPE_CHECKING
 
+import networkx as nx
 import numpy as np
 import xarray as xr
 
@@ -130,6 +131,9 @@ class ExtParamConfig(ParameterConfig):
                 "names": names,
             }
         )
+
+    def load_parameter_graph(self) -> nx.Graph[int]:
+        raise NotImplementedError()
 
     def __len__(self) -> int:
         return len(self.input_keys)

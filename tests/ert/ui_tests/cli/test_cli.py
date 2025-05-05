@@ -26,6 +26,7 @@ from ert.config import ConfigValidationError, ErtConfig
 from ert.enkf_main import sample_prior
 from ert.ensemble_evaluator import EnsembleEvaluator
 from ert.mode_definitions import (
+    ENIF_MODE,
     ENSEMBLE_EXPERIMENT_MODE,
     ENSEMBLE_SMOOTHER_MODE,
     ES_MDA_MODE,
@@ -564,6 +565,33 @@ def test_es_mda(snapshot):
         result.to_csv(float_format="%.12g"),
         f"es_mda_integration_snapshot{numpy_suffix}",
     )
+
+
+@pytest.mark.usefixtures("copy_poly_case")
+def test_enif(snapshot):
+    with fileinput.input("poly.ert", inplace=True) as fin:
+        for line_nr, line in enumerate(fin):
+            if line_nr == 1:
+                print("RANDOM_SEED 1234")
+            print(line, end="")
+
+    run_cli(
+        ENIF_MODE,
+        "poly.ert",
+    )
+
+    with open_storage("storage", "r") as storage:
+        data = []
+        experiment = storage.get_experiment_by_name("enif")
+        for iter_nr in range(2):
+            ensemble = experiment.get_ensemble_by_name(f"iter-{iter_nr}")
+            data.append(ensemble.load_all_gen_kw_data())
+    result = pd.concat(
+        data,
+        keys=[f"iter-{i}" for i in range(len(data))],
+        names=("Iteration", "Realization"),
+    )
+    snapshot.assert_match(result.to_csv(float_format="%.12g"), "enif_snapshot.csv")
 
 
 @pytest.mark.parametrize(
