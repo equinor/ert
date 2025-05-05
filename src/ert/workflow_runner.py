@@ -44,18 +44,14 @@ class WorkflowJobRunner:
 
         if isinstance(self.job, ErtScriptWorkflow):
             self.__script = self.job.ert_script()
-            if self.job.stop_on_fail is not None:
-                self.stop_on_fail = self.job.stop_on_fail
-            elif self.__script is not None:
-                self.stop_on_fail = self.__script.stop_on_fail or False
+            # We let stop on fail either from class or config take precedence
+            self.stop_on_fail = self.job.stop_on_fail or self.__script.stop_on_fail
 
         else:
             self.__script = ExternalErtScript(
                 self.job.executable,  # type: ignore
             )
-
-            if self.job.stop_on_fail is not None:
-                self.stop_on_fail = self.job.stop_on_fail
+            self.stop_on_fail = self.job.stop_on_fail
 
         result = self.__script.initializeAndRun(
             self.job.argument_types(), arguments, fixtures
