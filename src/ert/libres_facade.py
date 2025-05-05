@@ -65,10 +65,6 @@ class LibresFacade:
         return update_snapshot
 
     @property
-    def enspath(self) -> str:
-        return self.config.ens_path
-
-    @property
     def user_config_file(self) -> str | None:
         return self.config.user_config_file
 

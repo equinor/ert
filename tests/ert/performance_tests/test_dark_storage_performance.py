@@ -16,12 +16,11 @@ import pytest
 from httpx import RequestError
 from starlette.testclient import TestClient
 
-from ert.config import ErtConfig, SummaryConfig
+from ert.config import SummaryConfig
 from ert.dark_storage import common
 from ert.dark_storage.app import app
 from ert.dark_storage.endpoints import ensembles, experiments, records
 from ert.gui.tools.plot.plot_api import PlotApi
-from ert.libres_facade import LibresFacade
 from ert.services import StorageService
 from ert.storage import open_storage
 
@@ -163,9 +162,7 @@ def test_direct_dark_performance(
     }[keyword]
 
     with template_config["folder"].as_cwd():
-        config = ErtConfig.from_file("poly.ert")
-        enkf_facade = LibresFacade(config)
-        storage = open_storage(enkf_facade.enspath)
+        storage = open_storage("storage")
         experiment_json = experiments.get_experiments(storage=storage)
         ensemble_id_default = None
         for ensemble_id in experiment_json[0].ensemble_ids:
@@ -198,9 +195,7 @@ def test_direct_dark_performance_with_storage(
     }[keyword]
 
     with template_config["folder"].as_cwd():
-        config = ErtConfig.from_file("poly.ert")
-        enkf_facade = LibresFacade(config)
-        storage = open_storage(enkf_facade.enspath)
+        storage = open_storage("storage")
         experiment_json = experiments.get_experiments(storage=storage)
         ensemble_id_default = None
         for ensemble_id in experiment_json[0].ensemble_ids:
