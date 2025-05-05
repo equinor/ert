@@ -1199,7 +1199,8 @@ async def _write_responses_to_storage(
         except Exception as err:
             errors.append(str(err))
             logger.exception(
-                f"Unexpected exception while writing response to storage {realization}",
+                "Unexpected exception while writing response to storage "
+                f"for realization {realization=}",
                 exc_info=err,
             )
             continue
