@@ -48,6 +48,16 @@ def test_subst_list_reads_correct_values():
     assert substitutions["keyD"] == "valD"
 
 
+def test_substitutions_with_hybrid_parameter_types():
+    subst_list = Substitutions()
+    params: dict[str, dict[str, float | str]] = {
+        "GROUP1": {"a": 1.01},
+        "GROUP2": {"b": "value"},
+    }
+    to_substitute = "<a> and <b>"
+    assert subst_list.substitute_parameters(to_substitute, params) == "1.01 and value"
+
+
 def test_substitutions():
     subst_list = Substitutions()
 

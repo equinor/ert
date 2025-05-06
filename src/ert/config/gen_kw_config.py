@@ -299,7 +299,7 @@ class GenKwConfig(ParameterConfig):
         run_path: Path,
         real_nr: int,
         ensemble: Ensemble,
-    ) -> dict[str, dict[str, float]]:
+    ) -> dict[str, dict[str, float | str]]:
         array = ensemble.load_parameters(self.name, real_nr)["transformed_values"]
         assert isinstance(array, xr.DataArray)
         if not array.size == len(self.transform_functions):
@@ -327,10 +327,10 @@ class GenKwConfig(ParameterConfig):
             )
         )
 
-        log10_data = {
+        log10_data: dict[str, float | str] = {
             tf.name: math.log10(data[tf.name])
             for tf in self.transform_functions
-            if tf.use_log
+            if tf.use_log and isinstance(data[tf.name], (int, float))
         }
 
         if log10_data:

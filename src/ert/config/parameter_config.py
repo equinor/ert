@@ -61,7 +61,7 @@ class ParameterConfig(ABC):
     @abstractmethod
     def write_to_runpath(
         self, run_path: Path, real_nr: int, ensemble: Ensemble
-    ) -> dict[str, dict[str, float]] | None:
+    ) -> dict[str, dict[str, float | str]] | None:
         """
         This function is responsible for converting the parameter
         from the internal ert format to the format the forward model

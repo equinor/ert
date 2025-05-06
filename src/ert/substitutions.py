@@ -31,11 +31,15 @@ class Substitutions(UserDict[str, str]):
         return _substitute(self, to_substitute, context, max_iterations, warn_max_iter)
 
     def substitute_parameters(
-        self, to_substitute: str, data: dict[str, dict[str, float]]
+        self, to_substitute: str, data: dict[str, dict[str, float | str]]
     ) -> str:
         for values in data.values():
             for key, value in values.items():
-                to_substitute = to_substitute.replace(f"<{key}>", f"{value:.6g}")
+                if isinstance(value, (int, float)):
+                    formatted_value = f"{value:.6g}"
+                else:
+                    formatted_value = str(value)
+                to_substitute = to_substitute.replace(f"<{key}>", formatted_value)
         return to_substitute
 
     def substitute_real_iter(
