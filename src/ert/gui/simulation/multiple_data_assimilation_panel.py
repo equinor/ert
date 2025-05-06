@@ -3,6 +3,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import TYPE_CHECKING, Any
 
+from PyQt6.QtCore import Qt
 from PyQt6.QtCore import pyqtSlot as Slot
 from PyQt6.QtGui import QFont
 from PyQt6.QtWidgets import QCheckBox, QFormLayout, QHBoxLayout, QLabel, QWidget
@@ -58,6 +59,10 @@ class MultipleDataAssimilationPanel(ExperimentConfigPanel):
         self.notifier = notifier
 
         layout = QFormLayout()
+        lab = QLabel(" ".join(MultipleDataAssimilation.__doc__.split()))  # type: ignore
+        lab.setWordWrap(True)
+        lab.setAlignment(Qt.AlignmentFlag.AlignLeft)
+        layout.addRow(lab)
         self.setObjectName("ES_MDA_panel")
 
         self._experiment_name_field = StringBox(

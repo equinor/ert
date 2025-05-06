@@ -3,6 +3,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import TYPE_CHECKING
 
+from PyQt6.QtCore import Qt
 from PyQt6.QtCore import pyqtSlot as Slot
 from PyQt6.QtWidgets import QFormLayout, QHBoxLayout, QLabel, QWidget
 
@@ -48,9 +49,13 @@ class EnsembleSmootherPanel(ExperimentConfigPanel):
     ) -> None:
         super().__init__(EnsembleSmoother)
         self.notifier = notifier
+        self.setObjectName("ensemble_smoother_panel")
 
         layout = QFormLayout()
-        self.setObjectName("ensemble_smoother_panel")
+        lab = QLabel(" ".join(EnsembleSmoother.__doc__.split()))  # type: ignore
+        lab.setWordWrap(True)
+        lab.setAlignment(Qt.AlignmentFlag.AlignLeft)
+        layout.addRow(lab)
 
         self._experiment_name_field = StringBox(
             TextModel(""),
