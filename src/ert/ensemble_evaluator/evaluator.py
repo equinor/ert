@@ -36,6 +36,7 @@ from _ert.forward_model_runner.client import (
 )
 from ert.ensemble_evaluator import identifiers as ids
 
+from ..config import QueueSystem
 from ._ensemble import FMStepSnapshot
 from ._ensemble import LegacyEnsemble as Ensemble
 from .config import EvaluatorServerConfig
@@ -176,9 +177,10 @@ class EnsembleEvaluator:
             memory_usage = fm_step.get(ids.MAX_MEMORY_USAGE) or "-1"
             max_memory_usage = max(int(memory_usage), max_memory_usage)
 
-            if cpu_message := detect_overspent_cpu(
+            cpu_message = detect_overspent_cpu(
                 self.ensemble.reals[int(real_id)].num_cpu, real_id, fm_step
-            ):
+            )
+            if self.ensemble.queue_system != QueueSystem.LOCAL and cpu_message:
                 logger.warning(cpu_message)
 
         logger.info(
