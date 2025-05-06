@@ -21,6 +21,7 @@ import scipy
 from iterative_ensemble_smoother.experimental import AdaptiveESMDA
 
 from ert.config import (
+    ErtConfig,
     ESSettings,
     GenKwConfig,
     ObservationGroups,
@@ -382,7 +383,9 @@ def _preprocess_observations_and_responses(
     missing_observations.sort()
 
     if len(missing_observations) > 0:
-        logger.warning(f"Deactivating observations: {missing_observations}")
+        ErtConfig.log_large_message(
+            logging.WARNING, f"Deactivating observations: {missing_observations}"
+        )
 
     return observations_and_responses
 
