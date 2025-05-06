@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import warnings
 from collections.abc import Callable, Iterable
 from typing import (
     TYPE_CHECKING,
@@ -25,7 +24,7 @@ if TYPE_CHECKING:
     from ert.config import (
         EnkfObs,
     )
-    from ert.storage import Ensemble, Storage
+    from ert.storage import Ensemble
 
 
 class LibresFacade:
@@ -140,35 +139,6 @@ class LibresFacade:
         misfit.index = misfit.index.astype(int)
 
         return misfit
-
-    def run_ertscript(  # type: ignore
-        self,
-        ertscript,
-        storage: Storage,
-        ensemble: Ensemble,
-        *args: Any,
-        **kwargs: dict[str, Any],
-    ) -> Any:
-        warnings.warn(
-            "run_ertscript is deprecated, use the workflow runner",
-            DeprecationWarning,
-            stacklevel=1,
-        )
-        return ertscript().initializeAndRun(
-            [],
-            argument_values=args,
-            fixtures={
-                "storage": storage,
-                "ensemble": ensemble,
-                "reports_dir": (
-                    self.config.analysis_config.log_path / ensemble.experiment.name
-                ),
-                "observation_settings": self.config.analysis_config.observation_settings,  # noqa: E501
-                "es_settings": self.config.analysis_config.es_settings,
-                "random_seed": self.config.random_seed,
-            },
-            **kwargs,
-        )
 
     @classmethod
     def from_config_file(
