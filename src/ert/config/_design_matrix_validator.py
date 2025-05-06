@@ -1,6 +1,7 @@
 import logging
 from pathlib import Path
 
+from . import ErtConfig
 from .design_matrix import DesignMatrix
 
 logger = logging.getLogger(__name__)
@@ -19,9 +20,10 @@ class DesignMatrixValidator:
                 DesignMatrix(xlsfilename, designsheet, defaultsheet)
             )
         except Exception as exc:
-            logger.warning(
+            ErtConfig.log_large_message(
+                logging.WARNING,
                 "DESIGN_MATRIX validation of DESIGN2PARAMS would have "
-                f"failed with: {exc!s}"
+                f"failed with: {exc!s}",
             )
 
     def validate_design_matrix_merge(self) -> None:

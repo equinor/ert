@@ -1094,12 +1094,6 @@ class ErtConfig(BaseModel):
 
     @classmethod
     def _log_config_dict(cls, content_dict: dict[str, Any]) -> None:
-        # The content of the message is sanitized before beeing sendt to App Insights
-        # to make sure GDPR-rules are not violated. In doing do, the message length
-        # will typically increase a bit. To Avoid hiting the App Insights' hard limit
-        # of message length, the limit is set to 80% of
-        # MAX_MESSAGE_LENGTH_APP_INSIGHTS = 32768
-        SAFE_MESSAGE_LENGTH_LIMIT = 26214  # <= MAX_MESSAGE_LENGTH_APP_INSIGHTS * 0.8
         try:
             config_dict_content = pprint.pformat(content_dict)
         except Exception as err:
@@ -1108,19 +1102,25 @@ class ErtConfig(BaseModel):
                 "Logging of config dict could not be formatted for "
                 f"enhanced readability. {err}"
             )
-        config_dict_content_length = len(config_dict_content)
-        if config_dict_content_length > SAFE_MESSAGE_LENGTH_LIMIT:
-            config_sections = _split_string_into_sections(
-                config_dict_content, SAFE_MESSAGE_LENGTH_LIMIT
-            )
-            section_count = len(config_sections)
-            for i, section in enumerate(config_sections):
-                logger.info(
-                    "Content of the config_dict "
-                    f"(part {i + 1}/{section_count}): {section}"
-                )
+        cls.log_large_message(
+            logging.INFO, f"Content of the config_dict: {config_dict_content}"
+        )
+
+    @classmethod
+    def log_large_message(cls, loglevel, msg) -> None:
+        # The content of the message is sanitized before being sent to App Insights
+        # to make sure GDPR-rules are not violated. In doing do, the message length
+        # will typically increase a bit. To Avoid hitting the App Insights' hard limit
+        # of message length, the limit is set to 80% of
+        # MAX_MESSAGE_LENGTH_APP_INSIGHTS = 32768
+        SAFE_MESSAGE_LENGTH_LIMIT = 26214  # <= MAX_MESSAGE_LENGTH_APP_INSIGHTS * 0.8
+        if len(msg) > SAFE_MESSAGE_LENGTH_LIMIT:
+            sections = _split_string_into_sections(msg, SAFE_MESSAGE_LENGTH_LIMIT)
+            section_count = len(sections)
+            for i, section in enumerate(sections):
+                logger.log(loglevel, f"[part {i + 1}/{section_count}] {section}")
         else:
-            logger.info(f"Content of the config_dict: {config_dict_content}")
+            logger.log(loglevel, msg)
 
     @classmethod
     def _log_custom_forward_model_steps(cls, user_config: ConfigDict) -> None:

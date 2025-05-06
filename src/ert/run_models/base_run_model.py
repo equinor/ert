@@ -30,6 +30,7 @@ from ert.analysis.event import (
     AnalysisEvent,
 )
 from ert.config import (
+    ErtConfig,
     ESSettings,
     ForwardModelStep,
     HookRuntime,
@@ -266,7 +267,9 @@ class BaseRunModel(ABC):
             for key, value in self.__dict__.items()
             if key not in keys_to_drop
         }
-        logger.info(f"Running '{self.name()}' with settings {settings_dict}")
+        ErtConfig.log_large_message(
+            logging.INFO, f"Running '{self.name()}' with settings {settings_dict}"
+        )
 
     @classmethod
     @abstractmethod
