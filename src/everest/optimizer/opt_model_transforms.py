@@ -12,6 +12,7 @@ from ropt.transforms.base import (
 
 from everest.config import (
     ControlConfig,
+    ModelConfig,
     ObjectiveFunctionConfig,
     OutputConstraintConfig,
 )
@@ -202,7 +203,7 @@ class ObjectiveScaler(ObjectiveTransform):
             auto_scales: Flags indicating which objects are auto-scaled.
             weights:     Weights used to perform auto-scaling.
         """
-        self._scaling_factors = np.asarray(scales, dtype=np.float64)
+        self._scales = np.asarray(scales, dtype=np.float64)
         self._auto_scales = np.asarray(auto_scales, dtype=np.bool_)
         self._weights = np.asarray(weights, dtype=np.float64)
 
@@ -218,7 +219,7 @@ class ObjectiveScaler(ObjectiveTransform):
         Returns:
             The negative of the scaled objectives.
         """
-        return -objectives / self._scaling_factors
+        return -objectives / self._scales
 
     def from_optimizer(self, objectives: NDArray[np.float64]) -> NDArray[np.float64]:
         """Transform objectives to user space.
@@ -229,7 +230,7 @@ class ObjectiveScaler(ObjectiveTransform):
         Returns:
             The negative of the re-scaled objectives.
         """
-        return -objectives * self._scaling_factors
+        return -objectives * self._scales
 
     def weighted_objective_from_optimizer(
         self, weighted_objective: NDArray[np.float64]
@@ -249,22 +250,28 @@ class ObjectiveScaler(ObjectiveTransform):
         """
         return -weighted_objective
 
-    def calculate_auto_scales(self, objectives: NDArray[np.float64]) -> None:
+    def calculate_auto_scales(
+        self, objectives: NDArray[np.float64], realizations: NDArray[np.intc]
+    ) -> None:
         """Calculated scales from a set of realizations.
 
         For selected objectives, this method calculates the scales by a weighted
         sum of the objectives from an ensemble of objective values.
 
-        The input must be a matrix, where each column represents the different
-        realizations of an objective.
+        The `objectives` argument must be a matrix, where each row represents a
+        different realization of each objective. The indices of the realizations
+        must be passed via the `realizations` argument.
 
         Args:
-            objectives: The objectives for each realization.
+            objectives:   The objectives for each realization.
+            realizations: The realizations to use for the calculation.
         """
-        auto_scales = np.abs(
-            np.nansum(objectives * self._weights[:, np.newaxis], axis=0)
-        )
-        self._scaling_factors[self._auto_scales] *= auto_scales[self._auto_scales]
+        weights = np.tile(self._weights[realizations, np.newaxis], objectives.shape[1])
+        weights[np.isnan(objectives)] = 0.0
+        weights /= np.sum(weights, axis=0)
+        auto_scales = np.abs(np.sum(objectives * weights, axis=0))
+        auto_scales = np.where(auto_scales > 0.0, auto_scales, 1.0)
+        self._scales[self._auto_scales] *= auto_scales[self._auto_scales]
 
     @property
     def has_auto_scale(self) -> bool:
@@ -346,21 +353,27 @@ class ConstraintScaler(NonLinearConstraintTransform):
         """
         return lower_diffs * self._scales, upper_diffs * self._scales
 
-    def calculate_auto_scales(self, constraints: NDArray[np.float64]) -> None:
+    def calculate_auto_scales(
+        self, constraints: NDArray[np.float64], realizations: NDArray[np.intc]
+    ) -> None:
         """Calculated scales from a set of realizations.
 
-        For selected constraints, this method calculates the scales by a weighted
-        sum of the constraints from an ensemble of constraint values.
+        For selected constraints, this method calculates the scales by a
+        weighted sum of the constraints from an ensemble of constraint values.
 
-        The input must be a matrix, where each column represents the different
-        realizations of an constraint.
+        The `constraints` argument must be a matrix, where each row represents a
+        different realization of each constraint. The indices of the
+        realizations must be passed via the `realizations` argument.
 
         Args:
-            cnstraints: The constraints for each realization.
+            constraints:  The constraints for each realization.
+            realizations: The realizations to use for the calculation.
         """
-        auto_scales = np.abs(
-            np.nansum(constraints * self._weights[:, np.newaxis], axis=0)
-        )
+        weights = np.tile(self._weights[realizations, np.newaxis], constraints.shape[1])
+        weights[np.isnan(constraints)] = 0.0
+        weights /= np.sum(weights, axis=0)
+        auto_scales = np.abs(np.sum(constraints * weights, axis=0))
+        auto_scales = np.where(auto_scales > 0.0, auto_scales, 1.0)
         self._scales[self._auto_scales] *= auto_scales[self._auto_scales]
 
     @property
@@ -373,42 +386,52 @@ def get_optimization_domain_transforms(
     controls: list[ControlConfig],
     objectives: list[ObjectiveFunctionConfig],
     constraints: list[OutputConstraintConfig] | None,
-    weights: list[float],
+    model: ModelConfig,
 ) -> OptModelTransforms:
     flattened_controls = FlattenedControls(controls)
-    return OptModelTransforms(
-        variables=(
-            ControlScaler(
-                flattened_controls.lower_bounds,
-                flattened_controls.upper_bounds,
-                flattened_controls.scaled_ranges,
-                flattened_controls.types,
-            )
-        ),
-        objectives=ObjectiveScaler(
+    variable_scaler = ControlScaler(
+        flattened_controls.lower_bounds,
+        flattened_controls.upper_bounds,
+        flattened_controls.scaled_ranges,
+        flattened_controls.types,
+    )
+
+    weights = (
+        [1.0 / len(model.realizations)] * len(model.realizations)
+        if model.realizations_weights is None
+        else model.realizations_weights
+    )
+
+    objective_scaler = ObjectiveScaler(
+        [
+            1.0 if objective.scale is None else objective.scale
+            for objective in objectives
+        ],
+        [
+            False if objective.auto_scale is None else objective.auto_scale
+            for objective in objectives
+        ],
+        weights,
+    )
+
+    constraint_scaler = (
+        ConstraintScaler(
             [
-                1.0 if objective.scale is None else objective.scale
-                for objective in objectives
+                1.0 if constraint.scale is None else constraint.scale
+                for constraint in constraints
             ],
             [
-                False if objective.auto_scale is None else objective.auto_scale
-                for objective in objectives
+                False if constraint.auto_scale is None else constraint.auto_scale
+                for constraint in constraints
             ],
             weights,
-        ),
-        nonlinear_constraints=(
-            ConstraintScaler(
-                [
-                    1.0 if constraint.scale is None else constraint.scale
-                    for constraint in constraints
-                ],
-                [
-                    False if constraint.auto_scale is None else constraint.auto_scale
-                    for constraint in constraints
-                ],
-                weights,
-            )
-            if constraints
-            else None
-        ),
+        )
+        if constraints
+        else None
+    )
+
+    return OptModelTransforms(
+        variables=variable_scaler,
+        objectives=objective_scaler,
+        nonlinear_constraints=constraint_scaler,
     )

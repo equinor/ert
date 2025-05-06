@@ -16,12 +16,11 @@ from typing import TYPE_CHECKING, Any, Protocol, cast
 
 import numpy as np
 import polars as pl
-from numpy._typing import NDArray
+from numpy.typing import NDArray
 from ropt.enums import OptimizerExitCode
 from ropt.evaluator import EvaluatorContext, EvaluatorResult
 from ropt.plan import BasicOptimizer
 from ropt.results import FunctionResults, Results
-from ropt.transforms import OptModelTransforms
 from typing_extensions import TypedDict
 
 from ert.config import ExtParamConfig
@@ -36,7 +35,6 @@ from ert.ensemble_evaluator import EndEvent, EvaluatorServerConfig
 from ert.runpaths import Runpaths
 from ert.storage import open_storage
 from everest.config import ControlConfig, ControlVariableGuessListConfig, EverestConfig
-from everest.config.utils import FlattenedControls
 from everest.everest_storage import (
     EverestStorage,
     OptimalResult,
@@ -363,72 +361,6 @@ class EverestRunModel(BaseRunModel):
             f"Everest experiment finished with exit code {self._exit_code.name}"
         )
 
-    def _init_domain_transforms(
-        self, control_variables: NDArray[np.float64]
-    ) -> OptModelTransforms:
-        model_realizations = self._everest_config.model.realizations
-        nreal = len(model_realizations)
-        realization_weights = self._everest_config.model.realizations_weights
-        if realization_weights is None:
-            realization_weights = [1.0 / nreal] * nreal
-        transforms = get_optimization_domain_transforms(
-            self._everest_config.controls,
-            self._everest_config.objective_functions,
-            self._everest_config.output_constraints,
-            realization_weights,
-        )
-
-        # If required, initialize auto-scaling:
-        assert isinstance(transforms.objectives, ObjectiveScaler)
-        assert transforms.nonlinear_constraints is None or isinstance(
-            transforms.nonlinear_constraints, ConstraintScaler
-        )
-        if transforms.objectives.has_auto_scale or (
-            transforms.nonlinear_constraints
-            and transforms.nonlinear_constraints.has_auto_scale
-        ):
-            # Run the forward model once to find the objective/constraint values
-            # to compute the scales. This will add an ensemble/batch in the
-            # storage that is not part of the optimization run. However, the
-            # results may be used in the optimization via the caching mechanism.
-
-            self.send_event(
-                EverestStatusEvent(
-                    batch=self._batch_id,
-                    everest_event="START_SAMPLING_EVALUATION",
-                )
-            )
-
-            logger.debug(f"Running sampling forward model for batch {self._batch_id}")
-            objectives, constraints = self._run_forward_model(
-                sim_to_control_vector=np.repeat(
-                    np.expand_dims(control_variables, axis=0), nreal, axis=0
-                ),
-                sim_to_model_realization=model_realizations,
-                sim_to_perturbation=[-1] * nreal,
-            )
-
-            self.send_event(
-                EverestBatchResultEvent(
-                    batch=self._batch_id,
-                    everest_event="FINISHED_SAMPLING_EVALUATION",
-                    result_type="FunctionResult",
-                )
-            )
-
-            # Increase the batch ID for the next evaluation:
-            self._batch_id += 1
-
-            if transforms.objectives.has_auto_scale:
-                transforms.objectives.calculate_auto_scales(objectives)
-            if (
-                transforms.nonlinear_constraints
-                and transforms.nonlinear_constraints.has_auto_scale
-            ):
-                assert constraints is not None
-                transforms.nonlinear_constraints.calculate_auto_scales(constraints)
-        return transforms
-
     def _check_for_abort(self) -> bool:
         logger.debug("Optimization callback called")
         if (
@@ -440,18 +372,16 @@ class EverestRunModel(BaseRunModel):
         return False
 
     def _create_optimizer(self) -> BasicOptimizer:
-        # Initialize the optimization model transforms. This may run one initial
-        # ensemble for auto-scaling purposes:
-        transforms = self._init_domain_transforms(
-            np.asarray(
-                FlattenedControls(self._everest_config.controls).initial_guesses,
-                dtype=np.float64,
-            )
+        self._transforms = get_optimization_domain_transforms(
+            self._everest_config.controls,
+            self._everest_config.objective_functions,
+            self._everest_config.output_constraints,
+            self._everest_config.model,
         )
+
         optimizer = BasicOptimizer(
-            enopt_config=everest2ropt(self._everest_config, transforms=transforms),
+            enopt_config=everest2ropt(self._everest_config, self._transforms),
             evaluator=self._forward_model_evaluator,
-            transforms=transforms,
             everest_config=self._everest_config,
         )
 
@@ -845,6 +775,34 @@ class EverestRunModel(BaseRunModel):
                 case _EvaluationStatus.INACTIVE:
                     sim_ids.append(-1)
                     source_batch_ids.append(-1)
+
+        if self._batch_id == 0:
+            indices = [
+                idx
+                for idx in range(control_values.shape[0])
+                if (
+                    evaluator_context.perturbations is None
+                    or evaluator_context.perturbations[idx] < 0
+                )
+                and (evaluator_context.active is None or evaluator_context.active[idx])
+            ]
+            if indices:
+                assert self._transforms is not None
+                assert isinstance(self._transforms.objectives, ObjectiveScaler)
+                if self._transforms.objectives.has_auto_scale:
+                    self._transforms.objectives.calculate_auto_scales(
+                        objectives[indices, :], evaluator_context.realizations[indices]
+                    )
+                if self._transforms.nonlinear_constraints:
+                    assert isinstance(
+                        self._transforms.nonlinear_constraints, ConstraintScaler
+                    )
+                    if self._transforms.nonlinear_constraints.has_auto_scale:
+                        assert constraints is not None
+                        self._transforms.nonlinear_constraints.calculate_auto_scales(
+                            constraints[indices, :],
+                            evaluator_context.realizations[indices],
+                        )
 
         evaluator_result = EvaluatorResult(
             objectives=objectives,

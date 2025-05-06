@@ -48,7 +48,7 @@ def test_everest2ropt_controls_auto_scale():
             config.controls,
             config.objective_functions,
             config.output_constraints,
-            config.model.realizations_weights,
+            config.model,
         ),
     )
     assert np.allclose(ropt_config.variables.lower_bounds, 0.3)
@@ -119,7 +119,7 @@ def test_everest2ropt_controls_input_constraint_auto_scale():
             config.controls,
             config.objective_functions,
             config.output_constraints,
-            config.model.realizations_weights,
+            config.model,
         ),
     )
     assert np.allclose(
@@ -265,7 +265,7 @@ def test_everest2ropt_snapshot(case, snapshot):
             config.controls,
             config.objective_functions,
             config.output_constraints,
-            config.model.realizations_weights,
+            config.model,
         ),
     ).model_dump()
 
