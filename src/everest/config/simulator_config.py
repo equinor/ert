@@ -9,6 +9,7 @@ from pydantic import (
 )
 from pydantic_core.core_schema import ValidationInfo
 
+from ert.config import ConfigValidationError
 from ert.config.parsing import BaseModelWithContextSupport
 from ert.config.queue_config import (
     LocalQueueOptions,
@@ -16,6 +17,7 @@ from ert.config.queue_config import (
     QueueOptions,
     SlurmQueueOptions,
     TorqueQueueOptions,
+    parse_realization_memory_str,
 )
 
 simulator_example = {"queue_system": {"name": "local", "max_running": 3}}
@@ -58,6 +60,29 @@ class SimulatorConfig(BaseModelWithContextSupport, extra="forbid"):
         A value of 0 means unlimited runtime.
         """,
     )
+    max_memory: int | str | None = Field(
+        default=None,
+        description="""Maximum allowed memory usage of a forward model. When
+        set, a job is only allowed to use max_memory of memory.
+
+        max_memory may be an integer value, indicating the number of bytes, or a
+        string consisting of a number followed by a unit. The unit indicates the
+        multiplier that is applied, and must start with one of these characters:
+
+        * b, B: bytes
+        * k, K: kilobytes (1024 bytes)
+        * m, M: megabytes (1024**2 bytes)
+        * g, G: gigabytes (1024**3 bytes)
+        * t, T: terabytes (1024**4 bytes)
+        * p, P: petabytes (1024**5 bytes)
+
+        Spaces between the number and the unit are ignored, and so are any
+        characters after the first. For example: 2g, 2G, and 2 GB all resolve
+        to the same value: 2 gigabytes, equaling 2 * 1024**3 bytes.
+
+        If not set, or a set to zero, the allowed amount of memory is unlimited.
+        """,
+    )
     queue_system: (
         LocalQueueOptions
         | LsfQueueOptions
@@ -91,6 +116,18 @@ class SimulatorConfig(BaseModelWithContextSupport, extra="forbid"):
                 options = info.context.get("queue_system")
             return options or LocalQueueOptions(max_running=8)
         return v
+
+    @field_validator("max_memory")
+    @classmethod
+    def validate_max_memory(cls, max_memory: int | str | None) -> str | None:
+        if max_memory is None:
+            return None
+        max_memory = str(max_memory).strip()
+        try:
+            parse_realization_memory_str(max_memory)
+        except ConfigValidationError as exc:
+            raise ValueError(exc.cli_message) from exc
+        return max_memory
 
     @model_validator(mode="before")
     @classmethod
