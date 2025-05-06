@@ -99,6 +99,7 @@ def test_run_poly_example_with_design_matrix_and_genkw_merge(default_values, err
             {
                 "REAL": list(range(num_realizations)),
                 "a": a_values,
+                "category": 5 * ["cat1"] + 5 * ["cat2"],
             }
         ),
         pd.DataFrame(default_values),
@@ -121,6 +122,11 @@ def test_run_poly_example_with_design_matrix_and_genkw_merge(default_values, err
                 """
             )
         )
+
+    # This adds a dummy category parameter to COEFFS GENKW
+    # which will be overridden by the design matrix catagorical entries
+    with open("coeff_priors", "a", encoding="utf-8") as f:
+        f.write("category UNIFORM 0 1")
 
     with open("poly_eval.py", "w", encoding="utf-8") as f:
         f.write(
@@ -152,6 +158,7 @@ def test_run_poly_example_with_design_matrix_and_genkw_merge(default_values, err
                 a: <a>
                 b: <b>
                 c: <c>
+                category: <category>
                 """
             )
         )
@@ -183,14 +190,22 @@ def test_run_poly_example_with_design_matrix_and_genkw_merge(default_values, err
         params = experiment.get_ensemble_by_name("default").load_parameters("COEFFS")[
             "values"
         ]
-        np.testing.assert_array_equal(params[:, 0], a_values)
-        np.testing.assert_array_equal(params[:, 1], 10 * [1])
-        np.testing.assert_array_equal(params[:, 2], 10 * [2])
+        np.testing.assert_array_equal(params[:, 0], [str(idx) for idx in a_values])
+        np.testing.assert_array_equal(params[:, 2], 10 * ["1"])
+        np.testing.assert_array_equal(params[:, 3], 10 * ["2"])
+        np.testing.assert_array_equal(params[:, 1], 5 * ["cat1"] + 5 * ["cat2"])
     with open("poly_out/realization-0/iter-0/my_output", encoding="utf-8") as f:
         output = [line.strip() for line in f]
-    assert output[0] == "a: 0"
-    assert output[1] == "b: 1"
-    assert output[2] == "c: 2"
+        assert output[0] == "a: 0"
+        assert output[1] == "b: 1"
+        assert output[2] == "c: 2"
+        assert output[3] == "category: cat1"
+    with open("poly_out/realization-5/iter-0/my_output", encoding="utf-8") as f:
+        output = [line.strip() for line in f]
+        assert output[0] == "a: 5"
+        assert output[1] == "b: 1"
+        assert output[2] == "c: 2"
+        assert output[3] == "category: cat2"
 
 
 @pytest.mark.usefixtures("copy_poly_case")
