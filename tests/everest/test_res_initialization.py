@@ -7,6 +7,7 @@ from unittest.mock import MagicMock
 
 import pytest
 import yaml
+from pydantic import ValidationError
 from ruamel.yaml import YAML
 
 import everest
@@ -435,3 +436,70 @@ def test_that_queue_settings_are_taken_from_site_config(
     assert queue_config.queue_options == LsfQueueOptions(
         lsf_queue="my_queue", lsf_resource="my_resource"
     )
+
+
+@pytest.mark.usefixtures("no_plugins")
+@pytest.mark.parametrize(
+    "max_memory",
+    [
+        None,
+        0,
+        1,
+        "0",
+        "1",
+        "1b",
+        "1k",
+        "1m",
+        "1g",
+        "1t",
+        "1p",
+        "1G",
+        "1 G",
+        "1Gb",
+        "1 Gb",
+    ],
+)
+def test_that_max_memory_is_valid(max_memory) -> None:
+    EverestConfig.with_defaults(simulator={"max_memory": max_memory})
+
+
+@pytest.mark.usefixtures("no_plugins")
+@pytest.mark.parametrize(
+    "max_memory",
+    [-1, "-1", "-1G", "-1 G", "-1Gb"],
+)
+def test_that_negative_max_memory_fails(max_memory) -> None:
+    with pytest.raises(
+        ValidationError, match=f"Negative memory does not make sense in {max_memory}"
+    ):
+        EverestConfig.with_defaults(simulator={"max_memory": max_memory})
+
+
+@pytest.mark.usefixtures("no_plugins")
+@pytest.mark.parametrize(
+    "max_memory",
+    ["1x", "1 x", "1 xy", "foo"],
+)
+def test_that_invalid_max_memory_fails(max_memory) -> None:
+    with pytest.raises(
+        ValidationError, match=f"Could not understand byte unit in {max_memory}"
+    ):
+        EverestConfig.with_defaults(simulator={"max_memory": max_memory})
+
+
+@pytest.mark.usefixtures("no_plugins")
+@pytest.mark.parametrize(
+    "max_memory",
+    [0, 1, "0", "1", "1b", "1k", "1m", "1g", "1t", "1p", "1G", "1 G", "1Gb", "1 Gb"],
+)
+def test_that_max_memory_is_passed_to_ert_unchanged(max_memory) -> None:
+    ever_config = EverestConfig.with_defaults(simulator={"max_memory": max_memory})
+    config_dict = everest_to_ert_config_dict(ever_config)
+    assert config_dict[ErtConfigKeys.REALIZATION_MEMORY] == str(max_memory)
+
+
+@pytest.mark.usefixtures("no_plugins")
+def test_that_max_memory_none_is_not_passed_to_ert() -> None:
+    ever_config = EverestConfig.with_defaults()
+    config_dict = everest_to_ert_config_dict(ever_config)
+    assert ErtConfigKeys.REALIZATION_MEMORY not in config_dict

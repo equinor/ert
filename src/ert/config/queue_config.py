@@ -280,7 +280,7 @@ class QueueConfig:
         job_script: str = config_dict.get(
             "JOB_SCRIPT", shutil.which("fm_dispatch.py") or "fm_dispatch.py"
         )
-        realization_memory: int = _parse_realization_memory_str(
+        realization_memory: int = parse_realization_memory_str(
             config_dict.get(ConfigKeys.REALIZATION_MEMORY, "0b")
         )
         max_submit: int = config_dict.get(ConfigKeys.MAX_SUBMIT, 1)
@@ -361,7 +361,7 @@ class QueueConfig:
         return self.queue_options.submit_sleep
 
 
-def _parse_realization_memory_str(realization_memory_str: str) -> int:
+def parse_realization_memory_str(realization_memory_str: str) -> int:
     if "-" in realization_memory_str:
         raise ConfigValidationError.with_context(
             f"Negative memory does not make sense in {realization_memory_str}",
