@@ -43,7 +43,9 @@ def _backup_if_existing(path: Path) -> None:
 
 
 def _value_export_txt(
-    run_path: Path, export_base_name: str, values: Mapping[str, Mapping[str, float]]
+    run_path: Path,
+    export_base_name: str,
+    values: Mapping[str, Mapping[str, float | str]],
 ) -> None:
     path = run_path / f"{export_base_name}.txt"
     _backup_if_existing(path)
@@ -61,7 +63,9 @@ def _value_export_txt(
 
 
 def _value_export_json(
-    run_path: Path, export_base_name: str, values: Mapping[str, Mapping[str, float]]
+    run_path: Path,
+    export_base_name: str,
+    values: Mapping[str, Mapping[str, float | str]],
 ) -> None:
     path = run_path / f"{export_base_name}.json"
     _backup_if_existing(path)
@@ -70,7 +74,7 @@ def _value_export_json(
         return
 
     # Hierarchical
-    json_out: dict[str, float | dict[str, float]] = {
+    json_out: dict[str, float | dict[str, float | str]] = {
         key: dict(param_map.items()) for key, param_map in values.items()
     }
 
@@ -90,7 +94,7 @@ def _generate_parameter_files(
     iens: int,
     fs: Ensemble,
     iteration: int,
-) -> dict[str, dict[str, float]]:
+) -> dict[str, dict[str, float | str]]:
     """
     Generate parameter files that are placed in each runtime directory for
     forward-model jobs to consume.
@@ -104,7 +108,7 @@ def _generate_parameter_files(
         iens: Realisation index
         fs: Ensemble from which to load parameter data
     """
-    exports: dict[str, dict[str, float]] = {}
+    exports: dict[str, dict[str, float | str]] = {}
 
     for node in parameter_configs:
         # For the first iteration we do not write the parameter
