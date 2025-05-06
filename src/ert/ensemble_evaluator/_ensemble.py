@@ -17,7 +17,7 @@ from _ert.events import (
     ForwardModelStepFailure,
     ForwardModelStepSuccess,
 )
-from ert.config import ForwardModelStep, QueueConfig
+from ert.config import ForwardModelStep, QueueConfig, QueueSystem
 from ert.run_arg import RunArg
 from ert.scheduler import Scheduler, create_driver
 
@@ -266,6 +266,10 @@ class LegacyEnsemble:
         if self._scheduler is not None:
             await self._scheduler.kill_all_jobs()
         logger.debug("evaluator cancelled")
+
+    @property
+    def queue_system(self) -> QueueSystem:
+        return self._queue_config.queue_system
 
 
 @dataclass
