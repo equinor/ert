@@ -168,10 +168,7 @@ def test_math_func_auto_scaled_objectives(copy_math_func_test_data_to_tmp):
     # Normalize only distance_p:
     config_dict["objective_functions"][0]["auto_scale"] = True
     config_dict["objective_functions"][0]["scale"] = 1.0
-
-    # We two batches, the first to do the auto-scaling,
-    # the second is the initial function evaluation:
-    config_dict["optimization"]["max_batch_num"] = 2
+    config_dict["optimization"]["max_batch_num"] = 1
 
     config = EverestConfig.model_validate(config_dict)
     run_model = EverestRunModel.create(config)
@@ -193,7 +190,7 @@ def test_math_func_auto_scaled_constraints(copy_math_func_test_data_to_tmp):
 
     # control number of batches, no need for full convergence:
     config_dict["optimization"]["convergence_tolerance"] = 1e-10
-    config_dict["optimization"]["max_batch_num"] = 2
+    config_dict["optimization"]["max_batch_num"] = 1
 
     # Run with auto_scaling:
     config_dict["environment"]["output_folder"] = "output_auto_scale"

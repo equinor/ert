@@ -33,10 +33,7 @@ class RunModelStatusEvent(RunModelEvent):
 class EverestStatusEvent(BaseModel):
     batch: int | None
     event_type: Literal["EverestStatusEvent"] = "EverestStatusEvent"
-    everest_event: Literal[
-        "START_OPTIMIZER_EVALUATION",
-        "START_SAMPLING_EVALUATION",
-    ]
+    everest_event: Literal["START_OPTIMIZER_EVALUATION",]
 
 
 class _CacheHitInfo(TypedDict):
@@ -59,7 +56,6 @@ class EverestBatchResultEvent(BaseModel):
     everest_event: Literal[
         "OPTIMIZATION_RESULT",
         "FINISHED_OPTIMIZER_EVALUATION",
-        "FINISHED_SAMPLING_EVALUATION",
     ]
     result_type: Literal["FunctionResult", "GradientResult"]
     results: dict[str, Any] | None = None

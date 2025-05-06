@@ -48,7 +48,7 @@
   "nonlinear_constraints": {
     "function_estimators": null,
     "lower_bounds": [
-      1.0
+      0.1
     ],
     "realization_filters": null,
     "upper_bounds": [
