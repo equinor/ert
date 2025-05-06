@@ -143,8 +143,8 @@ The following is a list of available LSF configuration options:
 .. _submit_sleep:
 .. topic:: SUBMIT_SLEEP
 
-  Determines for how long the system will sleep between submitting jobs.
-  Default: ``0``. To change it to 1 s::
+  Determines for how long in seconds the system will sleep between submitting jobs.
+  Default: ``0``. To change it to 1 second::
 
     QUEUE_OPTION LSF SUBMIT_SLEEP 1
 
