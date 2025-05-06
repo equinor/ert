@@ -374,9 +374,16 @@ class EverestDataAPI:
         perturbation_dfs_to_concat = _join_by_batch(
             perturbation_dfs_to_join, on=["batch_id", "realization", "perturbation"]
         )
-        perturbation_df = pl.concat(perturbation_dfs_to_concat, how="diagonal")
-
-        pert_real_df = pl.concat([realization_df, perturbation_df], how="diagonal")
+        if perturbation_dfs_to_concat:
+            # Perturbations exists, proceed as normal
+            perturbation_df = pl.concat(perturbation_dfs_to_concat, how="diagonal")
+            pert_real_df = pl.concat([realization_df, perturbation_df], how="diagonal")
+        else:
+            # Discrete methods never have perturbations,
+            # append an empty (i.e., null) column
+            pert_real_df = realization_df.with_columns(
+                pl.lit(None).alias("perturbation")
+            )
 
         pert_real_df = pert_real_df.select(
             "batch_id",
