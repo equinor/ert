@@ -12,6 +12,7 @@ from tests.everest.utils import (
     skipif_no_everest_models,
 )
 
+from ert.storage import open_storage
 from everest import __version__ as everest_version
 from everest.bin.main import start_everest
 from everest.config import EverestConfig, ServerConfig
@@ -60,8 +61,8 @@ def test_everest_entry_run(cached_example):
     )
 
     assert status["status"] == ServerStatus.completed
-
-    storage = EverestStorage(Path(config.optimization_output_dir))
+    ert_experiment = next(open_storage(config.storage_dir, mode="r").experiments)
+    storage = EverestStorage(Path(config.optimization_output_dir), ert_experiment)
     storage.read_from_output_dir()
     optimal = storage.get_optimal_result()
 
