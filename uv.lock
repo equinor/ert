@@ -793,7 +793,7 @@ requires-dist = [
     { name = "graphite-maps" },
     { name = "httpx" },
     { name = "humanize" },
-    { name = "hypothesis", marker = "extra == 'dev'", specifier = ">=6.85,!=6.102.0,!=6.112.3,<6.131.1" },
+    { name = "hypothesis", marker = "extra == 'dev'", specifier = ">=6.85,!=6.102.0,!=6.112.3" },
     { name = "iterative-ensemble-smoother", specifier = ">=0.3.0" },
     { name = "jinja2", specifier = ">=2.10" },
     { name = "json-schema-for-humans", marker = "extra == 'dev'" },
@@ -1134,15 +1134,15 @@ wheels = [
 
 [[package]]
 name = "hypothesis"
-version = "6.131.0"
+version = "6.131.16"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "attrs" },
     { name = "sortedcontainers" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/73/79/82eaf131f58a5c434830f0c196995a5071531765c51ebc8aaff493002b5e/hypothesis-6.131.0.tar.gz", hash = "sha256:4b807daeeee47852edfd9818ba0e33df14902f1b78a5524f1a3fb71f80c7cec3", size = 430541, upload-time = "2025-04-10T04:33:07.742Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/3c/05/fcda52dd0817080d9a953ef926ca1ba63ce660c437a5f36cdc13c6f74ef3/hypothesis-6.131.16.tar.gz", hash = "sha256:4953b8dbb79ae3399c4243b1799b3286c7809d08457269274f77581aef8b7048", size = 436840, upload-time = "2025-05-13T08:20:18.087Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/01/43/b5e5d397e1ece9b71584c1771214b4a643d81fa8f197d4ff5938295ead25/hypothesis-6.131.0-py3-none-any.whl", hash = "sha256:734959017e3ee4ef8f0ecb4e5169c8f4cf96dc83a997d2edf01fb5350f5bf2f4", size = 495720, upload-time = "2025-04-10T04:33:04.097Z" },
+    { url = "https://files.pythonhosted.org/packages/dc/f1/a51627f39787b21ee1392fce4685a9480037b548009761e833b89fe3c6db/hypothesis-6.131.16-py3-none-any.whl", hash = "sha256:574e0ebc28e469a891c2c4fcc092ed7d5da81255b84505b599e6768b39d7ca61", size = 501365, upload-time = "2025-05-13T08:20:13.741Z" },
 ]
 
 [[package]]
@@ -1512,7 +1512,7 @@ wheels = [
 
 [[package]]
 name = "jupyter-server"
-version = "2.15.0"
+version = "2.16.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "anyio" },
@@ -1535,9 +1535,9 @@ dependencies = [
     { name = "traitlets" },
     { name = "websocket-client" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/61/8c/df09d4ab646141f130f9977b32b206ba8615d1969b2eba6a2e84b7f89137/jupyter_server-2.15.0.tar.gz", hash = "sha256:9d446b8697b4f7337a1b7cdcac40778babdd93ba614b6d68ab1c0c918f1c4084", size = 725227, upload-time = "2024-12-20T13:02:42.654Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/41/c8/ba2bbcd758c47f1124c4ca14061e8ce60d9c6fd537faee9534a95f83521a/jupyter_server-2.16.0.tar.gz", hash = "sha256:65d4b44fdf2dcbbdfe0aa1ace4a842d4aaf746a2b7b168134d5aaed35621b7f6", size = 728177, upload-time = "2025-05-12T16:44:46.245Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/e2/a2/89eeaf0bb954a123a909859fa507fa86f96eb61b62dc30667b60dbd5fdaf/jupyter_server-2.15.0-py3-none-any.whl", hash = "sha256:872d989becf83517012ee669f09604aa4a28097c0bd90b2f424310156c2cdae3", size = 385826, upload-time = "2024-12-20T13:02:37.785Z" },
+    { url = "https://files.pythonhosted.org/packages/46/1f/5ebbced977171d09a7b0c08a285ff9a20aafb9c51bde07e52349ff1ddd71/jupyter_server-2.16.0-py3-none-any.whl", hash = "sha256:3d8db5be3bc64403b1c65b400a1d7f4647a5ce743f3b20dbdefe8ddb7b55af9e", size = 386904, upload-time = "2025-05-12T16:44:43.335Z" },
 ]
 
 [[package]]
@@ -3986,14 +3986,14 @@ wheels = [
 
 [[package]]
 name = "types-networkx"
-version = "3.4.2.20250509"
+version = "3.4.2.20250513"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "numpy" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/8f/52/e7e4e72f4f46ca434546cb4c0e0a89fe5714bea4a3b805945b639f09440d/types_networkx-3.4.2.20250509.tar.gz", hash = "sha256:4bf3459461ef772f2ab35f76038fb53e3e7b80ab4f09aa91646d189accc1d456", size = 59894, upload-time = "2025-05-09T03:04:20.753Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/14/42/8c81ac735d7f9fa47cc7f13a1e5d44e157748f32764fa63e1669a0d43457/types_networkx-3.4.2.20250513.tar.gz", hash = "sha256:6542f1fad8ea7ee4ad26f4edc78a3f0559539bc64270ef2c323b8ee06a197d3b", size = 60476, upload-time = "2025-05-13T03:06:08.884Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/1f/25/fb77afd928064d01d15e1b15e9ffbea46d8c6186a39d311ad9be96a0eacc/types_networkx-3.4.2.20250509-py3-none-any.whl", hash = "sha256:f0120088ae87be6645aee68888730e8d1ce3b393799e3a7ea18e9382ab81a163", size = 145013, upload-time = "2025-05-09T03:04:19.317Z" },
+    { url = "https://files.pythonhosted.org/packages/b4/40/48b0c33494ba78a9fda1de1923d5946d715ee9a86bd092da775a1e6cb70e/types_networkx-3.4.2.20250513-py3-none-any.whl", hash = "sha256:f38e3db19c8c5aedad3ed9e113701cedd2fa32016c2ad251b4d52fdad86d1a07", size = 145732, upload-time = "2025-05-13T03:06:07.301Z" },
 ]
 
 [[package]]
@@ -4049,14 +4049,14 @@ wheels = [
 
 [[package]]
 name = "types-tqdm"
-version = "4.67.0.20250417"
+version = "4.67.0.20250513"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "types-requests" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/4a/54/1ce092a682af4b2995a3708a8830dc15502927f3586064d9ea3738a562d1/types_tqdm-4.67.0.20250417.tar.gz", hash = "sha256:bfcc4099d8d48df54e53f3ea64708cbcc1d1c4039ca7619594189da8c03c7be2", size = 17179, upload-time = "2025-04-17T02:58:17.07Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/d4/74/a77b5179e3543853c51ce786b300cd253934477c81aab4d786dff9894724/types_tqdm-4.67.0.20250513.tar.gz", hash = "sha256:907028c8d0a8fc20072132cd0cee72a3b6c72abf32f5ff914a7749e7d13b351e", size = 17207, upload-time = "2025-05-13T03:06:17.539Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/18/48/320971ed192f4ac207305a75fa8366efb1b6a90a24db0513f492668d87c0/types_tqdm-4.67.0.20250417-py3-none-any.whl", hash = "sha256:d43fc9a295be1f94083c744a09099c033c4dea293ff9a07bab9f34bfbffaaf80", size = 24057, upload-time = "2025-04-17T02:58:15.705Z" },
+    { url = "https://files.pythonhosted.org/packages/6a/7b/996a534691afd516f60fa3ad3f4101b38f7222fff6c1b12f508a4c817695/types_tqdm-4.67.0.20250513-py3-none-any.whl", hash = "sha256:73d2bdac28bab49235d8660aece6c415636a0fb406f7a24b39737dfc6bf6a5dd", size = 24060, upload-time = "2025-05-13T03:06:16.241Z" },
 ]
 
 [[package]]
