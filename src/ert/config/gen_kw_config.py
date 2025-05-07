@@ -400,7 +400,13 @@ class GenKwConfig(ParameterConfig):
     def load_parameters(
         self, ensemble: Ensemble, realizations: npt.NDArray[np.int_]
     ) -> npt.NDArray[np.float64]:
-        return ensemble.load_parameters(self.name, realizations)["values"].values.T
+        return np.vstack(
+            [
+                ensemble.load_parameters(group, realizations)["values"].values.T
+                for group in self.groups
+                if self.groups_update[group]
+            ]
+        )
 
     def shouldUseLogScale(self, keyword: str) -> bool:
         for tf in self.transform_functions:
