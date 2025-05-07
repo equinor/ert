@@ -1,7 +1,10 @@
 from opentelemetry import trace
+from opentelemetry.instrumentation.threading import ThreadingInstrumentor
 from opentelemetry.sdk.resources import SERVICE_NAME, Resource
 from opentelemetry.sdk.trace import SpanLimits, TracerProvider
 from opentelemetry.trace.propagation.tracecontext import TraceContextTextMapPropagator
+
+ThreadingInstrumentor().instrument()
 
 resource = Resource(attributes={SERVICE_NAME: "ert"})
 tracer_provider = TracerProvider(
@@ -9,7 +12,7 @@ tracer_provider = TracerProvider(
 )
 trace.set_tracer_provider(tracer_provider)
 
-tracer = trace.get_tracer("ert.main")
+tracer = trace.get_tracer("ert.trace")
 
 
 def get_trace_id() -> str:

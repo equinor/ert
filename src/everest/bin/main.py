@@ -6,6 +6,7 @@ try:
     from ert.shared.version import __version__ as everest_version
 except ImportError:
     everest_version = "0.0.0"
+from ert.trace import tracer, tracer_provider
 from everest.bin.config_branch_script import config_branch_entry
 from everest.bin.everconfigdump_script import config_dump_entry
 from everest.bin.everest_script import everest_entry
@@ -15,7 +16,6 @@ from everest.bin.kill_script import kill_entry
 from everest.bin.monitor_script import monitor_entry
 from everest.bin.visualization_script import visualization_entry
 from everest.plugins.everest_plugin_manager import EverestPluginManager
-from everest.trace import tracer, tracer_provider
 
 
 def _build_args_parser() -> argparse.ArgumentParser:
