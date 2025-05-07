@@ -5,7 +5,7 @@ import contextlib
 import logging
 import os
 import time
-from collections.abc import Iterable
+from collections.abc import Collection, Iterable
 from datetime import datetime
 from functools import cache, lru_cache
 from multiprocessing.pool import ThreadPool
@@ -568,6 +568,33 @@ class LocalEnsemble(BaseMode):
         """
 
         return self._load_dataset(group, realizations)
+
+    def load_parameters_pl(
+        self, group: str, realizations: Collection[int] | None = None
+    ) -> pl.DataFrame:
+        """
+        Load parameters for group and realizations into pl.DataFrame.
+
+        Parameters
+        ----------
+        group : str
+            Name of parameter group to load.
+        realizations : Collection[int], optional
+            Realization indices to load. If None, all realizations are loaded.
+
+        Returns
+        -------
+        parameters : pl.DataFrame
+            Loaded pl.DataFrame with parameters.
+        """
+
+        group_path = self.mount_point / f"{_escape_filename(group)}.parquet"
+        if not group_path.exists():
+            raise KeyError(f"No {group} dataset in storage for ensemble {self.name}")
+        df_lazy = pl.scan_parquet(group_path)
+        if realizations is not None:
+            df_lazy = df_lazy.filter(pl.col("realization").is_in(realizations))
+        return df_lazy.collect()
 
     def load_cross_correlations(self) -> xr.Dataset:
         input_path = self.mount_point / "corr_XY.nc"

@@ -12,6 +12,7 @@ from typing import TYPE_CHECKING, Any, Self, cast, overload
 import networkx as nx
 import numpy as np
 import pandas as pd
+import polars as pl
 import xarray as xr
 from scipy.stats import norm
 from typing_extensions import TypedDict
@@ -270,7 +271,7 @@ class GenKwConfig(ParameterConfig):
 
     def sample_or_load(
         self, real_nr: int, random_seed: int, ensemble_size: int
-    ) -> xr.Dataset:
+    ) -> pl.DataFrame:
         keys = [e.name for e in self.transform_functions]
         parameter_value = self._sample_value(
             self.name,
@@ -279,13 +280,15 @@ class GenKwConfig(ParameterConfig):
             real_nr,
         )
 
-        return xr.Dataset(
-            {
-                "values": ("names", parameter_value),
-                "transformed_values": ("names", self.transform(parameter_value)),
-                "names": keys,
-            }
-        )
+        parameter_dict = {}
+        parameter_dict["realization"] = real_nr
+        trasfmored_values = self.transform(parameter_value)
+        for parameter in self.transform_function_definitions:
+            parameter_dict[parameter.name] = parameter_value[keys.index(parameter.name)]
+            parameter_dict[f"{parameter.name}.transformed"] = trasfmored_values[
+                keys.index(parameter.name)
+            ]
+        return pl.DataFrame(parameter_dict, schema_overrides={"realization": pl.Int32})
 
     def load_parameter_graph(self) -> nx.Graph[int]:
         # Create a graph with no edges
@@ -307,12 +310,15 @@ class GenKwConfig(ParameterConfig):
         real_nr: int,
         ensemble: Ensemble,
     ) -> dict[str, dict[str, float | str]]:
-        array = ensemble.load_parameters(self.name, real_nr)["transformed_values"]
-        assert isinstance(array, xr.DataArray)
-        if not array.size == len(self.transform_functions):
+        df = ensemble.load_parameters_pl(self.name, [real_nr]).select(
+            pl.col("^.*\\.transformed$")
+        )
+
+        assert isinstance(df, pl.DataFrame)
+        if not df.width == len(self.transform_functions):
             raise ValueError(
                 f"The configuration of GEN_KW parameter {self.name}"
-                f" is of size {len(self.transform_functions)}, expected {array.size}"
+                f" is of size {len(self.transform_functions)}, expected {df.width}"
             )
 
         def parse_value(value: float | int | str) -> float | int | str:
@@ -326,13 +332,10 @@ class GenKwConfig(ParameterConfig):
                 except ValueError:
                     return value
 
-        data = dict(
-            zip(
-                array["names"].values.tolist(),
-                [parse_value(i) for i in array.values],
-                strict=False,
-            )
-        )
+        data_dict = df.rename(
+            {col: col.replace(".transformed", "") for col in df.columns}
+        ).to_dict()
+        data = {key: parse_value(value[0]) for key, value in data_dict.items()}
 
         log10_data: dict[str, float | str] = {
             tf.name: math.log10(data[tf.name])
@@ -366,7 +369,12 @@ class GenKwConfig(ParameterConfig):
     def load_parameters(
         self, ensemble: Ensemble, realizations: npt.NDArray[np.int_]
     ) -> npt.NDArray[np.float64]:
-        return ensemble.load_parameters(self.name, realizations)["values"].values.T
+        return (
+            ensemble.load_parameters_pl(self.name, realizations)
+            .select(~pl.col("^.*\\.transformed$"))
+            .to_numpy()
+            .flatten()
+        )
 
     def shouldUseLogScale(self, keyword: str) -> bool:
         for tf in self.transform_functions:
