@@ -277,13 +277,12 @@ def test_plot_api_handles_empty_gen_kw(api_and_storage):
     )
     ensemble = storage.create_ensemble(experiment.id, ensemble_size=10)
     assert api.data_for_key(str(ensemble.id), key).empty
-    ensemble.save_parameters(
+    ensemble.save_parameters_pl(
         key,
-        1,
-        xr.Dataset(
+        pl.DataFrame(
             {
-                "values": ("names", [1.0]),
-                "names": [name],
+                name: [1.0],
+                "realization": 1,
             }
         ),
     )

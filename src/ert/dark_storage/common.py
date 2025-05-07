@@ -1,4 +1,3 @@
-import contextlib
 import logging
 import operator
 import os
@@ -9,7 +8,6 @@ from uuid import UUID
 import numpy as np
 import pandas as pd
 import polars as pl
-import xarray as xr
 from polars.exceptions import ColumnNotFoundError
 
 from ert.config import Field, GenDataConfig, GenKwConfig
@@ -129,41 +127,22 @@ def _extract_parameter_group_and_key(key: str) -> tuple[str, str] | tuple[None, 
 
 def data_for_parameter(ensemble: Ensemble, key: str) -> pd.DataFrame:
     group, _ = _extract_parameter_group_and_key(key)
-    parameters = ensemble.experiment.parameter_configuration
-    if group in parameters and isinstance(gen_kw := parameters[group], GenKwConfig):
-        dataframes: list[pd.DataFrame] = []
+    df = ensemble.load_scalars(group)
+    if df.is_empty():
+        return pd.DataFrame()
 
-        with contextlib.suppress(KeyError):
-            try:
-                da = ensemble.load_parameters(group, transformed=True)["values"]
-            except ValueError as err:
-                print(f"Could not load parameter {group}: {err}")
-                return pd.DataFrame()
-
-            assert isinstance(da, xr.DataArray)
-            da["names"] = np.char.add(f"{gen_kw.name}:", da["names"].astype(np.str_))
-            df = da.to_dataframe().unstack(level="names")
-            df.columns = df.columns.droplevel()
-            for parameter in df.columns:
-                if gen_kw.shouldUseLogScale(parameter.split(":")[1]):
-                    df[f"LOG10_{parameter}"] = np.log10(df[parameter])
-            dataframes.append(df)
-        if not dataframes:
-            return pd.DataFrame()
-
-        dataframe = pd.concat(dataframes, axis=1)
-        dataframe.columns.name = None
-        dataframe.index.name = "Realization"
-
-        data = dataframe.sort_index(axis=1)
-        if data.empty or key not in data:
-            return pd.DataFrame()
-        data = data[key].to_frame().dropna()
-        data.columns = pd.Index([0])
-        try:
-            return data.astype(float)
-        except ValueError:
-            return data
+    dataframe = df.to_pandas().set_index("realization")
+    dataframe.columns.name = None
+    dataframe.index.name = "Realization"
+    data = dataframe.sort_index(axis=1)
+    if data.empty or key not in data:
+        return pd.DataFrame()
+    data = data[key].to_frame().dropna()
+    data.columns = pd.Index([0])
+    try:
+        return data.astype(float)
+    except ValueError:
+        return data
 
 
 def _extract_response_type_and_key(

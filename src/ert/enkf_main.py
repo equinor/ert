@@ -10,7 +10,7 @@ from typing import TYPE_CHECKING, Any
 
 import orjson
 import pandas as pd
-import xarray as xr
+import polars as pl
 
 from ert.substitutions import Substitutions, substitute_runpath_name
 from ert.utils import log_duration
@@ -158,19 +158,15 @@ def save_design_matrix_to_ensemble(
     design_group_name: str = DESIGN_MATRIX_GROUP,
 ) -> None:
     assert not design_matrix_df.empty
-    for realization_nr in active_realizations:
-        row = design_matrix_df.loc[realization_nr]
-        ds = xr.Dataset(
-            {
-                "values": ("names", list(row.values)),
-                "names": list(row.keys()),
-            }
-        )
-        ensemble.save_parameters(
-            design_group_name,
-            realization_nr,
-            ds,
-        )
+    df = design_matrix_df.copy()
+    df["realization"] = df.index
+    pl_df = pl.from_pandas(df.reset_index(drop=True))
+    if not set(active_realizations) <= set(pl_df["realization"].to_list()):
+        raise KeyError("Active realization mask is not in design matrix!")
+    ensemble.save_parameters_pl(
+        design_group_name,
+        pl_df.filter(pl.col("realization").is_in(list(active_realizations))),
+    )
 
 
 @log_duration(
@@ -199,13 +195,25 @@ def sample_prior(
             f"Sampling parameter {config_node.name} "
             f"for realizations {active_realizations}"
         )
-        for realization_nr in active_realizations:
-            ds = config_node.sample_or_load(
-                realization_nr,
-                random_seed=random_seed,
-                ensemble_size=ensemble.ensemble_size,
-            )
-            ensemble.save_parameters(parameter, realization_nr, ds)
+        if isinstance(config_node, GenKwConfig):
+            datasets = []
+            for realization_nr in active_realizations:
+                datasets.append(
+                    config_node.sample_or_load(
+                        realization_nr,
+                        random_seed=random_seed,
+                        ensemble_size=ensemble.ensemble_size,
+                    )
+                )
+            ensemble.save_parameters_pl(parameter, pl.concat(datasets, how="vertical"))
+        else:
+            for realization_nr in active_realizations:
+                ds = config_node.sample_or_load(
+                    realization_nr,
+                    random_seed=random_seed,
+                    ensemble_size=ensemble.ensemble_size,
+                )
+                ensemble.save_parameters(parameter, realization_nr, ds)
 
     ensemble.refresh_ensemble_state()
 

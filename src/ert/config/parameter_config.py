@@ -7,6 +7,7 @@ from typing import TYPE_CHECKING, Any, Literal
 
 import networkx as nx
 import numpy as np
+import polars as pl
 import xarray as xr
 from pydantic import BaseModel
 
@@ -48,7 +49,7 @@ class ParameterConfig(ABC):
         real_nr: int,
         random_seed: int,
         ensemble_size: int,
-    ) -> xr.Dataset:
+    ) -> xr.Dataset | pl.DataFrame:
         return self.read_from_runpath(Path(), real_nr, 0)
 
     @property

@@ -9,18 +9,12 @@ import numpy as np
 import polars as pl
 from numpy import typing as npt
 
-from ert.config import ObservationGroups, OutlierSettings
+from ert.config import GenKwConfig, ObservationGroups, OutlierSettings
 from ert.storage import Ensemble
 
 from . import misfit_preprocessor
-from .event import (
-    AnalysisDataEvent,
-    AnalysisEvent,
-    DataSection,
-)
-from .snapshots import (
-    ObservationStatus,
-)
+from .event import AnalysisDataEvent, AnalysisEvent, DataSection
+from .snapshots import ObservationStatus
 
 logger = logging.getLogger(__name__)
 
@@ -62,9 +56,16 @@ def _copy_unupdated_parameters(
     # Copy the non-updated parameter groups from source to target
     # for each active realization
     for parameter_group in not_updated_parameter_groups:
-        for realization in iens_active_index:
-            ds = source_ensemble.load_parameters(parameter_group, realization)
-            target_ensemble.save_parameters(parameter_group, realization, ds)
+        if isinstance(
+            source_ensemble.experiment.parameter_configuration[parameter_group],
+            GenKwConfig,
+        ):
+            df = source_ensemble.load_parameters_pl(parameter_group)
+            target_ensemble.save_parameters_pl(parameter_group, df)
+        else:
+            for realization in iens_active_index:
+                ds = source_ensemble.load_parameters(parameter_group, realization)
+                target_ensemble.save_parameters(parameter_group, realization, ds)
 
 
 def _expand_wildcards(
