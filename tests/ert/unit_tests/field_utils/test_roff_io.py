@@ -11,7 +11,7 @@ import pytest
 from hypothesis import given
 from hypothesis.extra.numpy import array_shapes, arrays
 
-from ert.field_utils.roff_io import export_roff, import_roff
+from ert.field_utils.roff_io import RMS_UNDEFINED_FLOAT, export_roff, import_roff
 
 
 @pytest.mark.parametrize("infty_val", [np.nan, np.inf, -np.inf])
@@ -74,7 +74,10 @@ def test_that_export_and_import_are_inverses(
     output = buffer_constructor()
     export_roff(masked_array, output, name, binary=is_binary)
     output.seek(0)
-    assert import_roff(output, name).tolist() == masked_array.tolist()
+    assert (
+        import_roff(output, name).filled().tolist()
+        == masked_array.filled(RMS_UNDEFINED_FLOAT).tolist()
+    )
 
 
 @pytest.mark.parametrize("code_type", ["int", "byte"])
@@ -130,7 +133,9 @@ def test_that_fetching_1_valued_parameter_fetches_correct_value(value):
     """
     )
 
-    assert list(import_roff(StringIO(content), "parameter")) == pytest.approx([value])
+    assert list(import_roff(StringIO(content), "parameter").filled()) == pytest.approx(
+        [value]
+    )
 
 
 def test_that_fetching_unknown_parameter_fails():
