@@ -17,7 +17,7 @@ from scipy.stats import norm
 from typing_extensions import TypedDict
 
 from ._str_to_bool import str_to_bool
-from .parameter_config import ParameterConfig
+from .parameter_config import ParameterConfig, ParameterMetadata
 from .parsing import ConfigValidationError, ConfigWarning, ErrorInfo
 
 if TYPE_CHECKING:
@@ -79,6 +79,26 @@ class GenKwConfig(ParameterConfig):
 
     def __len__(self) -> int:
         return len(self.transform_functions)
+
+    @property
+    def parameter_keys(self) -> list[str]:
+        keys = []
+        for tf in self.transform_functions:
+            keys.append(tf.name)
+
+        return keys
+
+    @property
+    def metadata(self) -> list[ParameterMetadata]:
+        return [
+            ParameterMetadata(
+                key=f"{self.name}:{tf.name}",
+                transformation=tf.transform_function_name,
+                dimensionality=1,
+                userdata={"data_origin": "GEN_KW"},
+            )
+            for tf in self.transform_functions
+        ]
 
     @classmethod
     def templates_from_config(

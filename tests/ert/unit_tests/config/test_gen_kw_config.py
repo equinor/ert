@@ -717,6 +717,29 @@ def test_validation_derrf_distribution(
             GenKwConfig.from_config_list(config_list)
 
 
+@pytest.mark.parametrize(
+    "transform_fns",
+    [
+        [],
+        [{"name": "dummy", "param_name": "NORMAL", "values": [0, 0.1]}],
+        [
+            {"name": f"dummy_{i}", "param_name": "NORMAL", "values": [0, 0.1]}
+            for i in range(100)
+        ],
+    ],
+)
+def test_that_transfer_function_names_are_reflected_as_parameter_keys(transform_fns):
+    config = GenKwConfig(
+        name="a_group",
+        forward_init=False,
+        update=True,
+        transform_function_definitions=[
+            TransformFunctionDefinition(**tf) for tf in transform_fns
+        ],
+    )
+    assert config.parameter_keys == [tf["name"] for tf in transform_fns]
+
+
 @pytest.mark.parametrize("num_tfs", [0, 1, 3, 8])
 def test_genkw_paramgraph_transformfn_node_correspondence(num_tfs):
     config = GenKwConfig(
