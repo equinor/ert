@@ -109,53 +109,62 @@ class PlotApi:
         the key"""
 
         all_keys: dict[str, PlotApiKeyDefinition] = {}
+        all_params = {}
 
         with StorageService.session(project=self.ens_path) as client:
             response = client.get("/experiments", timeout=self._timeout)
             self._check_response(response)
 
             for experiment in response.json():
-                response = client.get(
-                    f"/experiments/{experiment['id']}/ensembles", timeout=self._timeout
-                )
-                self._check_response(response)
-
-                for ensemble in response.json():
-                    response = client.get(
-                        f"/ensembles/{ensemble['id']}/responses", timeout=self._timeout
-                    )
-                    self._check_response(response)
-                    for key, value in response.json().items():
-                        assert isinstance(key, str)
-
-                        has_observation = value["has_observations"]
-                        k = all_keys.get(key)
-                        if k and k.observations:
-                            has_observation = True
-
-                        all_keys[key] = PlotApiKeyDefinition(
-                            key=key,
-                            index_type="VALUE",
-                            observations=has_observation,
-                            dimensionality=2,
-                            metadata=value["userdata"],
-                            log_scale=key.startswith("LOG10_"),
+                for response_type, response_metadatas in experiment[
+                    "responses"
+                ].items():
+                    for metadata in response_metadatas:
+                        key = metadata["response_key"]
+                        has_obs = (
+                            response_type in experiment["observations"]
+                            and key in experiment["observations"][response_type]
                         )
+                        if metadata["filter_on"]:
+                            # Only assume one filter_on, this code is to be
+                            # considered a bit "temp".
+                            # In general, we could create a dropdown per
+                            # filter_on on the frontend side
+                            for values in metadata["filter_on"].values():
+                                for v in values:
+                                    subkey = f"{key}@{v}"
+                                    all_keys[subkey] = PlotApiKeyDefinition(
+                                        key=subkey,
+                                        index_type="VALUE",
+                                        observations=has_obs,
+                                        dimensionality=2,
+                                        metadata={"data_origin": response_type},
+                                        log_scale=False,
+                                    )
+                        else:
+                            all_keys[key] = PlotApiKeyDefinition(
+                                key=key,
+                                index_type="VALUE",
+                                observations=has_obs,
+                                dimensionality=2,
+                                metadata={"data_origin": response_type},
+                                log_scale=False,
+                            )
 
-                    response = client.get(
-                        f"/ensembles/{ensemble['id']}/parameters", timeout=self._timeout
-                    )
-                    self._check_response(response)
-                    for e in response.json():
-                        key = e["name"]
-                        all_keys[key] = PlotApiKeyDefinition(
-                            key=key,
+                for param_metadatas in experiment["parameters"].values():
+                    for metadata in param_metadatas:
+                        param_key = metadata["key"]
+                        all_keys[param_key] = PlotApiKeyDefinition(
+                            key=param_key,
                             index_type=None,
                             observations=False,
-                            dimensionality=e["dimensionality"],
-                            metadata=e["userdata"],
-                            log_scale=key.startswith("LOG10_"),
+                            dimensionality=metadata["dimensionality"],
+                            metadata=metadata["userdata"],
+                            log_scale=(metadata["transformation"] or "None")
+                            .lower()
+                            .startswith("log"),
                         )
+                        all_params[param_key] = all_keys[param_key]
 
         return list(all_keys.values())
 

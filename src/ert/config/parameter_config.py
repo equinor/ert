@@ -3,11 +3,12 @@ from __future__ import annotations
 import dataclasses
 from abc import ABC, abstractmethod
 from pathlib import Path
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, Literal
 
 import networkx as nx
 import numpy as np
 import xarray as xr
+from pydantic import BaseModel
 
 if TYPE_CHECKING:
     import numpy.typing as npt
@@ -29,6 +30,13 @@ class CustomDict(dict):  # type: ignore  # noqa: FURB189
         super().__init__(data)
 
 
+class ParameterMetadata(BaseModel):
+    key: str
+    transformation: str | None
+    dimensionality: Literal[1, 2, 3] = 1
+    userdata: dict[str, Any]
+
+
 @dataclasses.dataclass
 class ParameterConfig(ABC):
     name: str
@@ -42,6 +50,21 @@ class ParameterConfig(ABC):
         ensemble_size: int,
     ) -> xr.Dataset:
         return self.read_from_runpath(Path(), real_nr, 0)
+
+    @property
+    @abstractmethod
+    def parameter_keys(self) -> list[str]:
+        """
+        Returns a list of parameter keys within this parameter group
+        """
+
+    @property
+    @abstractmethod
+    def metadata(self) -> list[ParameterMetadata]:
+        """
+        Returns metadata describing this parameter
+
+        """
 
     @abstractmethod
     def __len__(self) -> int:

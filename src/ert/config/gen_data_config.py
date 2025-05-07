@@ -12,7 +12,7 @@ from ert.substitutions import substitute_runpath_name
 from ert.validation import rangestring_to_list
 
 from .parsing import ConfigDict, ConfigValidationError, ErrorInfo
-from .response_config import InvalidResponseFile, ResponseConfig
+from .response_config import InvalidResponseFile, ResponseConfig, ResponseMetadata
 from .responses_index import responses_index
 
 
@@ -21,6 +21,21 @@ class GenDataConfig(ResponseConfig):
     name: str = "gen_data"
     report_steps_list: list[list[int] | None] = dataclasses.field(default_factory=list)
     has_finalized_keys: bool = True
+
+    @property
+    def metadata(self) -> list[ResponseMetadata]:
+        return [
+            ResponseMetadata(
+                response_type=self.name,
+                response_key=response_key,
+                filter_on={"report_steps": report_steps}
+                if report_steps is not None
+                else {"report_steps": [0]},
+            )
+            for response_key, report_steps in zip(
+                self.keys, self.report_steps_list, strict=False
+            )
+        ]
 
     def __post_init__(self) -> None:
         if len(self.report_steps_list) == 0:
