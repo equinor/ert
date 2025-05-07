@@ -26,10 +26,6 @@ logger = logging.getLogger(__name__)
 
 
 class EnsembleSmoother(UpdateRunModel):
-    """
-    Ensemble Smoother
-    """
-
     def __init__(
         self,
         target_ensemble: str,
