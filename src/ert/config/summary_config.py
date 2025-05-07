@@ -13,7 +13,7 @@ from ._read_summary import read_summary
 from .ensemble_config import Refcase
 from .parsing import ConfigDict, ConfigKeys
 from .parsing.config_errors import ConfigValidationError, ConfigWarning
-from .response_config import InvalidResponseFile, ResponseConfig
+from .response_config import InvalidResponseFile, ResponseConfig, ResponseMetadata
 from .responses_index import responses_index
 
 logger = logging.getLogger(__name__)
@@ -31,6 +31,17 @@ class SummaryConfig(ResponseConfig):
         self.keys = sorted(set(self.keys))
         if len(self.keys) < 1:
             raise ValueError("SummaryConfig must be given at least one key")
+
+    @property
+    def metadata(self) -> list[ResponseMetadata]:
+        return [
+            ResponseMetadata(
+                response_type=self.name,
+                response_key=response_key,
+                filter_on=None,
+            )
+            for response_key in self.keys
+        ]
 
     @property
     def expected_input_files(self) -> list[str]:
