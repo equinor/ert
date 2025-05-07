@@ -1,13 +1,12 @@
 from __future__ import annotations
 
 import asyncio
-import contextlib
 import logging
 import os
 import time
 from collections.abc import Iterable
 from datetime import datetime
-from functools import cache, lru_cache
+from functools import cache, cached_property, lru_cache
 from multiprocessing.pool import ThreadPool
 from pathlib import Path
 from typing import TYPE_CHECKING
@@ -261,6 +260,25 @@ class LocalEnsemble(BaseMode):
             ]
         )
 
+    @cached_property
+    def _existing_scalars(self) -> dict[str, list[int]]:
+        genkw_mask: dict[str, list[int]] = {}
+        for parameter in self.experiment.parameter_configuration.values():
+            if isinstance(parameter, GenKwConfig):
+                genkw_mask[parameter.name] = []
+                group_path = (
+                    self.mount_point / f"{_escape_filename(parameter.name)}.parquet"
+                )
+                if group_path.exists():
+                    genkw_mask[parameter.name] = (
+                        pl.scan_parquet(group_path)
+                        .select("realization")
+                        .collect()["realization"]
+                        .unique()
+                        .to_list()
+                    )
+        return genkw_mask
+
     def has_data(self) -> list[int]:
         """
         Return the realization numbers where all responses are internalized
@@ -372,6 +390,8 @@ class LocalEnsemble(BaseMode):
 
     def refresh_ensemble_state(self) -> None:
         self.get_ensemble_state.cache_clear()
+        if self._existing_scalars is not None:
+            del self._existing_scalars
         self.get_ensemble_state()
 
     @lru_cache  # noqa: B019
@@ -386,6 +406,7 @@ class LocalEnsemble(BaseMode):
         """
 
         response_configs = self.experiment.response_configuration
+        existing_scalars = self._existing_scalars
 
         def _parameters_exist_for_realization(realization: int) -> bool:
             """
@@ -406,8 +427,12 @@ class LocalEnsemble(BaseMode):
                 return True
             path = self._realization_dir(realization)
             return all(
-                (path / (_escape_filename(parameter) + ".nc")).exists()
-                for parameter in self.experiment.parameter_configuration
+                (
+                    parameter.name in existing_scalars
+                    and realization in existing_scalars[parameter.name]
+                )
+                or ((path / (_escape_filename(parameter.name) + ".nc")).exists())
+                for parameter in self.experiment.parameter_configuration.values()
             )
 
         def _responses_exist_for_realization(
@@ -518,45 +543,67 @@ class LocalEnsemble(BaseMode):
             datasets = [self._load_single_dataset(group, i) for i in realizations]
         return xr.combine_nested(datasets, concat_dim="realizations")
 
+    def _load_parameters_lazy(
+        self,
+        group: str,
+    ) -> pl.LazyFrame:
+        """
+        Lazy load genkw group with all realizations
+        Parameters
+        ----------
+        group : str
+            Name of parameter group to load.
+
+        Returns
+        -------
+        parameters : pl.LazyFrame
+            Loaded parameters.
+        """
+        group_path = self.mount_point / f"{_escape_filename(group)}.parquet"
+        if not group_path.exists():
+            raise KeyError(f"No {group} dataset in storage for ensemble {self.name}")
+        df = pl.scan_parquet(group_path)
+        return df
+
     def load_parameters(
         self,
         group: str,
         realizations: int | npt.NDArray[np.int_] | None = None,
         transformed: bool = False,
-    ) -> xr.Dataset:
+    ) -> xr.Dataset | pl.DataFrame:
         """
-        Load parameters for group and realizations into xarray Dataset.
+        Load parameters for group and realizations. If transformed is True,
+        the parameters will be transformed using the parameter transformation
+        otherwise it will return the raw values.
 
-        Parameters
-        ----------
-        group : str
-            Name of parameter group to load.
-        realizations : {int, ndarray of int}, optional
-            Realization indices to load. If None, all realizations are loaded.
-        transformed : bool
-            If True, the parameters are transformed using the parameter transformation
-
-        Returns
-        -------
-        parameters : Dataset
-            Loaded xarray Dataset with parameters.
         """
-
+        if group not in self.experiment.parameter_configuration:
+            raise KeyError(f"{group} is not registered to the experiment.")
+        config = self.experiment.parameter_configuration[group]
+        if isinstance(config, GenKwConfig):
+            df = self._load_parameters_lazy(group).collect()
+            if realizations is not None:
+                if isinstance(realizations, int):
+                    realizations = np.array([realizations])
+                df = df.filter(pl.col("realization").is_in(realizations))
+                if df.is_empty():
+                    raise IndexError(
+                        f"No matching realizations {realizations} found for {group}"
+                    )
+            if transformed:
+                df = df.with_columns(
+                    [
+                        pl.col(col)
+                        .map_elements(
+                            config.transform_col(col), return_dtype=df[col].dtype
+                        )
+                        .alias(col)
+                        for col in df.columns
+                        if col != "realization"
+                    ]
+                )
+            return df
         ds = self._load_dataset(group, realizations)
-        if transformed:
-            config = self.experiment.parameter_configuration[group]
-            assert isinstance(config, GenKwConfig)
-            transformed_array = xr.apply_ufunc(
-                config.transform,
-                ds["values"],
-                input_core_dims=[["names"]],
-                output_core_dims=[["names"]],
-                vectorize=True,
-            )
-            ds = xr.Dataset(
-                {"values": transformed_array},
-                coords=ds.coords,
-            )
         return ds
 
     def load_parameters_numpy(
@@ -572,8 +619,57 @@ class LocalEnsemble(BaseMode):
         iens_active_index: npt.NDArray[np.int_],
     ) -> None:
         config_node = self.experiment.parameter_configuration[param_group]
-        for i, realization in enumerate(iens_active_index):
-            config_node.save_parameters(self, int(realization), parameters[:, i])
+        if isinstance(config_node, GenKwConfig):
+            df = pl.DataFrame(
+                {
+                    "realization": iens_active_index,
+                }
+            ).with_columns(
+                [
+                    pl.Series(parameters[i, :]).alias(param_name.name)
+                    for i, param_name in enumerate(config_node.transform_functions)
+                ]
+            )
+            self.save_parameters(param_group, None, df)
+        else:
+            for i, realization in enumerate(iens_active_index):
+                config_node.save_parameters(self, int(realization), parameters[:, i])
+
+    def load_scalars(
+        self, group: str | None = None, realizations: npt.NDArray[np.int_] | None = None
+    ) -> pl.DataFrame:
+        dataframes = []
+        gen_kws = [
+            config
+            for config in self.experiment.parameter_configuration.values()
+            if isinstance(config, GenKwConfig)
+        ]
+        if group:
+            gen_kws = [config for config in gen_kws if config.name == group]
+        for config in gen_kws:
+            df = self.load_parameters(config.name, realizations, transformed=True)
+            assert isinstance(df, pl.DataFrame)
+            df = df.rename(
+                {
+                    col: f"{config.name}:{col}"
+                    for col in df.columns
+                    if col != "realization"
+                }
+            )
+            for parameter in df.columns:
+                if parameter == "realization":
+                    continue
+                if config.shouldUseLogScale(parameter.split(":")[-1]):
+                    df = df.with_columns(
+                        (np.log10(pl.col(parameter))).alias(f"LOG10_{parameter}")
+                    )
+
+            dataframes.append(df)
+
+        if not dataframes:
+            return pl.DataFrame()
+
+        return pl.concat(dataframes, how="align")
 
     def load_cross_correlations(self) -> xr.Dataset:
         input_path = self.mount_point / "corr_XY.nc"
@@ -719,57 +815,57 @@ class LocalEnsemble(BaseMode):
             )
             realizations = np.flatnonzero(ens_mask)
 
-        dataframes: list[pd.DataFrame] = []
-        gen_kws = [
-            config
-            for config in self.experiment.parameter_configuration.values()
-            if isinstance(config, GenKwConfig)
-        ]
-        if group:
-            gen_kws = [config for config in gen_kws if config.name == group]
-        for key in gen_kws:
-            with contextlib.suppress(KeyError):
-                da = self.load_parameters(key.name, realizations, transformed=True)[
-                    "values"
-                ]
-                assert isinstance(da, xr.DataArray)
-                da["names"] = np.char.add(f"{key.name}:", da["names"].astype(np.str_))
-                df = da.to_dataframe().unstack(level="names")
-                df.columns = df.columns.droplevel()
-                for parameter in df.columns:
-                    if key.shouldUseLogScale(parameter.split(":")[1]):
-                        df[f"LOG10_{parameter}"] = np.log10(df[parameter])
-                dataframes.append(df)
-        if not dataframes:
+        df = self.load_scalars(group, realizations)
+
+        if df.is_empty():
             return pd.DataFrame()
 
-        dataframe = pd.concat(dataframes, axis=1)
+        dataframe = df.to_pandas().set_index("realization")
         dataframe.columns.name = None
         dataframe.index.name = "Realization"
-
         return dataframe.sort_index(axis=1)
 
     @require_write
     def save_parameters(
         self,
         group: str,
-        realization: int,
-        dataset: xr.Dataset,
+        realization: int | None,
+        dataset: xr.Dataset | pl.DataFrame,
     ) -> None:
         """
         Saves the provided dataset under a parameter group and realization index(es)
-        Parameters
-        ----------
-        group : str
-            Parameter group name for saving dataset.
-        realization : int or NDArray[int_]
-            Realization index(es) for saving group.
-        dataset : Dataset
-            Dataset to save. It must contain a variable named 'values'
-            which will be used when flattening out the parameters into
-            a 1d-vector. When saving multiple realizations, dataset must
-            have a 'realizations' dimension.
+
         """
+        if isinstance(dataset, pl.DataFrame):
+            try:
+                # since all realizations are saved in a single parquet file,
+                # this makes sure that we only append new realizations.
+                df = self._load_parameters_lazy(group)
+                existing_realizations = (
+                    df.select("realization")
+                    .unique()
+                    .collect()
+                    .get_column("realization")
+                )
+                new_data = dataset.filter(
+                    ~pl.col("realization").is_in(existing_realizations)
+                )
+                if new_data.height > 0:
+                    df_full = pl.concat([df.collect(), new_data], how="vertical").sort(
+                        "realization"
+                    )
+                else:
+                    return
+            except KeyError:
+                df_full = dataset
+
+            group_path = self.mount_point / f"{_escape_filename(group)}.parquet"
+            self._storage._to_parquet_transaction(group_path, df_full)
+            return
+
+        assert realization is not None, (
+            "Realization must be provided for xarray Dataset"
+        )
         if "values" not in dataset.variables:
             raise ValueError(
                 f"Dataset for parameter group '{group}' "
@@ -779,8 +875,6 @@ class LocalEnsemble(BaseMode):
             raise ValueError(
                 f"Parameters {group} are empty. Cannot proceed with saving to storage."
             )
-        if group not in self.experiment.parameter_configuration:
-            raise ValueError(f"{group} is not registered to the experiment.")
 
         path = self._realization_dir(realization) / f"{_escape_filename(group)}.nc"
         path.parent.mkdir(exist_ok=True)
@@ -844,17 +938,23 @@ class LocalEnsemble(BaseMode):
         if parameter_group not in self.experiment.parameter_configuration:
             raise ValueError(f"{parameter_group} is not registered to the experiment.")
 
-        ds = self.load_parameters(parameter_group)
-        return ds.std("realizations")["values"].values
+        data = self.load_parameters(parameter_group)
+        if isinstance(data, pl.DataFrame):
+            return data.drop("realization").std().to_numpy().reshape(-1)
+        return data.std("realizations")["values"].values
 
     def get_parameter_state(
         self, realization: int
     ) -> dict[str, RealizationStorageState]:
         path = self._realization_dir(realization)
+        existing_scalars = self._existing_scalars
         return {
-            e: RealizationStorageState.PARAMETERS_LOADED
-            if (path / (_escape_filename(e) + ".nc")).exists()
-            else RealizationStorageState.UNDEFINED
+            e: (
+                RealizationStorageState.PARAMETERS_LOADED
+                if (path / (_escape_filename(e) + ".nc")).exists()
+                or (e in existing_scalars and realization in existing_scalars[e])
+                else RealizationStorageState.UNDEFINED
+            )
             for e in self.experiment.parameter_configuration
         }
 
