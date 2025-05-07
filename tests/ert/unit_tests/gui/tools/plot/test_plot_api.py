@@ -279,11 +279,11 @@ def test_plot_api_handles_empty_gen_kw(api_and_storage):
     assert api.data_for_key(str(ensemble.id), key).empty
     ensemble.save_parameters(
         key,
-        1,
-        xr.Dataset(
+        realization=None,
+        dataset=pl.DataFrame(
             {
-                "values": ("names", [1.0]),
-                "names": [name],
+                name: [1.0],
+                "realization": 1,
             }
         ),
     )

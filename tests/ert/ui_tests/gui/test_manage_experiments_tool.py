@@ -77,10 +77,11 @@ def test_design_matrix_in_manage_experiments_panel(
         RealizationStorageState.PARAMETERS_LOADED in s
         for s in ensemble.get_ensemble_state()
     )
-    params = ensemble.load_parameters("DESIGN_MATRIX")["values"]
-    np.testing.assert_array_equal(params[:, 0], a_values)
-    np.testing.assert_array_equal(params[:, 1], np.ones(num_realizations))
-    np.testing.assert_array_equal(params[:, 2], 2 * np.ones(num_realizations))
+
+    params = ensemble.load_parameters("DESIGN_MATRIX").drop("realization")
+    np.testing.assert_array_equal(params["a"].to_list(), a_values)
+    np.testing.assert_array_equal(params["b"].to_list(), np.ones(num_realizations))
+    np.testing.assert_array_equal(params["c"].to_list(), 2 * np.ones(num_realizations))
 
     add_experiment_in_manage_experiment_dialog(
         qtbot, tool, experiment_name="my-experiment-2", ensemble_name="my-design-2"
@@ -389,7 +390,7 @@ ANALYSIS_SET_VAR OBSERVATIONS AUTO_SCALE POLY_OBS1_*
 """
         )
 
-    prior_ens, _ = run_cli_ES_with_case("poly_localization_0.ert")
+    prior_ens_id, _, _ = run_cli_ES_with_case("poly_localization_0.ert")
     config = ErtConfig.from_file("poly_localization_0.ert")
 
     notifier = ErtNotifier()
@@ -400,7 +401,7 @@ ANALYSIS_SET_VAR OBSERVATIONS AUTO_SCALE POLY_OBS1_*
             config, notifier, config.runpath_config.num_realizations
         )
 
-        assert prior_ens.name
+        assert storage.get_ensemble(prior_ens_id).name
 
         # select the ensemble
         storage_widget = tool.findChild(StorageWidget)

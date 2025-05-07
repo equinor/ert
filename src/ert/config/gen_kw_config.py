@@ -12,6 +12,7 @@ from typing import TYPE_CHECKING, Any, Self, cast, overload
 import networkx as nx
 import numpy as np
 import pandas as pd
+import polars as pl
 import xarray as xr
 from scipy.stats import norm
 from typing_extensions import TypedDict
@@ -290,7 +291,7 @@ class GenKwConfig(ParameterConfig):
 
     def sample_or_load(
         self, real_nr: int, random_seed: int, ensemble_size: int
-    ) -> xr.Dataset:
+    ) -> pl.DataFrame:
         keys = [e.name for e in self.transform_functions]
         parameter_value = self._sample_value(
             self.name,
@@ -299,11 +300,15 @@ class GenKwConfig(ParameterConfig):
             real_nr,
         )
 
-        return xr.Dataset(
-            {
-                "values": ("names", parameter_value),
-                "names": keys,
-            }
+        parameter_dict = {
+            parameter.name: parameter_value[idx]
+            for idx, parameter in enumerate(self.transform_functions)
+        }
+        parameter_dict["realization"] = real_nr
+        return pl.DataFrame(
+            parameter_dict,
+            schema={tf.name: pl.Float64 for tf in self.transform_functions}
+            | {"realization": pl.Int64},
         )
 
     def load_parameter_graph(self) -> nx.Graph[int]:
@@ -326,32 +331,19 @@ class GenKwConfig(ParameterConfig):
         real_nr: int,
         ensemble: Ensemble,
     ) -> dict[str, dict[str, float | str]]:
-        array = ensemble.load_parameters(self.name, real_nr, transformed=True)["values"]
-        assert isinstance(array, xr.DataArray)
-        if not array.size == len(self.transform_functions):
+        df = ensemble.load_parameters(self.name, real_nr, transformed=True).drop(
+            "realization"
+        )
+
+        assert isinstance(df, pl.DataFrame)
+        if not df.width == len(self.transform_functions):
             raise ValueError(
                 f"The configuration of GEN_KW parameter {self.name}"
-                f" is of size {len(self.transform_functions)}, expected {array.size}"
+                f" has {len(self.transform_functions)} parameters, but ensemble dataset"
+                f" for realization {real_nr} has {df.width} parameters."
             )
 
-        def parse_value(value: float | int | str) -> float | int | str:
-            if isinstance(value, float | int):
-                return value
-            try:
-                return int(value)
-            except ValueError:
-                try:
-                    return float(value)
-                except ValueError:
-                    return value
-
-        data = dict(
-            zip(
-                array["names"].values.tolist(),
-                [parse_value(i) for i in array.values],
-                strict=False,
-            )
-        )
+        data = df.to_dicts()[0]
 
         log10_data: dict[str, float | str] = {
             tf.name: math.log10(data[tf.name])
@@ -370,18 +362,39 @@ class GenKwConfig(ParameterConfig):
         realization: int,
         data: npt.NDArray[np.float64],
     ) -> None:
-        ds = xr.Dataset(
-            {
-                "values": ("names", data),
-                "names": [e.name for e in self.transform_functions],
-            }
+        parameter_dict = {
+            parameter.name: data[idx]
+            for idx, parameter in enumerate(self.transform_functions)
+        }
+        parameter_dict["realization"] = realization
+        ensemble.save_parameters(
+            self.name,
+            realization=None,
+            dataset=pl.DataFrame(
+                parameter_dict,
+                schema={tf.name: pl.Float64 for tf in self.transform_functions}
+                | {"realization": pl.Int64},
+            ),
         )
-        ensemble.save_parameters(self.name, realization, ds)
 
     def load_parameters(
         self, ensemble: Ensemble, realizations: npt.NDArray[np.int_]
     ) -> npt.NDArray[np.float64]:
-        return ensemble.load_parameters(self.name, realizations)["values"].values.T
+        return (
+            ensemble.load_parameters(self.name, realizations)
+            .drop("realization")
+            .to_numpy()
+            .T.copy()
+        )
+
+    def copy_parameters(
+        self,
+        source_ensemble: Ensemble,
+        target_ensemble: Ensemble,
+        realizations: npt.NDArray[np.int_],
+    ) -> None:
+        df = source_ensemble.load_parameters(self.name, realizations)
+        target_ensemble.save_parameters(self.name, realization=None, dataset=df)
 
     def shouldUseLogScale(self, keyword: str) -> bool:
         for tf in self.transform_functions:
@@ -415,6 +428,15 @@ class GenKwConfig(ParameterConfig):
         for index, tf in enumerate(self.transform_functions):
             array[index] = tf.calc_func(array[index], list(tf.parameter_list.values()))
         return array
+
+    def transform_col(self, param_name: str) -> Callable[[float], float]:
+        tf: TransformFunction | None = None
+        for tf in self.transform_functions:
+            if tf.name == param_name:
+                break
+        assert tf is not None, f"Transform function {param_name} not found"
+        arg = list(tf.parameter_list.values())
+        return lambda x: tf.calc_func(x, arg)
 
     @staticmethod
     def _values_from_file(file_name: str, keys: list[str]) -> npt.NDArray[np.double]:
