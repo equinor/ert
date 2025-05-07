@@ -12,7 +12,7 @@ import xarray as xr
 
 from ert.substitutions import substitute_runpath_name
 
-from .parameter_config import ParameterConfig
+from .parameter_config import ParameterConfig, ParameterMetadata
 
 if TYPE_CHECKING:
     import numpy.typing as npt
@@ -32,6 +32,21 @@ class ExtParamConfig(ParameterConfig):
     keys as strings and a list of suffixes for each key.
     If a list of strings is given, the order is preserved.
     """
+
+    @property
+    def parameter_keys(self) -> list[str]:
+        if isinstance(self.input_keys, dict):
+            flattened = []
+            for key, subkeys in self.input_keys.items():
+                for subkey in subkeys:
+                    flattened.append(key + subkey)
+            return flattened
+        else:
+            return self.input_keys
+
+    @property
+    def metadata(self) -> list[ParameterMetadata]:
+        return []
 
     input_keys: list[str] | dict[str, list[str]] = field(default_factory=list)
     forward_init: bool = False

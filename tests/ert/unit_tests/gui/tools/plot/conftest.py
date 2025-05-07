@@ -300,6 +300,58 @@ def mocked_requests_get(*args, **kwargs):
                 "ens_id_4",
                 "ens_id_5",
             ],
+            "parameters": {
+                "default": [
+                    {
+                        "key": "SNAKE_OIL_PARAM:BPR_138_PERSISTENCE",
+                        "transformation": "NORMAL",
+                        "dimensionality": 1,
+                        "userdata": {"data_origin": "GEN_KW"},
+                    },
+                    {
+                        "key": "SNAKE_OIL_PARAM:OP1_DIVERGENCE_SCALE",
+                        "transformation": "NORMAL",
+                        "dimensionality": 1,
+                        "userdata": {"data_origin": "GEN_KW"},
+                    },
+                    {
+                        "key": "I_AM_A_PARAM",
+                        "transformation": "NORMAL",
+                        "dimensionality": 1,
+                        "userdata": {"data_origin": "GEN_KW"},
+                    },
+                ]
+            },
+            "responses": {
+                "summary": [
+                    {
+                        "response_type": "summary",
+                        "response_key": "BPR:1,3,8",
+                        "filter_on": {},
+                    },
+                    {
+                        "response_type": "summary",
+                        "response_key": "FOPR",
+                        "filter_on": {},
+                    },
+                    {
+                        "response_type": "summary",
+                        "response_key": "WOPPER",
+                        "filter_on": {},
+                    },
+                ],
+                "gen_data": [
+                    {
+                        "response_type": "gen_data",
+                        "response_key": "SNAKE_OIL_WPR_DIFF",
+                        "filter_on": {"report_steps": [199]},
+                    }
+                ],
+            },
+            "observations": {
+                "summary": ["FOPR"],
+                "gen_data": ["SNAKE_OIL_WPR_DIFF@199"],
+            },
             "priors": {},
             "userdata": {},
         }

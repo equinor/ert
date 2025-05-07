@@ -325,6 +325,34 @@ class LocalExperiment(BaseMode):
             params[data["name"]] = _KNOWN_PARAMETER_TYPES[param_type](**data)
         return params
 
+    @cached_property
+    def parameter_keys(self) -> list[str]:
+        keys = []
+        for config in self.parameter_configuration.values():
+            keys += config.parameter_keys
+
+        return keys
+
+    @cached_property
+    def parameter_group_to_parameter_keys(self) -> dict[str, list[str]]:
+        return {
+            config.name: config.parameter_keys
+            for config in self.parameter_configuration.values()
+        }
+
+    @cached_property
+    def response_key_to_observation_key(self) -> dict[str, dict[str, list[str]]]:
+        # response_type->response_key->[observation_keys]
+        return {
+            response_type: {
+                d["response_key"]: d["observation_key"]
+                for d in obs_df.group_by("response_key")
+                .agg([pl.col("observation_key").drop_nulls().unique()])
+                .to_dicts()
+            }
+            for response_type, obs_df in self.observations.items()
+        }
+
     @property
     def response_configuration(self) -> dict[str, ResponseConfig]:
         responses = {}

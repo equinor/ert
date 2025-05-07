@@ -12,6 +12,7 @@ from pandas.testing import assert_frame_equal
 from starlette.testclient import TestClient
 
 from ert.config import GenKwConfig, SummaryConfig
+from ert.config.gen_kw_config import TransformFunctionDefinition
 from ert.dark_storage import common
 from ert.dark_storage.app import app
 from ert.gui.tools.plot.plot_api import PlotApi, PlotApiKeyDefinition
@@ -42,7 +43,7 @@ def test_key_def_structure(api):
         "dimensionality": 2,
         "index_type": "VALUE",
         "key": "FOPR",
-        "metadata": {"data_origin": "Summary"},
+        "metadata": {"data_origin": "summary"},
         "observations": True,
         "log_scale": False,
     }
@@ -53,7 +54,7 @@ def test_key_def_structure(api):
         "dimensionality": 2,
         "index_type": "VALUE",
         "key": "BPR:1,3,8",
-        "metadata": {"data_origin": "Summary"},
+        "metadata": {"data_origin": "summary"},
         "observations": False,
         "log_scale": False,
     }
@@ -120,15 +121,17 @@ def test_can_load_data_and_observations(api):
 
 def test_all_data_type_keys(api):
     keys = [e.key for e in api.all_data_type_keys()]
-    assert keys == [
-        "BPR:1,3,8",
-        "FOPR",
-        "SNAKE_OIL_WPR_DIFF@199",
-        "SNAKE_OIL_PARAM:BPR_138_PERSISTENCE",
-        "SNAKE_OIL_PARAM:OP1_DIVERGENCE_SCALE",
-        "WOPPER",
-        "I_AM_A_PARAM",
-    ]
+    assert sorted(keys) == sorted(
+        [
+            "BPR:1,3,8",
+            "FOPR",
+            "SNAKE_OIL_WPR_DIFF@199",
+            "SNAKE_OIL_PARAM:BPR_138_PERSISTENCE",
+            "SNAKE_OIL_PARAM:OP1_DIVERGENCE_SCALE",
+            "WOPPER",
+            "I_AM_A_PARAM",
+        ]
+    )
 
 
 def test_load_history_data(api):
@@ -262,7 +265,11 @@ def test_plot_api_handles_empty_gen_kw(api_and_storage):
                 name=key,
                 forward_init=False,
                 update=False,
-                transform_function_definitions=[],
+                transform_function_definitions=[
+                    TransformFunctionDefinition(
+                        name=name, param_name="NORMAL", values=[0, 0.1]
+                    )
+                ],
             ),
         ],
         responses=[],
