@@ -41,8 +41,8 @@ class FileDialog(QDialog):
     def __init__(
         self,
         file_name: str,
-        job_name: str,
-        job_number: int,
+        step_name: str,
+        step_number: int,
         realization: int,
         iteration: int,
         parent: QWidget | None = None,
@@ -50,7 +50,7 @@ class FileDialog(QDialog):
         super().__init__(parent)
 
         self.setWindowTitle(
-            f"{job_name} # {job_number} "
+            f"{step_name} # {step_number} "
             f"Realization: {realization} Iteration: {iteration}"
         )
         self.setObjectName(file_name)
