@@ -22,6 +22,7 @@ from ert.run_models.event import EverestBatchResultEvent, status_event_from_json
 from ert.scheduler import create_driver
 from ert.scheduler.driver import Driver, FailedSubmit
 from ert.scheduler.event import StartedEvent
+from ert.trace import get_traceparent
 from everest.config import EverestConfig, ServerConfig
 from everest.strings import (
     EVEREST_SERVER_CONFIG,
@@ -30,7 +31,6 @@ from everest.strings import (
     START_EXPERIMENT_ENDPOINT,
     STOP_ENDPOINT,
 )
-from everest.trace import get_traceparent
 
 # Specifies how many times to try a http request within the specified timeout.
 _HTTP_REQUEST_RETRY = 10
