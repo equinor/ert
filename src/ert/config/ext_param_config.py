@@ -39,7 +39,7 @@ class ExtParamConfig(ParameterConfig):
             flattened = []
             for key, subkeys in self.input_keys.items():
                 for subkey in subkeys:
-                    flattened.append(key + subkey)
+                    flattened.append(key + "." + subkey)
             return flattened
         else:
             return self.input_keys

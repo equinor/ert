@@ -14,6 +14,7 @@ import numpy as np
 import polars as pl
 from ropt.results import FunctionResults, GradientResults, Results
 
+from ert.storage import Ensemble, Experiment, open_storage
 from everest.config.objective_function_config import ObjectiveFunctionConfig
 from everest.config.output_constraint_config import OutputConstraintConfig
 from everest.strings import EVEREST
@@ -53,19 +54,65 @@ class OptimizationDataframes(TypedDict, total=False):
 
 class BatchStorageData:
     BATCH_DATAFRAMES: ClassVar[list[str]] = [
-        "realization_controls",
         "batch_objectives",
-        "realization_objectives",
         "batch_constraints",
-        "realization_constraints",
         "batch_objective_gradient",
-        "perturbation_objectives",
         "batch_constraint_gradient",
-        "perturbation_constraints",
     ]
 
-    def __init__(self, path: Path) -> None:
+    def __init__(self, path: Path, ert_ensemble: Ensemble) -> None:
         self._path = path
+        self._ert_ensemble = ert_ensemble
+
+        ert_experiment = ert_ensemble.experiment
+        response_type_mapping = ert_experiment.response_type_to_response_keys
+        self._objective_names = response_type_mapping.get("everest_objectives", [])
+        self._constraints_names = response_type_mapping.get("everest_constraints", [])
+        self._controls_names = [
+            f"{group}.{key}"
+            for group, keys in ert_experiment.parameter_group_to_parameter_keys.items()
+            for key in keys
+        ]
+
+        self._ert_storage_df = (
+            self._ert_storage_all_objectives_constraints_and_controls()
+        )
+
+    def _ert_storage_all_objectives_constraints_and_controls(
+        self,
+    ) -> pl.DataFrame | None:
+        ensemble_data = self._ert_ensemble.all_parameters_and_gen_data
+
+        if ensemble_data is None:
+            return None
+
+        all_columns = {
+            *self._constraints_names,
+            *self._objective_names,
+            *self._controls_names,
+            *["batch", "realization", "model_realization", "perturbation"],
+        }
+
+        ensemble_data = ensemble_data.drop(set(ensemble_data.columns) - all_columns)
+
+        cast_types = dict.fromkeys(
+            self._constraints_names + self._objective_names, pl.Float64
+        )
+
+        return ensemble_data.rename(
+            {
+                "batch": "batch_id",
+                "realization": "simulation_id",
+                "model_realization": "realization",
+            }
+        ).cast(
+            {
+                "batch_id": pl.UInt32,
+                "realization": pl.UInt32,
+                "simulation_id": pl.Int32,
+                **cast_types,  # type: ignore
+            },
+        )
 
     @property
     def has_data(self) -> bool:
@@ -95,40 +142,64 @@ class BatchStorageData:
         return None
 
     @property
-    def realization_controls(self) -> pl.DataFrame | None:
-        return self._read_df_if_exists(self._path / "realization_controls.parquet")
-
-    @property
     def batch_objectives(self) -> pl.DataFrame | None:
         return self._read_df_if_exists(self._path / "batch_objectives.parquet")
-
-    @property
-    def realization_objectives(self) -> pl.DataFrame | None:
-        return self._read_df_if_exists(self._path / "realization_objectives.parquet")
 
     @property
     def batch_constraints(self) -> pl.DataFrame | None:
         return self._read_df_if_exists(self._path / "batch_constraints.parquet")
 
     @property
-    def realization_constraints(self) -> pl.DataFrame | None:
-        return self._read_df_if_exists(self._path / "realization_constraints.parquet")
-
-    @property
     def batch_objective_gradient(self) -> pl.DataFrame | None:
         return self._read_df_if_exists(self._path / "batch_objective_gradient.parquet")
-
-    @property
-    def perturbation_objectives(self) -> pl.DataFrame | None:
-        return self._read_df_if_exists(self._path / "perturbation_objectives.parquet")
 
     @property
     def batch_constraint_gradient(self) -> pl.DataFrame | None:
         return self._read_df_if_exists(self._path / "batch_constraint_gradient.parquet")
 
     @property
+    def realization_controls(self) -> pl.DataFrame | None:
+        if self._ert_storage_df is None:
+            return None
+        return self._ert_storage_df.filter(pl.col("perturbation") < 0).drop(
+            ["perturbation", *self._objective_names, *self._constraints_names]
+        )
+
+    @property
+    def realization_objectives(self) -> pl.DataFrame | None:
+        if self._ert_storage_df is None:
+            return None
+        return self._ert_storage_df.filter(pl.col("perturbation") < 0).drop(
+            ["perturbation", *self._controls_names, *self._constraints_names]
+        )
+
+    @property
+    def realization_constraints(self) -> pl.DataFrame | None:
+        if self._ert_storage_df is None:
+            return None
+        return self._ert_storage_df.filter(pl.col("perturbation") < 0).drop(
+            ["perturbation", *self._objective_names, *self._controls_names]
+        )
+
+    @property
+    def perturbation_objectives(self) -> pl.DataFrame | None:
+        if self._ert_storage_df is None:
+            return None
+        return self._ert_storage_df.filter(pl.col("perturbation") >= 0).drop(
+            ["simulation_id", *self._constraints_names]
+        )
+
+    @property
     def perturbation_constraints(self) -> pl.DataFrame | None:
-        return self._read_df_if_exists(self._path / "perturbation_constraints.parquet")
+        if (
+            self._ert_storage_df is None
+            or self._ert_storage_df.is_empty()
+            or not self._constraints_names
+        ):
+            return None
+        return self._ert_storage_df.filter(pl.col("perturbation") >= 0).drop(
+            ["simulation_id", *self._objective_names]
+        )
 
     def save_dataframes(self, dataframes: BatchDataframes) -> None:
         for df_name in self.BATCH_DATAFRAMES:
@@ -262,7 +333,7 @@ class OptimizationStorageData:
     @property
     def batches_with_function_results(self) -> list[FunctionBatchStorageData]:
         return [
-            FunctionBatchStorageData(b._path)
+            FunctionBatchStorageData(b._path, b._ert_ensemble)
             for b in self.batches
             if b.has_function_results
         ]
@@ -270,7 +341,7 @@ class OptimizationStorageData:
     @property
     def batches_with_gradient_results(self) -> list[GradientBatchStorageData]:
         return [
-            GradientBatchStorageData(b._path)
+            GradientBatchStorageData(b._path, b._ert_ensemble)
             for b in self.batches
             if b.has_gradient_results
         ]
@@ -319,11 +390,16 @@ class OptimizationStorageData:
 
         return mapping
 
-    def read_from_experiment(self, experiment: _OptimizerOnlyExperiment) -> None:
-        for ens in experiment.ensembles.values():
+    def read_from_experiment(
+        self, experiment: _OptimizerOnlyExperiment, ert_experiment: Experiment | None
+    ) -> None:
+        if not ert_experiment:
+            return
+        opt_ens = experiment.ensembles
+        for ens in ert_experiment.ensembles:
             self.batches.append(
                 BatchStorageData(
-                    path=ens.optimizer_mount_point,
+                    path=opt_ens[ens.name].optimizer_mount_point, ert_ensemble=ens
                 )
             )
 
@@ -405,13 +481,15 @@ class EverestStorage:
     def __init__(
         self,
         output_dir: Path,
+        ert_storage_path: Path,
     ) -> None:
         self._control_ensemble_id = 0
         self._gradient_ensemble_id = 0
 
         self._output_dir = output_dir
         self._experiment = _OptimizerOnlyExperiment(self._output_dir)
-
+        self._ert_storage_path = ert_storage_path
+        self._ert_experiment: Experiment | None = None
         self.data = OptimizationStorageData(self._experiment.optimizer_mount_point)
 
     @staticmethod
@@ -538,8 +616,10 @@ class EverestStorage:
             )
 
     def read_from_output_dir(self) -> None:
-        exp = _OptimizerOnlyExperiment(self._output_dir)
-        self.data.read_from_experiment(exp)
+        self._ert_experiment = self._ert_experiment or next(
+            open_storage(self._ert_storage_path, mode="r").experiments, None
+        )
+        self.data.read_from_experiment(self._experiment, self._ert_experiment)
 
     def init(
         self,
@@ -855,10 +935,13 @@ class EverestStorage:
             if isinstance(item, GradientResults):
                 gradient_results = self._store_gradient_results(item)
                 batch_dicts[item.batch_id].update(gradient_results)
-
+        self._ert_experiment = self._ert_experiment or next(
+            open_storage(self._ert_storage_path, mode="r").experiments
+        )
+        assert self._ert_experiment is not None
         for batch_id, batch_dict in batch_dicts.items():
             target_ensemble = self._experiment.get_ensemble_by_name(f"batch_{batch_id}")
-
+            ert_ens = self._ert_experiment.get_ensemble_by_name(f"batch_{batch_id}")
             with open(
                 target_ensemble.optimizer_mount_point / "batch.json",
                 "w+",
@@ -872,28 +955,19 @@ class EverestStorage:
                     f,
                 )
 
-            batch_data = BatchStorageData(path=target_ensemble.optimizer_mount_point)
+            batch_data = BatchStorageData(
+                path=target_ensemble.optimizer_mount_point, ert_ensemble=ert_ens
+            )
 
             batch_data.save_dataframes(
                 {
-                    "realization_controls": batch_dict.get("realization_controls"),
                     "batch_objectives": batch_dict.get("batch_objectives"),
-                    "realization_objectives": batch_dict.get("realization_objectives"),
                     "batch_constraints": batch_dict.get("batch_constraints"),
-                    "realization_constraints": batch_dict.get(
-                        "realization_constraints"
-                    ),
                     "batch_objective_gradient": batch_dict.get(
                         "batch_objective_gradient"
                     ),
-                    "perturbation_objectives": batch_dict.get(
-                        "perturbation_objectives"
-                    ),
                     "batch_constraint_gradient": batch_dict.get(
                         "batch_constraint_gradient"
-                    ),
-                    "perturbation_constraints": batch_dict.get(
-                        "perturbation_constraints"
                     ),
                 }
             )
@@ -1058,7 +1132,6 @@ class EverestStorage:
         realization_dfs_to_join = {}  # type: ignore
         perturbation_dfs_to_join = {}  # type: ignore
 
-        batch_ids = [b.batch_id for b in self.data.batches]
         all_controls = (
             self.data.controls["control_name"].to_list()
             if self.data.controls is not None
@@ -1135,45 +1208,17 @@ class EverestStorage:
                 batch.batch_constraints,
             )
 
-        def _join_by_batch(
-            dfs: dict[int, list[pl.DataFrame]], on: list[str]
-        ) -> list[pl.DataFrame]:
-            """
-            Creates one dataframe per batch, with one column per input/output,
-            including control, objective, constraint, gradient value.
-            """
-            dfs_to_concat_ = []
-            for batch_id in batch_ids:
-                if batch_id not in dfs:
-                    continue
-
-                batch_df_ = dfs[batch_id][0]
-                for bdf_ in dfs[batch_id][1:]:
-                    if set(all_controls).issubset(set(bdf_.columns)) and set(
-                        all_controls
-                    ).issubset(set(batch_df_.columns)):
-                        bdf_ = bdf_.drop(all_controls)
-
-                    batch_df_ = batch_df_.join(
-                        bdf_,
-                        on=on,
-                    )
-
-                dfs_to_concat_.append(batch_df_)
-
-            return dfs_to_concat_
-
-        batch_dfs_to_concat = _join_by_batch(batch_dfs_to_join, on=["batch_id"])
-        batch_df = pl.concat(batch_dfs_to_concat, how="diagonal")
-
-        realization_dfs_to_concat = _join_by_batch(
-            realization_dfs_to_join, on=["batch_id", "realization", "simulation_id"]
+        batch_df = pl.concat(
+            [pl.concat(d, how="align") for d in batch_dfs_to_join.values()],
+            how="diagonal",
         )
-        realization_df = pl.concat(realization_dfs_to_concat, how="diagonal")
-
-        perturbation_dfs_to_concat = _join_by_batch(
-            perturbation_dfs_to_join, on=["batch_id", "realization", "perturbation"]
+        realization_df = pl.concat(
+            [pl.concat(d, how="align") for d in realization_dfs_to_join.values()],
+            how="diagonal",
         )
+        perturbation_dfs_to_concat = [
+            pl.concat(d, how="align") for d in perturbation_dfs_to_join.values()
+        ]
         if perturbation_dfs_to_concat:
             # Perturbations exists, proceed as normal
             perturbation_df = pl.concat(perturbation_dfs_to_concat, how="diagonal")

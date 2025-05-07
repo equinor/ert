@@ -1085,29 +1085,25 @@ class LocalEnsemble(BaseMode):
                     **{c: pl.Float64 for c in param_df.columns if c != "realization"},
                 }
             )
-            param_dfs.append(param_df)
+            param_dfs.append(param_df.sort("realization"))
 
-        responses = self.load_responses(
-            "gen_data", tuple(self.get_realization_list_with_responses())
-        )
+        reals = tuple(self.get_realization_list_with_responses())
+        responses = []
+        for key in self.experiment.response_type_to_response_keys:
+            response = self.load_responses(key, reals)
+            if response.is_empty() or key == "summary":
+                continue
+            responses.append(
+                response["realization", "response_key", "values"]
+                .pivot(on="response_key", values="values")
+                .sort("realization")
+            )
+        if not responses:
+            return None
 
-        if responses is None:
-            return pl.concat(param_dfs)
+        responses_wide = pl.concat(responses, how="align_right")
 
-        params_wide = pl.concat(
-            [
-                pdf.sort("realization").drop("realization")
-                if i > 0
-                else pdf.sort("realization")
-                for i, pdf in enumerate(param_dfs)
-            ],
-            how="horizontal",
-        )
-
-        responses_wide = responses["realization", "response_key", "values"].pivot(
-            on="response_key", values="values"
-        )
-
+        params_wide = pl.concat(param_dfs, how="align_right")
         # If responses are missing for some realizations, this _left_ join will
         # put null (polars) which maps to nan when doing .to_numpy() into the
         # response columns for those realizations

@@ -286,6 +286,7 @@ class EverestRunModel(BaseRunModel):
             )
 
     def _handle_optimizer_results(self, results: tuple[Results, ...]) -> None:
+        self.ever_storage._ert_experiment = self._experiment
         self.ever_storage.on_batch_evaluation_finished(results)
 
         for r in results:
@@ -327,6 +328,7 @@ class EverestRunModel(BaseRunModel):
 
         self.ever_storage = EverestStorage(
             output_dir=Path(self._everest_config.optimization_output_dir),
+            ert_storage_path=Path(self._everest_config.storage_dir),
         )
 
         self.ever_storage.init(
