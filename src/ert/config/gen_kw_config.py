@@ -71,6 +71,7 @@ class GenKwConfig(ParameterConfig):
     )
     forward_init: bool = False
     update: bool = True
+    name: str = "GEN_KW"
 
     def __post_init__(self) -> None:
         self.transform_functions: list[TransformFunction] = []
@@ -216,7 +217,6 @@ class GenKwConfig(ParameterConfig):
                     gen_kw_key,
                 )
         return cls(
-            name="SCALARS",
             transform_function_definitions=transform_function_definitions,
         )
 
