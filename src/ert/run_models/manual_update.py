@@ -20,8 +20,6 @@ logger = logging.getLogger(__name__)
 
 
 class ManualUpdate(UpdateRunModel):
-    """Manual update"""
-
     def __init__(
         self,
         ensemble_id: str,
