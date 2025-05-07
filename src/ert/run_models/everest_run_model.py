@@ -121,11 +121,17 @@ logger = logging.getLogger(EVEREST)
 
 
 class EverestRunModel(BaseRunModel):
+    """
+    This will run an Everest optimization experiment.
+    """
+
     def __init__(
         self,
         everest_config: EverestConfig,
         optimization_callback: OptimizerCallback | None,
         status_queue: queue.SimpleQueue[StatusEvents] | None = None,
+        # 2do make nicer or don't support timestamps
+        experiment_name: str | None = "EnOpt@<TIME>",
     ):
         Path(everest_config.log_dir).mkdir(parents=True, exist_ok=True)
         Path(everest_config.optimization_output_dir).mkdir(parents=True, exist_ok=True)
@@ -135,6 +141,7 @@ class EverestRunModel(BaseRunModel):
             everest_config.environment.random_seed,
         )
 
+        self._experiment_name = experiment_name
         self._everest_config = everest_config
         self._opt_callback = optimization_callback
         self._fm_errors: dict[int, dict[str, Any]] = {}
@@ -315,7 +322,9 @@ class EverestRunModel(BaseRunModel):
         self._eval_server_cfg = evaluator_server_config
 
         self._experiment = self._experiment or self._storage.create_experiment(
-            name=f"EnOpt@{datetime.datetime.now().strftime('%Y-%m-%d@%H:%M:%S')}",
+            name=self._experiment_name.replace(
+                "<TIME>", datetime.datetime.now().strftime("%Y-%m-%d@%H:%M:%S")
+            ),
             parameters=self._parameter_configuration,
             responses=self._response_configuration,
         )

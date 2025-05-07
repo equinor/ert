@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import os
 from importlib.resources import files
 from signal import SIG_DFL, SIGINT, signal
 
@@ -7,10 +8,13 @@ from PyQt6.QtCore import QDir
 from PyQt6.QtGui import QIcon
 from PyQt6.QtWidgets import QApplication
 
-from everest.gui.main_window import EverestMainWindow
+from ert.gui.main_window import ErtMainWindow
+from ert.services import StorageService
+from ert.storage import open_storage
+from everest.config import EverestConfig
 
 
-def run_gui(output_dir: str) -> None:
+def run_gui(config: EverestConfig) -> None:
     # Replace Python's exception handler for SIGINT with the system default.
     #
     # Python's SIGINT handler is the one that raises KeyboardInterrupt. This is
@@ -30,11 +34,15 @@ def run_gui(output_dir: str) -> None:
     app.setWindowIcon(QIcon("img:ert_icon.svg"))
 
     # Add arg parser if we are to pass more opts
-
-    window = EverestMainWindow(output_dir)
-    window.run()
-    window.adjustSize()
-    window.show()
-    window.activateWindow()
-    window.raise_()
-    app.exec()
+    with StorageService.init_service(project=os.path.abspath(config.storage_dir)):
+        window = ErtMainWindow.from_everest_config(config)
+        # window.run()
+        window.adjustSize()
+        storage = open_storage(config.optimization_output_dir, mode="r")
+        window.notifier.set_storage(storage)
+        window.post_init()
+        window.adjustSize()
+        window.show()
+        window.activateWindow()
+        window.raise_()
+        app.exec()
