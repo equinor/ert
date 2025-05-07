@@ -19,11 +19,7 @@ from websockets import ConnectionClosedError, ConnectionClosedOK
 from websockets.sync.client import connect
 
 from ert.ensemble_evaluator import EndEvent
-from ert.run_models.event import (
-    EverestBatchResultEvent,
-    EverestCacheHitEvent,
-    status_event_from_json,
-)
+from ert.run_models.event import EverestBatchResultEvent, status_event_from_json
 from ert.scheduler import create_driver
 from ert.scheduler.driver import Driver, FailedSubmit
 from ert.scheduler.event import StartedEvent
@@ -238,8 +234,6 @@ def start_monitor(
                     event = status_event_from_json(message)
                     if isinstance(event, EndEvent):
                         print(event.msg)
-                    elif isinstance(event, EverestCacheHitEvent):
-                        callback({OPT_PROGRESS_ID: {"cache_hits": event}})
                     elif isinstance(event, EverestBatchResultEvent):
                         if event.result_type == "FunctionResult":
                             callback(
