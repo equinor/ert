@@ -5,7 +5,7 @@ import os
 import warnings
 from collections import defaultdict
 from collections.abc import Callable
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from enum import StrEnum
 from hashlib import sha256
 from pathlib import Path
@@ -66,7 +66,9 @@ class TransformFunctionDefinition:
 
 @dataclass
 class GenKwConfig(ParameterConfig):
-    transform_function_definitions: list[TransformFunctionDefinition]
+    transform_function_definitions: list[TransformFunctionDefinition] = field(
+        default_factory=list
+    )
     forward_init: bool = False
     update: bool = True
 
@@ -135,7 +137,7 @@ class GenKwConfig(ParameterConfig):
 
     @classmethod
     def from_config_list(cls, gen_kw_list: list[list[str | dict[str, str]]]) -> Self:
-        errors = []
+        errors: list[ConfigValidationError] = []
         transform_function_definitions: list[TransformFunctionDefinition] = []
         for gen_kw in gen_kw_list:
             gen_kw_key = cast(str, gen_kw[0])
@@ -346,7 +348,7 @@ class GenKwConfig(ParameterConfig):
         real_nr: int,
         ensemble: Ensemble,
     ) -> dict[str, dict[str, float | str]]:
-        data = {}
+        data: dict[str, dict[str, float | str]] = {}
         for group in self.groups:
             array = ensemble.load_parameters(group, real_nr)["transformed_values"]
             assert isinstance(array, xr.DataArray)
@@ -371,9 +373,10 @@ class GenKwConfig(ParameterConfig):
             }
 
             if log10_data:
-                return data.update({group: data_group, f"LOG10_{group}": log10_data})
+                data.update({group: data_group, f"LOG10_{group}": log10_data})
             else:
-                data.update({group: data})
+                data.update({group: data_group})
+
         return data
 
     def save_parameters(
