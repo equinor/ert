@@ -7,10 +7,8 @@
     },
     {
       "batch": 0,
-      "event_type": "EverestBatchResultEvent",
-      "everest_event": "FINISHED_OPTIMIZER_EVALUATION",
-      "result_type": "FunctionResult",
-      "results": null
+      "event_type": "EverestStatusEvent",
+      "everest_event": "FINISHED_OPTIMIZER_EVALUATION"
     },
     {
       "batch": 0,
@@ -125,10 +123,8 @@
     },
     {
       "batch": 1,
-      "event_type": "EverestBatchResultEvent",
-      "everest_event": "FINISHED_OPTIMIZER_EVALUATION",
-      "result_type": "FunctionResult",
-      "results": null
+      "event_type": "EverestStatusEvent",
+      "everest_event": "FINISHED_OPTIMIZER_EVALUATION"
     },
     {
       "batch": 1,
@@ -163,10 +159,8 @@
     },
     {
       "batch": 2,
-      "event_type": "EverestBatchResultEvent",
-      "everest_event": "FINISHED_OPTIMIZER_EVALUATION",
-      "result_type": "FunctionResult",
-      "results": null
+      "event_type": "EverestStatusEvent",
+      "everest_event": "FINISHED_OPTIMIZER_EVALUATION"
     },
     {
       "batch": 2,

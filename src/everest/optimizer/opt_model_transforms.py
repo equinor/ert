@@ -1,9 +1,10 @@
+from __future__ import annotations
+
 from collections.abc import Sequence
-from typing import Literal
+from typing import Literal, TypedDict
 
 import numpy as np
 from numpy.typing import NDArray
-from ropt.transforms import OptModelTransforms
 from ropt.transforms.base import (
     NonLinearConstraintTransform,
     ObjectiveTransform,
@@ -17,6 +18,12 @@ from everest.config import (
     OutputConstraintConfig,
 )
 from everest.config.utils import FlattenedControls
+
+
+class EverestOptModelTransforms(TypedDict):
+    control_scaler: ControlScaler
+    objective_scaler: ObjectiveScaler
+    constraint_scaler: ConstraintScaler | None
 
 
 class ControlScaler(VariableTransform):
@@ -206,6 +213,7 @@ class ObjectiveScaler(ObjectiveTransform):
         self._scales = np.asarray(scales, dtype=np.float64)
         self._auto_scales = np.asarray(auto_scales, dtype=np.bool_)
         self._weights = np.asarray(weights, dtype=np.float64)
+        self._needs_auto_scale_calculation = bool(np.any(self._auto_scales))
 
     # The transform methods below all return the negative of the objectives.
     # This is because Everest maximizes the objectives, while ropt is a minimizer.
@@ -272,11 +280,12 @@ class ObjectiveScaler(ObjectiveTransform):
         auto_scales = np.abs(np.sum(objectives * weights, axis=0))
         auto_scales = np.where(auto_scales > 0.0, auto_scales, 1.0)
         self._scales[self._auto_scales] *= auto_scales[self._auto_scales]
+        self._needs_auto_scale_calculation = False
 
     @property
-    def has_auto_scale(self) -> bool:
-        """Return true if any objective is auto-scaled."""
-        return bool(np.any(self._auto_scales))
+    def needs_auto_scale_calculation(self) -> bool:
+        """Return true auto-scaling must be initialized"""
+        return self._needs_auto_scale_calculation
 
 
 class ConstraintScaler(NonLinearConstraintTransform):
@@ -302,6 +311,7 @@ class ConstraintScaler(NonLinearConstraintTransform):
         self._scales = np.asarray(scales, dtype=np.float64)
         self._auto_scales = np.asarray(auto_scales, dtype=np.bool_)
         self._weights = np.asarray(weights, dtype=np.float64)
+        self._needs_auto_scale_calculation = bool(np.any(self._auto_scales))
 
     def bounds_to_optimizer(
         self, lower_bounds: NDArray[np.float64], upper_bounds: NDArray[np.float64]
@@ -375,11 +385,12 @@ class ConstraintScaler(NonLinearConstraintTransform):
         auto_scales = np.abs(np.sum(constraints * weights, axis=0))
         auto_scales = np.where(auto_scales > 0.0, auto_scales, 1.0)
         self._scales[self._auto_scales] *= auto_scales[self._auto_scales]
+        self._needs_auto_scale_calculation = False
 
     @property
-    def has_auto_scale(self) -> bool:
-        """Return true if any constraint is auto-scaled."""
-        return bool(np.any(self._auto_scales))
+    def needs_auto_scale_calculation(self) -> bool:
+        """Return true if auto-scaling must be initialized"""
+        return self._needs_auto_scale_calculation
 
 
 def get_optimization_domain_transforms(
@@ -387,9 +398,9 @@ def get_optimization_domain_transforms(
     objectives: list[ObjectiveFunctionConfig],
     constraints: list[OutputConstraintConfig] | None,
     model: ModelConfig,
-) -> OptModelTransforms:
+) -> EverestOptModelTransforms:
     flattened_controls = FlattenedControls(controls)
-    variable_scaler = ControlScaler(
+    control_scaler = ControlScaler(
         flattened_controls.lower_bounds,
         flattened_controls.upper_bounds,
         flattened_controls.scaled_ranges,
@@ -427,8 +438,8 @@ def get_optimization_domain_transforms(
         else None
     )
 
-    return OptModelTransforms(
-        variables=variable_scaler,
-        objectives=objective_scaler,
-        nonlinear_constraints=constraint_scaler,
-    )
+    return {
+        "control_scaler": control_scaler,
+        "objective_scaler": objective_scaler,
+        "constraint_scaler": constraint_scaler,
+    }

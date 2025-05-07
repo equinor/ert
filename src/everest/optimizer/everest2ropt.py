@@ -1,4 +1,4 @@
-import importlib
+import importlib.metadata
 import logging
 import os
 from typing import Any
@@ -16,6 +16,7 @@ from everest.config import (
     OutputConstraintConfig,
 )
 from everest.config.utils import FlattenedControls
+from everest.optimizer.opt_model_transforms import EverestOptModelTransforms
 from everest.strings import EVEREST
 
 
@@ -305,12 +306,22 @@ def _everest2ropt(ever_config: EverestConfig) -> dict[str, Any]:
 
 
 def everest2ropt(
-    ever_config: EverestConfig, transforms: OptModelTransforms | None = None
+    ever_config: EverestConfig, transforms: EverestOptModelTransforms | None = None
 ) -> EnOptConfig:
     ropt_dict = _everest2ropt(ever_config)
 
+    ropt_transforms = (
+        OptModelTransforms(
+            variables=transforms["control_scaler"],
+            objectives=transforms["objective_scaler"],
+            nonlinear_constraints=transforms["constraint_scaler"],
+        )
+        if transforms
+        else None
+    )
+
     try:
-        enopt_config = EnOptConfig.model_validate(ropt_dict, context=transforms)
+        enopt_config = EnOptConfig.model_validate(ropt_dict, context=ropt_transforms)
     except ValidationError as exc:
         ert_version = importlib.metadata.version("ert")
         ropt_version = importlib.metadata.version("ropt")
