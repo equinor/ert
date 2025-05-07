@@ -849,7 +849,7 @@ requires-dist = [
     { name = "resdata", marker = "extra == 'everest'" },
     { name = "resfo" },
     { name = "resfo", marker = "extra == 'dev'" },
-    { name = "ropt", extras = ["pandas"], marker = "extra == 'everest'", specifier = ">=0.20,<0.21" },
+    { name = "ropt", extras = ["pandas"], marker = "extra == 'everest'", specifier = ">=0.20.1,<0.21" },
     { name = "ropt-dakota", marker = "extra == 'everest'", specifier = ">=0.20,<0.21" },
     { name = "ruamel-yaml", marker = "extra == 'everest'" },
     { name = "rust-just", marker = "extra == 'dev'" },
@@ -3289,16 +3289,16 @@ wheels = [
 
 [[package]]
 name = "ropt"
-version = "0.20.0"
+version = "0.20.1"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "numpy" },
     { name = "pydantic" },
     { name = "scipy" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/b8/22/a4c75cd636fa195502e367c8d56fa038998aaf3070521c5b9af1ed0a5d80/ropt-0.20.0.tar.gz", hash = "sha256:74879334906d64d1e3153763a1d4f6d150410be1cab9ff799f21bbf0890d41ae", size = 148951 }
+sdist = { url = "https://files.pythonhosted.org/packages/ee/25/5cf7f9635032a4099f18a92381d10e9b5148dd9aff4df13149602603456d/ropt-0.20.1.tar.gz", hash = "sha256:bbc306e3232f4780e1f5e4705f15a9e5ba04112861104a2fdae6b1325dc248a0", size = 149903, upload-time = "2025-05-08T06:51:30.942Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/75/8f/62fd1585407e417761ffffb82ba41cb5b248575a02e18639a1c3751cadaf/ropt-0.20.0-py3-none-any.whl", hash = "sha256:0b4ac0b278cbb43a52a44bf4ded833d2bfc0bbeec2188ce74676cf5af8997989", size = 156644 },
+    { url = "https://files.pythonhosted.org/packages/03/35/ca766dbc6d4f8514b409ce8f5c068416dcc5f73ef0161bb8f3639b1ea86a/ropt-0.20.1-py3-none-any.whl", hash = "sha256:367c93633fa41039ad0b29a453056ce046789cf497b9a2db19d6b8e4e1de1a14", size = 157502, upload-time = "2025-05-08T06:51:28.989Z" },
 ]
 
 [package.optional-dependencies]

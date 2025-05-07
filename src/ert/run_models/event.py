@@ -32,16 +32,16 @@ class RunModelStatusEvent(RunModelEvent):
 class EverestStatusEvent(BaseModel):
     batch: int | None
     event_type: Literal["EverestStatusEvent"] = "EverestStatusEvent"
-    everest_event: Literal["START_OPTIMIZER_EVALUATION",]
+    everest_event: Literal[
+        "START_OPTIMIZER_EVALUATION",
+        "FINISHED_OPTIMIZER_EVALUATION",
+    ]
 
 
 class EverestBatchResultEvent(BaseModel):
     batch: int
     event_type: Literal["EverestBatchResultEvent"] = "EverestBatchResultEvent"
-    everest_event: Literal[
-        "OPTIMIZATION_RESULT",
-        "FINISHED_OPTIMIZER_EVALUATION",
-    ]
+    everest_event: Literal["OPTIMIZATION_RESULT",]
     result_type: Literal["FunctionResult", "GradientResult"]
     results: dict[str, Any] | None = None
 

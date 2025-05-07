@@ -12,7 +12,7 @@ from collections.abc import Callable, MutableSequence
 from enum import IntEnum, auto
 from pathlib import Path
 from types import TracebackType
-from typing import TYPE_CHECKING, Any, Protocol, cast
+from typing import TYPE_CHECKING, Any, Protocol
 
 import numpy as np
 from numpy.typing import NDArray
@@ -40,8 +40,7 @@ from everest.everest_storage import (
 )
 from everest.optimizer.everest2ropt import everest2ropt
 from everest.optimizer.opt_model_transforms import (
-    ConstraintScaler,
-    ObjectiveScaler,
+    EverestOptModelTransforms,
     get_optimization_domain_transforms,
 )
 from everest.simulator.everest_to_ert import (
@@ -188,6 +187,15 @@ class EverestRunModel(BaseRunModel):
         self._parameter_configs = ensemble_config.parameter_configs
         self._response_configuration = ensemble_config.response_configuration
         self._templates = ert_templates
+
+        self._transforms: EverestOptModelTransforms = (
+            get_optimization_domain_transforms(
+                self._everest_config.controls,
+                self._everest_config.objective_functions,
+                self._everest_config.output_constraints,
+                self._everest_config.model,
+            )
+        )
 
         super().__init__(
             storage,
@@ -372,13 +380,6 @@ class EverestRunModel(BaseRunModel):
         return False
 
     def _create_optimizer(self) -> BasicOptimizer:
-        self._transforms = get_optimization_domain_transforms(
-            self._everest_config.controls,
-            self._everest_config.objective_functions,
-            self._everest_config.output_constraints,
-            self._everest_config.model,
-        )
-
         optimizer = BasicOptimizer(
             enopt_config=everest2ropt(self._everest_config, self._transforms),
             evaluator=self._forward_model_evaluator,
@@ -449,192 +450,155 @@ class EverestRunModel(BaseRunModel):
         # Return the results, together with the indices of the evaluated controls:
         return objectives, constraints
 
-    @staticmethod
-    def _create_evaluation_infos(
-        control_values: NDArray[np.float64],
-        model_realizations: list[int],
-        perturbations: list[int],
-        active_controls: list[bool],
-        objective_names: list[str],
-        constraint_names: list[str],
-    ) -> list[_EvaluationInfo]:
-        inactive_objective_fill_value: NDArray[np.float64] = np.zeros(
-            len(objective_names)
-        )
-        inactive_constraints_fill_value: NDArray[np.float64] = np.zeros(
-            len(constraint_names)
-        )
-        evaluation_infos = []
-
-        sim_id_counter = 0
-        for flat_index, (
-            control_row,
-            model_realization,
-            perturbation,
-            is_active,
-        ) in enumerate(
-            zip(
-                control_values,
-                model_realizations,
-                perturbations,
-                active_controls,
-                strict=False,
-            )
-        ):
-            control_vector = cast(NDArray[np.float64], control_row)
-            if not is_active:
-                evaluation_infos.append(
-                    _EvaluationInfo(
-                        control_vector=control_vector,
-                        status=_EvaluationStatus.INACTIVE,
-                        model_realization=model_realization,
-                        perturbation=perturbation,
-                        flat_index=flat_index,
-                        simulation_id=None,
-                        objectives=inactive_objective_fill_value,
-                        constraints=inactive_constraints_fill_value,
-                    )
-                )
-                continue
-
-            evaluation_infos.append(
-                _EvaluationInfo(
-                    control_vector=control_vector,
-                    status=_EvaluationStatus.TO_SIMULATE,
-                    model_realization=model_realization,
-                    perturbation=perturbation,
-                    flat_index=flat_index,
-                    simulation_id=sim_id_counter,
-                )
-            )
-            sim_id_counter += 1
-
-        return evaluation_infos
-
     def _forward_model_evaluator(
         self, control_values: NDArray[np.float64], evaluator_context: EvaluatorContext
     ) -> EvaluatorResult:
         logger.debug(f"Evaluating batch {self._batch_id}")
-        control_indices = list(range(control_values.shape[0]))
-        model_realizations = [
-            self._everest_config.model.realizations[evaluator_context.realizations[idx]]
-            for idx in control_indices
-        ]
-        active_control_vectors = [
-            evaluator_context.active is None
-            or bool(evaluator_context.active[evaluator_context.realizations[idx]])
-            for idx in control_indices
-        ]
 
-        num_constraints = len(self._everest_config.constraint_names)
+        # ----------------------------------------------------------------------
+        # General Info:
+        #
+        # `control_values` is a matrix, where each row is one set of controls,
+        # One forward model run must be done for each row, but only if the
+        # corresponding model realization is marked as active, as indicated in
+        # the `evaluator_context` object.
+        #
+        # The result consists of matrices for objectives and constraints. Each
+        # row corresponds to a row in `control_values` and contains the results
+        # of the corresponding forward model run.
+        #
+        # Following information is used from `evaluator_context`:
+        #
+        # 1. `evaluator_context.realizations`: The indices of the model
+        #    realizations for each control vector. A numpy vector with a length
+        #    equal to the number of rows of `control_values`
+        # 2. `evaluator_context.perturbations`: The indices of the perturbations
+        #    for each control vector. A numpy vector with a length equal to the
+        #    number of rows of `control_values`. If an entry is less than zero,
+        #    the corresponding control vector is not a perturbation. If
+        #    evaluator_context.perturbations is `None`, none of the vectors is a
+        #    perturbation.
+        #
+        # Control vectors pertaining to inactive realizations do not need to be
+        # evaluated. This can be achieved by removing the inactive entries
+        # before running the forward models, using the
+        # `evaluator_context.filter_inactive_realizations` method of the context
+        # object. Before returning the results, the must be amended by inserting
+        # rows at the positions that were filtered out. This can be done using
+        # the `evaluator_context.insert_inactive_realizations`
+        #
+        # In summary, the evaluation comprises three steps:
+        #
+        # 1. A filter step, where all inactive control vectors are removed.
+        # 2. A forward model run for each remaining control vector.
+        # 3. A reconstruction step where zero values are inserted in the results
+        #    for inactive control vectors.
+        #
+        # Note: An extra step may inserted before the last step in one of the
+        #       initial batches, where auto-scaling values are calculated. This
+        #       is done at that point for efficiency reasons, but has nothing to
+        #       do with the forward model evaluations itself.
+        #
+        # ----------------------------------------------------------------------
 
-        evaluation_infos = self._create_evaluation_infos(
-            control_values=control_values,
-            model_realizations=model_realizations,
-            perturbations=evaluator_context.perturbations.tolist()
-            if evaluator_context.perturbations is not None
-            else [-1] * len(model_realizations),
-            active_controls=active_control_vectors,
-            objective_names=self._everest_config.objective_names,
-            constraint_names=self._everest_config.constraint_names,
+        # This is the first step: Remove inactive control vectors.
+        #
+        # This generates the following vectors that have the necessary information
+        # to run the forward models for all active control vectors:
+        #
+        # 1. active_control_vectors: A copy of the `control_values` matrix, where
+        #    all inactive control vectors have been removed.
+        # 2. `realization_indices` and `perturbation_indices` are copies of
+        #    `evaluator_context.realizations` and
+        #    `evaluator_context.perturbations` with entries corresponding to
+        #    inactive control vectors removed.
+        active_control_vectors = evaluator_context.filter_inactive_realizations(
+            control_values
+        )
+        num_simulations = active_control_vectors.shape[0]
+        realization_indices = evaluator_context.filter_inactive_realizations(
+            evaluator_context.realizations
+        )
+        perturbation_indices = (
+            np.full(num_simulations, fill_value=-1, dtype=np.intc)
+            if evaluator_context.perturbations is None
+            else evaluator_context.filter_inactive_realizations(
+                evaluator_context.perturbations
+            )
         )
 
-        control_values_to_simulate = np.array(
-            [
-                c.control_vector
-                for c in evaluation_infos
-                if c.status == _EvaluationStatus.TO_SIMULATE
-            ],
-            dtype=np.float64,
-        )
+        if num_simulations > 0:
+            self.send_event(
+                EverestStatusEvent(
+                    batch=self._batch_id, everest_event="START_OPTIMIZER_EVALUATION"
+                )
+            )
 
-        if control_values_to_simulate.shape[0] > 0:
-            sim_infos = [
-                c for c in evaluation_infos if c.status == _EvaluationStatus.TO_SIMULATE
+            # Run the forward model and collect the objectives and constraints:
+            logger.debug(f"Running forward model for batch {self._batch_id}")
+
+            # Find the model realization name of each active control vector, by
+            # finding its realization index and then looking up its name in the
+            # config:
+            model_realizations = [
+                self._everest_config.model.realizations[realization_indices[idx]]
+                for idx in range(num_simulations)
             ]
+
+            # Run the forward models:
+            objectives, constraints = self._run_forward_model(
+                sim_to_control_vector=active_control_vectors,
+                sim_to_model_realization=model_realizations,
+                sim_to_perturbation=perturbation_indices.tolist(),
+            )
 
             self.send_event(
                 EverestStatusEvent(
                     batch=self._batch_id,
-                    everest_event="START_OPTIMIZER_EVALUATION",
-                )
-            )
-
-            logger.debug(f"Running forward model for batch {self._batch_id}")
-            sim_objectives, sim_constraints = self._run_forward_model(
-                sim_to_control_vector=control_values_to_simulate,
-                sim_to_model_realization=[c.model_realization for c in sim_infos],
-                sim_to_perturbation=[c.perturbation for c in sim_infos],
-            )
-
-            self.send_event(
-                EverestBatchResultEvent(
-                    batch=self._batch_id,
                     everest_event="FINISHED_OPTIMIZER_EVALUATION",
-                    result_type="FunctionResult",
                 )
             )
 
-        else:
-            sim_objectives = np.array([], dtype=np.float64)
-            sim_constraints = np.array([], dtype=np.float64)
+            # The simulation IDs are also returned, these are implicitly
+            # defined as the range over the active control vectors:
+            sim_ids: NDArray[np.int32] = np.arange(num_simulations, dtype=np.int32)
 
-        # Assign simulated results to corresponding evaluation infos
-        for ei in evaluation_infos:
-            if ei.simulation_id is not None:
-                ei.objectives = sim_objectives[ei.simulation_id]
-                ei.constraints = (
-                    sim_constraints[ei.simulation_id]
-                    if sim_constraints is not None
-                    else None
+            # Calculate auto-scales if necessary.
+            self._calculate_objective_auto_scales(
+                objectives, realization_indices, perturbation_indices
+            )
+            if constraints is not None:
+                self._calculate_constraint_auto_scales(
+                    constraints, realization_indices, perturbation_indices
                 )
 
-        # At this point:
-        # np.zeros are attached to inactive evaluations
-        # simulated results are attached to simulated evaluations
-        objectives = np.array(
-            [cs.objectives for cs in evaluation_infos],
-            dtype=np.float64,
-        )
-
-        constraints = (
-            np.array([cs.constraints for cs in evaluation_infos], dtype=np.float64)
-            if num_constraints > 0
-            else None
-        )
-
-        if self._batch_id == 0:
-            indices = [
-                idx
-                for idx, ei in enumerate(evaluation_infos)
-                if ei.perturbation < 0 and ei.simulation_id is not None
-            ]
-            if indices:
-                assert self._transforms is not None
-                assert isinstance(self._transforms.objectives, ObjectiveScaler)
-                if self._transforms.objectives.has_auto_scale:
-                    self._transforms.objectives.calculate_auto_scales(
-                        objectives[indices, :], evaluator_context.realizations[indices]
-                    )
-                if self._transforms.nonlinear_constraints:
-                    assert isinstance(
-                        self._transforms.nonlinear_constraints, ConstraintScaler
-                    )
-                    if self._transforms.nonlinear_constraints.has_auto_scale:
-                        assert constraints is not None
-                        self._transforms.nonlinear_constraints.calculate_auto_scales(
-                            constraints[indices, :],
-                            evaluator_context.realizations[indices],
-                        )
-
-        # Also return for each control vector the simulation id:
-        sim_ids = np.fromiter(
-            (
-                -1 if ei.simulation_id is None else ei.simulation_id
-                for ei in evaluation_infos
-            ),
-            dtype=np.int32,
-        )
+            # This is the final step: insert zero results for inactive
+            # control vectors. This is done by inserting zeros at each position
+            # where the input control vectors are not active.
+            objectives = evaluator_context.insert_inactive_realizations(objectives)
+            if constraints is not None:
+                constraints = evaluator_context.insert_inactive_realizations(
+                    constraints
+                )
+            sim_ids = evaluator_context.insert_inactive_realizations(
+                sim_ids, fill_value=-1
+            )
+        else:
+            # Nothing to do, there may only have been inactive control vectors:
+            num_all_simulations = control_values.shape[0]
+            objectives = np.zeros(
+                (num_all_simulations, len(self._everest_config.objective_names)),
+                dtype=np.float64,
+            )
+            constraints = (
+                np.zeros(
+                    (num_all_simulations, len(self._everest_config.constraint_names)),
+                    dtype=np.float64,
+                )
+                if self._everest_config.output_constraints
+                else None
+            )
+            sim_ids = np.array([-1] * num_all_simulations, dtype=np.int32)
 
         evaluator_result = EvaluatorResult(
             objectives=objectives,
@@ -647,6 +611,37 @@ class EverestRunModel(BaseRunModel):
         self._batch_id += 1
 
         return evaluator_result
+
+    def _calculate_objective_auto_scales(
+        self,
+        objectives: NDArray[np.float64],
+        realization_indices: NDArray[np.intc],
+        perturbation_indices: NDArray[np.intc],
+    ) -> None:
+        objective_transform = self._transforms["objective_scaler"]
+        if objective_transform.needs_auto_scale_calculation:
+            mask = perturbation_indices < 0
+            if not np.any(mask):  # If we have only perturbations, just use those.
+                mask = np.ones(perturbation_indices.shape[0], dtype=np.bool_)
+            objective_transform.calculate_auto_scales(
+                objectives[mask, :], realization_indices[mask]
+            )
+
+    def _calculate_constraint_auto_scales(
+        self,
+        constraints: NDArray[np.float64],
+        realization_indices: NDArray[np.intc],
+        perturbation_indices: NDArray[np.intc],
+    ) -> None:
+        constraint_transform = self._transforms["constraint_scaler"]
+        assert constraint_transform is not None
+        if constraint_transform.needs_auto_scale_calculation:
+            mask = perturbation_indices < 0
+            if not np.any(mask):  # If we have only perturbations, just use those.
+                mask = np.ones(perturbation_indices.shape[0], dtype=np.bool_)
+            constraint_transform.calculate_auto_scales(
+                constraints[mask, :], realization_indices[mask]
+            )
 
     def _create_simulation_controls(
         self,
