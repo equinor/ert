@@ -9,18 +9,12 @@ import numpy as np
 import polars as pl
 from numpy import typing as npt
 
-from ert.config import ObservationGroups, OutlierSettings
+from ert.config import GenKwConfig, ObservationGroups, OutlierSettings
 from ert.storage import Ensemble
 
 from . import misfit_preprocessor
-from .event import (
-    AnalysisDataEvent,
-    AnalysisEvent,
-    DataSection,
-)
-from .snapshots import (
-    ObservationStatus,
-)
+from .event import AnalysisDataEvent, AnalysisEvent, DataSection
+from .snapshots import ObservationStatus
 
 logger = logging.getLogger(__name__)
 

@@ -272,6 +272,7 @@ class Field(ParameterConfig):
         self, ensemble: Ensemble, realizations: npt.NDArray[np.int_]
     ) -> npt.NDArray[np.float64]:
         ds = ensemble.load_parameters(self.name, realizations)
+        assert isinstance(ds, xr.Dataset)
         ensemble_size = len(ds.realizations)
         da = xr.DataArray(
             [

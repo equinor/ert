@@ -144,7 +144,9 @@ class SurfaceConfig(ParameterConfig):
     def write_to_runpath(
         self, run_path: Path, real_nr: int, ensemble: Ensemble
     ) -> None:
-        data = ensemble.load_parameters(self.name, real_nr)["values"]
+        ds = ensemble.load_parameters(self.name, real_nr)
+        assert isinstance(ds, xr.Dataset)
+        data = ds["values"]
 
         surf = xtgeo.RegularSurface(
             ncol=self.ncol,
@@ -184,6 +186,7 @@ class SurfaceConfig(ParameterConfig):
         self, ensemble: Ensemble, realizations: npt.NDArray[np.int_]
     ) -> npt.NDArray[np.float64]:
         ds = ensemble.load_parameters(self.name, realizations)
+        assert isinstance(ds, xr.Dataset)
         ensemble_size = len(ds.realizations)
         return ds["values"].values.reshape(ensemble_size, -1).T
 

@@ -8,11 +8,7 @@ import xarray as xr
 import xtgeo
 from tabulate import tabulate
 
-from ert.analysis import (
-    ErtAnalysisError,
-    ObservationStatus,
-    smoother_update,
-)
+from ert.analysis import ErtAnalysisError, ObservationStatus, smoother_update
 from ert.analysis._update_commons import (
     _compute_observation_statuses,
     _OutlierColumns,
@@ -496,11 +492,11 @@ def test_update_snapshot(
     )
 
     sim_gen_kw = list(
-        prior_ens.load_parameters("SNAKE_OIL_PARAM", 0)["values"].values.flatten()
+        prior_ens.load_parameters_numpy("SNAKE_OIL_PARAM", np.array([0])).flatten()
     )
 
     target_gen_kw = list(
-        posterior_ens.load_parameters("SNAKE_OIL_PARAM", 0)["values"].values.flatten()
+        posterior_ens.load_parameters_numpy("SNAKE_OIL_PARAM", np.array([0])).flatten()
     )
 
     # Check that prior is not equal to posterior after updationg
@@ -577,10 +573,10 @@ def test_smoother_snapshot_alpha(
         prior_storage.save_parameters(
             "PARAMETER",
             iens,
-            xr.Dataset(
+            pl.DataFrame(
                 {
-                    "values": ("names", [data]),
-                    "names": ["KEY_1"],
+                    "KEY_1": [data],
+                    "realization": iens,
                 }
             ),
         )
@@ -1064,10 +1060,10 @@ def test_gen_data_obs_data_mismatch(storage, uniform_parameter):
         prior.save_parameters(
             "PARAMETER",
             iens,
-            xr.Dataset(
+            pl.DataFrame(
                 {
-                    "values": ("names", [data]),
-                    "names": ["KEY_1"],
+                    "KEY_1": [data],
+                    "realization": iens,
                 }
             ),
         )
@@ -1126,10 +1122,10 @@ def test_gen_data_missing(storage, uniform_parameter, obs):
         prior.save_parameters(
             "PARAMETER",
             iens,
-            xr.Dataset(
+            pl.DataFrame(
                 {
-                    "values": ("names", [data]),
-                    "names": ["KEY_1"],
+                    "KEY_1": [data],
+                    "realization": iens,
                 }
             ),
         )
@@ -1200,20 +1196,20 @@ def test_update_subset_parameters(storage, uniform_parameter, obs):
         prior.save_parameters(
             "PARAMETER",
             iens,
-            xr.Dataset(
+            pl.DataFrame(
                 {
-                    "values": ("names", [data]),
-                    "names": ["KEY_1"],
+                    "KEY_1": [data],
+                    "realization": iens,
                 }
             ),
         )
         prior.save_parameters(
             "EXTRA_PARAMETER",
             iens,
-            xr.Dataset(
+            pl.DataFrame(
                 {
-                    "values": ("names", [data]),
-                    "names": ["KEY_1"],
+                    "KEY_1": [data],
+                    "realization": iens,
                 }
             ),
         )
@@ -1246,9 +1242,12 @@ def test_update_subset_parameters(storage, uniform_parameter, obs):
         ObservationSettings(),
         ESSettings(),
     )
-    assert prior.load_parameters("EXTRA_PARAMETER", 0)["values"].equals(
-        posterior_ens.load_parameters("EXTRA_PARAMETER", 0)["values"]
+
+    assert (
+        prior.load_parameters("EXTRA_PARAMETER", 0).rows()
+        == posterior_ens.load_parameters("EXTRA_PARAMETER", 0).rows()
     )
-    assert not prior.load_parameters("PARAMETER", 0)["values"].equals(
-        posterior_ens.load_parameters("PARAMETER", 0)["values"]
+    assert (
+        prior.load_parameters("PARAMETER", 0).rows()
+        != posterior_ens.load_parameters("PARAMETER", 0).rows()
     )
