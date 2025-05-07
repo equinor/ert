@@ -16,7 +16,6 @@ from typing import Any
 from uuid import UUID
 
 import yaml
-from opentelemetry.instrumentation.threading import ThreadingInstrumentor
 from opentelemetry.trace import Status, StatusCode
 
 import ert.shared
@@ -613,7 +612,6 @@ def main() -> None:
 
     # Have ErtThread re-raise uncaught exceptions on main thread
     set_signal_handler()
-    ThreadingInstrumentor().instrument()
 
     args = ert_parser(None, sys.argv[1:])
 
@@ -672,7 +670,6 @@ def main() -> None:
     finally:
         log_process_usage()
         os.environ.pop("ERT_LOG_DIR")
-        ThreadingInstrumentor().uninstrument()
 
 
 if __name__ == "__main__":
