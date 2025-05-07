@@ -447,7 +447,7 @@ class EverestStorage:
             "batch_id": pl.UInt32,
             "perturbation": pl.Int32,
             "realization": pl.UInt32,
-            # -1 is used as a value in simulator cache.
+            # -1 is used as a place-holder value.
             # thus we need signed, otherwise we could do unsigned
             "simulation_id": pl.Int32,
             "objective_name": pl.String,

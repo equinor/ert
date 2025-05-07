@@ -142,46 +142,9 @@ class _DetachedMonitor:
             if OPT_PROGRESS_ID in status:
                 opt_status = status[OPT_PROGRESS_ID]
                 if opt_status:
-                    if "cache_hits" in opt_status:
-                        event = opt_status["cache_hits"]
-
-                        cache_hits = event.data
-                        header = self._make_header(
-                            f"({len(cache_hits)}) cache_hit(s) for "
-                            f"batch #{event.batch})",
-                            Fore.GREEN,
-                        )
-
-                        cache_hit_strs = []
-                        for c in event.data:
-                            pert = c["target_perturbation"]
-                            real = c["model_realization"]
-                            src_sim_id = c["source_simulation_id"]
-                            src_batch = c["source_batch_id"]
-
-                            start = (
-                                f"Perturbation {pert} for realization {real}"
-                                if pert != -1
-                                else f"Function evaluation for realization {real}"
-                            )
-                            end = (
-                                ": re-using results from simulation "
-                                f"{src_sim_id} of batch {src_batch}."
-                            )
-
-                            cache_hit_strs.append(start + end)
-
-                        msg = self._join_one_newline_indent(
-                            (
-                                header,
-                                *cache_hit_strs,
-                            )
-                        )
-                        print(msg + "\n")
-                    else:
-                        msg = self._get_opt_progress_single_batch(opt_status)
-                        print(msg + "\n")
-                        self._clear_lines = 0
+                    msg = self._get_opt_progress_single_batch(opt_status)
+                    print(msg + "\n")
+                    self._clear_lines = 0
             if SIM_PROGRESS_ID in status:
                 match status[SIM_PROGRESS_ID]:
                     case FullSnapshotEvent(snapshot=snapshot, iteration=batch):
