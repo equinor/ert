@@ -13,11 +13,12 @@ from everest.everest_storage import EverestStorage
 
 def _yaml_config(
     file_path: str, parser: argparse.ArgumentParser
-) -> tuple[str, str, dict[str, Any] | None]:
+) -> tuple[str, str, str, dict[str, Any] | None]:
     loaded_config = EverestConfig.load_file_with_argparser(file_path, parser)
     assert loaded_config is not None
     opt_folder = loaded_config.optimization_output_dir
-    return file_path, opt_folder, load_yaml(file_path)
+    storage_folder = loaded_config.storage_dir
+    return file_path, opt_folder, storage_folder, load_yaml(file_path)
 
 
 def _build_args_parser() -> argparse.ArgumentParser:
@@ -44,8 +45,11 @@ def _build_args_parser() -> argparse.ArgumentParser:
     return arg_parser
 
 
-def opt_controls_by_batch(optimization_dir: str, batch: int) -> dict[str, Any] | None:
-    storage = EverestStorage(Path(optimization_dir))
+def opt_controls_by_batch(
+    optimization_dir: str, storage_dir: str, batch: int
+) -> dict[str, Any] | None:
+    opt_dir = Path(optimization_dir)
+    storage = EverestStorage(opt_dir, Path(storage_dir))
     storage.read_from_output_dir()
 
     assert storage.data is not None
@@ -105,11 +109,11 @@ def _updated_initial_guess(
 def config_branch_entry(args: list[str] | None = None) -> None:
     parser = _build_args_parser()
     options = parser.parse_args(args)
-    _, optimization_dir, yml_config = options.input_config
+    _, optimization_dir, storage_dir, yml_config = options.input_config
 
     EverestStorage.check_for_deprecated_seba_storage(optimization_dir)
 
-    opt_controls = opt_controls_by_batch(optimization_dir, options.batch)
+    opt_controls = opt_controls_by_batch(optimization_dir, storage_dir, options.batch)
     if opt_controls is None:
         parser.error(f"Batch {options.batch} not present in optimization data")
 
