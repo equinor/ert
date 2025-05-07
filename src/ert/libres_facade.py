@@ -1,20 +1,15 @@
 from __future__ import annotations
 
 import warnings
-from collections.abc import Callable, Iterable
 from typing import (
     TYPE_CHECKING,
     Any,
 )
 
-import numpy as np
 from pandas import DataFrame
 
-from ert.analysis import AnalysisEvent, SmootherSnapshot, smoother_update
 from ert.config import (
     ErtConfig,
-    Field,
-    ObservationType,
 )
 from ert.data import MeasuredData
 from ert.data._measured_data import ObservationError, ResponseError
@@ -22,9 +17,6 @@ from ert.data._measured_data import ObservationError, ResponseError
 from .plugins import ErtPluginContext
 
 if TYPE_CHECKING:
-    from ert.config import (
-        EnkfObs,
-    )
     from ert.storage import Ensemble, Storage
 
 
@@ -35,65 +27,66 @@ class LibresFacade:
 
     def __init__(self, ert_config: ErtConfig, _: Any = None):
         self.config = ert_config
-        self.update_snapshots: dict[str, SmootherSnapshot] = {}
-        self.update_configuration = None
-
-    def smoother_update(
-        self,
-        prior_storage: Ensemble,
-        posterior_storage: Ensemble,
-        run_id: str,
-        observations: Iterable[str],
-        parameters: Iterable[str],
-        progress_callback: Callable[[AnalysisEvent], None] | None = None,
-        global_std_scaling: float = 1.0,
-        rng: np.random.Generator | None = None,
-    ) -> SmootherSnapshot:
-        if rng is None:
-            rng = np.random.default_rng()
-        update_snapshot = smoother_update(
-            prior_storage,
-            posterior_storage,
-            observations,
-            parameters,
-            self.config.analysis_config.observation_settings,
-            self.config.analysis_config.es_settings,
-            rng,
-            progress_callback,
-            global_std_scaling,
-        )
-        self.update_snapshots[run_id] = update_snapshot
-        return update_snapshot
 
     @property
     def enspath(self) -> str:
+        # Note: only used in tests, ert-internal-examples
+        # semeio ahmanalysis tests, 2do remove?
         return self.config.ens_path
 
-    @property
-    def user_config_file(self) -> str | None:
-        return self.config.user_config_file
-
-    def get_field_parameters(self) -> list[str]:
-        return [
-            val.name
-            for val in self.config.ensemble_config.parameter_configuration
-            if isinstance(val, Field)
-        ]
+    def get_ensemble_size(self) -> int:
+        # Note: ErtMainWindow on init
+        # 2do get it somehow else / expose through endpoint
+        return self.config.runpath_config.num_realizations
 
     @property
-    def run_path(self) -> str:
+    def run_path(self) -> str:  # Note: Only used in ert_internal_examples
         return self.config.runpath_config.runpath_format_string
 
-    def get_observations(self) -> EnkfObs:
-        return self.config.enkf_obs
+    @property
+    def resolved_run_path(
+        self,
+    ) -> str:  # Note: LoadResultsPanel, 2do expose through endpoint?
+        return str(Path(self.config.runpath_config.runpath_format_string).resolve())
 
-    def get_data_key_for_obs_key(self, observation_key: str) -> str:
-        obs = self.config.enkf_obs[observation_key]
-        if obs.observation_type == ObservationType.SUMMARY:
-            return next(iter(obs.observations.values())).summary_key  # type: ignore
-        else:
-            return obs.data_key
+    @staticmethod
+    def load_from_run_path(  # Note: LoadResultsPanel, 2do expose as endpoint?
+        run_path_format: str,
+        ensemble: Ensemble,
+        active_realizations: list[int],
+    ) -> int:
+        """Returns the number of loaded realizations"""
+        pool = ThreadPool(processes=8)
 
+        async_result = [
+            pool.apply_async(
+                _load_realization_from_run_path,
+                (
+                    run_path_format.replace("<IENS>", str(realization)).replace(
+                        "<ITER>", "0"
+                    ),
+                    realization,
+                    ensemble,
+                ),
+            )
+            for realization in active_realizations
+        ]
+
+        loaded = 0
+        for t in async_result:
+            ((status, message), iens) = t.get()
+
+            if status == LoadStatus.LOAD_SUCCESSFUL:
+                loaded += 1
+            else:
+                _logger.error(f"Realization: {iens}, load failure: {message}")
+
+        ensemble.refresh_ensemble_state()
+        return loaded
+
+    # 2do move logic to LocalEnsemble?
+    # Related to removing MeasuredData and pointing to
+    # LocalEnsemble.get_observations_and_responses instead
     @staticmethod
     def load_all_misfit_data(ensemble: Ensemble) -> DataFrame:
         """Loads all misfit data for a given ensemble.
@@ -141,6 +134,7 @@ class LibresFacade:
 
         return misfit
 
+    # Only used in semeio tests, 2do update semeio tests and remove?
     def run_ertscript(  # type: ignore
         self,
         ertscript,
