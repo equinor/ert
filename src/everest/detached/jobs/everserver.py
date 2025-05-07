@@ -63,6 +63,7 @@ from ert.run_models.everest_run_model import (
     EverestExitCode,
     EverestRunModel,
 )
+from ert.trace import tracer, tracer_provider
 from everest.config import EverestConfig, ServerConfig
 from everest.detached import (
     ServerStatus,
@@ -78,7 +79,6 @@ from everest.strings import (
     OPTIMIZATION_OUTPUT_DIR,
     EverEndpoints,
 )
-from everest.trace import tracer, tracer_provider
 from everest.util import makedirs_if_needed, version_info
 
 logger = logging.getLogger(__name__)
