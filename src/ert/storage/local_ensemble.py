@@ -544,6 +544,26 @@ class LocalEnsemble(BaseMode):
 
         return self._load_dataset(group, realizations)
 
+    def save_parameters_pl(self, group: str, dataset: pl.DataFrame) -> None:
+        """
+        Save parameters for group and realizations into pl.DataFrame.
+
+        Parameters
+        ----------
+        group : str
+            Name of parameter group to save.
+        dataset : pl.DataFrame
+            pl.DataFrame to save.
+        """
+        try:
+            df = self.load_parameters_pl(group)
+            df = pl.concat([df, dataset], how="vertical")
+        except KeyError:
+            df = dataset
+
+        group_path = self.mount_point / f"{_escape_filename(group)}.parquet"
+        self._storage._to_parquet_transaction(group_path, df)
+
     def load_parameters_pl(
         self, group: str, realizations: Collection[int] | None = None
     ) -> pl.DataFrame:
@@ -748,7 +768,7 @@ class LocalEnsemble(BaseMode):
         self,
         group: str,
         realization: int,
-        dataset: xr.Dataset,
+        dataset: xr.Dataset | pl.DataFrame,
     ) -> None:
         """
         Saves the provided dataset under a parameter group and realization index(es)
@@ -764,6 +784,9 @@ class LocalEnsemble(BaseMode):
             a 1d-vector. When saving multiple realizations, dataset must
             have a 'realizations' dimension.
         """
+        if isinstance(dataset, pl.DataFrame):
+            self.save_parameters_pl(group, dataset)
+            return
         if "values" not in dataset.variables:
             raise ValueError(
                 f"Dataset for parameter group '{group}' "
