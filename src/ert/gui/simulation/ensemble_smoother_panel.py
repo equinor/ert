@@ -52,8 +52,7 @@ class EnsembleSmootherPanel(ExperimentConfigPanel):
         self.setObjectName("ensemble_smoother_panel")
 
         layout = QFormLayout()
-        lab = QLabel(" ".join(EnsembleSmoother.__doc__.split()))  # type: ignore
-        lab.setWordWrap(True)
+        lab = QLabel(EnsembleSmoother.name())
         lab.setAlignment(Qt.AlignmentFlag.AlignLeft)
         layout.addRow(lab)
 

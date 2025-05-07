@@ -43,8 +43,7 @@ class ManualUpdatePanel(ExperimentConfigPanel):
         self.setObjectName("Manual_update_panel")
 
         layout = QFormLayout()
-        lab = QLabel(" ".join(ManualUpdate.__doc__.split()))  # type: ignore
-        lab.setWordWrap(True)
+        lab = QLabel(ManualUpdate.name())
         lab.setAlignment(Qt.AlignmentFlag.AlignLeft)
         layout.addRow(lab)
         self._ensemble_selector = EnsembleSelector(notifier)
