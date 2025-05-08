@@ -277,7 +277,22 @@ class LocalEnsemble(BaseMode):
         exists : list[int]
             Returns the realization numbers with parameters
         """
-
+        genkwn_mask = set()
+        for i in range(self.ensemble_size):
+            for parameter in self.experiment.parameter_configuration.values():
+                if isinstance(parameter, GenKwConfig):
+                    group_path = (
+                        self.mount_point / f"{_escape_filename(parameter.name)}.parquet"
+                    )
+                    if not group_path.exists():
+                        genkwn_mask.add(i)
+                    else:
+                        df_lazy = pl.scan_parquet(group_path)
+                        if not (
+                            df_lazy.filter(pl.col("realization") == i).fetch(1).height
+                            > 0
+                        ):
+                            genkwn_mask.add(i)
         return [
             i
             for i in range(self.ensemble_size)
@@ -287,8 +302,9 @@ class LocalEnsemble(BaseMode):
                     / (_escape_filename(parameter.name) + ".nc")
                 ).exists()
                 for parameter in self.experiment.parameter_configuration.values()
-                if not parameter.forward_init
+                if not parameter.forward_init and not isinstance(parameter, GenKwConfig)
             )
+            and i not in genkwn_mask
         ]
 
     def has_data(self) -> list[int]:
@@ -614,14 +630,16 @@ class LocalEnsemble(BaseMode):
         group_path = self.mount_point / f"{_escape_filename(group)}.parquet"
         if not group_path.exists():
             raise KeyError(f"No {group} dataset in storage for ensemble {self.name}")
-        df_lazy = pl.scan_parquet(group_path)
+        df_lazy = pl.scan_parquet(group_path).collect()
         if realizations is not None:
             df_lazy = df_lazy.filter(pl.col("realization").is_in(realizations))
+            if df_lazy.is_empty():
+                raise IndexError(
+                    f"No matching realizations {realizations} found in {group_path}"
+                )
         if not all_data:
-            return df_lazy.collect().select(
-                pl.exclude("^.*\\.transformed$", "realization")
-            )
-        return df_lazy.collect()
+            return df_lazy.select(pl.exclude("^.*\\.transformed$", "realization"))
+        return df_lazy
 
     def load_cross_correlations(self) -> xr.Dataset:
         input_path = self.mount_point / "corr_XY.nc"
@@ -780,22 +798,20 @@ class LocalEnsemble(BaseMode):
                 df = self.load_parameters_pl(key.name, realizations).select(
                     [pl.col("^.*\\.transformed$"), "realization"]
                 )
-                param_names = [col for col in df.columns if col != "realization"]
-                df = df.rename(
-                    {col: col.replace(".transformed", "") for col in param_names}
-                )
-                for parameter in param_names:
-                    if key.shouldUseLogScale(parameter):
-                        df = df.with_columns(
-                            (np.log10(pl.col(parameter))).alias(f"LOG10_{parameter}")
-                        )
                 df = df.rename(
                     {
-                        col: f"{key.name}:{col}"
+                        col: f"{key.name}:{col.replace('.transformed', '')}"
                         for col in df.columns
                         if col != "realization"
                     }
                 )
+                for parameter in df.columns:
+                    if parameter == "realization":
+                        continue
+                    if key.shouldUseLogScale(parameter.split(":")[-1]):
+                        df = df.with_columns(
+                            (np.log10(pl.col(parameter))).alias(f"LOG10_{parameter}")
+                        )
 
                 dataframes.append(df)
 
