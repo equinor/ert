@@ -323,17 +323,6 @@ class GenKwConfig(ParameterConfig):
                 f" is of size {len(self.transform_functions)}, expected {df.width}"
             )
 
-        def parse_value(value: float | int | str) -> float | int | str:
-            if isinstance(value, float | int):
-                return value
-            try:
-                return int(value)
-            except ValueError:
-                try:
-                    return float(value)
-                except ValueError:
-                    return value
-
         data_dict = df.rename(
             {col: col.replace(".transformed", "") for col in df.columns}
         ).to_dict()
