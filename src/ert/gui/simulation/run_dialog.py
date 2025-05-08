@@ -36,7 +36,6 @@ from ert.ensemble_evaluator import (
 )
 from ert.ensemble_evaluator import identifiers as ids
 from ert.gui.ertnotifier import ErtNotifier
-from ert.gui.ertwidgets.message_box import ErtMessageBox
 from ert.gui.model.fm_step_list import FMStepListProxyModel
 from ert.gui.model.node import IterNode
 from ert.gui.model.real_list import RealListModel
@@ -68,6 +67,8 @@ from ert.shared.status.utils import (
     get_mount_directory,
 )
 
+from ...config import ErrorInfo
+from ..suggestor import Suggestor
 from .queue_emitter import QueueEmitter
 from .view import DiskSpaceWidget, ProgressWidget, RealizationWidget, UpdateWidget
 
@@ -213,7 +214,7 @@ class RunDialog(QFrame):
         self._snapshot_model = SnapshotModel(self)
         self._event_queue = event_queue
         self._notifier = notifier
-        self.fail_msg_box: ErtMessageBox | None = None
+        self.fail_msg_box: Suggestor | None = None
 
         self._ticker = QTimer(self)
         self._ticker.timeout.connect(self._on_ticker)
@@ -450,8 +451,16 @@ class RunDialog(QFrame):
 
             self._progress_widget.set_all_failed()
 
-            self.fail_msg_box = ErtMessageBox("ERT experiment failed!", msg, self)
-            self.fail_msg_box.setModal(True)
+            self.fail_msg_box = Suggestor(
+                errors=[ErrorInfo(msg)],
+                warnings=[],
+                deprecations=[],
+                continue_action=None,
+                widget_info="""\
+                    <p style="font-size: 28px;">The ERT experiment failed!</p>
+                    <p>These errors were detected:</p>
+                """,
+            )
             self.fail_msg_box.show()
         else:
             self.update_total_progress(1.0, "Experiment completed.")
