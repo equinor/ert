@@ -590,7 +590,10 @@ class LocalEnsemble(BaseMode):
         self._storage._to_parquet_transaction(group_path, df)
 
     def load_parameters_pl(
-        self, group: str, realizations: Collection[int] | None = None
+        self,
+        group: str,
+        realizations: Collection[int] | None = None,
+        all_data: bool = True,
     ) -> pl.DataFrame:
         """
         Load parameters for group and realizations into pl.DataFrame.
@@ -614,6 +617,10 @@ class LocalEnsemble(BaseMode):
         df_lazy = pl.scan_parquet(group_path)
         if realizations is not None:
             df_lazy = df_lazy.filter(pl.col("realization").is_in(realizations))
+        if not all_data:
+            return df_lazy.collect().select(
+                pl.exclude("^.*\\.transformed$", "realization")
+            )
         return df_lazy.collect()
 
     def load_cross_correlations(self) -> xr.Dataset:
