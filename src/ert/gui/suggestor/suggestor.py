@@ -111,20 +111,13 @@ class Suggestor(QWidget):
         deprecations: list[WarningInfo],
         continue_action: Callable[[], None] | None,
         help_links: dict[str, str] | None = None,
+        widget_info: str | None = None,
     ) -> None:
         super().__init__()
         self._continue_action = continue_action
         self.__layout = QVBoxLayout()
         self.setLayout(self.__layout)
-        self.__layout.addWidget(
-            QLabel(
-                """\
-                <p style="font-size: 28px;">Some problems detected</p>
-                <p> The following problems were detected while reading
-                the ert configuration file. </p>
-        """
-            )
-        )
+        self.__layout.addWidget(QLabel(widget_info))
         self.setWindowTitle("ERT")
         data_widget = QWidget(parent=self)
         self.__layout.addWidget(data_widget)
