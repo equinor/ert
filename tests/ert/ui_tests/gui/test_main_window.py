@@ -14,6 +14,7 @@ from PyQt6.QtWidgets import (
     QCheckBox,
     QComboBox,
     QDoubleSpinBox,
+    QLabel,
     QMenuBar,
     QPushButton,
     QToolButton,
@@ -585,11 +586,10 @@ def test_that_a_failing_job_shows_error_message_with_context(
             lambda: run_dialog.fail_msg_box is not None,
             timeout=20000,
         )
-        error_dialog = run_dialog.fail_msg_box
+        error_dialog: Suggestor = run_dialog.fail_msg_box
         assert error_dialog
-        text = error_dialog.details_text.toPlainText()
-        label = error_dialog.label_text.text()
-        assert "ERT experiment failed" in label
+
+        assert "ERT experiment failed" in error_dialog.findChild(QLabel).text()
         expected_substrings = [
             "Realization: 0 failed after reaching max submit (1)",
             "Step poly_eval failed",
@@ -598,9 +598,14 @@ def test_that_a_failing_job_shows_error_message_with_context(
             "raise RuntimeError('Argh')",
             "RuntimeError: Argh",
         ]
+        suggestor_messages = (
+            error_dialog.findChild(QWidget, name="suggestor_messages")
+            .findChild(QLabel)
+            .text()
+        )
         for substring in expected_substrings:
-            assert substring in text
-        error_dialog.accept()
+            assert substring in suggestor_messages
+        error_dialog.close()
 
     qtbot.mouseClick(run_experiment, Qt.MouseButton.LeftButton)
 
