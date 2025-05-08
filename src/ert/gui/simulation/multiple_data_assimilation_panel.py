@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import logging
 from dataclasses import dataclass
 from typing import TYPE_CHECKING, Any
 
@@ -8,6 +9,7 @@ from PyQt6.QtCore import pyqtSlot as Slot
 from PyQt6.QtGui import QFont
 from PyQt6.QtWidgets import QCheckBox, QFormLayout, QHBoxLayout, QLabel, QWidget
 
+from ert.config import ErrorInfo
 from ert.gui.ertnotifier import ErtNotifier
 from ert.gui.ertwidgets import (
     ActiveRealizationsModel,
@@ -19,6 +21,7 @@ from ert.gui.ertwidgets import (
     TextModel,
     ValueModel,
 )
+from ert.gui.suggestor import Suggestor
 from ert.mode_definitions import ES_MDA_MODE
 from ert.run_models import MultipleDataAssimilation
 from ert.validation import (
@@ -34,6 +37,7 @@ from .experiment_config_panel import ExperimentConfigPanel
 if TYPE_CHECKING:
     from ert.config import AnalysisConfig
     from ert.gui.ertwidgets import ValueModel
+logger = logging.getLogger(__name__)
 
 
 @dataclass
@@ -290,9 +294,16 @@ class MultipleDataAssimilationPanel(ExperimentConfigPanel):
 
     def _realizations_from_fs(self) -> None:
         ensemble = self._ensemble_selector.selected_ensemble
-        if ensemble:
-            mask = ensemble.get_realization_mask_with_parameters()
-            self._active_realizations_field.model.setValueFromMask(mask)  # type: ignore
+        try:
+            if ensemble:
+                mask = ensemble.get_realization_mask_with_parameters()
+                self._active_realizations_field.model.setValueFromMask(mask)  # type: ignore
+        except OSError as err:
+            logger.error(str(err))
+            Suggestor(
+                errors=[ErrorInfo(str(err))],
+                widget_info='<p style="font-size: 28px;">Error reading storage</p>',
+            ).show()
 
 
 class _ActiveLabel(QLabel):

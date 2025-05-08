@@ -1,3 +1,4 @@
+import logging
 from collections.abc import Callable
 
 from PyQt6.QtCore import (
@@ -20,9 +21,10 @@ from PyQt6.QtWidgets import (
     QWidget,
 )
 
-from ert.config import ConfigValidationError, ErtConfig
+from ert.config import ConfigValidationError, ErrorInfo, ErtConfig
 from ert.gui.ertnotifier import ErtNotifier
 from ert.gui.ertwidgets.create_experiment_dialog import CreateExperimentDialog
+from ert.gui.suggestor import Suggestor
 from ert.storage import Ensemble, Experiment
 
 from .storage_model import (
@@ -31,6 +33,8 @@ from .storage_model import (
     RealizationModel,
     StorageModel,
 )
+
+logger = logging.getLogger(__name__)
 
 
 class AddWidget(QWidget):
@@ -167,20 +171,30 @@ class StorageWidget(QWidget):
                         ),
                     )
                     return
-            ensemble = self._notifier.storage.create_experiment(
-                parameters=(
-                    [*parameters_config, design_matrix_group]
-                    if design_matrix_group is not None
-                    else parameters_config
-                ),
-                responses=self._ert_config.ensemble_config.response_configuration,
-                observations=self._ert_config.enkf_obs.datasets,
-                name=create_experiment_dialog.experiment_name,
-                templates=self._ert_config.ert_templates,
-            ).create_ensemble(
-                name=create_experiment_dialog.ensemble_name,
-                ensemble_size=self._ensemble_size,
-                iteration=create_experiment_dialog.iteration,
-            )
-            self._notifier.set_current_ensemble(ensemble)
-            self._notifier.ertChanged.emit()
+            try:
+                ensemble = self._notifier.storage.create_experiment(
+                    parameters=(
+                        [*parameters_config, design_matrix_group]
+                        if design_matrix_group is not None
+                        else parameters_config
+                    ),
+                    responses=self._ert_config.ensemble_config.response_configuration,
+                    observations=self._ert_config.enkf_obs.datasets,
+                    name=create_experiment_dialog.experiment_name,
+                    templates=self._ert_config.ert_templates,
+                ).create_ensemble(
+                    name=create_experiment_dialog.ensemble_name,
+                    ensemble_size=self._ensemble_size,
+                    iteration=create_experiment_dialog.iteration,
+                )
+                self._notifier.set_current_ensemble(ensemble)
+                self._notifier.ertChanged.emit()
+            except OSError as err:
+                logger.error(str(err))
+                Suggestor(
+                    errors=[ErrorInfo(str(err))],
+                    widget_info=(
+                        '<p style="font-size: 28px;">'
+                        "Error writing to storage, experiment not created</p>"
+                    ),
+                ).show()
