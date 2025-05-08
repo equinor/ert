@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import logging
 from dataclasses import dataclass
 from typing import TYPE_CHECKING, Any
 
@@ -14,6 +15,7 @@ from ert.gui.ertwidgets import (
     AnalysisModuleEdit,
     CopyableLabel,
     EnsembleSelector,
+    ErtMessageBox,
     StringBox,
     TargetEnsembleModel,
     TextModel,
@@ -34,6 +36,7 @@ from .experiment_config_panel import ExperimentConfigPanel
 if TYPE_CHECKING:
     from ert.config import AnalysisConfig
     from ert.gui.ertwidgets import ValueModel
+logger = logging.getLogger(__name__)
 
 
 @dataclass
@@ -290,9 +293,14 @@ class MultipleDataAssimilationPanel(ExperimentConfigPanel):
 
     def _realizations_from_fs(self) -> None:
         ensemble = self._ensemble_selector.selected_ensemble
-        if ensemble:
-            mask = ensemble.get_realization_mask_with_parameters()
-            self._active_realizations_field.model.setValueFromMask(mask)  # type: ignore
+        try:
+            if ensemble:
+                mask = ensemble.get_realization_mask_with_parameters()
+                self._active_realizations_field.model.setValueFromMask(mask)  # type: ignore
+        except OSError as err:
+            logger.error(str(err))
+            msg = ErtMessageBox("Error reading storage", str(err))
+            msg.exec()
 
 
 class _ActiveLabel(QLabel):

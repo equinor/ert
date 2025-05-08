@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import logging
 from collections.abc import Iterable
 from typing import TYPE_CHECKING
 
@@ -10,8 +11,12 @@ from PyQt6.QtWidgets import QComboBox
 from ert.gui.ertnotifier import ErtNotifier
 from ert.storage.realization_storage_state import RealizationStorageState
 
+from .message_box import ErtMessageBox
+
 if TYPE_CHECKING:
     from ert.storage import Ensemble
+
+logger = logging.getLogger(__name__)
 
 
 class EnsembleSelector(QComboBox):
@@ -65,13 +70,19 @@ class EnsembleSelector(QComboBox):
 
         self.clear()
 
-        if self._ensemble_list():
-            self.setEnabled(True)
+        try:
+            if self._ensemble_list():
+                self.setEnabled(True)
 
-        for ensemble in self._ensemble_list():
-            self.addItem(
-                f"{ensemble.experiment.name} : {ensemble.name}", userData=ensemble
-            )
+            for ensemble in self._ensemble_list():
+                self.addItem(
+                    f"{ensemble.experiment.name} : {ensemble.name}", userData=ensemble
+                )
+        except OSError as err:
+            logger.error(str(err))
+            msg = ErtMessageBox("Error writing to storage", str(err))
+            msg.exec()
+            return
 
         current_index = self.findData(
             self.notifier.current_ensemble, Qt.ItemDataRole.UserRole

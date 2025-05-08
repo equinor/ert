@@ -1,3 +1,4 @@
+import logging
 from dataclasses import dataclass
 
 import numpy as np
@@ -10,6 +11,7 @@ from ert.gui.ertwidgets import (
     ActiveRealizationsModel,
     CopyableLabel,
     EnsembleSelector,
+    ErtMessageBox,
     StringBox,
 )
 from ert.gui.simulation.experiment_config_panel import ExperimentConfigPanel
@@ -17,6 +19,8 @@ from ert.mode_definitions import EVALUATE_ENSEMBLE_MODE
 from ert.run_models.evaluate_ensemble import EvaluateEnsemble
 from ert.storage.realization_storage_state import RealizationStorageState
 from ert.validation import EnsembleRealizationsArgument
+
+logger = logging.getLogger(__name__)
 
 
 @dataclass
@@ -87,15 +91,21 @@ class EvaluateEnsemblePanel(ExperimentConfigPanel):
     def _realizations_from_fs(self) -> None:
         ensemble = self._ensemble_selector.selected_ensemble
         self._active_realizations_field.setEnabled(ensemble is not None)
-        if ensemble:
-            self._realizations_validator.set_ensemble(ensemble)
-            parameters = ensemble.get_realization_mask_with_parameters()
-            missing_responses = ~ensemble.get_realization_mask_with_responses()
-            failures = ~ensemble.get_realization_mask_without_failure()
-            mask = np.logical_and(
-                parameters, np.logical_or(missing_responses, failures)
-            )
-            self._active_realizations_field.model.setValueFromMask(mask)  # type: ignore
+        try:
+            if ensemble:
+                self._realizations_validator.set_ensemble(ensemble)
+
+                parameters = ensemble.get_realization_mask_with_parameters()
+                missing_responses = ~ensemble.get_realization_mask_with_responses()
+                failures = ~ensemble.get_realization_mask_without_failure()
+                mask = np.logical_and(
+                    parameters, np.logical_or(missing_responses, failures)
+                )
+                self._active_realizations_field.model.setValueFromMask(mask)  # type: ignore
+        except OSError as err:
+            logger.error(str(err))
+            msg = ErtMessageBox("Error reading storage", str(err))
+            msg.exec()
 
     @Slot(QWidget)
     def experimentTypeChanged(self, w: QWidget) -> None:
