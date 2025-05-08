@@ -217,7 +217,8 @@ class Suggestor(QWidget):
         buttons_layout = QHBoxLayout()
         buttons_layout.insertStretch(-1, -1)
         buttons_layout.setContentsMargins(0, 24, 0, 0)
-        buttons_layout.addWidget(run)
+        if self._continue_action:
+            buttons_layout.addWidget(run)
         buttons_layout.addWidget(give_up)
         buttons.setLayout(buttons_layout)
         return buttons
