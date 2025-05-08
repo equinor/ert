@@ -777,19 +777,36 @@ class LocalEnsemble(BaseMode):
             gen_kws = [config for config in gen_kws if config.name == group]
         for key in gen_kws:
             with contextlib.suppress(KeyError):
-                da = self.load_parameters(key.name, realizations)["transformed_values"]
-                assert isinstance(da, xr.DataArray)
-                da["names"] = np.char.add(f"{key.name}:", da["names"].astype(np.str_))
-                df = da.to_dataframe().unstack(level="names")
-                df.columns = df.columns.droplevel()
-                for parameter in df.columns:
-                    if key.shouldUseLogScale(parameter.split(":")[1]):
-                        df[f"LOG10_{parameter}"] = np.log10(df[parameter])
+                df = self.load_parameters_pl(key.name, realizations).select(
+                    [pl.col("^.*\\.transformed$"), "realization"]
+                )
+                param_names = [col for col in df.columns if col != "realization"]
+                df = df.rename(
+                    {col: col.replace(".transformed", "") for col in param_names}
+                )
+                for parameter in param_names:
+                    if key.shouldUseLogScale(parameter):
+                        df = df.with_columns(
+                            (np.log10(pl.col(parameter))).alias(f"LOG10_{parameter}")
+                        )
+                df = df.rename(
+                    {
+                        col: f"{key.name}:{col}"
+                        for col in df.columns
+                        if col != "realization"
+                    }
+                )
+
                 dataframes.append(df)
+
         if not dataframes:
             return pd.DataFrame()
 
-        dataframe = pd.concat(dataframes, axis=1)
+        dataframe = (
+            pl.concat(dataframes, how="align").to_pandas().set_index("realization")
+        )
+
+        # dataframe = pd.concat(dataframes, axis=1)
         dataframe.columns.name = None
         dataframe.index.name = "Realization"
 
