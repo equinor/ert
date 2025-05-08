@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import asyncio
+import contextlib
 import hashlib
 import logging
 import time
@@ -291,9 +292,10 @@ class Job:
             self.real.run_arg.runpath, self.real.run_arg.job_name
         )
 
-        self.real.run_arg.ensemble_storage.set_failure(
-            self.real.run_arg.iens, RealizationStorageState.LOAD_FAILURE, error_msg
-        )
+        with contextlib.suppress(OSError):
+            self.real.run_arg.ensemble_storage.set_failure(
+                self.real.run_arg.iens, RealizationStorageState.LOAD_FAILURE, error_msg
+            )
         logger.error(error_msg)
         log_info_from_exit_file(Path(self.real.run_arg.runpath) / ERROR_file)
 
