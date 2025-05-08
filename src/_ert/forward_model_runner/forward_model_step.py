@@ -61,7 +61,7 @@ def killed_by_oom(pids: set[int]) -> bool:
         )
         return False
 
-    oom_lines = "".join(
+    oom_lines = "\n".join(
         [
             line
             for line in dmesg_result.stdout.decode(
@@ -76,7 +76,7 @@ def killed_by_oom(pids: set[int]) -> bool:
         rhel8_message = f"Killed process {pid}"
         if rhel7_message in oom_lines or rhel8_message in oom_lines:
             logger.warning(
-                f"Found OOM trace in dmesg: {oom_lines}, "
+                f"Found OOM trace in dmesg: \n{oom_lines}\n"
                 "assuming OOM is the cause of realization kill."
             )
             return True
