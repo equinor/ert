@@ -106,7 +106,7 @@ def test_valid_forward_model_config_files(copy_test_data_to_tmp, monkeypatch):
     monkeypatch.chdir("valid_config_file/forward_models")
     parser = MockParser()
     EverestConfig.load_file_with_argparser(
-        "valid_config_maintained_forward_models.yml", parser=parser
+        "valid_config_forward_models.yml", parser=parser
     )
 
     assert parser.get_error() is None
@@ -120,10 +120,10 @@ def test_invalid_forward_model_config_files(copy_test_data_to_tmp, monkeypatch):
     parser = MockParser()
     next((Path.cwd() / "input" / "templates").glob("*")).unlink()
     EverestConfig.load_file_with_argparser(
-        "valid_config_maintained_forward_models.yml", parser=parser
+        "valid_config_forward_models.yml", parser=parser
     )
     template_config_path = "configs/template_config.yml"
-    config_file = "valid_config_maintained_forward_models.yml"
+    config_file = "valid_config_forward_models.yml"
     template_path = "./templates/wellopen.jinja"
     assert f"""Loading config file <{config_file}> failed with:
 Found 1 validation error:
