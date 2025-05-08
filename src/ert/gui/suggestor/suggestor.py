@@ -199,7 +199,8 @@ class Suggestor(QWidget):
             self.close()
 
         run = QPushButton("Open ERT")
-        give_up = QPushButton("Cancel")
+        give_up = QPushButton("Close")
+        give_up.setObjectName("close_button")
         if self._continue_action is None:
             run.setStyleSheet(DISABLED_BUTTON_STYLE)
             run.setEnabled(False)

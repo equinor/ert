@@ -611,7 +611,9 @@ def test_that_exception_in_base_run_model_is_handled(qtbot: QtBot, storage):
                 .text()
             )
             assert "I failed :(" in text
-            button = suggestor_termination_window.findChild(QPushButton)
+            button = suggestor_termination_window.findChild(
+                QPushButton, name="close_button"
+            )
             assert button
             button.click()
             handler_done = True
