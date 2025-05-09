@@ -20,7 +20,7 @@ def main() -> None:
     jobdir = Path(os.getenv("PYTEST_TMP_PATH", ".")) / "mock_jobs"
     killsignal = getattr(signal, args.signal)
     for jobid in args.jobids:
-        pidfile = jobdir / f"{jobid}.pid"
+        pidfile = jobdir / jobid / "pid"
         if not pidfile.exists():
             sys.exit(1)
         pid = int(pidfile.read_text(encoding="utf-8").strip())
