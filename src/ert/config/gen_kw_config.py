@@ -3,8 +3,10 @@ from __future__ import annotations
 import math
 import os
 import warnings
+from collections import defaultdict
 from collections.abc import Callable
-from dataclasses import dataclass
+from dataclasses import dataclass, field
+from enum import StrEnum
 from hashlib import sha256
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, Self, cast, overload
@@ -48,19 +50,33 @@ def _get_abs_path(file: str | None) -> str | None:
     return file
 
 
+class DataSource(StrEnum):
+    DESIGN_MATRIX = "design_matrix"
+    SAMPLED = "sampled"
+
+
 @dataclass
 class TransformFunctionDefinition:
     name: str
     param_name: str
+    group_name: str
     values: list[Any]
+    update: bool = True
+    input_source: DataSource = DataSource.SAMPLED
 
 
 @dataclass
 class GenKwConfig(ParameterConfig):
-    transform_function_definitions: list[TransformFunctionDefinition]
+    transform_function_definitions: list[TransformFunctionDefinition] = field(
+        default_factory=list
+    )
+    forward_init: bool = False
+    update: bool = True
+    name: str = "GEN_KW"
 
     def __post_init__(self) -> None:
         self.transform_functions: list[TransformFunction] = []
+        self.groups: dict[str, list[TransformFunctionDefinition]] = defaultdict(list)
         for e in self.transform_function_definitions:
             if isinstance(e, dict):
                 self.transform_functions.append(
@@ -72,6 +88,8 @@ class GenKwConfig(ParameterConfig):
                 self.transform_functions.append(
                     self._parse_transform_function_definition(e)
                 )
+            self.groups[e.group_name].append(e)
+        self.update = any(param.update for param in self.transform_function_definitions)
         self._validate()
 
     def __contains__(self, item: str) -> bool:
@@ -82,107 +100,125 @@ class GenKwConfig(ParameterConfig):
 
     @classmethod
     def templates_from_config(
-        cls, gen_kw: list[str | dict[str, str]]
-    ) -> tuple[str, str] | None:
-        gen_kw_key = cast(str, gen_kw[0])
-        positional_args = cast(list[str], gen_kw[:-1])
-
-        if len(positional_args) == 4:
-            output_file = positional_args[2]
-            parameter_file_context = positional_args[3][0]
-            template_file = _get_abs_path(positional_args[1][0])
-            if not os.path.isfile(template_file):
-                raise ConfigValidationError.with_context(
-                    f"No such template file: {template_file}", positional_args[1]
-                )
-            elif Path(template_file).stat().st_size == 0:
-                token = getattr(parameter_file_context, "token", parameter_file_context)
-                ConfigWarning.deprecation_warn(
-                    f"The template file for GEN_KW ({gen_kw_key}) is empty. "
-                    "If templating is not needed, you "
-                    "can use GEN_KW with just the distribution file "
-                    f"instead: GEN_KW {gen_kw_key} {token}",
-                    positional_args[1],
-                )
-            if output_file.startswith("/"):
-                raise ConfigValidationError.with_context(
-                    f"Output file cannot have an absolute path {output_file}",
-                    positional_args[2],
-                )
-            return template_file, output_file
-        return None
-
-    @classmethod
-    def from_config_list(cls, gen_kw: list[str | dict[str, str]]) -> Self:
-        gen_kw_key = cast(str, gen_kw[0])
-
-        options = cast(dict[str, str], gen_kw[-1])
-        positional_args = cast(list[str], gen_kw[:-1])
+        cls, gen_kw_list: list[list[str | dict[str, str]]]
+    ) -> list[tuple[str, str]]:
+        templates: list[tuple[str, str]] = []
         errors = []
-        update_parameter = str_to_bool(options.get("UPDATE", "TRUE"))
-        if _get_abs_path(options.get("INIT_FILES")):
-            raise ConfigValidationError.with_context(
-                "INIT_FILES with GEN_KW has been removed. "
-                f"Please remove INIT_FILES from the GEN_KW {gen_kw_key} config. "
-                "Alternatively, use DESIGN_MATRIX to load parameters from files.",
-                gen_kw,
-            )
+        for gen_kw in gen_kw_list:
+            gen_kw_key = cast(str, gen_kw[0])
+            positional_args = cast(list[str], gen_kw[:-1])
 
-        if len(positional_args) == 2:
-            parameter_file_contents = positional_args[1][1]
-            parameter_file_context = positional_args[1][0]
-        elif len(positional_args) == 4:
-            parameter_file_contents = positional_args[3][1]
-            parameter_file_context = positional_args[3][0]
-        else:
-            raise ConfigValidationError(
-                f"Unexpected positional arguments: {positional_args}"
-            )
-
-        transform_function_definitions: list[TransformFunctionDefinition] = []
-        for line_number, item in enumerate(parameter_file_contents.splitlines()):
-            item = item.split("--")[0]  # remove comments
-            if item.strip():  # only lines with content
-                items = item.split()
-                if len(items) < 2:
+            if len(positional_args) == 4:
+                output_file = positional_args[2]
+                parameter_file_context = positional_args[3][0]
+                template_file = _get_abs_path(positional_args[1][0])
+                if not os.path.isfile(template_file):
+                    raise ConfigValidationError.with_context(
+                        f"No such template file: {template_file}", positional_args[1]
+                    )
+                elif Path(template_file).stat().st_size == 0:
+                    token = getattr(
+                        parameter_file_context, "token", parameter_file_context
+                    )
+                    ConfigWarning.deprecation_warn(
+                        f"The template file for GEN_KW ({gen_kw_key}) is empty. "
+                        "If templating is not needed, you "
+                        "can use GEN_KW with just the distribution file "
+                        f"instead: GEN_KW {gen_kw_key} {token}",
+                        positional_args[1],
+                    )
+                if output_file.startswith("/"):
                     errors.append(
                         ConfigValidationError.with_context(
-                            f"Too few values on line {line_number} in parameter "
-                            f"file {parameter_file_context}",
-                            gen_kw,
+                            f"Output file cannot have an absolute path {output_file}",
+                            positional_args[2],
                         )
                     )
-                else:
-                    transform_function_definitions.append(
-                        TransformFunctionDefinition(
-                            name=items[0],
-                            param_name=items[1],
-                            values=items[2:],
-                        )
+                templates.append((template_file, output_file))
+        return templates
+
+    @classmethod
+    def from_config_list(cls, gen_kw_list: list[list[str | dict[str, str]]]) -> Self:
+        errors: list[ConfigValidationError] = []
+        transform_function_definitions: list[TransformFunctionDefinition] = []
+        for gen_kw in gen_kw_list:
+            gen_kw_key = cast(str, gen_kw[0])
+
+            options = cast(dict[str, str], gen_kw[-1])
+            positional_args = cast(list[str], gen_kw[:-1])
+            errors = []
+            update_parameter = str_to_bool(options.get("UPDATE", "TRUE"))
+            if _get_abs_path(options.get("INIT_FILES")):
+                errors.append(
+                    ConfigValidationError.with_context(
+                        "INIT_FILES with GEN_KW has been removed. "
+                        "Please remove INIT_FILES from "
+                        f"the GEN_KW {gen_kw_key} config. "
+                        "Alternatively, use DESIGN_MATRIX to load "
+                        "parameters from files.",
+                        gen_kw,
                     )
-        if not transform_function_definitions:
-            errors.append(
-                ConfigValidationError.with_context(
-                    f"No parameters specified in {parameter_file_context}",
-                    parameter_file_context,
                 )
-            )
 
-        if errors:
-            raise ConfigValidationError.from_collected(errors)
+            parameter_file_contents: str = ""
+            parameter_file_context: str = ""
+            if len(positional_args) == 2:
+                parameter_file_contents = positional_args[1][1]
+                parameter_file_context = positional_args[1][0]
+            elif len(positional_args) == 4:
+                parameter_file_contents = positional_args[3][1]
+                parameter_file_context = positional_args[3][0]
+            else:
+                errors.append(
+                    ConfigValidationError(
+                        f"Unexpected positional arguments: {positional_args}"
+                    )
+                )
 
-        if gen_kw_key == "PRED" and update_parameter:
-            ConfigWarning.warn(
-                "GEN_KW PRED used to hold a special meaning and be "
-                "excluded from being updated.\n If the intention was "
-                "to exclude this from updates, set UPDATE:FALSE.\n",
-                gen_kw_key,
-            )
+            scalars_added = False
+            for line_number, item in enumerate(parameter_file_contents.splitlines()):
+                item = item.split("--")[0]  # remove comments
+                if item.strip():  # only lines with content
+                    items = item.split()
+                    if len(items) < 2:
+                        errors.append(
+                            ConfigValidationError.with_context(
+                                f"Too few values on line {line_number} in parameter "
+                                f"file {parameter_file_context}",
+                                gen_kw,
+                            )
+                        )
+                    else:
+                        transform_function_definitions.append(
+                            TransformFunctionDefinition(
+                                name=items[0],
+                                param_name=items[1],
+                                group_name=gen_kw_key,
+                                update=update_parameter,
+                                values=items[2:],
+                            )
+                        )
+                        scalars_added = True
+                if not scalars_added:
+                    errors.append(
+                        ConfigValidationError.with_context(
+                            f"No parameters specified in {parameter_file_context}",
+                            parameter_file_context,
+                        )
+                    )
+
+            if errors:
+                raise ConfigValidationError.from_collected(errors)
+
+            if gen_kw_key == "PRED" and update_parameter:
+                ConfigWarning.warn(
+                    "GEN_KW PRED used to hold a special meaning and be "
+                    "excluded from being updated.\n If the intention was "
+                    "to exclude this from updates, set UPDATE:FALSE.\n",
+                    gen_kw_key,
+                )
         return cls(
-            name=gen_kw_key,
-            forward_init=False,
             transform_function_definitions=transform_function_definitions,
-            update=update_parameter,
         )
 
     def _validate(self) -> None:
@@ -301,49 +337,54 @@ class GenKwConfig(ParameterConfig):
     ) -> xr.Dataset:
         raise NotImplementedError()
 
+    @staticmethod
+    def parse_value(value: float | int | str) -> float | int | str:
+        if isinstance(value, float | int):
+            return value
+        try:
+            return int(value)
+        except ValueError:
+            try:
+                return float(value)
+            except ValueError:
+                return value
+
     def write_to_runpath(
         self,
         run_path: Path,
         real_nr: int,
         ensemble: Ensemble,
     ) -> dict[str, dict[str, float | str]]:
-        array = ensemble.load_parameters(self.name, real_nr)["transformed_values"]
-        assert isinstance(array, xr.DataArray)
-        if not array.size == len(self.transform_functions):
-            raise ValueError(
-                f"The configuration of GEN_KW parameter {self.name}"
-                f" is of size {len(self.transform_functions)}, expected {array.size}"
+        data: dict[str, dict[str, float | str]] = {}
+        for group in self.groups:
+            array = ensemble.load_parameters(group, real_nr)["transformed_values"]
+            assert isinstance(array, xr.DataArray)
+            if not array.size == len(self.groups[group]):
+                raise ValueError(
+                    f"The configuration of GEN_KW parameter {self.name}"
+                    f" is of size {len(self.transform_functions)}, "
+                    f"expected {array.size}"
+                )
+            data_group = dict(
+                zip(
+                    array["names"].values.tolist(),
+                    [GenKwConfig.parse_value(i) for i in array.values],
+                    strict=False,
+                )
             )
 
-        def parse_value(value: float | int | str) -> float | int | str:
-            if isinstance(value, float | int):
-                return value
-            try:
-                return int(value)
-            except ValueError:
-                try:
-                    return float(value)
-                except ValueError:
-                    return value
+            log10_data: dict[str, float | str] = {
+                tf.name: math.log10(data_group[tf.name])
+                for tf in self.transform_functions
+                if tf.use_log and isinstance(data[tf.name], (int, float))
+            }
 
-        data = dict(
-            zip(
-                array["names"].values.tolist(),
-                [parse_value(i) for i in array.values],
-                strict=False,
-            )
-        )
+            if log10_data:
+                data.update({group: data_group, f"LOG10_{group}": log10_data})
+            else:
+                data.update({group: data_group})
 
-        log10_data: dict[str, float | str] = {
-            tf.name: math.log10(data[tf.name])
-            for tf in self.transform_functions
-            if tf.use_log and isinstance(data[tf.name], (int, float))
-        }
-
-        if log10_data:
-            return {self.name: data, f"LOG10_{self.name}": log10_data}
-        else:
-            return {self.name: data}
+        return data
 
     def save_parameters(
         self,
@@ -366,7 +407,13 @@ class GenKwConfig(ParameterConfig):
     def load_parameters(
         self, ensemble: Ensemble, realizations: npt.NDArray[np.int_]
     ) -> npt.NDArray[np.float64]:
-        return ensemble.load_parameters(self.name, realizations)["values"].values.T
+        return np.vstack(
+            [
+                ensemble.load_parameters(group, realizations)["values"].values.T
+                for group in self.groups
+                if self.groups_update[group]
+            ]
+        )
 
     def shouldUseLogScale(self, keyword: str) -> bool:
         for tf in self.transform_functions:
