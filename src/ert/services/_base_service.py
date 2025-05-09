@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import contextlib
 import io
 import json
 import os
@@ -188,8 +189,9 @@ class _Proc(threading.Thread):
         """
         Ensure that the JSON connection information file is deleted
         """
-        if self._service_config_path.exists():
-            self._service_config_path.unlink()
+        with contextlib.suppress(OSError):
+            if self._service_config_path.exists():
+                self._service_config_path.unlink()
 
     @property
     def logger(self) -> Logger:
