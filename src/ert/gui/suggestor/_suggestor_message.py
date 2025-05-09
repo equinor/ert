@@ -133,9 +133,9 @@ class SuggestorMessage(QWidget):
 
     def _text(self, location: str) -> str:
         return (
-            '<div style="font-size: 16px; line-height: 24px;">'
+            '<div style="font-size: 12px; line-height: 24px;">'
             + self._color_bold(self._header)
-            + self._message
+            + f"<pre>{self._message}</pre>"
             + location
             + "</div>"
         )

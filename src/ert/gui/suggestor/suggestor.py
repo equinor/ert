@@ -111,20 +111,13 @@ class Suggestor(QWidget):
         deprecations: list[WarningInfo],
         continue_action: Callable[[], None] | None,
         help_links: dict[str, str] | None = None,
+        widget_info: str | None = None,
     ) -> None:
         super().__init__()
         self._continue_action = continue_action
         self.__layout = QVBoxLayout()
         self.setLayout(self.__layout)
-        self.__layout.addWidget(
-            QLabel(
-                """\
-                <p style="font-size: 28px;">Some problems detected</p>
-                <p> The following problems were detected while reading
-                the ert configuration file. </p>
-        """
-            )
-        )
+        self.__layout.addWidget(QLabel(widget_info))
         self.setWindowTitle("ERT")
         data_widget = QWidget(parent=self)
         self.__layout.addWidget(data_widget)
@@ -138,9 +131,8 @@ class Suggestor(QWidget):
         data_layout.setContentsMargins(0, 0, 0, 0)
 
         data_layout.addWidget(self._problem_area(errors, warnings, deprecations))
-        data_layout.addWidget(
-            self._help_panel(help_links if help_links is not None else {})
-        )
+        if help_links:
+            data_layout.addWidget(self._help_panel(help_links))
 
     def _help_panel(self, help_links: dict[str, str]) -> QFrame:
         help_button_frame = QFrame(parent=self)
@@ -207,7 +199,8 @@ class Suggestor(QWidget):
             self.close()
 
         run = QPushButton("Open ERT")
-        give_up = QPushButton("Cancel")
+        give_up = QPushButton("Close")
+        give_up.setObjectName("close_button")
         if self._continue_action is None:
             run.setStyleSheet(DISABLED_BUTTON_STYLE)
             run.setEnabled(False)
@@ -224,16 +217,17 @@ class Suggestor(QWidget):
         buttons_layout = QHBoxLayout()
         buttons_layout.insertStretch(-1, -1)
         buttons_layout.setContentsMargins(0, 24, 0, 0)
-        buttons_layout.addWidget(run)
+        if self._continue_action:
+            buttons_layout.addWidget(run)
         buttons_layout.addWidget(give_up)
         buttons.setLayout(buttons_layout)
         return buttons
 
     def _messages(
         self,
-        errors: list[ErrorInfo],
-        warnings: list[WarningInfo],
-        deprecations: list[WarningInfo],
+        errors: Sequence[ErrorInfo],
+        warnings: Sequence[WarningInfo],
+        deprecations: Sequence[WarningInfo],
     ) -> QScrollArea:
         CARD_WIDTH = 450
         CARD_HEIGHT = 220
@@ -251,28 +245,18 @@ class Suggestor(QWidget):
         column = 0
         row = 0
         num = 0
-        for combined in _combine_messages(errors):
-            suggest_layout.addWidget(SuggestorMessage.error_msg(*combined), row, column)
-            if column:
-                row += 1
-            column = (column + 1) % NUM_COLUMNS
-            num += 1
-        for combined in _combine_messages(warnings):
-            suggest_layout.addWidget(
-                SuggestorMessage.warning_msg(*combined), row, column
-            )
-            if column:
-                row += 1
-            column = (column + 1) % NUM_COLUMNS
-            num += 1
-        for combined in _combine_messages(deprecations):
-            suggest_layout.addWidget(
-                SuggestorMessage.deprecation_msg(*combined), row, column
-            )
-            if column:
-                row += 1
-            column = (column + 1) % NUM_COLUMNS
-            num += 1
+        for messages, message_type in [
+            (errors, SuggestorMessage.error_msg),
+            (warnings, SuggestorMessage.warning_msg),
+            (deprecations, SuggestorMessage.deprecation_msg),
+        ]:
+            for combined in _combine_messages(messages):
+                suggest_layout.addWidget(message_type(*combined), row, column)
+                if column:
+                    row += 1
+                column = (column + 1) % NUM_COLUMNS
+                num += 1
+
         suggest_layout.setRowStretch(row + 1, 1)
 
         width = 1440
