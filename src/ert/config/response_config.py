@@ -3,6 +3,7 @@ from abc import ABC, abstractmethod
 from typing import Any, Self
 
 import polars as pl
+from pydantic import BaseModel
 
 from .parameter_config import CustomDict
 from .parsing import ConfigDict
@@ -15,12 +16,27 @@ class InvalidResponseFile(Exception):
     """
 
 
+class ResponseMetadata(BaseModel):
+    response_type: str
+    response_key: str
+    # ex: { "report_step": [0, 199, 299] }
+    filter_on: dict[str, list[Any]] | None  # Dimensions
+
+
 @dataclasses.dataclass
 class ResponseConfig(ABC):
     name: str
     input_files: list[str] = dataclasses.field(default_factory=list)
     keys: list[str] = dataclasses.field(default_factory=list)
     has_finalized_keys: bool = False
+
+    @property
+    @abstractmethod
+    def metadata(self) -> list[ResponseMetadata]:
+        """
+        Returns metadata describing this response
+
+        """
 
     @abstractmethod
     def read_from_file(self, run_path: str, iens: int, iter_: int) -> pl.DataFrame:
