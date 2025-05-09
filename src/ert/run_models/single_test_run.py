@@ -8,8 +8,6 @@ from ert.run_models import EnsembleExperiment
 if TYPE_CHECKING:
     from queue import SimpleQueue
 
-    from ert.storage import Storage
-
     from .base_run_model import StatusEvents
 
 SINGLE_TEST_RUN_GROUP = "Forward model evaluation"
@@ -29,7 +27,6 @@ class SingleTestRun(EnsembleExperiment):
         experiment_name: str,
         random_seed: int,
         config: ErtConfig,
-        storage: Storage,
         status_queue: SimpleQueue[StatusEvents],
     ):
         local_queue_config = config.queue_config.create_local_copy()
@@ -39,7 +36,7 @@ class SingleTestRun(EnsembleExperiment):
             active_realizations=[True],
             minimum_required_realizations=1,
             config=config,
-            storage=storage,
+            storage_path=config.ens_path,
             queue_config=local_queue_config,
             status_queue=status_queue,
             random_seed=random_seed,

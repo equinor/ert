@@ -248,7 +248,6 @@ class ExperimentPanel(QWidget):
         try:
             model = create_model(
                 self.config,
-                self._notifier.storage,
                 args,
                 event_queue,
             )
@@ -359,7 +358,12 @@ class ExperimentPanel(QWidget):
             self._notifier.emitErtChange()
             self.toggleExperimentType()
 
+        def update_end_event_handler() -> None:
+            self._notifier.storage.refresh()
+            self._notifier.storage_changed.emit()
+
         self._dialog.simulation_done.connect(simulation_done_handler)
+        self._dialog.update_end_event.connect(update_end_event_handler)
 
     def toggleExperimentType(self) -> None:
         current_model = self.get_current_experiment_type()

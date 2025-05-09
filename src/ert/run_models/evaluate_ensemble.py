@@ -8,11 +8,12 @@ from uuid import UUID
 import numpy as np
 
 from ert.ensemble_evaluator import EvaluatorServerConfig
-from ert.storage import Storage
 from ert.trace import tracer
 
 from ..run_arg import create_run_arguments
+from ..storage import open_storage
 from . import BaseRunModel
+from .experiment_configs import RunModelConfig
 
 if TYPE_CHECKING:
     from queue import SimpleQueue
@@ -40,33 +41,36 @@ class EvaluateEnsemble(BaseRunModel):
         ensemble_id: str,
         random_seed: int,
         config: ErtConfig,
-        storage: Storage,
+        storage_path: str,
         queue_config: QueueConfig,
         status_queue: SimpleQueue[StatusEvents],
     ):
         try:
-            self.ensemble = storage.get_ensemble(UUID(ensemble_id))
+            with open_storage(storage_path, mode="r") as storage:
+                self.ensemble = storage.get_ensemble(UUID(ensemble_id))
         except KeyError as err:
             raise ValueError(f"No ensemble: {ensemble_id}") from err
 
         super().__init__(
-            storage,
-            config.runpath_file,
-            Path(config.user_config_file),
-            config.env_vars,
-            config.env_pr_fm_step,
-            config.runpath_config,
-            queue_config,
-            config.forward_model_steps,
-            status_queue,
-            config.substitutions,
-            config.hooked_workflows,
-            start_iteration=self.ensemble.iteration,
-            total_iterations=1,
-            active_realizations=active_realizations,
-            minimum_required_realizations=minimum_required_realizations,
-            random_seed=random_seed,
-            log_path=config.analysis_config.log_path,
+            RunModelConfig(
+                storage_path=storage_path,
+                runpath_file=config.runpath_file,
+                user_config_file=Path(config.user_config_file),
+                env_vars=config.env_vars,
+                env_pr_fm_step=config.env_pr_fm_step,
+                runpath_config=config.runpath_config,
+                queue_config=queue_config,
+                forward_model_steps=config.forward_model_steps,
+                substitutions=config.substitutions,
+                hooked_workflows=config.hooked_workflows,
+                start_iteration=self.ensemble.iteration,
+                total_iterations=1,
+                active_realizations=active_realizations,
+                minimum_required_realizations=minimum_required_realizations,
+                random_seed=random_seed,
+                log_path=config.analysis_config.log_path,
+            ),
+            status_queue=status_queue,
         )
 
     @tracer.start_as_current_span(f"{__name__}.run_experiment")

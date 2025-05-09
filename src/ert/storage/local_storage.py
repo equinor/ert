@@ -78,7 +78,6 @@ class LocalStorage(BaseMode):
         ignore_migration_check : bool
             If True, skips migration checks during initialization.
         """
-
         super().__init__(mode)
         self.path = Path(path).absolute()
 
@@ -292,11 +291,14 @@ class LocalStorage(BaseMode):
             return
 
         self._save_index()
-        self._release_lock()
+
+        if self.can_write:
+            self._release_lock()
 
     def _release_lock(self) -> None:
-        if self._lock.is_locked:
-            self._lock.release()
+        self._lock.release()
+
+        if (self.path / "storage.lock").exists():
             (self.path / "storage.lock").unlink()
 
     @require_write
