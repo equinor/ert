@@ -6,6 +6,7 @@ import os
 import signal
 import sys
 import threading
+import traceback
 from collections.abc import Callable, Mapping, Sequence
 from logging import Logger, getLogger
 from pathlib import Path
@@ -315,6 +316,7 @@ class BaseService:
 
         if self._project is not None:
             if not Path(self._project).exists():
+                print(traceback.print_stack())
                 raise RuntimeError(f"No storage exists at : {self._project}")
             path = f"{self._project}/{self.service_name}_server.json"
         else:

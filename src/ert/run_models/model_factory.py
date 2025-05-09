@@ -79,7 +79,6 @@ def create_model(
 
 def _setup_single_test_run(
     config: ErtConfig,
-    storage: Storage,
     args: Namespace,
     status_queue: SimpleQueue[StatusEvents],
 ) -> SingleTestRun:
@@ -92,7 +91,6 @@ def _setup_single_test_run(
         ensemble_name=args.current_ensemble,
         experiment_name=experiment_name,
         config=config,
-        storage=storage,
         status_queue=status_queue,
     )
 
@@ -181,6 +179,7 @@ def _setup_manual_update(
         minimum_required_realizations=config.analysis_config.minimum_required_realizations,
         target_ensemble=args.target_ensemble,
         config=config,
+        storage_path=config.ens_path,
         queue_config=config.queue_config,
         es_settings=config.analysis_config.es_settings,
         update_settings=update_settings,

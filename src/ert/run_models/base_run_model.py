@@ -405,6 +405,7 @@ class BaseRunModel(ABC):
                     self._completed_realizations_mask = copy.copy(
                         self.active_realizations
                     )
+                self._storage.close()
         except ErtRunError as e:
             self._completed_realizations_mask = []
             failed = True
@@ -420,6 +421,7 @@ class BaseRunModel(ABC):
             exception = e
             traceback_str = traceback.format_exc()
         finally:
+            self._storage.close()
             self._clean_env_context()
             self.stop_time = int(time.time())
             self.send_event(
@@ -436,7 +438,6 @@ class BaseRunModel(ABC):
                     ),
                 )
             )
-            self._storage.close()
 
     @abstractmethod
     def run_experiment(
