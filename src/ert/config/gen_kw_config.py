@@ -366,7 +366,7 @@ class GenKwConfig(ParameterConfig):
             for col in df.columns
             if not col.endswith(".transformed") and col != "realization"
         ]
-        return df.select(pl.col(param_cols)).to_numpy().T
+        return df.select(pl.col(param_cols)).to_numpy().T.copy()
 
     def shouldUseLogScale(self, keyword: str) -> bool:
         for tf in self.transform_functions:
