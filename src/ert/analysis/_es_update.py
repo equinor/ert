@@ -378,13 +378,13 @@ def analysis_ES(
             f"{(time.time() - start) / 60} minutes"
         )
 
-        _copy_unupdated_parameters(
-            list(source_ensemble.experiment.parameter_configuration.keys()),
-            parameters,
-            iens_active_index,
-            source_ensemble,
-            target_ensemble,
-        )
+    _copy_unupdated_parameters(
+        list(source_ensemble.experiment.parameter_configuration.keys()),
+        parameters,
+        iens_active_index,
+        source_ensemble,
+        target_ensemble,
+    )
 
 
 def smoother_update(
