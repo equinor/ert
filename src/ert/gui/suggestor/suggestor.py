@@ -225,9 +225,9 @@ class Suggestor(QWidget):
 
     def _messages(
         self,
-        errors: list[ErrorInfo],
-        warnings: list[WarningInfo],
-        deprecations: list[WarningInfo],
+        errors: Sequence[ErrorInfo],
+        warnings: Sequence[WarningInfo],
+        deprecations: Sequence[WarningInfo],
     ) -> QScrollArea:
         CARD_WIDTH = 450
         CARD_HEIGHT = 220
@@ -245,28 +245,18 @@ class Suggestor(QWidget):
         column = 0
         row = 0
         num = 0
-        for combined in _combine_messages(errors):
-            suggest_layout.addWidget(SuggestorMessage.error_msg(*combined), row, column)
-            if column:
-                row += 1
-            column = (column + 1) % NUM_COLUMNS
-            num += 1
-        for combined in _combine_messages(warnings):
-            suggest_layout.addWidget(
-                SuggestorMessage.warning_msg(*combined), row, column
-            )
-            if column:
-                row += 1
-            column = (column + 1) % NUM_COLUMNS
-            num += 1
-        for combined in _combine_messages(deprecations):
-            suggest_layout.addWidget(
-                SuggestorMessage.deprecation_msg(*combined), row, column
-            )
-            if column:
-                row += 1
-            column = (column + 1) % NUM_COLUMNS
-            num += 1
+        for messages, message_type in [
+            (errors, SuggestorMessage.error_msg),
+            (warnings, SuggestorMessage.warning_msg),
+            (deprecations, SuggestorMessage.deprecation_msg),
+        ]:
+            for combined in _combine_messages(messages):
+                suggest_layout.addWidget(message_type(*combined), row, column)
+                if column:
+                    row += 1
+                column = (column + 1) % NUM_COLUMNS
+                num += 1
+
         suggest_layout.setRowStretch(row + 1, 1)
 
         width = 1440
