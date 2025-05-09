@@ -45,16 +45,16 @@ def test_current_ensemble(qtbot, notifier, storage):
     qtbot.addWidget(widget)
     assert widget.count() == 0
 
-    notifier.set_storage(storage)
+    notifier.set_storage(str(storage.path))
     notifier.set_current_ensemble(ensemble)
     assert widget.count() == 1
-    assert widget.currentData() == ensemble
+    assert widget.currentData()._path == ensemble._path
 
     # Creating EnsembleSelector after storage has been created populates it
     widget = EnsembleSelector(notifier)
     qtbot.addWidget(widget)
     assert widget.count() == 1
-    assert widget.currentData() == ensemble
+    assert widget.currentData()._path == ensemble._path
 
 
 def test_changing_ensemble(qtbot, notifier, storage):
@@ -65,7 +65,7 @@ def test_changing_ensemble(qtbot, notifier, storage):
         name="default_b", ensemble_size=1
     )
 
-    notifier.set_storage(storage)
+    notifier.set_storage(str(storage.path))
     notifier.set_current_ensemble(ensemble_a)
     widget_a = EnsembleSelector(notifier)
     widget_b = EnsembleSelector(notifier)
@@ -111,7 +111,7 @@ def test_show_only_no_parent(
     ensemble = experiment.create_ensemble(name="parent", ensemble_size=1)
     experiment.create_ensemble(name="child", ensemble_size=1, prior_ensemble=ensemble)
 
-    notifier.set_storage(storage)
+    notifier.set_storage(str(storage.path))
     notifier.set_current_ensemble(ensemble)
 
     widget = EnsembleSelector(notifier, show_only_no_children=flag)

@@ -188,6 +188,7 @@ class FMStepOverview(QTableView):
 
 class RunDialog(QFrame):
     simulation_done = Signal(bool, str)
+    update_end_event = Signal()
     progress_update_event = Signal(dict, int)
     restart_experiment = Signal()
     _RUN_TIME_POLL_RATE = 1000
@@ -514,6 +515,7 @@ class RunDialog(QFrame):
                 self._progress_widget.stop_waiting_progress_bar()
                 self._get_update_widget(event.iteration).end(event)
                 event.write_as_csv(self.output_path)
+                self.update_end_event.emit()
             case RunModelStatusEvent() | RunModelTimeEvent():
                 self._get_update_widget(event.iteration).update_status(event)
             case RunModelDataEvent():

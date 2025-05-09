@@ -1,25 +1,21 @@
 from __future__ import annotations
 
 import logging
-from pathlib import Path
 from typing import TYPE_CHECKING
 from uuid import UUID
 
 import numpy as np
+from pydantic import PrivateAttr
 
 from ert.ensemble_evaluator import EvaluatorServerConfig
-from ert.storage import Storage
 from ert.trace import tracer
 
 from ..run_arg import create_run_arguments
+from ..storage import Ensemble
 from . import BaseRunModel
 
 if TYPE_CHECKING:
-    from queue import SimpleQueue
-
-    from ert.config import ErtConfig, QueueConfig
-
-    from .base_run_model import StatusEvents
+    pass
 
 logger = logging.getLogger(__name__)
 
@@ -33,57 +29,33 @@ class EvaluateEnsemble(BaseRunModel):
     ensemble, and will not reflect any changes to the user configuration on disk.
     """
 
-    def __init__(
-        self,
-        active_realizations: list[bool],
-        minimum_required_realizations: int,
-        ensemble_id: str,
-        random_seed: int,
-        config: ErtConfig,
-        storage: Storage,
-        queue_config: QueueConfig,
-        status_queue: SimpleQueue[StatusEvents],
-    ):
-        try:
-            self.ensemble = storage.get_ensemble(UUID(ensemble_id))
-        except KeyError as err:
-            raise ValueError(f"No ensemble: {ensemble_id}") from err
+    ensemble_id: str
+    _ensemble: Ensemble = PrivateAttr()
 
-        super().__init__(
-            storage,
-            config.runpath_file,
-            Path(config.user_config_file),
-            config.env_vars,
-            config.env_pr_fm_step,
-            config.runpath_config,
-            queue_config,
-            config.forward_model_steps,
-            status_queue,
-            config.substitutions,
-            config.hooked_workflows,
-            start_iteration=self.ensemble.iteration,
-            total_iterations=1,
-            active_realizations=active_realizations,
-            minimum_required_realizations=minimum_required_realizations,
-            random_seed=random_seed,
-            log_path=config.analysis_config.log_path,
-        )
+    def model_post_init(self, ctx) -> None:
+        super().model_post_init(ctx)
+        try:
+            self._ensemble = self._storage.get_ensemble(UUID(self.ensemble_id))
+        except KeyError as err:
+            raise ValueError(f"No ensemble: {self.ensemble_id}") from err
+
+        self.start_iteration = self._ensemble.iteration
 
     @tracer.start_as_current_span(f"{__name__}.run_experiment")
     def run_experiment(
         self, evaluator_server_config: EvaluatorServerConfig, restart: bool = False
     ) -> None:
         self.log_at_startup()
-        self.restart = restart
-        if self.restart:
+        self._restart = restart
+        if self._restart:
             self.active_realizations = self._create_mask_from_failed_realizations()
-        ensemble = self.ensemble
+        ensemble = self._ensemble
         experiment = ensemble.experiment
         self.set_env_key("_ERT_EXPERIMENT_ID", str(experiment.id))
         self.set_env_key("_ERT_ENSEMBLE_ID", str(ensemble.id))
 
         prior_args = create_run_arguments(
-            self.run_paths,
+            self._run_paths,
             np.array(self.active_realizations, dtype=bool),
             ensemble=ensemble,
         )

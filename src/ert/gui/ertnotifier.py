@@ -2,7 +2,7 @@ from PyQt6.QtCore import QObject
 from PyQt6.QtCore import pyqtSignal as Signal
 from PyQt6.QtCore import pyqtSlot as Slot
 
-from ert.storage import Ensemble, Storage
+from ert.storage import Ensemble, Storage, open_storage
 
 
 class ErtNotifier(QObject):
@@ -48,9 +48,10 @@ class ErtNotifier(QObject):
         self.ertChanged.emit()
 
     @Slot(object)
-    def set_storage(self, storage: Storage) -> None:
-        self._storage = storage
-        self.storage_changed.emit(storage)
+    def set_storage(self, storage_path: str) -> None:
+        self._storage = open_storage(storage_path, mode="r")
+        self._storage_path = storage_path
+        self.storage_changed.emit(self._storage)
 
     @Slot(object)
     def set_current_ensemble(self, ensemble: Ensemble | None = None) -> None:

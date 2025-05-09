@@ -320,6 +320,7 @@ def copy_minimum_case(copy_case):
 @pytest.fixture()
 def use_tmpdir(tmp_path, monkeypatch):
     monkeypatch.chdir(tmp_path)
+    yield tmp_path
 
 
 @pytest.fixture(scope="session", autouse=True)
