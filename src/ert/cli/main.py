@@ -83,17 +83,16 @@ def run_cli(args: Namespace, plugin_manager: ErtPluginManager | None = None) -> 
                 f"All parameters are set to UPDATE:FALSE in {args.config}"
             )
 
-    storage = open_storage(ert_config.ens_path, "w")
-
     if args.mode == WORKFLOW_MODE:
+        storage = open_storage(ert_config.ens_path, "w")
         execute_workflow(ert_config, storage, args.name)
+        storage.close()
         return
 
     status_queue: queue.SimpleQueue[StatusEvents] = queue.SimpleQueue()
     try:
         model = create_model(
             ert_config,
-            storage,
             args,
             status_queue,
         )
@@ -151,7 +150,6 @@ def run_cli(args: Namespace, plugin_manager: ErtPluginManager | None = None) -> 
             model.cancel()
 
     thread.join()
-    storage.close()
 
     if end_event is not None and end_event.failed:
         # If monitor has not reported, give some info if the job failed

@@ -42,7 +42,6 @@ if TYPE_CHECKING:
 
 def create_model(
     config: ErtConfig,
-    storage: Storage,
     args: Namespace,
     status_queue: SimpleQueue[StatusEvents],
 ) -> BaseRunModel:
@@ -57,28 +56,24 @@ def create_model(
     update_settings = config.analysis_config.observation_settings
 
     if args.mode == TEST_RUN_MODE:
-        return _setup_single_test_run(config, storage, args, status_queue)
+        return _setup_single_test_run(config, args, status_queue)
     validate_minimum_realizations(config, args)
     if args.mode == ENSEMBLE_EXPERIMENT_MODE:
-        return _setup_ensemble_experiment(config, storage, args, status_queue)
+        return _setup_ensemble_experiment(config, args, status_queue)
     if args.mode == EVALUATE_ENSEMBLE_MODE:
-        return _setup_evaluate_ensemble(config, storage, args, status_queue)
+        return _setup_evaluate_ensemble(config, args, status_queue)
     if args.mode == ENSEMBLE_SMOOTHER_MODE:
-        return _setup_ensemble_smoother(
-            config, storage, args, update_settings, status_queue
-        )
+        return _setup_ensemble_smoother(config, args, update_settings, status_queue)
     if args.mode == ENIF_MODE:
         return _setup_ensemble_information_filter(
-            config, storage, args, update_settings, status_queue
+            config, args, update_settings, status_queue
         )
     if args.mode == ES_MDA_MODE:
         return _setup_multiple_data_assimilation(
-            config, storage, args, update_settings, status_queue
+            config, args, update_settings, status_queue
         )
     if args.mode == MANUAL_UPDATE_MODE:
-        return _setup_manual_update(
-            config, storage, args, update_settings, status_queue
-        )
+        return _setup_manual_update(config, args, update_settings, status_queue)
     raise NotImplementedError(f"Run type not supported {args.mode}")
 
 
@@ -117,7 +112,6 @@ def validate_minimum_realizations(config: ErtConfig, args: Namespace) -> None:
 
 def _setup_ensemble_experiment(
     config: ErtConfig,
-    storage: Storage,
     args: Namespace,
     status_queue: SimpleQueue[StatusEvents],
 ) -> EnsembleExperiment:
@@ -132,7 +126,7 @@ def _setup_ensemble_experiment(
         minimum_required_realizations=config.analysis_config.minimum_required_realizations,
         experiment_name=experiment_name,
         config=config,
-        storage=storage,
+        storage_path=config.ens_path,
         queue_config=config.queue_config,
         status_queue=status_queue,
     )
@@ -140,7 +134,6 @@ def _setup_ensemble_experiment(
 
 def _setup_evaluate_ensemble(
     config: ErtConfig,
-    storage: Storage,
     args: Namespace,
     status_queue: SimpleQueue[StatusEvents],
 ) -> EvaluateEnsemble:
@@ -152,7 +145,7 @@ def _setup_evaluate_ensemble(
         ensemble_id=args.ensemble_id,
         minimum_required_realizations=config.analysis_config.minimum_required_realizations,
         config=config,
-        storage=storage,
+        storage_path=config.storage_path,
         queue_config=config.queue_config,
         status_queue=status_queue,
     )
@@ -175,7 +168,6 @@ def _get_active_realizations_list(args: Namespace, config: ErtConfig) -> list[bo
 
 def _setup_manual_update(
     config: ErtConfig,
-    storage: Storage,
     args: Namespace,
     update_settings: ObservationSettings,
     status_queue: SimpleQueue[StatusEvents],
@@ -189,7 +181,6 @@ def _setup_manual_update(
         minimum_required_realizations=config.analysis_config.minimum_required_realizations,
         target_ensemble=args.target_ensemble,
         config=config,
-        storage=storage,
         queue_config=config.queue_config,
         es_settings=config.analysis_config.es_settings,
         update_settings=update_settings,
@@ -199,7 +190,6 @@ def _setup_manual_update(
 
 def _setup_ensemble_smoother(
     config: ErtConfig,
-    storage: Storage,
     args: Namespace,
     update_settings: ObservationSettings,
     status_queue: SimpleQueue[StatusEvents],
@@ -217,7 +207,7 @@ def _setup_ensemble_smoother(
         minimum_required_realizations=config.analysis_config.minimum_required_realizations,
         random_seed=config.random_seed,
         config=config,
-        storage=storage,
+        storage_path=config.ens_path,
         queue_config=config.queue_config,
         es_settings=config.analysis_config.es_settings,
         update_settings=update_settings,
@@ -227,7 +217,6 @@ def _setup_ensemble_smoother(
 
 def _setup_ensemble_information_filter(
     config: ErtConfig,
-    storage: Storage,
     args: Namespace,
     update_settings: ObservationSettings,
     status_queue: SimpleQueue[StatusEvents],
@@ -245,7 +234,7 @@ def _setup_ensemble_information_filter(
         minimum_required_realizations=config.analysis_config.minimum_required_realizations,
         random_seed=config.random_seed,
         config=config,
-        storage=storage,
+        storage_path=config.ens_path,
         queue_config=config.queue_config,
         es_settings=config.analysis_config.es_settings,
         update_settings=update_settings,

@@ -13,7 +13,7 @@ from ert.config import ErtConfig, ESSettings, HookRuntime, ObservationSettings
 from ert.config.parsing.config_errors import ConfigValidationError
 from ert.enkf_main import sample_prior, save_design_matrix_to_ensemble
 from ert.ensemble_evaluator import EvaluatorServerConfig
-from ert.storage import Ensemble, Storage
+from ert.storage import Ensemble
 from ert.trace import tracer
 
 from ..analysis import ErtAnalysisError, enif_update
@@ -27,6 +27,7 @@ from ..plugins import (
 from ..run_arg import create_run_arguments
 from .base_run_model import ErtRunError, StatusEvents, UpdateRunModel
 from .event import RunModelStatusEvent, RunModelUpdateBeginEvent
+from .experiment_configs import UpdateRunModelConfig
 
 if TYPE_CHECKING:
     from ert.config import QueueConfig
@@ -44,32 +45,34 @@ class EnsembleInformationFilter(UpdateRunModel):
         minimum_required_realizations: int,
         random_seed: int,
         config: ErtConfig,
-        storage: Storage,
+        storage_path: str,
         queue_config: QueueConfig,
         es_settings: ESSettings,
         update_settings: ObservationSettings,
         status_queue: SimpleQueue[StatusEvents],
     ):
         super().__init__(
-            es_settings,
-            update_settings,
-            storage,
-            config.runpath_file,
-            Path(config.user_config_file),
-            config.env_vars,
-            config.env_pr_fm_step,
-            config.runpath_config,
-            queue_config,
-            config.forward_model_steps,
-            status_queue,
-            config.substitutions,
-            config.hooked_workflows,
-            active_realizations=active_realizations,
-            start_iteration=0,
-            total_iterations=2,
-            random_seed=random_seed,
-            minimum_required_realizations=minimum_required_realizations,
-            log_path=config.analysis_config.log_path,
+            UpdateRunModelConfig(
+                analysis_settings=es_settings,
+                update_settings=update_settings,
+                storage_path=storage_path,
+                runpath_file=config.runpath_file,
+                user_config_file=Path(config.user_config_file),
+                env_vars=config.env_vars,
+                env_pr_fm_step=config.env_pr_fm_step,
+                runpath_config=config.runpath_config,
+                queue_config=queue_config,
+                forward_model_steps=config.forward_model_steps,
+                substitutions=config.substitutions,
+                hooked_workflows=config.hooked_workflows,
+                active_realizations=active_realizations,
+                start_iteration=0,
+                total_iterations=2,
+                random_seed=random_seed,
+                minimum_required_realizations=minimum_required_realizations,
+                log_path=config.analysis_config.log_path,
+            ),
+            status_queue=status_queue,
         )
         self.target_ensemble_format = target_ensemble
         self.experiment_name = experiment_name

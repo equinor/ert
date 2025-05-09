@@ -7,6 +7,7 @@ import dataclasses
 import functools
 import logging
 import os
+import queue
 import shutil
 import time
 import traceback
@@ -65,8 +66,9 @@ from ert.plugins import (
     PreSimulationFixtures,
     PreUpdateFixtures,
 )
+from ert.run_models.experiment_configs import RunModelConfig, UpdateRunModelConfig
 from ert.runpaths import Runpaths
-from ert.storage import Ensemble, Storage
+from ert.storage import Ensemble, open_storage
 from ert.substitutions import Substitutions
 from ert.trace import tracer
 from ert.utils import log_duration
@@ -173,52 +175,40 @@ class BaseRunModelAPI:
 class BaseRunModel(ABC):
     def __init__(
         self,
-        storage: Storage,
-        runpath_file: Path,
-        user_config_file: Path,
-        env_vars: dict[str, str],
-        env_pr_fm_step: dict[str, dict[str, Any]],
-        model_config: ModelConfig,
-        queue_config: QueueConfig,
-        forward_model_steps: list[ForwardModelStep],
-        status_queue: SimpleQueue[StatusEvents],
-        substitutions: Substitutions,
-        hooked_workflows: defaultdict[HookRuntime, list[Workflow]],
-        active_realizations: list[bool],
-        log_path: Path,
-        random_seed: int,
-        total_iterations: int = 1,
-        start_iteration: int = 0,
-        minimum_required_realizations: int = 0,
+        config: RunModelConfig,
+        status_queue: queue.SimpleQueue[StatusEvents],
     ):
         """
         BaseRunModel serves as the base class for the various experiment modes,
         and contains logic for interacting with the Ensemble Evaluator by running
         the forward model and passing events back through the supplied queue.
         """
-        self._total_iterations = total_iterations
+
+        self._total_iterations = config.total_iterations
         self.start_time: int | None = None
         self.stop_time: int | None = None
-        self._queue_config: QueueConfig = queue_config
-        self._initial_realizations_mask: list[bool] = copy.copy(active_realizations)
+        self._queue_config: QueueConfig = config.queue_config
+        self._initial_realizations_mask: list[bool] = copy.copy(
+            config.active_realizations
+        )
         self._completed_realizations_mask: list[bool] = []
         self.support_restart: bool = True
-        self._storage = storage
+        self._storage = open_storage(config.storage_path, mode="w")
         self._context_env: dict[str, str] = {}
-        self.random_seed = random_seed
+        self.random_seed = config.random_seed
         self.rng = np.random.default_rng(self.random_seed)
-        self._substitutions: Substitutions = substitutions
-        self._model_config: ModelConfig = model_config
-        self._runpath_file: Path = runpath_file
-        self._forward_model_steps: list[ForwardModelStep] = forward_model_steps
-        self._user_config_file: Path = user_config_file
+        self._substitutions: Substitutions = config.substitutions
+        self._model_config: ModelConfig = config.runpath_config
+        self._runpath_file: Path = config.runpath_file
+        self._forward_model_steps: list[ForwardModelStep] = config.forward_model_steps
+        self._user_config_file: Path = config.user_config_file
         self._hooked_workflows: defaultdict[HookRuntime, list[Workflow]] = (
-            hooked_workflows
+            config.hooked_workflows
         )
-        self._log_path = log_path
+        self._log_path = config.log_path
 
-        self._env_vars: dict[str, str] = env_vars
-        self._env_pr_fm_step: dict[str, dict[str, Any]] = env_pr_fm_step
+        self._env_vars: dict[str, str] = config.env_vars
+        self._env_pr_fm_step: dict[str, dict[str, Any]] = config.env_pr_fm_step
 
         self.run_paths = Runpaths(
             jobname_format=self._model_config.jobname_format_string,
@@ -231,9 +221,9 @@ class BaseRunModel(ABC):
         self._status_queue = status_queue
         self._end_queue: SimpleQueue[str] = SimpleQueue()
         # This holds state about the run model
-        self.minimum_required_realizations = minimum_required_realizations
-        self.active_realizations = copy.copy(active_realizations)
-        self.start_iteration = start_iteration
+        self.minimum_required_realizations = config.minimum_required_realizations
+        self.active_realizations = copy.copy(config.active_realizations)
+        self.start_iteration = config.start_iteration
         self.restart = False
 
     @property
@@ -446,6 +436,7 @@ class BaseRunModel(ABC):
                     ),
                 )
             )
+            self._storage.close()
 
     @abstractmethod
     def run_experiment(
@@ -853,47 +844,15 @@ class BaseRunModel(ABC):
 class UpdateRunModel(BaseRunModel):
     def __init__(
         self,
-        analysis_settings: ESSettings,
-        update_settings: ObservationSettings,
-        storage: Storage,
-        runpath_file: Path,
-        user_config_file: Path,
-        env_vars: dict[str, str],
-        env_pr_fm_step: dict[str, dict[str, Any]],
-        model_config: ModelConfig,
-        queue_config: QueueConfig,
-        forward_model_steps: list[ForwardModelStep],
+        config: UpdateRunModelConfig,
         status_queue: SimpleQueue[StatusEvents],
-        substitutions: Substitutions,
-        hooked_workflows: defaultdict[HookRuntime, list[Workflow]],
-        active_realizations: list[bool],
-        total_iterations: int,
-        start_iteration: int,
-        random_seed: int,
-        minimum_required_realizations: int,
-        log_path: Path,
     ):
-        self._analysis_settings: ESSettings = analysis_settings
-        self._update_settings: ObservationSettings = update_settings
+        self._analysis_settings: ESSettings = config.analysis_settings
+        self._update_settings: ObservationSettings = config.update_settings
 
         super().__init__(
-            storage,
-            runpath_file,
-            user_config_file,
-            env_vars,
-            env_pr_fm_step,
-            model_config,
-            queue_config,
-            forward_model_steps,
+            config.to_run_model_config(),
             status_queue,
-            substitutions,
-            hooked_workflows,
-            active_realizations=active_realizations,
-            total_iterations=total_iterations,
-            start_iteration=start_iteration,
-            random_seed=random_seed,
-            minimum_required_realizations=minimum_required_realizations,
-            log_path=log_path,
         )
 
     def update(
