@@ -221,7 +221,11 @@ def test_that_first_three_parameters_sampled_snapshot(tmpdir, storage):
         with open("prior.txt", mode="w", encoding="utf-8") as fh:
             fh.writelines("MY_KEYWORD NORMAL 0 1")
         _, fs = create_runpath(storage, "config.ert", [True] * 3)
-        prior = fs.load_parameters("KW_NAME", range(3))["values"].values.ravel()
+        prior = (
+            fs.load_parameters_pl("KW_NAME", range(3), all_data=False)
+            .to_numpy()
+            .flatten()
+        )
         expected = np.array([-0.8814228, 1.5847818, 1.009956])
         np.testing.assert_almost_equal(prior, expected)
 
@@ -279,9 +283,9 @@ def test_that_sampling_is_fixed_from_name(
         key_hash = sha256(b"1234" + b"KW_NAME:MY_KEYWORD")
         seed = np.frombuffer(key_hash.digest(), dtype="uint32")
         expected = np.random.default_rng(seed).standard_normal(num_realisations)
-        assert fs.load_parameters("KW_NAME").sel(names="MY_KEYWORD")[
-            "values"
-        ].values.ravel().tolist() == list(expected)
+        assert fs.load_parameters_pl("KW_NAME", all_data=False).select(
+            "MY_KEYWORD"
+        ).to_numpy().ravel().tolist() == list(expected)
 
 
 @pytest.mark.parametrize(
@@ -342,9 +346,10 @@ def test_that_sub_sample_maintains_order(tmpdir, storage, mask, expected):
         )
 
         assert (
-            fs.load_parameters("KW_NAME")["values"]
-            .sel(names="MY_KEYWORD")
-            .values.ravel()
+            fs.load_parameters_pl("KW_NAME", all_data=False)
+            .select("MY_KEYWORD")
+            .to_numpy()
+            .ravel()
             .tolist()
             == expected
         )
@@ -375,9 +380,10 @@ def test_gen_kw_optional_template(storage, tmpdir, config_str, expected):
             fh.writelines("MY_KEYWORD NORMAL 0 1")
 
         create_runpath(storage, "config.ert")
-        assert next(iter(storage.ensembles)).load_parameters("KW_NAME")[
-            "values"
-        ].values.flatten().tolist() == pytest.approx([expected])
+
+        assert next(iter(storage.ensembles)).load_parameters_pl(
+            "KW_NAME", all_data=False
+        ).to_numpy().ravel().tolist() == pytest.approx([expected])
 
 
 def write_file(fname, contents):

@@ -10,7 +10,7 @@ from typing import TYPE_CHECKING, Any
 
 import orjson
 import pandas as pd
-import xarray as xr
+import polars as pl
 
 from ert.substitutions import Substitutions, substitute_runpath_name
 from ert.utils import log_duration
@@ -158,20 +158,14 @@ def save_design_matrix_to_ensemble(
     design_group_name: str = DESIGN_MATRIX_GROUP,
 ) -> None:
     assert not design_matrix_df.empty
-    for realization_nr in active_realizations:
-        row = design_matrix_df.loc[realization_nr]
-        ds = xr.Dataset(
-            {
-                "values": ("names", list(row.values)),
-                "transformed_values": ("names", list(row.values)),
-                "names": list(row.keys()),
-            }
-        )
-        ensemble.save_parameters(
-            design_group_name,
-            realization_nr,
-            ds,
-        )
+    df = design_matrix_df.copy()
+    for col in df.columns:
+        df[f"{col}.transformed"] = df[col]
+    df["realization"] = df.index
+    pl_df = pl.from_pandas(df.reset_index(drop=True)).filter(
+        pl.col("realization").is_in(list(active_realizations))
+    )
+    ensemble.save_parameters_pl(design_group_name, pl_df)
 
 
 @log_duration(
