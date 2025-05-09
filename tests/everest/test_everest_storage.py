@@ -3,6 +3,7 @@ from pathlib import Path
 import polars as pl
 import pytest
 
+from ert.storage import open_storage
 from everest.config import EverestConfig
 from everest.everest_storage import EverestStorage
 
@@ -28,8 +29,10 @@ from everest.everest_storage import EverestStorage
 def test_csv_export(config_file, cached_example, snapshot):
     config_path, config_file, _, _ = cached_example(f"math_func/{config_file}")
     config = EverestConfig.load_file(Path(config_path) / config_file)
-
-    ever_storage = EverestStorage(output_dir=Path(config.optimization_output_dir))
+    ert_experiment = next(open_storage(config.storage_dir, mode="r").experiments)
+    ever_storage = EverestStorage(
+        output_dir=Path(config.optimization_output_dir), ert_experiment=ert_experiment
+    )
     ever_storage.init(
         formatted_control_names=config.formatted_control_names,
         objective_functions=config.objective_functions,

@@ -18,6 +18,7 @@ import everest
 from ert.ensemble_evaluator import EndEvent
 from ert.run_models.everest_run_model import EverestExitCode
 from ert.scheduler.event import FinishedEvent
+from ert.storage import open_storage
 from everest.config import EverestConfig, ServerConfig
 from everest.detached import (
     ServerStatus,
@@ -214,7 +215,8 @@ async def test_status_max_batch_num(copy_math_func_test_data_to_tmp):
 
     # The server should complete without error.
     assert status["status"] == ServerStatus.completed
-    storage = EverestStorage(Path(config.optimization_output_dir))
+    ert_experiment = next(open_storage(config.storage_dir, mode="r").experiments)
+    storage = EverestStorage(Path(config.optimization_output_dir), ert_experiment)
     storage.read_from_output_dir()
 
     # Check that there is only one batch.
