@@ -23,6 +23,7 @@ from PyQt6.QtWidgets import (
     QWidget,
 )
 
+from ert import LibresFacade
 from ert.config import ErtConfig
 from ert.config.workflow_job import ErtScriptWorkflow
 from ert.gui.about_dialog import AboutDialog
@@ -39,6 +40,8 @@ from ert.gui.tools.plugins import PluginHandler, PluginsTool
 from ert.gui.tools.workflows import WorkflowsTool
 from ert.plugins import ErtPluginManager
 from ert.trace import get_trace_id
+from everest.config import EverestConfig
+from everest.simulator.everest_to_ert import everest_to_ert_config_dict
 
 BUTTON_STYLE_SHEET: str = """
     QToolButton {
@@ -83,14 +86,22 @@ class SidebarToolButton(QToolButton):
 class ErtMainWindow(QMainWindow):
     close_signal = Signal()
 
+    @classmethod
+    def from_everest_config(cls, config: EverestConfig):
+        ert_config = ErtConfig(**everest_to_ert_config_dict(config))
+
+        return cls(config.config_path, ert_config, is_everest=True)
+
     def __init__(
         self,
         config_file: str,
         ert_config: ErtConfig,
         plugin_manager: ErtPluginManager | None = None,
         log_handler: GUILogHandler | None = None,
+        is_everest: bool = False,
     ):
         QMainWindow.__init__(self)
+        self.is_everest = is_everest
         self.notifier = ErtNotifier()
         self.plugins_tool: PluginsTool | None = None
         self.ert_config = ert_config
@@ -99,6 +110,8 @@ class ErtMainWindow(QMainWindow):
 
         self.setWindowTitle(
             f"ERT - {config_file} - {find_ert_info()} - {get_trace_id()[:8]}"
+            if not is_everest
+            else f"Everest - {config_file} - {find_ert_info()} - {get_trace_id()[:8]}"
         )
         self.plugin_manager = plugin_manager
         self.central_widget = QFrame(self)
@@ -106,6 +119,9 @@ class ErtMainWindow(QMainWindow):
         self.central_layout.setContentsMargins(0, 0, 0, 0)
         self.central_layout.setSpacing(0)
         self.central_widget.setLayout(self.central_layout)
+        if not is_everest:
+            self.facade = LibresFacade(self.ert_config)
+
         self.side_frame = QFrame(self)
         self.button_group = QButtonGroup(self.side_frame)
         self._external_plot_windows: list[PlotWindow] = []
@@ -141,7 +157,12 @@ class ErtMainWindow(QMainWindow):
         )
         plot_button = self._add_sidebar_button("Create plot", QIcon("img:timeline.svg"))
         plot_button.setToolTip("Right click to open external window")
-        self._add_sidebar_button("Manage experiments", QIcon("img:build_wrench.svg"))
+
+        if not is_everest:
+            self._add_sidebar_button(
+                "Manage experiments", QIcon("img:build_wrench.svg")
+            )
+
         self.results_button = self._add_sidebar_button(
             "Simulation status", QIcon("img:in_progress.svg")
         )
@@ -156,8 +177,9 @@ class ErtMainWindow(QMainWindow):
         self.central_widget.setMinimumHeight(800)
         self.setCentralWidget(self.central_widget)
 
-        self.__add_tools_menu()
-        self.__add_help_menu()
+        if not is_everest:
+            self.__add_tools_menu()
+            self.__add_help_menu()
 
     def is_dark_mode(self) -> bool:
         return self.palette().base().color().value() < 70
@@ -275,6 +297,8 @@ class ErtMainWindow(QMainWindow):
             self.ert_config,
             self.notifier,
             self.config_file,
+            self.ert_config.runpath_config.num_realizations,
+            self.is_everest,
         )
         experiment_panel.experiment_started.connect(
             lambda _: self.results_button.setChecked(True)
@@ -285,23 +309,26 @@ class ErtMainWindow(QMainWindow):
 
         experiment_panel.experiment_started.connect(self.slot_add_widget)
 
-        plugin_handler = PluginHandler(
-            self.notifier,
-            [
-                wfj
-                for wfj in self.ert_config.workflow_jobs.values()
-                if isinstance(wfj, ErtScriptWorkflow) and wfj.is_plugin()
-            ],
-            self,
-        )
-        self.plugins_tool = PluginsTool(plugin_handler, self.notifier, self.ert_config)
-        if self.plugins_tool:
-            self.plugins_tool.setParent(self)
-            menubar = self.menuBar()
-            if menubar:
-                menubar.insertMenu(
-                    self.help_menu.menuAction(), self.plugins_tool.get_menu()
-                )
+        if not self.is_everest:
+            plugin_handler = PluginHandler(
+                self.notifier,
+                [
+                    wfj
+                    for wfj in self.ert_config.workflow_jobs.values()
+                    if isinstance(wfj, ErtScriptWorkflow) and wfj.is_plugin()
+                ],
+                self,
+            )
+            self.plugins_tool = PluginsTool(
+                plugin_handler, self.notifier, self.ert_config
+            )
+            if self.plugins_tool:
+                self.plugins_tool.setParent(self)
+                menubar = self.menuBar()
+                if menubar:
+                    menubar.insertMenu(
+                        self.help_menu.menuAction(), self.plugins_tool.get_menu()
+                    )
 
     def _add_sidebar_button(self, name: str, icon: QIcon) -> SidebarToolButton:
         button = SidebarToolButton(self.side_frame)

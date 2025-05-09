@@ -25,6 +25,7 @@ from ert.config import QueueSystem
 from ert.ensemble_evaluator import EvaluatorServerConfig
 from ert.gui.ertnotifier import ErtNotifier
 from ert.run_models import BaseRunModel, StatusEvents, create_model
+from everest.config import EverestConfig
 
 from ..find_ert_info import find_ert_info
 from ..summarypanel import SummaryPanel
@@ -33,6 +34,7 @@ from .ensemble_experiment_panel import EnsembleExperimentPanel
 from .ensemble_information_filter_panel import EnsembleInformationFilterPanel
 from .ensemble_smoother_panel import EnsembleSmootherPanel
 from .evaluate_ensemble_panel import EvaluateEnsemblePanel
+from .everest_optimization_panel import EverestOptimizationPanel
 from .experiment_config_panel import ExperimentConfigPanel
 from .manual_update_panel import ManualUpdatePanel
 from .multiple_data_assimilation_panel import MultipleDataAssimilationPanel
@@ -76,10 +78,12 @@ class ExperimentPanel(QWidget):
         config: ErtConfig,
         notifier: ErtNotifier,
         config_file: str,
+        is_everest: bool = False,
     ):
+        self._is_everest = is_everest
         QWidget.__init__(self)
         self._notifier = notifier
-        self.config = config
+        self.config = config if not is_everest else EverestConfig.load_file(config_file)
         run_path = config.runpath_config.runpath_format_string
         self._config_file = config_file
 
@@ -146,46 +150,55 @@ class ExperimentPanel(QWidget):
         self._experiment_widgets: dict[type[BaseRunModel], ExperimentConfigPanel] = (
             OrderedDict()
         )
-        self.addExperimentConfigPanel(
-            SingleTestRunPanel(run_path, notifier),
-            True,
-        )
 
-        ensemble_size = config.runpath_config.num_realizations
-        analysis_config = config.analysis_config
-        self.addExperimentConfigPanel(
-            EnsembleExperimentPanel(analysis_config, ensemble_size, run_path, notifier),
-            True,
-        )
-        self.addExperimentConfigPanel(
-            EvaluateEnsemblePanel(ensemble_size, run_path, notifier),
-            True,
-        )
+        if not is_everest:
+            self.addExperimentConfigPanel(
+                SingleTestRunPanel(run_path, notifier),
+                True,
+            )
+            ensemble_size = config.runpath_config.num_realizations
+            analysis_config = config.analysis_config
+            self.addExperimentConfigPanel(
+                EnsembleExperimentPanel(
+                    analysis_config, ensemble_size, run_path, notifier
+                ),
+                True,
+            )
+            self.addExperimentConfigPanel(
+                EvaluateEnsemblePanel(ensemble_size, run_path, notifier),
+                True,
+            )
 
-        experiment_type_valid = any(
-            p.update for p in config.ensemble_config.parameter_configs.values()
-        ) and bool(config.observations)
+            experiment_type_valid = any(
+                p.update for p in config.ensemble_config.parameter_configs.values()
+            ) and bool(config.observations)
 
-        self.addExperimentConfigPanel(
-            MultipleDataAssimilationPanel(
+            self.addExperimentConfigPanel(
+                MultipleDataAssimilationPanel(
+                    analysis_config, run_path, notifier, ensemble_size
+                ),
+                experiment_type_valid,
+            )
+            self.addExperimentConfigPanel(
+                EnsembleSmootherPanel(
+                    analysis_config, run_path, notifier, ensemble_size
+                ),
+                experiment_type_valid,
+            )
+            self.addExperimentConfigPanel(
+                EnsembleInformationFilterPanel(
                 analysis_config, run_path, notifier, ensemble_size
             ),
             experiment_type_valid,
         )
-        self.addExperimentConfigPanel(
-            EnsembleSmootherPanel(analysis_config, run_path, notifier, ensemble_size),
-            experiment_type_valid,
-        )
-        self.addExperimentConfigPanel(
-            EnsembleInformationFilterPanel(
-                analysis_config, run_path, notifier, ensemble_size
-            ),
-            experiment_type_valid,
-        )
-        self.addExperimentConfigPanel(
-            ManualUpdatePanel(ensemble_size, run_path, notifier, analysis_config),
-            experiment_type_valid,
-        )
+            self.addExperimentConfigPanel(ManualUpdatePanel(ensemble_size, run_path, notifier, analysis_config),
+                    experiment_type_valid,
+                )
+        else:
+            self.addExperimentConfigPanel(
+                EverestOptimizationPanel(config_file, notifier, run_path),
+                mode_enabled=True,
+            )
 
         self.configuration_summary = SummaryPanel(config)
         layout.addWidget(self.configuration_summary)
@@ -323,25 +336,42 @@ class ExperimentPanel(QWidget):
                         return
                 QApplication.restoreOverrideCursor()
 
+        # if not self._is_everest:
         self._dialog = RunDialog(
             f"Experiment - {self._config_file} {find_ert_info()}",
             model.api,
             event_queue,
             self._notifier,
             self.parent(),  # type: ignore
-            output_path=self.config.analysis_config.log_path,
+            output_path=self.config.analysis_config.log_path
+            if not self._is_everest
+            else None,
+            is_everest=self._is_everest,
         )
+        #        else:
+        #            self._dialog = RunDialog(
+        #                title=str(self._config_file),
+        #                run_model_api=model.api,
+        #                event_queue=event_queue,
+        #                is_everest=True,
+        #                notifier=ErtNotifier(),
+        #            )
+
         self._dialog.set_queue_system_name(model.queue_system)
         self.experiment_started.emit(self._dialog)
         self._simulation_done = False
         self.run_button.setEnabled(self._simulation_done)
 
+        if self._is_everest:
+            assert isinstance(self.config, EverestConfig)
+            queue_system = self.config.simulator.queue_system.name
+        else:
+            assert isinstance(self.config, ErtConfig)
+            queue_system = self.config.queue_config.queue_system
+
         def start_simulation_thread(restart: bool = False) -> None:
             simulation_thread = get_simulation_thread(
-                self._model,
-                restart,
-                use_ipc_protocol=self.config.queue_config.queue_system
-                == QueueSystem.LOCAL,
+                self._model, restart, use_ipc_protocol=queue_system == QueueSystem.LOCAL
             )
             self._dialog.setup_event_monitoring(restart)
             simulation_thread.start()

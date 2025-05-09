@@ -14,6 +14,7 @@ from ert.config import (
 )
 from ert.mode_definitions import (
     ENIF_MODE,
+    ENOPT_MODE,
     ENSEMBLE_EXPERIMENT_MODE,
     ENSEMBLE_SMOOTHER_MODE,
     ES_MDA_MODE,
@@ -22,12 +23,14 @@ from ert.mode_definitions import (
     TEST_RUN_MODE,
 )
 from ert.validation import ActiveRange
+from everest.config import EverestConfig
 
 from .base_run_model import BaseRunModel
 from .ensemble_experiment import EnsembleExperiment
 from .ensemble_information_filter import EnsembleInformationFilter
 from .ensemble_smoother import EnsembleSmoother
 from .evaluate_ensemble import EvaluateEnsemble
+from .everest_run_model import EverestRunModel
 from .manual_update import ManualUpdate
 from .multiple_data_assimilation import MultipleDataAssimilation
 from .single_test_run import SingleTestRun
@@ -41,44 +44,49 @@ if TYPE_CHECKING:
 
 
 def create_model(
-    config: ErtConfig,
+    config: ErtConfig | EverestConfig,
     storage: Storage,
     args: Namespace,
     status_queue: SimpleQueue[StatusEvents],
 ) -> BaseRunModel:
     logger = logging.getLogger(__name__)
-    logger.info(
-        "Initiating experiment",
-        extra={
-            "mode": args.mode,
-            "ensemble_size": config.runpath_config.num_realizations,
-        },
-    )
-    update_settings = config.analysis_config.observation_settings
 
-    if args.mode == TEST_RUN_MODE:
-        return _setup_single_test_run(config, storage, args, status_queue)
-    validate_minimum_realizations(config, args)
-    if args.mode == ENSEMBLE_EXPERIMENT_MODE:
-        return _setup_ensemble_experiment(config, storage, args, status_queue)
-    if args.mode == EVALUATE_ENSEMBLE_MODE:
-        return _setup_evaluate_ensemble(config, storage, args, status_queue)
-    if args.mode == ENSEMBLE_SMOOTHER_MODE:
-        return _setup_ensemble_smoother(
-            config, storage, args, update_settings, status_queue
+    if isinstance(config, ErtConfig):
+        logger.info(
+            "Initiating experiment",
+            extra={
+                "mode": args.mode,
+                "ensemble_size": config.runpath_config.num_realizations,
+            },
         )
-    if args.mode == ENIF_MODE:
-        return _setup_ensemble_information_filter(
-            config, storage, args, update_settings, status_queue
-        )
-    if args.mode == ES_MDA_MODE:
-        return _setup_multiple_data_assimilation(
-            config, storage, args, update_settings, status_queue
-        )
-    if args.mode == MANUAL_UPDATE_MODE:
-        return _setup_manual_update(
-            config, storage, args, update_settings, status_queue
-        )
+        update_settings = config.analysis_config.observation_settings
+
+        if args.mode == TEST_RUN_MODE:
+            return _setup_single_test_run(config, storage, args, status_queue)
+        validate_minimum_realizations(config, args)
+        if args.mode == ENSEMBLE_EXPERIMENT_MODE:
+            return _setup_ensemble_experiment(config, storage, args, status_queue)
+        if args.mode == EVALUATE_ENSEMBLE_MODE:
+            return _setup_evaluate_ensemble(config, storage, args, status_queue)
+        if args.mode == ENSEMBLE_SMOOTHER_MODE:
+            return _setup_ensemble_smoother(
+                config, storage, args, update_settings, status_queue
+            )
+        if args.mode == ENIF_MODE:
+            return _setup_ensemble_information_filter(
+                config, storage, args, update_settings, status_queue
+            )
+        if args.mode == ES_MDA_MODE:
+            return _setup_multiple_data_assimilation(
+                config, storage, args, update_settings, status_queue
+            )
+        if args.mode == MANUAL_UPDATE_MODE:
+            return _setup_manual_update(
+                config, storage, args, update_settings, status_queue
+            )
+    elif isinstance(config, EverestConfig):
+        if args.mode == ENOPT_MODE:
+            return _setup_everest_runmodel(config, args, status_queue=status_queue)
     raise NotImplementedError(f"Run type not supported {args.mode}")
 
 
@@ -194,6 +202,17 @@ def _setup_manual_update(
         es_settings=config.analysis_config.es_settings,
         update_settings=update_settings,
         status_queue=status_queue,
+    )
+
+
+def _setup_everest_runmodel(
+    config: EverestConfig, args: Namespace, status_queue: SimpleQueue[StatusEvents]
+):
+    return EverestRunModel(
+        config,
+        status_queue=status_queue,
+        experiment_name=args.experiment_name,
+        optimization_callback=None,  # Guess GUI should om
     )
 
 

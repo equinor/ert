@@ -175,26 +175,30 @@ async def run_everest(options: argparse.Namespace) -> None:
         logging_level = logging.DEBUG if options.debug else options.config.logging_level
 
         print("Adding everest server to queue ...")
-        logger.debug("Submitting everserver")
-        try:
-            await asyncio.wait_for(
-                start_server(options.config, logging_level), timeout=1800
-            )  # 30 minutes
-            logger.debug("Everserver submitted and started")
-        except TimeoutError as e:
-            logger.error("Everserver failed to start within timeout")
-            raise SystemExit("Failed to start the server") from e
 
-        print("Waiting for server ...")
-        logger.debug("Waiting for response from everserver")
-        wait_for_server(options.config.output_dir, timeout=600)
-        print("Everest server found!")
-        logger.debug("Got response from everserver. Starting experiment")
+        if not options.gui:
+            logger.debug("Submitting everserver")
+            try:
+                await asyncio.wait_for(
+                    start_server(options.config, logging_level), timeout=1800
+                )  # 30 minutes
+                logger.debug("Everserver submitted and started")
+            except TimeoutError as e:
+                logger.error("Everserver failed to start within timeout")
+                raise SystemExit("Failed to start the server") from e
 
-        start_experiment(
-            server_context=ServerConfig.get_server_context(options.config.output_dir),
-            config=options.config,
-        )
+            print("Waiting for server ...")
+            logger.debug("Waiting for response from everserver")
+            wait_for_server(options.config.output_dir, timeout=600)
+            print("Everest server found!")
+            logger.debug("Got response from everserver. Starting experiment")
+
+            start_experiment(
+                server_context=ServerConfig.get_server_context(
+                    options.config.output_dir
+                ),
+                config=options.config,
+            )
 
         # blocks until the run is finished
         if options.gui:
@@ -209,7 +213,7 @@ async def run_everest(options: argparse.Namespace) -> None:
                 daemon=True,
             )
             monitor_thread.start()
-            run_gui(options.config.output_dir)
+            run_gui(options.config)
             monitor_thread.join()
         elif options.disable_monitoring:
             run_empty_detached_monitor(
