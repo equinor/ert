@@ -751,6 +751,44 @@ class LocalEnsemble(BaseMode):
 
         return pl.concat(loaded) if loaded else pl.DataFrame().lazy()
 
+    def load_scalars(
+        self, group: str | None = None, realizations: Collection[int] | None = None
+    ) -> pl.DataFrame:
+        dataframes = []
+        gen_kws = [
+            config
+            for config in self.experiment.parameter_configuration.values()
+            if isinstance(config, GenKwConfig)
+        ]
+        if group:
+            gen_kws = [config for config in gen_kws if config.name == group]
+        for key in gen_kws:
+            with contextlib.suppress(KeyError):
+                df = self.load_parameters_pl(key.name, realizations).select(
+                    [pl.col("^.*\\.transformed$"), "realization"]
+                )
+                df = df.rename(
+                    {
+                        col: f"{key.name}:{col.replace('.transformed', '')}"
+                        for col in df.columns
+                        if col != "realization"
+                    }
+                )
+                for parameter in df.columns:
+                    if parameter == "realization":
+                        continue
+                    if key.shouldUseLogScale(parameter.split(":")[-1]):
+                        df = df.with_columns(
+                            (np.log10(pl.col(parameter))).alias(f"LOG10_{parameter}")
+                        )
+
+                dataframes.append(df)
+
+        if not dataframes:
+            return pl.DataFrame()
+
+        return pl.concat(dataframes, how="align")
+
     def load_all_gen_kw_data(
         self,
         group: str | None = None,
@@ -785,47 +823,14 @@ class LocalEnsemble(BaseMode):
             )
             realizations = np.flatnonzero(ens_mask)
 
-        dataframes = []
-        gen_kws = [
-            config
-            for config in self.experiment.parameter_configuration.values()
-            if isinstance(config, GenKwConfig)
-        ]
-        if group:
-            gen_kws = [config for config in gen_kws if config.name == group]
-        for key in gen_kws:
-            with contextlib.suppress(KeyError):
-                df = self.load_parameters_pl(key.name, realizations).select(
-                    [pl.col("^.*\\.transformed$"), "realization"]
-                )
-                df = df.rename(
-                    {
-                        col: f"{key.name}:{col.replace('.transformed', '')}"
-                        for col in df.columns
-                        if col != "realization"
-                    }
-                )
-                for parameter in df.columns:
-                    if parameter == "realization":
-                        continue
-                    if key.shouldUseLogScale(parameter.split(":")[-1]):
-                        df = df.with_columns(
-                            (np.log10(pl.col(parameter))).alias(f"LOG10_{parameter}")
-                        )
+        df = self.load_scalars(group, realizations)
 
-                dataframes.append(df)
-
-        if not dataframes:
+        if df.is_empty:
             return pd.DataFrame()
 
-        dataframe = (
-            pl.concat(dataframes, how="align").to_pandas().set_index("realization")
-        )
-
-        # dataframe = pd.concat(dataframes, axis=1)
+        dataframe = df.to_pandas().set_index("realization")
         dataframe.columns.name = None
         dataframe.index.name = "Realization"
-
         return dataframe.sort_index(axis=1)
 
     @require_write
