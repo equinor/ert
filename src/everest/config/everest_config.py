@@ -490,7 +490,7 @@ to read summary data from forward model, do:
         return self
 
     @model_validator(mode="after")
-    def validate_maintained_forward_models(self) -> Self:
+    def validate_forward_models(self) -> Self:
         install_data = self.install_data
 
         with InstallDataContext(install_data, self.config_path) as context:
@@ -502,7 +502,7 @@ to read summary data from forward model, do:
         return self
 
     @model_validator(mode="after")
-    def validate_maintained_forward_model_step_arguments(self) -> Self:
+    def validate_forward_model_step_arguments(self) -> Self:
         if not self.forward_model:
             return self
 
