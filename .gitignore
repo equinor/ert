@@ -13,6 +13,8 @@
 .vscode
 ## Eclipse?
 /.project
+# neovim (reversed rule)
+!.github
 
 # pytest ignores
 .pytest_cache
