@@ -29,7 +29,7 @@ from ert.storage.realization_storage_state import RealizationStorageState
 
 logger = logging.getLogger(__name__)
 
-_LOCAL_STORAGE_VERSION = 9
+_LOCAL_STORAGE_VERSION = 10
 
 
 class _Migrations(BaseModel):
