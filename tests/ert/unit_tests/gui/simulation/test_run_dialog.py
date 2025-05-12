@@ -115,7 +115,14 @@ def mock_get_runtime():
 
 
 @pytest.fixture
-def run_dialog(qtbot: QtBot, use_tmpdir, storage):
+def mock_set_env_key():
+    mock = MagicMock()
+    with patch("ert.run_models.base_run_model.BaseRunModel.set_env_key", mock) as _mock:
+        yield _mock
+
+
+@pytest.fixture
+def run_dialog(qtbot: QtBot, use_tmpdir, storage, mock_set_env_key):
     config_file = "minimal_config.ert"
     with open(config_file, "w", encoding="utf-8") as f:
         f.write("NUM_REALIZATIONS 1")
