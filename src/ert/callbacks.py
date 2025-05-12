@@ -45,7 +45,10 @@ async def _read_parameters(
         except Exception as err:
             error_msg += str(err)
             result = LoadResult(LoadStatus.LOAD_FAILURE, error_msg)
-            logger.warning(f"Failed to load: {realization}", exc_info=err)
+            logger.warning(
+                "Failed to load parameters in storage "
+                f"for realization {realization}: {err}"
+            )
     return result
 
 
