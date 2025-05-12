@@ -173,5 +173,7 @@ def test_and_benchmark_adaptive_localization_with_fields(
     assert np.isclose(prior_da, posterior_da).sum() > 0
     # The std for the ensemble should decrease
     assert float(
-        prior_ensemble.calculate_std_dev_for_parameter(param_group).sum()
-    ) > float(posterior_ensemble.calculate_std_dev_for_parameter(param_group).sum())
+        prior_ensemble.calculate_std_dev_for_parameter_group(param_group).sum()
+    ) > float(
+        posterior_ensemble.calculate_std_dev_for_parameter_group(param_group).sum()
+    )
