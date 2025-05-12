@@ -30,6 +30,7 @@ from .forward_model_step import (
     ForwardModelStepJSON,
     ForwardModelStepPlugin,
     ForwardModelStepValidationError,
+    ForwardModelStepWarning,
 )
 from .gen_kw_config import GenKwConfig
 from .model_config import ModelConfig
@@ -647,6 +648,12 @@ def create_list_of_forward_model_steps_to_run(
                         context=fm_step.name,
                     ),
                 )
+            except ForwardModelStepWarning as err:
+                ConfigWarning.warn(
+                    f"Forward model step validation: {err!s}",
+                    context=fm_step.name,
+                )
+
             except Exception as e:  # type: ignore
                 ConfigWarning.warn(
                     f"Unexpected plugin forward model exception: {e!s}",
