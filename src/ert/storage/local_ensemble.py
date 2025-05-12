@@ -830,12 +830,14 @@ class LocalEnsemble(BaseMode):
             response_keys = data["response_key"].unique().to_list()
             self.experiment._update_response_keys(response_type, response_keys)
 
-    def calculate_std_dev_for_parameter(self, parameter_group: str) -> xr.Dataset:
+    def calculate_std_dev_for_parameter(
+        self, parameter_group: str
+    ) -> npt.NDArray[np.float64]:
         if parameter_group not in self.experiment.parameter_configuration:
             raise ValueError(f"{parameter_group} is not registered to the experiment.")
 
         ds = self.load_parameters(parameter_group)
-        return ds.std("realizations")
+        return ds.std("realizations")["values"].values
 
     def get_parameter_state(
         self, realization: int
