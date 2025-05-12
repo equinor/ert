@@ -172,7 +172,7 @@ def get_std_dev(
     key = unquote(key)
     ensemble = storage.get_ensemble(ensemble_id)
     try:
-        da = ensemble.calculate_std_dev_for_parameter(key)
+        da = ensemble.calculate_std_dev_for_parameter_group(key)
     except ValueError as e:
         raise HTTPException(status_code=404, detail="Data not found") from e
 
