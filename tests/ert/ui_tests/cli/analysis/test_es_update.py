@@ -66,10 +66,8 @@ def test_that_posterior_has_lower_variance_than_prior():
 
         # The std for the ensemble should decrease
         assert float(
-            prior_ensemble.calculate_std_dev_for_parameter("COEFFS")["values"].sum()
-        ) > float(
-            posterior_ensemble.calculate_std_dev_for_parameter("COEFFS")["values"].sum()
-        )
+            prior_ensemble.calculate_std_dev_for_parameter("COEFFS").sum()
+        ) > float(posterior_ensemble.calculate_std_dev_for_parameter("COEFFS").sum())
 
     # We expect that ERT's update step lowers the
     # generalized variance for the parameters.
