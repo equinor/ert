@@ -436,8 +436,8 @@ def test_field_param_update_using_heat_equation_zero_var_params_and_adaptive_loc
         experiment = storage.get_experiment_by_name("es-mda")
         prior = experiment.get_ensemble_by_name("default_0")
         cond = prior.load_parameters("COND")
-        init_temp_scale = prior.load_parameters("INIT_TEMP_SCALE")
-        corr_length = prior.load_parameters("CORR_LENGTH")
+        init_temp_scale = prior.load_parameters_pl("INIT_TEMP_SCALE")
+        corr_length = prior.load_parameters_pl("CORR_LENGTH")
 
         new_experiment = storage.create_experiment(
             parameters=config.ensemble_config.parameter_configuration,
