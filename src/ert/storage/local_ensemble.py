@@ -885,6 +885,16 @@ class LocalEnsemble(BaseMode):
         if parameter_group not in self.experiment.parameter_configuration:
             raise ValueError(f"{parameter_group} is not registered to the experiment.")
 
+        if isinstance(
+            self.experiment.parameter_configuration[parameter_group], GenKwConfig
+        ):
+            return (
+                self.load_parameters_pl(parameter_group, all_data=False)
+                .std()
+                .to_numpy()
+                .squeeze()
+            )
+
         ds = self.load_parameters(parameter_group)
         return ds.std("realizations")["values"].values
 
