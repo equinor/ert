@@ -6,6 +6,7 @@ from PyQt6.QtWidgets import QLabel
 
 from ert.ensemble_evaluator.state import ENSEMBLE_STATE_FAILED
 from ert.gui.simulation.run_dialog import RunDialog
+from ert.gui.suggestor import Suggestor
 from ert.run_models import EnsembleExperiment
 
 from .conftest import open_gui_with_config, wait_for_child
@@ -61,10 +62,11 @@ def test_missing_runpath_has_isolated_failures(
                 timeout=20000,
             )
 
-            message_box = dialog.fail_msg_box
-            assert message_box is not None
-            assert message_box.label_text.text() == "ERT experiment failed!"
-            message_box.accept()
+            suggestor_box: Suggestor = dialog.fail_msg_box
+            assert suggestor_box is not None
+            dialog_message = suggestor_box.findChild(QLabel).text()
+            assert "ERT experiment failed!" in dialog_message
+            suggestor_box.close()
 
         return inner
 
@@ -116,10 +118,11 @@ def test_missing_runpath_does_not_show_waiting_bar(
                 timeout=20000,
             )
 
-            message_box = dialog.fail_msg_box
-            assert message_box is not None
-            assert message_box.label_text.text() == "ERT experiment failed!"
-            message_box.accept()
+            suggestor_box: Suggestor = dialog.fail_msg_box
+            assert suggestor_box is not None
+            dialog_message = suggestor_box.findChild(QLabel).text()
+            assert "ERT experiment failed!" in dialog_message
+            suggestor_box.close()
 
         return inner
 
