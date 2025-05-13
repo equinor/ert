@@ -360,13 +360,11 @@ class GenKwConfig(ParameterConfig):
     def load_parameters(
         self, ensemble: Ensemble, realizations: npt.NDArray[np.int_]
     ) -> npt.NDArray[np.float64]:
-        df = ensemble.load_parameters_pl(self.name, realizations)
-        param_cols = [
-            col
-            for col in df.columns
-            if not col.endswith(".transformed") and col != "realization"
-        ]
-        return df.select(pl.col(param_cols)).to_numpy().T.copy()
+        return (
+            ensemble.load_parameters_pl(self.name, realizations, all_data=False)
+            .to_numpy()
+            .T.copy()
+        )
 
     def shouldUseLogScale(self, keyword: str) -> bool:
         for tf in self.transform_functions:
