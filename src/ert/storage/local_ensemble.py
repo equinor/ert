@@ -559,7 +559,14 @@ class LocalEnsemble(BaseMode):
             raise ValueError(f"{group} is not registered to the experiment.")
         try:
             df = self.load_parameters_pl(group)
-            df = pl.concat([df, dataset], how="vertical")
+            existing_realizations = df.get_column("realization").unique()
+            new_data = dataset.filter(
+                ~pl.col("realization").is_in(existing_realizations)
+            )
+            if new_data.height > 0:
+                df = pl.concat([df, new_data], how="vertical")
+            # df = pl.concat([df, dataset], how="vertical")
+            # TODO bug when sampling as it samples N*N time
         except KeyError:
             df = dataset
 
