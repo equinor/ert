@@ -1,9 +1,11 @@
+import logging
 import os
 
 import pytest
 from hypothesis import assume, given, settings
 
 from ert.config import ErtConfig
+from ert.config.ert_config import _substitutions_from_dict
 from ert.config.parsing import ConfigKeys
 from ert.substitutions import Substitutions
 
@@ -83,3 +85,38 @@ def test_substitutions():
     assert subst_list.get("nosuchkey") is None
     assert subst_list.get(513) is None
     assert subst_list == {"<Key>": "Value", "<Key2>": "Value2"}
+
+
+def test_substitutions_of_parameters_logs_warning_on_overlap_with_userconfig_values(
+    caplog,
+):
+    caplog.set_level(logging.WARNING)
+    to_substitute = "<my_key> and <CWD> and <new_key>"
+    # first we apply the user config values (and CWD from magic string)
+    config_dict = {
+        "DEFINE": [
+            ["<my_key>", "my_value_from_config"],
+            ["<CWD>", "/my/path/somewhere"],  # Is a predefined key/magic string
+        ],
+    }
+    subst_list = _substitutions_from_dict(config_dict)
+    to_substitute = subst_list.substitute(to_substitute)
+
+    overlapping_parameter_names: dict[str, dict[str, float | str]] = {
+        "GROUP1": {"my_key": "ignored_value0"},
+        "GROUP2": {"CWD": "ignored_value1"},
+    }
+    params = overlapping_parameter_names.copy()
+    params["GROUP3"] = {"new_key": "new_value_from_param"}
+
+    assert (
+        subst_list.substitute_parameters(to_substitute, params)
+        == "my_value_from_config and /my/path/somewhere and new_value_from_param"
+    )  # Should not update if already set by user config
+    for group_values in overlapping_parameter_names.values():
+        for key, value in group_values.items():
+            assert (
+                f"Tried to substitute <{key}> for '{value}' from parameters, but it "
+                f"was already set to '{subst_list.get(f'<{key}>')}' from user config"
+                in caplog.text
+            )

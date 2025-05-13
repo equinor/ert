@@ -40,6 +40,12 @@ class Substitutions(UserDict[str, str]):
                 else:
                     formatted_value = str(value)
                 to_substitute = to_substitute.replace(f"<{key}>", formatted_value)
+                if f"<{key}>" in self:
+                    logger.warning(
+                        f"Tried to substitute <{key}> for '{formatted_value}' "
+                        f"from parameters, but it was already set to "
+                        f"'{self.get(f'<{key}>')}' from user config"
+                    )
         return to_substitute
 
     def substitute_real_iter(
@@ -115,10 +121,12 @@ def _substitute(
     """
     substituted_string = to_substitute
     for _ in range(max_iterations):
+        # print(f"pre replacing - {substituted_string=}")
         substituted_tmp_string = _replace_strings(substitutions, substituted_string)
         if substituted_tmp_string is None:
             break
         substituted_string = substituted_tmp_string
+    # print(f"post replacing - {substituted_string=}")
     else:
         if warn_max_iter:
             warning_message = (
