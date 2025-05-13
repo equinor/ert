@@ -162,10 +162,13 @@ def save_design_matrix_to_ensemble(
     for col in df.columns:
         df[f"{col}.transformed"] = df[col]
     df["realization"] = df.index
-    pl_df = pl.from_pandas(df.reset_index(drop=True)).filter(
-        pl.col("realization").is_in(list(active_realizations))
+    pl_df = pl.from_pandas(df.reset_index(drop=True))
+    if not set(active_realizations) <= set(pl_df["realization"].to_list()):
+        raise KeyError("Active realization mask is not in design matrix!")
+    ensemble.save_parameters_pl(
+        design_group_name,
+        pl_df.filter(pl.col("realization").is_in(list(active_realizations))),
     )
-    ensemble.save_parameters_pl(design_group_name, pl_df)
 
 
 @log_duration(
