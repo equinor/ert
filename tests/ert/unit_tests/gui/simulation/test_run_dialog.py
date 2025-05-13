@@ -23,7 +23,6 @@ from ert.ensemble_evaluator.event import (
     FullSnapshotEvent,
     SnapshotUpdateEvent,
 )
-from ert.gui.ertwidgets.message_box import ErtMessageBox
 from ert.gui.main import GUILogHandler, _setup_main_window
 from ert.gui.simulation.ensemble_experiment_panel import EnsembleExperimentPanel
 from ert.gui.simulation.ensemble_smoother_panel import EnsembleSmootherPanel
@@ -33,6 +32,7 @@ from ert.gui.simulation.multiple_data_assimilation_panel import (
 )
 from ert.gui.simulation.run_dialog import RunDialog
 from ert.gui.simulation.view.realization import RealizationWidget
+from ert.gui.suggestor import Suggestor
 from ert.gui.tools.file import FileDialog
 from ert.run_models import (
     EnsembleExperiment,
@@ -41,7 +41,7 @@ from ert.run_models import (
 )
 from ert.storage import open_storage
 from tests.ert import SnapshotBuilder
-from tests.ert.ui_tests.gui.conftest import wait_for_child
+from tests.ert.ui_tests.gui.conftest import wait_for_attribute, wait_for_child
 from tests.ert.unit_tests.gui.simulation.test_run_path_dialog import (
     handle_run_path_dialog,
 )
@@ -159,10 +159,12 @@ def test_terminating_experiment_shows_a_confirmation_dialog(qtbot: QtBot, run_di
 
         QTimer.singleShot(100, handle_dialog)
         qtbot.mouseClick(run_dialog.kill_button, Qt.MouseButton.LeftButton)
-    terminate_info = wait_for_child(run_dialog, qtbot, ErtMessageBox)
+    suggestor_termination_window = wait_for_attribute(run_dialog.fail_msg_box, qtbot)
     assert (
-        terminate_info.details_text.toPlainText()
-        == "Experiment cancelled by user during evaluation\n"
+        "Experiment cancelled by user during evaluation"
+        in suggestor_termination_window.findChild(QWidget, name="suggestor_messages")
+        .findChild(QLabel)
+        .text()
     )
 
 
@@ -604,15 +606,23 @@ def test_that_exception_in_base_run_model_is_handled(qtbot: QtBot, storage):
 
         def handle_error_dialog(run_dialog):
             nonlocal handler_done
-            qtbot.waitUntil(
-                lambda: run_dialog.fail_msg_box is not None,
-                timeout=20000,
+            suggestor_termination_window: Suggestor = wait_for_attribute(
+                run_dialog.fail_msg_box, qtbot, timeout=10000
             )
-            error_dialog = run_dialog.fail_msg_box
-            assert error_dialog
-            text = error_dialog.details_text.toPlainText()
+            assert suggestor_termination_window
+            text = (
+                suggestor_termination_window.findChild(
+                    QWidget, name="suggestor_messages"
+                )
+                .findChild(QLabel)
+                .text()
+            )
             assert "I failed :(" in text
-            qtbot.mouseClick(error_dialog.box.buttons()[0], Qt.MouseButton.LeftButton)
+            button = suggestor_termination_window.findChild(
+                QPushButton, name="close_button"
+            )
+            assert button
+            button.click()
             handler_done = True
 
         simulation_mode_combo = gui.findChild(QComboBox)
