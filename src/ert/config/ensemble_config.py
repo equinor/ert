@@ -66,6 +66,15 @@ class EnsembleConfig:
 
         self.grid_file = _get_abs_path(self.grid_file)
 
+    def get_all_parameter_names(self) -> list[str]:
+        gen_kw_list = [
+            p for p in self.parameter_configs.values() if isinstance(p, GenKwConfig)
+        ]
+        param_names = [
+            keyword.name for p in gen_kw_list for keyword in p.transform_functions
+        ]
+        return param_names
+
     @staticmethod
     def _check_for_duplicate_names(
         parameter_list: list[str], gen_data_list: list[str]
