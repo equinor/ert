@@ -4,6 +4,7 @@ import contextlib
 import logging
 import os.path
 import shutil
+from pathlib import Path
 from typing import no_type_check
 
 from pydantic import BaseModel, field_validator
@@ -71,7 +72,7 @@ class ModelConfig(BaseModel):
             ConfigWarning.warn(msg)
             logger.warning(msg)
         with contextlib.suppress(Exception):
-            mount_dir = get_mount_directory(runpath_format_string)
+            mount_dir = get_mount_directory(Path(runpath_format_string))
             total_space, used_space, free_space = shutil.disk_usage(mount_dir)
             percentage_used = used_space / total_space
             if (
