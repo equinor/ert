@@ -39,21 +39,21 @@ Launch the user interface
 The main elements relevant to this guide are:
 *********************************************
 
-* **Simulation mode**: Displays available algorithms. Only a limited set is available at this stage, as we have not fully configured ERT yet.
-* **Runpath**: A configurable path determining where each realization of the experiment will be executed. The placeholders ``<IENS>`` and ``<ITER>`` will be replaced by the number of the realization and the number of iterations, respectively.
-* **Configuration summary**: Initially empty, but will display what has been configured once you've set up your experiment.
-* **Run experiment**: Initiates an experiment with the current configuration and selected simulation mode.
+* **Start simulation** (sidebar menu) with the following components:
+    * Top dropdown menu displays available algorithms. Only a limited set is available at this stage, as we have not fully configured ERT yet.
+    * The "play button" next to the dropdown, initiates an experiment with the current configuration and selected simulation mode.
+    * Middle panel shows some help and the "Runpath", a configurable path determining where each realization of the experiment will be executed. The placeholders ``<IENS>`` and ``<ITER>`` will be replaced by the number of the realization and the number of iterations, respectively.
+    * Lower panel shows the configuration summary: Initially empty, but will display what has been configured once you've set up your experiment.
 
 Run an empty experiment
 ***********************
 
 To execute an empty experiment, follow these steps:
 
-1. **Select simulation mode**: Choose "Ensemble experiment" as the Simulation mode.
-2. **Start the experiment**: Click the "Run experiment" button.
+1. **Select simulation mode**: Choose "Ensemble experiment" as the Simulation mode in the dropdown.
+2. **Start the experiment**: Click the "Run experiment" (play) button.
 
-A new window named "Experiment" will appear, displaying the status of the experiment.
-You can view the status of each running realization by pressing "Show Details."
+The focus will be moved to the left sidebar menu item "Simulation status", displaying the status of the experiment.
 
 .. image:: minimal/simulations.png
 
@@ -331,11 +331,11 @@ Running with sampled parameters
 Before proceeding with the next run, delete the ``storage`` and ``poly_out`` folders from the last run.
 This ensures that you'll only see the new data in your results.
 
-1. **Launch ERT**: Open ERT again and observe that the "Config Summary" now includes the name of the parameter set you've defined.
+1. **Launch ERT**: Open ERT again and observe that the lower panel now includes the name of the parameter set you've defined.
 
-2. **Run experiment**: Choose "Ensemble Experiment" in the "Simulation mode" and hit "Run Experiment".
+2. **Run experiment**: Choose "Ensemble Experiment" in the dropdown and hit the play button.
 
-3. **Create plot**: Once the experiment is completed, press the "Create Plot" button either in the progress window or in the main window.
+3. **Create plot**: Once the experiment is completed, press the "Create Plot" button in the sidebar.
    This action will open the "Plotting" window.
 
 4. **View distributions**: In the "Plotting" window, you can now observe the distributions of the three different parameters you created: ``COEFFS:a``, ``COEFFS:b``, and ``COEFFS:c``.
@@ -447,11 +447,11 @@ With the final configuration:
 
 .. literalinclude:: with_observations/poly_final.ert
 
-Launch ERT, choose the "Ensemble Smoother" and hit "Run Experiment".
+Launch ERT, choose the "Ensemble Smoother" and hit the play button.
 
 Plot prior and posterior ensembles and notice that the updated parameters yield responses that better align with observations.
 
-In the "Plotting window", the ``POLY_RES`` plot will now display a yellow background, denoting that observations are available.
+In the "Create plot" section, the ``POLY_RES`` plot will now display a yellow background, denoting that observations are available.
 Black dots and lines represent observed values and uncertainties, respectively.
 Ensembles can be selected / deselected in the "Plot ensemble" section.
 
