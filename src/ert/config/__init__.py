@@ -9,6 +9,8 @@ from .capture_validation import capture_validation
 from .design_matrix import DESIGN_MATRIX_GROUP, DesignMatrix
 from .ensemble_config import EnsembleConfig
 from .ert_config import ErtConfig
+from .everest_constraints_config import EverestConstraintsConfig
+from .everest_objective_config import EverestObjectivesConfig
 from .ext_param_config import ExtParamConfig
 from .field import Field, field_transform
 from .forward_model_step import (
@@ -55,6 +57,8 @@ __all__ = [
     "EnsembleConfig",
     "ErrorInfo",
     "ErtConfig",
+    "EverestConstraintsConfig",
+    "EverestObjectivesConfig",
     "ExtParamConfig",
     "Field",
     "ForwardModelStep",

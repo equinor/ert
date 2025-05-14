@@ -3,6 +3,7 @@ from pathlib import Path
 import polars as pl
 import pytest
 
+from ert.storage import open_storage
 from everest.config import EverestConfig
 from everest.everest_storage import EverestStorage
 
@@ -57,3 +58,62 @@ def test_csv_export(config_file, cached_example, snapshot):
         _sort_df(batch_df.with_columns(pl.col(pl.Float64).round(4))).write_csv(),
         "batch_df.csv",
     )
+
+
+@pytest.mark.integration_test
+@pytest.mark.parametrize(
+    "config_file, responses, objectives, constraints, gen_data_only",
+    [
+        pytest.param(
+            "config_advanced.yml",
+            {"gen_data", "everest_constraints", "everest_objectives"},
+            {"distance"},
+            {"x-0_coord"},
+            {"distance_nonobj"},
+            marks=pytest.mark.xdist_group("math_func/config_advanced.yml"),
+        ),
+        pytest.param(
+            "config_minimal.yml",
+            {"everest_objectives"},
+            {"distance"},
+            {},
+            {},
+            marks=pytest.mark.xdist_group("math_func/config_minimal.yml"),
+        ),
+        pytest.param(
+            "config_multiobj.yml",
+            {"everest_objectives"},
+            {"distance_p", "distance_q"},
+            {},
+            {},
+            marks=pytest.mark.xdist_group("math_func/config_multiobj.yml"),
+        ),
+    ],
+)
+def test_everest_data_stored_in_ert_local_storage(
+    config_file, responses, objectives, constraints, gen_data_only, cached_example
+):
+    config_path, config_file, _, _ = cached_example(f"math_func/{config_file}")
+
+    config = EverestConfig.load_file(Path(config_path) / config_file)
+    with open_storage(config.storage_dir, mode="r") as storage:
+        experiment = next(s for s in storage._experiments.values())
+        ensemble = next(experiment.ensembles)
+        assert set(experiment.response_info.keys()) == responses
+        ens_range = tuple(range(ensemble.ensemble_size))
+
+        if gen_data_only:
+            df_gen_data = ensemble.load_responses("gen_data", ens_range)
+            gendata_only_keys = set(df_gen_data["response_key"].unique())
+            assert gendata_only_keys == gen_data_only
+
+        if constraints:
+            df_constraints = ensemble.load_responses("everest_constraints", ens_range)
+            constraints_keys = set(df_constraints["response_key"].unique())
+            assert constraints_keys == constraints
+
+        df_objectives = ensemble.load_responses("everest_objectives", ens_range)
+        objective_keys = set(df_objectives["response_key"].unique())
+        assert objective_keys == objectives
+
+        print(experiment.parameter_info.keys())
