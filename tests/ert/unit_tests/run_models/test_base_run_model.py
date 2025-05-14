@@ -440,19 +440,15 @@ async def test_terminate_in_post_evaluation(evaluator, use_tmpdir):
     evaluator()._server_started = asyncio.Future()
     evaluator()._server_started.set_result(None)
 
-    async def run_monitor_successfully_but_terminate(
-        self, ee_config, iteration: int
-    ) -> bool:
-        self._end_queue.put("terminate")
+    async def send_terminate(end_queue) -> bool:
+        end_queue.put("terminate")
         return True
 
     brm = create_run_model()
-    brm.run_monitor = MethodType(run_monitor_successfully_but_terminate, brm)
-    with (
-        pytest.raises(
-            UserCancelled,
-            match="Experiment cancelled by user in post evaluation",
-        ),
+    evaluator().wait_for_evaluation_result = MethodType(send_terminate, brm._end_queue)
+    with pytest.raises(
+        UserCancelled,
+        match="Experiment cancelled by user in post evaluation",
     ):
         await brm.run_ensemble_evaluator_async(AsyncMock(), AsyncMock(), AsyncMock())
 

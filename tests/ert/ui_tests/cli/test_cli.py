@@ -25,7 +25,6 @@ from _ert.forward_model_runner.client import Client
 from ert.cli.main import ErtCliError
 from ert.config import ConfigValidationError, ConfigWarning, ErtConfig
 from ert.enkf_main import sample_prior
-from ert.ensemble_evaluator import EnsembleEvaluator
 from ert.mode_definitions import (
     ENIF_MODE,
     ENSEMBLE_EXPERIMENT_MODE,
@@ -905,7 +904,6 @@ def test_that_connection_errors_do_not_effect_final_result(
 ):
     monkeypatch.setattr(Client, "DEFAULT_MAX_RETRIES", 1)
     monkeypatch.setattr(Client, "DEFAULT_ACK_TIMEOUT", 1)
-    monkeypatch.setattr(EnsembleEvaluator, "CLOSE_SERVER_TIMEOUT", 0.01)
     monkeypatch.setattr(Job, "DEFAULT_FILE_VERIFICATION_TIMEOUT", 0)
 
     def raise_connection_error(*args, **kwargs):

@@ -1,21 +1,29 @@
+import asyncio
 import json
 import os
 import stat
+from collections.abc import Callable
+from contextlib import _AsyncGeneratorContextManager, asynccontextmanager
 from pathlib import Path
+from queue import SimpleQueue
 from unittest.mock import MagicMock, Mock
 
 import pytest
 
 import ert.ensemble_evaluator
+from _ert.events import EEEvent
 from ert.config import QueueConfig, QueueSystem
 from ert.config.ert_config import _forward_model_step_from_config_contents
 from ert.config.queue_config import LocalQueueOptions
 from ert.ensemble_evaluator._ensemble import LegacyEnsemble
 from ert.ensemble_evaluator.config import EvaluatorServerConfig
+from ert.ensemble_evaluator.evaluator import EnsembleEvaluator
 from ert.run_arg import RunArg
 from ert.storage import Ensemble
 from ert.storage.load_status import LoadStatus
 from tests.ert import SnapshotBuilder
+
+from .ensemble_evaluator_utils import TestEnsemble
 
 
 @pytest.fixture
@@ -63,7 +71,9 @@ def queue_config_fixture():
 
 @pytest.fixture
 def make_ensemble(queue_config):
-    def _make_ensemble_builder(monkeypatch, tmpdir, num_reals, num_jobs, job_sleep=0):
+    def _make_ensemble_builder(
+        monkeypatch, tmpdir: Path, num_reals, num_jobs, job_sleep=0
+    ):
         async def load_successful(**_):
             return (LoadStatus.LOAD_SUCCESSFUL, "")
 
@@ -171,3 +181,32 @@ def make_ee_config_fixture():
         return EvaluatorServerConfig(**kwargs)
 
     return _ee_config
+
+
+@pytest.fixture
+def evaluator_to_use(
+    make_ee_config,
+) -> _AsyncGeneratorContextManager[EnsembleEvaluator, None]:
+    @asynccontextmanager
+    async def _evaluator_to_use(
+        end_queue: SimpleQueue | None = None,
+        event_handler: Callable[[EEEvent], None] | None = None,
+        ensemble: TestEnsemble | LegacyEnsemble | None = None,
+    ):
+        if end_queue is None:
+            end_queue = SimpleQueue()
+        if ensemble is None:
+            ensemble = TestEnsemble(0, 2, 2, id_="0")
+        evaluator = EnsembleEvaluator(
+            ensemble, make_ee_config(use_token=False), end_queue, event_handler
+        )
+        evaluator._batching_interval = 0.5  # batching can be faster for tests
+        run_task = asyncio.create_task(evaluator.run_and_get_successful_realizations())
+        await evaluator._server_started
+        try:
+            yield evaluator
+        finally:
+            evaluator.stop()
+            await run_task
+
+    return _evaluator_to_use
