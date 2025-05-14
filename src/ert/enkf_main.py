@@ -197,13 +197,25 @@ def sample_prior(
             f"Sampling parameter {config_node.name} "
             f"for realizations {active_realizations}"
         )
-        for realization_nr in active_realizations:
-            ds = config_node.sample_or_load(
-                realization_nr,
-                random_seed=random_seed,
-                ensemble_size=ensemble.ensemble_size,
-            )
-            ensemble.save_parameters(parameter, realization_nr, ds)
+        if isinstance(config_node, GenKwConfig):
+            datasets = []
+            for realization_nr in active_realizations:
+                datasets.append(
+                    config_node.sample_or_load(
+                        realization_nr,
+                        random_seed=random_seed,
+                        ensemble_size=ensemble.ensemble_size,
+                    )
+                )
+            ensemble.save_parameters_pl(parameter, pl.concat(datasets, how="vertical"))
+        else:
+            for realization_nr in active_realizations:
+                ds = config_node.sample_or_load(
+                    realization_nr,
+                    random_seed=random_seed,
+                    ensemble_size=ensemble.ensemble_size,
+                )
+                ensemble.save_parameters(parameter, realization_nr, ds)
 
     ensemble.refresh_ensemble_state()
 

@@ -544,6 +544,7 @@ class LocalEnsemble(BaseMode):
 
         return self._load_dataset(group, realizations)
 
+    @require_write
     def save_parameters_pl(self, group: str, dataset: pl.DataFrame) -> None:
         """
         Save parameters for group and realizations into pl.DataFrame.
@@ -565,6 +566,8 @@ class LocalEnsemble(BaseMode):
             )
             if new_data.height > 0:
                 df = pl.concat([df, new_data], how="vertical")
+            else:
+                return
             # df = pl.concat([df, dataset], how="vertical")
             # TODO bug when sampling as it samples N*N time
         except KeyError:
