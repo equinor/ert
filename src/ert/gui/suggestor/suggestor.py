@@ -272,9 +272,6 @@ class Suggestor(QWidget):
         height = 1024
         if num <= 1:
             width -= CARD_WIDTH
-        else:
-            suggest_layout.setColumnMinimumWidth(1, CARD_WIDTH)
-            suggest_layout.setColumnStretch(2, 1)
         if row < 4:
             height -= (4 - (row + column)) * (CARD_HEIGHT)
         self.resize(width, height)
