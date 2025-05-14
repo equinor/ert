@@ -44,7 +44,6 @@ class QueueOptions(
     use_enum_values=True,
     validate_default=True,
 ):
-    # name: QueueSystem
     max_running: pydantic.NonNegativeInt = 0
     submit_sleep: pydantic.NonNegativeFloat = 0.0
     max_submit: pydantic.NonNegativeInt = 1

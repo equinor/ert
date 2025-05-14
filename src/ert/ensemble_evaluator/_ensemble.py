@@ -215,7 +215,7 @@ class LegacyEnsemble:
                 self.active_reals,
                 manifest_queue,
                 scheduler_queue,
-                max_submit=self._queue_config.max_submit,
+                max_submit=self._queue_config.queue_options.max_submit,
                 max_running=self._queue_config.queue_options.max_running,
                 submit_sleep=self._queue_config.queue_options.submit_sleep,
                 ens_id=self.id_,
@@ -227,7 +227,7 @@ class LegacyEnsemble:
 
             min_required_realizations = (
                 self.min_required_realizations
-                if self._queue_config.stop_long_running
+                if self._queue_config.queue_options.stop_long_running
                 else 0
             )
 
