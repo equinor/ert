@@ -15,7 +15,7 @@ from pathlib import Path
 from tempfile import NamedTemporaryFile
 
 from .driver import SIGNAL_OFFSET, Driver, FailedSubmit, create_submit_script
-from .event import Event, FinishedEvent, StartedEvent
+from .event import DriverEvent, FinishedEvent, StartedEvent
 
 SLURM_FAILED_EXIT_CODE_FETCH = SIGNAL_OFFSET + 66
 SLURM_TERMINATED_EXIT_CODE = SIGNAL_OFFSET + signal.SIGTERM
@@ -309,7 +309,7 @@ class SlurmDriver(Driver):
             return
 
         self._jobs[job_id].status = new_state
-        event: Event | None = None
+        event: DriverEvent | None = None
         if new_state == JobStatus.RUNNING:
             logger.debug(f"Realization {iens} is running")
             event = StartedEvent(iens=iens)

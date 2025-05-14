@@ -9,13 +9,15 @@ from typing import Any
 
 from _ert.events import (
     EnsembleCancelled,
+    EnsembleEvent,
     EnsembleFailed,
     EnsembleStarted,
     EnsembleSucceeded,
-    Event,
     FMEvent,
+    ForwardModelStepChecksum,
     ForwardModelStepFailure,
     ForwardModelStepSuccess,
+    SnapshotInputEvent,
 )
 from ert.config import ForwardModelStep, QueueConfig, QueueSystem
 from ert.run_arg import RunArg
@@ -162,7 +164,7 @@ class LegacyEnsemble:
                 f"real={event.real}"
             )
 
-    def update_snapshot(self, events: Sequence[Event]) -> EnsembleSnapshot:
+    def update_snapshot(self, events: Sequence[SnapshotInputEvent]) -> EnsembleSnapshot:
         snapshot_mutate_event = EnsembleSnapshot()
         for event in events:
             snapshot_mutate_event = snapshot_mutate_event.update_from_event(
@@ -183,15 +185,15 @@ class LegacyEnsemble:
 
         return snapshot_mutate_event
 
-    async def send_event(self, event: Event) -> None:
+    async def send_event(self, event: EnsembleEvent) -> None:
         if self.outbound_event_queue is not None:
             await self.outbound_event_queue.put(event)
 
     async def evaluate(
         self,
         config: EvaluatorServerConfig,
-        scheduler_queue: asyncio.Queue[Event] | None = None,
-        manifest_queue: asyncio.Queue[Event] | None = None,
+        scheduler_queue: asyncio.Queue[SnapshotInputEvent] | None = None,
+        manifest_queue: asyncio.Queue[ForwardModelStepChecksum] | None = None,
     ) -> None:
         """
         This method does the actual work of evaluating the ensemble. It
