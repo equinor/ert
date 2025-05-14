@@ -1,32 +1,15 @@
 import asyncio
 import os
-from contextlib import asynccontextmanager
 from unittest.mock import AsyncMock, MagicMock
 
 import pytest
 
-from _ert.events import EESnapshot, EESnapshotUpdate, EETerminated
+from _ert.events import EEEvent
 from ert.config import QueueConfig
-from ert.ensemble_evaluator import EnsembleEvaluator, Monitor, identifiers, state
-from ert.ensemble_evaluator.config import EvaluatorServerConfig
+from ert.ensemble_evaluator import EnsembleEvaluator, state
+from ert.ensemble_evaluator.evaluator import UserCancelled
 from ert.scheduler import Scheduler, job
 from ert.scheduler.job import Job
-
-
-@pytest.fixture
-def evaluator_to_use():
-    @asynccontextmanager
-    async def run_evaluator(ensemble, ee_config):
-        evaluator = EnsembleEvaluator(ensemble, ee_config)
-        run_task = asyncio.create_task(evaluator.run_and_get_successful_realizations())
-        await evaluator._server_started
-        try:
-            yield evaluator
-        finally:
-            evaluator.stop()
-            await run_task
-
-    return run_evaluator
 
 
 @pytest.mark.integration_test
@@ -43,20 +26,12 @@ async def test_run_legacy_ensemble(
     monkeypatch.setattr(job, "log_warnings_from_forward_model", mocked_stdouterr_parser)
     with tmpdir.as_cwd():
         ensemble = make_ensemble(monkeypatch, tmpdir, num_reals, 2)
-        config = EvaluatorServerConfig(use_token=False)
+
         async with (
-            evaluator_to_use(ensemble, config) as evaluator,
-            Monitor(config.get_uri(), config.token) as monitor,
+            evaluator_to_use(ensemble=ensemble) as evaluator,
         ):
-            async for event in monitor.track():
-                if type(event) in {
-                    EESnapshotUpdate,
-                    EESnapshot,
-                } and event.snapshot.get(identifiers.STATUS) in {
-                    state.ENSEMBLE_STATE_FAILED,
-                    state.ENSEMBLE_STATE_STOPPED,
-                }:
-                    await monitor.signal_done()
+            assert isinstance(evaluator, EnsembleEvaluator)
+            assert await evaluator.wait_for_evaluation_result()
             assert evaluator._ensemble.status == state.ENSEMBLE_STATE_STOPPED
             assert len(evaluator._ensemble.get_successful_realizations()) == num_reals
 
@@ -66,39 +41,28 @@ async def test_run_legacy_ensemble(
 
 
 @pytest.mark.integration_test
-@pytest.mark.timeout(60)
+@pytest.mark.timeout(30)
+@pytest.mark.usefixtures("use_tmpdir")
 async def test_run_and_cancel_legacy_ensemble(
-    tmpdir, make_ensemble, monkeypatch, evaluator_to_use
+    make_ensemble, monkeypatch, evaluator_to_use, tmpdir
 ):
     num_reals = 2
-    with tmpdir.as_cwd():
-        ensemble = make_ensemble(monkeypatch, tmpdir, num_reals, 2, job_sleep=40)
-        config = EvaluatorServerConfig(use_token=False)
+    event_queue: asyncio.Queue[EEEvent] = asyncio.Queue()
+    ensemble = make_ensemble(monkeypatch, tmpdir, num_reals, 2, job_sleep=40)
+    async with evaluator_to_use(
+        event_handler=event_queue.put_nowait, ensemble=ensemble
+    ) as evaluator:
+        assert isinstance(evaluator, EnsembleEvaluator)
+        evaluator._publisher_receiving_timeout = 10.0
 
-        terminated_event = False
-
-        async with (
-            evaluator_to_use(ensemble, config) as evaluator,
-            Monitor(config.get_uri(), config.token) as monitor,
-        ):
-            # on lesser hardware the realizations might be killed by max_runtime
-            # and the ensemble is set to STOPPED
-            monitor._receiver_timeout = 10.0
-            cancel = True
-            await evaluator._ensemble._scheduler._running.wait()
-            async for event in monitor.track(heartbeat_interval=0.1):
-                # Cancel the ensemble upon the arrival of the first event
-                if cancel:
-                    await monitor.signal_cancel()
-                    cancel = False
-                if type(event) is EETerminated:
-                    terminated_event = True
-
-        if terminated_event:
-            assert evaluator._ensemble.status == state.ENSEMBLE_STATE_CANCELLED
-        else:
+        _ = await event_queue.get()
+        # Cancel the ensemble upon the arrival of the first event
+        evaluator._end_queue.put("END")
+        try:
+            await evaluator.wait_for_evaluation_result()
             assert evaluator._ensemble.status == state.ENSEMBLE_STATE_STOPPED
-
+        except UserCancelled:
+            assert evaluator._ensemble.status == state.ENSEMBLE_STATE_CANCELLED
         # realisations should not finish, thus not creating a status-file
         for i in range(num_reals):
             assert not os.path.isfile(f"real_{i}/status.txt")
