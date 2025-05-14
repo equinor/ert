@@ -1,6 +1,7 @@
 ENSEMBLE_SMOOTHER_MODE = "ensemble_smoother"
 ENIF_MODE = "ensemble_information_filter"
 ENSEMBLE_EXPERIMENT_MODE = "ensemble_experiment"
+ENOPT_MODE = "everest_optimization_mode"
 ES_MDA_MODE = "es_mda"
 TEST_RUN_MODE = "test_run"
 WORKFLOW_MODE = "workflow"
@@ -14,4 +15,5 @@ MODULE_MODE = {
     "SingleTestRun": TEST_RUN_MODE,
     "EvaluateEnsemble": EVALUATE_ENSEMBLE_MODE,
     "ManualUpdate": MANUAL_UPDATE_MODE,
+    "EverestRunModel": ENOPT_MODE,
 }
