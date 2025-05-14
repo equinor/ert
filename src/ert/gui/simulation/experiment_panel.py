@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from collections import OrderedDict
+from pathlib import Path
 from queue import SimpleQueue
 from typing import TYPE_CHECKING, Any
 
@@ -322,6 +323,7 @@ class ExperimentPanel(QWidget):
             self._notifier,
             self.parent(),  # type: ignore
             output_path=self.config.analysis_config.log_path,
+            run_path=Path(self.config.runpath_config.runpath_format_string),
         )
         self.experiment_started.emit(self._dialog)
         self._simulation_done = False
