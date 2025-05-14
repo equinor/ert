@@ -183,8 +183,11 @@ class Scheduler:
         while True:
             event = await self._manifest_queue.get()
             if type(event) is ForwardModelStepChecksum:
-                self.checksum.update(event.checksums)
+                await self._update_checksum(event.checksums)
             self._manifest_queue.task_done()
+
+    async def _update_checksum(self, checksum: dict[str, dict[str, Any]]) -> None:
+        self.checksum.update(checksum)
 
     async def _publisher(self) -> None:
         if self._ensemble_evaluator_queue is None:
