@@ -5,7 +5,7 @@ import logging
 import traceback
 from collections.abc import Awaitable, Callable, Iterable, Sequence
 from queue import SimpleQueue
-from typing import Any, get_args
+from typing import Any, cast, get_args
 
 import zmq.asyncio
 
@@ -17,11 +17,11 @@ from _ert.events import (
     EnsembleFailed,
     EnsembleStarted,
     EnsembleSucceeded,
-    Event,
     FMEvent,
     ForwardModelStepChecksum,
     RealizationEvent,
-    dispatch_event_from_json,
+    SnapshotInputEvent,
+    dispatcher_event_from_json,
 )
 from _ert.forward_model_runner.client import (
     ACK_MSG,
@@ -43,7 +43,7 @@ from .state import (
 
 logger = logging.getLogger(__name__)
 
-EVENT_HANDLER = Callable[[list[Event]], Awaitable[None]]
+EVENT_HANDLER = Callable[[list[SnapshotInputEvent]], Awaitable[None]]
 
 
 class UserCancelled(Exception):
@@ -69,7 +69,7 @@ class EnsembleEvaluator:
         self._config: EvaluatorServerConfig = config
         self._ensemble: Ensemble = ensemble
 
-        self._events: asyncio.Queue[Event] = asyncio.Queue()
+        self._events: asyncio.Queue[SnapshotInputEvent] = asyncio.Queue()
         self._events_to_send: asyncio.Queue[EEEvent | EETerminated | EventSentinel] = (
             asyncio.Queue()
         )
@@ -80,7 +80,7 @@ class EnsembleEvaluator:
 
         # batching section
         self._batch_processing_queue: asyncio.Queue[
-            list[tuple[EVENT_HANDLER, Event]]
+            list[tuple[EVENT_HANDLER, SnapshotInputEvent]]
         ] = asyncio.Queue()
         self._max_batch_size: int = 500
         self._batching_interval: float = 0.5
@@ -179,7 +179,7 @@ class EnsembleEvaluator:
     async def _process_event_buffer(self) -> None:
         while True:
             batch = await self._batch_processing_queue.get()
-            function_to_events_map: dict[EVENT_HANDLER, list[Event]] = {}
+            function_to_events_map: dict[EVENT_HANDLER, list[SnapshotInputEvent]] = {}
             for func, event in batch:
                 if func not in function_to_events_map:
                     function_to_events_map[func] = []
@@ -191,9 +191,12 @@ class EnsembleEvaluator:
             self._batch_processing_queue.task_done()
 
     async def _batch_events_into_buffer(self) -> None:
-        event_handler: dict[type[Event], EVENT_HANDLER] = {}
+        event_handler: dict[type[SnapshotInputEvent], EVENT_HANDLER] = {}
 
-        def set_event_handler(event_types: set[type[Event]], func: Any) -> None:
+        def set_event_handler(
+            event_types: set[type[SnapshotInputEvent]],
+            func: Any,
+        ) -> None:
             for event_type in event_types:
                 event_handler[event_type] = func
 
@@ -204,7 +207,7 @@ class EnsembleEvaluator:
         set_event_handler({EnsembleFailed}, self._failed_handler)
 
         while True:
-            batch: list[tuple[EVENT_HANDLER, Event]] = []
+            batch: list[tuple[EVENT_HANDLER, SnapshotInputEvent]] = []
             start_time = asyncio.get_running_loop().time()
             while (
                 len(batch) < self._max_batch_size
@@ -287,7 +290,7 @@ class EnsembleEvaluator:
             if not self._dispatchers_connected:
                 self._dispatchers_empty.set()
         else:
-            event = dispatch_event_from_json(frame.decode("utf-8"))
+            event = dispatcher_event_from_json(frame.decode("utf-8"))
             if event.ensemble != self.ensemble.id_:
                 logger.info(
                     "Got event from evaluator "
@@ -298,6 +301,7 @@ class EnsembleEvaluator:
             if type(event) is ForwardModelStepChecksum:
                 await self.forward_checksum(event)
             else:
+                event = cast(FMEvent, event)
                 await self._events.put(event)
 
     async def listen_for_messages(self) -> None:

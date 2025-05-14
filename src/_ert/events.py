@@ -197,32 +197,21 @@ EnsembleEvent = EnsembleStarted | EnsembleSucceeded | EnsembleFailed | EnsembleC
 
 EEEvent = EESnapshot | EESnapshotUpdate
 
-Event = FMEvent | ForwardModelStepChecksum | RealizationEvent | EEEvent | EnsembleEvent
+SnapshotInputEvent = RealizationEvent | EnsembleEvent | FMEvent
 
-DispatchEvent = FMEvent | ForwardModelStepChecksum
+DispatcherEvent = FMEvent | ForwardModelStepChecksum
 
 _DISPATCH_EVENTS_ANNOTATION = Annotated[
-    DispatchEvent, Field(discriminator="event_type")
+    DispatcherEvent, Field(discriminator="event_type")
 ]
-_ALL_EVENTS_ANNOTATION = Annotated[Event, Field(discriminator="event_type")]
-
-DispatchEventAdapter: TypeAdapter[DispatchEvent] = TypeAdapter(
+DispatcherEventAdapter: TypeAdapter[DispatcherEvent] = TypeAdapter(
     _DISPATCH_EVENTS_ANNOTATION
 )
-EventAdapter: TypeAdapter[Event] = TypeAdapter(_ALL_EVENTS_ANNOTATION)
 
 
-def dispatch_event_from_json(raw_msg: str | bytes) -> DispatchEvent:
-    return DispatchEventAdapter.validate_json(raw_msg)
+def dispatcher_event_from_json(raw_msg: str | bytes) -> DispatcherEvent:
+    return DispatcherEventAdapter.validate_json(raw_msg)
 
 
-def event_from_json(raw_msg: str | bytes) -> Event:
-    return EventAdapter.validate_json(raw_msg)
-
-
-def event_to_json(event: Event) -> str:
+def dispatcher_event_to_json(event: DispatcherEvent) -> str:
     return event.model_dump_json()
-
-
-def event_to_dict(event: Event) -> dict[str, Any]:
-    return event.model_dump()

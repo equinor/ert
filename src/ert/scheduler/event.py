@@ -16,4 +16,4 @@ class FinishedEvent:
     exec_hosts: str = "-"
 
 
-Event = StartedEvent | FinishedEvent
+DriverEvent = StartedEvent | FinishedEvent

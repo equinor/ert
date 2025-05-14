@@ -16,7 +16,7 @@ from _ert.events import (
     ForwardModelStepRunning,
     ForwardModelStepSuccess,
     RealizationResubmit,
-    event_to_json,
+    dispatcher_event_to_json,
 )
 from _ert.forward_model_runner.client import (
     CONNECT_MSG,
@@ -194,7 +194,7 @@ async def test_restarted_jobs_do_not_have_error_msgs(evaluator_to_use):
                 fm_step="0",
                 current_memory_usage=1000,
             )
-            await dispatch.send(event_to_json(event))
+            await dispatch.send(dispatcher_event_to_json(event))
 
             event = ForwardModelStepFailure(
                 ensemble=evaluator.ensemble.id_,
@@ -202,7 +202,7 @@ async def test_restarted_jobs_do_not_have_error_msgs(evaluator_to_use):
                 fm_step="0",
                 error_msg="error",
             )
-            await dispatch.send(event_to_json(event))
+            await dispatch.send(dispatcher_event_to_json(event))
 
         def is_completed_snapshot(snapshot: EnsembleSnapshot) -> bool:
             try:
@@ -231,7 +231,7 @@ async def test_restarted_jobs_do_not_have_error_msgs(evaluator_to_use):
                 fm_step="0",
                 current_memory_usage=1000,
             )
-            await dispatch.send(event_to_json(event))
+            await dispatch.send(dispatcher_event_to_json(event))
 
             def check_if_final_snapshot_is_complete(snapshot: EnsembleSnapshot) -> bool:
                 try:
@@ -297,28 +297,28 @@ async def test_snapshot_on_resubmit_is_cleared(evaluator_to_use):
                 fm_step="0",
                 current_memory_usage=1000,
             )
-            await dispatch.send(event_to_json(event))
+            await dispatch.send(dispatcher_event_to_json(event))
             event = ForwardModelStepSuccess(
                 ensemble=evaluator.ensemble.id_,
                 real="0",
                 fm_step="0",
                 current_memory_usage=1000,
             )
-            await dispatch.send(event_to_json(event))
+            await dispatch.send(dispatcher_event_to_json(event))
             event = ForwardModelStepRunning(
                 ensemble=evaluator.ensemble.id_,
                 real="0",
                 fm_step="1",
                 current_memory_usage=1000,
             )
-            await dispatch.send(event_to_json(event))
+            await dispatch.send(dispatcher_event_to_json(event))
             event = ForwardModelStepFailure(
                 ensemble=evaluator.ensemble.id_,
                 real="0",
                 fm_step="1",
                 error_msg="error",
             )
-            await dispatch.send(event_to_json(event))
+            await dispatch.send(dispatcher_event_to_json(event))
             event = await event_queue.get()
             snapshot = EnsembleSnapshot.from_nested_dict(event.snapshot)
             assert (
@@ -371,7 +371,7 @@ async def test_signal_cancel_does_not_cause_evaluator_dispatcher_communication_t
                 fm_step="0",
                 current_memory_usage=1000,
             )
-            await dispatch.send(event_to_json(event))
+            await dispatch.send(dispatcher_event_to_json(event))
 
             async def try_sending_event_from_dispatcher_while_monitor_is_cancelling_ensemble():  # noqa: E501
                 await started_cancelling_ensemble.wait()
@@ -381,7 +381,7 @@ async def test_signal_cancel_does_not_cause_evaluator_dispatcher_communication_t
                     fm_step="0",
                     current_memory_usage=1000,
                 )
-                await dispatch.send(event_to_json(event))
+                await dispatch.send(dispatcher_event_to_json(event))
                 kill_all_jobs_event.set()
 
             await asyncio.wait_for(

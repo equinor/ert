@@ -15,10 +15,11 @@ import orjson
 from pydantic.dataclasses import dataclass
 
 from _ert.events import (
-    Event,
     ForwardModelStepChecksum,
+    RealizationEvent,
     RealizationFailed,
     RealizationStoppedLongRunning,
+    SnapshotInputEvent,
 )
 
 from .driver import Driver
@@ -62,8 +63,8 @@ class Scheduler:
         self,
         driver: Driver,
         realizations: Sequence[Realization] | None = None,
-        manifest_queue: asyncio.Queue[Event] | None = None,
-        ensemble_evaluator_queue: asyncio.Queue[Event] | None = None,
+        manifest_queue: asyncio.Queue[ForwardModelStepChecksum] | None = None,
+        ensemble_evaluator_queue: asyncio.Queue[SnapshotInputEvent] | None = None,
         *,
         max_submit: int = 1,
         max_running: int = 1,
@@ -86,7 +87,7 @@ class Scheduler:
             real.iens: Job(self, real) for real in (realizations or [])
         }
 
-        self._events: asyncio.Queue[Any] = asyncio.Queue()
+        self._events: asyncio.Queue[RealizationEvent] = asyncio.Queue()
         self._running: asyncio.Event = asyncio.Event()
 
         self._average_job_runtime: float = 0
