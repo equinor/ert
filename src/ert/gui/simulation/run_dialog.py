@@ -203,8 +203,10 @@ class RunDialog(QFrame):
         parent: QWidget | None = None,
         output_path: Path | None = None,
         is_everest: bool | None = False,
+        run_path: Path | None = None,
     ):
         super().__init__(parent)
+        self.run_path = run_path or Path()
         self.output_path = output_path
         self.setAttribute(Qt.WidgetAttribute.WA_DeleteOnClose)
         self.setWindowFlags(Qt.WindowType.Window)
@@ -252,9 +254,6 @@ class RunDialog(QFrame):
 
         self.running_time = QLabel("")
         self.memory_usage = QLabel("")
-        self.disk_space = DiskSpaceWidget(
-            get_mount_directory(self._run_model_api.runpath_format_string)
-        )
 
         self.kill_button = QPushButton("Terminate experiment")
         self.restart_button = QPushButton("Rerun failed")
@@ -270,6 +269,21 @@ class RunDialog(QFrame):
         self.processing_animation.setFixedSize(QSize(size, size))
         self.processing_animation.setMovie(spin_movie)
 
+        footer_layout = QHBoxLayout()
+        footer_layout.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        running_time_layout = QHBoxLayout()
+        running_time_layout.addWidget(self.processing_animation)
+        running_time_layout.addWidget(self.running_time)
+        footer_layout.addLayout(running_time_layout)
+
+        footer_layout.addStretch()
+        footer_layout.addWidget(self.memory_usage)
+        self.disk_space = DiskSpaceWidget(
+            get_mount_directory(self.run_path),
+        )
+        footer_layout.addWidget(self.disk_space)
+
+        footer_layout.addStretch()
         button_layout = QHBoxLayout()
         button_layout.addWidget(self.processing_animation)
         button_layout.addWidget(self.running_time)
