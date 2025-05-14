@@ -37,10 +37,11 @@ class DiskSpaceWidget(QWidget):
         self.mount_path = mount_path
         self.space_left_label = QLabel(self)
         self.mount_point_label = QLabel(self)
+        self.mount_point_label.setMinimumWidth(250)
 
         vbox_layout = QVBoxLayout(self)
         vbox_layout.setContentsMargins(0, 0, 0, 0)
-        vbox_layout.setSpacing(10)
+        vbox_layout.setSpacing(0)
 
         frame = QFrame(self)
         layout = QHBoxLayout(frame)
