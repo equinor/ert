@@ -135,7 +135,7 @@ class SuggestorMessage(QWidget):
         return (
             '<div style="font-size: 16px; line-height: 24px;">'
             + self._color_bold(self._header)
-            + self._message
+            + f'<p style="white-space: pre-wrap;">{self._message}</p>'
             + location
             + "</div>"
         )
