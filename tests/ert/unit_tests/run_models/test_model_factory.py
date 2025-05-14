@@ -5,7 +5,6 @@ from uuid import uuid1
 
 import pytest
 
-import ert
 from ert.config import (
     ConfigValidationError,
     ConfigWarning,
@@ -253,11 +252,6 @@ def test_multiple_data_assimilation_restart_paths(
         experiment_name=None,
     )
 
-    monkeypatch.setattr(
-        ert.run_models.base_run_model.BaseRunModel,
-        "validate_successful_realizations_count",
-        MagicMock(),
-    )
     storage_mock = MagicMock()
     ensemble_mock = MagicMock()
     ensemble_mock.iteration = restart_from_iteration
@@ -309,12 +303,6 @@ def test_evaluate_ensemble_paths(
     tmp_path, monkeypatch, ensemble_iteration, expected_path
 ):
     monkeypatch.chdir(tmp_path)
-
-    monkeypatch.setattr(
-        ert.run_models.base_run_model.BaseRunModel,
-        "validate_successful_realizations_count",
-        MagicMock(),
-    )
     storage_mock = MagicMock()
     ensemble_mock = MagicMock()
     ensemble_mock.iteration = ensemble_iteration
