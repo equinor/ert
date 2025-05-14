@@ -108,7 +108,7 @@ def test_failed_realizations(initials, completed, any_failed, failures):
         ("out/realization-%d", 2, 0, [False, False, True], False),
     ],
 )
-def test_check_if_runpath_exists(
+def test_check_if_runpath_exists_with_substitutions(
     create_dummy_run_path,
     run_path: str,
     number_of_iterations: int,
