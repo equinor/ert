@@ -906,7 +906,7 @@ def test_that_connection_errors_do_not_effect_final_result(
         raise zmq.error.ZMQError(None, None)
 
     with patch(
-        "ert.ensemble_evaluator.evaluator.dispatch_event_from_json",
+        "ert.ensemble_evaluator.evaluator.dispatcher_event_from_json",
         raise_connection_error,
     ):
         run_cli(
