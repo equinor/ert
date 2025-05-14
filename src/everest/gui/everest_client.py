@@ -130,7 +130,6 @@ class EverestClient:
 
         return BaseRunModelAPI(
             experiment_name=self.config_filename,
-            runpath_format_string=self.simulation_dir,
             support_restart=False,
             start_simulations_thread=start_fn,
             cancel=self.stop,

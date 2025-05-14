@@ -70,6 +70,7 @@ from ert.shared.status.utils import (
 
 from .queue_emitter import QueueEmitter
 from .view import DiskSpaceWidget, ProgressWidget, RealizationWidget, UpdateWidget
+from .view.disk_space_widget import MountType
 
 _TOTAL_PROGRESS_TEMPLATE = "Total progress {total_progress}% — {iteration_label}"
 _EVEREST_TOTAL_PROGRESS_TEMPLATE = "Batch {iteration} progress: {total_progress}%"
@@ -202,9 +203,11 @@ class RunDialog(QFrame):
         output_path: Path | None = None,
         is_everest: bool | None = False,
         run_path: Path | None = None,
+        storage_path: Path | None = None,
     ):
         super().__init__(parent)
         self.run_path = run_path or Path()
+        self.storage_path = storage_path or Path()
         self.output_path = output_path
         self.setAttribute(Qt.WidgetAttribute.WA_DeleteOnClose)
         self.setWindowFlags(Qt.WindowType.Window)
@@ -249,7 +252,8 @@ class RunDialog(QFrame):
         self._fm_step_label.setObjectName("fm_step_label")
         self._fm_step_overview = FMStepOverview(self._snapshot_model, self)
 
-        self.running_time = QLabel("")
+        self.running_time = QLabel("Running time:\n -")
+        self.running_time.setMinimumWidth(150)
         self.queue_system = QLabel("")
         self.memory_usage = QLabel("")
 
@@ -274,15 +278,23 @@ class RunDialog(QFrame):
         running_time_layout.addWidget(self.running_time)
         footer_layout.addLayout(running_time_layout)
 
-        footer_layout.addStretch()
         footer_layout.addWidget(self.queue_system)
-
         footer_layout.addStretch()
         footer_layout.addWidget(self.memory_usage)
-        self.disk_space = DiskSpaceWidget(
+
+        self.disk_space_runpath = DiskSpaceWidget(
             get_mount_directory(self.run_path),
+            MountType.RUNPATH,
         )
-        footer_layout.addWidget(self.disk_space)
+        footer_layout.addWidget(self.disk_space_runpath)
+        self.disk_widgets = [self.disk_space_runpath]
+
+        self.disk_space_storage = DiskSpaceWidget(
+            get_mount_directory(self.storage_path),
+            MountType.STORAGE,
+        )
+        footer_layout.addWidget(self.disk_space_storage)
+        self.disk_widgets.append(self.disk_space_storage)
 
         footer_layout.addStretch()
         button_layout = QHBoxLayout()
@@ -467,7 +479,9 @@ class RunDialog(QFrame):
 
         maximum_memory_usage = self._snapshot_model.root.max_memory_usage
 
-        self.disk_space.update_status()
+        for disk_widget in self.disk_widgets:
+            disk_widget.update_status()
+
         if maximum_memory_usage:
             self.memory_usage.setText(
                 "Maximal realization memory usage: "

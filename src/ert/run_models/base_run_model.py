@@ -162,7 +162,6 @@ class StartSimulationsThreadFn(Protocol):
 @dataclasses.dataclass
 class BaseRunModelAPI:
     experiment_name: str
-    runpath_format_string: str
     support_restart: bool
     start_simulations_thread: StartSimulationsThreadFn
     cancel: Callable[[], None]
@@ -240,7 +239,6 @@ class BaseRunModel(ABC):
     def api(self) -> BaseRunModelAPI:
         return BaseRunModelAPI(
             experiment_name=self.name(),
-            runpath_format_string=str(self._runpath_file),
             get_runtime=self.get_runtime,
             start_simulations_thread=self.start_simulations_thread,
             has_failed_realizations=self.has_failed_realizations,
