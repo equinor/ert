@@ -1,3 +1,4 @@
+from pathlib import Path
 from unittest.mock import MagicMock
 
 from ert.gui.simulation.view import DiskSpaceWidget
@@ -9,7 +10,7 @@ from ert.gui.simulation.view.disk_space_widget import (
 
 
 def test_disk_space_widget(qtbot):
-    disk_space_widget = DiskSpaceWidget("/tmp")
+    disk_space_widget = DiskSpaceWidget(Path("/tmp"))
     qtbot.addWidget(disk_space_widget)
     disk_space_widget._get_status = MagicMock()
 
