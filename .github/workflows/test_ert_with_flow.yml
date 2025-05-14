@@ -16,6 +16,16 @@ jobs:
     runs-on: ${{ inputs.os }}
 
     steps:
+    - name: Check /etc/hosts
+      run: |
+        echo "/etc/hosts ::"
+        cat /etc/hosts
+        if grep -q '^-' /etc/hosts; then
+          echo "Found corrupted /etc/hosts - attempting fix"
+          sudo sed -i s'/^-[^ ] //' /etc/hosts
+          echo "/etc/hosts ::"
+          cat /etc/hosts
+        fi
     - uses: actions/checkout@v4
 
     - uses: ./.github/actions/install_dependencies_qt
