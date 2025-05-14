@@ -1272,7 +1272,8 @@ def test_that_boolean_values_can_be_any_case(val, expected):
             """
         )
     )
-    assert ert_config.queue_config.stop_long_running == expected
+
+    assert ert_config.queue_config.queue_options.stop_long_running == expected
 
 
 @pytest.mark.usefixtures("use_tmpdir", "set_site_config")

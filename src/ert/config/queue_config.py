@@ -44,10 +44,12 @@ class QueueOptions(
     use_enum_values=True,
     validate_default=True,
 ):
-    name: QueueSystem
+    # name: QueueSystem
     max_running: pydantic.NonNegativeInt = 0
     submit_sleep: pydantic.NonNegativeFloat = 0.0
     max_submit: pydantic.NonNegativeInt = 1
+    realization_memory: pydantic.NonNegativeInt = 0
+    stop_long_running: bool = False
     project_code: str | None = None
     activate_script: str | None = Field(default=None, validate_default=True)
 
@@ -93,6 +95,10 @@ class QueueOptions(
             if (generic_value := config_dict.get(name.upper(), None)) and self.__dict__[
                 name
             ] == generic_option.default:
+                if name == "realization_memory" and isinstance(generic_value, str):
+                    generic_value = parse_realization_memory_str(generic_value)
+                elif name == "stop_long_running":
+                    generic_value = bool(generic_value)
                 try:
                     setattr(self, name, generic_value)
                 except pydantic.ValidationError as exception:
@@ -130,7 +136,14 @@ class LsfQueueOptions(QueueOptions):
     @property
     def driver_options(self) -> dict[str, Any]:
         driver_dict = self.model_dump(
-            exclude={"name", "submit_sleep", "max_running", "max_submit"}
+            exclude={
+                "name",
+                "submit_sleep",
+                "max_running",
+                "max_submit",
+                "realization_memory",
+                "stop_long_running",
+            }
         )
         driver_dict["exclude_hosts"] = driver_dict.pop("exclude_host")
         driver_dict["queue_name"] = driver_dict.pop("lsf_queue")
@@ -156,6 +169,8 @@ class TorqueQueueOptions(QueueOptions):
                 "max_running",
                 "submit_sleep",
                 "max_submit",
+                "realization_memory",
+                "stop_long_running",
             }
         )
         driver_dict["queue_name"] = driver_dict.pop("queue")
@@ -178,7 +193,14 @@ class SlurmQueueOptions(QueueOptions):
     @property
     def driver_options(self) -> dict[str, Any]:
         driver_dict = self.model_dump(
-            exclude={"name", "max_running", "submit_sleep", "max_submit"}
+            exclude={
+                "name",
+                "max_running",
+                "submit_sleep",
+                "max_submit",
+                "realization_memory",
+                "stop_long_running",
+            }
         )
         driver_dict["sbatch_cmd"] = driver_dict.pop("sbatch")
         driver_dict["scancel_cmd"] = driver_dict.pop("scancel")
@@ -267,12 +289,10 @@ def _group_queue_options_by_queue_system(
 @dataclass
 class QueueConfig:
     job_script: str = shutil.which("fm_dispatch.py") or "fm_dispatch.py"
-    realization_memory: int = 0
     queue_system: QueueSystem = QueueSystem.LOCAL
     queue_options: (
         LsfQueueOptions | TorqueQueueOptions | SlurmQueueOptions | LocalQueueOptions
     ) = pydantic.Field(default_factory=LocalQueueOptions, discriminator="name")
-    stop_long_running: bool = False
     max_runtime: int | None = None
     preferred_num_cpu: int = 1
 
@@ -285,10 +305,6 @@ class QueueConfig:
         job_script: str = config_dict.get(
             "JOB_SCRIPT", shutil.which("fm_dispatch.py") or "fm_dispatch.py"
         )
-        realization_memory: int = parse_realization_memory_str(
-            config_dict.get(ConfigKeys.REALIZATION_MEMORY, "0b")
-        )
-        stop_long_running = config_dict.get(ConfigKeys.STOP_LONG_RUNNING, False)
 
         preferred_num_cpu = 1
         if ConfigKeys.NUM_CPU in config_dict:
@@ -336,10 +352,8 @@ class QueueConfig:
 
         return QueueConfig(
             job_script,
-            realization_memory,
             selected_queue_system,
             queue_options,
-            stop_long_running=bool(stop_long_running),
             max_runtime=config_dict.get(ConfigKeys.MAX_RUNTIME),
             preferred_num_cpu=preferred_num_cpu,
         )
@@ -347,10 +361,8 @@ class QueueConfig:
     def create_local_copy(self) -> QueueConfig:
         return QueueConfig(
             self.job_script,
-            self.realization_memory,
             QueueSystem.LOCAL,
             LocalQueueOptions(),
-            stop_long_running=bool(self.stop_long_running),
             max_runtime=self.max_runtime,
         )
 

@@ -32,10 +32,11 @@ def test_create_local_copy_is_a_copy_with_local_queue_system():
 @pytest.mark.parametrize("value", [True, False])
 def test_stop_long_running_is_set_from_corresponding_keyword(value):
     assert (
-        QueueConfig.from_dict({ConfigKeys.STOP_LONG_RUNNING: value}).stop_long_running
+        QueueConfig.from_dict(
+            {ConfigKeys.STOP_LONG_RUNNING: value}
+        ).queue_options.stop_long_running
         == value
     )
-    assert QueueConfig(stop_long_running=value).stop_long_running == value
 
 
 @pytest.mark.parametrize("queue_system", ["LSF", "TORQUE", "SLURM"])
@@ -119,12 +120,10 @@ def memory_with_unit(draw):
 def test_supported_memory_units_to_realization_memory(
     memory_with_unit,
 ):
-    assert (
-        ErtConfig.from_file_contents(
-            f"NUM_REALIZATIONS 1\nREALIZATION_MEMORY {memory_with_unit}\n"
-        ).queue_config.realization_memory
-        > 0
+    ert_config = ErtConfig.from_file_contents(
+        f"NUM_REALIZATIONS 1\nREALIZATION_MEMORY {memory_with_unit}\n"
     )
+    assert ert_config.queue_config.queue_options.realization_memory > 0
 
 
 @pytest.mark.parametrize(
@@ -146,7 +145,7 @@ def test_realization_memory_unit_support(memory_spec: str, expected_bytes: int):
     assert (
         ErtConfig.from_file_contents(
             f"NUM_REALIZATIONS 1\nREALIZATION_MEMORY {memory_spec}\n"
-        ).queue_config.realization_memory
+        ).queue_config.queue_options.realization_memory
         == expected_bytes
     )
 
