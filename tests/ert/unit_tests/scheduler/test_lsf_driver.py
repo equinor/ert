@@ -1297,6 +1297,15 @@ async def test_no_exception_when_no_access_to_bjobs_executable(
     assert "Permission denied" in caplog.text
 
 
+async def test_jobname_with_spaces(tmp_path, pytestconfig):
+    if not pytestconfig.getoption("lsf"):
+        pytest.skip("Mocked LSF driver does not support spaces")
+    os.chdir(tmp_path)
+    driver = LsfDriver()
+    await driver.submit(0, "sh", "-c", "sleep 1", name="I have spaces")
+    await poll(driver, {0})
+
+
 @pytest.mark.integration_test
 async def test_that_kill_before_submit_is_finished_works(tmp_path, monkeypatch, caplog):
     """This test asserts that it is possible to issue a kill command
