@@ -529,3 +529,30 @@ def test_progress_calculations(
 
     progress = brm.calculate_current_progress()
     assert math.isclose(progress, expected_result, abs_tol=0.1)
+
+
+@pytest.mark.parametrize(
+    "active_mask, expected",
+    [
+        ([True, True, True, True], True),
+        ([False, False, True, False], False),
+        ([], False),
+        ([False, True, True], True),
+        ([False, False, True], False),
+    ],
+)
+def test_check_if_runpath_exists(
+    create_dummy_run_path,
+    active_mask: list,
+    expected: bool,
+):
+    def get_run_path_mock(realizations, iteration=None):
+        if iteration is not None:
+            return [f"out/realization-{r}/iter-{iteration}" for r in realizations]
+        return [f"out/realization-{r}" for r in realizations]
+
+    run_model = create_base_run_model(
+        active_realizations=active_mask,
+    )
+    run_model.run_paths.get_paths = get_run_path_mock
+    assert run_model.check_if_runpath_exists() == expected
