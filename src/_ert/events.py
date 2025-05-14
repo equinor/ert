@@ -52,14 +52,8 @@ class Id:
 
     EE_SNAPSHOT_TYPE = Literal["ee.snapshot"]
     EE_SNAPSHOT_UPDATE_TYPE = Literal["ee.snapshot_update"]
-    EE_TERMINATED_TYPE = Literal["ee.terminated"]
-    EE_USER_CANCEL_TYPE = Literal["ee.user_cancel"]
-    EE_USER_DONE_TYPE = Literal["ee.user_done"]
     EE_SNAPSHOT: Final = "ee.snapshot"
     EE_SNAPSHOT_UPDATE: Final = "ee.snapshot_update"
-    EE_TERMINATED: Final = "ee.terminated"
-    EE_USER_CANCEL: Final = "ee.user_cancel"
-    EE_USER_DONE: Final = "ee.user_done"
 
 
 class BaseEvent(BaseModel):
@@ -180,21 +174,6 @@ class EESnapshotUpdate(EnsembleBaseEvent):
     snapshot: Any
 
 
-class EETerminated(BaseEvent):
-    event_type: Id.EE_TERMINATED_TYPE = Id.EE_TERMINATED
-    ensemble: str | None = None
-
-
-class EEUserCancel(BaseEvent):
-    event_type: Id.EE_USER_CANCEL_TYPE = Id.EE_USER_CANCEL
-    monitor: str
-
-
-class EEUserDone(BaseEvent):
-    event_type: Id.EE_USER_DONE_TYPE = Id.EE_USER_DONE
-    monitor: str
-
-
 FMEvent = (
     ForwardModelStepStart
     | ForwardModelStepRunning
@@ -216,11 +195,11 @@ RealizationEvent = (
 
 EnsembleEvent = EnsembleStarted | EnsembleSucceeded | EnsembleFailed | EnsembleCancelled
 
-EEEvent = EESnapshot | EESnapshotUpdate | EETerminated | EEUserCancel | EEUserDone
+EEEvent = EESnapshot | EESnapshotUpdate
 
 Event = FMEvent | ForwardModelStepChecksum | RealizationEvent | EEEvent | EnsembleEvent
 
-DispatchEvent = FMEvent | ForwardModelStepChecksum | RealizationEvent | EnsembleEvent
+DispatchEvent = FMEvent | ForwardModelStepChecksum
 
 _DISPATCH_EVENTS_ANNOTATION = Annotated[
     DispatchEvent, Field(discriminator="event_type")
