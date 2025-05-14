@@ -14,6 +14,7 @@ from PyQt6.QtWidgets import (
     QWidget,
 )
 
+from ..ertwidgets.copyablelabel import _CopyButton
 from ._colors import (
     BLUE_BACKGROUND,
     BLUE_TEXT,
@@ -93,6 +94,9 @@ class SuggestorMessage(QWidget):
         else:
             self._expand_collapse_label = QLabel()
             self._hbox.addWidget(self.lbl, alignment=Qt.AlignmentFlag.AlignTop)
+        self._hbox.addWidget(
+            _CopyButton(QLabel(message)), alignment=Qt.AlignmentFlag.AlignTop
+        )
 
     def _toggle_expand(self, _link: Any) -> None:
         if self._expanded:
