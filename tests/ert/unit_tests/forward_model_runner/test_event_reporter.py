@@ -7,7 +7,7 @@ from _ert.events import (
     ForwardModelStepRunning,
     ForwardModelStepStart,
     ForwardModelStepSuccess,
-    event_from_json,
+    dispatcher_event_from_json,
 )
 from _ert.forward_model_runner.forward_model_step import ForwardModelStep
 from _ert.forward_model_runner.reporting import Event
@@ -36,7 +36,7 @@ def test_report_with_successful_start_message_argument(unused_tcp_port):
         reporter.report(Finish())
 
     assert len(mock_server.messages) == 1
-    event = event_from_json(mock_server.messages[0])
+    event = dispatcher_event_from_json(mock_server.messages[0])
     assert type(event) is ForwardModelStepStart
     assert event.ensemble == "ens_id"
     assert event.real == "0"
@@ -63,7 +63,7 @@ def test_report_with_failed_start_message_argument(unused_tcp_port):
         reporter.report(Finish())
 
     assert len(mock_server.messages) == 2
-    event = event_from_json(mock_server.messages[1])
+    event = dispatcher_event_from_json(mock_server.messages[1])
     assert type(event) is ForwardModelStepFailure
     assert event.error_msg == "massive_failure"
 
@@ -82,7 +82,7 @@ async def test_report_with_successful_exit_message_argument(unused_tcp_port):
         reporter.report(Finish().with_error("failed"))
 
     assert len(mock_server.messages) == 1
-    event = event_from_json(mock_server.messages[0])
+    event = dispatcher_event_from_json(mock_server.messages[0])
     assert type(event) is ForwardModelStepSuccess
 
 
@@ -100,7 +100,7 @@ def test_report_with_failed_exit_message_argument(unused_tcp_port):
         reporter.report(Finish())
 
     assert len(mock_server.messages) == 1
-    event = event_from_json(mock_server.messages[0])
+    event = dispatcher_event_from_json(mock_server.messages[0])
     assert type(event) is ForwardModelStepFailure
     assert event.error_msg == "massive_failure"
 
@@ -119,7 +119,7 @@ def test_report_with_running_message_argument(unused_tcp_port):
         reporter.report(Finish())
 
     assert len(mock_server.messages) == 1
-    event = event_from_json(mock_server.messages[0])
+    event = dispatcher_event_from_json(mock_server.messages[0])
     assert type(event) is ForwardModelStepRunning
     assert event.max_memory_usage == 100
     assert event.current_memory_usage == 10
