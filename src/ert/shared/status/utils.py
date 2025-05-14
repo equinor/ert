@@ -87,7 +87,7 @@ def get_ert_memory_usage() -> int:
     return usage.ru_maxrss // rss_scale
 
 
-def get_mount_directory(runpath: str) -> Path:
+def get_mount_directory(runpath: Path) -> Path:
     path = Path(runpath).absolute()
 
     while not path.is_mount():
