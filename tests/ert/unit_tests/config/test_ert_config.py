@@ -1763,7 +1763,7 @@ def test_queue_config_max_running_queue_option_has_priority_over_general_option(
                 {max_running_queue_config_entry}
                 """
             )
-        ).queue_config.max_running
+        ).queue_config.queue_options.max_running
         == 6
     )
 
@@ -1789,8 +1789,8 @@ def test_general_option_in_local_config_has_priority_over_site_config():
         """
         ),
     )
-    assert config.queue_config.max_running == 13
-    assert config.queue_config.submit_sleep == 14
+    assert config.queue_config.queue_options.max_running == 13
+    assert config.queue_config.queue_options.submit_sleep == 14
     assert config.queue_config.queue_system == QueueSystem.TORQUE
 
 

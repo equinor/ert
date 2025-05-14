@@ -259,7 +259,7 @@ def test_max_running_property():
     )
 
     assert config.queue_config.queue_system == QueueSystem.TORQUE
-    assert config.queue_config.max_running == 19
+    assert config.queue_config.queue_options.max_running == 19
 
 
 @pytest.mark.parametrize("queue_system", ["LSF", "GENERIC"])
@@ -271,7 +271,7 @@ def test_multiple_submit_sleep_keywords(queue_system):
         f"QUEUE_OPTION {queue_system} SUBMIT_SLEEP 42\n"
         "QUEUE_OPTION TORQUE SUBMIT_SLEEP 22\n"
     )
-    assert config.queue_config.submit_sleep == 42
+    assert config.queue_config.queue_options.submit_sleep == 42
 
 
 def test_multiple_max_submit_keywords():
@@ -313,9 +313,9 @@ def test_global_queue_options(queue_system, key, value):
     def _check_results(contents):
         ert_config = ErtConfig.from_file_contents(contents)
         if key == "MAX_RUNNING":
-            assert ert_config.queue_config.max_running == value
+            assert ert_config.queue_config.queue_options.max_running == value
         elif key == "SUBMIT_SLEEP":
-            assert ert_config.queue_config.submit_sleep == value
+            assert ert_config.queue_config.queue_options.submit_sleep == value
         else:
             raise KeyError("Unexpected key")
 
@@ -344,9 +344,9 @@ def test_global_config_key_does_not_overwrite_queue_options(queue_system, key, v
     def _check_results(contents):
         ert_config = ErtConfig.from_file_contents(contents)
         if key == "MAX_RUNNING":
-            assert ert_config.queue_config.max_running == value
+            assert ert_config.queue_config.queue_options.max_running == value
         elif key == "SUBMIT_SLEEP":
-            assert ert_config.queue_config.submit_sleep == value
+            assert ert_config.queue_config.queue_options.submit_sleep == value
         else:
             raise KeyError("Unexpected key")
 

@@ -6,7 +6,6 @@ from unittest.mock import MagicMock
 import pytest
 
 from _ert.events import EESnapshot, EESnapshotUpdate, EETerminated
-from ert.config import QueueConfig
 from ert.ensemble_evaluator import EnsembleEvaluator, Monitor, identifiers, state
 from ert.ensemble_evaluator.config import EvaluatorServerConfig
 from ert.scheduler import Scheduler
@@ -110,9 +109,9 @@ async def test_queue_config_properties_propagated_to_scheduler(
     ensemble._scheduler = mocked_scheduler
 
     # The properties we want to propagate from QueueConfig to the Scheduler object:
-    monkeypatch.setattr(QueueConfig, "submit_sleep", 33)
-    monkeypatch.setattr(QueueConfig, "max_running", 44)
     ensemble._queue_config.max_submit = 55
+    ensemble._queue_config.queue_options.submit_sleep = 33
+    ensemble._queue_config.queue_options.max_running = 44
 
     # The function under test:
     await ensemble.evaluate(config=MagicMock())

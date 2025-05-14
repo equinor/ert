@@ -347,18 +347,10 @@ class QueueConfig:
             self.realization_memory,
             self.max_submit,
             QueueSystem.LOCAL,
-            LocalQueueOptions(max_running=self.max_running),
+            LocalQueueOptions(),
             stop_long_running=bool(self.stop_long_running),
             max_runtime=self.max_runtime,
         )
-
-    @property
-    def max_running(self) -> int:
-        return self.queue_options.max_running
-
-    @property
-    def submit_sleep(self) -> float:
-        return self.queue_options.submit_sleep
 
 
 def parse_realization_memory_str(realization_memory_str: str) -> int:
