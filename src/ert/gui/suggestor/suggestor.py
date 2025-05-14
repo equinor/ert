@@ -131,9 +131,8 @@ class Suggestor(QWidget):
         data_layout.setContentsMargins(0, 0, 0, 0)
 
         data_layout.addWidget(self._problem_area(errors, warnings, deprecations))
-        data_layout.addWidget(
-            self._help_panel(help_links if help_links is not None else {})
-        )
+        if help_links:
+            data_layout.addWidget(self._help_panel(help_links))
 
     def _help_panel(self, help_links: dict[str, str]) -> QFrame:
         help_button_frame = QFrame(parent=self)
