@@ -278,7 +278,7 @@ def test_multiple_max_submit_keywords():
     assert (
         ErtConfig.from_file_contents(
             "NUM_REALIZATIONS 1\nMAX_SUBMIT 10\nMAX_SUBMIT 42\n"
-        ).queue_config.max_submit
+        ).queue_config.queue_options.max_submit
         == 42
     )
 

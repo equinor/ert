@@ -481,7 +481,9 @@ def test_that_parsing_ert_config_result_in_expected_values(
         ert_config = ErtConfig.from_file(filename)
         assert ert_config.ens_path == config_values.enspath
         assert ert_config.random_seed == config_values.random_seed
-        assert ert_config.queue_config.max_submit == config_values.max_submit
+        assert (
+            ert_config.queue_config.queue_options.max_submit == config_values.max_submit
+        )
         assert ert_config.queue_config.job_script == config_values.job_script
         assert ert_config.user_config_file == os.path.abspath(filename)
         assert ert_config.config_path == os.getcwd()
@@ -1783,7 +1785,9 @@ def test_general_option_in_local_config_has_priority_over_site_config():
         ),
         site_config_contents=dedent(
             """
+        MAX_RUNNING 77
         QUEUE_OPTION TORQUE MAX_RUNNING 6
+        MAX_RUNNING 99
         QUEUE_SYSTEM LOCAL
         QUEUE_OPTION TORQUE SUBMIT_SLEEP 7
         """

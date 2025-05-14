@@ -47,6 +47,7 @@ class QueueOptions(
     name: QueueSystem
     max_running: pydantic.NonNegativeInt = 0
     submit_sleep: pydantic.NonNegativeFloat = 0.0
+    max_submit: pydantic.NonNegativeInt = 1
     project_code: str | None = None
     activate_script: str | None = Field(default=None, validate_default=True)
 
@@ -128,7 +129,9 @@ class LsfQueueOptions(QueueOptions):
 
     @property
     def driver_options(self) -> dict[str, Any]:
-        driver_dict = self.model_dump(exclude={"name", "submit_sleep", "max_running"})
+        driver_dict = self.model_dump(
+            exclude={"name", "submit_sleep", "max_running", "max_submit"}
+        )
         driver_dict["exclude_hosts"] = driver_dict.pop("exclude_host")
         driver_dict["queue_name"] = driver_dict.pop("lsf_queue")
         driver_dict["resource_requirement"] = driver_dict.pop("lsf_resource")
@@ -152,6 +155,7 @@ class TorqueQueueOptions(QueueOptions):
                 "name",
                 "max_running",
                 "submit_sleep",
+                "max_submit",
             }
         )
         driver_dict["queue_name"] = driver_dict.pop("queue")
@@ -173,7 +177,9 @@ class SlurmQueueOptions(QueueOptions):
 
     @property
     def driver_options(self) -> dict[str, Any]:
-        driver_dict = self.model_dump(exclude={"name", "max_running", "submit_sleep"})
+        driver_dict = self.model_dump(
+            exclude={"name", "max_running", "submit_sleep", "max_submit"}
+        )
         driver_dict["sbatch_cmd"] = driver_dict.pop("sbatch")
         driver_dict["scancel_cmd"] = driver_dict.pop("scancel")
         driver_dict["scontrol_cmd"] = driver_dict.pop("scontrol")
@@ -262,7 +268,6 @@ def _group_queue_options_by_queue_system(
 class QueueConfig:
     job_script: str = shutil.which("fm_dispatch.py") or "fm_dispatch.py"
     realization_memory: int = 0
-    max_submit: int = 1
     queue_system: QueueSystem = QueueSystem.LOCAL
     queue_options: (
         LsfQueueOptions | TorqueQueueOptions | SlurmQueueOptions | LocalQueueOptions
@@ -283,7 +288,6 @@ class QueueConfig:
         realization_memory: int = parse_realization_memory_str(
             config_dict.get(ConfigKeys.REALIZATION_MEMORY, "0b")
         )
-        max_submit: int = config_dict.get(ConfigKeys.MAX_SUBMIT, 1)
         stop_long_running = config_dict.get(ConfigKeys.STOP_LONG_RUNNING, False)
 
         preferred_num_cpu = 1
@@ -333,7 +337,6 @@ class QueueConfig:
         return QueueConfig(
             job_script,
             realization_memory,
-            max_submit,
             selected_queue_system,
             queue_options,
             stop_long_running=bool(stop_long_running),
@@ -345,7 +348,6 @@ class QueueConfig:
         return QueueConfig(
             self.job_script,
             self.realization_memory,
-            self.max_submit,
             QueueSystem.LOCAL,
             LocalQueueOptions(),
             stop_long_running=bool(self.stop_long_running),
