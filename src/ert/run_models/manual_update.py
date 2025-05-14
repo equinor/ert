@@ -1,80 +1,52 @@
 from __future__ import annotations
 
 import logging
-from pathlib import Path
-from queue import SimpleQueue
 from typing import TYPE_CHECKING
 from uuid import UUID
 
-from ert.config import ErtConfig, ESSettings, ObservationSettings
-from ert.ensemble_evaluator import EvaluatorServerConfig
-from ert.storage import Storage
+from pydantic import PrivateAttr
 
-from .base_run_model import ErtRunError, StatusEvents, UpdateRunModel
+from ert.ensemble_evaluator import EvaluatorServerConfig
+from ert.storage import Ensemble, open_storage
+
+from .base_run_model import ErtRunError, UpdateRunModel
 
 if TYPE_CHECKING:
-    from ert.config import QueueConfig
+    pass
 
 
 logger = logging.getLogger(__name__)
 
 
 class ManualUpdate(UpdateRunModel):
-    def __init__(
-        self,
-        ensemble_id: str,
-        target_ensemble: str,
-        active_realizations: list[bool],
-        minimum_required_realizations: int,
-        random_seed: int,
-        config: ErtConfig,
-        storage: Storage,
-        queue_config: QueueConfig,
-        es_settings: ESSettings,
-        update_settings: ObservationSettings,
-        status_queue: SimpleQueue[StatusEvents],
-    ):
+    ensemble_id: str
+    target_ensemble: str
+    support_restart: bool = False
+
+    _prior: Ensemble = PrivateAttr()
+
+    def model_post_init(self, ctx) -> None:
         try:
-            prior = storage.get_ensemble(UUID(ensemble_id))
+            with open_storage(self.storage_path, mode="r") as storage:
+                prior = storage.get_ensemble(UUID(self.ensemble_id))
         except (KeyError, ValueError) as err:
             raise ErtRunError(
-                f"Prior ensemble with ID: {UUID(ensemble_id)} does not exists"
+                f"Prior ensemble with ID: {UUID(self.ensemble_id)} does not exists"
             ) from err
 
-        super().__init__(
-            es_settings,
-            update_settings,
-            storage,
-            config.runpath_file,
-            Path(config.user_config_file),
-            config.env_vars,
-            config.env_pr_fm_step,
-            config.runpath_config,
-            queue_config,
-            config.forward_model_steps,
-            status_queue,
-            config.substitutions,
-            config.hooked_workflows,
-            active_realizations=active_realizations,
-            total_iterations=1,
-            start_iteration=prior.iteration,
-            random_seed=random_seed,
-            minimum_required_realizations=minimum_required_realizations,
-            log_path=config.analysis_config.log_path,
-        )
-        self.prior = prior
-        self.target_ensemble_format = target_ensemble
+        self._prior = prior
         self.support_restart = False
+        super().model_post_init(ctx)
 
     def run_experiment(
         self, evaluator_server_config: EvaluatorServerConfig, restart: bool = False
     ) -> None:
         self.log_at_startup()
-        self.set_env_key("_ERT_EXPERIMENT_ID", str(self.prior.experiment.id))
-        self.set_env_key("_ERT_ENSEMBLE_ID", str(self.prior.id))
+        self.set_env_key("_ERT_EXPERIMENT_ID", str(self._prior.experiment.id))
+        self.set_env_key("_ERT_ENSEMBLE_ID", str(self._prior.id))
 
-        ensemble_format = self.target_ensemble_format
-        self.update(self.prior, ensemble_format % (self.prior.iteration + 1))
+        ensemble_format = self.target_ensemble
+        self.update(self._prior, ensemble_format % (self._prior.iteration + 1))
 
     @classmethod
     def name(cls) -> str:
