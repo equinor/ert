@@ -266,6 +266,20 @@ class LocalEnsemble(BaseMode):
             ]
         )
 
+    def _scalar_exist(self) -> dict[str, list[int]]:
+        genkwn_mask: dict[str, list[int]] = {}
+        for parameter in self.experiment.parameter_configuration.values():
+            if isinstance(parameter, GenKwConfig):
+                genkwn_mask[parameter.name] = []
+                group_path = (
+                    self.mount_point / f"{_escape_filename(parameter.name)}.parquet"
+                )
+                if group_path.exists():
+                    genkwn_mask[parameter.name] = pl.read_parquet(group_path)[
+                        "realization"
+                    ].to_list()
+        return genkwn_mask
+
     def has_data(self) -> list[int]:
         """
         Return the realization numbers where all responses are internalized
@@ -391,6 +405,7 @@ class LocalEnsemble(BaseMode):
         """
 
         response_configs = self.experiment.response_configuration
+        genkwn_mask = self._scalar_exist()
 
         def _parameters_exist_for_realization(realization: int) -> bool:
             """
@@ -411,8 +426,15 @@ class LocalEnsemble(BaseMode):
                 return True
             path = self._realization_dir(realization)
             return all(
-                (path / (_escape_filename(parameter) + ".nc")).exists()
-                for parameter in self.experiment.parameter_configuration
+                (
+                    isinstance(parameter, GenKwConfig)
+                    and realization in genkwn_mask[parameter.name]
+                )
+                or (
+                    not isinstance(parameter, GenKwConfig)
+                    and (path / (_escape_filename(parameter.name) + ".nc")).exists()
+                )
+                for parameter in self.experiment.parameter_configuration.values()
             )
 
         def _responses_exist_for_realization(
