@@ -71,6 +71,7 @@ from ...config import ErrorInfo
 from ..suggestor import Suggestor
 from .queue_emitter import QueueEmitter
 from .view import DiskSpaceWidget, ProgressWidget, RealizationWidget, UpdateWidget
+from .view.disk_space_widget import MountType
 
 _TOTAL_PROGRESS_TEMPLATE = "Total progress {total_progress}% — {iteration_label}"
 _EVEREST_TOTAL_PROGRESS_TEMPLATE = "Batch {iteration} progress: {total_progress}%"
@@ -203,9 +204,11 @@ class RunDialog(QFrame):
         output_path: Path | None = None,
         is_everest: bool | None = False,
         run_path: Path | None = None,
+        storage_path: Path | None = None,
     ):
         super().__init__(parent)
         self.run_path = run_path or Path()
+        self.storage_path = storage_path or Path()
         self.output_path = output_path
         self.setAttribute(Qt.WidgetAttribute.WA_DeleteOnClose)
         self.setWindowFlags(Qt.WindowType.Window)
@@ -250,13 +253,16 @@ class RunDialog(QFrame):
         self._fm_step_label.setObjectName("fm_step_label")
         self._fm_step_overview = FMStepOverview(self._snapshot_model, self)
 
-        self.running_time = QLabel("")
+        self.running_time = QLabel("Running time:\n -")
+        self.running_time.setMinimumWidth(150)
         self.queue_system = QLabel("")
-        self.memory_usage = QLabel("")
+        self.queue_system.setMinimumWidth(150)
+        self.memory_usage = QLabel("Maximal realization memory usage: \n -")
+        self.memory_usage.setMinimumWidth(250)
 
         self.kill_button = QPushButton("Terminate experiment")
-        self.restart_button = QPushButton("Rerun failed")
-        self.restart_button.setHidden(True)
+        self.restart_button = QPushButton("Rerun failed simulations")
+        self.restart_button.setEnabled(False)
 
         size = 20
         spin_movie = QMovie("img:loading.gif")
@@ -267,26 +273,37 @@ class RunDialog(QFrame):
         self.processing_animation = QLabel()
         self.processing_animation.setFixedSize(QSize(size, size))
         self.processing_animation.setMovie(spin_movie)
+        self.processing_stopped = QLabel()
+        self.processing_stopped.setFixedSize(QSize(size, size))
+        self.processing_stopped.setVisible(False)
 
         footer_layout = QHBoxLayout()
         footer_layout.setAlignment(Qt.AlignmentFlag.AlignCenter)
         running_time_layout = QHBoxLayout()
         running_time_layout.addWidget(self.processing_animation)
+        running_time_layout.addWidget(self.processing_stopped)
         running_time_layout.addWidget(self.running_time)
         footer_layout.addLayout(running_time_layout)
 
-        footer_layout.addStretch()
         footer_layout.addWidget(self.queue_system)
-
-        footer_layout.addStretch()
         footer_layout.addWidget(self.memory_usage)
-        self.disk_space = DiskSpaceWidget(
-            get_mount_directory(self.run_path),
-        )
-        footer_layout.addWidget(self.disk_space)
 
-        footer_layout.addStretch()
-        button_layout = QHBoxLayout()
+        self.disk_space_runpath = DiskSpaceWidget(
+            get_mount_directory(self.run_path),
+            MountType.RUNPATH,
+        )
+        footer_layout.addWidget(self.disk_space_runpath)
+        self.disk_widgets = [self.disk_space_runpath]
+
+        self.disk_space_storage = DiskSpaceWidget(
+            get_mount_directory(self.storage_path),
+            MountType.STORAGE,
+        )
+        footer_layout.addWidget(self.disk_space_storage)
+        self.disk_widgets.append(self.disk_space_storage)
+
+        footer_layout.addStretch(1000)
+        button_layout = QVBoxLayout()
         button_layout.addWidget(self.kill_button)
         button_layout.addWidget(self.restart_button)
         footer_layout.addLayout(button_layout)
@@ -442,10 +459,13 @@ class RunDialog(QFrame):
 
     @Slot(bool, str)
     def _on_simulation_done(self, failed: bool, msg: str) -> None:
-        self.processing_animation.hide()
-        self.kill_button.setHidden(True)
-        self.restart_button.setVisible(self._run_model_api.has_failed_realizations())
-        self.restart_button.setEnabled(self._run_model_api.support_restart)
+        self.processing_animation.setVisible(False)
+        self.processing_stopped.setVisible(True)
+        self.kill_button.setEnabled(False)
+        self.restart_button.setEnabled(
+            self._run_model_api.has_failed_realizations()
+            and self._run_model_api.support_restart
+        )
         self._notifier.set_is_simulation_running(False)
         self.flag_simulation_done = True
         if failed:
@@ -472,14 +492,17 @@ class RunDialog(QFrame):
     @Slot()
     def _on_ticker(self) -> None:
         runtime = self._run_model_api.get_runtime()
-        self.running_time.setText(format_running_time(runtime))
+        running_time = format_running_time(runtime)
+        self.running_time.setText(running_time[0:14] + "\n" + running_time[14:])
 
         maximum_memory_usage = self._snapshot_model.root.max_memory_usage
 
-        self.disk_space.update_status()
+        for disk_widget in self.disk_widgets:
+            disk_widget.update_status()
+
         if maximum_memory_usage:
             self.memory_usage.setText(
-                "Maximal realization memory usage: "
+                "Maximal realization memory usage: \n"
                 f"{byte_with_unit(maximum_memory_usage)}"
             )
 
@@ -591,8 +614,8 @@ class RunDialog(QFrame):
         result = msg.exec()
 
         if result == QMessageBox.StandardButton.Ok:
-            self.restart_button.setVisible(False)
-            self.kill_button.setVisible(True)
+            self.restart_button.setEnabled(False)
+            self.kill_button.setEnabled(True)
             self._restart = True
             self.restart_experiment.emit()
 
@@ -606,7 +629,7 @@ class RunDialog(QFrame):
                 formatted_queue_system = "Torque/OpenPBS"
             case QueueSystem.SLURM:
                 formatted_queue_system = "Slurm"
-        self.queue_system.setText(f"Queue system: {formatted_queue_system}")
+        self.queue_system.setText(f"Queue system:\n{formatted_queue_system}")
 
 
 # Cannot use a non-static method here as

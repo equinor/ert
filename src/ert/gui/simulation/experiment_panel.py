@@ -332,6 +332,7 @@ class ExperimentPanel(QWidget):
             self.parent(),  # type: ignore
             output_path=self.config.analysis_config.log_path,
             run_path=Path(self.config.runpath_config.runpath_format_string),
+            storage_path=self._notifier.storage.path,
         )
         self._dialog.set_queue_system_name(model.queue_system)
         self.experiment_started.emit(self._dialog)

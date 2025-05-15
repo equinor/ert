@@ -1,11 +1,14 @@
 from pathlib import Path
 from unittest.mock import MagicMock
 
+import pytest
+
 from ert.gui.simulation.view import DiskSpaceWidget
 from ert.gui.simulation.view.disk_space_widget import (
     CRITICAL_RED,
     NORMAL_GREEN,
     WARNING_YELLOW,
+    MountType,
 )
 
 
@@ -35,3 +38,20 @@ def test_disk_space_widget(qtbot):
     disk_space_widget._get_status.return_value = None
     disk_space_widget.update_status()
     assert not disk_space_widget.isVisible()
+
+
+@pytest.mark.parametrize(
+    "mount_path, mount_type",
+    [
+        ("/tmp", MountType.RUNPATH),
+        ("/usr", MountType.STORAGE),
+    ],
+)
+def test_disk_space_widget_label_content(qtbot, mount_path: str, mount_type: MountType):
+    disk_space_widget = DiskSpaceWidget(Path(mount_path), mount_type)
+    qtbot.addWidget(disk_space_widget)
+    disk_space_widget.update_status()
+
+    assert disk_space_widget.isVisible()
+    assert mount_path in disk_space_widget.mount_point_label.text()
+    assert mount_type.name.capitalize() in disk_space_widget.mount_point_label.text()
