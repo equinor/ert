@@ -943,10 +943,15 @@ class LocalEnsemble(BaseMode):
         self, realization: int
     ) -> dict[str, RealizationStorageState]:
         path = self._realization_dir(realization)
+        genkw_mask = self._scalar_exist()
+
         return {
-            e: RealizationStorageState.PARAMETERS_LOADED
-            if (path / (_escape_filename(e) + ".nc")).exists()
-            else RealizationStorageState.UNDEFINED
+            e: (
+                RealizationStorageState.PARAMETERS_LOADED
+                if (path / (_escape_filename(e) + ".nc")).exists()
+                or (e in genkw_mask and realization in genkw_mask[e])
+                else RealizationStorageState.UNDEFINED
+            )
             for e in self.experiment.parameter_configuration
         }
 
