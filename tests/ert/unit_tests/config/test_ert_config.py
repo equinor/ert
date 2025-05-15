@@ -484,7 +484,9 @@ def test_that_parsing_ert_config_result_in_expected_values(
         assert (
             ert_config.queue_config.queue_options.max_submit == config_values.max_submit
         )
-        assert ert_config.queue_config.job_script == config_values.job_script
+        assert (
+            ert_config.queue_config.queue_options.job_script == config_values.job_script
+        )
         assert ert_config.user_config_file == os.path.abspath(filename)
         assert ert_config.config_path == os.getcwd()
         assert str(ert_config.runpath_file) == os.path.abspath(
