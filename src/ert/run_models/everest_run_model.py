@@ -163,7 +163,7 @@ class EverestRunModel(BaseRunModel):
         ensemble_config = get_ensemble_config(config_dict, everest_config)
 
         substitutions = get_substitutions(
-            config_dict, model_config, runpath_file, queue_config.preferred_num_cpu
+            config_dict, model_config, runpath_file, queue_config.queue_options.num_cpu
         )
         ert_templates = read_templates(config_dict)
 

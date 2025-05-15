@@ -448,11 +448,13 @@ def test_multiple_activate_script_generation(expected, monkeypatch, env):
 
 
 def test_default_max_runtime_is_unlimited():
-    assert QueueConfig.from_dict({}).max_runtime is None
-    assert QueueConfig().max_runtime is None
+    assert QueueConfig.from_dict({}).queue_options.max_runtime is None
+    assert QueueConfig().queue_options.max_runtime is None
 
 
 @given(st.integers(min_value=1))
 def test_max_runtime_is_set_from_corresponding_keyword(value):
-    assert QueueConfig.from_dict({ConfigKeys.MAX_RUNTIME: value}).max_runtime == value
-    assert QueueConfig(max_runtime=value).max_runtime == value
+    assert (
+        QueueConfig.from_dict({ConfigKeys.MAX_RUNTIME: value}).queue_options.max_runtime
+        == value
+    )

@@ -109,7 +109,7 @@ async def test_queue_config_properties_propagated_to_scheduler(
     ensemble._scheduler = mocked_scheduler
 
     # The properties we want to propagate from QueueConfig to the Scheduler object:
-    ensemble._queue_config.max_submit = 55
+    ensemble._queue_config.queue_options.max_submit = 55
     ensemble._queue_config.queue_options.submit_sleep = 33
     ensemble._queue_config.queue_options.max_running = 44
 

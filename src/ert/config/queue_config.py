@@ -49,6 +49,8 @@ class QueueOptions(
     max_submit: pydantic.NonNegativeInt = 1
     realization_memory: pydantic.NonNegativeInt = 0
     stop_long_running: bool = False
+    max_runtime: pydantic.NonNegativeInt | None = None
+    num_cpu: pydantic.PositiveInt = 1
     project_code: str | None = None
     activate_script: str | None = Field(default=None, validate_default=True)
 
@@ -142,6 +144,8 @@ class LsfQueueOptions(QueueOptions):
                 "max_submit",
                 "realization_memory",
                 "stop_long_running",
+                "max_runtime",
+                "num_cpu",
             }
         )
         driver_dict["exclude_hosts"] = driver_dict.pop("exclude_host")
@@ -170,6 +174,8 @@ class TorqueQueueOptions(QueueOptions):
                 "max_submit",
                 "realization_memory",
                 "stop_long_running",
+                "max_runtime",
+                "num_cpu",
             }
         )
         driver_dict["queue_name"] = driver_dict.pop("queue")
@@ -187,7 +193,6 @@ class SlurmQueueOptions(QueueOptions):
     include_host: str = ""
     partition: NonEmptyString | None = None  # aka queue_name
     squeue_timeout: pydantic.PositiveFloat = 2
-    max_runtime: pydantic.NonNegativeFloat | None = None
 
     @property
     def driver_options(self) -> dict[str, Any]:
@@ -199,6 +204,8 @@ class SlurmQueueOptions(QueueOptions):
                 "max_submit",
                 "realization_memory",
                 "stop_long_running",
+                "max_runtime",
+                "num_cpu",
             }
         )
         driver_dict["sbatch_cmd"] = driver_dict.pop("sbatch")
@@ -287,13 +294,11 @@ def _group_queue_options_by_queue_system(
 
 @dataclass
 class QueueConfig:
-    job_script: str = shutil.which("fm_dispatch.py") or "fm_dispatch.py"
+    job_script: str = shutil.which("fm_dispatch.py") or "fm_dispatch.py"  # move
     queue_system: QueueSystem = QueueSystem.LOCAL
     queue_options: (
         LsfQueueOptions | TorqueQueueOptions | SlurmQueueOptions | LocalQueueOptions
     ) = pydantic.Field(default_factory=LocalQueueOptions, discriminator="name")
-    max_runtime: int | None = None
-    preferred_num_cpu: int = 1
 
     @no_type_check
     @classmethod
@@ -305,15 +310,14 @@ class QueueConfig:
             "JOB_SCRIPT", shutil.which("fm_dispatch.py") or "fm_dispatch.py"
         )
 
-        preferred_num_cpu = 1
-        if ConfigKeys.NUM_CPU in config_dict:
-            preferred_num_cpu = config_dict.get(ConfigKeys.NUM_CPU)
-        elif ConfigKeys.DATA_FILE in config_dict:
+        if (
+            ConfigKeys.NUM_CPU not in config_dict
+            and ConfigKeys.DATA_FILE in config_dict
+        ):
             data_file = config_dict.get(ConfigKeys.DATA_FILE)
-            if preferred_num_cpu := get_num_cpu_from_data_file(data_file):
-                logger.info(f"Parsed NUM_CPU={preferred_num_cpu} from {data_file}")
-            else:
-                preferred_num_cpu = 1
+            if num_cpu := get_num_cpu_from_data_file(data_file):
+                logger.info(f"Parsed NUM_CPU={num_cpu} from {data_file}")
+                config_dict[ConfigKeys.NUM_CPU] = num_cpu
 
         raw_queue_options = config_dict.get("QUEUE_OPTION", [])
         grouped_queue_options = _group_queue_options_by_queue_system(raw_queue_options)
@@ -353,8 +357,6 @@ class QueueConfig:
             job_script,
             selected_queue_system,
             queue_options,
-            max_runtime=config_dict.get(ConfigKeys.MAX_RUNTIME),
-            preferred_num_cpu=preferred_num_cpu,
         )
 
     def create_local_copy(self) -> QueueConfig:
@@ -362,7 +364,6 @@ class QueueConfig:
             self.job_script,
             QueueSystem.LOCAL,
             LocalQueueOptions(),
-            max_runtime=self.max_runtime,
         )
 
 
