@@ -125,9 +125,9 @@ def test_that_job_script_can_be_set_in_site_config(monkeypatch):
         encoding="utf-8",
     )
 
-    ert_config = ErtConfig.from_file(test_user_config)
+    ert_config = ErtConfig.from_file(str(test_user_config))
 
-    assert Path(ert_config.queue_config.job_script).resolve() == my_script
+    assert Path(ert_config.queue_config.queue_options.job_script).resolve() == my_script
 
 
 @pytest.mark.parametrize(

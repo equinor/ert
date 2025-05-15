@@ -51,6 +51,7 @@ class QueueOptions(
     stop_long_running: bool = False
     max_runtime: pydantic.NonNegativeInt | None = None
     num_cpu: pydantic.PositiveInt = 1
+    job_script: NonEmptyString = shutil.which("fm_dispatch.py") or "fm_dispatch.py"
     project_code: str | None = None
     activate_script: str | None = Field(default=None, validate_default=True)
 
@@ -146,6 +147,7 @@ class LsfQueueOptions(QueueOptions):
                 "stop_long_running",
                 "max_runtime",
                 "num_cpu",
+                "job_script",
             }
         )
         driver_dict["exclude_hosts"] = driver_dict.pop("exclude_host")
@@ -176,6 +178,7 @@ class TorqueQueueOptions(QueueOptions):
                 "stop_long_running",
                 "max_runtime",
                 "num_cpu",
+                "job_script",
             }
         )
         driver_dict["queue_name"] = driver_dict.pop("queue")
@@ -206,6 +209,7 @@ class SlurmQueueOptions(QueueOptions):
                 "stop_long_running",
                 "max_runtime",
                 "num_cpu",
+                "job_script",
             }
         )
         driver_dict["sbatch_cmd"] = driver_dict.pop("sbatch")
@@ -294,7 +298,7 @@ def _group_queue_options_by_queue_system(
 
 @dataclass
 class QueueConfig:
-    job_script: str = shutil.which("fm_dispatch.py") or "fm_dispatch.py"  # move
+    # job_script: str = shutil.which("fm_dispatch.py") or "fm_dispatch.py"  # move
     queue_system: QueueSystem = QueueSystem.LOCAL
     queue_options: (
         LsfQueueOptions | TorqueQueueOptions | SlurmQueueOptions | LocalQueueOptions
@@ -309,6 +313,7 @@ class QueueConfig:
         job_script: str = config_dict.get(
             "JOB_SCRIPT", shutil.which("fm_dispatch.py") or "fm_dispatch.py"
         )
+        config_dict["JOB_SCRIPT"] = job_script
 
         if (
             ConfigKeys.NUM_CPU not in config_dict
@@ -354,14 +359,12 @@ class QueueConfig:
                 queue_options.project_code = "+".join(tags)
 
         return QueueConfig(
-            job_script,
             selected_queue_system,
             queue_options,
         )
 
     def create_local_copy(self) -> QueueConfig:
         return QueueConfig(
-            self.job_script,
             QueueSystem.LOCAL,
             LocalQueueOptions(),
         )
