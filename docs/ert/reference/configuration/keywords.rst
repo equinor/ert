@@ -1543,8 +1543,8 @@ you would like to only scale some observations, you can use wildcard matching:
 
 .. code-block:: text
 
-    ANALYSIS_SET_VAR OBSERVATIONS OBS_1*
-    ANALYSIS_SET_VAR OBSERVATIONS OBS_2*
+    ANALYSIS_SET_VAR OBSERVATIONS AUTO_SCALE OBS_1*
+    ANALYSIS_SET_VAR OBSERVATIONS AUTO_SCALE OBS_2*
 
 This will find correlations in all observations starting with: 'OBS_1' and scale those, then
 find correlations in all observations starting with: 'OBS_2', and scale those, independent of 'OBS_1*'
