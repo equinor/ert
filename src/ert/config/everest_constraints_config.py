@@ -1,12 +1,12 @@
 import os
-from collections.abc import Iterable
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Self
+from typing import Self, cast
 
 import numpy as np
 import polars as pl
 
+from ert.config.parsing import ConfigKeys
 from ert.substitutions import substitute_runpath_name
 
 from .parsing import ConfigDict, ConfigValidationError
@@ -25,18 +25,14 @@ class EverestConstraintsConfig(ResponseConfig):
 
     @classmethod
     def from_config_dict(cls, config_dict: ConfigDict) -> Self:
-        data = config_dict.get("EVEREST_GEN_DATA", [])
-        assert isinstance(data, Iterable)
-
         keys = []
         input_files = []
 
-        for gen_data in data:
-            assert isinstance(gen_data, dict)
-            if gen_data.get("type") != "constraint":
-                continue
-            name = gen_data["name"]
-            input_file = gen_data.get("input_file")
+        for constraint in cast(
+            list[dict[str, str]], config_dict.get(ConfigKeys.EVEREST_CONSTRAINTS, [])
+        ):
+            name = constraint["name"]
+            input_file = constraint.get("input_file")
 
             if input_file is None:
                 raise ConfigValidationError.with_context(

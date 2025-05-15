@@ -1,15 +1,14 @@
 import os
-from collections.abc import Iterable
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Self
+from typing import Self, cast
 
 import numpy as np
 import polars as pl
 
 from ert.substitutions import substitute_runpath_name
 
-from .parsing import ConfigDict, ConfigValidationError
+from .parsing import ConfigDict, ConfigKeys, ConfigValidationError
 from .response_config import InvalidResponseFile, ResponseConfig
 from .responses_index import responses_index
 
@@ -25,18 +24,14 @@ class EverestObjectivesConfig(ResponseConfig):
 
     @classmethod
     def from_config_dict(cls, config_dict: ConfigDict) -> Self:
-        data = config_dict.get("EVEREST_GEN_DATA", [])
-        assert isinstance(data, Iterable)
-
         keys = []
         input_files = []
 
-        for gen_data in data:
-            assert isinstance(gen_data, dict)
-            if gen_data.get("type") != "objective":
-                continue
-            name = gen_data["name"]
-            input_file = gen_data.get("input_file")
+        for objective in cast(
+            list[dict[str, str]], config_dict.get(ConfigKeys.EVEREST_OBJECTIVES, [])
+        ):
+            name = objective["name"]
+            input_file = objective.get("input_file")
 
             if input_file is None:
                 raise ConfigValidationError.with_context(

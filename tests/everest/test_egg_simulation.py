@@ -544,9 +544,7 @@ def _generate_exp_ert_config(config_path, output_dir):
             os.path.realpath("everest/model"),
             "everest_output/simulation_results",
         ),
-        ErtConfigKeys.EVEREST_GEN_DATA: [
-            {"input_file": "rf", "name": "rf", "type": "objective"}
-        ],
+        ErtConfigKeys.EVEREST_OBJECTIVES: [{"input_file": "rf", "name": "rf"}],
         ErtConfigKeys.ECLBASE: "eclipse/model/EGG",
         ErtConfigKeys.RANDOM_SEED: 123456,
         ErtConfigKeys.SUMMARY: SUM_KEYS,
