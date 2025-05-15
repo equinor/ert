@@ -116,4 +116,25 @@ def test_everest_data_stored_in_ert_local_storage(
         objective_keys = set(df_objectives["response_key"].unique())
         assert objective_keys == objectives
 
-        print(experiment.parameter_info.keys())
+        local_storage_params = [
+            {name: param_config.input_keys}
+            for name, param_config in experiment.parameter_configuration.items()
+        ]
+        everest_controls = []
+        for control in config.controls:
+            name = control.name
+            variables_ = {}
+            for variable in control.variables:
+                if variable.index is not None:
+                    variables_[variable.name] = [
+                        *variables_.get(variable.name, []),
+                        *[str(variable.index)],
+                    ]
+                else:
+                    if not isinstance(variables_, list):
+                        variables_ = []
+                    variables_ = [*variables_, *[variable.name]]
+
+        everest_controls.append({name: variables_})
+
+        assert local_storage_params == everest_controls
