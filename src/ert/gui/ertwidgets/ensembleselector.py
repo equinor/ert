@@ -57,8 +57,11 @@ class EnsembleSelector(QComboBox):
             self.populate()
 
     @property
-    def selected_ensemble(self) -> Ensemble:
-        return self.itemData(self.currentIndex())
+    def selected_ensemble(self) -> Ensemble | None:
+        if self.currentIndex() == -1:
+            return None
+
+        return self.notifier.storage.get_ensemble(self.itemData(self.currentIndex()))
 
     def populate(self) -> None:
         block = self.blockSignals(True)
@@ -70,11 +73,13 @@ class EnsembleSelector(QComboBox):
 
         for ensemble in self._ensemble_list():
             self.addItem(
-                f"{ensemble.experiment.name} : {ensemble.name}", userData=ensemble
+                f"{ensemble.experiment.name} : {ensemble.name}", userData=ensemble.id
             )
 
-        current_index = self.findData(
-            self.notifier.current_ensemble, Qt.ItemDataRole.UserRole
+        current_index = (
+            self.findData(self.notifier.current_ensemble.id, Qt.ItemDataRole.UserRole)
+            if self.notifier.current_ensemble is not None
+            else -1
         )
 
         self.setCurrentIndex(max(current_index, 0))
@@ -104,7 +109,7 @@ class EnsembleSelector(QComboBox):
         return sorted(ensemble_list, key=lambda x: x.started_at, reverse=True)
 
     def _on_current_index_changed(self, index: int) -> None:
-        self.notifier.set_current_ensemble(self.itemData(index))
+        self.notifier.set_current_ensemble_id(self.itemData(index))
 
     def _on_global_current_ensemble_changed(self, data: Ensemble | None) -> None:
         self.setCurrentIndex(max(self.findData(data, Qt.ItemDataRole.UserRole), 0))

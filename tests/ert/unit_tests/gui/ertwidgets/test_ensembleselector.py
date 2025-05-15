@@ -46,15 +46,15 @@ def test_current_ensemble(qtbot, notifier, storage):
     assert widget.count() == 0
 
     notifier.set_storage(storage)
-    notifier.set_current_ensemble(ensemble)
+    notifier.set_current_ensemble_id(ensemble.id)
     assert widget.count() == 1
-    assert widget.currentData() == ensemble
+    assert widget.currentData() == ensemble.id
 
     # Creating EnsembleSelector after storage has been created populates it
     widget = EnsembleSelector(notifier)
     qtbot.addWidget(widget)
     assert widget.count() == 1
-    assert widget.currentData() == ensemble
+    assert widget.currentData() == ensemble.id
 
 
 def test_changing_ensemble(qtbot, notifier, storage):
@@ -66,7 +66,7 @@ def test_changing_ensemble(qtbot, notifier, storage):
     )
 
     notifier.set_storage(storage)
-    notifier.set_current_ensemble(ensemble_a)
+    notifier.set_current_ensemble_id(ensemble_a.id)
     widget_a = EnsembleSelector(notifier)
     widget_b = EnsembleSelector(notifier)
     qtbot.addWidget(widget_a)
@@ -76,23 +76,23 @@ def test_changing_ensemble(qtbot, notifier, storage):
     assert widget_b.count() == 2
 
     # First ensemble is selected in both
-    assert widget_a.currentData() == ensemble_a
-    assert widget_b.currentData() == ensemble_a
+    assert widget_a.currentData() == ensemble_a.id
+    assert widget_b.currentData() == ensemble_a.id
 
     # Second ensemble is selected via signal, changing both widgets'
     # selections
-    notifier.set_current_ensemble(ensemble_b)
-    assert widget_a.currentData() == ensemble_b
-    assert widget_b.currentData() == ensemble_b
+    notifier.set_current_ensemble_id(ensemble_b.id)
+    assert widget_a.currentData() == ensemble_b.id
+    assert widget_b.currentData() == ensemble_b.id
 
     # Changing back to first ensemble via widget sets the global current_ensemble
     qtbot.keyClicks(
         widget_a,
-        widget_a.itemText(widget_a.findData(ensemble_a)),
+        widget_a.itemText(widget_a.findData(ensemble_a.id)),
     )
-    assert notifier.current_ensemble == ensemble_a
-    assert widget_a.currentData() == ensemble_a
-    assert widget_b.currentData() == ensemble_a
+    assert notifier.current_ensemble.id == ensemble_a.id
+    assert widget_a.currentData() == ensemble_a.id
+    assert widget_b.currentData() == ensemble_a.id
 
 
 @pytest.mark.parametrize(
@@ -112,7 +112,7 @@ def test_show_only_no_parent(
     experiment.create_ensemble(name="child", ensemble_size=1, prior_ensemble=ensemble)
 
     notifier.set_storage(storage)
-    notifier.set_current_ensemble(ensemble)
+    notifier.set_current_ensemble_id(ensemble.id)
 
     widget = EnsembleSelector(notifier, show_only_no_children=flag)
     qtbot.addWidget(widget)
