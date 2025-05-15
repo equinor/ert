@@ -40,7 +40,7 @@ class ForwardModelStepConfig(BaseModelWithContextSupport):
     results: (
         (
             Annotated[
-                SummaryResults | GenDataResults | ObjectiveResults,
+                SummaryResults | GenDataResults | ObjectiveResults | ConstraintResults,
                 Discriminator("type"),
             ]
         )
