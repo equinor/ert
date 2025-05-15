@@ -266,6 +266,7 @@ class LocalEnsemble(BaseMode):
             ]
         )
 
+    @lru_cache  # noqa: B019
     def _scalar_exist(self) -> dict[str, list[int]]:
         genkwn_mask: dict[str, list[int]] = {}
         for parameter in self.experiment.parameter_configuration.values():
@@ -391,6 +392,7 @@ class LocalEnsemble(BaseMode):
 
     def refresh_ensemble_state(self) -> None:
         self.get_ensemble_state.cache_clear()
+        self._scalar_exist.cache_clear()
         self.get_ensemble_state()
 
     @lru_cache  # noqa: B019
