@@ -346,6 +346,12 @@ def log_info_from_exit_file(exit_file_path: Path) -> None:
         return
     try:
         exit_file = etree.parse(exit_file_path)
+    except OSError as err:
+        logger.error(
+            f"Realization failed and the XML error file {exit_file_path} "
+            f"could not not be read: {err}"
+        )
+        return
     except etree.XMLSyntaxError:
         raw_xml_contents = exit_file_path.read_text(encoding="utf-8", errors="ignore")
         logger.error(
