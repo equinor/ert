@@ -1,1 +1,1 @@
-x UNIFORM 0 1
+t UNIFORM 0 1
