@@ -1,7 +1,7 @@
 from opentelemetry import trace
 from opentelemetry.instrumentation.threading import ThreadingInstrumentor
 from opentelemetry.sdk.resources import SERVICE_NAME, Resource
-from opentelemetry.sdk.trace import SpanLimits, TracerProvider
+from opentelemetry.sdk.trace import SpanLimits, SpanProcessor, TracerProvider
 from opentelemetry.trace.propagation.tracecontext import TraceContextTextMapPropagator
 
 ThreadingInstrumentor().instrument()
@@ -24,3 +24,10 @@ def get_traceparent() -> str | None:
     # Write the current context into the carrier.
     TraceContextTextMapPropagator().inject(carrier)
     return carrier.get("traceparent")
+
+
+def add_span_processor(span_processor: SpanProcessor) -> None:
+    # We don't want the same span processor registered multiple times,
+    # since this will cause duplicate span entries.
+    if span_processor not in tracer_provider._active_span_processor._span_processors:
+        tracer_provider.add_span_processor(span_processor)

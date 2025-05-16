@@ -63,7 +63,7 @@ from ert.run_models.everest_run_model import (
     EverestExitCode,
     EverestRunModel,
 )
-from ert.trace import tracer, tracer_provider
+from ert.trace import tracer
 from everest.config import EverestConfig, ServerConfig
 from everest.detached import (
     ServerStatus,
@@ -522,7 +522,7 @@ def _configure_loggers(detached_dir: Path, log_dir: Path, logging_level: int) ->
 
     plugin_manager = EverestPluginManager()
     plugin_manager.add_log_handle_to_root()
-    plugin_manager.add_span_processor_to_trace_provider(tracer_provider)
+    plugin_manager.add_span_processor_to_trace_provider()
 
 
 def get_trace_context():

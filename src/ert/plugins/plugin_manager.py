@@ -13,8 +13,9 @@ from types import TracebackType
 from typing import TYPE_CHECKING, Any, Literal, TypeVar, overload
 
 import pluggy
-from opentelemetry.sdk.trace import TracerProvider
 from typing_extensions import TypedDict
+
+from ert.trace import add_span_processor
 
 from .workflow_config import WorkflowConfigs
 
@@ -372,12 +373,10 @@ class ErtPluginManager(pluggy.PluginManager):
         for handle in handles:
             logger.addHandler(handle)
 
-    def add_span_processor_to_trace_provider(
-        self, trace_provider: TracerProvider
-    ) -> None:
+    def add_span_processor_to_trace_provider(self) -> None:
         span_processors = self.hook.add_span_processor()
         for span_processor in span_processors:
-            trace_provider.add_span_processor(span_processor)
+            add_span_processor(span_processor)
 
 
 class ErtPluginContext:
@@ -385,13 +384,11 @@ class ErtPluginContext:
         self,
         plugins: list[object] | None = None,
         logger: logging.Logger | None = None,
-        trace_provider: TracerProvider | None = None,
     ) -> None:
         self.plugin_manager = ErtPluginManager(plugins=plugins)
         self.tmp_dir: str | None = None
         self.tmp_site_config_filename: str | None = None
         self._logger = logger
-        self._trace_provider = trace_provider
 
     def _create_site_config(self, tmp_dir: str) -> str | None:
         site_config_content = self.plugin_manager.get_site_config_content()
@@ -407,10 +404,7 @@ class ErtPluginContext:
     def __enter__(self) -> ErtPluginContext:
         if self._logger is not None:
             self.plugin_manager.add_logging_handle_to_root(logger=self._logger)
-        if self._trace_provider is not None:
-            self.plugin_manager.add_span_processor_to_trace_provider(
-                trace_provider=self._trace_provider
-            )
+        self.plugin_manager.add_span_processor_to_trace_provider()
         logger.debug(str(self.plugin_manager))
         logger.debug("Creating temporary directory for site-config")
         self.tmp_dir = tempfile.mkdtemp()
