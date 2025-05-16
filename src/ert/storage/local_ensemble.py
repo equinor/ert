@@ -1054,8 +1054,8 @@ class LocalEnsemble(BaseMode):
             "gen_data", tuple(self.get_realization_list_with_responses())
         )
 
-        if responses is None:
-            return pl.concat(param_dfs)
+        if responses is None or responses.is_empty():
+            return None
 
         params_wide = pl.concat(
             [

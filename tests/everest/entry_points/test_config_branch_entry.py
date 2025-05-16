@@ -4,6 +4,7 @@ from pathlib import Path
 
 import pytest
 
+from ert.storage import open_storage
 from everest.bin.config_branch_script import config_branch_entry
 from everest.config_file_loader import load_yaml
 from everest.everest_storage import EverestStorage
@@ -28,8 +29,13 @@ def test_config_branch_entry(cached_example):
     assert "initial_guess" not in new_controls[0]
     assert len(new_controls) == len(old_controls)
     assert len(new_controls[0]["variables"]) == len(old_controls[0]["variables"])
-
-    storage = EverestStorage(Path(path) / "everest_output" / "optimization_output")
+    ert_storage = open_storage(
+        Path(path) / "everest_output" / "simulation_results", "r"
+    )
+    ert_experiment = next(ert_storage.experiments)
+    storage = EverestStorage(
+        Path(path) / "everest_output" / "optimization_output", ert_experiment
+    )
     storage.read_from_output_dir()
 
     new_controls_initial_guesses = {
@@ -75,8 +81,13 @@ def test_config_branch_preserves_config_section_order(cached_example):
 
     assert len(diff_lines) == 4
     assert "-initial_guess:0.1" in diff_lines
-
-    storage = EverestStorage(Path(path) / "everest_output" / "optimization_output")
+    ert_storage = open_storage(
+        Path(path) / "everest_output" / "simulation_results", "r"
+    )
+    ert_experiment = next(ert_storage.experiments)
+    storage = EverestStorage(
+        Path(path) / "everest_output" / "optimization_output", ert_experiment
+    )
     storage.read_from_output_dir()
     control_names = storage.data.controls["control_name"]
     batch_1_info = next(b for b in storage.data.batches if b.batch_id == 1)
