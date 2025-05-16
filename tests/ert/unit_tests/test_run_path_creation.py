@@ -20,7 +20,7 @@ from ert.enkf_main import create_run_path, sample_prior
 from ert.run_arg import create_run_arguments
 from ert.runpaths import Runpaths
 from ert.storage.load_status import LoadStatus
-from ert.storage.local_ensemble import forward_model_ok
+from ert.storage.local_ensemble import RealizationStorageState, forward_model_ok
 from tests.ert.unit_tests.config.egrid_generator import simple_grid
 from tests.ert.unit_tests.config.summary_generator import simple_smspec, simple_unsmry
 
@@ -354,9 +354,15 @@ def test_that_sampling_prior_makes_initialized_fs(storage):
         ensemble_size=ert_config.runpath_config.num_realizations,
     )
 
-    assert not prior_ensemble.is_initalized()
+    assert (
+        RealizationStorageState.PARAMETERS_LOADED
+        not in prior_ensemble.get_ensemble_state()[0]
+    )
     sample_prior(prior_ensemble, [0], 123)
-    assert prior_ensemble.is_initalized()
+    assert (
+        RealizationStorageState.PARAMETERS_LOADED
+        in prior_ensemble.get_ensemble_state()[0]
+    )
 
 
 @pytest.mark.parametrize(
