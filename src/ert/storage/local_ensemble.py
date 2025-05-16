@@ -1217,6 +1217,13 @@ async def forward_model_ok(
                 realization,
                 ensemble,
             )
+    except OSError as err:
+        msg = (
+            f"Failed to write responses to storage for realization {realization}, "
+            f"failed with {err}"
+        )
+        logger.error(msg)
+        parameters_result = LoadResult(LoadStatus.LOAD_FAILURE, msg)
     except Exception as err:
         logger.exception(
             f"Failed to load results for realization {realization}",
@@ -1228,13 +1235,20 @@ async def forward_model_ok(
         )
 
     final_result = parameters_result
-    if response_result.status != LoadStatus.LOAD_SUCCESSFUL:
-        final_result = response_result
-        ensemble.set_failure(
-            realization, RealizationStorageState.LOAD_FAILURE, final_result.message
+    try:
+        if response_result.status != LoadStatus.LOAD_SUCCESSFUL:
+            final_result = response_result
+            ensemble.set_failure(
+                realization, RealizationStorageState.LOAD_FAILURE, final_result.message
+            )
+        elif ensemble.has_failure(realization):
+            ensemble.unset_failure(realization)
+    except OSError as err:
+        msg = (
+            f"Failed to set realization state in storage for realization {realization},"
+            f" failed with {err}"
         )
-    elif ensemble.has_failure(realization):
-        ensemble.unset_failure(realization)
+        logger.error(msg)
 
     return final_result
 
