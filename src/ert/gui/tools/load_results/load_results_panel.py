@@ -6,17 +6,18 @@ from PyQt6.QtCore import Qt
 from PyQt6.QtCore import pyqtSignal as Signal
 from PyQt6.QtWidgets import QFormLayout, QLabel, QMessageBox, QWidget
 
+from ert.config import WarningInfo
 from ert.config.ert_config import ErtConfig
 from ert.gui.ertnotifier import ErtNotifier
 from ert.gui.ertwidgets import (
     ActiveRealizationsModel,
     EnsembleSelector,
-    ErtMessageBox,
     QApplication,
     StringBox,
     TextBox,
     TextModel,
 )
+from ert.gui.suggestor import Suggestor
 from ert.run_models.base_run_model import captured_logs
 from ert.storage.local_ensemble import load_parameters_and_responses_from_runpath
 from ert.validation import RangeStringArgument, StringDefinition
@@ -115,16 +116,28 @@ class LoadResultsPanel(QWidget):
 
         if loaded == realizations.count(True):
             QMessageBox.information(
-                self, "Success", "Successfully loaded all realisations"
+                self, "Success", "Successfully loaded all realizations"
             )
-        elif loaded > 0:
-            msg = ErtMessageBox(
-                f"Successfully loaded {loaded} realizations", "\n".join(messages)
-            )
-            msg.exec()
         else:
-            msg = ErtMessageBox("No realizations loaded", "\n".join(messages))
-            msg.exec()
+            txt = "No realizations loaded\n" + "\n".join(messages)
+
+            if loaded > 0:
+                txt = f"Successfully loaded {loaded} realization(s)\n" + "\n".join(
+                    messages
+                )
+
+            fail_msg_box = Suggestor(
+                errors=[],
+                warnings=[WarningInfo(message=txt)],
+                deprecations=[],
+                continue_action=None,
+                widget_info="""\
+                               <p style="font-size: 28px;">ERT experiment failed!</p>
+                               <p>These errors were detected:</p>
+                           """,
+            )
+            fail_msg_box.show()
+
         return loaded
 
     def refresh(self) -> None:
