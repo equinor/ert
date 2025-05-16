@@ -1008,6 +1008,14 @@ class ErtConfig:
             if dm_errors:
                 raise ConfigValidationError.from_collected(dm_errors)
 
+        for parameter_name in ensemble_config.get_all_parameter_names():
+            if f"<{parameter_name}>" in substitutions:
+                logger.info(
+                    f"Found reserved parameter name. "
+                    f"'{parameter_name}' is already either a "
+                    "magic string, or defined in the user config."
+                )
+
         env_vars = {}
         for key, val in config_dict.get("SETENV", []):
             env_vars[key] = substitutions.substitute(val)
