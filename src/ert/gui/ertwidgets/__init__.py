@@ -25,7 +25,6 @@ from .models import (
     PathModel,
 )
 from .copyablelabel import CopyableLabel
-from .message_box import ErtMessageBox
 from .copy_button import CopyButton
 
 
@@ -52,7 +51,6 @@ __all__ = [
     "CopyableLabel",
     "CustomDialog",
     "EnsembleSelector",
-    "ErtMessageBox",
     "ListEditBox",
     "PathChooser",
     "PathModel",
