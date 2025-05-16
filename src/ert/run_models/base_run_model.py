@@ -673,7 +673,10 @@ class BaseRunModel(ABC):
             raise UserCancelled("Experiment cancelled by user in post evaluation")
 
         await evaluator_task
-        ensemble.refresh_ensemble_state()
+        try:
+            ensemble.refresh_ensemble_state()
+        except OSError as err:
+            logger.error(f"Got OSError when refreshing ensemble state: {err}")
 
         return evaluator_task.result()
 
