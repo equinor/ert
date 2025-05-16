@@ -127,7 +127,7 @@ def _compare_ensemble_params(
             pl.col(pl.Float64).round(int(1 / outlier_threshold))
         )
 
-    if update_snapshot and not round_and_cast_(expected).equals(
+    if update_snapshot and not round_and_cast_(actual).equals(
         round_and_cast_(expected)
     ):
         actual.write_csv(reference_path)
