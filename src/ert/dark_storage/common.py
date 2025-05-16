@@ -117,7 +117,7 @@ def gen_data_display_keys(ensemble: Ensemble) -> Iterator[str]:
                     yield f"{key}@{report_step}"
 
 
-def _resolve_parameter_key(key: str) -> tuple[str, str] | tuple[None, None]:
+def _extract_parameter_group_and_key(key: str) -> tuple[str, str] | tuple[None, None]:
     key = key.removeprefix("LOG10_")
     if ":" not in key:
         # Assume all incoming keys are in format group:key for now
@@ -128,7 +128,7 @@ def _resolve_parameter_key(key: str) -> tuple[str, str] | tuple[None, None]:
 
 
 def data_for_parameter(ensemble: Ensemble, key: str) -> pd.DataFrame:
-    group, _ = _resolve_parameter_key(key)
+    group, _ = _extract_parameter_group_and_key(key)
     parameters = ensemble.experiment.parameter_configuration
     if group in parameters and isinstance(gen_kw := parameters[group], GenKwConfig):
         dataframes = []
@@ -167,7 +167,7 @@ def data_for_parameter(ensemble: Ensemble, key: str) -> pd.DataFrame:
             return data
 
 
-def _resolve_response_key(
+def _extract_response_type_and_key(
     key: str, response_key_to_response_type: dict[str, str]
 ) -> tuple[str, str] | tuple[None, None]:
     # Check for exact match first. For example if key is "FOPRH"
@@ -189,7 +189,7 @@ def _resolve_response_key(
 
 
 def data_for_response(ensemble: Ensemble, key: str) -> pd.DataFrame:
-    response_key, response_type = _resolve_response_key(
+    response_key, response_type = _extract_response_type_and_key(
         key, ensemble.experiment.response_key_to_response_type
     )
 
@@ -257,7 +257,7 @@ def data_for_key(
     given ensemble. The row index is the realization number, and the columns are an
     index over the indexes/dates"""
 
-    response_key, _ = _resolve_response_key(
+    response_key, _ = _extract_response_type_and_key(
         key, ensemble.experiment.response_key_to_response_type
     )
 
@@ -265,7 +265,7 @@ def data_for_key(
         return data_for_response(ensemble, key)
 
     parameter_config = ensemble.experiment.parameter_configuration
-    parameter_group, parameter_key = _resolve_parameter_key(key)
+    parameter_group, parameter_key = _extract_parameter_group_and_key(key)
     if (
         parameter_group in parameter_config
         and parameter_key in parameter_config[parameter_group].parameter_keys
