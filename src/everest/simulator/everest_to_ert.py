@@ -389,21 +389,31 @@ def _extract_seed(ever_config: EverestConfig, ert_config: dict[str, Any]) -> Non
 
 
 def _extract_results(ever_config: EverestConfig, ert_config: dict[str, Any]) -> None:
-    objectives_names = [objective.name for objective in ever_config.objective_functions]
-    constraint_names = [
-        constraint.name for constraint in ever_config.output_constraints
-    ]
+    everest_objectives = []
+    for objective in ever_config.objective_functions:
+        everest_objectives.append(
+            {"name": objective.name, "input_file": objective.name}
+        )
+    if everest_objectives:
+        ert_config[ErtConfigKeys.EVEREST_OBJECTIVES] = everest_objectives
 
-    gen_data_files = [
-        fm.results.file_name
+    everest_constraints = []
+    for constraint in ever_config.output_constraints:
+        everest_constraints.append(
+            {"name": constraint.name, "input_file": constraint.name}
+        )
+    if everest_constraints:
+        ert_config[ErtConfigKeys.EVEREST_CONSTRAINTS] = everest_constraints
+
+    gen_data = [
+        (fm.results.file_name, {"RESULT_FILE": fm.results.file_name})
         for fm in (ever_config.forward_model or [])
         if fm.results is not None and fm.results.type == "gen_data"
     ]
-
-    gen_data = ert_config.get(ErtConfigKeys.GEN_DATA, [])
-    for name in set(objectives_names + constraint_names + gen_data_files):
-        gen_data.append((name, {"RESULT_FILE": name}))
-    ert_config[ErtConfigKeys.GEN_DATA] = gen_data
+    ert_config[ErtConfigKeys.GEN_DATA] = [
+        *ert_config.get(ErtConfigKeys.GEN_DATA, []),
+        *gen_data,
+    ]
 
 
 def get_substitutions(

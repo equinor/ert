@@ -8,9 +8,12 @@ from pydantic import (
 from ert.config.parsing import BaseModelWithContextSupport
 
 
-class SummaryResults(BaseModelWithContextSupport):
-    type: Literal["summary"] = "summary"
+class ForwardModelResult(BaseModelWithContextSupport):
     file_name: str = Field(description="Output file produced by the forward model")
+
+
+class SummaryResults(ForwardModelResult):
+    type: Literal["summary"] = "summary"
     keys: Literal["*"] | list[str] = Field(
         description="List of keys to include in the result. "
         "Defaults to '*' indicating all keys",
@@ -18,9 +21,16 @@ class SummaryResults(BaseModelWithContextSupport):
     )
 
 
-class GenDataResults(BaseModelWithContextSupport):
+class ObjectiveResult(ForwardModelResult):
+    type: Literal["objective"] = "objective"
+
+
+class ConstraintResult(ForwardModelResult):
+    type: Literal["constraint"] = "constraint"
+
+
+class GenDataResults(ForwardModelResult):
     type: Literal["gen_data"] = "gen_data"
-    file_name: str = Field(description="Output file produced by the forward model")
 
 
 class ForwardModelStepConfig(BaseModelWithContextSupport):
@@ -30,7 +40,7 @@ class ForwardModelStepConfig(BaseModelWithContextSupport):
     results: (
         (
             Annotated[
-                SummaryResults | GenDataResults,
+                SummaryResults | GenDataResults | ObjectiveResult | ConstraintResult,
                 Discriminator("type"),
             ]
         )

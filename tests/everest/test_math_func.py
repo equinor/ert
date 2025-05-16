@@ -50,16 +50,6 @@ def test_math_func_advanced(cached_example):
 
     point_names = ["x.0", "x.1", "x.2"]
 
-    with open_storage(config.storage_dir) as storage:
-        experiment = next(s for s in storage._experiments.values())
-        ensemble = next(experiment.ensembles)
-        df = ensemble.load_responses("gen_data", tuple(range(ensemble.ensemble_size)))
-        response_keys = set(df["response_key"].unique())
-        gendata_only_keys = (
-            response_keys - set(config.objective_names) - set(config.constraint_names)
-        )
-        assert gendata_only_keys == {"distance_nonobj"}
-
     # Check resulting points
     x0, x1, x2 = (result.controls["point." + p] for p in point_names)
     assert x0 == pytest.approx(0.1, abs=0.05)

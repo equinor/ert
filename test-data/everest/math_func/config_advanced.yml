@@ -47,7 +47,7 @@ forward_model:
   - job: adv_distance3 --point-file point.json --target-file data/r{{ realization}}/target.json --out distance
     results:
       file_name: distance
-      type: gen_data
+      type: objective
       keys: "*"
   # Expect no objective, but should generate gen_data in ERT storage
   - job: adv_distance3 --point-file point.json --target-file data/r{{ realization}}/target.json --out distance_nonobj
