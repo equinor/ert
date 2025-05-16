@@ -92,7 +92,7 @@ if __name__ == "__main__":
     # Note that this could be avoided if we used an implicit solver.
     dt = dx**2 / (4 * max(np.max(cond), np.max(cond)))
 
-    scaled_u_init = u_init * float(init_temp_scale["x"])
+    scaled_u_init = u_init * float(init_temp_scale["t"])
 
     response = heat_equation(scaled_u_init, cond, dx, dt, k_start, k_end, rng)
 

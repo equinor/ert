@@ -71,11 +71,10 @@ class EnsembleConfig(BaseModel):
         names_counter = Counter(g for g in parameter_list + gen_data_list)
         duplicate_names = [n for n, c in names_counter.items() if c > 1]
         if duplicate_names:
-            raise ConfigValidationError.with_context(
+            raise ConfigValidationError(
                 "GEN_KW and GEN_DATA contained"
                 f" duplicate name{'s' if len(duplicate_names) > 1 else ''}:"
                 f" {','.join(duplicate_names)}",
-                duplicate_names[0],
             )
 
     @staticmethod
@@ -91,8 +90,9 @@ class EnsembleConfig(BaseModel):
             duplicates_formatted = ", ".join(
                 f"{name}({count})" for name, count in duplicate_gen_kw_names
             )
-            logger.info(
-                f"Found duplicate GEN_KW parameter names: {duplicates_formatted}"
+            raise ConfigValidationError(
+                "GEN_KW parameter names must be unique, found duplicates:"
+                f" {duplicates_formatted}",
             )
 
     @no_type_check

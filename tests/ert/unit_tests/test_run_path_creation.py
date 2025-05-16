@@ -681,9 +681,9 @@ def test_when_manifest_files_are_written_forward_model_ok_succeeds(storage, itr)
             name="PORO1",
             values=np.zeros((dim_size, dim_size, dim_size)),
         ).to_file(f"{i}init{i}0.roff", fformat="roff")
-    Path("gen0.txt").write_text("PARMA NORMAL 0 1\n", encoding="utf-8")
-    Path("gen1.txt").write_text("PARMA NORMAL 0 1\n", encoding="utf-8")
-    Path("template.txt").write_text("<PARMA>", encoding="utf-8")
+    Path("gen0.txt").write_text("PARMA0 NORMAL 0 1\n", encoding="utf-8")
+    Path("gen1.txt").write_text("PARMA1 NORMAL 0 1\n", encoding="utf-8")
+    Path("template.txt").write_text("<PARMA1>", encoding="utf-8")
 
     config = ErtConfig.from_file_contents(
         dedent(

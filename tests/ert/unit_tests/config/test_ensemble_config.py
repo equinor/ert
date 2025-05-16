@@ -1,4 +1,3 @@
-import logging
 import os
 from datetime import datetime
 from pathlib import Path
@@ -168,7 +167,7 @@ def test_that_empty_grid_file_raises(tmpdir):
 
 
 @pytest.mark.usefixtures("use_tmpdir")
-def test_logging_of_duplicate_gen_kw_parameter_names(caplog):
+def test_validation_of_duplicate_gen_kw_parameter_names():
     Path("FAULT_TEMPLATE").write_text("", encoding="utf-8")
     config_dict = {
         ConfigKeys.GEN_KW: [
@@ -188,6 +187,9 @@ def test_logging_of_duplicate_gen_kw_parameter_names(caplog):
             ],
         ],
     }
-    with caplog.at_level(logging.INFO):
-        EnsembleConfig.from_dict(config_dict=config_dict)
-    assert "Found duplicate GEN_KW parameter names: a(2), c(2)" in caplog.text
+    with pytest.raises(
+        ConfigValidationError,
+        match=r"GEN_KW parameter names must be unique,"
+        r" found duplicates: a\(2\), c\(2\)",
+    ):
+        ErtConfig.from_dict(config_dict=config_dict)
