@@ -86,11 +86,12 @@ def add_log_handle_to_root():
 
 
 span_output = StringIO()
+span_processor = BatchSpanProcessor(ConsoleSpanExporter(out=span_output))
 
 
 @plugin(name="dummy")
 def add_span_processor():
-    return BatchSpanProcessor(ConsoleSpanExporter(out=span_output))
+    return span_processor
 
 
 class DummyFMStep(ForwardModelStepPlugin):

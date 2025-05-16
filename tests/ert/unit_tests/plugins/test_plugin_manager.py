@@ -4,11 +4,11 @@ from functools import partial
 from unittest.mock import patch
 
 import pytest
-from opentelemetry.sdk.trace import TracerProvider
 
 import ert.plugins.hook_implementations
 from ert.config import ErtConfig
 from ert.plugins import ErtPluginManager, plugin
+from ert.trace import trace, tracer
 from tests.ert.unit_tests.plugins import dummy_plugins
 from tests.ert.unit_tests.plugins.dummy_plugins import DummyFMStep
 
@@ -258,18 +258,30 @@ def test_add_logging_handle(tmpdir):
 
 def test_add_span_processor():
     pm = ErtPluginManager(plugins=[dummy_plugins])
-    tracer_provider = TracerProvider()
-    tracer = tracer_provider.get_tracer("ert.tests")
-    pm.add_span_processor_to_trace_provider(tracer_provider)
+    pm.add_span_processor_to_trace_provider()
     with tracer.start_as_current_span("span_1"):
         print("do_something")
         with tracer.start_as_current_span("span_2"):
             print("do_something_else")
-    tracer_provider.force_flush()
+    trace.get_tracer_provider().force_flush()
     span_info = "[" + dummy_plugins.span_output.getvalue().replace("}\n{", "},{") + "]"
     span_info = json.loads(span_info)
     span_info = {span["name"]: span for span in span_info}
     assert span_info["span_2"]["parent_id"] == span_info["span_1"]["context"]["span_id"]
+
+
+def test_that_add_same_span_processor_twice_does_not_cause_duplicate_spans():
+    pm = ErtPluginManager(plugins=[dummy_plugins])
+    pm.add_span_processor_to_trace_provider()
+    pm.add_span_processor_to_trace_provider()
+    dummy_plugins.span_output.seek(0)
+    dummy_plugins.span_output.truncate(0)
+    with tracer.start_as_current_span("span_1"):
+        print("do_something")
+    trace.get_tracer_provider().force_flush()
+    span_info = "[" + dummy_plugins.span_output.getvalue().replace("}\n{", "},{") + "]"
+    span_info = json.loads(span_info)
+    assert len(span_info) == 1
 
 
 def test_that_forward_model_step_is_registered(tmpdir):
