@@ -13,7 +13,7 @@ from ert.substitutions import substitute_runpath_name
 
 from ._str_to_bool import str_to_bool
 from .field import create_flattened_cube_graph
-from .parameter_config import ParameterConfig
+from .parameter_config import ParameterConfig, ParameterMetadata
 from .parsing import ConfigValidationError, ErrorInfo
 
 if TYPE_CHECKING:
@@ -35,6 +35,25 @@ class SurfaceConfig(ParameterConfig):
     forward_init_file: str
     output_file: Path
     base_surface_path: str
+
+    @property
+    def parameter_keys(self) -> list[str]:
+        return []
+
+    @property
+    def metadata(self) -> list[ParameterMetadata]:
+        return [
+            ParameterMetadata(
+                key=self.name,
+                dimensionality=2,
+                transformation=None,
+                userdata={
+                    "data_origin": "SURFACE",
+                    "nx": self.ncol,
+                    "ny": self.nrow,
+                },
+            )
+        ]
 
     @classmethod
     def from_config_list(cls, surface: list[str | dict[str, str]]) -> Self:

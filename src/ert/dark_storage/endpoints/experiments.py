@@ -25,6 +25,15 @@ def get_experiments(
             ensemble_ids=[ens.id for ens in experiment.ensembles],
             priors=create_priors(experiment),
             userdata={},
+            parameters={
+                group: [m.model_dump() for m in config.metadata]
+                for group, config in experiment.parameter_configuration.items()
+            },
+            responses={
+                response_type: [m.model_dump() for m in config.metadata]
+                for response_type, config in experiment.response_configuration.items()
+            },
+            observations=experiment.response_key_to_observation_key,
         )
         for experiment in storage.experiments
     ]
@@ -43,6 +52,15 @@ def get_experiment_by_id(
         ensemble_ids=[ens.id for ens in experiment.ensembles],
         priors=create_priors(experiment),
         userdata={},
+        parameters={
+            group: [m.model_dump() for m in config.metadata]
+            for group, config in experiment.parameter_configuration.items()
+        },
+        responses={
+            response_type: [m.model_dump() for m in config.metadata]
+            for response_type, config in experiment.response_configuration.items()
+        },
+        observations=experiment.response_key_to_observation_key,
     )
 
 

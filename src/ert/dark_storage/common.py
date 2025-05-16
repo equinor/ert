@@ -117,85 +117,18 @@ def gen_data_display_keys(ensemble: Ensemble) -> Iterator[str]:
                     yield f"{key}@{report_step}"
 
 
-def data_for_key(
-    ensemble: Ensemble,
-    key: str,
-) -> pd.DataFrame:
-    """Returns a pandas DataFrame with the datapoints for a given key for a
-    given ensemble. The row index is the realization number, and the columns are an
-    index over the indexes/dates"""
-
+def _extract_parameter_group_and_key(key: str) -> tuple[str, str] | tuple[None, None]:
     key = key.removeprefix("LOG10_")
+    if ":" not in key:
+        # Assume all incoming keys are in format group:key for now
+        return None, None
 
-    response_key_to_response_type = ensemble.experiment.response_key_to_response_type
+    param_group, param_key = key.split(":")
+    return param_group, param_key
 
-    # Check for exact match first. For example if key is "FOPRH"
-    # it may stop at "FOPR", which would be incorrect
-    response_key = next((k for k in response_key_to_response_type if k == key), None)
-    if response_key is None:
-        response_key = next(
-            (k for k in response_key_to_response_type if k in key and key != f"{k}H"),
-            None,
-        )
 
-    if response_key is not None:
-        response_type = response_key_to_response_type[response_key]
-
-        if response_type == "summary":
-            summary_data = ensemble.load_responses(
-                response_key,
-                tuple(ensemble.get_realization_list_with_responses()),
-            )
-            if summary_data.is_empty():
-                return pd.DataFrame()
-
-            df = (
-                summary_data.rename({"time": "Date", "realization": "Realization"})
-                .drop("response_key")
-                .to_pandas()
-            )
-            df = df.set_index(["Date", "Realization"])
-            # This performs the same aggragation by mean of duplicate values
-            # as in ert/analysis/_es_update.py
-            df = df.groupby(["Date", "Realization"]).mean()
-            data = df.unstack(level="Date")
-            data.columns = data.columns.droplevel(0)
-            try:
-                return data.astype(float)
-            except ValueError:
-                return data
-
-        if response_type == "gen_data":
-            try:
-                # Call below will ValueError if key ends with H,
-                # requested via PlotAPI.history_data
-                response_key, report_step = displayed_key_to_response_key["gen_data"](
-                    key
-                )
-                mask = ensemble.get_realization_mask_with_responses()
-                realizations = np.where(mask)[0]
-                assert isinstance(response_key, str)
-                data = ensemble.load_responses(response_key, tuple(realizations))
-            except ValueError as err:
-                logger.info(f"Dark storage could not load response {key}: {err}")
-                return pd.DataFrame()
-
-            try:
-                vals = data.filter(pl.col("report_step").eq(report_step))
-                pivoted = vals.drop("response_key", "report_step").pivot(
-                    on="index", values="values"
-                )
-                data = pivoted.to_pandas().set_index("realization")
-                data.columns = data.columns.astype(int)
-                data.columns.name = "axis"
-                try:
-                    return data.astype(float)
-                except ValueError:
-                    return data
-            except (ValueError, KeyError, ColumnNotFoundError):
-                return pd.DataFrame()
-
-    group = key.split(":")[0]
+def data_for_parameter(ensemble: Ensemble, key: str) -> pd.DataFrame:
+    group, _ = _extract_parameter_group_and_key(key)
     parameters = ensemble.experiment.parameter_configuration
     if group in parameters and isinstance(gen_kw := parameters[group], GenKwConfig):
         dataframes = []
@@ -232,6 +165,112 @@ def data_for_key(
             return data.astype(float)
         except ValueError:
             return data
+
+
+def _extract_response_type_and_key(
+    key: str, response_key_to_response_type: dict[str, str]
+) -> tuple[str, str] | tuple[None, None]:
+    # Check for exact match first. For example if key is "FOPRH"
+    # it may stop at "FOPR", which would be incorrect
+    response_key = next((k for k in response_key_to_response_type if k == key), None)
+    if response_key is None:
+        response_key = next(
+            (k for k in response_key_to_response_type if k in key and key != f"{k}H"),
+            None,
+        )
+
+    if response_key is None:
+        return None, None
+
+    response_type = response_key_to_response_type.get(response_key)
+    assert response_type is not None
+
+    return response_key, response_type
+
+
+def data_for_response(ensemble: Ensemble, key: str) -> pd.DataFrame:
+    response_key, response_type = _extract_response_type_and_key(
+        key, ensemble.experiment.response_key_to_response_type
+    )
+
+    assert response_key is not None
+    assert response_type is not None
+
+    if response_type == "summary":
+        summary_data = ensemble.load_responses(
+            response_key,
+            tuple(ensemble.get_realization_list_with_responses()),
+        )
+        if summary_data.is_empty():
+            return pd.DataFrame()
+
+        df = (
+            summary_data.rename({"time": "Date", "realization": "Realization"})
+            .drop("response_key")
+            .to_pandas()
+        )
+        df = df.set_index(["Date", "Realization"])
+        # This performs the same aggragation by mean of duplicate values
+        # as in ert/analysis/_es_update.py
+        df = df.groupby(["Date", "Realization"]).mean()
+        data = df.unstack(level="Date")
+        data.columns = data.columns.droplevel(0)
+        try:
+            return data.astype(float)
+        except ValueError:
+            return data
+
+    if response_type == "gen_data":
+        try:
+            # Call below will ValueError if key ends with H,
+            # requested via PlotAPI.history_data
+            response_key, report_step = displayed_key_to_response_key["gen_data"](key)
+            assert isinstance(response_key, str)
+            data = ensemble.load_responses(
+                response_key, tuple(ensemble.get_realization_list_with_responses())
+            )
+        except ValueError as err:
+            logger.info(f"Dark storage could not load response {key}: {err}")
+            return pd.DataFrame()
+
+        try:
+            vals = data.filter(pl.col("report_step").eq(report_step))
+            pivoted = vals.drop("response_key", "report_step").pivot(
+                on="index", values="values"
+            )
+            data = pivoted.to_pandas().set_index("realization")
+            data.columns = data.columns.astype(int)
+            data.columns.name = "axis"
+            try:
+                return data.astype(float)
+            except ValueError:
+                return data
+        except (ValueError, KeyError, ColumnNotFoundError):
+            return pd.DataFrame()
+
+
+def data_for_key(
+    ensemble: Ensemble,
+    key: str,
+) -> pd.DataFrame:
+    """Returns a pandas DataFrame with the datapoints for a given key for a
+    given ensemble. The row index is the realization number, and the columns are an
+    index over the indexes/dates"""
+
+    response_key, _ = _extract_response_type_and_key(
+        key, ensemble.experiment.response_key_to_response_type
+    )
+
+    if response_key is not None:
+        return data_for_response(ensemble, key)
+
+    parameter_config = ensemble.experiment.parameter_configuration
+    parameter_group, parameter_key = _extract_parameter_group_and_key(key)
+    if (
+        parameter_group in parameter_config
+        and parameter_key in parameter_config[parameter_group].parameter_keys
+    ):
+        return data_for_parameter(ensemble, key)
 
     return pd.DataFrame()
 
