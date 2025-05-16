@@ -708,7 +708,7 @@ class BaseRunModel(ABC):
                     run_arg=run_arg,
                     num_cpu=self._queue_config.queue_options.num_cpu,
                     job_script=self._queue_config.job_script,
-                    realization_memory=self._queue_config.realization_memory,
+                    realization_memory=self._queue_config.queue_options.realization_memory,
                 )
             )
         return EEEnsemble(
