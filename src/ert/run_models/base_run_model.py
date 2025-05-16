@@ -420,7 +420,6 @@ class BaseRunModel(ABC):
             self._completed_realizations_mask = []
             failed = True
             exception = e
-            traceback_str = traceback.format_exc()
         except UserWarning as e:
             logger.exception(e)
         except UserCancelled as e:
