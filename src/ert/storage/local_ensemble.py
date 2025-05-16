@@ -1201,24 +1201,22 @@ async def forward_model_ok(
 ) -> LoadResult:
     parameters_result = LoadResult(LoadStatus.LOAD_SUCCESSFUL, "")
     response_result = LoadResult(LoadStatus.LOAD_SUCCESSFUL, "")
+    # We only read parameters after the prior, after that, ERT
+    # handles parameters
+    if iter_ == 0:
+        parameters_result = await _read_parameters(
+            run_path,
+            realization,
+            iter_,
+            ensemble,
+        )
     try:
-        # We only read parameters after the prior, after that, ERT
-        # handles parameters
-        if iter_ == 0:
-            parameters_result = await _read_parameters(
-                run_path,
-                realization,
-                iter_,
-                ensemble,
-            )
-
         if parameters_result.status == LoadStatus.LOAD_SUCCESSFUL:
             response_result = await _write_responses_to_storage(
                 run_path,
                 realization,
                 ensemble,
             )
-
     except Exception as err:
         logger.exception(
             f"Failed to load results for realization {realization}",
