@@ -915,7 +915,7 @@ class ErtConfig(BaseModel):
                 )
             queue_config = QueueConfig.from_dict(config_dict)
 
-            substitutions["<NUM_CPU>"] = str(queue_config.preferred_num_cpu)
+            substitutions["<NUM_CPU>"] = str(queue_config.queue_options.num_cpu)
 
         except ConfigValidationError as err:
             errors.append(err)

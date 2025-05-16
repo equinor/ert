@@ -122,7 +122,7 @@ def test_supported_memory_units_to_realization_memory(
     assert (
         ErtConfig.from_file_contents(
             f"NUM_REALIZATIONS 1\nREALIZATION_MEMORY {memory_with_unit}\n"
-        ).queue_config.realization_memory
+        ).queue_config.queue_options.realization_memory
         > 0
     )
 
@@ -146,7 +146,7 @@ def test_realization_memory_unit_support(memory_spec: str, expected_bytes: int):
     assert (
         ErtConfig.from_file_contents(
             f"NUM_REALIZATIONS 1\nREALIZATION_MEMORY {memory_spec}\n"
-        ).queue_config.realization_memory
+        ).queue_config.queue_options.realization_memory
         == expected_bytes
     )
 
