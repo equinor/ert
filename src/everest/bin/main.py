@@ -6,7 +6,7 @@ try:
     from ert.shared.version import __version__ as everest_version
 except ImportError:
     everest_version = "0.0.0"
-from ert.trace import tracer, tracer_provider
+from ert.trace import tracer
 from everest.bin.config_branch_script import config_branch_entry
 from everest.bin.everconfigdump_script import config_dump_entry
 from everest.bin.everest_script import everest_entry
@@ -50,7 +50,7 @@ class EverestMain:
         # Setup logging from plugins:
         plugin_manager = EverestPluginManager()
         plugin_manager.add_log_handle_to_root()
-        plugin_manager.add_span_processor_to_trace_provider(tracer_provider)
+        plugin_manager.add_span_processor_to_trace_provider()
 
         # Use dispatch pattern to invoke method with same name
         getattr(self, parsed_args.command)(args[2:])

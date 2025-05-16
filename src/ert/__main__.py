@@ -36,7 +36,7 @@ from ert.run_models.multiple_data_assimilation import MultipleDataAssimilation
 from ert.services import StorageService, WebvizErt
 from ert.shared.storage.command import add_parser_options as ert_api_add_parser_options
 from ert.storage import ErtStorageException
-from ert.trace import trace, tracer, tracer_provider
+from ert.trace import trace, tracer
 from ert.validation import (
     IntegerArgument,
     NumberListStringArgument,
@@ -601,9 +601,7 @@ def main() -> None:
         handler.setLevel(logging.INFO)
         root_logger.addHandler(handler)
     try:
-        with ErtPluginContext(
-            logger=logging.getLogger(), trace_provider=tracer_provider
-        ) as context:
+        with ErtPluginContext(logger=logging.getLogger()) as context:
             logger.info(f"Running ert with {args}")
             args.func(args, context.plugin_manager)
     except (ErtCliError, ErtStorageException) as err:
