@@ -21,11 +21,11 @@ class SummaryResults(ForwardModelResult):
     )
 
 
-class ObjectiveResults(ForwardModelResult):
+class ObjectiveResult(ForwardModelResult):
     type: Literal["objective"] = "objective"
 
 
-class ConstraintResults(ForwardModelResult):
+class ConstraintResult(ForwardModelResult):
     type: Literal["constraint"] = "constraint"
 
 
@@ -40,7 +40,7 @@ class ForwardModelStepConfig(BaseModelWithContextSupport):
     results: (
         (
             Annotated[
-                SummaryResults | GenDataResults | ObjectiveResults | ConstraintResults,
+                SummaryResults | GenDataResults | ObjectiveResult | ConstraintResult,
                 Discriminator("type"),
             ]
         )

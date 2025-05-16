@@ -61,13 +61,6 @@ class EverestConstraintsConfig(ResponseConfig):
                 data = np.loadtxt(filename, ndmin=1)
             except ValueError as err:
                 raise InvalidResponseFile(str(err)) from err
-            active_information_file = filename.parent / (filename.name + "_active")
-            if active_information_file.exists():
-                try:
-                    active_list = np.loadtxt(active_information_file)
-                except ValueError as err:
-                    raise InvalidResponseFile(str(err)) from err
-                data[active_list == 0] = np.nan
             return pl.DataFrame(
                 {
                     "index": pl.Series(np.arange(len(data)), dtype=pl.UInt16),
