@@ -198,28 +198,28 @@ class Suggestor(QWidget):
             self._continue_action()
             self.close()
 
-        run = QPushButton("Open ERT")
-        give_up = QPushButton("Close")
-        give_up.setObjectName("close_button")
-        if self._continue_action is None:
-            run.setStyleSheet(DISABLED_BUTTON_STYLE)
-            run.setEnabled(False)
-            give_up.setStyleSheet(BUTTON_STYLE)
-        else:
-            run.setStyleSheet(BUTTON_STYLE)
-            run.setEnabled(True)
-            give_up.setStyleSheet(SECONDARY_BUTTON_STYLE)
-
-        run.setObjectName("run_ert_button")
-        run.pressed.connect(run_pressed)
-        give_up.pressed.connect(self.close)
         buttons = QWidget(parent=self)
         buttons_layout = QHBoxLayout()
         buttons_layout.insertStretch(-1, -1)
         buttons_layout.setContentsMargins(0, 24, 0, 0)
-        buttons_layout.addWidget(run)
+
+        give_up = QPushButton("Close")
+        give_up.setObjectName("close_button")
+        give_up.setStyleSheet(BUTTON_STYLE)
+        give_up.pressed.connect(self.close)
+
+        if self._continue_action:
+            run = QPushButton("Open ERT")
+            run.setStyleSheet(BUTTON_STYLE)
+            run.setObjectName("run_ert_button")
+            run.pressed.connect(run_pressed)
+            buttons_layout.addWidget(run)
+
+            give_up.setStyleSheet(SECONDARY_BUTTON_STYLE)
+
         buttons_layout.addWidget(give_up)
         buttons.setLayout(buttons_layout)
+
         return buttons
 
     def _messages(
