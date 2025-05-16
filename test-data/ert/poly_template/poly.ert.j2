@@ -24,7 +24,7 @@ GEN_DATA POLY_RES_{{n}} RESULT_FILE:poly_{{n}}_%d.out REPORT_STEPS:0 INPUT_FORMA
 {% endfor %}
 
 {% for n in range(parameter_count) %}
-GEN_KW COEFFS_{{n}} coeff.tmpl coeffs_{{n}}.json coeff_priors
+GEN_KW COEFFS_{{n}} coeff.tmpl coeffs_{{n}}.json coeff_priors_{{n}}
 {% endfor %}
 
 INSTALL_JOB poly_eval POLY_EVAL

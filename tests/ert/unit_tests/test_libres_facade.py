@@ -165,8 +165,8 @@ def test_load_gen_kw_not_sorted(storage, tmpdir, snapshot):
         config = dedent(
             """
         NUM_REALIZATIONS 10
-        GEN_KW PARAM_2 template.txt kw.txt prior.txt
-        GEN_KW PARAM_1 template.txt kw.txt prior.txt
+        GEN_KW PARAM_2 template.txt kw.txt prior2.txt
+        GEN_KW PARAM_1 template.txt kw.txt prior1.txt
         RANDOM_SEED 1234
         """
         )
@@ -174,8 +174,10 @@ def test_load_gen_kw_not_sorted(storage, tmpdir, snapshot):
             fh.writelines(config)
         with open("template.txt", mode="w", encoding="utf-8") as fh:
             fh.writelines("MY_KEYWORD <MY_KEYWORD>")
-        with open("prior.txt", mode="w", encoding="utf-8") as fh:
-            fh.writelines("MY_KEYWORD LOGUNIF 0.1 1")
+        with open("prior1.txt", mode="w", encoding="utf-8") as fh:
+            fh.writelines("MY_KEYWORD1 LOGUNIF 0.1 1")
+        with open("prior2.txt", mode="w", encoding="utf-8") as fh:
+            fh.writelines("MY_KEYWORD2 LOGUNIF 0.1 1")
 
         ert_config = ErtConfig.from_file("config.ert")
 

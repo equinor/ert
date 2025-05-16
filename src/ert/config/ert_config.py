@@ -969,6 +969,11 @@ class ErtConfig(BaseModel):
             )
         except ConfigValidationError as err:
             errors.append(err)
+        except PydanticValidationError as err:
+            # pydantic catches ValueError (which ConfigValidationError inherits from),
+            # so we need to unpack them again.
+            for e in err.errors():
+                errors.append(e["ctx"]["error"])
 
         try:
             analysis_config = AnalysisConfig.from_dict(config_dict)
