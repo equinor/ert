@@ -49,6 +49,7 @@ class QueueOptions(
     submit_sleep: pydantic.NonNegativeFloat = 0.0
     num_cpu: pydantic.NonNegativeInt = 1
     realization_memory: pydantic.NonNegativeInt = 0
+    job_script: str = shutil.which("fm_dispatch.py") or "fm_dispatch.py"
     project_code: str | None = None
     activate_script: str | None = Field(default=None, validate_default=True)
 
@@ -139,6 +140,7 @@ class LsfQueueOptions(QueueOptions):
                 "max_running",
                 "num_cpu",
                 "realization_memory",
+                "job_script",
             }
         )
         driver_dict["exclude_hosts"] = driver_dict.pop("exclude_host")
@@ -166,6 +168,7 @@ class TorqueQueueOptions(QueueOptions):
                 "submit_sleep",
                 "num_cpu",
                 "realization_memory",
+                "job_script",
             }
         )
         driver_dict["queue_name"] = driver_dict.pop("queue")
@@ -194,6 +197,7 @@ class SlurmQueueOptions(QueueOptions):
                 "submit_sleep",
                 "num_cpu",
                 "realization_memory",
+                "job_script",
             }
         )
         driver_dict["sbatch_cmd"] = driver_dict.pop("sbatch")
@@ -282,7 +286,6 @@ def _group_queue_options_by_queue_system(
 
 @dataclass
 class QueueConfig:
-    job_script: str = shutil.which("fm_dispatch.py") or "fm_dispatch.py"
     max_submit: int = 1
     queue_system: QueueSystem = QueueSystem.LOCAL
     queue_options: (
@@ -300,6 +303,7 @@ class QueueConfig:
         job_script: str = config_dict.get(
             "JOB_SCRIPT", shutil.which("fm_dispatch.py") or "fm_dispatch.py"
         )
+        config_dict["JOB_SCRIPT"] = job_script
         max_submit: int = config_dict.get(ConfigKeys.MAX_SUBMIT, 1)
         stop_long_running = config_dict.get(ConfigKeys.STOP_LONG_RUNNING, False)
 
@@ -347,7 +351,6 @@ class QueueConfig:
                 queue_options.project_code = "+".join(tags)
 
         return QueueConfig(
-            job_script,
             max_submit,
             selected_queue_system,
             queue_options,
@@ -357,7 +360,6 @@ class QueueConfig:
 
     def create_local_copy(self) -> QueueConfig:
         return QueueConfig(
-            self.job_script,
             self.max_submit,
             QueueSystem.LOCAL,
             LocalQueueOptions(max_running=self.max_running),
