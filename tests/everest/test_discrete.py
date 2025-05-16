@@ -16,7 +16,7 @@ def test_discrete_optimizer(copy_math_func_test_data_to_tmp):
             "algorithm": "differential_evolution",
             "max_function_evaluations": 4,
             "parallel": False,
-            "backend_options": {"seed": 9},
+            "backend_options": {"rng": 4},
         },
         "controls": [
             {
