@@ -355,7 +355,8 @@ def log_info_from_exit_file(exit_file_path: Path) -> None:
     except etree.XMLSyntaxError:
         raw_xml_contents = exit_file_path.read_text(encoding="utf-8", errors="ignore")
         logger.error(
-            f"job failed with invalid XML ERROR file, contents '{raw_xml_contents}'"
+            "Realization failed with an invalid "
+            f"XML ERROR file, contents '{raw_xml_contents}'"
         )
         return
     logger.error(
