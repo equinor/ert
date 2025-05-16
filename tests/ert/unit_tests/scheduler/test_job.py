@@ -386,7 +386,7 @@ async def test_log_info_from_garbled_exit_file(caplog):
     Path("ERROR").write_text("this is not XML", encoding="utf-8")
     log_info_from_exit_file(Path("ERROR"))
     logs = caplog.text
-    assert "job failed with invalid XML" in logs
+    assert "Realization failed with an invalid XML" in logs
     assert "'this is not XML'" in logs
 
 
