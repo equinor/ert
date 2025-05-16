@@ -340,7 +340,7 @@ def test_that_sampling_prior_makes_initialized_fs(storage):
     ert_config = ErtConfig.from_file_contents(
         dedent(
             """\
-            NUM_REALIZATIONS 1
+            NUM_REALIZATIONS 2
             GEN_KW KW_NAME template.txt kw.txt prior.txt FORWARD_INIT:False
             """
         )
@@ -358,10 +358,19 @@ def test_that_sampling_prior_makes_initialized_fs(storage):
         RealizationStorageState.PARAMETERS_LOADED
         not in prior_ensemble.get_ensemble_state()[0]
     )
+    assert (
+        RealizationStorageState.PARAMETERS_LOADED
+        not in prior_ensemble.get_ensemble_state()[1]
+    )
     sample_prior(prior_ensemble, [0], 123)
+    # Realization 0 state now contains PARAMETERS_LOADED
     assert (
         RealizationStorageState.PARAMETERS_LOADED
         in prior_ensemble.get_ensemble_state()[0]
+    )
+    assert (
+        RealizationStorageState.PARAMETERS_LOADED
+        not in prior_ensemble.get_ensemble_state()[1]
     )
 
 
