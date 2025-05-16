@@ -106,14 +106,20 @@ QPushButton:hover {{
 class Suggestor(QWidget):
     def __init__(
         self,
-        errors: list[ErrorInfo],
-        warnings: list[WarningInfo],
-        deprecations: list[WarningInfo],
-        continue_action: Callable[[], None] | None,
+        errors: list[ErrorInfo] | None = None,
+        warnings: list[WarningInfo] | None = None,
+        deprecations: list[WarningInfo] | None = None,
+        continue_action: Callable[[], None] | None = None,
         help_links: dict[str, str] | None = None,
         widget_info: str | None = None,
     ) -> None:
         super().__init__()
+        if errors is None:
+            errors = []
+        if warnings is None:
+            warnings = []
+        if deprecations is None:
+            deprecations = []
         self._continue_action = continue_action
         self.__layout = QVBoxLayout()
         self.setLayout(self.__layout)
