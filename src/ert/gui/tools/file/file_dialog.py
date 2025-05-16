@@ -135,7 +135,7 @@ class FileDialog(QDialog):
 
     def _copy_all(self) -> None:
         text = self._view.toPlainText()
-        QApplication.clipboard().setText(text, QClipboard.Clipboard)  # type: ignore
+        QApplication.clipboard().setText(text, QClipboard.Mode.Clipboard)  # type: ignore
 
     def _update_cursor(self, value: int) -> None:
         if not self._view.textCursor().hasSelection():
