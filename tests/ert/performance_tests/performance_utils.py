@@ -67,14 +67,25 @@ def make_poly_example(folder, source, **kwargs):
     gen_obs_count = kwargs["gen_obs_count"]
     summary_data_entries = kwargs["summary_data_entries"]
     update_steps = kwargs["update_steps"]
+    parameter_count = kwargs["parameter_count"]
     file_loader = FileSystemLoader(str(folder))  # directory of template file
     env = Environment(loader=file_loader)
     shutil.copytree(source, folder)
-
-    render_template(
-        folder, env.get_template("coeff_priors.j2"), "coeff_priors", **kwargs
-    )
-    render_template(folder, env.get_template("coeff.tmpl.j2"), "coeff.tmpl", **kwargs)
+    for param_num in range(parameter_count):
+        render_template(
+            folder,
+            env.get_template("coeff_priors.j2"),
+            f"coeff_priors_{param_num}",
+            param_num=param_num,
+            **kwargs,
+        )
+        render_template(
+            folder,
+            env.get_template("coeff.tmpl.j2"),
+            "coeff.tmpl",
+            param_num=param_num,
+            **kwargs,
+        )
     render_template(
         folder, env.get_template("observations.j2"), "observations", **kwargs
     )
