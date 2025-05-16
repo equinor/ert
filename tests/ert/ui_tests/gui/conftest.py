@@ -340,7 +340,7 @@ def load_results_manually(qtbot, gui, ensemble_name="default"):
         def handle_popup_dialog():
             messagebox = QApplication.activeModalWidget()
             assert isinstance(messagebox, QMessageBox)
-            assert messagebox.text() == "Successfully loaded all realisations"
+            assert messagebox.text() == "Successfully loaded all realizations"
             ok_button = messagebox.button(QMessageBox.StandardButton.Ok)
             qtbot.mouseClick(ok_button, Qt.MouseButton.LeftButton)
 
