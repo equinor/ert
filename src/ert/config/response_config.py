@@ -3,7 +3,7 @@ from abc import ABC, abstractmethod
 from typing import Any, Self
 
 import polars as pl
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 from .parameter_config import CustomDict
 from .parsing import ConfigDict
@@ -19,8 +19,15 @@ class InvalidResponseFile(Exception):
 class ResponseMetadata(BaseModel):
     response_type: str
     response_key: str
-    # ex: { "report_step": [0, 199, 299] }
-    filter_on: dict[str, list[Any]] | None  # Dimensions
+    filter_on: dict[str, list[Any]] | None = Field(
+        default=None,
+        description="""
+    Holds information about which columns the response can be filtered on.
+    For example, for gen data, { "report_step": [0, 199, 299] } indicates
+    that we can filter the response by report step with the potential values
+    [0, 199, 299].
+    """,
+    )
 
 
 @dataclasses.dataclass
