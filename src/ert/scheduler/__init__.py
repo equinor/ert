@@ -15,10 +15,20 @@ from .scheduler import Scheduler
 from .slurm_driver import SlurmDriver
 
 if TYPE_CHECKING:
-    from ert.config.queue_config import QueueOptions
+    from ert.config.queue_config import (
+        LocalQueueOptions,
+        LsfQueueOptions,
+        SlurmQueueOptions,
+        TorqueQueueOptions,
+    )
 
 
-def create_driver(queue_options: QueueOptions) -> Driver:
+def create_driver(
+    queue_options: LocalQueueOptions
+    | LsfQueueOptions
+    | SlurmQueueOptions
+    | TorqueQueueOptions,
+) -> Driver:
     match str(queue_options.name):
         case QueueSystem.LOCAL:
             return LocalDriver()
