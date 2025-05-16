@@ -24,7 +24,7 @@ from ert.plugins import ErtPluginContext
 from ert.shared import __file__ as ert_shared_path
 from ert.shared import find_available_socket
 from ert.shared.storage.command import add_parser_options
-from ert.trace import tracer, tracer_provider
+from ert.trace import tracer
 
 DARK_STORAGE_APP = "ert.dark_storage.app:app"
 
@@ -193,7 +193,7 @@ def main() -> None:
     terminate_on_parent_death_thread = threading.Thread(
         target=terminate_on_parent_death, args=[stopped, args.parent_pid, 1.0]
     )
-    with ErtPluginContext(logger=logging.getLogger(), trace_provider=tracer_provider):
+    with ErtPluginContext(logger=logging.getLogger()):
         terminate_on_parent_death_thread.start()
         with tracer.start_as_current_span("run_storage_server", ctx):
             logger = logging.getLogger("ert.shared.storage.info")

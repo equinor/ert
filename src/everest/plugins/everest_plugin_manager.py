@@ -2,8 +2,8 @@ import logging
 from typing import Any
 
 import pluggy
-from opentelemetry.sdk.trace import TracerProvider
 
+from ert.trace import add_span_processor
 from everest.plugins import hook_impl, hook_specs
 from everest.strings import EVEREST
 
@@ -28,9 +28,7 @@ class EverestPluginManager(pluggy.PluginManager):
         for handler in self.hook.add_log_handle_to_root():
             root_logger.addHandler(handler)
 
-    def add_span_processor_to_trace_provider(
-        self, trace_provider: TracerProvider
-    ) -> None:
+    def add_span_processor_to_trace_provider(self) -> None:
         span_processors = self.hook.add_span_processor()
         for span_processor in span_processors:
-            trace_provider.add_span_processor(span_processor)
+            add_span_processor(span_processor)
