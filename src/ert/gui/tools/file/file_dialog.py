@@ -1,6 +1,4 @@
-from math import floor
-
-from PyQt6.QtCore import QSize, Qt, QThread
+from PyQt6.QtCore import Qt, QThread
 from PyQt6.QtGui import QClipboard, QFontDatabase, QTextCursor, QTextOption
 from PyQt6.QtWidgets import (
     QApplication,
@@ -15,26 +13,6 @@ from PyQt6.QtWidgets import (
 from ert.gui.tools.search_bar import SearchBar
 
 from .file_update_worker import FileUpdateWorker
-
-
-def calculate_screen_size_based_height() -> int:
-    screen = QApplication.primaryScreen()
-    if screen is None:
-        return 1024
-    screen_height = screen.geometry().height()
-    max_ratio_of_screen = 1.0 / 3.0
-    return floor(screen_height * max_ratio_of_screen)
-
-
-def calculate_font_based_width(charWidth: int) -> int:
-    desired_width_in_characters = 120
-    extra_bit_of_margin_space = 2
-    extra_space_for_vertical_scroll_bar = 5
-    return (
-        desired_width_in_characters
-        + extra_bit_of_margin_space
-        + extra_space_for_vertical_scroll_bar
-    ) * charWidth
 
 
 class FileDialog(QDialog):
@@ -168,10 +146,3 @@ class FileDialog(QDialog):
         if self._follow_mode:
             self._view.moveCursor(QTextCursor.MoveOperation.End)
         self._view.appendPlainText(text)
-
-    def sizeHint(self) -> QSize:
-        fontWidth = self._view.fontMetrics().averageCharWidth()
-        return QSize(
-            calculate_font_based_width(fontWidth),
-            calculate_screen_size_based_height(),
-        )
