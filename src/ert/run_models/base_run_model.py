@@ -703,7 +703,7 @@ class BaseRunModel(ABC):
                     fm_steps=self._forward_model_steps,
                     max_runtime=self._queue_config.max_runtime,
                     run_arg=run_arg,
-                    num_cpu=self._queue_config.preferred_num_cpu,
+                    num_cpu=self._queue_config.queue_options.num_cpu,
                     job_script=self._queue_config.job_script,
                     realization_memory=self._queue_config.realization_memory,
                 )
