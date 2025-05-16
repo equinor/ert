@@ -12,7 +12,10 @@ from ert.config import ErtConfig
 from ert.enkf_main import create_run_path
 from ert.libres_facade import LibresFacade
 from ert.storage import open_storage
-from ert.storage.local_ensemble import load_parameters_and_responses_from_runpath
+from ert.storage.local_ensemble import (
+    RealizationStorageState,
+    load_parameters_and_responses_from_runpath,
+)
 
 
 @pytest.fixture()
@@ -286,7 +289,12 @@ def test_that_the_states_are_set_correctly():
     load_parameters_and_responses_from_runpath(
         facade.run_path, new_ensemble, list(range(ensemble_size))
     )
-    assert not new_ensemble.is_initalized()
+
+    assert all(
+        RealizationStorageState.PARAMETERS_LOADED not in state
+        for state in new_ensemble.get_ensemble_state()
+    )
+
     assert new_ensemble.has_data()
 
 
