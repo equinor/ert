@@ -168,7 +168,6 @@ class FileDialog(QDialog):
         if self._follow_mode:
             self._view.moveCursor(QTextCursor.MoveOperation.End)
         self._view.appendPlainText(text)
-        self.adjustSize()
 
     def sizeHint(self) -> QSize:
         fontWidth = self._view.fontMetrics().averageCharWidth()
