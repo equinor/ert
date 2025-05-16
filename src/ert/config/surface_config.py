@@ -42,7 +42,18 @@ class SurfaceConfig(ParameterConfig):
 
     @property
     def metadata(self) -> list[ParameterMetadata]:
-        return []
+        return [
+            ParameterMetadata(
+                key=self.name,
+                dimensionality=2,
+                transformation=None,
+                userdata={
+                    "data_origin": "SURFACE",
+                    "nx": self.ncol,
+                    "ny": self.nrow,
+                },
+            )
+        ]
 
     @classmethod
     def from_config_list(cls, surface: list[str | dict[str, str]]) -> Self:
