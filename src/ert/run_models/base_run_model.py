@@ -55,7 +55,6 @@ from ert.ensemble_evaluator.state import (
     REALIZATION_STATE_FAILED,
     REALIZATION_STATE_FINISHED,
 )
-from ert.exceptions import ErtError
 from ert.mode_definitions import MODULE_MODE
 from ert.plugins import (
     HookedWorkflowFixtures,
@@ -105,7 +104,7 @@ class ErtRunError(Exception):
     pass
 
 
-class TooFewRealizationsSucceeded(ErtError):
+class TooFewRealizationsSucceeded(ErtRunError):
     def __init__(
         self, successful_realizations: int, required_realizations: int
     ) -> None:
