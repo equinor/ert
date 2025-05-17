@@ -157,6 +157,27 @@ class UpdateWidget(QWidget):
 
         self._tab_widget.setCurrentIndex(self._tab_widget.addTab(widget, name))
 
+    @staticmethod
+    def _format_time(seconds: float) -> str:
+        """
+        Turn a raw second count into d h m s, picking only the
+        units that make sense for the magnitude.
+        """
+        if seconds < 60:
+            return f"{seconds:.1f}s"
+
+        secs = int(round(seconds))
+        minutes, secs = divmod(secs, 60)
+        if minutes < 60:
+            return f"{minutes}m {secs}s"
+
+        hours, minutes = divmod(minutes, 60)
+        if hours < 24:
+            return f"{hours}h {minutes}m"
+
+        days, hours = divmod(hours, 24)
+        return f"{days}d {hours}h"
+
     @Slot(RunModelUpdateBeginEvent)
     def begin(self, event: RunModelUpdateBeginEvent) -> None:
         self._start_time = time.perf_counter()
@@ -188,7 +209,8 @@ class UpdateWidget(QWidget):
                 self._insert_status_message(msg)
             case RunModelTimeEvent(remaining_time=remaining_time):
                 self._progress_msg.setText(
-                    f"Estimated remaining time for current step {remaining_time:.2f}s"
+                    f"Estimated remaining time for current step "
+                    f"{self._format_time(remaining_time)}"
                 )
 
     @Slot(RunModelErrorEvent)
