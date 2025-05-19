@@ -76,16 +76,16 @@ def test_csv_export(config_file, cached_example, snapshot):
             "config_minimal.yml",
             {"everest_objectives"},
             {"distance"},
-            {},
-            {},
+            set(),
+            set(),
             marks=pytest.mark.xdist_group("math_func/config_minimal.yml"),
         ),
         pytest.param(
             "config_multiobj.yml",
             {"everest_objectives"},
             {"distance_p", "distance_q"},
-            {},
-            {},
+            set(),
+            set(),
             marks=pytest.mark.xdist_group("math_func/config_multiobj.yml"),
         ),
     ],
@@ -98,43 +98,23 @@ def test_everest_data_stored_in_ert_local_storage(
     config = EverestConfig.load_file(Path(config_path) / config_file)
     with open_storage(config.storage_dir, mode="r") as storage:
         experiment = next(s for s in storage._experiments.values())
-        ensemble = next(experiment.ensembles)
         assert set(experiment.response_info.keys()) == responses
-        ens_range = tuple(range(ensemble.ensemble_size))
 
-        if gen_data_only:
-            df_gen_data = ensemble.load_responses("gen_data", ens_range)
-            gendata_only_keys = set(df_gen_data["response_key"].unique())
-            assert gendata_only_keys == gen_data_only
+        response_type_mapping = experiment.response_type_to_response_keys
+        assert set(response_type_mapping.get("gen_data", [])) == gen_data_only
+        assert set(response_type_mapping.get("everest_constraints", [])) == constraints
+        assert set(response_type_mapping.get("everest_objectives", [])) == objectives
 
-        if constraints:
-            df_constraints = ensemble.load_responses("everest_constraints", ens_range)
-            constraints_keys = set(df_constraints["response_key"].unique())
-            assert constraints_keys == constraints
+        local_storage_params = []
+        for name, param_config in experiment.parameter_configuration.items():
+            if isinstance(param_config.input_keys, dict):
+                for k, v in param_config.input_keys.items():
+                    for e in v:
+                        local_storage_params.append(f"{name}.{k}.{e}")
+            if isinstance(param_config.input_keys, list):
+                local_storage_params = [
+                    *local_storage_params,
+                    *[f"{name}.{v}" for v in param_config.input_keys],
+                ]
 
-        df_objectives = ensemble.load_responses("everest_objectives", ens_range)
-        objective_keys = set(df_objectives["response_key"].unique())
-        assert objective_keys == objectives
-
-        local_storage_params = [
-            {name: param_config.input_keys}
-            for name, param_config in experiment.parameter_configuration.items()
-        ]
-        everest_controls = []
-        for control in config.controls:
-            name = control.name
-            variables_ = {}
-            for variable in control.variables:
-                if variable.index is not None:
-                    variables_[variable.name] = [
-                        *variables_.get(variable.name, []),
-                        *[str(variable.index)],
-                    ]
-                else:
-                    if not isinstance(variables_, list):
-                        variables_ = []
-                    variables_ = [*variables_, *[variable.name]]
-
-        everest_controls.append({name: variables_})
-
-        assert local_storage_params == everest_controls
+        assert local_storage_params == config.formatted_control_names
