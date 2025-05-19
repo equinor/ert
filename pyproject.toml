@@ -68,7 +68,8 @@ dependencies = [
     "xarray",
     "xtgeo >= 3.3.0",
     "networkx",
-    "graphite-maps"
+    "graphite-maps",
+    "surfio>=0.0.9",
 ]
 
 [project.scripts]
@@ -163,7 +164,7 @@ norecursedirs = [
     "tests/ert/unit_tests/snapshots",
     "tests/everest/snapshots",
     "tests/everest/test_data",
-    "tests/ert/unit_tests/scheduler/bin"
+    "tests/ert/unit_tests/scheduler/bin",
 ]
 markers = [
     "memory_test",

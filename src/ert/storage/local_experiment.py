@@ -9,10 +9,9 @@ from pathlib import Path
 from typing import TYPE_CHECKING, Any
 from uuid import UUID
 
-import numpy as np
 import polars as pl
-import xtgeo
 from pydantic import BaseModel
+from surfio import IrapSurface
 
 from ert.config import ExtParamConfig, Field, GenKwConfig, ResponseConfig, SurfaceConfig
 from ert.config.parsing.context_values import ContextBoolEncoder
@@ -296,7 +295,7 @@ class LocalExperiment(BaseMode):
             info = json.load(f)
         return info
 
-    def get_surface(self, name: str) -> xtgeo.RegularSurface:
+    def get_surface(self, name: str) -> IrapSurface:
         """
         Retrieve a geological surface by name.
 
@@ -307,15 +306,11 @@ class LocalExperiment(BaseMode):
 
         Returns
         -------
-        surface : RegularSurface
+        surface : IrapSurface
             The geological surface object.
         """
 
-        return xtgeo.surface_from_file(
-            str(self.mount_point / f"{name}.irap"),
-            fformat="irap_ascii",
-            dtype=np.float32,
-        )
+        return IrapSurface.from_ascii_file(self.mount_point / f"{name}.irap")
 
     @cached_property
     def parameter_configuration(self) -> dict[str, ParameterConfig]:
