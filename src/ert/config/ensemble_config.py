@@ -9,6 +9,8 @@ from pydantic import BaseModel, Field, model_validator
 
 from ert.field_utils import get_shape
 
+from .everest_constraints_config import EverestConstraintsConfig
+from .everest_objective_config import EverestObjectivesConfig
 from .ext_param_config import ExtParamConfig
 from .field import Field as FieldConfig
 from .gen_data_config import GenDataConfig
@@ -20,7 +22,12 @@ from .response_config import ResponseConfig
 from .summary_config import SummaryConfig
 from .surface_config import SurfaceConfig
 
-_KNOWN_RESPONSE_TYPES = [SummaryConfig, GenDataConfig]
+_KNOWN_RESPONSE_TYPES = [
+    SummaryConfig,
+    GenDataConfig,
+    EverestConstraintsConfig,
+    EverestObjectivesConfig,
+]
 
 logger = logging.getLogger(__name__)
 
@@ -43,9 +50,13 @@ def _get_abs_path(file: str | None) -> str | None:
 
 class EnsembleConfig(BaseModel):
     grid_file: str | None = None
-    response_configs: dict[str, SummaryConfig | GenDataConfig] = Field(
-        default_factory=dict
-    )
+    response_configs: dict[
+        str,
+        SummaryConfig
+        | GenDataConfig
+        | EverestConstraintsConfig
+        | EverestObjectivesConfig,
+    ] = Field(default_factory=dict)
     parameter_configs: dict[
         str, GenKwConfig | FieldConfig | SurfaceConfig | ExtParamConfig
     ] = Field(default_factory=dict)
