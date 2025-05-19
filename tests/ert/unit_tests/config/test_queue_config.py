@@ -1,4 +1,5 @@
 import logging
+import warnings
 
 import hypothesis.strategies as st
 import pytest
@@ -264,14 +265,25 @@ def test_max_running_property():
 
 @pytest.mark.parametrize("queue_system", ["LSF", "GENERIC"])
 def test_multiple_submit_sleep_keywords(queue_system):
-    config = ErtConfig.from_file_contents(
-        "NUM_REALIZATIONS 1\n"
-        "QUEUE_SYSTEM LSF\n"
-        "QUEUE_OPTION LSF SUBMIT_SLEEP 10\n"
-        f"QUEUE_OPTION {queue_system} SUBMIT_SLEEP 42\n"
-        "QUEUE_OPTION TORQUE SUBMIT_SLEEP 22\n"
-    )
-    assert config.queue_config.submit_sleep == 42
+    with warnings.catch_warnings(record=True) as all_warnings:
+        config = ErtConfig.from_file_contents(
+            "NUM_REALIZATIONS 1\n"
+            "QUEUE_SYSTEM LSF\n"
+            "QUEUE_OPTION LSF SUBMIT_SLEEP 10\n"
+            f"QUEUE_OPTION {queue_system} SUBMIT_SLEEP 42\n"
+            "QUEUE_OPTION TORQUE SUBMIT_SLEEP 22\n"
+        )
+        assert config.queue_config.submit_sleep == 42
+        assert len(all_warnings) > 0
+        assert all(issubclass(w.category, ConfigWarning) for w in all_warnings)
+        assert all(
+            str(w.message)
+            == (
+                "The SUBMIT_SLEEP keyword in QUEUE OPTIONS is deprecated, "
+                "use the global SUBMIT_SLEEP keyword instead"
+            )
+            for w in all_warnings
+        )
 
 
 def test_multiple_max_submit_keywords():
@@ -378,7 +390,8 @@ def test_global_config_key_does_not_overwrite_queue_options(queue_system, key, v
 )
 def test_wrong_generic_queue_option_raises_validation_error(queue_system, key, value):
     with pytest.raises(
-        ConfigValidationError, match="Input should be greater than or equal to 0"
+        ConfigValidationError,
+        match=f"Input should be greater than or equal to 0. Got input '{value}'",
     ):
         ErtConfig.from_file_contents(
             "NUM_REALIZATIONS 1\n"
@@ -389,7 +402,7 @@ def test_wrong_generic_queue_option_raises_validation_error(queue_system, key, v
     error_msg = (
         "must have a positive integer value"
         if key == "MAX_RUNNING"
-        else "Input should be greater than or equal to 0"
+        else f"Input should be greater than or equal to 0. Got input '{value}'"
     )
     with pytest.raises(ConfigValidationError, match=error_msg):
         ErtConfig.from_file_contents(
