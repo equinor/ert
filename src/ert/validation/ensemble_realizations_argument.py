@@ -1,5 +1,5 @@
-from collections.abc import Iterable
-from typing import TYPE_CHECKING
+from collections.abc import Callable, Iterable
+from typing import TYPE_CHECKING, Union
 
 from .range_string_argument import RangeStringArgument
 from .rangestring import rangestring_to_list
@@ -17,21 +17,21 @@ class EnsembleRealizationsArgument(RangeStringArgument):
 
     def __init__(
         self,
-        ensemble: "Ensemble",
+        ensemble: Callable[[], Union["Ensemble", None]],
         max_value: int | None,
         required_realization_storage_states: Iterable["RealizationStorageState"],
         **kwargs: bool,
     ) -> None:
         super().__init__(max_value, **kwargs)
-        self.__ensemble = ensemble
+        self.__ensemble_getter = ensemble
         self._required_realization_storage_states: Iterable[RealizationStorageState] = (
             required_realization_storage_states
         )
 
-    def set_ensemble(self, ensemble: "Ensemble") -> None:
-        self.__ensemble = ensemble
-
     def validate(self, token: str) -> ValidationStatus:
+        ensemble = self.__ensemble_getter()
+        assert ensemble is not None
+
         validation_status = super().validate(token)
         if not validation_status:
             return validation_status
@@ -40,7 +40,7 @@ class EnsembleRealizationsArgument(RangeStringArgument):
         invalid_realizations = []
         found_realization_ids = [
             index
-            for index, state in enumerate(self.__ensemble.get_ensemble_state())
+            for index, state in enumerate(ensemble.get_ensemble_state())
             if set(self._required_realization_storage_states).issubset(state)
         ]
         for realization in attempted_realizations:

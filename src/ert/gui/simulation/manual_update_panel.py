@@ -78,7 +78,7 @@ class ManualUpdatePanel(ExperimentConfigPanel):
             continuous_update=True,
         )
         self._realizations_validator = EnsembleRealizationsArgument(
-            self._ensemble_selector.selected_ensemble,
+            lambda: self._ensemble_selector.selected_ensemble,
             max_value=ensemble_size,
             required_realization_storage_states=[
                 RealizationStorageState.PARAMETERS_LOADED,
@@ -118,7 +118,6 @@ class ManualUpdatePanel(ExperimentConfigPanel):
         self._active_realizations_field.setEnabled(ensemble is not None)
         try:
             if ensemble:
-                self._realizations_validator.set_ensemble(ensemble)
                 parameters = ensemble.get_realization_mask_with_parameters()
                 responses = ensemble.get_realization_mask_with_responses()
                 mask = np.logical_and(parameters, responses)
