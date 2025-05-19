@@ -182,6 +182,7 @@ class MultipleDataAssimilationPanel(ExperimentConfigPanel):
     @Slot()
     def update_experiment_name(self) -> None:
         if not self._experiment_name_field.isEnabled():
+            assert self._ensemble_selector.selected_ensemble is not None
             self._experiment_name_field.setText(
                 self._ensemble_selector.selected_ensemble.experiment.name
             )
@@ -198,6 +199,7 @@ class MultipleDataAssimilationPanel(ExperimentConfigPanel):
         self._experiment_name_field.enable_validation(not checked)
         self._experiment_name_field.setEnabled(not checked)
         if checked:
+            assert self._ensemble_selector.selected_ensemble is not None
             self._experiment_name_field.setText(
                 self._ensemble_selector.selected_ensemble.experiment.name
             )
@@ -207,7 +209,10 @@ class MultipleDataAssimilationPanel(ExperimentConfigPanel):
     def _evaluate_weights_box_enabled(self) -> None:
         self._relative_iteration_weights_box.setEnabled(
             not self._restart_box.isChecked()
-            or not self._ensemble_selector.selected_ensemble.relative_weights
+            or (
+                self._ensemble_selector.selected_ensemble is not None
+                and not self._ensemble_selector.selected_ensemble.relative_weights
+            )
         )
 
     def restart_run_toggled(self) -> None:
@@ -215,7 +220,10 @@ class MultipleDataAssimilationPanel(ExperimentConfigPanel):
         self._ensemble_selector.setEnabled(self._restart_box.isChecked())
 
         self._relative_iteration_weights_box.setText(
-            self._ensemble_selector.selected_ensemble.relative_weights
+            (
+                self._ensemble_selector.selected_ensemble is not None
+                and self._ensemble_selector.selected_ensemble.relative_weights
+            )
             or MultipleDataAssimilation.default_weights
             if self._restart_box.isChecked()
             else MultipleDataAssimilation.default_weights
@@ -283,7 +291,8 @@ class MultipleDataAssimilationPanel(ExperimentConfigPanel):
             restart_run=self._restart_box.isChecked(),
             prior_ensemble_id=(
                 str(self._ensemble_selector.selected_ensemble.id)
-                if self._restart_box.isChecked()
+                if self._ensemble_selector.selected_ensemble is not None
+                and self._restart_box.isChecked()
                 else ""
             ),
             experiment_name=self._experiment_name_field.get_text,

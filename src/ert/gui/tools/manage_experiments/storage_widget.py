@@ -187,7 +187,7 @@ class StorageWidget(QWidget):
                     ensemble_size=self._ensemble_size,
                     iteration=create_experiment_dialog.iteration,
                 )
-                self._notifier.set_current_ensemble(ensemble)
+                self._notifier.set_current_ensemble_id(ensemble.id)
                 self._notifier.ertChanged.emit()
             except OSError as err:
                 logger.error(str(err))
