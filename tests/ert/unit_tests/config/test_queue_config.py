@@ -1,8 +1,10 @@
 import logging
+import warnings
 
 import hypothesis.strategies as st
 import pytest
 from hypothesis import given
+from pydantic import ValidationError
 
 from ert.config import (
     ConfigValidationError,
@@ -264,14 +266,32 @@ def test_max_running_property():
 
 @pytest.mark.parametrize("queue_system", ["LSF", "GENERIC"])
 def test_multiple_submit_sleep_keywords(queue_system):
-    config = ErtConfig.from_file_contents(
-        "NUM_REALIZATIONS 1\n"
-        "QUEUE_SYSTEM LSF\n"
-        "QUEUE_OPTION LSF SUBMIT_SLEEP 10\n"
-        f"QUEUE_OPTION {queue_system} SUBMIT_SLEEP 42\n"
-        "QUEUE_OPTION TORQUE SUBMIT_SLEEP 22\n"
-    )
-    assert config.queue_config.submit_sleep == 42
+    with warnings.catch_warnings(record=True) as all_warnings:
+        config = ErtConfig.from_file_contents(
+            "NUM_REALIZATIONS 1\n"
+            "QUEUE_SYSTEM LSF\n"
+            "QUEUE_OPTION LSF SUBMIT_SLEEP 10\n"
+            f"QUEUE_OPTION {queue_system} SUBMIT_SLEEP 42\n"
+            "QUEUE_OPTION TORQUE SUBMIT_SLEEP 22\n"
+        )
+        assert config.queue_config.submit_sleep == 42
+        assert len(all_warnings) > 0
+        assert all(issubclass(w.category, ConfigWarning) for w in all_warnings)
+        assert all(
+            str(w.message)
+            == (
+                "The SUBMIT_SLEEP keyword in QUEUE OPTIONS is deprecated, "
+                "use the global SUBMIT_SLEEP keyword instead"
+            )
+            for w in all_warnings
+        )
+
+
+def test_multiple_submit_sleep_keywords_without_queue_system():
+    with warnings.catch_warnings(record=True) as all_warnings:
+        config = ErtConfig.from_file_contents("NUM_REALIZATIONS 1\nSUBMIT_SLEEP 3\n")
+        assert config.queue_config.submit_sleep == 3
+        assert len(all_warnings) == 0
 
 
 def test_multiple_max_submit_keywords():
@@ -378,7 +398,8 @@ def test_global_config_key_does_not_overwrite_queue_options(queue_system, key, v
 )
 def test_wrong_generic_queue_option_raises_validation_error(queue_system, key, value):
     with pytest.raises(
-        ConfigValidationError, match="Input should be greater than or equal to 0"
+        ConfigValidationError,
+        match=f"Input should be greater than or equal to 0. Got input '{value}'",
     ):
         ErtConfig.from_file_contents(
             "NUM_REALIZATIONS 1\n"
@@ -386,15 +407,20 @@ def test_wrong_generic_queue_option_raises_validation_error(queue_system, key, v
             f"QUEUE_OPTION GENERIC {key} {value}\n"
         )
 
-    error_msg = (
-        "must have a positive integer value"
-        if key == "MAX_RUNNING"
-        else "Input should be greater than or equal to 0"
-    )
-    with pytest.raises(ConfigValidationError, match=error_msg):
-        ErtConfig.from_file_contents(
-            f"NUM_REALIZATIONS 1\nQUEUE_SYSTEM {queue_system}\n{key} {value}\n"
-        )
+    if key == "SUBMIT_SLEEP":
+        with pytest.raises(
+            ValidationError, match="Input should be greater than or equal to 0"
+        ):
+            ErtConfig.from_file_contents(
+                f"NUM_REALIZATIONS 1\nQUEUE_SYSTEM {queue_system}\n{key} {value}\n"
+            )
+    else:
+        with pytest.raises(
+            ConfigValidationError, match="must have a positive integer value"
+        ):
+            ErtConfig.from_file_contents(
+                f"NUM_REALIZATIONS 1\nQUEUE_SYSTEM {queue_system}\n{key} {value}\n"
+            )
 
 
 @pytest.mark.parametrize(
