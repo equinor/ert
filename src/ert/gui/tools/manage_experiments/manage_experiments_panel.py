@@ -148,12 +148,14 @@ class ManageExperimentsPanel(QTabWidget):
                 parameters.remove(design_matrix_group.name)
                 save_design_matrix_to_ensemble(
                     design_matrix.design_matrix_df,
-                    ensemble_selector.currentData(),
+                    self.notifier.storage.get_ensemble(ensemble_selector.currentData()),
                     active_realizations,
                     design_group_name=design_matrix_group.name,
                 )
             sample_prior(
-                ensemble=ensemble_selector.currentData(),
+                ensemble=self.notifier.storage.get_ensemble(
+                    ensemble_selector.currentData()
+                ),
                 active_realizations=active_realizations,
                 parameters=parameters,
                 random_seed=self.ert_config.random_seed,
@@ -167,7 +169,7 @@ class ManageExperimentsPanel(QTabWidget):
         initialize_button.clicked.connect(initialize_from_scratch)
         initialize_button.clicked.connect(
             lambda _: self._storage_info_widget.setEnsemble(
-                ensemble_selector.currentData()
+                self.notifier.storage.get_ensemble(ensemble_selector.currentData())
             )
         )
         initialize_button.clicked.connect(ensemble_selector.populate)

@@ -1,5 +1,6 @@
 import logging
 from dataclasses import dataclass
+from typing import cast
 
 import numpy as np
 from PyQt6.QtCore import Qt
@@ -20,6 +21,7 @@ from ert.gui.simulation.experiment_config_panel import ExperimentConfigPanel
 from ert.gui.suggestor import Suggestor
 from ert.mode_definitions import MANUAL_UPDATE_MODE
 from ert.run_models.manual_update import ManualUpdate
+from ert.storage import Ensemble
 from ert.storage.realization_storage_state import RealizationStorageState
 from ert.validation import EnsembleRealizationsArgument, ProperNameFormatArgument
 
@@ -108,7 +110,9 @@ class ManualUpdatePanel(ExperimentConfigPanel):
     def get_experiment_arguments(self) -> Arguments:
         return Arguments(
             mode=MANUAL_UPDATE_MODE,
-            ensemble_id=str(self._ensemble_selector.selected_ensemble.id),
+            ensemble_id=str(
+                cast(Ensemble, self._ensemble_selector.selected_ensemble).id
+            ),
             realizations=self._active_realizations_field.text(),
             target_ensemble=self._ensemble_format_model.getValue(),  # type: ignore
         )

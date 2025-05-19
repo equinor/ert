@@ -83,6 +83,7 @@ class EvaluateEnsemblePanel(ExperimentConfigPanel):
         )
 
     def get_experiment_arguments(self) -> Arguments:
+        assert self._ensemble_selector.selected_ensemble is not None
         return Arguments(
             mode=EVALUATE_ENSEMBLE_MODE,
             ensemble_id=str(self._ensemble_selector.selected_ensemble.id),

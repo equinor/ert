@@ -125,7 +125,9 @@ class RunWorkflowWidget(QWidget):
         )
 
         workflow = self.config.workflows[self.getCurrentWorkflowName()]
-        ensemble = self.source_ensemble_selector.currentData()
+        ensemble = self.storage.get_ensemble(
+            self.source_ensemble_selector.currentData()
+        )
         self._workflow_runner = WorkflowRunner(
             workflow=workflow,
             fixtures={
