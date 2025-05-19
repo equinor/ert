@@ -62,7 +62,6 @@ class EverestObjectivesConfig(ResponseConfig):
                 raise InvalidResponseFile(str(err)) from err
             return pl.DataFrame(
                 {
-                    "index": pl.Series(np.arange(len(data)), dtype=pl.UInt16),
                     "values": pl.Series(data, dtype=pl.Float32),
                 }
             )
