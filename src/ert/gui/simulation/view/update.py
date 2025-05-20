@@ -36,7 +36,6 @@ from ert.run_models import (
     RunModelUpdateEndEvent,
 )
 from ert.run_models.event import RunModelDataEvent, RunModelErrorEvent
-from ert.shared.status.utils import format_running_time
 
 
 class UpdateLogTable(QTableWidget):
