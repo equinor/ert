@@ -166,7 +166,7 @@ class UpdateWidget(QWidget):
         if seconds < 60:
             return f"{seconds:.1f}s"
 
-        secs = int(round(seconds))
+        secs = round(seconds)
         minutes, secs = divmod(secs, 60)
         if minutes < 60:
             return f"{minutes}m {secs}s"
