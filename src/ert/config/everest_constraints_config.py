@@ -10,12 +10,23 @@ from ert.config.parsing import ConfigKeys
 from ert.substitutions import substitute_runpath_name
 
 from .parsing import ConfigDict, ConfigValidationError
-from .response_config import InvalidResponseFile, ResponseConfig
+from .response_config import InvalidResponseFile, ResponseConfig, ResponseMetadata
 from .responses_index import responses_index
 
 
 @dataclass
 class EverestConstraintsConfig(ResponseConfig):
+    @property
+    def metadata(self) -> list[ResponseMetadata]:
+        return [
+            ResponseMetadata(
+                response_type=self.name,
+                response_key=response_key,
+                filter_on=None,
+            )
+            for response_key in self.keys
+        ]
+
     name: str = "everest_constraints"
     has_finalized_keys: bool = True
 
