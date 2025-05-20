@@ -190,7 +190,7 @@ class UpdateWidget(QWidget):
             case RunModelTimeEvent(remaining_time=remaining_time):
                 self._progress_msg.setText(
                     f"Estimated remaining time for current step "
-                    f"{format_running_time(int(remaining_time))}"
+                    f"{humanize.precisedelta(int(remaining_time))}"
                 )
 
     @Slot(RunModelErrorEvent)
