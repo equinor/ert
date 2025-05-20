@@ -9,7 +9,7 @@ import polars as pl
 from ert.substitutions import substitute_runpath_name
 
 from .parsing import ConfigDict, ConfigKeys, ConfigValidationError
-from .response_config import InvalidResponseFile, ResponseConfig
+from .response_config import InvalidResponseFile, ResponseConfig, ResponseMetadata
 from .responses_index import responses_index
 
 
@@ -17,6 +17,17 @@ from .responses_index import responses_index
 class EverestObjectivesConfig(ResponseConfig):
     name: str = "everest_objectives"
     has_finalized_keys: bool = True
+
+    @property
+    def metadata(self) -> list[ResponseMetadata]:
+        return [
+            ResponseMetadata(
+                response_type=self.name,
+                response_key=response_key,
+                filter_on=None,
+            )
+            for response_key in self.keys
+        ]
 
     @property
     def expected_input_files(self) -> list[str]:
