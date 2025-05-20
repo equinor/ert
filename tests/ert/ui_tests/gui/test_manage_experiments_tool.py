@@ -40,7 +40,7 @@ def test_design_matrix_in_manage_experiments_panel(
     copy_poly_case_with_design_matrix(design_dict, default_list)
     config = ErtConfig.from_file("poly.ert")
     notifier = ErtNotifier()
-    notifier.set_storage(storage)
+    notifier.set_storage(str(storage.path))
     assert config.ensemble_config.parameter_configuration == []
     assert config.analysis_config.design_matrix is not None
     ensemble = storage.create_experiment(
@@ -97,7 +97,7 @@ def test_init_prior(qtbot, storage):
     config = ErtConfig.from_file("poly.ert")
     config.random_seed = 1234
     notifier = ErtNotifier()
-    notifier.set_storage(storage)
+    notifier.set_storage(str(storage.path))
     ensemble = storage.create_experiment(
         parameters=config.ensemble_config.parameter_configuration,
         responses=config.ensemble_config.response_configuration,
@@ -122,7 +122,7 @@ def test_init_prior(qtbot, storage):
         RealizationStorageState.PARAMETERS_LOADED in s
         for s in ensemble.get_ensemble_state()
     )
-    assert ensemble.load_parameters_numpy(
+    assert notifier.current_ensemble.load_parameters_numpy(
         "COEFFS", np.arange(ensemble.ensemble_size)
     ).mean() == pytest.approx(0.0458710649708845)
 
@@ -131,7 +131,7 @@ def test_init_prior(qtbot, storage):
 def test_that_init_updates_the_info_tab(qtbot, storage):
     config = ErtConfig.from_file("poly.ert")
     notifier = ErtNotifier()
-    notifier.set_storage(storage)
+    notifier.set_storage(str(storage.path))
 
     ensemble = storage.create_experiment(
         parameters=config.ensemble_config.parameter_configuration,
@@ -201,7 +201,7 @@ def test_experiment_view(
     storage = snake_oil_storage
 
     notifier = ErtNotifier()
-    notifier.set_storage(storage)
+    notifier.set_storage(str(storage.path))
 
     tool = ManageExperimentsPanel(
         config, notifier, config.runpath_config.num_realizations
@@ -233,7 +233,7 @@ def test_ensemble_view(
     storage = snake_oil_storage
 
     notifier = ErtNotifier()
-    notifier.set_storage(storage)
+    notifier.set_storage(str(storage.path))
 
     tool = ManageExperimentsPanel(
         config, notifier, config.runpath_config.num_realizations
@@ -373,7 +373,7 @@ ANALYSIS_SET_VAR OBSERVATIONS AUTO_SCALE POLY_OBS1_*
 
     notifier = ErtNotifier()
     with open_storage(config.ens_path, mode="w") as storage:
-        notifier.set_storage(storage)
+        notifier.set_storage(str(storage.path))
 
         tool = ManageExperimentsPanel(
             config, notifier, config.runpath_config.num_realizations
@@ -419,7 +419,7 @@ def test_ensemble_observations_view_on_empty_ensemble(qtbot):
     config = ErtConfig.from_file("poly.ert")
     notifier = ErtNotifier()
     with open_storage(config.ens_path, mode="w") as storage:
-        notifier.set_storage(storage)
+        notifier.set_storage(str(storage.path))
         storage.create_experiment(
             responses=[SummaryConfig(keys=["*"])],
             observations={
@@ -482,7 +482,7 @@ def test_realization_view(
     storage = snake_oil_storage
 
     notifier = ErtNotifier()
-    notifier.set_storage(storage)
+    notifier.set_storage(str(storage.path))
 
     tool = ManageExperimentsPanel(
         config, notifier, config.runpath_config.num_realizations
