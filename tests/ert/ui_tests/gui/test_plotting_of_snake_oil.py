@@ -142,7 +142,7 @@ def test_that_all_plotter_filter_boxes_yield_expected_filter_results(
         gui = _setup_main_window(
             snake_oil_case_storage, args_mock, log_handler, storage
         )
-        gui.notifier.set_storage(storage)
+        gui.notifier.set_storage(str(storage.path))
         qtbot.addWidget(gui)
 
         button_plot_tool = gui.findChild(QToolButton, "button_Create_plot")

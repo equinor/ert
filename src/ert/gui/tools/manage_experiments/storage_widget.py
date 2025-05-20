@@ -104,7 +104,6 @@ class StorageWidget(QWidget):
 
         self._tree_view = QTreeView(self)
         storage_model = StorageModel(self._notifier.storage)
-        notifier.storage_changed.connect(storage_model.reloadStorage)
         notifier.ertChanged.connect(
             lambda: storage_model.reloadStorage(self._notifier.storage)
         )
@@ -172,23 +171,24 @@ class StorageWidget(QWidget):
                     )
                     return
             try:
-                ensemble = self._notifier.storage.create_experiment(
-                    parameters=(
-                        [*parameters_config, design_matrix_group]
-                        if design_matrix_group is not None
-                        else parameters_config
-                    ),
-                    responses=self._ert_config.ensemble_config.response_configuration,
-                    observations=self._ert_config.enkf_obs.datasets,
-                    name=create_experiment_dialog.experiment_name,
-                    templates=self._ert_config.ert_templates,
-                ).create_ensemble(
-                    name=create_experiment_dialog.ensemble_name,
-                    ensemble_size=self._ensemble_size,
-                    iteration=create_experiment_dialog.iteration,
-                )
+                with self._notifier.write_storage() as storage:
+                    ensemble = storage.create_experiment(
+                        parameters=(
+                            [*parameters_config, design_matrix_group]
+                            if design_matrix_group is not None
+                            else parameters_config
+                        ),
+                        responses=self._ert_config.ensemble_config.response_configuration,
+                        observations=self._ert_config.enkf_obs.datasets,
+                        name=create_experiment_dialog.experiment_name,
+                        templates=self._ert_config.ert_templates,
+                    ).create_ensemble(
+                        name=create_experiment_dialog.ensemble_name,
+                        ensemble_size=self._ensemble_size,
+                        iteration=create_experiment_dialog.iteration,
+                    )
+
                 self._notifier.set_current_ensemble_id(ensemble.id)
-                self._notifier.ertChanged.emit()
             except OSError as err:
                 logger.error(str(err))
                 Suggestor(

@@ -3,6 +3,7 @@ from __future__ import annotations
 import logging
 from collections.abc import Iterable
 from typing import TYPE_CHECKING
+from uuid import UUID
 
 from PyQt6.QtCore import Qt
 from PyQt6.QtCore import pyqtSignal as Signal
@@ -57,7 +58,6 @@ class EnsembleSelector(QComboBox):
             )
 
         notifier.ertChanged.connect(self.populate)
-        notifier.storage_changed.connect(self.populate)
 
         if notifier.is_storage_available:
             self.populate()
@@ -83,7 +83,7 @@ class EnsembleSelector(QComboBox):
             for ensemble in self._ensemble_list():
                 self.addItem(
                     f"{ensemble.experiment.name} : {ensemble.name}",
-                    userData=ensemble.id,
+                    userData=str(ensemble.id),
                 )
         except OSError as err:
             logger.error(str(err))
@@ -94,7 +94,9 @@ class EnsembleSelector(QComboBox):
             return
 
         current_index = (
-            self.findData(self.notifier.current_ensemble.id, Qt.ItemDataRole.UserRole)
+            self.findData(
+                str(self.notifier.current_ensemble.id), Qt.ItemDataRole.UserRole
+            )
             if self.notifier.current_ensemble is not None
             else -1
         )
@@ -126,7 +128,7 @@ class EnsembleSelector(QComboBox):
         return sorted(ensemble_list, key=lambda x: x.started_at, reverse=True)
 
     def _on_current_index_changed(self, index: int) -> None:
-        self.notifier.set_current_ensemble_id(self.itemData(index))
+        self.notifier.set_current_ensemble_id(UUID(self.itemData(index)))
 
-    def _on_global_current_ensemble_changed(self, data: Ensemble | None) -> None:
-        self.setCurrentIndex(max(self.findData(data, Qt.ItemDataRole.UserRole), 0))
+    def _on_global_current_ensemble_changed(self, data: UUID | None) -> None:
+        self.setCurrentIndex(max(self.findData(str(data), Qt.ItemDataRole.UserRole), 0))

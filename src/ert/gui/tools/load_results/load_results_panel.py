@@ -105,11 +105,14 @@ class LoadResultsPanel(QWidget):
         QApplication.setOverrideCursor(Qt.CursorShape.WaitCursor)
         messages: list[str] = []
         loaded: int = 0
-        with captured_logs(messages):
-            if ensemble := self._notifier.current_ensemble:
+        with captured_logs(messages), self._notifier.write_storage() as write_storage:
+            if self._notifier.current_ensemble is not None:
+                write_ensemble = write_storage.get_ensemble(
+                    self._notifier.current_ensemble.id
+                )
                 loaded = load_parameters_and_responses_from_runpath(
                     run_path_format=self._run_path_text.get_text,
-                    ensemble=ensemble,
+                    ensemble=write_ensemble,
                     active_realizations=active_realizations,
                 )
         QApplication.restoreOverrideCursor()

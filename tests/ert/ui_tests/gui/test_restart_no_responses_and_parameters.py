@@ -17,7 +17,7 @@ from ert.gui.simulation.experiment_panel import ExperimentPanel
 from ert.gui.tools.event_viewer import GUILogHandler
 from ert.run_models import EnsembleExperiment
 from ert.run_models.evaluate_ensemble import EvaluateEnsemble
-from ert.storage import Storage, open_storage
+from ert.storage import Storage
 from ert.validation import rangestring_to_mask
 
 from .conftest import get_child
@@ -69,10 +69,9 @@ def _open_main_window(
     # it will cause the following error:
     # RuntimeError: wrapped C/C++ object of type GUILogHandler
     handler = GUILogHandler()
-    with open_storage(config.ens_path, mode="w") as storage:
-        gui = _setup_main_window(config, args_mock, handler, storage)
-        yield gui, storage, config
-        gui.close()
+    gui = _setup_main_window(config, args_mock, handler, config.ens_path)
+    yield gui, config.ens_path, config
+    gui.close()
 
 
 @pytest.fixture
@@ -88,7 +87,7 @@ def open_gui(tmp_path, monkeypatch, run_experiment, tmp_path_factory):
         yield gui
 
 
-def test_sensitivity_restart(open_gui, qtbot, run_experiment):
+def test_sensitivity_restart(open_gui, run_experiment):
     """This runs a full manual update workflow, first running ensemble experiment
     where some of the realizations fail, then doing an update before running an
     ensemble experiment again to calculate the forecast of the update.

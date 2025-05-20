@@ -37,7 +37,7 @@ from ert.gui.tools.manage_experiments import ManageExperimentsPanel
 from ert.gui.tools.manage_experiments.storage_widget import AddWidget, StorageWidget
 from ert.plugins import ErtPluginContext
 from ert.run_models import EnsembleExperiment, MultipleDataAssimilation
-from ert.storage import Storage, open_storage
+from ert.storage import Storage
 from tests.ert.unit_tests.gui.simulation.test_run_path_dialog import (
     handle_run_path_dialog,
 )
@@ -87,11 +87,10 @@ def _open_main_window(path) -> Iterator[tuple[ErtMainWindow, Storage, ErtConfig]
     with ErtPluginContext():
         config = ErtConfig.with_plugins().from_file(path)
         with (
-            open_storage(config.ens_path, mode="w") as storage,
             add_gui_log_handler() as log_handler,
         ):
-            gui = _setup_main_window(config, args_mock, log_handler, storage)
-            yield gui, storage, config
+            gui = _setup_main_window(config, args_mock, log_handler, config.ens_path)
+            yield gui, config.ens_path, config
             gui.close()
 
 

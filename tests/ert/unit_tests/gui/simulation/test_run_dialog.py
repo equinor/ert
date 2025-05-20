@@ -39,7 +39,6 @@ from ert.run_models import (
     EnsembleSmoother,
     MultipleDataAssimilation,
 )
-from ert.storage import open_storage
 from tests.ert import SnapshotBuilder
 from tests.ert.ui_tests.gui.conftest import wait_for_attribute, wait_for_child
 from tests.ert.unit_tests.gui.simulation.test_run_path_dialog import (
@@ -122,14 +121,16 @@ def mock_set_env_key():
 
 
 @pytest.fixture
-def run_dialog(qtbot: QtBot, use_tmpdir, storage, mock_set_env_key):
+def run_dialog(qtbot: QtBot, use_tmpdir, mock_set_env_key):
     config_file = "minimal_config.ert"
     with open(config_file, "w", encoding="utf-8") as f:
         f.write("NUM_REALIZATIONS 1")
     args_mock = Mock()
     args_mock.config = config_file
     ert_config = ErtConfig.from_file(config_file)
-    gui = _setup_main_window(ert_config, args_mock, GUILogHandler(), storage)
+    gui = _setup_main_window(
+        ert_config, args_mock, GUILogHandler(), use_tmpdir / "storage"
+    )
     qtbot.addWidget(gui)
     experiment_panel = gui.findChild(ExperimentPanel)
     assert experiment_panel
@@ -585,7 +586,7 @@ def test_run_dialog_fm_label_show_correct_info(
 
 @pytest.mark.integration_test
 @pytest.mark.usefixtures("use_tmpdir")
-def test_that_exception_in_base_run_model_is_handled(qtbot: QtBot, storage):
+def test_that_exception_in_base_run_model_is_handled(qtbot: QtBot, use_tmpdir):
     config_file = "minimal_config.ert"
     with open(config_file, "w", encoding="utf-8") as f:
         f.write("NUM_REALIZATIONS 1")
@@ -598,7 +599,9 @@ def test_that_exception_in_base_run_model_is_handled(qtbot: QtBot, storage):
         "run_experiment",
         MagicMock(side_effect=ValueError("I failed :(")),
     ):
-        gui = _setup_main_window(ert_config, args_mock, GUILogHandler(), storage)
+        gui = _setup_main_window(
+            ert_config, args_mock, GUILogHandler(), use_tmpdir / "storage"
+        )
         qtbot.addWidget(gui)
         run_experiment = gui.findChild(QToolButton, name="run_experiment")
 
@@ -643,64 +646,61 @@ def test_that_stdout_and_stderr_buttons_react_to_file_content(
     args_mock = Mock()
     args_mock.config = "snake_oil.ert"
 
-    with (
-        open_storage(snake_oil_case.ens_path, mode="w") as storage,
-    ):
-        gui = _setup_main_window(snake_oil_case, args_mock, GUILogHandler(), storage)
-        experiment_panel = gui.findChild(ExperimentPanel)
-        assert experiment_panel
-        simulation_mode_combo = experiment_panel.findChild(QComboBox)
-        assert simulation_mode_combo
-        simulation_mode_combo.setCurrentText(EnsembleExperiment.name())
-        simulation_settings = gui.findChild(EnsembleExperimentPanel)
-        simulation_settings._experiment_name_field.setText("new_experiment_name")
+    gui = _setup_main_window(
+        snake_oil_case, args_mock, GUILogHandler(), snake_oil_case_storage.ens_path
+    )
+    experiment_panel = gui.findChild(ExperimentPanel)
+    assert experiment_panel
+    simulation_mode_combo = experiment_panel.findChild(QComboBox)
+    assert simulation_mode_combo
+    simulation_mode_combo.setCurrentText(EnsembleExperiment.name())
+    simulation_settings = gui.findChild(EnsembleExperimentPanel)
+    simulation_settings._experiment_name_field.setText("new_experiment_name")
 
-        run_experiment = experiment_panel.findChild(QToolButton, name="run_experiment")
-        assert run_experiment
+    run_experiment = experiment_panel.findChild(QToolButton, name="run_experiment")
+    assert run_experiment
 
-        QTimer.singleShot(
-            1000, lambda: handle_run_path_dialog(gui, qtbot, delete_run_path=True)
-        )
-        qtbot.mouseClick(run_experiment, Qt.MouseButton.LeftButton)
-        qtbot.waitUntil(lambda: gui.findChild(RunDialog) is not None, timeout=5000)
-        run_dialog = gui.findChild(RunDialog)
+    QTimer.singleShot(
+        1000, lambda: handle_run_path_dialog(gui, qtbot, delete_run_path=True)
+    )
+    qtbot.mouseClick(run_experiment, Qt.MouseButton.LeftButton)
+    qtbot.waitUntil(lambda: gui.findChild(RunDialog) is not None, timeout=5000)
+    run_dialog = gui.findChild(RunDialog)
 
-        qtbot.waitUntil(lambda: run_dialog.is_simulation_done() is True, timeout=100000)
+    qtbot.waitUntil(lambda: run_dialog.is_simulation_done() is True, timeout=100000)
 
-        fm_step_overview = run_dialog._fm_step_overview
-        qtbot.waitUntil(lambda: not fm_step_overview.isHidden(), timeout=20000)
-        realization_widget = run_dialog.findChild(RealizationWidget)
+    fm_step_overview = run_dialog._fm_step_overview
+    qtbot.waitUntil(lambda: not fm_step_overview.isHidden(), timeout=20000)
+    realization_widget = run_dialog.findChild(RealizationWidget)
 
-        click_pos = realization_widget._real_view.rectForIndex(
-            realization_widget._real_list_model.index(0, 0)
-        ).center()
+    click_pos = realization_widget._real_view.rectForIndex(
+        realization_widget._real_list_model.index(0, 0)
+    ).center()
 
-        with qtbot.waitSignal(realization_widget.itemClicked, timeout=30000):
-            qtbot.mouseClick(
-                realization_widget._real_view.viewport(),
-                Qt.MouseButton.LeftButton,
-                pos=click_pos,
-            )
-
-        fm_step_stdout = fm_step_overview.model().index(0, 4)
-        fm_step_stderr = fm_step_overview.model().index(0, 5)
-
-        assert fm_step_stdout.data(Qt.ItemDataRole.DisplayRole) == "View"
-        assert fm_step_stderr.data(Qt.ItemDataRole.DisplayRole) == "-"
-        assert (
-            fm_step_stdout.data(Qt.ItemDataRole.ForegroundRole) == Qt.GlobalColor.blue
-        )
-        assert fm_step_stderr.data(Qt.ItemDataRole.ForegroundRole) is None
-        assert fm_step_stdout.data(Qt.ItemDataRole.FontRole).underline()
-        assert fm_step_stderr.data(Qt.ItemDataRole.FontRole) is None
-
-        click_pos = fm_step_overview.visualRect(fm_step_stdout).center()
+    with qtbot.waitSignal(realization_widget.itemClicked, timeout=30000):
         qtbot.mouseClick(
-            fm_step_overview.viewport(), Qt.MouseButton.LeftButton, pos=click_pos
+            realization_widget._real_view.viewport(),
+            Qt.MouseButton.LeftButton,
+            pos=click_pos,
         )
-        file_dialog = run_dialog.findChild(FileDialog)
-        qtbot.waitUntil(file_dialog.isVisible, timeout=10000)
-        file_dialog.close()
+
+    fm_step_stdout = fm_step_overview.model().index(0, 4)
+    fm_step_stderr = fm_step_overview.model().index(0, 5)
+
+    assert fm_step_stdout.data(Qt.ItemDataRole.DisplayRole) == "View"
+    assert fm_step_stderr.data(Qt.ItemDataRole.DisplayRole) == "-"
+    assert fm_step_stdout.data(Qt.ItemDataRole.ForegroundRole) == Qt.GlobalColor.blue
+    assert fm_step_stderr.data(Qt.ItemDataRole.ForegroundRole) is None
+    assert fm_step_stdout.data(Qt.ItemDataRole.FontRole).underline()
+    assert fm_step_stderr.data(Qt.ItemDataRole.FontRole) is None
+
+    click_pos = fm_step_overview.visualRect(fm_step_stdout).center()
+    qtbot.mouseClick(
+        fm_step_overview.viewport(), Qt.MouseButton.LeftButton, pos=click_pos
+    )
+    file_dialog = run_dialog.findChild(FileDialog)
+    qtbot.waitUntil(file_dialog.isVisible, timeout=10000)
+    file_dialog.close()
 
 
 @pytest.mark.integration_test
@@ -710,7 +710,7 @@ def test_that_stdout_and_stderr_buttons_react_to_file_content(
     (True, False),
 )
 def test_that_design_matrix_show_parameters_button_is_visible(
-    design_matrix_entry, qtbot: QtBot, storage
+    design_matrix_entry, qtbot: QtBot, use_tmpdir
 ):
     xls_filename = "design_matrix.xlsx"
     design_matrix_df = pd.DataFrame(
@@ -736,7 +736,9 @@ def test_that_design_matrix_show_parameters_button_is_visible(
     args_mock.config = config_file
 
     ert_config = ErtConfig.from_file(config_file)
-    gui = _setup_main_window(ert_config, args_mock, GUILogHandler(), storage)
+    gui = _setup_main_window(
+        ert_config, args_mock, GUILogHandler(), use_tmpdir / "storage"
+    )
     experiment_panel = gui.findChild(ExperimentPanel)
     assert experiment_panel
 
@@ -856,7 +858,7 @@ def test_forward_model_overview_label_selected_on_tab_change(
     ],
 )
 def test_that_design_matrix_alters_num_realizations_field(
-    qtbot: QtBot, storage, experiment_mode, experiment_mode_panel
+    qtbot: QtBot, experiment_mode, experiment_mode_panel, use_tmpdir
 ):
     xls_filename = "design_matrix.xlsx"
     design_matrix_df = pd.DataFrame(
@@ -881,7 +883,9 @@ def test_that_design_matrix_alters_num_realizations_field(
     args_mock.config = config_file
 
     ert_config = ErtConfig.from_file(config_file)
-    gui = _setup_main_window(ert_config, args_mock, GUILogHandler(), storage)
+    gui = _setup_main_window(
+        ert_config, args_mock, GUILogHandler(), use_tmpdir / "storage"
+    )
     experiment_panel = gui.findChild(ExperimentPanel)
     assert experiment_panel
 

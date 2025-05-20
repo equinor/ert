@@ -142,26 +142,26 @@ class ManageExperimentsPanel(QTabWidget):
         def initialize_from_scratch(_: bool) -> None:
             parameters = parameter_model.getSelectedItems()
             active_realizations = [int(i) for i in members_model.getSelectedItems()]
-            if (
-                design_matrix is not None
-                and design_matrix_group is not None
-                and design_matrix_group.name in parameters
-            ):
-                parameters.remove(design_matrix_group.name)
-                save_design_matrix_to_ensemble(
-                    design_matrix.design_matrix_df,
-                    self.notifier.storage.get_ensemble(ensemble_selector.currentData()),
-                    active_realizations,
-                    design_group_name=design_matrix_group.name,
+
+            with self.notifier.write_storage() as storage:
+                if (
+                    design_matrix is not None
+                    and design_matrix_group is not None
+                    and design_matrix_group.name in parameters
+                ):
+                    parameters.remove(design_matrix_group.name)
+                    save_design_matrix_to_ensemble(
+                        design_matrix.design_matrix_df,
+                        storage.get_ensemble(ensemble_selector.currentData()),
+                        active_realizations,
+                        design_group_name=design_matrix_group.name,
+                    )
+                sample_prior(
+                    ensemble=storage.get_ensemble(ensemble_selector.currentData()),
+                    active_realizations=active_realizations,
+                    parameters=parameters,
+                    random_seed=self.ert_config.random_seed,
                 )
-            sample_prior(
-                ensemble=self.notifier.storage.get_ensemble(
-                    ensemble_selector.currentData()
-                ),
-                active_realizations=active_realizations,
-                parameters=parameters,
-                random_seed=self.ert_config.random_seed,
-            )
 
         def update_button_state() -> None:
             initialize_button.setEnabled(ensemble_selector.count() > 0)
@@ -169,12 +169,6 @@ class ManageExperimentsPanel(QTabWidget):
         update_button_state()
         ensemble_selector.ensemble_populated.connect(update_button_state)
         initialize_button.clicked.connect(initialize_from_scratch)
-        initialize_button.clicked.connect(
-            lambda _: self._storage_info_widget.setEnsemble(
-                self.notifier.storage.get_ensemble(ensemble_selector.currentData())
-            )
-        )
-        initialize_button.clicked.connect(ensemble_selector.populate)
 
         main_layout.addWidget(initialize_button, 1, Qt.AlignmentFlag.AlignRight)
         main_layout.addSpacing(10)
