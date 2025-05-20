@@ -10,7 +10,6 @@ from ert.config import ErtConfig
 from ert.gui.ertwidgets import CustomDialog, ListEditBox, PathChooser
 from ert.gui.main import GUILogHandler, _setup_main_window
 from ert.plugins import ErtPluginContext
-from ert.storage import open_storage
 
 from .conftest import (
     add_experiment_manually,
@@ -78,10 +77,7 @@ def test_rft_csv_export_plugin_exports_rft_data(
     output_file = Path("output.csv")
     with ErtPluginContext():
         ert_config = ErtConfig.with_plugins().from_file(args.config)
-    with (
-        open_storage(ert_config.ens_path, mode="w") as storage,
-    ):
-        gui = _setup_main_window(ert_config, args, GUILogHandler(), storage)
+        gui = _setup_main_window(ert_config, args, GUILogHandler(), ert_config.ens_path)
         qtbot.addWidget(gui)
 
         add_experiment_manually(qtbot, gui)
