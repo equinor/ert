@@ -1,6 +1,7 @@
 import asyncio
 import logging
 import shutil
+import time
 from functools import partial
 from pathlib import Path
 from unittest.mock import AsyncMock, MagicMock
@@ -425,6 +426,7 @@ async def test_log_info_from_garbled_exit_file(caplog):
 async def test_log_warnings_from_forward_model(
     realization, caplog, emitted_warning_str, should_be_captured
 ):
+    start_time = time.time()
     Path(realization.run_arg.runpath).mkdir()
     (Path(realization.run_arg.runpath) / "foo.stdout.0").write_text(
         emitted_warning_str, encoding="utf-8"
@@ -440,7 +442,7 @@ async def test_log_warnings_from_forward_model(
             stderr_file="foo.stderr",
         )
     ]
-    await log_warnings_from_forward_model(realization)
+    await log_warnings_from_forward_model(realization, start_time - 1)
     if should_be_captured:
         assert (
             "Realization 0 step foo.0 warned "
@@ -455,7 +457,27 @@ async def test_log_warnings_from_forward_model(
 
 
 @pytest.mark.usefixtures("use_tmpdir")
+async def test_old_warnings_are_not_logged(realization, caplog):
+    Path(realization.run_arg.runpath).mkdir()
+    (Path(realization.run_arg.runpath) / "foo.stdout.0").write_text(
+        "FutureWarning: Feature XYZ is deprecated", encoding="utf-8"
+    )
+    realization.fm_steps = [
+        ForwardModelStep(
+            name="foo",
+            executable="foo",
+            stdout_file="foo.stdout",
+            stderr_file="foo.stderr",
+        )
+    ]
+    job_start_time = time.time() + 1  # Pretend that the job started in the future
+    await log_warnings_from_forward_model(realization, job_start_time)
+    assert "FutureWarning: Feature XYZ" not in caplog.text
+
+
+@pytest.mark.usefixtures("use_tmpdir")
 async def test_long_warning_from_forward_model_is_truncated(realization, caplog):
+    start_time = time.time()
     emitted_warning_str = "FutureWarning: Feature XYZ is deprecated " + " ".join(
         ["foo bar"] * 2000
     )
@@ -471,7 +493,7 @@ async def test_long_warning_from_forward_model_is_truncated(realization, caplog)
             stdout_file="foo.stdout",
         )
     ]
-    await log_warnings_from_forward_model(realization)
+    await log_warnings_from_forward_model(realization, start_time - 1)
     for line in caplog.text.splitlines():
         if "Realization 0 step foo.0 warned" in line:
             assert len(line) <= 2048 + 91
@@ -481,6 +503,7 @@ async def test_long_warning_from_forward_model_is_truncated(realization, caplog)
 async def test_deduplication_of_repeated_warnings_from_forward_model(
     realization, caplog
 ):
+    start_time = time.time()
     emitted_warning_str = "FutureWarning: Feature XYZ is deprecated"
     Path(realization.run_arg.runpath).mkdir()
     (Path(realization.run_arg.runpath) / "foo.stdout.0").write_text(
@@ -494,7 +517,7 @@ async def test_deduplication_of_repeated_warnings_from_forward_model(
             stdout_file="foo.stdout",
         )
     ]
-    await log_warnings_from_forward_model(realization)
+    await log_warnings_from_forward_model(realization, start_time - 1)
     assert (
         f"Realization 0 step foo.0 warned 3 time(s) in stdout: {emitted_warning_str}"
         in caplog.text
