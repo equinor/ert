@@ -295,7 +295,12 @@ def test_websocket_multiple_connections_one_fails(monkeypatch, setup_client):
     ) as websocket:
         event = websocket.receive_json()
     assert len(subscribers) == 1
-    assert event == {"event_type": "EndEvent", "failed": False, "msg": "Complete"}
+    assert event == {
+        "event_type": "EndEvent",
+        "failed": False,
+        "msg": "Complete",
+        "warnings": "",
+    }
 
 
 def test_websocket_multiple_events_in_queue(monkeypatch, setup_client):
