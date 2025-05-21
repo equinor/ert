@@ -550,6 +550,16 @@ class LocalEnsemble(BaseMode):
         config = self.experiment.parameter_configuration[group]
         return config.load_parameters(self, realizations)
 
+    def save_parameters_numpy(
+        self,
+        parameters: npt.NDArray[np.float64],
+        param_group: str,
+        iens_active_index: npt.NDArray[np.int_],
+    ) -> None:
+        config_node = self.experiment.parameter_configuration[param_group]
+        for i, realization in enumerate(iens_active_index):
+            config_node.save_parameters(self, int(realization), parameters[:, i])
+
     def load_cross_correlations(self) -> xr.Dataset:
         input_path = self.mount_point / "corr_XY.nc"
 

@@ -325,19 +325,6 @@ class _OutlierColumns(StrEnum):
     scaled_std = "scaled_obs_error"
 
 
-def _save_param_ensemble_array_to_disk(
-    ensemble: Ensemble,
-    param_ensemble_array: npt.NDArray[np.float64],
-    param_group: str,
-    iens_active_index: npt.NDArray[np.int_],
-) -> None:
-    config_node = ensemble.experiment.parameter_configuration[param_group]
-    for i, realization in enumerate(iens_active_index):
-        config_node.save_parameters(
-            ensemble, int(realization), param_ensemble_array[:, i]
-        )
-
-
 def _all_parameters(
     ensemble: Ensemble,
     iens_active_index: npt.NDArray[np.int_],
