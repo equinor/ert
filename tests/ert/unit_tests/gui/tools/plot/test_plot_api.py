@@ -283,7 +283,6 @@ def test_plot_api_handles_empty_gen_kw(api_and_storage):
         xr.Dataset(
             {
                 "values": ("names", [1.0]),
-                "transformed_values": ("names", [1.0]),
                 "names": [name],
             }
         ),
@@ -291,7 +290,7 @@ def test_plot_api_handles_empty_gen_kw(api_and_storage):
     assert api.data_for_key(str(ensemble.id), key + ":" + name).to_csv() == dedent(
         """\
         Realization,0
-        1,1.0
+        1,0.1
         """
     )
 
@@ -317,7 +316,6 @@ def test_plot_api_handles_non_existant_gen_kw(api_and_storage):
         xr.Dataset(
             {
                 "values": ("names", [1.0]),
-                "transformed_values": ("names", [1.0]),
                 "names": ["key"],
             }
         ),

@@ -302,7 +302,6 @@ class GenKwConfig(ParameterConfig):
         return xr.Dataset(
             {
                 "values": ("names", parameter_value),
-                "transformed_values": ("names", self.transform(parameter_value)),
                 "names": keys,
             }
         )
@@ -327,7 +326,7 @@ class GenKwConfig(ParameterConfig):
         real_nr: int,
         ensemble: Ensemble,
     ) -> dict[str, dict[str, float | str]]:
-        array = ensemble.load_parameters(self.name, real_nr)["transformed_values"]
+        array = ensemble.load_parameters(self.name, real_nr, transformed=True)["values"]
         assert isinstance(array, xr.DataArray)
         if not array.size == len(self.transform_functions):
             raise ValueError(
@@ -374,10 +373,6 @@ class GenKwConfig(ParameterConfig):
         ds = xr.Dataset(
             {
                 "values": ("names", data),
-                "transformed_values": (
-                    "names",
-                    self.transform(data),
-                ),
                 "names": [e.name for e in self.transform_functions],
             }
         )
