@@ -368,7 +368,7 @@ def log_info_from_exit_file(exit_file_path: Path) -> None:
 
 
 async def log_warnings_from_forward_model(
-    real: Realization, scheduler: Scheduler
+    real: Realization, scheduler: Scheduler | None = None
 ) -> None:
     """Parse all stdout and stderr files from running the forward model
     for anything that looks like a Warning, and log it.
@@ -402,7 +402,8 @@ async def log_warnings_from_forward_model(
                 f"warned {counter} time(s) in {filetype}: {line}"
             )
             logger.warning(warning)
-            scheduler.post_simulation_warnings.append(warning)
+            if scheduler:
+                scheduler.post_simulation_warnings.append(warning)
 
     with suppress(KeyError):
         runpath = Path(real.run_arg.runpath)
