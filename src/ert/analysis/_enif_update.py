@@ -23,7 +23,6 @@ from ._update_commons import (
     _all_parameters,
     _copy_unupdated_parameters,
     _preprocess_observations_and_responses,
-    _save_param_ensemble_array_to_disk,
     noop_progress_callback,
 )
 from .event import (
@@ -230,8 +229,7 @@ def analysis_EnIF(
         param_group_indices = np.arange(
             parameters_updated, parameters_updated + parameters_to_update
         )
-        _save_param_ensemble_array_to_disk(
-            target_ensemble,
+        target_ensemble.save_parameters_numpy(
             X_full[param_group_indices, :],
             param_group,
             iens_active_index,

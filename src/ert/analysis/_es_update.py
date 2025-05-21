@@ -29,7 +29,6 @@ from ._update_commons import (
     _copy_unupdated_parameters,
     _OutlierColumns,
     _preprocess_observations_and_responses,
-    _save_param_ensemble_array_to_disk,
     noop_progress_callback,
 )
 from .event import (
@@ -369,8 +368,8 @@ def analysis_ES(
         progress_callback(AnalysisStatusEvent(msg=log_msg))
         start = time.time()
 
-        _save_param_ensemble_array_to_disk(
-            target_ensemble, param_ensemble_array, param_group, iens_active_index
+        target_ensemble.save_parameters_numpy(
+            param_ensemble_array, param_group, iens_active_index
         )
         logger.info(
             f"Storing data for {param_group} completed in "

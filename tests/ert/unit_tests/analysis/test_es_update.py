@@ -17,7 +17,6 @@ from ert.analysis._update_commons import (
     _compute_observation_statuses,
     _OutlierColumns,
     _preprocess_observations_and_responses,
-    _save_param_ensemble_array_to_disk,
 )
 from ert.analysis.event import AnalysisCompleteEvent, AnalysisErrorEvent
 from ert.config import (
@@ -749,9 +748,7 @@ def test_temporary_parameter_storage_with_inactive_fields(
         name="post",
     )
 
-    _save_param_ensemble_array_to_disk(
-        ensemble, param_ensemble_array, param_group, realization_list
-    )
+    ensemble.save_parameters_numpy(param_ensemble_array, param_group, realization_list)
     for iens in range(prior_ensemble.ensemble_size):
         ds = xr.open_dataset(
             ensemble._path / f"realization-{iens}" / f"{param_group}.nc", engine="scipy"
