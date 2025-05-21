@@ -140,7 +140,7 @@ class Job:
                 timeout_task = asyncio.create_task(self._max_runtime_task())
             if not self._scheduler.warnings_extracted:
                 self._scheduler.warnings_extracted = True
-                await log_warnings_from_forward_model(self.real)
+                await log_warnings_from_forward_model(self.real, self._scheduler)
 
             await self.returncode
 
@@ -367,7 +367,9 @@ def log_info_from_exit_file(exit_file_path: Path) -> None:
     )
 
 
-async def log_warnings_from_forward_model(real: Realization) -> None:
+async def log_warnings_from_forward_model(
+    real: Realization, scheduler: Scheduler
+) -> None:
     """Parse all stdout and stderr files from running the forward model
     for anything that looks like a Warning, and log it.
 
@@ -394,12 +396,13 @@ async def log_warnings_from_forward_model(real: Realization) -> None:
         for line in file.read_text(encoding="utf-8").splitlines():
             if line_contains_warning(line):
                 captured.append(line[:max_length])
-
         for line, counter in Counter(captured).items():
-            logger.warning(
+            warning = (
                 f"Realization {iens} step {step.name}.{step_idx} "
                 f"warned {counter} time(s) in {filetype}: {line}"
             )
+            logger.warning(warning)
+            scheduler.post_simulation_warnings.append(warning)
 
     with suppress(KeyError):
         runpath = Path(real.run_arg.runpath)

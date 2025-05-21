@@ -93,6 +93,7 @@ class Scheduler:
         self._completed_jobs_num: int = 0
         self.completed_jobs: asyncio.Queue[int] = asyncio.Queue()
         self.warnings_extracted: bool = False
+        self.post_simulation_warnings: list[str] = []
 
         self._cancelled = False
         if max_submit < 0:
