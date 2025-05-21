@@ -468,22 +468,23 @@ class RunDialog(QFrame):
         )
         self._notifier.set_is_simulation_running(False)
         self.flag_simulation_done = True
-        if failed:
+        if failed or warnings:
             self.update_total_progress(1.0, "Failed")
 
             self._progress_widget.set_all_failed()
 
             self.fail_msg_box = Suggestor(
-                errors=[ErrorInfo(msg)],
+                errors=[ErrorInfo(msg)] if failed else [],
                 warnings=[WarningInfo(warning) for warning in warnings.split("\n")]
                 if warnings
                 else [],
                 deprecations=[],
                 continue_action=None,
-                widget_info="""\
-                    <p style="font-size: 28px;">ERT experiment failed!</p>
-                    <p>These errors were detected:</p>
-                """,
+                widget_info=(
+                    "<p style='font-size: 28px;'>ERT experiment"
+                    f"{' failed!' if failed else ' succeeded with warnings:'}</p>"
+                    f"{'<p>These errors were detected:</p>' if failed else ''}"
+                ),
             )
             self.fail_msg_box.show()
         else:
