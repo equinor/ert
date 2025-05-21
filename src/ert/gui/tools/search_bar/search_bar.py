@@ -1,6 +1,13 @@
 from PyQt6.QtCore import pyqtSlot as Slot
-from PyQt6.QtGui import QBrush, QColor, QTextCharFormat, QTextCursor
-from PyQt6.QtWidgets import QBoxLayout, QHBoxLayout, QLabel, QLineEdit, QPlainTextEdit
+from PyQt6.QtGui import QBrush, QColor, QTextCharFormat, QTextCursor, QTextDocument
+from PyQt6.QtWidgets import (
+    QBoxLayout,
+    QDialogButtonBox,
+    QHBoxLayout,
+    QLabel,
+    QLineEdit,
+    QPlainTextEdit,
+)
 
 
 class SearchBar(QLineEdit):
@@ -11,42 +18,34 @@ class SearchBar(QLineEdit):
         self.textChanged.connect(self.search_bar_changed)
         self._cursor = self._text_box.textCursor()
 
-    @Slot(str)
-    def search_bar_changed(self, value: str) -> None:
-        self.clear_selection()
-        if not value:
-            return
-        text = self._text_box.toPlainText()
-        text_format = QTextCharFormat()
-        text_format.setBackground(QBrush(QColor("yellow")))
+        dialog_buttons = QDialogButtonBox(self)
 
-        if value in text:
-            first_instance_pos = text.find(value)
-            self.select_text(first_instance_pos, len(value))
-            self._cursor.setPosition(0)
-            while not self._cursor.atEnd():
-                position = self._cursor.position()
-                if (
-                    position < len(text)
-                    and text[position] == value[0]
-                    and text[position : position + len(value)] == value
-                ):
-                    # Check if the entire term matches
-                    self._cursor.movePosition(
-                        QTextCursor.MoveOperation.Right,
-                        QTextCursor.MoveMode.KeepAnchor,
-                        len(value),
-                    )
-                    self._cursor.mergeCharFormat(text_format)
-                self._cursor.movePosition(
-                    QTextCursor.MoveOperation.NextCharacter,
-                    QTextCursor.MoveMode.MoveAnchor,
-                )
+        self._find_next_button = dialog_buttons.addButton(
+            "Find next",
+            QDialogButtonBox.ButtonRole.ActionRole,
+        )
+
+        self._find_next_button.clicked.connect(self._find_next)  # type: ignore
+
+        self._highlight_all_button = dialog_buttons.addButton(
+            "Highlight all",
+            QDialogButtonBox.ButtonRole.ActionRole,
+        )
+
+        self._highlight_all_button.clicked.connect(self._highlight_all)  # type: ignore
+
+    @Slot(str)
+    def search_bar_changed(self, search_term: str) -> None:
+        self.clear_selection()
+        self._text_box.moveCursor(QTextCursor.MoveOperation.Start)
+        self._text_box.find(search_term, QTextDocument.FindFlag.FindCaseSensitively)
 
     def get_layout(self) -> QBoxLayout:
         layout = QHBoxLayout()
         layout.addWidget(self._label)
         layout.addWidget(self)
+        layout.addWidget(self._find_next_button)
+        layout.addWidget(self._highlight_all_button)
         return layout
 
     def select_text(self, start: int, length: int) -> None:
@@ -66,3 +65,41 @@ class SearchBar(QLineEdit):
         self._cursor.mergeCharFormat(text_format)
         self._cursor.clearSelection()
         self._text_box.setTextCursor(self._cursor)
+
+    def _highlight_all(self) -> None:
+        self.clear_selection()
+        search_term = self.text()
+        if not search_term:
+            return
+
+        # The edit block makes the highlight operation faster
+        self._cursor.beginEditBlock()
+
+        # Highlight all occurrences
+        text = self._text_box.toPlainText()
+        highlight_format = QTextCharFormat()
+        highlight_format.setBackground(QBrush(QColor("yellow")))
+
+        start = 0
+        while (start := text.find(search_term, start)) != -1:
+            self._cursor.setPosition(start)
+            self._cursor.movePosition(
+                QTextCursor.MoveOperation.Right,
+                QTextCursor.MoveMode.KeepAnchor,
+                len(search_term),
+            )
+            self._cursor.mergeCharFormat(highlight_format)
+            self._cursor.clearSelection()
+            start += len(search_term)
+
+        self._cursor.endEditBlock()
+
+    def _find_next(self) -> None:
+        search_term = self.text()
+        found = self._text_box.find(
+            search_term, QTextDocument.FindFlag.FindCaseSensitively
+        )
+        # If not found, move the cursor to the start and try again
+        if not found:
+            self._text_box.moveCursor(QTextCursor.MoveOperation.Start)
+            self._text_box.find(search_term, QTextDocument.FindFlag.FindCaseSensitively)
