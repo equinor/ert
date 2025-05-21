@@ -524,7 +524,10 @@ class LocalEnsemble(BaseMode):
         return xr.combine_nested(datasets, concat_dim="realizations")
 
     def load_parameters(
-        self, group: str, realizations: int | npt.NDArray[np.int_] | None = None
+        self,
+        group: str,
+        realizations: int | npt.NDArray[np.int_] | None = None,
+        transformed: bool = False,
     ) -> xr.Dataset:
         """
         Load parameters for group and realizations into xarray Dataset.
@@ -535,6 +538,8 @@ class LocalEnsemble(BaseMode):
             Name of parameter group to load.
         realizations : {int, ndarray of int}, optional
             Realization indices to load. If None, all realizations are loaded.
+        transformed : bool
+            If True, the parameters are transformed using the parameter transformation
 
         Returns
         -------
@@ -542,7 +547,22 @@ class LocalEnsemble(BaseMode):
             Loaded xarray Dataset with parameters.
         """
 
-        return self._load_dataset(group, realizations)
+        ds = self._load_dataset(group, realizations)
+        if transformed:
+            config = self.experiment.parameter_configuration[group]
+            assert isinstance(config, GenKwConfig)
+            transformed_array = xr.apply_ufunc(
+                config.transform,
+                ds["values"],
+                input_core_dims=[["names"]],
+                output_core_dims=[["names"]],
+                vectorize=True,
+            )
+            ds = xr.Dataset(
+                {"values": transformed_array},
+                coords=ds.coords,
+            )
+        return ds
 
     def load_parameters_numpy(
         self, group: str, realizations: npt.NDArray[np.int_]
@@ -704,7 +724,7 @@ class LocalEnsemble(BaseMode):
             )
             realizations = np.flatnonzero(ens_mask)
 
-        dataframes = []
+        dataframes: list[pd.DataFrame] = []
         gen_kws = [
             config
             for config in self.experiment.parameter_configuration.values()
@@ -714,7 +734,9 @@ class LocalEnsemble(BaseMode):
             gen_kws = [config for config in gen_kws if config.name == group]
         for key in gen_kws:
             with contextlib.suppress(KeyError):
-                da = self.load_parameters(key.name, realizations)["transformed_values"]
+                da = self.load_parameters(key.name, realizations, transformed=True)[
+                    "values"
+                ]
                 assert isinstance(da, xr.DataArray)
                 da["names"] = np.char.add(f"{key.name}:", da["names"].astype(np.str_))
                 df = da.to_dataframe().unstack(level="names")

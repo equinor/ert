@@ -163,7 +163,6 @@ def save_design_matrix_to_ensemble(
         ds = xr.Dataset(
             {
                 "values": ("names", list(row.values)),
-                "transformed_values": ("names", list(row.values)),
                 "names": list(row.keys()),
             }
         )

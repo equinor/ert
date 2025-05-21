@@ -580,7 +580,6 @@ def test_smoother_snapshot_alpha(
             xr.Dataset(
                 {
                     "values": ("names", [data]),
-                    "transformed_values": ("names", [data]),
                     "names": ["KEY_1"],
                 }
             ),
@@ -1068,7 +1067,6 @@ def test_gen_data_obs_data_mismatch(storage, uniform_parameter):
             xr.Dataset(
                 {
                     "values": ("names", [data]),
-                    "transformed_values": ("names", [data]),
                     "names": ["KEY_1"],
                 }
             ),
@@ -1131,7 +1129,6 @@ def test_gen_data_missing(storage, uniform_parameter, obs):
             xr.Dataset(
                 {
                     "values": ("names", [data]),
-                    "transformed_values": ("names", [data]),
                     "names": ["KEY_1"],
                 }
             ),
@@ -1206,7 +1203,6 @@ def test_update_subset_parameters(storage, uniform_parameter, obs):
             xr.Dataset(
                 {
                     "values": ("names", [data]),
-                    "transformed_values": ("names", [data]),
                     "names": ["KEY_1"],
                 }
             ),
@@ -1217,7 +1213,6 @@ def test_update_subset_parameters(storage, uniform_parameter, obs):
             xr.Dataset(
                 {
                     "values": ("names", [data]),
-                    "transformed_values": ("names", [data]),
                     "names": ["KEY_1"],
                 }
             ),
