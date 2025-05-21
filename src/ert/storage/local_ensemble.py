@@ -544,6 +544,12 @@ class LocalEnsemble(BaseMode):
 
         return self._load_dataset(group, realizations)
 
+    def load_parameters_numpy(
+        self, group: str, realizations: npt.NDArray[np.int_]
+    ) -> npt.NDArray[np.float64]:
+        config = self.experiment.parameter_configuration[group]
+        return config.load_parameters(self, realizations)
+
     def load_cross_correlations(self) -> xr.Dataset:
         input_path = self.mount_point / "corr_XY.nc"
 

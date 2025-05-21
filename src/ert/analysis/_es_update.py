@@ -27,7 +27,6 @@ from ert.config import (
 from ._update_commons import (
     ErtAnalysisError,
     _copy_unupdated_parameters,
-    _load_param_ensemble_array,
     _OutlierColumns,
     _preprocess_observations_and_responses,
     _save_param_ensemble_array_to_disk,
@@ -296,8 +295,8 @@ def analysis_ES(
         cross_correlations_accumulator.append(cross_correlations_of_batch)
 
     for param_group in parameters:
-        param_ensemble_array = _load_param_ensemble_array(
-            source_ensemble, param_group, iens_active_index
+        param_ensemble_array = source_ensemble.load_parameters_numpy(
+            param_group, iens_active_index
         )
         if module.localization:
             config_node = source_ensemble.experiment.parameter_configuration[
