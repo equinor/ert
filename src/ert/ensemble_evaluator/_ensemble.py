@@ -101,7 +101,7 @@ class LegacyEnsemble:
     _queue_config: QueueConfig
     min_required_realizations: int
     id_: str
-    post_simulation_warnings: list[str] = list
+    post_simulation_warnings: list[str] | None = None
 
     def __post_init__(self) -> None:
         self._scheduler: Scheduler | None = None

@@ -71,7 +71,7 @@ class Scheduler:
         ens_id: str | None = None,
         ee_uri: str | None = None,
         ee_token: str | None = None,
-        post_simulation_warnings: list[str] = list,
+        post_simulation_warnings: list[str] | None = None,
     ) -> None:
         self.driver = driver
         self._ensemble_evaluator_queue = ensemble_evaluator_queue

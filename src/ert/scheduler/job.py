@@ -402,7 +402,7 @@ async def log_warnings_from_forward_model(
                 f"warned {counter} time(s) in {filetype}: {line}"
             )
             logger.warning(warning)
-            if scheduler:
+            if scheduler and isinstance(scheduler.post_simulation_warnings, list):
                 scheduler.post_simulation_warnings.append(warning)
 
     with suppress(KeyError):
