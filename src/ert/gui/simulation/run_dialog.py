@@ -67,7 +67,7 @@ from ert.shared.status.utils import (
     get_mount_directory,
 )
 
-from ...config import ErrorInfo
+from ...config import ErrorInfo, WarningInfo
 from ..suggestor import Suggestor
 from .queue_emitter import QueueEmitter
 from .view import DiskSpaceWidget, ProgressWidget, RealizationWidget, UpdateWidget
@@ -189,7 +189,7 @@ class FMStepOverview(QTableView):
 
 
 class RunDialog(QFrame):
-    simulation_done = Signal(bool, str)
+    simulation_done = Signal(bool, str, str)
     progress_update_event = Signal(dict, int)
     restart_experiment = Signal()
     _RUN_TIME_POLL_RATE = 1000
@@ -457,8 +457,8 @@ class RunDialog(QFrame):
             self._run_model_api.cancel()
         return kill_job
 
-    @Slot(bool, str)
-    def _on_simulation_done(self, failed: bool, msg: str) -> None:
+    @Slot(bool, str, str)
+    def _on_simulation_done(self, failed: bool, msg: str, warnings: str) -> None:
         self.processing_animation.setVisible(False)
         self.processing_stopped.setVisible(True)
         self.kill_button.setEnabled(False)
@@ -475,7 +475,9 @@ class RunDialog(QFrame):
 
             self.fail_msg_box = Suggestor(
                 errors=[ErrorInfo(msg)],
-                warnings=[],
+                warnings=[WarningInfo(warning) for warning in warnings.split("\n")]
+                if warnings
+                else [],
                 deprecations=[],
                 continue_action=None,
                 widget_info="""\
@@ -510,8 +512,8 @@ class RunDialog(QFrame):
     def _on_event(self, event: object) -> None:
         model = self._snapshot_model
         match event:
-            case EndEvent(failed=failed, msg=msg):
-                self.simulation_done.emit(failed, msg)
+            case EndEvent(failed=failed, msg=msg, warnings=warnings):
+                self.simulation_done.emit(failed, msg, warnings)
                 self._ticker.stop()
             case FullSnapshotEvent(
                 status_count=status_count, realization_count=realization_count

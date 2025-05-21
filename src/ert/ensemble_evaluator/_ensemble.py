@@ -101,6 +101,7 @@ class LegacyEnsemble:
     _queue_config: QueueConfig
     min_required_realizations: int
     id_: str
+    post_simulation_warnings: list[str] = list
 
     def __post_init__(self) -> None:
         self._scheduler: Scheduler | None = None
@@ -221,6 +222,7 @@ class LegacyEnsemble:
                 ens_id=self.id_,
                 ee_uri=self._config.get_uri(),
                 ee_token=self._config.token,
+                post_simulation_warnings=self.post_simulation_warnings,
             )
 
             await self.send_event(EnsembleStarted(ensemble=self.id_))

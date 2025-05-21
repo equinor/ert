@@ -71,6 +71,7 @@ class Scheduler:
         ens_id: str | None = None,
         ee_uri: str | None = None,
         ee_token: str | None = None,
+        post_simulation_warnings: list[str] = list,
     ) -> None:
         self.driver = driver
         self._ensemble_evaluator_queue = ensemble_evaluator_queue
@@ -93,7 +94,7 @@ class Scheduler:
         self._completed_jobs_num: int = 0
         self.completed_jobs: asyncio.Queue[int] = asyncio.Queue()
         self.warnings_extracted: bool = False
-        self.post_simulation_warnings: list[str] = []
+        self.post_simulation_warnings = post_simulation_warnings
 
         self._cancelled = False
         if max_submit < 0:

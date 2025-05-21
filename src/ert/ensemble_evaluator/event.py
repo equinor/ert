@@ -47,3 +47,4 @@ class EndEvent(BaseModel):
     event_type: Literal["EndEvent"] = "EndEvent"
     failed: bool
     msg: str
+    warnings: str
