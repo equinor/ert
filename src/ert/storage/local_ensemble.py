@@ -577,7 +577,9 @@ class LocalEnsemble(BaseMode):
             if transformed:
                 cols_to_transform = [col for col in df.columns if col != "realization"]
                 real_col = df["realization"]
-                df_transformed = df.drop("realization").map_rows(config.transform)
+                df_transformed = df.drop("realization").map_rows(
+                    lambda row: list(config.transform(row))
+                )
                 df_transformed.columns = cols_to_transform
                 df = df_transformed.insert_column(0, real_col)
             return df

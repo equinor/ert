@@ -492,15 +492,11 @@ def test_update_snapshot(
     )
 
     sim_gen_kw = list(
-        prior_ens.load_parameters_pl("SNAKE_OIL_PARAM", 0, all_data=False)
-        .to_numpy()
-        .flatten()
+        prior_ens.load_parameters_numpy("SNAKE_OIL_PARAM", np.array([0])).flatten()
     )
 
     target_gen_kw = list(
-        posterior_ens.load_parameters_pl("SNAKE_OIL_PARAM", 0, all_data=False)
-        .to_numpy()
-        .flatten()
+        posterior_ens.load_parameters_numpy("SNAKE_OIL_PARAM", np.array([0])).flatten()
     )
 
     # Check that prior is not equal to posterior after updationg
