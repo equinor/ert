@@ -249,7 +249,6 @@ class ExperimentPanel(QWidget):
         try:
             model = create_model(
                 self.config,
-                self._notifier.storage,
                 args,
                 event_queue,
             )

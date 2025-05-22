@@ -46,5 +46,5 @@ def test_site_config_with_substitutions(monkeypatch, copy_math_func_test_data_to
     config = EverestConfig.load_file("config_minimal.yml")
     everest_run_model = EverestRunModel.create(config)
 
-    assert ("<NUM_CPU>", "1") in everest_run_model._substitutions.items()
-    assert everest_run_model._env_vars["HOW_MANY_CPU"] == "1"
+    assert ("<NUM_CPU>", "1") in everest_run_model.substitutions.items()
+    assert everest_run_model.env_vars["HOW_MANY_CPU"] == "1"

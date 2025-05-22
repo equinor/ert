@@ -1,16 +1,8 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from pydantic import Field
 
-from ert.config import ErtConfig
 from ert.run_models import EnsembleExperiment
-
-if TYPE_CHECKING:
-    from queue import SimpleQueue
-
-    from ert.storage import Storage
-
-    from .base_run_model import StatusEvents
 
 SINGLE_TEST_RUN_GROUP = "Forward model evaluation"
 
@@ -23,27 +15,8 @@ class SingleTestRun(EnsembleExperiment):
     2) Only a <b>single realization</b> (realization-0) is run<br>
     """
 
-    def __init__(
-        self,
-        ensemble_name: str,
-        experiment_name: str,
-        random_seed: int,
-        config: ErtConfig,
-        storage: Storage,
-        status_queue: SimpleQueue[StatusEvents],
-    ) -> None:
-        local_queue_config = config.queue_config.create_local_copy()
-        super().__init__(
-            ensemble_name=ensemble_name,
-            experiment_name=experiment_name,
-            active_realizations=[True],
-            minimum_required_realizations=1,
-            config=config,
-            storage=storage,
-            queue_config=local_queue_config,
-            status_queue=status_queue,
-            random_seed=random_seed,
-        )
+    active_realizations: list[bool] = Field(default_factory=lambda: [True])
+    minimum_required_realizations: int = 1
 
     @classmethod
     def name(cls) -> str:
