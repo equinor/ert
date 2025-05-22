@@ -52,14 +52,17 @@ def plot_figure(qtbot, heat_equation_storage, snake_oil_case_storage, request):
         storage_config = heat_equation_storage
         args_mock.config = "config.ert"
 
+    # For dark storage not to hang
+    open_storage(storage_config.ens_path, mode="w")
     log_handler = GUILogHandler()
     with (
         StorageService.init_service(
             project=storage_config.ens_path,
         ),
-        open_storage(storage_config.ens_path) as storage,
     ):
-        gui = _setup_main_window(storage_config, args_mock, log_handler, storage)
+        gui = _setup_main_window(
+            storage_config, args_mock, log_handler, storage_config.ens_path
+        )
         qtbot.addWidget(gui)
 
         button_plot_tool = gui.findChild(QToolButton, "button_Create_plot")
@@ -137,12 +140,13 @@ def test_that_all_plotter_filter_boxes_yield_expected_filter_results(
         StorageService.init_service(
             project=snake_oil_case_storage.ens_path,
         ),
-        open_storage(snake_oil_case_storage.ens_path) as storage,
     ):
         gui = _setup_main_window(
-            snake_oil_case_storage, args_mock, log_handler, storage
+            snake_oil_case_storage,
+            args_mock,
+            log_handler,
+            snake_oil_case_storage.ens_path,
         )
-        gui.notifier.set_storage(str(storage.path))
         qtbot.addWidget(gui)
 
         button_plot_tool = gui.findChild(QToolButton, "button_Create_plot")

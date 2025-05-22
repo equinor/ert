@@ -185,7 +185,6 @@ def test_tracking(
     queue = Events()
     model = create_model(
         ert_config,
-        storage,
         parsed,
         queue,
     )
@@ -272,7 +271,6 @@ def test_setting_env_context_during_run(
     queue = Events()
     model = create_model(
         ert_config,
-        storage,
         parsed,
         queue,
     )
@@ -342,7 +340,7 @@ def test_run_information_present_as_env_var_in_fm_context(
 
     evaluator_server_config = EvaluatorServerConfig(use_token=False)
     queue = Events()
-    model = create_model(ert_config, storage, parsed, queue)
+    model = create_model(ert_config, parsed, queue)
 
     thread = ErtThread(
         name="ert_cli_simulation_thread",

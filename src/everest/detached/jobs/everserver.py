@@ -137,7 +137,7 @@ class ExperimentRunner:
             status_queue=status_queue,
         )
 
-        if run_model._queue_config.queue_system == QueueSystem.LOCAL:
+        if run_model.queue_config.queue_system == QueueSystem.LOCAL:
             evaluator_server_config = EvaluatorServerConfig()
         else:
             evaluator_server_config = EvaluatorServerConfig(

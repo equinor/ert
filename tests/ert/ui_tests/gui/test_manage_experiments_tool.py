@@ -1,4 +1,5 @@
 import datetime
+import os
 import shutil
 
 import numpy as np
@@ -28,8 +29,9 @@ from .conftest import add_experiment_in_manage_experiment_dialog
 
 
 def test_design_matrix_in_manage_experiments_panel(
-    copy_poly_case_with_design_matrix, qtbot, storage
+    copy_poly_case_with_design_matrix, qtbot, tmp_path
 ):
+    os.chdir(tmp_path)
     num_realizations = 10
     a_values = list(range(num_realizations))
     design_dict = {
@@ -40,17 +42,25 @@ def test_design_matrix_in_manage_experiments_panel(
     copy_poly_case_with_design_matrix(design_dict, default_list)
     config = ErtConfig.from_file("poly.ert")
     notifier = ErtNotifier()
-    notifier.set_storage(str(storage.path))
+    notifier.set_storage(str(config.ens_path))
     assert config.ensemble_config.parameter_configuration == []
     assert config.analysis_config.design_matrix is not None
-    ensemble = storage.create_experiment(
-        parameters=[config.analysis_config.design_matrix.parameter_configuration],
-        responses=config.ensemble_config.response_configuration,
-        name="my-experiment",
-    ).create_ensemble(
-        ensemble_size=config.runpath_config.num_realizations,
-        name="my-design",
-    )
+
+    with notifier.write_storage() as storage:
+        storage.create_experiment(
+            parameters=[config.analysis_config.design_matrix.parameter_configuration],
+            responses=config.ensemble_config.response_configuration,
+            name="my-experiment",
+        ).create_ensemble(
+            ensemble_size=config.runpath_config.num_realizations,
+            name="my-design",
+        )
+
+    # Notifier storage is persistent, read-storage is not,
+    # hence we get the ensemble from the read storage
+    ensemble = notifier.storage.get_experiment_by_name(
+        "my-experiment"
+    ).get_ensemble_by_name("my-design")
     notifier.set_current_ensemble_id(ensemble.id)
     assert all(
         RealizationStorageState.UNDEFINED in s for s in ensemble.get_ensemble_state()
@@ -75,7 +85,8 @@ def test_design_matrix_in_manage_experiments_panel(
     add_experiment_in_manage_experiment_dialog(
         qtbot, tool, experiment_name="my-experiment-2", ensemble_name="my-design-2"
     )
-    experiments = list(storage.experiments)
+
+    experiments = list(notifier.storage.experiments)
     assert len(experiments) == 2
 
     # The write-storage writes the experiments,
@@ -98,23 +109,27 @@ def test_design_matrix_in_manage_experiments_panel(
 
 
 @pytest.mark.usefixtures("copy_poly_case")
-def test_init_prior(qtbot, storage):
+def test_init_prior(qtbot):
     config = ErtConfig.from_file("poly.ert")
     config.random_seed = 1234
     notifier = ErtNotifier()
-    notifier.set_storage(str(storage.path))
-    ensemble = storage.create_experiment(
-        parameters=config.ensemble_config.parameter_configuration,
-        responses=config.ensemble_config.response_configuration,
-        name="my-experiment",
-    ).create_ensemble(
-        ensemble_size=config.runpath_config.num_realizations,
-        name="prior",
-    )
+    notifier.set_storage(config.ens_path)
+
+    with notifier.write_storage() as storage:
+        ensemble = storage.create_experiment(
+            parameters=config.ensemble_config.parameter_configuration,
+            responses=config.ensemble_config.response_configuration,
+            name="my-experiment",
+        ).create_ensemble(
+            ensemble_size=config.runpath_config.num_realizations,
+            name="prior",
+        )
+
+        assert all(
+            RealizationStorageState.UNDEFINED in s
+            for s in ensemble.get_ensemble_state()
+        )
     notifier.set_current_ensemble_id(ensemble.id)
-    assert all(
-        RealizationStorageState.UNDEFINED in s for s in ensemble.get_ensemble_state()
-    )
 
     tool = ManageExperimentsPanel(
         config, notifier, config.runpath_config.num_realizations
@@ -125,7 +140,7 @@ def test_init_prior(qtbot, storage):
     )
     assert (
         RealizationStorageState.PARAMETERS_LOADED in s
-        for s in ensemble.get_ensemble_state()
+        for s in notifier.current_ensemble.get_ensemble_state()
     )
     assert notifier.current_ensemble.load_parameters_numpy(
         "COEFFS", np.arange(ensemble.ensemble_size)
@@ -133,19 +148,20 @@ def test_init_prior(qtbot, storage):
 
 
 @pytest.mark.usefixtures("copy_poly_case")
-def test_that_init_updates_the_info_tab(qtbot, storage):
+def test_that_init_updates_the_info_tab(qtbot):
     config = ErtConfig.from_file("poly.ert")
     notifier = ErtNotifier()
-    notifier.set_storage(str(storage.path))
+    notifier.set_storage(config.ens_path)
 
-    ensemble = storage.create_experiment(
-        parameters=config.ensemble_config.parameter_configuration,
-        responses=config.ensemble_config.response_configuration,
-        observations=config.observations,
-        name="my-experiment",
-    ).create_ensemble(
-        ensemble_size=config.runpath_config.num_realizations, name="default"
-    )
+    with notifier.write_storage() as storage:
+        ensemble = storage.create_experiment(
+            parameters=config.ensemble_config.parameter_configuration,
+            responses=config.ensemble_config.response_configuration,
+            observations=config.observations,
+            name="my-experiment",
+        ).create_ensemble(
+            ensemble_size=config.runpath_config.num_realizations, name="default"
+        )
     notifier.set_current_ensemble_id(ensemble.id)
 
     tool = ManageExperimentsPanel(
@@ -423,7 +439,9 @@ ANALYSIS_SET_VAR OBSERVATIONS AUTO_SCALE POLY_OBS1_*
 def test_ensemble_observations_view_on_empty_ensemble(qtbot):
     config = ErtConfig.from_file("poly.ert")
     notifier = ErtNotifier()
-    with open_storage(config.ens_path, mode="w") as storage:
+    notifier.set_storage(config.ens_path)
+
+    with notifier.write_storage() as storage:
         notifier.set_storage(str(storage.path))
         storage.create_experiment(
             responses=[SummaryConfig(keys=["*"])],
@@ -447,37 +465,35 @@ def test_ensemble_observations_view_on_empty_ensemble(qtbot):
             name="test", ensemble_size=config.runpath_config.num_realizations
         )
 
-        tool = ManageExperimentsPanel(
-            config, notifier, config.runpath_config.num_realizations
-        )
+    tool = ManageExperimentsPanel(
+        config, notifier, config.runpath_config.num_realizations
+    )
 
-        # select the ensemble
-        storage_widget = tool.findChild(StorageWidget)
-        storage_widget._tree_view.expandAll()
-        model_index = storage_widget._tree_view.model().index(
-            0, 0, storage_widget._tree_view.model().index(0, 0)
-        )
-        storage_widget._tree_view.setCurrentIndex(model_index)
-        assert (
-            tool._storage_info_widget._content_layout.currentIndex()
-            == _WidgetType.ENSEMBLE_WIDGET
-        )
+    # select the ensemble
+    storage_widget = tool.findChild(StorageWidget)
+    storage_widget._tree_view.expandAll()
+    model_index = storage_widget._tree_view.model().index(
+        0, 0, storage_widget._tree_view.model().index(0, 0)
+    )
+    storage_widget._tree_view.setCurrentIndex(model_index)
+    assert (
+        tool._storage_info_widget._content_layout.currentIndex()
+        == _WidgetType.ENSEMBLE_WIDGET
+    )
 
-        ensemble_widget = tool._storage_info_widget._content_layout.currentWidget()
-        assert isinstance(ensemble_widget, _EnsembleWidget)
-        assert ensemble_widget._name_label.text()
-        assert ensemble_widget._uuid_label.text()
-        assert not ensemble_widget._state_text_edit.toPlainText()
+    ensemble_widget = tool._storage_info_widget._content_layout.currentWidget()
+    assert isinstance(ensemble_widget, _EnsembleWidget)
+    assert ensemble_widget._name_label.text()
+    assert ensemble_widget._uuid_label.text()
+    assert not ensemble_widget._state_text_edit.toPlainText()
 
-        ensemble_widget._tab_widget.setCurrentIndex(_EnsembleWidgetTabs.STATE_TAB)
-        assert ensemble_widget._state_text_edit.toPlainText()
+    ensemble_widget._tab_widget.setCurrentIndex(_EnsembleWidgetTabs.STATE_TAB)
+    assert ensemble_widget._state_text_edit.toPlainText()
 
-        ensemble_widget._tab_widget.setCurrentIndex(
-            _EnsembleWidgetTabs.OBSERVATIONS_TAB
-        )
+    ensemble_widget._tab_widget.setCurrentIndex(_EnsembleWidgetTabs.OBSERVATIONS_TAB)
 
-        # Expect only one figure, the one for the observation
-        assert len(ensemble_widget._figure.get_axes()) == 1
+    # Expect only one figure, the one for the observation
+    assert len(ensemble_widget._figure.get_axes()) == 1
 
 
 def test_realization_view(
