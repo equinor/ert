@@ -443,9 +443,12 @@ def test_that_creating_ert_config_from_dict_is_same_as_from_file(
 ):
     filename = "config.ert"
     with config_generator(tmp_path_factory, filename) as config_values:
-        assert ErtConfig.from_dict(
+        config_from_dict = ErtConfig.from_dict(
             config_values.to_config_dict("config.ert", os.getcwd())
-        ) == ErtConfig.from_file(filename)
+        )
+        config_from_file = ErtConfig.from_file(filename)
+
+        assert config_from_dict == config_from_file
 
 
 @pytest.mark.integration_test
