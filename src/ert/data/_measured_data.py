@@ -12,7 +12,6 @@ from typing import TYPE_CHECKING
 
 import numpy as np
 import pandas as pd
-import polars as pl
 
 if TYPE_CHECKING:
     from ert.storage import Ensemble
@@ -83,7 +82,7 @@ class MeasuredData:
     @staticmethod
     def _get_data(
         ensemble: Ensemble,
-        observation_keys: list[str],
+        observed_response_keys: list[str],
     ) -> pd.DataFrame:
         """
         Adds simulated and observed data and returns a dataframe where ensemble
@@ -91,75 +90,43 @@ class MeasuredData:
         observed standard deviation will be named STD.
         """
 
-        observations_by_type = ensemble.experiment.observations
+        resp_key_to_resp_type = ensemble.experiment.response_key_to_response_type
+        selected_response_types = {
+            response_type
+            for response_key, response_type in resp_key_to_resp_type.items()
+            if response_key in observed_response_keys
+        }
 
-        dfs = []
+        active_realizations = ensemble.get_realization_list_with_responses()
 
-        for key in observation_keys:
-            if key not in ensemble.experiment.observation_keys:
-                raise ObservationError(
-                    f"No observation: {key} in ensemble: {ensemble.name}"
-                )
-
-        for (
-            response_type,
-            response_cls,
-        ) in ensemble.experiment.response_configuration.items():
-            observations_for_type = observations_by_type[response_type].filter(
-                pl.col("observation_key").is_in(observation_keys)
-            )
-            responses_for_type = ensemble.load_responses(
-                response_type,
-                realizations=tuple(ensemble.get_realization_list_with_responses()),
-            )
-
-            if responses_for_type.is_empty():
+        # Check if responses exist for all selected response types
+        for response_type in selected_response_types:
+            df = ensemble.load_responses(response_type, tuple(active_realizations))
+            if df.is_empty():
                 raise ResponseError(
                     f"No response loaded for observation type: {response_type}"
                 )
 
-            # Note that if there are duplicate entries for one
-            # response at one index, they are aggregated together
-            # with "mean" by default
-            pivoted = responses_for_type.pivot(
-                on="realization",
-                index=["response_key", *response_cls.primary_key],
-                aggregate_function="mean",
+        df = (
+            ensemble.get_observations_and_responses(
+                observed_response_keys, np.array(active_realizations)
             )
-
-            if "time" in pivoted:
-                joined = observations_for_type.join_asof(
-                    pivoted,
-                    by=["response_key", *response_cls.primary_key],
-                    on="time",
-                    tolerance="1s",
-                )
-            else:
-                joined = observations_for_type.join(
-                    pivoted,
-                    how="left",
-                    on=["response_key", *response_cls.primary_key],
-                )
-
-            joined = joined.sort(by="observation_key").with_columns(
-                pl.concat_str(response_cls.primary_key, separator=", ").alias(
-                    "key_index"
-                )
+            .rename(
+                {
+                    "index": "key_index",
+                    "observations": "OBS",
+                    "std": "STD",
+                }
             )
-
-            # Put key_index column 1st
-            joined = joined[["key_index", *joined.columns[:-1]]]
-            joined = joined.drop(*response_cls.primary_key)
-
-            if not joined.is_empty():
-                dfs.append(joined)
-
-        df = pl.concat(dfs)
-        df = df.rename(
-            {
-                "observations": "OBS",
-                "std": "STD",
-            }
+            .select(
+                "key_index",
+                "response_key",
+                "observation_key",
+                "OBS",
+                "STD",
+                *map(str, active_realizations),
+            )
+            .sort(by="observation_key")
         )
 
         pddf = df.to_pandas()[
@@ -175,7 +142,7 @@ class MeasuredData:
         # Pandas differentiates vs int and str keys.
         # Legacy-wise we use int keys for realizations
         pddf.rename(
-            columns={str(k): int(k) for k in range(ensemble.ensemble_size)},
+            columns={str(k): int(k) for k in active_realizations},
             inplace=True,
         )
 
