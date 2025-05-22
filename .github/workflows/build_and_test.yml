@@ -22,7 +22,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        python-version: [ '3.11', '3.12' ]
+        python-version: [ '3.13' ]
 
     uses: ./.github/workflows/build-wheels.yml
     with:
@@ -52,7 +52,7 @@ jobs:
         exclude:
         - os: 'ubuntu-latest'
           test-type: 'doc'
-          python-version: '3.11'
+          python-version: '3.13'
     uses: ./.github/workflows/test_everest.yml
     with:
       os: ${{ matrix.os }}
