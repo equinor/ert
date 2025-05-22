@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import asyncio
-import contextlib
 import logging
 import os
 import time
@@ -576,12 +575,11 @@ class LocalEnsemble(BaseMode):
                 realizations = np.array([realizations])
             df = self.load_parameters_pl(group, realizations, all_data=True)
             if transformed:
+                cols_to_transform = [col for col in df.columns if col != "realization"]
                 real_col = df["realization"]
-                return (
-                    df.drop("realization")
-                    .map_rows(config.transform)
-                    .insert_column(0, real_col)
-                )
+                df_transformed = df.drop("realization").map_rows(config.transform)
+                df_transformed.columns = cols_to_transform
+                df = df_transformed.insert_column(0, real_col)
             return df
         ds = self._load_dataset(group, realizations)
         return ds

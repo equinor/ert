@@ -6,6 +6,7 @@ from pathlib import Path
 from textwrap import dedent
 
 import numpy as np
+import polars as pl
 import pytest
 from resdata.geometry import Surface
 
@@ -221,11 +222,7 @@ def test_that_first_three_parameters_sampled_snapshot(tmpdir, storage):
         with open("prior.txt", mode="w", encoding="utf-8") as fh:
             fh.writelines("MY_KEYWORD NORMAL 0 1")
         _, fs = create_runpath(storage, "config.ert", [True] * 3)
-        prior = (
-            fs.load_parameters_pl("KW_NAME", range(3), all_data=False)
-            .to_numpy()
-            .flatten()
-        )
+        prior = fs.load_parameters_numpy("KW_NAME", np.arange(3)).flatten()
         expected = np.array([-0.8814228, 1.5847818, 1.009956])
         np.testing.assert_almost_equal(prior, expected)
 
@@ -283,9 +280,9 @@ def test_that_sampling_is_fixed_from_name(
         key_hash = sha256(b"1234" + b"KW_NAME:MY_KEYWORD")
         seed = np.frombuffer(key_hash.digest(), dtype="uint32")
         expected = np.random.default_rng(seed).standard_normal(num_realisations)
-        assert fs.load_parameters_pl("KW_NAME", all_data=False).select(
-            "MY_KEYWORD"
-        ).to_numpy().ravel().tolist() == list(expected)
+        df = fs.load_parameters("KW_NAME")
+        assert isinstance(df, pl.DataFrame)
+        assert df.select("MY_KEYWORD").to_numpy().ravel().tolist() == list(expected)
 
 
 @pytest.mark.parametrize(
@@ -345,14 +342,9 @@ def test_that_sub_sample_maintains_order(tmpdir, storage, mask, expected):
             fs, [i for i, active in enumerate(mask) if active], random_seed=1234
         )
 
-        assert (
-            fs.load_parameters_pl("KW_NAME", all_data=False)
-            .select("MY_KEYWORD")
-            .to_numpy()
-            .ravel()
-            .tolist()
-            == expected
-        )
+        df = fs.load_parameters("KW_NAME")
+        assert isinstance(df, pl.DataFrame)
+        assert df.select("MY_KEYWORD").to_numpy().ravel().tolist() == expected
 
 
 @pytest.mark.usefixtures("set_site_config")
@@ -381,9 +373,9 @@ def test_gen_kw_optional_template(storage, tmpdir, config_str, expected):
 
         create_runpath(storage, "config.ert")
 
-        assert next(iter(storage.ensembles)).load_parameters_pl(
-            "KW_NAME", all_data=False
-        ).to_numpy().ravel().tolist() == pytest.approx([expected])
+        assert next(iter(storage.ensembles)).load_parameters_numpy(
+            "KW_NAME", np.array([0])
+        ).ravel().tolist() == pytest.approx([expected])
 
 
 def write_file(fname, contents):
