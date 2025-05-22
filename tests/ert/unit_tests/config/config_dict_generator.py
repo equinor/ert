@@ -3,6 +3,7 @@ import datetime
 import operator
 import os
 import os.path
+import pathlib
 import stat
 from collections import defaultdict
 from dataclasses import dataclass
@@ -342,7 +343,7 @@ class ErtConfigValues:
                     name,
                     (
                         fn,
-                        f"EXECUTABLE script/{name}.exe\nMIN_ARG 0\nMAX_ARG 1\n",
+                        pathlib.Path(fn).read_text(encoding="utf-8"),
                     ),
                 )
                 for name, fn in self.install_job
