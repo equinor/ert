@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import dataclasses
 import datetime
-import json
 import logging
 import os
 import queue
@@ -16,13 +15,19 @@ from typing import TYPE_CHECKING, Any, Protocol
 
 import numpy as np
 from numpy.typing import NDArray
+from pydantic import NonNegativeInt, PrivateAttr
+from ropt.config.enopt import EnOptConfig
 from ropt.enums import OptimizerExitCode
 from ropt.evaluator import EvaluatorContext, EvaluatorResult
 from ropt.plan import BasicOptimizer
 from ropt.results import FunctionResults, Results
 from typing_extensions import TypedDict
 
-from ert.config import ExtParamConfig
+from ert.config import (
+    ExtParamConfig,
+    ParameterConfig,
+    ResponseConfig,
+)
 from ert.config.ert_config import (
     create_and_hook_workflows,
     read_templates,
@@ -32,8 +37,13 @@ from ert.config.model_config import ModelConfig
 from ert.config.queue_config import QueueConfig
 from ert.ensemble_evaluator import EndEvent, EvaluatorServerConfig
 from ert.runpaths import Runpaths
-from ert.storage import open_storage
-from everest.config import ControlConfig, ControlVariableGuessListConfig, EverestConfig
+from everest.config import (
+    ControlConfig,
+    ControlVariableGuessListConfig,
+    EverestConfig,
+    ObjectiveFunctionConfig,
+    OutputConstraintConfig,
+)
 from everest.everest_storage import (
     EverestStorage,
     OptimalResult,
@@ -114,31 +124,61 @@ logger = logging.getLogger(EVEREST)
 
 
 class EverestRunModel(BaseRunModel):
-    def __init__(
-        self,
+    optimization_output_dir: str
+    simulation_dir: str
+
+    parameter_configuration: list[ParameterConfig]
+    response_configuration: list[ResponseConfig]
+    ert_templates: list[tuple[str, str]]
+    enopt_config: EnOptConfig
+
+    formatted_control_names: list[str]
+    controls: list[ControlConfig]
+    control_names: list[str]
+
+    objective_functions: list[ObjectiveFunctionConfig]
+    objective_names: list[str]
+
+    output_constraints: list[OutputConstraintConfig]
+    constraint_names: list[str]
+
+    model_realizations: list[NonNegativeInt]
+    keep_run_path: bool
+
+    _result: OptimalResult | None = PrivateAttr(default=None)
+    _exit_code: EverestExitCode | None = PrivateAttr(default=None)
+    _experiment: Experiment | None = PrivateAttr(default=None)
+    _eval_server_cfg: EvaluatorServerConfig | None = PrivateAttr(default=None)
+    _batch_id: int = PrivateAttr(default=0)
+    _ever_storage: EverestStorage | None = PrivateAttr(default=None)
+    _opt_callback: OptimizerCallback | None = PrivateAttr(default=None)
+
+    _transforms: EverestOptModelTransforms = PrivateAttr()
+
+    def __init__(self, **data: Any) -> None:
+        transforms = data.pop("transforms", None)
+        opt_callback = data.pop("opt_callback", None)
+        super().__init__(**data)
+        self._transforms = transforms
+        self._opt_callback = opt_callback
+
+    @classmethod
+    def create(
+        cls,
         everest_config: EverestConfig,
-        optimization_callback: OptimizerCallback | None,
+        optimization_callback: OptimizerCallback | None = None,
         status_queue: queue.SimpleQueue[StatusEvents] | None = None,
-    ) -> None:
+    ) -> EverestRunModel:
         Path(everest_config.log_dir).mkdir(parents=True, exist_ok=True)
         Path(everest_config.optimization_output_dir).mkdir(parents=True, exist_ok=True)
+
         logger.info(
             "Using random seed: %d. To deterministically reproduce this experiment, "
             "add the above random seed to your configuration file.",
             everest_config.environment.random_seed,
         )
 
-        self._everest_config = everest_config
-        self._opt_callback = optimization_callback
-        self._fm_errors: dict[int, dict[str, Any]] = {}
-        self._result: OptimalResult | None = None
-        self._exit_code: EverestExitCode | None = None
-        self._experiment: Experiment | None = None
-        self._eval_server_cfg: EvaluatorServerConfig | None = None
-        self._batch_id: int = 0
-
-        ens_path = os.path.join(everest_config.output_dir, STORAGE_DIR)
-        storage = open_storage(ens_path, mode="w")
+        storage_dir = os.path.join(everest_config.output_dir, STORAGE_DIR)
 
         if status_queue is None:
             status_queue = queue.SimpleQueue()
@@ -182,49 +222,64 @@ class EverestRunModel(BaseRunModel):
         for key, val in config_dict.get("SETENV", []):  # type: ignore
             env_vars[key] = substitutions.substitute(val)
 
-        self.support_restart = False
-        self._parameter_configuration = ensemble_config.parameter_configuration
-        self._parameter_configs = ensemble_config.parameter_configs
-        self._response_configuration = ensemble_config.response_configuration
-        self._templates = ert_templates
-
-        self._transforms: EverestOptModelTransforms = (
-            get_optimization_domain_transforms(
-                self._everest_config.controls,
-                self._everest_config.objective_functions,
-                self._everest_config.output_constraints,
-                self._everest_config.model,
-            )
+        transforms: EverestOptModelTransforms = get_optimization_domain_transforms(
+            everest_config.controls,
+            everest_config.objective_functions,
+            everest_config.output_constraints,
+            everest_config.model,
         )
 
-        super().__init__(
-            storage,
-            runpath_file,
-            config_file,
-            env_vars,
-            env_pr_fm_step,
-            model_config,
-            queue_config,
-            forward_model_steps,
-            status_queue,
-            substitutions,
-            hooked_workflows,
-            random_seed=123,  # No-op as far as Everest is concerned
-            active_realizations=[],  # Set dynamically in run_forward_model()
-            log_path=Path(everest_config.optimization_output_dir),
+        formatted_control_names = everest_config.formatted_control_names
+        objective_functions = everest_config.objective_functions
+        output_constraints = everest_config.output_constraints
+        objective_names = everest_config.objective_names
+        constraint_names = everest_config.constraint_names
+        controls = everest_config.controls
+        control_names = everest_config.control_names
+
+        delete_run_path: bool = (
+            everest_config.simulator is not None
+            and everest_config.simulator.delete_run_path
         )
 
-    @classmethod
-    def create(
-        cls,
-        everest_config: EverestConfig,
-        optimization_callback: OptimizerCallback | None = None,
-        status_queue: queue.SimpleQueue[StatusEvents] | None = None,
-    ) -> EverestRunModel:
         return cls(
-            everest_config=everest_config,
-            optimization_callback=optimization_callback,
+            control_names=control_names,
+            controls=controls,
+            simulation_dir=everest_config.simulation_dir,
+            keep_run_path=not delete_run_path,
+            objective_names=objective_names,
+            constraint_names=constraint_names,
+            formatted_control_names=formatted_control_names,
+            objective_functions=objective_functions,
+            output_constraints=output_constraints,
+            model_realizations=everest_config.model.realizations,
+            transforms=transforms,
+            enopt_config=everest2ropt(everest_config, transforms),
+            optimization_output_dir=everest_config.optimization_output_dir,
+            log_path=everest_config.log_dir,
+            random_seed=123,
+            runpath_file=runpath_file,
+            # Mutated throughout execution of Everest
+            # (Not totally in conformity with ERT runmodel logic)
+            active_realizations=[],
+            ensemble_name="noop",
+            minimum_required_realizations=0,
+            experiment_name="noop",
+            parameter_configuration=ensemble_config.parameter_configuration,
+            response_configuration=ensemble_config.response_configuration,
+            ert_templates=ert_templates,
+            user_config_file=config_file,
+            env_vars=env_vars,
+            env_pr_fm_step=env_pr_fm_step,
+            runpath_config=model_config,
+            forward_model_steps=forward_model_steps,
+            substitutions=substitutions,
+            hooked_workflows=hooked_workflows,
+            storage_path=storage_dir,
+            queue_config=queue_config,
             status_queue=status_queue,
+            support_restart=False,
+            optimization_callback=optimization_callback,
         )
 
     @classmethod
@@ -244,8 +299,7 @@ class EverestRunModel(BaseRunModel):
         return self._result
 
     def __repr__(self) -> str:
-        config_json = json.dumps(self._everest_config, sort_keys=True, indent=2)
-        return f"EverestRunModel(config={config_json})"
+        return f"EverestRunModel(config={self.user_config_file})"
 
     def start_simulations_thread(
         self, evaluator_server_config: EvaluatorServerConfig, restart: bool = False
@@ -286,13 +340,14 @@ class EverestRunModel(BaseRunModel):
             )
 
     def _handle_optimizer_results(self, results: tuple[Results, ...]) -> None:
-        self.ever_storage.on_batch_evaluation_finished(results)
+        assert self._ever_storage is not None
+        self._ever_storage.on_batch_evaluation_finished(results)
 
         for r in results:
             storage_batches = (
-                self.ever_storage.data.batches_with_function_results
+                self._ever_storage.data.batches_with_function_results
                 if isinstance(r, FunctionResults)
-                else self.ever_storage.data.batches_with_gradient_results
+                else self._ever_storage.data.batches_with_gradient_results
             )
             batch_data = next(
                 (b for b in storage_batches if b.batch_id == r.batch_id),
@@ -318,22 +373,22 @@ class EverestRunModel(BaseRunModel):
 
         self._experiment = self._experiment or self._storage.create_experiment(
             name=f"EnOpt@{datetime.datetime.now().strftime('%Y-%m-%d@%H:%M:%S')}",
-            parameters=self._parameter_configuration,
-            responses=self._response_configuration,
+            parameters=self.parameter_configuration,
+            responses=self.response_configuration,
         )
 
         # Initialize the ropt optimizer:
         optimizer = self._create_optimizer()
 
-        self.ever_storage = EverestStorage(
-            output_dir=Path(self._everest_config.optimization_output_dir),
+        self._ever_storage = EverestStorage(
+            output_dir=Path(self.optimization_output_dir),
         )
 
-        self.ever_storage.init(
-            formatted_control_names=self._everest_config.formatted_control_names,
-            objective_functions=self._everest_config.objective_functions,
-            output_constraints=self._everest_config.output_constraints,
-            realizations=self._everest_config.model.realizations,
+        self._ever_storage.init(
+            formatted_control_names=self.formatted_control_names,
+            objective_functions=self.objective_functions,
+            output_constraints=self.output_constraints,
+            realizations=self.model_realizations,
         )
         optimizer.set_results_callback(self._handle_optimizer_results)
 
@@ -341,16 +396,16 @@ class EverestRunModel(BaseRunModel):
         optimizer_exit_code = optimizer.run().exit_code
 
         # Store some final results.
-        self.ever_storage.on_optimization_finished()
+        self._ever_storage.on_optimization_finished()
         if (
             optimizer_exit_code is not OptimizerExitCode.UNKNOWN
             and optimizer_exit_code is not OptimizerExitCode.TOO_FEW_REALIZATIONS
             and optimizer_exit_code is not OptimizerExitCode.USER_ABORT
         ):
-            self.ever_storage.export_everest_opt_results_to_csv()
+            self._ever_storage.export_everest_opt_results_to_csv()
 
         # Extract the best result from the storage.
-        self._result = self.ever_storage.get_optimal_result()
+        self._result = self._ever_storage.get_optimal_result()
 
         if self._exit_code is None:
             match optimizer_exit_code:
@@ -381,9 +436,8 @@ class EverestRunModel(BaseRunModel):
 
     def _create_optimizer(self) -> BasicOptimizer:
         optimizer = BasicOptimizer(
-            enopt_config=everest2ropt(self._everest_config, self._transforms),
+            enopt_config=self.enopt_config,
             evaluator=self._forward_model_evaluator,
-            everest_config=self._everest_config,
         )
 
         # Before each batch evaluation we check if we should abort:
@@ -442,7 +496,7 @@ class EverestRunModel(BaseRunModel):
         self._evaluate_and_postprocess(run_args, ensemble, self._eval_server_cfg)
 
         # If necessary, delete the run path:
-        self._delete_runpath(run_args)
+        self._delete_run_path(run_args)
 
         # Gather the results
         objectives, constraints = self._gather_simulation_results(ensemble)
@@ -541,7 +595,7 @@ class EverestRunModel(BaseRunModel):
             # finding its realization index and then looking up its name in the
             # config:
             model_realizations = [
-                self._everest_config.model.realizations[realization_indices[idx]]
+                self.model_realizations[realization_indices[idx]]
                 for idx in range(num_simulations)
             ]
 
@@ -587,15 +641,15 @@ class EverestRunModel(BaseRunModel):
             # Nothing to do, there may only have been inactive control vectors:
             num_all_simulations = control_values.shape[0]
             objectives = np.zeros(
-                (num_all_simulations, len(self._everest_config.objective_names)),
+                (num_all_simulations, len(self.objective_names)),
                 dtype=np.float64,
             )
             constraints = (
                 np.zeros(
-                    (num_all_simulations, len(self._everest_config.constraint_names)),
+                    (num_all_simulations, len(self.constraint_names)),
                     dtype=np.float64,
                 )
-                if self._everest_config.output_constraints
+                if self.output_constraints
                 else None
             )
             sim_ids = np.array([-1] * num_all_simulations, dtype=np.int32)
@@ -669,7 +723,7 @@ class EverestRunModel(BaseRunModel):
 
         return {
             sim_id: _create_control_dicts_for_simulation(
-                self._everest_config.controls, control_values[sim_id, :]
+                self.controls, control_values[sim_id, :]
             )
             for sim_id in range(control_values.shape[0])
         }
@@ -708,12 +762,14 @@ class EverestRunModel(BaseRunModel):
                         f"Key {key} has suffixes, a suffix must be specified"
                     )
 
-        if set(controls.keys()) != set(self._everest_config.control_names):
+        if set(controls.keys()) != set(self.control_names):
             err_msg = "Mismatch between initialized and provided control names."
             raise KeyError(err_msg)
 
         for control_name, control in controls.items():
-            ext_config = self._parameter_configs[control_name]
+            ext_config = next(
+                c for c in self.parameter_configuration if c.name == control_name
+            )
             if isinstance(ext_config, ExtParamConfig):
                 if len(ext_config) != len(control.keys()):
                     raise KeyError(
@@ -733,18 +789,18 @@ class EverestRunModel(BaseRunModel):
         ensemble: Ensemble,
         sim_to_model_realization: list[int],
     ) -> list[RunArg]:
-        substitutions = self._substitutions
+        substitutions = self.substitutions
         self.active_realizations = [True] * len(sim_to_model_realization)
         for sim_id, model_realization in enumerate(sim_to_model_realization):
             substitutions[f"<GEO_ID_{sim_id}_{ensemble.iteration}>"] = str(
                 int(model_realization)
             )
         run_paths = Runpaths(
-            jobname_format=self._model_config.jobname_format_string,
-            runpath_format=self._model_config.runpath_format_string,
-            filename=str(self._runpath_file),
+            jobname_format=self.runpath_config.jobname_format_string,
+            runpath_format=self.runpath_config.runpath_format_string,
+            filename=str(self.runpath_file),
             substitutions=substitutions,
-            eclbase=self._model_config.eclbase_format_string,
+            eclbase=self.runpath_config.eclbase_format_string,
         )
         return create_run_arguments(
             run_paths,
@@ -752,12 +808,9 @@ class EverestRunModel(BaseRunModel):
             ensemble=ensemble,
         )
 
-    def _delete_runpath(self, run_args: list[RunArg]) -> None:
+    def _delete_run_path(self, run_args: list[RunArg]) -> None:
         logger.debug("Simulation callback called")
-        if (
-            self._everest_config.simulator is not None
-            and self._everest_config.simulator.delete_run_path
-        ):
+        if not self.keep_run_path:
             for i, real in self.get_current_snapshot().reals.items():
                 path_to_delete = run_args[int(i)].runpath
                 if real["status"] == "Finished" and os.path.isdir(path_to_delete):
@@ -776,10 +829,10 @@ class EverestRunModel(BaseRunModel):
     def _gather_simulation_results(
         self, ensemble: Ensemble
     ) -> tuple[NDArray[np.float64], NDArray[np.float64] | None]:
-        objective_names = self._everest_config.objective_names
+        objective_names = self.objective_names
         objectives = np.zeros((ensemble.ensemble_size, len(objective_names)))
 
-        constraint_names = self._everest_config.constraint_names
+        constraint_names = self.constraint_names
         constraints = np.zeros((ensemble.ensemble_size, len(constraint_names)))
 
         if not any(self.active_realizations):
@@ -814,7 +867,7 @@ class EverestRunModel(BaseRunModel):
 
     def check_if_runpath_exists(self) -> bool:
         return (
-            self._everest_config.simulation_dir is not None
-            and os.path.exists(self._everest_config.simulation_dir)
-            and any(os.listdir(self._everest_config.simulation_dir))
+            self.simulation_dir is not None
+            and os.path.exists(self.simulation_dir)
+            and any(os.listdir(self.simulation_dir))
         )

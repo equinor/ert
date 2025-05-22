@@ -1,25 +1,27 @@
 from __future__ import annotations
 
 import logging
-from pathlib import Path
-from queue import SimpleQueue
-from typing import TYPE_CHECKING
+from typing import Any
+from uuid import UUID
 
 import numpy as np
+import polars as pl
+from pydantic import PrivateAttr
 
-from ert.config import ConfigValidationError
+from ert.config import (
+    ConfigValidationError,
+    DesignMatrix,
+    ParameterConfig,
+    ResponseConfig,
+)
 from ert.enkf_main import sample_prior, save_design_matrix_to_ensemble
 from ert.ensemble_evaluator import EvaluatorServerConfig
-from ert.storage import Ensemble, Experiment, Storage
+from ert.storage import Ensemble, Experiment, open_storage
 from ert.trace import tracer
 
 from ..plugins import PostExperimentFixtures, PreExperimentFixtures
 from ..run_arg import create_run_arguments
-from .base_run_model import BaseRunModel, ErtRunError, StatusEvents
-
-if TYPE_CHECKING:
-    from ert.config import ErtConfig, QueueConfig
-
+from .base_run_model import BaseRunModel, ErtRunError
 
 logger = logging.getLogger(__name__)
 
@@ -31,47 +33,30 @@ class EnsembleExperiment(BaseRunModel):
     will always sample parameters.<br>
     """
 
-    def __init__(
-        self,
-        ensemble_name: str,
-        experiment_name: str,
-        active_realizations: list[bool],
-        minimum_required_realizations: int,
-        random_seed: int,
-        config: ErtConfig,
-        storage: Storage,
-        queue_config: QueueConfig,
-        status_queue: SimpleQueue[StatusEvents],
-    ) -> None:
-        self.ensemble_name = ensemble_name
-        self.experiment_name = experiment_name
-        self.experiment: Experiment | None = None
-        self.ensemble: Ensemble | None = None
+    ensemble_name: str
+    experiment_name: str
+    design_matrix: DesignMatrix | None
+    parameter_configuration: list[ParameterConfig]
+    response_configuration: list[ResponseConfig]
+    ert_templates: list[tuple[str, str]]
+    _observations: dict[str, pl.DataFrame] = PrivateAttr()
+    _experiment_id: UUID | None = PrivateAttr(None)
+    _ensemble_id: UUID | None = PrivateAttr(None)
 
-        self._design_matrix = config.analysis_config.design_matrix
-        self._observations = config.observations
-        self._parameter_configuration = config.ensemble_config.parameter_configuration
-        self._response_configuration = config.ensemble_config.response_configuration
-        self._templates = config.ert_templates
+    def __init__(self, **data: Any) -> None:
+        observations = data.pop("observations", None)
+        super().__init__(**data)
+        self._observations = observations
 
-        super().__init__(
-            storage,
-            config.runpath_file,
-            Path(config.user_config_file),
-            config.env_vars,
-            config.env_pr_fm_step,
-            config.runpath_config,
-            queue_config,
-            config.forward_model_steps,
-            status_queue,
-            config.substitutions,
-            config.hooked_workflows,
-            total_iterations=1,
-            log_path=config.analysis_config.log_path,
-            active_realizations=active_realizations,
-            random_seed=random_seed,
-            minimum_required_realizations=minimum_required_realizations,
-        )
+    @property
+    def _ensemble(self) -> Ensemble:
+        assert self._ensemble_id is not None
+        return self._storage.get_ensemble(self._ensemble_id)
+
+    @property
+    def _experiment(self) -> Experiment:
+        assert self._experiment_id is not None
+        return self._storage.get_experiment(self._experiment_id)
 
     @tracer.start_as_current_span(f"{__name__}.run_experiment")
     def run_experiment(
@@ -80,11 +65,11 @@ class EnsembleExperiment(BaseRunModel):
         restart: bool = False,
     ) -> None:
         self.log_at_startup()
-        self.restart = restart
+        self._restart = restart
         # If design matrix is present, we try to merge design matrix parameters
         # to the experiment parameters and set new active realizations
-        parameters_config = self._parameter_configuration
-        design_matrix = self._design_matrix
+        parameters_config = self.parameter_configuration
+        design_matrix = self.design_matrix
         design_matrix_group = None
         if design_matrix is not None and not restart:
             try:
@@ -98,7 +83,7 @@ class EnsembleExperiment(BaseRunModel):
             self.run_workflows(
                 fixtures=PreExperimentFixtures(random_seed=self.random_seed),
             )
-            self.experiment = self._storage.create_experiment(
+            self._experiment_id = self._storage.create_experiment(
                 name=self.experiment_name,
                 parameters=(
                     [*parameters_config, design_matrix_group]
@@ -106,31 +91,34 @@ class EnsembleExperiment(BaseRunModel):
                     else parameters_config
                 ),
                 observations=self._observations,
-                responses=self._response_configuration,
-                templates=self._templates,
-            )
-            self.ensemble = self._storage.create_ensemble(
-                self.experiment,
+                responses=self.response_configuration,
+                templates=self.ert_templates,
+            ).id
+            self._ensemble_id = self._storage.create_ensemble(
+                self._experiment,
                 name=self.ensemble_name,
                 ensemble_size=self.ensemble_size,
-            )
+            ).id
         else:
+            # Storage is closed on completion of experiment
+            # If restart, we re-open it
+            self._storage = open_storage(self.storage_path, mode="w")
             self.active_realizations = self._create_mask_from_failed_realizations()
 
-        assert self.experiment
-        assert self.ensemble
+        assert self._experiment
+        assert self._ensemble
 
-        self.set_env_key("_ERT_EXPERIMENT_ID", str(self.experiment.id))
-        self.set_env_key("_ERT_ENSEMBLE_ID", str(self.ensemble.id))
+        self.set_env_key("_ERT_EXPERIMENT_ID", str(self._experiment.id))
+        self.set_env_key("_ERT_ENSEMBLE_ID", str(self._ensemble.id))
 
         run_args = create_run_arguments(
-            self.run_paths,
+            self._run_paths,
             np.array(self.active_realizations, dtype=bool),
-            ensemble=self.ensemble,
+            ensemble=self._ensemble,
         )
 
         sample_prior(
-            self.ensemble,
+            self._ensemble,
             np.where(self.active_realizations)[0],
             parameters=[param.name for param in parameters_config],
             random_seed=self.random_seed,
@@ -139,21 +127,21 @@ class EnsembleExperiment(BaseRunModel):
         if design_matrix_group is not None and design_matrix is not None:
             save_design_matrix_to_ensemble(
                 design_matrix.design_matrix_df,
-                self.ensemble,
+                self._ensemble,
                 np.where(self.active_realizations)[0],
                 design_matrix_group.name,
             )
 
         self._evaluate_and_postprocess(
             run_args,
-            self.ensemble,
+            self._ensemble,
             evaluator_server_config,
         )
         self.run_workflows(
             fixtures=PostExperimentFixtures(
                 random_seed=self.random_seed,
                 storage=self._storage,
-                ensemble=self.ensemble,
+                ensemble=self._ensemble,
             ),
         )
 

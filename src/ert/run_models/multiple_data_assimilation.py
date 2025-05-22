@@ -1,30 +1,27 @@
 from __future__ import annotations
 
 import logging
-from pathlib import Path
-from queue import SimpleQueue
-from typing import TYPE_CHECKING
+from typing import Any, ClassVar
 from uuid import UUID
 
 import numpy as np
+import polars as pl
+from pydantic import PrivateAttr
 
 from ert.config import (
     ConfigValidationError,
-    ErtConfig,
-    ESSettings,
-    ObservationSettings,
+    DesignMatrix,
+    ParameterConfig,
+    ResponseConfig,
 )
 from ert.enkf_main import sample_prior, save_design_matrix_to_ensemble
 from ert.ensemble_evaluator import EvaluatorServerConfig
-from ert.storage import Ensemble, Storage
+from ert.storage import Ensemble
 from ert.trace import tracer
 
 from ..plugins import PostExperimentFixtures, PreExperimentFixtures
 from ..run_arg import create_run_arguments
-from .base_run_model import ErtRunError, StatusEvents, UpdateRunModel
-
-if TYPE_CHECKING:
-    from ert.config import QueueConfig
+from .base_run_model import ErtRunError, UpdateRunModel
 
 logger = logging.getLogger(__name__)
 
@@ -36,69 +33,45 @@ class MultipleDataAssimilation(UpdateRunModel):
     Run multiple data assimilation (MDA) ensemble smoother with custom weights.
     """
 
-    default_weights = "4, 2, 1"
+    default_weights: ClassVar = "4, 2, 1"
+    target_ensemble_format: str
+    experiment_name: str
+    design_matrix: DesignMatrix | None
+    parameter_configuration: list[ParameterConfig]
+    response_configuration: list[ResponseConfig]
+    ert_templates: list[tuple[str, str]]
+    restart_run: bool
+    prior_ensemble_id: str | None
+    start_iteration: int = 0
+    weights: str
 
-    def __init__(
-        self,
-        target_ensemble: str,
-        experiment_name: str | None,
-        restart_run: bool,
-        prior_ensemble_id: str,
-        active_realizations: list[bool],
-        minimum_required_realizations: int,
-        random_seed: int,
-        weights: str,
-        config: ErtConfig,
-        storage: Storage,
-        queue_config: QueueConfig,
-        es_settings: ESSettings,
-        update_settings: ObservationSettings,
-        status_queue: SimpleQueue[StatusEvents],
-    ) -> None:
-        self._relative_weights = weights
-        self._parameter_configuration = config.ensemble_config.parameter_configuration
-        self._design_matrix = config.analysis_config.design_matrix
-        self.weights = self.parse_weights(weights)
+    _observations: dict[str, pl.DataFrame] = PrivateAttr()
+    _parsed_weights: list[float] = PrivateAttr()
+    _total_iterations: int = PrivateAttr(default=2)
 
-        self.target_ensemble_format = target_ensemble
-        self.experiment_name = experiment_name
-        self.restart_run = restart_run
-        self.prior_ensemble_id = prior_ensemble_id
+    def __init__(self, **data: Any) -> None:
+        observations = data.pop("observations", None)
+        super().__init__(**data)
+        self._observations = observations
+
+    def model_post_init(self, ctx: Any) -> None:
+        super().model_post_init(ctx)
+        self._parsed_weights = self.parse_weights(self.weights)
         start_iteration = 0
-        total_iterations = len(self.weights) + 1
+        total_iterations = len(self._parsed_weights) + 1
         if self.restart_run:
             if not self.prior_ensemble_id:
                 raise ValueError("For restart run, prior ensemble must be set")
-            start_iteration = storage.get_ensemble(prior_ensemble_id).iteration + 1
+            start_iteration = (
+                self._storage.get_ensemble(self.prior_ensemble_id).iteration + 1
+            )
             total_iterations -= start_iteration
         elif not self.experiment_name:
             raise ValueError("For non-restart run, experiment name must be set")
-        super().__init__(
-            es_settings,
-            update_settings,
-            storage,
-            config.runpath_file,
-            Path(config.user_config_file),
-            config.env_vars,
-            config.env_pr_fm_step,
-            config.runpath_config,
-            queue_config,
-            config.forward_model_steps,
-            status_queue,
-            config.substitutions,
-            config.hooked_workflows,
-            active_realizations=active_realizations,
-            total_iterations=total_iterations,
-            start_iteration=start_iteration,
-            random_seed=random_seed,
-            minimum_required_realizations=minimum_required_realizations,
-            log_path=config.analysis_config.log_path,
-        )
+
+        self.start_iteration = start_iteration
+        self._total_iterations = total_iterations
         self.support_restart = False
-        self._observations = config.observations
-        self._parameter_configuration = config.ensemble_config.parameter_configuration
-        self._response_configuration = config.ensemble_config.response_configuration
-        self._templates = config.ert_templates
 
     @tracer.start_as_current_span(f"{__name__}.run_experiment")
     def run_experiment(
@@ -106,8 +79,8 @@ class MultipleDataAssimilation(UpdateRunModel):
     ) -> None:
         self.log_at_startup()
 
-        parameters_config = self._parameter_configuration
-        design_matrix = self._design_matrix
+        parameters_config = self.parameter_configuration
+        design_matrix = self.design_matrix
         design_matrix_group = None
         if design_matrix is not None and not restart:
             try:
@@ -122,9 +95,10 @@ class MultipleDataAssimilation(UpdateRunModel):
             except ConfigValidationError as exc:
                 raise ErtRunError(str(exc)) from exc
 
-        self.restart = restart
+        self._restart = restart
         if self.restart_run:
             id_ = self.prior_ensemble_id
+            assert id_ is not None
             try:
                 ensemble_id = UUID(id_)
                 prior = self._storage.get_ensemble(ensemble_id)
@@ -146,15 +120,17 @@ class MultipleDataAssimilation(UpdateRunModel):
             self.run_workflows(
                 fixtures=PreExperimentFixtures(random_seed=self.random_seed),
             )
-            sim_args = {"weights": self._relative_weights}
+
+            sim_args = {"weights": self.weights}
+
             experiment = self._storage.create_experiment(
                 parameters=parameters_config
                 + ([design_matrix_group] if design_matrix_group else []),
                 observations=self._observations,
-                responses=self._response_configuration,
+                responses=self.response_configuration,
                 simulation_arguments=sim_args,
                 name=self.experiment_name,
-                templates=self._templates,
+                templates=self.ert_templates,
             )
 
             prior = self._storage.create_ensemble(
@@ -166,7 +142,7 @@ class MultipleDataAssimilation(UpdateRunModel):
             self.set_env_key("_ERT_EXPERIMENT_ID", str(experiment.id))
             self.set_env_key("_ERT_ENSEMBLE_ID", str(prior.id))
             prior_args = create_run_arguments(
-                self.run_paths,
+                self._run_paths,
                 np.array(self.active_realizations, dtype=bool),
                 ensemble=prior,
             )
@@ -190,7 +166,9 @@ class MultipleDataAssimilation(UpdateRunModel):
                 prior,
                 evaluator_server_config,
             )
-        enumerated_weights = list(enumerate(self.weights))
+        enumerated_weights: list[tuple[int, float]] = list(
+            enumerate(self._parsed_weights)
+        )
         weights_to_run = enumerated_weights[prior.iteration :]
 
         for iteration, weight in weights_to_run:
@@ -200,7 +178,7 @@ class MultipleDataAssimilation(UpdateRunModel):
                 weight=weight,
             )
             posterior_args = create_run_arguments(
-                self.run_paths,
+                self._run_paths,
                 self.active_realizations,
                 ensemble=posterior,
             )

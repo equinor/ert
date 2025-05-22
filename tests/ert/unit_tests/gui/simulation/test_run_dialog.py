@@ -128,9 +128,7 @@ def run_dialog(qtbot: QtBot, use_tmpdir, mock_set_env_key):
     args_mock = Mock()
     args_mock.config = config_file
     ert_config = ErtConfig.from_file(config_file)
-    gui = _setup_main_window(
-        ert_config, args_mock, GUILogHandler(), use_tmpdir / "storage"
-    )
+    gui = _setup_main_window(ert_config, args_mock, GUILogHandler(), "storage")
     qtbot.addWidget(gui)
     experiment_panel = gui.findChild(ExperimentPanel)
     assert experiment_panel
@@ -599,9 +597,7 @@ def test_that_exception_in_base_run_model_is_handled(qtbot: QtBot, use_tmpdir):
         "run_experiment",
         MagicMock(side_effect=ValueError("I failed :(")),
     ):
-        gui = _setup_main_window(
-            ert_config, args_mock, GUILogHandler(), use_tmpdir / "storage"
-        )
+        gui = _setup_main_window(ert_config, args_mock, GUILogHandler(), "storage")
         qtbot.addWidget(gui)
         run_experiment = gui.findChild(QToolButton, name="run_experiment")
 
@@ -736,9 +732,7 @@ def test_that_design_matrix_show_parameters_button_is_visible(
     args_mock.config = config_file
 
     ert_config = ErtConfig.from_file(config_file)
-    gui = _setup_main_window(
-        ert_config, args_mock, GUILogHandler(), use_tmpdir / "storage"
-    )
+    gui = _setup_main_window(ert_config, args_mock, GUILogHandler(), "storage")
     experiment_panel = gui.findChild(ExperimentPanel)
     assert experiment_panel
 
@@ -883,9 +877,7 @@ def test_that_design_matrix_alters_num_realizations_field(
     args_mock.config = config_file
 
     ert_config = ErtConfig.from_file(config_file)
-    gui = _setup_main_window(
-        ert_config, args_mock, GUILogHandler(), use_tmpdir / "storage"
-    )
+    gui = _setup_main_window(ert_config, args_mock, GUILogHandler(), "storage")
     experiment_panel = gui.findChild(ExperimentPanel)
     assert experiment_panel
 

@@ -3,17 +3,22 @@ from __future__ import annotations
 import dataclasses
 import functools
 import logging
-from pathlib import Path
-from queue import SimpleQueue
-from typing import TYPE_CHECKING
+from typing import Any
 
 import numpy as np
+import polars as pl
+from pydantic import PrivateAttr
 
-from ert.config import ErtConfig, ESSettings, HookRuntime, ObservationSettings
+from ert.config import (
+    DesignMatrix,
+    HookRuntime,
+    ParameterConfig,
+    ResponseConfig,
+)
 from ert.config.parsing.config_errors import ConfigValidationError
 from ert.enkf_main import sample_prior, save_design_matrix_to_ensemble
 from ert.ensemble_evaluator import EvaluatorServerConfig
-from ert.storage import Ensemble, Storage
+from ert.storage import Ensemble
 from ert.trace import tracer
 
 from ..analysis import ErtAnalysisError, enif_update
@@ -25,62 +30,29 @@ from ..plugins import (
     PreUpdateFixtures,
 )
 from ..run_arg import create_run_arguments
-from .base_run_model import ErtRunError, StatusEvents, UpdateRunModel
+from .base_run_model import ErtRunError, UpdateRunModel
 from .event import RunModelStatusEvent, RunModelUpdateBeginEvent
-
-if TYPE_CHECKING:
-    from ert.config import QueueConfig
-
 
 logger = logging.getLogger(__name__)
 
 
 class EnsembleInformationFilter(UpdateRunModel):
-    def __init__(
-        self,
-        target_ensemble: str,
-        experiment_name: str,
-        active_realizations: list[bool],
-        minimum_required_realizations: int,
-        random_seed: int,
-        config: ErtConfig,
-        storage: Storage,
-        queue_config: QueueConfig,
-        es_settings: ESSettings,
-        update_settings: ObservationSettings,
-        status_queue: SimpleQueue[StatusEvents],
-    ) -> None:
-        super().__init__(
-            es_settings,
-            update_settings,
-            storage,
-            config.runpath_file,
-            Path(config.user_config_file),
-            config.env_vars,
-            config.env_pr_fm_step,
-            config.runpath_config,
-            queue_config,
-            config.forward_model_steps,
-            status_queue,
-            config.substitutions,
-            config.hooked_workflows,
-            active_realizations=active_realizations,
-            start_iteration=0,
-            total_iterations=2,
-            random_seed=random_seed,
-            minimum_required_realizations=minimum_required_realizations,
-            log_path=config.analysis_config.log_path,
-        )
-        self.target_ensemble_format = target_ensemble
-        self.experiment_name = experiment_name
+    target_ensemble: str
+    experiment_name: str
+    design_matrix: DesignMatrix | None
+    parameter_configuration: list[ParameterConfig]
+    response_configuration: list[ResponseConfig]
+    ert_templates: list[tuple[str, str]]
 
-        self.support_restart = False
+    start_iteration: int = 0
 
-        self._parameter_configuration = config.ensemble_config.parameter_configuration
-        self._design_matrix = config.analysis_config.design_matrix
-        self._observations = config.observations
-        self._response_configuration = config.ensemble_config.response_configuration
-        self._templates = config.ert_templates
+    _observations: dict[str, pl.DataFrame] = PrivateAttr()
+    _total_iterations: int = PrivateAttr(default=2)
+
+    def __init__(self, **data: Any) -> None:
+        observations = data.pop("observations", None)
+        super().__init__(**data)
+        self._observations = observations
 
     @tracer.start_as_current_span(f"{__name__}.run_experiment")
     def run_experiment(
@@ -88,8 +60,8 @@ class EnsembleInformationFilter(UpdateRunModel):
     ) -> None:
         self.log_at_startup()
 
-        parameters_config = self._parameter_configuration
-        design_matrix = self._design_matrix
+        parameters_config = self.parameter_configuration
+        design_matrix = self.design_matrix
         design_matrix_group = None
         if design_matrix is not None:
             try:
@@ -99,18 +71,18 @@ class EnsembleInformationFilter(UpdateRunModel):
             except ConfigValidationError as exc:
                 raise ErtRunError(str(exc)) from exc
 
-        self.restart = restart
+        self._restart = restart
         self.run_workflows(
             PreExperimentFixtures(random_seed=self.random_seed),
         )
-        ensemble_format = self.target_ensemble_format
+        ensemble_format = self.target_ensemble
         experiment = self._storage.create_experiment(
             parameters=parameters_config
             + ([design_matrix_group] if design_matrix_group else []),
             observations=self._observations,
-            responses=self._response_configuration,
+            responses=self.response_configuration,
             name=self.experiment_name,
-            templates=self._templates,
+            templates=self.ert_templates,
         )
 
         self.set_env_key("_ERT_EXPERIMENT_ID", str(experiment.id))
@@ -121,7 +93,7 @@ class EnsembleInformationFilter(UpdateRunModel):
         )
         self.set_env_key("_ERT_ENSEMBLE_ID", str(prior.id))
         prior_args = create_run_arguments(
-            self.run_paths,
+            self._run_paths,
             np.array(self.active_realizations, dtype=bool),
             ensemble=prior,
         )
@@ -148,7 +120,7 @@ class EnsembleInformationFilter(UpdateRunModel):
         posterior = self.update(prior, ensemble_format % 1)
 
         posterior_args = create_run_arguments(
-            self.run_paths,
+            self._run_paths,
             np.array(self.active_realizations, dtype=bool),
             ensemble=posterior,
         )
@@ -187,11 +159,11 @@ class EnsembleInformationFilter(UpdateRunModel):
         pre_first_update_fixtures = PreFirstUpdateFixtures(
             storage=self._storage,
             ensemble=prior,
-            observation_settings=self._update_settings,
-            es_settings=self._analysis_settings,
+            observation_settings=self.update_settings,
+            es_settings=self.analysis_settings,
             random_seed=self.random_seed,
             reports_dir=self.reports_dir(experiment_name=prior.experiment.name),
-            run_paths=self.run_paths,
+            run_paths=self._run_paths,
         )
 
         posterior = self._storage.create_ensemble(

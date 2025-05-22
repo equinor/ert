@@ -60,6 +60,7 @@ from ert.run_models import (
     SingleTestRun,
 )
 from ert.services import StorageService
+from ert.storage import open_storage
 
 from ...unit_tests.gui.simulation.test_run_path_dialog import handle_run_path_dialog
 from .conftest import (
@@ -291,6 +292,7 @@ def test_that_the_plot_window_contains_the_expected_elements(
     esmda_has_run: ErtMainWindow, qtbot
 ):
     gui = esmda_has_run
+    open_storage(gui.ert_config.ens_path, mode="w")
     with StorageService.init_service(
         project=os.path.abspath(gui.ert_config.ens_path),
     ):
@@ -550,7 +552,7 @@ def test_that_load_results_manually_can_be_run_after_esmda(esmda_has_run, qtbot)
 
 
 def test_that_a_failing_job_shows_error_message_with_context(
-    opened_main_window_poly, qtbot
+    opened_main_window_poly, qtbot, use_tmpdir
 ):
     gui = opened_main_window_poly
 
@@ -615,19 +617,27 @@ def test_that_a_failing_job_shows_error_message_with_context(
     qtbot.waitUntil(lambda: run_dialog.is_simulation_done() is True, timeout=100000)
 
 
-@pytest.mark.usefixtures("use_tmpdir", "set_site_config")
-def test_that_gui_plotter_works_when_no_data(qtbot, storage, monkeypatch):
+@pytest.mark.usefixtures("set_site_config")
+def test_that_gui_plotter_works_when_no_data(qtbot, monkeypatch, use_tmpdir):
     monkeypatch.setattr(PlotApi, "get_all_ensembles", lambda _: [])
     config_file = "minimal_config.ert"
     with open(config_file, "w", encoding="utf-8") as f:
-        f.write("NUM_REALIZATIONS 1")
+        f.write("NUM_REALIZATIONS 1\n")
+        f.write("ENSPATH storage")
+
     args_mock = Mock()
     args_mock.config = config_file
     ert_config = ErtConfig.from_file(config_file)
+    # Open up storage to create it, so that dark storage can be mounted onto it
+    # Not creating will result in dark storage hanging/lagging
+    open_storage(ert_config.ens_path, mode="w")
+
     with StorageService.init_service(
         project=os.path.abspath(ert_config.ens_path),
     ):
-        gui = _setup_main_window(ert_config, args_mock, GUILogHandler(), storage)
+        gui = _setup_main_window(
+            ert_config, args_mock, GUILogHandler(), ert_config.ens_path
+        )
         qtbot.addWidget(gui)
 
         button_plot_tool = gui.findChild(QToolButton, "button_Create_plot")
@@ -642,18 +652,26 @@ def test_that_gui_plotter_works_when_no_data(qtbot, storage, monkeypatch):
 
 
 @pytest.mark.usefixtures("use_tmpdir", "set_site_config")
-def test_right_click_plot_button_opens_external_plotter(qtbot, storage, monkeypatch):
+def test_right_click_plot_button_opens_external_plotter(qtbot, use_tmpdir, monkeypatch):
     monkeypatch.setattr(PlotApi, "get_all_ensembles", lambda _: [])
     config_file = "minimal_config.ert"
     with open(config_file, "w", encoding="utf-8") as f:
-        f.write("NUM_REALIZATIONS 1")
+        f.write("NUM_REALIZATIONS 1\n")
+        f.write("ENSPATH storage")
+
+    # Open up storage to create it, so that dark storage can be mounted onto it
+    # Not creating will result in dark storage hanging/lagging
+    open_storage("storage", mode="w")
+
     args_mock = Mock()
     args_mock.config = config_file
     ert_config = ErtConfig.from_file(config_file)
     with StorageService.init_service(
         project=os.path.abspath(ert_config.ens_path),
     ):
-        gui = _setup_main_window(ert_config, args_mock, GUILogHandler(), storage)
+        gui = _setup_main_window(
+            ert_config, args_mock, GUILogHandler(), ert_config.ens_path
+        )
         qtbot.addWidget(gui)
 
         button_plot_tool = gui.findChild(QToolButton, "button_Create_plot")

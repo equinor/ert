@@ -287,7 +287,7 @@ class MultipleDataAssimilationPanel(ExperimentConfigPanel):
             mode=ES_MDA_MODE,
             target_ensemble=self._target_ensemble_format_model.getValue(),  # type: ignore
             realizations=self._active_realizations_field.text(),
-            weights=self.weights,  # type: ignore
+            weights=self.weights,
             restart_run=self._restart_box.isChecked(),
             prior_ensemble_id=(
                 str(self._ensemble_selector.selected_ensemble.id)

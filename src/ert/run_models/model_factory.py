@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import logging
+from pathlib import Path
 from queue import SimpleQueue
 from typing import TYPE_CHECKING
 
@@ -37,12 +38,10 @@ if TYPE_CHECKING:
 
     from ert.namespace import Namespace
     from ert.run_models.event import StatusEvents
-    from ert.storage import Storage
 
 
 def create_model(
     config: ErtConfig,
-    storage: Storage,
     args: Namespace,
     status_queue: SimpleQueue[StatusEvents],
 ) -> BaseRunModel:
@@ -57,34 +56,29 @@ def create_model(
     update_settings = config.analysis_config.observation_settings
 
     if args.mode == TEST_RUN_MODE:
-        return _setup_single_test_run(config, storage, args, status_queue)
+        return _setup_single_test_run(config, args, status_queue)
     validate_minimum_realizations(config, args)
     if args.mode == ENSEMBLE_EXPERIMENT_MODE:
-        return _setup_ensemble_experiment(config, storage, args, status_queue)
+        return _setup_ensemble_experiment(config, args, status_queue)
     if args.mode == EVALUATE_ENSEMBLE_MODE:
-        return _setup_evaluate_ensemble(config, storage, args, status_queue)
+        return _setup_evaluate_ensemble(config, args, status_queue)
     if args.mode == ENSEMBLE_SMOOTHER_MODE:
-        return _setup_ensemble_smoother(
-            config, storage, args, update_settings, status_queue
-        )
+        return _setup_ensemble_smoother(config, args, update_settings, status_queue)
     if args.mode == ENIF_MODE:
         return _setup_ensemble_information_filter(
-            config, storage, args, update_settings, status_queue
+            config, args, update_settings, status_queue
         )
     if args.mode == ES_MDA_MODE:
         return _setup_multiple_data_assimilation(
-            config, storage, args, update_settings, status_queue
+            config, args, update_settings, status_queue
         )
     if args.mode == MANUAL_UPDATE_MODE:
-        return _setup_manual_update(
-            config, storage, args, update_settings, status_queue
-        )
+        return _setup_manual_update(config, args, update_settings, status_queue)
     raise NotImplementedError(f"Run type not supported {args.mode}")
 
 
 def _setup_single_test_run(
     config: ErtConfig,
-    storage: Storage,
     args: Namespace,
     status_queue: SimpleQueue[StatusEvents],
 ) -> SingleTestRun:
@@ -94,10 +88,26 @@ def _setup_single_test_run(
 
     return SingleTestRun(
         random_seed=config.random_seed,
+        runpath_file=config.runpath_file,
+        active_realizations=[True],
         ensemble_name=args.current_ensemble,
+        minimum_required_realizations=1,
         experiment_name=experiment_name,
-        config=config,
-        storage=storage,
+        design_matrix=config.analysis_config.design_matrix,
+        parameter_configuration=config.ensemble_config.parameter_configuration,
+        response_configuration=config.ensemble_config.response_configuration,
+        ert_templates=config.ert_templates,
+        user_config_file=Path(config.user_config_file),
+        env_vars=config.env_vars,
+        env_pr_fm_step=config.env_pr_fm_step,
+        runpath_config=config.runpath_config,
+        forward_model_steps=config.forward_model_steps,
+        substitutions=config.substitutions,
+        hooked_workflows=config.hooked_workflows,
+        log_path=config.analysis_config.log_path,
+        storage_path=config.ens_path,
+        queue_config=config.queue_config.create_local_copy(),
+        observations=config.observations,
         status_queue=status_queue,
     )
 
@@ -117,7 +127,6 @@ def validate_minimum_realizations(config: ErtConfig, args: Namespace) -> None:
 
 def _setup_ensemble_experiment(
     config: ErtConfig,
-    storage: Storage,
     args: Namespace,
     status_queue: SimpleQueue[StatusEvents],
 ) -> EnsembleExperiment:
@@ -127,20 +136,32 @@ def _setup_ensemble_experiment(
 
     return EnsembleExperiment(
         random_seed=config.random_seed,
+        runpath_file=config.runpath_file,
         active_realizations=active_realizations,
         ensemble_name=args.current_ensemble,
         minimum_required_realizations=config.analysis_config.minimum_required_realizations,
         experiment_name=experiment_name,
-        config=config,
-        storage=storage,
+        design_matrix=config.analysis_config.design_matrix,
+        parameter_configuration=config.ensemble_config.parameter_configuration,
+        response_configuration=config.ensemble_config.response_configuration,
+        ert_templates=config.ert_templates,
+        user_config_file=Path(config.user_config_file),
+        env_vars=config.env_vars,
+        env_pr_fm_step=config.env_pr_fm_step,
+        runpath_config=config.runpath_config,
+        forward_model_steps=config.forward_model_steps,
+        substitutions=config.substitutions,
+        hooked_workflows=config.hooked_workflows,
+        log_path=config.analysis_config.log_path,
+        storage_path=config.ens_path,
         queue_config=config.queue_config,
+        observations=config.observations,
         status_queue=status_queue,
     )
 
 
 def _setup_evaluate_ensemble(
     config: ErtConfig,
-    storage: Storage,
     args: Namespace,
     status_queue: SimpleQueue[StatusEvents],
 ) -> EvaluateEnsemble:
@@ -151,10 +172,22 @@ def _setup_evaluate_ensemble(
         active_realizations=active_realizations,
         ensemble_id=args.ensemble_id,
         minimum_required_realizations=config.analysis_config.minimum_required_realizations,
-        config=config,
-        storage=storage,
+        storage_path=config.ens_path,
         queue_config=config.queue_config,
         status_queue=status_queue,
+        runpath_file=config.runpath_file,
+        design_matrix=config.analysis_config.design_matrix,
+        parameter_configuration=config.ensemble_config.parameter_configuration,
+        response_configuration=config.ensemble_config.response_configuration,
+        ert_templates=config.ert_templates,
+        user_config_file=Path(config.user_config_file),
+        env_vars=config.env_vars,
+        env_pr_fm_step=config.env_pr_fm_step,
+        runpath_config=config.runpath_config,
+        forward_model_steps=config.forward_model_steps,
+        substitutions=config.substitutions,
+        hooked_workflows=config.hooked_workflows,
+        log_path=config.analysis_config.log_path,
     )
 
 
@@ -175,7 +208,6 @@ def _get_active_realizations_list(args: Namespace, config: ErtConfig) -> list[bo
 
 def _setup_manual_update(
     config: ErtConfig,
-    storage: Storage,
     args: Namespace,
     update_settings: ObservationSettings,
     status_queue: SimpleQueue[StatusEvents],
@@ -189,17 +221,30 @@ def _setup_manual_update(
         minimum_required_realizations=config.analysis_config.minimum_required_realizations,
         target_ensemble=args.target_ensemble,
         config=config,
-        storage=storage,
+        storage_path=config.ens_path,
         queue_config=config.queue_config,
-        es_settings=config.analysis_config.es_settings,
+        analysis_settings=config.analysis_config.es_settings,
         update_settings=update_settings,
         status_queue=status_queue,
+        runpath_file=config.runpath_file,
+        design_matrix=config.analysis_config.design_matrix,
+        parameter_configuration=config.ensemble_config.parameter_configuration,
+        response_configuration=config.ensemble_config.response_configuration,
+        ert_templates=config.ert_templates,
+        user_config_file=Path(config.user_config_file),
+        env_vars=config.env_vars,
+        env_pr_fm_step=config.env_pr_fm_step,
+        runpath_config=config.runpath_config,
+        forward_model_steps=config.forward_model_steps,
+        substitutions=config.substitutions,
+        hooked_workflows=config.hooked_workflows,
+        log_path=config.analysis_config.log_path,
+        observations=config.observations,
     )
 
 
 def _setup_ensemble_smoother(
     config: ErtConfig,
-    storage: Storage,
     args: Namespace,
     update_settings: ObservationSettings,
     status_queue: SimpleQueue[StatusEvents],
@@ -217,17 +262,30 @@ def _setup_ensemble_smoother(
         minimum_required_realizations=config.analysis_config.minimum_required_realizations,
         random_seed=config.random_seed,
         config=config,
-        storage=storage,
+        storage_path=config.ens_path,
         queue_config=config.queue_config,
-        es_settings=config.analysis_config.es_settings,
+        analysis_settings=config.analysis_config.es_settings,
         update_settings=update_settings,
         status_queue=status_queue,
+        runpath_file=config.runpath_file,
+        design_matrix=config.analysis_config.design_matrix,
+        parameter_configuration=config.ensemble_config.parameter_configuration,
+        response_configuration=config.ensemble_config.response_configuration,
+        ert_templates=config.ert_templates,
+        user_config_file=Path(config.user_config_file),
+        env_vars=config.env_vars,
+        env_pr_fm_step=config.env_pr_fm_step,
+        runpath_config=config.runpath_config,
+        forward_model_steps=config.forward_model_steps,
+        substitutions=config.substitutions,
+        hooked_workflows=config.hooked_workflows,
+        log_path=config.analysis_config.log_path,
+        observations=config.observations,
     )
 
 
 def _setup_ensemble_information_filter(
     config: ErtConfig,
-    storage: Storage,
     args: Namespace,
     update_settings: ObservationSettings,
     status_queue: SimpleQueue[StatusEvents],
@@ -245,15 +303,29 @@ def _setup_ensemble_information_filter(
         minimum_required_realizations=config.analysis_config.minimum_required_realizations,
         random_seed=config.random_seed,
         config=config,
-        storage=storage,
+        storage_path=config.ens_path,
         queue_config=config.queue_config,
-        es_settings=config.analysis_config.es_settings,
+        analysis_settings=config.analysis_config.es_settings,
         update_settings=update_settings,
         status_queue=status_queue,
+        runpath_file=config.runpath_file,
+        design_matrix=config.analysis_config.design_matrix,
+        parameter_configuration=config.ensemble_config.parameter_configuration,
+        response_configuration=config.ensemble_config.response_configuration,
+        ert_templates=config.ert_templates,
+        user_config_file=Path(config.user_config_file),
+        env_vars=config.env_vars,
+        env_pr_fm_step=config.env_pr_fm_step,
+        runpath_config=config.runpath_config,
+        forward_model_steps=config.forward_model_steps,
+        substitutions=config.substitutions,
+        hooked_workflows=config.hooked_workflows,
+        log_path=config.analysis_config.log_path,
+        observations=config.observations,
     )
 
 
-def _determine_restart_info(args: Namespace) -> tuple[bool, str]:
+def _determine_restart_info(args: Namespace) -> tuple[bool, str | None]:
     """Handles differences in configuration between CLI and GUI.
 
     Returns
@@ -264,7 +336,7 @@ def _determine_restart_info(args: Namespace) -> tuple[bool, str]:
     if hasattr(args, "restart_ensemble_id"):
         # When running from CLI
         restart_run = args.restart_ensemble_id is not None
-        prior_ensemble = args.restart_ensemble_id
+        prior_ensemble = args.restart_ensemble_id or ""
     else:
         # When running from GUI
         restart_run = args.restart_run
@@ -274,7 +346,6 @@ def _determine_restart_info(args: Namespace) -> tuple[bool, str]:
 
 def _setup_multiple_data_assimilation(
     config: ErtConfig,
-    storage: Storage,
     args: Namespace,
     update_settings: ObservationSettings,
     status_queue: SimpleQueue[StatusEvents],
@@ -285,22 +356,35 @@ def _setup_multiple_data_assimilation(
         raise ConfigValidationError(
             "Number of active realizations must be at least 2 for an update step"
         )
-
     return MultipleDataAssimilation(
         random_seed=config.random_seed,
         active_realizations=active_realizations,
-        target_ensemble=_iterative_ensemble_format(args),
+        target_ensemble_format=_iterative_ensemble_format(args),
         weights=args.weights,
         restart_run=restart_run,
         prior_ensemble_id=prior_ensemble,
         minimum_required_realizations=config.analysis_config.minimum_required_realizations,
         experiment_name=args.experiment_name,
-        config=config,
-        storage=storage,
         queue_config=config.queue_config,
         es_settings=config.analysis_config.es_settings,
         update_settings=update_settings,
         status_queue=status_queue,
+        storage_path=config.ens_path,
+        analysis_settings=config.analysis_config.es_settings,
+        runpath_file=config.runpath_file,
+        design_matrix=config.analysis_config.design_matrix,
+        parameter_configuration=config.ensemble_config.parameter_configuration,
+        response_configuration=config.ensemble_config.response_configuration,
+        ert_templates=config.ert_templates,
+        user_config_file=Path(config.user_config_file),
+        env_vars=config.env_vars,
+        env_pr_fm_step=config.env_pr_fm_step,
+        runpath_config=config.runpath_config,
+        forward_model_steps=config.forward_model_steps,
+        substitutions=config.substitutions,
+        hooked_workflows=config.hooked_workflows,
+        log_path=config.analysis_config.log_path,
+        observations=config.observations,
     )
 
 
