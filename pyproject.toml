@@ -62,6 +62,7 @@ dependencies = [
     "seaborn",
     "tables",                                  # extra dependency for pandas (hdf5)
     "tabulate",
+    "threadpoolctl",
     "tqdm>=4.62.0",
     "typing_extensions>=4.5",
     "uvicorn >= 0.17.0",
