@@ -131,7 +131,7 @@ def data_for_parameter(ensemble: Ensemble, key: str) -> pd.DataFrame:
     group, _ = _extract_parameter_group_and_key(key)
     parameters = ensemble.experiment.parameter_configuration
     if group in parameters and isinstance(gen_kw := parameters[group], GenKwConfig):
-        dataframes = []
+        dataframes: list[pd.DataFrame] = []
 
         with contextlib.suppress(KeyError):
             try:
