@@ -17,6 +17,7 @@ import polars as pl
 import psutil
 import scipy
 from iterative_ensemble_smoother.experimental import AdaptiveESMDA
+from threadpoolctl import threadpool_limits
 
 from ert.config import (
     ESSettings,
@@ -52,6 +53,8 @@ if TYPE_CHECKING:
 logger = logging.getLogger(__name__)
 
 T = TypeVar("T")
+
+OPTIMAL_NUM_THREADS = max(1, (psutil.cpu_count(logical=False) or 1) // 2)
 
 
 class TimedIterator(Generic[T]):
@@ -246,135 +249,136 @@ def analysis_ES(
     )
     truncation = module.enkf_truncation
 
-    if module.localization:
-        smoother_adaptive_es = AdaptiveESMDA(
-            covariance=observation_errors**2,
-            observations=observation_values,
-            seed=rng,
-        )
-
-        # Pre-calculate cov_YY
-        cov_YY = np.atleast_2d(np.cov(S))
-
-        D = smoother_adaptive_es.perturb_observations(
-            ensemble_size=ensemble_size, alpha=1.0
-        )
-
-    else:
-        # Compute transition matrix so that
-        # X_posterior = X_prior @ T
-        try:
-            T = smoother_es.compute_transition_matrix(
-                Y=S, alpha=1.0, truncation=truncation
-            )
-        except scipy.linalg.LinAlgError as err:
-            msg = (
-                "Failed while computing transition matrix, "
-                "this might be due to outlier values in one "
-                f"or more realizations: {err}"
-            )
-            progress_callback(
-                AnalysisErrorEvent(
-                    error_msg=msg,
-                    data=DataSection(
-                        header=smoother_snapshot.header,
-                        data=smoother_snapshot.csv,
-                        extra=smoother_snapshot.extra,
-                    ),
-                )
-            )
-            raise ErtAnalysisError(msg) from err
-        # Add identity in place for fast computation
-        np.fill_diagonal(T, T.diagonal() + 1)
-
-    def correlation_callback(
-        cross_correlations_of_batch: npt.NDArray[np.float64],
-        cross_correlations_accumulator: list[npt.NDArray[np.float64]],
-    ) -> None:
-        cross_correlations_accumulator.append(cross_correlations_of_batch)
-
-    for param_group in parameters:
-        param_ensemble_array = source_ensemble.load_parameters_numpy(
-            param_group, iens_active_index
-        )
+    with threadpool_limits(limits=OPTIMAL_NUM_THREADS):
         if module.localization:
-            config_node = source_ensemble.experiment.parameter_configuration[
-                param_group
-            ]
-            num_params = param_ensemble_array.shape[0]
-            batch_size = _calculate_adaptive_batch_size(num_params, num_obs)
-            batches = _split_by_batchsize(np.arange(0, num_params), batch_size)
-
-            log_msg = (
-                f"Running localization on {num_params} parameters, "
-                f"{num_obs} responses, {ensemble_size} realizations "
-                f"and {len(batches)} batches"
+            smoother_adaptive_es = AdaptiveESMDA(
+                covariance=observation_errors**2,
+                observations=observation_values,
+                seed=rng,
             )
-            logger.info(log_msg)
-            progress_callback(AnalysisStatusEvent(msg=log_msg))
 
-            start = time.time()
-            cross_correlations: list[npt.NDArray[np.float64]] = []
-            for param_batch_idx in batches:
-                X_local = param_ensemble_array[param_batch_idx, :]
-                if isinstance(config_node, GenKwConfig):
-                    correlation_batch_callback = functools.partial(
-                        correlation_callback,
-                        cross_correlations_accumulator=cross_correlations,
-                    )
-                else:
-                    correlation_batch_callback = None
-                param_ensemble_array[param_batch_idx, :] = (
-                    smoother_adaptive_es.assimilate(
-                        X=X_local,
-                        Y=S,
-                        D=D,
-                        # The user is responsible for scaling observation covariance
-                        # (esmda usage):
-                        alpha=1.0,
-                        correlation_threshold=module.correlation_threshold,
-                        cov_YY=cov_YY,
-                        progress_callback=adaptive_localization_progress_callback,
-                        correlation_callback=correlation_batch_callback,
-                    )
-                )
+            # Pre-calculate cov_YY
+            cov_YY = np.atleast_2d(np.cov(S))
 
-            if cross_correlations:
-                assert isinstance(config_node, GenKwConfig)
-                parameter_names = [
-                    t["name"]  # type: ignore
-                    for t in config_node.transform_function_definitions
-                ]
-                cross_correlations_ = np.vstack(cross_correlations)
-                if cross_correlations_.size != 0:
-                    source_ensemble.save_cross_correlations(
-                        cross_correlations_,
-                        param_group,
-                        parameter_names[: cross_correlations_.shape[0]],
-                    )
-            logger.info(
-                f"Adaptive Localization of {param_group} completed "
-                f"in {(time.time() - start) / 60} minutes"
+            D = smoother_adaptive_es.perturb_observations(
+                ensemble_size=ensemble_size, alpha=1.0
             )
 
         else:
-            # In-place multiplication is not yet supported, therefore avoiding @=
-            param_ensemble_array = param_ensemble_array @ T.astype(  # noqa: PLR6104
-                param_ensemble_array.dtype
+            # Compute transition matrix so that
+            # X_posterior = X_prior @ T
+            try:
+                T = smoother_es.compute_transition_matrix(
+                    Y=S, alpha=1.0, truncation=truncation
+                )
+            except scipy.linalg.LinAlgError as err:
+                msg = (
+                    "Failed while computing transition matrix, "
+                    "this might be due to outlier values in one "
+                    f"or more realizations: {err}"
+                )
+                progress_callback(
+                    AnalysisErrorEvent(
+                        error_msg=msg,
+                        data=DataSection(
+                            header=smoother_snapshot.header,
+                            data=smoother_snapshot.csv,
+                            extra=smoother_snapshot.extra,
+                        ),
+                    )
+                )
+                raise ErtAnalysisError(msg) from err
+            # Add identity in place for fast computation
+            np.fill_diagonal(T, T.diagonal() + 1)
+
+        def correlation_callback(
+            cross_correlations_of_batch: npt.NDArray[np.float64],
+            cross_correlations_accumulator: list[npt.NDArray[np.float64]],
+        ) -> None:
+            cross_correlations_accumulator.append(cross_correlations_of_batch)
+
+        for param_group in parameters:
+            param_ensemble_array = source_ensemble.load_parameters_numpy(
+                param_group, iens_active_index
             )
+            if module.localization:
+                config_node = source_ensemble.experiment.parameter_configuration[
+                    param_group
+                ]
+                num_params = param_ensemble_array.shape[0]
+                batch_size = _calculate_adaptive_batch_size(num_params, num_obs)
+                batches = _split_by_batchsize(np.arange(0, num_params), batch_size)
 
-        log_msg = f"Storing data for {param_group}.."
-        logger.info(log_msg)
-        progress_callback(AnalysisStatusEvent(msg=log_msg))
-        start = time.time()
+                log_msg = (
+                    f"Running localization on {num_params} parameters, "
+                    f"{num_obs} responses, {ensemble_size} realizations "
+                    f"and {len(batches)} batches"
+                )
+                logger.info(log_msg)
+                progress_callback(AnalysisStatusEvent(msg=log_msg))
 
-        target_ensemble.save_parameters_numpy(
-            param_ensemble_array, param_group, iens_active_index
-        )
-        logger.info(
-            f"Storing data for {param_group} completed in "
-            f"{(time.time() - start) / 60} minutes"
-        )
+                start = time.time()
+                cross_correlations: list[npt.NDArray[np.float64]] = []
+                for param_batch_idx in batches:
+                    X_local = param_ensemble_array[param_batch_idx, :]
+                    if isinstance(config_node, GenKwConfig):
+                        correlation_batch_callback = functools.partial(
+                            correlation_callback,
+                            cross_correlations_accumulator=cross_correlations,
+                        )
+                    else:
+                        correlation_batch_callback = None
+                    param_ensemble_array[param_batch_idx, :] = (
+                        smoother_adaptive_es.assimilate(
+                            X=X_local,
+                            Y=S,
+                            D=D,
+                            # The user is responsible for scaling observation covariance
+                            # (esmda usage):
+                            alpha=1.0,
+                            correlation_threshold=module.correlation_threshold,
+                            cov_YY=cov_YY,
+                            progress_callback=adaptive_localization_progress_callback,
+                            correlation_callback=correlation_batch_callback,
+                        )
+                    )
+
+                if cross_correlations:
+                    assert isinstance(config_node, GenKwConfig)
+                    parameter_names = [
+                        t["name"]  # type: ignore
+                        for t in config_node.transform_function_definitions
+                    ]
+                    cross_correlations_ = np.vstack(cross_correlations)
+                    if cross_correlations_.size != 0:
+                        source_ensemble.save_cross_correlations(
+                            cross_correlations_,
+                            param_group,
+                            parameter_names[: cross_correlations_.shape[0]],
+                        )
+                logger.info(
+                    f"Adaptive Localization of {param_group} completed "
+                    f"in {(time.time() - start) / 60} minutes"
+                )
+
+            else:
+                # In-place multiplication is not yet supported, therefore avoiding @=
+                param_ensemble_array = param_ensemble_array @ T.astype(  # noqa: PLR6104
+                    param_ensemble_array.dtype
+                )
+
+            log_msg = f"Storing data for {param_group}.."
+            logger.info(log_msg)
+            progress_callback(AnalysisStatusEvent(msg=log_msg))
+            start = time.time()
+
+            target_ensemble.save_parameters_numpy(
+                param_ensemble_array, param_group, iens_active_index
+            )
+            logger.info(
+                f"Storing data for {param_group} completed in "
+                f"{(time.time() - start) / 60} minutes"
+            )
 
     _copy_unupdated_parameters(
         list(source_ensemble.experiment.parameter_configuration.keys()),
