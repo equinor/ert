@@ -237,8 +237,8 @@ def test_save_parameters_to_storage_from_design_dataframe(
             save_design_matrix_to_ensemble(
                 design_matrix.design_matrix_df, ensemble, reals
             )
-            params = ensemble.load_parameters(DESIGN_MATRIX_GROUP)["values"]
-            all(params.names.values == ["a", "b", "c"])
-            np.testing.assert_array_almost_equal(params[:, 0], a_values)
-            np.testing.assert_array_almost_equal(params[:, 1], b_values)
-            np.testing.assert_array_almost_equal(params[:, 2], c_values)
+            params = ensemble.load_parameters_pl(DESIGN_MATRIX_GROUP, all_data=False)
+            assert params.columns == ["a", "b", "c"]
+            np.testing.assert_array_almost_equal(params["a"].to_list(), a_values)
+            np.testing.assert_array_almost_equal(params["b"].to_list(), b_values)
+            np.testing.assert_array_almost_equal(params["c"].to_list(), c_values)
