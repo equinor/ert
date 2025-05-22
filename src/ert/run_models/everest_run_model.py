@@ -327,6 +327,7 @@ class EverestRunModel(BaseRunModel):
 
         self.ever_storage = EverestStorage(
             output_dir=Path(self._everest_config.optimization_output_dir),
+            ert_storage_path=Path(self._everest_config.storage_dir),
         )
 
         self.ever_storage.init(

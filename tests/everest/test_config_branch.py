@@ -12,19 +12,12 @@ from everest.config_file_loader import load_yaml
 @pytest.mark.xdist_group("math_func/config_advanced.yml")
 def test_get_controls_for_batch(cached_example):
     path, _, _, _ = cached_example("math_func/config_advanced.yml")
+    opt_path = Path(path) / "everest_output" / "optimization_output"
+    storage_path = Path(path) / "everest_output" / "simulation_results"
+    assert opt_controls_by_batch(opt_path, storage_path, 1) is not None
+    assert opt_controls_by_batch(opt_path, storage_path, 42) is None
 
-    assert (
-        opt_controls_by_batch(Path(path) / "everest_output" / "optimization_output", 1)
-        is not None
-    )
-    assert (
-        opt_controls_by_batch(Path(path) / "everest_output" / "optimization_output", 42)
-        is None
-    )
-
-    opt_controls = opt_controls_by_batch(
-        Path(path) / "everest_output" / "optimization_output", 1
-    )
+    opt_controls = opt_controls_by_batch(opt_path, storage_path, 1)
     control_names = set(opt_controls.keys())
     expected_control_names = {"point.x.0", "point.x.1", "point.x.2"}
 
@@ -60,7 +53,9 @@ def test_update_controls_initial_guess(cached_example):
         assert "initial_guess" not in var
 
     opt_controls = opt_controls_by_batch(
-        Path(path) / "everest_output" / "optimization_output", 1
+        Path(path) / "everest_output" / "optimization_output",
+        Path(path) / "everest_output" / "simulation_results",
+        1,
     )
     updated_controls = _updated_initial_guess(old_controls, opt_controls)
     updated_ctl = next(iter(updated_controls), None)

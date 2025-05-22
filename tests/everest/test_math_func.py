@@ -22,8 +22,9 @@ def test_math_func_multiobj(cached_example):
     config_path, config_file, _, _ = cached_example("math_func/config_multiobj.yml")
 
     config = EverestConfig.load_file(Path(config_path) / config_file)
-
-    storage = EverestStorage(Path(config.optimization_output_dir))
+    storage = EverestStorage(
+        Path(config.optimization_output_dir), Path(config.storage_dir)
+    )
     storage.read_from_output_dir()
     result = storage.get_optimal_result()
     # Check resulting points
@@ -44,7 +45,9 @@ def test_math_func_advanced(cached_example):
     config_path, config_file, _, _ = cached_example("math_func/config_advanced.yml")
 
     config = EverestConfig.load_file(Path(config_path) / config_file)
-    storage = EverestStorage(Path(config.optimization_output_dir))
+    storage = EverestStorage(
+        Path(config.optimization_output_dir), Path(config.storage_dir)
+    )
     storage.read_from_output_dir()
     result = storage.get_optimal_result()
 

@@ -60,8 +60,9 @@ def test_everest_entry_run(cached_example):
     )
 
     assert status["status"] == ServerStatus.completed
-
-    storage = EverestStorage(Path(config.optimization_output_dir))
+    storage = EverestStorage(
+        Path(config.optimization_output_dir), Path(config.storage_dir)
+    )
     storage.read_from_output_dir()
     optimal = storage.get_optimal_result()
 
