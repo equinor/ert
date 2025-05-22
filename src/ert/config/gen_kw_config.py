@@ -358,9 +358,8 @@ class GenKwConfig(ParameterConfig):
         realization: int,
         data: npt.NDArray[np.float64],
     ) -> None:
-        transformed_value = self.transform(data)
         parameter_dict = {
-            parameter.name: transformed_value[idx]
+            parameter.name: data[idx]
             for idx, parameter in enumerate(self.transform_functions)
         }
         parameter_dict["realization"] = realization
