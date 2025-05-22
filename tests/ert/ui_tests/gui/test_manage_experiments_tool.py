@@ -77,15 +77,20 @@ def test_design_matrix_in_manage_experiments_panel(
     )
     experiments = list(storage.experiments)
     assert len(experiments) == 2
-    assert experiments[0].name == "my-experiment"
-    assert experiments[1].name == "my-experiment-2"
-    ensemble = experiments[1].get_ensemble_by_name("my-design-2")
-    assert "DESIGN_MATRIX" in experiments[1].parameter_configuration
+
+    # The write-storage writes the experiments,
+    # and the read-storage refreshes itself.
+    # There is no guarantee that the experiment UUIDs are in order-of-creation
+    # hence, we do not assert the order here
+    assert {e.name for e in experiments} == {"my-experiment", "my-experiment-2"}
+    exp2 = notifier.storage.get_experiment_by_name("my-experiment-2")
+    ensemble = exp2.get_ensemble_by_name("my-design-2")
+    assert "DESIGN_MATRIX" in exp2.parameter_configuration
     assert {
         t["name"]
-        for t in experiments[1]
-        .parameter_configuration["DESIGN_MATRIX"]
-        .transform_function_definitions
+        for t in exp2.parameter_configuration[
+            "DESIGN_MATRIX"
+        ].transform_function_definitions
     } == {"a", "b", "c"}
     assert all(
         RealizationStorageState.UNDEFINED in s for s in ensemble.get_ensemble_state()
