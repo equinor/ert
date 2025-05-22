@@ -8,7 +8,7 @@ from abc import abstractmethod
 from typing import Annotated, Any, Literal, no_type_check
 
 import pydantic
-from pydantic import Field, field_validator
+from pydantic import BaseModel, Field, field_validator
 from pydantic.dataclasses import dataclass
 from pydantic_core.core_schema import ValidationInfo
 
@@ -284,8 +284,7 @@ def _group_queue_options_by_queue_system(
     return grouped
 
 
-@dataclass
-class QueueConfig:
+class QueueConfig(BaseModel):
     max_submit: int = 1
     queue_system: QueueSystem = QueueSystem.LOCAL
     queue_options: (
@@ -351,18 +350,18 @@ class QueueConfig:
                 queue_options.project_code = "+".join(tags)
 
         return QueueConfig(
-            max_submit,
-            selected_queue_system,
-            queue_options,
+            max_submit=max_submit,
+            queue_system=selected_queue_system,
+            queue_options=queue_options,
             stop_long_running=bool(stop_long_running),
             max_runtime=config_dict.get(ConfigKeys.MAX_RUNTIME),
         )
 
     def create_local_copy(self) -> QueueConfig:
         return QueueConfig(
-            self.max_submit,
-            QueueSystem.LOCAL,
-            LocalQueueOptions(max_running=self.max_running),
+            max_submit=self.max_submit,
+            queue_system=QueueSystem.LOCAL,
+            queue_options=LocalQueueOptions(max_running=self.max_running),
             stop_long_running=bool(self.stop_long_running),
             max_runtime=self.max_runtime,
         )
