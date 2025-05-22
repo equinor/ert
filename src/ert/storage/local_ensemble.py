@@ -974,6 +974,15 @@ class LocalEnsemble(BaseMode):
     ) -> pl.DataFrame:
         """Fetches and aligns selected observations with their
         corresponding simulated responses from an ensemble."""
+        known_observations = self.experiment.observation_keys
+        unknown_observations = [
+            obs for obs in selected_observations if obs not in known_observations
+        ]
+
+        if unknown_observations:
+            msg = f"Observations: {', '.join(unknown_observations)} not in experiment"
+            raise KeyError(msg)
+
         observations_by_type = self.experiment.observations
 
         with pl.StringCache():
