@@ -570,6 +570,21 @@ def test_that_flow_fm_step_check_version_availability():
         ErtConfig.with_plugins().from_file(config_file_name)
 
 
+@pytest.mark.integration_test
+@pytest.mark.usefixtures("use_tmpdir")
+def test_that_flow_fm_gives_config_warning_on_unknown_options():
+    config_file_name = "test.ert"
+    Path(config_file_name).write_text(
+        "NUM_REALIZATIONS 1\nFORWARD_MODEL FLOW(<DUMMY>=moredummy)\n",
+        encoding="utf-8",
+    )
+    with pytest.warns(
+        ConfigWarning,
+        match=r".*Unknown option.*Flow: .*DUMMY.*",
+    ):
+        ErtConfig.with_plugins().from_file(config_file_name)
+
+
 def test_that_plugin_forward_models_are_installed(tmp_path):
     (tmp_path / "test.ert").write_text(
         dedent(

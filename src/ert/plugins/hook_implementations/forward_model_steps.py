@@ -9,6 +9,7 @@ from ert import (
     ForwardModelStepJSON,
     ForwardModelStepPlugin,
     ForwardModelStepValidationError,
+    ForwardModelStepWarning,
     plugin,
 )
 
@@ -348,6 +349,11 @@ class Flow(ForwardModelStepPlugin):
         )
 
     def validate_pre_experiment(self, fm_json: ForwardModelStepJSON) -> None:
+        allowed_args = {"<VERSION>", "<NUM_CPU>", "<OPTS>", "<ECLBASE>"}
+        if unknowns := set(self.private_args) - allowed_args:
+            raise ForwardModelStepWarning(
+                f"Unknown option(s) supplied to Flow: {sorted(unknowns)}"
+            )
         available_versions = _available_flow_versions(env_vars=fm_json["environment"])
         version = fm_json["argList"][fm_json["argList"].index("--version") + 1]
         if version not in available_versions:
