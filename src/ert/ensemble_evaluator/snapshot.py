@@ -16,7 +16,6 @@ from _ert.events import (
     EnsembleFailed,
     EnsembleStarted,
     EnsembleSucceeded,
-    Event,
     FMEvent,
     ForwardModelStepFailure,
     ForwardModelStepRunning,
@@ -266,7 +265,13 @@ class EnsembleSnapshot:
         return self
 
     def update_from_event(
-        self, event: Event, source_snapshot: EnsembleSnapshot | None = None
+        self,
+        event: RealizationEvent
+        | FMEvent
+        | EnsembleEvent
+        | EESnapshotUpdate
+        | EESnapshot,
+        source_snapshot: EnsembleSnapshot | None = None,
     ) -> EnsembleSnapshot:
         e_type = type(event)
         timestamp = event.time
@@ -397,9 +402,9 @@ class EnsembleSnapshot:
         elif e_type in get_args(EnsembleEvent):
             event = cast(EnsembleEvent, event)
             self._ensemble_state = _ENSEMBLE_TYPE_EVENT_TO_STATUS[type(event)]
-        elif type(event) is EESnapshotUpdate:
+        elif isinstance(event, EESnapshotUpdate):
             self.merge_snapshot(EnsembleSnapshot.from_nested_dict(event.snapshot))
-        elif type(event) is EESnapshot:
+        elif isinstance(event, EESnapshot):
             return EnsembleSnapshot.from_nested_dict(event.snapshot)
         else:
             raise ValueError(f"Unknown type: {e_type}")
