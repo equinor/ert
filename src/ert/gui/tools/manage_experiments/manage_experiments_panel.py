@@ -162,7 +162,15 @@ class ManageExperimentsPanel(QTabWidget):
                 )
 
         def update_button_state() -> None:
-            initialize_button.setEnabled(ensemble_selector.count() > 0)
+            if self.notifier.is_simulation_running:
+                initialize_button.setEnabled(False)
+            else:
+                initialize_button.setEnabled(ensemble_selector.count() > 0)
+
+        self.notifier.simulationStarted.connect(
+            lambda: initialize_button.setEnabled(False)
+        )
+        self.notifier.simulationEnded.connect(update_button_state)
 
         update_button_state()
         ensemble_selector.ensemble_populated.connect(update_button_state)

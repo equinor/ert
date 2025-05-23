@@ -127,6 +127,13 @@ class StorageWidget(QWidget):
 
         self._create_experiment_button = AddWidget(self._addItem)
 
+        notifier.simulationStarted.connect(
+            lambda: self._create_experiment_button.addButton.setEnabled(False)
+        )
+        notifier.simulationEnded.connect(
+            lambda: self._create_experiment_button.addButton.setEnabled(True)
+        )
+
         layout = QVBoxLayout()
         layout.addWidget(search_bar)
         layout.addWidget(self._tree_view)

@@ -11,6 +11,8 @@ from ert.storage import Ensemble, Storage, open_storage
 
 class ErtNotifier(QObject):
     ertChanged = Signal()
+    simulationStarted = Signal()
+    simulationEnded = Signal()
     current_ensemble_changed = Signal(object, name="currentEnsembleChanged")
 
     def __init__(self) -> None:
@@ -91,3 +93,7 @@ class ErtNotifier(QObject):
     @Slot(bool)
     def set_is_simulation_running(self, is_running: bool) -> None:
         self._is_simulation_running = is_running
+        if self._is_simulation_running:
+            self.simulationStarted.emit()
+        else:
+            self.simulationEnded.emit()
