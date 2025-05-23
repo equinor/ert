@@ -310,9 +310,12 @@ def test_workflow_job_deprecated(tmp_path, monkeypatch):
     monkeypatch.chdir(tmp_path)
     Path("TEST").write_text("EXECUTABLE echo", encoding="utf-8")
     workflow_jobs = [{"name": "test", "source": "TEST"}]
-    ever_config = EverestConfig.with_defaults(
-        install_workflow_jobs=workflow_jobs, model={"realizations": [0]}
-    )
+    with pytest.warns(
+        ConfigWarning, match="`install_workflow_jobs: source` is deprecated"
+    ):
+        ever_config = EverestConfig.with_defaults(
+            install_workflow_jobs=workflow_jobs, model={"realizations": [0]}
+        )
     config_dict = everest_to_ert_config_dict(ever_config)
     substitutions = get_substitutions(
         config_dict=config_dict,
@@ -361,11 +364,14 @@ def test_workflows_deprecated(tmp_path, monkeypatch):
     Path("TEST").write_text("EXECUTABLE echo", encoding="utf-8")
     workflow_jobs = [{"name": "my_test", "source": "TEST"}]
     workflow = {"pre_simulation": ["my_test"]}
-    ever_config = EverestConfig.with_defaults(
-        workflows=workflow,
-        model={"realizations": [0]},
-        install_workflow_jobs=workflow_jobs,
-    )
+    with pytest.warns(
+        ConfigWarning, match="`install_workflow_jobs: source` is deprecated"
+    ):
+        ever_config = EverestConfig.with_defaults(
+            workflows=workflow,
+            model={"realizations": [0]},
+            install_workflow_jobs=workflow_jobs,
+        )
     config_dict = everest_to_ert_config_dict(ever_config)
     substitutions = get_substitutions(
         config_dict=config_dict,
@@ -414,18 +420,24 @@ def test_user_config_jobs_precedence(tmp_path, monkeypatch):
 
     assert existing_job in installed_forward_model_steps
 
+    echo = which("echo")
     ever_config_new = EverestConfig.with_defaults(
         model={"realizations": [0]},
-        install_jobs=[{"name": existing_job, "executable": which("echo")}],
+        install_jobs=[{"name": existing_job, "executable": echo}],
     )
     config_dict_new = everest_to_ert_config_dict(ever_config_new)
-    installed_forward_model_steps_new = _get_installed_forward_model_steps(
-        ever_config_new, config_dict_new
-    )
+    with pytest.warns(
+        ConfigWarning,
+        match=(
+            f"Duplicate forward model with name '{existing_job}'"
+            f", overriding it with '{echo}'."
+        ),
+    ):
+        installed_forward_model_steps_new = _get_installed_forward_model_steps(
+            ever_config_new, config_dict_new
+        )
 
-    assert installed_forward_model_steps_new.get(existing_job).executable == which(
-        "echo"
-    )
+    assert installed_forward_model_steps_new.get(existing_job).executable == echo
 
 
 @pytest.mark.usefixtures("no_plugins")
