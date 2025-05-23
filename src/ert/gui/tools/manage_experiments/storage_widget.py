@@ -10,6 +10,7 @@ from PyQt6.QtCore import (
     Qt,
 )
 from PyQt6.QtCore import pyqtSignal as Signal
+from PyQt6.QtCore import pyqtSlot as Slot
 from PyQt6.QtGui import QIcon
 from PyQt6.QtWidgets import (
     QHBoxLayout,
@@ -127,12 +128,21 @@ class StorageWidget(QWidget):
 
         self._create_experiment_button = AddWidget(self._addItem)
 
-        notifier.simulationStarted.connect(
-            lambda: self._create_experiment_button.addButton.setEnabled(False)
+        @Slot()
+        def disableAdd() -> None:
+            self._create_experiment_button.setEnabled(False)
+
+        @Slot()
+        def enableAdd() -> None:
+            self._create_experiment_button.setEnabled(True)
+
+        if self._notifier.is_simulation_running:
+            disableAdd()
+
+        notifier.simulationStarted.connect(  # type: ignore
+            disableAdd, Qt.ConnectionType.QueuedConnection
         )
-        notifier.simulationEnded.connect(
-            lambda: self._create_experiment_button.addButton.setEnabled(True)
-        )
+        notifier.simulationEnded.connect(enableAdd, Qt.ConnectionType.QueuedConnection)  # type: ignore
 
         layout = QVBoxLayout()
         layout.addWidget(search_bar)

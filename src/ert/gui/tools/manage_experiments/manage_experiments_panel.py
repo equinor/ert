@@ -3,6 +3,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from PyQt6.QtCore import QEvent, QObject, Qt
+from PyQt6.QtCore import pyqtSlot as Slot
 from PyQt6.QtWidgets import (
     QHBoxLayout,
     QLabel,
@@ -161,16 +162,23 @@ class ManageExperimentsPanel(QTabWidget):
                     random_seed=self.ert_config.random_seed,
                 )
 
+        @Slot()
         def update_button_state() -> None:
             if self.notifier.is_simulation_running:
                 initialize_button.setEnabled(False)
             else:
                 initialize_button.setEnabled(ensemble_selector.count() > 0)
 
-        self.notifier.simulationStarted.connect(
-            lambda: initialize_button.setEnabled(False)
+        @Slot()
+        def disableAdd() -> None:
+            initialize_button.setEnabled(False)
+
+        self.notifier.simulationStarted.connect(  # type: ignore
+            disableAdd, Qt.ConnectionType.QueuedConnection
         )
-        self.notifier.simulationEnded.connect(update_button_state)
+        self.notifier.simulationEnded.connect(  # type: ignore
+            update_button_state, Qt.ConnectionType.QueuedConnection
+        )
 
         update_button_state()
         ensemble_selector.ensemble_populated.connect(update_button_state)
