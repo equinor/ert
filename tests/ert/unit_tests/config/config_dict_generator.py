@@ -342,7 +342,7 @@ class ErtConfigValues:
                     name,
                     (
                         fn,
-                        f"EXECUTABLE script/{name}.exe\nMIN_ARG 0\nMAX_ARG 1\n",
+                        open(fn, encoding="utf-8").read(),  # noqa SIM115
                     ),
                 )
                 for name, fn in self.install_job
