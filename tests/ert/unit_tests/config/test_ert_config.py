@@ -127,7 +127,7 @@ def test_that_job_script_can_be_set_in_site_config(monkeypatch):
 
     ert_config = ErtConfig.from_file(test_user_config)
 
-    assert Path(ert_config.queue_config.queue_options.job_script).resolve() == my_script
+    assert Path(ert_config.queue_config.job_script).resolve() == my_script
 
 
 @pytest.mark.parametrize(
@@ -482,9 +482,7 @@ def test_that_parsing_ert_config_result_in_expected_values(
         assert ert_config.ens_path == config_values.enspath
         assert ert_config.random_seed == config_values.random_seed
         assert ert_config.queue_config.max_submit == config_values.max_submit
-        assert (
-            ert_config.queue_config.queue_options.job_script == config_values.job_script
-        )
+        assert ert_config.queue_config.job_script == config_values.job_script
         assert ert_config.user_config_file == os.path.abspath(filename)
         assert ert_config.config_path == os.getcwd()
         assert str(ert_config.runpath_file) == os.path.abspath(
