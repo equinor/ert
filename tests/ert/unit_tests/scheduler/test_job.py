@@ -18,8 +18,8 @@ from ert.scheduler import Scheduler
 from ert.scheduler.job import (
     Job,
     JobState,
+    get_warnings_from_forward_model,
     log_info_from_exit_file,
-    log_warnings_from_forward_model,
 )
 from ert.storage.load_status import LoadStatus
 
@@ -442,7 +442,7 @@ async def test_log_warnings_from_forward_model(
             stderr_file="foo.stderr",
         )
     ]
-    await log_warnings_from_forward_model(realization, start_time - 1)
+    await get_warnings_from_forward_model(realization, start_time - 1)
     if should_be_captured:
         assert (
             "Realization 0 step foo.0 warned "
@@ -471,7 +471,7 @@ async def test_old_warnings_are_not_logged(realization, caplog):
         )
     ]
     job_start_time = time.time() + 1  # Pretend that the job started in the future
-    await log_warnings_from_forward_model(realization, job_start_time)
+    await get_warnings_from_forward_model(realization, job_start_time)
     assert "FutureWarning: Feature XYZ" not in caplog.text
 
 
@@ -493,7 +493,7 @@ async def test_long_warning_from_forward_model_is_truncated(realization, caplog)
             stdout_file="foo.stdout",
         )
     ]
-    await log_warnings_from_forward_model(realization, start_time - 1)
+    await get_warnings_from_forward_model(realization, start_time - 1)
     for line in caplog.text.splitlines():
         if "Realization 0 step foo.0 warned" in line:
             assert len(line) <= 2048 + 91
@@ -517,7 +517,7 @@ async def test_deduplication_of_repeated_warnings_from_forward_model(
             stdout_file="foo.stdout",
         )
     ]
-    await log_warnings_from_forward_model(realization, start_time - 1)
+    await get_warnings_from_forward_model(realization, start_time - 1)
     assert (
         f"Realization 0 step foo.0 warned 3 time(s) in stdout: {emitted_warning_str}"
         in caplog.text
