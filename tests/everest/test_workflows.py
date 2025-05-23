@@ -3,6 +3,7 @@ from pathlib import Path
 
 import pytest
 
+from ert.config import ConfigWarning
 from ert.ensemble_evaluator.config import EvaluatorServerConfig
 from ert.run_models.everest_run_model import EverestRunModel
 from everest.config import EverestConfig
@@ -21,7 +22,10 @@ def test_workflow_will_run_during_experiment(
         config_dict = config.to_dict()
         del config_dict["install_workflow_jobs"][0]["executable"]
         config_dict["install_workflow_jobs"][0]["source"] = "jobs/TEST_WF"
-        config = EverestConfig.model_validate(config_dict)
+        with pytest.warns(
+            ConfigWarning, match="`install_workflow_jobs: source` is deprecated"
+        ):
+            config = EverestConfig.model_validate(config_dict)
 
     run_model = EverestRunModel.create(config)
     evaluator_server_config = EvaluatorServerConfig()
