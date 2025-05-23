@@ -1244,10 +1244,10 @@ def test_update_subset_parameters(storage, uniform_parameter, obs):
     )
 
     assert (
-        prior.load_parameters_pl("EXTRA_PARAMETER", 0).rows()
-        == posterior_ens.load_parameters_pl("EXTRA_PARAMETER", 0).rows()
+        prior.load_parameters("EXTRA_PARAMETER", 0).rows()
+        == posterior_ens.load_parameters("EXTRA_PARAMETER", 0).rows()
     )
     assert (
-        prior.load_parameters_pl("PARAMETER", 0).rows()
-        != posterior_ens.load_parameters_pl("PARAMETER", 0).rows()
+        prior.load_parameters("PARAMETER", 0).rows()
+        != posterior_ens.load_parameters("PARAMETER", 0).rows()
     )

@@ -68,7 +68,7 @@ def test_design_matrix_in_manage_experiments_panel(
         for s in ensemble.get_ensemble_state()
     )
 
-    params = ensemble.load_parameters_pl("DESIGN_MATRIX")
+    params = ensemble.load_parameters("DESIGN_MATRIX").drop("realization")
     np.testing.assert_array_equal(params["a"].to_list(), a_values)
     np.testing.assert_array_equal(params["b"].to_list(), np.ones(num_realizations))
     np.testing.assert_array_equal(params["c"].to_list(), 2 * np.ones(num_realizations))

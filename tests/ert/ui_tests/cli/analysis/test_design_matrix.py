@@ -55,7 +55,7 @@ def test_run_poly_example_with_design_matrix(copy_poly_case_with_design_matrix, 
     config_path = ErtConfig.from_file("poly.ert").config_path
     with open_storage(storage_path) as storage:
         experiment = storage.get_experiment_by_name("test-experiment")
-        params = experiment.get_ensemble_by_name("default").load_parameters_pl(
+        params = experiment.get_ensemble_by_name("default").load_parameters(
             "DESIGN_MATRIX"
         )
         np.testing.assert_array_equal(params["a"].to_list(), a_values)
@@ -189,7 +189,7 @@ def test_run_poly_example_with_design_matrix_and_genkw_merge(default_values, err
     storage_path = ErtConfig.from_file("poly.ert").ens_path
     with open_storage(storage_path) as storage:
         experiment = storage.get_experiment_by_name("test-experiment")
-        params = experiment.get_ensemble_by_name("default").load_parameters_pl("COEFFS")
+        params = experiment.get_ensemble_by_name("default").load_parameters("COEFFS")
         np.testing.assert_array_equal(params["a"].to_list(), a_values)
         np.testing.assert_array_equal(
             params["category"].to_list(), 5 * ["cat1"] + 5 * ["cat2"]
@@ -289,7 +289,7 @@ def test_run_poly_example_with_multiple_design_matrix_instances():
     storage_path = ErtConfig.from_file("poly.ert").ens_path
     with open_storage(storage_path) as storage:
         experiment = storage.get_experiment_by_name("test-experiment")
-        params = experiment.get_ensemble_by_name("default").load_parameters_pl(
+        params = experiment.get_ensemble_by_name("default").load_parameters(
             "DESIGN_MATRIX"
         )
         np.testing.assert_array_equal(params["a"].to_list(), a_values)
@@ -391,7 +391,7 @@ def test_design_matrix_on_esmda(experiment_mode, ensemble_name, iterations):
             ensemble = experiment.get_ensemble_by_name(f"{ensemble_name}{i}")
 
             # coeffs_a should be different in all realizations
-            coeffs_a = ensemble.load_parameters_pl("COEFFS_A")["a"].to_list()
+            coeffs_a = ensemble.load_parameters("COEFFS_A")["a"].to_list()
 
             if coeffs_a_previous is not None:
                 assert not np.array_equal(coeffs_a, coeffs_a_previous)
@@ -399,7 +399,7 @@ def test_design_matrix_on_esmda(experiment_mode, ensemble_name, iterations):
 
             # coeffs_b should be overridden by design matrix and be the
             # same for all realizations
-            coeffs_b = ensemble.load_parameters_pl("COEFFS_B")["b"].to_list()
+            coeffs_b = ensemble.load_parameters("COEFFS_B")["b"].to_list()
             assert values == pytest.approx(coeffs_b, 0.0001)
 
 

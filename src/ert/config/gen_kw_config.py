@@ -407,6 +407,15 @@ class GenKwConfig(ParameterConfig):
             array[index] = tf.calc_func(array[index], list(tf.parameter_list.values()))
         return array
 
+    def transform_col(self, param_name: str) -> Callable[[float], float]:
+        tf: TransformFunction | None = None
+        for tf in self.transform_functions:
+            if tf.name == param_name:
+                break
+        assert tf is not None, f"Transform function {param_name} not found"
+        arg = list(tf.parameter_list.values())
+        return lambda x: tf.calc_func(x, arg)
+
     @staticmethod
     def _values_from_file(file_name: str, keys: list[str]) -> npt.NDArray[np.double]:
         df = pd.read_csv(file_name, sep=r"\s+", header=None)

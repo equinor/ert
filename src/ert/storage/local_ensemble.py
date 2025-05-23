@@ -575,13 +575,13 @@ class LocalEnsemble(BaseMode):
                 realizations = np.array([realizations])
             df = self.load_parameters_pl(group, realizations, all_data=True)
             if transformed:
-                cols_to_transform = [col for col in df.columns if col != "realization"]
-                real_col = df["realization"]
-                df_transformed = df.drop("realization").map_rows(
-                    lambda row: tuple(config.transform(row))
+                df = df.with_columns(
+                    [
+                        pl.col(col).map_elements(config.transform_col(col)).alias(col)
+                        for col in df.columns
+                        if col != "realization"
+                    ]
                 )
-                df_transformed.columns = cols_to_transform
-                df = df_transformed.insert_column(0, real_col)
             return df
         ds = self._load_dataset(group, realizations)
         return ds

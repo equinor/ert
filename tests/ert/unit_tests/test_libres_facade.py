@@ -2,6 +2,7 @@ from datetime import datetime, timedelta
 from textwrap import dedent
 
 import numpy as np
+import polars as pl
 import pytest
 from pandas import ExcelWriter
 from pandas.core.frame import DataFrame
@@ -237,7 +238,8 @@ def test_save_parameters_to_storage_from_design_dataframe(
             save_design_matrix_to_ensemble(
                 design_matrix.design_matrix_df, ensemble, reals
             )
-            params = ensemble.load_parameters_pl(DESIGN_MATRIX_GROUP, all_data=False)
+            params = ensemble.load_parameters(DESIGN_MATRIX_GROUP).drop("realization")
+            assert isinstance(params, pl.DataFrame)
             assert params.columns == ["a", "b", "c"]
             np.testing.assert_array_almost_equal(params["a"].to_list(), a_values)
             np.testing.assert_array_almost_equal(params["b"].to_list(), b_values)
