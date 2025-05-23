@@ -78,7 +78,10 @@ async def test_submitted_job_is_cancelled(realization, mock_event):
     job._requested_max_submit = 1
     job.started = mock_event()
     job.returncode.cancel()
-    job_task = asyncio.create_task(job._submit_and_run_once(asyncio.BoundedSemaphore()))
+    kill_sem = asyncio.BoundedSemaphore()
+    job_task = asyncio.create_task(
+        job._submit_and_run_once(asyncio.BoundedSemaphore(), kill_sem)
+    )
 
     await asyncio.wait_for(job.started._mock_waited, 5)
 
@@ -95,7 +98,7 @@ async def test_submitted_job_is_cancelled(realization, mock_event):
             JobState.ABORTED,
         ],
     )
-    scheduler.driver.kill.assert_called_with(job.iens)
+    scheduler.driver.kill.assert_called_with(job.iens, kill_sem)
     scheduler.driver.kill.assert_called_once()
 
 
@@ -138,7 +141,11 @@ async def test_job_run_sends_expected_events(
 
     job_run_task = asyncio.create_task(
         job.run(
-            asyncio.Semaphore(), asyncio.Lock(), asyncio.Lock(), max_submit=max_submit
+            asyncio.Semaphore(),
+            asyncio.Semaphore(),
+            asyncio.Lock(),
+            asyncio.Lock(),
+            max_submit=max_submit,
         )
     )
 
@@ -191,7 +198,13 @@ async def test_num_cpu_is_propagated_to_driver(realization: Realization):
     scheduler = create_scheduler()
     job = Job(scheduler, realization)
     job_run_task = asyncio.create_task(
-        job.run(asyncio.Semaphore(), asyncio.Lock(), asyncio.Lock(), max_submit=1)
+        job.run(
+            asyncio.Semaphore(),
+            asyncio.Semaphore(),
+            asyncio.Lock(),
+            asyncio.Lock(),
+            max_submit=1,
+        )
     )
     job.started.set()
     job.returncode.set_result(0)
@@ -214,7 +227,13 @@ async def test_realization_memory_is_propagated_to_driver(realization: Realizati
     scheduler = create_scheduler()
     job = Job(scheduler, realization)
     job_run_task = asyncio.create_task(
-        job.run(asyncio.Semaphore(), asyncio.Lock(), asyncio.Lock(), max_submit=1)
+        job.run(
+            asyncio.Semaphore(),
+            asyncio.Semaphore(),
+            asyncio.Lock(),
+            asyncio.Lock(),
+            max_submit=1,
+        )
     )
     job.started.set()
     job.returncode.set_result(0)
@@ -252,7 +271,13 @@ async def test_when_waiting_for_disk_sync_times_out_an_error_is_logged(
 
     with captured_logs(log_msgs, logging.ERROR):
         job_run_task = asyncio.create_task(
-            job.run(asyncio.Semaphore(), asyncio.Lock(), asyncio.Lock(), max_submit=1)
+            job.run(
+                asyncio.Semaphore(),
+                asyncio.Semaphore(),
+                asyncio.Lock(),
+                asyncio.Lock(),
+                max_submit=1,
+            )
         )
         job.started.set()
         job.returncode.set_result(0)
@@ -283,7 +308,13 @@ async def test_when_files_in_manifest_are_not_created_an_error_is_logged(
 
     with captured_logs(log_msgs, logging.ERROR):
         job_run_task = asyncio.create_task(
-            job.run(asyncio.Semaphore(), asyncio.Lock(), asyncio.Lock(), max_submit=1)
+            job.run(
+                asyncio.Semaphore(),
+                asyncio.Semaphore(),
+                asyncio.Lock(),
+                asyncio.Lock(),
+                max_submit=1,
+            )
         )
         job.started.set()
         job.returncode.set_result(0)
@@ -317,7 +348,13 @@ async def test_when_checksums_do_not_match_a_warning_is_logged(
 
     with captured_logs(log_msgs, logging.WARNING):
         job_run_task = asyncio.create_task(
-            job.run(asyncio.Semaphore(), asyncio.Lock(), asyncio.Lock(), max_submit=1)
+            job.run(
+                asyncio.Semaphore(),
+                asyncio.Semaphore(),
+                asyncio.Lock(),
+                asyncio.Lock(),
+                max_submit=1,
+            )
         )
         job.started.set()
         job.returncode.set_result(0)
@@ -345,7 +382,13 @@ async def test_when_no_checksum_info_is_received_a_warning_is_logged(
 
     with captured_logs(log_msgs, logging.WARNING):
         job_run_task = asyncio.create_task(
-            job.run(asyncio.Semaphore(), asyncio.Lock(), asyncio.Lock(), max_submit=1)
+            job.run(
+                asyncio.Semaphore(),
+                asyncio.Semaphore(),
+                asyncio.Lock(),
+                asyncio.Lock(),
+                max_submit=1,
+            )
         )
         job.started.set()
         job.returncode.set_result(0)
