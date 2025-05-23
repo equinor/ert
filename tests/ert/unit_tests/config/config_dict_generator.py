@@ -199,13 +199,18 @@ def valid_queue_values(option_name, queue_system):
 @st.composite
 def queue_options(draw, systems):
     queue_system = draw(systems)
-    name = draw(st.sampled_from(valid_queue_options(queue_system)))
-    do_set = draw(booleans)
-    if do_set:
-        return [queue_system, name, draw(valid_queue_values(name, queue_system.name))]
+    queue_option = draw(st.sampled_from(valid_queue_options(queue_system)))
+
+    # The JOB_SCRIPT queue_option must have a value
+    if draw(booleans) or queue_option == "JOB_SCRIPT":
+        return [
+            queue_system,
+            queue_option,
+            draw(valid_queue_values(queue_option, queue_system.name)),
+        ]
     else:
         # Missing VALUE means unset
-        return [queue_system, name]
+        return [queue_system, queue_option]
 
 
 def default_forward_model_names():

@@ -485,9 +485,14 @@ def test_that_parsing_ert_config_result_in_expected_values(
         assert ert_config.ens_path == config_values.enspath
         assert ert_config.random_seed == config_values.random_seed
         assert ert_config.queue_config.max_submit == config_values.max_submit
-        assert (
-            ert_config.queue_config.queue_options.job_script == config_values.job_script
-        )
+
+        # If there is a job_script in queue_option it has precedence
+        job_script = config_values.job_script
+        for e in config_values.queue_option:
+            if ert_config.queue_config.queue_system in e and "JOB_SCRIPT" in e:
+                job_script = e[e.index("JOB_SCRIPT") + 1]
+
+        assert ert_config.queue_config.queue_options.job_script == job_script
         assert ert_config.user_config_file == os.path.abspath(filename)
         assert ert_config.config_path == os.getcwd()
         assert str(ert_config.runpath_file) == os.path.abspath(
