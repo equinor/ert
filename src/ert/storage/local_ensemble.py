@@ -578,7 +578,7 @@ class LocalEnsemble(BaseMode):
                 cols_to_transform = [col for col in df.columns if col != "realization"]
                 real_col = df["realization"]
                 df_transformed = df.drop("realization").map_rows(
-                    lambda row: list(config.transform(row))
+                    lambda row: tuple(config.transform(row))
                 )
                 df_transformed.columns = cols_to_transform
                 df = df_transformed.insert_column(0, real_col)
@@ -647,6 +647,13 @@ class LocalEnsemble(BaseMode):
             gen_kws = [config for config in gen_kws if config.name == group]
         for config in gen_kws:
             df = self.load_parameters(config.name, realizations, transformed=True)
+            df = df.rename(
+                {
+                    col: f"{config.name}:{col}"
+                    for col in df.columns
+                    if col != "realization"
+                }
+            )
             for parameter in df.columns:
                 if parameter == "realization":
                     continue
