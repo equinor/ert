@@ -3,6 +3,7 @@ import os
 import stat
 from functools import partial
 from pathlib import Path
+from shutil import which
 from unittest.mock import MagicMock, patch
 
 import pytest
@@ -21,6 +22,7 @@ from ert.config.queue_config import (
 )
 from ert.scheduler.event import FinishedEvent
 from everest.config import EverestConfig, InstallJobConfig
+from everest.config.forward_model_config import ForwardModelStepConfig
 from everest.config.server_config import ServerConfig
 from everest.config.simulator_config import SimulatorConfig
 from everest.detached import (
@@ -42,10 +44,9 @@ from everest.util import makedirs_if_needed
 @pytest.mark.xdist_group(name="starts_everest")
 async def test_https_requests(copy_math_func_test_data_to_tmp):
     everest_config = EverestConfig.load_file("config_minimal.yml")
-    Path("SLEEP_job").write_text("EXECUTABLE sleep", encoding="utf-8")
-    everest_config.forward_model.append("sleep 5")
+    everest_config.forward_model.append(ForwardModelStepConfig(job="sleep 5"))
     everest_config.install_jobs.append(
-        InstallJobConfig(name="sleep", source="SLEEP_job")
+        InstallJobConfig(name="sleep", executable=f"{which('sleep')}")
     )
     # start_server() loads config based on config_path, so we need to actually
     # overwrite it

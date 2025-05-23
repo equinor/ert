@@ -8,6 +8,7 @@ from everest.config import (
     EverestConfig,
     ServerConfig,
 )
+from everest.config.forward_model_config import ForwardModelStepConfig
 from everest.config.install_job_config import InstallJobConfig
 
 
@@ -16,7 +17,9 @@ from everest.config.install_job_config import InstallJobConfig
 @pytest.mark.xdist_group(name="starts_everest")
 def test_logging_setup(copy_math_func_test_data_to_tmp):
     everest_config = EverestConfig.load_file("config_minimal.yml")
-    everest_config.forward_model.append("toggle_failure --fail simulation_2")
+    everest_config.forward_model.append(
+        ForwardModelStepConfig(job="toggle_failure --fail simulation_2")
+    )
     everest_config.install_jobs.append(
         InstallJobConfig(name="toggle_failure", source="jobs/FAIL_SIMULATION")
     )

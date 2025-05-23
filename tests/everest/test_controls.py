@@ -6,6 +6,7 @@ from copy import deepcopy
 import pytest
 from pydantic import ValidationError
 
+from ert.config import ConfigWarning
 from everest.config import EverestConfig
 from everest.config.control_config import ControlConfig
 from everest.config.control_variable_config import (
@@ -165,7 +166,10 @@ def test_variable_name_index_validation(copy_test_data_to_tmp):
             {"upper_bound": 1, "lower_bound": 0, "weights": {"group.w00-0": 0.1}}
         ],
     }
-    EverestConfig.model_validate(config_dict)
+    with pytest.warns(
+        ConfigWarning, match="Deprecated input control name: group.w00-0"
+    ):
+        EverestConfig.model_validate(config_dict)
 
 
 @pytest.mark.integration_test

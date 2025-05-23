@@ -509,13 +509,16 @@ def test_that_non_existing_install_job_errors_deprecated(
     os.makedirs("config_dir")
     with open("config_dir/test.yml", "w", encoding="utf-8") as f:
         f.write(" ")
-    config = EverestConfig.with_defaults(
-        model={
-            "realizations": [1, 2, 3],
-        },
-        config_path=Path("config_dir/test.yml"),
-        **{install_keyword: [{"name": "test", "source": "non_existing"}]},
-    )
+    with pytest.warns(
+        ConfigWarning, match=f"`{install_keyword}: source` is deprecated"
+    ):
+        config = EverestConfig.with_defaults(
+            model={
+                "realizations": [1, 2, 3],
+            },
+            config_path=Path("config_dir/test.yml"),
+            **{install_keyword: [{"name": "test", "source": "non_existing"}]},
+        )
 
     with pytest.raises(ConfigValidationError, match="No such file or directory:"):
         dictionary = everest_to_ert_config_dict(config)
@@ -544,18 +547,21 @@ def test_that_existing_install_job_with_malformed_executable_errors_deprecated(
         """
         )
 
-    config = EverestConfig.with_defaults(
-        model={
-            "realizations": [1, 2, 3],
-        },
-        config_path=Path("."),
-        **{
-            install_keyword: [
-                {"name": "test", "source": "malformed.ert"},
-                {"name": "test2", "source": "malformed2.ert"},
-            ]
-        },
-    )
+    with pytest.warns(
+        ConfigWarning, match=f"`{install_keyword}: source` is deprecated"
+    ):
+        config = EverestConfig.with_defaults(
+            model={
+                "realizations": [1, 2, 3],
+            },
+            config_path=Path("."),
+            **{
+                install_keyword: [
+                    {"name": "test", "source": "malformed.ert"},
+                    {"name": "test2", "source": "malformed2.ert"},
+                ]
+            },
+        )
 
     with pytest.raises(
         ConfigValidationError, match="EXECUTABLE must have at least 1 arguments"
@@ -586,17 +592,20 @@ def test_that_existing_install_job_with_non_executable_executable_errors_depreca
     os.chmod("non_executable", os.stat("non_executable").st_mode & ~0o111)
     assert not os.access("non_executable", os.X_OK)
 
-    config = EverestConfig.with_defaults(
-        model={
-            "realizations": [1, 2, 3],
-        },
-        config_path=Path("."),
-        **{
-            install_keyword: [
-                {"name": "test", "source": "exec.ert"},
-            ]
-        },
-    )
+    with pytest.warns(
+        ConfigWarning, match=f"`{install_keyword}: source` is deprecated"
+    ):
+        config = EverestConfig.with_defaults(
+            model={
+                "realizations": [1, 2, 3],
+            },
+            config_path=Path("."),
+            **{
+                install_keyword: [
+                    {"name": "test", "source": "exec.ert"},
+                ]
+            },
+        )
 
     with pytest.raises(ConfigValidationError, match="File not executable"):
         dictionary = everest_to_ert_config_dict(config)
@@ -651,17 +660,20 @@ def test_that_existing_install_job_with_non_existing_executable_errors_deprecate
 
     assert not os.access("non_executable", os.X_OK)
 
-    config = EverestConfig.with_defaults(
-        model={
-            "realizations": [1, 2, 3],
-        },
-        config_path=Path("."),
-        **{
-            install_keyword: [
-                {"name": "test", "source": "exec.ert"},
-            ]
-        },
-    )
+    with pytest.warns(
+        ConfigWarning, match=f"`{install_keyword}: source` is deprecated"
+    ):
+        config = EverestConfig.with_defaults(
+            model={
+                "realizations": [1, 2, 3],
+            },
+            config_path=Path("."),
+            **{
+                install_keyword: [
+                    {"name": "test", "source": "exec.ert"},
+                ]
+            },
+        )
 
     with pytest.raises(ConfigValidationError, match="Could not find executable"):
         dictionary = everest_to_ert_config_dict(config)
