@@ -28,7 +28,7 @@ from ert.gui.tools.event_viewer import (
 from ert.namespace import Namespace
 from ert.plugins import ErtPluginManager
 from ert.services import StorageService
-from ert.storage import ErtStorageException, Storage, open_storage
+from ert.storage import ErtStorageException, open_storage
 from ert.storage.local_storage import local_storage_set_ert_config
 from ert.trace import trace, tracer
 
@@ -139,10 +139,13 @@ def _start_initial_gui_window(
 
         local_storage_set_ert_config(ert_config)
 
-    storage = None
+    storage_path = None
     if ert_config is not None:
         try:
-            storage = open_storage(ert_config.ens_path, mode="w")
+            # Open write to initialize the storage,so that
+            # dark storage can be mounted onto it
+            open_storage(ert_config.ens_path, mode="w").close()
+            storage_path = ert_config.ens_path
         except ErtStorageException as err:
             validation_messages.errors.append(
                 ErrorInfo(f"Error opening storage in ENSPATH: {err}").set_context(
@@ -178,9 +181,9 @@ def _start_initial_gui_window(
     for msg in validation_messages.warnings:
         logger.info(f"Warning shown in gui '{msg}'")
 
-    assert storage is not None
+    assert storage_path is not None
     main_window = _setup_main_window(
-        ert_config, args, log_handler, storage, plugin_manager
+        ert_config, args, log_handler, storage_path, plugin_manager
     )
 
     if validation_messages.warnings or validation_messages.deprecations:
@@ -218,12 +221,12 @@ def _setup_main_window(
     ert_config: ErtConfig,
     args: Namespace,
     log_handler: GUILogHandler,
-    storage: Storage,
+    storage_path: str,
     plugin_manager: ErtPluginManager | None = None,
 ) -> ErtMainWindow:
     # window reference must be kept until app.exec returns:
     window = ErtMainWindow(args.config, ert_config, plugin_manager, log_handler)
-    window.notifier.set_storage(storage)
+    window.notifier.set_storage(storage_path)
     window.post_init()
     window.adjustSize()
     return window

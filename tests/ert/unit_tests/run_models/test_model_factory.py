@@ -1,11 +1,13 @@
 import queue
 from argparse import Namespace
-from unittest.mock import MagicMock
+from unittest.mock import MagicMock, patch
 from uuid import uuid1
 
 import pytest
 
+import ert
 from ert.config import (
+    AnalysisConfig,
     ConfigValidationError,
     ConfigWarning,
     ErtConfig,
@@ -15,15 +17,16 @@ from ert.config import (
 from ert.mode_definitions import (
     ENSEMBLE_SMOOTHER_MODE,
     ES_MDA_MODE,
+    EVALUATE_ENSEMBLE_MODE,
 )
 from ert.run_models import (
     EnsembleExperiment,
     EnsembleSmoother,
     MultipleDataAssimilation,
     SingleTestRun,
+    create_model,
     model_factory,
 )
-from ert.run_models.evaluate_ensemble import EvaluateEnsemble
 
 
 @pytest.mark.parametrize(
@@ -56,7 +59,6 @@ def test_that_the_model_warns_when_active_realizations_less_min_realizations(
                 MIN_REALIZATION 10
                 """
             ),
-            storage,
             Namespace(
                 mode=mode,
                 realizations="0-4",
@@ -115,10 +117,9 @@ def test_custom_realizations():
     assert model_factory._realizations(args, ensemble_size).tolist() == active_mask
 
 
-def test_setup_single_test_run(storage):
+def test_setup_single_test_run(tmp_path):
     model = model_factory._setup_single_test_run(
-        ErtConfig.from_file_contents("NUM_REALIZATIONS 100\n"),
-        storage,
+        ErtConfig.from_file_contents(f"NUM_REALIZATIONS 100\nENSPATH {tmp_path}"),
         Namespace(
             current_ensemble="current-ensemble",
             target_ensemble=None,
@@ -128,13 +129,12 @@ def test_setup_single_test_run(storage):
         queue.SimpleQueue(),
     )
     assert isinstance(model, SingleTestRun)
-    assert model._storage == storage
+    assert model._storage.path == tmp_path
 
 
-def test_setup_single_test_run_with_ensemble(storage):
+def test_setup_single_test_run_with_ensemble(tmp_path):
     model = model_factory._setup_single_test_run(
-        ErtConfig.from_file_contents("NUM_REALIZATIONS 100\n"),
-        storage,
+        ErtConfig.from_file_contents(f"NUM_REALIZATIONS 100\nENSPATH {tmp_path}"),
         Namespace(
             current_ensemble="current-ensemble",
             target_ensemble=None,
@@ -144,13 +144,12 @@ def test_setup_single_test_run_with_ensemble(storage):
         queue.SimpleQueue(),
     )
     assert isinstance(model, SingleTestRun)
-    assert model._storage == storage
+    assert model._storage.path == tmp_path
 
 
-def test_setup_ensemble_experiment(storage):
+def test_setup_ensemble_experiment(tmp_path):
     model = model_factory._setup_ensemble_experiment(
-        ErtConfig.from_file_contents("NUM_REALIZATIONS 100\n"),
-        storage,
+        ErtConfig.from_file_contents(f"NUM_REALIZATIONS 100\nENSPATH {tmp_path}"),
         Namespace(
             realizations=None,
             iter_num=1,
@@ -165,15 +164,14 @@ def test_setup_ensemble_experiment(storage):
     assert model.active_realizations == [True] * 100
 
 
-def test_setup_ensemble_smoother(storage):
+def test_setup_ensemble_smoother(tmp_path):
     model = model_factory._setup_ensemble_smoother(
-        ErtConfig.from_file_contents("NUM_REALIZATIONS 100\n"),
-        storage,
+        ErtConfig.from_file_contents(f"NUM_REALIZATIONS 100\nENSPATH {tmp_path}"),
         Namespace(
             realizations="0-4,7,8",
             current_ensemble="default",
             target_ensemble="test_case",
-            experiment_name=None,
+            experiment_name="just_smoothing",
         ),
         ObservationSettings(),
         queue.SimpleQueue(),
@@ -185,10 +183,9 @@ def test_setup_ensemble_smoother(storage):
     )
 
 
-def test_setup_multiple_data_assimilation(storage):
+def test_setup_multiple_data_assimilation(tmp_path):
     model = model_factory._setup_multiple_data_assimilation(
-        ErtConfig.from_file_contents("NUM_REALIZATIONS 100\n"),
-        storage,
+        ErtConfig.from_file_contents(f"NUM_REALIZATIONS 100\nENSPATH {tmp_path}"),
         Namespace(
             realizations="0-4,8",
             weights="6,4,2",
@@ -202,7 +199,8 @@ def test_setup_multiple_data_assimilation(storage):
         queue.SimpleQueue(),
     )
     assert isinstance(model, MultipleDataAssimilation)
-    assert model.weights == MultipleDataAssimilation.parse_weights("6,4,2")
+    assert model.weights == "6,4,2"
+    assert model._parsed_weights == MultipleDataAssimilation.parse_weights("6,4,2")
     assert (
         model.active_realizations
         == [True] * 5 + [False] * 3 + [True] * 1 + [False] * 91
@@ -249,17 +247,24 @@ def test_multiple_data_assimilation_restart_paths(
         target_ensemble="restart_case_%d",
         restart_run=True,
         prior_ensemble_id=str(uuid1()),
-        experiment_name=None,
+        experiment_name="just_assimilatin",
     )
 
-    storage_mock = MagicMock()
+    monkeypatch.setattr(
+        ert.run_models.base_run_model.BaseRunModel,
+        "validate_successful_realizations_count",
+        MagicMock(),
+    )
     ensemble_mock = MagicMock()
     ensemble_mock.iteration = restart_from_iteration
     config = ErtConfig(runpath_config=ModelConfig(num_realizations=2))
-    storage_mock.get_ensemble.return_value = ensemble_mock
-    model = model_factory._setup_multiple_data_assimilation(
-        config, storage_mock, args, MagicMock(), MagicMock()
-    )
+
+    with patch(
+        "ert.run_models.base_run_model.Storage.get_ensemble", return_value=ensemble_mock
+    ):
+        model = model_factory._setup_multiple_data_assimilation(
+            config, args, MagicMock(spec=ObservationSettings), MagicMock()
+        )
     base_path = tmp_path / "simulations"
     expected_path = [str(base_path / expected) for expected in expected_path]
     assert set(model.paths) == set(expected_path)
@@ -287,7 +292,7 @@ def test_num_realizations_specified_incorrectly_raises(analysis_mode):
         ConfigValidationError,
         match="Number of active realizations must be at least 2 for an update step",
     ):
-        analysis_mode(config, MagicMock(), args, MagicMock(), MagicMock())
+        analysis_mode(config, args, MagicMock(), MagicMock())
 
 
 @pytest.mark.parametrize(
@@ -303,14 +308,33 @@ def test_evaluate_ensemble_paths(
     tmp_path, monkeypatch, ensemble_iteration, expected_path
 ):
     monkeypatch.chdir(tmp_path)
-    storage_mock = MagicMock()
+
+    monkeypatch.setattr(
+        ert.run_models.base_run_model.BaseRunModel,
+        "validate_successful_realizations_count",
+        MagicMock(),
+    )
     ensemble_mock = MagicMock()
     ensemble_mock.iteration = ensemble_iteration
-    config = ErtConfig(runpath_config=ModelConfig(num_realizations=2))
-    storage_mock.get_ensemble.return_value = ensemble_mock
-    model = EvaluateEnsemble(
-        [True], 1, str(uuid1(0)), 1234, config, storage_mock, MagicMock(), MagicMock()
+    config = ErtConfig(
+        random_seed=1234,
+        runpath_config=ModelConfig(num_realizations=1),
+        analysis_config=AnalysisConfig(minimum_required_realizations=1),
     )
+
+    with patch(
+        "ert.run_models.base_run_model.Storage.get_ensemble", return_value=ensemble_mock
+    ):
+        model = create_model(
+            config,
+            Namespace(
+                ensemble_id=str(uuid1(0)),
+                mode=EVALUATE_ENSEMBLE_MODE,
+                realizations=None,
+            ),
+            MagicMock(),
+        )
+
     base_path = tmp_path / "simulations"
     expected_path = [str(base_path / expected) for expected in expected_path]
     assert set(model.paths) == set(expected_path)

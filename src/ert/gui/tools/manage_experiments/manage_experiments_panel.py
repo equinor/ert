@@ -3,6 +3,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from PyQt6.QtCore import QEvent, QObject, Qt
+from PyQt6.QtCore import pyqtSlot as Slot
 from PyQt6.QtWidgets import (
     QHBoxLayout,
     QLabel,
@@ -140,39 +141,44 @@ class ManageExperimentsPanel(QTabWidget):
         def initialize_from_scratch(_: bool) -> None:
             parameters = parameter_model.getSelectedItems()
             active_realizations = [int(i) for i in members_model.getSelectedItems()]
-            if (
-                design_matrix is not None
-                and design_matrix_group is not None
-                and design_matrix_group.name in parameters
-            ):
-                parameters.remove(design_matrix_group.name)
-                save_design_matrix_to_ensemble(
-                    design_matrix.design_matrix_df,
-                    self.notifier.storage.get_ensemble(ensemble_selector.currentData()),
-                    active_realizations,
-                    design_group_name=design_matrix_group.name,
-                )
-            sample_prior(
-                ensemble=self.notifier.storage.get_ensemble(
-                    ensemble_selector.currentData()
-                ),
-                active_realizations=active_realizations,
-                parameters=parameters,
-                random_seed=self.ert_config.random_seed,
-            )
 
+            with self.notifier.write_storage() as storage:
+                if (
+                    design_matrix is not None
+                    and design_matrix_group is not None
+                    and design_matrix_group.name in parameters
+                ):
+                    parameters.remove(design_matrix_group.name)
+                    save_design_matrix_to_ensemble(
+                        design_matrix.design_matrix_df,
+                        storage.get_ensemble(ensemble_selector.currentData()),
+                        active_realizations,
+                        design_group_name=design_matrix_group.name,
+                    )
+                sample_prior(
+                    ensemble=storage.get_ensemble(ensemble_selector.currentData()),
+                    active_realizations=active_realizations,
+                    parameters=parameters,
+                    random_seed=self.ert_config.random_seed,
+                )
+
+        @Slot()
         def update_button_state() -> None:
-            initialize_button.setEnabled(ensemble_selector.count() > 0)
+            if self.notifier.is_simulation_running:
+                initialize_button.setEnabled(False)
+            else:
+                initialize_button.setEnabled(ensemble_selector.count() > 0)
+
+        @Slot()
+        def disableAdd() -> None:
+            initialize_button.setEnabled(False)
+
+        self.notifier.simulationStarted.connect(disableAdd)
+        self.notifier.simulationEnded.connect(update_button_state)
 
         update_button_state()
         ensemble_selector.ensemble_populated.connect(update_button_state)
         initialize_button.clicked.connect(initialize_from_scratch)
-        initialize_button.clicked.connect(
-            lambda _: self._storage_info_widget.setEnsemble(
-                self.notifier.storage.get_ensemble(ensemble_selector.currentData())
-            )
-        )
-        initialize_button.clicked.connect(ensemble_selector.populate)
 
         main_layout.addWidget(initialize_button, 1, Qt.AlignmentFlag.AlignRight)
         main_layout.addSpacing(10)

@@ -15,7 +15,7 @@ from ert.gui.tools.event_viewer import GUILogHandler
 from ert.gui.tools.workflows import RunWorkflowWidget
 from ert.plugins import ErtPluginContext
 from ert.run_models import EnsembleExperiment
-from ert.storage import Storage, open_storage
+from ert.storage import Storage
 
 from .conftest import get_child, wait_for_child
 
@@ -43,21 +43,16 @@ def _open_main_window(
         # it will cause the following error:
         # RuntimeError: wrapped C/C++ object of type GUILogHandler
         handler = GUILogHandler()
-        with open_storage(config.ens_path, mode="w") as storage:
-            gui = _setup_main_window(config, args_mock, handler, storage)
-            yield gui, storage, config
-            gui.close()
+        gui = _setup_main_window(config, args_mock, handler, config.ens_path)
+        yield gui
+        gui.close()
 
 
 @pytest.fixture
 def open_gui(tmp_path, monkeypatch):
     monkeypatch.chdir(tmp_path)
     with (
-        _open_main_window(tmp_path) as (
-            gui,
-            _,
-            __,
-        ),
+        _open_main_window(tmp_path) as (gui),
     ):
         yield gui
 
