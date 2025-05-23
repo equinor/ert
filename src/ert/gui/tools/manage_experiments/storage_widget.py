@@ -139,10 +139,8 @@ class StorageWidget(QWidget):
         if self._notifier.is_simulation_running:
             disableAdd()
 
-        notifier.simulationStarted.connect(  # type: ignore
-            disableAdd, Qt.ConnectionType.QueuedConnection
-        )
-        notifier.simulationEnded.connect(enableAdd, Qt.ConnectionType.QueuedConnection)  # type: ignore
+        notifier.simulationStarted.connect(disableAdd)
+        notifier.simulationEnded.connect(enableAdd)
 
         layout = QVBoxLayout()
         layout.addWidget(search_bar)

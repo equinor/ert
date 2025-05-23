@@ -173,12 +173,8 @@ class ManageExperimentsPanel(QTabWidget):
         def disableAdd() -> None:
             initialize_button.setEnabled(False)
 
-        self.notifier.simulationStarted.connect(  # type: ignore
-            disableAdd, Qt.ConnectionType.QueuedConnection
-        )
-        self.notifier.simulationEnded.connect(  # type: ignore
-            update_button_state, Qt.ConnectionType.QueuedConnection
-        )
+        self.notifier.simulationStarted.connect(disableAdd)
+        self.notifier.simulationEnded.connect(update_button_state)
 
         update_button_state()
         ensemble_selector.ensemble_populated.connect(update_button_state)
