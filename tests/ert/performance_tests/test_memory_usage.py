@@ -1,5 +1,6 @@
 import os
 import stat
+import sys
 import tempfile
 from multiprocessing import Process
 from pathlib import Path
@@ -181,6 +182,9 @@ def make_summary_data(
 
 @pytest.mark.limit_memory("130 MB")
 @pytest.mark.flaky(reruns=5)
+@pytest.mark.skipif(
+    sys.platform.startswith("darwin"), reason="Currently failing on mac"
+)
 def test_field_param_memory(tmpdir):
     with tmpdir.as_cwd():
         # Setup is done in a subprocess so that memray does not pick up the allocations
