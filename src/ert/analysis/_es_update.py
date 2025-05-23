@@ -249,59 +249,62 @@ def analysis_ES(
     )
     truncation = module.enkf_truncation
 
-    with threadpool_limits(limits=OPTIMAL_NUM_THREADS):
+    if module.localization:
+        logger.info(
+            f"Will run Adaptive Localization using {OPTIMAL_NUM_THREADS} threads."
+        )
+        smoother_adaptive_es = AdaptiveESMDA(
+            covariance=observation_errors**2,
+            observations=observation_values,
+            seed=rng,
+        )
+
+        # Pre-calculate cov_YY
+        cov_YY = np.atleast_2d(np.cov(S))
+
+        D = smoother_adaptive_es.perturb_observations(
+            ensemble_size=ensemble_size, alpha=1.0
+        )
+
+    else:
+        # Compute transition matrix so that
+        # X_posterior = X_prior @ T
+        try:
+            T = smoother_es.compute_transition_matrix(
+                Y=S, alpha=1.0, truncation=truncation
+            )
+        except scipy.linalg.LinAlgError as err:
+            msg = (
+                "Failed while computing transition matrix, "
+                "this might be due to outlier values in one "
+                f"or more realizations: {err}"
+            )
+            progress_callback(
+                AnalysisErrorEvent(
+                    error_msg=msg,
+                    data=DataSection(
+                        header=smoother_snapshot.header,
+                        data=smoother_snapshot.csv,
+                        extra=smoother_snapshot.extra,
+                    ),
+                )
+            )
+            raise ErtAnalysisError(msg) from err
+        # Add identity in place for fast computation
+        np.fill_diagonal(T, T.diagonal() + 1)
+
+    def correlation_callback(
+        cross_correlations_of_batch: npt.NDArray[np.float64],
+        cross_correlations_accumulator: list[npt.NDArray[np.float64]],
+    ) -> None:
+        cross_correlations_accumulator.append(cross_correlations_of_batch)
+
+    for param_group in parameters:
+        param_ensemble_array = source_ensemble.load_parameters_numpy(
+            param_group, iens_active_index
+        )
         if module.localization:
-            smoother_adaptive_es = AdaptiveESMDA(
-                covariance=observation_errors**2,
-                observations=observation_values,
-                seed=rng,
-            )
-
-            # Pre-calculate cov_YY
-            cov_YY = np.atleast_2d(np.cov(S))
-
-            D = smoother_adaptive_es.perturb_observations(
-                ensemble_size=ensemble_size, alpha=1.0
-            )
-
-        else:
-            # Compute transition matrix so that
-            # X_posterior = X_prior @ T
-            try:
-                T = smoother_es.compute_transition_matrix(
-                    Y=S, alpha=1.0, truncation=truncation
-                )
-            except scipy.linalg.LinAlgError as err:
-                msg = (
-                    "Failed while computing transition matrix, "
-                    "this might be due to outlier values in one "
-                    f"or more realizations: {err}"
-                )
-                progress_callback(
-                    AnalysisErrorEvent(
-                        error_msg=msg,
-                        data=DataSection(
-                            header=smoother_snapshot.header,
-                            data=smoother_snapshot.csv,
-                            extra=smoother_snapshot.extra,
-                        ),
-                    )
-                )
-                raise ErtAnalysisError(msg) from err
-            # Add identity in place for fast computation
-            np.fill_diagonal(T, T.diagonal() + 1)
-
-        def correlation_callback(
-            cross_correlations_of_batch: npt.NDArray[np.float64],
-            cross_correlations_accumulator: list[npt.NDArray[np.float64]],
-        ) -> None:
-            cross_correlations_accumulator.append(cross_correlations_of_batch)
-
-        for param_group in parameters:
-            param_ensemble_array = source_ensemble.load_parameters_numpy(
-                param_group, iens_active_index
-            )
-            if module.localization:
+            with threadpool_limits(limits=OPTIMAL_NUM_THREADS):
                 config_node = source_ensemble.experiment.parameter_configuration[
                     param_group
                 ]
@@ -361,24 +364,24 @@ def analysis_ES(
                     f"in {(time.time() - start) / 60} minutes"
                 )
 
-            else:
-                # In-place multiplication is not yet supported, therefore avoiding @=
-                param_ensemble_array = param_ensemble_array @ T.astype(  # noqa: PLR6104
-                    param_ensemble_array.dtype
-                )
-
-            log_msg = f"Storing data for {param_group}.."
-            logger.info(log_msg)
-            progress_callback(AnalysisStatusEvent(msg=log_msg))
-            start = time.time()
-
-            target_ensemble.save_parameters_numpy(
-                param_ensemble_array, param_group, iens_active_index
+        else:
+            # In-place multiplication is not yet supported, therefore avoiding @=
+            param_ensemble_array = param_ensemble_array @ T.astype(  # noqa: PLR6104
+                param_ensemble_array.dtype
             )
-            logger.info(
-                f"Storing data for {param_group} completed in "
-                f"{(time.time() - start) / 60} minutes"
-            )
+
+        log_msg = f"Storing data for {param_group}.."
+        logger.info(log_msg)
+        progress_callback(AnalysisStatusEvent(msg=log_msg))
+        start = time.time()
+
+        target_ensemble.save_parameters_numpy(
+            param_ensemble_array, param_group, iens_active_index
+        )
+        logger.info(
+            f"Storing data for {param_group} completed in "
+            f"{(time.time() - start) / 60} minutes"
+        )
 
     _copy_unupdated_parameters(
         list(source_ensemble.experiment.parameter_configuration.keys()),
