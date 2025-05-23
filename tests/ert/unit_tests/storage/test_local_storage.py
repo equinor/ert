@@ -194,7 +194,6 @@ def test_that_saving_empty_parameters_fails_nicely(tmp_path):
         empty_data = xr.Dataset(
             {
                 "values": ("names", np.array([], dtype=float)),
-                "transformed_values": ("names", np.array([], dtype=float)),
                 "names": (["names"], np.array([], dtype=str)),
             }
         )
@@ -234,7 +233,6 @@ def test_that_loading_parameter_via_response_api_fails(tmp_path):
             xr.Dataset(
                 {
                     "values": ("names", [1.0]),
-                    "transformed_values": ("names", [1.0]),
                     "names": ["KEY_1"],
                 }
             ),

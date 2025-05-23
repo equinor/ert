@@ -122,9 +122,9 @@ def test_init_prior(qtbot, storage):
         RealizationStorageState.PARAMETERS_LOADED in s
         for s in ensemble.get_ensemble_state()
     )
-    assert ensemble.load_parameters("COEFFS")[
-        "transformed_values"
-    ].mean() == pytest.approx(1.41487404)
+    assert ensemble.load_parameters_numpy(
+        "COEFFS", np.arange(ensemble.ensemble_size)
+    ).mean() == pytest.approx(0.0458710649708845)
 
 
 @pytest.mark.usefixtures("copy_poly_case")

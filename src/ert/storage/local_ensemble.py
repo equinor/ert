@@ -524,7 +524,10 @@ class LocalEnsemble(BaseMode):
         return xr.combine_nested(datasets, concat_dim="realizations")
 
     def load_parameters(
-        self, group: str, realizations: int | npt.NDArray[np.int_] | None = None
+        self,
+        group: str,
+        realizations: int | npt.NDArray[np.int_] | None = None,
+        transformed: bool = False,
     ) -> xr.Dataset:
         """
         Load parameters for group and realizations into xarray Dataset.
@@ -535,6 +538,8 @@ class LocalEnsemble(BaseMode):
             Name of parameter group to load.
         realizations : {int, ndarray of int}, optional
             Realization indices to load. If None, all realizations are loaded.
+        transformed : bool
+            If True, the parameters are transformed using the parameter transformation
 
         Returns
         -------
@@ -542,7 +547,38 @@ class LocalEnsemble(BaseMode):
             Loaded xarray Dataset with parameters.
         """
 
-        return self._load_dataset(group, realizations)
+        ds = self._load_dataset(group, realizations)
+        if transformed:
+            config = self.experiment.parameter_configuration[group]
+            assert isinstance(config, GenKwConfig)
+            transformed_array = xr.apply_ufunc(
+                config.transform,
+                ds["values"],
+                input_core_dims=[["names"]],
+                output_core_dims=[["names"]],
+                vectorize=True,
+            )
+            ds = xr.Dataset(
+                {"values": transformed_array},
+                coords=ds.coords,
+            )
+        return ds
+
+    def load_parameters_numpy(
+        self, group: str, realizations: npt.NDArray[np.int_]
+    ) -> npt.NDArray[np.float64]:
+        config = self.experiment.parameter_configuration[group]
+        return config.load_parameters(self, realizations)
+
+    def save_parameters_numpy(
+        self,
+        parameters: npt.NDArray[np.float64],
+        param_group: str,
+        iens_active_index: npt.NDArray[np.int_],
+    ) -> None:
+        config_node = self.experiment.parameter_configuration[param_group]
+        for i, realization in enumerate(iens_active_index):
+            config_node.save_parameters(self, int(realization), parameters[:, i])
 
     def load_cross_correlations(self) -> xr.Dataset:
         input_path = self.mount_point / "corr_XY.nc"
@@ -688,7 +724,7 @@ class LocalEnsemble(BaseMode):
             )
             realizations = np.flatnonzero(ens_mask)
 
-        dataframes = []
+        dataframes: list[pd.DataFrame] = []
         gen_kws = [
             config
             for config in self.experiment.parameter_configuration.values()
@@ -698,7 +734,9 @@ class LocalEnsemble(BaseMode):
             gen_kws = [config for config in gen_kws if config.name == group]
         for key in gen_kws:
             with contextlib.suppress(KeyError):
-                da = self.load_parameters(key.name, realizations)["transformed_values"]
+                da = self.load_parameters(key.name, realizations, transformed=True)[
+                    "values"
+                ]
                 assert isinstance(da, xr.DataArray)
                 da["names"] = np.char.add(f"{key.name}:", da["names"].astype(np.str_))
                 df = da.to_dataframe().unstack(level="names")
@@ -918,13 +956,17 @@ class LocalEnsemble(BaseMode):
                             )
                         )
                     elif "time" in pivoted:
-                        joined = observations_for_type.join_asof(
-                            pivoted,
-                            by=[
-                                "response_key",
-                                *[k for k in response_cls.primary_key if k != "time"],
-                            ],
+                        by_cols = [
+                            "response_key",
+                            *[k for k in response_cls.primary_key if k != "time"],
+                        ]
+                        joined = observations_for_type.sort(
+                            by=[*by_cols, "time"]
+                        ).join_asof(
+                            pivoted.sort(by=[*by_cols, "time"]),
+                            by=by_cols,
                             on="time",
+                            check_sortedness=False,  # Ref: https://github.com/pola-rs/polars/issues/21693
                             strategy="nearest",
                             tolerance="1s",
                         )

@@ -22,9 +22,7 @@ from ._update_commons import (
     ErtAnalysisError,
     _all_parameters,
     _copy_unupdated_parameters,
-    _load_param_ensemble_array,
     _preprocess_observations_and_responses,
-    _save_param_ensemble_array_to_disk,
     noop_progress_callback,
 )
 from .event import (
@@ -168,9 +166,7 @@ def analysis_EnIF(
     Prec_u = sp.sparse.csc_matrix((0, 0), dtype=float)
     for param_group in parameters:
         config_node = source_ensemble.experiment.parameter_configuration[param_group]
-        X_local = _load_param_ensemble_array(
-            source_ensemble, param_group, iens_active_index
-        )
+        X_local = source_ensemble.load_parameters_numpy(param_group, iens_active_index)
         X_local_scaler = StandardScaler()
         X_scaled = X_local_scaler.fit_transform(X_local.T)
 
@@ -226,15 +222,14 @@ def analysis_EnIF(
         progress_callback(AnalysisStatusEvent(msg=log_msg))
         start = time.time()
 
-        param_ensemble_array = _load_param_ensemble_array(
-            source_ensemble, param_group, iens_active_index
+        param_ensemble_array = source_ensemble.load_parameters_numpy(
+            param_group, iens_active_index
         )
         parameters_to_update = param_ensemble_array.shape[0]
         param_group_indices = np.arange(
             parameters_updated, parameters_updated + parameters_to_update
         )
-        _save_param_ensemble_array_to_disk(
-            target_ensemble,
+        target_ensemble.save_parameters_numpy(
             X_full[param_group_indices, :],
             param_group,
             iens_active_index,

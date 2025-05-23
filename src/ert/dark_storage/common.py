@@ -131,16 +131,15 @@ def data_for_parameter(ensemble: Ensemble, key: str) -> pd.DataFrame:
     group, _ = _extract_parameter_group_and_key(key)
     parameters = ensemble.experiment.parameter_configuration
     if group in parameters and isinstance(gen_kw := parameters[group], GenKwConfig):
-        dataframes = []
+        dataframes: list[pd.DataFrame] = []
 
         with contextlib.suppress(KeyError):
             try:
-                data = ensemble.load_parameters(group)
+                da = ensemble.load_parameters(group, transformed=True)["values"]
             except ValueError as err:
                 print(f"Could not load parameter {group}: {err}")
                 return pd.DataFrame()
 
-            da = data["transformed_values"]
             assert isinstance(da, xr.DataArray)
             da["names"] = np.char.add(f"{gen_kw.name}:", da["names"].astype(np.str_))
             df = da.to_dataframe().unstack(level="names")

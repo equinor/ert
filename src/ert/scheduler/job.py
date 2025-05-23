@@ -140,7 +140,12 @@ class Job:
                 timeout_task = asyncio.create_task(self._max_runtime_task())
             if not self._scheduler.warnings_extracted:
                 self._scheduler.warnings_extracted = True
-                await log_warnings_from_forward_model(self.real, self._scheduler)
+
+                await log_warnings_from_forward_model(
+                    self.real,
+                    file_modified_after=submit_time,
+                    scheduler=self._scheduler,
+                )
 
             await self.returncode
 
@@ -368,7 +373,7 @@ def log_info_from_exit_file(exit_file_path: Path) -> None:
 
 
 async def log_warnings_from_forward_model(
-    real: Realization, scheduler: Scheduler | None = None
+    real: Realization, file_modified_after: float, scheduler: Scheduler | None = None
 ) -> None:
     """Parse all stdout and stderr files from running the forward model
     for anything that looks like a Warning, and log it.
@@ -410,13 +415,19 @@ async def log_warnings_from_forward_model(
         for step_idx, step in enumerate(real.fm_steps):
             if step.stdout_file is not None:
                 stdout_file = runpath / f"{step.stdout_file}.{step_idx}"
-                if stdout_file.exists():
+                if (
+                    stdout_file.exists()
+                    and stdout_file.stat().st_mtime >= file_modified_after
+                ):
                     await log_warnings_from_file(
                         stdout_file, real.iens, step, step_idx, "stdout"
                     )
             if step.stderr_file is not None:
                 stderr_file = runpath / f"{step.stderr_file}.{step_idx}"
-                if stderr_file.exists():
+                if (
+                    stderr_file.exists()
+                    and stderr_file.stat().st_mtime >= file_modified_after
+                ):
                     await log_warnings_from_file(
                         stderr_file, real.iens, step, step_idx, "stderr"
                     )
