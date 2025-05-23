@@ -457,3 +457,15 @@ def test_default_max_runtime_is_unlimited():
 def test_max_runtime_is_set_from_corresponding_keyword(value):
     assert QueueConfig.from_dict({ConfigKeys.MAX_RUNTIME: value}).max_runtime == value
     assert QueueConfig(max_runtime=value).max_runtime == value
+
+
+def test_that_job_script_from_queue_options_takes_precedence_over_global(
+    copy_poly_case,
+):
+    config = ErtConfig.from_file_contents(
+        "NUM_REALIZATIONS 1\n"
+        "JOB_SCRIPT poly_eval.py\n"
+        "QUEUE_SYSTEM LSF\n"
+        "QUEUE_OPTION LSF JOB_SCRIPT fm_dispatch_lsf.py\n"
+    )
+    assert config.queue_config.queue_options.job_script == "fm_dispatch_lsf.py"
