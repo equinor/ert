@@ -3,6 +3,7 @@ from typing import Any, Literal
 
 from pydantic import BaseModel, ConfigDict, field_serializer, field_validator
 
+from ..config.parsing.forward_model_warning import ForwardModelWarning
 from .snapshot import EnsembleSnapshot
 
 
@@ -47,4 +48,4 @@ class EndEvent(BaseModel):
     event_type: Literal["EndEvent"] = "EndEvent"
     failed: bool
     msg: str
-    warnings: str = ""
+    warnings: list[ForwardModelWarning] = []

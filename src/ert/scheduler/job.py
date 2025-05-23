@@ -31,6 +31,7 @@ from ert.storage.local_ensemble import forward_model_ok
 from ert.storage.realization_storage_state import RealizationStorageState
 from ert.trace import trace, tracer
 
+from ..config.parsing.forward_model_warning import ForwardModelWarning
 from .driver import Driver, FailedSubmit
 
 if TYPE_CHECKING:
@@ -141,11 +142,14 @@ class Job:
             if not self._scheduler.warnings_extracted:
                 self._scheduler.warnings_extracted = True
 
-                await log_warnings_from_forward_model(
+                warnings = await get_warnings_from_forward_model(
                     self.real,
                     file_modified_after=submit_time,
                     scheduler=self._scheduler,
                 )
+                log_forward_model_warnings(warnings)
+                for warning in warnings:
+                    self._scheduler.post_simulation_warnings.append(warning)
 
             await self.returncode
 
@@ -372,9 +376,9 @@ def log_info_from_exit_file(exit_file_path: Path) -> None:
     )
 
 
-async def log_warnings_from_forward_model(
+async def get_warnings_from_forward_model(
     real: Realization, file_modified_after: float, scheduler: Scheduler | None = None
-) -> None:
+) -> list[ForwardModelWarning]:
     """Parse all stdout and stderr files from running the forward model
     for anything that looks like a Warning, and log it.
 
@@ -394,22 +398,28 @@ async def log_warnings_from_forward_model(
             or "- ERROR - " in line
         )
 
-    async def log_warnings_from_file(  # noqa
+    async def get_warnings_from_file(  # noqa
         file: Path, iens: int, step: ForwardModelStep, step_idx: int, filetype: str
-    ) -> None:
+    ) -> list[ForwardModelWarning]:
         captured: list[str] = []
         for line in file.read_text(encoding="utf-8").splitlines():
             if line_contains_warning(line):
                 captured.append(line[:max_length])
+        warnings = []
         for line, counter in Counter(captured).items():
-            warning = (
-                f"Realization {iens} step {step.name}.{step_idx} "
-                f"warned {counter} time(s) in {filetype}: {line}"
+            warnings.append(
+                ForwardModelWarning(
+                    warning_msg=line,
+                    warning_count=counter,
+                    iens=iens,
+                    step_name=step.name,
+                    step_idx=step_idx,
+                    filetype=filetype,
+                )
             )
-            logger.warning(warning)
-            if scheduler and isinstance(scheduler.post_simulation_warnings, list):
-                scheduler.post_simulation_warnings.append(warning)
+        return warnings
 
+    all_warnings = []
     with suppress(KeyError):
         runpath = Path(real.run_arg.runpath)
         for step_idx, step in enumerate(real.fm_steps):
@@ -419,7 +429,7 @@ async def log_warnings_from_forward_model(
                     stdout_file.exists()
                     and stdout_file.stat().st_mtime >= file_modified_after
                 ):
-                    await log_warnings_from_file(
+                    all_warnings += await get_warnings_from_file(
                         stdout_file, real.iens, step, step_idx, "stdout"
                     )
             if step.stderr_file is not None:
@@ -428,6 +438,17 @@ async def log_warnings_from_forward_model(
                     stderr_file.exists()
                     and stderr_file.stat().st_mtime >= file_modified_after
                 ):
-                    await log_warnings_from_file(
+                    all_warnings += await get_warnings_from_file(
                         stderr_file, real.iens, step, step_idx, "stderr"
                     )
+    return all_warnings
+
+
+def log_forward_model_warnings(warnings: list[ForwardModelWarning]) -> None:
+    for warning in warnings:
+        logger.warning(
+            f"Realization {warning.get('iens')} step "
+            f"{warning.get('step_name')}.{warning.get('step_idx')} "
+            f"warned {warning.get('warning_count')} time(s) in "
+            f"{warning.get('filetype')}: {warning.get('warning_msg')}"
+        )

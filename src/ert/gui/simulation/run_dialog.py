@@ -68,6 +68,7 @@ from ert.shared.status.utils import (
 )
 
 from ...config import ErrorInfo, WarningInfo
+from ...config.parsing.forward_model_warning import ForwardModelWarning
 from ..suggestor import Suggestor
 from .queue_emitter import QueueEmitter
 from .view import DiskSpaceWidget, ProgressWidget, RealizationWidget, UpdateWidget
@@ -189,7 +190,7 @@ class FMStepOverview(QTableView):
 
 
 class RunDialog(QFrame):
-    simulation_done = Signal(bool, str, str)
+    simulation_done = Signal(bool, str, list)
     progress_update_event = Signal(dict, int)
     restart_experiment = Signal()
     _RUN_TIME_POLL_RATE = 1000
@@ -457,8 +458,10 @@ class RunDialog(QFrame):
             self._run_model_api.cancel()
         return kill_job
 
-    @Slot(bool, str, str)
-    def _on_simulation_done(self, failed: bool, msg: str, warnings: str) -> None:
+    @Slot(bool, str, list)
+    def _on_simulation_done(
+        self, failed: bool, msg: str, warnings: list[ForwardModelWarning]
+    ) -> None:
         self.processing_animation.setVisible(False)
         self.processing_stopped.setVisible(True)
         self.kill_button.setEnabled(False)
@@ -475,7 +478,7 @@ class RunDialog(QFrame):
 
             self.fail_msg_box = Suggestor(
                 errors=[ErrorInfo(msg)] if failed else [],
-                warnings=[WarningInfo(warning) for warning in warnings.split("\n")]
+                warnings=[WarningInfo(warning["warning_msg"]) for warning in warnings]
                 if warnings
                 else [],
                 deprecations=[],

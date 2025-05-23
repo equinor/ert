@@ -71,6 +71,7 @@ from ert.trace import tracer
 from ert.utils import log_duration
 from ert.workflow_runner import WorkflowRunner
 
+from ..config.parsing.forward_model_warning import ForwardModelWarning
 from ..plugins.workflow_fixtures import (
     create_workflow_fixtures_from_hooked,
 )
@@ -197,7 +198,7 @@ class BaseRunModel(ABC):
         self._total_iterations = total_iterations
         self.start_time: int | None = None
         self.stop_time: int | None = None
-        self.post_simulation_warnings: list[str] = []
+        self.post_simulation_warnings: list[ForwardModelWarning] = []
         self._queue_config: QueueConfig = queue_config
         self._initial_realizations_mask: list[bool] = copy.copy(active_realizations)
         self._completed_realizations_mask: list[bool] = []
@@ -441,7 +442,7 @@ class BaseRunModel(ABC):
                         if failed
                         else "Experiment completed."
                     ),
-                    warnings="\n".join(self.post_simulation_warnings) or "",
+                    warnings=self.post_simulation_warnings or [],
                 )
             )
 
