@@ -204,9 +204,18 @@ class PlotWindow(QMainWindow):
             ensemble_to_data_map: dict[EnsembleObject, pd.DataFrame] = {}
             for ensemble in selected_ensembles:
                 try:
-                    ensemble_to_data_map[ensemble] = self._api.data_for_key(
-                        ensemble.id, key
-                    )
+                    if key_def.response_metadata is not None:
+                        # It is a response!
+                        ensemble_to_data_map[ensemble] = self._api.data_for_response(
+                            ensemble_id=ensemble.id,
+                            response_key=key_def.response_metadata.response_key,
+                        )
+                    elif key_def.parameter_metadata is not None:
+                        # It is a parameter
+                        ensemble_to_data_map[ensemble] = self._api.data_for_parameter(
+                            ensemble_id=ensemble.id,
+                            parameter_key=key_def.parameter_metadata.key,
+                        )
                 except (RequestError, TimeoutError) as e:
                     logger.exception(f"plot api request failed: {e}")
                     open_error_dialog("Request failed", f"{e}")
