@@ -3,11 +3,13 @@ from __future__ import annotations
 import functools
 import logging
 import time
+import warnings
 from collections.abc import Callable, Iterable, Sequence
 from typing import (
     TYPE_CHECKING,
     Generic,
     Self,
+    TextIO,
     TypeVar,
 )
 
@@ -411,20 +413,33 @@ def smoother_update(
         global_scaling=global_scaling,
     )
 
+    def log_warning(
+        message: Warning | str,
+        category: type[Warning],
+        filename: str,
+        lineno: int,
+        file: TextIO | None = None,
+        line: str | None = None,
+    ) -> None:
+        print(message)
+        logger.warning(f"{category.__name__}: {message} (from {filename}:{lineno})")
+
     try:
-        analysis_ES(
-            parameters,
-            observations,
-            rng,
-            es_settings,
-            update_settings,
-            global_scaling,
-            smoother_snapshot,
-            ens_mask,
-            prior_storage,
-            posterior_storage,
-            progress_callback,
-        )
+        with warnings.catch_warnings():
+            warnings.showwarning = log_warning
+            analysis_ES(
+                parameters,
+                observations,
+                rng,
+                es_settings,
+                update_settings,
+                global_scaling,
+                smoother_snapshot,
+                ens_mask,
+                prior_storage,
+                posterior_storage,
+                progress_callback,
+            )
     except Exception as e:
         progress_callback(
             AnalysisErrorEvent(
