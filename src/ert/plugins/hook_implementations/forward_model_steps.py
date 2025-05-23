@@ -347,6 +347,15 @@ class Flow(ForwardModelStepPlugin):
             },
         )
 
+    def validate_pre_experiment(self, fm_json: ForwardModelStepJSON) -> None:
+        available_versions = _available_flow_versions(env_vars=fm_json["environment"])
+        version = fm_json["argList"][fm_json["argList"].index("--version") + 1]
+        if version not in available_versions:
+            raise ForwardModelStepValidationError(
+                f"Unavailable Flow version {version}. "
+                f"Available versions: {available_versions}"
+            )
+
     @staticmethod
     def documentation() -> ForwardModelStepDocumentation | None:
         return ForwardModelStepDocumentation(
@@ -644,6 +653,28 @@ for fm_step_subclass in _UpperCaseFMSteps:
 @plugin(name="ert")
 def installable_forward_model_steps() -> list[type[ForwardModelStepPlugin]]:
     return [*_UpperCaseFMSteps, *_LowerCaseFMSteps]
+
+
+def _available_flow_versions(env_vars: dict[str, str]) -> list[str]:
+    default_versions: list[str] = ["default"]
+    flowrun_path: str = env_vars.get("FLOWRUN_PATH", "")
+    runner_abspath = shutil.which(Path(flowrun_path) / "flowrun")
+    if runner_abspath is None:
+        return default_versions
+    try:
+        versionlines = (
+            subprocess.check_output(
+                [
+                    runner_abspath,
+                    "--report-versions",
+                ],
+            )
+            .decode("utf-8")
+            .splitlines()
+        )
+        return sorted([line.split(":")[0].strip() for line in versionlines])
+    except subprocess.CalledProcessError:
+        return default_versions
 
 
 def _available_eclrun_versions(

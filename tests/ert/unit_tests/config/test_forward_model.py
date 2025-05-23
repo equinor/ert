@@ -532,6 +532,44 @@ def test_that_no_error_thrown_when_checking_eclipse_version_and_eclrun_is_not_pr
     )
 
 
+@pytest.mark.integration_test
+@pytest.mark.usefixtures("use_tmpdir")
+def test_that_flow_fm_step_does_not_need_explicit_version():
+    config_file_name = "test.ert"
+    Path(config_file_name).write_text(
+        "NUM_REALIZATIONS 1\nFORWARD_MODEL FLOW\n",
+        encoding="utf-8",
+    )
+    ErtConfig.with_plugins().from_file(config_file_name)
+
+
+@pytest.mark.integration_test
+@pytest.mark.usefixtures("use_tmpdir")
+def test_that_flow_fm_step_always_allow_explicit_default_version():
+    config_file_name = "test.ert"
+    Path(config_file_name).write_text(
+        "NUM_REALIZATIONS 1\nFORWARD_MODEL FLOW(<VERSION>=default)\n",
+        encoding="utf-8",
+    )
+    ErtConfig.with_plugins().from_file(config_file_name)
+
+
+@pytest.mark.integration_test
+@pytest.mark.skipif(shutil.which("flowrun") is None, reason="flowrun is not in $PATH")
+@pytest.mark.usefixtures("use_tmpdir")
+def test_that_flow_fm_step_check_version_availability():
+    config_file_name = "test.ert"
+    Path(config_file_name).write_text(
+        "NUM_REALIZATIONS 1\nFORWARD_MODEL FLOW(<VERSION>=dummy)\n",
+        encoding="utf-8",
+    )
+    with pytest.raises(
+        ConfigValidationError,
+        match=r".*Unavailable Flow version dummy. Available versions: \[\'.*",
+    ):
+        ErtConfig.with_plugins().from_file(config_file_name)
+
+
 def test_that_plugin_forward_models_are_installed(tmp_path):
     (tmp_path / "test.ert").write_text(
         dedent(
