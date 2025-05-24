@@ -5,7 +5,6 @@ from collections.abc import Callable, Iterator
 from typing import Any
 from uuid import UUID
 
-import numpy as np
 import pandas as pd
 import polars as pl
 from polars.exceptions import ColumnNotFoundError
