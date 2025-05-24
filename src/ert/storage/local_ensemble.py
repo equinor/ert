@@ -635,7 +635,7 @@ class LocalEnsemble(BaseMode):
         self._storage._to_parquet_transaction(group_path, df)
 
     def load_scalars(
-        self, group: str | None = None, realizations: Collection[int] | None = None
+        self, group: str | None = None, realizations: npt.NDArray[np.int_] | None = None
     ) -> pl.DataFrame:
         dataframes = []
         gen_kws = [
@@ -647,6 +647,7 @@ class LocalEnsemble(BaseMode):
             gen_kws = [config for config in gen_kws if config.name == group]
         for config in gen_kws:
             df = self.load_parameters(config.name, realizations, transformed=True)
+            assert isinstance(df, pl.DataFrame)
             df = df.rename(
                 {
                     col: f"{config.name}:{col}"
@@ -957,18 +958,10 @@ class LocalEnsemble(BaseMode):
         if parameter_group not in self.experiment.parameter_configuration:
             raise ValueError(f"{parameter_group} is not registered to the experiment.")
 
-        if isinstance(
-            self.experiment.parameter_configuration[parameter_group], GenKwConfig
-        ):
-            return (
-                self.load_parameters_pl(parameter_group, all_data=False)
-                .std()
-                .to_numpy()
-                .squeeze()
-            )
-
-        ds = self.load_parameters(parameter_group)
-        return ds.std("realizations")["values"].values
+        data = self.load_parameters(parameter_group)
+        if isinstance(data, pl.DataFrame):
+            return data.std().to_numpy().squeeze()
+        return data.std("realizations")["values"].values
 
     def get_parameter_state(
         self, realization: int
