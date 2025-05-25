@@ -570,7 +570,7 @@ class LocalEnsemble(BaseMode):
             Loaded xarray Dataset with parameters.
         """
         if group not in self.experiment.parameter_configuration:
-            raise ValueError(f"{group} is not registered to the experiment.")
+            raise KeyError(f"{group} is not registered to the experiment.")
         config = self.experiment.parameter_configuration[group]
         if isinstance(config, GenKwConfig):
             if realizations is not None and isinstance(realizations, int):
