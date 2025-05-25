@@ -363,7 +363,9 @@ class GenKwConfig(ParameterConfig):
             for idx, parameter in enumerate(self.transform_functions)
         }
         parameter_dict["realization"] = realization
-        ensemble.save_parameters_pl(self.name, pl.DataFrame(parameter_dict))
+        ensemble.save_parameters(
+            self.name, realization=None, dataset=pl.DataFrame(parameter_dict)
+        )
 
     def load_parameters(
         self, ensemble: Ensemble, realizations: npt.NDArray[np.int_]

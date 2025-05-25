@@ -63,7 +63,9 @@ def _copy_unupdated_parameters(
             df = source_ensemble.load_scalar_dataframe(
                 parameter_group, realizations=iens_active_index
             )
-            target_ensemble.save_parameters_pl(parameter_group, df)
+            target_ensemble.save_parameters(
+                parameter_group, realization=None, dataset=df
+            )
         else:
             for realization in iens_active_index:
                 ds = source_ensemble.load_parameters(parameter_group, realization)

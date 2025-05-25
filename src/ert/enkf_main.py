@@ -163,9 +163,10 @@ def save_design_matrix_to_ensemble(
     pl_df = pl.from_pandas(df.reset_index(drop=True))
     if not set(active_realizations) <= set(pl_df["realization"].to_list()):
         raise KeyError("Active realization mask is not in design matrix!")
-    ensemble.save_parameters_pl(
+    ensemble.save_parameters(
         design_group_name,
-        pl_df.filter(pl.col("realization").is_in(list(active_realizations))),
+        realization=None,
+        dataset=pl_df.filter(pl.col("realization").is_in(list(active_realizations))),
     )
 
 
@@ -205,7 +206,9 @@ def sample_prior(
                         ensemble_size=ensemble.ensemble_size,
                     )
                 )
-            ensemble.save_parameters_pl(parameter, pl.concat(datasets, how="vertical"))
+            ensemble.save_parameters(
+                parameter, realization=None, dataset=pl.concat(datasets, how="vertical")
+            )
         else:
             for realization_nr in active_realizations:
                 ds = config_node.sample_or_load(

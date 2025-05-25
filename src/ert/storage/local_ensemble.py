@@ -604,38 +604,6 @@ class LocalEnsemble(BaseMode):
         for i, realization in enumerate(iens_active_index):
             config_node.save_parameters(self, int(realization), parameters[:, i])
 
-    @require_write
-    def save_parameters_pl(self, group: str, dataset: pl.DataFrame) -> None:
-        """
-        Save parameters for group and realizations into pl.DataFrame.
-
-        Parameters
-        ----------
-        group : str
-            Name of parameter group to save.
-        dataset : pl.DataFrame
-            pl.DataFrame to save.
-        """
-        if group not in self.experiment.parameter_configuration:
-            raise ValueError(f"{group} is not registered to the experiment.")
-        try:
-            df = self.load_scalar_dataframe(group)
-            existing_realizations = df.get_column("realization").unique()
-            new_data = dataset.filter(
-                ~pl.col("realization").is_in(existing_realizations)
-            )
-            if new_data.height > 0:
-                df = pl.concat([df, new_data], how="vertical")
-            else:
-                return
-            # df = pl.concat([df, dataset], how="vertical")
-            # TODO bug when sampling as it samples N*N time
-        except KeyError:
-            df = dataset
-
-        group_path = self.mount_point / f"{_escape_filename(group)}.parquet"
-        self._storage._to_parquet_transaction(group_path, df)
-
     def load_scalars(
         self, group: str | None = None, realizations: npt.NDArray[np.int_] | None = None
     ) -> pl.DataFrame:
@@ -863,7 +831,7 @@ class LocalEnsemble(BaseMode):
     def save_parameters(
         self,
         group: str,
-        realization: int,
+        realization: int | None,
         dataset: xr.Dataset | pl.DataFrame,
     ) -> None:
         """
@@ -880,9 +848,31 @@ class LocalEnsemble(BaseMode):
             a 1d-vector. When saving multiple realizations, dataset must
             have a 'realizations' dimension.
         """
-        if isinstance(dataset, pl.DataFrame):
-            self.save_parameters_pl(group, dataset)
+        if group not in self.experiment.parameter_configuration:
+            raise ValueError(f"{group} is not registered to the experiment.")
+        if isinstance(dataset, pl.DataFrame) and realization is None:
+            try:
+                df = self.load_scalar_dataframe(group)
+                existing_realizations = df.get_column("realization").unique()
+                new_data = dataset.filter(
+                    ~pl.col("realization").is_in(existing_realizations)
+                )
+                if new_data.height > 0:
+                    df = pl.concat([df, new_data], how="vertical")
+                else:
+                    return
+            # df = pl.concat([df, dataset], how="vertical")
+            # TODO bug when sampling as it samples N*N time
+            except KeyError:
+                df = dataset
+
+            group_path = self.mount_point / f"{_escape_filename(group)}.parquet"
+            self._storage._to_parquet_transaction(group_path, df)
             return
+
+        assert realization is not None, (
+            "Realization must be provided for xarray Dataset"
+        )
         if "values" not in dataset.variables:
             raise ValueError(
                 f"Dataset for parameter group '{group}' "
@@ -892,8 +882,6 @@ class LocalEnsemble(BaseMode):
             raise ValueError(
                 f"Parameters {group} are empty. Cannot proceed with saving to storage."
             )
-        if group not in self.experiment.parameter_configuration:
-            raise ValueError(f"{group} is not registered to the experiment.")
 
         path = self._realization_dir(realization) / f"{_escape_filename(group)}.nc"
         path.parent.mkdir(exist_ok=True)
