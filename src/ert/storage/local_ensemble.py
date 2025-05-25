@@ -848,8 +848,6 @@ class LocalEnsemble(BaseMode):
             a 1d-vector. When saving multiple realizations, dataset must
             have a 'realizations' dimension.
         """
-        if group not in self.experiment.parameter_configuration:
-            raise ValueError(f"{group} is not registered to the experiment.")
         if isinstance(dataset, pl.DataFrame):
             try:
                 df = self.load_scalar_dataframe(group)
