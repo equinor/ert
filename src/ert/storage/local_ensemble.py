@@ -569,11 +569,13 @@ class LocalEnsemble(BaseMode):
         parameters : Dataset
             Loaded xarray Dataset with parameters.
         """
+        if group not in self.experiment.parameter_configuration:
+            raise ValueError(f"{group} is not registered to the experiment.")
         config = self.experiment.parameter_configuration[group]
         if isinstance(config, GenKwConfig):
             if realizations is not None and isinstance(realizations, int):
                 realizations = np.array([realizations])
-            df = self.load_parameters_pl(group, realizations, all_data=True)
+            df = self.load_scalar_dataframe(group, realizations)
             if transformed:
                 df = df.with_columns(
                     [
@@ -617,7 +619,7 @@ class LocalEnsemble(BaseMode):
         if group not in self.experiment.parameter_configuration:
             raise ValueError(f"{group} is not registered to the experiment.")
         try:
-            df = self.load_parameters_pl(group)
+            df = self.load_scalar_dataframe(group)
             existing_realizations = df.get_column("realization").unique()
             new_data = dataset.filter(
                 ~pl.col("realization").is_in(existing_realizations)
@@ -670,11 +672,10 @@ class LocalEnsemble(BaseMode):
 
         return pl.concat(dataframes, how="align")
 
-    def load_parameters_pl(
+    def load_scalar_dataframe(
         self,
         group: str,
         realizations: Collection[int] | None = None,
-        all_data: bool = True,
     ) -> pl.DataFrame:
         """
         Load parameters for group and realizations into pl.DataFrame.
@@ -702,8 +703,6 @@ class LocalEnsemble(BaseMode):
                 raise IndexError(
                     f"No matching realizations {realizations} found in {group_path}"
                 )
-        if not all_data:
-            return df_lazy.select(pl.exclude("realization"))
         return df_lazy
 
     def load_cross_correlations(self) -> xr.Dataset:

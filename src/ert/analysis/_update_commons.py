@@ -60,7 +60,7 @@ def _copy_unupdated_parameters(
             source_ensemble.experiment.parameter_configuration[parameter_group],
             GenKwConfig,
         ):
-            df = source_ensemble.load_parameters_pl(
+            df = source_ensemble.load_scalar_dataframe(
                 parameter_group, realizations=iens_active_index
             )
             target_ensemble.save_parameters_pl(parameter_group, df)

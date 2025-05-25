@@ -666,11 +666,9 @@ def test_that_prior_is_not_overwritten_in_ensemble_experiment(
         )
         sample_prior(ensemble, prior_mask, ert_config.random_seed)
         experiment = storage.get_experiment_by_name("test-experiment")
-        prior_values = (
-            experiment.get_ensemble_by_name(ensemble.name)
-            .load_parameters_pl("COEFFS", all_data=False)
-            .to_numpy()
-        )
+        prior_values = experiment.get_ensemble_by_name(
+            ensemble.name
+        ).load_parameters_numpy("COEFFS", np.arange(num_realizations))
     with caplog.at_level(logging.INFO):
         run_cli(
             ENSEMBLE_EXPERIMENT_MODE,
@@ -682,10 +680,8 @@ def test_that_prior_is_not_overwritten_in_ensemble_experiment(
         )
 
     with open_storage(ert_config.ens_path, mode="w") as storage:
-        parameter_values = (
-            storage.get_ensemble(ensemble.id)
-            .load_parameters_pl("COEFFS", all_data=False)
-            .to_numpy()
+        parameter_values = storage.get_ensemble(ensemble.id).load_parameters_numpy(
+            "COEFFS", np.arange(num_realizations)
         )
         np.testing.assert_array_equal(parameter_values, prior_values)
     assert len([msg for msg in caplog.messages if "RANDOM_SEED" in msg]) == 1
@@ -738,8 +734,8 @@ def test_exclude_parameter_from_update():
         prior = experiment.get_ensemble_by_name("iter-0")
         posterior = experiment.get_ensemble_by_name("iter-1")
         np.allclose(
-            prior.load_parameters_pl("ANOTHER_KW", all_data=False).to_numpy(),
-            posterior.load_parameters_pl("ANOTHER_KW", all_data=False).to_numpy(),
+            prior.load_parameters_numpy("ANOTHER_KW", np.arange(6)),
+            posterior.load_parameters_numpy("ANOTHER_KW", np.arange(6)),
         )
 
     log_paths = list(Path("update_log").iterdir())

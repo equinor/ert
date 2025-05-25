@@ -49,8 +49,14 @@ def test_that_adaptive_localization_with_cutoff_1_equals_ensemble_prior():
         f.writelines(lines)
     prior_ensemble, posterior_ensemble = run_cli_ES_with_case("poly_localization_1.ert")
 
-    prior_sample = prior_ensemble.load_parameters_pl("COEFFS").to_numpy()
-    posterior_sample = posterior_ensemble.load_parameters_pl("COEFFS").to_numpy()
+    prior_sample = (
+        prior_ensemble.load_scalar_dataframe("COEFFS").drop("realization").to_numpy()
+    )
+    posterior_sample = (
+        posterior_ensemble.load_scalar_dataframe("COEFFS")
+        .drop("realization")
+        .to_numpy()
+    )
     # Check prior and posterior samples are equal
     assert np.allclose(posterior_sample, prior_sample)
 
@@ -241,12 +247,16 @@ def test_that_adaptive_localization_with_cutoff_0_equals_ESupdate():
     _, posterior_ensemble_loc0 = run_cli_ES_with_case("poly_localization_0.ert")
     _, posterior_ensemble_noloc = run_cli_ES_with_case("poly_no_localization.ert")
 
-    posterior_sample_loc0 = posterior_ensemble_loc0.load_parameters_pl(
-        "COEFFS", all_data=False
-    ).to_numpy()
-    posterior_sample_noloc = posterior_ensemble_noloc.load_parameters_pl(
-        "COEFFS", all_data=False
-    ).to_numpy()
+    posterior_sample_loc0 = (
+        posterior_ensemble_loc0.load_scalar_dataframe("COEFFS")
+        .drop("realization")
+        .to_numpy()
+    )
+    posterior_sample_noloc = (
+        posterior_ensemble_noloc.load_scalar_dataframe("COEFFS")
+        .drop("realization")
+        .to_numpy()
+    )
 
     # Check posterior sample without adaptive localization and with cut-off 0 are equal
     assert np.allclose(posterior_sample_loc0, posterior_sample_noloc, atol=1e-6)
@@ -304,17 +314,25 @@ def test_that_posterior_generalized_variance_increases_in_cutoff():
         & (cross_correlations["COEFFS"].values <= 1)
     ).all()
 
-    prior_sample_cutoff1 = prior_ensemble_cutoff1.load_parameters_pl(
-        "COEFFS", all_data=False
-    ).to_numpy()
+    prior_sample_cutoff1 = (
+        prior_ensemble_cutoff1.load_scalar_dataframe(
+            "COEFFS",
+        )
+        .drop("realization")
+        .to_numpy()
+    )
     prior_cov = np.cov(prior_sample_cutoff1, rowvar=False)
-    posterior_sample_cutoff1 = posterior_ensemble_cutoff1.load_parameters_pl(
-        "COEFFS", all_data=False
-    ).to_numpy()
+    posterior_sample_cutoff1 = (
+        posterior_ensemble_cutoff1.load_scalar_dataframe("COEFFS")
+        .drop("realization")
+        .to_numpy()
+    )
     posterior_cutoff1_cov = np.cov(posterior_sample_cutoff1, rowvar=False)
-    posterior_sample_cutoff2 = posterior_ensemble_cutoff2.load_parameters_pl(
-        "COEFFS", all_data=False
-    ).to_numpy()
+    posterior_sample_cutoff2 = (
+        posterior_ensemble_cutoff2.load_scalar_dataframe("COEFFS")
+        .drop("realization")
+        .to_numpy()
+    )
     posterior_cutoff2_cov = np.cov(posterior_sample_cutoff2, rowvar=False)
 
     generalized_variance_1 = np.linalg.det(posterior_cutoff1_cov)

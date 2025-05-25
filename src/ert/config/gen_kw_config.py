@@ -369,7 +369,8 @@ class GenKwConfig(ParameterConfig):
         self, ensemble: Ensemble, realizations: npt.NDArray[np.int_]
     ) -> npt.NDArray[np.float64]:
         return (
-            ensemble.load_parameters_pl(self.name, realizations, all_data=False)
+            ensemble.load_scalar_dataframe(self.name, realizations)
+            .drop("realization")
             .to_numpy()
             .T.copy()
         )
