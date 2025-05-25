@@ -850,7 +850,7 @@ class LocalEnsemble(BaseMode):
         """
         if group not in self.experiment.parameter_configuration:
             raise ValueError(f"{group} is not registered to the experiment.")
-        if isinstance(dataset, pl.DataFrame) and realization is None:
+        if isinstance(dataset, pl.DataFrame):
             try:
                 df = self.load_scalar_dataframe(group)
                 existing_realizations = df.get_column("realization").unique()
