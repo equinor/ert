@@ -203,8 +203,9 @@ class DesignMatrix:
             sheet_name=self.design_sheet,
             header=None,
             skiprows=1,
-        ).dropna(axis=1, how="all")
+        )
         design_matrix_df.columns = param_names.to_list()
+        design_matrix_df = design_matrix_df.dropna(axis=1, how="all")
 
         if "REAL" in design_matrix_df.columns:
             if not is_integer_dtype(design_matrix_df.dtypes["REAL"]) or any(
