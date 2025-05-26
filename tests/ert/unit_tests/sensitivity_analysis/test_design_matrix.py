@@ -83,6 +83,7 @@ def test_merge_multiple_occurrences(
                 "REAL": [0, 1, 2],
                 "a": [1, 2, 3],
                 "b": [0, 2, 0],
+                " ": ["", "", ""],
             },
         ),
         pd.DataFrame([["a", 1], ["b", 4]]),
