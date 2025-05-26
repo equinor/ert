@@ -1717,22 +1717,13 @@ JOB_SCRIPT
 ----------
 .. _job_script:
 
-Running the forward model from ERT is a multi-level process which can be
-summarized as follows:
+When Ert submits forward models to a queueing system, it relies on a script to
+be run on the compute node. This script is responsible for parsing a file
+prepared by Ert per realization that describes the entire forward model and
+executing it.
 
-#. A Python module called jobs.py is written and stored in the directory where
-   the forward simulation is run. The jobs.py module contains a list of
-   job-elements, where each element is a Python representation of the code
-   entered when installing the job.
-#. ERT submits a Python script to the enkf queue system, this
-   script then loads the jobs.py module to find out which programs to run, and
-   how to run them.
-#. The job_script starts and monitors the individual jobs in the jobs.py
-   module.
-
-The JOB_SCRIPT variable should point at the Python script which is managing
-the forward model. This should normally be set in the site wide configuration
-file.
+The keyword `JOB_SCRIPT` can be used to inject a different script to do this,
+but should normally only be set in the site wide configuration.
 
 QUEUE_SYSTEM
 ------------
