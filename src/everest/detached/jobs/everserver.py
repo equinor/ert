@@ -131,24 +131,25 @@ class ExperimentRunner:
 
     async def run(self) -> None:
         status_queue: SimpleQueue[StatusEvents] = SimpleQueue()
-        run_model = EverestRunModel.create(
-            self._everest_config,
-            optimization_callback=partial(_opt_monitor, shared_data=self._shared_data),
-            status_queue=status_queue,
-        )
-
-        if run_model._queue_config.queue_system == QueueSystem.LOCAL:
-            evaluator_server_config = EvaluatorServerConfig()
-        else:
-            evaluator_server_config = EvaluatorServerConfig(
-                port_range=(49152, 51819), use_ipc_protocol=False
+        try:
+            run_model = EverestRunModel.create(
+                self._everest_config,
+                optimization_callback=partial(
+                    _opt_monitor, shared_data=self._shared_data
+                ),
+                status_queue=status_queue,
             )
 
-        try:
             loop = asyncio.get_running_loop()
             simulation_future = loop.run_in_executor(
                 None,
-                lambda: run_model.start_simulations_thread(evaluator_server_config),
+                lambda: run_model.start_simulations_thread(
+                    EvaluatorServerConfig()
+                    if run_model._queue_config.queue_system == QueueSystem.LOCAL
+                    else EvaluatorServerConfig(
+                        port_range=(49152, 51819), use_ipc_protocol=False
+                    )
+                ),
             )
             while True:
                 if self._shared_data.stop:
