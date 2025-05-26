@@ -570,7 +570,7 @@ class LocalEnsemble(BaseMode):
         if isinstance(config, GenKwConfig):
             if realizations is not None and isinstance(realizations, int):
                 realizations = np.array([realizations])
-            df = self.load_scalar_dataframe(group, realizations)
+            df = self._load_scalar_dataframe(group, realizations)
             if transformed:
                 df = df.with_columns(
                     [
@@ -635,7 +635,7 @@ class LocalEnsemble(BaseMode):
 
         return pl.concat(dataframes, how="align")
 
-    def load_scalar_dataframe(
+    def _load_scalar_dataframe(
         self,
         group: str,
         realizations: Collection[int] | None = None,
@@ -845,7 +845,7 @@ class LocalEnsemble(BaseMode):
         """
         if isinstance(dataset, pl.DataFrame):
             try:
-                df = self.load_scalar_dataframe(group)
+                df = self._load_scalar_dataframe(group)
                 existing_realizations = df.get_column("realization").unique()
                 new_data = dataset.filter(
                     ~pl.col("realization").is_in(existing_realizations)
