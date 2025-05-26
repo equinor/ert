@@ -234,12 +234,7 @@ class LocalEnsemble(BaseMode):
 
         return np.array(
             [
-                bool(
-                    {
-                        RealizationStorageState.PARAMETERS_LOADED,
-                        RealizationStorageState.RESPONSES_LOADED,
-                    }.intersection(state)
-                )
+                bool({RealizationStorageState.PARAMETERS_LOADED}.intersection(state))
                 for state in self.get_ensemble_state()
             ]
         )
