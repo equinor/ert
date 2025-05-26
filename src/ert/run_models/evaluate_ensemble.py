@@ -7,7 +7,6 @@ from uuid import UUID
 import numpy as np
 
 from ert.ensemble_evaluator import EvaluatorServerConfig
-from ert.storage import open_storage
 from ert.trace import tracer
 
 from ..run_arg import create_run_arguments
@@ -40,12 +39,6 @@ class EvaluateEnsemble(BaseRunModel):
         self, evaluator_server_config: EvaluatorServerConfig, restart: bool = False
     ) -> None:
         self.log_at_startup()
-        self._restart = restart
-        if self._restart:
-            # Storage is closed on completion, hence it must be
-            # re-opened when restarting
-            self._storage = open_storage(self.storage_path, mode="w")
-            self.active_realizations = self._create_mask_from_failed_realizations()
         ensemble = self._storage.get_ensemble(UUID(self.ensemble_id))
         experiment = ensemble.experiment
         self.set_env_key("_ERT_EXPERIMENT_ID", str(experiment.id))

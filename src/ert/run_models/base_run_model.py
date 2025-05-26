@@ -387,6 +387,13 @@ class BaseRunModel(BaseModelWithContextSupport, ABC):
             self._stop_time = None
             with captured_logs(error_messages):
                 self._set_default_env_context()
+
+                if restart:
+                    self._storage = open_storage(self.storage_path, mode="w")
+                    self.active_realizations = (
+                        self._create_mask_from_failed_realizations()
+                    )
+
                 self.run_experiment(
                     evaluator_server_config=evaluator_server_config,
                     restart=restart,

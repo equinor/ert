@@ -16,7 +16,7 @@ from ert.config import (
 )
 from ert.enkf_main import sample_prior, save_design_matrix_to_ensemble
 from ert.ensemble_evaluator import EvaluatorServerConfig
-from ert.storage import Ensemble, Experiment, open_storage
+from ert.storage import Ensemble, Experiment
 from ert.trace import tracer
 
 from ..plugins import PostExperimentFixtures, PreExperimentFixtures
@@ -99,11 +99,6 @@ class EnsembleExperiment(BaseRunModel):
                 name=self.ensemble_name,
                 ensemble_size=self.ensemble_size,
             ).id
-        else:
-            # Storage is closed on completion of experiment
-            # If restart, we re-open it
-            self._storage = open_storage(self.storage_path, mode="w")
-            self.active_realizations = self._create_mask_from_failed_realizations()
 
         assert self._experiment
         assert self._ensemble
