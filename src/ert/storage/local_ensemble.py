@@ -6,7 +6,7 @@ import os
 import time
 from collections.abc import Collection, Iterable
 from datetime import datetime
-from functools import cache, lru_cache
+from functools import cache, cached_property, lru_cache
 from multiprocessing.pool import ThreadPool
 from pathlib import Path
 from typing import TYPE_CHECKING
@@ -260,20 +260,20 @@ class LocalEnsemble(BaseMode):
             ]
         )
 
-    @lru_cache  # noqa: B019
-    def _scalar_exist(self) -> dict[str, list[int]]:
-        genkwn_mask: dict[str, list[int]] = {}
+    @cached_property
+    def _existing_scalars(self) -> dict[str, list[int]]:
+        genkw_mask: dict[str, list[int]] = {}
         for parameter in self.experiment.parameter_configuration.values():
             if isinstance(parameter, GenKwConfig):
-                genkwn_mask[parameter.name] = []
+                genkw_mask[parameter.name] = []
                 group_path = (
                     self.mount_point / f"{_escape_filename(parameter.name)}.parquet"
                 )
                 if group_path.exists():
-                    genkwn_mask[parameter.name] = pl.read_parquet(group_path)[
+                    genkw_mask[parameter.name] = pl.read_parquet(group_path)[
                         "realization"
                     ].to_list()
-        return genkwn_mask
+        return genkw_mask
 
     def has_data(self) -> list[int]:
         """
@@ -386,7 +386,7 @@ class LocalEnsemble(BaseMode):
 
     def refresh_ensemble_state(self) -> None:
         self.get_ensemble_state.cache_clear()
-        self._scalar_exist.cache_clear()
+        self._existing_scalars.clear()
         self.get_ensemble_state()
 
     @lru_cache  # noqa: B019
@@ -401,7 +401,6 @@ class LocalEnsemble(BaseMode):
         """
 
         response_configs = self.experiment.response_configuration
-        genkwn_mask = self._scalar_exist()
 
         def _parameters_exist_for_realization(realization: int) -> bool:
             """
@@ -424,7 +423,7 @@ class LocalEnsemble(BaseMode):
             return all(
                 (
                     isinstance(parameter, GenKwConfig)
-                    and realization in genkwn_mask[parameter.name]
+                    and realization in self._existing_scalars[parameter.name]
                 )
                 or (
                     not isinstance(parameter, GenKwConfig)
@@ -947,13 +946,15 @@ class LocalEnsemble(BaseMode):
         self, realization: int
     ) -> dict[str, RealizationStorageState]:
         path = self._realization_dir(realization)
-        genkw_mask = self._scalar_exist()
 
         return {
             e: (
                 RealizationStorageState.PARAMETERS_LOADED
                 if (path / (_escape_filename(e) + ".nc")).exists()
-                or (e in genkw_mask and realization in genkw_mask[e])
+                or (
+                    e in self._existing_scalars
+                    and realization in self._existing_scalars[e]
+                )
                 else RealizationStorageState.UNDEFINED
             )
             for e in self.experiment.parameter_configuration
@@ -965,11 +966,9 @@ class LocalEnsemble(BaseMode):
         response_configs = self.experiment.response_configuration
         path = self._realization_dir(realization)
         return {
-            e: (
-                RealizationStorageState.RESPONSES_LOADED
-                if (path / f"{e}.parquet").exists()
-                else RealizationStorageState.UNDEFINED
-            )
+            e: RealizationStorageState.RESPONSES_LOADED
+            if (path / f"{e}.parquet").exists()
+            else RealizationStorageState.UNDEFINED
             for e in response_configs
         }
 
@@ -1199,11 +1198,9 @@ class LocalEnsemble(BaseMode):
 
         params_wide = pl.concat(
             [
-                (
-                    pdf.sort("realization").drop("realization")
-                    if i > 0
-                    else pdf.sort("realization")
-                )
+                pdf.sort("realization").drop("realization")
+                if i > 0
+                else pdf.sort("realization")
                 for i, pdf in enumerate(param_dfs)
             ],
             how="horizontal",
