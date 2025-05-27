@@ -148,7 +148,7 @@ class Monitor:
         tqdm.write("\n", end="", file=self._out)
         with tqdm(total=100, ncols=100, bar_format=bar_format, file=self._out) as pbar:
             pbar.set_description_str(nphase, refresh=False)
-            pbar.unit = f"{humanize.precisedelta(elapsed.seconds)}"
+            pbar.unit = f"Running time: {humanize.precisedelta(elapsed.seconds)}"
             pbar.update(event.progress * 100)
         tqdm.write("\n", end="", file=self._out)
         tqdm.write(self._get_legends(), file=self._out)

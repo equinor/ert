@@ -492,7 +492,7 @@ class RunDialog(QFrame):
     @Slot()
     def _on_ticker(self) -> None:
         runtime = self._run_model_api.get_runtime()
-        running_time = humanize.precisedelta(runtime)
+        running_time = f"Running time: {humanize.precisedelta(runtime)}"
         self.running_time.setText(running_time[0:14] + "\n" + running_time[14:])
 
         maximum_memory_usage = self._snapshot_model.root.max_memory_usage
