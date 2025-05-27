@@ -82,7 +82,11 @@ The following illustrates an example of a forward model section of an Everest co
       - well_constraints  -i files/well_readydate.json -c files/wc_config.yml -rc well_rate.json -o wc_wells.json
       - add_templates     -i wc_wells.json -c files/at_config.yml -o at_wells.json
       - schmerge          -s eclipse/include/schedule/schedule.tmpl -i at_wells.json -o eclipse/include/schedule/schedule.sch
-      - eclipse100        r{{ eclbase }} --version 2020.2
+      - job: eclipse100   r{{ eclbase }} --version 2020.2
+        results:
+          file_name: r{{eclbase}}
+          type: summary
+          keys: ['FOPR', 'WOPR']
       - rf                -s r{{ eclbase }} -o rf
 
 The ``add_templates`` job does **NOT** need to be *installed* it is already part of the default everest jobs.
@@ -213,7 +217,11 @@ If the file is to be modified by a custom job, the everest config should contain
       - custom_job        -i wc_wells.json -o wc_wells_custom.json
       - add_templates     -i wc_wells_custom.json -c files/at_config.yml -o at_wells.json
       - schmerge          -s eclipse/include/schedule/schedule.tmpl -i at_wells.json -o eclipse/include/schedule/schedule.sch
-      - eclipse100        r{{ eclbase }} --version 2020.2
+      - job: eclipse100   r{{ eclbase }} --version 2020.2
+        results:
+          file_name: r{{eclbase}}
+          type: summary
+          keys: ['FOPR', 'WOPR']
       - rf                -s r{{ eclbase }} -o rf
 
 
