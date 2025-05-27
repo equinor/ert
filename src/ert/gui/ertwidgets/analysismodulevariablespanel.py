@@ -35,8 +35,6 @@ class AnalysisModuleVariablesPanel(QWidget):
 
         self.blockSignals(True)
 
-        layout.addRow(QLabel("AnalysisModule: STD_ENKF"))
-        layout.addRow(self.create_horizontal_line())
         layout.addRow(QLabel("Inversion Algorithm"))
         dropdown = QComboBox(self)
         options = analysis_module.model_fields["inversion"]
