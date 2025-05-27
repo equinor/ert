@@ -1483,17 +1483,11 @@ ANALYSIS_SET_VAR keyword for the `STD_ENKF` module.
      - INVERSION
      - Note
    * - Exact inversion with diagonal R=I
-     - EXACT
-     -
+     - Deprecated: exact, 0
+     - Preferred name: EXACT
    * - Subspace inversion with exact R
-     - SUBSPACE_EXACT_R / SUBSPACE
+     - Deprecated: SUBSPACE_EXACT_R, subspace, 1
      - Preferred name: SUBSPACE
-   * - Subspace inversion using R=EE'
-     - SUBSPACE_EE_R
-     - Deprecated, maps to: SUBSPACE
-   * - Subspace inversion using E
-     - SUBSPACE_RE
-     - Deprecated, maps to: SUBSPACE
 
 
 LOCALIZATION

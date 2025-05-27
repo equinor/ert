@@ -13,19 +13,19 @@ DEFAULT_ENKF_TRUNCATION = 0.98
 DEFAULT_LOCALIZATION = False
 
 
-def _lower(v: str) -> str:
-    return v.lower()
+def _upper(v: str) -> str:
+    return v.upper()
 
 
-InversionTypeES = Annotated[Literal["exact", "subspace"], BeforeValidator(_lower)]
+InversionTypeES = Annotated[Literal["EXACT", "SUBSPACE"], BeforeValidator(_upper)]
 es_description = """
     The type of inversion used in the algorithm. Every inversion method
     scales the variables. The options are:
 
-    * `exact`:
+    * `EXACT`:
         Computes an exact inversion which uses a Cholesky factorization in the
         case of symmetric, positive definite matrices.
-    * `subspace`:
+    * `SUBSPACE`:
         This is an approximate solution. The approximation is that when
         U, w, V.T = svd(D_delta) then we assume that U @ U.T = I.
     """
