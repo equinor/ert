@@ -574,7 +574,11 @@ class LocalEnsemble(BaseMode):
             if transformed:
                 df = df.with_columns(
                     [
-                        pl.col(col).map_elements(config.transform_col(col)).alias(col)
+                        pl.col(col)
+                        .map_elements(
+                            config.transform_col(col), return_dtype=pl.Float64
+                        )
+                        .alias(col)
                         for col in df.columns
                         if col != "realization"
                     ]
@@ -596,8 +600,21 @@ class LocalEnsemble(BaseMode):
         iens_active_index: npt.NDArray[np.int_],
     ) -> None:
         config_node = self.experiment.parameter_configuration[param_group]
-        for i, realization in enumerate(iens_active_index):
-            config_node.save_parameters(self, int(realization), parameters[:, i])
+        if isinstance(config_node, GenKwConfig):
+            df = pl.DataFrame(
+                {
+                    "realization": iens_active_index,
+                }
+            ).with_columns(
+                [
+                    pl.Series(parameters[i, :]).alias(param_name.name)
+                    for i, param_name in enumerate(config_node.transform_functions)
+                ]
+            )
+            self.save_parameters(param_group, None, df)
+        else:
+            for i, realization in enumerate(iens_active_index):
+                config_node.save_parameters(self, int(realization), parameters[:, i])
 
     def load_scalars(
         self, group: str | None = None, realizations: npt.NDArray[np.int_] | None = None
@@ -854,8 +871,6 @@ class LocalEnsemble(BaseMode):
                     df = pl.concat([df, new_data], how="vertical")
                 else:
                     return
-            # df = pl.concat([df, dataset], how="vertical")
-            # TODO bug when sampling as it samples N*N time
             except KeyError:
                 df = dataset
 
