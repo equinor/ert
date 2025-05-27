@@ -77,8 +77,8 @@ class FileDialog(QDialog):
         self._file.close()
 
     def _init_layout(self) -> None:
-        dialog_buttons = QDialogButtonBox(QDialogButtonBox.StandardButton.Ok)
-        dialog_buttons.accepted.connect(self.accept)
+        dialog_buttons = QDialogButtonBox(QDialogButtonBox.StandardButton.Close)
+        dialog_buttons.rejected.connect(self.reject)
 
         self._copy_all_button = dialog_buttons.addButton(
             "Copy all",

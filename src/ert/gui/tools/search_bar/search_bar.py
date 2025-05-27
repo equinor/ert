@@ -24,7 +24,7 @@ class SearchBar(QLineEdit):
             "Find next",
             QDialogButtonBox.ButtonRole.ActionRole,
         )
-
+        self._find_next_button.setDefault(True)
         self._find_next_button.clicked.connect(self._find_next)  # type: ignore
 
         self._highlight_all_button = dialog_buttons.addButton(
