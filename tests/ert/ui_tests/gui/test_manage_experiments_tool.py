@@ -390,7 +390,7 @@ ANALYSIS_SET_VAR OBSERVATIONS AUTO_SCALE POLY_OBS1_*
 """
         )
 
-    prior_ens, _ = run_cli_ES_with_case("poly_localization_0.ert")
+    prior_ens_id, _, _ = run_cli_ES_with_case("poly_localization_0.ert")
     config = ErtConfig.from_file("poly_localization_0.ert")
 
     notifier = ErtNotifier()
@@ -401,7 +401,7 @@ ANALYSIS_SET_VAR OBSERVATIONS AUTO_SCALE POLY_OBS1_*
             config, notifier, config.runpath_config.num_realizations
         )
 
-        assert prior_ens.name
+        assert storage.get_ensemble(prior_ens_id).name
 
         # select the ensemble
         storage_widget = tool.findChild(StorageWidget)
