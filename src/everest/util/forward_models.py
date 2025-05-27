@@ -1,11 +1,25 @@
 from collections.abc import Sequence
 from typing import Any
 
+import pluggy
 from pydantic import BaseModel, ValidationError
 
 from everest.plugins.everest_plugin_manager import EverestPluginManager
 
-pm = EverestPluginManager()
+
+class LazyEverestPluginManager:
+    def __init__(self) -> None:
+        self.everest_plugin_manager: EverestPluginManager | None = None
+
+    @property
+    def hook(self) -> pluggy.HookRelay:
+        if self.everest_plugin_manager is None:
+            self.everest_plugin_manager = EverestPluginManager()
+
+        return self.everest_plugin_manager.hook
+
+
+pm = LazyEverestPluginManager()
 
 
 def collect_forward_model_schemas() -> dict[str, Any] | None:
