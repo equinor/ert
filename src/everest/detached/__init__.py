@@ -1,5 +1,4 @@
 import asyncio
-import importlib
 import json
 import logging
 import os
@@ -8,10 +7,10 @@ import ssl
 import time
 import traceback
 from base64 import b64encode
-from collections.abc import Callable, Mapping
+from collections.abc import Callable
 from enum import Enum
 from pathlib import Path
-from typing import Any, Literal
+from typing import Any
 
 import requests
 from pydantic import ValidationError
@@ -26,7 +25,6 @@ from ert.scheduler.event import StartedEvent
 from ert.trace import get_traceparent
 from everest.config import EverestConfig, ServerConfig
 from everest.strings import (
-    EVEREST_SERVER_CONFIG,
     OPT_PROGRESS_ID,
     SIM_PROGRESS_ID,
     EverEndpoints,
@@ -259,28 +257,6 @@ def start_monitor(
                 time.sleep(polling_interval)
     except Exception:
         logger.debug(traceback.format_exc())
-
-
-_EVERSERVER_JOB_PATH = str(
-    Path(importlib.util.find_spec("everest.detached").origin).parent  # type: ignore
-    / os.path.join("jobs", EVEREST_SERVER_CONFIG)
-)
-
-
-_QUEUE_SYSTEMS: Mapping[Literal["LSF", "SLURM", "TORQUE"], dict[str, Any]] = {
-    "LSF": {
-        "options": [("options", "LSF_RESOURCE")],
-        "name": "LSF_QUEUE",
-    },
-    "SLURM": {
-        "options": [
-            ("exclude_host", "EXCLUDE_HOST"),
-            ("include_host", "INCLUDE_HOST"),
-        ],
-        "name": "PARTITION",
-    },
-    "TORQUE": {"options": ["cluster_label", "CLUSTER_LABEL"], "name": "QUEUE"},
-}
 
 
 class ServerStatus(Enum):
