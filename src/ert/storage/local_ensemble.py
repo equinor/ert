@@ -386,7 +386,8 @@ class LocalEnsemble(BaseMode):
 
     def refresh_ensemble_state(self) -> None:
         self.get_ensemble_state.cache_clear()
-        self._existing_scalars.clear()
+        if self._existing_scalars is not None:
+            del self._existing_scalars
         self.get_ensemble_state()
 
     @lru_cache  # noqa: B019
