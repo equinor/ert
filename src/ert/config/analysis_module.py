@@ -39,7 +39,7 @@ class ESSettings(BaseModel):
     ] = DEFAULT_ENKF_TRUNCATION
     inversion: Annotated[
         InversionTypeES, Field(title="Inversion algorithm", description=es_description)
-    ] = "exact"
+    ] = "EXACT"
     localization: Annotated[bool, Field(title="Adaptive localization")] = False
     localization_correlation_threshold: Annotated[
         float | None,
