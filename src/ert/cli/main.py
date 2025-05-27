@@ -25,7 +25,7 @@ from ert.mode_definitions import (
 from ert.namespace import Namespace
 from ert.plugins import ErtPluginManager
 from ert.run_models.event import StatusEvents
-from ert.run_models.model_factory import create_model
+from ert.run_models.model_factory import _realizations, create_model
 from ert.storage import open_storage
 from ert.storage.local_storage import local_storage_set_ert_config
 
@@ -104,7 +104,43 @@ def run_cli(args: Namespace, plugin_manager: ErtPluginManager | None = None) -> 
         # This is within the range for ephemeral ports as defined by
         # most unix flavors https://en.wikipedia.org/wiki/Ephemeral_port
         args.port_range = range(49152, 51819)
+    if (
+        ert_config.analysis_config.design_matrix is not None
+        and ert_config.analysis_config.design_matrix.active_realizations is not None
+    ):
+        dm_num_realizations = (
+            ert_config.analysis_config.design_matrix.active_realizations
+        )
+        config_num_realizations = ert_config.runpath_config.num_realizations
 
+        if (
+            hasattr(args, "realizations")
+            and args.realizations is None
+            and len(dm_num_realizations) != ert_config.runpath_config.num_realizations
+        ):
+            if (
+                len(ert_config.analysis_config.design_matrix.active_realizations)
+                < ert_config.runpath_config.num_realizations
+            ):
+                print(
+                    f"NUM_REALIZATIONS ({config_num_realizations}) is greater than the "
+                    "number of realizations in DESIGN_MATRIX "
+                    f"({len(dm_num_realizations)}). Using the realizations from "
+                    f"DESIGN_MATRIX ({len(dm_num_realizations)})"
+                )
+                model.active_realizations = (
+                    ert_config.analysis_config.design_matrix.active_realizations
+                )
+            else:
+                print(
+                    f"NUM_REALIZATIONS ({config_num_realizations}) is less than the "
+                    "number of realizations in DESIGN_MATRIX "
+                    f"({len(dm_num_realizations)}). Using the realizations from "
+                    f"NUM_REALIZATIONS ({config_num_realizations})"
+                )
+                model.active_realizations = _realizations(
+                    args, config_num_realizations
+                ).tolist()
     use_ipc_protocol = model.queue_system == QueueSystem.LOCAL
     evaluator_server_config = EvaluatorServerConfig(
         port_range=None
