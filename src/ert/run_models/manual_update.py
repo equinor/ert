@@ -10,7 +10,8 @@ from ert.config import ErtConfig, ESSettings, ObservationSettings
 from ert.ensemble_evaluator import EvaluatorServerConfig
 from ert.storage import Storage
 
-from .base_run_model import ErtRunError, StatusEvents, UpdateRunModel
+from .base_run_model import ErtRunError, StatusEvents
+from .update_run_model import UpdateRunModel
 
 if TYPE_CHECKING:
     from ert.config import QueueConfig
@@ -61,10 +62,12 @@ class ManualUpdate(UpdateRunModel):
             random_seed=random_seed,
             minimum_required_realizations=minimum_required_realizations,
             log_path=config.analysis_config.log_path,
+            config=None,
+            target_ensemble=None,
+            experiment_name=None,
         )
         self.prior = prior
         self.target_ensemble_format = target_ensemble
-        self.support_restart = False
 
     def run_experiment(
         self, evaluator_server_config: EvaluatorServerConfig, restart: bool = False

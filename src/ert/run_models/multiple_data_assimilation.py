@@ -8,20 +8,13 @@ from uuid import UUID
 
 import numpy as np
 
-from ert.config import (
-    ConfigValidationError,
-    ErtConfig,
-    ESSettings,
-    ObservationSettings,
-)
-from ert.enkf_main import sample_prior, save_design_matrix_to_ensemble
-from ert.ensemble_evaluator import EvaluatorServerConfig
+from ert.config import ErtConfig, ESSettings, ObservationSettings
+from ert.run_arg import create_run_arguments
 from ert.storage import Ensemble, Storage
-from ert.trace import tracer
+from ert.storage.local_ensemble import LocalEnsemble
 
-from ..plugins import PostExperimentFixtures, PreExperimentFixtures
-from ..run_arg import create_run_arguments
-from .base_run_model import ErtRunError, StatusEvents, UpdateRunModel
+from .base_run_model import ErtRunError, StatusEvents
+from .update_run_model import UpdateRunModel
 
 if TYPE_CHECKING:
     from ert.config import QueueConfig
@@ -55,23 +48,14 @@ class MultipleDataAssimilation(UpdateRunModel):
         update_settings: ObservationSettings,
         status_queue: SimpleQueue[StatusEvents],
     ):
-        self._relative_weights = weights
-        self._parameter_configuration = config.ensemble_config.parameter_configuration
-        self._design_matrix = config.analysis_config.design_matrix
-        self.weights = self.parse_weights(weights)
-
-        self.target_ensemble_format = target_ensemble
-        self.experiment_name = experiment_name
-        self.restart_run = restart_run
-        self.prior_ensemble_id = prior_ensemble_id
         start_iteration = 0
-        total_iterations = len(self.weights) + 1
-        if self.restart_run:
-            if not self.prior_ensemble_id:
+        total_iterations = len(self.parse_weights(weights)) + 1
+        if restart_run:
+            if not prior_ensemble_id:
                 raise ValueError("For restart run, prior ensemble must be set")
             start_iteration = storage.get_ensemble(prior_ensemble_id).iteration + 1
             total_iterations -= start_iteration
-        elif not self.experiment_name:
+        elif not experiment_name:
             raise ValueError("For non-restart run, experiment name must be set")
         super().__init__(
             es_settings,
@@ -93,103 +77,19 @@ class MultipleDataAssimilation(UpdateRunModel):
             random_seed=random_seed,
             minimum_required_realizations=minimum_required_realizations,
             log_path=config.analysis_config.log_path,
+            config=config,
+            target_ensemble=target_ensemble,
+            experiment_name=experiment_name,
         )
-        self.support_restart = False
-        self._observations = config.observations
-        self._parameter_configuration = config.ensemble_config.parameter_configuration
-        self._response_configuration = config.ensemble_config.response_configuration
-        self._templates = config.ert_templates
+        self.restart_run = restart_run
+        self.prior_ensemble_id = prior_ensemble_id
+        self._relative_weights = weights
+        self.weights = self.parse_weights(weights)
+        self.simulation_arguments: dict[str, str] | None = {
+            "weights": self._relative_weights
+        }
 
-    @tracer.start_as_current_span(f"{__name__}.run_experiment")
-    def run_experiment(
-        self, evaluator_server_config: EvaluatorServerConfig, restart: bool = False
-    ) -> None:
-        self.log_at_startup()
-
-        parameters_config = self._parameter_configuration
-        design_matrix = self._design_matrix
-        design_matrix_group = None
-        if design_matrix is not None and not restart:
-            try:
-                parameters_config, design_matrix_group = (
-                    design_matrix.merge_with_existing_parameters(parameters_config)
-                )
-                if not any(p.update for p in parameters_config):
-                    raise ConfigValidationError(
-                        "No parameters to update as all parameters "
-                        "were set to update:false!",
-                    )
-            except ConfigValidationError as exc:
-                raise ErtRunError(str(exc)) from exc
-
-        self.restart = restart
-        if self.restart_run:
-            id_ = self.prior_ensemble_id
-            try:
-                ensemble_id = UUID(id_)
-                prior = self._storage.get_ensemble(ensemble_id)
-                experiment = prior.experiment
-                self.set_env_key("_ERT_EXPERIMENT_ID", str(experiment.id))
-                self.set_env_key("_ERT_ENSEMBLE_ID", str(prior.id))
-                assert isinstance(prior, Ensemble)
-                if self.start_iteration != prior.iteration + 1:
-                    raise ValueError(
-                        "Experiment misconfigured, got starting "
-                        f"iteration: {self.start_iteration},"
-                        f"restart iteration = {prior.iteration + 1}"
-                    )
-            except (KeyError, ValueError) as err:
-                raise ErtRunError(
-                    f"Prior ensemble with ID: {id_} does not exists"
-                ) from err
-        else:
-            self.run_workflows(
-                fixtures=PreExperimentFixtures(random_seed=self.random_seed),
-            )
-            sim_args = {"weights": self._relative_weights}
-            experiment = self._storage.create_experiment(
-                parameters=parameters_config
-                + ([design_matrix_group] if design_matrix_group else []),
-                observations=self._observations,
-                responses=self._response_configuration,
-                simulation_arguments=sim_args,
-                name=self.experiment_name,
-                templates=self._templates,
-            )
-
-            prior = self._storage.create_ensemble(
-                experiment,
-                ensemble_size=self.ensemble_size,
-                iteration=0,
-                name=self.target_ensemble_format % 0,
-            )
-            self.set_env_key("_ERT_EXPERIMENT_ID", str(experiment.id))
-            self.set_env_key("_ERT_ENSEMBLE_ID", str(prior.id))
-            prior_args = create_run_arguments(
-                self.run_paths,
-                np.array(self.active_realizations, dtype=bool),
-                ensemble=prior,
-            )
-
-            sample_prior(
-                prior,
-                np.where(self.active_realizations)[0],
-                parameters=[param.name for param in parameters_config],
-                random_seed=self.random_seed,
-            )
-
-            if design_matrix_group is not None and design_matrix is not None:
-                save_design_matrix_to_ensemble(
-                    design_matrix.design_matrix_df,
-                    prior,
-                    np.where(self.active_realizations)[0],
-                    design_matrix_group.name,
-                )
-            self._evaluate_and_postprocess(
-                prior_args,
-                prior,
-                evaluator_server_config,
-            )
+    def _update_then_run_ensembles(self, evaluator_server_config, prior):
         enumerated_weights = list(enumerate(self.weights))
         weights_to_run = enumerated_weights[prior.iteration :]
 
@@ -201,7 +101,7 @@ class MultipleDataAssimilation(UpdateRunModel):
             )
             posterior_args = create_run_arguments(
                 self.run_paths,
-                self.active_realizations,
+                np.array(self.active_realizations, dtype=bool),
                 ensemble=posterior,
             )
             self._evaluate_and_postprocess(
@@ -211,18 +111,12 @@ class MultipleDataAssimilation(UpdateRunModel):
             )
             prior = posterior
 
-        self.run_workflows(
-            fixtures=PostExperimentFixtures(
-                random_seed=self.random_seed,
-                storage=self._storage,
-                ensemble=prior,
-            ),
-        )
+        return prior
 
     @staticmethod
     def parse_weights(weights: str) -> list[float]:
         """Parse weights string and scale weights such that their reciprocals sum
-        to 1.0, i.e., sum(1.0 / x for x in weights) == 1.0. See for example Equation
+        to 1.0, i.e., sum(1.0 / x for x in weights) == 1.0. See, for example, Equation
         38 of evensen2018 - Analysis of iterative ensemble
         smoothers for solving inverse problems.
         """
@@ -247,6 +141,46 @@ class MultipleDataAssimilation(UpdateRunModel):
 
         length = sum(1.0 / x for x in result)
         return [x * length for x in result]
+
+    def _preExperimentFixtures(self):
+        if not self.restart_run:
+            super()._preExperimentFixtures()
+
+    def _evaluate_prior(
+        self,
+        design_matrix,
+        design_matrix_group,
+        evaluator_server_config,
+        parameters_config,
+    ) -> LocalEnsemble:
+        if self.restart_run:
+            id_ = self.prior_ensemble_id
+            try:
+                ensemble_id = UUID(id_)
+                prior = self._storage.get_ensemble(ensemble_id)
+                experiment = prior.experiment
+                self.set_env_key("_ERT_EXPERIMENT_ID", str(experiment.id))
+                self.set_env_key("_ERT_ENSEMBLE_ID", str(prior.id))
+                assert isinstance(prior, Ensemble)
+                if self.start_iteration != prior.iteration + 1:
+                    raise ValueError(
+                        "Experiment misconfigured, got starting "
+                        f"iteration: {self.start_iteration},"
+                        f"restart iteration = {prior.iteration + 1}"
+                    )
+                else:
+                    return prior
+            except (KeyError, ValueError) as err:
+                raise ErtRunError(
+                    f"Prior ensemble with ID: {id_} does not exists"
+                ) from err
+        else:
+            return super()._evaluate_prior(
+                design_matrix,
+                design_matrix_group,
+                evaluator_server_config,
+                parameters_config,
+            )
 
     @classmethod
     def name(cls) -> str:

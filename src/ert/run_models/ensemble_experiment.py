@@ -43,17 +43,6 @@ class EnsembleExperiment(BaseRunModel):
         queue_config: QueueConfig,
         status_queue: SimpleQueue[StatusEvents],
     ):
-        self.ensemble_name = ensemble_name
-        self.experiment_name = experiment_name
-        self.experiment: Experiment | None = None
-        self.ensemble: Ensemble | None = None
-
-        self._design_matrix = config.analysis_config.design_matrix
-        self._observations = config.observations
-        self._parameter_configuration = config.ensemble_config.parameter_configuration
-        self._response_configuration = config.ensemble_config.response_configuration
-        self._templates = config.ert_templates
-
         super().__init__(
             storage,
             config.runpath_file,
@@ -72,6 +61,18 @@ class EnsembleExperiment(BaseRunModel):
             random_seed=random_seed,
             minimum_required_realizations=minimum_required_realizations,
         )
+
+        self.ensemble_name = ensemble_name
+        self.experiment_name = experiment_name
+        self.experiment: Experiment | None = None
+        self.ensemble: Ensemble | None = None
+        self.support_restart: bool = True
+
+        self._design_matrix = config.analysis_config.design_matrix
+        self._observations = config.observations
+        self._parameter_configuration = config.ensemble_config.parameter_configuration
+        self._response_configuration = config.ensemble_config.response_configuration
+        self._templates = config.ert_templates
 
     @tracer.start_as_current_span(f"{__name__}.run_experiment")
     def run_experiment(

@@ -18,8 +18,8 @@ from ert.run_models import (
     EnsembleSmoother,
     MultipleDataAssimilation,
     base_run_model,
-    ensemble_smoother,
     multiple_data_assimilation,
+    update_run_model,
 )
 
 EXPECTED_CALL_ORDER = [
@@ -56,8 +56,8 @@ def test_hook_call_order_ensemble_smoother(monkeypatch):
     across different models.
     """
     run_wfs_mock = MagicMock()
-    monkeypatch.setattr(ensemble_smoother, "sample_prior", MagicMock())
-    monkeypatch.setattr(base_run_model, "smoother_update", MagicMock())
+    monkeypatch.setattr(update_run_model, "sample_prior", MagicMock())
+    monkeypatch.setattr(update_run_model, "smoother_update", MagicMock())
     monkeypatch.setattr(base_run_model.BaseRunModel, "run_workflows", run_wfs_mock)
 
     ens_mock = MagicMock()
@@ -95,13 +95,13 @@ def test_hook_call_order_es_mda(monkeypatch):
     """
 
     run_wfs_mock = MagicMock()
-    monkeypatch.setattr(multiple_data_assimilation, "sample_prior", MagicMock())
+    monkeypatch.setattr(update_run_model, "sample_prior", MagicMock())
+    monkeypatch.setattr(update_run_model, "smoother_update", MagicMock())
     monkeypatch.setattr(
         multiple_data_assimilation.MultipleDataAssimilation,
         "parse_weights",
         MagicMock(return_value=[1]),
     )
-    monkeypatch.setattr(base_run_model, "smoother_update", MagicMock())
     monkeypatch.setattr(base_run_model.BaseRunModel, "run_workflows", run_wfs_mock)
 
     ens_mock = MagicMock()

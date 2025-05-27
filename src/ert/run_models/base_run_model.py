@@ -4,7 +4,6 @@ import asyncio
 import concurrent.futures
 import copy
 import dataclasses
-import functools
 import logging
 import os
 import shutil
@@ -22,7 +21,6 @@ from typing import TYPE_CHECKING, Any, Protocol, cast
 import numpy as np
 
 from _ert.events import EESnapshot, EESnapshotUpdate, EETerminated, Event
-from ert.analysis import ErtAnalysisError, smoother_update
 from ert.analysis.event import (
     AnalysisCompleteEvent,
     AnalysisDataEvent,
@@ -30,11 +28,9 @@ from ert.analysis.event import (
     AnalysisEvent,
 )
 from ert.config import (
-    ESSettings,
     ForwardModelStep,
     HookRuntime,
     ModelConfig,
-    ObservationSettings,
     QueueSystem,
     Workflow,
 )
@@ -59,10 +55,7 @@ from ert.mode_definitions import MODULE_MODE
 from ert.plugins import (
     HookedWorkflowFixtures,
     PostSimulationFixtures,
-    PostUpdateFixtures,
-    PreFirstUpdateFixtures,
     PreSimulationFixtures,
-    PreUpdateFixtures,
 )
 from ert.runpaths import Runpaths
 from ert.storage import Ensemble, Storage
@@ -84,7 +77,6 @@ from .event import (
     RunModelErrorEvent,
     RunModelStatusEvent,
     RunModelTimeEvent,
-    RunModelUpdateBeginEvent,
     RunModelUpdateEndEvent,
     SnapshotUpdateEvent,
     StatusEvents,
@@ -200,7 +192,7 @@ class BaseRunModel(ABC):
         self._queue_config: QueueConfig = queue_config
         self._initial_realizations_mask: list[bool] = copy.copy(active_realizations)
         self._completed_realizations_mask: list[bool] = []
-        self.support_restart: bool = True
+        self.support_restart: bool = False
         self._storage = storage
         self._context_env: dict[str, str] = {}
         self.random_seed = random_seed
@@ -847,129 +839,3 @@ class BaseRunModel(ABC):
         )
 
         return num_successful_realizations
-
-
-class UpdateRunModel(BaseRunModel):
-    def __init__(
-        self,
-        analysis_settings: ESSettings,
-        update_settings: ObservationSettings,
-        storage: Storage,
-        runpath_file: Path,
-        user_config_file: Path,
-        env_vars: dict[str, str],
-        env_pr_fm_step: dict[str, dict[str, Any]],
-        model_config: ModelConfig,
-        queue_config: QueueConfig,
-        forward_model_steps: list[ForwardModelStep],
-        status_queue: SimpleQueue[StatusEvents],
-        substitutions: Substitutions,
-        hooked_workflows: defaultdict[HookRuntime, list[Workflow]],
-        active_realizations: list[bool],
-        total_iterations: int,
-        start_iteration: int,
-        random_seed: int,
-        minimum_required_realizations: int,
-        log_path: Path,
-    ):
-        self._analysis_settings: ESSettings = analysis_settings
-        self._update_settings: ObservationSettings = update_settings
-
-        super().__init__(
-            storage,
-            runpath_file,
-            user_config_file,
-            env_vars,
-            env_pr_fm_step,
-            model_config,
-            queue_config,
-            forward_model_steps,
-            status_queue,
-            substitutions,
-            hooked_workflows,
-            active_realizations=active_realizations,
-            total_iterations=total_iterations,
-            start_iteration=start_iteration,
-            random_seed=random_seed,
-            minimum_required_realizations=minimum_required_realizations,
-            log_path=log_path,
-        )
-
-    def update(
-        self,
-        prior: Ensemble,
-        posterior_name: str,
-        weight: float = 1.0,
-    ) -> Ensemble:
-        self.validate_successful_realizations_count()
-        self.send_event(
-            RunModelUpdateBeginEvent(iteration=prior.iteration, run_id=prior.id)
-        )
-        self.send_event(
-            RunModelStatusEvent(
-                iteration=prior.iteration,
-                run_id=prior.id,
-                msg="Creating posterior ensemble..",
-            )
-        )
-
-        pre_first_update_fixtures = PreFirstUpdateFixtures(
-            storage=self._storage,
-            ensemble=prior,
-            observation_settings=self._update_settings,
-            es_settings=self._analysis_settings,
-            random_seed=self.random_seed,
-            reports_dir=self.reports_dir(experiment_name=prior.experiment.name),
-            run_paths=self.run_paths,
-        )
-
-        posterior = self._storage.create_ensemble(
-            prior.experiment,
-            ensemble_size=prior.ensemble_size,
-            iteration=prior.iteration + 1,
-            name=posterior_name,
-            prior_ensemble=prior,
-        )
-        if prior.iteration == 0:
-            self.run_workflows(
-                fixtures=pre_first_update_fixtures,
-            )
-
-        update_args_dict = {
-            field.name: getattr(pre_first_update_fixtures, field.name)
-            for field in dataclasses.fields(pre_first_update_fixtures)
-        }
-
-        self.run_workflows(
-            fixtures=PreUpdateFixtures(
-                **{**update_args_dict, "hook": HookRuntime.PRE_UPDATE}
-            ),
-        )
-        try:
-            smoother_update(
-                prior,
-                posterior,
-                update_settings=self._update_settings,
-                es_settings=self._analysis_settings,
-                parameters=prior.experiment.update_parameters,
-                observations=prior.experiment.observation_keys,
-                global_scaling=weight,
-                rng=self.rng,
-                progress_callback=functools.partial(
-                    self.send_smoother_event,
-                    prior.iteration,
-                    prior.id,
-                ),
-            )
-        except ErtAnalysisError as e:
-            raise ErtRunError(
-                "Update algorithm failed for iteration:"
-                f"{posterior.iteration}. The following error occurred: {e}"
-            ) from e
-
-        self.run_workflows(
-            fixtures=PostUpdateFixtures(
-                **{**update_args_dict, "hook": HookRuntime.POST_UPDATE}
-            ),
-        )
-        return posterior

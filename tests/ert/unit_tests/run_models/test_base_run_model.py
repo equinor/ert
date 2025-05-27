@@ -47,15 +47,6 @@ def create_base_run_model(**kwargs):
     return BaseRunModel(**(default_args | kwargs))
 
 
-def test_base_run_model_supports_restart(minimum_case):
-    brm = create_base_run_model(
-        storage=minimum_case,
-        queue_config=minimum_case.queue_config,
-        active_realizations=[True],
-    )
-    assert brm.support_restart
-
-
 @pytest.mark.parametrize(
     "initials",
     [

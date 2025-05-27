@@ -182,7 +182,6 @@ class EverestRunModel(BaseRunModel):
         for key, val in config_dict.get("SETENV", []):  # type: ignore
             env_vars[key] = substitutions.substitute(val)
 
-        self.support_restart = False
         self._parameter_configuration = ensemble_config.parameter_configuration
         self._parameter_configs = ensemble_config.parameter_configs
         self._response_configuration = ensemble_config.response_configuration
