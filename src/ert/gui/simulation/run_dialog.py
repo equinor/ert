@@ -9,7 +9,7 @@ import humanize
 from PyQt6.QtCore import QModelIndex, QSize, Qt, QThread, QTimer
 from PyQt6.QtCore import pyqtSignal as Signal
 from PyQt6.QtCore import pyqtSlot as Slot
-from PyQt6.QtGui import QMouseEvent, QMovie, QTextCursor, QTextOption
+from PyQt6.QtGui import QHideEvent, QMouseEvent, QMovie, QTextCursor, QTextOption
 from PyQt6.QtWidgets import (
     QAbstractItemView,
     QDialog,
@@ -486,8 +486,6 @@ class RunDialog(QFrame):
             self.fail_msg_box.show()
         else:
             self.update_total_progress(1.0, "Experiment completed.")
-        for file_dialog in self.findChildren(FileDialog):
-            file_dialog.close()
 
     @Slot()
     def _on_ticker(self) -> None:
@@ -630,6 +628,10 @@ class RunDialog(QFrame):
             case QueueSystem.SLURM:
                 formatted_queue_system = "Slurm"
         self.queue_system.setText(f"Queue system:\n{formatted_queue_system}")
+
+    def hideEvent(self, event: QHideEvent | None) -> None:
+        for file_dialog in self.findChildren(FileDialog):
+            file_dialog.close()
 
 
 # Cannot use a non-static method here as

@@ -1,3 +1,4 @@
+import tempfile
 from unittest.mock import MagicMock, Mock, call, patch
 
 import pandas as pd
@@ -900,3 +901,17 @@ def test_that_design_matrix_alters_num_realizations_field(
         "Number of realizations changed from 10 to 3 due "
         "to 'REAL' column in design matrix"
     )
+
+
+@pytest.mark.integration_test
+def test_that_file_dialog_close_when_run_dialog_hidden(qtbot: QtBot, run_dialog):
+    qtbot.addWidget(run_dialog)
+    FileDialog._init_thread = lambda self: None
+    with tempfile.NamedTemporaryFile(mode="w", encoding="utf-8") as tmp_file:
+        file_dialog = FileDialog(tmp_file.name, "the_step", 0, 0, 0, run_dialog)
+        qtbot.addWidget(file_dialog)
+        assert file_dialog.isVisible()
+        run_dialog.setVisible(False)
+        # When the RunDialog is closed, the file_dialog should also be not visible
+        qtbot.waitSignal(file_dialog.finished, timeout=5000)
+        assert not file_dialog.isVisible()
