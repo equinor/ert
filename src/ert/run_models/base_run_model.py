@@ -16,10 +16,12 @@ from abc import ABC, abstractmethod
 from collections import defaultdict
 from collections.abc import Callable, Generator, MutableSequence
 from contextlib import contextmanager
+from functools import cached_property
 from pathlib import Path
 from typing import Any, Protocol, cast
 
 import numpy as np
+import pandas as pd
 from pydantic import PrivateAttr
 
 from _ert.events import EESnapshot, EESnapshotUpdate, EETerminated, Event
@@ -31,16 +33,20 @@ from ert.analysis.event import (
     AnalysisEvent,
 )
 from ert.config import (
+    ConfigValidationError,
+    DesignMatrix,
     ESSettings,
     ForwardModelStep,
+    GenKwConfig,
     HookRuntime,
     ModelConfig,
     ObservationSettings,
+    ParameterConfig,
     QueueConfig,
     QueueSystem,
     Workflow,
 )
-from ert.enkf_main import create_run_path
+from ert.enkf_main import create_run_path, save_design_matrix_to_ensemble
 from ert.ensemble_evaluator import Ensemble as EEEnsemble
 from ert.ensemble_evaluator import (
     EnsembleEvaluator,
@@ -845,6 +851,69 @@ class BaseRunModel(BaseModelWithContextSupport, ABC):
         )
 
         return num_successful_realizations
+
+
+class HasDesignParameters:
+    design_matrix: DesignMatrix | None
+    parameter_configuration: list[ParameterConfig]
+    active_realizations: list[bool]
+
+    @cached_property
+    def parsed_design_matrix(
+        self,
+    ) -> tuple[list[ParameterConfig], tuple[GenKwConfig, pd.DataFrame] | None]:
+        parameters_config = self.parameter_configuration
+        design_matrix = self.design_matrix
+        design_matrix_group = None
+        design_matrix_df = None
+        if design_matrix is not None:
+            try:
+                parameters_config, design_matrix_group = (
+                    design_matrix.merge_with_existing_parameters(parameters_config)
+                )
+                if not any(p.update for p in parameters_config):
+                    raise ConfigValidationError(
+                        "No parameters to update as all "
+                        "parameters were set to update:false!",
+                    )
+                design_matrix_df = design_matrix.design_matrix_df
+            except ConfigValidationError as exc:
+                raise ErtRunError(str(exc)) from exc
+
+        parameters_config + ([design_matrix_group] if design_matrix_group else [])
+
+        design_matrix_info = None
+        if design_matrix_group is not None and design_matrix_df is not None:
+            design_matrix_info = (design_matrix_group, design_matrix_df)
+
+        return parameters_config, design_matrix_info
+
+    def experiment_parameters(
+        self, include_design_matrix: bool = False
+    ) -> list[ParameterConfig]:
+        parameters_config = self.parameter_configuration
+        design_matrix_group = None
+
+        if include_design_matrix:
+            parameters_config, design_matrix_info = self.parsed_design_matrix
+            if design_matrix_info is not None:
+                design_matrix_group, _ = design_matrix_info
+
+        return parameters_config + (
+            [design_matrix_group] if design_matrix_group else []
+        )
+
+    def save_design_matrix_to_ensemble(self, ensemble: Ensemble) -> None:
+        _, design_matrix_info = self.parsed_design_matrix
+
+        if design_matrix_info is not None:
+            design_matrix_group, design_matrix_df = design_matrix_info
+            save_design_matrix_to_ensemble(
+                design_matrix_df,
+                ensemble,
+                np.where(self.active_realizations)[0],
+                design_matrix_group.name,
+            )
 
 
 class UpdateRunModel(BaseRunModel):
