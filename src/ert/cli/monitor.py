@@ -6,6 +6,7 @@ from pathlib import Path
 from queue import SimpleQueue
 from typing import TextIO
 
+import humanize
 from tqdm import tqdm
 
 from ert.ensemble_evaluator import (
@@ -27,7 +28,6 @@ from ert.run_models.event import (
     RunModelUpdateEndEvent,
     StatusEvents,
 )
-from ert.shared.status.utils import format_running_time
 
 Color = tuple[int, int, int]
 
@@ -148,7 +148,7 @@ class Monitor:
         tqdm.write("\n", end="", file=self._out)
         with tqdm(total=100, ncols=100, bar_format=bar_format, file=self._out) as pbar:
             pbar.set_description_str(nphase, refresh=False)
-            pbar.unit = f"{format_running_time(elapsed.seconds)}"
+            pbar.unit = f"Running time: {humanize.precisedelta(elapsed.seconds)}"
             pbar.update(event.progress * 100)
         tqdm.write("\n", end="", file=self._out)
         tqdm.write(self._get_legends(), file=self._out)

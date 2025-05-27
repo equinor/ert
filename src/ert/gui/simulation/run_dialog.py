@@ -5,6 +5,7 @@ from pathlib import Path
 from queue import SimpleQueue
 from typing import cast
 
+import humanize
 from PyQt6.QtCore import QModelIndex, QSize, Qt, QThread, QTimer
 from PyQt6.QtCore import pyqtSignal as Signal
 from PyQt6.QtCore import pyqtSlot as Slot
@@ -63,7 +64,6 @@ from ert.run_models.event import (
 from ert.shared.status.utils import (
     byte_with_unit,
     file_has_content,
-    format_running_time,
     get_mount_directory,
 )
 
@@ -492,7 +492,7 @@ class RunDialog(QFrame):
     @Slot()
     def _on_ticker(self) -> None:
         runtime = self._run_model_api.get_runtime()
-        running_time = format_running_time(runtime)
+        running_time = f"Running time: {humanize.precisedelta(runtime)}"
         self.running_time.setText(running_time[0:14] + "\n" + running_time[14:])
 
         maximum_memory_usage = self._snapshot_model.root.max_memory_usage
