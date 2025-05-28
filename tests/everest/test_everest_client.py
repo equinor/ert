@@ -12,7 +12,7 @@ from starlette.responses import Response
 from everest.bin.everest_script import everest_entry
 from everest.config import EverestConfig, ServerConfig
 from everest.detached import server_is_running
-from everest.detached.jobs.everserver import _find_open_port
+from everest.detached.everserver import _find_open_port
 from everest.gui.everest_client import EverestClient
 from everest.strings import EverEndpoints
 from tests.ert.utils import wait_until
