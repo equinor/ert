@@ -35,7 +35,7 @@ class Runpaths:
         filename: str | Path = ".ert_runpath_list",
         substitutions: Substitutions | None = None,
         eclbase: str | None = None,
-    ):
+    ) -> None:
         self._jobname_format = jobname_format
         self.runpath_list_filename = Path(filename)
         self._runpath_format = str(Path(runpath_format).resolve())

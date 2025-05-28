@@ -9,7 +9,7 @@ from .ert_script import ErtScript
 
 
 class ExternalErtScript(ErtScript):
-    def __init__(self, executable: str):
+    def __init__(self, executable: str) -> None:
         super().__init__()
 
         self.__executable = executable

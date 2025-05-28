@@ -27,7 +27,7 @@ class CopyStyleToDialog(QDialog):
         parent: QWidget | None,
         current_key: Any,
         key_defs: list[PlotApiKeyDefinition],
-    ):
+    ) -> None:
         QWidget.__init__(self, parent)
         self.setMinimumWidth(450)
         self.setMinimumHeight(200)

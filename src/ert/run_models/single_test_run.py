@@ -31,7 +31,7 @@ class SingleTestRun(EnsembleExperiment):
         config: ErtConfig,
         storage: Storage,
         status_queue: SimpleQueue[StatusEvents],
-    ):
+    ) -> None:
         local_queue_config = config.queue_config.create_local_copy()
         super().__init__(
             ensemble_name=ensemble_name,

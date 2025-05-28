@@ -9,7 +9,7 @@ class ObservationCount(TypedDict):
 
 
 class ErtSummary:
-    def __init__(self, ert_config: ErtConfig):
+    def __init__(self, ert_config: ErtConfig) -> None:
         self.ert_config = ert_config
 
     def getForwardModels(self) -> list[str]:

@@ -89,7 +89,7 @@ def xtgeo_fformat(
 class IoProvider:
     """Provides the ability to generate grid, field and surface files."""
 
-    def __init__(self, data: st.DataObject):
+    def __init__(self, data: st.DataObject) -> None:
         self.data = data
         self.field_values = {}
         self.surface_values = {}

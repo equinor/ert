@@ -24,7 +24,7 @@ class StringBox(QLineEdit):
         continuous_update: bool = False,
         placeholder_text: str = "",
         minimum_width: int = 250,
-    ):
+    ) -> None:
         """
         :type model: ert.gui.ertwidgets.models.valuemodel.ValueModel
         :type help_link: str

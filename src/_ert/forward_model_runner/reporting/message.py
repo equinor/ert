@@ -55,7 +55,7 @@ class ProcessTreeStatus:
         self.timestamp = dt.now().isoformat()
         self.free = psutil.virtual_memory().available
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return ",".join([str(value) for value in dataclasses.astuple(self)]).replace(
             "None", ""
         )
@@ -65,17 +65,17 @@ class ProcessTreeStatus:
 
 
 class _MetaMessage(type):
-    def __repr__(cls):
+    def __repr__(cls) -> str:
         return f"MessageType<{cls.__name__}>"
 
 
 class Message(metaclass=_MetaMessage):
-    def __init__(self, step=None):
+    def __init__(self, step=None) -> None:
         self.timestamp = dt.now()
         self.step: ForwardModelStep | None = step
         self.error_message: str | None = None
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return type(self).__name__
 
     def with_error(self, message: str):
@@ -98,7 +98,7 @@ class Init(Message):
         ens_id=None,
         real_id=None,
         experiment_id=None,
-    ):
+    ) -> None:
         super().__init__()
         self.steps = steps
         self.run_id = run_id
@@ -109,29 +109,31 @@ class Init(Message):
 
 
 class Finish(Message):
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__()
 
 
 class Start(Message):
-    def __init__(self, fm_step: "ForwardModelStep"):
+    def __init__(self, fm_step: "ForwardModelStep") -> None:
         super().__init__(fm_step)
 
 
 class Running(Message):
-    def __init__(self, fm_step: "ForwardModelStep", memory_status: ProcessTreeStatus):
+    def __init__(
+        self, fm_step: "ForwardModelStep", memory_status: ProcessTreeStatus
+    ) -> None:
         super().__init__(fm_step)
         self.memory_status = memory_status
 
 
 class Exited(Message):
-    def __init__(self, fm_step, exit_code: int):
+    def __init__(self, fm_step, exit_code: int) -> None:
         super().__init__(fm_step)
         self.exit_code = exit_code
 
 
 class Checksum(Message):
-    def __init__(self, checksum_dict: dict[str, "ChecksumDict"], run_path: str):
+    def __init__(self, checksum_dict: dict[str, "ChecksumDict"], run_path: str) -> None:
         super().__init__()
         self.data = checksum_dict
         self.run_path = run_path

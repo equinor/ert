@@ -103,7 +103,9 @@ def open_error_dialog(title: str, content: str) -> None:
 
 class PlotWindow(QMainWindow):
     @log_duration(logger, logging.INFO, "PlotWindow.__init__")
-    def __init__(self, config_file: str, ens_path: Path, parent: QWidget | None):
+    def __init__(
+        self, config_file: str, ens_path: Path, parent: QWidget | None
+    ) -> None:
         super().__init__(parent)
 
         logger.info("PlotWindow __init__")

@@ -27,7 +27,7 @@ class StorageService(BaseService):
         project: str | None = None,
         verbose: bool = False,
         traceparent: str | None = "inherit_parent",
-    ):
+    ) -> None:
         self._url: str | None = None
 
         exec_args = local_exec_args("storage")

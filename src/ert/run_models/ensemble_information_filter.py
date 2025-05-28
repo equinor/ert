@@ -49,7 +49,7 @@ class EnsembleInformationFilter(UpdateRunModel):
         es_settings: ESSettings,
         update_settings: ObservationSettings,
         status_queue: SimpleQueue[StatusEvents],
-    ):
+    ) -> None:
         super().__init__(
             es_settings,
             update_settings,

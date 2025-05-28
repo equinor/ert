@@ -15,7 +15,7 @@ if TYPE_CHECKING:
 
 
 class Plugin:
-    def __init__(self, notifier: ErtNotifier, workflow_job: ErtScriptWorkflow):
+    def __init__(self, notifier: ErtNotifier, workflow_job: ErtScriptWorkflow) -> None:
         self.__notifier = notifier
         self.__workflow_job = workflow_job
         self.__parent_window: QWidget | None = None

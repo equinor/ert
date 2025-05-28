@@ -11,7 +11,7 @@ class PathModel(ValueModel):
         must_exist: bool = False,
         must_be_absolute: bool = False,
         must_be_executable: bool = False,
-    ):
+    ) -> None:
         ValueModel.__init__(self, default_path)
 
         self._path_is_required = is_required

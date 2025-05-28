@@ -54,7 +54,7 @@ class MultipleDataAssimilation(UpdateRunModel):
         es_settings: ESSettings,
         update_settings: ObservationSettings,
         status_queue: SimpleQueue[StatusEvents],
-    ):
+    ) -> None:
         self._relative_weights = weights
         self._parameter_configuration = config.ensemble_config.parameter_configuration
         self._design_matrix = config.analysis_config.design_matrix

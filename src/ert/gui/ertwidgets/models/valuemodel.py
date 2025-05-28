@@ -6,7 +6,7 @@ from PyQt6.QtCore import pyqtSlot as Slot
 class ValueModel(QObject):
     valueChanged = Signal(str)
 
-    def __init__(self, value: str | None = ""):
+    def __init__(self, value: str | None = "") -> None:
         super().__init__()
         self._value = value
 

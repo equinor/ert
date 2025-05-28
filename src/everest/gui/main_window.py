@@ -23,7 +23,7 @@ class EverestMainWindow(QMainWindow):
     def __init__(
         self,
         output_dir: str,
-    ):
+    ) -> None:
         QMainWindow.__init__(self)
         self.output_dir = output_dir
 

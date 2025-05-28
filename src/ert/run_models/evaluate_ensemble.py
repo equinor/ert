@@ -43,7 +43,7 @@ class EvaluateEnsemble(BaseRunModel):
         storage: Storage,
         queue_config: QueueConfig,
         status_queue: SimpleQueue[StatusEvents],
-    ):
+    ) -> None:
         try:
             self.ensemble = storage.get_ensemble(UUID(ensemble_id))
         except KeyError as err:

@@ -32,7 +32,7 @@ class LibresFacade:
     commonly used in other project. It is part of the public interface of ert,
     and as such changes here should not be taken lightly."""
 
-    def __init__(self, ert_config: ErtConfig, _: Any = None):
+    def __init__(self, ert_config: ErtConfig, _: Any = None) -> None:
         self.config = ert_config
         self.update_snapshots: dict[str, SmootherSnapshot] = {}
         self.update_configuration = None

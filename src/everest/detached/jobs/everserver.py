@@ -122,7 +122,7 @@ class ExperimentRunner:
         everest_config: EverestConfig,
         shared_data: ExperimentRunnerState,
         msg_queue: SimpleQueue[EverestServerMsg],
-    ):
+    ) -> None:
         super().__init__()
 
         self._everest_config = everest_config

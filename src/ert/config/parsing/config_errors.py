@@ -40,7 +40,7 @@ class ConfigWarning(UserWarning):
         warnings.warn(config_warning, stacklevel=1)
         warnings.formatwarning = temp
 
-    def __init__(self, info: str | WarningInfo):
+    def __init__(self, info: str | WarningInfo) -> None:
         if isinstance(info, str):
             super().__init__(info)
             self.info = WarningInfo(message=info)

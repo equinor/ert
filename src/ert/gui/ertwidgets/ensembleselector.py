@@ -29,7 +29,7 @@ class EnsembleSelector(QComboBox):
         update_ert: bool = True,
         show_only_undefined: bool = False,
         show_only_no_children: bool = False,
-    ):
+    ) -> None:
         super().__init__()
         self.notifier = notifier
 

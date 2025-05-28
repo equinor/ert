@@ -33,7 +33,7 @@ from .plot_api import EnsembleObject
 class EnsembleSelectionWidget(QWidget):
     ensembleSelectionChanged = Signal()
 
-    def __init__(self, ensembles: list[EnsembleObject]):
+    def __init__(self, ensembles: list[EnsembleObject]) -> None:
         QWidget.__init__(self)
         self.__dndlist = EnsembleSelectListWidget(ensembles[::-1])
 
@@ -55,7 +55,7 @@ class EnsembleSelectListWidget(QListWidget):
     MAXIMUM_SELECTED = 5
     MINIMUM_SELECTED = 1
 
-    def __init__(self, ensembles: list[EnsembleObject]):
+    def __init__(self, ensembles: list[EnsembleObject]) -> None:
         super().__init__()
         self._ensemble_count = 0
         self.setObjectName("ensemble_selector")

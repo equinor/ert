@@ -523,7 +523,7 @@ def no_cert_in_test(monkeypatch):
     # consuming (e.g. 30 seconds)
     # Specifically generating the RSA key <_openssl.RSA_generate_key_ex>
     class MockESConfig(EvaluatorServerConfig):
-        def __init__(self, *args, **kwargs):
+        def __init__(self, *args, **kwargs) -> None:
             if "use_token" not in kwargs:
                 kwargs["use_token"] = False
             if sys.platform != "linux":

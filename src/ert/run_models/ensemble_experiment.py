@@ -42,7 +42,7 @@ class EnsembleExperiment(BaseRunModel):
         storage: Storage,
         queue_config: QueueConfig,
         status_queue: SimpleQueue[StatusEvents],
-    ):
+    ) -> None:
         self.ensemble_name = ensemble_name
         self.experiment_name = experiment_name
         self.experiment: Experiment | None = None

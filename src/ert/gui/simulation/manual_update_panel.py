@@ -43,7 +43,7 @@ class ManualUpdatePanel(ExperimentConfigPanel):
         run_path: str,
         notifier: ErtNotifier,
         analysis_config: AnalysisConfig,
-    ):
+    ) -> None:
         self.notifier = notifier
         super().__init__(ManualUpdate)
         self.setObjectName("Manual_update_panel")

@@ -77,7 +77,7 @@ class ExperimentPanel(QWidget):
         config: ErtConfig,
         notifier: ErtNotifier,
         config_file: str,
-    ):
+    ) -> None:
         QWidget.__init__(self)
         self._notifier = notifier
         self.config = config

@@ -64,7 +64,7 @@ class BatchStorageData:
         "perturbation_constraints",
     ]
 
-    def __init__(self, path: Path):
+    def __init__(self, path: Path) -> None:
         self._path = path
 
     @property

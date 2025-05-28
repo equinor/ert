@@ -55,7 +55,7 @@ class RealizationModel:
 
 
 class EnsembleModel:
-    def __init__(self, ensemble: Ensemble, parent: Any):
+    def __init__(self, ensemble: Ensemble, parent: Any) -> None:
         self._parent = parent
         self._name = ensemble.name
         self._id = ensemble.id
@@ -88,7 +88,7 @@ class EnsembleModel:
 
 
 class ExperimentModel:
-    def __init__(self, experiment: Experiment, parent: Any):
+    def __init__(self, experiment: Experiment, parent: Any) -> None:
         self._parent = parent
         self._id = experiment.id
         self._name = experiment.name
@@ -126,7 +126,7 @@ ChildModel = ExperimentModel | EnsembleModel | RealizationModel
 
 
 class StorageModel(QAbstractItemModel):
-    def __init__(self, storage: Storage):
+    def __init__(self, storage: Storage) -> None:
         super().__init__(None)
         self._children: list[ExperimentModel] = []
         self._load_storage(storage)

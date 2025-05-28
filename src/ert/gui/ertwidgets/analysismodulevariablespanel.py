@@ -24,7 +24,7 @@ from ert.config.analysis_module import (
 
 
 class AnalysisModuleVariablesPanel(QWidget):
-    def __init__(self, analysis_module: AnalysisModule, ensemble_size: int):
+    def __init__(self, analysis_module: AnalysisModule, ensemble_size: int) -> None:
         QWidget.__init__(self)
         self.analysis_module = analysis_module
 

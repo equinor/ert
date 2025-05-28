@@ -14,7 +14,7 @@ class FilterableKwListModel(SelectableListModel):
     SelectableListModel
     """
 
-    def __init__(self, key_defs: list[PlotApiKeyDefinition]):
+    def __init__(self, key_defs: list[PlotApiKeyDefinition]) -> None:
         SelectableListModel.__init__(self, [k.key for k in key_defs])
         self._key_defs = key_defs
         self._metadata_filters: dict[str, dict[str, bool]] = {}

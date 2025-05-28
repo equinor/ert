@@ -18,7 +18,7 @@ class Exporter:
         export_job: _WorkflowJob | None,
         notifier: ErtNotifier,
         config: ErtConfig,
-    ):
+    ) -> None:
         self.config = config
         self.export_job = export_job
         self._notifier = notifier

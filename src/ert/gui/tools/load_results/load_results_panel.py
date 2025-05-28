@@ -26,7 +26,7 @@ from ert.validation import RangeStringArgument, StringDefinition
 class LoadResultsPanel(QWidget):
     panelConfigurationChanged = Signal()
 
-    def __init__(self, config: ErtConfig, notifier: ErtNotifier):
+    def __init__(self, config: ErtConfig, notifier: ErtNotifier) -> None:
         QWidget.__init__(self)
 
         self.setMinimumWidth(500)

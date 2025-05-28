@@ -142,7 +142,7 @@ class RunReservoirSimulator:
         check_status: bool = True,
         summary_conversion: bool = False,
         forwarded_args: list[str] | None = None,
-    ):
+    ) -> None:
         if simulator not in get_args(Simulators):
             raise ValueError(
                 f"Unknown simulator '{simulator}', pick from {get_args(Simulators)}"

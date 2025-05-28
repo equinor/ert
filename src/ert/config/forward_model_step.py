@@ -221,7 +221,7 @@ class ForwardModelStep:
 class ForwardModelStepPlugin(ForwardModelStep):
     def __init__(
         self, name: str, command: list[str], **kwargs: Unpack[ForwardModelStepOptions]
-    ):
+    ) -> None:
         if not kwargs:
             kwargs = ForwardModelStepOptions()
 

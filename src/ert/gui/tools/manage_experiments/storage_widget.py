@@ -65,7 +65,7 @@ class AddWidget(QWidget):
 
 
 class _SortingProxyModel(QSortFilterProxyModel):
-    def __init__(self, model: QAbstractItemModel):
+    def __init__(self, model: QAbstractItemModel) -> None:
         super().__init__()
         self.setSourceModel(model)
 
@@ -94,7 +94,7 @@ class StorageWidget(QWidget):
 
     def __init__(
         self, notifier: ErtNotifier, ert_config: ErtConfig, ensemble_size: int
-    ):
+    ) -> None:
         QWidget.__init__(self)
 
         self._notifier = notifier

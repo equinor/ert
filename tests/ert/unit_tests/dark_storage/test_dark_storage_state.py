@@ -22,7 +22,7 @@ def escape(s):
 
 
 class DarkStorageStateTest(StatefulStorageTest):
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__()
         self.prev_no_token = os.environ.get("ERT_STORAGE_NO_TOKEN")
         self.prev_ens_path = os.environ.get("ERT_STORAGE_ENS_PATH")

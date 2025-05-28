@@ -10,7 +10,7 @@ from _ert.forward_model_runner.reporting.message import Checksum, Finish, Init, 
 
 
 class ForwardModelRunner:
-    def __init__(self, steps_data: dict[str, Any]):
+    def __init__(self, steps_data: dict[str, Any]) -> None:
         self.steps_data = (
             steps_data  # On disk, this is called jobs.json for legacy reasons
         )

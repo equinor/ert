@@ -75,7 +75,7 @@ class LocalEnsemble(BaseMode):
         storage: LocalStorage,
         path: Path,
         mode: Mode,
-    ):
+    ) -> None:
         """
         Initialize a LocalEnsemble instance.
 

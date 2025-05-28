@@ -32,7 +32,7 @@ class EverestClient:
         username: str,
         password: str,
         ssl_context: ssl.SSLContext,
-    ):
+    ) -> None:
         self._url = url
         self._cert = cert_file
         self._username = username

@@ -281,12 +281,12 @@ def _substitute_args(
 
 
 class IncludedFile:
-    def __init__(self, included_from: "IncludedFile", filename: str):
+    def __init__(self, included_from: "IncludedFile", filename: str) -> None:
         self.included_from = included_from
         self.filename = filename
         self.context = None
 
-    def __contains__(self, filename: str):
+    def __contains__(self, filename: str) -> bool:
         if filename == self.filename:
             return True
 

@@ -19,7 +19,7 @@ class Arguments:
 
 
 class SingleTestRunPanel(ExperimentConfigPanel):
-    def __init__(self, run_path: str, notifier: ErtNotifier):
+    def __init__(self, run_path: str, notifier: ErtNotifier) -> None:
         ExperimentConfigPanel.__init__(self, SingleTestRun)
         self.notifier = notifier
         self.setObjectName("Single_test_run_panel")

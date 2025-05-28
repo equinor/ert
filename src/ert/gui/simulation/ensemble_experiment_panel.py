@@ -40,7 +40,7 @@ class EnsembleExperimentPanel(ExperimentConfigPanel):
         ensemble_size: int,
         run_path: str,
         notifier: ErtNotifier,
-    ):
+    ) -> None:
         super().__init__(EnsembleExperiment)
         self.notifier = notifier
         self.setObjectName("Ensemble_experiment_panel")

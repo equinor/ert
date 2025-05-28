@@ -24,7 +24,7 @@ class Observation(ABC):
     def class_name(self):
         pass
 
-    def __str__(self):
+    def __str__(self) -> str:
         result = f"{self.class_name} {self.name}"
         result += " { "
         for f in fields(self):

@@ -33,7 +33,7 @@ from ert.run_models.model_factory import create_model
 
 
 class Events:
-    def __init__(self):
+    def __init__(self) -> None:
         self.events = []
         self.environment = []
 

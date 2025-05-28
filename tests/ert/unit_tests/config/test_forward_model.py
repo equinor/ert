@@ -596,7 +596,7 @@ def test_that_plugin_forward_models_are_installed(tmp_path):
     )
 
     class PluginForwardModel(ForwardModelStepPlugin):
-        def __init__(self):
+        def __init__(self) -> None:
             super().__init__(
                 name="PluginForwardModel",
                 command=["something", "<arg1>", "-f", "<arg2>", "<arg3>"],
@@ -682,7 +682,7 @@ def test_that_plugin_forward_model_validation_failure_propagates(tmp_path):
     )
 
     class FM(ForwardModelStepPlugin):
-        def __init__(self):
+        def __init__(self) -> None:
             super().__init__(
                 name="PluginFM",
                 command=["something", "<arg1>", "-f", "<arg2>", "<arg3>"],
@@ -729,7 +729,7 @@ def test_that_plugin_forward_model_validation_accepts_valid_args(tmp_path):
     )
 
     class FM(ForwardModelStepPlugin):
-        def __init__(self):
+        def __init__(self) -> None:
             super().__init__(
                 name="FM",
                 command=["something", "<arg1>", "-f", "<arg2>", "<arg3>"],
@@ -763,7 +763,7 @@ def test_that_plugin_forward_model_validation_accepts_valid_args(tmp_path):
 
 def test_that_plugin_forward_model_raises_pre_realization_validation_error():
     class FM1(ForwardModelStepPlugin):
-        def __init__(self):
+        def __init__(self) -> None:
             super().__init__(
                 name="FM1",
                 command=["the_executable.sh"],
@@ -777,7 +777,7 @@ def test_that_plugin_forward_model_raises_pre_realization_validation_error():
             )
 
     class FM2(ForwardModelStepPlugin):
-        def __init__(self):
+        def __init__(self) -> None:
             super().__init__(
                 name="FM2",
                 command=["something", "<arg1>", "-f", "<arg2>", "<arg3>"],
@@ -826,7 +826,7 @@ def test_that_plugin_forward_model_raises_pre_experiment_validation_error_early(
         pass
 
     class FM1(ForwardModelStepPlugin):
-        def __init__(self):
+        def __init__(self) -> None:
             super().__init__(name="FM1", command=["the_executable.sh"])
 
         def validate_pre_experiment(self, fm_step_json: ForwardModelStepJSON) -> None:
@@ -836,7 +836,7 @@ def test_that_plugin_forward_model_raises_pre_experiment_validation_error_early(
             raise InvalidFightingStyle("I don't think I wanna do hamster style anymore")
 
     class FM2(ForwardModelStepPlugin):
-        def __init__(self):
+        def __init__(self) -> None:
             super().__init__(
                 name="FM2",
                 command=["the_executable.sh"],
@@ -862,7 +862,7 @@ def test_that_plugin_forward_model_raises_pre_experiment_validation_error_early(
 
 def test_that_pre_run_substitution_forward_model_json_is_created_for_plugin_fms():
     class FM1(ForwardModelStepPlugin):
-        def __init__(self):
+        def __init__(self) -> None:
             super().__init__(
                 name="FM1",
                 command=[
@@ -916,14 +916,14 @@ def test_that_pre_run_substitution_forward_model_json_is_created_for_plugin_fms(
 
 def test_that_plugin_forward_model_unexpected_errors_show_as_warnings():
     class FMWithAssertionError(ForwardModelStepPlugin):
-        def __init__(self):
+        def __init__(self) -> None:
             super().__init__(name="FMWithAssertionError", command=["the_executable.sh"])
 
         def validate_pre_experiment(self, fm_step_json: ForwardModelStepJSON) -> None:
             raise AssertionError("I should be a warning")
 
     class FMWithFMStepValidationError(ForwardModelStepPlugin):
-        def __init__(self):
+        def __init__(self) -> None:
             super().__init__(
                 name="FMWithFMStepValidationError",
                 command=["the_executable.sh"],

@@ -28,7 +28,7 @@ class CheckList(QWidget):
         model: SelectableListModel,
         label: str = "",
         custom_filter_button: QToolButton | None = None,
-    ):
+    ) -> None:
         """
         :param custom_filter_button:  if needed, add a button that opens a
         custom filter menu. Useful when search alone isn't enough to filter the

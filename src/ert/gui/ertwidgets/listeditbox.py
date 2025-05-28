@@ -18,7 +18,7 @@ from .validationsupport import ValidationSupport
 
 class AutoCompleteLineEdit(QLineEdit):
     # http://blog.elentok.com/2011/08/autocomplete-textbox-for-multiple.html
-    def __init__(self, items: Sequence[str], parent: QWidget | None = None):
+    def __init__(self, items: Sequence[str], parent: QWidget | None = None) -> None:
         super().__init__(parent)
 
         self._separators = [",", " "]

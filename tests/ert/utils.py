@@ -67,7 +67,7 @@ def wait_until(func, interval=0.5, timeout=30):
 
 
 class MockZMQServer:
-    def __init__(self, port, signal=0):
+    def __init__(self, port, signal=0) -> None:
         """Mock ZMQ server for testing
         signal = 0: normal operation, receive messages but don't store CONNECT
                     and DISCONNECT messages

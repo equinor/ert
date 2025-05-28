@@ -57,7 +57,7 @@ class HeartbeatEvent(Enum):
 
 
 class EnsembleEvaluator:
-    def __init__(self, ensemble: Ensemble, config: EvaluatorServerConfig):
+    def __init__(self, ensemble: Ensemble, config: EvaluatorServerConfig) -> None:
         self._config: EvaluatorServerConfig = config
         self._ensemble: Ensemble = ensemble
 

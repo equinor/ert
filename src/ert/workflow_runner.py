@@ -15,7 +15,7 @@ from ert.plugins import (
 
 
 class WorkflowJobRunner:
-    def __init__(self, workflow_job: _WorkflowJob):
+    def __init__(self, workflow_job: _WorkflowJob) -> None:
         self.job = workflow_job
         self.__running = False
         self.__script: ErtScript | None = None

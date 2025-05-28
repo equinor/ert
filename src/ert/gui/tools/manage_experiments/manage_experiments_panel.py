@@ -33,7 +33,9 @@ if TYPE_CHECKING:
 
 
 class ManageExperimentsPanel(QTabWidget):
-    def __init__(self, config: ErtConfig, notifier: ErtNotifier, ensemble_size: int):
+    def __init__(
+        self, config: ErtConfig, notifier: ErtNotifier, ensemble_size: int
+    ) -> None:
         QTabWidget.__init__(self)
         self.ert_config = config
         self.ensemble_size = ensemble_size

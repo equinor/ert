@@ -610,7 +610,7 @@ def test_write_transaction(data):
 class RaisingWriteNamedTemporaryFile:
     entered = False
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args, **kwargs) -> None:
         self.wrapped = tempfile.NamedTemporaryFile(*args, **kwargs)  # noqa
         RaisingWriteNamedTemporaryFile.entered = False
 
@@ -987,7 +987,7 @@ class StatefulStorageTest(RuleBasedStateMachine):
     state.create_grid).
     """  # noqa: E501
 
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__()
         self.tmpdir = tempfile.mkdtemp(prefix="StatefulStorageTest")
         self.storage = open_storage(self.tmpdir + "/storage/", "w")

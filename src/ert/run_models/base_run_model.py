@@ -188,7 +188,7 @@ class BaseRunModel(ABC):
         total_iterations: int = 1,
         start_iteration: int = 0,
         minimum_required_realizations: int = 0,
-    ):
+    ) -> None:
         """
         BaseRunModel serves as the base class for the various experiment modes,
         and contains logic for interacting with the Ensemble Evaluator by running
@@ -871,7 +871,7 @@ class UpdateRunModel(BaseRunModel):
         random_seed: int,
         minimum_required_realizations: int,
         log_path: Path,
-    ):
+    ) -> None:
         self._analysis_settings: ESSettings = analysis_settings
         self._update_settings: ObservationSettings = update_settings
 
