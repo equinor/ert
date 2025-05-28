@@ -7,7 +7,7 @@ from abc import ABC, abstractmethod
 from collections.abc import Iterable
 from pathlib import Path
 
-from .event import Event
+from .event import DriverEvent
 
 SIGNAL_OFFSET = 128
 """Bash and other shells add an offset of 128 to the signal
@@ -33,12 +33,12 @@ class Driver(ABC):
     """Adapter for the HPC cluster."""
 
     def __init__(self, activate_script: str = "") -> None:
-        self._event_queue: asyncio.Queue[Event] | None = None
+        self._event_queue: asyncio.Queue[DriverEvent] | None = None
         self._job_error_message_by_iens: dict[int, str] = {}
         self.activate_script = activate_script
 
     @property
-    def event_queue(self) -> asyncio.Queue[Event]:
+    def event_queue(self) -> asyncio.Queue[DriverEvent]:
         if self._event_queue is None:
             self._event_queue = asyncio.Queue()
         return self._event_queue
