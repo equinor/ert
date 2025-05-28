@@ -14,7 +14,7 @@ import xtgeo
 from ert.analysis import (
     smoother_update,
 )
-from ert.config import ErtConfig, ESSettings, ObservationSettings
+from ert.config import ErtConfig, ESSettings, Field, ObservationSettings
 from ert.mode_definitions import ENSEMBLE_SMOOTHER_MODE
 from ert.storage import open_storage
 
@@ -27,26 +27,27 @@ def test_field_param_update_using_heat_equation_enif(heat_equation_storage_enif)
         experiment = storage.get_experiment_by_name("enif")
         [prior, posterior] = experiment.ensembles
 
-        prior_result = prior.load_parameters("COND")["values"]
+        realizations_with_params = np.flatnonzero(
+            prior.get_realization_mask_with_parameters()
+        )
+        prior_result = prior.load_parameters_numpy("COND", realizations_with_params)
 
         param_config = config.ensemble_config.parameter_configs["COND"]
-        assert len(prior_result.x) == param_config.nx
-        assert len(prior_result.y) == param_config.ny
-        assert len(prior_result.z) == param_config.nz
+        assert prior_result.shape == (
+            len(realizations_with_params),
+            param_config.nx * param_config.ny * param_config.nz,
+        )
 
-        posterior_result = posterior.load_parameters("COND")["values"]
+        posterior_result = posterior.load_parameters_numpy(
+            "COND", realizations_with_params
+        )
         prior_covariance = np.cov(
-            prior_result.values.reshape(
-                prior.ensemble_size, param_config.nx * param_config.ny * param_config.nz
-            ),
-            rowvar=False,
+            prior_result,
+            rowvar=True,
         )
         posterior_covariance = np.cov(
-            posterior_result.values.reshape(
-                posterior.ensemble_size,
-                param_config.nx * param_config.ny * param_config.nz,
-            ),
-            rowvar=False,
+            posterior_result,
+            rowvar=True,
         )
         # Check that generalized variance is reduced by update step.
         assert np.trace(prior_covariance) > np.trace(posterior_covariance)
@@ -171,18 +172,40 @@ def test_field_param_update_using_heat_equation_enif_snapshot(
         prior = experiment.get_ensemble_by_name("iter-0")
         posterior = experiment.get_ensemble_by_name("iter-1")
 
-        prior_result = prior.load_parameters("COND")["values"]
+        realizations_with_params = np.flatnonzero(
+            prior.get_realization_mask_with_parameters()
+        )
+        prior_result = prior.load_parameters_numpy("COND", realizations_with_params)
 
         param_config = config.ensemble_config.parameter_configs["COND"]
-        assert len(prior_result.x) == param_config.nx
-        assert len(prior_result.y) == param_config.ny
-        assert len(prior_result.z) == param_config.nz
+        assert prior_result.shape == (
+            len(realizations_with_params),
+            param_config.nx * param_config.ny * param_config.nz,
+        )
+
+        field_config = experiment.parameter_configuration["COND"]
 
         data = []
         for i, ens in enumerate([prior, posterior]):
-            field_data = ens.load_parameters("COND")
-            field_df = pl.from_pandas(
-                field_data.to_dataframe().reset_index()
+            field_data = ens.load_parameters_numpy(
+                "COND", realizations_with_params
+            ).T.reshape(
+                (
+                    len(realizations_with_params),
+                    field_config.nx,
+                    field_config.ny,
+                    field_config.nz,
+                )
+            )
+            realizations, x, y, z = np.indices(field_data.shape)
+            field_df = pl.DataFrame(
+                {
+                    "realizations": realizations.flatten(),
+                    "x": x.flatten(),
+                    "y": y.flatten(),
+                    "z": z.flatten(),
+                    "values": field_data.flatten(),
+                }
             ).with_columns(pl.lit(i).alias("iteration"))
             field_df = field_df.with_columns(pl.col(pl.Float64).cast(pl.Float32))
             data.append(
@@ -211,26 +234,27 @@ def test_field_param_update_using_heat_equation(heat_equation_storage):
         prior = experiment.get_ensemble_by_name("default_0")
         posterior = experiment.get_ensemble_by_name("default_1")
 
-        prior_result = prior.load_parameters("COND")["values"]
+        realizations_with_params = np.flatnonzero(
+            prior.get_realization_mask_with_parameters()
+        )
+        prior_result = prior.load_parameters_numpy("COND", realizations_with_params)
 
         param_config = config.ensemble_config.parameter_configs["COND"]
-        assert len(prior_result.x) == param_config.nx
-        assert len(prior_result.y) == param_config.ny
-        assert len(prior_result.z) == param_config.nz
+        assert prior_result.shape == (
+            len(realizations_with_params),
+            param_config.nx * param_config.ny * param_config.nz,
+        )
 
-        posterior_result = posterior.load_parameters("COND")["values"]
+        posterior_result = posterior.load_parameters_numpy(
+            "COND", realizations_with_params
+        )
         prior_covariance = np.cov(
-            prior_result.values.reshape(
-                prior.ensemble_size, param_config.nx * param_config.ny * param_config.nz
-            ),
-            rowvar=False,
+            prior_result,
+            rowvar=True,
         )
         posterior_covariance = np.cov(
-            posterior_result.values.reshape(
-                posterior.ensemble_size,
-                param_config.nx * param_config.ny * param_config.nz,
-            ),
-            rowvar=False,
+            posterior_result,
+            rowvar=True,
         )
         # Check that generalized variance is reduced by update step.
         assert np.trace(prior_covariance) > np.trace(posterior_covariance)
@@ -348,38 +372,24 @@ if __name__ == "__main__":
             prior = experiment.get_ensemble_by_name("iter-0")
             posterior = experiment.get_ensemble_by_name("iter-1")
 
-            prior_result = prior.load_parameters("MY_PARAM", list(range(realizations)))[
-                "values"
-            ]
-            posterior_result = posterior.load_parameters(
+            prior_result = prior.load_parameters_numpy(
                 "MY_PARAM", list(range(realizations))
-            )["values"]
+            )
+            posterior_result = posterior.load_parameters_numpy(
+                "MY_PARAM", list(range(realizations))
+            )
 
             # check the shape of internal data used in the update
-            assert prior_result.shape == (5, NCOL, NROW, NLAY)
-            assert posterior_result.shape == (5, NCOL, NROW, NLAY)
+            # Note, this will not include the deactivated cells
+            num_active_cells = np.count_nonzero(mask_list)
+            assert prior_result.shape == (num_active_cells, 5)
+            assert posterior_result.shape == (num_active_cells, 5)
 
             # Only assert on the first three rows, as there are only three parameters,
             # a, b and c, the rest have no correlation to the results.
-            assert np.linalg.det(
-                np.cov(
-                    prior_result.values.reshape(realizations, NCOL * NROW * NLAY).T[:2]
-                )
-            ) > np.linalg.det(
-                np.cov(
-                    posterior_result.values.reshape(realizations, NCOL * NROW * NLAY).T[
-                        :2
-                    ]
-                )
+            assert np.linalg.det(np.cov(prior_result[:2])) > np.linalg.det(
+                np.cov(posterior_result[:2])
             )
-
-            # 'c' should be inactive (all nans)
-            assert np.isnan(
-                prior_result.values.reshape(realizations, NCOL * NROW * NLAY).T[2:3]
-            ).all()
-            assert np.isnan(
-                posterior_result.values.reshape(realizations, NCOL * NROW * NLAY).T[2:3]
-            ).all()
 
             # This checks that the fields in the runpath
             # are different between iterations
@@ -435,9 +445,18 @@ def test_field_param_update_using_heat_equation_zero_var_params_and_adaptive_loc
     with open_storage(config.ens_path, mode="w") as storage:
         experiment = storage.get_experiment_by_name("es-mda")
         prior = experiment.get_ensemble_by_name("default_0")
-        cond = prior.load_parameters("COND")
-        init_temp_scale = prior.load_parameters("INIT_TEMP_SCALE")
-        corr_length = prior.load_parameters("CORR_LENGTH")
+
+        realizations_with_params = np.flatnonzero(
+            prior.get_realization_mask_with_parameters()
+        )
+
+        cond = prior.load_parameters_numpy("COND", realizations_with_params)
+        init_temp_scale = prior.load_parameters_numpy(
+            "INIT_TEMP_SCALE", realizations_with_params
+        )
+        corr_length = prior.load_parameters_numpy(
+            "CORR_LENGTH", realizations_with_params
+        )
 
         new_experiment = storage.create_experiment(
             parameters=config.ensemble_config.parameter_configuration,
@@ -451,11 +470,25 @@ def test_field_param_update_using_heat_equation_zero_var_params_and_adaptive_loc
             iteration=0,
             name="prior-zero-var",
         )
-        cond["values"][:, :, :5, 0] = 1.0
-        for real in range(prior.ensemble_size):
-            new_prior.save_parameters("COND", real, cond)
-            new_prior.save_parameters("INIT_TEMP_SCALE", real, init_temp_scale)
-            new_prior.save_parameters("CORR_LENGTH", real, corr_length)
+
+        field = experiment.parameter_configuration["COND"]
+        assert isinstance(field, Field)
+        cond_4d = cond.T.reshape(
+            (len(realizations_with_params), field.nx, field.ny, field.nz)
+        )
+        cond_4d[:, :, :5, 0] = 1.0
+        cond = cond_4d.reshape(
+            (field.nx * field.ny * field.nz, len(realizations_with_params))
+        ).T
+        # #cond["values"][:, :, :5, 0] = 1.0
+        # for real in range(prior.ensemble_size):
+        new_prior.save_parameters_numpy(cond, "COND", np.arange(prior.ensemble_size))
+        new_prior.save_parameters_numpy(
+            init_temp_scale, "INIT_TEMP_SCALE", np.arange(prior.ensemble_size)
+        )
+        new_prior.save_parameters_numpy(
+            corr_length, "CORR_LENGTH", np.arange(prior.ensemble_size)
+        )
 
         # Copy responses from existing prior to new prior.
         # Note that we ideally should generate new responses by running the
@@ -499,21 +532,15 @@ def test_field_param_update_using_heat_equation_zero_var_params_and_adaptive_loc
                 for w in warning_messages
             )
 
-        param_config = config.ensemble_config.parameter_configs["COND"]
-        prior_result = new_prior.load_parameters("COND")["values"]
-        posterior_result = new_posterior.load_parameters("COND")["values"]
-        prior_covariance = np.cov(
-            prior_result.values.reshape(
-                new_prior.ensemble_size,
-                param_config.nx * param_config.ny * param_config.nz,
-            ).T
+        realizations_with_params = np.flatnonzero(
+            new_prior.get_realization_mask_with_parameters()
         )
-        posterior_covariance = np.cov(
-            posterior_result.values.reshape(
-                new_posterior.ensemble_size,
-                param_config.nx * param_config.ny * param_config.nz,
-            ).T
+        prior_result = new_prior.load_parameters_numpy("COND", realizations_with_params)
+        posterior_result = new_posterior.load_parameters_numpy(
+            "COND", realizations_with_params
         )
+        prior_covariance = np.cov(prior_result, rowvar=False)
+        posterior_covariance = np.cov(posterior_result, rowvar=False)
         # Check that generalized variance is reduced by update step.
         assert np.trace(prior_covariance) > np.trace(posterior_covariance)
 
@@ -534,23 +561,21 @@ def test_foward_init_false():
         prior = experiment.get_ensemble_by_name("iter-0")
         posterior = experiment.get_ensemble_by_name("iter-1")
 
-        param_config = config.ensemble_config.parameter_configs["COND"]
-
-        prior_result = prior.load_parameters("COND")["values"]
+        realizations_with_params = np.flatnonzero(
+            prior.get_realization_mask_with_parameters()
+        )
+        prior_result = prior.load_parameters_numpy("COND", realizations_with_params)
         prior_covariance = np.cov(
-            prior_result.values.reshape(
-                prior.ensemble_size, param_config.nx * param_config.ny * param_config.nz
-            ),
-            rowvar=False,
+            prior_result,
+            rowvar=True,
         )
 
-        posterior_result = posterior.load_parameters("COND")["values"]
+        posterior_result = posterior.load_parameters_numpy(
+            "COND", realizations_with_params
+        )
         posterior_covariance = np.cov(
-            posterior_result.values.reshape(
-                posterior.ensemble_size,
-                param_config.nx * param_config.ny * param_config.nz,
-            ),
-            rowvar=False,
+            posterior_result,
+            rowvar=True,
         )
 
         # Check that generalized variance is reduced by update step.
