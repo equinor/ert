@@ -580,6 +580,7 @@ def test_enif(snapshot):
 
     run_cli(
         ENIF_MODE,
+        "--disable-monitoring",
         "poly.ert",
     )
 
@@ -867,6 +868,7 @@ def test_tracking_missing_ecl(monkeypatch, tmp_path, caplog):
     with pytest.raises(ErtCliError):
         run_cli(
             TEST_RUN_MODE,
+            "--disable-monitoring",
             str(config_file),
         )
     assert (
@@ -903,6 +905,7 @@ def test_that_connection_errors_do_not_effect_final_result(
     ):
         run_cli(
             ENSEMBLE_EXPERIMENT_MODE,
+            "--disable-monitoring",
             "poly.ert",
         )
 
