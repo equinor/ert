@@ -21,13 +21,13 @@ from ert.scheduler.event import FinishedEvent
 from everest.config import EverestConfig, ServerConfig
 from everest.detached import (
     ServerStatus,
+    everserver,
     everserver_status,
     start_experiment,
     start_server,
     wait_for_server,
 )
-from everest.detached.jobs import everserver
-from everest.detached.jobs.everserver import (
+from everest.detached.everserver import (
     ExperimentComplete,
     ExperimentRunnerState,
     _everserver_thread,
@@ -46,7 +46,7 @@ def setup_client(monkeypatch):
             return "password"
 
         server_config_mock.__getitem__.side_effect = getitem
-        monkeypatch.setattr(everest.detached.jobs.everserver, "uvicorn", uvicorn_mock)
+        monkeypatch.setattr(everest.detached.everserver, "uvicorn", uvicorn_mock)
         subscribers = {}
         _everserver_thread(
             ExperimentRunnerState(events=events, subscribers=subscribers),
@@ -96,7 +96,7 @@ def mock_server(monkeypatch):
             _everserver_thread(shared_data, server_config, msg_queue)
 
         monkeypatch.setattr(
-            everest.detached.jobs.everserver, "_everserver_thread", server_mock
+            everest.detached.everserver, "_everserver_thread", server_mock
         )
 
     yield func
