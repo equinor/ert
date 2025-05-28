@@ -103,6 +103,21 @@ class ParameterConfig(ABC):
         Save the parameter in internal storage for the given ensemble
         """
 
+    def copy_parameters(
+        self,
+        source_ensemble: Ensemble,
+        target_ensemble: Ensemble,
+        realizations: npt.NDArray[np.int_],
+    ) -> None:
+        """
+        Copy parameters from one ensemble to another.
+        If realizations is None, copy all realizations.
+        If realizations is given, copy only those realizations.
+        """
+        for realization in realizations:
+            ds = source_ensemble.load_parameters(self.name, realization)
+            target_ensemble.save_parameters(self.name, realization, ds)
+
     @abstractmethod
     def load_parameters(
         self, ensemble: Ensemble, realizations: npt.NDArray[np.int_]
