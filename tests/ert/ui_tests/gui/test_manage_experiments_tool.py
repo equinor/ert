@@ -389,12 +389,13 @@ ANALYSIS_SET_VAR OBSERVATIONS AUTO_SCALE POLY_OBS1_*
 """
         )
 
-    prior_ens, _ = run_cli_ES_with_case("poly_localization_0.ert")
+    _, prior_ens_id, _ = run_cli_ES_with_case("poly_localization_0.ert")
     config = ErtConfig.from_file("poly_localization_0.ert")
 
     notifier = ErtNotifier()
     with open_storage(config.ens_path, mode="w") as storage:
         notifier.set_storage(str(storage.path))
+        prior_ens = storage.get_ensemble(prior_ens_id)
 
         tool = ManageExperimentsPanel(
             config, notifier, config.runpath_config.num_realizations
