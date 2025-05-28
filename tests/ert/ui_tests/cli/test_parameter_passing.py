@@ -7,6 +7,7 @@ was passed the parameters correctly in the runpath.
 
 from __future__ import annotations
 
+import warnings
 from abc import abstractmethod
 from dataclasses import dataclass
 from datetime import datetime
@@ -25,6 +26,7 @@ from resdata import ResDataType
 from resdata.grid import GridGenerator
 from resdata.resfile import ResdataKW
 
+from ert.config import ConfigWarning
 from ert.field_utils import FieldFileFormat, Shape, read_field, save_field
 from ert.field_utils.field_file_format import ROFF_FORMATS
 from ert.mode_definitions import ENSEMBLE_EXPERIMENT_MODE
@@ -447,9 +449,11 @@ def test_that_parameters_are_placed_in_the_runpath_as_expected(
         smspec.to_file("ECLBASE.SMSPEC")
         unsmry.to_file("ECLBASE.UNSMRY")
 
-        run_cli_with_pm(
-            [ENSEMBLE_EXPERIMENT_MODE, "--disable-monitoring", "config.ert"]
-        )
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore", category=ConfigWarning)
+            run_cli_with_pm(
+                [ENSEMBLE_EXPERIMENT_MODE, "--disable-monitoring", "config.ert"]
+            )
 
         mask = np.logical_not(
             np.array(io_source.actnum).reshape(io_source.dims, order="F")

@@ -5,6 +5,7 @@ import logging
 import os
 import stat
 import threading
+import warnings
 from datetime import datetime
 from pathlib import Path
 from textwrap import dedent
@@ -22,7 +23,7 @@ import _ert.threading
 import ert.shared
 from _ert.forward_model_runner.client import Client
 from ert.cli.main import ErtCliError
-from ert.config import ConfigValidationError, ErtConfig
+from ert.config import ConfigValidationError, ConfigWarning, ErtConfig
 from ert.enkf_main import sample_prior
 from ert.ensemble_evaluator import EnsembleEvaluator
 from ert.mode_definitions import (
@@ -507,11 +508,13 @@ def test_that_stop_on_fail_workflow_jobs_stop_ert(
             )
         )
 
-    if expect_stopped:
-        with pytest.raises(Exception, match=r"Workflow job .* failed with error"):
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore", category=ConfigWarning)
+        if expect_stopped:
+            with pytest.raises(Exception, match=r"Workflow job .* failed with error"):
+                run_cli(TEST_RUN_MODE, "--disable-monitoring", "poly.ert")
+        else:
             run_cli(TEST_RUN_MODE, "--disable-monitoring", "poly.ert")
-    else:
-        run_cli(TEST_RUN_MODE, "--disable-monitoring", "poly.ert")
 
 
 @pytest.fixture(name="mock_cli_run")
