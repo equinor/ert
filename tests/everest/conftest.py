@@ -20,7 +20,7 @@ from ert.run_models.event import status_event_from_json, status_event_to_json
 from ert.run_models.everest_run_model import EverestRunModel
 from everest.config import EverestConfig
 from everest.config.control_config import ControlConfig
-from everest.detached.jobs import everserver
+from everest.detached import everserver
 from tests.everest.utils import get_optimal_result, relpath
 
 
