@@ -107,8 +107,11 @@ def test_field_init_file_not_readable(monkeypatch):
     field_file_rel_path = "fields/permx0.grdecl"
     os.chmod(field_file_rel_path, 0x0)
 
-    with pytest.raises(ErtCliError, match="Permission denied:"):
-        run_cli(TEST_RUN_MODE, "--disable-monitoring", config_file_name)
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore", category=ConfigWarning)
+        # Config contains a SUMMARY key but no forward model known..
+        with pytest.raises(ErtCliError, match="Permission denied:"):
+            run_cli(TEST_RUN_MODE, "--disable-monitoring", config_file_name)
 
 
 @pytest.mark.usefixtures("copy_snake_oil_field")
@@ -865,12 +868,15 @@ def test_tracking_missing_ecl(monkeypatch, tmp_path, caplog):
     )
     # We create a reference case, but there will be no response
     run_sim(datetime(2014, 9, 10))
-    with pytest.raises(ErtCliError):
-        run_cli(
-            TEST_RUN_MODE,
-            "--disable-monitoring",
-            str(config_file),
-        )
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore", category=ConfigWarning)
+        # Config contains a SUMMARY key but no forward model known..
+        with pytest.raises(ErtCliError):
+            run_cli(
+                TEST_RUN_MODE,
+                "--disable-monitoring",
+                str(config_file),
+            )
     assert (
         f"Realization: 0 failed after reaching max submit (1):\n\t\n"
         "status from done callback: "
