@@ -674,7 +674,7 @@ def test_that_prior_is_not_overwritten_in_ensemble_experiment(
             ENSEMBLE_EXPERIMENT_MODE,
             "--disable-monitoring",
             "poly.ert",
-            "--current-case=iter-0",
+            "--current-ensemble=iter-0",
             "--realizations",
             reals_rerun_option,
         )
