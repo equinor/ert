@@ -451,6 +451,7 @@ def test_that_parameters_are_placed_in_the_runpath_as_expected(
 
         with warnings.catch_warnings():
             warnings.simplefilter("ignore", category=ConfigWarning)
+            warnings.simplefilter("ignore", category=RuntimeWarning)  # Numpy
             run_cli_with_pm(
                 [ENSEMBLE_EXPERIMENT_MODE, "--disable-monitoring", "config.ert"]
             )
