@@ -51,7 +51,7 @@ class ProcessTreeStatus:
 
     oom_score: int | None = None
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         self.timestamp = dt.now().isoformat()
         self.free = psutil.virtual_memory().available
 
