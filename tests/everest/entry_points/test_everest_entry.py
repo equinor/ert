@@ -249,7 +249,7 @@ def test_everest_entry_monitor_no_run(
 
 @pytest.fixture(autouse=True)
 def mock_ssl(monkeypatch):
-    monkeypatch.setattr(everest.detached, "ssl", MagicMock())
+    monkeypatch.setattr(everest.detached.client, "ssl", MagicMock())
 
 
 @patch(
