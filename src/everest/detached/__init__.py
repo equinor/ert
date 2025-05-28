@@ -3,6 +3,7 @@ Client methods for interacting with everserver
 """
 
 from .client import (
+    ServerStatus,
     everserver_status,
     server_is_running,
     start_experiment,
@@ -15,6 +16,7 @@ from .client import (
 )
 
 __all__ = [
+    "ServerStatus",
     "everserver_status",
     "server_is_running",
     "start_experiment",
