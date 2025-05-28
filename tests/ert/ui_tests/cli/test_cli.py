@@ -739,9 +739,10 @@ def test_exclude_parameter_from_update():
         experiment = storage.get_experiment_by_name("es")
         prior = experiment.get_ensemble_by_name("iter-0")
         posterior = experiment.get_ensemble_by_name("iter-1")
-        assert prior.load_parameters(
-            "ANOTHER_KW", tuple(range(5))
-        ) == posterior.load_parameters("ANOTHER_KW", tuple(range(5)))
+        assert np.all(
+            prior.load_parameters_numpy("ANOTHER_KW", tuple(range(5)))
+            == posterior.load_parameters_numpy("ANOTHER_KW", tuple(range(5)))
+        )
 
     log_paths = list(Path("update_log").iterdir())
     assert log_paths
