@@ -204,7 +204,9 @@ class Transform(Enum):
     LN = auto()
     EXP = auto()
 
-    def __call__(self, values):
+    def __call__(
+        self, values: np.typing.NDArray[np.float64]
+    ) -> np.typing.NDArray[np.float64]:
         if self == Transform.LN:
             return np.log(values)
         if self == Transform.EXP:

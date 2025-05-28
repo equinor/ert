@@ -89,23 +89,23 @@ class MockZMQServer:
         asyncio.set_event_loop(self.loop)
         self.loop.run_until_complete(self.mock_zmq_server())
 
-    def __enter__(self):
+    def __enter__(self) -> MockZMQServer:
         self.loop = asyncio.new_event_loop()
         self.thread = ErtThread(target=self.start_event_loop)
         self.thread.start()
         return self
 
-    def __exit__(self, exc_type, exc_value, traceback):
+    def __exit__(self, exc_type, exc_value, traceback) -> None:
         if self.handler_task and not self.handler_task.done():
             self.loop.call_soon_threadsafe(self.handler_task.cancel)
         self.thread.join()
         self.loop.close()
 
-    async def __aenter__(self):
+    async def __aenter__(self) -> MockZMQServer:
         self.server_task = asyncio.create_task(self.mock_zmq_server())
         return self
 
-    async def __aexit__(self, exc_type, exc_value, traceback):
+    async def __aexit__(self, exc_type, exc_value, traceback) -> None:
         if not self.server_task.done():
             with contextlib.suppress(asyncio.TimeoutError):
                 await asyncio.wait_for(self.no_dealers.wait(), timeout=2.0)

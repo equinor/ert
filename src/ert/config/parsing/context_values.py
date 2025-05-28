@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from json import JSONEncoder
 from typing import Any, TypeVar, no_type_check
 
@@ -31,7 +33,7 @@ class ContextBool:
         return "False"
 
     @no_type_check
-    def __deepcopy__(self, memo):
+    def __deepcopy__(self, memo) -> ContextBool:
         new_instance = ContextBool(bool(self), self.token, self.keyword_token)
         memo[id(self)] = new_instance
         return new_instance
@@ -40,14 +42,14 @@ class ContextBool:
 class ContextInt(int):
     def __new__(
         cls, val: int, token: FileContextToken, keyword_token: FileContextToken
-    ) -> "ContextInt":
+    ) -> ContextInt:
         obj = super().__new__(cls, val)
         obj.token = token
         obj.keyword_token = keyword_token
         return obj
 
     @no_type_check
-    def __deepcopy__(self, memo):
+    def __deepcopy__(self, memo) -> ContextInt:
         new_instance = ContextInt(int(self), self.token, self.keyword_token)
         memo[id(self)] = new_instance
         return new_instance
@@ -56,14 +58,14 @@ class ContextInt(int):
 class ContextFloat(float):
     def __new__(
         cls, val: float, token: FileContextToken, keyword_token: FileContextToken
-    ) -> "ContextFloat":
+    ) -> ContextFloat:
         obj = super().__new__(cls, val)
         obj.token = token
         obj.keyword_token = keyword_token
         return obj
 
     @no_type_check
-    def __deepcopy__(self, memo):
+    def __deepcopy__(self, memo) -> ContextFloat:
         new_instance = ContextFloat(float(self), self.token, self.keyword_token)
         memo[id(self)] = new_instance
         return new_instance
@@ -71,19 +73,19 @@ class ContextFloat(float):
 
 class ContextString(str):  # noqa: FURB189
     @classmethod
-    def from_token(cls, token: FileContextToken) -> "ContextString":
+    def from_token(cls, token: FileContextToken) -> ContextString:
         return cls(val=str(token), token=token, keyword_token=token)
 
     def __new__(
         cls, val: str, token: FileContextToken, keyword_token: FileContextToken
-    ) -> "ContextString":
+    ) -> ContextString:
         obj = super().__new__(cls, val)
         obj.token = token
         obj.keyword_token = keyword_token
         return obj
 
     @no_type_check
-    def __deepcopy__(self, memo):
+    def __deepcopy__(self, memo) -> ContextString:
         new_instance = ContextString(str(self), self.token, self.keyword_token)
         memo[id(self)] = new_instance
         return new_instance
@@ -101,8 +103,8 @@ class ContextList(list[T]):  # noqa: FURB189
 
     @classmethod
     def with_values(
-        cls, token: FileContextToken, values: list["ContextValue"]
-    ) -> "ContextList[ContextValue]":
+        cls, token: FileContextToken, values: list[ContextValue]
+    ) -> ContextList[ContextValue]:
         the_list: ContextList[ContextValue] = ContextList(token)
         the_list += values
         return the_list

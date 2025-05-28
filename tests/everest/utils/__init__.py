@@ -54,7 +54,7 @@ def satisfy(predicate):
     """
 
     class _PredicateChecker:
-        def __eq__(self, obj):
+        def __eq__(self, obj) -> bool:
             return predicate(obj)
 
     return _PredicateChecker()

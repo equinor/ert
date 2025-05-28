@@ -3,10 +3,12 @@ import json
 import os
 import re
 from argparse import ArgumentParser
+from collections.abc import Generator
 from pathlib import Path
 
 import pytest
 from jsonpath_ng import parse
+from pydantic import BaseModel
 
 from _ert.threading import ErtThread
 from ert.__main__ import ert_parser
@@ -34,10 +36,10 @@ from ert.run_models.model_factory import create_model
 
 class Events:
     def __init__(self) -> None:
-        self.events = []
+        self.events: list[BaseModel] = []
         self.environment = []
 
-    def __iter__(self):
+    def __iter__(self) -> Generator[BaseModel]:
         yield from self.events
 
     def put(self, event):
