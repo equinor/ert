@@ -161,12 +161,10 @@ def test_and_benchmark_adaptive_localization_with_fields(
     )
     benchmark(smoother_update_run)
 
-    prior_da = prior_ensemble.load_parameters(param_group, range(num_ensemble))[
-        "values"
-    ]
-    posterior_da = posterior_ensemble.load_parameters(param_group, range(num_ensemble))[
-        "values"
-    ]
+    prior_da = prior_ensemble.load_parameters_numpy(param_group, range(num_ensemble))
+    posterior_da = posterior_ensemble.load_parameters_numpy(
+        param_group, range(num_ensemble)
+    )
     # Make sure some, but not all parameters were updated.
     assert not np.allclose(prior_da, posterior_da)
     # All parameters would be updated with a global update so this would fail.
