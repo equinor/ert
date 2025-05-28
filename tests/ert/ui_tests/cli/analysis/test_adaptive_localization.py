@@ -27,7 +27,7 @@ def run_cli_ES_with_case(poly_config):
         experiment = storage.get_experiment_by_name("test-experiment")
         prior_ensemble = experiment.get_ensemble_by_name("iter-0")
         posterior_ensemble = experiment.get_ensemble_by_name("iter-1")
-    return prior_ensemble, posterior_ensemble
+    return storage_path, prior_ensemble.id, posterior_ensemble.id
 
 
 @pytest.mark.timeout(600)
@@ -47,12 +47,18 @@ def test_that_adaptive_localization_with_cutoff_1_equals_ensemble_prior():
 
     with open("poly_localization_1.ert", "w", encoding="utf-8") as f:
         f.writelines(lines)
-    prior_ensemble, posterior_ensemble = run_cli_ES_with_case("poly_localization_1.ert")
+    storage_path, prior_id, posterior_id = run_cli_ES_with_case(
+        "poly_localization_1.ert"
+    )
 
-    prior_sample = prior_ensemble.load_parameters("COEFFS")["values"]
-    posterior_sample = posterior_ensemble.load_parameters("COEFFS")["values"]
-    # Check prior and posterior samples are equal
-    assert np.allclose(posterior_sample, prior_sample)
+    with open_storage(storage_path) as storage:
+        prior_ensemble = storage.get_ensemble(prior_id)
+        posterior_ensemble = storage.get_ensemble(posterior_id)
+        prior_sample = prior_ensemble.load_parameters("COEFFS")["values"]
+        posterior_sample = posterior_ensemble.load_parameters("COEFFS")["values"]
+
+        # Check prior and posterior samples are equal
+        assert np.allclose(posterior_sample, prior_sample)
 
 
 @pytest.mark.timeout(600)
@@ -89,7 +95,7 @@ def test_that_adaptive_localization_works_with_a_single_observation():
     with open("poly_localization_0.ert", "w", encoding="utf-8") as f:
         f.writelines(lines)
 
-    _, _ = run_cli_ES_with_case("poly_localization_0.ert")
+    _, _, _ = run_cli_ES_with_case("poly_localization_0.ert")
 
 
 @pytest.mark.timeout(600)
@@ -205,11 +211,15 @@ ANALYSIS_SET_VAR OBSERVATIONS AUTO_SCALE POLY_OBS1_*
         ("POLY_OBS1_*", "POLY_OBS1_2", "0, 4"),
     }
 
-    prior_ens, _ = run_cli_ES_with_case("poly_localization_0.ert")
-    sf = prior_ens.load_observation_scaling_factors()
-    records_from_pl = sf.select(["input_group", "obs_key", "index"]).to_numpy().tolist()
+    storage_path, prior_id, _ = run_cli_ES_with_case("poly_localization_0.ert")
+    with open_storage(storage_path) as storage:
+        prior_ens = storage.get_ensemble(prior_id)
+        sf = prior_ens.load_observation_scaling_factors()
+        records_from_pl = (
+            sf.select(["input_group", "obs_key", "index"]).to_numpy().tolist()
+        )
 
-    assert set(map(tuple, records_from_pl)) == expected_records
+        assert set(map(tuple, records_from_pl)) == expected_records
 
 
 @pytest.mark.timeout(600)
@@ -238,16 +248,22 @@ def test_that_adaptive_localization_with_cutoff_0_equals_ESupdate():
     with open("poly_localization_0.ert", "w", encoding="utf-8") as f:
         f.writelines(lines)
 
-    _, posterior_ensemble_loc0 = run_cli_ES_with_case("poly_localization_0.ert")
-    _, posterior_ensemble_noloc = run_cli_ES_with_case("poly_no_localization.ert")
+    storage_path, _, posterior_id_loc0 = run_cli_ES_with_case("poly_localization_0.ert")
+    _, _, posterior_id_noloc = run_cli_ES_with_case("poly_no_localization.ert")
 
-    posterior_sample_loc0 = posterior_ensemble_loc0.load_parameters("COEFFS")["values"]
-    posterior_sample_noloc = posterior_ensemble_noloc.load_parameters("COEFFS")[
-        "values"
-    ]
+    with open_storage(storage_path) as storage:
+        posterior_ensemble_loc0 = storage.get_ensemble(posterior_id_loc0)
+        posterior_ensemble_noloc = storage.get_ensemble(posterior_id_noloc)
+        posterior_sample_loc0 = posterior_ensemble_loc0.load_parameters("COEFFS")[
+            "values"
+        ]
+        posterior_sample_noloc = posterior_ensemble_noloc.load_parameters("COEFFS")[
+            "values"
+        ]
 
-    # Check posterior sample without adaptive localization and with cut-off 0 are equal
-    assert np.allclose(posterior_sample_loc0, posterior_sample_noloc, atol=1e-6)
+        # Check posterior sample without adaptive localization and
+        # with cut-off 0 are equal
+        assert np.allclose(posterior_sample_loc0, posterior_sample_noloc, atol=1e-6)
 
 
 @pytest.mark.timeout(600)
@@ -287,42 +303,48 @@ def test_that_posterior_generalized_variance_increases_in_cutoff():
     with open("poly_localization_cutoff2.ert", "w", encoding="utf-8") as f:
         f.writelines(lines)
 
-    prior_ensemble_cutoff1, posterior_ensemble_cutoff1 = run_cli_ES_with_case(
+    storage_path, prior_id_cutoff1, posterior_id_cutoff1 = run_cli_ES_with_case(
         "poly_localization_cutoff1.ert"
     )
-    _, posterior_ensemble_cutoff2 = run_cli_ES_with_case(
+    storage_path, _, posterior_id_cutoff2 = run_cli_ES_with_case(
         "poly_localization_cutoff2.ert"
     )
 
-    cross_correlations = prior_ensemble_cutoff1.load_cross_correlations()
-    assert all(cross_correlations.parameter.to_numpy() == ["a", "b", "c"])
-    assert cross_correlations["COEFFS"].values.shape == (3, 5)
-    assert (
-        (cross_correlations["COEFFS"].values >= -1)
-        & (cross_correlations["COEFFS"].values <= 1)
-    ).all()
+    with open_storage(storage_path) as storage:
+        prior_ensemble_cutoff1 = storage.get_ensemble(prior_id_cutoff1)
+        posterior_ensemble_cutoff1 = storage.get_ensemble(posterior_id_cutoff1)
+        posterior_ensemble_cutoff2 = storage.get_ensemble(posterior_id_cutoff2)
+        cross_correlations = prior_ensemble_cutoff1.load_cross_correlations()
+        assert all(cross_correlations.parameter.to_numpy() == ["a", "b", "c"])
+        assert cross_correlations["COEFFS"].values.shape == (3, 5)
+        assert (
+            (cross_correlations["COEFFS"].values >= -1)
+            & (cross_correlations["COEFFS"].values <= 1)
+        ).all()
 
-    prior_sample_cutoff1 = prior_ensemble_cutoff1.load_parameters("COEFFS")["values"]
-    prior_cov = np.cov(prior_sample_cutoff1, rowvar=False)
-    posterior_sample_cutoff1 = posterior_ensemble_cutoff1.load_parameters("COEFFS")[
-        "values"
-    ]
-    posterior_cutoff1_cov = np.cov(posterior_sample_cutoff1, rowvar=False)
-    posterior_sample_cutoff2 = posterior_ensemble_cutoff2.load_parameters("COEFFS")[
-        "values"
-    ]
-    posterior_cutoff2_cov = np.cov(posterior_sample_cutoff2, rowvar=False)
+        prior_sample_cutoff1 = prior_ensemble_cutoff1.load_parameters("COEFFS")[
+            "values"
+        ]
+        prior_cov = np.cov(prior_sample_cutoff1, rowvar=False)
+        posterior_sample_cutoff1 = posterior_ensemble_cutoff1.load_parameters("COEFFS")[
+            "values"
+        ]
+        posterior_cutoff1_cov = np.cov(posterior_sample_cutoff1, rowvar=False)
+        posterior_sample_cutoff2 = posterior_ensemble_cutoff2.load_parameters("COEFFS")[
+            "values"
+        ]
+        posterior_cutoff2_cov = np.cov(posterior_sample_cutoff2, rowvar=False)
 
-    generalized_variance_1 = np.linalg.det(posterior_cutoff1_cov)
-    generalized_variance_2 = np.linalg.det(posterior_cutoff2_cov)
-    generalized_variance_prior = np.linalg.det(prior_cov)
+        generalized_variance_1 = np.linalg.det(posterior_cutoff1_cov)
+        generalized_variance_2 = np.linalg.det(posterior_cutoff2_cov)
+        generalized_variance_prior = np.linalg.det(prior_cov)
 
-    # Check that posterior generalized variance in positive, increases in cutoff and
-    # does not exceed prior generalized variance
-    assert generalized_variance_1 > 0, f"Assertion failed with cutoff1={cutoff1}"
-    assert generalized_variance_1 <= generalized_variance_2, (
-        f"Assertion failed with cutoff1={cutoff1} and cutoff2={cutoff2}"
-    )
-    assert generalized_variance_2 <= generalized_variance_prior, (
-        f"Assertion failed with cutoff2={cutoff2}"
-    )
+        # Check that posterior generalized variance in positive, increases in cutoff and
+        # does not exceed prior generalized variance
+        assert generalized_variance_1 > 0, f"Assertion failed with cutoff1={cutoff1}"
+        assert generalized_variance_1 <= generalized_variance_2, (
+            f"Assertion failed with cutoff1={cutoff1} and cutoff2={cutoff2}"
+        )
+        assert generalized_variance_2 <= generalized_variance_prior, (
+            f"Assertion failed with cutoff2={cutoff2}"
+        )
