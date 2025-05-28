@@ -15,7 +15,7 @@ from typing import Any, ClassVar, Self, no_type_check, overload
 import polars as pl
 from numpy.random import SeedSequence
 from pydantic import ValidationError as PydanticValidationError
-from pydantic import field_validator
+from pydantic import field_validator, model_validator
 from pydantic.dataclasses import dataclass, rebuild_dataclass
 
 from ert.plugins import ErtPluginManager, fixtures_per_hook
@@ -738,6 +738,16 @@ class ErtConfig:
             else os.getcwd()
         )
         self.observations: dict[str, pl.DataFrame] = self.enkf_obs.datasets
+
+    @model_validator(mode="after")
+    def validate_parameter_name_overlap(self):
+        for parameter_name in self.ensemble_config.get_all_parameter_names():
+            if f"<{parameter_name}>" in self.substitutions:
+                logger.info(
+                    f"Found reserved parameter name. "
+                    f"'{parameter_name}' is already either a "
+                    "magic string, or defined in the user config."
+                )
 
     @staticmethod
     def with_plugins(
