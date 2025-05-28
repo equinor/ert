@@ -239,6 +239,7 @@ class EverestRunModel(BaseRunModel):
     def exit_code(self) -> EverestExitCode | None:
         return self._exit_code
 
+    # TODO: This is only used in testing, and it should be removed.
     @property
     def result(self) -> OptimalResult | None:
         return self._result
