@@ -118,21 +118,15 @@ if __name__ == "__main__":
             experiment = storage.get_experiment_by_name("es")
             prior = experiment.get_ensemble_by_name("iter-0")
             posterior = experiment.get_ensemble_by_name("iter-1")
-            prior_param = (
-                prior.load_parameters("MY_PARAM", range(5))["values"]
-                .values.reshape(5, 2 * 3)
-                .T
-            )
-            posterior_param = (
-                posterior.load_parameters("MY_PARAM", range(5))["values"]
-                .values.reshape(5, 2 * 3)
-                .T
-            )
+            prior_param = prior.load_parameters_numpy("MY_PARAM", range(5))
+            posterior_param = posterior.load_parameters_numpy("MY_PARAM", range(5))
 
             assert prior_param.dtype == np.float32
             assert posterior_param.dtype == np.float32
-            assert len(prior.load_parameters("MY_PARAM", 0)["values"].x) == 2
-            assert len(prior.load_parameters("MY_PARAM", 0)["values"].y) == 3
+
+            # Numpy params loaded are flattened by default,
+            # hence expect shape to be (nx*ny, nreals)
+            assert prior.load_parameters_numpy("MY_PARAM", [0]).shape == (6, 1)
 
             assert np.linalg.det(np.cov(prior_param[:3])) > np.linalg.det(
                 np.cov(posterior_param[:3])
