@@ -19,7 +19,7 @@ class _Signaler(QObject):
 
 
 class _GUILogHandler(logging.Handler):
-    def __init__(self, signaler: _Signaler):
+    def __init__(self, signaler: _Signaler) -> None:
         super().__init__()
         self.signaler = signaler
 
@@ -50,7 +50,7 @@ class GUILogHandler(_Signaler):
 
 
 class EventViewerPanel(QPlainTextEdit):
-    def __init__(self, log_handler: GUILogHandler):
+    def __init__(self, log_handler: GUILogHandler) -> None:
         self.log_handler = log_handler
         QPlainTextEdit.__init__(self)
 

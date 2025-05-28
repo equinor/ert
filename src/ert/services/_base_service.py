@@ -85,7 +85,7 @@ class _Proc(threading.Thread):
         timeout: int,
         set_conn_info: Callable[[ConnInfo], None],
         project: Path,
-    ):
+    ) -> None:
         super().__init__()
 
         self._shutdown = threading.Event()
@@ -238,7 +238,7 @@ class BaseService:
         timeout: int = 120,
         conn_info: ConnInfo = None,
         project: str | None = None,
-    ):
+    ) -> None:
         self._exec_args = exec_args
         self._timeout = timeout
 

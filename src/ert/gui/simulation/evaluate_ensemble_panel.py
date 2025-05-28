@@ -32,7 +32,9 @@ class Arguments:
 
 
 class EvaluateEnsemblePanel(ExperimentConfigPanel):
-    def __init__(self, ensemble_size: int, run_path: str, notifier: ErtNotifier):
+    def __init__(
+        self, ensemble_size: int, run_path: str, notifier: ErtNotifier
+    ) -> None:
         self.notifier = notifier
         super().__init__(EvaluateEnsemble)
         self.setObjectName("Evaluate_parameters_panel")

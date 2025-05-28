@@ -205,7 +205,7 @@ class RunDialog(QFrame):
         is_everest: bool | None = False,
         run_path: Path | None = None,
         storage_path: Path | None = None,
-    ):
+    ) -> None:
         super().__init__(parent)
         self.run_path = run_path or Path()
         self.storage_path = storage_path or Path()

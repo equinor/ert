@@ -7,7 +7,7 @@ from ert.services._base_service import BaseService
 class WebvizErt(BaseService):
     service_name = "webviz-ert"
 
-    def __init__(self, **kwargs: Any):
+    def __init__(self, **kwargs: Any) -> None:
         exec_args = [sys.executable, "-m", "webviz_ert"]
         if kwargs.get("experimental_mode"):
             exec_args.append("--experimental-mode")

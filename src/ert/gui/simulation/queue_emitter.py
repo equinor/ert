@@ -26,7 +26,7 @@ class QueueEmitter(QObject):
         self,
         event_queue: SimpleQueue[StatusEvents],
         parent: QObject | None = None,
-    ):
+    ) -> None:
         super().__init__(parent)
         logger.debug("init QueueEmitter")
         self._event_queue = event_queue

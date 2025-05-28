@@ -62,7 +62,7 @@ class Event(Reporter):
         ack_timeout: float | None = None,
         max_retries: int | None = None,
         finished_event_timeout: float | None = None,
-    ):
+    ) -> None:
         self._evaluator_url = evaluator_url
         self._token = token
 

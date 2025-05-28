@@ -12,7 +12,7 @@ class DataTypeKeysListModel(QAbstractItemModel):
     HAS_OBSERVATIONS = QColor(237, 218, 116)
     GROUP_ITEM = QColor(64, 64, 64)
 
-    def __init__(self, keys: list[PlotApiKeyDefinition]):
+    def __init__(self, keys: list[PlotApiKeyDefinition]) -> None:
         QAbstractItemModel.__init__(self)
         self._keys = keys
         self.__icon = QIcon("img:star_filled.svg")

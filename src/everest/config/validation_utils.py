@@ -24,7 +24,9 @@ _VARIABLE_ERROR_MESSAGE = (
 
 
 class InstallDataContext:
-    def __init__(self, install_data: list[InstallDataConfig], config_path: Path):
+    def __init__(
+        self, install_data: list[InstallDataConfig], config_path: Path
+    ) -> None:
         self._install_data = install_data or []
         self._config_dir = str(config_path.parent)
         self._cwd = os.getcwd()

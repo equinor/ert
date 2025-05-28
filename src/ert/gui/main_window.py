@@ -89,7 +89,7 @@ class ErtMainWindow(QMainWindow):
         ert_config: ErtConfig,
         plugin_manager: ErtPluginManager | None = None,
         log_handler: GUILogHandler | None = None,
-    ):
+    ) -> None:
         QMainWindow.__init__(self)
         self.notifier = ErtNotifier()
         self.plugins_tool: PluginsTool | None = None

@@ -19,7 +19,7 @@ logger = logging.getLogger(__name__)
 
 
 class ExportTool(Tool):
-    def __init__(self, config: ErtConfig, notifier: ErtNotifier):
+    def __init__(self, config: ErtConfig, notifier: ErtNotifier) -> None:
         super().__init__("Export data", QIcon("img:share.svg"))
         export_job = config.workflow_jobs.get("CSV_EXPORT")
         self.setEnabled(export_job is not None)

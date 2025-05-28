@@ -7,7 +7,7 @@ class ActiveRange:
         mask: list[bool] | None = None,
         rangestring: str | None = None,
         length: int | None = None,
-    ):
+    ) -> None:
         self.length = length
         if mask is None and rangestring is None and length is None:
             raise ValueError("Supply mask or rangestring and length to IndexRange.")

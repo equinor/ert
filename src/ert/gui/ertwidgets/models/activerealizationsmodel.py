@@ -5,7 +5,7 @@ from ert.validation import ActiveRange, mask_to_rangestring
 
 
 class ActiveRealizationsModel(ValueModel):
-    def __init__(self, ensemble_size: int, show_default: bool = True):
+    def __init__(self, ensemble_size: int, show_default: bool = True) -> None:
         self.show_default = show_default
         self.ensemble_size = ensemble_size
         ValueModel.__init__(self, self.getDefaultValue())

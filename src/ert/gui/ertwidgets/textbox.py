@@ -23,7 +23,7 @@ class TextBox(QTextEdit):
         default_string: str = "",
         placeholder_text: str = "",
         minimum_width: int = 250,
-    ):
+    ) -> None:
         QTextEdit.__init__(self)
         self.setMinimumWidth(minimum_width)
         self._validation = ValidationSupport(self)

@@ -119,7 +119,7 @@ class EverestRunModel(BaseRunModel):
         everest_config: EverestConfig,
         optimization_callback: OptimizerCallback | None,
         status_queue: queue.SimpleQueue[StatusEvents] | None = None,
-    ):
+    ) -> None:
         Path(everest_config.log_dir).mkdir(parents=True, exist_ok=True)
         Path(everest_config.optimization_output_dir).mkdir(parents=True, exist_ok=True)
         logger.info(

@@ -27,7 +27,7 @@ class MeasuredData:
         self,
         ensemble: Ensemble,
         keys: list[str] | None = None,
-    ):
+    ) -> None:
         if keys is None:
             keys = sorted(ensemble.experiment.observation_keys)
         if not keys:

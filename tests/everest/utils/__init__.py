@@ -76,7 +76,7 @@ class MockParser:
     validation functions used with the argparse module
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.error_msg = None
 
     def get_error(self):

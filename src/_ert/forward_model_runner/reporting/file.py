@@ -33,7 +33,7 @@ STATUS_json = "status.json"
 
 
 class File(Reporter):
-    def __init__(self):
+    def __init__(self) -> None:
         self.status_dict = {}
         self.node = socket.gethostname()
 

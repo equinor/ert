@@ -11,7 +11,7 @@ from PyQt6.QtWidgets import (
 
 
 class SearchBar(QLineEdit):
-    def __init__(self, text_box: QPlainTextEdit, label: str = "Find"):
+    def __init__(self, text_box: QPlainTextEdit, label: str = "Find") -> None:
         super().__init__()
         self._text_box = text_box
         self._label = QLabel(label, self)

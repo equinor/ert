@@ -12,7 +12,7 @@ from ert.services import StorageService
 
 
 class MockResponse:
-    def __init__(self, json_data, status_code, text="", url=""):
+    def __init__(self, json_data, status_code, text="", url="") -> None:
         self.json_data = json_data
         self.status_code = status_code
         self.text = text

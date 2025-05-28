@@ -11,7 +11,7 @@ from tests.everest.utils import capture_streams
 
 
 class MockPluginManager(pluggy.PluginManager):
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__(EVEREST)
         self.add_hookspecs(hook_specs)
         self.register(hook_impl)

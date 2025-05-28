@@ -23,7 +23,7 @@ def patch_abstractmethods(monkeypatch):
 
 
 class MockJob:
-    def __init__(self, status):
+    def __init__(self, status) -> None:
         self.status = status
 
 

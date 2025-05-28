@@ -8,7 +8,9 @@ from .panel import EventViewerPanel, GUILogHandler
 
 
 class EventViewerTool(Tool, QObject):
-    def __init__(self, gui_handler: GUILogHandler, config_filename: str | None = None):
+    def __init__(
+        self, gui_handler: GUILogHandler, config_filename: str | None = None
+    ) -> None:
         super().__init__(
             "Event viewer",
             QIcon("img:notifications.svg"),

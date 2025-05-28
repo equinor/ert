@@ -18,7 +18,7 @@ class PlotConfig:
         title: str | None = "Unnamed",
         x_label: str | None = None,
         y_label: str | None = None,
-    ):
+    ) -> None:
         self._title = title
         self._plot_settings = plot_settings
         if self._plot_settings is None:

@@ -39,7 +39,7 @@ from ert.run_models.event import RunModelDataEvent, RunModelErrorEvent
 
 
 class UpdateLogTable(QTableWidget):
-    def __init__(self, data: DataSection, parent: QWidget | None = None):
+    def __init__(self, data: DataSection, parent: QWidget | None = None) -> None:
         super().__init__(parent)
 
         self.setColumnCount(len(data.header))

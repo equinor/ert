@@ -21,7 +21,7 @@ from .widgets import FilterPopup
 class _LegendMarker(QWidget):
     """A widget that shows a colored box"""
 
-    def __init__(self, color: QColor):
+    def __init__(self, color: QColor) -> None:
         QWidget.__init__(self)
 
         self.setMaximumSize(QSize(12, 12))
@@ -45,7 +45,7 @@ class _LegendMarker(QWidget):
 class _Legend(QWidget):
     """Combines a _LegendMarker with a label"""
 
-    def __init__(self, legend: str | None, color: QColor):
+    def __init__(self, legend: str | None, color: QColor) -> None:
         QWidget.__init__(self)
 
         self.setMinimumWidth(140)
@@ -70,7 +70,7 @@ class _Legend(QWidget):
 class DataTypeKeysWidget(QWidget):
     dataTypeKeySelected = Signal()
 
-    def __init__(self, key_defs: list[PlotApiKeyDefinition]):
+    def __init__(self, key_defs: list[PlotApiKeyDefinition]) -> None:
         QWidget.__init__(self)
 
         self.__filter_popup = FilterPopup(self, key_defs)

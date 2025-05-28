@@ -13,7 +13,7 @@ from ert.scheduler.local_driver import LocalDriver
 
 
 class MockDriver(LocalDriver):
-    def __init__(self, init=None, wait=None, kill=None):
+    def __init__(self, init=None, wait=None, kill=None) -> None:
         super().__init__()
         self._mock_init = init
         self._mock_wait = wait
@@ -59,7 +59,7 @@ def mock_driver():
 
 
 class MockEvent(asyncio.Event):
-    def __init__(self):
+    def __init__(self) -> None:
         self._mock_waited = asyncio.Future()
         super().__init__()
 

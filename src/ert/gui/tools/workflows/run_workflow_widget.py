@@ -33,7 +33,7 @@ class RunWorkflowWidget(QWidget):
     workflowFailed = Signal()
     workflowKilled = Signal()
 
-    def __init__(self, config: ErtConfig, notifier: ErtNotifier):
+    def __init__(self, config: ErtConfig, notifier: ErtNotifier) -> None:
         self.config = config
         self.storage = notifier.storage
         self.notifier = notifier

@@ -34,7 +34,7 @@ class Server(uvicorn.Server):
         self,
         config: uvicorn.Config,
         connection_info: str | dict[str, Any],
-    ):
+    ) -> None:
         super().__init__(config)
         self.connection_info = connection_info
 

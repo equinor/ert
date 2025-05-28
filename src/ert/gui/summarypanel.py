@@ -57,7 +57,7 @@ class SummaryTemplate:
 
 
 class SummaryPanel(QFrame):
-    def __init__(self, config: ErtConfig):
+    def __init__(self, config: ErtConfig) -> None:
         self.config = config
         QFrame.__init__(self)
 

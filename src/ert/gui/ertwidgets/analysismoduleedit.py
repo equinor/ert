@@ -18,7 +18,7 @@ class AnalysisModuleEdit(QWidget):
         self,
         analysis_module: AnalysisModule,
         ensemble_size: int,
-    ):
+    ) -> None:
         self.analysis_module = analysis_module
         self.ensemble_size = ensemble_size
         QWidget.__init__(self)

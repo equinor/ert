@@ -16,7 +16,7 @@ from everest.strings import EVEREST
 class MockPluginManager(pluggy.PluginManager):
     """A testing plugin manager"""
 
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__(EVEREST)
         self.add_hookspecs(hook_specs)
 

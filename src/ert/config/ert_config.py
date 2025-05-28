@@ -135,7 +135,7 @@ def create_forward_model_json(
         env_pr_fm_step = {}
 
     class Substituter:
-        def __init__(self, fm_step):
+        def __init__(self, fm_step) -> None:
             fm_step_args = ",".join(
                 [f"{key}={value}" for key, value in fm_step.private_args.items()]
             )

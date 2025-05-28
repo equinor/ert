@@ -6,7 +6,7 @@ from ert.ensemble_evaluator._ensemble import ForwardModelStep, Realization
 class TestEnsemble(Ensemble):
     __test__ = False
 
-    def __init__(self, iter_, reals, fm_steps, id_):
+    def __init__(self, iter_, reals, fm_steps, id_) -> None:
         the_reals = [
             Realization(
                 real_no,

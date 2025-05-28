@@ -44,7 +44,7 @@ class SubmitSleeper:
     _submit_sleep: float
     _last_started: float
 
-    def __init__(self, submit_sleep: float):
+    def __init__(self, submit_sleep: float) -> None:
         self._submit_sleep = submit_sleep
         self._last_started = (
             time.time() - submit_sleep

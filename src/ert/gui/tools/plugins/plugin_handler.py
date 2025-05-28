@@ -19,7 +19,7 @@ class PluginHandler:
         notifier: ErtNotifier,
         plugin_jobs: list[ErtScriptWorkflow],
         parent_window: QWidget | None,
-    ):
+    ) -> None:
         self.__plugins = []
 
         for job in plugin_jobs:

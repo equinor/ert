@@ -21,7 +21,7 @@ from ert.services._base_service import (
 class _DummyService(BaseService):
     service_name = "dummy"
 
-    def __init__(self, exec_args, *args, **kwargs):
+    def __init__(self, exec_args, *args, **kwargs) -> None:
         super().__init__(exec_args=exec_args, timeout=10, *args, **kwargs)  # noqa: B026
 
     def start(self):

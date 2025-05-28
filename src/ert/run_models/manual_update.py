@@ -33,7 +33,7 @@ class ManualUpdate(UpdateRunModel):
         es_settings: ESSettings,
         update_settings: ObservationSettings,
         status_queue: SimpleQueue[StatusEvents],
-    ):
+    ) -> None:
         try:
             prior = storage.get_ensemble(UUID(ensemble_id))
         except (KeyError, ValueError) as err:

@@ -10,7 +10,7 @@ class ErtStorageError(RuntimeError):
 
     __status_code__ = status.HTTP_200_OK
 
-    def __init__(self, message: str, **kwargs: Any):
+    def __init__(self, message: str, **kwargs: Any) -> None:
         super().__init__(message, kwargs)
 
 

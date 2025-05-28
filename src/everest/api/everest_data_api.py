@@ -10,7 +10,7 @@ from everest.everest_storage import EverestStorage
 
 
 class EverestDataAPI:
-    def __init__(self, config: EverestConfig, filter_out_gradient: bool = True):
+    def __init__(self, config: EverestConfig, filter_out_gradient: bool = True) -> None:
         self._config = config
         output_folder = config.optimization_output_dir
         assert output_folder

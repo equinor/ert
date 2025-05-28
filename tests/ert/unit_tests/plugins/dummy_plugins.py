@@ -95,7 +95,7 @@ def add_span_processor():
 
 
 class DummyFMStep(ForwardModelStepPlugin):
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__(name="DummyForwardModel", command=["touch", "dummy.out"])
 
 

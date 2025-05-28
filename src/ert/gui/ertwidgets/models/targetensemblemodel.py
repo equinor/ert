@@ -10,7 +10,7 @@ class TargetEnsembleModel(ValueModel):
         self,
         analysis_config: AnalysisConfig,
         notifier: ErtNotifier,
-    ):
+    ) -> None:
         self.analysis_config = analysis_config
         self.notifier = notifier
         self._custom = False
