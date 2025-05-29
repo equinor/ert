@@ -14,7 +14,10 @@ class EverestDataAPI:
         self._config = config
         output_folder = config.optimization_output_dir
         assert output_folder
-        self._ever_storage = EverestStorage(Path(output_folder))
+        assert self._config.storage_dir
+        self._ever_storage = EverestStorage(
+            Path(output_folder), Path(self._config.storage_dir)
+        )
 
         if os.path.exists(output_folder):
             self._ever_storage.read_from_output_dir()
