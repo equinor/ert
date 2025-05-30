@@ -132,24 +132,26 @@ def test_that_surfaces_retain_their_order_when_loaded_and_saved_by_ert():
     ens_posterior = experiment.get_ensemble_by_name("iter-1")
 
     # Check that surfaces defined in INIT_FILES are not changed by ERT
-    surf_prior = ens_prior.load_parameters("TOP", list(range(ensemble_size)))["values"]
+    surf_prior = ens_prior.load_parameters_numpy("TOP", list(range(ensemble_size)))
     for i in range(ensemble_size):
         prior_init = surface_from_file(
             f"surface/surf_init_{i}.irap", fformat="irap_ascii", dtype=np.float32
         )
-        np.testing.assert_array_equal(surf_prior[i], prior_init.values.data)
+        np.testing.assert_array_equal(
+            surf_prior[:, i].reshape((nx, ny)), prior_init.values.data
+        )
 
-    surf_posterior = ens_posterior.load_parameters("TOP", list(range(ensemble_size)))[
-        "values"
-    ]
+    surf_posterior = ens_posterior.load_parameters_numpy(
+        "TOP", list(range(ensemble_size))
+    )
 
     assert surf_prior.shape == surf_posterior.shape
 
     for i in range(ensemble_size):
         with pytest.raises(AssertionError):
-            np.testing.assert_array_equal(surf_prior[i], surf_posterior[i])
+            np.testing.assert_array_equal(surf_prior[:, i], surf_posterior[:, i])
         np.testing.assert_almost_equal(
-            surf_prior[i].values, surf_posterior[i].values, decimal=2
+            surf_prior[:, i], surf_posterior[:, i], decimal=2
         )
 
 

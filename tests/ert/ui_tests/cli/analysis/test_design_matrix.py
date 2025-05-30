@@ -55,13 +55,15 @@ def test_run_poly_example_with_design_matrix(copy_poly_case_with_design_matrix, 
     config_path = ErtConfig.from_file("poly.ert").config_path
     with open_storage(storage_path) as storage:
         experiment = storage.get_experiment_by_name("test-experiment")
-        params = experiment.get_ensemble_by_name("default").load_parameters(
-            "DESIGN_MATRIX"
-        )["values"]
-        np.testing.assert_array_equal(params[:, 0], [str(idx) for idx in a_values])
-        np.testing.assert_array_equal(params[:, 1], 5 * ["cat1"] + 5 * ["cat2"])
-        np.testing.assert_array_equal(params[:, 2], 10 * ["1"])
-        np.testing.assert_array_equal(params[:, 3], 10 * ["2"])
+        ensemble = experiment.get_ensemble_by_name("default")
+        params = ensemble.load_parameters_numpy(
+            "DESIGN_MATRIX",
+            np.flatnonzero(ensemble.get_realization_mask_with_parameters()),
+        )
+        np.testing.assert_array_equal(params[0, :], [str(idx) for idx in a_values])
+        np.testing.assert_array_equal(params[1, :], 5 * ["cat1"] + 5 * ["cat2"])
+        np.testing.assert_array_equal(params[2, :], 10 * ["1"])
+        np.testing.assert_array_equal(params[3, :], 10 * ["2"])
 
     real_0_iter_0_parameters_json_path = (
         Path(config_path) / "poly_out" / "realization-0" / "iter-0" / "parameters.json"
@@ -187,13 +189,15 @@ def test_run_poly_example_with_design_matrix_and_genkw_merge(default_values, err
     storage_path = ErtConfig.from_file("poly.ert").ens_path
     with open_storage(storage_path) as storage:
         experiment = storage.get_experiment_by_name("test-experiment")
-        params = experiment.get_ensemble_by_name("default").load_parameters("COEFFS")[
-            "values"
-        ]
-        np.testing.assert_array_equal(params[:, 0], [str(idx) for idx in a_values])
-        np.testing.assert_array_equal(params[:, 2], 10 * ["1"])
-        np.testing.assert_array_equal(params[:, 3], 10 * ["2"])
-        np.testing.assert_array_equal(params[:, 1], 5 * ["cat1"] + 5 * ["cat2"])
+        ensemble = experiment.get_ensemble_by_name("default")
+        params = ensemble.load_parameters_numpy(
+            "COEFFS",
+            np.flatnonzero(ensemble.get_realization_mask_with_parameters()),
+        )
+        np.testing.assert_array_equal(params[0, :], [str(idx) for idx in a_values])
+        np.testing.assert_array_equal(params[2, :], 10 * ["1"])
+        np.testing.assert_array_equal(params[3, :], 10 * ["2"])
+        np.testing.assert_array_equal(params[1, :], 5 * ["cat1"] + 5 * ["cat2"])
     with open("poly_out/realization-0/iter-0/my_output", encoding="utf-8") as f:
         output = [line.strip() for line in f]
         assert output[0] == "a: 0"
@@ -287,14 +291,16 @@ def test_run_poly_example_with_multiple_design_matrix_instances():
     storage_path = ErtConfig.from_file("poly.ert").ens_path
     with open_storage(storage_path) as storage:
         experiment = storage.get_experiment_by_name("test-experiment")
-        params = experiment.get_ensemble_by_name("default").load_parameters(
-            "DESIGN_MATRIX"
-        )["values"]
-        np.testing.assert_array_equal(params[:, 0], a_values)
-        np.testing.assert_array_equal(params[:, 1], 10 * [1])
-        np.testing.assert_array_equal(params[:, 2], 10 * [2])
-        np.testing.assert_array_equal(params[:, 3], 10 * [3])
-        np.testing.assert_array_equal(params[:, 4], 10 * [4])
+        ensemble = experiment.get_ensemble_by_name("default")
+        params = ensemble.load_parameters_numpy(
+            "DESIGN_MATRIX",
+            np.flatnonzero(ensemble.get_realization_mask_with_parameters()),
+        )
+        np.testing.assert_array_equal(params[0, :], a_values)
+        np.testing.assert_array_equal(params[1, :], 10 * [1])
+        np.testing.assert_array_equal(params[2, :], 10 * [2])
+        np.testing.assert_array_equal(params[3, :], 10 * [3])
+        np.testing.assert_array_equal(params[4, :], 10 * [4])
 
 
 @pytest.mark.usefixtures("copy_poly_case")
@@ -389,15 +395,21 @@ def test_design_matrix_on_esmda(experiment_mode, ensemble_name, iterations):
             ensemble = experiment.get_ensemble_by_name(f"{ensemble_name}{i}")
 
             # coeffs_a should be different in all realizations
-            coeffs_a = ensemble.load_parameters("COEFFS_A")["values"].values.flatten()
+            coeffs_a = ensemble.load_parameters_numpy(
+                "COEFFS_A",
+                np.flatnonzero(ensemble.get_realization_mask_with_parameters()),
+            )
             if coeffs_a_previous is not None:
                 assert not np.array_equal(coeffs_a, coeffs_a_previous)
             coeffs_a_previous = coeffs_a
 
             # coeffs_b should be overridden by design matrix and be the
             # same for all realizations
-            coeffs_b = ensemble.load_parameters("COEFFS_B")["values"].values.flatten()
-            assert values == pytest.approx(coeffs_b, 0.0001)
+            coeffs_b = ensemble.load_parameters_numpy(
+                "COEFFS_B",
+                np.flatnonzero(ensemble.get_realization_mask_with_parameters()),
+            )[0]
+            assert values == pytest.approx(coeffs_b, abs=0.0001)
 
 
 def test_run_poly_example_with_design_matrix_selective_realizations(
