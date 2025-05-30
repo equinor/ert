@@ -4,7 +4,6 @@ import json
 import logging
 import os
 import traceback
-from collections.abc import Callable
 from dataclasses import dataclass
 from functools import cached_property
 from pathlib import Path
@@ -38,6 +37,9 @@ class BatchDataframes(TypedDict, total=False):
     realization_objectives: pl.DataFrame | None
     batch_constraints: pl.DataFrame | None
     realization_constraints: pl.DataFrame | None
+    batch_bound_constraint_violations: pl.DataFrame | None
+    batch_input_constraint_violations: pl.DataFrame | None
+    batch_output_constraint_violations: pl.DataFrame | None
     batch_objective_gradient: pl.DataFrame | None
     perturbation_objectives: pl.DataFrame | None
     batch_constraint_gradient: pl.DataFrame | None
@@ -58,6 +60,9 @@ class BatchStorageData:
         "realization_objectives",
         "batch_constraints",
         "realization_constraints",
+        "batch_bound_constraint_violations",
+        "batch_input_constraint_violations",
+        "batch_output_constraint_violations",
         "batch_objective_gradient",
         "perturbation_objectives",
         "batch_constraint_gradient",
@@ -113,6 +118,24 @@ class BatchStorageData:
     @property
     def realization_constraints(self) -> pl.DataFrame | None:
         return self._read_df_if_exists(self._path / "realization_constraints.parquet")
+
+    @property
+    def batch_bound_constraint_violations(self) -> pl.DataFrame | None:
+        return self._read_df_if_exists(
+            self._path / "batch_bound_constraint_violations.parquet"
+        )
+
+    @property
+    def batch_input_constraint_violations(self) -> pl.DataFrame | None:
+        return self._read_df_if_exists(
+            self._path / "batch_input_constraint_violations.parquet"
+        )
+
+    @property
+    def batch_output_constraint_violations(self) -> pl.DataFrame | None:
+        return self._read_df_if_exists(
+            self._path / "batch_output_constraint_violations.parquet"
+        )
 
     @property
     def batch_objective_gradient(self) -> pl.DataFrame | None:
@@ -386,6 +409,9 @@ class _FunctionResults(TypedDict):
     realization_objectives: pl.DataFrame
     batch_constraints: pl.DataFrame | None
     realization_constraints: pl.DataFrame | None
+    batch_bound_constraint_violations: pl.DataFrame | None
+    batch_input_constraint_violations: pl.DataFrame | None
+    batch_output_constraint_violations: pl.DataFrame | None
 
 
 class _GradientResults(TypedDict):
@@ -393,12 +419,6 @@ class _GradientResults(TypedDict):
     perturbation_objectives: pl.DataFrame | None
     batch_constraint_gradient: pl.DataFrame | None
     perturbation_constraints: pl.DataFrame | None
-
-
-@dataclass
-class _MeritValue:
-    value: float
-    iter: int
 
 
 class EverestStorage:
@@ -433,6 +453,10 @@ class EverestStorage:
             "variables": "control_value",
             "objectives": "objective_value",
             "constraints": "constraint_value",
+            "bound_violation": "bound_constraint_violation",
+            "linear_violation": "input_constraint_violation",
+            "nonlinear_violation": "output_constraint_violation",
+            "linear_constraint": "input_constraint_index",
             "nonlinear_constraint": "constraint_name",
             "perturbed_variables": "perturbed_control_value",
             "perturbed_objectives": "perturbed_objective_value",
@@ -453,10 +477,14 @@ class EverestStorage:
             "objective_name": pl.String,
             "control_name": pl.String,
             "constraint_name": pl.String,
+            "input_constraint_index": pl.UInt32,
             "total_objective_value": pl.Float64,
             "control_value": pl.Float64,
             "objective_value": pl.Float64,
             "constraint_value": pl.Float64,
+            "bound_constraint_violation": pl.Float64,
+            "input_constraint_violation": pl.Float64,
+            "output_constraint_violation": pl.Float64,
             "perturbed_control_value": pl.Float64,
             "perturbed_objective_value": pl.Float64,
             "perturbed_constraint_value": pl.Float64,
@@ -668,6 +696,53 @@ class EverestStorage:
             separator=":",
         )
 
+        batch_bound_constraint_violations = None
+        batch_input_constraint_violations = None
+        batch_output_constraint_violations = None
+        if results.constraint_info is not None:
+            if results.constraint_info.bound_violation is not None:
+                batch_bound_constraint_violations = self._ropt_to_df(
+                    results,
+                    "constraint_info",
+                    values=["bound_violation"],
+                    select=["batch_id", "variable"],
+                )
+                batch_bound_constraint_violations = (
+                    batch_bound_constraint_violations.pivot(
+                        on="control_name",
+                        values=["bound_constraint_violation"],
+                        separator=":",
+                    )
+                )
+            if results.constraint_info.linear_violation is not None:
+                batch_input_constraint_violations = self._ropt_to_df(
+                    results,
+                    "constraint_info",
+                    values=["linear_violation"],
+                    select=["batch_id", "linear_constraint"],
+                )
+                batch_input_constraint_violations = (
+                    batch_input_constraint_violations.pivot(
+                        on="input_constraint_index",
+                        values=["input_constraint_violation"],
+                        separator=":",
+                    )
+                )
+            if results.constraint_info.nonlinear_violation is not None:
+                batch_output_constraint_violations = self._ropt_to_df(
+                    results,
+                    "constraint_info",
+                    values=["nonlinear_violation"],
+                    select=["batch_id", "nonlinear_constraint"],
+                )
+                batch_output_constraint_violations = (
+                    batch_output_constraint_violations.pivot(
+                        on="constraint_name",
+                        values=["output_constraint_violation"],
+                        separator=":",
+                    )
+                )
+
         realization_objectives = realization_objectives.pivot(
             on="objective_name",
             values="objective_value",
@@ -684,6 +759,9 @@ class EverestStorage:
             "realization_objectives": realization_objectives,
             "batch_constraints": batch_constraints,
             "realization_constraints": realization_constraints,
+            "batch_bound_constraint_violations": batch_bound_constraint_violations,
+            "batch_input_constraint_violations": batch_input_constraint_violations,
+            "batch_output_constraint_violations": batch_output_constraint_violations,
         }
 
     def _store_gradient_results(self, results: GradientResults) -> _GradientResults:
@@ -825,6 +903,13 @@ class EverestStorage:
 
         results: list[FunctionResults | GradientResults] = []
 
+        # TODO: This code only stores a single 'best' function result, most
+        # likely because this is compatible with the old SEBA storage. This
+        # needs to be fixed, as this unnecessarily discards results. The current
+        # approach may break for discrete optimizers that may evaluate multiple
+        # functions, in particular if constraint violations need to be
+        # considered, since that affects the 'best' value.
+
         best_value = -np.inf
         best_results = None
         for item in optimizer_results:
@@ -859,6 +944,10 @@ class EverestStorage:
         for batch_id, batch_dict in batch_dicts.items():
             target_ensemble = self._experiment.get_ensemble_by_name(f"batch_{batch_id}")
 
+            # NOTE: the `is_improvement` flag is there for compatibility with
+            # everviz. It is problematic, since it is stored as a batch
+            # property, implying that there is only a single function result per
+            # batch. See comment above for more details.
             with open(
                 target_ensemble.optimizer_mount_point / "batch.json",
                 "w+",
@@ -883,6 +972,15 @@ class EverestStorage:
                     "realization_constraints": batch_dict.get(
                         "realization_constraints"
                     ),
+                    "batch_bound_constraint_violations": batch_dict.get(
+                        "batch_bound_constraint_violations"
+                    ),
+                    "batch_input_constraint_violations": batch_dict.get(
+                        "batch_input_constraint_violations"
+                    ),
+                    "batch_output_constraint_violations": batch_dict.get(
+                        "batch_output_constraint_violations"
+                    ),
                     "batch_objective_gradient": batch_dict.get(
                         "batch_objective_gradient"
                     ),
@@ -903,56 +1001,90 @@ class EverestStorage:
     def on_optimization_finished(self) -> None:
         logger.debug("Storing final results Everest storage")
 
-        merit_values = self._get_merit_values()
-        if merit_values:
-            # NOTE: Batch 0 is always an "accepted batch", and "accepted batches" are
-            # batches with merit_flag , which means that it was an improvement
-            self.data.batches[0].write_metadata(is_improvement=True)
+        # NOTE: The `is_improvement` flag is there for the benefit of everviz.
+        # It originally was based on the merit function concept of dakota which
+        # was only used by the optpp_q_newton optimizer. All other optimizers do
+        # not provide this and as a result they ignore constraint violations. In
+        # addition, the merit function is in fact not sufficient to address
+        # output constraint violations, and it does not take violations of bound
+        # and input constraints into account.
+        #
+        # Here we have dropped the merit value approach and check the
+        # constraints against a threshold. This inherently flawed since the
+        # choice of the threshold may depend on the scale and type of the
+        # constraint. A better approach would be to remove the `is_improvement`
+        # flag and instead let the user set the constraint violation threshold
+        # at the time of visualization (with sensible defaults).
 
-            improvement_batches = self.data.batches_with_function_results[1:]
-            for i, b in enumerate(improvement_batches):
-                merit_value = next(
-                    (m.value for m in merit_values if (m.iter - 1) == i), None
-                )
-                if merit_value is None:
-                    continue
+        # This a somewhat arbitrary threshold. As noted above, this should be a
+        # user choice during visualization:
+        CONSTRAINT_TOL = 1e-6
 
-                b.save_dataframes(
-                    {
-                        "batch_objectives": b.batch_objectives.with_columns(
-                            pl.lit(merit_value).alias("merit_value")
-                        )
-                    }
+        max_total_objective = -np.inf
+        for b in self.data.batches_with_function_results:
+            total_objective = b.batch_objectives["total_objective_value"].item()
+            bound_constraint_violation = (
+                0.0
+                if b.batch_bound_constraint_violations is None
+                else (
+                    b.batch_bound_constraint_violations.drop("batch_id")
+                    .to_numpy()
+                    .min()
+                    .item()
                 )
+            )
+            input_constraint_violation = (
+                0.0
+                if b.batch_input_constraint_violations is None
+                else (
+                    b.batch_input_constraint_violations.drop("batch_id")
+                    .to_numpy()
+                    .min()
+                    .item()
+                )
+            )
+            output_constraint_violation = (
+                0.0
+                if b.batch_output_constraint_violations is None
+                else (
+                    b.batch_output_constraint_violations.drop("batch_id")
+                    .to_numpy()
+                    .min()
+                    .item()
+                )
+            )
+            if (
+                max(
+                    bound_constraint_violation,
+                    input_constraint_violation,
+                    output_constraint_violation,
+                )
+                < CONSTRAINT_TOL
+                and total_objective > max_total_objective
+            ):
                 b.write_metadata(is_improvement=True)
-        else:
-            max_total_objective = -np.inf
-            for b in self.data.batches_with_function_results:
-                total_objective = b.batch_objectives["total_objective_value"].item()
-                if total_objective > max_total_objective:
-                    b.write_metadata(is_improvement=True)
-                    max_total_objective = total_objective
+                max_total_objective = total_objective
 
     def get_optimal_result(self) -> OptimalResult | None:
-        # Only used in tests, but re-created to ensure
-        # same behavior as w/ old SEBA setup
-        has_merit = any(
-            "merit_value" in b.batch_objectives.columns
+        # NOTE: The use of the `is_improvement` flag implies that this relies on
+        # the threshold set in the `on_optimization_finished` method.
+        #
+        # TODO: This method is only used for testing, where this is sufficient.
+        # This should not be for general use, and it should be replaced with a a
+        # function in the testing code. The corresponding `result` property in
+        # EverestRunModel can then be removed.
+        matching_batches = [
+            b
             for b in self.data.batches_with_function_results
-        )
+            if not b.batch_objectives.is_empty() and b.is_improvement
+        ]
 
-        def find_best_fn_eval_batch(
-            filter_by: Callable[[FunctionBatchStorageData], bool],
-            sort_by: Callable[[FunctionBatchStorageData], Any],
-        ) -> tuple[FunctionBatchStorageData, dict[str, Any]] | None:
-            matching_batches = [
-                b for b in self.data.batches_with_function_results if filter_by(b)
-            ]
-
-            if not matching_batches:
-                return None
-
-            matching_batches.sort(key=sort_by)
+        if matching_batches:
+            matching_batches.sort(
+                key=lambda b: -b.batch_objectives.select(
+                    pl.col("total_objective_value").sample(n=1)
+                ).item()
+            )
             batch = matching_batches[0]
             controls_dict = batch.realization_controls.drop(
                 [
@@ -962,43 +1094,6 @@ class EverestStorage:
                 ]
             ).to_dicts()[0]
 
-            return batch, controls_dict
-
-        if has_merit:
-            # Minimize merit
-            result = find_best_fn_eval_batch(
-                filter_by=lambda b: "merit_value" in b.batch_objectives.columns,
-                sort_by=lambda b: b.batch_objectives.select(
-                    pl.col("merit_value").min()
-                ).item(),
-            )
-
-            if result is None:
-                return None
-
-            batch, controls_dict = result
-
-            return OptimalResult(
-                batch=batch.batch_id,
-                controls=controls_dict,
-                total_objective=batch.batch_objectives.select(
-                    pl.col("total_objective_value").sample(n=1)
-                ).item(),
-            )
-        else:
-            # Maximize objective
-            result = find_best_fn_eval_batch(
-                filter_by=lambda b: not b.batch_objectives.is_empty(),
-                sort_by=lambda b: -b.batch_objectives.select(
-                    pl.col("total_objective_value").sample(n=1)
-                ).item(),
-            )
-
-            if result is None:
-                return None
-
-            batch, controls_dict = result
-
             return OptimalResult(
                 batch=batch.batch_id,
                 controls=controls_dict,
@@ -1007,49 +1102,7 @@ class EverestStorage:
                 ).item(),
             )
 
-    def _get_merit_values(self) -> list[_MeritValue]:
-        # Read the file containing merit information.
-        # The file should contain the following table header
-        # Iter    F(x)    mu    alpha    Merit    feval    btracks    Penalty
-        # :return: merit values indexed by the function evaluation number
-
-        merit_file = Path(self._output_dir) / "dakota" / "OPT_DEFAULT.out"
-
-        def _get_merit_fn_lines() -> list[str]:
-            if os.path.isfile(merit_file):
-                with open(merit_file, errors="replace", encoding="utf-8") as reader:
-                    lines = reader.readlines()
-                start_line_idx = -1
-                for inx, line in enumerate(lines):
-                    if "Merit" in line and "feval" in line:
-                        start_line_idx = inx + 1
-                    if start_line_idx > -1 and line.startswith("="):
-                        return lines[start_line_idx:inx]
-                if start_line_idx > -1:
-                    return lines[start_line_idx:]
-            return []
-
-        def _parse_merit_line(merit_values_string: str) -> tuple[int, float] | None:
-            values = []
-            for merit_elem in merit_values_string.split():
-                try:
-                    values.append(float(merit_elem))
-                except ValueError:
-                    for elem in merit_elem.split("0x")[1:]:
-                        values.append(float.fromhex("0x" + elem))
-            if len(values) == 8:
-                # Dakota starts counting at one, correct to be zero-based.
-                return int(values[5]) - 1, values[4]
-            return None
-
-        merit_values = []
-        if merit_file.exists():
-            for line in _get_merit_fn_lines():
-                value = _parse_merit_line(line)
-                if value is not None:
-                    merit_values.append(_MeritValue(iter=value[0], value=value[1]))
-
-        return merit_values
+        return None
 
     def export_dataframes(
         self,

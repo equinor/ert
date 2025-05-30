@@ -1,8 +1,6 @@
 {
   "accepted_batches": [
     0,
-    1,
-    2,
     3,
     4,
     5
@@ -222,42 +220,6 @@
       "value": 0.50424549
     },
     {
-      "batch": 1,
-      "control": "point.x.0",
-      "function": "distance",
-      "value": -0.52209326
-    },
-    {
-      "batch": 1,
-      "control": "point.x.1",
-      "function": "distance",
-      "value": -0.28579331
-    },
-    {
-      "batch": 1,
-      "control": "point.x.2",
-      "function": "distance",
-      "value": 0.64869691
-    },
-    {
-      "batch": 2,
-      "control": "point.x.0",
-      "function": "distance",
-      "value": -0.64281291
-    },
-    {
-      "batch": 2,
-      "control": "point.x.1",
-      "function": "distance",
-      "value": -0.00521952
-    },
-    {
-      "batch": 2,
-      "control": "point.x.2",
-      "function": "distance",
-      "value": 0.73152662
-    },
-    {
       "batch": 3,
       "control": "point.x.0",
       "function": "distance",
@@ -452,12 +414,12 @@
       "objective": -1.6875
     },
     {
-      "accepted": 1,
+      "accepted": 0,
       "batch": 1,
       "objective": -1.69281773
     },
     {
-      "accepted": 1,
+      "accepted": 0,
       "batch": 2,
       "objective": -1.73561919
     },
