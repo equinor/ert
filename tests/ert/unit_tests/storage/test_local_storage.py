@@ -258,7 +258,7 @@ def test_that_load_parameters_throws_exception(tmp_path):
         ensemble = storage.create_ensemble(experiment, name="foo", ensemble_size=1)
 
         with pytest.raises(expected_exception=KeyError):
-            ensemble.load_parameters("I_DONT_EXIST", 1)
+            ensemble.load_parameters_numpy("I_DONT_EXIST", np.array([1]))
 
 
 def test_open_empty_read(tmp_path):
@@ -1083,7 +1083,7 @@ class StatefulStorageTest(RuleBasedStateMachine):
         parameters = model_ensemble.parameter_values.values()
         fields = [p for p in parameters if isinstance(p, Field)]
         for f in fields:
-            model_ensemble.parameter_values[f.name] = field_data
+            model_ensemble.parameter_values[f.name] = field_data["values"].flatten().T
             storage_ensemble.save_parameters(
                 f.name,
                 1,
@@ -1146,11 +1146,14 @@ class StatefulStorageTest(RuleBasedStateMachine):
         parameter_names = model_ensemble.parameter_values.keys()
 
         for f in parameter_names:
-            parameter_data = storage_ensemble.load_parameters(f, self.iens_to_edit)
-            xr.testing.assert_equal(
-                model_ensemble.parameter_values[f],
-                parameter_data["values"],
+            parameter_data = storage_ensemble.load_parameters_numpy(
+                f, self.iens_to_edit
             )
+            assert np.all(parameter_data == model_ensemble.parameter_values[f])
+            # xr.testing.assert_equal(
+            #    model_ensemble.parameter_values[f],
+            #    parameter_data["values"],
+            # )
 
     @rule(model_ensemble=ensembles, data=st.data())
     def save_summary(self, model_ensemble: Ensemble, data):
@@ -1245,7 +1248,7 @@ class StatefulStorageTest(RuleBasedStateMachine):
         with pytest.raises(
             KeyError, match=f"No dataset '{parameter}' in storage for realization 0"
         ):
-            _ = storage_ensemble.load_parameters(parameter, self.iens_to_edit)
+            _ = storage_ensemble.load_parameters_numpy(parameter, self.iens_to_edit)
 
     @rule(
         target=ensembles,
