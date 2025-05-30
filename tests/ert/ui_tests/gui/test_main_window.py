@@ -2,6 +2,7 @@ import contextlib
 import os
 import shutil
 import stat
+import warnings
 from pathlib import Path
 from textwrap import dedent
 from unittest.mock import MagicMock, Mock, patch
@@ -25,6 +26,7 @@ from xtgeo import RegularSurface
 
 import ert.gui
 from ert.config import ErtConfig
+from ert.exceptions._post_simulation_warnings import PostSimulationWarning
 from ert.gui.about_dialog import AboutDialog
 from ert.gui.ertwidgets import StringBox
 from ert.gui.ertwidgets.analysismodulevariablespanel import AnalysisModuleVariablesPanel
@@ -551,7 +553,7 @@ def test_that_load_results_manually_can_be_run_after_esmda(esmda_has_run, qtbot)
     load_results_manually(qtbot, esmda_has_run)
 
 
-def test_that_a_failing_job_shows_error_message_with_context(
+def test_that_a_failing_job_shows_error_and_warning_messages_with_context(
     opened_main_window_poly, qtbot, use_tmpdir
 ):
     gui = opened_main_window_poly
@@ -599,20 +601,20 @@ def test_that_a_failing_job_shows_error_message_with_context(
             "Traceback",
             "raise RuntimeError('Argh')",
             "RuntimeError: Argh",
+            "Warning!",
         ]
-        suggestor_messages = (
-            error_dialog.findChild(QWidget, name="suggestor_messages")
-            .findChild(QLabel)
-            .text()
-        )
+        suggestor_messages = error_dialog.findChild(QWidget, name="suggestor_messages")
+        suggestor_messages_content = ""
+        for label in suggestor_messages.findChildren(QLabel):
+            suggestor_messages_content += label.text()
         for substring in expected_substrings:
-            assert substring in suggestor_messages
+            assert substring in suggestor_messages_content
         error_dialog.close()
 
     qtbot.mouseClick(run_experiment, Qt.MouseButton.LeftButton)
 
     run_dialog = wait_for_child(gui, qtbot, RunDialog)
-
+    warnings.warn("Warning!", PostSimulationWarning, stacklevel=2)
     QTimer.singleShot(200, lambda: handle_error_dialog(run_dialog))
     qtbot.waitUntil(lambda: run_dialog.is_simulation_done() is True, timeout=100000)
 

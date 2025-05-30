@@ -5,6 +5,7 @@ import contextlib
 import hashlib
 import logging
 import time
+import warnings
 from collections import Counter
 from contextlib import suppress
 from enum import StrEnum
@@ -31,6 +32,7 @@ from ert.storage.local_ensemble import forward_model_ok
 from ert.storage.realization_storage_state import RealizationStorageState
 from ert.trace import trace, tracer
 
+from ..exceptions._post_simulation_warnings import PostSimulationWarning
 from .driver import Driver, FailedSubmit
 
 if TYPE_CHECKING:
@@ -134,7 +136,6 @@ class Job:
                 f"(num_cpu={self.real.num_cpu} "
                 f"realization_memory={self.real.realization_memory})"
             )
-
             await self._send(JobState.RUNNING)
             if self.real.max_runtime is not None and self.real.max_runtime > 0:
                 timeout_task = asyncio.create_task(self._max_runtime_task())
@@ -400,10 +401,14 @@ async def log_warnings_from_forward_model(
                 captured.append(line[:max_length])
 
         for line, counter in Counter(captured).items():
-            logger.warning(
+            msg = (
                 f"Realization {iens} step {step.name}.{step_idx} "
                 f"warned {counter} time(s) in {filetype}: {line}"
             )
+            logger.warning(
+                msg,
+            )
+            warnings.warn(msg, PostSimulationWarning, stacklevel=2)
 
     with suppress(KeyError):
         runpath = Path(real.run_arg.runpath)

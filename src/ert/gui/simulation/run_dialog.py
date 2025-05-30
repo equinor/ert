@@ -67,7 +67,11 @@ from ert.shared.status.utils import (
     get_mount_directory,
 )
 
-from ...config import ErrorInfo
+from ...config import ErrorInfo, WarningInfo
+from ...exceptions._post_simulation_warnings import (
+    PostSimulationWarning,
+    QtWarningHandler,
+)
 from ..suggestor import Suggestor
 from .queue_emitter import QueueEmitter
 from .view import DiskSpaceWidget, ProgressWidget, RealizationWidget, UpdateWidget
@@ -214,6 +218,12 @@ class RunDialog(QFrame):
         self.setWindowFlags(Qt.WindowType.Window)
         self.setWindowFlag(Qt.WindowType.WindowContextHelpButtonHint, False)
         self.setWindowTitle(title)
+
+        self.warnings: list[str] = []
+        self.warning_handler = QtWarningHandler(
+            accepted_categories=[PostSimulationWarning],
+            post_simulation_warnings=self.warnings,
+        )
 
         self._run_model_api = run_model_api
         self._snapshot_model = SnapshotModel(self)
@@ -468,20 +478,21 @@ class RunDialog(QFrame):
         )
         self._notifier.set_is_simulation_running(False)
         self.flag_simulation_done = True
-        if failed:
+        if failed or self.warnings:
             self.update_total_progress(1.0, "Failed")
 
             self._progress_widget.set_all_failed()
 
             self.fail_msg_box = Suggestor(
-                errors=[ErrorInfo(msg)],
-                warnings=[],
+                errors=[ErrorInfo(msg)] if failed else [],
+                warnings=[WarningInfo(str(warning)) for warning in self.warnings],
                 deprecations=[],
                 continue_action=None,
-                widget_info="""\
-                    <p style="font-size: 28px;">ERT experiment failed!</p>
-                    <p>These errors were detected:</p>
-                """,
+                widget_info=(
+                    '<p style="font-size: 28px;">ERT experiment '
+                    f"{'failed' if failed else 'succeeded with warnings'}!</p>"
+                    f"<p>These {'errors' if failed else 'warnings'} were detected:</p>"
+                ),
             )
             self.fail_msg_box.show()
         else:
