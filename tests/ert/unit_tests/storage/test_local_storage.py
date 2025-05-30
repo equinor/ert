@@ -1243,7 +1243,7 @@ class StatefulStorageTest(RuleBasedStateMachine):
         parameter_names = [p.name for p in self.model[experiment_id].parameters]
         assume(parameter not in parameter_names)
         with pytest.raises(
-            KeyError, match=f"No dataset '{parameter}' in storage for realization 0"
+            KeyError, match=f"{parameter} is not registered to the experiment"
         ):
             _ = storage_ensemble.load_parameters(parameter, self.iens_to_edit)
 
