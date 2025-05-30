@@ -563,7 +563,7 @@ class LocalEnsemble(BaseMode):
         self, group: str, realizations: npt.NDArray[np.int_]
     ) -> npt.NDArray[np.float64]:
         config = self.experiment.parameter_configuration[group]
-        return config.load_parameters(self, realizations)
+        return config.load_parameters_for_update(self, realizations)
 
     def save_parameters_numpy(
         self,

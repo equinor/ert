@@ -126,6 +126,11 @@ class ExtParamConfig(ParameterConfig):
     ) -> npt.NDArray[np.float64]:
         raise NotImplementedError()
 
+    def load_parameters_for_update(
+        self, ensemble: Ensemble, realizations: npt.NDArray[np.int_]
+    ) -> npt.NDArray[np.float64]:
+        raise NotImplementedError()
+
     @staticmethod
     def to_dataset(data: DataType) -> xr.Dataset:
         """Flattens data to fit inside a dataset"""
