@@ -8,27 +8,22 @@ import numpy as np
 import polars as pl
 from pydantic import PrivateAttr
 
-from ert.config import (
-    ConfigValidationError,
-    DesignMatrix,
-    ParameterConfig,
-    ResponseConfig,
-)
-from ert.enkf_main import sample_prior, save_design_matrix_to_ensemble
+from ert.enkf_main import sample_prior
 from ert.ensemble_evaluator import EvaluatorServerConfig
 from ert.storage import Ensemble
 from ert.trace import tracer
 
+from ..config import ResponseConfig
 from ..plugins import PostExperimentFixtures, PreExperimentFixtures
 from ..run_arg import create_run_arguments
-from .base_run_model import ErtRunError, UpdateRunModel
+from .base_run_model import ErtRunError, HasDesignParameters, UpdateRunModel
 
 logger = logging.getLogger(__name__)
 
 MULTIPLE_DATA_ASSIMILATION_GROUP = "Parameter update"
 
 
-class MultipleDataAssimilation(UpdateRunModel):
+class MultipleDataAssimilation(HasDesignParameters, UpdateRunModel):
     """
     Run multiple data assimilation (MDA) ensemble smoother with custom weights.
     """
@@ -36,8 +31,6 @@ class MultipleDataAssimilation(UpdateRunModel):
     default_weights: ClassVar = "4, 2, 1"
     target_ensemble_format: str
     experiment_name: str
-    design_matrix: DesignMatrix | None
-    parameter_configuration: list[ParameterConfig]
     response_configuration: list[ResponseConfig]
     ert_templates: list[tuple[str, str]]
     restart_run: bool
@@ -79,22 +72,9 @@ class MultipleDataAssimilation(UpdateRunModel):
     ) -> None:
         self.log_at_startup()
 
-        parameters_config = self.parameter_configuration
-        design_matrix = self.design_matrix
-        design_matrix_group = None
-        if design_matrix is not None and not restart:
-            try:
-                parameters_config, design_matrix_group = (
-                    design_matrix.merge_with_existing_parameters(parameters_config)
-                )
-                if not any(p.update for p in parameters_config):
-                    raise ConfigValidationError(
-                        "No parameters to update as all parameters "
-                        "were set to update:false!",
-                    )
-            except ConfigValidationError as exc:
-                raise ErtRunError(str(exc)) from exc
-
+        experiment_parameters = self.experiment_parameters(
+            include_design_matrix=not restart
+        )
         self._restart = restart
         if self.restart_run:
             id_ = self.prior_ensemble_id
@@ -124,8 +104,7 @@ class MultipleDataAssimilation(UpdateRunModel):
             sim_args = {"weights": self.weights}
 
             experiment = self._storage.create_experiment(
-                parameters=parameters_config
-                + ([design_matrix_group] if design_matrix_group else []),
+                parameters=experiment_parameters,
                 observations=self._observations,
                 responses=self.response_configuration,
                 simulation_arguments=sim_args,
@@ -150,17 +129,16 @@ class MultipleDataAssimilation(UpdateRunModel):
             sample_prior(
                 prior,
                 np.where(self.active_realizations)[0],
-                parameters=[param.name for param in parameters_config],
+                parameters=[param.name for param in experiment_parameters],
                 random_seed=self.random_seed,
             )
 
-            if design_matrix_group is not None and design_matrix is not None:
-                save_design_matrix_to_ensemble(
-                    design_matrix.design_matrix_df,
-                    prior,
-                    np.where(self.active_realizations)[0],
-                    design_matrix_group.name,
+            if not restart:
+                self.save_design_matrix_parameters(
+                    target_ensemble=prior,
+                    active_realizations=np.where(self.active_realizations)[0],
                 )
+
             self._evaluate_and_postprocess(
                 prior_args,
                 prior,
