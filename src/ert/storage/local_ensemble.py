@@ -576,7 +576,7 @@ class LocalEnsemble(BaseMode):
                     [
                         pl.col(col)
                         .map_elements(
-                            config.transform_col(col), return_dtype=pl.Float64
+                            config.transform_col(col), return_dtype=df[col].dtype
                         )
                         .alias(col)
                         for col in df.columns
