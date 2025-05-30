@@ -14,6 +14,8 @@ import numpy.typing as npt
 import pandas as pd
 from pandas.errors import ParserError
 
+from ert.config.parameter_config import ParameterMetadata
+from ert.config.response_config import ResponseMetadata
 from ert.services import StorageService
 
 logger = logging.getLogger(__name__)
@@ -26,6 +28,7 @@ if TYPE_CHECKING:
 class EnsembleObject:
     name: str
     id: str
+    experiment_id: str
     hidden: bool
     experiment_name: str
 
@@ -37,6 +40,8 @@ class PlotApiKeyDefinition(NamedTuple):
     dimensionality: int
     metadata: dict[Any, Any]
     log_scale: bool
+    parameter_metadata: ParameterMetadata | None = None
+    response_metadata: ResponseMetadata | None = None
 
 
 class PlotApi:
@@ -80,6 +85,7 @@ class PlotApi:
                             EnsembleObject(
                                 name=ensemble_name,
                                 id=ensemble_id,
+                                experiment_id=experiment["id"],
                                 experiment_name=experiment_name,
                                 hidden=ensemble_name.startswith("."),
                             )
@@ -99,6 +105,34 @@ class PlotApi:
                 f" Please report this error and try restarting the application."
                 f"{response.text} from url: {response.url}."
             )
+
+    def all_parameters_metadata(self) -> list[ParameterMetadata]:
+        all_params = {}
+
+        with StorageService.session(project=self.ens_path) as client:
+            response = client.get("/experiments", timeout=self._timeout)
+            self._check_response(response)
+
+            for experiment in response.json():
+                for param_metadatas in experiment["parameters"].values():
+                    for metadata in param_metadatas:
+                        all_params |= metadata
+
+        return [ParameterMetadata(**p) for p in all_params]
+
+    def all_responses_metadata(self) -> list[ParameterMetadata]:
+        all_responses = {}
+
+        with StorageService.session(project=self.ens_path) as client:
+            response = client.get("/experiments", timeout=self._timeout)
+            self._check_response(response)
+
+            for experiment in response.json():
+                for response_metadatas in experiment["responses"].values():
+                    for metadata in response_metadatas:
+                        all_responses |= metadata
+
+        return [ResponseMetadata(**p) for p in all_responses]
 
     def all_data_type_keys(self) -> list[PlotApiKeyDefinition]:
         """Returns a list of all the keys except observation keys.
@@ -140,6 +174,7 @@ class PlotApi:
                                         dimensionality=2,
                                         metadata={"data_origin": response_type},
                                         log_scale=False,
+                                        response_metadata=ResponseMetadata(**metadata),
                                     )
                         else:
                             all_keys[key] = PlotApiKeyDefinition(
@@ -149,6 +184,7 @@ class PlotApi:
                                 dimensionality=2,
                                 metadata={"data_origin": response_type},
                                 log_scale=False,
+                                response_metadata=ResponseMetadata(**metadata),
                             )
 
                 for param_metadatas in experiment["parameters"].values():
@@ -163,6 +199,7 @@ class PlotApi:
                             log_scale=(metadata["transformation"] or "None")
                             .lower()
                             .startswith("log"),
+                            parameter_metadata=ParameterMetadata(**metadata),
                         )
                         all_params[param_key] = all_keys[param_key]
 
@@ -188,6 +225,50 @@ class PlotApi:
             self._check_response(response)
 
             stream = io.BytesIO(response.content)
+            df = pd.read_parquet(stream)
+
+            try:
+                df.columns = pd.to_datetime(df.columns, format="%Y-%m-%d %H:%M:%S")
+            except (ParserError, ValueError):
+                df.columns = [int(s) for s in df.columns]
+
+            try:
+                return df.astype(float)
+            except ValueError:
+                return df
+
+    def data_for_response(self, ensemble_id: str, response_key: str) -> pd.DataFrame:
+        with StorageService.session(project=self.ens_path) as client:
+            response = client.get(
+                f"/ensembles/{ensemble_id}/responses/{PlotApi.escape(response_key)}",
+                headers={"accept": "application/x-parquet"},
+                timeout=self._timeout,
+            )
+            self._check_response(response)
+
+            stream = io.BytesIO(response.content)
+            df = pd.read_parquet(stream)
+
+            try:
+                df.columns = pd.to_datetime(df.columns, format="%Y-%m-%d %H:%M:%S")
+            except (ParserError, ValueError):
+                df.columns = [int(s) for s in df.columns]
+
+            try:
+                return df.astype(float)
+            except ValueError:
+                return df
+
+    def data_for_parameter(self, ensemble_id: str, parameter_key: str) -> pd.DataFrame:
+        with StorageService.session(project=self.ens_path) as client:
+            parameter = client.get(
+                f"/ensembles/{ensemble_id}/parameters/{PlotApi.escape(parameter_key)}",
+                headers={"accept": "application/x-parquet"},
+                timeout=self._timeout,
+            )
+            self._check_response(parameter)
+
+            stream = io.BytesIO(parameter.content)
             df = pd.read_parquet(stream)
 
             try:

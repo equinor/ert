@@ -166,7 +166,7 @@ def data_for_parameter(ensemble: Ensemble, key: str) -> pd.DataFrame:
             return data
 
 
-def _extract_response_type_and_key(
+def extract_response_type_and_key(
     key: str, response_key_to_response_type: dict[str, str]
 ) -> tuple[str, str] | tuple[None, None]:
     # Check for exact match first. For example if key is "FOPRH"
@@ -188,7 +188,7 @@ def _extract_response_type_and_key(
 
 
 def data_for_response(ensemble: Ensemble, key: str) -> pd.DataFrame:
-    response_key, response_type = _extract_response_type_and_key(
+    response_key, response_type = extract_response_type_and_key(
         key, ensemble.experiment.response_key_to_response_type
     )
 
@@ -256,7 +256,7 @@ def data_for_key(
     given ensemble. The row index is the realization number, and the columns are an
     index over the indexes/dates"""
 
-    response_key, _ = _extract_response_type_and_key(
+    response_key, _ = extract_response_type_and_key(
         key, ensemble.experiment.response_key_to_response_type
     )
 
