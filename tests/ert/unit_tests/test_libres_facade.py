@@ -237,8 +237,13 @@ def test_save_parameters_to_storage_from_design_dataframe(
             save_design_matrix_to_ensemble(
                 design_matrix.design_matrix_df, ensemble, reals
             )
-            params = ensemble.load_parameters(DESIGN_MATRIX_GROUP)["values"]
-            all(params.names.values == ["a", "b", "c"])
-            np.testing.assert_array_almost_equal(params[:, 0], a_values)
-            np.testing.assert_array_almost_equal(params[:, 1], b_values)
-            np.testing.assert_array_almost_equal(params[:, 2], c_values)
+            realizations_with_params = np.flatnonzero(
+                ensemble.get_realization_mask_with_parameters()
+            )
+            params = ensemble.load_parameters_numpy(
+                DESIGN_MATRIX_GROUP, realizations_with_params
+            )
+            assert params.shape == (3, ensemble_size)
+            np.testing.assert_array_almost_equal(params[0, :], a_values)
+            np.testing.assert_array_almost_equal(params[1, :], b_values)
+            np.testing.assert_array_almost_equal(params[2, :], c_values)
