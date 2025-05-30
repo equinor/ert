@@ -3,6 +3,7 @@ Client methods for interacting with everserver
 """
 
 from .client import (
+    PROXY,
     ServerStatus,
     everserver_status,
     server_is_running,
@@ -16,6 +17,7 @@ from .client import (
 )
 
 __all__ = [
+    "PROXY",
     "ServerStatus",
     "everserver_status",
     "server_is_running",
