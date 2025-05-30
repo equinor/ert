@@ -6,6 +6,7 @@ import resource
 import shutil
 import stat
 import sys
+import warnings
 from argparse import ArgumentParser
 from importlib.resources import files
 from pathlib import Path
@@ -22,7 +23,7 @@ import _ert.forward_model_runner.fm_dispatch
 from _ert.threading import set_signal_handler
 from ert.__main__ import ert_parser
 from ert.cli.main import run_cli
-from ert.config import ErtConfig
+from ert.config import ConfigWarning, ErtConfig
 from ert.ensemble_evaluator.config import EvaluatorServerConfig
 from ert.mode_definitions import ENIF_MODE, ENSEMBLE_EXPERIMENT_MODE, ES_MDA_MODE
 from ert.storage import open_storage
@@ -152,7 +153,10 @@ def poly_case(setup_case):
 
 @pytest.fixture()
 def snake_oil_case_storage(copy_snake_oil_case_storage):
-    return ErtConfig.from_file("snake_oil.ert")
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore", category=ConfigWarning)
+        # Avoiding ConfigWarning on SUMMARY key with no known forward model
+        return ErtConfig.from_file("snake_oil.ert")
 
 
 @pytest.fixture()

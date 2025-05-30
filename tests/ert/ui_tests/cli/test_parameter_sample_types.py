@@ -37,6 +37,7 @@ FORWARD_MODEL poly_eval
             xori=1,
             yori=1,
             yflip=1,
+            values=6 * [0.0],
             rotation=1,
         )
         base_surface.to_file("surf.irap", fformat="irap_ascii")

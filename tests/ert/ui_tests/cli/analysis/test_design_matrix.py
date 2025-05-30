@@ -3,6 +3,7 @@ import logging
 import os
 import random
 import stat
+import warnings
 from pathlib import Path
 from textwrap import dedent
 
@@ -11,7 +12,7 @@ import pandas as pd
 import pytest
 
 from ert.cli.main import ErtCliError
-from ert.config import DESIGN_MATRIX_GROUP, ErtConfig
+from ert.config import DESIGN_MATRIX_GROUP, ConfigWarning, ErtConfig
 from ert.config.parsing.config_errors import ConfigValidationError
 from ert.mode_definitions import (
     ENSEMBLE_EXPERIMENT_MODE,
@@ -177,13 +178,18 @@ def test_run_poly_example_with_design_matrix_and_genkw_merge(default_values, err
                 "test-experiment",
             )
         return
-    run_cli(
-        ENSEMBLE_EXPERIMENT_MODE,
-        "--disable-monitoring",
-        "poly.ert",
-        "--experiment-name",
-        "test-experiment",
-    )
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore", category=ConfigWarning)
+        # Expected warning:
+        # ConfigWarning: Parameters {'c', 'a', 'b', 'category'} from GEN_KW
+        # group 'COEFFS' will be overridden by design matrix.
+        run_cli(
+            ENSEMBLE_EXPERIMENT_MODE,
+            "--disable-monitoring",
+            "poly.ert",
+            "--experiment-name",
+            "test-experiment",
+        )
     storage_path = ErtConfig.from_file("poly.ert").ens_path
     with open_storage(storage_path) as storage:
         experiment = storage.get_experiment_by_name("test-experiment")
@@ -374,13 +380,18 @@ def test_design_matrix_on_esmda(experiment_mode, ensemble_name, iterations):
     with open("coeff_priors_c", "w", encoding="utf-8") as f:
         f.write("c UNIFORM 0 5")
 
-    run_cli(
-        experiment_mode,
-        "--disable-monitoring",
-        "poly.ert",
-        "--experiment-name",
-        "test-experiment",
-    )
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore", category=ConfigWarning)
+        # Expected warning:
+        # ConfigWarning: Parameters {'b'} from GEN_KW group 'COEFFS_B'
+        # will be overridden by design matrix.
+        run_cli(
+            experiment_mode,
+            "--disable-monitoring",
+            "poly.ert",
+            "--experiment-name",
+            "test-experiment",
+        )
     storage_path = ErtConfig.from_file("poly.ert").ens_path
     coeffs_a_previous = None
     with open_storage(storage_path) as storage:
@@ -459,10 +470,17 @@ def test_design_matrix_on_esmda_fail_without_updateable_parameters(
             )
         )
 
-    with pytest.raises(
-        ErtCliError,
-        match="No parameters to update as all parameters were set to update:false!",
+    with (
+        pytest.raises(
+            ErtCliError,
+            match="No parameters to update as all parameters were set to update:false!",
+        ),
+        warnings.catch_warnings(),
     ):
+        warnings.simplefilter("ignore", category=ConfigWarning)
+        # Expected warning:
+        # ConfigWarning: Parameters {'c', 'a', 'b'} from GEN_KW
+        # group 'COEFFS' will be overridden
         run_cli(
             experiment_mode,
             "--disable-monitoring",
