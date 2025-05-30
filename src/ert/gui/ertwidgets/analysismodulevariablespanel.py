@@ -39,7 +39,7 @@ class AnalysisModuleVariablesPanel(QWidget):
         layout.addRow(self.create_horizontal_line())
         layout.addRow(QLabel("Inversion Algorithm"))
         dropdown = QComboBox(self)
-        options = analysis_module.model_fields["inversion"]
+        options = AnalysisModule.model_fields["inversion"]
         layout.addRow(QLabel(options.description))
         default_index = 0
         for i, option in enumerate(get_args(options.annotation)):
@@ -50,7 +50,7 @@ class AnalysisModuleVariablesPanel(QWidget):
         dropdown.currentTextChanged.connect(self.update_inversion_algorithm)
         layout.addRow(dropdown)
         var_name = "enkf_truncation"
-        metadata = analysis_module.model_fields[var_name]
+        metadata = AnalysisModule.model_fields[var_name]
         self.truncation_spinner = self.createDoubleSpinBox(
             var_name,
             analysis_module.enkf_truncation,
@@ -70,7 +70,8 @@ class AnalysisModuleVariablesPanel(QWidget):
         lf_layout = cast(QLayout, localization_frame.layout())
         lf_layout.setContentsMargins(0, 0, 0, 0)
 
-        metadata = analysis_module.model_fields["localization_correlation_threshold"]
+        metadata = AnalysisModule.model_fields["localization_correlation_threshold"]
+        breakpoint()
         local_checkbox = QCheckBox(metadata.title)
         local_checkbox.setObjectName("localization")
         local_checkbox.clicked.connect(
@@ -81,7 +82,7 @@ class AnalysisModuleVariablesPanel(QWidget):
             )
         )
         var_name = "localization_correlation_threshold"
-        metadata = analysis_module.model_fields[var_name]
+        metadata = AnalysisModule.model_fields[var_name]
         self.local_spinner = self.createDoubleSpinBox(
             var_name,
             analysis_module.correlation_threshold(ensemble_size),
