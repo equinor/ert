@@ -73,6 +73,9 @@ class ForwardModelRunner:
                 f"Available forward_model steps: {[step.name() for step in self.steps]}"
             )
             yield init_message
+            yield Finish().with_error(
+                "Not all forward model steps completed successfully."
+            )
             return
         else:
             yield init_message
