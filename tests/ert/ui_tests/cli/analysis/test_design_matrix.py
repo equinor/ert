@@ -423,7 +423,6 @@ def test_run_poly_example_with_design_matrix_selective_realizations(
         "0,10",
     )
     config_path = ErtConfig.from_file("poly.ert").config_path
-    print(config_path)
 
     realizations_run = os.listdir(Path(config_path) / "poly_out")
     assert len(realizations_run) == 2
@@ -470,3 +469,50 @@ def test_design_matrix_on_esmda_fail_without_updateable_parameters(
             "--experiment-name",
             "test-experiment",
         )
+
+
+@pytest.mark.parametrize("realizations_in_design_matrix", [5, 15])
+def test_run_poly_example_with_different_realization_count_chooses_smaller_and_warns(
+    realizations_in_design_matrix,
+    copy_poly_case_with_design_matrix,
+    capsys,
+):
+    num_realizations_in_user_config = 10
+    if realizations_in_design_matrix < num_realizations_in_user_config:
+        expected_message = (
+            f"NUM_REALIZATIONS ({num_realizations_in_user_config}) is greater than "
+            "the number of realizations in DESIGN_MATRIX "
+            f"({realizations_in_design_matrix}). Using the realizations from "
+            f"DESIGN_MATRIX ({realizations_in_design_matrix})"
+        )
+    else:
+        expected_message = (
+            f"NUM_REALIZATIONS ({num_realizations_in_user_config}) is less than the "
+            f"number of realizations in DESIGN_MATRIX "
+            f"({realizations_in_design_matrix}). Using the realizations from "
+            f"NUM_REALIZATIONS ({num_realizations_in_user_config})"
+        )
+
+    realization_list = list(range(realizations_in_design_matrix))
+    design_dict = {
+        "REAL": realization_list,
+        "a": [2 * a for a in realization_list],
+    }
+    default_list = [["b", 1], ["c", 2]]
+    copy_poly_case_with_design_matrix(design_dict, default_list)
+    with open("poly.ert", "a+", encoding="utf-8") as f:
+        f.write(f"\nNUM_REALIZATIONS {num_realizations_in_user_config}")
+    run_cli(
+        ENSEMBLE_EXPERIMENT_MODE,
+        "--disable-monitoring",
+        "poly.ert",
+        "--experiment-name",
+        "test-experiment",
+    )
+    config_path = ErtConfig.from_file("poly.ert").config_path
+
+    realizations_run = os.listdir(Path(config_path) / "poly_out")
+    assert len(realizations_run) == min(
+        realizations_in_design_matrix, num_realizations_in_user_config
+    )
+    assert expected_message in capsys.readouterr().out
