@@ -77,10 +77,14 @@ def test_design_matrix_in_manage_experiments_panel(
         RealizationStorageState.PARAMETERS_LOADED in s
         for s in ensemble.get_ensemble_state()
     )
-    params = ensemble.load_parameters("DESIGN_MATRIX")["values"]
-    np.testing.assert_array_equal(params[:, 0], a_values)
-    np.testing.assert_array_equal(params[:, 1], np.ones(num_realizations))
-    np.testing.assert_array_equal(params[:, 2], 2 * np.ones(num_realizations))
+
+    realizations_with_params = np.flatnonzero(
+        ensemble.get_realization_mask_with_parameters()
+    )
+    params = ensemble.load_parameters_numpy("DESIGN_MATRIX", realizations_with_params)
+    np.testing.assert_array_equal(params[0, :], a_values)
+    np.testing.assert_array_equal(params[1, :], np.ones(num_realizations))
+    np.testing.assert_array_equal(params[2, :], 2 * np.ones(num_realizations))
 
     add_experiment_in_manage_experiment_dialog(
         qtbot, tool, experiment_name="my-experiment-2", ensemble_name="my-design-2"
