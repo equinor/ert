@@ -4,6 +4,7 @@ import logging
 import os
 import re
 import shutil
+import warnings
 from abc import abstractmethod
 from typing import Annotated, Any, Literal, no_type_check
 
@@ -46,12 +47,33 @@ class QueueOptions(
 ):
     name: QueueSystem
     max_running: pydantic.NonNegativeInt = 0
-    submit_sleep: pydantic.NonNegativeFloat = 0.0
     num_cpu: pydantic.NonNegativeInt = 1
     realization_memory: pydantic.NonNegativeInt = 0
     job_script: str = shutil.which("fm_dispatch.py") or "fm_dispatch.py"
+    submit_sleep: float | None = None
     project_code: str | None = None
     activate_script: str | None = Field(default=None, validate_default=True)
+
+    @field_validator("submit_sleep", mode="before")
+    @classmethod
+    def validate_submit_sleep(
+        cls, v: float | None, info: ValidationInfo
+    ) -> float | None:
+        if v:
+            warnings.warn(
+                "The SUBMIT_SLEEP keyword in QUEUE OPTIONS is deprecated, "
+                "use the global SUBMIT_SLEEP keyword instead",
+                DeprecationWarning,
+                stacklevel=1,
+            )
+            logger.info("Using deprecated SUBMIT_SLEEP")
+        if v and float(v) < 0.0:
+            raise ConfigValidationError.with_context(
+                "Input should be greater than or equal to 0",
+                v,
+            )
+
+        return v
 
     @field_validator("activate_script", mode="before")
     @classmethod
@@ -292,6 +314,13 @@ class QueueConfig(BaseModel):
     ) = pydantic.Field(default_factory=LocalQueueOptions, discriminator="name")
     stop_long_running: bool = False
     max_runtime: int | None = None
+    _submit_sleep: float = 0.0
+
+    @property
+    def submit_sleep(self) -> float:
+        if self.queue_options.submit_sleep is not None:
+            return self.queue_options.submit_sleep
+        return self._submit_sleep
 
     @no_type_check
     @classmethod
@@ -314,6 +343,8 @@ class QueueConfig(BaseModel):
             if num_cpu := get_num_cpu_from_data_file(data_file):
                 logger.info(f"Parsed NUM_CPU={num_cpu} from {data_file}")
                 config_dict[ConfigKeys.NUM_CPU] = num_cpu
+
+        submit_sleep = config_dict.get(ConfigKeys.SUBMIT_SLEEP, 0.0)
 
         raw_queue_options = config_dict.get("QUEUE_OPTION", [])
         grouped_queue_options = _group_queue_options_by_queue_system(raw_queue_options)
@@ -353,6 +384,7 @@ class QueueConfig(BaseModel):
             max_submit=max_submit,
             queue_system=selected_queue_system,
             queue_options=queue_options,
+            _submit_sleep=submit_sleep,
             stop_long_running=bool(stop_long_running),
             max_runtime=config_dict.get(ConfigKeys.MAX_RUNTIME),
         )
@@ -362,6 +394,7 @@ class QueueConfig(BaseModel):
             max_submit=self.max_submit,
             queue_system=QueueSystem.LOCAL,
             queue_options=LocalQueueOptions(max_running=self.max_running),
+            _submit_sleep=self.submit_sleep,
             stop_long_running=bool(self.stop_long_running),
             max_runtime=self.max_runtime,
         )
@@ -369,10 +402,6 @@ class QueueConfig(BaseModel):
     @property
     def max_running(self) -> int:
         return self.queue_options.max_running
-
-    @property
-    def submit_sleep(self) -> float:
-        return self.queue_options.submit_sleep
 
 
 def parse_realization_memory_str(realization_memory_str: str) -> int:
