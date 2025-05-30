@@ -24,15 +24,16 @@ class SearchBar(QLineEdit):
             "Find next",
             QDialogButtonBox.ButtonRole.ActionRole,
         )
-
-        self._find_next_button.clicked.connect(self._find_next)  # type: ignore
+        assert self._find_next_button is not None
+        self._find_next_button.setDefault(True)
+        self._find_next_button.clicked.connect(self._find_next)
 
         self._highlight_all_button = dialog_buttons.addButton(
             "Highlight all",
             QDialogButtonBox.ButtonRole.ActionRole,
         )
-
-        self._highlight_all_button.clicked.connect(self._highlight_all)  # type: ignore
+        assert self._highlight_all_button is not None
+        self._highlight_all_button.clicked.connect(self._highlight_all)
 
     @Slot(str)
     def search_bar_changed(self, search_term: str) -> None:

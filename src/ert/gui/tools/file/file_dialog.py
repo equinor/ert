@@ -58,9 +58,10 @@ class FileDialog(QDialog):
         self._view.setWordWrapMode(QTextOption.WrapMode.NoWrap)
         # for moving the actual slider
         scroll_bar = self._view.verticalScrollBar()
-        scroll_bar.sliderMoved.connect(self._update_cursor)  # type: ignore
+        assert scroll_bar is not None
+        scroll_bar.sliderMoved.connect(self._update_cursor)
         # for mouse wheel and keyboard arrows
-        scroll_bar.valueChanged.connect(self._update_cursor)  # type: ignore
+        scroll_bar.valueChanged.connect(self._update_cursor)
 
         self._view.setFont(QFontDatabase.systemFont(QFontDatabase.SystemFont.FixedFont))
         self._search_bar = SearchBar(self._view)
@@ -77,21 +78,23 @@ class FileDialog(QDialog):
         self._file.close()
 
     def _init_layout(self) -> None:
-        dialog_buttons = QDialogButtonBox(QDialogButtonBox.StandardButton.Ok)
-        dialog_buttons.accepted.connect(self.accept)
+        dialog_buttons = QDialogButtonBox(QDialogButtonBox.StandardButton.Close)
+        dialog_buttons.rejected.connect(self.reject)
 
         self._copy_all_button = dialog_buttons.addButton(
             "Copy all",
             QDialogButtonBox.ButtonRole.ActionRole,
         )
-        self._copy_all_button.clicked.connect(self._copy_all)  # type: ignore
+        assert self._copy_all_button is not None
+        self._copy_all_button.clicked.connect(self._copy_all)
 
         self._follow_button = dialog_buttons.addButton(
             "Follow",
             QDialogButtonBox.ButtonRole.ActionRole,
         )
-        self._follow_button.setCheckable(True)  # type: ignore
-        self._follow_button.toggled.connect(self._enable_follow_mode)  # type: ignore
+        assert self._follow_button is not None
+        self._follow_button.setCheckable(True)
+        self._follow_button.toggled.connect(self._enable_follow_mode)
         self._enable_follow_mode(self._follow_mode)
         layout = QVBoxLayout(self)
         layout.addLayout(self._search_bar.get_layout())
@@ -114,18 +117,22 @@ class FileDialog(QDialog):
 
     def _copy_all(self) -> None:
         text = self._view.toPlainText()
-        QApplication.clipboard().setText(text, QClipboard.Mode.Clipboard)  # type: ignore
+        clipboard = QApplication.clipboard()
+        assert clipboard is not None
+        clipboard.setText(text, QClipboard.Mode.Clipboard)
 
     def _update_cursor(self, value: int) -> None:
         if not self._view.textCursor().hasSelection():
             document = self._view.document()
-            block = document.findBlockByLineNumber(value)  # type: ignore
+            assert document is not None
+            block = document.findBlockByLineNumber(value)
             cursor = QTextCursor(block)
             self._view.setTextCursor(cursor)
 
     def _enable_follow_mode(self, enable: bool) -> None:
         vertical_scroll_bar = self._view.verticalScrollBar()
-        vertical_scroll_bar.setDisabled(enable)  # type: ignore
+        assert vertical_scroll_bar is not None
+        vertical_scroll_bar.setDisabled(enable)
         self._follow_mode = enable
         if enable:
             self._view.moveCursor(QTextCursor.MoveOperation.End)
