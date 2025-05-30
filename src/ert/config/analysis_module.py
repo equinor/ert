@@ -22,10 +22,10 @@ es_description = """
     The type of inversion used in the algorithm. Every inversion method
     scales the variables. The options are:
 
-    * `EXACT`:
+    * EXACT:
         Computes an exact inversion which uses a Cholesky factorization in the
         case of symmetric, positive definite matrices.
-    * `SUBSPACE`:
+    * SUBSPACE:
         This is an approximate solution. The approximation is that when
         U, w, V.T = svd(D_delta) then we assume that U @ U.T = I.
     """
