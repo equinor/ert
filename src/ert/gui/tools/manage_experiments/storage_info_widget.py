@@ -306,6 +306,7 @@ class _EnsembleWidget(QWidget):
             self._state_text_edit.clear()
             html = "<table>"
             assert self._ensemble is not None
+            self._ensemble.refresh_ensemble_state()
             for state_index, state in enumerate(self._ensemble.get_ensemble_state()):
                 html += (
                     f"<tr><td width=30>{state_index:d}.</td>"

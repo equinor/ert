@@ -402,6 +402,7 @@ class LocalEnsemble(BaseMode):
         """
 
         response_configs = self.experiment.response_configuration
+        existing_scalars = self._existing_scalars
 
         def _parameters_exist_for_realization(realization: int) -> bool:
             """
@@ -423,13 +424,10 @@ class LocalEnsemble(BaseMode):
             path = self._realization_dir(realization)
             return all(
                 (
-                    isinstance(parameter, GenKwConfig)
-                    and realization in self._existing_scalars[parameter.name]
+                    parameter.name in existing_scalars
+                    and realization in existing_scalars[parameter.name]
                 )
-                or (
-                    not isinstance(parameter, GenKwConfig)
-                    and (path / (_escape_filename(parameter.name) + ".nc")).exists()
-                )
+                or ((path / (_escape_filename(parameter.name) + ".nc")).exists())
                 for parameter in self.experiment.parameter_configuration.values()
             )
 
@@ -943,15 +941,12 @@ class LocalEnsemble(BaseMode):
         self, realization: int
     ) -> dict[str, RealizationStorageState]:
         path = self._realization_dir(realization)
-
+        existing_scalars = self._existing_scalars
         return {
             e: (
                 RealizationStorageState.PARAMETERS_LOADED
                 if (path / (_escape_filename(e) + ".nc")).exists()
-                or (
-                    e in self._existing_scalars
-                    and realization in self._existing_scalars[e]
-                )
+                or (e in existing_scalars and realization in existing_scalars[e])
                 else RealizationStorageState.UNDEFINED
             )
             for e in self.experiment.parameter_configuration
