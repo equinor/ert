@@ -281,7 +281,11 @@ def test_update_handles_precision_loss_in_std_dev(tmp_path):
                 random_seed=1234,
                 ensemble_size=prior.ensemble_size,
             )
-            prior.save_parameters("COEFFS", realization_nr, ds)
+            prior.save_parameters_numpy(
+                ds["values"].to_numpy().T.reshape((-1, 1)),
+                "COEFFS",
+                np.array([realization_nr]),
+            )
 
         prior.save_response(
             "gen_data",
@@ -400,7 +404,11 @@ def test_update_raises_on_singular_matrix(tmp_path):
                 random_seed=1234,
                 ensemble_size=prior.ensemble_size,
             )
-            prior.save_parameters("COEFFS", realization_nr, ds)
+            prior.save_parameters_numpy(
+                ds["values"].values.T.reshape((-1, 1)),
+                "COEFFS",
+                np.array([realization_nr]),
+            )
 
         for i, v in enumerate(
             [
@@ -572,15 +580,8 @@ def test_smoother_snapshot_alpha(
     rng = np.random.default_rng(1234)
     for iens in range(prior_storage.ensemble_size):
         data = rng.uniform(0, 1)
-        prior_storage.save_parameters(
-            "PARAMETER",
-            iens,
-            xr.Dataset(
-                {
-                    "values": ("names", [data]),
-                    "names": ["KEY_1"],
-                }
-            ),
+        prior_storage.save_parameters_numpy(
+            np.array([data]).reshape((1, 1)), "PARAMETER", np.array([iens])
         )
         data = rng.uniform(0.8, 1, 3)
         prior_storage.save_response(
@@ -1059,15 +1060,10 @@ def test_gen_data_obs_data_mismatch(storage, uniform_parameter):
     rng = np.random.default_rng(1234)
     for iens in range(prior.ensemble_size):
         data = rng.uniform(0, 1)
-        prior.save_parameters(
+        prior.save_parameters_numpy(
+            np.array([[data]]),
             "PARAMETER",
-            iens,
-            xr.Dataset(
-                {
-                    "values": ("names", [data]),
-                    "names": ["KEY_1"],
-                }
-            ),
+            np.array([iens]),
         )
 
         data = rng.uniform(0.8, 1, 3)
@@ -1121,15 +1117,8 @@ def test_gen_data_missing(storage, uniform_parameter, obs):
     rng = np.random.default_rng(1234)
     for iens in range(prior.ensemble_size):
         data = rng.uniform(0, 1)
-        prior.save_parameters(
-            "PARAMETER",
-            iens,
-            xr.Dataset(
-                {
-                    "values": ("names", [data]),
-                    "names": ["KEY_1"],
-                }
-            ),
+        prior.save_parameters_numpy(
+            np.array([data]).reshape((-1, 1)), "PARAMETER", np.array([iens])
         )
         data = rng.uniform(0.8, 1, 2)  # Importantly, shorter than obs
         prior.save_response(
@@ -1195,25 +1184,11 @@ def test_update_subset_parameters(storage, uniform_parameter, obs):
     rng = np.random.default_rng(1234)
     for iens in range(prior.ensemble_size):
         data = rng.uniform(0, 1)
-        prior.save_parameters(
-            "PARAMETER",
-            iens,
-            xr.Dataset(
-                {
-                    "values": ("names", [data]),
-                    "names": ["KEY_1"],
-                }
-            ),
+        prior.save_parameters_numpy(
+            np.array([data]).reshape((-1, 1)), "PARAMETER", np.array([iens])
         )
-        prior.save_parameters(
-            "EXTRA_PARAMETER",
-            iens,
-            xr.Dataset(
-                {
-                    "values": ("names", [data]),
-                    "names": ["KEY_1"],
-                }
-            ),
+        prior.save_parameters_numpy(
+            np.array([data]).reshape((-1, 1)), "EXTRA_PARAMETER", np.array([iens])
         )
 
         data = rng.uniform(0.8, 1, 10)
