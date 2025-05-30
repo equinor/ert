@@ -122,13 +122,13 @@ def test_surface_param(
 
         # Assert that the data has been internalised to storage
         if expect_num_loaded > 0:
-            arr = fs.load_parameters("MY_PARAM", 0)["values"].values.T
-            assert arr.flatten().tolist() == [0.0, 1.0, 2.0, 3.0]
+            arr = fs.load_parameters_numpy("MY_PARAM", np.array([0]))
+            assert arr.flatten().tolist() == [0.0, 2.0, 1.0, 3.0]
         else:
             with pytest.raises(
                 KeyError, match="No dataset 'MY_PARAM' in storage for realization 0"
             ):
-                fs.load_parameters("MY_PARAM", 0)["values"]
+                fs.load_parameters_numpy("MY_PARAM", np.array([0]))
 
 
 @pytest.mark.parametrize(
