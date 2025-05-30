@@ -1155,6 +1155,13 @@ Keyword arguments:
 Where the :code:`UPDATE` keyword argument specifies whether a parameter group should be included during the
 history matching process. It must be set to either TRUE or FALSE. The parameters are still sampled in the prior.
 
+.. note::
+
+        The ``INIT_FILES:`` named attribute that was used to provide externally sampled values has been removed from GEN_KW.
+        To provide values sampled outside of ERT, please see :ref:`DESIGN_MATRIX <design_matrix>`.
+        Note that only parameters sampled internally in ERT will be updated during assisted history matching, and
+        parameters provided through ``DESIGN_MATRIX`` will be constant.
+
 A configuration example is shown below:
 
 ::
