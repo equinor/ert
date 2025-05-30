@@ -383,6 +383,11 @@ class GenKwConfig(ParameterConfig):
     ) -> npt.NDArray[np.float64]:
         return ensemble.load_parameters(self.name, realizations)["values"].values.T
 
+    def load_parameters_for_update(
+        self, ensemble: Ensemble, realizations: npt.NDArray[np.int_]
+    ) -> npt.NDArray[np.float64]:
+        return self.load_parameters(ensemble, realizations)
+
     def shouldUseLogScale(self, keyword: str) -> bool:
         for tf in self.transform_functions:
             if tf.name == keyword:

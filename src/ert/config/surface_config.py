@@ -180,6 +180,11 @@ class SurfaceConfig(ParameterConfig):
         )
         ensemble.save_parameters(self.name, realization, ds)
 
+    def load_parameters_for_update(
+        self, ensemble: Ensemble, realizations: npt.NDArray[np.int_]
+    ) -> npt.NDArray[np.float64]:
+        return self.load_parameters(ensemble, realizations)
+
     def load_parameters(
         self, ensemble: Ensemble, realizations: npt.NDArray[np.int_]
     ) -> npt.NDArray[np.float64]:

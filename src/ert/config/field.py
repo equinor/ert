@@ -268,7 +268,7 @@ class Field(ParameterConfig):
         ds = xr.Dataset({"values": (["x", "y", "z"], ma.filled())})  # type: ignore
         ensemble.save_parameters(self.name, realization, ds)
 
-    def load_parameters(
+    def load_parameters_for_update(
         self, ensemble: Ensemble, realizations: npt.NDArray[np.int_]
     ) -> npt.NDArray[np.float64]:
         ds = ensemble.load_parameters(self.name, realizations)
@@ -280,6 +280,12 @@ class Field(ParameterConfig):
             ]
         )
         return da.T.to_numpy()
+
+    def load_parameters(
+        self, ensemble: Ensemble, realizations: npt.NDArray[np.int_]
+    ) -> npt.NDArray[np.float64]:
+        ds = ensemble.load_parameters(self.name, realizations)
+        return ds["values"].T.to_numpy()
 
     def _fetch_from_ensemble(self, real_nr: int, ensemble: Ensemble) -> xr.DataArray:
         da = ensemble.load_parameters(self.name, real_nr)["values"]

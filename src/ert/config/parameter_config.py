@@ -128,6 +128,15 @@ class ParameterConfig(ABC):
         """
 
     @abstractmethod
+    def load_parameters_for_update(
+        self, ensemble: Ensemble, realizations: npt.NDArray[np.int_]
+    ) -> npt.NDArray[np.float64]:
+        """
+        Load parameters to update from internal storage for the given ensemble.
+        Must return array of shape (number of parameters, number of realizations).
+        """
+
+    @abstractmethod
     def load_parameter_graph(self) -> nx.Graph[int]:
         """
         Load the graph encoding Markov properties on the parameter `group`
