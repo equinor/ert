@@ -4,7 +4,7 @@ import asyncio
 import logging
 import os
 import time
-from collections.abc import Collection, Iterable
+from collections.abc import Iterable
 from datetime import datetime
 from functools import cache, cached_property, lru_cache
 from multiprocessing.pool import ThreadPool
@@ -570,7 +570,20 @@ class LocalEnsemble(BaseMode):
         if isinstance(config, GenKwConfig):
             if realizations is not None and isinstance(realizations, int):
                 realizations = np.array([realizations])
-            df = self._load_scalar_dataframe(group, realizations)
+            group_path = self.mount_point / f"{_escape_filename(group)}.parquet"
+            if not group_path.exists():
+                raise KeyError(
+                    f"No {group} dataset in storage for ensemble {self.name}"
+                )
+            df = pl.read_parquet(group_path)
+            if realizations is not None:
+                if isinstance(realizations, int):
+                    realizations = np.array([realizations])
+                df = df.filter(pl.col("realization").is_in(realizations))
+                if df.is_empty():
+                    raise IndexError(
+                        f"No matching realizations {realizations} found in {group_path}"
+                    )
             if transformed:
                 df = df.with_columns(
                     [
@@ -651,39 +664,6 @@ class LocalEnsemble(BaseMode):
             return pl.DataFrame()
 
         return pl.concat(dataframes, how="align")
-
-    def _load_scalar_dataframe(
-        self,
-        group: str,
-        realizations: Collection[int] | None = None,
-    ) -> pl.DataFrame:
-        """
-        Load parameters for group and realizations into pl.DataFrame.
-
-        Parameters
-        ----------
-        group : str
-            Name of parameter group to load.
-        realizations : Collection[int], optional
-            Realization indices to load. If None, all realizations are loaded.
-
-        Returns
-        -------
-        parameters : pl.DataFrame
-            Loaded pl.DataFrame with parameters.
-        """
-
-        group_path = self.mount_point / f"{_escape_filename(group)}.parquet"
-        if not group_path.exists():
-            raise KeyError(f"No {group} dataset in storage for ensemble {self.name}")
-        df_lazy = pl.scan_parquet(group_path).collect()
-        if realizations is not None:
-            df_lazy = df_lazy.filter(pl.col("realization").is_in(realizations))
-            if df_lazy.is_empty():
-                raise IndexError(
-                    f"No matching realizations {realizations} found in {group_path}"
-                )
-        return df_lazy
 
     def load_cross_correlations(self) -> xr.Dataset:
         input_path = self.mount_point / "corr_XY.nc"
@@ -862,7 +842,8 @@ class LocalEnsemble(BaseMode):
         """
         if isinstance(dataset, pl.DataFrame):
             try:
-                df = self._load_scalar_dataframe(group)
+                df = self.load_parameters(group)
+                assert isinstance(df, pl.DataFrame)
                 existing_realizations = df.get_column("realization").unique()
                 new_data = dataset.filter(
                     ~pl.col("realization").is_in(existing_realizations)
