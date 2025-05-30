@@ -9,7 +9,6 @@ from PyQt6.QtWidgets import QFormLayout, QLabel, QWidget
 from ert.gui.ertnotifier import ErtNotifier
 from ert.gui.ertwidgets import (
     ActiveRealizationsModel,
-    AnalysisModuleEdit,
     CopyableLabel,
     StringBox,
     TargetEnsembleModel,
@@ -79,12 +78,6 @@ class EnsembleInformationFilterPanel(ExperimentConfigPanel):
         )
         self._ensemble_format_field.setValidator(ProperNameFormatArgument())
         layout.addRow("Ensemble format:", self._ensemble_format_field)
-
-        self._analysis_module_edit = AnalysisModuleEdit(
-            analysis_config.es_settings, ensemble_size
-        )
-        self._analysis_module_edit.setObjectName("enif_edit")
-        layout.addRow("Analysis module:", self._analysis_module_edit)
 
         active_realizations_model = ActiveRealizationsModel(ensemble_size)
         self._active_realizations_field = StringBox(
