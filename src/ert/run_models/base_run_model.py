@@ -14,7 +14,7 @@ import traceback
 import uuid
 from abc import ABC, abstractmethod
 from collections import defaultdict
-from collections.abc import Callable, Generator, MutableSequence
+from collections.abc import Callable, Generator, Iterable, MutableSequence
 from contextlib import contextmanager
 from functools import cached_property
 from pathlib import Path
@@ -856,7 +856,6 @@ class BaseRunModel(BaseModelWithContextSupport, ABC):
 class HasDesignParameters:
     design_matrix: DesignMatrix | None
     parameter_configuration: list[ParameterConfig]
-    active_realizations: list[bool]
 
     @cached_property
     def parsed_design_matrix(
@@ -903,15 +902,17 @@ class HasDesignParameters:
             [design_matrix_group] if design_matrix_group else []
         )
 
-    def save_design_matrix_to_ensemble(self, ensemble: Ensemble) -> None:
+    def save_design_matrix_parameters(
+        self, target_ensemble: Ensemble, active_realizations: Iterable[int]
+    ) -> None:
         _, design_matrix_info = self.parsed_design_matrix
 
         if design_matrix_info is not None:
             design_matrix_group, design_matrix_df = design_matrix_info
             save_design_matrix_to_ensemble(
                 design_matrix_df,
-                ensemble,
-                np.where(self.active_realizations)[0],
+                target_ensemble,
+                active_realizations,
                 design_matrix_group.name,
             )
 

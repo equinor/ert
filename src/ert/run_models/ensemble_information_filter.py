@@ -94,7 +94,10 @@ class EnsembleInformationFilter(HasDesignParameters, UpdateRunModel):
         )
 
         if not restart:
-            self.save_design_matrix_to_ensemble(ensemble=prior)
+            self.save_design_matrix_parameters(
+                target_ensemble=prior,
+                active_realizations=np.where(self.active_realizations)[0],
+            )
 
         self._evaluate_and_postprocess(
             prior_args,

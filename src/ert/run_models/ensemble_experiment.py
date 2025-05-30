@@ -103,7 +103,10 @@ class EnsembleExperiment(HasDesignParameters, BaseRunModel):
         )
 
         if not restart:
-            self.save_design_matrix_to_ensemble(ensemble=self._ensemble)
+            self.save_design_matrix_parameters(
+                target_ensemble=self._ensemble,
+                active_realizations=np.where(self.active_realizations)[0],
+            )
 
         self._evaluate_and_postprocess(
             run_args,
