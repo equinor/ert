@@ -247,7 +247,7 @@ def analysis_ES(
         # The user is responsible for scaling observation covariance (esmda usage):
         alpha=1,
         seed=rng,
-        inversion=module.inversion,
+        inversion=module.inversion.lower(),
     )
     truncation = module.enkf_truncation
 

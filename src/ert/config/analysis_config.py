@@ -93,10 +93,11 @@ class AnalysisConfig:
         analysis_set_var = config_dict.get(ConfigKeys.ANALYSIS_SET_VAR, [])
         inversion_str_map: Final = {
             "STD_ENKF": {
-                **dict.fromkeys(["EXACT", "0"], "exact"),
-                **dict.fromkeys(["SUBSPACE_EXACT_R", "1"], "subspace"),
-                **dict.fromkeys(["SUBSPACE_EE_R", "2"], "subspace"),
-                **dict.fromkeys(["SUBSPACE_RE", "3"], "subspace"),
+                **dict.fromkeys(["exact", "0"], "EXACT"),
+                **dict.fromkeys(
+                    ["subspace", "subspace_exact_r", "SUBSPACE_EXACT_R", "1"],
+                    "SUBSPACE",
+                ),
             }
         }
         deprecated_keys = ["ENKF_NCOMP", "ENKF_SUBSPACE_DIMENSION"]
@@ -142,7 +143,7 @@ class AnalysisConfig:
                     new_value = inversion_str_map[module_name][value]
                     ConfigWarning.warn(
                         f"Using {value} is deprecated, use:\n"
-                        f"ANALYSIS_SET_VAR {module_name} INVERSION {new_value.upper()}"
+                        f"ANALYSIS_SET_VAR {module_name} INVERSION {new_value}"
                     )
                     value = new_value
 

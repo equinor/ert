@@ -90,7 +90,7 @@ def test_update_report(
         experiment.observation_keys,
         ert_config.ensemble_config.parameters,
         ObservationSettings(auto_scale_observations=misfit_preprocess),
-        ESSettings(inversion="subspace"),
+        ESSettings(inversion="SUBSPACE"),
         progress_callback=events.append,
     )
 
@@ -126,7 +126,7 @@ def test_update_report_with_exception_in_analysis_ES(
             experiment.observation_keys,
             ert_config.ensemble_config.parameters,
             ObservationSettings(outlier_settings=OutlierSettings(alpha=0.0000000001)),
-            ESSettings(inversion="subspace"),
+            ESSettings(inversion="SUBSPACE"),
             progress_callback=events.append,
         )
 
@@ -193,7 +193,7 @@ def test_update_report_with_different_observation_status_from_smoother_update(
         experiment.observation_keys,
         ert_config.ensemble_config.parameters,
         update_settings,
-        ESSettings(inversion="subspace"),
+        ESSettings(inversion="SUBSPACE"),
         progress_callback=events.append,
     )
 
@@ -491,7 +491,7 @@ def test_update_snapshot(
         experiment.observation_keys,
         list(ert_config.ensemble_config.parameters),
         ObservationSettings(),
-        ESSettings(inversion="subspace"),
+        ESSettings(inversion="SUBSPACE"),
         rng=rng,
     )
 
@@ -614,7 +614,7 @@ def test_smoother_snapshot_alpha(
             update_settings=ObservationSettings(
                 outlier_settings=OutlierSettings(alpha=alpha)
             ),
-            es_settings=ESSettings(inversion="subspace"),
+            es_settings=ESSettings(inversion="SUBSPACE"),
             rng=rng,
         )
         assert result_snapshot.alpha == alpha

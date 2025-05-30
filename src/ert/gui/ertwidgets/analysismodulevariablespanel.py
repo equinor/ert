@@ -35,8 +35,6 @@ class AnalysisModuleVariablesPanel(QWidget):
 
         self.blockSignals(True)
 
-        layout.addRow(QLabel("AnalysisModule: STD_ENKF"))
-        layout.addRow(self.create_horizontal_line())
         layout.addRow(QLabel("Inversion Algorithm"))
         dropdown = QComboBox(self)
         options = analysis_module.model_fields["inversion"]
@@ -104,7 +102,7 @@ class AnalysisModuleVariablesPanel(QWidget):
 
     def update_inversion_algorithm(self, text: InversionTypeES) -> None:
         self.truncation_spinner.setEnabled(
-            not any(val in text.lower() for val in ["direct", "exact"])
+            not any(val in text.upper() for val in ["DIRECT", "EXACT"])
         )
         self.analysis_module.inversion = text
 

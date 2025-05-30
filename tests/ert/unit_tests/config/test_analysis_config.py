@@ -317,15 +317,50 @@ def test_num_realizations_0_means_all():
     )
 
 
-def test_incorrect_variable_deprecation_warning():
+@pytest.mark.parametrize(
+    "config, expected",
+    [
+        ("exact", "EXACT"),
+        ("0", "EXACT"),
+        ("subspace", "SUBSPACE"),
+        ("1", "SUBSPACE"),
+        ("subspace_exact_r", "SUBSPACE"),
+        ("SUBSPACE_EXACT_R", "SUBSPACE"),
+    ],
+)
+def test_incorrect_variable_deprecation_warning(config, expected):
     with pytest.warns(
         match=(
-            "Using 1 is deprecated, use:\nANALYSIS_SET_VAR STD_ENKF INVERSION SUBSPACE"
+            f"Using {config} is deprecated, use:\n"
+            f"ANALYSIS_SET_VAR STD_ENKF INVERSION {expected}"
         )
     ):
         AnalysisConfig.from_dict(
             {
-                ConfigKeys.ANALYSIS_SET_VAR: [["STD_ENKF", "INVERSION", "1"]],
+                ConfigKeys.ANALYSIS_SET_VAR: [["STD_ENKF", "INVERSION", config]],
+            }
+        )
+
+
+@pytest.mark.parametrize(
+    "config",
+    [
+        ("2"),
+        ("3"),
+        ("SUBSPACE_RE"),
+        ("SUBSPACE_EE_R"),
+        ("subspace_re"),
+        ("subspace_ee_r"),
+    ],
+)
+def test_incorrect_variable_inversion(config):
+    with pytest.raises(
+        ConfigValidationError,
+        match=f"Input should be 'EXACT' or 'SUBSPACE'.*{config.upper()}",
+    ):
+        AnalysisConfig.from_dict(
+            {
+                ConfigKeys.ANALYSIS_SET_VAR: [["STD_ENKF", "INVERSION", config]],
             }
         )
 
