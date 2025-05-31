@@ -93,7 +93,8 @@ def _compare_ensemble_params(
                 pl.col(c).map_elements(
                     lambda x: 0.0
                     if abs(x) < outlier_threshold
-                    else (abs(x) - outlier_threshold)
+                    else (abs(x) - outlier_threshold),
+                    return_dtype=pl.Float32,
                 )
             ).alias(c)
             for c in columns
@@ -104,7 +105,10 @@ def _compare_ensemble_params(
     outlier_percentage = truncated_df.select(
         [
             pl.concat_list(columns)
-            .map_elements(lambda row: sum(1 for x in row if x != 0.0) / len(row))
+            .map_elements(
+                lambda row: sum(1 for x in row if x != 0.0) / len(row),
+                return_dtype=pl.Float32,
+            )
             .alias("outlier_percentage")
         ]
     )["outlier_percentage"]
@@ -112,7 +116,7 @@ def _compare_ensemble_params(
     max_deviance = truncated_df.select(
         [
             pl.concat_list(columns)
-            .map_elements(lambda row: max(x for x in row))
+            .map_elements(lambda row: max(x for x in row), return_dtype=pl.Float32)
             .alias("max_deviance")
         ]
     )["max_deviance"]
