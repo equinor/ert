@@ -266,7 +266,7 @@ Creating the folders and files::
     ~/everest_example$: mkdir jobs
     ~/everest_example$: cd jobs
     ~/everest_example/jobs$: touch distance3d.py
-    ~/everest_example/jobs$: chmod 777 distance3d.py
+    ~/everest_example/jobs$: chmod a+x distance3d.py
 
 ``chmod +x distance3d.py``: command is used to change the access permissions for the file ``distance3d.py``, such that execution of the file is
 allowed.
