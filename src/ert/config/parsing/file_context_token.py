@@ -41,7 +41,7 @@ class FileContextToken(Token):
         else:
             return False
 
-    def __hash__(self) -> int:  # type: ignore
+    def __hash__(self) -> int:
         return hash(self.value)
 
     @classmethod
