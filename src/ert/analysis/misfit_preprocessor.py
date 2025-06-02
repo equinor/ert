@@ -80,15 +80,10 @@ def main(
     The procedure involves several steps:
 
     1. Response Scaling:
-        Each response in the data is scaled by its corresponding observation error.
-        This is done to balance the responses by their uncertainties.
-        By multiplying each response by its corresponding observation error,
-        we're weighting the responses based on their uncertainty.
-        Responses with larger observation errors (more uncertainty) will
-        be scaled up, while those with smaller errors will be scaled down.
-        Different types of observations might have different units or scales.
-        By scaling them with their respective errors, we're putting all responses
-        on a comparable scale, which is important for subsequent clustering and PCA.
+        Each response is divided by its observation error to normalize by uncertainty.
+        This scales down uncertain observations (large errors) and scales up
+        reliable observations (small errors), putting all responses on a
+        comparable scale for clustering and PCA analysis.
     2. PCA for Dimensionality Estimation:
         PCA is performed on the centered and scaled
         responses to estimate the intrinsic dimensionality of the data.
