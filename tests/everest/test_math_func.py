@@ -133,11 +133,15 @@ def test_math_func_auto_scaled_controls(copy_math_func_test_data_to_tmp):
 
     # Convergence is slower that's why more batches and start closer to final solution?
     config.controls[0].initial_guess = 0.2
-    config.optimization.max_batch_num = 10
+    config.optimization.max_batch_num = 8
     config_dict = {
         **config.model_dump(exclude_none=True),
         "input_constraints": [
-            {"weights": {"point.x": 1.0, "point.y": 1.0}, "upper_bound": 0.5}
+            {
+                "weights": {"point.x": 1.0, "point.y": 1.0},
+                "lower_bound": 0.2,
+                "upper_bound": 0.5,
+            }
         ],
     }
     config = EverestConfig.model_validate(config_dict)
@@ -226,3 +230,75 @@ def test_ensemble_creation(cached_example):
     with open_storage("everest_output/simulation_results", "r") as storage:
         ensembles = storage.ensembles
         assert sorted(ensemble.iteration for ensemble in ensembles) == sorted(range(6))
+
+
+@pytest.mark.integration_test
+def test_that_math_func_violating_output_constraints_has_no_result(
+    copy_math_func_test_data_to_tmp,
+):
+    config = EverestConfig.load_file("config_advanced.yml")
+    config_dict = config.model_dump(exclude_none=True)
+
+    # The first batch violates the output constraint:
+    config_dict["optimization"]["max_batch_num"] = 1
+    config_dict["controls"][0]["initial_guess"] = 0.05
+
+    config = EverestConfig.model_validate(config_dict)
+    run_model = EverestRunModel.create(config)
+    evaluator_server_config = EvaluatorServerConfig()
+    run_model.run_experiment(evaluator_server_config)
+    assert run_model.result is None  # No feasible result
+
+
+@pytest.mark.integration_test
+def test_that_math_func_violating_output_constraints_has_a_result(
+    copy_math_func_test_data_to_tmp,
+):
+    config = EverestConfig.load_file("config_advanced.yml")
+    config_dict = config.model_dump(exclude_none=True)
+
+    # The second batch does not violate the output constraint:
+    config_dict["optimization"]["max_batch_num"] = 2
+    config_dict["controls"][0]["initial_guess"] = 0.05
+
+    config = EverestConfig.model_validate(config_dict)
+    run_model = EverestRunModel.create(config)
+    evaluator_server_config = EvaluatorServerConfig()
+    run_model.run_experiment(evaluator_server_config)
+    assert run_model.result is not None  # Feasible result
+
+
+@pytest.mark.integration_test
+def test_that_math_func_violating_input_constraints_has_no_result(
+    copy_math_func_test_data_to_tmp,
+):
+    config = EverestConfig.load_file("config_advanced.yml")
+    config_dict = config.model_dump(exclude_none=True)
+
+    # The first batch violates the input constraint:
+    config_dict["optimization"]["max_batch_num"] = 1
+    config_dict["controls"][0]["initial_guess"] = 0.5
+
+    config = EverestConfig.model_validate(config_dict)
+    run_model = EverestRunModel.create(config)
+    evaluator_server_config = EvaluatorServerConfig()
+    run_model.run_experiment(evaluator_server_config)
+    assert run_model.result is None  # No feasible result
+
+
+@pytest.mark.integration_test
+def test_that_math_func_violating_input_constraints_has_a_result(
+    copy_math_func_test_data_to_tmp,
+):
+    config = EverestConfig.load_file("config_advanced.yml")
+    config_dict = config.model_dump(exclude_none=True)
+
+    # The second batch does not violate the input constraint:
+    config_dict["optimization"]["max_batch_num"] = 2
+    config_dict["controls"][0]["initial_guess"] = 0.5
+
+    config = EverestConfig.model_validate(config_dict)
+    run_model = EverestRunModel.create(config)
+    evaluator_server_config = EvaluatorServerConfig()
+    run_model.run_experiment(evaluator_server_config)
+    assert run_model.result is not None  # Feasible result
