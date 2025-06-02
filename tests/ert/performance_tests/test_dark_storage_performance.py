@@ -91,7 +91,7 @@ def get_record_observations(storage, ensemble_id, keyword: str, poly_ran):
             assert len(obs) == 0
 
     elif "POLY_RES_" in keyword:
-        n = int(keyword.split("@")[0][9:])
+        n = int(keyword.split("@", maxsplit=1)[0][9:])
         if n < poly_ran["gen_obs_count"]:
             num_general_obs = poly_ran["gen_obs_count"]
             rows_per_obs = poly_ran["gen_data_entries"] // poly_ran["gen_obs_every"]
