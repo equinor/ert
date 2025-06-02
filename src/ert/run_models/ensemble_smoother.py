@@ -21,7 +21,6 @@ logger = logging.getLogger(__name__)
 
 
 class EnsembleSmoother(UpdateRunModel):
-    target_ensemble: str
     experiment_name: str
     design_matrix: DesignMatrix | None
     parameter_configuration: list[ParameterConfig]

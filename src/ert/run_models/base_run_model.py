@@ -848,6 +848,7 @@ class BaseRunModel(BaseModelWithContextSupport, ABC):
 
 
 class UpdateRunModel(BaseRunModel):
+    target_ensemble: str
     analysis_settings: ESSettings
     update_settings: ObservationSettings
 

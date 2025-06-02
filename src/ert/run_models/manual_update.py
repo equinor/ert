@@ -16,7 +16,6 @@ logger = logging.getLogger(__name__)
 
 class ManualUpdate(UpdateRunModel):
     ensemble_id: str
-    target_ensemble: str
     support_restart: bool = False
 
     _prior: Ensemble = PrivateAttr()
