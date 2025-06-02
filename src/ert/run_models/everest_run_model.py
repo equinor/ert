@@ -190,7 +190,7 @@ class EverestRunModel(BaseRunModel):
         )
 
         assert everest_config.config_file is not None
-        config_file: Path = Path(everest_config.config_file)
+        config_file: Path = Path(everest_config.config_path)
 
         model_config = ModelConfig.from_dict(config_dict)
 
@@ -438,6 +438,7 @@ class EverestRunModel(BaseRunModel):
         optimizer = BasicOptimizer(
             enopt_config=self.enopt_config,
             evaluator=self._forward_model_evaluator,
+            everest_config=EverestConfig.load_file(self.user_config_file),
         )
 
         # Before each batch evaluation we check if we should abort:
