@@ -71,7 +71,7 @@ class StyleCustomizationView(CustomizationView):
         )
 
     def setObservationsColor(self, color_tuple: tuple[str, float]) -> None:
-        self._observs_color_box.color = color_tuple  # type: ignore[assignment]
+        self._observs_color_box.color = color_tuple
 
     @staticmethod
     def createColorBox(name: str) -> ColorBox:
@@ -89,7 +89,7 @@ class StyleCustomizationView(CustomizationView):
         for index, color_tuple in enumerate(color_cycle):
             if 0 <= index < len(self._color_boxes):
                 color_box = self._color_boxes[index]
-                color_box.color = color_tuple  # type: ignore[assignment]
+                color_box.color = color_tuple
 
     def applyCustomization(self, plot_config: "PlotConfig") -> None:
         plot_config.setDefaultStyle(self.default_style)

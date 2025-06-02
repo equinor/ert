@@ -22,9 +22,7 @@ WELL_ORDER = "everest/model/config.yml"
 CONFIG_FILE_ADVANCED = "config_advanced.yml"
 
 
-pytestmark = pytest.mark.xdist_group(name="starts_everest")
-
-
+@pytest.mark.xdist_group(name="starts_everest")
 def test_everest_entry_version():
     """Test calling everest with --version"""
     with capture_streams() as (out, err), pytest.raises(SystemExit):
@@ -34,6 +32,7 @@ def test_everest_entry_version():
     assert any(everest_version in channel for channel in channels)
 
 
+@pytest.mark.xdist_group(name="starts_everest")
 def test_everest_main_entry_bad_command():
     # Setup command line arguments for the test
     with capture_streams() as (_, err), pytest.raises(SystemExit):
@@ -46,7 +45,6 @@ def test_everest_main_entry_bad_command():
 
 @pytest.mark.skip_mac_ci
 @pytest.mark.integration_test
-@pytest.mark.xdist_group(name="starts_everest")
 @pytest.mark.xdist_group("math_func/config_minimal.yml")
 def test_everest_entry_run(cached_example):
     _, config_file, _, _ = cached_example("math_func/config_minimal.yml")
@@ -143,6 +141,7 @@ line: 2, column: 18. controls -> 0 -> initial_guess
 @skipif_no_everest_models
 @pytest.mark.everest_models_test
 @pytest.mark.integration_test
+@pytest.mark.xdist_group(name="starts_everest")
 def test_everest_main_configdump_entry(copy_egg_test_data_to_tmp):
     # Setup command line arguments
     with capture_streams() as (out, _):
@@ -162,6 +161,7 @@ def test_everest_main_configdump_entry(copy_egg_test_data_to_tmp):
 @pytest.mark.flaky(reruns=5)
 @pytest.mark.timeout(60)
 @pytest.mark.integration_test
+@pytest.mark.xdist_group(name="starts_everest")
 def test_stopping_local_queue_with_ctrl_c(capsys, copy_math_func_test_data_to_tmp):
     config = EverestConfig.load_file(CONFIG_FILE_ADVANCED)
 

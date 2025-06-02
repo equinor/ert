@@ -625,17 +625,17 @@ class LsfDriver(Driver):
                 and job_stat["running_seconds"]
                 == self._bhist_cache[job_id]["running_seconds"]
             ):
-                jobs[job_id] = cast(JobState, "DONE")  # or EXIT, we can't tell
+                jobs[job_id] = "DONE"  # or EXIT, we can't tell
             elif (
                 job_stat["running_seconds"]
                 > self._bhist_cache[job_id]["running_seconds"]
             ):
-                jobs[job_id] = cast(JobState, "RUN")
+                jobs[job_id] = "RUN"
             elif (
                 job_stat["pending_seconds"]
                 > self._bhist_cache[job_id]["pending_seconds"]
             ):
-                jobs[job_id] = cast(JobState, "PEND")
+                jobs[job_id] = "PEND"
         self._bhist_cache = data
         self._bhist_cache_timestamp = time.time()
         return _parse_jobs_dict(jobs)

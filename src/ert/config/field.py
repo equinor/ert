@@ -265,7 +265,7 @@ class Field(ParameterConfig):
         )
         ma[~ma.mask] = data
         ma = ma.reshape(self.mask.shape)  # type: ignore
-        ds = xr.Dataset({"values": (["x", "y", "z"], ma.filled())})  # type: ignore
+        ds = xr.Dataset({"values": (["x", "y", "z"], ma.filled())})
         ensemble.save_parameters(self.name, realization, ds)
 
     def load_parameters(
