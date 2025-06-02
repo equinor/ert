@@ -38,6 +38,9 @@ class BatchDataframes(TypedDict, total=False):
     realization_objectives: pl.DataFrame | None
     batch_constraints: pl.DataFrame | None
     realization_constraints: pl.DataFrame | None
+    batch_bound_constraint_violations: pl.DataFrame | None
+    batch_input_constraint_violations: pl.DataFrame | None
+    batch_output_constraint_violations: pl.DataFrame | None
     batch_objective_gradient: pl.DataFrame | None
     perturbation_objectives: pl.DataFrame | None
     batch_constraint_gradient: pl.DataFrame | None
@@ -58,6 +61,9 @@ class BatchStorageData:
         "realization_objectives",
         "batch_constraints",
         "realization_constraints",
+        "batch_bound_constraint_violations",
+        "batch_input_constraint_violations",
+        "batch_output_constraint_violations",
         "batch_objective_gradient",
         "perturbation_objectives",
         "batch_constraint_gradient",
@@ -113,6 +119,24 @@ class BatchStorageData:
     @property
     def realization_constraints(self) -> pl.DataFrame | None:
         return self._read_df_if_exists(self._path / "realization_constraints.parquet")
+
+    @property
+    def batch_bound_constraint_violations(self) -> pl.DataFrame | None:
+        return self._read_df_if_exists(
+            self._path / "batch_bound_constraint_violations.parquet"
+        )
+
+    @property
+    def batch_input_constraint_violations(self) -> pl.DataFrame | None:
+        return self._read_df_if_exists(
+            self._path / "batch_input_constraint_violations.parquet"
+        )
+
+    @property
+    def batch_output_constraint_violations(self) -> pl.DataFrame | None:
+        return self._read_df_if_exists(
+            self._path / "batch_output_constraint_violations.parquet"
+        )
 
     @property
     def batch_objective_gradient(self) -> pl.DataFrame | None:
@@ -386,6 +410,9 @@ class _FunctionResults(TypedDict):
     realization_objectives: pl.DataFrame
     batch_constraints: pl.DataFrame | None
     realization_constraints: pl.DataFrame | None
+    batch_bound_constraint_violations: pl.DataFrame | None
+    batch_input_constraint_violations: pl.DataFrame | None
+    batch_output_constraint_violations: pl.DataFrame | None
 
 
 class _GradientResults(TypedDict):
@@ -433,6 +460,10 @@ class EverestStorage:
             "variables": "control_value",
             "objectives": "objective_value",
             "constraints": "constraint_value",
+            "bound_violation": "bound_constraint_violation",
+            "linear_violation": "input_constraint_violation",
+            "nonlinear_violation": "output_constraint_violation",
+            "linear_constraint": "input_constraint_index",
             "nonlinear_constraint": "constraint_name",
             "perturbed_variables": "perturbed_control_value",
             "perturbed_objectives": "perturbed_objective_value",
@@ -453,10 +484,14 @@ class EverestStorage:
             "objective_name": pl.String,
             "control_name": pl.String,
             "constraint_name": pl.String,
+            "input_constraint_index": pl.UInt32,
             "total_objective_value": pl.Float64,
             "control_value": pl.Float64,
             "objective_value": pl.Float64,
             "constraint_value": pl.Float64,
+            "bound_constraint_violation": pl.Float64,
+            "input_constraint_violation": pl.Float64,
+            "output_constraint_violation": pl.Float64,
             "perturbed_control_value": pl.Float64,
             "perturbed_objective_value": pl.Float64,
             "perturbed_constraint_value": pl.Float64,
@@ -668,6 +703,53 @@ class EverestStorage:
             separator=":",
         )
 
+        batch_bound_constraint_violations = None
+        batch_input_constraint_violations = None
+        batch_output_constraint_violations = None
+        if results.constraint_info is not None:
+            if results.constraint_info.bound_violation is not None:
+                batch_bound_constraint_violations = self._ropt_to_df(
+                    results,
+                    "constraint_info",
+                    values=["bound_violation"],
+                    select=["batch_id", "variable"],
+                )
+                batch_bound_constraint_violations = (
+                    batch_bound_constraint_violations.pivot(
+                        on="control_name",
+                        values=["bound_constraint_violation"],
+                        separator=":",
+                    )
+                )
+            if results.constraint_info.linear_violation is not None:
+                batch_input_constraint_violations = self._ropt_to_df(
+                    results,
+                    "constraint_info",
+                    values=["linear_violation"],
+                    select=["batch_id", "linear_constraint"],
+                )
+                batch_input_constraint_violations = (
+                    batch_input_constraint_violations.pivot(
+                        on="input_constraint_index",
+                        values=["input_constraint_violation"],
+                        separator=":",
+                    )
+                )
+            if results.constraint_info.nonlinear_violation is not None:
+                batch_output_constraint_violations = self._ropt_to_df(
+                    results,
+                    "constraint_info",
+                    values=["nonlinear_violation"],
+                    select=["batch_id", "nonlinear_constraint"],
+                )
+                batch_output_constraint_violations = (
+                    batch_output_constraint_violations.pivot(
+                        on="constraint_name",
+                        values=["output_constraint_violation"],
+                        separator=":",
+                    )
+                )
+
         realization_objectives = realization_objectives.pivot(
             on="objective_name",
             values="objective_value",
@@ -684,6 +766,9 @@ class EverestStorage:
             "realization_objectives": realization_objectives,
             "batch_constraints": batch_constraints,
             "realization_constraints": realization_constraints,
+            "batch_bound_constraint_violations": batch_bound_constraint_violations,
+            "batch_input_constraint_violations": batch_input_constraint_violations,
+            "batch_output_constraint_violations": batch_output_constraint_violations,
         }
 
     def _store_gradient_results(self, results: GradientResults) -> _GradientResults:
@@ -882,6 +967,15 @@ class EverestStorage:
                     "batch_constraints": batch_dict.get("batch_constraints"),
                     "realization_constraints": batch_dict.get(
                         "realization_constraints"
+                    ),
+                    "batch_bound_constraint_violations": batch_dict.get(
+                        "batch_bound_constraint_violations"
+                    ),
+                    "batch_input_constraint_violations": batch_dict.get(
+                        "batch_input_constraint_violations"
+                    ),
+                    "batch_output_constraint_violations": batch_dict.get(
+                        "batch_output_constraint_violations"
                     ),
                     "batch_objective_gradient": batch_dict.get(
                         "batch_objective_gradient"
