@@ -205,7 +205,7 @@ def test_setup_multiple_data_assimilation(tmp_path):
         model.active_realizations
         == [True] * 5 + [False] * 3 + [True] * 1 + [False] * 91
     )
-    assert model.target_ensemble_format == "test_case_%d"
+    assert model.target_ensemble == "test_case_%d"
     assert model.prior_ensemble_id == "b272fe09-83ac-4744-b667-9a0a5415420b"
     assert model.restart_run is False
 

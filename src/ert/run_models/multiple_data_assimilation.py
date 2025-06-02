@@ -34,7 +34,7 @@ class MultipleDataAssimilation(UpdateRunModel):
     """
 
     default_weights: ClassVar = "4, 2, 1"
-    target_ensemble_format: str
+    target_ensemble: str
     experiment_name: str
     design_matrix: DesignMatrix | None
     parameter_configuration: list[ParameterConfig]
@@ -137,7 +137,7 @@ class MultipleDataAssimilation(UpdateRunModel):
                 experiment,
                 ensemble_size=self.ensemble_size,
                 iteration=0,
-                name=self.target_ensemble_format % 0,
+                name=self.target_ensemble % 0,
             )
             self.set_env_key("_ERT_EXPERIMENT_ID", str(experiment.id))
             self.set_env_key("_ERT_ENSEMBLE_ID", str(prior.id))
@@ -174,7 +174,7 @@ class MultipleDataAssimilation(UpdateRunModel):
         for iteration, weight in weights_to_run:
             posterior = self.update(
                 prior,
-                self.target_ensemble_format % (iteration + 1),
+                self.target_ensemble % (iteration + 1),
                 weight=weight,
             )
             posterior_args = create_run_arguments(
