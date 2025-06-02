@@ -359,7 +359,7 @@ def _setup_multiple_data_assimilation(
     return MultipleDataAssimilation(
         random_seed=config.random_seed,
         active_realizations=active_realizations,
-        target_ensemble_format=_iterative_ensemble_format(args),
+        target_ensemble=_iterative_ensemble_format(args),
         weights=args.weights,
         restart_run=restart_run,
         prior_ensemble_id=prior_ensemble,

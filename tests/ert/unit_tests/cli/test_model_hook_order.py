@@ -138,7 +138,7 @@ def test_hook_call_order_es_mda(monkeypatch, use_tmpdir):
         model_config = ConfigDict(frozen=False, extra="allow")
 
     test_class = ESMDAWithMockSupport(
-        target_ensemble_format="ens%d",
+        target_ensemble="ens%d",
         restart_run=False,
         prior_ensemble_id="N/A",
         experiment_name="exp",
