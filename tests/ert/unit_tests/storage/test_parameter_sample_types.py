@@ -423,6 +423,40 @@ def test_gen_kw(storage, tmpdir, config_str, expected, extra_files, expectation)
             )
 
 
+@pytest.mark.parametrize(
+    "active_reals, expectation",
+    [
+        (
+            [False, False],
+            pytest.raises(
+                KeyError, match="No KW_NAME dataset in storage for ensemble default"
+            ),
+        ),
+        (
+            [False, True],
+            pytest.raises(
+                IndexError, match=r"No matching realizations \[0\] found for KW_NAME"
+            ),
+        ),
+    ],
+)
+def test_gen_kw_missing_in_storage(storage, tmpdir, active_reals, expectation):
+    with tmpdir.as_cwd():
+        config = dedent(
+            """
+        NUM_REALIZATIONS 2
+        GEN_KW KW_NAME prior.txt
+        """
+        )
+        with open("config.ert", mode="w", encoding="utf-8") as fh:
+            fh.writelines(config)
+        with open("prior.txt", mode="w", encoding="utf-8") as fh:
+            fh.writelines("MY_KEYWORD NORMAL 0 1")
+        with expectation:
+            _, ensemble = create_runpath(storage, "config.ert", active_reals)
+            ensemble.load_parameters("KW_NAME", 0)
+
+
 @pytest.mark.usefixtures("set_site_config")
 @pytest.mark.parametrize(
     "config_str, expected, extra_files",
