@@ -34,7 +34,6 @@ class MultipleDataAssimilation(UpdateRunModel):
     """
 
     default_weights: ClassVar = "4, 2, 1"
-    target_ensemble: str
     experiment_name: str
     design_matrix: DesignMatrix | None
     parameter_configuration: list[ParameterConfig]
