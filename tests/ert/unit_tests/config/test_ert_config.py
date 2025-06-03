@@ -2364,3 +2364,31 @@ def test_validation_error_on_gen_kw_with_design_matrix_group_name(tmp_path):
                 GEN_KW DESIGN_MATRIX {tmp_path}/coeffs_priors
                 """
         )
+
+
+@pytest.mark.parametrize(
+    "invalid_parameter_definition_name",
+    [
+        pytest.param("CWD UNIFORM 0 1", id="already_a_magic_string"),
+        pytest.param("a UNIFORM 0 1", id="already_defined_in_user_config"),
+    ],
+)
+def test_validation_error_on_invalid_parameter_name(
+    invalid_parameter_definition_name, tmp_path, caplog
+):
+    with open(tmp_path / "coeffs_priors", mode="w", encoding="utf-8") as fh:
+        fh.write(invalid_parameter_definition_name)
+    with pytest.raises(
+        ConfigValidationError,
+        match=(
+            r"Found reserved parameter name\(s\): \w+. The names are already "
+            "in use as magic strings or defined in the user config."
+        ),
+    ):
+        ErtConfig.from_file_contents(
+            f"""\
+                DEFINE <a> 3
+                NUM_REALIZATIONS 1
+                GEN_KW COEFFS {tmp_path}/coeffs_priors
+                """
+        )
