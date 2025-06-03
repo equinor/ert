@@ -5,6 +5,7 @@ import shutil
 from pathlib import Path
 
 import numpy as np
+import orjson
 import polars as pl
 import pytest
 
@@ -29,6 +30,54 @@ def copy_shared(tmp_path, block_storage_path):
         shutil.copy(
             block_storage_path / f"all_data_types/{file}",
             tmp_path / "all_data_types" / file,
+        )
+
+
+@pytest.fixture()
+def copy_shared_design(tmp_path, block_storage_path):
+    shutil.copytree(
+        block_storage_path / "design_poly",
+        tmp_path / "design_poly",
+    )
+    yield tmp_path / "design_poly"
+
+
+@pytest.mark.parametrize(
+    "ert_version",
+    [
+        "14.2",
+    ],
+)
+def test_migration_to_genkw_with_polars_and_design_matrix(
+    copy_shared_design, ert_version, snapshot
+):
+    # we need to make a dummy ert config to open storage
+    local_storage_set_ert_config(ErtConfig.from_file_contents("NUM_REALIZATIONS 1\n"))
+    storage_path = copy_shared_design / f"version-{ert_version}"
+    with open_storage(storage_path, "w") as storage:
+        experiments = list(storage.experiments)
+        assert len(experiments) == 1
+        experiment = experiments[0]
+        ensembles = list(experiment.ensembles)
+        assert len(ensembles) == 1
+        ensemble = ensembles[0]
+        df = ensemble.load_parameters("DESIGN_MATRIX")
+        assert isinstance(df, pl.DataFrame)
+        assert df.schema == pl.Schema(
+            {
+                "a": pl.Int64,
+                "category": pl.String,
+                "b": pl.Int64,
+                "c": pl.Int64,
+                "realization": pl.Int64,
+            }
+        )
+        snapshot.assert_match(
+            orjson.dumps(df.to_dicts(), option=orjson.OPT_INDENT_2)
+            .decode("utf-8")
+            .strip()
+            + "\n",
+            "design_matrix_snapshot.json",
         )
 
 
@@ -146,6 +195,10 @@ def test_that_storage_matches(
         # We need to normalize some irrelevant details:
         experiment.parameter_configuration["PORO"].mask_file = ""
         assert experiment.templates_configuration == [("\nBPR:<BPR>\n", "params.txt")]
+        df = ensemble.load_parameters("BPR")
+        assert isinstance(df, pl.DataFrame)
+        assert df.schema == pl.Schema({"BPR": pl.Float64, "realization": pl.Int64})
+        assert df["realization"].to_list() == list(range(ensemble.ensemble_size))
         snapshot.assert_match(
             str(dict(sorted(experiment.parameter_configuration.items()))) + "\n",
             "parameters",
