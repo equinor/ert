@@ -200,6 +200,14 @@ class EnsembleConfig(BaseModel):
             if isinstance(val, GenKwConfig)
         ]
 
+    def get_all_gen_kw_parameter_names(self) -> list[str]:
+        return [
+            parameter_key
+            for p in self.parameter_configs.values()
+            if isinstance(p, GenKwConfig)
+            for parameter_key in p.parameter_keys
+        ]
+
     @property
     def parameters(self) -> list[str]:
         return list(self.parameter_configs)

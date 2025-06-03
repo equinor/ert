@@ -710,6 +710,21 @@ class ErtConfig(BaseModel):
         )
         return self
 
+    @model_validator(mode="after")
+    def validate_genkw_parameter_name_overlap(self):
+        overlapping_parameter_names = [
+            parameter_name
+            for parameter_name in self.ensemble_config.get_all_gen_kw_parameter_names()
+            if f"<{parameter_name}>" in self.substitutions
+        ]
+        if overlapping_parameter_names:
+            raise ConfigValidationError(
+                f"Found reserved parameter name(s): "
+                f"{', '.join(overlapping_parameter_names)}. The names are already in "
+                "use as magic strings or defined in the user config."
+            )
+        return self
+
     @property
     def observations(self) -> dict[str, pl.DataFrame]:
         return self.enkf_obs.datasets
@@ -1023,31 +1038,37 @@ class ErtConfig(BaseModel):
         env_vars = {}
         for key, val in config_dict.get("SETENV", []):
             env_vars[key] = substitutions.substitute(val)
-
-        return cls(
-            substitutions=substitutions,
-            ensemble_config=ensemble_config,
-            ens_path=config_dict.get(ConfigKeys.ENSPATH, ErtConfig.DEFAULT_ENSPATH),
-            env_vars=env_vars,
-            random_seed=_seed_sequence(config_dict.get(ConfigKeys.RANDOM_SEED)),
-            analysis_config=analysis_config,
-            queue_config=queue_config,
-            workflow_jobs=workflow_jobs,
-            workflows=workflows,
-            hooked_workflows=hooked_workflows,
-            runpath_file=Path(runpath_file),
-            ert_templates=read_templates(config_dict),
-            installed_forward_model_steps=installed_forward_model_steps,
-            forward_model_steps=cls._create_list_of_forward_model_steps_to_run(
-                installed_forward_model_steps,
-                substitutions,
-                config_dict,
-            ),
-            runpath_config=model_config,
-            user_config_file=config_file_path,
-            observation_config=obs_configs,
-            enkf_obs=observations,
-        )
+        try:
+            return cls(
+                substitutions=substitutions,
+                ensemble_config=ensemble_config,
+                ens_path=config_dict.get(ConfigKeys.ENSPATH, ErtConfig.DEFAULT_ENSPATH),
+                env_vars=env_vars,
+                random_seed=_seed_sequence(config_dict.get(ConfigKeys.RANDOM_SEED)),
+                analysis_config=analysis_config,
+                queue_config=queue_config,
+                workflow_jobs=workflow_jobs,
+                workflows=workflows,
+                hooked_workflows=hooked_workflows,
+                runpath_file=Path(runpath_file),
+                ert_templates=read_templates(config_dict),
+                installed_forward_model_steps=installed_forward_model_steps,
+                forward_model_steps=cls._create_list_of_forward_model_steps_to_run(
+                    installed_forward_model_steps,
+                    substitutions,
+                    config_dict,
+                ),
+                runpath_config=model_config,
+                user_config_file=config_file_path,
+                observation_config=obs_configs,
+                enkf_obs=observations,
+            )
+        except PydanticValidationError as err:
+            # pydantic catches ValueError (which ConfigValidationError inherits from),
+            # so we need to unpack them again.
+            for e in err.errors():
+                errors.append(e["ctx"]["error"])
+            raise ConfigValidationError.from_collected(errors) from err
 
     @classmethod
     def _create_list_of_forward_model_steps_to_run(
