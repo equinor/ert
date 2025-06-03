@@ -21,13 +21,13 @@ from ert.scheduler.event import FinishedEvent
 from everest.config import EverestConfig, ServerConfig
 from everest.detached import (
     ServerStatus,
+    everserver,
     everserver_status,
     start_experiment,
     start_server,
     wait_for_server,
 )
-from everest.detached.jobs import everserver
-from everest.detached.jobs.everserver import (
+from everest.detached.everserver import (
     ExperimentComplete,
     ExperimentRunnerState,
     _everserver_thread,
@@ -46,7 +46,7 @@ def setup_client(monkeypatch):
             return "password"
 
         server_config_mock.__getitem__.side_effect = getitem
-        monkeypatch.setattr(everest.detached.jobs.everserver, "uvicorn", uvicorn_mock)
+        monkeypatch.setattr(everest.detached.everserver, "uvicorn", uvicorn_mock)
         subscribers = {}
         _everserver_thread(
             ExperimentRunnerState(events=events, subscribers=subscribers),
@@ -96,7 +96,7 @@ def mock_server(monkeypatch):
             _everserver_thread(shared_data, server_config, msg_queue)
 
         monkeypatch.setattr(
-            everest.detached.jobs.everserver, "_everserver_thread", server_mock
+            everest.detached.everserver, "_everserver_thread", server_mock
         )
 
     yield func
@@ -135,7 +135,7 @@ def test_hostfile_storage(change_to_tmpdir):
 
 @patch("sys.argv", ["name", "--output-dir", "everest_output"])
 @patch(
-    "everest.detached.jobs.everserver._configure_loggers",
+    "everest.detached.everserver._configure_loggers",
     side_effect=configure_everserver_logger,
 )
 def test_configure_logger_failure(_, change_to_tmpdir):
@@ -150,7 +150,7 @@ def test_configure_logger_failure(_, change_to_tmpdir):
 
 @pytest.mark.integration_test
 @patch("sys.argv", ["name", "--output-dir", "everest_output"])
-@patch("everest.detached.jobs.everserver._configure_loggers")
+@patch("everest.detached.everserver._configure_loggers")
 def test_status_running_complete(_, change_to_tmpdir, mock_server):
     mock_server(EverestExitCode.COMPLETED)
 
@@ -166,7 +166,7 @@ def test_status_running_complete(_, change_to_tmpdir, mock_server):
 
 @pytest.mark.integration_test
 @patch("sys.argv", ["name", "--output-dir", "everest_output"])
-@patch("everest.detached.jobs.everserver._configure_loggers")
+@patch("everest.detached.everserver._configure_loggers")
 def test_status_failed_job(_, change_to_tmpdir, mock_server):
     mock_server(EverestExitCode.TOO_FEW_REALIZATIONS)
     everserver.main()
@@ -181,7 +181,7 @@ def test_status_failed_job(_, change_to_tmpdir, mock_server):
 
 @pytest.mark.integration_test
 @patch("sys.argv", ["name", "--output-dir", "everest_output"])
-@patch("everest.detached.jobs.everserver._configure_loggers")
+@patch("everest.detached.everserver._configure_loggers")
 async def test_status_exception(_, change_to_tmpdir, min_config):
     config = EverestConfig(**min_config)
 

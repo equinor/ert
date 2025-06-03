@@ -46,7 +46,7 @@ def test_logging_setup(copy_math_func_test_data_to_tmp):
     assert os.path.exists(everest_log_path)
     assert os.path.exists(endpoint_log_path)
 
-    assert "everest.detached.jobs.everserver INFO: Output directory:" in Path(
+    assert "everest.detached.everserver INFO: Output directory:" in Path(
         everest_log_path
     ).read_text(encoding="utf-8")
     assert "Process exited with status code 1" in Path(
