@@ -3,6 +3,7 @@ import pytest
 from ert.ensemble_evaluator.config import EvaluatorServerConfig
 from ert.run_models.everest_run_model import EverestRunModel
 from everest.config import EverestConfig
+from tests.everest.utils import get_optimal_result
 
 
 @pytest.mark.integration_test
@@ -41,6 +42,8 @@ def test_discrete_optimizer(copy_math_func_test_data_to_tmp):
     evaluator_server_config = EvaluatorServerConfig()
     run_model.run_experiment(evaluator_server_config)
 
+    optimal_result = get_optimal_result(config.optimization_output_dir)
+
     # Assert
-    assert run_model.result.controls["point.x"] == 3
-    assert run_model.result.controls["point.y"] == 7
+    assert optimal_result.controls["point.x"] == 3
+    assert optimal_result.controls["point.y"] == 7

@@ -44,10 +44,7 @@ from everest.config import (
     ObjectiveFunctionConfig,
     OutputConstraintConfig,
 )
-from everest.everest_storage import (
-    EverestStorage,
-    OptimalResult,
-)
+from everest.everest_storage import EverestStorage
 from everest.optimizer.everest2ropt import everest2ropt
 from everest.optimizer.opt_model_transforms import (
     EverestOptModelTransforms,
@@ -145,7 +142,6 @@ class EverestRunModel(BaseRunModel):
     model_realizations: list[NonNegativeInt]
     keep_run_path: bool
 
-    _result: OptimalResult | None = PrivateAttr(default=None)
     _exit_code: EverestExitCode | None = PrivateAttr(default=None)
     _experiment: Experiment | None = PrivateAttr(default=None)
     _eval_server_cfg: EvaluatorServerConfig | None = PrivateAttr(default=None)
@@ -294,10 +290,6 @@ class EverestRunModel(BaseRunModel):
     def exit_code(self) -> EverestExitCode | None:
         return self._exit_code
 
-    @property
-    def result(self) -> OptimalResult | None:
-        return self._result
-
     def __repr__(self) -> str:
         return f"EverestRunModel(config={self.user_config_file})"
 
@@ -403,9 +395,6 @@ class EverestRunModel(BaseRunModel):
             and optimizer_exit_code is not OptimizerExitCode.USER_ABORT
         ):
             self._ever_storage.export_everest_opt_results_to_csv()
-
-        # Extract the best result from the storage.
-        self._result = self._ever_storage.get_optimal_result()
 
         if self._exit_code is None:
             match optimizer_exit_code:

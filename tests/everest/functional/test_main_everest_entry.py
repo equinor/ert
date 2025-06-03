@@ -9,6 +9,7 @@ import pytest
 from ruamel.yaml import YAML
 from tests.everest.utils import (
     capture_streams,
+    get_optimal_result,
     skipif_no_everest_models,
 )
 
@@ -16,7 +17,6 @@ from everest import __version__ as everest_version
 from everest.bin.main import start_everest
 from everest.config import EverestConfig, ServerConfig
 from everest.detached import ServerStatus, everserver_status
-from everest.everest_storage import EverestStorage
 
 WELL_ORDER = "everest/model/config.yml"
 CONFIG_FILE_ADVANCED = "config_advanced.yml"
@@ -59,9 +59,7 @@ def test_everest_entry_run(cached_example):
 
     assert status["status"] == ServerStatus.completed
 
-    storage = EverestStorage(Path(config.optimization_output_dir))
-    storage.read_from_output_dir()
-    optimal = storage.get_optimal_result()
+    optimal = get_optimal_result(config.optimization_output_dir)
 
     assert optimal.controls["point.x"] == pytest.approx(0.5, abs=0.05)
     assert optimal.controls["point.y"] == pytest.approx(0.5, abs=0.05)

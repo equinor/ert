@@ -4,7 +4,6 @@ import json
 import logging
 import os
 import traceback
-from dataclasses import dataclass
 from functools import cached_property
 from pathlib import Path
 from typing import Any, ClassVar, TypedDict
@@ -18,13 +17,6 @@ from everest.config.output_constraint_config import OutputConstraintConfig
 from everest.strings import EVEREST
 
 logger = logging.getLogger(__name__)
-
-
-@dataclass
-class OptimalResult:
-    batch: int
-    controls: dict[str, Any]
-    total_objective: float
 
 
 def try_read_df(path: Path) -> pl.DataFrame | None:
@@ -1038,38 +1030,6 @@ class EverestStorage:
             ):
                 b.write_metadata(is_improvement=True)
                 max_total_objective = total_objective
-
-    def get_optimal_result(self) -> OptimalResult | None:
-        matching_batches = [
-            b
-            for b in self.data.batches_with_function_results
-            if not b.batch_objectives.is_empty() and b.is_improvement
-        ]
-
-        if matching_batches:
-            matching_batches.sort(
-                key=lambda b: -b.batch_objectives.select(
-                    pl.col("total_objective_value").sample(n=1)
-                ).item()
-            )
-            batch = matching_batches[0]
-            controls_dict = batch.realization_controls.drop(
-                [
-                    "batch_id",
-                    "simulation_id",
-                    "realization",
-                ]
-            ).to_dicts()[0]
-
-            return OptimalResult(
-                batch=batch.batch_id,
-                controls=controls_dict,
-                total_objective=batch.batch_objectives.select(
-                    pl.col("total_objective_value")
-                ).item(),
-            )
-
-        return None
 
     def export_dataframes(
         self,

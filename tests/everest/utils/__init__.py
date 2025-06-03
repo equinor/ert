@@ -1,3 +1,4 @@
+from .optimal_result import get_optimal_result
 from .utils import (
     MockParser,
     capture_streams,
@@ -15,6 +16,7 @@ __all__ = [
     "capture_streams",
     "create_cached_mocked_test_case",
     "everest_default_jobs",
+    "get_optimal_result",
     "relpath",
     "satisfy",
     "satisfy_callable",
