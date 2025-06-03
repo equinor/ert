@@ -35,6 +35,7 @@ from .ensemble_information_filter_panel import EnsembleInformationFilterPanel
 from .ensemble_smoother_panel import EnsembleSmootherPanel
 from .evaluate_ensemble_panel import EvaluateEnsemblePanel
 from .experiment_config_panel import ExperimentConfigPanel
+from .manual_enif_update_panel import ManualEnIFUpdatePanel
 from .manual_update_panel import ManualUpdatePanel
 from .multiple_data_assimilation_panel import MultipleDataAssimilationPanel
 from .run_dialog import RunDialog
@@ -211,6 +212,10 @@ class ExperimentPanel(QWidget):
         )
         self.addExperimentConfigPanel(
             ManualUpdatePanel(ensemble_size, run_path, notifier, analysis_config),
+            experiment_type_valid,
+        )
+        self.addExperimentConfigPanel(
+            ManualEnIFUpdatePanel(ensemble_size, run_path, notifier, analysis_config),
             experiment_type_valid,
         )
 
