@@ -122,13 +122,13 @@ def test_surface_param(
 
         # Assert that the data has been internalised to storage
         if expect_num_loaded > 0:
-            arr = fs.load_parameters("MY_PARAM", 0)["values"].values.T
-            assert arr.flatten().tolist() == [0.0, 1.0, 2.0, 3.0]
+            arr = fs.load_parameters_numpy("MY_PARAM", np.array([0]))
+            assert arr.flatten().tolist() == [0.0, 2.0, 1.0, 3.0]
         else:
             with pytest.raises(
                 KeyError, match="No dataset 'MY_PARAM' in storage for realization 0"
             ):
-                fs.load_parameters("MY_PARAM", 0)["values"]
+                fs.load_parameters_numpy("MY_PARAM", np.array([0]))
 
 
 @pytest.mark.parametrize(
@@ -221,7 +221,7 @@ def test_that_first_three_parameters_sampled_snapshot(tmpdir, storage):
         with open("prior.txt", mode="w", encoding="utf-8") as fh:
             fh.writelines("MY_KEYWORD NORMAL 0 1")
         _, fs = create_runpath(storage, "config.ert", [True] * 3)
-        prior = fs.load_parameters("KW_NAME", range(3))["values"].values.ravel()
+        prior = fs.load_parameters_numpy("KW_NAME", range(3)).T.flatten()
         expected = np.array([-0.8814228, 1.5847818, 1.009956])
         np.testing.assert_almost_equal(prior, expected)
 
@@ -375,9 +375,13 @@ def test_gen_kw_optional_template(storage, tmpdir, config_str, expected):
             fh.writelines("MY_KEYWORD NORMAL 0 1")
 
         create_runpath(storage, "config.ert")
-        assert next(iter(storage.ensembles)).load_parameters("KW_NAME")[
-            "values"
-        ].values.flatten().tolist() == pytest.approx([expected])
+        ens = next(iter(storage.ensembles))
+        realizations_with_params = np.flatnonzero(
+            ens.get_realization_mask_with_parameters()
+        )
+        assert ens.load_parameters_numpy(
+            "KW_NAME", realizations_with_params
+        ).flatten().tolist() == pytest.approx([expected])
 
 
 def write_file(fname, contents):
