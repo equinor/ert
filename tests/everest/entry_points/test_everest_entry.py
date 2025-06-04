@@ -42,10 +42,19 @@ def test_everest_entry_debug(
     wait_for_server_mock,
     start_monitor_mock,
     caplog,
+    tmp_path,
     copy_math_func_test_data_to_tmp,
 ):
     """Test running everest with --debug"""
-    with caplog.at_level(logging.DEBUG):
+
+    # Need to deactivate the logging.config.dictConfig() statement in the entry
+    # point for the caplog fixture to be able to catch logs:
+    logger_conf = tmp_path / "dummy_logger.conf"
+    logger_conf.write_text("", encoding="utf-8")
+    with (
+        patch("everest.bin.everest_script.LOGGING_CONFIG", str(logger_conf)),
+        caplog.at_level(logging.DEBUG),
+    ):
         everest_entry([CONFIG_FILE_MINIMAL, "--debug", "--skip"])
     logstream = "\n".join(caplog.messages)
     start_server_mock.assert_called_once()
