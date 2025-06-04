@@ -38,8 +38,8 @@ class TimestampedFileHandler(logging.FileHandler):
         )
         filename, extension = os.path.splitext(filename)
 
-        if "ert_config" in kwargs:
-            config_file_path = pathlib.Path(kwargs.pop("ert_config"))
+        if "config_filename" in kwargs:
+            config_file_path = pathlib.Path(kwargs.pop("config_filename"))
             name, ext = os.path.splitext(config_file_path.name)
             config_filename = f"{name}-{ext[1:]}"
             filename = f"{filename}-{config_filename}-{timestamp}{extension}"
