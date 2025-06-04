@@ -82,7 +82,6 @@ class StorageService(BaseService):
 
             except requests.ConnectionError as ce:
                 logging.getLogger(__name__).info(f"Could not connect to {url}: {ce}")
-
         raise TimeoutError(
             "None of the URLs provided for the ert storage server worked."
         )

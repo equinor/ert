@@ -15,6 +15,7 @@ from fastapi.testclient import TestClient
 from starlette.websockets import WebSocketDisconnect
 
 import everest
+from ert.dark_storage.endpoints.experiment_server import _everserver_thread
 from ert.ensemble_evaluator import EndEvent
 from ert.run_models.everest_run_model import EverestExitCode
 from ert.scheduler.event import FinishedEvent
@@ -30,7 +31,6 @@ from everest.detached import (
 from everest.detached.everserver import (
     ExperimentComplete,
     ExperimentRunnerState,
-    _everserver_thread,
 )
 from everest.everest_storage import EverestStorage
 
