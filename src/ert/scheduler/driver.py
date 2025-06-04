@@ -117,9 +117,13 @@ class Driver(ABC):
                 )
             except FileNotFoundError as e:
                 return (False, str(e))
-            except OSError:
-                await asyncio.sleep(retry_interval)
-                continue
+            except OSError as e:
+                if e.errno == 24:
+                    # Too many files open error, we try again
+                    await asyncio.sleep(retry_interval)
+                    continue
+                else:
+                    return (False, str(e))
 
             stdout, stderr = await process.communicate(stdin)
 
