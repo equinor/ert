@@ -39,13 +39,14 @@ if TYPE_CHECKING:
     from ert.namespace import Namespace
     from ert.run_models.event import StatusEvents
 
+logger = logging.getLogger(__name__)
+
 
 def create_model(
     config: ErtConfig,
     args: Namespace,
     status_queue: SimpleQueue[StatusEvents],
 ) -> BaseRunModel:
-    logger = logging.getLogger(__name__)
     logger.info(
         "Initiating experiment",
         extra={
@@ -57,7 +58,6 @@ def create_model(
 
     if args.mode == TEST_RUN_MODE:
         return _setup_single_test_run(config, args, status_queue)
-    validate_minimum_realizations(config, args)
     if args.mode == ENSEMBLE_EXPERIMENT_MODE:
         return _setup_ensemble_experiment(config, args, status_queue)
     if args.mode == EVALUATE_ENSEMBLE_MODE:
@@ -85,7 +85,11 @@ def _setup_single_test_run(
     experiment_name = (
         "single-test-run" if args.experiment_name is None else args.experiment_name
     )
-
+    active_realizations = _get_and_validate_active_realizations_list(args, config)
+    if not active_realizations[0]:
+        raise ConfigValidationError(
+            "Cannot run single test run when the first realization is inactive."
+        )
     return SingleTestRun(
         random_seed=config.random_seed,
         runpath_file=config.runpath_file,
@@ -112,9 +116,10 @@ def _setup_single_test_run(
     )
 
 
-def validate_minimum_realizations(config: ErtConfig, args: Namespace) -> None:
+def validate_minimum_realizations(
+    config: ErtConfig, active_realizations: list[bool]
+) -> None:
     min_realizations_count = config.analysis_config.minimum_required_realizations
-    active_realizations = _get_active_realizations_list(args, config)
     active_realizations_count = int(np.sum(active_realizations))
     if active_realizations_count < min_realizations_count:
         config.analysis_config.minimum_required_realizations = active_realizations_count
@@ -130,7 +135,8 @@ def _setup_ensemble_experiment(
     args: Namespace,
     status_queue: SimpleQueue[StatusEvents],
 ) -> EnsembleExperiment:
-    active_realizations = _get_active_realizations_list(args, config)
+    active_realizations = _get_and_validate_active_realizations_list(args, config)
+    validate_minimum_realizations(config, active_realizations)
     experiment_name = args.experiment_name
     assert experiment_name is not None
 
@@ -165,8 +171,8 @@ def _setup_evaluate_ensemble(
     args: Namespace,
     status_queue: SimpleQueue[StatusEvents],
 ) -> EvaluateEnsemble:
-    active_realizations = _get_active_realizations_list(args, config)
-
+    active_realizations = _get_and_validate_active_realizations_list(args, config)
+    validate_minimum_realizations(config, active_realizations)
     return EvaluateEnsemble(
         random_seed=config.random_seed,
         active_realizations=active_realizations,
@@ -191,18 +197,46 @@ def _setup_evaluate_ensemble(
     )
 
 
-def _get_active_realizations_list(args: Namespace, config: ErtConfig) -> list[bool]:
+def _get_and_validate_active_realizations_list(
+    args: Namespace, config: ErtConfig
+) -> list[bool]:
     ensemble_size = config.runpath_config.num_realizations
     if (
         config.analysis_config.design_matrix is not None
-        and config.analysis_config.design_matrix.active_realizations is not None
+        and (
+            dm_active_realizations
+            := config.analysis_config.design_matrix.active_realizations
+        )
+        is not None
     ):
-        if args.realizations is None:
-            return config.analysis_config.design_matrix.active_realizations
-        else:
-            ensemble_size = len(
-                config.analysis_config.design_matrix.active_realizations
+        if ensemble_size != len(dm_active_realizations):
+            ensemble_size = min(ensemble_size, len(dm_active_realizations))
+            logger.warning(
+                "The number of realizations in the design matrix "
+                f"({len(dm_active_realizations)}) differs from the configured "
+                f"ensemble size ({config.runpath_config.num_realizations}). "
+                f"Using the minimum of both ({ensemble_size})."
             )
+        if hasattr(args, "realizations") and args.realizations is not None:
+            intersected_realizations = np.array(
+                ActiveRange(
+                    rangestring=args.realizations,
+                    length=max(
+                        len(dm_active_realizations),
+                        config.runpath_config.num_realizations,
+                    ),
+                ).mask[:ensemble_size]
+            ) & np.array(dm_active_realizations[:ensemble_size])
+            if np.any(intersected_realizations):
+                return intersected_realizations
+            else:
+                raise ConfigValidationError(
+                    "The specified realizations do not intersect "
+                    "with the active realizations in the design matrix "
+                    "and num_realizations."
+                )
+        return dm_active_realizations[:ensemble_size]
+
     return _realizations(args, ensemble_size).tolist()
 
 
@@ -213,7 +247,7 @@ def _setup_manual_update(
     status_queue: SimpleQueue[StatusEvents],
 ) -> ManualUpdate:
     active_realizations = _realizations(args, config.runpath_config.num_realizations)
-
+    validate_minimum_realizations(config, active_realizations.tolist())
     return ManualUpdate(
         random_seed=config.random_seed,
         active_realizations=active_realizations.tolist(),
@@ -249,7 +283,8 @@ def _setup_ensemble_smoother(
     update_settings: ObservationSettings,
     status_queue: SimpleQueue[StatusEvents],
 ) -> EnsembleSmoother:
-    active_realizations = _get_active_realizations_list(args, config)
+    active_realizations = _get_and_validate_active_realizations_list(args, config)
+    validate_minimum_realizations(config, active_realizations)
     if len(active_realizations) < 2:
         raise ConfigValidationError(
             "Number of active realizations must be at least 2 for an update step"
@@ -290,7 +325,8 @@ def _setup_ensemble_information_filter(
     update_settings: ObservationSettings,
     status_queue: SimpleQueue[StatusEvents],
 ) -> EnsembleInformationFilter:
-    active_realizations = _get_active_realizations_list(args, config)
+    active_realizations = _get_and_validate_active_realizations_list(args, config)
+    validate_minimum_realizations(config, active_realizations)
     if len(active_realizations) < 2:
         raise ConfigValidationError(
             "Number of active realizations must be at least 2 for an update step"
@@ -351,7 +387,8 @@ def _setup_multiple_data_assimilation(
     status_queue: SimpleQueue[StatusEvents],
 ) -> MultipleDataAssimilation:
     restart_run, prior_ensemble = _determine_restart_info(args)
-    active_realizations = _get_active_realizations_list(args, config)
+    active_realizations = _get_and_validate_active_realizations_list(args, config)
+    validate_minimum_realizations(config, active_realizations)
     if len(active_realizations) < 2:
         raise ConfigValidationError(
             "Number of active realizations must be at least 2 for an update step"
@@ -389,7 +426,7 @@ def _setup_multiple_data_assimilation(
 
 
 def _realizations(args: Namespace, ensemble_size: int) -> npt.NDArray[np.bool_]:
-    if args.realizations is None:
+    if not hasattr(args, "realizations") or args.realizations is None:
         return np.ones(ensemble_size, dtype=bool)
     return np.array(
         ActiveRange(rangestring=args.realizations, length=ensemble_size).mask

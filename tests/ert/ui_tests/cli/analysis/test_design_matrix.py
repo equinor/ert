@@ -415,7 +415,7 @@ def test_design_matrix_on_esmda(experiment_mode, ensemble_name, iterations):
 
 
 def test_run_poly_example_with_design_matrix_selective_realizations(
-    copy_poly_case_with_design_matrix,
+    copy_poly_case_with_design_matrix, capsys
 ):
     num_realizations = 5
     a_values = list(range(num_realizations))
@@ -440,10 +440,13 @@ def test_run_poly_example_with_design_matrix_selective_realizations(
     print(config_path)
 
     realizations_run = os.listdir(Path(config_path) / "poly_out")
-    assert len(realizations_run) == 2
+    assert len(realizations_run) == 1
     assert "realization-0" in realizations_run
-    assert "realization-10" in realizations_run
-    assert "realization-5" not in realizations_run
+
+    assert (
+        "Using realizations intersected between realizations_specified "
+        "and DESIGN_MATRIX (1)" in capsys.readouterr().out
+    )
 
 
 @pytest.mark.usefixtures("copy_poly_case")
@@ -491,3 +494,129 @@ def test_design_matrix_on_esmda_fail_without_updateable_parameters(
             "--experiment-name",
             "test-experiment",
         )
+
+
+@pytest.mark.parametrize(
+    "realizations_in_design_matrix, expected_message_format",
+    [
+        pytest.param(
+            5,
+            (
+                "NUM_REALIZATIONS ({num_realizations_in_user_config}) is greater than "
+                "the number of realizations in DESIGN_MATRIX "
+                "({realizations_in_design_matrix}). Using the realizations from "
+                "DESIGN_MATRIX ({realizations_in_design_matrix})"
+            ),
+        ),
+        pytest.param(
+            15,
+            (
+                "NUM_REALIZATIONS ({num_realizations_in_user_config}) is less than the "
+                "number of realizations in DESIGN_MATRIX "
+                "({realizations_in_design_matrix}). Using the realizations from "
+                "NUM_REALIZATIONS ({num_realizations_in_user_config})"
+            ),
+        ),
+    ],
+)
+def test_run_poly_example_with_different_realization_count_chooses_smaller_and_warns(
+    realizations_in_design_matrix,
+    expected_message_format,
+    copy_poly_case_with_design_matrix,
+    capsys,
+):
+    num_realizations_in_user_config = 10
+    expected_message = expected_message_format.format(
+        num_realizations_in_user_config=num_realizations_in_user_config,
+        realizations_in_design_matrix=realizations_in_design_matrix,
+    )
+
+    realization_list = list(range(realizations_in_design_matrix))
+    design_dict = {
+        "REAL": realization_list,
+        "a": [2 * a for a in realization_list],
+    }
+    default_list = [["b", 1], ["c", 2]]
+    copy_poly_case_with_design_matrix(design_dict, default_list)
+    with open("poly.ert", "a+", encoding="utf-8") as f:
+        f.write(f"\nNUM_REALIZATIONS {num_realizations_in_user_config}")
+    run_cli(
+        ENSEMBLE_EXPERIMENT_MODE,
+        "--disable-monitoring",
+        "poly.ert",
+        "--experiment-name",
+        "test-experiment",
+    )
+    config_path = ErtConfig.from_file("poly.ert").config_path
+
+    realizations_run = os.listdir(Path(config_path) / "poly_out")
+    assert len(realizations_run) == min(
+        realizations_in_design_matrix, num_realizations_in_user_config
+    )
+    assert expected_message in capsys.readouterr().out
+
+
+@pytest.mark.parametrize(
+    "specified_realizations, intersected_realizations_count",
+    [
+        pytest.param(
+            "--realizations=3-6",
+            2,
+            id="specified_realizations_finds_and_uses_intersect",
+        ),
+        pytest.param(
+            "--realizations=0-4",
+            0,
+            id="specified_realizations_are_not_intersecting_and_raises",
+        ),
+    ],
+)
+def test_run_poly_example_with_specified_realizations_finds_intersection_and_warns(
+    specified_realizations: str,
+    intersected_realizations_count: int,
+    copy_poly_case_with_design_matrix,
+    capsys,
+):
+    realization_list = [5, 6, 7, 9, 10]
+    design_dict = {
+        "REAL": realization_list,
+        "a": [2 * a for a in realization_list],
+    }
+    default_list = [["b", 1], ["c", 2]]
+    copy_poly_case_with_design_matrix(design_dict, default_list)
+    with open("poly.ert", "a+", encoding="utf-8") as f:
+        f.write("\nNUM_REALIZATIONS 20")
+    if intersected_realizations_count > 0:
+        run_cli(
+            ENSEMBLE_EXPERIMENT_MODE,
+            specified_realizations,
+            "--disable-monitoring",
+            "poly.ert",
+            "--experiment-name",
+            "test-experiment",
+        )
+
+        assert (
+            "Using realizations intersected between realizations_specified and "
+            f"DESIGN_MATRIX ({intersected_realizations_count})"
+        ) in capsys.readouterr().out
+
+        config_path = ErtConfig.from_file("poly.ert").config_path
+        realizations_run = os.listdir(Path(config_path) / "poly_out")
+        assert len(realizations_run) == intersected_realizations_count
+    else:
+        with pytest.raises(
+            ErtCliError,
+            match=(
+                "The specified realizations do not intersect with the active "
+                r"realizations in the design matrix."
+            ),
+        ):
+            run_cli(
+                ENSEMBLE_EXPERIMENT_MODE,
+                specified_realizations,
+                "--disable-monitoring",
+                "poly.ert",
+                "--experiment-name",
+                "test-experiment",
+            )
