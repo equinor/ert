@@ -18,13 +18,15 @@ import numpy as np
 import polars as pl
 import psutil
 import scipy
-from iterative_ensemble_smoother.experimental import AdaptiveESMDA
+from iterative_ensemble_smoother.experimental import AdaptiveESMDA, DistanceESMDA
 from threadpoolctl import threadpool_limits
 
 from ert.config import (
     ESSettings,
+    Field,
     GenKwConfig,
     ObservationSettings,
+    SurfaceConfig,
 )
 
 from ._update_commons import (
@@ -301,16 +303,39 @@ def analysis_ES(
     ) -> None:
         cross_correlations_accumulator.append(cross_correlations_of_batch)
 
+    smoother_distance = DistanceESMDA(
+        covariance=observation_errors**2,
+        observations=observation_values,
+        seed=rng,
+    )
     for param_group in parameters:
         param_ensemble_array = source_ensemble.load_parameters_numpy(
             param_group, iens_active_index
         )
-        if module.localization:
+        num_params = param_ensemble_array.shape[0]
+
+        param_obj = source_ensemble.experiment.parameter_configuration[param_group]
+        if isinstance(param_obj, (Field, SurfaceConfig)):
+            print("Updating Field or Surface using distance based localization...")
+            # TODO: Calculate rho using coordinates from
+            # field and positions of observations.
+            # Both field coordinates and positions of observations
+            # are currently missing.
+            rho = np.ones(shape=(num_params, num_obs))
+            # TODO: Loop over batches similar to how it's done in adloc.
+            # I think we can re-use _calculate_adaptive_batch_size as the
+            # Kalmain gain matrix we need to form is (num_params x num_obs),
+            # the same as the cross-covariance matrix in adloc.
+            for i in range(num_params):
+                X_local = param_ensemble_array[i, :]
+                param_ensemble_array[i, :] = smoother_distance.assimilate(
+                    X=np.atleast_2d(X_local), Y=S, D=D, alpha=1.0, rho=rho[i, :]
+                )
+        elif isinstance(param_obj, GenKwConfig) and module.localization:
             with threadpool_limits(limits=OPTIMAL_NUM_THREADS):
                 config_node = source_ensemble.experiment.parameter_configuration[
                     param_group
                 ]
-                num_params = param_ensemble_array.shape[0]
                 batch_size = _calculate_adaptive_batch_size(num_params, num_obs)
                 batches = _split_by_batchsize(np.arange(0, num_params), batch_size)
 
@@ -365,7 +390,6 @@ def analysis_ES(
                     f"Adaptive Localization of {param_group} completed "
                     f"in {(time.time() - start) / 60} minutes"
                 )
-
         else:
             # In-place multiplication is not yet supported, therefore avoiding @=
             param_ensemble_array = param_ensemble_array @ T.astype(  # noqa: PLR6104
