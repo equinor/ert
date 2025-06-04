@@ -1,16 +1,21 @@
 #!/usr/bin/env python
-
 import argparse
 import asyncio
 import json
 import logging
+import logging.config
 import os
 import signal
+import sys
 import threading
 from functools import partial
+from pathlib import Path
+
+import yaml
 
 from _ert.threading import ErtThread
 from ert.config import QueueSystem
+from ert.logging import LOGGING_CONFIG
 from everest.bin.utils import show_scaled_controls_warning
 from everest.config import EverestConfig, ServerConfig
 from everest.detached import (
@@ -22,7 +27,6 @@ from everest.detached import (
     wait_for_server,
 )
 from everest.everest_storage import EverestStorage
-from everest.strings import DEFAULT_LOGGING_FORMAT
 from everest.util import (
     makedirs_if_needed,
     version_info,
@@ -44,17 +48,29 @@ def everest_entry(args: list[str] | None = None) -> None:
     parser = _build_args_parser()
     options = parser.parse_args(args)
 
-    handler = logging.StreamHandler()
-    formatter = logging.Formatter(DEFAULT_LOGGING_FORMAT)
-    handler.setFormatter(formatter)
+    makedirs_if_needed(options.config.output_dir, roll_if_exists=True)
+    log_dir = Path(options.config.output_dir) / "logs"
+    try:
+        log_dir.mkdir(exist_ok=True)
+    except PermissionError as err:
+        sys.exit(str(err))
+    os.environ["ERT_LOG_DIR"] = str(log_dir)
 
-    root_logger = logging.root
-    root_logger.addHandler(handler)
-    root_logger.setLevel(
-        logging.DEBUG if options.debug else options.config.logging_level
-    )
+    with open(LOGGING_CONFIG, encoding="utf-8") as log_conf_file:
+        config_dict = yaml.safe_load(log_conf_file)
+        if config_dict:
+            for handler_name, handler_config in config_dict["handlers"].items():
+                if handler_name == "file":
+                    handler_config["filename"] = "everest-log.txt"
+                if "ert.logging.TimestampedFileHandler" in handler_config.values():
+                    handler_config["config_filename"] = options.config.config_path.name
+            logging.config.dictConfig(config_dict)
 
-    logger.setLevel(logging.DEBUG if options.debug else options.config.logging_level)
+    if options.debug:
+        root_logger = logging.getLogger()
+        handler = logging.StreamHandler(sys.stdout)
+        handler.setLevel(logging.DEBUG)
+        root_logger.addHandler(handler)
 
     logger.debug(version_info())
 
@@ -152,8 +168,6 @@ async def run_everest(options: argparse.Namespace) -> None:
         for fm_job in options.config.forward_model_step_commands:
             job_name = fm_job.split()[0]
             logger.debug(f"Everest forward model contains job {job_name}")
-
-        makedirs_if_needed(options.config.output_dir, roll_if_exists=True)
 
         if (
             options.config.simulation_dir is not None
