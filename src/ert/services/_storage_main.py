@@ -25,6 +25,8 @@ from ert.shared import __file__ as ert_shared_path
 from ert.shared import find_available_socket
 from ert.shared.storage.command import add_parser_options
 from ert.trace import tracer
+from everest.config import ServerConfig
+from everest.detached.jobs.everserver import _generate_certificate, _get_machine_name
 
 DARK_STORAGE_APP = "ert.dark_storage.app:app"
 
@@ -67,7 +69,9 @@ def parse_args() -> argparse.Namespace:
     return ap.parse_args()
 
 
-def _create_connection_info(sock: socket.socket, authtoken: str) -> dict[str, Any]:
+def _create_connection_info(
+    sock: socket.socket, authtoken: str, cert: str
+) -> dict[str, Any]:
     connection_info = {
         "urls": [
             f"http://{host}:{sock.getsockname()[1]}"
@@ -78,6 +82,10 @@ def _create_connection_info(sock: socket.socket, authtoken: str) -> dict[str, An
             )
         ],
         "authtoken": authtoken,
+        "host": _get_machine_name(),
+        "port": sock.getsockname()[1],
+        "cert": cert,
+        "auth": authtoken,
     }
 
     os.environ["ERT_STORAGE_CONNECTION_STRING"] = json.dumps(
@@ -105,7 +113,11 @@ def run_server(
         os.environ["ERT_STORAGE_DEBUG"] = "1"
 
     sock = find_available_socket(host=args.host, port_range=range(51850, 51870 + 1))
-    connection_info = _create_connection_info(sock, authtoken)
+    cert_path, key_path, key_pw = _generate_certificate(
+        ServerConfig.get_certificate_dir(args.project)
+    )
+
+    connection_info = _create_connection_info(sock, authtoken, cert_path)
 
     # Appropriated from uvicorn.main:run
     os.environ["ERT_STORAGE_NO_TOKEN"] = "1"

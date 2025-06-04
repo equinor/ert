@@ -9,44 +9,21 @@ import os
 import queue
 import random
 import socket
-import ssl
-import threading
 import time
 import traceback
-import uuid
-from base64 import b64decode, b64encode
+from base64 import b64encode
 from contextlib import asynccontextmanager
 from functools import lru_cache, partial
 from pathlib import Path
-from queue import Empty, SimpleQueue
+from queue import SimpleQueue
 from typing import Any
 
-import uvicorn
 from cryptography import x509
 from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import hashes, serialization
 from cryptography.hazmat.primitives.asymmetric import rsa
 from cryptography.x509.oid import NameOID
 from dns import resolver, reversename
-from fastapi import (
-    BackgroundTasks,
-    Depends,
-    FastAPI,
-    HTTPException,
-    Request,
-    WebSocket,
-    WebSocketException,
-    status,
-)
-from fastapi.encoders import jsonable_encoder
-from fastapi.responses import (
-    PlainTextResponse,
-    Response,
-)
-from fastapi.security import (
-    HTTPBasic,
-    HTTPBasicCredentials,
-)
 from opentelemetry.trace.propagation.tracecontext import TraceContextTextMapPropagator
 from pydantic import BaseModel
 
@@ -63,6 +40,7 @@ from ert.run_models.everest_run_model import (
     EverestExitCode,
     EverestRunModel,
 )
+from ert.services import StorageService
 from ert.trace import tracer
 from everest.config import EverestConfig, ServerConfig
 from everest.detached import (
@@ -77,7 +55,6 @@ from everest.strings import (
     OPT_FAILURE_REALIZATIONS,
     OPTIMIZATION_LOG_DIR,
     OPTIMIZATION_OUTPUT_DIR,
-    EverEndpoints,
 )
 from everest.util import makedirs_if_needed, version_info
 
@@ -252,181 +229,6 @@ def _opt_monitor(shared_data: ExperimentRunnerState) -> str | None:
     return None
 
 
-def _everserver_thread(
-    shared_data: ExperimentRunnerState,
-    server_config: dict[str, Any],
-    msg_queue: SimpleQueue[EverestServerMsg],
-) -> None:
-    # ruff: noqa: RUF029
-    @asynccontextmanager
-    async def lifespan(app: FastAPI):  # type: ignore
-        # Startup event
-        msg_queue.put(ServerStarted())
-        yield
-        # Shutdown event
-        msg_queue.put(ServerStopped())
-
-    app = FastAPI(lifespan=lifespan)
-    security = HTTPBasic()
-
-    def _check_authentication(auth_header: str) -> None:
-        if auth_header is None:
-            raise WebSocketException(
-                code=status.WS_1008_POLICY_VIOLATION, reason="No authentication"
-            )
-        _, encoded_credentials = auth_header.split(" ")
-        decoded_credentials = b64decode(encoded_credentials).decode("utf-8")
-        _, _, password = decoded_credentials.partition(":")
-        if password != server_config["authentication"]:
-            raise WebSocketException(code=status.WS_1008_POLICY_VIOLATION)
-
-    def _check_user(credentials: HTTPBasicCredentials) -> None:
-        if credentials.password != server_config["authentication"]:
-            raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED,
-                detail="Invalid credentials",
-                headers={"WWW-Authenticate": "Basic"},
-            )
-
-    def _log(request: Request) -> None:
-        logging.getLogger(EVERSERVER).info(
-            f"{request.scope['path']} entered from "
-            f"{request.client.host if request.client else 'unknown host'} "
-            f"with HTTP {request.method}"
-        )
-
-    @app.get("/")
-    def get_status(
-        request: Request, credentials: HTTPBasicCredentials = Depends(security)
-    ) -> PlainTextResponse:
-        _log(request)
-        _check_user(credentials)
-        return PlainTextResponse("Everest is running")
-
-    @app.post("/" + EverEndpoints.stop)
-    def stop(
-        request: Request, credentials: HTTPBasicCredentials = Depends(security)
-    ) -> Response:
-        _log(request)
-        _check_user(credentials)
-        shared_data.stop = True
-        msg_queue.put(ServerStopped())
-        return Response("Raise STOP flag succeeded. Everest initiates shutdown..", 200)
-
-    @app.post("/" + EverEndpoints.start_experiment)
-    async def start_experiment(
-        request: Request,
-        background_tasks: BackgroundTasks,
-        credentials: HTTPBasicCredentials = Depends(security),
-    ) -> Response:
-        _log(request)
-        _check_user(credentials)
-        if not shared_data.started:
-            request_data = await request.json()
-            config = EverestConfig.with_plugins(request_data)
-            runner = ExperimentRunner(config, shared_data, msg_queue)
-            try:
-                background_tasks.add_task(runner.run)
-                shared_data.started = True
-
-                # Assume only one unique running experiment per everserver instance
-                # Ideally, we should return the experiment ID in the response here
-                shared_data.config_path = config.config_path
-
-                # Assume client and server is always in the same timezone
-                # so disregard timestamps
-                shared_data.start_time_unix = int(time.time())
-                return Response("Everest experiment started")
-            except Exception as e:
-                logging.getLogger(EVERSERVER).exception(e)
-                return Response(f"Could not start experiment: {e!s}", status_code=501)
-        return Response("Everest experiment is running")
-
-    @app.get("/" + EverEndpoints.config_path)
-    async def config_path(
-        request: Request, credentials: HTTPBasicCredentials = Depends(security)
-    ) -> Response:
-        _log(request)
-        _check_user(credentials)
-        if not shared_data.started:
-            return Response("No experiment started", status_code=404)
-
-        return Response(str(shared_data.config_path), status_code=200)
-
-    @app.get("/" + EverEndpoints.simulation_dir)
-    async def simulation_dir(
-        request: Request, credentials: HTTPBasicCredentials = Depends(security)
-    ) -> Response:
-        _log(request)
-        _check_user(credentials)
-        if not shared_data.started:
-            return Response("No experiment started", status_code=404)
-
-        sim_dir = EverestConfig.from_file(shared_data.config_path).simulation_dir
-        return Response(sim_dir, status_code=200)
-
-    @app.get("/" + EverEndpoints.start_time)
-    async def start_time(
-        request: Request, credentials: HTTPBasicCredentials = Depends(security)
-    ) -> Response:
-        _log(request)
-        _check_user(credentials)
-        if not shared_data.started:
-            return Response("No experiment started", status_code=404)
-
-        return Response(str(shared_data.start_time_unix), status_code=200)
-
-    @app.websocket("/events")
-    async def websocket_endpoint(websocket: WebSocket) -> None:
-        await websocket.accept()
-        _check_authentication(websocket.headers.get("Authorization"))
-        subscriber_id = str(uuid.uuid4())
-        try:
-            while True:
-                event = await get_event(subscriber_id=subscriber_id)
-                await websocket.send_json(jsonable_encoder(event))
-                if isinstance(event, EndEvent):
-                    break
-        except Exception as e:
-            logging.getLogger(EVERSERVER).exception(str(e))
-        finally:
-            logging.getLogger(EVERSERVER).info(
-                f"Subscriber {subscriber_id} done. Closing websocket"
-            )
-            # Give some time for subscribers to get events
-            await asyncio.sleep(5)
-            shared_data.subscribers[subscriber_id].done()
-
-    async def get_event(subscriber_id: str) -> StatusEvents:
-        """
-        The function waits until there is an event available for the subscriber
-        and returns the event. If the subscriber is up to date it will
-        wait until we wake up the subscriber using notify
-        """
-        if subscriber_id not in shared_data.subscribers:
-            shared_data.subscribers[subscriber_id] = Subscriber()
-        subscriber = shared_data.subscribers[subscriber_id]
-
-        while subscriber.index >= len(shared_data.events):
-            await subscriber.wait_for_event()
-
-        event = shared_data.events[subscriber.index]
-        subscriber.index += 1
-        return event
-
-    # Configure the Uvicorn server
-    uvicorn.run(
-        app,
-        host="0.0.0.0",
-        port=server_config["port"],
-        ssl_keyfile=server_config["key_path"],
-        ssl_certfile=server_config["cert_path"],
-        ssl_version=ssl.PROTOCOL_SSLv23,
-        ssl_keyfile_password=server_config["key_passwd"],
-        log_level=logging.CRITICAL,
-    )
-
-
 def _find_open_port(host: str, lower: int, upper: int) -> int:
     # Making the port selection random does not fix the problem that an
     # everserver might be assigned a port that another everserver in the process
@@ -558,11 +360,8 @@ def main() -> None:
     options = arg_parser.parse_args()
 
     output_dir = options.output_dir
-    optimization_output_dir = str(Path(output_dir).absolute() / OPTIMIZATION_OUTPUT_DIR)
 
     status_path = ServerConfig.get_everserver_status_path(output_dir)
-    host_file = ServerConfig.get_hostfile_path(output_dir)
-    msg_queue: SimpleQueue[EverestServerMsg] = SimpleQueue()
 
     ctx = (
         TraceContextTextMapPropagator().extract(
@@ -585,56 +384,15 @@ def main() -> None:
             logger.info(version_info())
             logger.info(f"Output directory: {output_dir}")
 
-            authentication = _generate_authentication()
-            cert_path, key_path, key_pw = _generate_certificate(
-                ServerConfig.get_certificate_dir(output_dir)
-            )
-            host = _get_machine_name()
-            port = _find_open_port(host, lower=5000, upper=5800)
-            _write_hostfile(host_file, host, port, cert_path, authentication)
 
-            shared_data = ExperimentRunnerState()
-
-            server_config = {
-                "optimization_output_dir": optimization_output_dir,
-                "port": port,
-                "cert_path": cert_path,
-                "key_path": key_path,
-                "key_passwd": key_pw,
-                "authentication": authentication,
-            }
             # Starting the server
-            everserver_instance = threading.Thread(
-                target=_everserver_thread,
-                args=(shared_data, server_config, msg_queue),
-            )
-            everserver_instance.daemon = True
-            everserver_instance.start()
-
-            # Monitoring the server
-            logging.getLogger(EVERSERVER).info("Everserver started")
-            while True:
-                try:
-                    item = msg_queue.get(timeout=1)  # Wait for data
-                    match item:
-                        case ServerStarted():
-                            update_everserver_status(status_path, ServerStatus.running)
-                        case ServerStopped():
-                            update_everserver_status(status_path, ServerStatus.stopped)
-                            return
-                        case ExperimentFailed():
-                            update_everserver_status(
-                                status_path, ServerStatus.failed, item.msg
-                            )
-                            return
-                        case ExperimentComplete():
-                            status, message = _get_optimization_status(
-                                item.exit_code, item.events, item.server_stopped
-                            )
-                            update_everserver_status(status_path, status, message)
-                            return
-                except Empty:
-                    continue
+            print("Starting server")
+            with StorageService.init_service(
+                project=os.path.abspath(ServerConfig.get_session_dir(output_dir))
+            ):
+                update_everserver_status(status_path, ServerStatus.running)
+                while True:
+                    time.sleep(0.1)
         except Exception as e:
             update_everserver_status(
                 status_path,
@@ -642,10 +400,6 @@ def main() -> None:
                 message=traceback.format_exc(),
             )
             logging.getLogger(EVERSERVER).exception(e)
-        finally:
-            logging.getLogger(EVERSERVER).info(
-                f"Everserver stopped. Items left in queue: {msg_queue.qsize()}"
-            )
 
 
 def _get_optimization_status(
