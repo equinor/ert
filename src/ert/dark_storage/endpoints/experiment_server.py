@@ -1,8 +1,10 @@
 import asyncio
 import logging
+import os
 import time
 import uuid
 from base64 import b64decode
+from http.client import HTTPException
 from queue import SimpleQueue
 
 from fastapi import (
@@ -43,18 +45,17 @@ def _check_authentication(auth_header: str) -> None:
     _, encoded_credentials = auth_header.split(" ")
     decoded_credentials = b64decode(encoded_credentials).decode("utf-8")
     _, _, password = decoded_credentials.partition(":")
-    # if password != server_config["authentication"]:
-    #     raise WebSocketException(code=status.WS_1008_POLICY_VIOLATION)
+    if password != os.environ["ERT_STORAGE_TOKEN"]:
+        raise WebSocketException(code=status.WS_1008_POLICY_VIOLATION)
 
 
 def _check_user(credentials: HTTPBasicCredentials) -> None:
-    # if credentials.password != server_config["authentication"]:
-    #     raise HTTPException(
-    #         status_code=status.HTTP_401_UNAUTHORIZED,
-    #         detail="Invalid credentials",
-    #         headers={"WWW-Authenticate": "Basic"},
-    #     )
-    return
+    if credentials.password != os.environ["ERT_STORAGE_TOKEN"]:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid credentials",
+            headers={"WWW-Authenticate": "Basic"},
+        )
 
 
 def _log(request: Request) -> None:
@@ -91,7 +92,6 @@ async def start_experiment(
     background_tasks: BackgroundTasks,
     credentials: HTTPBasicCredentials = Depends(security),
 ) -> Response:
-    print("starting")
     _log(request)
     _check_user(credentials)
     msg_queue = SimpleQueue()
