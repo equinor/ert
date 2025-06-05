@@ -25,6 +25,7 @@ def test_logging_setup(copy_math_func_test_data_to_tmp):
     )
     everest_config.optimization.min_pert_success = 1
     everest_config.optimization.max_iterations = 1
+    everest_config.optimization.max_batch_num = 1
     everest_config.optimization.min_realizations_success = 1
     everest_config.optimization.perturbation_num = 2
 
@@ -57,4 +58,6 @@ def test_logging_setup(copy_math_func_test_data_to_tmp):
     # Avoid cases where optimization finished before we get a chance to check that
     # the everest server has started
     if endpoint_logs:
-        assert "everserver INFO: / entered from" in endpoint_logs
+        assert (
+            "everserver INFO: /experiment_server/status entered from" in endpoint_logs
+        )

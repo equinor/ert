@@ -1,4 +1,6 @@
 # Specifies how many times to try a http request within the specified timeout.
+import json
+
 _HTTP_REQUEST_RETRY = 10
 
 # Proxy configuration for outgoing requests.
@@ -249,34 +251,16 @@ _QUEUE_SYSTEMS: Mapping[Literal["LSF", "SLURM", "TORQUE"], dict[str, Any]] = {
 }
 
 
-class ServerStatus(Enum):
+class ServerStatus(StrEnum):
     """Keep track of the different states the everest server is in"""
 
-    starting = 1
-    running = 2
-    exporting_to_csv = 3
-    completed = 4
-    stopped = 5
-    failed = 6
-    never_run = 7
-
-
-class ServerStatusEncoder(json.JSONEncoder):
-    """Facilitates encoding and decoding the server status enum object to
-    and from a json file"""
-
-    def default(self, o: ServerStatus | None) -> dict[str, str]:
-        if type(o) is ServerStatus:
-            return {"__enum__": str(o)}
-        return json.JSONEncoder.default(self, o)
-
-    @staticmethod
-    def decode(obj: dict[str, str]) -> dict[str, str]:
-        if "__enum__" in obj:
-            _, member = obj["__enum__"].split(".")
-            return getattr(ServerStatus, member)
-        else:
-            return obj
+    starting = auto()
+    running = auto()
+    exporting_to_csv = auto()
+    completed = auto()
+    stopped = auto()
+    failed = auto()
+    never_run = auto()
 
 
 def update_everserver_status(
@@ -288,7 +272,7 @@ def update_everserver_status(
     if not os.path.exists(os.path.dirname(path)):
         os.makedirs(os.path.dirname(path))
         with open(path, "w", encoding="utf-8") as outfile:
-            json.dump(new_status, outfile, cls=ServerStatusEncoder)
+            json.dump(new_status, outfile)
     elif os.path.exists(path):
         server_status = everserver_status(path)
         if server_status["message"] is not None:
@@ -299,7 +283,7 @@ def update_everserver_status(
             else:
                 new_status["message"] = server_status["message"]
         with open(path, "w", encoding="utf-8") as outfile:
-            json.dump(new_status, outfile, cls=ServerStatusEncoder)
+            json.dump(new_status, outfile)
 
 
 def everserver_status(everserver_status_path: str) -> dict[str, Any]:
@@ -314,6 +298,6 @@ def everserver_status(everserver_status_path: str) -> dict[str, Any]:
     """
     if os.path.exists(everserver_status_path):
         with open(everserver_status_path, encoding="utf-8") as f:
-            return json.load(f, object_hook=ServerStatusEncoder.decode)
+            return json.load(f)
     else:
         return {"status": ServerStatus.never_run, "message": None}

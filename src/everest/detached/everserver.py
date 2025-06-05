@@ -1,22 +1,21 @@
 import argparse
-import asyncio
-import dataclasses
 import datetime
 import json
 import logging
 import logging.config
 import os
-import queue
+import pathlib
 import random
 import socket
 import time
 import traceback
 from base64 import b64encode
-from functools import lru_cache, partial
+from functools import lru_cache
 from pathlib import Path
-from queue import SimpleQueue
+from tempfile import NamedTemporaryFile
 from typing import Any
 
+import yaml
 from cryptography import x509
 from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import hashes, serialization
@@ -24,29 +23,25 @@ from cryptography.hazmat.primitives.asymmetric import rsa
 from cryptography.x509.oid import NameOID
 from dns import resolver, reversename
 from opentelemetry.trace.propagation.tracecontext import TraceContextTextMapPropagator
-from pydantic import BaseModel
 
-from ert.config import QueueSystem
 from ert.ensemble_evaluator import (
-    EndEvent,
     EnsembleSnapshot,
-    EvaluatorServerConfig,
     FullSnapshotEvent,
     SnapshotUpdateEvent,
 )
 from ert.run_models import StatusEvents
 from ert.run_models.everest_run_model import (
     EverestExitCode,
-    EverestRunModel,
 )
 from ert.services import StorageService
+from ert.services._base_service import BaseServiceExit
 from ert.trace import tracer
-from everest.config import EverestConfig, ServerConfig
+from everest.config import ServerConfig
 from everest.detached import (
     ServerStatus,
+    everserver_status,
     update_everserver_status,
 )
-from everest.plugins.everest_plugin_manager import EverestPluginManager
 from everest.strings import (
     DEFAULT_LOGGING_FORMAT,
     EVEREST,
@@ -57,140 +52,6 @@ from everest.strings import (
 from everest.util import makedirs_if_needed, version_info
 
 logger = logging.getLogger(__name__)
-
-
-class EverestServerMsg(BaseModel):
-    msg: str | None = None
-
-
-class ServerStarted(EverestServerMsg):
-    pass
-
-
-class ServerStopped(EverestServerMsg):
-    pass
-
-
-class ExperimentComplete(EverestServerMsg):
-    exit_code: EverestExitCode
-    events: list[StatusEvents]
-    server_stopped: bool
-
-
-class ExperimentFailed(EverestServerMsg):
-    pass
-
-
-@dataclasses.dataclass
-class ExperimentRunnerState:
-    stop: bool = False
-    started: bool = False
-    events: list[StatusEvents] = dataclasses.field(default_factory=list)
-    subscribers: dict[str, "Subscriber"] = dataclasses.field(default_factory=dict)
-    config_path: str | None = None
-    start_time_unix: int | None = None
-
-
-class ExperimentRunner:
-    def __init__(
-        self,
-        everest_config: EverestConfig,
-        shared_data: ExperimentRunnerState,
-        msg_queue: SimpleQueue[EverestServerMsg],
-    ) -> None:
-        super().__init__()
-
-        self._everest_config = everest_config
-        self._shared_data = shared_data
-        self._msg_queue = msg_queue
-
-    async def run(self) -> None:
-        status_queue: SimpleQueue[StatusEvents] = SimpleQueue()
-        try:
-            run_model = EverestRunModel.create(
-                self._everest_config,
-                optimization_callback=partial(
-                    _opt_monitor, shared_data=self._shared_data
-                ),
-                status_queue=status_queue,
-            )
-
-            loop = asyncio.get_running_loop()
-            simulation_future = loop.run_in_executor(
-                None,
-                lambda: run_model.start_simulations_thread(
-                    EvaluatorServerConfig()
-                    if run_model.queue_config.queue_system == QueueSystem.LOCAL
-                    else EvaluatorServerConfig(
-                        port_range=(49152, 51819), use_ipc_protocol=False
-                    )
-                ),
-            )
-            while True:
-                if self._shared_data.stop:
-                    run_model.cancel()
-                    raise ValueError("Optimization aborted")
-                try:
-                    item: StatusEvents = status_queue.get(block=False)
-                except queue.Empty:
-                    await asyncio.sleep(0.01)
-                    continue
-
-                self._shared_data.events.append(item)
-                for sub in self._shared_data.subscribers.values():
-                    sub.notify()
-
-                if isinstance(item, EndEvent):
-                    # Wait for subscribers to receive final events
-                    for sub in self._shared_data.subscribers.values():
-                        await sub.is_done()
-
-                    break
-            await simulation_future
-            assert run_model.exit_code is not None
-            self._msg_queue.put(
-                ExperimentComplete(
-                    exit_code=run_model.exit_code,
-                    events=self._shared_data.events,
-                    server_stopped=self._shared_data.stop,
-                )
-            )
-        except Exception as e:
-            logging.getLogger(EVERSERVER).exception(e)
-            self._msg_queue.put(
-                ExperimentFailed(msg=f"Exception: {e}\n{traceback.format_exc()}")
-            )
-        finally:
-            logging.getLogger(EVERSERVER).info(
-                f"ExperimentRunner done. Items left in queue: {status_queue.qsize()}"
-            )
-
-
-class Subscriber:
-    """
-    This class keeps track of events and allows subscribers
-    to wait for new events to occur. Each subscriber instance
-    can be notified of an event, at which point any coroutines
-    that are waiting for an event will resume execution.
-    """
-
-    def __init__(self) -> None:
-        self.index = 0
-        self._event = asyncio.Event()
-        self._done = asyncio.Event()
-
-    def notify(self) -> None:
-        self._event.set()
-
-    def done(self):
-        self._done.set()
-
-    async def wait_for_event(self) -> None:
-        await self._event.wait()
-        self._event.clear()
-
-    async def is_done(self) -> None:
-        await self._done.wait()
 
 
 @lru_cache
@@ -219,12 +80,6 @@ def _get_machine_name() -> str:
     except socket.gaierror:
         logging.getLogger(EVERSERVER).debug(traceback.format_exc())
         return "localhost"
-
-
-def _opt_monitor(shared_data: ExperimentRunnerState) -> str | None:
-    if shared_data.stop:
-        return "stop_optimization"
-    return None
 
 
 def _find_open_port(host: str, lower: int, upper: int) -> int:
@@ -270,7 +125,9 @@ def _write_hostfile(
         f.write(json_string)
 
 
-def _configure_loggers(detached_dir: Path, log_dir: Path, logging_level: int) -> None:
+def _configure_loggers(
+    detached_dir: Path, log_dir: Path, logging_level: int, output_file: str | None
+) -> None:
     def make_handler_config(path: Path, log_level: int) -> dict[str, Any]:
         makedirs_if_needed(str(path.parent))
         return {
@@ -319,11 +176,18 @@ def _configure_loggers(detached_dir: Path, log_dir: Path, logging_level: int) ->
         },
     }
 
+    def path_representer(dumper, data):
+        return dumper.represent_scalar("tag:yaml.org,2002:str", str(data))
+
+    yaml.add_representer(pathlib.PosixPath, path_representer)
+    if output_file:
+        with open(output_file, "w", encoding="utf-8") as outfile:
+            yaml.dump(logging_config, outfile, default_flow_style=False)
     logging.config.dictConfig(logging_config)
 
-    plugin_manager = EverestPluginManager()
-    plugin_manager.add_log_handle_to_root()
-    plugin_manager.add_span_processor_to_trace_provider()
+    # plugin_manager = EverestPluginManager()
+    # plugin_manager.add_log_handle_to_root()
+    # plugin_manager.add_span_processor_to_trace_provider()
 
 
 def get_trace_context():
@@ -369,26 +233,61 @@ def main() -> None:
         else None
     )
 
-    with tracer.start_as_current_span("everest.everserver", context=ctx):
+    with (
+        tracer.start_as_current_span("everest.everserver", context=ctx),
+        NamedTemporaryFile() as log_file,
+    ):
         try:
             _configure_loggers(
                 detached_dir=Path(ServerConfig.get_detached_node_dir(output_dir)),
                 log_dir=Path(output_dir) / OPTIMIZATION_LOG_DIR,
                 logging_level=options.logging_level,
+                output_file=log_file.name,
             )
 
             logging.getLogger(EVERSERVER).info("Everserver starting ...")
             update_everserver_status(status_path, ServerStatus.starting)
             logger.info(version_info())
             logger.info(f"Output directory: {output_dir}")
-
             # Starting the server
-            with StorageService.init_service(
-                project=os.path.abspath(ServerConfig.get_session_dir(output_dir))
+            server_path = os.path.abspath(ServerConfig.get_session_dir(output_dir))
+            status = ""
+            with (
+                StorageService.init_service(
+                    timeout=240, project=server_path, logging_config=log_file.name
+                ) as server,
+                StorageService.session(project=server_path) as client,
             ):
                 update_everserver_status(status_path, ServerStatus.running)
-                while True:
-                    time.sleep(0.1)
+                done = False
+                while not done:
+                    response = client.get(
+                        "/experiment_server/status", auth=server.fetch_auth()
+                    )
+                    status = response.content.decode("utf-8")
+                    done = status and status != "Experiment started"
+                    time.sleep(0.5)
+                if status == "Optimization completed.":
+                    update_everserver_status(
+                        status_path, ServerStatus.completed, message=status
+                    )
+                elif status == "Server stopped by user":
+                    update_everserver_status(
+                        status_path, ServerStatus.stopped, message=status
+                    )
+                elif status == "Maximum number of batches reached.":
+                    update_everserver_status(
+                        status_path, ServerStatus.completed, message=status
+                    )
+                elif status.startswith(OPT_FAILURE_REALIZATIONS):
+                    update_everserver_status(
+                        status_path, ServerStatus.failed, message=status
+                    )
+        except BaseServiceExit:
+            # Server exit, happens on normal shutdown and keyboard interrupt
+            server_status = everserver_status(status_path)
+            if server_status["status"] == ServerStatus.running:
+                update_everserver_status(status_path, ServerStatus.stopped)
         except Exception as e:
             update_everserver_status(
                 status_path,

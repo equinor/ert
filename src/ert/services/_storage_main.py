@@ -133,7 +133,9 @@ def run_server(
     connection_info = _create_connection_info(sock, authtoken, config.ssl_certfile)
 
     server = Server(config, json.dumps(connection_info))
-
+    if args.logging_config:
+        with open(args.logging_config, encoding="utf-8") as fin:
+            logging.config.dictConfig(yaml.safe_load(fin))
     logger = logging.getLogger("ert.shared.storage.info")
     if args.verbose:
         handler = logging.StreamHandler(sys.stdout)

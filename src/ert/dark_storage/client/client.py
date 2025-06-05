@@ -17,4 +17,6 @@ class Client(httpx.Client):
         if conn_info.auth_token is not None:
             headers = {"Token": conn_info.auth_token}
 
-        super().__init__(base_url=conn_info.base_url, headers=headers)
+        super().__init__(
+            base_url=conn_info.base_url, headers=headers, verify=conn_info.cert
+        )
