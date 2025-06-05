@@ -97,8 +97,11 @@ class StorageService(BaseService):
         Start a HTTP transaction with the server
         """
         inst = cls.connect(timeout=timeout, project=project)
+        info = inst.fetch_conn_info()
         return Client(
             conn_info=ConnInfo(
-                base_url=inst.fetch_url(), auth_token=inst.fetch_auth()[1]
+                base_url=inst.fetch_url(),
+                auth_token=inst.fetch_auth()[1],
+                cert=info["cert"],
             )
         )

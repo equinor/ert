@@ -75,6 +75,18 @@ def get_status(
     return PlainTextResponse("Everest is running")
 
 
+@router.get("/status")
+def experiment_status(
+    request: Request, credentials: HTTPBasicCredentials = Depends(security)
+) -> PlainTextResponse:
+    _log(request)
+    _check_user(credentials)
+    if shared_data.done:
+        return PlainTextResponse("Experiment is done")
+    if shared_data.started:
+        return PlainTextResponse("Experiment is started")
+
+
 @router.post("/" + EverEndpoints.stop)
 def stop(
     request: Request, credentials: HTTPBasicCredentials = Depends(security)
@@ -164,6 +176,7 @@ async def websocket_endpoint(websocket: WebSocket) -> None:
             event = await get_event(subscriber_id=subscriber_id)
             await websocket.send_json(jsonable_encoder(event))
             if isinstance(event, EndEvent):
+                shared_data.done = True
                 break
     except Exception as e:
         logging.getLogger(EVERSERVER).exception(str(e))

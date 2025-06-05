@@ -83,6 +83,7 @@ class ExperimentFailed(EverestServerMsg):
 
 @dataclasses.dataclass
 class ExperimentRunnerState:
+    done: bool = False
     stop: bool = False
     started: bool = False
     events: list[StatusEvents] = dataclasses.field(default_factory=list)
@@ -381,14 +382,22 @@ def main() -> None:
             update_everserver_status(status_path, ServerStatus.starting)
             logger.info(version_info())
             logger.info(f"Output directory: {output_dir}")
-
             # Starting the server
             with StorageService.init_service(
                 project=os.path.abspath(ServerConfig.get_session_dir(output_dir))
-            ):
+            ) as server:
                 update_everserver_status(status_path, ServerStatus.running)
-                while True:
-                    time.sleep(0.1)
+                done = False
+                with StorageService.session(
+                    project=os.path.abspath(ServerConfig.get_session_dir(output_dir))
+                ) as client:
+                    while not done:
+                        response = client.get(
+                            "/experiment_server/status", auth=server.fetch_auth()
+                        )
+                        done = response.content.decode("utf-8") == "Experiment is done"
+                        time.sleep(0.5)
+                update_everserver_status(status_path, ServerStatus.completed)
         except Exception as e:
             update_everserver_status(
                 status_path,
