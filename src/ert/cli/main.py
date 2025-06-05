@@ -107,7 +107,7 @@ def run_cli(args: Namespace, plugin_manager: ErtPluginManager | None = None) -> 
         config_num_realizations = ert_config.runpath_config.num_realizations
 
         if len(dm_num_realizations) != ert_config.runpath_config.num_realizations:
-            if hasattr(args, "realizations") and args.realizations is not None:
+            if args.realizations and args.realizations is not None:
                 print(
                     "Using realizations intersected between realizations_specified "
                     f"and DESIGN_MATRIX ({model.active_realizations.count(True)})"
@@ -120,7 +120,7 @@ def run_cli(args: Namespace, plugin_manager: ErtPluginManager | None = None) -> 
                     f"NUM_REALIZATIONS ({config_num_realizations}) is greater than the "
                     "number of realizations in DESIGN_MATRIX "
                     f"({len(dm_num_realizations)}). Using the realizations from "
-                    f"DESIGN_MATRIX ({model.active_realizations.count(True)})"
+                    f"DESIGN_MATRIX ({len(dm_num_realizations)})"
                 )
 
             else:

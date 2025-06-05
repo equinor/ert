@@ -507,7 +507,7 @@ def test_run_poly_example_with_different_realization_count_chooses_smaller_and_w
             f"({realizations_in_design_matrix}). Using the realizations from "
             f"DESIGN_MATRIX ({realizations_in_design_matrix})"
         )
-    else:
+    elif realizations_in_design_matrix > num_realizations_in_user_config:
         expected_message = (
             f"NUM_REALIZATIONS ({num_realizations_in_user_config}) is less than the "
             f"number of realizations in DESIGN_MATRIX "
