@@ -52,7 +52,7 @@ class ServerConfig(BaseModel):
         server information are retrieved from the hostfile
         """
         server_info = ServerConfig.get_server_info(output_dir)
-        return f"http://{server_info['host']}:{server_info['port']}/experiment_server"
+        return f"https://{server_info['host']}:{server_info['port']}/experiment_server"
 
     @staticmethod
     def get_server_context(output_dir: str) -> tuple[str, str, tuple[str, str]]:

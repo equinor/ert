@@ -1,34 +1,3 @@
-import asyncio
-import json
-import logging
-import os
-import ssl
-import time
-import traceback
-from base64 import b64encode
-from collections.abc import Callable
-from enum import Enum
-from pathlib import Path
-from typing import Any
-
-import requests
-from pydantic import ValidationError
-from websockets import ConnectionClosedError, ConnectionClosedOK
-from websockets.sync.client import connect
-
-from ert.ensemble_evaluator import EndEvent
-from ert.run_models.event import EverestBatchResultEvent, status_event_from_json
-from ert.scheduler import create_driver
-from ert.scheduler.driver import Driver, FailedSubmit
-from ert.scheduler.event import StartedEvent
-from ert.trace import get_traceparent
-from everest.config import EverestConfig, ServerConfig
-from everest.strings import (
-    OPT_PROGRESS_ID,
-    SIM_PROGRESS_ID,
-    EverEndpoints,
-)
-
 # Specifies how many times to try a http request within the specified timeout.
 _HTTP_REQUEST_RETRY = 10
 
@@ -220,7 +189,7 @@ def start_monitor(
 
     try:
         with connect(
-                url.replace("http://", "wss://") + "/events",
+                url.replace("https://", "wss://") + "/events",
                 ssl=ssl_context,
                 open_timeout=30,
                 additional_headers={"Authorization": f"Basic {credentials}"},
