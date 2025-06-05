@@ -223,7 +223,7 @@ def start_monitor(
 
     try:
         with connect(
-            url.replace("http://", "wss://") + "/events",
+            url.replace("https://", "wss://") + "/events",
             ssl=ssl_context,
             open_timeout=30,
             additional_headers={"Authorization": f"Basic {credentials}"},
