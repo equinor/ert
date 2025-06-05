@@ -152,7 +152,6 @@ async def run_everest(options: argparse.Namespace) -> None:
         )
 
     server_state = everserver_status(everserver_status_path)
-    print(options.config.output_dir)
     if server_is_running(*ServerConfig.get_server_context(options.config.output_dir)):
         config_file = options.config.config_file
         print(
