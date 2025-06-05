@@ -83,6 +83,7 @@ def _create_connection_info(
                 sock.getsockname()[0],
                 socket.gethostname(),
                 socket.getfqdn(),
+                _get_machine_name(),
             )
         ],
         "authtoken": authtoken,
