@@ -146,7 +146,6 @@ def run_server(
     for url in connection_info["urls"]:
         logger.info(f"  {url}")
         logger.info(f"\nOpenAPI Docs: {url}/docs")
-        print(f"Starting server on: {url}")
     if args.debug or debug:
         logger.info("\tRunning in NON-SECURE debug mode.\n")
         os.environ["ERT_STORAGE_NO_TOKEN"] = "1"

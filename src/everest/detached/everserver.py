@@ -12,7 +12,6 @@ import socket
 import time
 import traceback
 from base64 import b64encode
-from contextlib import asynccontextmanager
 from functools import lru_cache, partial
 from pathlib import Path
 from queue import SimpleQueue
@@ -54,7 +53,6 @@ from everest.strings import (
     EVERSERVER,
     OPT_FAILURE_REALIZATIONS,
     OPTIMIZATION_LOG_DIR,
-    OPTIMIZATION_OUTPUT_DIR,
 )
 from everest.util import makedirs_if_needed, version_info
 
@@ -384,9 +382,7 @@ def main() -> None:
             logger.info(version_info())
             logger.info(f"Output directory: {output_dir}")
 
-
             # Starting the server
-            print("Starting server")
             with StorageService.init_service(
                 project=os.path.abspath(ServerConfig.get_session_dir(output_dir))
             ):
