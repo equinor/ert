@@ -32,9 +32,24 @@ def visualization_entry(args: list[str] | None = None) -> None:
     server_state = everserver_status(
         ServerConfig.get_everserver_status_path(config.output_dir)
     )
-    if server_state["status"] != ServerStatus.never_run:
+    if server_state["status"] in {
+        ServerStatus.failed,
+        ServerStatus.stopped,
+        ServerStatus.completed,
+    }:
         pm = EverestPluginManager()
         pm.hook.visualize_data(api=EverestDataAPI(config))
+    elif server_state["status"] in {
+        ServerStatus.running,
+        ServerStatus.starting,
+        ServerStatus.exporting_to_csv,
+    }:
+        print(
+            "Everest is running, please wait for it to finish before "
+            "running the visualization."
+        )
+    else:
+        print("No Everest results found for the given configuration.")
 
 
 if __name__ == "__main__":
