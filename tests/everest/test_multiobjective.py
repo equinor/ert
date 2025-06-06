@@ -33,14 +33,14 @@ CONFIG_FILE = "config_multi_objectives.yml"
             [{"name": "c1", "weight": -1.0}],
             pytest.raises(
                 ValueError,
-                match="Input should be greater than 0",
+                match="The objective weight should be greater than 0",
             ),
         ),
         (
             [{"name": "c1", "weight": 0}],
             pytest.raises(
                 ValueError,
-                match="Input should be greater than 0",
+                match="The objective weight should be greater than 0",
             ),
         ),
         (

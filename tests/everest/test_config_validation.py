@@ -707,22 +707,27 @@ def test_that_existing_install_job_with_non_existing_executable_errors(
 
 
 @pytest.mark.parametrize(
-    ["key", "value", "expected_error"],
+    ["value", "expect_error"],
     [
-        ("weight", 0.0, "(.*)Input should be greater than 0"),
-        ("weight", -1.0, "(.*)Input should be greater than 0"),
-        ("weight", 0.1, None),
+        (0.0, True),
+        (-1.0, True),
+        (0.1, False),
     ],
 )
 @pytest.mark.filterwarnings("ignore:normalization key is deprecated")
-def test_that_objective_function_attrs_are_valid(key, value, expected_error):
-    if expected_error:
-        with pytest.raises(ValueError, match=expected_error):
+def test_that_objective_function_attrs_are_valid(value, expect_error):
+    if expect_error:
+        with pytest.raises(
+            ValueError,
+            match="The objective weight should be greater than 0",
+        ):
             EverestConfig.with_defaults(
-                objective_functions=[{"name": "npv", key: value}]
+                objective_functions=[{"name": "npv", "weight": value}]
             )
     else:
-        EverestConfig.with_defaults(objective_functions=[{"name": "npv", key: value}])
+        EverestConfig.with_defaults(
+            objective_functions=[{"name": "npv", "weight": value}]
+        )
 
 
 def test_that_objective_function_weight_defined_for_all_or_no_function():
@@ -738,10 +743,47 @@ def test_that_objective_function_weight_defined_for_all_or_no_function():
 
     EverestConfig.with_defaults(
         objective_functions=[
+            {"name": "npv"},
+            {"name": "npv2"},
+        ]
+    )
+
+    EverestConfig.with_defaults(
+        objective_functions=[
             {"name": "npv", "weight": 0.7},
             {"name": "npv2", "weight": 0.3},
         ]
     )
+
+
+@pytest.mark.parametrize(
+    ["values", "expect_error"],
+    [
+        ([0.0, 0.0], True),
+        ([0.0, -1.0], True),
+        ([1.0, 0.0], False),
+        ([1.0, -0.5], False),
+    ],
+)
+def test_that_objective_function_weights_sum_is_positive(values, expect_error):
+    if expect_error:
+        with pytest.raises(
+            ValueError,
+            match="The sum of the objective weights should be greater than 0",
+        ):
+            EverestConfig.with_defaults(
+                objective_functions=[
+                    {"name": "npv", "weight": values[0]},
+                    {"name": "npv2", "weight": values[1]},
+                ]
+            )
+    else:
+        EverestConfig.with_defaults(
+            objective_functions=[
+                {"name": "npv", "weight": values[0]},
+                {"name": "npv2", "weight": values[1]},
+            ]
+        )
 
 
 def test_that_install_templates_must_have_unique_names(change_to_tmpdir):
