@@ -31,10 +31,9 @@ from ert.storage import open_storage
 @pytest.fixture
 def uniform_parameter():
     return GenKwConfig(
-        name="PARAMETER",
         forward_init=False,
         transform_function_definitions=[
-            TransformFunctionDefinition("KEY1", "UNIFORM", [0, 1]),
+            TransformFunctionDefinition("PARAMETER", "KEY1", "UNIFORM", [0, 1]),
         ],
         update=True,
     )
@@ -225,12 +224,11 @@ def test_update_handles_precision_loss_in_std_dev(tmp_path):
     standard deviation.
     """
     gen_kw = GenKwConfig(
-        name="COEFFS",
         forward_init=False,
         update=True,
         transform_function_definitions=[
             TransformFunctionDefinition(
-                name="coeff_0", param_name="CONST", values=["0.1"]
+                name="coeff_0", param_name="CONST", group_name="COEFFS", values=["0.1"]
             ),
         ],
     )
@@ -344,12 +342,11 @@ def test_update_raises_on_singular_matrix(tmp_path):
     standard deviation.
     """
     gen_kw = GenKwConfig(
-        name="COEFFS",
         forward_init=False,
         update=True,
         transform_function_definitions=[
             TransformFunctionDefinition(
-                name="coeff_0", param_name="CONST", values=["0.1"]
+                name="coeff_0", param_name="CONST", group_name="COEFFS", values=["0.1"]
             ),
         ],
     )
@@ -575,7 +572,7 @@ def test_smoother_snapshot_alpha(
             iens,
             pl.DataFrame(
                 {
-                    "KEY_1": [data],
+                    "KEY1": [data],
                     "realization": iens,
                 }
             ),
@@ -1062,7 +1059,7 @@ def test_gen_data_obs_data_mismatch(storage, uniform_parameter):
             iens,
             pl.DataFrame(
                 {
-                    "KEY_1": [data],
+                    "KEY1": [data],
                     "realization": iens,
                 }
             ),
@@ -1124,7 +1121,7 @@ def test_gen_data_missing(storage, uniform_parameter, obs):
             iens,
             pl.DataFrame(
                 {
-                    "KEY_1": [data],
+                    "KEY1": [data],
                     "realization": iens,
                 }
             ),
@@ -1169,18 +1166,22 @@ def test_gen_data_missing(storage, uniform_parameter, obs):
 
 
 @pytest.mark.usefixtures("use_tmpdir")
-def test_update_subset_parameters(storage, uniform_parameter, obs):
-    no_update_param = GenKwConfig(
-        name="EXTRA_PARAMETER",
+def test_update_subset_parameters(storage, obs):
+    param = GenKwConfig(
+        name="SCALAR",
         forward_init=False,
         transform_function_definitions=[
-            TransformFunctionDefinition("KEY1", "UNIFORM", [0, 1]),
+            TransformFunctionDefinition(
+                "PARAMETER", "KEY1", "UNIFORM", [0, 1], update=True
+            ),
+            TransformFunctionDefinition(
+                "EXTRA_PARAMETER", "KEY2", "UNIFORM", [0, 1], update=False
+            ),
         ],
-        update=False,
     )
     resp = GenDataConfig(keys=["RESPONSE"])
     experiment = storage.create_experiment(
-        parameters=[uniform_parameter, no_update_param],
+        parameters=[param],
         responses=[resp],
         observations={"gen_data": obs},
     )
@@ -1198,7 +1199,7 @@ def test_update_subset_parameters(storage, uniform_parameter, obs):
             iens,
             pl.DataFrame(
                 {
-                    "KEY_1": [data],
+                    "KEY1": [data],
                     "realization": iens,
                 }
             ),
@@ -1208,7 +1209,7 @@ def test_update_subset_parameters(storage, uniform_parameter, obs):
             iens,
             pl.DataFrame(
                 {
-                    "KEY_1": [data],
+                    "KEY2": [data],
                     "realization": iens,
                 }
             ),
@@ -1238,7 +1239,7 @@ def test_update_subset_parameters(storage, uniform_parameter, obs):
         prior,
         posterior_ens,
         ["OBSERVATION"],
-        ["PARAMETER"],
+        ["SCALAR"],
         ObservationSettings(),
         ESSettings(),
     )

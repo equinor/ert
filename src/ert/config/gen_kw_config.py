@@ -3,8 +3,11 @@ from __future__ import annotations
 import math
 import os
 import warnings
+from collections import defaultdict
 from collections.abc import Callable
-from dataclasses import dataclass
+from dataclasses import dataclass, field
+from enum import StrEnum
+from functools import cached_property
 from hashlib import sha256
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, Self, cast, overload
@@ -25,6 +28,12 @@ if TYPE_CHECKING:
     import numpy.typing as npt
 
     from ert.storage import Ensemble
+
+
+SCALAR_NAME = "SCALAR"
+ConfigItem = str | dict[str, str] | tuple[str, str]
+ConfigGroup = list[ConfigItem]
+ConfigList = ConfigGroup | list[ConfigGroup]
 
 
 class PriorDict(TypedDict):
@@ -49,31 +58,56 @@ def _get_abs_path(file: str | None) -> str | None:
     return file
 
 
+class DataSource(StrEnum):
+    DESIGN_MATRIX = "design_matrix"
+    SAMPLED = "sampled"
+
+
 @dataclass
 class TransformFunctionDefinition:
+    group_name: str
     name: str
     param_name: str
     values: list[Any]
+    update: bool = True
+    input_source: DataSource = DataSource.SAMPLED
 
 
 @dataclass
 class GenKwConfig(ParameterConfig):
-    transform_function_definitions: list[TransformFunctionDefinition]
+    transform_function_definitions: list[TransformFunctionDefinition] = field(
+        default_factory=list
+    )
+    forward_init: bool = False
+    update: bool = True
+    name: str = SCALAR_NAME
 
     def __post_init__(self) -> None:
-        self.transform_functions: list[TransformFunction] = []
-        for e in self.transform_function_definitions:
-            if isinstance(e, dict):
-                self.transform_functions.append(
-                    self._parse_transform_function_definition(
-                        TransformFunctionDefinition(**e)
-                    )
-                )
-            else:
-                self.transform_functions.append(
-                    self._parse_transform_function_definition(e)
-                )
+        self.transform_functions = [
+            self._parse_transform_function_definition(
+                TransformFunctionDefinition(**e) if isinstance(e, dict) else e
+            )
+            for e in self.transform_function_definitions
+        ]
+        self.update = any(param.update for param in self.transform_function_definitions)
         self._validate()
+
+    @cached_property
+    def groups(self) -> dict[str, list[TransformFunction]]:
+        groups: dict[str, list[TransformFunction]] = defaultdict(list)
+        for e in self.transform_functions:
+            groups[e.group_name].append(e)
+        return groups
+
+    def group_keys(self, group: str) -> list[str]:
+        """Return the keys of the transform functions in the specified group."""
+        return [tf.name for tf in self.group_parameters(group)]
+
+    def group_parameters(self, group: str) -> list[TransformFunction]:
+        """Return the transform functions in the specified group."""
+        if group == SCALAR_NAME:
+            return self.transform_functions
+        return self.groups[group]
 
     def __contains__(self, item: str) -> bool:
         return item in [v.name for v in self.transform_function_definitions]
@@ -102,8 +136,24 @@ class GenKwConfig(ParameterConfig):
         ]
 
     @classmethod
-    def templates_from_config(
-        cls, gen_kw: list[str | dict[str, str]]
+    def templates_from_config(cls, gen_kw_list: ConfigList) -> list[tuple[str, str]]:
+        groups: list[ConfigGroup] = []
+        if not gen_kw_list:
+            return []
+        if isinstance(gen_kw_list[0], (str, dict)):
+            groups = [cast(ConfigGroup, gen_kw_list)]
+        else:
+            groups = cast(list[ConfigGroup], gen_kw_list)
+        return [
+            template
+            for gen_kw in groups
+            if (template := GenKwConfig._templates_from_config_single(gen_kw))
+            is not None
+        ]
+
+    @classmethod
+    def _templates_from_config_single(
+        cls, gen_kw: ConfigGroup
     ) -> tuple[str, str] | None:
         gen_kw_key = cast(str, gen_kw[0])
         positional_args = cast(list[str], gen_kw[:-1])
@@ -134,7 +184,26 @@ class GenKwConfig(ParameterConfig):
         return None
 
     @classmethod
-    def from_config_list(cls, gen_kw: list[str | dict[str, str]]) -> Self:
+    def from_config_list(cls, gen_kw_list: ConfigList) -> Self | None:
+        groups: list[ConfigGroup] = []
+        if not gen_kw_list:
+            return None
+        elif isinstance(gen_kw_list[0], (str, dict)):
+            groups = [cast(ConfigGroup, gen_kw_list)]
+        else:
+            groups = cast(list[ConfigGroup], gen_kw_list)
+        return cls(
+            transform_function_definitions=[
+                item
+                for gen_kw in groups
+                for item in GenKwConfig._from_config_list_single_genkw(gen_kw)
+            ]
+        )
+
+    @classmethod
+    def _from_config_list_single_genkw(
+        cls, gen_kw: ConfigGroup
+    ) -> list[TransformFunctionDefinition]:
         gen_kw_key = cast(str, gen_kw[0])
 
         options = cast(dict[str, str], gen_kw[-1])
@@ -176,8 +245,10 @@ class GenKwConfig(ParameterConfig):
                 else:
                     transform_function_definitions.append(
                         TransformFunctionDefinition(
+                            group_name=gen_kw_key,
                             name=items[0],
                             param_name=items[1],
+                            update=update_parameter,
                             values=items[2:],
                         )
                     )
@@ -199,12 +270,7 @@ class GenKwConfig(ParameterConfig):
                 "to exclude this from updates, set UPDATE:FALSE.\n",
                 gen_kw_key,
             )
-        return cls(
-            name=gen_kw_key,
-            forward_init=False,
-            transform_function_definitions=transform_function_definitions,
-            update=update_parameter,
-        )
+        return transform_function_definitions
 
     def _validate(self) -> None:
         errors = []
@@ -290,25 +356,60 @@ class GenKwConfig(ParameterConfig):
             raise ConfigValidationError.from_collected(errors)
 
     def sample_or_load(
-        self, real_nr: int, random_seed: int, ensemble_size: int
+        self,
+        real_nr: int,
+        random_seed: int,
+        ensemble_size: int,
+        design_matrix_df: pd.DataFrame | None = None,
     ) -> pl.DataFrame:
-        keys = [e.name for e in self.transform_functions]
-        parameter_value = self._sample_value(
-            self.name,
-            keys,
-            str(random_seed),
-            real_nr,
-        )
+        parameter_dict: dict[str, str | float] = {}
+        schema_dict: dict[str, pl.DataType] = {}
+        global_seed = str(random_seed)
+        for tfd in self.transform_functions:
+            if tfd.input_source == DataSource.DESIGN_MATRIX:
+                assert design_matrix_df is not None, (
+                    "Design matrix must be provided when using "
+                    "DataSource.DESIGN_MATRIX for transform function definitions."
+                )
+                if real_nr not in design_matrix_df.index:
+                    raise KeyError(
+                        f"Realization {real_nr} not found in design matrix DataFrame."
+                    )
+                raw_val = design_matrix_df.at[real_nr, tfd.name]
+                if isinstance(raw_val, np.generic):
+                    param_val = raw_val.item()  # int, float, or str
+                else:
+                    param_val = raw_val
+            elif tfd.input_source == DataSource.SAMPLED:
+                key_hash = sha256(
+                    global_seed.encode("utf-8")
+                    + f"{tfd.group_name}:{tfd.name}".encode()
+                )
+                seed = np.frombuffer(key_hash.digest(), dtype="uint32")
+                rng = np.random.default_rng(seed)
 
-        parameter_dict = {
-            parameter.name: parameter_value[idx]
-            for idx, parameter in enumerate(self.transform_functions)
-        }
+                # Advance the RNG state to the realization point
+                rng.standard_normal(real_nr)
+
+                # Generate a single sample
+                param_val = float(rng.standard_normal(1)[0])
+            else:
+                raise ValueError(
+                    f"Unknown input source {tfd.input_source} for parameter {tfd.name}"
+                )
+            parameter_dict[tfd.name] = param_val
+            if isinstance(param_val, str):
+                schema_dict[tfd.name] = pl.String()
+            elif isinstance(param_val, float):
+                schema_dict[tfd.name] = pl.Float64()
+            elif isinstance(param_val, int):
+                schema_dict[tfd.name] = pl.Int64()
+            else:
+                # fallback: let Polars infer
+                schema_dict[tfd.name] = pl.DataType()
         parameter_dict["realization"] = real_nr
         return pl.DataFrame(
-            parameter_dict,
-            schema={tf.name: pl.Float64 for tf in self.transform_functions}
-            | {"realization": pl.Int64},
+            parameter_dict, schema=schema_dict | {"realization": pl.Int64}
         )
 
     def load_parameter_graph(self) -> nx.Graph[int]:
@@ -331,30 +432,33 @@ class GenKwConfig(ParameterConfig):
         real_nr: int,
         ensemble: Ensemble,
     ) -> dict[str, dict[str, float | str]]:
-        df = ensemble.load_parameters(self.name, real_nr, transformed=True).drop(
-            "realization"
-        )
-
-        assert isinstance(df, pl.DataFrame)
-        if not df.width == len(self.transform_functions):
-            raise ValueError(
-                f"The configuration of GEN_KW parameter {self.name}"
-                f" has {len(self.transform_functions)} parameters, but ensemble dataset"
-                f" for realization {real_nr} has {df.width} parameters."
+        data_dict: dict[str, dict[str, float | str]] = {}
+        for group in self.groups:
+            df = ensemble.load_parameters(group, real_nr, transformed=True).drop(
+                "realization"
             )
+            assert isinstance(df, pl.DataFrame)
+            if not df.width == len(self.groups[group]):
+                raise ValueError(
+                    f"The configuration of GEN_KW parameter {self.name}"
+                    f" has {len(self.groups[group])} parameters, "
+                    "but ensemble dataset"
+                    f" for realization {real_nr} has {df.width} parameters."
+                )
 
-        data = df.to_dicts()[0]
+            data = df.to_dicts()[0]
 
-        log10_data: dict[str, float | str] = {
-            tf.name: math.log10(data[tf.name])
-            for tf in self.transform_functions
-            if tf.use_log and isinstance(data[tf.name], (int, float))
-        }
+            log10_data: dict[str, float | str] = {
+                tf.name: math.log10(data[tf.name])
+                for tf in self.groups[group]
+                if tf.use_log and isinstance(data[tf.name], (int, float))
+            }
 
-        if log10_data:
-            return {self.name: data, f"LOG10_{self.name}": log10_data}
-        else:
-            return {self.name: data}
+            if log10_data:
+                data_dict.update({group: data, f"LOG10_{group}": log10_data})
+            else:
+                data_dict.update({group: data})
+        return data_dict
 
     def save_parameters(
         self,
@@ -392,8 +496,17 @@ class GenKwConfig(ParameterConfig):
         source_ensemble: Ensemble,
         target_ensemble: Ensemble,
         realizations: npt.NDArray[np.int_],
+        update_mask: bool = False,
     ) -> None:
         df = source_ensemble.load_parameters(self.name, realizations)
+        if update_mask:
+            no_update_keys = [
+                tf.name for tf in self.transform_functions if not tf.update
+            ]
+            if not no_update_keys:
+                return
+            df = df.select(["realization", *no_update_keys])
+
         target_ensemble.save_parameters(self.name, realization=None, dataset=df)
 
     def shouldUseLogScale(self, keyword: str) -> bool:
@@ -454,58 +567,6 @@ class GenKwConfig(ParameterConfig):
             )
         return df.values.flatten()
 
-    @staticmethod
-    def _sample_value(
-        parameter_group_name: str,
-        keys: list[str],
-        global_seed: str,
-        realization: int,
-    ) -> npt.NDArray[np.double]:
-        """
-        Generate a sample value for each key in a parameter group.
-
-        The sampling is reproducible and dependent on a global seed combined
-        with the parameter group name and individual key names. The 'realization'
-        parameter determines the specific sample point from the distribution for each
-        parameter.
-
-        Parameters:
-        - parameter_group_name (str): The name of the parameter group, used to ensure
-        unique RNG seeds for different groups.
-        - keys (list[str]): A list of parameter keys for which the sample values are
-        generated.
-        - global_seed (str): A global seed string used for RNG seed generation to ensure
-        reproducibility across runs.
-        - realization (int): An integer used to advance the RNG to a specific point in
-        its sequence, effectively selecting the 'realization'-th sample from the
-        distribution.
-
-        Returns:
-        - npt.NDArray[np.double]: An array of sample values, one for each key in the
-        provided list.
-
-        Note:
-        The method uses SHA-256 for hash generation and numpy's default random number
-        generator for sampling. The RNG state is advanced to the 'realization' point
-        before generating a single sample, enhancing efficiency by avoiding the
-        generation of large, unused sample sets.
-        """
-        parameter_values = []
-        for key in keys:
-            key_hash = sha256(
-                global_seed.encode("utf-8") + f"{parameter_group_name}:{key}".encode()
-            )
-            seed = np.frombuffer(key_hash.digest(), dtype="uint32")
-            rng = np.random.default_rng(seed)
-
-            # Advance the RNG state to the realization point
-            rng.standard_normal(realization)
-
-            # Generate a single sample
-            value = rng.standard_normal(1)
-            parameter_values.append(value[0])
-        return np.array(parameter_values)
-
     def _parse_transform_function_definition(
         self,
         t: TransformFunctionDefinition,
@@ -548,6 +609,9 @@ class GenKwConfig(ParameterConfig):
 
         return TransformFunction(
             name=t.name,
+            input_source=t.input_source,
+            update=t.update,
+            group_name=t.group_name,
             transform_function_name=t.param_name,
             parameter_list=params,
             calc_func=PRIOR_FUNCTIONS[t.param_name],
@@ -561,6 +625,9 @@ class TransformFunction:
     parameter_list: dict[str, float]
     calc_func: Callable[[float, list[float]], float]
     use_log: bool = False
+    input_source: DataSource = DataSource.SAMPLED
+    update: bool = True
+    group_name: str = SCALAR_NAME
 
     def __post_init__(self) -> None:
         if self.transform_function_name in {"LOGNORMAL", "LOGUNIF"}:

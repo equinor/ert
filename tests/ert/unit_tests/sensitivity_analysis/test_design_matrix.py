@@ -2,12 +2,8 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from ert.config import (
-    DESIGN_MATRIX_GROUP,
-    DesignMatrix,
-    GenKwConfig,
-)
-from ert.config.gen_kw_config import TransformFunctionDefinition
+from ert.config import DESIGN_MATRIX_GROUP, DesignMatrix, GenKwConfig
+from ert.config.gen_kw_config import DataSource, TransformFunctionDefinition
 
 
 def _create_design_matrix(xls_path, design_matrix_df, default_sheet_df) -> DesignMatrix:
@@ -108,48 +104,35 @@ def test_merge_multiple_occurrences(
 
 
 @pytest.mark.parametrize(
-    "parameters, error_msg",
+    "parameters, case_name",
     [
         pytest.param(
             {"COEFFS": ["a", "b"]},
-            "",
-            id="genkw_replaced",
+            "one_group_merge",
         ),
         pytest.param(
-            {"COEFFS": ["a"]},
-            "Overlapping parameter names found in design matrix!",
-            id="ValidationErrorOverlapping",
+            {"COEFFS1": ["aa", "bb"], "COEFFS2": ["cc", "dd"]},
+            "two_groups_no_merge",
         ),
         pytest.param(
-            {"COEFFS": ["aa", "bb"], "COEFFS2": ["cc", "dd"]},
-            "",
-            id="DESIGN_MATRIX_GROUP",
-        ),
-        pytest.param(
-            {"COEFFS": ["a", "b"], "COEFFS2": ["a", "b"]},
-            (
-                "Multiple overlapping groups with design matrix "
-                "found in existing parameters!"
-            ),
-            id="ValidationErrorMultipleGroups",
+            {"COEFFS1": ["a", "bb"], "COEFFS2": ["cc", "dd"]},
+            "two_groups_one_merge",
         ),
     ],
 )
-def test_read_and_merge_with_existing_parameters(tmp_path, parameters, error_msg):
+def test_read_and_merge_with_existing_parameters(tmp_path, parameters, case_name):
     extra_genkw_config = []
     if parameters:
-        for group_name in parameters:
-            extra_genkw_config.append(
-                GenKwConfig(
-                    name=group_name,
-                    forward_init=False,
-                    transform_function_definitions=[
-                        TransformFunctionDefinition(param, "UNIFORM", [0, 1])
-                        for param in parameters[group_name]
-                    ],
-                    update=True,
-                )
+        tfd = [
+            TransformFunctionDefinition(group_name, param, "UNIFORM", [0, 1])
+            for group_name in parameters
+            for param in parameters[group_name]
+        ]
+        extra_genkw_config.append(
+            GenKwConfig(
+                transform_function_definitions=tfd,
             )
+        )
 
     realizations = [0, 1, 2]
     design_path = tmp_path / "design_matrix.xlsx"
@@ -160,28 +143,44 @@ def test_read_and_merge_with_existing_parameters(tmp_path, parameters, error_msg
             "b": [0, 2, 0],
         }
     )
-    default_sheet_df = pd.DataFrame([["a", 1], ["b", 4]])
+
     with pd.ExcelWriter(design_path) as xl_write:
         design_matrix_df.to_excel(xl_write, index=False, sheet_name="DesignSheet")
-        default_sheet_df.to_excel(
-            xl_write, index=False, sheet_name="DefaultSheet", header=False
-        )
-    design_matrix = DesignMatrix(design_path, "DesignSheet", "DefaultSheet")
-    if error_msg:
-        with pytest.raises(ValueError, match=error_msg):
-            design_matrix.merge_with_existing_parameters(extra_genkw_config)
-    elif len(parameters) == 1:
-        new_config_parameters, design_group = (
-            design_matrix.merge_with_existing_parameters(extra_genkw_config)
-        )
-        assert len(new_config_parameters) == 0
-        assert design_group.name == "COEFFS"
-    elif len(parameters) == 2:
-        new_config_parameters, design_group = (
-            design_matrix.merge_with_existing_parameters(extra_genkw_config)
-        )
-        assert len(new_config_parameters) == 2
-        assert design_group.name == DESIGN_MATRIX_GROUP
+    design_matrix = DesignMatrix(design_path, "DesignSheet", None)
+    new_config_parameters = design_matrix.merge_with_existing_parameters(
+        extra_genkw_config
+    )
+    cfg = new_config_parameters[0]
+    assert isinstance(cfg, GenKwConfig)
+    if case_name == "one_group_merge":
+        assert set(cfg.groups.keys()) == {"COEFFS"}
+        tf = cfg.group_parameters("COEFFS")
+        assert tf[0].name == "a"
+        assert tf[0].input_source == DataSource.DESIGN_MATRIX
+        assert tf[1].name == "b"
+        assert tf[0].input_source == DataSource.DESIGN_MATRIX
+        assert len(tf) == 2
+    elif case_name == "two_groups_no_merge":
+        assert set(cfg.groups.keys()) == {"COEFFS1", "COEFFS2", DESIGN_MATRIX_GROUP}
+        tf = cfg.group_parameters("COEFFS1")
+        assert tf[0].name == "aa"
+        assert tf[0].input_source == DataSource.SAMPLED
+        tf = cfg.group_parameters("COEFFS2")
+        assert tf[0].name == "cc"
+        assert tf[0].input_source == DataSource.SAMPLED
+        tf = cfg.group_parameters(DESIGN_MATRIX_GROUP)
+        assert tf[0].name == "a"
+        assert tf[0].input_source == DataSource.DESIGN_MATRIX
+    elif case_name == "two_groups_one_merge":
+        assert set(cfg.groups.keys()) == {"COEFFS1", "COEFFS2", DESIGN_MATRIX_GROUP}
+        tf = cfg.group_parameters("COEFFS1")
+        assert tf[0].name == "a"
+        assert tf[0].input_source == DataSource.DESIGN_MATRIX
+        assert tf[1].name == "bb"
+        assert tf[1].input_source == DataSource.SAMPLED
+        tf = cfg.group_parameters("COEFFS2")
+        assert tf[0].name == "cc"
+        assert tf[0].input_source == DataSource.SAMPLED
 
 
 def test_reading_design_matrix(tmp_path):

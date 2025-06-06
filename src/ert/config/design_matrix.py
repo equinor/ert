@@ -2,19 +2,21 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from pathlib import Path
-from typing import TYPE_CHECKING, cast
+from typing import cast
 
 import numpy as np
 import pandas as pd
 from pandas.api.types import is_integer_dtype
 
-from ert.config.gen_kw_config import GenKwConfig, TransformFunctionDefinition
+from ert.config.gen_kw_config import (
+    DataSource,
+    GenKwConfig,
+    TransformFunctionDefinition,
+)
+from ert.config.parameter_config import ParameterConfig
 from ert.shared.status.utils import convert_to_numeric
 
 from .parsing import ConfigValidationError, ErrorInfo
-
-if TYPE_CHECKING:
-    from ert.config import ParameterConfig
 
 DESIGN_MATRIX_GROUP = "DESIGN_MATRIX"
 
@@ -128,56 +130,39 @@ class DesignMatrix:
 
     def merge_with_existing_parameters(
         self, existing_parameters: list[ParameterConfig]
-    ) -> tuple[list[ParameterConfig], GenKwConfig]:
-        """
-        This method merges the design matrix parameters with the existing parameters and
-        returns the new list of existing parameters, wherein we drop GEN_KW group having
-        a full overlap with the design matrix group. GEN_KW group that was dropped will
-        acquire a new name from the design matrix group. Additionally, the
-        ParameterConfig which is the design matrix group is returned separately.
-
-        Args:
-            existing_parameters (List[ParameterConfig]): List of existing parameters
-
-        Raises:
-            ConfigValidationError: If there is a partial overlap between the design
-            matrix group and any existing GEN_KW group
-
-        Returns:
-            tuple[List[ParameterConfig], ParameterConfig]: List of existing parameters
-            and the dedicated design matrix group
-        """
-
-        new_param_config: list[ParameterConfig] = []
-
-        design_parameter_group = self.parameter_configuration
-        design_keys = [e.name for e in design_parameter_group.transform_functions]
-
-        design_group_added = False
-        for parameter_group in existing_parameters:
-            if not isinstance(parameter_group, GenKwConfig):
-                new_param_config += [parameter_group]
+    ) -> list[ParameterConfig]:
+        overlap_set = set()
+        all_params: list[TransformFunctionDefinition] = []
+        parameter_configs: list[ParameterConfig] = []
+        for config in existing_parameters:
+            if not isinstance(config, GenKwConfig):
+                parameter_configs.append(config)
                 continue
-            existing_keys = [e.name for e in parameter_group.transform_functions]
-            if set(existing_keys) == set(design_keys):
-                if design_group_added:
-                    raise ConfigValidationError(
-                        "Multiple overlapping groups with design matrix found in "
-                        "existing parameters!\n"
-                        f"{design_parameter_group.name} and {parameter_group.name}"
-                    )
-
-                design_parameter_group.name = parameter_group.name
-                design_group_added = True
-            elif set(design_keys) & set(existing_keys):
-                raise ConfigValidationError(
-                    "Overlapping parameter names found in design matrix!\n"
-                    f"{DESIGN_MATRIX_GROUP}:{design_keys}\n{parameter_group.name}:{existing_keys}"
-                    "\nThey need to match exactly or not at all."
-                )
-            else:
-                new_param_config += [parameter_group]
-        return new_param_config, design_parameter_group
+            for existing_parameter in config.transform_function_definitions:
+                if existing_parameter.input_source == DataSource.DESIGN_MATRIX:
+                    continue
+                overlap = False
+                for (
+                    parameter_design
+                ) in self.parameter_configuration.transform_function_definitions:
+                    if existing_parameter.name == parameter_design.name:
+                        parameter_design.group_name = existing_parameter.group_name
+                        all_params.append(parameter_design)
+                        overlap = True
+                        overlap_set.add(existing_parameter.name)
+                        break
+                if not overlap:
+                    all_params.append(existing_parameter)
+        for (
+            parameter_design
+        ) in self.parameter_configuration.transform_function_definitions:
+            if parameter_design.name not in overlap_set:
+                all_params.append(parameter_design)
+        if all_params:
+            parameter_configs.append(
+                GenKwConfig(transform_function_definitions=all_params)
+            )
+        return parameter_configs
 
     def read_and_validate_design_matrix(
         self,
@@ -240,16 +225,17 @@ class DesignMatrix:
         for parameter in design_matrix_df.columns:
             transform_function_definitions.append(
                 TransformFunctionDefinition(
+                    group_name=DESIGN_MATRIX_GROUP,
                     name=parameter,
                     param_name="RAW",
                     values=[],
+                    input_source=DataSource.DESIGN_MATRIX,
+                    update=False,
                 )
             )
         parameter_configuration = GenKwConfig(
             name=DESIGN_MATRIX_GROUP,
-            forward_init=False,
             transform_function_definitions=transform_function_definitions,
-            update=False,
         )
 
         reals = design_matrix_df.index.tolist()

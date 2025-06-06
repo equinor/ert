@@ -22,7 +22,7 @@ from .forward_model_step import (
     ForwardModelStepWarning,
 )
 from .gen_data_config import GenDataConfig
-from .gen_kw_config import GenKwConfig, PriorDict, TransformFunction
+from .gen_kw_config import SCALAR_NAME, GenKwConfig, PriorDict, TransformFunction
 from .lint_file import lint_file
 from .model_config import ModelConfig
 from .observations import EnkfObs
@@ -46,6 +46,7 @@ from .workflow_job import _WorkflowJob
 
 __all__ = [
     "DESIGN_MATRIX_GROUP",
+    "SCALAR_NAME",
     "AnalysisConfig",
     "AnalysisModule",
     "ConfigValidationError",

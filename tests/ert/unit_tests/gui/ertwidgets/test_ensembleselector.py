@@ -9,10 +9,9 @@ from ert.gui.ertwidgets.ensembleselector import EnsembleSelector
 @pytest.fixture
 def uniform_parameter():
     return GenKwConfig(
-        name="parameter",
         forward_init=False,
         transform_function_definitions=[
-            TransformFunctionDefinition("KEY1", "UNIFORM", [0, 1]),
+            TransformFunctionDefinition("parameter", "KEY1", "UNIFORM", [0, 1]),
         ],
         update=True,
     )

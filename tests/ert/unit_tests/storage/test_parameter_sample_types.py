@@ -237,19 +237,23 @@ def test_that_first_three_parameters_sampled_snapshot(tmpdir, storage):
         (
             "MY_KEYWORD <MY_KEYWORD>\nMY_SECOND_KEYWORD <MY_SECOND_KEYWORD>",
             [
-                TransformFunctionDefinition("MY_KEYWORD", "NORMAL", [0, 1]),
-                TransformFunctionDefinition("MY_SECOND_KEYWORD", "NORMAL", [0, 1]),
+                TransformFunctionDefinition("KW_NAME", "MY_KEYWORD", "NORMAL", [0, 1]),
+                TransformFunctionDefinition(
+                    "KW_NAME", "MY_SECOND_KEYWORD", "NORMAL", [0, 1]
+                ),
             ],
         ),
         (
             "MY_KEYWORD <MY_KEYWORD>",
-            [TransformFunctionDefinition("MY_KEYWORD", "NORMAL", [0, 1])],
+            [TransformFunctionDefinition("KW_NAME", "MY_KEYWORD", "NORMAL", [0, 1])],
         ),
         (
             "MY_FIRST_KEYWORD <MY_FIRST_KEYWORD>\nMY_KEYWORD <MY_KEYWORD>",
             [
-                TransformFunctionDefinition("MY_FIRST_KEYWORD", "NORMAL", [0, 1]),
-                TransformFunctionDefinition("MY_KEYWORD", "NORMAL", [0, 1]),
+                TransformFunctionDefinition(
+                    "KW_NAME", "MY_FIRST_KEYWORD", "NORMAL", [0, 1]
+                ),
+                TransformFunctionDefinition("KW_NAME", "MY_KEYWORD", "NORMAL", [0, 1]),
             ],
         ),
     ],
@@ -263,7 +267,6 @@ def test_that_sampling_is_fixed_from_name(
     """
     with tmpdir.as_cwd():
         conf = GenKwConfig(
-            name="KW_NAME",
             forward_init=False,
             transform_function_definitions=prior,
             update=True,
@@ -429,7 +432,7 @@ def test_gen_kw(storage, tmpdir, config_str, expected, extra_files, expectation)
         (
             [False, False],
             pytest.raises(
-                KeyError, match="No KW_NAME dataset in storage for ensemble default"
+                KeyError, match="No SCALAR dataset in storage for ensemble default"
             ),
         ),
         (
