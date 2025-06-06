@@ -3,8 +3,10 @@ from __future__ import annotations
 import math
 import os
 import warnings
+from collections import defaultdict
 from collections.abc import Callable
 from dataclasses import dataclass
+from enum import StrEnum
 from hashlib import sha256
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, Self, cast, overload
@@ -49,19 +51,31 @@ def _get_abs_path(file: str | None) -> str | None:
     return file
 
 
+class DataSource(StrEnum):
+    DESIGN_MATRIX = "design_matrix"
+    SAMPLED = "sampled"
+
+
 @dataclass
 class TransformFunctionDefinition:
     name: str
     param_name: str
+    group_name: str
     values: list[Any]
+    update: bool = True
+    input_source: DataSource = DataSource.SAMPLED
 
 
 @dataclass
 class GenKwConfig(ParameterConfig):
     transform_function_definitions: list[TransformFunctionDefinition]
+    forward_init: bool = False
+    update: bool = True
+    name: str = "GEN_KW"
 
     def __post_init__(self) -> None:
         self.transform_functions: list[TransformFunction] = []
+        self.groups: dict[str, list[TransformFunctionDefinition]] = defaultdict(list)
         for e in self.transform_function_definitions:
             if isinstance(e, dict):
                 self.transform_functions.append(
@@ -73,6 +87,8 @@ class GenKwConfig(ParameterConfig):
                 self.transform_functions.append(
                     self._parse_transform_function_definition(e)
                 )
+            self.groups[e.group_name].append(e)
+        self.update = any(param.update for param in self.transform_function_definitions)
         self._validate()
 
     def __contains__(self, item: str) -> bool:
@@ -103,6 +119,17 @@ class GenKwConfig(ParameterConfig):
 
     @classmethod
     def templates_from_config(
+        cls, gen_kw_list: list[list[str | dict[str, str]]]
+    ) -> list[tuple[str, str]]:
+        return [
+            template
+            for gen_kw in gen_kw_list
+            if (template := GenKwConfig._templates_from_config_single(gen_kw))
+            is not None
+        ]
+
+    @classmethod
+    def _templates_from_config_single(
         cls, gen_kw: list[str | dict[str, str]]
     ) -> tuple[str, str] | None:
         gen_kw_key = cast(str, gen_kw[0])
@@ -134,7 +161,19 @@ class GenKwConfig(ParameterConfig):
         return None
 
     @classmethod
-    def from_config_list(cls, gen_kw: list[str | dict[str, str]]) -> Self:
+    def from_config_list(cls, gen_kw_list: list[list[str | dict[str, str]]]) -> Self:
+        return cls(
+            transform_function_definitions=[
+                item
+                for gen_kw in gen_kw_list
+                for item in GenKwConfig._from_config_list_single_genkw(gen_kw)
+            ]
+        )
+
+    @classmethod
+    def _from_config_list_single_genkw(
+        cls, gen_kw: list[str | dict[str, str]]
+    ) -> list[TransformFunctionDefinition]:
         gen_kw_key = cast(str, gen_kw[0])
 
         options = cast(dict[str, str], gen_kw[-1])
@@ -178,6 +217,8 @@ class GenKwConfig(ParameterConfig):
                         TransformFunctionDefinition(
                             name=items[0],
                             param_name=items[1],
+                            group_name=gen_kw_key,
+                            update=update_parameter,
                             values=items[2:],
                         )
                     )
@@ -199,12 +240,7 @@ class GenKwConfig(ParameterConfig):
                 "to exclude this from updates, set UPDATE:FALSE.\n",
                 gen_kw_key,
             )
-        return cls(
-            name=gen_kw_key,
-            forward_init=False,
-            transform_function_definitions=transform_function_definitions,
-            update=update_parameter,
-        )
+        return transform_function_definitions
 
     def _validate(self) -> None:
         errors = []
@@ -331,30 +367,34 @@ class GenKwConfig(ParameterConfig):
         real_nr: int,
         ensemble: Ensemble,
     ) -> dict[str, dict[str, float | str]]:
-        df = ensemble.load_parameters(self.name, real_nr, transformed=True).drop(
-            "realization"
-        )
-
-        assert isinstance(df, pl.DataFrame)
-        if not df.width == len(self.transform_functions):
-            raise ValueError(
-                f"The configuration of GEN_KW parameter {self.name}"
-                f" has {len(self.transform_functions)} parameters, but ensemble dataset"
-                f" for realization {real_nr} has {df.width} parameters."
+        data_dict: dict[str, dict[str, float | str]] = {}
+        for group in self.groups:
+            df = ensemble.load_parameters(group, real_nr, transformed=True).drop(
+                "realization"
             )
 
-        data = df.to_dicts()[0]
+            assert isinstance(df, pl.DataFrame)
+            if not df.width == len(self.transform_functions):
+                raise ValueError(
+                    f"The configuration of GEN_KW parameter {self.name}"
+                    f" has {len(self.transform_functions)} parameters, "
+                    "but ensemble dataset"
+                    f" for realization {real_nr} has {df.width} parameters."
+                )
 
-        log10_data: dict[str, float | str] = {
-            tf.name: math.log10(data[tf.name])
-            for tf in self.transform_functions
-            if tf.use_log and isinstance(data[tf.name], (int, float))
-        }
+            data = df.to_dicts()[0]
 
-        if log10_data:
-            return {self.name: data, f"LOG10_{self.name}": log10_data}
-        else:
-            return {self.name: data}
+            log10_data: dict[str, float | str] = {
+                tf.name: math.log10(data[tf.name])
+                for tf in self.transform_functions
+                if tf.use_log and isinstance(data[tf.name], (int, float))
+            }
+
+            if log10_data:
+                data_dict.update({self.name: data, f"LOG10_{self.name}": log10_data})
+            else:
+                data_dict.update({self.name: data})
+        return data_dict
 
     def save_parameters(
         self,
