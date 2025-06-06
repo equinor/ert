@@ -97,7 +97,7 @@ def mocked_requests_get(*args, **kwargs):
     }
 
     observations = {
-        "/ensembles/ens_id_5/records/WOPR%25253AOP1/observations": [
+        "/ensembles/ens_id_5/responses/WOPR%25253AOP1/observations": [
             {
                 "name": "WOPR_OP1_108",
                 "errors": [0.07500000298023224],
@@ -135,7 +135,7 @@ def mocked_requests_get(*args, **kwargs):
                 "x_axis": ["2010-03-31T00:00:00"],
             },
         ],
-        "/ensembles/ens_id_3/records/WOPR:OP1/observations": [
+        "/ensembles/ens_id_3/responses/WOPR:OP1/observations": [
             {
                 "name": "WOPR:OP1",
                 "errors": [0.05, 0.07],
@@ -143,7 +143,7 @@ def mocked_requests_get(*args, **kwargs):
                 "x_axis": ["2010-03-31T00:00:00", "2010-12-26T00:00:00"],
             }
         ],
-        "/ensembles/ens_id_4/records/WOPR:OP1/observations": [
+        "/ensembles/ens_id_4/responses/WOPR:OP1/observations": [
             {
                 "name": "WOPR:OP1",
                 "errors": [0.05, 0.07],
@@ -151,7 +151,7 @@ def mocked_requests_get(*args, **kwargs):
                 "x_axis": ["2010-03-31T00:00:00", "2010-12-26T00:00:00"],
             }
         ],
-        "/ensembles/ens_id_3/records/SNAKE_OIL_WPR_DIFF@199/observations": [
+        "/ensembles/ens_id_3/responses/SNAKE_OIL_WPR_DIFF@199/observations": [
             {
                 "name": "SNAKE_OIL_WPR_DIFF",
                 "errors": [0.05, 0.07, 0.05],
@@ -163,7 +163,7 @@ def mocked_requests_get(*args, **kwargs):
                 ],
             }
         ],
-        "/ensembles/ens_id_4/records/SNAKE_OIL_WPR_DIFF@199/observations": [
+        "/ensembles/ens_id_4/responses/SNAKE_OIL_WPR_DIFF@199/observations": [
             {
                 "name": "WOPR:OP1",
                 "errors": [0.05, 0.07, 0.05],
@@ -175,7 +175,7 @@ def mocked_requests_get(*args, **kwargs):
                 ],
             }
         ],
-        "/ensembles/ens_id_3/records/FOPR/observations": [
+        "/ensembles/ens_id_3/responses/FOPR/observations": [
             {
                 "name": "FOPR",
                 "errors": [0.05, 0.07],
@@ -277,16 +277,16 @@ def mocked_requests_get(*args, **kwargs):
     }
 
     records = {
-        "/ensembles/ens_id_3/records/FOPR": summary_parquet_data,
-        "/ensembles/ens_id_3/records/BPR%25253A1%25252C3%25252C8": summary_parquet_data,
+        "/ensembles/ens_id_3/responses/FOPR": summary_parquet_data,
+        "/ensembles/ens_id_3/responses/BPR%25253A1%25252C3%25252C8": summary_parquet_data,  # noqa
         (
-            "/ensembles/ens_id_3/records/SNAKE_OIL_PARAM%25253ABPR_138_PERSISTENCE"
+            "/ensembles/ens_id_3/parameters/SNAKE_OIL_PARAM%25253ABPR_138_PERSISTENCE"
         ): parameter_parquet_data,
         (
-            "/ensembles/ens_id_3/records/SNAKE_OIL_PARAM%25253AOP1_DIVERGENCE_SCALE"
+            "/ensembles/ens_id_3/parameters/SNAKE_OIL_PARAM%25253AOP1_DIVERGENCE_SCALE"
         ): parameter_parquet_data,
-        "/ensembles/ens_id_3/records/SNAKE_OIL_WPR_DIFF@199": gen_parquet_data,
-        "/ensembles/ens_id_3/records/FOPRH": history_parquet_data,
+        "/ensembles/ens_id_3/responses/SNAKE_OIL_WPR_DIFF@199": gen_parquet_data,
+        "/ensembles/ens_id_3/responses/FOPRH": history_parquet_data,
     }
 
     experiments = [

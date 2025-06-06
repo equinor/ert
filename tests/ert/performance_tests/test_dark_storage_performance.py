@@ -2,11 +2,13 @@ import asyncio
 import contextlib
 import gc
 import io
+import json
 import os
 from collections.abc import Awaitable
 from datetime import datetime, timedelta
 from typing import TypeVar
 from urllib.parse import quote
+from uuid import UUID
 
 import memray
 import numpy as np
@@ -19,12 +21,36 @@ from starlette.testclient import TestClient
 from ert.config import SummaryConfig
 from ert.dark_storage import common
 from ert.dark_storage.app import app
-from ert.dark_storage.endpoints import ensembles, experiments, records
+from ert.dark_storage.endpoints import ensembles, experiments
+from ert.dark_storage.endpoints.observations import get_observations_for_response
+from ert.dark_storage.endpoints.responses import get_response
 from ert.gui.tools.plot.plot_api import PlotApi
 from ert.services import StorageService
-from ert.storage import open_storage
+from ert.storage import Storage, open_storage
 
 T = TypeVar("T")
+
+
+def get_response_autofilter(
+    storage: Storage, response_key: str, ensemble_id: UUID, **kwargs
+):
+    if "@" in response_key:
+        response_key, report_step = response_key.split("@")
+        return get_response(
+            storage=storage,
+            response_key=response_key,
+            ensemble_id=ensemble_id,
+            filter_on=json.dumps({"report_step": report_step}),
+            **kwargs,
+        )
+
+    return get_response(
+        storage=storage,
+        ensemble_id=ensemble_id,
+        response_key=response_key,
+        filter_on=None,
+        **kwargs,
+    )
 
 
 @pytest.fixture(autouse=True)
@@ -54,9 +80,9 @@ def run_in_loop(coro: Awaitable[T]) -> T:
 
 def get_single_record_csv(storage, ensemble_id1, keyword, poly_ran):
     csv = run_in_loop(
-        records.get_ensemble_record(
+        get_response(
             storage=storage,
-            name=keyword,
+            response_key=keyword,
             ensemble_id=ensemble_id1,
         )
     ).body
@@ -68,9 +94,13 @@ def get_single_record_csv(storage, ensemble_id1, keyword, poly_ran):
 
 
 def get_record_observations(storage, ensemble_id, keyword: str, poly_ran):
+    response_key, _ = keyword.split("@") if "@" in keyword else (keyword, None)
+
     obs = run_in_loop(
-        records.get_record_observations(
-            storage=storage, ensemble_id=ensemble_id, response_name=keyword
+        get_observations_for_response(
+            storage=storage,
+            ensemble_id=ensemble_id,
+            response_key=response_key,
         )
     )
 
@@ -107,9 +137,9 @@ def get_record_observations(storage, ensemble_id, keyword: str, poly_ran):
 
 def get_record_parquet(storage, ensemble_id1, keyword, poly_ran):
     parquet = run_in_loop(
-        records.get_ensemble_record(
+        get_response_autofilter(
             storage=storage,
-            name=keyword,
+            response_key=keyword,
             ensemble_id=ensemble_id1,
             accept="application/x-parquet",
         )
@@ -121,8 +151,8 @@ def get_record_parquet(storage, ensemble_id1, keyword, poly_ran):
 
 def get_record_csv(storage, ensemble_id1, keyword, poly_ran):
     csv = run_in_loop(
-        records.get_ensemble_record(
-            storage=storage, name=keyword, ensemble_id=ensemble_id1
+        get_response_autofilter(
+            storage=storage, response_key=keyword, ensemble_id=ensemble_id1
         )
     ).body
     record_df1 = pd.read_csv(io.BytesIO(csv), index_col=0, float_precision="round_trip")
@@ -130,23 +160,9 @@ def get_record_csv(storage, ensemble_id1, keyword, poly_ran):
     assert len(record_df1.index) == poly_ran["reals"]
 
 
-def get_parameters(storage, ensemble_id1, keyword, poly_ran):
-    parameters_json = run_in_loop(
-        records.get_ensemble_parameters(storage=storage, ensemble_id=ensemble_id1)
-    )
-    assert (
-        len(parameters_json)
-        == poly_ran["parameter_entries"] * poly_ran["parameter_count"]
-    )
-
-
 @pytest.mark.parametrize(
     "function",
-    [
-        get_record_parquet,
-        get_record_csv,
-        get_parameters,
-    ],
+    [get_record_parquet, get_record_csv],
 )
 @pytest.mark.parametrize(
     "keyword", ["summary", "gen_data", "summary_with_obs", "gen_data_with_obs"]
@@ -291,15 +307,15 @@ def test_plot_api_big_summary_memory_usage(
 
     with memray.Tracker("memray.bin", follow_fork=True, native_traces=True):
         # Initialize plotter window
-        all_keys = {k.key for k in api.all_data_type_keys()}
+        response_keys = {k.key for k in api.responses_api_key_defs}
         all_ensembles = [e.id for e in api.get_all_ensembles()]
-        assert set(keys_df.to_list()) == set(all_keys)
+        assert set(keys_df.to_list()) == set(response_keys)
 
         # call updatePlot()
         ensemble_to_data_map: dict[str, pd.DataFrame] = {}
         sample_key = keys_df.sample(1).item()
         for ensemble in all_ensembles:
-            ensemble_to_data_map[ensemble] = api.data_for_key(ensemble, sample_key)
+            ensemble_to_data_map[ensemble] = api.data_for_response(ensemble, sample_key)
 
         for ensemble in all_ensembles:
             data = ensemble_to_data_map[ensemble]
@@ -319,12 +335,23 @@ def test_plotter_on_all_snake_oil_responses_time(api_and_snake_oil_storage, benc
     api, _ = api_and_snake_oil_storage
 
     def run():
-        key_infos = api.all_data_type_keys()
+        key_infos_params = api.parameters_api_key_defs
+        key_infos_responses = api.responses_api_key_defs
         all_ensembles = api.get_all_ensembles()
         # Cycle through all ensembles and get all responses
-        for key_info in key_infos:
+        for key_info in key_infos_params:
             for ensemble in all_ensembles:
-                api.data_for_key(ensemble_id=ensemble.id, key=key_info.key)
+                api.data_for_parameter(
+                    ensemble_id=ensemble.id, parameter_key=key_info.key
+                )
+
+        for key_info in key_infos_responses:
+            for ensemble in all_ensembles:
+                api.data_for_response(
+                    ensemble_id=ensemble.id,
+                    response_key=key_info.response_metadata.response_key,
+                    filter_on=key_info.filter_on,
+                )
 
             if key_info.observations:
                 with contextlib.suppress(RequestError, TimeoutError):
@@ -336,8 +363,9 @@ def test_plotter_on_all_snake_oil_responses_time(api_and_snake_oil_storage, benc
             if not (str(key_info.key).endswith("H") or "H:" in str(key_info.key)):
                 with contextlib.suppress(RequestError, TimeoutError):
                     api.history_data(
-                        key_info.key,
+                        key_info.response_metadata.response_key,
                         [e.id for e in all_ensembles],
+                        filter_on=key_info.filter_on,
                     )
 
     benchmark(run)
@@ -347,12 +375,16 @@ def test_plotter_on_all_snake_oil_responses_memory(api_and_snake_oil_storage):
     api, _ = api_and_snake_oil_storage
 
     with memray.Tracker("memray.bin", follow_fork=True, native_traces=True):
-        key_infos = api.all_data_type_keys()
+        key_infos = api.responses_api_key_defs
         all_ensembles = api.get_all_ensembles()
         # Cycle through all ensembles and get all responses
         for key_info in key_infos:
             for ensemble in all_ensembles:
-                api.data_for_key(ensemble_id=ensemble.id, key=key_info.key)
+                api.data_for_response(
+                    ensemble_id=ensemble.id,
+                    response_key=key_info.response_metadata.response_key,
+                    filter_on=key_info.filter_on,
+                )
 
             if key_info.observations:
                 with contextlib.suppress(RequestError, TimeoutError):
@@ -364,8 +396,9 @@ def test_plotter_on_all_snake_oil_responses_memory(api_and_snake_oil_storage):
             if not (str(key_info.key).endswith("H") or "H:" in str(key_info.key)):
                 with contextlib.suppress(RequestError, TimeoutError):
                     api.history_data(
-                        key_info.key,
+                        key_info.response_metadata.response_key,
                         [e.id for e in all_ensembles],
+                        filter_on=key_info.filter_on,
                     )
 
     stats = memray._memray.compute_statistics("memray.bin")

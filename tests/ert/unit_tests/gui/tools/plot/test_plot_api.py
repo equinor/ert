@@ -13,6 +13,8 @@ from starlette.testclient import TestClient
 
 from ert.config import GenKwConfig, SummaryConfig
 from ert.config.gen_kw_config import TransformFunctionDefinition
+from ert.config.parameter_config import ParameterMetadata
+from ert.config.response_config import ResponseMetadata
 from ert.dark_storage import common
 from ert.dark_storage.app import app
 from ert.gui.tools.plot.plot_api import PlotApi, PlotApiKeyDefinition
@@ -37,7 +39,7 @@ def use_testclient(monkeypatch):
 
 
 def test_key_def_structure(api):
-    key_defs = api.all_data_type_keys()
+    key_defs = api.parameters_api_key_defs + api.responses_api_key_defs
     fopr = next(x for x in key_defs if x.key == "FOPR")
     fopr_expected = {
         "dimensionality": 2,
@@ -46,6 +48,10 @@ def test_key_def_structure(api):
         "metadata": {"data_origin": "summary"},
         "observations": True,
         "log_scale": False,
+        "parameter_metadata": None,
+        "response_metadata": ResponseMetadata(
+            response_type="summary", response_key="FOPR", filter_on={}
+        ),
     }
     assert fopr == PlotApiKeyDefinition(**fopr_expected)
 
@@ -57,6 +63,10 @@ def test_key_def_structure(api):
         "metadata": {"data_origin": "summary"},
         "observations": False,
         "log_scale": False,
+        "parameter_metadata": None,
+        "response_metadata": ResponseMetadata(
+            response_type="summary", response_key="BPR:1,3,8", filter_on={}
+        ),
     }
     assert bpr == PlotApiKeyDefinition(**bpr_expected)
 
@@ -70,6 +80,13 @@ def test_key_def_structure(api):
         "metadata": {"data_origin": "GEN_KW"},
         "observations": False,
         "log_scale": False,
+        "parameter_metadata": ParameterMetadata(
+            key="SNAKE_OIL_PARAM:BPR_138_PERSISTENCE",
+            transformation="NORMAL",
+            dimensionality=1,
+            userdata={"data_origin": "GEN_KW"},
+        ),
+        "response_metadata": None,
     }
     assert bpr_parameter == PlotApiKeyDefinition(**bpr_parameter_expected)
 
@@ -92,35 +109,21 @@ def test_case_structure(api):
 
 
 def test_can_load_data_and_observations(api):
-    keys = {
-        "SNAKE_OIL_PARAM:BPR_138_PERSISTENCE": {
-            "key": "SNAKE_OIL_PARAM:BPR_138_PERSISTENCE",
-            "observations": False,
-            "userdata": {"data_origin": "GEN_KW"},
-        },
-        "BPR:1,3,8": {
-            "key": "BPR:1,3,8",
-            "userdata": {"data_origin": "Summary"},
-            "observations": False,
-        },
-        "FOPR": {
-            "key": "FOPR",
-            "userdata": {"data_origin": "Summary"},
-            "observations": True,
-        },
-    }
+    responses = [("BPR:1,3,8", False), ("FOPR", True)]
     ensemble = next(x for x in api.get_all_ensembles() if x.name == "default_0")
-    for key, value in keys.items():
-        observations = value["observations"]
-        if observations:
+    data = api.data_for_parameter(ensemble.id, "SNAKE_OIL_PARAM:BPR_138_PERSISTENCE")
+    assert not data.empty
+
+    for key, has_observations in responses:
+        if has_observations:
             obs_data = api.observations_for_key([ensemble.id], key)
             assert not obs_data.empty
-        data = api.data_for_key(ensemble.id, key)
+        data = api.data_for_response(ensemble.id, key)
         assert not data.empty
 
 
 def test_all_data_type_keys(api):
-    keys = [e.key for e in api.all_data_type_keys()]
+    keys = [e.key for e in (api.parameters_api_key_defs + api.responses_api_key_defs)]
     assert sorted(keys) == sorted(
         [
             "BPR:1,3,8",
@@ -172,7 +175,7 @@ def test_plot_api_request_errors_all_data_type_keys(api, mocker):
     )
 
     with pytest.raises(httpx.RequestError):
-        api.all_data_type_keys()
+        api.parameters_api_key_defs + api.responses_api_key_defs
 
 
 def test_plot_api_request_errors(api):
@@ -182,7 +185,7 @@ def test_plot_api_request_errors(api):
         api.observations_for_key([ensemble.id], "should_not_be_there")
 
     with pytest.raises(httpx.RequestError):
-        api.data_for_key(ensemble.id, "should_not_be_there")
+        api.data_for_response(ensemble.id, "should_not_be_there")
 
 
 @pytest.fixture
@@ -225,7 +228,7 @@ def test_plot_api_handles_urlescape(api_and_storage):
         },
     )
     ensemble = experiment.create_ensemble(ensemble_size=1, name="ensemble")
-    assert api.data_for_key(str(ensemble.id), key).empty
+    assert api.data_for_response(str(ensemble.id), key).empty
     df = pl.DataFrame(
         {
             "response_key": [key],
@@ -239,7 +242,7 @@ def test_plot_api_handles_urlescape(api_and_storage):
         df,
         0,
     )
-    assert api.data_for_key(str(ensemble.id), key).to_csv() == dedent(
+    assert api.data_for_response(str(ensemble.id), key).to_csv() == dedent(
         """\
         Realization,2024-10-04
         0,1.0
@@ -276,7 +279,7 @@ def test_plot_api_handles_empty_gen_kw(api_and_storage):
         observations={},
     )
     ensemble = storage.create_ensemble(experiment.id, ensemble_size=10)
-    assert api.data_for_key(str(ensemble.id), key).empty
+    assert api.data_for_parameter(str(ensemble.id), key).empty
     ensemble.save_parameters(
         key,
         realization=None,
@@ -287,7 +290,9 @@ def test_plot_api_handles_empty_gen_kw(api_and_storage):
             }
         ),
     )
-    assert api.data_for_key(str(ensemble.id), key + ":" + name).to_csv() == dedent(
+    assert api.data_for_parameter(
+        str(ensemble.id), key + ":" + name
+    ).to_csv() == dedent(
         """\
         Realization,0
         1,0.1
@@ -320,8 +325,8 @@ def test_plot_api_handles_non_existant_gen_kw(api_and_storage):
             }
         ),
     )
-    assert api.data_for_key(str(ensemble.id), "gen_kw").empty
-    assert api.data_for_key(str(ensemble.id), "gen_kw:does_not_exist").empty
+    assert api.data_for_parameter(str(ensemble.id), "gen_kw").empty
+    assert api.data_for_parameter(str(ensemble.id), "gen_kw:does_not_exist").empty
 
 
 def test_that_multiple_observations_are_parsed_correctly(api):

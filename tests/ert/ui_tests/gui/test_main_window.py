@@ -368,7 +368,7 @@ def test_that_the_plot_window_contains_the_expected_elements(
             qtbot.mouseClick(tab_bar, Qt.MouseButton.LeftButton, pos=tab_center)
 
         # make sure plotter remembers plot types selected previously
-        response_index = 0
+        response_index = 3  # responses are at the end, thus POLY_RES@0 is at index3
         gen_kw_index = 1
         response_alternate_index = 1
         gen_kw_alternate_index = 3
