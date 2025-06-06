@@ -4,14 +4,14 @@ from urllib.parse import unquote
 from uuid import UUID
 
 import numpy as np
+import pandas as pd
 from fastapi import APIRouter, Body, Depends, Header, HTTPException, status
 from fastapi.responses import Response
 
 from ert.dark_storage.common import (
-    data_for_parameter,
     get_storage,
 )
-from ert.storage import Storage
+from ert.storage import Ensemble, Storage
 
 router = APIRouter(tags=["ensemble"])
 
@@ -89,3 +89,37 @@ def get_parameter_std_dev(
     np.save(buffer, data_2d)
 
     return Response(content=buffer.getvalue(), media_type="application/octet-stream")
+
+
+def _extract_parameter_group_and_key(key: str) -> tuple[str, str] | tuple[None, None]:
+    key = key.removeprefix("LOG10_")
+    if ":" not in key:
+        # Assume all incoming keys are in format group:key for now
+        return None, None
+
+    param_group, param_key = key.split(":")
+    return param_group, param_key
+
+
+def data_for_parameter(ensemble: Ensemble, key: str) -> pd.DataFrame:
+    group, _ = _extract_parameter_group_and_key(key)
+    try:
+        df = ensemble.load_scalars(group)
+    except KeyError:
+        return pd.DataFrame()
+
+    if df.is_empty():
+        return pd.DataFrame()
+
+    dataframe = df.to_pandas().set_index("realization")
+    dataframe.columns.name = None
+    dataframe.index.name = "Realization"
+    data = dataframe.sort_index(axis=1)
+    if data.empty or key not in data:
+        return pd.DataFrame()
+    data = data[key].to_frame().dropna()
+    data.columns = pd.Index([0])
+    try:
+        return data.astype(float)
+    except ValueError:
+        return data

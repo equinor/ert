@@ -5,7 +5,7 @@ import polars as pl
 import pytest
 
 from ert.config import GenDataConfig, SummaryConfig
-from ert.dark_storage.common import data_for_response
+from ert.dark_storage.endpoints.responses import data_for_response
 from ert.storage import open_storage
 from tests.ert.unit_tests.config.summary_generator import (
     Date,
