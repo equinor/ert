@@ -1,34 +1,13 @@
 {
   "function_estimators": [
     {
-      "method": "mean",
-      "options": {}
+      "method": "mean"
     }
   ],
   "gradient": {
-    "boundary_types": [
-      3,
-      3,
-      3
-    ],
     "evaluation_policy": "speculative",
     "merge_realizations": false,
-    "number_of_perturbations": 7,
-    "perturbation_magnitudes": [
-      0.005,
-      0.005,
-      0.005
-    ],
-    "perturbation_min_success": 7,
-    "perturbation_types": [
-      1,
-      1,
-      1
-    ],
-    "samplers": null,
-    "seed": [
-      999
-    ]
+    "number_of_perturbations": 7
   },
   "linear_constraints": {
     "coefficients": [
@@ -46,11 +25,9 @@
     ]
   },
   "nonlinear_constraints": {
-    "function_estimators": null,
     "lower_bounds": [
       0.1
     ],
-    "realization_filters": null,
     "upper_bounds": [
       null
     ]
@@ -59,15 +36,11 @@
     "function_estimators": [
       0
     ],
-    "realization_filters": null,
     "weights": [
       1.0
     ]
   },
   "optimizer": {
-    "max_batches": null,
-    "max_functions": null,
-    "max_iterations": null,
     "method": "optpp_q_newton",
     "options": {},
     "output_dir": "not_relevant",
@@ -76,27 +49,13 @@
     "stdout": "optimizer.stdout",
     "tolerance": 0.005
   },
-  "realization_filters": [],
   "realizations": {
-    "realization_min_success": 2,
     "weights": [
       0.25,
       0.75
     ]
   },
-  "samplers": [
-    {
-      "method": "scipy/default",
-      "options": {},
-      "shared": false
-    }
-  ],
   "variables": {
-    "initial_values": [
-      0.25,
-      0.25,
-      0.25
-    ],
     "lower_bounds": [
       -1.0,
       -1.0,
@@ -107,6 +66,17 @@
       true,
       true
     ],
+    "perturbation_magnitudes": [
+      0.005,
+      0.005,
+      0.005
+    ],
+    "perturbation_types": [
+      1,
+      1,
+      1
+    ],
+    "seed": 999,
     "types": [
       1,
       1,
@@ -116,6 +86,7 @@
       1.0,
       1.0,
       1.0
-    ]
+    ],
+    "variable_count": 3
   }
 }

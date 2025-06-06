@@ -1,7 +1,6 @@
 from contextlib import ExitStack as does_not_raise
 
 import pytest
-from ropt.config.enopt import EnOptConfig
 
 from ert.ensemble_evaluator.config import EvaluatorServerConfig
 from ert.run_models.everest_run_model import EverestRunModel
@@ -71,14 +70,10 @@ def test_multi_objectives2ropt(copy_mocked_test_data_to_tmp):
     ever_objs[1]["weight"] = 3.1
     assert len(EverestConfig.lint_config_dict(config_dict)) == 0
 
-    norm = ever_objs[0]["weight"] + ever_objs[1]["weight"]
-
-    enopt_config = EnOptConfig.model_validate(
-        everest2ropt(EverestConfig.model_validate(config_dict))
-    )
-    assert len(enopt_config.objectives.weights) == 2
-    assert enopt_config.objectives.weights[1] == ever_objs[1]["weight"] / norm
-    assert enopt_config.objectives.weights[0] == ever_objs[0]["weight"] / norm
+    enopt_config, _ = everest2ropt(EverestConfig.model_validate(config_dict))
+    assert len(enopt_config["objectives"]["weights"]) == 2
+    assert enopt_config["objectives"]["weights"][1] == ever_objs[1]["weight"]
+    assert enopt_config["objectives"]["weights"][0] == ever_objs[0]["weight"]
 
 
 @pytest.mark.integration_test
