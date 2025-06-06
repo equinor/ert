@@ -110,11 +110,7 @@ class EnsembleConfig(BaseModel):
     @staticmethod
     def get_gen_kw_templates(config_dict: ConfigDict) -> list[tuple[str, str]]:
         gen_kw_list = config_dict.get(ConfigKeys.GEN_KW, [])
-        return [
-            template
-            for g in gen_kw_list
-            if (template := GenKwConfig.templates_from_config(g)) is not None
-        ]
+        return GenKwConfig.templates_from_config(gen_kw_list)
 
     @no_type_check
     @classmethod
@@ -147,7 +143,7 @@ class EnsembleConfig(BaseModel):
             return FieldConfig.from_config_list(grid_file_path, dims, field_list)
 
         parameter_configs = (
-            [GenKwConfig.from_config_list(g) for g in gen_kw_list]
+            [GenKwConfig.from_config_list(gen_kw_list)]
             + [SurfaceConfig.from_config_list(s) for s in surface_list]
             + [make_field(f) for f in field_list]
         )
