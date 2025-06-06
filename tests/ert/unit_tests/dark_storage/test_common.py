@@ -5,7 +5,7 @@ import polars as pl
 import pytest
 
 from ert.config import GenDataConfig, SummaryConfig
-from ert.dark_storage.common import data_for_key
+from ert.dark_storage.endpoints.responses import data_for_response
 from ert.storage import open_storage
 from tests.ert.unit_tests.config.summary_generator import (
     Date,
@@ -19,7 +19,7 @@ from tests.ert.unit_tests.config.summary_generator import (
 )
 
 
-def test_data_for_key_gives_mean_for_duplicate_values(tmp_path):
+def test_data_for_response_gives_mean_for_duplicate_values(tmp_path):
     value1 = 1.1
     value2 = 1.0e19
     with open_storage(tmp_path / "storage", mode="w") as storage:
@@ -68,14 +68,14 @@ def test_data_for_key_gives_mean_for_duplicate_values(tmp_path):
         unsmry.to_file(tmp_path / "CASE.UNSMRY")
         ds = summary_config.read_from_file(tmp_path, 0, 0)
         ensemble.save_response(summary_config.response_type, ds, 0)
-        df = data_for_key(ensemble, "NRPPR:WELLNAME")
+        df = data_for_response(ensemble, "NRPPR:WELLNAME")
         assert list(df.columns) == [pd.Timestamp("2014-01-16 05:00:00")]
         assert df[pd.Timestamp("2014-01-16 05:00:00")][0] == pytest.approx(
             (value1 + value2) / 2
         )
 
 
-def test_data_for_key_doesnt_mistake_history_for_response(tmp_path):
+def test_data_for_response_doesnt_mistake_history_for_response(tmp_path):
     with open_storage(tmp_path / "storage", mode="w") as storage:
         summary_config = SummaryConfig(
             name="summary", input_files=["CASE"], keys=["FGPR"]
@@ -98,10 +98,10 @@ def test_data_for_key_doesnt_mistake_history_for_response(tmp_path):
         )
         ensemble.refresh_ensemble_state()
 
-        assert data_for_key(ensemble, "FGPRH").empty
+        assert data_for_response(ensemble, "FGPRH").empty
 
 
-def test_data_for_key_returns_empty_gen_data_config(tmp_path):
+def test_data_for_response_returns_empty_gen_data_config(tmp_path):
     with open_storage(tmp_path / "storage", mode="w") as storage:
         gen_data_config = GenDataConfig(keys=["response"])
         experiment = storage.create_experiment(
@@ -111,7 +111,7 @@ def test_data_for_key_returns_empty_gen_data_config(tmp_path):
         )
         ensemble = experiment.create_ensemble(name="ensemble", ensemble_size=1)
 
-        data = data_for_key(ensemble, "response@0")
+        data = data_for_response(ensemble, "response", filter_on={"report_step": 0})
         assert data.empty
 
         ensemble.save_response(
@@ -127,5 +127,5 @@ def test_data_for_key_returns_empty_gen_data_config(tmp_path):
             0,
         )
         ensemble.refresh_ensemble_state()
-        data = data_for_key(ensemble, "response@0")
+        data = data_for_response(ensemble, "response", filter_on={"report_step": 0})
         assert not data.empty

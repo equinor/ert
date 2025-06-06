@@ -60,13 +60,27 @@ class DarkStorageStateTest(StatefulStorageTest):
 
     @rule(model_ensemble=StatefulStorageTest.ensembles)
     def get_responses_through_client(self, model_ensemble):
-        response = self.client.get(f"/ensembles/{model_ensemble.uuid}/responses")
-        response_names = {
-            k
-            for r in model_ensemble.response_values.values()
-            for k in r["response_key"]
+        experiments = self.client.get("/experiments").json()
+        experiment = next(
+            e for e in experiments if str(model_ensemble.uuid) in e["ensemble_ids"]
+        )
+
+        response_keys_in_experiment = [
+            metadata["response_key"]
+            for metadatas in experiment["responses"].values()
+            for metadata in metadatas
+        ]
+
+        response_keys_in_ens = {
+            key
+            for df in model_ensemble.response_values.values()
+            for key in df["response_key"].unique()
         }
-        assert set(response.json().keys()) == response_names
+
+        assert response_keys_in_ens <= set(response_keys_in_experiment)
+
+        for response_key in response_keys_in_ens:
+            self.client.get(f"ensembles/{model_ensemble.uuid}/{response_key}")
 
     @rule(model_ensemble=StatefulStorageTest.ensembles, data=st.data())
     def get_response_csv_through_client(self, model_ensemble, data):
@@ -83,7 +97,7 @@ class DarkStorageStateTest(StatefulStorageTest):
         df = pd.read_parquet(
             io.BytesIO(
                 self.client.get(
-                    f"/ensembles/{model_ensemble.uuid}/records/{escape(response_key)}",
+                    f"/ensembles/{model_ensemble.uuid}/responses/{escape(response_key)}",
                     headers={"accept": "application/x-parquet"},
                 ).content
             )

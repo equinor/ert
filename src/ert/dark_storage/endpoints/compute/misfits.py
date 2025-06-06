@@ -1,20 +1,20 @@
+import json
 from datetime import datetime
 from typing import Any
 from uuid import UUID
 
 import pandas as pd
 from dateutil.parser import parse
-from fastapi import APIRouter, Depends, status
+from fastapi import APIRouter, Depends, Query, status
 from fastapi.responses import Response
 
 from ert.dark_storage import exceptions as exc
-from ert.dark_storage.common import (
-    data_for_key,
-    get_observation_keys_for_response,
-    get_observations_for_obs_keys,
-    get_storage,
-)
+from ert.dark_storage.common import get_storage
 from ert.dark_storage.compute.misfits import calculate_misfits_from_pandas
+from ert.dark_storage.endpoints.observations import (
+    _get_observations,
+)
+from ert.dark_storage.endpoints.responses import data_for_response
 from ert.storage import Storage
 
 router = APIRouter(tags=["misfits"])
@@ -36,9 +36,14 @@ async def get_response_misfits(
     response_name: str,
     realization_index: int | None = None,
     summary_misfits: bool = False,
+    filter_on: str | None = Query(None, description="JSON string with filters"),
 ) -> Response:
     ensemble = storage.get_ensemble(ensemble_id)
-    dataframe = data_for_key(ensemble, response_name)
+    dataframe = data_for_response(
+        ensemble,
+        response_name,
+        json.loads(filter_on) if filter_on is not None else None,
+    )
     if realization_index is not None:
         dataframe = pd.DataFrame(dataframe.loc[realization_index]).T
 
@@ -47,8 +52,12 @@ async def get_response_misfits(
         data_df = pd.DataFrame(data).T
         response_dict[index] = data_df
 
-    obs_keys = get_observation_keys_for_response(ensemble, response_name)
-    obs = get_observations_for_obs_keys(ensemble, obs_keys)
+    experiment = ensemble.experiment
+    response_type = experiment.response_key_to_response_type[response_name]
+    obs_keys = experiment.response_key_to_observation_key[response_type].get(
+        response_name, []
+    )
+    obs = _get_observations(ensemble.experiment, obs_keys)
 
     if not obs_keys:
         raise ValueError(f"No observations for key {response_name}")
