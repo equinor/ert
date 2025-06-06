@@ -69,7 +69,7 @@ class Driver(ABC):
         """
 
     @abstractmethod
-    async def kill(self, iens: int) -> None:
+    async def kill(self, iens: int, kill_sem: asyncio.BoundedSemaphore) -> None:
         """Terminate execution of a job associated with a realization.
 
         Args:
@@ -117,6 +117,13 @@ class Driver(ABC):
                 )
             except FileNotFoundError as e:
                 return (False, str(e))
+            except OSError as e:
+                if e.errno == 24:
+                    # Too many files open error, we try again
+                    await asyncio.sleep(retry_interval)
+                    continue
+                else:
+                    return (False, str(e))
 
             stdout, stderr = await process.communicate(stdin)
 
