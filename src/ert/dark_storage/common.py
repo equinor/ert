@@ -1,15 +1,12 @@
 import logging
-import operator
 import os
-from collections.abc import Callable, Iterator
+from collections.abc import Callable
 from typing import Any
-from uuid import UUID
 
 import pandas as pd
 import polars as pl
 from polars.exceptions import ColumnNotFoundError
 
-from ert.config import Field, GenDataConfig, GenKwConfig
 from ert.dark_storage.exceptions import InternalServerError
 from ert.storage import Ensemble, Experiment, Storage, open_storage
 
@@ -30,22 +27,6 @@ def get_storage() -> Storage:
     return _storage
 
 
-response_key_to_displayed_key: dict[str, Callable[[tuple[Any, ...]], str]] = {
-    "summary": operator.itemgetter(0),
-    "gen_data": lambda t: f"{t[0]}@{t[1]}",
-}
-
-
-def _parse_gendata_response_key(display_key: str) -> tuple[Any, ...]:
-    response_key, report_step = display_key.split("@")
-    return response_key, int(report_step)
-
-
-displayed_key_to_response_key: dict[str, Callable[[str], tuple[Any, ...]]] = {
-    "summary": lambda key: (key,),
-    "gen_data": _parse_gendata_response_key,
-}
-
 # indexing below is based on observation ds columns:
 # [ "observation_key", "response_key", *primary_key ]
 # for gen_data primary_key is ["report_step", "index"]
@@ -54,64 +35,6 @@ response_to_pandas_x_axis_fns: dict[str, Callable[[tuple[Any, ...]], Any]] = {
     "summary": lambda t: pd.Timestamp(t[2]).isoformat(),
     "gen_data": lambda t: str(t[3]),
 }
-
-
-def ensemble_parameters(storage: Storage, ensemble_id: UUID) -> list[dict[str, Any]]:
-    param_list = []
-    ensemble = storage.get_ensemble(ensemble_id)
-    for config in ensemble.experiment.parameter_configuration.values():
-        match config:
-            case GenKwConfig(name=name, transform_functions=transform_functions):
-                for tf in transform_functions:
-                    param_list.append(
-                        {
-                            "name": (
-                                f"LOG10_{name}:{tf.name}"
-                                if tf.use_log
-                                else f"{name}:{tf.name}"
-                            ),
-                            "userdata": {"data_origin": "GEN_KW"},
-                            "dimensionality": 1,
-                            "labels": [],
-                        }
-                    )
-            case Field(name=name, nx=nx, ny=ny, nz=nz):
-                param_list.append(
-                    {
-                        "name": name,
-                        "userdata": {
-                            "data_origin": "FIELD",
-                            "nx": nx,
-                            "ny": ny,
-                            "nz": nz,
-                        },
-                        "dimensionality": 3,
-                        "labels": [],
-                    }
-                )
-
-    return param_list
-
-
-def get_response_names(ensemble: Ensemble) -> list[str]:
-    result = ensemble.experiment.response_type_to_response_keys["summary"]
-    result.extend(sorted(gen_data_display_keys(ensemble), key=lambda k: k.lower()))
-    return result
-
-
-def gen_data_display_keys(ensemble: Ensemble) -> Iterator[str]:
-    gen_data_config = ensemble.experiment.response_configuration.get("gen_data")
-
-    if gen_data_config:
-        assert isinstance(gen_data_config, GenDataConfig)
-        for key, report_steps in zip(
-            gen_data_config.keys, gen_data_config.report_steps_list, strict=False
-        ):
-            if report_steps is None:
-                yield f"{key}@0"
-            else:
-                for report_step in report_steps:
-                    yield f"{key}@{report_step}"
 
 
 def _extract_parameter_group_and_key(key: str) -> tuple[str, str] | tuple[None, None]:
@@ -126,7 +49,11 @@ def _extract_parameter_group_and_key(key: str) -> tuple[str, str] | tuple[None, 
 
 def data_for_parameter(ensemble: Ensemble, key: str) -> pd.DataFrame:
     group, _ = _extract_parameter_group_and_key(key)
-    df = ensemble.load_scalars(group)
+    try:
+        df = ensemble.load_scalars(group)
+    except KeyError:
+        return pd.DataFrame()
+
     if df.is_empty():
         return pd.DataFrame()
 
@@ -165,10 +92,15 @@ def _extract_response_type_and_key(
     return response_key, response_type
 
 
-def data_for_response(ensemble: Ensemble, key: str) -> pd.DataFrame:
+def data_for_response(
+    ensemble: Ensemble, key: str, filter_on: dict[str, Any] | None = None
+) -> pd.DataFrame:
     response_key, response_type = _extract_response_type_and_key(
         key, ensemble.experiment.response_key_to_response_type
     )
+
+    if response_key is None:
+        return pd.DataFrame()
 
     assert response_key is not None
     assert response_type is not None
@@ -201,8 +133,6 @@ def data_for_response(ensemble: Ensemble, key: str) -> pd.DataFrame:
         try:
             # Call below will ValueError if key ends with H,
             # requested via PlotAPI.history_data
-            response_key, report_step = displayed_key_to_response_key["gen_data"](key)
-            assert isinstance(response_key, str)
             data = ensemble.load_responses(
                 response_key, tuple(ensemble.get_realization_list_with_responses())
             )
@@ -211,6 +141,9 @@ def data_for_response(ensemble: Ensemble, key: str) -> pd.DataFrame:
             return pd.DataFrame()
 
         try:
+            assert filter_on is not None
+            assert "report_step" in filter_on
+            report_step = int(filter_on["report_step"])
             vals = data.filter(pl.col("report_step").eq(report_step))
             pivoted = vals.drop("response_key", "report_step").pivot(
                 on="index", values="values"
@@ -224,32 +157,6 @@ def data_for_response(ensemble: Ensemble, key: str) -> pd.DataFrame:
                 return data
         except (ValueError, KeyError, ColumnNotFoundError):
             return pd.DataFrame()
-
-
-def data_for_key(
-    ensemble: Ensemble,
-    key: str,
-) -> pd.DataFrame:
-    """Returns a pandas DataFrame with the datapoints for a given key for a
-    given ensemble. The row index is the realization number, and the columns are an
-    index over the indexes/dates"""
-
-    response_key, _ = _extract_response_type_and_key(
-        key, ensemble.experiment.response_key_to_response_type
-    )
-
-    if response_key is not None:
-        return data_for_response(ensemble, key)
-
-    parameter_config = ensemble.experiment.parameter_configuration
-    parameter_group, parameter_key = _extract_parameter_group_and_key(key)
-    if (
-        parameter_group in parameter_config
-        and parameter_key in parameter_config[parameter_group].parameter_keys
-    ):
-        return data_for_parameter(ensemble, key)
-
-    return pd.DataFrame()
 
 
 def _get_observations(
@@ -296,47 +203,3 @@ def get_observations_for_obs_keys(
     ensemble: Ensemble, observation_keys: list[str]
 ) -> list[dict[str, Any]]:
     return _get_observations(ensemble.experiment, observation_keys)
-
-
-def get_observation_keys_for_response(
-    ensemble: Ensemble, displayed_response_key: str
-) -> list[str]:
-    """
-    Get all observation keys for given response key
-    """
-
-    if displayed_response_key in gen_data_display_keys(ensemble):
-        response_key, report_step = displayed_key_to_response_key["gen_data"](
-            displayed_response_key
-        )
-
-        if "gen_data" in ensemble.experiment.observations:
-            observations = ensemble.experiment.observations["gen_data"]
-            filtered = observations.filter(
-                pl.col("response_key").eq(response_key)
-                & pl.col("report_step").eq(report_step)
-            )
-
-            if filtered.is_empty():
-                return []
-
-            return filtered["observation_key"].unique().to_list()
-
-    elif (
-        displayed_response_key
-        in ensemble.experiment.response_type_to_response_keys.get("summary", {})
-    ):
-        response_key = displayed_key_to_response_key["summary"](displayed_response_key)[
-            0
-        ]
-
-        if "summary" in ensemble.experiment.observations:
-            observations = ensemble.experiment.observations["summary"]
-            filtered = observations.filter(pl.col("response_key").eq(response_key))
-
-            if filtered.is_empty():
-                return []
-
-            return filtered["observation_key"].unique().to_list()
-
-    return []

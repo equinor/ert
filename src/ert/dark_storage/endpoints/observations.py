@@ -1,9 +1,15 @@
-from uuid import UUID
+import operator
+from urllib.parse import unquote
+from uuid import UUID, uuid4
 
 from fastapi import APIRouter, Body, Depends
 
 from ert.dark_storage import json_schema as js
-from ert.dark_storage.common import get_all_observations, get_storage
+from ert.dark_storage.common import (
+    get_all_observations,
+    get_observations_for_obs_keys,
+    get_storage,
+)
 from ert.storage import Storage
 
 router = APIRouter(tags=["ensemble"])
@@ -29,4 +35,41 @@ def get_observations(
             name=observation["name"],
         )
         for observation in get_all_observations(experiment)
+    ]
+
+
+@router.get("/ensembles/{ensemble_id}/responses/{response_key}/observations")
+async def get_observations_for_response(
+    *,
+    storage: Storage = DEFAULT_STORAGE,
+    ensemble_id: UUID,
+    response_key: str,
+) -> list[js.ObservationOut]:
+    response_key = unquote(response_key)
+    ensemble = storage.get_ensemble(ensemble_id)
+    experiment = ensemble.experiment
+
+    response_type = experiment.response_key_to_response_type.get(response_key, "")
+    obs_keys = experiment.response_key_to_observation_key.get(response_type, {}).get(
+        response_key
+    )
+    if not obs_keys:
+        return []
+
+    obss = get_observations_for_obs_keys(ensemble, obs_keys)
+
+    obss.sort(key=operator.itemgetter("name"))
+    if not obss:
+        return []
+
+    return [
+        js.ObservationOut(
+            id=uuid4(),
+            userdata={},
+            errors=obs["errors"],
+            values=obs["values"],
+            x_axis=obs["x_axis"],
+            name=obs["name"],
+        )
+        for obs in obss
     ]
