@@ -117,7 +117,9 @@ class PlotWindow(QMainWindow):
         QApplication.setOverrideCursor(Qt.CursorShape.WaitCursor)
         try:
             self._api = PlotApi(ens_path)
-            self._key_definitions = self._api.all_data_type_keys()
+            self._key_definitions = (
+                self._api.parameters_api_key_defs + self._api.responses_api_key_defs
+            )
         except (RequestError, TimeoutError) as e:
             logger.exception(f"plot api request failed: {e}")
             open_error_dialog("Request failed", str(e))

@@ -186,15 +186,6 @@ class PlotApi:
 
         return list(key_defs.values())
 
-    def all_data_type_keys(self) -> list[PlotApiKeyDefinition]:
-        """Returns a list of all the keys except observation keys.
-
-        The keys are a unique set of all keys in the ensembles
-
-        For each key a dict is returned with info about
-        the key"""
-        return self.parameters_api_key_defs + self.responses_api_key_defs
-
     def data_for_response(
         self,
         ensemble_id: str,
