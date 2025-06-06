@@ -714,6 +714,7 @@ dependencies = [
     { name = "resfo" },
     { name = "scipy" },
     { name = "seaborn" },
+    { name = "surfio" },
     { name = "tables" },
     { name = "tabulate" },
     { name = "threadpoolctl" },
@@ -863,6 +864,7 @@ requires-dist = [
     { name = "sphinx-autoapi", marker = "extra == 'dev'" },
     { name = "sphinx-copybutton", marker = "extra == 'dev'" },
     { name = "sphinxcontrib-datatemplates", marker = "extra == 'dev'" },
+    { name = "surfio", specifier = ">=0.0.8" },
     { name = "tables" },
     { name = "tabulate" },
     { name = "threadpoolctl" },
@@ -3810,6 +3812,21 @@ dependencies = [
 sdist = { url = "https://files.pythonhosted.org/packages/ce/20/08dfcd9c983f6a6f4a1000d934b9e6d626cff8d2eeb77a89a68eef20a2b7/starlette-0.46.2.tar.gz", hash = "sha256:7f7361f34eed179294600af672f565727419830b54b7b084efe44bb82d2fccd5", size = 2580846, upload-time = "2025-04-13T13:56:17.942Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/8b/0c/9d30a4ebeb6db2b25a841afbb80f6ef9a854fc3b41be131d249a977b4959/starlette-0.46.2-py3-none-any.whl", hash = "sha256:595633ce89f8ffa71a015caed34a5b2dc1c0cdb3f0f1fbd1e69339cf2abeec35", size = 72037, upload-time = "2025-04-13T13:56:16.21Z" },
+]
+
+[[package]]
+name = "surfio"
+version = "0.0.8"
+source = { registry = "https://pypi.org/simple" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/bc/c1/c0387be6d79820a341c9f6879e11652171e61a245fd906ea03b5403bac16/surfio-0.0.8-cp311-cp311-macosx_13_0_x86_64.whl", hash = "sha256:347914417dae3a772e50d4ac3acf8d55b0a01b33595e8be5d781c1ff08f37303", size = 3295482, upload-time = "2025-05-19T08:00:30.692Z" },
+    { url = "https://files.pythonhosted.org/packages/46/61/767b54fc2be0076906e9cf0eee28afcfba733a26a37d5b35e828f0f27978/surfio-0.0.8-cp311-cp311-macosx_14_0_arm64.whl", hash = "sha256:7dd31649e6e12fd446c72a1e7bd9fbd0dc111ce0547d98c3f8974f2024b1c2bf", size = 3132462, upload-time = "2025-05-19T08:00:32.669Z" },
+    { url = "https://files.pythonhosted.org/packages/28/f1/6f109b394edd67b0915ed93195512e292a49f205e21cd691b365311b4647/surfio-0.0.8-cp311-cp311-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl", hash = "sha256:c632e2a3a27d6f3a5c9b7f39a0de4752eeadbbc2c3cbfd1a0c5acdf21cf0ec83", size = 348822, upload-time = "2025-05-19T08:00:34.229Z" },
+    { url = "https://files.pythonhosted.org/packages/d9/40/c3fcd1aed9f38fa39b31203119e753461142bd6c6d803edadbd7a18e8fcf/surfio-0.0.8-cp311-cp311-win_amd64.whl", hash = "sha256:b634dc7048984796f408b4af6d7c1b7edbe0e74edb17bc432514ea53a8cf8db5", size = 209168, upload-time = "2025-05-19T08:00:35.443Z" },
+    { url = "https://files.pythonhosted.org/packages/70/81/f6f136c02a7ab84c85e46e33aa901f4da61051c0d9bfc5842f8c2e4ffbfa/surfio-0.0.8-cp312-cp312-macosx_13_0_x86_64.whl", hash = "sha256:3e15b68e61b5f2b5ff81b9b9004df1428236bf8e79439ed5e43d2c67be68c0c3", size = 3295634, upload-time = "2025-05-19T08:00:36.781Z" },
+    { url = "https://files.pythonhosted.org/packages/0f/2c/7721f847861201de26788f5e142a0ffc8ab18bbafa818b596eff79c8dfab/surfio-0.0.8-cp312-cp312-macosx_14_0_arm64.whl", hash = "sha256:83672e40557d6b340889a65c6bfe68b63d04fddb3bc0bea708b2dc612e5924c0", size = 3132106, upload-time = "2025-05-19T08:00:38.186Z" },
+    { url = "https://files.pythonhosted.org/packages/b4/f4/423c538428ac2d8fc65fdc9258000637f10a0a4cf50ee48bcb08af731667/surfio-0.0.8-cp312-cp312-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl", hash = "sha256:8f9391ee77d1a2ccb5ea87ed1f9d7000e67f6a3be9417f9235225fa810ecd7ab", size = 348591, upload-time = "2025-05-19T08:00:39.646Z" },
+    { url = "https://files.pythonhosted.org/packages/3e/b5/98cddb9e8e05a74fb0271413228e0016200d91939521d20cec50c15825b0/surfio-0.0.8-cp312-cp312-win_amd64.whl", hash = "sha256:aa29c720b763743dff97e8871915583a81d70c608bce3746cdf2351675639594", size = 209204, upload-time = "2025-05-19T08:00:41.228Z" },
 ]
 
 [[package]]
