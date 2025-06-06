@@ -541,7 +541,10 @@ class LocalEnsemble(BaseMode):
             ]
         else:
             datasets = [self._load_single_dataset(group, i) for i in realizations]
-        return xr.combine_nested(datasets, concat_dim="realizations")
+
+        return xr.combine_nested(datasets, concat_dim="realizations").sortby(
+            "realizations"
+        )
 
     def _load_parameters_lazy(
         self,

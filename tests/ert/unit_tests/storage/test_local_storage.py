@@ -942,6 +942,67 @@ def test_that_all_parameters_and_gen_data_consolidation_works(
         assert pl.concat(ensemble_datas).equals(experiment_data)
 
 
+def test_that_parameters_are_ordered_by_realization_with_and_without_realizations_arg(
+    use_tmpdir,
+):
+    genkw_config = GenKwConfig(
+        name="COEFFS",
+        forward_init=False,
+        update=True,
+        transform_function_definitions=[
+            TransformFunctionDefinition(
+                name="a",
+                param_name="UNIFORM",
+                values=[
+                    0.0,
+                    100.0,
+                ],
+            )
+        ],
+    )
+
+    storage_path = Path.cwd() / "test_storage_dir"
+
+    with open_storage(str(storage_path), mode="w") as storage:
+        experiment = storage.create_experiment(
+            parameters=[genkw_config], name="sample_genkw_experiment"
+        )
+
+        realization_numbers = [0, 1, 2, 3, 11, 20, 22, 100]
+        ensemble_size = max(realization_numbers)
+
+        ensemble = experiment.create_ensemble(
+            ensemble_size=ensemble_size, name="genkw_test_ensemble"
+        )
+
+        expected_data_map = {}
+
+        for real_nr in realization_numbers:
+            sample_value = float(real_nr * 10.0 + 0.5)
+            data_array = xr.DataArray(np.array([sample_value]))
+            dataset_to_save = xr.Dataset({"values": data_array})
+            ensemble.save_parameters("COEFFS", real_nr, dataset_to_save)
+            expected_data_map[real_nr] = sample_value
+
+        assert (
+            ensemble.load_parameters("COEFFS")["realizations"].to_numpy().tolist()
+            == realization_numbers
+        )
+
+        assert (
+            ensemble.load_parameters("COEFFS", np.array(realization_numbers))[
+                "realizations"
+            ]
+            .to_numpy()
+            .tolist()
+            == realization_numbers
+        )
+
+        assert ensemble.load_parameters("COEFFS").equals(
+            ensemble.load_parameters("COEFFS", np.array(realization_numbers))
+        )
+
+
 @dataclass
 class Ensemble:
     uuid: UUID
