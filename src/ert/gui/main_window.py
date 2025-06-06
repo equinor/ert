@@ -359,24 +359,30 @@ class ErtMainWindow(QMainWindow):
         assert menu_bar is not None
         tools_menu = menu_bar.addMenu("&Tools")
         assert tools_menu is not None
-
+        tools_menu_name = f"Tools Menu - {self.objectName()}"
         if self.log_handler:
             self._event_viewer_tool = EventViewerTool(
-                self.log_handler, self.config_file
+                self.log_handler, self.config_file, trigger_source=tools_menu_name
             )
             self._event_viewer_tool.setParent(self)
             tools_menu.addAction(self._event_viewer_tool.getAction())
             self.close_signal.connect(self._event_viewer_tool.close_wnd)
 
-        self.export_tool = ExportTool(self.ert_config, self.notifier)
+        self.export_tool = ExportTool(
+            self.ert_config, self.notifier, trigger_source=tools_menu_name
+        )
         self.export_tool.setParent(self)
         tools_menu.addAction(self.export_tool.getAction())
 
-        self.workflows_tool = WorkflowsTool(self.ert_config, self.notifier)
+        self.workflows_tool = WorkflowsTool(
+            self.ert_config, self.notifier, trigger_source=tools_menu_name
+        )
         self.workflows_tool.setParent(self)
         tools_menu.addAction(self.workflows_tool.getAction())
 
-        self.load_results_tool = LoadResultsTool(self.ert_config, self.notifier)
+        self.load_results_tool = LoadResultsTool(
+            self.ert_config, self.notifier, trigger_source=tools_menu_name
+        )
         self.load_results_tool.setParent(self)
         tools_menu.addAction(self.load_results_tool.getAction())
 

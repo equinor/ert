@@ -19,9 +19,12 @@ logger = logging.getLogger(__name__)
 
 
 class ExportTool(Tool):
-    def __init__(self, config: ErtConfig, notifier: ErtNotifier) -> None:
+    def __init__(
+        self, config: ErtConfig, notifier: ErtNotifier, trigger_source: str = ""
+    ) -> None:
         super().__init__("Export data", QIcon("img:share.svg"))
         export_job = config.workflow_jobs.get("CSV_EXPORT")
+        self.trigger_source = trigger_source
         self.setEnabled(export_job is not None)
         self.__exporter = Exporter(
             export_job,
@@ -33,6 +36,11 @@ class ExportTool(Tool):
 
     @no_type_check
     def trigger(self) -> None:
+        logger.info(
+            f"ExportTool triggered from {self.trigger_source}"
+            if self.trigger_source
+            else ""
+        )
         dialog = ExportDialog(self.config, self.notifier.storage, self.parent())
         success = dialog.showAndTell()
 

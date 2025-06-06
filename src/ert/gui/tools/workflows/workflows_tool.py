@@ -11,10 +11,16 @@ from ert.gui.tools.workflows import RunWorkflowWidget
 if TYPE_CHECKING:
     from ert.config import ErtConfig
     from ert.gui.ertnotifier import ErtNotifier
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 class WorkflowsTool(Tool):
-    def __init__(self, config: ErtConfig, notifier: ErtNotifier) -> None:
+    def __init__(
+        self, config: ErtConfig, notifier: ErtNotifier, trigger_source: str = ""
+    ) -> None:
+        self.trigger_source = trigger_source
         self.notifier = notifier
         self.config = config
         enabled = len(config.workflows) > 0
@@ -25,6 +31,11 @@ class WorkflowsTool(Tool):
         )
 
     def trigger(self) -> None:
+        logger.info(
+            f"WorkflowsTool triggered from {self.trigger_source}"
+            if self.trigger_source
+            else ""
+        )
         run_workflow_widget = RunWorkflowWidget(self.config, self.notifier)
         dialog = ClosableDialog("Run workflow", run_workflow_widget, self.parent())  # type: ignore
         dialog.exec()

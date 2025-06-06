@@ -1,3 +1,4 @@
+import logging
 from typing import Any
 
 from PyQt6.QtGui import QIcon
@@ -8,9 +9,13 @@ from ert.gui.ertwidgets import ClosableDialog
 from ert.gui.tools import Tool
 from ert.gui.tools.load_results import LoadResultsPanel
 
+logger = logging.getLogger(__name__)
+
 
 class LoadResultsTool(Tool):
-    def __init__(self, config: ErtConfig, notifier: ErtNotifier) -> None:
+    def __init__(
+        self, config: ErtConfig, notifier: ErtNotifier, trigger_source: str = ""
+    ) -> None:
         super().__init__(
             "Load results manually",
             QIcon("img:upload.svg"),
@@ -19,8 +24,14 @@ class LoadResultsTool(Tool):
         self._dialog: ClosableDialog | None = None
         self._notifier = notifier
         self._config = config
+        self.trigger_source = trigger_source
 
     def trigger(self) -> None:
+        logger.info(
+            f"LoadResultsTool triggered from {self.trigger_source}"
+            if self.trigger_source
+            else ""
+        )
         if self._import_widget is None:
             self._import_widget = LoadResultsPanel(self._config, self._notifier)
             self._import_widget.panelConfigurationChanged.connect(
