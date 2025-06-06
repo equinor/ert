@@ -11,7 +11,7 @@ EVEREST_SERVER_CONFIG = "everserver_config"
 EVEREST = "everest"
 EVERSERVER = "everserver"
 
-HOSTFILE_NAME = "hostfile"
+HOSTFILE_NAME = "storage_server.json"
 
 NAME = "name"
 

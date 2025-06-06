@@ -70,8 +70,13 @@ class StorageService(BaseService):
             return self._url
 
         for url in self.fetch_conn_info()["urls"]:
+            con_info = self.fetch_conn_info()
             try:
-                resp = requests.get(f"{url}/healthcheck", auth=self.fetch_auth())
+                resp = requests.get(
+                    f"{url}/healthcheck",
+                    auth=self.fetch_auth(),
+                    verify=con_info["cert"],
+                )
                 if resp.status_code == 200:
                     self._url = url
                     return str(url)
@@ -82,7 +87,6 @@ class StorageService(BaseService):
 
             except requests.ConnectionError as ce:
                 logging.getLogger(__name__).info(f"Could not connect to {url}: {ce}")
-
         raise TimeoutError(
             "None of the URLs provided for the ert storage server worked."
         )
@@ -93,8 +97,11 @@ class StorageService(BaseService):
         Start a HTTP transaction with the server
         """
         inst = cls.connect(timeout=timeout, project=project)
+        info = inst.fetch_conn_info()
         return Client(
             conn_info=ConnInfo(
-                base_url=inst.fetch_url(), auth_token=inst.fetch_auth()[1]
+                base_url=inst.fetch_url(),
+                auth_token=inst.fetch_auth()[1],
+                cert=info["cert"],
             )
         )

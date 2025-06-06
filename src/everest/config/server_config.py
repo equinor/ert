@@ -52,7 +52,7 @@ class ServerConfig(BaseModel):
         server information are retrieved from the hostfile
         """
         server_info = ServerConfig.get_server_info(output_dir)
-        return f"https://{server_info['host']}:{server_info['port']}"
+        return f"https://{server_info['host']}:{server_info['port']}/experiment_server"
 
     @staticmethod
     def get_server_context(output_dir: str) -> tuple[str, str, tuple[str, str]]:
@@ -77,7 +77,7 @@ class ServerConfig(BaseModel):
                 json_string = f.read()
 
             data = json.loads(json_string)
-            if set(data.keys()) != {"host", "port", "cert", "auth"}:
+            if not all(k in data for k in ("host", "port", "cert", "auth")):
                 raise RuntimeError("Malformed hostfile")
         except FileNotFoundError:
             # No host file
