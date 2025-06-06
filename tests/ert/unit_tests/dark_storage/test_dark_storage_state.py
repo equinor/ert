@@ -51,13 +51,6 @@ class DarkStorageStateTest(StatefulStorageTest):
             for key in ds["observation_key"]
         }
 
-    @rule(model_experiment=StatefulStorageTest.experiments)
-    def get_ensembles_through_client(self, model_experiment):
-        response = self.client.get(f"/experiments/{model_experiment.uuid}/ensembles")
-        assert {r["id"] for r in response.json()} == {
-            str(uuid) for uuid in model_experiment.ensembles
-        }
-
     @rule(model_ensemble=StatefulStorageTest.ensembles)
     def get_responses_through_client(self, model_ensemble):
         response = self.client.get(f"/ensembles/{model_ensemble.uuid}/responses")

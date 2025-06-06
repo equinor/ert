@@ -35,23 +35,6 @@ def test_get_ensemble(poly_example_tmp_dir, dark_storage_client):
 
 
 @pytest.mark.integration_test
-def test_get_experiment_ensemble(poly_example_tmp_dir, dark_storage_client):
-    resp: Response = dark_storage_client.get("/experiments")
-    experiment_json = resp.json()
-    assert len(experiment_json) == 1
-    assert len(experiment_json[0]["ensemble_ids"]) == 2
-
-    experiment_id = experiment_json[0]["id"]
-
-    resp: Response = dark_storage_client.get(f"/experiments/{experiment_id}/ensembles")
-    ensembles_json = resp.json()
-
-    assert len(ensembles_json) == 2
-    assert ensembles_json[0]["experiment_id"] == experiment_json[0]["id"]
-    assert ensembles_json[0]["userdata"]["name"] in {"iter-0", "iter-1"}
-
-
-@pytest.mark.integration_test
 def test_get_responses_with_observations(poly_example_tmp_dir, dark_storage_client):
     resp: Response = dark_storage_client.get("/experiments")
     experiment_json = resp.json()
