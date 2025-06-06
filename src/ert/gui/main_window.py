@@ -100,6 +100,7 @@ class ErtMainWindow(QMainWindow):
         self.setWindowTitle(
             f"ERT - {config_file} - {find_ert_info()} - {get_trace_id()[:8]}"
         )
+        self.setObjectName("ErtMainWindow")
         self.plugin_manager = plugin_manager
         self.central_widget = QFrame(self)
         self.central_layout = QHBoxLayout(self.central_widget)
