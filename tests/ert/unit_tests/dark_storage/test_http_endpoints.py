@@ -3,7 +3,6 @@ import json
 
 import pandas as pd
 import pytest
-from numpy.testing import assert_array_equal
 from requests import Response
 
 
@@ -35,34 +34,20 @@ def test_get_ensemble(poly_example_tmp_dir, dark_storage_client):
 
 
 @pytest.mark.integration_test
-def test_get_experiment_ensemble(poly_example_tmp_dir, dark_storage_client):
-    resp: Response = dark_storage_client.get("/experiments")
-    experiment_json = resp.json()
-    assert len(experiment_json) == 1
-    assert len(experiment_json[0]["ensemble_ids"]) == 2
-
-    experiment_id = experiment_json[0]["id"]
-
-    resp: Response = dark_storage_client.get(f"/experiments/{experiment_id}/ensembles")
-    ensembles_json = resp.json()
-
-    assert len(ensembles_json) == 2
-    assert ensembles_json[0]["experiment_id"] == experiment_json[0]["id"]
-    assert ensembles_json[0]["userdata"]["name"] in {"iter-0", "iter-1"}
-
-
-@pytest.mark.integration_test
 def test_get_responses_with_observations(poly_example_tmp_dir, dark_storage_client):
     resp: Response = dark_storage_client.get("/experiments")
-    experiment_json = resp.json()
-    ensemble_id = experiment_json[0]["ensemble_ids"][1]
+    experiment_json = resp.json()[0]
 
-    resp: Response = dark_storage_client.get(f"/ensembles/{ensemble_id}/responses")
-    ensemble_json = resp.json()
-
-    assert "POLY_RES@0" in ensemble_json
-    assert "has_observations" in ensemble_json["POLY_RES@0"]
-    assert ensemble_json["POLY_RES@0"]["has_observations"] is True
+    assert experiment_json["observations"] == {"gen_data": {"POLY_RES": ["POLY_OBS"]}}
+    assert experiment_json["responses"] == {
+        "gen_data": [
+            {
+                "response_type": "gen_data",
+                "response_key": "POLY_RES",
+                "filter_on": {"report_step": [0]},
+            }
+        ]
+    }
 
 
 @pytest.mark.integration_test
@@ -97,7 +82,8 @@ def test_get_response(poly_example_tmp_dir, dark_storage_client):
     )
 
     resp: Response = dark_storage_client.get(
-        f"/ensembles/{ensemble_id1}/records/POLY_RES@0",
+        f"/ensembles/{ensemble_id1}/responses/POLY_RES",
+        params={"filter_on": json.dumps({"report_step": 0})},
         headers={"accept": "text/csv"},
     )
     stream = io.BytesIO(resp.content)
@@ -106,7 +92,8 @@ def test_get_response(poly_example_tmp_dir, dark_storage_client):
     assert len(record_df1.index) == 3
 
     resp: Response = dark_storage_client.get(
-        f"/ensembles/{ensemble_id1}/records/POLY_RES@0",
+        f"/ensembles/{ensemble_id1}/responses/POLY_RES",
+        params={"filter_on": json.dumps({"report_step": 0})},
         headers={"accept": "application/x-parquet"},
     )
     stream = io.BytesIO(resp.content)
@@ -138,7 +125,7 @@ def test_get_summary_response(
     assert userdata == {"name": "default_0", "experiment_name": "ensemble-experiment"}
 
     resp_response: Response = dark_storage_client_snake_oil.get(
-        f"/ensembles/{ensemble_id}/records/FOPR",
+        f"/ensembles/{ensemble_id}/responses/FOPR",
         headers={"accept": "text/csv"},
     )
     stream = io.BytesIO(resp_response.content)
@@ -150,37 +137,30 @@ def test_get_summary_response(
 @pytest.mark.integration_test
 def test_get_ensemble_parameters(poly_example_tmp_dir, dark_storage_client):
     resp: Response = dark_storage_client.get("/experiments")
-    answer_json = resp.json()
-    ensemble_id = answer_json[0]["ensemble_ids"][0]
+    experiment_json = resp.json()[0]
 
-    resp: Response = dark_storage_client.get(f"/ensembles/{ensemble_id}/parameters")
-    parameters_json = resp.json()
-
-    assert len(parameters_json) == 3
-    assert parameters_json[0] == {
-        "dimensionality": 1,
-        "labels": [],
-        "name": "COEFFS:a",
-        "userdata": {"data_origin": "GEN_KW"},
+    assert experiment_json["parameters"] == {
+        "COEFFS": [
+            {
+                "key": "COEFFS:a",
+                "transformation": "UNIFORM",
+                "dimensionality": 1,
+                "userdata": {"data_origin": "GEN_KW"},
+            },
+            {
+                "key": "COEFFS:b",
+                "transformation": "UNIFORM",
+                "dimensionality": 1,
+                "userdata": {"data_origin": "GEN_KW"},
+            },
+            {
+                "key": "COEFFS:c",
+                "transformation": "UNIFORM",
+                "dimensionality": 1,
+                "userdata": {"data_origin": "GEN_KW"},
+            },
+        ]
     }
-    assert parameters_json[1] == {
-        "dimensionality": 1,
-        "labels": [],
-        "name": "COEFFS:b",
-        "userdata": {"data_origin": "GEN_KW"},
-    }
-    assert parameters_json[2] == {
-        "dimensionality": 1,
-        "labels": [],
-        "name": "COEFFS:c",
-        "userdata": {"data_origin": "GEN_KW"},
-    }
-
-
-@pytest.mark.integration_test
-def test_refresh_facade(poly_example_tmp_dir, dark_storage_client):
-    resp: Response = dark_storage_client.post("/updates/facade")
-    assert resp.status_code == 200
 
 
 @pytest.mark.integration_test
@@ -208,7 +188,7 @@ def test_get_record_observations(poly_example_tmp_dir, dark_storage_client):
     ensemble_id = answer_json[0]["ensemble_ids"][0]
 
     resp: Response = dark_storage_client.get(
-        f"/ensembles/{ensemble_id}/records/POLY_RES@0/observations"
+        f"/ensembles/{ensemble_id}/responses/POLY_RES/observations",
     )
     response_json = resp.json()
 
@@ -217,22 +197,6 @@ def test_get_record_observations(poly_example_tmp_dir, dark_storage_client):
     assert len(response_json[0]["errors"]) == 5
     assert len(response_json[0]["values"]) == 5
     assert len(response_json[0]["x_axis"]) == 5
-
-
-@pytest.mark.integration_test
-def test_misfit_endpoint(poly_example_tmp_dir, dark_storage_client):
-    resp: Response = dark_storage_client.get("/experiments")
-    experiment_json = resp.json()
-    ensemble_id = experiment_json[0]["ensemble_ids"][0]
-
-    resp: Response = dark_storage_client.get(
-        f"/compute/misfits?ensemble_id={ensemble_id}&response_name=POLY_RES@0"
-    )
-    stream = io.BytesIO(resp.content)
-    misfit = pd.read_csv(stream, index_col=0, float_precision="round_trip")
-
-    assert_array_equal(misfit.columns, ["0", "2", "4", "6", "8"])
-    assert misfit.shape == (3, 5)
 
 
 @pytest.mark.integration_test
@@ -250,7 +214,7 @@ def test_get_coeffs_records(poly_example_tmp_dir, dark_storage_client, coeffs):
     ensemble_id = answer_json[0]["ensemble_ids"][0]
 
     resp: Response = dark_storage_client.get(
-        f"/ensembles/{ensemble_id}/records/{coeffs}/",
+        f"/ensembles/{ensemble_id}/parameters/{coeffs}/",
         headers={"accept": "application/x-parquet"},
     )
 
