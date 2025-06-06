@@ -1,16 +1,17 @@
 import operator
+from typing import Any
 from urllib.parse import unquote
 from uuid import UUID, uuid4
 
+import polars as pl
 from fastapi import APIRouter, Body, Depends
 
 from ert.dark_storage import json_schema as js
 from ert.dark_storage.common import (
-    get_all_observations,
-    get_observations_for_obs_keys,
     get_storage,
 )
-from ert.storage import Storage
+from ert.dark_storage.endpoints.responses import response_to_pandas_x_axis_fns
+from ert.storage import Ensemble, Experiment, Storage
 
 router = APIRouter(tags=["ensemble"])
 
@@ -73,3 +74,49 @@ async def get_observations_for_response(
         )
         for obs in obss
     ]
+
+
+def _get_observations(
+    experiment: Experiment, observation_keys: list[str] | None = None
+) -> list[dict[str, Any]]:
+    observations = []
+
+    for response_type, df in experiment.observations.items():
+        if observation_keys is not None:
+            df = df.filter(pl.col("observation_key").is_in(observation_keys))
+
+        if df.is_empty():
+            continue
+
+        x_axis_fn = response_to_pandas_x_axis_fns[response_type]
+        df = df.rename(
+            {
+                "observation_key": "name",
+                "std": "errors",
+                "observations": "values",
+            }
+        )
+        df = df.with_columns(pl.Series(name="x_axis", values=df.map_rows(x_axis_fn)))
+        df = df.sort("x_axis")
+
+        for obs_key, _obs_df in df.group_by("name"):
+            observations.append(
+                {
+                    "name": obs_key[0],
+                    "values": _obs_df["values"].to_list(),
+                    "errors": _obs_df["errors"].to_list(),
+                    "x_axis": _obs_df["x_axis"].to_list(),
+                }
+            )
+
+    return observations
+
+
+def get_all_observations(experiment: Experiment) -> list[dict[str, Any]]:
+    return _get_observations(experiment)
+
+
+def get_observations_for_obs_keys(
+    ensemble: Ensemble, observation_keys: list[str]
+) -> list[dict[str, Any]]:
+    return _get_observations(ensemble.experiment, observation_keys)
