@@ -209,10 +209,9 @@ def test_that_saving_empty_parameters_fails_nicely(tmp_path):
 
 def test_that_loading_parameter_via_response_api_fails(tmp_path):
     uniform_parameter = GenKwConfig(
-        name="PARAMETER",
         forward_init=False,
         transform_function_definitions=[
-            TransformFunctionDefinition("KEY1", "UNIFORM", [0, 1]),
+            TransformFunctionDefinition("PARAMETER", "KEY1", "UNIFORM", [0, 1]),
         ],
         update=True,
     )

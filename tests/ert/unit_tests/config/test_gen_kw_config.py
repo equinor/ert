@@ -17,12 +17,11 @@ from ert.enkf_main import create_run_path, sample_prior
 @pytest.mark.usefixtures("use_tmpdir")
 def test_gen_kw_config():
     conf = GenKwConfig(
-        name="KEY",
         forward_init=False,
         transform_function_definitions=[
-            TransformFunctionDefinition("KEY1", "UNIFORM", [0, 1]),
-            TransformFunctionDefinition("KEY2", "UNIFORM", [0, 1]),
-            TransformFunctionDefinition("KEY3", "UNIFORM", [0, 1]),
+            TransformFunctionDefinition("KEY", "KEY1", "UNIFORM", [0, 1]),
+            TransformFunctionDefinition("KEY", "KEY2", "UNIFORM", [0, 1]),
+            TransformFunctionDefinition("KEY", "KEY3", "UNIFORM", [0, 1]),
         ],
         update=True,
     )
@@ -36,13 +35,12 @@ def test_gen_kw_config_duplicate_keys_raises():
         match="Duplicate GEN_KW keys 'KEY2' found, keys must be unique\\.",
     ):
         GenKwConfig(
-            name="KEY",
             forward_init=False,
             transform_function_definitions=[
-                TransformFunctionDefinition("KEY1", "UNIFORM", [0, 1]),
-                TransformFunctionDefinition("KEY2", "UNIFORM", [0, 1]),
-                TransformFunctionDefinition("KEY2", "UNIFORM", [0, 1]),
-                TransformFunctionDefinition("KEY3", "UNIFORM", [0, 1]),
+                TransformFunctionDefinition("KEY", "KEY1", "UNIFORM", [0, 1]),
+                TransformFunctionDefinition("KEY", "KEY2", "UNIFORM", [0, 1]),
+                TransformFunctionDefinition("KEY", "KEY2", "UNIFORM", [0, 1]),
+                TransformFunctionDefinition("KEY", "KEY3", "UNIFORM", [0, 1]),
             ],
             update=True,
         )
@@ -64,21 +62,26 @@ def test_short_definition_raises_config_error(tmp_path):
 
 def test_gen_kw_config_get_priors():
     conf = GenKwConfig(
-        name="KW_NAME",
         forward_init=False,
         transform_function_definitions=[
-            TransformFunctionDefinition("KEY1", "NORMAL", ["0", "1"]),
-            TransformFunctionDefinition("KEY2", "LOGNORMAL", ["2", "3"]),
+            TransformFunctionDefinition("KW_NAME", "KEY1", "NORMAL", ["0", "1"]),
+            TransformFunctionDefinition("KW_NAME", "KEY2", "LOGNORMAL", ["2", "3"]),
             TransformFunctionDefinition(
-                "KEY3", "TRUNCATED_NORMAL", ["4", "5", "6", "7"]
+                "KW_NAME", "KEY3", "TRUNCATED_NORMAL", ["4", "5", "6", "7"]
             ),
-            TransformFunctionDefinition("KEY4", "TRIANGULAR", ["0", "1", "2"]),
-            TransformFunctionDefinition("KEY5", "UNIFORM", ["2", "3"]),
-            TransformFunctionDefinition("KEY6", "DUNIF", ["3", "0", "1"]),
-            TransformFunctionDefinition("KEY7", "ERRF", ["0", "1", "2", "3"]),
-            TransformFunctionDefinition("KEY8", "DERRF", ["1", "1", "2", "3", "4"]),
-            TransformFunctionDefinition("KEY9", "LOGUNIF", ["0", "1"]),
-            TransformFunctionDefinition("KEY10", "CONST", ["10"]),
+            TransformFunctionDefinition(
+                "KW_NAME", "KEY4", "TRIANGULAR", ["0", "1", "2"]
+            ),
+            TransformFunctionDefinition("KW_NAME", "KEY5", "UNIFORM", ["2", "3"]),
+            TransformFunctionDefinition("KW_NAME", "KEY6", "DUNIF", ["3", "0", "1"]),
+            TransformFunctionDefinition(
+                "KW_NAME", "KEY7", "ERRF", ["0", "1", "2", "3"]
+            ),
+            TransformFunctionDefinition(
+                "KW_NAME", "KEY8", "DERRF", ["1", "1", "2", "3", "4"]
+            ),
+            TransformFunctionDefinition("KW_NAME", "KEY9", "LOGUNIF", ["0", "1"]),
+            TransformFunctionDefinition("KW_NAME", "KEY10", "CONST", ["10"]),
         ],
         update=True,
     )
@@ -204,7 +207,7 @@ def test_gen_kw_is_log_or_not(
 
         ert_config = ErtConfig.from_file("config.ert")
 
-        gen_kw_config = ert_config.ensemble_config.parameter_configs["KW_NAME"]
+        gen_kw_config = ert_config.ensemble_config.get_gen_kw()
         assert isinstance(gen_kw_config, GenKwConfig)
         assert gen_kw_config.shouldUseLogScale("MY_KEYWORD") is expect_log
         assert gen_kw_config.shouldUseLogScale("Non-existent-keyword") is False
@@ -318,12 +321,14 @@ def test_gen_kw_params_parsing(tmpdir, params, error):
         ss = params.split()
         if len(ss) == 1:
             tfd = TransformFunctionDefinition(
+                group_name="MY_PARAM",
                 name=ss[0],
                 param_name=None,
                 values=None,
             )
         else:
             tfd = TransformFunctionDefinition(
+                group_name="MY_PARAM",
                 name=ss[0],
                 param_name=ss[1],
                 values=ss[2:],
@@ -331,14 +336,12 @@ def test_gen_kw_params_parsing(tmpdir, params, error):
         if error:
             with pytest.raises(ConfigValidationError, match=error):
                 GenKwConfig(
-                    name="MY_PARAM",
                     forward_init=False,
                     update=False,
                     transform_function_definitions=[tfd],
                 )
         else:
             GenKwConfig(
-                name="MY_PARAM",
                 forward_init=False,
                 update=False,
                 transform_function_definitions=[tfd],
@@ -404,6 +407,7 @@ def test_gen_kw_trans_func(tmpdir, params, xinput, expected):
         float_args.append(float(a))
 
     tfd = TransformFunctionDefinition(
+        group_name="MY_PARAM",
         name=params.split()[0],
         param_name=params.split()[1],
         values=params.split()[2:],
@@ -411,7 +415,6 @@ def test_gen_kw_trans_func(tmpdir, params, xinput, expected):
 
     with tmpdir.as_cwd():
         gkw = GenKwConfig(
-            name="MY_PARAM",
             forward_init=False,
             update=False,
             transform_function_definitions=[tfd],
@@ -435,11 +438,13 @@ def test_gen_kw_objects_equal(tmpdir):
         assert g1.transform_functions[0].name == "MY_KEYWORD"
 
         tfd = TransformFunctionDefinition(
-            name="MY_KEYWORD", param_name="UNIFORM", values=["1", "2"]
+            group_name="KW_NAME",
+            name="MY_KEYWORD",
+            param_name="UNIFORM",
+            values=["1", "2"],
         )
 
         g2 = GenKwConfig(
-            name="KW_NAME",
             forward_init=False,
             transform_function_definitions=[tfd],
             update=True,
@@ -721,16 +726,27 @@ def test_validation_derrf_distribution(
     "transform_fns",
     [
         [],
-        [{"name": "dummy", "param_name": "NORMAL", "values": [0, 0.1]}],
         [
-            {"name": f"dummy_{i}", "param_name": "NORMAL", "values": [0, 0.1]}
+            {
+                "group_name": "a_group",
+                "name": "dummy",
+                "param_name": "NORMAL",
+                "values": [0, 0.1],
+            }
+        ],
+        [
+            {
+                "group_name": "a_group",
+                "name": f"dummy_{i}",
+                "param_name": "NORMAL",
+                "values": [0, 0.1],
+            }
             for i in range(100)
         ],
     ],
 )
 def test_that_transfer_function_names_are_reflected_as_parameter_keys(transform_fns):
     config = GenKwConfig(
-        name="a_group",
         forward_init=False,
         update=True,
         transform_function_definitions=[
@@ -743,12 +759,11 @@ def test_that_transfer_function_names_are_reflected_as_parameter_keys(transform_
 @pytest.mark.parametrize("num_tfs", [0, 1, 3, 8])
 def test_genkw_paramgraph_transformfn_node_correspondence(num_tfs):
     config = GenKwConfig(
-        name="COEFFS",
         forward_init=True,
         update=True,
         transform_function_definitions=[
             TransformFunctionDefinition(
-                name=f"tf_{i}", param_name="UNIFORM", values=[0, 1]
+                group_name="COEFFS", name=f"tf_{i}", param_name="UNIFORM", values=[0, 1]
             )
             for i in range(num_tfs)
         ],

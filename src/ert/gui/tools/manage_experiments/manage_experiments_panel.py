@@ -15,7 +15,7 @@ from PyQt6.QtWidgets import (
 )
 
 from ert.config import ConfigValidationError
-from ert.enkf_main import sample_prior, save_design_matrix_to_ensemble
+from ert.enkf_main import sample_prior
 from ert.gui.ertwidgets import (
     CheckList,
     EnsembleSelector,
@@ -93,14 +93,13 @@ class ManageExperimentsPanel(QTabWidget):
         center_layout = QHBoxLayout()
         design_matrix = self.ert_config.analysis_config.design_matrix
         parameters_config = self.ert_config.ensemble_config.parameter_configuration
-        design_matrix_group = None
         realizations: Collection[int] = range(
             self.ert_config.runpath_config.num_realizations
         )
         if design_matrix is not None:
             try:
-                parameters_config, design_matrix_group = (
-                    design_matrix.merge_with_existing_parameters(parameters_config)
+                parameters_config = design_matrix.merge_with_existing_parameters(
+                    parameters_config
                 )
                 realizations = [
                     real
@@ -119,9 +118,7 @@ class ManageExperimentsPanel(QTabWidget):
                 return
 
         parameter_model = SelectableListModel(
-            [p.name for p in parameters_config] + [design_matrix_group.name]
-            if design_matrix_group
-            else self.ert_config.ensemble_config.parameters
+            self.ert_config.ensemble_config.parameters
         )
         parameter_check_list = CheckList(parameter_model, "Parameters")
         parameter_check_list.setMinimumWidth(500)
@@ -145,23 +142,16 @@ class ManageExperimentsPanel(QTabWidget):
             active_realizations = [int(i) for i in members_model.getSelectedItems()]
 
             with self.notifier.write_storage() as storage:
-                if (
-                    design_matrix is not None
-                    and design_matrix_group is not None
-                    and design_matrix_group.name in parameters
-                ):
-                    parameters.remove(design_matrix_group.name)
-                    save_design_matrix_to_ensemble(
-                        design_matrix.design_matrix_df,
-                        storage.get_ensemble(ensemble_selector.currentData()),
-                        active_realizations,
-                        design_group_name=design_matrix_group.name,
-                    )
                 sample_prior(
                     ensemble=storage.get_ensemble(ensemble_selector.currentData()),
                     active_realizations=active_realizations,
                     parameters=parameters,
                     random_seed=self.ert_config.random_seed,
+                    design_matrix_df=(
+                        design_matrix.design_matrix_df
+                        if design_matrix is not None
+                        else None
+                    ),
                 )
 
         @Slot()

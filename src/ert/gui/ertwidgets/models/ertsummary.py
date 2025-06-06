@@ -24,8 +24,10 @@ class ErtSummary:
         ) in self.ert_config.ensemble_config.parameter_configs.items():
             match config:
                 case GenKwConfig():
-                    parameters.append(f"{key} ({len(config)})")
-                    count += len(config)
+                    for group_name in config.groups:
+                        group_size = len(config.groups[group_name])
+                        parameters.append(f"{group_name} ({group_size})")
+                        count += group_size
                 case Field(nx=nx, ny=ny, nz=nz):
                     parameters.append(f"{key} ({nx}, {ny}, {nz})")
                     count += len(config)
