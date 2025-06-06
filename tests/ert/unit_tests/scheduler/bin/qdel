@@ -1,14 +1,14 @@
 #!/usr/bin/env bash
 set -e
 
-jobdir="${PYTEST_TMP_PATH:-.}/mock_jobs"
 jobid=$1
+jobdir="${PYTEST_TMP_PATH:-.}/mock_jobs/${jobid}"
 
-if ! [ -f "${jobdir}/${jobid}.pid" ]
+if ! [ -f "${jobdir}/pid" ]
 then
     echo "No such job ${jobid}" >&2
     exit 1
 fi
 
-pid=$(cat "${jobdir}/${jobid}.pid")
+pid=$(cat "${jobdir}/pid")
 kill $pid
