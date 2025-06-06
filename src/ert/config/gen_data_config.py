@@ -28,9 +28,9 @@ class GenDataConfig(ResponseConfig):
             ResponseMetadata(
                 response_type=self.name,
                 response_key=response_key,
-                filter_on={"report_steps": report_steps}
+                filter_on={"report_step": report_steps}
                 if report_steps is not None
-                else {"report_steps": [0]},
+                else {"report_step": [0]},
             )
             for response_key, report_steps in zip(
                 self.keys, self.report_steps_list, strict=False
