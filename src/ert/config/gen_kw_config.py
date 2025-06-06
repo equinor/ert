@@ -29,6 +29,9 @@ if TYPE_CHECKING:
     from ert.storage import Ensemble
 
 
+SCALAR_NAME = "SCALAR"
+
+
 class PriorDict(TypedDict):
     key: str
     function: str
@@ -71,7 +74,7 @@ class GenKwConfig(ParameterConfig):
     transform_function_definitions: list[TransformFunctionDefinition]
     forward_init: bool = False
     update: bool = True
-    name: str = "GEN_KW"
+    name: str = SCALAR_NAME
 
     def __post_init__(self) -> None:
         self.transform_functions: list[TransformFunction] = []
@@ -90,6 +93,10 @@ class GenKwConfig(ParameterConfig):
             self.groups[e.group_name].append(e)
         self.update = any(param.update for param in self.transform_function_definitions)
         self._validate()
+
+    def group_keys(self, group: str) -> list[str]:
+        """Return the keys of the transform functions in the specified group."""
+        return [tf.name for tf in self.groups[group]]
 
     def __contains__(self, item: str) -> bool:
         return item in [v.name for v in self.transform_function_definitions]
