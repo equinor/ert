@@ -1,12 +1,8 @@
-import importlib.metadata
 import logging
 import os
 from typing import Any
 
-from pydantic import ValidationError
-from ropt.config.enopt import EnOptConfig
 from ropt.enums import PerturbationType, VariableType
-from ropt.transforms import OptModelTransforms
 
 from everest.config import (
     EverestConfig,
@@ -16,7 +12,6 @@ from everest.config import (
     OutputConstraintConfig,
 )
 from everest.config.utils import FlattenedControls
-from everest.optimizer.opt_model_transforms import EverestOptModelTransforms
 from everest.strings import EVEREST
 
 
@@ -24,14 +19,11 @@ def _parse_controls(controls: FlattenedControls, ropt_config: dict[str, Any]) ->
     control_types = [VariableType[type_.upper()] for type_ in controls.types]
     ropt_config["variables"] = {
         "types": None if all(item is None for item in control_types) else control_types,
-        "initial_values": controls.initial_guesses,
+        "variable_count": len(controls.initial_guesses),
         "lower_bounds": controls.lower_bounds,
         "upper_bounds": controls.upper_bounds,
         "mask": controls.enabled,
     }
-
-    if "gradients" not in ropt_config:
-        ropt_config["gradient"] = {}
 
     if any(item >= 0 for item in controls.sampler_indices):
         ropt_config["samplers"] = [
@@ -42,15 +34,15 @@ def _parse_controls(controls: FlattenedControls, ropt_config: dict[str, Any]) ->
             }
             for sampler in controls.samplers
         ]
-        ropt_config["gradient"]["samplers"] = controls.sampler_indices
+        ropt_config["variables"]["samplers"] = controls.sampler_indices
 
     default_magnitude = (max(controls.upper_bounds) - min(controls.lower_bounds)) / 10.0
-    ropt_config["gradient"]["perturbation_magnitudes"] = [
+    ropt_config["variables"]["perturbation_magnitudes"] = [
         default_magnitude if perturbation_magnitude is None else perturbation_magnitude
         for perturbation_magnitude in controls.perturbation_magnitudes
     ]
 
-    ropt_config["gradient"]["perturbation_types"] = [
+    ropt_config["variables"]["perturbation_types"] = [
         PerturbationType[perturbation_type.upper()]
         for perturbation_type in controls.perturbation_types
     ]
@@ -169,6 +161,8 @@ def _parse_optimization(
         "stdout": "optimizer.stdout",
         "stderr": "optimizer.stderr",
     }
+    ropt_config["gradient"] = {}
+
     if not ever_opt:
         return
 
@@ -267,7 +261,7 @@ def _parse_optimization(
             ropt_gradient["evaluation_policy"] = "separate"
 
 
-def _everest2ropt(ever_config: EverestConfig) -> dict[str, Any]:
+def everest2ropt(ever_config: EverestConfig) -> tuple[dict[str, Any], list[float]]:
     """Generate a ropt configuration from an Everest one
 
     NOTE: This method is a work in progress. So far only the some of
@@ -276,7 +270,9 @@ def _everest2ropt(ever_config: EverestConfig) -> dict[str, Any]:
     """
     ropt_config: dict[str, Any] = {}
 
-    _parse_controls(FlattenedControls(ever_config.controls), ropt_config)
+    flattened_controls = FlattenedControls(ever_config.controls)
+
+    _parse_controls(flattened_controls, ropt_config)
     _parse_objectives(ever_config.objective_functions, ropt_config)
     _parse_input_constraints(
         ever_config.input_constraints,
@@ -300,37 +296,6 @@ def _everest2ropt(ever_config: EverestConfig) -> dict[str, Any]:
     ropt_config["optimizer"]["output_dir"] = os.path.abspath(
         ever_config.optimization_output_dir
     )
-    ropt_config["gradient"]["seed"] = ever_config.environment.random_seed
+    ropt_config["variables"]["seed"] = ever_config.environment.random_seed
 
-    return ropt_config
-
-
-def everest2ropt(
-    ever_config: EverestConfig, transforms: EverestOptModelTransforms | None = None
-) -> EnOptConfig:
-    ropt_dict = _everest2ropt(ever_config)
-
-    ropt_transforms = (
-        OptModelTransforms(
-            variables=transforms["control_scaler"],
-            objectives=transforms["objective_scaler"],
-            nonlinear_constraints=transforms["constraint_scaler"],
-        )
-        if transforms
-        else None
-    )
-
-    try:
-        enopt_config = EnOptConfig.model_validate(ropt_dict, context=ropt_transforms)
-    except ValidationError as exc:
-        ert_version = importlib.metadata.version("ert")
-        ropt_version = importlib.metadata.version("ropt")
-        msg = (
-            f"Validation error(s) in ropt:\n\n{exc}.\n\n"
-            "Check the everest installation, there may a be version mismatch.\n"
-            f"  (ERT: {ert_version}, ropt: {ropt_version})\n"
-            "If the everest installation is correct, please report this as a bug."
-        )
-        raise ValueError(msg) from exc
-
-    return enopt_config
+    return ropt_config, flattened_controls.initial_guesses

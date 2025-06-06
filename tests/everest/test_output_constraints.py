@@ -1,6 +1,5 @@
 import numpy as np
 import pytest
-from ropt.config.enopt import EnOptConfig
 
 from ert.ensemble_evaluator.config import EvaluatorServerConfig
 from ert.run_models.everest_run_model import EverestRunModel
@@ -92,7 +91,7 @@ def test_upper_bound_output_constraint_def(copy_mocked_test_data_to_tmp):
     )
 
     # Check ropt conversion
-    ropt_conf = EnOptConfig.model_validate(everest2ropt(config))
+    ropt_conf, _ = everest2ropt(config)
 
     expected = {
         "name": "some_name",
@@ -100,8 +99,13 @@ def test_upper_bound_output_constraint_def(copy_mocked_test_data_to_tmp):
         "upper_bounds": [5000],
     }
 
-    assert expected["lower_bounds"] == ropt_conf.nonlinear_constraints.lower_bounds[0]
-    assert expected["upper_bounds"] == ropt_conf.nonlinear_constraints.upper_bounds[0]
+    assert (
+        expected["lower_bounds"]
+        == ropt_conf["nonlinear_constraints"]["lower_bounds"][0]
+    )
+    assert (
+        expected["upper_bounds"] == ropt_conf["nonlinear_constraints"]["upper_bounds"]
+    )
 
     EverestRunModel.create(config)
 
