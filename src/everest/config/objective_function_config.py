@@ -1,11 +1,11 @@
 from typing import Any
 
-from pydantic import BaseModel, Field, PositiveFloat, field_validator, model_validator
+from pydantic import BaseModel, Field, field_validator, model_validator
 
 
 class ObjectiveFunctionConfig(BaseModel, extra="forbid"):
     name: str = Field()
-    weight: PositiveFloat | None = Field(
+    weight: float | None = Field(
         default=None,
         description="""
 weight determines the importance of an objective function relative to the other
@@ -13,7 +13,8 @@ objective functions.
 
 Ultimately, the weighted sum of all the objectives is what Everest tries to optimize.
 Note that, in case the weights do not sum up to 1, they are normalized before being
-used in the optimization process.
+used in the optimization process. Weights may be zero or negative, but should add up to
+a positive value.
 """,
     )
     scale: float | None = Field(

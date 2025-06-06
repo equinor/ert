@@ -5,6 +5,7 @@ from copy import copy
 from io import StringIO
 from itertools import chain
 from pathlib import Path
+from sys import float_info
 from textwrap import dedent
 from typing import (
     Annotated,
@@ -602,6 +603,14 @@ to read summary data from forward model, do:
                 "Weight should be given either for all of the objectives"
                 " or for none of them"
             )
+        if weights and sum(weights) < float_info.epsilon:
+            msg = (
+                "The sum of the objective weights should be greater than 0"
+                if len(weights) > 1
+                else "The objective weight should be greater than 0"
+            )
+            raise ValueError(msg)
+
         return functions
 
     @field_validator("config_path")
