@@ -21,7 +21,7 @@ class ExportDialog(CustomDialog):
     ) -> None:
         self.storage = storage
         description = "The CSV export requires some information before it starts:"
-        super().__init__("export", description, parent)
+        super().__init__("CSV Export", description, parent)
 
         subs_list = ert_config.substitutions
         default_csv_output_path = subs_list.get("<CSV_OUTPUT_PATH>", "output.csv")

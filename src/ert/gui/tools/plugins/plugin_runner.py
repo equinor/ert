@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import logging
 import time
 from collections.abc import Callable
 from typing import TYPE_CHECKING, Any
@@ -12,6 +13,7 @@ from ert.workflow_runner import WorkflowJobRunner
 
 from .process_job_dialog import ProcessJobDialog
 
+logger = logging.getLogger(__name__)
 if TYPE_CHECKING:
     from ert.storage import LocalStorage
 
@@ -37,6 +39,7 @@ class PluginRunner:
         ert_config = self.ert_config
         try:
             plugin = self.__plugin
+            logger.info(f"Plugin {plugin.getName()} triggered")
             run_paths = Runpaths(
                 jobname_format=ert_config.runpath_config.jobname_format_string,
                 runpath_format=ert_config.runpath_config.runpath_format_string,

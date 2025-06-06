@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import datetime
 import functools
+import logging
 import webbrowser
 from pathlib import Path
 from typing import cast
@@ -40,6 +41,7 @@ from ert.gui.tools.workflows import WorkflowsTool
 from ert.plugins import ErtPluginManager
 from ert.trace import get_trace_id
 
+logger = logging.getLogger(__name__)
 BUTTON_STYLE_SHEET: str = """
     QToolButton {
         border-radius: 10px;
@@ -100,6 +102,7 @@ class ErtMainWindow(QMainWindow):
         self.setWindowTitle(
             f"ERT - {config_file} - {find_ert_info()} - {get_trace_id()[:8]}"
         )
+        self.setObjectName("ErtMainWindow")
         self.plugin_manager = plugin_manager
         self.central_widget = QFrame(self)
         self.central_layout = QHBoxLayout(self.central_widget)
@@ -343,6 +346,11 @@ class ErtMainWindow(QMainWindow):
             help_link_item = help_menu.addAction(menu_label)
             assert help_link_item is not None
             help_link_item.setMenuRole(QAction.MenuRole.ApplicationSpecificRole)
+            help_link_item.triggered.connect(
+                lambda checked=False, menu_label="": logger.info(
+                    f"Help link pressed: {menu_label.title()}"
+                )
+            )
             help_link_item.triggered.connect(functools.partial(webbrowser.open, link))
 
         show_about = help_menu.addAction("About")
@@ -358,24 +366,30 @@ class ErtMainWindow(QMainWindow):
         assert menu_bar is not None
         tools_menu = menu_bar.addMenu("&Tools")
         assert tools_menu is not None
-
+        tools_menu_name = f"Tools Menu - {self.objectName()}"
         if self.log_handler:
             self._event_viewer_tool = EventViewerTool(
-                self.log_handler, self.config_file
+                self.log_handler, self.config_file, trigger_source=tools_menu_name
             )
             self._event_viewer_tool.setParent(self)
             tools_menu.addAction(self._event_viewer_tool.getAction())
             self.close_signal.connect(self._event_viewer_tool.close_wnd)
 
-        self.export_tool = ExportTool(self.ert_config, self.notifier)
+        self.export_tool = ExportTool(
+            self.ert_config, self.notifier, trigger_source=tools_menu_name
+        )
         self.export_tool.setParent(self)
         tools_menu.addAction(self.export_tool.getAction())
 
-        self.workflows_tool = WorkflowsTool(self.ert_config, self.notifier)
+        self.workflows_tool = WorkflowsTool(
+            self.ert_config, self.notifier, trigger_source=tools_menu_name
+        )
         self.workflows_tool.setParent(self)
         tools_menu.addAction(self.workflows_tool.getAction())
 
-        self.load_results_tool = LoadResultsTool(self.ert_config, self.notifier)
+        self.load_results_tool = LoadResultsTool(
+            self.ert_config, self.notifier, trigger_source=tools_menu_name
+        )
         self.load_results_tool.setParent(self)
         tools_menu.addAction(self.load_results_tool.getAction())
 
