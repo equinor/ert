@@ -39,7 +39,7 @@ def use_testclient(monkeypatch):
 
 
 def test_key_def_structure(api):
-    key_defs = api.all_data_type_keys()
+    key_defs = api.parameters_api_key_defs + api.responses_api_key_defs
     fopr = next(x for x in key_defs if x.key == "FOPR")
     fopr_expected = {
         "dimensionality": 2,
@@ -123,7 +123,7 @@ def test_can_load_data_and_observations(api):
 
 
 def test_all_data_type_keys(api):
-    keys = [e.key for e in api.all_data_type_keys()]
+    keys = [e.key for e in (api.parameters_api_key_defs + api.responses_api_key_defs)]
     assert sorted(keys) == sorted(
         [
             "BPR:1,3,8",
@@ -175,7 +175,7 @@ def test_plot_api_request_errors_all_data_type_keys(api, mocker):
     )
 
     with pytest.raises(httpx.RequestError):
-        api.all_data_type_keys()
+        api.parameters_api_key_defs + api.responses_api_key_defs
 
 
 def test_plot_api_request_errors(api):
