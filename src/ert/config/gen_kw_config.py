@@ -5,7 +5,7 @@ import os
 import warnings
 from collections import defaultdict
 from collections.abc import Callable
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from enum import StrEnum
 from hashlib import sha256
 from pathlib import Path
@@ -71,7 +71,9 @@ class TransformFunctionDefinition:
 
 @dataclass
 class GenKwConfig(ParameterConfig):
-    transform_function_definitions: list[TransformFunctionDefinition]
+    transform_function_definitions: list[TransformFunctionDefinition] = field(
+        default_factory=list
+    )
     forward_init: bool = False
     update: bool = True
     name: str = SCALAR_NAME
