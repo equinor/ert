@@ -8,7 +8,7 @@ import pytest
 
 from ert.config import ErtConfig
 from ert.data import MeasuredData
-from ert.data._measured_data import ObservationError, ResponseError
+from ert.data._measured_data import ResponseError
 from ert.libres_facade import LibresFacade
 from ert.storage import open_storage
 
@@ -95,8 +95,8 @@ def test_gen_obs_and_summary(create_measured_data):
 @pytest.mark.parametrize(
     "obs_key, expected_msg",
     [
-        ("FOPR", r"No observation: FOPR in ensemble"),
-        ("WPR_DIFF_1", "No observation: WPR_DIFF_1 in ensemble"),
+        ("FOPR", r"Observations: FOPR not in experiment"),
+        ("WPR_DIFF_1", "Observations: WPR_DIFF_1 not in experiment"),
     ],
 )
 def test_no_storage(obs_key, expected_msg, storage):
@@ -105,7 +105,7 @@ def test_no_storage(obs_key, expected_msg, storage):
     )
 
     with pytest.raises(
-        ObservationError,
+        KeyError,
         match=expected_msg,
     ):
         MeasuredData(ensemble, [obs_key])
