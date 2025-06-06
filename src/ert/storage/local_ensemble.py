@@ -9,7 +9,7 @@ from datetime import datetime
 from functools import cache, cached_property, lru_cache
 from multiprocessing.pool import ThreadPool
 from pathlib import Path
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, cast
 from uuid import UUID
 
 import numpy as np
@@ -19,7 +19,7 @@ import xarray as xr
 from pydantic import BaseModel
 from typing_extensions import TypedDict
 
-from ert.config import GenKwConfig
+from ert.config import SCALAR_NAME, GenKwConfig
 from ert.config.response_config import InvalidResponseFile
 from ert.storage.load_status import LoadResult, LoadStatus
 from ert.storage.mode import BaseMode, Mode, require_write
@@ -557,6 +557,18 @@ class LocalEnsemble(BaseMode):
         df = pl.scan_parquet(group_path)
         return df
 
+    @property
+    def _scalar_config(self) -> GenKwConfig | None:
+        """
+        Returns the GenKwConfig for the scalar parameters.
+        If no scalar parameters are registered, returns None.
+        """
+        if SCALAR_NAME in self.experiment.parameter_configuration:
+            return cast(
+                GenKwConfig, self.experiment.parameter_configuration[SCALAR_NAME]
+            )
+        return None
+
     def load_parameters(
         self,
         group: str,
@@ -569,11 +581,18 @@ class LocalEnsemble(BaseMode):
         otherwise it will return the raw values.
 
         """
+        group_keys: list[str] | None = None
         if group not in self.experiment.parameter_configuration:
+            if self._scalar_config and group in self._scalar_config.groups:
+                group_keys = [key.name for key in self._scalar_config.groups[group]]
             raise KeyError(f"{group} is not registered to the experiment.")
-        config = self.experiment.parameter_configuration[group]
+        else:
+            config = self.experiment.parameter_configuration[group]
         if isinstance(config, GenKwConfig):
-            df = self._load_parameters_lazy(group).collect()
+            df_lazy = self._load_parameters_lazy(SCALAR_NAME)
+            if group_keys:
+                df_lazy = df_lazy.select(group_keys)
+            df = df_lazy.collect()
             if realizations is not None:
                 if isinstance(realizations, int):
                     realizations = np.array([realizations])
@@ -834,10 +853,11 @@ class LocalEnsemble(BaseMode):
 
         """
         if isinstance(dataset, pl.DataFrame):
+            assert self._scalar_config is not None
             try:
                 # since all realizations are saved in a single parquet file,
                 # this makes sure that we only append new realizations.
-                df = self._load_parameters_lazy(group)
+                df = self._load_parameters_lazy(SCALAR_NAME)
                 existing_realizations = (
                     df.select("realization")
                     .unique()
@@ -856,7 +876,7 @@ class LocalEnsemble(BaseMode):
             except KeyError:
                 df_full = dataset
 
-            group_path = self.mount_point / f"{_escape_filename(group)}.parquet"
+            group_path = self.mount_point / f"{_escape_filename(SCALAR_NAME)}.parquet"
             self._storage._to_parquet_transaction(group_path, df_full)
             return
 
