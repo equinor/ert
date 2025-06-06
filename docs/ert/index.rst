@@ -33,6 +33,7 @@ To understand the theoretical foundations of ensemble-based methods, head over t
    getting_started/howto/adaptive_localization.ipynb
    getting_started/updating_parameters/index
    getting_started/howto/plugin_system
+   getting_started/howto/design_matrix
    getting_started/webviz-ert/webviz-ert
 
 .. toctree::
