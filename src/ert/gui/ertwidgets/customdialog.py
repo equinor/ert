@@ -1,3 +1,4 @@
+import logging
 from typing import Any
 
 from PyQt6.QtCore import QSize, Qt
@@ -11,6 +12,8 @@ from PyQt6.QtWidgets import (
     QPushButton,
     QWidget,
 )
+
+logger = logging.getLogger(__name__)
 
 
 class CustomDialog(QDialog):
@@ -71,7 +74,10 @@ class CustomDialog(QDialog):
         Shows the dialog modally and returns the true or false (accept/reject)
         """
         self.optionValidationChanged()
-        return self.exec()
+        accepted = self.exec()
+        if accepted:
+            logger.info(f"{self.windowTitle()} was used")
+        return accepted
 
     @staticmethod
     def createSpace(size: int = 5) -> QWidget:
