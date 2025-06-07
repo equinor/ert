@@ -88,11 +88,12 @@ class GenKwConfig(ParameterConfig):
                         TransformFunctionDefinition(**e)
                     )
                 )
+                self.groups[e["group_name"]].append(TransformFunctionDefinition(**e))
             else:
                 self.transform_functions.append(
                     self._parse_transform_function_definition(e)
                 )
-            self.groups[e.group_name].append(e)
+                self.groups[e.group_name].append(e)
         self.update = any(param.update for param in self.transform_function_definitions)
         self._validate()
 
