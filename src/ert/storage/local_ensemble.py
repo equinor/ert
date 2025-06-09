@@ -585,13 +585,15 @@ class LocalEnsemble(BaseMode):
         if group not in self.experiment.parameter_configuration:
             if self._scalar_config and group in self._scalar_config.groups:
                 group_keys = [key.name for key in self._scalar_config.groups[group]]
-            raise KeyError(f"{group} is not registered to the experiment.")
+                config = self._scalar_config
+            else:
+                raise KeyError(f"{group} is not registered to the experiment.")
         else:
             config = self.experiment.parameter_configuration[group]
         if isinstance(config, GenKwConfig):
             df_lazy = self._load_parameters_lazy(SCALAR_NAME)
             if group_keys:
-                df_lazy = df_lazy.select(group_keys)
+                df_lazy = df_lazy.select([*group_keys, "realization"])
             df = df_lazy.collect()
             if realizations is not None:
                 if isinstance(realizations, int):
