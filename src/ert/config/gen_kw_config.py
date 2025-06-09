@@ -382,7 +382,6 @@ class GenKwConfig(ParameterConfig):
             df = ensemble.load_parameters(group, real_nr, transformed=True).drop(
                 "realization"
             )
-
             assert isinstance(df, pl.DataFrame)
             if not df.width == len(self.transform_functions):
                 raise ValueError(
@@ -401,9 +400,9 @@ class GenKwConfig(ParameterConfig):
             }
 
             if log10_data:
-                data_dict.update({self.name: data, f"LOG10_{self.name}": log10_data})
+                data_dict.update({group: data, f"LOG10_{group}": log10_data})
             else:
-                data_dict.update({self.name: data})
+                data_dict.update({group: data})
         return data_dict
 
     def save_parameters(
