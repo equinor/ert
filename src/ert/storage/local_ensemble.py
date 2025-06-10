@@ -525,22 +525,14 @@ class LocalEnsemble(BaseMode):
     def _load_dataset(
         self,
         group: str,
-        realizations: int | np.int64 | npt.NDArray[np.int_] | None,
+        realizations: int | np.int64 | npt.NDArray[np.int_],
     ) -> xr.Dataset:
         if isinstance(realizations, int | np.int64):
             return self._load_single_dataset(group, int(realizations)).isel(
                 realizations=0, drop=True
             )
 
-        if realizations is None:
-            datasets = [
-                xr.open_dataset(p, engine="scipy")
-                for p in sorted(
-                    self.mount_point.glob(f"realization-*/{_escape_filename(group)}.nc")
-                )
-            ]
-        else:
-            datasets = [self._load_single_dataset(group, i) for i in realizations]
+        datasets = [self._load_single_dataset(group, i) for i in realizations]
         return xr.combine_nested(datasets, concat_dim="realizations")
 
     def _load_parameters_lazy(
@@ -603,7 +595,12 @@ class LocalEnsemble(BaseMode):
                     ]
                 )
             return df
-        ds = self._load_dataset(group, realizations)
+        ds = self._load_dataset(
+            group,
+            realizations
+            if realizations is not None
+            else np.flatnonzero(self.get_realization_mask_with_parameters()),
+        )
         return ds
 
     def load_parameters_numpy(
