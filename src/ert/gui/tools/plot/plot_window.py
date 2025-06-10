@@ -333,10 +333,7 @@ class PlotWindow(QMainWindow):
         dock_widget.setObjectName(f"{name}Dock")
         dock_widget.setWidget(widget)
         dock_widget.setAllowedAreas(allowed_areas)
-        dock_widget.setFeatures(
-            QDockWidget.DockWidgetFeature.DockWidgetFloatable
-            | QDockWidget.DockWidgetFeature.DockWidgetMovable
-        )
+        dock_widget.setFeatures(QDockWidget.DockWidgetFeature.NoDockWidgetFeatures)
 
         self.addDockWidget(area, dock_widget)
         return dock_widget
