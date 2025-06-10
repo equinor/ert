@@ -37,6 +37,7 @@ class ExportTool(Tool):
         success = dialog.showAndTell()
 
         if success:
+            logger.info("Export CSV tool was used")
             self._run_export(
                 [
                     dialog.output_path,
