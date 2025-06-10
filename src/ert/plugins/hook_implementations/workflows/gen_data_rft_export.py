@@ -1,5 +1,6 @@
 import contextlib
 import json
+import logging
 import os
 from collections.abc import Sequence
 from typing import Any
@@ -11,6 +12,8 @@ from PyQt6.QtWidgets import QCheckBox, QWidget
 
 from ert.plugins import CancelPluginException, ErtPlugin
 from ert.storage import Storage
+
+logger = logging.getLogger(__name__)
 
 
 def load_args(filename: str, column_names: list[str] | None = None) -> pd.DataFrame:
@@ -252,6 +255,7 @@ class GenDataRFTCSVExportJob(ErtPlugin):
         success = dialog.showAndTell()
 
         if success:
+            logger.info("Gen Data RFT CSV export triggered")
             ensemble_data_as_dict = {
                 str(ensemble.id): {
                     "ensemble_name": ensemble.name,
