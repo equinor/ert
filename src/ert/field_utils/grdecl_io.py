@@ -227,7 +227,7 @@ def export_grdecl(
     """Export ascii or binary GRDECL"""
     values = values.flatten(order="F")
     if isinstance(values, np.ma.MaskedArray):
-        values = values.filled(0.0)  # type: ignore
+        values = values.filled(0.0)
 
     if binary:
         resfo.write(file_path, [(param_name.ljust(8), values.astype(np.float32))])
