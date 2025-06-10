@@ -572,6 +572,7 @@ class LocalStorage(BaseMode):
         self._swap_path.mkdir(parents=True, exist_ok=True)
         with NamedTemporaryFile(dir=self._swap_path, delete=False) as f:
             f.write(data)
+            f.flush()
             os.chmod(f.name, 0o660)
             os.rename(f.name, filename)
 
