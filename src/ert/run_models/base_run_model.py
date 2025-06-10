@@ -74,10 +74,12 @@ from ert.utils import log_duration
 from ert.workflow_runner import WorkflowRunner
 
 from ..config.parsing import BaseModelWithContextSupport
+from ..config.parsing.config_errors import PostSimulationWarning
 from ..plugins.workflow_fixtures import (
     create_workflow_fixtures_from_hooked,
 )
 from ..run_arg import RunArg
+from ..warnings.specific_warning_handler import capture_specific_warning
 from .event import (
     AnalysisStatusEvent,
     AnalysisTimeEvent,
@@ -385,7 +387,10 @@ class BaseRunModel(BaseModelWithContextSupport, ABC):
         try:
             self._start_time = int(time.time())
             self._stop_time = None
-            with captured_logs(error_messages):
+            with (
+                capture_specific_warning(PostSimulationWarning, self.send_event),
+                captured_logs(error_messages),
+            ):
                 self._set_default_env_context()
 
                 if restart:

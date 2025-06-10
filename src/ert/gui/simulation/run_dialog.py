@@ -67,7 +67,8 @@ from ert.shared.status.utils import (
     get_mount_directory,
 )
 
-from ...config import ErrorInfo
+from ...config import ErrorInfo, WarningInfo
+from ...ensemble_evaluator.event import WarningEvent
 from ..suggestor import Suggestor
 from .queue_emitter import QueueEmitter
 from .view import DiskSpaceWidget, ProgressWidget, RealizationWidget, UpdateWidget
@@ -219,6 +220,7 @@ class RunDialog(QFrame):
         self._snapshot_model = SnapshotModel(self)
         self._event_queue = event_queue
         self._notifier = notifier
+        self.post_simulation_warnings: list[str] = []
         self.fail_msg_box: Suggestor | None = None
 
         self._ticker = QTimer(self)
@@ -468,20 +470,20 @@ class RunDialog(QFrame):
         )
         self._notifier.set_is_simulation_running(False)
         self.flag_simulation_done = True
-        if failed:
+        if failed or self.post_simulation_warnings:
             self.update_total_progress(1.0, "Failed")
 
             self._progress_widget.set_all_failed()
-
             self.fail_msg_box = Suggestor(
-                errors=[ErrorInfo(msg)],
-                warnings=[],
+                errors=[ErrorInfo(msg)] if failed else [],
+                warnings=[WarningInfo(msg) for msg in self.post_simulation_warnings],
                 deprecations=[],
                 continue_action=None,
-                widget_info="""\
-                    <p style="font-size: 28px;">ERT experiment failed!</p>
-                    <p>These errors were detected:</p>
-                """,
+                widget_info=(
+                    f"<p style='font-size: 28px;' > ERT experiment "
+                    f"{'failed' if failed else 'succeeded'}!</p>"
+                    f"<p>These {'errors' if failed else 'warnings'} were detected</p>"
+                ),
             )
             self.fail_msg_box.show()
         else:
@@ -510,6 +512,8 @@ class RunDialog(QFrame):
     def _on_event(self, event: object) -> None:
         model = self._snapshot_model
         match event:
+            case WarningEvent(msg=msg):
+                self.post_simulation_warnings.append(msg)
             case EndEvent(failed=failed, msg=msg):
                 self.simulation_done.emit(failed, msg)
                 self._ticker.stop()
