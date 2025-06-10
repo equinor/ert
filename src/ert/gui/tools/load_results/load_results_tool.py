@@ -1,3 +1,4 @@
+import logging
 from typing import Any
 
 from PyQt6.QtGui import QIcon
@@ -7,6 +8,8 @@ from ert.gui.ertnotifier import ErtNotifier
 from ert.gui.ertwidgets import ClosableDialog
 from ert.gui.tools import Tool
 from ert.gui.tools.load_results import LoadResultsPanel
+
+logger = logging.getLogger(__name__)
 
 
 class LoadResultsTool(Tool):
@@ -44,6 +47,7 @@ class LoadResultsTool(Tool):
         self._dialog.exec()
 
     def load(self, _: Any) -> None:
+        logger.info("LoadResults tool was used")
         assert self._dialog is not None
         assert self._import_widget is not None
         self._dialog.disableCloseButton()

@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import logging
 import time
 from collections.abc import Iterable
 from typing import TYPE_CHECKING
@@ -23,6 +24,7 @@ from ert.gui.tools.workflows.workflow_dialog import WorkflowDialog
 from ert.runpaths import Runpaths
 from ert.workflow_runner import WorkflowRunner
 
+logger = logging.getLogger(__name__)
 if TYPE_CHECKING:
     from ert.config import ErtConfig
     from ert.gui.ertnotifier import ErtNotifier
@@ -113,6 +115,7 @@ class RunWorkflowWidget(QWidget):
         return sorted(self.config.workflows.keys(), key=str.lower)[index]
 
     def startWorkflow(self) -> None:
+        logger.info("Run Workflow tool was used")
         dialog = WorkflowDialog("Running workflow", self.createSpinWidget(), self)
         dialog.closeButtonPressed.connect(self.cancelWorkflow)
         self._running_workflow_dialog = dialog
