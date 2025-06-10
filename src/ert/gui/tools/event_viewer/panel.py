@@ -5,7 +5,7 @@ from contextlib import contextmanager
 from PyQt6.QtCore import QObject
 from PyQt6.QtCore import pyqtSignal as Signal
 from PyQt6.QtCore import pyqtSlot as Slot
-from PyQt6.QtWidgets import QPlainTextEdit, QVBoxLayout
+from PyQt6.QtWidgets import QDialog, QPlainTextEdit, QVBoxLayout
 
 from ert.gui.tools.search_bar import SearchBar
 
@@ -49,10 +49,10 @@ class GUILogHandler(_Signaler):
         return self.handler.handle(record)
 
 
-class EventViewerPanel(QPlainTextEdit):
+class EventViewerPanel(QDialog):
     def __init__(self, log_handler: GUILogHandler) -> None:
+        super().__init__()
         self.log_handler = log_handler
-        QPlainTextEdit.__init__(self)
 
         self.setMinimumWidth(500)
         self.setMinimumHeight(800)
