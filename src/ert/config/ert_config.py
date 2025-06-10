@@ -666,6 +666,9 @@ def create_list_of_forward_model_steps_to_run(
     return fm_steps
 
 
+RESERVED_KEYWORDS = ["realization", "IENS", "ITER"]
+
+
 class ErtConfig(BaseModel):
     DEFAULT_ENSPATH: ClassVar[str] = "storage"
     DEFAULT_RUNPATH_FILE: ClassVar[str] = ".ert_runpath_list"
@@ -673,6 +676,7 @@ class ErtConfig(BaseModel):
     PREINSTALLED_WORKFLOWS: ClassVar[dict[str, ErtScriptWorkflow]] = {}
     ENV_PR_FM_STEP: ClassVar[dict[str, dict[str, Any]]] = {}
     ACTIVATE_SCRIPT: ClassVar[str | None] = None
+    RESERVED_KEYWORDS: ClassVar[list[str]] = RESERVED_KEYWORDS
 
     substitutions: Substitutions = Field(default_factory=Substitutions)
     ensemble_config: EnsembleConfig = Field(default_factory=EnsembleConfig)
@@ -687,6 +691,7 @@ class ErtConfig(BaseModel):
         default_factory=lambda: defaultdict(list)
     )
     runpath_file: Path = Path(DEFAULT_RUNPATH_FILE)
+
     ert_templates: list[tuple[str, str]] = Field(default_factory=list)
     installed_forward_model_steps: dict[str, ForwardModelStep] = Field(
         default_factory=dict
@@ -716,6 +721,7 @@ class ErtConfig(BaseModel):
             parameter_name
             for parameter_name in self.ensemble_config.get_all_gen_kw_parameter_names()
             if f"<{parameter_name}>" in self.substitutions
+            or parameter_name in ErtConfig.RESERVED_KEYWORDS
         ]
         if overlapping_parameter_names:
             raise ConfigValidationError(
