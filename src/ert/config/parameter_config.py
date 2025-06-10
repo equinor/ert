@@ -116,8 +116,10 @@ class ParameterConfig(ABC):
         If realizations is given, copy only those realizations.
         """
         for realization in realizations:
-            ds = source_ensemble.load_parameters(self.name, realization)
-            target_ensemble.save_parameters(self.name, realization, ds)
+            # Converts to standard python scalar due to mypy
+            realization_int = int(realization)
+            ds = source_ensemble.load_parameters(self.name, realization_int)
+            target_ensemble.save_parameters(self.name, realization_int, ds)
 
     @abstractmethod
     def load_parameters(

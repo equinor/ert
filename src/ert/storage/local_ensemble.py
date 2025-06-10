@@ -532,7 +532,7 @@ class LocalEnsemble(BaseMode):
                 realizations=0, drop=True
             )
 
-        datasets = [self._load_single_dataset(group, i) for i in realizations]
+        datasets = [self._load_single_dataset(group, int(i)) for i in realizations]
         return xr.combine_nested(datasets, concat_dim="realizations")
 
     def _load_parameters_lazy(

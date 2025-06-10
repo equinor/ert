@@ -210,7 +210,8 @@ class Field(ParameterConfig):
         if self.mask_file is None:
             return self.nx * self.ny * self.nz
 
-        return np.size(self.mask) - np.count_nonzero(self.mask)
+        # Uses int() to convert to standard python int for mypy
+        return int(np.size(self.mask) - np.count_nonzero(self.mask))
 
     @log_duration(_logger, custom_name="load_field")
     def read_from_runpath(
