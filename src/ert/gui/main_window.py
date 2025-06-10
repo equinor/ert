@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import datetime
 import functools
+import logging
 import webbrowser
 from pathlib import Path
 from typing import cast
@@ -40,6 +41,7 @@ from ert.gui.tools.workflows import WorkflowsTool
 from ert.plugins import ErtPluginManager
 from ert.trace import get_trace_id
 
+logger = logging.getLogger(__name__)
 BUTTON_STYLE_SHEET: str = """
     QToolButton {
         border-radius: 10px;
@@ -343,6 +345,11 @@ class ErtMainWindow(QMainWindow):
             help_link_item = help_menu.addAction(menu_label)
             assert help_link_item is not None
             help_link_item.setMenuRole(QAction.MenuRole.ApplicationSpecificRole)
+            help_link_item.triggered.connect(
+                lambda checked=False, menu_label="": logger.info(
+                    f"Help link pressed: {menu_label.title()}"
+                )
+            )
             help_link_item.triggered.connect(functools.partial(webbrowser.open, link))
 
         show_about = help_menu.addAction("About")
@@ -358,7 +365,6 @@ class ErtMainWindow(QMainWindow):
         assert menu_bar is not None
         tools_menu = menu_bar.addMenu("&Tools")
         assert tools_menu is not None
-
         if self.log_handler:
             self._event_viewer_tool = EventViewerTool(
                 self.log_handler, self.config_file
