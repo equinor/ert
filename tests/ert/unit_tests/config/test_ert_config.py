@@ -2378,6 +2378,9 @@ def test_validation_error_on_gen_kw_with_design_matrix_group_name(tmp_path):
     "invalid_parameter_definition_name",
     [
         pytest.param("CWD UNIFORM 0 1", id="already_a_magic_string"),
+        pytest.param("realization UNIFORM 0 1", id="realization_is_reserved"),
+        pytest.param("ITER UNIFORM 0 1", id="ITER_is_reserved"),
+        pytest.param("IENS UNIFORM 0 1", id="IENS_is_reserved"),
         pytest.param("a UNIFORM 0 1", id="already_defined_in_user_config"),
     ],
 )
