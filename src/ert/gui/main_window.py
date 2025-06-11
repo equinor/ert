@@ -347,7 +347,7 @@ class ErtMainWindow(QMainWindow):
             help_link_item.setMenuRole(QAction.MenuRole.ApplicationSpecificRole)
             help_link_item.triggered.connect(
                 lambda checked=False, menu_label="": logger.info(
-                    f"Help link pressed: {menu_label.title()}"
+                    f"Gui utility: {menu_label.title()} - help link was used"
                 )
             )
             help_link_item.triggered.connect(functools.partial(webbrowser.open, link))

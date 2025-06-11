@@ -255,7 +255,7 @@ class GenDataRFTCSVExportJob(ErtPlugin):
         success = dialog.showAndTell()
 
         if success:
-            logger.info("Gen Data RFT CSV export triggered")
+            logger.info("Gui utility: Gen Data RFT CSV export was used")
             ensemble_data_as_dict = {
                 str(ensemble.id): {
                     "ensemble_name": ensemble.name,
