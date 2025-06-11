@@ -55,7 +55,13 @@ class Client:
         self._receiver_task: asyncio.Task[None] | None = None
 
     async def __aenter__(self) -> Self:
-        await self.connect()
+        try:
+            await self.connect()
+        except ClientConnectionError:
+            logger.error(
+                "No ack for dealer connection. Connection was not established!"
+            )
+            raise
         return self
 
     async def __aexit__(
@@ -162,5 +168,5 @@ class Client:
                 backoff = min(backoff * 2, 10)  # Exponential backoff
             retries -= 1
         raise ClientConnectionError(
-            f"{self.dealer_id} Failed to send {message!r} to {self.url} after retries!"
+            f"{self.dealer_id} Failed to send {message!r} to {self.url} after retrying!"
         )
