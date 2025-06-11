@@ -178,6 +178,7 @@ def sample_prior(
     active_realizations: Iterable[int],
     random_seed: int,
     parameters: list[str] | None = None,
+    design_matrix_df: pd.DataFrame | None = None,
 ) -> None:
     """This function is responsible for getting the prior into storage,
     in the case of GEN_KW we sample the data and store it, and if INIT_FILES
@@ -202,6 +203,7 @@ def sample_prior(
                     realization_nr,
                     random_seed=random_seed,
                     ensemble_size=ensemble.ensemble_size,
+                    design_matrix_df=design_matrix_df,
                 )
                 for realization_nr in active_realizations
             ]
