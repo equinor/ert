@@ -1034,3 +1034,38 @@ def test_export_deprecated_keys(key, value, min_config, change_to_tmpdir):
     )
     with pytest.warns(ConfigWarning, match=match_msg):
         EverestConfig.load_file_with_argparser("config.yml", parser)
+
+
+@pytest.mark.parametrize(
+    "realizations", ["1,", ",1", "1,,2", "1-", "-1", "2-1", "1--2", "1-,-2"]
+)
+def test_that_model_realizations_specs_are_invalid(realizations):
+    with pytest.raises(
+        ValueError, match=f"Invalid realizations specification: {realizations}"
+    ):
+        EverestConfig.with_defaults(model={"realizations": realizations})
+
+
+@pytest.mark.parametrize(
+    ("realizations", "expected"),
+    [
+        ("1", [1]),
+        ("1,2", [1, 2]),
+        ("1, 2", [1, 2]),
+        ("1, 2, 2", [1, 2]),
+        (" 1, 2 ", [1, 2]),
+        ("1-1", [1]),
+        ("1-3", [1, 2, 3]),
+        ("1 -3", [1, 2, 3]),
+        ("1- 3", [1, 2, 3]),
+        ("1 - 3", [1, 2, 3]),
+        ("1, 2-3", [1, 2, 3]),
+        ("1, 3-4", [1, 3, 4]),
+        ("1, 3-4, 2", [1, 2, 3, 4]),
+        ("1, 3-4, 2", [1, 2, 3, 4]),
+        ("6-6, 1, 3-4, 1, 2-5", [1, 2, 3, 4, 5, 6]),
+    ],
+)
+def test_that_model_realizations_specs_are_valid(realizations, expected):
+    config = EverestConfig.with_defaults(model={"realizations": realizations})
+    assert config.model.realizations == expected
