@@ -9,12 +9,10 @@ from fastapi import APIRouter, Depends, Query, status
 from fastapi.responses import Response
 
 from ert.dark_storage import exceptions as exc
-from ert.dark_storage.common import (
-    data_for_response,
-    get_observations_for_obs_keys,
-    get_storage,
-)
+from ert.dark_storage.common import get_storage
 from ert.dark_storage.compute.misfits import calculate_misfits_from_pandas
+from ert.dark_storage.endpoints.observations import get_observations_for_obs_keys
+from ert.dark_storage.endpoints.responses import data_for_response
 from ert.storage import Storage
 
 router = APIRouter(tags=["misfits"])
