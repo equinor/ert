@@ -112,6 +112,16 @@ class EnsembleConfig(BaseModel):
         gen_kw_list = config_dict.get(ConfigKeys.GEN_KW, [])
         return GenKwConfig.templates_from_config(gen_kw_list)
 
+    def get_gen_kw(self) -> GenKwConfig | None:
+        """
+        Get the GenKwConfig Returns None if the GenKwConfig does not exist.
+        """
+        return (
+            self.parameter_configs.get(key)
+            if isinstance(self.parameter_configs.get(key), GenKwConfig)
+            else None
+        )
+
     @no_type_check
     @classmethod
     def from_dict(cls, config_dict: ConfigDict) -> EnsembleConfig:
