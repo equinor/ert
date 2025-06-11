@@ -31,7 +31,7 @@ logger = logging.getLogger(__name__)
 
 def _clicked_help_button(menu_label: str, link: str) -> None:
     logger = logging.getLogger(__name__)
-    logger.info(f"Gui utility: {menu_label} - help link was used from Suggestor")
+    logger.info(f"Gui utility: {menu_label} help link was used from Suggestor")
     webbrowser.open(link)
 
 
