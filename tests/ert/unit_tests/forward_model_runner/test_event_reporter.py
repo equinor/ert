@@ -226,3 +226,36 @@ def test_report_with_reconnected_reporter_but_finished_jobs(unused_tcp_port):
             reporter._event_publisher_thread.join()
         assert reporter._done.is_set()
     assert len(mock_server.messages) == 3, "expected 3 Job running messages"
+
+
+@pytest.mark.parametrize(
+    "mocked_server_signal, expected_message",
+    [
+        pytest.param(4, "No ack for dealer disconnection", id="failed_disconnect"),
+        pytest.param(5, "No ack for dealer connection", id="failed_connect"),
+        pytest.param(1, "Failed to send event", id="failed_to_send_event"),
+    ],
+)
+def test_event_reporter_does_not_hang_after_failed_JONAK(
+    mocked_server_signal, expected_message, unused_tcp_port, monkeypatch, caplog
+):
+    host = "localhost"
+    url = f"tcp://{host}:{unused_tcp_port}"
+    monkeypatch.setattr(
+        "_ert.forward_model_runner.reporting.event.Client.DEFAULT_MAX_RETRIES", 1
+    )
+    with MockZMQServer(unused_tcp_port, signal=mocked_server_signal):
+        reporter = Event(evaluator_url=url, ack_timeout=1, max_retries=1)
+        fmstep1 = ForwardModelStep(
+            {"name": "fmstep1", "stdout": "stdout", "stderr": "stderr"}, 0
+        )
+
+        reporter.report(Init([fmstep1], 1, 19, ens_id="ens_id", real_id=0))
+        reporter.report(Start(fmstep1))
+        reporter.report(Finish())
+
+        reporter._event_publisher_thread.join(timeout=10)
+        assert not reporter._event_publisher_thread.is_alive(), (
+            "Event publisher thread is hanging"
+        )
+    assert expected_message in caplog.text
