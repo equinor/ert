@@ -45,10 +45,6 @@ install_jobs:
 forward_model:
   # Compute distance (squared and negated) between 2 points
   - job: adv_distance3 --point-file point.json --target-file data/r{{ realization}}/target.json --out distance
-    results:
-      file_name: distance
-      type: objective
-      keys: "*"
   # Expect no objective, but should generate gen_data in ERT storage
   - job: adv_distance3 --point-file point.json --target-file data/r{{ realization}}/target.json --out distance_nonobj
     results:
