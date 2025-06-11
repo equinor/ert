@@ -73,7 +73,9 @@ class MockZMQServer:
                     and DISCONNECT messages
         signal = 1: don't send ACK and don't receive messages
         signal = 2: don't send ACK, but receive messages
-        signal = 3: normal operation, and store also CONNECT and DISCONNECT messages
+        signal = 3: normal operation, and store CONNECT and DISCONNECT messages
+        signal = 4: same as signal = 3, but do not ACK DISCONNECT messages.
+        signal = 5: don't respond to anything.
         """
         self.port = port
         self.messages = []
@@ -137,9 +139,11 @@ class MockZMQServer:
         while True:
             try:
                 dealer, __, frame = await self.router_socket.recv_multipart()
+                if self.value == 5:
+                    continue
                 if (
                     self.value in {0, 2} and frame not in {CONNECT_MSG, DISCONNECT_MSG}
-                ) or self.value == 3:
+                ) or self.value in {3, 4}:
                     self.messages.append(frame.decode("utf-8"))
                 if frame == CONNECT_MSG:
                     self.dealers.add(dealer)
@@ -149,8 +153,9 @@ class MockZMQServer:
                     self.dealers.discard(dealer)
                     if not self.dealers:
                         self.no_dealers.set()
-                    await self.router_socket.send_multipart([dealer, b"", ACK_MSG])
-                elif self.value in {0, 3}:
+                    if self.value != 4:
+                        await self.router_socket.send_multipart([dealer, b"", ACK_MSG])
+                elif self.value in {0, 3, 4}:
                     await self.router_socket.send_multipart([dealer, b"", ACK_MSG])
             except asyncio.CancelledError:
                 break
