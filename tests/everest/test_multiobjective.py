@@ -62,18 +62,18 @@ def test_config_multi_objectives(min_config, config, expectation, tmp_path):
         EverestConfig(**min_config)
 
 
-def test_multi_objectives2ropt(copy_mocked_test_data_to_tmp):
-    config = EverestConfig.load_file(CONFIG_FILE)
-    config_dict = config.to_dict()
-    ever_objs = config_dict["objective_functions"]
-    ever_objs[0]["weight"] = 1.33
-    ever_objs[1]["weight"] = 3.1
-    assert len(EverestConfig.lint_config_dict(config_dict)) == 0
-
-    enopt_config, _ = everest2ropt(EverestConfig.model_validate(config_dict))
+def test_multi_objectives2ropt():
+    weights = [1.33, 3.1]
+    config = EverestConfig.with_defaults(
+        objective_functions=[
+            {"name": "f1", "weight": weights[0]},
+            {"name": "f2", "weight": weights[1]},
+        ]
+    )
+    enopt_config, _ = everest2ropt(config)
     assert len(enopt_config["objectives"]["weights"]) == 2
-    assert enopt_config["objectives"]["weights"][1] == ever_objs[1]["weight"]
-    assert enopt_config["objectives"]["weights"][0] == ever_objs[0]["weight"]
+    assert enopt_config["objectives"]["weights"][0] == weights[0]
+    assert enopt_config["objectives"]["weights"][1] == weights[1]
 
 
 @pytest.mark.integration_test
