@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import dataclasses
 import datetime
+import importlib.metadata
 import logging
 import os
 import queue
@@ -15,12 +16,12 @@ from typing import TYPE_CHECKING, Any, Protocol
 
 import numpy as np
 from numpy.typing import NDArray
-from pydantic import NonNegativeInt, PrivateAttr
-from ropt.config.enopt import EnOptConfig
-from ropt.enums import OptimizerExitCode
+from pydantic import NonNegativeInt, PrivateAttr, ValidationError
+from ropt.enums import ExitCode as RoptExitCode
 from ropt.evaluator import EvaluatorContext, EvaluatorResult
 from ropt.plan import BasicOptimizer
 from ropt.results import FunctionResults, Results
+from ropt.transforms import OptModelTransforms
 from typing_extensions import TypedDict
 
 from ert.config import (
@@ -127,7 +128,8 @@ class EverestRunModel(BaseRunModel):
     parameter_configuration: list[ParameterConfig]
     response_configuration: list[ResponseConfig]
     ert_templates: list[tuple[str, str]]
-    enopt_config: EnOptConfig
+    enopt_config: dict[str, Any]
+    initial_guesses: list[float]
 
     formatted_control_names: list[str]
     controls: list[ControlConfig]
@@ -238,6 +240,8 @@ class EverestRunModel(BaseRunModel):
             and everest_config.simulator.delete_run_path
         )
 
+        enopt_config, initial_guesses = everest2ropt(everest_config)
+
         return cls(
             control_names=control_names,
             controls=controls,
@@ -250,7 +254,8 @@ class EverestRunModel(BaseRunModel):
             output_constraints=output_constraints,
             model_realizations=everest_config.model.realizations,
             transforms=transforms,
-            enopt_config=everest2ropt(everest_config, transforms),
+            enopt_config=enopt_config,
+            initial_guesses=initial_guesses,
             optimization_output_dir=everest_config.optimization_output_dir,
             log_path=everest_config.log_dir,
             random_seed=123,
@@ -385,26 +390,26 @@ class EverestRunModel(BaseRunModel):
         optimizer.set_results_callback(self._handle_optimizer_results)
 
         # Run the optimization:
-        optimizer_exit_code = optimizer.run().exit_code
+        optimizer_exit_code = optimizer.run(self.initial_guesses).exit_code
 
         # Store some final results.
         self._ever_storage.on_optimization_finished()
         if (
-            optimizer_exit_code is not OptimizerExitCode.UNKNOWN
-            and optimizer_exit_code is not OptimizerExitCode.TOO_FEW_REALIZATIONS
-            and optimizer_exit_code is not OptimizerExitCode.USER_ABORT
+            optimizer_exit_code is not RoptExitCode.UNKNOWN
+            and optimizer_exit_code is not RoptExitCode.TOO_FEW_REALIZATIONS
+            and optimizer_exit_code is not RoptExitCode.USER_ABORT
         ):
             self._ever_storage.export_everest_opt_results_to_csv()
 
         if self._exit_code is None:
             match optimizer_exit_code:
-                case OptimizerExitCode.MAX_FUNCTIONS_REACHED:
+                case RoptExitCode.MAX_FUNCTIONS_REACHED:
                     self._exit_code = EverestExitCode.MAX_FUNCTIONS_REACHED
-                case OptimizerExitCode.MAX_BATCHES_REACHED:
+                case RoptExitCode.MAX_BATCHES_REACHED:
                     self._exit_code = EverestExitCode.MAX_BATCH_NUM_REACHED
-                case OptimizerExitCode.USER_ABORT:
+                case RoptExitCode.USER_ABORT:
                     self._exit_code = EverestExitCode.USER_ABORT
-                case OptimizerExitCode.TOO_FEW_REALIZATIONS:
+                case RoptExitCode.TOO_FEW_REALIZATIONS:
                     self._exit_code = EverestExitCode.TOO_FEW_REALIZATIONS
                 case _:
                     self._exit_code = EverestExitCode.COMPLETED
@@ -424,11 +429,32 @@ class EverestRunModel(BaseRunModel):
         return False
 
     def _create_optimizer(self) -> BasicOptimizer:
-        optimizer = BasicOptimizer(
-            enopt_config=self.enopt_config,
-            evaluator=self._forward_model_evaluator,
-            everest_config=self.user_config_file,
+        transforms = (
+            OptModelTransforms(
+                variables=self._transforms["control_scaler"],
+                objectives=self._transforms["objective_scaler"],
+                nonlinear_constraints=self._transforms["constraint_scaler"],
+            )
+            if self._transforms
+            else None
         )
+        try:
+            optimizer = BasicOptimizer(
+                enopt_config=self.enopt_config,
+                transforms=transforms,
+                evaluator=self._forward_model_evaluator,
+                everest_config=self.user_config_file,
+            )
+        except ValidationError as exc:
+            ert_version = importlib.metadata.version("ert")
+            ropt_version = importlib.metadata.version("ropt")
+            msg = (
+                f"Validation error(s) in ropt:\n\n{exc}.\n\n"
+                "Check the everest installation, there may a be version mismatch.\n"
+                f"  (ERT: {ert_version}, ropt: {ropt_version})\n"
+                "If the everest installation is correct, please report this as a bug."
+            )
+            raise ValueError(msg) from exc
 
         # Before each batch evaluation we check if we should abort:
         optimizer.set_abort_callback(self._check_for_abort)
@@ -524,12 +550,12 @@ class EverestRunModel(BaseRunModel):
         #    perturbation.
         #
         # Control vectors pertaining to inactive realizations do not need to be
-        # evaluated. This can be achieved by removing the inactive entries
-        # before running the forward models, using the
-        # `evaluator_context.filter_inactive_realizations` method of the context
+        # evaluated. This can be achieved by extracting active entries before
+        # running the forward models, using the
+        # `evaluator_context.get_active_evaluations` method of the context
         # object. Before returning the results, the must be amended by inserting
         # rows at the positions that were filtered out. This can be done using
-        # the `evaluator_context.insert_inactive_realizations`
+        # the `evaluator_context.insert_inactive_results`
         #
         # In summary, the evaluation comprises three steps:
         #
@@ -556,17 +582,17 @@ class EverestRunModel(BaseRunModel):
         #    `evaluator_context.realizations` and
         #    `evaluator_context.perturbations` with entries corresponding to
         #    inactive control vectors removed.
-        active_control_vectors = evaluator_context.filter_inactive_realizations(
+        active_control_vectors = evaluator_context.get_active_evaluations(
             control_values
         )
         num_simulations = active_control_vectors.shape[0]
-        realization_indices = evaluator_context.filter_inactive_realizations(
+        realization_indices = evaluator_context.get_active_evaluations(
             evaluator_context.realizations
         )
         perturbation_indices = (
             np.full(num_simulations, fill_value=-1, dtype=np.intc)
             if evaluator_context.perturbations is None
-            else evaluator_context.filter_inactive_realizations(
+            else evaluator_context.get_active_evaluations(
                 evaluator_context.perturbations
             )
         )
@@ -619,14 +645,10 @@ class EverestRunModel(BaseRunModel):
             # This is the final step: insert zero results for inactive
             # control vectors. This is done by inserting zeros at each position
             # where the input control vectors are not active.
-            objectives = evaluator_context.insert_inactive_realizations(objectives)
+            objectives = evaluator_context.insert_inactive_results(objectives)
             if constraints is not None:
-                constraints = evaluator_context.insert_inactive_realizations(
-                    constraints
-                )
-            sim_ids = evaluator_context.insert_inactive_realizations(
-                sim_ids, fill_value=-1
-            )
+                constraints = evaluator_context.insert_inactive_results(constraints)
+            sim_ids = evaluator_context.insert_inactive_results(sim_ids, fill_value=-1)
         else:
             # Nothing to do, there may only have been inactive control vectors:
             num_all_simulations = control_values.shape[0]
