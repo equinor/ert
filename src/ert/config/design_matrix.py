@@ -130,22 +130,25 @@ class DesignMatrix:
 
     def merge_with_existing_parameters(
         self, existing_parameters: list[ParameterConfig]
-    ) -> GenKwConfig:
+    ) -> list[ParameterConfig]:
+        return [
+            config
+            if not isinstance(config, GenKwConfig)
+            else self._merge_with_single_gen_kw(config)
+            for config in existing_parameters
+        ]
+
+    def _merge_with_single_gen_kw(self, gen_kw_config: GenKwConfig) -> GenKwConfig:
         """
-        This method merges the design matrix parameters with the existing parameters and
-        returns the new list of existing parameters.
-        Args:
-            existing_parameters: existing scalar parameters
-
-
+        This method merges the design matrix parameters with a single GenKwConfig.
         Returns:
-            new set of parameters
+            new merged GenKwConfig
         """
 
         all_params: list[TransformFunctionDefinition] = []
 
         overlap_set = set()
-        for existing_parameter in existing_parameters.transform_function_definitions:
+        for existing_parameter in gen_kw_config.transform_function_definitions:
             if existing_parameter.input_source == DataSource.DESIGN_MATRIX:
                 continue
             overlap = False

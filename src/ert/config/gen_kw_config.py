@@ -336,25 +336,56 @@ class GenKwConfig(ParameterConfig):
             raise ConfigValidationError.from_collected(errors)
 
     def sample_or_load(
-        self, real_nr: int, random_seed: int, ensemble_size: int
+        self,
+        real_nr: int,
+        random_seed: int,
+        ensemble_size: int,
+        design_matrix_df: pd.DataFrame | None = None,
     ) -> pl.DataFrame:
-        keys = [e.name for e in self.transform_functions]
-        parameter_value = self._sample_value(
-            self.name,
-            keys,
-            str(random_seed),
-            real_nr,
-        )
+        parameter_dict: dict[str, str | float] = {}
+        schema_dict: dict[str, pl.DataType] = {}
+        global_seed = str(random_seed)
+        for tfd in self.transform_functions:
+            if tfd.input_source == DataSource.DESIGN_MATRIX:
+                assert design_matrix_df is not None, (
+                    "Design matrix must be provided when using "
+                    "DataSource.DESIGN_MATRIX for transform function definitions."
+                )
+                raw_val = design_matrix_df.at[real_nr, tfd.name]
+                if isinstance(raw_val, np.generic):
+                    param_val = raw_val.item()  # int, float, or str
+                else:
+                    param_val = raw_val
+            elif tfd.input_source == DataSource.SAMPLED:
+                key_hash = sha256(
+                    global_seed.encode("utf-8")
+                    + f"{tfd.group_name}:{tfd.name}".encode()
+                )
+                seed = np.frombuffer(key_hash.digest(), dtype="uint32")
+                rng = np.random.default_rng(seed)
 
-        parameter_dict = {
-            parameter.name: parameter_value[idx]
-            for idx, parameter in enumerate(self.transform_functions)
-        }
+                # Advance the RNG state to the realization point
+                rng.standard_normal(real_nr)
+
+                # Generate a single sample
+                param_val = float(rng.standard_normal(1)[0])
+            else:
+                raise ValueError(
+                    f"Unknown input source {tfd.input_source} for parameter {tfd.name}"
+                )
+            parameter_dict[tfd.name] = param_val
+            if isinstance(param_val, str):
+                schema_dict[tfd.name] = pl.Utf8()
+            elif isinstance(param_val, int):
+                schema_dict[tfd.name] = pl.Int64()
+            elif isinstance(param_val, float):
+                schema_dict[tfd.name] = pl.Float64()
+            else:
+                # fallback: let Polars infer
+                schema_dict[tfd.name] = pl.DataType()
         parameter_dict["realization"] = real_nr
         return pl.DataFrame(
-            parameter_dict,
-            schema={tf.name: pl.Float64 for tf in self.transform_functions}
-            | {"realization": pl.Int64},
+            parameter_dict, schema=schema_dict | {"realization": pl.Int64}
         )
 
     def load_parameter_graph(self) -> nx.Graph[int]:
@@ -383,6 +414,7 @@ class GenKwConfig(ParameterConfig):
                 "realization"
             )
             assert isinstance(df, pl.DataFrame)
+            # todo this will fail hard!!! fix it
             if not df.width == len(self.transform_functions):
                 raise ValueError(
                     f"The configuration of GEN_KW parameter {self.name}"
@@ -503,10 +535,8 @@ class GenKwConfig(ParameterConfig):
             )
         return df.values.flatten()
 
-    @staticmethod
     def _sample_value(
-        parameter_group_name: str,
-        keys: list[str],
+        self,
         global_seed: str,
         realization: int,
     ) -> npt.NDArray[np.double]:
@@ -540,9 +570,11 @@ class GenKwConfig(ParameterConfig):
         generation of large, unused sample sets.
         """
         parameter_values = []
-        for key in keys:
+        for tfd in self.transform_function_definitions:
+            if tfd.input_source == DataSource.DESIGN_MATRIX:
+                continue
             key_hash = sha256(
-                global_seed.encode("utf-8") + f"{parameter_group_name}:{key}".encode()
+                global_seed.encode("utf-8") + f"{tfd.group_name}:{tfd.name}".encode()
             )
             seed = np.frombuffer(key_hash.digest(), dtype="uint32")
             rng = np.random.default_rng(seed)
@@ -597,6 +629,9 @@ class GenKwConfig(ParameterConfig):
 
         return TransformFunction(
             name=t.name,
+            input_source=t.input_source,
+            update=t.update,
+            group_name=t.group_name,
             transform_function_name=t.param_name,
             parameter_list=params,
             calc_func=PRIOR_FUNCTIONS[t.param_name],
@@ -610,6 +645,9 @@ class TransformFunction:
     parameter_list: dict[str, float]
     calc_func: Callable[[float, list[float]], float]
     use_log: bool = False
+    input_source: DataSource = DataSource.SAMPLED
+    update: bool = True
+    group_name: str = SCALAR_NAME
 
     def __post_init__(self) -> None:
         if self.transform_function_name in {"LOGNORMAL", "LOGUNIF"}:
