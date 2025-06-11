@@ -71,6 +71,11 @@ BUTTON_STYLE_SHEET_DARK: str = (
 )
 
 
+def _clicked_help_link(menu_label: str, link: str) -> None:
+    logger.info(f"Gui utility: {menu_label} help link was used from main window")
+    webbrowser.open(link)
+
+
 class SidebarToolButton(QToolButton):
     right_clicked = Signal()
 
@@ -346,9 +351,7 @@ class ErtMainWindow(QMainWindow):
             assert help_link_item is not None
             help_link_item.setMenuRole(QAction.MenuRole.ApplicationSpecificRole)
             help_link_item.triggered.connect(
-                lambda checked=False, menu_label="": logger.info(
-                    f"Gui utility: {menu_label.title()} - help link was used"
-                )
+                functools.partial(_clicked_help_link, menu_label, link)
             )
             help_link_item.triggered.connect(functools.partial(webbrowser.open, link))
 
