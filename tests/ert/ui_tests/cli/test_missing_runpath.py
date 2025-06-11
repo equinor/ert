@@ -78,7 +78,6 @@ def patch_raising_named_temporary_file(queue_system):
     )
 
 
-@pytest.mark.usefixtures()
 def test_failing_writes_lead_to_isolated_failures(tmp_path, monkeypatch, pytestconfig):
     monkeypatch.chdir(tmp_path)
     queue_system = None
