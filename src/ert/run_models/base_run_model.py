@@ -14,12 +14,14 @@ import traceback
 import uuid
 from abc import ABC, abstractmethod
 from collections import defaultdict
-from collections.abc import Callable, Generator, MutableSequence
+from collections.abc import Callable, Generator, Iterable, MutableSequence
 from contextlib import contextmanager
+from functools import cached_property
 from pathlib import Path
 from typing import Any, Protocol, cast
 
 import numpy as np
+import pandas as pd
 from pydantic import PrivateAttr
 
 from _ert.events import EESnapshot, EESnapshotUpdate, EETerminated, Event
@@ -31,16 +33,20 @@ from ert.analysis.event import (
     AnalysisEvent,
 )
 from ert.config import (
+    ConfigValidationError,
+    DesignMatrix,
     ESSettings,
     ForwardModelStep,
+    GenKwConfig,
     HookRuntime,
     ModelConfig,
     ObservationSettings,
+    ParameterConfig,
     QueueConfig,
     QueueSystem,
     Workflow,
 )
-from ert.enkf_main import create_run_path
+from ert.enkf_main import create_run_path, save_design_matrix_to_ensemble
 from ert.ensemble_evaluator import Ensemble as EEEnsemble
 from ert.ensemble_evaluator import (
     EnsembleEvaluator,
@@ -845,6 +851,64 @@ class BaseRunModel(BaseModelWithContextSupport, ABC):
         )
 
         return num_successful_realizations
+
+
+class HasDesignParameters:
+    design_matrix: DesignMatrix | None
+    parameter_configuration: list[ParameterConfig]
+
+    @cached_property
+    def parsed_design_matrix(
+        self,
+    ) -> tuple[list[ParameterConfig], tuple[GenKwConfig, pd.DataFrame] | None]:
+        parameters_config = self.parameter_configuration
+
+        if self.design_matrix is None:
+            return parameters_config, None
+
+        updated_params, group = self.design_matrix.merge_with_existing_parameters(
+            parameters_config
+        )
+        df = self.design_matrix.design_matrix_df
+
+        return updated_params, (group, df) if group and df is not None else None
+
+    def experiment_parameters(
+        self,
+        require_updated_parameters: bool = True,
+        include_design_matrix: bool = False,
+    ) -> tuple[list[ParameterConfig], list[ParameterConfig]]:
+        parameters_config = self.parameter_configuration
+
+        if include_design_matrix and self.design_matrix is not None:
+            parameters_config, design_matrix_info = self.parsed_design_matrix
+            group = design_matrix_info[0] if design_matrix_info else None
+
+            if require_updated_parameters and not any(
+                p.update for p in parameters_config
+            ):
+                raise ConfigValidationError(
+                    "No parameters to update as all "
+                    "parameters were set to update:false!"
+                )
+
+            return parameters_config, [group] if group else []
+
+        return parameters_config, []
+
+    def save_design_parameters(
+        self, target_ensemble: Ensemble, active_realizations: Iterable[int]
+    ) -> None:
+        _, design_matrix_info = self.parsed_design_matrix
+
+        if design_matrix_info is not None:
+            design_matrix_group, design_matrix_df = design_matrix_info
+            save_design_matrix_to_ensemble(
+                design_matrix_df,
+                target_ensemble,
+                active_realizations,
+                design_matrix_group.name,
+            )
 
 
 class UpdateRunModel(BaseRunModel):
