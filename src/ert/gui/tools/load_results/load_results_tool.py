@@ -47,7 +47,7 @@ class LoadResultsTool(Tool):
         self._dialog.exec()
 
     def load(self, _: Any) -> None:
-        logger.info("LoadResults tool was used")
+        logger.info("Gui utility: LoadResults tool was used")
         assert self._dialog is not None
         assert self._import_widget is not None
         self._dialog.disableCloseButton()

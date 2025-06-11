@@ -115,7 +115,7 @@ class RunWorkflowWidget(QWidget):
         return sorted(self.config.workflows.keys(), key=str.lower)[index]
 
     def startWorkflow(self) -> None:
-        logger.info("Run Workflow tool was used")
+        logger.info("Gui utility: Run Workflow tool was used")
         dialog = WorkflowDialog("Running workflow", self.createSpinWidget(), self)
         dialog.closeButtonPressed.connect(self.cancelWorkflow)
         self._running_workflow_dialog = dialog

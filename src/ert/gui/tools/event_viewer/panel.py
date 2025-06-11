@@ -79,7 +79,7 @@ class EventViewerPanel(QDialog):
         self.text_box.appendPlainText(value)
 
     def closeEvent(self, event: QCloseEvent | None) -> None:
-        logger.info("EventViewer tool was used")
+        logger.info("Gui utility: EventViewer tool was used")
         super().closeEvent(event)
 
 
