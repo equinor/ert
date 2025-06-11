@@ -75,7 +75,9 @@ class Event(Reporter):
         self._ens_id = None
         self._real_id = None
         self._event_queue: queue.Queue[events.Event | EventSentinel] = queue.Queue()
-        self._event_publisher_thread = ErtThread(target=self._event_publisher)
+        self._event_publisher_thread = ErtThread(
+            target=self._event_publisher, should_raise=False
+        )
         self._done = threading.Event()
         self._ack_timeout = ack_timeout
         self._max_retries = max_retries
@@ -124,6 +126,7 @@ class Event(Reporter):
                         return
                     except ClientConnectionError as exc:
                         logger.error(f"Failed to send event: {exc}")
+                        raise exc
 
         try:
             asyncio.run(publisher())
