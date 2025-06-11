@@ -14,7 +14,7 @@ from ert.config import (
     ParameterConfig,
     ResponseConfig,
 )
-from ert.enkf_main import sample_prior, save_design_matrix_to_ensemble
+from ert.enkf_main import sample_prior
 from ert.ensemble_evaluator import EvaluatorServerConfig
 from ert.storage import Ensemble, Experiment
 from ert.trace import tracer
@@ -70,11 +70,10 @@ class EnsembleExperiment(BaseRunModel):
         # to the experiment parameters and set new active realizations
         parameters_config = self.parameter_configuration
         design_matrix = self.design_matrix
-        design_matrix_group = None
         if design_matrix is not None and not restart:
             try:
-                parameters_config, design_matrix_group = (
-                    design_matrix.merge_with_existing_parameters(parameters_config)
+                parameters_config = design_matrix.merge_with_existing_parameters(
+                    parameters_config
                 )
             except ConfigValidationError as exc:
                 raise ErtRunError(str(exc)) from exc
@@ -85,11 +84,7 @@ class EnsembleExperiment(BaseRunModel):
             )
             self._experiment_id = self._storage.create_experiment(
                 name=self.experiment_name,
-                parameters=(
-                    [*parameters_config, design_matrix_group]
-                    if design_matrix_group is not None
-                    else parameters_config
-                ),
+                parameters=parameters_config,
                 observations=self._observations,
                 responses=self.response_configuration,
                 templates=self.ert_templates,
@@ -117,15 +112,10 @@ class EnsembleExperiment(BaseRunModel):
             np.where(self.active_realizations)[0],
             parameters=[param.name for param in parameters_config],
             random_seed=self.random_seed,
+            design_matrix_df=design_matrix.design_matrix_df
+            if design_matrix is not None
+            else None,
         )
-
-        if design_matrix_group is not None and design_matrix is not None:
-            save_design_matrix_to_ensemble(
-                design_matrix.design_matrix_df,
-                self._ensemble,
-                np.where(self.active_realizations)[0],
-                design_matrix_group.name,
-            )
 
         self._evaluate_and_postprocess(
             run_args,
