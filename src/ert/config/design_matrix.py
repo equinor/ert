@@ -13,6 +13,7 @@ from ert.config.gen_kw_config import (
     GenKwConfig,
     TransformFunctionDefinition,
 )
+from ert.config.parameter_config import ParameterConfig
 from ert.shared.status.utils import convert_to_numeric
 
 from .parsing import ConfigValidationError, ErrorInfo
@@ -128,7 +129,7 @@ class DesignMatrix:
                 self.parameter_configuration.transform_function_definitions.append(tfd)
 
     def merge_with_existing_parameters(
-        self, existing_parameters: GenKwConfig
+        self, existing_parameters: list[ParameterConfig]
     ) -> GenKwConfig:
         """
         This method merges the design matrix parameters with the existing parameters and
@@ -231,14 +232,15 @@ class DesignMatrix:
                 TransformFunctionDefinition(
                     name=parameter,
                     param_name="RAW",
+                    group_name=DESIGN_MATRIX_GROUP,
                     values=[],
+                    input_source=DataSource.DESIGN_MATRIX,
+                    update=False,
                 )
             )
         parameter_configuration = GenKwConfig(
             name=DESIGN_MATRIX_GROUP,
-            forward_init=False,
             transform_function_definitions=transform_function_definitions,
-            update=False,
         )
 
         reals = design_matrix_df.index.tolist()

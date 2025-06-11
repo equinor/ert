@@ -99,8 +99,8 @@ class ManageExperimentsPanel(QTabWidget):
         )
         if design_matrix is not None:
             try:
-                parameters_config, design_matrix_group = (
-                    design_matrix.merge_with_existing_parameters(parameters_config)
+                parameters_config = design_matrix.merge_with_existing_parameters(
+                    parameters_config
                 )
                 realizations = [
                     real
