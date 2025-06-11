@@ -252,37 +252,36 @@ def main() -> None:
             # Starting the server
             server_path = os.path.abspath(ServerConfig.get_session_dir(output_dir))
             status = ""
-            with (
-                StorageService.init_service(
-                    timeout=240, project=server_path, logging_config=log_file.name
-                ) as server,
-                StorageService.session(project=server_path) as client,
-            ):
-                update_everserver_status(status_path, ServerStatus.running)
-                done = False
-                while not done:
-                    response = client.get(
-                        "/experiment_server/status", auth=server.fetch_auth()
-                    )
-                    status = response.content.decode("utf-8")
-                    done = status and status != "Experiment started"
-                    time.sleep(0.5)
-                if status == "Optimization completed.":
-                    update_everserver_status(
-                        status_path, ServerStatus.completed, message=status
-                    )
-                elif status == "Server stopped by user":
-                    update_everserver_status(
-                        status_path, ServerStatus.stopped, message=status
-                    )
-                elif status == "Maximum number of batches reached.":
-                    update_everserver_status(
-                        status_path, ServerStatus.completed, message=status
-                    )
-                elif status.startswith(OPT_FAILURE_REALIZATIONS):
-                    update_everserver_status(
-                        status_path, ServerStatus.failed, message=status
-                    )
+            with StorageService.init_service(
+                timeout=240, project=server_path, logging_config=log_file.name
+            ) as server:
+                server.fetch_conn_info()
+                with StorageService.session(project=server_path) as client:
+                    update_everserver_status(status_path, ServerStatus.running)
+                    done = False
+                    while not done:
+                        response = client.get(
+                            "/experiment_server/status", auth=server.fetch_auth()
+                        )
+                        status = response.content.decode("utf-8")
+                        done = status and status != "Experiment started"
+                        time.sleep(0.5)
+                    if status == "Optimization completed.":
+                        update_everserver_status(
+                            status_path, ServerStatus.completed, message=status
+                        )
+                    elif status == "Server stopped by user":
+                        update_everserver_status(
+                            status_path, ServerStatus.stopped, message=status
+                        )
+                    elif status == "Maximum number of batches reached.":
+                        update_everserver_status(
+                            status_path, ServerStatus.completed, message=status
+                        )
+                    elif status.startswith(OPT_FAILURE_REALIZATIONS):
+                        update_everserver_status(
+                            status_path, ServerStatus.failed, message=status
+                        )
         except BaseServiceExit:
             # Server exit, happens on normal shutdown and keyboard interrupt
             server_status = everserver_status(status_path)
