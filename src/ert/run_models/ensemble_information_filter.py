@@ -56,7 +56,7 @@ class EnsembleInformationFilter(HasDesignParameters, UpdateRunModel):
         self.log_at_startup()
 
         parameters, design_parameters = self.experiment_parameters(
-            include_design_matrix=not restart, require_updated_parameters=False
+            include_design_matrix=not restart, require_updated_parameters=True
         )
 
         self._restart = restart
