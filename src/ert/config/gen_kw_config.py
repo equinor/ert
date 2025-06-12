@@ -535,58 +535,6 @@ class GenKwConfig(ParameterConfig):
             )
         return df.values.flatten()
 
-    def _sample_value(
-        self,
-        global_seed: str,
-        realization: int,
-    ) -> npt.NDArray[np.double]:
-        """
-        Generate a sample value for each key in a parameter group.
-
-        The sampling is reproducible and dependent on a global seed combined
-        with the parameter group name and individual key names. The 'realization'
-        parameter determines the specific sample point from the distribution for each
-        parameter.
-
-        Parameters:
-        - parameter_group_name (str): The name of the parameter group, used to ensure
-        unique RNG seeds for different groups.
-        - keys (list[str]): A list of parameter keys for which the sample values are
-        generated.
-        - global_seed (str): A global seed string used for RNG seed generation to ensure
-        reproducibility across runs.
-        - realization (int): An integer used to advance the RNG to a specific point in
-        its sequence, effectively selecting the 'realization'-th sample from the
-        distribution.
-
-        Returns:
-        - npt.NDArray[np.double]: An array of sample values, one for each key in the
-        provided list.
-
-        Note:
-        The method uses SHA-256 for hash generation and numpy's default random number
-        generator for sampling. The RNG state is advanced to the 'realization' point
-        before generating a single sample, enhancing efficiency by avoiding the
-        generation of large, unused sample sets.
-        """
-        parameter_values = []
-        for tfd in self.transform_function_definitions:
-            if tfd.input_source == DataSource.DESIGN_MATRIX:
-                continue
-            key_hash = sha256(
-                global_seed.encode("utf-8") + f"{tfd.group_name}:{tfd.name}".encode()
-            )
-            seed = np.frombuffer(key_hash.digest(), dtype="uint32")
-            rng = np.random.default_rng(seed)
-
-            # Advance the RNG state to the realization point
-            rng.standard_normal(realization)
-
-            # Generate a single sample
-            value = rng.standard_normal(1)
-            parameter_values.append(value[0])
-        return np.array(parameter_values)
-
     def _parse_transform_function_definition(
         self,
         t: TransformFunctionDefinition,

@@ -116,11 +116,13 @@ class EnsembleConfig(BaseModel):
         """
         Get the GenKwConfig Returns None if the GenKwConfig does not exist.
         """
-        return (
-            self.parameter_configs.get(key)
-            if isinstance(self.parameter_configs.get(key), GenKwConfig)
-            else None
-        )
+        gen_kw = [
+            config
+            for config in self.parameter_configs.values()
+            if isinstance(config, GenKwConfig)
+        ]
+        if gen_kw:
+            return gen_kw[0]
 
     @no_type_check
     @classmethod
