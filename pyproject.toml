@@ -206,6 +206,7 @@ select = [
     "NPY",   # numpy specific rules
     "C4",    # flake8-comprehensions
     "ASYNC", # flake8-async
+    "RSE",   # flake8-raise
     "RUF",   # ruff specific rules
     "UP",    # pyupgrade
     "ICN",   # flake8-import-conventions

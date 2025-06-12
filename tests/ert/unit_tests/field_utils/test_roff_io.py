@@ -365,7 +365,7 @@ class SkippedParameter:
     def __getitem__(self, index: int) -> str:
         if index == 0:
             return self.name
-        raise AssertionError()
+        raise AssertionError
 
 
 @patch("ert.field_utils.roff_io.roffio")

@@ -333,7 +333,7 @@ class BaseService:
         if isinstance(self._conn_info, Exception):
             raise self._conn_info
         if not is_ready:
-            raise TimeoutError()
+            raise TimeoutError
         if self._conn_info is None:
             raise ValueError("conn_info is None")
         return self._conn_info

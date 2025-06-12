@@ -793,7 +793,7 @@ def test_when_manifest_files_are_written_forward_model_ok_succeeds(storage, itr)
             elif file.endswith("txt"):
                 Path(file).write_text("1.0", encoding="utf-8")
             else:
-                raise AssertionError()
+                raise AssertionError
 
     # When files in manifest are written we expect forward_model_ok to succeed
     for run_arg in run_args:

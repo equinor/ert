@@ -32,7 +32,7 @@ class Tool:
         return self.__name
 
     def trigger(self) -> None:
-        raise NotImplementedError()
+        raise NotImplementedError
 
     def setParent(self, parent: QObject | None) -> None:
         self.__parent = parent
