@@ -52,14 +52,14 @@ def create_base_run_model(**kwargs):
     return BaseRunModelWithMockSupport(**(default_args | kwargs))
 
 
-def test_base_run_model_supports_restart(minimum_case):
+def test_base_run_model_not_supports_restart(minimum_case):
     brm = create_base_run_model(
         storage_path=minimum_case.ens_path,
         queue_config=minimum_case.queue_config,
         active_realizations=[True],
         forward_model_steps=minimum_case.forward_model_steps,
     )
-    assert brm.support_restart
+    assert not brm.support_restart
 
 
 @pytest.mark.parametrize(

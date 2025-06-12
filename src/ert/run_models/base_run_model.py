@@ -184,7 +184,7 @@ class BaseRunModel(BaseModelWithContextSupport, ABC):
     random_seed: int
     start_iteration: int = 0
     minimum_required_realizations: int = 0
-    support_restart: bool = True
+    support_restart: bool = False
 
     # Private attributes initialized in model_post_init
     _start_time: int | None = PrivateAttr(None)

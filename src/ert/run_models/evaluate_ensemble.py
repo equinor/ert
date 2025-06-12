@@ -25,6 +25,7 @@ class EvaluateEnsemble(BaseRunModel):
     """
 
     ensemble_id: str
+    support_restart: bool = True
 
     def model_post_init(self, ctx: Any) -> None:
         super().model_post_init(ctx)
