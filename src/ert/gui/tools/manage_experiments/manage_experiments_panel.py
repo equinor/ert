@@ -142,22 +142,16 @@ class ManageExperimentsPanel(QTabWidget):
             active_realizations = [int(i) for i in members_model.getSelectedItems()]
 
             with self.notifier.write_storage() as storage:
-                # if design_matrix is not None:
-                #     parameters.remove(design_matrix_group.name)
-                #     save_design_matrix_to_ensemble(
-                #         design_matrix.design_matrix_df,
-                #         storage.get_ensemble(ensemble_selector.currentData()),
-                #         active_realizations,
-                #         design_group_name=design_matrix_group.name,
-                #     )
                 sample_prior(
                     ensemble=storage.get_ensemble(ensemble_selector.currentData()),
                     active_realizations=active_realizations,
                     parameters=parameters,
                     random_seed=self.ert_config.random_seed,
-                    design_matrix_df=design_matrix.design_matrix_df
-                    if design_matrix is not None
-                    else None,
+                    design_matrix_df=(
+                        design_matrix.design_matrix_df
+                        if design_matrix is not None
+                        else None
+                    ),
                 )
 
         @Slot()
