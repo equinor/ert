@@ -132,7 +132,6 @@ class EverestRunModel(BaseRunModel):
     initial_guesses: list[float]
 
     controls: list[ControlConfig]
-    control_names: list[str]
 
     objective_functions: list[ObjectiveFunctionConfig]
     objective_names: list[str]
@@ -231,7 +230,6 @@ class EverestRunModel(BaseRunModel):
         objective_names = everest_config.objective_names
         constraint_names = everest_config.constraint_names
         controls = everest_config.controls
-        control_names = everest_config.control_names
 
         delete_run_path: bool = (
             everest_config.simulator is not None
@@ -241,7 +239,6 @@ class EverestRunModel(BaseRunModel):
         enopt_config, initial_guesses = everest2ropt(everest_config)
 
         return cls(
-            control_names=control_names,
             controls=controls,
             simulation_dir=everest_config.simulation_dir,
             keep_run_path=not delete_run_path,
@@ -774,7 +771,7 @@ class EverestRunModel(BaseRunModel):
                         f"Key {key} has suffixes, a suffix must be specified"
                     )
 
-        if set(controls.keys()) != set(self.control_names):
+        if set(controls.keys()) != {control.name for control in self.controls}:
             err_msg = "Mismatch between initialized and provided control names."
             raise KeyError(err_msg)
 
