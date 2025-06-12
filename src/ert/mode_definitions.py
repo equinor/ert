@@ -8,6 +8,7 @@ EVALUATE_ENSEMBLE_MODE = "evaluate_ensemble"
 MANUAL_UPDATE_MODE = "manual_update"
 
 MODULE_MODE = {
+    "EnsembleInformationFilter": ENIF_MODE,
     "EnsembleSmoother": ENSEMBLE_SMOOTHER_MODE,
     "EnsembleExperiment": ENSEMBLE_EXPERIMENT_MODE,
     "MultipleDataAssimilation": ES_MDA_MODE,
