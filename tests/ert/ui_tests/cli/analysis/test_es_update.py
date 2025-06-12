@@ -24,7 +24,7 @@ def uniform_parameter():
         name="PARAMETER",
         forward_init=False,
         transform_function_definitions=[
-            TransformFunctionDefinition("KEY1", "UNIFORM", [0, 1]),
+            TransformFunctionDefinition("KEY1", "UNIFORM", "PARAMETER", [0, 1]),
         ],
         update=True,
     )

@@ -79,21 +79,23 @@ class GenKwConfig(ParameterConfig):
     name: str = SCALAR_NAME
 
     def __post_init__(self) -> None:
+        if self.name != SCALAR_NAME:
+            raise ConfigValidationError.with_context(
+                f"GEN_KW name must be '{SCALAR_NAME}', got '{self.name}'",
+                self.name,
+            )
         self.transform_functions: list[TransformFunction] = []
-        self.groups: dict[str, list[TransformFunctionDefinition]] = defaultdict(list)
+        self.groups: dict[str, list[TransformFunction]] = defaultdict(list)
         for e in self.transform_function_definitions:
+            tf: TransformFunction | None = None
             if isinstance(e, dict):
-                self.transform_functions.append(
-                    self._parse_transform_function_definition(
-                        TransformFunctionDefinition(**e)
-                    )
+                tf = self._parse_transform_function_definition(
+                    TransformFunctionDefinition(**e)
                 )
-                self.groups[e["group_name"]].append(TransformFunctionDefinition(**e))
             else:
-                self.transform_functions.append(
-                    self._parse_transform_function_definition(e)
-                )
-                self.groups[e.group_name].append(e)
+                tf = self._parse_transform_function_definition(e)
+            self.transform_functions.append(tf)
+            self.groups[tf.group_name].append(tf)
         self.update = any(param.update for param in self.transform_function_definitions)
         self._validate()
 
@@ -415,10 +417,10 @@ class GenKwConfig(ParameterConfig):
             )
             assert isinstance(df, pl.DataFrame)
             # todo this will fail hard!!! fix it
-            if not df.width == len(self.transform_functions):
+            if not df.width == len(self.groups[group]):
                 raise ValueError(
                     f"The configuration of GEN_KW parameter {self.name}"
-                    f" has {len(self.transform_functions)} parameters, "
+                    f" has {len(self.groups[group])} parameters, "
                     "but ensemble dataset"
                     f" for realization {real_nr} has {df.width} parameters."
                 )
@@ -427,7 +429,7 @@ class GenKwConfig(ParameterConfig):
 
             log10_data: dict[str, float | str] = {
                 tf.name: math.log10(data[tf.name])
-                for tf in self.transform_functions
+                for tf in self.groups[group]
                 if tf.use_log and isinstance(data[tf.name], (int, float))
             }
 
