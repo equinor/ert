@@ -632,7 +632,7 @@ class LocalEnsemble(BaseMode):
             and self._scalar_config
             and group in self._scalar_config.groups
         ):
-            df = self.load_parameters(group, realizations)
+            df = self.load_parameters(group, realizations).drop("realization")
             assert isinstance(df, pl.DataFrame)
             return df.to_numpy().T.copy()
         config = self.experiment.parameter_configuration[group]
