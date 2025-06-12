@@ -14,36 +14,50 @@ def test_get_scaling_factor():
     assert get_scaling_factor(4, 1) == 2
 
 
-def test_that_get_nr_primary_components_is_according_to_theory():
+@pytest.mark.parametrize(
+    "p, rho",
+    [
+        (4, 0.3),
+        (10, 0.1),
+        (5, 0.8),
+    ],
+)
+@pytest.mark.parametrize("seed", range(9))
+def test_that_get_nr_primary_components_is_according_to_theory(p, rho, seed):
     """Based on theory in Multivariate Statistical Methods 4th Edition
     by Donald F. Morrison.
-    See section 6.5 - Some Patterned Matrices and Their Principal Components.
+    See section 6.5 - Some Patterned Matrices and Their Principal Components
+    on page 283.
     """
-    rho = 0.3
-    p = 4
     sigma = 1
     N = 100000
 
-    R = np.ones(shape=(p, p)) * rho
-    np.fill_diagonal(R, sigma**2)
+    # Define a p x p equicorrelation matrix
+    # See Eqn (1)
+    Sigma = np.ones(shape=(p, p)) * rho
+    np.fill_diagonal(Sigma, sigma**2)
 
-    rng = np.random.default_rng(1234)
+    # The greatest characteristic root of Sigma
+    # See Eqn (2)
+    # Represents the variance of the first
+    # principal component.
+    lambda_1 = sigma**2 * (1 + (p - 1) * rho)
+
+    # The remaining p - 1 characteristic roots are all equal to:
+    # See Eqn (5)
+    lambda_remaining = sigma**2 * (1 - rho)
+
+    # Calculate the theoretical proportion of variance
+    # explained directly from the eigenvalues.
+    total_variance = lambda_1 + (p - 1) * lambda_remaining
+    threshold_1 = lambda_1 / total_variance
+    threshold_2 = (lambda_1 + lambda_remaining) / total_variance
+    threshold_3 = (lambda_1 + 2 * lambda_remaining) / total_variance
 
     # Fast sampling of correlated multivariate observations
+    rng = np.random.default_rng(seed)
     X = rng.standard_normal(size=(p, N))
-    Y = (np.linalg.cholesky(R) @ X).T
-
-    Y = (Y - Y.mean(axis=0)) / Y.std(axis=0)
-
-    lambda_1 = sigma**2 * (1 + (p - 1) * rho)
-    lambda_remaining = sigma**2 * (1 - rho)
-    s1 = np.sqrt(lambda_1 * (N - 1))
-    s_remaining = np.sqrt(lambda_remaining * (N - 1))
-
-    total = s1**2 + (p - 1) * s_remaining**2
-    threshold_1 = s1**2 / total
-    threshold_2 = (s1**2 + s_remaining**2) / total
-    threshold_3 = (s1**2 + 2 * s_remaining**2) / total
+    Y = (np.linalg.cholesky(Sigma) @ X).T
 
     # Adding a bit to the thresholds because of numerical accuracy.
     assert get_nr_primary_components(Y, threshold_1 + 0.01) == 1
