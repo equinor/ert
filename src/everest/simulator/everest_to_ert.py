@@ -106,7 +106,7 @@ def _extract_simulator(ever_config: EverestConfig, ert_config: dict[str, Any]) -
     ever_simulation = ever_config.simulator or SimulatorConfig()
 
     # Resubmit number (number of submission retries)
-    ert_config[ErtConfigKeys.MAX_SUBMIT] = ever_simulation.resubmit_limit
+    ert_config[ErtConfigKeys.MAX_SUBMIT] = ever_simulation.resubmit_limit + 1
 
     # Maximum number of seconds (MAX_RUNTIME) a forward model is allowed to run
     max_runtime = ever_simulation.max_runtime
