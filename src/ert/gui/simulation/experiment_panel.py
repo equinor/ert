@@ -55,14 +55,14 @@ def create_md_table(kv: dict[str, str], output: str) -> str:
 
 
 def get_simulation_thread(
-    model: Any, restart: bool = False, use_ipc_protocol: bool = False
+    model: Any, rerun_failed_realizations: bool = False, use_ipc_protocol: bool = False
 ) -> ErtThread:
     evaluator_server_config = EvaluatorServerConfig(use_ipc_protocol=use_ipc_protocol)
 
     def run() -> None:
         model.api.start_simulations_thread(
             evaluator_server_config=evaluator_server_config,
-            restart=restart,
+            rerun_failed_realizations=rerun_failed_realizations,
         )
 
     return ErtThread(name="ert_gui_simulation_thread", target=run, daemon=True)
@@ -338,22 +338,24 @@ class ExperimentPanel(QWidget):
         self._simulation_done = False
         self.run_button.setEnabled(self._simulation_done)
 
-        def start_simulation_thread(restart: bool = False) -> None:
+        def start_simulation_thread(rerun_failed_realizations: bool = False) -> None:
             simulation_thread = get_simulation_thread(
                 self._model,
-                restart,
+                rerun_failed_realizations,
                 use_ipc_protocol=self.config.queue_config.queue_system
                 == QueueSystem.LOCAL,
             )
-            self._dialog.setup_event_monitoring(restart)
+            self._dialog.setup_event_monitoring(rerun_failed_realizations)
             simulation_thread.start()
             self._notifier.set_is_simulation_running(True)
 
-        def restart() -> None:
-            start_simulation_thread(restart=True)
+        def rerun_failed_realizations() -> None:
+            start_simulation_thread(rerun_failed_realizations=True)
 
-        self._dialog.restart_experiment.connect(restart)
-        start_simulation_thread(restart=False)
+        self._dialog.rerun_failed_realizations_experiment.connect(
+            rerun_failed_realizations
+        )
+        start_simulation_thread(rerun_failed_realizations=False)
 
         def simulation_done_handler() -> None:
             self._simulation_done = True

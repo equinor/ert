@@ -191,7 +191,7 @@ class FMStepOverview(QTableView):
 class RunDialog(QFrame):
     simulation_done = Signal(bool, str)
     progress_update_event = Signal(dict, int)
-    restart_experiment = Signal()
+    rerun_failed_realizations_experiment = Signal()
     _RUN_TIME_POLL_RATE = 1000
 
     def __init__(
@@ -261,8 +261,8 @@ class RunDialog(QFrame):
         self.memory_usage.setMinimumWidth(250)
 
         self.kill_button = QPushButton("Terminate experiment")
-        self.restart_button = QPushButton("Rerun failed simulations")
-        self.restart_button.setEnabled(False)
+        self.rerun_button = QPushButton("Rerun failed simulations")
+        self.rerun_button.setEnabled(False)
 
         size = 20
         spin_movie = QMovie("img:loading.gif")
@@ -305,7 +305,7 @@ class RunDialog(QFrame):
         footer_layout.addStretch(1000)
         button_layout = QVBoxLayout()
         button_layout.addWidget(self.kill_button)
-        button_layout.addWidget(self.restart_button)
+        button_layout.addWidget(self.rerun_button)
         footer_layout.addLayout(button_layout)
 
         footer_widget_container = QWidget()
@@ -343,11 +343,11 @@ class RunDialog(QFrame):
         self.setLayout(layout)
 
         self.kill_button.clicked.connect(self.killJobs)
-        self.restart_button.clicked.connect(self.restart_failed_realizations)
+        self.rerun_button.clicked.connect(self.rerun_failed_realizations)
         self.simulation_done.connect(self._on_simulation_done)
 
         self.setMinimumSize(1200, 600)
-        self._restart = False
+        self._is_rerunning_failed_realizations = False
         self.flag_simulation_done = False
 
         self._latest_iteration = 0
@@ -423,9 +423,9 @@ class RunDialog(QFrame):
                 text += f", assigned to host: {exec_hosts}"
             self._fm_step_label.setText(text)
 
-    def setup_event_monitoring(self, restart: bool = False) -> None:
+    def setup_event_monitoring(self, rerun_failed_realizations: bool = False) -> None:
         self.flag_simulation_done = False
-        if restart is False:
+        if rerun_failed_realizations is False:
             self._snapshot_model.reset()
             self._tab_widget.clear()
 
@@ -462,9 +462,9 @@ class RunDialog(QFrame):
         self.processing_animation.setVisible(False)
         self.processing_stopped.setVisible(True)
         self.kill_button.setEnabled(False)
-        self.restart_button.setEnabled(
+        self.rerun_button.setEnabled(
             self._run_model_api.has_failed_realizations()
-            and self._run_model_api.support_restart
+            and self._run_model_api.supports_rerunning_failed_realizations
         )
         self._notifier.set_is_simulation_running(False)
         self.flag_simulation_done = True
@@ -515,7 +515,7 @@ class RunDialog(QFrame):
                 status_count=status_count, realization_count=realization_count
             ):
                 if event.snapshot is not None:
-                    if self._restart:
+                    if self._is_rerunning_failed_realizations:
                         model._update_snapshot(event.snapshot, str(event.iteration))
                     else:
                         model._add_snapshot(event.snapshot, str(event.iteration))
@@ -597,7 +597,7 @@ class RunDialog(QFrame):
                 )
             )
 
-    def restart_failed_realizations(self) -> None:
+    def rerun_failed_realizations(self) -> None:
         msg = QMessageBox(self)
         msg.setIcon(QMessageBox.Icon.Information)
         msg.setText(
@@ -612,10 +612,10 @@ class RunDialog(QFrame):
         result = msg.exec()
 
         if result == QMessageBox.StandardButton.Ok:
-            self.restart_button.setEnabled(False)
+            self.rerun_button.setEnabled(False)
             self.kill_button.setEnabled(True)
-            self._restart = True
-            self.restart_experiment.emit()
+            self._is_rerunning_failed_realizations = True
+            self.rerun_failed_realizations_experiment.emit()
 
     def set_queue_system_name(self, queue_system: QueueSystem) -> None:
         match queue_system:

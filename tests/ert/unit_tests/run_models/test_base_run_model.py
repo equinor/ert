@@ -11,6 +11,7 @@ import pytest
 from pydantic import ConfigDict
 
 from ert.config import ErtConfig, ModelConfig, QueueConfig
+from ert.ensemble_evaluator import EndEvent, EvaluatorServerConfig
 from ert.ensemble_evaluator.snapshot import EnsembleSnapshot
 from ert.run_models import BaseRunModel
 from ert.run_models.base_run_model import UserCancelled
@@ -52,14 +53,27 @@ def create_base_run_model(**kwargs):
     return BaseRunModelWithMockSupport(**(default_args | kwargs))
 
 
-def test_base_run_model_supports_restart(minimum_case):
+def test_base_run_model_does_not_support_rerun_failed_realizations(minimum_case):
     brm = create_base_run_model(
         storage_path=minimum_case.ens_path,
         queue_config=minimum_case.queue_config,
         active_realizations=[True],
         forward_model_steps=minimum_case.forward_model_steps,
     )
-    assert brm.support_restart
+    assert not brm.supports_rerunning_failed_realizations
+
+
+def test_status_when_rerunning_on_non_rerunnable_model():
+    brm = create_base_run_model()
+    brm._status_queue = SimpleQueue()
+    brm.start_simulations_thread(
+        EvaluatorServerConfig(use_token=False), rerun_failed_realizations=True
+    )
+    assert brm._status_queue.get() == EndEvent(
+        event_type="EndEvent",
+        failed=True,
+        msg="Run model None does not support restart/rerun of failed simulations.\n",
+    )
 
 
 @pytest.mark.parametrize(
@@ -337,7 +351,7 @@ def test_get_current_status_when_rerun(
         active_realizations=initial_active_realizations,
     )
 
-    brm._restart = True
+    brm._is_rerunning_failed_realizations = True
     snapshot_dict_reals = {}
     for index, realization_status in real_status_dict.items():
         snapshot_dict_reals[index] = {"status": realization_status}
@@ -371,7 +385,7 @@ def test_get_current_status_for_new_iteration_when_realization_failed_in_previou
     brm._iter_snapshot[0] = iter_snapshot
     brm.active_realizations = new_active_realizations
 
-    assert brm._restart is False
+    assert brm._is_rerunning_failed_realizations is False
     assert dict(brm.get_current_status()) == {"Running": 1, "Finished": 1}
 
 
@@ -408,7 +422,7 @@ def test_get_number_of_active_realizations_varies_when_rerun_or_new_iteration(
     )
 
     brm.active_realizations = new_active_realizations
-    brm._restart = was_rerun
+    brm._is_rerunning_failed_realizations = was_rerun
     assert brm.get_number_of_active_realizations() == expected_result
 
 

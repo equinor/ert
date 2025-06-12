@@ -124,13 +124,14 @@ class EverestClient:
 
     def create_run_model_api(self) -> BaseRunModelAPI:
         def start_fn(
-            evaluator_server_config: EvaluatorServerConfig, restart: bool = False
+            evaluator_server_config: EvaluatorServerConfig,
+            rerun_failed_realizations: bool = False,
         ) -> None:
             pass
 
         return BaseRunModelAPI(
             experiment_name=self.config_filename,
-            support_restart=False,
+            supports_rerunning_failed_realizations=False,
             start_simulations_thread=start_fn,
             cancel=self.stop,
             get_runtime=self.get_runtime,

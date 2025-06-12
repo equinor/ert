@@ -289,7 +289,7 @@ def runmodel(active_realizations) -> Mock:
     brm = Mock()
     brm.get_runtime = Mock(return_value=100)
     brm.format_error = Mock(return_value="")
-    brm.support_restart = True
+    brm.supports_rerunning_failed_realizations = True
     brm.simulation_arguments = {"active_realizations": active_realizations}
     brm.has_failed_realizations = lambda: False
     return brm
