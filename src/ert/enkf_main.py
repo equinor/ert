@@ -157,16 +157,15 @@ def save_design_matrix_to_ensemble(
     active_realizations: Iterable[int],
     design_group_name: str = DESIGN_MATRIX_GROUP,
 ) -> None:
-    assert not design_matrix_df.empty
-    df = design_matrix_df.copy()
-    df["realization"] = df.index
-    pl_df = pl.from_pandas(df.reset_index(drop=True))
-    if not set(active_realizations) <= set(pl_df["realization"].to_list()):
+    assert not design_matrix_df.is_empty()
+    if not set(active_realizations) <= set(design_matrix_df["realization"].to_list()):
         raise KeyError("Active realization mask is not in design matrix!")
     ensemble.save_parameters(
         design_group_name,
         realization=None,
-        dataset=pl_df.filter(pl.col("realization").is_in(list(active_realizations))),
+        dataset=design_matrix_df.filter(
+            pl.col("realization").is_in(list(active_realizations))
+        ),
     )
 
 
