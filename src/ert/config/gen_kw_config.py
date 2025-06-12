@@ -323,7 +323,7 @@ class GenKwConfig(ParameterConfig):
         real_nr: int,
         iteration: int,
     ) -> xr.Dataset:
-        raise NotImplementedError()
+        raise NotImplementedError
 
     def write_to_runpath(
         self,

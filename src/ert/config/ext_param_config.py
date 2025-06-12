@@ -87,7 +87,7 @@ class ExtParamConfig(ParameterConfig):
     def read_from_runpath(
         self, run_path: Path, real_nr: int, iteration: int
     ) -> xr.Dataset:
-        raise NotImplementedError()
+        raise NotImplementedError
 
     def write_to_runpath(
         self, run_path: Path, real_nr: int, ensemble: Ensemble
@@ -119,12 +119,12 @@ class ExtParamConfig(ParameterConfig):
         realization: int,
         data: npt.NDArray[np.float64],
     ) -> None:
-        raise NotImplementedError()
+        raise NotImplementedError
 
     def load_parameters(
         self, ensemble: Ensemble, realizations: npt.NDArray[np.int_]
     ) -> npt.NDArray[np.float64]:
-        raise NotImplementedError()
+        raise NotImplementedError
 
     @staticmethod
     def to_dataset(data: DataType) -> xr.Dataset:
@@ -148,7 +148,7 @@ class ExtParamConfig(ParameterConfig):
         )
 
     def load_parameter_graph(self) -> nx.Graph[int]:
-        raise NotImplementedError()
+        raise NotImplementedError
 
     def __len__(self) -> int:
         return len(self.input_keys)

@@ -140,7 +140,7 @@ class IoProvider:
             )
             egrid.to_file(grid_file)
         else:
-            raise ValueError()
+            raise ValueError
 
     def _random_values(self, shape: tuple[int, ...], name: str):
         return self.data.draw(
@@ -186,7 +186,7 @@ class IoProvider:
         elif lib == IoLibrary.ERT:
             save_field(np.ma.masked_array(values), field_name, file_name, fformat)
         else:
-            raise ValueError()
+            raise ValueError
 
     def write_surface_file(self, file_name: str) -> None:
         values = self._random_values((2, 5), file_name)
@@ -211,7 +211,7 @@ class Transform(Enum):
             return np.log(values)
         if self == Transform.EXP:
             return np.exp(values)
-        raise ValueError()
+        raise ValueError
 
 
 @dataclass

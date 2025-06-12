@@ -620,7 +620,7 @@ class RaisingWriteNamedTemporaryFile:
         RaisingWriteNamedTemporaryFile.entered = True
 
         def ctrlc(_):
-            raise RuntimeError()
+            raise RuntimeError
 
         mock_handle.write = ctrlc
         return mock_handle
@@ -1168,7 +1168,7 @@ class StatefulStorageTest(RuleBasedStateMachine):
 
         if not smry_config:
             assume(False)
-            raise AssertionError()
+            raise AssertionError
 
         expected_summary_keys = (
             st.just(smry_config.keys)
@@ -1208,7 +1208,7 @@ class StatefulStorageTest(RuleBasedStateMachine):
             ds = summary.read_from_file(self.tmpdir, self.iens_to_edit, 0)
         except Exception as e:  # no match in keys
             assume(False)
-            raise AssertionError() from e
+            raise AssertionError from e
         storage_ensemble.save_response(summary.response_type, ds, self.iens_to_edit)
 
         model_ensemble.response_values[summary.name] = ds
