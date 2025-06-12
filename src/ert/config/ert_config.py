@@ -731,6 +731,25 @@ class ErtConfig(BaseModel):
             )
         return self
 
+    @model_validator(mode="after")
+    def validate_dm_parameter_name_overlap(self):
+        if not self.analysis_config.design_matrix:
+            return self
+        dm_param_config = self.analysis_config.design_matrix.parameter_configuration
+        overlapping_parameter_names = [
+            parameter_definition.name
+            for parameter_definition in dm_param_config.transform_function_definitions
+            if f"<{parameter_definition.name}>" in self.substitutions
+            or parameter_definition.name in ErtConfig.RESERVED_KEYWORDS
+        ]
+        if overlapping_parameter_names:
+            raise ConfigValidationError(
+                f"Found reserved parameter name(s): "
+                f"{', '.join(overlapping_parameter_names)}. The names are already in "
+                "use as magic strings or defined in the user config."
+            )
+        return self
+
     @property
     def observations(self) -> dict[str, pl.DataFrame]:
         return self.enkf_obs.datasets
