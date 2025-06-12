@@ -1,9 +1,11 @@
 import asyncio
+import errno
 import logging
 import os
 import signal
 import sys
 from pathlib import Path
+from unittest.mock import patch
 
 import pytest
 
@@ -241,3 +243,37 @@ async def test_poll_ignores_filenotfounderror(driver: Driver, caplog):
     )
     assert "No such file or directory" in str(caplog.text)
     assert "/usr/bin/foo" in str(caplog.text)
+
+
+async def test_execute_with_retry_retries_on_oserror_24(driver: Driver, caplog):
+    caplog.set_level(logging.DEBUG)
+
+    with patch("asyncio.create_subprocess_exec") as mock_subprocess:
+        mock_subprocess.side_effect = OSError(errno.EMFILE, "Too many open files")
+
+        (succeeded, message) = await driver._execute_with_retry(
+            ["echo", "test"],
+            total_attempts=3,
+            retry_interval=0.01,  # Speed up test
+        )
+
+    assert not succeeded
+    assert "Too many open files" in message
+
+    assert mock_subprocess.call_count == 3
+
+
+async def test_execute_with_retry_exits_on_oserror_non_24(driver: Driver, caplog):
+    caplog.set_level(logging.DEBUG)
+
+    with patch("asyncio.create_subprocess_exec") as mock_subprocess:
+        mock_subprocess.side_effect = OSError(errno.EACCES, "Permission denied")
+
+        (succeeded, message) = await driver._execute_with_retry(
+            ["echo", "test"], total_attempts=3, retry_interval=0.01
+        )
+
+    assert not succeeded
+    assert "Permission denied" in message
+
+    assert mock_subprocess.call_count == 1
