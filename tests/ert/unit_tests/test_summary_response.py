@@ -2,6 +2,8 @@ import shutil
 from pathlib import Path
 from textwrap import dedent
 
+import numpy as np
+
 from ert.config import ErtConfig
 from ert.enkf_main import create_run_path
 from ert.storage.local_ensemble import load_parameters_and_responses_from_runpath
@@ -17,7 +19,10 @@ def test_load_summary_response_restart_not_zero(
     report steps do not start from 1 as they usually do.
     """
     test_path = Path(request.module.__file__).parent / "summary_response"
-    with tmpdir.as_cwd():
+    # Numpy 2.3 changed the criteria for displaying float16 and float32 in
+    # scientific notation see https://github.com/numpy/numpy/releases/tag/v2.3.0
+    # for backwards compatibility in the test we set the legacy print option
+    with tmpdir.as_cwd(), np.printoptions(legacy="2.2"):
         config = dedent(
             """
         NUM_REALIZATIONS 1
