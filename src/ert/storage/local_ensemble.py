@@ -627,6 +627,14 @@ class LocalEnsemble(BaseMode):
     def load_parameters_numpy(
         self, group: str, realizations: npt.NDArray[np.int_]
     ) -> npt.NDArray[np.float64]:
+        if (
+            group not in self.experiment.parameter_configuration
+            and self._scalar_config
+            and group in self._scalar_config.groups
+        ):
+            df = self.load_parameters(group, realizations)
+            assert isinstance(df, pl.DataFrame)
+            return df.to_numpy().T.copy()
         config = self.experiment.parameter_configuration[group]
         return config.load_parameters(self, realizations)
 
@@ -636,7 +644,13 @@ class LocalEnsemble(BaseMode):
         param_group: str,
         iens_active_index: npt.NDArray[np.int_],
     ) -> None:
-        config_node = self.experiment.parameter_configuration[param_group]
+        if param_group not in self.experiment.parameter_configuration:
+            if self._scalar_config and param_group in self._scalar_config.groups:
+                config_node = self._scalar_config
+            else:
+                raise KeyError(f"{param_group} is not registered to the experiment.")
+        else:
+            config_node = self.experiment.parameter_configuration[param_group]
         if isinstance(config_node, GenKwConfig):
             df = pl.DataFrame(
                 {
@@ -857,27 +871,17 @@ class LocalEnsemble(BaseMode):
         if isinstance(dataset, pl.DataFrame):
             assert self._scalar_config is not None
             try:
-                # since all realizations are saved in a single parquet file,
-                # this makes sure that we only append new realizations.
-                df = self._load_parameters_lazy(SCALAR_NAME)
-                existing_realizations = (
-                    df.select("realization")
-                    .unique()
-                    .collect()
-                    .get_column("realization")
+                existing = self._load_parameters_lazy(SCALAR_NAME).collect()
+                # df_full = existing.join(
+                #     dataset, on="realization", how="full", coalesce=True
+                # )
+                df_full = pl.concat([existing, dataset], how="align").unique(
+                    subset="realization", keep="last"
                 )
-                new_data = dataset.filter(
-                    ~pl.col("realization").is_in(existing_realizations)
-                )
-                if new_data.height > 0:
-                    df_full = pl.concat([df.collect(), new_data], how="vertical").sort(
-                        "realization"
-                    )
-                else:
-                    return
             except KeyError:
                 df_full = dataset
 
+            df_full = df_full.sort("realization")
             group_path = self.mount_point / f"{_escape_filename(SCALAR_NAME)}.parquet"
             self._storage._to_parquet_transaction(group_path, df_full)
             return
@@ -954,9 +958,6 @@ class LocalEnsemble(BaseMode):
     def calculate_std_dev_for_parameter_group(
         self, parameter_group: str
     ) -> npt.NDArray[np.float64]:
-        if parameter_group not in self.experiment.parameter_configuration:
-            raise ValueError(f"{parameter_group} is not registered to the experiment.")
-
         data = self.load_parameters(parameter_group)
         if isinstance(data, pl.DataFrame):
             return data.drop("realization").std().to_numpy().reshape(-1)

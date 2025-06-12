@@ -31,10 +31,9 @@ from ert.storage import open_storage
 @pytest.fixture
 def uniform_parameter():
     return GenKwConfig(
-        name="PARAMETER",
         forward_init=False,
         transform_function_definitions=[
-            TransformFunctionDefinition("KEY1", "UNIFORM", [0, 1]),
+            TransformFunctionDefinition("KEY1", "UNIFORM", "PARAMETER", [0, 1]),
         ],
         update=True,
     )
@@ -225,12 +224,11 @@ def test_update_handles_precision_loss_in_std_dev(tmp_path):
     standard deviation.
     """
     gen_kw = GenKwConfig(
-        name="COEFFS",
         forward_init=False,
         update=True,
         transform_function_definitions=[
             TransformFunctionDefinition(
-                name="coeff_0", param_name="CONST", values=["0.1"]
+                name="coeff_0", param_name="CONST", group_name="COEFFS", values=["0.1"]
             ),
         ],
     )
@@ -344,12 +342,11 @@ def test_update_raises_on_singular_matrix(tmp_path):
     standard deviation.
     """
     gen_kw = GenKwConfig(
-        name="COEFFS",
         forward_init=False,
         update=True,
         transform_function_definitions=[
             TransformFunctionDefinition(
-                name="coeff_0", param_name="CONST", values=["0.1"]
+                name="coeff_0", param_name="CONST", group_name="COEFFS", values=["0.1"]
             ),
         ],
     )
@@ -1174,7 +1171,7 @@ def test_update_subset_parameters(storage, uniform_parameter, obs):
         name="EXTRA_PARAMETER",
         forward_init=False,
         transform_function_definitions=[
-            TransformFunctionDefinition("KEY1", "UNIFORM", [0, 1]),
+            TransformFunctionDefinition("KEY1", "UNIFORM", "EXTRA_PARAMETER", [0, 1]),
         ],
         update=False,
     )
