@@ -3,6 +3,7 @@ from pathlib import Path
 from textwrap import dedent
 
 import numpy as np
+from packaging import version
 
 from ert.config import ErtConfig
 from ert.enkf_main import create_run_path
@@ -22,7 +23,8 @@ def test_load_summary_response_restart_not_zero(
     # Numpy 2.3 changed the criteria for displaying float16 and float32 in
     # scientific notation see https://github.com/numpy/numpy/releases/tag/v2.3.0
     # for backwards compatibility in the test we set the legacy print option
-    with tmpdir.as_cwd(), np.printoptions(legacy="2.2"):
+    legacy = "2.2" if version.parse(np.__version__) >= version.parse("2.3") else False
+    with tmpdir.as_cwd(), np.printoptions(legacy=legacy):
         config = dedent(
             """
         NUM_REALIZATIONS 1
