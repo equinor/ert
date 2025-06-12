@@ -101,34 +101,32 @@ def run_cli(args: Namespace, plugin_manager: ErtPluginManager | None = None) -> 
         ert_config.analysis_config.design_matrix is not None
         and ert_config.analysis_config.design_matrix.active_realizations is not None
     ):
-        dm_num_realizations = (
+        dm_num_realizations = len(
             ert_config.analysis_config.design_matrix.active_realizations
         )
         config_num_realizations = ert_config.runpath_config.num_realizations
 
-        if len(dm_num_realizations) != ert_config.runpath_config.num_realizations:
-            if args.realizations and args.realizations is not None:
+        if dm_num_realizations != config_num_realizations:
+            if hasattr(args, "realizations") and args.realizations is not None:
                 print(
                     "Using realizations intersected between realizations_specified "
                     f"and DESIGN_MATRIX ({model.active_realizations.count(True)})"
                 )
-            elif (
-                len(ert_config.analysis_config.design_matrix.active_realizations)
-                < ert_config.runpath_config.num_realizations
-            ):
-                print(
-                    f"NUM_REALIZATIONS ({config_num_realizations}) is greater than the "
-                    "number of realizations in DESIGN_MATRIX "
-                    f"({len(dm_num_realizations)}). Using the realizations from "
-                    f"DESIGN_MATRIX ({len(dm_num_realizations)})"
-                )
-
             else:
                 print(
-                    f"NUM_REALIZATIONS ({config_num_realizations}) is less than the "
-                    "number of realizations in DESIGN_MATRIX "
-                    f"({len(dm_num_realizations)}). Using the realizations from "
-                    f"NUM_REALIZATIONS ({config_num_realizations})"
+                    f"NUM_REALIZATIONS ({config_num_realizations}) is "
+                    + (
+                        "greater "
+                        if dm_num_realizations < config_num_realizations
+                        else "less "
+                    )
+                    + f"than the number of realizations in DESIGN_MATRIX "
+                    f"({dm_num_realizations}). Using the realizations from "
+                    + (
+                        f"DESIGN_MATRIX ({dm_num_realizations})"
+                        if dm_num_realizations < config_num_realizations
+                        else f"NUM_REALIZATIONS ({config_num_realizations})"
+                    )
                 )
     if args.port_range is None and model.queue_system == QueueSystem.LOCAL:
         # This is within the range for ephemeral ports as defined by
