@@ -1,23 +1,7 @@
-import requests
-from pydantic import ValidationError
-from websockets import ConnectionClosedError, ConnectionClosedOK
-from websockets.sync.client import connect
-
-from ert.ensemble_evaluator import EndEvent
-from ert.run_models.event import EverestBatchResultEvent, status_event_from_json
-from ert.scheduler import create_driver
-from ert.scheduler.driver import Driver, FailedSubmit
-from ert.scheduler.event import FinishedEvent, StartedEvent
-from ert.trace import get_traceparent
-from everest.config import EverestConfig, ServerConfig
-from everest.strings import (
-    EVEREST_SERVER_CONFIG,
-    OPT_PROGRESS_ID,
-    SIM_PROGRESS_ID,
-    EverEndpoints,
-)
-
 # Specifies how many times to try a http request within the specified timeout.
+import json
+import os
+
 _HTTP_REQUEST_RETRY = 10
 
 # Proxy configuration for outgoing requests.
@@ -55,12 +39,16 @@ async def start_server(config: EverestConfig, logging_level: int) -> Driver:
         raise ValueError(f"Everserver not started as expected, got status: {status}")
     start_time = time.time()
     while time.time() < start_time + 5:
-        status = await driver.event_queue.get()
+        try:
+            status = await driver.event_queue.get_nowait()
+        except QueueEmpty:
+            continue
         if isinstance(status, FinishedEvent):
             poll_task.cancel()
             raise ValueError(
                 f"Everserver not started as expected, got status: {status}"
             )
+        await asyncio.sleep(0.5)
     poll_task.cancel()
     logger.debug(
         f"Everserver started. Items left in queue: {driver.event_queue.qsize()}"
