@@ -131,7 +131,6 @@ class EverestRunModel(BaseRunModel):
     enopt_config: dict[str, Any]
     initial_guesses: list[float]
 
-    formatted_control_names: list[str]
     controls: list[ControlConfig]
     control_names: list[str]
 
@@ -227,7 +226,6 @@ class EverestRunModel(BaseRunModel):
             everest_config.model,
         )
 
-        formatted_control_names = everest_config.formatted_control_names
         objective_functions = everest_config.objective_functions
         output_constraints = everest_config.output_constraints
         objective_names = everest_config.objective_names
@@ -249,7 +247,6 @@ class EverestRunModel(BaseRunModel):
             keep_run_path=not delete_run_path,
             objective_names=objective_names,
             constraint_names=constraint_names,
-            formatted_control_names=formatted_control_names,
             objective_functions=objective_functions,
             output_constraints=output_constraints,
             model_realizations=everest_config.model.realizations,
@@ -381,8 +378,11 @@ class EverestRunModel(BaseRunModel):
             output_dir=Path(self.optimization_output_dir),
         )
 
+        formatted_control_names = [
+            name for config in self.controls for name in config.formatted_control_names
+        ]
         self._ever_storage.init(
-            formatted_control_names=self.formatted_control_names,
+            formatted_control_names=formatted_control_names,
             objective_functions=self.objective_functions,
             output_constraints=self.output_constraints,
             realizations=self.model_realizations,

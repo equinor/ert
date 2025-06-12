@@ -214,6 +214,34 @@ sampler to use the same perturbations for each realization.
     def uniqueness(self) -> str:
         return "name"
 
+    @property
+    def formatted_control_names(self) -> list[str]:
+        formatted_names = []
+        for variable in self.variables:
+            if isinstance(variable, ControlVariableGuessListConfig):
+                for index in range(1, len(variable.initial_guess) + 1):
+                    formatted_names.append(f"{self.name}.{variable.name}.{index}")
+            elif variable.index is not None:
+                formatted_names.append(f"{self.name}.{variable.name}.{variable.index}")
+            else:
+                formatted_names.append(f"{self.name}.{variable.name}")
+
+        return formatted_names
+
+    @property
+    def formatted_control_names_dotdash(self) -> list[str]:
+        formatted_names = []
+        for variable in self.variables:
+            if isinstance(variable, ControlVariableGuessListConfig):
+                for index in range(1, len(variable.initial_guess) + 1):
+                    formatted_names.append(f"{self.name}.{variable.name}-{index}")
+            elif variable.index is not None:
+                formatted_names.append(f"{self.name}.{variable.name}-{variable.index}")
+            else:
+                formatted_names.append(f"{self.name}.{variable.name}")
+
+        return formatted_names
+
     model_config = ConfigDict(
         extra="forbid",
     )
