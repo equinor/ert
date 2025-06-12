@@ -758,6 +758,7 @@ dependencies = [
     { name = "cryptography" },
     { name = "dnspython" },
     { name = "fastapi" },
+    { name = "fastexcel" },
     { name = "filelock" },
     { name = "graphite-maps" },
     { name = "httpx" },
@@ -770,7 +771,6 @@ dependencies = [
     { name = "netcdf4" },
     { name = "networkx" },
     { name = "numpy" },
-    { name = "openpyxl" },
     { name = "opentelemetry-api" },
     { name = "opentelemetry-instrumentation-threading" },
     { name = "opentelemetry-sdk" },
@@ -834,6 +834,7 @@ dev = [
     { name = "sphinx-autoapi" },
     { name = "sphinx-copybutton" },
     { name = "sphinxcontrib-datatemplates" },
+    { name = "xlsxwriter" },
 ]
 everest = [
     { name = "colorama" },
@@ -871,6 +872,7 @@ requires-dist = [
     { name = "dnspython", specifier = ">=2" },
     { name = "fastapi" },
     { name = "fastapi", marker = "extra == 'everest'" },
+    { name = "fastexcel", specifier = ">=0.14.0" },
     { name = "filelock" },
     { name = "furo", marker = "extra == 'dev'" },
     { name = "graphite-maps" },
@@ -892,7 +894,6 @@ requires-dist = [
     { name = "networkx" },
     { name = "numpy" },
     { name = "oil-reservoir-synthesizer", marker = "extra == 'dev'" },
-    { name = "openpyxl" },
     { name = "opentelemetry-api" },
     { name = "opentelemetry-instrumentation-threading" },
     { name = "opentelemetry-sdk" },
@@ -959,18 +960,10 @@ requires-dist = [
     { name = "websockets" },
     { name = "websockets", marker = "extra == 'everest'" },
     { name = "xarray" },
+    { name = "xlsxwriter", marker = "extra == 'dev'", specifier = ">=3.2.3" },
     { name = "xtgeo", specifier = ">=3.3.0" },
 ]
 provides-extras = ["dev", "style", "types", "everest"]
-
-[[package]]
-name = "et-xmlfile"
-version = "2.0.0"
-source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/d3/38/af70d7ab1ae9d4da450eeec1fa3918940a5fafb9055e934af8d6eb0c2313/et_xmlfile-2.0.0.tar.gz", hash = "sha256:dab3f4764309081ce75662649be815c4c9081e88f0837825f90fd28317d4da54", size = 17234, upload-time = "2024-10-25T17:25:40.039Z" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/c1/8b/5fe2cc11fee489817272089c4203e679c63b570a5aaeb18d852ae3cbba6a/et_xmlfile-2.0.0-py3-none-any.whl", hash = "sha256:7a91720bc756843502c3b7504c77b8fe44217c85c537d85037f0f536151b2caa", size = 18059, upload-time = "2024-10-25T17:25:39.051Z" },
-]
 
 [[package]]
 name = "execnet"
@@ -1002,6 +995,22 @@ dependencies = [
 sdist = { url = "https://files.pythonhosted.org/packages/ca/53/8c38a874844a8b0fa10dd8adf3836ac154082cf88d3f22b544e9ceea0a15/fastapi-0.115.14.tar.gz", hash = "sha256:b1de15cdc1c499a4da47914db35d0e4ef8f1ce62b624e94e0e5824421df99739", size = 296263, upload-time = "2025-06-26T15:29:08.21Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/53/50/b1222562c6d270fea83e9c9075b8e8600b8479150a18e4516a6138b980d1/fastapi-0.115.14-py3-none-any.whl", hash = "sha256:6c0c8bf9420bd58f565e585036d971872472b4f7d3f6c73b698e10cffdefb3ca", size = 95514, upload-time = "2025-06-26T15:29:06.49Z" },
+]
+
+[[package]]
+name = "fastexcel"
+version = "0.14.0"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "pyarrow" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/b7/55/376bc213921232d18dc9287c7e4eddd892d29e6a988c3ab022ee96f3a7ae/fastexcel-0.14.0.tar.gz", hash = "sha256:c73460c2ce2a07cf1a21a27aae67af3bc6a855fb4aa191c20c6ddae3f0573215", size = 40892, upload-time = "2025-04-30T08:57:05.996Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/b8/5a/e5612bb03f113e283cdd4e137a24e60d312230e55870a2879cc62ee256cd/fastexcel-0.14.0-cp39-abi3-macosx_10_12_x86_64.whl", hash = "sha256:8cf9fdff9df918cc2dfad66932cd238b6e1e5e1b7b0a079df713a35d2af1586e", size = 1281472, upload-time = "2025-04-30T08:57:00.658Z" },
+    { url = "https://files.pythonhosted.org/packages/12/97/204b0da0b1d94af752e5a7a515d4b68e8d957bc48a04d27a3087ea80e0c2/fastexcel-0.14.0-cp39-abi3-macosx_11_0_arm64.whl", hash = "sha256:0764cb1232e5feb4a7953ee53e60a46f330fa32ef012d813fa491173c7578d3b", size = 1235392, upload-time = "2025-04-30T08:57:02.227Z" },
+    { url = "https://files.pythonhosted.org/packages/38/41/7a0b8c0421cbda0f6185bfeaf55d06cd12073f68abb31cc70f385350f1bc/fastexcel-0.14.0-cp39-abi3-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:fecc5927ef18eba36f360aec0994e2cef106f8d83f197734d460ae198e5c0b87", size = 1359282, upload-time = "2025-04-30T08:56:57.271Z" },
+    { url = "https://files.pythonhosted.org/packages/8d/86/f00dae040b315505008c4e94ae59c5de0b5fdaefdb27c046bb11917628da/fastexcel-0.14.0-cp39-abi3-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:c70f463b88d72205eb5069754b07edb9a877bab9991ca71f8db1cc4e1bb8d8a4", size = 1383225, upload-time = "2025-04-30T08:56:59.068Z" },
+    { url = "https://files.pythonhosted.org/packages/f2/5f/fdb54eab1fae9057fbcaca3b4b283cde717686c9e67e3cff2796a308b1e2/fastexcel-0.14.0-cp39-abi3-win_amd64.whl", hash = "sha256:856d061b254268302ee968d10fd446b83f4a1a932588149539be4fb9d34224d4", size = 1094572, upload-time = "2025-04-30T08:57:03.58Z" },
 ]
 
 [[package]]
@@ -2566,18 +2575,6 @@ dependencies = [
 sdist = { url = "https://files.pythonhosted.org/packages/01/49/e2e5a8c907de1d55de08b623289e66865bfc0289a9401e459e5da7860442/oil_reservoir_synthesizer-0.2.0.tar.gz", hash = "sha256:112cd3a0bf2258aff44456e75c9f7368e0f6bc4745fa8e883d6f86582db8b87e", size = 24250, upload-time = "2023-12-08T10:21:20.245Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/b6/31/ee7747c1d66b064f95bc756b35119879b805f96da288df17aac516813c83/oil_reservoir_synthesizer-0.2.0-py3-none-any.whl", hash = "sha256:5cb9aeaeac121892e8291f987b151b544be7db5a28659c08cb723fc0bca33a62", size = 19654, upload-time = "2023-12-08T10:21:18.587Z" },
-]
-
-[[package]]
-name = "openpyxl"
-version = "3.1.5"
-source = { registry = "https://pypi.org/simple" }
-dependencies = [
-    { name = "et-xmlfile" },
-]
-sdist = { url = "https://files.pythonhosted.org/packages/3d/f9/88d94a75de065ea32619465d2f77b29a0469500e99012523b91cc4141cd1/openpyxl-3.1.5.tar.gz", hash = "sha256:cf0e3cf56142039133628b5acffe8ef0c12bc902d2aadd3e0fe5878dc08d1050", size = 186464, upload-time = "2024-06-28T14:03:44.161Z" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/c0/da/977ded879c29cbd04de313843e76868e6e13408a94ed6b987245dc7c8506/openpyxl-3.1.5-py2.py3-none-any.whl", hash = "sha256:5282c12b107bffeef825f4617dc029afaf41d0ea60823bbb665ef3079dc79de2", size = 250910, upload-time = "2024-06-28T14:03:41.161Z" },
 ]
 
 [[package]]
@@ -4852,6 +4849,15 @@ dependencies = [
 sdist = { url = "https://files.pythonhosted.org/packages/19/ec/e50d833518f10b0c24feb184b209bb6856f25b919ba8c1f89678b930b1cd/xarray-2025.6.1.tar.gz", hash = "sha256:a84f3f07544634a130d7dc615ae44175419f4c77957a7255161ed99c69c7c8b0", size = 3003185, upload-time = "2025-06-12T03:04:09.099Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/82/8a/6b50c1dd2260d407c1a499d47cf829f59f07007e0dcebafdabb24d1d26a5/xarray-2025.6.1-py3-none-any.whl", hash = "sha256:8b988b47f67a383bdc3b04c5db475cd165e580134c1f1943d52aee4a9c97651b", size = 1314739, upload-time = "2025-06-12T03:04:06.708Z" },
+]
+
+[[package]]
+name = "xlsxwriter"
+version = "3.2.3"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/a7/d1/e026d33dd5d552e5bf3a873dee54dad66b550230df8290d79394f09b2315/xlsxwriter-3.2.3.tar.gz", hash = "sha256:ad6fd41bdcf1b885876b1f6b7087560aecc9ae5a9cc2ba97dcac7ab2e210d3d5", size = 209135, upload-time = "2025-04-17T10:11:23.481Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/37/b1/a252d499f2760b314fcf264d2b36fcc4343a1ecdb25492b210cb0db70a68/XlsxWriter-3.2.3-py3-none-any.whl", hash = "sha256:593f8296e8a91790c6d0378ab08b064f34a642b3feb787cf6738236bd0a4860d", size = 169433, upload-time = "2025-04-17T10:11:21.329Z" },
 ]
 
 [[package]]

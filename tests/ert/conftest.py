@@ -12,12 +12,13 @@ from importlib.resources import files
 from pathlib import Path
 from textwrap import dedent
 
-import pandas as pd
+import polars as pl
 import pytest
 from hypothesis import HealthCheck, settings
 from hypothesis import strategies as st
 from PyQt6.QtCore import QDir
 from PyQt6.QtWidgets import QApplication
+from xlsxwriter import Workbook
 
 import _ert.forward_model_runner.fm_dispatch
 from _ert.threading import set_signal_handler
@@ -185,11 +186,11 @@ def fixture_copy_case(tmp_path_factory, source_root, monkeypatch):
 
 
 def _create_design_matrix(filename, design_sheet_df, default_sheet_df=None):
-    with pd.ExcelWriter(filename) as xl_write:
-        design_sheet_df.to_excel(xl_write, index=False, sheet_name="DesignSheet")
+    with Workbook(filename) as wb:
+        design_sheet_df.write_excel(wb, worksheet="DesignSheet")
         if default_sheet_df is not None:
-            default_sheet_df.to_excel(
-                xl_write, index=False, sheet_name="DefaultSheet", header=False
+            default_sheet_df.write_excel(
+                wb, worksheet="DefaultSheet", include_header=False
             )
 
 
@@ -207,8 +208,8 @@ def copy_poly_case_with_design_matrix(copy_case):
         num_realizations = len(design_dict["REAL"])
         _create_design_matrix(
             "poly_design.xlsx",
-            pd.DataFrame(design_dict),
-            pd.DataFrame(default_list),
+            pl.DataFrame(design_dict),
+            pl.DataFrame(default_list, orient="row"),
         )
         with open("poly.ert", "w", encoding="utf-8") as fout:
             fout.write(
