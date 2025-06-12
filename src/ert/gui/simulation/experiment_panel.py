@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import logging
 from collections import OrderedDict
 from pathlib import Path
 from queue import SimpleQueue
@@ -45,8 +44,6 @@ if TYPE_CHECKING:
     from ert.config import ErtConfig
 
 EXPERIMENT_IS_MANUAL_UPDATE_MESSAGE = "Execute Selected"
-
-logger = logging.getLogger(__name__)
 
 
 def create_md_table(kv: dict[str, str], output: str) -> str:
@@ -353,9 +350,6 @@ class ExperimentPanel(QWidget):
             self._notifier.set_is_simulation_running(True)
 
         def restart() -> None:
-            logger.info(
-                f"Rerunning failed simulations for run model '{self._model.name()}'"
-            )
             start_simulation_thread(restart=True)
 
         self._dialog.restart_experiment.connect(restart)
