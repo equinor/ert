@@ -477,7 +477,7 @@ def _generate_exp_ert_config(config_path, output_dir):
             os.path.realpath("everest/model"),
             "everest_output/.res_runpath_list",
         ),
-        ErtConfigKeys.MAX_SUBMIT: 1,
+        ErtConfigKeys.MAX_SUBMIT: 2,
         ErtConfigKeys.FORWARD_MODEL: [
             [
                 "copy_directory",
