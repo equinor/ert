@@ -271,7 +271,7 @@ class EverestRunModel(BaseRunModel):
             storage_path=storage_dir,
             queue_config=queue_config,
             status_queue=status_queue,
-            support_restart=False,
+            supports_rerunning_failed_realizations=False,
             optimization_callback=optimization_callback,
         )
 
@@ -291,7 +291,9 @@ class EverestRunModel(BaseRunModel):
         return f"EverestRunModel(config={self.user_config_file})"
 
     def start_simulations_thread(
-        self, evaluator_server_config: EvaluatorServerConfig, restart: bool = False
+        self,
+        evaluator_server_config: EvaluatorServerConfig,
+        rerun_failed_realizations: bool = False,
     ) -> None:
         failed = False
         exception: Exception | None = None
@@ -355,7 +357,9 @@ class EverestRunModel(BaseRunModel):
             )
 
     def run_experiment(
-        self, evaluator_server_config: EvaluatorServerConfig, restart: bool = False
+        self,
+        evaluator_server_config: EvaluatorServerConfig,
+        rerun_failed_realizations: bool = False,
     ) -> None:
         self.log_at_startup()
         self._eval_server_cfg = evaluator_server_config

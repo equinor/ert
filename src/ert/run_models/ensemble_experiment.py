@@ -42,6 +42,7 @@ class EnsembleExperiment(BaseRunModel):
     _observations: dict[str, pl.DataFrame] = PrivateAttr()
     _experiment_id: UUID | None = PrivateAttr(None)
     _ensemble_id: UUID | None = PrivateAttr(None)
+    supports_rerunning_failed_realizations: bool = True
 
     def __init__(self, **data: Any) -> None:
         observations = data.pop("observations", None)
@@ -62,16 +63,16 @@ class EnsembleExperiment(BaseRunModel):
     def run_experiment(
         self,
         evaluator_server_config: EvaluatorServerConfig,
-        restart: bool = False,
+        rerun_failed_realizations: bool = False,
     ) -> None:
         self.log_at_startup()
-        self._restart = restart
+        self._is_rerunning_failed_realizations = rerun_failed_realizations
         # If design matrix is present, we try to merge design matrix parameters
         # to the experiment parameters and set new active realizations
         parameters_config = self.parameter_configuration
         design_matrix = self.design_matrix
         design_matrix_group = None
-        if design_matrix is not None and not restart:
+        if design_matrix is not None and not rerun_failed_realizations:
             try:
                 parameters_config, design_matrix_group = (
                     design_matrix.merge_with_existing_parameters(parameters_config)
@@ -79,7 +80,7 @@ class EnsembleExperiment(BaseRunModel):
             except ConfigValidationError as exc:
                 raise ErtRunError(str(exc)) from exc
 
-        if not restart:
+        if not rerun_failed_realizations:
             self.run_workflows(
                 fixtures=PreExperimentFixtures(random_seed=self.random_seed),
             )

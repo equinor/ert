@@ -25,6 +25,7 @@ class EvaluateEnsemble(BaseRunModel):
     """
 
     ensemble_id: str
+    supports_rerunning_failed_realizations: bool = True
 
     def model_post_init(self, ctx: Any) -> None:
         super().model_post_init(ctx)
@@ -36,7 +37,9 @@ class EvaluateEnsemble(BaseRunModel):
 
     @tracer.start_as_current_span(f"{__name__}.run_experiment")
     def run_experiment(
-        self, evaluator_server_config: EvaluatorServerConfig, restart: bool = False
+        self,
+        evaluator_server_config: EvaluatorServerConfig,
+        rerun_failed_realizations: bool = False,
     ) -> None:
         self.log_at_startup()
         ensemble = self._storage.get_ensemble(UUID(self.ensemble_id))

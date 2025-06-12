@@ -154,14 +154,16 @@ def captured_logs(
 
 class StartSimulationsThreadFn(Protocol):
     def __call__(
-        self, evaluator_server_config: EvaluatorServerConfig, restart: bool = False
+        self,
+        evaluator_server_config: EvaluatorServerConfig,
+        rerun_failed_realizations: bool = False,
     ) -> None: ...
 
 
 @dataclasses.dataclass
 class BaseRunModelAPI:
     experiment_name: str
-    support_restart: bool
+    supports_rerunning_failed_realizations: bool
     start_simulations_thread: StartSimulationsThreadFn
     cancel: Callable[[], None]
     get_runtime: Callable[[], int]
@@ -184,7 +186,7 @@ class BaseRunModel(BaseModelWithContextSupport, ABC):
     random_seed: int
     start_iteration: int = 0
     minimum_required_realizations: int = 0
-    support_restart: bool = True
+    supports_rerunning_failed_realizations: bool = False
 
     # Private attributes initialized in model_post_init
     _start_time: int | None = PrivateAttr(None)
@@ -197,7 +199,7 @@ class BaseRunModel(BaseModelWithContextSupport, ABC):
     _rng: np.random.Generator = PrivateAttr()
     _end_queue: queue.SimpleQueue[str] = PrivateAttr(default_factory=queue.SimpleQueue)
     _iter_snapshot: dict[int, EnsembleSnapshot] = PrivateAttr(default_factory=dict)
-    _restart: bool = PrivateAttr(False)
+    _is_rerunning_failed_realizations: bool = PrivateAttr(False)
     _run_paths: Runpaths = PrivateAttr()
     _total_iterations: int = PrivateAttr(default=1)
 
@@ -230,7 +232,7 @@ class BaseRunModel(BaseModelWithContextSupport, ABC):
             get_runtime=self.get_runtime,
             start_simulations_thread=self.start_simulations_thread,
             has_failed_realizations=self.has_failed_realizations,
-            support_restart=self.support_restart,
+            supports_rerunning_failed_realizations=self.supports_rerunning_failed_realizations,
             cancel=self.cancel,
         )
 
@@ -376,7 +378,7 @@ class BaseRunModel(BaseModelWithContextSupport, ABC):
     def start_simulations_thread(
         self,
         evaluator_server_config: EvaluatorServerConfig,
-        restart: bool = False,
+        rerun_failed_realizations: bool = False,
     ) -> None:
         failed = False
         exception: Exception | None = None
@@ -388,15 +390,27 @@ class BaseRunModel(BaseModelWithContextSupport, ABC):
             with captured_logs(error_messages):
                 self._set_default_env_context()
 
-                if restart:
+                if (
+                    rerun_failed_realizations
+                    and not self.supports_rerunning_failed_realizations
+                ):
+                    raise ErtRunError(
+                        f"Run model {self.name()} does not support "
+                        f"restart/rerun of failed simulations."
+                    )
+
+                if rerun_failed_realizations:
                     self._storage = open_storage(self.storage_path, mode="w")
                     self.active_realizations = (
                         self._create_mask_from_failed_realizations()
                     )
+                    logger.info(
+                        f"Rerunning failed simulations for run model '{self.name()}'"
+                    )
 
                 self.run_experiment(
                     evaluator_server_config=evaluator_server_config,
-                    restart=restart,
+                    rerun_failed_realizations=rerun_failed_realizations,
                 )
                 if self._completed_realizations_mask:
                     combined = np.logical_or(
@@ -445,7 +459,7 @@ class BaseRunModel(BaseModelWithContextSupport, ABC):
     def run_experiment(
         self,
         evaluator_server_config: EvaluatorServerConfig,
-        restart: bool = False,
+        rerun_failed_realizations: bool = False,
     ) -> None: ...
 
     @staticmethod
@@ -478,7 +492,7 @@ class BaseRunModel(BaseModelWithContextSupport, ABC):
                 for real in all_realizations.values():
                     status[str(real["status"])] += 1
 
-        if self._restart:
+        if self._is_rerunning_failed_realizations:
             status["Finished"] += (
                 self._get_number_of_finished_realizations_from_reruns()
             )
@@ -744,7 +758,7 @@ class BaseRunModel(BaseModelWithContextSupport, ABC):
     def get_number_of_active_realizations(self) -> int:
         return (
             self._initial_realizations_mask.count(True)
-            if self._restart
+            if self._is_rerunning_failed_realizations
             else self.active_realizations.count(True)
         )
 

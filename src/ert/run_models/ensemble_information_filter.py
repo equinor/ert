@@ -55,10 +55,15 @@ class EnsembleInformationFilter(UpdateRunModel):
 
     @tracer.start_as_current_span(f"{__name__}.run_experiment")
     def run_experiment(
-        self, evaluator_server_config: EvaluatorServerConfig, restart: bool = False
+        self,
+        evaluator_server_config: EvaluatorServerConfig,
+        rerun_failed_realizations: bool = False,
     ) -> None:
         self.log_at_startup()
-
+        if rerun_failed_realizations:
+            raise ErtRunError(
+                f"Rerunning failed runs in {self.name()} experiment is not supported."
+            )
         parameters_config = self.parameter_configuration
         design_matrix = self.design_matrix
         design_matrix_group = None
@@ -70,7 +75,6 @@ class EnsembleInformationFilter(UpdateRunModel):
             except ConfigValidationError as exc:
                 raise ErtRunError(str(exc)) from exc
 
-        self._restart = restart
         self.run_workflows(
             PreExperimentFixtures(random_seed=self.random_seed),
         )
