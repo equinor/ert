@@ -21,7 +21,6 @@
   "optimizer": {
     "max_batches": 3,
     "method": "optpp_q_newton",
-    "options": {},
     "output_dir": "not_relevant",
     "parallel": true,
     "stderr": "optimizer.stderr",

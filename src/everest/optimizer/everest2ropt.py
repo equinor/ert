@@ -1,4 +1,3 @@
-import logging
 import os
 from typing import Any
 
@@ -6,28 +5,41 @@ from ropt.enums import PerturbationType, VariableType
 
 from everest.config import (
     ControlConfig,
-    EverestConfig,
     InputConstraintConfig,
     ObjectiveFunctionConfig,
     OptimizationConfig,
     OutputConstraintConfig,
 )
 from everest.config.utils import FlattenedControls
-from everest.strings import EVEREST
 
 
-def _parse_controls(controls: FlattenedControls, ropt_config: dict[str, Any]) -> None:
+def _parse_controls(
+    controls: FlattenedControls, random_seed: int
+) -> tuple[dict[str, Any], list[dict[str, Any]] | None]:
     control_types = [VariableType[type_.upper()] for type_ in controls.types]
-    ropt_config["variables"] = {
+    ropt_variables: dict[str, Any] = {
         "types": None if all(item is None for item in control_types) else control_types,
         "variable_count": len(controls.initial_guesses),
         "lower_bounds": controls.lower_bounds,
         "upper_bounds": controls.upper_bounds,
         "mask": controls.enabled,
+        "seed": random_seed,
     }
 
+    default_magnitude = (max(controls.upper_bounds) - min(controls.lower_bounds)) / 10.0
+    ropt_variables["perturbation_magnitudes"] = [
+        default_magnitude if perturbation_magnitude is None else perturbation_magnitude
+        for perturbation_magnitude in controls.perturbation_magnitudes
+    ]
+
+    ropt_variables["perturbation_types"] = [
+        PerturbationType[perturbation_type.upper()]
+        for perturbation_type in controls.perturbation_types
+    ]
+
+    ropt_samplers: list[dict[str, Any]] = []
     if any(item >= 0 for item in controls.sampler_indices):
-        ropt_config["samplers"] = [
+        ropt_samplers = [
             {
                 "method": sampler.method,
                 "options": {} if sampler.options is None else sampler.options,
@@ -35,23 +47,14 @@ def _parse_controls(controls: FlattenedControls, ropt_config: dict[str, Any]) ->
             }
             for sampler in controls.samplers
         ]
-        ropt_config["variables"]["samplers"] = controls.sampler_indices
+        ropt_variables["samplers"] = controls.sampler_indices
 
-    default_magnitude = (max(controls.upper_bounds) - min(controls.lower_bounds)) / 10.0
-    ropt_config["variables"]["perturbation_magnitudes"] = [
-        default_magnitude if perturbation_magnitude is None else perturbation_magnitude
-        for perturbation_magnitude in controls.perturbation_magnitudes
-    ]
-
-    ropt_config["variables"]["perturbation_types"] = [
-        PerturbationType[perturbation_type.upper()]
-        for perturbation_type in controls.perturbation_types
-    ]
+    return ropt_variables, ropt_samplers
 
 
 def _parse_objectives(
-    objective_functions: list[ObjectiveFunctionConfig], ropt_config: dict[str, Any]
-) -> None:
+    objective_functions: list[ObjectiveFunctionConfig],
+) -> tuple[dict[str, Any], list[dict[str, Any]]]:
     weights: list[float] = []
     function_estimator_indices: list[int] = []
     function_estimators: list = []  # type: ignore
@@ -64,9 +67,8 @@ def _parse_objectives(
         # function estimators in ropt to implement these types. This is done by
         # supplying a list of estimators and for each objective an index into
         # that list:
-        objective_type = objective.type
-        if objective_type is None:
-            objective_type = "mean"
+        objective_type = "mean" if objective.type is None else objective.type
+
         # Find the estimator if it exists:
         function_estimator_idx = next(
             (
@@ -82,13 +84,14 @@ def _parse_objectives(
             function_estimators.append({"method": objective_type})
         function_estimator_indices.append(function_estimator_idx)
 
-    ropt_config["objectives"] = {
-        "weights": weights,
-    }
+    ropt_objectives: dict[str, Any] = {"weights": weights}
+    ropt_function_estimators: list[dict[str, Any]] = []
     if function_estimators:
         # Only needed if we specified at least one objective type:
-        ropt_config["objectives"]["function_estimators"] = function_estimator_indices
-        ropt_config["function_estimators"] = function_estimators
+        ropt_objectives["function_estimators"] = function_estimator_indices
+        ropt_function_estimators = function_estimators
+
+    return ropt_objectives, ropt_function_estimators
 
 
 def _get_bounds(
@@ -109,8 +112,7 @@ def _get_bounds(
 def _parse_input_constraints(
     input_constraints: list[InputConstraintConfig],
     controls: list[ControlConfig],
-    ropt_config: dict[str, Any],
-) -> None:
+) -> dict[str, Any]:
     formatted_control_names = [
         name for config in controls for name in config.formatted_control_names
     ]
@@ -141,167 +143,171 @@ def _parse_input_constraints(
 
         lower_bounds, upper_bounds = _get_bounds(input_constraints)
 
-        ropt_config["linear_constraints"] = {
+        return {
             "coefficients": coefficients_matrix,
             "lower_bounds": lower_bounds,
             "upper_bounds": upper_bounds,
         }
+    return {}
 
 
 def _parse_output_constraints(
-    output_constraints: list[OutputConstraintConfig], ropt_config: dict[str, Any]
-) -> None:
+    output_constraints: list[OutputConstraintConfig],
+) -> dict[str, Any]:
     if output_constraints:
         lower_bounds, upper_bounds = _get_bounds(output_constraints)
-        ropt_config["nonlinear_constraints"] = {
+        return {
             "lower_bounds": lower_bounds,
             "upper_bounds": upper_bounds,
         }
+    return {}
 
 
 def _parse_optimization(
     ever_opt: OptimizationConfig | None,
+    realizations_weights: list[float],
     has_output_constraints: bool,
-    ropt_config: dict[str, Any],
-) -> None:
-    ropt_config["optimizer"] = {
+    optimization_output_dir: str,
+) -> tuple[dict[str, Any], dict[str, Any], dict[str, Any], dict[str, Any]]:
+    ropt_optimizer: dict[str, Any] = {
+        "output_dir": os.path.abspath(optimization_output_dir),
         "stdout": "optimizer.stdout",
         "stderr": "optimizer.stderr",
     }
-    ropt_config["gradient"] = {}
+    ropt_gradient: dict[str, Any] = {}
+    ropt_realizations: dict[str, Any] = {"weights": realizations_weights}
+    cvar_config: dict[str, Any] = {}
 
-    if not ever_opt:
-        return
+    if ever_opt is not None:
+        ropt_optimizer["method"] = ever_opt.algorithm
 
-    ropt_optimizer = ropt_config["optimizer"]
-    ropt_gradient = ropt_config["gradient"]
+        if ever_opt.max_iterations is not None:
+            ropt_optimizer["max_iterations"] = ever_opt.max_iterations
 
-    ropt_optimizer["method"] = ever_opt.algorithm
+        if ever_opt.max_function_evaluations is not None:
+            ropt_optimizer["max_functions"] = ever_opt.max_function_evaluations
 
-    if alg_max_iter := ever_opt.max_iterations:
-        ropt_optimizer["max_iterations"] = alg_max_iter
+        if ever_opt.max_batch_num is not None:
+            ropt_optimizer["max_batches"] = ever_opt.max_batch_num
 
-    if alg_max_eval := ever_opt.max_function_evaluations:
-        ropt_optimizer["max_functions"] = alg_max_eval
+        if ever_opt.convergence_tolerance is not None:
+            ropt_optimizer["tolerance"] = ever_opt.convergence_tolerance
 
-    if max_batches := ever_opt.max_batch_num:
-        ropt_optimizer["max_batches"] = max_batches
+        if ever_opt.speculative:
+            ropt_gradient["evaluation_policy"] = "speculative"
 
-    if alg_conv_tol := ever_opt.convergence_tolerance:
-        ropt_optimizer["tolerance"] = alg_conv_tol
+        options: list[str] | dict[str, Any] = []
+        if ever_opt.options is not None:
+            options = ever_opt.options
+        elif ever_opt.backend_options is not None:
+            options = ever_opt.backend_options
 
-    if ever_opt.speculative:
-        ropt_gradient["evaluation_policy"] = "speculative"
+        # The constraint_tolerance option is only used by Dakota:
+        if (
+            has_output_constraints
+            and ever_opt.constraint_tolerance is not None
+            and isinstance(options, list)
+        ):
+            options += [f"constraint_tolerance = {ever_opt.constraint_tolerance}"]
 
-    # Handle the backend options. Due to historical reasons there two keywords:
-    # "options" is used to pass a list of string, "backend_options" is used to
-    # pass a dict. These are redirected to the same ropt option:
-    if ever_opt.backend_options is not None:
-        message = (
-            "optimization.backend_options is deprecated. "
-            "Please use optimization.options instead, "
-            "it will accept both objects and lists of strings."
-        )
-        print(message)
-        logging.getLogger(EVEREST).warning(message)
+        if options:
+            ropt_optimizer["options"] = options
 
-    options = ever_opt.options or ever_opt.backend_options or {}
+        ropt_optimizer["parallel"] = ever_opt.parallel
 
-    alg_const_tol = ever_opt.constraint_tolerance or None
-    if (
-        has_output_constraints
-        and alg_const_tol is not None
-        and isinstance(options, list)
-    ):
-        options += [f"constraint_tolerance = {alg_const_tol}"]
-
-    # The constraint_tolerance option is only used by Dakota:
-    ropt_optimizer["options"] = options
-
-    parallel = True if ever_opt.parallel is None else ever_opt.parallel
-    ropt_optimizer["parallel"] = True if parallel is None else parallel
-
-    if ever_opt.perturbation_num is not None:
-        ropt_gradient["number_of_perturbations"] = ever_opt.perturbation_num
-        # For a single perturbation, use the ensemble for gradient calculation:
-        ropt_gradient["merge_realizations"] = (
-            ropt_gradient["number_of_perturbations"] == 1
-        )
-
-    min_per_succ = ever_opt.min_pert_success
-    if min_per_succ is not None:
-        ropt_gradient["perturbation_min_success"] = min_per_succ
-
-    if cvar_opts := ever_opt.cvar or None:
-        # set up the configuration of the realization filter that implements cvar:
-        if (percentile := cvar_opts.percentile) is not None:
-            cvar_config: dict[str, Any] = {
-                "method": "cvar-objective",
-                "options": {"percentile": percentile},
-            }
-        elif (realizations := cvar_opts.number_of_realizations) is not None:
-            cvar_config = {
-                "method": "sort-objective",
-                "options": {"first": 0, "last": realizations - 1},
-            }
-        else:
-            cvar_config = {}
-
-        if cvar_config:
-            # Both objective and constraint configurations use an array of
-            # indices to any realization filters that should be applied. In this
-            # case, we want all objectives and constraints to refer to the same
-            # filter implementing cvar:
-            objective_count = len(ropt_config["objectives"]["weights"])
-            constraint_count = len(
-                ropt_config.get("nonlinear_constraints", {}).get("lower_bounds", [])
+        if ever_opt.perturbation_num is not None:
+            ropt_gradient["number_of_perturbations"] = ever_opt.perturbation_num
+            # For a single perturbation, use the ensemble for gradient calculation:
+            ropt_gradient["merge_realizations"] = (
+                ropt_gradient["number_of_perturbations"] == 1
             )
-            ropt_config["objectives"]["realization_filters"] = objective_count * [0]
-            if constraint_count > 0:
-                ropt_config["nonlinear_constraints"]["realization_filters"] = (
-                    constraint_count * [0]
-                )
-            cvar_config["options"].update({"sort": list(range(objective_count))})
-            ropt_config["realization_filters"] = [cvar_config]
-            # For efficiency, function and gradient evaluations should be split
-            # so that no unnecessary gradients are calculated:
-            ropt_gradient["evaluation_policy"] = "separate"
+
+        if ever_opt.min_pert_success is not None:
+            ropt_gradient["perturbation_min_success"] = ever_opt.min_pert_success
+
+        if ever_opt.min_realizations_success is not None:
+            ropt_realizations["realization_min_success"] = (
+                ever_opt.min_realizations_success
+            )
+
+        if (cvar_opts := ever_opt.cvar) is not None:
+            # set up the configuration of the realization filter that implements cvar:
+            if cvar_opts.percentile is not None:
+                cvar_config = {
+                    "method": "cvar-objective",
+                    "options": {
+                        "percentile": cvar_opts.percentile,
+                    },
+                }
+            elif cvar_opts.number_of_realizations is not None:
+                cvar_config = {
+                    "method": "sort-objective",
+                    "options": {
+                        "first": 0,
+                        "last": cvar_opts.number_of_realizations - 1,
+                    },
+                }
+
+    return ropt_optimizer, ropt_gradient, ropt_realizations, cvar_config
 
 
-def everest2ropt(ever_config: EverestConfig) -> tuple[dict[str, Any], list[float]]:
-    """Generate a ropt configuration from an Everest one
+def everest2ropt(
+    controls: list[ControlConfig],
+    objective_functions: list[ObjectiveFunctionConfig],
+    input_constraints: list[InputConstraintConfig],
+    output_constraints: list[OutputConstraintConfig],
+    optimization: OptimizationConfig | None,
+    realizations_weights: list[float],
+    random_seed: int,
+    optimization_output_dir: str,
+) -> tuple[dict[str, Any], list[float]]:
+    flattened_controls = FlattenedControls(controls)
 
-    NOTE: This method is a work in progress. So far only the some of
-    the values are actually extracted, all the others are set to some
-    more or less reasonable default
-    """
-    ropt_config: dict[str, Any] = {}
-
-    flattened_controls = FlattenedControls(ever_config.controls)
-
-    _parse_controls(flattened_controls, ropt_config)
-    _parse_objectives(ever_config.objective_functions, ropt_config)
-    _parse_input_constraints(
-        ever_config.input_constraints,
-        ever_config.controls,
-        ropt_config,
+    ropt_variables, ropt_samplers = _parse_controls(flattened_controls, random_seed)
+    ropt_objectives, ropt_function_estimators = _parse_objectives(objective_functions)
+    ropt_linear_constraints = _parse_input_constraints(input_constraints, controls)
+    ropt_nonlinear_constraints = _parse_output_constraints(output_constraints)
+    ropt_optimizer, ropt_gradient, ropt_realizations, cvar_config = _parse_optimization(
+        ever_opt=optimization,
+        realizations_weights=realizations_weights,
+        has_output_constraints=bool(output_constraints),
+        optimization_output_dir=optimization_output_dir,
     )
-    _parse_output_constraints(ever_config.output_constraints, ropt_config)
-    _parse_optimization(
-        ever_opt=ever_config.optimization,
-        has_output_constraints=bool(ever_config.output_constraints),
-        ropt_config=ropt_config,
-    )
+    ropt_realization_filters: list[dict[str, Any]] = []
 
-    ropt_config["realizations"] = {
-        "weights": ever_config.model.realizations_weights,
+    if cvar_config:
+        # Both objective and constraint configurations use an array of
+        # indices to any realization filters that should be applied. In this
+        # case, we want all objectives and constraints to refer to the same
+        # filter implementing cvar:
+        objective_count = len(ropt_objectives["weights"])
+        ropt_objectives["realization_filters"] = objective_count * [0]
+        if ropt_nonlinear_constraints:
+            constraint_count = len(ropt_nonlinear_constraints["lower_bounds"])
+            ropt_nonlinear_constraints["realization_filters"] = constraint_count * [0]
+        cvar_config["options"].update({"sort": list(range(objective_count))})
+        ropt_realization_filters = [cvar_config]
+        # For efficiency, function and gradient evaluations should be split
+        # so that no unnecessary gradients are calculated:
+        ropt_gradient["evaluation_policy"] = "separate"
+
+    ropt_config: dict[str, Any] = {
+        "variables": ropt_variables,
+        "objectives": ropt_objectives,
+        "realizations": ropt_realizations,
+        "optimizer": ropt_optimizer,
     }
-    if min_real_succ := ever_config.optimization.min_realizations_success:
-        ropt_config["realizations"]["realization_min_success"] = min_real_succ
-
-    ropt_config["optimizer"]["output_dir"] = os.path.abspath(
-        ever_config.optimization_output_dir
-    )
-    ropt_config["variables"]["seed"] = ever_config.environment.random_seed
+    if ropt_linear_constraints:
+        ropt_config["linear_constraints"] = ropt_linear_constraints
+    if ropt_nonlinear_constraints:
+        ropt_config["nonlinear_constraints"] = ropt_nonlinear_constraints
+    if ropt_gradient:
+        ropt_config["gradient"] = ropt_gradient
+    if ropt_realization_filters:
+        ropt_config["realization_filters"] = ropt_realization_filters
+    if ropt_function_estimators:
+        ropt_config["function_estimators"] = ropt_function_estimators
+    if ropt_samplers:
+        ropt_config["samplers"] = ropt_samplers
 
     return ropt_config, flattened_controls.initial_guesses

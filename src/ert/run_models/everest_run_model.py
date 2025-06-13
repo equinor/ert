@@ -42,7 +42,9 @@ from everest.config import (
     ControlConfig,
     ControlVariableGuessListConfig,
     EverestConfig,
+    InputConstraintConfig,
     ObjectiveFunctionConfig,
+    OptimizationConfig,
     OutputConstraintConfig,
 )
 from everest.everest_storage import EverestStorage
@@ -128,18 +130,22 @@ class EverestRunModel(BaseRunModel):
     parameter_configuration: list[ParameterConfig]
     response_configuration: list[ResponseConfig]
     ert_templates: list[tuple[str, str]]
-    enopt_config: dict[str, Any]
-    initial_guesses: list[float]
 
     controls: list[ControlConfig]
 
     objective_functions: list[ObjectiveFunctionConfig]
     objective_names: list[str]
 
+    input_constraints: list[InputConstraintConfig]
+
     output_constraints: list[OutputConstraintConfig]
     constraint_names: list[str]
 
+    optimization: OptimizationConfig
+
     model_realizations: list[NonNegativeInt]
+    model_weights: list[float]
+
     keep_run_path: bool
 
     _exit_code: EverestExitCode | None = PrivateAttr(default=None)
@@ -225,34 +231,27 @@ class EverestRunModel(BaseRunModel):
             everest_config.model,
         )
 
-        objective_functions = everest_config.objective_functions
-        output_constraints = everest_config.output_constraints
-        objective_names = everest_config.objective_names
-        constraint_names = everest_config.constraint_names
-        controls = everest_config.controls
-
         delete_run_path: bool = (
             everest_config.simulator is not None
             and everest_config.simulator.delete_run_path
         )
 
-        enopt_config, initial_guesses = everest2ropt(everest_config)
-
         return cls(
-            controls=controls,
+            controls=everest_config.controls,
             simulation_dir=everest_config.simulation_dir,
             keep_run_path=not delete_run_path,
-            objective_names=objective_names,
-            constraint_names=constraint_names,
-            objective_functions=objective_functions,
-            output_constraints=output_constraints,
+            objective_names=everest_config.objective_names,
+            constraint_names=everest_config.constraint_names,
+            objective_functions=everest_config.objective_functions,
+            input_constraints=everest_config.input_constraints,
+            output_constraints=everest_config.output_constraints,
+            optimization=everest_config.optimization,
             model_realizations=everest_config.model.realizations,
+            model_weights=everest_config.model.realizations_weights,
             transforms=transforms,
-            enopt_config=enopt_config,
-            initial_guesses=initial_guesses,
             optimization_output_dir=everest_config.optimization_output_dir,
             log_path=everest_config.log_dir,
-            random_seed=123,
+            random_seed=everest_config.environment.random_seed,
             runpath_file=runpath_file,
             # Mutated throughout execution of Everest
             # (Not totally in conformity with ERT runmodel logic)
@@ -369,7 +368,7 @@ class EverestRunModel(BaseRunModel):
         )
 
         # Initialize the ropt optimizer:
-        optimizer = self._create_optimizer()
+        optimizer, initial_guesses = self._create_optimizer()
 
         self._ever_storage = EverestStorage(
             output_dir=Path(self.optimization_output_dir),
@@ -387,7 +386,7 @@ class EverestRunModel(BaseRunModel):
         optimizer.set_results_callback(self._handle_optimizer_results)
 
         # Run the optimization:
-        optimizer_exit_code = optimizer.run(self.initial_guesses).exit_code
+        optimizer_exit_code = optimizer.run(initial_guesses).exit_code
 
         # Store some final results.
         self._ever_storage.on_optimization_finished()
@@ -425,7 +424,17 @@ class EverestRunModel(BaseRunModel):
             return True
         return False
 
-    def _create_optimizer(self) -> BasicOptimizer:
+    def _create_optimizer(self) -> tuple[BasicOptimizer, list[float]]:
+        enopt_config, initial_guesses = everest2ropt(
+            self.controls,
+            self.objective_functions,
+            self.input_constraints,
+            self.output_constraints,
+            self.optimization,
+            self.model_weights,
+            self.random_seed,
+            self.optimization_output_dir,
+        )
         transforms = (
             OptModelTransforms(
                 variables=self._transforms["control_scaler"],
@@ -437,7 +446,7 @@ class EverestRunModel(BaseRunModel):
         )
         try:
             optimizer = BasicOptimizer(
-                enopt_config=self.enopt_config,
+                enopt_config=enopt_config,
                 transforms=transforms,
                 evaluator=self._forward_model_evaluator,
                 everest_config=self.user_config_file,
@@ -456,7 +465,7 @@ class EverestRunModel(BaseRunModel):
         # Before each batch evaluation we check if we should abort:
         optimizer.set_abort_callback(self._check_for_abort)
 
-        return optimizer
+        return optimizer, initial_guesses
 
     def _run_forward_model(
         self,
