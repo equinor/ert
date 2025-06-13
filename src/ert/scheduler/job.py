@@ -107,7 +107,7 @@ class Job:
             if self._scheduler.submit_sleep_state:
                 await self._scheduler.submit_sleep_state.sleep_until_we_can_submit()
             await self._send(JobState.SUBMITTING)
-            submit_time = time.time()
+            self.submit_time = time.time()
             try:
                 await self.driver.submit(
                     self.real.iens,
@@ -127,7 +127,7 @@ class Job:
             await self._send(JobState.PENDING)
             await self.started.wait()
             self._start_time = time.time()
-            pending_time = self._start_time - submit_time
+            pending_time = self._start_time - self.submit_time
             logger.info(
                 f"Pending time for realization {self.iens} "
                 f"was {pending_time:.2f} seconds "
@@ -138,11 +138,6 @@ class Job:
             await self._send(JobState.RUNNING)
             if self.real.max_runtime is not None and self.real.max_runtime > 0:
                 timeout_task = asyncio.create_task(self._max_runtime_task())
-            if not self._scheduler.warnings_extracted:
-                self._scheduler.warnings_extracted = True
-                await log_warnings_from_forward_model(
-                    self.real, file_modified_after=submit_time
-                )
 
             await self.returncode
 
@@ -179,6 +174,11 @@ class Job:
                     await self._verify_checksum(checksum_lock)
                 async with forward_model_ok_lock:
                     await self._handle_finished_forward_model()
+                if not self._scheduler.warnings_extracted:
+                    self._scheduler.warnings_extracted = True
+                    await log_warnings_from_forward_model(
+                        self.real, file_modified_after=self.submit_time
+                    )
                 break
 
             if attempt < max_submit - 1:
