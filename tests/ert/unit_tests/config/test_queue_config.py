@@ -385,6 +385,13 @@ def test_global_config_key_does_not_overwrite_queue_options(queue_system, key, v
     )
 
 
+def test_negative_submit_sleep_raises_validation_error():
+    with pytest.raises(
+        ValidationError, match="Input should be greater than or equal to 0"
+    ):
+        ErtConfig.from_file_contents("NUM_REALIZATIONS 1\nSUBMIT_SLEEP -4.2\n")
+
+
 @pytest.mark.parametrize(
     "queue_system, key, value",
     [

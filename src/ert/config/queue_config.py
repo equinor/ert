@@ -49,7 +49,7 @@ class QueueOptions(
     num_cpu: pydantic.NonNegativeInt = 1
     realization_memory: pydantic.NonNegativeInt = 0
     job_script: str = shutil.which("fm_dispatch.py") or "fm_dispatch.py"
-    submit_sleep: float | None = None
+    submit_sleep: pydantic.NonNegativeFloat | None = None
     project_code: str | None = None
     activate_script: str | None = Field(default=None, validate_default=True)
 
@@ -64,12 +64,6 @@ class QueueOptions(
                 "use the global SUBMIT_SLEEP keyword instead",
             )
             logger.info("Using deprecated SUBMIT_SLEEP")
-        if v and float(v) < 0.0:
-            raise ConfigValidationError.with_context(
-                "Input should be greater than or equal to 0",
-                v,
-            )
-
         return v
 
     @field_validator("activate_script", mode="before")
@@ -313,19 +307,7 @@ class QueueConfig(BaseModel):
     ) = pydantic.Field(default_factory=LocalQueueOptions, discriminator="name")
     stop_long_running: bool = False
     max_runtime: int | None = None
-    submit_sleep_: float = 0.0
-
-    @field_validator("submit_sleep_", mode="before")
-    @classmethod
-    def validate_submit_sleep_(
-        cls, v: float | None, info: ValidationInfo
-    ) -> float | None:
-        if v and float(v) < 0.0:
-            raise ConfigValidationError.with_context(
-                "Input should be greater than or equal to 0",
-                v,
-            )
-        return v
+    submit_sleep_: pydantic.NonNegativeFloat = 0.0
 
     @property
     def submit_sleep(self) -> float:
