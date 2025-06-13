@@ -1,7 +1,7 @@
 import asyncio
 import os
 from contextlib import asynccontextmanager
-from unittest.mock import MagicMock
+from unittest.mock import AsyncMock, MagicMock
 
 import pytest
 
@@ -9,7 +9,8 @@ from _ert.events import EESnapshot, EESnapshotUpdate, EETerminated
 from ert.config import QueueConfig
 from ert.ensemble_evaluator import EnsembleEvaluator, Monitor, identifiers, state
 from ert.ensemble_evaluator.config import EvaluatorServerConfig
-from ert.scheduler import Scheduler
+from ert.scheduler import Scheduler, job
+from ert.scheduler.job import Job
 
 
 @pytest.fixture
@@ -35,6 +36,11 @@ async def test_run_legacy_ensemble(
     tmpdir, make_ensemble, monkeypatch, evaluator_to_use
 ):
     num_reals = 2
+    # Skip waiting for stdout/err in job
+    mocked_stdouterr_parser = AsyncMock(
+        return_value=Job.DEFAULT_FILE_VERIFICATION_TIMEOUT
+    )
+    monkeypatch.setattr(job, "log_warnings_from_forward_model", mocked_stdouterr_parser)
     with tmpdir.as_cwd():
         ensemble = make_ensemble(monkeypatch, tmpdir, num_reals, 2)
         config = EvaluatorServerConfig(use_token=False)

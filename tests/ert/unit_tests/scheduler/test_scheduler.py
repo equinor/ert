@@ -19,7 +19,7 @@ from ert.config import QueueConfig, QueueSystem
 from ert.ensemble_evaluator import Realization
 from ert.run_arg import RunArg
 from ert.scheduler import LsfDriver, OpenPBSDriver, create_driver, job, scheduler
-from ert.scheduler.job import JobState
+from ert.scheduler.job import Job, JobState
 from ert.storage.load_status import LoadResult, LoadStatus
 
 
@@ -738,7 +738,9 @@ async def test_log_warnings_from_forward_model_is_run_once_per_ensemble(
         create_stub_realization(ensemble, tmp_path, iens)
         for iens in range(ensemble_size)
     ]
-    mocked_stdouterr_parser = AsyncMock()
+    mocked_stdouterr_parser = AsyncMock(
+        return_value=Job.DEFAULT_FILE_VERIFICATION_TIMEOUT
+    )
     monkeypatch.setattr(job, "log_warnings_from_forward_model", mocked_stdouterr_parser)
     sch = scheduler.Scheduler(mock_driver(), realizations)
     await sch.execute()

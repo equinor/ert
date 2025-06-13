@@ -2,12 +2,15 @@ import asyncio
 import json
 import logging
 from pathlib import Path
+from unittest.mock import AsyncMock
 
 import pytest
 
 from _ert.events import EESnapshot, EESnapshotUpdate, ForwardModelStepChecksum
 from ert.ensemble_evaluator import EnsembleEvaluator, Monitor, identifiers, state
 from ert.ensemble_evaluator.config import EvaluatorServerConfig
+from ert.scheduler import job
+from ert.scheduler.job import Job
 
 
 @pytest.mark.integration_test
@@ -54,6 +57,13 @@ async def test_scheduler_receives_checksum_and_waits_for_disk_sync(
         create_manifest_file()
         file_path = Path("real_0/job_test_file")
         file_path.write_text("test")
+        # Skip waiting for stdout/err in job
+        mocked_stdouterr_parser = AsyncMock(
+            return_value=Job.DEFAULT_FILE_VERIFICATION_TIMEOUT
+        )
+        monkeypatch.setattr(
+            job, "log_warnings_from_forward_model", mocked_stdouterr_parser
+        )
         # actual_md5sum = hashlib.md5(file_path.read_bytes()).hexdigest()
         config = EvaluatorServerConfig(use_token=False)
         evaluator = EnsembleEvaluator(ensemble, config)

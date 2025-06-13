@@ -1,6 +1,9 @@
+from unittest.mock import AsyncMock
+
 import pytest
 
-from ert.scheduler import Scheduler, create_driver
+from ert.scheduler import Scheduler, create_driver, job
+from ert.scheduler.job import Job
 
 
 @pytest.mark.asyncio
@@ -19,6 +22,11 @@ async def test_happy_path(
         realizations=ensemble.reals,
         ens_id="ee_0",
     )
+    # Skip waiting for stdout/err in job
+    mocked_stdouterr_parser = AsyncMock(
+        return_value=Job.DEFAULT_FILE_VERIFICATION_TIMEOUT
+    )
+    monkeypatch.setattr(job, "log_warnings_from_forward_model", mocked_stdouterr_parser)
 
     await queue.execute()
 
