@@ -803,7 +803,10 @@ to read summary data from forward model, do:
             for e in error.errors(
                 include_context=True, include_input=True, include_url=False
             ):
-                if e["type"] in {"missing", "value_error"} or e["input"] is None:
+                if (
+                    e["type"] in {"missing", "value_error", "string_type"}
+                    or e["input"] is None
+                ):
                     exp.errors.append((e, None))
                 else:
                     for index, line in enumerate(file_content):
