@@ -1,13 +1,38 @@
 import logging
 from pathlib import Path
+from textwrap import dedent
 
 import pytest
 
-from everest.config import EverestConfig, ServerConfig, SimulatorConfig
+from everest.config import (
+    EverestConfig,
+    EverestValidationError,
+    ServerConfig,
+    SimulatorConfig,
+)
 from everest.config.control_config import ControlConfig
 from everest.config.control_variable_config import ControlVariableConfig
 from everest.config.cvar_config import CVaRConfig
 from everest.config.optimization_config import OptimizationConfig
+
+
+def test_that_str_type_failures_are_propagated(tmp_path, monkeypatch):
+    monkeypatch.chdir(str(tmp_path))
+    Path("everest_config.yml").write_text(
+        dedent("""
+        objective_functions:
+            - name:
+                job: distance
+    """),
+        encoding="utf-8",
+    )
+
+    with pytest.raises(EverestValidationError) as err:
+        EverestConfig.load_file("everest_config.yml")
+
+    assert any(
+        e for e in err.value.error if "Input should be a valid string" in e[0]["msg"]
+    )
 
 
 def test_that_control_config_is_initialized_with_control_variables():
