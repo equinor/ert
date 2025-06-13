@@ -2,6 +2,7 @@ import asyncio
 import logging
 import os
 import random
+import signal
 import stat
 import string
 import sys
@@ -458,3 +459,33 @@ async def test_slurm_uses_sacct(
 
     # Make sure sacct was tried:
     assert "scontrol failed, trying sacct" in caplog.text
+
+
+async def test_slurm_timeout(tmp_path, caplog, pytestconfig):
+    os.chdir(tmp_path)
+    caplog.set_level(logging.INFO)
+
+    if pytestconfig.getoption("slurm"):
+        cmd = ["sleep 300"]
+        kwargs = {"max_runtime": 10}
+    else:
+        cmd = ["sh", "-c", f"exit {signal.SIGTERM + 128}"]
+        kwargs = {}
+
+    driver = SlurmDriver(**kwargs)
+    await driver.submit(0, *cmd)
+
+    async def finished(_: int, returncode: int):
+        assert returncode == signal.SIGTERM + 128
+
+    await poll(driver, {0}, finished=finished)
+
+    found = False
+    for msg in caplog.messages:
+        if msg.startswith("Realization 0 (SLURM-id: ") and msg.endswith(
+            ") was terminated"
+        ):
+            found = True
+            break
+    if not found:
+        pytest.fail("Time-out message not found, Jobstatus.TERMINATED not detected")

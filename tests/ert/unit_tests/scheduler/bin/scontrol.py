@@ -8,6 +8,7 @@ This script partially mocks the Slurm provided utility scontrol:
 import argparse
 import glob
 import os
+import signal
 from pathlib import Path
 from typing import Literal
 
@@ -51,6 +52,10 @@ def main() -> None:
                 state = "COMPLETED"
             if returncode != "0":
                 state = "FAILED"
+            # This is just to enable testing of time-out:
+            if returncode == f"{signal.SIGTERM + 128}":
+                state = "TERMINATED"
+                returncode = 0
 
         print(f"JobId={job} JobName={name}")
         print(f"   JobState={state}")
