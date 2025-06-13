@@ -30,6 +30,9 @@ if TYPE_CHECKING:
 
 
 SCALAR_NAME = "SCALAR"
+ConfigItem = str | dict[str, str] | tuple[str, str]
+ConfigGroup = list[ConfigItem]
+ConfigList = ConfigGroup | list[ConfigGroup]
 
 
 class PriorDict(TypedDict):
@@ -130,19 +133,24 @@ class GenKwConfig(ParameterConfig):
         ]
 
     @classmethod
-    def templates_from_config(
-        cls, gen_kw_list: list[list[str | dict[str, str]]]
-    ) -> list[tuple[str, str]]:
+    def templates_from_config(cls, gen_kw_list: ConfigList) -> list[tuple[str, str]]:
+        groups: list[ConfigGroup] = []
+        if not gen_kw_list:
+            return []
+        if isinstance(gen_kw_list[0], (str, dict)):
+            groups = [cast(ConfigGroup, gen_kw_list)]
+        else:
+            groups = cast(list[ConfigGroup], gen_kw_list)
         return [
             template
-            for gen_kw in gen_kw_list
+            for gen_kw in groups
             if (template := GenKwConfig._templates_from_config_single(gen_kw))
             is not None
         ]
 
     @classmethod
     def _templates_from_config_single(
-        cls, gen_kw: list[str | dict[str, str]]
+        cls, gen_kw: ConfigGroup
     ) -> tuple[str, str] | None:
         gen_kw_key = cast(str, gen_kw[0])
         positional_args = cast(list[str], gen_kw[:-1])
@@ -173,18 +181,25 @@ class GenKwConfig(ParameterConfig):
         return None
 
     @classmethod
-    def from_config_list(cls, gen_kw_list: list[list[str | dict[str, str]]]) -> Self:
+    def from_config_list(cls, gen_kw_list: ConfigList) -> Self:
+        groups: list[ConfigGroup] = []
+        if not gen_kw_list:
+            pass
+        elif isinstance(gen_kw_list[0], (str, dict)):
+            groups = [cast(ConfigGroup, gen_kw_list)]
+        else:
+            groups = cast(list[ConfigGroup], gen_kw_list)
         return cls(
             transform_function_definitions=[
                 item
-                for gen_kw in gen_kw_list
+                for gen_kw in groups
                 for item in GenKwConfig._from_config_list_single_genkw(gen_kw)
             ]
         )
 
     @classmethod
     def _from_config_list_single_genkw(
-        cls, gen_kw: list[str | dict[str, str]]
+        cls, gen_kw: ConfigGroup
     ) -> list[TransformFunctionDefinition]:
         gen_kw_key = cast(str, gen_kw[0])
 
