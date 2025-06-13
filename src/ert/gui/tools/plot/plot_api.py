@@ -1,8 +1,10 @@
 from __future__ import annotations
 
 import io
+import json
 import logging
 from dataclasses import dataclass
+from functools import cached_property
 from itertools import combinations as combi
 from json.decoder import JSONDecodeError
 from typing import TYPE_CHECKING, Any, NamedTuple
@@ -14,6 +16,8 @@ import numpy.typing as npt
 import pandas as pd
 from pandas.errors import ParserError
 
+from ert.config.parameter_config import ParameterMetadata
+from ert.config.response_config import ResponseMetadata
 from ert.services import StorageService
 
 logger = logging.getLogger(__name__)
@@ -37,6 +41,9 @@ class PlotApiKeyDefinition(NamedTuple):
     dimensionality: int
     metadata: dict[Any, Any]
     log_scale: bool
+    filter_on: dict[Any, Any] | None = None
+    parameter_metadata: ParameterMetadata | None = None
+    response_metadata: ResponseMetadata | None = None
 
 
 class PlotApi:
@@ -100,16 +107,37 @@ class PlotApi:
                 f"{response.text} from url: {response.url}."
             )
 
-    def all_data_type_keys(self) -> list[PlotApiKeyDefinition]:
-        """Returns a list of all the keys except observation keys.
-
-        The keys are a unique set of all keys in the ensembles
-
-        For each key a dict is returned with info about
-        the key"""
-
+    @cached_property
+    def parameters_api_key_defs(self) -> list[PlotApiKeyDefinition]:
         all_keys: dict[str, PlotApiKeyDefinition] = {}
         all_params = {}
+
+        with StorageService.session(project=self.ens_path) as client:
+            response = client.get("/experiments", timeout=self._timeout)
+            self._check_response(response)
+
+            for experiment in response.json():
+                for param_metadatas in experiment["parameters"].values():
+                    for metadata in param_metadatas:
+                        param_key = metadata["key"]
+                        all_keys[param_key] = PlotApiKeyDefinition(
+                            key=param_key,
+                            index_type=None,
+                            observations=False,
+                            dimensionality=metadata["dimensionality"],
+                            metadata=metadata["userdata"],
+                            log_scale=(metadata["transformation"] or "None")
+                            .lower()
+                            .startswith("log"),
+                            parameter_metadata=ParameterMetadata(**metadata),
+                        )
+                        all_params[param_key] = all_keys[param_key]
+
+        return list(all_keys.values())
+
+    @cached_property
+    def responses_api_key_defs(self) -> list[PlotApiKeyDefinition]:
+        key_defs: dict[str, PlotApiKeyDefinition] = {}
 
         with StorageService.session(project=self.ens_path) as client:
             response = client.get("/experiments", timeout=self._timeout)
@@ -130,64 +158,74 @@ class PlotApi:
                             # considered a bit "temp".
                             # In general, we could create a dropdown per
                             # filter_on on the frontend side
-                            for values in metadata["filter_on"].values():
+                            for filter_key, values in metadata["filter_on"].items():
                                 for v in values:
                                     subkey = f"{key}@{v}"
-                                    all_keys[subkey] = PlotApiKeyDefinition(
+                                    key_defs[subkey] = PlotApiKeyDefinition(
                                         key=subkey,
                                         index_type="VALUE",
                                         observations=has_obs,
                                         dimensionality=2,
-                                        metadata={"data_origin": response_type},
+                                        metadata={
+                                            "data_origin": response_type,
+                                        },
+                                        filter_on={filter_key: v},
                                         log_scale=False,
+                                        response_metadata=ResponseMetadata(**metadata),
                                     )
                         else:
-                            all_keys[key] = PlotApiKeyDefinition(
+                            key_defs[key] = PlotApiKeyDefinition(
                                 key=key,
                                 index_type="VALUE",
                                 observations=has_obs,
                                 dimensionality=2,
                                 metadata={"data_origin": response_type},
                                 log_scale=False,
+                                response_metadata=ResponseMetadata(**metadata),
                             )
 
-                for param_metadatas in experiment["parameters"].values():
-                    for metadata in param_metadatas:
-                        param_key = metadata["key"]
-                        all_keys[param_key] = PlotApiKeyDefinition(
-                            key=param_key,
-                            index_type=None,
-                            observations=False,
-                            dimensionality=metadata["dimensionality"],
-                            metadata=metadata["userdata"],
-                            log_scale=(metadata["transformation"] or "None")
-                            .lower()
-                            .startswith("log"),
-                        )
-                        all_params[param_key] = all_keys[param_key]
+        return list(key_defs.values())
 
-        return list(all_keys.values())
-
-    def data_for_key(self, ensemble_id: str, key: str) -> pd.DataFrame:
-        """Returns a pandas DataFrame with the datapoints for a given key for a given
-        ensemble. The row index is the realization number, and the columns are an index
-        over the indexes/dates"""
-
-        key = key.removeprefix("LOG10_")
-
-        ensemble = self._get_ensemble_by_id(ensemble_id)
-        if not ensemble:
-            return pd.DataFrame()
-
+    def data_for_response(
+        self,
+        ensemble_id: str,
+        response_key: str,
+        filter_on: dict[str, Any] | None = None,
+    ) -> pd.DataFrame:
         with StorageService.session(project=self.ens_path) as client:
             response = client.get(
-                f"/ensembles/{ensemble.id}/records/{PlotApi.escape(key)}",
+                f"/ensembles/{ensemble_id}/responses/{PlotApi.escape(response_key)}",
                 headers={"accept": "application/x-parquet"},
+                params={"filter_on": json.dumps(filter_on)}
+                if filter_on is not None
+                else None,
                 timeout=self._timeout,
             )
             self._check_response(response)
 
             stream = io.BytesIO(response.content)
+            df = pd.read_parquet(stream)
+
+            try:
+                df.columns = pd.to_datetime(df.columns, format="%Y-%m-%d %H:%M:%S")
+            except (ParserError, ValueError):
+                df.columns = [int(s) for s in df.columns]
+
+            try:
+                return df.astype(float)
+            except ValueError:
+                return df
+
+    def data_for_parameter(self, ensemble_id: str, parameter_key: str) -> pd.DataFrame:
+        with StorageService.session(project=self.ens_path) as client:
+            parameter = client.get(
+                f"/ensembles/{ensemble_id}/parameters/{PlotApi.escape(parameter_key)}",
+                headers={"accept": "application/x-parquet"},
+                timeout=self._timeout,
+            )
+            self._check_response(parameter)
+
+            stream = io.BytesIO(parameter.content)
             df = pd.read_parquet(stream)
 
             try:
@@ -214,7 +252,7 @@ class PlotApi:
 
             with StorageService.session(project=self.ens_path) as client:
                 response = client.get(
-                    f"/ensembles/{ensemble.id}/records/{PlotApi.escape(key)}/observations",
+                    f"/ensembles/{ensemble.id}/responses/{PlotApi.escape(key)}/observations",
                     timeout=self._timeout,
                 )
                 self._check_response(response)
@@ -254,31 +292,45 @@ class PlotApi:
 
         return all_observations.T
 
-    def history_data(self, key: str, ensemble_ids: list[str] | None) -> pd.DataFrame:
+    def _history_key(self, key: str) -> str:
+        if ":" in key:
+            head, tail = key.split(":", 2)
+            history_key = f"{head}H:{tail}"
+        else:
+            history_key = f"{key}H"
+
+        return history_key
+
+    def has_history_data(self, key: str) -> bool:
+        history_key = self._history_key(key)
+        return any(x for x in self.responses_api_key_defs if x.key == history_key)
+
+    def history_data(
+        self,
+        key: str,
+        ensemble_ids: list[str] | None,
+        filter_on: dict[str, Any] | None = None,
+    ) -> pd.DataFrame:
         """Returns a pandas DataFrame with the data points for the history for a
         given data key, if any.  The row index is the index/date and the column
         index is the key."""
-        if ensemble_ids:
-            for ensemble_id in ensemble_ids:
-                if ":" in key:
-                    head, tail = key.split(":", 2)
-                    history_key = f"{head}H:{tail}"
-                else:
-                    history_key = f"{key}H"
+        if not ensemble_ids:
+            return pd.DataFrame()
 
-                df = self.data_for_key(ensemble_id, history_key)
+        for ensemble_id in ensemble_ids:
+            history_key = self._history_key(key)
 
-                if not df.empty:
-                    df = df.T
-                    # Drop columns with equal data
-                    duplicate_cols = [
-                        cc[0]
-                        for cc in combi(df.columns, r=2)
-                        if (df[cc[0]] == df[cc[1]]).all()
-                    ]
-                    return df.drop(columns=duplicate_cols)
+            df = self.data_for_response(ensemble_id, history_key, filter_on)
 
-        return pd.DataFrame()
+            if not df.empty:
+                df = df.T
+                # Drop columns with equal data
+                duplicate_cols = [
+                    cc[0]
+                    for cc in combi(df.columns, r=2)
+                    if (df[cc[0]] == df[cc[1]]).all()
+                ]
+                return df.drop(columns=duplicate_cols)
 
     def std_dev_for_parameter(
         self, key: str, ensemble_id: str, z: int
@@ -289,7 +341,7 @@ class PlotApi:
 
         with StorageService.session(project=self.ens_path) as client:
             response = client.get(
-                f"/ensembles/{ensemble.id}/records/{PlotApi.escape(key)}/std_dev",
+                f"/ensembles/{ensemble.id}/parameters/{PlotApi.escape(key)}/std_dev",
                 params={"z": z},
                 timeout=self._timeout,
             )
