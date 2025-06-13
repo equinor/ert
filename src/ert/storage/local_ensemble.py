@@ -625,7 +625,7 @@ class LocalEnsemble(BaseMode):
         return ds
 
     def load_parameters_numpy(
-        self, group: str, realizations: npt.NDArray[np.int_]
+        self, group: str, realizations: npt.NDArray[np.int_], update_mask: bool = False
     ) -> npt.NDArray[np.float64]:
         if (
             group not in self.experiment.parameter_configuration
@@ -633,7 +633,14 @@ class LocalEnsemble(BaseMode):
             and group in self._scalar_config.groups
         ):
             df = self.load_parameters(group, realizations).drop("realization")
-            assert isinstance(df, pl.DataFrame)
+            if update_mask:
+                update_keys = [
+                    tf.name
+                    for tf in self._scalar_config.transform_functions
+                    if tf.update and tf.name in df.columns
+                ]
+                if update_keys:
+                    df = df.select(update_keys)
             return df.to_numpy().T.copy()
         config = self.experiment.parameter_configuration[group]
         return config.load_parameters(self, realizations)
@@ -643,6 +650,7 @@ class LocalEnsemble(BaseMode):
         parameters: npt.NDArray[np.float64],
         param_group: str,
         iens_active_index: npt.NDArray[np.int_],
+        update_mask: bool = False,
     ) -> None:
         if param_group not in self.experiment.parameter_configuration:
             if self._scalar_config and param_group in self._scalar_config.groups:
@@ -658,8 +666,9 @@ class LocalEnsemble(BaseMode):
                 }
             ).with_columns(
                 [
-                    pl.Series(parameters[i, :]).alias(param_name.name)
-                    for i, param_name in enumerate(config_node.transform_functions)
+                    pl.Series(parameters[i, :]).alias(tf.name)
+                    for i, tf in enumerate(config_node.groups[param_group])
+                    if not update_mask or tf.update
                 ]
             )
             self.save_parameters(param_group, None, df)
