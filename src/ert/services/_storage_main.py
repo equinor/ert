@@ -26,7 +26,7 @@ from ert.shared import __file__ as ert_shared_path
 from ert.shared import find_available_socket
 from ert.shared.storage.command import add_parser_options
 from ert.trace import tracer
-from everest.detached.jobs.everserver import (
+from everest.detached.everserver import (
     _generate_authentication,
     _generate_certificate,
     _get_machine_name,
@@ -117,7 +117,9 @@ def run_server(
         config_args.update(reload=True, reload_dirs=[os.path.dirname(ert_shared_path)])
         os.environ["ERT_STORAGE_DEBUG"] = "1"
 
-    sock = find_available_socket(host=args.host, port_range=range(51850, 51870 + 1))
+    sock = find_available_socket(
+        host=_get_machine_name(), port_range=range(51850, 51870 + 1)
+    )
 
     # Appropriated from uvicorn.main:run
     os.environ["ERT_STORAGE_NO_TOKEN"] = "1"

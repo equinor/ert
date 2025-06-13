@@ -1,6 +1,32 @@
 # Specifies how many times to try a http request within the specified timeout.
+import asyncio
 import json
+import logging
 import os
+import re
+import ssl
+import time
+import traceback
+from asyncio import QueueEmpty
+from base64 import b64encode
+from collections.abc import Callable
+from enum import StrEnum, auto
+from pathlib import Path
+from typing import Any
+
+import requests
+from pydantic import ValidationError
+from websockets import ConnectionClosedError, ConnectionClosedOK
+from websockets.sync.client import connect
+
+from ert.ensemble_evaluator import EndEvent
+from ert.run_models.event import EverestBatchResultEvent, status_event_from_json
+from ert.scheduler import create_driver
+from ert.scheduler.driver import Driver, FailedSubmit
+from ert.scheduler.event import FinishedEvent, StartedEvent
+from ert.trace import get_traceparent
+from everest.config import EverestConfig, ServerConfig
+from everest.strings import OPT_PROGRESS_ID, SIM_PROGRESS_ID, EverEndpoints
 
 _HTTP_REQUEST_RETRY = 10
 
@@ -57,7 +83,7 @@ async def start_server(config: EverestConfig, logging_level: int) -> Driver:
 
 
 def stop_server(
-        server_context: tuple[str, str, tuple[str, str]], retries: int = 5
+    server_context: tuple[str, str, tuple[str, str]], retries: int = 5
 ) -> bool:
     """
     Stop server if found and it is running.
@@ -82,9 +108,9 @@ def stop_server(
 
 
 def start_experiment(
-        server_context: tuple[str, str, tuple[str, str]],
-        config: EverestConfig,
-        retries: int = 5,
+    server_context: tuple[str, str, tuple[str, str]],
+    config: EverestConfig,
+    retries: int = 5,
 ) -> None:
     for retry in range(retries):
         try:
@@ -129,7 +155,7 @@ def wait_for_server(output_dir: str, timeout: int | float) -> None:
 
 
 def wait_for_server_to_stop(
-        server_context: tuple[str, str, tuple[str, str]], timeout: int
+    server_context: tuple[str, str, tuple[str, str]], timeout: int
 ) -> None:
     """
     Checks everest server has stopped _HTTP_REQUEST_RETRY times. Waits
@@ -170,7 +196,7 @@ def server_is_running(url: str, cert: str, auth: tuple[str, str]) -> bool:
 
 
 def get_opt_status_from_batch_result_event(
-        event: EverestBatchResultEvent,
+    event: EverestBatchResultEvent,
 ) -> dict[str, Any]:
     if not event.results:
         return {}
@@ -186,9 +212,9 @@ def get_opt_status_from_batch_result_event(
 
 
 def start_monitor(
-        server_context: tuple[str, str, tuple[str, str]],
-        callback: Callable[..., None],
-        polling_interval: float = 0.1,
+    server_context: tuple[str, str, tuple[str, str]],
+    callback: Callable[..., None],
+    polling_interval: float = 0.1,
 ) -> None:
     """
     Checks status on Everest server and calls callback when status changes
@@ -203,10 +229,10 @@ def start_monitor(
 
     try:
         with connect(
-                url.replace("https://", "wss://") + "/events",
-                ssl=ssl_context,
-                open_timeout=30,
-                additional_headers={"Authorization": f"Basic {credentials}"},
+            url.replace("https://", "wss://") + "/events",
+            ssl=ssl_context,
+            open_timeout=30,
+            additional_headers={"Authorization": f"Basic {credentials}"},
         ) as websocket:
             while True:
                 try:
@@ -241,28 +267,6 @@ def start_monitor(
         logger.debug(traceback.format_exc())
 
 
-_EVERSERVER_JOB_PATH = str(
-    Path(importlib.util.find_spec("everest.detached").origin).parent  # type: ignore
-    / os.path.join("jobs", EVEREST_SERVER_CONFIG)
-)
-
-
-_QUEUE_SYSTEMS: Mapping[Literal["LSF", "SLURM", "TORQUE"], dict[str, Any]] = {
-    "LSF": {
-        "options": [("options", "LSF_RESOURCE")],
-        "name": "LSF_QUEUE",
-    },
-    "SLURM": {
-        "options": [
-            ("exclude_host", "EXCLUDE_HOST"),
-            ("include_host", "INCLUDE_HOST"),
-        ],
-        "name": "PARTITION",
-    },
-    "TORQUE": {"options": ["cluster_label", "CLUSTER_LABEL"], "name": "QUEUE"},
-}
-
-
 class ServerStatus(StrEnum):
     """Keep track of the different states the everest server is in"""
 
@@ -276,7 +280,7 @@ class ServerStatus(StrEnum):
 
 
 def update_everserver_status(
-        everserver_status_path: str, status: ServerStatus, message: str | None = None
+    everserver_status_path: str, status: ServerStatus, message: str | None = None
 ) -> None:
     """Update the everest server status with new status information"""
     new_status = {"status": status, "message": message}

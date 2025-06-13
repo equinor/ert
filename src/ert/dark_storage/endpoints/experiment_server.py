@@ -30,7 +30,7 @@ from ert.ensemble_evaluator import EndEvent, EvaluatorServerConfig
 from ert.run_models import StatusEvents
 from ert.run_models.everest_run_model import EverestExitCode, EverestRunModel
 from everest.config import EverestConfig
-from everest.detached.jobs.everserver import _get_optimization_status
+from everest.detached.everserver import _get_optimization_status
 from everest.strings import EVERSERVER, EverEndpoints
 
 router = APIRouter(prefix="/experiment_server", tags=["experiment_server"])
