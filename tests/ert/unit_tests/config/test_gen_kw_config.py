@@ -53,11 +53,9 @@ def test_short_definition_raises_config_error(tmp_path):
     with pytest.raises(ConfigValidationError, match="Too few values"):
         GenKwConfig.from_config_list(
             [
-                [
-                    "GEN",
-                    str(parameter_file),
-                    {},
-                ]
+                "GEN",
+                str(parameter_file),
+                {},
             ]
         )
 
@@ -265,13 +263,11 @@ def test_gen_kw_distribution_errors(tmpdir, distribution, mean, std, error):
             distribution_line = f"MY_KEYWORD {distribution} {mean} {std}"
 
         config_list = [
-            [
-                "KW_NAME",
-                ("template.txt", "MY_KEYWORD <MY_KEYWORD>"),
-                "kw.txt",
-                ("prior.txt", distribution_line),
-                {},
-            ]
+            "KW_NAME",
+            ("template.txt", "MY_KEYWORD <MY_KEYWORD>"),
+            "kw.txt",
+            ("prior.txt", distribution_line),
+            {},
         ]
 
         if error:
@@ -434,11 +430,9 @@ def test_gen_kw_objects_equal(tmpdir):
 
         g1 = GenKwConfig.from_config_list(
             [
-                [
-                    "KW_NAME",
-                    ("prior.txt", "MY_KEYWORD UNIFORM 1 2"),
-                    {},
-                ]
+                "KW_NAME",
+                ("prior.txt", "MY_KEYWORD UNIFORM 1 2"),
+                {},
             ]
         )
         assert g1.transform_functions[0].name == "MY_KEYWORD"
@@ -489,26 +483,23 @@ def test_gen_kw_config_validation():
 
     GenKwConfig.templates_from_config(
         [
-            [
-                "KEY",
-                ("template.txt", "Hello"),
-                "nothing_here.txt",
-                ("parameters.txt", "KEY  UNIFORM 0 1 \n"),
-                {},
-            ]
+            "KEY",
+            ("template.txt", "Hello"),
+            "nothing_here.txt",
+            ("parameters.txt", "KEY  UNIFORM 0 1 \n"),
+            {},
         ]
     )
 
     GenKwConfig.templates_from_config(
         [
-            [
-                "KEY",
-                ("template.txt", "hello.txt"),
-                "nothing_here.txt",
-                (
-                    "parameters_with_comments.txt",
-                    dedent(
-                        """\
+            "KEY",
+            ("template.txt", "hello.txt"),
+            "nothing_here.txt",
+            (
+                "parameters_with_comments.txt",
+                dedent(
+                    """\
                             KEY1  UNIFORM 0 1 -- COMMENT
 
 
@@ -518,10 +509,9 @@ def test_gen_kw_config_validation():
                             ------------
                             KEY3  UNIFORM 0 1
                             """
-                    ),
                 ),
-                {},
-            ]
+            ),
+            {},
         ],
     )
 
@@ -530,13 +520,11 @@ def test_gen_kw_config_validation():
     ):
         GenKwConfig.templates_from_config(
             [
-                [
-                    "KEY",
-                    make_context_string("no_template_here.txt", "config.ert"),
-                    "nothing_here.txt",
-                    "parameters.txt",
-                    {},
-                ]
+                "KEY",
+                make_context_string("no_template_here.txt", "config.ert"),
+                "nothing_here.txt",
+                "parameters.txt",
+                {},
             ]
         )
 
@@ -547,16 +535,14 @@ def test_suggestion_on_empty_parameter_file():
     with pytest.warns(UserWarning, match="GEN_KW KEY coeffs.txt"):
         GenKwConfig.templates_from_config(
             [
-                [
-                    "KEY",
-                    ("empty_template.txt", ""),
-                    "output.txt",
-                    (
-                        make_context_string("coeffs.txt", "config.ert"),
-                        "a UNIFORM 0 1",
-                    ),
-                    {},
-                ]
+                "KEY",
+                ("empty_template.txt", ""),
+                "output.txt",
+                (
+                    make_context_string("coeffs.txt", "config.ert"),
+                    "a UNIFORM 0 1",
+                ),
+                {},
             ]
         )
 
@@ -596,13 +582,11 @@ def test_validation_triangular_distribution(
         with open("template.txt", "w", encoding="utf-8") as fh:
             fh.writelines("MY_KEYWORD <MY_KEYWORD>")
         config_list = [
-            [
-                "KW_NAME",
-                ("template.txt", "MY_KEYWORD <MY_KEYWORD>"),
-                "kw.txt",
-                ("prior.txt", f"MY_KEYWORD {distribution} {minimum} {mode} {maximum}"),
-                {},
-            ]
+            "KW_NAME",
+            ("template.txt", "MY_KEYWORD <MY_KEYWORD>"),
+            "kw.txt",
+            ("prior.txt", f"MY_KEYWORD {distribution} {minimum} {mode} {maximum}"),
+            {},
         ]
 
         if error:
