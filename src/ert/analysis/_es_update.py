@@ -303,7 +303,7 @@ def analysis_ES(
 
     for param_group in parameters:
         param_ensemble_array = source_ensemble.load_parameters_numpy(
-            param_group, iens_active_index
+            param_group, iens_active_index, update_mask=True
         )
 
         # Calculate variance for each parameter
@@ -406,7 +406,7 @@ def analysis_ES(
         start = time.time()
 
         target_ensemble.save_parameters_numpy(
-            param_ensemble_array, param_group, iens_active_index
+            param_ensemble_array, param_group, iens_active_index, update_mask=True
         )
         logger.info(
             f"Storing data for {param_group} completed in "

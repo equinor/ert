@@ -391,10 +391,8 @@ class GenKwConfig(ParameterConfig):
                     f"Unknown input source {tfd.input_source} for parameter {tfd.name}"
                 )
             parameter_dict[tfd.name] = param_val
-            if isinstance(param_val, str):
-                schema_dict[tfd.name] = pl.Utf8()
-            elif isinstance(param_val, int):
-                schema_dict[tfd.name] = pl.Int64()
+            if isinstance(param_val, str | int):
+                schema_dict[tfd.name] = pl.Categorical()
             elif isinstance(param_val, float):
                 schema_dict[tfd.name] = pl.Float64()
             else:
@@ -490,8 +488,17 @@ class GenKwConfig(ParameterConfig):
         source_ensemble: Ensemble,
         target_ensemble: Ensemble,
         realizations: npt.NDArray[np.int_],
+        update_mask: bool = False,
     ) -> None:
         df = source_ensemble.load_parameters(self.name, realizations)
+        if update_mask:
+            no_update_keys = [
+                tf.name for tf in self.transform_functions if not tf.update
+            ]
+            if no_update_keys:
+                df = df.select(no_update_keys)
+
+        target_ensemble.save_parameters(self.name, realization=None, dataset=df)
         target_ensemble.save_parameters(self.name, realization=None, dataset=df)
 
     def shouldUseLogScale(self, keyword: str) -> bool:

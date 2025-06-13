@@ -572,7 +572,7 @@ def test_smoother_snapshot_alpha(
             iens,
             pl.DataFrame(
                 {
-                    "KEY_1": [data],
+                    "KEY1": [data],
                     "realization": iens,
                 }
             ),
@@ -1059,7 +1059,7 @@ def test_gen_data_obs_data_mismatch(storage, uniform_parameter):
             iens,
             pl.DataFrame(
                 {
-                    "KEY_1": [data],
+                    "KEY1": [data],
                     "realization": iens,
                 }
             ),
@@ -1121,7 +1121,7 @@ def test_gen_data_missing(storage, uniform_parameter, obs):
             iens,
             pl.DataFrame(
                 {
-                    "KEY_1": [data],
+                    "KEY1": [data],
                     "realization": iens,
                 }
             ),
@@ -1166,17 +1166,22 @@ def test_gen_data_missing(storage, uniform_parameter, obs):
 
 
 @pytest.mark.usefixtures("use_tmpdir")
-def test_update_subset_parameters(storage, uniform_parameter, obs):
-    no_update_param = GenKwConfig(
+def test_update_subset_parameters(storage, obs):
+    param = GenKwConfig(
+        name="SCALAR",
         forward_init=False,
         transform_function_definitions=[
-            TransformFunctionDefinition("EXTRA_PARAMETER", "KEY1", "UNIFORM", [0, 1]),
+            TransformFunctionDefinition(
+                "PARAMETER", "KEY1", "UNIFORM", [0, 1], update=True
+            ),
+            TransformFunctionDefinition(
+                "EXTRA_PARAMETER", "KEY2", "UNIFORM", [0, 1], update=False
+            ),
         ],
-        update=False,
     )
     resp = GenDataConfig(keys=["RESPONSE"])
     experiment = storage.create_experiment(
-        parameters=[uniform_parameter, no_update_param],
+        parameters=[param],
         responses=[resp],
         observations={"gen_data": obs},
     )
@@ -1194,7 +1199,7 @@ def test_update_subset_parameters(storage, uniform_parameter, obs):
             iens,
             pl.DataFrame(
                 {
-                    "KEY_1": [data],
+                    "KEY1": [data],
                     "realization": iens,
                 }
             ),
@@ -1204,7 +1209,7 @@ def test_update_subset_parameters(storage, uniform_parameter, obs):
             iens,
             pl.DataFrame(
                 {
-                    "KEY_1": [data],
+                    "KEY2": [data],
                     "realization": iens,
                 }
             ),
@@ -1234,7 +1239,7 @@ def test_update_subset_parameters(storage, uniform_parameter, obs):
         prior,
         posterior_ens,
         ["OBSERVATION"],
-        ["PARAMETER"],
+        ["SCALAR"],
         ObservationSettings(),
         ESSettings(),
     )
