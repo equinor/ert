@@ -156,7 +156,7 @@ def test_everest_main_configdump_entry(copy_egg_test_data_to_tmp):
     )
 
 
-@pytest.mark.flaky(reruns=5)
+@pytest.mark.flaky(reruns=1)
 @pytest.mark.timeout(60)
 @pytest.mark.integration_test
 @pytest.mark.xdist_group(name="starts_everest")

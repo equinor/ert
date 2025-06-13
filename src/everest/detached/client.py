@@ -1,13 +1,15 @@
+# Specifies how many times to try a http request within the specified timeout.
 import asyncio
 import json
 import logging
 import os
+import re
 import ssl
 import time
 import traceback
 from base64 import b64encode
 from collections.abc import Callable
-from enum import Enum
+from enum import StrEnum, auto
 from pathlib import Path
 from typing import Any
 
@@ -23,13 +25,8 @@ from ert.scheduler.driver import Driver, FailedSubmit
 from ert.scheduler.event import StartedEvent
 from ert.trace import get_traceparent
 from everest.config import EverestConfig, ServerConfig
-from everest.strings import (
-    OPT_PROGRESS_ID,
-    SIM_PROGRESS_ID,
-    EverEndpoints,
-)
+from everest.strings import OPT_PROGRESS_ID, SIM_PROGRESS_ID, EverEndpoints
 
-# Specifies how many times to try a http request within the specified timeout.
 _HTTP_REQUEST_RETRY = 10
 
 # Proxy configuration for outgoing requests.
@@ -61,11 +58,22 @@ async def start_server(config: EverestConfig, logging_level: int) -> Driver:
         await driver.submit(0, "everserver", *args, name=Path(config.config_file).stem)
     except FailedSubmit as err:
         raise ValueError(f"Failed to submit Everserver with error: {err}") from err
-
     status = await driver.event_queue.get()
     if not isinstance(status, StartedEvent):
         poll_task.cancel()
         raise ValueError(f"Everserver not started as expected, got status: {status}")
+    # start_time = time.time()
+    # while time.time() < start_time + 5:
+    #     try:
+    #         status = await driver.event_queue.get_nowait()
+    #     except QueueEmpty:
+    #         continue
+    #     if isinstance(status, FinishedEvent):
+    #         poll_task.cancel()
+    #         raise ValueError(
+    #             f"Everserver not started as expected, got status: {status}"
+    #         )
+    #     await asyncio.sleep(0.5)
     poll_task.cancel()
     logger.debug(
         f"Everserver started. Items left in queue: {driver.event_queue.qsize()}"
@@ -121,6 +129,12 @@ def start_experiment(
         else:
             return
     raise RuntimeError("Failed to start experiment")
+
+
+def extract_errors_from_file(path: str) -> list[str]:
+    with open(path, encoding="utf-8") as f:
+        content = f.read()
+    return re.findall(r"(Error \w+.*)", content)
 
 
 def wait_for_server(output_dir: str, timeout: int | float) -> None:
@@ -252,34 +266,16 @@ def start_monitor(
         logger.debug(traceback.format_exc())
 
 
-class ServerStatus(Enum):
+class ServerStatus(StrEnum):
     """Keep track of the different states the everest server is in"""
 
-    starting = 1
-    running = 2
-    exporting_to_csv = 3
-    completed = 4
-    stopped = 5
-    failed = 6
-    never_run = 7
-
-
-class ServerStatusEncoder(json.JSONEncoder):
-    """Facilitates encoding and decoding the server status enum object to
-    and from a json file"""
-
-    def default(self, o: ServerStatus | None) -> dict[str, str]:
-        if type(o) is ServerStatus:
-            return {"__enum__": str(o)}
-        return json.JSONEncoder.default(self, o)
-
-    @staticmethod
-    def decode(obj: dict[str, str]) -> dict[str, str]:
-        if "__enum__" in obj:
-            _, member = obj["__enum__"].split(".")
-            return getattr(ServerStatus, member)
-        else:
-            return obj
+    starting = auto()
+    running = auto()
+    exporting_to_csv = auto()
+    completed = auto()
+    stopped = auto()
+    failed = auto()
+    never_run = auto()
 
 
 def update_everserver_status(
@@ -291,7 +287,7 @@ def update_everserver_status(
     if not os.path.exists(os.path.dirname(path)):
         os.makedirs(os.path.dirname(path))
         with open(path, "w", encoding="utf-8") as outfile:
-            json.dump(new_status, outfile, cls=ServerStatusEncoder)
+            json.dump(new_status, outfile)
     elif os.path.exists(path):
         server_status = everserver_status(path)
         if server_status["message"] is not None:
@@ -302,7 +298,7 @@ def update_everserver_status(
             else:
                 new_status["message"] = server_status["message"]
         with open(path, "w", encoding="utf-8") as outfile:
-            json.dump(new_status, outfile, cls=ServerStatusEncoder)
+            json.dump(new_status, outfile)
 
 
 def everserver_status(everserver_status_path: str) -> dict[str, Any]:
@@ -317,6 +313,6 @@ def everserver_status(everserver_status_path: str) -> dict[str, Any]:
     """
     if os.path.exists(everserver_status_path):
         with open(everserver_status_path, encoding="utf-8") as f:
-            return json.load(f, object_hook=ServerStatusEncoder.decode)
+            return json.load(f)
     else:
         return {"status": ServerStatus.never_run, "message": None}
