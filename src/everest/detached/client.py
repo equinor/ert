@@ -68,7 +68,7 @@ async def start_server(config: EverestConfig, logging_level: int) -> Driver:
         raise ValueError(f"Everserver not started as expected, got status: {status}")
     poll_task.cancel()
     logger.debug(
-        f"Everserver started. Items left in queue: {driver.event_queue.qsize()}"
+        f"Everserver started. Events left in driver queue: {driver.event_queue.qsize()}"
     )
     return driver
 

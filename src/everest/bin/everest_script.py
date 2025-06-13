@@ -72,7 +72,7 @@ def everest_entry(args: list[str] | None = None) -> None:
         handler.setLevel(logging.DEBUG)
         root_logger.addHandler(handler)
 
-    logger.debug(version_info())
+    logger.info(version_info())
 
     if options.config.server_queue_system == QueueSystem.LOCAL:
         print(
@@ -163,11 +163,11 @@ async def run_everest(options: argparse.Namespace) -> None:
         )
     elif server_state["status"] == ServerStatus.never_run or options.new_run:
         config_dict = options.config.to_dict()
-        logger.debug("Running everest with the following config:")
-        logger.debug(json.dumps(config_dict, sort_keys=True, indent=2))
+        logger.info("Running everest with the following config:")
+        logger.info(json.dumps(config_dict, sort_keys=True, indent=2))
         for fm_job in options.config.forward_model_step_commands:
             job_name = fm_job.split()[0]
-            logger.debug(f"Everest forward model contains job {job_name}")
+            logger.info(f"Everest forward model contains job {job_name}")
 
         if (
             options.config.simulation_dir is not None
@@ -203,7 +203,7 @@ async def run_everest(options: argparse.Namespace) -> None:
         logger.debug("Waiting for response from everserver")
         wait_for_server(options.config.output_dir, timeout=600)
         print("Everest server found!")
-        logger.debug("Got response from everserver. Starting experiment")
+        logger.info("Got response from everserver. Starting experiment")
 
         start_experiment(
             server_context=ServerConfig.get_server_context(options.config.output_dir),
@@ -238,14 +238,14 @@ async def run_everest(options: argparse.Namespace) -> None:
                 )
             )
 
-        logger.debug("Everest experiment finished")
+        logger.info("Everest experiment finished")
 
         server_state = everserver_status(everserver_status_path)
         server_state_info = server_state["message"]
         if server_state["status"] == ServerStatus.failed:
             raise SystemExit(f"Everest run failed with: {server_state_info}")
         if server_state_info is not None:
-            logger.debug(f"Everest run finished with: {server_state_info}")
+            logger.info(f"Everest run finished with: {server_state_info}")
             print(server_state_info)
     else:
         report_on_previous_run(
