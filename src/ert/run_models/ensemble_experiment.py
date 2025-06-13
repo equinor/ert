@@ -42,6 +42,7 @@ class EnsembleExperiment(BaseRunModel):
     _observations: dict[str, pl.DataFrame] = PrivateAttr()
     _experiment_id: UUID | None = PrivateAttr(None)
     _ensemble_id: UUID | None = PrivateAttr(None)
+    support_restart: bool = True
 
     def __init__(self, **data: Any) -> None:
         observations = data.pop("observations", None)

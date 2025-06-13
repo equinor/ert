@@ -70,7 +70,6 @@ class MultipleDataAssimilation(UpdateRunModel):
 
         self.start_iteration = start_iteration
         self._total_iterations = total_iterations
-        self.support_restart = False
 
     @tracer.start_as_current_span(f"{__name__}.run_experiment")
     def run_experiment(

@@ -184,7 +184,7 @@ class BaseRunModel(BaseModelWithContextSupport, ABC):
     random_seed: int
     start_iteration: int = 0
     minimum_required_realizations: int = 0
-    support_restart: bool = True
+    support_restart: bool = False
 
     # Private attributes initialized in model_post_init
     _start_time: int | None = PrivateAttr(None)
@@ -388,10 +388,19 @@ class BaseRunModel(BaseModelWithContextSupport, ABC):
             with captured_logs(error_messages):
                 self._set_default_env_context()
 
+                if restart and not self.support_restart:
+                    raise ErtRunError(
+                        f"Run model {self.name()} does not support "
+                        f"restart/rerun of failed simulations."
+                    )
+
                 if restart:
                     self._storage = open_storage(self.storage_path, mode="w")
                     self.active_realizations = (
                         self._create_mask_from_failed_realizations()
+                    )
+                    logger.info(
+                        f"Rerunning failed simulations for run model '{self.name()}'"
                     )
 
                 self.run_experiment(

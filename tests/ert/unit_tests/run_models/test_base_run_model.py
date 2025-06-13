@@ -11,6 +11,7 @@ import pytest
 from pydantic import ConfigDict
 
 from ert.config import ErtConfig, ModelConfig, QueueConfig
+from ert.ensemble_evaluator import EndEvent, EvaluatorServerConfig
 from ert.ensemble_evaluator.snapshot import EnsembleSnapshot
 from ert.run_models import BaseRunModel
 from ert.run_models.base_run_model import UserCancelled
@@ -52,14 +53,25 @@ def create_base_run_model(**kwargs):
     return BaseRunModelWithMockSupport(**(default_args | kwargs))
 
 
-def test_base_run_model_supports_restart(minimum_case):
+def test_base_run_model_not_supports_restart(minimum_case):
     brm = create_base_run_model(
         storage_path=minimum_case.ens_path,
         queue_config=minimum_case.queue_config,
         active_realizations=[True],
         forward_model_steps=minimum_case.forward_model_steps,
     )
-    assert brm.support_restart
+    assert not brm.support_restart
+
+
+def test_status_when_restarting_non_restartable_model():
+    brm = create_base_run_model()
+    brm._status_queue = SimpleQueue()
+    brm.start_simulations_thread(EvaluatorServerConfig(use_token=False), restart=True)
+    assert brm._status_queue.get() == EndEvent(
+        event_type="EndEvent",
+        failed=True,
+        msg="Run model None does not support restart/rerun of failed simulations.\n",
+    )
 
 
 @pytest.mark.parametrize(

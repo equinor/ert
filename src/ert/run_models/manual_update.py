@@ -16,7 +16,6 @@ logger = logging.getLogger(__name__)
 
 class ManualUpdate(UpdateRunModel):
     ensemble_id: str
-    support_restart: bool = False
 
     _prior: Ensemble = PrivateAttr()
 
@@ -29,8 +28,6 @@ class ManualUpdate(UpdateRunModel):
             raise ErtRunError(
                 f"Prior ensemble with ID: {UUID(self.ensemble_id)} does not exist"
             ) from err
-
-        self.support_restart = False
 
     def run_experiment(
         self, evaluator_server_config: EvaluatorServerConfig, restart: bool = False
