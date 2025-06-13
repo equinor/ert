@@ -60,7 +60,7 @@ class Job:
     (LSF, PBS, SLURM, etc.)
     """
 
-    DEFAULT_CHECKSUM_TIMEOUT = 120
+    DEFAULT_FILE_VERIFICATION_TIMEOUT = 120
 
     def __init__(self, scheduler: Scheduler, real: Realization) -> None:
         self.real = real
@@ -73,6 +73,9 @@ class Job:
         self._requested_max_submit: int | None = None
         self._start_time: float | None = None
         self._end_time: float | None = None
+        self.remaining_file_verification_timeout = (
+            self.DEFAULT_FILE_VERIFICATION_TIMEOUT
+        )
 
     def unschedule(self, msg: str) -> None:
         self.state = JobState.ABORTED
@@ -176,8 +179,12 @@ class Job:
                     await self._handle_finished_forward_model()
                 if not self._scheduler.warnings_extracted:
                     self._scheduler.warnings_extracted = True
-                    await log_warnings_from_forward_model(
-                        self.real, file_modified_after=self.submit_time
+                    self.remaining_file_verification_timeout = (
+                        await log_warnings_from_forward_model(
+                            self.real,
+                            job_submission_time=self.submit_time,
+                            timeout_seconds=self.remaining_file_verification_timeout,
+                        )
                     )
                 break
 
@@ -214,7 +221,7 @@ class Job:
         timeout: int | None = None,  # noqa: ASYNC109
     ) -> None:
         if timeout is None:
-            timeout = self.DEFAULT_CHECKSUM_TIMEOUT
+            timeout = self.DEFAULT_FILE_VERIFICATION_TIMEOUT
         # Wait for job runpath to be in the checksum dictionary
         runpath = self.real.run_arg.runpath
         while runpath not in self._scheduler.checksum:
@@ -226,6 +233,7 @@ class Job:
         checksum = self._scheduler.checksum.get(runpath)
         if checksum is None:
             logger.warning(f"Checksum information not received for {runpath}")
+            self.remaining_file_verification_timeout = timeout
             return
 
         errors = "\n".join(
@@ -259,6 +267,7 @@ class Job:
                     logger.warning(f"Checksum not received for file {file_path}")
                 else:
                     logger.error(f"Disk synchronization failed for {file_path}")
+        self.remaining_file_verification_timeout = timeout
 
     async def _handle_finished_forward_model(self) -> None:
         callback_status, status_msg = await forward_model_ok(
@@ -370,8 +379,10 @@ def log_info_from_exit_file(exit_file_path: Path) -> None:
 
 
 async def log_warnings_from_forward_model(
-    real: Realization, file_modified_after: float
-) -> None:
+    real: Realization,
+    job_submission_time: float,
+    timeout_seconds: int = Job.DEFAULT_FILE_VERIFICATION_TIMEOUT,
+) -> int:
     """Parse all stdout and stderr files from running the forward model
     for anything that looks like a Warning, and log it.
 
@@ -405,24 +416,40 @@ async def log_warnings_from_forward_model(
                 f"warned {counter} time(s) in {filetype}: {line}"
             )
 
+    async def wait_for_file(file_path: Path, _timeout: int) -> int:
+        if _timeout <= 0:
+            return 0
+        remaining_timeout = _timeout
+        for _ in range(_timeout):
+            if not (
+                file_path.exists() and file_path.stat().st_mtime >= job_submission_time
+            ):
+                remaining_timeout -= 1
+                await asyncio.sleep(1)
+            else:
+                break
+        return remaining_timeout
+
     with suppress(KeyError):
         runpath = Path(real.run_arg.runpath)
         for step_idx, step in enumerate(real.fm_steps):
-            if step.stdout_file is not None:
-                stdout_file = runpath / f"{step.stdout_file}.{step_idx}"
-                if (
-                    stdout_file.exists()
-                    and stdout_file.stat().st_mtime >= file_modified_after
-                ):
+            for std_file_name, file_type in [
+                (step.stdout_file, "stdout"),
+                (step.stderr_file, "stderr"),
+            ]:
+                if std_file_name is not None:
+                    std_path = runpath / f"{std_file_name}.{step_idx}"
+                    timeout_seconds = await wait_for_file(std_path, timeout_seconds)
+
+                    if timeout_seconds <= 0:
+                        break
+
                     await log_warnings_from_file(
-                        stdout_file, real.iens, step, step_idx, "stdout"
+                        std_path, real.iens, step, step_idx, file_type
                     )
-            if step.stderr_file is not None:
-                stderr_file = runpath / f"{step.stderr_file}.{step_idx}"
-                if (
-                    stderr_file.exists()
-                    and stderr_file.stat().st_mtime >= file_modified_after
-                ):
-                    await log_warnings_from_file(
-                        stderr_file, real.iens, step, step_idx, "stderr"
-                    )
+            if timeout_seconds <= 0:
+                break
+
+    if timeout_seconds <= 0:
+        logger.info("Could not log forward model warnings: Timed out")
+    return timeout_seconds

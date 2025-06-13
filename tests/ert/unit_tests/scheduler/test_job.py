@@ -2,8 +2,10 @@ import asyncio
 import logging
 import shutil
 import time
-from functools import partial
+from functools import partial, wraps
+from math import inf
 from pathlib import Path
+from types import SimpleNamespace
 from unittest.mock import AsyncMock, MagicMock
 
 import pytest
@@ -247,7 +249,17 @@ async def test_when_waiting_for_disk_sync_times_out_an_error_is_logged(
     }
     log_msgs = []
     job = Job(scheduler, realization)
-    job._verify_checksum = partial(job._verify_checksum, timeout=0)
+
+    original_func = job._verify_checksum
+
+    @wraps(original_func)
+    async def wrapped_verify_checksum(*args, **kwargs):
+        return await partial(original_func, timeout=0)(*args, **kwargs)
+
+    # This allows job.py to access self._verify_checksum.__name__,
+    # which doesn't exist on functools.partial()
+    job._verify_checksum = wrapped_verify_checksum
+
     job.started.set()
 
     with captured_logs(log_msgs, logging.ERROR):
@@ -457,7 +469,10 @@ async def test_log_warnings_from_forward_model(
 
 
 @pytest.mark.usefixtures("use_tmpdir")
-async def test_old_warnings_are_not_logged(realization, caplog):
+async def test_old_warnings_are_not_logged(realization, caplog, mocker):
+    # Mock asyncio.sleep to fast-forward time
+    mocker.patch("asyncio.sleep")
+
     Path(realization.run_arg.runpath).mkdir()
     (Path(realization.run_arg.runpath) / "foo.stdout.0").write_text(
         "FutureWarning: Feature XYZ is deprecated", encoding="utf-8"
@@ -476,7 +491,12 @@ async def test_old_warnings_are_not_logged(realization, caplog):
 
 
 @pytest.mark.usefixtures("use_tmpdir")
-async def test_long_warning_from_forward_model_is_truncated(realization, caplog):
+async def test_long_warning_from_forward_model_is_truncated(
+    realization, caplog, mocker
+):
+    # Mock asyncio.sleep to fast-forward time
+    mocker.patch("asyncio.sleep")
+
     start_time = time.time()
     emitted_warning_str = "FutureWarning: Feature XYZ is deprecated " + " ".join(
         ["foo bar"] * 2000
@@ -501,8 +521,10 @@ async def test_long_warning_from_forward_model_is_truncated(realization, caplog)
 
 @pytest.mark.usefixtures("use_tmpdir")
 async def test_deduplication_of_repeated_warnings_from_forward_model(
-    realization, caplog
+    realization, caplog, mocker
 ):
+    # Mock asyncio.sleep to fast-forward time
+    mocker.patch("asyncio.sleep")
     start_time = time.time()
     emitted_warning_str = "FutureWarning: Feature XYZ is deprecated"
     Path(realization.run_arg.runpath).mkdir()
@@ -523,3 +545,44 @@ async def test_deduplication_of_repeated_warnings_from_forward_model(
         in caplog.text
     )
     assert caplog.text.count(emitted_warning_str) == 1
+
+
+async def test_log_warnings_from_forward_model_can_detect_files_being_created_after_delay(  # noqa
+    realization, mocker, tmpdir
+):
+    initial_timeout = Job.DEFAULT_FILE_VERIFICATION_TIMEOUT
+    delay = 10
+
+    stdout_file = "foo.stdout"
+    stderr_file = "foo.stderr"
+
+    realization.fm_steps = [
+        ForwardModelStep(
+            name="foo",
+            executable="foo",
+            stdout_file=stdout_file,
+            stderr_file=stderr_file,
+        )
+    ]
+
+    # Mock Path.exists to return False delay times before returning True
+    call_count = [0]
+
+    def true_after_delay(*args, **kwargs):
+        call_count[0] += 1
+        return call_count[0] > delay
+
+    mocker.patch("asyncio.sleep")
+    mocker.patch("pathlib.Path.exists", side_effect=true_after_delay)
+
+    # Mock st_mtime to be infinite
+    mock_stat_result = SimpleNamespace(st_mtime=inf)
+    mocker.patch("pathlib.Path.stat", return_value=mock_stat_result)
+
+    # Skip reading from file as there is no files to read from
+    mocker.patch("pathlib.Path.read_text", return_value="")
+
+    remaining_timeout = await log_warnings_from_forward_model(
+        realization, time.time(), initial_timeout
+    )
+    assert remaining_timeout == initial_timeout - delay

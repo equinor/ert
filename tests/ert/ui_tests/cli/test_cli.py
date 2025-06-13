@@ -901,7 +901,7 @@ def test_that_connection_errors_do_not_effect_final_result(
     monkeypatch.setattr(Client, "DEFAULT_MAX_RETRIES", 1)
     monkeypatch.setattr(Client, "DEFAULT_ACK_TIMEOUT", 1)
     monkeypatch.setattr(EnsembleEvaluator, "CLOSE_SERVER_TIMEOUT", 0.01)
-    monkeypatch.setattr(Job, "DEFAULT_CHECKSUM_TIMEOUT", 0)
+    monkeypatch.setattr(Job, "DEFAULT_FILE_VERIFICATION_TIMEOUT", 0)
 
     def raise_connection_error(*args, **kwargs):
         raise zmq.error.ZMQError(None, None)
