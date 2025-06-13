@@ -7,7 +7,7 @@ from typing import TYPE_CHECKING, Self, cast
 import networkx as nx
 import numpy as np
 import xarray as xr
-import xtgeo
+from surfio import IrapHeader, IrapSurface
 
 from ert.substitutions import substitute_runpath_name
 
@@ -91,22 +91,21 @@ class SurfaceConfig(ParameterConfig):
         assert out_file is not None
         assert base_surface is not None
         try:
-            surf = xtgeo.surface_from_file(
-                base_surface, fformat="irap_ascii", dtype=np.float32
-            )
+            surf = IrapSurface.from_ascii_file(base_surface)
+            yflip = -1 if surf.header.yinc < 0 else 1
         except Exception as err:
             raise ConfigValidationError.with_context(
                 f"Could not load surface {base_surface!r}", surface
             ) from err
         return cls(
-            ncol=surf.ncol,
-            nrow=surf.nrow,
-            xori=surf.xori,
-            yori=surf.yori,
-            xinc=surf.xinc,
-            yinc=surf.yinc,
-            rotation=surf.rotation,
-            yflip=surf.yflip,
+            ncol=surf.header.ncol,
+            nrow=surf.header.nrow,
+            xori=surf.header.xori,
+            yori=surf.header.yori,
+            xinc=surf.header.xinc,
+            yinc=surf.header.yinc * yflip,
+            rotation=surf.header.rot,
+            yflip=yflip,
             name=name,
             forward_init=forward_init,
             forward_init_file=init_file,
@@ -129,9 +128,7 @@ class SurfaceConfig(ParameterConfig):
                 f"'{self.name}' in file {file_name}: "
                 "File not found\n"
             )
-        surface = xtgeo.surface_from_file(
-            file_path, fformat="irap_ascii", dtype=np.float32
-        )
+        surface = IrapSurface.from_ascii_file(file_path)
 
         da = xr.DataArray(
             surface.values,
@@ -148,15 +145,17 @@ class SurfaceConfig(ParameterConfig):
         assert isinstance(ds, xr.Dataset)
         data = ds["values"]
 
-        surf = xtgeo.RegularSurface(
-            ncol=self.ncol,
-            nrow=self.nrow,
-            xori=self.xori,
-            yori=self.yori,
-            xinc=self.xinc,
-            yinc=self.yinc,
-            rotation=self.rotation,
-            yflip=self.yflip,
+        yinc = self.yinc * self.yflip
+        surf = IrapSurface(
+            header=IrapHeader(
+                ncol=self.ncol,
+                nrow=self.nrow,
+                xori=self.xori,
+                yori=self.yori,
+                xinc=self.xinc,
+                yinc=yinc,
+                rot=self.rotation,
+            ),
             values=data.values,
         )
 
@@ -164,7 +163,7 @@ class SurfaceConfig(ParameterConfig):
             str(self.output_file), real_nr, ensemble.iteration
         )
         file_path.parent.mkdir(exist_ok=True, parents=True)
-        surf.to_file(file_path, fformat="irap_ascii")
+        surf.to_ascii_file(file_path)
 
     def save_parameters(
         self,
