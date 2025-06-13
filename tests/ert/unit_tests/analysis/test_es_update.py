@@ -33,7 +33,7 @@ def uniform_parameter():
     return GenKwConfig(
         forward_init=False,
         transform_function_definitions=[
-            TransformFunctionDefinition("KEY1", "UNIFORM", "PARAMETER", [0, 1]),
+            TransformFunctionDefinition("PARAMETER", "KEY1", "UNIFORM", [0, 1]),
         ],
         update=True,
     )
@@ -1168,10 +1168,9 @@ def test_gen_data_missing(storage, uniform_parameter, obs):
 @pytest.mark.usefixtures("use_tmpdir")
 def test_update_subset_parameters(storage, uniform_parameter, obs):
     no_update_param = GenKwConfig(
-        name="EXTRA_PARAMETER",
         forward_init=False,
         transform_function_definitions=[
-            TransformFunctionDefinition("KEY1", "UNIFORM", "EXTRA_PARAMETER", [0, 1]),
+            TransformFunctionDefinition("EXTRA_PARAMETER", "KEY1", "UNIFORM", [0, 1]),
         ],
         update=False,
     )

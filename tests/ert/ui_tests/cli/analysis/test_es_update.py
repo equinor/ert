@@ -21,10 +21,9 @@ from tests.ert.ui_tests.cli.run_cli import run_cli
 @pytest.fixture
 def uniform_parameter():
     return GenKwConfig(
-        name="PARAMETER",
         forward_init=False,
         transform_function_definitions=[
-            TransformFunctionDefinition("KEY1", "UNIFORM", "PARAMETER", [0, 1]),
+            TransformFunctionDefinition("PARAMETER", "KEY1", "UNIFORM", [0, 1]),
         ],
         update=True,
     )
