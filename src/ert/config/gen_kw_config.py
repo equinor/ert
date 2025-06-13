@@ -61,9 +61,9 @@ class DataSource(StrEnum):
 
 @dataclass
 class TransformFunctionDefinition:
+    group_name: str
     name: str
     param_name: str
-    group_name: str
     values: list[Any]
     update: bool = True
     input_source: DataSource = DataSource.SAMPLED
@@ -227,9 +227,9 @@ class GenKwConfig(ParameterConfig):
                 else:
                     transform_function_definitions.append(
                         TransformFunctionDefinition(
+                            group_name=gen_kw_key,
                             name=items[0],
                             param_name=items[1],
-                            group_name=gen_kw_key,
                             update=update_parameter,
                             values=items[2:],
                         )
