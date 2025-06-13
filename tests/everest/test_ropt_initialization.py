@@ -4,6 +4,7 @@ from orjson import orjson
 from pydantic import ValidationError
 
 from ert.ensemble_evaluator.config import EvaluatorServerConfig
+from ert.run_models import everest_run_model
 from ert.run_models.everest_run_model import EverestRunModel
 from everest.config import EverestConfig
 from everest.optimizer.everest2ropt import everest2ropt
@@ -63,7 +64,16 @@ def ever_config() -> EverestConfig:
 
 
 def test_tutorial_everest2ropt(ever_config):
-    ropt_config, _ = everest2ropt(ever_config)
+    ropt_config, _ = everest2ropt(
+        ever_config.controls,
+        ever_config.objective_functions,
+        ever_config.input_constraints,
+        ever_config.output_constraints,
+        ever_config.optimization,
+        ever_config.model.realizations_weights,
+        ever_config.environment.random_seed,
+        ever_config.optimization_output_dir,
+    )
     realizations = ropt_config["realizations"]
     assert len(realizations["weights"]) == 2
     assert realizations["weights"][0] == 0.2
@@ -72,7 +82,16 @@ def test_tutorial_everest2ropt(ever_config):
 def test_everest2ropt_controls(ever_config):
     controls = ever_config.controls
     assert len(controls) == 1
-    ropt_config, _ = everest2ropt(ever_config)
+    ropt_config, _ = everest2ropt(
+        ever_config.controls,
+        ever_config.objective_functions,
+        ever_config.input_constraints,
+        ever_config.output_constraints,
+        ever_config.optimization,
+        ever_config.model.realizations_weights,
+        ever_config.environment.random_seed,
+        ever_config.optimization_output_dir,
+    )
     assert len(ropt_config["variables"]["lower_bounds"]) == 6
     assert len(ropt_config["variables"]["upper_bounds"]) == 6
 
@@ -80,7 +99,16 @@ def test_everest2ropt_controls(ever_config):
 def test_everest2ropt_controls_input_constraint(ever_config):
     input_constraints_ever_config = ever_config.input_constraints
     assert len(input_constraints_ever_config) == 2
-    ropt_config, _ = everest2ropt(ever_config)
+    ropt_config, _ = everest2ropt(
+        ever_config.controls,
+        ever_config.objective_functions,
+        ever_config.input_constraints,
+        ever_config.output_constraints,
+        ever_config.optimization,
+        ever_config.model.realizations_weights,
+        ever_config.environment.random_seed,
+        ever_config.optimization_output_dir,
+    )
     assert len(ropt_config["linear_constraints"]["coefficients"]) == 2
     exp_lower_bounds = [0.0, 1.0]
     exp_upper_bounds = [1.0, 1.0]
@@ -89,37 +117,100 @@ def test_everest2ropt_controls_input_constraint(ever_config):
 
 
 def test_everest2ropt_controls_optimizer_setting(ever_config):
-    ropt_config, _ = everest2ropt(ever_config)
+    ropt_config, _ = everest2ropt(
+        ever_config.controls,
+        ever_config.objective_functions,
+        ever_config.input_constraints,
+        ever_config.output_constraints,
+        ever_config.optimization,
+        ever_config.model.realizations_weights,
+        ever_config.environment.random_seed,
+        ever_config.optimization_output_dir,
+    )
     assert len(ropt_config["realizations"]["weights"]) == 2
     assert ropt_config["optimizer"]["method"] == "optpp_q_newton"
     assert ropt_config["gradient"]["number_of_perturbations"] == 2
 
 
 def test_everest2ropt_constraints(ever_config):
-    ropt_config, _ = everest2ropt(ever_config)
+    ropt_config, _ = everest2ropt(
+        ever_config.controls,
+        ever_config.objective_functions,
+        ever_config.input_constraints,
+        ever_config.output_constraints,
+        ever_config.optimization,
+        ever_config.model.realizations_weights,
+        ever_config.environment.random_seed,
+        ever_config.optimization_output_dir,
+    )
     assert len(ropt_config["nonlinear_constraints"]["lower_bounds"]) == 2
 
 
 def test_everest2ropt_backend_options(ever_config):
     ever_config.optimization.options = ["test = 1"]
-    ropt_config, _ = everest2ropt(ever_config)
+    ropt_config, _ = everest2ropt(
+        ever_config.controls,
+        ever_config.objective_functions,
+        ever_config.input_constraints,
+        ever_config.output_constraints,
+        ever_config.optimization,
+        ever_config.model.realizations_weights,
+        ever_config.environment.random_seed,
+        ever_config.optimization_output_dir,
+    )
     assert ropt_config["optimizer"]["options"] == ["test = 1"]
 
     ever_config.optimization.backend_options = {"test": "5"}  # should be disregarded
-    ropt_config, _ = everest2ropt(ever_config)
+    ropt_config, _ = everest2ropt(
+        ever_config.controls,
+        ever_config.objective_functions,
+        ever_config.input_constraints,
+        ever_config.output_constraints,
+        ever_config.optimization,
+        ever_config.model.realizations_weights,
+        ever_config.environment.random_seed,
+        ever_config.optimization_output_dir,
+    )
     assert ropt_config["optimizer"]["options"] == ["test = 1"]
 
     ever_config.optimization.options = None
-    ropt_config, _ = everest2ropt(ever_config)
+    ropt_config, _ = everest2ropt(
+        ever_config.controls,
+        ever_config.objective_functions,
+        ever_config.input_constraints,
+        ever_config.output_constraints,
+        ever_config.optimization,
+        ever_config.model.realizations_weights,
+        ever_config.environment.random_seed,
+        ever_config.optimization_output_dir,
+    )
     assert ropt_config["optimizer"]["options"] == {"test": "5"}
 
     ever_config.optimization.options = ["hey", "a=b", "c 100"]
-    ropt_config, _ = everest2ropt(ever_config)
+    ropt_config, _ = everest2ropt(
+        ever_config.controls,
+        ever_config.objective_functions,
+        ever_config.input_constraints,
+        ever_config.output_constraints,
+        ever_config.optimization,
+        ever_config.model.realizations_weights,
+        ever_config.environment.random_seed,
+        ever_config.optimization_output_dir,
+    )
     assert ropt_config["optimizer"]["options"] == ["hey", "a=b", "c 100"]
 
 
 def test_everest2ropt_samplers(ever_config):
-    ropt_config, _ = everest2ropt(ever_config)
+    ropt_config, _ = everest2ropt(
+        ever_config.controls,
+        ever_config.objective_functions,
+        ever_config.input_constraints,
+        ever_config.output_constraints,
+        ever_config.optimization,
+        ever_config.model.realizations_weights,
+        ever_config.environment.random_seed,
+        ever_config.optimization_output_dir,
+    )
 
     assert len(ropt_config["samplers"]) == 3
     assert ropt_config["variables"]["samplers"] == [0, 1, 2, 0, 0, 0]
@@ -151,7 +242,17 @@ def test_everest2ropt_cvar(ever_config):
         "number_of_realizations": 1,
     }
 
-    ropt_config, _ = everest2ropt(EverestConfig.model_validate(config_dict))
+    config = EverestConfig.model_validate(config_dict)
+    ropt_config, _ = everest2ropt(
+        config.controls,
+        config.objective_functions,
+        config.input_constraints,
+        config.output_constraints,
+        config.optimization,
+        config.model.realizations_weights,
+        config.environment.random_seed,
+        config.optimization_output_dir,
+    )
 
     assert ropt_config["objectives"]["realization_filters"] == [0]
     assert len(ropt_config["realization_filters"]) == 1
@@ -164,7 +265,17 @@ def test_everest2ropt_cvar(ever_config):
         "percentile": 0.3,
     }
 
-    ropt_config, _ = everest2ropt(EverestConfig.model_validate(config_dict))
+    config = EverestConfig.model_validate(config_dict)
+    ropt_config, _ = everest2ropt(
+        config.controls,
+        config.objective_functions,
+        config.input_constraints,
+        config.output_constraints,
+        config.optimization,
+        config.model.realizations_weights,
+        config.environment.random_seed,
+        config.optimization_output_dir,
+    )
     assert ropt_config["objectives"]["realization_filters"] == [0]
     assert len(ropt_config["realization_filters"]) == 1
     assert ropt_config["realization_filters"][0]["method"] == "cvar-objective"
@@ -174,7 +285,16 @@ def test_everest2ropt_cvar(ever_config):
 
 def test_everest2ropt_arbitrary_backend_options(ever_config):
     ever_config.optimization.backend_options = {"a": [1]}
-    ropt_config, _ = everest2ropt(ever_config)
+    ropt_config, _ = everest2ropt(
+        ever_config.controls,
+        ever_config.objective_functions,
+        ever_config.input_constraints,
+        ever_config.output_constraints,
+        ever_config.optimization,
+        ever_config.model.realizations_weights,
+        ever_config.environment.random_seed,
+        ever_config.optimization_output_dir,
+    )
     assert "a" in ropt_config["optimizer"]["options"]
     assert ropt_config["optimizer"]["options"]["a"] == [1]
 
@@ -182,7 +302,16 @@ def test_everest2ropt_arbitrary_backend_options(ever_config):
 def test_everest2ropt_default_algorithm_name(min_config):
     config = EverestConfig(**min_config)
     assert not min_config.get("optimization")
-    ropt_config, _ = everest2ropt(config)
+    ropt_config, _ = everest2ropt(
+        config.controls,
+        config.objective_functions,
+        config.input_constraints,
+        config.output_constraints,
+        config.optimization,
+        config.model.realizations_weights,
+        config.environment.random_seed,
+        config.optimization_output_dir,
+    )
     assert ropt_config["optimizer"]["method"] == "optpp_q_newton"
 
 
@@ -193,7 +322,16 @@ def test_everest2ropt_snapshot(case, snapshot):
     config = EverestConfig.load_file(
         relpath(f"../../test-data/everest/math_func/{case}")
     )
-    ropt_config_dict, _ = everest2ropt(config)
+    ropt_config_dict, _ = everest2ropt(
+        config.controls,
+        config.objective_functions,
+        config.input_constraints,
+        config.output_constraints,
+        config.optimization,
+        config.model.realizations_weights,
+        config.environment.random_seed,
+        config.optimization_output_dir,
+    )
     ropt_config_dict["optimizer"]["output_dir"] = "not_relevant"
 
     ropt_config_str = (
@@ -209,13 +347,13 @@ def test_everest2ropt_snapshot(case, snapshot):
 
 
 def test_everest2ropt_validation_error(ever_config, monkeypatch) -> None:
-    def _patched_everest2ropt(ever_config):
-        ropt_dict, _ = everest2ropt(ever_config)
+    def _patched_everest2ropt(*args, **kwargs):
+        ropt_dict, initial_value = everest2ropt(*args, **kwargs)
         ropt_dict["foo"] = "bar"
-        return ropt_dict
+        return ropt_dict, initial_value
 
     run_model = EverestRunModel.create(ever_config)
-    monkeypatch.setattr(run_model, "enopt_config", _patched_everest2ropt(ever_config))
+    monkeypatch.setattr(everest_run_model, "everest2ropt", _patched_everest2ropt)
     evaluator_server_config = EvaluatorServerConfig()
     with pytest.raises(ValueError, match=r"Validation error\(s\) in ropt"):
         run_model.run_experiment(evaluator_server_config)
@@ -224,7 +362,16 @@ def test_everest2ropt_validation_error(ever_config, monkeypatch) -> None:
 def test_transforms_controls_scaling(ever_config):
     controls = ever_config.controls
     controls[0].scaled_range = [0.3, 0.7]
-    ropt_config, _ = everest2ropt(ever_config)
+    ropt_config, _ = everest2ropt(
+        ever_config.controls,
+        ever_config.objective_functions,
+        ever_config.input_constraints,
+        ever_config.output_constraints,
+        ever_config.optimization,
+        ever_config.model.realizations_weights,
+        ever_config.environment.random_seed,
+        ever_config.optimization_output_dir,
+    )
     transforms = get_optimization_domain_transforms(
         ever_config.controls,
         ever_config.objective_functions,
@@ -249,7 +396,16 @@ def test_transforms_controls_input_constraint_scaling(ever_config):
     input_constraints_ever_config = ever_config.input_constraints
     assert len(input_constraints_ever_config) == 2
 
-    ropt_config, _ = everest2ropt(ever_config)
+    ropt_config, _ = everest2ropt(
+        ever_config.controls,
+        ever_config.objective_functions,
+        ever_config.input_constraints,
+        ever_config.output_constraints,
+        ever_config.optimization,
+        ever_config.model.realizations_weights,
+        ever_config.environment.random_seed,
+        ever_config.optimization_output_dir,
+    )
 
     controls = ever_config.controls
     min_values = np.asarray(ropt_config["variables"]["lower_bounds"])

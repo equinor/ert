@@ -70,7 +70,16 @@ def test_multi_objectives2ropt():
             {"name": "f2", "weight": weights[1]},
         ]
     )
-    enopt_config, _ = everest2ropt(config)
+    enopt_config, _ = everest2ropt(
+        config.controls,
+        config.objective_functions,
+        config.input_constraints,
+        config.output_constraints,
+        config.optimization,
+        config.model.realizations_weights,
+        config.environment.random_seed,
+        config.optimization_output_dir,
+    )
     assert len(enopt_config["objectives"]["weights"]) == 2
     assert enopt_config["objectives"]["weights"][0] == weights[0]
     assert enopt_config["objectives"]["weights"][1] == weights[1]

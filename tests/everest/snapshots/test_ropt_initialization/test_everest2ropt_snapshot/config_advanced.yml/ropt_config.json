@@ -42,7 +42,6 @@
   },
   "optimizer": {
     "method": "optpp_q_newton",
-    "options": {},
     "output_dir": "not_relevant",
     "parallel": true,
     "stderr": "optimizer.stderr",
