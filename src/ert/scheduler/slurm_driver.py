@@ -5,6 +5,7 @@ import datetime
 import itertools
 import logging
 import shlex
+import signal
 import stat
 import time
 from collections.abc import Iterator
@@ -17,6 +18,7 @@ from .driver import SIGNAL_OFFSET, Driver, FailedSubmit, create_submit_script
 from .event import Event, FinishedEvent, StartedEvent
 
 SLURM_FAILED_EXIT_CODE_FETCH = SIGNAL_OFFSET + 66
+SLURM_TERMINATED_EXIT_CODE = SIGNAL_OFFSET + signal.SIGTERM
 
 logger = logging.getLogger(__name__)
 
@@ -26,6 +28,7 @@ class JobStatus(Enum):
     COMPLETED = auto()
     RUNNING = auto()
     FAILED = auto()
+    TERMINATED = auto()
     CANCELLED = auto()
     COMPLETING = auto()
     CONFIGURING = auto()
@@ -38,7 +41,12 @@ class JobData:
     status: JobStatus | None = None
 
 
-END_STATES = {JobStatus.FAILED, JobStatus.COMPLETED, JobStatus.CANCELLED}
+END_STATES = {
+    JobStatus.FAILED,
+    JobStatus.TERMINATED,
+    JobStatus.COMPLETED,
+    JobStatus.CANCELLED,
+}
 
 
 @dataclass
@@ -305,9 +313,10 @@ class SlurmDriver(Driver):
         if new_state == JobStatus.RUNNING:
             logger.debug(f"Realization {iens} is running")
             event = StartedEvent(iens=iens)
-        elif new_state == JobStatus.FAILED:
+        elif new_state in {JobStatus.FAILED, JobStatus.TERMINATED}:
+            reason = "failed" if new_state == JobStatus.FAILED else "was terminated"
             logger.info(
-                f"Realization {iens} (SLURM-id: {self._iens2jobid[iens]}) failed"
+                f"Realization {iens} (SLURM-id: {self._iens2jobid[iens]}) {reason}"
             )
             exit_code = await self._get_exit_code(job_id)
             event = FinishedEvent(iens=iens, returncode=exit_code)
@@ -350,6 +359,9 @@ class SlurmDriver(Driver):
             info = await self._run_sacct(missing_job_id)
         if info is None:
             return None
+
+        if info.status == JobStatus.TERMINATED:
+            info.exit_code = SLURM_TERMINATED_EXIT_CODE
 
         self._scontrol_cache[missing_job_id] = info
         self._scontrol_cache_timestamp = time.time()
@@ -461,17 +473,22 @@ def _seconds_to_slurm_time_format(seconds: float) -> str:
 
 
 def _parse_scontrol_output(output: str) -> ScontrolInfo:
-    values = dict(w.split("=", 1) for w in output.split())
+    pairs = [w.split("=", 1) for w in output.split()]
+    values = dict(value for value in pairs if len(value) == 2)
+    jobstate = values["JobState"]
+    if jobstate == "TIMEOUT":
+        jobstate = "TERMINATED"
     exit_code_str = values.get("ExitCode")
-    exit_code = None
-    if exit_code_str:
-        exit_code = int(exit_code_str.split(":")[0])
-    return ScontrolInfo(JobStatus[values["JobState"]], exit_code)
+    exit_code = int(exit_code_str.split(":")[0]) if exit_code_str else None
+    return ScontrolInfo(JobStatus[jobstate], exit_code)
 
 
 def _parse_sacct_output(output: str) -> ScontrolInfo:
     items = output.split("|")
     exit_code = None
+    jobstate = items[0]
+    if jobstate == "TIMEOUT":
+        jobstate = "TERMINATED"
     if len(items) > 0 and items[1]:
         exit_code = int(items[1].split(":")[0])
-    return ScontrolInfo(JobStatus[items[0]], exit_code)
+    return ScontrolInfo(JobStatus[jobstate], exit_code)
