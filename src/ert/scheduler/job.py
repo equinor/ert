@@ -60,7 +60,7 @@ class Job:
     (LSF, PBS, SLURM, etc.)
     """
 
-    DEFAULT_CHECKSUM_TIMEOUT = 120
+    remaining_file_verification_timeout = 120
 
     def __init__(self, scheduler: Scheduler, real: Realization) -> None:
         self.real = real
@@ -176,8 +176,12 @@ class Job:
                     await self._handle_finished_forward_model()
                 if not self._scheduler.warnings_extracted:
                     self._scheduler.warnings_extracted = True
-                    await log_warnings_from_forward_model(
-                        self.real, file_modified_after=self.submit_time
+                    self.remaining_file_verification_timeout = (
+                        await log_warnings_from_forward_model(
+                            self.real,
+                            file_modified_after=self.submit_time,
+                            timeout=self.remaining_file_verification_timeout,
+                        )
                     )
                 break
 
@@ -214,7 +218,7 @@ class Job:
         timeout: int | None = None,  # noqa: ASYNC109
     ) -> None:
         if timeout is None:
-            timeout = self.DEFAULT_CHECKSUM_TIMEOUT
+            timeout = self.remaining_file_verification_timeout
         # Wait for job runpath to be in the checksum dictionary
         runpath = self.real.run_arg.runpath
         while runpath not in self._scheduler.checksum:
@@ -259,6 +263,7 @@ class Job:
                     logger.warning(f"Checksum not received for file {file_path}")
                 else:
                     logger.error(f"Disk synchronization failed for {file_path}")
+        self.remaining_file_verification_timeout = timeout
 
     async def _handle_finished_forward_model(self) -> None:
         callback_status, status_msg = await forward_model_ok(
@@ -370,8 +375,8 @@ def log_info_from_exit_file(exit_file_path: Path) -> None:
 
 
 async def log_warnings_from_forward_model(
-    real: Realization, file_modified_after: float
-) -> None:
+    real: Realization, file_modified_after: float, timeout_seconds: int | None = None
+) -> int:
     """Parse all stdout and stderr files from running the forward model
     for anything that looks like a Warning, and log it.
 
@@ -410,19 +415,31 @@ async def log_warnings_from_forward_model(
         for step_idx, step in enumerate(real.fm_steps):
             if step.stdout_file is not None:
                 stdout_file = runpath / f"{step.stdout_file}.{step_idx}"
-                if (
-                    stdout_file.exists()
-                    and stdout_file.stat().st_mtime >= file_modified_after
-                ):
-                    await log_warnings_from_file(
-                        stdout_file, real.iens, step, step_idx, "stdout"
-                    )
+                for _ in range(timeout_seconds):
+                    if not (
+                        stdout_file.exists()
+                        and stdout_file.stat().st_mtime >= file_modified_after
+                    ):
+                        timeout_seconds -= 1
+                        if timeout_seconds == 0:
+                            return timeout_seconds
+                        await asyncio.sleep(1)
+
+                await log_warnings_from_file(
+                    stdout_file, real.iens, step, step_idx, "stdout"
+                )
             if step.stderr_file is not None:
                 stderr_file = runpath / f"{step.stderr_file}.{step_idx}"
-                if (
-                    stderr_file.exists()
-                    and stderr_file.stat().st_mtime >= file_modified_after
-                ):
-                    await log_warnings_from_file(
-                        stderr_file, real.iens, step, step_idx, "stderr"
-                    )
+                for _ in range(timeout_seconds):
+                    if not (
+                        stderr_file.exists()
+                        and stderr_file.stat().st_mtime >= file_modified_after
+                    ):
+                        timeout_seconds -= 1
+                        if timeout_seconds == 0:
+                            return timeout_seconds
+                        await asyncio.sleep(1)
+                await log_warnings_from_file(
+                    stderr_file, real.iens, step, step_idx, "stderr"
+                )
+    return timeout_seconds
