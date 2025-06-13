@@ -1,0 +1,60 @@
+name: Test Everest Models
+
+# This job checks whether current main of everest-models
+# is compatible with the changes. It is not required to pass
+# before merging, but breakage should be followed by fix in everest-models
+
+on: [pull_request]
+
+env:
+  UV_FROZEN: true
+  OMP_NUM_THREADS: 1
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
+
+jobs:
+    test-everest-models:
+        name: Test everest-models
+        timeout-minutes: 10
+        runs-on: ubuntu-latest
+        strategy:
+            fail-fast: false
+            matrix:
+                python-version: ['3.12']
+        steps:
+        - uses: actions/checkout@v4
+          with:
+            fetch-depth: 0
+            filter: tree:0
+
+        - name: Install dependencies
+          uses: ./.github/actions/install_dependencies_qt
+          with:
+            os: ubuntu-latest
+
+        - name: Set up Python
+          uses: actions/setup-python@v5
+          with:
+            python-version: ${{ matrix.python-version }}
+
+        - name: Install uv
+          uses: astral-sh/setup-uv@v6
+          with:
+            enable-cache: true
+            python-version: ${{ matrix.python-version }}
+
+        - name: Install ert
+          run: |
+            uv sync
+
+        - name: Get everest-models
+          run: |
+            git clone https://github.com/equinor/everest-models.git
+
+        - name: "Install and test everest-models"
+          run: |
+            pushd everest-models
+            VIRTUAL_ENV=../.venv uv pip install ".[test]"
+            UV_PROJECT_ENVIRONMENT=../.venv uv run --no-sync pytest -sv --hypothesis-profile ci --run-slow
