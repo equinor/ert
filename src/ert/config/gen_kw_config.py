@@ -98,6 +98,7 @@ class GenKwConfig(ParameterConfig):
             else:
                 tf = self._parse_transform_function_definition(e)
             self.transform_functions.append(tf)
+            self.groups[SCALAR_NAME].append(tf)
             self.groups[tf.group_name].append(tf)
         self.update = any(param.update for param in self.transform_function_definitions)
         self._validate()

@@ -887,6 +887,12 @@ class LocalEnsemble(BaseMode):
                 df_full = pl.concat([existing, dataset], how="align").unique(
                     subset="realization", keep="last"
                 )
+                col_order = ["realization"] + [
+                    tf.name
+                    for tf in self._scalar_config.transform_functions
+                    if tf.name in df_full.columns
+                ]
+                df_full = df_full.select(col_order)
             except KeyError:
                 df_full = dataset
 
