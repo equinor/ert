@@ -97,7 +97,37 @@ def run_cli(args: Namespace, plugin_manager: ErtPluginManager | None = None) -> 
         )
     except ValueError as e:
         raise ErtCliError(f"{args.mode} was not valid, failed with: {e}") from e
+    if (
+        ert_config.analysis_config.design_matrix is not None
+        and ert_config.analysis_config.design_matrix.active_realizations is not None
+    ):
+        dm_num_realizations = len(
+            ert_config.analysis_config.design_matrix.active_realizations
+        )
+        config_num_realizations = ert_config.runpath_config.num_realizations
 
+        if dm_num_realizations != config_num_realizations:
+            if hasattr(args, "realizations") and args.realizations is not None:
+                print(
+                    "Using realizations intersected between realizations_specified "
+                    f"and DESIGN_MATRIX ({model.active_realizations.count(True)})"
+                )
+            else:
+                print(
+                    f"NUM_REALIZATIONS ({config_num_realizations}) is "
+                    + (
+                        "greater "
+                        if dm_num_realizations < config_num_realizations
+                        else "less "
+                    )
+                    + f"than the number of realizations in DESIGN_MATRIX "
+                    f"({dm_num_realizations}). Using the realizations from "
+                    + (
+                        f"DESIGN_MATRIX ({dm_num_realizations})"
+                        if dm_num_realizations < config_num_realizations
+                        else f"NUM_REALIZATIONS ({config_num_realizations})"
+                    )
+                )
     if args.port_range is None and model.queue_system == QueueSystem.LOCAL:
         # This is within the range for ephemeral ports as defined by
         # most unix flavors https://en.wikipedia.org/wiki/Ephemeral_port
