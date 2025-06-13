@@ -123,6 +123,7 @@ class EnsembleConfig(BaseModel):
         ]
         if gen_kw:
             return gen_kw[0]
+        return None
 
     @no_type_check
     @classmethod

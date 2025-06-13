@@ -233,9 +233,9 @@ class DesignMatrix:
         for parameter in design_matrix_df.columns:
             transform_function_definitions.append(
                 TransformFunctionDefinition(
+                    group_name=DESIGN_MATRIX_GROUP,
                     name=parameter,
                     param_name="RAW",
-                    group_name=DESIGN_MATRIX_GROUP,
                     values=[],
                     input_source=DataSource.DESIGN_MATRIX,
                     update=False,
