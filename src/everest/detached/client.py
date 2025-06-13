@@ -7,7 +7,6 @@ import re
 import ssl
 import time
 import traceback
-from asyncio import QueueEmpty
 from base64 import b64encode
 from collections.abc import Callable
 from enum import StrEnum, auto
@@ -23,7 +22,7 @@ from ert.ensemble_evaluator import EndEvent
 from ert.run_models.event import EverestBatchResultEvent, status_event_from_json
 from ert.scheduler import create_driver
 from ert.scheduler.driver import Driver, FailedSubmit
-from ert.scheduler.event import FinishedEvent, StartedEvent
+from ert.scheduler.event import StartedEvent
 from ert.trace import get_traceparent
 from everest.config import EverestConfig, ServerConfig
 from everest.strings import OPT_PROGRESS_ID, SIM_PROGRESS_ID, EverEndpoints
@@ -63,18 +62,18 @@ async def start_server(config: EverestConfig, logging_level: int) -> Driver:
     if not isinstance(status, StartedEvent):
         poll_task.cancel()
         raise ValueError(f"Everserver not started as expected, got status: {status}")
-    start_time = time.time()
-    while time.time() < start_time + 5:
-        try:
-            status = await driver.event_queue.get_nowait()
-        except QueueEmpty:
-            continue
-        if isinstance(status, FinishedEvent):
-            poll_task.cancel()
-            raise ValueError(
-                f"Everserver not started as expected, got status: {status}"
-            )
-        await asyncio.sleep(0.5)
+    # start_time = time.time()
+    # while time.time() < start_time + 5:
+    #     try:
+    #         status = await driver.event_queue.get_nowait()
+    #     except QueueEmpty:
+    #         continue
+    #     if isinstance(status, FinishedEvent):
+    #         poll_task.cancel()
+    #         raise ValueError(
+    #             f"Everserver not started as expected, got status: {status}"
+    #         )
+    #     await asyncio.sleep(0.5)
     poll_task.cancel()
     logger.debug(
         f"Everserver started. Items left in queue: {driver.event_queue.qsize()}"
