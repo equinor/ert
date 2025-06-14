@@ -881,18 +881,42 @@ class LocalEnsemble(BaseMode):
             assert self._scalar_config is not None
             try:
                 existing = self._load_parameters_lazy(SCALAR_NAME).collect()
-                # df_full = existing.join(
-                #     dataset, on="realization", how="full", coalesce=True
-                # )
-                df_full = pl.concat([existing, dataset], how="align").unique(
-                    subset="realization", keep="last"
+                existing_realizations = existing["realization"].to_list()
+
+                new_columns = set(dataset.columns) - set(existing.columns)
+                if new_columns:
+                    existing = existing.with_columns(
+                        [
+                            pl.Series(
+                                name=col,
+                                values=[None] * existing.height,
+                                dtype=dataset.schema[col],
+                            )
+                            for col in new_columns
+                        ]
+                    )
+                updated_realizations = dataset.filter(
+                    pl.col("realization").is_in(existing_realizations)
                 )
+                if updated_realizations.height > 0:
+                    existing = existing.update(
+                        updated_realizations, on="realization", how="full"
+                    )
+
+                new_realizations = dataset.filter(
+                    ~pl.col("realization").is_in(existing_realizations)
+                )
+                if new_realizations.height > 0:
+                    existing = pl.concat(
+                        [existing, new_realizations],
+                        how="diagonal",
+                    )
                 col_order = ["realization"] + [
                     tf.name
                     for tf in self._scalar_config.transform_functions
-                    if tf.name in df_full.columns
+                    if tf.name in existing.columns
                 ]
-                df_full = df_full.select(col_order)
+                df_full = existing.select(col_order)
             except KeyError:
                 df_full = dataset
 

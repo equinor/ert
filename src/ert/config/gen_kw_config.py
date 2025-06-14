@@ -496,10 +496,10 @@ class GenKwConfig(ParameterConfig):
             no_update_keys = [
                 tf.name for tf in self.transform_functions if not tf.update
             ]
-            if no_update_keys:
-                df = df.select(no_update_keys)
+            if not no_update_keys:
+                return
+            df = df.select(["realization", *no_update_keys])
 
-        target_ensemble.save_parameters(self.name, realization=None, dataset=df)
         target_ensemble.save_parameters(self.name, realization=None, dataset=df)
 
     def shouldUseLogScale(self, keyword: str) -> bool:
