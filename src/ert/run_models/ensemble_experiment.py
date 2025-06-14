@@ -69,10 +69,9 @@ class EnsembleExperiment(BaseRunModel):
         # If design matrix is present, we try to merge design matrix parameters
         # to the experiment parameters and set new active realizations
         parameters_config = self.parameter_configuration
-        design_matrix = self.design_matrix
-        if design_matrix is not None and not restart:
+        if self.design_matrix is not None and not restart:
             try:
-                parameters_config = design_matrix.merge_with_existing_parameters(
+                parameters_config = self.design_matrix.merge_with_existing_parameters(
                     parameters_config
                 )
             except ConfigValidationError as exc:
@@ -112,8 +111,8 @@ class EnsembleExperiment(BaseRunModel):
             np.where(self.active_realizations)[0],
             parameters=[param.name for param in parameters_config],
             random_seed=self.random_seed,
-            design_matrix_df=design_matrix.design_matrix_df
-            if design_matrix is not None
+            design_matrix_df=self.design_matrix.design_matrix_df
+            if self.design_matrix is not None
             else None,
         )
 
