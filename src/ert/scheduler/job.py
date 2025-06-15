@@ -60,7 +60,7 @@ class Job:
     (LSF, PBS, SLURM, etc.)
     """
 
-    DEFAULT_CHECKSUM_TIMEOUT = 120
+    DEFAULT_FILE_VERIFICATION_TIMEOUT = 120
 
     def __init__(self, scheduler: Scheduler, real: Realization) -> None:
         self.real = real
@@ -73,6 +73,9 @@ class Job:
         self._requested_max_submit: int | None = None
         self._start_time: float | None = None
         self._end_time: float | None = None
+        self.remaining_file_verification_timeout = (
+            self.DEFAULT_FILE_VERIFICATION_TIMEOUT
+        )
 
     def unschedule(self, msg: str) -> None:
         self.state = JobState.ABORTED
@@ -107,7 +110,7 @@ class Job:
             if self._scheduler.submit_sleep_state:
                 await self._scheduler.submit_sleep_state.sleep_until_we_can_submit()
             await self._send(JobState.SUBMITTING)
-            submit_time = time.time()
+            self.submit_time = time.time()
             try:
                 await self.driver.submit(
                     self.real.iens,
@@ -127,7 +130,7 @@ class Job:
             await self._send(JobState.PENDING)
             await self.started.wait()
             self._start_time = time.time()
-            pending_time = self._start_time - submit_time
+            pending_time = self._start_time - self.submit_time
             logger.info(
                 f"Pending time for realization {self.iens} "
                 f"was {pending_time:.2f} seconds "
@@ -138,11 +141,6 @@ class Job:
             await self._send(JobState.RUNNING)
             if self.real.max_runtime is not None and self.real.max_runtime > 0:
                 timeout_task = asyncio.create_task(self._max_runtime_task())
-            if not self._scheduler.warnings_extracted:
-                self._scheduler.warnings_extracted = True
-                await log_warnings_from_forward_model(
-                    self.real, file_modified_after=submit_time
-                )
 
             await self.returncode
 
@@ -179,6 +177,15 @@ class Job:
                     await self._verify_checksum(checksum_lock)
                 async with forward_model_ok_lock:
                     await self._handle_finished_forward_model()
+                if not self._scheduler.warnings_extracted:
+                    self._scheduler.warnings_extracted = True
+                    self.remaining_file_verification_timeout = (
+                        await log_warnings_from_forward_model(
+                            self.real,
+                            job_submission_time=self.submit_time,
+                            timeout_seconds=self.remaining_file_verification_timeout,
+                        )
+                    )
                 break
 
             if attempt < max_submit - 1:
@@ -214,7 +221,7 @@ class Job:
         timeout: int | None = None,  # noqa: ASYNC109
     ) -> None:
         if timeout is None:
-            timeout = self.DEFAULT_CHECKSUM_TIMEOUT
+            timeout = self.DEFAULT_FILE_VERIFICATION_TIMEOUT
         # Wait for job runpath to be in the checksum dictionary
         runpath = self.real.run_arg.runpath
         while runpath not in self._scheduler.checksum:
@@ -259,6 +266,7 @@ class Job:
                     logger.warning(f"Checksum not received for file {file_path}")
                 else:
                     logger.error(f"Disk synchronization failed for {file_path}")
+        self.DEFAULT_FILE_VERIFICATION_TIMEOUT = timeout
 
     async def _handle_finished_forward_model(self) -> None:
         callback_status, status_msg = await forward_model_ok(
@@ -370,8 +378,8 @@ def log_info_from_exit_file(exit_file_path: Path) -> None:
 
 
 async def log_warnings_from_forward_model(
-    real: Realization, file_modified_after: float
-) -> None:
+    real: Realization, job_submission_time: float, timeout_seconds: int = 120
+) -> int:
     """Parse all stdout and stderr files from running the forward model
     for anything that looks like a Warning, and log it.
 
@@ -410,19 +418,31 @@ async def log_warnings_from_forward_model(
         for step_idx, step in enumerate(real.fm_steps):
             if step.stdout_file is not None:
                 stdout_file = runpath / f"{step.stdout_file}.{step_idx}"
-                if (
-                    stdout_file.exists()
-                    and stdout_file.stat().st_mtime >= file_modified_after
-                ):
-                    await log_warnings_from_file(
-                        stdout_file, real.iens, step, step_idx, "stdout"
-                    )
+                for _ in range(timeout_seconds):
+                    if not (
+                        stdout_file.exists()
+                        and stdout_file.stat().st_mtime >= job_submission_time
+                    ):
+                        timeout_seconds -= 1
+                        if timeout_seconds == 0:
+                            return timeout_seconds
+                        await asyncio.sleep(1)
+
+                await log_warnings_from_file(
+                    stdout_file, real.iens, step, step_idx, "stdout"
+                )
             if step.stderr_file is not None:
                 stderr_file = runpath / f"{step.stderr_file}.{step_idx}"
-                if (
-                    stderr_file.exists()
-                    and stderr_file.stat().st_mtime >= file_modified_after
-                ):
-                    await log_warnings_from_file(
-                        stderr_file, real.iens, step, step_idx, "stderr"
-                    )
+                for _ in range(timeout_seconds):
+                    if not (
+                        stderr_file.exists()
+                        and stderr_file.stat().st_mtime >= job_submission_time
+                    ):
+                        timeout_seconds -= 1
+                        if timeout_seconds == 0:
+                            return timeout_seconds
+                        await asyncio.sleep(1)
+                await log_warnings_from_file(
+                    stderr_file, real.iens, step, step_idx, "stderr"
+                )
+    return timeout_seconds
