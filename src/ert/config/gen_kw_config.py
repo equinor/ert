@@ -82,11 +82,6 @@ class GenKwConfig(ParameterConfig):
     name: str = SCALAR_NAME
 
     def __post_init__(self) -> None:
-        if self.name != SCALAR_NAME:
-            raise ConfigValidationError.with_context(
-                f"GEN_KW name must be '{SCALAR_NAME}', got '{self.name}'",
-                self.name,
-            )
         self.transform_functions: list[TransformFunction] = []
         self.groups: dict[str, list[TransformFunction]] = defaultdict(list)
         for e in self.transform_function_definitions:
