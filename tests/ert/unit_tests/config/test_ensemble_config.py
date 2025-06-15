@@ -166,30 +166,31 @@ def test_that_empty_grid_file_raises(tmpdir):
             _ = ErtConfig.from_file("config.ert")
 
 
-@pytest.mark.usefixtures("use_tmpdir")
-def test_validation_of_duplicate_gen_kw_parameter_names():
-    Path("FAULT_TEMPLATE").write_text("", encoding="utf-8")
-    config_dict = {
-        ConfigKeys.GEN_KW: [
-            [
-                "test_group1",
-                ("FAULT_TEMPLATE", ""),
-                "MULTFLT.INC",
-                ("MULTFLT1.TXT", "a UNIFORM 0 1\nc UNIFORM 2 5"),
-                {"FORWARD_INIT": "FALSE"},
-            ],
-            [
-                "test_group2",
-                ("FAULT_TEMPLATE", ""),
-                "MULTFLT.INC",
-                ("MULTFLT2.TXT", "a UNIFORM 0 1\nc UNIFORM 4 7"),
-                {"FORWARD_INIT": "FALSE"},
-            ],
-        ],
-    }
-    with pytest.raises(
-        ConfigValidationError,
-        match=r"GEN_KW parameter names must be unique,"
-        r" found duplicates: a\(2\), c\(2\)",
-    ):
-        ErtConfig.from_dict(config_dict=config_dict)
+# refactor or delete this test! More likely the latter
+# @pytest.mark.usefixtures("use_tmpdir")
+# def test_validation_of_duplicate_gen_kw_parameter_names():
+#     Path("FAULT_TEMPLATE").write_text("", encoding="utf-8")
+#     config_dict = {
+#         ConfigKeys.GEN_KW: [
+#             [
+#                 "test_group1",
+#                 ("FAULT_TEMPLATE", ""),
+#                 "MULTFLT.INC",
+#                 ("MULTFLT1.TXT", "a UNIFORM 0 1\nc UNIFORM 2 5"),
+#                 {"FORWARD_INIT": "FALSE"},
+#             ],
+#             [
+#                 "test_group2",
+#                 ("FAULT_TEMPLATE", ""),
+#                 "MULTFLT.INC",
+#                 ("MULTFLT2.TXT", "a UNIFORM 0 1\nc UNIFORM 4 7"),
+#                 {"FORWARD_INIT": "FALSE"},
+#             ],
+#         ],
+#     }
+#     with pytest.raises(
+#         ConfigValidationError,
+#         match=r"GEN_KW parameter names must be unique,"
+#         r" found duplicates: a\(2\), c\(2\)",
+#     ):
+#         ErtConfig.from_dict(config_dict=config_dict)

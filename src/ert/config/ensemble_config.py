@@ -79,9 +79,7 @@ class EnsembleConfig(BaseModel):
     ) -> None:
         group_names: list[str] = []
         if gen_kw_node is not None:
-            group_names.extend(
-                [tfd.group_name for tfd in gen_kw_node.transform_function_definitions]
-            )
+            group_names.extend(gen_kw_node.groups.keys())
         names_counter = Counter([*group_names, *gen_data_list])
         duplicate_names = [n for n, c in names_counter.items() if c > 1]
         if duplicate_names:
