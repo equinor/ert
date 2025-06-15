@@ -109,6 +109,7 @@ class ParameterConfig(ABC):
         source_ensemble: Ensemble,
         target_ensemble: Ensemble,
         realizations: npt.NDArray[np.int_],
+        update_mask: bool = False,
     ) -> None:
         """
         Copy parameters from one ensemble to another.
