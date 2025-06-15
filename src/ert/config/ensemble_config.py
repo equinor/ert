@@ -65,21 +65,24 @@ class EnsembleConfig(BaseModel):
     @model_validator(mode="after")
     def set_derived_fields(self) -> Self:
         self._check_for_duplicate_names(
-            [p.name for p in self.parameter_configs.values()],
+            self.get_gen_kw(),
             [key for config in self.response_configs.values() for key in config.keys],
         )
-        self._check_for_duplicate_gen_kw_param_names(
-            [p for p in self.parameter_configs.values() if isinstance(p, GenKwConfig)]
-        )
+        self._check_for_duplicate_gen_kw_param_names(self.get_gen_kw())
 
         self.grid_file = _get_abs_path(self.grid_file)
         return self
 
     @staticmethod
     def _check_for_duplicate_names(
-        parameter_list: list[str], gen_data_list: list[str]
+        gen_kw_node: GenKwConfig | None, gen_data_list: list[str]
     ) -> None:
-        names_counter = Counter(g for g in parameter_list + gen_data_list)
+        group_names: list[str] = []
+        if gen_kw_node is not None:
+            group_names.extend(
+                [tfd.group_name for tfd in gen_kw_node.transform_function_definitions]
+            )
+        names_counter = Counter([*group_names, *gen_data_list])
         duplicate_names = [n for n, c in names_counter.items() if c > 1]
         if duplicate_names:
             raise ConfigValidationError(
@@ -89,17 +92,15 @@ class EnsembleConfig(BaseModel):
             )
 
     @staticmethod
-    def _check_for_duplicate_gen_kw_param_names(gen_kw_list: list[GenKwConfig]) -> None:
-        gen_kw_param_count = Counter(
-            keyword.name for p in gen_kw_list for keyword in p.transform_functions
-        )
-        duplicate_gen_kw_names = [
-            (n, c) for n, c in gen_kw_param_count.items() if c > 1
-        ]
+    def _check_for_duplicate_gen_kw_param_names(gen_kw: GenKwConfig | None) -> None:
+        if gen_kw is None:
+            return
+        param_name_counter = Counter(tf.name for tf in gen_kw.transform_functions)
+        duplicates = [(n, c) for n, c in param_name_counter.items() if c > 1]
 
-        if duplicate_gen_kw_names:
+        if duplicates:
             duplicates_formatted = ", ".join(
-                f"{name}({count})" for name, count in duplicate_gen_kw_names
+                f"{name}({count})" for name, count in duplicates
             )
             raise ConfigValidationError(
                 "GEN_KW parameter names must be unique, found duplicates:"
@@ -155,8 +156,10 @@ class EnsembleConfig(BaseModel):
                 )
             return FieldConfig.from_config_list(grid_file_path, dims, field_list)
 
+        # take care of scalar a single gen_kw config
+        gen_kw_config = GenKwConfig.from_config_list(gen_kw_list)
         parameter_configs = (
-            [GenKwConfig.from_config_list(gen_kw_list)]
+            ([gen_kw_config] if gen_kw_config is not None else [])
             + [SurfaceConfig.from_config_list(s) for s in surface_list]
             + [make_field(f) for f in field_list]
         )
