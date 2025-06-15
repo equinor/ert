@@ -19,7 +19,7 @@ import xarray as xr
 from pydantic import BaseModel
 from typing_extensions import TypedDict
 
-from ert.config import SCALAR_NAME, GenKwConfig
+from ert.config import SCALAR_NAME, GenKwConfig, ParameterConfig
 from ert.config.response_config import InvalidResponseFile
 from ert.storage.load_status import LoadResult, LoadStatus
 from ert.storage.mode import BaseMode, Mode, require_write
@@ -582,6 +582,7 @@ class LocalEnsemble(BaseMode):
 
         """
         group_keys: list[str] | None = None
+        config: ParameterConfig | None = None
         if group not in self.experiment.parameter_configuration:
             if self._scalar_config:
                 try:
@@ -684,20 +685,16 @@ class LocalEnsemble(BaseMode):
     def load_scalars(
         self, group: str | None = None, realizations: npt.NDArray[np.int_] | None = None
     ) -> pl.DataFrame:
+        if self._scalar_config is None:
+            return pl.DataFrame()
+        groups = [group] if group else list(self._scalar_config.groups.keys())
         dataframes = []
-        gen_kws = [
-            config
-            for config in self.experiment.parameter_configuration.values()
-            if isinstance(config, GenKwConfig)
-        ]
-        if group:
-            gen_kws = [config for config in gen_kws if config.name == group]
-        for config in gen_kws:
-            df = self.load_parameters(config.name, realizations, transformed=True)
+        for group_name in groups:
+            df = self.load_parameters(group_name, realizations, transformed=True)
             assert isinstance(df, pl.DataFrame)
             df = df.rename(
                 {
-                    col: f"{config.name}:{col}"
+                    col: f"{group_name}:{col}"
                     for col in df.columns
                     if col != "realization"
                 }
@@ -705,7 +702,7 @@ class LocalEnsemble(BaseMode):
             for parameter in df.columns:
                 if parameter == "realization":
                     continue
-                if config.shouldUseLogScale(parameter.split(":")[-1]):
+                if self._scalar_config.shouldUseLogScale(parameter.split(":")[-1]):
                     df = df.with_columns(
                         (np.log10(pl.col(parameter))).alias(f"LOG10_{parameter}")
                     )
