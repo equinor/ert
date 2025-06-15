@@ -583,9 +583,14 @@ class LocalEnsemble(BaseMode):
         """
         group_keys: list[str] | None = None
         if group not in self.experiment.parameter_configuration:
-            if self._scalar_config and group in self._scalar_config.groups:
-                group_keys = [key.name for key in self._scalar_config.groups[group]]
-                config = self._scalar_config
+            if self._scalar_config:
+                try:
+                    group_keys = self._scalar_config.group_keys(group)
+                    config = self._scalar_config
+                except KeyError as e:
+                    raise KeyError(
+                        f"{group} is not registered to the experiment."
+                    ) from e
             else:
                 raise KeyError(f"{group} is not registered to the experiment.")
         else:
@@ -667,7 +672,7 @@ class LocalEnsemble(BaseMode):
             ).with_columns(
                 [
                     pl.Series(parameters[i, :]).alias(tf.name)
-                    for i, tf in enumerate(config_node.groups[param_group])
+                    for i, tf in enumerate(config_node.group_paramaters(param_group))
                     if not update_mask or tf.update
                 ]
             )
