@@ -187,10 +187,10 @@ class GenKwConfig(ParameterConfig):
         return None
 
     @classmethod
-    def from_config_list(cls, gen_kw_list: ConfigList) -> Self:
+    def from_config_list(cls, gen_kw_list: ConfigList) -> Self | None:
         groups: list[ConfigGroup] = []
         if not gen_kw_list:
-            pass
+            return None
         elif isinstance(gen_kw_list[0], (str, dict)):
             groups = [cast(ConfigGroup, gen_kw_list)]
         else:
