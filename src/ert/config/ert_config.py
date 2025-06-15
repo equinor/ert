@@ -30,7 +30,6 @@ from .forward_model_step import (
     ForwardModelStepValidationError,
     ForwardModelStepWarning,
 )
-from .gen_kw_config import GenKwConfig
 from .model_config import ModelConfig
 from .observation_vector import ObsVector
 from .observations import EnkfObs
@@ -1010,33 +1009,21 @@ class ErtConfig(BaseModel):
                 x.name
                 for x in dm.parameter_configuration.transform_function_definitions
             }
-            for group_name, config in ensemble_config.parameter_configs.items():
-                if not isinstance(config, GenKwConfig):
-                    continue
-                group_params = {x.name for x in config.transform_function_definitions}
-                if group_name == DESIGN_MATRIX_GROUP:
+            if gen_kw := ensemble_config.get_gen_kw():
+                group_names = list(gen_kw.groups.keys())
+                if DESIGN_MATRIX_GROUP in group_names:
                     dm_errors.append(
                         ConfigValidationError(
                             f"Cannot have GEN_KW with group name {DESIGN_MATRIX_GROUP} "
                             "when using DESIGN_MATRIX keyword."
                         )
                     )
-                if dm_params == group_params:
+                gen_kw_params = {x.name for x in gen_kw.transform_functions}
+                if intersection := gen_kw_params & dm_params:
                     ConfigWarning.warn(
-                        f"Parameters {group_params} from GEN_KW group '{group_name}' "
+                        f"Parameters {intersection} from GEN_KW "
                         "will be overridden by design matrix. This will cause "
                         "updates to be turned off for these parameters."
-                    )
-                elif intersection := dm_params & group_params:
-                    dm_errors.append(
-                        ConfigValidationError(
-                            "Only full overlaps of design matrix and "
-                            "one genkw group are supported.\n"
-                            f"design matrix parameters: {dm_params}\n"
-                            f"parameters in genkw group <{group_name}>: "
-                            f"{group_params}\n"
-                            f"overlap between them: {intersection}"
-                        )
                     )
             if dm_errors:
                 raise ConfigValidationError.from_collected(dm_errors)
