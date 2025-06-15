@@ -98,14 +98,19 @@ class GenKwConfig(ParameterConfig):
             else:
                 tf = self._parse_transform_function_definition(e)
             self.transform_functions.append(tf)
-            self.groups[SCALAR_NAME].append(tf)
             self.groups[tf.group_name].append(tf)
         self.update = any(param.update for param in self.transform_function_definitions)
         self._validate()
 
     def group_keys(self, group: str) -> list[str]:
         """Return the keys of the transform functions in the specified group."""
-        return [tf.name for tf in self.groups[group]]
+        return [tf.name for tf in self.group_paramaters(group)]
+
+    def group_paramaters(self, group: str) -> list[TransformFunction]:
+        """Return the transform functions in the specified group."""
+        if group == SCALAR_NAME:
+            return self.transform_functions
+        return self.groups[group]
 
     def __contains__(self, item: str) -> bool:
         return item in [v.name for v in self.transform_function_definitions]
