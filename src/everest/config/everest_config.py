@@ -33,7 +33,6 @@ from ert.config.parsing.base_model_context import init_context
 from ert.config.parsing.config_errors import ConfigWarning
 from ert.config.parsing.queue_system import QueueSystem
 from ert.plugins import ErtPluginManager
-from everest.config.control_variable_config import ControlVariableGuessListConfig
 from everest.config.install_template_config import InstallTemplateConfig
 from everest.config.server_config import ServerConfig
 from everest.config.validation_utils import (
@@ -519,8 +518,14 @@ to read summary data from forward model, do:
         controls = self.controls
         if controls is None:
             return self
-        control_names = self.formatted_control_names
-        control_names_deprecated = self.formatted_control_names_dotdash
+        control_names = [
+            name for config in self.controls for name in config.formatted_control_names
+        ]
+        control_names_deprecated = [
+            name
+            for config in self.controls
+            for name in config.formatted_control_names_dotdash
+        ]
         errors = []
 
         for input_const in input_constraints:
@@ -687,36 +692,6 @@ to read summary data from forward model, do:
     def control_names(self) -> list[str]:
         controls = self.controls or []
         return [control.name for control in controls]
-
-    @property
-    def formatted_control_names(self) -> list[str]:
-        names = []
-        for control in self.controls:
-            for variable in control.variables:
-                if isinstance(variable, ControlVariableGuessListConfig):
-                    for index in range(1, len(variable.initial_guess) + 1):
-                        names.append(f"{control.name}.{variable.name}.{index}")
-                elif variable.index is not None:
-                    names.append(f"{control.name}.{variable.name}.{variable.index}")
-                else:
-                    names.append(f"{control.name}.{variable.name}")
-        return names
-
-    @property
-    def formatted_control_names_dotdash(self) -> list[str]:
-        # Note: Should be removed as the .- way of referencing controls
-        # from input constraints is removed
-        names = []
-        for control in self.controls:
-            for variable in control.variables:
-                if isinstance(variable, ControlVariableGuessListConfig):
-                    for index in range(1, len(variable.initial_guess) + 1):
-                        names.append(f"{control.name}.{variable.name}-{index}")
-                elif variable.index is not None:
-                    names.append(f"{control.name}.{variable.name}-{variable.index}")
-                else:
-                    names.append(f"{control.name}.{variable.name}")
-        return names
 
     @property
     def objective_names(self) -> list[str]:

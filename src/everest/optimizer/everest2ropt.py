@@ -9,6 +9,7 @@ from ropt.enums import PerturbationType, VariableType
 from ropt.transforms import OptModelTransforms
 
 from everest.config import (
+    ControlConfig,
     EverestConfig,
     InputConstraintConfig,
     ObjectiveFunctionConfig,
@@ -115,10 +116,16 @@ def _get_bounds(
 
 def _parse_input_constraints(
     input_constraints: list[InputConstraintConfig],
-    formatted_control_names: list[str],
-    formatted_control_names_dotdash: list[str],
+    controls: list[ControlConfig],
     ropt_config: dict[str, Any],
 ) -> None:
+    formatted_control_names = [
+        name for config in controls for name in config.formatted_control_names
+    ]
+    formatted_control_names_dotdash = [
+        name for config in controls for name in config.formatted_control_names_dotdash
+    ]
+
     def _get_control_index(name: str) -> int:
         try:
             matching_index = formatted_control_names.index(name.replace("-", "."))
@@ -280,8 +287,7 @@ def _everest2ropt(ever_config: EverestConfig) -> dict[str, Any]:
     _parse_objectives(ever_config.objective_functions, ropt_config)
     _parse_input_constraints(
         ever_config.input_constraints,
-        ever_config.formatted_control_names,
-        ever_config.formatted_control_names_dotdash,
+        ever_config.controls,
         ropt_config,
     )
     _parse_output_constraints(ever_config.output_constraints, ropt_config)
