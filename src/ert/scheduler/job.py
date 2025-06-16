@@ -53,6 +53,9 @@ class JobState(StrEnum):
     ABORTED = "ABORTED"
 
 
+FILE_VERIFICATION_LOG_TIME_THRESHOLD = 5
+
+
 class Job:
     """Handle to a single job scheduler job.
 
@@ -73,9 +76,11 @@ class Job:
         self._requested_max_submit: int | None = None
         self._start_time: float | None = None
         self._end_time: float | None = None
-        self.remaining_file_verification_timeout = (
-            self.DEFAULT_FILE_VERIFICATION_TIMEOUT
-        )
+        self.remaining_file_verification_time = self.DEFAULT_FILE_VERIFICATION_TIMEOUT
+        self.remember_remaining_time()
+
+    def remember_remaining_time(self) -> None:
+        self.previous_file_verification_time = self.remaining_file_verification_time
 
     def unschedule(self, msg: str) -> None:
         self.state = JobState.ABORTED
@@ -155,6 +160,24 @@ class Job:
                 timeout_task.cancel()
             sem.release()
 
+    async def log_time_spent_above_threshold_waiting_for_files(
+        self, method_name: str
+    ) -> None:
+        if self.previous_file_verification_time <= 0:
+            return
+        elapsed_time = (
+            self.previous_file_verification_time - self.remaining_file_verification_time
+        )
+        if self.remaining_file_verification_time <= 0:
+            logger.warning(
+                f"{method_name} timed out after waiting "
+                f"{elapsed_time} seconds for files"
+            )
+        elif elapsed_time >= FILE_VERIFICATION_LOG_TIME_THRESHOLD:
+            logger.warning(
+                f"{method_name} spent {elapsed_time} seconds waiting for files"
+            )
+
     @tracer.start_as_current_span(f"{__name__}.run")
     async def run(
         self,
@@ -174,17 +197,27 @@ class Job:
 
             if self.returncode.result() == 0:
                 if self._scheduler._manifest_queue is not None:
+                    self.remember_remaining_time()
                     await self._verify_checksum(checksum_lock)
+                    await self.log_time_spent_above_threshold_waiting_for_files(
+                        method_name=self._verify_checksum.__name__
+                    )
+
                 async with forward_model_ok_lock:
                     await self._handle_finished_forward_model()
+
                 if not self._scheduler.warnings_extracted:
                     self._scheduler.warnings_extracted = True
-                    self.remaining_file_verification_timeout = (
+                    self.remember_remaining_time()
+                    self.remaining_file_verification_time = (
                         await log_warnings_from_forward_model(
                             self.real,
                             job_submission_time=self.submit_time,
-                            timeout_seconds=self.remaining_file_verification_timeout,
+                            timeout_seconds=self.remaining_file_verification_time,
                         )
+                    )
+                    await self.log_time_spent_above_threshold_waiting_for_files(
+                        method_name=log_warnings_from_forward_model.__name__
                     )
                 break
 
@@ -231,7 +264,7 @@ class Job:
         checksum = self._scheduler.checksum.get(runpath)
         if checksum is None:
             logger.warning(f"Checksum information not received for {runpath}")
-            self.remaining_file_verification_timeout = timeout
+            self.remaining_file_verification_time = timeout
             return
 
         errors = "\n".join(
@@ -265,7 +298,7 @@ class Job:
                     logger.warning(f"Checksum not received for file {file_path}")
                 else:
                     logger.error(f"Disk synchronization failed for {file_path}")
-        self.remaining_file_verification_timeout = timeout
+        self.remaining_file_verification_time = timeout
 
     async def _handle_finished_forward_model(self) -> None:
         callback_status, status_msg = await forward_model_ok(
@@ -447,7 +480,4 @@ async def log_warnings_from_forward_model(
                     )
             if timeout_seconds <= 0:
                 break
-
-    if timeout_seconds <= 0:
-        logger.info("Could not log forward model warnings: Timed out")
     return timeout_seconds

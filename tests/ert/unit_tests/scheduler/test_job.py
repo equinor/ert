@@ -586,3 +586,50 @@ async def test_log_warnings_from_forward_model_can_detect_files_being_created_af
         realization, time.time(), initial_timeout
     )
     assert remaining_timeout == initial_timeout - delay
+
+
+@pytest.mark.parametrize(
+    "method_to_test", ["_verify_checksum", "log_warnings_from_forward_model"]
+)
+async def test_job_logs_timeouts_from_individual_methods(
+    realization, mocker, tmpdir, monkeypatch, caplog, method_to_test
+):
+    scheduler = create_scheduler()
+    scheduler.warnings_extracted = False
+    scheduler._manifest_queue = asyncio.Queue()
+    scheduler.checksum = {}
+
+    job_ = Job(scheduler, realization)
+
+    if method_to_test == "_verify_checksum":
+        mocker.patch(
+            "ert.scheduler.job.log_warnings_from_forward_model",
+            new_callable=AsyncMock,
+            return_value=0,
+        )
+    elif method_to_test == "log_warnings_from_forward_model":
+        # Need a fm step to check for files
+        realization.fm_steps = [
+            ForwardModelStep(
+                name="foo",
+                executable="foo",
+            )
+        ]
+        mocker.patch.object(Job, "_verify_checksum")
+
+    job_run_task = asyncio.create_task(
+        job_.run(asyncio.Semaphore(), asyncio.Lock(), asyncio.Lock(), max_submit=1)
+    )
+    # Mock asyncio.sleep to fast-forward time
+    mocker.patch("asyncio.sleep")
+
+    job_.started.set()
+    job_.returncode.set_result(0)
+
+    with caplog.at_level(logging.INFO):
+        await asyncio.gather(job_run_task)
+
+    assert (
+        f"{method_to_test} timed out after waiting "
+        f"{Job.DEFAULT_FILE_VERIFICATION_TIMEOUT} seconds for files" in caplog.text
+    )
