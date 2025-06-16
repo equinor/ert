@@ -43,7 +43,6 @@ def visualization_entry(args: list[str] | None = None) -> None:
     elif server_state["status"] in {
         ServerStatus.running,
         ServerStatus.starting,
-        ServerStatus.exporting_to_csv,
     }:
         print(
             "Everest is running, please wait for it to finish before "
