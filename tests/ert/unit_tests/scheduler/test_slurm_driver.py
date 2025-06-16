@@ -4,7 +4,6 @@ import os
 import random
 import stat
 import string
-import sys
 from contextlib import ExitStack as does_not_raise
 from pathlib import Path
 
@@ -370,19 +369,14 @@ async def test_submit_with_num_cpu(pytestconfig, job_name):
 
 
 @pytest.mark.integration_test
-@pytest.mark.flaky(reruns=3)
+@pytest.mark.flaky(reruns=4)
 async def test_kill_before_submit_is_finished(
-    tmp_path, monkeypatch, caplog, pytestconfig
+    tmp_path, monkeypatch, caplog, pytestconfig, request
 ):
     os.chdir(tmp_path)
 
-    if sys.platform.startswith("darwin"):
-        # Mitigate flakiness on low-power test nodes
-        job_kill_window = 5
-        test_grace_time = 10
-    else:
-        job_kill_window = 1
-        test_grace_time = 2
+    job_kill_window = 1 * 2 ** (request.node.execution_count - 1)
+    test_grace_time = 2 * 2 ** (request.node.execution_count - 1)
 
     bin_path = tmp_path / "bin"
     bin_path.mkdir()
