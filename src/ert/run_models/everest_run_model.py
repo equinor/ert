@@ -165,9 +165,6 @@ class EverestRunModel(BaseRunModel):
         optimization_callback: OptimizerCallback | None = None,
         status_queue: queue.SimpleQueue[StatusEvents] | None = None,
     ) -> EverestRunModel:
-        Path(everest_config.log_dir).mkdir(parents=True, exist_ok=True)
-        Path(everest_config.optimization_output_dir).mkdir(parents=True, exist_ok=True)
-
         logger.info(
             "Using random seed: %d. To deterministically reproduce this experiment, "
             "add the above random seed to your configuration file.",
