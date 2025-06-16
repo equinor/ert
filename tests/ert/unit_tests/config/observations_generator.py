@@ -156,7 +156,7 @@ time_types = st.sampled_from(["date", "days", "restart", "hours"])
 
 @st.composite
 def summary_observations(
-    draw, summary_keys, std_cutoff, names, dates, time_types=time_types
+    draw, summary_keys, std_cutoff, names, datetimes, time_types=time_types
 ):
     kws = {
         "name": draw(names),
@@ -201,8 +201,8 @@ def summary_observations(
 
     time_type = draw(time_types)
     if time_type == "date":
-        date = draw(dates)
-        kws["date"] = date.strftime("%Y-%m-%d")
+        _datetime = draw(datetimes)
+        kws["date"] = _datetime.date().isoformat()
     if time_type in {"days", "hours"}:
         kws[time_type] = draw(st.floats(min_value=1, max_value=3000))
     if time_type == "restart":
@@ -223,7 +223,7 @@ def observations(draw, ensemble_keys, summary_keys, std_cutoff, start_date):
     unique_summary_names = summary_keys.filter(lambda x: x not in seen).map(
         lambda x: seen.add(x) or x
     )
-    dates = st.datetimes(
+    datetimes = st.datetimes(
         max_value=start_date + datetime.timedelta(days=200_000),  # ~ 300 years
         min_value=start_date + datetime.timedelta(days=1),
     )
@@ -235,7 +235,7 @@ def observations(draw, ensemble_keys, summary_keys, std_cutoff, start_date):
     if summary_keys is not None:
         observation_generators.extend(
             (
-                summary_observations(summary_keys, std_cutoff, unique_names, dates),
+                summary_observations(summary_keys, std_cutoff, unique_names, datetimes),
                 st.builds(
                     HistoryObservation,
                     error=st.floats(

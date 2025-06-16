@@ -61,9 +61,7 @@ def write_summary_data(
 
                 step = report_step * mini_step_count + mini_step
                 day = float(step)
-                time_map.append(
-                    (start_date + datetime.timedelta(days=day)).strftime("%Y-%m-%d")
-                )
+                time_map.append((start_date + datetime.timedelta(days=day)).isoformat())
                 values = [
                     simulator.fopt(),
                     simulator.fopr(),
