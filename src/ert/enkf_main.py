@@ -4,7 +4,7 @@ import json
 import logging
 import os
 from collections.abc import Iterable, Mapping
-from datetime import datetime
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
@@ -37,7 +37,7 @@ logger = logging.getLogger(__name__)
 def _backup_if_existing(path: Path) -> None:
     if not path.exists():
         return
-    timestamp = datetime.now().strftime("%Y-%m-%d_%H-%M-%SZ")
+    timestamp = datetime.now(UTC).isoformat(timespec="seconds")
     new_path = path.parent / f"{path.name}_backup_{timestamp}"
     path.rename(new_path)
 

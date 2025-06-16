@@ -84,7 +84,7 @@ if __name__ == "__main__":
         date = date_ranges[index + 1]  # end of period
         production_sum = production_sums[index]
 
-        oil_price = OIL_PRICES[date.date().strftime("%Y-%m-%d")]
+        oil_price = OIL_PRICES[date.date().isoformat()]
 
         production_value = oil_price * production_sum
         npv += production_value

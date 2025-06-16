@@ -51,7 +51,7 @@ observation_times = st.dates(
                     summary_keys=st.just("FOPR"),
                     std_cutoff=10.0,
                     names=st.just("FOPR_OBSERVATION"),
-                    dates=st.just(observation_time),
+                    datetimes=st.just(observation_time),
                     time_types=st.just("date"),
                 ),
             }

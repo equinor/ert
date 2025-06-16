@@ -120,7 +120,7 @@ class LocalExperiment(BaseMode):
             Instance of the newly created experiment.
         """
         if name is None:
-            name = datetime.today().strftime("%Y-%m-%d")
+            name = datetime.today().isoformat()
 
         (path / "index.json").write_text(
             _Index(id=uuid, name=name).model_dump_json(indent=2)

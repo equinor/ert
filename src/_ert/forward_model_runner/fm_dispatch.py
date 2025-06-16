@@ -63,9 +63,9 @@ def _setup_logging(directory: str = "logs"):
     )
 
     filename = (
-        f"forward-model-runner-log-{datetime.now().strftime('%Y-%m-%dT%H%M')}.txt"
+        f"forward-model-runner-log-{datetime.now().isoformat(timespec='minutes')}.txt"
     )
-    csv_filename = f"memory-profile-{datetime.now().strftime('%Y-%m-%dT%H%M')}.csv"
+    csv_filename = f"memory-profile-{datetime.now().isoformat(timespec='minutes')}.csv"
 
     handler = logging.FileHandler(filename=directory + "/" + filename)
     handler.setFormatter(formatter)
