@@ -263,7 +263,6 @@ class ServerStatus(StrEnum):
 
     starting = auto()
     running = auto()
-    exporting_to_csv = auto()
     completed = auto()
     stopped = auto()
     failed = auto()
