@@ -70,7 +70,7 @@ class ExperimentRunnerState:
     started: bool = False
     events: list[StatusEvents] = dataclasses.field(default_factory=list)
     subscribers: dict[str, "Subscriber"] = dataclasses.field(default_factory=dict)
-    config_path: str | None = None
+    config_path: str | os.PathLike[str] | None = None
     start_time_unix: int | None = None
 
 
@@ -78,7 +78,7 @@ shared_data = ExperimentRunnerState()
 security = HTTPBasic()
 
 
-def _check_authentication(auth_header: str) -> None:
+def _check_authentication(auth_header: str | None) -> None:
     if auth_header is None:
         raise WebSocketException(
             code=status.WS_1008_POLICY_VIOLATION, reason="No authentication"
@@ -316,7 +316,7 @@ class Subscriber:
     def notify(self) -> None:
         self._event.set()
 
-    def done(self):
+    def done(self) -> None:
         self._done.set()
 
     async def wait_for_event(self) -> None:
