@@ -59,10 +59,6 @@ class EverestClient:
         )
 
     @property
-    def simulation_dir(self) -> str:
-        return self._http_get(EverEndpoints.simulation_dir).text
-
-    @property
     def config_filename(self) -> str:
         config_path = self._http_get(EverEndpoints.config_path).text
 
