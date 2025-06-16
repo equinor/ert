@@ -31,6 +31,7 @@ def add_parser_options(ap: ArgumentParser) -> None:
     ap.add_argument(
         "--host", type=str, default=os.environ.get("ERT_STORAGE_HOST", "127.0.0.1")
     )
+    ap.add_argument("--logging-config", type=str, default=None)
     ap.add_argument(
         "--verbose", action="store_true", help="Show verbose output.", default=False
     )
