@@ -6,6 +6,7 @@ import os
 import random
 import signal
 import socket
+import ssl
 import string
 import sys
 import threading
@@ -25,6 +26,11 @@ from ert.shared import __file__ as ert_shared_path
 from ert.shared import find_available_socket
 from ert.shared.storage.command import add_parser_options
 from ert.trace import tracer
+from everest.detached.everserver import (
+    _generate_authentication,
+    _generate_certificate,
+    _get_machine_name,
+)
 
 DARK_STORAGE_APP = "ert.dark_storage.app:app"
 
@@ -67,17 +73,21 @@ def parse_args() -> argparse.Namespace:
     return ap.parse_args()
 
 
-def _create_connection_info(sock: socket.socket, authtoken: str) -> dict[str, Any]:
+def _create_connection_info(
+    sock: socket.socket, authtoken: str, cert: str | os.PathLike[str]
+) -> dict[str, Any]:
     connection_info = {
         "urls": [
-            f"http://{host}:{sock.getsockname()[1]}"
+            f"https://{host}:{sock.getsockname()[1]}"
             for host in (
                 sock.getsockname()[0],
                 socket.gethostname(),
                 socket.getfqdn(),
+                _get_machine_name(),
             )
         ],
         "authtoken": authtoken,
+        "cert": cert,
     }
 
     os.environ["ERT_STORAGE_CONNECTION_STRING"] = json.dumps(
@@ -104,8 +114,9 @@ def run_server(
         config_args.update(reload=True, reload_dirs=[os.path.dirname(ert_shared_path)])
         os.environ["ERT_STORAGE_DEBUG"] = "1"
 
-    sock = find_available_socket(host=args.host, port_range=range(51850, 51870 + 1))
-    connection_info = _create_connection_info(sock, authtoken)
+    sock = find_available_socket(
+        host=_get_machine_name(), port_range=range(51850, 51870 + 1)
+    )
 
     # Appropriated from uvicorn.main:run
     os.environ["ERT_STORAGE_NO_TOKEN"] = "1"
@@ -118,6 +129,8 @@ def run_server(
         if uvicorn_config is None
         else uvicorn_config
     )
+    assert config.ssl_certfile
+    connection_info = _create_connection_info(sock, authtoken, config.ssl_certfile)
     server = Server(config, json.dumps(connection_info))
 
     logger = logging.getLogger("ert.shared.storage.info")
@@ -166,7 +179,17 @@ def terminate_on_parent_death(
 
 def main() -> None:
     args = parse_args()
-    config_args: dict[str, Any] = {}
+    authentication = _generate_authentication()
+    os.environ["ERT_STORAGE_TOKEN"] = authentication
+    cert_path, key_path, key_pw = _generate_certificate(
+        os.path.join(args.project, "cert")
+    )
+    config_args: dict[str, Any] = {
+        "ssl_keyfile": key_path,
+        "ssl_certfile": cert_path,
+        "ssl_keyfile_password": key_pw,
+        "ssl_version": ssl.PROTOCOL_SSLv23,
+    }
     with open(STORAGE_LOG_CONFIG, encoding="utf-8") as conf_file:
         logging_conf = yaml.safe_load(conf_file)
         logging.config.dictConfig(logging_conf)

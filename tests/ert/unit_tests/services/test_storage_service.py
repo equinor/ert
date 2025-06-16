@@ -11,13 +11,13 @@ def test_create_connection_string():
     authtoken = "very_secret_token"
     sock = find_available_socket()
 
-    _create_connection_info(sock, authtoken)
+    _create_connection_info(sock, authtoken, "path/to/cert")
 
     assert "ERT_STORAGE_CONNECTION_STRING" in os.environ
     connection_string = json.loads(os.environ["ERT_STORAGE_CONNECTION_STRING"])
     assert "urls" in connection_string
     assert "authtoken" in connection_string
-    assert len(connection_string["urls"]) == 3
+    assert len(connection_string["urls"]) == 4
 
     del os.environ["ERT_STORAGE_CONNECTION_STRING"]
 
