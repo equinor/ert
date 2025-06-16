@@ -177,19 +177,6 @@ async def config_path(
     return Response(str(shared_data.config_path), status_code=200)
 
 
-@router.get("/" + EverEndpoints.simulation_dir)
-async def simulation_dir(
-    request: Request, credentials: HTTPBasicCredentials = Depends(security)
-) -> Response:
-    _log(request)
-    _check_user(credentials)
-    if not shared_data.started:
-        return Response("No experiment started", status_code=404)
-
-    sim_dir = EverestConfig.from_file(shared_data.config_path).simulation_dir
-    return Response(sim_dir, status_code=200)
-
-
 @router.get("/" + EverEndpoints.start_time)
 async def start_time(
     request: Request, credentials: HTTPBasicCredentials = Depends(security)

@@ -36,5 +36,4 @@ class EverEndpoints(StrEnum):
     stop = "stop"
     start_experiment = "start_experiment"
     config_path = "config_path"
-    simulation_dir = "simulation_dir"
     start_time = "start_time_unix"
