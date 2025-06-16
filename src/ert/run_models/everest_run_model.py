@@ -361,7 +361,7 @@ class EverestRunModel(BaseRunModel):
         self._eval_server_cfg = evaluator_server_config
 
         self._experiment = self._experiment or self._storage.create_experiment(
-            name=f"EnOpt@{datetime.datetime.now().strftime('%Y-%m-%d@%H:%M:%S')}",
+            name=f"EnOpt@{datetime.datetime.now().isoformat(timespec='seconds')}",
             parameters=self.parameter_configuration,
             responses=self.response_configuration,
         )
