@@ -142,18 +142,32 @@ def test_that_correlated_and_independent_observations_are_grouped_separately(
 
 
 @pytest.mark.parametrize("nr_observations", [0, 1, 2])
-def test_misfit_preprocessor_single(nr_observations):
-    """We create nr_observations responses using the linear function y = ax.
-    We don`t have enough information to cluster properly, so we don`t try
-    to scale"""
-    rng = np.random.default_rng(1234)
+def test_edge_cases_with_few_observations_return_default_values(nr_observations):
+    """Test that edge cases with 0-2 observations return default scaling values.
+    We do not know why this is the case.
+    """
     nr_realizations = 1000
     Y = np.ones((nr_observations, nr_realizations))
+
+    rng = np.random.default_rng(1234)
     parameters_a = rng.normal(10, 1, nr_realizations)
+
     for i in range(nr_observations):
         Y[i] = (i + 1) * parameters_a
-    result, *_ = main(Y, Y.mean(axis=1))
+
+    scale_factors, clusters, nr_components = main(Y, Y.mean(axis=1))
+
     np.testing.assert_equal(
-        result,
+        scale_factors,
+        np.array(nr_observations * [1.0]),
+    )
+
+    np.testing.assert_equal(
+        clusters,
+        np.array(nr_observations * [1.0]),
+    )
+
+    np.testing.assert_equal(
+        nr_components,
         np.array(nr_observations * [1.0]),
     )
