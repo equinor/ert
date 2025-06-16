@@ -8,6 +8,7 @@ from pydantic import BaseModel, ValidationError
 class ConnInfo(BaseModel):
     base_url: str
     auth_token: str | None = None
+    cert: str | bool = False
 
 
 ENV_VAR = "ERT_STORAGE_CONNECTION_STRING"
