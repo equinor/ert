@@ -117,7 +117,9 @@ class PlotWindow(QMainWindow):
         QApplication.setOverrideCursor(Qt.CursorShape.WaitCursor)
         try:
             self._api = PlotApi(ens_path)
-            self._key_definitions = self._api.all_data_type_keys()
+            self._key_definitions = (
+                self._api.parameters_api_key_defs + self._api.responses_api_key_defs
+            )
         except (RequestError, TimeoutError) as e:
             logger.exception(f"plot api request failed: {e}")
             open_error_dialog("Request failed", str(e))
@@ -206,9 +208,17 @@ class PlotWindow(QMainWindow):
             ensemble_to_data_map: dict[EnsembleObject, pd.DataFrame] = {}
             for ensemble in selected_ensembles:
                 try:
-                    ensemble_to_data_map[ensemble] = self._api.data_for_key(
-                        ensemble.id, key
-                    )
+                    if key_def.response_metadata is not None:
+                        ensemble_to_data_map[ensemble] = self._api.data_for_response(
+                            ensemble_id=ensemble.id,
+                            response_key=key_def.response_metadata.response_key,
+                            filter_on=key_def.filter_on,
+                        )
+                    elif key_def.parameter_metadata is not None:
+                        ensemble_to_data_map[ensemble] = self._api.data_for_parameter(
+                            ensemble_id=ensemble.id,
+                            parameter_key=key_def.parameter_metadata.key,
+                        )
                 except (RequestError, TimeoutError) as e:
                     logger.exception(f"plot api request failed: {e}")
                     open_error_dialog("Request failed", f"{e}")
@@ -254,10 +264,11 @@ class PlotWindow(QMainWindow):
                 plot_context.history_data = DataFrame()
             else:
                 try:
-                    plot_context.history_data = self._api.history_data(
-                        key,
-                        [e.id for e in plot_context.ensembles()],
-                    )
+                    if self._api.has_history_data(key):
+                        plot_context.history_data = self._api.history_data(
+                            key,
+                            [e.id for e in plot_context.ensembles()],
+                        )
 
                 except (RequestError, TimeoutError) as e:
                     logger.exception(f"plot api request failed: {e}")
@@ -350,7 +361,6 @@ class PlotWindow(QMainWindow):
             for widget in self._plot_widgets
             if widget._plotter.dimensionality == key_def.dimensionality
         ]
-        current_widget = self._central_tab.currentWidget()
 
         # Enabling/disabling tab triggers the
         # currentTabChanged event which also triggers
@@ -364,6 +374,8 @@ class PlotWindow(QMainWindow):
                 self._central_tab.indexOf(plot_widget), plot_widget in available_widgets
             )
         self._central_tab.currentChanged.connect(self.currentTabChanged)
+
+        current_widget = self._central_tab.currentWidget()
 
         if 0 < self._prev_key_dimensionality != key_def.dimensionality:
             if self._current_tab_index == -1:
