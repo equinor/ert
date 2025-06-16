@@ -26,12 +26,16 @@ ConnInfo = Mapping[str, Any] | Exception | None
 SERVICE_CONF_PATHS: set[str] = set()
 
 
+class BaseServiceExit(OSError):
+    pass
+
+
 def cleanup_service_files(signum: int, frame: FrameType | None) -> None:
     for file_path in SERVICE_CONF_PATHS:
         file = Path(file_path)
         if file.exists():
             file.unlink()
-    raise OSError(f"Signal {signum} received.")
+    raise BaseServiceExit(f"Signal {signum} received.")
 
 
 if threading.current_thread() is threading.main_thread():

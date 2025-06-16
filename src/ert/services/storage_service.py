@@ -27,6 +27,7 @@ class StorageService(BaseService):
         project: str | None = None,
         verbose: bool = False,
         traceparent: str | None = "inherit_parent",
+        logging_config: str | None = None,
     ) -> None:
         self._url: str | None = None
 
@@ -35,6 +36,8 @@ class StorageService(BaseService):
         exec_args.extend(["--project", str(project)])
         if verbose:
             exec_args.append("--verbose")
+        if logging_config:
+            exec_args.extend(["--logging-config", str(logging_config)])
         if traceparent:
             traceparent = (
                 get_traceparent() if traceparent == "inherit_parent" else traceparent
@@ -87,7 +90,6 @@ class StorageService(BaseService):
 
             except requests.ConnectionError as ce:
                 logging.getLogger(__name__).info(f"Could not connect to {url}: {ce}")
-
         raise TimeoutError(
             "None of the URLs provided for the ert storage server worked."
         )

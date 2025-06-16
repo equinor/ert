@@ -14,9 +14,9 @@ from fastapi.encoders import jsonable_encoder
 from fastapi.testclient import TestClient
 from starlette.websockets import WebSocketDisconnect
 
-import everest
+import ert
+from ert.dark_storage.app import app
 from ert.ensemble_evaluator import EndEvent
-from ert.run_models.everest_run_model import EverestExitCode
 from ert.scheduler.event import FinishedEvent
 from everest.config import EverestConfig, ServerConfig
 from everest.detached import (
@@ -27,34 +27,31 @@ from everest.detached import (
     start_server,
     wait_for_server,
 )
-from everest.detached.everserver import (
-    ExperimentComplete,
-    ExperimentRunnerState,
-    _everserver_thread,
-)
 from everest.everest_storage import EverestStorage
+from everest.strings import OPT_FAILURE_REALIZATIONS
 
 
 @pytest.fixture
 def setup_client(monkeypatch):
     def func(events=None):
         events = [EndEvent(failed=False, msg="Complete")] if events is None else events
-        uvicorn_mock = MagicMock()
+        subscribers = {}
         server_config_mock = MagicMock()
+        monkeypatch.setattr(
+            ert.dark_storage.endpoints.experiment_server.shared_data, "events", events
+        )
+        monkeypatch.setattr(
+            ert.dark_storage.endpoints.experiment_server.shared_data,
+            "subscribers",
+            subscribers,
+        )
 
         def getitem(*_):
             return "password"
 
+        monkeypatch.setenv("ERT_STORAGE_TOKEN", "password")
         server_config_mock.__getitem__.side_effect = getitem
-        monkeypatch.setattr(everest.detached.everserver, "uvicorn", uvicorn_mock)
-        subscribers = {}
-        _everserver_thread(
-            ExperimentRunnerState(events=events, subscribers=subscribers),
-            server_config_mock,
-            MagicMock(),
-        )
-        # The first argument to uvicorn.run is app, so we extract that
-        return TestClient(uvicorn_mock.run.mock_calls[0].args[0]), subscribers
+        return TestClient(app), subscribers
 
     return func
 
@@ -84,20 +81,14 @@ def configure_everserver_logger(*args, **kwargs):
 
 @pytest.fixture
 def mock_server(monkeypatch):
-    def func(exit_code: EverestExitCode, message: str = ""):
-        def server_mock(shared_data, server_config, msg_queue):
-            msg_queue.put(
-                ExperimentComplete(
-                    exit_code=exit_code,
-                    events=shared_data.events,
-                    server_stopped=shared_data.stop,
-                )
-            )
-            _everserver_thread(shared_data, server_config, msg_queue)
-
-        monkeypatch.setattr(
-            everest.detached.everserver, "_everserver_thread", server_mock
-        )
+    def func(message: str):
+        server_patch = MagicMock()
+        client_mock = MagicMock()
+        response_mock = MagicMock()
+        response_mock.content = message.encode()
+        client_mock.get.return_value = response_mock
+        server_patch.session.return_value.__enter__.return_value = client_mock
+        monkeypatch.setattr("everest.detached.everserver.StorageService", server_patch)
 
     yield func
 
@@ -152,8 +143,7 @@ def test_configure_logger_failure(_, change_to_tmpdir):
 @patch("sys.argv", ["name", "--output-dir", "everest_output"])
 @patch("everest.detached.everserver._configure_loggers")
 def test_status_running_complete(_, change_to_tmpdir, mock_server):
-    mock_server(EverestExitCode.COMPLETED)
-
+    mock_server("Optimization completed.")
     everserver.main()
 
     status = everserver_status(
@@ -168,7 +158,7 @@ def test_status_running_complete(_, change_to_tmpdir, mock_server):
 @patch("sys.argv", ["name", "--output-dir", "everest_output"])
 @patch("everest.detached.everserver._configure_loggers")
 def test_status_failed_job(_, change_to_tmpdir, mock_server):
-    mock_server(EverestExitCode.TOO_FEW_REALIZATIONS)
+    mock_server(OPT_FAILURE_REALIZATIONS)
     everserver.main()
 
     status = everserver_status(
@@ -180,6 +170,7 @@ def test_status_failed_job(_, change_to_tmpdir, mock_server):
 
 
 @pytest.mark.integration_test
+@pytest.mark.xdist_group(name="starts_everest")
 @patch("sys.argv", ["name", "--output-dir", "everest_output"])
 @patch("everest.detached.everserver._configure_loggers")
 async def test_status_exception(_, change_to_tmpdir, min_config):
@@ -214,6 +205,7 @@ async def test_status_max_batch_num(copy_math_func_test_data_to_tmp):
 
     # The server should complete without error.
     assert status["status"] == ServerStatus.completed
+    assert status["message"] == "Maximum number of batches reached."
     storage = EverestStorage(Path(config.optimization_output_dir))
     storage.read_from_output_dir()
 
@@ -245,7 +237,7 @@ async def test_status_contains_max_runtime_failure(change_to_tmpdir, min_config)
 def test_websocket_no_authentication(monkeypatch, setup_client):
     client, _ = setup_client()
     with (
-        client.websocket_connect("/events") as websocket,
+        client.websocket_connect("/experiment_server/events") as websocket,
         pytest.raises(WebSocketDisconnect) as exception,
     ):
         websocket.receive_json()
@@ -257,7 +249,8 @@ def test_websocket_wrong_password(monkeypatch, setup_client):
     credentials = b64encode(b"username:wrong_password").decode()
     with (
         client.websocket_connect(
-            "/events", headers={"Authorization": f"Basic {credentials}"}
+            "/experiment_server/events",
+            headers={"Authorization": f"Basic {credentials}"},
         ) as websocket,
         pytest.raises(WebSocketDisconnect) as exception,
     ):
@@ -270,12 +263,12 @@ def test_websocket_multiple_connections(monkeypatch, setup_client):
     client, subscribers = setup_client()
     credentials = b64encode(b"username:password").decode()
     with client.websocket_connect(
-        "/events", headers={"Authorization": f"Basic {credentials}"}
+        "/experiment_server/events", headers={"Authorization": f"Basic {credentials}"}
     ) as websocket:
         event = websocket.receive_json()
         websocket.close()
     with client.websocket_connect(
-        "/events", headers={"Authorization": f"Basic {credentials}"}
+        "/experiment_server/events", headers={"Authorization": f"Basic {credentials}"}
     ) as websocket:
         event_2 = websocket.receive_json()
     assert len(subscribers) == 2
@@ -286,12 +279,12 @@ def test_websocket_multiple_connections_one_fails(monkeypatch, setup_client):
     client, subscribers = setup_client()
     credentials = b64encode(b"username:password").decode()
     with (
-        client.websocket_connect("/events") as websocket,
+        client.websocket_connect("/experiment_server/events") as websocket,
         pytest.raises(WebSocketDisconnect),
     ):
         websocket.receive_json()
     with client.websocket_connect(
-        "/events", headers={"Authorization": f"Basic {credentials}"}
+        "/experiment_server/events", headers={"Authorization": f"Basic {credentials}"}
     ) as websocket:
         event = websocket.receive_json()
     assert len(subscribers) == 1
@@ -312,7 +305,7 @@ def test_websocket_multiple_events_in_queue(monkeypatch, setup_client):
     credentials = b64encode(b"username:password").decode()
     event_msgs = []
     with client.websocket_connect(
-        "/events", headers={"Authorization": f"Basic {credentials}"}
+        "/experiment_server/events", headers={"Authorization": f"Basic {credentials}"}
     ) as websocket:
         for _ in expected:
             event_msgs.append(websocket.receive_json())
@@ -327,7 +320,7 @@ async def test_websocket_no_events_on_connect(monkeypatch, setup_client):
     expected_result = EndEvent(failed=False, msg="Test message")
 
     with client.websocket_connect(
-        "/events", headers={"Authorization": f"Basic {credentials}"}
+        "experiment_server/events", headers={"Authorization": f"Basic {credentials}"}
     ) as websocket:
 
         def receive_event():

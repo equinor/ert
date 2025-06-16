@@ -2,6 +2,7 @@ import asyncio
 import json
 import logging
 import os
+import re
 import ssl
 import time
 import traceback
@@ -61,7 +62,6 @@ async def start_server(config: EverestConfig, logging_level: int) -> Driver:
         await driver.submit(0, "everserver", *args, name=Path(config.config_file).stem)
     except FailedSubmit as err:
         raise ValueError(f"Failed to submit Everserver with error: {err}") from err
-
     status = await driver.event_queue.get()
     if not isinstance(status, StartedEvent):
         poll_task.cancel()
@@ -121,6 +121,12 @@ def start_experiment(
         else:
             return
     raise RuntimeError("Failed to start experiment")
+
+
+def extract_errors_from_file(path: str) -> list[str]:
+    with open(path, encoding="utf-8") as f:
+        content = f.read()
+    return re.findall(r"(Error \w+.*)", content)
 
 
 def wait_for_server(output_dir: str, timeout: int | float) -> None:

@@ -87,7 +87,10 @@ def _create_connection_info(
             )
         ],
         "authtoken": authtoken,
+        "host": _get_machine_name(),
+        "port": sock.getsockname()[1],
         "cert": cert,
+        "auth": authtoken,
     }
 
     os.environ["ERT_STORAGE_CONNECTION_STRING"] = json.dumps(
@@ -133,6 +136,9 @@ def run_server(
     connection_info = _create_connection_info(sock, authtoken, config.ssl_certfile)
     server = Server(config, json.dumps(connection_info))
 
+    if args.logging_config:
+        with open(args.logging_config, encoding="utf-8") as fin:
+            logging.config.dictConfig(yaml.safe_load(fin))
     logger = logging.getLogger("ert.shared.storage.info")
     if args.verbose:
         handler = logging.StreamHandler(sys.stdout)
@@ -146,7 +152,6 @@ def run_server(
     for url in connection_info["urls"]:
         logger.info(f"  {url}")
         logger.info(f"\nOpenAPI Docs: {url}/docs")
-
     if args.debug or debug:
         logger.info("\tRunning in NON-SECURE debug mode.\n")
         os.environ["ERT_STORAGE_NO_TOKEN"] = "1"
