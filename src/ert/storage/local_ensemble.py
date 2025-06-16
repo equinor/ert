@@ -687,10 +687,18 @@ class LocalEnsemble(BaseMode):
     ) -> pl.DataFrame:
         if self._scalar_config is None:
             return pl.DataFrame()
-        groups = [group] if group else list(self._scalar_config.groups.keys())
+        if group:
+            if group not in self._scalar_config.groups:
+                return pl.DataFrame()
+            groups = [group]
+        else:
+            groups = list(self._scalar_config.groups.keys())
         dataframes = []
         for group_name in groups:
-            df = self.load_parameters(group_name, realizations, transformed=True)
+            try:
+                df = self.load_parameters(group_name, realizations, transformed=True)
+            except KeyError:
+                return pl.DataFrame()
             assert isinstance(df, pl.DataFrame)
             df = df.rename(
                 {

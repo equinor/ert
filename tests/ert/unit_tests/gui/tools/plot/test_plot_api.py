@@ -262,12 +262,11 @@ def test_plot_api_handles_empty_gen_kw(api_and_storage):
     experiment = storage.create_experiment(
         parameters=[
             GenKwConfig(
-                name=key,
                 forward_init=False,
                 update=False,
                 transform_function_definitions=[
                     TransformFunctionDefinition(
-                        name=name, param_name="NORMAL", values=[0, 0.1]
+                        group_name=key, name=name, param_name="NORMAL", values=[0, 0.1]
                     )
                 ],
             ),
