@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import functools
 import logging
 from typing import Any, ClassVar
 from uuid import UUID
@@ -19,6 +20,7 @@ from ert.ensemble_evaluator import EvaluatorServerConfig
 from ert.storage import Ensemble
 from ert.trace import tracer
 
+from ..analysis import smoother_update
 from ..plugins import PostExperimentFixtures, PreExperimentFixtures
 from ..run_arg import create_run_arguments
 from .base_run_model import ErtRunError, UpdateRunModel
@@ -196,6 +198,25 @@ class MultipleDataAssimilation(UpdateRunModel):
                 random_seed=self.random_seed,
                 storage=self._storage,
                 ensemble=prior,
+            ),
+        )
+
+    def update_ensemble_parameters(
+        self, prior: Ensemble, posterior: Ensemble, weight: float
+    ) -> None:
+        smoother_update(
+            prior,
+            posterior,
+            update_settings=self.update_settings,
+            es_settings=self.analysis_settings,
+            parameters=prior.experiment.update_parameters,
+            observations=prior.experiment.observation_keys,
+            global_scaling=weight,
+            rng=self._rng,
+            progress_callback=functools.partial(
+                self.send_smoother_event,
+                prior.iteration,
+                prior.id,
             ),
         )
 

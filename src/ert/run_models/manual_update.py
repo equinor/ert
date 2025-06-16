@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import functools
 import logging
 from typing import Any
 from uuid import UUID
@@ -9,6 +10,7 @@ from pydantic import PrivateAttr
 from ert.ensemble_evaluator import EvaluatorServerConfig
 from ert.storage import Ensemble
 
+from ..analysis import smoother_update
 from .base_run_model import ErtRunError, UpdateRunModel
 
 logger = logging.getLogger(__name__)
@@ -40,6 +42,25 @@ class ManualUpdate(UpdateRunModel):
 
         ensemble_format = self.target_ensemble
         self.update(self._prior, ensemble_format % (self._prior.iteration + 1))
+
+    def update_ensemble_parameters(
+        self, prior: Ensemble, posterior: Ensemble, weight: float
+    ) -> None:
+        smoother_update(
+            prior,
+            posterior,
+            update_settings=self.update_settings,
+            es_settings=self.analysis_settings,
+            parameters=prior.experiment.update_parameters,
+            observations=prior.experiment.observation_keys,
+            global_scaling=weight,
+            rng=self._rng,
+            progress_callback=functools.partial(
+                self.send_smoother_event,
+                prior.iteration,
+                prior.id,
+            ),
+        )
 
     @classmethod
     def name(cls) -> str:

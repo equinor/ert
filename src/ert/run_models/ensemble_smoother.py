@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import functools
 import logging
 from typing import Any
 
@@ -12,9 +13,11 @@ from ert.enkf_main import sample_prior, save_design_matrix_to_ensemble
 from ert.ensemble_evaluator import EvaluatorServerConfig
 from ert.trace import tracer
 
+from ..analysis import smoother_update
 from ..config import DesignMatrix, ParameterConfig, ResponseConfig
 from ..plugins import PostExperimentFixtures, PreExperimentFixtures
 from ..run_arg import create_run_arguments
+from ..storage import Ensemble
 from .base_run_model import ErtRunError, UpdateRunModel
 
 logger = logging.getLogger(__name__)
@@ -128,6 +131,25 @@ class EnsembleSmoother(UpdateRunModel):
                 random_seed=self.random_seed,
                 storage=self._storage,
                 ensemble=posterior,
+            ),
+        )
+
+    def update_ensemble_parameters(
+        self, prior: Ensemble, posterior: Ensemble, weight: float
+    ) -> None:
+        smoother_update(
+            prior,
+            posterior,
+            update_settings=self.update_settings,
+            es_settings=self.analysis_settings,
+            parameters=prior.experiment.update_parameters,
+            observations=prior.experiment.observation_keys,
+            global_scaling=weight,
+            rng=self._rng,
+            progress_callback=functools.partial(
+                self.send_smoother_event,
+                prior.iteration,
+                prior.id,
             ),
         )
 
