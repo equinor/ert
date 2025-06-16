@@ -392,10 +392,12 @@ class GenKwConfig(ParameterConfig):
                     f"Unknown input source {tfd.input_source} for parameter {tfd.name}"
                 )
             parameter_dict[tfd.name] = param_val
-            if isinstance(param_val, str | int):
-                schema_dict[tfd.name] = pl.Categorical()
+            if isinstance(param_val, str):
+                schema_dict[tfd.name] = pl.String()
             elif isinstance(param_val, float):
                 schema_dict[tfd.name] = pl.Float64()
+            elif isinstance(param_val, int):
+                schema_dict[tfd.name] = pl.Int64()
             else:
                 # fallback: let Polars infer
                 schema_dict[tfd.name] = pl.DataType()

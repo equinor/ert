@@ -131,46 +131,38 @@ class DesignMatrix:
     def merge_with_existing_parameters(
         self, existing_parameters: list[ParameterConfig]
     ) -> list[ParameterConfig]:
-        return [
-            config
-            if not isinstance(config, GenKwConfig)
-            else self._merge_with_single_gen_kw(config)
-            for config in existing_parameters
-        ]
-
-    def _merge_with_single_gen_kw(self, gen_kw_config: GenKwConfig) -> GenKwConfig:
-        """
-        This method merges the design matrix parameters with a single GenKwConfig.
-        Returns:
-            new merged GenKwConfig
-        """
-
-        all_params: list[TransformFunctionDefinition] = []
-
         overlap_set = set()
-        for existing_parameter in gen_kw_config.transform_function_definitions:
-            if existing_parameter.input_source == DataSource.DESIGN_MATRIX:
+        all_params: list[TransformFunctionDefinition] = []
+        parameter_configs: list[ParameterConfig] = []
+        for config in existing_parameters:
+            if not isinstance(config, GenKwConfig):
+                parameter_configs.append(config)
                 continue
-            overlap = False
-            for (
-                parameter_design
-            ) in self.parameter_configuration.transform_function_definitions:
-                if existing_parameter.name == parameter_design.name:
-                    parameter_design.group_name = existing_parameter.group_name
-                    all_params.append(parameter_design)
-                    overlap = True
-                    overlap_set.add(existing_parameter.param_name)
-                    break
-            if not overlap:
-                all_params.append(existing_parameter)
-
+            for existing_parameter in config.transform_function_definitions:
+                if existing_parameter.input_source == DataSource.DESIGN_MATRIX:
+                    continue
+                overlap = False
+                for (
+                    parameter_design
+                ) in self.parameter_configuration.transform_function_definitions:
+                    if existing_parameter.name == parameter_design.name:
+                        parameter_design.group_name = existing_parameter.group_name
+                        all_params.append(parameter_design)
+                        overlap = True
+                        overlap_set.add(existing_parameter.name)
+                        break
+                if not overlap:
+                    all_params.append(existing_parameter)
         for (
             parameter_design
         ) in self.parameter_configuration.transform_function_definitions:
             if parameter_design.name not in overlap_set:
                 all_params.append(parameter_design)
-
-        return GenKwConfig(transform_function_definitions=all_params)
+        if all_params:
+            parameter_configs.append(
+                GenKwConfig(transform_function_definitions=all_params)
+            )
+        return parameter_configs
 
     def read_and_validate_design_matrix(
         self,
