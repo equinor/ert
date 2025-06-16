@@ -67,7 +67,7 @@ def test_hook_call_order_ensemble_smoother(monkeypatch, use_tmpdir):
     """
     run_wfs_mock = MagicMock()
     monkeypatch.setattr(ensemble_smoother, "sample_prior", MagicMock())
-    monkeypatch.setattr(base_run_model, "smoother_update", MagicMock())
+    monkeypatch.setattr(ensemble_smoother, "smoother_update", MagicMock())
     monkeypatch.setattr(base_run_model.BaseRunModel, "run_workflows", run_wfs_mock)
 
     ens_mock = MagicMock()
@@ -125,7 +125,7 @@ def test_hook_call_order_es_mda(monkeypatch, use_tmpdir):
         "parse_weights",
         MagicMock(return_value=[1]),
     )
-    monkeypatch.setattr(base_run_model, "smoother_update", MagicMock())
+    monkeypatch.setattr(multiple_data_assimilation, "smoother_update", MagicMock())
     monkeypatch.setattr(base_run_model.BaseRunModel, "run_workflows", run_wfs_mock)
 
     ens_mock = MagicMock()

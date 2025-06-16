@@ -4,7 +4,6 @@ import asyncio
 import concurrent.futures
 import copy
 import dataclasses
-import functools
 import logging
 import os
 import queue
@@ -23,7 +22,7 @@ import numpy as np
 from pydantic import PrivateAttr
 
 from _ert.events import EESnapshot, EESnapshotUpdate, EETerminated, Event
-from ert.analysis import ErtAnalysisError, smoother_update
+from ert.analysis import ErtAnalysisError
 from ert.analysis.event import (
     AnalysisCompleteEvent,
     AnalysisDataEvent,
@@ -866,6 +865,28 @@ class UpdateRunModel(BaseRunModel):
     analysis_settings: ESSettings
     update_settings: ObservationSettings
 
+    @abstractmethod
+    def update_ensemble_parameters(
+        self, prior: Ensemble, posterior: Ensemble, weight: float
+    ) -> None:
+        """
+        Updates parameters of prior ensemble assumed to already contain responses.
+        Writes resulting updated parameters into the posterior ensemble.
+
+        Parameters
+        ----------
+        prior : Ensemble
+            The prior ensemble, which must contain responses
+            for the observations of the experiment.
+
+        posterior : Ensemble
+            The (initially empty) posterior ensemble
+            where the updated parameters will be stored.
+
+        weight : float
+            The weight applied to this update step (only used in esmda).
+        """
+
     def update(
         self,
         prior: Ensemble,
@@ -917,21 +938,7 @@ class UpdateRunModel(BaseRunModel):
             ),
         )
         try:
-            smoother_update(
-                prior,
-                posterior,
-                update_settings=self.update_settings,
-                es_settings=self.analysis_settings,
-                parameters=prior.experiment.update_parameters,
-                observations=prior.experiment.observation_keys,
-                global_scaling=weight,
-                rng=self._rng,
-                progress_callback=functools.partial(
-                    self.send_smoother_event,
-                    prior.iteration,
-                    prior.id,
-                ),
-            )
+            self.update_ensemble_parameters(prior, posterior, weight)
         except ErtAnalysisError as e:
             raise ErtRunError(
                 "Update algorithm failed for iteration:"

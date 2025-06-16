@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import dataclasses
 import functools
 import logging
 from typing import Any
@@ -11,7 +10,6 @@ from pydantic import PrivateAttr
 
 from ert.config import (
     DesignMatrix,
-    HookRuntime,
     ParameterConfig,
     ResponseConfig,
 )
@@ -21,17 +19,13 @@ from ert.ensemble_evaluator import EvaluatorServerConfig
 from ert.storage import Ensemble
 from ert.trace import tracer
 
-from ..analysis import ErtAnalysisError, enif_update
+from ..analysis import enif_update
 from ..plugins import (
     PostExperimentFixtures,
-    PostUpdateFixtures,
     PreExperimentFixtures,
-    PreFirstUpdateFixtures,
-    PreUpdateFixtures,
 )
 from ..run_arg import create_run_arguments
 from .base_run_model import ErtRunError, UpdateRunModel
-from .event import RunModelStatusEvent, RunModelUpdateBeginEvent
 
 logger = logging.getLogger(__name__)
 
@@ -141,82 +135,22 @@ class EnsembleInformationFilter(UpdateRunModel):
             ),
         )
 
-    def update(
-        self,
-        prior: Ensemble,
-        posterior_name: str,
-        weight: float = 1.0,
-    ) -> Ensemble:
-        self.validate_successful_realizations_count()
-        self.send_event(
-            RunModelUpdateBeginEvent(iteration=prior.iteration, run_id=prior.id)
-        )
-        self.send_event(
-            RunModelStatusEvent(
-                iteration=prior.iteration,
-                run_id=prior.id,
-                msg="Creating posterior ensemble..",
-            )
-        )
-
-        pre_first_update_fixtures = PreFirstUpdateFixtures(
-            storage=self._storage,
-            ensemble=prior,
-            observation_settings=self.update_settings,
-            es_settings=self.analysis_settings,
+    def update_ensemble_parameters(
+        self, prior: Ensemble, posterior: Ensemble, weight: float
+    ) -> None:
+        enif_update(
+            prior,
+            posterior,
+            parameters=prior.experiment.update_parameters,
+            observations=prior.experiment.observation_keys,
+            global_scaling=weight,
             random_seed=self.random_seed,
-            reports_dir=self.reports_dir(experiment_name=prior.experiment.name),
-            run_paths=self._run_paths,
-        )
-
-        posterior = self._storage.create_ensemble(
-            prior.experiment,
-            ensemble_size=prior.ensemble_size,
-            iteration=prior.iteration + 1,
-            name=posterior_name,
-            prior_ensemble=prior,
-        )
-        if prior.iteration == 0:
-            self.run_workflows(
-                fixtures=pre_first_update_fixtures,
-            )
-
-        update_args_dict = {
-            field.name: getattr(pre_first_update_fixtures, field.name)
-            for field in dataclasses.fields(pre_first_update_fixtures)
-        }
-
-        self.run_workflows(
-            fixtures=PreUpdateFixtures(
-                **{**update_args_dict, "hook": HookRuntime.PRE_UPDATE}
+            progress_callback=functools.partial(
+                self.send_smoother_event,
+                prior.iteration,
+                prior.id,
             ),
         )
-        try:
-            enif_update(
-                prior,
-                posterior,
-                parameters=prior.experiment.update_parameters,
-                observations=prior.experiment.observation_keys,
-                global_scaling=weight,
-                random_seed=self.random_seed,
-                progress_callback=functools.partial(
-                    self.send_smoother_event,
-                    prior.iteration,
-                    prior.id,
-                ),
-            )
-        except ErtAnalysisError as e:
-            raise ErtRunError(
-                "Update algorithm failed for iteration:"
-                f"{posterior.iteration}. The following error occurred: {e}"
-            ) from e
-
-        self.run_workflows(
-            fixtures=PostUpdateFixtures(
-                **{**update_args_dict, "hook": HookRuntime.POST_UPDATE}
-            ),
-        )
-        return posterior
 
     @classmethod
     def name(cls) -> str:
