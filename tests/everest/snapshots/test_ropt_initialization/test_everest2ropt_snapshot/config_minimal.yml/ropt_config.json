@@ -4,7 +4,6 @@
       "method": "mean"
     }
   ],
-  "gradient": {},
   "objectives": {
     "function_estimators": [
       0
@@ -16,7 +15,6 @@
   "optimizer": {
     "max_batches": 4,
     "method": "optpp_q_newton",
-    "options": {},
     "output_dir": "not_relevant",
     "parallel": true,
     "stderr": "optimizer.stderr",

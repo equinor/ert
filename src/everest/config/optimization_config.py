@@ -170,8 +170,8 @@ passthrough parameters for the optimizer
 The number of simulation runs used for estimating the gradient is equal to the
 the product of perturbation_num and model.realizations.""",
     )
-    speculative: bool | None = Field(
-        default=None,
+    speculative: bool = Field(
+        default=False,
         description="""specifies whether to enable speculative computation.
 
 The speculative specification enables speculative computation of gradient and/or
@@ -184,8 +184,8 @@ shorter wall clock time. The speculative specification is applicable only when
 parallelism in the gradient calculations can be exploited by Dakota (it will be
 ignored for vendor numerical gradients).  (From the Dakota Manual.)""",
     )
-    parallel: bool | None = Field(
-        default=None,
+    parallel: bool = Field(
+        default=True,
         description="""whether to allow parallel function evaluation.
 
 By default Everest will evaluate a single function and gradient evaluation at
@@ -211,6 +211,15 @@ The default is to use parallel evaluation if supported.
                 "The correct backend will be inferred by the algorithm. "
                 "If several backends have an algorithm named A and you want to pick "
                 "a specific backend B, put B/A in optimization.algorithm."
+            )
+            print(message)
+            logging.getLogger(EVEREST).warning(message)
+
+        if self.backend_options is not None:
+            message = (
+                "optimization.backend_options is deprecated. "
+                "Please use optimization.options instead, "
+                "it will accept both objects and lists of strings."
             )
             print(message)
             logging.getLogger(EVEREST).warning(message)

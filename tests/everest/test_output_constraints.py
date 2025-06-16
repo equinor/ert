@@ -91,7 +91,16 @@ def test_upper_bound_output_constraint_def(copy_mocked_test_data_to_tmp):
     )
 
     # Check ropt conversion
-    ropt_conf, _ = everest2ropt(config)
+    ropt_conf, _ = everest2ropt(
+        config.controls,
+        config.objective_functions,
+        config.input_constraints,
+        config.output_constraints,
+        config.optimization,
+        config.model.realizations_weights,
+        config.environment.random_seed,
+        config.optimization_output_dir,
+    )
 
     expected = {
         "name": "some_name",
