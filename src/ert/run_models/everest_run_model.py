@@ -329,8 +329,13 @@ class EverestRunModel(BaseRunModel):
             output_dir=Path(self._everest_config.optimization_output_dir),
         )
 
+        formatted_control_names = [
+            name
+            for config in self._everest_config.controls
+            for name in config.formatted_control_names
+        ]
         self.ever_storage.init(
-            formatted_control_names=self._everest_config.formatted_control_names,
+            formatted_control_names=formatted_control_names,
             objective_functions=self._everest_config.objective_functions,
             output_constraints=self._everest_config.output_constraints,
             realizations=self._everest_config.model.realizations,

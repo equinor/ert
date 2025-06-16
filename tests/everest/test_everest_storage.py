@@ -32,7 +32,11 @@ def test_csv_export(config_file, cached_example, snapshot):
 
     ever_storage = EverestStorage(output_dir=Path(config.optimization_output_dir))
     ever_storage.init(
-        formatted_control_names=config.formatted_control_names,
+        formatted_control_names=[
+            name
+            for control_config in config.controls
+            for name in control_config.formatted_control_names
+        ],
         objective_functions=config.objective_functions,
         output_constraints=config.output_constraints,
         realizations=config.model.realizations,
@@ -117,4 +121,10 @@ def test_everest_data_stored_in_ert_local_storage(
                     *[f"{name}.{v}" for v in param_config.input_keys],
                 ]
 
-        assert local_storage_params == config.formatted_control_names
+        formatted_control_names = [
+            name
+            for control_config in config.controls
+            for name in control_config.formatted_control_names
+        ]
+
+        assert local_storage_params == formatted_control_names
