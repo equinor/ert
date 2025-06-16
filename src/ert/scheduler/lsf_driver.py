@@ -20,7 +20,7 @@ from typing import (
 )
 
 from .driver import SIGNAL_OFFSET, Driver, FailedSubmit, create_submit_script
-from .event import Event, FinishedEvent, StartedEvent
+from .event import DriverEvent, FinishedEvent, StartedEvent
 
 _POLL_PERIOD = 2.0  # seconds
 LSF_FAILED_JOB = SIGNAL_OFFSET + 65  # first non signal returncode
@@ -507,7 +507,7 @@ class LsfDriver(Driver):
             return
 
         self._jobs[job_id].job_state = new_state
-        event: Event | None = None
+        event: DriverEvent | None = None
         if isinstance(new_state, RunningJob):
             logger.debug(f"Realization {iens} is running")
             event = StartedEvent(iens=iens, exec_hosts=self._jobs[job_id].exec_hosts)
