@@ -8,25 +8,20 @@ import numpy as np
 import polars as pl
 from pydantic import PrivateAttr
 
-from ert.config import (
-    ConfigValidationError,
-    DesignMatrix,
-    ParameterConfig,
-    ResponseConfig,
-)
-from ert.enkf_main import sample_prior, save_design_matrix_to_ensemble
+from ert.enkf_main import sample_prior
 from ert.ensemble_evaluator import EvaluatorServerConfig
 from ert.storage import Ensemble, Experiment
 from ert.trace import tracer
 
+from ..config import ResponseConfig
 from ..plugins import PostExperimentFixtures, PreExperimentFixtures
 from ..run_arg import create_run_arguments
-from .base_run_model import BaseRunModel, ErtRunError
+from .base_run_model import BaseRunModel, HasDesignParameters
 
 logger = logging.getLogger(__name__)
 
 
-class EnsembleExperiment(BaseRunModel):
+class EnsembleExperiment(HasDesignParameters, BaseRunModel):
     """
     This workflow will create a new experiment and a new ensemble from
     the user configuration.<br>It will never overwrite existing ensembles, and
@@ -35,10 +30,9 @@ class EnsembleExperiment(BaseRunModel):
 
     ensemble_name: str
     experiment_name: str
-    design_matrix: DesignMatrix | None
-    parameter_configuration: list[ParameterConfig]
     response_configuration: list[ResponseConfig]
     ert_templates: list[tuple[str, str]]
+
     _observations: dict[str, pl.DataFrame] = PrivateAttr()
     _experiment_id: UUID | None = PrivateAttr(None)
     _ensemble_id: UUID | None = PrivateAttr(None)
@@ -68,16 +62,10 @@ class EnsembleExperiment(BaseRunModel):
         self._restart = restart
         # If design matrix is present, we try to merge design matrix parameters
         # to the experiment parameters and set new active realizations
-        parameters_config = self.parameter_configuration
-        design_matrix = self.design_matrix
-        design_matrix_group = None
-        if design_matrix is not None and not restart:
-            try:
-                parameters_config, design_matrix_group = (
-                    design_matrix.merge_with_existing_parameters(parameters_config)
-                )
-            except ConfigValidationError as exc:
-                raise ErtRunError(str(exc)) from exc
+        parameters, design_parameters = self.experiment_parameters(
+            include_design_matrix=not restart,
+            require_updated_parameters=False,
+        )
 
         if not restart:
             self.run_workflows(
@@ -85,11 +73,7 @@ class EnsembleExperiment(BaseRunModel):
             )
             self._experiment_id = self._storage.create_experiment(
                 name=self.experiment_name,
-                parameters=(
-                    [*parameters_config, design_matrix_group]
-                    if design_matrix_group is not None
-                    else parameters_config
-                ),
+                parameters=parameters + design_parameters,
                 observations=self._observations,
                 responses=self.response_configuration,
                 templates=self.ert_templates,
@@ -115,16 +99,14 @@ class EnsembleExperiment(BaseRunModel):
         sample_prior(
             self._ensemble,
             np.where(self.active_realizations)[0],
-            parameters=[param.name for param in parameters_config],
+            parameters=[p.name for p in parameters],
             random_seed=self.random_seed,
         )
 
-        if design_matrix_group is not None and design_matrix is not None:
-            save_design_matrix_to_ensemble(
-                design_matrix.design_matrix_df,
-                self._ensemble,
-                np.where(self.active_realizations)[0],
-                design_matrix_group.name,
+        if not restart:
+            self.save_design_parameters(
+                target_ensemble=self._ensemble,
+                active_realizations=np.where(self.active_realizations)[0],
             )
 
         self._evaluate_and_postprocess(
