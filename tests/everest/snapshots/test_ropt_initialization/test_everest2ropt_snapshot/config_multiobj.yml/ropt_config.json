@@ -8,6 +8,21 @@
     "merge_realizations": false,
     "number_of_perturbations": 5
   },
+  "names": {
+    "nonlinear_constraint": [],
+    "objective": [
+      "distance_p",
+      "distance_q"
+    ],
+    "realization": [
+      0
+    ],
+    "variable": [
+      "point.x",
+      "point.y",
+      "point.z"
+    ]
+  },
   "objectives": {
     "function_estimators": [
       0,

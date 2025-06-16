@@ -70,7 +70,7 @@ def test_tutorial_everest2ropt(ever_config):
         ever_config.input_constraints,
         ever_config.output_constraints,
         ever_config.optimization,
-        ever_config.model.realizations_weights,
+        ever_config.model,
         ever_config.environment.random_seed,
         ever_config.optimization_output_dir,
     )
@@ -88,7 +88,7 @@ def test_everest2ropt_controls(ever_config):
         ever_config.input_constraints,
         ever_config.output_constraints,
         ever_config.optimization,
-        ever_config.model.realizations_weights,
+        ever_config.model,
         ever_config.environment.random_seed,
         ever_config.optimization_output_dir,
     )
@@ -105,7 +105,7 @@ def test_everest2ropt_controls_input_constraint(ever_config):
         ever_config.input_constraints,
         ever_config.output_constraints,
         ever_config.optimization,
-        ever_config.model.realizations_weights,
+        ever_config.model,
         ever_config.environment.random_seed,
         ever_config.optimization_output_dir,
     )
@@ -123,7 +123,7 @@ def test_everest2ropt_controls_optimizer_setting(ever_config):
         ever_config.input_constraints,
         ever_config.output_constraints,
         ever_config.optimization,
-        ever_config.model.realizations_weights,
+        ever_config.model,
         ever_config.environment.random_seed,
         ever_config.optimization_output_dir,
     )
@@ -139,7 +139,7 @@ def test_everest2ropt_constraints(ever_config):
         ever_config.input_constraints,
         ever_config.output_constraints,
         ever_config.optimization,
-        ever_config.model.realizations_weights,
+        ever_config.model,
         ever_config.environment.random_seed,
         ever_config.optimization_output_dir,
     )
@@ -154,7 +154,7 @@ def test_everest2ropt_backend_options(ever_config):
         ever_config.input_constraints,
         ever_config.output_constraints,
         ever_config.optimization,
-        ever_config.model.realizations_weights,
+        ever_config.model,
         ever_config.environment.random_seed,
         ever_config.optimization_output_dir,
     )
@@ -167,7 +167,7 @@ def test_everest2ropt_backend_options(ever_config):
         ever_config.input_constraints,
         ever_config.output_constraints,
         ever_config.optimization,
-        ever_config.model.realizations_weights,
+        ever_config.model,
         ever_config.environment.random_seed,
         ever_config.optimization_output_dir,
     )
@@ -180,7 +180,7 @@ def test_everest2ropt_backend_options(ever_config):
         ever_config.input_constraints,
         ever_config.output_constraints,
         ever_config.optimization,
-        ever_config.model.realizations_weights,
+        ever_config.model,
         ever_config.environment.random_seed,
         ever_config.optimization_output_dir,
     )
@@ -193,7 +193,7 @@ def test_everest2ropt_backend_options(ever_config):
         ever_config.input_constraints,
         ever_config.output_constraints,
         ever_config.optimization,
-        ever_config.model.realizations_weights,
+        ever_config.model,
         ever_config.environment.random_seed,
         ever_config.optimization_output_dir,
     )
@@ -207,7 +207,7 @@ def test_everest2ropt_samplers(ever_config):
         ever_config.input_constraints,
         ever_config.output_constraints,
         ever_config.optimization,
-        ever_config.model.realizations_weights,
+        ever_config.model,
         ever_config.environment.random_seed,
         ever_config.optimization_output_dir,
     )
@@ -249,7 +249,7 @@ def test_everest2ropt_cvar(ever_config):
         config.input_constraints,
         config.output_constraints,
         config.optimization,
-        config.model.realizations_weights,
+        config.model,
         config.environment.random_seed,
         config.optimization_output_dir,
     )
@@ -272,7 +272,7 @@ def test_everest2ropt_cvar(ever_config):
         config.input_constraints,
         config.output_constraints,
         config.optimization,
-        config.model.realizations_weights,
+        config.model,
         config.environment.random_seed,
         config.optimization_output_dir,
     )
@@ -291,7 +291,7 @@ def test_everest2ropt_arbitrary_backend_options(ever_config):
         ever_config.input_constraints,
         ever_config.output_constraints,
         ever_config.optimization,
-        ever_config.model.realizations_weights,
+        ever_config.model,
         ever_config.environment.random_seed,
         ever_config.optimization_output_dir,
     )
@@ -308,7 +308,7 @@ def test_everest2ropt_default_algorithm_name(min_config):
         config.input_constraints,
         config.output_constraints,
         config.optimization,
-        config.model.realizations_weights,
+        config.model,
         config.environment.random_seed,
         config.optimization_output_dir,
     )
@@ -328,7 +328,7 @@ def test_everest2ropt_snapshot(case, snapshot):
         config.input_constraints,
         config.output_constraints,
         config.optimization,
-        config.model.realizations_weights,
+        config.model,
         config.environment.random_seed,
         config.optimization_output_dir,
     )
@@ -368,7 +368,7 @@ def test_transforms_controls_scaling(ever_config):
         ever_config.input_constraints,
         ever_config.output_constraints,
         ever_config.optimization,
-        ever_config.model.realizations_weights,
+        ever_config.model,
         ever_config.environment.random_seed,
         ever_config.optimization_output_dir,
     )
@@ -402,7 +402,7 @@ def test_transforms_controls_input_constraint_scaling(ever_config):
         ever_config.input_constraints,
         ever_config.output_constraints,
         ever_config.optimization,
-        ever_config.model.realizations_weights,
+        ever_config.model,
         ever_config.environment.random_seed,
         ever_config.optimization_output_dir,
     )

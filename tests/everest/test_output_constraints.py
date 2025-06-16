@@ -97,7 +97,7 @@ def test_upper_bound_output_constraint_def(copy_mocked_test_data_to_tmp):
         config.input_constraints,
         config.output_constraints,
         config.optimization,
-        config.model.realizations_weights,
+        config.model,
         config.environment.random_seed,
         config.optimization_output_dir,
     )

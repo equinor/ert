@@ -6,6 +6,7 @@ from ropt.enums import PerturbationType, VariableType
 from everest.config import (
     ControlConfig,
     InputConstraintConfig,
+    ModelConfig,
     ObjectiveFunctionConfig,
     OptimizationConfig,
     OutputConstraintConfig,
@@ -257,7 +258,7 @@ def everest2ropt(
     input_constraints: list[InputConstraintConfig],
     output_constraints: list[OutputConstraintConfig],
     optimization: OptimizationConfig | None,
-    realizations_weights: list[float],
+    model: ModelConfig,
     random_seed: int,
     optimization_output_dir: str,
 ) -> tuple[dict[str, Any], list[float]]:
@@ -269,7 +270,7 @@ def everest2ropt(
     ropt_nonlinear_constraints = _parse_output_constraints(output_constraints)
     ropt_optimizer, ropt_gradient, ropt_realizations, cvar_config = _parse_optimization(
         ever_opt=optimization,
-        realizations_weights=realizations_weights,
+        realizations_weights=model.realizations_weights,
         has_output_constraints=bool(output_constraints),
         optimization_output_dir=optimization_output_dir,
     )
@@ -296,6 +297,16 @@ def everest2ropt(
         "objectives": ropt_objectives,
         "realizations": ropt_realizations,
         "optimizer": ropt_optimizer,
+        "names": {
+            "variable": [
+                name for config in controls for name in config.formatted_control_names
+            ],
+            "objective": [objective.name for objective in objective_functions],
+            "nonlinear_constraint": [
+                constraint.name for constraint in output_constraints
+            ],
+            "realization": model.realizations,
+        },
     }
     if ropt_linear_constraints:
         ropt_config["linear_constraints"] = ropt_linear_constraints

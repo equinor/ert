@@ -24,6 +24,23 @@
       0.4
     ]
   },
+  "names": {
+    "nonlinear_constraint": [
+      "x-0_coord"
+    ],
+    "objective": [
+      "distance"
+    ],
+    "realization": [
+      0,
+      2
+    ],
+    "variable": [
+      "point.x.0",
+      "point.x.1",
+      "point.x.2"
+    ]
+  },
   "nonlinear_constraints": {
     "lower_bounds": [
       0.1

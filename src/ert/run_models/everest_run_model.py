@@ -16,7 +16,7 @@ from typing import TYPE_CHECKING, Any, Protocol
 
 import numpy as np
 from numpy.typing import NDArray
-from pydantic import NonNegativeInt, PrivateAttr, ValidationError
+from pydantic import PrivateAttr, ValidationError
 from ropt.enums import ExitCode as RoptExitCode
 from ropt.evaluator import EvaluatorContext, EvaluatorResult
 from ropt.plan import BasicOptimizer
@@ -34,7 +34,7 @@ from ert.config.ert_config import (
     read_templates,
     workflow_jobs_from_dict,
 )
-from ert.config.model_config import ModelConfig
+from ert.config.model_config import ModelConfig as ErtModelConfig
 from ert.config.queue_config import QueueConfig
 from ert.ensemble_evaluator import EndEvent, EvaluatorServerConfig
 from ert.runpaths import Runpaths
@@ -43,6 +43,7 @@ from everest.config import (
     ControlVariableGuessListConfig,
     EverestConfig,
     InputConstraintConfig,
+    ModelConfig,
     ObjectiveFunctionConfig,
     OptimizationConfig,
     OutputConstraintConfig,
@@ -143,8 +144,7 @@ class EverestRunModel(BaseRunModel):
 
     optimization: OptimizationConfig
 
-    model_realizations: list[NonNegativeInt]
-    model_weights: list[float]
+    model: ModelConfig
 
     keep_run_path: bool
 
@@ -194,7 +194,7 @@ class EverestRunModel(BaseRunModel):
         assert everest_config.config_file is not None
         config_file: Path = Path(everest_config.config_path)
 
-        model_config = ModelConfig.from_dict(config_dict)
+        runpath_config = ErtModelConfig.from_dict(config_dict)
 
         queue_config = QueueConfig.from_dict(config_dict)
         assert everest_config.simulator is not None
@@ -205,7 +205,10 @@ class EverestRunModel(BaseRunModel):
         ensemble_config = get_ensemble_config(config_dict, everest_config)
 
         substitutions = get_substitutions(
-            config_dict, model_config, runpath_file, queue_config.queue_options.num_cpu
+            config_dict,
+            runpath_config,
+            runpath_file,
+            queue_config.queue_options.num_cpu,
         )
         ert_templates = read_templates(config_dict)
 
@@ -246,8 +249,7 @@ class EverestRunModel(BaseRunModel):
             input_constraints=everest_config.input_constraints,
             output_constraints=everest_config.output_constraints,
             optimization=everest_config.optimization,
-            model_realizations=everest_config.model.realizations,
-            model_weights=everest_config.model.realizations_weights,
+            model=everest_config.model,
             transforms=transforms,
             optimization_output_dir=everest_config.optimization_output_dir,
             log_path=everest_config.log_dir,
@@ -265,7 +267,7 @@ class EverestRunModel(BaseRunModel):
             user_config_file=config_file,
             env_vars=env_vars,
             env_pr_fm_step=env_pr_fm_step,
-            runpath_config=model_config,
+            runpath_config=runpath_config,
             forward_model_steps=forward_model_steps,
             substitutions=substitutions,
             hooked_workflows=hooked_workflows,
@@ -381,7 +383,7 @@ class EverestRunModel(BaseRunModel):
             formatted_control_names=formatted_control_names,
             objective_functions=self.objective_functions,
             output_constraints=self.output_constraints,
-            realizations=self.model_realizations,
+            realizations=self.model.realizations,
         )
         optimizer.set_results_callback(self._handle_optimizer_results)
 
@@ -431,7 +433,7 @@ class EverestRunModel(BaseRunModel):
             self.input_constraints,
             self.output_constraints,
             self.optimization,
-            self.model_weights,
+            self.model,
             self.random_seed,
             self.optimization_output_dir,
         )
@@ -449,7 +451,6 @@ class EverestRunModel(BaseRunModel):
                 enopt_config=enopt_config,
                 transforms=transforms,
                 evaluator=self._forward_model_evaluator,
-                everest_config=self.user_config_file,
             )
         except ValidationError as exc:
             ert_version = importlib.metadata.version("ert")
@@ -617,7 +618,7 @@ class EverestRunModel(BaseRunModel):
             # finding its realization index and then looking up its name in the
             # config:
             model_realizations = [
-                self.model_realizations[realization_indices[idx]]
+                self.model.realizations[realization_indices[idx]]
                 for idx in range(num_simulations)
             ]
 

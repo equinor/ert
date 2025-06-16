@@ -76,7 +76,7 @@ def test_multi_objectives2ropt():
         config.input_constraints,
         config.output_constraints,
         config.optimization,
-        config.model.realizations_weights,
+        config.model,
         config.environment.random_seed,
         config.optimization_output_dir,
     )

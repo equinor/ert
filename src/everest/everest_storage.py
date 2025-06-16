@@ -510,33 +510,6 @@ class EverestStorage:
         df = pl.from_pandas(
             results.to_dataframe(field, select=values).reset_index(),
         ).select(select + values)
-
-        # The results from ropt do not contain any names, but indices referring
-        # to control names, objective names, etc. The corresponding names can be
-        # retrieved from the everest configuration and were stored in the init
-        # method. Here we replace the indices with those names:
-        ropt_to_everest_names = {
-            "variable": self.data.controls["control_name"]
-            if self.data.controls is not None
-            else None,
-            "objective": self.data.objective_functions["objective_name"]
-            if self.data.objective_functions is not None
-            else None,
-            "nonlinear_constraint": (
-                self.data.nonlinear_constraints["constraint_name"]
-                if self.data.nonlinear_constraints is not None
-                else None
-            ),
-            "realization": self.data.realization_weights["realization"]
-            if self.data.realization_weights is not None
-            else None,
-        }
-        df = df.with_columns(
-            pl.col(ropt_name).replace_strict(dict(enumerate(everest_names)))  # type: ignore
-            for ropt_name, everest_names in ropt_to_everest_names.items()
-            if ropt_name in select
-        )
-
         df = self._rename_ropt_df_columns(df)
         df = self._enforce_dtypes(df)
 
