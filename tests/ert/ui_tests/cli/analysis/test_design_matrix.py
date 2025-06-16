@@ -13,7 +13,6 @@ import pytest
 
 from ert.cli.main import ErtCliError
 from ert.config import DESIGN_MATRIX_GROUP, ConfigWarning, ErtConfig
-from ert.config.parsing.config_errors import ConfigValidationError
 from ert.mode_definitions import (
     ENSEMBLE_EXPERIMENT_MODE,
     ENSEMBLE_SMOOTHER_MODE,
@@ -86,14 +85,14 @@ def test_run_poly_example_with_design_matrix(copy_poly_case_with_design_matrix, 
 @pytest.mark.parametrize(
     "default_values, error_msg",
     [
-        ([["b", 1], ["c", 2]], None),
-        (
-            [["b", 1]],
-            "Only full overlaps of design matrix and one genkw group are supported.",
-        ),
+        ([["b", 1]], None),
     ],
 )
 def test_run_poly_example_with_design_matrix_and_genkw_merge(default_values, error_msg):
+    # DESIGN_MATRIX provides values for parameters a, b, and category.
+    # GEN_KW provides values for parameters a, b and c
+    # merge will change group_name of a, b to GEN_KW group COEFFS,
+    # but values will be provided by DESIGN_MATRIX where c will be sampled
     num_realizations = 10
     a_values = list(range(num_realizations))
     _create_design_matrix(
@@ -125,11 +124,6 @@ def test_run_poly_example_with_design_matrix_and_genkw_merge(default_values, err
                 """
             )
         )
-
-    # This adds a dummy category parameter to COEFFS GENKW
-    # which will be overridden by the design matrix catagorical entries
-    with open("coeff_priors", "a", encoding="utf-8") as f:
-        f.write("category UNIFORM 0 1")
 
     with open("poly_eval.py", "w", encoding="utf-8") as f:
         f.write(
@@ -170,16 +164,6 @@ def test_run_poly_example_with_design_matrix_and_genkw_merge(default_values, err
         os.stat("poly_eval.py").st_mode | stat.S_IXUSR | stat.S_IXGRP | stat.S_IXOTH,
     )
 
-    if error_msg:
-        with pytest.raises(ConfigValidationError, match=error_msg):
-            run_cli(
-                ENSEMBLE_EXPERIMENT_MODE,
-                "--disable-monitoring",
-                "poly.ert",
-                "--experiment-name",
-                "test-experiment",
-            )
-        return
     with warnings.catch_warnings():
         warnings.simplefilter("ignore", category=ConfigWarning)
         # Expected warning:
@@ -195,24 +179,22 @@ def test_run_poly_example_with_design_matrix_and_genkw_merge(default_values, err
     storage_path = ErtConfig.from_file("poly.ert").ens_path
     with open_storage(storage_path) as storage:
         experiment = storage.get_experiment_by_name("test-experiment")
-        params = experiment.get_ensemble_by_name("default").load_parameters("COEFFS")
+        params = experiment.get_ensemble_by_name("default").load_parameters("SCALAR")
         np.testing.assert_array_equal(params["a"].to_list(), a_values)
         np.testing.assert_array_equal(
             params["category"].to_list(), 5 * ["cat1"] + 5 * ["cat2"]
         )
         np.testing.assert_array_equal(params["b"].to_list(), 10 * [1])
-        np.testing.assert_array_equal(params["c"].to_list(), 10 * [2])
+        assert params["c"].std() != 0
     with open("poly_out/realization-0/iter-0/my_output", encoding="utf-8") as f:
         output = [line.strip() for line in f]
         assert output[0] == "a: 0"
         assert output[1] == "b: 1"
-        assert output[2] == "c: 2"
         assert output[3] == "category: cat1"
     with open("poly_out/realization-5/iter-0/my_output", encoding="utf-8") as f:
         output = [line.strip() for line in f]
         assert output[0] == "a: 5"
         assert output[1] == "b: 1"
-        assert output[2] == "c: 2"
         assert output[3] == "category: cat2"
 
 
