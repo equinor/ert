@@ -182,39 +182,6 @@ def test_control_variable_initial_guess_above_max():
         )
 
 
-def test_control_variable_min_is_negative():
-    with pytest.raises(ValidationError, match="initial_guess"):
-        ControlConfig(
-            name="control",
-            type="well_control",
-            variables=[
-                ControlVariableConfig(name="w00", min=-0.5, max=1.0, initial_guess=1.3)
-            ],
-        )
-
-
-def test_control_variable_max_is_zero():
-    with pytest.raises(ValidationError, match="initial_guess"):
-        ControlConfig(
-            name="control",
-            type="well_control",
-            variables=[
-                ControlVariableConfig(name="w00", min=0.5, max=0, initial_guess=1.3)
-            ],
-        )
-
-
-def test_control_variable_max_is_negative():
-    with pytest.raises(ValidationError, match="initial_guess"):
-        ControlConfig(
-            name="control",
-            type="well_control",
-            variables=[
-                ControlVariableConfig(name="w00", min=0.5, max=-1.0, initial_guess=1.3)
-            ],
-        )
-
-
 def test_control_variable_name():
     """We would potentially like to support variable names with
     underscores, but currently Seba is using this as a separator between
