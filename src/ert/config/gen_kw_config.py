@@ -99,9 +99,9 @@ class GenKwConfig(ParameterConfig):
 
     def group_keys(self, group: str) -> list[str]:
         """Return the keys of the transform functions in the specified group."""
-        return [tf.name for tf in self.group_paramaters(group)]
+        return [tf.name for tf in self.group_parameters(group)]
 
-    def group_paramaters(self, group: str) -> list[TransformFunction]:
+    def group_parameters(self, group: str) -> list[TransformFunction]:
         """Return the transform functions in the specified group."""
         if group == SCALAR_NAME:
             return self.transform_functions
@@ -432,7 +432,6 @@ class GenKwConfig(ParameterConfig):
                 "realization"
             )
             assert isinstance(df, pl.DataFrame)
-            # todo this will fail hard!!! fix it
             if not df.width == len(self.groups[group]):
                 raise ValueError(
                     f"The configuration of GEN_KW parameter {self.name}"
