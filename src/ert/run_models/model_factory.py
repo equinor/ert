@@ -224,7 +224,7 @@ def _get_and_validate_active_realizations_list(
                 ).mask[:ensemble_size]
             ) & np.array(dm_active_realizations[:ensemble_size])
             if np.any(intersected_realizations):
-                return intersected_realizations
+                return intersected_realizations.tolist()
             else:
                 raise ConfigValidationError(
                     "The specified realizations do not intersect "
