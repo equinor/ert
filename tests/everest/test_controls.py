@@ -7,7 +7,7 @@ import pytest
 from pydantic import ValidationError
 
 from ert.config import ConfigWarning
-from everest.config import EverestConfig
+from everest.config import EverestConfig, InputConstraintConfig
 from everest.config.control_config import ControlConfig
 from everest.config.control_variable_config import (
     ControlVariableConfig,
@@ -112,64 +112,107 @@ def _perturb_control_zero(
     return exp_var_def
 
 
-def test_variable_name_index_validation(copy_test_data_to_tmp):
-    config = EverestConfig.load_file(
-        os.path.join("mocked_test_case", "mocked_test_case.yml")
-    )
-
-    # Not valid equal names
-    config.controls[0].variables[1].name = "w00"
+def test_control_variable_duplicate_name_no_index():
     with pytest.raises(
         ValidationError, match=r"Subfield\(s\) `name.index` must be unique"
     ):
-        EverestConfig.model_validate(config.model_dump(exclude_none=True))
-    # Not valid index inconsistency
-    config.controls[0].variables[1].name = "w01"
-    config.controls[0].variables[1].index = 0
+        ControlConfig(
+            name="group",
+            type="generic_control",
+            initial_guess=0.5,
+            variables=[
+                ControlVariableConfig(name="w00", min=0, max=1),
+                ControlVariableConfig(
+                    name="w00", min=0, max=1
+                ),  # This is the duplicate
+            ],
+        )
+
+
+def test_control_variable_index_inconsistency():
     with pytest.raises(
         ValidationError, match="for all of the variables or for none of them"
     ):
-        EverestConfig.model_validate(config.model_dump(exclude_none=True))
+        ControlConfig(
+            name="group",
+            type="generic_control",
+            initial_guess=0.5,
+            variables=[
+                ControlVariableConfig(name="w00", min=0, max=1),
+                ControlVariableConfig(name="w01", min=0, max=1, index=0),
+            ],
+        )
 
-    # Index and name not unique
-    config.controls[0].variables[1].name = "w00"
-    for v in config.controls[0].variables:
-        v.index = 0
+
+def test_control_variable_duplicate_name_and_index():
     with pytest.raises(
         ValidationError, match=r"Subfield\(s\) `name.index` must be unique"
     ):
-        EverestConfig.model_validate(config.model_dump(exclude_none=True))
+        ControlConfig(
+            name="group",
+            type="generic_control",
+            initial_guess=0.5,
+            variables=[
+                ControlVariableConfig(name="w00", min=0, max=1, index=0),
+                ControlVariableConfig(name="w00", min=0, max=1, index=0),
+            ],
+        )
 
-    # Index and name unique and valid, but input constraints are not
-    # specifying index
 
-    config.controls[0].variables[1].name = "w01"
-    config_dict = {
-        **config.to_dict(),
-        "input_constraints": [
-            {"upper_bound": 1, "lower_bound": 0, "weights": {"group.w00": 0.1}}
-        ],
-    }
-
+def test_input_constraint_name_mismatch_with_indexed_variables():
     with pytest.raises(
         ValidationError,
         match="does not match any instance of "
         "control_name\\.variable_name\\.variable_index",
     ):
-        EverestConfig.model_validate(config_dict)
+        EverestConfig.with_defaults(
+            controls=[
+                ControlConfig(
+                    name="group",
+                    type="generic_control",
+                    initial_guess=0.5,
+                    variables=[
+                        ControlVariableConfig(name="w00", min=0, max=1, index=0),
+                        ControlVariableConfig(name="w01", min=0, max=1, index=0),
+                    ],
+                )
+            ],
+            input_constraints=[
+                InputConstraintConfig(
+                    upper_bound=1,
+                    lower_bound=0,
+                    weights={"group.w00": 0.1},
+                )
+            ],
+        )
 
-    # Index and name unique and valid and input constraints are specifying
-    # index
-    config_dict = {
-        **config.to_dict(),
-        "input_constraints": [
-            {"upper_bound": 1, "lower_bound": 0, "weights": {"group.w00-0": 0.1}}
-        ],
-    }
+
+def test_input_constraint_deprecated_indexed_name_format_warns():
     with pytest.warns(
         ConfigWarning, match="Deprecated input control name: group.w00-0"
     ):
-        EverestConfig.model_validate(config_dict)
+        EverestConfig.with_defaults(
+            controls=[
+                ControlConfig(
+                    name="group",
+                    type="generic_control",
+                    initial_guess=0.5,
+                    variables=[
+                        ControlVariableConfig(name="w00", min=0, max=1, index=0),
+                        ControlVariableConfig(name="w01", min=0, max=1, index=0),
+                    ],
+                )
+            ],
+            input_constraints=[
+                InputConstraintConfig(
+                    upper_bound=1,
+                    lower_bound=0,
+                    weights={
+                        "group.w00-0": 0.1
+                    },  # This specific format is deprecated [7].
+                )
+            ],
+        )
 
 
 @pytest.mark.integration_test
