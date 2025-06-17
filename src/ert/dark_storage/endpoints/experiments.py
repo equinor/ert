@@ -2,6 +2,7 @@ from uuid import UUID
 
 from fastapi import APIRouter, Body, Depends
 
+from ert.config import SurfaceConfig
 from ert.dark_storage import json_schema as js
 from ert.dark_storage.common import get_storage
 from ert.shared.storage.extraction import create_priors
@@ -28,6 +29,7 @@ def get_experiments(
             parameters={
                 group: [m.model_dump() for m in config.metadata]
                 for group, config in experiment.parameter_configuration.items()
+                if not isinstance(config, SurfaceConfig)
             },
             responses={
                 response_type: [m.model_dump() for m in config.metadata]
