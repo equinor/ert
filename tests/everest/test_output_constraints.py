@@ -3,38 +3,40 @@ import pytest
 
 from ert.ensemble_evaluator.config import EvaluatorServerConfig
 from ert.run_models.everest_run_model import EverestRunModel
-from everest.config import EverestConfig
+from everest.config import EverestConfig, OutputConstraintConfig
 from everest.optimizer.everest2ropt import everest2ropt
 
-CONFIG_FILE = "config_output_constraints.yml"
 
+def test_constraints_init(tmp_path):
+    num_constraints = 16
+    initial_everest_config = EverestConfig.with_defaults(
+        output_constraints=[
+            OutputConstraintConfig(
+                name=f"oil_prod_rate_{i:03d}", upper_bound=5000.0, scale=7500.0
+            )
+            for i in range(num_constraints)
+        ]
+    )
 
-def test_constraints_init(copy_mocked_test_data_to_tmp):
-    config = EverestConfig.load_file(CONFIG_FILE)
-    constr = config.output_constraints
+    config_file_path = tmp_path / "mocked_output_constraints.yml"
 
-    constr_names = [cn.name for cn in constr]
-    assert constr_names == [
-        "oil_prod_rate_000",
-        "oil_prod_rate_001",
-        "oil_prod_rate_002",
-        "oil_prod_rate_003",
-        "oil_prod_rate_004",
-        "oil_prod_rate_005",
-        "oil_prod_rate_006",
-        "oil_prod_rate_007",
-        "oil_prod_rate_008",
-        "oil_prod_rate_009",
-        "oil_prod_rate_010",
-        "oil_prod_rate_011",
-        "oil_prod_rate_012",
-        "oil_prod_rate_013",
-        "oil_prod_rate_014",
-        "oil_prod_rate_015",
+    initial_everest_config.dump(str(config_file_path))
+
+    loaded_everest_config = EverestConfig.load_file(str(config_file_path))
+
+    constraints_from_loaded_config = loaded_everest_config.output_constraints
+
+    constraint_names = [cn.name for cn in constraints_from_loaded_config]
+    assert constraint_names == [
+        f"oil_prod_rate_{i:03d}" for i in range(num_constraints)
     ]
 
-    assert [cn.upper_bound for cn in constr] == 16 * [5000]
-    assert [cn.scale for cn in constr] == 16 * [7500]
+    assert [
+        cn.upper_bound for cn in constraints_from_loaded_config
+    ] == num_constraints * [5000.0]
+    assert [cn.scale for cn in constraints_from_loaded_config] == num_constraints * [
+        7500.0
+    ]
 
 
 @pytest.mark.parametrize(
@@ -80,17 +82,22 @@ def test_output_constraint_config(config, error):
         )
 
 
-def test_upper_bound_output_constraint_def(copy_mocked_test_data_to_tmp):
-    with open("conf_file", "w", encoding="utf-8") as f:
-        f.write(" ")
-
-    config = EverestConfig.with_defaults(
-        output_constraints=[
-            {"name": "some_name", "upper_bound": 5000, "scale": 1.0},
-        ],
+def test_upper_bound_output_constraint_def(tmp_path):
+    output_constraint_definition = OutputConstraintConfig(
+        name="some_name",
+        upper_bound=5000.0,
+        scale=1.0,
     )
 
-    # Check ropt conversion
+    initial_config = EverestConfig.with_defaults(
+        output_constraints=[output_constraint_definition],
+    )
+
+    config_file_path = tmp_path / "test_config.yml"
+    initial_config.dump(str(config_file_path))
+
+    config = EverestConfig.load_file(str(config_file_path))
+
     ropt_conf, _ = everest2ropt(
         config.controls,
         config.objective_functions,
@@ -102,18 +109,19 @@ def test_upper_bound_output_constraint_def(copy_mocked_test_data_to_tmp):
         config.optimization_output_dir,
     )
 
-    expected = {
+    expected_nonlinear_constraint_representation = {
         "name": "some_name",
         "lower_bounds": -np.inf,
-        "upper_bounds": [5000],
+        "upper_bounds": [5000.0],
     }
 
     assert (
-        expected["lower_bounds"]
+        expected_nonlinear_constraint_representation["lower_bounds"]
         == ropt_conf["nonlinear_constraints"]["lower_bounds"][0]
     )
     assert (
-        expected["upper_bounds"] == ropt_conf["nonlinear_constraints"]["upper_bounds"]
+        expected_nonlinear_constraint_representation["upper_bounds"]
+        == ropt_conf["nonlinear_constraints"]["upper_bounds"]
     )
 
     EverestRunModel.create(config)
@@ -121,7 +129,7 @@ def test_upper_bound_output_constraint_def(copy_mocked_test_data_to_tmp):
 
 @pytest.mark.integration_test
 def test_sim_output_constraints(copy_mocked_test_data_to_tmp):
-    config = EverestConfig.load_file(CONFIG_FILE)
+    config = EverestConfig.load_file("config_output_constraints.yml")
     run_model = EverestRunModel.create(config)
     evaluator_server_config = EvaluatorServerConfig()
     run_model.run_experiment(evaluator_server_config)
