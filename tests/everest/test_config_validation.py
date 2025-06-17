@@ -474,6 +474,62 @@ def test_that_install_data_allows_runpath_root_as_target(
         assert install_data_config.target == Path(data["source"]).name
 
 
+@pytest.mark.parametrize(
+    "install_data, expected_error_msg",
+    [
+        (
+            {"source": "/", "link": True, "target": "bar.json"},
+            "'/' is a mount point and can't be handled",
+        ),
+        (
+            {"source": "baz/", "link": True, "target": "bar.json"},
+            "No such file or directory",
+        ),
+        (
+            {"source": None, "link": True, "target": "bar.json"},
+            "Input should be a valid string",
+        ),
+        (
+            {"source": "", "link": "false", "target": "bar.json"},
+            " false could not be parsed to a boolean",
+        ),
+        (
+            {"source": "baz/", "link": True, "target": 3},
+            "Input should be a valid string",
+        ),
+    ],
+)
+def test_install_data_with_invalid_templates(
+    tmp_path, install_data, expected_error_msg
+):
+    """
+    Checks for InstallDataConfig's validations instantiating EverestConfig to also
+    check invalid template rendering (e.g 'r{{ foo }}/) that maps to '/'
+    """
+    with pytest.raises(ValidationError) as exc_info:
+        EverestConfig.with_defaults(
+            controls=[
+                {
+                    "name": "initial_control",
+                    "type": "well_control",
+                    "min": 0,
+                    "max": 1,
+                    "variables": [
+                        {
+                            "name": "param_a",
+                            "initial_guess": 0.5,
+                        }
+                    ],
+                }
+            ],
+            environment={"output_folder": str(tmp_path / "output")},
+            model={"realizations": [1]},
+            install_data=[install_data],
+        )
+
+    assert expected_error_msg in str(exc_info.value)
+
+
 def test_that_install_data_source_exists(change_to_tmpdir):
     data = {
         "source": "relative/path",
