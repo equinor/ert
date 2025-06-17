@@ -8,7 +8,6 @@ from unittest.mock import MagicMock
 import pytest
 import yaml
 from pydantic import ValidationError
-from ruamel.yaml import YAML
 
 import everest
 from ert.config import ConfigWarning
@@ -23,7 +22,7 @@ from ert.config.queue_config import (
     SlurmQueueOptions,
     TorqueQueueOptions,
 )
-from everest.config import EverestConfig, EverestValidationError
+from everest.config import EverestConfig
 from everest.simulator.everest_to_ert import (
     _everest_to_ert_config_dict,
     _get_installed_forward_model_steps,
@@ -278,30 +277,32 @@ def test_summary_default_no_opm():
     ],
 )
 def test_install_data_with_invalid_templates(
-    copy_mocked_test_data_to_tmp,
-    install_data,
-    expected_error_msg,
+    tmp_path, install_data, expected_error_msg
 ):
     """
     Checks for InstallDataConfig's validations instantiating EverestConfig to also
     check invalid template rendering (e.g 'r{{ foo }}/) that maps to '/'
     """
-
-    config_file = "mocked_multi_batch.yml"
-
-    with open(config_file, encoding="utf-8") as f:
-        raw_config = YAML(typ="safe", pure=True).load(f)
-
-    raw_config["install_data"] = [install_data]
-
-    with open(config_file, "w", encoding="utf-8") as f:
-        yaml = YAML(typ="safe", pure=True)
-        yaml.indent = 2
-        yaml.default_flow_style = False
-        yaml.dump(raw_config, f)
-
-    with pytest.raises(EverestValidationError) as exc_info:
-        EverestConfig.load_file(config_file)
+    with pytest.raises(ValidationError) as exc_info:
+        EverestConfig.with_defaults(
+            controls=[
+                {
+                    "name": "initial_control",
+                    "type": "well_control",
+                    "min": 0,
+                    "max": 1,
+                    "variables": [
+                        {
+                            "name": "param_a",
+                            "initial_guess": 0.5,
+                        }
+                    ],
+                }
+            ],
+            environment={"output_folder": str(tmp_path / "output")},
+            model={"realizations": [1]},
+            install_data=[install_data],
+        )
 
     assert expected_error_msg in str(exc_info.value)
 
