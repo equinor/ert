@@ -888,8 +888,8 @@ class LocalEnsemble(BaseMode):
 
         """
         if isinstance(dataset, pl.DataFrame):
-            assert self._scalar_config is not None
             try:
+                assert self._scalar_config is not None
                 existing = self._load_parameters_lazy(SCALAR_NAME).collect()
                 existing_realizations = existing["realization"].to_list()
 
