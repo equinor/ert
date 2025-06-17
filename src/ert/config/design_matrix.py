@@ -33,7 +33,9 @@ class DesignMatrix:
             ) = self.read_and_validate_design_matrix()
         except (ValueError, AttributeError) as exc:
             raise ConfigValidationError.with_context(
-                f"Error reading design matrix {self.xls_filename}: {exc}",
+                f"Error reading design matrix {self.xls_filename}"
+                f" ({self.design_sheet} {self.default_sheet or ''}):"
+                f" {exc}",
                 str(self.xls_filename),
             ) from exc
 
@@ -74,15 +76,15 @@ class DesignMatrix:
             errors.append(
                 ErrorInfo(
                     f"Design Matrices '{self.xls_filename.name} ({self.design_sheet} "
-                    f"{self.default_sheet})' and '{dm_other.xls_filename.name} "
-                    f"({dm_other.design_sheet} {dm_other.default_sheet})' do not "
+                    f"{self.default_sheet or ''})' and '{dm_other.xls_filename.name} "
+                    f"({dm_other.design_sheet} {dm_other.default_sheet or ''})' do not "
                     "have the same active realizations!"
                 )
             )
 
-        common_keys = set(self.design_matrix_df.columns) & set(
-            dm_other.design_matrix_df.columns
-        )
+        common_keys = set(
+            self.design_matrix_df.select(pl.exclude("realization")).columns
+        ) & set(dm_other.design_matrix_df.columns)
         non_identical_cols = set()
         if common_keys:
             for key in common_keys:
@@ -94,9 +96,9 @@ class DesignMatrix:
                 errors.append(
                     ErrorInfo(
                         f"Design Matrices '{self.xls_filename.name} "
-                        f"({self.design_sheet} {self.default_sheet})' and "
+                        f"({self.design_sheet} {self.default_sheet or ''})' and "
                         f"'{dm_other.xls_filename.name} ({dm_other.design_sheet} "
-                        f"{dm_other.default_sheet})' "
+                        f"{dm_other.default_sheet or ''})' "
                         "contains non identical columns with the same name: "
                         f"{non_identical_cols}!"
                     )
@@ -116,9 +118,10 @@ class DesignMatrix:
         except ValueError as exc:
             raise ConfigValidationError(
                 f"Error when merging design matrices "
-                f"'{self.xls_filename.name} ({self.design_sheet} {self.default_sheet})'"
+                f"'{self.xls_filename.name} ({self.design_sheet}"
+                f" {self.default_sheet or ''})'"
                 f" and '{dm_other.xls_filename.name} ({dm_other.design_sheet} "
-                f"{dm_other.default_sheet})': {exc}!"
+                f"{dm_other.default_sheet or ''})': {exc}!"
             ) from exc
 
         for tfd in dm_other.parameter_configuration.transform_function_definitions:
@@ -181,7 +184,7 @@ class DesignMatrix:
     def read_and_validate_design_matrix(
         self,
     ) -> tuple[list[bool], pl.DataFrame, GenKwConfig]:
-        # Read the parameter names (first row) as strings to prevent pandas from
+        # Read the parameter names (first row) as strings to prevent polars from
         # modifying them. This ensures that duplicate or empty column names are
         # preserved exactly as they appear in the Excel sheet. By doing this, we
         # can properly validate variable names, including detecting duplicates or
@@ -199,16 +202,23 @@ class DesignMatrix:
             )
         except pl.exceptions.NoDataError as err:
             raise ValueError("Design sheet headers are empty.") from err
-        design_matrix_df = pl.read_excel(
-            self.xls_filename,
-            sheet_name=self.design_sheet,
-            has_header=False,
-            drop_empty_cols=False,
-            drop_empty_rows=True,
-            raise_if_empty=False,
-            infer_schema_length=None,
-            read_options={"skip_rows": 1},
-        ).with_columns(pl.col(pl.Float32, pl.Float64).fill_nan(None))
+        design_matrix_df = (
+            pl.read_excel(
+                self.xls_filename,
+                sheet_name=self.design_sheet,
+                has_header=False,
+                drop_empty_cols=False,
+                drop_empty_rows=True,
+                raise_if_empty=False,
+                infer_schema_length=None,
+                read_options={"skip_rows": 1},
+            )
+            .with_columns(pl.col(pl.Float32, pl.Float64).fill_nan(None))
+            .with_columns(pl.col(pl.String, pl.Categorical).str.strip_chars())
+        )
+        if design_matrix_df.is_empty():
+            raise ValueError("Design sheet body is empty.")
+        print(design_matrix_df)
         string_cols = [
             col
             for col, dtype in design_matrix_df.schema.items()
@@ -236,14 +246,19 @@ class DesignMatrix:
         )
         param_names = tuple(param_names[i] for i in columns_to_keep)
 
-        if error_list := DesignMatrix._validate_design_matrix(
+        if errors := DesignMatrix._validate_design_matrix(
             design_matrix_df, param_names
         ):
-            error_msg = "\n".join(error_list)
+            error_msg = "\n".join(errors)
             raise ValueError(f"Design matrix is not valid, error(s):\n{error_msg}")
 
         design_matrix_df.columns = list(param_names)
         if "REAL" in design_matrix_df.schema:
+            if "realization" in design_matrix_df.schema:
+                raise ValueError(
+                    "'realization' is a reserved internal keyword in ERT"
+                    " and cannot be used as a parameter name."
+                )
             design_matrix_df = design_matrix_df.rename({"REAL": "realization"})
             real_dt = design_matrix_df.schema.get("realization")
             assert real_dt is not None
@@ -293,8 +308,6 @@ class DesignMatrix:
         Validate user inputted design matrix
         :raises: ValueError if design matrix contains empty headers or empty cells
         """
-        if design_matrix.is_empty():
-            return []
         errors = []
         param_name_count = Counter(p for p in param_names if p is not None)
         duplicate_param_names = [(n, c) for n, c in param_name_count.items() if c > 1]
