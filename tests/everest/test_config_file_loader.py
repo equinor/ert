@@ -3,7 +3,6 @@ import string
 from unittest.mock import patch
 
 import pytest
-from ruamel.yaml import YAML
 
 from everest import config_file_loader as loader
 from everest.config import EverestConfig
@@ -13,31 +12,57 @@ from tests.everest.utils import relpath
 mocked_root = relpath(os.path.join("test_data", "mocked_test_case"))
 
 
-def test_load_yaml():
-    config_file = os.path.join(mocked_root, "mocked_test_case.yml")
-    configuration = loader.load_yaml(config_file)
-    assert configuration is not None
-    assert configuration["definitions"] is not None
+def test_load_yaml(tmp_path):
+    config_file_path = tmp_path / "config.yml"
+
+    initial_config = EverestConfig.with_defaults(definitions={})
+
+    initial_config.dump(str(config_file_path))
+
+    loaded_config = EverestConfig.load_file(str(config_file_path))
+
+    assert loaded_config is not None
+    assert loaded_config.definitions is not None
 
 
 @patch.dict("os.environ", {"USER": "NO_USERNAME_ENV_SET"})
-def test_load_yaml_preprocess():
-    config_file = os.path.join(mocked_root, "mocked_test_case.yml")
-    configuration = EverestConfig.load_file(config_file)
-    username = os.environ.get("USER")
-    folder = configuration.environment.simulation_folder
-    assert f"simulations_{username}" == folder
+def test_load_yaml_preprocess(tmp_path):
+    config_file = tmp_path / "config.yml"
+
+    initial_config = EverestConfig.with_defaults(
+        environment={"simulation_folder": "simulations_r{{ os.USER }}"}
+    )
+
+    initial_config.dump(str(config_file))
+
+    config = EverestConfig.load_file(str(config_file))
+
+    assert config.environment.simulation_folder == "simulations_NO_USERNAME_ENV_SET"
 
 
-def test_get_definitions():
-    config_file = os.path.join(mocked_root, "mocked_test_case.yml")
-    configuration = loader.load_yaml(config_file)
+def test_get_definitions(tmp_path):
+    initial_config = EverestConfig.with_defaults(
+        definitions={
+            "case": "MOCKED_TEST_CASE",
+            "eclbase": "eclipse/ECL",
+            "numeric_key": 1,
+            "bool_key": True,
+        }
+    )
+
+    config_file = tmp_path / "config.yml"
+
+    initial_config.dump(str(config_file))
+
+    config = loader.load_yaml(config_file)
     definitions = loader._get_definitions(
-        configuration=configuration,
+        configuration=config,
         configpath=os.path.dirname(os.path.abspath(config_file)),
     )
+
     assert definitions is not None
-    defs = {
+
+    expected_definitions = {
         "case": "MOCKED_TEST_CASE",
         "configpath": os.path.dirname(os.path.abspath(config_file)),
         "runpath_file": "<RUNPATH_FILE>",
@@ -47,80 +72,107 @@ def test_get_definitions():
         "realization": "<GEO_ID>",
     }
 
-    assert defs == definitions
+    assert definitions == expected_definitions
 
 
-def test_load_config_as_yaml():
-    config_file = os.path.join(mocked_root, "mocked_test_case.yml")
-    rendered_template = EverestConfig.load_file(config_file)
-    assert rendered_template is not None
+def test_load_config_as_yaml(tmp_path):
+    config_file = tmp_path / "config.yml"
+
+    initial_config = EverestConfig.with_defaults(definitions={"case": "MINIMAL_CASE"})
+
+    initial_config.dump(str(config_file))
+
+    assert EverestConfig.load_file(str(config_file)) is not None
 
 
-def test_configpath_in_defs(copy_mocked_test_data_to_tmp):
-    config_file = "mocked_multi_batch.yml"
-    config = EverestConfig.load_file(config_file)
-    defs = {
+def test_configpath_in_defs(tmp_path, monkeypatch):
+    monkeypatch.chdir(tmp_path)
+    current_working_directory = os.getcwd()
+
+    definitions_for_yaml_creation = {
+        "local_jobs_folder": "r{{ configpath }}/jobs",
+    }
+
+    config_file_path = tmp_path / "config.yml"
+
+    config = EverestConfig.with_defaults(definitions=definitions_for_yaml_creation)
+    config.dump(config_file_path)
+
+    loaded_config = EverestConfig.load_file(str(config_file_path))
+
+    expected_definitions_after_load = {
+        "local_jobs_folder": os.path.join(current_working_directory, "jobs"),
+    }
+
+    assert expected_definitions_after_load == loaded_config.definitions
+
+
+def test_dependent_definitions(tmp_path, monkeypatch):
+    monkeypatch.chdir(tmp_path)
+    current_working_directory = os.getcwd()
+
+    definitions_for_initial_config_object = {
         "numeric_key": 1,
         "bool_key": True,
-        "local_jobs_folder": os.path.join(os.getcwd(), "jobs"),
+        "local_jobs_folder": "r{{ configpath }}/jobs",
     }
-    assert defs == config.definitions
 
+    all_chars = string.ascii_lowercase
+    for i in range(len(all_chars) - 1):
+        current_char = all_chars[i]
+        next_char = all_chars[i + 1]
+        definitions_for_initial_config_object[current_char] = f"r{{{{ {next_char} }}}}"
 
-def test_dependent_definitions(copy_mocked_test_data_to_tmp):
-    config_file = "mocked_multi_batch.yml"
-    with open(config_file, encoding="utf-8") as f:
-        raw_config = YAML(typ="safe", pure=True).load(f)
+    definitions_for_initial_config_object[all_chars[-1]] = "r{{ configpath }}"
 
-    conseq_chars = zip(
-        string.ascii_lowercase[:-1], string.ascii_lowercase[1:], strict=False
+    initial_config_object = EverestConfig.with_defaults(
+        definitions=definitions_for_initial_config_object
     )
-    for c, cdef in [*list(conseq_chars), (string.ascii_lowercase[-1], "configpath")]:
-        raw_config["definitions"][c] = f"r{{{{ {cdef} }}}}"
 
-    with open(config_file, "w", encoding="utf-8") as f:
-        yaml = YAML(typ="safe", pure=True)
-        yaml.indent = 2
-        yaml.default_flow_style = False
-        yaml.dump(raw_config, f)
+    config_file_path = tmp_path / "config.yml"
+    initial_config_object.dump(str(config_file_path))
 
-    config = EverestConfig.load_file(config_file)
+    loaded_config = EverestConfig.load_file(str(config_file_path))
 
-    defs = {
+    expected_defs = {
         "numeric_key": 1,
         "bool_key": True,
-        "local_jobs_folder": os.path.join(os.getcwd(), "jobs"),
+        "local_jobs_folder": os.path.join(current_working_directory, "jobs"),
+        **dict.fromkeys(all_chars, current_working_directory),
     }
-    defs.update({x: os.getcwd() for x in string.ascii_lowercase})
-    assert defs == config.definitions
+
+    assert expected_defs == loaded_config.definitions
 
 
-def test_dependent_definitions_value_error(copy_mocked_test_data_to_tmp):
-    config_file = "mocked_multi_batch.yml"
-    with open(config_file, encoding="utf-8") as f:
-        raw_config = YAML(typ="safe", pure=True).load(f)
+def test_dependent_definitions_value_error(tmp_path):
+    config_file_path = tmp_path / "config.yml"
 
-    raw_config["definitions"]["a"] = "r{{ b }}"
-    raw_config["definitions"]["b"] = "r{{ a }}"
+    definitions_with_circular_dependency = {
+        "a": "r{{ b }}",
+        "b": "r{{ a }}",
+        "numeric_key": 1,
+        "bool_key": True,
+        "local_jobs_folder": "{{ configpath }}/jobs",
+    }
 
-    with open(config_file, "w", encoding="utf-8") as f:
-        yaml = YAML(typ="safe", pure=True)
-        yaml.indent = 2
-        yaml.default_flow_style = False
-        yaml.dump(raw_config, f)
+    initial_config_object = EverestConfig.with_defaults(
+        definitions=definitions_with_circular_dependency
+    )
+    initial_config_object.dump(str(config_file_path))
+
     with pytest.raises(ValueError):
-        EverestConfig.load_file(config_file)
+        EverestConfig.load_file(str(config_file_path))
 
 
-def test_load_empty_configuration(copy_mocked_test_data_to_tmp):
-    with open("empty_config.yml", mode="w", encoding="utf-8") as fh:
+def test_load_empty_configuration(tmp_path):
+    with open(tmp_path / "config.yml", mode="w", encoding="utf-8") as fh:
         fh.writelines("")
     with pytest.raises(EverestValidationError, match="missing"):
-        EverestConfig.load_file("empty_config.yml")
+        EverestConfig.load_file(tmp_path / "config.yml")
 
 
-def test_load_invalid_configuration(copy_mocked_test_data_to_tmp):
-    with open("invalid_config.yml", mode="w", encoding="utf-8") as fh:
+def test_load_invalid_configuration(tmp_path):
+    with open(tmp_path / "config.yml", mode="w", encoding="utf-8") as fh:
         fh.writelines("asdf")
     with pytest.raises(EverestValidationError, match="missing"):
-        EverestConfig.load_file("invalid_config.yml")
+        EverestConfig.load_file(tmp_path / "config.yml")
