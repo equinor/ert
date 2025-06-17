@@ -17,7 +17,7 @@ from collections import defaultdict
 from collections.abc import Callable, Generator, MutableSequence
 from contextlib import contextmanager
 from pathlib import Path
-from typing import Any, Protocol, cast
+from typing import Any, ClassVar, Protocol, cast
 
 import numpy as np
 from pydantic import PrivateAttr
@@ -186,7 +186,7 @@ class BaseRunModel(BaseModelWithContextSupport, ABC):
     random_seed: int
     start_iteration: int = 0
     minimum_required_realizations: int = 0
-    supports_rerunning_failed_realizations: bool = False
+    supports_rerunning_failed_realizations: ClassVar[bool] = False
 
     # Private attributes initialized in model_post_init
     _start_time: int | None = PrivateAttr(None)

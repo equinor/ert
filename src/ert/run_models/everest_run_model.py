@@ -271,7 +271,6 @@ class EverestRunModel(BaseRunModel):
             storage_path=storage_dir,
             queue_config=queue_config,
             status_queue=status_queue,
-            supports_rerunning_failed_realizations=False,
             optimization_callback=optimization_callback,
         )
 

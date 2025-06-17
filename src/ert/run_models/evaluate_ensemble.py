@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import logging
-from typing import Any
+from typing import Any, ClassVar
 from uuid import UUID
 
 import numpy as np
@@ -25,7 +25,7 @@ class EvaluateEnsemble(BaseRunModel):
     """
 
     ensemble_id: str
-    supports_rerunning_failed_realizations: bool = True
+    supports_rerunning_failed_realizations: ClassVar[bool] = True
 
     def model_post_init(self, ctx: Any) -> None:
         super().model_post_init(ctx)

@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import logging
-from typing import Any
+from typing import Any, ClassVar
 from uuid import UUID
 
 import numpy as np
@@ -42,7 +42,7 @@ class EnsembleExperiment(BaseRunModel):
     _observations: dict[str, pl.DataFrame] = PrivateAttr()
     _experiment_id: UUID | None = PrivateAttr(None)
     _ensemble_id: UUID | None = PrivateAttr(None)
-    supports_rerunning_failed_realizations: bool = True
+    supports_rerunning_failed_realizations: ClassVar[bool] = True
 
     def __init__(self, **data: Any) -> None:
         observations = data.pop("observations", None)
