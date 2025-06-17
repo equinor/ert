@@ -66,8 +66,8 @@ By installing your own steps in this way, you can extend the capabilities of ERT
     REQUIRED    <ARG0> <ARG1>    -- A list of arguments required to be passed
                                  -- on to the executable
 
-Note
-____
+Notes
+_____
 When configuring ARGLIST for FORWARD_MODEL steps, "long-options" signified by a
 double dash, like :code:`--some-option`, is problematic for Ert as the double
 dash is treated as a comment. Enclose any such long options in quotes for this
@@ -88,6 +88,22 @@ Note that the following behaviour provides identical results:
     FORWARD_MODEL STEP_NAME(<ARG1>="something")
 
 see example :ref:`create_script`
+
+If the zero return code of the executable is not to be trusted, i.e. if the
+executable exits with a zero return code even in the case of failure, you may override Erts
+notion of a forward model step success by requiring the production of a
+certain file on the runpath. This is done through configuring a `TARGET_FILE`
+in the step configuration:
+
+.. code-block:: bash
+
+    EXECUTABLE   some_executable_with_flaky_return_code
+    TARGET_FILE  some_file_produced_on_success
+
+When this `TARGET_FILE` is present in the configuration, Ert will wait for this
+file to appear on disk before continuing on with the next step in the forward
+model. If the file is not present after 5 seconds, it will stop execution and
+notify about the failure.
 
 .. _Pre-configured steps:
 
