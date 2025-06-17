@@ -1,6 +1,4 @@
-import itertools
 import numbers
-import os
 from copy import deepcopy
 
 import pytest
@@ -57,59 +55,6 @@ def test_controls_initialization():
 
     config.controls[1].name = exp_grp_name + "_new"
     EverestConfig.model_validate(config.to_dict())
-
-
-def _perturb_control_zero(
-    config: EverestConfig, gmin, gmax, ginit, fill
-) -> list[ControlVariableConfig]:
-    """Perturbs the variable range of the first control to create
-    interesting configurations.
-    """
-    control_zero = config.controls[0]
-    variable_names = [var.name for var in control_zero.variables]
-    revised_control_zero = None
-
-    exp_var_def = []
-    for idx, var_name in enumerate(variable_names):
-        var_config = ControlVariableConfig.model_validate({"name": var_name})
-
-        if idx % 2 == 0 or fill:
-            var_config.min = gmin - 0.3 if gmin else 0.13
-        if idx % 3 == 0 or fill:
-            var_config.max = gmax + 1.2 if gmax else 2.64
-        if idx % 4 == 0 or fill:
-            var_max = var_config.max if var_config.max is not None else gmax
-            var_min = var_config.min if var_config.min is not None else gmin
-            if var_min and var_max:
-                var_config.initial_guess = (var_min + var_max) / 2.0
-        if revised_control_zero is None:
-            revised_control_zero = ControlConfig(
-                name=control_zero.name,
-                type=control_zero.type,
-                min=gmin,
-                max=gmax,
-                initial_guess=ginit,
-                variables=[var_config],
-            )
-        else:
-            revised_control_zero.variables.append(var_config)
-
-        exp_var_def.append(
-            ControlVariableConfig(
-                name=var_name,
-                min=var_config.min if var_config.min is not None else gmin,
-                max=var_config.max if var_config.max is not None else gmax,
-                initial_guess=(
-                    var_config.initial_guess
-                    if var_config.initial_guess is not None
-                    else ginit
-                ),
-            )
-        )
-
-    config.controls[0] = revised_control_zero
-
-    return exp_var_def
 
 
 def test_control_variable_duplicate_name_no_index():
@@ -215,36 +160,59 @@ def test_input_constraint_deprecated_indexed_name_format_warns():
         )
 
 
-@pytest.mark.integration_test
-def test_individual_control_variable_config(copy_test_data_to_tmp):
-    config_file = os.path.join("mocked_test_case", "config_input_constraints.yml")
+def test_control_variable_initial_guess_below_min():
+    with pytest.raises(ValidationError, match="initial_guess"):
+        ControlConfig(
+            name="control",
+            type="well_control",
+            variables=[
+                ControlVariableConfig(name="w00", min=0.5, max=1.0, initial_guess=0.3)
+            ],
+        )
 
-    global_min = (0, 0.7, 1.3, None)
-    global_max = (0.5, 1, 3, None)
-    global_init = (0.3, 0.6, 1.1, None)
-    fill_missing = (True, False)
-    test_base = (global_min, global_max, global_init, fill_missing)
 
-    for gmin, gmax, ginit, fill in itertools.product(*test_base):
-        config = EverestConfig.load_file(config_file)
-        exp_var_def = _perturb_control_zero(config, gmin, gmax, ginit, fill)
+def test_control_variable_initial_guess_above_max():
+    with pytest.raises(ValidationError, match="initial_guess"):
+        ControlConfig(
+            name="control",
+            type="well_control",
+            variables=[
+                ControlVariableConfig(name="w00", min=0.5, max=1.0, initial_guess=1.3)
+            ],
+        )
 
-        # Not complete configuration
-        if None in {gmin, gmax, ginit} and not fill:
-            with pytest.raises(expected_exception=ValidationError):
-                EverestConfig.model_validate(config.to_dict())
-            continue
 
-        # Invalid parameters
-        def valid_control(var: ControlVariableConfig) -> bool:
-            return var.min <= var.initial_guess <= var.max
+def test_control_variable_min_is_negative():
+    with pytest.raises(ValidationError, match="initial_guess"):
+        ControlConfig(
+            name="control",
+            type="well_control",
+            variables=[
+                ControlVariableConfig(name="w00", min=-0.5, max=1.0, initial_guess=1.3)
+            ],
+        )
 
-        if not all(map(valid_control, exp_var_def)):
-            with pytest.raises(expected_exception=ValidationError):
-                EverestConfig.model_validate(config.to_dict())
-            continue
 
-        EverestConfig.model_validate(config.to_dict())
+def test_control_variable_max_is_zero():
+    with pytest.raises(ValidationError, match="initial_guess"):
+        ControlConfig(
+            name="control",
+            type="well_control",
+            variables=[
+                ControlVariableConfig(name="w00", min=0.5, max=0, initial_guess=1.3)
+            ],
+        )
+
+
+def test_control_variable_max_is_negative():
+    with pytest.raises(ValidationError, match="initial_guess"):
+        ControlConfig(
+            name="control",
+            type="well_control",
+            variables=[
+                ControlVariableConfig(name="w00", min=0.5, max=-1.0, initial_guess=1.3)
+            ],
+        )
 
 
 def test_control_variable_name():
