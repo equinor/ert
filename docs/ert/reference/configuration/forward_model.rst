@@ -68,9 +68,10 @@ By installing your own steps in this way, you can extend the capabilities of ERT
 
 Note
 ____
-When configuring ARGLIST for FORWARD_MODEL steps it is not suitable to use
-:code:`--some-option` for named options as it treated as a comment by the
-configuration compiler. Single letter options, i.e. :code:`-s` are needed.
+When configuring ARGLIST for FORWARD_MODEL steps, "long-options" signified by a
+double dash, like :code:`--some-option`, is problematic for Ert as the double
+dash is treated as a comment. Enclose any such long options in quotes for this
+reason.
 
 Invoking the step is then done by including it in the ert config:
 
