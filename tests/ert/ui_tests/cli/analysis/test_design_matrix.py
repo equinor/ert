@@ -12,7 +12,7 @@ import pytest
 
 from ert.cli.main import ErtCliError
 from ert.config import DESIGN_MATRIX_GROUP, ErtConfig
-from ert.config.parsing.config_errors import ConfigValidationError
+from ert.config.parsing.config_errors import ConfigValidationError, ConfigWarning
 from ert.mode_definitions import (
     ENSEMBLE_EXPERIMENT_MODE,
     ENSEMBLE_SMOOTHER_MODE,
@@ -420,17 +420,16 @@ def test_run_poly_example_with_design_matrix_selective_realizations(
         "--experiment-name",
         "test-experiment",
         "--realizations",
-        "0,10",
+        "0,4",
     )
     config_path = ErtConfig.from_file("poly.ert").config_path
-    print(config_path)
 
     realizations_run = os.listdir(Path(config_path) / "poly_out")
     assert len(realizations_run) == 1
     assert "realization-0" in realizations_run
 
     assert (
-        "Using realizations intersected between realizations_specified "
+        "Using realizations intersected between realizations specified "
         "and DESIGN_MATRIX (1)" in capsys.readouterr().out
     )
 
@@ -481,20 +480,22 @@ def test_design_matrix_on_esmda_fail_without_updateable_parameters(
         pytest.param(
             5,
             (
-                "NUM_REALIZATIONS ({num_realizations_in_user_config}) is greater than "
-                "the number of realizations in DESIGN_MATRIX "
-                "({realizations_in_design_matrix}). Using the realizations from "
-                "DESIGN_MATRIX ({realizations_in_design_matrix})"
+                r"NUM_REALIZATIONS \({num_realizations_in_user_config}\) is "
+                "greater than the number of realizations in DESIGN_MATRIX "
+                r"\({realizations_in_design_matrix}\)\. Using the realizations from "
+                r"DESIGN_MATRIX \({realizations_in_design_matrix}\)"
             ),
+            id="num_reals_greater_than_design_matrix",
         ),
         pytest.param(
             15,
             (
-                "NUM_REALIZATIONS ({num_realizations_in_user_config}) is less than the "
-                "number of realizations in DESIGN_MATRIX "
-                "({realizations_in_design_matrix}). Using the realizations from "
-                "NUM_REALIZATIONS ({num_realizations_in_user_config})"
+                r"NUM_REALIZATIONS \({num_realizations_in_user_config}\) is "
+                "less than the number of realizations in DESIGN_MATRIX "
+                r"\({realizations_in_design_matrix}\). Using the realizations from "
+                r"NUM_REALIZATIONS \({num_realizations_in_user_config}\)"
             ),
+            id="num_reals_less_than_design_matrix",
         ),
     ],
 )
@@ -502,7 +503,6 @@ def test_run_poly_example_with_different_realization_count_chooses_smaller_and_w
     realizations_in_design_matrix,
     expected_message_format,
     copy_poly_case_with_design_matrix,
-    capsys,
 ):
     num_realizations_in_user_config = 10
     expected_message = expected_message_format.format(
@@ -519,20 +519,20 @@ def test_run_poly_example_with_different_realization_count_chooses_smaller_and_w
     copy_poly_case_with_design_matrix(design_dict, default_list)
     with open("poly.ert", "a+", encoding="utf-8") as f:
         f.write(f"\nNUM_REALIZATIONS {num_realizations_in_user_config}")
-    run_cli(
-        ENSEMBLE_EXPERIMENT_MODE,
-        "--disable-monitoring",
-        "poly.ert",
-        "--experiment-name",
-        "test-experiment",
-    )
+    with pytest.warns(ConfigWarning, match=expected_message):
+        run_cli(
+            ENSEMBLE_EXPERIMENT_MODE,
+            "--disable-monitoring",
+            "poly.ert",
+            "--experiment-name",
+            "test-experiment",
+        )
     config_path = ErtConfig.from_file("poly.ert").config_path
 
     realizations_run = os.listdir(Path(config_path) / "poly_out")
     assert len(realizations_run) == min(
         realizations_in_design_matrix, num_realizations_in_user_config
     )
-    assert expected_message in capsys.readouterr().out
 
 
 @pytest.mark.parametrize(
@@ -576,7 +576,7 @@ def test_run_poly_example_with_specified_realizations_finds_intersection_and_war
         )
 
         assert (
-            "Using realizations intersected between realizations_specified and "
+            "Using realizations intersected between realizations specified and "
             f"DESIGN_MATRIX ({intersected_realizations_count})"
         ) in capsys.readouterr().out
 

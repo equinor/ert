@@ -101,14 +101,16 @@ def run_cli(args: Namespace, plugin_manager: ErtPluginManager | None = None) -> 
         raise ErtCliError(f"{args.mode} was not valid, failed with: {e}") from e
 
     if (
-        ert_config.analysis_config.design_matrix is not None
-        and ert_config.analysis_config.design_matrix.active_realizations is not None
+        (
+            ert_config.analysis_config.design_matrix is not None
+            and ert_config.analysis_config.design_matrix.active_realizations is not None
+        )
+        and hasattr(args, "realizations")
+        and args.realizations is not None
     ):
-        _log_if_num_realization_was_updated(
-            ert_config.runpath_config.num_realizations,
-            len(ert_config.analysis_config.design_matrix.active_realizations),
-            model.active_realizations.count(True),
-            hasattr(args, "realizations") and args.realizations is not None,
+        print(
+            "Using realizations intersected between realizations specified "
+            f"and DESIGN_MATRIX ({model.active_realizations.count(True)})"
         )
 
     if args.port_range is None and model.queue_system == QueueSystem.LOCAL:
@@ -168,30 +170,3 @@ def run_cli(args: Namespace, plugin_manager: ErtPluginManager | None = None) -> 
         # If monitor has not reported, give some info if the job failed
         msg = end_event.msg if args.disable_monitoring else ""
         raise ErtCliError(msg)
-
-
-def _log_if_num_realization_was_updated(
-    config_num_realizations: int,
-    dm_num_realizations: int,
-    active_realizations_count: int,
-    has_realizations_specified: bool = False,
-) -> None:
-    if dm_num_realizations == config_num_realizations:
-        return
-    if has_realizations_specified:
-        print(
-            "Using realizations intersected between realizations_specified "
-            f"and DESIGN_MATRIX ({active_realizations_count})"
-        )
-    else:
-        print(
-            f"NUM_REALIZATIONS ({config_num_realizations}) is "
-            + ("greater " if dm_num_realizations < config_num_realizations else "less ")
-            + f"than the number of realizations in DESIGN_MATRIX "
-            f"({dm_num_realizations}). Using the realizations from "
-            + (
-                f"DESIGN_MATRIX ({dm_num_realizations})"
-                if dm_num_realizations < config_num_realizations
-                else f"NUM_REALIZATIONS ({config_num_realizations})"
-            )
-        )

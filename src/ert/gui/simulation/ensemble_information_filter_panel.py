@@ -9,7 +9,6 @@ from PyQt6.QtWidgets import QFormLayout, QLabel, QWidget
 from ert.gui.ertnotifier import ErtNotifier
 from ert.gui.ertwidgets import (
     ActiveRealizationsModel,
-    AnalysisModuleEdit,
     CopyableLabel,
     StringBox,
     TargetEnsembleModel,
@@ -20,8 +19,9 @@ from ert.run_models import EnsembleInformationFilter
 from ert.validation import (
     ExperimentValidation,
     ProperNameFormatArgument,
-    RangeStringArgument,
 )
+from ert.validation.active_range import ActiveRange
+from ert.validation.range_string_argument import RangeSubsetStringArgument
 
 from ._design_matrix_panel import DesignMatrixPanel
 from .experiment_config_panel import ExperimentConfigPanel
@@ -45,6 +45,8 @@ class EnsembleInformationFilterPanel(ExperimentConfigPanel):
         run_path: str,
         notifier: ErtNotifier,
         ensemble_size: int,
+        active_realizations: list[bool],
+        config_num_realization: int,
     ) -> None:
         super().__init__(EnsembleInformationFilter)
         self.notifier = notifier
@@ -80,18 +82,16 @@ class EnsembleInformationFilterPanel(ExperimentConfigPanel):
         self._ensemble_format_field.setValidator(ProperNameFormatArgument())
         layout.addRow("Ensemble format:", self._ensemble_format_field)
 
-        self._analysis_module_edit = AnalysisModuleEdit(
-            analysis_config.es_settings, ensemble_size
-        )
-        self._analysis_module_edit.setObjectName("enif_edit")
-        layout.addRow("Analysis module:", self._analysis_module_edit)
-
-        active_realizations_model = ActiveRealizationsModel(ensemble_size)
         self._active_realizations_field = StringBox(
-            active_realizations_model,  # type: ignore
+            ActiveRealizationsModel(ensemble_size),  # type: ignore
             "config/simulation/active_realizations",
         )
-        self._active_realizations_field.setValidator(RangeStringArgument(ensemble_size))
+        self._active_realizations_field.setValidator(
+            RangeSubsetStringArgument(ActiveRange(active_realizations)),
+        )
+        self._active_realizations_field.model.setValueFromMask(  # type: ignore
+            active_realizations
+        )
         layout.addRow("Active realizations", self._active_realizations_field)
 
         design_matrix = analysis_config.design_matrix
@@ -99,10 +99,9 @@ class EnsembleInformationFilterPanel(ExperimentConfigPanel):
             layout.addRow(
                 "Design Matrix",
                 DesignMatrixPanel.get_design_matrix_button(
-                    self._active_realizations_field,
                     design_matrix,
                     number_of_realizations_label,
-                    ensemble_size,
+                    config_num_realization,
                 ),
             )
 
