@@ -875,21 +875,24 @@ def test_forward_model_overview_label_selected_on_tab_change(
 @pytest.mark.integration_test
 @pytest.mark.usefixtures("use_tmpdir")
 @pytest.mark.parametrize(
-    "experiment_mode, experiment_mode_panel",
+    "experiment_mode, experiment_mode_panel, dm_realizations",
     [
-        (EnsembleExperiment, EnsembleExperimentPanel),
-        (EnsembleSmoother, EnsembleSmootherPanel),
-        (MultipleDataAssimilation, MultipleDataAssimilationPanel),
+        (EnsembleExperiment, EnsembleExperimentPanel, 5),
+        (EnsembleExperiment, EnsembleExperimentPanel, 15),
+        (EnsembleSmoother, EnsembleSmootherPanel, 5),
+        (EnsembleSmoother, EnsembleSmootherPanel, 15),
+        (MultipleDataAssimilation, MultipleDataAssimilationPanel, 5),
+        (MultipleDataAssimilation, MultipleDataAssimilationPanel, 15),
     ],
 )
-def test_that_design_matrix_alters_num_realizations_field(
-    qtbot: QtBot, experiment_mode, experiment_mode_panel, use_tmpdir
+def test_that_ert_chooses_minimum_realization_with_design_matrix(
+    qtbot: QtBot, experiment_mode, dm_realizations, experiment_mode_panel, use_tmpdir
 ):
     xls_filename = "design_matrix.xlsx"
     design_matrix_df = pd.DataFrame(
         {
-            "REAL": list(range(3)),
-            "a": [0, 1, 2],
+            "REAL": list(range(dm_realizations)),
+            "a": list(range(dm_realizations)),
         }
     )
     default_sheet_df = pd.DataFrame([["b", 1], ["c", 2]])
@@ -899,9 +902,11 @@ def test_that_design_matrix_alters_num_realizations_field(
             xl_write, index=False, sheet_name="DefaultSheet", header=False
         )
 
+    config_num_realizations = 10
+    expected_num_realizations = min(dm_realizations, config_num_realizations)
     config_file = "minimal_config.ert"
     with open(config_file, "w", encoding="utf-8") as f:
-        f.write("NUM_REALIZATIONS 10")
+        f.write(f"NUM_REALIZATIONS {config_num_realizations}")
         f.write(f"\nDESIGN_MATRIX {xls_filename}")
 
     args_mock = Mock()
@@ -919,13 +924,15 @@ def test_that_design_matrix_alters_num_realizations_field(
     simulation_settings = gui.findChild(experiment_mode_panel)
     num_realizations_label = simulation_settings.findChild(QWidget, "num_reals_label")
     assert num_realizations_label
-    assert num_realizations_label.text() == "<b>3</b>"
+
+    assert num_realizations_label.text() == f"<b>{expected_num_realizations}</b>"
 
     # Verify that the warning icon has the correct tooltip
     warning_icon = gui.findChild(QLabel, "warning_icon_num_realizations_design_matrix")
     assert warning_icon.toolTip() == (
-        "Number of realizations changed from 10 to 3 due "
-        "to 'REAL' column in design matrix"
+        f"Number of realizations was set to {expected_num_realizations} "
+        "due to different number of realizations in the design matrix "
+        "and NUM_REALIZATIONS in config"
     )
 
 

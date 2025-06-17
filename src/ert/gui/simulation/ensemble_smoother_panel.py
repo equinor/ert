@@ -21,8 +21,9 @@ from ert.run_models import EnsembleSmoother
 from ert.validation import (
     ExperimentValidation,
     ProperNameFormatArgument,
-    RangeStringArgument,
 )
+from ert.validation.active_range import ActiveRange
+from ert.validation.range_string_argument import RangeSubsetStringArgument
 
 from ._design_matrix_panel import DesignMatrixPanel
 from .experiment_config_panel import ExperimentConfigPanel
@@ -46,6 +47,8 @@ class EnsembleSmootherPanel(ExperimentConfigPanel):
         run_path: str,
         notifier: ErtNotifier,
         ensemble_size: int,
+        active_realizations: list[bool],
+        config_num_realization: int,
     ) -> None:
         super().__init__(EnsembleSmoother)
         self.notifier = notifier
@@ -98,12 +101,16 @@ class EnsembleSmootherPanel(ExperimentConfigPanel):
         self._analysis_module_edit.setObjectName("ensemble_smoother_edit")
         layout.addRow("Analysis module:", self._analysis_module_edit)
 
-        active_realizations_model = ActiveRealizationsModel(ensemble_size)
         self._active_realizations_field = StringBox(
-            active_realizations_model,  # type: ignore
+            ActiveRealizationsModel(ensemble_size),  # type: ignore
             "config/simulation/active_realizations",
         )
-        self._active_realizations_field.setValidator(RangeStringArgument(ensemble_size))
+        self._active_realizations_field.setValidator(
+            RangeSubsetStringArgument(ActiveRange(active_realizations)),
+        )
+        self._active_realizations_field.model.setValueFromMask(  # type: ignore
+            active_realizations
+        )
         layout.addRow("Active realizations", self._active_realizations_field)
 
         design_matrix = analysis_config.design_matrix
@@ -111,10 +118,7 @@ class EnsembleSmootherPanel(ExperimentConfigPanel):
             layout.addRow(
                 "Design Matrix",
                 DesignMatrixPanel.get_design_matrix_button(
-                    self._active_realizations_field,
-                    design_matrix,
-                    number_of_realizations_label,
-                    ensemble_size,
+                    design_matrix, number_of_realizations_label, config_num_realization
                 ),
             )
 

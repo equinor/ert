@@ -7,6 +7,7 @@ import re
 from collections import defaultdict
 from collections.abc import Mapping, Sequence
 from datetime import datetime
+from functools import cached_property
 from os import path
 from pathlib import Path
 from typing import Any, ClassVar, Self, no_type_check, overload
@@ -1175,6 +1176,51 @@ class ErtConfig(BaseModel):
                 )
         else:
             logger.info(f"Content of the config_dict: {config_dict_content}")
+
+    @cached_property
+    def ensemble_size(self) -> int:
+        config_num_realizations = self.runpath_config.num_realizations
+        if (
+            self.analysis_config.design_matrix is not None
+            and (
+                dm_active_realizations
+                := self.analysis_config.design_matrix.active_realizations
+            )
+            is not None
+        ) and (
+            dm_num_realizations := len(dm_active_realizations)
+        ) != config_num_realizations:
+            msg = (
+                f"NUM_REALIZATIONS ({config_num_realizations}) is "
+                + (
+                    "greater "
+                    if dm_num_realizations < config_num_realizations
+                    else "less "
+                )
+                + f"than the number of realizations in DESIGN_MATRIX "
+                f"({dm_num_realizations}). Using the realizations from "
+                + (
+                    f"DESIGN_MATRIX ({dm_num_realizations})"
+                    if dm_num_realizations < config_num_realizations
+                    else f"NUM_REALIZATIONS ({config_num_realizations})"
+                )
+            )
+            ConfigWarning.warn(msg)
+            return min(config_num_realizations, dm_num_realizations)
+        return config_num_realizations
+
+    @cached_property
+    def active_realizations(self) -> list[bool]:
+        if (
+            self.analysis_config.design_matrix is not None
+            and (
+                dm_active_realizations
+                := self.analysis_config.design_matrix.active_realizations
+            )
+            is not None
+        ):
+            return dm_active_realizations[: self.ensemble_size]
+        return [True for _ in range(self.ensemble_size)]
 
     @classmethod
     def _log_custom_forward_model_steps(cls, user_config: ConfigDict) -> None:
