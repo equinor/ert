@@ -369,6 +369,10 @@ class GenKwConfig(ParameterConfig):
                     "Design matrix must be provided when using "
                     "DataSource.DESIGN_MATRIX for transform function definitions."
                 )
+                if real_nr not in design_matrix_df.index:
+                    raise KeyError(
+                        f"Realization {real_nr} not found in design matrix DataFrame."
+                    )
                 raw_val = design_matrix_df.at[real_nr, tfd.name]
                 if isinstance(raw_val, np.generic):
                     param_val = raw_val.item()  # int, float, or str
