@@ -200,44 +200,29 @@ def _setup_evaluate_ensemble(
 def _get_and_validate_active_realizations_list(
     args: Namespace, config: ErtConfig
 ) -> list[bool]:
-    ensemble_size = config.runpath_config.num_realizations
-    if (
-        config.analysis_config.design_matrix is not None
-        and (
-            dm_active_realizations
-            := config.analysis_config.design_matrix.active_realizations
-        )
-        is not None
-    ):
-        if ensemble_size != len(dm_active_realizations):
-            ensemble_size = min(ensemble_size, len(dm_active_realizations))
-            logger.warning(
-                "The number of realizations in the design matrix "
-                f"({len(dm_active_realizations)}) differs from the configured "
-                f"ensemble size ({config.runpath_config.num_realizations}). "
-                f"Using the minimum of both ({ensemble_size})."
+    if hasattr(args, "realizations") and args.realizations is not None:
+        intersected_realizations = np.array(
+            ActiveRange(
+                rangestring=args.realizations,
+                length=len(config.active_realizations),
+            ).mask
+        ) & np.array(config.active_realizations)
+        if np.any(intersected_realizations):
+            return intersected_realizations.tolist()
+        elif (
+            config.analysis_config.design_matrix is not None
+            and config.analysis_config.design_matrix.active_realizations is not None
+        ):
+            raise ConfigValidationError(
+                "The specified realizations do not intersect "
+                "with the active realizations in the design matrix "
+                "and NUM_REALIZATIONS."
             )
-        if hasattr(args, "realizations") and args.realizations is not None:
-            intersected_realizations = np.array(
-                ActiveRange(
-                    rangestring=args.realizations,
-                    length=max(
-                        len(dm_active_realizations),
-                        config.runpath_config.num_realizations,
-                    ),
-                ).mask[:ensemble_size]
-            ) & np.array(dm_active_realizations[:ensemble_size])
-            if np.any(intersected_realizations):
-                return intersected_realizations.tolist()
-            else:
-                raise ConfigValidationError(
-                    "The specified realizations do not intersect "
-                    "with the active realizations in the design matrix "
-                    "and num_realizations."
-                )
-        return dm_active_realizations[:ensemble_size]
-
-    return _realizations(args, ensemble_size).tolist()
+        else:
+            raise ConfigValidationError(
+                "The specified realizations do not intersect with NUM_REALIZATIONS."
+            )
+    return config.active_realizations
 
 
 def _setup_manual_update(
