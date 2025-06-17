@@ -3,6 +3,7 @@ from pathlib import Path
 from textwrap import dedent
 
 import pytest
+from pydantic import ValidationError
 from ruamel.yaml import YAML
 
 from ert.config.parsing import ConfigKeys as ErtConfigKeys
@@ -115,19 +116,35 @@ def test_valid_forward_model_config_files(copy_test_data_to_tmp, monkeypatch):
 @skipif_no_everest_models
 @pytest.mark.everest_models_test
 @pytest.mark.skip_mac_ci
-def test_invalid_forward_model_config_files(copy_test_data_to_tmp, monkeypatch):
-    monkeypatch.chdir("valid_config_file/forward_models")
-    parser = MockParser()
-    next((Path.cwd() / "input" / "templates").glob("*")).unlink()
-    EverestConfig.load_file_with_argparser(
-        "valid_config_forward_models.yml", parser=parser
-    )
-    template_config_path = "configs/template_config.yml"
-    config_file = "valid_config_forward_models.yml"
-    template_path = "./templates/wellopen.jinja"
-    assert f"""Loading config file <{config_file}> failed with:
-Found 1 validation error:
+def test_invalid_forward_model_config_files(tmp_path):
+    template_rel_path = "configs/template_config.yml"
+    template_abs_path = tmp_path / template_rel_path
 
+    template_abs_path.parent.mkdir(parents=True, exist_ok=True)
+    (template_abs_path.parent / "templates").mkdir(parents=True, exist_ok=True)
 
-    * Value error, job = 'add_templates'\t-c/--config = {template_config_path}
-\t\ttemplates: {template_path} -> Path does not point to a file (type=value_error)""" in parser.get_error()  # noqa: E501
+    with pytest.raises(ValidationError) as exc_info:
+        EverestConfig.with_defaults(
+            controls=[
+                {
+                    "name": "initial_control",
+                    "min": 0.0,
+                    "max": 1.0,
+                    "type": "well_control",
+                    "variables": [{"name": "param_a", "initial_guess": 0.5}],
+                }
+            ],
+            environment={"output_folder": str(tmp_path / "output")},
+            model={"realizations": [1]},
+            forward_model=[
+                (
+                    "add_templates -i wells_sw_result.json "
+                    "-c configs/template_config.yml "
+                    "-o wells_tmpl_result.json"
+                )
+            ],
+        )
+
+    assert (
+        f"File does not exists or is a directory: {template_rel_path} [type=value_error"
+    ) in str(exc_info.value)
