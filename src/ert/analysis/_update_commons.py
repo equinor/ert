@@ -65,6 +65,10 @@ def _copy_unupdated_parameters(
         source_ensemble.experiment.parameter_configuration[
             parameter_group
         ].copy_parameters(source_ensemble, target_ensemble, iens_active_index)
+    if source_ensemble._scalar_config:
+        source_ensemble._scalar_config.copy_parameters(
+            source_ensemble, target_ensemble, iens_active_index, update_mask=True
+        )
 
 
 def _expand_wildcards(

@@ -126,6 +126,7 @@ def _extract_parameter_group_and_key(key: str) -> tuple[str, str] | tuple[None, 
 
 def data_for_parameter(ensemble: Ensemble, key: str) -> pd.DataFrame:
     group, _ = _extract_parameter_group_and_key(key)
+
     df = ensemble.load_scalars(group)
     if df.is_empty():
         return pd.DataFrame()
@@ -241,15 +242,16 @@ def data_for_key(
     if response_key is not None:
         return data_for_response(ensemble, key)
 
-    parameter_config = ensemble.experiment.parameter_configuration
-    parameter_group, parameter_key = _extract_parameter_group_and_key(key)
-    if (
-        parameter_group in parameter_config
-        and parameter_key in parameter_config[parameter_group].parameter_keys
-    ):
-        return data_for_parameter(ensemble, key)
+    # parameter_config = ensemble.experiment.parameter_configuration
+    # parameter_group, parameter_key = _extract_parameter_group_and_key(key)
 
-    return pd.DataFrame()
+    # if (
+    #     parameter_group in parameter_config
+    #     and parameter_key in parameter_config[parameter_group].parameter_keys
+    # ):
+    return data_for_parameter(ensemble, key)
+
+    # return pd.DataFrame()
 
 
 def _get_observations(

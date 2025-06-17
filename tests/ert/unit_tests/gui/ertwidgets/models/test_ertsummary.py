@@ -18,12 +18,11 @@ def mock_ert(monkeypatch):
     ]
 
     gen_kw = GenKwConfig(
-        name="KEY",
         forward_init=False,
         transform_function_definitions=[
-            TransformFunctionDefinition("KEY1", "UNIFORM", [0, 1]),
-            TransformFunctionDefinition("KEY2", "NORMAL", [0, 1]),
-            TransformFunctionDefinition("KEY3", "LOGNORMAL", [0, 1]),
+            TransformFunctionDefinition("gen_kw", "KEY1", "UNIFORM", [0, 1]),
+            TransformFunctionDefinition("gen_kw", "KEY2", "NORMAL", [0, 1]),
+            TransformFunctionDefinition("gen_kw", "KEY3", "LOGNORMAL", [0, 1]),
         ],
         update=True,
     )

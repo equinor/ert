@@ -8,7 +8,7 @@ import polars as pl
 from pydantic import PrivateAttr
 
 from ert.config.parsing.config_errors import ConfigValidationError
-from ert.enkf_main import sample_prior, save_design_matrix_to_ensemble
+from ert.enkf_main import sample_prior
 from ert.ensemble_evaluator import EvaluatorServerConfig
 from ert.trace import tracer
 
@@ -43,12 +43,10 @@ class EnsembleSmoother(UpdateRunModel):
     ) -> None:
         self.log_at_startup()
         parameters_config = self.parameter_configuration
-        design_matrix = self.design_matrix
-        design_matrix_group = None
-        if design_matrix is not None and not restart:
+        if self.design_matrix is not None and not restart:
             try:
-                parameters_config, design_matrix_group = (
-                    design_matrix.merge_with_existing_parameters(parameters_config)
+                parameters_config = self.design_matrix.merge_with_existing_parameters(
+                    parameters_config
                 )
                 if not any(p.update for p in parameters_config):
                     raise ConfigValidationError(
@@ -64,8 +62,7 @@ class EnsembleSmoother(UpdateRunModel):
         )
         ensemble_format = self.target_ensemble
         experiment = self._storage.create_experiment(
-            parameters=parameters_config
-            + ([design_matrix_group] if design_matrix_group else []),
+            parameters=parameters_config,
             observations=self._observations,
             responses=self.response_configuration,
             name=self.experiment_name,
@@ -90,15 +87,11 @@ class EnsembleSmoother(UpdateRunModel):
             np.where(self.active_realizations)[0],
             parameters=[param.name for param in parameters_config],
             random_seed=self.random_seed,
+            design_matrix_df=self.design_matrix.design_matrix_df
+            if self.design_matrix is not None
+            else None,
         )
 
-        if design_matrix_group is not None and design_matrix is not None:
-            save_design_matrix_to_ensemble(
-                design_matrix.design_matrix_df,
-                prior,
-                np.where(self.active_realizations)[0],
-                design_matrix_group.name,
-            )
         self._evaluate_and_postprocess(
             prior_args,
             prior,
