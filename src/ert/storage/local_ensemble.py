@@ -673,7 +673,7 @@ class LocalEnsemble(BaseMode):
             ).with_columns(
                 [
                     pl.Series(parameters[i, :]).alias(tf.name)
-                    for i, tf in enumerate(config_node.group_paramaters(param_group))
+                    for i, tf in enumerate(config_node.group_parameters(param_group))
                     if not update_mask or tf.update
                 ]
             )
