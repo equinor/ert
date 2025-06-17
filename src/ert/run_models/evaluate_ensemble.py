@@ -42,6 +42,7 @@ class EvaluateEnsemble(BaseRunModel):
         rerun_failed_realizations: bool = False,
     ) -> None:
         self.log_at_startup()
+        self._is_rerunning_failed_realizations = rerun_failed_realizations
         ensemble = self._storage.get_ensemble(UUID(self.ensemble_id))
         experiment = ensemble.experiment
         self.set_env_key("_ERT_EXPERIMENT_ID", str(experiment.id))
