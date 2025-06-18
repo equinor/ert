@@ -11,7 +11,7 @@ from everest.bin.kill_script import kill_entry
 from everest.bin.monitor_script import monitor_entry
 from everest.config import EverestConfig, ServerConfig
 from everest.detached import (
-    ServerStatus,
+    ExperimentState,
     everserver_status,
     update_everserver_status,
 )
@@ -20,7 +20,7 @@ from tests.everest.utils import capture_streams
 CONFIG_FILE_MINIMAL = "config_minimal.yml"
 
 
-def run_detached_monitor_mock(status=ServerStatus.completed, error=None, **kwargs):
+def run_detached_monitor_mock(status=ExperimentState.completed, error=None, **kwargs):
     path = os.path.join(
         os.getcwd(), "everest_output/detached_node_output/.session/status"
     )
@@ -32,7 +32,7 @@ def run_detached_monitor_mock(status=ServerStatus.completed, error=None, **kwarg
 @patch("everest.bin.everest_script.start_server")
 @patch(
     "everest.bin.everest_script.everserver_status",
-    return_value={"status": ServerStatus.never_run, "message": None},
+    return_value={"status": ExperimentState.never_run, "message": None},
 )
 @patch("everest.bin.everest_script.start_experiment")
 def test_everest_entry_debug(
@@ -75,7 +75,7 @@ def test_everest_entry_debug(
 @patch("everest.bin.everest_script.start_server")
 @patch(
     "everest.bin.everest_script.everserver_status",
-    return_value={"status": ServerStatus.never_run, "message": None},
+    return_value={"status": ExperimentState.never_run, "message": None},
 )
 @patch("everest.bin.everest_script.start_experiment")
 def test_everest_entry(
@@ -101,7 +101,7 @@ def test_everest_entry(
 @patch("everest.bin.everest_script.start_server")
 @patch(
     "everest.bin.everest_script.everserver_status",
-    return_value={"status": ServerStatus.completed, "message": None},
+    return_value={"status": ExperimentState.completed, "message": None},
 )
 @patch("everest.bin.everest_script.start_experiment")
 def test_everest_entry_detached_already_run(
@@ -140,7 +140,7 @@ def test_everest_entry_detached_already_run(
 @patch("everest.bin.monitor_script.run_detached_monitor")
 @patch(
     "everest.bin.monitor_script.everserver_status",
-    return_value={"status": ServerStatus.completed, "message": None},
+    return_value={"status": ExperimentState.completed, "message": None},
 )
 def test_everest_entry_detached_already_run_monitor(
     everserver_status_mock,
@@ -168,7 +168,7 @@ def test_everest_entry_detached_already_run_monitor(
 @patch("everest.bin.kill_script.wait_for_server_to_stop")
 @patch(
     "everest.bin.everest_script.everserver_status",
-    return_value={"status": ServerStatus.completed, "message": None},
+    return_value={"status": ExperimentState.completed, "message": None},
 )
 def test_everest_entry_detached_running(
     everserver_status_mock,
@@ -217,7 +217,7 @@ def test_everest_entry_detached_running(
 @patch("everest.bin.monitor_script.run_detached_monitor")
 @patch(
     "everest.bin.monitor_script.everserver_status",
-    return_value={"status": ServerStatus.completed, "message": None},
+    return_value={"status": ExperimentState.completed, "message": None},
 )
 def test_everest_entry_detached_running_monitor(
     everserver_status_mock,
@@ -238,7 +238,7 @@ def test_everest_entry_detached_running_monitor(
 @patch("everest.bin.monitor_script.run_detached_monitor")
 @patch(
     "everest.bin.monitor_script.everserver_status",
-    return_value={"status": ServerStatus.completed, "message": None},
+    return_value={"status": ExperimentState.completed, "message": None},
 )
 def test_everest_entry_monitor_no_run(
     everserver_status_mock,
@@ -265,7 +265,7 @@ def mock_ssl(monkeypatch):
     "everest.bin.everest_script.run_detached_monitor",
     side_effect=partial(
         run_detached_monitor_mock,
-        status=ServerStatus.failed,
+        status=ExperimentState.failed,
         error="Reality was ripped to shreds!",
     ),
 )
@@ -288,7 +288,7 @@ def test_exception_raised_when_server_run_fails(
     "everest.bin.monitor_script.run_detached_monitor",
     side_effect=partial(
         run_detached_monitor_mock,
-        status=ServerStatus.failed,
+        status=ExperimentState.failed,
         error="Reality was ripped to shreds!",
     ),
 )
@@ -317,7 +317,7 @@ def test_complete_status_for_normal_run(
     config = EverestConfig.load_file(CONFIG_FILE_MINIMAL)
     status_path = ServerConfig.get_everserver_status_path(config.output_dir)
     status = everserver_status(status_path)
-    expected_status = ServerStatus.completed
+    expected_status = ExperimentState.completed
     expected_error = None
 
     assert expected_status == status["status"]
@@ -336,7 +336,7 @@ def test_complete_status_for_normal_run_monitor(
     config = EverestConfig.load_file(CONFIG_FILE_MINIMAL)
     status_path = ServerConfig.get_everserver_status_path(config.output_dir)
     status = everserver_status(status_path)
-    expected_status = ServerStatus.completed
+    expected_status = ExperimentState.completed
     expected_error = None
 
     assert expected_status == status["status"]

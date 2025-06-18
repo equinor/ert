@@ -8,7 +8,7 @@ import pytest
 from everest import util
 from everest.bin.utils import report_on_previous_run, show_scaled_controls_warning
 from everest.config import EverestConfig, ServerConfig
-from everest.detached import ServerStatus
+from everest.detached import ExperimentState
 from everest.strings import EVEREST, SERVER_STATUS
 from tests.everest.utils import (
     capture_streams,
@@ -107,7 +107,7 @@ def test_get_everserver_status_path(copy_math_func_test_data_to_tmp):
 
 @patch(
     "everest.bin.utils.everserver_status",
-    return_value={"status": ServerStatus.failed, "message": "mock error"},
+    return_value={"status": ExperimentState.failed, "message": "mock error"},
 )
 def test_report_on_previous_run(_, change_to_tmpdir):
     with open("config_file", "w", encoding="utf-8") as f:

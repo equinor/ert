@@ -5,7 +5,7 @@ from functools import partial
 
 from everest.api import EverestDataAPI
 from everest.config import EverestConfig, ServerConfig
-from everest.detached import ServerStatus, everserver_status
+from everest.detached import ExperimentState, everserver_status
 from everest.everest_storage import EverestStorage
 from everest.plugins.everest_plugin_manager import EverestPluginManager
 
@@ -34,15 +34,15 @@ def visualization_entry(args: list[str] | None = None) -> None:
         ServerConfig.get_everserver_status_path(options.config.output_dir)
     )
     if server_state["status"] in {
-        ServerStatus.failed,
-        ServerStatus.stopped,
-        ServerStatus.completed,
+        ExperimentState.failed,
+        ExperimentState.stopped,
+        ExperimentState.completed,
     }:
         pm = EverestPluginManager()
         pm.hook.visualize_data(api=EverestDataAPI(options.config))
     elif server_state["status"] in {
-        ServerStatus.running,
-        ServerStatus.starting,
+        ExperimentState.running,
+        ExperimentState.pending,
     }:
         print(
             "Everest is running, please wait for it to finish before "
