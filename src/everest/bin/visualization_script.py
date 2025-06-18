@@ -4,6 +4,7 @@ import argparse
 from functools import partial
 
 from everest.api import EverestDataAPI
+from everest.bin.utils import setup_logging
 from everest.config import EverestConfig, ServerConfig
 from everest.detached import ServerStatus, everserver_status
 from everest.everest_storage import EverestStorage
@@ -26,6 +27,7 @@ def _build_args_parser() -> argparse.ArgumentParser:
 def visualization_entry(args: list[str] | None = None) -> None:
     parser = _build_args_parser()
     options = parser.parse_args(args)
+    setup_logging(options)
 
     EverestStorage.check_for_deprecated_seba_storage(
         options.config.optimization_output_dir
