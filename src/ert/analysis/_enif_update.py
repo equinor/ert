@@ -45,7 +45,6 @@ def enif_update(
     parameters: Iterable[str],
     random_seed: int,
     progress_callback: Callable[[AnalysisEvent], None] | None = None,
-    global_scaling: float = 1.0,
 ) -> SmootherSnapshot:
     if not progress_callback:
         progress_callback = noop_progress_callback
@@ -57,7 +56,7 @@ def enif_update(
         target_ensemble_name=posterior_storage.name,
         alpha=-1,
         std_cutoff=-1,
-        global_scaling=global_scaling,
+        global_scaling=-1,
     )
 
     try:

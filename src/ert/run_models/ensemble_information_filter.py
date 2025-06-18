@@ -143,7 +143,6 @@ class EnsembleInformationFilter(UpdateRunModel):
             posterior,
             parameters=prior.experiment.update_parameters,
             observations=prior.experiment.observation_keys,
-            global_scaling=weight,
             random_seed=self.random_seed,
             progress_callback=functools.partial(
                 self.send_smoother_event,
