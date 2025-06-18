@@ -16,7 +16,7 @@ def _build_args_parser() -> argparse.ArgumentParser:
         usage="""everest results <config_file>""",
     )
     arg_parser.add_argument(
-        "config_file",
+        "config",
         type=partial(EverestConfig.load_file_with_argparser, parser=arg_parser),
         help="The path to the everest configuration file",
     )
@@ -26,11 +26,12 @@ def _build_args_parser() -> argparse.ArgumentParser:
 def visualization_entry(args: list[str] | None = None) -> None:
     parser = _build_args_parser()
     options = parser.parse_args(args)
-    config = options.config_file
 
-    EverestStorage.check_for_deprecated_seba_storage(config.optimization_output_dir)
+    EverestStorage.check_for_deprecated_seba_storage(
+        options.config.optimization_output_dir
+    )
     server_state = everserver_status(
-        ServerConfig.get_everserver_status_path(config.output_dir)
+        ServerConfig.get_everserver_status_path(options.config.output_dir)
     )
     if server_state["status"] in {
         ServerStatus.failed,
@@ -38,7 +39,7 @@ def visualization_entry(args: list[str] | None = None) -> None:
         ServerStatus.completed,
     }:
         pm = EverestPluginManager()
-        pm.hook.visualize_data(api=EverestDataAPI(config))
+        pm.hook.visualize_data(api=EverestDataAPI(options.config))
     elif server_state["status"] in {
         ServerStatus.running,
         ServerStatus.starting,

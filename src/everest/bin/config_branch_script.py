@@ -29,7 +29,7 @@ def _build_args_parser() -> argparse.ArgumentParser:
         usage="""everest branch <config_file> <new_config_file> -b #""",
     )
     arg_parser.add_argument(
-        "input_config",
+        "config",
         help="The path to the everest configuration file",
         type=partial(_yaml_config, parser=arg_parser),
     )
@@ -105,7 +105,7 @@ def _updated_initial_guess(
 def config_branch_entry(args: list[str] | None = None) -> None:
     parser = _build_args_parser()
     options = parser.parse_args(args)
-    _, optimization_dir, yml_config = options.input_config
+    _, optimization_dir, yml_config = options.config
 
     EverestStorage.check_for_deprecated_seba_storage(optimization_dir)
 
