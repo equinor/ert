@@ -19,7 +19,7 @@ from ert.logging import LOGGING_CONFIG
 from everest.bin.utils import show_scaled_controls_warning
 from everest.config import EverestConfig, ServerConfig
 from everest.detached import (
-    ServerStatus,
+    ExperimentState,
     everserver_status,
     server_is_running,
     start_experiment,
@@ -161,7 +161,7 @@ async def run_everest(options: argparse.Namespace) -> None:
             "To kill the running optimization use command:\n"
             f"  `everest kill {config_file}`"
         )
-    elif server_state["status"] == ServerStatus.never_run or options.new_run:
+    elif server_state["status"] == ExperimentState.never_run or options.new_run:
         config_dict = options.config.to_dict()
         logger.info("Running everest with the following config:")
         logger.info(json.dumps(config_dict, sort_keys=True, indent=2))
@@ -242,7 +242,7 @@ async def run_everest(options: argparse.Namespace) -> None:
 
         server_state = everserver_status(everserver_status_path)
         server_state_info = server_state["message"]
-        if server_state["status"] == ServerStatus.failed:
+        if server_state["status"] == ExperimentState.failed:
             raise SystemExit(f"Everest run failed with: {server_state_info}")
         if server_state_info is not None:
             logger.info(f"Everest run finished with: {server_state_info}")

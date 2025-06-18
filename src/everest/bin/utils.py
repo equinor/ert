@@ -23,7 +23,7 @@ from ert.ensemble_evaluator import (
 )
 from everest.config.server_config import ServerConfig
 from everest.detached import (
-    ServerStatus,
+    ExperimentState,
     everserver_status,
     server_is_running,
     start_monitor,
@@ -354,7 +354,7 @@ def report_on_previous_run(
     optimization_output_dir: str,
 ) -> None:
     server_state = everserver_status(everserver_status_path)
-    if server_state["status"] == ServerStatus.failed:
+    if server_state["status"] == ExperimentState.failed:
         error_msg = server_state["message"]
         print(
             f"Optimization run failed, with error: {error_msg}\n"

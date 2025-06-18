@@ -20,7 +20,7 @@ from ert.ensemble_evaluator import EndEvent
 from ert.scheduler.event import FinishedEvent
 from everest.config import EverestConfig, ServerConfig
 from everest.detached import (
-    ServerStatus,
+    ExperimentState,
     everserver,
     everserver_status,
     start_experiment,
@@ -81,11 +81,11 @@ def configure_everserver_logger(*args, **kwargs):
 
 @pytest.fixture
 def mock_server(monkeypatch):
-    def func(message: str):
+    def func(status: ExperimentState, message: str):
         server_patch = MagicMock()
         client_mock = MagicMock()
         response_mock = MagicMock()
-        response_mock.content = message.encode()
+        response_mock.json.return_value = {"status": status, "message": message}
         client_mock.get.return_value = response_mock
         server_patch.session.return_value.__enter__.return_value = client_mock
         monkeypatch.setattr("everest.detached.everserver.StorageService", server_patch)
@@ -135,7 +135,7 @@ def test_configure_logger_failure(_, change_to_tmpdir):
         ServerConfig.get_everserver_status_path("everest_output")
     )
 
-    assert status["status"] == ServerStatus.failed
+    assert status["status"] == ExperimentState.failed
     assert "Exception: Configuring logger failed" in status["message"]
 
 
@@ -143,14 +143,14 @@ def test_configure_logger_failure(_, change_to_tmpdir):
 @patch("sys.argv", ["name", "--output-dir", "everest_output"])
 @patch("everest.detached.everserver._configure_loggers")
 def test_status_running_complete(_, change_to_tmpdir, mock_server):
-    mock_server("Optimization completed.")
+    mock_server(ExperimentState.completed, "Optimization completed.")
     everserver.main()
 
     status = everserver_status(
         ServerConfig.get_everserver_status_path("everest_output")
     )
 
-    assert status["status"] == ServerStatus.completed
+    assert status["status"] == ExperimentState.completed
     assert status["message"] == "Optimization completed."
 
 
@@ -158,7 +158,7 @@ def test_status_running_complete(_, change_to_tmpdir, mock_server):
 @patch("sys.argv", ["name", "--output-dir", "everest_output"])
 @patch("everest.detached.everserver._configure_loggers")
 def test_status_failed_job(_, change_to_tmpdir, mock_server):
-    mock_server(OPT_FAILURE_REALIZATIONS)
+    mock_server(ExperimentState.failed, OPT_FAILURE_REALIZATIONS)
     everserver.main()
 
     status = everserver_status(
@@ -166,7 +166,7 @@ def test_status_failed_job(_, change_to_tmpdir, mock_server):
     )
 
     # The server should fail and store a user-friendly message.
-    assert status["status"] == ServerStatus.failed
+    assert status["status"] == ExperimentState.failed
 
 
 @pytest.mark.integration_test
@@ -181,7 +181,7 @@ async def test_status_exception(_, change_to_tmpdir, min_config):
         ServerConfig.get_everserver_status_path("everest_output")
     )
 
-    assert status["status"] == ServerStatus.failed
+    assert status["status"] == ExperimentState.failed
     assert "Optimization failed:" in status["message"]
 
 
@@ -204,7 +204,7 @@ async def test_status_max_batch_num(copy_math_func_test_data_to_tmp):
     )
 
     # The server should complete without error.
-    assert status["status"] == ServerStatus.completed
+    assert status["status"] == ExperimentState.completed
     assert status["message"] == "Maximum number of batches reached."
     storage = EverestStorage(Path(config.optimization_output_dir))
     storage.read_from_output_dir()
@@ -230,7 +230,7 @@ async def test_status_contains_max_runtime_failure(change_to_tmpdir, min_config)
         ServerConfig.get_everserver_status_path("everest_output")
     )
 
-    assert status["status"] == ServerStatus.failed
+    assert status["status"] == ExperimentState.failed
     assert "The run is cancelled due to reaching MAX_RUNTIME" in status["message"]
 
 

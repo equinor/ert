@@ -16,7 +16,7 @@ from tests.everest.utils import (
 from everest import __version__ as everest_version
 from everest.bin.main import start_everest
 from everest.config import EverestConfig, ServerConfig
-from everest.detached import ServerStatus, everserver_status
+from everest.detached import ExperimentState, everserver_status
 
 WELL_ORDER = "everest/model/config.yml"
 CONFIG_FILE_ADVANCED = "config_advanced.yml"
@@ -57,7 +57,7 @@ def test_everest_entry_run(cached_example):
         ServerConfig.get_everserver_status_path(config.output_dir)
     )
 
-    assert status["status"] == ServerStatus.completed
+    assert status["status"] == ExperimentState.completed
 
     optimal = get_optimal_result(config.optimization_output_dir)
 
@@ -75,7 +75,7 @@ def test_everest_entry_run(cached_example):
         ServerConfig.get_everserver_status_path(config.output_dir)
     )
 
-    assert status["status"] == ServerStatus.completed
+    assert status["status"] == ExperimentState.completed
 
 
 @pytest.mark.xdist_group("math_func/config_minimal.yml")
@@ -89,7 +89,7 @@ def test_everest_entry_monitor_no_run(cached_example):
         ServerConfig.get_everserver_status_path(config.output_dir)
     )
 
-    assert status["status"] == ServerStatus.never_run
+    assert status["status"] == ExperimentState.never_run
 
 
 @pytest.mark.xdist_group("math_func/config_minimal.yml")
@@ -168,7 +168,7 @@ def test_stopping_local_queue_with_ctrl_c(capsys, copy_math_func_test_data_to_tm
             status = everserver_status(
                 ServerConfig.get_everserver_status_path(config.output_dir)
             )
-            if status.get("status") == ServerStatus.running:
+            if status.get("status") == ExperimentState.running:
                 os.kill(os.getpid(), signal.SIGINT)
                 return
             time.sleep(1)
@@ -187,4 +187,4 @@ def test_stopping_local_queue_with_ctrl_c(capsys, copy_math_func_test_data_to_tm
 
     status_path = ServerConfig.get_everserver_status_path(config.output_dir)
     status = everserver_status(status_path)
-    assert status["status"] == ServerStatus.stopped
+    assert status["status"] == ExperimentState.stopped

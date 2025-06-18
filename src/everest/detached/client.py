@@ -258,10 +258,8 @@ def start_monitor(
         logger.debug(traceback.format_exc())
 
 
-class ServerStatus(StrEnum):
-    """Keep track of the different states the everest server is in"""
-
-    starting = auto()
+class ExperimentState(StrEnum):
+    pending = auto()
     running = auto()
     completed = auto()
     stopped = auto()
@@ -270,7 +268,7 @@ class ServerStatus(StrEnum):
 
 
 def update_everserver_status(
-    everserver_status_path: str, status: ServerStatus, message: str | None = None
+    everserver_status_path: str, status: ExperimentState, message: str | None = None
 ) -> None:
     """Update the everest server status with new status information"""
     new_status = {"status": status, "message": message}
@@ -306,4 +304,4 @@ def everserver_status(everserver_status_path: str) -> dict[str, Any]:
         with open(everserver_status_path, encoding="utf-8") as f:
             return json.load(f)
     else:
-        return {"status": ServerStatus.never_run, "message": None}
+        return {"status": ExperimentState.never_run, "message": None}

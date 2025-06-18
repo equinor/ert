@@ -7,7 +7,7 @@ import threading
 from functools import partial
 
 from everest.config import EverestConfig, ServerConfig
-from everest.detached import ServerStatus, everserver_status, server_is_running
+from everest.detached import ExperimentState, everserver_status, server_is_running
 from everest.everest_storage import EverestStorage
 
 from .utils import (
@@ -77,11 +77,11 @@ def monitor_everest(options: argparse.Namespace) -> None:
     if server_is_running(*server_context):
         run_detached_monitor(server_context=server_context)
         server_state = everserver_status(status_path)
-        if server_state["status"] == ServerStatus.failed:
+        if server_state["status"] == ExperimentState.failed:
             raise SystemExit(server_state["message"])
         if server_state["message"] is not None:
             print(server_state["message"])
-    elif server_state["status"] == ServerStatus.never_run:
+    elif server_state["status"] == ExperimentState.never_run:
         config_file = config.config_file
         print(
             "The optimization has not run yet.\n"

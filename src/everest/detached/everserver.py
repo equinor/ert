@@ -23,6 +23,7 @@ from cryptography.hazmat.primitives.asymmetric import rsa
 from cryptography.x509.oid import NameOID
 from dns import resolver, reversename
 from opentelemetry.trace.propagation.tracecontext import TraceContextTextMapPropagator
+from pydantic import BaseModel
 
 from ert.ensemble_evaluator import (
     EnsembleSnapshot,
@@ -38,7 +39,7 @@ from ert.services._base_service import BaseServiceExit
 from ert.trace import tracer
 from everest.config import ServerConfig
 from everest.detached import (
-    ServerStatus,
+    ExperimentState,
     everserver_status,
     update_everserver_status,
 )
@@ -53,6 +54,11 @@ from everest.strings import (
 from everest.util import makedirs_if_needed, version_info
 
 logger = logging.getLogger(__name__)
+
+
+class ExperimentStatus(BaseModel):
+    message: str = ""
+    status: ExperimentState = ExperimentState.pending
 
 
 @lru_cache
@@ -247,7 +253,7 @@ def main() -> None:
             )
 
             logging.getLogger(EVERSERVER).info("Everserver starting ...")
-            update_everserver_status(status_path, ServerStatus.starting)
+            update_everserver_status(status_path, ExperimentState.pending)
             logger.info(version_info())
             logger.info(f"Output directory: {output_dir}")
             # Starting the server
@@ -258,40 +264,43 @@ def main() -> None:
             ) as server:
                 server.fetch_conn_info()
                 with StorageService.session(project=server_path) as client:
-                    update_everserver_status(status_path, ServerStatus.running)
+                    update_everserver_status(status_path, ExperimentState.running)
                     done = False
                     while not done:
                         response = client.get(
                             "/experiment_server/status", auth=server.fetch_auth()
                         )
-                        status = response.content.decode("utf-8")
-                        done = status and status != "Experiment started"
+                        status = ExperimentStatus(**response.json())
+                        done = status.status not in {
+                            ExperimentState.pending,
+                            ExperimentState.running,
+                        }
                         time.sleep(0.5)
-                    if status == "Optimization completed.":
+                    if status.status == ExperimentState.completed:
                         update_everserver_status(
-                            status_path, ServerStatus.completed, message=status
+                            status_path,
+                            ExperimentState.completed,
+                            message=status.message,
                         )
-                    elif status == "Server stopped by user":
+                    elif status.status == ExperimentState.stopped:
                         update_everserver_status(
-                            status_path, ServerStatus.stopped, message=status
+                            status_path,
+                            ExperimentState.stopped,
+                            message=status.message,
                         )
-                    elif status == "Maximum number of batches reached.":
+                    elif status.status == ExperimentState.failed:
                         update_everserver_status(
-                            status_path, ServerStatus.completed, message=status
-                        )
-                    elif status.startswith(OPT_FAILURE_REALIZATIONS):
-                        update_everserver_status(
-                            status_path, ServerStatus.failed, message=status
+                            status_path, ExperimentState.failed, message=status.message
                         )
         except BaseServiceExit:
             # Server exit, happens on normal shutdown and keyboard interrupt
             server_status = everserver_status(status_path)
-            if server_status["status"] == ServerStatus.running:
-                update_everserver_status(status_path, ServerStatus.stopped)
+            if server_status["status"] == ExperimentState.running:
+                update_everserver_status(status_path, ExperimentState.stopped)
         except Exception as e:
             update_everserver_status(
                 status_path,
-                ServerStatus.failed,
+                ExperimentState.failed,
                 message=traceback.format_exc(),
             )
             logging.getLogger(EVERSERVER).exception(e)
@@ -299,28 +308,30 @@ def main() -> None:
 
 def _get_optimization_status(
     exit_code: EverestExitCode, events: list[StatusEvents], server_stopped: bool
-) -> tuple[ServerStatus, str]:
+) -> tuple[ExperimentState, str]:
     match exit_code:
         case EverestExitCode.MAX_BATCH_NUM_REACHED:
-            return ServerStatus.completed, "Maximum number of batches reached."
+            return ExperimentState.completed, "Maximum number of batches reached."
 
         case EverestExitCode.MAX_FUNCTIONS_REACHED:
             return (
-                ServerStatus.completed,
+                ExperimentState.completed,
                 "Maximum number of function evaluations reached.",
             )
 
         case EverestExitCode.USER_ABORT:
-            return ServerStatus.stopped, "Optimization aborted."
+            return ExperimentState.stopped, "Optimization aborted."
 
         case EverestExitCode.TOO_FEW_REALIZATIONS:
-            status_ = ServerStatus.stopped if server_stopped else ServerStatus.failed
+            status_ = (
+                ExperimentState.stopped if server_stopped else ExperimentState.failed
+            )
             messages = _failed_realizations_messages(events)
             for msg in messages:
                 logging.getLogger(EVEREST).error(msg)
             return status_, "\n".join(messages)
         case _:
-            return ServerStatus.completed, "Optimization completed."
+            return ExperimentState.completed, "Optimization completed."
 
 
 def _failed_realizations_messages(events: list[StatusEvents]) -> list[str]:

@@ -4,7 +4,7 @@ Client methods for interacting with everserver
 
 from .client import (
     PROXY,
-    ServerStatus,
+    ExperimentState,
     everserver_status,
     server_is_running,
     start_experiment,
@@ -18,7 +18,7 @@ from .client import (
 
 __all__ = [
     "PROXY",
-    "ServerStatus",
+    "ExperimentState",
     "everserver_status",
     "server_is_running",
     "start_experiment",
