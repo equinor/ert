@@ -9,7 +9,7 @@ from datetime import datetime
 from functools import cache, cached_property, lru_cache
 from multiprocessing.pool import ThreadPool
 from pathlib import Path
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, cast
 from uuid import UUID
 
 import numpy as np
@@ -19,7 +19,7 @@ import xarray as xr
 from pydantic import BaseModel
 from typing_extensions import TypedDict
 
-from ert.config import GenKwConfig
+from ert.config import SCALAR_NAME, GenKwConfig, ParameterConfig
 from ert.config.response_config import InvalidResponseFile
 from ert.storage.load_status import LoadResult, LoadStatus
 from ert.storage.mode import BaseMode, Mode, require_write
@@ -557,6 +557,18 @@ class LocalEnsemble(BaseMode):
         df = pl.scan_parquet(group_path)
         return df
 
+    @property
+    def _scalar_config(self) -> GenKwConfig | None:
+        """
+        Returns the GenKwConfig for the scalar parameters.
+        If no scalar parameters are registered, returns None.
+        """
+        if SCALAR_NAME in self.experiment.parameter_configuration:
+            return cast(
+                GenKwConfig, self.experiment.parameter_configuration[SCALAR_NAME]
+            )
+        return None
+
     def load_parameters(
         self,
         group: str,
@@ -569,11 +581,26 @@ class LocalEnsemble(BaseMode):
         otherwise it will return the raw values.
 
         """
+        group_keys: list[str] | None = None
+        config: ParameterConfig | None = None
         if group not in self.experiment.parameter_configuration:
-            raise KeyError(f"{group} is not registered to the experiment.")
-        config = self.experiment.parameter_configuration[group]
+            if self._scalar_config:
+                try:
+                    group_keys = self._scalar_config.group_keys(group)
+                    config = self._scalar_config
+                except KeyError as e:
+                    raise KeyError(
+                        f"{group} is not registered to the experiment."
+                    ) from e
+            else:
+                raise KeyError(f"{group} is not registered to the experiment.")
+        else:
+            config = self.experiment.parameter_configuration[group]
         if isinstance(config, GenKwConfig):
-            df = self._load_parameters_lazy(group).collect()
+            df_lazy = self._load_parameters_lazy(SCALAR_NAME)
+            if group_keys:
+                df_lazy = df_lazy.select([*group_keys, "realization"])
+            df = df_lazy.collect()
             if realizations is not None:
                 if isinstance(realizations, int):
                     realizations = np.array([realizations])
@@ -604,8 +631,23 @@ class LocalEnsemble(BaseMode):
         return ds
 
     def load_parameters_numpy(
-        self, group: str, realizations: npt.NDArray[np.int_]
+        self, group: str, realizations: npt.NDArray[np.int_], update_mask: bool = False
     ) -> npt.NDArray[np.float64]:
+        if (
+            group not in self.experiment.parameter_configuration
+            and self._scalar_config
+            and group in self._scalar_config.groups
+        ):
+            df = self.load_parameters(group, realizations).drop("realization")
+            if update_mask:
+                update_keys = [
+                    tf.name
+                    for tf in self._scalar_config.transform_functions
+                    if tf.update and tf.name in df.columns
+                ]
+                if update_keys:
+                    df = df.select(update_keys)
+            return df.to_numpy().T.copy()
         config = self.experiment.parameter_configuration[group]
         return config.load_parameters(self, realizations)
 
@@ -614,8 +656,15 @@ class LocalEnsemble(BaseMode):
         parameters: npt.NDArray[np.float64],
         param_group: str,
         iens_active_index: npt.NDArray[np.int_],
+        update_mask: bool = False,
     ) -> None:
-        config_node = self.experiment.parameter_configuration[param_group]
+        if param_group not in self.experiment.parameter_configuration:
+            if self._scalar_config and param_group in self._scalar_config.groups:
+                config_node = self._scalar_config
+            else:
+                raise KeyError(f"{param_group} is not registered to the experiment.")
+        else:
+            config_node = self.experiment.parameter_configuration[param_group]
         if isinstance(config_node, GenKwConfig):
             df = pl.DataFrame(
                 {
@@ -623,8 +672,9 @@ class LocalEnsemble(BaseMode):
                 }
             ).with_columns(
                 [
-                    pl.Series(parameters[i, :]).alias(param_name.name)
-                    for i, param_name in enumerate(config_node.transform_functions)
+                    pl.Series(parameters[i, :]).alias(tf.name)
+                    for i, tf in enumerate(config_node.group_parameters(param_group))
+                    if not update_mask or tf.update
                 ]
             )
             self.save_parameters(param_group, None, df)
@@ -635,20 +685,24 @@ class LocalEnsemble(BaseMode):
     def load_scalars(
         self, group: str | None = None, realizations: npt.NDArray[np.int_] | None = None
     ) -> pl.DataFrame:
-        dataframes = []
-        gen_kws = [
-            config
-            for config in self.experiment.parameter_configuration.values()
-            if isinstance(config, GenKwConfig)
-        ]
+        if self._scalar_config is None:
+            return pl.DataFrame()
         if group:
-            gen_kws = [config for config in gen_kws if config.name == group]
-        for config in gen_kws:
-            df = self.load_parameters(config.name, realizations, transformed=True)
+            if group not in self._scalar_config.groups:
+                return pl.DataFrame()
+            groups = [group]
+        else:
+            groups = list(self._scalar_config.groups.keys())
+        dataframes = []
+        for group_name in groups:
+            try:
+                df = self.load_parameters(group_name, realizations, transformed=True)
+            except KeyError:
+                return pl.DataFrame()
             assert isinstance(df, pl.DataFrame)
             df = df.rename(
                 {
-                    col: f"{config.name}:{col}"
+                    col: f"{group_name}:{col}"
                     for col in df.columns
                     if col != "realization"
                 }
@@ -656,7 +710,7 @@ class LocalEnsemble(BaseMode):
             for parameter in df.columns:
                 if parameter == "realization":
                     continue
-                if config.shouldUseLogScale(parameter.split(":")[-1]):
+                if self._scalar_config.shouldUseLogScale(parameter.split(":")[-1]):
                     df = df.with_columns(
                         (np.log10(pl.col(parameter))).alias(f"LOG10_{parameter}")
                     )
@@ -835,28 +889,49 @@ class LocalEnsemble(BaseMode):
         """
         if isinstance(dataset, pl.DataFrame):
             try:
-                # since all realizations are saved in a single parquet file,
-                # this makes sure that we only append new realizations.
-                df = self._load_parameters_lazy(group)
-                existing_realizations = (
-                    df.select("realization")
-                    .unique()
-                    .collect()
-                    .get_column("realization")
+                assert self._scalar_config is not None
+                existing = self._load_parameters_lazy(SCALAR_NAME).collect()
+                existing_realizations = existing["realization"].to_list()
+
+                new_columns = set(dataset.columns) - set(existing.columns)
+                if new_columns:
+                    existing = existing.with_columns(
+                        [
+                            pl.Series(
+                                name=col,
+                                values=[None] * existing.height,
+                                dtype=dataset.schema[col],
+                            )
+                            for col in new_columns
+                        ]
+                    )
+                updated_realizations = dataset.filter(
+                    pl.col("realization").is_in(existing_realizations)
                 )
-                new_data = dataset.filter(
+                if updated_realizations.height > 0:
+                    existing = existing.update(
+                        updated_realizations, on="realization", how="full"
+                    )
+
+                new_realizations = dataset.filter(
                     ~pl.col("realization").is_in(existing_realizations)
                 )
-                if new_data.height > 0:
-                    df_full = pl.concat([df.collect(), new_data], how="vertical").sort(
-                        "realization"
+                if new_realizations.height > 0:
+                    existing = pl.concat(
+                        [existing, new_realizations],
+                        how="diagonal",
                     )
-                else:
-                    return
+                col_order = ["realization"] + [
+                    tf.name
+                    for tf in self._scalar_config.transform_functions
+                    if tf.name in existing.columns
+                ]
+                df_full = existing.select(col_order)
             except KeyError:
                 df_full = dataset
 
-            group_path = self.mount_point / f"{_escape_filename(group)}.parquet"
+            df_full = df_full.sort("realization")
+            group_path = self.mount_point / f"{_escape_filename(SCALAR_NAME)}.parquet"
             self._storage._to_parquet_transaction(group_path, df_full)
             return
 
@@ -932,9 +1007,6 @@ class LocalEnsemble(BaseMode):
     def calculate_std_dev_for_parameter_group(
         self, parameter_group: str
     ) -> npt.NDArray[np.float64]:
-        if parameter_group not in self.experiment.parameter_configuration:
-            raise ValueError(f"{parameter_group} is not registered to the experiment.")
-
         data = self.load_parameters(parameter_group)
         if isinstance(data, pl.DataFrame):
             return data.drop("realization").std().to_numpy().reshape(-1)
