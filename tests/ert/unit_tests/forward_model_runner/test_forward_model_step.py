@@ -295,3 +295,81 @@ def test_processtree_timer(
     for snapshot in snapshots:
         timer.update(snapshot)
     assert timer.total_cpu_seconds() == expected_total_seconds
+
+
+@pytest.mark.usefixtures("use_tmpdir")
+@pytest.mark.parametrize(
+    "command, exit_code, expected_error_message, target_file_name",
+    [
+        pytest.param(
+            "touch some_file; exit 0",
+            0,
+            None,
+            "some_file",
+            id="target_file_touched_and_exit_code_0_is_success",
+        ),
+        pytest.param(
+            "touch some_file; exit 1",
+            1,
+            "Process exited with status code 1",
+            "some_file",
+            id="target_file_touched_but_ignored_due_to_exit_code_1",
+        ),
+        pytest.param(
+            "exit 0",
+            0,
+            "Could not find target_file:non_existent_file",
+            "non_existent_file",
+            id="target_file_not_touched_and_exit_code_0_gives_error",
+        ),
+        pytest.param(
+            "exit 1",
+            1,
+            "Process exited with status code 1",
+            "non_existent_file",
+            id="target_file_not_touched_but_ignored_due_to_exit_code_1",
+        ),
+        pytest.param(
+            "exit 0",
+            0,
+            (
+                "The target file:already_existing_file has not "
+                "been updated; this is flagged as failure"
+            ),
+            "already_existing_file",
+            id="target_file_touched_but_not_updated_and_exit_code_0_gives_error",
+        ),
+        pytest.param(
+            "exit 1",
+            1,
+            "Process exited with status code 1",
+            "already_existing_file",
+            id="target_file_touched_but_not_updated_is_ignored_due_to_exit_code_1",
+        ),
+    ],
+)
+def test_target_file_only_sets_error_if_specified_and_fm_step_succeeded(
+    command, exit_code, expected_error_message, target_file_name
+):
+    pathlib.Path("already_existing_file").touch()
+    fmstep = ForwardModelStep(
+        {
+            "name": "target_file_test_fm_step ",
+            "executable": "/bin/sh",
+            "stdout": "exit_out",
+            "stderr": "exit_err",
+            "argList": ["-c", command],
+            "target_file": target_file_name,
+        },
+        0,
+    )
+    fmstep.TARGET_FILE_POLL_PERIOD = 0.1
+
+    statuses = list(fmstep.run())
+
+    assert len(statuses) == 2, "Wrong statuses count"
+    assert statuses[1].exit_code == exit_code, "Exited status wrong exit_code"
+    if expected_error_message:
+        assert expected_error_message in statuses[1].error_message
+    else:
+        assert statuses[1].error_message is None
