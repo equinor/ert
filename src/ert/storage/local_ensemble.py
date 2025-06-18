@@ -857,7 +857,7 @@ class LocalEnsemble(BaseMode):
                     .get_column("realization")
                 )
                 new_data = dataset.filter(
-                    ~pl.col("realization").is_in(existing_realizations)
+                    ~pl.col("realization").is_in(existing_realizations.implode())
                 )
                 if new_data.height > 0:
                     df_full = pl.concat([df.collect(), new_data], how="vertical").sort(
@@ -1045,7 +1045,7 @@ class LocalEnsemble(BaseMode):
                     for col, observed_values in observed_cols.items():
                         if col != "time":
                             responses = responses.filter(
-                                pl.col(col).is_in(observed_values)
+                                pl.col(col).is_in(observed_values.implode())
                             )
 
                     pivoted = responses.collect().pivot(
