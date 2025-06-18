@@ -13,6 +13,7 @@ from textwrap import dedent
 from typing import Any, ClassVar
 
 import colorama
+import yaml
 from colorama import Fore
 
 from ert.config.parsing.queue_system import QueueSystem
@@ -21,6 +22,7 @@ from ert.ensemble_evaluator import (
     FullSnapshotEvent,
     SnapshotUpdateEvent,
 )
+from ert.logging import LOGGING_CONFIG
 from everest.config.server_config import ServerConfig
 from everest.detached import (
     ExperimentState,
@@ -29,8 +31,48 @@ from everest.detached import (
     start_monitor,
     stop_server,
 )
+from everest.plugins.everest_plugin_manager import EverestPluginManager
 from everest.simulator import JOB_FAILURE, JOB_RUNNING, JOB_SUCCESS
 from everest.strings import EVEREST, OPT_PROGRESS_ID, SIM_PROGRESS_ID
+from everest.util import makedirs_if_needed
+
+
+def setup_logging(options: argparse.Namespace) -> None:
+    if "output_dir" in options.config:
+        makedirs_if_needed(options.config.output_dir, roll_if_exists=False)
+        log_dir = Path(options.config.output_dir) / "logs"
+    else:
+        log_dir = Path("logs")
+
+    try:
+        log_dir.mkdir(exist_ok=True)
+    except PermissionError as err:
+        sys.exit(str(err))
+    os.environ["ERT_LOG_DIR"] = str(log_dir)
+
+    with open(LOGGING_CONFIG, encoding="utf-8") as log_conf_file:
+        config_dict = yaml.safe_load(log_conf_file)
+        if config_dict:
+            for handler_name, handler_config in config_dict["handlers"].items():
+                if handler_name == "file":
+                    handler_config["filename"] = "everest-log.txt"
+                if "ert.logging.TimestampedFileHandler" in handler_config.values():
+                    handler_config["config_filename"] = ""
+                    if "config_path" in options.config:
+                        handler_config["config_filename"] = (
+                            options.config.config_path.name
+                        )
+            logging.config.dictConfig(config_dict)
+
+    if "debug" in options and options.debug:
+        root_logger = logging.getLogger()
+        handler = logging.StreamHandler(sys.stdout)
+        handler.setLevel(logging.DEBUG)
+        root_logger.addHandler(handler)
+
+    plugin_manager = EverestPluginManager()
+    plugin_manager.add_log_handle_to_root()
+    plugin_manager.add_span_processor_to_trace_provider()
 
 
 def handle_keyboard_interrupt(signum: int, _: Any, options: argparse.Namespace) -> None:

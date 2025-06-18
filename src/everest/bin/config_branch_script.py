@@ -6,6 +6,7 @@ from typing import Any
 
 from ruamel.yaml import YAML
 
+from everest.bin.utils import setup_logging
 from everest.config import EverestConfig
 from everest.config_file_loader import load_yaml
 from everest.everest_storage import EverestStorage
@@ -105,6 +106,8 @@ def _updated_initial_guess(
 def config_branch_entry(args: list[str] | None = None) -> None:
     parser = _build_args_parser()
     options = parser.parse_args(args)
+    setup_logging(options)
+
     _, optimization_dir, yml_config = options.config
 
     EverestStorage.check_for_deprecated_seba_storage(optimization_dir)

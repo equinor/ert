@@ -11,6 +11,7 @@ import traceback
 from functools import partial
 from typing import Any
 
+from everest.bin.utils import setup_logging
 from everest.config import EverestConfig, ServerConfig
 from everest.detached import server_is_running, stop_server, wait_for_server_to_stop
 from everest.util import version_info
@@ -22,11 +23,7 @@ def kill_entry(args: list[str] | None = None) -> None:
     """Entry point for running an optimization."""
     parser = _build_args_parser()
     options = parser.parse_args(args)
-
-    if options.debug:
-        logger.setLevel(logging.DEBUG)
-        # Remove the null handler if set:
-        logger.removeHandler(logging.NullHandler())
+    setup_logging(options)
 
     logger.info(version_info())
     logger.debug(json.dumps(options.config.to_dict(), sort_keys=True, indent=2))

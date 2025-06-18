@@ -4,18 +4,17 @@ import argparse
 import logging
 from functools import partial
 
+from everest.bin.utils import setup_logging
 from everest.config import EverestConfig
 from everest.strings import EVEREST
+
+logger = logging.getLogger(EVEREST)
 
 
 def everexport_entry(args: list[str] | None = None) -> None:
     parser = _build_args_parser()
     options = parser.parse_args(args)
-    logger = logging.getLogger(EVEREST)
-    if options.debug:
-        logger.setLevel(logging.DEBUG)
-        # Remove the null handler if set:
-        logging.getLogger().removeHandler(logging.NullHandler())
+    setup_logging(options)
 
     logger.info("Everexport deprecation warning seen")
     print(

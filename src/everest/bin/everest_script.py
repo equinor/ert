@@ -6,17 +6,12 @@ import logging
 import logging.config
 import os
 import signal
-import sys
 import threading
 from functools import partial
-from pathlib import Path
-
-import yaml
 
 from _ert.threading import ErtThread
 from ert.config import QueueSystem
-from ert.logging import LOGGING_CONFIG
-from everest.bin.utils import show_scaled_controls_warning
+from everest.bin.utils import setup_logging, show_scaled_controls_warning
 from everest.config import EverestConfig, ServerConfig
 from everest.detached import (
     ExperimentState,
@@ -47,31 +42,8 @@ def everest_entry(args: list[str] | None = None) -> None:
     """Entry point for running an optimization."""
     parser = _build_args_parser()
     options = parser.parse_args(args)
-
     makedirs_if_needed(options.config.output_dir, roll_if_exists=True)
-    log_dir = Path(options.config.output_dir) / "logs"
-    try:
-        log_dir.mkdir(exist_ok=True)
-    except PermissionError as err:
-        sys.exit(str(err))
-    os.environ["ERT_LOG_DIR"] = str(log_dir)
-
-    with open(LOGGING_CONFIG, encoding="utf-8") as log_conf_file:
-        config_dict = yaml.safe_load(log_conf_file)
-        if config_dict:
-            for handler_name, handler_config in config_dict["handlers"].items():
-                if handler_name == "file":
-                    handler_config["filename"] = "everest-log.txt"
-                if "ert.logging.TimestampedFileHandler" in handler_config.values():
-                    handler_config["config_filename"] = options.config.config_path.name
-            logging.config.dictConfig(config_dict)
-
-    if options.debug:
-        root_logger = logging.getLogger()
-        handler = logging.StreamHandler(sys.stdout)
-        handler.setLevel(logging.DEBUG)
-        root_logger.addHandler(handler)
-
+    setup_logging(options)
     logger.info(version_info())
 
     if options.config.server_queue_system == QueueSystem.LOCAL:
