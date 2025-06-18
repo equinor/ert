@@ -32,10 +32,19 @@ def get_nr_primary_components(
     responses: npt.NDArray[np.float64], threshold: float
 ) -> int:
     """
-    Calculate the number of principal components needed to achieve a cumulative
-    variance less than a specified threshold using Singular Value Decomposition (SVD).
+    Calculate the number of principal components required
+    to explain a given amount of variance in the responses.
 
-    responses should be on form (n_realizations, n_observations)
+    Args:
+    responses: A 2D array of data with shape
+        (n_realizations, n_observations).
+    threshold: The cumulative variance threshold to meet or exceed.
+        For example, a value of 0.95 will find the number of
+        components needed to explain at least 95% of the total variance.
+
+    Returns:
+        The minimum number of principal components required to meet or exceed
+        the specified variance threshold.
     """
     data_matrix = responses - responses.mean(axis=0)
     _, singulars, _ = np.linalg.svd(data_matrix.astype(float), full_matrices=False)
@@ -45,7 +54,10 @@ def get_nr_primary_components(
     # sum to get the cumulative proportion of variance explained by each successive
     # component.
     variance_ratio = np.cumsum(singulars**2) / np.sum(singulars**2)
-    return max(len([1 for i in variance_ratio[:-1] if i < threshold]), 1)
+
+    num_components = np.searchsorted(variance_ratio, threshold, side="left") + 1
+
+    return int(num_components)
 
 
 def cluster_responses(
