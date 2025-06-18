@@ -295,3 +295,104 @@ def test_processtree_timer(
     for snapshot in snapshots:
         timer.update(snapshot)
     assert timer.total_cpu_seconds() == expected_total_seconds
+
+
+@pytest.mark.usefixtures("use_tmpdir")
+@pytest.mark.parametrize(
+    "exit_code, expected_error_message",
+    [(0, None), (1, "Process exited with status code 1")],
+)
+def test_target_file_specified(exit_code, expected_error_message):
+    target_file = "some_file"
+    fmstep = ForwardModelStep(
+        {
+            "name": f"touch target file and exit {exit_code} ",
+            "executable": "/bin/sh",
+            "stdout": "exit_out",
+            "stderr": "exit_err",
+            "argList": ["-c", f"touch {target_file}; exit {exit_code}"],
+            "target_file": target_file,
+        },
+        0,
+    )
+    fmstep.TARGET_FILE_POLL_PERIOD = 0.1
+
+    statuses = list(fmstep.run())
+
+    assert len(statuses) == 2, "Wrong statuses count"
+    assert statuses[1].exit_code == exit_code, "Exited status wrong exit_code"
+    if expected_error_message:
+        assert expected_error_message in statuses[1].error_message
+    else:
+        assert statuses[1].error_message is None
+
+
+@pytest.mark.usefixtures("use_tmpdir")
+@pytest.mark.parametrize(
+    "exit_code, expected_error_message",
+    [
+        (0, "Could not find target_file:non_existent_file"),
+        (1, "Process exited with status code 1"),
+    ],
+)
+def test_target_file_specified_but_not_written(exit_code, expected_error_message):
+    target_file = "non_existent_file"
+    fmstep = ForwardModelStep(
+        {
+            "name": f"exit {exit_code} with missing target file",
+            "executable": "/bin/sh",
+            "stdout": "exit_out",
+            "stderr": "exit_err",
+            "argList": ["-c", f"exit {exit_code}"],
+            "target_file": target_file,
+        },
+        0,
+    )
+    fmstep.TARGET_FILE_POLL_PERIOD = 0.1
+
+    statuses = list(fmstep.run())
+
+    assert len(statuses) == 2, "Wrong statuses count"
+    assert statuses[1].exit_code == exit_code, "Exited status wrong exit_code"
+    assert expected_error_message in statuses[1].error_message
+
+
+@pytest.mark.usefixtures("use_tmpdir")
+@pytest.mark.parametrize(
+    "exit_code, expected_error_message",
+    [
+        (
+            0,
+            (
+                "The target file:already_existing_file has not "
+                "been updated; this is flagged as failure"
+            ),
+        ),
+        (1, "Process exited with status code 1"),
+    ],
+)
+def test_target_file_specified_but_not_updated_by_fm_step(
+    exit_code, expected_error_message
+):
+    target_file = "already_existing_file"
+    pathlib.Path(target_file).touch()
+    fmstep = ForwardModelStep(
+        {
+            "name": f"exit {exit_code} but file not updated",
+            "executable": "/bin/sh",
+            "stdout": "exit_out",
+            "stderr": "exit_err",
+            "argList": ["-c", f"exit {exit_code}"],
+            "target_file": target_file,
+        },
+        0,
+    )
+    fmstep.TARGET_FILE_POLL_PERIOD = 0.1
+
+    statuses = list(fmstep.run())
+
+    assert len(statuses) == 2, "Wrong statuses count"
+    assert statuses[1].exit_code == exit_code, "Exited status wrong exit_code"
+    assert (expected_error_message) in statuses[1].error_message, (
+        "Target file exists, but was not updated"
+    )
