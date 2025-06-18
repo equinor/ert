@@ -17,12 +17,10 @@ def everexport_entry(args: list[str] | None = None) -> None:
         # Remove the null handler if set:
         logging.getLogger().removeHandler(logging.NullHandler())
 
-    config = options.config_file
-
     logger.info("Everexport deprecation warning seen")
     print(
         "Everexport is deprecated, optimization results "
-        f"already exist @ {config.optimization_output_dir}"
+        f"already exist @ {options.config.optimization_output_dir}"
     )
 
 
@@ -33,7 +31,7 @@ def _build_args_parser() -> argparse.ArgumentParser:
         usage="everest export <config_file>",
     )
     arg_parser.add_argument(
-        "config_file",
+        "config",
         type=partial(EverestConfig.load_file_with_argparser, parser=arg_parser),
         help="The path to the everest configuration file",
     )

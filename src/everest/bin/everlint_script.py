@@ -15,7 +15,7 @@ def _build_args_parser() -> argparse.ArgumentParser:
         usage="""everest lint <config_file>""",
     )
     arg_parser.add_argument(
-        "config_file",
+        "config",
         type=partial(EverestConfig.load_file_with_argparser, parser=arg_parser),
         help="The path to the everest configuration file",
     )
@@ -34,7 +34,7 @@ def lint_entry(args: list[str]) -> None:
         warnings.filterwarnings("default", category=ConfigWarning)
     parser = _build_args_parser()
     options = parser.parse_args(args)
-    parsed_config = options.config_file
+    parsed_config = options.config
     conf_file = parsed_config.config_path
 
     print(f"{conf_file} is valid")
