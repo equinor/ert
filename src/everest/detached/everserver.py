@@ -232,7 +232,7 @@ def main() -> None:
 
 
 def _get_optimization_status(
-    exit_code: EverestExitCode, events: list[StatusEvents], server_stopped: bool
+    exit_code: EverestExitCode, events: list[StatusEvents]
 ) -> tuple[ExperimentState, str]:
     match exit_code:
         case EverestExitCode.MAX_BATCH_NUM_REACHED:
@@ -248,9 +248,7 @@ def _get_optimization_status(
             return ExperimentState.stopped, "Optimization aborted."
 
         case EverestExitCode.TOO_FEW_REALIZATIONS:
-            status_ = (
-                ExperimentState.stopped if server_stopped else ExperimentState.failed
-            )
+            status_ = ExperimentState.failed
             messages = _failed_realizations_messages(events)
             for msg in messages:
                 logging.getLogger(EVEREST).error(msg)
