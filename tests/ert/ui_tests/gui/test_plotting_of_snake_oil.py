@@ -39,6 +39,7 @@ from .conftest import get_child, wait_for_child
         ("SNAKE_OIL_PARAM:OP1_OCTAVES", DISTRIBUTION, "snake_oil"),
         ("SNAKE_OIL_PARAM:OP1_OCTAVES", GAUSSIAN_KDE, "snake_oil"),
         ("SNAKE_OIL_PARAM:OP1_OCTAVES", HISTOGRAM, "snake_oil"),
+        ("SNAKE_OIL_WPR_DIFF@199", ENSEMBLE, "snake_oil"),
     ],
 )
 def plot_figure(qtbot, heat_equation_storage, snake_oil_case_storage, request):
