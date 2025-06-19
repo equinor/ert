@@ -196,6 +196,48 @@ def test_that_invalid_boolean_values_are_handled_gracefully():
         )
 
 
+@pytest.mark.parametrize(
+    "config_file_contents",
+    [
+        dedent(
+            """\
+             NUM_REALIZATIONS 1
+             RUN_TEMPLATE file.txt out.txt
+             """
+        ),
+        dedent(
+            """\
+             NUM_REALIZATIONS 1
+             DATA_FILE file.txt
+             """
+        ),
+        dedent(
+            """\
+             NUM_REALIZATIONS 1
+             GEN_KW file.txt file.txt
+             """
+        ),
+    ],
+)
+@pytest.mark.usefixtures("use_tmpdir")
+def test_that_file_without_read_access_fails_gracefully(config_file_contents):
+    """Given a file without read permissions, we should fail gracefully"""
+
+    config_file_name = "config.ert"
+    template_file = "file.txt"
+
+    touch(template_file)
+    os.chmod(template_file, 0o000)  # Remove permissions
+    with pytest.raises(
+        ConfigValidationError,
+        match=f'{template_file}" is not readable; please check read access.',
+    ):
+        with open(config_file_name, mode="w", encoding="utf-8") as file:
+            file.write(config_file_contents)
+
+        _ = parse(config_file_name, schema=init_user_config_schema())
+
+
 @pytest.mark.usefixtures("use_tmpdir")
 def test_not_executable_job_script_fails_gracefully():
     """Given a non executable job script, we should fail gracefully"""

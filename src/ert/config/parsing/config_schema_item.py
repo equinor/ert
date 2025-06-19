@@ -167,13 +167,20 @@ class SchemaItem:
                 if val_type in {
                     SchemaItemType.EXISTING_PATH,
                     SchemaItemType.EXISTING_PATH_INLINE,
-                } and not os.path.exists(str(path)):
-                    err = f'Cannot find file or directory "{token.value}". '
-                    if path != token:
-                        err += f"The configured value was {path!r} "
-                    raise ConfigValidationError.with_context(err, token)
+                }:
+                    if not os.path.exists(str(path)):
+                        err = f'Cannot find file or directory "{token.value}". '
+                        if path != token:
+                            err += f"The configured value was {path!r} "
+                        raise ConfigValidationError.with_context(err, token)
+                    elif not os.access(str(path), os.R_OK):
+                        raise ConfigValidationError.with_context(
+                            f'File "{path}" is not readable; please check read access.',
+                            token,
+                        )
 
                 assert isinstance(path, str)
+
                 if val_type == SchemaItemType.EXISTING_PATH_INLINE:
                     return [ContextString(path, token, keyword), read_file(path, token)]
                 else:
@@ -219,7 +226,7 @@ class SchemaItem:
             case EnumType():
                 try:
                     return val_type(str(token))
-                except ValueError as err:
+                except ValueError:
                     config_case = (
                         val_type.ert_config_case()
                         if hasattr(val_type, "ert_config_case")

@@ -166,7 +166,11 @@ def test_unopenable_observation_config_fails_gracefully():
     observation_config_abs_path = os.path.join(os.getcwd(), observation_config_rel_path)
     os.chmod(observation_config_abs_path, 0o000)
 
-    with pytest.raises(ConfigValidationError, match="Permission denied:"):
+    with pytest.raises(
+        ConfigValidationError,
+        match=f'File "{observation_config_abs_path}" '
+        f"is not readable; please check read access.",
+    ):
         run_cli(TEST_RUN_MODE, config_file_name)
 
 
