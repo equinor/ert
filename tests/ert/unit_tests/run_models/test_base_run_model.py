@@ -63,6 +63,7 @@ def test_base_run_model_does_not_support_rerun_failed_realizations(minimum_case)
     assert not brm.supports_rerunning_failed_realizations
 
 
+@pytest.mark.usefixtures("use_tmpdir")
 def test_status_when_rerunning_on_non_rerunnable_model():
     brm = create_base_run_model()
     brm._status_queue = SimpleQueue()
