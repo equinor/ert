@@ -5,8 +5,6 @@ import logging
 import logging.config
 import os
 import pathlib
-import random
-import socket
 import time
 import traceback
 from base64 import b64encode
@@ -58,32 +56,6 @@ logger = logging.getLogger(__name__)
 class ExperimentStatus(BaseModel):
     message: str = ""
     status: ExperimentState = ExperimentState.pending
-
-
-def _find_open_port(host: str, lower: int, upper: int) -> int:
-    # Making the port selection random does not fix the problem that an
-    # everserver might be assigned a port that another everserver in the process
-    # of shutting down already have.
-    #
-    # Since this problem is very unlikely in the normal usage of everest this change
-    # is mainly for alowing testing to run in paralell.
-
-    for _ in range(10):
-        port = random.randint(lower, upper)
-        try:
-            sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-            sock.bind((host, port))
-            sock.close()
-        except OSError:
-            logging.getLogger(EVERSERVER).info(f"Port {port} for host {host} is taken")
-        else:
-            return port
-    msg = (
-        f"Failed 10 times to get a random port in the range {lower}-{upper} on {host}. "
-        "Giving up."
-    )
-    logging.getLogger(EVERSERVER).error(msg)
-    raise Exception(msg)
 
 
 def _write_hostfile(
