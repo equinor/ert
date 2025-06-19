@@ -1,10 +1,11 @@
+import json
 import operator
 from typing import Any
 from urllib.parse import unquote
 from uuid import UUID, uuid4
 
 import polars as pl
-from fastapi import APIRouter, Body, Depends
+from fastapi import APIRouter, Body, Depends, Query
 
 from ert.dark_storage import json_schema as js
 from ert.dark_storage.common import (
@@ -45,6 +46,7 @@ async def get_observations_for_response(
     storage: Storage = DEFAULT_STORAGE,
     ensemble_id: UUID,
     response_key: str,
+    filter_on: str | None = Query(None, description="JSON string with filters"),
 ) -> list[js.ObservationOut]:
     response_key = unquote(response_key)
     ensemble = storage.get_ensemble(ensemble_id)
@@ -57,7 +59,11 @@ async def get_observations_for_response(
     if not obs_keys:
         return []
 
-    obss = _get_observations(ensemble.experiment, obs_keys)
+    obss = _get_observations(
+        ensemble.experiment,
+        obs_keys,
+        json.loads(filter_on) if filter_on is not None else None,
+    )
 
     obss.sort(key=operator.itemgetter("name"))
     if not obss:
@@ -77,13 +83,25 @@ async def get_observations_for_response(
 
 
 def _get_observations(
-    experiment: Experiment, observation_keys: list[str] | None = None
+    experiment: Experiment,
+    observation_keys: list[str] | None = None,
+    filter_on: dict[str, Any] | None = None,
 ) -> list[dict[str, Any]]:
     observations = []
 
     for response_type, df in experiment.observations.items():
         if observation_keys is not None:
             df = df.filter(pl.col("observation_key").is_in(observation_keys))
+
+        if df.is_empty():
+            continue
+
+        if filter_on is not None:
+            for response_key, selected_value in filter_on.items():
+                # For now we only filter on report_step
+                # When we filter on more, we should infer what type to cast
+                # the value to from the dtype of the polars column
+                df = df.filter(pl.col(response_key).eq(int(selected_value)))
 
         if df.is_empty():
             continue
