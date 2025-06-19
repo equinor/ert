@@ -20,7 +20,7 @@ from pathlib import Path
 from typing import Any, ClassVar, Protocol, cast
 
 import numpy as np
-from pydantic import BaseModel, PrivateAttr
+from pydantic import BaseModel, PrivateAttr, field_serializer, field_validator
 
 from _ert.events import EESnapshot, EESnapshotUpdate, EETerminated, Event
 from ert.analysis import ErtAnalysisError, smoother_update
@@ -951,3 +951,19 @@ class UpdateRunModel(BaseRunModel):
 class HasParametersAndResponses(BaseModel):
     parameter_configuration: list[ParameterConfig]
     response_configuration: list[ResponseConfig]
+
+    @field_validator("parameter_configuration", mode="before")
+    def deserialize_parameters(self, values):
+        pass
+
+    @field_serializer("parameter_configuration", mode="plain")
+    def serialize_parameters(self, values):
+        pass
+
+    @field_validator("response_configuration", mode="before")
+    def deserialize_responses(self, values):
+        pass
+
+    @field_serializer("response_configuration", mode="plain")
+    def serialize_responses(self, values):
+        pass
