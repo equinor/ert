@@ -57,7 +57,11 @@ async def get_response_misfits(
     obs_keys = experiment.response_key_to_observation_key[response_type].get(
         response_name, []
     )
-    obs = _get_observations(ensemble.experiment, obs_keys)
+    obs = _get_observations(
+        ensemble.experiment,
+        obs_keys,
+        json.loads(filter_on) if filter_on is not None else None,
+    )
 
     if not obs_keys:
         raise ValueError(f"No observations for key {response_name}")

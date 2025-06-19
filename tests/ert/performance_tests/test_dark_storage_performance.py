@@ -94,13 +94,18 @@ def get_single_record_csv(storage, ensemble_id1, keyword, poly_ran):
 
 
 def get_record_observations(storage, ensemble_id, keyword: str, poly_ran):
-    response_key, _ = keyword.split("@") if "@" in keyword else (keyword, None)
+    response_key, report_step = (
+        keyword.split("@") if "@" in keyword else (keyword, None)
+    )
 
     obs = run_in_loop(
         get_observations_for_response(
             storage=storage,
             ensemble_id=ensemble_id,
             response_key=response_key,
+            filter_on=json.dumps({"report_step": report_step})
+            if report_step is not None
+            else None,
         )
     )
 

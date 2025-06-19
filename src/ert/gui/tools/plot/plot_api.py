@@ -250,10 +250,22 @@ class PlotApi:
             if not ensemble:
                 continue
 
+            key_def = next(
+                (k for k in self.responses_api_key_defs if k.key == key), None
+            )
+            if not key_def:
+                raise httpx.RequestError(f"Response key {key_def} not found")
+
+            assert key_def.response_metadata is not None
+            actual_response_key = key_def.response_metadata.response_key
+            filter_on = key_def.filter_on
             with StorageService.session(project=self.ens_path) as client:
                 response = client.get(
-                    f"/ensembles/{ensemble.id}/responses/{PlotApi.escape(key)}/observations",
+                    f"/ensembles/{ensemble.id}/responses/{PlotApi.escape(actual_response_key)}/observations",
                     timeout=self._timeout,
+                    params={"filter_on": json.dumps(filter_on)}
+                    if filter_on is not None
+                    else None,
                 )
                 self._check_response(response)
 
