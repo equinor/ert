@@ -1,6 +1,5 @@
 import argparse
 import datetime
-import json
 import logging
 import logging.config
 import os
@@ -56,23 +55,6 @@ logger = logging.getLogger(__name__)
 class ExperimentStatus(BaseModel):
     message: str = ""
     status: ExperimentState = ExperimentState.pending
-
-
-def _write_hostfile(
-    host_file_path: str, host: str, port: int, cert: str, auth: str
-) -> None:
-    if not os.path.exists(os.path.dirname(host_file_path)):
-        os.makedirs(os.path.dirname(host_file_path))
-    data = {
-        "host": host,
-        "port": port,
-        "cert": cert,
-        "auth": auth,
-    }
-    json_string = json.dumps(data)
-
-    with open(host_file_path, "w", encoding="utf-8") as f:
-        f.write(json_string)
 
 
 def _configure_loggers(
