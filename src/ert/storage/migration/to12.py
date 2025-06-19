@@ -32,6 +32,9 @@ def migrate(path: Path) -> None:
             one_gen_kw = {}
             one_gen_kw["name"] = "SCALAR"
             one_gen_kw["transform_function_definitions"] = []
+            one_gen_kw["_ert_kind"] = "GenKwConfig"
+            one_gen_kw["forward_init"] = False
+            one_gen_kw["update"] = False
             for param_name, param_config in parameters_json.items():
                 if param_config["_ert_kind"] == "GenKwConfig":
                     group = param_config["name"]
@@ -42,7 +45,7 @@ def migrate(path: Path) -> None:
                         new_tfd["update"] = param_config.get("update", False)
                         one_gen_kw["transform_function_definitions"].append(new_tfd)
                     tfd = {}
-                    if (ens / f"{_escape_filename(group)}.nc").exists():
+                    if (ens / f"{_escape_filename(group)}.parquet").exists():
                         df = pl.read_parquet(ens / f"{_escape_filename(group)}.parquet")
                         if datasets:
                             datasets[group] = df.drop("realization")
