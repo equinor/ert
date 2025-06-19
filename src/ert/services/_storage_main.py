@@ -23,13 +23,12 @@ from uvicorn.supervisors import ChangeReload
 from ert.logging import STORAGE_LOG_CONFIG
 from ert.plugins import ErtPluginContext
 from ert.shared import __file__ as ert_shared_path
-from ert.shared import find_available_socket
+from ert.shared import find_available_socket, get_machine_name
 from ert.shared.storage.command import add_parser_options
 from ert.trace import tracer
 from everest.detached.everserver import (
     _generate_authentication,
     _generate_certificate,
-    _get_machine_name,
 )
 
 DARK_STORAGE_APP = "ert.dark_storage.app:app"
@@ -83,11 +82,11 @@ def _create_connection_info(
                 sock.getsockname()[0],
                 socket.gethostname(),
                 socket.getfqdn(),
-                _get_machine_name(),
+                get_machine_name(),
             )
         ],
         "authtoken": authtoken,
-        "host": _get_machine_name(),
+        "host": get_machine_name(),
         "port": sock.getsockname()[1],
         "cert": cert,
         "auth": authtoken,
@@ -118,7 +117,7 @@ def run_server(
         os.environ["ERT_STORAGE_DEBUG"] = "1"
 
     sock = find_available_socket(
-        host=_get_machine_name(), port_range=range(51850, 51870 + 1)
+        host=get_machine_name(), port_range=range(51850, 51870 + 1)
     )
 
     # Appropriated from uvicorn.main:run
