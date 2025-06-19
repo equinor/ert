@@ -1,6 +1,8 @@
 import logging
 import random
 import socket
+import traceback
+from functools import lru_cache
 
 from dns import exception, resolver, reversename
 
@@ -20,6 +22,7 @@ class InvalidHostException(Exception):
 logger = logging.getLogger(__name__)
 
 
+@lru_cache
 def get_machine_name() -> str:
     """Returns a name that can be used to identify this machine in a network
     A fully qualified domain name is returned if available. Otherwise returns
@@ -37,11 +40,12 @@ def get_machine_name() -> str:
         ]
         resolved_hosts.sort()
         return resolved_hosts[0]
-    except (resolver.NXDOMAIN, exception.Timeout):
+    except (resolver.NXDOMAIN, exception.Timeout, resolver.NoResolverConfiguration):
         # If local address and reverse lookup not working - fallback
         # to socket fqdn which are using /etc/hosts to retrieve this name
         return socket.getfqdn()
     except (socket.gaierror, exception.DNSException):
+        logging.getLogger(__name__).debug(traceback.format_exc())
         return "localhost"
 
 

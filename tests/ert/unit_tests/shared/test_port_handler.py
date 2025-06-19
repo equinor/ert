@@ -36,9 +36,10 @@ def test_that_get_machine_name_is_predictive(mocker):
 
     # This call is what this test wants to test:
     mocker.patch("dns.resolver.resolve", return_value=ptr_records)
-
+    get_machine_name.cache_clear()
     # ASSERT the returned name
     assert get_machine_name() == expected_resolved_name
+    get_machine_name.cache_clear()
 
     # Shuffle the the list and try again:
     ptr_records.reverse()
