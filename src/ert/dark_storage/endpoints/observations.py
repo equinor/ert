@@ -11,7 +11,7 @@ from ert.dark_storage.common import (
     get_storage,
 )
 from ert.dark_storage.endpoints.responses import response_to_pandas_x_axis_fns
-from ert.storage import Ensemble, Experiment, Storage
+from ert.storage import Experiment, Storage
 
 router = APIRouter(tags=["ensemble"])
 
@@ -57,7 +57,7 @@ async def get_observations_for_response(
     if not obs_keys:
         return []
 
-    obss = get_observations_for_obs_keys(ensemble, obs_keys)
+    obss = _get_observations(ensemble.experiment, obs_keys)
 
     obss.sort(key=operator.itemgetter("name"))
     if not obss:
@@ -110,9 +110,3 @@ def _get_observations(
             )
 
     return observations
-
-
-def get_observations_for_obs_keys(
-    ensemble: Ensemble, observation_keys: list[str]
-) -> list[dict[str, Any]]:
-    return _get_observations(ensemble.experiment, observation_keys)
