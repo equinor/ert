@@ -1,5 +1,4 @@
 import asyncio
-import json
 import logging
 import os
 import ssl
@@ -106,22 +105,6 @@ def test_certificate_generation(change_to_tmpdir):
     # check certificate is readable
     ctx = ssl.SSLContext(ssl.PROTOCOL_TLS_CLIENT)
     ctx.load_cert_chain(cert, key, pw)  # raise on error
-
-
-def test_hostfile_storage(change_to_tmpdir):
-    host_file_path = "detach/.session/host_file"
-
-    expected_result = {
-        "host": "hostname.1.2.3",
-        "port": "5000",
-        "cert": "/a/b/c.cert",
-        "auth": "1234",
-    }
-    everserver._write_hostfile(host_file_path, **expected_result)
-    assert os.path.exists(host_file_path)
-    with open(host_file_path, encoding="utf-8") as f:
-        result = json.load(f)
-    assert result == expected_result
 
 
 @patch("sys.argv", ["name", "--output-dir", "everest_output"])
