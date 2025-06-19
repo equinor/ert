@@ -265,7 +265,6 @@ class ExperimentRunner:
             exp_status, msg = _get_optimization_status(
                 run_model.exit_code,
                 shared_data.events,
-                shared_data.status.status == ExperimentState.stopped,
             )
             shared_data.status = ExperimentStatus(
                 message=msg,
