@@ -117,3 +117,7 @@ class ConfigValidationError(ValueError):
                 all_error_infos.append(e)
 
         return cls(all_error_infos)
+
+
+class PostSimulationWarning(Warning):
+    pass

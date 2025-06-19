@@ -47,3 +47,9 @@ class EndEvent(BaseModel):
     event_type: Literal["EndEvent"] = "EndEvent"
     failed: bool
     msg: str
+
+
+class WarningEvent(BaseModel):
+    model_config = ConfigDict(arbitrary_types_allowed=True, extra="forbid")
+    event_type: Literal["WarningEvent"] = "WarningEvent"
+    msg: str
