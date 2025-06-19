@@ -9,10 +9,10 @@ import uvicorn
 from fastapi import FastAPI
 from starlette.responses import Response
 
+from ert.shared import find_available_socket
 from everest.bin.everest_script import everest_entry
 from everest.config import EverestConfig, ServerConfig
 from everest.detached import server_is_running
-from everest.detached.everserver import _find_open_port
 from everest.gui.everest_client import EverestClient
 from everest.strings import EverEndpoints
 from tests.ert.utils import wait_until
@@ -22,7 +22,7 @@ from tests.ert.utils import wait_until
 def client_server_mock() -> tuple[FastAPI, threading.Thread, EverestClient]:
     server_app = FastAPI()
     host = "127.0.0.1"
-    port = _find_open_port(host, lower=5000, upper=5800)
+    port = find_available_socket(host, range(5000, 5800)).getsockname()[1]
     server_url = f"http://{host}:{port}"
 
     @server_app.get("alive")
