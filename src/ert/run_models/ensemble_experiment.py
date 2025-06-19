@@ -11,8 +11,6 @@ from pydantic import PrivateAttr
 from ert.config import (
     ConfigValidationError,
     DesignMatrix,
-    ParameterConfig,
-    ResponseConfig,
 )
 from ert.enkf_main import sample_prior, save_design_matrix_to_ensemble
 from ert.ensemble_evaluator import EvaluatorServerConfig
@@ -21,12 +19,12 @@ from ert.trace import tracer
 
 from ..plugins import PostExperimentFixtures, PreExperimentFixtures
 from ..run_arg import create_run_arguments
-from .base_run_model import BaseRunModel, ErtRunError
+from .base_run_model import BaseRunModel, ErtRunError, HasParametersAndResponses
 
 logger = logging.getLogger(__name__)
 
 
-class EnsembleExperiment(BaseRunModel):
+class EnsembleExperiment(HasParametersAndResponses, BaseRunModel):
     """
     This workflow will create a new experiment and a new ensemble from
     the user configuration.<br>It will never overwrite existing ensembles, and
@@ -36,8 +34,6 @@ class EnsembleExperiment(BaseRunModel):
     ensemble_name: str
     experiment_name: str
     design_matrix: DesignMatrix | None
-    parameter_configuration: list[ParameterConfig]
-    response_configuration: list[ResponseConfig]
     ert_templates: list[tuple[str, str]]
     _observations: dict[str, pl.DataFrame] = PrivateAttr()
     _experiment_id: UUID | None = PrivateAttr(None)

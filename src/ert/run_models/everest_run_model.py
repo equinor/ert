@@ -26,8 +26,6 @@ from typing_extensions import TypedDict
 
 from ert.config import (
     ExtParamConfig,
-    ParameterConfig,
-    ResponseConfig,
 )
 from ert.config.ert_config import (
     create_and_hook_workflows,
@@ -65,7 +63,7 @@ from everest.strings import EVEREST, STORAGE_DIR
 
 from ..run_arg import RunArg, create_run_arguments
 from ..storage.local_ensemble import EverestRealizationInfo
-from .base_run_model import BaseRunModel, StatusEvents
+from .base_run_model import BaseRunModel, HasParametersAndResponses, StatusEvents
 from .event import EverestBatchResultEvent, EverestStatusEvent
 
 if TYPE_CHECKING:
@@ -124,12 +122,10 @@ class _EvaluationInfo:
 logger = logging.getLogger(EVEREST)
 
 
-class EverestRunModel(BaseRunModel):
+class EverestRunModel(HasParametersAndResponses, BaseRunModel):
     optimization_output_dir: str
     simulation_dir: str
 
-    parameter_configuration: list[ParameterConfig]
-    response_configuration: list[ResponseConfig]
     ert_templates: list[tuple[str, str]]
 
     controls: list[ControlConfig]

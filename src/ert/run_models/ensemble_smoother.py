@@ -12,19 +12,17 @@ from ert.enkf_main import sample_prior, save_design_matrix_to_ensemble
 from ert.ensemble_evaluator import EvaluatorServerConfig
 from ert.trace import tracer
 
-from ..config import DesignMatrix, ParameterConfig, ResponseConfig
+from ..config import DesignMatrix
 from ..plugins import PostExperimentFixtures, PreExperimentFixtures
 from ..run_arg import create_run_arguments
-from .base_run_model import ErtRunError, UpdateRunModel
+from .base_run_model import ErtRunError, HasParametersAndResponses, UpdateRunModel
 
 logger = logging.getLogger(__name__)
 
 
-class EnsembleSmoother(UpdateRunModel):
+class EnsembleSmoother(HasParametersAndResponses, UpdateRunModel):
     experiment_name: str
     design_matrix: DesignMatrix | None
-    parameter_configuration: list[ParameterConfig]
-    response_configuration: list[ResponseConfig]
     ert_templates: list[tuple[str, str]]
 
     start_iteration: int = 0

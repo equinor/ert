@@ -20,7 +20,7 @@ from pathlib import Path
 from typing import Any, ClassVar, Protocol, cast
 
 import numpy as np
-from pydantic import PrivateAttr
+from pydantic import BaseModel, PrivateAttr
 
 from _ert.events import EESnapshot, EESnapshotUpdate, EETerminated, Event
 from ert.analysis import ErtAnalysisError, smoother_update
@@ -36,8 +36,10 @@ from ert.config import (
     HookRuntime,
     ModelConfig,
     ObservationSettings,
+    ParameterConfig,
     QueueConfig,
     QueueSystem,
+    ResponseConfig,
     Workflow,
 )
 from ert.enkf_main import create_run_path
@@ -944,3 +946,8 @@ class UpdateRunModel(BaseRunModel):
             ),
         )
         return posterior
+
+
+class HasParametersAndResponses(BaseModel):
+    parameter_configuration: list[ParameterConfig]
+    response_configuration: list[ResponseConfig]

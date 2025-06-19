@@ -11,8 +11,6 @@ from pydantic import PrivateAttr
 from ert.config import (
     ConfigValidationError,
     DesignMatrix,
-    ParameterConfig,
-    ResponseConfig,
 )
 from ert.enkf_main import sample_prior, save_design_matrix_to_ensemble
 from ert.ensemble_evaluator import EvaluatorServerConfig
@@ -21,14 +19,14 @@ from ert.trace import tracer
 
 from ..plugins import PostExperimentFixtures, PreExperimentFixtures
 from ..run_arg import create_run_arguments
-from .base_run_model import ErtRunError, UpdateRunModel
+from .base_run_model import ErtRunError, HasParametersAndResponses, UpdateRunModel
 
 logger = logging.getLogger(__name__)
 
 MULTIPLE_DATA_ASSIMILATION_GROUP = "Parameter update"
 
 
-class MultipleDataAssimilation(UpdateRunModel):
+class MultipleDataAssimilation(HasParametersAndResponses, UpdateRunModel):
     """
     Run multiple data assimilation (MDA) ensemble smoother with custom weights.
     """
@@ -36,8 +34,6 @@ class MultipleDataAssimilation(UpdateRunModel):
     default_weights: ClassVar = "4, 2, 1"
     experiment_name: str
     design_matrix: DesignMatrix | None
-    parameter_configuration: list[ParameterConfig]
-    response_configuration: list[ResponseConfig]
     ert_templates: list[tuple[str, str]]
     restart_run: bool
     prior_ensemble_id: str | None
