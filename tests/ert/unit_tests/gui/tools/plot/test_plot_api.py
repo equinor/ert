@@ -1,5 +1,5 @@
 import gc
-from datetime import datetime
+from datetime import date, datetime
 from textwrap import dedent
 from urllib.parse import quote
 
@@ -329,8 +329,38 @@ def test_plot_api_handles_non_existant_gen_kw(api_and_storage):
     assert api.data_for_parameter(str(ensemble.id), "gen_kw:does_not_exist").empty
 
 
-def test_that_multiple_observations_are_parsed_correctly(api):
-    ensemble = next(x for x in api.get_all_ensembles() if x.id == "ens_id_5")
+def test_that_multiple_observations_are_parsed_correctly(api_and_storage):
+    api, storage = api_and_storage
+    experiment = storage.create_experiment(
+        parameters=[],
+        responses=[
+            SummaryConfig(
+                name="summary",
+                input_files=[""],
+                keys=["WOPR:OP1"],
+                has_finalized_keys=True,
+            )
+        ],
+        observations={
+            "summary": pl.DataFrame(
+                {
+                    "observation_key": [f"WOPR:OP1_o{i}" for i in range(6)],
+                    "response_key": ["WOPR:OP1"] * 6,
+                    "time": pl.date_range(
+                        date(2000, 1, 1),
+                        date(2000, 6, 1),
+                        interval="1mo",
+                        eager=True,
+                    ),
+                    "observations": [0.2, 0.1, 0.15, 0.21, 0.11, 0.151],
+                    "std": [0.1, 0.1, 0.1, 0.1, 0.1, 0.1],
+                }
+            )
+        },
+    )
+    ens = experiment.create_ensemble(ensemble_size=1, name="ensemble")
+
+    ensemble = next(x for x in api.get_all_ensembles() if x.id == str(ens.id))
     obs_data = api.observations_for_key([ensemble.id], "WOPR:OP1")
     assert obs_data.shape == (3, 6)
 
