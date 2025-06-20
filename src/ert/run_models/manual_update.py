@@ -8,10 +8,11 @@ from uuid import UUID
 from pydantic import PrivateAttr
 
 from ert.ensemble_evaluator import EvaluatorServerConfig
+from ert.run_models.update_run_model import UpdateRunModel
 from ert.storage import Ensemble
 
 from ..analysis import smoother_update
-from .base_run_model import ErtRunError, UpdateRunModel
+from .base_run_model import ErtRunError
 
 logger = logging.getLogger(__name__)
 
