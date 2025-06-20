@@ -2403,3 +2403,44 @@ def test_validation_error_on_invalid_parameter_name(
                 GEN_KW COEFFS {tmp_path}/coeffs_priors
                 """
         )
+
+
+@pytest.mark.parametrize(
+    "invalid_parameter_name",
+    [
+        pytest.param("CWD", id="already_a_magic_string"),
+        pytest.param("realization", id="realization_is_reserved"),
+        pytest.param("ITER", id="ITER_is_reserved"),
+        pytest.param("IENS", id="IENS_is_reserved"),
+        pytest.param("RMS_SEED", id="already_defined_in_user_config"),
+    ],
+)
+def test_validation_error_on_invalid_design_matrix_parameter_name(
+    invalid_parameter_name, tmp_path
+):
+    design_matrix_file = tmp_path / "my_design_matrix.xlsx"
+    _create_design_matrix(
+        design_matrix_file,
+        pd.DataFrame(
+            {
+                "REAL": [0, 1],
+                invalid_parameter_name: [0.55, 0.80],
+            }
+        ),
+        pd.DataFrame([["a", 1], ["c", 2]]),
+    )
+
+    with pytest.raises(
+        ConfigValidationError,
+        match=(
+            r"Found reserved parameter name\(s\): \w+. The names are already "
+            "in use as magic strings or defined in the user config."
+        ),
+    ):
+        ErtConfig.from_file_contents(
+            f"""\
+                DEFINE <RMS_SEED> -20
+                NUM_REALIZATIONS 1
+                DESIGN_MATRIX {tmp_path}/my_design_matrix.xlsx
+                """
+        )
