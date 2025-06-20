@@ -280,8 +280,8 @@ def test_multiple_submit_sleep_keywords(queue_system):
         assert all(
             str(w.message)
             == (
-                "The SUBMIT_SLEEP keyword in QUEUE OPTIONS is deprecated, "
-                "use the global SUBMIT_SLEEP keyword instead"
+                "The SUBMIT_SLEEP keyword in QUEUE_OPTION is deprecated. "
+                "Put SUBMIT_SLEEP <seconds> on a separate line instead"
             )
             for w in all_warnings
         )
@@ -383,6 +383,13 @@ def test_global_config_key_does_not_overwrite_queue_options(queue_system, key, v
         f"QUEUE_OPTION GENERIC {key} {value}\n"
         f"{key} {value + 42}\n"
     )
+
+
+def test_negative_submit_sleep_raises_validation_error():
+    with pytest.raises(
+        ValidationError, match="Input should be greater than or equal to 0"
+    ):
+        ErtConfig.from_file_contents("NUM_REALIZATIONS 1\nSUBMIT_SLEEP -4.2\n")
 
 
 @pytest.mark.parametrize(
