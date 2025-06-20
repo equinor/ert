@@ -7,6 +7,7 @@ from collections import defaultdict
 from collections.abc import Callable
 from dataclasses import dataclass, field
 from enum import StrEnum
+from functools import cached_property
 from hashlib import sha256
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, Self, cast, overload
@@ -82,20 +83,21 @@ class GenKwConfig(ParameterConfig):
     name: str = SCALAR_NAME
 
     def __post_init__(self) -> None:
-        self.transform_functions: list[TransformFunction] = []
-        self.groups: dict[str, list[TransformFunction]] = defaultdict(list)
-        for e in self.transform_function_definitions:
-            tf: TransformFunction | None = None
-            if isinstance(e, dict):
-                tf = self._parse_transform_function_definition(
-                    TransformFunctionDefinition(**e)
-                )
-            else:
-                tf = self._parse_transform_function_definition(e)
-            self.transform_functions.append(tf)
-            self.groups[tf.group_name].append(tf)
+        self.transform_functions = [
+            self._parse_transform_function_definition(
+                TransformFunctionDefinition(**e) if isinstance(e, dict) else e
+            )
+            for e in self.transform_function_definitions
+        ]
         self.update = any(param.update for param in self.transform_function_definitions)
         self._validate()
+
+    @cached_property
+    def groups(self) -> dict[str, list[TransformFunction]]:
+        groups: dict[str, list[TransformFunction]] = defaultdict(list)
+        for e in self.transform_functions:
+            groups[e.group_name].append(e)
+        return groups
 
     def group_keys(self, group: str) -> list[str]:
         """Return the keys of the transform functions in the specified group."""
