@@ -22,19 +22,10 @@ import numpy as np
 from pydantic import PrivateAttr
 
 from _ert.events import EESnapshot, EESnapshotUpdate, EETerminated, Event
-from ert.analysis import ErtAnalysisError
-from ert.analysis.event import (
-    AnalysisCompleteEvent,
-    AnalysisDataEvent,
-    AnalysisErrorEvent,
-    AnalysisEvent,
-)
 from ert.config import (
-    ESSettings,
     ForwardModelStep,
     HookRuntime,
     ModelConfig,
-    ObservationSettings,
     QueueConfig,
     QueueSystem,
     Workflow,
@@ -60,10 +51,7 @@ from ert.mode_definitions import MODULE_MODE
 from ert.plugins import (
     HookedWorkflowFixtures,
     PostSimulationFixtures,
-    PostUpdateFixtures,
-    PreFirstUpdateFixtures,
     PreSimulationFixtures,
-    PreUpdateFixtures,
 )
 from ert.runpaths import Runpaths
 from ert.storage import Ensemble, Storage, open_storage
@@ -73,24 +61,9 @@ from ert.utils import log_duration
 from ert.workflow_runner import WorkflowRunner
 
 from ..config.parsing import BaseModelWithContextSupport
-from ..plugins.workflow_fixtures import (
-    create_workflow_fixtures_from_hooked,
-)
+from ..plugins.workflow_fixtures import create_workflow_fixtures_from_hooked
 from ..run_arg import RunArg
-from .event import (
-    AnalysisStatusEvent,
-    AnalysisTimeEvent,
-    EndEvent,
-    FullSnapshotEvent,
-    RunModelDataEvent,
-    RunModelErrorEvent,
-    RunModelStatusEvent,
-    RunModelTimeEvent,
-    RunModelUpdateBeginEvent,
-    RunModelUpdateEndEvent,
-    SnapshotUpdateEvent,
-    StatusEvents,
-)
+from .event import EndEvent, FullSnapshotEvent, SnapshotUpdateEvent, StatusEvents
 
 logger = logging.getLogger(__name__)
 
@@ -277,45 +250,6 @@ class BaseRunModel(BaseModelWithContextSupport, ABC):
 
     def send_event(self, event: StatusEvents) -> None:
         self._status_queue.put(event)
-
-    def send_smoother_event(
-        self, iteration: int, run_id: uuid.UUID, event: AnalysisEvent
-    ) -> None:
-        match event:
-            case AnalysisStatusEvent(msg=msg):
-                self.send_event(
-                    RunModelStatusEvent(iteration=iteration, run_id=run_id, msg=msg)
-                )
-            case AnalysisTimeEvent():
-                self.send_event(
-                    RunModelTimeEvent(
-                        iteration=iteration,
-                        run_id=run_id,
-                        elapsed_time=event.elapsed_time,
-                        remaining_time=event.remaining_time,
-                    )
-                )
-            case AnalysisErrorEvent():
-                self.send_event(
-                    RunModelErrorEvent(
-                        iteration=iteration,
-                        run_id=run_id,
-                        error_msg=event.error_msg,
-                        data=event.data,
-                    )
-                )
-            case AnalysisDataEvent(name=name, data=data):
-                self.send_event(
-                    RunModelDataEvent(
-                        iteration=iteration, run_id=run_id, name=name, data=data
-                    )
-                )
-            case AnalysisCompleteEvent():
-                self.send_event(
-                    RunModelUpdateEndEvent(
-                        iteration=iteration, run_id=run_id, data=event.data
-                    )
-                )
 
     @property
     def queue_system(self) -> QueueSystem:
@@ -858,96 +792,3 @@ class BaseRunModel(BaseModelWithContextSupport, ABC):
         )
 
         return num_successful_realizations
-
-
-class UpdateRunModel(BaseRunModel):
-    target_ensemble: str
-    analysis_settings: ESSettings
-    update_settings: ObservationSettings
-
-    @abstractmethod
-    def update_ensemble_parameters(
-        self, prior: Ensemble, posterior: Ensemble, weight: float
-    ) -> None:
-        """
-        Updates parameters of prior ensemble assumed to already contain responses.
-        Writes resulting updated parameters into the posterior ensemble.
-
-        Parameters
-        ----------
-        prior : Ensemble
-            The prior ensemble, which must contain responses
-            for the observations of the experiment.
-
-        posterior : Ensemble
-            The (initially empty) posterior ensemble
-            where the updated parameters will be stored.
-
-        weight : float
-            The weight applied to this update step (only used in esmda).
-        """
-
-    def update(
-        self,
-        prior: Ensemble,
-        posterior_name: str,
-        weight: float = 1.0,
-    ) -> Ensemble:
-        self.validate_successful_realizations_count()
-        self.send_event(
-            RunModelUpdateBeginEvent(iteration=prior.iteration, run_id=prior.id)
-        )
-        self.send_event(
-            RunModelStatusEvent(
-                iteration=prior.iteration,
-                run_id=prior.id,
-                msg="Creating posterior ensemble..",
-            )
-        )
-
-        pre_first_update_fixtures = PreFirstUpdateFixtures(
-            storage=self._storage,
-            ensemble=prior,
-            observation_settings=self.update_settings,
-            es_settings=self.analysis_settings,
-            random_seed=self.random_seed,
-            reports_dir=self.reports_dir(experiment_name=prior.experiment.name),
-            run_paths=self._run_paths,
-        )
-
-        posterior = self._storage.create_ensemble(
-            prior.experiment,
-            ensemble_size=prior.ensemble_size,
-            iteration=prior.iteration + 1,
-            name=posterior_name,
-            prior_ensemble=prior,
-        )
-        if prior.iteration == 0:
-            self.run_workflows(
-                fixtures=pre_first_update_fixtures,
-            )
-
-        update_args_dict = {
-            field.name: getattr(pre_first_update_fixtures, field.name)
-            for field in dataclasses.fields(pre_first_update_fixtures)
-        }
-
-        self.run_workflows(
-            fixtures=PreUpdateFixtures(
-                **{**update_args_dict, "hook": HookRuntime.PRE_UPDATE}
-            ),
-        )
-        try:
-            self.update_ensemble_parameters(prior, posterior, weight)
-        except ErtAnalysisError as e:
-            raise ErtRunError(
-                "Update algorithm failed for iteration:"
-                f"{posterior.iteration}. The following error occurred: {e}"
-            ) from e
-
-        self.run_workflows(
-            fixtures=PostUpdateFixtures(
-                **{**update_args_dict, "hook": HookRuntime.POST_UPDATE}
-            ),
-        )
-        return posterior

@@ -16,6 +16,7 @@ from ert.config import (
 from ert.config.parsing.config_errors import ConfigValidationError
 from ert.enkf_main import sample_prior, save_design_matrix_to_ensemble
 from ert.ensemble_evaluator import EvaluatorServerConfig
+from ert.run_models.update_run_model import UpdateRunModel
 from ert.storage import Ensemble
 from ert.trace import tracer
 
@@ -25,7 +26,7 @@ from ..plugins import (
     PreExperimentFixtures,
 )
 from ..run_arg import create_run_arguments
-from .base_run_model import ErtRunError, UpdateRunModel
+from .base_run_model import ErtRunError
 
 logger = logging.getLogger(__name__)
 
