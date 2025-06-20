@@ -4,6 +4,7 @@ import pathlib
 import sys
 from collections.abc import Callable
 from datetime import datetime
+from pathlib import Path
 from types import TracebackType
 from typing import Any
 
@@ -47,6 +48,7 @@ class TimestampedFileHandler(logging.FileHandler):
         if kwargs.pop("use_log_dir_from_env", False) and "ERT_LOG_DIR" in os.environ:
             log_dir = os.environ["ERT_LOG_DIR"]
             filename = log_dir + "/" + filename
+            Path(filename).parent.mkdir(exist_ok=True, parents=True)
 
         super().__init__(filename, *args, **kwargs)
 
