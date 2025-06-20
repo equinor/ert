@@ -61,7 +61,7 @@ def cluster_responses(
     if isinstance(correlation, np.float64):
         correlation = np.array([[1, correlation], [correlation, 1]])
     linkage_matrix = linkage(correlation, "average", "euclidean")
-    return fcluster(linkage_matrix, nr_clusters, criterion="maxclust", depth=2)
+    return fcluster(linkage_matrix, nr_clusters, criterion="maxclust")
 
 
 def main(
