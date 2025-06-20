@@ -85,6 +85,7 @@ def killed_by_oom(pids: set[int]) -> bool:
 
 class ForwardModelStep:
     MEMORY_POLL_PERIOD = 5  # Seconds between memory polls
+    TARGET_FILE_POLL_PERIOD = 5  # Seconds to wait for target file after step completion
 
     def __init__(
         self, step_data: ForwardModelStepJSON, index: int, sleep_interval: int = 1
@@ -167,8 +168,10 @@ class ForwardModelStep:
         (stdin, stdout, stderr) = self._open_file_handles()
         # stdin/stdout/stderr are closed at the end of this function
 
-        target_file = self.step_data.get("target_file")
-        target_file_mtime: int | None = _get_target_file_ntime(target_file)
+        target_file: str | None = self.step_data.get("target_file")
+        existing_target_file_mtime: int | None = _get_existing_target_file_mtime(
+            target_file
+        )
         run_start_time = dt.now()
         try:
             proc = Popen(
@@ -226,14 +229,19 @@ class ForwardModelStep:
             )
         ensure_file_handles_closed([stdin, stdout, stderr])
         exited_message = self._create_exited_message_based_on_exit_code(
-            max_memory_usage, target_file_mtime, exit_code, fm_step_pids
+            max_memory_usage,
+            target_file,
+            existing_target_file_mtime,
+            exit_code,
+            fm_step_pids,
         )
         yield exited_message
 
     def _create_exited_message_based_on_exit_code(
         self,
         max_memory_usage: int,
-        target_file_mtime: int | None,
+        target_file: str | None,
+        existing_target_file_mtime: int | None,
         exit_code: int,
         fm_step_pids: set[int],
     ) -> Exited:
@@ -251,8 +259,10 @@ class ForwardModelStep:
                 f"Found the error file:{self.step_data['error_file']} - step failed."
             )
 
-        if target_file_mtime:
-            target_file_error = self._check_target_file_is_written(target_file_mtime)
+        if target_file:
+            target_file_error = self._check_target_file_is_written(
+                target_file, existing_target_file_mtime, self.TARGET_FILE_POLL_PERIOD
+            )
             if target_file_error:
                 return exited_message.with_error(target_file_error)
 
@@ -349,23 +359,18 @@ class ForwardModelStep:
         return errors
 
     def _check_target_file_is_written(
-        self, target_file_mtime: int, timeout: int = 5
+        self, target_file: str, existing_target_file_mtime: int | None, timeout: int = 5
     ) -> str | None:
         """
         Check whether or not a target_file eventually appear. Returns None in
         case of success, an error message in the case of failure.
         """
-        # no target file is expected at all, indicate success
-        if "target_file" not in self.step_data:
-            return None
-
-        target_file = self.step_data["target_file"]
 
         start_time = time.time()
         while True:
             if os.path.exists(target_file):
                 stat = os.stat(target_file)
-                if stat.st_mtime_ns > target_file_mtime:
+                if stat.st_mtime_ns > (existing_target_file_mtime or 0):
                     return None
 
             time.sleep(self.sleep_interval)
@@ -379,7 +384,7 @@ class ForwardModelStep:
             return (
                 f"The target file:{target_file} has not been updated; "
                 f"this is flagged as failure. mtime:{stat.st_mtime}   "
-                f"stat_start_time:{target_file_mtime}"
+                f"stat_start_time:{existing_target_file_mtime}"
             )
         return f"Could not find target_file:{target_file}"
 
@@ -407,7 +412,7 @@ class ForwardModelStep:
         return errors
 
 
-def _get_target_file_ntime(file: str | None) -> int | None:
+def _get_existing_target_file_mtime(file: str | None) -> int | None:
     mtime = None
     if file and os.path.exists(file):
         stat = os.stat(file)
