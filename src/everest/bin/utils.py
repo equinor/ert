@@ -23,6 +23,7 @@ from ert.ensemble_evaluator import (
     SnapshotUpdateEvent,
 )
 from ert.logging import LOGGING_CONFIG
+from everest.config import EverestConfig
 from everest.config.server_config import ServerConfig
 from everest.detached import (
     ExperimentState,
@@ -38,10 +39,11 @@ from everest.util import makedirs_if_needed
 
 
 def setup_logging(options: argparse.Namespace) -> None:
-    if "output_dir" in options.config:
+    if isinstance(options.config, EverestConfig):
         makedirs_if_needed(options.config.output_dir, roll_if_exists=False)
         log_dir = Path(options.config.output_dir) / "logs"
     else:
+        # `everest branch` gives a tuple object here.
         log_dir = Path("logs")
 
     try:
@@ -58,10 +60,13 @@ def setup_logging(options: argparse.Namespace) -> None:
                     handler_config["filename"] = "everest-log.txt"
                 if "ert.logging.TimestampedFileHandler" in handler_config.values():
                     handler_config["config_filename"] = ""
-                    if "config_path" in options.config:
+                    if isinstance(options.config, EverestConfig):
                         handler_config["config_filename"] = (
                             options.config.config_path.name
                         )
+                    else:
+                        # `everest branch`
+                        handler_config["config_filename"] = options.config[0]
             logging.config.dictConfig(config_dict)
 
     if "debug" in options and options.debug:
