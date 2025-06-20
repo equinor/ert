@@ -192,7 +192,7 @@ def main() -> None:
         "ssl_keyfile": key_path,
         "ssl_certfile": cert_path,
         "ssl_keyfile_password": key_pw,
-        "ssl_version": ssl.PROTOCOL_SSLv23,
+        "ssl_version": ssl.PROTOCOL_TLS_SERVER,
     }
     with open(STORAGE_LOG_CONFIG, encoding="utf-8") as conf_file:
         logging_conf = yaml.safe_load(conf_file)
