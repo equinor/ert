@@ -1033,7 +1033,7 @@ class LocalEnsemble(BaseMode):
                     for col, observed_values in observed_cols.items():
                         if col != "time":
                             responses = responses.filter(
-                                pl.col(col).is_in(observed_values)
+                                pl.col(col).is_in(observed_values.implode())
                             )
 
                     pivoted = responses.collect().pivot(
