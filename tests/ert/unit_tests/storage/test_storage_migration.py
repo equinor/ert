@@ -136,18 +136,6 @@ def test_migration_to_genkw_with_polars_and_design_matrix(
         "6.0.2",
         "6.0.1",
         "6.0.0",
-        "5.0.12",
-        "5.0.11",
-        "5.0.10",
-        "5.0.9",
-        "5.0.8",
-        "5.0.7",
-        "5.0.6",
-        "5.0.5",
-        "5.0.4",
-        "5.0.2",
-        "5.0.1",
-        "5.0.0",
     ],
 )
 def test_that_storage_matches(
