@@ -1,4 +1,5 @@
 import logging
+from collections import defaultdict
 from itertools import chain
 from typing import (
     Annotated,
@@ -10,6 +11,8 @@ from typing import (
 
 from pydantic import AfterValidator, BaseModel, ConfigDict, Field, model_validator
 from ropt.enums import PerturbationType, VariableType
+
+from ert.config import ExtParamConfig
 
 from .control_variable_config import (
     ControlVariableConfig,
@@ -245,3 +248,29 @@ sampler to use the same perturbations for each realization.
     model_config = ConfigDict(
         extra="forbid",
     )
+
+    def to_ert_parameter_config(self) -> ExtParamConfig:
+        def _get_variables(
+            variables: list[ControlVariableConfig]
+            | list[ControlVariableGuessListConfig],
+        ) -> list[str] | dict[str, list[str]]:
+            if (
+                isinstance(variables[0], ControlVariableConfig)
+                and getattr(variables[0], "index", None) is None
+            ):
+                return [var.name for var in variables]
+            result: defaultdict[str, list] = defaultdict(list)  # type: ignore
+            for variable in variables:
+                if isinstance(variable, ControlVariableGuessListConfig):
+                    result[variable.name].extend(
+                        str(index + 1) for index, _ in enumerate(variable.initial_guess)
+                    )
+                else:
+                    result[variable.name].append(str(variable.index))
+            return dict(result)
+
+        return ExtParamConfig(
+            name=self.name,
+            input_keys=_get_variables(self.variables),
+            output_file=self.name + ".json",
+        )
