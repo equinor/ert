@@ -658,6 +658,7 @@ class LocalEnsemble(BaseMode):
         iens_active_index: npt.NDArray[np.int_],
         update_mask: bool = False,
     ) -> None:
+        config_node: ParameterConfig | None = None
         if param_group not in self.experiment.parameter_configuration:
             if self._scalar_config and param_group in self._scalar_config.groups:
                 config_node = self._scalar_config
