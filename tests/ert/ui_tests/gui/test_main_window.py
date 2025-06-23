@@ -551,8 +551,45 @@ def test_that_load_results_manually_can_be_run_after_esmda(esmda_has_run, qtbot)
     load_results_manually(qtbot, esmda_has_run)
 
 
+@pytest.mark.parametrize(
+    "file_content,expected_substrings",
+    [
+        (
+            """\
+        #!/usr/bin/env python
+
+        if __name__ == "__main__":
+            raise RuntimeError('Argh')
+        """,
+            [
+                "Realization: 0 failed after reaching max submit (1)",
+                "Step poly_eval failed",
+                "Process exited with status code 1",
+                "Traceback",
+                "raise RuntimeError('Argh')",
+                "RuntimeError: Argh",
+            ],
+        ),
+        (
+            """\
+        #!/usr/bin/env python
+
+        import warnings
+        warnings.warn('Argh')
+        """,
+            [
+                "Realization: 0 failed after reaching max submit (1)",
+                "Step poly_eval failed",
+                "Process exited with status code 1",
+                "Traceback",
+                "raise RuntimeError('Argh')",
+                "RuntimeError: Argh",
+            ],
+        ),
+    ],
+)
 def test_that_a_failing_job_shows_error_message_with_context(
-    opened_main_window_poly, qtbot, use_tmpdir
+    opened_main_window_poly, qtbot, use_tmpdir, file_content, expected_substrings
 ):
     gui = opened_main_window_poly
 
@@ -592,14 +629,6 @@ def test_that_a_failing_job_shows_error_message_with_context(
         assert error_dialog
 
         assert "ERT experiment failed" in error_dialog.findChild(QLabel).text()
-        expected_substrings = [
-            "Realization: 0 failed after reaching max submit (1)",
-            "Step poly_eval failed",
-            "Process exited with status code 1",
-            "Traceback",
-            "raise RuntimeError('Argh')",
-            "RuntimeError: Argh",
-        ]
         suggestor_messages = (
             error_dialog.findChild(QWidget, name="suggestor_messages")
             .findChild(QLabel)
