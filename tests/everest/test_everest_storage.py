@@ -110,16 +110,8 @@ def test_everest_data_stored_in_ert_local_storage(
         assert set(response_type_mapping.get("everest_objectives", [])) == objectives
 
         local_storage_params = []
-        for name, param_config in experiment.parameter_configuration.items():
-            if isinstance(param_config.input_keys, dict):
-                for k, v in param_config.input_keys.items():
-                    for e in v:
-                        local_storage_params.append(f"{name}.{k}.{e}")
-            if isinstance(param_config.input_keys, list):
-                local_storage_params = [
-                    *local_storage_params,
-                    *[f"{name}.{v}" for v in param_config.input_keys],
-                ]
+        for param_config in experiment.parameter_configuration.values():
+            local_storage_params += param_config.input_keys
 
         formatted_control_names = [
             name

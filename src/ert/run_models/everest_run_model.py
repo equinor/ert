@@ -24,11 +24,7 @@ from ropt.results import FunctionResults, Results
 from ropt.transforms import OptModelTransforms
 from typing_extensions import TypedDict
 
-from ert.config import (
-    ExtParamConfig,
-    ParameterConfig,
-    ResponseConfig,
-)
+from ert.config import ParameterConfig, ResponseConfig
 from ert.config.ert_config import (
     create_and_hook_workflows,
     read_templates,
@@ -40,7 +36,6 @@ from ert.ensemble_evaluator import EndEvent, EvaluatorServerConfig
 from ert.runpaths import Runpaths
 from everest.config import (
     ControlConfig,
-    ControlVariableGuessListConfig,
     EverestConfig,
     InputConstraintConfig,
     ModelConfig,
@@ -474,9 +469,6 @@ class EverestRunModel(BaseRunModel):
         sim_to_model_realization: list[int],
         sim_to_perturbation: list[int],
     ) -> tuple[NDArray[np.float64], NDArray[np.float64] | None]:
-        # Create the batch to run:
-        sim_controls = self._create_simulation_controls(sim_to_control_vector)
-
         # Initialize a new ensemble in storage:
         assert self._experiment is not None
         ensemble = self._experiment.create_ensemble(
@@ -501,8 +493,24 @@ class EverestRunModel(BaseRunModel):
 
         ensemble.save_everest_realization_info(realization_info)
 
-        for sim_id, controls in enumerate(sim_controls.values()):
-            self._setup_sim(sim_id, controls, ensemble)
+        for sim_id in range(sim_to_control_vector.shape[0]):
+            sim_controls = sim_to_control_vector[sim_id]
+            offset = 0
+            for control_config in self.controls:
+                ext_param_config = next(
+                    c
+                    for c in self.parameter_configuration
+                    if c.name == control_config.name
+                )
+                n_param_keys = len(ext_param_config.parameter_keys)
+
+                # Save controls to ensemble
+                ext_param_config.save_parameters(
+                    ensemble,
+                    realization=sim_id,
+                    data=sim_controls[offset : (offset + n_param_keys)],
+                )
+                offset += n_param_keys
 
         # Evaluate the batch:
         run_args = self._get_run_args(ensemble, sim_to_model_realization)
@@ -713,93 +721,6 @@ class EverestRunModel(BaseRunModel):
             constraint_transform.calculate_auto_scales(
                 constraints[mask, :], realization_indices[mask]
             )
-
-    def _create_simulation_controls(
-        self,
-        control_values: NDArray[np.float64],
-    ) -> dict[int, dict[str, Any]]:
-        def _create_control_dicts_for_simulation(
-            controls_config: list[ControlConfig], values: NDArray[np.float64]
-        ) -> dict[str, Any]:
-            control_dicts: dict[str, Any] = {}
-            value_list = values.tolist()
-            for control in controls_config:
-                control_dict: dict[str, Any] = control_dicts.get(control.name, {})
-                for variable in control.variables:
-                    variable_value = control_dict.get(variable.name, {})
-                    if isinstance(variable, ControlVariableGuessListConfig):
-                        for index in range(1, len(variable.initial_guess) + 1):
-                            variable_value[str(index)] = value_list.pop(0)
-                    elif variable.index is not None:
-                        variable_value[str(variable.index)] = value_list.pop(0)
-                    else:
-                        variable_value = value_list.pop(0)
-                    control_dict[variable.name] = variable_value
-                control_dicts[control.name] = control_dict
-            return control_dicts
-
-        return {
-            sim_id: _create_control_dicts_for_simulation(
-                self.controls, control_values[sim_id, :]
-            )
-            for sim_id in range(control_values.shape[0])
-        }
-
-    def _setup_sim(
-        self,
-        sim_id: int,
-        controls: dict[str, dict[str, Any]],
-        ensemble: Ensemble,
-    ) -> None:
-        def _check_suffix(
-            ext_config: ExtParamConfig,
-            key: str,
-            assignment: dict[str, Any] | tuple[str, str] | str | int,
-        ) -> None:
-            if key not in ext_config:
-                raise KeyError(f"No such key: {key}")
-            if isinstance(assignment, dict):  # handle suffixes
-                suffixes = ext_config[key]
-                if len(assignment) != len(suffixes):
-                    missingsuffixes = set(suffixes).difference(set(assignment.keys()))
-                    raise KeyError(
-                        f"Key {key} is missing values for "
-                        f"these suffixes: {missingsuffixes}"
-                    )
-                for suffix in assignment:
-                    if suffix not in suffixes:
-                        raise KeyError(
-                            f"Key {key} has suffixes {suffixes}. "
-                            f"Can't find the requested suffix {suffix}"
-                        )
-            else:
-                suffixes = ext_config[key]
-                if suffixes:
-                    raise KeyError(
-                        f"Key {key} has suffixes, a suffix must be specified"
-                    )
-
-        if set(controls.keys()) != {control.name for control in self.controls}:
-            err_msg = "Mismatch between initialized and provided control names."
-            raise KeyError(err_msg)
-
-        for control_name, control in controls.items():
-            ext_config = next(
-                c for c in self.parameter_configuration if c.name == control_name
-            )
-            if isinstance(ext_config, ExtParamConfig):
-                if len(ext_config) != len(control.keys()):
-                    raise KeyError(
-                        f"Expected {len(ext_config)} variables for "
-                        f"control {control_name}, "
-                        f"received {len(control.keys())}."
-                    )
-                for var_name, var_setting in control.items():
-                    _check_suffix(ext_config, var_name, var_setting)
-
-                ensemble.save_parameters(
-                    control_name, sim_id, ExtParamConfig.to_dataset(control)
-                )
 
     def _get_run_args(
         self,

@@ -12,6 +12,7 @@ from everest.config.control_variable_config import (
     ControlVariableGuessListConfig,
 )
 from everest.config.well_config import WellConfig
+from everest.optimizer.everest2ropt import everest2ropt
 from tests.everest.utils import relpath
 
 cfg_dir = relpath("test_data", "mocked_test_case")
@@ -258,7 +259,7 @@ def test_control_bad_variables(variables, control_data_no_variables: dict):
         ControlConfig.model_validate(data)
 
 
-def test_controls_variables_array_vs_index():
+def test_controls_ordering_is_consistent_for_ropt_and_extparam():
     index_wise = ControlConfig(
         name="well_priorities",
         type="well_control",
@@ -282,24 +283,24 @@ def test_controls_variables_array_vs_index():
         type="well_control",
         variables=[
             {"name": "WELL-1", "initial_guess": 0.58, "index": 1},
-            {"name": "WELL-2", "initial_guess": 0.5, "index": 1},
-            {"name": "WELL-3", "initial_guess": 0.56, "index": 1},
-            {"name": "WELL-4", "initial_guess": 0.54, "index": 1},
-            {"name": "WELL-5", "initial_guess": 0.52, "index": 1},
             {"name": "WELL-1", "initial_guess": 0.54, "index": 2},
-            {"name": "WELL-2", "initial_guess": 0.58, "index": 2},
-            {"name": "WELL-3", "initial_guess": 0.52, "index": 2},
-            {"name": "WELL-4", "initial_guess": 0.56, "index": 2},
-            {"name": "WELL-5", "initial_guess": 0.5, "index": 2},
             {"name": "WELL-1", "initial_guess": 0.5, "index": 3},
-            {"name": "WELL-2", "initial_guess": 0.56, "index": 3},
-            {"name": "WELL-3", "initial_guess": 0.58, "index": 3},
-            {"name": "WELL-4", "initial_guess": 0.54, "index": 3},
-            {"name": "WELL-5", "initial_guess": 0.52, "index": 3},
             {"name": "WELL-1", "initial_guess": 0.52, "index": 4},
+            {"name": "WELL-2", "initial_guess": 0.5, "index": 1},
+            {"name": "WELL-2", "initial_guess": 0.58, "index": 2},
+            {"name": "WELL-2", "initial_guess": 0.56, "index": 3},
             {"name": "WELL-2", "initial_guess": 0.54, "index": 4},
+            {"name": "WELL-3", "initial_guess": 0.56, "index": 1},
+            {"name": "WELL-3", "initial_guess": 0.52, "index": 2},
+            {"name": "WELL-3", "initial_guess": 0.58, "index": 3},
             {"name": "WELL-3", "initial_guess": 0.5, "index": 4},
+            {"name": "WELL-4", "initial_guess": 0.54, "index": 1},
+            {"name": "WELL-4", "initial_guess": 0.56, "index": 2},
+            {"name": "WELL-4", "initial_guess": 0.54, "index": 3},
             {"name": "WELL-4", "initial_guess": 0.58, "index": 4},
+            {"name": "WELL-5", "initial_guess": 0.52, "index": 1},
+            {"name": "WELL-5", "initial_guess": 0.5, "index": 2},
+            {"name": "WELL-5", "initial_guess": 0.52, "index": 3},
             {"name": "WELL-5", "initial_guess": 0.56, "index": 4},
         ],
         control_type="real",
@@ -310,7 +311,93 @@ def test_controls_variables_array_vs_index():
         scaled_range=(0.0, 1.0),
     )
 
-    assert (
-        index_wise.to_ert_parameter_config().parameter_keys
-        == var_wise.to_ert_parameter_config().parameter_keys
+    ever_config_var_wise = EverestConfig.with_defaults(controls=[var_wise])
+    ever_config_index_wise = EverestConfig.with_defaults(controls=[index_wise])
+
+    ropt_var_wise = everest2ropt(
+        ever_config_var_wise.controls,
+        ever_config_var_wise.objective_functions,
+        ever_config_var_wise.input_constraints,
+        ever_config_var_wise.output_constraints,
+        ever_config_var_wise.optimization,
+        ever_config_var_wise.model,
+        1234,
+        "dummy",
     )
+
+    ropt_index_wise = everest2ropt(
+        ever_config_index_wise.controls,
+        ever_config_index_wise.objective_functions,
+        ever_config_index_wise.input_constraints,
+        ever_config_index_wise.output_constraints,
+        ever_config_index_wise.optimization,
+        ever_config_index_wise.model,
+        1234,
+        "dummy",
+    )
+
+    assert (
+        ropt_var_wise[0]["names"]["variable"] == ropt_index_wise[0]["names"]["variable"]
+    )
+
+    assert (
+        ropt_var_wise[0]["names"]["variable"]
+        == index_wise.to_ert_parameter_config().input_keys
+    )
+
+    assert (
+        index_wise.to_ert_parameter_config().input_keys
+        == var_wise.to_ert_parameter_config().input_keys
+    )
+
+
+def test_controls_ordering_disregards_index():
+    var_wise = ControlConfig(
+        name="well_priorities",
+        type="well_control",
+        variables=[
+            {"name": "WELL-1", "initial_guess": 0.54, "index": 2},
+            {"name": "WELL-1", "initial_guess": 0.58, "index": 1},
+            {"name": "WELL-1", "initial_guess": 0.5, "index": 3},
+            {"name": "WELL-2", "initial_guess": 0.58, "index": 2},
+            {"name": "WELL-2", "initial_guess": 0.5, "index": 1},
+            {"name": "WELL-2", "initial_guess": 0.56, "index": 3},
+            {"name": "WELL-3", "initial_guess": 0.52, "index": 2},
+            {"name": "WELL-3", "initial_guess": 0.56, "index": 1},
+            {"name": "WELL-3", "initial_guess": 0.58, "index": 3},
+        ],
+        control_type="real",
+        min=0.0,
+        max=1.0,
+        perturbation_type="absolute",
+        perturbation_magnitude=0.05,
+        scaled_range=(0.0, 1.0),
+    )
+
+    ever_config_var_wise = EverestConfig.with_defaults(controls=[var_wise])
+
+    ropt_var_wise = everest2ropt(
+        ever_config_var_wise.controls,
+        ever_config_var_wise.objective_functions,
+        ever_config_var_wise.input_constraints,
+        ever_config_var_wise.output_constraints,
+        ever_config_var_wise.optimization,
+        ever_config_var_wise.model,
+        1234,
+        "dummy",
+    )
+
+    expected = [
+        "well_priorities.WELL-1.2",
+        "well_priorities.WELL-1.1",
+        "well_priorities.WELL-1.3",
+        "well_priorities.WELL-2.2",
+        "well_priorities.WELL-2.1",
+        "well_priorities.WELL-2.3",
+        "well_priorities.WELL-3.2",
+        "well_priorities.WELL-3.1",
+        "well_priorities.WELL-3.3",
+    ]
+    assert (ropt_var_wise[0]["names"]["variable"]) == expected
+
+    assert var_wise.to_ert_parameter_config().input_keys == expected
