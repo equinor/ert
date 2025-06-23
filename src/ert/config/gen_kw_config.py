@@ -127,7 +127,7 @@ class GenKwConfig(ParameterConfig):
     def metadata(self) -> list[ParameterMetadata]:
         return [
             ParameterMetadata(
-                key=f"{self.name}:{tf.name}",
+                key=f"{tf.group_name}:{tf.name}",
                 transformation=tf.transform_function_name,
                 dimensionality=1,
                 userdata={"data_origin": "GEN_KW"},
