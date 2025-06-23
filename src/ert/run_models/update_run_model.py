@@ -13,6 +13,9 @@ from ert.analysis.event import (
 )
 from ert.config.analysis_config import ObservationSettings
 from ert.config.analysis_module import ESSettings
+from ert.config.design_matrix import DesignMatrix
+from ert.config.gen_kw_config import GenKwConfig
+from ert.config.parameter_config import ParameterConfig
 from ert.config.parsing.hook_runtime import HookRuntime
 from ert.plugins.workflow_fixtures import (
     PostUpdateFixtures,
@@ -161,3 +164,23 @@ class UpdateRunModel(BaseRunModel):
                         iteration=iteration, run_id=run_id, data=event.data
                     )
                 )
+
+    @classmethod
+    def _merge_parameters_from_design_matrix(
+        cls,
+        parameters_config: list[ParameterConfig],
+        design_matrix: DesignMatrix | None,
+        rerun_failed_realizations: bool,
+    ) -> tuple[list[ParameterConfig], DesignMatrix | None, GenKwConfig | None]:
+        parameters_config, design_matrix, design_matrix_group = (
+            super()._merge_parameters_from_design_matrix(
+                parameters_config, design_matrix, rerun_failed_realizations
+            )
+        )
+
+        if design_matrix and not any(p.update for p in parameters_config):
+            raise ErtRunError(
+                "No parameters to update as all parameters were set to update:false!"
+            )
+
+        return parameters_config, design_matrix, design_matrix_group

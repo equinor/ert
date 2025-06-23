@@ -6,12 +6,7 @@ from unittest.mock import ANY, MagicMock, call
 import pytest
 from pydantic import ConfigDict
 
-from ert.config import (
-    ESSettings,
-    ModelConfig,
-    ObservationSettings,
-    QueueConfig,
-)
+from ert.config import ESSettings, ModelConfig, ObservationSettings, QueueConfig
 from ert.plugins import (
     PostExperimentFixtures,
     PostSimulationFixtures,
@@ -27,8 +22,7 @@ from ert.run_models import (
     EnsembleSmoother,
     MultipleDataAssimilation,
     base_run_model,
-    ensemble_smoother,
-    multiple_data_assimilation,
+    initial_ensemble_run_model,
 )
 from ert.substitutions import Substitutions
 
@@ -66,8 +60,8 @@ def test_hook_call_order_ensemble_smoother(monkeypatch, use_tmpdir):
     across different models.
     """
     run_wfs_mock = MagicMock()
-    monkeypatch.setattr(ensemble_smoother, "sample_prior", MagicMock())
-    monkeypatch.setattr(ensemble_smoother, "smoother_update", MagicMock())
+    monkeypatch.setattr(initial_ensemble_run_model, "sample_prior", MagicMock())
+    monkeypatch.setattr(EnsembleSmoother, "update_ensemble_parameters", MagicMock())
     monkeypatch.setattr(base_run_model.BaseRunModel, "run_workflows", run_wfs_mock)
 
     ens_mock = MagicMock()
@@ -119,13 +113,10 @@ def test_hook_call_order_es_mda(monkeypatch, use_tmpdir):
     across different models.
     """
     run_wfs_mock = MagicMock()
-    monkeypatch.setattr(multiple_data_assimilation, "sample_prior", MagicMock())
+    monkeypatch.setattr(base_ensemble_run_model, "sample_prior", MagicMock())
     monkeypatch.setattr(
-        multiple_data_assimilation.MultipleDataAssimilation,
-        "parse_weights",
-        MagicMock(return_value=[1]),
+        MultipleDataAssimilation, "update_ensemble_parameters", MagicMock()
     )
-    monkeypatch.setattr(multiple_data_assimilation, "smoother_update", MagicMock())
     monkeypatch.setattr(base_run_model.BaseRunModel, "run_workflows", run_wfs_mock)
 
     ens_mock = MagicMock()
@@ -142,7 +133,7 @@ def test_hook_call_order_es_mda(monkeypatch, use_tmpdir):
         restart_run=False,
         prior_ensemble_id="N/A",
         experiment_name="exp",
-        weights="4,2,1",
+        weights="1",
         active_realizations=MagicMock(),
         minimum_required_realizations=MagicMock(),
         random_seed=0,
