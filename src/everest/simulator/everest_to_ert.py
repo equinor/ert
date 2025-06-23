@@ -10,7 +10,6 @@ import everest
 from ert.config import (
     EnsembleConfig,
     ErtConfig,
-    ExtParamConfig,
     ForwardModelStep,
     ModelConfig,
 )
@@ -27,10 +26,6 @@ from ert.plugins import ErtPluginContext
 from ert.plugins.plugin_manager import ErtPluginManager
 from ert.substitutions import Substitutions
 from everest.config import EverestConfig
-from everest.config.control_variable_config import (
-    ControlVariableConfig,
-    ControlVariableGuessListConfig,
-)
 from everest.config.forward_model_config import SummaryResults
 from everest.config.install_data_config import InstallDataConfig
 from everest.config.install_job_config import InstallJobConfig
@@ -510,32 +505,12 @@ def get_ensemble_config(
 ) -> EnsembleConfig:
     ensemble_config = EnsembleConfig.from_dict(config_dict)
 
-    def _get_variables(
-        variables: list[ControlVariableConfig] | list[ControlVariableGuessListConfig],
-    ) -> list[str] | dict[str, list[str]]:
-        if (
-            isinstance(variables[0], ControlVariableConfig)
-            and getattr(variables[0], "index", None) is None
-        ):
-            return [var.name for var in variables]
-        result: collections.defaultdict[str, list] = collections.defaultdict(list)  # type: ignore
-        for variable in variables:
-            if isinstance(variable, ControlVariableGuessListConfig):
-                result[variable.name].extend(
-                    str(index + 1) for index, _ in enumerate(variable.initial_guess)
-                )
-            else:
-                result[variable.name].append(str(variable.index))
-        return dict(result)
-
     # This adds an EXT_PARAM key to the ert_config, which is not a true ERT
     # configuration key. When initializing an ERT config object, it is ignored.
     # It is used by the Simulator object to inject ExtParamConfig nodes.
     for control in everest_config.controls or []:
-        ensemble_config.parameter_configs[control.name] = ExtParamConfig(
-            name=control.name,
-            input_keys=_get_variables(control.variables),
-            output_file=control.name + ".json",
+        ensemble_config.parameter_configs[control.name] = (
+            control.to_ert_parameter_config()
         )
 
     return ensemble_config
