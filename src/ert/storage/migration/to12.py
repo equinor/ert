@@ -65,5 +65,6 @@ def migrate(path: Path) -> None:
                 )
                 df_scalar.write_parquet(ens / "SCALAR.parquet")
                 with open(experiment / "parameter.json", "w", encoding="utf-8") as fout:
-                    parameters_json["SCALAR"] = one_gen_kw
-                    fout.write(json.dumps(parameters_json, indent=4))
+                    parameters["SCALAR"] = one_gen_kw
+                    parameters = dict(sorted(parameters.items()))
+                    fout.write(json.dumps(parameters, indent=4))

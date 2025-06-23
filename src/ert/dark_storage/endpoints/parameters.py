@@ -107,7 +107,8 @@ def data_for_parameter(ensemble: Ensemble, key: str) -> pd.DataFrame:
         df = ensemble.load_scalars(group)
     except KeyError:
         return pd.DataFrame()
-
+    if df.is_empty():
+        return pd.DataFrame()
     dataframe = df.to_pandas().set_index("realization")
     dataframe.columns.name = None
     dataframe.index.name = "Realization"
