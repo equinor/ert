@@ -474,8 +474,6 @@ class EverestRunModel(BaseRunModel):
         sim_to_model_realization: list[int],
         sim_to_perturbation: list[int],
     ) -> tuple[NDArray[np.float64], NDArray[np.float64] | None]:
-        # Reset the current run status:
-
         # Create the batch to run:
         sim_controls = self._create_simulation_controls(sim_to_control_vector)
 
