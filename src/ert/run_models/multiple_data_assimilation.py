@@ -5,18 +5,10 @@ import logging
 from typing import Any, ClassVar
 from uuid import UUID
 
-import numpy as np
-import polars as pl
 from pydantic import PrivateAttr
 
-from ert.config import (
-    ConfigValidationError,
-    DesignMatrix,
-    ParameterConfig,
-    ResponseConfig,
-)
-from ert.enkf_main import sample_prior, save_design_matrix_to_ensemble
 from ert.ensemble_evaluator import EvaluatorServerConfig
+from ert.run_models.initial_ensemble_run_model import InitialEnsembleRunModel
 from ert.run_models.update_run_model import UpdateRunModel
 from ert.storage import Ensemble
 from ert.trace import tracer
@@ -31,30 +23,18 @@ logger = logging.getLogger(__name__)
 MULTIPLE_DATA_ASSIMILATION_GROUP = "Parameter update"
 
 
-class MultipleDataAssimilation(UpdateRunModel):
+class MultipleDataAssimilation(UpdateRunModel, InitialEnsembleRunModel):
     """
     Run multiple data assimilation (MDA) ensemble smoother with custom weights.
     """
 
     default_weights: ClassVar = "4, 2, 1"
-    experiment_name: str
-    design_matrix: DesignMatrix | None
-    parameter_configuration: list[ParameterConfig]
-    response_configuration: list[ResponseConfig]
-    ert_templates: list[tuple[str, str]]
     restart_run: bool
     prior_ensemble_id: str | None
-    start_iteration: int = 0
     weights: str
 
-    _observations: dict[str, pl.DataFrame] = PrivateAttr()
     _parsed_weights: list[float] = PrivateAttr()
     _total_iterations: int = PrivateAttr(default=2)
-
-    def __init__(self, **data: Any) -> None:
-        observations = data.pop("observations", None)
-        super().__init__(**data)
-        self._observations = observations
 
     def model_post_init(self, ctx: Any) -> None:
         super().model_post_init(ctx)
@@ -82,24 +62,7 @@ class MultipleDataAssimilation(UpdateRunModel):
     ) -> None:
         self.log_at_startup()
         if rerun_failed_realizations:
-            raise ErtRunError(
-                f"Rerunning failed runs in {self.name()} experiment is not supported."
-            )
-        parameters_config = self.parameter_configuration
-        design_matrix = self.design_matrix
-        design_matrix_group = None
-        if design_matrix is not None:
-            try:
-                parameters_config, design_matrix_group = (
-                    design_matrix.merge_with_existing_parameters(parameters_config)
-                )
-                if not any(p.update for p in parameters_config):
-                    raise ConfigValidationError(
-                        "No parameters to update as all parameters "
-                        "were set to update:false!",
-                    )
-            except ConfigValidationError as exc:
-                raise ErtRunError(str(exc)) from exc
+            raise ErtRunError("ESMDA does not support restart")
 
         if self.restart_run:
             id_ = self.prior_ensemble_id
@@ -125,52 +88,13 @@ class MultipleDataAssimilation(UpdateRunModel):
             self.run_workflows(
                 fixtures=PreExperimentFixtures(random_seed=self.random_seed),
             )
-
             sim_args = {"weights": self.weights}
-
-            experiment = self._storage.create_experiment(
-                parameters=parameters_config
-                + ([design_matrix_group] if design_matrix_group else []),
-                observations=self._observations,
-                responses=self.response_configuration,
-                simulation_arguments=sim_args,
-                name=self.experiment_name,
-                templates=self.ert_templates,
-            )
-
-            prior = self._storage.create_ensemble(
-                experiment,
-                ensemble_size=self.ensemble_size,
-                iteration=0,
-                name=self.target_ensemble % 0,
-            )
-            self.set_env_key("_ERT_EXPERIMENT_ID", str(experiment.id))
-            self.set_env_key("_ERT_ENSEMBLE_ID", str(prior.id))
-            prior_args = create_run_arguments(
-                self._run_paths,
-                np.array(self.active_realizations, dtype=bool),
-                ensemble=prior,
-            )
-
-            sample_prior(
-                prior,
-                np.where(self.active_realizations)[0],
-                parameters=[param.name for param in parameters_config],
-                random_seed=self.random_seed,
-            )
-
-            if design_matrix_group is not None and design_matrix is not None:
-                save_design_matrix_to_ensemble(
-                    design_matrix.design_matrix_df,
-                    prior,
-                    np.where(self.active_realizations)[0],
-                    design_matrix_group.name,
-                )
-            self._evaluate_and_postprocess(
-                prior_args,
-                prior,
+            prior = self._sample_prior_and_evaluate_ensemble(
                 evaluator_server_config,
+                sim_args,
+                self.target_ensemble % 0,
             )
+
         enumerated_weights: list[tuple[int, float]] = list(
             enumerate(self._parsed_weights)
         )
