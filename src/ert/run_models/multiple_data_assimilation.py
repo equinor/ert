@@ -28,7 +28,7 @@ class MultipleDataAssimilation(UpdateRunModel, InitialEnsembleRunModel):
     Run multiple data assimilation (MDA) ensemble smoother with custom weights.
     """
 
-    default_weights: ClassVar = "4, 2, 1"
+    default_weights: ClassVar[str] = "4, 2, 1"
     restart_run: bool
     prior_ensemble_id: str | None
     weights: str
