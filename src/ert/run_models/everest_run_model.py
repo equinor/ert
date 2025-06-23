@@ -255,9 +255,6 @@ class EverestRunModel(BaseRunModel):
             # Mutated throughout execution of Everest
             # (Not totally in conformity with ERT runmodel logic)
             active_realizations=[],
-            ensemble_name="noop",
-            minimum_required_realizations=0,
-            experiment_name="noop",
             parameter_configuration=ensemble_config.parameter_configuration,
             response_configuration=ensemble_config.response_configuration,
             ert_templates=ert_templates,
@@ -832,7 +829,7 @@ class EverestRunModel(BaseRunModel):
         if not self.keep_run_path:
             for i, real in self.get_current_snapshot().reals.items():
                 path_to_delete = run_args[int(i)].runpath
-                if real["status"] == "Finished" and os.path.isdir(path_to_delete):
+                if real.get("status") == "Finished" and os.path.isdir(path_to_delete):
 
                     def onerror(
                         _: Callable[..., Any],
