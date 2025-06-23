@@ -296,6 +296,7 @@ def init_site_config_schema() -> ConfigSchemaDict:
         positive_int_keyword(ConfigKeys.MAX_SUBMIT),
         positive_int_keyword(ConfigKeys.NUM_CPU),
         string_keyword(ConfigKeys.REALIZATION_MEMORY),
+        float_keyword(ConfigKeys.SUBMIT_SLEEP),
         queue_system_keyword(False),
         queue_option_keyword(),
         job_script_keyword(),
