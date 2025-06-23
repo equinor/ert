@@ -293,9 +293,6 @@ def check_non_utf_chars(file_path: str) -> None:
 def read_templates(config_dict) -> list[tuple[str, str]]:
     templates = []
     if ConfigKeys.DATA_FILE in config_dict and ConfigKeys.ECLBASE in config_dict:
-        # This replicates the behavior of the DATA_FILE implementation
-        # in C, it adds the .DATA extension and facilitates magic string
-        # replacement in the data file
         source_file = config_dict[ConfigKeys.DATA_FILE]
         target_file = config_dict[ConfigKeys.ECLBASE].replace("%d", "<IENS>") + ".DATA"
         check_non_utf_chars(source_file)
