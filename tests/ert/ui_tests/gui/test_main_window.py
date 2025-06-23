@@ -876,3 +876,59 @@ def test_that_simulation_status_button_adds_menu_on_subsequent_runs(
         choice.trigger()
         find_and_check_selected("button_Start_simulation", False)
         find_and_check_selected("button_Simulation_status", True)
+
+
+def test_warnings_from_forward_model_are_propagated_to_ert_main_window_post_simulation(
+    qtbot, opened_main_window_poly, use_tmpdir
+):
+    forward_model_file = Path("WARNING_EXAMPLE")
+    forward_model_file.write_text("""
+    EXECUTABLE warning.py""")
+
+    script_file = "warning.py"
+    script_file_content = """#!/usr/bin/env python
+import warnings
+warnings.warn('Foobar')"""
+
+    Path(script_file).write_text(dedent(script_file_content), encoding="utf-8")
+
+    os.chmod(
+        script_file,
+        os.stat(script_file).st_mode | stat.S_IXUSR | stat.S_IXGRP | stat.S_IXOTH,
+    )
+
+    config_file = "config.ert"
+    config_file_content = """\
+            NUM_REALIZATIONS 1
+            INSTALL_JOB poly_eval WARNING_EXAMPLE
+            FORWARD_MODEL poly_eval
+        """
+    Path(config_file).write_text(dedent(config_file_content), encoding="utf-8")
+
+    ert_config = ErtConfig.from_file(config_file)
+    args_mock = Mock()
+    args_mock.config = config_file
+
+    gui = _setup_main_window(
+        ert_config, args_mock, GUILogHandler(), ert_config.ens_path
+    )
+    qtbot.addWidget(gui)
+
+    experiments_panel = wait_for_child(gui, qtbot, ExperimentPanel)
+    qtbot.wait_until(lambda: not experiments_panel.isHidden(), timeout=5000)
+    qtbot.mouseClick(experiments_panel.run_button, Qt.MouseButton.LeftButton)
+
+    run_dialog = wait_for_child(gui, qtbot, RunDialog)
+
+    qtbot.wait_until(lambda: run_dialog.fail_msg_box is not None, timeout=20000)
+    expected_messages = [
+        "ERT experiment succeeded!",
+        "These warnings were detected",
+        "UserWarning: Foobar",
+    ]
+    messages = "\n".join(
+        [child.text() for child in run_dialog.fail_msg_box.findChildren(QLabel)]
+    )
+
+    for expected_message in expected_messages:
+        assert expected_message in messages

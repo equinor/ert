@@ -5,6 +5,7 @@ import contextlib
 import hashlib
 import logging
 import time
+import warnings
 from collections import Counter
 from contextlib import suppress
 from enum import StrEnum
@@ -31,6 +32,7 @@ from ert.storage.local_ensemble import forward_model_ok
 from ert.storage.realization_storage_state import RealizationStorageState
 from ert.trace import trace, tracer
 
+from ..warnings import PostSimulationWarning
 from .driver import Driver, FailedSubmit
 
 if TYPE_CHECKING:
@@ -442,10 +444,12 @@ async def log_warnings_from_forward_model(
                 captured.append(line[:max_length])
 
         for line, counter in Counter(captured).items():
-            logger.warning(
+            warning_msg = (
                 f"Realization {iens} step {step.name}.{step_idx} "
                 f"warned {counter} time(s) in {filetype}: {line}"
             )
+            warnings.warn(warning_msg, PostSimulationWarning, stacklevel=2)
+            logger.warning(warning_msg)
 
     async def wait_for_file(file_path: Path, _timeout: int) -> int:
         if _timeout <= 0:
