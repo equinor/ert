@@ -24,7 +24,7 @@ class EnsembleExperiment(InitialEnsembleRunModel):
 
     _ensemble_id: UUID | None = PrivateAttr(None)
     supports_rerunning_failed_realizations: ClassVar[bool] = True
-    ensemble_name: str
+    target_ensemble: str
 
     @property
     def _ensemble(self) -> Ensemble:
@@ -45,14 +45,14 @@ class EnsembleExperiment(InitialEnsembleRunModel):
         ensemble = self._sample_prior_and_evaluate_ensemble(
             evaluator_server_config,
             None,
-            self.ensemble_name,
+            self.target_ensemble,
             rerun_failed_realizations,
             self._ensemble if rerun_failed_realizations else None,
         )
         self._ensemble_id = ensemble.id
 
         self.run_workflows(
-            PostExperimentFixtures(
+            fixtures=PostExperimentFixtures(
                 random_seed=self.random_seed,
                 storage=self._storage,
                 ensemble=self._ensemble,

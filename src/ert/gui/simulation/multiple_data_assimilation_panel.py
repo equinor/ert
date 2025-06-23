@@ -45,7 +45,7 @@ class Arguments:
     mode: str
     target_ensemble: str
     realizations: str
-    weights: list[float]
+    weights: str
     restart_run: bool
     prior_ensemble_id: str  # UUID not serializable in json
     experiment_name: str
