@@ -20,9 +20,15 @@ def test_gen_kw_config():
         name="KEY",
         forward_init=False,
         transform_function_definitions=[
-            TransformFunctionDefinition(name="KEY1", param_name="UNIFORM", values=[0, 1]),
-            TransformFunctionDefinition(name="KEY2", param_name="UNIFORM", values=[0, 1]),
-            TransformFunctionDefinition(name="KEY3", param_name="UNIFORM", values=[0, 1]),
+            TransformFunctionDefinition(
+                name="KEY1", param_name="UNIFORM", values=[0, 1]
+            ),
+            TransformFunctionDefinition(
+                name="KEY2", param_name="UNIFORM", values=[0, 1]
+            ),
+            TransformFunctionDefinition(
+                name="KEY3", param_name="UNIFORM", values=[0, 1]
+            ),
         ],
         update=True,
     )
@@ -39,10 +45,18 @@ def test_gen_kw_config_duplicate_keys_raises():
             name="KEY",
             forward_init=False,
             transform_function_definitions=[
-                TransformFunctionDefinition(name="KEY1", param_name="UNIFORM", values=[0, 1]),
-                TransformFunctionDefinition(name="KEY2", param_name="UNIFORM", values=[0, 1]),
-                TransformFunctionDefinition(name="KEY2", param_name="UNIFORM", values=[0, 1]),
-                TransformFunctionDefinition(name="KEY3", param_name="UNIFORM", values=[0, 1]),
+                TransformFunctionDefinition(
+                    name="KEY1", param_name="UNIFORM", values=[0, 1]
+                ),
+                TransformFunctionDefinition(
+                    name="KEY2", param_name="UNIFORM", values=[0, 1]
+                ),
+                TransformFunctionDefinition(
+                    name="KEY2", param_name="UNIFORM", values=[0, 1]
+                ),
+                TransformFunctionDefinition(
+                    name="KEY3", param_name="UNIFORM", values=[0, 1]
+                ),
             ],
             update=True,
         )
@@ -67,18 +81,36 @@ def test_gen_kw_config_get_priors():
         name="KW_NAME",
         forward_init=False,
         transform_function_definitions=[
-            TransformFunctionDefinition(name="KEY1", param_name="NORMAL", values=["0", "1"]),
-            TransformFunctionDefinition(name="KEY2", param_name="LOGNORMAL", values=["2", "3"]),
+            TransformFunctionDefinition(
+                name="KEY1", param_name="NORMAL", values=["0", "1"]
+            ),
+            TransformFunctionDefinition(
+                name="KEY2", param_name="LOGNORMAL", values=["2", "3"]
+            ),
             TransformFunctionDefinition(
                 "KEY3", "TRUNCATED_NORMAL", ["4", "5", "6", "7"]
             ),
-            TransformFunctionDefinition(name="KEY4", param_name="TRIANGULAR", values=["0", "1", "2"]),
-            TransformFunctionDefinition(name="KEY5", param_name="UNIFORM", values=["2", "3"]),
-            TransformFunctionDefinition(name="KEY6", param_name="DUNIF", values=["3", "0", "1"]),
-            TransformFunctionDefinition(name="KEY7", param_name="ERRF", values=["0", "1", "2", "3"]),
-            TransformFunctionDefinition(name="KEY8", param_name="DERRF", values=["1", "1", "2", "3", "4"]),
-            TransformFunctionDefinition(name="KEY9", param_name="LOGUNIF", values=["0", "1"]),
-            TransformFunctionDefinition(name="KEY10", param_name="CONST", values=["10"]),
+            TransformFunctionDefinition(
+                name="KEY4", param_name="TRIANGULAR", values=["0", "1", "2"]
+            ),
+            TransformFunctionDefinition(
+                name="KEY5", param_name="UNIFORM", values=["2", "3"]
+            ),
+            TransformFunctionDefinition(
+                name="KEY6", param_name="DUNIF", values=["3", "0", "1"]
+            ),
+            TransformFunctionDefinition(
+                name="KEY7", param_name="ERRF", values=["0", "1", "2", "3"]
+            ),
+            TransformFunctionDefinition(
+                name="KEY8", param_name="DERRF", values=["1", "1", "2", "3", "4"]
+            ),
+            TransformFunctionDefinition(
+                name="KEY9", param_name="LOGUNIF", values=["0", "1"]
+            ),
+            TransformFunctionDefinition(
+                name="KEY10", param_name="CONST", values=["10"]
+            ),
         ],
         update=True,
     )

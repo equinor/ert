@@ -1174,7 +1174,9 @@ def test_update_subset_parameters(storage, uniform_parameter, obs):
         name="EXTRA_PARAMETER",
         forward_init=False,
         transform_function_definitions=[
-            TransformFunctionDefinition(name="KEY1", param_name="UNIFORM", values=[0, 1]),
+            TransformFunctionDefinition(
+                name="KEY1", param_name="UNIFORM", values=[0, 1]
+            ),
         ],
         update=False,
     )

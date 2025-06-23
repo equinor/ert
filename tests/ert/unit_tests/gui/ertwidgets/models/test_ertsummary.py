@@ -21,9 +21,15 @@ def mock_ert(monkeypatch):
         name="KEY",
         forward_init=False,
         transform_function_definitions=[
-            TransformFunctionDefinition(name="KEY1", param_name="UNIFORM", values=[0, 1]),
-            TransformFunctionDefinition(name="KEY2", param_name="NORMAL", values=[0, 1]),
-            TransformFunctionDefinition(name="KEY3", param_name="LOGNORMAL", values=[0, 1]),
+            TransformFunctionDefinition(
+                name="KEY1", param_name="UNIFORM", values=[0, 1]
+            ),
+            TransformFunctionDefinition(
+                name="KEY2", param_name="NORMAL", values=[0, 1]
+            ),
+            TransformFunctionDefinition(
+                name="KEY3", param_name="LOGNORMAL", values=[0, 1]
+            ),
         ],
         update=True,
     )
