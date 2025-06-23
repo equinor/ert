@@ -8,7 +8,7 @@ from pydantic import PrivateAttr
 from ert.config.design_matrix import DesignMatrix
 from ert.config.parameter_config import ParameterConfig
 from ert.config.response_config import ResponseConfig
-from ert.enkf_main import sample_prior, save_design_matrix_to_ensemble
+from ert.enkf_main import sample_prior
 from ert.ensemble_evaluator.config import EvaluatorServerConfig
 from ert.run_arg import create_run_arguments
 from ert.run_models.base_run_model import BaseRunModel
@@ -36,17 +36,14 @@ class InitialEnsembleRunModel(BaseRunModel, ABC):
         rerun_failed_realizations: bool = False,
         ensemble_storage: LocalEnsemble | None = None,
     ) -> LocalEnsemble:
-        parameters_config, design_matrix, design_matrix_group = (
-            self._merge_parameters_from_design_matrix(
-                self.parameter_configuration,
-                self.design_matrix,
-                rerun_failed_realizations,
-            )
+        parameters_config, design_matrix = self._merge_parameters_from_design_matrix(
+            self.parameter_configuration,
+            self.design_matrix,
+            rerun_failed_realizations,
         )
         if ensemble_storage is None:
             experiment_storage = self._storage.create_experiment(
-                parameters=parameters_config
-                + ([design_matrix_group] if design_matrix_group else []),
+                parameters=parameters_config,
                 observations=self._observations,
                 responses=self.response_configuration,
                 simulation_arguments=simulation_arguments,
@@ -58,13 +55,6 @@ class InitialEnsembleRunModel(BaseRunModel, ABC):
                 ensemble_size=self.ensemble_size,
                 name=ensemble_name,
             )
-            if design_matrix_group is not None and design_matrix is not None:
-                save_design_matrix_to_ensemble(
-                    design_matrix.design_matrix_df,
-                    ensemble_storage,
-                    np.where(self.active_realizations)[0],
-                    design_matrix_group.name,
-                )
         else:
             assert ensemble_storage is not None
         self.set_env_key("_ERT_EXPERIMENT_ID", str(ensemble_storage.experiment.id))
@@ -75,6 +65,9 @@ class InitialEnsembleRunModel(BaseRunModel, ABC):
             np.where(self.active_realizations)[0],
             parameters=[param.name for param in parameters_config],
             random_seed=self.random_seed,
+            design_matrix_df=(
+                design_matrix.design_matrix_df if design_matrix is not None else None
+            ),
         )
 
         prior_args = create_run_arguments(
