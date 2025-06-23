@@ -396,6 +396,7 @@ def test_that_queue_settings_are_taken_from_site_config(
     QUEUE_SYSTEM LSF
     QUEUE_OPTION LSF LSF_RESOURCE my_resource
     QUEUE_OPTION LSF LSF_QUEUE my_queue
+    SUBMIT_SLEEP 9.9
     """),
         encoding="utf-8",
     )
@@ -410,6 +411,7 @@ def test_that_queue_settings_are_taken_from_site_config(
     assert queue_config.queue_options == LsfQueueOptions(
         lsf_queue="my_queue", lsf_resource="my_resource"
     )
+    assert queue_config.submit_sleep == 9.9
 
 
 def test_passthrough_explicit_summary_keys():
