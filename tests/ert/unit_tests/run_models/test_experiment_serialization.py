@@ -420,12 +420,16 @@ def field_config_strategy(draw):
 
 
 @st.composite
-def parameter_config_strategy(draw):
+def parameter_config_list_strategy(draw, min_size=1, max_size=5):
     return draw(
-        st.one_of(
-            surface_config_strategy(),
-            field_config_strategy(),
-            gen_kw_config_strategy(),  # ✅ now fully enabled
+        st.lists(
+            st.one_of(
+                surface_config_strategy(),
+                field_config_strategy(),
+                gen_kw_config_strategy(),
+            ),
+            min_size=min_size,
+            max_size=max_size,
         )
     )
 
@@ -489,11 +493,24 @@ def response_config_list_strategy(draw):
     return configs
 
 
-@given(baserunmodel_args(), ensemble_experiment_strategy())
+@given(
+    baserunmodel_args(),
+    ensemble_experiment_strategy(),
+    parameter_config_list_strategy(),
+    response_config_list_strategy(),
+)
 def test_ensemble_experiment(
-    baserunmodel_args: dict[str, Any], ensemble_experiment_args: dict[str, Any]
+    baserunmodel_args: dict[str, Any],
+    ensemble_experiment_args: dict[str, Any],
+    parameter_configs,
+    response_configs,
 ) -> None:
-    runmodel = EnsembleExperiment(**baserunmodel_args, **ensemble_experiment_args)
+    runmodel = EnsembleExperiment(
+        **baserunmodel_args,
+        **ensemble_experiment_args,
+        parameter_configuration=parameter_configs,
+        response_configuration=response_configs,
+    )
     serialized = runmodel.model_dump_json()
     runmodel2 = EnsembleExperiment.model_validate_json(serialized)
     assert runmodel == runmodel2

@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import json
 from collections.abc import Mapping, MutableMapping
-from dataclasses import dataclass, field
+from dataclasses import field
 from pathlib import Path
 from typing import TYPE_CHECKING
 
@@ -24,7 +24,6 @@ if TYPE_CHECKING:
     MutableDataType = MutableMapping[str, Number | MutableMapping[str, Number]]
 
 
-@dataclass
 class ExtParamConfig(ParameterConfig):
     """Create an ExtParamConfig for @key with the given @input_keys
 
