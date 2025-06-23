@@ -1,6 +1,7 @@
 import json
 import os
 from pathlib import Path
+from typing import Any
 
 import polars as pl
 
@@ -27,9 +28,9 @@ def migrate(path: Path) -> None:
                 if ens_file["experiment_id"] != experiment_id:
                     continue
 
-            datasets = {}
-            parameters = {}
-            one_gen_kw = {}
+            datasets: dict[str, pl.DataFrame] = {}
+            parameters: dict[str, Any] = {}
+            one_gen_kw: dict[str, Any] = {}
             one_gen_kw["name"] = "SCALAR"
             one_gen_kw["transform_function_definitions"] = []
             one_gen_kw["_ert_kind"] = "GenKwConfig"
