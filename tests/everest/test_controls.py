@@ -256,3 +256,61 @@ def test_control_bad_variables(variables, control_data_no_variables: dict):
     data["variables"] = variables
     with pytest.raises(ValidationError, match="3 validation errors"):
         ControlConfig.model_validate(data)
+
+
+def test_controls_variables_array_vs_index():
+    index_wise = ControlConfig(
+        name="well_priorities",
+        type="well_control",
+        variables=[
+            {"name": "WELL-1", "initial_guess": [0.58, 0.54, 0.5, 0.52]},
+            {"name": "WELL-2", "initial_guess": [0.5, 0.58, 0.56, 0.54]},
+            {"name": "WELL-3", "initial_guess": [0.56, 0.52, 0.58, 0.5]},
+            {"name": "WELL-4", "initial_guess": [0.54, 0.56, 0.54, 0.58]},
+            {"name": "WELL-5", "initial_guess": [0.52, 0.5, 0.52, 0.56]},
+        ],
+        control_type="real",
+        min=0.0,
+        max=1.0,
+        perturbation_type="absolute",
+        perturbation_magnitude=0.05,
+        scaled_range=[0.0, 1.0],
+    )
+
+    var_wise = ControlConfig(
+        name="well_priorities",
+        type="well_control",
+        variables=[
+            {"name": "WELL-1", "initial_guess": 0.58, "index": 1},
+            {"name": "WELL-2", "initial_guess": 0.5, "index": 1},
+            {"name": "WELL-3", "initial_guess": 0.56, "index": 1},
+            {"name": "WELL-4", "initial_guess": 0.54, "index": 1},
+            {"name": "WELL-5", "initial_guess": 0.52, "index": 1},
+            {"name": "WELL-1", "initial_guess": 0.54, "index": 2},
+            {"name": "WELL-2", "initial_guess": 0.58, "index": 2},
+            {"name": "WELL-3", "initial_guess": 0.52, "index": 2},
+            {"name": "WELL-4", "initial_guess": 0.56, "index": 2},
+            {"name": "WELL-5", "initial_guess": 0.5, "index": 2},
+            {"name": "WELL-1", "initial_guess": 0.5, "index": 3},
+            {"name": "WELL-2", "initial_guess": 0.56, "index": 3},
+            {"name": "WELL-3", "initial_guess": 0.58, "index": 3},
+            {"name": "WELL-4", "initial_guess": 0.54, "index": 3},
+            {"name": "WELL-5", "initial_guess": 0.52, "index": 3},
+            {"name": "WELL-1", "initial_guess": 0.52, "index": 4},
+            {"name": "WELL-2", "initial_guess": 0.54, "index": 4},
+            {"name": "WELL-3", "initial_guess": 0.5, "index": 4},
+            {"name": "WELL-4", "initial_guess": 0.58, "index": 4},
+            {"name": "WELL-5", "initial_guess": 0.56, "index": 4},
+        ],
+        control_type="real",
+        min=0.0,
+        max=1.0,
+        perturbation_type="absolute",
+        perturbation_magnitude=0.05,
+        scaled_range=(0.0, 1.0),
+    )
+
+    assert (
+        index_wise.to_ert_parameter_config().parameter_keys
+        == var_wise.to_ert_parameter_config().parameter_keys
+    )
