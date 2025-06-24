@@ -265,13 +265,14 @@ class LocalEnsemble(BaseMode):
         genkw_mask: dict[str, list[int]] = {}
         if self._scalar_config:
             scalar_path = self.mount_point / f"{_escape_filename(SCALAR_NAME)}.parquet"
-            genkw_mask[SCALAR_NAME] = (
-                pl.scan_parquet(scalar_path)
-                .select("realization")
-                .collect()["realization"]
-                .unique()
-                .to_list()
-            )
+            if scalar_path.exists():
+                genkw_mask[SCALAR_NAME] = (
+                    pl.scan_parquet(scalar_path)
+                    .select("realization")
+                    .collect()["realization"]
+                    .unique()
+                    .to_list()
+                )
         return genkw_mask
 
     def has_data(self) -> list[int]:
