@@ -89,7 +89,7 @@ class MultipleDataAssimilation(UpdateRunModel, InitialEnsembleRunModel):
                 fixtures=PreExperimentFixtures(random_seed=self.random_seed),
             )
             sim_args = {"weights": self.weights}
-            prior = self._sample_prior_and_evaluate_ensemble(
+            prior = self._sample_and_evaluate_ensemble(
                 evaluator_server_config,
                 sim_args,
                 self.target_ensemble % 0,
