@@ -4,6 +4,7 @@ import re
 from argparse import ArgumentParser
 from contextlib import ExitStack as does_not_raise
 from pathlib import Path
+from textwrap import dedent
 from typing import Any
 
 import pytest
@@ -930,15 +931,29 @@ def test_load_file_non_existing():
         EverestConfig.load_file("non_existing.yml")
 
 
-def test_load_file_with_errors(copy_math_func_test_data_to_tmp, capsys):
-    with open("config_minimal.yml", encoding="utf-8") as file:
-        content = file.read()
+@pytest.mark.usefixtures("change_to_tmpdir")
+def test_load_file_with_errors(capsys):
+    content = dedent("""
+    controls:
+    -   initial_guess: 0.1
+        max: not_a number
+        min: -1.0
+        name: point
+        type: yolo_control
+        variables:
+        -   name: x
+    install_jobs:
+    -   executable: jobs/distance3.py
+        name: distance
+        invalid: invalid3
+    model:
+        realizations:
+        - 0
+    objective_functions:
+    -   name: distance
+""")
 
     with open("config_minimal_error.yml", "w", encoding="utf-8") as file:
-        content = content.replace("generic_control", "yolo_control")
-        content = content.replace("max: 1.0", "max: not_a number")
-        pos = content.find("name: distance")
-        content = content[: pos + 14] + "\n    invalid: invalid" + content[pos + 14 :]
         file.write(content)
 
     with pytest.raises(SystemExit):
@@ -948,19 +963,19 @@ def test_load_file_with_errors(copy_math_func_test_data_to_tmp, capsys):
     captured = capsys.readouterr()
 
     assert "Found 3 validation error" in captured.err
-    assert "line: 3, column: 11" in captured.err
+    assert "line: 7, column: 11" in captured.err
     assert (
         "Input should be 'well_control' or 'generic_control' (type=literal_error)"
         in captured.err
     )
 
-    assert "line: 5, column: 10" in captured.err
+    assert "line: 4, column: 10" in captured.err
     assert (
         "Input should be a valid number, "
         "unable to parse string as a number (type=float_parsing)"
     ) in captured.err
 
-    assert "line: 17, column: 5" in captured.err
+    assert "line: 13, column: 14" in captured.err
     assert "Extra inputs are not permitted (type=extra_forbidden)" in captured.err
 
 
