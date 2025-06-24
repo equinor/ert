@@ -7,6 +7,7 @@ from typing import Any
 import orjson
 import polars as pl
 import pytest
+import yaml
 
 from ert.config import SummaryConfig
 from ert.storage import open_storage
@@ -65,6 +66,11 @@ def make_api_snapshot(api) -> dict[str, Any]:
 def test_api_snapshots(config_file, snapshot, cached_example):
     config_path, config_file, optimal_result_json, _ = cached_example(
         f"math_func/{config_file}"
+    )
+    config_content = yaml.safe_load(Path(config_file).read_text(encoding="utf-8"))
+    config_content["simulator"] = {"queue_system": {"name": "local"}}
+    Path(config_file).write_text(
+        yaml.dump(config_content, default_flow_style=False), encoding="utf-8"
     )
     config = EverestConfig.load_file(Path(config_path) / config_file)
     api = EverestDataAPI(config)
