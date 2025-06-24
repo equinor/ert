@@ -2,6 +2,7 @@ import os
 from pathlib import Path
 
 import pytest
+import yaml
 
 from everest.bin.main import start_everest
 from everest.config import (
@@ -16,7 +17,15 @@ from everest.config.install_job_config import InstallJobConfig
 @pytest.mark.integration_test
 @pytest.mark.xdist_group(name="starts_everest")
 def test_logging_setup(copy_math_func_test_data_to_tmp):
-    everest_config = EverestConfig.load_file("config_minimal.yml")
+    # Ensure no interference with plugins which may set queue system
+    config_file = "config_minimal.yml"
+    config_content = yaml.safe_load(Path(config_file).read_text(encoding="utf-8"))
+    config_content["simulator"] = {"queue_system": {"name": "local"}}
+    Path(config_file).write_text(
+        yaml.dump(config_content, default_flow_style=False), encoding="utf-8"
+    )
+
+    everest_config = EverestConfig.load_file(config_file)
     everest_config.forward_model.append(
         ForwardModelStepConfig(job="toggle_failure --fail simulation_2")
     )
