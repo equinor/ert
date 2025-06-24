@@ -251,8 +251,10 @@ class Job:
     async def _verify_checksum(
         self,
         checksum_lock: asyncio.Lock,
-        timeout: int = DEFAULT_FILE_VERIFICATION_TIMEOUT,  # noqa: ASYNC109
+        timeout: int | None = None,  # noqa: ASYNC109
     ) -> None:
+        if timeout is None:
+            timeout = self.DEFAULT_FILE_VERIFICATION_TIMEOUT
         # Wait for job runpath to be in the checksum dictionary
         runpath = self.real.run_arg.runpath
         while runpath not in self._scheduler.checksum:
