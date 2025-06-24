@@ -140,9 +140,16 @@ class CustomItemDelegate(QStyledItemDelegate):
 
         painter.drawRect(rect)
 
-        text_rect = rect.adjusted(self.swap_pixmap.width() + 4, 4, -4, -4)
+        icon_logical_width = int(
+            self.swap_pixmap.width() / self.swap_pixmap.devicePixelRatio()
+        )
+        icon_logical_height = int(
+            self.swap_pixmap.height() / self.swap_pixmap.devicePixelRatio()
+        )
+
+        text_rect = rect.adjusted(2 * icon_logical_width, 4, -4, -4)
         painter.drawText(text_rect, Qt.AlignmentFlag.AlignLeft, index.data())
 
-        cursor_x = option.rect.left() + self.swap_pixmap.width() - 14
-        cursor_y = int(option.rect.center().y() - (self.swap_pixmap.height() / 2))
+        cursor_x = int(option.rect.left() + icon_logical_width / 2)
+        cursor_y = int(option.rect.center().y() - (icon_logical_height / 2))
         painter.drawPixmap(cursor_x, cursor_y, self.swap_pixmap)
