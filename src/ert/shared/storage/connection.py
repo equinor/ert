@@ -13,4 +13,5 @@ def get_info(
     return {
         "baseurl": client.fetch_url(),
         "auth": client.fetch_auth(),
+        "cert": client.fetch_conn_info()["cert"],
     }
