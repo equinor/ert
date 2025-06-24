@@ -65,7 +65,7 @@ class AnalysisDataEvent(AnalysisEvent):
 class AnalysisErrorEvent(AnalysisEvent):
     event_type: Literal["AnalysisErrorEvent"] = "AnalysisErrorEvent"
     error_msg: str
-    data: DataSection | None = None
+    data: DataSection
 
 
 class AnalysisCompleteEvent(AnalysisEvent):
