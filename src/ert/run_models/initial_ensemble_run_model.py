@@ -28,7 +28,7 @@ class InitialEnsembleRunModel(BaseRunModel, ABC):
         super().__init__(**data)
         self._observations = observations
 
-    def _sample_prior_and_evaluate_ensemble(
+    def _sample_and_evaluate_ensemble(
         self,
         evaluator_server_config: EvaluatorServerConfig,
         simulation_arguments: dict[str, str] | None,

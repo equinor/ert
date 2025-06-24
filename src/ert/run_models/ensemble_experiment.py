@@ -42,7 +42,7 @@ class EnsembleExperiment(InitialEnsembleRunModel):
 
         self.run_workflows(fixtures=PreExperimentFixtures(random_seed=self.random_seed))
 
-        ensemble = self._sample_prior_and_evaluate_ensemble(
+        ensemble = self._sample_and_evaluate_ensemble(
             evaluator_server_config,
             None,
             self.target_ensemble,
