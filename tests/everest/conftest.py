@@ -144,6 +144,12 @@ def cached_example(pytestconfig):
                 Path(__file__) / f"../../../test-data/everest/{test_data_case}"
             ).resolve()
             config_file = config_path.name
+            # Ensure tests are run locally, avoiding interference with plugins:
+            config_content = yaml.safe_load(config_path.open())
+            config_content["simulator"]["queue_system"] = {"name": "local"}
+            config_path.write_text(
+                yaml.dump(config_content, default_flow_style=False), encoding="utf-8"
+            )
 
             # This assumes no parallel runs for the same example,
             # which must be ensured by using xdist loadgroups
