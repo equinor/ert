@@ -23,8 +23,9 @@ class InitialEnsembleRunModel(RunModel, ABC):
     ert_templates: list[tuple[str, str]]
     _observations: dict[str, pl.DataFrame] | None = PrivateAttr()
 
-    def __init__(self, **data: Any) -> None:
-        observations = data.pop("observations", None)
+    def __init__(
+        self, *, observations: dict[str, pl.DataFrame] | None, **data: Any
+    ) -> None:
         super().__init__(**data)
         self._observations = observations
 
