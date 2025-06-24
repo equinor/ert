@@ -6,6 +6,7 @@ from pathlib import Path
 import pytest
 import requests
 import uvicorn
+import yaml
 from fastapi import FastAPI
 from starlette.responses import Response
 
@@ -155,6 +156,12 @@ def test_that_multiple_everest_clients_can_connect_to_server(cached_example):
     )
 
     config_path = Path(path) / config_file
+    config_content = yaml.safe_load(config_path.read_text(encoding="utf-8"))
+    config_content["simulator"] = {"queue_system": {"name": "local"}}
+    config_path.write_text(
+        yaml.dump(config_content, default_flow_style=False), encoding="utf-8"
+    )
+
     ever_config = EverestConfig.load_file(config_path)
 
     # Run the case through everserver
