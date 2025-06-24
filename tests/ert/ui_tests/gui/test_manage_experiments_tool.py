@@ -537,5 +537,5 @@ def test_realization_view(
     )
     assert (
         realization_widget._parameter_text_edit.toPlainText()
-        == "\nSNAKE_OIL_PARAM - PARAMETERS_LOADED\n"
+        == "\nSCALAR - PARAMETERS_LOADED\n"
     )
