@@ -894,6 +894,7 @@ def test_tracking_missing_ecl(monkeypatch, tmp_path, caplog):
     ) in caplog.messages
 
 
+@pytest.mark.timeout(10)
 @pytest.mark.usefixtures("copy_poly_case")
 def test_that_connection_errors_do_not_effect_final_result(
     monkeypatch: pytest.MonkeyPatch,
@@ -911,7 +912,7 @@ def test_that_connection_errors_do_not_effect_final_result(
         raise_connection_error,
     ):
         run_cli(
-            ENSEMBLE_EXPERIMENT_MODE,
+            TEST_RUN_MODE,
             "--disable-monitoring",
             "poly.ert",
         )
