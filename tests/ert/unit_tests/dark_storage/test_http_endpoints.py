@@ -158,7 +158,7 @@ def test_get_ensemble_parameters(poly_example_tmp_dir, dark_storage_client):
     experiment_json = resp.json()[0]
 
     assert experiment_json["parameters"] == {
-        "COEFFS": [
+        "SCALAR": [
             {
                 "key": "COEFFS:a",
                 "transformation": "UNIFORM",

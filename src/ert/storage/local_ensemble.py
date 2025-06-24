@@ -263,20 +263,15 @@ class LocalEnsemble(BaseMode):
     @cached_property
     def _existing_scalars(self) -> dict[str, list[int]]:
         genkw_mask: dict[str, list[int]] = {}
-        for parameter in self.experiment.parameter_configuration.values():
-            if isinstance(parameter, GenKwConfig):
-                genkw_mask[parameter.name] = []
-                group_path = (
-                    self.mount_point / f"{_escape_filename(parameter.name)}.parquet"
-                )
-                if group_path.exists():
-                    genkw_mask[parameter.name] = (
-                        pl.scan_parquet(group_path)
-                        .select("realization")
-                        .collect()["realization"]
-                        .unique()
-                        .to_list()
-                    )
+        if self._scalar_config:
+            scalar_path = self.mount_point / f"{_escape_filename(SCALAR_NAME)}.parquet"
+            genkw_mask[SCALAR_NAME] = (
+                pl.scan_parquet(scalar_path)
+                .select("realization")
+                .collect()["realization"]
+                .unique()
+                .to_list()
+            )
         return genkw_mask
 
     def has_data(self) -> list[int]:
