@@ -5,7 +5,6 @@ from typing import TYPE_CHECKING, cast
 
 import numpy as np
 import pandas as pd
-from httpx import RequestError
 from pandas import DataFrame
 from PyQt6.QtCore import Qt
 from PyQt6.QtCore import pyqtSlot as Slot
@@ -23,6 +22,7 @@ from PyQt6.QtWidgets import (
 )
 
 from ert.gui.ertwidgets import CopyButton, showWaitCursorWhileWaiting
+from ert.services._base_service import ServerBootFail
 from ert.utils import log_duration
 
 from .customize import PlotCustomizer
@@ -75,6 +75,7 @@ def create_error_dialog(title: str, content: str) -> QDialog:
     qd = QDialog()
     qd.setModal(True)
     qd.setSizeGripEnabled(True)
+
     layout = QVBoxLayout()
     top_layout = QHBoxLayout()
     top_layout.addWidget(QLabel(title))
@@ -92,6 +93,7 @@ def create_error_dialog(title: str, content: str) -> QDialog:
     layout.addWidget(text)
 
     qd.setLayout(layout)
+    qd.resize(450, 150)
     return qd
 
 
@@ -99,6 +101,18 @@ def open_error_dialog(title: str, content: str) -> None:
     qd = create_error_dialog(title, content)
     QApplication.restoreOverrideCursor()
     qd.exec()
+
+
+def handle_exception(e: BaseException) -> None:
+    if isinstance(e, TimeoutError):
+        e.args = (
+            "Plot API request timed out. Please check your connection ",
+            "or the storage server status",
+        )
+    elif isinstance(e, ServerBootFail):
+        e.args = ("The storage server failed to start",)
+    logger.exception(e)  # noqa: LOG004
+    open_error_dialog(type(e).__name__, str(e))
 
 
 class PlotWindow(QMainWindow):
@@ -120,9 +134,8 @@ class PlotWindow(QMainWindow):
             self._key_definitions = (
                 self._api.responses_api_key_defs + self._api.parameters_api_key_defs
             )
-        except (RequestError, TimeoutError) as e:
-            logger.exception(f"plot api request failed: {e}")
-            open_error_dialog("Request failed", str(e))
+        except BaseException as e:
+            handle_exception(e)
             self._key_definitions = []
         QApplication.restoreOverrideCursor()
 
@@ -164,9 +177,8 @@ class PlotWindow(QMainWindow):
         QApplication.setOverrideCursor(Qt.CursorShape.WaitCursor)
         try:
             ensembles = self._api.get_all_ensembles()
-        except (RequestError, TimeoutError) as e:
-            logger.exception(e)
-            open_error_dialog("Request failed", str(e))
+        except BaseException as e:
+            handle_exception(e)
             ensembles = []
         QApplication.restoreOverrideCursor()
 
@@ -219,9 +231,8 @@ class PlotWindow(QMainWindow):
                             ensemble_id=ensemble.id,
                             parameter_key=key_def.parameter_metadata.key,
                         )
-                except (RequestError, TimeoutError) as e:
-                    logger.exception(f"plot api request failed: {e}")
-                    open_error_dialog("Request failed", f"{e}")
+                except BaseException as e:
+                    handle_exception(e)
 
             observations = None
             if key_def.observations and selected_ensembles:
@@ -229,9 +240,8 @@ class PlotWindow(QMainWindow):
                     observations = self._api.observations_for_key(
                         [ensembles.id for ensembles in selected_ensembles], key
                     )
-                except (RequestError, TimeoutError) as e:
-                    logger.exception(f"plot api request failed: {e}")
-                    open_error_dialog("Request failed", f"{e}")
+                except BaseException as e:
+                    handle_exception(e)
 
             std_dev_images: dict[str, npt.NDArray[np.float32]] = {}
             if "FIELD" in key_def.metadata["data_origin"]:
@@ -249,9 +259,8 @@ class PlotWindow(QMainWindow):
                         std_dev_images[ensemble.name] = self._api.std_dev_for_parameter(
                             key, ensemble.id, layer
                         )
-                    except (RequestError, TimeoutError) as e:
-                        logger.exception(f"plot api request failed: {e}")
-                        open_error_dialog("Request failed", f"{e}")
+                    except BaseException as e:
+                        handle_exception(e)
             else:
                 plot_widget.showLayerWidget.emit(False)
 
@@ -270,9 +279,8 @@ class PlotWindow(QMainWindow):
                             [e.id for e in plot_context.ensembles()],
                         )
 
-                except (RequestError, TimeoutError) as e:
-                    logger.exception(f"plot api request failed: {e}")
-                    open_error_dialog("Request failed", f"{e}")
+                except BaseException as e:
+                    handle_exception(e)
                     plot_context.history_data = None
 
             plot_context.log_scale = key_def.log_scale
