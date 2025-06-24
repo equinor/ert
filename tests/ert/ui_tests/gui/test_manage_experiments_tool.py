@@ -8,7 +8,7 @@ import pytest
 from PyQt6.QtCore import Qt
 from PyQt6.QtWidgets import QPushButton, QTextEdit
 
-from ert.config import ErtConfig, SummaryConfig
+from ert.config import ErtConfig, GenKwConfig, SummaryConfig
 from ert.gui.ertnotifier import ErtNotifier
 from ert.gui.tools.manage_experiments import ManageExperimentsPanel
 from ert.gui.tools.manage_experiments.storage_info_widget import (
@@ -46,9 +46,12 @@ def test_design_matrix_in_manage_experiments_panel(
     assert config.ensemble_config.parameter_configuration == []
     assert config.analysis_config.design_matrix is not None
 
+    new_config_parameters = (
+        config.analysis_config.design_matrix.merge_with_existing_parameters([])
+    )
     with notifier.write_storage() as storage:
         storage.create_experiment(
-            parameters=[config.analysis_config.design_matrix.parameter_configuration],
+            parameters=new_config_parameters,
             responses=config.ensemble_config.response_configuration,
             name="my-experiment",
         ).create_ensemble(
@@ -97,13 +100,9 @@ def test_design_matrix_in_manage_experiments_panel(
     assert {e.name for e in experiments} == {"my-experiment", "my-experiment-2"}
     exp2 = notifier.storage.get_experiment_by_name("my-experiment-2")
     ensemble = exp2.get_ensemble_by_name("my-design-2")
-    assert "DESIGN_MATRIX" in exp2.parameter_configuration
-    assert {
-        t["name"]
-        for t in exp2.parameter_configuration[
-            "DESIGN_MATRIX"
-        ].transform_function_definitions
-    } == {"a", "b", "c"}
+    scalar_config = exp2.parameter_configuration["SCALAR"]
+    assert isinstance(scalar_config, GenKwConfig)
+    assert set(scalar_config.group_keys("DESIGN_MATRIX")) == {"a", "b", "c"}
     assert all(
         RealizationStorageState.UNDEFINED in s for s in ensemble.get_ensemble_state()
     )
