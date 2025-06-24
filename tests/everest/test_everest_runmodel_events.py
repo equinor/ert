@@ -1,5 +1,8 @@
+from pathlib import Path
+
 import orjson
 import pytest
+import yaml
 
 from ert.ensemble_evaluator import FullSnapshotEvent
 from ert.run_models.event import EverestBatchResultEvent, EverestStatusEvent
@@ -35,6 +38,12 @@ def round_floats(obj, decimals=6):
 )
 def test_everest_events(config_file, snapshot, cached_example):
     _, config_file, _, events_list = cached_example(f"math_func/{config_file}")
+
+    config_content = yaml.safe_load(Path(config_file).read_text(encoding="utf-8"))
+    config_content["simulator"] = {"queue_system": {"name": "local"}}
+    Path(config_file).write_text(
+        yaml.dump(config_content, default_flow_style=False), encoding="utf-8"
+    )
 
     full_snapshots = [e for e in events_list if isinstance(e, FullSnapshotEvent)]
     everest_events = [

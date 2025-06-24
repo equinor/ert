@@ -6,6 +6,7 @@ from pathlib import Path
 from textwrap import dedent
 
 import pytest
+import yaml
 from ruamel.yaml import YAML
 from tests.everest.utils import (
     capture_streams,
@@ -48,6 +49,14 @@ def test_everest_main_entry_bad_command():
 @pytest.mark.xdist_group("math_func/config_minimal.yml")
 def test_everest_entry_run(cached_example):
     _, config_file, _, _ = cached_example("math_func/config_minimal.yml")
+
+    # Ensure no interference with plugins which may set queue system
+    config_content = yaml.safe_load(Path(config_file).read_text(encoding="utf-8"))
+    config_content["simulator"] = {"queue_system": {"name": "local"}}
+    Path(config_file).write_text(
+        yaml.dump(config_content, default_flow_style=False), encoding="utf-8"
+    )
+
     # Setup command line arguments
     with capture_streams():
         start_everest(["everest", "run", config_file, "--skip-prompt"])
