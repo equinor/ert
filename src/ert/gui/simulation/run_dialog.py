@@ -77,6 +77,8 @@ from .view.disk_space_widget import MountType
 _TOTAL_PROGRESS_TEMPLATE = "Total progress {total_progress}% — {iteration_label}"
 _EVEREST_TOTAL_PROGRESS_TEMPLATE = "Batch {iteration} progress: {total_progress}%"
 
+logger = logging.getLogger(__name__)
+
 
 def _batch_type_text(batch_id: int, batch_types: set[str]) -> str:
     """
@@ -471,6 +473,12 @@ class RunDialog(QFrame):
         self._notifier.set_is_simulation_running(False)
         self.flag_simulation_done = True
         if failed or self.post_simulation_warnings:
+            if self.post_simulation_warnings:
+                logger.info(
+                    f"Simulation finished with "
+                    f"{len(self.post_simulation_warnings)} PostSimulationWarnings"
+                )
+
             self.update_total_progress(1.0, "Failed")
 
             self._progress_widget.set_all_failed()
@@ -583,7 +591,6 @@ class RunDialog(QFrame):
         if (
             progress < 0 or progress > 100
         ) and progress != self._total_progress_bar_calculated_value:
-            logger = logging.getLogger(__name__)
             logger.warning(f"Total progress bar exceeds [0-100] range: {progress}")
             self._total_progress_bar_calculated_value = progress
 
