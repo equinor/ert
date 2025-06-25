@@ -221,9 +221,7 @@ class DesignMatrix:
         if design_matrix_df.is_empty():
             raise ValueError("Design sheet body is empty.")
         string_cols = [
-            col
-            for col, dtype in design_matrix_df.schema.items()
-            if dtype in {pl.String, pl.Categorical}
+            col for col, dtype in design_matrix_df.schema.items() if dtype == pl.String
         ]
         design_matrix_df = design_matrix_df.with_columns(
             [
@@ -265,8 +263,10 @@ class DesignMatrix:
             assert real_dt is not None
             if (
                 not real_dt.is_integer()
-                or design_matrix_df.get_column("realization").lt(0).any()
-                or design_matrix_df.get_column("realization").is_duplicated().any()
+                or (
+                    design_matrix_df.get_column("realization").lt(0)
+                    | design_matrix_df.get_column("realization").is_duplicated()
+                ).any()
             ):
                 raise ValueError(
                     "REAL column must only contain unique positive integers"
