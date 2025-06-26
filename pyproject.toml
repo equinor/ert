@@ -143,8 +143,8 @@ everest = [
     "fastapi",
     "decorator",
     "colorama",
-    "ropt[pandas]>=0.21",
-    "ropt-dakota>=0.21",
+    "ropt[pandas]>=0.22",
+    "ropt-dakota>=0.22",
 ]
 
 [tool.setuptools]
