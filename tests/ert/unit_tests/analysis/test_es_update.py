@@ -275,7 +275,6 @@ def test_update_handles_precision_loss_in_std_dev(tmp_path):
             ds = gen_kw.sample_or_load(
                 realization_nr,
                 random_seed=1234,
-                ensemble_size=prior.ensemble_size,
             )
             prior.save_parameters("COEFFS", realization_nr, ds)
 
@@ -394,7 +393,6 @@ def test_update_raises_on_singular_matrix(tmp_path):
             ds = gen_kw.sample_or_load(
                 realization_nr,
                 random_seed=1234,
-                ensemble_size=prior.ensemble_size,
             )
             prior.save_parameters("COEFFS", realization_nr, ds)
 

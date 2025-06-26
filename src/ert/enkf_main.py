@@ -201,7 +201,6 @@ def sample_prior(
                 config_node.sample_or_load(
                     realization_nr,
                     random_seed=random_seed,
-                    ensemble_size=ensemble.ensemble_size,
                 )
                 for realization_nr in active_realizations
             ]
@@ -216,7 +215,6 @@ def sample_prior(
                 ds = config_node.sample_or_load(
                     realization_nr,
                     random_seed=random_seed,
-                    ensemble_size=ensemble.ensemble_size,
                 )
                 ensemble.save_parameters(parameter, realization_nr, ds)
 
