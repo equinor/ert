@@ -21,7 +21,7 @@ def test_surface_param_update(tmpdir):
     with tmpdir.as_cwd():
         config = f"""
 NUM_REALIZATIONS {ensemble_size}
-QUEUE_OPTION LOCAL MAX_RUNNING {ensemble_size}
+QUEUE_OPTION LOCAL MAX_RUNNING 2
 OBS_CONFIG observations
 SURFACE MY_PARAM OUTPUT_FILE:surf.irap INIT_FILES:surf.irap \
     BASE_SURFACE:surf.irap FORWARD_INIT:True

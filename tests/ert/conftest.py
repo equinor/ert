@@ -207,7 +207,7 @@ def _create_design_matrix(filename, design_sheet_df, default_sheet_df=None):
 def copy_poly_case(copy_case):
     copy_case("poly_example")
     with open("poly.ert", "a", encoding="utf-8") as fh:
-        fh.write("QUEUE_OPTION LOCAL MAX_RUNNING 12\n")
+        fh.write("QUEUE_OPTION LOCAL MAX_RUNNING 2\n")
 
 
 @pytest.fixture()
@@ -224,7 +224,7 @@ def copy_poly_case_with_design_matrix(copy_case):
             fout.write(
                 dedent(
                     f"""\
-                    QUEUE_OPTION LOCAL MAX_RUNNING 10
+                    QUEUE_OPTION LOCAL MAX_RUNNING 2
                     RUNPATH poly_out/realization-<IENS>/iter-<ITER>
                     NUM_REALIZATIONS {num_realizations}
                     MIN_REALIZATIONS 1
@@ -273,21 +273,21 @@ def copy_poly_case_with_design_matrix(copy_case):
 def copy_snake_oil_field(copy_case):
     copy_case("snake_oil_field")
     with open("snake_oil_field.ert", "a", encoding="utf-8") as fh:
-        fh.write("QUEUE_OPTION LOCAL MAX_RUNNING 12\n")
+        fh.write("QUEUE_OPTION LOCAL MAX_RUNNING 2\n")
 
 
 @pytest.fixture()
 def copy_snake_oil_case(copy_case):
     copy_case("snake_oil")
     with open("snake_oil.ert", "a", encoding="utf-8") as fh:
-        fh.write("QUEUE_OPTION LOCAL MAX_RUNNING 12\n")
+        fh.write("QUEUE_OPTION LOCAL MAX_RUNNING 2\n")
 
 
 @pytest.fixture()
 def copy_heat_equation(copy_case):
     copy_case("heat_equation")
     with open("config.ert", "a", encoding="utf-8") as fh:
-        fh.write("QUEUE_OPTION LOCAL MAX_RUNNING 12\n")
+        fh.write("QUEUE_OPTION LOCAL MAX_RUNNING 2\n")
 
 
 @pytest.fixture(
@@ -394,7 +394,7 @@ def _run_heat_equation(source_root):
     )
     os.chdir("test_data")
     with open("config.ert", "a", encoding="utf-8") as fh:
-        fh.write("QUEUE_OPTION LOCAL MAX_RUNNING 12\n")
+        fh.write("QUEUE_OPTION LOCAL MAX_RUNNING 2\n")
     parser = ArgumentParser(prog="test_main")
     parsed = ert_parser(
         parser,
@@ -414,7 +414,7 @@ def _run_heat_equation_enif(source_root):
     )
     os.chdir("test_data")
     with open("config.ert", "a", encoding="utf-8") as fh:
-        fh.write("QUEUE_OPTION LOCAL MAX_RUNNING 12\n")
+        fh.write("QUEUE_OPTION LOCAL MAX_RUNNING 2\n")
     parser = ArgumentParser(prog="test_main")
     parsed = ert_parser(
         parser,
