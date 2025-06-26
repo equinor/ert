@@ -59,7 +59,9 @@ async def start_server(config: EverestConfig, logging_level: int) -> Driver:
             str(get_traceparent()),
         ]
         poll_task = asyncio.create_task(driver.poll(), name="poll_task")
-        await driver.submit(0, "everserver", *args, name=Path(config.config_file).stem)
+        await driver.submit(
+            0, "everserver", *args, name=f"{Path(config.config_file).stem}-server"
+        )
     except FailedSubmit as err:
         raise ValueError(f"Failed to submit Everserver with error: {err}") from err
     status = await driver.event_queue.get()

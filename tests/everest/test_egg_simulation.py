@@ -1,5 +1,6 @@
 import json
 import os
+from pathlib import Path
 
 import numpy as np
 import pandas as pd
@@ -464,9 +465,12 @@ def sort_res_summary(ert_config):
     ert_config[ErtConfigKeys.SUMMARY][0] = sorted(ert_config[ErtConfigKeys.SUMMARY][0])
 
 
-def _generate_exp_ert_config(config_path, output_dir):
+def _generate_exp_ert_config(config_path, output_dir, config_file):
     return {
-        ErtConfigKeys.DEFINE: [("<CONFIG_PATH>", config_path)],
+        ErtConfigKeys.DEFINE: [
+            ("<CONFIG_PATH>", config_path),
+            ("<CONFIG_FILE>", Path(config_file).stem),
+        ],
         ErtConfigKeys.INSTALL_JOB: everest_default_jobs(output_dir),
         ErtConfigKeys.NUM_REALIZATIONS: NUM_REALIZATIONS,
         ErtConfigKeys.RUNPATH: os.path.join(
@@ -562,7 +566,7 @@ def test_egg_model_convert_no_opm(copy_egg_test_data_to_tmp):
     # to be at the directory of the config file.
     output_dir = config.output_dir
     config_path = os.path.dirname(os.path.abspath(CONFIG_FILE))
-    exp_ert_config = _generate_exp_ert_config(config_path, output_dir)
+    exp_ert_config = _generate_exp_ert_config(config_path, output_dir, CONFIG_FILE)
     exp_ert_config[ErtConfigKeys.SUMMARY][0] = ["*", *SUM_KEYS_NO_OPM]
     sort_res_summary(exp_ert_config)
     sort_res_summary(ert_config)
@@ -582,7 +586,7 @@ def test_opm_fail_default_summary_keys(copy_egg_test_data_to_tmp):
     # to be at the directory of the config file.
     output_dir = config.output_dir
     config_path = os.path.dirname(os.path.abspath(CONFIG_FILE))
-    exp_ert_config = _generate_exp_ert_config(config_path, output_dir)
+    exp_ert_config = _generate_exp_ert_config(config_path, output_dir, CONFIG_FILE)
     exp_ert_config[ErtConfigKeys.SUMMARY][0] = filter(
         lambda key: not key.startswith("G"), exp_ert_config[ErtConfigKeys.SUMMARY][0]
     )
@@ -615,7 +619,7 @@ def test_opm_fail_explicit_summary_keys(copy_egg_test_data_to_tmp):
     # to be at the directory of the config file.
     output_dir = config.output_dir
     config_path = os.path.dirname(os.path.abspath(CONFIG_FILE))
-    exp_ert_config = _generate_exp_ert_config(config_path, output_dir)
+    exp_ert_config = _generate_exp_ert_config(config_path, output_dir, CONFIG_FILE)
     exp_ert_config[ErtConfigKeys.SUMMARY] = [
         list(
             filter(
