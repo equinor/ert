@@ -1,7 +1,6 @@
 import os
 
 import pytest
-from ropt.exceptions import ConfigError as ROptConfigError
 
 from everest.config_file_loader import yaml_file_to_substituted_config_dict
 from everest.optimizer.utils import get_ropt_plugin_manager
@@ -46,7 +45,7 @@ def test_all_repo_configs():
 
     try:
         get_ropt_plugin_manager().get_plugin("optimizer", "scipy/default")
-    except ROptConfigError:
+    except ValueError:
         config_files = [f for f in config_files if "scipy" not in f]
 
     config_files = list(config_files)
