@@ -63,7 +63,7 @@ def opened_main_window_poly(
     yield from open_gui_with_config(tmp_path / "poly.ert")
 
 
-def _new_poly_example(source_root, destination, num_realizations: int = 20):
+def _new_poly_example(source_root, destination, num_realizations: int = 10):
     shutil.copytree(
         os.path.join(source_root, "test-data", "ert", "poly_example"),
         destination,

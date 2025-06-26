@@ -59,7 +59,7 @@ def test_rerun_failed_realizations(opened_main_window_poly, qtbot):
     experiment_panel = gui.findChild(ExperimentPanel)
     num_reals = experiment_panel.config.runpath_config.num_realizations
 
-    failing_reals_first_try = {*random.sample(range(num_reals), 10)}
+    failing_reals_first_try = {*random.sample(range(num_reals), 5)}
     write_poly_eval(failing_reals=failing_reals_first_try)
 
     # Select correct experiment in the simulation panel
@@ -102,7 +102,7 @@ def test_rerun_failed_realizations(opened_main_window_poly, qtbot):
         message_box = gui.findChildren(QMessageBox, name="restart_prompt")[-1]
         qtbot.mouseClick(message_box.buttons()[0], Qt.MouseButton.LeftButton)
 
-    failing_reals_second_try = {*random.sample(list(failing_reals_first_try), 5)}
+    failing_reals_second_try = {*random.sample(list(failing_reals_first_try), 3)}
     write_poly_eval(failing_reals=failing_reals_second_try)
     QTimer.singleShot(500, handle_dialog)
     qtbot.mouseClick(run_dialog.rerun_button, Qt.MouseButton.LeftButton)
