@@ -41,7 +41,10 @@ This dict of values is passed unchanged to the selected method in the backend.
 
     @model_validator(mode="after")
     def validate_backend_and_method(self) -> Self:
-        if not get_ropt_plugin_manager().is_supported("sampler", f"{self.method}"):
+        if (
+            get_ropt_plugin_manager().get_plugin_name("sampler", f"{self.method}")
+            is None
+        ):
             raise ValueError(f"Sampler '{self.method}' not found")
 
         if self.backend is not None:
