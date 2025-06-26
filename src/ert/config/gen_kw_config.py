@@ -289,9 +289,7 @@ class GenKwConfig(ParameterConfig):
         if errors:
             raise ConfigValidationError.from_collected(errors)
 
-    def sample_or_load(
-        self, real_nr: int, random_seed: int, ensemble_size: int
-    ) -> pl.DataFrame:
+    def sample_or_load(self, real_nr: int, random_seed: int) -> pl.DataFrame:
         keys = [e.name for e in self.transform_functions]
         parameter_value = self._sample_value(
             self.name,
