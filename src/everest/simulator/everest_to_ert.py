@@ -526,7 +526,10 @@ def _everest_to_ert_config_dict(
     ert_config = site_config if site_config is not None else {}
 
     config_dir = ever_config.config_directory
-    ert_config[ErtConfigKeys.DEFINE] = [("<CONFIG_PATH>", config_dir)]
+    ert_config[ErtConfigKeys.DEFINE] = [
+        ("<CONFIG_PATH>", config_dir),
+        ("<CONFIG_FILE>", Path(ever_config.config_file).stem),
+    ]
 
     # Extract simulator and simulation related configs
     _extract_simulator(ever_config, ert_config)
