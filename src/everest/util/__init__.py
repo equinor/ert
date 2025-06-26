@@ -8,19 +8,11 @@ try:
     from ert.shared.version import version as ert_version
 except ImportError:
     ert_version = "0.0.0"
-from everest.strings import DATE_FORMAT, EVEREST
+from everest.strings import EVEREST
 
 
 def version_info() -> str:
     return f"everest:{ert_version}, ropt:{ropt_version}, ert:{ert_version}"
-
-
-def date2str(date: datetime) -> str:
-    return datetime.strftime(date, DATE_FORMAT)
-
-
-def str2date(date_str: str) -> datetime:
-    return datetime.strptime(date_str, DATE_FORMAT)
 
 
 def makedirs_if_needed(path: str, roll_if_exists: bool = False) -> None:
