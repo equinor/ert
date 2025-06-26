@@ -51,7 +51,7 @@ def _open_main_window(
         fout.write("EXECUTABLE forward_model.py")
     config = dedent("""
     QUEUE_SYSTEM LOCAL
-    QUEUE_OPTION LOCAL MAX_RUNNING 10
+    QUEUE_OPTION LOCAL MAX_RUNNING 2
     MAX_SUBMIT 1
     NUM_REALIZATIONS 10
     MIN_REALIZATIONS 1

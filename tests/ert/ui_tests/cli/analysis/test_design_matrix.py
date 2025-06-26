@@ -112,7 +112,7 @@ def test_run_poly_example_with_design_matrix_and_genkw_merge(default_values, err
         fout.write(
             dedent(
                 """\
-                QUEUE_OPTION LOCAL MAX_RUNNING 10
+                QUEUE_OPTION LOCAL MAX_RUNNING 2
                 RUNPATH poly_out/realization-<IENS>/iter-<ITER>
                 NUM_REALIZATIONS 10
                 MIN_REALIZATIONS 1
@@ -245,7 +245,7 @@ def test_run_poly_example_with_multiple_design_matrix_instances():
         fout.write(
             dedent(
                 """\
-                QUEUE_OPTION LOCAL MAX_RUNNING 10
+                QUEUE_OPTION LOCAL MAX_RUNNING 2
                 RUNPATH poly_out/realization-<IENS>/iter-<ITER>
                 NUM_REALIZATIONS 10
                 MIN_REALIZATIONS 1
@@ -331,7 +331,7 @@ def test_design_matrix_on_esmda(experiment_mode, ensemble_name, iterations):
         f.write(
             dedent(
                 """\
-                QUEUE_OPTION LOCAL MAX_RUNNING 50
+                QUEUE_OPTION LOCAL MAX_RUNNING 2
                 RUNPATH poly_out/realization-<IENS>/iter-<ITER>
                 OBS_CONFIG observations
                 NUM_REALIZATIONS 10
