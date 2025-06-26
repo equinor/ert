@@ -9,7 +9,7 @@ from pandas.core.frame import DataFrame
 from resdata.summary import Summary
 
 from ert.config import DESIGN_MATRIX_GROUP, DesignMatrix, ErtConfig
-from ert.enkf_main import sample_prior, save_design_matrix_to_ensemble
+from ert.enkf_main import sample_prior
 from ert.libres_facade import LibresFacade
 from ert.storage import open_storage
 
@@ -223,20 +223,27 @@ def test_save_parameters_to_storage_from_design_dataframe(
         )
     design_matrix = DesignMatrix(design_path, "DesignSheet", "DefaultSheet")
     with open_storage(tmp_path / "storage", mode="w") as storage:
-        experiment_id = storage.create_experiment(
-            parameters=[design_matrix.parameter_configuration]
-        )
+        parameters_configuration = design_matrix.merge_with_existing_parameters([])
+        experiment_id = storage.create_experiment(parameters=parameters_configuration)
         ensemble = storage.create_ensemble(
             experiment_id, name="default", ensemble_size=ensemble_size
         )
         if expect_error:
             with pytest.raises(KeyError):
-                save_design_matrix_to_ensemble(
-                    design_matrix.design_matrix_df, ensemble, reals
+                sample_prior(
+                    ensemble,
+                    reals,
+                    random_seed=1234,
+                    parameters=None,
+                    design_matrix_df=design_matrix_df,
                 )
         else:
-            save_design_matrix_to_ensemble(
-                design_matrix.design_matrix_df, ensemble, reals
+            sample_prior(
+                ensemble,
+                reals,
+                random_seed=1234,
+                parameters=None,
+                design_matrix_df=design_matrix_df,
             )
             params = ensemble.load_parameters(DESIGN_MATRIX_GROUP).drop("realization")
             assert isinstance(params, pl.DataFrame)

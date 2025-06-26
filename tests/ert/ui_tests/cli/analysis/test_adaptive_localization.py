@@ -317,10 +317,10 @@ def test_that_posterior_generalized_variance_increases_in_cutoff():
             prior_ensemble_cutoff1_id
         ).load_cross_correlations()
         assert all(cross_correlations.parameter.to_numpy() == ["a", "b", "c"])
-        assert cross_correlations["COEFFS"].values.shape == (3, 5)
+        assert cross_correlations["SCALAR"].values.shape == (3, 5)
         assert (
-            (cross_correlations["COEFFS"].values >= -1)
-            & (cross_correlations["COEFFS"].values <= 1)
+            (cross_correlations["SCALAR"].values >= -1)
+            & (cross_correlations["SCALAR"].values <= 1)
         ).all()
 
         prior_sample_cutoff1 = (

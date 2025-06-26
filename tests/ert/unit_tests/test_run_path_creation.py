@@ -655,7 +655,7 @@ def save_zeros(prior_ensemble, num_realizations, dim_size):
                     prior_ensemble, realization_nr, np.zeros(dim_size**3)
                 )
             elif isinstance(config_node, GenKwConfig):
-                config_node.save_parameters(prior_ensemble, realization_nr, np.zeros(1))
+                config_node.save_parameters(prior_ensemble, realization_nr, np.zeros(2))
             else:
                 raise ValueError(f"unexpected {config_node}")
 

@@ -222,7 +222,7 @@ def analysis_EnIF(
         start = time.time()
 
         param_ensemble_array = source_ensemble.load_parameters_numpy(
-            param_group, iens_active_index
+            param_group, iens_active_index, update_mask=True
         )
         parameters_to_update = param_ensemble_array.shape[0]
         param_group_indices = np.arange(
@@ -232,6 +232,7 @@ def analysis_EnIF(
             X_full[param_group_indices, :],
             param_group,
             iens_active_index,
+            update_mask=True,
         )
         parameters_updated += parameters_to_update
 
@@ -239,13 +240,13 @@ def analysis_EnIF(
             f"Storing data for {param_group} completed in "
             f"{(time.time() - start) / 60} minutes"
         )
-        _copy_unupdated_parameters(
-            list(source_ensemble.experiment.parameter_configuration.keys()),
-            parameters,
-            iens_active_index,
-            source_ensemble,
-            target_ensemble,
-        )
+    _copy_unupdated_parameters(
+        list(source_ensemble.experiment.parameter_configuration.keys()),
+        parameters,
+        iens_active_index,
+        source_ensemble,
+        target_ensemble,
+    )
 
     stop_enif = time.time()
     logger.info(f"EnIF total update time: {stop_enif - start_enif} seconds")

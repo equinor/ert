@@ -56,12 +56,12 @@ def create_experiment_args(
     num_summary_obs: int,
 ) -> ExperimentInfo:
     gen_kw_config = GenKwConfig(
-        name="all_my_parameters_live_here",
         forward_init=False,
         update=True,
         transform_function_definitions=[
             TransformFunctionDefinition(
-                f"param_{i}",
+                group_name="all_my_parameters_live_here",
+                name=f"param_{i}",
                 param_name="NORMAL",
                 values=[10, 0.1],
             )
