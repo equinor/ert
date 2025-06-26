@@ -158,7 +158,7 @@ if __name__ == "__main__":
         f.write(
             """
         QUEUE_SYSTEM LOCAL
-QUEUE_OPTION LOCAL MAX_RUNNING 12
+QUEUE_OPTION LOCAL MAX_RUNNING 2
 
 RUNPATH poly_out/realization-<IENS>/iter-<ITER>
 
