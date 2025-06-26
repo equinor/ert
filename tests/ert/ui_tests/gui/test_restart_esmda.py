@@ -67,7 +67,7 @@ def test_active_realizations_esmda(opened_main_window_poly, qtbot):
     es_mda_panel = gui.findChild(QWidget, name="ES_MDA_panel")
     assert es_mda_panel
     active_reals = gui.findChild(StringBox, "active_realizations_box")
-    assert active_reals.text() == "0-19"
+    assert active_reals.text() == "0-9"
 
     restart_checkbox = es_mda_panel.findChild(QCheckBox, name="restart_checkbox_esmda")
     assert restart_checkbox
@@ -75,7 +75,7 @@ def test_active_realizations_esmda(opened_main_window_poly, qtbot):
     restart_checkbox.click()
     assert active_reals.text() == "0"
     restart_checkbox.click()
-    assert active_reals.text() == "0-19"
+    assert active_reals.text() == "0-9"
 
 
 def test_custom_weights_stored_and_retrieved_from_metadata_esmda(
