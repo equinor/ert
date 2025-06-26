@@ -85,7 +85,7 @@ def test_manual_analysis_workflow(ensemble_experiment_has_run, qtbot):
     assert not all(active_reals)
     assert active_reals == rangestring_to_mask(
         experiment_panel.get_experiment_arguments().realizations,
-        20,
+        10,
     )
 
     df_prior = ensemble_prior.load_all_gen_kw_data()
