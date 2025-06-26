@@ -52,7 +52,11 @@ jobs:
     - name: GUI Test
       if: inputs.test-type == 'gui-tests'
       run: |
+        touch storage
+        chmod 000 storage
         uv run just ert-gui-tests
+        chmod 700 storage
+        rm storage
 
     - name: Upload artifact images
       uses: actions/upload-artifact@v4
@@ -65,13 +69,21 @@ jobs:
     - name: CLI Test
       if: inputs.test-type == 'cli-tests'
       run: |
+        touch storage
+        chmod 000 storage
         uv run just ert-cli-tests
+        chmod 700 storage
+        rm storage
 
     - name: Unit Test
       if: inputs.test-type == 'performance-and-unit-tests'
       run: |
+        touch storage
+        chmod 000 storage
         uv run just ert-unit-tests
         ERT_PYTEST_ARGS='-m ${{ inputs.select-string }} --cov=ert --cov=everest --cov=_ert --cov-report=xml:cov2.xml --junit-xml=junit.xml -o junit_family=legacy -v --durations=25 --benchmark-disable' uv run just ert-doc-tests
+        chmod 700 storage
+        rm storage
 
     - name: Upload coverage to Codecov
       id: codecov1
