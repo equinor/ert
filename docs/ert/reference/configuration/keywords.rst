@@ -785,12 +785,12 @@ MAX_RUNNING
 .. _max_running:
 
 The MAX_RUNNING keyword controls the maximum number of simultaneously
-  submitted and running realizations, where ``n`` is a positive integer::
+submitted and running realizations, where ``n`` is a positive integer::
 
-    MAX_RUNNING n
+  MAX_RUNNING n
 
-  If ``n`` is zero (the default), then there is no limit, and all realizations
-  will be started as soon as possible.
+If ``n`` is zero (the default), then there is no limit, and all realizations
+will be started as soon as possible.
 
 
 MAX_RUNTIME
