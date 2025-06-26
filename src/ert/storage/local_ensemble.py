@@ -577,13 +577,14 @@ class LocalEnsemble(BaseMode):
         otherwise it will return the raw values.
 
         """
-        group_keys: list[str] | None = None
+
         config: ParameterConfig | None = None
         if group not in self.experiment.parameter_configuration:
             if self._scalar_config:
                 try:
-                    group_keys = self._scalar_config.group_keys(group)
-                    config = self._scalar_config
+                    self._scalar_config.load_parameter_group(
+                        self, group, realizations, transformed
+                    )
                 except KeyError as e:
                     raise KeyError(
                         f"{group} is not registered to the experiment."
@@ -593,31 +594,7 @@ class LocalEnsemble(BaseMode):
         else:
             config = self.experiment.parameter_configuration[group]
         if isinstance(config, GenKwConfig):
-            df_lazy = self._load_parameters_lazy(SCALAR_NAME)
-            if group_keys:
-                df_lazy = df_lazy.select([*group_keys, "realization"])
-            df = df_lazy.collect()
-            if realizations is not None:
-                if isinstance(realizations, int):
-                    realizations = np.array([realizations])
-                df = df.filter(pl.col("realization").is_in(realizations))
-                if df.is_empty():
-                    raise IndexError(
-                        f"No matching realizations {realizations} found for {group}"
-                    )
-            if transformed:
-                df = df.with_columns(
-                    [
-                        pl.col(col)
-                        .map_elements(
-                            config.transform_col(col), return_dtype=df[col].dtype
-                        )
-                        .alias(col)
-                        for col in df.columns
-                        if col != "realization"
-                    ]
-                )
-            return df
+            return config.load_parameter_group(self, group, realizations, transformed)
         ds = self._load_dataset(
             group,
             realizations

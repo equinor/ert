@@ -481,6 +481,46 @@ class GenKwConfig(ParameterConfig):
             ),
         )
 
+    def load_parameter_group(
+        self,
+        ensemble: Ensemble,
+        group: str,
+        realizations: int | npt.NDArray[np.int_] | None = None,
+        transformed: bool = False,
+    ) -> pl.DataFrame:
+        group_keys: list[str] | None = None
+        if group in self.groups:
+            group_keys = self.group_keys(group)
+        elif group != SCALAR_NAME:
+            raise KeyError(
+                f"Group {group} not found in GenKwConfig {self.name}. "
+                f"Available groups: {list(self.groups.keys())}"
+            )
+
+        df_lazy = ensemble._load_parameters_lazy(SCALAR_NAME)
+        if group_keys:
+            df_lazy = df_lazy.select([*group_keys, "realization"])
+        df = df_lazy.collect()
+        if realizations is not None:
+            if isinstance(realizations, int):
+                realizations = np.array([realizations])
+            df = df.filter(pl.col("realization").is_in(realizations))
+            if df.is_empty():
+                raise IndexError(
+                    f"No matching realizations {realizations} found for {group}"
+                )
+        if transformed:
+            df = df.with_columns(
+                [
+                    pl.col(col)
+                    .map_elements(self.transform_col(col), return_dtype=df[col].dtype)
+                    .alias(col)
+                    for col in df.columns
+                    if col != "realization"
+                ]
+            )
+        return df
+
     def load_parameters(
         self, ensemble: Ensemble, realizations: npt.NDArray[np.int_]
     ) -> npt.NDArray[np.float64]:
