@@ -157,6 +157,7 @@ def test_status_failed_job(_, change_to_tmpdir, mock_server):
 @patch("sys.argv", ["name", "--output-dir", "everest_output"])
 @patch("everest.detached.everserver._configure_loggers")
 async def test_status_exception(_, change_to_tmpdir, min_config):
+    min_config["simulator"] = {"queue_system": {"name": "local"}}
     config = EverestConfig(**min_config)
 
     await wait_for_server_to_complete(config)
