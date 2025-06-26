@@ -32,7 +32,7 @@ from everest.simulator.everest_to_ert import everest_to_ert_config_dict
         ),
         (
             {"name": "a.b"},
-            pytest.raises(ValueError, match=r"Well name can not contain any dots (.)"),
+            pytest.raises(ValueError, match=r"Well name cannot contain any dots (.)"),
         ),
         (
             {"name": "well_well", "drill_time": -4},

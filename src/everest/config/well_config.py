@@ -1,3 +1,4 @@
+import logging
 from datetime import datetime
 
 from pydantic import (
@@ -8,7 +9,8 @@ from pydantic import (
     field_validator,
 )
 
-from everest.strings import DATE_FORMAT
+from ert.config import ConfigWarning
+from everest.strings import EVEREST
 
 
 class WellConfig(BaseModel):
@@ -32,20 +34,34 @@ consider this as the earliest possible drill date.
 
     @field_validator("name")
     @classmethod
-    def validate_no_dots_in_well_nane(cls, well_name: str) -> str:
+    def validate_no_dots_in_well_name(cls, well_name: str) -> str:
         if "." in well_name:
-            raise ValueError("Well name can not contain any dots (.)")
+            raise ValueError("Well name cannot contain any dots (.)")
 
         return well_name
 
     @field_validator("drill_date")
     @classmethod
-    def validate_drill_date_is_valid_date(cls, drill_date: str | None) -> None:
+    def validate_drill_date_is_valid_date(cls, drill_date: str | None) -> str | None:
+        if drill_date is None:
+            return None
+
         try:
-            if not isinstance(drill_date, str):
-                raise ValueError("invalid type str expected")
-            datetime.strptime(drill_date, DATE_FORMAT)
+            parsed_date = datetime.strptime(drill_date, "%Y-%m-%d").date().isoformat()
         except ValueError as e:
             raise ValueError(
-                f"malformed date: {drill_date}, expected format: {DATE_FORMAT}"
+                f"malformed date: {drill_date}, expected format: YYYY-MM-DD"
             ) from e
+
+        try:
+            datetime.fromisoformat(drill_date)
+        except ValueError:
+            msg = (
+                f"Deprecated date format: {drill_date}, "
+                "please use ISO date format YYYY-MM-DD."
+            )
+            logging.getLogger(EVEREST).warning(msg)
+            ConfigWarning.deprecation_warn(msg)
+            return parsed_date
+
+        return drill_date

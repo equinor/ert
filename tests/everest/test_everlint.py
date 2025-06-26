@@ -7,6 +7,7 @@ import pytest
 import yaml
 from pydantic import ValidationError
 
+from ert.config import ConfigWarning
 from everest.config import EverestConfig
 from everest.config_file_loader import yaml_file_to_substituted_config_dict
 from tests.everest.utils import relpath
@@ -223,7 +224,7 @@ def test_bool_validation(value, valid, min_config, tmp_path, monkeypatch):
 
 def test_invalid_wells(tmp_path, monkeypatch):
     monkeypatch.chdir(tmp_path)
-    with pytest.raises(ValidationError, match="can not contain any dots"):
+    with pytest.raises(ValidationError, match="cannot contain any dots"):
         EverestConfig.with_defaults(
             **yaml.safe_load(
                 dedent("""
@@ -312,8 +313,6 @@ def test_init_context_controls():
 @pytest.mark.parametrize(
     "date, valid",
     [
-        ("2000-1-1", True),
-        ("2010-1-1", True),
         ("2018-12-31", True),
         ("32.01.2000", False),
         ("2000-1-32", False),
@@ -331,7 +330,16 @@ def test_date_type(date, valid, min_config):
     )
     min_config["wells"] = [{"drill_date": date, "name": "test"}]
     with expectation:
-        EverestConfig(**min_config)
+        EverestConfig.model_validate(min_config)
+
+
+@pytest.mark.parametrize("date", ["2000-1-1", "2010-1-1"])
+def test_date_warn_deprecated(date, min_config, caplog):
+    min_config["wells"] = [{"drill_date": date, "name": "test"}]
+    msg = f"Deprecated date format: {date}"
+    with pytest.warns(ConfigWarning, match=msg):
+        EverestConfig.model_validate(min_config)
+    assert msg in "".join(caplog.messages)
 
 
 @pytest.mark.skip_mac_ci
