@@ -6,13 +6,10 @@ from collections.abc import Mapping, Sequence
 from typing import Any
 
 import requests
-from opentelemetry.instrumentation.httpx import HTTPXClientInstrumentor
 
 from ert.dark_storage.client import Client, ConnInfo
 from ert.services._base_service import BaseService, _Context, local_exec_args
 from ert.trace import get_traceparent
-
-HTTPXClientInstrumentor().instrument()
 
 
 class StorageService(BaseService):
