@@ -73,9 +73,12 @@ def _new_poly_example(source_root, destination, num_realizations: int = 20):
     with fileinput.input(destination / "poly.ert", inplace=True) as fin:
         for line in fin:
             if "NUM_REALIZATIONS" in line:
-                # Decrease the number of realizations to speed up the test,
-                # if there is flakyness, this can be increased.
+                # Speed of running tests dictates a low number of realizations,
+                # while many realizations might be needed to observe
+                # significant effect from update algorithms
                 print(f"NUM_REALIZATIONS {num_realizations}", end="\n")
+            elif "MAX_RUNNING" in line:
+                print("MAX_RUNNING 2", end="\n")
             else:
                 print(line, end="")
 
