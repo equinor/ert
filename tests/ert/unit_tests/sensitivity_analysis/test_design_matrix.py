@@ -358,6 +358,12 @@ def test_reading_design_matrix_validate_cells(tmp_path, values, error_msg):
             r"Default sheet contains duplicate parameter names",
             id="duplicate parameter names",
         ),
+        pytest.param(
+            [["realization", 1], ["a ", "some"], ["d", 6]],
+            r"'realization' is a reserved internal keyword in ERT"
+            " and cannot be used as a parameter name.",
+            id="realization in default values",
+        ),
     ],
 )
 def test_reading_default_sheet_validation(tmp_path, data, error_msg):

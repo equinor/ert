@@ -252,12 +252,21 @@ class DesignMatrix:
             raise ValueError(f"Design matrix is not valid, error(s):\n{error_msg}")
 
         design_matrix_df.columns = list(param_names)
+
+        if self.default_sheet is not None:
+            defaults_to_use = DesignMatrix._read_defaultssheet(
+                self.xls_filename, self.default_sheet, design_matrix_df.columns
+            )
+            design_matrix_df = design_matrix_df.with_columns(
+                pl.lit(value).alias(name) for name, value in defaults_to_use.items()
+            )
+
+        if "realization" in design_matrix_df.schema:
+            raise ValueError(
+                "'realization' is a reserved internal keyword in ERT"
+                " and cannot be used as a parameter name."
+            )
         if "REAL" in design_matrix_df.schema:
-            if "realization" in design_matrix_df.schema:
-                raise ValueError(
-                    "'realization' is a reserved internal keyword in ERT"
-                    " and cannot be used as a parameter name."
-                )
             design_matrix_df = design_matrix_df.rename({"REAL": "realization"})
             real_dt = design_matrix_df.schema.get("realization")
             assert real_dt is not None
@@ -273,14 +282,6 @@ class DesignMatrix:
                 )
         else:
             design_matrix_df = design_matrix_df.with_row_index(name="realization")
-
-        if self.default_sheet is not None:
-            defaults_to_use = DesignMatrix._read_defaultssheet(
-                self.xls_filename, self.default_sheet, design_matrix_df.columns
-            )
-            design_matrix_df = design_matrix_df.with_columns(
-                pl.lit(value).alias(name) for name, value in defaults_to_use.items()
-            )
 
         transform_function_definitions = [
             TransformFunctionDefinition(name=col, param_name="RAW", values=[])
