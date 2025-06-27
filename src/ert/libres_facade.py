@@ -27,10 +27,6 @@ class LibresFacade:
     def __init__(self, ert_config: ErtConfig, _: Any = None) -> None:
         self.config = ert_config
 
-    @property
-    def run_path(self) -> str:
-        return self.config.runpath_config.runpath_format_string
-
     @staticmethod
     def load_all_misfit_data(ensemble: Ensemble) -> DataFrame:
         """Loads all misfit data for a given ensemble.
