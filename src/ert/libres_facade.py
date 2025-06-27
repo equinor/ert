@@ -32,10 +32,6 @@ class LibresFacade:
     def __init__(self, ert_config: ErtConfig, _: Any = None) -> None:
         self.config = ert_config
 
-    @property
-    def user_config_file(self) -> str | None:
-        return self.config.user_config_file
-
     def get_field_parameters(self) -> list[str]:
         return [
             val.name
