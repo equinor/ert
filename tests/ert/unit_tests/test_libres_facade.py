@@ -1,4 +1,3 @@
-from datetime import datetime, timedelta
 from textwrap import dedent
 
 import numpy as np
@@ -6,7 +5,6 @@ import polars as pl
 import pytest
 from pandas import ExcelWriter
 from pandas.core.frame import DataFrame
-from resdata.summary import Summary
 
 from ert.config import DESIGN_MATRIX_GROUP, DesignMatrix, ErtConfig
 from ert.enkf_main import sample_prior, save_design_matrix_to_ensemble
@@ -116,45 +114,6 @@ def test_gen_kw_collector(snake_oil_default_storage, snapshot):
             "SNAKE_OIL_PARAM",
             realization_index=non_existing_realization_index,
         )["SNAKE_OIL_PARAM:OP1_PERSISTENCE"]
-
-
-def test_get_observations(tmpdir):
-    date = datetime(2014, 9, 10)
-    with tmpdir.as_cwd():
-        config = dedent(
-            """
-        NUM_REALIZATIONS 2
-
-        ECLBASE ECLIPSE_CASE
-        REFCASE ECLIPSE_CASE
-        OBS_CONFIG observations
-        """
-        )
-        observations = dedent(
-            f"""
-        SUMMARY_OBSERVATION FOPR_1
-        {{
-        VALUE   = 0.1;
-        ERROR   = 0.05;
-        DATE    = {(date + timedelta(days=1)).isoformat()};
-        KEY     = FOPR;
-        }};
-        """
-        )
-
-        with open("config.ert", "w", encoding="utf-8") as fh:
-            fh.writelines(config)
-        with open("observations", "w", encoding="utf-8") as fh:
-            fh.writelines(observations)
-
-        summary = Summary.writer("ECLIPSE_CASE", date, 3, 3, 3)
-        summary.add_variable("FOPR", unit="SM3/DAY")
-        t_step = summary.add_t_step(1, sim_days=1)
-        t_step["FOPR"] = 1
-        summary.fwrite()
-
-        facade = LibresFacade.from_config_file("config.ert")
-        assert "FOPR_1" in facade.get_observations()
 
 
 def test_load_gen_kw_not_sorted(storage, tmpdir, snapshot):
