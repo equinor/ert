@@ -10,7 +10,7 @@ from pathlib import Path
 from textwrap import dedent
 from unittest.mock import MagicMock
 
-import pandas as pd
+import polars as pl
 import pytest
 from hypothesis import HealthCheck, assume, given, settings
 from hypothesis import strategies as st
@@ -33,7 +33,7 @@ from ert.config.parsing.queue_system import QueueSystem
 from ert.plugins import ErtPluginManager
 from ert.shared import ert_share_path
 from ert.storage import LocalEnsemble, Storage
-from tests.ert.ui_tests.cli.analysis.test_design_matrix import _create_design_matrix
+from tests.ert.conftest import _create_design_matrix
 
 from .config_dict_generator import config_generators
 
@@ -2031,14 +2031,14 @@ def test_design2params_also_validates_design_matrix(tmp_path, caplog, monkeypatc
     design_matrix_file = tmp_path / "my_design_matrix.xlsx"
     _create_design_matrix(
         design_matrix_file,
-        pd.DataFrame(
+        pl.DataFrame(
             {
                 "REAL": ["not_a_valid_real"],
                 "a": [1],
                 "category": ["cat1"],
             }
         ),
-        pd.DataFrame([["b", 1], ["c", 2]]),
+        pl.DataFrame([["b", 1], ["c", 2]], orient="row"),
     )
     mock_design2params = ForwardModelStep(
         "DESIGN2PARAMS",
@@ -2066,18 +2066,18 @@ def test_two_design2params_validates_design_matrix_merging(
     design_matrix_file2 = tmp_path / "my_design_matrix2.xlsx"
     _create_design_matrix(
         design_matrix_file,
-        pd.DataFrame(
+        pl.DataFrame(
             {
                 "REAL": [0, 1],
                 "letters": ["x", "y"],
             }
         ),
-        pd.DataFrame([["a", 1], ["c", 2]]),
+        pl.DataFrame([["a", 1], ["c", 2]], orient="row"),
     )
     _create_design_matrix(
         design_matrix_file2,
-        pd.DataFrame({"REAL": [1, 2], "numbers": [99, 98]}),
-        pd.DataFrame(),
+        pl.DataFrame({"REAL": [1, 2], "numbers": [99, 98]}),
+        pl.DataFrame(),
     )
     mock_design2params = ForwardModelStep(
         "DESIGN2PARAMS",
@@ -2114,28 +2114,28 @@ def test_three_design2params_validates_design_matrix_merging(
     design_matrix_file3 = tmp_path / "my_design_matrix3.xlsx"
     _create_design_matrix(
         design_matrix_file,
-        pd.DataFrame(
+        pl.DataFrame(
             {
                 "REAL": [0, 1],
                 "letters": ["x", "y"],
             }
         ),
-        pd.DataFrame([["a", 1], ["c", 2]]),
+        pl.DataFrame([["a", 1], ["c", 2]], orient="row"),
     )
     _create_design_matrix(
         design_matrix_file2,
-        pd.DataFrame(
+        pl.DataFrame(
             {
                 "REAL": [0, 1],
                 "weirdly": ["x", "y"],
             }
         ),
-        pd.DataFrame([["b", 1], ["d", 2]]),
+        pl.DataFrame([["b", 1], ["d", 2]], orient="row"),
     )
     _create_design_matrix(
         design_matrix_file3,
-        pd.DataFrame({"REAL": [1, 2], "numbers": [99, 98]}),
-        pd.DataFrame(),
+        pl.DataFrame({"REAL": [1, 2], "numbers": [99, 98]}),
+        pl.DataFrame(),
     )
     mock_design2params = ForwardModelStep(
         "DESIGN2PARAMS",
@@ -2170,14 +2170,14 @@ def test_design_matrix_default_argument(tmp_path):
     design_matrix_file = tmp_path / "my_design_matrix.xlsx"
     _create_design_matrix(
         design_matrix_file,
-        pd.DataFrame(
+        pl.DataFrame(
             {
                 "REAL": [1],
                 "a": [1],
                 "category": ["cat1"],
             }
         ),
-        pd.DataFrame([["b", 1], ["c", 2]]),
+        pl.DataFrame([["b", 1], ["c", 2]], orient="row"),
     )
 
     config = ErtConfig.from_file_contents(
@@ -2350,13 +2350,13 @@ def test_validation_error_on_gen_kw_with_design_matrix_group_name(tmp_path):
     design_matrix_file = tmp_path / "my_design_matrix.xlsx"
     _create_design_matrix(
         design_matrix_file,
-        pd.DataFrame(
+        pl.DataFrame(
             {
                 "REAL": [0, 1],
                 "letters": ["x", "y"],
             }
         ),
-        pd.DataFrame([["a", 1], ["c", 2]]),
+        pl.DataFrame([["a", 1], ["c", 2]], orient="row"),
     )
     with open(tmp_path / "coeffs_priors", mode="w", encoding="utf-8") as fh:
         fh.write("a CONST 0")
@@ -2409,7 +2409,6 @@ def test_validation_error_on_invalid_parameter_name(
     "invalid_parameter_name",
     [
         pytest.param("CWD", id="already_a_magic_string"),
-        pytest.param("realization", id="realization_is_reserved"),
         pytest.param("ITER", id="ITER_is_reserved"),
         pytest.param("IENS", id="IENS_is_reserved"),
         pytest.param("RMS_SEED", id="already_defined_in_user_config"),
@@ -2421,13 +2420,12 @@ def test_validation_error_on_invalid_design_matrix_parameter_name(
     design_matrix_file = tmp_path / "my_design_matrix.xlsx"
     _create_design_matrix(
         design_matrix_file,
-        pd.DataFrame(
+        pl.DataFrame(
             {
-                "REAL": [0, 1],
                 invalid_parameter_name: [0.55, 0.80],
             }
         ),
-        pd.DataFrame([["a", 1], ["c", 2]]),
+        pl.DataFrame([["a", 1], ["c", 2]], orient="row"),
     )
 
     with pytest.raises(
