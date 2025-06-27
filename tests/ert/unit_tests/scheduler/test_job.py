@@ -15,7 +15,7 @@ import ert
 from ert.config import ForwardModelStep
 from ert.ensemble_evaluator import Realization
 from ert.run_arg import RunArg
-from ert.run_models.base_run_model import captured_logs
+from ert.run_models.run_model import captured_logs
 from ert.scheduler import Scheduler
 from ert.scheduler.job import (
     Job,

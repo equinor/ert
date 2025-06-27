@@ -138,7 +138,7 @@ class StartSimulationsThreadFn(Protocol):
 
 
 @dataclasses.dataclass
-class BaseRunModelAPI:
+class RunModelAPI:
     experiment_name: str
     supports_rerunning_failed_realizations: bool
     start_simulations_thread: StartSimulationsThreadFn
@@ -147,7 +147,7 @@ class BaseRunModelAPI:
     has_failed_realizations: Callable[[], bool]
 
 
-class BaseRunModel(BaseModel, ABC):
+class RunModel(BaseModel, ABC):
     storage_path: str
     runpath_file: Path
     user_config_file: Path
@@ -203,8 +203,8 @@ class BaseRunModel(BaseModel, ABC):
         )
 
     @property
-    def api(self) -> BaseRunModelAPI:
-        return BaseRunModelAPI(
+    def api(self) -> RunModelAPI:
+        return RunModelAPI(
             experiment_name=self.name(),
             get_runtime=self.get_runtime,
             start_simulations_thread=self.start_simulations_thread,

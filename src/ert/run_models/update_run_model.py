@@ -22,7 +22,6 @@ from ert.plugins.workflow_fixtures import (
     PreFirstUpdateFixtures,
     PreUpdateFixtures,
 )
-from ert.run_models.base_run_model import BaseRunModel, ErtRunError
 from ert.run_models.event import (
     RunModelDataEvent,
     RunModelErrorEvent,
@@ -31,10 +30,11 @@ from ert.run_models.event import (
     RunModelUpdateBeginEvent,
     RunModelUpdateEndEvent,
 )
+from ert.run_models.run_model import ErtRunError, RunModel
 from ert.storage import Ensemble
 
 
-class UpdateRunModel(BaseRunModel):
+class UpdateRunModel(RunModel):
     target_ensemble: str
     analysis_settings: ESSettings
     update_settings: ObservationSettings

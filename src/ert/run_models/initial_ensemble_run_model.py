@@ -11,11 +11,11 @@ from ert.config.response_config import ResponseConfig
 from ert.enkf_main import sample_prior, save_design_matrix_to_ensemble
 from ert.ensemble_evaluator.config import EvaluatorServerConfig
 from ert.run_arg import create_run_arguments
-from ert.run_models.base_run_model import BaseRunModel
+from ert.run_models.run_model import RunModel
 from ert.storage.local_ensemble import LocalEnsemble
 
 
-class InitialEnsembleRunModel(BaseRunModel, ABC):
+class InitialEnsembleRunModel(RunModel, ABC):
     experiment_name: str
     design_matrix: DesignMatrix | None
     parameter_configuration: list[ParameterConfig]

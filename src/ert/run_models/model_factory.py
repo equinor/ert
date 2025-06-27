@@ -24,13 +24,13 @@ from ert.mode_definitions import (
 )
 from ert.validation import ActiveRange
 
-from .base_run_model import BaseRunModel
 from .ensemble_experiment import EnsembleExperiment
 from .ensemble_information_filter import EnsembleInformationFilter
 from .ensemble_smoother import EnsembleSmoother
 from .evaluate_ensemble import EvaluateEnsemble
 from .manual_update import ManualUpdate
 from .multiple_data_assimilation import MultipleDataAssimilation
+from .run_model import RunModel
 from .single_test_run import SingleTestRun
 
 if TYPE_CHECKING:
@@ -46,7 +46,7 @@ def create_model(
     config: ErtConfig,
     args: Namespace,
     status_queue: SimpleQueue[StatusEvents],
-) -> BaseRunModel:
+) -> RunModel:
     logger.info(
         "Initiating experiment",
         extra={

@@ -60,8 +60,8 @@ from everest.strings import EVEREST, STORAGE_DIR
 
 from ..run_arg import RunArg, create_run_arguments
 from ..storage.local_ensemble import EverestRealizationInfo
-from .base_run_model import BaseRunModel, StatusEvents
 from .event import EverestBatchResultEvent, EverestStatusEvent
+from .run_model import RunModel, StatusEvents
 
 if TYPE_CHECKING:
     from ert.storage import Ensemble, Experiment
@@ -119,7 +119,7 @@ class _EvaluationInfo:
 logger = logging.getLogger(EVEREST)
 
 
-class EverestRunModel(BaseRunModel):
+class EverestRunModel(RunModel):
     optimization_output_dir: str
     simulation_dir: str
 
