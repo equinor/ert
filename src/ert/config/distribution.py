@@ -196,7 +196,7 @@ class TransDerrfSettings(TransSettingsValidation):
     @model_validator(mode="after")
     def valid_derrf_params(self):
         steps_float = float(self.steps)
-        if not steps_float.is_integer() or not (int(steps_float) > 1):
+        if not steps_float.is_integer() or not (int(steps_float) >= 1):
             raise ValueError(
                 f"NBINS {int(self.steps)} must be a positive integer"
                 " larger than 1 for DERRF distribution"
@@ -254,7 +254,7 @@ def get_distribution(name: str, values: list[str]) -> Any:
             min=float(values[2]),
             max=float(values[3]),
         ),
-        "RAW": TransRawSettings.create(),
+        "RAW": TransRawSettings.create,
         "CONST": lambda: TransConstSettings.create(value=float(values[0])),
         "DUNIF": lambda: TransDUnifSettings.create(
             steps=int(values[0]), min=float(values[1]), max=float(values[2])

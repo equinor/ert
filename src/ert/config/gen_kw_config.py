@@ -3,7 +3,7 @@ from __future__ import annotations
 import math
 import os
 from collections.abc import Callable
-from dataclasses import dataclass
+from dataclasses import asdict, dataclass
 from hashlib import sha256
 from pathlib import Path
 from typing import TYPE_CHECKING, Annotated, Any, Self, cast, overload
@@ -32,7 +32,7 @@ from .distribution import (
     get_distribution,
 )
 from .parameter_config import ParameterConfig, ParameterMetadata
-from .parsing import ConfigValidationError, ConfigWarning
+from .parsing import ConfigValidationError, ConfigWarning, ErrorInfo
 
 if TYPE_CHECKING:
     import numpy.typing as npt
@@ -105,6 +105,7 @@ class GenKwConfig(ParameterConfig):
                 self.transform_functions.append(
                     self._parse_transform_function_definition(e)
                 )
+        self._validate()
 
     def __contains__(self, item: str) -> bool:
         return item in [v.name for v in self.transform_function_definitions]
@@ -237,6 +238,22 @@ class GenKwConfig(ParameterConfig):
             update=update_parameter,
         )
 
+    def _validate(self) -> None:
+        errors = []
+        unique_keys = set()
+        for prior in self.get_priors():
+            key = prior["key"]
+            if key in unique_keys:
+                errors.append(
+                    ErrorInfo(
+                        f"Duplicate GEN_KW keys {key!r} found, keys must be unique."
+                    ).set_context(self.name)
+                )
+            unique_keys.add(key)
+
+        if errors:
+            raise ConfigValidationError.from_collected(errors)
+
     def sample_or_load(self, real_nr: int, random_seed: int) -> pl.DataFrame:
         keys = [e.name for e in self.transform_functions]
         parameter_value = self._sample_value(
@@ -359,11 +376,13 @@ class GenKwConfig(ParameterConfig):
             priors.append(
                 {
                     "key": tf.name,
-                    "function": tf.distribution.name,
-                    "parameters": tf.distribution.__dict__(),
+                    "function": tf.distribution.name.upper(),
+                    "parameters": {
+                        k.upper(): v for k, v in asdict(tf.distribution).items()
+                    },
                 }
             )
-
+        print(priors)
         return priors
 
     def transform(self, array: npt.ArrayLike) -> npt.NDArray[np.float64]:
