@@ -1290,7 +1290,7 @@ async def test_no_exception_when_no_access_to_bjobs_executable(
     go down if the filesystem is temporarily flaky."""
     driver = LsfDriver()
     driver._poll_period = 0.01
-    Path("bin/bjobs").chmod(0x0)  # Modify the bjobs from the fixture
+    Path("bin/bjobs").chmod(0o000)  # Modify the bjobs from the fixture
     await driver.submit(0, "sh", "-c", "echo", name=job_name)
     with pytest.raises(asyncio.TimeoutError):
         await asyncio.wait_for(driver.poll(), timeout=0.1)
