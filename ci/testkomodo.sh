@@ -99,6 +99,7 @@ start_tests() {
     pushd "${CI_TEST_ROOT}"/tests/ert || exit 1
 
     if [ "$CI_SUBSYSTEM_TEST" == "ert" ]; then
+      export OMP_NUM_THREADS=1
       just -f "${CI_SOURCE_ROOT}"/justfile ert-tests
       return $?
     elif [ "$CI_SUBSYSTEM_TEST" == "everest" ]; then
@@ -112,7 +113,7 @@ start_tests() {
       export OMP_NUM_THREADS=1
 
       # Run ert tests that evaluates memory consumption
-      pytest -n 2 --durations=0 -m "limit_memory" --memray
+      pytest -m "limit_memory" --memray
       return $?
     elif [ "$CI_SUBSYSTEM_TEST" == "ert-queue-system" ]; then
       basetemp=$(mktemp -d -p "$_ERT_TESTS_SHARED_TMP")
