@@ -19,8 +19,11 @@ import xarray as xr
 from hypothesis import assume, given, note, settings
 from hypothesis.extra.numpy import arrays
 from hypothesis.stateful import Bundle, RuleBasedStateMachine, initialize, rule
+from pandas import DataFrame, ExcelWriter
 
 from ert.config import (
+    DESIGN_MATRIX_GROUP,
+    DesignMatrix,
     EnkfObs,
     ExtParamConfig,
     Field,
@@ -35,6 +38,7 @@ from ert.config import (
 from ert.config.gen_kw_config import TransformFunctionDefinition
 from ert.config.general_observation import GenObservation
 from ert.config.observation_vector import ObsVector
+from ert.enkf_main import save_design_matrix_to_ensemble
 from ert.storage import ErtStorageException, LocalEnsemble, open_storage
 from ert.storage.local_storage import _LOCAL_STORAGE_VERSION
 from ert.storage.mode import ModeError
@@ -940,6 +944,56 @@ def test_that_all_parameters_and_gen_data_consolidation_works(
         snapshot.assert_match(snapshot_str, "all_batches.json")
 
         assert pl.concat(ensemble_datas).equals(experiment_data)
+
+
+@pytest.mark.parametrize(
+    "reals, expect_error",
+    [
+        pytest.param(
+            list(range(10)),
+            False,
+            id="correct_active_realizations",
+        ),
+        pytest.param([10, 11], True, id="incorrect_active_realizations"),
+    ],
+)
+def test_save_parameters_to_storage_from_design_dataframe(
+    tmp_path, reals, expect_error
+):
+    design_path = tmp_path / "design_matrix.xlsx"
+    ensemble_size = 10
+    a_values = np.random.default_rng().uniform(-5, 5, 10)
+    b_values = np.random.default_rng().uniform(-5, 5, 10)
+    c_values = np.random.default_rng().uniform(-5, 5, 10)
+    design_matrix_df = DataFrame({"a": a_values, "b": b_values, "c": c_values})
+    with ExcelWriter(design_path) as xl_write:
+        design_matrix_df.to_excel(xl_write, index=False, sheet_name="DesignSheet")
+        DataFrame().to_excel(
+            xl_write, index=False, sheet_name="DefaultSheet", header=False
+        )
+    design_matrix = DesignMatrix(design_path, "DesignSheet", "DefaultSheet")
+    with open_storage(tmp_path / "storage", mode="w") as storage:
+        experiment_id = storage.create_experiment(
+            parameters=[design_matrix.parameter_configuration]
+        )
+        ensemble = storage.create_ensemble(
+            experiment_id, name="default", ensemble_size=ensemble_size
+        )
+        if expect_error:
+            with pytest.raises(KeyError):
+                save_design_matrix_to_ensemble(
+                    design_matrix.design_matrix_df, ensemble, reals
+                )
+        else:
+            save_design_matrix_to_ensemble(
+                design_matrix.design_matrix_df, ensemble, reals
+            )
+            params = ensemble.load_parameters(DESIGN_MATRIX_GROUP).drop("realization")
+            assert isinstance(params, pl.DataFrame)
+            assert params.columns == ["a", "b", "c"]
+            np.testing.assert_array_almost_equal(params["a"].to_list(), a_values)
+            np.testing.assert_array_almost_equal(params["b"].to_list(), b_values)
+            np.testing.assert_array_almost_equal(params["c"].to_list(), c_values)
 
 
 @dataclass
