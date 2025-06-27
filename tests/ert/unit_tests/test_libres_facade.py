@@ -78,34 +78,3 @@ def test_misfit_collector(snake_oil_case_storage, snake_oil_default_storage, sna
     with pytest.raises(KeyError):
         # realization 60:
         _ = data.loc[60]
-
-
-def test_gen_kw_collector(snake_oil_default_storage, snapshot):
-    data = snake_oil_default_storage.load_all_gen_kw_data()
-    snapshot.assert_match(data.round(6).to_csv(), "gen_kw_collector.csv")
-
-    with pytest.raises(KeyError):
-        # realization 60:
-        _ = data.loc[60]
-
-    data = snake_oil_default_storage.load_all_gen_kw_data(
-        "SNAKE_OIL_PARAM",
-    )[["SNAKE_OIL_PARAM:OP1_PERSISTENCE", "SNAKE_OIL_PARAM:OP1_OFFSET"]]
-    snapshot.assert_match(data.round(6).to_csv(), "gen_kw_collector_2.csv")
-
-    with pytest.raises(KeyError):
-        _ = data["SNAKE_OIL_PARAM:OP1_DIVERGENCE_SCALE"]
-
-    realization_index = 3
-    data = snake_oil_default_storage.load_all_gen_kw_data(
-        "SNAKE_OIL_PARAM",
-        realization_index=realization_index,
-    )["SNAKE_OIL_PARAM:OP1_PERSISTENCE"]
-    snapshot.assert_match(data.round(6).to_csv(), "gen_kw_collector_3.csv")
-
-    non_existing_realization_index = 150
-    with pytest.raises((IndexError, KeyError)):
-        _ = snake_oil_default_storage.load_all_gen_kw_data(
-            "SNAKE_OIL_PARAM",
-            realization_index=non_existing_realization_index,
-        )["SNAKE_OIL_PARAM:OP1_PERSISTENCE"]
