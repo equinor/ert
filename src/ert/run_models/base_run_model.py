@@ -366,7 +366,6 @@ class BaseRunModel(BaseModelWithContextSupport, ABC):
                     )
                 self._storage.close()
         except ErtRunError as e:
-            self._completed_realizations_mask = []
             failed = True
             exception = e
         except UserWarning as e:

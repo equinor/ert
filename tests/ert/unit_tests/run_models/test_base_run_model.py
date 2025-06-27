@@ -14,7 +14,7 @@ from ert.config import ErtConfig, ModelConfig, QueueConfig
 from ert.ensemble_evaluator import EndEvent, EvaluatorServerConfig
 from ert.ensemble_evaluator.snapshot import EnsembleSnapshot
 from ert.run_models import BaseRunModel
-from ert.run_models.base_run_model import UserCancelled
+from ert.run_models.base_run_model import ErtRunError, UserCancelled
 from ert.substitutions import Substitutions
 
 
@@ -584,3 +584,33 @@ def test_check_if_runpath_exists(
     )
     run_model._run_paths.get_paths = get_run_path_mock
     assert run_model.check_if_runpath_exists() == expected
+
+
+def test_base_model_does_not_overwrite_completed_realizations_when_ert_run_error_is_raised(  # noqa
+    monkeypatch,
+):
+    initial_active_realizations = [True, False]
+    completed_realizations = [False, False]
+    active_realizations = initial_active_realizations.copy()
+
+    def failing_experiment(
+        self: BaseRunModel,
+        evaluator_server_config: EvaluatorServerConfig,
+        rerun_failed_realizations: bool,
+    ):
+        raise ErtRunError
+
+    monkeypatch.setattr(BaseRunModel, "run_experiment", failing_experiment)
+
+    brm = create_base_run_model(
+        start_iteration=0,
+        _total_iterations=1,
+        active_realizations=active_realizations,
+    )
+    brm._completed_realizations_mask = completed_realizations.copy()
+
+    mock_evaluator_server_config = MagicMock(spec=EvaluatorServerConfig)
+
+    brm.start_simulations_thread(mock_evaluator_server_config, False)
+
+    assert brm._completed_realizations_mask == completed_realizations
