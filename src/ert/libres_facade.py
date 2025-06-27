@@ -9,7 +9,6 @@ from pandas import DataFrame
 
 from ert.config import (
     ErtConfig,
-    Field,
 )
 from ert.data import MeasuredData
 from ert.data._measured_data import ObservationError, ResponseError
@@ -27,13 +26,6 @@ class LibresFacade:
 
     def __init__(self, ert_config: ErtConfig, _: Any = None) -> None:
         self.config = ert_config
-
-    def get_field_parameters(self) -> list[str]:
-        return [
-            val.name
-            for val in self.config.ensemble_config.parameter_configuration
-            if isinstance(val, Field)
-        ]
 
     @property
     def run_path(self) -> str:
