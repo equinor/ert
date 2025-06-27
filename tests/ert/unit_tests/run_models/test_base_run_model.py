@@ -104,7 +104,6 @@ def test_active_realizations(initials, use_tmpdir):
         ([False, False], [False, False], False, [False, False]),
         ([False, False], [True, True], False, [False, False]),
         ([True, True], [False, True], True, [True, False]),
-        ([False, False], [], True, [True, True]),
     ],
 )
 def test_failed_realizations(initials, completed, any_failed, failures, use_tmpdir):
@@ -584,3 +583,22 @@ def test_check_if_runpath_exists(
     )
     run_model._run_paths.get_paths = get_run_path_mock
     assert run_model.check_if_runpath_exists() == expected
+
+
+def test_create_mask_from_failed_realizations_returns_initial_active_realizations_if_no_realization_succeeded():  # noqa
+    initial_active_realizations = [True, False]
+    active_realizations = initial_active_realizations.copy()
+    completed_realizations = [False, False]
+
+    brm = create_run_model(
+        start_iteration=0,
+        _total_iterations=1,
+        active_realizations=active_realizations,
+    )
+    brm._initial_realizations_mask = initial_active_realizations
+    brm.active_realizations = active_realizations
+    brm._completed_realizations_mask = completed_realizations
+
+    failed_realization_mask = brm._create_mask_from_failed_realizations()
+
+    assert failed_realization_mask == initial_active_realizations
