@@ -180,8 +180,13 @@ class BaseRunModel(BaseModel, ABC):
     _run_paths: Runpaths = PrivateAttr()
     _total_iterations: int = PrivateAttr(default=1)
 
-    def __init__(self, _total_iterations: int | None = None, **data: Any) -> None:
-        status_queue = data.pop("status_queue", None)
+    def __init__(
+        self,
+        *,
+        status_queue: queue.SimpleQueue[StatusEvents],
+        _total_iterations: int | None = None,
+        **data: Any,
+    ) -> None:
         super().__init__(**data)
         self._status_queue = status_queue
 

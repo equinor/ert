@@ -40,9 +40,7 @@ class ManualUpdate(UpdateRunModel):
         self.log_at_startup()
         self.set_env_key("_ERT_EXPERIMENT_ID", str(self._prior.experiment.id))
         self.set_env_key("_ERT_ENSEMBLE_ID", str(self._prior.id))
-
-        ensemble_format = self.target_ensemble
-        self.update(self._prior, ensemble_format % (self._prior.iteration + 1))
+        self.update(self._prior, self.target_ensemble % (self._prior.iteration + 1))
 
     def update_ensemble_parameters(
         self, prior: Ensemble, posterior: Ensemble, weight: float
