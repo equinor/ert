@@ -190,6 +190,7 @@ class RunModel(BaseModel, ABC):
 
     def model_post_init(self, ctx: Any) -> None:
         self._initial_realizations_mask = self.active_realizations.copy()
+        self._completed_realizations_mask = [False] * len(self.active_realizations)
         self._storage = open_storage(self.storage_path, mode="w")
         self._rng = np.random.default_rng(self.random_seed)
         self._model_config = self.runpath_config
@@ -275,18 +276,14 @@ class RunModel(BaseModel, ABC):
         Creates a list of bools representing the failed realizations,
         i.e., a realization that has failed is assigned a True value.
         """
-        if self._completed_realizations_mask:
-            return [
-                initial and not completed
-                for initial, completed in zip(
-                    self._initial_realizations_mask,
-                    self._completed_realizations_mask,
-                    strict=False,
-                )
-            ]
-        else:
-            # If all realisations fail
-            return [True] * len(self._initial_realizations_mask)
+        return [
+            initial and not completed
+            for initial, completed in zip(
+                self._initial_realizations_mask,
+                self._completed_realizations_mask,
+                strict=False,
+            )
+        ]
 
     def set_env_key(self, key: str, value: str) -> None:
         """
@@ -365,7 +362,6 @@ class RunModel(BaseModel, ABC):
                     )
                 self._storage.close()
         except ErtRunError as e:
-            self._completed_realizations_mask = []
             failed = True
             exception = e
         except UserWarning as e:
