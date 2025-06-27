@@ -243,7 +243,7 @@ def test_not_executable_job_script_somewhere_in_PATH_fails_gracefully(monkeypatc
     ):
         _ = parse(config_file_name, schema=init_user_config_schema())
 
-    os.chmod(path_location, 0x775)
+    os.chmod(path_location, 0o775)
 
 
 def test_that_giving_non_int_values_give_config_validation_error():
