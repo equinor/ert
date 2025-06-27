@@ -17,7 +17,7 @@ from websockets.sync.client import connect
 
 from _ert.threading import ErtThread
 from ert.ensemble_evaluator import EvaluatorServerConfig
-from ert.run_models import BaseRunModelAPI
+from ert.run_models import RunModelAPI
 from ert.run_models.event import StatusEvents, status_event_from_json
 from everest.strings import EverEndpoints
 
@@ -118,14 +118,14 @@ class EverestClient:
 
         return event_queue, monitor_thread
 
-    def create_run_model_api(self) -> BaseRunModelAPI:
+    def create_run_model_api(self) -> RunModelAPI:
         def start_fn(
             evaluator_server_config: EvaluatorServerConfig,
             rerun_failed_realizations: bool = False,
         ) -> None:
             pass
 
-        return BaseRunModelAPI(
+        return RunModelAPI(
             experiment_name=self.config_filename,
             supports_rerunning_failed_realizations=False,
             start_simulations_thread=start_fn,

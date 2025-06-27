@@ -10,12 +10,12 @@ from ert.ensemble_evaluator import EvaluatorServerConfig
 from ert.trace import tracer
 
 from ..run_arg import create_run_arguments
-from . import BaseRunModel
+from .run_model import RunModel
 
 logger = logging.getLogger(__name__)
 
 
-class EvaluateEnsemble(BaseRunModel):
+class EvaluateEnsemble(RunModel):
     """
     This workflow will evaluate ensembles which have parameters, but no simulation
     has been performed, so there are no responses. This can be used in instances

@@ -25,7 +25,7 @@ from _ert.threading import ErtThread
 from ert.config import QueueSystem
 from ert.ensemble_evaluator import EvaluatorServerConfig
 from ert.gui.ertnotifier import ErtNotifier
-from ert.run_models import BaseRunModel, StatusEvents, create_model
+from ert.run_models import RunModel, StatusEvents, create_model
 
 from ..find_ert_info import find_ert_info
 from ..summarypanel import SummaryPanel
@@ -144,7 +144,7 @@ class ExperimentPanel(QWidget):
 
         layout.addWidget(self._experiment_stack)
 
-        self._experiment_widgets: dict[type[BaseRunModel], ExperimentConfigPanel] = (
+        self._experiment_widgets: dict[type[RunModel], ExperimentConfigPanel] = (
             OrderedDict()
         )
         self.addExperimentConfigPanel(

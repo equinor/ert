@@ -49,7 +49,7 @@ from ert.gui.model.snapshot import (
 )
 from ert.gui.tools.file import FileDialog
 from ert.run_models import (
-    BaseRunModelAPI,
+    RunModelAPI,
     RunModelStatusEvent,
     RunModelTimeEvent,
     RunModelUpdateBeginEvent,
@@ -200,7 +200,7 @@ class RunDialog(QFrame):
     def __init__(
         self,
         title: str,
-        run_model_api: BaseRunModelAPI,
+        run_model_api: RunModelAPI,
         event_queue: SimpleQueue[StatusEvents],
         notifier: ErtNotifier,
         parent: QWidget | None = None,

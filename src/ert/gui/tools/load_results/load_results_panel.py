@@ -18,7 +18,7 @@ from ert.gui.ertwidgets import (
     TextModel,
 )
 from ert.gui.suggestor import Suggestor
-from ert.run_models.base_run_model import captured_logs
+from ert.run_models.run_model import captured_logs
 from ert.storage.local_ensemble import load_parameters_and_responses_from_runpath
 from ert.validation import RangeStringArgument, StringDefinition
 

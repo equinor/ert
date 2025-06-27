@@ -216,7 +216,7 @@ async def test_that_monitor_track_can_exit_without_terminated_event_from_evaluat
 
 
 async def test_that_monitor_can_emit_heartbeats(unused_tcp_port):
-    """BaseRunModel.run_monitor() depends on heartbeats to be able to
+    """RunModel.run_monitor() depends on heartbeats to be able to
     exit anytime. A heartbeat is a None event.
 
     If the heartbeat is never sent, this test function will hang and then timeout."""

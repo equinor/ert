@@ -15,7 +15,7 @@ from ert.trace import tracer
 from ..analysis import smoother_update
 from ..plugins import PostExperimentFixtures, PreExperimentFixtures
 from ..run_arg import create_run_arguments
-from .base_run_model import ErtRunError
+from .run_model import ErtRunError
 
 logger = logging.getLogger(__name__)
 

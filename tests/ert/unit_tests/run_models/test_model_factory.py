@@ -251,7 +251,7 @@ def test_multiple_data_assimilation_restart_paths(
     )
 
     monkeypatch.setattr(
-        ert.run_models.base_run_model.BaseRunModel,
+        ert.run_models.run_model.RunModel,
         "validate_successful_realizations_count",
         MagicMock(),
     )
@@ -260,7 +260,7 @@ def test_multiple_data_assimilation_restart_paths(
     config = ErtConfig(runpath_config=ModelConfig(num_realizations=2))
 
     with patch(
-        "ert.run_models.base_run_model.Storage.get_ensemble", return_value=ensemble_mock
+        "ert.run_models.run_model.Storage.get_ensemble", return_value=ensemble_mock
     ):
         model = model_factory._setup_multiple_data_assimilation(
             config, args, MagicMock(spec=ObservationSettings), MagicMock()
@@ -310,7 +310,7 @@ def test_evaluate_ensemble_paths(
     monkeypatch.chdir(tmp_path)
 
     monkeypatch.setattr(
-        ert.run_models.base_run_model.BaseRunModel,
+        ert.run_models.run_model.RunModel,
         "validate_successful_realizations_count",
         MagicMock(),
     )
@@ -323,7 +323,7 @@ def test_evaluate_ensemble_paths(
     )
 
     with patch(
-        "ert.run_models.base_run_model.Storage.get_ensemble", return_value=ensemble_mock
+        "ert.run_models.run_model.Storage.get_ensemble", return_value=ensemble_mock
     ):
         model = create_model(
             config,

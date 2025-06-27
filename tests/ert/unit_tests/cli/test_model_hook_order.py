@@ -18,13 +18,13 @@ from ert.plugins import (
     fixtures_per_hook,
 )
 from ert.run_models import (
-    BaseRunModel,
     EnsembleExperiment,
     EnsembleInformationFilter,
     EnsembleSmoother,
     MultipleDataAssimilation,
-    base_run_model,
+    RunModel,
     initial_ensemble_run_model,
+    run_model,
 )
 from ert.substitutions import Substitutions
 
@@ -59,12 +59,10 @@ EXPECTED_CALL_ORDER_WITHOUT_UPDATES = [
 
 
 @pytest.fixture
-def patch_base_run_model(monkeypatch):
-    monkeypatch.setattr(base_run_model, "create_run_path", MagicMock())
-    monkeypatch.setattr(
-        BaseRunModel, "validate_successful_realizations_count", MagicMock()
-    )
-    monkeypatch.setattr(BaseRunModel, "set_env_key", MagicMock())
+def patch_run_model(monkeypatch):
+    monkeypatch.setattr(run_model, "create_run_path", MagicMock())
+    monkeypatch.setattr(RunModel, "validate_successful_realizations_count", MagicMock())
+    monkeypatch.setattr(RunModel, "set_env_key", MagicMock())
 
 
 @pytest.mark.parametrize(
@@ -97,7 +95,7 @@ def patch_base_run_model(monkeypatch):
         ),
     ],
 )
-@pytest.mark.usefixtures("patch_base_run_model")
+@pytest.mark.usefixtures("patch_run_model")
 def test_hook_call_order(monkeypatch, use_tmpdir, cls, extra_args, expected_call_order):
     """
     The goal of this test is to assert that the hook call order is the same
@@ -106,7 +104,7 @@ def test_hook_call_order(monkeypatch, use_tmpdir, cls, extra_args, expected_call
     run_wfs_mock = MagicMock()
     monkeypatch.setattr(initial_ensemble_run_model, "sample_prior", MagicMock())
     monkeypatch.setattr(cls, "update_ensemble_parameters", MagicMock(), raising=False)
-    monkeypatch.setattr(base_run_model.BaseRunModel, "run_workflows", run_wfs_mock)
+    monkeypatch.setattr(run_model.RunModel, "run_workflows", run_wfs_mock)
 
     ens_mock = MagicMock()
     ens_mock.iteration = 0

@@ -13,14 +13,13 @@ from pydantic import ConfigDict
 from ert.config import ErtConfig, ModelConfig, QueueConfig
 from ert.ensemble_evaluator import EndEvent, EvaluatorServerConfig
 from ert.ensemble_evaluator.snapshot import EnsembleSnapshot
-from ert.run_models import BaseRunModel
-from ert.run_models.base_run_model import UserCancelled
+from ert.run_models.run_model import RunModel, UserCancelled
 from ert.substitutions import Substitutions
 
 
 @pytest.fixture(autouse=True)
 def patch_abstractmethods(monkeypatch):
-    monkeypatch.setattr(BaseRunModel, "__abstractmethods__", set())
+    monkeypatch.setattr(RunModel, "__abstractmethods__", set())
 
 
 class MockJob:
@@ -28,7 +27,7 @@ class MockJob:
         self.status = status
 
 
-def create_base_run_model(**kwargs):
+def create_run_model(**kwargs):
     default_args = {
         # Note: Will create a storage in cwd
         "storage_path": "./storage",
@@ -47,14 +46,14 @@ def create_base_run_model(**kwargs):
         "log_path": Path(""),
     }
 
-    class BaseRunModelWithMockSupport(BaseRunModel):
+    class RunModelWithMockSupport(RunModel):
         model_config = ConfigDict(frozen=False, extra="allow")
 
-    return BaseRunModelWithMockSupport(**(default_args | kwargs))
+    return RunModelWithMockSupport(**(default_args | kwargs))
 
 
-def test_base_run_model_does_not_support_rerun_failed_realizations(minimum_case):
-    brm = create_base_run_model(
+def test_run_model_does_not_support_rerun_failed_realizations(minimum_case):
+    brm = create_run_model(
         storage_path=minimum_case.ens_path,
         queue_config=minimum_case.queue_config,
         active_realizations=[True],
@@ -65,7 +64,7 @@ def test_base_run_model_does_not_support_rerun_failed_realizations(minimum_case)
 
 @pytest.mark.usefixtures("use_tmpdir")
 def test_status_when_rerunning_on_non_rerunnable_model():
-    brm = create_base_run_model()
+    brm = create_run_model()
     brm._status_queue = SimpleQueue()
     brm.start_simulations_thread(
         EvaluatorServerConfig(use_token=False), rerun_failed_realizations=True
@@ -89,7 +88,7 @@ def test_status_when_rerunning_on_non_rerunnable_model():
     ],
 )
 def test_active_realizations(initials, use_tmpdir):
-    brm = create_base_run_model(active_realizations=initials)
+    brm = create_run_model(active_realizations=initials)
     brm._initial_realizations_mask = initials
     assert brm.ensemble_size == len(initials)
 
@@ -108,7 +107,7 @@ def test_active_realizations(initials, use_tmpdir):
     ],
 )
 def test_failed_realizations(initials, completed, any_failed, failures, use_tmpdir):
-    brm = create_base_run_model(active_realizations=initials)
+    brm = create_run_model(active_realizations=initials)
     brm._initial_realizations_mask = initials
     brm._completed_realizations_mask = completed
 
@@ -140,7 +139,7 @@ def test_check_if_runpath_exists_with_substitutions(
 ):
     model_config = ModelConfig(runpath_format_string=run_path)
     subs_list = Substitutions()
-    brm = create_base_run_model(
+    brm = create_run_model(
         runpath_config=model_config,
         substitutions=subs_list,
         active_realizations=active_realizations_mask,
@@ -166,7 +165,7 @@ def test_get_number_of_existing_runpaths(
     run_path = "out/realization-%d/iter-%d"
     model_config = ModelConfig(runpath_format_string=run_path)
     subs_list = Substitutions()
-    brm = create_base_run_model(
+    brm = create_run_model(
         runpath_config=model_config,
         substitutions=subs_list,
         active_realizations=active_realizations_mask,
@@ -203,7 +202,7 @@ def test_delete_run_path(run_path_format, active_realizations):
     model_config = ModelConfig(runpath_format_string=run_path_format)
     subs_list = Substitutions({"<ITER>": "0", "<ERTCASE>": "Case_Name"})
 
-    brm = create_base_run_model(
+    brm = create_run_model(
         runpath_config=model_config,
         substitutions=subs_list,
         active_realizations=active_realizations,
@@ -219,9 +218,9 @@ def test_delete_run_path(run_path_format, active_realizations):
 def test_num_cpu_is_propagated_from_config_to_ensemble(run_args):
     # Given NUM_CPU in the config file has a special value
     config = ErtConfig.from_file_contents("NUM_REALIZATIONS 2\nNUM_CPU 42")
-    # Set up a BaseRunModel object from the config above:
+    # Set up a RunModel object from the config above:
 
-    brm = create_base_run_model(
+    brm = create_run_model(
         queue_config=config.queue_config,
         substitutions=config.substitutions,
         active_realizations=[True],
@@ -229,7 +228,7 @@ def test_num_cpu_is_propagated_from_config_to_ensemble(run_args):
 
     run_args = run_args(config, MagicMock())
 
-    # Instead of running the BaseRunModel, we only test its implementation detail
+    # Instead of running the RunModel, we only test its implementation detail
     # which is to use _build_ensemble() just prior to running
     ensemble = brm._build_ensemble(run_args, uuid.uuid1())
 
@@ -266,7 +265,7 @@ def test_get_current_status(
     initial_active_realizations = [True] * 3
     new_active_realizations = [True] * 3
 
-    brm = create_base_run_model(
+    brm = create_run_model(
         queue_config=config.queue_config,
         substitutions=config.substitutions,
         active_realizations=initial_active_realizations,
@@ -346,7 +345,7 @@ def test_get_current_status_when_rerun(
     """Active realizations gets changed when we choose to rerun, and the result from
     the previous run should be included in the current_status."""
     config = ErtConfig.from_file_contents("NUM_REALIZATIONS 3")
-    brm = create_base_run_model(
+    brm = create_run_model(
         queue_config=config.queue_config,
         substitutions=config.substitutions,
         active_realizations=initial_active_realizations,
@@ -372,7 +371,7 @@ def test_get_current_status_for_new_iteration_when_realization_failed_in_previou
     new_active_realizations = [False, False, True, False, True]
     config = ErtConfig.from_file_contents("NUM_REALIZATIONS 5")
 
-    brm = create_base_run_model(
+    brm = create_run_model(
         queue_config=config.queue_config,
         substitutions=config.substitutions,
         active_realizations=initial_active_realizations,
@@ -416,7 +415,7 @@ def test_get_number_of_active_realizations_varies_when_rerun_or_new_iteration(
     initial_active_realizations = [True] * 5
     config = ErtConfig.from_file_contents("NUM_REALIZATIONS 5")
 
-    brm = create_base_run_model(
+    brm = create_run_model(
         queue_config=config.queue_config,
         substitutions=config.substitutions,
         active_realizations=initial_active_realizations,
@@ -428,7 +427,7 @@ def test_get_number_of_active_realizations_varies_when_rerun_or_new_iteration(
 
 
 async def test_terminate_in_pre_evaluation(use_tmpdir):
-    brm = create_base_run_model()
+    brm = create_run_model()
     brm._end_queue.put("terminate")
     with pytest.raises(
         UserCancelled, match="Experiment cancelled by user in pre evaluation"
@@ -436,7 +435,7 @@ async def test_terminate_in_pre_evaluation(use_tmpdir):
         await brm.run_ensemble_evaluator_async(AsyncMock(), AsyncMock(), AsyncMock())
 
 
-@patch("ert.run_models.base_run_model.EnsembleEvaluator")
+@patch("ert.run_models.run_model.EnsembleEvaluator")
 async def test_terminate_in_post_evaluation(evaluator, use_tmpdir):
     async def mocked_run_and_get_successful_realizations() -> list[int]:
         return list(range(5))
@@ -453,7 +452,7 @@ async def test_terminate_in_post_evaluation(evaluator, use_tmpdir):
         self._end_queue.put("terminate")
         return True
 
-    brm = create_base_run_model()
+    brm = create_run_model()
     brm.run_monitor = MethodType(run_monitor_successfully_but_terminate, brm)
     with (
         pytest.raises(
@@ -534,7 +533,7 @@ def test_progress_calculations(
     expected_result: float,
     use_tmpdir,
 ):
-    brm = create_base_run_model(
+    brm = create_run_model(
         start_iteration=start_iteration,
         _total_iterations=total_iterations,
         active_realizations=[True] * len(real_status_dict),
@@ -579,7 +578,7 @@ def test_check_if_runpath_exists(
             return [f"out/realization-{r}/iter-{iteration}" for r in realizations]
         return [f"out/realization-{r}" for r in realizations]
 
-    run_model = create_base_run_model(
+    run_model = create_run_model(
         active_realizations=active_mask,
     )
     run_model._run_paths.get_paths = get_run_path_mock

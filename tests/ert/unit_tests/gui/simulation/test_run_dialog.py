@@ -55,7 +55,7 @@ def event_queue(events):
         return [0]
 
     with patch(
-        "ert.run_models.base_run_model.BaseRunModel.run_ensemble_evaluator_async",
+        "ert.run_models.run_model.RunModel.run_ensemble_evaluator_async",
         _add_event,
     ):
         yield
@@ -91,7 +91,7 @@ def event_queue_large_snapshot(large_snapshot):
         return [0]
 
     with patch(
-        "ert.run_models.base_run_model.BaseRunModel.run_ensemble_evaluator_async",
+        "ert.run_models.run_model.RunModel.run_ensemble_evaluator_async",
         _add_event,
     ):
         yield
@@ -109,7 +109,7 @@ def mock_set_is_simulation_running():
 @pytest.fixture
 def mock_get_runtime():
     mock = MagicMock()
-    with patch("ert.run_models.base_run_model.BaseRunModel.get_runtime", mock) as _mock:
+    with patch("ert.run_models.run_model.RunModel.get_runtime", mock) as _mock:
         _mock.return_value = 10
         yield _mock
 
@@ -117,7 +117,7 @@ def mock_get_runtime():
 @pytest.fixture
 def mock_set_env_key():
     mock = MagicMock()
-    with patch("ert.run_models.base_run_model.BaseRunModel.set_env_key", mock) as _mock:
+    with patch("ert.run_models.run_model.RunModel.set_env_key", mock) as _mock:
         yield _mock
 
 
@@ -585,7 +585,7 @@ def test_run_dialog_fm_label_show_correct_info(
 
 @pytest.mark.integration_test
 @pytest.mark.usefixtures("use_tmpdir")
-def test_that_exception_in_base_run_model_is_handled(qtbot: QtBot, use_tmpdir):
+def test_that_exception_in_run_model_is_handled(qtbot: QtBot, use_tmpdir):
     config_file = "minimal_config.ert"
     with open(config_file, "w", encoding="utf-8") as f:
         f.write("NUM_REALIZATIONS 1")
