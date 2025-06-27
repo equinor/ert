@@ -10,7 +10,6 @@ from resdata.summary import Summary
 
 from ert.config import ErtConfig
 from ert.enkf_main import create_run_path
-from ert.libres_facade import LibresFacade
 from ert.storage import open_storage
 from ert.storage.local_ensemble import (
     RealizationStorageState,
@@ -276,8 +275,8 @@ def test_that_the_states_are_set_correctly():
     When creating a new ensemble and loading results manually (load_from_forward_model)
     we expect only summary and gen_data to be copied and not parameters.
     """
-    facade = LibresFacade.from_config_file("snake_oil.ert")
-    storage = open_storage("storage/snake_oil/ensemble", mode="w")
+    config = ErtConfig.from_file("snake_oil.ert")
+    storage = open_storage(config.ens_path, mode="w")
     experiment = storage.get_experiment_by_name("ensemble-experiment")
     ensemble = experiment.get_ensemble_by_name("default_0")
     ensemble_size = ensemble.ensemble_size
@@ -286,7 +285,9 @@ def test_that_the_states_are_set_correctly():
         experiment=ensemble.experiment, ensemble_size=ensemble_size
     )
     load_parameters_and_responses_from_runpath(
-        facade.run_path, new_ensemble, list(range(ensemble_size))
+        config.runpath_config.runpath_format_string,
+        new_ensemble,
+        list(range(ensemble_size)),
     )
 
     assert all(
