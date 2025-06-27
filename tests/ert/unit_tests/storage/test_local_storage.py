@@ -6,6 +6,7 @@ import tempfile
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta
 from pathlib import Path
+from textwrap import dedent
 from typing import Any
 from unittest.mock import MagicMock, PropertyMock, patch
 from uuid import UUID
@@ -25,6 +26,7 @@ from ert.config import (
     DESIGN_MATRIX_GROUP,
     DesignMatrix,
     EnkfObs,
+    ErtConfig,
     ExtParamConfig,
     Field,
     GenDataConfig,
@@ -38,7 +40,7 @@ from ert.config import (
 from ert.config.gen_kw_config import TransformFunctionDefinition
 from ert.config.general_observation import GenObservation
 from ert.config.observation_vector import ObsVector
-from ert.enkf_main import save_design_matrix_to_ensemble
+from ert.enkf_main import sample_prior, save_design_matrix_to_ensemble
 from ert.storage import ErtStorageException, LocalEnsemble, open_storage
 from ert.storage.local_storage import _LOCAL_STORAGE_VERSION
 from ert.storage.mode import ModeError
@@ -994,6 +996,45 @@ def test_save_parameters_to_storage_from_design_dataframe(
             np.testing.assert_array_almost_equal(params["a"].to_list(), a_values)
             np.testing.assert_array_almost_equal(params["b"].to_list(), b_values)
             np.testing.assert_array_almost_equal(params["c"].to_list(), c_values)
+
+
+def test_load_gen_kw_not_sorted(storage, tmpdir, snapshot):
+    """
+    This test checks two things, loading multiple parameters and
+    loading log parameters.
+    """
+    with tmpdir.as_cwd():
+        config = dedent(
+            """
+        NUM_REALIZATIONS 10
+        GEN_KW PARAM_2 template.txt kw.txt prior2.txt
+        GEN_KW PARAM_1 template.txt kw.txt prior1.txt
+        RANDOM_SEED 1234
+        """
+        )
+        with open("config.ert", mode="w", encoding="utf-8") as fh:
+            fh.writelines(config)
+        with open("template.txt", mode="w", encoding="utf-8") as fh:
+            fh.writelines("MY_KEYWORD <MY_KEYWORD>")
+        with open("prior1.txt", mode="w", encoding="utf-8") as fh:
+            fh.writelines("MY_KEYWORD1 LOGUNIF 0.1 1")
+        with open("prior2.txt", mode="w", encoding="utf-8") as fh:
+            fh.writelines("MY_KEYWORD2 LOGUNIF 0.1 1")
+
+        ert_config = ErtConfig.from_file("config.ert")
+
+        experiment_id = storage.create_experiment(
+            parameters=ert_config.ensemble_config.parameter_configuration
+        )
+        ensemble_size = 10
+        ensemble = storage.create_ensemble(
+            experiment_id, name="default", ensemble_size=ensemble_size
+        )
+
+        sample_prior(ensemble, range(ensemble_size), random_seed=1234)
+
+        data = ensemble.load_all_gen_kw_data()
+        snapshot.assert_match(data.round(12).to_csv(), "gen_kw_unsorted")
 
 
 @dataclass
