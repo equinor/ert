@@ -10,7 +10,6 @@ from pandas import DataFrame
 from ert.config import (
     ErtConfig,
     Field,
-    ObservationType,
 )
 from ert.data import MeasuredData
 from ert.data._measured_data import ObservationError, ResponseError
@@ -39,13 +38,6 @@ class LibresFacade:
     @property
     def run_path(self) -> str:
         return self.config.runpath_config.runpath_format_string
-
-    def get_data_key_for_obs_key(self, observation_key: str) -> str:
-        obs = self.config.enkf_obs[observation_key]
-        if obs.observation_type == ObservationType.SUMMARY:
-            return next(iter(obs.observations.values())).summary_key  # type: ignore
-        else:
-            return obs.data_key
 
     @staticmethod
     def load_all_misfit_data(ensemble: Ensemble) -> DataFrame:
