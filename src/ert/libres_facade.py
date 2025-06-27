@@ -18,9 +18,6 @@ from ert.data._measured_data import ObservationError, ResponseError
 from .plugins import ErtPluginContext
 
 if TYPE_CHECKING:
-    from ert.config import (
-        EnkfObs,
-    )
     from ert.storage import Ensemble
 
 
@@ -42,9 +39,6 @@ class LibresFacade:
     @property
     def run_path(self) -> str:
         return self.config.runpath_config.runpath_format_string
-
-    def get_observations(self) -> EnkfObs:
-        return self.config.enkf_obs
 
     def get_data_key_for_obs_key(self, observation_key: str) -> str:
         obs = self.config.enkf_obs[observation_key]
