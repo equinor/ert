@@ -105,7 +105,7 @@ def test_that_the_cli_raises_exceptions_when_no_weight_provided_for_es_mda():
 def test_field_init_file_not_readable(monkeypatch):
     config_file_name = "snake_oil_field.ert"
     field_file_rel_path = "fields/permx0.grdecl"
-    os.chmod(field_file_rel_path, 0x0)
+    os.chmod(field_file_rel_path, 0o000)
 
     with warnings.catch_warnings():
         warnings.simplefilter("ignore", category=ConfigWarning)
@@ -164,7 +164,7 @@ def test_unopenable_observation_config_fails_gracefully():
     line_with_observation_config = content_lines[index_line_with_observation_config]
     observation_config_rel_path = line_with_observation_config.split(" ")[1]
     observation_config_abs_path = os.path.join(os.getcwd(), observation_config_rel_path)
-    os.chmod(observation_config_abs_path, 0x0)
+    os.chmod(observation_config_abs_path, 0o000)
 
     with pytest.raises(ConfigValidationError, match="Permission denied:"):
         run_cli(TEST_RUN_MODE, config_file_name)

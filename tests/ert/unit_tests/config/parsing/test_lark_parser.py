@@ -227,7 +227,7 @@ def test_not_executable_job_script_somewhere_in_PATH_fails_gracefully(monkeypatc
     path_location = os.path.join(os.getcwd(), "bin")
     os.mkdir(path_location)
     touch(os.path.join(path_location, script_name))
-    os.chmod(path_location, 0x0)
+    os.chmod(path_location, 0o000)
     monkeypatch.setenv("PATH", path_location, ":")
     config_file_contents = dedent(
         f"""\

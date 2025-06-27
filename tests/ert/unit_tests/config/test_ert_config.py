@@ -1570,7 +1570,7 @@ def test_that_removed_analysis_module_keywords_raises_error(
 def test_ert_config_parser_fails_gracefully_on_unreadable_config_file(caplog, tmp_path):
     config_file = Path(tmp_path) / "config.ert"
     config_file.write_text("")
-    os.chmod(config_file, 0x0)
+    os.chmod(config_file, 0o000)
     caplog.set_level(logging.WARNING)
 
     with pytest.raises(ConfigValidationError, match="Permission"):
