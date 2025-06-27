@@ -1,15 +1,12 @@
 from __future__ import annotations
 
-from collections.abc import Callable, Iterable
 from typing import (
     TYPE_CHECKING,
     Any,
 )
 
-import numpy as np
 from pandas import DataFrame
 
-from ert.analysis import AnalysisEvent, SmootherSnapshot, smoother_update
 from ert.config import (
     ErtConfig,
     Field,
@@ -34,35 +31,6 @@ class LibresFacade:
 
     def __init__(self, ert_config: ErtConfig, _: Any = None) -> None:
         self.config = ert_config
-        self.update_snapshots: dict[str, SmootherSnapshot] = {}
-        self.update_configuration = None
-
-    def smoother_update(
-        self,
-        prior_storage: Ensemble,
-        posterior_storage: Ensemble,
-        run_id: str,
-        observations: Iterable[str],
-        parameters: Iterable[str],
-        progress_callback: Callable[[AnalysisEvent], None] | None = None,
-        global_std_scaling: float = 1.0,
-        rng: np.random.Generator | None = None,
-    ) -> SmootherSnapshot:
-        if rng is None:
-            rng = np.random.default_rng()
-        update_snapshot = smoother_update(
-            prior_storage,
-            posterior_storage,
-            observations,
-            parameters,
-            self.config.analysis_config.observation_settings,
-            self.config.analysis_config.es_settings,
-            rng,
-            progress_callback,
-            global_std_scaling,
-        )
-        self.update_snapshots[run_id] = update_snapshot
-        return update_snapshot
 
     @property
     def user_config_file(self) -> str | None:
