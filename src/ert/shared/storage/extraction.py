@@ -29,7 +29,7 @@ def create_priors(
         if isinstance(priors, GenKwConfig):
             for func in priors.transform_functions:
                 prior: dict[str, str | float] = {
-                    "function": _PRIOR_NAME_MAP[func.transform_function_name],
+                    "function": _PRIOR_NAME_MAP[func.distribution.name.upper()],
                 }
                 for name, value in func.parameter_list.items():
                     # Libres calls it steps, but normal stats uses bins

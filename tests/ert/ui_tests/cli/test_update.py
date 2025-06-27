@@ -11,7 +11,6 @@ from hypothesis import given, note, settings
 from pytest import MonkeyPatch, TempPathFactory
 
 from ert.cli.main import ErtCliError
-from ert.config.gen_kw_config import DISTRIBUTION_PARAMETERS
 from ert.mode_definitions import ENSEMBLE_SMOOTHER_MODE
 from ert.storage import open_storage
 
@@ -26,6 +25,20 @@ names = st.text(
         exclude_characters="\"'$,:%",  # These have specific meaning in configs
     ),
 )
+
+DISTRIBUTION_PARAMETERS: dict[str, list[str]] = {
+    "NORMAL": ["MEAN", "STD"],
+    "LOGNORMAL": ["MEAN", "STD"],
+    "TRUNCATED_NORMAL": ["MEAN", "STD", "MIN", "MAX"],
+    "TRIANGULAR": ["MIN", "MODE", "MAX"],
+    "UNIFORM": ["MIN", "MAX"],
+    "DUNIF": ["STEPS", "MIN", "MAX"],
+    "ERRF": ["MIN", "MAX", "SKEWNESS", "WIDTH"],
+    "DERRF": ["STEPS", "MIN", "MAX", "SKEWNESS", "WIDTH"],
+    "LOGUNIF": ["MIN", "MAX"],
+    "CONST": ["VALUE"],
+    "RAW": [],
+}
 
 
 @st.composite

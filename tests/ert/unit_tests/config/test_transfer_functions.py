@@ -6,7 +6,7 @@ from hypothesis import assume, given
 from hypothesis import strategies as st
 from scipy.stats import norm
 
-from ert.config import TransformFunction
+from ert.config.distribution import get_distribution
 
 
 @pytest.fixture(autouse=True)
@@ -48,7 +48,7 @@ def valid_truncated_normal_params():
 
 @given(nice_floats(), valid_truncated_normal_params())
 def test_that_truncated_normal_stays_within_bounds(x, arg):
-    assert arg[2] <= TransformFunction.trans_truncated_normal(x, arg) <= arg[3]
+    assert arg[2] <= get_distribution("TRUNCATED_NORMAL", arg).transform(x) <= arg[3]
 
 
 @given(
@@ -61,8 +61,8 @@ def test_that_truncated_normal_stays_within_bounds(x, arg):
 def test_that_truncated_normal_is_monotonic(x1x2, arg):
     x1, x2 = x1x2
     assume((x2 - x1) > abs(arg[0] / 1e13) + 1e-13)  # tolerance relative to mean
-    result1 = TransformFunction.trans_truncated_normal(x1, arg)
-    result2 = TransformFunction.trans_truncated_normal(x2, arg)
+    result1 = get_distribution("TRUNCATED_NORMAL", arg).transform(x1)
+    result2 = get_distribution("TRUNCATED_NORMAL", arg).transform(x2)
     # Results should be different unless clamped
     assert (
         result1 < result2
@@ -76,7 +76,7 @@ def test_that_truncated_normal_is_standardized(arg):
     """If `x` is 0 (i.e., the mean of the standard normal distribution),
     the output should be close to `_mean`.
     """
-    assert np.isclose(TransformFunction.trans_truncated_normal(0, arg), arg[0])
+    assert np.isclose(get_distribution("TRUNCATED_NORMAL", arg).transform(0), arg[0])
 
 
 def valid_derrf_parameters():
@@ -104,7 +104,7 @@ def valid_derrf_parameters():
 @given(nice_floats(), valid_derrf_parameters())
 def test_that_derrf_is_within_bounds(x, arg):
     """The result shold always be between (or equal) min and max"""
-    assert arg[1] <= TransformFunction.trans_derrf(x, arg) <= arg[2]
+    assert arg[1] <= get_distribution("DERRF", arg).transform(x) <= arg[2]
 
 
 @given(
@@ -113,7 +113,7 @@ def test_that_derrf_is_within_bounds(x, arg):
 )
 def test_that_derrf_creates_at_least_steps_or_less_distinct_values(xlist, arg):
     """derrf cannot create more than steps distinct values"""
-    assert len({TransformFunction.trans_derrf(x, arg) for x in xlist}) <= arg[0]
+    assert len({get_distribution("DERRF", arg).transform(x) for x in xlist}) <= arg[0]
 
 
 @given(nice_floats(), valid_derrf_parameters())
@@ -129,7 +129,7 @@ def test_that_derrf_corresponds_scaled_binned_normal_cdf(x, arg):
     expected = min_ + expected * (max_ - min_)
     if expected > max_ or expected < min_:
         np.clip(expected, min_, max_)
-    assert np.isclose(TransformFunction.trans_derrf(x, arg), expected)
+    assert np.isclose(get_distribution("DERRF", arg).transform(x), expected)
 
 
 @given(
@@ -142,9 +142,9 @@ def test_that_derrf_corresponds_scaled_binned_normal_cdf(x, arg):
 def test_that_derrf_is_non_strictly_monotone(x_tuple, arg):
     """`derrf` is a non-strict monotone function"""
     x1, x2 = x_tuple
-    assert TransformFunction.trans_derrf(x1, arg) <= TransformFunction.trans_derrf(
-        x2, arg
-    )
+    assert get_distribution("DERRF", arg).transform(x1) <= get_distribution(
+        "DERRF", arg
+    ).transform(x2)
 
 
 def valid_triangular_params():
@@ -166,7 +166,9 @@ def valid_triangular_params():
 @given(nice_floats(), valid_triangular_params())
 def test_that_triangular_is_within_bounds(x, args):
     mode, min_, max_ = args
-    assert min_ <= TransformFunction.trans_triangular(x, [min_, mode, max_]) <= max_
+    assert (
+        min_ <= get_distribution("TRIANGULAR", [min_, mode, max_]).transform(x) <= max_
+    )
 
 
 @given(valid_triangular_params())
@@ -181,7 +183,9 @@ def test_mode_behavior(args):
 
     x = norm.ppf(ymode)
 
-    assert np.isclose(TransformFunction.trans_triangular(x, [min_, mode, max_]), mode)
+    assert np.isclose(
+        get_distribution("TRIANGULAR", [min_, mode, max_]).transform(x), mode
+    )
 
 
 @given(valid_triangular_params())
@@ -204,8 +208,8 @@ def test_that_triangular_is_symmetric_around_mode(args):
     x2 = norm.ppf(ymode + delta)
 
     # Calculate the corresponding triangular values
-    y1 = TransformFunction.trans_triangular(x1, [min_, mode, max_])
-    y2 = TransformFunction.trans_triangular(x2, [min_, mode, max_])
+    y1 = get_distribution("TRIANGULAR", [min_, mode, max_]).transform(x1)
+    y2 = get_distribution("TRIANGULAR", [min_, mode, max_]).transform(x2)
 
     # Check if y1 and y2 are symmetric around the mode
     assert abs((mode - y1) - (y2 - mode)) < 1e-15 * max(
@@ -226,8 +230,8 @@ def test_that_triangular_is_monotonic(args):
         x1 = norm.ppf(ymode + direction * delta)
         x2 = norm.ppf(ymode + direction * 2 * delta)
 
-        y1 = TransformFunction.trans_triangular(x1, [min_, mode, max_])
-        y2 = TransformFunction.trans_triangular(x2, [min_, mode, max_])
+        y1 = get_distribution("TRIANGULAR", [min_, mode, max_]).transform(x1)
+        y2 = get_distribution("TRIANGULAR", [min_, mode, max_]).transform(x2)
 
         # Assert monotonicity
         if direction == -1:

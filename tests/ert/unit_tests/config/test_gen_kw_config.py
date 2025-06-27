@@ -77,7 +77,7 @@ def test_gen_kw_config_get_priors():
             TransformFunctionDefinition("KEY6", "DUNIF", ["3", "0", "1"]),
             TransformFunctionDefinition("KEY7", "ERRF", ["0", "1", "2", "3"]),
             TransformFunctionDefinition("KEY8", "DERRF", ["1", "1", "2", "3", "4"]),
-            TransformFunctionDefinition("KEY9", "LOGUNIF", ["0", "1"]),
+            TransformFunctionDefinition("KEY9", "LOGUNIF", ["1", "2"]),
             TransformFunctionDefinition("KEY10", "CONST", ["10"]),
         ],
         update=True,
@@ -136,7 +136,7 @@ def test_gen_kw_config_get_priors():
     assert {
         "key": "KEY9",
         "function": "LOGUNIF",
-        "parameters": {"MIN": 0, "MAX": 1},
+        "parameters": {"MIN": 1, "MAX": 2},
     } in priors
 
     assert {
@@ -283,11 +283,34 @@ def test_gen_kw_distribution_errors(tmpdir, distribution, mean, std, error):
     [
         ("MYNAME NORMAL 0 1", None),
         ("MYNAME LOGNORMAL 0 1", None),
+        (
+            "MYNAME TRUNCATED_NORMAL 0 1 3 2",
+            "Minimum 3.0 must be strictly less than the maximum"
+            " 2.0 for truncated_normal distribution",
+        ),
         ("MYNAME TRUNCATED_NORMAL 0 1 2 3", None),
         ("MYNAME TRIANGULAR 0 1 2", None),
         ("MYNAME UNIFORM 0 1", None),
-        ("MYNAME DUNIF 0 1 2", None),
+        ("MYNAME DUNIF 2 1 2", None),
+        (
+            "MYNAME DUNIF 0 1 2",
+            "Number of steps 0 must be larger than 1 for duniform distribution",
+        ),
+        (
+            "MYNAME DUNIF 0 2 1",
+            "Minimum 2.0 must be strictly less than the maximum"
+            " 1.0 for duniform distribution",
+        ),
         ("MYNAME ERRF 0 1 2 3", None),
+        (
+            "MYNAME ERRF 3 2 1 1",
+            "Minimum 3.0 must be strictly less than the maximum"
+            " 2.0 for errf distribution",
+        ),
+        (
+            "MYNAME ERRF 3 2 1 -1",
+            "The width -1.0 must be greater than 0 for errf distribution",
+        ),
         ("MYNAME DERRF 3 1 2 3 4", None),
         ("MYNAME LOGUNIF 0 1", None),
         ("MYNAME CONST 0", None),
@@ -417,7 +440,7 @@ def test_gen_kw_trans_func(tmpdir, params, xinput, expected):
             transform_function_definitions=[tfd],
         )
         tf = gkw.transform_functions[0]
-        assert abs(tf.calculate(xinput, float_args) - expected) < 10**-15
+        assert abs(tf.distribution.transform(xinput) - expected) < 10**-15
 
 
 def test_gen_kw_objects_equal(tmpdir):
@@ -540,6 +563,46 @@ def test_suggestion_on_empty_parameter_file():
                 {},
             ]
         )
+
+
+@pytest.mark.parametrize(
+    "distribution, minimum, maximum, error",
+    [
+        ("UNIFORM", "0", "1", None),
+        (
+            "UNIFORM",
+            "1.0",
+            "1.0",
+            "Minimum 1.0 must be strictly less than the maximum 1.0",
+        ),
+        (
+            "LOGUNIF",
+            "1.0",
+            "1.0",
+            "Minimum 1.0 must be strictly less than the maximum 1.0",
+        ),
+    ],
+)
+def test_validation_unif_distribution(tmpdir, distribution, minimum, maximum, error):
+    with tmpdir.as_cwd():
+        with open("template.txt", "w", encoding="utf-8") as fh:
+            fh.writelines("MY_KEYWORD <MY_KEYWORD>")
+        config_list = [
+            "KW_NAME",
+            ("template.txt", "MY_KEYWORD <MY_KEYWORD>"),
+            "kw.txt",
+            ("prior.txt", f"MY_KEYWORD {distribution} {minimum} {maximum}"),
+            {},
+        ]
+
+        if error:
+            with pytest.raises(
+                ConfigValidationError,
+                match=error,
+            ):
+                GenKwConfig.from_config_list(config_list)
+        else:
+            GenKwConfig.from_config_list(config_list)
 
 
 @pytest.mark.parametrize(
