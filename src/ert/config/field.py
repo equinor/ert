@@ -10,7 +10,7 @@ from typing import TYPE_CHECKING, Any, Self, cast, overload
 import networkx as nx
 import numpy as np
 import xarray as xr
-from pydantic.dataclasses import dataclass
+from pydantic import field_serializer
 
 from ert.field_utils import FieldFileFormat, Shape, read_field, read_mask, save_field
 from ert.substitutions import substitute_runpath_name
@@ -80,7 +80,6 @@ def adjust_graph_for_masking(
     return G
 
 
-@dataclass
 class Field(ParameterConfig):
     nx: int
     ny: int
@@ -94,6 +93,14 @@ class Field(ParameterConfig):
     output_file: Path
     grid_file: str
     mask_file: Path | None = None
+
+    @field_serializer("output_file")
+    def serialize_output_file(self, path: Path):
+        return str(path)
+
+    @field_serializer("mask_file")
+    def serialize_mask_file(self, path: Path | None):
+        return str(path) if path is not None else "null"
 
     @property
     def parameter_keys(self) -> list[str]:

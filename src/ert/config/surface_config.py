@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-from dataclasses import dataclass
 from pathlib import Path
 from typing import TYPE_CHECKING, Self, cast
 
@@ -8,6 +7,7 @@ import networkx as nx
 import numpy as np
 import xarray as xr
 import xtgeo
+from pydantic import field_serializer
 
 from ert.substitutions import substitute_runpath_name
 
@@ -22,7 +22,6 @@ if TYPE_CHECKING:
     from ert.storage import Ensemble
 
 
-@dataclass
 class SurfaceConfig(ParameterConfig):
     ncol: int
     nrow: int
@@ -35,6 +34,14 @@ class SurfaceConfig(ParameterConfig):
     forward_init_file: str
     output_file: Path
     base_surface_path: str
+
+    @field_serializer("output_file")
+    def serialize_output_file(self, output_file: Path):
+        return str(output_file)
+
+    @field_serializer("base_surface_path")
+    def serialize_base_surface_path(self, base_surface_path: Path):
+        return str(base_surface_path)
 
     @property
     def parameter_keys(self) -> list[str]:

@@ -5,6 +5,7 @@ import os
 import warnings
 from collections.abc import Callable
 from dataclasses import dataclass
+from functools import cached_property
 from hashlib import sha256
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, Self, cast, overload
@@ -14,6 +15,7 @@ import numpy as np
 import pandas as pd
 import polars as pl
 import xarray as xr
+from pydantic import BaseModel
 from scipy.stats import norm
 from typing_extensions import TypedDict
 
@@ -49,30 +51,31 @@ def _get_abs_path(file: str | None) -> str | None:
     return file
 
 
-@dataclass
-class TransformFunctionDefinition:
+class TransformFunctionDefinition(BaseModel):
     name: str
     param_name: str
     values: list[Any]
 
 
-@dataclass
 class GenKwConfig(ParameterConfig):
     transform_function_definitions: list[TransformFunctionDefinition]
 
-    def __post_init__(self) -> None:
-        self.transform_functions: list[TransformFunction] = []
+    @cached_property
+    def transform_functions(self):
+        transform_functions: list[TransformFunction] = []
         for e in self.transform_function_definitions:
             if isinstance(e, dict):
-                self.transform_functions.append(
+                transform_functions.append(
                     self._parse_transform_function_definition(
                         TransformFunctionDefinition(**e)
                     )
                 )
             else:
-                self.transform_functions.append(
-                    self._parse_transform_function_definition(e)
-                )
+                transform_functions.append(self._parse_transform_function_definition(e))
+
+        return transform_functions
+
+    def __post_init__(self) -> None:
         self._validate()
 
     def __contains__(self, item: str) -> bool:
