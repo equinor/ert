@@ -6,7 +6,7 @@ from collections.abc import Callable
 from dataclasses import dataclass
 from hashlib import sha256
 from pathlib import Path
-from typing import TYPE_CHECKING, Annotated, Self, cast, overload
+from typing import TYPE_CHECKING, Annotated, Any, Self, cast, overload
 
 import networkx as nx
 import numpy as np
@@ -65,6 +65,13 @@ def _get_abs_path(file: str | None) -> str | None:
 @dataclass
 class TransformFunctionDefinition:
     name: str
+    param_name: str
+    values: list[Any]
+
+
+@dataclass
+class TransformFunction:
+    name: str
     distribution: Annotated[
         TransUnifSettings
         | TransLogNormalSettings
@@ -86,12 +93,18 @@ class GenKwConfig(ParameterConfig):
     transform_function_definitions: list[TransformFunctionDefinition]
 
     def __post_init__(self) -> None:
-        self.transform_functions: list[TransformFunctionDefinition] = []
+        self.transform_functions: list[TransformFunction] = []
         for e in self.transform_function_definitions:
             if isinstance(e, dict):
-                self.transform_functions.append(TransformFunctionDefinition(**e))
+                self.transform_functions.append(
+                    self._parse_transform_function_definition(
+                        TransformFunctionDefinition(**e)
+                    )
+                )
             else:
-                self.transform_functions.append(e)
+                self.transform_functions.append(
+                    self._parse_transform_function_definition(e)
+                )
 
     def __contains__(self, item: str) -> bool:
         return item in [v.name for v in self.transform_function_definitions]
@@ -195,7 +208,8 @@ class GenKwConfig(ParameterConfig):
                     transform_function_definitions.append(
                         TransformFunctionDefinition(
                             name=items[0],
-                            distribution=get_distribution(items[1], items[2:]),
+                            param_name=items[1],
+                            values=items[2:],
                         )
                     )
         if not transform_function_definitions:
@@ -346,7 +360,7 @@ class GenKwConfig(ParameterConfig):
                 {
                     "key": tf.name,
                     "function": tf.distribution.name,
-                    "parameters": tf.distribution.model_dump(),
+                    "parameters": tf.distribution.__dict__(),
                 }
             )
 
@@ -367,7 +381,7 @@ class GenKwConfig(ParameterConfig):
         return array
 
     def transform_col(self, param_name: str) -> Callable[[float], float]:
-        tf: TransformFunctionDefinition | None = None
+        tf: TransformFunction | None = None
         for tf in self.transform_functions:
             if tf.name == param_name:
                 break
@@ -441,3 +455,11 @@ class GenKwConfig(ParameterConfig):
             value = rng.standard_normal(1)
             parameter_values.append(value[0])
         return np.array(parameter_values)
+
+    def _parse_transform_function_definition(
+        self,
+        t: TransformFunctionDefinition,
+    ) -> TransformFunction:
+        return TransformFunction(
+            name=t.name, distribution=get_distribution(t.param_name, t.values)
+        )
