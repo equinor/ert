@@ -274,11 +274,10 @@ class Field(ParameterConfig):
     ) -> npt.NDArray[np.float64]:
         ds = ensemble.load_parameters(self.name, realizations)
         assert isinstance(ds, xr.Dataset)
-        ensemble_size = len(ds.realizations)
         da = xr.DataArray(
             [
                 np.ma.MaskedArray(data=d, mask=self.mask).compressed()  # type: ignore
-                for d in ds["values"].values.reshape(ensemble_size, -1)
+                for d in ds["values"].values.reshape(ensemble.ensemble_size, -1)
             ]
         )
         return da.T.to_numpy()
