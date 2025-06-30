@@ -346,7 +346,9 @@ def test_everest2ropt_snapshot(case, snapshot):
     snapshot.assert_match(ropt_config_str, "ropt_config.json")
 
 
-def test_everest2ropt_validation_error(ever_config, monkeypatch) -> None:
+def test_everest2ropt_validation_error(
+    change_to_tmpdir, ever_config, monkeypatch
+) -> None:
     def _patched_everest2ropt(*args, **kwargs):
         ropt_dict, initial_value = everest2ropt(*args, **kwargs)
         ropt_dict["foo"] = "bar"
