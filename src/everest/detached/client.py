@@ -133,18 +133,22 @@ def extract_errors_from_file(path: str) -> list[str]:
 
 def wait_for_server(output_dir: str, timeout: int | float) -> None:
     """
-    Checks everest server has started _HTTP_REQUEST_RETRY times. Waits
-    progressively longer between each check.
+    Waits until the everest server has started. Polls every second
+    for server availability until timeout (measured in seconds).
 
-    Raise an exception when the timeout is reached.
+    Raise an exception if no response within the timeout.
     """
-    sleep_time_increment = float(timeout) / (2**_HTTP_REQUEST_RETRY - 1)
-    for retry_count in range(_HTTP_REQUEST_RETRY):
+    sleep_time: float = 1.0
+    slept_time: float = 0.0
+    while slept_time <= timeout:
         if server_is_running(*ServerConfig.get_server_context(output_dir)):
+            logger.info(f"Waited {slept_time:g} seconds before everest server was up")
             return
-        else:
-            time.sleep(sleep_time_increment * (2**retry_count))
-    raise RuntimeError("Failed to get reply from server within configured timeout.")
+        if slept_time + sleep_time > timeout:
+            break
+        time.sleep(sleep_time)
+        slept_time += sleep_time
+    raise RuntimeError(f"Failed to get reply from server within {slept_time:g} seconds")
 
 
 def wait_for_server_to_stop(
