@@ -26,7 +26,6 @@ from ert.run_models import (
     initial_ensemble_run_model,
     run_model,
 )
-from ert.substitutions import Substitutions
 
 EXPECTED_CALL_ORDER_WITH_ONE_UPDATE = [
     call(
@@ -135,7 +134,7 @@ def test_hook_call_order(monkeypatch, use_tmpdir, cls, extra_args, expected_call
         env_pr_fm_step=MagicMock(spec=dict),
         runpath_config=ModelConfig(),
         forward_model_steps=MagicMock(),
-        substitutions=Substitutions(),
+        substitutions={},
         hooked_workflows=MagicMock(spec=dict),
         log_path=Path(""),
         status_queue=queue.SimpleQueue(),

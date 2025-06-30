@@ -14,7 +14,6 @@ from ert.config import ErtConfig, ModelConfig, QueueConfig
 from ert.ensemble_evaluator import EndEvent, EvaluatorServerConfig
 from ert.ensemble_evaluator.snapshot import EnsembleSnapshot
 from ert.run_models.run_model import RunModel, UserCancelled
-from ert.substitutions import Substitutions
 
 
 @pytest.fixture(autouse=True)
@@ -39,7 +38,7 @@ def create_run_model(**kwargs):
         "queue_config": MagicMock(spec=QueueConfig),
         "forward_model_steps": MagicMock(spec=list),
         "status_queue": MagicMock(spec=SimpleQueue),
-        "substitutions": MagicMock(spec=Substitutions),
+        "substitutions": MagicMock(spec=dict),
         "hooked_workflows": MagicMock(spec=dict),
         "active_realizations": MagicMock(spec=list),
         "random_seed": 123,
@@ -137,10 +136,9 @@ def test_check_if_runpath_exists_with_substitutions(
     use_tmpdir,
 ):
     model_config = ModelConfig(runpath_format_string=run_path)
-    subs_list = Substitutions()
     brm = create_run_model(
         runpath_config=model_config,
-        substitutions=subs_list,
+        substitutions={},
         active_realizations=active_realizations_mask,
         start_iteration=start_iteration,
         _total_iterations=number_of_iterations,
@@ -163,10 +161,9 @@ def test_get_number_of_existing_runpaths(
 ):
     run_path = "out/realization-%d/iter-%d"
     model_config = ModelConfig(runpath_format_string=run_path)
-    subs_list = Substitutions()
     brm = create_run_model(
         runpath_config=model_config,
-        substitutions=subs_list,
+        substitutions={},
         active_realizations=active_realizations_mask,
     )
 
@@ -199,11 +196,10 @@ def test_delete_run_path(run_path_format, active_realizations):
     share_path = Path("share")
     os.makedirs(share_path)
     model_config = ModelConfig(runpath_format_string=run_path_format)
-    subs_list = Substitutions({"<ITER>": "0", "<ERTCASE>": "Case_Name"})
 
     brm = create_run_model(
         runpath_config=model_config,
-        substitutions=subs_list,
+        substitutions={"<ITER>": "0", "<ERTCASE>": "Case_Name"},
         active_realizations=active_realizations,
     )
 

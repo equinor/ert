@@ -24,7 +24,6 @@ from ert.config.parsing import ConfigKeys as ErtConfigKeys
 from ert.config.workflow_job import ExecutableWorkflow, _WorkflowJob
 from ert.plugins import ErtPluginContext
 from ert.plugins.plugin_manager import ErtPluginManager
-from ert.substitutions import Substitutions
 from everest.config import EverestConfig
 from everest.config.forward_model_config import SummaryResults
 from everest.config.install_data_config import InstallDataConfig
@@ -413,7 +412,7 @@ def _extract_results(ever_config: EverestConfig, ert_config: dict[str, Any]) -> 
 
 def get_substitutions(
     config_dict: ConfigDict, model_config: ModelConfig, runpath_file: Path, num_cpu: int
-) -> Substitutions:
+) -> dict[str, str]:
     substitutions = _substitutions_from_dict(config_dict)
     substitutions["<RUNPATH_FILE>"] = str(runpath_file)
     substitutions["<RUNPATH>"] = model_config.runpath_format_string
@@ -455,7 +454,7 @@ def _get_installed_forward_model_steps(
 
 
 def get_forward_model_steps(
-    ever_config: EverestConfig, config_dict: ConfigDict, substitutions: Substitutions
+    ever_config: EverestConfig, config_dict: ConfigDict, substitutions: dict[str, str]
 ) -> tuple[list[ForwardModelStep], dict[str, dict[str, Any]]]:
     installed_forward_model_steps = _get_installed_forward_model_steps(
         ever_config, config_dict

@@ -11,7 +11,6 @@ from ert.config.workflow_job import (
     ExecutableWorkflow,
     workflow_job_from_file,
 )
-from ert.substitutions import Substitutions
 from ert.workflow_runner import WorkflowJobRunner, WorkflowRunner
 from tests.ert.utils import wait_until
 
@@ -170,10 +169,9 @@ def test_workflow_run():
 
     dump_job = workflow_job_from_file("dump_job", name="DUMP")
 
-    context = Substitutions()
-    context["<PARAM>"] = "text"
-
-    workflow = Workflow.from_file("dump_workflow", context, {"DUMP": dump_job})
+    workflow = Workflow.from_file(
+        "dump_workflow", {"<PARAM>": "text"}, {"DUMP": dump_job}
+    )
 
     assert len(workflow) == 2
 
@@ -200,7 +198,7 @@ def test_workflow_thread_cancel_ert_script():
 
     wait_job = workflow_job_from_file("wait_job", name="WAIT")
 
-    workflow = Workflow.from_file("wait_workflow", Substitutions(), {"WAIT": wait_job})
+    workflow = Workflow.from_file("wait_workflow", {}, {"WAIT": wait_job})
 
     assert len(workflow) == 3
 
@@ -239,7 +237,7 @@ def test_workflow_thread_cancel_external():
         name="WAIT",
         config_file="wait_job",
     )
-    workflow = Workflow.from_file("wait_workflow", Substitutions(), {"WAIT": wait_job})
+    workflow = Workflow.from_file("wait_workflow", {}, {"WAIT": wait_job})
 
     assert len(workflow) == 3
 
@@ -269,7 +267,7 @@ def test_workflow_failed_job():
         name="DUMP",
         config_file="dump_job",
     )
-    workflow = Workflow.from_file("dump_workflow", Substitutions(), {"DUMP": dump_job})
+    workflow = Workflow.from_file("dump_workflow", {}, {"DUMP": dump_job})
     assert len(workflow) == 2
 
     workflow_runner = WorkflowRunner(workflow, fixtures={})
@@ -301,7 +299,7 @@ def test_workflow_success():
     )
     workflow = Workflow.from_file(
         "fast_wait_workflow",
-        Substitutions(),
+        {},
         {"WAIT": wait_job, "EXTERNAL_WAIT": external_job},
     )
 
@@ -337,7 +335,7 @@ def test_workflow_stops_with_stopping_job():
 
     workflow = Workflow.from_file(
         src_file="dump_failing_workflow",
-        context=Substitutions(),
+        context={},
         job_dict={"DUMP": job_failing_dump},
     )
 
@@ -352,7 +350,7 @@ def test_workflow_stops_with_stopping_job():
     assert not job_successful_dump.stop_on_fail
     workflow = Workflow.from_file(
         src_file="dump_failing_workflow",
-        context=Substitutions(),
+        context={},
         job_dict={"DUMP": job_successful_dump},
     )
 
