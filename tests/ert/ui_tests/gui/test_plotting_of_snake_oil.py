@@ -42,7 +42,7 @@ from .conftest import get_child, wait_for_child
         ("SNAKE_OIL_WPR_DIFF@199", ENSEMBLE, "snake_oil"),
     ],
 )
-def plot_figure(qtbot, heat_equation_storage, snake_oil_case_storage, request):
+def plot_figure(qtbot, heat_equation_storage_esmda, snake_oil_case_storage, request):
     key, plot_name, storage_type = request.param
     args_mock = Mock()
 
@@ -50,7 +50,7 @@ def plot_figure(qtbot, heat_equation_storage, snake_oil_case_storage, request):
         storage_config = snake_oil_case_storage
         args_mock.config = "snake_oil.ert"
     else:
-        storage_config = heat_equation_storage
+        storage_config = heat_equation_storage_esmda
         args_mock.config = "config.ert"
 
     # For dark storage not to hang
