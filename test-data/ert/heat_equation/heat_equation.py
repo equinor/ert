@@ -71,11 +71,11 @@ if __name__ == "__main__":
     init_temp_scale = parameters["INIT_TEMP_SCALE"]
     corr_length = parameters["CORR_LENGTH"]
 
-    cond = sample_prior_conductivity(
-        ensemble_size=1, nx=nx, rng=rng, corr_length=float(corr_length["x"])
-    ).reshape(nx, nx)
-
     if iteration == 0:
+        cond = sample_prior_conductivity(
+            ensemble_size=1, nx=nx, rng=rng, corr_length=float(corr_length["x"])
+        ).reshape(nx, nx)
+
         resfo.write(
             "cond.bgrdecl", [("COND    ", cond.flatten(order="F").astype(np.float32))]
         )
@@ -90,7 +90,7 @@ if __name__ == "__main__":
     # Calculate maximum `dt`.
     # If higher values are used, the numerical solution will become unstable.
     # Note that this could be avoided if we used an implicit solver.
-    dt = dx**2 / (4 * max(np.max(cond), np.max(cond)))
+    dt = dx**2 / (4 * np.max(cond))
 
     scaled_u_init = u_init * float(init_temp_scale["t"])
 
