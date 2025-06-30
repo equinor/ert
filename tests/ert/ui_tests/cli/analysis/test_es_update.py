@@ -187,6 +187,7 @@ def test_that_update_works_with_failed_realizations():
                 import numpy as np
                 import sys
                 import json
+                import os
 
                 def _load_coeffs(filename):
                     with open(filename, encoding="utf-8") as f:
@@ -196,7 +197,11 @@ def test_that_update_works_with_failed_realizations():
                     return coeffs["a"] * x**2 + coeffs["b"] * x + coeffs["c"]
 
                 if __name__ == "__main__":
-                    if np.random.random(1) > 0.5:
+                    # Kill one realization per iteration
+                    if (
+                        os.getenv("_ERT_REALIZATION_NUMBER") ==
+                        os.getenv("_ERT_ITERATION_NUMBER")
+                        ):
                         sys.exit(1)
                     coeffs = _load_coeffs("parameters.json")
                     output = [_evaluate(coeffs, x) for x in range(10)]
@@ -213,6 +218,8 @@ def test_that_update_works_with_failed_realizations():
     run_cli(
         ENSEMBLE_SMOOTHER_MODE,
         "--disable-monitoring",
+        "--realizations",
+        "0-2",
         "poly.ert",
     )
 
