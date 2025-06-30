@@ -21,33 +21,35 @@ def heat_equation(
     rng: np.random.Generator,
     scale: float | None = None,
 ) -> npt.NDArray[np.float64]:
-    """2D heat equation that suppoheat_erts field of heat coefficients.
+    """2D heat equation that supports ert fields of heat coefficients.
 
     Based on:
     https://levelup.gitconnected.com/solving-2d-heat-equation-numerically-using-python-3334004aa01a
     """
     u_ = u.copy()
     nx = u.shape[1]  # number of grid cells
-    assert cond.shape == (nx, nx)
-
     gamma = (cond * dt) / (dx**2)
-    plate_length = u.shape[1]
-    for k in range(k_start, k_end - 1, 1):
-        for i in range(1, plate_length - 1, dx):
-            for j in range(1, plate_length - 1, dx):
-                noise = rng.normal(scale=scale) if scale is not None else 0
-                u_[k + 1, i, j] = (
-                    gamma[i, j]
-                    * (
-                        u_[k][i + 1][j]
-                        + u_[k][i - 1][j]
-                        + u_[k][i][j + 1]
-                        + u_[k][i][j - 1]
-                        - 4 * u_[k][i][j]
-                    )
-                    + u_[k][i][j]
-                    + noise
-                )
+    num_timesteps = k_end - k_start - 1
+    if scale is not None:
+        noise = rng.normal(scale=scale, size=(num_timesteps, nx - 2, nx - 2))
+    else:
+        noise = np.zeros((num_timesteps, nx - 2, nx - 2))
+
+    for idx, k in enumerate(range(k_start, k_end - 1)):
+        laplacian = (
+            u_[k, 2:, 1:-1]  # u[i+1, j]
+            + u_[k, :-2, 1:-1]  # u[i-1, j]
+            + u_[k, 1:-1, 2:]  # u[i, j+1]
+            + u_[k, 1:-1, :-2]  # u[i, j-1]
+            - 4 * u_[k, 1:-1, 1:-1]  # -4*u[i, j]
+        )
+
+        if scale is not None:
+            u_[k + 1, 1:-1, 1:-1] = (
+                gamma[1:-1, 1:-1] * laplacian + u_[k, 1:-1, 1:-1] + noise[idx]
+            )
+        else:
+            u_[k + 1, 1:-1, 1:-1] = gamma[1:-1, 1:-1] * laplacian + u_[k, 1:-1, 1:-1]
 
     return u_
 
