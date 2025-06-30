@@ -28,7 +28,6 @@ def heat_equation(
     """
     u_ = u.copy()
     nx = u.shape[1]  # number of grid cells
-    nx, ny = u.shape
     assert cond.shape == (nx, nx)
 
     gamma = (cond * dt) / (dx**2)
@@ -47,7 +46,7 @@ def heat_equation(
         )
         # Add noise if needed
         if scale is not None:
-            noise = rng.normal(0, scale, size=(ny - 2, nx - 2))
+            noise = rng.normal(0, scale, size=(nx - 2, nx - 2))
             u_[k + 1, 1:-1, 1:-1] += noise
 
     return u_
