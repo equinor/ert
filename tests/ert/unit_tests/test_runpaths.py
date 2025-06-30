@@ -1,7 +1,6 @@
 import pytest
 
 from ert.runpaths import Runpaths
-from ert.substitutions import Substitutions
 
 
 @pytest.mark.parametrize(
@@ -53,12 +52,11 @@ def test_runpath_file(tmp_path, job_format, runpath_format, expected_contents):
     runpath_file = tmp_path / "runpath_file"
 
     assert not runpath_file.exists()
-    context = Substitutions()
     runpaths = Runpaths(
         job_format,
         runpath_format,
         runpath_file,
-        context,
+        {},
     )
     runpaths.write_runpath_list([0, 1], [3, 4])
 
@@ -68,13 +66,11 @@ def test_runpath_file(tmp_path, job_format, runpath_format, expected_contents):
 def test_runpath_file_writer_substitution(tmp_path):
     runpath_file = tmp_path / "runpath_file"
 
-    context = Substitutions()
-    context["<casename>"] = "my_case"
     runpaths = Runpaths(
         "<casename>_job",
         "/path/<casename>/ensemble-<IENS>/iteration<ITER>",
         runpath_file,
-        context,
+        {"<casename>": "my_case"},
     )
 
     runpaths.write_runpath_list([1], [1])
@@ -88,13 +84,11 @@ def test_runpath_file_writer_substitution(tmp_path):
 def test_runpath_file_writes_eclbase_when_present(tmp_path):
     runpath_file = tmp_path / "runpath_file"
 
-    context = Substitutions()
-    context["<casename>"] = "my_case"
     runpaths = Runpaths(
         "<casename>_job",
         "/path/<casename>/ensemble-<IENS>/iteration<ITER>",
         runpath_file,
-        context,
+        {"<casename>": "my_case"},
         "path/to/eclbase",
     )
 

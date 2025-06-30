@@ -60,6 +60,7 @@ from everest.strings import EVEREST, STORAGE_DIR
 
 from ..run_arg import RunArg, create_run_arguments
 from ..storage.local_ensemble import EverestRealizationInfo
+from ..substitutions import Substitutions
 from .event import EverestBatchResultEvent, EverestStatusEvent
 from .run_model import RunModel, StatusEvents
 
@@ -216,8 +217,9 @@ class EverestRunModel(RunModel):
         )
 
         env_vars = {}
+        substituter = Substitutions(substitutions)
         for key, val in config_dict.get("SETENV", []):  # type: ignore
-            env_vars[key] = substitutions.substitute(val)
+            env_vars[key] = substituter.substitute(val)
 
         transforms: EverestOptModelTransforms = get_optimization_domain_transforms(
             everest_config.controls,

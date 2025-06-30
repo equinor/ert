@@ -13,7 +13,7 @@ from typing import Any, ClassVar, Self, no_type_check, overload
 
 import polars as pl
 from numpy.random import SeedSequence
-from pydantic import BaseModel, Field, field_validator, model_validator
+from pydantic import BaseModel, Field, model_validator
 from pydantic import ValidationError as PydanticValidationError
 
 from ert.plugins import ErtPluginManager, fixtures_per_hook
@@ -119,7 +119,7 @@ def _read_time_map(file_contents: str) -> list[datetime]:
 
 
 def create_forward_model_json(
-    context: Substitutions,
+    context: dict[str, str],
     forward_model_steps: list[ForwardModelStep],
     run_id: str | None,
     iens: int = 0,
@@ -134,6 +134,8 @@ def create_forward_model_json(
     if env_pr_fm_step is None:
         env_pr_fm_step = {}
 
+    context_substitutions = Substitutions(context)
+
     class Substituter:
         def __init__(self, fm_step) -> None:
             fm_step_args = ",".join(
@@ -144,11 +146,12 @@ def create_forward_model_json(
                 f"parsing forward model step `FORWARD_MODEL {fm_step_description}` - "
                 "reconstructed, with defines applied during parsing"
             )
-            self.copy_private_args = Substitutions()
-            for key, val in fm_step.private_args.items():
-                self.copy_private_args[key] = context.substitute_real_iter(
-                    val, iens, itr
-                )
+            self.copy_private_args = Substitutions(
+                {
+                    key: context_substitutions.substitute_real_iter(val, iens, itr)
+                    for key, val in fm_step.private_args.items()
+                }
+            )
 
         @overload
         def substitute(self, string: str) -> str: ...
@@ -162,7 +165,7 @@ def create_forward_model_json(
             string = self.copy_private_args.substitute(
                 string, self.substitution_context_hint, 1, warn_max_iter=False
             )
-            return context.substitute_real_iter(string, iens, itr)
+            return context_substitutions.substitute_real_iter(string, iens, itr)
 
         def filter_env_dict(self, env_dict: dict[str, str]) -> dict[str, str] | None:
             substituted_dict = {}
@@ -400,7 +403,7 @@ def workflow_jobs_from_dict(
 def create_and_hook_workflows(
     content_dict: ConfigDict,
     workflow_jobs: dict[str, _WorkflowJob],
-    substitutions: Substitutions,
+    substitutions: dict[str, str],
 ) -> tuple[dict[str, Workflow], defaultdict[HookRuntime, list[Workflow]]]:
     hook_workflow_info = content_dict.get(ConfigKeys.HOOK_WORKFLOW, [])
     workflow_info = content_dict.get(ConfigKeys.LOAD_WORKFLOW, [])
@@ -495,7 +498,7 @@ def create_and_hook_workflows(
 @staticmethod
 def workflows_from_dict(
     content_dict: ConfigDict,
-    substitutions: Substitutions,
+    substitutions: dict[str, str],
     installed_workflows: Mapping[str, _WorkflowJob] | None = None,
 ) -> tuple[
     dict[str, _WorkflowJob],
@@ -562,7 +565,7 @@ def installed_forward_model_steps_from_dict(config_dict) -> dict[str, ForwardMod
 
 def create_list_of_forward_model_steps_to_run(
     installed_steps: dict[str, ForwardModelStep],
-    substitutions: Substitutions,
+    substitutions: dict[str, str],
     config_dict: dict,
     preinstalled_forward_model_steps: dict[str, ForwardModelStep],
     env_pr_fm_step: dict[str, dict[str, Any]],
@@ -570,9 +573,10 @@ def create_list_of_forward_model_steps_to_run(
     errors = []
     fm_steps: list[ForwardModelStep] = []
 
+    substituter = Substitutions(substitutions)
     env_vars = {}
     for key, val in config_dict.get("SETENV", []):
-        env_vars[key] = substitutions.substitute(val)
+        env_vars[key] = substituter.substitute(val)
 
     for fm_step_description in config_dict.get(ConfigKeys.FORWARD_MODEL, []):
         if len(fm_step_description) > 1:
@@ -580,7 +584,7 @@ def create_list_of_forward_model_steps_to_run(
         else:
             unsubstituted_step_name = fm_step_description[0]
             args = []
-        fm_step_name = substitutions.substitute(unsubstituted_step_name)
+        fm_step_name = substituter.substitute(unsubstituted_step_name)
         try:
             fm_step = copy.deepcopy(installed_steps[fm_step_name])
 
@@ -596,7 +600,8 @@ def create_list_of_forward_model_steps_to_run(
                 )
             )
             continue
-        fm_step.private_args = Substitutions()
+
+        fm_step.private_args = {}
         for arg in args:
             match arg:
                 case key, val:
@@ -675,7 +680,7 @@ class ErtConfig(BaseModel):
     ACTIVATE_SCRIPT: ClassVar[str | None] = None
     RESERVED_KEYWORDS: ClassVar[list[str]] = RESERVED_KEYWORDS
 
-    substitutions: Substitutions = Field(default_factory=Substitutions)
+    substitutions: dict[str, str] = Field(default_factory=dict)
     ensemble_config: EnsembleConfig = Field(default_factory=EnsembleConfig)
     ens_path: str = DEFAULT_ENSPATH
     env_vars: dict[str, str] = Field(default_factory=dict)
@@ -750,13 +755,6 @@ class ErtConfig(BaseModel):
     @property
     def observations(self) -> dict[str, pl.DataFrame]:
         return self.enkf_obs.datasets
-
-    @field_validator("substitutions", mode="before")
-    @classmethod
-    def convert_to_substitutions(cls, v: dict[str, str]) -> Substitutions:
-        if isinstance(v, Substitutions):
-            return v
-        return Substitutions(v)
 
     def __eq__(self, other: object) -> bool:
         if not isinstance(other, ErtConfig):
@@ -1058,8 +1056,9 @@ class ErtConfig(BaseModel):
                 raise ConfigValidationError.from_collected(dm_errors)
 
         env_vars = {}
+        substituter = Substitutions(substitutions)
         for key, val in config_dict.get("SETENV", []):
-            env_vars[key] = substitutions.substitute(val)
+            env_vars[key] = substituter.substitute(val)
         try:
             return cls(
                 substitutions=substitutions,
@@ -1096,7 +1095,7 @@ class ErtConfig(BaseModel):
     def _create_list_of_forward_model_steps_to_run(
         cls,
         installed_steps: dict[str, ForwardModelStep],
-        substitutions: Substitutions,
+        substitutions: dict[str, str],
         config_dict: dict,
     ) -> list[ForwardModelStep]:
         return create_list_of_forward_model_steps_to_run(
@@ -1384,7 +1383,7 @@ def _get_files_in_directory(job_path, errors):
     return files
 
 
-def _substitutions_from_dict(config_dict) -> Substitutions:
+def _substitutions_from_dict(config_dict) -> dict[str, str]:
     subst_list = {}
 
     for key, val in config_dict.get("DEFINE", []):
@@ -1396,7 +1395,7 @@ def _substitutions_from_dict(config_dict) -> Substitutions:
     for key, val in config_dict.get("DATA_KW", []):
         subst_list[key] = val
 
-    return Substitutions(subst_list)
+    return subst_list
 
 
 def uppercase_subkeys_and_stringify_subvalues(

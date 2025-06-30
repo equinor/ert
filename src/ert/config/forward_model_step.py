@@ -5,10 +5,7 @@ from abc import abstractmethod
 from dataclasses import dataclass, field
 from typing import ClassVar, Literal, NotRequired
 
-from pydantic import field_validator
 from typing_extensions import TypedDict, Unpack
-
-from ert.substitutions import Substitutions
 
 from .parsing import ConfigValidationError, ConfigWarning, SchemaItemType
 
@@ -149,20 +146,13 @@ class ForwardModelStep:
     arg_types: list[SchemaItemType] = field(default_factory=list)
     environment: dict[str, int | str] = field(default_factory=dict)
     default_mapping: dict[str, int | str] = field(default_factory=dict)
-    private_args: Substitutions = field(default_factory=Substitutions)
+    private_args: dict[str, str] = field(default_factory=dict)
 
     default_env: ClassVar[dict[str, str]] = {
         "_ERT_ITERATION_NUMBER": "<ITER>",
         "_ERT_REALIZATION_NUMBER": "<IENS>",
         "_ERT_RUNPATH": "<RUNPATH>",
     }
-
-    @field_validator("private_args", mode="before")
-    @classmethod
-    def convert_to_substitutions(cls, v: dict[str, str]) -> Substitutions:
-        if isinstance(v, Substitutions):
-            return v
-        return Substitutions(v)
 
     def validate_pre_experiment(self, fm_step_json: ForwardModelStepJSON) -> None:
         """
@@ -255,7 +245,7 @@ class ForwardModelStepPlugin(ForwardModelStep):
             arg_types=[],
             environment=environment,
             default_mapping=default_mapping,
-            private_args=Substitutions(),
+            private_args={},
         )
 
     @staticmethod

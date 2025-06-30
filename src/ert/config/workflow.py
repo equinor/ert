@@ -5,8 +5,6 @@ from collections.abc import Iterator
 from dataclasses import dataclass
 from typing import Any
 
-from ert.substitutions import Substitutions
-
 from .parsing import ConfigValidationError, ErrorInfo, init_workflow_schema, parse
 from .parsing.types import Defines
 from .workflow_job import _WorkflowJob
@@ -86,7 +84,7 @@ class Workflow:
     def from_file(
         cls,
         src_file: str,
-        context: Substitutions | None,
+        context: dict[str, str] | None,
         job_dict: dict[str, _WorkflowJob],
     ) -> Workflow:
         cmd_list = cls._parse_command_list(

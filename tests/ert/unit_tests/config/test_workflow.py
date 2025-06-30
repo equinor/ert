@@ -5,7 +5,6 @@ import pytest
 from hypothesis import given, strategies
 
 from ert.config import ConfigValidationError, Workflow, _WorkflowJob
-from ert.substitutions import Substitutions
 
 
 @pytest.mark.usefixtures("use_tmpdir")
@@ -32,9 +31,7 @@ def test_that_failure_in_parsing_workflow_gives_config_validation_error():
 def test_that_substitution_happens_in_workflow():
     with open("workflow", "w", encoding="utf-8") as f:
         f.write("JOB <A> <B>\n")
-    substlist = Substitutions()
-    substlist["<A>"] = "a"
-    substlist["<B>"] = "b"
+
     job = _WorkflowJob(
         name="JOB",
         min_args=None,
@@ -43,7 +40,10 @@ def test_that_substitution_happens_in_workflow():
     )
     wf = Workflow.from_file(
         "workflow",
-        substlist,
+        {
+            "<A>": "a",
+            "<B>": "b",
+        },
         {"JOB": job},
     )
     assert wf.cmd_list == [(job, ["a", "b"])]

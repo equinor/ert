@@ -20,7 +20,6 @@ from ert.config.forward_model_step import (
     ForwardModelStepValidationError,
 )
 from ert.config.parsing import SchemaItemType
-from ert.substitutions import Substitutions
 
 from .config_dict_generator import config_generators
 
@@ -638,13 +637,11 @@ def test_that_plugin_forward_models_are_installed(tmp_path):
             "_ERT_RUNPATH": "<RUNPATH>",
         },
         "default_mapping": {},
-        "private_args": Substitutions(
-            {
-                "<arg1>": "hello",
-                "<arg2>": "world",
-                "<arg3>": "derpyderp",
-            }
-        ),
+        "private_args": {
+            "<arg1>": "hello",
+            "<arg2>": "world",
+            "<arg3>": "derpyderp",
+        },
     }
 
     for a, v in expected_attrs.items():

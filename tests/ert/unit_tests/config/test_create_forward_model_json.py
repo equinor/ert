@@ -12,12 +12,11 @@ from ert.config.ert_config import (
     _forward_model_step_from_config_contents,
     create_forward_model_json,
 )
-from ert.substitutions import Substitutions
 
 
 @pytest.fixture()
 def context():
-    return Substitutions({"<RUNPATH>": "./"})
+    return {"<RUNPATH>": "./"}
 
 
 @pytest.fixture

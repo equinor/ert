@@ -59,7 +59,6 @@ from ert.plugins import (
 )
 from ert.runpaths import Runpaths
 from ert.storage import Ensemble, Storage, open_storage
-from ert.substitutions import Substitutions
 from ert.trace import tracer
 from ert.utils import log_duration
 from ert.workflow_runner import WorkflowRunner
@@ -156,7 +155,7 @@ class RunModel(BaseModel, ABC):
     runpath_config: ModelConfig
     queue_config: QueueConfig
     forward_model_steps: list[ForwardModelStep]
-    substitutions: Substitutions
+    substitutions: dict[str, str]
     hooked_workflows: defaultdict[HookRuntime, list[Workflow]]
     active_realizations: list[bool]
     log_path: Path

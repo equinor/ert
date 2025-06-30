@@ -1,4 +1,5 @@
 from collections.abc import Iterable
+from functools import cached_property
 from pathlib import Path
 
 from ert.substitutions import Substitutions
@@ -33,14 +34,18 @@ class Runpaths:
         jobname_format: str,
         runpath_format: str,
         filename: str | Path = ".ert_runpath_list",
-        substitutions: Substitutions | None = None,
+        substitutions: dict[str, str] | None = None,
         eclbase: str | None = None,
     ) -> None:
         self._jobname_format = jobname_format
         self.runpath_list_filename = Path(filename)
         self._runpath_format = str(Path(runpath_format).resolve())
-        self._substitutions = substitutions or Substitutions()
+        self._substitutions = substitutions or {}
         self._eclbase = eclbase
+
+    @cached_property
+    def substitutions(self) -> Substitutions:
+        return Substitutions(self._substitutions)
 
     def set_ert_ensemble(self, ensemble_name: str) -> None:
         self._substitutions["<ERT-CASE>"] = ensemble_name
@@ -48,7 +53,7 @@ class Runpaths:
 
     def get_paths(self, realizations: Iterable[int], iteration: int) -> list[str]:
         return [
-            self._substitutions.substitute_real_iter(
+            self.substitutions.substitute_real_iter(
                 self._runpath_format, realization, iteration
             )
             for realization in realizations
@@ -56,7 +61,7 @@ class Runpaths:
 
     def get_jobnames(self, realizations: Iterable[int], iteration: int) -> list[str]:
         return [
-            self._substitutions.substitute_real_iter(
+            self.substitutions.substitute_real_iter(
                 self._jobname_format, realization, iteration
             )
             for realization in realizations
@@ -90,12 +95,12 @@ class Runpaths:
         with open(self.runpath_list_filename, "w", encoding="utf-8") as filehandle:
             for iteration in iteration_numbers:
                 for realization in realization_numbers:
-                    job_name_or_eclbase = self._substitutions.substitute_real_iter(
+                    job_name_or_eclbase = self.substitutions.substitute_real_iter(
                         self._eclbase or self._jobname_format,
                         realization,
                         iteration,
                     )
-                    runpath = self._substitutions.substitute_real_iter(
+                    runpath = self.substitutions.substitute_real_iter(
                         self._runpath_format, realization, iteration
                     )
 
