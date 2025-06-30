@@ -25,7 +25,12 @@ from ert.__main__ import ert_parser
 from ert.cli.main import run_cli
 from ert.config import ConfigWarning, ErtConfig
 from ert.ensemble_evaluator.config import EvaluatorServerConfig
-from ert.mode_definitions import ENIF_MODE, ENSEMBLE_EXPERIMENT_MODE, ES_MDA_MODE
+from ert.mode_definitions import (
+    ENIF_MODE,
+    ENSEMBLE_EXPERIMENT_MODE,
+    ENSEMBLE_SMOOTHER_MODE,
+    ES_MDA_MODE,
+)
 from ert.storage import open_storage
 
 from .utils import SOURCE_DIR
@@ -160,7 +165,12 @@ def snake_oil_case_storage(copy_snake_oil_case_storage):
 
 
 @pytest.fixture()
-def heat_equation_storage(copy_heat_equation_storage):
+def heat_equation_storage_es(copy_heat_equation_storage_es):
+    return ErtConfig.from_file("config.ert")
+
+
+@pytest.fixture()
+def heat_equation_storage_esmda(copy_heat_equation_storage_esmda):
     return ErtConfig.from_file("config.ert")
 
 
@@ -303,9 +313,18 @@ def fixture_copy_snake_oil_case_storage(_shared_snake_oil_case, tmp_path, monkey
 
 
 @pytest.fixture
-def copy_heat_equation_storage(_shared_heat_equation, tmp_path, monkeypatch):
+def copy_heat_equation_storage_es(_shared_heat_equation_es, tmp_path, monkeypatch):
     monkeypatch.chdir(tmp_path)
-    shutil.copytree(_shared_heat_equation, "heat_equation")
+    shutil.copytree(_shared_heat_equation_es, "heat_equation")
+    monkeypatch.chdir("heat_equation")
+
+
+@pytest.fixture
+def copy_heat_equation_storage_esmda(
+    _shared_heat_equation_esmda, tmp_path, monkeypatch
+):
+    monkeypatch.chdir(tmp_path)
+    shutil.copytree(_shared_heat_equation_esmda, "heat_equation")
     monkeypatch.chdir("heat_equation")
 
 
@@ -388,7 +407,7 @@ def _run_snake_oil(source_root):
     run_cli(parsed)
 
 
-def _run_heat_equation(source_root):
+def _run_heat_equation(source_root, run_mode):
     shutil.copytree(
         os.path.join(source_root, "test-data", "ert", "heat_equation"), "test_data"
     )
@@ -399,27 +418,7 @@ def _run_heat_equation(source_root):
     parsed = ert_parser(
         parser,
         [
-            ES_MDA_MODE,
-            "--disable-monitoring",
-            "config.ert",
-        ],
-    )
-
-    run_cli(parsed)
-
-
-def _run_heat_equation_enif(source_root):
-    shutil.copytree(
-        os.path.join(source_root, "test-data", "ert", "heat_equation"), "test_data"
-    )
-    os.chdir("test_data")
-    with open("config.ert", "a", encoding="utf-8") as fh:
-        fh.write("QUEUE_OPTION LOCAL MAX_RUNNING 2\n")
-    parser = ArgumentParser(prog="test_main")
-    parsed = ert_parser(
-        parser,
-        [
-            ENIF_MODE,
+            run_mode,
             "--disable-monitoring",
             "config.ert",
         ],
@@ -447,17 +446,35 @@ def _shared_snake_oil_case(request, monkeypatch, source_root):
 
 
 @pytest.fixture
-def _shared_heat_equation(request, monkeypatch, source_root):
+def _shared_heat_equation_es(request, monkeypatch, source_root):
     """This fixture will run the heat_equation case to populate storage,
     this is quite slow, but the results will be cached. If something comes
     out of sync, clear the cache and start again.
     """
     snake_path = request.config.cache.mkdir(
-        "heat_equation_data" + os.environ.get("PYTEST_XDIST_WORKER", "")
+        "heat_equation_data_es" + os.environ.get("PYTEST_XDIST_WORKER", "")
     )
     monkeypatch.chdir(snake_path)
     if not os.listdir(snake_path):
-        _run_heat_equation(source_root)
+        _run_heat_equation(source_root, ENSEMBLE_SMOOTHER_MODE)
+    else:
+        monkeypatch.chdir("test_data")
+
+    yield os.getcwd()
+
+
+@pytest.fixture
+def _shared_heat_equation_esmda(request, monkeypatch, source_root):
+    """This fixture will run the heat_equation case to populate storage,
+    this is quite slow, but the results will be cached. If something comes
+    out of sync, clear the cache and start again.
+    """
+    snake_path = request.config.cache.mkdir(
+        "heat_equation_data_esmda" + os.environ.get("PYTEST_XDIST_WORKER", "")
+    )
+    monkeypatch.chdir(snake_path)
+    if not os.listdir(snake_path):
+        _run_heat_equation(source_root, ES_MDA_MODE)
     else:
         monkeypatch.chdir("test_data")
 
@@ -475,7 +492,7 @@ def _shared_heat_equation_enif(request, monkeypatch, source_root):
     )
     monkeypatch.chdir(snake_path)
     if not os.listdir(snake_path):
-        _run_heat_equation_enif(source_root)
+        _run_heat_equation(source_root, ENIF_MODE)
     else:
         monkeypatch.chdir("test_data")
 

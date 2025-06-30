@@ -205,12 +205,12 @@ def test_field_param_update_using_heat_equation_enif_snapshot(
         )
 
 
-def test_field_param_update_using_heat_equation(heat_equation_storage):
+def test_field_param_update_using_heat_equation(heat_equation_storage_es):
     config = ErtConfig.from_file("config.ert")
     with open_storage(config.ens_path, mode="w") as storage:
-        experiment = storage.get_experiment_by_name("es-mda")
-        prior = experiment.get_ensemble_by_name("default_0")
-        posterior = experiment.get_ensemble_by_name("default_1")
+        experiment = storage.get_experiment_by_name("es")
+        prior = experiment.get_ensemble_by_name("iter-0")
+        posterior = experiment.get_ensemble_by_name("iter-1")
 
         prior_result = prior.load_parameters("COND")["values"]
 
@@ -408,7 +408,7 @@ if __name__ == "__main__":
 
 @pytest.mark.timeout(600)
 def test_field_param_update_using_heat_equation_zero_var_params_and_adaptive_loc(
-    heat_equation_storage, caplog
+    heat_equation_storage_es, caplog
 ):
     """Test field parameter updates with zero-variance regions and adaptive
     localization.
@@ -432,8 +432,8 @@ def test_field_param_update_using_heat_equation_zero_var_params_and_adaptive_loc
     """
     config = ErtConfig.from_file("config.ert")
     with open_storage(config.ens_path, mode="w") as storage:
-        experiment = storage.get_experiment_by_name("es-mda")
-        prior = experiment.get_ensemble_by_name("default_0")
+        experiment = storage.get_experiment_by_name("es")
+        prior = experiment.get_ensemble_by_name("iter-0")
         cond = prior.load_parameters("COND")
         init_temp_scale = prior.load_parameters("INIT_TEMP_SCALE")
         corr_length = prior.load_parameters("CORR_LENGTH")
