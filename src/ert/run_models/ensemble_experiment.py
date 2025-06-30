@@ -42,14 +42,13 @@ class EnsembleExperiment(InitialEnsembleRunModel):
 
         self.run_workflows(fixtures=PreExperimentFixtures(random_seed=self.random_seed))
 
-        ensemble = self._sample_and_evaluate_ensemble(
+        self._sample_and_evaluate_ensemble(
             evaluator_server_config,
             None,
             self.target_ensemble,
             rerun_failed_realizations,
             self._ensemble if rerun_failed_realizations else None,
         )
-        self._ensemble_id = ensemble.id
 
         self.run_workflows(
             fixtures=PostExperimentFixtures(

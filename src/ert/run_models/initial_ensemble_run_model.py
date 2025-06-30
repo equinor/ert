@@ -65,8 +65,10 @@ class InitialEnsembleRunModel(RunModel, ABC):
                     np.where(self.active_realizations)[0],
                     design_matrix_group.name,
                 )
-        else:
-            assert ensemble_storage is not None
+            if hasattr(self, "_ensemble_id"):
+                setattr(self, "_ensemble_id", ensemble_storage.id)  # noqa: B010
+
+        assert ensemble_storage is not None
         self.set_env_key("_ERT_EXPERIMENT_ID", str(ensemble_storage.experiment.id))
         self.set_env_key("_ERT_ENSEMBLE_ID", str(ensemble_storage.id))
 
