@@ -166,6 +166,7 @@ norecursedirs = [
     "tests/ert/unit_tests/scheduler/bin"
 ]
 markers = [
+    "memory_test",
     "integration_test",
     "out_of_memory",
     "quick_only",
