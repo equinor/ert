@@ -40,4 +40,4 @@ jobs:
         with:
           token: ${{ secrets.CODSPEED_TOKEN }}
           run: |
-            uv run pytest tests/ert/performance_tests --codspeed --timeout=1200
+            uv run pytest tests/ert/performance_tests --codspeed --timeout=1200 -m "not memory_test"
