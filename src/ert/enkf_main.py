@@ -229,7 +229,7 @@ def create_run_path(
     env_vars: dict[str, str],
     env_pr_fm_step: dict[str, dict[str, Any]],
     forward_model_steps: list[ForwardModelStep],
-    substitutions: Substitutions,
+    substitutions: dict[str, str],
     parameters_file: str,
     runpaths: Runpaths,
     context_env: dict[str, str] | None = None,
@@ -237,6 +237,8 @@ def create_run_path(
     if context_env is None:
         context_env = {}
     runpaths.set_ert_ensemble(ensemble.name)
+
+    substituter = Substitutions(substitutions)
     for run_arg in run_args:
         run_path = Path(run_arg.runpath)
         if run_arg.active:
@@ -253,15 +255,15 @@ def create_run_path(
                 source_file_content,
                 target_file,
             ) in ensemble.experiment.templates_configuration:
-                target_file = substitutions.substitute_real_iter(
+                target_file = substituter.substitute_real_iter(
                     target_file, run_arg.iens, ensemble.iteration
                 )
-                result = substitutions.substitute_real_iter(
+                result = substituter.substitute_real_iter(
                     source_file_content,
                     run_arg.iens,
                     ensemble.iteration,
                 )
-                result = substitutions.substitute_parameters(
+                result = substituter.substitute_parameters(
                     result,
                     param_data,
                 )

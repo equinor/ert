@@ -13,7 +13,6 @@ from ert.config.ert_config import (
     _forward_model_step_from_config_contents,
     create_forward_model_json,
 )
-from ert.substitutions import Substitutions
 
 
 def create_jobs_json(fm_step_list):
@@ -248,7 +247,7 @@ def test_default_env_variables_available_inside_fm_step_context():
     with open("jobs.json", mode="w", encoding="utf-8") as fptr:
         ert_config = ErtConfig(
             forward_model_steps=[step],
-            substitutions=Substitutions({"<RUNPATH>": "./"}),
+            substitutions={"<RUNPATH>": "./"},
         )
         json.dump(
             create_forward_model_json(

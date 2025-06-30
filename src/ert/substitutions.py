@@ -4,11 +4,6 @@ import logging
 import re
 from collections import UserDict
 from collections.abc import Mapping
-from typing import Any
-
-from pydantic import GetCoreSchemaHandler, GetJsonSchemaHandler
-from pydantic.json_schema import JsonSchemaValue
-from pydantic_core import core_schema
 
 logger = logging.getLogger(__name__)
 _PATTERN = re.compile(r"<[^<>]+>")
@@ -31,7 +26,7 @@ class Substitutions(UserDict[str, str]):
         return _substitute(self, to_substitute, context, max_iterations, warn_max_iter)
 
     def substitute_parameters(
-        self, to_substitute: str, data: dict[str, dict[str, float | str]]
+        self, to_substitute: str, data: dict[str, dict[str, str | float]]
     ) -> str:
         for values in data.values():
             for key, value in values.items():
@@ -45,13 +40,16 @@ class Substitutions(UserDict[str, str]):
     def substitute_real_iter(
         self, to_substitute: str, realization: int, iteration: int
     ) -> str:
-        copy_substituter = self.copy()
+        extra_data = {
+            "<IENS>": str(realization),
+            "<ITER>": str(iteration),
+        }
+
         geo_id_key = f"<GEO_ID_{realization}_{iteration}>"
         if geo_id_key in self:
-            copy_substituter["<GEO_ID>"] = self[geo_id_key]
-        copy_substituter["<IENS>"] = str(realization)
-        copy_substituter["<ITER>"] = str(iteration)
-        return copy_substituter.substitute(to_substitute)
+            extra_data["<GEO_ID>"] = self[geo_id_key]
+
+        return Substitutions({**self, **extra_data}).substitute(to_substitute)
 
     def _concise_representation(self) -> str:
         return (
@@ -63,41 +61,6 @@ class Substitutions(UserDict[str, str]):
 
     def __str__(self) -> str:
         return f"Substitutions({self._concise_representation()})"
-
-    @classmethod
-    def __get_pydantic_core_schema__(
-        cls,
-        _source_type: Any,
-        _handler: GetCoreSchemaHandler,
-    ) -> core_schema.CoreSchema:
-        def _serialize(instance: Any, info: Any) -> Any:
-            return dict(instance)
-
-        from_str_schema = core_schema.chain_schema(
-            [
-                core_schema.str_schema(),
-                core_schema.no_info_plain_validator_function(cls),
-            ]
-        )
-
-        return core_schema.json_or_python_schema(
-            json_schema=from_str_schema,
-            python_schema=core_schema.union_schema(
-                [
-                    from_str_schema,
-                    core_schema.is_instance_schema(cls),
-                ]
-            ),
-            serialization=core_schema.plain_serializer_function_ser_schema(
-                _serialize, info_arg=True
-            ),
-        )
-
-    @classmethod
-    def __get_pydantic_json_schema__(
-        cls, _core_schema: core_schema.CoreSchema, handler: GetJsonSchemaHandler
-    ) -> JsonSchemaValue:
-        return handler(core_schema.str_schema())
 
 
 def _substitute(
