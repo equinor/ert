@@ -128,11 +128,6 @@ def copy_egg_test_data_to_tmp(tmp_path, monkeypatch):
 
 
 @pytest.fixture
-def change_to_tmpdir(tmp_path, monkeypatch):
-    monkeypatch.chdir(tmp_path)
-
-
-@pytest.fixture
 def cached_example(pytestconfig):
     cache = pytestconfig.cache
 

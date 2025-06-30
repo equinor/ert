@@ -37,14 +37,14 @@ from ert.run_models import (
     ],
 )
 def test_that_the_model_warns_when_active_realizations_less_min_realizations(
-    mode, storage
+    mode,
+    change_to_tmpdir,
 ):
     """
     Verify that the run model checks that active realizations is equal or higher than
     NUM_REALIZATIONS when running an experiment.
     A warning is issued when NUM_REALIZATIONS is higher than active_realizations.
     """
-
     with pytest.warns(
         ConfigWarning,
         match=(
@@ -56,7 +56,7 @@ def test_that_the_model_warns_when_active_realizations_less_min_realizations(
             ErtConfig.from_file_contents(
                 """\
                 NUM_REALIZATIONS 100
-                MIN_REALIZATION 10
+                MIN_REALIZATIONS 10
                 """
             ),
             Namespace(
