@@ -10,6 +10,7 @@ from ert.storage import open_storage
 from tests.ert.ui_tests.cli.run_cli import run_cli
 
 random_seed_line = "RANDOM_SEED 1234\n\n"
+NUM_REALIZATIONS_TO_TEST = 50
 
 
 def run_cli_ES_with_case(poly_config):
@@ -17,7 +18,7 @@ def run_cli_ES_with_case(poly_config):
         ENSEMBLE_SMOOTHER_MODE,
         "--disable-monitoring",
         "--realizations",
-        "1-50",
+        f"0-{NUM_REALIZATIONS_TO_TEST - 1}",
         poly_config,
         "--experiment-name",
         "test-experiment",
@@ -53,11 +54,11 @@ def test_that_adaptive_localization_with_cutoff_1_equals_ensemble_prior():
 
     with open_storage(storage_path) as storage:
         prior_sample = storage.get_ensemble(prior_ensemble_id).load_parameters_numpy(
-            "COEFFS", np.arange(100)
+            "COEFFS", np.arange(NUM_REALIZATIONS_TO_TEST)
         )
         posterior_sample = storage.get_ensemble(
             posterior_ensemble_id
-        ).load_parameters_numpy("COEFFS", np.arange(100))
+        ).load_parameters_numpy("COEFFS", np.arange(NUM_REALIZATIONS_TO_TEST))
         # Check prior and posterior samples are equal
         assert np.allclose(posterior_sample, prior_sample)
 
@@ -259,11 +260,11 @@ def test_that_adaptive_localization_with_cutoff_0_equals_ESupdate():
     with open_storage(storage_loc) as storage:
         posterior_sample_loc0 = storage.get_ensemble(
             posterior_ensemble_loc0_id
-        ).load_parameters_numpy("COEFFS", np.arange(100))
+        ).load_parameters_numpy("COEFFS", np.arange(NUM_REALIZATIONS_TO_TEST))
     with open_storage(storage_noloc) as storage:
         posterior_sample_noloc = storage.get_ensemble(
             posterior_ensemble_noloc_id
-        ).load_parameters_numpy("COEFFS", np.arange(100))
+        ).load_parameters_numpy("COEFFS", np.arange(NUM_REALIZATIONS_TO_TEST))
 
     # Check posterior sample without adaptive localization and with cut-off 0 are equal
     assert np.allclose(posterior_sample_loc0, posterior_sample_noloc, atol=1e-6)
@@ -291,10 +292,6 @@ def test_that_posterior_generalized_variance_increases_in_cutoff():
 
     with open("poly.ert", "r+", encoding="utf-8") as f:
         lines = f.readlines()
-        for i, line in enumerate(lines):
-            if "NUM_REALIZATIONS 100" in line:
-                lines[i] = "NUM_REALIZATIONS 200\n"
-                break
         lines.insert(2, random_seed_line)
         lines.insert(9, set_adaptive_localization_cutoff1)
 
@@ -325,14 +322,14 @@ def test_that_posterior_generalized_variance_increases_in_cutoff():
 
         prior_sample_cutoff1 = (
             storage.get_ensemble(prior_ensemble_cutoff1_id)
-            .load_parameters_numpy("COEFFS", np.arange(200))
+            .load_parameters_numpy("COEFFS", np.arange(NUM_REALIZATIONS_TO_TEST))
             .T
         )
         prior_cov = np.cov(prior_sample_cutoff1, rowvar=False)
 
         posterior_sample_cutoff1 = (
             storage.get_ensemble(posterior_ensemble_cutoff1_id)
-            .load_parameters_numpy("COEFFS", np.arange(200))
+            .load_parameters_numpy("COEFFS", np.arange(NUM_REALIZATIONS_TO_TEST))
             .T
         )
         posterior_cutoff1_cov = np.cov(posterior_sample_cutoff1, rowvar=False)
@@ -340,7 +337,7 @@ def test_that_posterior_generalized_variance_increases_in_cutoff():
     with open_storage(storage_cutoff2) as storage:
         posterior_sample_cutoff2 = (
             storage.get_ensemble(posterior_ensemble_cutoff2_id)
-            .load_parameters_numpy("COEFFS", np.arange(200))
+            .load_parameters_numpy("COEFFS", np.arange(NUM_REALIZATIONS_TO_TEST))
             .T
         )
         posterior_cutoff2_cov = np.cov(posterior_sample_cutoff2, rowvar=False)
