@@ -408,6 +408,7 @@ def setup_benchmark(tmp_path, request):
         )
 
 
+@pytest.mark.memory_test
 def test_memory_performance_of_joining_observations_and_responses(
     setup_benchmark, tmp_path
 ):
@@ -500,6 +501,7 @@ def setup_es_benchmark(tmp_path, request):
         )
 
 
+@pytest.mark.memory_test
 def test_memory_performance_of_doing_es_update(setup_es_benchmark, tmp_path):
     _, prior, posterior, gen_kw_name, expected_performance = setup_es_benchmark
     with memray.Tracker(tmp_path / "memray.bin"):
@@ -536,6 +538,7 @@ def test_speed_performance_of_doing_es_update(setup_es_benchmark, benchmark):
     benchmark(run)
 
 
+@pytest.mark.memory_test
 def test_memory_performance_of_doing_enif_update(setup_es_benchmark, tmp_path):
     _, prior, posterior, gen_kw_name, expected_performance = setup_es_benchmark
     with memray.Tracker(tmp_path / "memray.bin"):
