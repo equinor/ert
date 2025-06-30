@@ -46,6 +46,7 @@ def poly_template(monkeypatch):
     yield folder
 
 
+@pytest.mark.memory_test
 def test_memory_smoothing(poly_template):
     ert_config = ErtConfig.from_file("poly.ert")
     fill_storage_with_data(poly_template, ert_config)
@@ -73,6 +74,7 @@ def test_memory_smoothing(poly_template):
     assert stats.peak_memory_allocated < 1024**2 * 300
 
 
+@pytest.mark.memory_test
 def test_memory_enif_update(poly_template):
     ert_config = ErtConfig.from_file("poly.ert")
     fill_storage_with_data(poly_template, ert_config)
@@ -180,6 +182,7 @@ def make_summary_data(
     )
 
 
+@pytest.mark.memory_test
 @pytest.mark.limit_memory("130 MB")
 @pytest.mark.flaky(reruns=5)
 @pytest.mark.skipif(

@@ -12,7 +12,7 @@ pytest_args := env("ERT_PYTEST_ARGS", "--quiet")
 
 # execute rapid unittests
 rapid-tests:
-    pytest -n auto --dist loadgroup tests/ert/unit_tests tests/everest --hypothesis-profile=fast -m "not (integration_test or flaky)"
+    pytest -n auto --dist loadgroup tests/ert/unit_tests tests/everest --hypothesis-profile=fast -m "not (integration_test or flaky or memory_test)"
 
 ert-gui-tests:
     pytest {{pytest_args}} --mpl tests/ert/ui_tests/gui
@@ -20,8 +20,11 @@ ert-gui-tests:
 ert-cli-tests:
     pytest {{pytest_args}} tests/ert/ui_tests/cli
 
+ert-memory-tests:
+    _RJEM_MALLOC_CONF="dirty_decay_ms:100,muzzy_decay_ms:100" pytest -n 2 {{pytest_args}} tests/ert -m "memory_test"
+
 ert-unit-tests:
-    pytest {{pytest_args}} -n 4 --dist loadgroup --benchmark-disable tests/ert/unit_tests tests/ert/performance_tests
+    pytest {{pytest_args}} -n 4 --dist loadgroup --benchmark-disable tests/ert/unit_tests tests/ert/performance_tests -m "not memory_test"
 
 ert-doc-tests:
     pytest {{pytest_args}} --doctest-modules src/ --ignore src/ert/dark_storage

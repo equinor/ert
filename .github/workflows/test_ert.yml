@@ -82,6 +82,7 @@ jobs:
         chmod 000 storage
         uv run just ert-unit-tests
         ERT_PYTEST_ARGS='-m ${{ inputs.select-string }} --cov=ert --cov=everest --cov=_ert --cov-report=xml:cov2.xml --junit-xml=junit.xml -o junit_family=legacy -v --durations=25 --benchmark-disable' uv run just ert-doc-tests
+        uv run just ert-memory-tests
         chmod 700 storage
         rm storage
 
