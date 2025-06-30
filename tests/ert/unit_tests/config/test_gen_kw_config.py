@@ -77,7 +77,7 @@ def test_gen_kw_config_get_priors():
             TransformFunctionDefinition("KEY6", "DUNIF", ["3", "0", "1"]),
             TransformFunctionDefinition("KEY7", "ERRF", ["0", "1", "2", "3"]),
             TransformFunctionDefinition("KEY8", "DERRF", ["1", "1", "2", "3", "4"]),
-            TransformFunctionDefinition("KEY9", "LOGUNIF", ["0", "1"]),
+            TransformFunctionDefinition("KEY9", "LOGUNIF", ["1", "2"]),
             TransformFunctionDefinition("KEY10", "CONST", ["10"]),
         ],
         update=True,
@@ -136,7 +136,7 @@ def test_gen_kw_config_get_priors():
     assert {
         "key": "KEY9",
         "function": "LOGUNIF",
-        "parameters": {"MIN": 0, "MAX": 1},
+        "parameters": {"MIN": 1, "MAX": 2},
     } in priors
 
     assert {
@@ -417,7 +417,8 @@ def test_gen_kw_trans_func(tmpdir, params, xinput, expected):
             transform_function_definitions=[tfd],
         )
         tf = gkw.transform_functions[0]
-        assert abs(tf.calculate(xinput, float_args) - expected) < 10**-15
+        # assert abs(tf.calculate(xinput, float_args) - expected) < 10**-15
+        assert abs(tf.distribution.trans(xinput) - expected) < 10**-15
 
 
 def test_gen_kw_objects_equal(tmpdir):
