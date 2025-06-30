@@ -417,7 +417,8 @@ def test_gen_kw_trans_func(tmpdir, params, xinput, expected):
             transform_function_definitions=[tfd],
         )
         tf = gkw.transform_functions[0]
-        assert abs(tf.calculate(xinput, float_args) - expected) < 10**-15
+        # assert abs(tf.calculate(xinput, float_args) - expected) < 10**-15
+        assert abs(tf.distribution.trans(xinput) - expected) < 10**-15
 
 
 def test_gen_kw_objects_equal(tmpdir):

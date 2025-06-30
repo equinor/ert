@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import math
 import warnings
+from dataclasses import fields
 from typing import Any, Literal
 
 import numpy as np
@@ -21,10 +22,14 @@ class TransSettingsValidation:
             simplified_msg = "; ".join(err["msg"] for err in e.errors())
             raise ConfigValidationError(simplified_msg) from e
 
+    @classmethod
+    def get_param_names(cls) -> list[str]:
+        return [f.name for f in fields(cls) if f.name != "name"]
+
 
 @dataclass
 class TransUnifSettings(TransSettingsValidation):
-    name: Literal["unif"] = "unif"
+    name: Literal["uniform"] = "uniform"
     min: float = 0.0
     max: float = 1.0
 
@@ -36,15 +41,13 @@ class TransUnifSettings(TransSettingsValidation):
 @dataclass
 class TransLogUnifSettings(TransSettingsValidation):
     name: Literal["logunif"] = "logunif"
-    log_min: float = 0.0
-    log_max: float = 1.0
+    min: float = 0.0
+    max: float = 1.0
 
     def trans(self, x: float) -> float:
-        # log_min, log_max = math.log(arg[0]), math.log(arg[1])
+        log_min, log_max = math.log(self.min), math.log(self.max)
         tmp = norm.cdf(x)
-        log_y = self.log_min + tmp * (
-            self.log_max - self.log_min
-        )  # Shift according to max / min
+        log_y = log_min + tmp * (log_max - log_min)  # Shift according to max / min
         return math.exp(log_y)
 
 
@@ -99,7 +102,7 @@ class TransLogNormalSettings(TransSettingsValidation):
 
 @dataclass
 class TransTruncNormalSettings(TransSettingsValidation):
-    name: Literal["trunc_normal"] = "trunc_normal"
+    name: Literal["truncated_normal"] = "truncated_normal"
     mean: float = 0.0
     std: float = 1.0
     min: float = 0.0
@@ -171,11 +174,11 @@ class TransErrfSettings(TransSettingsValidation):
     name: Literal["errf"] = "errf"
     min: float = 0.0
     max: float = 1.0
-    skew: float = 0.0
+    skewness: float = 0.0
     width: float = 1.0
 
     def trans(self, x: float) -> float:
-        y = norm(loc=0, scale=self.width).cdf(x + self.skew)
+        y = norm(loc=0, scale=self.width).cdf(x + self.skewness)
         if np.isnan(y):
             raise ValueError(
                 "Output is nan, likely from triplet (x, skewness, width) "
@@ -190,7 +193,7 @@ class TransDerrfSettings(TransSettingsValidation):
     steps: float = 1000.0
     min: float = 0.0
     max: float = 1.0
-    skew: float = 0.0
+    skewness: float = 0.0
     width: float = 1.0
 
     @model_validator(mode="after")
@@ -216,7 +219,9 @@ class TransDerrfSettings(TransSettingsValidation):
     def trans(self, x: float) -> float:
         q_values = np.linspace(start=0, stop=1, num=int(self.steps))
         q_checks = np.linspace(start=0, stop=1, num=int(self.steps + 1))[1:]
-        y = TransErrfSettings(min=0, max=1, skew=self.skew, width=self.width).trans(x)
+        y = TransErrfSettings(
+            min=0, max=1, skewness=self.skewness, width=self.width
+        ).trans(x)
         bin_index = np.digitize(y, q_checks, right=True)
         y_binned = q_values[bin_index]
         result = self.min + y_binned * (self.max - self.min)
@@ -234,45 +239,77 @@ class TransDerrfSettings(TransSettingsValidation):
         return float(result)
 
 
+# def get_distribution(name: str, values: list[str]) -> Any:
+#     return {
+#         "NORMAL": lambda: TransNormalSettings.create(
+#             mean=float(values[0]), std=float(values[1])
+#         ),
+#         "LOGNORMAL": lambda: TransLogNormalSettings.create(
+#             mean=float(values[0]), std=float(values[1])
+#         ),
+#         "UNIFORM": lambda: TransUnifSettings.create(
+#             min=float(values[0]), max=float(values[1])
+#         ),
+#         "LOGUNIF": lambda: TransLogUnifSettings.create(
+#             min=float(values[0]), max=float(values[1])
+#         ),
+#         "TRUNCATED_NORMAL": lambda: TransTruncNormalSettings.create(
+#             mean=float(values[0]),
+#             std=float(values[1]),
+#             min=float(values[2]),
+#             max=float(values[3]),
+#         ),
+#         "RAW": TransRawSettings.create,
+#         "CONST": lambda: TransConstSettings.create(value=float(values[0])),
+#         "DUNIF": lambda: TransDUnifSettings.create(
+#             steps=int(values[0]), min=float(values[1]), max=float(values[2])
+#         ),
+#         "TRIANGULAR": lambda: TransTriangularSettings.create(
+#             min=float(values[0]), mode=float(values[1]), max=float(values[2])
+#         ),
+#         "ERRF": lambda: TransErrfSettings.create(
+#             min=values[0],
+#             max=values[1],
+#             skewness=values[2],
+#             width=values[3],
+#         ),
+#         "DERRF": lambda: TransDerrfSettings.create(
+#             steps=values[0],
+#             min=values[1],
+#             max=values[2],
+#             skewness=values[3],
+#             width=values[4],
+#         ),
+#     }[name]()
+
+
+DISTRIBUTION_CLASSES = {
+    "NORMAL": TransNormalSettings,
+    "LOGNORMAL": TransLogNormalSettings,
+    "UNIFORM": TransUnifSettings,
+    "LOGUNIF": TransLogUnifSettings,
+    "TRUNCATED_NORMAL": TransTruncNormalSettings,
+    "RAW": TransRawSettings,
+    "CONST": TransConstSettings,
+    "DUNIF": TransDUnifSettings,
+    "TRIANGULAR": TransTriangularSettings,
+    "ERRF": TransErrfSettings,
+    "DERRF": TransDerrfSettings,
+}
+
+
 def get_distribution(name: str, values: list[str]) -> Any:
-    return {
-        "NORMAL": lambda: TransNormalSettings.create(
-            mean=float(values[0]), std=float(values[1])
-        ),
-        "LOGNORMAL": lambda: TransLogNormalSettings.create(
-            mean=float(values[0]), std=float(values[1])
-        ),
-        "UNIFORM": lambda: TransUnifSettings.create(
-            min=float(values[0]), max=float(values[1])
-        ),
-        "LOGUNIF": lambda: TransLogUnifSettings.create(
-            log_min=math.log(float(values[0])), log_max=math.log(float(values[1]))
-        ),
-        "TRUNCATED_NORMAL": lambda: TransTruncNormalSettings.create(
-            mean=float(values[0]),
-            std=float(values[1]),
-            min=float(values[2]),
-            max=float(values[3]),
-        ),
-        "RAW": TransRawSettings.create,
-        "CONST": lambda: TransConstSettings.create(value=float(values[0])),
-        "DUNIF": lambda: TransDUnifSettings.create(
-            steps=int(values[0]), min=float(values[1]), max=float(values[2])
-        ),
-        "TRIANGULAR": lambda: TransTriangularSettings.create(
-            min=float(values[0]), mode=float(values[1]), max=float(values[2])
-        ),
-        "ERRF": lambda: TransErrfSettings.create(
-            min=values[0],
-            max=values[1],
-            skew=values[2],
-            width=values[3],
-        ),
-        "DERRF": lambda: TransDerrfSettings.create(
-            steps=values[0],
-            min=values[1],
-            max=values[2],
-            skew=values[3],
-            width=values[4],
-        ),
-    }[name]()
+    cls = DISTRIBUTION_CLASSES[name]
+
+    param_names = cls.get_param_names()
+
+    # Prepare typed kwargs: try float first, fallback to str
+    kwargs = {}
+    for pname, val in zip(param_names, values, strict=False):
+        try:
+            fval = float(val)
+            kwargs[pname] = fval
+        except ValueError:
+            kwargs[pname] = val
+
+    return cls.create(**kwargs)

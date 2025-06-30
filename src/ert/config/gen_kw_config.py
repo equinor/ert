@@ -18,6 +18,7 @@ from typing_extensions import TypedDict
 
 from ._str_to_bool import str_to_bool
 from .distribution import (
+    DISTRIBUTION_CLASSES,
     TransConstSettings,
     TransDerrfSettings,
     TransDUnifSettings,
@@ -378,7 +379,9 @@ class GenKwConfig(ParameterConfig):
                     "key": tf.name,
                     "function": tf.distribution.name.upper(),
                     "parameters": {
-                        k.upper(): v for k, v in asdict(tf.distribution).items()
+                        k.upper(): v
+                        for k, v in asdict(tf.distribution).items()
+                        if k != "name"
                     },
                 }
             )
@@ -479,6 +482,36 @@ class GenKwConfig(ParameterConfig):
         self,
         t: TransformFunctionDefinition,
     ) -> TransformFunction:
+        if t.param_name is None and t.values is None:
+            raise ConfigValidationError.with_context(
+                f"Too few instructions provided in: {t}", self.name
+            )
+
+        if t.param_name not in DISTRIBUTION_CLASSES:
+            raise ConfigValidationError(
+                f"Unknown distribution provided: {t.param_name}, for variable {t.name}",
+                self.name,
+            )
+
+        cls = DISTRIBUTION_CLASSES[t.param_name]
+
+        if len(t.values) != len(cls.get_param_names()):
+            raise ConfigValidationError.with_context(
+                f"Incorrect number of values: {t.values}, provided for variable "
+                f"{t.name} with distribution {t.param_name}.",
+                self.name,
+            )
+        param_floats = []
+        for p in t.values:
+            try:
+                param_floats.append(float(p))
+            except ValueError as e:
+                raise ConfigValidationError.with_context(
+                    f"Unable to convert '{p}' to float number for variable "
+                    f"{t.name} with distribution {t.param_name}.",
+                    self.name,
+                ) from e
+
         return TransformFunction(
             name=t.name, distribution=get_distribution(t.param_name, t.values)
         )
