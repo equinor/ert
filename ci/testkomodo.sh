@@ -112,7 +112,6 @@ start_tests() {
       export OMP_NUM_THREADS=1
 
       # Run ert tests that evaluates memory consumption
-      pytest -n 2 --durations=0 -m "limit_memory" --memray
       just -f "${CI_SOURCE_ROOT}"/justfile ert-memory-tests
       return $?
     elif [ "$CI_SUBSYSTEM_TEST" == "ert-queue-system" ]; then
