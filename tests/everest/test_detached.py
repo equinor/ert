@@ -147,7 +147,7 @@ def test_wait_for_server(_):
     config = EverestConfig.with_defaults()
 
     with pytest.raises(
-        RuntimeError, match=r"Failed to get reply from server .* timeout"
+        RuntimeError, match=r"Failed to get reply from server within .* seconds"
     ):
         wait_for_server(config.output_dir, timeout=0.01)
 
