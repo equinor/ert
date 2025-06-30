@@ -29,8 +29,13 @@ def heat_equation(
     u_ = u.copy()
     nx = u.shape[1]  # number of grid cells
     assert cond.shape == (nx, nx)
-
     gamma = (cond * dt) / (dx**2)
+
+    # Pre-sample all noise at once
+    if scale is not None:
+        num_steps = k_end - k_start - 1
+        noise_all = rng.normal(0, scale, size=(num_steps, nx - 2, nx - 2))
+
     for k in range(k_start, k_end - 1):
         # Vectorized finite difference
         u_[k + 1, 1:-1, 1:-1] = (
@@ -44,10 +49,10 @@ def heat_equation(
             )
             + u_[k, 1:-1, 1:-1]
         )
-        # Add noise if needed
+        # Add pre-sampled noise
         if scale is not None:
-            noise = rng.normal(0, scale, size=(nx - 2, nx - 2))
-            u_[k + 1, 1:-1, 1:-1] += noise
+            noise_idx = k - k_start
+            u_[k + 1, 1:-1, 1:-1] += noise_all[noise_idx]
 
     return u_
 
