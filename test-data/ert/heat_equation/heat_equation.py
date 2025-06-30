@@ -28,26 +28,27 @@ def heat_equation(
     """
     u_ = u.copy()
     nx = u.shape[1]  # number of grid cells
+    nx, ny = u.shape
     assert cond.shape == (nx, nx)
 
     gamma = (cond * dt) / (dx**2)
-    plate_length = u.shape[1]
-    for k in range(k_start, k_end - 1, 1):
-        for i in range(1, plate_length - 1, dx):
-            for j in range(1, plate_length - 1, dx):
-                noise = rng.normal(scale=scale) if scale is not None else 0
-                u_[k + 1, i, j] = (
-                    gamma[i, j]
-                    * (
-                        u_[k][i + 1][j]
-                        + u_[k][i - 1][j]
-                        + u_[k][i][j + 1]
-                        + u_[k][i][j - 1]
-                        - 4 * u_[k][i][j]
-                    )
-                    + u_[k][i][j]
-                    + noise
-                )
+    for k in range(k_start, k_end - 1):
+        # Vectorized finite difference
+        u_[k + 1, 1:-1, 1:-1] = (
+            gamma[1:-1, 1:-1]
+            * (
+                u_[k, 2:, 1:-1]  # i+1
+                + u_[k, :-2, 1:-1]  # i-1
+                + u_[k, 1:-1, 2:]  # j+1
+                + u_[k, 1:-1, :-2]  # j-1
+                - 4 * u_[k, 1:-1, 1:-1]
+            )
+            + u_[k, 1:-1, 1:-1]
+        )
+        # Add noise if needed
+        if scale is not None:
+            noise = rng.normal(0, scale, size=(ny - 2, nx - 2))
+            u_[k + 1, 1:-1, 1:-1] += noise
 
     return u_
 
