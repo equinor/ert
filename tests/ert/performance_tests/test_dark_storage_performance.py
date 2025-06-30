@@ -258,6 +258,7 @@ def api_and_snake_oil_storage(snake_oil_case_storage, monkeypatch):
     gc.collect()
 
 
+@pytest.mark.memory_test
 @pytest.mark.flaky(reruns=2)
 @pytest.mark.parametrize(
     "num_reals, num_dates, num_keys, max_memory_mb",
@@ -377,6 +378,7 @@ def test_plotter_on_all_snake_oil_responses_time(api_and_snake_oil_storage, benc
     benchmark(run)
 
 
+@pytest.mark.memory_test
 def test_plotter_on_all_snake_oil_responses_memory(api_and_snake_oil_storage):
     api, _ = api_and_snake_oil_storage
 
