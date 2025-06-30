@@ -27,7 +27,7 @@ ert-doc-tests:
     pytest {{pytest_args}} --doctest-modules src/ --ignore src/ert/dark_storage
 
 everest-tests:
-    pytest {{pytest_args}} tests/everest -n 4 --dist loadgroup
+    pytest -n 4 --dist loadgroup {{pytest_args}} tests/everest
 
 build-everest-docs:
     sphinx-build -n -v -E -W ./docs/everest ./everest_docs
