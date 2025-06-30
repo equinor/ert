@@ -138,12 +138,14 @@ class EnsembleConfig(BaseModel):
                 ) from err
 
         def make_field(field_list: list[str]) -> FieldConfig:
-            # TODO: Is there a better way to fetch settings?
+            # An example of `field_list` when the keyword `GRID` is set:
+            # ['COND', 'PARAMETER', 'cond.bgrdecl',
+            #  {'INIT_FILES': 'cond_%d.bgrdecl', 'FORWARD_INIT': 'False',
+            #   'GRID': 'CASE.EGRID'}]
+            # The fourth element (index 3) of this list is a dictionary of
+            # optional keywords, one of which is `GRID`.
             field_settings = field_list[3]
-            if ConfigKeys.GRID in field_settings:
-                grid_file_path = field_settings[ConfigKeys.GRID]
-            else:
-                grid_file_path = None
+            grid_file_path = field_settings.get(ConfigKeys.GRID)
 
             if grid_file_path is None and global_grid_file_path is None:
                 raise ConfigValidationError.with_context(
