@@ -80,10 +80,11 @@ def generate_priors():
     using Fortran-style ordering. Used for testing when FORWARD_INIT
     is disabled.
     """
-
-    rng = np.random.default_rng()
+    corr_lengths = rng.normal(loc=0.8, scale=0.1, size=10)
     for i in range(10):
-        cond = sample_prior_conductivity(ensemble_size=1, nx=nx, rng=rng)
+        cond = sample_prior_conductivity(
+            ensemble_size=1, nx=nx, rng=rng, corr_length=corr_lengths[i]
+        )
         resfo.write(
             f"cond_{i}.bgrdecl",
             [("COND    ", cond.flatten(order="F").astype(np.float32))],
@@ -106,9 +107,9 @@ if __name__ == "__main__":
     u_init = np.zeros((k_end, nx, nx))
     u_init[:, 5:7, 5:7] = 100
 
-    cond_truth = sample_prior_conductivity(ensemble_size=1, nx=nx, rng=rng).reshape(
-        nx, nx
-    )
+    cond_truth = sample_prior_conductivity(
+        ensemble_size=1, nx=nx, rng=rng, corr_length=0.8
+    ).reshape(nx, nx)
 
     # Resolution in the x-direction (nothing to worry about really)
     dx = 1
@@ -116,7 +117,7 @@ if __name__ == "__main__":
     # Calculate maximum `dt`.
     # If higher values are used, the numerical solution will become unstable.
     # Note that this could be avoided if we used an implicit solver.
-    dt = dx**2 / (4 * max(np.max(cond_truth), np.max(cond_truth)))
+    dt = dx**2 / (4 * np.max(cond_truth))
 
     u_t = heat_equation(u_init, cond_truth, dx, dt, k_start, k_end, rng=rng)
 
