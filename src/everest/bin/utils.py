@@ -38,6 +38,10 @@ from everest.strings import EVEREST, OPT_PROGRESS_ID, SIM_PROGRESS_ID
 from everest.util import makedirs_if_needed
 
 
+def cleanup_logging() -> None:
+    os.environ.pop("ERT_LOG_DIR")
+
+
 def setup_logging(options: argparse.Namespace) -> None:
     if isinstance(options.config, EverestConfig):
         makedirs_if_needed(options.config.output_dir, roll_if_exists=False)
