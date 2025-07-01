@@ -493,6 +493,7 @@ class RunDialog(QFrame):
                     f"{'failed' if failed else 'succeeded'}!</p>"
                     f"<p>These {'errors' if failed else 'warnings'} were detected</p>"
                 ),
+                parent=self,
             )
             self.fail_msg_box.show()
         else:

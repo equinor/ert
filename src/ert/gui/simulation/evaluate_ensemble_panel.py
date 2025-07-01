@@ -109,6 +109,7 @@ class EvaluateEnsemblePanel(ExperimentConfigPanel):
             Suggestor(
                 errors=[ErrorInfo(str(err))],
                 widget_info='<p style="font-size: 28px;">Error reading storage</p>',
+                parent=self,
             ).show()
 
     @Slot(QWidget)
