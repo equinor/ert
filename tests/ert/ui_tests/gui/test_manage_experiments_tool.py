@@ -390,7 +390,9 @@ ANALYSIS_SET_VAR OBSERVATIONS AUTO_SCALE POLY_OBS1_*
 """
         )
 
-    prior_ens_id, _, _ = run_cli_ES_with_case("poly_localization_0.ert")
+    prior_ens_id, _, _ = run_cli_ES_with_case(
+        "poly_localization_0.ert", "test_experiment"
+    )
     config = ErtConfig.from_file("poly_localization_0.ert")
 
     notifier = ErtNotifier()
