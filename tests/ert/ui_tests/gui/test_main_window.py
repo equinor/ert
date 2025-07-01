@@ -16,6 +16,7 @@ from PyQt6.QtWidgets import (
     QDoubleSpinBox,
     QLabel,
     QMenuBar,
+    QMessageBox,
     QPushButton,
     QToolButton,
     QTreeView,
@@ -932,3 +933,44 @@ warnings.warn('Foobar')"""
 
     for expected_message in expected_messages:
         assert expected_message in messages
+
+
+def test_denied_run_path_warning_dialog_releases_storage_lock(
+    qtbot, opened_main_window_poly, use_tmpdir, monkeypatch
+):
+    # Populate runpath
+    runpath = "poly_out/realization-0/iter-0"
+    Path(runpath).mkdir(parents=True, exist_ok=True)
+    Path(runpath).touch()
+
+    # Open main window
+    gui = opened_main_window_poly
+    run_experiment_panel = wait_for_child(gui, qtbot, ExperimentPanel)
+
+    # Mock class for experiment arguments
+    class MockArgs:
+        def __init__(self) -> None:
+            self.mode = "ensemble_experiment"
+            self.current_ensemble = "ensemble"
+            self.experiment_name = "FooBar"
+
+    monkeypatch.setattr(
+        ExperimentPanel, "get_experiment_arguments", Mock(return_value=MockArgs())
+    )
+
+    # Mock the runpath warning window
+    def mock_exec():
+        # Assert the storage lock is initially locked
+        assert run_experiment_panel._model._storage._lock.is_locked
+        return QMessageBox.StandardButton.No
+
+    monkeypatch.setattr(
+        QMessageBox,
+        "exec",
+        lambda _: mock_exec(),
+    )
+
+    run_experiment_panel.run_experiment()
+
+    # Assert the storage lock has been unlocked
+    assert not run_experiment_panel._model._storage._lock.is_locked

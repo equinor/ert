@@ -298,6 +298,7 @@ class ExperimentPanel(QWidget):
 
             msg_box_res = msg_box.exec()
             if msg_box_res == QMessageBox.StandardButton.No:
+                self._model._storage.close()
                 return
 
             if delete_runpath_checkbox.checkState() == Qt.CheckState.Checked:
