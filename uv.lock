@@ -933,7 +933,7 @@ requires-dist = [
     { name = "rust-just", marker = "extra == 'dev'" },
     { name = "scipy", specifier = ">=1.10.1" },
     { name = "seaborn" },
-    { name = "sphinx", marker = "extra == 'dev'", specifier = "<8.2.0" },
+    { name = "sphinx", marker = "extra == 'dev'" },
     { name = "sphinx-argparse", marker = "extra == 'dev'" },
     { name = "sphinx-autoapi", marker = "extra == 'dev'" },
     { name = "sphinx-copybutton", marker = "extra == 'dev'" },
