@@ -212,4 +212,5 @@ class StorageWidget(QWidget):
                         '<p style="font-size: 28px;">'
                         "Error writing to storage, experiment not created</p>"
                     ),
+                    parent=self,
                 ).show()

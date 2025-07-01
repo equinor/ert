@@ -90,6 +90,7 @@ class EnsembleSelector(QComboBox):
             Suggestor(
                 errors=[ErrorInfo(str(err))],
                 widget_info='<p style="font-size: 28px;">Error writing to storage</p>',
+                parent=self,
             ).show()
             return
 

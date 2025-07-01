@@ -112,8 +112,9 @@ class Suggestor(QWidget):
         continue_action: Callable[[], None] | None = None,
         help_links: dict[str, str] | None = None,
         widget_info: str | None = None,
+        parent: QWidget | None = None,
     ) -> None:
-        super().__init__()
+        super().__init__(parent, flags=Qt.WindowType.Window)
         if errors is None:
             errors = []
         if warnings is None:

@@ -138,6 +138,7 @@ class LoadResultsPanel(QWidget):
                                <p style="font-size: 28px;">ERT experiment failed!</p>
                                <p>These errors were detected:</p>
                            """,
+                parent=self,
             )
             fail_msg_box.show()
 
