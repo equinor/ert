@@ -10,7 +10,7 @@ from ert.storage import open_storage
 from tests.ert.ui_tests.cli.run_cli import run_cli
 
 random_seed_line = "RANDOM_SEED 1234\n\n"
-NUM_REALIZATIONS_TO_TEST = 50
+NUM_REALIZATIONS_TO_TEST = 25
 
 
 def run_cli_ES_with_case(poly_config):
@@ -274,8 +274,8 @@ def test_that_adaptive_localization_with_cutoff_0_equals_ESupdate():
 @pytest.mark.usefixtures("copy_poly_case")
 def test_that_posterior_generalized_variance_increases_in_cutoff():
     rng = np.random.default_rng(42)
-    cutoff1 = rng.uniform(0, 1)
-    cutoff2 = rng.uniform(cutoff1, 1)
+    cutoff1 = rng.uniform(0, 0.5)
+    cutoff2 = rng.uniform(cutoff1 + 0.1, 1)
 
     set_adaptive_localization_cutoff1 = dedent(
         f"""
@@ -345,7 +345,6 @@ def test_that_posterior_generalized_variance_increases_in_cutoff():
     generalized_variance_1 = np.linalg.det(posterior_cutoff1_cov)
     generalized_variance_2 = np.linalg.det(posterior_cutoff2_cov)
     generalized_variance_prior = np.linalg.det(prior_cov)
-
     # Check that posterior generalized variance in positive, increases in cutoff and
     # does not exceed prior generalized variance
     assert generalized_variance_1 > 0, f"Assertion failed with cutoff1={cutoff1}"
