@@ -44,6 +44,7 @@ from everest.strings import (
     DEFAULT_LOGGING_FORMAT,
     EVEREST,
     EVERSERVER,
+    OPT_FAILURE_ALL_REALIZATIONS,
     OPT_FAILURE_REALIZATIONS,
     OPTIMIZATION_LOG_DIR,
 )
@@ -247,9 +248,12 @@ def _get_optimization_status(
         case EverestExitCode.USER_ABORT:
             return ExperimentState.stopped, "Optimization aborted."
 
-        case EverestExitCode.TOO_FEW_REALIZATIONS:
+        case (
+            EverestExitCode.TOO_FEW_REALIZATIONS
+            | EverestExitCode.ALL_REALIZATIONS_FAILED
+        ):
             status_ = ExperimentState.failed
-            messages = _failed_realizations_messages(events)
+            messages = _failed_realizations_messages(events, exit_code)
             for msg in messages:
                 logging.getLogger(EVEREST).error(msg)
             return status_, "\n".join(messages)
@@ -257,7 +261,9 @@ def _get_optimization_status(
             return ExperimentState.completed, "Optimization completed."
 
 
-def _failed_realizations_messages(events: list[StatusEvents]) -> list[str]:
+def _failed_realizations_messages(
+    events: list[StatusEvents], exit_code: EverestExitCode
+) -> list[str]:
     snapshots: dict[int, EnsembleSnapshot] = {}
     for event in events:
         if isinstance(event, FullSnapshotEvent) and event.snapshot:
@@ -267,7 +273,11 @@ def _failed_realizations_messages(events: list[StatusEvents]) -> list[str]:
             assert isinstance(snapshot, EnsembleSnapshot)
             snapshot.merge_snapshot(event.snapshot)
     logging.getLogger("forward_models").info("Status event")
-    messages = [OPT_FAILURE_REALIZATIONS]
+    messages = [
+        OPT_FAILURE_REALIZATIONS
+        if exit_code == EverestExitCode.TOO_FEW_REALIZATIONS
+        else OPT_FAILURE_ALL_REALIZATIONS
+    ]
     for snapshot in snapshots.values():
         for job in snapshot.get_all_fm_steps().values():
             if error := job.get("error"):

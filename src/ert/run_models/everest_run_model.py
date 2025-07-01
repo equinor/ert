@@ -93,11 +93,12 @@ class OptimizerCallback(Protocol):
 
 
 class EverestExitCode(IntEnum):
-    COMPLETED = 1
-    TOO_FEW_REALIZATIONS = 2
-    MAX_FUNCTIONS_REACHED = 3
-    MAX_BATCH_NUM_REACHED = 4
-    USER_ABORT = 5
+    COMPLETED = auto()
+    TOO_FEW_REALIZATIONS = auto()
+    ALL_REALIZATIONS_FAILED = auto()
+    MAX_FUNCTIONS_REACHED = auto()
+    MAX_BATCH_NUM_REACHED = auto()
+    USER_ABORT = auto()
 
 
 class _EvaluationStatus(IntEnum):
@@ -405,7 +406,11 @@ class EverestRunModel(RunModel):
                 case RoptExitCode.USER_ABORT:
                     self._exit_code = EverestExitCode.USER_ABORT
                 case RoptExitCode.TOO_FEW_REALIZATIONS:
-                    self._exit_code = EverestExitCode.TOO_FEW_REALIZATIONS
+                    self._exit_code = (
+                        EverestExitCode.TOO_FEW_REALIZATIONS
+                        if self.get_number_of_successful_realizations() > 0
+                        else EverestExitCode.ALL_REALIZATIONS_FAILED
+                    )
                 case _:
                     self._exit_code = EverestExitCode.COMPLETED
 
