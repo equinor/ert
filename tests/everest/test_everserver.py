@@ -27,7 +27,7 @@ from everest.detached import (
     wait_for_server,
 )
 from everest.everest_storage import EverestStorage
-from everest.strings import OPT_FAILURE_REALIZATIONS
+from everest.strings import OPT_FAILURE_ALL_REALIZATIONS, OPT_FAILURE_REALIZATIONS
 
 
 @pytest.fixture
@@ -196,6 +196,61 @@ async def test_status_max_batch_num(copy_math_func_test_data_to_tmp):
 
     # Check that there is only one batch.
     assert {b.batch_id for b in storage.data.batches} == {0}
+
+
+@pytest.mark.integration_test
+@pytest.mark.xdist_group(name="starts_everest")
+@pytest.mark.timeout(240)
+@patch("sys.argv", ["name", "--output-dir", "everest_output"])
+async def test_status_too_few_realizations_succeeded(copy_math_func_test_data_to_tmp):
+    config = EverestConfig.load_file("config_minimal.yml")
+    config_dict = {
+        **config.model_dump(exclude_none=True),
+        "optimization": {"algorithm": "optpp_q_newton", "max_batch_num": 1},
+        "simulator": {"queue_system": {"name": "local"}},
+        "model": {"realizations": [0, 1]},
+    }
+    config_dict["install_jobs"].append(
+        {"name": "fail_simulation", "executable": "jobs/fail_simulation.py"}
+    )
+    config_dict["forward_model"].append("fail_simulation --fail geo_realization_0")
+    config = EverestConfig.model_validate(config_dict)
+
+    await wait_for_server_to_complete(config)
+
+    status = everserver_status(
+        ServerConfig.get_everserver_status_path(config.output_dir)
+    )
+
+    # The server should complete without error.
+    assert status["status"] == ExperimentState.failed
+    assert OPT_FAILURE_REALIZATIONS in status["message"]
+
+
+@pytest.mark.integration_test
+@pytest.mark.xdist_group(name="starts_everest")
+@pytest.mark.timeout(240)
+@patch("sys.argv", ["name", "--output-dir", "everest_output"])
+async def test_status_all_realizations_failed(copy_math_func_test_data_to_tmp):
+    config = EverestConfig.load_file("config_minimal.yml")
+    config_dict = {
+        **config.model_dump(exclude_none=True),
+        "optimization": {"algorithm": "optpp_q_newton", "max_batch_num": 1},
+        "simulator": {"queue_system": {"name": "local"}},
+    }
+    config_dict["install_jobs"].append({"name": "fail", "executable": which("false")})
+    config_dict["forward_model"].append("fail")
+    config = EverestConfig.model_validate(config_dict)
+
+    await wait_for_server_to_complete(config)
+
+    status = everserver_status(
+        ServerConfig.get_everserver_status_path(config.output_dir)
+    )
+
+    # The server should complete without error.
+    assert status["status"] == ExperimentState.failed
+    assert OPT_FAILURE_ALL_REALIZATIONS in status["message"]
 
 
 @pytest.mark.integration_test

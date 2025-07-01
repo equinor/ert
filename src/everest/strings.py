@@ -19,6 +19,7 @@ OPT_PROGRESS_ID = "optimization_progress"
 OPT_FAILURE_REALIZATIONS = (
     "Optimization failed: not enough successful realizations to proceed."
 )
+OPT_FAILURE_ALL_REALIZATIONS = "Optimization failed: all realizations failed."
 
 SESSION_DIR = ".session"
 SERVER_STATUS = "status"
