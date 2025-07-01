@@ -4,7 +4,7 @@ import argparse
 from functools import partial
 
 from everest.api import EverestDataAPI
-from everest.bin.utils import setup_logging
+from everest.bin.utils import cleanup_logging, setup_logging
 from everest.config import EverestConfig, ServerConfig
 from everest.detached import ExperimentState, everserver_status
 from everest.everest_storage import EverestStorage
@@ -52,6 +52,8 @@ def visualization_entry(args: list[str] | None = None) -> None:
         )
     else:
         print("No Everest results found for the given configuration.")
+
+    cleanup_logging()
 
 
 if __name__ == "__main__":

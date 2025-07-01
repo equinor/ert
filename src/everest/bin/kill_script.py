@@ -11,7 +11,7 @@ import traceback
 from functools import partial
 from typing import Any
 
-from everest.bin.utils import setup_logging
+from everest.bin.utils import cleanup_logging, setup_logging
 from everest.config import EverestConfig, ServerConfig
 from everest.detached import server_is_running, stop_server, wait_for_server_to_stop
 from everest.util import version_info
@@ -31,7 +31,10 @@ def kill_entry(args: list[str] | None = None) -> None:
     if threading.current_thread() is threading.main_thread():
         signal.signal(signal.SIGINT, partial(_handle_keyboard_interrupt))
 
-    kill_everest(options)
+    try:
+        kill_everest(options)
+    finally:
+        cleanup_logging()
 
 
 def _build_args_parser() -> argparse.ArgumentParser:

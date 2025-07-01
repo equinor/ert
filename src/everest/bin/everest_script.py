@@ -11,7 +11,6 @@ from functools import partial
 
 from _ert.threading import ErtThread
 from ert.config import QueueSystem
-from everest.bin.utils import setup_logging, show_scaled_controls_warning
 from everest.config import EverestConfig, ServerConfig
 from everest.detached import (
     ExperimentState,
@@ -29,10 +28,13 @@ from everest.util import (
 )
 
 from .utils import (
+    cleanup_logging,
     handle_keyboard_interrupt,
     report_on_previous_run,
     run_detached_monitor,
     run_empty_detached_monitor,
+    setup_logging,
+    show_scaled_controls_warning,
 )
 
 logger = logging.getLogger(__name__)
@@ -58,7 +60,10 @@ def everest_entry(args: list[str] | None = None) -> None:
             partial(handle_keyboard_interrupt, options=options),
         )
 
-    asyncio.run(run_everest(options))
+    try:
+        asyncio.run(run_everest(options))
+    finally:
+        cleanup_logging()
 
 
 def _build_args_parser() -> argparse.ArgumentParser:
