@@ -13,7 +13,7 @@ random_seed_line = "RANDOM_SEED 1234\n\n"
 NUM_REALIZATIONS_TO_TEST = 25
 
 
-def run_cli_ES_with_case(poly_config):
+def run_cli_ES_with_case(poly_config, experiment_name):
     run_cli(
         ENSEMBLE_SMOOTHER_MODE,
         "--disable-monitoring",
@@ -21,11 +21,11 @@ def run_cli_ES_with_case(poly_config):
         f"0-{NUM_REALIZATIONS_TO_TEST - 1}",
         poly_config,
         "--experiment-name",
-        "test-experiment",
+        experiment_name,
     )
     storage_path = ErtConfig.from_file(poly_config).ens_path
     with open_storage(storage_path) as storage:
-        experiment = storage.get_experiment_by_name("test-experiment")
+        experiment = storage.get_experiment_by_name(experiment_name)
         prior_ensemble = experiment.get_ensemble_by_name("iter-0")
         posterior_ensemble = experiment.get_ensemble_by_name("iter-1")
     return prior_ensemble.id, posterior_ensemble.id, storage_path
@@ -49,7 +49,7 @@ def test_that_adaptive_localization_with_cutoff_1_equals_ensemble_prior():
     with open("poly_localization_1.ert", "w", encoding="utf-8") as f:
         f.writelines(lines)
     prior_ensemble_id, posterior_ensemble_id, storage_path = run_cli_ES_with_case(
-        "poly_localization_1.ert"
+        "poly_localization_1.ert", "test_experiment"
     )
 
     with open_storage(storage_path) as storage:
@@ -97,7 +97,7 @@ def test_that_adaptive_localization_works_with_a_single_observation():
     with open("poly_localization_0.ert", "w", encoding="utf-8") as f:
         f.writelines(lines)
 
-    _, _, _ = run_cli_ES_with_case("poly_localization_0.ert")
+    _, _, _ = run_cli_ES_with_case("poly_localization_0.ert", "test_experiment")
 
 
 @pytest.mark.timeout(600)
@@ -213,7 +213,9 @@ ANALYSIS_SET_VAR OBSERVATIONS AUTO_SCALE POLY_OBS1_*
         ("POLY_OBS1_*", "POLY_OBS1_2", "0, 4"),
     }
 
-    prior_ens_id, _, storage_path = run_cli_ES_with_case("poly_localization_0.ert")
+    prior_ens_id, _, storage_path = run_cli_ES_with_case(
+        "poly_localization_0.ert", "test_experiment"
+    )
     with open_storage(storage_path) as storage:
         sf = storage.get_ensemble(prior_ens_id).load_observation_scaling_factors()
         assert sf is not None
@@ -251,10 +253,10 @@ def test_that_adaptive_localization_with_cutoff_0_equals_ESupdate():
         f.writelines(lines)
 
     _, posterior_ensemble_loc0_id, storage_loc = run_cli_ES_with_case(
-        "poly_localization_0.ert"
+        "poly_localization_0.ert", "test_experiment_loc"
     )
     _, posterior_ensemble_noloc_id, storage_noloc = run_cli_ES_with_case(
-        "poly_no_localization.ert"
+        "poly_no_localization.ert", "test_experiment_no_loc"
     )
 
     with open_storage(storage_loc) as storage:
@@ -294,7 +296,6 @@ def test_that_posterior_generalized_variance_increases_in_cutoff():
         lines = f.readlines()
         lines.insert(2, random_seed_line)
         lines.insert(9, set_adaptive_localization_cutoff1)
-
     with open("poly_localization_cutoff1.ert", "w", encoding="utf-8") as f:
         f.writelines(lines)
 
@@ -304,10 +305,10 @@ def test_that_posterior_generalized_variance_increases_in_cutoff():
         f.writelines(lines)
 
     prior_ensemble_cutoff1_id, posterior_ensemble_cutoff1_id, storage_cutoff1 = (
-        run_cli_ES_with_case("poly_localization_cutoff1.ert")
+        run_cli_ES_with_case("poly_localization_cutoff1.ert", "test_experiment_cutoff1")
     )
     _, posterior_ensemble_cutoff2_id, storage_cutoff2 = run_cli_ES_with_case(
-        "poly_localization_cutoff2.ert"
+        "poly_localization_cutoff2.ert", "test_experiment_cutoff2"
     )
     with open_storage(storage_cutoff1) as storage:
         cross_correlations = storage.get_ensemble(
@@ -325,6 +326,7 @@ def test_that_posterior_generalized_variance_increases_in_cutoff():
             .load_parameters_numpy("COEFFS", np.arange(NUM_REALIZATIONS_TO_TEST))
             .T
         )
+
         prior_cov = np.cov(prior_sample_cutoff1, rowvar=False)
 
         posterior_sample_cutoff1 = (
