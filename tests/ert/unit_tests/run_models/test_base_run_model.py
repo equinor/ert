@@ -580,7 +580,9 @@ def test_check_if_runpath_exists(
     assert run_model.check_if_runpath_exists() == expected
 
 
-def test_create_mask_from_failed_realizations_returns_initial_active_realizations_if_no_realization_succeeded():  # noqa
+def test_create_mask_from_failed_realizations_returns_initial_active_realizations_if_no_realization_succeeded(  # noqa
+    use_tmpdir,
+):
     initial_active_realizations = [True, False]
     active_realizations = initial_active_realizations.copy()
     completed_realizations = [False, False]
