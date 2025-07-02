@@ -16,7 +16,7 @@ pytest_args := env("ERT_PYTEST_ARGS", "--quiet")
 
 # execute rapid unittests
 rapid-tests:
-    pytest -n auto --dist loadgroup tests/ert/unit_tests tests/everest --hypothesis-profile=fast -m "not (integration_test or flaky or memory_test or limit_memory)"
+    OMP_NUM_THREADS=1 pytest -n auto --dist loadgroup tests/ert/unit_tests tests/everest --hypothesis-profile=fast -m "not (integration_test or flaky or memory_test or limit_memory)"
 
 ert-gui-tests:
     pytest {{pytest_args}} --mpl tests/ert/ui_tests/gui
