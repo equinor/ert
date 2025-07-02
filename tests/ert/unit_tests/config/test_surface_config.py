@@ -207,7 +207,7 @@ def test_invalid_surface_files_gives_config_error():
         ((0, 0), [], []),
         ((1, 0), [], []),
         ((0, 1), [], []),
-        ((1, 1), [], []),  # Q: (unrealistic edge case) should it be 1 node?
+        ((1, 1), [], []),
         ((1, 2), [{"id": 0}, {"id": 1}], [{"source": 0, "target": 1}]),
         (
             (10, 1),
