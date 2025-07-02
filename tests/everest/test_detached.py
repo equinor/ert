@@ -104,8 +104,9 @@ async def test_https_requests(copy_math_func_test_data_to_tmp):
         assert ExperimentState.stopped == server_status["status"]
 
 
-def test_server_status(copy_math_func_test_data_to_tmp):
-    config = EverestConfig.load_file("config_minimal.yml")
+def test_server_status(change_to_tmpdir):
+    config = EverestConfig.with_defaults()
+
     everserver_status_path = ServerConfig.get_everserver_status_path(config.output_dir)
     # Check status file does not exist before initial status update
     assert not os.path.exists(everserver_status_path)

@@ -93,8 +93,8 @@ def test_makedirs_roll_existing(change_to_tmpdir):
     assert len(os.listdir(cwd)) == 3
 
 
-def test_get_everserver_status_path(copy_math_func_test_data_to_tmp):
-    config = EverestConfig.load_file("config_minimal.yml")
+def test_get_everserver_status_path():
+    config = EverestConfig.with_defaults()
     cwd = os.getcwd()
     session_path = os.path.join(
         cwd, "everest_output", "detached_node_output", ".session"
