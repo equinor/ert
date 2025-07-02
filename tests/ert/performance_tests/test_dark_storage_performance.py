@@ -334,6 +334,7 @@ def test_plot_api_big_summary_memory_usage(
 
     stats = memray._memray.compute_statistics("memray.bin")
     os.remove("memray.bin")
+    gc.collect()
     total_memory_usage = stats.total_memory_allocated / (1024**2)
     assert total_memory_usage < max_memory_mb
 
