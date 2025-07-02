@@ -9,7 +9,6 @@ import pandas as pd
 import polars as pl
 from fastapi import APIRouter, Body, Depends, Header, HTTPException, Query, status
 from fastapi.responses import Response
-from polars.exceptions import ColumnNotFoundError
 
 from ert.dark_storage.common import get_storage
 from ert.storage import Ensemble, Storage
@@ -154,5 +153,5 @@ def data_for_response(
             data.columns.name = "axis"
             return data.astype(float)
 
-        except (ValueError, KeyError, ColumnNotFoundError):
+        except (ValueError, KeyError, pl.ColumnNotFoundError):
             return pd.DataFrame()
