@@ -80,8 +80,8 @@ def test_run_export_runpath_workflow(open_gui, qtbot, run_experiment):
     assert os.path.isfile(".ert_runpath_list")
 
 
-def test_run_workflow_with_no_ensemble_selected(qtbot, tmp_path, capsys):
-    os.chdir(tmp_path)
+def test_run_workflow_with_no_ensemble_selected(qtbot, tmp_path, capsys, monkeypatch):
+    monkeypatch.chdir(tmp_path)
     (tmp_path / "config.ert").write_text(
         dedent("""
             NUM_REALIZATIONS 1

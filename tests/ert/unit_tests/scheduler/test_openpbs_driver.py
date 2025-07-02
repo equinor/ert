@@ -109,7 +109,7 @@ words = st.text(
 
 @pytest.fixture
 def capturing_qsub(monkeypatch, tmp_path):
-    os.chdir(tmp_path)
+    monkeypatch.chdir(tmp_path)
     bin_path = tmp_path / "bin"
     bin_path.mkdir()
     monkeypatch.setenv("PATH", f"{bin_path}:{os.environ['PATH']}")
@@ -308,7 +308,7 @@ async def test_full_resource_string(realization_memory, num_cpu, cluster_label):
 async def test_that_qsub_will_retry_and_fail(
     monkeypatch, tmp_path, exit_code, error_msg
 ):
-    os.chdir(tmp_path)
+    monkeypatch.chdir(tmp_path)
     bin_path = tmp_path / "bin"
     bin_path.mkdir()
     monkeypatch.setenv("PATH", f"{bin_path}:{os.environ['PATH']}")
@@ -338,7 +338,7 @@ async def test_that_qsub_will_retry_and_fail(
 async def test_that_qsub_will_retry_and_succeed(
     monkeypatch, tmp_path, exit_code, error_msg
 ):
-    os.chdir(tmp_path)
+    monkeypatch.chdir(tmp_path)
     bin_path = tmp_path / "bin"
     bin_path.mkdir()
     monkeypatch.setenv("PATH", f"{bin_path}:{os.environ['PATH']}")
@@ -377,7 +377,7 @@ async def test_that_qsub_will_retry_and_succeed(
 async def test_that_qdel_will_retry_and_succeed(
     monkeypatch, tmp_path, exit_code, error_msg
 ):
-    os.chdir(tmp_path)
+    monkeypatch.chdir(tmp_path)
     bin_path = tmp_path / "bin"
     bin_path.mkdir()
     monkeypatch.setenv("PATH", f"{bin_path}:{os.environ['PATH']}")

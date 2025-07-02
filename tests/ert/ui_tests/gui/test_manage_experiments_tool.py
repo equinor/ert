@@ -1,5 +1,4 @@
 import datetime
-import os
 import shutil
 
 import numpy as np
@@ -29,9 +28,8 @@ from .conftest import add_experiment_in_manage_experiment_dialog
 
 
 def test_design_matrix_in_manage_experiments_panel(
-    copy_poly_case_with_design_matrix, qtbot, tmp_path
+    copy_poly_case_with_design_matrix, qtbot, use_tmpdir
 ):
-    os.chdir(tmp_path)
     num_realizations = 10
     a_values = list(range(num_realizations))
     design_dict = {
