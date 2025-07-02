@@ -54,6 +54,7 @@ async def test_run_and_cancel_legacy_ensemble(
     ) as evaluator:
         assert isinstance(evaluator, EnsembleEvaluator)
         evaluator._publisher_receiving_timeout = 10.0
+        evaluator.WAIT_PERIOD_FOR_GRACEFUL_SHUTDOWN = 0
 
         _ = await event_queue.get()
         # Cancel the ensemble upon the arrival of the first event
