@@ -6,7 +6,6 @@ import json
 import os
 from collections.abc import Awaitable
 from datetime import datetime, timedelta
-from time import sleep
 from typing import TypeVar
 from urllib.parse import quote
 from uuid import UUID
@@ -259,32 +258,14 @@ def api_and_snake_oil_storage(snake_oil_case_storage, monkeypatch):
     gc.collect()
 
 
-@pytest.mark.memory_test
-@pytest.mark.flaky(reruns=2)
-@pytest.mark.parametrize(
-    "num_reals, num_dates, num_keys, max_memory_mb",
-    [  # Tested 24.11.22 on macbook pro M1 max
-        # (xr = tested on previous ert using xarray to store responses)
-        (1, 100, 100, 1200),  # 790MiB local, xr: 791, MiB
-        (1000, 100, 100, 1500),  # 809MiB local, 879MiB linux-3.11, xr: 1107MiB
-        # (Cases below are more realistic at up to 200realizations)
-        # Not to be run these on GHA runners
-        # (2000, 100, 100, 1950),
-        #   1607MiB local, 1716MiB linux3.12, 1863 on linux3.11, xr: 2186MiB
-        # (2, 5803, 11787, 5500),  # 4657MiB local, xr: 10115MiB
-        # (10, 5803, 11787, 13500),  # 10036MiB local, 12803MiB mac-3.12, xr: 46715MiB
-    ],
-)
-def test_plot_api_big_summary_memory_usage(
-    num_reals, num_dates, num_keys, max_memory_mb, use_tmpdir, api_and_storage
+def _test_plot_api_summary_memory_usage(
+    num_reals, num_dates, num_keys, max_memory_mb, api_and_storage
 ):
     api, storage = api_and_storage
 
     dates = []
-
     for i in range(num_keys):
         dates += [datetime(2000, 1, 1) + timedelta(days=i)] * num_dates
-
     dates_df = pl.Series(dates, dtype=pl.Datetime).dt.cast_time_unit("ms")
 
     keys_df = pl.Series([f"K{i}" for i in range(num_keys)])
@@ -314,31 +295,49 @@ def test_plot_api_big_summary_memory_usage(
         ensemble.save_response("summary", big_summary.clone(), real)
 
     with memray.Tracker("memray.bin", follow_fork=True, native_traces=True):
-        # Initialize plotter window
         response_keys = {k.key for k in api.responses_api_key_defs}
         all_ensembles = [e.id for e in api.get_all_ensembles()]
         assert set(keys_df.to_list()) == set(response_keys)
 
-        # call updatePlot()
-        ensemble_to_data_map: dict[str, pd.DataFrame] = {}
+        ensemble_to_data_map = {}
         sample_key = keys_df.sample(1).item()
         for ensemble in all_ensembles:
             ensemble_to_data_map[ensemble] = api.data_for_response(ensemble, sample_key)
 
         for ensemble in all_ensembles:
             data = ensemble_to_data_map[ensemble]
-
-            # Transpose it twice as done in plotter
-            # (should ideally be avoided)
             _ = data.T
             _ = data.T
 
     stats = memray._memray.compute_statistics("memray.bin")
     os.remove("memray.bin")
-    sleep(2)
-    gc.collect()
+
     total_memory_usage = stats.total_memory_allocated / (1024**2)
     assert total_memory_usage < max_memory_mb
+
+
+@pytest.mark.memory_test
+@pytest.mark.flaky(reruns=2)
+def test_plot_api_summary_memory_usage_1reals(use_tmpdir, api_and_storage):
+    _test_plot_api_summary_memory_usage(1, 100, 100, 1200, api_and_storage)
+
+
+@pytest.mark.memory_test
+@pytest.mark.flaky(reruns=2)
+def test_plot_api_big_summary_memory_usage_5reals(use_tmpdir, api_and_storage):
+    _test_plot_api_summary_memory_usage(5, 100, 100, 1200, api_and_storage)
+
+
+@pytest.mark.memory_test
+@pytest.mark.flaky(reruns=2)
+def test_plot_api_big_summary_memory_usagey_1000reals(use_tmpdir, api_and_storage):
+    _test_plot_api_summary_memory_usage(1000, 100, 100, 1500, api_and_storage)
+
+
+@pytest.mark.memory_test
+@pytest.mark.flaky(reruns=2)
+def test_plot_api_big_summary_memory_usage_2000reals(use_tmpdir, api_and_storage):
+    _test_plot_api_summary_memory_usage(2000, 100, 100, 1950, api_and_storage)
 
 
 def test_plotter_on_all_snake_oil_responses_time(api_and_snake_oil_storage, benchmark):
