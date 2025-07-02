@@ -118,8 +118,12 @@ class Scheduler:
         await self._cancel_job_tasks()
 
     async def _cancel_job_tasks(self) -> None:
-        for task in self._job_tasks.values():
+        for iens, task in self._job_tasks.items():
             if not task.done():
+                logger.warning(
+                    f"Realization {iens} did not stop after getting the "
+                    "TERMINATE message. Killing it using scheduler."
+                )
                 task.cancel()
         _, pending = await asyncio.wait(
             self._job_tasks.values(),
