@@ -1,6 +1,7 @@
 import logging
 import os
 from functools import partial
+from pathlib import Path
 from unittest.mock import MagicMock, patch
 
 import pytest
@@ -42,20 +43,23 @@ def test_everest_entry_debug(
     wait_for_server_mock,
     start_monitor_mock,
     caplog,
-    tmp_path,
-    copy_math_func_test_data_to_tmp,
+    change_to_tmpdir,
 ):
     """Test running everest with --debug"""
 
+    Path("config.yml").touch()
+    config = EverestConfig.with_defaults(config_path="./config.yml")
+    config.dump("config.yml")
+
     # Need to deactivate the logging.config.dictConfig() statement in the entry
     # point for the caplog fixture to be able to catch logs:
-    logger_conf = tmp_path / "dummy_logger.conf"
+    logger_conf = Path("dummy_logger.conf")
     logger_conf.write_text("", encoding="utf-8")
     with (
         patch("everest.bin.utils.LOGGING_CONFIG", str(logger_conf)),
         caplog.at_level(logging.DEBUG),
     ):
-        everest_entry([CONFIG_FILE_MINIMAL, "--debug", "--skip"])
+        everest_entry(["config.yml", "--debug", "--skip"])
     logstream = "\n".join(caplog.messages)
     start_server_mock.assert_called_once()
     wait_for_server_mock.assert_called_once()
@@ -66,8 +70,8 @@ def test_everest_entry_debug(
     # the config file itself is dumped at DEBUG level
     assert '"controls"' in logstream
     assert '"objective_functions"' in logstream
-    assert '"name": "distance"' in logstream
-    assert f'"config_path": "{os.getcwd()}/config_minimal.yml"' in logstream
+    assert '"name": "default"' in logstream
+    assert f'"config_path": "{os.getcwd()}/config.yml"' in logstream
 
 
 @patch("everest.bin.everest_script.run_detached_monitor")
@@ -84,10 +88,14 @@ def test_everest_entry(
     start_server_mock,
     wait_for_server_mock,
     start_monitor_mock,
-    copy_math_func_test_data_to_tmp,
+    change_to_tmpdir,
 ):
     """Test running everest in detached mode"""
-    everest_entry([CONFIG_FILE_MINIMAL, "--skip"])
+
+    Path("config.yml").touch()
+    config = EverestConfig.with_defaults(config_path="./config.yml")
+    config.dump("config.yml")
+    everest_entry(["config.yml", "--skip"])
     start_server_mock.assert_called_once()
     wait_for_server_mock.assert_called_once()
     start_monitor_mock.assert_called_once()
@@ -111,12 +119,17 @@ def test_everest_entry_detached_already_run(
     wait_for_server_mock,
     start_monitor_mock,
     server_is_running_mock,
-    copy_math_func_test_data_to_tmp,
+    change_to_tmpdir,
 ):
     """Test everest detached, when an optimization has already run"""
+
+    Path("config.yml").touch()
+    config = EverestConfig.with_defaults(config_path="./config.yml")
+    config.dump("config.yml")
+
     # optimization already run, notify the user
     with capture_streams() as (out, _):
-        everest_entry([CONFIG_FILE_MINIMAL, "--skip-prompt"])
+        everest_entry(["config.yml", "--skip-prompt"])
     assert "--new-run" in out.getvalue()
     start_server_mock.assert_not_called()
     start_monitor_mock.assert_not_called()
@@ -126,11 +139,11 @@ def test_everest_entry_detached_already_run(
     everserver_status_mock.reset_mock()
 
     # stopping the server has no effect
-    kill_entry([CONFIG_FILE_MINIMAL])
+    kill_entry(["config.yml"])
     everserver_status_mock.assert_not_called()
 
     # forcefully re-run the case
-    everest_entry([CONFIG_FILE_MINIMAL, "--new-run", "--skip-prompt"])
+    everest_entry(["config.yml", "--new-run", "--skip-prompt"])
     start_server_mock.assert_called_once()
     start_monitor_mock.assert_called_once()
     everserver_status_mock.assert_called()
@@ -146,12 +159,17 @@ def test_everest_entry_detached_already_run_monitor(
     everserver_status_mock,
     start_monitor_mock,
     server_is_running_mock,
-    copy_math_func_test_data_to_tmp,
+    change_to_tmpdir,
 ):
     """Test everest detached, when an optimization has already run"""
+
+    Path("config.yml").touch()
+    config = EverestConfig.with_defaults(config_path="./config.yml")
+    config.dump("config.yml")
+
     # optimization already run, notify the user
     with capture_streams() as (out, _):
-        monitor_entry([CONFIG_FILE_MINIMAL])
+        monitor_entry(["config.yml"])
     assert "--new-run" in out.getvalue()
     start_monitor_mock.assert_not_called()
     server_is_running_mock.assert_called_once()
@@ -179,12 +197,17 @@ def test_everest_entry_detached_running(
     start_monitor_mock,
     server_is_running_mock_kill_script,
     server_is_running_mock_everest_script,
-    copy_math_func_test_data_to_tmp,
+    change_to_tmpdir,
 ):
     """Test everest detached, optimization is running"""
+
+    Path("config.yml").touch()
+    config = EverestConfig.with_defaults(config_path="./config.yml")
+    config.dump("config.yml")
+
     # can't start a new run if one is already running
     with capture_streams() as (out, _):
-        everest_entry([CONFIG_FILE_MINIMAL, "--new-run", "--skip-prompt"])
+        everest_entry(["config.yml", "--new-run", "--skip-prompt"])
     assert "everest kill" in out.getvalue()
     assert "everest monitor" in out.getvalue()
     start_server_mock.assert_not_called()
@@ -196,7 +219,7 @@ def test_everest_entry_detached_running(
     everserver_status_mock.reset_mock()
 
     # stop the server
-    kill_entry([CONFIG_FILE_MINIMAL])
+    kill_entry(["config.yml"])
     stop_server_mock.assert_called_once()
     wait_for_server_to_stop_mock.assert_called_once()
     wait_for_server_mock.assert_not_called()
@@ -207,7 +230,7 @@ def test_everest_entry_detached_running(
     # if already running, nothing happens
     assert "everest kill" in out.getvalue()
     assert "everest monitor" in out.getvalue()
-    everest_entry([CONFIG_FILE_MINIMAL, "--skip-prompt"])
+    everest_entry(["config.yml", "--skip-prompt"])
     start_server_mock.assert_not_called()
     server_is_running_mock_everest_script.assert_called_once()
     everserver_status_mock.assert_called()
@@ -223,12 +246,17 @@ def test_everest_entry_detached_running_monitor(
     everserver_status_mock,
     start_monitor_mock,
     server_is_running_mock,
-    copy_math_func_test_data_to_tmp,
+    change_to_tmpdir,
 ):
     """Test everest detached, optimization is running, monitoring"""
+
+    Path("config.yml").touch()
+    config = EverestConfig.with_defaults(config_path="./config.yml")
+    config.dump("config.yml")
+
     # Attach to a running optimization.
     with capture_streams():
-        monitor_entry([CONFIG_FILE_MINIMAL])
+        monitor_entry(["config.yml"])
     start_monitor_mock.assert_called_once()
     server_is_running_mock.assert_called_once()
     everserver_status_mock.assert_called()
@@ -244,12 +272,17 @@ def test_everest_entry_monitor_no_run(
     everserver_status_mock,
     start_monitor_mock,
     server_is_running_mock,
-    copy_math_func_test_data_to_tmp,
+    change_to_tmpdir,
 ):
     """Test everest detached, optimization is running, monitoring"""
+
+    Path("config.yml").touch()
+    config = EverestConfig.with_defaults(config_path="./config.yml")
+    config.dump("config.yml")
+
     # Attach to a running optimization.
     with capture_streams() as (out, _):
-        monitor_entry([CONFIG_FILE_MINIMAL])
+        monitor_entry(["config.yml"])
     assert "everest run" in out.getvalue()
     start_monitor_mock.assert_not_called()
     server_is_running_mock.assert_called_once()
@@ -277,10 +310,14 @@ def test_exception_raised_when_server_run_fails(
     start_server_mock,
     wait_for_server_mock,
     start_monitor_mock,
-    copy_math_func_test_data_to_tmp,
+    change_to_tmpdir,
 ):
+    Path("config.yml").touch()
+    config = EverestConfig.with_defaults(config_path="./config.yml")
+    config.dump("config.yml")
+
     with pytest.raises(SystemExit, match="Reality was ripped to shreds!"):
-        everest_entry([CONFIG_FILE_MINIMAL, "--skip-prompt"])
+        everest_entry(["config.yml", "--skip-prompt"])
 
 
 @patch("everest.bin.monitor_script.server_is_running", return_value=True)
@@ -293,10 +330,16 @@ def test_exception_raised_when_server_run_fails(
     ),
 )
 def test_exception_raised_when_server_run_fails_monitor(
-    start_monitor_mock, server_is_running_mock, copy_math_func_test_data_to_tmp
+    start_monitor_mock,
+    server_is_running_mock,
+    change_to_tmpdir,
 ):
+    Path("config.yml").touch()
+    config = EverestConfig.with_defaults(config_path="./config.yml")
+    config.dump("config.yml")
+
     with pytest.raises(SystemExit, match="Reality was ripped to shreds!"):
-        monitor_entry([CONFIG_FILE_MINIMAL])
+        monitor_entry(["config.yml"])
 
 
 @patch(
@@ -311,10 +354,13 @@ def test_complete_status_for_normal_run(
     start_server_mock,
     wait_for_server_mock,
     start_monitor_mock,
-    copy_math_func_test_data_to_tmp,
+    change_to_tmpdir,
 ):
-    everest_entry([CONFIG_FILE_MINIMAL, "--skip-prompt"])
-    config = EverestConfig.load_file(CONFIG_FILE_MINIMAL)
+    Path("config.yml").touch()
+    config = EverestConfig.with_defaults(config_path="./config.yml")
+    config.dump("config.yml")
+
+    everest_entry(["config.yml", "--skip-prompt"])
     status_path = ServerConfig.get_everserver_status_path(config.output_dir)
     status = everserver_status(status_path)
     expected_status = ExperimentState.completed
@@ -330,10 +376,14 @@ def test_complete_status_for_normal_run(
     side_effect=run_detached_monitor_mock,
 )
 def test_complete_status_for_normal_run_monitor(
-    start_monitor_mock, server_is_running_mock, copy_math_func_test_data_to_tmp
+    start_monitor_mock,
+    server_is_running_mock,
+    change_to_tmpdir,
 ):
-    monitor_entry([CONFIG_FILE_MINIMAL])
-    config = EverestConfig.load_file(CONFIG_FILE_MINIMAL)
+    Path("config.yml").touch()
+    config = EverestConfig.with_defaults(config_path="./config.yml")
+    config.dump("config.yml")
+    monitor_entry(["config.yml"])
     status_path = ServerConfig.get_everserver_status_path(config.output_dir)
     status = everserver_status(status_path)
     expected_status = ExperimentState.completed

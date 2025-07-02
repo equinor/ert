@@ -169,8 +169,10 @@ def test_everest_main_configdump_entry(copy_egg_test_data_to_tmp):
 @pytest.mark.timeout(60)
 @pytest.mark.integration_test
 @pytest.mark.xdist_group(name="starts_everest")
-def test_stopping_local_queue_with_ctrl_c(capsys, copy_math_func_test_data_to_tmp):
-    config = EverestConfig.load_file(CONFIG_FILE_ADVANCED)
+def test_stopping_local_queue_with_ctrl_c(capsys, change_to_tmpdir):
+    Path("config.yml").touch()
+    config = EverestConfig.with_defaults(config_path="./config.yml")
+    config.dump("config.yml")
 
     def wait_and_kill():
         while True:
@@ -186,7 +188,7 @@ def test_stopping_local_queue_with_ctrl_c(capsys, copy_math_func_test_data_to_tm
     thread.start()
 
     with pytest.raises(SystemExit):
-        start_everest(["everest", "run", CONFIG_FILE_ADVANCED, "--skip-prompt"])
+        start_everest(["everest", "run", "config.yml", "--skip-prompt"])
 
     out = capsys.readouterr().out
 

@@ -42,15 +42,16 @@ from everest.util import makedirs_if_needed
 @pytest.mark.integration_test
 @pytest.mark.skip_mac_ci
 @pytest.mark.xdist_group(name="starts_everest")
-async def test_https_requests(copy_math_func_test_data_to_tmp):
-    everest_config = EverestConfig.load_file("config_minimal.yml")
+async def test_https_requests(change_to_tmpdir):
+    Path("./config.yml").touch()
+    everest_config = EverestConfig.with_defaults(config_path="./config.yml")
     everest_config.forward_model.append(ForwardModelStepConfig(job="sleep 5"))
     everest_config.install_jobs.append(
         InstallJobConfig(name="sleep", executable=f"{which('sleep')}")
     )
     # start_server() loads config based on config_path, so we need to actually
     # overwrite it
-    everest_config.dump("config_minimal.yml")
+    everest_config.dump("config.yml")
 
     status_path = ServerConfig.get_everserver_status_path(everest_config.output_dir)
     expected_server_status = ExperimentState.never_run
