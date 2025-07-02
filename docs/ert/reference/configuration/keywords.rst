@@ -1449,13 +1449,8 @@ field property, such as FOPT, WGRNAME need not be set to FIELD.
         -- Using the SUMMARY keyword to add diagnostic variables
         SUMMARY WOPR:MY_WELL
         SUMMARY RPR:8
-        SUMMARY F*          -- Use of wildcards requires that you have entered a REFCASE.
-
-
-The SUMMARY keyword has limited support for '*' wildcards, if your key
-contains one or more '*' characters all matching variables from the refcase
-are selected. Observe that if your summary key contains wildcards you must
-supply a refcase with the :ref:`REFCASE <refcase>` key - otherwise only fully expanded keywords will be used.
+        SUMMARY *           -- Select all keys
+        SUMMARY F*          -- Select all keys starting with F
 
 .. note::
     Properties added using the SUMMARY keyword are only
