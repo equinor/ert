@@ -2,8 +2,11 @@ from __future__ import annotations
 
 import asyncio
 import logging
+import os
 import queue
+import signal
 import threading
+import uuid
 from pathlib import Path
 from typing import Final
 
@@ -16,7 +19,10 @@ from _ert.events import (
     ForwardModelStepSuccess,
     dispatcher_event_to_json,
 )
-from _ert.forward_model_runner.client import Client, ClientConnectionError
+from _ert.forward_model_runner.client import (
+    Client,
+    ClientConnectionError,
+)
 from _ert.forward_model_runner.reporting.base import Reporter
 from _ert.forward_model_runner.reporting.message import (
     _STEP_EXIT_FAILED_STRING,
@@ -97,43 +103,64 @@ class Event(Reporter):
         if self._event_publisher_thread.is_alive():
             self._event_publisher_thread.join()
 
+    async def handle_publish(self, client: Client):
+        event = None
+        start_time = None
+        while True:
+            try:
+                if self._done.is_set() and start_time is None:
+                    start_time = asyncio.get_event_loop().time()
+                if event is None:
+                    event = self._event_queue.get(timeout=0.1)
+                    if event is self._sentinel:
+                        break
+                if (
+                    start_time
+                    and (asyncio.get_event_loop().time() - start_time)
+                    > self._finished_event_timeout
+                ):
+                    break
+                await client.send(dispatcher_event_to_json(event), self._max_retries)
+                event = None
+            except asyncio.CancelledError:
+                return
+            except ClientConnectionError as exc:
+                logger.error(f"Failed to send event: {exc}")
+                return
+            except queue.Empty:
+                await asyncio.sleep(0)
+
+    async def listen_for_terminate_message(self, client: Client):
+        try:
+            await client.received_terminate_message.wait()
+
+            logger.info("Received a TERMINATE message. Terminating the forward model")
+            pgid = os.getpgid(os.getpid())
+            os.killpg(pgid, signal.SIGTERM)
+        except asyncio.CancelledError:
+            return
+
     def _event_publisher(self):
         async def publisher():
             async with Client(
                 url=self._evaluator_url,
                 token=self._token,
                 ack_timeout=self._ack_timeout,
+                dealer_name=f"dispatch-real-{self._real_id}-{uuid.uuid4().hex[:6]}",
             ) as client:
-                event = None
-                start_time = None
-                while True:
-                    try:
-                        if self._done.is_set() and start_time is None:
-                            start_time = asyncio.get_event_loop().time()
-                        if event is None:
-                            event = self._event_queue.get()
-                            if event is self._sentinel:
-                                break
-                        if (
-                            start_time
-                            and (asyncio.get_event_loop().time() - start_time)
-                            > self._finished_event_timeout
-                        ):
-                            break
-                        await client.send(
-                            dispatcher_event_to_json(event), self._max_retries
-                        )
-                        event = None
-                    except asyncio.CancelledError:
-                        return
-                    except ClientConnectionError as exc:
-                        logger.error(f"Failed to send event: {exc}")
-                        raise exc
+                publisher_task = asyncio.create_task(
+                    self.handle_publish(client), name="publisher_task"
+                )
+                listener_task = asyncio.create_task(
+                    self.listen_for_terminate_message(client),
+                    name="terminate_message_listener_task",
+                )
+                await publisher_task
+                if not listener_task.done():
+                    listener_task.cancel()
+                    await listener_task
 
-        try:
-            asyncio.run(publisher())
-        except ClientConnectionError as exc:
-            raise ClientConnectionError("Couldn't connect to evaluator") from exc
+        asyncio.run(publisher())
 
     def report(self, msg):
         self._statemachine.transition(msg)
