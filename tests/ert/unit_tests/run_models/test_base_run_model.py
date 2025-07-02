@@ -61,8 +61,7 @@ def test_run_model_does_not_support_rerun_failed_realizations(minimum_case):
     assert not brm.supports_rerunning_failed_realizations
 
 
-@pytest.mark.usefixtures("use_tmpdir")
-def test_status_when_rerunning_on_non_rerunnable_model():
+def test_status_when_rerunning_on_non_rerunnable_model(use_tmpdir):
     brm = create_run_model()
     brm._status_queue = SimpleQueue()
     brm.start_simulations_thread(
@@ -170,7 +169,6 @@ def test_get_number_of_existing_runpaths(
     assert brm.get_number_of_existing_runpaths() == expected_number
 
 
-@pytest.mark.usefixtures("use_tmpdir")
 @pytest.mark.parametrize(
     "run_path_format",
     ["<ERTCASE>/realization-<IENS>/iter-<ITER>", "<ERTCASE>/realization-<IENS>"],
@@ -178,7 +176,7 @@ def test_get_number_of_existing_runpaths(
 @pytest.mark.parametrize(
     "active_realizations", [[True], [True, True], [True, False], [False], [False, True]]
 )
-def test_delete_run_path(run_path_format, active_realizations):
+def test_delete_run_path(run_path_format, active_realizations, use_tmpdir):
     expected_remaining = []
     expected_removed = []
     for iens, mask in enumerate(active_realizations):
@@ -210,7 +208,7 @@ def test_delete_run_path(run_path_format, active_realizations):
     assert share_path.exists()
 
 
-def test_num_cpu_is_propagated_from_config_to_ensemble(run_args):
+def test_num_cpu_is_propagated_from_config_to_ensemble(run_args, use_tmpdir):
     # Given NUM_CPU in the config file has a special value
     config = ErtConfig.from_file_contents("NUM_REALIZATIONS 2\nNUM_CPU 42")
     # Set up a RunModel object from the config above:
@@ -255,6 +253,7 @@ def test_num_cpu_is_propagated_from_config_to_ensemble(run_args):
 def test_get_current_status(
     real_status_dict,
     expected_result,
+    use_tmpdir,
 ):
     config = ErtConfig.from_file_contents("NUM_REALIZATIONS 3")
     initial_active_realizations = [True] * 3
@@ -567,6 +566,7 @@ def test_check_if_runpath_exists(
     create_dummy_run_path,
     active_mask: list,
     expected: bool,
+    use_tmpdir,
 ):
     def get_run_path_mock(realizations, iteration=None):
         if iteration is not None:
