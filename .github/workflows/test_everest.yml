@@ -106,3 +106,17 @@ jobs:
       uses: codecov/test-results-action@v1
       with:
         token: ${{ secrets.CODECOV_TOKEN }}
+
+    - name: Test for a clean repository
+      if: ${{ inputs.test-type != 'everest-docs-entry-test' && inputs.test-type != 'doc' }}
+      run: |
+        # Remove things we have generated on purpose:
+        ls -la
+        rm -rf .coverage
+        rm -f coverage.xml cov1.xml cov2.xml junit.xml
+        rm -f ert.*.whl
+        rm -f codecov.SHA*
+        rm -f codecov
+        rm -f .coverage.*
+        git status --porcelain
+        test -z "$(git status --porcelain)"

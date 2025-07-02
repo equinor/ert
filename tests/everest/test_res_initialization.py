@@ -220,7 +220,8 @@ def test_install_data_no_init(tmp_path, source, target, symlink, cmd, monkeypatc
 @skipif_no_everest_models
 @pytest.mark.everest_models_test
 @pytest.mark.skip_mac_ci
-def test_summary_default_no_opm():
+def test_summary_default_no_opm(tmp_path, monkeypatch):
+    monkeypatch.chdir(tmp_path)
     everconf = EverestConfig.with_defaults(
         forward_model=[
             {
