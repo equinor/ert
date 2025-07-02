@@ -44,6 +44,7 @@ from ert.run_models import (
     EnsembleSmoother,
     MultipleDataAssimilation,
 )
+from ert.scheduler.job import Job
 from tests.ert import SnapshotBuilder
 from tests.ert.ui_tests.gui.conftest import wait_for_attribute, wait_for_child
 from tests.ert.unit_tests.gui.simulation.test_run_path_dialog import (
@@ -152,7 +153,10 @@ def run_dialog(qtbot: QtBot, use_tmpdir, mock_set_env_key):
 
 
 @pytest.mark.integration_test
-def test_terminating_experiment_shows_a_confirmation_dialog(qtbot: QtBot, run_dialog):
+def test_terminating_experiment_shows_a_confirmation_dialog(
+    qtbot: QtBot, run_dialog, monkeypatch
+):
+    monkeypatch.setattr(Job, "WAIT_PERIOD_FOR_TERM_MESSAGE_TO_CANCEL", 0)
     with qtbot.waitSignal(run_dialog.simulation_done, timeout=10000):
 
         def handle_dialog():

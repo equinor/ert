@@ -130,6 +130,16 @@ class Scheduler:
         for task in pending:
             logger.debug(f"Task {task.get_name()} was not killed properly!")
 
+    def mark_job_as_being_killed_by_evaluator(self, real_id: int) -> None:
+        """Mark the job as being killed by the evaluator"""
+        self._jobs[real_id]._started_killing_by_evaluator = True
+
+    def confirm_job_killed_by_evaluator(self, real_id: int) -> None:
+        """Set the job as killed by the evaluator, if the flag for \
+            evaluator started killing job is already set."""
+        if self._jobs[real_id]._started_killing_by_evaluator:
+            self._jobs[int(real_id)]._was_killed_by_evaluator.set()
+
     async def _update_avg_job_runtime(self) -> None:
         while True:
             iens = await self.completed_jobs.get()

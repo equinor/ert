@@ -20,6 +20,7 @@ DISCONNECT_MSG = b"DISCONNECT"
 ACK_MSG = b"ACK"
 HEARTBEAT_MSG = b"BEAT"
 HEARTBEAT_TIMEOUT = 5.0
+TERMINATE_MSG = b"TERMINATE"
 
 
 class Client:
@@ -44,6 +45,7 @@ class Client:
         # wherein the linger is set to 0 to discard all messages in the queue
         self.socket.setsockopt(zmq.LINGER, 0)
         self.dealer_id = dealer_name or f"dispatch-{uuid.uuid4().hex[:8]}"
+        self.received_terminate_message: asyncio.Event = asyncio.Event()
         self.socket.setsockopt_string(zmq.IDENTITY, self.dealer_id)
 
         if token is not None:
@@ -118,6 +120,8 @@ class Client:
                             f"{self.dealer_id} heartbeat failed - reconnecting."
                         )
                     last_heartbeat_time = asyncio.get_running_loop().time()
+                elif raw_msg == TERMINATE_MSG:
+                    self.received_terminate_message.set()
                 else:
                     await self.process_message(raw_msg.decode("utf-8"))
             except zmq.ZMQError as exc:
@@ -157,7 +161,6 @@ class Client:
                     f"reconnecting: {exc}"
                 )
             except asyncio.CancelledError:
-                self.term()
                 raise
 
             if retries > 0:

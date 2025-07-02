@@ -19,6 +19,7 @@ from _ert.events import (
     EnsembleSucceeded,
     FMEvent,
     ForwardModelStepChecksum,
+    ForwardModelStepFailure,
     RealizationEvent,
     SnapshotInputEvent,
     dispatcher_event_from_json,
@@ -27,7 +28,9 @@ from _ert.forward_model_runner.client import (
     ACK_MSG,
     CONNECT_MSG,
     DISCONNECT_MSG,
+    TERMINATE_MSG,
 )
+from _ert.forward_model_runner.fm_dispatch import FORWARD_MODEL_TERMINATED_MSG
 from ert.ensemble_evaluator import identifiers as ids
 
 from ..config import QueueSystem
@@ -148,6 +151,7 @@ class EnsembleEvaluator:
                                 "Experiment cancelled by user during evaluation"
                             )
                         )
+                        self.stop()
 
             except TimeoutError:
                 if closetracker_received:  # THIS SHOULD NOT BE NEEDED ANYMORE
@@ -169,6 +173,26 @@ class EnsembleEvaluator:
                 logger.debug("Run model cancelled - during evaluation - cancel sent")
                 self._end_event.clear()
             await asyncio.sleep(0.1)
+
+    async def _send_terminate_message_to_dispatchers(self) -> None:
+        event = TERMINATE_MSG
+
+        await asyncio.gather(
+            *(
+                self._router_socket.send_multipart([identity, b"", event])
+                for identity in self._dispatchers_connected
+            )
+        )
+        if self._ensemble._scheduler is not None:
+            for identity in self._dispatchers_connected:
+                real_id = int(identity.decode("utf-8").split("-")[2])
+                self._ensemble._scheduler.mark_job_as_being_killed_by_evaluator(real_id)
+
+    async def _terminate_all_dispatchers(self) -> None:
+        if (scheduler := self.ensemble._scheduler) is not None:
+            await scheduler._running.wait()
+        await self._send_terminate_message_to_dispatchers()
+        await self._ensemble.cancel()
 
     async def _append_message(self, snapshot_update_event: EnsembleSnapshot) -> None:
         event = EESnapshotUpdate(
@@ -298,6 +322,15 @@ class EnsembleEvaluator:
                     f"Ignoring since I am {self.ensemble.id_}"
                 )
                 return
+            if (
+                type(event) is ForwardModelStepFailure
+                and event.error_msg == FORWARD_MODEL_TERMINATED_MSG
+                and self._ensemble._scheduler is not None
+            ):
+                self._ensemble._scheduler.confirm_job_killed_by_evaluator(
+                    int(event.real)
+                )
+
             if type(event) is ForwardModelStepChecksum:
                 await self.forward_checksum(event)
             else:
@@ -395,7 +428,8 @@ class EnsembleEvaluator:
             logger.debug("Cancelling current ensemble")
             self._ee_tasks.append(
                 asyncio.create_task(
-                    self._ensemble.cancel(), name="ensemble_cancellation_task"
+                    self._terminate_all_dispatchers(),
+                    name="dispatcher_termination_task",
                 )
             )
         else:
@@ -450,7 +484,7 @@ class EnsembleEvaluator:
                 elif task.get_name() in {
                     "ensemble_task",
                     "listener_task",
-                    "ensemble_cancellation_task",
+                    "dispatcher_termination_task",
                     "publisher_task",
                     "monitor_end_event_task",
                 }:

@@ -553,10 +553,12 @@ class RunModel(BaseModel, ABC):
         evaluator_task = asyncio.create_task(
             evaluator.run_and_get_successful_realizations()
         )
-
-        if await evaluator.wait_for_evaluation_result() is not True:
+        try:
+            if (await evaluator.wait_for_evaluation_result()) is not True:
+                await evaluator_task
+                return []
+        finally:
             await evaluator_task
-            return []
 
         logger.debug("tasks complete")
 

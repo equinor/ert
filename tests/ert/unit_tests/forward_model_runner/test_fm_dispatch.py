@@ -410,6 +410,7 @@ def test_report_all_messages_drops_reporter_on_error():
     reporter.report.assert_called_once_with(message1)
 
 
+@pytest.mark.timeout(30)
 @pytest.mark.integration_test
 async def test_fm_dispatch_sends_exited_event_with_terminated_msg_on_sigterm(
     use_tmpdir, unused_tcp_port
@@ -475,10 +476,88 @@ time.sleep(180)"""
                     return
 
         # wait for fm running
-        await asyncio.wait_for(wait_for_msg("forward_model_step.running"), timeout=10)
+        await asyncio.wait_for(wait_for_msg("forward_model_step.start"), timeout=15)
         p.terminate()
         # wait for fm_dispatch has been terminated, and sends failure message
-        await asyncio.wait_for(wait_for_msg("forward_model_step.failure"), timeout=10)
+        await asyncio.wait_for(wait_for_msg("forward_model_step.failure"), timeout=15)
+        assert (
+            dispatcher_event_from_json(zmq_server.messages[-1]).error_msg
+            == FORWARD_MODEL_TERMINATED_MSG
+        )
+
+
+@pytest.mark.timeout(30)
+@pytest.mark.integration_test
+async def test_fm_dispatch_sends_exited_event_with_terminated_msg_on_terminate_message(
+    tmp_path, unused_tcp_port
+):
+    os.chdir(tmp_path)
+    with open("dummy_executable", "w", encoding="utf-8") as f:  # noqa: ASYNC230
+        f.write(
+            """#!/usr/bin/env python
+import time
+time.sleep(180)"""
+        )
+
+    executable = os.path.realpath("dummy_executable")
+    os.chmod("dummy_executable", stat.S_IRWXU | stat.S_IRWXO | stat.S_IRWXG)
+
+    fm_description = {
+        "ens_id": "_id_",
+        "dispatch_url": f"tcp://localhost:{unused_tcp_port}",
+        "jobList": [
+            {
+                "name": "dummy_executable",
+                "executable": executable,
+                "stdout": "dummy.stdout",
+                "stderr": "dummy.stderr",
+            }
+        ],
+    }
+
+    with open(FORWARD_MODEL_DESCRIPTION_FILE, "w", encoding="utf-8") as f:  # noqa: ASYNC230
+        f.write(json.dumps(fm_description))
+
+    # macOS doesn't provide /usr/bin/setsid, so we roll our own
+    with open("setsid", "w", encoding="utf-8") as f:  # noqa: ASYNC230
+        f.write(
+            dedent(
+                """\
+            #!/usr/bin/env python
+            import os
+            import sys
+            os.setsid()
+            os.execvp(sys.argv[1], sys.argv[1:])
+            """
+            )
+        )
+    os.chmod("setsid", 0o755)
+
+    async with MockZMQServer(unused_tcp_port) as zmq_server:
+        fm_dispatch_process = Popen(  # noqa: ASYNC220
+            [
+                os.getcwd() + "/setsid",
+                "fm_dispatch.py",
+                os.getcwd(),
+            ]
+        )
+
+        async def wait_for_msg(msg_type):
+            while True:
+                await asyncio.sleep(0.1)
+                if any(
+                    msg_type in dispatcher_event_from_json(msg).event_type
+                    for msg in zmq_server.messages
+                ):
+                    return
+
+        await asyncio.wait_for(wait_for_msg("forward_model_step.start"), timeout=15)
+        await zmq_server.send_terminate_message()
+        await asyncio.wait_for(wait_for_msg("forward_model_step.failure"), timeout=15)
+        await zmq_server.no_dealers.wait()
+        fm_dispatch_process.wait(
+            timeout=15
+        )  # Waiting for the fm_dispatch process to exit
         assert (
             dispatcher_event_from_json(zmq_server.messages[-1]).error_msg
             == FORWARD_MODEL_TERMINATED_MSG

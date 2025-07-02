@@ -1,5 +1,7 @@
 import asyncio
 import datetime
+import logging
+import uuid
 from functools import partial
 from threading import Event
 
@@ -8,6 +10,7 @@ import zmq.asyncio
 from hypothesis import given
 from hypothesis import strategies as st
 from pydantic import ValidationError
+from pytest import MonkeyPatch
 
 from _ert.events import (
     EESnapshot,
@@ -27,16 +30,21 @@ from ert.ensemble_evaluator import (
     EnsembleEvaluator,
     EnsembleSnapshot,
     FMStepSnapshot,
+    identifiers,
+    state,
 )
 from ert.ensemble_evaluator._ensemble import LegacyEnsemble
-from ert.ensemble_evaluator.evaluator import detect_overspent_cpu
+from ert.ensemble_evaluator.config import EvaluatorServerConfig
+from ert.ensemble_evaluator.evaluator import UserCancelled, detect_overspent_cpu
 from ert.ensemble_evaluator.state import (
+    ENSEMBLE_STATE_CANCELLED,
     ENSEMBLE_STATE_UNKNOWN,
     FORWARD_MODEL_STATE_FAILURE,
     FORWARD_MODEL_STATE_FINISHED,
     FORWARD_MODEL_STATE_INIT,
 )
 from ert.scheduler import JobState
+from ert.scheduler.job import Job
 
 from .ensemble_evaluator_utils import TestEnsemble
 
@@ -90,12 +98,15 @@ async def test_evaluator_handles_dispatchers_connected(
         end_event=Event(),
     )
 
-    await evaluator.handle_dispatch(b"dispatcher-1", CONNECT_MSG)
-    await evaluator.handle_dispatch(b"dispatcher-2", CONNECT_MSG)
+    await evaluator.handle_dispatch(b"dispatcher-iens-1", CONNECT_MSG)
+    await evaluator.handle_dispatch(b"dispatcher-iens-2", CONNECT_MSG)
     assert not evaluator._dispatchers_empty.is_set()
-    assert evaluator._dispatchers_connected == {b"dispatcher-1", b"dispatcher-2"}
-    await evaluator.handle_dispatch(b"dispatcher-1", DISCONNECT_MSG)
-    await evaluator.handle_dispatch(b"dispatcher-2", DISCONNECT_MSG)
+    assert evaluator._dispatchers_connected == {
+        b"dispatcher-iens-1",
+        b"dispatcher-iens-2",
+    }
+    await evaluator.handle_dispatch(b"dispatcher-iens-1", DISCONNECT_MSG)
+    await evaluator.handle_dispatch(b"dispatcher-iens-2", DISCONNECT_MSG)
     assert evaluator._dispatchers_empty.is_set()
 
 
@@ -171,46 +182,90 @@ async def test_when_task_prematurely_ends_raises_exception(
         await evaluator.run_and_get_successful_realizations()
 
 
+@pytest.fixture(name="evaluator_to_use")
+async def evaluator_to_use_fixture(make_ee_config):
+    ensemble = TestEnsemble(0, 2, 2, id_="0")
+    event_queue = asyncio.Queue()
+    evaluator = EnsembleEvaluator(
+        ensemble, make_ee_config(use_token=False), Event(), event_queue.put_nowait
+    )
+    evaluator._batching_interval = 0.5  # batching can be faster for tests
+    run_task = asyncio.create_task(evaluator.run_and_get_successful_realizations())
+    await evaluator._server_started
+    yield (evaluator, event_queue)
+    evaluator.stop()
+    await run_task
+
+
 @pytest.mark.integration_test
 @pytest.mark.timeout(20)
 async def test_restarted_jobs_do_not_have_error_msgs(evaluator_to_use):
-    event_queue: asyncio.Queue[EESnapshot | EESnapshotUpdate] = asyncio.Queue()
-    async with evaluator_to_use(event_handler=event_queue.put_nowait) as evaluator:
-        token = evaluator._config.token
-        url = evaluator._config.get_uri()
+    (evaluator, event_queue) = evaluator_to_use
 
-        snapshot_event = await event_queue.get()
-        snapshot = EnsembleSnapshot.from_nested_dict(snapshot_event.snapshot)
-        assert snapshot.status == ENSEMBLE_STATE_UNKNOWN
-        # two dispatch endpoint clients connect
-        async with Client(
-            url,
-            token=token,
-            dealer_name="dispatch_from_test_1",
-        ) as dispatch:
-            event = ForwardModelStepRunning(
-                ensemble=evaluator.ensemble.id_,
-                real="0",
-                fm_step="0",
-                current_memory_usage=1000,
+    token = evaluator._config.token
+    url = evaluator._config.get_uri()
+
+    snapshot_event = await event_queue.get()
+    snapshot = EnsembleSnapshot.from_nested_dict(snapshot_event.snapshot)
+    assert snapshot.status == ENSEMBLE_STATE_UNKNOWN
+    # two dispatch endpoint clients connect
+    async with Client(
+        url,
+        token=token,
+        dealer_name=f"dispatch-real-0-{uuid.uuid4().hex[:6]}",
+    ) as dispatch:
+        event = ForwardModelStepRunning(
+            ensemble=evaluator.ensemble.id_,
+            real="0",
+            fm_step="0",
+            current_memory_usage=1000,
+        )
+        await dispatch.send(dispatcher_event_to_json(event))
+
+        event = ForwardModelStepFailure(
+            ensemble=evaluator.ensemble.id_,
+            real="0",
+            fm_step="0",
+            error_msg="error",
+        )
+        await dispatch.send(dispatcher_event_to_json(event))
+
+    def is_completed_snapshot(snapshot: EnsembleSnapshot) -> bool:
+        try:
+            assert (
+                snapshot.get_fm_step("0", "0").get("status")
+                == FORWARD_MODEL_STATE_FAILURE
             )
-            await dispatch.send(dispatcher_event_to_json(event))
+            assert snapshot.get_fm_step("0", "0").get("error") == "error"
+        except AssertionError:
+            return False
+        else:
+            return True
 
-            event = ForwardModelStepFailure(
-                ensemble=evaluator.ensemble.id_,
-                real="0",
-                fm_step="0",
-                error_msg="error",
-            )
-            await dispatch.send(dispatcher_event_to_json(event))
+    while True:
+        event = await event_queue.get()
+        snapshot.update_from_event(event)
+        if is_completed_snapshot(snapshot):
+            break
+    async with Client(
+        url, token=token, dealer_name=f"dispatch-real-0-{uuid.uuid4().hex[:6]}"
+    ) as dispatch:
+        event = ForwardModelStepSuccess(
+            ensemble=evaluator.ensemble.id_,
+            real="0",
+            fm_step="0",
+            current_memory_usage=1000,
+        )
+        await dispatch.send(dispatcher_event_to_json(event))
 
-        def is_completed_snapshot(snapshot: EnsembleSnapshot) -> bool:
+        def check_if_final_snapshot_is_complete(snapshot: EnsembleSnapshot) -> bool:
             try:
+                assert snapshot.status == ENSEMBLE_STATE_UNKNOWN
                 assert (
-                    snapshot.get_fm_step("0", "0")["status"]
-                    == FORWARD_MODEL_STATE_FAILURE
+                    snapshot.get_fm_step("0", "0").get("status")
+                    == FORWARD_MODEL_STATE_FINISHED
                 )
-                assert snapshot.get_fm_step("0", "0")["error"] == "error"
+                assert not snapshot.get_fm_step("0", "0").get("error")
             except AssertionError:
                 return False
             else:
@@ -218,39 +273,9 @@ async def test_restarted_jobs_do_not_have_error_msgs(evaluator_to_use):
 
         while True:
             event = await event_queue.get()
-            snapshot.update_from_event(event)
-            if is_completed_snapshot(snapshot):
+            snapshot = snapshot.update_from_event(event)
+            if check_if_final_snapshot_is_complete(snapshot):
                 break
-        async with Client(
-            url,
-            token=token,
-        ) as dispatch:
-            event = ForwardModelStepSuccess(
-                ensemble=evaluator.ensemble.id_,
-                real="0",
-                fm_step="0",
-                current_memory_usage=1000,
-            )
-            await dispatch.send(dispatcher_event_to_json(event))
-
-            def check_if_final_snapshot_is_complete(snapshot: EnsembleSnapshot) -> bool:
-                try:
-                    assert snapshot.status == ENSEMBLE_STATE_UNKNOWN
-                    assert (
-                        snapshot.get_fm_step("0", "0")["status"]
-                        == FORWARD_MODEL_STATE_FINISHED
-                    )
-                    assert not snapshot.get_fm_step("0", "0")["error"]
-                except AssertionError:
-                    return False
-                else:
-                    return True
-
-            while True:
-                event = await event_queue.get()
-                snapshot = snapshot.update_from_event(event)
-                if check_if_final_snapshot_is_complete(snapshot):
-                    break
 
 
 @given(
@@ -282,22 +307,105 @@ def test_overspent_cpu_is_logged(
 
 @pytest.mark.integration_test
 async def test_snapshot_on_resubmit_is_cleared(evaluator_to_use):
-    event_queue: asyncio.Queue[EESnapshot | EESnapshotUpdate] = asyncio.Queue()
-    async with evaluator_to_use(event_handler=event_queue.put_nowait) as evaluator:
-        evaluator._batching_interval = 0.4
-        token = evaluator._config.token
-        url = evaluator._config.get_uri()
+    (evaluator, event_queue) = evaluator_to_use
+    evaluator._batching_interval = 0.4
+    token = evaluator._config.token
+    url = evaluator._config.get_uri()
 
-        snapshot_event = await event_queue.get()
-        assert type(snapshot_event) is EESnapshot
-        async with Client(url, token=token) as dispatch:
-            event = ForwardModelStepRunning(
+    snapshot_event = await event_queue.get()
+    assert type(snapshot_event) is EESnapshot
+    async with Client(
+        url, token=token, dealer_name=f"dispatch-real-0-{uuid.uuid4().hex[:6]}"
+    ) as dispatch:
+        event = ForwardModelStepRunning(
+            ensemble=evaluator.ensemble.id_,
+            real="0",
+            fm_step="0",
+            current_memory_usage=1000,
+        )
+        await dispatch.send(dispatcher_event_to_json(event))
+        event = ForwardModelStepSuccess(
+            ensemble=evaluator.ensemble.id_,
+            real="0",
+            fm_step="0",
+            current_memory_usage=1000,
+        )
+        await dispatch.send(dispatcher_event_to_json(event))
+        event = ForwardModelStepRunning(
+            ensemble=evaluator.ensemble.id_,
+            real="0",
+            fm_step="1",
+            current_memory_usage=1000,
+        )
+        await dispatch.send(dispatcher_event_to_json(event))
+        event = ForwardModelStepFailure(
+            ensemble=evaluator.ensemble.id_,
+            real="0",
+            fm_step="1",
+            error_msg="error",
+        )
+        await dispatch.send(dispatcher_event_to_json(event))
+        event = await event_queue.get()
+        snapshot = EnsembleSnapshot.from_nested_dict(event.snapshot)
+        assert (
+            snapshot.get_fm_step("0", "0").get("status") == FORWARD_MODEL_STATE_FINISHED
+        )
+        assert (
+            snapshot.get_fm_step("0", "1").get("status") == FORWARD_MODEL_STATE_FAILURE
+        )
+        await evaluator._events.put(
+            RealizationResubmit(
                 ensemble=evaluator.ensemble.id_,
+                queue_event_type=JobState.RESUBMITTING,
                 real="0",
-                fm_step="0",
-                current_memory_usage=1000,
+                exec_hosts="something",
             )
-            await dispatch.send(dispatcher_event_to_json(event))
+        )
+        event = await event_queue.get()
+        snapshot = EnsembleSnapshot.from_nested_dict(event.snapshot)
+        assert snapshot.get_fm_step("0", "0").get("status") == FORWARD_MODEL_STATE_INIT
+        assert snapshot.get_fm_step("0", "1").get("status") == FORWARD_MODEL_STATE_INIT
+
+
+@pytest.mark.integration_test
+async def test_signal_cancel_does_not_cause_evaluator_dispatcher_communication_to_hang(
+    evaluator_to_use, monkeypatch
+):
+    (evaluator, event_queue) = evaluator_to_use
+    evaluator._batching_interval = 0.4
+    evaluator._max_batch_size = 1
+
+    terminated_all_dispatchers_event = asyncio.Event()
+    started_terminating_all_dispatchers = asyncio.Event()
+
+    async def mock_never_ending_termination_of_dispatchers(*args, **kwargs):
+        nonlocal terminated_all_dispatchers_event, started_terminating_all_dispatchers
+        started_terminating_all_dispatchers.set()
+        await terminated_all_dispatchers_event.wait()
+
+    monkeypatch.setattr(
+        EnsembleEvaluator,
+        "_terminate_all_dispatchers",
+        mock_never_ending_termination_of_dispatchers,
+    )
+    monkeypatch.setattr(Client, "DEFAULT_MAX_RETRIES", 1)
+    monkeypatch.setattr(Client, "DEFAULT_ACK_TIMEOUT", 1)
+    token = evaluator._config.token
+    url = evaluator._config.get_uri()
+    evaluator.ensemble._cancellable = True
+    async with Client(
+        url, token=token, dealer_name=f"dispatch-real-0-{uuid.uuid4().hex[:6]}"
+    ) as dispatch:
+        event = ForwardModelStepRunning(
+            ensemble=evaluator.ensemble.id_,
+            real="0",
+            fm_step="0",
+            current_memory_usage=1000,
+        )
+        await dispatch.send(dispatcher_event_to_json(event))
+
+        async def try_sending_event_from_dispatcher_while_evaluator_is_terminating_dispatchers():  # noqa: E501
+            await started_terminating_all_dispatchers.wait()
             event = ForwardModelStepSuccess(
                 ensemble=evaluator.ensemble.id_,
                 real="0",
@@ -305,111 +413,190 @@ async def test_snapshot_on_resubmit_is_cleared(evaluator_to_use):
                 current_memory_usage=1000,
             )
             await dispatch.send(dispatcher_event_to_json(event))
-            event = ForwardModelStepRunning(
-                ensemble=evaluator.ensemble.id_,
-                real="0",
-                fm_step="1",
-                current_memory_usage=1000,
-            )
-            await dispatch.send(dispatcher_event_to_json(event))
-            event = ForwardModelStepFailure(
-                ensemble=evaluator.ensemble.id_,
-                real="0",
-                fm_step="1",
-                error_msg="error",
-            )
-            await dispatch.send(dispatcher_event_to_json(event))
-            event = await event_queue.get()
-            snapshot = EnsembleSnapshot.from_nested_dict(event.snapshot)
+            terminated_all_dispatchers_event.set()
+
+        await asyncio.wait_for(
+            asyncio.gather(
+                try_sending_event_from_dispatcher_while_evaluator_is_terminating_dispatchers(),
+                evaluator._signal_cancel(),
+            ),
+            timeout=10,
+        )
+
+    def is_completed_snapshot(snapshot: EnsembleSnapshot) -> bool:
+        try:
             assert (
-                snapshot.get_fm_step("0", "0")["status"] == FORWARD_MODEL_STATE_FINISHED
+                snapshot.get_fm_step("0", "0").get("status")
+                == FORWARD_MODEL_STATE_FINISHED
             )
-            assert (
-                snapshot.get_fm_step("0", "1")["status"] == FORWARD_MODEL_STATE_FAILURE
-            )
-            await evaluator._events.put(
-                RealizationResubmit(
-                    ensemble=evaluator.ensemble.id_,
-                    queue_event_type=JobState.RESUBMITTING,
-                    real="0",
-                    exec_hosts="something",
-                )
-            )
-            event = await event_queue.get()
-            snapshot = EnsembleSnapshot.from_nested_dict(event.snapshot)
-            assert snapshot.get_fm_step("0", "0")["status"] == FORWARD_MODEL_STATE_INIT
-            assert snapshot.get_fm_step("0", "1")["status"] == FORWARD_MODEL_STATE_INIT
+        except AssertionError:
+            return False
+        else:
+            return True
+
+    was_completed = False
+    final_snapshot = EnsembleSnapshot()
+    while True:
+        event = await event_queue.get()
+        final_snapshot.update_from_event(event)
+        if is_completed_snapshot(final_snapshot):
+            was_completed = True
+            break
+
+    assert was_completed
 
 
+@pytest.mark.timeout(15)
+async def test_signal_cancel_sends_terminate_message_to_dispatchers(evaluator_to_use):
+    (evaluator, _) = evaluator_to_use
+    token = evaluator._config.token
+    url = evaluator._config.get_uri()
+    evaluator.ensemble._cancellable = True
+    async with (
+        Client(
+            url, token=token, dealer_name=f"dispatch-real-0-{uuid.uuid4().hex[:6]}"
+        ) as dispatcher_0,
+        Client(
+            url, token=token, dealer_name=f"dispatch-real-1-{uuid.uuid4().hex[:6]}"
+        ) as dispatcher_1,
+    ):
+        await evaluator._signal_cancel()
+        assert await asyncio.wait_for(
+            dispatcher_0.received_terminate_message.wait(), timeout=5
+        )
+        assert await asyncio.wait_for(
+            dispatcher_1.received_terminate_message.wait(), timeout=5
+        )
+
+
+@pytest.mark.timeout(10)
 @pytest.mark.integration_test
-async def test_signal_cancel_does_not_cause_evaluator_dispatcher_communication_to_hang(
-    evaluator_to_use, monkeypatch
+async def test_signal_cancel_terminates_fm_dispatcher_with_terminate_message(
+    tmpdir, monkeypatch, make_ensemble, caplog
 ):
+    caplog.set_level(logging.INFO)
+    driver_kill_was_called = asyncio.Event()
+
+    async def mock_driver_kill(*args, **kwargs):
+        nonlocal driver_kill_was_called
+        driver_kill_was_called.set()
+
+    num_reals = 1
+    num_jobs = 1
+    sleep_period = 60
+    ensemble: LegacyEnsemble = make_ensemble(
+        monkeypatch, tmpdir, num_reals, num_jobs, sleep_period
+    )
+    config = EvaluatorServerConfig(use_token=False)
     event_queue: asyncio.Queue[EESnapshot | EESnapshotUpdate] = asyncio.Queue()
-    async with evaluator_to_use(event_handler=event_queue.put_nowait) as evaluator:
-        evaluator._batching_interval = 0.4
-        evaluator._max_batch_size = 1
+    evaluator = EnsembleEvaluator(ensemble, config, Event(), event_queue.put_nowait)
+    run_task = asyncio.create_task(evaluator.run_and_get_successful_realizations())
+    await evaluator._server_started
 
-        kill_all_jobs_event = asyncio.Event()
-        started_cancelling_ensemble = asyncio.Event()
+    async def dispatcher_is_running():
+        nonlocal evaluator
+        while True:
+            if not evaluator._dispatchers_empty.is_set():
+                break
+            await asyncio.sleep(0.1)
 
-        async def mock_never_ending_ensemble_cancel(*args, **kwargs):
-            nonlocal kill_all_jobs_event, started_cancelling_ensemble
-            started_cancelling_ensemble.set()
-            await kill_all_jobs_event.wait()
+    await asyncio.wait_for(dispatcher_is_running(), timeout=5)
 
-        monkeypatch.setattr(LegacyEnsemble, "cancel", mock_never_ending_ensemble_cancel)
-        monkeypatch.setattr(Client, "DEFAULT_MAX_RETRIES", 1)
-        monkeypatch.setattr(Client, "DEFAULT_ACK_TIMEOUT", 1)
-        token = evaluator._config.token
-        url = evaluator._config.get_uri()
-        evaluator.ensemble._cancellable = True
-        async with Client(url, token=token) as dispatch:
-            event = ForwardModelStepRunning(
-                ensemble=evaluator.ensemble.id_,
-                real="0",
-                fm_step="0",
-                current_memory_usage=1000,
-            )
-            await dispatch.send(dispatcher_event_to_json(event))
-
-            async def try_sending_event_from_dispatcher_while_monitor_is_cancelling_ensemble():  # noqa: E501
-                await started_cancelling_ensemble.wait()
-                event = ForwardModelStepSuccess(
-                    ensemble=evaluator.ensemble.id_,
-                    real="0",
-                    fm_step="0",
-                    current_memory_usage=1000,
-                )
-                await dispatch.send(dispatcher_event_to_json(event))
-                kill_all_jobs_event.set()
-
-            await asyncio.wait_for(
-                asyncio.gather(
-                    try_sending_event_from_dispatcher_while_monitor_is_cancelling_ensemble(),
-                    evaluator._signal_cancel(),
-                ),
-                timeout=10,
-            )
-
-        def is_completed_snapshot(snapshot: EnsembleSnapshot) -> bool:
-            try:
-                assert (
-                    snapshot.get_fm_step("0", "0").get("status")
-                    == FORWARD_MODEL_STATE_FINISHED
-                )
-            except AssertionError:
-                return False
-            else:
-                return True
-
-        was_completed = False
-        final_snapshot = EnsembleSnapshot()
+    async def cancel_evaluator_after_getting_initial_event_and_wait_for_confirmation():
+        nonlocal event_queue
         while True:
             event = await event_queue.get()
-            final_snapshot.update_from_event(event)
-            if is_completed_snapshot(final_snapshot):
-                was_completed = True
-                break
+            if type(event) in {
+                EESnapshotUpdate,
+                EESnapshot,
+            }:
+                if (
+                    event.snapshot.get(identifiers.STATUS)
+                    == state.ENSEMBLE_STATE_STARTED
+                ):
+                    assert evaluator._ensemble._scheduler is not None
+                    evaluator._ensemble._scheduler.driver.kill = mock_driver_kill
+                    evaluator._end_event.set()
+                elif event.snapshot.get(identifiers.STATUS) == ENSEMBLE_STATE_CANCELLED:
+                    break
 
-        assert was_completed
+    await asyncio.wait_for(
+        cancel_evaluator_after_getting_initial_event_and_wait_for_confirmation(),
+        timeout=8,
+    )
+
+    await run_task
+    assert len(evaluator._ensemble.get_successful_realizations()) == 0
+    assert not driver_kill_was_called.is_set()
+    assert evaluator._ensemble.status == ENSEMBLE_STATE_CANCELLED
+    assert isinstance(evaluator._evaluation_result.exception(), UserCancelled)
+
+    async def wait_for_log_message():
+        nonlocal caplog
+        while "Realization 0 was killed by the evaluator" not in caplog.text:  # noqa: ASYNC110
+            await asyncio.sleep(0.1)
+
+    await asyncio.wait_for(wait_for_log_message(), timeout=10)
+    # assert "Realization 0 was killed by the evaluator" in caplog.text
+
+
+@pytest.mark.timeout(10)
+@pytest.mark.integration_test
+async def test_signal_cancel_terminates_fm_dispatcher_with_scheduler_as_fallback(
+    tmpdir, monkeypatch: MonkeyPatch, make_ensemble, caplog
+):
+    caplog.set_level(logging.INFO)
+    send_terminate_was_called = asyncio.Event()
+
+    async def empty_send_terminate_messages(*args, **kwargs):
+        nonlocal send_terminate_was_called
+        send_terminate_was_called.set()
+
+    num_reals = 1
+    num_jobs = 1
+    sleep_period = 60
+    ensemble: LegacyEnsemble = make_ensemble(
+        monkeypatch, tmpdir, num_reals, num_jobs, sleep_period
+    )
+    config = EvaluatorServerConfig(use_token=False)
+    event_queue: asyncio.Queue[EESnapshot | EESnapshotUpdate] = asyncio.Queue()
+    monkeypatch.setattr(Job, "WAIT_PERIOD_FOR_TERM_MESSAGE_TO_CANCEL", 0)
+    monkeypatch.setattr(
+        EnsembleEvaluator,
+        "_send_terminate_message_to_dispatchers",
+        empty_send_terminate_messages,
+    )
+
+    evaluator = EnsembleEvaluator(ensemble, config, Event(), event_queue.put_nowait)
+    run_task = asyncio.create_task(evaluator.run_and_get_successful_realizations())
+    await evaluator._server_started
+
+    async def cancel_evaluator_after_getting_initial_event_and_wait_for_confirmation():
+        nonlocal event_queue
+        while True:
+            event = await event_queue.get()
+            if type(event) in {
+                EESnapshotUpdate,
+                EESnapshot,
+            }:
+                if (
+                    event.snapshot.get(identifiers.STATUS)
+                    == state.ENSEMBLE_STATE_STARTED
+                ):
+                    evaluator._end_event.set()
+                elif event.snapshot.get(identifiers.STATUS) == ENSEMBLE_STATE_CANCELLED:
+                    break
+
+    await asyncio.wait_for(
+        cancel_evaluator_after_getting_initial_event_and_wait_for_confirmation(),
+        timeout=5,
+    )
+    await run_task
+
+    assert send_terminate_was_called.is_set()
+    assert evaluator._ensemble.status == ENSEMBLE_STATE_CANCELLED
+    assert isinstance(evaluator._evaluation_result.exception(), UserCancelled)
+    assert (
+        "Realization 0 was not killed gracefully by TERM message. "
+        "Killing it with the scheduler"
+    ) in caplog.text
