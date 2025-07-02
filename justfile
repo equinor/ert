@@ -8,6 +8,10 @@ poly:
 snake_oil:
     ert gui test-data/ert/snake_oil/snake_oil.ert
 
+# run heat_equation test-case
+heat_equation:
+    ert gui test-data/ert/heat_equation/config.ert
+
 pytest_args := env("ERT_PYTEST_ARGS", "--quiet")
 
 # execute rapid unittests
