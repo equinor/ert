@@ -1,5 +1,6 @@
 import os
 import shutil
+from pathlib import Path
 from unittest.mock import patch
 
 import pytest
@@ -33,13 +34,17 @@ def test_that_one_experiment_creates_one_ensemble_per_batch(cached_example):
     "everest.bin.everest_script.everserver_status",
     return_value={"status": ExperimentState.never_run, "message": None},
 )
-def test_save_running_config(_, _1, _2, _3, _4, _5, copy_math_func_test_data_to_tmp):
+def test_save_running_config(_, _1, _2, _3, _4, _5, change_to_tmpdir):
     """Test everest detached, when an optimization has already run"""
-    # optimization already run, notify the user
-    file_name = "config_minimal.yml"
-    config = EverestConfig.load_file(file_name)
-    everest_entry([file_name, "--skip-prompt"])
-    saved_config_path = os.path.join(config.output_dir, file_name)
+
+    Path("config.yml").touch()
+    config = EverestConfig.with_defaults(
+        config_path="./config.yml", environment={"random_seed": 12345}
+    )
+    config.dump("config.yml")
+
+    everest_entry(["config.yml", "--skip-prompt"])
+    saved_config_path = os.path.join(config.output_dir, "config.yml")
 
     assert os.path.exists(saved_config_path)
     shutil.move(saved_config_path, os.path.join(os.getcwd(), "saved_config.yml"))

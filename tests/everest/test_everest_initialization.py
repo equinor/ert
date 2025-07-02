@@ -26,7 +26,7 @@ def test_no_config_init():
         EverestRunModel.create("Frozen bananas")
 
 
-def test_site_config_with_substitutions(monkeypatch, copy_math_func_test_data_to_tmp):
+def test_site_config_with_substitutions(monkeypatch, change_to_tmpdir):
     # set up siteconfig
     test_site_config = Path("test_site_config.ert")
     test_site_config.write_text(
@@ -37,7 +37,7 @@ def test_site_config_with_substitutions(monkeypatch, copy_math_func_test_data_to
     )
     monkeypatch.setenv("ERT_SITE_CONFIG", str(test_site_config))
 
-    config = EverestConfig.load_file("config_minimal.yml")
+    config = EverestConfig.with_defaults()
     everest_run_model = EverestRunModel.create(config)
 
     assert ("<NUM_CPU>", "1") in everest_run_model.substitutions.items()
