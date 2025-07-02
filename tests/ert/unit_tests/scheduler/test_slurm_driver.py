@@ -271,8 +271,7 @@ def mock_slurm(pytestconfig, monkeypatch, tmp_path):
     mock_bin(monkeypatch, tmp_path)
 
 
-async def test_slurm_stdout_file(tmp_path, job_name):
-    os.chdir(tmp_path)
+async def test_slurm_stdout_file(job_name, use_tmpdir):
     driver = SlurmDriver()
     await driver.submit(0, "sh", "-c", "echo yay", name=job_name)
     await poll(driver, {0})
@@ -281,8 +280,7 @@ async def test_slurm_stdout_file(tmp_path, job_name):
     assert "yay" in slurm_stdout
 
 
-async def test_slurm_dumps_stderr_to_file(tmp_path, job_name):
-    os.chdir(tmp_path)
+async def test_slurm_dumps_stderr_to_file(job_name, use_tmpdir):
     driver = SlurmDriver()
     failure_message = "failURE"
     await driver.submit(0, "sh", "-c", f"echo {failure_message} >&2", name=job_name)
@@ -303,9 +301,8 @@ def generate_random_text(size):
 @pytest.mark.parametrize("tail_chars_to_read", [(5), (50), (500), (700)])
 @pytest.mark.integration_test
 async def test_slurm_can_retrieve_stdout_and_stderr(
-    tmp_path, job_name, tail_chars_to_read
+    job_name, tail_chars_to_read, use_tmpdir
 ):
-    os.chdir(tmp_path)
     driver = SlurmDriver()
     num_written_characters = 600
     out = generate_random_text(num_written_characters)
@@ -326,7 +323,7 @@ async def test_slurm_can_retrieve_stdout_and_stderr(
 
 
 @pytest.mark.integration_test
-async def test_submit_to_named_queue(tmp_path, job_name):
+async def test_submit_to_named_queue(tmp_path, job_name, monkeypatch):
     """If the environment variable _ERT_TEST_ALTERNATIVE_QUEUE is defined
     a job will be attempted submitted to that queue.
 
@@ -334,7 +331,7 @@ async def test_submit_to_named_queue(tmp_path, job_name):
 
     As Ert does not keep track of which queue a job is executed in, we can only
     test for success for the job."""
-    os.chdir(tmp_path)
+    monkeypatch.chdir(tmp_path)
     driver = SlurmDriver(queue_name=os.getenv("_ERT_TESTS_ALTERNATIVE_QUEUE"))
     await driver.submit(0, "sh", "-c", f"echo test > {tmp_path}/test", name=job_name)
     await poll(driver, {0})
@@ -342,8 +339,7 @@ async def test_submit_to_named_queue(tmp_path, job_name):
     assert (tmp_path / "test").read_text(encoding="utf-8") == "test\n"
 
 
-@pytest.mark.usefixtures("use_tmpdir")
-async def test_submit_with_num_cpu(pytestconfig, job_name):
+async def test_submit_with_num_cpu(pytestconfig, job_name, use_tmpdir):
     if not pytestconfig.getoption("slurm"):
         return
 
@@ -372,9 +368,9 @@ async def test_submit_with_num_cpu(pytestconfig, job_name):
 @pytest.mark.integration_test
 @pytest.mark.flaky(reruns=4)
 async def test_kill_before_submit_is_finished(
-    tmp_path, monkeypatch, caplog, pytestconfig, request
+    monkeypatch, caplog, pytestconfig, request, tmp_path
 ):
-    os.chdir(tmp_path)
+    monkeypatch.chdir(tmp_path)
 
     job_kill_window = 1 * 2 ** (request.node.execution_count - 1)
     test_grace_time = 2 * 2 ** (request.node.execution_count - 1)
@@ -433,7 +429,7 @@ async def test_slurm_uses_sacct(
     if pytestconfig.getoption("slurm"):
         pytest.skip()
 
-    os.chdir(tmp_path)
+    monkeypatch.chdir(tmp_path)
 
     bin_path = tmp_path / "bin"
     bin_path.mkdir()
@@ -455,8 +451,7 @@ async def test_slurm_uses_sacct(
     assert "scontrol failed, trying sacct" in caplog.text
 
 
-async def test_slurm_timeout(tmp_path, caplog, pytestconfig):
-    os.chdir(tmp_path)
+async def test_slurm_timeout(caplog, pytestconfig, use_tmpdir):
     caplog.set_level(logging.INFO)
 
     if pytestconfig.getoption("slurm"):

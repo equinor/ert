@@ -1,5 +1,4 @@
 import asyncio
-import os
 import signal
 from pathlib import Path
 
@@ -11,10 +10,9 @@ from ert.scheduler.event import FinishedEvent, StartedEvent
 from ert.scheduler.local_driver import LocalDriver
 
 
-async def test_success(tmp_path):
+async def test_success(use_tmpdir):
     driver = LocalDriver()
 
-    os.chdir(tmp_path)
     await driver.submit(42, "/usr/bin/env", "touch", "testfile")
     assert await driver.event_queue.get() == StartedEvent(iens=42)
     assert await driver.event_queue.get() == FinishedEvent(iens=42, returncode=0)
@@ -104,7 +102,7 @@ async def test_kill_unresponsive_process(monkeypatch, tmp_path):
 
 @pytest.mark.integration_test
 @pytest.mark.parametrize("cmd,returncode", [("true", 0), ("false", 1)])
-async def test_kill_when_job_completed(cmd, returncode):
+async def test_kill_when_job_completed(cmd, returncode, use_tmpdir):
     driver = LocalDriver()
 
     await driver.submit(42, "/usr/bin/env", cmd)
@@ -116,7 +114,7 @@ async def test_kill_when_job_completed(cmd, returncode):
     )
 
 
-async def test_that_killing_killed_job_does_not_raise():
+async def test_that_killing_killed_job_does_not_raise(use_tmpdir):
     driver = LocalDriver()
     await driver.submit(23, "/usr/bin/env", "sleep", "10")
     assert await driver.event_queue.get() == StartedEvent(iens=23)
@@ -132,9 +130,9 @@ async def test_that_killing_killed_job_does_not_raise():
 
 
 @pytest.mark.timeout(10)
-async def test_path_as_argument_is_valid(tmp_path):
+async def test_path_as_argument_is_valid(tmp_path, monkeypatch):
+    monkeypatch.chdir(tmp_path)
     driver = LocalDriver()
-    os.chdir(tmp_path)
 
     await driver.submit(42, "/usr/bin/env", "touch", Path(tmp_path) / "testfile")
     assert await driver.event_queue.get() == StartedEvent(iens=42)

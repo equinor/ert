@@ -1,5 +1,3 @@
-import os
-
 import pytest
 from ruamel.yaml import YAML
 
@@ -36,8 +34,8 @@ def test_input_constraint_initialization():
     assert exp_weights == [input_constraint.weights[v] for v in exp_vars]
 
 
-def test_input_constraint_control_references(tmp_path, capsys, caplog):
-    os.chdir(tmp_path)
+def test_input_constraint_control_references(tmp_path, capsys, caplog, monkeypatch):
+    monkeypatch.chdir(tmp_path)
     controls_config = [
         {
             "name": "dummy",

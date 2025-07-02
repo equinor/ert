@@ -160,6 +160,7 @@ def test_tracking(
     num_iters,
     assert_present_in_snapshot,
     storage,
+    monkeypatch,
 ):
     config_lines = [
         "INSTALL_JOB poly_eval2 POLY_EVAL\nFORWARD_MODEL poly_eval2\n",
@@ -182,7 +183,7 @@ def test_tracking(
     )
 
     ert_config = ErtConfig.from_file(parsed.config)
-    os.chdir(ert_config.config_path)
+    monkeypatch.chdir(ert_config.config_path)
 
     queue = Events()
     model = create_model(
@@ -258,6 +259,7 @@ def test_setting_env_context_during_run(
     mode,
     cmd_line_arguments,
     storage,
+    monkeypatch,
 ):
     parser = ArgumentParser(prog="test_main")
     cmd_line_arguments = [mode, *cmd_line_arguments]
@@ -267,7 +269,7 @@ def test_setting_env_context_during_run(
     )
 
     ert_config = ErtConfig.from_file(parsed.config)
-    os.chdir(ert_config.config_path)
+    monkeypatch.chdir(ert_config.config_path)
 
     evaluator_server_config = EvaluatorServerConfig(use_token=False)
     queue = Events()
@@ -321,6 +323,7 @@ def test_run_information_present_as_env_var_in_fm_context(
     mode,
     cmd_line_arguments,
     storage,
+    monkeypatch,
 ):
     expected = ["_ERT_SIMULATION_MODE", "_ERT_EXPERIMENT_ID", "_ERT_ENSEMBLE_ID"]
 
@@ -338,7 +341,7 @@ def test_run_information_present_as_env_var_in_fm_context(
     parsed = ert_parser(parser, [mode, *cmd_line_arguments])
 
     ert_config = ErtConfig.from_file(parsed.config)
-    os.chdir(ert_config.config_path)
+    monkeypatch.chdir(ert_config.config_path)
 
     evaluator_server_config = EvaluatorServerConfig(use_token=False)
     queue = Events()

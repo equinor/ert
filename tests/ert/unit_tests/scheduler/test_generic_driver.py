@@ -53,8 +53,8 @@ def driver(request, pytestconfig, monkeypatch, tmp_path):
 
 
 @pytest.mark.integration_test
-async def test_submit(driver: Driver, tmp_path, job_name):
-    os.chdir(tmp_path)
+async def test_submit(driver: Driver, tmp_path, job_name, monkeypatch):
+    monkeypatch.chdir(tmp_path)
     await driver.submit(0, "sh", "-c", f"echo test > {tmp_path}/test", name=job_name)
     await poll(driver, {0})
 
@@ -62,8 +62,10 @@ async def test_submit(driver: Driver, tmp_path, job_name):
 
 
 @pytest.mark.integration_test
-async def test_submit_something_that_fails(driver: Driver, tmp_path, job_name):
-    os.chdir(tmp_path)
+async def test_submit_something_that_fails(
+    driver: Driver, tmp_path, job_name, monkeypatch
+):
+    monkeypatch.chdir(tmp_path)
     finished_called = False
 
     expected_returncode = 42
@@ -89,8 +91,7 @@ async def test_submit_something_that_fails(driver: Driver, tmp_path, job_name):
 
 
 @pytest.mark.integration_test
-async def test_kill_gives_correct_state(driver: Driver, tmp_path, request):
-    os.chdir(tmp_path)
+async def test_kill_gives_correct_state(driver: Driver, use_tmpdir, request):
     aborted_called = False
 
     if isinstance(driver, SlurmDriver):
@@ -125,11 +126,11 @@ async def test_kill_gives_correct_state(driver: Driver, tmp_path, request):
 
 @pytest.mark.integration_test
 @pytest.mark.flaky(reruns=10)
-async def test_repeated_submit_same_iens(driver: Driver, tmp_path):
+async def test_repeated_submit_same_iens(driver: Driver, tmp_path, monkeypatch):
     """Submits are allowed to be repeated for the same iens, and are to be
     handled according to FIFO, but this order cannot be guaranteed as it depends
     on the host operating system."""
-    os.chdir(tmp_path)
+    monkeypatch.chdir(tmp_path)
     await driver.submit(
         0,
         "sh",
@@ -152,8 +153,8 @@ async def test_repeated_submit_same_iens(driver: Driver, tmp_path):
 
 @pytest.mark.integration_test
 @pytest.mark.flaky(reruns=5)
-async def test_kill_actually_kills(driver: Driver, tmp_path, pytestconfig):
-    os.chdir(tmp_path)
+async def test_kill_actually_kills(driver: Driver, tmp_path, pytestconfig, monkeypatch):
+    monkeypatch.chdir(tmp_path)
     finished = False
 
     async def kill_job_once_started(iens):
@@ -178,7 +179,9 @@ async def test_kill_actually_kills(driver: Driver, tmp_path, pytestconfig):
 
 
 @pytest.mark.integration_test
-async def test_num_cpu_sets_env_variables(driver: Driver, tmp_path, job_name):
+async def test_num_cpu_sets_env_variables(
+    driver: Driver, tmp_path, job_name, monkeypatch
+):
     """The intention of this check is to verify that the driver sets up
     the num_cpu requirement correctly for the relevant queue system.
 
@@ -186,7 +189,7 @@ async def test_num_cpu_sets_env_variables(driver: Driver, tmp_path, job_name):
     environment variable that they all set."""
     if isinstance(driver, LocalDriver):
         pytest.skip("LocalDriver has no NUM_CPU concept")
-    os.chdir(tmp_path)
+    monkeypatch.chdir(tmp_path)
     await driver.submit(
         0,
         "sh",

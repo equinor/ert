@@ -412,9 +412,8 @@ def test_report_all_messages_drops_reporter_on_error():
 
 @pytest.mark.integration_test
 async def test_fm_dispatch_sends_exited_event_with_terminated_msg_on_sigterm(
-    tmp_path, unused_tcp_port
+    use_tmpdir, unused_tcp_port
 ):
-    os.chdir(tmp_path)
     with open("dummy_executable", "w", encoding="utf-8") as f:  # noqa: ASYNC230
         f.write(
             """#!/usr/bin/env python

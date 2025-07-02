@@ -1010,7 +1010,7 @@ def mock_lsf(pytestconfig, monkeypatch, tmp_path):
 def not_found_bjobs(monkeypatch, tmp_path):
     """This creates a bjobs command that will always claim a job
     does not exist, mimicking a job that has 'fallen out of the bjobs cache'."""
-    os.chdir(tmp_path)
+    monkeypatch.chdir(tmp_path)
     bin_path = tmp_path / "bin"
     bin_path.mkdir()
     monkeypatch.setenv("PATH", f"{bin_path}:{os.environ['PATH']}")
@@ -1023,9 +1023,8 @@ def not_found_bjobs(monkeypatch, tmp_path):
 
 
 @pytest.mark.integration_test
-async def test_bjobs_exec_host_logs_only_once(tmp_path, job_name, caplog):
+async def test_bjobs_exec_host_logs_only_once(use_tmpdir, job_name, caplog):
     caplog.set_level(logging.INFO)
-    os.chdir(tmp_path)
     driver = LsfDriver()
     await driver.submit(0, "sh", "-c", "sleep 1", name=job_name)
 
@@ -1038,8 +1037,7 @@ async def test_bjobs_exec_host_logs_only_once(tmp_path, job_name, caplog):
 
 
 @pytest.mark.integration_test
-async def test_lsf_stdout_file(tmp_path, job_name):
-    os.chdir(tmp_path)
+async def test_lsf_stdout_file(use_tmpdir, job_name):
     driver = LsfDriver()
     await driver.submit(0, "sh", "-c", "echo yay", name=job_name)
     await poll(driver, {0})
@@ -1054,8 +1052,7 @@ async def test_lsf_stdout_file(tmp_path, job_name):
 
 
 @pytest.mark.integration_test
-async def test_lsf_dumps_stderr_to_file(tmp_path, job_name):
-    os.chdir(tmp_path)
+async def test_lsf_dumps_stderr_to_file(use_tmpdir, job_name):
     driver = LsfDriver()
     failure_message = "failURE"
     await driver.submit(0, "sh", "-c", f"echo {failure_message} >&2", name=job_name)
@@ -1078,9 +1075,8 @@ def generate_random_text(size):
 @pytest.mark.integration_test
 @pytest.mark.parametrize("tail_chars_to_read", [(5), (50), (500), (700)])
 async def test_lsf_can_retrieve_stdout_and_stderr(
-    tmp_path, job_name, tail_chars_to_read
+    use_tmpdir, job_name, tail_chars_to_read
 ):
-    os.chdir(tmp_path)
     driver = LsfDriver()
     num_written_characters = 600
     out = generate_random_text(num_written_characters)
@@ -1101,8 +1097,7 @@ async def test_lsf_can_retrieve_stdout_and_stderr(
 
 
 @pytest.mark.integration_test
-async def test_lsf_cannot_retrieve_stdout_and_stderr(tmp_path, job_name):
-    os.chdir(tmp_path)
+async def test_lsf_cannot_retrieve_stdout_and_stderr(use_tmpdir, job_name):
     driver = LsfDriver()
     num_written_characters = 600
     out = generate_random_text(num_written_characters)
@@ -1123,11 +1118,12 @@ async def test_lsf_cannot_retrieve_stdout_and_stderr(tmp_path, job_name):
 
 @pytest.mark.integration_test
 @pytest.mark.parametrize("explicit_runpath", [(True), (False)])
-async def test_lsf_info_file_in_runpath(explicit_runpath, tmp_path, job_name):
-    os.chdir(tmp_path)
+async def test_lsf_info_file_in_runpath(
+    explicit_runpath, tmp_path, job_name, monkeypatch
+):
+    monkeypatch.chdir(tmp_path)
     driver = LsfDriver()
     (tmp_path / "some_runpath").mkdir()
-    os.chdir(tmp_path)
     effective_runpath = tmp_path / "some_runpath" if explicit_runpath else tmp_path
     await driver.submit(
         0,
@@ -1147,13 +1143,13 @@ async def test_lsf_info_file_in_runpath(explicit_runpath, tmp_path, job_name):
 
 
 @pytest.mark.integration_test
-async def test_submit_to_named_queue(tmp_path, caplog, job_name):
+async def test_submit_to_named_queue(tmp_path, caplog, job_name, monkeypatch):
     """If the environment variable _ERT_TEST_ALTERNATIVE_QUEUE is defined
     a job will be attempted submitted to that queue.
 
     As Ert does not keep track of which queue a job is executed in, we can only
     test for success for the job."""
-    os.chdir(tmp_path)
+    monkeypatch.chdir(tmp_path)
     driver = LsfDriver(queue_name=os.getenv("_ERT_TESTS_ALTERNATIVE_QUEUE"))
     await driver.submit(0, "sh", "-c", f"echo test > {tmp_path}/test", name=job_name)
     await poll(driver, {0})
@@ -1297,10 +1293,9 @@ async def test_no_exception_when_no_access_to_bjobs_executable(
     assert "Permission denied" in caplog.text
 
 
-async def test_jobname_with_spaces(tmp_path, pytestconfig):
+async def test_jobname_with_spaces(use_tmpdir, pytestconfig):
     if not pytestconfig.getoption("lsf"):
         pytest.skip("Mocked LSF driver does not support spaces")
-    os.chdir(tmp_path)
     driver = LsfDriver()
     await driver.submit(0, "sh", "-c", "sleep 1", name="I have spaces")
     await poll(driver, {0})
