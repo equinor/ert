@@ -6,6 +6,7 @@ import json
 import os
 from collections.abc import Awaitable
 from datetime import datetime, timedelta
+from time import sleep
 from typing import TypeVar
 from urllib.parse import quote
 from uuid import UUID
@@ -334,6 +335,7 @@ def test_plot_api_big_summary_memory_usage(
 
     stats = memray._memray.compute_statistics("memray.bin")
     os.remove("memray.bin")
+    sleep(2)
     gc.collect()
     total_memory_usage = stats.total_memory_allocated / (1024**2)
     assert total_memory_usage < max_memory_mb
