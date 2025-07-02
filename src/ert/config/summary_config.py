@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import logging
 from dataclasses import dataclass
-from datetime import datetime
 from typing import Any, no_type_check
 
 import polars as pl
@@ -10,7 +9,6 @@ import polars as pl
 from ert.substitutions import substitute_runpath_name
 
 from ._read_summary import read_summary
-from .ensemble_config import Refcase
 from .parsing import ConfigDict, ConfigKeys
 from .parsing.config_errors import ConfigValidationError, ConfigWarning
 from .response_config import InvalidResponseFile, ResponseConfig, ResponseMetadata
@@ -22,12 +20,9 @@ logger = logging.getLogger(__name__)
 @dataclass
 class SummaryConfig(ResponseConfig):
     name: str = "summary"
-    refcase: set[datetime] | list[str] | None = None
     has_finalized_keys: bool = False
 
     def __post_init__(self) -> None:
-        if isinstance(self.refcase, list):
-            self.refcase = {datetime.fromisoformat(val) for val in self.refcase}
         self.keys = sorted(set(self.keys))
         if len(self.keys) < 1:
             raise ValueError("SummaryConfig must be given at least one key")
@@ -84,14 +79,12 @@ class SummaryConfig(ResponseConfig):
     @no_type_check
     @classmethod
     def from_config_dict(cls, config_dict: ConfigDict) -> SummaryConfig | None:
-        refcase = Refcase.from_config_dict(config_dict)
         if summary_keys := config_dict.get(ConfigKeys.SUMMARY, []):
             eclbase: str | None = config_dict.get("ECLBASE")
             if eclbase is None:
                 raise ConfigValidationError(
                     "In order to use summary responses, ECLBASE has to be set."
                 )
-            time_map = set(refcase.dates) if refcase is not None else None
             fm_steps = config_dict.get(ConfigKeys.FORWARD_MODEL, [])
             names = [fm_step[0] for fm_step in fm_steps]
             simulation_step_exists = any(
@@ -107,7 +100,6 @@ class SummaryConfig(ResponseConfig):
                 name="summary",
                 input_files=[eclbase.replace("%d", "<IENS>")],
                 keys=[key for keys in summary_keys for key in keys],
-                refcase=time_map,
             )
 
         return None

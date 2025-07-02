@@ -175,7 +175,6 @@ def test_that_storage_matches(
         ensemble = ensembles[0]
 
         response_config = experiment.response_configuration
-        response_config["summary"].refcase = {}
 
         assert all(
             "has_finalized_keys" in config

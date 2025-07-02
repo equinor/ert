@@ -353,6 +353,8 @@ class LocalExperiment(BaseMode):
         responses = {}
         for data in self.response_info.values():
             ert_kind = data.pop("_ert_kind")
+            data.pop("refcase", None)
+
             assert ert_kind in responses_index
             response_cls = responses_index[ert_kind]
             response_instance = response_cls(**data)
