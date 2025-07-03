@@ -105,6 +105,26 @@ def class_source_root(request, source_root):
     yield
 
 
+@pytest.fixture(autouse=True)
+def env_save():
+    exceptions = [
+        "PYTEST_CURRENT_TEST",
+        "KMP_DUPLICATE_LIB_OK",
+        "KMP_INIT_AT_FORK",
+        "QT_API",
+        "COV_CORE_CONTEXT",
+    ]
+    environment_pre = [
+        (key, val) for key, val in os.environ.items() if key not in exceptions
+    ]
+    yield
+    environment_post = [
+        (key, val) for key, val in os.environ.items() if key not in exceptions
+    ]
+    set_xor = set(environment_pre).symmetric_difference(set(environment_post))
+    assert len(set_xor) == 0, f"Detected differences in environment: {set_xor}"
+
+
 @pytest.fixture(scope="session", autouse=True)
 def maximize_ulimits():
     """

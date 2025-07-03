@@ -6,7 +6,7 @@ from typing import Any
 
 from ruamel.yaml import YAML
 
-from everest.bin.utils import cleanup_logging, setup_logging
+from everest.bin.utils import setup_logging
 from everest.config import EverestConfig
 from everest.config_file_loader import load_yaml
 from everest.everest_storage import EverestStorage
@@ -126,8 +126,6 @@ def config_branch_entry(args: list[str] | None = None) -> None:
     with open(options.output_config, "w", encoding="utf-8") as f:
         yaml.dump(yml_config, f)
     print(f"New config file {options.output_config} created.")
-
-    cleanup_logging()
 
 
 if __name__ == "__main__":
