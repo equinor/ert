@@ -43,7 +43,7 @@ from ert.ensemble_evaluator._ensemble import LegacyEnsemble
 from ert.ensemble_evaluator.config import EvaluatorServerConfig
 from ert.ensemble_evaluator.evaluator import detect_overspent_cpu
 from ert.ensemble_evaluator.state import (
-    ENSEMBLE_STATE_FAILED,
+    ENSEMBLE_STATE_CANCELLED,
     ENSEMBLE_STATE_STARTED,
     ENSEMBLE_STATE_STOPPED,
     ENSEMBLE_STATE_UNKNOWN,
@@ -811,24 +811,20 @@ async def test_signal_cancel_terminates_fm_dispatcher(
         setup_evaluator(ensemble, config) as evaluator,
         Monitor(config.get_uri(), config.token) as monitor,
     ):
-        evaluator.WAIT_PERIOD_FOR_GRACEFUL_SHUTDOWN = 0
         async for event in monitor.track():
-            if type(event) in {
-                EESnapshotUpdate,
-                EESnapshot,
-            }:
-                if (
-                    event.snapshot.get(identifiers.STATUS)
-                    == state.ENSEMBLE_STATE_STARTED
-                ):
-                    await monitor.signal_cancel()
-                elif event.snapshot.get(identifiers.STATUS) in {
-                    ENSEMBLE_STATE_STOPPED,
-                    ENSEMBLE_STATE_FAILED,
-                }:
-                    await monitor.signal_done()
+            if (
+                type(event)
+                in {
+                    EESnapshotUpdate,
+                    EESnapshot,
+                }
+                and event.snapshot.get(identifiers.STATUS)
+                == state.ENSEMBLE_STATE_STARTED
+            ):
+                await monitor.signal_cancel()
 
         assert len(evaluator._ensemble.get_successful_realizations()) == 0
+        assert evaluator._ensemble.status == ENSEMBLE_STATE_CANCELLED
 
 
 @pytest.mark.timeout(20)
@@ -853,26 +849,22 @@ async def test_signal_cancel_terminates_fm_dispatcher_with_terminate_message(
         setup_evaluator(ensemble, config) as evaluator,
         Monitor(config.get_uri(), config.token) as monitor,
     ):
-        evaluator.WAIT_PERIOD_FOR_GRACEFUL_SHUTDOWN = 0
         evaluator._ensemble.cancel = empty_cancel
         async for event in monitor.track():
-            if type(event) in {
-                EESnapshotUpdate,
-                EESnapshot,
-            }:
-                if (
-                    event.snapshot.get(identifiers.STATUS)
-                    == state.ENSEMBLE_STATE_STARTED
-                ):
-                    await monitor.signal_cancel()
-                elif event.snapshot.get(identifiers.STATUS) in {
-                    ENSEMBLE_STATE_STOPPED,
-                    ENSEMBLE_STATE_FAILED,
-                }:
-                    await monitor.signal_done()
+            if (
+                type(event)
+                in {
+                    EESnapshotUpdate,
+                    EESnapshot,
+                }
+                and event.snapshot.get(identifiers.STATUS)
+                == state.ENSEMBLE_STATE_STARTED
+            ):
+                await monitor.signal_cancel()
 
         assert len(evaluator._ensemble.get_successful_realizations()) == 0
     assert ensemble_cancelled_was_called.is_set()
+    assert evaluator._ensemble.status == ENSEMBLE_STATE_CANCELLED
 
 
 @pytest.mark.timeout(20)
@@ -897,28 +889,25 @@ async def test_signal_cancel_terminates_fm_dispatcher_with_scheduler_as_fallback
         setup_evaluator(ensemble, config) as evaluator,
         Monitor(config.get_uri(), config.token) as monitor,
     ):
-        evaluator.WAIT_PERIOD_FOR_GRACEFUL_SHUTDOWN = 0
+        evaluator._ensemble._scheduler.WAIT_PERIOD_FOR_GRACEFUL_SHUTDOWN = 0
         evaluator._send_terminate_messages_to_dispatchers = (
             empty_send_terminate_messages
         )
         async for event in monitor.track():
-            if type(event) in {
-                EESnapshotUpdate,
-                EESnapshot,
-            }:
-                if (
-                    event.snapshot.get(identifiers.STATUS)
-                    == state.ENSEMBLE_STATE_STARTED
-                ):
-                    await monitor.signal_cancel()
-                elif event.snapshot.get(identifiers.STATUS) in {
-                    ENSEMBLE_STATE_STOPPED,
-                    ENSEMBLE_STATE_FAILED,
-                }:
-                    await monitor.signal_done()
+            if (
+                type(event)
+                in {
+                    EESnapshotUpdate,
+                    EESnapshot,
+                }
+                and event.snapshot.get(identifiers.STATUS)
+                == state.ENSEMBLE_STATE_STARTED
+            ):
+                await monitor.signal_cancel()
 
         assert len(evaluator._ensemble.get_successful_realizations()) == 0
     assert send_terminate_was_called.is_set()
+    assert evaluator._ensemble.status == ENSEMBLE_STATE_CANCELLED
     assert (
         "Realization 0 did not stop after getting the TERMINATE message. "
         "Killing it using scheduler"

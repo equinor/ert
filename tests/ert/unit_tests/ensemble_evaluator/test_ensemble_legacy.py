@@ -81,7 +81,6 @@ async def test_run_and_cancel_legacy_ensemble(
             evaluator_to_use(ensemble, config) as evaluator,
             Monitor(config.get_uri(), config.token) as monitor,
         ):
-            evaluator.WAIT_PERIOD_FOR_GRACEFUL_SHUTDOWN = 0
             # on lesser hardware the realizations might be killed by max_runtime
             # and the ensemble is set to STOPPED
             monitor._receiver_timeout = 10.0

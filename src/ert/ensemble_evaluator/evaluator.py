@@ -58,8 +58,6 @@ class HeartbeatEvent(Enum):
 
 
 class EnsembleEvaluator:
-    WAIT_PERIOD_FOR_GRACEFUL_SHUTDOWN = 5.0
-
     def __init__(self, ensemble: Ensemble, config: EvaluatorServerConfig) -> None:
         self._config: EvaluatorServerConfig = config
         self._ensemble: Ensemble = ensemble
@@ -118,8 +116,13 @@ class EnsembleEvaluator:
         )
 
     async def _terminate_all_dispatchers(self) -> None:
+        if (scheduler := self.ensemble._scheduler) is not None:
+            await scheduler._running.wait()
+            scheduler._cancelled = True
         await self._send_terminate_messages_to_dispatchers()
-        await asyncio.sleep(self.WAIT_PERIOD_FOR_GRACEFUL_SHUTDOWN)
+        if (scheduler := self.ensemble._scheduler) is not None:
+            for scheduler_job in scheduler._jobs.values():
+                scheduler_job.returncode.cancel()
         await self._ensemble.cancel()
 
     async def _append_message(self, snapshot_update_event: EnsembleSnapshot) -> None:
