@@ -58,6 +58,8 @@ class SubmitSleeper:
 
 
 class Scheduler:
+    WAIT_PERIOD_FOR_GRACEFUL_SHUTDOWN = 5.0
+
     def __init__(
         self,
         driver: Driver,
@@ -95,6 +97,7 @@ class Scheduler:
         self.warnings_extracted: bool = False
 
         self._cancelled = False
+        self._cancelled_by_evaluator = False
         if max_submit < 0:
             raise ValueError(
                 "max_submit needs to be a positive number. "
@@ -113,6 +116,9 @@ class Scheduler:
 
     async def cancel_all_jobs(self) -> None:
         await self._running.wait()
+        await asyncio.wait(
+            self._job_tasks.values(), timeout=self.WAIT_PERIOD_FOR_GRACEFUL_SHUTDOWN
+        )
         self._cancelled = True
         logger.info("Cancelling all jobs")
         await self._cancel_job_tasks()
@@ -120,11 +126,12 @@ class Scheduler:
     async def _cancel_job_tasks(self) -> None:
         for iens, task in self._job_tasks.items():
             if not task.done():
-                logger.warning(
-                    f"Realization {iens} did not stop after getting the "
-                    "TERMINATE message. Killing it using scheduler."
-                )
                 task.cancel()
+            else:
+                logger.info(
+                    f"Realization {iens} stopped itself after getting the "
+                    "TERMINATE message."
+                )
         _, pending = await asyncio.wait(
             self._job_tasks.values(),
             timeout=30.0,
@@ -321,7 +328,7 @@ class Scheduler:
                 return_exceptions=True,
             )
 
-        if self._cancelled:
+        if self._cancelled or self._cancelled_by_evaluator:
             logger.debug("Scheduler has been cancelled, jobs are stopped.")
             return False
 
@@ -341,6 +348,7 @@ class Scheduler:
             if (
                 isinstance(event, FinishedEvent)
                 and not self._cancelled
+                and not self._cancelled_by_evaluator
                 and not job.returncode.cancelled()
             ):
                 job.returncode.set_result(event.returncode)

@@ -129,9 +129,6 @@ def run_dialog(qtbot: QtBot, use_tmpdir, mock_set_env_key, monkeypatch):
         f.write("NUM_REALIZATIONS 1")
     args_mock = Mock()
     args_mock.config = config_file
-    monkeypatch.setattr(
-        ert.ensemble_evaluator.EnsembleEvaluator, "WAIT_PERIOD_FOR_GRACEFUL_SHUTDOWN", 0
-    )
     ert_config = ErtConfig.from_file(config_file)
     gui = _setup_main_window(ert_config, args_mock, GUILogHandler(), "storage")
     qtbot.addWidget(gui)

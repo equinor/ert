@@ -404,7 +404,7 @@ class LsfDriver(Driver):
                 "SIGTERM",
                 job_id,
             ]
-
+            logger.log(f"CALLED LSF KILL FOR {iens=}")
             _, process_message = await self._execute_with_retry(
                 bkill_with_args,
                 retry_codes=(FLAKY_SSH_RETURNCODE,),
