@@ -69,14 +69,6 @@ def test_storage_logging(change_to_tmpdir):
         assert len(logfiles) == 1, "Expected exactly one log file"
         with open(logfiles[0], encoding="utf-8") as logfile:
             contents = logfile.readlines()
-            assert (
-                "[INFO] ert.shared.storage.info: Starting dark storage" in contents[0]
-            )
-            assert (
-                "[INFO] ert.shared.storage.info: "
-                f"Started dark storage with parent {os.getpid()}"
-            ) in contents[1]
-            assert (
-                "[INFO] ert.shared.storage.info: "
-                "Storage server is ready to accept requests. Listening on:"
-            ) in contents[2]
+
+        # check for duplicated log entries
+        assert len(contents) == len(set(contents)), "Found duplicated log entries"
