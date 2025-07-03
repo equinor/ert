@@ -236,7 +236,7 @@ def test_report_with_reconnected_reporter_but_finished_jobs(unused_tcp_port):
         pytest.param(1, "Failed to send event", id="failed_to_send_event"),
     ],
 )
-def test_event_reporter_does_not_hang_after_failed_JONAK(
+def test_event_reporter_does_not_hang_after_failed(
     mocked_server_signal, expected_message, unused_tcp_port, monkeypatch, caplog
 ):
     host = "localhost"
