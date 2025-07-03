@@ -3,37 +3,40 @@
 import argparse
 import json
 import sys
+from pathlib import Path
 
 
-def compute_distance_squared(p, q):
-    d = ((i - j) ** 2 for i, j in zip(p, q, strict=False))
-    d = sum(d)
-    return -d
+def compute_distance_squared(
+    p: tuple[float, float, float], q: tuple[float, float, float]
+) -> float:
+    d = ((i - j) ** 2 for i, j in zip(p, q, strict=True))
+    return -sum(d)
 
 
-def read_point(filename):
-    with open(filename, encoding="utf-8") as f:
-        point = json.load(f)
+def read_point(filename: Path) -> tuple[float, float, float]:
+    point = json.loads(filename.read_text(encoding="utf-8"))
     return point["x"], point["y"], point["z"]
 
 
-def main(argv):
+def main(argv: list[str]) -> None:
     arg_parser = argparse.ArgumentParser()
-    arg_parser.add_argument("--point-file", type=str)
+    arg_parser.add_argument("--point-file", type=Path)
     arg_parser.add_argument("--point", nargs=3, type=float)
-    arg_parser.add_argument("--target-file", type=str)
+    arg_parser.add_argument("--target-file", type=Path)
     arg_parser.add_argument("--target", nargs=3, type=float)
-    arg_parser.add_argument("--out", type=str)
+    arg_parser.add_argument("--out", type=Path)
     arg_parser.add_argument("--realization", type=float)
     options, _ = arg_parser.parse_known_args(args=argv)
 
     point = options.point or read_point(options.point_file)
     if len(point) != 3:
-        raise RuntimeError("Failed parsing point")
+        msg = "Failed parsing point"
+        raise RuntimeError(msg)
 
     target = options.target or read_point(options.target_file)
     if len(target) != 3:
-        raise RuntimeError("Failed parsing target")
+        msg = "Failed parsing target"
+        raise RuntimeError(msg)
 
     value = compute_distance_squared(point, target)
     # If any realizations with an index > 0 are passed we make those incorrect
@@ -42,8 +45,7 @@ def main(argv):
         value = -value
 
     if options.out:
-        with open(options.out, "w", encoding="utf-8") as f:
-            f.write(f"{value:g} \n")
+        options.out.write_text(f"{value:g} \n", encoding="utf-8")
     else:
         print(value)
 
