@@ -4,6 +4,7 @@ from textwrap import dedent
 from urllib.parse import quote
 
 import httpx
+import numpy as np
 import pandas as pd
 import polars as pl
 import pytest
@@ -327,6 +328,39 @@ def test_plot_api_handles_non_existant_gen_kw(api_and_storage):
     )
     assert api.data_for_parameter(str(ensemble.id), "gen_kw").empty
     assert api.data_for_parameter(str(ensemble.id), "gen_kw:does_not_exist").empty
+
+
+def test_plot_api_handles_colons_in_parameter_keys(api_and_storage):
+    api, storage = api_and_storage
+    experiment = storage.create_experiment(
+        parameters=[
+            GenKwConfig(
+                name="group",
+                forward_init=False,
+                update=False,
+                transform_function_definitions=[
+                    TransformFunctionDefinition(
+                        name="subgroup:1:2:2", param_name="RAW", values=[]
+                    ),
+                ],
+            ),
+        ],
+        responses=[],
+        observations={},
+    )
+    ensemble = storage.create_ensemble(experiment.id, ensemble_size=10)
+    ensemble.save_parameters(
+        "group",
+        0,
+        pl.DataFrame(
+            {
+                "subgroup:1:2:2": pl.Series([10], dtype=pl.Float32),
+                "realization": pl.Series([0], dtype=pl.Int32),
+            }
+        ),
+    )
+    test = api.data_for_parameter(str(ensemble.id), "group:subgroup:1:2:2")
+    assert test.to_numpy() == np.array([[10]])
 
 
 def test_that_multiple_observations_are_parsed_correctly(api_and_storage):
