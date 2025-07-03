@@ -306,7 +306,7 @@ class PlotApi:
 
     def _history_key(self, key: str) -> str:
         if ":" in key:
-            head, tail = key.split(":", 2)
+            head, tail = key.split(":", 1)
             history_key = f"{head}H:{tail}"
         else:
             history_key = f"{key}H"
