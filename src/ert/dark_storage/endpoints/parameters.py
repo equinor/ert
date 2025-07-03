@@ -97,7 +97,7 @@ def _extract_parameter_group_and_key(key: str) -> tuple[str, str] | tuple[None, 
         # Assume all incoming keys are in format group:key for now
         return None, None
 
-    param_group, param_key = key.split(":")
+    param_group, param_key = key.split(":", maxsplit=1)
     return param_group, param_key
 
 
