@@ -142,6 +142,8 @@ def wait_for_server(output_dir: str, timeout: int | float) -> None:
             return
         else:
             time.sleep(sleep_time_increment * (2**retry_count))
+    if server_is_running(*ServerConfig.get_server_context(output_dir)):
+        return
     raise RuntimeError("Failed to get reply from server within configured timeout.")
 
 
