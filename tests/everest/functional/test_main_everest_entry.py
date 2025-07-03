@@ -169,33 +169,32 @@ def test_everest_main_configdump_entry(copy_egg_test_data_to_tmp):
 @pytest.mark.timeout(60)
 @pytest.mark.integration_test
 @pytest.mark.xdist_group(name="starts_everest")
-def test_stopping_local_queue_with_ctrl_c(capsys, change_to_tmpdir):
-    Path("config.yml").touch()
-    config = EverestConfig.with_defaults(config_path="./config.yml")
-    config.dump("config.yml")
+def test_stopping_local_queue_with_ctrl_c(capsys, setup_minimal_everest_case):
+    with setup_minimal_everest_case(forward_model_sleep_time=5) as config_path:
+        config = EverestConfig.load_file(config_path)
 
-    def wait_and_kill():
-        while True:
-            status = everserver_status(
-                ServerConfig.get_everserver_status_path(config.output_dir)
-            )
-            if status.get("status") == ExperimentState.running:
-                os.kill(os.getpid(), signal.SIGINT)
-                return
-            time.sleep(1)
+        def wait_and_kill():
+            while True:
+                status = everserver_status(
+                    ServerConfig.get_everserver_status_path(config.output_dir)
+                )
+                if status.get("status") == ExperimentState.running:
+                    os.kill(os.getpid(), signal.SIGINT)
+                    return
+                time.sleep(1)
 
-    thread = threading.Thread(target=wait_and_kill, args=())
-    thread.start()
+        thread = threading.Thread(target=wait_and_kill, args=())
+        thread.start()
 
-    with pytest.raises(SystemExit):
-        start_everest(["everest", "run", "config.yml", "--skip-prompt"])
+        with pytest.raises(SystemExit):
+            start_everest(["everest", "run", "config.yml", "--skip-prompt"])
 
-    out = capsys.readouterr().out
+        out = capsys.readouterr().out
 
-    assert "You are running your optimization locally." in out
-    assert "KeyboardInterrupt" in out
-    assert "The optimization will be stopped and the program will exit..." in out
+        assert "You are running your optimization locally." in out
+        assert "KeyboardInterrupt" in out
+        assert "The optimization will be stopped and the program will exit..." in out
 
-    status_path = ServerConfig.get_everserver_status_path(config.output_dir)
-    status = everserver_status(status_path)
-    assert status["status"] == ExperimentState.stopped
+        status_path = ServerConfig.get_everserver_status_path(config.output_dir)
+        status = everserver_status(status_path)
+        assert status["status"] == ExperimentState.stopped
