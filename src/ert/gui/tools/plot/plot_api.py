@@ -14,6 +14,7 @@ import httpx
 import numpy as np
 import numpy.typing as npt
 import pandas as pd
+from pandas.api.types import is_numeric_dtype
 from pandas.errors import ParserError
 
 from ert.config.parameter_config import ParameterMetadata
@@ -233,10 +234,10 @@ class PlotApi:
             except (ParserError, ValueError):
                 df.columns = [int(s) for s in df.columns]
 
-            try:
-                return df.astype(float)
-            except ValueError:
-                return df
+            for col in df.columns:
+                if is_numeric_dtype(df[col]):
+                    df[col] = df[col].astype(float)
+            return df
 
     def observations_for_key(self, ensemble_ids: list[str], key: str) -> pd.DataFrame:
         """Returns a pandas DataFrame with the datapoints for a given observation key
