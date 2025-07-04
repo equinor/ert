@@ -27,7 +27,6 @@
     ]
   },
   "optimizer": {
-    "max_batches": 4,
     "method": "optpp_q_newton",
     "output_dir": "not_relevant",
     "parallel": true,
