@@ -1,0 +1,282 @@
+{
+  "storage_path": "test-data/ert/heat_equation.config.ert/storage",
+  "runpath_file": "test-data/ert/heat_equation.config.ert/.ert_runpath_list",
+  "user_config_file": "test-data/ert/heat_equation.config.ert/config.ert",
+  "env_vars": {
+    "MKL_NUM_THREADS": "1",
+    "NUMEXPR_NUM_THREADS": "1",
+    "OMP_NUM_THREADS": "1"
+  },
+  "env_pr_fm_step": {},
+  "runpath_config": {
+    "num_realizations": 100,
+    "runpath_format_string": "simulations/realization-<IENS>/iter-<ITER>",
+    "jobname_format_string": "<CONFIG_FILE>-<IENS>",
+    "eclbase_format_string": "ECLBASE<IENS>",
+    "gen_kw_export_name": "parameters"
+  },
+  "queue_config": {
+    "max_submit": 1,
+    "queue_system": "local",
+    "queue_options": {
+      "name": "local",
+      "max_running": 100,
+      "num_cpu": 1,
+      "realization_memory": 0,
+      "job_script": "fm_dispatch.py",
+      "submit_sleep": null,
+      "project_code": null,
+      "activate_script": "activate"
+    },
+    "stop_long_running": false,
+    "max_runtime": null,
+    "submit_sleep_": 0.0
+  },
+  "forward_model_steps": [
+    {
+      "name": "heat_equation",
+      "executable": "test-data/ert/heat_equation.config.ert/heat_equation.py",
+      "stdin_file": null,
+      "stdout_file": "heat_equation.stdout",
+      "stderr_file": "heat_equation.stderr",
+      "start_file": null,
+      "target_file": null,
+      "error_file": null,
+      "max_running_minutes": null,
+      "min_arg": null,
+      "max_arg": null,
+      "arglist": [
+        "<ARG0>",
+        "<ARG1>"
+      ],
+      "required_keywords": [],
+      "arg_types": [],
+      "environment": {
+        "_ERT_ITERATION_NUMBER": "<ITER>",
+        "_ERT_REALIZATION_NUMBER": "<IENS>",
+        "_ERT_RUNPATH": "<RUNPATH>"
+      },
+      "default_mapping": {},
+      "private_args": {
+        "<ARG0>": "<IENS>",
+        "<ARG1>": "<ITER>"
+      }
+    }
+  ],
+  "substitutions": {
+    "<CONFIG_PATH>": "test-data/ert/heat_equation.config.ert",
+    "<CONFIG_FILE_BASE>": "config",
+    "<DATE>": "2000-01-01",
+    "<CWD>": "test-data/ert/heat_equation.config.ert",
+    "<CONFIG_FILE>": "config.ert",
+    "<RUNPATH_FILE>": "test-data/ert/heat_equation.config.ert/.ert_runpath_list",
+    "<RUNPATH>": "simulations/realization-<IENS>/iter-<ITER>",
+    "<ECL_BASE>": "ECLBASE<IENS>",
+    "<ECLBASE>": "ECLBASE<IENS>",
+    "<NUM_CPU>": "1"
+  },
+  "hooked_workflows": {},
+  "active_realizations": [
+    false,
+    true,
+    true,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false
+  ],
+  "log_path": "test-data/ert/heat_equation.config.ert/update_log",
+  "random_seed": 1,
+  "start_iteration": 0,
+  "minimum_required_realizations": 2,
+  "experiment_name": "es-mda",
+  "design_matrix": null,
+  "parameter_configuration": [
+    {
+      "type": "gen_kw",
+      "name": "INIT_TEMP_SCALE",
+      "forward_init": false,
+      "update": true,
+      "transform_function_definitions": [
+        {
+          "name": "t",
+          "param_name": "UNIFORM",
+          "values": [
+            "0",
+            "1"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "gen_kw",
+      "name": "CORR_LENGTH",
+      "forward_init": false,
+      "update": true,
+      "transform_function_definitions": [
+        {
+          "name": "x",
+          "param_name": "NORMAL",
+          "values": [
+            "0.8",
+            "0.1"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "field",
+      "name": "COND",
+      "forward_init": true,
+      "update": true,
+      "nx": 10,
+      "ny": 10,
+      "nz": 1,
+      "file_format": "bgrdecl",
+      "output_transformation": null,
+      "input_transformation": null,
+      "truncation_min": null,
+      "truncation_max": null,
+      "forward_init_file": "cond.bgrdecl",
+      "output_file": "cond.bgrdecl",
+      "grid_file": "test-data/ert/heat_equation.config.ert/CASE.EGRID",
+      "mask_file": null
+    }
+  ],
+  "response_configuration": [
+    {
+      "type": "gen_data",
+      "name": "gen_data",
+      "input_files": [
+        "gen_data_%d.out"
+      ],
+      "keys": [
+        "MY_RESPONSE"
+      ],
+      "has_finalized_keys": true,
+      "report_steps_list": [
+        [
+          10,
+          71,
+          132,
+          193,
+          255,
+          316,
+          377,
+          438
+        ]
+      ]
+    }
+  ],
+  "ert_templates": [],
+  "target_ensemble": "iter-<ITER>",
+  "analysis_settings": {
+    "enkf_truncation": 0.98,
+    "inversion": "EXACT",
+    "localization": true,
+    "localization_correlation_threshold": 0.1
+  },
+  "update_settings": {
+    "outlier_settings": {
+      "alpha": 3.0,
+      "std_cutoff": 1e-6
+    },
+    "auto_scale_observations": []
+  },
+  "restart_run": false,
+  "prior_ensemble_id": null,
+  "weights": "4, 2, 1"
+}
