@@ -1,6 +1,5 @@
 import contextlib
 import gc
-import os
 import shutil
 from argparse import ArgumentParser
 
@@ -21,10 +20,11 @@ def poly_example_tmp_dir_shared(
     source_root,
 ):
     tmpdir = tmp_path_factory.mktemp("my_poly_tmp")
-    poly_dir = path.local(os.path.join(str(tmpdir), "poly_example"))
+    poly_dir = path.local(tmpdir / "poly_example")
     shutil.copytree(
-        os.path.join(source_root, "test-data", "ert", "poly_example"),
+        source_root / "test-data" / "ert" / "poly_example",
         poly_dir,
+        ignore=shutil.ignore_patterns("*ipynb", "poly_out", "storage", "logs"),
     )
     with poly_dir.as_cwd():
         parser = ArgumentParser(prog="test_main")
