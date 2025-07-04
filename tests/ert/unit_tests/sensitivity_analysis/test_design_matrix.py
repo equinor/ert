@@ -144,7 +144,9 @@ def test_read_and_merge_with_existing_parameters(tmp_path, parameters, error_msg
                     name=group_name,
                     forward_init=False,
                     transform_function_definitions=[
-                        TransformFunctionDefinition(param, "UNIFORM", [0, 1])
+                        TransformFunctionDefinition(
+                            name=param, param_name="UNIFORM", values=[0, 1]
+                        )
                         for param in parameters[group_name]
                     ],
                     update=True,

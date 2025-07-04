@@ -6,6 +6,7 @@ from textwrap import dedent
 import networkx as nx
 import pytest
 from lark import Token
+from pydantic import ValidationError
 
 from ert.config import ConfigValidationError, ConfigWarning, ErtConfig, GenKwConfig
 from ert.config.gen_kw_config import TransformFunctionDefinition
@@ -20,9 +21,15 @@ def test_gen_kw_config():
         name="KEY",
         forward_init=False,
         transform_function_definitions=[
-            TransformFunctionDefinition("KEY1", "UNIFORM", [0, 1]),
-            TransformFunctionDefinition("KEY2", "UNIFORM", [0, 1]),
-            TransformFunctionDefinition("KEY3", "UNIFORM", [0, 1]),
+            TransformFunctionDefinition(
+                name="KEY1", param_name="UNIFORM", values=[0, 1]
+            ),
+            TransformFunctionDefinition(
+                name="KEY2", param_name="UNIFORM", values=[0, 1]
+            ),
+            TransformFunctionDefinition(
+                name="KEY3", param_name="UNIFORM", values=[0, 1]
+            ),
         ],
         update=True,
     )
@@ -32,17 +39,25 @@ def test_gen_kw_config():
 @pytest.mark.usefixtures("use_tmpdir")
 def test_gen_kw_config_duplicate_keys_raises():
     with pytest.raises(
-        ConfigValidationError,
+        ValidationError,
         match="Duplicate GEN_KW keys 'KEY2' found, keys must be unique\\.",
     ):
         GenKwConfig(
             name="KEY",
             forward_init=False,
             transform_function_definitions=[
-                TransformFunctionDefinition("KEY1", "UNIFORM", [0, 1]),
-                TransformFunctionDefinition("KEY2", "UNIFORM", [0, 1]),
-                TransformFunctionDefinition("KEY2", "UNIFORM", [0, 1]),
-                TransformFunctionDefinition("KEY3", "UNIFORM", [0, 1]),
+                TransformFunctionDefinition(
+                    name="KEY1", param_name="UNIFORM", values=[0, 1]
+                ),
+                TransformFunctionDefinition(
+                    name="KEY2", param_name="UNIFORM", values=[0, 1]
+                ),
+                TransformFunctionDefinition(
+                    name="KEY2", param_name="UNIFORM", values=[0, 1]
+                ),
+                TransformFunctionDefinition(
+                    name="KEY3", param_name="UNIFORM", values=[0, 1]
+                ),
             ],
             update=True,
         )
@@ -67,18 +82,36 @@ def test_gen_kw_config_get_priors():
         name="KW_NAME",
         forward_init=False,
         transform_function_definitions=[
-            TransformFunctionDefinition("KEY1", "NORMAL", ["0", "1"]),
-            TransformFunctionDefinition("KEY2", "LOGNORMAL", ["2", "3"]),
             TransformFunctionDefinition(
-                "KEY3", "TRUNCATED_NORMAL", ["4", "5", "6", "7"]
+                name="KEY1", param_name="NORMAL", values=["0", "1"]
             ),
-            TransformFunctionDefinition("KEY4", "TRIANGULAR", ["0", "1", "2"]),
-            TransformFunctionDefinition("KEY5", "UNIFORM", ["2", "3"]),
-            TransformFunctionDefinition("KEY6", "DUNIF", ["3", "0", "1"]),
-            TransformFunctionDefinition("KEY7", "ERRF", ["0", "1", "2", "3"]),
-            TransformFunctionDefinition("KEY8", "DERRF", ["1", "1", "2", "3", "4"]),
-            TransformFunctionDefinition("KEY9", "LOGUNIF", ["1", "2"]),
-            TransformFunctionDefinition("KEY10", "CONST", ["10"]),
+            TransformFunctionDefinition(
+                name="KEY2", param_name="LOGNORMAL", values=["2", "3"]
+            ),
+            TransformFunctionDefinition(
+                name="KEY3", param_name="TRUNCATED_NORMAL", values=["4", "5", "6", "7"]
+            ),
+            TransformFunctionDefinition(
+                name="KEY4", param_name="TRIANGULAR", values=["0", "1", "2"]
+            ),
+            TransformFunctionDefinition(
+                name="KEY5", param_name="UNIFORM", values=["2", "3"]
+            ),
+            TransformFunctionDefinition(
+                name="KEY6", param_name="DUNIF", values=["3", "0", "1"]
+            ),
+            TransformFunctionDefinition(
+                name="KEY7", param_name="ERRF", values=["0", "1", "2", "3"]
+            ),
+            TransformFunctionDefinition(
+                name="KEY8", param_name="DERRF", values=["1", "1", "2", "3", "4"]
+            ),
+            TransformFunctionDefinition(
+                name="KEY9", param_name="LOGUNIF", values=["1", "2"]
+            ),
+            TransformFunctionDefinition(
+                name="KEY10", param_name="CONST", values=["10"]
+            ),
         ],
         update=True,
     )
@@ -320,7 +353,6 @@ def test_gen_kw_distribution_errors(tmpdir, distribution, mean, std, error):
             "Incorrect number of values: \\['0', '1', '2'\\], "
             "provided for variable MYNAME with distribution UNIFORM.",
         ),
-        ("MYNAME", "Too few instructions provided in"),
         (
             "MYNAME RANDOM 0 1",
             "Unknown distribution provided: RANDOM, for variable MYNAME",
@@ -339,20 +371,14 @@ def test_gen_kw_distribution_errors(tmpdir, distribution, mean, std, error):
 def test_gen_kw_params_parsing(tmpdir, params, error):
     with tmpdir.as_cwd():
         ss = params.split()
-        if len(ss) == 1:
-            tfd = TransformFunctionDefinition(
-                name=ss[0],
-                param_name=None,
-                values=None,
-            )
-        else:
-            tfd = TransformFunctionDefinition(
-                name=ss[0],
-                param_name=ss[1],
-                values=ss[2:],
-            )
+
+        tfd = TransformFunctionDefinition(
+            name=ss[0],
+            param_name=ss[1],
+            values=ss[2:],
+        )
         if error:
-            with pytest.raises(ConfigValidationError, match=error):
+            with pytest.raises(ValidationError, match=error):
                 GenKwConfig(
                     name="MY_PARAM",
                     forward_init=False,
