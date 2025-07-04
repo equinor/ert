@@ -7,14 +7,14 @@ import threading
 from pathlib import Path
 from typing import Final
 
-from _ert import events
 from _ert.events import (
+    DispatcherEvent,
     ForwardModelStepChecksum,
     ForwardModelStepFailure,
     ForwardModelStepRunning,
     ForwardModelStepStart,
     ForwardModelStepSuccess,
-    event_to_json,
+    dispatcher_event_to_json,
 )
 from _ert.forward_model_runner.client import Client, ClientConnectionError
 from _ert.forward_model_runner.reporting.base import Reporter
@@ -74,7 +74,7 @@ class Event(Reporter):
 
         self._ens_id = None
         self._real_id = None
-        self._event_queue: queue.Queue[events.Event | EventSentinel] = queue.Queue()
+        self._event_queue: queue.Queue[DispatcherEvent | EventSentinel] = queue.Queue()
         self._event_publisher_thread = ErtThread(
             target=self._event_publisher, should_raise=False
         )
@@ -120,7 +120,9 @@ class Event(Reporter):
                             > self._finished_event_timeout
                         ):
                             break
-                        await client.send(event_to_json(event), self._max_retries)
+                        await client.send(
+                            dispatcher_event_to_json(event), self._max_retries
+                        )
                         event = None
                     except asyncio.CancelledError:
                         return
@@ -136,7 +138,7 @@ class Event(Reporter):
     def report(self, msg):
         self._statemachine.transition(msg)
 
-    def _dump_event(self, event: events.Event):
+    def _dump_event(self, event: DispatcherEvent):
         logger.debug(f'Schedule "{type(event)}" for delivery')
         self._event_queue.put(event)
 

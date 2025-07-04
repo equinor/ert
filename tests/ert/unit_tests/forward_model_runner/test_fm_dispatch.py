@@ -17,7 +17,7 @@ import psutil
 import pytest
 
 import _ert.forward_model_runner.fm_dispatch
-from _ert.events import event_from_json
+from _ert.events import dispatcher_event_from_json
 from _ert.forward_model_runner.fm_dispatch import (
     FORWARD_MODEL_DESCRIPTION_FILE,
     FORWARD_MODEL_TERMINATED_MSG,
@@ -469,7 +469,7 @@ time.sleep(180)"""
             while True:
                 await asyncio.sleep(0.5)
                 if any(
-                    msg_type in event_from_json(msg).event_type
+                    msg_type in dispatcher_event_from_json(msg).event_type
                     for msg in zmq_server.messages
                 ):
                     return
@@ -480,7 +480,7 @@ time.sleep(180)"""
         # wait for fm_dispatch has been terminated, and sends failure message
         await asyncio.wait_for(wait_for_msg("forward_model_step.failure"), timeout=10)
         assert (
-            event_from_json(zmq_server.messages[-1]).error_msg
+            dispatcher_event_from_json(zmq_server.messages[-1]).error_msg
             == FORWARD_MODEL_TERMINATED_MSG
         )
 
