@@ -1,6 +1,9 @@
+import glob
 import json
 import os
 import socket
+
+import pytest
 
 from ert.services import StorageService
 from ert.services._storage_main import _create_connection_info
@@ -46,3 +49,32 @@ def test_that_service_can_be_started_with_existing_conn_info_json(tmp_path):
     with open(tmp_path / "storage_server.json", mode="w", encoding="utf-8") as f:
         json.dump(connection_info, f)
     StorageService.connect(project=tmp_path)
+
+
+@pytest.mark.integration_test
+def test_storage_logging(change_to_tmpdir):
+    """
+    This is a regression test for a bug where the storage service
+    would log everything twice
+    """
+
+    with StorageService.start_server(
+        verbose=True,
+        project=".",
+        parent_pid=os.getpid(),
+    ) as server:
+        server.wait_until_ready()
+
+        logfiles = glob.glob("api-log-storage*.txt")
+        assert len(logfiles) == 1, "Expected exactly one log file"
+        with open(logfiles[0], encoding="utf-8") as logfile:
+            contents = logfile.readlines()
+
+        # check for duplicated log entries
+        assert (
+            sum(
+                "[INFO] ert.shared.storage.info: Starting dark storage" in e
+                for e in contents
+            )
+            == 1
+        ), "Found duplicated log entries"
