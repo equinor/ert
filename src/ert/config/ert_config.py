@@ -913,10 +913,7 @@ class ErtConfig(BaseModel):
         except ConfigValidationError as e:
             errors.append(e)
         except PydanticValidationError as err:
-            # pydantic catches ValueError (which ConfigValidationError inherits from),
-            # so we need to unpack them again.
-            for e in err.errors():
-                errors.append(e["ctx"]["error"])
+            errors.append(ConfigValidationError.from_pydantic(err))
 
         try:
             workflow_jobs, workflows, hooked_workflows = workflows_from_dict(
@@ -1005,10 +1002,7 @@ class ErtConfig(BaseModel):
         except ConfigValidationError as err:
             errors.append(err)
         except PydanticValidationError as err:
-            # pydantic catches ValueError (which ConfigValidationError inherits from),
-            # so we need to unpack them again.
-            for e in err.errors():
-                errors.append(e["ctx"]["error"])
+            errors.append(ConfigValidationError.from_pydantic(err))
 
         try:
             analysis_config = AnalysisConfig.from_dict(config_dict)
@@ -1085,11 +1079,7 @@ class ErtConfig(BaseModel):
                 enkf_obs=observations,
             )
         except PydanticValidationError as err:
-            # pydantic catches ValueError (which ConfigValidationError inherits from),
-            # so we need to unpack them again.
-            for e in err.errors():
-                errors.append(e["ctx"]["error"])
-            raise ConfigValidationError.from_collected(errors) from err
+            raise ConfigValidationError.from_pydantic(err) from err
 
     @classmethod
     def _create_list_of_forward_model_steps_to_run(

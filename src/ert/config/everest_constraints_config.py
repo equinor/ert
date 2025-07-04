@@ -1,7 +1,6 @@
 import os
-from dataclasses import dataclass
 from pathlib import Path
-from typing import Self, cast
+from typing import Literal, Self, cast
 
 import numpy as np
 import polars as pl
@@ -14,7 +13,6 @@ from .response_config import InvalidResponseFile, ResponseConfig, ResponseMetada
 from .responses_index import responses_index
 
 
-@dataclass
 class EverestConstraintsConfig(ResponseConfig):
     @property
     def metadata(self) -> list[ResponseMetadata]:
@@ -27,6 +25,7 @@ class EverestConstraintsConfig(ResponseConfig):
             for response_key in self.keys
         ]
 
+    type: Literal["everest_constraints"] = "everest_constraints"
     name: str = "everest_constraints"
     has_finalized_keys: bool = True
 

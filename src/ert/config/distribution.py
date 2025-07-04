@@ -2,29 +2,31 @@ from __future__ import annotations
 
 import math
 import warnings
-from dataclasses import fields, is_dataclass
 from typing import Any, Literal, Self
 
 import numpy as np
-from pydantic import field_validator, model_validator
-from pydantic.dataclasses import dataclass
+from pydantic import BaseModel, field_validator, model_validator
 from scipy.stats import norm
 
 from .parsing import ConfigValidationError, ErrorInfo
 
 
-class TransSettingsValidation:
+class TransSettingsValidation(BaseModel):
+    model_config = {"extra": "forbid"}
+
     @classmethod
-    def create(cls, *args: Any, **kwargs: Any) -> Self:
+    def create(cls, *args: Any, **kwargs: Any) -> TransSettingsValidation:
         return cls(*args, **kwargs)
 
     @classmethod
     def get_param_names(cls) -> list[str]:
-        assert is_dataclass(cls), "This method should only be called on dataclasses"
-        return [f.name for f in fields(cls) if f.init and f.name != "name"]
+        return [
+            name
+            for name, field in cls.model_fields.items()
+            if field.is_required() or (field.default is not None and name != "name")
+        ]
 
 
-@dataclass
 class UnifSettings(TransSettingsValidation):
     name: Literal["uniform"] = "uniform"
     min: float = 0.0
@@ -44,7 +46,6 @@ class UnifSettings(TransSettingsValidation):
         return y * (self.max - self.min) + self.min
 
 
-@dataclass
 class LogUnifSettings(TransSettingsValidation):
     name: Literal["logunif"] = "logunif"
     min: float = 0.0
@@ -66,7 +67,6 @@ class LogUnifSettings(TransSettingsValidation):
         return math.exp(log_min + tmp * (log_max - log_min))
 
 
-@dataclass
 class DUnifSettings(TransSettingsValidation):
     name: Literal["dunif"] = "dunif"
     steps: int = 1000
@@ -101,7 +101,6 @@ class DUnifSettings(TransSettingsValidation):
         ) + self.min
 
 
-@dataclass
 class NormalSettings(TransSettingsValidation):
     name: Literal["normal"] = "normal"
     mean: float = 0.0
@@ -118,7 +117,6 @@ class NormalSettings(TransSettingsValidation):
         return x * self.std + self.mean
 
 
-@dataclass
 class LogNormalSettings(TransSettingsValidation):
     name: Literal["lognormal"] = "lognormal"
     mean: float = 0.0
@@ -137,7 +135,6 @@ class LogNormalSettings(TransSettingsValidation):
         return math.exp(x * self.std + self.mean)
 
 
-@dataclass
 class TruncNormalSettings(TransSettingsValidation):
     name: Literal["truncated_normal"] = "truncated_normal"
     mean: float = 0.0
@@ -170,7 +167,6 @@ class TruncNormalSettings(TransSettingsValidation):
         return max(min(y, self.max), self.min)  # clamp
 
 
-@dataclass
 class RawSettings(TransSettingsValidation):
     name: Literal["raw"] = "raw"
 
@@ -178,7 +174,6 @@ class RawSettings(TransSettingsValidation):
         return x
 
 
-@dataclass
 class ConstSettings(TransSettingsValidation):
     name: Literal["const"] = "const"
     value: float = 0.0
@@ -187,7 +182,6 @@ class ConstSettings(TransSettingsValidation):
         return self.value
 
 
-@dataclass
 class TriangularSettings(TransSettingsValidation):
     name: Literal["triangular"] = "triangular"
     min: float = 0.0
@@ -227,7 +221,6 @@ class TriangularSettings(TransSettingsValidation):
             return self.max - math.sqrt((1 - y) * inv_norm_right)
 
 
-@dataclass
 class ErrfSettings(TransSettingsValidation):
     name: Literal["errf"] = "errf"
     min: float = 0.0
@@ -266,7 +259,6 @@ class ErrfSettings(TransSettingsValidation):
         return self.min + y * (self.max - self.min)
 
 
-@dataclass
 class DerrfSettings(TransSettingsValidation):
     name: Literal["derrf"] = "derrf"
     steps: float = 1000.0

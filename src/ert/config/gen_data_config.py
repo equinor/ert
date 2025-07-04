@@ -1,25 +1,28 @@
-import dataclasses
 import os
 from collections.abc import Iterable
-from dataclasses import dataclass
 from pathlib import Path
-from typing import Self, cast
+from typing import Any, Literal, Self, cast
 
 import numpy as np
 import polars as pl
+from pydantic import Field
 
 from ert.substitutions import substitute_runpath_name
 from ert.validation import rangestring_to_list
 
 from .parsing import ConfigDict, ConfigValidationError, ErrorInfo
-from .response_config import InvalidResponseFile, ResponseConfig, ResponseMetadata
+from .response_config import (
+    InvalidResponseFile,
+    ResponseConfig,
+    ResponseMetadata,
+)
 from .responses_index import responses_index
 
 
-@dataclass
 class GenDataConfig(ResponseConfig):
+    type: Literal["gen_data"] = "gen_data"
     name: str = "gen_data"
-    report_steps_list: list[list[int] | None] = dataclasses.field(default_factory=list)
+    report_steps_list: list[list[int] | None] = Field(default_factory=list)
     has_finalized_keys: bool = True
 
     @property
@@ -37,7 +40,7 @@ class GenDataConfig(ResponseConfig):
             )
         ]
 
-    def __post_init__(self) -> None:
+    def model_post_init(self, ctx: Any) -> None:
         if len(self.report_steps_list) == 0:
             self.report_steps_list = [[0] for _ in self.keys]
         else:

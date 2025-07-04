@@ -21,15 +21,21 @@ def mock_ert(monkeypatch):
         name="KEY",
         forward_init=False,
         transform_function_definitions=[
-            TransformFunctionDefinition("KEY1", "UNIFORM", [0, 1]),
-            TransformFunctionDefinition("KEY2", "NORMAL", [0, 1]),
-            TransformFunctionDefinition("KEY3", "LOGNORMAL", [0, 1]),
+            TransformFunctionDefinition(
+                name="KEY1", param_name="UNIFORM", values=[0, 1]
+            ),
+            TransformFunctionDefinition(
+                name="KEY2", param_name="NORMAL", values=[0, 1]
+            ),
+            TransformFunctionDefinition(
+                name="KEY3", param_name="LOGNORMAL", values=[0, 1]
+            ),
         ],
         update=True,
     )
 
     surface = SurfaceConfig(
-        "some_name",
+        name="some_name",
         forward_init=True,
         ncol=10,
         nrow=7,

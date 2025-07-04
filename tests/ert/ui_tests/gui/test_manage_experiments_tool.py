@@ -97,7 +97,7 @@ def test_design_matrix_in_manage_experiments_panel(
     ensemble = exp2.get_ensemble_by_name("my-design-2")
     assert "DESIGN_MATRIX" in exp2.parameter_configuration
     assert {
-        t["name"]
+        t.name
         for t in exp2.parameter_configuration[
             "DESIGN_MATRIX"
         ].transform_function_definitions

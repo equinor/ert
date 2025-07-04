@@ -61,7 +61,7 @@ def create_experiment_args(
         update=True,
         transform_function_definitions=[
             TransformFunctionDefinition(
-                f"param_{i}",
+                name=f"param_{i}",
                 param_name="NORMAL",
                 values=[10, 0.1],
             )
@@ -70,9 +70,7 @@ def create_experiment_args(
     )
     gen_data_config = GenDataConfig(
         name="gen_data",
-        report_steps_list=[
-            [list(range(num_gen_data_report_steps))] * num_gen_data_keys
-        ],
+        report_steps_list=[list(range(num_gen_data_report_steps))] * num_gen_data_keys,
         keys=[f"gen_data_{i}" for i in range(num_gen_data_keys)],
     )
 

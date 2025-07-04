@@ -3,17 +3,17 @@ from __future__ import annotations
 import math
 import os
 from collections.abc import Callable
-from dataclasses import asdict, dataclass
+from dataclasses import dataclass
 from hashlib import sha256
 from pathlib import Path
-from typing import TYPE_CHECKING, Annotated, Any, Self, cast, overload
+from typing import TYPE_CHECKING, Annotated, Any, Literal, Self, cast, overload
 
 import networkx as nx
 import numpy as np
 import pandas as pd
 import polars as pl
 import xarray as xr
-from pydantic import Field, ValidationError
+from pydantic import BaseModel, Field, PrivateAttr, ValidationError, model_validator
 from typing_extensions import TypedDict
 
 from ._str_to_bool import str_to_bool
@@ -63,8 +63,7 @@ def _get_abs_path(file: str | None) -> str | None:
     return file
 
 
-@dataclass
-class TransformFunctionDefinition:
+class TransformFunctionDefinition(BaseModel):
     name: str
     param_name: str
     values: list[Any]
@@ -91,33 +90,56 @@ class TransformFunction:
     @property
     def parameter_list(self) -> dict[str, float]:
         """Return the parameters of the distribution as a dictionary."""
-        return {k: v for k, v in asdict(self.distribution).items() if k != "name"}
+        return self.distribution.model_dump(exclude={"name"})
 
 
-@dataclass
 class GenKwConfig(ParameterConfig):
+    type: Literal["gen_kw"] = "gen_kw"
     transform_function_definitions: list[TransformFunctionDefinition]
 
-    def __post_init__(self) -> None:
-        self.transform_functions: list[TransformFunction] = []
+    _transform_functions: list[TransformFunction] = PrivateAttr()
+
+    @model_validator(mode="after")
+    def validate_and_setup_transform_functions(self) -> Self:
+        transform_functions: list[TransformFunction] = []
+
+        errors = []
         for e in self.transform_function_definitions:
-            if isinstance(e, dict):
-                self.transform_functions.append(
-                    self._parse_transform_function_definition(
-                        TransformFunctionDefinition(**e)
+            try:
+                if isinstance(e, dict):
+                    transform_functions.append(
+                        self._parse_transform_function_definition(
+                            TransformFunctionDefinition(**e)
+                        )
                     )
-                )
-            else:
-                self.transform_functions.append(
-                    self._parse_transform_function_definition(e)
-                )
-        self._validate()
+                else:
+                    transform_functions.append(
+                        self._parse_transform_function_definition(e)
+                    )
+            except ConfigValidationError as e:
+                errors.append(e)
+
+        self._transform_functions = transform_functions
+
+        try:
+            self._validate()
+        except ConfigValidationError as e:
+            errors.append(e)
+
+        if errors:
+            raise ConfigValidationError.from_collected(errors)
+
+        return self
 
     def __contains__(self, item: str) -> bool:
         return item in [v.name for v in self.transform_function_definitions]
 
     def __len__(self) -> int:
         return len(self.transform_functions)
+
+    @property
+    def transform_functions(self) -> list[TransformFunction]:
+        return self._transform_functions
 
     @property
     def parameter_keys(self) -> list[str]:
@@ -237,12 +259,15 @@ class GenKwConfig(ParameterConfig):
                 "to exclude this from updates, set UPDATE:FALSE.\n",
                 gen_kw_key,
             )
-        return cls(
-            name=gen_kw_key,
-            forward_init=False,
-            transform_function_definitions=transform_function_definitions,
-            update=update_parameter,
-        )
+        try:
+            return cls(
+                name=gen_kw_key,
+                forward_init=False,
+                transform_function_definitions=transform_function_definitions,
+                update=update_parameter,
+            )
+        except ValidationError as e:
+            raise ConfigValidationError.from_pydantic(e, gen_kw) from e
 
     def _validate(self) -> None:
         errors = []
@@ -482,11 +507,6 @@ class GenKwConfig(ParameterConfig):
         self,
         t: TransformFunctionDefinition,
     ) -> TransformFunction:
-        if t.param_name is None and t.values is None:
-            raise ConfigValidationError.with_context(
-                f"Too few instructions provided in: {t}", self.name
-            )
-
         if t.param_name not in DISTRIBUTION_CLASSES:
             raise ConfigValidationError(
                 f"Unknown distribution provided: {t.param_name}, for variable {t.name}",
@@ -514,18 +534,12 @@ class GenKwConfig(ParameterConfig):
         try:
             dist = get_distribution(t.param_name, param_floats)
         except ValidationError as e:
-            error_info = e.errors()[0]
-            ctx = error_info.get("ctx")
-            if ctx and "error" in ctx:
-                custom_error = ctx["error"].errors
-                if isinstance(custom_error, str):
-                    ctx["error"].errors += f" parameter {t.name}"
-                else:
-                    for err in custom_error:
-                        err.set_context(self.name)
-                        err.message += f" parameter {t.name}"
+            error_to_raise = ConfigValidationError.from_pydantic(
+                error=e, context=self.name
+            )
+            for error_info in error_to_raise.errors:
+                error_info.message += f" parameter {t.name}"
 
-                    raise ConfigValidationError.from_collected(custom_error) from e
-            raise e
+            raise error_to_raise from e
 
         return TransformFunction(name=t.name, distribution=dist)

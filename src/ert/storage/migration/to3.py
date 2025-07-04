@@ -33,6 +33,8 @@ def migrate(path: Path) -> None:
 
         response_info = {}
         for response in ens_config.response_configuration:
-            response_info[response.name] = response.to_dict()
+            response_info[response.name] = response.model_dump() | {
+                "_ert_kind": response.__class__.__name__
+            }
         with open(experiment / "responses.json", "w", encoding="utf-8") as fout:
             fout.write(json.dumps(response_info, default=str, indent=4))

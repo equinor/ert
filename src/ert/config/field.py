@@ -5,12 +5,12 @@ import logging
 import os
 from functools import cached_property
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, Self, cast, overload
+from typing import TYPE_CHECKING, Any, Literal, Self, cast, overload
 
 import networkx as nx
 import numpy as np
 import xarray as xr
-from pydantic.dataclasses import dataclass
+from pydantic import field_serializer
 
 from ert.field_utils import FieldFileFormat, Shape, read_field, read_mask, save_field
 from ert.substitutions import substitute_runpath_name
@@ -80,8 +80,8 @@ def adjust_graph_for_masking(
     return G
 
 
-@dataclass
 class Field(ParameterConfig):
+    type: Literal["field"] = "field"
     nx: int
     ny: int
     nz: int
@@ -94,6 +94,14 @@ class Field(ParameterConfig):
     output_file: Path
     grid_file: str
     mask_file: Path | None = None
+
+    @field_serializer("output_file")
+    def serialize_output_file(self, path: Path) -> str:
+        return str(path)
+
+    @field_serializer("mask_file")
+    def serialize_mask_file(self, path: Path | None) -> str | None:
+        return str(path) if path is not None else None
 
     @property
     def parameter_keys(self) -> list[str]:

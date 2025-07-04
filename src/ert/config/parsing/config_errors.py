@@ -4,6 +4,8 @@ import warnings
 from collections.abc import Callable, Sequence
 from typing import Self
 
+from pydantic import ValidationError
+
 from .error_info import ErrorInfo, WarningInfo
 from .types import MaybeWithContext
 
@@ -72,6 +74,31 @@ class ConfigValidationError(ValueError):
         else:
             self.errors.append(ErrorInfo(message=errors, filename=config_file))
         super().__init__(";".join([str(error) for error in self.errors]))
+
+    @classmethod
+    def from_pydantic(
+        cls, error: ValidationError, context: MaybeWithContext | None = None
+    ) -> Self:
+        parsed_errors = []
+        for pydantic_error_info in error.errors():
+            actual_error = pydantic_error_info["ctx"]["error"]
+
+            if isinstance(actual_error, ConfigValidationError):
+                parsed_errors += [
+                    e.set_context(context)
+                    if (e.line is None and context is not None)
+                    else e
+                    for e in actual_error.errors
+                ]
+            else:
+                message = pydantic_error_info["msg"]
+                error_info = ErrorInfo(message=message)
+                if context is not None:
+                    error_info.set_context(context)
+
+                parsed_errors.append(error_info)
+
+        return cls.from_collected(errors=parsed_errors)
 
     @classmethod
     def with_context(cls, msg: str, context: MaybeWithContext) -> Self:

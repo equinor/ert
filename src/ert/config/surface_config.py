@@ -1,12 +1,12 @@
 from __future__ import annotations
 
-from dataclasses import dataclass
 from pathlib import Path
-from typing import TYPE_CHECKING, Self, cast
+from typing import TYPE_CHECKING, Literal, Self, cast
 
 import networkx as nx
 import numpy as np
 import xarray as xr
+from pydantic import field_serializer
 from surfio import IrapHeader, IrapSurface
 
 from ert.substitutions import substitute_runpath_name
@@ -22,8 +22,8 @@ if TYPE_CHECKING:
     from ert.storage import Ensemble
 
 
-@dataclass
 class SurfaceConfig(ParameterConfig):
+    type: Literal["surface"] = "surface"
     ncol: int
     nrow: int
     xori: float
@@ -35,6 +35,14 @@ class SurfaceConfig(ParameterConfig):
     forward_init_file: str
     output_file: Path
     base_surface_path: str
+
+    @field_serializer("output_file")
+    def serialize_output_file(self, output_file: Path) -> str:
+        return str(output_file)
+
+    @field_serializer("base_surface_path")
+    def serialize_base_surface_path(self, base_surface_path: Path) -> str:
+        return str(base_surface_path)
 
     @property
     def parameter_keys(self) -> list[str]:

@@ -185,7 +185,7 @@ def test_that_storage_matches(
             experiment._path / experiment._responses_file, "w", encoding="utf-8"
         ) as f:
             json.dump(
-                {k: v.to_dict() for k, v in response_config.items()},
+                {k: v.model_dump(mode="json") for k, v in response_config.items()},
                 f,
                 default=str,
                 indent=2,
@@ -199,15 +199,25 @@ def test_that_storage_matches(
         assert df.schema == pl.Schema({"BPR": pl.Float64, "realization": pl.Int64})
         assert df["realization"].to_list() == list(range(ensemble.ensemble_size))
         snapshot.assert_match(
-            str(dict(sorted(experiment.parameter_configuration.items()))) + "\n",
+            json.dumps(
+                {
+                    k: v.model_dump(mode="json")
+                    for k, v in sorted(experiment.parameter_configuration.items())
+                },
+                default=str,
+                indent=2,
+            )
+            + "\n",
             "parameters",
         )
         snapshot.assert_match(
-            str(
+            json.dumps(
                 {
-                    k: experiment.response_configuration[k]
-                    for k in sorted(experiment.response_configuration.keys())
-                }
+                    k: v.model_dump(mode="json")
+                    for k, v in sorted(experiment.response_configuration.items())
+                },
+                default=str,
+                indent=2,
             )
             + "\n",
             "responses",

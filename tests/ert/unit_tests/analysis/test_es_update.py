@@ -34,7 +34,9 @@ def uniform_parameter():
         name="PARAMETER",
         forward_init=False,
         transform_function_definitions=[
-            TransformFunctionDefinition("KEY1", "UNIFORM", [0, 1]),
+            TransformFunctionDefinition(
+                name="KEY1", param_name="UNIFORM", values=[0, 1]
+            ),
         ],
         update=True,
     )
@@ -1018,7 +1020,7 @@ def test_that_activate_observations_are_not_logged_as_deactivated(storage, caplo
     _mock_preprocess_observations_and_responses(
         observations_and_responses,
         observation_settings=ObservationSettings(
-            outlier_settings=OutlierSettings(alpha=100, std_cutoff=0),
+            outlier_settings=OutlierSettings(alpha=100, std_cutoff=0.000001),
             auto_scale_observations=None,
         ),
         global_std_scaling=1,
@@ -1172,7 +1174,9 @@ def test_update_subset_parameters(storage, uniform_parameter, obs):
         name="EXTRA_PARAMETER",
         forward_init=False,
         transform_function_definitions=[
-            TransformFunctionDefinition("KEY1", "UNIFORM", [0, 1]),
+            TransformFunctionDefinition(
+                name="KEY1", param_name="UNIFORM", values=[0, 1]
+            ),
         ],
         update=False,
     )
