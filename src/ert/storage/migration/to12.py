@@ -38,3 +38,13 @@ def migrate(path: Path) -> None:
                 "EverestObjectiveConfig": "everest_objective",
             },
         )
+
+        with open(experiment / "responses.json", encoding="utf-8") as fin:
+            old_json = json.load(fin)
+            new_json = {}
+
+            for key, config in old_json.items():
+                if config["type"] == "summary" and "refcase" in config:
+                    config.pop("refcase")
+
+                new_json[key] = config
