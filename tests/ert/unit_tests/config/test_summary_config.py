@@ -33,11 +33,15 @@ def test_reading_empty_summaries_raises(wopr_summary):
     smspec.to_file("CASE.SMSPEC")
     unsmry.to_file("CASE.UNSMRY")
     with pytest.raises(InvalidResponseFile, match="Did not find any summary values"):
-        SummaryConfig("summary", ["CASE"], ["WWCT:OP1"]).read_from_file(".", 0, 0)
+        SummaryConfig(
+            name="summary", input_files=["CASE"], keys=["WWCT:OP1"]
+        ).read_from_file(".", 0, 0)
 
 
 def test_summary_config_normalizes_list_of_keys():
-    assert SummaryConfig("summary", "CASE", ["FOPR", "WOPR", "WOPR"]).keys == [
+    assert SummaryConfig(
+        name="summary", input_files=["CASE"], keys=["FOPR", "WOPR", "WOPR"]
+    ).keys == [
         "FOPR",
         "WOPR",
     ]
@@ -51,12 +55,16 @@ def test_that_read_file_does_not_raise_unexpected_exceptions_on_invalid_file(
     Path("CASE.UNSMRY").write_bytes(unsmry)
     Path("CASE.SMSPEC").write_bytes(smspec)
     with suppress(InvalidResponseFile):
-        SummaryConfig("summary", ["CASE"], ["FOPR"]).read_from_file(os.getcwd(), 1, 0)
+        SummaryConfig(
+            name="summary", input_files=["CASE"], keys=["FOPR"]
+        ).read_from_file(os.getcwd(), 1, 0)
 
 
 def test_that_read_file_does_not_raise_unexpected_exceptions_on_missing_file(tmpdir):
     with pytest.raises(FileNotFoundError):
-        SummaryConfig("summary", ["NOT_CASE"], ["FOPR"]).read_from_file(tmpdir, 1, 0)
+        SummaryConfig(
+            name="summary", input_files=["NOT_CASE"], keys=["FOPR"]
+        ).read_from_file(tmpdir, 1, 0)
 
 
 @pytest.mark.usefixtures("use_tmpdir")
@@ -64,6 +72,6 @@ def test_that_read_file_does_not_raise_unexpected_exceptions_on_missing_director
     tmp_path,
 ):
     with pytest.raises(FileNotFoundError):
-        SummaryConfig("summary", ["CASE"], ["FOPR"]).read_from_file(
-            str(tmp_path / "DOES_NOT_EXIST"), 1, 0
-        )
+        SummaryConfig(
+            name="summary", input_files=["CASE"], keys=["FOPR"]
+        ).read_from_file(str(tmp_path / "DOES_NOT_EXIST"), 1, 0)

@@ -14,17 +14,20 @@ from pydantic import BaseModel, Field, TypeAdapter
 from surfio import IrapSurface
 
 from ert.config import (
+    EverestConstraintsConfig,
+    EverestObjectivesConfig,
     ExtParamConfig,
+    GenDataConfig,
     GenKwConfig,
     ParameterConfig,
     ResponseConfig,
+    SummaryConfig,
     SurfaceConfig,
 )
 from ert.config import (
     Field as FieldConfig,
 )
 from ert.config.parsing.context_values import ContextBoolEncoder
-from ert.config.responses_index import responses_index
 from ert.storage.mode import BaseMode, Mode, require_write
 
 if TYPE_CHECKING:
@@ -154,7 +157,9 @@ class LocalExperiment(BaseMode):
 
         response_data = {}
         for response in responses or []:
-            response_data.update({response.response_type: response.to_dict()})
+            response_data.update(
+                {response.response_type: response.model_dump(mode="json")}
+            )
         storage._write_transaction(
             path / cls._responses_file,
             json.dumps(response_data, default=str, indent=2).encode("utf-8"),
@@ -360,13 +365,20 @@ class LocalExperiment(BaseMode):
     @property
     def response_configuration(self) -> dict[str, ResponseConfig]:
         responses = {}
+
+        adapter = TypeAdapter(
+            Annotated[
+                GenDataConfig
+                | SummaryConfig
+                | EverestConstraintsConfig
+                | EverestObjectivesConfig,
+                Field(discriminator="type"),
+            ]
+        )
         for data in self.response_info.values():
-            ert_kind = data.pop("_ert_kind")
             data.pop("refcase", None)
 
-            assert ert_kind in responses_index
-            response_cls = responses_index[ert_kind]
-            response_instance = response_cls(**data)
+            response_instance = adapter.validate_python(data)
             responses[response_instance.response_type] = response_instance
 
         return responses
@@ -452,7 +464,7 @@ class LocalExperiment(BaseMode):
             self._path / self._responses_file,
             json.dumps(
                 {
-                    c.response_type: c.to_dict()
+                    c.response_type: c.model_dump(mode="json")
                     for c in responses_configuration.values()
                 },
                 default=str,
