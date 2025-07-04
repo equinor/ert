@@ -5,6 +5,7 @@ import pandas as pd
 import pytest
 from PyQt6.QtCore import Qt, QTimer
 from PyQt6.QtWidgets import (
+    QApplication,
     QComboBox,
     QDialogButtonBox,
     QLabel,
@@ -25,7 +26,10 @@ from ert.ensemble_evaluator.event import (
     SnapshotUpdateEvent,
 )
 from ert.gui.main import GUILogHandler, _setup_main_window
-from ert.gui.simulation.ensemble_experiment_panel import EnsembleExperimentPanel
+from ert.gui.simulation.ensemble_experiment_panel import (
+    DesignMatrixPanel,
+    EnsembleExperimentPanel,
+)
 from ert.gui.simulation.ensemble_smoother_panel import EnsembleSmootherPanel
 from ert.gui.simulation.experiment_panel import ExperimentPanel
 from ert.gui.simulation.multiple_data_assimilation_panel import (
@@ -712,16 +716,12 @@ def test_that_design_matrix_show_parameters_button_is_visible(
     xls_filename = "design_matrix.xlsx"
     design_matrix_df = pd.DataFrame(
         {
-            "REAL": list(range(3)),
-            "a": [0, 1, 2],
+            "REAL": [0, 10, 20],
+            "a": [0, 1, 5],
         }
     )
-    default_sheet_df = pd.DataFrame([["b", 1], ["c", 2]])
     with pd.ExcelWriter(xls_filename) as xl_write:
         design_matrix_df.to_excel(xl_write, index=False, sheet_name="DesignSheet")
-        default_sheet_df.to_excel(
-            xl_write, index=False, sheet_name="DefaultSheet", header=False
-        )
 
     config_file = "minimal_config.ert"
     with open(config_file, "w", encoding="utf-8") as f:
@@ -747,6 +747,36 @@ def test_that_design_matrix_show_parameters_button_is_visible(
     )
     if design_matrix_entry:
         assert show_dm_parameters
+
+        def dialog_appeared_and_test():
+            app = QApplication.instance()
+            dialogs = [w for w in app.allWidgets() if isinstance(w, DesignMatrixPanel)]
+
+            if not dialogs:
+                raise AssertionError("No DesignMatrixPanel dialog found")
+            dialog = dialogs[0]
+
+            try:
+                model = dialog.model
+                assert model.rowCount() == 3
+                assert model.columnCount() == 1
+                assert model.horizontalHeaderItem(0).text() == "a"
+
+                assert model.verticalHeaderItem(0).text() == "0"
+                assert model.verticalHeaderItem(1).text() == "10"
+                assert model.verticalHeaderItem(2).text() == "20"
+
+                assert model.item(0, 0).text() == "0"
+                assert model.item(1, 0).text() == "1"
+                assert model.item(2, 0).text() == "5"
+
+                dialog.accept()
+            except Exception as e:
+                dialog.accept()
+                raise e
+
+        QTimer.singleShot(500, dialog_appeared_and_test)
+        qtbot.mouseClick(show_dm_parameters, Qt.MouseButton.LeftButton)
     else:
         assert show_dm_parameters is None
 

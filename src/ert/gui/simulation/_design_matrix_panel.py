@@ -1,6 +1,6 @@
 from typing import TYPE_CHECKING
 
-import pandas as pd
+import polars as pl
 from PyQt6.QtCore import Qt
 from PyQt6.QtGui import QStandardItem, QStandardItemModel
 from PyQt6.QtWidgets import (
@@ -25,7 +25,7 @@ if TYPE_CHECKING:
 class DesignMatrixPanel(QDialog):
     def __init__(
         self,
-        design_matrix_df: pd.DataFrame,
+        design_matrix_df: pl.DataFrame,
         filename: str,
         parent: QWidget | None = None,
     ) -> None:
@@ -48,18 +48,20 @@ class DesignMatrixPanel(QDialog):
         self.adjustSize()
 
     @staticmethod
-    def create_model(design_matrix_df: pd.DataFrame) -> QStandardItemModel:
-        header_labels = design_matrix_df.columns.astype(str).tolist()
+    def create_model(design_matrix_df: pl.DataFrame) -> QStandardItemModel:
+        header_labels = design_matrix_df.select(pl.exclude("realization")).columns
 
         model = QStandardItemModel()
         model.setHorizontalHeaderLabels(header_labels)
-        for index, _ in design_matrix_df.iterrows():
+        for row_dict in design_matrix_df.iter_rows(named=True):
             items = [
-                QStandardItem(str(design_matrix_df.at[index, col]))
-                for col in design_matrix_df.columns
+                QStandardItem(str(row_dict[col]))
+                for col in design_matrix_df.select(pl.exclude("realization")).columns
             ]
             model.appendRow(items)
-        model.setVerticalHeaderLabels(design_matrix_df.index.astype(str).tolist())
+        model.setVerticalHeaderLabels(
+            design_matrix_df.get_column("realization").cast(pl.String).to_list()
+        )
         return model
 
     @staticmethod

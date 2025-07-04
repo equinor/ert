@@ -9,7 +9,6 @@ from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
 import orjson
-import pandas as pd
 import polars as pl
 
 from ert.substitutions import Substitutions, substitute_runpath_name
@@ -152,7 +151,7 @@ def _manifest_to_json(ensemble: Ensemble, iens: int, iter_: int) -> dict[str, An
 
 
 def save_design_matrix_to_ensemble(
-    design_matrix_df: pd.DataFrame,
+    design_matrix_df: pl.DataFrame,
     ensemble: Ensemble,
     active_realizations: Iterable[int],
     design_group_name: str = DESIGN_MATRIX_GROUP,
