@@ -33,6 +33,7 @@ from _ert.forward_model_runner.client import (
     DISCONNECT_MSG,
     HEARTBEAT_MSG,
     HEARTBEAT_TIMEOUT,
+    TERMINATE_MSG,
 )
 from ert.ensemble_evaluator import identifiers as ids
 
@@ -104,6 +105,25 @@ class EnsembleEvaluator:
                         [identity, b"", event_to_json(event).encode("utf-8")]
                     )
             self._events_to_send.task_done()
+
+    async def _send_terminate_messages_to_dispatchers(self) -> None:
+        event = TERMINATE_MSG
+        await asyncio.gather(
+            *(
+                self._router_socket.send_multipart([identity, b"", event])
+                for identity in self._dispatchers_connected
+            )
+        )
+
+    async def _terminate_all_dispatchers(self) -> None:
+        if (scheduler := self.ensemble._scheduler) is not None:
+            await scheduler._running.wait()
+            scheduler._cancelled = True
+        await self._send_terminate_messages_to_dispatchers()
+        if (scheduler := self.ensemble._scheduler) is not None:
+            for scheduler_job in scheduler._jobs.values():
+                scheduler_job.returncode.cancel()
+        await self._ensemble.cancel()
 
     async def _append_message(self, snapshot_update_event: EnsembleSnapshot) -> None:
         event = EESnapshotUpdate(
@@ -360,7 +380,8 @@ class EnsembleEvaluator:
             logger.debug("Cancelling current ensemble")
             self._ee_tasks.append(
                 asyncio.create_task(
-                    self._ensemble.cancel(), name="ensemble_cancellation_task"
+                    self._terminate_all_dispatchers(),
+                    name="dispatcher_termination_task",
                 )
             )
 

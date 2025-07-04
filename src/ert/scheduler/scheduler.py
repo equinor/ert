@@ -58,6 +58,8 @@ class SubmitSleeper:
 
 
 class Scheduler:
+    WAIT_PERIOD_FOR_GRACEFUL_SHUTDOWN = 5.0
+
     def __init__(
         self,
         driver: Driver,
@@ -114,12 +116,19 @@ class Scheduler:
     async def cancel_all_jobs(self) -> None:
         await self._running.wait()
         self._cancelled = True
+        await asyncio.wait(
+            self._job_tasks.values(), timeout=self.WAIT_PERIOD_FOR_GRACEFUL_SHUTDOWN
+        )
         logger.info("Cancelling all jobs")
         await self._cancel_job_tasks()
 
     async def _cancel_job_tasks(self) -> None:
-        for task in self._job_tasks.values():
+        for iens, task in self._job_tasks.items():
             if not task.done():
+                logger.warning(
+                    f"Realization {iens} did not stop after getting the "
+                    "TERMINATE message. Killing it using scheduler."
+                )
                 task.cancel()
         _, pending = await asyncio.wait(
             self._job_tasks.values(),

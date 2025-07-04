@@ -17,6 +17,7 @@ from PyQt6.QtWidgets import (
 from pytestqt.qtbot import QtBot
 
 import ert
+import ert.ensemble_evaluator
 import ert.run_models
 from ert.config import ErtConfig
 from ert.ensemble_evaluator import state
@@ -126,7 +127,7 @@ def mock_set_env_key():
 
 
 @pytest.fixture
-def run_dialog(qtbot: QtBot, use_tmpdir, mock_set_env_key):
+def run_dialog(qtbot: QtBot, use_tmpdir, mock_set_env_key, monkeypatch):
     config_file = "minimal_config.ert"
     with open(config_file, "w", encoding="utf-8") as f:
         f.write("NUM_REALIZATIONS 1")
