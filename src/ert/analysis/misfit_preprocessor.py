@@ -72,6 +72,13 @@ def cluster_responses(
     correlation = spearmanr(responses).statistic
     if isinstance(correlation, np.float64):
         correlation = np.array([[1, correlation], [correlation, 1]])
+    # Take absolute value to cluster based on correlation strength rather
+    # than direction.
+    # This ensures that strong negative correlations (-0.9) are
+    # treated as similar to
+    # strong positive correlations (+0.9), since both represent
+    # strong relationships.
+    correlation = np.abs(correlation)
     linkage_matrix = linkage(correlation, "average", "euclidean")
     return fcluster(linkage_matrix, nr_clusters, criterion="maxclust")
 
