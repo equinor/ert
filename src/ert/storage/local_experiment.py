@@ -380,8 +380,6 @@ class LocalExperiment(BaseMode):
         responses = {}
 
         for data in self.response_info.values():
-            data.pop("refcase", None)
-
             response_instance = _responses_adapter.validate_python(data)
             responses[response_instance.response_type] = response_instance
 
