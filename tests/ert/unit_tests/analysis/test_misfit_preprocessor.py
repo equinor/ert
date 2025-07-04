@@ -270,7 +270,7 @@ def test_main_correctly_separates_distinct_correlation_groups(
     ],
 )
 @pytest.mark.integration_test
-def test_autoscale_clusters_by_correlation_sign_not_signal_source(
+def test_autoscale_clusters_observations_by_correlation_pattern_ignoring_sign(
     nr_obs_group_a, nr_obs_group_b
 ):
     """
@@ -282,8 +282,6 @@ def test_autoscale_clusters_by_correlation_sign_not_signal_source(
       following the pattern (b+j)*(-1)^j*X_2, creating a checkerboard
       correlation pattern within the group, but independent of Group A.
 
-    This test asserts that the algorithm correctly identifies the correlation
-    patterns and clusters responses based on their correlation structure.
     """
     rng = np.random.default_rng(seed=12345)
     nr_realizations = 1000
@@ -309,51 +307,21 @@ def test_autoscale_clusters_by_correlation_sign_not_signal_source(
     obs_errors = Y.std(axis=1)
     scale_factors, clusters, nr_components = main(Y, obs_errors)
 
-    # NB!
-    # It's not distinguishing based on which underlying signal
-    # (X_1 vs X_2) the responses come from,
-    # but rather on their correlation patterns.
-    # From the algorithm's perspective,
-    # X_1 and 3*X_2 look very similar (both positive scaling),
-    # while -2*X_2 looks different (negative scaling).
-
     # Assert that all members of Group A are in the same cluster
     group_a_clusters = clusters[:nr_obs_group_a]
     assert len(np.unique(group_a_clusters)) == 1, (
         "All Group A responses should be in the same cluster"
     )
 
-    # Identify Group B even and odd indexed responses
+    # Assert that all members of Group B are in the same cluster
     group_b_clusters = clusters[nr_obs_group_a:]
-    group_b_even_clusters = group_b_clusters[::2]  # indices 0, 2, 4, ...
-    group_b_odd_clusters = group_b_clusters[1::2]  # indices 1, 3, 5, ...
+    assert len(np.unique(group_b_clusters)) == 1, (
+        "All Group B responses should be in the same cluster"
+    )
 
-    # Assert that Group B even-indexed responses are clustered together
-    if len(group_b_even_clusters) > 1:
-        assert len(np.unique(group_b_even_clusters)) == 1, (
-            "All Group B even-indexed responses should be in the same cluster"
-        )
-
-    # Assert that Group B odd-indexed responses are clustered together
-    if len(group_b_odd_clusters) > 1:
-        assert len(np.unique(group_b_odd_clusters)) == 1, (
-            "All Group B odd-indexed responses should be in the same cluster"
-        )
-
-    # Assert that Group B even and odd responses are in different clusters
-    # (only if both even and odd responses exist)
-    if len(group_b_even_clusters) > 0 and len(group_b_odd_clusters) > 0:
-        assert group_b_even_clusters[0] != group_b_odd_clusters[0], (
-            "Group B even and odd indexed responses should be in different clusters"
-        )
-
-    # Assert that Group A responses are clustered with Group B even-indexed responses
-    # This documents the algorithm's behavior: it clusters based on correlation patterns
-    # (positive vs negative scaling) rather than underlying signal source (X_1 vs X_2)
-    group_a_cluster = group_a_clusters[0]
-    if len(group_b_even_clusters) > 0:
-        group_b_even_cluster = group_b_even_clusters[0]
-        assert group_a_cluster == group_b_even_cluster
+    # Assert that responses from Group A are assigned
+    # to a different cluster than responses from Group B
+    assert np.unique(group_a_clusters) != np.unique(group_b_clusters)
 
     # Assert that nr_components are consistent within clusters
     # (all members of the same cluster should have the same nr_components)
