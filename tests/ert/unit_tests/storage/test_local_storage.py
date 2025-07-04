@@ -218,7 +218,9 @@ def test_that_loading_parameter_via_response_api_fails(tmp_path):
         name="PARAMETER",
         forward_init=False,
         transform_function_definitions=[
-            TransformFunctionDefinition("KEY1", "UNIFORM", [0, 1]),
+            TransformFunctionDefinition(
+                name="KEY1", param_name="UNIFORM", values=[0, 1]
+            ),
         ],
         update=True,
     )

@@ -1,1 +1,53 @@
-{'BPR': GenKwConfig(name='BPR', forward_init=False, update=True, transform_function_definitions=[{'name': 'BPR', 'param_name': 'NORMAL', 'values': ['0', '1']}]), 'PORO': Field(name='PORO', forward_init=False, update=True, nx=2, ny=3, nz=4, file_format=<FieldFileFormat.GRDECL: 'grdecl'>, output_transformation=None, input_transformation=None, truncation_min=None, truncation_max=None, forward_init_file='data/poro%d.grdecl', output_file=PosixPath('poro.grdecl'), grid_file='/home/eivind/Projects/ert/test-data/all_data_types/refcase/CASE.EGRID', mask_file=''), 'TOP': SurfaceConfig(name='TOP', forward_init=False, update=True, ncol=2, nrow=3, xori=0.0, yori=0.0, xinc=1.0, yinc=1.0, rotation=0.0, yflip=1, forward_init_file='data/surf%d.irap', output_file='surf.irap', base_surface_path='data/basesurf.irap')}
+{
+  "BPR": {
+    "type": "gen_kw",
+    "name": "BPR",
+    "forward_init": false,
+    "update": true,
+    "transform_function_definitions": [
+      {
+        "name": "BPR",
+        "param_name": "NORMAL",
+        "values": [
+          "0",
+          "1"
+        ]
+      }
+    ]
+  },
+  "PORO": {
+    "type": "field",
+    "name": "PORO",
+    "forward_init": false,
+    "update": true,
+    "nx": 2,
+    "ny": 3,
+    "nz": 4,
+    "file_format": "grdecl",
+    "output_transformation": null,
+    "input_transformation": null,
+    "truncation_min": null,
+    "truncation_max": null,
+    "forward_init_file": "data/poro%d.grdecl",
+    "output_file": "poro.grdecl",
+    "grid_file": "/home/eivind/Projects/ert/test-data/all_data_types/refcase/CASE.EGRID",
+    "mask_file": ""
+  },
+  "TOP": {
+    "type": "surface",
+    "name": "TOP",
+    "forward_init": false,
+    "update": true,
+    "ncol": 2,
+    "nrow": 3,
+    "xori": 0.0,
+    "yori": 0.0,
+    "xinc": 1.0,
+    "yinc": 1.0,
+    "rotation": 0.0,
+    "yflip": 1,
+    "forward_init_file": "data/surf%d.irap",
+    "output_file": "surf.irap",
+    "base_surface_path": "data/basesurf.irap"
+  }
+}

@@ -28,7 +28,7 @@ def surface():
 
 def test_runpath_roundtrip(tmp_path, storage, surface):
     config = SurfaceConfig(
-        "some_name",
+        name="some_name",
         forward_init=True,
         ncol=surface.ncol,
         nrow=surface.nrow,
@@ -256,7 +256,7 @@ def test_invalid_surface_files_gives_config_error():
 )
 def test_surface_parameter_graph(shape, expected_nodes, expected_links):
     config = SurfaceConfig(
-        "surf",
+        name="surf",
         forward_init=False,
         update=True,
         ncol=shape[0],

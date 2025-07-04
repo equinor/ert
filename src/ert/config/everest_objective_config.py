@@ -1,7 +1,6 @@
 import os
-from dataclasses import dataclass
 from pathlib import Path
-from typing import Self, cast
+from typing import Literal, Self, cast
 
 import numpy as np
 import polars as pl
@@ -13,8 +12,8 @@ from .response_config import InvalidResponseFile, ResponseConfig, ResponseMetada
 from .responses_index import responses_index
 
 
-@dataclass
 class EverestObjectivesConfig(ResponseConfig):
+    type: Literal["everest_objectives"] = "everest_objectives"
     name: str = "everest_objectives"
     has_finalized_keys: bool = True
 

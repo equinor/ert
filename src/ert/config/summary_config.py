@@ -1,10 +1,10 @@
 from __future__ import annotations
 
 import logging
-from dataclasses import dataclass
-from typing import Any, no_type_check
+from typing import Any, Literal, no_type_check
 
 import polars as pl
+from pydantic import field_validator
 
 from ert.substitutions import substitute_runpath_name
 
@@ -17,15 +17,10 @@ from .responses_index import responses_index
 logger = logging.getLogger(__name__)
 
 
-@dataclass
 class SummaryConfig(ResponseConfig):
+    type: Literal["summary"] = "summary"
     name: str = "summary"
     has_finalized_keys: bool = False
-
-    def __post_init__(self) -> None:
-        self.keys = sorted(set(self.keys))
-        if len(self.keys) < 1:
-            raise ValueError("SummaryConfig must be given at least one key")
 
     @property
     def metadata(self) -> list[ResponseMetadata]:
@@ -42,6 +37,14 @@ class SummaryConfig(ResponseConfig):
     def expected_input_files(self) -> list[str]:
         base = self.input_files[0]
         return [f"{base}.UNSMRY", f"{base}.SMSPEC"]
+
+    @field_validator("keys", mode="before")
+    @classmethod
+    def dedupe_and_sort_keys(cls, keys: list[str]) -> list[str]:
+        if len(keys) < 1:
+            raise ValueError("SummaryConfig must be given at least one key")
+
+        return sorted(set(keys))
 
     def read_from_file(self, run_path: str, iens: int, iter_: int) -> pl.DataFrame:
         filename = substitute_runpath_name(self.input_files[0], iens, iter_)

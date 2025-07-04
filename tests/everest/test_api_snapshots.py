@@ -121,7 +121,10 @@ def test_api_summary_snapshot(config_file, snapshot, cached_example):
         experiment._storage._write_transaction(
             experiment._path / experiment._responses_file,
             json.dumps(
-                {c.response_type: c.to_dict() for c in response_config.values()},
+                {
+                    c.response_type: c.model_dump(mode="json")
+                    for c in response_config.values()
+                },
                 default=str,
                 indent=2,
             ).encode("utf-8"),
@@ -164,7 +167,10 @@ def test_api_summary_snapshot_missing_batch(snapshot, cached_example):
         experiment._storage._write_transaction(
             experiment._path / experiment._responses_file,
             json.dumps(
-                {c.response_type: c.to_dict() for c in response_config.values()},
+                {
+                    c.response_type: c.model_dump(mode="json")
+                    for c in response_config.values()
+                },
                 default=str,
                 indent=2,
             ).encode("utf-8"),

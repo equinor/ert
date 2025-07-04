@@ -1,7 +1,6 @@
 from __future__ import annotations
 
-import dataclasses
-from abc import ABC, abstractmethod
+from abc import abstractmethod
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, Literal
 
@@ -38,8 +37,8 @@ class ParameterMetadata(BaseModel):
     userdata: dict[str, Any]
 
 
-@dataclasses.dataclass
-class ParameterConfig(ABC):
+class ParameterConfig(BaseModel):
+    type: str
     name: str
     forward_init: bool
     update: bool
@@ -136,12 +135,7 @@ class ParameterConfig(ABC):
         Often a neighbourhood graph.
         """
 
-    def to_dict(self) -> dict[str, Any]:
-        data = dataclasses.asdict(self, dict_factory=CustomDict)
-        data["_ert_kind"] = self.__class__.__name__
-        return data
-
-    def save_experiment_data(  # noqa: B027
+    def save_experiment_data(
         self,
         experiment_path: Path,
     ) -> None:

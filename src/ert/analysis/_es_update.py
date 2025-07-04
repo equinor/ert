@@ -378,10 +378,7 @@ def analysis_ES(
 
                 if cross_correlations:
                     assert isinstance(config_node, GenKwConfig)
-                    parameter_names = [
-                        t["name"]  # type: ignore
-                        for t in config_node.transform_function_definitions
-                    ]
+                    parameter_names = config_node.parameter_keys
                     cross_correlations_ = np.vstack(cross_correlations)
                     if cross_correlations_.size != 0:
                         source_ensemble.save_cross_correlations(

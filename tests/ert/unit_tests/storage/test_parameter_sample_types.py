@@ -237,19 +237,31 @@ def test_that_first_three_parameters_sampled_snapshot(tmpdir, storage):
         (
             "MY_KEYWORD <MY_KEYWORD>\nMY_SECOND_KEYWORD <MY_SECOND_KEYWORD>",
             [
-                TransformFunctionDefinition("MY_KEYWORD", "NORMAL", [0, 1]),
-                TransformFunctionDefinition("MY_SECOND_KEYWORD", "NORMAL", [0, 1]),
+                TransformFunctionDefinition(
+                    name="MY_KEYWORD", param_name="NORMAL", values=[0, 1]
+                ),
+                TransformFunctionDefinition(
+                    name="MY_SECOND_KEYWORD", param_name="NORMAL", values=[0, 1]
+                ),
             ],
         ),
         (
             "MY_KEYWORD <MY_KEYWORD>",
-            [TransformFunctionDefinition("MY_KEYWORD", "NORMAL", [0, 1])],
+            [
+                TransformFunctionDefinition(
+                    name="MY_KEYWORD", param_name="NORMAL", values=[0, 1]
+                )
+            ],
         ),
         (
             "MY_FIRST_KEYWORD <MY_FIRST_KEYWORD>\nMY_KEYWORD <MY_KEYWORD>",
             [
-                TransformFunctionDefinition("MY_FIRST_KEYWORD", "NORMAL", [0, 1]),
-                TransformFunctionDefinition("MY_KEYWORD", "NORMAL", [0, 1]),
+                TransformFunctionDefinition(
+                    name="MY_FIRST_KEYWORD", param_name="NORMAL", values=[0, 1]
+                ),
+                TransformFunctionDefinition(
+                    name="MY_KEYWORD", param_name="NORMAL", values=[0, 1]
+                ),
             ],
         ),
     ],

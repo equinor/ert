@@ -26,7 +26,9 @@ def migrate(path: Path) -> None:
             for parameter in parameter_info:
                 if parameter in ens_config.parameter_configs:
                     parameter_config = ens_config.parameter_configs[parameter]
-                    parameters_json[parameter] = parameter_config.to_dict()
+                    parameters_json[parameter] = parameter_config.model_dump() | {
+                        "_ert_kind": parameter_config.__class__.__name__
+                    }
                     parameter_config.save_experiment_data(experiment)
 
             os.remove(gen_kw_file)
