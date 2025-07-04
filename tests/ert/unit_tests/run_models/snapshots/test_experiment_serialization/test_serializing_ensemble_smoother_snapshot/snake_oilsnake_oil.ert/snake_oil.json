@@ -1,0 +1,304 @@
+{
+  "storage_path": "test-data/ert/snake_oil.snake_oil.ert/storage/snake_oil/ensemble",
+  "runpath_file": "test-data/ert/snake_oil.snake_oil.ert/.ert_runpath_list",
+  "user_config_file": "test-data/ert/snake_oil.snake_oil.ert/snake_oil.ert",
+  "env_vars": {},
+  "env_pr_fm_step": {},
+  "runpath_config": {
+    "num_realizations": 25,
+    "runpath_format_string": "test-data/ert/snake_oil.snake_oil.ert/storage/snake_oil/runpath/realization-<IENS>/iter-<ITER>",
+    "jobname_format_string": "SNAKE_OIL_FIELD",
+    "eclbase_format_string": "SNAKE_OIL_FIELD",
+    "gen_kw_export_name": "parameters"
+  },
+  "queue_config": {
+    "max_submit": 1,
+    "queue_system": "local",
+    "queue_options": {
+      "name": "local",
+      "max_running": 25,
+      "num_cpu": 1,
+      "realization_memory": 0,
+      "job_script": "fm_dispatch.py",
+      "submit_sleep": null,
+      "project_code": null,
+      "activate_script": "activate"
+    },
+    "stop_long_running": false,
+    "max_runtime": null,
+    "submit_sleep_": 0.0
+  },
+  "forward_model_steps": [
+    {
+      "name": "SNAKE_OIL_SIMULATOR",
+      "executable": "test-data/ert/snake_oil.snake_oil.ert/forward_models/snake_oil_simulator.py",
+      "stdin_file": null,
+      "stdout_file": "snake_oil.stdout",
+      "stderr_file": "snake_oil.stderr",
+      "start_file": null,
+      "target_file": null,
+      "error_file": null,
+      "max_running_minutes": null,
+      "min_arg": null,
+      "max_arg": null,
+      "arglist": [],
+      "required_keywords": [],
+      "arg_types": [],
+      "environment": {
+        "_ERT_ITERATION_NUMBER": "<ITER>",
+        "_ERT_REALIZATION_NUMBER": "<IENS>",
+        "_ERT_RUNPATH": "<RUNPATH>"
+      },
+      "default_mapping": {},
+      "private_args": {}
+    },
+    {
+      "name": "SNAKE_OIL_NPV",
+      "executable": "test-data/ert/snake_oil.snake_oil.ert/forward_models/snake_oil_npv.py",
+      "stdin_file": null,
+      "stdout_file": "snake_oil_npv.stdout",
+      "stderr_file": "snake_oil_npv.stderr",
+      "start_file": null,
+      "target_file": null,
+      "error_file": null,
+      "max_running_minutes": null,
+      "min_arg": null,
+      "max_arg": null,
+      "arglist": [],
+      "required_keywords": [],
+      "arg_types": [],
+      "environment": {
+        "_ERT_ITERATION_NUMBER": "<ITER>",
+        "_ERT_REALIZATION_NUMBER": "<IENS>",
+        "_ERT_RUNPATH": "<RUNPATH>"
+      },
+      "default_mapping": {},
+      "private_args": {}
+    },
+    {
+      "name": "SNAKE_OIL_DIFF",
+      "executable": "test-data/ert/snake_oil.snake_oil.ert/forward_models/snake_oil_diff.py",
+      "stdin_file": null,
+      "stdout_file": "snake_oil_diff.stdout",
+      "stderr_file": "snake_oil_diff.stderr",
+      "start_file": null,
+      "target_file": null,
+      "error_file": null,
+      "max_running_minutes": null,
+      "min_arg": null,
+      "max_arg": null,
+      "arglist": [],
+      "required_keywords": [],
+      "arg_types": [],
+      "environment": {
+        "_ERT_ITERATION_NUMBER": "<ITER>",
+        "_ERT_REALIZATION_NUMBER": "<IENS>",
+        "_ERT_RUNPATH": "<RUNPATH>"
+      },
+      "default_mapping": {},
+      "private_args": {}
+    }
+  ],
+  "substitutions": {
+    "<CONFIG_PATH>": "test-data/ert/snake_oil.snake_oil.ert",
+    "<CONFIG_FILE_BASE>": "snake_oil",
+    "<DATE>": "2000-01-01",
+    "<CWD>": "test-data/ert/snake_oil.snake_oil.ert",
+    "<CONFIG_FILE>": "snake_oil.ert",
+    "<STORAGE>": "storage/snake_oil",
+    "<RUNPATH_FILE>": "test-data/ert/snake_oil.snake_oil.ert/.ert_runpath_list",
+    "<RUNPATH>": "test-data/ert/snake_oil.snake_oil.ert/storage/snake_oil/runpath/realization-<IENS>/iter-<ITER>",
+    "<ECL_BASE>": "SNAKE_OIL_FIELD",
+    "<ECLBASE>": "SNAKE_OIL_FIELD",
+    "<NUM_CPU>": "1"
+  },
+  "hooked_workflows": {},
+  "active_realizations": [
+    false,
+    true,
+    true,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false
+  ],
+  "log_path": "test-data/ert/snake_oil.snake_oil.ert/update_log",
+  "random_seed": 1,
+  "start_iteration": 0,
+  "minimum_required_realizations": 2,
+  "experiment_name": "dummy",
+  "design_matrix": null,
+  "parameter_configuration": [
+    {
+      "type": "gen_kw",
+      "name": "SNAKE_OIL_PARAM",
+      "forward_init": false,
+      "update": true,
+      "transform_function_definitions": [
+        {
+          "name": "OP1_PERSISTENCE",
+          "param_name": "UNIFORM",
+          "values": [
+            "0.01",
+            "0.4"
+          ]
+        },
+        {
+          "name": "OP1_OCTAVES",
+          "param_name": "UNIFORM",
+          "values": [
+            "3",
+            "5"
+          ]
+        },
+        {
+          "name": "OP1_DIVERGENCE_SCALE",
+          "param_name": "UNIFORM",
+          "values": [
+            "0.25",
+            "1.25"
+          ]
+        },
+        {
+          "name": "OP1_OFFSET",
+          "param_name": "UNIFORM",
+          "values": [
+            "-0.1",
+            "0.1"
+          ]
+        },
+        {
+          "name": "OP2_PERSISTENCE",
+          "param_name": "UNIFORM",
+          "values": [
+            "0.1",
+            "0.6"
+          ]
+        },
+        {
+          "name": "OP2_OCTAVES",
+          "param_name": "UNIFORM",
+          "values": [
+            "5",
+            "12"
+          ]
+        },
+        {
+          "name": "OP2_DIVERGENCE_SCALE",
+          "param_name": "UNIFORM",
+          "values": [
+            "0.5",
+            "1.5"
+          ]
+        },
+        {
+          "name": "OP2_OFFSET",
+          "param_name": "UNIFORM",
+          "values": [
+            "-0.2",
+            "0.2"
+          ]
+        },
+        {
+          "name": "BPR_555_PERSISTENCE",
+          "param_name": "UNIFORM",
+          "values": [
+            "0.1",
+            "0.5"
+          ]
+        },
+        {
+          "name": "BPR_138_PERSISTENCE",
+          "param_name": "UNIFORM",
+          "values": [
+            "0.2",
+            "0.7"
+          ]
+        }
+      ]
+    }
+  ],
+  "response_configuration": [
+    {
+      "type": "summary",
+      "name": "summary",
+      "input_files": [
+        "SNAKE_OIL_FIELD"
+      ],
+      "keys": [
+        "*",
+        "FOPR",
+        "WOPR:OP1"
+      ],
+      "has_finalized_keys": false
+    },
+    {
+      "type": "gen_data",
+      "name": "gen_data",
+      "input_files": [
+        "snake_oil_opr_diff_%d.txt",
+        "snake_oil_wpr_diff_%d.txt",
+        "snake_oil_gpr_diff_%d.txt"
+      ],
+      "keys": [
+        "SNAKE_OIL_OPR_DIFF",
+        "SNAKE_OIL_WPR_DIFF",
+        "SNAKE_OIL_GPR_DIFF"
+      ],
+      "has_finalized_keys": true,
+      "report_steps_list": [
+        [
+          199
+        ],
+        [
+          199
+        ],
+        [
+          199
+        ]
+      ]
+    }
+  ],
+  "ert_templates": [
+    [
+      "test-data/ert/snake_oil.snake_oil.ert/templates/seed_template.txt",
+      "seed.txt"
+    ],
+    [
+      "test-data/ert/snake_oil.snake_oil.ert/templates/snake_oil_template.txt",
+      "snake_oil_params.txt"
+    ]
+  ],
+  "target_ensemble": "helloworld<ITER>",
+  "analysis_settings": {
+    "enkf_truncation": 0.98,
+    "inversion": "SUBSPACE",
+    "localization": false,
+    "localization_correlation_threshold": null
+  },
+  "update_settings": {
+    "outlier_settings": {
+      "alpha": 3.0,
+      "std_cutoff": 1e-6
+    },
+    "auto_scale_observations": []
+  }
+}
