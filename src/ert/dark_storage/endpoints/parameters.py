@@ -8,9 +8,7 @@ import pandas as pd
 from fastapi import APIRouter, Body, Depends, Header, HTTPException, status
 from fastapi.responses import Response
 
-from ert.dark_storage.common import (
-    get_storage,
-)
+from ert.dark_storage.common import get_storage
 from ert.storage import Ensemble, Storage
 
 router = APIRouter(tags=["ensemble"])
@@ -116,4 +114,4 @@ def data_for_parameter(ensemble: Ensemble, key: str) -> pd.DataFrame:
         return pd.DataFrame()
     data = data[key].to_frame().dropna()
     data.columns = pd.Index([0])
-    return data.astype(float)
+    return data
