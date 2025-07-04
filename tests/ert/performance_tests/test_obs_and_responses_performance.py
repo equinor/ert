@@ -484,7 +484,9 @@ def setup_es_benchmark(tmp_path, request):
                 "gen_data", _add_noise_to_df_values(info.gen_data_responses), real
             )
 
-        sample_prior(prior, range(config.num_realizations), [info.gen_kw_config.name])
+        sample_prior(
+            prior, range(config.num_realizations), 42, [info.gen_kw_config.name]
+        )
         posterior = experiment.create_ensemble(
             ensemble_size=config.num_realizations,
             name="AtleJohnny",
