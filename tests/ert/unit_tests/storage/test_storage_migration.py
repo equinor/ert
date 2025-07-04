@@ -185,7 +185,7 @@ def test_that_storage_matches(
             experiment._path / experiment._responses_file, "w", encoding="utf-8"
         ) as f:
             json.dump(
-                {k: v.to_dict() for k, v in response_config.items()},
+                {k: v.model_dump(mode="json") for k, v in response_config.items()},
                 f,
                 default=str,
                 indent=2,

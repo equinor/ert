@@ -6,29 +6,33 @@ from collections.abc import Generator
 from datetime import datetime
 from functools import cached_property
 from pathlib import Path
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Annotated, Any
 from uuid import UUID
 
 import polars as pl
-from pydantic import BaseModel
+from pydantic import BaseModel, Field, TypeAdapter
 from surfio import IrapSurface
 
-from ert.config import ExtParamConfig, Field, GenKwConfig, ResponseConfig, SurfaceConfig
+from ert.config import (
+    EverestConstraintsConfig,
+    EverestObjectivesConfig,
+    ExtParamConfig,
+    GenDataConfig,
+    GenKwConfig,
+    ParameterConfig,
+    ResponseConfig,
+    SummaryConfig,
+    SurfaceConfig,
+)
+from ert.config import (
+    Field as FieldConfig,
+)
 from ert.config.parsing.context_values import ContextBoolEncoder
-from ert.config.responses_index import responses_index
 from ert.storage.mode import BaseMode, Mode, require_write
 
 if TYPE_CHECKING:
-    from ert.config import ParameterConfig
     from ert.storage.local_ensemble import LocalEnsemble
     from ert.storage.local_storage import LocalStorage
-
-_KNOWN_PARAMETER_TYPES = {
-    GenKwConfig.__name__: GenKwConfig,
-    SurfaceConfig.__name__: SurfaceConfig,
-    Field.__name__: Field,
-    ExtParamConfig.__name__: ExtParamConfig,
-}
 
 
 class _Index(BaseModel):
@@ -128,7 +132,7 @@ class LocalExperiment(BaseMode):
         parameter_data = {}
         for parameter in parameters or []:
             parameter.save_experiment_data(path)
-            parameter_data.update({parameter.name: parameter.to_dict()})
+            parameter_data.update({parameter.name: parameter.model_dump(mode="json")})
         storage._write_transaction(
             path / cls._parameter_file,
             json.dumps(parameter_data, indent=2).encode("utf-8"),
@@ -153,7 +157,9 @@ class LocalExperiment(BaseMode):
 
         response_data = {}
         for response in responses or []:
-            response_data.update({response.response_type: response.to_dict()})
+            response_data.update(
+                {response.response_type: response.model_dump(mode="json")}
+            )
         storage._write_transaction(
             path / cls._responses_file,
             json.dumps(response_data, default=str, indent=2).encode("utf-8"),
@@ -314,11 +320,19 @@ class LocalExperiment(BaseMode):
 
     @cached_property
     def parameter_configuration(self) -> dict[str, ParameterConfig]:
-        params = {}
-        for data in self.parameter_info.values():
-            param_type = data.pop("_ert_kind")
-            params[data["name"]] = _KNOWN_PARAMETER_TYPES[param_type](**data)
-        return params
+        adapter = TypeAdapter(
+            list[
+                Annotated[
+                    (GenKwConfig | SurfaceConfig | FieldConfig | ExtParamConfig),
+                    Field(discriminator="type"),
+                ]
+            ]
+        )
+
+        return {
+            instance.name: instance
+            for instance in adapter.validate_python(self.parameter_info.values())
+        }
 
     @cached_property
     def parameter_keys(self) -> list[str]:
@@ -351,13 +365,20 @@ class LocalExperiment(BaseMode):
     @property
     def response_configuration(self) -> dict[str, ResponseConfig]:
         responses = {}
+
+        adapter = TypeAdapter(
+            Annotated[
+                GenDataConfig
+                | SummaryConfig
+                | EverestConstraintsConfig
+                | EverestObjectivesConfig,
+                Field(discriminator="type"),
+            ]
+        )
         for data in self.response_info.values():
-            ert_kind = data.pop("_ert_kind")
             data.pop("refcase", None)
 
-            assert ert_kind in responses_index
-            response_cls = responses_index[ert_kind]
-            response_instance = response_cls(**data)
+            response_instance = adapter.validate_python(data)
             responses[response_instance.response_type] = response_instance
 
         return responses
@@ -443,7 +464,7 @@ class LocalExperiment(BaseMode):
             self._path / self._responses_file,
             json.dumps(
                 {
-                    c.response_type: c.to_dict()
+                    c.response_type: c.model_dump(mode="json")
                     for c in responses_configuration.values()
                 },
                 default=str,

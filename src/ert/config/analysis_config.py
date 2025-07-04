@@ -1,13 +1,15 @@
 from __future__ import annotations
 
+import dataclasses
 import logging
-from dataclasses import dataclass, field
+from dataclasses import field
 from math import ceil
 from os.path import realpath
 from pathlib import Path
 from typing import Any, Final, no_type_check
 
-from pydantic import PositiveFloat, ValidationError
+from pydantic import Field, PositiveFloat, ValidationError
+from pydantic.dataclasses import dataclass
 
 from .analysis_module import ESSettings
 from .design_matrix import DesignMatrix
@@ -25,17 +27,19 @@ ObservationGroups = list[str]
 
 @dataclass
 class OutlierSettings:
-    alpha: float = field(default=3.0)
-    std_cutoff: PositiveFloat = field(default=1e-6)
+    alpha: float = Field(default=3.0)
+    std_cutoff: PositiveFloat = Field(default=1e-6)
 
 
 @dataclass
 class ObservationSettings:
-    outlier_settings: OutlierSettings = field(default_factory=OutlierSettings)
-    auto_scale_observations: list[ObservationGroups] = field(default_factory=list)
+    outlier_settings: OutlierSettings = Field(default_factory=OutlierSettings)
+    auto_scale_observations: list[ObservationGroups] | None = Field(
+        default_factory=list
+    )
 
 
-@dataclass
+@dataclasses.dataclass
 class AnalysisConfig:
     minimum_required_realizations: int = 0
     update_log_path: str | Path = "update_log"

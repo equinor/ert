@@ -2,9 +2,9 @@ from __future__ import annotations
 
 import json
 from collections.abc import Mapping, MutableMapping
-from dataclasses import dataclass, field
+from dataclasses import field
 from pathlib import Path
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Literal
 
 import networkx as nx
 import numpy as np
@@ -24,7 +24,6 @@ if TYPE_CHECKING:
     MutableDataType = MutableMapping[str, Number | MutableMapping[str, Number]]
 
 
-@dataclass
 class ExtParamConfig(ParameterConfig):
     """Create an ExtParamConfig for @key with the given @input_keys
 
@@ -41,6 +40,7 @@ class ExtParamConfig(ParameterConfig):
     def metadata(self) -> list[ParameterMetadata]:
         return []
 
+    type: Literal["everest_parameters"] = "everest_parameters"
     input_keys: list[str] = field(default_factory=list)
     forward_init: bool = False
     output_file: str = ""

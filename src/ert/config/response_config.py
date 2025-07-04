@@ -1,11 +1,9 @@
-import dataclasses
-from abc import ABC, abstractmethod
+from abc import abstractmethod
 from typing import Any, Self
 
 import polars as pl
 from pydantic import BaseModel, Field
 
-from .parameter_config import CustomDict
 from .parsing import ConfigDict
 
 
@@ -30,11 +28,11 @@ class ResponseMetadata(BaseModel):
     )
 
 
-@dataclasses.dataclass
-class ResponseConfig(ABC):
+class ResponseConfig(BaseModel):
+    type: str
     name: str
-    input_files: list[str] = dataclasses.field(default_factory=list)
-    keys: list[str] = dataclasses.field(default_factory=list)
+    input_files: list[str] = Field(default_factory=list)
+    keys: list[str] = Field(default_factory=list)
     has_finalized_keys: bool = False
 
     @property
@@ -57,9 +55,7 @@ class ResponseConfig(ABC):
         """
 
     def to_dict(self) -> dict[str, Any]:
-        data = dataclasses.asdict(self, dict_factory=CustomDict)
-        data["_ert_kind"] = self.__class__.__name__
-        return data
+        return self.model_dump() | {"_ert_kind": self.__class__.__name__}
 
     @property
     @abstractmethod
