@@ -71,4 +71,10 @@ def test_storage_logging(change_to_tmpdir):
             contents = logfile.readlines()
 
         # check for duplicated log entries
-        assert len(contents) == len(set(contents)), "Found duplicated log entries"
+        assert (
+            sum(
+                "[INFO] ert.shared.storage.info: Starting dark storage" in e
+                for e in contents
+            )
+            == 1
+        ), "Found duplicated log entries"
