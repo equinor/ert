@@ -5,16 +5,15 @@ import signal
 import threading
 from functools import partial
 
+from everest.bin.utils import setup_logging
 from everest.config import EverestConfig, ServerConfig
 from everest.detached import ExperimentState, everserver_status, server_is_running
 from everest.everest_storage import EverestStorage
 
 from .utils import (
-    cleanup_logging,
     handle_keyboard_interrupt,
     report_on_previous_run,
     run_detached_monitor,
-    setup_logging,
 )
 
 
@@ -35,10 +34,7 @@ def monitor_entry(args: list[str] | None = None) -> None:
         options.config.optimization_output_dir
     )
 
-    try:
-        monitor_everest(options)
-    finally:
-        cleanup_logging()
+    monitor_everest(options)
 
 
 def _build_args_parser() -> argparse.ArgumentParser:
