@@ -5,8 +5,6 @@ import pytest
 from everest.config import EverestConfig
 from everest.optimizer.everest2ropt import everest2ropt
 
-CONFIG_FILE = "config_multi_objectives.yml"
-
 
 @pytest.mark.parametrize(
     "config, expectation",
