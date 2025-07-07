@@ -19,7 +19,6 @@ EGG_DATA = relpath(
     "../../test-data/everest/egg/eclipse/include/",
     "realizations/realization-0/eclipse/model/EGG.DATA",
 )
-SPE1_DATA = relpath("test_data/eclipse/SPE1.DATA")
 
 
 def test_get_values(change_to_tmpdir):
