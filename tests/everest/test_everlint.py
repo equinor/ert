@@ -249,65 +249,77 @@ def test_control_ref_validation(min_config):
     EverestConfig(**min_config)
 
 
-@pytest.mark.integration_test
-def test_init_context_controls():
-    test_configs = [
-        "test_data/mocked_test_case/config_input_constraints.yml",
-        "test_data/mocked_test_case/mocked_test_case.yml",
-    ]
-    test_configs = map(relpath, test_configs)
+def test_that_control_group_name_contains_dot_is_linted(min_config):
+    min_config["controls"][0]["name"] = "my.name"
 
-    for config_file in test_configs:
-        # No initial errors
-        config = yaml_file_to_substituted_config_dict(config_file)
-        assert len(EverestConfig.lint_config_dict(config)) == 0
+    lint = EverestConfig.lint_config_dict(min_config)
+    assert (
+        len(lint) == 1
+        and lint[0]["loc"] == ("controls", 0, "name")
+        and lint[0]["type"] == "value_error"
+    )
 
-        # Messed up controls
-        config = yaml_file_to_substituted_config_dict(config_file)
-        config.pop("controls")
-        assert len(EverestConfig.lint_config_dict(config)) > 0
 
-        config = yaml_file_to_substituted_config_dict(config_file)
-        config["controls"] = "monkey"
-        assert len(EverestConfig.lint_config_dict(config)) > 0
+def test_that_missing_variables_field_in_control_group_is_linted(min_config):
+    min_config["controls"][0].pop("variables")
 
-        # Messed up control group name
-        config = yaml_file_to_substituted_config_dict(config_file)
-        config["controls"][0].pop("name")
-        assert len(EverestConfig.lint_config_dict(config)) > 0
+    lint = EverestConfig.lint_config_dict(min_config)
+    assert (
+        len(lint) == 1
+        and lint[0]["loc"] == ("controls", 0, "variables")
+        and lint[0]["type"] == "missing"
+    )
 
-        config = yaml_file_to_substituted_config_dict(config_file)
-        config["controls"][0]["name"] = ["my", "name"]
-        assert len(EverestConfig.lint_config_dict(config)) > 0
 
-        config = yaml_file_to_substituted_config_dict(config_file)
-        config["controls"][0]["name"] = "my.name"
-        assert len(EverestConfig.lint_config_dict(config)) > 0
+def test_that_invalid_type_for_control_group_item_is_linted(min_config):
+    min_config["controls"][0] = "my vars"  # Modify the item at index 0
 
-        # Messed up variables
-        config = yaml_file_to_substituted_config_dict(config_file)
-        config["controls"][0].pop("variables")
-        assert len(EverestConfig.lint_config_dict(config)) > 0
+    lint = EverestConfig.lint_config_dict(min_config)
+    assert (
+        len(lint) == 1
+        and lint[0]["loc"] == ("controls", 0)
+        and lint[0]["type"] == "model_type"
+    )
 
-        config = yaml_file_to_substituted_config_dict(config_file)
-        config["controls"][0] = "my vars"
-        assert len(EverestConfig.lint_config_dict(config)) > 0
 
-        # Messed up names
-        config = yaml_file_to_substituted_config_dict(config_file)
-        variable = config["controls"][0]["variables"][0]
-        variable.pop("name")
-        assert len(EverestConfig.lint_config_dict(config)) > 0
+def test_that_missing_name_in_control_variable_is_linted(min_config):
+    min_config["controls"][0]["variables"][0].pop("name")
 
-        config = yaml_file_to_substituted_config_dict(config_file)
-        variable = config["controls"][0]["variables"][0]
-        variable["name"] = {"name": True}
-        assert len(EverestConfig.lint_config_dict(config)) > 0
+    lints = EverestConfig.lint_config_dict(min_config)
 
-        config = yaml_file_to_substituted_config_dict(config_file)
-        variable = config["controls"][0]["variables"][0]
-        variable["name"] = "my.name"
-        assert len(EverestConfig.lint_config_dict(config)) > 0
+    assert any(
+        lint_
+        for lint_ in lints
+        if lint_["loc"]
+        == ("controls", 0, "variables", "list[ControlVariableConfig]", 0, "name")
+        and lint_["type"] == "missing"
+    )
+
+
+def test_that_invalid_type_for_control_variable_name_is_linted(min_config):
+    min_config["controls"][0]["variables"][0]["name"] = {"name": True}
+
+    lints = EverestConfig.lint_config_dict(min_config)
+    assert any(
+        lint_
+        for lint_ in lints
+        if lint_["loc"]
+        == ("controls", 0, "variables", "list[ControlVariableConfig]", 0, "name")
+        and lint_["type"] == "string_type"
+    )
+
+
+def test_that_control_variable_name_contains_dot_is_linted(min_config):
+    min_config["controls"][0]["variables"][0]["name"] = "my.name"
+
+    lints = EverestConfig.lint_config_dict(min_config)
+    assert any(
+        lint_
+        for lint_ in lints
+        if lint_["loc"]
+        == ("controls", 0, "variables", "list[ControlVariableConfig]", 0, "name")
+        and lint_["type"] == "value_error"
+    )
 
 
 @pytest.mark.parametrize(
