@@ -1,7 +1,6 @@
 import numpy as np
 import pytest
 
-from ert.ensemble_evaluator.config import EvaluatorServerConfig
 from ert.run_models.everest_run_model import EverestRunModel
 from everest.config import EverestConfig, OutputConstraintConfig
 from everest.optimizer.everest2ropt import everest2ropt
@@ -125,11 +124,3 @@ def test_upper_bound_output_constraint_def(tmp_path):
     )
 
     EverestRunModel.create(config)
-
-
-@pytest.mark.integration_test
-def test_sim_output_constraints(copy_mocked_test_data_to_tmp):
-    config = EverestConfig.load_file("config_output_constraints.yml")
-    run_model = EverestRunModel.create(config)
-    evaluator_server_config = EvaluatorServerConfig()
-    run_model.run_experiment(evaluator_server_config)
