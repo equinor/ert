@@ -15,9 +15,6 @@ from PyQt6.QtWidgets import (
     QWidget,
 )
 
-from ert.gui.ertwidgets.stringbox import StringBox
-from ert.validation import ActiveRange, RangeSubsetStringArgument
-
 if TYPE_CHECKING:
     from ert.config import DesignMatrix
 
@@ -75,17 +72,10 @@ class DesignMatrixPanel(QDialog):
 
     @staticmethod
     def get_design_matrix_button(
-        active_realizations_field: StringBox,
         design_matrix: "DesignMatrix",
         number_of_realizations_label: QLabel,
-        ensemble_size: int,
+        config_num_realization: int,
     ) -> QHBoxLayout:
-        active_realizations_field.setValidator(
-            RangeSubsetStringArgument(ActiveRange(design_matrix.active_realizations))
-        )
-        active_realizations_field.model.setValueFromMask(  # type: ignore
-            design_matrix.active_realizations
-        )
         show_dm_param_button = QPushButton("Show parameters")
         show_dm_param_button.setObjectName("show-dm-parameters")
         show_dm_param_button.setMinimumWidth(50)
@@ -97,9 +87,7 @@ class DesignMatrixPanel(QDialog):
         show_dm_param_button.clicked.connect(
             lambda: DesignMatrixPanel.show_dm_params(design_matrix)
         )
-        dm_num_reals = len(design_matrix.active_realizations)
-        if dm_num_reals != ensemble_size:
-            number_of_realizations_label.setText(f"<b>{dm_num_reals}</b>")
+        if len(design_matrix.active_realizations) != config_num_realization:
             parent_widget = number_of_realizations_label.parent()
 
             if isinstance(parent_widget, QWidget) and (
@@ -121,8 +109,15 @@ class DesignMatrixPanel(QDialog):
                 layout.setAlignment(Qt.AlignmentFlag.AlignLeft)
 
                 warning_icon.setToolTip(
-                    f"Number of realizations changed from {ensemble_size} "
-                    f"to {dm_num_reals} due to 'REAL' column in design matrix"
+                    "Number of realizations was set to "
+                    + str(
+                        min(
+                            config_num_realization,
+                            len(design_matrix.active_realizations),
+                        )
+                    )
+                    + " due to different number of realizations in the design matrix "
+                    "and NUM_REALIZATIONS in config"
                 )
                 warning_icon.show()
 
