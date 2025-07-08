@@ -1,17 +1,12 @@
 import contextlib
 import importlib.util
 import os
-import pathlib
-import shutil
 import sys
 from io import StringIO
 from pathlib import Path
 
 import pytest
 
-from everest.bin.main import start_everest
-from everest.config import EverestConfig, ServerConfig
-from everest.detached import ExperimentState, everserver_status
 from everest.jobs import script_names
 
 
@@ -99,26 +94,3 @@ def everest_default_jobs(output_dir):
         )
         for script_name in script_names
     ]
-
-
-def create_cached_mocked_test_case(request, monkeypatch) -> pathlib.Path:
-    """This function will run everest to create some mocked data,
-    this is quite slow, but the results will be cached. If something comes
-    out of sync, clear the cache and start again. (rm -fr .pytest_cache/)
-    """
-    config_file = "mocked_multi_batch.yml"
-    config_path = relpath("test_data", "mocked_test_case")
-    cache_path = request.config.cache.mkdir(
-        "snake_oil_data" + os.environ.get("PYTEST_XDIST_WORKER", "")
-    )
-    if not os.path.exists(cache_path / "mocked_run"):
-        monkeypatch.chdir(cache_path)
-        shutil.copytree(config_path, "mocked_run")
-        monkeypatch.chdir("mocked_run")
-        start_everest(["everest", "run", config_file, "--skip-prompt"])
-        config = EverestConfig.load_file(config_file)
-        status = everserver_status(
-            ServerConfig.get_everserver_status_path(config.output_dir)
-        )
-        assert status["status"] == ExperimentState.completed
-    return cache_path / "mocked_run"
