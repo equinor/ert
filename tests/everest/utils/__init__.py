@@ -2,7 +2,6 @@ from .optimal_result import get_optimal_result
 from .utils import (
     MockParser,
     capture_streams,
-    create_cached_mocked_test_case,
     everest_default_jobs,
     relpath,
     satisfy,
@@ -14,7 +13,6 @@ from .utils import (
 __all__ = [
     "MockParser",
     "capture_streams",
-    "create_cached_mocked_test_case",
     "everest_default_jobs",
     "get_optimal_result",
     "relpath",
