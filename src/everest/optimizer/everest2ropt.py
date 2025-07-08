@@ -38,17 +38,17 @@ def _parse_controls(
         for perturbation_type in controls.perturbation_types
     ]
 
-    ropt_samplers: list[dict[str, Any]] = []
-    if any(item >= 0 for item in controls.sampler_indices):
-        ropt_samplers = [
-            {
-                "method": sampler.method,
-                "options": {} if sampler.options is None else sampler.options,
-                "shared": False if sampler.shared is None else sampler.shared,
-            }
-            for sampler in controls.samplers
-        ]
-        ropt_variables["samplers"] = controls.sampler_indices
+    ropt_variables["samplers"] = controls.sampler_indices
+    ropt_samplers = [
+        {}
+        if sampler is None
+        else {
+            "method": sampler.method,
+            "options": {} if sampler.options is None else sampler.options,
+            "shared": False if sampler.shared is None else sampler.shared,
+        }
+        for sampler in controls.samplers
+    ]
 
     return ropt_variables, ropt_samplers
 
