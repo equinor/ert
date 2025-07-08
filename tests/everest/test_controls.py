@@ -12,6 +12,7 @@ from everest.config.control_variable_config import (
     ControlVariableGuessListConfig,
 )
 from everest.config.well_config import WellConfig
+from everest.optimizer.everest2ropt import everest2ropt
 from tests.everest.utils import relpath
 
 cfg_dir = relpath("test_data", "mocked_test_case")
@@ -256,3 +257,73 @@ def test_control_bad_variables(variables, control_data_no_variables: dict):
     data["variables"] = variables
     with pytest.raises(ValidationError, match="3 validation errors"):
         ControlConfig.model_validate(data)
+
+
+def test_control_variable_guess_list():
+    controls1 = ControlConfig(
+        name="controls",
+        type="generic_control",
+        variables=[
+            {"name": "var", "initial_guess": [0.1, 0.2, 0.3]},
+        ],
+        control_type="real",
+        min=0.0,
+        max=1.0,
+        perturbation_type="relative",
+        perturbation_magnitude=5,
+        scaled_range=[1.0, 2.0],
+        enabled=False,
+    )
+
+    controls2 = ControlConfig(
+        name="controls",
+        type="generic_control",
+        variables=[
+            {"name": "var", "initial_guess": 0.1, "index": 1},
+            {"name": "var", "initial_guess": 0.2, "index": 2},
+            {"name": "var", "initial_guess": 0.3, "index": 3},
+        ],
+        control_type="real",
+        min=0.0,
+        max=1.0,
+        perturbation_type="relative",
+        perturbation_magnitude=5,
+        scaled_range=[1.0, 2.0],
+        enabled=False,
+    )
+
+    ever_config1 = EverestConfig.with_defaults(controls=[controls1])
+    ever_config2 = EverestConfig.with_defaults(controls=[controls2])
+
+    ropt_config1, initial1 = everest2ropt(
+        ever_config1.controls,
+        ever_config1.objective_functions,
+        ever_config1.input_constraints,
+        ever_config1.output_constraints,
+        ever_config1.optimization,
+        ever_config1.model,
+        1234,
+        "dummy",
+    )
+
+    ropt_config2, initial2 = everest2ropt(
+        ever_config2.controls,
+        ever_config2.objective_functions,
+        ever_config2.input_constraints,
+        ever_config2.output_constraints,
+        ever_config2.optimization,
+        ever_config2.model,
+        1234,
+        "dummy",
+    )
+
+    assert initial1 == initial2
+    assert ropt_config1["names"]["variable"] == ropt_config2["names"]["variable"]
+    for key in [
+        "lower_bounds",
+        "upper_bounds",
+        "perturbation_magnitudes",
+        "perturbation_types",
+        "mask",
+    ]:
+        assert ropt_config1["variables"][key] == ropt_config2["variables"][key]

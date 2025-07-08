@@ -40,6 +40,9 @@
       1.0
     ]
   },
+  "samplers": [
+    {}
+  ],
   "variables": {
     "lower_bounds": [
       -1.0,
@@ -60,6 +63,11 @@
       1,
       1,
       1
+    ],
+    "samplers": [
+      0,
+      0,
+      0
     ],
     "seed": 123,
     "types": [
