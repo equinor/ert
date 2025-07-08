@@ -1,4 +1,3 @@
-import numbers
 from copy import deepcopy
 
 import pytest
@@ -13,49 +12,21 @@ from everest.config.control_variable_config import (
 )
 from everest.config.well_config import WellConfig
 from everest.optimizer.everest2ropt import everest2ropt
-from tests.everest.utils import relpath
-
-cfg_dir = relpath("test_data", "mocked_test_case")
-mocked_config = relpath(cfg_dir, "mocked_test_case.yml")
 
 
-def test_controls_initialization():
-    exp_grp_name = "group"
+def test_control_group_duplicate_name_validation(min_config):
+    existing_name = min_config["controls"][0]["name"]
 
-    config = EverestConfig.load_file(mocked_config)
-    assert config.controls is not None
-    group = config.controls[0]
-    assert group.variables is not None
-
-    assert exp_grp_name == group.name
-
-    for c in group.variables:
-        assert isinstance(c.name, str)
-        assert isinstance(c.initial_guess, numbers.Number)
-
-    a_ctrl_name = group.variables[0].name
-    config.controls.append(
-        ControlConfig(
-            name=exp_grp_name,
-            type="well_control",
-            variables=[
-                ControlVariableConfig(
-                    name=a_ctrl_name,
-                    min=0,
-                    max=1,
-                    initial_guess=0.5,
-                )
-            ],
-        )
+    min_config["controls"].append(
+        {
+            "name": existing_name,
+            "type": "generic_control",
+            "variables": [{"name": "var_b", "min": 0, "max": 1, "initial_guess": 0.9}],
+        }
     )
-    with pytest.raises(
-        ValidationError,
-        match=r"Subfield\(s\) `name` must be unique",
-    ):
-        EverestConfig.model_validate(config.to_dict())
 
-    config.controls[1].name = exp_grp_name + "_new"
-    EverestConfig.model_validate(config.to_dict())
+    with pytest.raises(ValidationError, match=r"Subfield\(s\) `name` must be unique"):
+        EverestConfig.model_validate(min_config)
 
 
 def test_control_variable_duplicate_name_no_index():
@@ -183,41 +154,38 @@ def test_control_variable_initial_guess_above_max():
         )
 
 
-def test_control_variable_name():
+def test_control_variable_name(min_config):
+    illegal_name = "illegal.name.due.to.dots"
+    min_config["controls"][0]["variables"][0]["name"] = illegal_name
+    with pytest.raises(
+        ValidationError,
+        match="Variable name can not contain any dots",
+    ):
+        ControlConfig.model_validate(min_config["controls"][0])
+
+
+def test_control_variable_weird_names(min_config):
     """We would potentially like to support variable names with
     underscores, but currently Seba is using this as a separator between
     the group name and the variable name in such a way that having an
     underscore in a variable name will not behave nicely..
     """
-    config = EverestConfig.load_file(mocked_config)
-    EverestConfig.model_validate(config.to_dict())
-
-    illegal_name = "illegal.name.due.to.dots"
-    config.controls[0].variables[0].name = illegal_name
-    with pytest.raises(
-        ValidationError,
-        match="Variable name can not contain any dots",
-    ):
-        EverestConfig.model_validate(config.to_dict())
-
     weirdo_name = "something/with-symbols_=/()*&%$#!"
-    new_config = EverestConfig.load_file(mocked_config)
+    new_config = EverestConfig.model_validate(min_config)
     new_config.wells.append(WellConfig(name=weirdo_name))
     new_config.controls[0].variables[0].name = weirdo_name
     EverestConfig.model_validate(new_config.to_dict())
 
 
-def test_control_none_well_variable_name():
-    config = EverestConfig.load_file(mocked_config)
-    EverestConfig.model_validate(config.to_dict())
-
+def test_control_none_well_variable_name(min_config):
     illegal_name = "nowell4sure"
-    config.controls[0].variables[0].name = illegal_name
+    min_config["controls"][0]["variables"][0]["name"] = illegal_name
+    min_config["controls"][0]["type"] = "well_control"
     with pytest.raises(
         ValidationError,
         match="Variable name does not match any well name",
     ):
-        EverestConfig.model_validate(config.to_dict())
+        EverestConfig.with_defaults(**(min_config | {"wells": [{"name": "a"}]}))
 
 
 def test_control_variable_types(control_config: ControlConfig):

@@ -7,9 +7,6 @@ import pytest
 from everest import config_file_loader as loader
 from everest.config import EverestConfig
 from everest.config.everest_config import EverestValidationError
-from tests.everest.utils import relpath
-
-mocked_root = relpath(os.path.join("test_data", "mocked_test_case"))
 
 
 def test_load_yaml(tmp_path):

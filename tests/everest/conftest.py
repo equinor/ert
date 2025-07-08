@@ -107,13 +107,6 @@ def copy_math_func_test_data_to_tmp(tmp_path, monkeypatch):
 
 
 @pytest.fixture
-def copy_mocked_test_data_to_tmp(tmp_path, monkeypatch):
-    path = relpath("test_data", "mocked_test_case")
-    shutil.copytree(path, tmp_path, dirs_exist_ok=True)
-    monkeypatch.chdir(tmp_path)
-
-
-@pytest.fixture
 def copy_template_test_data_to_tmp(tmp_path, monkeypatch):
     path = relpath("test_data", "templating")
     shutil.copytree(path, tmp_path, dirs_exist_ok=True)
