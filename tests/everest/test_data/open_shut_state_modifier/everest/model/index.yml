@@ -51,13 +51,13 @@ controls:
   - name: swapping_constraints
     type: generic_control
     min: 0.0
-    max: 1.0
-    perturbation_magnitude: 0.05
+    max: 500
+    perturbation_magnitude: 25
     variables:
-      - { name: state_duration, index: 1, initial_guess: 0.5 }
-      - { name: state_duration, index: 2, initial_guess: 0.5 }
-      - { name: state_duration, index: 3, initial_guess: 0.5 }
-      - { name: state_duration, index: 4, initial_guess: 0.5 }
+      - { name: state_duration, index: 1, initial_guess: 250 }
+      - { name: state_duration, index: 2, initial_guess: 250 }
+      - { name: state_duration, index: 3, initial_guess: 250 }
+      - { name: state_duration, index: 4, initial_guess: 250 }
 
 objective_functions:
   - name: npv
