@@ -165,11 +165,6 @@ def test_control_variable_name(min_config):
 
 
 def test_control_variable_weird_names(min_config):
-    """We would potentially like to support variable names with
-    underscores, but currently Seba is using this as a separator between
-    the group name and the variable name in such a way that having an
-    underscore in a variable name will not behave nicely..
-    """
     weirdo_name = "something/with-symbols_=/()*&%$#!"
     new_config = EverestConfig.model_validate(min_config)
     new_config.wells.append(WellConfig(name=weirdo_name))
