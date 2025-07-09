@@ -64,7 +64,7 @@ async def test_scheduler_receives_checksum_and_waits_for_disk_sync(
         monkeypatch.setattr(
             job, "log_warnings_from_forward_model", mocked_stdouterr_parser
         )
-        # actual_md5sum = hashlib.md5(file_path.read_bytes()).hexdigest()
+
         config = EvaluatorServerConfig(use_token=False)
         evaluator = EnsembleEvaluator(ensemble, config)
         with caplog.at_level(logging.DEBUG):
