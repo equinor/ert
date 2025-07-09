@@ -70,21 +70,37 @@ def _get_samplers(
 ) -> tuple[list[SamplerConfig | None], list[int]]:
     samplers: list[SamplerConfig | None] = []
     sampler_indices: list[int] = []
+
+    default_sampler_index: int | None = None
+
     for control in controls:
-        control_sampler_idx: int | None = None
+        control_sampler_index: int | None = None
+
         for variable in control.variables:
-            if variable.sampler is None:
-                if control_sampler_idx is None:
-                    samplers.append(control.sampler)
-                    control_sampler_idx = len(samplers) - 1
-                sampler_index = control_sampler_idx
-            else:
+            if variable.sampler is not None:
+                # Use the sampler of the variable:
                 samplers.append(variable.sampler)
-                sampler_index = len(samplers) - 1
-            if isinstance(variable, ControlVariableGuessListConfig):
-                sampler_indices.extend([sampler_index] * len(variable.initial_guess))
+                variable_sampler_index = len(samplers) - 1
+            elif control.sampler is not None:
+                # Use the sampler of the control:
+                if control_sampler_index is None:
+                    samplers.append(control.sampler)
+                    control_sampler_index = len(samplers) - 1
+                variable_sampler_index = control_sampler_index
             else:
-                sampler_indices.append(sampler_index)
+                # Use the default sampler:
+                if default_sampler_index is None:
+                    samplers.append(None)
+                    default_sampler_index = len(samplers) - 1
+                variable_sampler_index = default_sampler_index
+
+            if isinstance(variable, ControlVariableGuessListConfig):
+                sampler_indices.extend(
+                    [variable_sampler_index] * len(variable.initial_guess)
+                )
+            else:
+                sampler_indices.append(variable_sampler_index)
+
     return samplers, sampler_indices
 
 
