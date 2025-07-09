@@ -3,6 +3,7 @@ from __future__ import annotations
 import logging
 import os
 from collections.abc import Mapping, Sequence
+from json.decoder import JSONDecodeError
 from typing import Any
 
 import requests
@@ -60,7 +61,7 @@ class StorageService(BaseService):
             service = cls.connect(timeout=0, project=kwargs.get("project", os.getcwd()))
             # Check the server is up and running
             _ = service.fetch_url()
-        except (TimeoutError, KeyError):
+        except (TimeoutError, JSONDecodeError, KeyError):
             return cls.start_server(*args, **kwargs)
         return _Context(service)
 
