@@ -52,6 +52,9 @@ jobs:
         - name: Get everest-models
           run: |
             git clone https://github.com/equinor/everest-models.git
+            pushd everest-models
+            git checkout 1.6.2
+            popd
 
         - name: "Install and test everest-models"
           run: |
