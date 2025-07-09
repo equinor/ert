@@ -67,7 +67,11 @@ class StorageService(BaseService):
             service = cls.connect(timeout=0, project=kwargs.get("project", os.getcwd()))
             # Check the server is up and running
             _ = service.fetch_url()
-        except (TimeoutError, JSONDecodeError, KeyError):
+        except (TimeoutError, JSONDecodeError, KeyError) as e:
+            logging.getLogger(__name__).warning(
+                "Failed locating existing storage service due to "
+                f"{type(e).__name__}: {e}, starting new service"
+            )
             return cls.start_server(*args, **kwargs)
         return _Context(service)
 
