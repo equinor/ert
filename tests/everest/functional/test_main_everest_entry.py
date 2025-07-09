@@ -164,12 +164,12 @@ def test_everest_main_configdump_entry(copy_egg_test_data_to_tmp):
     )
 
 
-@pytest.mark.flaky(reruns=5)
+@pytest.mark.flaky(reruns=3)
 @pytest.mark.timeout(60)
 @pytest.mark.integration_test
 @pytest.mark.xdist_group(name="starts_everest")
 def test_stopping_local_queue_with_ctrl_c(capsys, setup_minimal_everest_case):
-    with setup_minimal_everest_case(forward_model_sleep_time=5) as config_path:
+    with setup_minimal_everest_case(forward_model_sleep_time=15) as config_path:
         config = EverestConfig.load_file(config_path)
 
         def wait_and_kill():
