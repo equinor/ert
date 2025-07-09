@@ -92,6 +92,17 @@ def test_that_service_can_be_started_with_empty_conn_info_json(
     start_server_mock.assert_called_once()
 
 
+@patch("ert.services.StorageService.start_server")
+def test_that_service_can_be_started_with_empty_json_content(
+    start_server_mock, tmp_path
+):
+    """An empty JSON document on disk is an erroneous scenario in which we should
+    ignore the file on disk and overwrite it by launching a new server"""
+    (tmp_path / "storage_server.json").write_text("{}", encoding="utf-8")
+    StorageService.init_service(project=str(tmp_path))
+    start_server_mock.assert_called_once()
+
+
 @pytest.mark.integration_test
 def test_storage_logging(change_to_tmpdir):
     """

@@ -44,6 +44,12 @@ class StorageService(BaseService):
         if parent_pid is not None:
             exec_args.extend(["--parent_pid", str(parent_pid)])
 
+        if (
+            conn_info is not None
+            and isinstance(conn_info, Mapping)
+            and "urls" not in conn_info
+        ):
+            raise KeyError("urls not found in conn_info")
         super().__init__(exec_args, timeout, conn_info, project)
 
     def fetch_auth(self) -> tuple[str, Any]:
