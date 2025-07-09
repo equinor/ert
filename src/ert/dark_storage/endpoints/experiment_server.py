@@ -39,6 +39,10 @@ from everest.strings import EVERSERVER, EverEndpoints
 router = APIRouter(prefix="/experiment_server", tags=["experiment_server"])
 
 
+class UserCancelled(Exception):
+    pass
+
+
 @dataclasses.dataclass
 class ExperimentRunnerState:
     status: ExperimentStatus = dataclasses.field(default_factory=ExperimentStatus)
@@ -244,7 +248,7 @@ class ExperimentRunner:
             while True:
                 if shared_data.status.status == ExperimentState.stopped:
                     run_model.cancel()
-                    raise ValueError("Optimization aborted")
+                    raise UserCancelled("Optimization aborted")
                 try:
                     item: StatusEvents = status_queue.get(block=False)
                 except queue.Empty:
@@ -270,6 +274,8 @@ class ExperimentRunner:
                 message=msg,
                 status=exp_status,
             )
+        except UserCancelled as e:
+            logging.getLogger(EVERSERVER).exception(e)
         except Exception as e:
             logging.getLogger(EVERSERVER).exception(e)
             shared_data.status = ExperimentStatus(
