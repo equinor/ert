@@ -1,6 +1,7 @@
 import json
 import os
 import socket
+from unittest.mock import patch
 
 from ert.services import StorageService
 from ert.services._storage_main import _create_connection_info
@@ -46,3 +47,32 @@ def test_that_service_can_be_started_with_existing_conn_info_json(tmp_path):
     with open(tmp_path / "storage_server.json", mode="w", encoding="utf-8") as f:
         json.dump(connection_info, f)
     StorageService.connect(project=tmp_path)
+
+
+@patch("ert.services.StorageService.start_server")
+def test_that_service_can_be_started_with_missing_cert_in_conn_info_json(
+    start_server_mock, tmp_path
+):
+    """
+    This is a regression test for a bug with the following reproduction steps:
+
+        1. run `ert gui poly.ert` with an ert 14.3
+        2. kill that process, meaning `storage_service_server.json` is not cleaned up.
+        3. run `ert gui poly.ert` with ert 14.4.0, which
+           looks for a 'cert' key present in storage_server.json
+    """
+    connection_info = {
+        "urls": [
+            f"http://{host}:51839"
+            for host in (
+                "127.0.0.1",
+                socket.gethostname(),
+                socket.getfqdn(),
+            )
+        ],
+        "authtoken": "dummytoken",
+    }
+    with open(tmp_path / "storage_server.json", mode="w", encoding="utf-8") as f:
+        json.dump(connection_info, f)
+    StorageService.init_service(project=str(tmp_path))
+    start_server_mock.assert_called_once()
