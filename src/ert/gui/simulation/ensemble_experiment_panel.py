@@ -19,7 +19,9 @@ from ert.gui.ertwidgets import (
 )
 from ert.mode_definitions import ENSEMBLE_EXPERIMENT_MODE
 from ert.run_models import EnsembleExperiment
-from ert.validation import ExperimentValidation, ProperNameArgument, RangeStringArgument
+from ert.validation import ExperimentValidation, ProperNameArgument
+from ert.validation.active_range import ActiveRange
+from ert.validation.range_string_argument import RangeSubsetStringArgument
 
 from ._design_matrix_panel import DesignMatrixPanel
 from .experiment_config_panel import ExperimentConfigPanel
@@ -38,6 +40,8 @@ class EnsembleExperimentPanel(ExperimentConfigPanel):
         self,
         analysis_config: AnalysisConfig,
         ensemble_size: int,
+        active_realizations: list[bool],
+        config_num_realization: int,
         run_path: str,
         notifier: ErtNotifier,
     ):
@@ -91,7 +95,10 @@ class EnsembleExperimentPanel(ExperimentConfigPanel):
             "config/simulation/active_realizations",
         )
         self._active_realizations_field.setValidator(
-            RangeStringArgument(ensemble_size),
+            RangeSubsetStringArgument(ActiveRange(active_realizations)),
+        )
+        self._active_realizations_field.model.setValueFromMask(  # type: ignore
+            active_realizations
         )
         layout.addRow("Active realizations", self._active_realizations_field)
 
@@ -100,10 +107,9 @@ class EnsembleExperimentPanel(ExperimentConfigPanel):
             layout.addRow(
                 "Design Matrix",
                 DesignMatrixPanel.get_design_matrix_button(
-                    self._active_realizations_field,
                     design_matrix,
                     number_of_realizations_label,
-                    ensemble_size,
+                    config_num_realization,
                 ),
             )
 

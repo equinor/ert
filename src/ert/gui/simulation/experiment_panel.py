@@ -152,10 +152,19 @@ class ExperimentPanel(QWidget):
             True,
         )
 
-        ensemble_size = config.runpath_config.num_realizations
+        ensemble_size = config.ensemble_size
+        active_realizations = config.active_realizations
         analysis_config = config.analysis_config
+        config_num_realization = config.runpath_config.num_realizations
         self.addExperimentConfigPanel(
-            EnsembleExperimentPanel(analysis_config, ensemble_size, run_path, notifier),
+            EnsembleExperimentPanel(
+                analysis_config,
+                ensemble_size,
+                active_realizations,
+                config_num_realization,
+                run_path,
+                notifier,
+            ),
             True,
         )
         self.addExperimentConfigPanel(
@@ -169,17 +178,34 @@ class ExperimentPanel(QWidget):
 
         self.addExperimentConfigPanel(
             MultipleDataAssimilationPanel(
-                analysis_config, run_path, notifier, ensemble_size
+                analysis_config,
+                run_path,
+                notifier,
+                ensemble_size,
+                active_realizations,
+                config_num_realization,
             ),
             experiment_type_valid,
         )
         self.addExperimentConfigPanel(
-            EnsembleSmootherPanel(analysis_config, run_path, notifier, ensemble_size),
+            EnsembleSmootherPanel(
+                analysis_config,
+                run_path,
+                notifier,
+                ensemble_size,
+                active_realizations,
+                config_num_realization,
+            ),
             experiment_type_valid,
         )
         self.addExperimentConfigPanel(
             EnsembleInformationFilterPanel(
-                analysis_config, run_path, notifier, ensemble_size
+                analysis_config,
+                run_path,
+                notifier,
+                ensemble_size,
+                active_realizations,
+                config_num_realization,
             ),
             experiment_type_valid,
         )

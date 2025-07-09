@@ -96,6 +96,14 @@ at least 2 realizations.
         -- Use 200 realizations/members
         NUM_REALIZATIONS 200
 
+
+.. note::
+         If used alongside :ref:`DESIGN_MATRIX <design_matrix>`, Ert will
+         compare the value of NUM_REALIZATIONS and the number of realizations
+         found in the design matrix, and use the minimum of the two as the
+         number of realizations to run. See :ref:`DESIGN_MATRIX notes <design_matrix_notes>`
+         for details on how the number of realizations is calculated in the design matrix.
+
 DEFINE
 ------
 .. _define:
@@ -281,6 +289,12 @@ In such cases consider to comment out GEN_KW definitions and thus only the desig
 
 In case there is no overlap with a GEN_KW group, the GEN_KW group will be sampled normally.
 
+.. _design_matrix_notes:
+.. note::
+    The number of realizations in the design matrix is calculated by the max realization id found in the
+    `REALS` column + 1. If the `REALS` column is missing some realizations, they will be set
+    as inactive in the ensemble and not run. For example, if the DESIGN_MATRIX only contains realization
+    id 3, then the ensemble_size will be four. Here the realizations 0, 1, and 2 will be marked as inactive and not run.
 
 ECLBASE
 -------
