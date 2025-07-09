@@ -60,7 +60,7 @@ class StorageService(BaseService):
             service = cls.connect(timeout=0, project=kwargs.get("project", os.getcwd()))
             # Check the server is up and running
             _ = service.fetch_url()
-        except TimeoutError:
+        except (TimeoutError, KeyError):
             return cls.start_server(*args, **kwargs)
         return _Context(service)
 
