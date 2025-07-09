@@ -1,5 +1,4 @@
 import os
-import signal
 import threading
 import time
 from pathlib import Path
@@ -180,7 +179,9 @@ def test_stopping_local_queue_with_ctrl_c(capsys, setup_minimal_everest_case):
                     ServerConfig.get_everserver_status_path(config.output_dir)
                 )
                 if status.get("status") == ExperimentState.running:
-                    os.kill(os.getpid(), signal.SIGINT)
+                    import _thread  # noqa: PLC0415
+
+                    _thread.interrupt_main()
                     return
                 time.sleep(1)
 
