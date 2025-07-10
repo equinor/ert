@@ -76,38 +76,95 @@ from .workflow_config import WorkflowConfig
 class EverestValidationError(ValueError):
     def __init__(self) -> None:
         super().__init__()
-        self.errors: list[tuple[ErrorDetails, tuple[int, int] | None]] = []
+        self._errors: list[ErrorDetails] = []
 
     @property
-    def error(self) -> list[tuple[ErrorDetails, tuple[int, int] | None]]:
-        return self.errors
+    def errors(self) -> list[ErrorDetails]:
+        return self._errors
 
     def __str__(self) -> str:
-        return f"{self.errors!s}"
+        return f"{self._errors!s}"
 
 
-def _error_loc(error_dict: ErrorDetails) -> str:
+def _error_loc(error: ErrorDetails) -> str:
     return " -> ".join(
-        str(e) for e in error_dict["loc"] if e is not None and e != "__root__"
+        str(e) for e in error["loc"] if e is not None and e != "__root__"
     )
 
 
-def format_errors(validation_error: EverestValidationError) -> str:
+def _format_errors(validation_error: EverestValidationError) -> str:
     msg = (
         f"Found {len(validation_error.errors)} validation "
         f"error{'s' if len(validation_error.errors) > 1 else ''}:\n\n"
     )
     error_map = {}
-    for error, pos in validation_error.errors:
-        if pos:
-            row, col = pos
-            key = f"line: {row}, column: {col}. {_error_loc(error)}"
+    for error in validation_error.errors:
+        if "ctx" in error and error["ctx"] is not None:
+            line = error["ctx"].get("line_number")
+            column = error["ctx"].get("column_number")
+
+            key = (
+                (f"line: {line}, " if line else "")
+                + (f"column: {column}. " if column else "")
+                + (f"{_error_loc(error)}")
+            )
         else:
             key = f"{_error_loc(error)}"
+
         if key not in error_map:
             error_map[key] = [key]
         error_map[key].append(f"    * {error['msg']} (type={error['type']})")
+
     return msg + "\n".join(list(chain.from_iterable(error_map.values())))
+
+
+def _convert_to_everest_validation_error(
+    validation_error: ValidationError, config_path: str
+) -> EverestValidationError:
+    """
+    Convert a pydantic ValidationError to EverestValidationError.
+    This is used to convert the errors from the pydantic validation
+    to a format that is more suitable for Everest.
+    """
+    everest_validation_error = EverestValidationError()
+
+    file_content = []
+    with open(config_path, encoding="utf-8") as f:
+        file_content = f.readlines()
+
+    for error in validation_error.errors(
+        include_context=True, include_input=True, include_url=False
+    ):
+        if input_pos := _find_input(error.get("input"), file_content):
+            error["ctx"] = {"line_number": input_pos[0], "column_number": input_pos[1]}
+        elif loc_pos := _find_loc(error.get("loc"), file_content):
+            error["ctx"] = {"line_number": loc_pos}
+
+        everest_validation_error.errors.append(error)
+
+    return everest_validation_error
+
+
+def _find_input(input_: Any, file_content: list[str]) -> tuple[int, int] | None:
+    if not isinstance(input_, str):
+        return None
+
+    for index, line in enumerate(file_content):
+        if (pos := line.find(input_)) != -1:
+            return index + 1, pos + 1
+    return None
+
+
+def _find_loc(loc: tuple[int | str, ...] | None, file_content: list[str]) -> int | None:
+    if not loc:
+        return None
+    if not isinstance(loc[0], str):
+        return None
+
+    for index, line in enumerate(file_content):
+        if str(loc[0]) in line:
+            return index + 1
+    return None
 
 
 class EverestConfig(BaseModelWithContextSupport):
@@ -774,25 +831,7 @@ to read summary data from forward model, do:
         try:
             return cls.with_plugins(config_dict)
         except ValidationError as error:
-            exp = EverestValidationError()
-            file_content = []
-            with open(config_path, encoding="utf-8") as f:
-                file_content = f.readlines()
-
-            for e in error.errors(
-                include_context=True, include_input=True, include_url=False
-            ):
-                if (
-                    e["type"] in {"missing", "value_error", "string_type"}
-                    or e["input"] is None
-                ):
-                    exp.errors.append((e, None))
-                else:
-                    for index, line in enumerate(file_content):
-                        if (pos := line.find(str(e["input"]))) != -1:
-                            exp.errors.append((e, (index + 1, pos + 1)))
-                            break
-            raise exp from error
+            raise _convert_to_everest_validation_error(error, config_path) from error
 
     @classmethod
     def with_plugins(cls, config_dict: dict[str, Any] | ConfigDict) -> Self:
@@ -826,7 +865,7 @@ to read summary data from forward model, do:
             )
         except EverestValidationError as e:
             parser.error(
-                f"Loading config file <{config_path}> failed with:\n{format_errors(e)}"
+                f"Loading config file <{config_path}> failed with:\n{_format_errors(e)}"
             )
         except ValueError as e:
             parser.error(f"Loading config file <{config_path}> failed with: {e}")
