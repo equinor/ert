@@ -17,7 +17,7 @@ existing Python script:
 ::
 
    INTERNAL  TRUE                     -- The job will call an internal function or script of the currently running ERT instance.
-   SCRIPT scripts/my_script.py        -- An existing Python script
+   SCRIPT bin/my_script.py        -- An existing Python script
 
 Observe that the important thing here is the fact that we are writing
 an *internal* Python script; if you are writing an external script to
@@ -63,7 +63,10 @@ For example, if a job is defined as follows:
     EXECUTABLE script.sh
     STOP_ON_FAIL TRUE                   -- Tell the job to stop ert on failure
 
-Shell scripts (Bash) must, in addition to having `STOP_ON_FAIL TRUE` in ert config, set the "exit immediately" flag (`set -e`) for the error to propagate. Otherwise, even if errors occur within the script, it will still be "successful".
+Shell scripts (Bash) must, in addition to having `STOP_ON_FAIL TRUE` in ert
+config, set the "exit immediately" flag (`set -e`) for the error to propagate.
+Otherwise, even if errors occur within the script, it will still be
+"successful".
 
 ::
 
@@ -121,13 +124,12 @@ Single letter options, i.e. :code:`-s`, are needed.
 
 ::
 
-	-- FILE: ECL_HIST --
-	EXECUTABLE  Script/ecl_hist.py
+	EXECUTABLE  bin/ecl_hist.py
 	MIN_ARG     3
 
-This job will invoke the external script :code:`Script/ecl_host.py`
+This job will invoke the external script :code:`bin/ecl_host.py`
 which is expected to have at least three command line arguments. The path to
-the script, :code:`Script/ecl_hist.py` is interpreted relative to the location
+the script, :code:`bin/ecl_hist.py` is interpreted relative to the location
 of the configuration file.
 
 Loading workflow jobs into ERT
@@ -141,7 +143,7 @@ Use the keyword :code:`LOAD_WORKFLOW_JOB` to specify jobs by name:
 
 ::
 
-	LOAD_WORKFLOW_JOB     jobConfigFile     JobName
+	LOAD_WORKFLOW_JOB     job_config_file     job_name
 
 The :code:`LOAD_WORKFLOW_JOB` keyword will load one workflow job.
 The name of the job is optional, and will be fetched from the configuration file if not provided.
