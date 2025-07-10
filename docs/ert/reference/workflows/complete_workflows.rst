@@ -1,9 +1,9 @@
 .. _complete_workflows_chapter:
 
-Complete Workflows
+Complete workflows
 ==================
 
-A workflow is a list of calls to jobs, with additional arguments. The
+A workflow is a list of calls to workflow jobs, with additional arguments. The
 job name should be the first element on each line. Based on the two
 jobs PLOT and ECL_HIST we can create a small workflow example:
 
