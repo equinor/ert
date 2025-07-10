@@ -69,6 +69,7 @@ For non-iterative algorithms, :code:`PRE_FIRST_UPDATE` is equal to :code:`PRE_UP
 The :code:`POST_SIMULATION` hook is typically used to trigger QC workflows.
 
 ::
+
    HOOK_WORKFLOW preExperimentWFLOW        PRE_EXPERIMENT
    HOOK_WORKFLOW initWFLOW                 PRE_SIMULATION
    HOOK_WORKFLOW preUpdateWFLOW            PRE_UPDATE
