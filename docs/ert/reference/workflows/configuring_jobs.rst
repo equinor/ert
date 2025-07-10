@@ -66,11 +66,13 @@ For example, if a job is defined as follows:
 Shell scripts (Bash) must, in addition to having `STOP_ON_FAIL TRUE` in ert config, set the "exit immediately" flag (`set -e`) for the error to propagate. Otherwise, even if errors occur within the script, it will still be "successful".
 
 ::
+
     set -e
 
 For example, this bash external job script will stop on failure
 
 ::
+
     #!/usr/bin/env bash
     set -e
     ekho 'Hello World' # misspelled command fails
@@ -86,7 +88,7 @@ For example, this internal job script will stop on failure
 
         def run(self):
             assert False, "failure"
-    """
+
 
 Configuring the arguments
 -------------------------
