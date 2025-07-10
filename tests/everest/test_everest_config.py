@@ -31,7 +31,7 @@ def test_that_str_type_failures_are_propagated(tmp_path, monkeypatch):
         EverestConfig.load_file("everest_config.yml")
 
     assert any(
-        e for e in err.value.error if "Input should be a valid string" in e[0]["msg"]
+        e for e in err.value.errors if "Input should be a valid string" in e["msg"]
     )
 
 
