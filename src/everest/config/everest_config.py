@@ -11,7 +11,6 @@ from typing import (
     Annotated,
     Any,
     Optional,
-    Protocol,
     Self,
     no_type_check,
 )
@@ -109,10 +108,6 @@ def format_errors(validation_error: EverestValidationError) -> str:
             error_map[key] = [key]
         error_map[key].append(f"    * {error['msg']} (type={error['type']})")
     return msg + "\n".join(list(chain.from_iterable(error_map.values())))
-
-
-class HasName(Protocol):
-    name: str
 
 
 class EverestConfig(BaseModelWithContextSupport):
