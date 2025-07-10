@@ -110,6 +110,8 @@ jobs:
         cp -a test-data/ert/poly_example poly_slurm
         pushd poly_slurm
 
+        sed -i '/if __name__ == "__main__":/a\    import random, sys\n    if random.random() < 0.3: sys.exit(1)' poly_eval.py
+
         cat << EOF >> poly.ert
         NUM_REALIZATIONS 5
         QUEUE_SYSTEM SLURM
