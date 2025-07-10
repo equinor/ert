@@ -16,6 +16,7 @@ from ert.config.ert_config import ErtConfig
 from ert.config.parsing import ConfigValidationError
 from everest.config import EverestConfig, ModelConfig, ObjectiveFunctionConfig
 from everest.config.control_variable_config import ControlVariableConfig
+from everest.config.everest_config import EverestValidationError
 from everest.config.sampler_config import SamplerConfig
 from everest.simulator.everest_to_ert import (
     everest_to_ert_config_dict,
@@ -962,7 +963,7 @@ def test_load_file_with_errors(capsys):
 
     captured = capsys.readouterr()
 
-    assert "Found 3 validation error" in captured.err
+    assert "Found 3 validation errors" in captured.err
     assert "line: 7, column: 11" in captured.err
     assert (
         "Input should be 'well_control' or 'generic_control' (type=literal_error)"
@@ -976,6 +977,7 @@ def test_load_file_with_errors(capsys):
     ) in captured.err
 
     assert "line: 13, column: 14" in captured.err
+    assert "install_jobs -> 0 -> invalid" in captured.err
     assert "Extra inputs are not permitted (type=extra_forbidden)" in captured.err
 
 
@@ -1140,3 +1142,37 @@ def test_that_model_realizations_specs_are_invalid(realizations):
 def test_that_model_realizations_specs_are_valid(realizations, expected):
     config = EverestConfig.with_defaults(model={"realizations": realizations})
     assert config.model.realizations == expected
+
+
+def test_that_nested_extra_types_are_validated_correctly(change_to_tmpdir):
+    Path("everest_config.yml").write_text(
+        dedent("""
+        objective_functions:
+          - name: func_name
+
+        controls:
+          - name: control_name
+            type: generic_control
+            min: 0
+            max: 1
+            initial_guess: 0.5
+            variables:
+                - name: var_name
+
+        model:
+          realizations: [0, 1]
+
+        foo:
+          bar:
+            foobar: 44
+
+    """),
+        encoding="utf-8",
+    )
+
+    with pytest.raises(EverestValidationError) as err:
+        EverestConfig.load_file("everest_config.yml")
+
+    assert "ctx" in err.value.errors[0]
+    assert err.value.errors[0]["ctx"] == {"line_number": 17}
+    assert err.value.errors[0]["type"] == "extra_forbidden"
