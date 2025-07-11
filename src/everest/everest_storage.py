@@ -426,6 +426,10 @@ class EverestStorage:
 
         self.data = OptimizationStorageData(self._experiment.optimizer_mount_point)
 
+    @property
+    def is_empty(self) -> bool:
+        return not any(b.has_data for b in self.data.batches)
+
     @staticmethod
     def _rename_ropt_df_columns(df: pl.DataFrame) -> pl.DataFrame:
         """
@@ -1182,7 +1186,32 @@ class EverestStorage:
         )
 
     def export_everest_opt_results_to_csv(self) -> Path:
-        full_path = self._output_dir / "experiment_results.csv"
+        batches_with_data = ",".join(
+            {str(b.batch_id) for b in self.data.batches if b.has_data}
+        )
+        full_path = (
+            self._output_dir
+            / f"experiment_results_batches::{','.join(batches_with_data)}.csv"
+        )
+
+        # Find old csv to delete
+        existing_csv = next(
+            (
+                Path(f)
+                for f in os.listdir(self._output_dir)
+                if f.startswith("experiment_results_batches::")
+            ),
+            None,
+        )
+
+        if (
+            existing_csv is not None
+            and existing_csv.exists()
+            and (self._output_dir / existing_csv) != full_path
+        ):
+            # New batches are added -> overwrite existing csv
+            os.remove(existing_csv)
+
         if not os.path.exists(full_path):
             combined_df, _, _ = self.export_dataframes()
             combined_df.write_csv(full_path)

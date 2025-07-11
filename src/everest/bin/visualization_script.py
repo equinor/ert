@@ -1,12 +1,15 @@
 #!/usr/bin/env python
 
 import argparse
+import logging
+import sys
 from functools import partial
+from pathlib import Path
 
+from ert.storage import ErtStorageException, open_storage
 from everest.api import EverestDataAPI
 from everest.bin.utils import cleanup_logging, setup_logging
-from everest.config import EverestConfig, ServerConfig
-from everest.detached import ExperimentState, everserver_status
+from everest.config import EverestConfig
 from everest.everest_storage import EverestStorage
 from everest.plugins.everest_plugin_manager import EverestPluginManager
 
@@ -28,33 +31,37 @@ def visualization_entry(args: list[str] | None = None) -> None:
     parser = _build_args_parser()
     options = parser.parse_args(args)
     setup_logging(options)
+    ever_config = options.config
 
     EverestStorage.check_for_deprecated_seba_storage(
-        options.config.optimization_output_dir
+        ever_config.optimization_output_dir
     )
-    server_state = everserver_status(
-        ServerConfig.get_everserver_status_path(options.config.output_dir)
-    )
-    if server_state["status"] in {
-        ExperimentState.failed,
-        ExperimentState.stopped,
-        ExperimentState.completed,
-    }:
-        pm = EverestPluginManager()
-        pm.hook.visualize_data(api=EverestDataAPI(options.config))
-    elif server_state["status"] in {
-        ExperimentState.running,
-        ExperimentState.pending,
-    }:
+
+    try:
+        # If successful, no need to migrate
+        open_storage(ever_config.storage_dir, mode="r").close()
+    except ErtStorageException as err:
+        if "too old" in str(err):
+            # Open write storage to do a migration
+            logging.getLogger(__name__).info(
+                "Migrating ERT storage from everviz entrypoint"
+            )
+            open_storage(ever_config.storage_dir, mode="w").close()
+
+    storage = EverestStorage(output_dir=Path(ever_config.optimization_output_dir))
+    storage.read_from_output_dir()
+
+    if storage.is_empty:
         print(
-            "Everest is running, please wait for it to finish before "
-            "running the visualization."
+            f"No data found in storage at {storage._output_dir}. Please try again later"
         )
-    else:
-        print("No Everest results found for the given configuration.")
+        return
+
+    pm = EverestPluginManager()
+    pm.hook.visualize_data(api=EverestDataAPI(options.config))
 
     cleanup_logging()
 
 
 if __name__ == "__main__":
-    visualization_entry()
+    visualization_entry(sys.argv[1:])
