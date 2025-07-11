@@ -365,7 +365,10 @@ class ErtPluginManager(pluggy.PluginManager):
 
     def get_ertscript_workflows(self) -> WorkflowConfigs:
         config = WorkflowConfigs()
+
+        # Amend the config object with legacy workflows:
         self.hook.legacy_ertscript_workflow(config=config)
+
         return config
 
     def add_logging_handle_to_root(self, logger: logging.Logger) -> None:

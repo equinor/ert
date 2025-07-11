@@ -52,9 +52,9 @@ def load_args(filename: str, column_names: list[str] | None = None) -> pd.DataFr
 
 class GenDataRFTCSVExportJob(ErtPlugin):
     """Export of GEN_DATA based rfts to a CSV file. The csv file will in
-     addition contain the depth as duplicated seperate row.
+    addition contain the depth as duplicated seperate row.
 
-     The script expects four arguments:
+    The script expects four arguments:
 
        output_file: this is the path to the file to output the CSV data to
 
@@ -67,9 +67,9 @@ class GenDataRFTCSVExportJob(ErtPlugin):
 
     Optional arguments:
 
-     ensemble_data_as_json: a comma separated list of ensembles to
-         export (no spaces allowed). If no list is provided the current
-         ensemble is exported
+       ensemble_data_as_json: a comma separated list of ensembles to
+           export (no spaces allowed). If no list is provided the current
+           ensemble is exported
 
     """
 
