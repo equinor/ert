@@ -1,9 +1,9 @@
 .. _complete_workflows_chapter:
 
-Complete Workflows
+Complete workflows
 ==================
 
-A workflow is a list of calls to jobs, with additional arguments. The
+A workflow is a list of calls to workflow jobs, with additional arguments. The
 job name should be the first element on each line. Based on the two
 jobs PLOT and ECL_HIST we can create a small workflow example:
 
@@ -18,7 +18,7 @@ In this workflow we create plots of the nodes
 have created in this example is general, if we limited
 ourselves to ECLIPSE summary variables we could get wildcard
 support. Then we invoke the ECL_HIST example job to create a
-histogram. See documentation of :ref:`RUNPATH_FILE <ms_runpath_file>`. and
+histogram. See documentation of :ref:`RUNPATH_FILE <ms_runpath_file>` and
 :ref:`ERTCASE <ms_ertcase>`.
 
 :code:`DEFINE` usage in workflows
@@ -69,6 +69,7 @@ For non-iterative algorithms, :code:`PRE_FIRST_UPDATE` is equal to :code:`PRE_UP
 The :code:`POST_SIMULATION` hook is typically used to trigger QC workflows.
 
 ::
+
    HOOK_WORKFLOW preExperimentWFLOW        PRE_EXPERIMENT
    HOOK_WORKFLOW initWFLOW                 PRE_SIMULATION
    HOOK_WORKFLOW preUpdateWFLOW            PRE_UPDATE
