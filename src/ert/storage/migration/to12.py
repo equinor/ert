@@ -35,7 +35,7 @@ def migrate(path: Path) -> None:
                 "GenDataConfig": "gen_data",
                 "SummaryConfig": "summary",
                 "EverestConstraintsConfig": "everest_constraints",
-                "EverestObjectiveConfig": "everest_objective",
+                "EverestObjectivesConfig": "everest_objectives",
             },
         )
 
