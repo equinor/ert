@@ -6,7 +6,10 @@ from ert.config import ConfigValidationError
 
 class MisfitPreprocessor(ErtScript):
     """MISFIT_PREPROCESSOR is removed, use ANALYSIS_SET_VAR OBSERVATIONS AUTO_SCALE"
-    example: ANALYSIS_SET_VAR OBSERVATIONS AUTO_SCALE *  -- all observations"
+
+    example:
+
+        ANALYSIS_SET_VAR OBSERVATIONS AUTO_SCALE *  -- all observations"
     """
 
     def run(self, disable_parameters: str) -> None:

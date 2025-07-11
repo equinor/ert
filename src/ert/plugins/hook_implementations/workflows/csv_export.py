@@ -25,15 +25,15 @@ class CSVExportJob(ErtScript):
 
     The script expects a single argument:
 
-    output_file: this is the path to the file to output the CSV data to
+        output_file: this is the path to the file to output the CSV data to
 
     Optional arguments:
 
-    ensemble_list: a JSON string representation of a dictionary where keys are
-                   UUID strings and values are ensemble names.
-                   A single * can be used to export all ensembles
+        ensemble_list: a JSON string representation of a dictionary where keys are
+            UUID strings and values are ensemble names.
+            A single * can be used to export all ensembles
 
-    design_matrix: a path to a file containing the design matrix
+        design_matrix: a path to a file containing the design matrix
 
     The script also looks for default values for output path and design matrix
     path to present in the GUI. These can be specified with DATA_KW keyword in
