@@ -1,10 +1,11 @@
+from pathlib import Path
 from unittest.mock import patch
 
 import pluggy
+import pytest
 
 from everest.bin.visualization_script import visualization_entry
 from everest.config import EverestConfig
-from everest.detached import ExperimentState
 from everest.plugins import hook_impl, hook_specs
 from everest.strings import EVEREST
 from tests.everest.utils import capture_streams
@@ -17,14 +18,14 @@ class MockPluginManager(pluggy.PluginManager):
         self.register(hook_impl)
 
 
-@patch(
-    "everest.bin.visualization_script.everserver_status",
-    return_value={"status": ExperimentState.completed},
-)
+@pytest.mark.xdist_group("math_func/config_advanced.yml")
 @patch("everest.bin.visualization_script.EverestPluginManager", MockPluginManager)
 def test_expected_message_when_no_visualisation_plugin_is_installed(
-    _, change_to_tmpdir, min_config
+    change_to_tmpdir, cached_example, min_config
 ):
+    config_path, config_file, _, _ = cached_example("math_func/config_advanced.yml")
+    config = EverestConfig.load_file(Path(config_path) / config_file)
+
     config_file = "test.yml"
     config = EverestConfig(**min_config)
     config.dump(config_file)
