@@ -17,9 +17,13 @@ class ExportMisfitDataJob(ErtScript):
     The hdf file has the observation as key, and the misfit as values.
     The filename is "misfit.hdf" by default, but can be overridden by giving
     the filename as the first parameter:
-    EXPORT_MISFIT_DATA path/to/output.hdf
+
+        EXPORT_MISFIT_DATA path/to/output.hdf
+
     The misfit its calculated as follows:
-    ((response_value - observation_data) / observation_std)**2
+
+        ((response_value - observation_data) / observation_std)**2
+
     """
 
     def run(self, ensemble: Ensemble, workflow_args: list[Any]) -> None:
