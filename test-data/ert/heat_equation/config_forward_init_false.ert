@@ -18,7 +18,7 @@ GRID CASE.EGRID
 
 OBS_CONFIG observations
 
-FIELD COND PARAMETER cond.bgrdecl INIT_FILES:cond_%d.bgrdecl FORWARD_INIT:False
+FIELD COND PARAMETER cond.bgrdecl INIT_FILES:cond_<IENS>.bgrdecl FORWARD_INIT:False
 
 GEN_KW INIT_TEMP_SCALE init_temp_prior.txt
 GEN_KW CORR_LENGTH corr_length_prior.txt
