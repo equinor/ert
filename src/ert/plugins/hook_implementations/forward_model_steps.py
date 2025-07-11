@@ -35,11 +35,11 @@ class CarefulCopyFile(ForwardModelStepPlugin):
         return ForwardModelStepDocumentation(
             description=dedent(
                 """
-                The :code:`CAREFUL_COPY_FILE` job will copy a file. If the :code:`<TO>`
+                :code:`CAREFUL_COPY_FILE` will copy a file. If the :code:`<TO>`
                 argument has a directory component, that directory will be created.
                 This is an extension of the normal :code:`cp` command
                 which will *not* create directories in this way.
-                This job superseded an older version called :code:`CAREFULL_COPY`
+                This supersedes an older version called :code:`CAREFULL_COPY`
                 and should be used instead.
                 """
             ),
@@ -73,7 +73,7 @@ class CopyDirectory(ForwardModelStepPlugin):
         return ForwardModelStepDocumentation(
             category="utility.file_system",
             description="""
-The job copies the directory :code:`<FROM>` to the target :code:`<TO>`. If
+Copies the directory :code:`<FROM>` to the target :code:`<TO>`. If
 :code:`<TO>` points to a non-existing directory structure, it will be
 created first. If the :code:`<TO>` folder already exist it creates a new
 directory within the existing one. E.g. :code:`COPY_DIRECTORY (<FROM>=foo, <TO>=bar)`
@@ -111,7 +111,7 @@ class CopyFile(ForwardModelStepPlugin):
 Copies file from :code:`<FROM>` to :code:`<TO>`. If no directory is specified
 in :code:`<TO>`, the file will be copied to :code:`RUNPATH`. If the :code:`<TO>`
 argument includes a directory component, that directory will be created. Unlike
-the standard :code:`cp` command, this job will automatically create any missing
+the standard :code:`cp` command, this will automatically create any missing
 directories in the destination path.
 """,
             examples="""
@@ -142,10 +142,10 @@ class DeleteDirectory(ForwardModelStepPlugin):
         return ForwardModelStepDocumentation(
             category="utility.file_system",
             description="""
-The :code:`DELETE_DIRECTORY` job will recursively remove a directory
-and all the files in the directory. Like the :code:`DELETE_FILE` job
+:code:`DELETE_DIRECTORY` will recursively remove a directory
+and all the files in the directory. Like :code:`DELETE_FILE`
 it will *only* delete files and directories which are owned by the
-current user. If one delete operation fails the job will continue, but
+current user. If one delete operation fails it will continue, but
 unless all delete calls succeed (parts of) the directory structure
 will remain.
 
@@ -184,7 +184,7 @@ class DeleteFile(ForwardModelStepPlugin):
         return ForwardModelStepDocumentation(
             category="utility.file_system",
             description="""
-The :code:`DELETE_FILE` job will *only* remove files which are owned
+:code:`DELETE_FILE` will *only* remove files which are owned
 by the current user, *even if* file system permissions would have
 allowed the delete operation to proceed. The :code:`DELETE_FILE` will
 *not* delete a directory, and if presented with a symbolic link it
@@ -470,8 +470,8 @@ class MoveFile(ForwardModelStepPlugin):
         return ForwardModelStepDocumentation(
             category="utility.file_system",
             description="""
-The :code:`MOVE_FILE` job will move file to target directory.
-If file already exists, this job will move file to the target directory
+:code:`MOVE_FILE` will move file to target directory.
+If file already exists, it will move the file to the target directory
 and then replace the existing file.
 """,
             examples="""
@@ -503,7 +503,7 @@ class MoveDirectory(ForwardModelStepPlugin):
         return ForwardModelStepDocumentation(
             category="utility.file_system",
             description="""
-The :code:`MOVE_DIRECTORY` job will move a directory.
+:code:`MOVE_DIRECTORY` will move a directory.
 If the target directory already exists, it will be replaced.
 """,
             examples="""
