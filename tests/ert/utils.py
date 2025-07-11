@@ -14,6 +14,7 @@ from _ert.forward_model_runner.client import (
     CONNECT_MSG,
     DISCONNECT_MSG,
     HEARTBEAT_MSG,
+    TERMINATE_MSG,
 )
 from _ert.threading import ErtThread
 from ert.scheduler.event import FinishedEvent, StartedEvent
@@ -134,6 +135,10 @@ class MockZMQServer:
     async def do_heartbeat(self):
         for dealer in self.dealers:
             await self.router_socket.send_multipart([dealer, b"", HEARTBEAT_MSG])
+
+    async def send_terminate_message(self):
+        for dealer in self.dealers:
+            await self.router_socket.send_multipart([dealer, b"", TERMINATE_MSG])
 
     async def _handler(self):
         while True:

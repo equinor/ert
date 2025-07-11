@@ -153,6 +153,7 @@ class Job:
 
         except asyncio.CancelledError:
             await self._send(JobState.ABORTING)
+            logger.debug("JONAK CANCELLEDERROR 0")
             await self.driver.kill(self.iens)
             with suppress(asyncio.CancelledError):
                 self.returncode.cancel()
@@ -194,7 +195,11 @@ class Job:
         for attempt in range(max_submit):
             await self._submit_and_run_once(sem)
 
-            if self.returncode.cancelled() or self._scheduler._cancelled:
+            if (
+                self.returncode.cancelled()
+                or self._scheduler._cancelled
+                or self._scheduler._cancelled_by_evaluator
+            ):
                 break
 
             if self.returncode.result() == 0:
