@@ -56,6 +56,7 @@ class JobState(StrEnum):
 
 
 FILE_VERIFICATION_LOG_TIME_THRESHOLD = 5
+DISK_SYNCHRONIZATION_POLLING_INTERVAL = 1
 
 
 class Job:
@@ -283,9 +284,9 @@ class Job:
         while not all(Path(info["path"]).exists() for info in valid_checksums):
             if timeout <= 0:
                 break
-            timeout -= 1
+            timeout -= DISK_SYNCHRONIZATION_POLLING_INTERVAL
             logger.debug("Waiting for disk synchronization")
-            await asyncio.sleep(1)
+            await asyncio.sleep(DISK_SYNCHRONIZATION_POLLING_INTERVAL)
         async with checksum_lock:
             for info in valid_checksums:
                 file_path = Path(info["path"])

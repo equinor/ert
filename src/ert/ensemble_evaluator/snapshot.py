@@ -16,7 +16,6 @@ from _ert.events import (
     EnsembleFailed,
     EnsembleStarted,
     EnsembleSucceeded,
-    Event,
     FMEvent,
     ForwardModelStepFailure,
     ForwardModelStepRunning,
@@ -266,7 +265,13 @@ class EnsembleSnapshot:
         return self
 
     def update_from_event(
-        self, event: Event, source_snapshot: EnsembleSnapshot | None = None
+        self,
+        event: RealizationEvent
+        | FMEvent
+        | EnsembleEvent
+        | EESnapshotUpdate
+        | EESnapshot,
+        source_snapshot: EnsembleSnapshot | None = None,
     ) -> EnsembleSnapshot:
         e_type = type(event)
         timestamp = event.time

@@ -11,7 +11,7 @@ from pathlib import Path
 from typing import Any, Literal, cast, get_type_hints
 
 from .driver import Driver, FailedSubmit, create_submit_script
-from .event import Event, FinishedEvent, StartedEvent
+from .event import DriverEvent, FinishedEvent, StartedEvent
 
 logger = logging.getLogger(__name__)
 
@@ -342,7 +342,7 @@ class OpenPBSDriver(Driver):
             return
 
         self._jobs[job_id] = (iens, new_state)
-        event: Event | None = None
+        event: DriverEvent | None = None
         if isinstance(new_state, RunningJob):
             logger.debug(f"Realization {iens} is running")
             event = StartedEvent(iens=iens)
