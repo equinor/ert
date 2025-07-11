@@ -5,8 +5,13 @@ from ert.config import ConfigValidationError
 
 
 class DisableParametersUpdate(ErtScript):
-    """The DISABLE_PARAMETERS workflow has been moved to ert parameters.
-    Add GEN_KW <name> ... UPDATE:FALSE
+    """The DISABLE_PARAMETERS workflow has been deprecated and removed.
+
+    Add
+
+        GEN_KW <name> ... UPDATE:FALSE
+
+    to the configuration instead.
     """
 
     def run(self, disable_parameters: str) -> None:
