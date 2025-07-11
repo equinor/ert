@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import logging
 import os
+import textwrap
 from argparse import ArgumentParser
 from collections.abc import Callable
 from dataclasses import field
@@ -155,10 +156,8 @@ class ErtScriptWorkflow(_WorkflowJob):
                 f"Failed to load {self.name}, script had wrong "
                 f"type, expected ErtScript, got {self.ert_script}"
             )
-
-        self.description = (
-            self.description or self.ert_script.__doc__  # type: ignore
-        )
+        if self.ert_script.__doc__ is not None:
+            self.description = textwrap.dedent(self.ert_script.__doc__.strip())
         return self
 
     @property
