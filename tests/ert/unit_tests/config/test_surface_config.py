@@ -84,7 +84,7 @@ def test_runpath_roundtrip(tmp_path, storage, surface):
 def test_init_files_must_contain_placeholder_when_not_forward_init():
     with pytest.raises(
         ConfigValidationError,
-        match="INIT_FILES must contain %d when FORWARD_INIT:FALSE",
+        match="INIT_FILES must contain %d or <IENS> when FORWARD_INIT:FALSE",
     ):
         SurfaceConfig.from_config_list(
             [

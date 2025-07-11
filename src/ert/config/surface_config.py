@@ -79,10 +79,10 @@ class SurfaceConfig(ParameterConfig):
             )
         if not init_file:
             errors.append(ErrorInfo("Missing required INIT_FILES").set_context(surface))
-        elif not forward_init and "%d" not in init_file:
+        elif not forward_init and not ("%d" in init_file or "<IENS>" in init_file):
             errors.append(
                 ErrorInfo(
-                    "INIT_FILES must contain %d when FORWARD_INIT:FALSE"
+                    "INIT_FILES must contain %d or <IENS> when FORWARD_INIT:FALSE"
                 ).set_context(surface)
             )
         if not base_surface:
