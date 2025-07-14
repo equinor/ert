@@ -54,7 +54,7 @@ def find_conn_info() -> ConnInfo:
         raise RuntimeError("No Storage connection configuration found")
 
     try:
-        conn_info = ConnInfo.parse_obj(json.loads(conn_str))
+        conn_info = ConnInfo.model_validate_json(conn_str)
     except (json.JSONDecodeError, ValidationError) as e:
         raise RuntimeError("Invalid storage connection configuration") from e
     else:

@@ -1,3 +1,5 @@
+import ssl
+
 import httpx
 
 from ._session import ConnInfo, find_conn_info
@@ -16,10 +18,11 @@ class Client(httpx.Client):
         headers = {}
         if conn_info.auth_token is not None:
             headers = {"Token": conn_info.auth_token}
-
         super().__init__(
             base_url=conn_info.base_url,
             headers=headers,
-            verify=conn_info.cert,
+            verify=ssl.create_default_context(cafile=conn_info.cert)
+            if isinstance(conn_info.cert, str)
+            else conn_info.cert,
             timeout=15,
         )
