@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 import json
+import time
 
 
 def _load_coeffs(filename):
@@ -12,6 +13,7 @@ def _evaluate(coeffs, x):
 
 
 if __name__ == "__main__":
+    time.sleep(20)
     coeffs = _load_coeffs("parameters.json")
     output = [_evaluate(coeffs, x) for x in range(10)]
     with open("poly.out", "w", encoding="utf-8") as f:

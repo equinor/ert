@@ -33,6 +33,7 @@ from _ert.forward_model_runner.client import (
     DISCONNECT_MSG,
     HEARTBEAT_MSG,
     HEARTBEAT_TIMEOUT,
+    TERMINATE_MSG,
 )
 from ert.ensemble_evaluator import identifiers as ids
 
@@ -50,6 +51,11 @@ from .state import (
 logger = logging.getLogger(__name__)
 
 EVENT_HANDLER = Callable[[list[Event]], Awaitable[None]]
+
+
+def _get_iens_from_dealer_name(dealer_name: str) -> int:
+    realid = dealer_name.split("-")[2]
+    return int(realid)
 
 
 class HeartbeatEvent(Enum):
@@ -80,6 +86,7 @@ class EnsembleEvaluator:
         self._clients_empty: asyncio.Event = asyncio.Event()
         self._clients_empty.set()
         self._dispatchers_connected: set[bytes] = set()
+        self._dispatcher_identity_to_iens: dict[bytes, str] = {}
         self._dispatchers_empty: asyncio.Event = asyncio.Event()
         self._dispatchers_empty.set()
 
@@ -104,6 +111,28 @@ class EnsembleEvaluator:
                         [identity, b"", event_to_json(event).encode("utf-8")]
                     )
             self._events_to_send.task_done()
+
+    async def _send_terminate_messages_to_dispatchers(self) -> None:
+        event = TERMINATE_MSG
+        await asyncio.gather(
+            *(
+                self._router_socket.send_multipart([identity, b"", event])
+                for identity in self._dispatchers_connected
+            )
+        )
+
+    async def _terminate_all_dispatchers(self) -> None:
+        if (scheduler := self.ensemble._scheduler) is not None:
+            await scheduler._running.wait()
+            logger.debug("SET SCHEDULER CANCELLED")
+            scheduler._cancelled_by_evaluator = True
+        await self._send_terminate_messages_to_dispatchers()
+        logger.debug("SENT TERMINATE MESSAGES")
+        # if (scheduler := self.ensemble._scheduler) is not None:
+        #    for scheduler_job in scheduler._jobs.values():
+        #        logger.debug("CANCELLED RETURN CODE")
+        #        scheduler_job.returncode.cancel()
+        await self._ensemble.cancel()
 
     async def _append_message(self, snapshot_update_event: EnsembleSnapshot) -> None:
         event = EESnapshotUpdate(
@@ -244,9 +273,13 @@ class EnsembleEvaluator:
     async def handle_dispatch(self, dealer: bytes, frame: bytes) -> None:
         if frame == CONNECT_MSG:
             self._dispatchers_connected.add(dealer)
+            self._dispatcher_identity_to_iens[dealer] = _get_iens_from_dealer_name(
+                dealer.decode("utf-8")
+            )
             self._dispatchers_empty.clear()
         elif frame == DISCONNECT_MSG:
             self._dispatchers_connected.discard(dealer)
+            del self._dispatcher_identity_to_iens[dealer]
             if not self._dispatchers_connected:
                 self._dispatchers_empty.set()
         else:
@@ -360,7 +393,8 @@ class EnsembleEvaluator:
             logger.debug("Cancelling current ensemble")
             self._ee_tasks.append(
                 asyncio.create_task(
-                    self._ensemble.cancel(), name="ensemble_cancellation_task"
+                    self._terminate_all_dispatchers(),
+                    name="dispatcher_termination_task",
                 )
             )
 

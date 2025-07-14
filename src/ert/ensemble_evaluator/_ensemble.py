@@ -264,6 +264,7 @@ class LegacyEnsemble:
 
     async def cancel(self) -> None:
         if self._scheduler is not None:
+            logger.info("JONAK CALLED _scheduler.kill_all_jobs()")
             await self._scheduler.kill_all_jobs()
         logger.debug("evaluator cancelled")
 

@@ -1,5 +1,6 @@
 import asyncio
 import datetime
+from contextlib import asynccontextmanager
 from functools import partial
 from typing import cast
 from unittest.mock import patch
@@ -35,10 +36,14 @@ from ert.ensemble_evaluator import (
     EnsembleSnapshot,
     FMStepSnapshot,
     Monitor,
+    identifiers,
+    state,
 )
 from ert.ensemble_evaluator._ensemble import LegacyEnsemble
+from ert.ensemble_evaluator.config import EvaluatorServerConfig
 from ert.ensemble_evaluator.evaluator import detect_overspent_cpu
 from ert.ensemble_evaluator.state import (
+    ENSEMBLE_STATE_CANCELLED,
     ENSEMBLE_STATE_STARTED,
     ENSEMBLE_STATE_STOPPED,
     ENSEMBLE_STATE_UNKNOWN,
@@ -168,6 +173,21 @@ async def test_new_connections_are_no_problem_when_evaluator_is_closing_down(
     evaluator.stop()
 
     await new_connection_task
+
+
+@pytest.fixture
+def setup_evaluator():
+    @asynccontextmanager
+    async def run_evaluator(ensemble, ee_config):
+        evaluator = EnsembleEvaluator(ensemble, ee_config)
+        run_task = asyncio.create_task(evaluator.run_and_get_successful_realizations())
+        await evaluator._server_started
+        try:
+            yield evaluator
+        finally:
+            await run_task
+
+    return run_evaluator
 
 
 @pytest.fixture(name="evaluator_to_use")
@@ -687,15 +707,19 @@ async def test_signal_cancel_does_not_cause_evaluator_dispatcher_communication_t
     evaluator._batching_interval = 0.4
     evaluator._max_batch_size = 1
 
-    kill_all_jobs_event = asyncio.Event()
-    started_cancelling_ensemble = asyncio.Event()
+    terminated_all_dispatchers_event = asyncio.Event()
+    started_terminating_all_dispatchers = asyncio.Event()
 
-    async def mock_never_ending_ensemble_cancel(*args, **kwargs):
-        nonlocal kill_all_jobs_event, started_cancelling_ensemble
-        started_cancelling_ensemble.set()
-        await kill_all_jobs_event.wait()
+    async def mock_never_ending_termination_of_dispatchers(*args, **kwargs):
+        nonlocal terminated_all_dispatchers_event, started_terminating_all_dispatchers
+        started_terminating_all_dispatchers.set()
+        await terminated_all_dispatchers_event.wait()
 
-    monkeypatch.setattr(LegacyEnsemble, "cancel", mock_never_ending_ensemble_cancel)
+    monkeypatch.setattr(
+        EnsembleEvaluator,
+        "_terminate_all_dispatchers",
+        mock_never_ending_termination_of_dispatchers,
+    )
     monkeypatch.setattr(Client, "DEFAULT_MAX_RETRIES", 1)
     monkeypatch.setattr(Client, "DEFAULT_ACK_TIMEOUT", 1)
     token = evaluator._config.token
@@ -711,8 +735,8 @@ async def test_signal_cancel_does_not_cause_evaluator_dispatcher_communication_t
             )
             await dispatch.send(event_to_json(event))
 
-            async def try_sending_event_from_dispatcher_while_monitor_is_cancelling_ensemble():  # noqa: E501
-                await started_cancelling_ensemble.wait()
+            async def try_sending_event_from_dispatcher_while_evaluator_is_terminating_dispatchers():  # noqa: E501
+                await started_terminating_all_dispatchers.wait()
                 event = ForwardModelStepSuccess(
                     ensemble=evaluator.ensemble.id_,
                     real="0",
@@ -720,11 +744,11 @@ async def test_signal_cancel_does_not_cause_evaluator_dispatcher_communication_t
                     current_memory_usage=1000,
                 )
                 await dispatch.send(event_to_json(event))
-                kill_all_jobs_event.set()
+                terminated_all_dispatchers_event.set()
 
             await asyncio.wait_for(
                 asyncio.gather(
-                    try_sending_event_from_dispatcher_while_monitor_is_cancelling_ensemble(),
+                    try_sending_event_from_dispatcher_while_evaluator_is_terminating_dispatchers(),
                     monitor.signal_cancel(),
                 ),
                 timeout=10,
@@ -750,3 +774,141 @@ async def test_signal_cancel_does_not_cause_evaluator_dispatcher_communication_t
                 break
 
         assert was_completed
+
+
+@pytest.mark.timeout(15)
+async def test_signal_cancel_sends_terminate_message_to_dispatchers(evaluator_to_use):
+    evaluator = evaluator_to_use
+    token = evaluator._config.token
+    url = evaluator._config.get_uri()
+    evaluator.ensemble._cancellable = True
+    async with (
+        Client(url, token=token) as dispatcher_0,
+        Client(url, token=token) as dispatcher_1,
+    ):
+        await evaluator._signal_cancel()
+        assert await asyncio.wait_for(
+            dispatcher_0.received_terminate_message.wait(), timeout=5
+        )
+        assert await asyncio.wait_for(
+            dispatcher_1.received_terminate_message.wait(), timeout=5
+        )
+
+
+@pytest.mark.timeout(20)
+@pytest.mark.integration_test
+async def test_signal_cancel_terminates_fm_dispatcher(
+    tmpdir, monkeypatch, make_ensemble, setup_evaluator
+):
+    num_reals = 1
+    num_jobs = 1
+    sleep_period = 60
+    ensemble: LegacyEnsemble = make_ensemble(
+        monkeypatch, tmpdir, num_reals, num_jobs, sleep_period
+    )
+    config = EvaluatorServerConfig(use_token=False)
+    async with (
+        setup_evaluator(ensemble, config) as evaluator,
+        Monitor(config.get_uri(), config.token) as monitor,
+    ):
+        async for event in monitor.track():
+            if (
+                type(event)
+                in {
+                    EESnapshotUpdate,
+                    EESnapshot,
+                }
+                and event.snapshot.get(identifiers.STATUS)
+                == state.ENSEMBLE_STATE_STARTED
+            ):
+                await monitor.signal_cancel()
+
+        assert len(evaluator._ensemble.get_successful_realizations()) == 0
+        assert evaluator._ensemble.status == ENSEMBLE_STATE_CANCELLED
+
+
+@pytest.mark.timeout(20)
+@pytest.mark.integration_test
+async def test_signal_cancel_terminates_fm_dispatcher_with_terminate_message(
+    tmpdir, monkeypatch, make_ensemble, setup_evaluator
+):
+    ensemble_cancelled_was_called = asyncio.Event()
+
+    async def empty_cancel(*args, **kwargs):
+        nonlocal ensemble_cancelled_was_called
+        ensemble_cancelled_was_called.set()
+
+    num_reals = 1
+    num_jobs = 1
+    sleep_period = 60
+    ensemble: LegacyEnsemble = make_ensemble(
+        monkeypatch, tmpdir, num_reals, num_jobs, sleep_period
+    )
+    config = EvaluatorServerConfig(use_token=False)
+    async with (
+        setup_evaluator(ensemble, config) as evaluator,
+        Monitor(config.get_uri(), config.token) as monitor,
+    ):
+        evaluator._ensemble.cancel = empty_cancel
+        async for event in monitor.track():
+            if (
+                type(event)
+                in {
+                    EESnapshotUpdate,
+                    EESnapshot,
+                }
+                and event.snapshot.get(identifiers.STATUS)
+                == state.ENSEMBLE_STATE_STARTED
+            ):
+                await monitor.signal_cancel()
+
+        assert len(evaluator._ensemble.get_successful_realizations()) == 0
+    assert ensemble_cancelled_was_called.is_set()
+    assert evaluator._ensemble.status == ENSEMBLE_STATE_CANCELLED
+
+
+@pytest.mark.timeout(20)
+@pytest.mark.integration_test
+async def test_signal_cancel_terminates_fm_dispatcher_with_scheduler_as_fallback(
+    tmpdir, monkeypatch, make_ensemble, setup_evaluator, caplog
+):
+    send_terminate_was_called = asyncio.Event()
+
+    async def empty_send_terminate_messages(*args, **kwargs):
+        nonlocal send_terminate_was_called
+        send_terminate_was_called.set()
+
+    num_reals = 1
+    num_jobs = 1
+    sleep_period = 60
+    ensemble: LegacyEnsemble = make_ensemble(
+        monkeypatch, tmpdir, num_reals, num_jobs, sleep_period
+    )
+    config = EvaluatorServerConfig(use_token=False)
+    async with (
+        setup_evaluator(ensemble, config) as evaluator,
+        Monitor(config.get_uri(), config.token) as monitor,
+    ):
+        evaluator._ensemble._scheduler.WAIT_PERIOD_FOR_GRACEFUL_SHUTDOWN = 0
+        evaluator._send_terminate_messages_to_dispatchers = (
+            empty_send_terminate_messages
+        )
+        async for event in monitor.track():
+            if (
+                type(event)
+                in {
+                    EESnapshotUpdate,
+                    EESnapshot,
+                }
+                and event.snapshot.get(identifiers.STATUS)
+                == state.ENSEMBLE_STATE_STARTED
+            ):
+                await monitor.signal_cancel()
+
+        assert len(evaluator._ensemble.get_successful_realizations()) == 0
+    assert send_terminate_was_called.is_set()
+    assert evaluator._ensemble.status == ENSEMBLE_STATE_CANCELLED
+    assert (
+        "Realization 0 did not stop after getting the TERMINATE message. "
+        "Killing it using scheduler"
+    ) in caplog.text
