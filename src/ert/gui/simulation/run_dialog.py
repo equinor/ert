@@ -491,7 +491,8 @@ class RunDialog(QFrame):
                 widget_info=(
                     f"<p style='font-size: 28px;' > ERT experiment "
                     f"{'failed' if failed else 'succeeded'}!</p>"
-                    f"<p>These {'errors' if failed else 'warnings'} were detected</p>"
+                    f"<p style='font-size: 16px;'>"
+                    f"These {'errors' if failed else 'warnings'} were detected</p>"
                 ),
                 parent=self,
             )

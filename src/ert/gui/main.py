@@ -163,8 +163,8 @@ def _start_initial_gui_window(
                 (plugin_manager.get_help_links() if plugin_manager is not None else {}),
                 widget_info="""\
                     <p style="font-size: 28px;">Some errors detected</p>
-                    <p> The following errors were detected while reading
-                    the ert configuration file. </p>
+                    <p style="font-size: 16px;">The following errors were detected
+                    while reading the ert configuration file. </p>
                 """,
             ),
             None,
@@ -202,8 +202,8 @@ def _start_initial_gui_window(
             plugin_manager.get_help_links() if plugin_manager is not None else {},
             widget_info="""\
                 <p style="font-size: 28px;">Some problems detected</p>
-                <p> The following problems were detected while reading
-                the ert configuration file. </p>
+                <p style="font-size: 16px;">The following problems were detected
+                while reading the ert configuration file. </p>
             """,
         )
         return (
