@@ -5,14 +5,12 @@ import functools
 import logging
 import webbrowser
 from pathlib import Path
-from typing import cast
 
 from PyQt6.QtCore import QCoreApplication, QEvent, QSize, Qt
 from PyQt6.QtCore import pyqtSignal as Signal
 from PyQt6.QtCore import pyqtSlot as Slot
-from PyQt6.QtGui import QAction, QCloseEvent, QCursor, QIcon, QMouseEvent, QPalette
+from PyQt6.QtGui import QAction, QCloseEvent, QCursor, QIcon, QMouseEvent
 from PyQt6.QtWidgets import (
-    QApplication,
     QButtonGroup,
     QFrame,
     QHBoxLayout,
@@ -26,6 +24,7 @@ from PyQt6.QtWidgets import (
 
 from ert.config import ErtConfig
 from ert.config.workflow_job import ErtScriptWorkflow
+from ert.gui import is_dark_mode, is_high_contrast_mode
 from ert.gui.about_dialog import AboutDialog
 from ert.gui.ertnotifier import ErtNotifier
 from ert.gui.find_ert_info import find_ert_info
@@ -117,7 +116,7 @@ class ErtMainWindow(QMainWindow):
         self.button_group = QButtonGroup(self.side_frame)
         self._external_plot_windows: list[PlotWindow] = []
 
-        if self.is_dark_mode():
+        if is_dark_mode():
             self.side_frame.setStyleSheet("background-color: rgb(64, 64, 64);")
         else:
             self.side_frame.setStyleSheet("background-color: lightgray;")
@@ -165,9 +164,6 @@ class ErtMainWindow(QMainWindow):
 
         self.__add_tools_menu()
         self.__add_help_menu()
-
-    def is_dark_mode(self) -> bool:
-        return self.palette().base().color().value() < 70
 
     def right_clicked(self) -> None:
         actor = self.sender()
@@ -320,7 +316,7 @@ class ErtMainWindow(QMainWindow):
 
         button.setStyleSheet(
             BUTTON_STYLE_SHEET_DARK
-        ) if self.is_dark_mode() else button.setStyleSheet(BUTTON_STYLE_SHEET_LIGHT)
+        ) if is_dark_mode() else button.setStyleSheet(BUTTON_STYLE_SHEET_LIGHT)
 
         pad = 45
         icon_size = QSize(button.size().width() - pad, button.size().height() - pad)
@@ -405,8 +401,3 @@ class ErtMainWindow(QMainWindow):
     def __showAboutMessage(self) -> None:
         diag = AboutDialog(self)
         diag.show()
-
-
-def is_high_contrast_mode() -> bool:
-    app = cast(QWidget, QApplication.instance())
-    return app.palette().color(QPalette.ColorRole.Window).lightness() > 245
