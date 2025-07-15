@@ -95,6 +95,10 @@ start_tests() {
     export NO_PROXY=localhost,127.0.0.1
     export ECL_SKIP_SIGNAL=ON
     export ERT_PYTEST_ARGS=--eclipse-simulator
+    # Restricting the number of threads utilized by numpy to control memory consumption
+    #, as some tests evaluate memory usage and additional threads increase it.
+    # Also reduces cpu usage, since we run most tests in parallell anyway.
+    export OMP_NUM_THREADS=1
 
     pushd "${CI_TEST_ROOT}"/tests/ert || exit 1
 
@@ -108,9 +112,6 @@ start_tests() {
       run_everest_egg_test
       return $?
     elif [ "$CI_SUBSYSTEM_TEST" == "ert-limit-memory" ]; then
-      # Restricting the number of threads utilized by numpy to control memory consumption, as some tests evaluate memory usage and additional threads increase it.
-      export OMP_NUM_THREADS=1
-
       # Run ert tests that evaluates memory consumption
       just -f "${CI_SOURCE_ROOT}"/justfile ert-memory-tests
       return $?
