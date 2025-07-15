@@ -26,6 +26,11 @@ optimization:
 model:
   realizations: [0]
 
+simulator:
+  queue_system:
+    name: local
+    max_running: 3
+
 environment:
   output_folder: everest_output
   simulation_folder: simulations_by_templating

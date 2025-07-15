@@ -51,7 +51,6 @@ def test_everest_entry_run(cached_example):
 
     # Ensure no interference with plugins which may set queue system
     config_content = yaml.safe_load(Path(config_file).read_text(encoding="utf-8"))
-    config_content["simulator"] = {"queue_system": {"name": "local"}}
     Path(config_file).write_text(
         yaml.dump(config_content, default_flow_style=False), encoding="utf-8"
     )
