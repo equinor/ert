@@ -136,7 +136,8 @@ class LoadResultsPanel(QWidget):
                 continue_action=None,
                 widget_info="""\
                                <p style="font-size: 28px;">ERT experiment failed!</p>
-                               <p>These errors were detected:</p>
+                               <p style="font-size: 16px;">These errors were detected:
+                               </p>
                            """,
                 parent=self,
             )

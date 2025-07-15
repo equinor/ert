@@ -124,26 +124,28 @@ class Suggestor(QWidget):
         if deprecations is None:
             deprecations = []
         self._continue_action = continue_action
+        self.setWindowTitle("ERT")
+
         self.__layout = QVBoxLayout()
         self.setLayout(self.__layout)
+        self.__layout.setContentsMargins(32, 16, 32, 16)
         self.__layout.addWidget(QLabel(widget_info))
-        self.setWindowTitle("ERT")
-        data_widget = QWidget(parent=self)
-        self.__layout.addWidget(data_widget)
-        self.__layout.setContentsMargins(32, 47, 32, 16)
-        self.__layout.setSpacing(32)
+        self.__layout.addSpacing(20)
 
         if not is_dark_mode():
             self.setStyleSheet(f"background-color: {LIGHT_GREY};")
 
+        data_widget = QWidget(parent=self)
         data_layout = QHBoxLayout()
         data_widget.setLayout(data_layout)
         data_layout.setSpacing(16)
         data_layout.setContentsMargins(0, 0, 0, 0)
-
         data_layout.addWidget(self._problem_area(errors, warnings, deprecations))
         if help_links:
             data_layout.addWidget(self._help_panel(help_links))
+        self.__layout.addWidget(data_widget)
+
+        self.__layout.addWidget(self._action_buttons())
 
     def _help_panel(self, help_links: dict[str, str]) -> QFrame:
         help_button_frame = QFrame(parent=self)
@@ -200,7 +202,6 @@ class Suggestor(QWidget):
         problem_area.setLayout(area_layout)
         area_layout.setContentsMargins(0, 0, 0, 0)
         area_layout.addWidget(self._messages(errors, warnings, deprecations))
-        area_layout.addWidget(self._action_buttons())
         return problem_area
 
     def _action_buttons(self) -> QWidget:
