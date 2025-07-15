@@ -20,6 +20,8 @@ from PyQt6.QtWidgets import (
     QWidget,
 )
 
+from ert.gui import is_dark_mode
+
 from ._colors import BLUE_TEXT
 from ._suggestor_message import SuggestorMessage
 
@@ -128,9 +130,11 @@ class Suggestor(QWidget):
         self.setWindowTitle("ERT")
         data_widget = QWidget(parent=self)
         self.__layout.addWidget(data_widget)
-        self.setStyleSheet(f"background-color: {LIGHT_GREY}; color: black")
         self.__layout.setContentsMargins(32, 47, 32, 16)
         self.__layout.setSpacing(32)
+
+        if not is_dark_mode():
+            self.setStyleSheet(f"background-color: {LIGHT_GREY};")
 
         data_layout = QHBoxLayout()
         data_widget.setLayout(data_layout)

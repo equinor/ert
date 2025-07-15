@@ -14,6 +14,8 @@ from PyQt6.QtWidgets import (
     QWidget,
 )
 
+from ert.gui import is_dark_mode
+
 from ..ertwidgets.copyablelabel import _CopyButton
 from ._colors import (
     BLUE_BACKGROUND,
@@ -35,7 +37,7 @@ class SuggestorMessage(QWidget):
     def __init__(
         self,
         header: str,
-        text_color: str,
+        header_text_color: str,
         bg_color: str,
         icon: QWidget,
         message: str,
@@ -65,7 +67,11 @@ class SuggestorMessage(QWidget):
             self._locations.pop(0)
 
         self._header = header
-        self._text_color = text_color
+        self._header_text_color = header_text_color
+
+        self._text_color = self.palette().text().color().name()
+        if is_dark_mode():
+            self._text_color = "#303030"
 
         self._hbox = QHBoxLayout()
         self._hbox.setContentsMargins(16, 16, 16, 16)
@@ -116,9 +122,11 @@ class SuggestorMessage(QWidget):
     def _collapsed_text(self) -> str:
         location_paragraph = ""
         if self._locations:
-            location_paragraph = self._locations[0]
             location_paragraph = (
-                "<p>" + self._color_bold("location: ") + location_paragraph + "</p>"
+                "<p>"
+                + self._color_bold("location: ")
+                + f"<div style='color: {self._text_color};'>{self._locations[0]}"
+                + "</div></p>"
             )
 
         return self._text(location_paragraph)
@@ -128,10 +136,16 @@ class SuggestorMessage(QWidget):
         first = True
         for loc in self._locations:
             if first:
-                location_paragraphs += f"<p>{self._color_bold('location:')}{loc}</p>"
+                location_paragraphs += (
+                    f"<p>{self._color_bold('location:')}"
+                    f"<div style='color: {self._text_color};'>"
+                    f"{loc}</div></p>"
+                )
                 first = False
             else:
-                location_paragraphs += f"<p>{loc}</p>"
+                location_paragraphs += (
+                    f"<p style='color: {self._text_color};'>{loc}</p>"
+                )
 
         return self._text(location_paragraphs)
 
@@ -139,13 +153,14 @@ class SuggestorMessage(QWidget):
         return (
             '<div style="font-size: 16px; line-height: 24px;">'
             + self._color_bold(self._header)
-            + f'<p style="white-space: pre-wrap;">{self._message}</p>'
+            + f"<p style='white-space: pre-wrap; color: {self._text_color};'>"
+            + f"{self._message}</p>"
             + location
             + "</div>"
         )
 
     def _color_bold(self, text: str) -> str:
-        return f'<b style="color: {self._text_color}">{text}</b>'
+        return f'<b style="color: {self._header_text_color}">{text}</b>'
 
     @classmethod
     def error_msg(cls, message: str, locations: list[str]) -> Self:
