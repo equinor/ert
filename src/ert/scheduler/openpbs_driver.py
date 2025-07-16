@@ -233,28 +233,31 @@ class OpenPBSDriver(Driver):
         self._iens2jobid[iens] = job_id_
         self._non_finished_job_ids.add(job_id_)
 
-    async def kill(self, iens: int) -> None:
-        if iens in self._finished_iens:
-            return
+    async def kill(self, iens: int, kill_sem: asyncio.BoundedSemaphore) -> None:
+        async with kill_sem:
+            if iens in self._finished_iens:
+                return
 
-        if iens not in self._iens2jobid:
-            logger.info(f"PBS kill failed due to missing jobid for realization {iens}")
-            return
+            if iens not in self._iens2jobid:
+                logger.info(
+                    f"PBS kill failed due to missing jobid for realization {iens}"
+                )
+                return
 
-        job_id = self._iens2jobid[iens]
+            job_id = self._iens2jobid[iens]
 
-        logger.debug(f"Killing realization {iens} with PBS-id {job_id}")
+            logger.debug(f"Killing realization {iens} with PBS-id {job_id}")
 
-        process_success, process_message = await self._execute_with_retry(
-            [str(self._qdel_cmd), str(job_id)],
-            retry_codes=(QDEL_REQUEST_INVALID,),
-            accept_codes=(QDEL_JOB_HAS_FINISHED,),
-            total_attempts=self._max_pbs_cmd_attempts,
-            retry_interval=self._sleep_time_between_cmd_retries,
-            driverlogger=logger,
-        )
-        if not process_success:
-            raise RuntimeError(process_message)
+            process_success, process_message = await self._execute_with_retry(
+                [str(self._qdel_cmd), str(job_id)],
+                retry_codes=(QDEL_REQUEST_INVALID,),
+                accept_codes=(QDEL_JOB_HAS_FINISHED,),
+                total_attempts=self._max_pbs_cmd_attempts,
+                retry_interval=self._sleep_time_between_cmd_retries,
+                driverlogger=logger,
+            )
+            if not process_success:
+                raise RuntimeError(process_message)
 
     async def poll(self) -> None:
         while True:
