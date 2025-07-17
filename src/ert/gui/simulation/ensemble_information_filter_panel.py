@@ -44,7 +44,6 @@ class EnsembleInformationFilterPanel(ExperimentConfigPanel):
         analysis_config: AnalysisConfig,
         run_path: str,
         notifier: ErtNotifier,
-        ensemble_size: int,
         active_realizations: list[bool],
         config_num_realization: int,
     ) -> None:
@@ -70,7 +69,7 @@ class EnsembleInformationFilterPanel(ExperimentConfigPanel):
         runpath_label = CopyableLabel(text=run_path)
         layout.addRow("Runpath:", runpath_label)
 
-        number_of_realizations_label = QLabel(f"<b>{ensemble_size}</b>")
+        number_of_realizations_label = QLabel(f"<b>{len(active_realizations)}</b>")
         layout.addRow(QLabel("Number of realizations:"), number_of_realizations_label)
 
         self._ensemble_format_model = TargetEnsembleModel(analysis_config, notifier)
@@ -83,7 +82,7 @@ class EnsembleInformationFilterPanel(ExperimentConfigPanel):
         layout.addRow("Ensemble format:", self._ensemble_format_field)
 
         self._active_realizations_field = StringBox(
-            ActiveRealizationsModel(ensemble_size),  # type: ignore
+            ActiveRealizationsModel(len(active_realizations)),  # type: ignore
             "config/simulation/active_realizations",
         )
         self._active_realizations_field.setValidator(
