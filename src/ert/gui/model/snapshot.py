@@ -15,6 +15,7 @@ from ert.ensemble_evaluator.snapshot import (
     EnsembleSnapshotMetadata,
     convert_iso8601_to_datetime,
 )
+from ert.gui import is_dark_mode
 from ert.gui.model.node import (
     ForwardModelStepNode,
     IterNode,
@@ -400,6 +401,8 @@ class SnapshotModel(QAbstractItemModel):
                 index.data(FileRole)
             ):
                 return QColor(Qt.GlobalColor.blue)
+            elif is_dark_mode():
+                return QColor(Qt.GlobalColor.black)
 
         if role == Qt.ItemDataRole.BackgroundRole:
             return (
