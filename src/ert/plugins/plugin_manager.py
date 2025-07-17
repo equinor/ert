@@ -363,7 +363,6 @@ class ErtPluginManager(pluggy.PluginManager):
 
         fm_step_doc = self.get_documentation_for_forward_model_steps()
         for workflow_job in self.get_installable_workflow_jobs():
-            print(f"Adding step {workflow_job} as workflow_job")
             job_docs[workflow_job] = JobDoc(
                 {
                     "description": fm_step_doc[workflow_job].description,
