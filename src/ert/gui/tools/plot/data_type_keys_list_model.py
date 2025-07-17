@@ -4,6 +4,8 @@ from PyQt6.QtCore import QAbstractItemModel, QModelIndex, QObject, Qt
 from PyQt6.QtGui import QColor, QIcon
 from typing_extensions import override
 
+from ert.gui import is_dark_mode
+
 from .plot_api import PlotApiKeyDefinition
 
 
@@ -52,6 +54,12 @@ class DataTypeKeysListModel(QAbstractItemModel):
                 return item.key
             elif role == Qt.ItemDataRole.BackgroundRole and item.observations:
                 return self.HAS_OBSERVATIONS
+            elif (
+                role == Qt.ItemDataRole.ForegroundRole
+                and item.observations
+                and is_dark_mode()
+            ):
+                return QColor(Qt.GlobalColor.black)
 
         return None
 
