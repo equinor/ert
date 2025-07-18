@@ -93,7 +93,6 @@ run_everest_egg_test() {
 
 start_tests() {
     export NO_PROXY=localhost,127.0.0.1
-    export ECL_SKIP_SIGNAL=ON
     export ERT_PYTEST_ARGS=--eclipse-simulator
     # Restricting the number of threads utilized by numpy to control memory consumption
     #, as some tests evaluate memory usage and additional threads increase it.
