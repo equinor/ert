@@ -58,7 +58,6 @@ class MultipleDataAssimilationPanel(ExperimentConfigPanel):
         analysis_config: AnalysisConfig,
         run_path: str,
         notifier: ErtNotifier,
-        ensemble_size: int,
         active_realizations: list[bool],
         config_num_realization: int,
     ) -> None:
@@ -91,7 +90,7 @@ class MultipleDataAssimilationPanel(ExperimentConfigPanel):
         number_of_realizations_container = QWidget()
         number_of_realizations_layout = QHBoxLayout(number_of_realizations_container)
         number_of_realizations_layout.setContentsMargins(0, 0, 0, 0)
-        number_of_realizations_label = QLabel(f"<b>{ensemble_size}</b>")
+        number_of_realizations_label = QLabel(f"<b>{len(active_realizations)}</b>")
         number_of_realizations_label.setObjectName("num_reals_label")
         number_of_realizations_layout.addWidget(number_of_realizations_label)
 
@@ -115,11 +114,11 @@ class MultipleDataAssimilationPanel(ExperimentConfigPanel):
         self._createInputForWeights(layout)
 
         self._analysis_module_edit = AnalysisModuleEdit(
-            analysis_config.es_settings, ensemble_size
+            analysis_config.es_settings, len(active_realizations)
         )
         layout.addRow("Analysis module:", self._analysis_module_edit)
         self._active_realizations_field = StringBox(
-            ActiveRealizationsModel(ensemble_size),  # type: ignore
+            ActiveRealizationsModel(len(active_realizations)),  # type: ignore
             "config/simulation/active_realizations",
         )
         self._active_realizations_field.setValidator(
