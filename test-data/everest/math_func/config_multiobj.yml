@@ -49,3 +49,8 @@ environment:
   output_folder: everest_output_multiobj
   log_level: debug
   random_seed: 999
+
+simulator:
+  queue_system:
+    name: local
+    max_running: 3

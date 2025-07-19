@@ -157,7 +157,7 @@ def test_status_failed_job(_, change_to_tmpdir, mock_server):
 @patch("sys.argv", ["name", "--output-dir", "everest_output"])
 @patch("everest.detached.everserver._configure_loggers")
 async def test_status_exception(_, change_to_tmpdir, min_config):
-    min_config["simulator"] = {"queue_system": {"name": "local"}}
+    min_config["simulator"] = {"queue_system": {"name": "local", "max_running": 3}}
     config = EverestConfig(**min_config)
 
     await wait_for_server_to_complete(config)
@@ -178,7 +178,6 @@ async def test_status_max_batch_num(copy_math_func_test_data_to_tmp):
     config_dict = {
         **config.model_dump(exclude_none=True),
         "optimization": {"algorithm": "optpp_q_newton", "max_batch_num": 1},
-        "simulator": {"queue_system": {"name": "local"}},
     }
     config = EverestConfig.model_validate(config_dict)
 
@@ -207,7 +206,6 @@ async def test_status_too_few_realizations_succeeded(copy_math_func_test_data_to
     config_dict = {
         **config.model_dump(exclude_none=True),
         "optimization": {"algorithm": "optpp_q_newton", "max_batch_num": 1},
-        "simulator": {"queue_system": {"name": "local"}},
         "model": {"realizations": [0, 1]},
     }
     config_dict["install_jobs"].append(
@@ -236,7 +234,6 @@ async def test_status_all_realizations_failed(copy_math_func_test_data_to_tmp):
     config_dict = {
         **config.model_dump(exclude_none=True),
         "optimization": {"algorithm": "optpp_q_newton", "max_batch_num": 1},
-        "simulator": {"queue_system": {"name": "local"}},
     }
     config_dict["install_jobs"].append({"name": "fail", "executable": which("false")})
     config_dict["forward_model"].append("fail")
@@ -258,7 +255,10 @@ async def test_status_all_realizations_failed(copy_math_func_test_data_to_tmp):
 @pytest.mark.timeout(240)
 @patch("sys.argv", ["name", "--output-dir", "everest_output"])
 async def test_status_contains_max_runtime_failure(change_to_tmpdir, min_config):
-    min_config["simulator"] = {"queue_system": {"name": "local"}, "max_runtime": 1}
+    min_config["simulator"] = {
+        "queue_system": {"name": "local", "max_running": 3},
+        "max_runtime": 1,
+    }
     min_config["forward_model"] = ["sleep 5"]
     min_config["install_jobs"] = [{"name": "sleep", "executable": which("sleep")}]
 

@@ -79,3 +79,8 @@ environment:
   random_seed: 999
   simulation_folder: scratch/advanced/
   output_folder: everest_output/
+
+simulator:
+  queue_system:
+    name: local
+    max_running: 3

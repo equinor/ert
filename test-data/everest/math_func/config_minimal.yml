@@ -37,3 +37,8 @@ environment:
   simulation_folder: sim_output
   log_level: info
   random_seed: 123
+
+simulator:
+  queue_system:
+    name: local
+    max_running: 3
