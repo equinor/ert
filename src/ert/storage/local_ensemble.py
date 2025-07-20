@@ -1216,7 +1216,6 @@ class LocalEnsemble(BaseMode):
             self._path / "index.json", self._index.model_dump_json().encode("utf-8")
         )
 
-
 async def _read_parameters(
     run_path: str,
     realization: int,

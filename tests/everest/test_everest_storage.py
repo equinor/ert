@@ -30,7 +30,9 @@ def test_csv_export(config_file, cached_example, snapshot):
     config_path, config_file, _, _ = cached_example(f"math_func/{config_file}")
     config = EverestConfig.load_file(Path(config_path) / config_file)
 
-    ever_storage = EverestStorage(output_dir=Path(config.optimization_output_dir))
+    ever_storage = EverestStorage.from_storage_path(
+        storage_path=config.storage_dir,
+    )
     ever_storage.init(
         formatted_control_names=[
             name
