@@ -41,7 +41,7 @@ def test_objective_type(copy_math_func_test_data_to_tmp):
     evaluator_server_config = EvaluatorServerConfig()
     run_model.run_experiment(evaluator_server_config)
 
-    optimal_result = get_optimal_result(config.optimization_output_dir)
+    optimal_result = get_optimal_result(config.storage_dir)
 
     # Assert
     x0, x1, x2 = (optimal_result.controls["point." + p] for p in ["x", "y", "z"])
