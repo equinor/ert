@@ -192,6 +192,7 @@ def _parse_optimization(
         "stdout": "optimizer.stdout",
         "stderr": "optimizer.stderr",
     }
+
     ropt_gradient: dict[str, Any] = {}
     ropt_realizations: dict[str, Any] = {"weights": realizations_weights}
     cvar_config: dict[str, Any] = {}

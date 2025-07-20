@@ -995,8 +995,8 @@ to read summary data from forward model, do:
         return self._get_output_subdirectory(OPTIMIZATION_OUTPUT_DIR)
 
     @property
-    def storage_dir(self) -> str:
-        return self._get_output_subdirectory(STORAGE_DIR)
+    def storage_dir(self) -> Path:
+        return Path(self._get_output_subdirectory(STORAGE_DIR))
 
     @property
     def log_dir(self) -> str:
