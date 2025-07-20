@@ -25,5 +25,5 @@ def test_fix_control(copy_math_func_test_data_to_tmp):
     run_model.run_experiment(evaluator_server_config)
 
     # Check that the first variable remains fixed:
-    optimal_result = get_optimal_result(config.optimization_output_dir)
+    optimal_result = get_optimal_result(config.storage_dir)
     assert optimal_result.controls["point.x.0"] == config.controls[0].initial_guess

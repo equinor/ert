@@ -49,7 +49,7 @@ def test_discrete_optimizer(copy_math_func_test_data_to_tmp):
     evaluator_server_config = EvaluatorServerConfig()
     run_model.run_experiment(evaluator_server_config)
 
-    optimal_result = get_optimal_result(config.optimization_output_dir)
+    optimal_result = get_optimal_result(config.storage_dir)
 
     # Assert
     assert optimal_result.controls["point.x"] == 3
