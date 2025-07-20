@@ -627,7 +627,7 @@ class EverestRunModel(RunModel, EverestRunModelConfig):
 
     def _handle_optimizer_results(self, results: tuple[Results, ...]) -> None:
         assert self._ever_storage is not None
-        self._ever_storage.on_batch_evaluation_finished(results)
+        self._ever_storage.unpack_ropt_results(results)
 
         for r in results:
             storage_batches = (

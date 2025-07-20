@@ -843,9 +843,7 @@ class EverestStorage:
             "perturbation_constraints": perturbation_constraints,
         }
 
-    def on_batch_evaluation_finished(
-        self, optimizer_results: tuple[Results, ...]
-    ) -> None:
+    def unpack_ropt_results(self, optimizer_results: tuple[Results, ...]) -> None:
         logger.debug("Storing batch results dataframes")
 
         results: list[FunctionResults | GradientResults] = []
