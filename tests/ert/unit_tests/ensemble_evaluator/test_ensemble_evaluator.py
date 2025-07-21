@@ -1,17 +1,16 @@
 import asyncio
 import datetime
-from contextlib import asynccontextmanager
-from functools import partial
 import logging
-from queue import SimpleQueue
 import uuid
+from functools import partial
+from queue import SimpleQueue
 
 import pytest
-from pytest import MonkeyPatch
 import zmq.asyncio
 from hypothesis import given
 from hypothesis import strategies as st
 from pydantic import ValidationError
+from pytest import MonkeyPatch
 
 from _ert.events import (
     EESnapshot,
@@ -102,7 +101,10 @@ async def test_evaluator_handles_dispatchers_connected(
     await evaluator.handle_dispatch(b"dispatcher-iens-1", CONNECT_MSG)
     await evaluator.handle_dispatch(b"dispatcher-iens-2", CONNECT_MSG)
     assert not evaluator._dispatchers_empty.is_set()
-    assert evaluator._dispatchers_connected == {b"dispatcher-iens-1", b"dispatcher-iens-2"}
+    assert evaluator._dispatchers_connected == {
+        b"dispatcher-iens-1",
+        b"dispatcher-iens-2",
+    }
     await evaluator.handle_dispatch(b"dispatcher-iens-1", DISCONNECT_MSG)
     await evaluator.handle_dispatch(b"dispatcher-iens-2", DISCONNECT_MSG)
     assert evaluator._dispatchers_empty.is_set()
@@ -180,12 +182,13 @@ async def test_when_task_prematurely_ends_raises_exception(
         await evaluator.run_and_get_successful_realizations()
 
 
-
 @pytest.fixture(name="evaluator_to_use")
 async def evaluator_to_use_fixture(make_ee_config):
     ensemble = TestEnsemble(0, 2, 2, id_="0")
     event_queue = asyncio.Queue()
-    evaluator = EnsembleEvaluator(ensemble, make_ee_config(use_token=False), SimpleQueue(), event_queue.put_nowait)
+    evaluator = EnsembleEvaluator(
+        ensemble, make_ee_config(use_token=False), SimpleQueue(), event_queue.put_nowait
+    )
     evaluator._batching_interval = 0.5  # batching can be faster for tests
     run_task = asyncio.create_task(evaluator.run_and_get_successful_realizations())
     await evaluator._server_started
@@ -193,11 +196,14 @@ async def evaluator_to_use_fixture(make_ee_config):
     evaluator.stop()
     await run_task
 
+
 @pytest.fixture(name="evaluator_to_use2")
 async def evaluator_to_use_fixture2(make_ee_config):
     ensemble = TestEnsemble(0, 2, 2, id_="0")
     event_queue = asyncio.Queue()
-    evaluator = EnsembleEvaluator(ensemble, make_ee_config(use_token=False), SimpleQueue(), event_queue.put_nowait)
+    evaluator = EnsembleEvaluator(
+        ensemble, make_ee_config(use_token=False), SimpleQueue(), event_queue.put_nowait
+    )
     evaluator._batching_interval = 0.5  # batching can be faster for tests
     run_task = asyncio.create_task(evaluator.run_and_get_successful_realizations())
     await evaluator._server_started
@@ -210,7 +216,7 @@ async def evaluator_to_use_fixture2(make_ee_config):
 @pytest.mark.timeout(20)
 async def test_restarted_jobs_do_not_have_error_msgs(evaluator_to_use2):
     (evaluator, event_queue) = evaluator_to_use2
-    
+
     token = evaluator._config.token
     url = evaluator._config.get_uri()
 
@@ -257,9 +263,7 @@ async def test_restarted_jobs_do_not_have_error_msgs(evaluator_to_use2):
         if is_completed_snapshot(snapshot):
             break
     async with Client(
-        url,
-        token=token,
-        dealer_name=f"dispatch-iens-0-{uuid.uuid4().hex[:6]}"
+        url, token=token, dealer_name=f"dispatch-iens-0-{uuid.uuid4().hex[:6]}"
     ) as dispatch:
         event = ForwardModelStepSuccess(
             ensemble=evaluator.ensemble.id_,
@@ -325,7 +329,9 @@ async def test_snapshot_on_resubmit_is_cleared(evaluator_to_use2):
 
     snapshot_event = await event_queue.get()
     assert type(snapshot_event) is EESnapshot
-    async with Client(url, token=token,dealer_name=f"dispatch-iens-0-{uuid.uuid4().hex[:6]}") as dispatch:
+    async with Client(
+        url, token=token, dealer_name=f"dispatch-iens-0-{uuid.uuid4().hex[:6]}"
+    ) as dispatch:
         event = ForwardModelStepRunning(
             ensemble=evaluator.ensemble.id_,
             real="0",
@@ -402,7 +408,9 @@ async def test_signal_cancel_does_not_cause_evaluator_dispatcher_communication_t
     token = evaluator._config.token
     url = evaluator._config.get_uri()
     evaluator.ensemble._cancellable = True
-    async with Client(url, token=token,dealer_name=f"dispatch-iens-0-{uuid.uuid4().hex[:6]}") as dispatch:
+    async with Client(
+        url, token=token, dealer_name=f"dispatch-iens-0-{uuid.uuid4().hex[:6]}"
+    ) as dispatch:
         event = ForwardModelStepRunning(
             ensemble=evaluator.ensemble.id_,
             real="0",
@@ -460,8 +468,12 @@ async def test_signal_cancel_sends_terminate_message_to_dispatchers(evaluator_to
     url = evaluator._config.get_uri()
     evaluator.ensemble._cancellable = True
     async with (
-        Client(url, token=token, dealer_name=f"dispatch-iens-0-{uuid.uuid4().hex[:6]}") as dispatcher_0,
-        Client(url, token=token, dealer_name=f"dispatch-iens-1-{uuid.uuid4().hex[:6]}") as dispatcher_1,
+        Client(
+            url, token=token, dealer_name=f"dispatch-iens-0-{uuid.uuid4().hex[:6]}"
+        ) as dispatcher_0,
+        Client(
+            url, token=token, dealer_name=f"dispatch-iens-1-{uuid.uuid4().hex[:6]}"
+        ) as dispatcher_1,
     ):
         await evaluator._signal_cancel()
         assert await asyncio.wait_for(
@@ -475,7 +487,7 @@ async def test_signal_cancel_sends_terminate_message_to_dispatchers(evaluator_to
 @pytest.mark.timeout(10)
 @pytest.mark.integration_test
 async def test_signal_cancel_terminates_fm_dispatcher_with_terminate_message(
-    tmpdir, monkeypatch, make_ensemble,caplog
+    tmpdir, monkeypatch, make_ensemble, caplog
 ):
     caplog.set_level(logging.INFO)
     driver_kill_was_called = asyncio.Event()
@@ -492,14 +504,12 @@ async def test_signal_cancel_terminates_fm_dispatcher_with_terminate_message(
     )
     config = EvaluatorServerConfig(use_token=False)
     event_queue: asyncio.Queue[EESnapshot | EESnapshotUpdate] = asyncio.Queue()
-    evaluator = EnsembleEvaluator(ensemble, config, SimpleQueue(), event_queue.put_nowait)
+    evaluator = EnsembleEvaluator(
+        ensemble, config, SimpleQueue(), event_queue.put_nowait
+    )
     run_task = asyncio.create_task(evaluator.run_and_get_successful_realizations())
     await evaluator._server_started
 
-    
-
-   
-            
     async def cancel_evaluator_after_getting_initial_event_and_wait_for_confirmation():
         nonlocal event_queue
         while True:
@@ -515,23 +525,20 @@ async def test_signal_cancel_terminates_fm_dispatcher_with_terminate_message(
                     assert evaluator._ensemble._scheduler is not None
                     evaluator._ensemble._scheduler.driver.kill = mock_driver_kill
                     evaluator._end_queue.put("END")
-                elif event.snapshot.get(identifiers.STATUS) in {
-                    ENSEMBLE_STATE_CANCELLED
-                }:
+                elif event.snapshot.get(identifiers.STATUS) == ENSEMBLE_STATE_CANCELLED:
                     break
-        
-            
-    
-    await asyncio.wait_for(cancel_evaluator_after_getting_initial_event_and_wait_for_confirmation(), timeout=5)
-        
+
+    await asyncio.wait_for(
+        cancel_evaluator_after_getting_initial_event_and_wait_for_confirmation(),
+        timeout=5,
+    )
+
     await run_task
     assert len(evaluator._ensemble.get_successful_realizations()) == 0
     assert not driver_kill_was_called.is_set()
     assert evaluator._ensemble.status == ENSEMBLE_STATE_CANCELLED
     assert isinstance(evaluator._evaluation_result.exception(), UserCancelled)
-    assert (
-        "Realization 0 was killed by the evaluator"
-    ) in caplog.text
+    assert ("Realization 0 was killed by the evaluator") in caplog.text
 
 
 @pytest.mark.timeout(10)
@@ -545,7 +552,7 @@ async def test_signal_cancel_terminates_fm_dispatcher_with_scheduler_as_fallback
     async def empty_send_terminate_messages(*args, **kwargs):
         nonlocal send_terminate_was_called
         send_terminate_was_called.set()
-    
+
     num_reals = 1
     num_jobs = 1
     sleep_period = 60
@@ -555,12 +562,17 @@ async def test_signal_cancel_terminates_fm_dispatcher_with_scheduler_as_fallback
     config = EvaluatorServerConfig(use_token=False)
     event_queue: asyncio.Queue[EESnapshot | EESnapshotUpdate] = asyncio.Queue()
     monkeypatch.setattr(Job, "WAIT_PERIOD_FOR_TERM_MESSAGE_TO_CANCEL", 0)
-    monkeypatch.setattr(EnsembleEvaluator, "_send_terminate_messages_to_dispatchers", empty_send_terminate_messages)
+    monkeypatch.setattr(
+        EnsembleEvaluator,
+        "_send_terminate_messages_to_dispatchers",
+        empty_send_terminate_messages,
+    )
 
-    evaluator = EnsembleEvaluator(ensemble, config, SimpleQueue(), event_queue.put_nowait)
+    evaluator = EnsembleEvaluator(
+        ensemble, config, SimpleQueue(), event_queue.put_nowait
+    )
     run_task = asyncio.create_task(evaluator.run_and_get_successful_realizations())
     await evaluator._server_started
-
 
     async def cancel_evaluator_after_getting_initial_event_and_wait_for_confirmation():
         nonlocal event_queue
@@ -575,15 +587,14 @@ async def test_signal_cancel_terminates_fm_dispatcher_with_scheduler_as_fallback
                     == state.ENSEMBLE_STATE_STARTED
                 ):
                     evaluator._end_queue.put("END")
-                elif event.snapshot.get(identifiers.STATUS) in {
-                    ENSEMBLE_STATE_CANCELLED
-                }:
+                elif event.snapshot.get(identifiers.STATUS) == ENSEMBLE_STATE_CANCELLED:
                     break
-        
-            
-    
-    await asyncio.wait_for(cancel_evaluator_after_getting_initial_event_and_wait_for_confirmation(), timeout=5)
-    await run_task    
+
+    await asyncio.wait_for(
+        cancel_evaluator_after_getting_initial_event_and_wait_for_confirmation(),
+        timeout=5,
+    )
+    await run_task
 
     assert send_terminate_was_called.is_set()
     assert evaluator._ensemble.status == ENSEMBLE_STATE_CANCELLED

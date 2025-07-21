@@ -194,11 +194,6 @@ class EnsembleEvaluator:
             await scheduler._running.wait()
             scheduler._cancelled_by_evaluator = True
         await self._send_terminate_messages_to_dispatchers()
-        logger.debug("SENT TERMINATE MESSAGES")
-        # if (scheduler := self.ensemble._scheduler) is not None:
-        #    for scheduler_job in scheduler._jobs.values():
-        #        logger.debug("CANCELLED RETURN CODE")
-        #        scheduler_job.returncode.cancel()
         await self._ensemble.cancel()
 
     async def _append_message(self, snapshot_update_event: EnsembleSnapshot) -> None:
@@ -319,10 +314,8 @@ class EnsembleEvaluator:
                 dealer.decode("utf-8")
             )
             self._dispatchers_empty.clear()
-            logger.info(f"connected {dealer=}")
         elif frame == DISCONNECT_MSG:
             self._dispatchers_connected.discard(dealer)
-            logger.info(f"disconnected {dealer=}")
             del self._dispatcher_identity_to_iens[dealer]
             if not self._dispatchers_connected:
                 self._dispatchers_empty.set()
@@ -335,13 +328,14 @@ class EnsembleEvaluator:
                     f"Ignoring since I am {self.ensemble.id_}"
                 )
                 return
-            if type(event) is ForwardModelStepFailure:
-                logger.info(f"Got FMStepFailed for {event.real=} with {event.error_msg=}")
-            if type(event) is ForwardModelStepFailure and event.error_msg == FORWARD_MODEL_TERMINATED_MSG:
-                logger.info("GOT MATCH IN EVALUATOR FOR TERMINATED JOB!")
-                if self._ensemble._scheduler is not None:
-                    self._ensemble._scheduler._jobs[int(event.real)]._was_killed_by_evaluator.set()
-                logger.info(f"Set killed_by_evaluator for {event.real}")
+            if (
+                type(event) is ForwardModelStepFailure
+                and event.error_msg == FORWARD_MODEL_TERMINATED_MSG
+                and self._ensemble._scheduler is not None
+            ):
+                self._ensemble._scheduler._jobs[
+                    int(event.real)
+                ]._was_killed_by_evaluator.set()
             if type(event) is ForwardModelStepChecksum:
                 await self.forward_checksum(event)
             else:
@@ -499,7 +493,6 @@ class EnsembleEvaluator:
                     "publisher_task",
                     "monitor_end_queue_task",
                 }:
-                    
                     timeout = self.CLOSE_SERVER_TIMEOUT
                 else:
                     msg = (
@@ -526,7 +519,6 @@ class EnsembleEvaluator:
         try:
             await self._monitor_and_handle_tasks()
         finally:
-            print("A")
             self._server_done.set()
             self._dispatchers_empty.set()
             for task in self._ee_tasks:
@@ -535,7 +527,6 @@ class EnsembleEvaluator:
                     # We have to manually yield, otherwise the
                     # nested coroutines will not be cancelled
                     await asyncio.sleep(0)
-            print("B")
             results = await asyncio.gather(*self._ee_tasks, return_exceptions=True)
             for result in results or []:
                 if not isinstance(result, asyncio.CancelledError) and isinstance(

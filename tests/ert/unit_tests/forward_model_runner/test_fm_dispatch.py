@@ -481,7 +481,7 @@ time.sleep(180)"""
         # wait for fm_dispatch has been terminated, and sends failure message
         await asyncio.wait_for(wait_for_msg("forward_model_step.failure"), timeout=15)
         assert (
-            event_from_json(zmq_server.messages[-1]).error_msg
+            dispatcher_event_from_json(zmq_server.messages[-1]).error_msg
             == FORWARD_MODEL_TERMINATED_MSG
         )
 
@@ -546,7 +546,7 @@ time.sleep(180)"""
             while True:
                 await asyncio.sleep(0.1)
                 if any(
-                    msg_type in event_from_json(msg).event_type
+                    msg_type in dispatcher_event_from_json(msg).event_type
                     for msg in zmq_server.messages
                 ):
                     return

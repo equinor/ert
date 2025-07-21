@@ -68,6 +68,7 @@ class Job:
 
     DEFAULT_FILE_VERIFICATION_TIMEOUT = 120
     WAIT_PERIOD_FOR_TERM_MESSAGE_TO_CANCEL = 5
+
     def __init__(self, scheduler: Scheduler, real: Realization) -> None:
         self.real = real
         self.state = JobState.WAITING
@@ -155,13 +156,17 @@ class Job:
 
         except asyncio.CancelledError:
             await self._send(JobState.ABORTING)
-            logger.debug("JONAK CANCELLEDERROR 0")
-            #await asyncio.sleep(5)
             killed_by_evaluator = False
             with suppress(asyncio.TimeoutError):
-                killed_by_evaluator = await asyncio.wait_for(self._was_killed_by_evaluator.wait(), timeout=self.WAIT_PERIOD_FOR_TERM_MESSAGE_TO_CANCEL)
+                killed_by_evaluator = await asyncio.wait_for(
+                    self._was_killed_by_evaluator.wait(),
+                    timeout=self.WAIT_PERIOD_FOR_TERM_MESSAGE_TO_CANCEL,
+                )
             if not killed_by_evaluator:
-                logger.warning(f"Realization {self.iens} was not killed by the evaluator. Killing it with the scheduler")
+                logger.warning(
+                    f"Realization {self.iens} was not killed by the evaluator. "
+                    "Killing it with the scheduler"
+                )
                 await self.driver.kill(self.iens)
             else:
                 logger.info(f"Realization {self.iens} was killed by the evaluator")

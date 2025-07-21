@@ -33,6 +33,7 @@ def create_scheduler():
     sch.driver = AsyncMock()
     sch._manifest_queue = None
     sch._cancelled = False
+    sch._cancelled_by_evaluator = False
     return sch
 
 
@@ -77,6 +78,7 @@ async def assert_scheduler_events(
 async def test_submitted_job_is_cancelled(realization, mock_event):
     scheduler = create_scheduler()
     job = Job(scheduler, realization)
+    job.WAIT_PERIOD_FOR_TERM_MESSAGE_TO_CANCEL = 0
     job._requested_max_submit = 1
     job.started = mock_event()
     job.returncode.cancel()

@@ -121,9 +121,7 @@ class Event(Reporter):
                     > self._finished_event_timeout
                 ):
                     break
-                await client.send(
-                            dispatcher_event_to_json(event), self._max_retries
-                        )
+                await client.send(dispatcher_event_to_json(event), self._max_retries)
                 event = None
             except asyncio.CancelledError:
                 return
