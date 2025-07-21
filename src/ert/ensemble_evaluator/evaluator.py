@@ -182,12 +182,18 @@ class EnsembleEvaluator:
 
     async def _send_terminate_messages_to_dispatchers(self) -> None:
         event = TERMINATE_MSG
+
         await asyncio.gather(
             *(
                 self._router_socket.send_multipart([identity, b"", event])
                 for identity in self._dispatchers_connected
             )
         )
+        for iens in self._dispatcher_identity_to_iens.values():
+            if self._ensemble._scheduler is not None:
+                self._ensemble._scheduler._jobs[
+                    iens
+                ]._started_killing_by_evaluator = True
 
     async def _terminate_all_dispatchers(self) -> None:
         if (scheduler := self.ensemble._scheduler) is not None:
@@ -332,6 +338,9 @@ class EnsembleEvaluator:
                 type(event) is ForwardModelStepFailure
                 and event.error_msg == FORWARD_MODEL_TERMINATED_MSG
                 and self._ensemble._scheduler is not None
+                and self._ensemble._scheduler._jobs[
+                    int(event.real)
+                ]._started_killing_by_evaluator
             ):
                 self._ensemble._scheduler._jobs[
                     int(event.real)

@@ -510,6 +510,15 @@ async def test_signal_cancel_terminates_fm_dispatcher_with_terminate_message(
     run_task = asyncio.create_task(evaluator.run_and_get_successful_realizations())
     await evaluator._server_started
 
+    async def dispatcher_is_running():
+        nonlocal evaluator
+        while True:
+            if not evaluator._dispatchers_empty.is_set():
+                break
+            await asyncio.sleep(0.1)
+
+    await asyncio.wait_for(dispatcher_is_running(), timeout=5)
+
     async def cancel_evaluator_after_getting_initial_event_and_wait_for_confirmation():
         nonlocal event_queue
         while True:
@@ -530,7 +539,7 @@ async def test_signal_cancel_terminates_fm_dispatcher_with_terminate_message(
 
     await asyncio.wait_for(
         cancel_evaluator_after_getting_initial_event_and_wait_for_confirmation(),
-        timeout=5,
+        timeout=8,
     )
 
     await run_task

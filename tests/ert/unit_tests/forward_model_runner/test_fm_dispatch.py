@@ -554,6 +554,7 @@ time.sleep(180)"""
         await asyncio.wait_for(wait_for_msg("forward_model_step.start"), timeout=15)
         await zmq_server.send_terminate_message()
         await asyncio.wait_for(wait_for_msg("forward_model_step.failure"), timeout=15)
+        await zmq_server.no_dealers.wait()
         fm_dispatch_process.wait(
             timeout=15
         )  # Waiting for the fm_dispatch process to exit

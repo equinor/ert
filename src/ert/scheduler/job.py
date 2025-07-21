@@ -82,6 +82,7 @@ class Job:
         self._end_time: float | None = None
         self.remaining_file_verification_time = self.DEFAULT_FILE_VERIFICATION_TIMEOUT
         self.remember_remaining_time()
+        self._started_killing_by_evaluator: bool = False
         self._was_killed_by_evaluator = asyncio.Event()
 
     def remember_remaining_time(self) -> None:
@@ -157,11 +158,12 @@ class Job:
         except asyncio.CancelledError:
             await self._send(JobState.ABORTING)
             killed_by_evaluator = False
-            with suppress(asyncio.TimeoutError):
-                killed_by_evaluator = await asyncio.wait_for(
-                    self._was_killed_by_evaluator.wait(),
-                    timeout=self.WAIT_PERIOD_FOR_TERM_MESSAGE_TO_CANCEL,
-                )
+            if self._started_killing_by_evaluator:
+                with suppress(asyncio.TimeoutError):
+                    killed_by_evaluator = await asyncio.wait_for(
+                        self._was_killed_by_evaluator.wait(),
+                        timeout=self.WAIT_PERIOD_FOR_TERM_MESSAGE_TO_CANCEL,
+                    )
             if not killed_by_evaluator:
                 logger.warning(
                     f"Realization {self.iens} was not killed by the evaluator. "
