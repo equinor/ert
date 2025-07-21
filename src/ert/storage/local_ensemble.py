@@ -461,11 +461,8 @@ class LocalEnsemble(BaseMode):
             path = self._realization_dir(realization)
 
             def _has_response(key_: str) -> bool:
-                if key_ in self.experiment.response_key_to_response_type:
-                    response_type = self.experiment.response_key_to_response_type[key_]
-                    return (path / f"{response_type}.parquet").exists()
-
-                return (path / f"{key_}.parquet").exists()
+                df_key = self.experiment.response_key_to_response_type.get(key_, key_)
+                return (path / f"{df_key}.parquet").exists()
 
             if key:
                 return _has_response(key)
