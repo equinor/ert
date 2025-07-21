@@ -448,7 +448,11 @@ class SnapshotModel(QAbstractItemModel):
                     delta = timedelta()
                 return str(delta)
 
-            return node.data.get(data_name)
+            return (
+                str(node.data.get(data_name))
+                if node.data.get(data_name) is not None
+                else None
+            )
 
         if role == FileRole:
             data_name = FM_STEP_COLUMNS[index.column()]
