@@ -116,10 +116,15 @@ def data_for_response(
     assert response_key is not None
     assert response_type is not None
 
+    realizations_with_responses = ensemble.get_realization_list_with_responses()
+
+    if len(realizations_with_responses) == 0:
+        return pd.DataFrame()
+
     if response_type == "summary":
         summary_data = ensemble.load_responses(
             response_key,
-            tuple(ensemble.get_realization_list_with_responses()),
+            tuple(realizations_with_responses),
         )
 
         df = (
@@ -136,9 +141,7 @@ def data_for_response(
         return data.astype(float)
 
     if response_type == "gen_data":
-        data = ensemble.load_responses(
-            response_key, tuple(ensemble.get_realization_list_with_responses())
-        )
+        data = ensemble.load_responses(response_key, tuple(realizations_with_responses))
 
         try:
             assert filter_on is not None

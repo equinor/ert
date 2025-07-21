@@ -408,3 +408,27 @@ def test_that_observations_for_empty_ensemble_returns_empty_data(api_and_storage
     )
     ensemble = storage.create_ensemble(experiment.id, ensemble_size=1)
     assert api.observations_for_key([str(ensemble.id)], "NAIMFRAC").empty
+
+
+def test_data_for_response_no_realizations(api_and_storage):
+    api, storage = api_and_storage
+
+    experiment = storage.create_experiment(
+        parameters=[],
+        responses=[
+            SummaryConfig(
+                name="summary",
+                input_files=[],
+                keys=["FOPT"],
+                has_finalized_keys=True,
+            )
+        ],
+    )
+
+    ensemble = experiment.create_ensemble(
+        ensemble_size=1, name="ensemble_without_responses"
+    )
+
+    result_df = api.data_for_response(str(ensemble.id), "FOPT")
+
+    assert result_df.empty
