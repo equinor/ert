@@ -68,6 +68,11 @@ install_data:
     source: r{{configpath}}/../input/templates/
     target: templates
 
+simulator:
+  queue_system:
+    name: local
+    max_running: 3
+
 forward_model:
   - well_swapping --priorities well_priorities.json --constraints swapping_constraints.json --cases wells.json --output well_swap_output.json --config files/well_swap_config.yml
 
