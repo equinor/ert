@@ -8,7 +8,7 @@ import numpy as np
 import pandas as pd
 from matplotlib.patches import Rectangle
 
-from ert.gui.tools.plot.plot_api import EnsembleObject
+from ert.gui.tools.plot.plot_api import EnsembleObject, PlotApiKeyDefinition
 from ert.shared.status.utils import convert_to_numeric
 
 from .plot_tools import ConditionalAxisFormatter, PlotTools
@@ -24,6 +24,7 @@ if TYPE_CHECKING:
 class HistogramPlot:
     def __init__(self) -> None:
         self.dimensionality = 1
+        self.requires_observations = False
 
     @staticmethod
     def plot(
@@ -32,6 +33,7 @@ class HistogramPlot:
         ensemble_to_data_map: dict[EnsembleObject, pd.DataFrame],
         observation_data: pd.DataFrame,
         std_dev_images: dict[str, npt.NDArray[np.float32]],
+        key_def: PlotApiKeyDefinition | None = None,
     ) -> None:
         plotHistogram(figure, plot_context, ensemble_to_data_map)
 

@@ -348,6 +348,7 @@ def test_that_the_plot_window_contains_the_expected_elements(
             "Histogram",
             "Statistics",
             "Std Dev",
+            "Misfits",
         }
 
         model = data_keys.model()
