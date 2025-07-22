@@ -25,7 +25,7 @@ from PyQt6.QtWidgets import (
 )
 from typing_extensions import override
 
-from .plot_api import EnsembleObject
+from .plot_api import EnsembleObject, PlotApiKeyDefinition
 
 if TYPE_CHECKING:
     from .plottery import PlotContext
@@ -34,6 +34,7 @@ if TYPE_CHECKING:
     from .plottery.plots.ensemble import EnsemblePlot
     from .plottery.plots.gaussian_kde import GaussianKDEPlot
     from .plottery.plots.histogram import HistogramPlot
+    from .plottery.plots.misfits import MisfitsPlot
     from .plottery.plots.statistics import StatisticsPlot
     from .plottery.plots.std_dev import StdDevPlot
 
@@ -122,6 +123,7 @@ class PlotWidget(QWidget):
             "DistributionPlot",
             "CrossEnsembleStatisticsPlot",
             "StdDevPlot",
+            "MisfitsPlot",
         ],
         parent: QWidget | None = None,
     ) -> None:
@@ -192,6 +194,7 @@ class PlotWidget(QWidget):
         ensemble_to_data_map: dict[EnsembleObject, pd.DataFrame],
         observations: pd.DataFrame,
         std_dev_images: dict[str, npt.NDArray[np.float32]],
+        key_def: PlotApiKeyDefinition | None = None,
     ) -> None:
         self.resetPlot()
         try:
@@ -204,6 +207,7 @@ class PlotWidget(QWidget):
                 ensemble_to_data_map,
                 observations,
                 std_dev_images,
+                key_def,
             )
             self._canvas.draw()
             self._sync_log_checkbox()

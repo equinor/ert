@@ -40,6 +40,7 @@ from .plottery.plots import (
     EnsemblePlot,
     GaussianKDEPlot,
     HistogramPlot,
+    MisfitsPlot,
     StatisticsPlot,
     StdDevPlot,
 )
@@ -51,10 +52,11 @@ ENSEMBLE = "Ensemble"
 HISTOGRAM = "Histogram"
 STATISTICS = "Statistics"
 STD_DEV = "Std Dev"
+MISFITS = "Misfits"
 
 RESPONSE_DEFAULT = 0
-GEN_KW_DEFAULT = 2
-STD_DEV_DEFAULT = 6
+GEN_KW_DEFAULT = 3
+STD_DEV_DEFAULT = 7
 
 
 logger = logging.getLogger(__name__)
@@ -189,6 +191,7 @@ class PlotWindow(QMainWindow):
 
             self.addPlotWidget(ENSEMBLE, EnsemblePlot())
             self.addPlotWidget(STATISTICS, StatisticsPlot())
+            self.addPlotWidget(MISFITS, MisfitsPlot())
             self.addPlotWidget(HISTOGRAM, HistogramPlot())
             self.addPlotWidget(GAUSSIAN_KDE, GaussianKDEPlot())
             self.addPlotWidget(DISTRIBUTION, DistributionPlot())
@@ -358,7 +361,11 @@ class PlotWindow(QMainWindow):
             self._updateCustomizer(plot_widget, self._preferred_ensemble_x_axis_format)
 
             plot_widget.updatePlot(
-                plot_context, ensemble_to_data_map, observations, std_dev_images
+                plot_context,
+                ensemble_to_data_map,
+                observations,
+                std_dev_images,
+                key_def,
             )
 
     def _updateCustomizer(
@@ -387,15 +394,14 @@ class PlotWindow(QMainWindow):
     def addPlotWidget(
         self,
         name: str,
-        plotter: (
-            EnsemblePlot
-            | StatisticsPlot
-            | HistogramPlot
-            | GaussianKDEPlot
-            | DistributionPlot
-            | CrossEnsembleStatisticsPlot
-            | StdDevPlot
-        ),
+        plotter: EnsemblePlot
+        | StatisticsPlot
+        | HistogramPlot
+        | GaussianKDEPlot
+        | DistributionPlot
+        | CrossEnsembleStatisticsPlot
+        | StdDevPlot
+        | MisfitsPlot,
         enabled: bool = True,
     ) -> None:
         plot_widget = PlotWidget(name, plotter)
@@ -434,6 +440,7 @@ class PlotWindow(QMainWindow):
             widget
             for widget in self._plot_widgets
             if widget._plotter.dimensionality == key_def.dimensionality
+            and (key_def.observations or not widget._plotter.requires_observations)
         ]
 
         # Enabling/disabling tab triggers the

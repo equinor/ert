@@ -18,12 +18,13 @@ if TYPE_CHECKING:
     from matplotlib.axes import Axes
     from matplotlib.figure import Figure
 
-    from ert.gui.tools.plot.plot_api import EnsembleObject
+    from ert.gui.tools.plot.plot_api import EnsembleObject, PlotApiKeyDefinition
 
 
 class StatisticsPlot:
     def __init__(self) -> None:
         self.dimensionality = 2
+        self.requires_observations = False
 
     @staticmethod
     def plot(
@@ -32,6 +33,7 @@ class StatisticsPlot:
         ensemble_to_data_map: dict[EnsembleObject, DataFrame],
         observation_data: DataFrame,
         std_dev_images: dict[str, npt.NDArray[np.float32]],
+        key_def: PlotApiKeyDefinition | None = None,
     ) -> None:
         config = plot_context.plotConfig()
         axes = figure.add_subplot(111)
