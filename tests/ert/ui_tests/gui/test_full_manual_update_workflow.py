@@ -8,12 +8,10 @@ from PyQt6.QtWidgets import QComboBox, QToolButton, QTreeView, QWidget
 from ert.data import MeasuredData
 from ert.gui.simulation.evaluate_ensemble_panel import EvaluateEnsemblePanel
 from ert.gui.simulation.experiment_panel import ExperimentPanel
-from ert.gui.simulation.manual_update_panel import ManualUpdatePanel
 from ert.gui.simulation.run_dialog import RunDialog
 from ert.gui.tools.manage_experiments import ManageExperimentsPanel
 from ert.gui.tools.manage_experiments.storage_widget import StorageWidget
 from ert.run_models.evaluate_ensemble import EvaluateEnsemble
-from ert.run_models.manual_update import ManualUpdate
 from ert.validation import rangestring_to_mask
 
 from .conftest import get_child, wait_for_child
@@ -28,10 +26,13 @@ def test_manual_analysis_workflow(ensemble_experiment_has_run, qtbot):
 
     # Select correct experiment in the simulation panel
     experiment_panel = get_child(gui, ExperimentPanel)
-    simulation_settings = get_child(experiment_panel, ManualUpdatePanel)
     simulation_mode_combo = get_child(experiment_panel, QComboBox)
-    simulation_mode_combo.setCurrentText(ManualUpdate.name())
+    simulation_mode_combo.setCurrentText("Manual Update")
 
+    # update_mode_dropdown = experiment_panel.findChild(
+    #     QComboBox, "manual_update_method_dropdown"
+    # )
+    # update_mode_dropdown.setCurrentText(mode)
     with contextlib.suppress(FileNotFoundError):
         shutil.rmtree("poly_out")
 
