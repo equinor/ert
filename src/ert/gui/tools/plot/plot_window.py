@@ -39,6 +39,7 @@ from .plottery.plots import (
     EnsemblePlot,
     GaussianKDEPlot,
     HistogramPlot,
+    MisfitsPlot,
     StatisticsPlot,
     StdDevPlot,
 )
@@ -50,6 +51,7 @@ ENSEMBLE = "Ensemble"
 HISTOGRAM = "Histogram"
 STATISTICS = "Statistics"
 STD_DEV = "Std Dev"
+MISFITS = "Misfits"
 
 RESPONSE_DEFAULT = 0
 GEN_KW_DEFAULT = 2
@@ -188,13 +190,13 @@ class PlotWindow(QMainWindow):
 
             self.addPlotWidget(ENSEMBLE, EnsemblePlot())
             self.addPlotWidget(STATISTICS, StatisticsPlot())
-            self.addPlotWidget(HISTOGRAM, HistogramPlot())
-            self.addPlotWidget(GAUSSIAN_KDE, GaussianKDEPlot())
-            self.addPlotWidget(DISTRIBUTION, DistributionPlot())
-            self.addPlotWidget(CROSS_ENSEMBLE_STATISTICS, CrossEnsembleStatisticsPlot())
-            self.addPlotWidget(STD_DEV, StdDevPlot())
-            self._central_tab.currentChanged.connect(self.currentTabChanged)
-            self.logPlotTabUsage(self._central_tab.tabText(0), default=True)
+            self.addPlotWidget(MISFITS, MisfitsPlot())
+        self.addPlotWidget(HISTOGRAM, HistogramPlot())
+        self.addPlotWidget(GAUSSIAN_KDE, GaussianKDEPlot())
+        self.addPlotWidget(DISTRIBUTION, DistributionPlot())
+        self.addPlotWidget(CROSS_ENSEMBLE_STATISTICS, CrossEnsembleStatisticsPlot())
+        self.addPlotWidget(STD_DEV, StdDevPlot())
+        self._central_tab.currentChanged.connect(self.currentTabChanged)self.logPlotTabUsage(self._central_tab.tabText(0), default=True)
 
             self._prev_tab_widget_index = -1
             self._current_tab_index = -1
@@ -269,6 +271,22 @@ class PlotWindow(QMainWindow):
                             response_key=key_def.response_metadata.response_key,
                             filter_on=key_def.filter_on,
                         )
+
+                        if key_def.observations:
+                            misfits_ens_obj = EnsembleObject(
+                                name=f"{ensemble.name}.misfits",
+                                id=ensemble.id,
+                                hidden=ensemble.hidden,
+                                experiment_name=ensemble.experiment_name,
+                            )
+                            ensemble_to_data_map[misfits_ens_obj] = (
+                                self._api.data_for_response_misfits(
+                                    ensemble_id=ensemble.id,
+                                    response_key=key_def.response_metadata.response_key,
+                                    filter_on=key_def.filter_on,
+                                )
+                            )
+
                     elif (
                         key_def.parameter_metadata is not None
                         and "GEN_KW" in key_def.metadata["data_origin"]
@@ -386,15 +404,14 @@ class PlotWindow(QMainWindow):
     def addPlotWidget(
         self,
         name: str,
-        plotter: (
-            EnsemblePlot
-            | StatisticsPlot
-            | HistogramPlot
-            | GaussianKDEPlot
-            | DistributionPlot
-            | CrossEnsembleStatisticsPlot
-            | StdDevPlot
-        ),
+        plotter: EnsemblePlot
+        | StatisticsPlot
+        | HistogramPlot
+        | GaussianKDEPlot
+        | DistributionPlot
+        | CrossEnsembleStatisticsPlot
+        | StdDevPlot
+        | MisfitsPlot,
         enabled: bool = True,
     ) -> None:
         plot_widget = PlotWidget(name, plotter)
@@ -433,6 +450,7 @@ class PlotWindow(QMainWindow):
             widget
             for widget in self._plot_widgets
             if widget._plotter.dimensionality == key_def.dimensionality
+            and (key_def.observations or not widget._plotter.requires_observations)
         ]
 
         # Enabling/disabling tab triggers the

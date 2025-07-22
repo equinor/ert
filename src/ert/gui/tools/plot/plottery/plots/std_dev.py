@@ -17,6 +17,7 @@ if TYPE_CHECKING:
 class StdDevPlot:
     def __init__(self) -> None:
         self.dimensionality = 3
+        self.requires_observations = False
 
     def plot(
         self,

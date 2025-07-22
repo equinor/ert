@@ -122,6 +122,7 @@ class PlotWidget(QWidget):
             "DistributionPlot",
             "CrossEnsembleStatisticsPlot",
             "StdDevPlot",
+            "MisfitsPlot",
         ],
         parent: QWidget | None = None,
     ) -> None:

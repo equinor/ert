@@ -21,6 +21,7 @@ if TYPE_CHECKING:
 class GaussianKDEPlot:
     def __init__(self) -> None:
         self.dimensionality = 1
+        self.requires_observations = False
 
     @staticmethod
     def plot(

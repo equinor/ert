@@ -251,6 +251,72 @@ class PlotApi:
             except ValueError:
                 return df
 
+    def data_for_response_misfits(
+        self,
+        ensemble_id: str,
+        response_key: str,  # The base response key (e.g., 'FOPR')
+        summary_misfits: bool = False,  # Controls whether to get univariate or summary misfit
+        filter_on: dict[str, Any] | None = None,
+    ) -> pd.DataFrame:
+        """
+        Retrieves misfit data for a given response key from the storage service's
+        '/compute/misfits' endpoint [Previous Conversation].
+
+        Parameters
+        ----------
+        ensemble_id : str
+            The unique identifier of the ensemble.
+        response_key : str
+            The base response key for which misfit data is requested (e.g., 'FOPR').
+        summary_misfits : bool, optional
+            If True, retrieves summary misfit (e.g., 'MISFIT:TOTAL'); otherwise,
+            retrieves univariate misfits, by default False.
+        filter_on : dict[str, Any] | None, optional
+            Additional filters to apply, by default None.
+
+        Returns
+        -------
+        pd.DataFrame
+            A DataFrame containing the requested misfit data. Returns an empty
+            DataFrame if data retrieval fails [Previous Conversation].
+        """
+        try:
+            # Assuming StorageService is imported and accessible at the module level or as a class attribute
+            # The 'project' parameter typically corresponds to the ensemble path/identifier.
+            with StorageService.session(project=self.ens_path) as client:
+                params = {
+                    "ensemble_id": ensemble_id,
+                    "response_name": response_key,
+                    "summary_misfits": summary_misfits,
+                }
+                if filter_on is not None:
+                    # Filter parameters are typically JSON-encoded for HTTP requests
+                    params["filter_on"] = json.dumps(filter_on)
+
+                # Call the /compute/misfits endpoint [Previous Conversation]
+                response = client.get(
+                    "/compute/misfits",
+                    headers={
+                        "accept": "text/csv"
+                    },  # The misfit endpoint returns CSV format [Previous Conversation]
+                    params=params,
+                    timeout=self._timeout,  # Assuming _timeout is an instance attribute
+                )
+                self._check_response(
+                    response
+                )  # Custom method to check HTTP response status
+
+                # Read the CSV content into a pandas DataFrame [Previous Conversation]
+                df = pd.read_csv(io.BytesIO(response.content))
+                return df
+        except Exception as e:
+            # Log the error using the PlotApi's logger and return an empty DataFrame
+            # to prevent application crashes [Previous Conversation].
+            self.logger.exception(
+                f"Failed to retrieve misfit data for {response_key} from ensemble {ensemble_id}: {e}"
+            )
+            return pd.DataFrame()
+
     def data_for_parameter(self, ensemble_id: str, parameter_key: str) -> pd.DataFrame:
         with StorageService.session(project=self.ens_path) as client:
             parameter = client.get(
@@ -271,6 +337,46 @@ class PlotApi:
             for col in df.columns:
                 if is_numeric_dtype(df[col]):
                     df[col] = df[col].astype(float)
+            return df
+
+    def compute_misfits(
+        self,
+        ensemble_id: str,
+        response_key: str,
+        summary_misfits: bool = False,
+        filter_on: dict[str, Any] | None = None,
+    ) -> pd.DataFrame:
+        """
+        Fetches misfit data for a given ensemble and response key from the storage server.
+        This mirrors the functionality seen in webviz_ert's DataLoader.
+
+        :param ensemble_id: The ID of the ensemble.
+        :param response_key: The key of the response for which to compute misfits.
+        :param summary_misfits: If True, requests summarized misfits; otherwise, univariate.
+        :param filter_on: Optional dictionary for filtering observations (converted to JSON string).
+        :return: A pandas DataFrame containing misfit data.
+        """
+        with StorageService.session(project=self.ens_path) as client:
+            params = {
+                "response_name": response_key,
+                "ensemble_id": ensemble_id,
+                "summary_misfits": summary_misfits,
+            }
+            if filter_on is not None:
+                params["filter_on"] = json.dumps(filter_on)
+
+            response = client.get(
+                "/compute/misfits",
+                headers={"accept": "text/csv"},
+                params=params,
+                timeout=self._timeout,
+            )
+            self._check_response(response)  # Uses existing response checking [2]
+
+            stream = io.BytesIO(response.content)  # Reads response content [2]
+            # The misfit endpoint returns CSV [1], so pandas.read_csv is appropriate.
+            # webviz_ert also uses a pandas DataFrame for misfits [3, 4].
+            df = pd.read_csv(stream)
             return df
 
     def observations_for_key(self, ensemble_ids: list[str], key: str) -> pd.DataFrame:

@@ -86,9 +86,16 @@ class PlotConfig:
             "std": PlotStyle("Std dev", line_style=""),
         }
 
-        self._std_dev_factor = 1  # sigma 1 is default std dev
+        self._misfits_plot_mode: str = (
+            "Univariate"  # Default: 'Univariate' (boxplots) or 'Summary' (histogram)
+        )
 
+        self._std_dev_factor = 1  # sigma 1 is default std dev
         self.depth_y_axis = False
+
+    def getMisfitsPlotMode(self) -> str:
+        return self._misfits_plot_mode
+
 
     def getNumberOfColors(self) -> int:
         return len(self._line_color_cycle_colors)
