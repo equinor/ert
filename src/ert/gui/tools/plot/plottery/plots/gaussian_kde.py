@@ -6,7 +6,7 @@ import numpy as np
 import pandas as pd
 from scipy.stats import gaussian_kde
 
-from ert.gui.tools.plot.plot_api import EnsembleObject
+from ert.gui.tools.plot.plot_api import EnsembleObject, PlotApiKeyDefinition
 
 from .plot_tools import ConditionalAxisFormatter, PlotTools
 
@@ -21,6 +21,7 @@ if TYPE_CHECKING:
 class GaussianKDEPlot:
     def __init__(self) -> None:
         self.dimensionality = 1
+        self.requires_observations = False
 
     @staticmethod
     def plot(
@@ -29,6 +30,7 @@ class GaussianKDEPlot:
         ensemble_to_data_map: dict[EnsembleObject, pd.DataFrame],
         observation_data: pd.DataFrame,
         std_dev_images: dict[str, npt.NDArray[np.float32]],
+        key_def: PlotApiKeyDefinition | None = None,
     ) -> None:
         plotGaussianKDE(figure, plot_context, ensemble_to_data_map, observation_data)
 
