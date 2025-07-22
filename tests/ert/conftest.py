@@ -39,6 +39,10 @@ from .utils import SOURCE_DIR
 st.register_type_strategy(Path, st.builds(Path, st.text().map(lambda x: "/tmp/" + x)))
 
 
+def is_parallel():
+    return "PYTEST_XDIST_WORKER" in os.environ
+
+
 @pytest.fixture(autouse=True)
 def no_jobs_file_retry(monkeypatch):
     monkeypatch.setattr(_ert.forward_model_runner.fm_dispatch, "FILE_RETRY_TIME", 0)
@@ -197,8 +201,10 @@ def _create_design_matrix(filename, design_sheet_df, default_sheet_df=None):
 @pytest.fixture()
 def copy_poly_case(copy_case):
     copy_case("poly_example")
-    with open("poly.ert", "a", encoding="utf-8") as fh:
-        fh.write("QUEUE_OPTION LOCAL MAX_RUNNING 2\n")
+
+    if is_parallel():
+        with open("poly.ert", "a", encoding="utf-8") as fh:
+            fh.write("QUEUE_OPTION LOCAL MAX_RUNNING 2\n")
 
 
 @pytest.fixture()
@@ -211,11 +217,11 @@ def copy_poly_case_with_design_matrix(copy_case):
             pl.DataFrame(design_dict),
             pl.DataFrame(default_list, orient="row"),
         )
+
         with open("poly.ert", "w", encoding="utf-8") as fout:
             fout.write(
                 dedent(
                     f"""\
-                    QUEUE_OPTION LOCAL MAX_RUNNING 2
                     RUNPATH poly_out/realization-<IENS>/iter-<ITER>
                     NUM_REALIZATIONS {num_realizations}
                     MIN_REALIZATIONS 1
@@ -224,6 +230,9 @@ def copy_poly_case_with_design_matrix(copy_case):
                     INSTALL_JOB poly_eval POLY_EVAL
                     FORWARD_MODEL poly_eval
                     """
+                    + "\nQUEUE_OPTION LOCAL MAX_RUNNING 2\n"
+                    if is_parallel
+                    else ""
                 )
             )
 
@@ -263,22 +272,28 @@ def copy_poly_case_with_design_matrix(copy_case):
 @pytest.fixture()
 def copy_snake_oil_field(copy_case):
     copy_case("snake_oil_field")
-    with open("snake_oil_field.ert", "a", encoding="utf-8") as fh:
-        fh.write("QUEUE_OPTION LOCAL MAX_RUNNING 2\n")
+
+    if is_parallel():
+        with open("snake_oil_field.ert", "a", encoding="utf-8") as fh:
+            fh.write("QUEUE_OPTION LOCAL MAX_RUNNING 2\n")
 
 
 @pytest.fixture()
 def copy_snake_oil_case(copy_case):
     copy_case("snake_oil")
-    with open("snake_oil.ert", "a", encoding="utf-8") as fh:
-        fh.write("QUEUE_OPTION LOCAL MAX_RUNNING 2\n")
+
+    if is_parallel():
+        with open("snake_oil.ert", "a", encoding="utf-8") as fh:
+            fh.write("QUEUE_OPTION LOCAL MAX_RUNNING 2\n")
 
 
 @pytest.fixture()
 def copy_heat_equation(copy_case):
     copy_case("heat_equation")
-    with open("config.ert", "a", encoding="utf-8") as fh:
-        fh.write("QUEUE_OPTION LOCAL MAX_RUNNING 2\n")
+
+    if is_parallel():
+        with open("config.ert", "a", encoding="utf-8") as fh:
+            fh.write("QUEUE_OPTION LOCAL MAX_RUNNING 2\n")
 
 
 @pytest.fixture(
@@ -393,8 +408,11 @@ def _run_heat_equation(source_root, run_mode):
         os.path.join(source_root, "test-data", "ert", "heat_equation"), "test_data"
     )
     os.chdir("test_data")
-    with open("config.ert", "a", encoding="utf-8") as fh:
-        fh.write("QUEUE_OPTION LOCAL MAX_RUNNING 2\n")
+
+    if is_parallel():
+        with open("config.ert", "a", encoding="utf-8") as fh:
+            fh.write("QUEUE_OPTION LOCAL MAX_RUNNING 2\n")
+
     parser = ArgumentParser(prog="test_main")
     parsed = ert_parser(
         parser,
