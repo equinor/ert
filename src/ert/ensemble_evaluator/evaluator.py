@@ -19,6 +19,7 @@ from _ert.events import (
     EnsembleSucceeded,
     FMEvent,
     ForwardModelStepChecksum,
+    ForwardModelStepFailure,
     RealizationEvent,
     SnapshotInputEvent,
     dispatcher_event_from_json,
@@ -27,7 +28,9 @@ from _ert.forward_model_runner.client import (
     ACK_MSG,
     CONNECT_MSG,
     DISCONNECT_MSG,
+    TERMINATE_MSG,
 )
+from _ert.forward_model_runner.fm_dispatch import FORWARD_MODEL_TERMINATED_MSG
 from ert.ensemble_evaluator import identifiers as ids
 
 from ..config import QueueSystem
@@ -87,6 +90,7 @@ class EnsembleEvaluator:
         self._complete_batch: asyncio.Event = asyncio.Event()
         self._server_started: asyncio.Future[None] = asyncio.Future()
         self._dispatchers_connected: set[bytes] = set()
+        self._dispatcher_identity_to_real: dict[bytes, int] = {}
         self._dispatchers_empty: asyncio.Event = asyncio.Event()
         self._dispatchers_empty.set()
         # Send initial snapshot created by ensemble
@@ -148,6 +152,7 @@ class EnsembleEvaluator:
                                 "Experiment cancelled by user during evaluation"
                             )
                         )
+                        self.stop()
 
             except TimeoutError:
                 if closetracker_received:  # THIS SHOULD NOT BE NEEDED ANYMORE
@@ -169,6 +174,28 @@ class EnsembleEvaluator:
                 await self._signal_cancel()
                 logger.debug("Run model cancelled - during evaluation - cancel sent")
             await asyncio.sleep(0.1)
+
+    async def _send_terminate_messages_to_dispatchers(self) -> None:
+        event = TERMINATE_MSG
+
+        await asyncio.gather(
+            *(
+                self._router_socket.send_multipart([identity, b"", event])
+                for identity in self._dispatchers_connected
+            )
+        )
+        for iens in self._dispatcher_identity_to_real.values():
+            if self._ensemble._scheduler is not None:
+                self._ensemble._scheduler._jobs[
+                    iens
+                ]._started_killing_by_evaluator = True
+
+    async def _terminate_all_dispatchers(self) -> None:
+        if (scheduler := self.ensemble._scheduler) is not None:
+            await scheduler._running.wait()
+            scheduler._cancelled_by_evaluator = True
+        await self._send_terminate_messages_to_dispatchers()
+        await self._ensemble.cancel()
 
     async def _append_message(self, snapshot_update_event: EnsembleSnapshot) -> None:
         event = EESnapshotUpdate(
@@ -284,9 +311,17 @@ class EnsembleEvaluator:
     async def handle_dispatch(self, dealer: bytes, frame: bytes) -> None:
         if frame == CONNECT_MSG:
             self._dispatchers_connected.add(dealer)
+
+            def _get_iens_from_dealer_name(dealer_name: str) -> int:
+                realid = dealer_name
+                return int(realid)
+
+            real_id = dealer.decode("utf-8").split("-")[2]
+            self._dispatcher_identity_to_real[dealer] = int(real_id)
             self._dispatchers_empty.clear()
         elif frame == DISCONNECT_MSG:
             self._dispatchers_connected.discard(dealer)
+            del self._dispatcher_identity_to_real[dealer]
             if not self._dispatchers_connected:
                 self._dispatchers_empty.set()
         else:
@@ -298,6 +333,17 @@ class EnsembleEvaluator:
                     f"Ignoring since I am {self.ensemble.id_}"
                 )
                 return
+            if (
+                type(event) is ForwardModelStepFailure
+                and event.error_msg == FORWARD_MODEL_TERMINATED_MSG
+                and self._ensemble._scheduler is not None
+                and self._ensemble._scheduler._jobs[
+                    int(event.real)
+                ]._started_killing_by_evaluator
+            ):
+                self._ensemble._scheduler._jobs[
+                    int(event.real)
+                ]._was_killed_by_evaluator.set()
             if type(event) is ForwardModelStepChecksum:
                 await self.forward_checksum(event)
             else:
@@ -395,7 +441,8 @@ class EnsembleEvaluator:
             logger.debug("Cancelling current ensemble")
             self._ee_tasks.append(
                 asyncio.create_task(
-                    self._ensemble.cancel(), name="ensemble_cancellation_task"
+                    self._terminate_all_dispatchers(),
+                    name="dispatcher_termination_task",
                 )
             )
         else:
@@ -450,7 +497,7 @@ class EnsembleEvaluator:
                 elif task.get_name() in {
                     "ensemble_task",
                     "listener_task",
-                    "ensemble_cancellation_task",
+                    "dispatcher_termination_task",
                     "publisher_task",
                     "monitor_end_queue_task",
                 }:

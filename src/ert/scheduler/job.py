@@ -67,6 +67,7 @@ class Job:
     """
 
     DEFAULT_FILE_VERIFICATION_TIMEOUT = 120
+    WAIT_PERIOD_FOR_TERM_MESSAGE_TO_CANCEL = 5
 
     def __init__(self, scheduler: Scheduler, real: Realization) -> None:
         self.real = real
@@ -81,6 +82,8 @@ class Job:
         self._end_time: float | None = None
         self.remaining_file_verification_time = self.DEFAULT_FILE_VERIFICATION_TIMEOUT
         self.remember_remaining_time()
+        self._started_killing_by_evaluator: bool = False
+        self._was_killed_by_evaluator = asyncio.Event()
 
     def remember_remaining_time(self) -> None:
         self.previous_file_verification_time = self.remaining_file_verification_time
@@ -154,7 +157,21 @@ class Job:
 
         except asyncio.CancelledError:
             await self._send(JobState.ABORTING)
-            await self.driver.kill(self.iens)
+            killed_by_evaluator = False
+            if self._started_killing_by_evaluator:
+                with suppress(asyncio.TimeoutError):
+                    killed_by_evaluator = await asyncio.wait_for(
+                        self._was_killed_by_evaluator.wait(),
+                        timeout=self.WAIT_PERIOD_FOR_TERM_MESSAGE_TO_CANCEL,
+                    )
+            if not killed_by_evaluator:
+                logger.warning(
+                    f"Realization {self.iens} was not killed by the evaluator. "
+                    "Killing it with the scheduler"
+                )
+                await self.driver.kill(self.iens)
+            else:
+                logger.info(f"Realization {self.iens} was killed by the evaluator")
             with suppress(asyncio.CancelledError):
                 self.returncode.cancel()
             await self._send(JobState.ABORTED)
@@ -195,7 +212,11 @@ class Job:
         for attempt in range(max_submit):
             await self._submit_and_run_once(sem)
 
-            if self.returncode.cancelled() or self._scheduler._cancelled:
+            if (
+                self.returncode.cancelled()
+                or self._scheduler._cancelled
+                or self._scheduler._cancelled_by_evaluator
+            ):
                 break
 
             if self.returncode.result() == 0:

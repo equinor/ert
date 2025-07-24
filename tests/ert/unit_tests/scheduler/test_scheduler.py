@@ -291,7 +291,7 @@ async def test_max_running(max_running, mock_driver, storage, tmp_path):
 
 @pytest.mark.integration_test
 @pytest.mark.timeout(6)
-async def test_max_runtime_while_killing(realization, mock_driver):
+async def test_max_runtime_while_killing(monkeypatch, realization, mock_driver):
     wait_started = asyncio.Event()
     now_kill_me = asyncio.Event()
 
@@ -308,7 +308,7 @@ async def test_max_runtime_while_killing(realization, mock_driver):
         await asyncio.sleep(1)
 
     realization.max_runtime = 1
-
+    monkeypatch.setattr(Job, "WAIT_PERIOD_FOR_TERM_MESSAGE_TO_CANCEL", 0)
     sch = scheduler.Scheduler(mock_driver(wait=wait, kill=kill), [realization])
 
     scheduler_task = asyncio.create_task(sch.execute())
@@ -447,7 +447,7 @@ async def test_that_failed_realization_will_not_be_cancelled(
 
 @pytest.mark.timeout(6)
 async def test_that_long_running_jobs_were_stopped(
-    storage, tmp_path, mock_driver, caplog
+    monkeypatch, storage, tmp_path, mock_driver, caplog
 ):
     killed_iens = []
 
@@ -462,6 +462,7 @@ async def test_that_long_running_jobs_were_stopped(
         else:
             await asyncio.sleep(10)
 
+    monkeypatch.setattr(Job, "WAIT_PERIOD_FOR_TERM_MESSAGE_TO_CANCEL", 0)
     ensemble_size = 10
     ensemble = storage.create_experiment().create_ensemble(
         name="foo", ensemble_size=ensemble_size
@@ -596,10 +597,12 @@ async def mock_failure(message, *args, **kwargs):
 
 
 @pytest.mark.timeout(5)
-async def test_that_driver_poll_exceptions_are_propagated(mock_driver, realization):
+async def test_that_driver_poll_exceptions_are_propagated(
+    monkeypatch, mock_driver, realization
+):
     driver = mock_driver()
     driver.poll = partial(mock_failure, "Status polling failed")
-
+    monkeypatch.setattr(Job, "WAIT_PERIOD_FOR_TERM_MESSAGE_TO_CANCEL", 0)
     sch = scheduler.Scheduler(driver, [realization])
 
     with pytest.raises(RuntimeError, match="Status polling failed"):
@@ -612,7 +615,7 @@ async def test_that_publisher_exceptions_are_propagated(
 ):
     driver = mock_driver()
     monkeypatch.setattr(asyncio.Queue, "get", partial(mock_failure, "Publisher failed"))
-
+    monkeypatch.setattr(Job, "WAIT_PERIOD_FOR_TERM_MESSAGE_TO_CANCEL", 0)
     sch = scheduler.Scheduler(driver, [realization])
     with pytest.raises(RuntimeError, match="Publisher failed"):
         await sch.execute()
@@ -625,6 +628,7 @@ async def test_that_process_event_queue_exceptions_are_propagated(
     monkeypatch.setattr(
         asyncio.Queue, "get", partial(mock_failure, "Processing event queue failed")
     )
+    monkeypatch.setattr(Job, "WAIT_PERIOD_FOR_TERM_MESSAGE_TO_CANCEL", 0)
     driver = mock_driver()
 
     sch = scheduler.Scheduler(driver, [realization])
