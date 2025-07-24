@@ -49,11 +49,6 @@ logger = logging.getLogger(__name__)
 EVENT_HANDLER = Callable[[list[SnapshotInputEvent]], Awaitable[None]]
 
 
-def _get_iens_from_dealer_name(dealer_name: str) -> int:
-    realid = dealer_name.split("-")[2]
-    return int(realid)
-
-
 class UserCancelled(Exception):
     pass
 
@@ -95,7 +90,7 @@ class EnsembleEvaluator:
         self._complete_batch: asyncio.Event = asyncio.Event()
         self._server_started: asyncio.Future[None] = asyncio.Future()
         self._dispatchers_connected: set[bytes] = set()
-        self._dispatcher_identity_to_iens: dict[bytes, int] = {}
+        self._dispatcher_identity_to_real: dict[bytes, int] = {}
         self._dispatchers_empty: asyncio.Event = asyncio.Event()
         self._dispatchers_empty.set()
         # Send initial snapshot created by ensemble
@@ -189,7 +184,7 @@ class EnsembleEvaluator:
                 for identity in self._dispatchers_connected
             )
         )
-        for iens in self._dispatcher_identity_to_iens.values():
+        for iens in self._dispatcher_identity_to_real.values():
             if self._ensemble._scheduler is not None:
                 self._ensemble._scheduler._jobs[
                     iens
@@ -316,13 +311,17 @@ class EnsembleEvaluator:
     async def handle_dispatch(self, dealer: bytes, frame: bytes) -> None:
         if frame == CONNECT_MSG:
             self._dispatchers_connected.add(dealer)
-            self._dispatcher_identity_to_iens[dealer] = _get_iens_from_dealer_name(
-                dealer.decode("utf-8")
-            )
+
+            def _get_iens_from_dealer_name(dealer_name: str) -> int:
+                realid = dealer_name
+                return int(realid)
+
+            real_id = dealer.decode("utf-8").split("-")[2]
+            self._dispatcher_identity_to_real[dealer] = int(real_id)
             self._dispatchers_empty.clear()
         elif frame == DISCONNECT_MSG:
             self._dispatchers_connected.discard(dealer)
-            del self._dispatcher_identity_to_iens[dealer]
+            del self._dispatcher_identity_to_real[dealer]
             if not self._dispatchers_connected:
                 self._dispatchers_empty.set()
         else:

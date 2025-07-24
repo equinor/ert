@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import asyncio
-import contextlib
 import logging
 import os
 import queue
@@ -127,11 +126,11 @@ class Event(Reporter):
                 return
             except ClientConnectionError as exc:
                 logger.error(f"Failed to send event: {exc}")
-                raise exc
+                return
             except queue.Empty:
                 await asyncio.sleep(0)
 
-    async def handle_listen(self, client: Client):
+    async def listen_for_terminate_message(self, client: Client):
         try:
             await client.received_terminate_message.wait()
 
@@ -153,15 +152,15 @@ class Event(Reporter):
                     self.handle_publish(client), name="publisher_task"
                 )
                 listener_task = asyncio.create_task(
-                    self.handle_listen(client), name="listener_task"
+                    self.listen_for_terminate_message(client),
+                    name="terminate_message_listener_task",
                 )
                 await publisher_task
                 if not listener_task.done():
                     listener_task.cancel()
                     await listener_task
 
-        with contextlib.suppress(ClientConnectionError):
-            asyncio.run(publisher())
+        asyncio.run(publisher())
 
     def report(self, msg):
         self._statemachine.transition(msg)
