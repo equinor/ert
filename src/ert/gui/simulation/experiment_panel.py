@@ -159,7 +159,6 @@ class ExperimentPanel(QWidget):
         self.addExperimentConfigPanel(
             EnsembleExperimentPanel(
                 analysis_config,
-                ensemble_size,
                 active_realizations,
                 config_num_realization,
                 run_path,
@@ -181,7 +180,6 @@ class ExperimentPanel(QWidget):
                 analysis_config,
                 run_path,
                 notifier,
-                ensemble_size,
                 active_realizations,
                 config_num_realization,
             ),
@@ -192,7 +190,6 @@ class ExperimentPanel(QWidget):
                 analysis_config,
                 run_path,
                 notifier,
-                ensemble_size,
                 active_realizations,
                 config_num_realization,
             ),
@@ -203,7 +200,6 @@ class ExperimentPanel(QWidget):
                 analysis_config,
                 run_path,
                 notifier,
-                ensemble_size,
                 active_realizations,
                 config_num_realization,
             ),
