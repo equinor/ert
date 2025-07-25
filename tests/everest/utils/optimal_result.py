@@ -16,7 +16,6 @@ class OptimalResult:
 
 def get_optimal_result(output_dir: str) -> OptimalResult | None:
     storage = EverestStorage.from_storage_path(Path(output_dir))
-    storage.read_from_output_dir()
 
     matching_batches = [
         b
