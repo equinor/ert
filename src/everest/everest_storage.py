@@ -14,6 +14,7 @@ from ropt.results import FunctionResults, GradientResults, Results
 
 from ert.config import EverestConstraintsConfig, EverestObjectivesConfig
 from ert.storage import LocalEnsemble, LocalExperiment, LocalStorage, open_storage
+from ert.storage.local_ensemble import BatchDataframes
 from everest.strings import EVEREST
 
 logger = logging.getLogger(__name__)
@@ -21,21 +22,6 @@ logger = logging.getLogger(__name__)
 
 def try_read_df(path: Path) -> pl.DataFrame | None:
     return pl.read_parquet(path) if path.exists() else None
-
-
-class BatchDataframes(TypedDict, total=False):
-    realization_controls: pl.DataFrame | None
-    batch_objectives: pl.DataFrame | None
-    realization_objectives: pl.DataFrame | None
-    batch_constraints: pl.DataFrame | None
-    realization_constraints: pl.DataFrame | None
-    batch_bound_constraint_violations: pl.DataFrame | None
-    batch_input_constraint_violations: pl.DataFrame | None
-    batch_output_constraint_violations: pl.DataFrame | None
-    batch_objective_gradient: pl.DataFrame | None
-    perturbation_objectives: pl.DataFrame | None
-    batch_constraint_gradient: pl.DataFrame | None
-    perturbation_constraints: pl.DataFrame | None
 
 
 class OptimizationDataframes(TypedDict, total=False):
@@ -46,21 +32,6 @@ class OptimizationDataframes(TypedDict, total=False):
 
 
 class BatchStorageData:
-    BATCH_DATAFRAMES: ClassVar[list[str]] = [
-        "realization_controls",
-        "batch_objectives",
-        "realization_objectives",
-        "batch_constraints",
-        "realization_constraints",
-        "batch_bound_constraint_violations",
-        "batch_input_constraint_violations",
-        "batch_output_constraint_violations",
-        "batch_objective_gradient",
-        "perturbation_objectives",
-        "batch_constraint_gradient",
-        "perturbation_constraints",
-    ]
-
     def __init__(self, path: Path) -> None:
         self._ensemble_path = path
 
@@ -68,7 +39,7 @@ class BatchStorageData:
     def has_data(self) -> bool:
         return any(
             (self._ensemble_path / f"{df_name}.parquet").exists()
-            for df_name in self.BATCH_DATAFRAMES
+            for df_name in LocalEnsemble.BATCH_DATAFRAMES
         )
 
     @property
@@ -160,13 +131,6 @@ class BatchStorageData:
         return self._read_df_if_exists(
             self._ensemble_path / "perturbation_constraints.parquet"
         )
-
-    @classmethod
-    def save_dataframes(cls, dataframes: BatchDataframes, ensemble_path: Path) -> None:
-        for df_name in cls.BATCH_DATAFRAMES:
-            df = dataframes.get(df_name)
-            if isinstance(df, pl.DataFrame):
-                df.write_parquet(ensemble_path / f"{df_name}.parquet")
 
     @cached_property
     def is_improvement(self) -> bool:
