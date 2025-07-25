@@ -59,7 +59,7 @@ from everest.config import (
     OptimizationConfig,
 )
 from everest.config.forward_model_config import ForwardModelStepConfig, SummaryResults
-from everest.everest_storage import BatchStorageData, EverestStorage
+from everest.everest_storage import EverestStorage
 from everest.optimizer.everest2ropt import everest2ropt
 from everest.optimizer.opt_model_transforms import (
     EverestOptModelTransforms,
@@ -637,9 +637,7 @@ class EverestRunModel(RunModel, EverestRunModelConfig):
 
         for batch_id, batch_dict in batch_dataframes.items():
             target_ensemble = self._experiment.get_ensemble_by_name(f"batch_{batch_id}")
-            BatchStorageData.save_dataframes(
-                dataframes=batch_dict, ensemble_path=target_ensemble._path
-            )
+            target_ensemble.save_batch_dataframes(dataframes=batch_dict)
 
             (target_ensemble._path / "batch.json").write_text(
                 json.dumps(
