@@ -44,7 +44,7 @@ from everest.config import (
     OptimizationConfig,
     OutputConstraintConfig,
 )
-from everest.everest_storage import BatchStorageData, EverestStorage
+from everest.everest_storage import EverestStorage
 from everest.optimizer.everest2ropt import everest2ropt
 from everest.optimizer.opt_model_transforms import (
     EverestOptModelTransforms,
@@ -333,7 +333,7 @@ class EverestRunModel(RunModel):
 
         for batch_id, batch_dict in batch_dataframes.items():
             target_ensemble = self._experiment.get_ensemble_by_name(f"batch_{batch_id}")
-            BatchStorageData.save_dataframes(
+            target_ensemble.save_dataframes(
                 dataframes=batch_dict, ensemble_path=target_ensemble._path
             )
 
