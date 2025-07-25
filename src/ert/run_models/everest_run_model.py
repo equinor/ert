@@ -3,6 +3,7 @@ from __future__ import annotations
 import dataclasses
 import datetime
 import importlib.metadata
+import json
 import logging
 import os
 import queue
@@ -326,13 +327,34 @@ class EverestRunModel(RunModel):
 
     def _handle_optimizer_results(self, results: tuple[Results, ...]) -> None:
         assert self._ever_storage is not None
-        self._ever_storage.on_batch_evaluation_finished(results)
+        assert self._experiment is not None
+
+        batch_dataframes = self._ever_storage.unpack_ropt_results(results)
+
+        for batch_id, batch_dict in batch_dataframes.items():
+            target_ensemble = self._experiment.get_ensemble_by_name(f"batch_{batch_id}")
+            target_ensemble.save_batch_dataframes(
+                dataframes=batch_dict, ensemble_path=target_ensemble._path
+            )
+
+            with open(
+                target_ensemble._path / "batch.json",
+                "w+",
+                encoding="utf-8",
+            ) as f:
+                json.dump(
+                    {
+                        "batch_id": batch_id,
+                        "is_improvement": False,
+                    },
+                    f,
+                )
 
         for r in results:
             storage_batches = (
-                self._ever_storage.data.batches_with_function_results
+                self._ever_storage.batches_with_function_results
                 if isinstance(r, FunctionResults)
-                else self._ever_storage.data.batches_with_gradient_results
+                else self._ever_storage.batches_with_gradient_results
             )
             batch_data = next(
                 (b for b in storage_batches if b.batch_id == r.batch_id),
@@ -367,15 +389,13 @@ class EverestRunModel(RunModel):
         # Initialize the ropt optimizer:
         optimizer, initial_guesses = self._create_optimizer()
 
+        # ROPT expects this folder to exist wrt stdout/stderr redirect files
+        os.makedirs(self.optimization_output_dir, exist_ok=True)
         self._ever_storage = EverestStorage(
-            output_dir=Path(self.optimization_output_dir),
+            storage=self._storage, experiment_id=self._experiment.id
         )
 
-        formatted_control_names = [
-            name for config in self.controls for name in config.formatted_control_names
-        ]
         self._ever_storage.init(
-            formatted_control_names=formatted_control_names,
             objective_functions=self.objective_functions,
             output_constraints=self.output_constraints,
             realizations=self.model.realizations,
@@ -436,6 +456,7 @@ class EverestRunModel(RunModel):
             self.random_seed,
             self.optimization_output_dir,
         )
+
         transforms = (
             OptModelTransforms(
                 variables=self._transforms["control_scaler"],

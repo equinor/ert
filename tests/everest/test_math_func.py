@@ -23,7 +23,7 @@ def test_math_func_multiobj(cached_example):
 
     config = EverestConfig.load_file(Path(config_path) / config_file)
 
-    result = get_optimal_result(config.optimization_output_dir)
+    result = get_optimal_result(config.storage_dir)
 
     # Check resulting points
     x, y, z = (result.controls["point." + p] for p in ("x", "y", "z"))
@@ -43,7 +43,7 @@ def test_math_func_advanced(cached_example):
     config_path, config_file, _, _ = cached_example("math_func/config_advanced.yml")
 
     config = EverestConfig.load_file(Path(config_path) / config_file)
-    result = get_optimal_result(config.optimization_output_dir)
+    result = get_optimal_result(config.storage_dir)
 
     point_names = ["x.0", "x.1", "x.2"]
 
@@ -148,7 +148,7 @@ def test_math_func_auto_scaled_controls(copy_math_func_test_data_to_tmp):
     evaluator_server_config = EvaluatorServerConfig()
     run_model.run_experiment(evaluator_server_config)
 
-    optimal_result = get_optimal_result(config.optimization_output_dir)
+    optimal_result = get_optimal_result(config.storage_dir)
 
     # Assert
     x, y, z = (optimal_result.controls["point." + p] for p in ("x", "y", "z"))
@@ -178,7 +178,7 @@ def test_math_func_auto_scaled_objectives(copy_math_func_test_data_to_tmp):
     evaluator_server_config = EvaluatorServerConfig()
     run_model.run_experiment(evaluator_server_config)
 
-    optim = get_optimal_result(config.optimization_output_dir).total_objective
+    optim = get_optimal_result(config.storage_dir).total_objective
 
     expected_p = 1.0  # normalized
     expected_q = 4.75  # not normalized
@@ -204,7 +204,7 @@ def test_math_func_auto_scaled_constraints(copy_math_func_test_data_to_tmp):
     run_model = EverestRunModel.create(config)
     evaluator_server_config = EvaluatorServerConfig()
     run_model.run_experiment(evaluator_server_config)
-    result1 = get_optimal_result(config.optimization_output_dir)
+    result1 = get_optimal_result(config.storage_dir)
 
     # Run the equivalent without auto-scaling:
     config_dict["environment"]["output_folder"] = "output_manual_scale"
@@ -214,7 +214,7 @@ def test_math_func_auto_scaled_constraints(copy_math_func_test_data_to_tmp):
     run_model = EverestRunModel.create(config)
     evaluator_server_config = EvaluatorServerConfig()
     run_model.run_experiment(evaluator_server_config)
-    result2 = get_optimal_result(config.optimization_output_dir)
+    result2 = get_optimal_result(config.storage_dir)
 
     assert result1.total_objective == pytest.approx(result2.total_objective)
     assert np.allclose(
@@ -247,7 +247,7 @@ def test_that_math_func_violating_output_constraints_has_no_result(
     run_model = EverestRunModel.create(config)
     evaluator_server_config = EvaluatorServerConfig()
     run_model.run_experiment(evaluator_server_config)
-    optimal_result = get_optimal_result(config.optimization_output_dir)
+    optimal_result = get_optimal_result(config.storage_dir)
     assert optimal_result is None  # No feasible result
 
 
@@ -266,7 +266,7 @@ def test_that_math_func_violating_output_constraints_has_a_result(
     run_model = EverestRunModel.create(config)
     evaluator_server_config = EvaluatorServerConfig()
     run_model.run_experiment(evaluator_server_config)
-    optimal_result = get_optimal_result(config.optimization_output_dir)
+    optimal_result = get_optimal_result(config.storage_dir)
     assert optimal_result is not None  # Feasible result
 
 
@@ -285,7 +285,7 @@ def test_that_math_func_violating_input_constraints_has_no_result(
     run_model = EverestRunModel.create(config)
     evaluator_server_config = EvaluatorServerConfig()
     run_model.run_experiment(evaluator_server_config)
-    optimal_result = get_optimal_result(config.optimization_output_dir)
+    optimal_result = get_optimal_result(config.storage_dir)
     assert optimal_result is None  # No feasible result
 
 
@@ -304,5 +304,5 @@ def test_that_math_func_violating_input_constraints_has_a_result(
     run_model = EverestRunModel.create(config)
     evaluator_server_config = EvaluatorServerConfig()
     run_model.run_experiment(evaluator_server_config)
-    optimal_result = get_optimal_result(config.optimization_output_dir)
+    optimal_result = get_optimal_result(config.storage_dir)
     assert optimal_result is not None  # Feasible result
