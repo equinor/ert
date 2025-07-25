@@ -1278,7 +1278,9 @@ class LocalEnsemble(BaseMode):
 
         return params_and_responses[column_order]
 
-    def save_dataframes(cls, dataframes: BatchDataframes, ensemble_path: Path) -> None:
+    def save_batch_dataframes(
+        cls, dataframes: BatchDataframes, ensemble_path: Path
+    ) -> None:
         for df_name in cls.BATCH_DATAFRAMES:
             df = dataframes.get(df_name)
             if isinstance(df, pl.DataFrame):
