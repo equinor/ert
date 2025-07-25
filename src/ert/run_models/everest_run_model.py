@@ -350,7 +350,6 @@ class EverestRunModel(RunModel):
                     f,
                 )
 
-        self._ever_storage.read_from_output_dir()
         for r in results:
             storage_batches = (
                 self._ever_storage.batches_with_function_results
@@ -411,7 +410,6 @@ class EverestRunModel(RunModel):
         optimizer_exit_code = optimizer.run(initial_guesses).exit_code
 
         # Store some final results.
-        self._ever_storage.read_from_output_dir()
         self._ever_storage.on_optimization_finished()
         if (
             optimizer_exit_code is not RoptExitCode.UNKNOWN

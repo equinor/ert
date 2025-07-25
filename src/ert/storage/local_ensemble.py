@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import asyncio
+import json
 import logging
 import os
 import time
@@ -1279,12 +1280,26 @@ class LocalEnsemble(BaseMode):
         return params_and_responses[column_order]
 
     def save_batch_dataframes(
-        cls, dataframes: BatchDataframes, ensemble_path: Path
+        self, dataframes: BatchDataframes, ensemble_path: Path
     ) -> None:
-        for df_name in cls.BATCH_DATAFRAMES:
+        for df_name in self.BATCH_DATAFRAMES:
             df = dataframes.get(df_name)
             if isinstance(df, pl.DataFrame):
                 df.write_parquet(ensemble_path / f"{df_name}.parquet")
+
+    def save_batch_metadata(self, is_improvement: bool) -> None:
+        with open(
+            self._path / "batch.json",
+            "w+",
+            encoding="utf-8",
+        ) as f:
+            json.dump(
+                {
+                    "batch_id": self.iteration,
+                    "is_improvement": is_improvement,
+                },
+                f,
+            )
 
 
 async def _read_parameters(
