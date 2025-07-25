@@ -395,11 +395,7 @@ class EverestRunModel(RunModel):
             storage=self._storage, experiment_id=self._experiment.id
         )
 
-        formatted_control_names = [
-            name for config in self.controls for name in config.formatted_control_names
-        ]
         self._ever_storage.init(
-            formatted_control_names=formatted_control_names,
             objective_functions=self.objective_functions,
             output_constraints=self.output_constraints,
             realizations=self.model.realizations,

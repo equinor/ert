@@ -27,7 +27,6 @@ def try_read_df(path: Path) -> pl.DataFrame | None:
 
 
 class OptimizationDataframes(TypedDict, total=False):
-    controls: pl.DataFrame | None
     objective_functions: pl.DataFrame | None
     nonlinear_constraints: pl.DataFrame | None
     realization_weights: pl.DataFrame | None
@@ -265,7 +264,6 @@ class _GradientResults(TypedDict):
 
 class EverestStorage:
     EXPERIMENT_DATAFRAMES: ClassVar[list[str]] = [
-        "controls",
         "objective_functions",
         "nonlinear_constraints",
         "realization_weights",
@@ -321,8 +319,8 @@ class EverestStorage:
         ]
 
     @property
-    def controls(self) -> pl.DataFrame | None:
-        return pl.read_parquet(self.experiment._path / "controls.parquet")
+    def control_names(self) -> list[str]:
+        return self.experiment.parameter_keys
 
     @property
     def objective_functions(self) -> pl.DataFrame | None:
@@ -485,17 +483,10 @@ class EverestStorage:
 
     def init(
         self,
-        formatted_control_names: list[str],
         objective_functions: list[ObjectiveFunctionConfig],
         output_constraints: list[OutputConstraintConfig] | None,
         realizations: list[int],
     ) -> None:
-        controls = pl.DataFrame(
-            {
-                "control_name": pl.Series(formatted_control_names, dtype=pl.String),
-            }
-        )
-
         # TODO: The weight and normalization keys are only used by the everest api,
         # with everviz. They should be removed in the long run.
         weights = np.fromiter(
@@ -537,7 +528,6 @@ class EverestStorage:
 
         self.save_experiment_dataframes(
             dataframes={
-                "controls": controls,
                 "objective_functions": objective_functions_dataframe,
                 "nonlinear_constraints": nonlinear_constraints,
                 "realization_weights": realization_weights,  # Store in metadata
@@ -943,9 +933,7 @@ class EverestStorage:
         perturbation_dfs_to_join = {}  # type: ignore
 
         batch_ids = [b.batch_id for b in self.batches]
-        all_controls = (
-            self.controls["control_name"].to_list() if self.controls is not None else []
-        )
+        all_controls = self.control_names
 
         def _try_append_df(
             batch_id: int,
