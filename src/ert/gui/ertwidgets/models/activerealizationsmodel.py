@@ -9,14 +9,11 @@ class ActiveRealizationsModel(ValueModel):
         self.show_default = show_default
         self.ensemble_size = ensemble_size
         ValueModel.__init__(self, self.getDefaultValue())
-        self._custom = False
 
     def setValue(self, value: str | None) -> None:
         if not value or not value.strip() or value == self.getDefaultValue():
-            self._custom = False
             ValueModel.setValue(self, self.getDefaultValue())
         else:
-            self._custom = True
             ValueModel.setValue(self, value)
 
     def setValueFromMask(self, mask: Collection[bool | int]) -> None:
