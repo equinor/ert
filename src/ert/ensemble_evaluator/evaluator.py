@@ -184,10 +184,10 @@ class EnsembleEvaluator:
                 for identity in self._dispatchers_connected
             )
         )
-        for iens in self._dispatcher_identity_to_real.values():
+        for real_id in self._dispatcher_identity_to_real.values():
             if self._ensemble._scheduler is not None:
                 self._ensemble._scheduler._jobs[
-                    iens
+                    real_id
                 ]._started_killing_by_evaluator = True
 
     async def _terminate_all_dispatchers(self) -> None:
@@ -311,11 +311,6 @@ class EnsembleEvaluator:
     async def handle_dispatch(self, dealer: bytes, frame: bytes) -> None:
         if frame == CONNECT_MSG:
             self._dispatchers_connected.add(dealer)
-
-            def _get_iens_from_dealer_name(dealer_name: str) -> int:
-                realid = dealer_name
-                return int(realid)
-
             real_id = dealer.decode("utf-8").split("-")[2]
             self._dispatcher_identity_to_real[dealer] = int(real_id)
             self._dispatchers_empty.clear()

@@ -227,7 +227,7 @@ async def test_restarted_jobs_do_not_have_error_msgs(evaluator_to_use2):
     async with Client(
         url,
         token=token,
-        dealer_name=f"dispatch-iens-0-{uuid.uuid4().hex[:6]}",
+        dealer_name=f"dispatch-real-0-{uuid.uuid4().hex[:6]}",
     ) as dispatch:
         event = ForwardModelStepRunning(
             ensemble=evaluator.ensemble.id_,
@@ -263,7 +263,7 @@ async def test_restarted_jobs_do_not_have_error_msgs(evaluator_to_use2):
         if is_completed_snapshot(snapshot):
             break
     async with Client(
-        url, token=token, dealer_name=f"dispatch-iens-0-{uuid.uuid4().hex[:6]}"
+        url, token=token, dealer_name=f"dispatch-real-0-{uuid.uuid4().hex[:6]}"
     ) as dispatch:
         event = ForwardModelStepSuccess(
             ensemble=evaluator.ensemble.id_,
@@ -330,7 +330,7 @@ async def test_snapshot_on_resubmit_is_cleared(evaluator_to_use2):
     snapshot_event = await event_queue.get()
     assert type(snapshot_event) is EESnapshot
     async with Client(
-        url, token=token, dealer_name=f"dispatch-iens-0-{uuid.uuid4().hex[:6]}"
+        url, token=token, dealer_name=f"dispatch-real-0-{uuid.uuid4().hex[:6]}"
     ) as dispatch:
         event = ForwardModelStepRunning(
             ensemble=evaluator.ensemble.id_,
@@ -409,7 +409,7 @@ async def test_signal_cancel_does_not_cause_evaluator_dispatcher_communication_t
     url = evaluator._config.get_uri()
     evaluator.ensemble._cancellable = True
     async with Client(
-        url, token=token, dealer_name=f"dispatch-iens-0-{uuid.uuid4().hex[:6]}"
+        url, token=token, dealer_name=f"dispatch-real-0-{uuid.uuid4().hex[:6]}"
     ) as dispatch:
         event = ForwardModelStepRunning(
             ensemble=evaluator.ensemble.id_,
@@ -469,10 +469,10 @@ async def test_signal_cancel_sends_terminate_message_to_dispatchers(evaluator_to
     evaluator.ensemble._cancellable = True
     async with (
         Client(
-            url, token=token, dealer_name=f"dispatch-iens-0-{uuid.uuid4().hex[:6]}"
+            url, token=token, dealer_name=f"dispatch-real-0-{uuid.uuid4().hex[:6]}"
         ) as dispatcher_0,
         Client(
-            url, token=token, dealer_name=f"dispatch-iens-1-{uuid.uuid4().hex[:6]}"
+            url, token=token, dealer_name=f"dispatch-real-1-{uuid.uuid4().hex[:6]}"
         ) as dispatcher_1,
     ):
         await evaluator._signal_cancel()

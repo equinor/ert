@@ -146,7 +146,7 @@ class Event(Reporter):
                 url=self._evaluator_url,
                 token=self._token,
                 ack_timeout=self._ack_timeout,
-                dealer_name=f"dispatch-iens-{self._real_id}-{uuid.uuid4().hex[:6]}",
+                dealer_name=f"dispatch-real-{self._real_id}-{uuid.uuid4().hex[:6]}",
             ) as client:
                 publisher_task = asyncio.create_task(
                     self.handle_publish(client), name="publisher_task"
