@@ -101,8 +101,9 @@ async def test_kill_gives_correct_state(driver: Driver, use_tmpdir, request):
         ]
     else:
         expected_returncodes = [
-            SIGNAL_OFFSET + signal.SIGTERM,
+            signal.SIGTERM,
             SIGNAL_OFFSET + signal.SIGINT,
+            SIGNAL_OFFSET + signal.SIGTERM,
             256 + signal.SIGKILL,
             256 + signal.SIGTERM,
         ]
