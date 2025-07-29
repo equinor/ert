@@ -1,12 +1,12 @@
 import os
 
 
-def cond_unlink(file):
+def cond_unlink(file: str) -> None:
     if os.path.exists(file):
         os.unlink(file)
 
 
-def check_executable(fname) -> str:
+def check_executable(fname: str | None) -> str:
     """The function returns an error message if the given file is either not a file or
     not an executable.
 
