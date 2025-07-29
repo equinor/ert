@@ -42,6 +42,8 @@ from tests.ert.unit_tests.gui.simulation.test_run_path_dialog import (
     handle_run_path_dialog,
 )
 
+DEFAULT_NUM_REALIZATIONS = 10
+
 
 def open_gui_with_config(config_path) -> Iterator[ErtMainWindow]:
     with (
@@ -63,7 +65,9 @@ def opened_main_window_poly(
     yield from open_gui_with_config(tmp_path / "poly.ert")
 
 
-def _new_poly_example(source_root, destination, num_realizations: int = 10):
+def _new_poly_example(
+    source_root, destination, num_realizations: int = DEFAULT_NUM_REALIZATIONS
+):
     shutil.copytree(
         os.path.join(source_root, "test-data", "ert", "poly_example"),
         destination,
