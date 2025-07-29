@@ -103,6 +103,8 @@ class EvaluateEnsemblePanel(ExperimentConfigPanel):
                 mask = np.logical_and(
                     parameters, np.logical_or(missing_responses, failures)
                 )
+                if not any(mask):
+                    mask = parameters
                 self._active_realizations_field.model.setValueFromMask(mask)  # type: ignore
         except OSError as err:
             logger.error(str(err))
