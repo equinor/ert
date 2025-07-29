@@ -2,7 +2,6 @@ import asyncio
 import json
 import logging
 from pathlib import Path
-from queue import SimpleQueue
 from unittest.mock import AsyncMock
 
 import pytest
@@ -54,7 +53,7 @@ async def test_scheduler_receives_checksum_and_waits_for_disk_sync(
         event_queue = asyncio.Queue()
 
         evaluator = EnsembleEvaluator(
-            ensemble, config, SimpleQueue(), event_queue.put_nowait
+            ensemble, config, asyncio.Event(), event_queue.put_nowait
         )
 
         async def mock_checksum_consumer(self, *args) -> None:
