@@ -231,6 +231,20 @@ def test_rerun_failed_realizations(opened_main_window_poly, qtbot):
     )
 
 
+def handle_run_path_dialog(
+    gui,
+    qtbot,
+):
+    mb = gui.findChildren(QMessageBox, "RUN_PATH_WARNING_BOX")
+    mb = mb[-1] if mb else None
+
+    if mb is not None:
+        assert mb
+        assert isinstance(mb, QMessageBox)
+
+        qtbot.mouseClick(mb.buttons()[0], Qt.MouseButton.LeftButton)
+
+
 def test_rerun_failed_realizations_evaluate_ensemble(
     ensemble_experiment_has_run_no_failure, qtbot
 ):
@@ -293,19 +307,6 @@ def test_rerun_failed_realizations_evaluate_ensemble(
 
     # Click start simulation and agree to the message
     run_experiment = experiment_panel.findChild(QWidget, name="run_experiment")
-
-    def handle_run_path_dialog(
-        gui,
-        qtbot,
-    ):
-        mb = gui.findChildren(QMessageBox, "RUN_PATH_WARNING_BOX")
-        mb = mb[-1] if mb else None
-
-        if mb is not None:
-            assert mb
-            assert isinstance(mb, QMessageBox)
-
-            qtbot.mouseClick(mb.buttons()[0], Qt.MouseButton.LeftButton)
 
     QTimer.singleShot(1000, lambda: handle_run_path_dialog(gui, qtbot))
     qtbot.mouseClick(run_experiment, Qt.MouseButton.LeftButton)
