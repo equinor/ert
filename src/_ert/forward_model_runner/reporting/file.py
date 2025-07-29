@@ -1,17 +1,18 @@
+import datetime
 import logging
 import os
 import socket
 import time
+from typing import TYPE_CHECKING, TypedDict
 
+if TYPE_CHECKING:
+    from _ert.forward_model_runner.forward_model_step import ForwardModelStep
 import orjson
 
 from _ert.forward_model_runner.io import cond_unlink
 from _ert.forward_model_runner.reporting.base import Reporter
 from _ert.forward_model_runner.reporting.message import (
-    _STEP_EXIT_FAILED_STRING,
-    _STEP_STATUS_FAILURE,
-    _STEP_STATUS_RUNNING,
-    _STEP_STATUS_SUCCESS,
+    STEP_EXIT_FAILED_STRING_TEMPLATE,
     Exited,
     Finish,
     Init,
@@ -19,7 +20,12 @@ from _ert.forward_model_runner.reporting.message import (
     Running,
     Start,
 )
-from _ert.forward_model_runner.util import data as data_util
+from _ert.forward_model_runner.util.data import (
+    StepDict,
+    StepStatus,
+    create_step_dict,
+    datetime_serialize,
+)
 
 TIME_FORMAT = "%H:%M:%S"
 logger = logging.getLogger(__name__)
@@ -32,13 +38,21 @@ OK_file = "OK"
 STATUS_json = "status.json"
 
 
+class StatusDict(TypedDict, total=False):
+    run_id: str | None
+    start_time: float | None
+    end_time: float | None
+    steps: list[StepDict]
+    status: StepStatus
+
+
 class File(Reporter):
     def __init__(self) -> None:
-        self.status_dict = {}
+        self.status_dict: StatusDict = {}
         self.node = socket.gethostname()
 
-    def report(self, msg: Message):
-        fm_step_status = {}
+    def report(self, msg: Message) -> None:
+        fm_step_status: StepDict = {}
 
         if msg.step:
             logger.debug("Adding message step to status dictionary.")
@@ -53,72 +67,64 @@ class File(Reporter):
             )
 
         elif isinstance(msg, Start):
+            assert msg.step is not None
             if msg.success():
                 logger.debug(
                     f"Forward model step {msg.step.name()} was successfully started"
                 )
                 self._start_status_file(msg)
                 self._add_log_line(msg.step)
-                fm_step_status.update(
-                    status=_STEP_STATUS_RUNNING,
-                    start_time=data_util.datetime_serialize(msg.timestamp),
-                )
+                fm_step_status["status"] = StepStatus.RUNNING
+                fm_step_status["start_time"] = datetime_serialize(msg.timestamp)
             else:
                 logger.error(f"Forward model step {msg.step.name()} FAILED to start")
-                error_msg = msg.error_message
-                fm_step_status.update(
-                    status=_STEP_STATUS_FAILURE,
-                    error=error_msg,
-                    end_time=data_util.datetime_serialize(msg.timestamp),
-                )
+                fm_step_status["status"] = StepStatus.FAILURE
+                fm_step_status["error"] = msg.error_message
+                fm_step_status["end_time"] = datetime_serialize(msg.timestamp)
                 self._complete_status_file(msg)
 
         elif isinstance(msg, Exited):
-            fm_step_status["end_time"] = data_util.datetime_serialize(msg.timestamp)
+            assert msg.step is not None
+            fm_step_status["end_time"] = datetime_serialize(msg.timestamp)
             if msg.success():
                 logger.debug(
                     f"Forward model step {msg.step.name()} exited successfully"
                 )
-                fm_step_status["status"] = _STEP_STATUS_SUCCESS
+                fm_step_status["status"] = StepStatus.SUCCESS
                 self._complete_status_file(msg)
             else:
-                error_msg = msg.error_message
                 logger.error(
-                    _STEP_EXIT_FAILED_STRING.format(
+                    STEP_EXIT_FAILED_STRING_TEMPLATE.format(
                         step_name=msg.step.name(),
                         exit_code=msg.exit_code,
                         error_message=msg.error_message,
                     )
                 )
-                fm_step_status.update(error=error_msg, status=_STEP_STATUS_FAILURE)
-
+                fm_step_status["status"] = StepStatus.FAILURE
+                fm_step_status["error"] = msg.error_message
                 # A STATUS_file is not written if there is no exit_code, i.e.
                 # when the step is killed due to timeout.
                 if msg.exit_code:
                     self._complete_status_file(msg)
-                self._dump_error_file(msg.step, error_msg)
+                self._dump_error_file(msg.step, msg.error_message)
 
         elif isinstance(msg, Running):
-            fm_step_status.update(
-                max_memory_usage=msg.memory_status.max_rss,
-                current_memory_usage=msg.memory_status.rss,
-                cpu_seconds=msg.memory_status.cpu_seconds,
-                status=_STEP_STATUS_RUNNING,
-            )
+            fm_step_status["max_memory_usage"] = msg.memory_status.max_rss
+            fm_step_status["current_memory_usage"] = msg.memory_status.rss
+            fm_step_status["cpu_seconds"] = msg.memory_status.cpu_seconds
+            fm_step_status["status"] = StepStatus.RUNNING
             memory_logger.info(msg.memory_status)
 
         elif isinstance(msg, Finish):
             logger.debug("Runner finished")
             if msg.success():
                 logger.debug("Runner finished successfully")
-                self.status_dict["end_time"] = data_util.datetime_serialize(
-                    msg.timestamp
-                )
+                self.status_dict["end_time"] = datetime_serialize(msg.timestamp)
                 self._dump_ok_file()
         self._dump_status_json()
 
     @staticmethod
-    def _delete_old_status_files():
+    def _delete_old_status_files() -> None:
         logger.debug("Deleting old status files")
         cond_unlink(ERROR_file)
         cond_unlink(STATUS_file)
@@ -129,19 +135,24 @@ class File(Reporter):
         with open(STATUS_file, "a", encoding="utf-8") as status_file:
             status_file.write(msg)
 
-    def _init_status_file(self):
+    def _init_status_file(self) -> None:
         self._write_status_file(f"{'Current host':32}: {self.node}/{os.uname()[4]}\n")
 
     @staticmethod
-    def _init_step_status_dict(start_time, run_id, steps):
+    def _init_step_status_dict(
+        start_time: datetime.datetime,
+        run_id: str | None,
+        steps: list["ForwardModelStep"],
+    ) -> "StatusDict":
         return {
             "run_id": run_id,
-            "start_time": data_util.datetime_serialize(start_time),
+            "start_time": datetime_serialize(start_time),
             "end_time": None,
-            "steps": [data_util.create_step_dict(step) for step in steps],
+            "steps": [create_step_dict(step) for step in steps],
         }
 
-    def _start_status_file(self, msg):
+    def _start_status_file(self, msg: Start) -> None:
+        assert msg.step is not None
         timestamp = msg.timestamp.strftime(TIME_FORMAT)
         step_name = msg.step.name()
         self._write_status_file(f"{step_name:32}: {timestamp} .... ")
@@ -149,7 +160,8 @@ class File(Reporter):
             f"Append {step_name} step starting timestamp {timestamp} to STATUS_file."
         )
 
-    def _complete_status_file(self, msg):
+    def _complete_status_file(self, msg: Start | Exited) -> None:
+        assert msg.step is not None
         status: str = ""
         timestamp = msg.timestamp.strftime(TIME_FORMAT)
         if not msg.success():
@@ -161,14 +173,15 @@ class File(Reporter):
         self._write_status_file(f"{timestamp}  {status}\n")
 
     @staticmethod
-    def _add_log_line(step):
+    def _add_log_line(step: "ForwardModelStep") -> None:
         with open(LOG_file, "a", encoding="utf-8") as f:
+            assert step.step_data["argList"] is not None
             args = " ".join(step.step_data["argList"])
             time_str = time.strftime(TIME_FORMAT, time.localtime())
             f.write(f"{time_str}  Calling: {step.step_data['executable']} {args}\n")
 
     @staticmethod
-    def _dump_error_file(fm_step, error_msg):
+    def _dump_error_file(fm_step: "ForwardModelStep", error_msg: str | None) -> None:
         with open(ERROR_file, "w", encoding="utf-8") as file:
             file.write("<error>\n")
             file.write(
@@ -206,12 +219,12 @@ class File(Reporter):
             file.write("</error>\n")
 
     @staticmethod
-    def _dump_ok_file():
+    def _dump_ok_file() -> None:
         with open(OK_file, "w", encoding="utf-8") as f:
             f.write(
                 f"All jobs complete {time.strftime(TIME_FORMAT, time.localtime())} \n"
             )
 
-    def _dump_status_json(self):
+    def _dump_status_json(self) -> None:
         with open(STATUS_json, "wb") as fp:
             fp.write(orjson.dumps(self.status_dict, option=orjson.OPT_INDENT_2))

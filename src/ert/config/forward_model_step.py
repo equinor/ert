@@ -51,7 +51,7 @@ class ForwardModelStepJSON(TypedDict):
     """
 
     name: str
-    executable: list[str]
+    executable: str
     target_file: str
     error_file: str
     start_file: str
@@ -254,3 +254,12 @@ class ForwardModelStepPlugin(ForwardModelStep):
         """
         Returns the documentation for the plugin forward model
         """
+
+
+class ForwardModelJSON(TypedDict):
+    global_environment: dict[str, str]
+    config_path: str
+    config_file: str
+    jobList: list[ForwardModelStepJSON]
+    run_id: str | None
+    ert_pid: str

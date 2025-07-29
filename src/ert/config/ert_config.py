@@ -25,6 +25,7 @@ from .analysis_config import AnalysisConfig
 from .design_matrix import DESIGN_MATRIX_GROUP
 from .ensemble_config import EnsembleConfig
 from .forward_model_step import (
+    ForwardModelJSON,
     ForwardModelStep,
     ForwardModelStepJSON,
     ForwardModelStepPlugin,
@@ -129,7 +130,7 @@ def create_forward_model_json(
     env_vars: dict[str, str] | None = None,
     env_pr_fm_step: dict[str, dict[str, Any]] | None = None,
     skip_pre_experiment_validation: bool = False,
-) -> dict[str, Any]:
+) -> ForwardModelJSON:
     if env_vars is None:
         env_vars = {}
     if env_pr_fm_step is None:
@@ -210,7 +211,7 @@ def create_forward_model_json(
     job_list: list[ForwardModelStepJSON] = []
     for idx, fm_step in enumerate(forward_model_steps):
         substituter = Substituter(fm_step)
-        fm_step_json = {
+        fm_step_json: ForwardModelStepJSON = {
             "name": substituter.substitute(fm_step.name),
             "executable": substituter.substitute(fm_step.executable),
             "target_file": substituter.substitute(fm_step.target_file),
@@ -637,7 +638,7 @@ def create_list_of_forward_model_steps_to_run(
                     env_vars=env_vars,
                     env_pr_fm_step=env_pr_fm_step,
                 )
-                fm_json_for_validation = dict(substituted_json["jobList"][0])
+                fm_json_for_validation = substituted_json["jobList"][0]
                 fm_json_for_validation["environment"] = {
                     **substituted_json["global_environment"],
                     **fm_json_for_validation["environment"],

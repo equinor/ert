@@ -114,7 +114,6 @@ class ForwardModelStep:
 
     def _build_arg_list(self) -> list[str]:
         executable = self.step_data.get("executable")
-        # assert executable is not None
         combined_arg_list = [executable]
         if arg_list := self.step_data.get("argList"):
             combined_arg_list += arg_list
@@ -388,11 +387,11 @@ class ForwardModelStep:
             )
         return f"Could not find target_file:{target_file}"
 
-    def _assert_arg_list(self):
-        errors = []
-        if "arg_types" in self.step_data:
+    def _assert_arg_list(self) -> list[str]:
+        errors: list[str] = []
+        if "arg_types" in self.step_data:  # This seems to be NEVER true(?)
             arg_types = self.step_data["arg_types"]
-            arg_list = self.step_data.get("argList")
+            arg_list = self.step_data.get("argList", [])
             for index, arg_type in enumerate(arg_types):
                 if arg_type == "RUNTIME_FILE":
                     file_path = os.path.join(os.getcwd(), arg_list[index])

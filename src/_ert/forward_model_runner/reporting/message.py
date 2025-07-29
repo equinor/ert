@@ -1,6 +1,6 @@
 import dataclasses
 from datetime import datetime as dt
-from typing import TYPE_CHECKING, Literal
+from typing import TYPE_CHECKING, Literal, NotRequired, Self
 
 import psutil
 from typing_extensions import TypedDict
@@ -8,26 +8,15 @@ from typing_extensions import TypedDict
 if TYPE_CHECKING:
     from _ert.forward_model_runner.forward_model_step import ForwardModelStep
 
-    class _ChecksumDictBase(TypedDict):
-        type: Literal["file"]
-        path: str
 
-    class ChecksumDict(_ChecksumDictBase, total=False):
-        md5sum: str
-        error: str
-
-
-_STEP_STATUS_SUCCESS = "Success"
-_STEP_STATUS_RUNNING = "Running"
-_STEP_STATUS_FAILURE = "Failure"
-_STEP_STATUS_WAITING = "Waiting"
-
-_RUNNER_STATUS_INITIALIZED = "Initialized"
-_RUNNER_STATUS_SUCCESS = "Success"
-_RUNNER_STATUS_FAILURE = "Failure"
+class Manifest(TypedDict):
+    type: Literal["file"]
+    path: str
+    error: NotRequired[str]
+    md5sum: NotRequired[str]
 
 
-_STEP_EXIT_FAILED_STRING = """Step {step_name} FAILED with code {exit_code}
+STEP_EXIT_FAILED_STRING_TEMPLATE = """Step {step_name} FAILED with code {exit_code}
 ----------------------------------------------------------
 Error message: {error_message}
 ----------------------------------------------------------
@@ -70,15 +59,15 @@ class _MetaMessage(type):
 
 
 class Message(metaclass=_MetaMessage):
-    def __init__(self, step=None) -> None:
+    def __init__(self, step: "ForwardModelStep | None" = None) -> None:
         self.timestamp = dt.now()
-        self.step: ForwardModelStep | None = step
+        self.step = step
         self.error_message: str | None = None
 
     def __repr__(self) -> str:
         return type(self).__name__
 
-    def with_error(self, message: str):
+    def with_error(self, message: str) -> Self:
         self.error_message = message
         return self
 
@@ -92,12 +81,12 @@ class Message(metaclass=_MetaMessage):
 class Init(Message):
     def __init__(
         self,
-        steps,
-        run_id,
-        ert_pid,
-        ens_id=None,
-        real_id=None,
-        experiment_id=None,
+        steps: list["ForwardModelStep"],
+        run_id: str | None,
+        ert_pid: str | None,
+        ens_id: str | None = None,
+        real_id: int | None = None,
+        experiment_id: str | None = None,
     ) -> None:
         super().__init__()
         self.steps = steps
@@ -127,13 +116,15 @@ class Running(Message):
 
 
 class Exited(Message):
-    def __init__(self, fm_step, exit_code: int) -> None:
+    def __init__(
+        self, fm_step: "ForwardModelStep | None", exit_code: int | None
+    ) -> None:
         super().__init__(fm_step)
         self.exit_code = exit_code
 
 
 class Checksum(Message):
-    def __init__(self, checksum_dict: dict[str, "ChecksumDict"], run_path: str) -> None:
+    def __init__(self, checksum_dict: dict[str, "Manifest"], run_path: str) -> None:
         super().__init__()
         self.data = checksum_dict
         self.run_path = run_path
