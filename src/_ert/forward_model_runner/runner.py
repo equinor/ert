@@ -3,14 +3,22 @@ import json
 import os
 from collections.abc import Generator
 from pathlib import Path
-from typing import Any
+from typing import TYPE_CHECKING
 
+if TYPE_CHECKING:
+    from _ert.forward_model_runner.fm_dispatch import ForwardModelDescriptionJSON
 from _ert.forward_model_runner.forward_model_step import ForwardModelStep
-from _ert.forward_model_runner.reporting.message import Checksum, Finish, Init, Message
+from _ert.forward_model_runner.reporting.message import (
+    Checksum,
+    Finish,
+    Init,
+    Manifest,
+    Message,
+)
 
 
 class ForwardModelRunner:
-    def __init__(self, steps_data: dict[str, Any]) -> None:
+    def __init__(self, steps_data: "ForwardModelDescriptionJSON") -> None:
         self.steps_data = (
             steps_data  # On disk, this is called jobs.json for legacy reasons
         )
@@ -29,7 +37,7 @@ class ForwardModelRunner:
 
         self._set_environment()
 
-    def _read_manifest(self):
+    def _read_manifest(self) -> dict[str, Manifest] | None:
         if not Path("manifest.json").exists():
             return None
         with open("manifest.json", encoding="utf-8") as f:
@@ -39,7 +47,9 @@ class ForwardModelRunner:
             for name, file in data.items()
         }
 
-    def _populate_checksums(self, manifest):
+    def _populate_checksums(
+        self, manifest: dict[str, Manifest] | None
+    ) -> dict[str, Manifest]:
         if not manifest:
             return {}
         for info in manifest.values():
@@ -95,7 +105,7 @@ class ForwardModelRunner:
         yield Checksum(checksum_dict=checksum_dict, run_path=os.getcwd())
         yield Finish()
 
-    def _set_environment(self):
+    def _set_environment(self) -> None:
         if self.global_environment:
             for key, value in self.global_environment.items():
                 for env_key, env_val in os.environ.items():

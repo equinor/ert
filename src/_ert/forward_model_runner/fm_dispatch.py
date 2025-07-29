@@ -8,8 +8,10 @@ import sys
 import time
 from collections.abc import Generator, Iterable
 from datetime import datetime
+from typing import TYPE_CHECKING, Any
 
 from _ert.forward_model_runner import reporting
+from _ert.forward_model_runner.reporting.base import Reporter
 from _ert.forward_model_runner.reporting.message import (
     Exited,
     Finish,
@@ -17,6 +19,17 @@ from _ert.forward_model_runner.reporting.message import (
     ProcessTreeStatus,
 )
 from _ert.forward_model_runner.runner import ForwardModelRunner
+
+if TYPE_CHECKING:
+    from ert.config.forward_model_step import ForwardModelJSON
+
+    class ForwardModelDescriptionJSON(ForwardModelJSON):
+        ens_id: str | None
+        real_id: int
+        dispatch_url: str | None
+        ee_token: str | None
+        experiment_id: str | None
+
 
 # This is incorrecty named, but is kept to avoid a breaking change.
 # "job" was previously used for what is now called a "forward_model_step".
@@ -32,11 +45,11 @@ logger = logging.getLogger(__name__)
 
 
 def _setup_reporters(
-    is_interactive_run,
-    ens_id,
-    dispatch_url,
-    ee_token=None,
-    experiment_id=None,
+    is_interactive_run: bool,
+    ens_id: str | None,
+    dispatch_url: str | None,
+    ee_token: str | None = None,
+    experiment_id: str | None = None,
 ) -> list[reporting.Reporter]:
     reporters: list[reporting.Reporter] = []
     if is_interactive_run:
@@ -52,7 +65,7 @@ def _setup_reporters(
     return reporters
 
 
-def _setup_logging(directory: str = "logs"):
+def _setup_logging(directory: str = "logs") -> None:
     fm_runner_logger = logging.getLogger("_ert.forward_model_runner")
     memory_csv_logger = logging.getLogger("_ert.forward_model_memory_profiler")
 
@@ -82,11 +95,11 @@ def _setup_logging(directory: str = "logs"):
     fm_runner_logger.setLevel(logging.DEBUG)
 
 
-def _wait_for_retry():
+def _wait_for_retry() -> None:
     time.sleep(FILE_RETRY_TIME)
 
 
-def _read_fm_description_file(retry=True):
+def _read_fm_description_file(retry: bool = True) -> "ForwardModelDescriptionJSON":
     try:
         with open(FORWARD_MODEL_DESCRIPTION_FILE, encoding="utf-8") as json_file:
             return json.load(json_file)
@@ -130,7 +143,9 @@ def _report_all_messages(
             _stop_reporters_and_sigkill(reporters)
 
 
-def _stop_reporters_and_sigkill(reporters, exited_event: Exited | None = None):
+def _stop_reporters_and_sigkill(
+    reporters: Iterable[Reporter], exited_event: Exited | None = None
+) -> None:
     _stop_reporters(reporters, exited_event)
     pgid = os.getpgid(os.getpid())
     os.killpg(pgid, signal.SIGKILL)
@@ -144,7 +159,16 @@ def _stop_reporters(
             reporter.stop(exited_event=exited_event)
 
 
-def fm_dispatch(args):
+class Namespace(argparse.Namespace):
+    """
+    fm_dispatch argument parser namespace
+    """
+
+    run_path: str | None = None
+    steps: list[str]
+
+
+def fm_dispatch(args: list[str]) -> None:
     parser = argparse.ArgumentParser(
         description=(
             "Run all the forward model steps specified in jobs.json, "
@@ -161,7 +185,7 @@ def fm_dispatch(args):
         ),
     )
 
-    parsed_args = parser.parse_args(args[1:])
+    parsed_args = parser.parse_args(args[1:], namespace=Namespace())
 
     # If run_path is defined, enter into that directory
     if parsed_args.run_path is not None:
@@ -190,7 +214,7 @@ def fm_dispatch(args):
 
     fm_runner = ForwardModelRunner(fm_description)
 
-    def sigterm_handler(_signo, _stack_frame):
+    def sigterm_handler(_signo: int, _stack_frame: Any) -> None:
         exited_event = Exited(
             fm_runner._currently_running_step, exit_code=1
         ).with_error(FORWARD_MODEL_TERMINATED_MSG)
@@ -200,7 +224,7 @@ def fm_dispatch(args):
     _report_all_messages(fm_runner.run(parsed_args.steps), reporters)
 
 
-def main():
+def main() -> None:
     os.nice(19)
     try:
         fm_dispatch(sys.argv)

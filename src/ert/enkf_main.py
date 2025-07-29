@@ -276,7 +276,7 @@ def create_run_path(
             path = run_path / "jobs.json"
             _backup_if_existing(path)
 
-            forward_model_output: dict[str, Any] = create_forward_model_json(
+            forward_model_output = create_forward_model_json(
                 context=substitutions,
                 forward_model_steps=forward_model_steps,
                 user_config_file=user_config_file,
