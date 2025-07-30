@@ -234,16 +234,15 @@ class ExperimentRunner:
             shared_data.status = ExperimentStatus(
                 message="Experiment started", status=ExperimentState.running
             )
-            loop = asyncio.get_running_loop()
-            simulation_future = loop.run_in_executor(
-                None,
-                lambda: run_model.start_simulations_thread(
+            simulation_task = asyncio.create_task(
+                run_model.start_simulations_thread(
                     EvaluatorServerConfig()
                     if run_model.queue_config.queue_system == QueueSystem.LOCAL
                     else EvaluatorServerConfig(
                         port_range=(49152, 51819), use_ipc_protocol=False
                     )
                 ),
+                name="simulation_task",
             )
             while True:
                 if shared_data.status.status == ExperimentState.stopped:
@@ -264,7 +263,7 @@ class ExperimentRunner:
                     for sub in shared_data.subscribers.values():
                         await sub.is_done()
                     break
-            await simulation_future
+            await simulation_task
             assert run_model.exit_code is not None
             exp_status, msg = _get_optimization_status(
                 run_model.exit_code,

@@ -55,7 +55,7 @@ class MultipleDataAssimilation(UpdateRunModel, InitialEnsembleRunModel):
         self._total_iterations = total_iterations
 
     @tracer.start_as_current_span(f"{__name__}.run_experiment")
-    def run_experiment(
+    async def run_experiment(
         self,
         evaluator_server_config: EvaluatorServerConfig,
         rerun_failed_realizations: bool = False,
@@ -89,7 +89,7 @@ class MultipleDataAssimilation(UpdateRunModel, InitialEnsembleRunModel):
                 fixtures=PreExperimentFixtures(random_seed=self.random_seed),
             )
             sim_args = {"weights": self.weights}
-            prior = self._sample_and_evaluate_ensemble(
+            prior = await self._sample_and_evaluate_ensemble(
                 evaluator_server_config,
                 sim_args,
                 self.target_ensemble % 0,
@@ -111,7 +111,7 @@ class MultipleDataAssimilation(UpdateRunModel, InitialEnsembleRunModel):
                 self.active_realizations,
                 ensemble=posterior,
             )
-            self._evaluate_and_postprocess(
+            await self._evaluate_and_postprocess(
                 posterior_args,
                 posterior,
                 evaluator_server_config,

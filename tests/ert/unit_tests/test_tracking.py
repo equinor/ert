@@ -152,7 +152,7 @@ def check_expression(original, path_expression, expected: list[str], msg_start):
         ),
     ],
 )
-def test_tracking(
+async def test_tracking(
     extra_config,
     extra_poly_eval,
     cmd_line_arguments,
@@ -167,7 +167,7 @@ def test_tracking(
         extra_config,
     ]
 
-    with open("poly.ert", "a", encoding="utf-8") as fh:
+    with open("poly.ert", "a", encoding="utf-8") as fh:  # noqa: ASYNC230
         fh.writelines(config_lines)
 
     with fileinput.input("poly_eval.py", inplace=True) as fin:
@@ -193,7 +193,7 @@ def test_tracking(
     )
 
     evaluator_server_config = EvaluatorServerConfig(use_token=False)
-    model.start_simulations_thread(evaluator_server_config)
+    await model.start_simulations_thread(evaluator_server_config)
 
     snapshots: dict[str, EnsembleSnapshot] = {}
 
@@ -281,7 +281,7 @@ def test_setting_env_context_during_run(
 
     thread = ErtThread(
         name="ert_cli_simulation_thread",
-        target=model.start_simulations_thread,
+        target=model.api.start_simulations_thread,
         args=(evaluator_server_config,),
     )
     thread.start()
@@ -349,7 +349,7 @@ def test_run_information_present_as_env_var_in_fm_context(
 
     thread = ErtThread(
         name="ert_cli_simulation_thread",
-        target=model.start_simulations_thread,
+        target=model.api.start_simulations_thread,
         args=(evaluator_server_config,),
     )
     thread.start()

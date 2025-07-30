@@ -32,7 +32,7 @@ class ManualUpdate(UpdateRunModel):
                 f"Prior ensemble with ID: {UUID(self.ensemble_id)} does not exist"
             ) from err
 
-    def run_experiment(
+    async def run_experiment(
         self,
         evaluator_server_config: EvaluatorServerConfig,
         rerun_failed_realizations: bool = False,

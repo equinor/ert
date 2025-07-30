@@ -36,7 +36,7 @@ class EvaluateEnsemble(RunModel):
             raise ValueError(f"No ensemble: {self.ensemble_id}") from err
 
     @tracer.start_as_current_span(f"{__name__}.run_experiment")
-    def run_experiment(
+    async def run_experiment(
         self,
         evaluator_server_config: EvaluatorServerConfig,
         rerun_failed_realizations: bool = False,
@@ -54,7 +54,7 @@ class EvaluateEnsemble(RunModel):
         )
 
         self._total_iterations = ensemble.iteration + 1
-        self._evaluate_and_postprocess(
+        await self._evaluate_and_postprocess(
             prior_args,
             ensemble,
             evaluator_server_config,

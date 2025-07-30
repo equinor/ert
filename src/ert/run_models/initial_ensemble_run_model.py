@@ -54,7 +54,7 @@ class InitialEnsembleRunModel(RunModel, ABC):
         super().__init__(**data)
         self._observations = observations
 
-    def _sample_and_evaluate_ensemble(
+    async def _sample_and_evaluate_ensemble(
         self,
         evaluator_server_config: EvaluatorServerConfig,
         simulation_arguments: dict[str, str] | None,
@@ -110,7 +110,7 @@ class InitialEnsembleRunModel(RunModel, ABC):
             np.array(self.active_realizations, dtype=bool),
             ensemble=ensemble_storage,
         )
-        self._evaluate_and_postprocess(
+        await self._evaluate_and_postprocess(
             prior_args,
             ensemble_storage,
             evaluator_server_config,

@@ -205,7 +205,9 @@ class RunModel(BaseModel, ABC):
         return RunModelAPI(
             experiment_name=self.name(),
             get_runtime=self.get_runtime,
-            start_simulations_thread=self.start_simulations_thread,
+            start_simulations_thread=lambda *args, **kwargs: asyncio.run(
+                self.start_simulations_thread(*args, **kwargs)
+            ),
             has_failed_realizations=self.has_failed_realizations,
             supports_rerunning_failed_realizations=self.supports_rerunning_failed_realizations,
             cancel=self.cancel,
@@ -307,7 +309,7 @@ class RunModel(BaseModel, ABC):
             os.environ.pop(key, None)
 
     @tracer.start_as_current_span(f"{__name__}.start_simulations_thread")
-    def start_simulations_thread(
+    async def start_simulations_thread(
         self,
         evaluator_server_config: EvaluatorServerConfig,
         rerun_failed_realizations: bool = False,
@@ -343,7 +345,7 @@ class RunModel(BaseModel, ABC):
                         f"Rerunning failed simulations for run model '{self.name()}'"
                     )
 
-                self.run_experiment(
+                await self.run_experiment(
                     evaluator_server_config=evaluator_server_config,
                     rerun_failed_realizations=rerun_failed_realizations,
                 )
@@ -390,7 +392,7 @@ class RunModel(BaseModel, ABC):
             )
 
     @abstractmethod
-    def run_experiment(
+    async def run_experiment(
         self,
         evaluator_server_config: EvaluatorServerConfig,
         rerun_failed_realizations: bool = False,
@@ -579,18 +581,6 @@ class RunModel(BaseModel, ABC):
 
         return evaluator_task.result()
 
-    # This function needs to be there for the sake of testing that expects sync ee run
-    @tracer.start_as_current_span(f"{__name__}.run_ensemble_evaluator")
-    def run_ensemble_evaluator(
-        self,
-        run_args: list[RunArg],
-        ensemble: Ensemble,
-        ee_config: EvaluatorServerConfig,
-    ) -> list[int]:
-        return asyncio.run(
-            self.run_ensemble_evaluator_async(run_args, ensemble, ee_config)
-        )
-
     def _build_ensemble(
         self,
         run_args: list[RunArg],
@@ -677,7 +667,7 @@ class RunModel(BaseModel, ABC):
                 fixtures=create_workflow_fixtures_from_hooked(fixtures),
             ).run_blocking()
 
-    def _evaluate_and_postprocess(
+    async def _evaluate_and_postprocess(
         self,
         run_args: list[RunArg],
         ensemble: Ensemble,
@@ -706,7 +696,7 @@ class RunModel(BaseModel, ABC):
             ),
         )
         try:
-            successful_realizations = self.run_ensemble_evaluator(
+            successful_realizations = await self.run_ensemble_evaluator_async(
                 run_args,
                 ensemble,
                 evaluator_server_config,

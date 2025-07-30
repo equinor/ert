@@ -32,7 +32,7 @@ class EnsembleExperiment(InitialEnsembleRunModel):
         return self._storage.get_ensemble(self._ensemble_id)
 
     @tracer.start_as_current_span(f"{__name__}.run_experiment")
-    def run_experiment(
+    async def run_experiment(
         self,
         evaluator_server_config: EvaluatorServerConfig,
         rerun_failed_realizations: bool = False,
@@ -42,7 +42,7 @@ class EnsembleExperiment(InitialEnsembleRunModel):
 
         self.run_workflows(fixtures=PreExperimentFixtures(random_seed=self.random_seed))
 
-        self._sample_and_evaluate_ensemble(
+        await self._sample_and_evaluate_ensemble(
             evaluator_server_config,
             None,
             self.target_ensemble,

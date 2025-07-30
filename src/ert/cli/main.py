@@ -140,7 +140,7 @@ def run_cli(args: Namespace, plugin_manager: ErtPluginManager | None = None) -> 
 
     thread = ErtThread(
         name="ert_cli_simulation_thread",
-        target=model.start_simulations_thread,
+        target=model.api.start_simulations_thread,
         args=(evaluator_server_config,),
     )
 

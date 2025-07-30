@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import asyncio
 import dataclasses
 import datetime
 import importlib.metadata
@@ -284,7 +285,7 @@ class EverestRunModel(RunModel):
     def __repr__(self) -> str:
         return f"EverestRunModel(config={self.user_config_file})"
 
-    def start_simulations_thread(
+    async def start_simulations_thread(
         self,
         evaluator_server_config: EvaluatorServerConfig,
         rerun_failed_realizations: bool = False,
@@ -295,7 +296,7 @@ class EverestRunModel(RunModel):
         traceback_str: str | None = None
         try:
             logger.debug("Starting Everest simulations thread")
-            self.run_experiment(evaluator_server_config)
+            await self.run_experiment(evaluator_server_config)
         except Exception as e:
             failed = True
             exception = e
@@ -350,7 +351,7 @@ class EverestRunModel(RunModel):
                 )
             )
 
-    def run_experiment(
+    async def run_experiment(
         self,
         evaluator_server_config: EvaluatorServerConfig,
         rerun_failed_realizations: bool = False,
@@ -526,7 +527,9 @@ class EverestRunModel(RunModel):
             }
         )
         assert self._eval_server_cfg is not None
-        self._evaluate_and_postprocess(run_args, ensemble, self._eval_server_cfg)
+        asyncio.run(
+            self._evaluate_and_postprocess(run_args, ensemble, self._eval_server_cfg)
+        )
 
         # If necessary, delete the run path:
         self._delete_run_path(run_args)

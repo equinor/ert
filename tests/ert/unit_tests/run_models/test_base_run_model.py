@@ -61,10 +61,10 @@ def test_run_model_does_not_support_rerun_failed_realizations(minimum_case):
     assert not brm.supports_rerunning_failed_realizations
 
 
-def test_status_when_rerunning_on_non_rerunnable_model(use_tmpdir):
+async def test_status_when_rerunning_on_non_rerunnable_model(use_tmpdir):
     brm = create_run_model()
     brm._status_queue = SimpleQueue()
-    brm.start_simulations_thread(
+    await brm.start_simulations_thread(
         EvaluatorServerConfig(use_token=False), rerun_failed_realizations=True
     )
     assert brm._status_queue.get() == EndEvent(
