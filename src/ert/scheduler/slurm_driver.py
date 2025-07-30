@@ -217,13 +217,16 @@ class SlurmDriver(Driver):
 
     async def kill(self, iens: int) -> None:
         if iens not in self._submit_locks:
-            logger.error(f"scancel failed, realization {iens} has never been submitted")
+            logger.debug(
+                f"scancel was not run, realization {iens} has never been submitted"
+            )
             return
 
         async with self._submit_locks[iens]:
             if iens not in self._iens2jobid:
-                logger.error(
-                    f"scancel failed, realization {iens} was not submitted properly"
+                logger.warning(
+                    f"scancel failed, realization {iens} was not submitted properly, "
+                    "or it has already finished"
                 )
                 return
 
