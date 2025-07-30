@@ -667,12 +667,12 @@ def test_egg_model_wells_json_output_no_none(copy_egg_test_data_to_tmp):
 @pytest.mark.everest_models_test
 @pytest.mark.requires_eclipse
 @pytest.mark.timeout(0)
-def test_egg_snapshot(snapshot, copy_egg_test_data_to_tmp):
+async def test_egg_snapshot(snapshot, copy_egg_test_data_to_tmp):
     config = EverestConfig.load_file(CONFIG_FILE)
 
     run_model = EverestRunModel.create(config)
     evaluator_server_config = EvaluatorServerConfig()
-    run_model.run_experiment(evaluator_server_config)
+    await run_model.run_experiment(evaluator_server_config)
 
     best_batch = [b for b in run_model._ever_storage.data.batches if b.is_improvement][
         -1

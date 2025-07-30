@@ -184,10 +184,10 @@ def copy_egg_test_data_to_tmp(tmp_path, monkeypatch):
 
 
 @pytest.fixture
-def cached_example(pytestconfig):
+async def cached_example(pytestconfig):
     cache = pytestconfig.cache
 
-    def run_config(test_data_case: str):
+    async def run_config(test_data_case: str):
         test_data_name = test_data_case.replace("/", ".")
         if cache.get(f"cached_example:{test_data_case}", None) is None:
             my_tmpdir = cache.mkdir("cached_example_case" + test_data_name)
@@ -210,7 +210,7 @@ def cached_example(pytestconfig):
             run_model = EverestRunModel.create(config, status_queue=status_queue)
             evaluator_server_config = EvaluatorServerConfig()
             try:
-                run_model.run_experiment(evaluator_server_config)
+                await run_model.run_experiment(evaluator_server_config)
             except Exception as e:
                 raise Exception(f"Failed running {config_path} with error: {e}") from e
 

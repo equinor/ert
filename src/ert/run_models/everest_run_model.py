@@ -8,6 +8,7 @@ import logging
 import os
 import queue
 import shutil
+import threading
 import traceback
 from collections.abc import Callable, MutableSequence
 from enum import IntEnum, auto
@@ -446,11 +447,27 @@ class EverestRunModel(RunModel):
             if self._transforms
             else None
         )
+
+        def run_new_event_loop(a, b):
+            thread_result = queue.Queue()
+
+            thread = threading.Thread(
+                target=lambda: asyncio.run(run_thread(a, b, thread_result))
+            )
+            thread.start()
+            thread.join()
+            return thread_result.get()
+
+        async def run_thread(a, b, queue: queue.Queue):
+            nonlocal self
+            res = await self._forward_model_evaluator(a, b)
+            queue.put(res)
+
         try:
             optimizer = BasicOptimizer(
                 enopt_config=enopt_config,
                 transforms=transforms,
-                evaluator=self._forward_model_evaluator,
+                evaluator=lambda a, b: run_new_event_loop(a, b),
             )
         except ValidationError as exc:
             ert_version = importlib.metadata.version("ert")
@@ -468,7 +485,7 @@ class EverestRunModel(RunModel):
 
         return optimizer, initial_guesses
 
-    def _run_forward_model(
+    async def _run_forward_model(
         self,
         sim_to_control_vector: NDArray[np.float64],
         sim_to_model_realization: list[int],
@@ -527,10 +544,7 @@ class EverestRunModel(RunModel):
             }
         )
         assert self._eval_server_cfg is not None
-        asyncio.run(
-            self._evaluate_and_postprocess(run_args, ensemble, self._eval_server_cfg)
-        )
-
+        await self._evaluate_and_postprocess(run_args, ensemble, self._eval_server_cfg)
         # If necessary, delete the run path:
         self._delete_run_path(run_args)
 
@@ -540,7 +554,7 @@ class EverestRunModel(RunModel):
         # Return the results, together with the indices of the evaluated controls:
         return objectives, constraints
 
-    def _forward_model_evaluator(
+    async def _forward_model_evaluator(
         self, control_values: NDArray[np.float64], evaluator_context: EvaluatorContext
     ) -> EvaluatorResult:
         logger.debug(f"Evaluating batch {self._batch_id}")
@@ -636,7 +650,7 @@ class EverestRunModel(RunModel):
             ]
 
             # Run the forward models:
-            objectives, constraints = self._run_forward_model(
+            objectives, constraints = await self._run_forward_model(
                 sim_to_control_vector=active_control_vectors,
                 sim_to_model_realization=model_realizations,
                 sim_to_perturbation=perturbation_indices.tolist(),

@@ -63,8 +63,8 @@ def make_api_snapshot(api) -> dict[str, Any]:
         ),
     ],
 )
-def test_api_snapshots(config_file, snapshot, cached_example):
-    config_path, config_file, optimal_result_json, _ = cached_example(
+async def test_api_snapshots(config_file, snapshot, cached_example):
+    config_path, config_file, optimal_result_json, _ = await cached_example(
         f"math_func/{config_file}"
     )
     config_content = yaml.safe_load(Path(config_file).read_text(encoding="utf-8"))

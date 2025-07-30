@@ -346,7 +346,7 @@ def test_everest2ropt_snapshot(case, snapshot):
     snapshot.assert_match(ropt_config_str, "ropt_config.json")
 
 
-def test_everest2ropt_validation_error(
+async def test_everest2ropt_validation_error(
     change_to_tmpdir, ever_config, monkeypatch
 ) -> None:
     def _patched_everest2ropt(*args, **kwargs):
@@ -358,7 +358,7 @@ def test_everest2ropt_validation_error(
     monkeypatch.setattr(everest_run_model, "everest2ropt", _patched_everest2ropt)
     evaluator_server_config = EvaluatorServerConfig()
     with pytest.raises(ValueError, match=r"Validation error\(s\) in ropt"):
-        run_model.run_experiment(evaluator_server_config)
+        await run_model.run_experiment(evaluator_server_config)
 
 
 def test_transforms_controls_scaling(ever_config):

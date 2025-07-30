@@ -68,7 +68,7 @@ def test_math_func_advanced(cached_example):
 
 
 @pytest.mark.integration_test
-def test_remove_run_path(copy_math_func_test_data_to_tmp):
+async def test_remove_run_path(copy_math_func_test_data_to_tmp):
     with open("config_minimal.yml", encoding="utf-8") as file:
         config_yaml = yaml.safe_load(file)
         config_yaml["simulator"] = {"delete_run_path": True}
@@ -84,7 +84,7 @@ def test_remove_run_path(copy_math_func_test_data_to_tmp):
 
     run_model = EverestRunModel.create(config)
     evaluator_server_config = EvaluatorServerConfig()
-    run_model.run_experiment(evaluator_server_config)
+    await run_model.run_experiment(evaluator_server_config)
 
     # Check the failed simulation folder still exists
     assert os.path.exists(
@@ -106,7 +106,7 @@ def test_remove_run_path(copy_math_func_test_data_to_tmp):
     config.simulator.delete_run_path = False
     run_model = EverestRunModel.create(config)
     evaluator_server_config = EvaluatorServerConfig()
-    run_model.run_experiment(evaluator_server_config)
+    await run_model.run_experiment(evaluator_server_config)
 
     # Check the all simulation folder exist when delete_run_path is set to False
     assert os.path.exists(
@@ -123,7 +123,7 @@ def test_remove_run_path(copy_math_func_test_data_to_tmp):
 
 
 @pytest.mark.integration_test
-def test_math_func_auto_scaled_controls(copy_math_func_test_data_to_tmp):
+async def test_math_func_auto_scaled_controls(copy_math_func_test_data_to_tmp):
     # Arrange
     config = EverestConfig.load_file("config_minimal.yml")
     config.controls[0].scaled_range = (0.3, 0.7)
@@ -146,7 +146,7 @@ def test_math_func_auto_scaled_controls(copy_math_func_test_data_to_tmp):
     # Act
     run_model = EverestRunModel.create(config)
     evaluator_server_config = EvaluatorServerConfig()
-    run_model.run_experiment(evaluator_server_config)
+    await run_model.run_experiment(evaluator_server_config)
 
     optimal_result = get_optimal_result(config.optimization_output_dir)
 
@@ -164,7 +164,7 @@ def test_math_func_auto_scaled_controls(copy_math_func_test_data_to_tmp):
 
 
 @pytest.mark.integration_test
-def test_math_func_auto_scaled_objectives(copy_math_func_test_data_to_tmp):
+async def test_math_func_auto_scaled_objectives(copy_math_func_test_data_to_tmp):
     config = EverestConfig.load_file("config_multiobj.yml")
     config_dict = config.model_dump(exclude_none=True)
 
@@ -176,7 +176,7 @@ def test_math_func_auto_scaled_objectives(copy_math_func_test_data_to_tmp):
     config = EverestConfig.model_validate(config_dict)
     run_model = EverestRunModel.create(config)
     evaluator_server_config = EvaluatorServerConfig()
-    run_model.run_experiment(evaluator_server_config)
+    await run_model.run_experiment(evaluator_server_config)
 
     optim = get_optimal_result(config.optimization_output_dir).total_objective
 
@@ -188,7 +188,7 @@ def test_math_func_auto_scaled_objectives(copy_math_func_test_data_to_tmp):
 
 
 @pytest.mark.integration_test
-def test_math_func_auto_scaled_constraints(copy_math_func_test_data_to_tmp):
+async def test_math_func_auto_scaled_constraints(copy_math_func_test_data_to_tmp):
     config = EverestConfig.load_file("config_advanced.yml")
     config_dict = config.model_dump(exclude_none=True)
 
@@ -203,7 +203,7 @@ def test_math_func_auto_scaled_constraints(copy_math_func_test_data_to_tmp):
     config = EverestConfig.model_validate(config_dict)
     run_model = EverestRunModel.create(config)
     evaluator_server_config = EvaluatorServerConfig()
-    run_model.run_experiment(evaluator_server_config)
+    await run_model.run_experiment(evaluator_server_config)
     result1 = get_optimal_result(config.optimization_output_dir)
 
     # Run the equivalent without auto-scaling:
@@ -213,7 +213,7 @@ def test_math_func_auto_scaled_constraints(copy_math_func_test_data_to_tmp):
     config = EverestConfig.model_validate(config_dict)
     run_model = EverestRunModel.create(config)
     evaluator_server_config = EvaluatorServerConfig()
-    run_model.run_experiment(evaluator_server_config)
+    await run_model.run_experiment(evaluator_server_config)
     result2 = get_optimal_result(config.optimization_output_dir)
 
     assert result1.total_objective == pytest.approx(result2.total_objective)
@@ -233,7 +233,7 @@ def test_ensemble_creation(cached_example):
 
 
 @pytest.mark.integration_test
-def test_that_math_func_violating_output_constraints_has_no_result(
+async def test_that_math_func_violating_output_constraints_has_no_result(
     copy_math_func_test_data_to_tmp,
 ):
     config = EverestConfig.load_file("config_advanced.yml")
@@ -246,13 +246,13 @@ def test_that_math_func_violating_output_constraints_has_no_result(
     config = EverestConfig.model_validate(config_dict)
     run_model = EverestRunModel.create(config)
     evaluator_server_config = EvaluatorServerConfig()
-    run_model.run_experiment(evaluator_server_config)
+    await run_model.run_experiment(evaluator_server_config)
     optimal_result = get_optimal_result(config.optimization_output_dir)
     assert optimal_result is None  # No feasible result
 
 
 @pytest.mark.integration_test
-def test_that_math_func_violating_output_constraints_has_a_result(
+async def test_that_math_func_violating_output_constraints_has_a_result(
     copy_math_func_test_data_to_tmp,
 ):
     config = EverestConfig.load_file("config_advanced.yml")
@@ -265,13 +265,13 @@ def test_that_math_func_violating_output_constraints_has_a_result(
     config = EverestConfig.model_validate(config_dict)
     run_model = EverestRunModel.create(config)
     evaluator_server_config = EvaluatorServerConfig()
-    run_model.run_experiment(evaluator_server_config)
+    await run_model.run_experiment(evaluator_server_config)
     optimal_result = get_optimal_result(config.optimization_output_dir)
     assert optimal_result is not None  # Feasible result
 
 
 @pytest.mark.integration_test
-def test_that_math_func_violating_input_constraints_has_no_result(
+async def test_that_math_func_violating_input_constraints_has_no_result(
     copy_math_func_test_data_to_tmp,
 ):
     config = EverestConfig.load_file("config_advanced.yml")
@@ -284,13 +284,13 @@ def test_that_math_func_violating_input_constraints_has_no_result(
     config = EverestConfig.model_validate(config_dict)
     run_model = EverestRunModel.create(config)
     evaluator_server_config = EvaluatorServerConfig()
-    run_model.run_experiment(evaluator_server_config)
+    await run_model.run_experiment(evaluator_server_config)
     optimal_result = get_optimal_result(config.optimization_output_dir)
     assert optimal_result is None  # No feasible result
 
 
 @pytest.mark.integration_test
-def test_that_math_func_violating_input_constraints_has_a_result(
+async def test_that_math_func_violating_input_constraints_has_a_result(
     copy_math_func_test_data_to_tmp,
 ):
     config = EverestConfig.load_file("config_advanced.yml")
@@ -303,6 +303,6 @@ def test_that_math_func_violating_input_constraints_has_a_result(
     config = EverestConfig.model_validate(config_dict)
     run_model = EverestRunModel.create(config)
     evaluator_server_config = EvaluatorServerConfig()
-    run_model.run_experiment(evaluator_server_config)
+    await run_model.run_experiment(evaluator_server_config)
     optimal_result = get_optimal_result(config.optimization_output_dir)
     assert optimal_result is not None  # Feasible result

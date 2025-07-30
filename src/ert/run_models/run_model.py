@@ -693,11 +693,13 @@ class RunModel(BaseModel, ABC):
             ),
         )
         try:
+            print("RUN EE")
             successful_realizations = await self.run_ensemble_evaluator_async(
                 run_args,
                 ensemble,
                 evaluator_server_config,
             )
+            print("RAN EE")
         except UserCancelled:
             self.active_realizations = [False for _ in self.active_realizations]
             raise

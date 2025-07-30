@@ -16,7 +16,7 @@ from tests.everest.utils import skipif_no_everest_models
 
 @pytest.mark.integration_test
 @pytest.mark.parametrize("test_deprecated", [True, False])
-def test_workflow_will_run_during_experiment(
+async def test_workflow_will_run_during_experiment(
     min_config, test_deprecated, tmp_path, monkeypatch
 ):
     monkeypatch.chdir(tmp_path)
@@ -81,7 +81,7 @@ if __name__ == "__main__":
 
     run_model = EverestRunModel.create(config)
     evaluator_server_config = EvaluatorServerConfig()
-    run_model.run_experiment(evaluator_server_config)
+    await run_model.run_experiment(evaluator_server_config)
 
     for name in ("pre_simulation", "post_simulation"):
         output_file_path = Path.cwd() / f"{name}.txt"
@@ -97,7 +97,7 @@ if __name__ == "__main__":
 @pytest.mark.everest_models_test
 @skipif_no_everest_models
 @pytest.mark.parametrize("config", ("array", "index"))
-def test_state_modifier_workflow_run(
+async def test_state_modifier_workflow_run(
     config: str,
     copy_testdata_tmpdir: Callable[[str | None], Path],
 ) -> None:
@@ -107,7 +107,7 @@ def test_state_modifier_workflow_run(
         EverestConfig.load_file(f"everest/model/{config}.yml")
     )
     evaluator_server_config = EvaluatorServerConfig()
-    run_model.run_experiment(evaluator_server_config)
+    await run_model.run_experiment(evaluator_server_config)
     paths = list(Path.cwd().glob("**/simulation_0/RESULT.SCH"))
     assert paths
     for path in paths:

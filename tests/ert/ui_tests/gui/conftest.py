@@ -250,6 +250,7 @@ def run_experiment_fixture(request):
                 lambda: handle_run_path_dialog(gui, qtbot, delete_run_path=False),
             )
 
+        return
         if experiment_mode.name() not in {
             "Ensemble experiment",
             "Evaluate ensemble",

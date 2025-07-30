@@ -138,11 +138,11 @@ def test_render_executable(copy_template_test_data_to_tmp):
 
 
 @pytest.mark.integration_test
-def test_install_template(copy_template_test_data_to_tmp):
+async def test_install_template(copy_template_test_data_to_tmp):
     config = EverestConfig.load_file(TMPL_CONFIG_FILE)
     run_model = EverestRunModel.create(config)
     evaluator_server_config = EvaluatorServerConfig()
-    run_model.run_experiment(evaluator_server_config)
+    await run_model.run_experiment(evaluator_server_config)
 
 
 def test_well_order_template(change_to_tmpdir):
@@ -178,7 +178,7 @@ def test_well_order_template(change_to_tmpdir):
 
 
 @pytest.mark.integration_test
-def test_user_specified_data_n_template(
+async def test_user_specified_data_n_template(
     copy_math_func_test_data_to_tmp,
 ):
     """
@@ -230,7 +230,7 @@ def test_user_specified_data_n_template(
 
     run_model = EverestRunModel.create(config)
     evaluator_server_config = EvaluatorServerConfig()
-    run_model.run_experiment(evaluator_server_config)
+    await run_model.run_experiment(evaluator_server_config)
 
     # The data should have been loaded and passed through template to file.
     expected_file = os.path.join(

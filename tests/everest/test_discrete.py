@@ -7,7 +7,7 @@ from tests.everest.utils import get_optimal_result
 
 
 @pytest.mark.integration_test
-def test_discrete_optimizer(copy_math_func_test_data_to_tmp):
+async def test_discrete_optimizer(copy_math_func_test_data_to_tmp):
     # Arrange
     config = EverestConfig.load_file("config_minimal.yml")
     config_dict = {
@@ -40,7 +40,7 @@ def test_discrete_optimizer(copy_math_func_test_data_to_tmp):
     # Act
     run_model = EverestRunModel.create(config)
     evaluator_server_config = EvaluatorServerConfig()
-    run_model.run_experiment(evaluator_server_config)
+    await run_model.run_experiment(evaluator_server_config)
 
     optimal_result = get_optimal_result(config.optimization_output_dir)
 
