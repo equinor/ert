@@ -57,7 +57,7 @@ async def test_run_and_cancel_legacy_ensemble(
 
         _ = await event_queue.get()
         # Cancel the ensemble upon the arrival of the first event
-        evaluator._end_queue.put("END")
+        evaluator._end_event.set()
         try:
             await evaluator.wait_for_evaluation_result()
             assert evaluator._ensemble.status == state.ENSEMBLE_STATE_STOPPED

@@ -5,7 +5,7 @@ import stat
 from collections.abc import Callable
 from contextlib import _AsyncGeneratorContextManager, asynccontextmanager
 from pathlib import Path
-from queue import SimpleQueue
+from threading import Event
 from unittest.mock import MagicMock, Mock
 
 import pytest
@@ -189,16 +189,16 @@ def evaluator_to_use(
 ) -> _AsyncGeneratorContextManager[EnsembleEvaluator, None]:
     @asynccontextmanager
     async def _evaluator_to_use(
-        end_queue: SimpleQueue | None = None,
+        end_event: Event | None = None,
         event_handler: Callable[[EEEvent], None] | None = None,
         ensemble: TestEnsemble | LegacyEnsemble | None = None,
     ):
-        if end_queue is None:
-            end_queue = SimpleQueue()
+        if end_event is None:
+            end_event = Event()
         if ensemble is None:
             ensemble = TestEnsemble(0, 2, 2, id_="0")
         evaluator = EnsembleEvaluator(
-            ensemble, make_ee_config(use_token=False), end_queue, event_handler
+            ensemble, make_ee_config(use_token=False), end_event, event_handler
         )
         evaluator._batching_interval = 0.5  # batching can be faster for tests
         run_task = asyncio.create_task(evaluator.run_and_get_successful_realizations())
