@@ -122,7 +122,6 @@ class Scheduler:
         for task in self._job_tasks.values():
             if not task.done():
                 task.cancel()
-
         _, pending = await asyncio.wait(
             self._job_tasks.values(),
             timeout=30.0,
