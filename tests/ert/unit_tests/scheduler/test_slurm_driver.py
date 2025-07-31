@@ -256,10 +256,11 @@ async def test_faulty_sbatch_produces_error_log(monkeypatch, tmp_path):
 
 
 async def test_kill_before_submit_logs_error(caplog):
+    caplog.set_level(logging.DEBUG)
     driver = SlurmDriver()
     await driver.kill(0)
-    assert "ERROR" in caplog.text
-    assert "realization 0 has never been submitted" in caplog.text
+    assert "DEBUG" in caplog.text
+    assert "scancel was not run, realization 0 has never been submitted" in caplog.text
 
 
 @pytest.fixture(autouse=True)

@@ -991,10 +991,11 @@ def test_filter_job_ids_on_submission_time(time_submitted_modifier, expected_res
 
 
 async def test_kill_before_submit_logs_error(caplog):
+    caplog.set_level(logging.DEBUG)
     driver = LsfDriver()
     await driver.kill(0)
-    assert "ERROR" in caplog.text
-    assert "realization 0 has never been submitted" in caplog.text
+    assert "DEBUG" in caplog.text
+    assert "LSF kill was not run, realization 0 has never been submitted" in caplog.text
 
 
 @pytest.fixture(autouse=True)
