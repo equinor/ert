@@ -9,6 +9,7 @@ import logging
 import os
 import queue
 import shutil
+import threading
 import time
 import traceback
 import uuid
@@ -166,7 +167,7 @@ class RunModel(BaseModel, ABC):
     _context_env: dict[str, str] = PrivateAttr(default_factory=dict)
     _model_config: ModelConfig = PrivateAttr()
     _rng: np.random.Generator = PrivateAttr()
-    _end_queue: queue.SimpleQueue[str] = PrivateAttr(default_factory=queue.SimpleQueue)
+    _end_event: threading.Event = PrivateAttr(default_factory=threading.Event)
     _iter_snapshot: dict[int, EnsembleSnapshot] = PrivateAttr(default_factory=dict)
     _is_rerunning_failed_realizations: bool = PrivateAttr(False)
     _run_paths: Runpaths = PrivateAttr()
@@ -216,7 +217,7 @@ class RunModel(BaseModel, ABC):
 
     def log_at_startup(self) -> None:
         keys_to_drop = [
-            "_end_queue",
+            "_end_event",
             "_queue_config",
             "_status_queue",
             "_storage",
@@ -263,7 +264,7 @@ class RunModel(BaseModel, ABC):
         return len(self._initial_realizations_mask)
 
     def cancel(self) -> None:
-        self._end_queue.put("END")
+        self._end_event.set()
 
     def has_failed_realizations(self) -> bool:
         return any(self._create_mask_from_failed_realizations())
@@ -536,16 +537,15 @@ class RunModel(BaseModel, ABC):
         ensemble: Ensemble,
         ee_config: EvaluatorServerConfig,
     ) -> list[int]:
-        if not self._end_queue.empty():
+        if self._end_event.is_set():
             logger.debug("Run model cancelled - pre evaluation")
-            self._end_queue.get()
             raise UserCancelled("Experiment cancelled by user in pre evaluation")
 
         ee_ensemble = self._build_ensemble(run_args, ensemble.experiment_id)
         evaluator = EnsembleEvaluator(
             ee_ensemble,
             ee_config,
-            end_queue=self._end_queue,
+            end_event=self._end_event,
             event_handler=functools.partial(
                 self.forward_event_from_ee, iteration=ensemble.iteration
             ),
@@ -560,9 +560,8 @@ class RunModel(BaseModel, ABC):
 
         logger.debug("tasks complete")
 
-        if not self._end_queue.empty():
+        if self._end_event.is_set():
             logger.debug("Run model cancelled - post evaluation")
-            self._end_queue.get()
             try:
                 await evaluator_task
             except Exception as e:
