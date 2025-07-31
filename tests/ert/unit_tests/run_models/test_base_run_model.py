@@ -422,7 +422,7 @@ def test_get_number_of_active_realizations_varies_when_rerun_or_new_iteration(
 
 async def test_terminate_in_pre_evaluation(use_tmpdir):
     brm = create_run_model()
-    brm._end_queue.put("terminate")
+    brm._end_event.set()
     with pytest.raises(
         UserCancelled, match="Experiment cancelled by user in pre evaluation"
     ):
@@ -440,12 +440,12 @@ async def test_terminate_in_post_evaluation(evaluator, use_tmpdir):
     evaluator()._server_started = asyncio.Future()
     evaluator()._server_started.set_result(None)
 
-    async def send_terminate(end_queue) -> bool:
-        end_queue.put("terminate")
+    async def send_terminate(end_event) -> bool:
+        end_event.set()
         return True
 
     brm = create_run_model()
-    evaluator().wait_for_evaluation_result = MethodType(send_terminate, brm._end_queue)
+    evaluator().wait_for_evaluation_result = MethodType(send_terminate, brm._end_event)
     with pytest.raises(
         UserCancelled,
         match="Experiment cancelled by user in post evaluation",

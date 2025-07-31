@@ -1,7 +1,7 @@
 import asyncio
 import datetime
 from functools import partial
-from queue import SimpleQueue
+from threading import Event
 
 import pytest
 import zmq.asyncio
@@ -58,7 +58,7 @@ async def test_when_task_fails_evaluator_raises_exception(
     evaluator = EnsembleEvaluator(
         TestEnsemble(0, 2, 2, id_="0"),
         make_ee_config(use_token=False),
-        end_queue=SimpleQueue(),
+        end_event=Event(),
     )
 
     monkeypatch.setattr(
@@ -74,7 +74,7 @@ async def test_evaluator_raises_on_invalid_dispatch_event(make_ee_config):
     evaluator = EnsembleEvaluator(
         TestEnsemble(0, 2, 2, id_="0"),
         make_ee_config(),
-        end_queue=SimpleQueue(),
+        end_event=Event(),
     )
 
     with pytest.raises(ValidationError):
@@ -87,7 +87,7 @@ async def test_evaluator_handles_dispatchers_connected(
     evaluator = EnsembleEvaluator(
         TestEnsemble(0, 2, 2, id_="0"),
         make_ee_config(),
-        end_queue=SimpleQueue(),
+        end_event=Event(),
     )
 
     await evaluator.handle_dispatch(b"dispatcher-1", CONNECT_MSG)
@@ -115,7 +115,7 @@ async def test_evaluator_raises_on_start_with_address_in_use(make_ee_config):
         evaluator = EnsembleEvaluator(
             TestEnsemble(0, 2, 2, id_="0"),
             ee_config,
-            end_queue=SimpleQueue(),
+            end_event=Event(),
         )
         with pytest.raises(
             zmq.error.ZMQBindError, match="Could not bind socket to random port"
@@ -130,7 +130,7 @@ async def test_no_config_raises_valueerror_when_running():
     evaluator = EnsembleEvaluator(
         TestEnsemble(0, 2, 2, id_="0"),
         None,
-        end_queue=SimpleQueue(),
+        end_event=Event(),
     )
     with pytest.raises(ValueError, match="no config for evaluator"):
         await evaluator.run_and_get_successful_realizations()
@@ -158,7 +158,7 @@ async def test_when_task_prematurely_ends_raises_exception(
     evaluator = EnsembleEvaluator(
         TestEnsemble(0, 2, 2, id_="0"),
         make_ee_config(),
-        end_queue=SimpleQueue(),
+        end_event=Event(),
         event_handler=event_handler,
     )
     monkeypatch.setattr(

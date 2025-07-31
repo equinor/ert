@@ -2,9 +2,9 @@ from __future__ import annotations
 
 import asyncio
 import logging
+import threading
 import traceback
 from collections.abc import Awaitable, Callable, Iterable, Sequence
-from queue import SimpleQueue
 from typing import Any, cast, get_args
 
 import zmq.asyncio
@@ -63,7 +63,7 @@ class EnsembleEvaluator:
         self,
         ensemble: Ensemble,
         config: EvaluatorServerConfig,
-        end_queue: SimpleQueue[str],
+        end_event: threading.Event,
         event_handler: Callable[[EEEvent], None] | None = None,
     ) -> None:
         self._config: EvaluatorServerConfig = config
@@ -97,7 +97,7 @@ class EnsembleEvaluator:
             )
         )
         self._event_handler = event_handler
-        self._end_queue = end_queue
+        self._end_event = end_event
 
         self._publisher_receiving_timeout: float = 60.0
         self._evaluation_result: asyncio.Future[bool] = asyncio.Future()
@@ -161,11 +161,10 @@ class EnsembleEvaluator:
                 self._evaluation_result.set_result(False)
                 return
 
-    async def _monitor_end_queue(self) -> None:
+    async def _monitor_end_event(self) -> None:
         while True:
-            if not self._end_queue.empty():
+            if self._end_event.is_set():
                 logger.debug("Run model cancelled - during evaluation")
-                self._end_queue.get()
                 await self._signal_cancel()
                 logger.debug("Run model cancelled - during evaluation - cancel sent")
             await asyncio.sleep(0.1)
@@ -421,7 +420,7 @@ class EnsembleEvaluator:
                 name="ensemble_task",
             ),
             asyncio.create_task(
-                self._monitor_end_queue(), name="monitor_end_queue_task"
+                self._monitor_end_event(), name="monitor_end_event_task"
             ),
         ]
 
@@ -452,7 +451,7 @@ class EnsembleEvaluator:
                     "listener_task",
                     "ensemble_cancellation_task",
                     "publisher_task",
-                    "monitor_end_queue_task",
+                    "monitor_end_event_task",
                 }:
                     timeout = self.CLOSE_SERVER_TIMEOUT
                 else:
