@@ -193,7 +193,6 @@ class EnsembleEvaluator:
     async def _terminate_all_dispatchers(self) -> None:
         if (scheduler := self.ensemble._scheduler) is not None:
             await scheduler._running.wait()
-            scheduler._cancelled_by_evaluator = True
         await self._send_terminate_messages_to_dispatchers()
         await self._ensemble.cancel()
 

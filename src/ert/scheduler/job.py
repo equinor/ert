@@ -212,11 +212,7 @@ class Job:
         for attempt in range(max_submit):
             await self._submit_and_run_once(sem)
 
-            if (
-                self.returncode.cancelled()
-                or self._scheduler._cancelled
-                or self._scheduler._cancelled_by_evaluator
-            ):
+            if self.returncode.cancelled() or self._scheduler._cancelled:
                 break
 
             if self.returncode.result() == 0:
