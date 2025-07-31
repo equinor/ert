@@ -34,7 +34,7 @@ class ForwardModelRunner:
         self.steps: list[ForwardModelStep] = []
         for index, step_data in enumerate(steps_data["jobList"]):
             self.steps.append(ForwardModelStep(step_data, index))
-
+        self._currently_running_step: ForwardModelStep | None = None
         self._set_environment()
 
     def _read_manifest(self) -> dict[str, Manifest] | None:

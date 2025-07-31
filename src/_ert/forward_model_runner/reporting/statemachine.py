@@ -28,7 +28,7 @@ class StateMachine:
         finished = (Finish,)
         self._handler: dict[Any, Callable[[Any], None]] = {}
         self._transitions = {
-            None: initialized,
+            None: (*initialized, Exited),
             initialized: steps + checksum + finished,
             steps: steps + checksum + finished,
             checksum: checksum + finished,

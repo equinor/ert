@@ -75,6 +75,8 @@ class Event(Reporter):
         ack_timeout: float | None = None,
         max_retries: int | None = None,
         finished_event_timeout: float | None = None,
+        ens_id: str | None = None,
+        real_id: str | None = None,
     ) -> None:
         self._evaluator_url = evaluator_url
         self._token = token
@@ -85,8 +87,8 @@ class Event(Reporter):
         self._statemachine.add_handler((Checksum,), self._checksum_handler)
         self._statemachine.add_handler((Finish,), self._finished_handler)
 
-        self._ens_id: str | None = None
-        self._real_id: str | None = None
+        self._ens_id = ens_id
+        self._real_id = real_id
         self._event_queue: queue.Queue[DispatcherEvent | EventSentinel] = queue.Queue()
         self._event_publisher_thread = ErtThread(
             target=self._event_publisher, should_raise=False
@@ -183,17 +185,17 @@ class Event(Reporter):
         self._event_publisher_thread.start()
 
     def _step_handler(self, msg: Start | Running | Exited) -> None:
-        assert msg.step is not None
+        step_name = msg.step.name() if msg.step is not None else "Unknown"
         assert self._ens_id is not None
         assert self._real_id is not None
-        step_name = msg.step.name()
         step_msg: StepMessage = {
             "ensemble": self._ens_id,
-            "real": self._real_id,
-            "fm_step": str(msg.step.index),
+            "real": self._real_id if self._real_id is not None else "Unknown",
+            "fm_step": str(msg.step.index if msg.step is not None else 0),
         }
         if isinstance(msg, Start):
             logger.debug(f"Step {step_name} was successfully started")
+            assert msg.step is not None
             self._dump_event(
                 ForwardModelStepStart(
                     **step_msg,
@@ -222,7 +224,7 @@ class Event(Reporter):
             else:
                 logger.error(
                     STEP_EXIT_FAILED_STRING_TEMPLATE.format(
-                        step_name=msg.step.name(),
+                        step_name=step_name,
                         exit_code=msg.exit_code,
                         error_message=msg.error_message,
                     )

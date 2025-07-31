@@ -50,6 +50,7 @@ def _setup_reporters(
     dispatch_url: str | None,
     ee_token: str | None = None,
     experiment_id: str | None = None,
+    real_id: str | None = None,
 ) -> list[reporting.Reporter]:
     reporters: list[reporting.Reporter] = []
     if is_interactive_run:
@@ -58,7 +59,12 @@ def _setup_reporters(
         reporters.append(reporting.File())
         if dispatch_url is not None:
             reporters.append(
-                reporting.Event(evaluator_url=dispatch_url, token=ee_token)
+                reporting.Event(
+                    evaluator_url=dispatch_url,
+                    token=ee_token,
+                    real_id=real_id,
+                    ens_id=ens_id,
+                )
             )
     else:
         reporters.append(reporting.File())
@@ -202,14 +208,11 @@ def fm_dispatch(args: list[str]) -> None:
     ens_id = fm_description.get("ens_id")
     ee_token = fm_description.get("ee_token")
     dispatch_url = fm_description.get("dispatch_url")
+    real_id = fm_description.get("real_id")
 
     is_interactive_run = len(parsed_args.steps) > 0
     reporters = _setup_reporters(
-        is_interactive_run,
-        ens_id,
-        dispatch_url,
-        ee_token,
-        experiment_id,
+        is_interactive_run, ens_id, dispatch_url, ee_token, experiment_id, str(real_id)
     )
 
     fm_runner = ForwardModelRunner(fm_description)
