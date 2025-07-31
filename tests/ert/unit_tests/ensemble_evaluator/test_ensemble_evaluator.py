@@ -192,21 +192,6 @@ async def evaluator_to_use_fixture(make_ee_config):
     evaluator._batching_interval = 0.5  # batching can be faster for tests
     run_task = asyncio.create_task(evaluator.run_and_get_successful_realizations())
     await evaluator._server_started
-    yield evaluator
-    evaluator.stop()
-    await run_task
-
-
-@pytest.fixture(name="evaluator_to_use2")
-async def evaluator_to_use_fixture2(make_ee_config):
-    ensemble = TestEnsemble(0, 2, 2, id_="0")
-    event_queue = asyncio.Queue()
-    evaluator = EnsembleEvaluator(
-        ensemble, make_ee_config(use_token=False), SimpleQueue(), event_queue.put_nowait
-    )
-    evaluator._batching_interval = 0.5  # batching can be faster for tests
-    run_task = asyncio.create_task(evaluator.run_and_get_successful_realizations())
-    await evaluator._server_started
     yield (evaluator, event_queue)
     evaluator.stop()
     await run_task
@@ -214,8 +199,8 @@ async def evaluator_to_use_fixture2(make_ee_config):
 
 @pytest.mark.integration_test
 @pytest.mark.timeout(20)
-async def test_restarted_jobs_do_not_have_error_msgs(evaluator_to_use2):
-    (evaluator, event_queue) = evaluator_to_use2
+async def test_restarted_jobs_do_not_have_error_msgs(evaluator_to_use):
+    (evaluator, event_queue) = evaluator_to_use
 
     token = evaluator._config.token
     url = evaluator._config.get_uri()
@@ -321,8 +306,8 @@ def test_overspent_cpu_is_logged(
 
 
 @pytest.mark.integration_test
-async def test_snapshot_on_resubmit_is_cleared(evaluator_to_use2):
-    (evaluator, event_queue) = evaluator_to_use2
+async def test_snapshot_on_resubmit_is_cleared(evaluator_to_use):
+    (evaluator, event_queue) = evaluator_to_use
     evaluator._batching_interval = 0.4
     token = evaluator._config.token
     url = evaluator._config.get_uri()
@@ -384,9 +369,9 @@ async def test_snapshot_on_resubmit_is_cleared(evaluator_to_use2):
 
 @pytest.mark.integration_test
 async def test_signal_cancel_does_not_cause_evaluator_dispatcher_communication_to_hang(
-    evaluator_to_use2, monkeypatch
+    evaluator_to_use, monkeypatch
 ):
-    (evaluator, event_queue) = evaluator_to_use2
+    (evaluator, event_queue) = evaluator_to_use
     evaluator._batching_interval = 0.4
     evaluator._max_batch_size = 1
 
@@ -462,8 +447,8 @@ async def test_signal_cancel_does_not_cause_evaluator_dispatcher_communication_t
 
 
 @pytest.mark.timeout(15)
-async def test_signal_cancel_sends_terminate_message_to_dispatchers(evaluator_to_use2):
-    (evaluator, _) = evaluator_to_use2
+async def test_signal_cancel_sends_terminate_message_to_dispatchers(evaluator_to_use):
+    (evaluator, _) = evaluator_to_use
     token = evaluator._config.token
     url = evaluator._config.get_uri()
     evaluator.ensemble._cancellable = True
