@@ -412,20 +412,6 @@ class GenKwConfig(ParameterConfig):
             )
         return priors
 
-    def transform(self, array: npt.ArrayLike) -> npt.NDArray[np.float64]:
-        """Transform the input array in accordance with priors
-
-        Parameters:
-            array: An array of standard normal values
-
-        Returns: Transformed array, where each element has been transformed from
-            a standard normal distribution to the distribution set by the user
-        """
-        array = np.array(array)
-        for index, tf in enumerate(self.transform_functions):
-            array[index] = tf.distribution.transform(array[index])
-        return array
-
     def transform_col(self, param_name: str) -> Callable[[float], float]:
         tf: TransformFunction | None = None
         for tf in self.transform_functions:
