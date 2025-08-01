@@ -10,7 +10,6 @@ from typing import TYPE_CHECKING, Annotated, Any, Literal, Self, cast, overload
 
 import networkx as nx
 import numpy as np
-import pandas as pd
 import polars as pl
 import xarray as xr
 from pydantic import BaseModel, Field, PrivateAttr, ValidationError, model_validator
@@ -434,22 +433,6 @@ class GenKwConfig(ParameterConfig):
                 break
         assert tf is not None, f"Transform function {param_name} not found"
         return tf.distribution.transform
-
-    @staticmethod
-    def _values_from_file(file_name: str, keys: list[str]) -> npt.NDArray[np.double]:
-        df = pd.read_csv(file_name, sep=r"\s+", header=None)
-        # This means we have a key: value mapping in the
-        # file otherwise it is just a list of values
-        if df.shape[1] == 2:
-            # We need to sort the user input keys by the
-            # internal order of sub-parameters:
-            df = df.set_index(df.columns[0])
-            return df.reindex(keys).values.flatten()
-        if not np.issubdtype(df.values.dtype, np.number):
-            raise ValueError(
-                f"The file {file_name} did not contain numbers, got {df.values.dtype}"
-            )
-        return df.values.flatten()
 
     @staticmethod
     def _sample_value(
