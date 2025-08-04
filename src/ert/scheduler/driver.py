@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import asyncio
+import errno
 import logging
 import shlex
 from abc import ABC, abstractmethod
@@ -117,6 +118,16 @@ class Driver(ABC):
                 )
             except FileNotFoundError as e:
                 return (False, str(e))
+            except OSError as e:
+                if e.errno == errno.EMFILE:
+                    # Too many files open error, we try again
+                    if i < (total_attempts - 1):
+                        await asyncio.sleep(retry_interval)
+                        continue
+                    else:
+                        return (False, str(e))
+                else:
+                    return (False, str(e))
 
             stdout, stderr = await process.communicate(stdin)
 
