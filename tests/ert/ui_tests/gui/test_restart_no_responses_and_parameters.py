@@ -87,7 +87,7 @@ def open_gui(tmp_path, monkeypatch, run_experiment, tmp_path_factory):
         yield gui
 
 
-def test_sensitivity_restart(open_gui, run_experiment):
+def test_sensitivity_restart(open_gui, qtbot, run_experiment):
     """This runs a full manual update workflow, first running ensemble experiment
     where some of the realizations fail, then doing an update before running an
     ensemble experiment again to calculate the forecast of the update.
