@@ -630,7 +630,18 @@ def main() -> None:
                 handler_config["filename"] = "ert-log.txt"
             if "ert.logging.TimestampedFileHandler" in handler_config.values():
                 handler_config["config_filename"] = args.config
-        logging.config.dictConfig(config_dict)
+        try:
+            logging.config.dictConfig(config_dict)
+        except ValueError as err:
+            if "handler 'file'" in str(err):
+                exit_msg = (
+                    "Could not configure log handler for files. "
+                    "Check if you have write-access to the logs-directory."
+                )
+            else:
+                exit_msg = str(err)
+            os.environ.pop("ERT_LOG_DIR")
+            sys.exit(exit_msg)
 
     logger = logging.getLogger(__name__)
     if args.verbose:

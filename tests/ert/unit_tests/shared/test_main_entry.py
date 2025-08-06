@@ -1,4 +1,5 @@
 import logging
+import os
 import sys
 from unittest.mock import MagicMock
 
@@ -53,3 +54,23 @@ def test_storage_exception_is_not_unexpected_error(monkeypatch, caplog):
         main.main()
     assert "ERT crashed unexpectedly" not in str(exc_info.value)
     assert "Failed to open storage" in str(exc_info.value)
+
+
+def test_non_writable_log_directory_exits_with_message(monkeypatch, use_tmpdir):
+    logs_dir = "logs_dir_without_write_access"
+    os.mkdir(logs_dir)
+    os.chmod(logs_dir, 0o444)  # Read only access mode
+
+    expected_exit_message = (
+        "Could not configure log handler for files. "
+        "Check if you have write-access to the logs-directory."
+    )
+
+    class ErtparserMock(MagicMock):
+        logdir = logs_dir
+
+    monkeypatch.setattr(main, "ert_parser", MagicMock(return_value=ErtparserMock()))
+
+    with pytest.raises(SystemExit) as exc_info:
+        main.main()
+    assert expected_exit_message in str(exc_info)
