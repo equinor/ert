@@ -27,8 +27,7 @@ This dict of values is passed unchanged to the selected method in the backend.
 
 """,
     )
-    method: str | None = Field(
-        default=None,
+    method: str = Field(
         description="""The sampling method or distribution used by the sampler backend.
 """,
     )
@@ -41,20 +40,24 @@ This dict of values is passed unchanged to the selected method in the backend.
 
     @model_validator(mode="after")
     def validate_backend_and_method(self) -> Self:
+        if self.backend is not None:
+            message = (
+                "sampler.backend is deprecated. "
+                "The correct backend will be inferred by the method. "
+                "If several backends have a method named A, you need to pick "
+                "a specific backend B by putting B/A in sampler.method."
+            )
+            print(message)
+            logging.getLogger(EVEREST).warning(message)
+
+        if self.backend is not None:
+            self.method = f"{self.backend}/{self.method}"
+            self.backend = None
+
         if (
             get_ropt_plugin_manager().get_plugin_name("sampler", f"{self.method}")
             is None
         ):
             raise ValueError(f"Sampler '{self.method}' not found")
-
-        if self.backend is not None:
-            message = (
-                "sampler.backend is deprecated. "
-                "The correct backend will be inferred by the method. "
-                "If several backends have a method named A and you want to pick "
-                "a specific backend B, put B/A in sampler.method."
-            )
-            print(message)
-            logging.getLogger(EVEREST).warning(message)
 
         return self

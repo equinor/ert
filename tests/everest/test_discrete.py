@@ -13,8 +13,7 @@ def test_discrete_optimizer(copy_math_func_test_data_to_tmp):
     config_dict = {
         **config.model_dump(exclude_none=True),
         "optimization": {
-            "backend": "scipy",
-            "algorithm": "differential_evolution",
+            "algorithm": "scipy/differential_evolution",
             "max_function_evaluations": 4,
             "parallel": False,
             "backend_options": {"rng": 4},
