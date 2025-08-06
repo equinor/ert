@@ -207,7 +207,7 @@ def _parse_optimization(
         if (
             has_output_constraints
             and ever_opt.constraint_tolerance is not None
-            and ever_opt._optimization_plugin_name == "dakota"
+            and ever_opt.optimization_plugin_name == "dakota"
             and (
                 ever_opt.algorithm
                 in {"conmin_mfd", "conmin_frcg", "asynch_pattern_search"}
