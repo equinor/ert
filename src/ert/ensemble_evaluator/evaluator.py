@@ -32,6 +32,8 @@ from _ert.forward_model_runner.client import (
 )
 from _ert.forward_model_runner.fm_dispatch import FORWARD_MODEL_TERMINATED_MSG
 from ert.ensemble_evaluator import identifiers as ids
+from ert.scheduler import create_driver
+from ert.scheduler.scheduler import Scheduler
 
 from ..config import QueueSystem
 from ._ensemble import FMStepSnapshot
@@ -70,6 +72,8 @@ class EnsembleEvaluator:
         event_handler: Callable[[EEEvent], None] | None = None,
     ) -> None:
         self._config: EvaluatorServerConfig = config
+        if self._config is None:
+            raise ValueError("no config for evaluator")
         self._ensemble: Ensemble = ensemble
 
         self._events: asyncio.Queue[SnapshotInputEvent] = asyncio.Queue()
@@ -104,6 +108,18 @@ class EnsembleEvaluator:
 
         self._publisher_receiving_timeout: float = 60.0
         self._evaluation_result: asyncio.Future[bool] = asyncio.Future()
+        self._scheduler = Scheduler(
+            create_driver(self.ensemble._queue_config.queue_options),
+            self.ensemble.active_reals,
+            self._manifest_queue,
+            self._events,
+            max_submit=self.ensemble._queue_config.max_submit,
+            max_running=self.ensemble._queue_config.max_running,
+            submit_sleep=self.ensemble._queue_config.submit_sleep,
+            ens_id=self.ensemble.id_,
+            ee_uri=self._config.get_uri(),
+            ee_token=self._config.token,
+        )
 
     async def _publisher(self) -> None:
         heartbeat_interval = 0.1
@@ -183,16 +199,16 @@ class EnsembleEvaluator:
                 for identity in self._dispatchers_connected
             )
         )
-        if self._ensemble._scheduler is not None:
-            for identity in self._dispatchers_connected:
-                real_id = int(identity.decode("utf-8").split("-")[2])
-                self._ensemble._scheduler.mark_job_as_being_killed_by_evaluator(real_id)
+
+        for identity in self._dispatchers_connected:
+            real_id = int(identity.decode("utf-8").split("-")[2])
+            self._scheduler.mark_job_as_being_killed_by_evaluator(real_id)
 
     async def _terminate_all_dispatchers(self) -> None:
-        if (scheduler := self.ensemble._scheduler) is not None:
-            await scheduler._running.wait()
+        await self._scheduler._running.wait()
         await self._send_terminate_message_to_dispatchers()
-        await self._ensemble.cancel()
+        await self._scheduler.kill_all_jobs()
+        logger.debug("evaluator cancelled")
 
     async def _append_message(self, snapshot_update_event: EnsembleSnapshot) -> None:
         event = EESnapshotUpdate(
@@ -325,11 +341,8 @@ class EnsembleEvaluator:
             if (
                 type(event) is ForwardModelStepFailure
                 and event.error_msg == FORWARD_MODEL_TERMINATED_MSG
-                and self._ensemble._scheduler is not None
             ):
-                self._ensemble._scheduler.confirm_job_killed_by_evaluator(
-                    int(event.real)
-                )
+                self._scheduler.confirm_job_killed_by_evaluator(int(event.real))
 
             if type(event) is ForwardModelStepChecksum:
                 await self.forward_checksum(event)
@@ -449,9 +462,7 @@ class EnsembleEvaluator:
             asyncio.create_task(self._publisher(), name="publisher_task"),
             asyncio.create_task(self.listen_for_messages(), name="listener_task"),
             asyncio.create_task(
-                self._ensemble.evaluate(
-                    self._config, self._events, self._manifest_queue
-                ),
+                self.evaluate(),
                 name="ensemble_task",
             ),
             asyncio.create_task(
@@ -539,6 +550,58 @@ class EnsembleEvaluator:
 
     async def wait_for_evaluation_result(self) -> bool:
         return await self._evaluation_result
+
+    async def evaluate(
+        self,
+    ) -> None:
+        """
+        This method does the actual work of evaluating the ensemble. It
+        prepares and executes the necessary bookkeeping, prepares and executes
+        the driver and scheduler, and dispatches pertinent events.
+
+        Before returning, it always dispatches an Event describing
+        the final result of executing all its jobs through a scheduler and driver.
+        """
+
+        if not self.ensemble.id_:
+            raise ValueError("Ensemble id not set")
+        if not self._config:
+            raise ValueError("no config")  # mypy
+        try:
+            await self._events.put(EnsembleStarted(ensemble=self.ensemble.id_))
+
+            min_required_realizations = (
+                self.ensemble.min_required_realizations
+                if self.ensemble._queue_config.stop_long_running
+                else 0
+            )
+
+            self._scheduler.add_dispatch_information_to_jobs_file()
+            scheduler_finished_successfully = await self._scheduler.execute(
+                min_required_realizations
+            )
+        except PermissionError as error:
+            logger.exception(f"Unexpected exception in ensemble: \n {error!s}")
+            await self._events.put(EnsembleFailed(ensemble=self.ensemble.id_))
+            return
+        except Exception as exc:
+            logger.exception(
+                (
+                    "Unexpected exception in ensemble: \n".join(
+                        traceback.format_exception(None, exc, exc.__traceback__)
+                    )
+                ),
+            )
+            await self._events.put(EnsembleFailed(ensemble=self.ensemble.id_))
+            return
+        except asyncio.CancelledError:
+            print("Cancelling evaluator task!")
+            return
+        # Dispatch final result from evaluator - SUCCEEDED or CANCELLED
+        if scheduler_finished_successfully:
+            await self._events.put(EnsembleSucceeded(ensemble=self.ensemble.id_))
+        else:
+            await self._events.put(EnsembleCancelled(ensemble=self.ensemble.id_))
 
 
 def detect_overspent_cpu(num_cpu: int, real_id: str, fm_step: FMStepSnapshot) -> str:

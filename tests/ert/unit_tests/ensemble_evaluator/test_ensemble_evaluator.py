@@ -4,6 +4,7 @@ import logging
 import uuid
 from functools import partial
 from threading import Event
+from unittest.mock import MagicMock
 
 import pytest
 import zmq.asyncio
@@ -26,6 +27,7 @@ from _ert.forward_model_runner.client import (
     DISCONNECT_MSG,
     Client,
 )
+from ert.config.queue_config import QueueConfig
 from ert.ensemble_evaluator import (
     EnsembleEvaluator,
     EnsembleSnapshot,
@@ -45,6 +47,7 @@ from ert.ensemble_evaluator.state import (
 )
 from ert.scheduler import JobState
 from ert.scheduler.job import Job
+from ert.scheduler.scheduler import Scheduler
 
 from .ensemble_evaluator_utils import TestEnsemble
 
@@ -137,14 +140,13 @@ async def test_evaluator_raises_on_start_with_address_in_use(make_ee_config):
         ctx.destroy(linger=0)
 
 
-async def test_no_config_raises_valueerror_when_running():
-    evaluator = EnsembleEvaluator(
-        TestEnsemble(0, 2, 2, id_="0"),
-        None,
-        end_event=Event(),
-    )
+async def test_no_config_raises_valueerror():
     with pytest.raises(ValueError, match="no config for evaluator"):
-        await evaluator.run_and_get_successful_realizations()
+        EnsembleEvaluator(
+            TestEnsemble(0, 2, 2, id_="0"),
+            None,
+            end_event=Event(),
+        )
 
 
 @pytest.mark.integration_test
@@ -183,12 +185,20 @@ async def test_when_task_prematurely_ends_raises_exception(
 
 
 @pytest.fixture(name="evaluator_to_use")
-async def evaluator_to_use_fixture(make_ee_config):
+async def evaluator_to_use_fixture(monkeypatch, make_ee_config):
     ensemble = TestEnsemble(0, 2, 2, id_="0")
+
+    async def empty_mock_function(*args, **kwargs):
+        pass
+
+    monkeypatch.setattr(EnsembleEvaluator, "evaluate", empty_mock_function)
     event_queue = asyncio.Queue()
     evaluator = EnsembleEvaluator(
         ensemble, make_ee_config(use_token=False), Event(), event_queue.put_nowait
     )
+
+    evaluator._scheduler.kill_all_jobs = empty_mock_function
+    evaluator._scheduler._running.set()
     evaluator._batching_interval = 0.5  # batching can be faster for tests
     run_task = asyncio.create_task(evaluator.run_and_get_successful_realizations())
     await evaluator._server_started
@@ -312,8 +322,9 @@ async def test_snapshot_on_resubmit_is_cleared(evaluator_to_use):
     token = evaluator._config.token
     url = evaluator._config.get_uri()
 
-    snapshot_event = await event_queue.get()
-    assert type(snapshot_event) is EESnapshot
+    event = await event_queue.get()
+    assert type(event) is EESnapshot
+    main_snapshot = EnsembleSnapshot.from_nested_dict(event.snapshot)
     async with Client(
         url, token=token, dealer_name=f"dispatch-real-0-{uuid.uuid4().hex[:6]}"
     ) as dispatch:
@@ -346,12 +357,19 @@ async def test_snapshot_on_resubmit_is_cleared(evaluator_to_use):
         )
         await dispatch.send(dispatcher_event_to_json(event))
         event = await event_queue.get()
-        snapshot = EnsembleSnapshot.from_nested_dict(event.snapshot)
+        main_snapshot.update_from_event(event)
+        # main_snapshot = EnsembleSnapshot.from_nested_dict(event.snapshot)
+        while not event_queue.empty():
+            event = await event_queue.get()
+            main_snapshot.update_from_event(event)
+
         assert (
-            snapshot.get_fm_step("0", "0").get("status") == FORWARD_MODEL_STATE_FINISHED
+            main_snapshot.get_fm_step("0", "0").get("status")
+            == FORWARD_MODEL_STATE_FINISHED
         )
         assert (
-            snapshot.get_fm_step("0", "1").get("status") == FORWARD_MODEL_STATE_FAILURE
+            main_snapshot.get_fm_step("0", "1").get("status")
+            == FORWARD_MODEL_STATE_FAILURE
         )
         await evaluator._events.put(
             RealizationResubmit(
@@ -362,9 +380,15 @@ async def test_snapshot_on_resubmit_is_cleared(evaluator_to_use):
             )
         )
         event = await event_queue.get()
-        snapshot = EnsembleSnapshot.from_nested_dict(event.snapshot)
-        assert snapshot.get_fm_step("0", "0").get("status") == FORWARD_MODEL_STATE_INIT
-        assert snapshot.get_fm_step("0", "1").get("status") == FORWARD_MODEL_STATE_INIT
+        main_snapshot.update_from_event(event)
+        assert (
+            main_snapshot.get_fm_step("0", "0").get("status")
+            == FORWARD_MODEL_STATE_INIT
+        )
+        assert (
+            main_snapshot.get_fm_step("0", "1").get("status")
+            == FORWARD_MODEL_STATE_INIT
+        )
 
 
 @pytest.mark.integration_test
@@ -514,8 +538,7 @@ async def test_signal_cancel_terminates_fm_dispatcher_with_terminate_message(
                     event.snapshot.get(identifiers.STATUS)
                     == state.ENSEMBLE_STATE_STARTED
                 ):
-                    assert evaluator._ensemble._scheduler is not None
-                    evaluator._ensemble._scheduler.driver.kill = mock_driver_kill
+                    evaluator._scheduler.driver.kill = mock_driver_kill
                     evaluator._end_event.set()
                 elif event.snapshot.get(identifiers.STATUS) == ENSEMBLE_STATE_CANCELLED:
                     break
@@ -600,3 +623,28 @@ async def test_signal_cancel_terminates_fm_dispatcher_with_scheduler_as_fallback
         "Realization 0 was not killed gracefully by TERM message. "
         "Killing it with the scheduler"
     ) in caplog.text
+
+
+async def test_queue_config_properties_propagated_to_scheduler_from_ensemble(
+    tmpdir, make_ensemble, monkeypatch
+):
+    num_reals = 1
+    mocked_scheduler = MagicMock(return_value=None)
+    mocked_scheduler.__class__ = Scheduler
+    monkeypatch.setattr(Scheduler, "__init__", mocked_scheduler)
+    ensemble = make_ensemble(monkeypatch, tmpdir, num_reals, 2)
+    ensemble._config = MagicMock()
+    ensemble._scheduler = mocked_scheduler
+
+    # The properties we want to propagate from QueueConfig to the Scheduler object:
+    monkeypatch.setattr(QueueConfig, "submit_sleep", 33)
+    monkeypatch.setattr(QueueConfig, "max_running", 44)
+    ensemble._queue_config.max_submit = 55
+
+    # The function under test:
+    _ = EnsembleEvaluator(ensemble, MagicMock(), Event())
+
+    # Assert properties successfully propagated:
+    assert Scheduler.__init__.call_args.kwargs["submit_sleep"] == 33
+    assert Scheduler.__init__.call_args.kwargs["max_running"] == 44
+    assert Scheduler.__init__.call_args.kwargs["max_submit"] == 55
