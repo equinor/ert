@@ -167,6 +167,7 @@ class EnsembleEvaluator:
                 logger.debug("Run model cancelled - during evaluation")
                 await self._signal_cancel()
                 logger.debug("Run model cancelled - during evaluation - cancel sent")
+                self._end_event.clear()
             await asyncio.sleep(0.1)
 
     async def _append_message(self, snapshot_update_event: EnsembleSnapshot) -> None:
