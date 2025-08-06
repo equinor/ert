@@ -13,10 +13,49 @@ from everest.config import EverestConfig
 from tests.ert.unit_tests.resources._import_from_location import import_from_location
 from tests.ert.utils import SOURCE_DIR
 
-TMPL_CONFIG_FILE = "config.yml"
-TMPL_WELL_DRILL_FILE = os.path.join("templates", "well_drill_info.tmpl")
-TMPL_DUAL_INPUT_FILE = os.path.join("templates", "dual_input.tmpl")
-MATH_CONFIG_FILE = "config_minimal.yml"
+CONFIG = {
+    "wells": [
+        {"name": "PROD1", "drill_time": 30},
+        {"name": "PROD2", "drill_time": 60},
+    ],
+    "controls": [
+        {
+            "name": "well_drill",
+            "type": "well_control",
+            "min": 0,
+            "max": 1,
+            "variables": [
+                {"name": "PROD1", "initial_guess": 1},
+                {"name": "PROD2", "initial_guess": 0.9},
+            ],
+        }
+    ],
+    "objective_functions": [{"name": "objectf_by_tmpl"}],
+    "optimization": {"algorithm": "optpp_q_newton", "max_iterations": 1},
+    "model": {"realizations": [0]},
+    "install_templates": [
+        {
+            "template": "<CONFIG_PATH>/well_drill_info.tmpl",
+            "output_file": "well_drill.json",
+        },
+        {
+            "template": "<CONFIG_PATH>/the_optimal_template.tmpl",
+            "output_file": "objectf_by_tmpl",
+        },
+    ],
+}
+WELL_DRILL_TMPL = """PROD1 takes value {{ well_drill.PROD1 }}, implying \
+{{ "on" if well_drill.PROD1 >= 0.5 else "off" }}
+PROD2 takes value {{ well_drill.PROD2 }}, implying \
+{{ "on" if well_drill.PROD2 >= 0.5 else "off" }}
+----------------------------------
+{%- for well_name, value in well_drill.items() %}
+{{ well_name }} takes value {{ value }}, implying {{ "on" if value >= 0.5 else "off"}}
+{%- endfor %}
+"""
+THE_OPTIMAL_TEMPLATE_TMPL = "{{ well_drill.values() | sum() }}"
+DUAL_INPUT_TMPL = "{{ well_drill_north.PROD1 }} vs {{ well_drill_south.PROD1 }}"
+
 
 template_render = import_from_location(
     "template_render",
@@ -27,7 +66,11 @@ template_render = import_from_location(
 )
 
 
-def test_render_invalid(copy_template_test_data_to_tmp):
+def test_render_invalid(change_to_tmpdir):
+    template_file = "well_drill_info.tmpl"
+    with open(template_file, "w", encoding="utf-8") as fp:
+        fp.write(WELL_DRILL_TMPL)
+
     render = template_render.render_template
 
     prod_wells = {f"PROD{idx:d}": 0.3 * idx for idx in range(4)}
@@ -38,22 +81,26 @@ def test_render_invalid(copy_template_test_data_to_tmp):
     wells_out = "wells.out"
 
     with pytest.raises(jinja2.exceptions.UndefinedError):
-        render(None, TMPL_WELL_DRILL_FILE, wells_out)
+        render(None, template_file, wells_out)
 
     with pytest.raises(ValueError):
-        render(2 * prod_in, TMPL_WELL_DRILL_FILE, wells_out)
+        render(2 * prod_in, template_file, wells_out)
 
     with pytest.raises(TypeError):
         render(prod_in, None, wells_out)
 
     with pytest.raises(ValueError):
-        render(prod_in, TMPL_WELL_DRILL_FILE + "nogo", wells_out)
+        render(prod_in, template_file + "nogo", wells_out)
 
     with pytest.raises(TypeError):
-        render(prod_in, TMPL_WELL_DRILL_FILE, None)
+        render(prod_in, template_file, None)
 
 
-def test_render(copy_template_test_data_to_tmp):
+def test_render(change_to_tmpdir):
+    template_file = "well_drill_info.tmpl"
+    with open(template_file, "w", encoding="utf-8") as fp:
+        fp.write(WELL_DRILL_TMPL)
+
     render = template_render.render_template
 
     wells = {f"PROD{idx:d}": 0.2 * idx for idx in range(1, 5)}
@@ -63,7 +110,7 @@ def test_render(copy_template_test_data_to_tmp):
         json.dump(wells, fout)
 
     wells_out = "wells.out"
-    render(wells_in, TMPL_WELL_DRILL_FILE, wells_out)
+    render(wells_in, template_file, wells_out)
 
     with open(wells_out, encoding="utf-8") as fin:
         output = fin.readlines()
@@ -83,7 +130,11 @@ def test_render(copy_template_test_data_to_tmp):
             assert expected_string == line
 
 
-def test_render_multiple_input(copy_template_test_data_to_tmp):
+def test_render_multiple_input(change_to_tmpdir):
+    template_file = "dual_input.tmpl"
+    with open(template_file, "w", encoding="utf-8") as fp:
+        fp.write(DUAL_INPUT_TMPL)
+
     render = template_render.render_template
 
     wells_north = {f"PROD{idx:d}": 0.2 * idx for idx in range(1, 5)}
@@ -97,7 +148,7 @@ def test_render_multiple_input(copy_template_test_data_to_tmp):
         json.dump(wells_south, fout)
 
     wells_out = "sub_folder/wells.out"
-    render((wells_north_in, wells_south_in), TMPL_DUAL_INPUT_FILE, wells_out)
+    render((wells_north_in, wells_south_in), template_file, wells_out)
 
     with open(wells_out, encoding="utf-8") as fin:
         output = fin.readlines()
@@ -106,7 +157,11 @@ def test_render_multiple_input(copy_template_test_data_to_tmp):
 
 
 @pytest.mark.integration_test
-def test_render_executable(copy_template_test_data_to_tmp):
+def test_render_executable(change_to_tmpdir):
+    template_file = "dual_input.tmpl"
+    with open(template_file, "w", encoding="utf-8") as fp:
+        fp.write(DUAL_INPUT_TMPL)
+
     assert os.access(everest.jobs.render, os.X_OK)
 
     # Dump input
@@ -125,7 +180,7 @@ def test_render_executable(copy_template_test_data_to_tmp):
     cmd_fmt = "{render} --output {fout} --template {tmpl} --input_files {fin}"
     cmd = cmd_fmt.format(
         render=everest.jobs.render,
-        tmpl=TMPL_DUAL_INPUT_FILE,
+        tmpl=template_file,
         fout=output_file,
         fin=" ".join((wells_north_in, wells_south_in)),
     )
@@ -138,8 +193,16 @@ def test_render_executable(copy_template_test_data_to_tmp):
 
 
 @pytest.mark.integration_test
-def test_install_template(copy_template_test_data_to_tmp):
-    config = EverestConfig.load_file(TMPL_CONFIG_FILE)
+def test_install_template(change_to_tmpdir):
+    with open("config.yml", "w", encoding="utf-8") as fp:
+        YAML(typ="safe", pure=True).dump(CONFIG, fp)
+    template_file = "well_drill_info.tmpl"
+    with open(template_file, "w", encoding="utf-8") as fp:
+        fp.write(WELL_DRILL_TMPL)
+    template_file = "the_optimal_template.tmpl"
+    with open(template_file, "w", encoding="utf-8") as fp:
+        fp.write(THE_OPTIMAL_TEMPLATE_TMPL)
+    config = EverestConfig.load_file("config.yml")
     run_model = EverestRunModel.create(config)
     evaluator_server_config = EvaluatorServerConfig()
     run_model.run_experiment(evaluator_server_config)
@@ -187,7 +250,7 @@ def test_user_specified_data_n_template(
     directory for each consecutive simulation
     """
 
-    config = EverestConfig.load_file(MATH_CONFIG_FILE)
+    config = EverestConfig.load_file("config_minimal.yml")
 
     # Write out some constants to a yaml file; doing it here, so config
     # test (TestRepoConfigs) doesn't try to lint this yaml file.
