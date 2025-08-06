@@ -91,7 +91,7 @@ class Job:
     def unschedule(self, msg: str) -> None:
         self.state = JobState.ABORTED
         self.real.run_arg.ensemble_storage.set_failure(
-            self.real.run_arg.iens,
+            self.real.iens,
             RealizationStorageState.LOAD_FAILURE,
             f"Job not scheduled due to {msg}",
         )

@@ -1,29 +1,19 @@
 from __future__ import annotations
 
-import asyncio
 import logging
-import traceback
 from collections.abc import Callable, Sequence
 from dataclasses import dataclass
 from typing import Any
 
 from _ert.events import (
-    EnsembleCancelled,
-    EnsembleEvent,
-    EnsembleFailed,
-    EnsembleStarted,
-    EnsembleSucceeded,
     FMEvent,
-    ForwardModelStepChecksum,
     ForwardModelStepFailure,
     ForwardModelStepSuccess,
     SnapshotInputEvent,
 )
 from ert.config import ForwardModelStep, QueueConfig, QueueSystem
 from ert.run_arg import RunArg
-from ert.scheduler import Scheduler, create_driver
 
-from .config import EvaluatorServerConfig
 from .snapshot import EnsembleSnapshot, FMStepSnapshot, RealizationSnapshot
 from .state import (
     ENSEMBLE_STATE_CANCELLED,
@@ -105,8 +95,6 @@ class LegacyEnsemble:
     id_: str
 
     def __post_init__(self) -> None:
-        self._scheduler: Scheduler | None = None
-        self._config: EvaluatorServerConfig | None = None
         self.snapshot: EnsembleSnapshot = self._create_snapshot()
         self.status = self.snapshot.status
         if self.snapshot.status:
@@ -185,89 +173,9 @@ class LegacyEnsemble:
 
         return snapshot_mutate_event
 
-    async def send_event(self, event: EnsembleEvent) -> None:
-        if self.outbound_event_queue is not None:
-            await self.outbound_event_queue.put(event)
-
-    async def evaluate(
-        self,
-        config: EvaluatorServerConfig,
-        scheduler_queue: asyncio.Queue[SnapshotInputEvent] | None = None,
-        manifest_queue: asyncio.Queue[ForwardModelStepChecksum] | None = None,
-    ) -> None:
-        """
-        This method does the actual work of evaluating the ensemble. It
-        prepares and executes the necessary bookkeeping, prepares and executes
-        the driver and scheduler, and dispatches pertinent events.
-
-        Before returning, it always dispatches an Event describing
-        the final result of executing all its jobs through a scheduler and driver.
-        """
-        self._config = config
-        self.outbound_event_queue = scheduler_queue
-
-        if not self.id_:
-            raise ValueError("Ensemble id not set")
-        if not self._config:
-            raise ValueError("no config")  # mypy
-        try:
-            driver = create_driver(self._queue_config.queue_options)
-            self._scheduler = Scheduler(
-                driver,
-                self.active_reals,
-                manifest_queue,
-                scheduler_queue,
-                max_submit=self._queue_config.max_submit,
-                max_running=self._queue_config.max_running,
-                submit_sleep=self._queue_config.submit_sleep,
-                ens_id=self.id_,
-                ee_uri=self._config.get_uri(),
-                ee_token=self._config.token,
-            )
-
-            await self.send_event(EnsembleStarted(ensemble=self.id_))
-
-            min_required_realizations = (
-                self.min_required_realizations
-                if self._queue_config.stop_long_running
-                else 0
-            )
-
-            self._scheduler.add_dispatch_information_to_jobs_file()
-            scheduler_finished_successfully = await self._scheduler.execute(
-                min_required_realizations
-            )
-        except PermissionError as error:
-            logger.exception(f"Unexpected exception in ensemble: \n {error!s}")
-            await self.send_event(EnsembleFailed(ensemble=self.id_))
-            return
-        except Exception as exc:
-            logger.exception(
-                (
-                    "Unexpected exception in ensemble: \n".join(
-                        traceback.format_exception(None, exc, exc.__traceback__)
-                    )
-                ),
-            )
-            await self.send_event(EnsembleFailed(ensemble=self.id_))
-            return
-        except asyncio.CancelledError:
-            print("Cancelling evaluator task!")
-            return
-        # Dispatch final result from evaluator - SUCCEEDED or CANCELLED
-        if scheduler_finished_successfully:
-            await self.send_event(EnsembleSucceeded(ensemble=self.id_))
-        else:
-            await self.send_event(EnsembleCancelled(ensemble=self.id_))
-
     @property
     def cancellable(self) -> bool:
         return True
-
-    async def cancel(self) -> None:
-        if self._scheduler is not None:
-            await self._scheduler.kill_all_jobs()
-        logger.debug("evaluator cancelled")
 
     @property
     def queue_system(self) -> QueueSystem:
