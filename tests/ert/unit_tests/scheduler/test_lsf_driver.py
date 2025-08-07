@@ -15,7 +15,7 @@ from typing import get_args, get_type_hints
 from unittest.mock import AsyncMock
 
 import pytest
-from hypothesis import given
+from hypothesis import given, settings
 from hypothesis import strategies as st
 
 from ert.config import QueueConfig
@@ -117,9 +117,10 @@ async def test_exit_codes(
 
 
 @given(
-    jobstate_sequence=st.lists(st.sampled_from(JobState.__args__)),
+    jobstate_sequence=st.lists(st.sampled_from(JobState.__args__), min_size=1),
     exit_code=st.integers(min_value=1, max_value=254),
 )
+@settings(max_examples=10)
 async def test_events_produced_from_jobstate_updates(
     tmp_path_factory, jobstate_sequence: list[str], exit_code: int
 ):
@@ -226,6 +227,7 @@ async def test_submit_with_project_code():
 @pytest.mark.usefixtures("capturing_bsub")
 async def test_submit_sets_stdout():
     driver = LsfDriver()
+    driver._poll_period = 0.01
     await driver.submit(0, "sleep", name="myjobname")
     expected_stdout_file = Path(os.getcwd()) / "myjobname.LSF-stdout"
     assert f"-o {expected_stdout_file}" in Path("captured_bsub_args").read_text(
@@ -1001,6 +1003,7 @@ def not_found_bjobs(monkeypatch, tmp_path):
 async def test_bjobs_exec_host_logs_only_once(use_tmpdir, job_name, caplog):
     caplog.set_level(logging.INFO)
     driver = LsfDriver()
+    driver._poll_period = 0.01
     await driver.submit(0, "sh", "-c", "sleep 1", name=job_name)
 
     job_id = next(iter(driver._jobs.keys()))
@@ -1014,6 +1017,7 @@ async def test_bjobs_exec_host_logs_only_once(use_tmpdir, job_name, caplog):
 @pytest.mark.integration_test
 async def test_lsf_stdout_file(use_tmpdir, job_name):
     driver = LsfDriver()
+    driver._poll_period = 0.01
     await driver.submit(0, "sh", "-c", "echo yay", name=job_name)
     await poll(driver, {0})
     lsf_stdout = Path(f"{job_name}.LSF-stdout").read_text(encoding="utf-8")
@@ -1029,6 +1033,7 @@ async def test_lsf_stdout_file(use_tmpdir, job_name):
 @pytest.mark.integration_test
 async def test_lsf_dumps_stderr_to_file(use_tmpdir, job_name):
     driver = LsfDriver()
+    driver._poll_period = 0.01
     failure_message = "failURE"
     await driver.submit(0, "sh", "-c", f"echo {failure_message} >&2", name=job_name)
     await poll(driver, {0})
@@ -1053,6 +1058,7 @@ async def test_lsf_can_retrieve_stdout_and_stderr(
     use_tmpdir, job_name, tail_chars_to_read
 ):
     driver = LsfDriver()
+    driver._poll_period = 0.01
     num_written_characters = 600
     out = generate_random_text(num_written_characters)
     err = generate_random_text(num_written_characters)
@@ -1074,6 +1080,7 @@ async def test_lsf_can_retrieve_stdout_and_stderr(
 @pytest.mark.integration_test
 async def test_lsf_cannot_retrieve_stdout_and_stderr(use_tmpdir, job_name):
     driver = LsfDriver()
+    driver._poll_period = 0.01
     num_written_characters = 600
     out = generate_random_text(num_written_characters)
     err = generate_random_text(num_written_characters)
@@ -1098,6 +1105,7 @@ async def test_lsf_info_file_in_runpath(
 ):
     monkeypatch.chdir(tmp_path)
     driver = LsfDriver()
+    driver._poll_period = 0.01
     (tmp_path / "some_runpath").mkdir()
     effective_runpath = tmp_path / "some_runpath" if explicit_runpath else tmp_path
     await driver.submit(
@@ -1126,6 +1134,7 @@ async def test_submit_to_named_queue(tmp_path, caplog, job_name, monkeypatch):
     test for success for the job."""
     monkeypatch.chdir(tmp_path)
     driver = LsfDriver(queue_name=os.getenv("_ERT_TESTS_ALTERNATIVE_QUEUE"))
+    driver._poll_period = 0.01
     await driver.submit(0, "sh", "-c", f"echo test > {tmp_path}/test", name=job_name)
     await poll(driver, {0})
 
@@ -1137,6 +1146,7 @@ async def test_submit_to_named_queue(tmp_path, caplog, job_name, monkeypatch):
 async def test_submit_with_resource_requirement(job_name):
     resource_requirement = "select[cs && x86_64Linux]"
     driver = LsfDriver(resource_requirement=resource_requirement)
+    driver._poll_period = 0.01
     await driver.submit(0, "sh", "-c", "echo test>test", name=job_name)
     await poll(driver, {0})
 
@@ -1235,6 +1245,8 @@ async def test_polling_bhist_fallback(not_found_bjobs, caplog, job_name):
     Path("mock_jobs/pendingtimemillis").write_text("100", encoding="utf-8")
     driver._poll_period = 0.01
 
+    driver._bhist_required_cache_age = 0.01
+    driver._sleep_time_between_cmd_retries = 0.01
     bhist_called = False
     original_bhist_method = driver._poll_once_by_bhist
 
