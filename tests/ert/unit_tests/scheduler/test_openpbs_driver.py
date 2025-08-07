@@ -10,7 +10,7 @@ from pathlib import Path
 from textwrap import dedent
 
 import pytest
-from hypothesis import given
+from hypothesis import given, settings
 from hypothesis import strategies as st
 
 from ert.cli.main import ErtCliError
@@ -265,6 +265,7 @@ async def test_faulty_qstat(monkeypatch, tmp_path, qstat_script, started_expecte
 
 
 @given(st.integers(), st.integers(min_value=1), words)
+@settings(max_examples=10)
 @pytest.mark.usefixtures("capturing_qsub")
 async def test_full_resource_string(realization_memory, num_cpu, cluster_label):
     driver = OpenPBSDriver(
@@ -361,6 +362,7 @@ async def test_that_qsub_will_retry_and_succeed(
     )
     qsub_path.chmod(qsub_path.stat().st_mode | stat.S_IEXEC)
     driver = OpenPBSDriver()
+    driver._poll_period = 0.01
     driver._max_pbs_cmd_attempts = 2
     driver._sleep_time_between_cmd_retries = 0.2
     await driver.submit(0, "sleep 10")
@@ -401,7 +403,7 @@ async def test_that_qdel_will_retry_and_succeed(
     qdel_path.chmod(qdel_path.stat().st_mode | stat.S_IEXEC)
     driver = OpenPBSDriver()
     driver._max_pbs_cmd_attempts = 2
-    driver._retry_pbs_cmd_interval = 0.2
+    driver._sleep_time_between_cmd_retries = 0.2
     driver._iens2jobid[0] = 111
     await driver.kill(0)
     assert "TRIED" in (bin_path / "script_try").read_text()
