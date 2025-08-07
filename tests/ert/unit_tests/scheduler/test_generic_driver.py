@@ -55,6 +55,7 @@ def driver(request, pytestconfig, monkeypatch, tmp_path):
 @pytest.mark.integration_test
 async def test_submit(driver: Driver, tmp_path, job_name, monkeypatch):
     monkeypatch.chdir(tmp_path)
+    driver._poll_period = 0.01
     await driver.submit(0, "sh", "-c", f"echo test > {tmp_path}/test", name=job_name)
     await poll(driver, {0})
 
@@ -77,6 +78,7 @@ async def test_submit_something_that_fails(
         nonlocal finished_called
         finished_called = True
 
+    driver._poll_period = 0.01
     await driver.submit(
         0,
         "sh",
@@ -93,6 +95,7 @@ async def test_submit_something_that_fails(
 @pytest.mark.integration_test
 async def test_kill_gives_correct_state(driver: Driver, use_tmpdir, request):
     aborted_called = False
+    driver._poll_period = 0.01
 
     if isinstance(driver, SlurmDriver):
         expected_returncodes = [
@@ -157,6 +160,7 @@ async def test_repeated_submit_same_iens(driver: Driver, tmp_path, monkeypatch):
 async def test_kill_actually_kills(driver: Driver, tmp_path, pytestconfig, monkeypatch):
     monkeypatch.chdir(tmp_path)
     finished = False
+    driver._poll_period = 0.01
 
     async def kill_job_once_started(iens):
         nonlocal driver
@@ -191,6 +195,7 @@ async def test_num_cpu_sets_env_variables(
     if isinstance(driver, LocalDriver):
         pytest.skip("LocalDriver has no NUM_CPU concept")
     monkeypatch.chdir(tmp_path)
+    driver._poll_period = 0.01
     await driver.submit(
         0,
         "sh",
