@@ -25,6 +25,7 @@ from _ert.events import (
 from .driver import Driver
 from .event import FinishedEvent, StartedEvent
 from .job import Job, JobState
+from .local_driver import LocalDriver
 
 if TYPE_CHECKING:
     from ert.ensemble_evaluator import Realization
@@ -78,7 +79,7 @@ class Scheduler:
         self._job_tasks: MutableMapping[int, asyncio.Task[None]] = {}
 
         self.submit_sleep_state: SubmitSleeper | None = None
-        if submit_sleep > 0:
+        if submit_sleep > 0 and not isinstance(driver, LocalDriver):
             self.submit_sleep_state = SubmitSleeper(submit_sleep)
 
         self._jobs: MutableMapping[int, Job] = {
