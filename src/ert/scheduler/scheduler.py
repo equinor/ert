@@ -70,8 +70,6 @@ class Scheduler:
         max_running: int = 1,
         submit_sleep: float = 0.0,
         ens_id: str | None = None,
-        ee_uri: str | None = None,
-        ee_token: str | None = None,
     ) -> None:
         self.driver = driver
         self._ensemble_evaluator_queue = ensemble_evaluator_queue
@@ -103,9 +101,7 @@ class Scheduler:
             )
         self._max_submit = max_submit
         self._max_running = max_running
-        self._ee_uri = ee_uri
         self._ens_id = ens_id
-        self._ee_token = ee_token
 
         self.checksum: dict[str, dict[str, Any]] = {}
 
@@ -205,9 +201,11 @@ class Scheduler:
             await self._ensemble_evaluator_queue.put(event)
             self._events.task_done()
 
-    def add_dispatch_information_to_jobs_file(self) -> None:
+    def add_dispatch_information_to_jobs_file(
+        self, ee_uri: str, ee_token: str | None
+    ) -> None:
         for job in self._jobs.values():
-            self._update_jobs_json(job.iens, job.real.run_arg.runpath)
+            self._update_jobs_json(job.iens, job.real.run_arg.runpath, ee_uri, ee_token)
 
     async def _monitor_and_handle_tasks(
         self, scheduling_tasks: list[asyncio.Task[None]]
@@ -352,13 +350,15 @@ class Scheduler:
             ):
                 job.returncode.set_result(event.returncode)
 
-    def _update_jobs_json(self, iens: int, runpath: str) -> None:
+    def _update_jobs_json(
+        self, iens: int, runpath: str, ee_uri: str, ee_token: str | None
+    ) -> None:
         jobs = _JobsJson(
             experiment_id=None,
             ens_id=self._ens_id,
             real_id=iens,
-            dispatch_url=self._ee_uri,
-            ee_token=self._ee_token,
+            dispatch_url=ee_uri,
+            ee_token=ee_token,
         )
         jobs_path = os.path.join(runpath, "jobs.json")
         try:
