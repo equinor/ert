@@ -635,8 +635,8 @@ def main() -> None:
         except ValueError as err:
             if "handler 'file'" in str(err):
                 exit_msg = (
-                    "Could not configure log handler for files. "
-                    "Check if you have write-access to the logs-directory."
+                    f"Could not configure log handler for files. "
+                    f"Check if you have write-access to the logs-directory ({log_dir})."
                 )
             else:
                 exit_msg = str(err)
