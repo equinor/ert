@@ -117,8 +117,6 @@ class EnsembleEvaluator:
             max_running=self.ensemble._queue_config.max_running,
             submit_sleep=self.ensemble._queue_config.submit_sleep,
             ens_id=self.ensemble.id_,
-            ee_uri=self._config.get_uri(),
-            ee_token=self._config.token,
         )
 
     async def _publisher(self) -> None:
@@ -576,7 +574,9 @@ class EnsembleEvaluator:
                 else 0
             )
 
-            self._scheduler.add_dispatch_information_to_jobs_file()
+            self._scheduler.add_dispatch_information_to_jobs_file(
+                self._config.get_uri(), self._config.token
+            )
             scheduler_finished_successfully = await self._scheduler.execute(
                 min_required_realizations
             )

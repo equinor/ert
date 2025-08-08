@@ -146,14 +146,12 @@ async def test_add_dispatch_information_to_jobs_file(
         mock_driver(),
         realizations=realizations,
         ens_id=test_ens_id,
-        ee_uri=test_ee_uri,
-        ee_token=test_ee_token,
     )
 
     for realization in realizations:
         create_jobs_json(realization)
 
-    sch.add_dispatch_information_to_jobs_file()
+    sch.add_dispatch_information_to_jobs_file(test_ee_uri, test_ee_token)
 
     for realization in realizations:
         job_file_path = Path(realization.run_arg.runpath) / "jobs.json"
