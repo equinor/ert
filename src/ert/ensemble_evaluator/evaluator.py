@@ -115,7 +115,11 @@ class EnsembleEvaluator:
             self._events,
             max_submit=self.ensemble._queue_config.max_submit,
             max_running=self.ensemble._queue_config.max_running,
-            submit_sleep=self.ensemble._queue_config.submit_sleep,
+            submit_sleep=(
+                0.0
+                if self.ensemble._queue_config.queue_options.name == QueueSystem.LOCAL
+                else self.ensemble._queue_config.submit_sleep
+            ),
             ens_id=self.ensemble.id_,
         )
 
