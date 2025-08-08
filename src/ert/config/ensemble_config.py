@@ -49,7 +49,6 @@ def _get_abs_path(file: str | None) -> str | None:
 
 
 class EnsembleConfig(BaseModel):
-    grid_file: str | None = None
     response_configs: dict[
         str,
         SummaryConfig
@@ -72,7 +71,6 @@ class EnsembleConfig(BaseModel):
             [p for p in self.parameter_configs.values() if isinstance(p, GenKwConfig)]
         )
 
-        self.grid_file = _get_abs_path(self.grid_file)
         return self
 
     @staticmethod
@@ -119,31 +117,62 @@ class EnsembleConfig(BaseModel):
     @no_type_check
     @classmethod
     def from_dict(cls, config_dict: ConfigDict) -> EnsembleConfig:
-        grid_file_path = config_dict.get(ConfigKeys.GRID)
+        # Grid file handling:
+        # Each field can specify its own grid file, or fall back to a global grid.
+        # If neither is provided, validation will fail when processing fields.
+        global_grid_file_path = config_dict.get(ConfigKeys.GRID)
         gen_kw_list = config_dict.get(ConfigKeys.GEN_KW, [])
         surface_list = config_dict.get(ConfigKeys.SURFACE, [])
         field_list = config_dict.get(ConfigKeys.FIELD, [])
-        dims = None
-        if grid_file_path is not None:
+        global_dims = None
+
+        # When users specify GRID as a separate line in the config,
+        # and not as an option to the FIELD keyword.
+        if global_grid_file_path is not None:
             try:
-                dims = get_shape(grid_file_path)
+                global_dims = get_shape(global_grid_file_path)
             except Exception as err:
                 raise ConfigValidationError.with_context(
-                    f"Could not read grid file {grid_file_path}: {err}",
-                    grid_file_path,
+                    f"Could not read grid file {global_grid_file_path}: {err}",
+                    global_grid_file_path,
                 ) from err
 
         def make_field(field_list: list[str]) -> FieldConfig:
-            if grid_file_path is None:
+            # An example of `field_list` when the keyword `GRID` is set:
+            # ['COND', 'PARAMETER', 'cond.bgrdecl',
+            #  {'INIT_FILES': 'cond_%d.bgrdecl', 'FORWARD_INIT': 'False',
+            #   'GRID': 'CASE.EGRID'}]
+            # The fourth element (index 3) of this list is a dictionary of
+            # optional keywords, one of which is `GRID`.
+            field_settings = field_list[3]
+            grid_file_path = field_settings.get(ConfigKeys.GRID)
+
+            if grid_file_path is None and global_grid_file_path is None:
                 raise ConfigValidationError.with_context(
                     "In order to use the FIELD keyword, a GRID must be supplied.",
                     field_list,
                 )
+
+            # Use field-specific grid if provided,
+            # otherwise fall back to global grid.
+            if grid_file_path is not None:
+                try:
+                    dims = get_shape(grid_file_path)
+                except Exception as err:
+                    raise ConfigValidationError.with_context(
+                        f"Could not read grid file {grid_file_path}: {err}",
+                        grid_file_path,
+                    ) from err
+            else:
+                grid_file_path = global_grid_file_path
+                dims = global_dims
+
             if dims is None:
                 raise ConfigValidationError.with_context(
                     f"Grid file {grid_file_path} did not contain dimensions",
                     grid_file_path,
                 )
+
             return FieldConfig.from_config_list(grid_file_path, dims, field_list)
 
         parameter_configs = (
@@ -163,7 +192,6 @@ class EnsembleConfig(BaseModel):
         refcase = Refcase.from_config_dict(config_dict)
 
         return cls(
-            grid_file=grid_file_path,
             response_configs={response.name: response for response in response_configs},
             parameter_configs={
                 parameter.name: parameter for parameter in parameter_configs

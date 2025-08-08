@@ -1,4 +1,3 @@
-import os
 from datetime import datetime
 from pathlib import Path
 from textwrap import dedent
@@ -16,7 +15,6 @@ def test_create():
     conf_from_dict = EnsembleConfig.from_dict({})
 
     assert empty_ens_conf == conf_from_dict
-    assert conf_from_dict.grid_file is None
     assert not conf_from_dict.parameters
 
     assert "XYZ" not in conf_from_dict
@@ -54,8 +52,7 @@ def test_ensemble_config_fails_on_non_sensical_grid_file():
 
 
 @pytest.mark.usefixtures("use_tmpdir")
-def test_ensemble_config_construct_refcase_and_grid():
-    grid_file = "CASE.EGRID"
+def test_ensemble_config_construct_refcase():
     refcase_file = "REFCASE_NAME"
     xtgeo.create_box_grid(dimension=(10, 10, 1)).to_file("CASE.EGRID", "egrid")
     summary = Summary.writer("REFCASE_NAME", datetime(2014, 9, 10), 3, 3, 3)
@@ -65,15 +62,12 @@ def test_ensemble_config_construct_refcase_and_grid():
     summary.fwrite()
     ec = EnsembleConfig.from_dict(
         config_dict={
-            ConfigKeys.GRID: grid_file,
             ConfigKeys.REFCASE: refcase_file,
         },
     )
 
     assert isinstance(ec, EnsembleConfig)
     assert ec.refcase is not None
-
-    assert ec.grid_file == os.path.realpath(grid_file)
 
 
 @pytest.mark.usefixtures("use_tmpdir")
