@@ -17,16 +17,15 @@
     "queue_options": {
       "name": "local",
       "max_running": 25,
+      "submit_sleep": 0.0,
       "num_cpu": 1,
       "realization_memory": 0,
       "job_script": "fm_dispatch.py",
-      "submit_sleep": null,
       "project_code": null,
       "activate_script": "activate"
     },
     "stop_long_running": false,
-    "max_runtime": null,
-    "submit_sleep_": 0.0
+    "max_runtime": null
   },
   "forward_model_steps": [
     {
