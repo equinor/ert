@@ -202,19 +202,12 @@ The default is to use parallel evaluation if supported.
 
     @model_validator(mode="after")
     def validate_backend_and_algorithm(self) -> Self:
-        method = "default" if self.algorithm is None else self.algorithm
-        plugin_manager = get_ropt_plugin_manager()
-        plugin_name = plugin_manager.get_plugin_name("optimizer", method)
-        if plugin_name is None:
-            raise ValueError(f"Optimizer algorithm '{method}' not found")
-        self._optimization_plugin_name = plugin_name
-
         if self.backend is not None:
             message = (
                 "optimization.backend is deprecated. "
                 "The correct backend will be inferred by the algorithm. "
-                "If several backends have an algorithm named A and you want to pick "
-                "a specific backend B, put B/A in optimization.algorithm."
+                "If several backends have an algorithm named A, you need to pick "
+                "a specific backend B by putting B/A in optimization.algorithm."
             )
             print(message)
             logging.getLogger(EVEREST).warning(message)
@@ -228,9 +221,25 @@ The default is to use parallel evaluation if supported.
             print(message)
             logging.getLogger(EVEREST).warning(message)
 
+        method = self.algorithm
+        if self.backend == "dakota":
+            method = f"{self.backend}/{self.algorithm}"
+        elif self.backend is not None and "algorithm" not in self.model_fields_set:
+            self.algorithm = "default"
+        if self.backend is not None:
+            method = f"{self.backend}/{self.algorithm}"
+        plugin_manager = get_ropt_plugin_manager()
+        plugin_name = plugin_manager.get_plugin_name("optimizer", method)
+        if plugin_name is None:
+            raise ValueError(f"Optimizer algorithm '{method}' not found")
+        self._optimization_plugin_name = plugin_name
+
         plugin_manager.get_plugin("optimizer", method).validate_options(
-            method, self.options or self.backend_options
+            self.algorithm, self.options or self.backend_options
         )
+
+        self.backend = None
+        self.algorithm = method
 
         return self
 
