@@ -38,3 +38,26 @@ def test_optimization_config_options_unknown_options_error():
                 "merit_function el_bakry",
             ]
         )
+
+
+@pytest.mark.parametrize(
+    "backend, algorithm, expected",
+    [
+        (None, None, "optpp_q_newton"),
+        ("dakota", None, "dakota/optpp_q_newton"),
+        (None, "conmin_mfd", "conmin_mfd"),
+        ("dakota", "conmin_mfd", "dakota/conmin_mfd"),
+        (None, "slsqp", "slsqp"),
+        ("scipy", None, "scipy/default"),
+        ("scipy", "slsqp", "scipy/slsqp"),
+    ],
+)
+def test_optimization_config_backend_and_algorithm(backend, algorithm, expected):
+    config_dict = {}
+    if backend is not None:
+        config_dict["backend"] = backend
+    if algorithm is not None:
+        config_dict["algorithm"] = algorithm
+    config = OptimizationConfig.model_validate(config_dict)
+    assert config.backend is None
+    assert config.algorithm == expected
