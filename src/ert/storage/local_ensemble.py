@@ -19,7 +19,7 @@ import xarray as xr
 from pydantic import BaseModel
 from typing_extensions import TypedDict
 
-from ert.config import GenKwConfig
+from ert.config import GenKwConfig, ParameterConfig
 from ert.config.response_config import InvalidResponseFile
 from ert.storage.load_status import LoadResult, LoadStatus
 from ert.storage.mode import BaseMode, Mode, require_write
@@ -691,6 +691,32 @@ class LocalEnsemble(BaseMode):
             return pl.read_parquet(ds_path)
 
         return None
+
+    @staticmethod
+    def sample_parameter(
+        parameter: ParameterConfig,
+        real_nr: int,
+        random_seed: int,
+    ) -> pl.DataFrame:
+        keys = parameter.parameter_keys
+        if not keys:
+            return pl.DataFrame([])
+        parameter_value = parameter.sample_value(
+            parameter.name,
+            keys,
+            str(random_seed),
+            real_nr,
+        )
+
+        parameter_dict = {
+            parameter_name: parameter_value[idx]
+            for idx, parameter_name in enumerate(keys)
+        }
+        parameter_dict["realization"] = real_nr
+        return pl.DataFrame(
+            parameter_dict,
+            schema=dict.fromkeys(keys, pl.Float64) | {"realization": pl.Int64},
+        )
 
     @require_write
     def save_cross_correlations(
