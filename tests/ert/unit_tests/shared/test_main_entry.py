@@ -61,10 +61,11 @@ def test_non_writable_log_directory_exits_with_message(monkeypatch, use_tmpdir):
     os.mkdir(logs_dir)
     os.chmod(logs_dir, 0o444)  # Read only access mode
 
-    expected_exit_message = (
-        "Could not configure log handler for files. "
-        "Check if you have write-access to the logs-directory."
-    )
+    expected_exit_messages = [
+        "Could not configure log handler for files.",
+        "Check if you have write-access to the logs-directory",
+        logs_dir,
+    ]
 
     class ErtparserMock(MagicMock):
         logdir = logs_dir
@@ -73,4 +74,7 @@ def test_non_writable_log_directory_exits_with_message(monkeypatch, use_tmpdir):
 
     with pytest.raises(SystemExit) as exc_info:
         main.main()
-    assert expected_exit_message in str(exc_info)
+    assert all(
+        expected_exit_message in str(exc_info)
+        for expected_exit_message in expected_exit_messages
+    )
