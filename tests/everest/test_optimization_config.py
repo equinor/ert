@@ -61,3 +61,22 @@ def test_optimization_config_backend_and_algorithm(backend, algorithm, expected)
     config = OptimizationConfig.model_validate(config_dict)
     assert config.backend is None
     assert config.algorithm == expected
+
+
+@pytest.mark.parametrize(
+    "backend, algorithm, expected",
+    [
+        (None, "foo", "Optimizer algorithm 'foo' not found"),
+        (None, "default", "Cannot specify 'default' method without a plugin name"),
+        ("foo", None, "Optimizer algorithm 'foo/default' not found"),
+        ("foo", "optpp_q_newton", "Optimizer algorithm 'foo/optpp_q_newton' not found"),
+    ],
+)
+def test_optimization_config_backend_and_algorithm_errors(backend, algorithm, expected):
+    config_dict = {}
+    if backend is not None:
+        config_dict["backend"] = backend
+    if algorithm is not None:
+        config_dict["algorithm"] = algorithm
+    with pytest.raises(ValueError, match=expected):
+        OptimizationConfig.model_validate(config_dict)
