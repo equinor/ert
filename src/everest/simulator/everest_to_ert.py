@@ -386,7 +386,15 @@ def _extract_results(ever_config: EverestConfig, ert_config: dict[str, Any]) -> 
     everest_objectives = []
     for objective in ever_config.objective_functions:
         everest_objectives.append(
-            {"name": objective.name, "input_file": objective.name}
+            {
+                "type": "everest_objectives",
+                "name": objective.name,
+                "input_file": objective.name,
+                "objective_type": objective.type,
+                "weight": objective.weight,
+                "auto_scale": objective.auto_scale or False,
+                "scale": objective.scale,
+            }
         )
     if everest_objectives:
         ert_config[ErtConfigKeys.EVEREST_OBJECTIVES] = everest_objectives
@@ -394,7 +402,15 @@ def _extract_results(ever_config: EverestConfig, ert_config: dict[str, Any]) -> 
     everest_constraints = []
     for constraint in ever_config.output_constraints:
         everest_constraints.append(
-            {"name": constraint.name, "input_file": constraint.name}
+            {
+                "type": "everest_constraints",
+                "name": constraint.name,
+                "input_file": constraint.name,
+                "auto_scale": constraint.auto_scale or False,
+                "lower_bound": constraint.lower_bound,
+                "upper_bound": constraint.upper_bound,
+                "scale": constraint.scale,
+            }
         )
     if everest_constraints:
         ert_config[ErtConfigKeys.EVEREST_CONSTRAINTS] = everest_constraints
