@@ -6,7 +6,7 @@ import os
 from collections.abc import Iterable, Mapping
 from datetime import UTC, datetime
 from pathlib import Path
-from typing import TYPE_CHECKING, Any
+from typing import Any
 
 import orjson
 import polars as pl
@@ -26,9 +26,7 @@ from .config import (
 from .config.ert_config import create_forward_model_json
 from .run_arg import RunArg
 from .runpaths import Runpaths
-
-if TYPE_CHECKING:
-    from .storage import Ensemble
+from .storage import Ensemble
 
 logger = logging.getLogger(__name__)
 
@@ -196,7 +194,8 @@ def sample_prior(
         )
         if isinstance(config_node, GenKwConfig):
             datasets = [
-                config_node.sample_or_load(
+                Ensemble.sample_parameter(
+                    config_node,
                     realization_nr,
                     random_seed=random_seed,
                 )
@@ -210,10 +209,7 @@ def sample_prior(
                 )
         else:
             for realization_nr in active_realizations:
-                ds = config_node.sample_or_load(
-                    realization_nr,
-                    random_seed=random_seed,
-                )
+                ds = config_node.read_from_runpath(Path(), realization_nr, 0)
                 ensemble.save_parameters(parameter, realization_nr, ds)
 
     ensemble.refresh_ensemble_state()

@@ -25,7 +25,7 @@ from ert.config import (
 )
 from ert.config.gen_kw_config import TransformFunctionDefinition
 from ert.field_utils import Shape
-from ert.storage import open_storage
+from ert.storage import Ensemble, open_storage
 
 
 @pytest.fixture
@@ -274,7 +274,8 @@ def test_update_handles_precision_loss_in_std_dev(tmp_path):
         )
         prior = storage.create_ensemble(experiment.id, ensemble_size=23, name="prior")
         for realization_nr in range(prior.ensemble_size):
-            ds = gen_kw.sample_or_load(
+            ds = Ensemble.sample_parameter(
+                gen_kw,
                 realization_nr,
                 random_seed=1234,
             )
@@ -392,7 +393,8 @@ def test_update_raises_on_singular_matrix(tmp_path):
         )
         prior = storage.create_ensemble(experiment.id, ensemble_size=2, name="prior")
         for realization_nr in range(prior.ensemble_size):
-            ds = gen_kw.sample_or_load(
+            ds = Ensemble.sample_parameter(
+                gen_kw,
                 realization_nr,
                 random_seed=1234,
             )
