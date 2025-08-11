@@ -28,6 +28,7 @@ This dict of values is passed unchanged to the selected method in the backend.
 """,
     )
     method: str = Field(
+        default="norm",
         description="""The sampling method or distribution used by the sampler backend.
 """,
     )
@@ -50,14 +51,22 @@ This dict of values is passed unchanged to the selected method in the backend.
             print(message)
             logging.getLogger(EVEREST).warning(message)
 
+        # Update the default for backends that are not scipy:
+        if (
+            self.backend not in {None, "scipy"}
+            and "method" not in self.model_fields_set
+        ):
+            self.method = "default"
+
         if self.backend is not None:
             self.method = f"{self.backend}/{self.method}"
-            self.backend = None
 
         if (
             get_ropt_plugin_manager().get_plugin_name("sampler", f"{self.method}")
             is None
         ):
-            raise ValueError(f"Sampler '{self.method}' not found")
+            raise ValueError(f"Sampler method '{self.method}' not found")
+
+        self.backend = None
 
         return self

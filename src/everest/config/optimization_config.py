@@ -221,25 +221,31 @@ The default is to use parallel evaluation if supported.
             print(message)
             logging.getLogger(EVEREST).warning(message)
 
-        method = self.algorithm
-        if self.backend == "dakota":
-            method = f"{self.backend}/{self.algorithm}"
-        elif self.backend is not None and "algorithm" not in self.model_fields_set:
+        # Update the default for backends that are not dakota:
+        if (
+            self.backend not in {None, "dakota"}
+            and "algorithm" not in self.model_fields_set
+        ):
             self.algorithm = "default"
-        if self.backend is not None:
-            method = f"{self.backend}/{self.algorithm}"
+
+        algorithm = (  # Do not modify self.algorithm yet, still needed.
+            self.algorithm
+            if self.backend is None
+            else f"{self.backend}/{self.algorithm}"
+        )
+
         plugin_manager = get_ropt_plugin_manager()
-        plugin_name = plugin_manager.get_plugin_name("optimizer", method)
+        plugin_name = plugin_manager.get_plugin_name("optimizer", algorithm)
         if plugin_name is None:
-            raise ValueError(f"Optimizer algorithm '{method}' not found")
+            raise ValueError(f"Optimizer algorithm '{algorithm}' not found")
         self._optimization_plugin_name = plugin_name
 
-        plugin_manager.get_plugin("optimizer", method).validate_options(
+        plugin_manager.get_plugin("optimizer", algorithm).validate_options(
             self.algorithm, self.options or self.backend_options
         )
 
         self.backend = None
-        self.algorithm = method
+        self.algorithm = algorithm
 
         return self
 
