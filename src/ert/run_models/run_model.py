@@ -230,7 +230,17 @@ class RunModel(BaseModel, ABC):
             for key, value in self.__dict__.items()
             if key not in keys_to_drop
         }
-        logger.info(f"Running '{self.name()}' with settings {settings_dict}")
+        num_params_log = ""
+        if hasattr(self, "parameter_configuration"):
+            num_params = sum(
+                len(param_config.parameter_keys)
+                for param_config in self.parameter_configuration
+            )
+            num_params_log = f"\nExperiment has {num_params} parameters."
+
+        logger.info(
+            f"Running '{self.name()}' with settings {settings_dict}{num_params_log}"
+        )
 
     @classmethod
     @abstractmethod
