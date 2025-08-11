@@ -11,7 +11,6 @@ from pydantic import ValidationError
 
 import everest
 from ert.config import ConfigWarning
-from ert.config.ensemble_config import EnsembleConfig
 from ert.config.ert_config import create_and_hook_workflows, workflows_from_dict
 from ert.config.model_config import ModelConfig
 from ert.config.parsing import ConfigKeys as ErtConfigKeys
@@ -22,9 +21,9 @@ from ert.config.queue_config import (
     SlurmQueueOptions,
     TorqueQueueOptions,
 )
+from ert.run_models.everest_run_model import EverestRunModel
 from everest.config import EverestConfig
 from everest.simulator.everest_to_ert import (
-    _everest_to_ert_config_dict,
     _get_installed_forward_model_steps,
     everest_to_ert_config_dict,
     get_forward_model_steps,
@@ -147,9 +146,6 @@ def test_default_installed_jobs(tmp_path, monkeypatch):
     assert [c.name for c in forward_model_steps[1:]] == jobs
 
 
-@pytest.mark.filterwarnings(
-    "ignore:Config contains a SUMMARY key but no forward model steps"
-)
 def test_combined_wells_everest_to_ert(tmp_path, monkeypatch):
     monkeypatch.chdir(tmp_path)
     Path("my_file").touch()
@@ -171,10 +167,13 @@ def test_combined_wells_everest_to_ert(tmp_path, monkeypatch):
     """)
         )
     )
-    config_dict = everest_to_ert_config_dict(ever_config)
-    ensemble_config = EnsembleConfig.from_dict(config_dict)
 
-    assert "WOPR:fakename" in ensemble_config.response_configs["summary"].keys
+    run_model = EverestRunModel.create(ever_config)
+
+    smry_config = next(
+        c for c in run_model.response_configuration if c.type == "summary"
+    )
+    assert "WOPR:fakename" in smry_config.keys
 
 
 @pytest.mark.parametrize(
@@ -246,10 +245,16 @@ def test_summary_default_no_opm(tmp_path, monkeypatch):
             )
         ]
     )
-    sum_keys = [list(set(sum_keys))]
-    res_conf = _everest_to_ert_config_dict(everconf)
 
-    assert set(sum_keys[0]) == set(res_conf[ErtConfigKeys.SUMMARY][0]) - {"*"}
+    sum_keys = [list(set(sum_keys))]
+
+    run_model = EverestRunModel.create(everconf)
+
+    smry_config = next(
+        c for c in run_model.response_configuration if c.type == "summary"
+    )
+
+    assert set(sum_keys[0]) == set(smry_config.keys) - {"*"}
 
 
 def test_workflow_job_deprecated(tmp_path, monkeypatch):
@@ -440,8 +445,13 @@ def test_passthrough_explicit_summary_keys(change_to_tmpdir):
         ]
     )
 
-    ert_config = _everest_to_ert_config_dict(config)
-    assert set(custom_sum_keys).issubset(set(ert_config[ErtConfigKeys.SUMMARY][0]))
+    run_model = EverestRunModel.create(config)
+
+    smry_config = next(
+        c for c in run_model.response_configuration if c.type == "summary"
+    )
+
+    assert set(custom_sum_keys).issubset(smry_config.keys)
 
 
 @pytest.mark.usefixtures("no_plugins")

@@ -52,8 +52,8 @@ from everest.optimizer.opt_model_transforms import (
 )
 from everest.simulator.everest_to_ert import (
     everest_to_ert_config_dict,
-    get_ensemble_config,
     get_forward_model_steps,
+    get_parameters_and_responses,
     get_substitutions,
     get_workflow_jobs,
 )
@@ -197,7 +197,9 @@ class EverestRunModel(RunModel):
         queue_config.queue_options = everest_config.simulator.queue_system
         queue_config.queue_system = everest_config.simulator.queue_system.name
 
-        ensemble_config = get_ensemble_config(config_dict, everest_config)
+        parameter_configuration, response_configuration = get_parameters_and_responses(
+            everest_config
+        )
 
         substitutions = get_substitutions(
             config_dict,
@@ -254,8 +256,8 @@ class EverestRunModel(RunModel):
             # Mutated throughout execution of Everest
             # (Not totally in conformity with ERT runmodel logic)
             active_realizations=[],
-            parameter_configuration=ensemble_config.parameter_configuration,
-            response_configuration=ensemble_config.response_configuration,
+            parameter_configuration=parameter_configuration,
+            response_configuration=response_configuration,
             ert_templates=ert_templates,
             user_config_file=config_file,
             env_vars=env_vars,

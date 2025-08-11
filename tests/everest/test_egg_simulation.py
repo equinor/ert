@@ -1,19 +1,16 @@
 import json
 import os
-from pathlib import Path
 
 import numpy as np
 import pandas as pd
 import pytest
 
 from ert.config import ErtConfig
-from ert.config.parsing import ConfigKeys as ErtConfigKeys
 from ert.ensemble_evaluator import EvaluatorServerConfig
 from ert.run_models.everest_run_model import EverestRunModel
 from everest.config import EverestConfig
 from everest.simulator.everest_to_ert import _everest_to_ert_config_dict
 from tests.everest.utils import (
-    everest_default_jobs,
     skipif_no_everest_models,
 )
 
@@ -461,148 +458,34 @@ SUM_KEYS = [
 ]
 
 
-def sort_res_summary(ert_config):
-    ert_config[ErtConfigKeys.SUMMARY][0] = sorted(ert_config[ErtConfigKeys.SUMMARY][0])
-
-
-def _generate_exp_ert_config(config_path, output_dir, config_file):
-    return {
-        ErtConfigKeys.DEFINE: [
-            ("<CONFIG_PATH>", config_path),
-            ("<CONFIG_FILE>", Path(config_file).stem),
-        ],
-        ErtConfigKeys.INSTALL_JOB: everest_default_jobs(output_dir),
-        ErtConfigKeys.NUM_REALIZATIONS: NUM_REALIZATIONS,
-        ErtConfigKeys.RUNPATH: os.path.join(
-            output_dir,
-            "egg_simulations/batch_<ITER>/geo_realization_<GEO_ID>/simulation_<IENS>",
-        ),
-        ErtConfigKeys.RUNPATH_FILE: os.path.join(
-            os.path.realpath("everest/model"),
-            "everest_output/.res_runpath_list",
-        ),
-        ErtConfigKeys.MAX_SUBMIT: 2,
-        ErtConfigKeys.FORWARD_MODEL: [
-            [
-                "copy_directory",
-                [
-                    f"{config_path}/../../eclipse/include/realizations/realization-<GEO_ID>/eclipse",
-                    "eclipse",
-                ],
-            ],
-            [
-                "symlink",
-                [f"{config_path}/../input/files", "files"],
-            ],
-            [
-                "copy_file",
-                [
-                    os.path.realpath(
-                        "everest/model/everest_output/.internal_data/wells.json"
-                    ),
-                    "wells.json",
-                ],
-            ],
-            [
-                "well_constraints",
-                [
-                    "-i",
-                    "files/well_readydate.json",
-                    "-c",
-                    "files/wc_config.yml",
-                    "-rc",
-                    "well_rate.json",
-                    "-o",
-                    "wc_wells.json",
-                ],
-            ],
-            [
-                "add_templates",
-                [
-                    "-i",
-                    "wc_wells.json",
-                    "-c",
-                    "files/at_config.yml",
-                    "-o",
-                    "at_wells.json",
-                ],
-            ],
-            [
-                "schmerge",
-                [
-                    "-s",
-                    "eclipse/include/schedule/schedule.tmpl",
-                    "-i",
-                    "at_wells.json",
-                    "-o",
-                    "eclipse/include/schedule/schedule.sch",
-                ],
-            ],
-            [
-                "eclipse100",
-                ["eclipse", "eclipse/model/EGG.DATA", "--version", "2020.2"],
-            ],
-            ["rf", ["-s", "eclipse/model/EGG", "-o", "rf"]],
-        ],
-        ErtConfigKeys.ENSPATH: os.path.join(
-            os.path.realpath("everest/model"),
-            "everest_output/simulation_results",
-        ),
-        ErtConfigKeys.EVEREST_OBJECTIVES: [
-            {
-                "type": "everest_objectives",
-                "name": "rf",
-                "input_file": "rf",
-                "objective_type": None,
-                "weight": None,
-                "auto_scale": False,
-                "scale": None,
-            }
-        ],
-        ErtConfigKeys.ECLBASE: "eclipse/model/EGG",
-        ErtConfigKeys.RANDOM_SEED: 123456,
-        ErtConfigKeys.SUMMARY: SUM_KEYS,
-        ErtConfigKeys.GEN_DATA: [],
-    }
-
-
 @skipif_no_everest_models
 @pytest.mark.everest_models_test
 def test_egg_model_convert_no_opm(copy_egg_test_data_to_tmp):
     config = EverestConfig.load_file(CONFIG_FILE)
-    ert_config = _everest_to_ert_config_dict(config)
+    run_model = EverestRunModel.create(config)
 
-    # configpath isn't specified in config_file so it should be inferred
-    # to be at the directory of the config file.
-    output_dir = config.output_dir
-    config_path = os.path.dirname(os.path.abspath(CONFIG_FILE))
-    exp_ert_config = _generate_exp_ert_config(config_path, output_dir, CONFIG_FILE)
-    exp_ert_config[ErtConfigKeys.SUMMARY][0] = ["*", *SUM_KEYS_NO_OPM]
-    sort_res_summary(exp_ert_config)
-    sort_res_summary(ert_config)
-    assert exp_ert_config == ert_config
+    smry_config = next(
+        c for c in run_model.response_configuration if c.type == "summary"
+    )
+
+    expected_smry_keys = set(SUM_KEYS_NO_OPM).union({"*"})
+    assert set(smry_config.keys) == expected_smry_keys
 
 
 @skipif_no_everest_models
 @pytest.mark.everest_models_test
-def test_opm_fail_default_summary_keys(copy_egg_test_data_to_tmp):
+def test_opm_fail_default_summary_keys(copy_egg_test_data_to_tmp, snapshot):
     pytest.importorskip("everest_models")
 
     config = EverestConfig.load_file(CONFIG_FILE)
-    # The Everest config file will fail to load as an Eclipse data file
-    ert_config = _everest_to_ert_config_dict(config)
+    run_model = EverestRunModel.create(config)
 
-    # configpath isn't specified in config_file so it should be inferred
-    # to be at the directory of the config file.
-    output_dir = config.output_dir
-    config_path = os.path.dirname(os.path.abspath(CONFIG_FILE))
-    exp_ert_config = _generate_exp_ert_config(config_path, output_dir, CONFIG_FILE)
-    exp_ert_config[ErtConfigKeys.SUMMARY][0] = filter(
-        lambda key: not key.startswith("G"), exp_ert_config[ErtConfigKeys.SUMMARY][0]
+    smry_config = next(
+        c for c in run_model.response_configuration if c.type == "summary"
     )
-    sort_res_summary(exp_ert_config)
-    sort_res_summary(ert_config)
-    assert exp_ert_config == ert_config
+
+    expected_smry_keys = {k for k in SUM_KEYS[0] if not k.startswith("G")}
+    assert set(smry_config.keys) == expected_smry_keys
 
 
 @skipif_no_everest_models
@@ -622,26 +505,16 @@ def test_opm_fail_explicit_summary_keys(copy_egg_test_data_to_tmp):
     config = EverestConfig.load_file(CONFIG_FILE)
     # The Everest config file will fail to load as an Eclipse data file
     config.export.keywords = extra_sum_keys
+    run_model = EverestRunModel.create(config)
 
-    ert_config = _everest_to_ert_config_dict(config)
+    smry_config = next(
+        c for c in run_model.response_configuration if c.type == "summary"
+    )
 
-    # configpath isn't specified in config_file so it should be inferred
-    # to be at the directory of the config file.
-    output_dir = config.output_dir
-    config_path = os.path.dirname(os.path.abspath(CONFIG_FILE))
-    exp_ert_config = _generate_exp_ert_config(config_path, output_dir, CONFIG_FILE)
-    exp_ert_config[ErtConfigKeys.SUMMARY] = [
-        list(
-            filter(
-                lambda key: not key.startswith("G"),
-                exp_ert_config[ErtConfigKeys.SUMMARY][0],
-            )
-        )
-        + extra_sum_keys
-    ]
-    sort_res_summary(exp_ert_config)
-    sort_res_summary(ert_config)
-    assert exp_ert_config == ert_config
+    expected_smry_keys = {k for k in SUM_KEYS[0] if not k.startswith("G")}.union(
+        set(extra_sum_keys)
+    )
+    assert set(smry_config.keys) == expected_smry_keys
 
 
 @skipif_no_everest_models

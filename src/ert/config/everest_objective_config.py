@@ -16,9 +16,9 @@ class EverestObjectivesConfig(ResponseConfig):
     type: Literal["everest_objectives"] = "everest_objectives"
     name: str = "everest_objectives"
     has_finalized_keys: bool = True
-    weights: list[float | None]
+    weights: list[float]
     auto_scales: list[bool]
-    scales: list[float | None]
+    scales: list[float]
     objective_types: list[str | None]
 
     @property
