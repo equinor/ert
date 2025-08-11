@@ -695,6 +695,7 @@ class ErtConfig(BaseModel):
         default_factory=lambda: defaultdict(list)
     )
     runpath_file: Path = Path(DEFAULT_RUNPATH_FILE)
+    num_params: int
 
     ert_templates: list[tuple[str, str]] = Field(default_factory=list)
     installed_forward_model_steps: dict[str, ForwardModelStep] = Field(
@@ -1053,6 +1054,14 @@ class ErtConfig(BaseModel):
 
         env_vars = {}
         substituter = Substitutions(substitutions)
+        num_params = sum(
+            len(
+                ensemble_config.parameter_configs[param_name].dict()[
+                    "transform_function_definitions"
+                ]
+            )
+            for param_name in ensemble_config.parameter_configs
+        )
         for key, val in config_dict.get("SETENV", []):
             env_vars[key] = substituter.substitute(val)
         try:
@@ -1079,6 +1088,7 @@ class ErtConfig(BaseModel):
                 user_config_file=config_file_path,
                 observation_config=obs_configs,
                 enkf_obs=observations,
+                num_params=num_params,
             )
         except PydanticValidationError as err:
             raise ConfigValidationError.from_pydantic(err) from err

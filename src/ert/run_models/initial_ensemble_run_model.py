@@ -34,6 +34,7 @@ class InitialEnsembleRunModel(RunModel, ABC):
             Field(discriminator="type"),
         ]
     ]
+    num_params: int
     response_configuration: list[
         Annotated[
             (

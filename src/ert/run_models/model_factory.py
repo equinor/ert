@@ -163,6 +163,7 @@ def _setup_ensemble_experiment(
         queue_config=config.queue_config,
         observations=config.observations,
         status_queue=status_queue,
+        num_params=config.num_params,
     )
 
 
