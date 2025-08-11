@@ -12,8 +12,7 @@ def test_mathfunc_cvar(copy_math_func_test_data_to_tmp):
     config_dict = {
         **config.model_dump(exclude_none=True),
         "optimization": {
-            "backend": "scipy",
-            "algorithm": "slsqp",
+            "algorithm": "scipy/slsqp",
             "cvar": {"percentile": 0.5},
             "max_batch_num": 5,
         },
