@@ -55,6 +55,10 @@ class EverestStorage:
     def close(self) -> None:
         self._storage.close()
 
+    # Deprecation note:
+    # Only used in EverestDataAPI, this information is already stored in
+    # LocalEnsembles, hence this function is due to be removed once
+    # the everest data is exposed through dark storage.
     def simulation_to_geo_realization_map(self, batch_id: int) -> dict[int, int]:
         """
         Mapping from simulation ID to geo-realization
