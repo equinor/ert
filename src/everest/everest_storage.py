@@ -6,17 +6,16 @@ import os
 import traceback
 from functools import cached_property
 from pathlib import Path
-from typing import Any, ClassVar, TypedDict
+from typing import Any, ClassVar, TypedDict, cast
 from uuid import UUID
 
 import numpy as np
 import polars as pl
 from ropt.results import FunctionResults, GradientResults, Results
 
+from ert.config import EverestObjectivesConfig
 from ert.storage import LocalEnsemble, LocalExperiment, LocalStorage, open_storage
 from ert.storage.local_ensemble import BatchDataframes
-from everest.config.objective_function_config import ObjectiveFunctionConfig
-from everest.config.output_constraint_config import OutputConstraintConfig
 from everest.strings import EVEREST
 
 logger = logging.getLogger(__name__)
@@ -27,8 +26,6 @@ def try_read_df(path: Path) -> pl.DataFrame | None:
 
 
 class OptimizationDataframes(TypedDict, total=False):
-    objective_functions: pl.DataFrame | None
-    nonlinear_constraints: pl.DataFrame | None
     realization_weights: pl.DataFrame | None
 
 
@@ -264,8 +261,6 @@ class _GradientResults(TypedDict):
 
 class EverestStorage:
     EXPERIMENT_DATAFRAMES: ClassVar[list[str]] = [
-        "objective_functions",
-        "nonlinear_constraints",
         "realization_weights",
     ]
 
@@ -323,8 +318,12 @@ class EverestStorage:
         return self.experiment.parameter_keys
 
     @property
-    def objective_functions(self) -> pl.DataFrame | None:
-        return pl.read_parquet(self.experiment._path / "objective_functions.parquet")
+    def objective_functions(self) -> EverestObjectivesConfig:
+        objectives_config = self.experiment.response_configuration.get(
+            "everest_objectives"
+        )
+        assert objectives_config is not None
+        return cast(EverestObjectivesConfig, objectives_config)
 
     @property
     def nonlinear_constraints(self) -> list[str]:
@@ -487,43 +486,8 @@ class EverestStorage:
 
     def init(
         self,
-        objective_functions: list[ObjectiveFunctionConfig],
-        output_constraints: list[OutputConstraintConfig] | None,
         realizations: list[int],
     ) -> None:
-        # TODO: The weight and normalization keys are only used by the everest api,
-        # with everviz. They should be removed in the long run.
-        weights = np.fromiter(
-            (1.0 if obj.weight is None else obj.weight for obj in objective_functions),
-            dtype=np.float64,
-        )
-
-        objective_functions_dataframe = pl.DataFrame(
-            {
-                "objective_name": [objective.name for objective in objective_functions],
-                "weight": pl.Series(weights / sum(weights), dtype=pl.Float64),
-                "scale": pl.Series(
-                    [
-                        1.0 if obj.scale is None else obj.scale
-                        for obj in objective_functions
-                    ],
-                    dtype=pl.Float64,
-                ),
-            }
-        )
-
-        nonlinear_constraints = (
-            pl.DataFrame(
-                {
-                    "constraint_name": [
-                        constraint.name for constraint in output_constraints
-                    ],
-                }
-            )
-            if output_constraints
-            else None
-        )
-
         realization_weights = pl.DataFrame(
             {
                 "realization": pl.Series(realizations, dtype=pl.UInt32),
@@ -532,15 +496,9 @@ class EverestStorage:
 
         self.save_experiment_dataframes(
             dataframes={
-                "objective_functions": objective_functions_dataframe,
-                "nonlinear_constraints": nonlinear_constraints,
                 "realization_weights": realization_weights,  # Store in metadata
             },
             experiment_path=self.experiment._path,
-            # Note: Write storage is held by ERT runmodel, hence we need to bypass
-            # the read/write, this should/could be synced better up between ERT /
-            # everest storage. Ideally Everest would have its own "write" priviliege
-            # for dumping optimization results.
         )
 
     @classmethod

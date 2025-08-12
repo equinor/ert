@@ -27,11 +27,7 @@ class EverestDataAPI:
 
     @property
     def objective_function_names(self) -> list[str]:
-        if self._ever_storage.objective_functions is None:
-            return []
-        return sorted(
-            self._ever_storage.objective_functions["objective_name"].unique().to_list()
-        )
+        return self._ever_storage.objective_functions.keys
 
     @property
     def output_constraint_names(self) -> list[str]:
@@ -84,6 +80,8 @@ class EverestDataAPI:
     @property
     def objective_values(self) -> list[dict[str, Any]]:
         obj_values = []
+
+        objectives = self._ever_storage.objective_functions
         for b in self._ever_storage.batches_with_function_results:
             for (
                 geo_realization,
@@ -91,23 +89,18 @@ class EverestDataAPI:
             ), df in b.realization_objectives.sort(
                 ["realization", "simulation_id"]
             ).group_by(["realization", "simulation_id"], maintain_order=True):
-                for obj_dict in (
-                    self._ever_storage.objective_functions.sort(
-                        ["objective_name"]
-                    ).to_dicts()
-                    if self._ever_storage.objective_functions is not None
-                    else []
+                for key, scale, weight in zip(
+                    objectives.keys, objectives.scales, objectives.weights, strict=False
                 ):
-                    obj_name = obj_dict["objective_name"]
                     obj_values.append(
                         {
                             "batch": int(b.batch_id),
                             "realization": int(geo_realization),  # type: ignore
                             "simulation": int(simulation_id),  # type: ignore
-                            "function": obj_name,
-                            "scale": float(obj_dict["scale"]),
-                            "value": float(df[obj_name].item()),
-                            "weight": float(obj_dict["weight"]),
+                            "function": key,
+                            "scale": float(scale),
+                            "value": float(df[key].item()),
+                            "weight": float(weight),
                         }
                     )
 
@@ -125,18 +118,17 @@ class EverestDataAPI:
         )
         objectives = self._ever_storage.objective_functions
         assert objectives is not None
-        objective_names = objectives["objective_name"].unique().to_list()
 
-        for o in objectives.to_dicts():
-            batch_datas = batch_datas.with_columns(
-                pl.col(o["objective_name"]) * o["weight"] / o["scale"]
-            )
+        for name, weight, scale in zip(
+            objectives.keys, objectives.scales, objectives.weights, strict=False
+        ):
+            batch_datas = batch_datas.with_columns(pl.col(name) * weight / scale)
 
         columns = [
             "batch",
             "objective",
             "accepted",
-            *(objective_names if len(objective_names) > 1 else []),
+            *self._ever_storage.objective_functions.keys,
         ]
 
         return (
