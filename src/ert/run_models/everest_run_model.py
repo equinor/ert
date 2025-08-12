@@ -410,7 +410,7 @@ class EverestRunModel(RunModel):
         optimizer_exit_code = optimizer.run(initial_guesses).exit_code
 
         # Store some final results.
-        self._ever_storage.on_optimization_finished()
+        self._experiment.on_optimization_finished()
         if (
             optimizer_exit_code is not RoptExitCode.UNKNOWN
             and optimizer_exit_code is not RoptExitCode.TOO_FEW_REALIZATIONS

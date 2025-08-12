@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import logging
 import shutil
 from collections.abc import Generator
 from datetime import datetime
@@ -9,6 +10,7 @@ from pathlib import Path
 from typing import TYPE_CHECKING, Annotated, Any
 from uuid import UUID
 
+import numpy as np
 import polars as pl
 from pydantic import BaseModel, Field, TypeAdapter
 from surfio import IrapSurface
@@ -64,6 +66,8 @@ _parameters_adapter = TypeAdapter(
         ]
     ]
 )
+
+logger = logging.getLogger(__name__)
 
 
 class LocalExperiment(BaseMode):
@@ -510,3 +514,55 @@ class LocalExperiment(BaseMode):
             self._path / "index.json",
             self._index.model_dump_json(indent=2).encode("utf-8"),
         )
+
+    def on_optimization_finished(self) -> None:
+        logger.debug("Storing final results Everest storage")
+
+        # This a somewhat arbitrary threshold, this should be a user choice
+        # during visualization:
+        CONSTRAINT_TOL = 1e-6
+
+        max_total_objective = -np.inf
+        for b in self.batches_with_function_results:
+            total_objective = b.batch_objectives["total_objective_value"].item()
+            bound_constraint_violation = (
+                0.0
+                if b.batch_bound_constraint_violations is None
+                else (
+                    b.batch_bound_constraint_violations.drop("batch_id")
+                    .to_numpy()
+                    .min()
+                    .item()
+                )
+            )
+            input_constraint_violation = (
+                0.0
+                if b.batch_input_constraint_violations is None
+                else (
+                    b.batch_input_constraint_violations.drop("batch_id")
+                    .to_numpy()
+                    .min()
+                    .item()
+                )
+            )
+            output_constraint_violation = (
+                0.0
+                if b.batch_output_constraint_violations is None
+                else (
+                    b.batch_output_constraint_violations.drop("batch_id")
+                    .to_numpy()
+                    .min()
+                    .item()
+                )
+            )
+            if (
+                max(
+                    bound_constraint_violation,
+                    input_constraint_violation,
+                    output_constraint_violation,
+                )
+                < CONSTRAINT_TOL
+                and total_objective > max_total_objective
+            ):
+                b.write_metadata(is_improvement=True)
+                max_total_objective = total_objective
