@@ -8,7 +8,7 @@ from collections.abc import Generator
 from datetime import datetime
 from functools import cached_property
 from pathlib import Path
-from typing import TYPE_CHECKING, Annotated, Any, TypedDict
+from typing import TYPE_CHECKING, Annotated, Any, TypedDict, cast
 from uuid import UUID
 
 import numpy as np
@@ -1030,3 +1030,9 @@ class LocalExperiment(BaseMode):
             combined_df, _, _ = self.export_dataframes()
             combined_df.write_csv(full_path)
         return full_path
+
+    @property
+    def objective_functions(self) -> EverestObjectivesConfig:
+        objectives_config = self.response_configuration.get("everest_objectives")
+        assert objectives_config is not None
+        return cast(EverestObjectivesConfig, objectives_config)

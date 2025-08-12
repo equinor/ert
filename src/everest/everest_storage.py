@@ -3,14 +3,13 @@ from __future__ import annotations
 import logging
 import traceback
 from pathlib import Path
-from typing import Any, cast
+from typing import Any
 from uuid import UUID
 
 import numpy as np
 import polars as pl
 from ropt.results import FunctionResults, GradientResults, Results
 
-from ert.config import EverestObjectivesConfig
 from ert.storage import LocalExperiment, LocalStorage, open_storage
 from ert.storage.local_ensemble import BatchDataframes
 from ert.storage.local_experiment import (
@@ -55,14 +54,6 @@ class EverestStorage:
 
     def close(self) -> None:
         self._storage.close()
-
-    @property
-    def objective_functions(self) -> EverestObjectivesConfig:
-        objectives_config = self.experiment.response_configuration.get(
-            "everest_objectives"
-        )
-        assert objectives_config is not None
-        return cast(EverestObjectivesConfig, objectives_config)
 
     @property
     def nonlinear_constraints(self) -> list[str]:

@@ -30,7 +30,7 @@ class EverestDataAPI:
 
     @property
     def objective_function_names(self) -> list[str]:
-        return self._ever_storage.objective_functions.keys
+        return self._ever_storage.experiment.objective_functions.keys
 
     @property
     def output_constraint_names(self) -> list[str]:
@@ -84,7 +84,7 @@ class EverestDataAPI:
     def objective_values(self) -> list[dict[str, Any]]:
         obj_values = []
 
-        objectives = self._ever_storage.objective_functions
+        objectives = self._ever_storage.experiment.objective_functions
         for b in self._ever_storage.experiment.batches_with_function_results:
             for (
                 geo_realization,
@@ -119,7 +119,7 @@ class EverestDataAPI:
                 for b in self._ever_storage.experiment.batches_with_function_results
             ]
         )
-        objectives = self._ever_storage.objective_functions
+        objectives = self._ever_storage.experiment.objective_functions
         assert objectives is not None
 
         for name, weight, scale in zip(
@@ -131,7 +131,7 @@ class EverestDataAPI:
             "batch",
             "objective",
             "accepted",
-            *self._ever_storage.objective_functions.keys,
+            *self._ever_storage.experiment.objective_functions.keys,
         ]
 
         return (
