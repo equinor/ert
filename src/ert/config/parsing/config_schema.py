@@ -345,7 +345,6 @@ def init_user_config_schema() -> ConfigSchemaDict:
         num_realizations_keyword(),
         run_template_keyword(),
         path_keyword(ConfigKeys.RUNPATH),
-        path_keyword(ConfigKeys.DATA_ROOT),
         path_keyword(ConfigKeys.ENSPATH),
         single_arg_keyword(ConfigKeys.JOBNAME),
         forward_model_keyword(),
