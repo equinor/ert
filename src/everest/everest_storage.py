@@ -27,9 +27,6 @@ def try_read_df(path: Path) -> pl.DataFrame | None:
 
 class EverestStorage:
     def __init__(self, storage: LocalStorage, experiment_id: UUID) -> None:
-        self._control_ensemble_id = 0
-        self._gradient_ensemble_id = 0
-
         self._storage = storage
         self._experiment_id = experiment_id
 
