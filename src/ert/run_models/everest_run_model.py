@@ -354,9 +354,9 @@ class EverestRunModel(RunModel):
 
         for r in results:
             storage_batches = (
-                self._ever_storage.batches_with_function_results
+                self._ever_storage.experiment.batches_with_function_results
                 if isinstance(r, FunctionResults)
-                else self._ever_storage.batches_with_gradient_results
+                else self._ever_storage.experiment.batches_with_gradient_results
             )
             batch_data = next(
                 (b for b in storage_batches if b.batch_id == r.batch_id),
