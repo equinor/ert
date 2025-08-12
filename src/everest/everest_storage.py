@@ -6,7 +6,7 @@ import os
 import traceback
 from functools import cached_property
 from pathlib import Path
-from typing import Any, ClassVar, TypedDict, cast
+from typing import Any, TypedDict, cast
 from uuid import UUID
 
 import numpy as np
@@ -23,10 +23,6 @@ logger = logging.getLogger(__name__)
 
 def try_read_df(path: Path) -> pl.DataFrame | None:
     return pl.read_parquet(path) if path.exists() else None
-
-
-class OptimizationDataframes(TypedDict, total=False):
-    realization_weights: pl.DataFrame | None
 
 
 class BatchStorageData:
@@ -260,10 +256,6 @@ class _GradientResults(TypedDict):
 
 
 class EverestStorage:
-    EXPERIMENT_DATAFRAMES: ClassVar[list[str]] = [
-        "realization_weights",
-    ]
-
     def __init__(self, storage: LocalStorage, experiment_id: UUID) -> None:
         self._control_ensemble_id = 0
         self._gradient_ensemble_id = 0
@@ -332,19 +324,6 @@ class EverestStorage:
             return []
 
         return constraints.keys
-
-    @property
-    def realization_weights(self) -> pl.DataFrame | None:
-        return pl.read_parquet(self.experiment._path / "realization_weights.parquet")
-
-    @classmethod
-    def save_experiment_dataframes(
-        cls, dataframes: OptimizationDataframes, experiment_path: Path
-    ) -> None:
-        for df_name in cls.EXPERIMENT_DATAFRAMES:
-            df = dataframes.get(df_name)
-            if isinstance(df, pl.DataFrame):
-                df.write_parquet(experiment_path / f"{df_name}.parquet")
 
     def simulation_to_geo_realization_map(self, batch_id: int) -> dict[int, int]:
         """
@@ -483,23 +462,6 @@ class EverestStorage:
             BatchStorageData(ens._path)
             for ens in sorted(self.experiment.ensembles, key=lambda ens: ens.iteration)
         ]
-
-    def init(
-        self,
-        realizations: list[int],
-    ) -> None:
-        realization_weights = pl.DataFrame(
-            {
-                "realization": pl.Series(realizations, dtype=pl.UInt32),
-            }
-        )
-
-        self.save_experiment_dataframes(
-            dataframes={
-                "realization_weights": realization_weights,  # Store in metadata
-            },
-            experiment_path=self.experiment._path,
-        )
 
     @classmethod
     def _unpack_function_results(cls, results: FunctionResults) -> _FunctionResults:

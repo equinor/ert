@@ -38,6 +38,12 @@ if TYPE_CHECKING:
 class _Index(BaseModel):
     id: UUID
     name: str
+    everest_metadata: _EverestExperimentMetadata | None = None
+
+
+class _EverestExperimentMetadata(BaseModel):
+    model_realizations: list[int]
+    model_realization_weights: list[float]
 
 
 _responses_adapter = TypeAdapter(  # type: ignore
@@ -495,3 +501,12 @@ class LocalExperiment(BaseMode):
             return None
 
         return pl.concat(ensemble_dfs)
+
+    def save_everest_metadata(self, metadata: dict[str, Any]) -> None:
+        self._index.everest_metadata = _EverestExperimentMetadata.model_validate(
+            metadata
+        )
+        self._storage._write_transaction(
+            self._path / "index.json",
+            self._index.model_dump_json(indent=2).encode("utf-8"),
+        )

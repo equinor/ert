@@ -388,6 +388,13 @@ class EverestRunModel(RunModel):
             responses=self.response_configuration,
         )
 
+        self._experiment.save_everest_metadata(
+            {
+                "model_realizations": self.model.realizations,
+                "model_realization_weights": self.model.realizations_weights,
+            }
+        )
+
         # Initialize the ropt optimizer:
         optimizer, initial_guesses = self._create_optimizer()
 
@@ -397,9 +404,6 @@ class EverestRunModel(RunModel):
             storage=self._storage, experiment_id=self._experiment.id
         )
 
-        self._ever_storage.init(
-            realizations=self.model.realizations,
-        )
         optimizer.set_results_callback(self._handle_optimizer_results)
 
         # Run the optimization:
