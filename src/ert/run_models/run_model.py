@@ -230,13 +230,13 @@ class RunModel(BaseModel, ABC):
             for key, value in self.__dict__.items()
             if key not in keys_to_drop
         }
-        num_params_log = " with "
+        num_params_log = "with"
         if hasattr(self, "parameter_configuration"):
             num_params = sum(
                 len(param_config.parameter_keys)
                 for param_config in self.parameter_configuration
             )
-            num_params_log = f" with {num_params} parameters and "
+            num_params_log = f"with {num_params} parameters and"
 
         logger.info(
             f"Running '{self.name()}' {num_params_log} settings {settings_dict}"
