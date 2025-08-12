@@ -647,15 +647,23 @@ def save_zeros(prior_ensemble, num_realizations, dim_size):
     for config_node in parameter_configs.values():
         for realization_nr in range(num_realizations):
             if isinstance(config_node, SurfaceConfig):
-                config_node.save_parameters(
-                    prior_ensemble, realization_nr, np.zeros(dim_size**2)
+                prior_ensemble.save_parameters_numpy(
+                    np.zeros(dim_size**2).reshape(-1, 1),
+                    config_node.name,
+                    np.array([realization_nr]),
                 )
             elif isinstance(config_node, Field):
-                config_node.save_parameters(
-                    prior_ensemble, realization_nr, np.zeros(dim_size**3)
+                prior_ensemble.save_parameters_numpy(
+                    np.zeros(dim_size**3).reshape(-1, 1),
+                    config_node.name,
+                    np.array([realization_nr]),
                 )
             elif isinstance(config_node, GenKwConfig):
-                config_node.save_parameters(prior_ensemble, realization_nr, np.zeros(1))
+                prior_ensemble.save_parameters_numpy(
+                    np.zeros(1).reshape(-1, 1),
+                    config_node.name,
+                    np.array([realization_nr]),
+                )
             else:
                 raise ValueError(f"unexpected {config_node}")
 

@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from collections.abc import Iterator
 from pathlib import Path
 from typing import TYPE_CHECKING, Literal, Self, cast
 
@@ -173,21 +174,21 @@ class SurfaceConfig(ParameterConfig):
         file_path.parent.mkdir(exist_ok=True, parents=True)
         surf.to_ascii_file(file_path)
 
-    def save_parameters(
+    def create_storage_datasets(
         self,
-        ensemble: Ensemble,
-        realization: int,
-        data: npt.NDArray[np.float64],
-    ) -> None:
-        ds = xr.Dataset(
-            {
-                "values": (
-                    ["x", "y"],
-                    data.reshape(self.ncol, self.nrow).astype("float32"),
-                )
-            }
-        )
-        ensemble.save_parameters(self.name, realization, ds)
+        from_data: npt.NDArray[np.float64],
+        iens_active_index: npt.NDArray[np.int_],
+    ) -> Iterator[tuple[int, xr.Dataset]]:
+        for i, realization in enumerate(iens_active_index):
+            ds = xr.Dataset(
+                {
+                    "values": (
+                        ["x", "y"],
+                        from_data[:, i].reshape(self.ncol, self.nrow).astype("float32"),
+                    )
+                }
+            )
+            yield int(realization), ds
 
     def load_parameters(
         self, ensemble: Ensemble, realizations: npt.NDArray[np.int_]

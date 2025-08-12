@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import math
 import os
-from collections.abc import Callable
+from collections.abc import Callable, Iterator
 from dataclasses import dataclass
 from pathlib import Path
 from typing import TYPE_CHECKING, Annotated, Any, Literal, Self, cast, overload
@@ -329,27 +329,6 @@ class GenKwConfig(ParameterConfig):
         else:
             return {self.name: data}
 
-    def save_parameters(
-        self,
-        ensemble: Ensemble,
-        realization: int,
-        data: npt.NDArray[np.float64],
-    ) -> None:
-        parameter_dict = {
-            parameter.name: data[idx]
-            for idx, parameter in enumerate(self.transform_functions)
-        }
-        parameter_dict["realization"] = realization
-        ensemble.save_parameters(
-            self.name,
-            realization=None,
-            dataset=pl.DataFrame(
-                parameter_dict,
-                schema={tf.name: pl.Float64 for tf in self.transform_functions}
-                | {"realization": pl.Int64},
-            ),
-        )
-
     def load_parameters(
         self, ensemble: Ensemble, realizations: npt.NDArray[np.int_]
     ) -> npt.NDArray[np.float64]:
@@ -358,6 +337,25 @@ class GenKwConfig(ParameterConfig):
             .drop("realization")
             .to_numpy()
             .T.copy()
+        )
+
+    def create_storage_datasets(
+        self,
+        from_data: npt.NDArray[np.float64],
+        iens_active_index: npt.NDArray[np.int_],
+    ) -> Iterator[tuple[int | None, pl.DataFrame]]:
+        yield (
+            None,
+            pl.DataFrame(
+                {
+                    "realization": iens_active_index,
+                }
+            ).with_columns(
+                [
+                    pl.Series(from_data[i, :]).alias(param_name.name)
+                    for i, param_name in enumerate(self.transform_functions)
+                ]
+            ),
         )
 
     def copy_parameters(

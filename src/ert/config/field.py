@@ -3,6 +3,7 @@ from __future__ import annotations
 import itertools
 import logging
 import os
+from collections.abc import Iterator
 from functools import cached_property
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, Literal, Self, cast, overload
@@ -261,21 +262,21 @@ class Field(ParameterConfig):
             self.file_format,
         )
 
-    def save_parameters(
+    def create_storage_datasets(
         self,
-        ensemble: Ensemble,
-        realization: int,
-        data: npt.NDArray[np.float64],
-    ) -> None:
-        ma = np.ma.MaskedArray(  # type: ignore
-            data=np.zeros(self.mask.size),
-            mask=self.mask,
-            fill_value=np.nan,
-        )
-        ma[~ma.mask] = data
-        ma = ma.reshape(self.mask.shape)  # type: ignore
-        ds = xr.Dataset({"values": (["x", "y", "z"], ma.filled())})
-        ensemble.save_parameters(self.name, realization, ds)
+        from_data: npt.NDArray[np.float64],
+        iens_active_index: npt.NDArray[np.int_],
+    ) -> Iterator[tuple[int, xr.Dataset]]:
+        for i, realization in enumerate(iens_active_index):
+            ma = np.ma.MaskedArray(  # type: ignore
+                data=np.zeros(self.mask.size),
+                mask=self.mask,
+                fill_value=np.nan,
+            )
+            ma[~ma.mask] = from_data[:, i]
+            ma = ma.reshape(self.mask.shape)  # type: ignore
+            ds = xr.Dataset({"values": (["x", "y", "z"], ma.filled())})
+            yield int(realization), ds
 
     def load_parameters(
         self, ensemble: Ensemble, realizations: npt.NDArray[np.int_]
