@@ -1032,7 +1032,7 @@ class LocalExperiment(BaseMode):
         return full_path
 
     @property
-    def objective_functions(self) -> EverestObjectivesConfig:
+    def everest_objective_functions(self) -> EverestObjectivesConfig:
         objectives_config = self.response_configuration.get("everest_objectives")
         assert objectives_config is not None
         return cast(EverestObjectivesConfig, objectives_config)
