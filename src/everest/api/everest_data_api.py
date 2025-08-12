@@ -226,4 +226,4 @@ class EverestDataAPI:
 
     @property
     def everest_csv(self) -> str:
-        return str(self._ever_storage.export_everest_opt_results_to_csv())
+        return str(self._ever_storage.experiment.export_everest_opt_results_to_csv())

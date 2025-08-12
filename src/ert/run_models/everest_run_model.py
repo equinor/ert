@@ -416,7 +416,7 @@ class EverestRunModel(RunModel):
             and optimizer_exit_code is not RoptExitCode.TOO_FEW_REALIZATIONS
             and optimizer_exit_code is not RoptExitCode.USER_ABORT
         ):
-            self._ever_storage.export_everest_opt_results_to_csv()
+            self._ever_storage.experiment.export_everest_opt_results_to_csv()
 
         if self._exit_code is None:
             match optimizer_exit_code:
