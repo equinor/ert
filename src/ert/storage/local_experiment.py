@@ -1038,7 +1038,7 @@ class LocalExperiment(BaseMode):
         return cast(EverestObjectivesConfig, objectives_config)
 
     @property
-    def nonlinear_constraints(self) -> list[str]:
+    def everest_output_constraint_keys(self) -> list[str]:
         constraints = self.response_configuration.get("everest_constraints")
         if constraints is None:
             return []

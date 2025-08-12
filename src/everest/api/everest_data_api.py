@@ -34,7 +34,7 @@ class EverestDataAPI:
 
     @property
     def output_constraint_names(self) -> list[str]:
-        return self._ever_storage.experiment.nonlinear_constraints
+        return self._ever_storage.experiment.everest_output_constraint_keys
 
     @property
     def realizations(self) -> list[int]:
