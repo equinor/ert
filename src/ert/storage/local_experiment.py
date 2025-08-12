@@ -826,7 +826,7 @@ class LocalExperiment(BaseMode):
                 b.write_metadata(is_improvement=True)
                 max_total_objective = total_objective
 
-    def export_dataframes(
+    def export_everest_data(
         self,
     ) -> tuple[pl.DataFrame, pl.DataFrame, pl.DataFrame]:
         batch_dfs_to_join = {}  # type: ignore
@@ -1027,7 +1027,7 @@ class LocalExperiment(BaseMode):
             os.remove(existing_csv)
 
         if not os.path.exists(full_path):
-            combined_df, _, _ = self.export_dataframes()
+            combined_df, _, _ = self.export_everest_data()
             combined_df.write_csv(full_path)
         return full_path
 

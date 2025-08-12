@@ -33,7 +33,7 @@ def test_csv_export(config_file, cached_example, snapshot):
     ever_storage = EverestStorage.from_storage_path(
         storage_path=config.storage_dir,
     )
-    combined_df, pert_real_df, batch_df = ever_storage.experiment.export_dataframes()
+    combined_df, pert_real_df, batch_df = ever_storage.experiment.export_everest_data()
 
     def _sort_df(df: pl.DataFrame) -> pl.DataFrame:
         df_ = df.select(df.columns)
