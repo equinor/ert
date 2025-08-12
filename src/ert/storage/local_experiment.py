@@ -1044,3 +1044,7 @@ class LocalExperiment(BaseMode):
             return []
 
         return constraints.keys
+
+    @property
+    def is_empty(self) -> bool:
+        return not any(b.has_data for b in self.experiment.batches)

@@ -51,7 +51,7 @@ def visualization_entry(args: list[str] | None = None) -> None:
         storage_path=ever_config.storage_dir,
     )
 
-    if storage.is_empty:
+    if storage.experiment.is_empty:
         print(
             f"No data found in storage at {storage._storage.path}. "
             f"Please try again later"

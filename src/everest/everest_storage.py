@@ -81,10 +81,6 @@ class EverestStorage:
 
         return mapping
 
-    @property
-    def is_empty(self) -> bool:
-        return not any(b.has_data for b in self.experiment.batches)
-
     @staticmethod
     def _rename_ropt_df_columns(df: pl.DataFrame) -> pl.DataFrame:
         """
