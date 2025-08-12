@@ -57,10 +57,6 @@ class EverestStorage:
         self._storage.close()
 
     @property
-    def control_names(self) -> list[str]:
-        return self.experiment.parameter_keys
-
-    @property
     def objective_functions(self) -> EverestObjectivesConfig:
         objectives_config = self.experiment.response_configuration.get(
             "everest_objectives"

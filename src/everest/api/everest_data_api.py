@@ -60,11 +60,11 @@ class EverestDataAPI:
 
     @property
     def control_names(self) -> list[str]:
-        return self._ever_storage.control_names
+        return self._ever_storage.experiment.parameter_keys
 
     @property
     def control_values(self) -> list[dict[str, Any]]:
-        all_control_names = self._ever_storage.control_names
+        all_control_names = self._ever_storage.experiment.parameter_keys
 
         new = []
         for batch in self._ever_storage.experiment.batches_with_function_results:

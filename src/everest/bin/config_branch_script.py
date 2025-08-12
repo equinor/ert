@@ -62,7 +62,7 @@ def opt_controls_by_batch(optimization_dir: Path, batch: int) -> dict[str, Any] 
         # All geo-realizations should have the same unperturbed control values per batch
         # hence it does not matter which realization we select the controls for
         return function_batch.realization_controls.select(
-            storage.control_names
+            storage.experiment.parameter_keys
         ).to_dicts()[0]
 
     return None
