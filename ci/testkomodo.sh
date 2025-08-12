@@ -30,8 +30,11 @@ run_ert_with_opm() {
             cat spe1_out/realization-0/iter-0/FLOW.stderr.0 || true
             cat spe1_out/realization-0/iter-0/FLOW.stdout.0 || true
             cat logs/ert-log* || true
+            exit 1
         )
+    STATUS=$?
     popd || exit 1
+    return "$STATUS"
 }
 
 
