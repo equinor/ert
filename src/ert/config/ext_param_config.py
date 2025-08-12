@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import json
-from collections.abc import Mapping, MutableMapping
+from collections.abc import Iterator, Mapping, MutableMapping
 from dataclasses import field
 from pathlib import Path
 from typing import TYPE_CHECKING, Literal
@@ -76,26 +76,24 @@ class ExtParamConfig(ParameterConfig):
         with open(file_path, "w", encoding="utf-8") as f:
             json.dump(data, f)
 
-    def save_parameters(
+    def create_storage_datasets(
         self,
-        ensemble: Ensemble,
-        realization: int,
-        data: npt.NDArray[np.float64],
-    ) -> None:
-        assert len(data) == len(self.parameter_keys)
-        ensemble.save_parameters(
-            self.name,
-            realization,
-            xr.Dataset(
-                {
-                    "values": ("names", data),
-                    "names": [
-                        x.split(f"{self.name}.")[1].replace(".", "\0")
-                        for x in self.parameter_keys
-                    ],
-                }
-            ),
-        )
+        from_data: npt.NDArray[np.float64],
+        iens_active_index: npt.NDArray[np.int_],
+    ) -> Iterator[tuple[int, xr.Dataset]]:
+        for i, realization in enumerate(iens_active_index):
+            yield (
+                int(realization),
+                xr.Dataset(
+                    {
+                        "values": ("names", from_data[:, i]),
+                        "names": [
+                            x.split(f"{self.name}.")[1].replace(".", "\0")
+                            for x in self.parameter_keys
+                        ],
+                    }
+                ),
+            )
 
     def load_parameters(
         self, ensemble: Ensemble, realizations: npt.NDArray[np.int_]

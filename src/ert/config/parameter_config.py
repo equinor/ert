@@ -1,12 +1,14 @@
 from __future__ import annotations
 
 from abc import abstractmethod
+from collections.abc import Iterator
 from hashlib import sha256
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, Literal
 
 import networkx as nx
 import numpy as np
+import polars as pl
 import xarray as xr
 from pydantic import BaseModel
 
@@ -85,14 +87,14 @@ class ParameterConfig(BaseModel):
         """
 
     @abstractmethod
-    def save_parameters(
+    def create_storage_datasets(
         self,
-        ensemble: Ensemble,
-        realization: int,
-        data: npt.NDArray[np.float64],
-    ) -> None:
+        from_data: npt.NDArray[np.float64],
+        iens_active_index: npt.NDArray[np.int_],
+    ) -> Iterator[tuple[int | None, pl.DataFrame | xr.Dataset]]:
         """
-        Save the parameter in internal storage for the given ensemble
+        Iterates over realization. It creates an xarray Dataset
+        or polars DataFrame from the numpy data
         """
 
     def copy_parameters(
