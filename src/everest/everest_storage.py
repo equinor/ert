@@ -55,14 +55,6 @@ class EverestStorage:
     def close(self) -> None:
         self._storage.close()
 
-    @property
-    def nonlinear_constraints(self) -> list[str]:
-        constraints = self.experiment.response_configuration.get("everest_constraints")
-        if constraints is None:
-            return []
-
-        return constraints.keys
-
     def simulation_to_geo_realization_map(self, batch_id: int) -> dict[int, int]:
         """
         Mapping from simulation ID to geo-realization

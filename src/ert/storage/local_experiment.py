@@ -1036,3 +1036,11 @@ class LocalExperiment(BaseMode):
         objectives_config = self.response_configuration.get("everest_objectives")
         assert objectives_config is not None
         return cast(EverestObjectivesConfig, objectives_config)
+
+    @property
+    def nonlinear_constraints(self) -> list[str]:
+        constraints = self.response_configuration.get("everest_constraints")
+        if constraints is None:
+            return []
+
+        return constraints.keys
