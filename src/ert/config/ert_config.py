@@ -1427,7 +1427,7 @@ def _substitutions_from_dict(config_dict) -> dict[str, str]:
         subst_list[key] = val
 
     if "<CONFIG_PATH>" not in subst_list:
-        subst_list["<CONFIG_PATH>"] = config_dict.get("CONFIG_DIRECTORY", os.getcwd())
+        subst_list["<CONFIG_PATH>"] = os.getcwd()
 
     for key, val in config_dict.get("DATA_KW", []):
         subst_list[key] = val
