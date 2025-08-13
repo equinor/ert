@@ -4,13 +4,12 @@ import logging
 import traceback
 from pathlib import Path
 from typing import Any
-from uuid import UUID
 
 import numpy as np
 import polars as pl
 from ropt.results import FunctionResults, GradientResults, Results
 
-from ert.storage import LocalExperiment, LocalStorage, open_storage
+from ert.storage import LocalExperiment, open_storage
 from ert.storage.local_ensemble import BatchDataframes
 from ert.storage.local_experiment import (
     _FunctionResults,
@@ -26,10 +25,6 @@ def try_read_df(path: Path) -> pl.DataFrame | None:
 
 
 class EverestStorage:
-    def __init__(self, storage: LocalStorage, experiment_id: UUID) -> None:
-        self._storage = storage
-        self._experiment_id = experiment_id
-
     @property
     def experiment(self) -> LocalExperiment:
         return self._storage.get_experiment(self._experiment_id)
