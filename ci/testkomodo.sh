@@ -124,6 +124,12 @@ start_tests() {
       return $?
     fi
 
-    echo "Error: Variable $CI_SUBSYSTEM_TEST did not match any testable subsystem"
+    if [ -n "$CI_SUBSYSTEM_TEST" ]; then
+      echo "Error: No argument for subsystem was provided."
+      echo "Possible subsystems are specified with ert[<subsystem>]."
+    else
+      echo "Error: Variable $CI_SUBSYSTEM_TEST did not match any testable subsystem"
+    fi
+    echo "Possible subsystems are: ert, everest, everest-egg, ert-limit-memory, ert-queue-system, opm-integration"
     return 1
 }
