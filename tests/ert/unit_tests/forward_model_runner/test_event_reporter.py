@@ -228,6 +228,7 @@ def test_report_with_reconnected_reporter_but_finished_jobs(unused_tcp_port):
     assert len(mock_server.messages) == 3, "expected 3 Job running messages"
 
 
+@pytest.mark.integration_test
 @pytest.mark.parametrize(
     "mocked_server_signal, expected_message",
     [
