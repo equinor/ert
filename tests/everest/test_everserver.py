@@ -193,7 +193,7 @@ async def test_status_max_batch_num(copy_math_func_test_data_to_tmp):
     # The server should complete without error.
     assert status["status"] == ExperimentState.completed
     assert status["message"] == "Maximum number of batches reached."
-    experiment = EverestStorage.from_storage_path(config.storage_dir).experiment
+    experiment = EverestStorage.get_experiment(config.storage_dir)
 
     # Check that there is only one batch.
     assert {b.batch_id for b in experiment.everest_batches} == {0}

@@ -47,9 +47,9 @@ def visualization_entry(args: list[str] | None = None) -> None:
             )
             open_storage(ever_config.storage_dir, mode="w").close()
 
-    experiment = EverestStorage.from_storage_path(
+    experiment = EverestStorage.get_experiment(
         storage_path=ever_config.storage_dir,
-    ).experiment
+    )
 
     if not experiment.has_everest_data:
         print(

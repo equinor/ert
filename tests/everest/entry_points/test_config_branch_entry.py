@@ -31,7 +31,7 @@ def test_config_branch_entry(cached_example):
     assert len(new_controls[0]["variables"]) == len(old_controls[0]["variables"])
 
     config = EverestConfig.load_file(Path(config_path) / config_file)
-    experiment = EverestStorage.from_storage_path(config.storage_dir).experiment
+    experiment = EverestStorage.get_experiment(config.storage_dir)
 
     new_controls_initial_guesses = {
         var["initial_guess"] for var in new_controls[0]["variables"]
@@ -78,7 +78,7 @@ def test_config_branch_preserves_config_section_order(cached_example):
     assert "-initial_guess:0.1" in diff_lines
 
     config = EverestConfig.load_file(Path(config_path) / config_file)
-    experiment = EverestStorage.from_storage_path(config.storage_dir).experiment
+    experiment = EverestStorage.get_experiment(config.storage_dir)
     control_names = experiment.parameter_keys
     batch_1_info = next(b for b in experiment.everest_batches if b.batch_id == 1)
     realization_control_vals = batch_1_info.realization_controls.select(

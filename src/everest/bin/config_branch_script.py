@@ -46,7 +46,7 @@ def _build_args_parser() -> argparse.ArgumentParser:
 
 
 def opt_controls_by_batch(optimization_dir: Path, batch: int) -> dict[str, Any] | None:
-    experiment = EverestStorage.from_storage_path(optimization_dir).experiment
+    experiment = EverestStorage.get_experiment(optimization_dir)
 
     assert experiment is not None
     function_batch = next(

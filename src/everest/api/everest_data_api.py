@@ -11,9 +11,7 @@ class EverestDataAPI:
     def __init__(self, config: EverestConfig, filter_out_gradient: bool = True) -> None:
         self._config = config
         assert config.storage_dir.exists()
-        self._experiment = EverestStorage.from_storage_path(
-            config.storage_dir
-        ).experiment
+        self._experiment = EverestStorage.get_experiment(config.storage_dir)
 
     @property
     def batches(self) -> list[int]:

@@ -35,19 +35,13 @@ class EverestStorage:
         return self._storage.get_experiment(self._experiment_id)
 
     @classmethod
-    def from_storage_path(cls, storage_path: Path) -> EverestStorage:
+    def get_experiment(cls, storage_path: Path) -> LocalExperiment:
         """
-        Creates everest storage from a storage path. Note: This
+        Gets the experiment at a given storage path. Note: This
         requires there to be at least one initialized batch/ensemble
         for it to be possible to detect the experiment.
         """
-        storage = open_storage(storage_path, mode="r")
-        try:
-            experiment = next(storage.experiments)
-            return EverestStorage(storage, experiment.id)
-        except Exception as e:  # 2do remove, just 4dev
-            traceback.print_tb(e.__traceback__)
-            raise e
+        return next(open_storage(storage_path, mode="r").experiments)
 
     def close(self) -> None:
         self._storage.close()
