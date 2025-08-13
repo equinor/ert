@@ -24,6 +24,7 @@ JUST_REMOVE_KEYWORDS = [
     "ENKF_MODE",
     "ANALYSIS_SELECT",
     "RESULT_PATH",
+    "DATA_ROOT",
 ]
 RSH_KEYWORDS = ["RSH_HOST", "RSH_COMMAND", "MAX_RUNNING_RSH"]
 USE_QUEUE_OPTION = [
@@ -194,5 +195,13 @@ deprecated_keywords_list = [
         "longer has any effect. It has been used in the as a lightweight alternative "
         "of FORWARD_MODEL. Please use FORWARD_MODEL keyword instead:\n"
         f"FORWARD_MODEL {' '.join(args) if args else ''}",
+    ),
+    DeprecationInfo(
+        keyword="CONFIG_DIRECTORY",
+        message="The CONFIG_DIRECTORY keyword has been removed and no longer has any "
+        "effect. It has been used in the past to specify the experiment "
+        "configuration path if provided."
+        "It has been replaced with the path to the directory containing the "
+        "configuration file for the experiment.",
     ),
 ]
