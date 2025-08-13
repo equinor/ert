@@ -47,13 +47,13 @@ def visualization_entry(args: list[str] | None = None) -> None:
             )
             open_storage(ever_config.storage_dir, mode="w").close()
 
-    storage = EverestStorage.from_storage_path(
+    experiment = EverestStorage.from_storage_path(
         storage_path=ever_config.storage_dir,
-    )
+    ).experiment
 
-    if not storage.experiment.has_everest_data:
+    if not experiment.has_everest_data:
         print(
-            f"No data found in storage at {storage._storage.path}. "
+            f"No data found in storage at {experiment._storage.path}. "
             f"Please try again later"
         )
         return

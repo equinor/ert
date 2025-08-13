@@ -150,7 +150,6 @@ class EverestRunModel(RunModel):
     _experiment: Experiment | None = PrivateAttr(default=None)
     _eval_server_cfg: EvaluatorServerConfig | None = PrivateAttr(default=None)
     _batch_id: int = PrivateAttr(default=0)
-    _ever_storage: EverestStorage | None = PrivateAttr(default=None)
     _opt_callback: OptimizerCallback | None = PrivateAttr(default=None)
 
     _transforms: EverestOptModelTransforms = PrivateAttr()
@@ -328,10 +327,9 @@ class EverestRunModel(RunModel):
             )
 
     def _handle_optimizer_results(self, results: tuple[Results, ...]) -> None:
-        assert self._ever_storage is not None
         assert self._experiment is not None
 
-        batch_dataframes = self._ever_storage.unpack_ropt_results(results)
+        batch_dataframes = EverestStorage.unpack_ropt_results(results)
 
         for batch_id, batch_dict in batch_dataframes.items():
             target_ensemble = self._experiment.get_ensemble_by_name(f"batch_{batch_id}")
@@ -354,9 +352,9 @@ class EverestRunModel(RunModel):
 
         for r in results:
             storage_batches = (
-                self._ever_storage.experiment.everest_batches_with_function_results
+                self._experiment.everest_batches_with_function_results
                 if isinstance(r, FunctionResults)
-                else self._ever_storage.experiment.everest_batches_with_gradient_results
+                else self._experiment.everest_batches_with_gradient_results
             )
             batch_data = next(
                 (b for b in storage_batches if b.batch_id == r.batch_id),
@@ -400,10 +398,6 @@ class EverestRunModel(RunModel):
 
         # ROPT expects this folder to exist wrt stdout/stderr redirect files
         os.makedirs(self.optimization_output_dir, exist_ok=True)
-        self._ever_storage = EverestStorage(
-            storage=self._storage, experiment_id=self._experiment.id
-        )
-
         optimizer.set_results_callback(self._handle_optimizer_results)
 
         # Run the optimization:
@@ -416,7 +410,7 @@ class EverestRunModel(RunModel):
             and optimizer_exit_code is not RoptExitCode.TOO_FEW_REALIZATIONS
             and optimizer_exit_code is not RoptExitCode.USER_ABORT
         ):
-            self._ever_storage.experiment.export_everest_opt_results_to_csv()
+            self._experiment.export_everest_opt_results_to_csv()
 
         if self._exit_code is None:
             match optimizer_exit_code:

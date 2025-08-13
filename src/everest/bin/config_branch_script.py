@@ -46,13 +46,13 @@ def _build_args_parser() -> argparse.ArgumentParser:
 
 
 def opt_controls_by_batch(optimization_dir: Path, batch: int) -> dict[str, Any] | None:
-    storage = EverestStorage.from_storage_path(optimization_dir)
+    experiment = EverestStorage.from_storage_path(optimization_dir).experiment
 
-    assert storage is not None
+    assert experiment is not None
     function_batch = next(
         (
             b
-            for b in storage.experiment.everest_batches_with_function_results
+            for b in experiment.everest_batches_with_function_results
             if b.batch_id == batch
         ),
         None,
@@ -62,7 +62,7 @@ def opt_controls_by_batch(optimization_dir: Path, batch: int) -> dict[str, Any] 
         # All geo-realizations should have the same unperturbed control values per batch
         # hence it does not matter which realization we select the controls for
         return function_batch.realization_controls.select(
-            storage.experiment.parameter_keys
+            experiment.parameter_keys
         ).to_dicts()[0]
 
     return None

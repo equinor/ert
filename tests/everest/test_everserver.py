@@ -193,10 +193,10 @@ async def test_status_max_batch_num(copy_math_func_test_data_to_tmp):
     # The server should complete without error.
     assert status["status"] == ExperimentState.completed
     assert status["message"] == "Maximum number of batches reached."
-    storage = EverestStorage.from_storage_path(config.storage_dir)
+    experiment = EverestStorage.from_storage_path(config.storage_dir).experiment
 
     # Check that there is only one batch.
-    assert {b.batch_id for b in storage.experiment.everest_batches} == {0}
+    assert {b.batch_id for b in experiment.everest_batches} == {0}
 
 
 @pytest.mark.integration_test
