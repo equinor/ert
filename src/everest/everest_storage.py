@@ -25,21 +25,14 @@ def try_read_df(path: Path) -> pl.DataFrame | None:
 
 
 class EverestStorage:
-    @property
-    def experiment(self) -> LocalExperiment:
-        return self._storage.get_experiment(self._experiment_id)
-
-    @classmethod
-    def get_experiment(cls, storage_path: Path) -> LocalExperiment:
+    @staticmethod
+    def get_experiment(storage_path: Path) -> LocalExperiment:
         """
         Gets the experiment at a given storage path. Note: This
         requires there to be at least one initialized batch/ensemble
         for it to be possible to detect the experiment.
         """
         return next(open_storage(storage_path, mode="r").experiments)
-
-    def close(self) -> None:
-        self._storage.close()
 
     @staticmethod
     def _rename_ropt_df_columns(df: pl.DataFrame) -> pl.DataFrame:
