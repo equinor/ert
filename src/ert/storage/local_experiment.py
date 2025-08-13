@@ -1048,3 +1048,29 @@ class LocalExperiment(BaseMode):
     @property
     def has_everest_data(self) -> bool:
         return any(b.has_data for b in self.everest_batches)
+
+    # Deprecation note:
+    # Only used in EverestDataAPI, this information is already stored in
+    # LocalEnsembles, hence this function is due to be removed once
+    # the everest data is exposed through dark storage.
+    def simulation_to_geo_realization_map(self, batch_id: int) -> dict[int, int]:
+        """
+        Mapping from simulation ID to geo-realization
+        """
+        dummy_df = next(
+            (
+                b.realization_controls
+                for b in self.everest_batches_with_function_results
+                if b.batch_id == batch_id
+            ),
+            None,
+        )
+
+        if dummy_df is None:
+            return {}
+
+        mapping = {}
+        for d in dummy_df.select("realization", "simulation_id").to_dicts():
+            mapping[int(d["simulation_id"])] = int(d["realization"])
+
+        return mapping

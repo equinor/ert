@@ -209,8 +209,10 @@ class EverestDataAPI:
                     pl.Series("batch", [batch_id] * summary.shape[0])
                 )
 
-                realization_map = self._ever_storage.simulation_to_geo_realization_map(
-                    batch_id
+                realization_map = (
+                    self._ever_storage.experiment.simulation_to_geo_realization_map(
+                        batch_id
+                    )
                 )
                 realizations = pl.Series(
                     "realization",
