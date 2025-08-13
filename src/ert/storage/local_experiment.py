@@ -748,7 +748,7 @@ class LocalExperiment(BaseMode):
         )
 
     @property
-    def batches(self) -> list[BatchStorageData]:
+    def everest_batches(self) -> list[BatchStorageData]:
         return [
             BatchStorageData(ens._path)
             for ens in sorted(self.ensembles, key=lambda ens: ens.iteration)
@@ -760,7 +760,7 @@ class LocalExperiment(BaseMode):
     ) -> list[FunctionBatchStorageData]:
         return [
             FunctionBatchStorageData(b._ensemble_path)
-            for b in self.batches
+            for b in self.everest_batches
             if b.has_function_results
         ]
 
@@ -770,7 +770,7 @@ class LocalExperiment(BaseMode):
     ) -> list[GradientBatchStorageData]:
         return [
             GradientBatchStorageData(b._ensemble_path)
-            for b in self.batches
+            for b in self.everest_batches
             if b.has_gradient_results
         ]
 
@@ -833,7 +833,7 @@ class LocalExperiment(BaseMode):
         realization_dfs_to_join = {}  # type: ignore
         perturbation_dfs_to_join = {}  # type: ignore
 
-        batch_ids = [b.batch_id for b in self.batches]
+        batch_ids = [b.batch_id for b in self.everest_batches]
         all_controls = self.parameter_keys
 
         def _try_append_df(
@@ -872,7 +872,7 @@ class LocalExperiment(BaseMode):
                 }
             )
 
-        for batch in self.batches:
+        for batch in self.everest_batches:
             if not batch.has_data:
                 continue
 
@@ -1001,7 +1001,7 @@ class LocalExperiment(BaseMode):
 
     def export_everest_opt_results_to_csv(self) -> Path:
         batches_with_data = ",".join(
-            {str(b.batch_id) for b in self.batches if b.has_data}
+            {str(b.batch_id) for b in self.everest_batches if b.has_data}
         )
         full_path = (
             self._path
@@ -1047,4 +1047,4 @@ class LocalExperiment(BaseMode):
 
     @property
     def has_everest_data(self) -> bool:
-        return any(b.has_data for b in self.batches)
+        return any(b.has_data for b in self.everest_batches)

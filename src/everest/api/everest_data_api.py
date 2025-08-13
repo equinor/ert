@@ -24,7 +24,7 @@ class EverestDataAPI:
     def accepted_batches(self) -> list[int]:
         return sorted(
             b.batch_id
-            for b in self._ever_storage.experiment.batches
+            for b in self._ever_storage.experiment.everest_batches
             if b.is_improvement
         )
 

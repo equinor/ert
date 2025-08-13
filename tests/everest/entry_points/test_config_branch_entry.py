@@ -38,7 +38,9 @@ def test_config_branch_entry(cached_example):
     }
 
     control_names = storage.experiment.parameter_keys
-    batch_1_info = next(b for b in storage.experiment.batches if b.batch_id == 1)
+    batch_1_info = next(
+        b for b in storage.experiment.everest_batches if b.batch_id == 1
+    )
     realization_control_vals = batch_1_info.realization_controls.select(
         *control_names
     ).to_dicts()[0]
@@ -80,7 +82,9 @@ def test_config_branch_preserves_config_section_order(cached_example):
     config = EverestConfig.load_file(Path(config_path) / config_file)
     storage = EverestStorage.from_storage_path(config.storage_dir)
     control_names = storage.experiment.parameter_keys
-    batch_1_info = next(b for b in storage.experiment.batches if b.batch_id == 1)
+    batch_1_info = next(
+        b for b in storage.experiment.everest_batches if b.batch_id == 1
+    )
     realization_control_vals = batch_1_info.realization_controls.select(
         *control_names
     ).to_dicts()[0]

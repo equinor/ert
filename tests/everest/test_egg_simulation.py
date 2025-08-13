@@ -557,9 +557,9 @@ def test_egg_snapshot(snapshot, copy_egg_test_data_to_tmp):
     evaluator_server_config = EvaluatorServerConfig()
     run_model.run_experiment(evaluator_server_config)
 
-    best_batch = [b for b in run_model._ever_storage.data.batches if b.is_improvement][
-        -1
-    ]
+    best_batch = [
+        b for b in run_model._ever_storage.data.everest_batches if b.is_improvement
+    ][-1]
 
     best_controls = best_batch.realization_controls
     best_objectives_csv = best_batch.perturbation_objectives
