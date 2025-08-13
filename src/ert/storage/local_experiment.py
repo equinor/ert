@@ -774,7 +774,7 @@ class LocalExperiment(BaseMode):
             if b.has_gradient_results
         ]
 
-    def on_optimization_finished(self) -> None:
+    def on_everest_experiment_finished(self) -> None:
         logger.debug("Storing final results Everest storage")
 
         # This a somewhat arbitrary threshold, this should be a user choice
