@@ -117,6 +117,10 @@ class Driver(ABC):
                 )
             except FileNotFoundError as e:
                 return (False, str(e))
+            except OSError as e:
+                logger.error(str(e))
+                await asyncio.sleep(retry_interval)
+                continue
 
             stdout, stderr = await process.communicate(stdin)
 
