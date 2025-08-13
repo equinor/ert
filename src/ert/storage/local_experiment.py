@@ -755,7 +755,7 @@ class LocalExperiment(BaseMode):
         ]
 
     @property
-    def batches_with_function_results(
+    def everest_batches_with_function_results(
         self,
     ) -> list[FunctionBatchStorageData]:
         return [
@@ -765,7 +765,7 @@ class LocalExperiment(BaseMode):
         ]
 
     @property
-    def batches_with_gradient_results(
+    def everest_batches_with_gradient_results(
         self,
     ) -> list[GradientBatchStorageData]:
         return [
@@ -782,7 +782,7 @@ class LocalExperiment(BaseMode):
         CONSTRAINT_TOL = 1e-6
 
         max_total_objective = -np.inf
-        for b in self.batches_with_function_results:
+        for b in self.everest_batches_with_function_results:
             total_objective = b.batch_objectives["total_objective_value"].item()
             bound_constraint_violation = (
                 0.0

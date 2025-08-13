@@ -63,7 +63,7 @@ class EverestStorage:
         dummy_df = next(
             (
                 b.realization_controls
-                for b in self.experiment.batches_with_function_results
+                for b in self.experiment.everest_batches_with_function_results
                 if b.batch_id == batch_id
             ),
             None,
