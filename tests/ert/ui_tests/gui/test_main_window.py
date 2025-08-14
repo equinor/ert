@@ -883,8 +883,11 @@ def test_warnings_from_forward_model_are_propagated_to_ert_main_window_post_simu
     qtbot, opened_main_window_poly, use_tmpdir
 ):
     forward_model_file = Path("WARNING_EXAMPLE")
-    forward_model_file.write_text("""
-    EXECUTABLE warning.py""")
+    forward_model_file.write_text(
+        """
+    EXECUTABLE warning.py""",
+        encoding="utf-8",
+    )
 
     script_file = "warning.py"
     script_file_content = """#!/usr/bin/env python

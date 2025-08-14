@@ -168,7 +168,7 @@ def test_update_lowers_generalized_variance_or_deactivates_observations(
         note(f"config file: {contents}")
         Path("config.ert").write_text(contents, encoding="utf-8")
         py = Path("poly_eval.py")
-        py.write_text(poly_eval.format(num_points=num_points))
+        py.write_text(poly_eval.format(num_points=num_points), encoding="utf-8")
         mode = os.stat(py)
         os.chmod(py, mode.st_mode | stat.S_IEXEC)
 
