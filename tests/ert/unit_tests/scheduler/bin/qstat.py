@@ -14,7 +14,7 @@ QSTAT_HEADER = (
 
 
 def read(path: Path, default: str | None = None) -> str | None:
-    return path.read_text().strip() if path.exists() else default
+    return path.read_text(encoding="utf-8").strip() if path.exists() else default
 
 
 def parse_args() -> Namespace:
