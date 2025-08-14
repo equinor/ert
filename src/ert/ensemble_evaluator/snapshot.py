@@ -104,11 +104,11 @@ class EnsembleSnapshot:
         self._realization_snapshots: defaultdict[
             RealId,
             RealizationSnapshot,
-        ] = defaultdict(RealizationSnapshot)  # type: ignore
+        ] = defaultdict(RealizationSnapshot)
 
         self._fm_step_snapshots: defaultdict[
             tuple[RealId, FmStepId], FMStepSnapshot
-        ] = defaultdict(FMStepSnapshot)  # type: ignore
+        ] = defaultdict(FMStepSnapshot)
 
         self._ensemble_state: str | None = None
         self._metadata = EnsembleSnapshotMetadata(
