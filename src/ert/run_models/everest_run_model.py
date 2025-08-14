@@ -196,6 +196,9 @@ class EverestRunModel(RunModel):
         queue_config.queue_options = everest_config.simulator.queue_system
         queue_config.queue_system = everest_config.simulator.queue_system.name
 
+        with open("queue_config_ert_everest.json", "w", encoding="utf-8") as fp:
+            fp.write(queue_config.model_dump_json(indent=4))
+
         ensemble_config = get_ensemble_config(config_dict, everest_config)
 
         substitutions = get_substitutions(
