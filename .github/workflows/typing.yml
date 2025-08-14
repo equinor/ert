@@ -46,4 +46,4 @@ jobs:
     - run: echo ::add-matcher::.github/mypy-matcher.json
     - name: Run mypy
       run: |
-        uv run mypy src/ert src/everest
+        uv run mypy src
