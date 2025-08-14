@@ -3,8 +3,8 @@ import queue
 import shutil
 import stat
 import tempfile
-from collections.abc import Callable, Iterator
-from contextlib import contextmanager
+from collections.abc import Callable, Generator, Iterator
+from contextlib import AbstractContextManager, contextmanager
 from copy import deepcopy
 from functools import partial
 from pathlib import Path
@@ -60,11 +60,11 @@ def control_data_no_variables() -> dict[str, str | float]:
 
 
 @pytest.fixture
-def setup_minimal_everest_case(tmp_path) -> EverestConfig:
+def setup_minimal_everest_case(tmp_path) -> AbstractContextManager[str]:
     @contextmanager
-    def make_config(forward_model_sleep_time: int = 1) -> EverestConfig:
+    def make_config(forward_model_sleep_time: int = 1) -> Generator[str, None, None]:
+        cwd = Path.cwd()
         try:
-            cwd = Path.cwd()
             os.chdir(tmp_path)
 
             job_path = tmp_path / "dummy_job.py"
