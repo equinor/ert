@@ -605,7 +605,7 @@ def test_create_mask_from_failed_realizations_returns_initial_active_realization
     assert failed_realization_mask == initial_active_realizations
 
 
-def test_run_model_logs_number_of_parameters_in_ensemble_experiment(use_tmpdir):
+def test_run_model_logs_number_of_parameters(use_tmpdir):
     tfds = [
         TransformFunctionDefinition(name="a", param_name="NORMAL", values=[1, 2]),
         TransformFunctionDefinition(name="b", param_name="NORMAL", values=[1, 2]),
