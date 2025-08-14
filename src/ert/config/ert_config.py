@@ -1421,18 +1421,18 @@ def _get_files_in_directory(job_path, errors):
 
 
 def _substitutions_from_dict(config_dict) -> dict[str, str]:
-    subst_list = {}
+    substitutions = {}
 
     for key, val in config_dict.get("DEFINE", []):
-        subst_list[key] = val
+        substitutions[key] = val
 
-    if "<CONFIG_PATH>" not in subst_list:
-        subst_list["<CONFIG_PATH>"] = config_dict.get("CONFIG_DIRECTORY", os.getcwd())
+    if "<CONFIG_PATH>" not in substitutions:
+        substitutions["<CONFIG_PATH>"] = os.getcwd()
 
     for key, val in config_dict.get("DATA_KW", []):
-        subst_list[key] = val
+        substitutions[key] = val
 
-    return subst_list
+    return substitutions
 
 
 def uppercase_subkeys_and_stringify_subvalues(
