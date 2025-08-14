@@ -28,6 +28,10 @@ class EverestConstraintsConfig(ResponseConfig):
     type: Literal["everest_constraints"] = "everest_constraints"
     name: str = "everest_constraints"
     has_finalized_keys: bool = True
+    auto_scales: list[bool]
+    scales: list[float | None]
+    upper_bounds: list[float | None]
+    lower_bounds: list[float | None]
 
     @property
     def expected_input_files(self) -> list[str]:
@@ -37,12 +41,20 @@ class EverestConstraintsConfig(ResponseConfig):
     def from_config_dict(cls, config_dict: ConfigDict) -> Self:
         keys = []
         input_files = []
+        auto_scales = []
+        scales = []
+        upper_bounds = []
+        lower_bounds = []
 
         for constraint in cast(
             list[dict[str, str]], config_dict.get(ConfigKeys.EVEREST_CONSTRAINTS, [])
         ):
             name = constraint["name"]
             input_file = constraint.get("input_file")
+            auto_scale = constraint.get("auto_scale")
+            scale = constraint.get("scale")
+            upper_bound = constraint.get("upper_bound")
+            lower_bound = constraint.get("lower_bound")
 
             if input_file is None:
                 raise ConfigValidationError.with_context(
@@ -58,11 +70,19 @@ class EverestConstraintsConfig(ResponseConfig):
 
             keys.append(name)
             input_files.append(input_file)
+            auto_scales.append(auto_scale)
+            scales.append(scale)
+            upper_bounds.append(upper_bound)
+            lower_bounds.append(lower_bound)
 
         return cls(
             name="everest_constraints",
             keys=keys,
             input_files=input_files,
+            auto_scales=auto_scales,
+            scales=scales,
+            upper_bounds=upper_bounds,
+            lower_bounds=lower_bounds,
         )
 
     def read_from_file(self, run_path: str, iens: int, iter_: int) -> pl.DataFrame:

@@ -132,16 +132,19 @@
     {
       "accepted": 1,
       "batch": 0,
+      "distance": -0.47999999,
       "objective": -0.47999999
     },
     {
       "accepted": 0,
       "batch": 1,
+      "distance": -0.48021799,
       "objective": -0.48021799
     },
     {
       "accepted": 1,
       "batch": 2,
+      "distance": -2.2e-7,
       "objective": -2.2e-7
     }
   ]

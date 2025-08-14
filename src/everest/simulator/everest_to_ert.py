@@ -8,10 +8,15 @@ from typing import Any, cast
 
 import everest
 from ert.config import (
-    EnsembleConfig,
     ErtConfig,
+    EverestConstraintsConfig,
+    EverestObjectivesConfig,
+    ExtParamConfig,
     ForwardModelStep,
+    GenDataConfig,
     ModelConfig,
+    ResponseConfig,
+    SummaryConfig,
 )
 from ert.config.ert_config import (
     _substitutions_from_dict,
@@ -33,8 +38,8 @@ from everest.strings import EVEREST, SIMULATION_DIR, STORAGE_DIR
 
 
 def _extract_summary_keys(
-    ever_config: EverestConfig, ert_config: dict[str, Any]
-) -> None:
+    ever_config: EverestConfig,
+) -> tuple[list[list[str]] | None, str | None]:
     summary_fms = [
         fm
         for fm in ever_config.forward_model
@@ -42,7 +47,7 @@ def _extract_summary_keys(
     ]
 
     if not summary_fms:
-        return None
+        return None, None
 
     summary_fm = summary_fms[0]
     assert summary_fm.results is not None
@@ -68,8 +73,7 @@ def _extract_summary_keys(
     all_keys = data_keys + field_keys + well_keys + deprecated_user_specified_keys
 
     all_keys = list(set(all_keys + requested_keys))
-    ert_config[ErtConfigKeys.SUMMARY] = [all_keys]
-    ert_config[ErtConfigKeys.ECLBASE] = smry_results.file_name
+    return [all_keys], smry_results.file_name
 
 
 def _extract_environment(
@@ -364,8 +368,6 @@ def _extract_forward_model(
 
 
 def _extract_model(ever_config: EverestConfig, ert_config: dict[str, Any]) -> None:
-    _extract_summary_keys(ever_config, ert_config)
-
     if ErtConfigKeys.NUM_REALIZATIONS not in ert_config:
         if ever_config.model.realizations is not None:
             ert_config[ErtConfigKeys.NUM_REALIZATIONS] = len(
@@ -382,32 +384,82 @@ def _extract_seed(ever_config: EverestConfig, ert_config: dict[str, Any]) -> Non
         ert_config[ErtConfigKeys.RANDOM_SEED] = random_seed
 
 
-def _extract_results(ever_config: EverestConfig, ert_config: dict[str, Any]) -> None:
-    everest_objectives = []
-    for objective in ever_config.objective_functions:
-        everest_objectives.append(
-            {"name": objective.name, "input_file": objective.name}
-        )
-    if everest_objectives:
-        ert_config[ErtConfigKeys.EVEREST_OBJECTIVES] = everest_objectives
+def _extract_results(
+    ever_config: EverestConfig,
+) -> tuple[
+    EverestObjectivesConfig,
+    EverestConstraintsConfig | None,
+    GenDataConfig | None,
+    SummaryConfig | None,
+]:
+    objectives_config = EverestObjectivesConfig.from_config_dict(
+        {
+            "EVEREST_OBJECTIVES": [
+                {
+                    "type": "everest_objectives",
+                    "name": objective.name,
+                    "input_file": objective.name,
+                    "objective_type": objective.type,
+                    "weight": objective.weight or 1,
+                    "auto_scale": objective.auto_scale or False,
+                    "scale": objective.scale or 1,
+                }
+                for objective in ever_config.objective_functions
+            ]
+        }
+    )
 
     everest_constraints = []
     for constraint in ever_config.output_constraints:
         everest_constraints.append(
-            {"name": constraint.name, "input_file": constraint.name}
+            {
+                "type": "everest_constraints",
+                "name": constraint.name,
+                "input_file": constraint.name,
+                "auto_scale": constraint.auto_scale or False,
+                "lower_bound": constraint.lower_bound,
+                "upper_bound": constraint.upper_bound,
+                "scale": constraint.scale,
+            }
         )
-    if everest_constraints:
-        ert_config[ErtConfigKeys.EVEREST_CONSTRAINTS] = everest_constraints
+
+    constraints_config = (
+        EverestConstraintsConfig.from_config_dict(
+            {
+                "EVEREST_CONSTRAINTS": [
+                    {
+                        "type": "everest_constraints",
+                        "name": constraint.name,
+                        "input_file": constraint.name,
+                        "auto_scale": constraint.auto_scale or False,
+                        "lower_bound": constraint.lower_bound,
+                        "upper_bound": constraint.upper_bound,
+                        "scale": constraint.scale,
+                    }
+                    for constraint in ever_config.output_constraints
+                ],
+            }
+        )
+        if everest_constraints
+        else None
+    )
 
     gen_data = [
         (fm.results.file_name, {"RESULT_FILE": fm.results.file_name})
         for fm in (ever_config.forward_model or [])
         if fm.results is not None and fm.results.type == "gen_data"
     ]
-    ert_config[ErtConfigKeys.GEN_DATA] = [
-        *ert_config.get(ErtConfigKeys.GEN_DATA, []),
-        *gen_data,
-    ]
+
+    gen_data_config = (
+        GenDataConfig.from_config_dict({"GEN_DATA": gen_data}) if gen_data else None
+    )
+
+    smry_keys, eclbase = _extract_summary_keys(ever_config)
+    summary_config = SummaryConfig.from_config_dict(
+        {"ECLBASE": eclbase, "SUMMARY": smry_keys}
+    )
+
+    return objectives_config, constraints_config, gen_data_config, summary_config
 
 
 def get_substitutions(
@@ -499,20 +551,29 @@ def get_workflow_jobs(ever_config: EverestConfig) -> dict[str, _WorkflowJob]:
     return workflow_jobs
 
 
-def get_ensemble_config(
-    config_dict: ConfigDict, everest_config: EverestConfig
-) -> EnsembleConfig:
-    ensemble_config = EnsembleConfig.from_dict(config_dict)
+def get_parameters_and_responses(
+    everest_config: EverestConfig,
+) -> tuple[list[ExtParamConfig], list[ResponseConfig]]:
+    everest_objectives, everest_constraints, gen_data, summary = _extract_results(
+        everest_config
+    )
 
-    # This adds an EXT_PARAM key to the ert_config, which is not a true ERT
-    # configuration key. When initializing an ERT config object, it is ignored.
-    # It is used by the Simulator object to inject ExtParamConfig nodes.
+    response_configs: list[ResponseConfig] = [everest_objectives]
+
+    if everest_constraints is not None:
+        response_configs.append(everest_constraints)
+
+    if gen_data is not None:
+        response_configs.append(gen_data)
+
+    if summary is not None:
+        response_configs.append(summary)
+
+    parameter_configs = []
     for control in everest_config.controls or []:
-        ensemble_config.parameter_configs[control.name] = (
-            control.to_ert_parameter_config()
-        )
+        parameter_configs.append(control.to_ert_parameter_config())
 
-    return ensemble_config
+    return parameter_configs, response_configs
 
 
 def _everest_to_ert_config_dict(
@@ -539,7 +600,6 @@ def _everest_to_ert_config_dict(
     _extract_workflows(ever_config, ert_config, config_dir)
     _extract_model(ever_config, ert_config)
     _extract_seed(ever_config, ert_config)
-    _extract_results(ever_config, ert_config)
 
     return ert_config
 

@@ -45,15 +45,16 @@ def _build_args_parser() -> argparse.ArgumentParser:
     return arg_parser
 
 
-def opt_controls_by_batch(optimization_dir: str, batch: int) -> dict[str, Any] | None:
-    storage = EverestStorage(Path(optimization_dir))
-    storage.read_from_output_dir()
+def opt_controls_by_batch(optimization_dir: Path, batch: int) -> dict[str, Any] | None:
+    experiment = EverestStorage.get_experiment(optimization_dir)
 
-    assert storage.data is not None
-    assert storage.data.controls is not None
-    control_names = storage.data.controls["control_name"]
+    assert experiment is not None
     function_batch = next(
-        (b for b in storage.data.batches_with_function_results if b.batch_id == batch),
+        (
+            b
+            for b in experiment.everest_batches_with_function_results
+            if b.batch_id == batch
+        ),
         None,
     )
 
@@ -61,7 +62,7 @@ def opt_controls_by_batch(optimization_dir: str, batch: int) -> dict[str, Any] |
         # All geo-realizations should have the same unperturbed control values per batch
         # hence it does not matter which realization we select the controls for
         return function_batch.realization_controls.select(
-            control_names.to_list()
+            experiment.parameter_keys
         ).to_dicts()[0]
 
     return None
@@ -108,11 +109,12 @@ def config_branch_entry(args: list[str] | None = None) -> None:
     options = parser.parse_args(args)
     setup_logging(options)
 
-    _, optimization_dir, yml_config = options.config
+    config_file, optimization_dir, yml_config = options.config
+    config = EverestConfig.load_file(config_file)
 
     EverestStorage.check_for_deprecated_seba_storage(optimization_dir)
 
-    opt_controls = opt_controls_by_batch(optimization_dir, options.batch)
+    opt_controls = opt_controls_by_batch(config.storage_dir, options.batch)
     if opt_controls is None:
         parser.error(f"Batch {options.batch} not present in optimization data")
 

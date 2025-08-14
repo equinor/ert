@@ -4,7 +4,6 @@ import os
 import ssl
 from base64 import b64encode
 from dataclasses import dataclass
-from pathlib import Path
 from shutil import which
 from unittest.mock import MagicMock, patch
 
@@ -27,7 +26,10 @@ from everest.detached import (
     wait_for_server,
 )
 from everest.everest_storage import EverestStorage
-from everest.strings import OPT_FAILURE_ALL_REALIZATIONS, OPT_FAILURE_REALIZATIONS
+from everest.strings import (
+    OPT_FAILURE_ALL_REALIZATIONS,
+    OPT_FAILURE_REALIZATIONS,
+)
 
 
 @pytest.fixture
@@ -191,11 +193,10 @@ async def test_status_max_batch_num(copy_math_func_test_data_to_tmp):
     # The server should complete without error.
     assert status["status"] == ExperimentState.completed
     assert status["message"] == "Maximum number of batches reached."
-    storage = EverestStorage(Path(config.optimization_output_dir))
-    storage.read_from_output_dir()
+    experiment = EverestStorage.get_experiment(config.storage_dir)
 
     # Check that there is only one batch.
-    assert {b.batch_id for b in storage.data.batches} == {0}
+    assert {b.batch_id for b in experiment.everest_batches} == {0}
 
 
 @pytest.mark.integration_test

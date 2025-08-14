@@ -4,7 +4,6 @@ import argparse
 import logging
 import sys
 from functools import partial
-from pathlib import Path
 
 from ert.storage import ErtStorageException, open_storage
 from everest.api import EverestDataAPI
@@ -48,12 +47,14 @@ def visualization_entry(args: list[str] | None = None) -> None:
             )
             open_storage(ever_config.storage_dir, mode="w").close()
 
-    storage = EverestStorage(output_dir=Path(ever_config.optimization_output_dir))
-    storage.read_from_output_dir()
+    experiment = EverestStorage.get_experiment(
+        storage_path=ever_config.storage_dir,
+    )
 
-    if storage.is_empty:
+    if not experiment.has_everest_data:
         print(
-            f"No data found in storage at {storage._output_dir}. Please try again later"
+            f"No data found in storage at {experiment._storage.path}. "
+            f"Please try again later"
         )
         return
 

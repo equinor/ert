@@ -30,19 +30,10 @@ def test_csv_export(config_file, cached_example, snapshot):
     config_path, config_file, _, _ = cached_example(f"math_func/{config_file}")
     config = EverestConfig.load_file(Path(config_path) / config_file)
 
-    ever_storage = EverestStorage(output_dir=Path(config.optimization_output_dir))
-    ever_storage.init(
-        formatted_control_names=[
-            name
-            for control_config in config.controls
-            for name in control_config.formatted_control_names
-        ],
-        objective_functions=config.objective_functions,
-        output_constraints=config.output_constraints,
-        realizations=config.model.realizations,
+    experiment = EverestStorage.get_experiment(
+        storage_path=config.storage_dir,
     )
-    ever_storage.read_from_output_dir()
-    combined_df, pert_real_df, batch_df = ever_storage.export_dataframes()
+    combined_df, pert_real_df, batch_df = experiment.export_everest_data()
 
     def _sort_df(df: pl.DataFrame) -> pl.DataFrame:
         df_ = df.select(df.columns)

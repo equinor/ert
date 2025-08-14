@@ -411,31 +411,37 @@
     {
       "accepted": 1,
       "batch": 0,
+      "distance": -1.6875,
       "objective": -1.6875
     },
     {
       "accepted": 0,
       "batch": 1,
+      "distance": -1.69281773,
       "objective": -1.69281773
     },
     {
       "accepted": 0,
       "batch": 2,
+      "distance": -1.73561919,
       "objective": -1.73561919
     },
     {
       "accepted": 1,
       "batch": 3,
+      "distance": -1.6236748,
       "objective": -1.6236748
     },
     {
       "accepted": 1,
       "batch": 4,
+      "distance": -1.539793,
       "objective": -1.539793
     },
     {
       "accepted": 1,
       "batch": 5,
+      "distance": -1.52561897,
       "objective": -1.52561897
     }
   ]

@@ -15,12 +15,11 @@ class OptimalResult:
 
 
 def get_optimal_result(output_dir: str) -> OptimalResult | None:
-    storage = EverestStorage(Path(output_dir))
-    storage.read_from_output_dir()
+    experiment = EverestStorage.get_experiment(Path(output_dir))
 
     matching_batches = [
         b
-        for b in storage.data.batches_with_function_results
+        for b in experiment.everest_batches_with_function_results
         if not b.batch_objectives.is_empty() and b.is_improvement
     ]
 

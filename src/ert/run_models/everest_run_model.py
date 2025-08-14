@@ -3,6 +3,7 @@ from __future__ import annotations
 import dataclasses
 import datetime
 import importlib.metadata
+import json
 import logging
 import os
 import queue
@@ -51,8 +52,8 @@ from everest.optimizer.opt_model_transforms import (
 )
 from everest.simulator.everest_to_ert import (
     everest_to_ert_config_dict,
-    get_ensemble_config,
     get_forward_model_steps,
+    get_parameters_and_responses,
     get_substitutions,
     get_workflow_jobs,
 )
@@ -149,7 +150,6 @@ class EverestRunModel(RunModel):
     _experiment: Experiment | None = PrivateAttr(default=None)
     _eval_server_cfg: EvaluatorServerConfig | None = PrivateAttr(default=None)
     _batch_id: int = PrivateAttr(default=0)
-    _ever_storage: EverestStorage | None = PrivateAttr(default=None)
     _opt_callback: OptimizerCallback | None = PrivateAttr(default=None)
 
     _transforms: EverestOptModelTransforms = PrivateAttr()
@@ -196,7 +196,9 @@ class EverestRunModel(RunModel):
         queue_config.queue_options = everest_config.simulator.queue_system
         queue_config.queue_system = everest_config.simulator.queue_system.name
 
-        ensemble_config = get_ensemble_config(config_dict, everest_config)
+        parameter_configuration, response_configuration = get_parameters_and_responses(
+            everest_config
+        )
 
         substitutions = get_substitutions(
             config_dict,
@@ -253,8 +255,8 @@ class EverestRunModel(RunModel):
             # Mutated throughout execution of Everest
             # (Not totally in conformity with ERT runmodel logic)
             active_realizations=[],
-            parameter_configuration=ensemble_config.parameter_configuration,
-            response_configuration=ensemble_config.response_configuration,
+            parameter_configuration=parameter_configuration,
+            response_configuration=response_configuration,
             ert_templates=ert_templates,
             user_config_file=config_file,
             env_vars=env_vars,
@@ -325,14 +327,34 @@ class EverestRunModel(RunModel):
             )
 
     def _handle_optimizer_results(self, results: tuple[Results, ...]) -> None:
-        assert self._ever_storage is not None
-        self._ever_storage.on_batch_evaluation_finished(results)
+        assert self._experiment is not None
+
+        batch_dataframes = EverestStorage.unpack_ropt_results(results)
+
+        for batch_id, batch_dict in batch_dataframes.items():
+            target_ensemble = self._experiment.get_ensemble_by_name(f"batch_{batch_id}")
+            target_ensemble.save_batch_dataframes(
+                dataframes=batch_dict, ensemble_path=target_ensemble._path
+            )
+
+            with open(
+                target_ensemble._path / "batch.json",
+                "w+",
+                encoding="utf-8",
+            ) as f:
+                json.dump(
+                    {
+                        "batch_id": batch_id,
+                        "is_improvement": False,
+                    },
+                    f,
+                )
 
         for r in results:
             storage_batches = (
-                self._ever_storage.data.batches_with_function_results
+                self._experiment.everest_batches_with_function_results
                 if isinstance(r, FunctionResults)
-                else self._ever_storage.data.batches_with_gradient_results
+                else self._experiment.everest_batches_with_gradient_results
             )
             batch_data = next(
                 (b for b in storage_batches if b.batch_id == r.batch_id),
@@ -364,35 +386,31 @@ class EverestRunModel(RunModel):
             responses=self.response_configuration,
         )
 
+        self._experiment.save_everest_metadata(
+            {
+                "model_realizations": self.model.realizations,
+                "model_realization_weights": self.model.realizations_weights,
+            }
+        )
+
         # Initialize the ropt optimizer:
         optimizer, initial_guesses = self._create_optimizer()
 
-        self._ever_storage = EverestStorage(
-            output_dir=Path(self.optimization_output_dir),
-        )
-
-        formatted_control_names = [
-            name for config in self.controls for name in config.formatted_control_names
-        ]
-        self._ever_storage.init(
-            formatted_control_names=formatted_control_names,
-            objective_functions=self.objective_functions,
-            output_constraints=self.output_constraints,
-            realizations=self.model.realizations,
-        )
+        # ROPT expects this folder to exist wrt stdout/stderr redirect files
+        os.makedirs(self.optimization_output_dir, exist_ok=True)
         optimizer.set_results_callback(self._handle_optimizer_results)
 
         # Run the optimization:
         optimizer_exit_code = optimizer.run(initial_guesses).exit_code
 
         # Store some final results.
-        self._ever_storage.on_optimization_finished()
+        self._experiment.on_everest_experiment_finished()
         if (
             optimizer_exit_code is not RoptExitCode.UNKNOWN
             and optimizer_exit_code is not RoptExitCode.TOO_FEW_REALIZATIONS
             and optimizer_exit_code is not RoptExitCode.USER_ABORT
         ):
-            self._ever_storage.export_everest_opt_results_to_csv()
+            self._experiment.export_everest_opt_results_to_csv()
 
         if self._exit_code is None:
             match optimizer_exit_code:
@@ -436,6 +454,7 @@ class EverestRunModel(RunModel):
             self.random_seed,
             self.optimization_output_dir,
         )
+
         transforms = (
             OptModelTransforms(
                 variables=self._transforms["control_scaler"],

@@ -16,6 +16,10 @@ class EverestObjectivesConfig(ResponseConfig):
     type: Literal["everest_objectives"] = "everest_objectives"
     name: str = "everest_objectives"
     has_finalized_keys: bool = True
+    weights: list[float]
+    auto_scales: list[bool]
+    scales: list[float]
+    objective_types: list[str | None]
 
     @property
     def metadata(self) -> list[ResponseMetadata]:
@@ -36,12 +40,21 @@ class EverestObjectivesConfig(ResponseConfig):
     def from_config_dict(cls, config_dict: ConfigDict) -> Self:
         keys = []
         input_files = []
+        weights = []
+        auto_scales = []
+        scales = []
+        objective_types = []
 
         for objective in cast(
             list[dict[str, str]], config_dict.get(ConfigKeys.EVEREST_OBJECTIVES, [])
         ):
-            name = objective["name"]
             input_file = objective.get("input_file")
+
+            name = objective["name"]
+            weight = objective["weight"]
+            auto_scale = objective["auto_scale"]
+            scale = objective["scale"]
+            objective_type = objective["objective_type"]
 
             if input_file is None:
                 raise ConfigValidationError.with_context(
@@ -56,12 +69,20 @@ class EverestObjectivesConfig(ResponseConfig):
                 )
 
             keys.append(name)
+            weights.append(weight)
+            auto_scales.append(auto_scale)
+            scales.append(scale)
+            objective_types.append(objective_type)
             input_files.append(input_file)
 
         return cls(
             name="everest_objectives",
             keys=keys,
             input_files=input_files,
+            weights=weights,
+            auto_scales=auto_scales,
+            scales=scales,
+            objective_types=objective_types,
         )
 
     def read_from_file(self, run_path: str, iens: int, iter_: int) -> pl.DataFrame:
