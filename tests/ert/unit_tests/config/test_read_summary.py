@@ -55,84 +55,84 @@ def to_ecl(st: SummaryKeyType) -> SummaryVarType:
 @pytest.mark.parametrize("keyword", ["AAQR", "AAQT"])
 def test_aquifer_variables_are_recognized(keyword):
     assert Summary.var_type(keyword) == SummaryVarType.RD_SMSPEC_AQUIFER_VAR
-    assert SummaryKeyType.from_keyword(keyword) == SummaryKeyType.AQUIFER
+    assert SummaryKeyType.from_variable(keyword) == SummaryKeyType.AQUIFER
 
 
 @pytest.mark.parametrize("keyword", ["BOSAT"])
 def test_block_variables_are_recognized(keyword):
     assert Summary.var_type(keyword) == SummaryVarType.RD_SMSPEC_BLOCK_VAR
-    assert SummaryKeyType.from_keyword(keyword) == SummaryKeyType.BLOCK
+    assert SummaryKeyType.from_variable(keyword) == SummaryKeyType.BLOCK
 
 
 @pytest.mark.parametrize("keyword", ["LBOSAT"])
 def test_local_block_variables_are_recognized(keyword):
     assert Summary.var_type(keyword) == SummaryVarType.RD_SMSPEC_LOCAL_BLOCK_VAR
-    assert SummaryKeyType.from_keyword(keyword) == SummaryKeyType.LOCAL_BLOCK
+    assert SummaryKeyType.from_variable(keyword) == SummaryKeyType.LOCAL_BLOCK
 
 
 @pytest.mark.parametrize("keyword", ["CGORL"])
 def test_completion_variables_are_recognized(keyword):
     assert Summary.var_type(keyword) == SummaryVarType.RD_SMSPEC_COMPLETION_VAR
-    assert SummaryKeyType.from_keyword(keyword) == SummaryKeyType.COMPLETION
+    assert SummaryKeyType.from_variable(keyword) == SummaryKeyType.COMPLETION
 
 
 @pytest.mark.parametrize("keyword", ["LCGORL"])
 def test_local_completion_variables_are_recognized(keyword):
     assert Summary.var_type(keyword) == SummaryVarType.RD_SMSPEC_LOCAL_COMPLETION_VAR
-    assert SummaryKeyType.from_keyword(keyword) == SummaryKeyType.LOCAL_COMPLETION
+    assert SummaryKeyType.from_variable(keyword) == SummaryKeyType.LOCAL_COMPLETION
 
 
 @pytest.mark.parametrize("keyword", ["FGOR", "FOPR"])
 def test_field_variables_are_recognized(keyword):
     assert Summary.var_type(keyword) == SummaryVarType.RD_SMSPEC_FIELD_VAR
-    assert SummaryKeyType.from_keyword(keyword) == SummaryKeyType.FIELD
+    assert SummaryKeyType.from_variable(keyword) == SummaryKeyType.FIELD
 
 
 @pytest.mark.parametrize("keyword", ["GGFT", "GOPR"])
 def test_group_variables_are_recognized(keyword):
     assert Summary.var_type(keyword) == SummaryVarType.RD_SMSPEC_GROUP_VAR
-    assert SummaryKeyType.from_keyword(keyword) == SummaryKeyType.GROUP
+    assert SummaryKeyType.from_variable(keyword) == SummaryKeyType.GROUP
 
 
 @pytest.mark.parametrize("keyword", ["NOPR", "NGPR"])
 def test_network_variables_are_recognized(keyword):
     assert Summary.var_type(keyword) == SummaryVarType.RD_SMSPEC_NETWORK_VAR
-    assert SummaryKeyType.from_keyword(keyword) == SummaryKeyType.NETWORK
+    assert SummaryKeyType.from_variable(keyword) == SummaryKeyType.NETWORK
 
 
 @pytest.mark.parametrize("keyword", inter_region_summary_variables)
 def test_inter_region_summary_variables_are_recognized(keyword):
     assert Summary.var_type(keyword) == SummaryVarType.RD_SMSPEC_REGION_2_REGION_VAR
-    assert SummaryKeyType.from_keyword(keyword) == SummaryKeyType.INTER_REGION
+    assert SummaryKeyType.from_variable(keyword) == SummaryKeyType.INTER_REGION
 
 
 @pytest.mark.parametrize("keyword", ["RORFR", "RPR", "ROPT"])
 def test_region_variables_are_recognized(keyword):
     assert Summary.var_type(keyword) == SummaryVarType.RD_SMSPEC_REGION_VAR
-    assert SummaryKeyType.from_keyword(keyword) == SummaryKeyType.REGION
+    assert SummaryKeyType.from_variable(keyword) == SummaryKeyType.REGION
 
 
 @pytest.mark.parametrize("keyword", ["SOPR"])
 def test_segment_variables_are_recognized(keyword):
     assert Summary.var_type(keyword) == SummaryVarType.RD_SMSPEC_SEGMENT_VAR
-    assert SummaryKeyType.from_keyword(keyword) == SummaryKeyType.SEGMENT
+    assert SummaryKeyType.from_variable(keyword) == SummaryKeyType.SEGMENT
 
 
 @pytest.mark.parametrize("keyword", ["WOPR"])
 def test_well_variables_are_recognized(keyword):
     assert Summary.var_type(keyword) == SummaryVarType.RD_SMSPEC_WELL_VAR
-    assert SummaryKeyType.from_keyword(keyword) == SummaryKeyType.WELL
+    assert SummaryKeyType.from_variable(keyword) == SummaryKeyType.WELL
 
 
 @pytest.mark.parametrize("keyword", ["LWOPR"])
 def test_local_well_variables_are_recognized(keyword):
     assert Summary.var_type(keyword) == SummaryVarType.RD_SMSPEC_LOCAL_WELL_VAR
-    assert SummaryKeyType.from_keyword(keyword) == SummaryKeyType.LOCAL_WELL
+    assert SummaryKeyType.from_variable(keyword) == SummaryKeyType.LOCAL_WELL
 
 
 @given(summary_variables())
 def test_that_identify_var_type_is_same_as_ecl(variable):
-    assert Summary.var_type(variable) == to_ecl(SummaryKeyType.from_keyword(variable))
+    assert Summary.var_type(variable) == to_ecl(SummaryKeyType.from_variable(variable))
 
 
 @given(st.integers(), st.text(), st.integers(), st.integers())

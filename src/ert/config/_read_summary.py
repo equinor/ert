@@ -88,7 +88,7 @@ def make_summary_key(
     'BOPR:2,2,1'
     """
     try:
-        sum_type = SummaryKeyType.from_keyword(keyword)
+        sum_type = SummaryKeyType.from_variable(keyword)
     except Exception as err:
         raise InvalidResponseFile(
             f"Could not read summary keyword '{keyword}': {err}"

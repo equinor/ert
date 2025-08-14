@@ -34,6 +34,13 @@ SPECIAL_KEYWORDS = [
 
 
 class SummaryKeyType(Enum):
+    """Summary keys are divided into types based on summary variable name.
+
+    see :ref:`SUMMARY  <summary>` for in keywords.rst for details on summary
+    variables and keys.
+
+    """
+
     AQUIFER = auto()
     BLOCK = auto()
     COMPLETION = auto()
@@ -50,7 +57,14 @@ class SummaryKeyType(Enum):
     OTHER = auto()
 
     @classmethod
-    def from_keyword(cls, summary_keyword: str) -> SummaryKeyType:
+    def from_variable(cls, summary_variable: str) -> SummaryKeyType:
+        """Returns the type corresponding to the given summary variable
+
+        >>> SummaryKeyType.from_variable("FOPR").name
+        'FIELD'
+        >>> SummaryKeyType.from_variable("LWWIT").name
+        'LOCAL_WELL'
+        """
         KEYWORD_TYPE_MAPPING = {
             "A": cls.AQUIFER,
             "B": cls.BLOCK,
@@ -64,23 +78,23 @@ class SummaryKeyType(Enum):
             "S": cls.SEGMENT,
             "W": cls.WELL,
         }
-        if not summary_keyword:
+        if not summary_variable:
             raise ValueError("Got empty summary keyword")
-        if any(special in summary_keyword for special in SPECIAL_KEYWORDS):
+        if any(special in summary_variable for special in SPECIAL_KEYWORDS):
             return cls.OTHER
-        if summary_keyword[0] in KEYWORD_TYPE_MAPPING:
-            return KEYWORD_TYPE_MAPPING[summary_keyword[0]]
-        if summary_keyword[0:2] in KEYWORD_TYPE_MAPPING:
-            return KEYWORD_TYPE_MAPPING[summary_keyword[0:2]]
-        if summary_keyword == "RORFR":
+        if summary_variable[0] in KEYWORD_TYPE_MAPPING:
+            return KEYWORD_TYPE_MAPPING[summary_variable[0]]
+        if summary_variable[0:2] in KEYWORD_TYPE_MAPPING:
+            return KEYWORD_TYPE_MAPPING[summary_variable[0:2]]
+        if summary_variable == "RORFR":
             return cls.REGION
 
         if any(
-            re.fullmatch(pattern, summary_keyword)
+            re.fullmatch(pattern, summary_variable)
             for pattern in [r"R.FT.*", r"R..FT.*", r"R.FR.*", r"R..FR.*", r"R.F"]
         ):
             return cls.INTER_REGION
-        if summary_keyword[0] == "R":
+        if summary_variable[0] == "R":
             return cls.REGION
 
         return cls.OTHER
@@ -170,7 +184,7 @@ def _match_keyword_string(start: int, rate_string: str, keyword: str) -> bool:
 
 
 def is_rate(key: str) -> bool:
-    key_type = SummaryKeyType.from_keyword(key)
+    key_type = SummaryKeyType.from_variable(key)
     if key_type in {
         SummaryKeyType.WELL,
         SummaryKeyType.GROUP,

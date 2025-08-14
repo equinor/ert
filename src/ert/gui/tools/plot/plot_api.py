@@ -47,6 +47,28 @@ class PlotApiKeyDefinition(NamedTuple):
     response_metadata: ResponseMetadata | None = None
 
 
+def _history_key(key: str) -> str:
+    """The history summary key responding to given summary key
+
+    See :ref:`SUMMARY  <summary>` and :ref:`HISTORY_SOURCE <history_source>`
+    for in keywords.rst for details.
+
+    >>> _history_key("FOPR")
+    'FOPRH'
+    >>> _history_key("BPR:1,3,8")
+    'BPRH:1,3,8'
+    >>> _history_key("LWWIT:WNAME:LGRNAME")
+    'LWWITH:WNAME:LGRNAME'
+    """
+    if ":" in key:
+        head, tail = key.split(":", 1)
+        history_key = f"{head}H:{tail}"
+    else:
+        history_key = f"{key}H"
+
+    return history_key
+
+
 class PlotApi:
     def __init__(self, ens_path: Path) -> None:
         self.ens_path = ens_path
@@ -305,17 +327,8 @@ class PlotApi:
 
         return all_observations.T
 
-    def _history_key(self, key: str) -> str:
-        if ":" in key:
-            head, tail = key.split(":", 1)
-            history_key = f"{head}H:{tail}"
-        else:
-            history_key = f"{key}H"
-
-        return history_key
-
     def has_history_data(self, key: str) -> bool:
-        history_key = self._history_key(key)
+        history_key = _history_key(key)
         return any(x for x in self.responses_api_key_defs if x.key == history_key)
 
     def history_data(
@@ -331,7 +344,7 @@ class PlotApi:
             return pd.DataFrame()
 
         for ensemble_id in ensemble_ids:
-            history_key = self._history_key(key)
+            history_key = _history_key(key)
 
             df = self.data_for_response(ensemble_id, history_key, filter_on)
 

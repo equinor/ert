@@ -67,7 +67,7 @@ Keyword name                                                            Required
 :ref:`SETENV <setenv>`                                                  NO                                                                      You can modify the UNIX environment with SETENV calls
 :ref:`STOP_LONG_RUNNING <stop_long_running>`                            NO                                      FALSE                           Stop long running realizations after minimum number of realizations (MIN_REALIZATIONS) have run
 :ref:`SUBMIT_SLEEP  <submit_sleep>`                                     NO                                      0.0                             Determines for how long in seconds the system will sleep between submitting jobs.
-:ref:`SUMMARY  <summary>`                                               NO                                                                      Add summary variables for internalization
+:ref:`SUMMARY  <summary>`                                               NO                                                                      Add summary vectors for internalization
 :ref:`SURFACE <surface>`                                                NO                                                                      Surface parameter read from RMS IRAP file
 :ref:`TIME_MAP  <time_map>`                                             NO                                                                      Ability to manually enter a list of dates to establish report step <-> dates mapping
 :ref:`UPDATE_LOG_PATH  <update_log_path>`                               NO                                      update_log                      Summary of the update steps are stored in this directory
@@ -1436,11 +1436,28 @@ SUMMARY
 -------
 .. _summary:
 
-The SUMMARY keyword is used to add variables from the ECLIPSE summary file to
-the parametrization. The keyword expects a string, which should have the
-format VAR:WGRNAME. Here, VAR should be a quantity, such as WOPR, WGOR, RPR or
-GWCT. Moreover, WGRNAME should refer to a well, group or region. If it is a
-field property, such as FOPT, WGRNAME need not be set to FIELD.
+The SUMMARY keyword is used to add summary vectors from the summary file to
+be read from the runpath. Summary variables are described in the `opm flow reference manual
+<https://opm-project.org/wp-content/uploads/2023/06/OPM_Flow_Reference_Manual_2023-04_Rev-0_Reduced.pdf>`
+section 11.1.
+A summary vector is uniquely specified by giving a summary variable, and
+potentially one or more of the following properties: well name, region name, lgr
+name, block index, completion index, network name.
+
+Ert uses the following textual format, called summary key, to refer to a summary vector.
+
+A summary key is a colon separated list of the required properties needed to uniquely
+specify a summary vector. What properties are required is specified in
+OPM Flow Reference manual 2023-04 section F.9.2.
+
+So for example for field variables, no additional information is required:
+`FOPR`, `FWPR`, etc. For well variables, the well name need to be specified:
+`WOPR:WELL_NAME`, `WAQR:MY_WELL` etc. For block variables, the index has to be
+given: `BOPR:10,9,50`. For a local completion, both the lgr name, well name,
+and index has to be given: `LWWITH:LGR1:WELL2:3,5,5`.
+
+The SUMMARY keyword accepts wildcard '*'. This adds all summary vectors where
+the corresponding summary key matches the pattern.
 
 *Example:*
 
