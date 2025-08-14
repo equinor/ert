@@ -572,7 +572,7 @@ _not_yet_serializable_args = {
     runmodel_args(),
     initial_ensemble_runmodel_strategy(),
 )
-def test_serializing_and_deserializing_ensemble_experiment(
+def test_that_deserializing_ensemble_experiment_is_the_inverse_of_serializing(
     create_new_tmpdir,
     baserunmodel_args: dict[str, Any],
     ensemble_experiment_args: dict[str, Any],
@@ -596,7 +596,7 @@ def test_serializing_and_deserializing_ensemble_experiment(
 @given(
     runmodel_args(), initial_ensemble_runmodel_strategy(), update_runmodel_strategy()
 )
-def test_serializing_and_deserializing_ensemble_smoother(
+def test_that_deserializing_ensemble_smoother_is_the_inverse_of_serializing(
     create_new_tmpdir,
     baserunmodel_args: dict[str, Any],
     initial_ensemble_args: dict[str, Any],
@@ -620,7 +620,7 @@ def test_serializing_and_deserializing_ensemble_smoother(
 @given(
     runmodel_args(), initial_ensemble_runmodel_strategy(), update_runmodel_strategy()
 )
-def test_serializing_and_deserializing_ensemble_information_filter(
+def test_that_deserializing_ensemble_information_filter_is_the_inverse_of_serializing(
     create_new_tmpdir,
     baserunmodel_args: dict[str, Any],
     initial_ensemble_args: dict[str, Any],
@@ -647,7 +647,7 @@ def test_serializing_and_deserializing_ensemble_information_filter(
     update_runmodel_strategy(),
     multidass_strategy(),
 )
-def test_serializing_and_deserializing_esmda(
+def test_that_deserializing_esmda_is_the_inverse_of_serializing(
     create_new_tmpdir,
     monkeypatch,
     baserunmodel_args: dict[str, Any],
@@ -710,7 +710,7 @@ cases_to_test = [
 # readable/accessible wrt single test case failures
 @pytest.mark.filterwarnings("ignore::ert.config.ConfigWarning")
 @pytest.mark.parametrize("case", cases_to_test)
-def test_serializing_manual_update_snapshot(
+def test_that_dumped_manual_update_matches_snapshot(
     case, copy_case, snapshot, change_to_tmpdir
 ):
     config_dir, config_file = case.split("/")
@@ -745,7 +745,7 @@ def test_serializing_manual_update_snapshot(
 
 @pytest.mark.filterwarnings("ignore::ert.config.ConfigWarning")
 @pytest.mark.parametrize("case", cases_to_test)
-def test_serializing_evaluate_ensemble_snapshot(
+def test_that_dumped_evaluate_ensemble_matches_snapshot(
     case, copy_case, snapshot, change_to_tmpdir
 ):
     config_dir, config_file = case.split("/")
@@ -779,7 +779,7 @@ def test_serializing_evaluate_ensemble_snapshot(
 
 @pytest.mark.filterwarnings("ignore::ert.config.ConfigWarning")
 @pytest.mark.parametrize("case", cases_to_test)
-def test_serializing_ensemble_experiment_snapshot(
+def test_that_dumped_ensemble_experiment_matches_snapshot(
     case, copy_case, snapshot, change_to_tmpdir
 ):
     config_dir, config_file = case.split("/")
@@ -803,7 +803,7 @@ def test_serializing_ensemble_experiment_snapshot(
 
 @pytest.mark.filterwarnings("ignore::ert.config.ConfigWarning")
 @pytest.mark.parametrize("case", cases_to_test)
-def test_serializing_ensemble_smoother_snapshot(
+def test_that_dumped_ensemble_smoother_matches_snapshot(
     case, copy_case, snapshot, change_to_tmpdir
 ):
     config_dir, config_file = case.split("/")
@@ -827,7 +827,7 @@ def test_serializing_ensemble_smoother_snapshot(
 
 @pytest.mark.filterwarnings("ignore::ert.config.ConfigWarning")
 @pytest.mark.parametrize("case", cases_to_test)
-def test_serializing_enif_snapshot(case, copy_case, snapshot, change_to_tmpdir):
+def test_that_dumped_enif_matches_snapshot(case, copy_case, snapshot, change_to_tmpdir):
     config_dir, config_file = case.split("/")
     copy_case(config_dir)
 
@@ -849,7 +849,9 @@ def test_serializing_enif_snapshot(case, copy_case, snapshot, change_to_tmpdir):
 
 @pytest.mark.filterwarnings("ignore::ert.config.ConfigWarning")
 @pytest.mark.parametrize("case", cases_to_test)
-def test_serializing_esmda_snapshot(case, copy_case, snapshot, change_to_tmpdir):
+def test_that_dumped_esmda_matches_snapshot(
+    case, copy_case, snapshot, change_to_tmpdir
+):
     config_dir, config_file = case.split("/")
     copy_case(config_dir)
 
