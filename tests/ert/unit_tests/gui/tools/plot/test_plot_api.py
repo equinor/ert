@@ -410,7 +410,9 @@ def test_that_observations_for_empty_ensemble_returns_empty_data(api_and_storage
     assert api.observations_for_key([str(ensemble.id)], "NAIMFRAC").empty
 
 
-def test_data_for_response_no_realizations(api_and_storage):
+def test_that_data_for_response_is_empty_for_ensembles_without_responses(
+    api_and_storage,
+):
     api, storage = api_and_storage
 
     experiment = storage.create_experiment(
