@@ -168,7 +168,9 @@ def test_everest_main_configdump_entry(copy_egg_test_data_to_tmp):
 @pytest.mark.timeout(60)
 @pytest.mark.integration_test
 @pytest.mark.xdist_group(name="starts_everest")
-def test_stopping_local_queue_with_ctrl_c(capsys, setup_minimal_everest_case):
+def test_that_keyboard_interrupt_stops_optimization_with_a_graceful_shutdown(
+    capsys, setup_minimal_everest_case
+):
     with setup_minimal_everest_case(forward_model_sleep_time=15) as config_path:
         config = EverestConfig.load_file(config_path)
 
