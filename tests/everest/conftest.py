@@ -70,17 +70,17 @@ def setup_minimal_everest_case(tmp_path) -> EverestConfig:
             job_path = tmp_path / "dummy_job.py"
             job_path.write_text(
                 dedent(f"""#!/usr/bin/env python3
-import sys
-import os
-import time
-from pathlib import Path
+                    import sys
+                    import os
+                    import time
+                    from pathlib import Path
 
-def main(argv):
-    time.sleep({forward_model_sleep_time})
-    Path('my_objective').write_text('0.5')
+                    def main(argv):
+                        time.sleep({forward_model_sleep_time})
+                        Path('my_objective').write_text('0.5')
 
-if __name__ == '__main__':
-    main(sys.argv)
+                    if __name__ == '__main__':
+                        main(sys.argv)
                 """)
             )
 
