@@ -52,7 +52,7 @@ def killed_by_oom(pids: set[int]) -> bool:
             logger.warning(
                 "Could not use dmesg to check for OOM kill, "
                 f"returncode {dmesg_result.returncode} "
-                f"and stderr: {dmesg_result.stderr}"
+                f"and stderr: {dmesg_result.stderr}"  # type: ignore
             )
             return False
     except FileNotFoundError:
@@ -117,7 +117,7 @@ class ForwardModelStep:
         combined_arg_list = [executable]
         if arg_list := self.step_data.get("argList"):
             combined_arg_list += arg_list
-        return combined_arg_list
+        return combined_arg_list  # type: ignore
 
     def _open_file_handles(
         self,
@@ -202,7 +202,9 @@ class ForwardModelStep:
             except TimeoutExpired:
                 potential_exited_msg = (
                     self.handle_process_timeout_and_create_exited_msg(
-                        exit_code, proc, run_start_time
+                        exit_code,
+                        proc,  # type: ignore
+                        run_start_time,
                     )
                 )
                 if isinstance(potential_exited_msg, Exited):
@@ -291,7 +293,10 @@ class ForwardModelStep:
         )
 
     def handle_process_timeout_and_create_exited_msg(
-        self, exit_code: int | None, proc: Popen[Process], run_start_time: dt
+        self,
+        exit_code: int | None,
+        proc: Popen[Process],  # type: ignore
+        run_start_time: dt,
     ) -> Exited | None:
         max_running_minutes = self.step_data.get("max_running_minutes")
 
@@ -390,7 +395,7 @@ class ForwardModelStep:
     def _assert_arg_list(self) -> list[str]:
         errors: list[str] = []
         if "arg_types" in self.step_data:  # This seems to be NEVER true(?)
-            arg_types = self.step_data["arg_types"]
+            arg_types = self.step_data["arg_types"]  # type: ignore
             arg_list = self.step_data.get("argList", [])
             for index, arg_type in enumerate(arg_types):
                 if arg_type == "RUNTIME_FILE":
