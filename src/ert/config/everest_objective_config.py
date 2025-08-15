@@ -23,6 +23,7 @@ class EverestObjectivesConfig(ResponseConfig):
             ResponseMetadata(
                 response_type=self.name,
                 response_key=response_key,
+                finalized=self.has_finalized_keys,
                 filter_on=None,
             )
             for response_key in self.keys
