@@ -51,7 +51,10 @@ def test_key_def_structure(api):
         "log_scale": False,
         "parameter_metadata": None,
         "response_metadata": ResponseMetadata(
-            response_type="summary", response_key="FOPR", filter_on={}
+            response_type="summary",
+            response_key="FOPR",
+            filter_on={},
+            finalized=True,
         ),
     }
     assert fopr == PlotApiKeyDefinition(**fopr_expected)
@@ -66,7 +69,10 @@ def test_key_def_structure(api):
         "log_scale": False,
         "parameter_metadata": None,
         "response_metadata": ResponseMetadata(
-            response_type="summary", response_key="BPR:1,3,8", filter_on={}
+            response_type="summary",
+            response_key="BPR:1,3,8",
+            filter_on={},
+            finalized=True,
         ),
     }
     assert bpr == PlotApiKeyDefinition(**bpr_expected)
