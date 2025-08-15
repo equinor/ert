@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import math
 import os
 from collections.abc import Callable, Iterator
 from dataclasses import dataclass
@@ -316,18 +315,7 @@ class GenKwConfig(ParameterConfig):
             )
 
         data = df.to_dicts()[0]
-
-        log10_data: dict[str, float | str] = {
-            tf.name: math.log10(data[tf.name])
-            for tf in self.transform_functions
-            if isinstance(tf.distribution, LogNormalSettings | LogUnifSettings)
-            and isinstance(data[tf.name], (int, float))
-        }
-
-        if log10_data:
-            return {self.name: data, f"LOG10_{self.name}": log10_data}
-        else:
-            return {self.name: data}
+        return {self.name: data}
 
     def load_parameters(
         self, ensemble: Ensemble, realizations: npt.NDArray[np.int_]
