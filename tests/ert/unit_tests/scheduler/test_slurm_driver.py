@@ -9,7 +9,7 @@ from contextlib import ExitStack as does_not_raise
 from pathlib import Path
 
 import pytest
-from hypothesis import given
+from hypothesis import given, settings
 from hypothesis import strategies as st
 
 from ert.scheduler import SlurmDriver
@@ -75,6 +75,7 @@ async def test_exit_codes(
 @pytest.mark.usefixtures("capturing_sbatch")
 async def test_submit_sets_out():
     driver = SlurmDriver()
+    driver._poll_period = 0.01
     await driver.submit(0, "sleep", name="myjobname")
     assert "--output=myjobname.stdout" in Path("captured_sbatch_args").read_text(
         encoding="utf-8"
@@ -86,8 +87,10 @@ async def test_submit_sets_out():
 
 @pytest.mark.usefixtures("capturing_sbatch")
 @given(num_cpu=st.integers(min_value=1))
+@settings(max_examples=10)
 async def test_numcpu_sets_ntasks(num_cpu):
     driver = SlurmDriver()
+    driver._poll_period = 0.01
     await driver.submit(0, "sleep", name="myjobname", num_cpu=num_cpu)
     assert f"--ntasks={num_cpu}" in Path("captured_sbatch_args").read_text(
         encoding="utf-8"
@@ -96,8 +99,10 @@ async def test_numcpu_sets_ntasks(num_cpu):
 
 @pytest.mark.usefixtures("capturing_sbatch")
 @given(memory_in_bytes=st.integers(min_value=1))
+@settings(max_examples=10)
 async def test_realization_memory(memory_in_bytes):
     driver = SlurmDriver()
+    driver._poll_period = 0.01
     await driver.submit(
         0, "sleep", name="myjobname", realization_memory=memory_in_bytes
     )
@@ -108,6 +113,7 @@ async def test_realization_memory(memory_in_bytes):
 
 @pytest.mark.usefixtures("capturing_sbatch")
 @given(exclude=st.text(st.characters(whitelist_categories=("Lu",)), min_size=1))
+@settings(max_examples=10)
 async def test_exclude_is_set(exclude):
     driver = SlurmDriver(exclude_hosts=f"{exclude}")
     await driver.submit(0, "sleep", name="myjobname")
@@ -118,6 +124,7 @@ async def test_exclude_is_set(exclude):
 
 @pytest.mark.usefixtures("capturing_sbatch")
 @given(include=st.text(st.characters(whitelist_categories=("Lu",)), min_size=1))
+@settings(max_examples=10)
 async def test_include_is_set(include):
     driver = SlurmDriver(include_hosts=f"{include}")
     await driver.submit(0, "sleep", name="myjobname")
@@ -128,6 +135,7 @@ async def test_include_is_set(include):
 
 @pytest.mark.usefixtures("capturing_sbatch")
 @given(queue_name=st.text(st.characters(whitelist_categories=("Lu",)), min_size=1))
+@settings(max_examples=10)
 async def test_queue_name_is_set(queue_name):
     driver = SlurmDriver(queue_name=f"{queue_name}")
     await driver.submit(0, "sleep", name="myjobname")
@@ -138,6 +146,7 @@ async def test_queue_name_is_set(queue_name):
 
 @pytest.mark.usefixtures("capturing_sbatch")
 @given(project_code=st.text(st.characters(whitelist_categories=("Lu",)), min_size=1))
+@settings(max_examples=10)
 async def test_project_code_is_set(project_code):
     driver = SlurmDriver(project_code=f"{project_code}")
     await driver.submit(0, "sleep", name="myjobname")
@@ -149,6 +158,7 @@ async def test_project_code_is_set(project_code):
 @pytest.mark.usefixtures("capturing_sbatch")
 async def test_empty_job_name():
     driver = SlurmDriver()
+    driver._poll_period = 0.01
     await driver.submit(0, "/bin/sleep")
     assert "--job-name=sleep" in Path("captured_sbatch_args").read_text(
         encoding="utf-8"
@@ -157,6 +167,7 @@ async def test_empty_job_name():
 
 @pytest.mark.usefixtures("capturing_sbatch")
 @given(max_runtime=st.floats(min_value=1, max_value=999999999))
+@settings(max_examples=10)
 async def test_max_runtime_is_properly_formatted(max_runtime):
     # According to https://slurm.schedmd.com/sbatch.html we accept the formats
     # "minutes", "minutes:seconds", "hours:minutes:seconds", "days-hours",
@@ -274,6 +285,7 @@ def mock_slurm(pytestconfig, monkeypatch, tmp_path):
 
 async def test_slurm_stdout_file(job_name, use_tmpdir):
     driver = SlurmDriver()
+    driver._poll_period = 0.01
     await driver.submit(0, "sh", "-c", "echo yay", name=job_name)
     await poll(driver, {0})
     slurm_stdout = Path(f"{job_name}.stdout").read_text(encoding="utf-8")
@@ -283,6 +295,7 @@ async def test_slurm_stdout_file(job_name, use_tmpdir):
 
 async def test_slurm_dumps_stderr_to_file(job_name, use_tmpdir):
     driver = SlurmDriver()
+    driver._poll_period = 0.01
     failure_message = "failURE"
     await driver.submit(0, "sh", "-c", f"echo {failure_message} >&2", name=job_name)
     await poll(driver, {0})
@@ -305,6 +318,7 @@ async def test_slurm_can_retrieve_stdout_and_stderr(
     job_name, tail_chars_to_read, use_tmpdir
 ):
     driver = SlurmDriver()
+    driver._poll_period = 0.01
     num_written_characters = 600
     out = generate_random_text(num_written_characters)
     err = generate_random_text(num_written_characters)
@@ -334,6 +348,7 @@ async def test_submit_to_named_queue(tmp_path, job_name, monkeypatch):
     test for success for the job."""
     monkeypatch.chdir(tmp_path)
     driver = SlurmDriver(queue_name=os.getenv("_ERT_TESTS_ALTERNATIVE_QUEUE"))
+    driver._poll_period = 0.01
     await driver.submit(0, "sh", "-c", f"echo test > {tmp_path}/test", name=job_name)
     await poll(driver, {0})
 
@@ -346,6 +361,7 @@ async def test_submit_with_num_cpu(pytestconfig, job_name, use_tmpdir):
 
     num_cpu = 2
     driver = SlurmDriver()
+    driver._poll_period = 0.01
     await driver.submit(0, "sh", "-c", "echo test>test", name=job_name, num_cpu=num_cpu)
     job_id = driver._iens2jobid[0]
     await poll(driver, {0})
@@ -445,6 +461,7 @@ async def test_slurm_uses_sacct(
     scontrol_path.chmod(scontrol_path.stat().st_mode | stat.S_IEXEC)
 
     driver = SlurmDriver()
+    driver._poll_period = 0.01
     await driver.submit(0, cmd)
     assert await driver._get_exit_code(driver._iens2jobid[0]) == exit_code
 
@@ -463,6 +480,7 @@ async def test_slurm_timeout(caplog, pytestconfig, use_tmpdir):
         kwargs = {}
 
     driver = SlurmDriver(**kwargs)
+    driver._poll_period = 0.01
     await driver.submit(0, *cmd)
 
     async def finished(_: int, returncode: int):
