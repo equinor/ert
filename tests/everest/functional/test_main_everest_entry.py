@@ -194,7 +194,10 @@ def test_that_keyboard_interrupt_stops_optimization_with_a_graceful_shutdown(
 
         out = capsys.readouterr().out
 
-        assert "You are running your optimization locally." in out
+        assert (
+            "The optimization will be run by an experiment server on this machine"
+            in out
+        )
         assert "KeyboardInterrupt" in out
         assert "The optimization will be stopped and the program will exit..." in out
 
