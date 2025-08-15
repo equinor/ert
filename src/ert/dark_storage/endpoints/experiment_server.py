@@ -24,7 +24,6 @@ from starlette.requests import Request
 from starlette.responses import PlainTextResponse, Response
 from starlette.websockets import WebSocket
 
-from ert.config import QueueSystem
 from ert.ensemble_evaluator import EndEvent, EvaluatorServerConfig
 from ert.run_models import StatusEvents
 from ert.run_models.everest_run_model import EverestRunModel
@@ -238,9 +237,7 @@ class ExperimentRunner:
             simulation_future = loop.run_in_executor(
                 None,
                 lambda: run_model.start_simulations_thread(
-                    EvaluatorServerConfig()
-                    if run_model.queue_config.queue_system == QueueSystem.LOCAL
-                    else EvaluatorServerConfig(
+                    EvaluatorServerConfig(
                         port_range=(49152, 51819), use_ipc_protocol=False
                     )
                 ),
