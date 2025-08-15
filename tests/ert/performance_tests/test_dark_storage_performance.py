@@ -259,7 +259,6 @@ def api_and_snake_oil_storage(snake_oil_case_storage, monkeypatch):
 
 
 @pytest.mark.memory_test
-@pytest.mark.flaky(reruns=2)
 @pytest.mark.parametrize(
     "num_reals, num_dates, num_keys, max_memory_mb",
     [  # Tested 24.11.22 on macbook pro M1 max
