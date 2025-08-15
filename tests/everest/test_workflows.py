@@ -43,7 +43,7 @@ if __name__ == "__main__":
     """)
 
     wf_path = Path("test_wf.py")
-    wf_path.write_text(workflow_job_script_content)
+    wf_path.write_text(workflow_job_script_content, encoding="utf-8")
     wf_path.chmod(wf_path.stat().st_mode | stat.S_IEXEC)
 
     min_config["install_workflow_jobs"] = [

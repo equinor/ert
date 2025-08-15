@@ -437,7 +437,7 @@ def create_mock_flaky_qstat(monkeypatch, tmp_path):
 
 def _mock_flaky_qstat(error_message_to_output: str):
     qsub_path = Path("qsub")
-    qsub_path.write_text("#!/bin/sh\necho '1'")
+    qsub_path.write_text("#!/bin/sh\necho '1'", encoding="utf-8")
     qsub_path.chmod(qsub_path.stat().st_mode | stat.S_IEXEC)
     qstat_path = Path("qstat")
     qstat_path.write_text(
@@ -469,7 +469,8 @@ def _mock_flaky_qstat(error_message_to_output: str):
                 exit 2
             fi
         """  # noqa: E501
-        )
+        ),
+        encoding="utf-8",
     )
     qstat_path.chmod(qstat_path.stat().st_mode | stat.S_IEXEC)
 

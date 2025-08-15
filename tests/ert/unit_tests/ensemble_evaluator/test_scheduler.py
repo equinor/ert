@@ -40,7 +40,7 @@ async def test_scheduler_receives_checksum_and_waits_for_disk_sync(
         # Creating testing manifest file
         create_manifest_file()
         file_path = Path("real_0/job_test_file")
-        file_path.write_text("test")
+        file_path.write_text("test", encoding="utf-8")
         # Skip waiting for stdout/err in job
         mocked_stdouterr_parser = AsyncMock(
             return_value=Job.DEFAULT_FILE_VERIFICATION_TIMEOUT

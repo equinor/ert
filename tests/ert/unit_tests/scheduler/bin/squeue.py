@@ -28,7 +28,7 @@ def get_parser() -> argparse.ArgumentParser:
 
 
 def read(path: Path, default: str | None = None) -> str | None:
-    return path.read_text().strip() if path.exists() else default
+    return path.read_text(encoding="utf-8").strip() if path.exists() else default
 
 
 def main() -> None:
