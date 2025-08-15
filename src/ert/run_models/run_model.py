@@ -42,6 +42,7 @@ from ert.ensemble_evaluator import (
     EnsembleEvaluator,
     EvaluatorServerConfig,
     Realization,
+    WarningEvent,
 )
 from ert.ensemble_evaluator.evaluator import UserCancelled
 from ert.ensemble_evaluator.snapshot import EnsembleSnapshot
@@ -327,11 +328,15 @@ class RunModel(BaseModel, ABC):
         exception: Exception | None = None
         error_messages: MutableSequence[str] = []
         traceback_str: str | None = None
+
+        def handle_captured_event(message: Warning | str) -> None:
+            self.send_event(WarningEvent(msg=str(message)))
+
         try:
             self._start_time = int(time.time())
             self._stop_time = None
             with (
-                capture_specific_warning(PostSimulationWarning, self.send_event),
+                capture_specific_warning(PostSimulationWarning, handle_captured_event),
                 captured_logs(error_messages),
             ):
                 self._set_default_env_context()
