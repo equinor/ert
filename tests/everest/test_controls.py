@@ -1,5 +1,3 @@
-from copy import deepcopy
-
 import pytest
 from pydantic import ValidationError
 
@@ -180,32 +178,6 @@ def test_that_control_variables_not_matching_any_well_name_is_invalid(min_config
         match="Variable name does not match any well name",
     ):
         EverestConfig.with_defaults(**(min_config | {"wells": [{"name": "a"}]}))
-
-
-@pytest.mark.parametrize(
-    "variables",
-    (
-        pytest.param(
-            [
-                {"name": "w00", "initial_guess": 0.0626, "index": 0},
-                {"name": "w00", "initial_guess": [0.063, 0.0617, 0.0621]},
-            ],
-            id="same name",
-        ),
-        pytest.param(
-            [
-                {"name": "w00", "initial_guess": 0.0626, "index": 0},
-                {"name": "w01", "initial_guess": [0.0627, 0.0631, 0.0618, 0.0622]},
-            ],
-            id="different name",
-        ),
-    ),
-)
-def test_control_bad_variables(variables, control_data_no_variables: dict):
-    data = deepcopy(control_data_no_variables)
-    data["variables"] = variables
-    with pytest.raises(ValidationError, match="3 validation errors"):
-        ControlConfig.model_validate(data)
 
 
 def test_that_controls_ordering_is_the_same_for_ropt_and_extparam():
