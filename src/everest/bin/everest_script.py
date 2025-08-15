@@ -6,6 +6,7 @@ import logging
 import logging.config
 import os
 import signal
+import socket
 import threading
 from functools import partial
 
@@ -50,11 +51,40 @@ def everest_entry(args: list[str] | None = None) -> None:
     setup_logging(options)
     logger.info(version_info())
 
-    if options.config.server_queue_system == QueueSystem.LOCAL:
-        print(
-            "You are running your optimization locally.\n"
-            "Pressing Ctrl+C will stop the optimization and exit."
-        )
+    client_machine_hostname = socket.gethostname()
+    server_queue_system = options.config.server.queue_system.name
+    simulator_queue_system = options.config.simulator.queue_system.name
+
+    server_info_str = "The optimization will be run by an experiment server on " + (
+        f"this machine ({client_machine_hostname}). "
+        f"Pressing Ctrl+C will stop the optimization and exit."
+        if server_queue_system == QueueSystem.LOCAL
+        else f"the {server_queue_system} queue."
+    )
+
+    simulator_info_str = (
+        "The experiment server will submit the ERT forward model to run on "
+    ) + (
+        f"this machine ({client_machine_hostname})"
+        if simulator_queue_system == QueueSystem.LOCAL
+        else f"the {simulator_queue_system} queue."
+    )
+
+    print(
+        "=======You are now running everest=======\n"
+        f"* Monitoring from this machine: {client_machine_hostname}.\n"
+        f"* {server_info_str}\n"
+        f"* {simulator_info_str}\n"
+        "=========================================\n"
+        + (
+            ""
+            if server_queue_system == QueueSystem.LOCAL
+            else "*Since the server is running on the queue, "
+            "pressing Ctrl+C will NOT stop the optimization, it will "
+            f"only shut down the monitoring on this "
+            f"machine ({client_machine_hostname}).\n"
+        ),
+    )
 
     if threading.current_thread() is threading.main_thread():
         signal.signal(

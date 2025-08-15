@@ -7,6 +7,7 @@ from unittest.mock import MagicMock, patch
 import pytest
 
 import everest
+from ert.config import QueueSystem
 from everest.bin.everest_script import everest_entry
 from everest.bin.kill_script import kill_entry
 from everest.bin.monitor_script import monitor_entry
@@ -391,3 +392,72 @@ def test_complete_status_for_normal_run_monitor(
 
     assert expected_status == status["status"]
     assert expected_error == status["message"]
+
+
+class ServerStatus:
+    pass
+
+
+@pytest.mark.parametrize(
+    "server_queue_system, simulator_queue_system",
+    [
+        (QueueSystem.LSF, QueueSystem.LSF),
+        (QueueSystem.SLURM, QueueSystem.LSF),
+        (QueueSystem.LOCAL, QueueSystem.LSF),
+        (QueueSystem.LSF, QueueSystem.SLURM),
+        (QueueSystem.SLURM, QueueSystem.SLURM),
+        (QueueSystem.LOCAL, QueueSystem.SLURM),
+        (QueueSystem.LOCAL, QueueSystem.LOCAL),
+    ],
+)
+def test_that_run_everest_prints_where_it_runs(
+    server_queue_system, simulator_queue_system, capsys, change_to_tmpdir
+):
+    EverestConfig.with_defaults(
+        simulator={"queue_system": {"name": simulator_queue_system}},
+        server={"queue_system": {"name": server_queue_system}},
+    ).dump("config.yml")
+
+    with (
+        patch(
+            "everest.bin.everest_script.EverestStorage.check_for_deprecated_seba_storage"
+        ),
+        patch(
+            "everest.bin.everest_script.ServerConfig.get_everserver_status_path",
+            return_value="mock_status_path",
+        ),
+        patch(
+            "everest.bin.everest_script.everserver_status",
+            return_value={"status": ExperimentState.never_run, "message": None},
+        ),
+        patch("everest.bin.everest_script.server_is_running", return_value=False),
+        patch("everest.bin.everest_script.start_server"),
+        patch("everest.bin.everest_script.wait_for_server"),
+        patch("everest.bin.everest_script.start_experiment"),
+    ):
+        everest_entry(["config.yml", "--skip-prompt"])
+
+        captured = capsys.readouterr().out
+
+        server_loc_str = (
+            "this machine"
+            if server_queue_system == QueueSystem.LOCAL
+            else "the " + server_queue_system + " queue."
+        )
+        expected_server_str = (
+            f"* The optimization will be run by an experiment "
+            f"server on {server_loc_str}"
+        )
+
+        expected_simulator_str = (
+            "The experiment server will submit the ERT forward model to run on "
+        ) + (
+            "this machine"
+            if simulator_queue_system == QueueSystem.LOCAL
+            else f"the {simulator_queue_system} queue."
+        )
+
+        assert "=======You are now running everest=======" in captured
+        assert "* Monitoring from this machine:" in captured
+        assert expected_server_str in captured
+        assert expected_simulator_str in captured
