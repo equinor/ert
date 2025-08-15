@@ -5,7 +5,7 @@ from pydantic import (
     Field,
 )
 
-from ert.config.parsing import BaseModelWithContextSupport
+from ert.base_model_context import BaseModelWithContextSupport
 
 
 class ForwardModelResult(BaseModelWithContextSupport):
