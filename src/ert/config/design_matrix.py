@@ -8,8 +8,7 @@ from typing import TYPE_CHECKING, cast
 import numpy as np
 import polars as pl
 
-from ert.config.gen_kw_config import GenKwConfig, TransformFunctionDefinition
-
+from .gen_kw_config import GenKwConfig, TransformFunctionDefinition
 from .parsing import ConfigValidationError, ErrorInfo
 
 if TYPE_CHECKING:

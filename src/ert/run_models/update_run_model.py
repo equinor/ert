@@ -11,12 +11,14 @@ from ert.analysis.event import (
     AnalysisStatusEvent,
     AnalysisTimeEvent,
 )
-from ert.config.analysis_config import ObservationSettings
-from ert.config.analysis_module import ESSettings
-from ert.config.design_matrix import DesignMatrix
-from ert.config.gen_kw_config import GenKwConfig
-from ert.config.parameter_config import ParameterConfig
-from ert.config.parsing.hook_runtime import HookRuntime
+from ert.config import (
+    DesignMatrix,
+    ESSettings,
+    GenKwConfig,
+    HookRuntime,
+    ObservationSettings,
+    ParameterConfig,
+)
 from ert.plugins.workflow_fixtures import (
     PostUpdateFixtures,
     PreFirstUpdateFixtures,

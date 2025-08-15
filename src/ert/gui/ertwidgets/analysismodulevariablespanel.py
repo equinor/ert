@@ -17,7 +17,7 @@ from PyQt6.QtWidgets import (
     QWidget,
 )
 
-from ert.config.analysis_module import (
+from ert.config import (
     AnalysisModule,
     InversionTypeES,
 )

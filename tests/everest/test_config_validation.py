@@ -11,9 +11,7 @@ import pytest
 import yaml
 from pydantic import ValidationError
 
-from ert.config import ConfigWarning
-from ert.config.ert_config import ErtConfig
-from ert.config.parsing import ConfigValidationError
+from ert.config import ConfigValidationError, ConfigWarning, ErtConfig
 from everest.config import EverestConfig, ModelConfig, ObjectiveFunctionConfig
 from everest.config.control_variable_config import ControlVariableConfig
 from everest.config.everest_config import EverestValidationError

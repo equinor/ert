@@ -24,14 +24,13 @@ from ropt.results import FunctionResults, Results
 from ropt.transforms import OptModelTransforms
 from typing_extensions import TypedDict
 
-from ert.config import ParameterConfig, ResponseConfig
+from ert.config import ParameterConfig, QueueConfig, ResponseConfig
 from ert.config.ert_config import (
     create_and_hook_workflows,
     read_templates,
     workflow_jobs_from_dict,
 )
 from ert.config.model_config import ModelConfig as ErtModelConfig
-from ert.config.queue_config import QueueConfig
 from ert.ensemble_evaluator import EndEvent, EvaluatorServerConfig
 from ert.runpaths import Runpaths
 from everest.config import (

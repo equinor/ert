@@ -3,7 +3,7 @@ from typing import Any
 
 from PyQt6.QtGui import QIcon
 
-from ert.config.ert_config import ErtConfig
+from ert.config import ErtConfig
 from ert.gui.ertnotifier import ErtNotifier
 from ert.gui.ertwidgets import ClosableDialog
 from ert.gui.tools import Tool

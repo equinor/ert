@@ -1,8 +1,7 @@
 import pytest
 
-from ert.config.gen_data_config import GenDataConfig
+from ert.config import GenDataConfig, SummaryConfig
 from ert.config.responses_index import responses_index
-from ert.config.summary_config import SummaryConfig
 
 
 def test_adding_gendata_and_summary():

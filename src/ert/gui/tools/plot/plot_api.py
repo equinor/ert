@@ -17,8 +17,7 @@ import pandas as pd
 from pandas.api.types import is_numeric_dtype
 from pandas.errors import ParserError
 
-from ert.config.parameter_config import ParameterMetadata
-from ert.config.response_config import ResponseMetadata
+from ert.config import ParameterMetadata, ResponseMetadata
 from ert.services import StorageService
 
 logger = logging.getLogger(__name__)

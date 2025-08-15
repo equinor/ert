@@ -12,8 +12,12 @@ import polars as pl
 import pytest
 
 from ert.cli.main import ErtCliError
-from ert.config import DESIGN_MATRIX_GROUP, ConfigWarning, ErtConfig
-from ert.config.parsing.config_errors import ConfigValidationError
+from ert.config import (
+    DESIGN_MATRIX_GROUP,
+    ConfigValidationError,
+    ConfigWarning,
+    ErtConfig,
+)
 from ert.mode_definitions import (
     ENSEMBLE_EXPERIMENT_MODE,
     ENSEMBLE_SMOOTHER_MODE,

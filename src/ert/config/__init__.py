@@ -4,7 +4,7 @@ from .analysis_config import (
     ObservationSettings,
     OutlierSettings,
 )
-from .analysis_module import AnalysisModule, ESSettings
+from .analysis_module import AnalysisModule, ESSettings, InversionTypeES
 from .capture_validation import capture_validation
 from .design_matrix import DESIGN_MATRIX_GROUP, DesignMatrix
 from .ensemble_config import EnsembleConfig
@@ -26,7 +26,7 @@ from .gen_kw_config import GenKwConfig, PriorDict, TransformFunction
 from .lint_file import lint_file
 from .model_config import ModelConfig
 from .observations import EnkfObs
-from .parameter_config import ParameterConfig
+from .parameter_config import ParameterConfig, ParameterMetadata
 from .parsing import (
     ConfigValidationError,
     ConfigWarning,
@@ -37,7 +37,7 @@ from .parsing import (
 )
 from .parsing.observations_parser import ObservationType
 from .queue_config import QueueConfig
-from .response_config import InvalidResponseFile, ResponseConfig
+from .response_config import InvalidResponseFile, ResponseConfig, ResponseMetadata
 from .summary_config import SummaryConfig
 from .summary_observation import SummaryObservation
 from .surface_config import SurfaceConfig
@@ -71,16 +71,19 @@ __all__ = [
     "GenKwConfig",
     "HookRuntime",
     "InvalidResponseFile",
+    "InversionTypeES",
     "ModelConfig",
     "ObservationGroups",
     "ObservationSettings",
     "ObservationType",
     "OutlierSettings",
     "ParameterConfig",
+    "ParameterMetadata",
     "PriorDict",
     "QueueConfig",
     "QueueSystem",
     "ResponseConfig",
+    "ResponseMetadata",
     "SummaryConfig",
     "SummaryObservation",
     "SurfaceConfig",

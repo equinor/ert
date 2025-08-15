@@ -6,6 +6,7 @@ import polars as pl
 from pydantic import Field, PrivateAttr
 
 from ert.config import (
+    DesignMatrix,
     EverestConstraintsConfig,
     EverestObjectivesConfig,
     ExtParamConfig,
@@ -17,7 +18,6 @@ from ert.config import (
     SurfaceConfig,
 )
 from ert.config import Field as FieldConfig
-from ert.config.design_matrix import DesignMatrix
 from ert.enkf_main import sample_prior, save_design_matrix_to_ensemble
 from ert.ensemble_evaluator.config import EvaluatorServerConfig
 from ert.run_arg import create_run_arguments

@@ -10,8 +10,7 @@ import yaml
 from pydantic import ValidationError
 
 import everest
-from ert.config import ConfigWarning
-from ert.config.ensemble_config import EnsembleConfig
+from ert.config import ConfigWarning, EnsembleConfig
 from ert.config.ert_config import create_and_hook_workflows, workflows_from_dict
 from ert.config.model_config import ModelConfig
 from ert.config.parsing import ConfigKeys as ErtConfigKeys
