@@ -16,7 +16,7 @@ import colorama
 import yaml
 from colorama import Fore
 
-from ert.config.parsing.queue_system import QueueSystem
+from ert.config import QueueSystem
 from ert.ensemble_evaluator import (
     EnsembleSnapshot,
     FullSnapshotEvent,

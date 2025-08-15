@@ -1,7 +1,7 @@
 import pytest
 from ruamel.yaml import YAML
 
-from ert.config.parsing.config_errors import ConfigWarning
+from ert.config import ConfigWarning
 from everest.config import EverestConfig
 
 

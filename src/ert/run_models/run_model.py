@@ -25,17 +25,17 @@ from pydantic import BaseModel, PrivateAttr
 
 from _ert.events import EEEvent, EESnapshot, EESnapshotUpdate
 from ert.config import (
+    ConfigValidationError,
+    DesignMatrix,
     ForwardModelStep,
+    GenKwConfig,
     HookRuntime,
     ModelConfig,
+    ParameterConfig,
     QueueConfig,
     QueueSystem,
     Workflow,
 )
-from ert.config.design_matrix import DesignMatrix
-from ert.config.gen_kw_config import GenKwConfig
-from ert.config.parameter_config import ParameterConfig
-from ert.config.parsing.config_errors import ConfigValidationError
 from ert.enkf_main import create_run_path
 from ert.ensemble_evaluator import Ensemble as EEEnsemble
 from ert.ensemble_evaluator import (

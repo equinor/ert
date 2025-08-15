@@ -29,8 +29,7 @@ from PyQt6.QtWidgets import (
     QWidget,
 )
 
-from ert.config import ErrorInfo, WarningInfo
-from ert.config.parsing.queue_system import QueueSystem
+from ert.config import ErrorInfo, QueueSystem, WarningInfo
 from ert.ensemble_evaluator import (
     EndEvent,
     FullSnapshotEvent,

@@ -17,7 +17,13 @@ from hypothesis import strategies as st
 from pydantic import RootModel, TypeAdapter
 
 from ert import ErtScript, ErtScriptWorkflow
-from ert.config import ConfigValidationError, ErtConfig, ESSettings, HookRuntime
+from ert.config import (
+    ConfigValidationError,
+    ErtConfig,
+    ESSettings,
+    HookRuntime,
+    QueueSystem,
+)
 from ert.config.ert_config import _split_string_into_sections, create_forward_model_json
 from ert.config.forward_model_step import ForwardModelStep
 from ert.config.parsing import ConfigKeys, ConfigWarning
@@ -29,7 +35,6 @@ from ert.config.parsing.context_values import (
     ContextList,
     ContextString,
 )
-from ert.config.parsing.queue_system import QueueSystem
 from ert.plugins import ErtPluginManager
 from ert.shared import ert_share_path
 from ert.storage import LocalEnsemble, Storage

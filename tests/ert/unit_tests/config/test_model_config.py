@@ -3,8 +3,7 @@ from unittest.mock import patch
 
 import pytest
 
-from ert.config import ModelConfig
-from ert.config.parsing import ConfigWarning
+from ert.config import ConfigWarning, ModelConfig
 
 
 def test_default_model_config_run_path():
