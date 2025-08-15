@@ -273,8 +273,9 @@ class LocalEnsemble(BaseMode):
                     genkw_mask[parameter.name] = (
                         pl.scan_parquet(group_path)
                         .select("realization")
-                        .collect()["realization"]
                         .unique()
+                        .collect()  # only fetching reals, so use standard engine
+                        .get_column("realization")
                         .to_list()
                     )
         return genkw_mask
@@ -570,15 +571,16 @@ class LocalEnsemble(BaseMode):
             raise KeyError(f"{group} is not registered to the experiment.")
         config = self.experiment.parameter_configuration[group]
         if isinstance(config, GenKwConfig):
-            df = self._load_parameters_lazy(group).collect()
+            df_lazy = self._load_parameters_lazy(group)
             if realizations is not None:
                 if isinstance(realizations, int):
                     realizations = np.array([realizations])
-                df = df.filter(pl.col("realization").is_in(realizations))
-                if df.is_empty():
-                    raise IndexError(
-                        f"No matching realizations {realizations} found for {group}"
-                    )
+                df_lazy = df_lazy.filter(pl.col("realization").is_in(realizations))
+            df = df_lazy.collect(engine="streaming")
+            if df.is_empty():
+                raise IndexError(
+                    f"No matching realizations {realizations} found for {group}"
+                )
             if transformed:
                 df = df.with_columns(
                     [
@@ -744,7 +746,7 @@ class LocalEnsemble(BaseMode):
             Loaded polars DataFrame with responses.
         """
 
-        return self._load_responses_lazy(key, realizations).collect()
+        return self._load_responses_lazy(key, realizations).collect(engine="streaming")
 
     def _load_responses_lazy(
         self, key: str, realizations: tuple[int, ...]
@@ -853,16 +855,18 @@ class LocalEnsemble(BaseMode):
                 existing_realizations = (
                     df.select("realization")
                     .unique()
-                    .collect()
+                    .collect()  # only fetch reals, so use standard engine
                     .get_column("realization")
                 )
                 new_data = dataset.filter(
-                    ~pl.col("realization").is_in(existing_realizations)
+                    ~pl.col("realization").is_in(existing_realizations.implode())
                 )
                 if new_data.height > 0:
-                    df_full = pl.concat([df.collect(), new_data], how="vertical").sort(
-                        "realization"
-                    )
+                    df_full = pl.concat(
+                        [df.collect(), new_data],
+                        # needs all data in memory anyway so using standard engine
+                        how="vertical",
+                    ).sort("realization")
                 else:
                     return
             except KeyError:
@@ -1045,10 +1049,10 @@ class LocalEnsemble(BaseMode):
                     for col, observed_values in observed_cols.items():
                         if col != "time":
                             responses = responses.filter(
-                                pl.col(col).is_in(observed_values)
+                                pl.col(col).is_in(observed_values.implode())
                             )
 
-                    pivoted = responses.collect().pivot(
+                    pivoted = responses.collect(engine="streaming").pivot(
                         on="realization",
                         index=["response_key", *response_cls.primary_key],
                         values="values",
