@@ -31,6 +31,7 @@ from everest.detached import (
     server_is_running,
     start_monitor,
     stop_server,
+    wait_for_server_to_stop,
 )
 from everest.plugins.everest_plugin_manager import EverestPluginManager
 from everest.simulator import JOB_FAILURE, JOB_RUNNING, JOB_SUCCESS
@@ -89,13 +90,14 @@ def handle_keyboard_interrupt(signum: int, _: Any, options: argparse.Namespace) 
     if options.config.server_queue_system == QueueSystem.LOCAL:
         server_context = ServerConfig.get_server_context(options.config.output_dir)
         if server_is_running(*server_context):
+            print(
+                f"KeyboardInterrupt (ID: {signum}) has been caught. \n"
+                "You are running locally. \n"
+                "The optimization will be stopped and the program will exit..."
+            )
             stop_server(server_context)
+            wait_for_server_to_stop(server_context, timeout=10)
 
-        print(
-            f"KeyboardInterrupt (ID: {signum}) has been caught. \n"
-            "You are running locally. \n"
-            "The optimization will be stopped and the program will exit..."
-        )
     else:
         print(f"KeyboardInterrupt (ID: {signum}) has been caught. Program will exit...")
         config_file = options.config.config_file
