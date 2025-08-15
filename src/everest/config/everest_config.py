@@ -33,7 +33,7 @@ from ert.config.parsing import BaseModelWithContextSupport
 from ert.config.parsing.base_model_context import init_context
 from ert.config.parsing.config_errors import ConfigWarning
 from ert.config.parsing.queue_system import QueueSystem
-from ert.plugins import ErtPluginManager
+from ert.plugins import ErtPluginContext, ErtPluginManager
 from everest.config.install_template_config import InstallTemplateConfig
 from everest.config.server_config import ServerConfig
 from everest.config.validation_utils import (
@@ -801,21 +801,24 @@ to read summary data from forward model, do:
 
     @classmethod
     def with_plugins(cls, config_dict: dict[str, Any] | ConfigDict) -> Self:
-        site_config = ErtConfig.read_site_config()
-        has_site_config = bool(site_config)  # site_config gets mutated by next call
-        ert_config: ErtConfig = ErtConfig.with_plugins().from_dict(
-            config_dict=site_config
-        )
-        context: dict[str, Any] = {
-            "install_jobs": ert_config.installed_forward_model_steps,
-        }
-        activate_script = ErtPluginManager().activate_script()
-        if has_site_config:
-            context["queue_system"] = QueueConfig.from_dict(site_config).queue_options
-        if activate_script:
-            context["activate_script"] = activate_script
-        with init_context(context):
-            return cls(**config_dict)
+        with ErtPluginContext():
+            site_config = ErtConfig.read_site_config()
+            has_site_config = bool(site_config)  # site_config gets mutated by next call
+            ert_config: ErtConfig = ErtConfig.with_plugins().from_dict(
+                config_dict=site_config
+            )
+            context: dict[str, Any] = {
+                "install_jobs": ert_config.installed_forward_model_steps,
+            }
+            activate_script = ErtPluginManager().activate_script()
+            if has_site_config:
+                context["queue_system"] = QueueConfig.from_dict(
+                    site_config
+                ).queue_options
+            if activate_script:
+                context["activate_script"] = activate_script
+            with init_context(context):
+                return cls(**config_dict)
 
     @staticmethod
     def load_file_with_argparser(
