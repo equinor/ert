@@ -12,9 +12,10 @@ from pydantic import BaseModel, Field, field_validator
 from pydantic.dataclasses import dataclass
 from pydantic_core.core_schema import ValidationInfo
 
+from ert.base_model_context import BaseModelWithContextSupport
+
 from ._get_num_cpu import get_num_cpu_from_data_file
 from .parsing import (
-    BaseModelWithContextSupport,
     ConfigDict,
     ConfigKeys,
     ConfigValidationError,
