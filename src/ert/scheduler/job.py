@@ -31,8 +31,8 @@ from ert.storage.load_status import LoadStatus
 from ert.storage.local_ensemble import forward_model_ok
 from ert.storage.realization_storage_state import RealizationStorageState
 from ert.trace import trace, tracer
+from ert.warnings import PostSimulationWarning
 
-from ..warnings import PostSimulationWarning
 from .driver import Driver, FailedSubmit
 
 if TYPE_CHECKING:

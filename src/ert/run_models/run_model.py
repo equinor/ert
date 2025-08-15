@@ -60,12 +60,11 @@ from ert.runpaths import Runpaths
 from ert.storage import Ensemble, Storage, open_storage
 from ert.trace import tracer
 from ert.utils import log_duration
+from ert.warnings import PostSimulationWarning, capture_specific_warning
 from ert.workflow_runner import WorkflowRunner
 
 from ..plugins.workflow_fixtures import create_workflow_fixtures_from_hooked
 from ..run_arg import RunArg
-from ..warnings._warnings import PostSimulationWarning
-from ..warnings.specific_warning_handler import capture_specific_warning
 from .event import EndEvent, FullSnapshotEvent, SnapshotUpdateEvent, StatusEvents
 
 logger = logging.getLogger(__name__)

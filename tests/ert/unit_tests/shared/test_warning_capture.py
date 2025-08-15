@@ -1,6 +1,6 @@
 import warnings
 
-from ert.warnings.specific_warning_handler import capture_specific_warning
+from ert.warnings import capture_specific_warning
 
 
 def test_capture_specific_warning_propagates_specific_warning():
