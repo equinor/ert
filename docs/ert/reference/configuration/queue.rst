@@ -140,6 +140,14 @@ The following is a list of available LSF configuration options:
 
     QUEUE_OPTION LSF BHIST_CMD command
 
+.. _submit_sleep:
+.. topic:: SUBMIT_SLEEP
+
+  Determines for how long in seconds the system will sleep between submitting jobs.
+  Default: ``0``. To change it to 1 second::
+
+    QUEUE_OPTION LSF SUBMIT_SLEEP 1
+
 .. _lsf_queue:
 .. topic:: LSF_QUEUE
 
@@ -278,6 +286,14 @@ The following is a list of all queue-specific configuration options:
 
     QUEUE_OPTION TORQUE KEEP_QSUB_OUTPUT 1
 
+.. _torque_submit_sleep:
+.. topic:: SUBMIT_SLEEP
+
+  To avoid stressing the TORQUE/PBS system you can instruct the driver to sleep
+  for every submit request. The argument to the SUBMIT_SLEEP is the number of
+  seconds to sleep for every submit, which can be a fraction like 0.5::
+
+    QUEUE_OPTION TORQUE SUBMIT_SLEEP 0.5
 
 .. _torque_project_code:
 .. topic:: PROJECT_CODE
@@ -435,8 +451,10 @@ the `GENERIC` keyword. ::
 
     QUEUE_SYSTEM LSF
     QUEUE_OPTION GENERIC MAX_RUNNING 10
+    QUEUE_OPTION GENERIC SUBMIT_SLEEP 2
 
 Is equivalent to::
 
     QUEUE_SYSTEM LSF
     QUEUE_OPTION LSF MAX_RUNNING 10
+    QUEUE_OPTION LSF SUBMIT_SLEEP 2
