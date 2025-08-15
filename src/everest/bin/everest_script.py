@@ -41,7 +41,9 @@ logger = logging.getLogger(__name__)
 def everest_entry(args: list[str] | None = None) -> None:
     """Entry point for running an optimization."""
     parser = _build_args_parser()
+
     options = parser.parse_args(args)
+
     makedirs_if_needed(options.config.output_dir, roll_if_exists=True)
     setup_logging(options)
     logger.info(version_info())
