@@ -3,7 +3,7 @@ from collections.abc import Callable, Generator
 from contextlib import contextmanager
 from typing import Any, TextIO
 
-from ert.ensemble_evaluator.event import WarningEvent
+from ert.ensemble_evaluator import WarningEvent
 
 
 @contextmanager

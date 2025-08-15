@@ -34,6 +34,7 @@ from ert.ensemble_evaluator import (
     EndEvent,
     FullSnapshotEvent,
     SnapshotUpdateEvent,
+    WarningEvent,
 )
 from ert.ensemble_evaluator import identifiers as ids
 from ert.gui.ertnotifier import ErtNotifier
@@ -68,7 +69,6 @@ from ert.shared.status.utils import (
 )
 
 from ...config import ErrorInfo, WarningInfo
-from ...ensemble_evaluator.event import WarningEvent
 from ..suggestor import Suggestor
 from .queue_emitter import QueueEmitter
 from .view import DiskSpaceWidget, ProgressWidget, RealizationWidget, UpdateWidget
