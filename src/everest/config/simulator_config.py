@@ -9,8 +9,8 @@ from pydantic import (
 )
 from pydantic_core.core_schema import ValidationInfo
 
+from ert.base_model_context import BaseModelWithContextSupport
 from ert.config import ConfigValidationError
-from ert.config.parsing import BaseModelWithContextSupport
 from ert.config.queue_config import (
     LocalQueueOptions,
     LsfQueueOptions,
