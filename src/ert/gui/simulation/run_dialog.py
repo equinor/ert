@@ -29,6 +29,7 @@ from PyQt6.QtWidgets import (
     QWidget,
 )
 
+from ert.config import ErrorInfo, WarningInfo
 from ert.config.parsing.queue_system import QueueSystem
 from ert.ensemble_evaluator import (
     EndEvent,
@@ -48,6 +49,7 @@ from ert.gui.model.snapshot import (
     RealIens,
     SnapshotModel,
 )
+from ert.gui.suggestor import Suggestor
 from ert.gui.tools.file import FileDialog
 from ert.run_models import (
     RunModelAPI,
@@ -68,8 +70,6 @@ from ert.shared.status.utils import (
     get_mount_directory,
 )
 
-from ...config import ErrorInfo, WarningInfo
-from ..suggestor import Suggestor
 from .queue_emitter import QueueEmitter
 from .view import DiskSpaceWidget, ProgressWidget, RealizationWidget, UpdateWidget
 from .view.disk_space_widget import MountType
