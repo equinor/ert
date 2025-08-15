@@ -14,7 +14,7 @@ from everest.config.well_config import WellConfig
 from everest.optimizer.everest2ropt import everest2ropt
 
 
-def test_control_group_duplicate_name_validation(min_config):
+def test_that_duplicate_control_group_name_is_invalid(min_config):
     existing_name = min_config["controls"][0]["name"]
 
     min_config["controls"].append(
@@ -29,7 +29,7 @@ def test_control_group_duplicate_name_validation(min_config):
         EverestConfig.model_validate(min_config)
 
 
-def test_control_variable_duplicate_name_no_index():
+def test_that_duplicate_control_group_names_without_index_is_invalid():
     with pytest.raises(
         ValidationError, match=r"Subfield\(s\) `name.index` must be unique"
     ):
@@ -46,7 +46,7 @@ def test_control_variable_duplicate_name_no_index():
         )
 
 
-def test_control_variable_index_inconsistency():
+def test_that_partial_use_of_index_in_control_variables_is_invalid():
     with pytest.raises(
         ValidationError, match="for all of the variables or for none of them"
     ):
@@ -61,7 +61,7 @@ def test_control_variable_index_inconsistency():
         )
 
 
-def test_control_variable_duplicate_name_and_index():
+def test_that_duplicate_control_variable_name_and_index_is_invalid():
     with pytest.raises(
         ValidationError, match=r"Subfield\(s\) `name.index` must be unique"
     ):
@@ -76,7 +76,7 @@ def test_control_variable_duplicate_name_and_index():
         )
 
 
-def test_input_constraint_name_mismatch_with_indexed_variables():
+def test_that_unmatched_weight_name_due_to_missing_index_is_invalid():
     with pytest.raises(
         ValidationError,
         match="does not match any instance of "
@@ -104,7 +104,7 @@ def test_input_constraint_name_mismatch_with_indexed_variables():
         )
 
 
-def test_input_constraint_deprecated_indexed_name_format_warns():
+def test_that_input_constraint_with_deprecated_indexed_name_format_warns():
     with pytest.warns(
         ConfigWarning, match="Deprecated input control name: group.w00-0"
     ):
@@ -132,7 +132,7 @@ def test_input_constraint_deprecated_indexed_name_format_warns():
         )
 
 
-def test_control_variable_initial_guess_below_min():
+def test_that_control_variable_with_initial_guess_below_min_is_invalid():
     with pytest.raises(ValidationError, match="initial_guess"):
         ControlConfig(
             name="control",
@@ -143,7 +143,7 @@ def test_control_variable_initial_guess_below_min():
         )
 
 
-def test_control_variable_initial_guess_above_max():
+def test_that_control_variable_with_initial_guess_above_max_is_invalid():
     with pytest.raises(ValidationError, match="initial_guess"):
         ControlConfig(
             name="control",
@@ -154,7 +154,7 @@ def test_control_variable_initial_guess_above_max():
         )
 
 
-def test_control_variable_name(min_config):
+def test_that_control_variable_name_with_too_many_dots_is_invalid(min_config):
     illegal_name = "illegal.name.due.to.dots"
     min_config["controls"][0]["variables"][0]["name"] = illegal_name
     with pytest.raises(
@@ -164,7 +164,7 @@ def test_control_variable_name(min_config):
         ControlConfig.model_validate(min_config["controls"][0])
 
 
-def test_control_variable_weird_names(min_config):
+def test_that_control_variable_without_too_many_dots_does_not_raise(min_config):
     weirdo_name = "something/with-symbols_=/()*&%$#!"
     new_config = EverestConfig.model_validate(min_config)
     new_config.wells.append(WellConfig(name=weirdo_name))
@@ -172,7 +172,7 @@ def test_control_variable_weird_names(min_config):
     EverestConfig.model_validate(new_config.to_dict())
 
 
-def test_control_none_well_variable_name(min_config):
+def test_that_control_variables_not_matching_any_well_name_is_invalid(min_config):
     illegal_name = "nowell4sure"
     min_config["controls"][0]["variables"][0]["name"] = illegal_name
     min_config["controls"][0]["type"] = "well_control"
@@ -222,7 +222,7 @@ def test_control_bad_variables(variables, control_data_no_variables: dict):
         ControlConfig.model_validate(data)
 
 
-def test_controls_ordering_is_consistent_for_ropt_and_extparam():
+def test_that_controls_ordering_is_the_same_for_ropt_and_extparam():
     index_wise = ControlConfig(
         name="well_priorities",
         type="well_control",
@@ -314,7 +314,7 @@ def test_controls_ordering_is_consistent_for_ropt_and_extparam():
     )
 
 
-def test_controls_ordering_disregards_index():
+def test_that_controls_ordering_disregards_index():
     var_wise = ControlConfig(
         name="well_priorities",
         type="well_control",
@@ -366,7 +366,7 @@ def test_controls_ordering_disregards_index():
     assert var_wise.to_ert_parameter_config().input_keys == expected
 
 
-def test_control_variable_guess_list():
+def test_that_setting_initial_guess_in_a_list_is_the_same_as_one_per_index():
     controls1 = ControlConfig(
         name="controls",
         type="generic_control",
