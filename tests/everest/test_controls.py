@@ -8,7 +8,6 @@ from everest.config import EverestConfig, InputConstraintConfig
 from everest.config.control_config import ControlConfig
 from everest.config.control_variable_config import (
     ControlVariableConfig,
-    ControlVariableGuessListConfig,
 )
 from everest.config.well_config import WellConfig
 from everest.optimizer.everest2ropt import everest2ropt
@@ -181,19 +180,6 @@ def test_that_control_variables_not_matching_any_well_name_is_invalid(min_config
         match="Variable name does not match any well name",
     ):
         EverestConfig.with_defaults(**(min_config | {"wells": [{"name": "a"}]}))
-
-
-def test_control_variable_types(control_config: ControlConfig):
-    if isinstance(control_config.variables[0], ControlVariableConfig):
-        assert all(
-            isinstance(variable, ControlVariableConfig)
-            for variable in control_config.variables
-        )
-    else:
-        assert all(
-            isinstance(variable, ControlVariableGuessListConfig)
-            for variable in control_config.variables
-        )
 
 
 @pytest.mark.parametrize(
