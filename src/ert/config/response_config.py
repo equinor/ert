@@ -17,6 +17,7 @@ class InvalidResponseFile(Exception):
 class ResponseMetadata(BaseModel):
     response_type: str
     response_key: str
+    finalized: bool
     filter_on: dict[str, list[Any]] | None = Field(
         default=None,
         description="""

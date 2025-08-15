@@ -39,6 +39,10 @@ class DataTypeProxyModel(QSortFilterProxyModel):
                     ):
                         show = False
 
+            # Filter out non-finalized responses
+            if key.response_metadata and not key.response_metadata.finalized:
+                show = False
+
         return show
 
     def sourceModel(self) -> DataTypeKeysListModel:

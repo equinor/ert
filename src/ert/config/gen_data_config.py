@@ -31,6 +31,7 @@ class GenDataConfig(ResponseConfig):
             ResponseMetadata(
                 response_type=self.name,
                 response_key=response_key,
+                finalized=self.has_finalized_keys,
                 filter_on={"report_step": report_steps}
                 if report_steps is not None
                 else {"report_step": [0]},

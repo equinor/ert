@@ -328,16 +328,19 @@ def mocked_requests_get(*args, **kwargs):
                         "response_type": "summary",
                         "response_key": "BPR:1,3,8",
                         "filter_on": {},
+                        "finalized": True,
                     },
                     {
                         "response_type": "summary",
                         "response_key": "FOPR",
                         "filter_on": {},
+                        "finalized": True,
                     },
                     {
                         "response_type": "summary",
                         "response_key": "WOPPER",
                         "filter_on": {},
+                        "finalized": True,
                     },
                 ],
                 "gen_data": [
@@ -345,6 +348,7 @@ def mocked_requests_get(*args, **kwargs):
                         "response_type": "gen_data",
                         "response_key": "SNAKE_OIL_WPR_DIFF",
                         "filter_on": {"report_steps": [199]},
+                        "finalized": True,
                     }
                 ],
             },

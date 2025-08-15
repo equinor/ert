@@ -29,6 +29,7 @@ class SummaryConfig(ResponseConfig):
                 response_type=self.name,
                 response_key=response_key,
                 filter_on=None,
+                finalized=self.has_finalized_keys,
             )
             for response_key in self.keys
         ]

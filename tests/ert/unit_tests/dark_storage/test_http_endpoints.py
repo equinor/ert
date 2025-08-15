@@ -63,6 +63,7 @@ def test_get_responses_with_observations(poly_example_tmp_dir, dark_storage_clie
                 "response_type": "gen_data",
                 "response_key": "POLY_RES",
                 "filter_on": {"report_step": [0]},
+                "finalized": True,
             }
         ]
     }
