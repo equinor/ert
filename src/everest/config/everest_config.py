@@ -27,10 +27,8 @@ from pydantic_core import ErrorDetails
 from pydantic_core.core_schema import ValidationInfo
 from ruamel.yaml import YAML, YAMLError
 
-from ert.config import ConfigWarning, ErtConfig, QueueConfig
-from ert.config.parsing import BaseModelWithContextSupport
-from ert.config.parsing.base_model_context import init_context
-from ert.config.parsing.queue_system import QueueSystem
+from ert.base_model_context import BaseModelWithContextSupport, init_context
+from ert.config import ConfigWarning, ErtConfig, QueueConfig, QueueSystem
 from ert.plugins import ErtPluginContext, ErtPluginManager
 from everest.config.install_template_config import InstallTemplateConfig
 from everest.config.server_config import ServerConfig
