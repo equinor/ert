@@ -448,7 +448,17 @@ async def log_warnings_from_forward_model(
     for anything that looks like a Warning, and log it.
 
     This is not a critical task to perform, but it is critical not to crash
-    during this process."""
+    during this process.
+
+    Args:
+        real: The realization to look for warnings in
+        job_submission_time: The time the job for the given realization was last
+            started. Files not changed after the job started are not read. There is
+            a retry used to wait for file sync.
+        timeout_seconds: Time to wait for stdout and stderr to appear if missing.
+    Returns:
+        The seconds left of the given timeout_seconds.
+    """
 
     max_length = 2048  # Lines will be truncated in length when logged
 
