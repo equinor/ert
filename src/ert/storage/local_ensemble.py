@@ -273,7 +273,7 @@ class LocalEnsemble(BaseMode):
                     genkw_mask[parameter.name] = (
                         pl.scan_parquet(group_path)
                         .select("realization")
-                        .collect()["realization"]
+                        .collect(engine="streaming")["realization"]
                         .unique()
                         .to_list()
                     )
@@ -570,7 +570,7 @@ class LocalEnsemble(BaseMode):
             raise KeyError(f"{group} is not registered to the experiment.")
         config = self.experiment.parameter_configuration[group]
         if isinstance(config, GenKwConfig):
-            df = self._load_parameters_lazy(group).collect()
+            df = self._load_parameters_lazy(group).collect(engine="streaming")
             if realizations is not None:
                 if isinstance(realizations, int):
                     realizations = np.array([realizations])
@@ -744,7 +744,7 @@ class LocalEnsemble(BaseMode):
             Loaded polars DataFrame with responses.
         """
 
-        return self._load_responses_lazy(key, realizations).collect()
+        return self._load_responses_lazy(key, realizations).collect(engine="streaming")
 
     def _load_responses_lazy(
         self, key: str, realizations: tuple[int, ...]
@@ -853,16 +853,16 @@ class LocalEnsemble(BaseMode):
                 existing_realizations = (
                     df.select("realization")
                     .unique()
-                    .collect()
+                    .collect(engine="streaming")
                     .get_column("realization")
                 )
                 new_data = dataset.filter(
                     ~pl.col("realization").is_in(existing_realizations.implode())
                 )
                 if new_data.height > 0:
-                    df_full = pl.concat([df.collect(), new_data], how="vertical").sort(
-                        "realization"
-                    )
+                    df_full = pl.concat(
+                        [df.collect(engine="streaming"), new_data], how="vertical"
+                    ).sort("realization")
                 else:
                     return
             except KeyError:
@@ -1048,7 +1048,7 @@ class LocalEnsemble(BaseMode):
                                 pl.col(col).is_in(observed_values.implode())
                             )
 
-                    pivoted = responses.collect().pivot(
+                    pivoted = responses.collect(engine="streaming").pivot(
                         on="realization",
                         index=["response_key", *response_cls.primary_key],
                         values="values",
