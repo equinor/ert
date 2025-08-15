@@ -80,13 +80,25 @@ class Job:
         self._requested_max_submit: int | None = None
         self._start_time: float | None = None
         self._end_time: float | None = None
-        self.remaining_file_verification_time = self.DEFAULT_FILE_VERIFICATION_TIMEOUT
-        self.remember_remaining_time()
+        self._remaining_file_verification_time = self.DEFAULT_FILE_VERIFICATION_TIMEOUT
+        self._previous_file_verification_time = self._remaining_file_verification_time
         self._started_killing_by_evaluator: bool = False
         self._was_killed_by_evaluator = asyncio.Event()
 
-    def remember_remaining_time(self) -> None:
-        self.previous_file_verification_time = self.remaining_file_verification_time
+    @property
+    def remaining_file_verification_time(self) -> int:
+        return self._remaining_file_verification_time
+
+    @remaining_file_verification_time.setter
+    def remaining_file_verification_time(self, value: int) -> None:
+        self._previous_file_verification_time = self._remaining_file_verification_time
+        self._remaining_file_verification_time = value
+
+    def elapsed_time(self) -> int:
+        return (
+            self._previous_file_verification_time
+            - self._remaining_file_verification_time
+        )
 
     def unschedule(self, msg: str) -> None:
         self.state = JobState.ABORTED
@@ -183,11 +195,9 @@ class Job:
     async def log_time_spent_above_threshold_waiting_for_files(
         self, method_name: str
     ) -> None:
-        if self.previous_file_verification_time <= 0:
+        if self._previous_file_verification_time <= 0:
             return
-        elapsed_time = (
-            self.previous_file_verification_time - self.remaining_file_verification_time
-        )
+        elapsed_time = self.elapsed_time()
         if self.remaining_file_verification_time <= 0:
             logger.warning(
                 f"{method_name} timed out after waiting "
@@ -217,7 +227,6 @@ class Job:
 
             if self.returncode.result() == 0:
                 if self._scheduler._manifest_queue is not None:
-                    self.remember_remaining_time()
                     await self._verify_checksum(checksum_lock)
                     await self.log_time_spent_above_threshold_waiting_for_files(
                         method_name=self._verify_checksum.__name__
@@ -228,7 +237,6 @@ class Job:
 
                 if not self._scheduler.warnings_extracted:
                     self._scheduler.warnings_extracted = True
-                    self.remember_remaining_time()
                     self.remaining_file_verification_time = (
                         await log_warnings_from_forward_model(
                             self.real,
