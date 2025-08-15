@@ -17,6 +17,6 @@ def test_capture_specific_warning_propagates_specific_warning():
         warnings.warn(warning_to_be_captured, SpecificWarning, stacklevel=2)
         warnings.warn(warning_not_to_be_captured, UserWarning, stacklevel=2)
 
-    warning_messages = [warning_event.msg for warning_event in specific_warnings]
+    warning_messages = [str(warning_event) for warning_event in specific_warnings]
     assert warning_to_be_captured in warning_messages
     assert warning_not_to_be_captured not in warning_messages
