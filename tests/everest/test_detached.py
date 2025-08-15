@@ -158,7 +158,9 @@ def test_detached_mode_config_base(min_config, monkeypatch, tmp_path):
     with open("config.yml", "w", encoding="utf-8") as fout:
         yaml.dump(min_config, fout)
     everest_config = EverestConfig.load_file("config.yml")
-    assert everest_config.simulator.queue_system == LocalQueueOptions(max_running=8)
+
+    # Expect it to take the default of the ERT QueueConfig
+    assert everest_config.simulator.queue_system == LocalQueueOptions(max_running=0)
 
 
 @pytest.mark.parametrize(
