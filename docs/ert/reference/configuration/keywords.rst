@@ -339,6 +339,12 @@ GRID
 ----
 .. _grid:
 
+Sets the global grid to use when working with fields.
+This keyword specifies the name of an existing GRID/EGRID file for
+your ECLIPSE model and enables parametrization via the FIELD keyword.
+Note that this keyword is optional,
+as you can alternatively specify the grid directly in the FIELD keyword.
+
 This is the name of an existing GRID/EGRID file for your ECLIPSE model.
 It is used to enable parametrization via the FIELD keyword. If you had
 to create a new grid file when preparing your ECLIPSE reservoir model
@@ -833,11 +839,14 @@ The ``FIELD`` keyword is used to parametrize quantities that span the entire gri
 with porosity and permeability being the most common examples.
 In order to use the ``FIELD`` keyword, the :ref:`GRID<grid>` keyword must be supplied.
 
+The ``FIELD`` keyword can either use a global grid specified by the :ref:`GRID<grid>` keyword,
+or specify a grid directly using the GRID: option as shown below.
+
 Field parameters (e.g. porosity, permeability or Gaussian Random Fields from APS) are defined as follows:
 
 ::
 
-        FIELD  ID  PARAMETER  <OUTPUT_FILE>  INIT_FILES:/path/<IENS>  FORWARD_INIT:True  INIT_TRANSFORM:FUNC  OUTPUT_TRANSFORM:FUNC  MIN:X  MAX:Y
+        FIELD  ID  PARAMETER  <OUTPUT_FILE>  INIT_FILES:/path/<IENS>  FORWARD_INIT:True  INIT_TRANSFORM:FUNC  OUTPUT_TRANSFORM:FUNC  MIN:X  MAX:Y GRID:CASE.EGRID
 
 - **ID**
   String identifier with maximum 8 characters that must match the name of the parameter specified in ``INIT_FILES``.
@@ -879,6 +888,10 @@ Field parameters (e.g. porosity, permeability or Gaussian Random Fields from APS
 
 - **MAX** (Optional)
   Specifies the maximum value possible after applying ``OUTPUT_TRANSFORM``.
+
+- **GRID** (Optional)
+  Specifies the grid file to use for this specific field parameter, e.g., GRID:CASE.EGRID.
+  If not specified, the global grid from the :ref:`GRID<grid>` keyword will be used.
 
 .. _init-files:
 
