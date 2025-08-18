@@ -225,6 +225,7 @@ def test_field_param_update_using_heat_equation(heat_equation_storage_es):
         assert len(prior_result.z) == param_config.nz
 
         posterior_result = posterior.load_parameters("COND")["values"]
+        assert posterior_result.dtype == np.float32
         prior_covariance = np.cov(
             prior_result.values.reshape(
                 prior.ensemble_size, param_config.nx * param_config.ny * param_config.nz
