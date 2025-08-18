@@ -1,6 +1,7 @@
 import os
 from pathlib import Path
 from textwrap import dedent
+from unittest import mock
 
 import pytest
 
@@ -26,7 +27,7 @@ def test_no_config_init():
         EverestRunModel.create("Frozen bananas")
 
 
-def test_site_config_with_substitutions(monkeypatch, copy_math_func_test_data_to_tmp):
+def test_site_config_with_substitutions(monkeypatch, change_to_tmpdir):
     # set up siteconfig
     test_site_config = Path("test_site_config.ert")
     test_site_config.write_text(
@@ -35,10 +36,12 @@ def test_site_config_with_substitutions(monkeypatch, copy_math_func_test_data_to
         """),
         encoding="utf-8",
     )
-    monkeypatch.setenv("ERT_SITE_CONFIG", str(test_site_config))
 
-    config = EverestConfig.load_file("config_minimal.yml")
-    everest_run_model = EverestRunModel.create(config)
+    with mock.patch(
+        "ert.config.ert_config.site_config_location", return_value=str(test_site_config)
+    ):
+        config = EverestConfig.with_defaults()
+        everest_run_model = EverestRunModel.create(config)
 
-    assert ("<NUM_CPU>", "1") in everest_run_model.substitutions.items()
-    assert everest_run_model.env_vars["HOW_MANY_CPU"] == "1"
+        assert ("<NUM_CPU>", "1") in everest_run_model.substitutions.items()
+        assert everest_run_model.env_vars["HOW_MANY_CPU"] == "1"
