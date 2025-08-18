@@ -272,6 +272,7 @@ class Field(ParameterConfig):
                 data=np.zeros(self.mask.size),
                 mask=self.mask,
                 fill_value=np.nan,
+                dtype=from_data.dtype,
             )
             ma[~ma.mask] = from_data[:, i]
             ma = ma.reshape(self.mask.shape)  # type: ignore
