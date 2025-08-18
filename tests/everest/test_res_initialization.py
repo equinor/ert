@@ -3,7 +3,7 @@ import stat
 from pathlib import Path
 from shutil import which
 from textwrap import dedent
-from unittest.mock import MagicMock
+from unittest.mock import MagicMock, patch
 
 import pytest
 import yaml
@@ -402,16 +402,19 @@ def test_that_queue_settings_are_taken_from_site_config(
     )
     with open("config.yml", "w", encoding="utf-8") as f:
         yaml.dump(min_config, f)
-    monkeypatch.setenv("ERT_SITE_CONFIG", "site-config")
-    config = EverestConfig.load_file("config.yml")
-    assert config.simulator.queue_system == LsfQueueOptions(
-        lsf_queue="my_queue", lsf_resource="my_resource"
-    )
-    queue_config = QueueConfig.from_dict(everest_to_ert_config_dict(config))
-    assert queue_config.queue_options == LsfQueueOptions(
-        lsf_queue="my_queue", lsf_resource="my_resource"
-    )
-    assert queue_config.submit_sleep == 9.9
+
+    with patch(
+        "ert.config.ert_config.site_config_location", return_value="site-config"
+    ):
+        config = EverestConfig.load_file("config.yml")
+        assert config.simulator.queue_system == LsfQueueOptions(
+            lsf_queue="my_queue", lsf_resource="my_resource"
+        )
+        queue_config = QueueConfig.from_dict(everest_to_ert_config_dict(config))
+        assert queue_config.queue_options == LsfQueueOptions(
+            lsf_queue="my_queue", lsf_resource="my_resource"
+        )
+        assert queue_config.submit_sleep == 9.9
 
 
 def test_passthrough_explicit_summary_keys(change_to_tmpdir):
