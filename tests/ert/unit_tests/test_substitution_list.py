@@ -30,7 +30,7 @@ def test_different_defines_give_different_subst_lists(
             )
 
 
-def test_subst_list_reads_correct_values():
+def test_that_define_and_data_kw_parameters_are_used_as_substitutions():
     substitutions = ErtConfig.from_dict(
         {
             ConfigKeys.NUM_REALIZATIONS: 1,
@@ -48,7 +48,7 @@ def test_subst_list_reads_correct_values():
     assert substitutions["keyD"] == "valD"
 
 
-def test_substitutions_with_hybrid_parameter_types():
+def test_that_parameters_as_magic_strings_are_substituted():
     params: dict[str, dict[str, float | str]] = {
         "GROUP1": {"a": 1.01},
         "GROUP2": {"b": "value"},
