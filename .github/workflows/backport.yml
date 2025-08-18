@@ -22,7 +22,7 @@ jobs:
         )
       )
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - name: Generate token
         id: generate-token
         uses: actions/create-github-app-token@v2
