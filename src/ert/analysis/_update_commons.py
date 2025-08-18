@@ -62,9 +62,9 @@ def _copy_unupdated_parameters(
     # Copy the non-updated parameter groups from source to target
     # for each active realization
     for parameter_group in not_updated_parameter_groups:
-        source_ensemble.experiment.parameter_configuration[
-            parameter_group
-        ].copy_parameters(source_ensemble, target_ensemble, iens_active_index)
+        source_ensemble.copy_parameters(
+            parameter_group, target_ensemble, iens_active_index
+        )
 
 
 def _expand_wildcards(

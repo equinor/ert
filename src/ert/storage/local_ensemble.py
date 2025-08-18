@@ -835,6 +835,24 @@ class LocalEnsemble(BaseMode):
         return dataframe.sort_index(axis=1)
 
     @require_write
+    def copy_parameters(
+        self,
+        group: str,
+        target_ensemble: LocalEnsemble,
+        realizations: npt.NDArray[np.int_],
+    ) -> None:
+        config_node = self.experiment.parameter_configuration[group]
+        if isinstance(config_node, GenKwConfig):
+            df = self.load_parameters(self.name, realizations)
+            target_ensemble.save_parameters(self.name, realization=None, dataset=df)
+        else:
+            for realization in realizations:
+                # Converts to standard python scalar due to mypy
+                realization_int = int(realization)
+                ds = self.load_parameters(self.name, realization_int)
+                target_ensemble.save_parameters(self.name, realization_int, ds)
+
+    @require_write
     def save_parameters(
         self,
         group: str,

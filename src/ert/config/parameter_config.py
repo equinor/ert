@@ -101,23 +101,6 @@ class ParameterConfig(BaseModel):
         or polars DataFrame from the numpy data
         """
 
-    def copy_parameters(
-        self,
-        source_ensemble: Ensemble,
-        target_ensemble: Ensemble,
-        realizations: npt.NDArray[np.int_],
-    ) -> None:
-        """
-        Copy parameters from one ensemble to another.
-        If realizations is None, copy all realizations.
-        If realizations is given, copy only those realizations.
-        """
-        for realization in realizations:
-            # Converts to standard python scalar due to mypy
-            realization_int = int(realization)
-            ds = source_ensemble.load_parameters(self.name, realization_int)
-            target_ensemble.save_parameters(self.name, realization_int, ds)
-
     @abstractmethod
     def load_parameters(
         self, ensemble: Ensemble, realizations: npt.NDArray[np.int_]
