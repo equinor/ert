@@ -271,6 +271,7 @@ class Field(ParameterConfig):
             data=np.zeros(self.mask.size),
             mask=self.mask,
             fill_value=np.nan,
+            dtype=data.dtype,
         )
         ma[~ma.mask] = data
         ma = ma.reshape(self.mask.shape)  # type: ignore
