@@ -1,3 +1,4 @@
+import contextlib
 import os
 import queue
 import shutil
@@ -302,9 +303,23 @@ def no_plugins():
     patched_everest = partial(
         everest.config.everest_config.ErtPluginManager, plugins=[]
     )
+
     with (
         patch("everest.simulator.everest_to_ert.ErtPluginContext", patched_context),
         patch("ert.config.ert_config.ErtPluginManager", patched),
         patch("everest.config.everest_config.ErtPluginManager", patched_everest),
     ):
         yield
+
+
+@pytest.fixture(autouse=True)
+def no_site_config():
+    site_config_patcher = patch(
+        "ert.config.ert_config.site_config_location", return_value=None
+    )
+    site_config_patcher.start()
+
+    yield site_config_patcher
+
+    with contextlib.suppress(RuntimeError, AttributeError):
+        site_config_patcher.stop()
