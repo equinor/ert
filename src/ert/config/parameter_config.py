@@ -84,6 +84,10 @@ class ParameterConfig(BaseModel):
         This function is responsible for converting the parameter
         from the internal ert format to the format the forward model
         expects
+
+        Returns:
+            Optionally returns a mapping from parameter name to
+            parameter value.
         """
 
     @abstractmethod

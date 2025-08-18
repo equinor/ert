@@ -91,7 +91,7 @@ def _generate_parameter_files(
     iens: int,
     fs: Ensemble,
     iteration: int,
-) -> dict[str, dict[str, float | str]]:
+) -> Mapping[str, Mapping[str, float | str]]:
     """
     Generate parameter files that are placed in each runtime directory for
     forward-model jobs to consume.
@@ -104,6 +104,10 @@ def _generate_parameter_files(
         run_path: Path to the runtime directory
         iens: Realisation index
         fs: Ensemble from which to load parameter data
+
+    Returns:
+        Returns the union of parameters returned by write_to_runpath for each
+        parameter_config.
     """
     exports: dict[str, dict[str, float | str]] = {}
 

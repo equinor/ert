@@ -27,15 +27,24 @@ class Substitutions(UserDict[str, str]):
 
     @staticmethod
     def substitute_parameters(
-        to_substitute: str, data: dict[str, dict[str, str | float]]
+        to_substitute: str, parameter_values: Mapping[str, Mapping[str, str | float]]
     ) -> str:
-        for values in data.values():
-            for key, value in values.items():
+        """Applies the substitution '<param_name>' to parameter value
+        Args:
+            parameter_values: Mapping from parameter name to parameter value
+            to_substitute: string to substitute magic strings in
+        Returns:
+            substituted string
+        """
+        for values in parameter_values.values():
+            for param_name, value in values.items():
                 if isinstance(value, (int, float)):
                     formatted_value = f"{value:.6g}"
                 else:
                     formatted_value = str(value)
-                to_substitute = to_substitute.replace(f"<{key}>", formatted_value)
+                to_substitute = to_substitute.replace(
+                    f"<{param_name}>", formatted_value
+                )
         return to_substitute
 
     def substitute_real_iter(
