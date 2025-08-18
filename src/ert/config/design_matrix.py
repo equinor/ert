@@ -407,18 +407,18 @@ class DesignMatrix:
 
 def convert_numeric_string_columns(df: pl.DataFrame) -> pl.DataFrame:
     """Automatically convert string columns to numeric (int or float) where possible"""
-    for col in df.columns:
-        if df[col].dtype == pl.String:
+    for col, dtype in zip(df.columns, df.dtypes, strict=False):
+        if dtype == pl.String:
             try:
-                temp = df[col].cast(pl.Int64, strict=True)
-                df = df.with_columns(temp.alias(col))
+                df = df.with_columns(pl.col(col).cast(pl.Int64, strict=True).alias(col))
                 continue
             except InvalidOperationError:
                 pass
 
-            try:
-                temp = df[col].cast(pl.Float64, strict=True)
-                df = df.with_columns(temp.alias(col))
+            try:  # noqa: SIM105
+                df = df.with_columns(
+                    pl.col(col).cast(pl.Float64, strict=True).alias(col)
+                )
             except InvalidOperationError:
                 pass
 
