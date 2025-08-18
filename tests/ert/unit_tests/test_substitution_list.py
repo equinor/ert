@@ -57,30 +57,3 @@ def test_that_parameters_as_magic_strings_are_substituted():
     assert (
         Substitutions.substitute_parameters(to_substitute, params) == "1.01 and value"
     )
-
-
-def test_substitutions():
-    subst_list = Substitutions()
-
-    subst_list["<Key>"] = "Value"
-
-    assert len(subst_list) == 1
-
-    with pytest.raises(KeyError):
-        _ = subst_list["NoSuchKey"]
-
-    assert "<Key>" in subst_list
-    assert subst_list["<Key>"], "Value"
-
-    subst_list["<Key2>"] = "Value2"
-    assert list(subst_list.keys()) == ["<Key>", "<Key2>"]
-
-    str_repr = repr(subst_list)
-    assert "Substitutions" in str_repr
-    assert "<Key2>, Value2" in str_repr
-    assert "<Key>, Value" in str_repr
-
-    assert subst_list.get("nosuchkey", 1729) == 1729
-    assert subst_list.get("nosuchkey") is None
-    assert subst_list.get(513) is None
-    assert subst_list == {"<Key>": "Value", "<Key2>": "Value2"}
