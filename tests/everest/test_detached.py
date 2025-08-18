@@ -162,7 +162,7 @@ def test_detached_mode_config_base(min_config, monkeypatch, tmp_path):
     everest_config = EverestConfig.load_file("config.yml")
 
     # Expect it to take the default of the ERT QueueConfig
-    assert everest_config.simulator.queue_system == LocalQueueOptions(max_running=0)
+    assert everest_config.simulator.queue_system == LocalQueueOptions(max_running=8)
 
 
 @pytest.mark.parametrize(
@@ -194,29 +194,24 @@ def test_detached_mode_config_error():
 
 
 @pytest.mark.parametrize(
-    "config, expected_result",
+    "config_kwargs, expected_result",
     [
+        ({"simulator": {"queue_system": {"name": "lsf"}}}, "lsf"),
         (
-            EverestConfig.with_defaults(simulator={"queue_system": {"name": "lsf"}}),
+            {
+                "simulator": {"queue_system": {"name": "lsf"}},
+                "server": {"queue_system": {"name": "lsf"}},
+            },
             "lsf",
         ),
-        (
-            EverestConfig.with_defaults(
-                simulator={"queue_system": {"name": "lsf"}},
-                server={"queue_system": {"name": "lsf"}},
-            ),
-            "lsf",
-        ),
-        (EverestConfig.with_defaults(), "local"),
-        (
-            EverestConfig.with_defaults(simulator={"queue_system": {"name": "local"}}),
-            "local",
-        ),
+        ({}, "local"),
+        ({"simulator": {"queue_system": {"name": "local"}}}, "local"),
     ],
 )
-def test_find_queue_system(config: EverestConfig, expected_result):
-    result = config.simulator
+def test_find_queue_system(config_kwargs, expected_result):
+    config = EverestConfig.with_defaults(**config_kwargs)
 
+    result = config.simulator
     assert result.queue_system.name == expected_result
 
 
@@ -227,37 +222,32 @@ def test_generate_queue_options_no_config():
 
 
 @pytest.mark.parametrize(
-    "queue_options, expected_result",
+    "queue_class, expected_queue_kwargs",
     [
         (
-            {"partition": "ever_opt_1", "name": "slurm"},
-            SlurmQueueOptions(max_running=1, partition="ever_opt_1"),
+            SlurmQueueOptions,
+            {"name": "slurm", "partition": "ever_opt_1", "max_running": 1},
         ),
+        (LsfQueueOptions, {"name": "lsf", "lsf_queue": "ever_opt_1", "max_running": 1}),
         (
-            {"lsf_queue": "ever_opt_1", "name": "lsf"},
-            LsfQueueOptions(
-                max_running=1,
-                lsf_queue="ever_opt_1",
-            ),
-        ),
-        (
-            {
-                "name": "torque",
-                "keep_qsub_output": "1",
-            },
-            TorqueQueueOptions(max_running=1, keep_qsub_output=True),
+            TorqueQueueOptions,
+            {"name": "torque", "keep_qsub_output": True, "max_running": 1},
         ),
     ],
 )
 def test_generate_queue_options_use_simulator_values(
-    queue_options, expected_result, monkeypatch
+    monkeypatch, queue_class, expected_queue_kwargs
 ):
     monkeypatch.setattr(
         everest.config.everest_config.ErtPluginManager,
         "activate_script",
         MagicMock(return_value=activate_script()),
     )
-    config = EverestConfig.with_defaults(simulator={"queue_system": queue_options})
+
+    config = EverestConfig.with_defaults(
+        simulator={"queue_system": expected_queue_kwargs}
+    )
+    expected_result = queue_class(**expected_queue_kwargs)
     assert config.server.queue_system == expected_result
 
 
