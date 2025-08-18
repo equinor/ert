@@ -32,7 +32,7 @@ jobs:
           echo "/etc/hosts ::"
           cat /etc/hosts
         fi
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v5
       with:
         fetch-depth: 0
         filter: tree:0
