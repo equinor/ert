@@ -25,8 +25,9 @@ class Substitutions(UserDict[str, str]):
         """
         return _substitute(self, to_substitute, context, max_iterations, warn_max_iter)
 
+    @staticmethod
     def substitute_parameters(
-        self, to_substitute: str, data: dict[str, dict[str, str | float]]
+        to_substitute: str, data: dict[str, dict[str, str | float]]
     ) -> str:
         for values in data.values():
             for key, value in values.items():
