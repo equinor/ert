@@ -173,7 +173,7 @@ def test_invalid_subconfig(extra_config, min_config, expected):
         (False, "test_dir/my_file", "../test/test_file"),
     ],
 )
-def test_linking_outside_runpath(
+def test_that_install_data_target_path_outside_runpath_is_invalid(
     link, source, target, tmp_path, monkeypatch, min_config
 ):
     monkeypatch.chdir(tmp_path)
