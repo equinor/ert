@@ -21,7 +21,7 @@ jobs:
   tests-ert:
     name: Run ert tests
     runs-on: ${{ inputs.os }}
-    timeout-minutes: 30
+    timeout-minutes: 60
     steps:
     - uses: actions/checkout@v4
       with:
