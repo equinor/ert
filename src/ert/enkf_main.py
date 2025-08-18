@@ -111,13 +111,13 @@ def _generate_parameter_files(
     """
     exports: dict[str, dict[str, float | str]] = {}
 
-    for node in parameter_configs:
+    for param in parameter_configs:
         # For the first iteration we do not write the parameter
         # to run path, as we expect to read if after the forward
         # model has completed.
-        if node.forward_init and iteration == 0:
+        if param.forward_init and iteration == 0:
             continue
-        export_values = node.write_to_runpath(Path(run_path), iens, fs)
+        export_values = param.write_to_runpath(Path(run_path), iens, fs)
         if export_values:
             exports.update(export_values)
         continue
