@@ -21,12 +21,13 @@ from ert.trace import tracer
 
 from ..analysis import smoother_update
 from ..run_arg import create_run_arguments
+from .ert_runmodel_configs import EnsembleSmootherConfig
 from .run_model import ErtRunError
 
 logger = logging.getLogger(__name__)
 
 
-class EnsembleSmoother(UpdateRunModel, InitialEnsembleRunModel):
+class EnsembleSmoother(InitialEnsembleRunModel, UpdateRunModel, EnsembleSmootherConfig):
     _total_iterations: int = PrivateAttr(default=2)
 
     @tracer.start_as_current_span(f"{__name__}.run_experiment")
