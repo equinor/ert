@@ -235,7 +235,7 @@ def test_generate_queue_options_no_config():
         ),
     ],
 )
-def test_generate_queue_options_use_simulator_values(
+def test_that_server_queue_system_defaults_to_simulator_queue_options(
     monkeypatch, queue_class, expected_queue_kwargs
 ):
     monkeypatch.setattr(
