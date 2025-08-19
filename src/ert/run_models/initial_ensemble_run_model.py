@@ -73,6 +73,11 @@ class InitialEnsembleRunModel(RunModel, ABC):
                 name=self.experiment_name,
                 templates=self.ert_templates,
             )
+
+            experiment_storage.save_experiment_config(
+                serialized_experiment=self.model_dump()
+            )
+
             ensemble_storage = self._storage.create_ensemble(
                 experiment_storage,
                 ensemble_size=self.ensemble_size,

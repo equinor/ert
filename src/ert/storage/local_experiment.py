@@ -40,6 +40,7 @@ from polars.datatypes import DataTypeClass
 class _Index(BaseModel):
     id: UUID
     name: str
+    experiment: dict[str, Any] | None = None
 
 
 _responses_adapter = TypeAdapter(  # type: ignore
@@ -531,3 +532,7 @@ class LocalExperiment(BaseMode):
             return None
 
         return pl.concat(ensemble_dfs)
+
+    def save_experiment_config(self, serialized_experiment: dict[str, Any]) -> None:
+        self._index.experiment = serialized_experiment
+        (self._path / "index.json").write_text(self._index.model_dump_json(indent=2))

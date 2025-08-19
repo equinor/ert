@@ -360,6 +360,7 @@ class EverestRunModel(RunModel):
             parameters=self.parameter_configuration,
             responses=self.response_configuration,
         )
+        self._experiment.save_experiment_config(serialized_experiment=self.model_dump())
 
         # Initialize the ropt optimizer:
         optimizer, initial_guesses = self._create_optimizer()
