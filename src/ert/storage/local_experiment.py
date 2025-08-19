@@ -27,7 +27,6 @@ from ert.config import (
 from ert.config import (
     Field as FieldConfig,
 )
-from ert.config.parsing.context_values import ContextBoolEncoder
 from ert.storage.mode import BaseMode, Mode, require_write
 
 if TYPE_CHECKING:
@@ -107,7 +106,6 @@ class LocalExperiment(BaseMode):
 
     _parameter_file = Path("parameter.json")
     _responses_file = Path("responses.json")
-    _metadata_file = Path("metadata.json")
     _templates_file = Path("templates.json")
 
     def __init__(
@@ -230,12 +228,6 @@ class LocalExperiment(BaseMode):
                     output_path / f"{response_type}", dataset.to_polars()
                 )
 
-        simulation_data = simulation_arguments or {}
-        storage._write_transaction(
-            path / cls._metadata_file,
-            json.dumps(simulation_data, cls=ContextBoolEncoder).encode("utf-8"),
-        )
-
         return cls(storage, path, Mode.WRITE)
 
     @require_write
@@ -302,16 +294,8 @@ class LocalExperiment(BaseMode):
         raise KeyError(f"Ensemble with name '{name}' not found")
 
     @property
-    def metadata(self) -> dict[str, Any]:
-        path = self.mount_point / self._metadata_file
-        if not path.exists():
-            raise ValueError(f"{self._metadata_file!s} does not exist")
-        with open(path, encoding="utf-8") as f:
-            return json.load(f)
-
-    @property
     def relative_weights(self) -> str:
-        return self.metadata.get("weights", "")
+        return self._index["experiment"].get("weights", "")
 
     @property
     def name(self) -> str:
