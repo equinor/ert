@@ -433,3 +433,26 @@ def test_whitespace_is_stripped_from_string_parameters(tmp_path):
         df["d"],
         np.array(["case_name", "case_name", "case_name", "case_name"]),
     )
+
+
+def test_that_numeric_string_columns_are_converted(tmp_path):
+    realizations = [0, 1, 4]
+    design_path = tmp_path / "design_matrix.xlsx"
+    design_matrix_df = pl.DataFrame(
+        {
+            "REAL": realizations,
+            "a": ["1", "2", "3"],
+            "b": [0, "2.2", "0.1"],
+            "c": [10, "high", "medium"],
+        },
+        strict=False,
+    )
+    _create_design_matrix(design_path, design_matrix_df)
+    design_matrix = DesignMatrix(design_path, "DesignSheet", None)
+    df = design_matrix.design_matrix_df
+    assert df.schema["a"] == pl.Int64
+    assert df.schema["b"] == pl.Float64
+    assert df.schema["c"] == pl.String
+    np.testing.assert_equal(df["a"], np.array([1, 2, 3]))
+    np.testing.assert_equal(df["b"], np.array([0, 2.2, 0.1]))
+    np.testing.assert_equal(df["c"], np.array(["10", "high", "medium"]))
