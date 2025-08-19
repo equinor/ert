@@ -443,10 +443,9 @@ def test_that_summary_observation_validation_is_handled(obs_content, match):
         parse_content(obs_content, filename="")
 
 
-@pytest.mark.parametrize(
-    "obs_content, match",
-    [
-        (
+def test_that_general_observation_without_error_is_invalid():
+    with pytest.raises(ObservationConfigError, match="ERROR must also be given"):
+        parse_content(
             """
             GENERAL_OBSERVATION  obs
             {
@@ -455,9 +454,13 @@ def test_that_summary_observation_validation_is_handled(obs_content, match):
                VALUE      = 1;
             };
             """,
-            "ERROR must also be given",
-        ),
-        (
+            "",
+        )
+
+
+def test_that_general_observation_without_data_is_invalid():
+    with pytest.raises(ObservationConfigError, match='Missing item "DATA"'):
+        parse_content(
             """
             GENERAL_OBSERVATION  obs
             {
@@ -467,13 +470,8 @@ def test_that_summary_observation_validation_is_handled(obs_content, match):
                ERROR_MIN  = 0.1;
             };
             """,
-            'Missing item "DATA"',
-        ),
-    ],
-)
-def test_validation_of_general_observation(obs_content, match):
-    with pytest.raises(ObservationConfigError, match=match):
-        parse_content(obs_content, "")
+            "",
+        )
 
 
 @pytest.mark.parametrize(
