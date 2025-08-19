@@ -27,15 +27,17 @@ from ert.run_models.event import (
     RunModelUpdateBeginEvent,
     RunModelUpdateEndEvent,
 )
-from ert.run_models.run_model import ErtRunError, RunModel
+from ert.run_models.run_model import ErtRunError, RunModel, RunModelConfig
 from ert.storage import Ensemble, LocalExperiment
 
 
-class UpdateRunModel(RunModel):
+class UpdateRunModelConfig(RunModelConfig):
     target_ensemble: str
     analysis_settings: ESSettings
     update_settings: ObservationSettings
 
+
+class UpdateRunModel(RunModel, UpdateRunModelConfig):
     @abstractmethod
     def update_ensemble_parameters(
         self, prior: Ensemble, posterior: Ensemble, weight: float

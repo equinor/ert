@@ -25,7 +25,7 @@ from ert.gui.ertwidgets import (
 from ert.gui.ertwidgets.parameterviewer import get_parameters_button
 from ert.gui.suggestor import Suggestor
 from ert.mode_definitions import ES_MDA_MODE
-from ert.run_models import MultipleDataAssimilation
+from ert.run_models import MultipleDataAssimilation, MultipleDataAssimilationConfig
 from ert.storage.realization_storage_state import RealizationStorageState
 from ert.validation import (
     ExperimentValidation,
@@ -114,7 +114,7 @@ class MultipleDataAssimilationPanel(ExperimentConfigPanel):
         self._target_ensemble_format_field.setValidator(ProperNameFormatArgument())
         layout.addRow("Target ensemble format:", self._target_ensemble_format_field)
 
-        self.weights = MultipleDataAssimilation.default_weights
+        self.weights = MultipleDataAssimilationConfig.default_weights
         self.weights_valid = True
         self._createInputForWeights(layout)
 
@@ -217,7 +217,7 @@ class MultipleDataAssimilationPanel(ExperimentConfigPanel):
 
             self._relative_iteration_weights_box.setText(
                 self._ensemble_selector.selected_ensemble.relative_weights
-                or MultipleDataAssimilation.default_weights
+                or MultipleDataAssimilationConfig.default_weights
             )
             self._evaluate_weights_box_enabled()
 
@@ -252,9 +252,9 @@ class MultipleDataAssimilationPanel(ExperimentConfigPanel):
                 self._ensemble_selector.selected_ensemble is not None
                 and self._ensemble_selector.selected_ensemble.relative_weights
             )
-            or MultipleDataAssimilation.default_weights
+            or MultipleDataAssimilationConfig.default_weights
             if self._restart_box.isChecked()
-            else MultipleDataAssimilation.default_weights
+            else MultipleDataAssimilationConfig.default_weights
         )
         if self._restart_box.isChecked():
             self._active_realizations_field.setValidator(
