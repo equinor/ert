@@ -7,6 +7,7 @@ from typing import TYPE_CHECKING, cast
 
 import numpy as np
 import polars as pl
+from polars.exceptions import InvalidOperationError
 
 from .gen_kw_config import GenKwConfig, TransformFunctionDefinition
 from .parsing import ConfigValidationError, ErrorInfo
@@ -283,6 +284,7 @@ class DesignMatrix:
         else:
             design_matrix_df = design_matrix_df.with_row_index(name="realization")
 
+        design_matrix_df = convert_numeric_string_columns(design_matrix_df)
         transform_function_definitions = [
             TransformFunctionDefinition(name=col, param_name="RAW", values=[])
             for col in design_matrix_df.columns
@@ -401,6 +403,26 @@ class DesignMatrix:
             for row in default_df.iter_rows()
             if row[0] not in existing_parameters
         }
+
+
+def convert_numeric_string_columns(df: pl.DataFrame) -> pl.DataFrame:
+    """Automatically convert string columns to numeric (int or float) where possible"""
+    for col, dtype in zip(df.columns, df.dtypes, strict=False):
+        if dtype == pl.String:
+            try:
+                df = df.with_columns(pl.col(col).cast(pl.Int64, strict=True).alias(col))
+                continue
+            except InvalidOperationError:
+                pass
+
+            try:  # noqa: SIM105
+                df = df.with_columns(
+                    pl.col(col).cast(pl.Float64, strict=True).alias(col)
+                )
+            except InvalidOperationError:
+                pass
+
+    return df
 
 
 def convert_to_numeric(x: str) -> str | float | int:
