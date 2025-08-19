@@ -72,10 +72,10 @@ class Field(ParameterConfig):
     type: Literal["field"] = "field"
     ertbox_params: ErtboxParameters
     file_format: FieldFileFormat
-    output_transformation: str | None
-    input_transformation: str | None
-    truncation_min: float | None
-    truncation_max: float | None
+    output_transformation: str | None = None
+    input_transformation: str | None = None
+    truncation_min: float | None = None
+    truncation_max: float | None = None
     forward_init_file: str
     output_file: Path
     grid_file: str

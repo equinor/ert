@@ -106,9 +106,11 @@ def fill_storage_with_data(poly_template: Path, ert_config: ErtConfig) -> None:
     with open_storage(path, mode="w") as storage:
         ens_config = ert_config.ensemble_config
         experiment_id = storage.create_experiment(
-            parameters=ens_config.parameter_configuration,
-            responses=ens_config.response_configuration,
-            observations=ert_config.observations,
+            experiment_config={
+                "parameter_configuration": ens_config.parameter_configuration,
+                "response_configuration": ens_config.response_configuration,
+                "observations": ert_config.observations,
+            },
             name="test-experiment",
         )
         source = storage.create_ensemble(experiment_id, name="prior", ensemble_size=100)

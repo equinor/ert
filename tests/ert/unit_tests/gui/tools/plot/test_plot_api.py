@@ -20,7 +20,7 @@ from ert.dark_storage import common
 from ert.dark_storage.app import app
 from ert.gui.tools.plot.plot_api import PlotApi, PlotApiKeyDefinition
 from ert.services import ErtServer
-from ert.storage import open_storage
+from ert.storage import DictEncodedDataFrame, open_storage
 from tests.ert.unit_tests.gui.tools.plot.conftest import MockResponse
 
 
@@ -219,26 +219,32 @@ def test_plot_api_handles_urlescape(api_and_storage):
     api, storage = api_and_storage
     key = "WBHP:46/3-7S"
     date = datetime(year=2024, month=10, day=4)
+
     experiment = storage.create_experiment(
-        parameters=[],
-        responses=[
-            SummaryConfig(
-                name="summary",
-                input_files=["CASE.UNSMRY", "CASE.SMSPEC"],
-                keys=[key],
-            )
-        ],
-        observations={
-            "summary": pl.DataFrame(
-                {
-                    "response_key": key,
-                    "observation_key": "sumobs",
-                    "time": pl.Series([date]).dt.cast_time_unit("ms"),
-                    "observations": pl.Series([1.0], dtype=pl.Float32),
-                    "std": pl.Series([1.0], dtype=pl.Float32),
-                }
-            )
-        },
+        experiment_config={
+            "parameter_configuration": [],
+            "response_configuration": [
+                SummaryConfig(
+                    name="summary",
+                    input_files=["CASE.UNSMRY", "CASE.SMSPEC"],
+                    keys=[key],
+                )
+            ],
+            "ert_templates": {},
+            "observations": {
+                "summary": DictEncodedDataFrame.from_polars(
+                    pl.DataFrame(
+                        {
+                            "response_key": key,
+                            "observation_key": "sumobs",
+                            "time": pl.Series([date]).dt.cast_time_unit("ms"),
+                            "observations": pl.Series([1.0], dtype=pl.Float32),
+                            "std": pl.Series([1.0], dtype=pl.Float32),
+                        }
+                    )
+                )
+            },
+        }
     )
     ensemble = experiment.create_ensemble(ensemble_size=1, name="ensemble")
     assert api.data_for_response(str(ensemble.id), key).empty
@@ -276,16 +282,19 @@ def test_plot_api_handles_empty_gen_kw(api_and_storage):
     key = "gen_kw"
     name = "<poro>"
     experiment = storage.create_experiment(
-        parameters=[
-            GenKwConfig(
-                name=name,
-                group=key,
-                update=False,
-                distribution={"name": "normal", "mean": 0, "std": 0.1},
-            ),
-        ],
-        responses=[],
-        observations={},
+        experiment_config={
+            "parameter_configuration": [
+                GenKwConfig(
+                    name=name,
+                    group=key,
+                    update=False,
+                    distribution={"name": "normal", "mean": 0, "std": 0.1},
+                ),
+            ],
+            "response_configuration": [],
+            "ert_templates": {},
+            "observations": {},
+        }
     )
     ensemble = storage.create_ensemble(experiment.id, ensemble_size=10)
     assert api.data_for_parameter(str(ensemble.id), key).empty
@@ -310,15 +319,18 @@ def test_plot_api_handles_empty_gen_kw(api_and_storage):
 def test_plot_api_handles_non_existant_gen_kw(api_and_storage):
     api, storage = api_and_storage
     experiment = storage.create_experiment(
-        parameters=[
-            GenKwConfig(
-                name="KEY_1",
-                group="gen_kw",
-                distribution={"name": "normal", "mean": 0, "std": 1},
-            ),
-        ],
-        responses=[],
-        observations={},
+        experiment_config={
+            "parameter_configuration": [
+                GenKwConfig(
+                    name="KEY_1",
+                    group="gen_kw",
+                    distribution={"name": "normal", "mean": 0, "std": 1},
+                ),
+            ],
+            "response_configuration": [],
+            "ert_templates": {},
+            "observations": {},
+        }
     )
     ensemble = storage.create_ensemble(experiment.id, ensemble_size=10)
     assert api.data_for_parameter(str(ensemble.id), "gen_kw").empty
@@ -328,16 +340,19 @@ def test_plot_api_handles_non_existant_gen_kw(api_and_storage):
 def test_plot_api_handles_colons_in_parameter_keys(api_and_storage):
     api, storage = api_and_storage
     experiment = storage.create_experiment(
-        parameters=[
-            GenKwConfig(
-                name="subgroup:1:2:2",
-                group="group",
-                update=False,
-                distribution={"name": "raw"},
-            ),
-        ],
-        responses=[],
-        observations={},
+        experiment_config={
+            "parameter_configuration": [
+                GenKwConfig(
+                    name="subgroup:1:2:2",
+                    group="group",
+                    update=False,
+                    distribution={"name": "raw"},
+                ),
+            ],
+            "response_configuration": [],
+            "ert_templates": {},
+            "observations": {},
+        }
     )
     ensemble = storage.create_ensemble(experiment.id, ensemble_size=10)
     ensemble.save_parameters(
@@ -354,32 +369,38 @@ def test_plot_api_handles_colons_in_parameter_keys(api_and_storage):
 
 def test_that_multiple_observations_are_parsed_correctly(api_and_storage):
     api, storage = api_and_storage
+
     experiment = storage.create_experiment(
-        parameters=[],
-        responses=[
-            SummaryConfig(
-                name="summary",
-                input_files=[""],
-                keys=["WOPR:OP1"],
-                has_finalized_keys=True,
-            )
-        ],
-        observations={
-            "summary": pl.DataFrame(
-                {
-                    "observation_key": [f"WOPR:OP1_o{i}" for i in range(6)],
-                    "response_key": ["WOPR:OP1"] * 6,
-                    "time": pl.date_range(
-                        date(2000, 1, 1),
-                        date(2000, 6, 1),
-                        interval="1mo",
-                        eager=True,
-                    ),
-                    "observations": [0.2, 0.1, 0.15, 0.21, 0.11, 0.151],
-                    "std": [0.1, 0.1, 0.1, 0.1, 0.1, 0.1],
-                }
-            )
-        },
+        experiment_config={
+            "parameter_configuration": [],
+            "response_configuration": [
+                SummaryConfig(
+                    name="summary",
+                    input_files=[""],
+                    keys=["WOPR:OP1"],
+                    has_finalized_keys=True,
+                )
+            ],
+            "ert_templates": {},
+            "observations": {
+                "summary": DictEncodedDataFrame.from_polars(
+                    pl.DataFrame(
+                        {
+                            "observation_key": [f"WOPR:OP1_o{i}" for i in range(6)],
+                            "response_key": ["WOPR:OP1"] * 6,
+                            "time": pl.date_range(
+                                date(2000, 1, 1),
+                                date(2000, 6, 1),
+                                interval="1mo",
+                                eager=True,
+                            ),
+                            "observations": [0.2, 0.1, 0.15, 0.21, 0.11, 0.151],
+                            "std": [0.1, 0.1, 0.1, 0.1, 0.1, 0.1],
+                        }
+                    )
+                )
+            },
+        }
     )
     ens = experiment.create_ensemble(ensemble_size=1, name="ensemble")
 
@@ -391,9 +412,15 @@ def test_that_multiple_observations_are_parsed_correctly(api_and_storage):
 def test_that_observations_for_empty_ensemble_returns_empty_data(api_and_storage):
     api, storage = api_and_storage
     experiment = storage.create_experiment(
-        parameters=[],
-        responses=[SummaryConfig(name="summary", input_files=[""], keys=["NAIMFRAC"])],
-        observations={},
+        experiment_config={
+            "parameter_configuration": [],
+            "response_configuration": [
+                SummaryConfig(name="summary", input_files=[""], keys=["NAIMFRAC"])
+            ],
+            "ert_templates": {},
+            "observations": {},
+        },
+        name=None,
     )
     ensemble = storage.create_ensemble(experiment.id, ensemble_size=1)
     assert api.observations_for_key([str(ensemble.id)], "NAIMFRAC").empty
@@ -405,15 +432,20 @@ def test_that_data_for_response_is_empty_for_ensembles_without_responses(
     api, storage = api_and_storage
 
     experiment = storage.create_experiment(
-        parameters=[],
-        responses=[
-            SummaryConfig(
-                name="summary",
-                input_files=[],
-                keys=["FOPT"],
-                has_finalized_keys=True,
-            )
-        ],
+        name=None,
+        experiment_config={
+            "parameter_configuration": [],
+            "response_configuration": [
+                SummaryConfig(
+                    name="summary",
+                    input_files=[],
+                    keys=["FOPT"],
+                    has_finalized_keys=True,
+                )
+            ],
+            "ert_templates": {},
+            "observations": {},
+        },
     )
 
     ensemble = experiment.create_ensemble(
@@ -432,36 +464,45 @@ def test_that_response_key_has_observation_when_only_one_experiment_has_observat
 
     date = datetime(year=2024, month=10, day=4)
     experiment_with_observation = storage.create_experiment(
-        parameters=[],
-        responses=[
-            SummaryConfig(
-                name="summary",
-                input_files=["CASE.UNSMRY", "CASE.SMSPEC"],
-                keys=["FOPR"],
-            )
-        ],
-        observations={
-            "summary": pl.DataFrame(
-                {
-                    "response_key": "FOPR",
-                    "observation_key": "sumobs",
-                    "time": pl.Series([date]).dt.cast_time_unit("ms"),
-                    "observations": pl.Series([1.0], dtype=pl.Float32),
-                    "std": pl.Series([1.0], dtype=pl.Float32),
-                }
-            )
-        },
+        experiment_config={
+            "parameter_configuration": [],
+            "response_configuration": [
+                SummaryConfig(
+                    name="summary",
+                    input_files=["CASE.UNSMRY", "CASE.SMSPEC"],
+                    keys=["FOPR"],
+                )
+            ],
+            "ert_templates": {},
+            "observations": {
+                "summary": DictEncodedDataFrame.from_polars(
+                    pl.DataFrame(
+                        {
+                            "response_key": "FOPR",
+                            "observation_key": "sumobs",
+                            "time": pl.Series([date]).dt.cast_time_unit("ms"),
+                            "observations": pl.Series([1.0], dtype=pl.Float32),
+                            "std": pl.Series([1.0], dtype=pl.Float32),
+                        }
+                    )
+                )
+            },
+        }
     )
 
     experiment_without_observation = storage.create_experiment(
-        parameters=[],
-        responses=[
-            SummaryConfig(
-                name="summary",
-                input_files=["CASE.UNSMRY", "CASE.SMSPEC"],
-                keys=["FOPR"],
-            )
-        ],
+        experiment_config={
+            "parameter_configuration": [],
+            "response_configuration": [
+                SummaryConfig(
+                    name="summary",
+                    input_files=["CASE.UNSMRY", "CASE.SMSPEC"],
+                    keys=["FOPR"],
+                )
+            ],
+            "ert_templates": {},
+            "observations": {},
+        }
     )
 
     ensemble_with_observation = experiment_with_observation.create_ensemble(
@@ -512,26 +553,32 @@ def test_that_response_keys_do_not_match_keys_that_are_substrings(
     api, storage = api_and_storage
     key = f"WBHP:{well_name}"
     date = datetime(year=2024, month=10, day=4)
+
     experiment = storage.create_experiment(
-        parameters=[],
-        responses=[
-            SummaryConfig(
-                name="summary",
-                input_files=["CASE.UNSMRY", "CASE.SMSPEC"],
-                keys=[key, history_key(key), "FOPR"],
-            )
-        ],
-        observations={
-            "summary": pl.DataFrame(
-                {
-                    "observation_key": [key, history_key(key), "FOPR"],
-                    "response_key": [key, history_key(key), "FOPR"],
-                    "time": [date, date, date],
-                    "observations": [0.2, 0.1, 0.01],
-                    "std": [0.1, 0.1, 0.2],
-                }
-            )
-        },
+        experiment_config={
+            "parameter_configuration": [],
+            "response_configuration": [
+                SummaryConfig(
+                    name="summary",
+                    input_files=["CASE.UNSMRY", "CASE.SMSPEC"],
+                    keys=[key, history_key(key), "FOPR"],
+                )
+            ],
+            "ert_templates": {},
+            "observations": {
+                "summary": DictEncodedDataFrame.from_polars(
+                    pl.DataFrame(
+                        {
+                            "observation_key": [key, history_key(key), "FOPR"],
+                            "response_key": [key, history_key(key), "FOPR"],
+                            "time": [date, date, date],
+                            "observations": [0.2, 0.1, 0.01],
+                            "std": [0.1, 0.1, 0.2],
+                        }
+                    )
+                )
+            },
+        }
     )
     ensemble = experiment.create_ensemble(ensemble_size=1, name="ensemble")
     assert api.data_for_response(str(ensemble.id), key).empty

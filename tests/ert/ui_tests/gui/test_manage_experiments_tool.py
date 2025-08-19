@@ -20,7 +20,12 @@ from ert.gui.tools.manage_experiments.storage_info_widget import (
     _WidgetType,
 )
 from ert.gui.tools.manage_experiments.storage_widget import StorageWidget
-from ert.storage import RealizationStorageState, Storage, open_storage
+from ert.storage import (
+    DictEncodedDataFrame,
+    RealizationStorageState,
+    Storage,
+    open_storage,
+)
 from tests.ert.ui_tests.cli.analysis.test_adaptive_localization import (
     run_cli_ES_with_case,
 )
@@ -47,10 +52,12 @@ def test_design_matrix_in_manage_experiments_panel(
 
     with notifier.write_storage() as storage:
         storage.create_experiment(
-            parameters=list(
-                config.analysis_config.design_matrix.parameter_configurations
-            ),
-            responses=config.ensemble_config.response_configuration,
+            experiment_config={
+                "parameter_configuration": list(
+                    config.analysis_config.design_matrix.parameter_configurations
+                ),
+                "response_configuration": config.ensemble_config.response_configuration,
+            },
             name="my-experiment",
         ).create_ensemble(
             ensemble_size=config.runpath_config.num_realizations,
@@ -115,8 +122,12 @@ def test_init_prior(qtbot):
 
     with notifier.write_storage() as storage:
         ensemble = storage.create_experiment(
-            parameters=config.ensemble_config.parameter_configuration,
-            responses=config.ensemble_config.response_configuration,
+            experiment_config={
+                "parameter_configuration": (
+                    config.ensemble_config.parameter_configuration
+                ),
+                "response_configuration": config.ensemble_config.response_configuration,
+            },
             name="my-experiment",
         ).create_ensemble(
             ensemble_size=config.runpath_config.num_realizations,
@@ -150,12 +161,19 @@ def test_that_init_updates_the_info_tab(qtbot):
     config = ErtConfig.from_file("poly.ert")
     notifier = ErtNotifier()
     notifier.set_storage(config.ens_path)
+    ensemble_config = config.ensemble_config
 
     with notifier.write_storage() as storage:
         ensemble = storage.create_experiment(
-            parameters=config.ensemble_config.parameter_configuration,
-            responses=config.ensemble_config.response_configuration,
-            observations=config.observations,
+            experiment_config={
+                "parameter_configuration": ensemble_config.parameter_configuration,
+                "response_configuration": ensemble_config.response_configuration,
+                "observations": {
+                    response_type: DictEncodedDataFrame.from_polars(df)
+                    for response_type, df in config.observations.items()
+                },
+                "ert_templates": config.ert_templates,
+            },
             name="my-experiment",
         ).create_ensemble(
             ensemble_size=config.runpath_config.num_realizations, name="default"
@@ -443,25 +461,29 @@ def test_ensemble_observations_view_on_empty_ensemble(qtbot):
 
     with notifier.write_storage() as storage:
         notifier.set_storage(str(storage.path))
-        storage.create_experiment(
-            responses=[SummaryConfig(keys=["*"])],
-            observations={
-                "summary": pl.DataFrame(
-                    pl.DataFrame(
-                        {
-                            "response_key": ["FOPR"],
-                            "observation_key": ["O4"],
-                            "time": pl.Series(
-                                [datetime.datetime(2000, 1, 1)],
-                                dtype=pl.Datetime("ms"),
-                            ),
-                            "observations": pl.Series([10.2], dtype=pl.Float32),
-                            "std": pl.Series([0.1], dtype=pl.Float32),
-                        }
-                    )
-                ),
-            },
-        ).create_ensemble(
+        exp = storage.create_experiment(
+            experiment_config={
+                "response_configuration": [SummaryConfig(keys=["*"])],
+                "observations": {
+                    "summary": DictEncodedDataFrame.from_polars(
+                        pl.DataFrame(
+                            {
+                                "response_key": ["FOPR"],
+                                "observation_key": ["O4"],
+                                "time": pl.Series(
+                                    [datetime.datetime(2000, 1, 1)],
+                                    dtype=pl.Datetime("ms"),
+                                ),
+                                "observations": pl.Series([10.2], dtype=pl.Float32),
+                                "std": pl.Series([0.1], dtype=pl.Float32),
+                            }
+                        )
+                    ),
+                },
+            }
+        )
+
+        exp.create_ensemble(
             name="test", ensemble_size=config.runpath_config.num_realizations
         )
 

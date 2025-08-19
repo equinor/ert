@@ -20,7 +20,7 @@ from ert.config import (
     ObservationSettings,
     OutlierSettings,
 )
-from ert.storage import Ensemble, open_storage
+from ert.storage import DictEncodedDataFrame, Ensemble, open_storage
 
 
 @pytest.fixture
@@ -230,34 +230,42 @@ def test_update_handles_precision_loss_in_std_dev(tmp_path):
     with open_storage(tmp_path, mode="w") as storage:
         experiment = storage.create_experiment(
             name="ensemble_smoother",
-            parameters=[gen_kw],
-            observations={
-                "gen_data": pl.DataFrame(
-                    {
-                        "response_key": "RES",
-                        "observation_key": "OBS",
-                        "report_step": pl.Series(np.zeros(3), dtype=pl.UInt16),
-                        "index": pl.Series([0, 1, 2], dtype=pl.UInt16),
-                        "observations": pl.Series(
-                            [-218285263.28648496, -999999999.0, -107098474.0148249],
-                            dtype=pl.Float32,
-                        ),
-                        "std": pl.Series(
-                            [559437122.6211826, 999999999.9999999, 1.9],
-                            dtype=pl.Float32,
-                        ),
-                    }
-                )
+            experiment_config={
+                "parameter_configuration": [gen_kw],
+                "response_configuration": [
+                    GenDataConfig(
+                        name="gen_data",
+                        input_files=["poly.out"],
+                        keys=["RES"],
+                        has_finalized_keys=True,
+                        report_steps_list=[None],
+                    )
+                ],
+                "observations": {
+                    "gen_data": DictEncodedDataFrame.from_polars(
+                        pl.DataFrame(
+                            {
+                                "response_key": "RES",
+                                "observation_key": "OBS",
+                                "report_step": pl.Series(np.zeros(3), dtype=pl.UInt16),
+                                "index": pl.Series([0, 1, 2], dtype=pl.UInt16),
+                                "observations": pl.Series(
+                                    [
+                                        -218285263.28648496,
+                                        -999999999.0,
+                                        -107098474.0148249,
+                                    ],
+                                    dtype=pl.Float32,
+                                ),
+                                "std": pl.Series(
+                                    [559437122.6211826, 999999999.9999999, 1.9],
+                                    dtype=pl.Float32,
+                                ),
+                            }
+                        )
+                    )
+                },
             },
-            responses=[
-                GenDataConfig(
-                    name="gen_data",
-                    input_files=["poly.out"],
-                    keys=["RES"],
-                    has_finalized_keys=True,
-                    report_steps_list=[None],
-                )
-            ],
         )
         prior = storage.create_ensemble(experiment.id, ensemble_size=23, name="prior")
         datasets = [
@@ -346,34 +354,38 @@ def test_update_raises_on_singular_matrix(tmp_path):
     with open_storage(tmp_path, mode="w") as storage:
         experiment = storage.create_experiment(
             name="ensemble_smoother",
-            parameters=[gen_kw],
-            observations={
-                "gen_data": pl.DataFrame(
-                    {
-                        "response_key": "RES",
-                        "observation_key": "OBS",
-                        "report_step": pl.Series(np.zeros(3), dtype=pl.UInt16),
-                        "index": pl.Series([0, 1, 2], dtype=pl.UInt16),
-                        "observations": pl.Series(
-                            [-1.5, 5.9604645e-08, 0.0],
-                            dtype=pl.Float32,
-                        ),
-                        "std": pl.Series(
-                            [0.33333334, 0.14142136, 0.0],
-                            dtype=pl.Float32,
-                        ),
-                    }
-                )
+            experiment_config={
+                "parameter_configuration": [gen_kw],
+                "response_configuration": [
+                    GenDataConfig(
+                        name="gen_data",
+                        input_files=["poly.out"],
+                        keys=["RES"],
+                        has_finalized_keys=True,
+                        report_steps_list=[None],
+                    )
+                ],
+                "observations": {
+                    "gen_data": DictEncodedDataFrame.from_polars(
+                        pl.DataFrame(
+                            {
+                                "response_key": "RES",
+                                "observation_key": "OBS",
+                                "report_step": pl.Series(np.zeros(3), dtype=pl.UInt16),
+                                "index": pl.Series([0, 1, 2], dtype=pl.UInt16),
+                                "observations": pl.Series(
+                                    [-1.5, 5.9604645e-08, 0.0],
+                                    dtype=pl.Float32,
+                                ),
+                                "std": pl.Series(
+                                    [0.33333334, 0.14142136, 0.0],
+                                    dtype=pl.Float32,
+                                ),
+                            }
+                        )
+                    )
+                },
             },
-            responses=[
-                GenDataConfig(
-                    name="gen_data",
-                    input_files=["poly.out"],
-                    keys=["RES"],
-                    has_finalized_keys=True,
-                    report_steps_list=[None],
-                )
-            ],
         )
         prior = storage.create_ensemble(experiment.id, ensemble_size=2, name="prior")
         datasets = [
@@ -549,9 +561,12 @@ def test_smoother_snapshot_alpha(
 
     resp = GenDataConfig(keys=["RESPONSE"])
     experiment = storage.create_experiment(
-        parameters=[uniform_parameter],
-        responses=[resp],
-        observations={"gen_data": obs},
+        name="ensemble_smoother",
+        experiment_config={
+            "parameter_configuration": [uniform_parameter],
+            "response_configuration": [resp],
+            "observations": {"gen_data": DictEncodedDataFrame.from_polars(obs)},
+        },
     )
     prior_storage = storage.create_ensemble(
         experiment,
@@ -942,9 +957,14 @@ def test_gen_data_obs_data_mismatch(storage, uniform_parameter):
     )
 
     experiment = storage.create_experiment(
-        parameters=[uniform_parameter],
-        responses=[resp],
-        observations={"gen_data": gen_data_obs},
+        name="ensemble_smoother",
+        experiment_config={
+            "parameter_configuration": [uniform_parameter],
+            "response_configuration": [resp],
+            "observations": {
+                "gen_data": DictEncodedDataFrame.from_polars(gen_data_obs)
+            },
+        },
     )
     prior = storage.create_ensemble(
         experiment,
@@ -1005,9 +1025,11 @@ def test_gen_data_obs_data_mismatch(storage, uniform_parameter):
 def test_gen_data_missing(storage, uniform_parameter, obs):
     resp = GenDataConfig(keys=["RESPONSE"])
     experiment = storage.create_experiment(
-        parameters=[uniform_parameter],
-        responses=[resp],
-        observations={"gen_data": obs},
+        experiment_config={
+            "parameter_configuration": [uniform_parameter],
+            "response_configuration": [resp],
+            "observations": {"gen_data": DictEncodedDataFrame.from_polars(obs)},
+        }
     )
     prior = storage.create_ensemble(
         experiment,
@@ -1079,9 +1101,12 @@ def test_update_subset_parameters(storage, uniform_parameter, obs):
     )
     resp = GenDataConfig(keys=["RESPONSE"])
     experiment = storage.create_experiment(
-        parameters=[uniform_parameter, no_update_param],
-        responses=[resp],
-        observations={"gen_data": obs},
+        name="ensemble_smoother",
+        experiment_config={
+            "parameter_configuration": [uniform_parameter, no_update_param],
+            "response_configuration": [resp],
+            "observations": {"gen_data": DictEncodedDataFrame.from_polars(obs)},
+        },
     )
     prior = storage.create_ensemble(
         experiment,
