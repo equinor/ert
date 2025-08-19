@@ -101,16 +101,11 @@ def test_suggester_gives_runpath_deprecated_specifier_migration():
         ErtConfig.from_file_contents("NUM_REALIZATIONS 1\nRUNPATH real-%d/iter-%d\n")
 
 
+@pytest.mark.filterwarnings("error")
 def test_suggester_gives_no_runpath_deprecated_specifier_migration():
-    # Assert no warnings from this line:  FIXMEEEE
     ErtConfig.from_file_contents(
         "NUM_REALIZATIONS 1\nRUNPATH real-<IENS>/iter-<ITER>\n"
     )
-
-    with pytest.warns(
-        ConfigWarning, match="RUNPATH keyword contains deprecated value placeholders"
-    ):
-        ErtConfig.from_file_contents("NUM_REALIZATIONS 1\nRUNPATH real-%d/iter-%d\n")
 
 
 def test_suggester_gives_plot_settings_migration():
