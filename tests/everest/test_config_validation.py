@@ -460,7 +460,7 @@ def test_that_min_realizations_success_is_nonnegative():
 def test_that_install_data_allows_runpath_root_as_target(
     target, link, change_to_tmpdir
 ):
-    data = {"source": "relative/path_<GEO_ID>", "target": target, "link": link}
+    data = {"source": "relative/path_<MODEL_ID>", "target": target, "link": link}
     os.makedirs("config_dir/relative/path_0")
     with open("config_dir/test.yml", "w", encoding="utf-8") as f:
         f.write(" ")

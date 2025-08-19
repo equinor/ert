@@ -38,6 +38,6 @@ def test_run_path(tmp_path, min_config, iteration, monkeypatch):
         str(Path(run_arg.runpath).relative_to(Path().absolute()))
         for run_arg in run_args
     ] == [
-        f"everest_output/simulation_folder/batch_{iteration}/geo_realization_0/simulation_0",
-        f"everest_output/simulation_folder/batch_{iteration}/geo_realization_2/simulation_1",
+        f"everest_output/simulation_folder/batch_{iteration}/realization_0/simulation_0",
+        f"everest_output/simulation_folder/batch_{iteration}/realization_2/simulation_1",
     ]

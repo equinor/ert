@@ -733,7 +733,7 @@ class EverestRunModel(RunModel):
         substitutions = self.substitutions
         self.active_realizations = [True] * len(sim_to_model_realization)
         for sim_id, model_realization in enumerate(sim_to_model_realization):
-            substitutions[f"<GEO_ID_{sim_id}_{ensemble.iteration}>"] = str(
+            substitutions[f"<MODEL_ID_{sim_id}_{ensemble.iteration}>"] = str(
                 int(model_realization)
             )
         run_paths = Runpaths(

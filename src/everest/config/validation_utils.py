@@ -34,7 +34,7 @@ class InstallDataContext:
     def __enter__(self) -> Self:
         self._temp_dir = tempfile.TemporaryDirectory()
         for data in self._install_data:
-            if "<GEO_ID>" not in data.source:
+            if "<MODEL_ID>" not in data.source:
                 self._set_symlink(data.source, data.target, None)
 
         os.chdir(self._temp_dir.name)
@@ -42,8 +42,8 @@ class InstallDataContext:
 
     def _set_symlink(self, source: str, target: str, realization: int | None) -> None:
         if realization is not None:
-            source = source.replace("<GEO_ID>", str(realization))
-            target = target.replace("<GEO_ID>", str(realization))
+            source = source.replace("<MODEL_ID>", str(realization))
+            target = target.replace("<MODEL_ID>", str(realization))
         if target.startswith("../"):
             raise ValueError(
                 f"Target location outside of runpath {target} not allowed!"
@@ -57,7 +57,7 @@ class InstallDataContext:
 
     def add_links_for_realization(self, realization: int) -> None:
         for data in self._install_data:
-            if "<GEO_ID>" in data.source:
+            if "<MODEL_ID>" in data.source:
                 self._set_symlink(data.source, data.target, realization)
 
     def __exit__(self, exc_type: Any, exc_value: Any, exc_tb: Any) -> None:
@@ -197,9 +197,9 @@ def as_abs_path(path: str, config_dir: str) -> str:
     return os.path.realpath(os.path.join(config_dir, path))
 
 
-def expand_geo_id_paths(path_source: str, realizations: list[int]) -> list[str]:
-    if "<GEO_ID>" in path_source:
-        return [path_source.replace("<GEO_ID>", str(r)) for r in realizations]
+def expand_model_id_paths(path_source: str, realizations: list[int]) -> list[str]:
+    if "<MODEL_ID>" in path_source:
+        return [path_source.replace("<MODEL_ID>", str(r)) for r in realizations]
     return [path_source]
 
 
@@ -207,7 +207,7 @@ def check_path_exists(
     path_source: str, config_path: Path | None, realizations: list[int]
 ) -> None:
     """Check if the given path exists. If the given path contains <CONFIG_PATH>
-    or GEO_ID they will be expanded and all instances of expanded paths need to exist.
+    or MODEL_ID they will be expanded and all instances of expanded paths need to exist.
     """
     if not isinstance(path_source, str):
         raise ValueError(
@@ -225,7 +225,7 @@ def check_path_exists(
             pos = pos[1:]
             path_source = os.path.join(pre, config_dir, pos)
 
-    expanded_paths = expand_geo_id_paths(str(path_source), realizations)
+    expanded_paths = expand_model_id_paths(str(path_source), realizations)
     for exp_path in [as_abs_path(p, str(config_dir)) for p in expanded_paths]:
         if os.path.ismount(exp_path):
             raise ValueError(f"'{exp_path}' is a mount point and can't be handled")

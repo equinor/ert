@@ -300,7 +300,7 @@ def test_user_specified_data_n_template(
         "everest_output",
         "sim_output",
         "batch_0",
-        "geo_realization_0",
+        "realization_0",
         "simulation_1",
         "well_drill_constants.json",
     )

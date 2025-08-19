@@ -206,7 +206,7 @@ Used to specify variables that will be replaced in the file when encountered.
 
 Some keywords are pre-defined by Everest,
 
-| realization: <GEO_ID>
+| realization: <MODEL_ID>
 | configpath: <CONFIG_PATH>
 | runpath_file: <RUNPATH_FILE>
 | eclbase: <ECLBASE>

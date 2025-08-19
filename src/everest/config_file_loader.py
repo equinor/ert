@@ -25,7 +25,7 @@ SUBSTITUTION_PATTERN = r"(r\{\{.*?\}\})"
 
 # Jinja vars which should NOT be included in definitions portion of config.
 ERT_CONFIG_TEMPLATES = {
-    "realization": "GEO_ID",
+    "realization": "MODEL_ID",
     "runpath_file": "RUNPATH_FILE",
 }
 
@@ -67,7 +67,7 @@ def _get_definitions(
                     f"Internal key {key} specified by user as {defs[key]}. "
                     f"Overriding as {val}"
                 )
-            defs[key] = f"<{val}>"  # ert uses <GEO_ID> as format
+            defs[key] = f"<{val}>"  # ert uses <MODEL_ID> as format
     else:
         logging.getLogger(EVEREST).warning("Empty configuration file provided!")
 
