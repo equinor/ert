@@ -562,54 +562,127 @@ def test_num_cpu_subst(append, numcpu, make_run_path):
         assert [str(numcpu)] == jobs["jobList"][0]["argList"]
 
 
+@pytest.mark.filterwarnings(
+    "ignore:.*RUNPATH keyword contains deprecated "
+    "value placeholders.*:ert.config.ConfigWarning"
+)
 @pytest.mark.parametrize(
-    "run_path, expected_raise, msg",
+    "iens_placeholder, iter_placeholder", [("%d", "%d"), ("<IENS>", "<ITER>")]
+)
+def test_that_iens_and_iter_in_runpaths_are_substituted_with_corresponding_indices(
+    tmpdir, iens_placeholder, iter_placeholder
+):
+    with tmpdir.as_cwd():
+        ert_config = ErtConfig.from_file_contents(
+            f"""
+            NUM_REALIZATIONS 10
+            RUNPATH simulations/realization-{iens_placeholder}/ITER-{iter_placeholder}
+            """
+        )
+        run_paths = Runpaths(
+            jobname_format=ert_config.runpath_config.jobname_format_string,
+            runpath_format=ert_config.runpath_config.runpath_format_string,
+            filename=".runpath_file",
+            substitutions=ert_config.substitutions,
+            eclbase=ert_config.runpath_config.eclbase_format_string,
+        )
+        assert run_paths.get_paths([1, 2, 3], 0) == [
+            tmpdir + "/simulations/realization-1/ITER-0",
+            tmpdir + "/simulations/realization-2/ITER-0",
+            tmpdir + "/simulations/realization-3/ITER-0",
+        ]
+
+
+@pytest.mark.filterwarnings(
+    "ignore:.*RUNPATH keyword contains deprecated "
+    "value placeholders.*:ert.config.ConfigWarning"
+)
+@pytest.mark.parametrize("iens_placeholder", [("%d"), ("<IENS>")])
+def test_that_runpaths_with_just_iens_will_be_substituted_with_just_iens_index(
+    tmpdir, iens_placeholder
+):
+    with tmpdir.as_cwd():
+        ert_config = ErtConfig.from_file_contents(
+            f"""
+            NUM_REALIZATIONS 10
+            RUNPATH simulations/realization-{iens_placeholder}
+            """
+        )
+        run_paths = Runpaths(
+            jobname_format=ert_config.runpath_config.jobname_format_string,
+            runpath_format=ert_config.runpath_config.runpath_format_string,
+            filename=".runpath_file",
+            substitutions=ert_config.substitutions,
+            eclbase=ert_config.runpath_config.eclbase_format_string,
+        )
+        assert run_paths.get_paths([1, 2, 3], 0) == [
+            tmpdir + "/simulations/realization-1",
+            tmpdir + "/simulations/realization-2",
+            tmpdir + "/simulations/realization-3",
+        ]
+
+
+@pytest.mark.parametrize(
+    "runpath",
     [
-        ("simulations/realization-<IENS>/iter-<ITER>", False, ""),
-        ("simulations/realization-%d/iter-%d", False, ""),
-        ("simulations/realization-%d", False, ""),
-        (
-            "simulations/realization-<IENS>/iter-%d",
-            True,
-            "RUNPATH cannot combine deprecated ",
-        ),
-        (
-            "simulations/realization-<IENS>/iter-<IENS>",
-            True,
-            "RUNPATH cannot contain multiple <IENS>",
-        ),
-        (
-            "simulations/realization-<ITER>/iter-<ITER>",
-            True,
-            "RUNPATH cannot contain multiple <ITER>",
-        ),
-        (
-            "simulations/realization-%d/iter-%d/more-%d",
-            True,
-            "RUNPATH cannot contain more than two",
-        ),
+        "simulations/realization-<IENS>/iter-%d",
+        "simulations/realization-%d/iter-<ITER>",
     ],
 )
 @pytest.mark.filterwarnings(
     "ignore:.*RUNPATH keyword contains deprecated "
     "value placeholders.*:ert.config.ConfigWarning"
 )
-@pytest.mark.usefixtures("use_tmpdir")
-def test_that_runpaths_are_raised_when_invalid(run_path, expected_raise, msg):
-    """
-    This checks that RUNPATH does not include too many or few substitution placeholders
-    """
-    config_text = dedent(
-        f"""\
-        NUM_REALIZATIONS 1
-        RUNPATH {run_path}
-        """
-    )
-    if expected_raise:
-        with pytest.raises(ConfigValidationError, match=f"{msg}.*{run_path}`."):
-            _ = ErtConfig.from_file_contents(config_text)
-    else:
-        _ = ErtConfig.from_file_contents(config_text)
+def test_that_mixing_printf_format_placeholders_and_bracketed_is_invalid(runpath):
+    with pytest.raises(
+        ConfigValidationError, match=f"RUNPATH cannot combine deprecated.*{runpath}`."
+    ):
+        _ = ErtConfig.from_file_contents(
+            f"""\
+            NUM_REALIZATIONS 1
+            RUNPATH {runpath}
+            """
+        )
+
+
+@pytest.mark.parametrize(
+    "runpath",
+    [
+        "simulations/realization-<IENS>/iter-<IENS>",
+        "simulations/realization-<ITER>/iter-<ITER>",
+        "simulations/realization-<IENS>/iter-<ITER>/iter-<ITER>",
+    ],
+)
+def test_that_duplicate_bracketed_placeholders_is_invalid(runpath):
+    with pytest.raises(
+        ConfigValidationError, match=f"RUNPATH cannot contain multiple.*{runpath}`."
+    ):
+        _ = ErtConfig.from_file_contents(
+            f"""\
+            NUM_REALIZATIONS 1
+            RUNPATH {runpath}
+            """
+        )
+
+
+@pytest.mark.parametrize(
+    "runpath",
+    [
+        "simulations/realization-%d/iter-%d/iter-%d",
+        "simulations/realization-%d/realization-%d/iter-%d/iter-%d",
+    ],
+)
+def test_that_more_than_two_printf_format_placeholders_is_invalid(runpath):
+    with pytest.raises(
+        ConfigValidationError,
+        match=f"RUNPATH cannot contain more than two.*{runpath}`.",
+    ):
+        _ = ErtConfig.from_file_contents(
+            f"""\
+            NUM_REALIZATIONS 1
+            RUNPATH {runpath}
+            """
+        )
 
 
 @pytest.mark.usefixtures("use_tmpdir")
@@ -617,7 +690,7 @@ def test_that_runpaths_are_raised_when_invalid(run_path, expected_raise, msg):
     "placeholder",
     ["<ERTCASE>", "<ERT-CASE>"],
 )
-def test_assert_ertcase_replaced_in_runpath(placeholder, make_run_path):
+def test_that_ertcase_is_replaced_in_runpath(placeholder, make_run_path):
     ert_config = ErtConfig.from_file_contents(
         dedent(
             f"""\
