@@ -337,6 +337,6 @@ def test_evaluate_ensemble_paths(
             queue.SimpleQueue(),
         )
 
-    base_path = tmp_path / "simulations"
-    expected_path = [str(base_path / expected) for expected in expected_path]
-    assert set(model.paths) == set(expected_path)
+        base_path = tmp_path / "simulations"
+        expected_path = [str(base_path / expected) for expected in expected_path]
+        assert set(model.paths) == set(expected_path)
