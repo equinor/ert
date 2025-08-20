@@ -140,6 +140,7 @@ def test_math_func_auto_scaled_controls(copy_math_func_test_data_to_tmp):
                 "upper_bound": 0.5,
             }
         ],
+        "simulator": {"queue_system": {"name": "local", "max_running": 2}},
     }
     config = EverestConfig.model_validate(config_dict)
 
@@ -168,11 +169,12 @@ def test_math_func_auto_scaled_objectives(copy_math_func_test_data_to_tmp):
     config = EverestConfig.load_file("config_multiobj.yml")
     config_dict = config.model_dump(exclude_none=True)
 
+    config_dict["simulator"] = {"queue_system": {"name": "local", "max_running": 2}}
+
     # Normalize only distance_p:
     config_dict["objective_functions"][0]["auto_scale"] = True
     config_dict["objective_functions"][0]["scale"] = 1.0
     config_dict["optimization"]["max_batch_num"] = 1
-
     config = EverestConfig.model_validate(config_dict)
     run_model = EverestRunModel.create(config)
     evaluator_server_config = EvaluatorServerConfig()
@@ -191,6 +193,8 @@ def test_math_func_auto_scaled_objectives(copy_math_func_test_data_to_tmp):
 def test_math_func_auto_scaled_constraints(copy_math_func_test_data_to_tmp):
     config = EverestConfig.load_file("config_advanced.yml")
     config_dict = config.model_dump(exclude_none=True)
+
+    config_dict["simulator"] = {"queue_system": {"name": "local", "max_running": 2}}
 
     # control number of batches, no need for full convergence:
     config_dict["optimization"]["convergence_tolerance"] = 1e-10
@@ -239,6 +243,8 @@ def test_that_math_func_violating_output_constraints_has_no_result(
     config = EverestConfig.load_file("config_advanced.yml")
     config_dict = config.model_dump(exclude_none=True)
 
+    config_dict["simulator"] = {"queue_system": {"name": "local", "max_running": 2}}
+
     # The first batch violates the output constraint:
     config_dict["optimization"]["max_batch_num"] = 1
     config_dict["controls"][0]["initial_guess"] = 0.05
@@ -257,6 +263,8 @@ def test_that_math_func_violating_output_constraints_has_a_result(
 ):
     config = EverestConfig.load_file("config_advanced.yml")
     config_dict = config.model_dump(exclude_none=True)
+
+    config_dict["simulator"] = {"queue_system": {"name": "local", "max_running": 2}}
 
     # The second batch does not violate the output constraint:
     config_dict["optimization"]["max_batch_num"] = 2
@@ -277,6 +285,8 @@ def test_that_math_func_violating_input_constraints_has_no_result(
     config = EverestConfig.load_file("config_advanced.yml")
     config_dict = config.model_dump(exclude_none=True)
 
+    config_dict["simulator"] = {"queue_system": {"name": "local", "max_running": 2}}
+
     # The first batch violates the input constraint:
     config_dict["optimization"]["max_batch_num"] = 1
     config_dict["controls"][0]["initial_guess"] = 0.5
@@ -295,6 +305,8 @@ def test_that_math_func_violating_input_constraints_has_a_result(
 ):
     config = EverestConfig.load_file("config_advanced.yml")
     config_dict = config.model_dump(exclude_none=True)
+
+    config_dict["simulator"] = {"queue_system": {"name": "local", "max_running": 2}}
 
     # The second batch does not violate the input constraint:
     config_dict["optimization"]["max_batch_num"] = 2
