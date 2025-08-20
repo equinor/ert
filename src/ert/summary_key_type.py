@@ -123,17 +123,17 @@ def is_rate(summary_variable: str) -> bool:
             SummaryKeyType.LOCAL_COMPLETION,
             SummaryKeyType.NETWORK,
         }:
-            return _match_keyword_vector(2, _rate_roots, summary_variable)
-        return _match_keyword_vector(1, _rate_roots, summary_variable)
+            return _match_rate_root(2, _rate_roots, summary_variable)
+        return _match_rate_root(1, _rate_roots, summary_variable)
 
     if key_type == SummaryKeyType.SEGMENT:
-        return _match_keyword_vector(1, _segment_rate_roots, summary_variable)
+        return _match_rate_root(1, _segment_rate_roots, summary_variable)
 
     if key_type == SummaryKeyType.INTER_REGION:
         # Region to region rates are identified by R*FR or R**FR
-        if _match_keyword_vector(2, ["FR"], summary_variable):
+        if _match_rate_root(2, ["FR"], summary_variable):
             return True
-        return _match_keyword_vector(3, ["FR"], summary_variable)
+        return _match_rate_root(3, ["FR"], summary_variable)
 
     return False
 
@@ -209,7 +209,7 @@ _segment_rate_roots = [  # see opm-flow-manual 2023-04 table 11.19
 ]
 
 
-def _match_keyword_vector(start: int, rate_roots: list[str], keyword: str) -> bool:
+def _match_rate_root(start: int, rate_roots: list[str], keyword: str) -> bool:
     if len(keyword) < start:
         return False
     return any(keyword[start:].startswith(key) for key in rate_roots)
