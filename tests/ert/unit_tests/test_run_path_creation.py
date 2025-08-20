@@ -823,27 +823,28 @@ def test_that_ertcase_is_replaced_in_runpath(placeholder, make_run_path):
 def save_zeros(prior_ensemble, num_realizations, dim_size):
     parameter_configs = prior_ensemble.experiment.parameter_configuration
     for config_node in parameter_configs.values():
-        for realization_nr in range(num_realizations):
-            if isinstance(config_node, SurfaceConfig):
+        if isinstance(config_node, SurfaceConfig):
+            for realization_nr in range(num_realizations):
                 prior_ensemble.save_parameters_numpy(
                     np.zeros(dim_size**2).reshape(-1, 1),
                     config_node.name,
                     np.array([realization_nr]),
                 )
-            elif isinstance(config_node, Field):
+        elif isinstance(config_node, Field):
+            for realization_nr in range(num_realizations):
                 prior_ensemble.save_parameters_numpy(
                     np.zeros(dim_size**3).reshape(-1, 1),
                     config_node.name,
                     np.array([realization_nr]),
                 )
-            elif isinstance(config_node, GenKwConfig):
-                prior_ensemble.save_parameters_numpy(
-                    np.zeros(1).reshape(-1, 1),
-                    config_node.name,
-                    np.array([realization_nr]),
-                )
-            else:
-                raise ValueError(f"unexpected {config_node}")
+        elif isinstance(config_node, GenKwConfig):
+            prior_ensemble.save_parameters_numpy(
+                np.zeros(2),
+                config_node.name,
+                np.array(range(num_realizations)),
+            )
+        else:
+            raise ValueError(f"unexpected {config_node}")
 
 
 @pytest.mark.usefixtures("use_tmpdir")

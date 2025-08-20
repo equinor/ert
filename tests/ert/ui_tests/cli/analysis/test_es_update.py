@@ -11,7 +11,6 @@ from xtgeo import RegularSurface, surface_from_file
 
 from ert.analysis._update_commons import _all_parameters
 from ert.config import ErtConfig, GenKwConfig
-from ert.config.gen_kw_config import TransformFunctionDefinition
 from ert.mode_definitions import ENSEMBLE_SMOOTHER_MODE
 from ert.storage import RealizationStorageState, open_storage
 from tests.ert.ui_tests.cli.run_cli import run_cli
@@ -20,12 +19,9 @@ from tests.ert.ui_tests.cli.run_cli import run_cli
 @pytest.fixture
 def uniform_parameter():
     return GenKwConfig(
-        name="PARAMETER",
-        forward_init=False,
-        transform_function_definitions=[
-            TransformFunctionDefinition("KEY1", "UNIFORM", [0, 1]),
-        ],
-        update=True,
+        name="KEY1",
+        group="PARAMETER",
+        distribution={"name": "uniform", "min": 0, "max": 1},
     )
 
 

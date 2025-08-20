@@ -1,3 +1,5 @@
+from collections import defaultdict
+
 from typing_extensions import TypedDict
 
 from ert.config import ErtConfig, Field, GenKwConfig, SurfaceConfig
@@ -17,6 +19,7 @@ class ErtSummary:
 
     def getParameters(self) -> tuple[list[str], int]:
         parameters = []
+        genkw_groups: dict[str, int] = defaultdict(int)
         count = 0
         for (
             key,
@@ -24,14 +27,17 @@ class ErtSummary:
         ) in self.ert_config.ensemble_config.parameter_configs.items():
             match config:
                 case GenKwConfig():
-                    parameters.append(f"{key} ({len(config)})")
-                    count += len(config)
+                    genkw_groups[config.group_name] += 1
+                    count += 1
                 case Field(nx=nx, ny=ny, nz=nz):
                     parameters.append(f"{key} ({nx}, {ny}, {nz})")
                     count += len(config)
                 case SurfaceConfig(ncol=ncol, nrow=nrow):
                     parameters.append(f"{key} ({ncol}, {nrow})")
                     count += len(config)
+        parameters += [
+            f"{group_name} ({cnt})" for group_name, cnt in genkw_groups.items()
+        ]
         return sorted(parameters, key=lambda k: k.lower()), count
 
     def getObservations(self) -> list[ObservationCount]:

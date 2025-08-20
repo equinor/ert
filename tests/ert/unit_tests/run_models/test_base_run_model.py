@@ -12,13 +12,7 @@ from unittest.mock import AsyncMock, MagicMock, patch
 import pytest
 from pydantic import ConfigDict
 
-from ert.config import (
-    ErtConfig,
-    GenKwConfig,
-    ModelConfig,
-    QueueConfig,
-)
-from ert.config.gen_kw_config import TransformFunctionDefinition
+from ert.config import ErtConfig, GenKwConfig, ModelConfig, QueueConfig
 from ert.ensemble_evaluator import EndEvent, EvaluatorServerConfig
 from ert.ensemble_evaluator.snapshot import EnsembleSnapshot
 from ert.run_models.run_model import RunModel, UserCancelled
@@ -605,17 +599,10 @@ def test_create_mask_from_failed_realizations_returns_initial_active_realization
     assert failed_realization_mask == initial_active_realizations
 
 
+# TODO remove this test?
 def test_run_model_logs_number_of_parameters(use_tmpdir):
-    tfds = [
-        TransformFunctionDefinition(name="a", param_name="NORMAL", values=[1, 2]),
-        TransformFunctionDefinition(name="b", param_name="NORMAL", values=[1, 2]),
-        TransformFunctionDefinition(name="c", param_name="NORMAL", values=[1, 2]),
-        TransformFunctionDefinition(name="d", param_name="NORMAL", values=[1, 2]),
-        TransformFunctionDefinition(name="e", param_name="NORMAL", values=[1, 2]),
-    ]
-
     parameters = GenKwConfig(
-        transform_function_definitions=tfds,
+        distribution={"name": "normal", "mean": 0, "std": 1},
         name="parameter_configuration",
         forward_init=False,
         update=True,
@@ -628,7 +615,7 @@ def test_run_model_logs_number_of_parameters(use_tmpdir):
         match = re.search(regex, log_str)
         num_param = int(match.group(1))
 
-        assert num_param == len(tfds)
+        assert num_param == 1
 
     with patch.object(Logger, "info", mock_logging):
         rm.log_at_startup()

@@ -8,7 +8,7 @@ import polars as pl
 
 from ert.utils import log_duration
 
-from .config import GenKwConfig
+from .config import DataSource, GenKwConfig
 from .storage import Ensemble
 
 logger = logging.getLogger(__name__)
@@ -22,6 +22,7 @@ def sample_prior(
     active_realizations: Iterable[int],
     random_seed: int,
     parameters: list[str] | None = None,
+    design_matrix_df: pl.DataFrame | None = None,
 ) -> None:
     """This function is responsible for getting the prior into storage,
     in the case of GEN_KW we sample the data and store it, and if INIT_FILES
@@ -41,23 +42,41 @@ def sample_prior(
             f"for realizations {active_realizations}"
         )
         if isinstance(config_node, GenKwConfig):
-            datasets = [
-                Ensemble.sample_parameter(
-                    config_node,
-                    realization_nr,
-                    random_seed=random_seed,
-                )
-                for realization_nr in active_realizations
-            ]
-            if datasets:
+            dataset: pl.DataFrame | None = None
+            if (
+                config_node.input_source == DataSource.DESIGN_MATRIX
+                and design_matrix_df is not None
+            ):
+                cols = {"realization", config_node.name}
+                missing = cols - set(design_matrix_df.columns)
+                if missing:
+                    raise KeyError(
+                        f"Design matrix is missing column(s): {', '.join(missing)}"
+                    )
+                dataset = design_matrix_df.select(
+                    ["realization", config_node.name]
+                ).filter(pl.col("realization").is_in(list(active_realizations)))
+                if dataset.is_empty():
+                    raise KeyError("Active realization mask is not in design matrix!")
+            elif config_node.input_source == DataSource.SAMPLED:
+                datasets = [
+                    Ensemble.sample_parameter(
+                        config_node,
+                        realization_nr,
+                        random_seed=random_seed,
+                    )
+                    for realization_nr in active_realizations
+                ]
+                if datasets:
+                    dataset = pl.concat(datasets, how="vertical")
+
+            if dataset is not None:
                 ensemble.save_parameters(
-                    parameter,
-                    realization=None,
-                    dataset=pl.concat(datasets, how="vertical"),
+                    dataset=dataset,
                 )
         else:
             for realization_nr in active_realizations:
                 ds = config_node.read_from_runpath(Path(), realization_nr, 0)
-                ensemble.save_parameters(parameter, realization_nr, ds)
+                ensemble.save_parameters(ds, parameter, realization_nr)
 
     ensemble.refresh_ensemble_state()

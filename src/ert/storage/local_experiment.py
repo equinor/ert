@@ -24,9 +24,7 @@ from ert.config import (
     SummaryConfig,
     SurfaceConfig,
 )
-from ert.config import (
-    Field as FieldConfig,
-)
+from ert.config import Field as FieldConfig
 from ert.config.parsing.context_values import ContextBoolEncoder
 
 from .mode import BaseMode, Mode, require_write
@@ -53,12 +51,10 @@ _responses_adapter = TypeAdapter(  # type: ignore
     ]
 )
 
-_parameters_adapter = TypeAdapter(
-    list[
-        Annotated[
-            (GenKwConfig | SurfaceConfig | FieldConfig | ExtParamConfig),
-            Field(discriminator="type"),
-        ]
+_parameters_adapter = TypeAdapter(  # type: ignore
+    Annotated[
+        (GenKwConfig | SurfaceConfig | FieldConfig | ExtParamConfig),
+        Field(discriminator="type"),
     ]
 )
 
@@ -377,10 +373,8 @@ class LocalExperiment(BaseMode):
     @cached_property
     def parameter_configuration(self) -> dict[str, ParameterConfig]:
         return {
-            instance.name: instance
-            for instance in _parameters_adapter.validate_python(
-                self.parameter_info.values()
-            )
+            name: _parameters_adapter.validate_python(cfg)
+            for name, cfg in self.parameter_info.items()
         }
 
     @cached_property

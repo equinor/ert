@@ -117,8 +117,6 @@ def test_and_benchmark_adaptive_localization_with_fields(
 
     for iens in range(prior_ensemble.ensemble_size):
         prior_ensemble.save_parameters(
-            param_group,
-            iens,
             xr.Dataset(
                 {
                     "values": xr.DataArray(
@@ -127,6 +125,8 @@ def test_and_benchmark_adaptive_localization_with_fields(
                     ),
                 }
             ),
+            param_group,
+            iens,
         )
 
         prior_ensemble.save_response(
