@@ -70,6 +70,14 @@ dependencies = [
     "graphite-maps",
     "surfio>=0.0.9",
     "fastexcel>=0.14.0", # extra dependency for polars (excel)
+    "websockets",
+    "progressbar2",
+    "ruamel.yaml",
+    "fastapi",
+    "decorator",
+    "colorama",
+    "ropt[pandas]>=0.22",
+    "ropt-dakota>=0.22",
 ]
 
 [project.scripts]
@@ -135,16 +143,6 @@ types = [
     "types-psutil",
     "types-setuptools",
     "types-networkx",
-]
-everest = [
-    "websockets",
-    "progressbar2",
-    "ruamel.yaml",
-    "fastapi",
-    "decorator",
-    "colorama",
-    "ropt[pandas]>=0.22",
-    "ropt-dakota>=0.22",
 ]
 
 [tool.setuptools]
