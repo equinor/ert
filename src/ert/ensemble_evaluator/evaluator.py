@@ -343,7 +343,7 @@ class EnsembleEvaluator:
                 self._scheduler.confirm_job_killed_by_evaluator(int(event.real))
 
             if type(event) is ForwardModelStepChecksum:
-                await self.forward_checksum(event)
+                await self._manifest_queue.put(event)
             else:
                 event = cast(FMEvent, event)
                 await self._events.put(event)
@@ -367,9 +367,6 @@ class EnsembleEvaluator:
                     logger.error(f"Unexpected error when listening to messages: {e}")
             except asyncio.CancelledError:
                 return
-
-    async def forward_checksum(self, event: ForwardModelStepChecksum) -> None:
-        await self._manifest_queue.put(event)
 
     async def _server(self) -> None:
         zmq_context = zmq.asyncio.Context()
@@ -404,6 +401,7 @@ class EnsembleEvaluator:
                 logger.warning(
                     "Not all dispatchers were disconnected when closing zmq server!"
                 )
+            await self._manifest_queue.join()
             await self._events.join()
             await self._complete_batch.wait()
             await self._batch_processing_queue.join()
