@@ -209,7 +209,7 @@ _segment_rate_roots = [  # see opm-flow-manual 2023-04 table 11.19
 ]
 
 
-def _match_keyword_vector(start: int, rate_keys: list[str], keyword: str) -> bool:
+def _match_keyword_vector(start: int, rate_roots: list[str], keyword: str) -> bool:
     if len(keyword) < start:
         return False
-    return any(keyword[start:].startswith(key) for key in rate_keys)
+    return any(keyword[start:].startswith(key) for key in rate_roots)
