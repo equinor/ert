@@ -118,7 +118,8 @@ def _generate_parameter_files(
             continue
         export_values = param.write_to_runpath(Path(run_path), iens, fs)
         if export_values:
-            exports.update(export_values)
+            for group, vals in export_values.items():
+                exports.setdefault(group, {}).update(vals)
         continue
 
     _value_export_txt(run_path, export_base_name, exports)

@@ -3,20 +3,22 @@ from __future__ import annotations
 import math
 import sys
 import warnings
-from typing import Any, Literal, Self
+from typing import Annotated, Any, Literal, Self, TypeVar
 
 import numpy as np
-from pydantic import BaseModel, field_validator, model_validator
+from pydantic import BaseModel, Field, field_validator, model_validator
 from scipy.stats import norm
 
 from .parsing import ConfigValidationError, ConfigWarning, ErrorInfo
+
+T = TypeVar("T", bound="TransSettingsValidation")
 
 
 class TransSettingsValidation(BaseModel):
     model_config = {"extra": "forbid"}
 
     @classmethod
-    def create(cls, *args: Any, **kwargs: Any) -> TransSettingsValidation:
+    def create(cls: type[T], *args: Any, **kwargs: Any) -> T:
         return cls(*args, **kwargs)
 
     @classmethod
@@ -330,7 +332,22 @@ class DerrfSettings(TransSettingsValidation):
         return float(result)
 
 
-DISTRIBUTION_CLASSES: dict[str, type[TransSettingsValidation]] = {
+DistributionSettings = Annotated[
+    UnifSettings
+    | LogNormalSettings
+    | LogUnifSettings
+    | DUnifSettings
+    | RawSettings
+    | ConstSettings
+    | NormalSettings
+    | TruncNormalSettings
+    | ErrfSettings
+    | DerrfSettings
+    | TriangularSettings,
+    Field(discriminator="name"),
+]
+
+DISTRIBUTION_CLASSES: dict[str, type[DistributionSettings]] = {
     "NORMAL": NormalSettings,
     "LOGNORMAL": LogNormalSettings,
     "UNIFORM": UnifSettings,
@@ -345,11 +362,10 @@ DISTRIBUTION_CLASSES: dict[str, type[TransSettingsValidation]] = {
 }
 
 
-def get_distribution(name: str, values: list[float]) -> Any:
+def get_distribution(name: str, values: list[float]) -> DistributionSettings:
     cls = DISTRIBUTION_CLASSES[name]
 
     param_names = cls.get_param_names()
-
     kwargs = dict(zip(param_names, values, strict=False))
 
     return cls.create(**kwargs)

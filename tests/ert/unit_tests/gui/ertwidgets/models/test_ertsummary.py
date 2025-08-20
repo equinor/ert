@@ -3,7 +3,6 @@ from unittest.mock import MagicMock
 import pytest
 
 from ert.config import Field, GenKwConfig, SurfaceConfig
-from ert.config.gen_kw_config import TransformFunctionDefinition
 from ert.field_utils import FieldFileFormat
 from ert.gui.ertwidgets.models.ertsummary import ErtSummary
 
@@ -17,22 +16,20 @@ def mock_ert(monkeypatch):
         "forward_model_2",
     ]
 
-    gen_kw = GenKwConfig(
-        name="KEY",
-        forward_init=False,
-        transform_function_definitions=[
-            TransformFunctionDefinition(
-                name="KEY1", param_name="UNIFORM", values=[0, 1]
-            ),
-            TransformFunctionDefinition(
-                name="KEY2", param_name="NORMAL", values=[0, 1]
-            ),
-            TransformFunctionDefinition(
-                name="KEY3", param_name="LOGNORMAL", values=[0, 1]
-            ),
-        ],
-        update=True,
-    )
+    gen_kws = {
+        "KEY_1": GenKwConfig(
+            name="KEY_1",
+            distribution={"name": "uniform", "min": 0, "max": 1},
+        ),
+        "KEY_2": GenKwConfig(
+            name="KEY_2",
+            distribution={"name": "normal", "mean": 0, "std": 1},
+        ),
+        "KEY_3": GenKwConfig(
+            name="KEY_3",
+            distribution={"name": "lognormal", "mean": 0, "std": 1},
+        ),
+    }
 
     surface = SurfaceConfig(
         name="some_name",
@@ -70,9 +67,8 @@ def mock_ert(monkeypatch):
 
     ert_mock.ensemble_config.parameter_configs = {
         "surface": surface,
-        "gen_kw": gen_kw,
         "field": field,
-    }
+    } | gen_kws
 
     yield ert_mock
 
@@ -84,7 +80,7 @@ def test_getForwardModels(mock_ert):
 
 
 def test_getParameters(mock_ert):
-    expected_list = ["field (10, 5, 3)", "gen_kw (3)", "surface (10, 7)"]
+    expected_list = ["DEFAULT (3)", "field (10, 5, 3)", "surface (10, 7)"]
     parameter_list, parameter_count = ErtSummary(mock_ert).getParameters()
     assert parameter_list == expected_list
     assert parameter_count == 223

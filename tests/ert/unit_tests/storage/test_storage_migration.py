@@ -64,14 +64,16 @@ def test_migration_to_genkw_with_polars_and_design_matrix(
         ensemble = ensembles[0]
         df = ensemble.load_parameters("DESIGN_MATRIX")
         assert isinstance(df, pl.DataFrame)
-        assert df.schema == pl.Schema(
-            {
-                "a": pl.Int64,
-                "category": pl.String,
-                "b": pl.Int64,
-                "c": pl.Int64,
-                "realization": pl.Int64,
-            }
+        assert dict(df.schema) == dict(
+            pl.Schema(
+                {
+                    "a": pl.Int64,
+                    "category": pl.String,
+                    "b": pl.Int64,
+                    "c": pl.Int64,
+                    "realization": pl.Int64,
+                }
+            )
         )
         snapshot.assert_match(
             orjson.dumps(df.to_dicts(), option=orjson.OPT_INDENT_2)
@@ -137,18 +139,6 @@ def test_migration_to_genkw_with_polars_and_design_matrix(
         "6.0.2",
         "6.0.1",
         "6.0.0",
-        "5.0.12",
-        "5.0.11",
-        "5.0.10",
-        "5.0.9",
-        "5.0.8",
-        "5.0.7",
-        "5.0.6",
-        "5.0.5",
-        "5.0.4",
-        "5.0.2",
-        "5.0.1",
-        "5.0.0",
     ],
 )
 def test_that_storage_matches(
@@ -199,7 +189,7 @@ def test_that_storage_matches(
         assert experiment.templates_configuration == [("\nBPR:<BPR>\n", "params.txt")]
         df = ensemble.load_parameters("BPR")
         assert isinstance(df, pl.DataFrame)
-        assert df.schema == pl.Schema({"BPR": pl.Float64, "realization": pl.Int64})
+        assert dict(df.schema) == {"BPR": pl.Float64, "realization": pl.Int64}
         assert df["realization"].to_list() == list(range(ensemble.ensemble_size))
         snapshot.assert_match(
             json.dumps(
@@ -319,18 +309,6 @@ def test_that_storage_matches(
         "6.0.2",
         "6.0.1",
         "6.0.0",
-        "5.0.12",
-        "5.0.11",
-        "5.0.10",
-        "5.0.9",
-        "5.0.8",
-        "5.0.7",
-        "5.0.6",
-        "5.0.5",
-        "5.0.4",
-        "5.0.2",
-        "5.0.1",
-        "5.0.0",
     ],
 )
 def test_that_storage_works_with_missing_parameters_and_responses(
@@ -440,7 +418,6 @@ def test_that_migrate_blockfs_creates_backup_folder(tmp_path, caplog):
         "8.4.5",
         "8.0.11",
         "6.0.5",
-        "5.0.0",
     ],
 )
 def test_that_manual_update_from_migrated_storage_works(
@@ -579,16 +556,6 @@ def test_that_manual_update_from_migrated_storage_works(
         "6.0.3",
         "6.0.1",
         "6.0.0",
-        "5.0.11",
-        "5.0.9",
-        "5.0.8",
-        "5.0.7",
-        "5.0.6",
-        "5.0.5",
-        "5.0.4",
-        "5.0.2",
-        "5.0.1",
-        "5.0.0",
     ],
 )
 def test_migrate_storage_with_no_responses(

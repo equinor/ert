@@ -3,9 +3,8 @@ import polars as pl
 import pytest
 from xlsxwriter import Workbook
 
-from ert.config import DesignMatrix, GenKwConfig
+from ert.config import DataSource, DesignMatrix, GenKwConfig
 from ert.config.design_matrix import DESIGN_MATRIX_GROUP
-from ert.config.gen_kw_config import TransformFunctionDefinition
 from tests.ert.conftest import _create_design_matrix
 
 
@@ -95,7 +94,7 @@ def test_merge_multiple_occurrences(
             design_matrix_1.merge_with_other(design_matrix_2)
     else:
         design_matrix_1.merge_with_other(design_matrix_2)
-        design_params = design_matrix_1.parameter_configuration
+        design_params = [cfg.name for cfg in design_matrix_1.parameter_configurations]
         assert all(param in design_params for param in ("a", "b", "c", "d"))
         assert design_matrix_1.active_realizations == [True, True, True]
         df = design_matrix_1.design_matrix_df
@@ -106,50 +105,60 @@ def test_merge_multiple_occurrences(
 
 
 @pytest.mark.parametrize(
-    "parameters, error_msg",
+    "parameters, num_configs, input_source, group_name",
     [
         pytest.param(
-            {"COEFFS": ["a", "b"]},
-            "",
+            ["a", "b"],
+            2,
+            {"a": DataSource.DESIGN_MATRIX, "b": DataSource.DESIGN_MATRIX},
+            {"a": "COEFFS", "b": "COEFFS"},
             id="genkw_replaced",
         ),
         pytest.param(
-            {"COEFFS": ["a"]},
-            "Overlapping parameter names found in design matrix!",
-            id="ValidationErrorOverlapping",
+            ["aa", "bb"],
+            4,
+            {
+                "a": DataSource.DESIGN_MATRIX,
+                "b": DataSource.DESIGN_MATRIX,
+                "aa": DataSource.SAMPLED,
+                "bb": DataSource.SAMPLED,
+            },
+            {
+                "a": DESIGN_MATRIX_GROUP,
+                "b": DESIGN_MATRIX_GROUP,
+                "aa": "COEFFS",
+                "bb": "COEFFS",
+            },
+            id="genkw_added",
         ),
         pytest.param(
-            {"COEFFS": ["aa", "bb"], "COEFFS2": ["cc", "dd"]},
-            "",
-            id="DESIGN_MATRIX_GROUP",
-        ),
-        pytest.param(
-            {"COEFFS": ["a", "b"], "COEFFS2": ["a", "b"]},
-            (
-                "Multiple overlapping groups with design matrix "
-                "found in existing parameters!"
-            ),
-            id="ValidationErrorMultipleGroups",
+            ["a", "bb"],
+            3,
+            {
+                "a": DataSource.DESIGN_MATRIX,
+                "b": DataSource.DESIGN_MATRIX,
+                "bb": DataSource.SAMPLED,
+            },
+            {
+                "a": "COEFFS",
+                "b": DESIGN_MATRIX_GROUP,
+                "bb": "COEFFS",
+            },
+            id="genkw_added_and_replaced",
         ),
     ],
 )
-def test_read_and_merge_with_existing_parameters(tmp_path, parameters, error_msg):
-    extra_genkw_config = []
-    if parameters:
-        for group_name in parameters:
-            extra_genkw_config.append(
-                GenKwConfig(
-                    name=group_name,
-                    forward_init=False,
-                    transform_function_definitions=[
-                        TransformFunctionDefinition(
-                            name=param, param_name="UNIFORM", values=[0, 1]
-                        )
-                        for param in parameters[group_name]
-                    ],
-                    update=True,
-                )
-            )
+def test_read_and_merge_with_existing_parameters(
+    tmp_path, parameters, num_configs, input_source, group_name
+):
+    genkw_configs = [
+        GenKwConfig(
+            name=param,
+            group="COEFFS",
+            distribution={"name": "uniform", "min": 0, "max": 1},
+        )
+        for param in parameters
+    ]
 
     realizations = [0, 1, 2]
     design_path = tmp_path / "design_matrix.xlsx"
@@ -163,21 +172,16 @@ def test_read_and_merge_with_existing_parameters(tmp_path, parameters, error_msg
     default_sheet_df = pl.DataFrame([["a", 1], ["b", 4]], orient="row")
     _create_design_matrix(design_path, design_matrix_df, default_sheet_df)
     design_matrix = DesignMatrix(design_path, "DesignSheet", "DefaultSheet")
-    if error_msg:
-        with pytest.raises(ValueError, match=error_msg):
-            design_matrix.merge_with_existing_parameters(extra_genkw_config)
-    elif len(parameters) == 1:
-        new_config_parameters, design_group = (
-            design_matrix.merge_with_existing_parameters(extra_genkw_config)
+    new_config_parameters = design_matrix.merge_with_existing_parameters(genkw_configs)
+    assert len(new_config_parameters) == num_configs
+    for config in new_config_parameters:
+        assert config.name in input_source
+        assert config.input_source == input_source[config.name], (
+            f"{config} mismatch in input source"
         )
-        assert len(new_config_parameters) == 0
-        assert design_group.name == "COEFFS"
-    elif len(parameters) == 2:
-        new_config_parameters, design_group = (
-            design_matrix.merge_with_existing_parameters(extra_genkw_config)
+        assert config.group == group_name[config.name], (
+            f"{config} mismatch in group name"
         )
-        assert len(new_config_parameters) == 2
-        assert design_group.name == DESIGN_MATRIX_GROUP
 
 
 def test_reading_design_matrix(tmp_path):
@@ -196,7 +200,7 @@ def test_reading_design_matrix(tmp_path):
     )
     _create_design_matrix(design_path, design_matrix_df, default_sheet_df)
     design_matrix = DesignMatrix(design_path, "DesignSheet", "DefaultSheet")
-    design_params = design_matrix.parameter_configuration
+    design_params = [cfg.name for cfg in design_matrix.parameter_configurations]
     assert all(param in design_params for param in ("a", "b", "c", "one", "d"))
     assert design_matrix.active_realizations == [True, True, False, False, True]
 

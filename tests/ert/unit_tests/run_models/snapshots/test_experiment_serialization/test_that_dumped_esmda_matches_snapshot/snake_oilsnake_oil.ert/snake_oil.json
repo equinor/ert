@@ -148,91 +148,133 @@
   "parameter_configuration": [
     {
       "type": "gen_kw",
-      "name": "SNAKE_OIL_PARAM",
+      "name": "OP1_PERSISTENCE",
       "forward_init": false,
       "update": true,
-      "transform_function_definitions": [
-        {
-          "name": "OP1_PERSISTENCE",
-          "param_name": "UNIFORM",
-          "values": [
-            "0.01",
-            "0.4"
-          ]
-        },
-        {
-          "name": "OP1_OCTAVES",
-          "param_name": "UNIFORM",
-          "values": [
-            "3",
-            "5"
-          ]
-        },
-        {
-          "name": "OP1_DIVERGENCE_SCALE",
-          "param_name": "UNIFORM",
-          "values": [
-            "0.25",
-            "1.25"
-          ]
-        },
-        {
-          "name": "OP1_OFFSET",
-          "param_name": "UNIFORM",
-          "values": [
-            "-0.1",
-            "0.1"
-          ]
-        },
-        {
-          "name": "OP2_PERSISTENCE",
-          "param_name": "UNIFORM",
-          "values": [
-            "0.1",
-            "0.6"
-          ]
-        },
-        {
-          "name": "OP2_OCTAVES",
-          "param_name": "UNIFORM",
-          "values": [
-            "5",
-            "12"
-          ]
-        },
-        {
-          "name": "OP2_DIVERGENCE_SCALE",
-          "param_name": "UNIFORM",
-          "values": [
-            "0.5",
-            "1.5"
-          ]
-        },
-        {
-          "name": "OP2_OFFSET",
-          "param_name": "UNIFORM",
-          "values": [
-            "-0.2",
-            "0.2"
-          ]
-        },
-        {
-          "name": "BPR_555_PERSISTENCE",
-          "param_name": "UNIFORM",
-          "values": [
-            "0.1",
-            "0.5"
-          ]
-        },
-        {
-          "name": "BPR_138_PERSISTENCE",
-          "param_name": "UNIFORM",
-          "values": [
-            "0.2",
-            "0.7"
-          ]
-        }
-      ]
+      "distribution": {
+        "name": "uniform",
+        "min": 0.01,
+        "max": 0.4
+      },
+      "group": "SNAKE_OIL_PARAM",
+      "input_source": "sampled"
+    },
+    {
+      "type": "gen_kw",
+      "name": "OP1_OCTAVES",
+      "forward_init": false,
+      "update": true,
+      "distribution": {
+        "name": "uniform",
+        "min": 3.0,
+        "max": 5.0
+      },
+      "group": "SNAKE_OIL_PARAM",
+      "input_source": "sampled"
+    },
+    {
+      "type": "gen_kw",
+      "name": "OP1_DIVERGENCE_SCALE",
+      "forward_init": false,
+      "update": true,
+      "distribution": {
+        "name": "uniform",
+        "min": 0.25,
+        "max": 1.25
+      },
+      "group": "SNAKE_OIL_PARAM",
+      "input_source": "sampled"
+    },
+    {
+      "type": "gen_kw",
+      "name": "OP1_OFFSET",
+      "forward_init": false,
+      "update": true,
+      "distribution": {
+        "name": "uniform",
+        "min": -0.1,
+        "max": 0.1
+      },
+      "group": "SNAKE_OIL_PARAM",
+      "input_source": "sampled"
+    },
+    {
+      "type": "gen_kw",
+      "name": "OP2_PERSISTENCE",
+      "forward_init": false,
+      "update": true,
+      "distribution": {
+        "name": "uniform",
+        "min": 0.1,
+        "max": 0.6
+      },
+      "group": "SNAKE_OIL_PARAM",
+      "input_source": "sampled"
+    },
+    {
+      "type": "gen_kw",
+      "name": "OP2_OCTAVES",
+      "forward_init": false,
+      "update": true,
+      "distribution": {
+        "name": "uniform",
+        "min": 5.0,
+        "max": 12.0
+      },
+      "group": "SNAKE_OIL_PARAM",
+      "input_source": "sampled"
+    },
+    {
+      "type": "gen_kw",
+      "name": "OP2_DIVERGENCE_SCALE",
+      "forward_init": false,
+      "update": true,
+      "distribution": {
+        "name": "uniform",
+        "min": 0.5,
+        "max": 1.5
+      },
+      "group": "SNAKE_OIL_PARAM",
+      "input_source": "sampled"
+    },
+    {
+      "type": "gen_kw",
+      "name": "OP2_OFFSET",
+      "forward_init": false,
+      "update": true,
+      "distribution": {
+        "name": "uniform",
+        "min": -0.2,
+        "max": 0.2
+      },
+      "group": "SNAKE_OIL_PARAM",
+      "input_source": "sampled"
+    },
+    {
+      "type": "gen_kw",
+      "name": "BPR_555_PERSISTENCE",
+      "forward_init": false,
+      "update": true,
+      "distribution": {
+        "name": "uniform",
+        "min": 0.1,
+        "max": 0.5
+      },
+      "group": "SNAKE_OIL_PARAM",
+      "input_source": "sampled"
+    },
+    {
+      "type": "gen_kw",
+      "name": "BPR_138_PERSISTENCE",
+      "forward_init": false,
+      "update": true,
+      "distribution": {
+        "name": "uniform",
+        "min": 0.2,
+        "max": 0.7
+      },
+      "group": "SNAKE_OIL_PARAM",
+      "input_source": "sampled"
     }
   ],
   "response_configuration": [

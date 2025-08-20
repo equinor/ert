@@ -14,7 +14,6 @@ from ert.analysis.event import (
 from ert.config import (
     DesignMatrix,
     ESSettings,
-    GenKwConfig,
     HookRuntime,
     ObservationSettings,
     ParameterConfig,
@@ -171,11 +170,9 @@ class UpdateRunModel(RunModel):
         parameters_config: list[ParameterConfig],
         design_matrix: DesignMatrix | None,
         rerun_failed_realizations: bool,
-    ) -> tuple[list[ParameterConfig], DesignMatrix | None, GenKwConfig | None]:
-        parameters_config, design_matrix, design_matrix_group = (
-            super()._merge_parameters_from_design_matrix(
-                parameters_config, design_matrix, rerun_failed_realizations
-            )
+    ) -> tuple[list[ParameterConfig], DesignMatrix | None]:
+        parameters_config, design_matrix = super()._merge_parameters_from_design_matrix(
+            parameters_config, design_matrix, rerun_failed_realizations
         )
 
         if design_matrix and not any(p.update for p in parameters_config):
@@ -183,4 +180,4 @@ class UpdateRunModel(RunModel):
                 "No parameters to update as all parameters were set to update:false!"
             )
 
-        return parameters_config, design_matrix, design_matrix_group
+        return parameters_config, design_matrix

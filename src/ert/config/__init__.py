@@ -25,10 +25,10 @@ from .forward_model_step import (
     ForwardModelStepWarning,
 )
 from .gen_data_config import GenDataConfig
-from .gen_kw_config import GenKwConfig, PriorDict, TransformFunction
+from .gen_kw_config import DataSource, GenKwConfig, PriorDict
 from .lint_file import lint_file
 from .model_config import ModelConfig
-from .parameter_config import ParameterConfig, ParameterMetadata
+from .parameter_config import ParameterCardinality, ParameterConfig, ParameterMetadata
 from .parsing import (
     ConfigValidationError,
     ConfigWarning,
@@ -74,6 +74,7 @@ __all__ = [
     "AnalysisModule",
     "ConfigValidationError",
     "ConfigWarning",
+    "DataSource",
     "DesignMatrix",
     "ESSettings",
     "EnsembleConfig",
@@ -109,6 +110,7 @@ __all__ = [
     "ObservationSettings",
     "ObservationType",
     "OutlierSettings",
+    "ParameterCardinality",
     "ParameterConfig",
     "ParameterMetadata",
     "PostExperimentFixtures",
@@ -125,7 +127,6 @@ __all__ = [
     "ResponseMetadata",
     "SummaryConfig",
     "SurfaceConfig",
-    "TransformFunction",
     "WarningInfo",
     "Workflow",
     "WorkflowConfigs",

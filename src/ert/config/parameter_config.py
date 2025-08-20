@@ -1,7 +1,8 @@
 from __future__ import annotations
 
 from abc import abstractmethod
-from collections.abc import Iterator
+from collections.abc import Callable, Iterator
+from enum import StrEnum, auto
 from hashlib import sha256
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, Literal
@@ -16,6 +17,19 @@ if TYPE_CHECKING:
     import numpy.typing as npt
 
     from ert.storage import Ensemble
+
+
+class ParameterCardinality(StrEnum):
+    """
+    multiple_configs_per_ensemble_dataset: multiple config instances per group, one
+    dataset per ensemble
+
+    one_config_per_realization_dataset: one config instance per group, one
+    dataset per realization
+    """
+
+    multiple_configs_per_ensemble_dataset = auto()
+    one_config_per_realization_dataset = auto()
 
 
 class ParameterMetadata(BaseModel):
@@ -102,7 +116,7 @@ class ParameterConfig(BaseModel):
             # Converts to standard python scalar due to mypy
             realization_int = int(realization)
             ds = source_ensemble.load_parameters(self.name, realization_int)
-            target_ensemble.save_parameters(self.name, realization_int, ds)
+            target_ensemble.save_parameters(ds, self.name, realization_int)
 
     @abstractmethod
     def load_parameters(
@@ -120,11 +134,22 @@ class ParameterConfig(BaseModel):
         Often a neighbourhood graph.
         """
 
+    @property
+    def cardinality(self) -> ParameterCardinality:
+        return ParameterCardinality.one_config_per_realization_dataset
+
     def save_experiment_data(
         self,
         experiment_path: Path,
     ) -> None:
         pass
+
+    @property
+    def group_name(self) -> str:
+        return self.name
+
+    def transform_data(self) -> Callable[[float], float]:
+        return lambda x: x
 
     def sample_value(
         self,
@@ -156,18 +181,15 @@ class ParameterConfig(BaseModel):
         before generating a single sample, enhancing efficiency by avoiding the
         generation of large, unused sample sets.
         """
-        parameter_values = []
-        for key in self.parameter_keys:
-            key_hash = sha256(
-                global_seed.encode("utf-8") + f"{self.name}:{key}".encode()
-            )
-            seed = np.frombuffer(key_hash.digest(), dtype="uint32")
-            rng = np.random.default_rng(seed)
+        key_hash = sha256(
+            global_seed.encode("utf-8") + f"{self.group_name}:{self.name}".encode()
+        )
+        seed = np.frombuffer(key_hash.digest(), dtype="uint32")
+        rng = np.random.default_rng(seed)
 
-            # Advance the RNG state to the realization point
-            rng.standard_normal(realization)
+        # Advance the RNG state to the realization point
+        rng.standard_normal(realization)
 
-            # Generate a single sample
-            value = rng.standard_normal(1)
-            parameter_values.append(value[0])
-        return np.array(parameter_values)
+        # Generate a single sample
+        value = rng.standard_normal(1)
+        return np.array([value[0]])
