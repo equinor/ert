@@ -123,11 +123,11 @@ def is_rate(summary_variable: str) -> bool:
             SummaryKeyType.LOCAL_COMPLETION,
             SummaryKeyType.NETWORK,
         }:
-            return _match_keyword_vector(2, rate_keys, summary_variable)
-        return _match_keyword_vector(1, rate_keys, summary_variable)
+            return _match_keyword_vector(2, _rate_roots, summary_variable)
+        return _match_keyword_vector(1, _rate_roots, summary_variable)
 
     if key_type == SummaryKeyType.SEGMENT:
-        return _match_keyword_vector(1, seg_rate_keys, summary_variable)
+        return _match_keyword_vector(1, _segment_rate_roots, summary_variable)
 
     if key_type == SummaryKeyType.INTER_REGION:
         # Region to region rates are identified by R*FR or R**FR
@@ -138,7 +138,7 @@ def is_rate(summary_variable: str) -> bool:
     return False
 
 
-rate_keys = [
+_rate_roots = [  # see opm-flow-manual 2023-04 table 11.8, 11.9 & 11.14
     "OPR",
     "OIR",
     "OVPR",
@@ -194,7 +194,7 @@ rate_keys = [
     "GLR",
 ]
 
-seg_rate_keys = [
+_segment_rate_roots = [  # see opm-flow-manual 2023-04 table 11.19
     "OFR",
     "GFR",
     "WFR",
