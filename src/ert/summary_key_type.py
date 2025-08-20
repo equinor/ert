@@ -107,33 +107,28 @@ def is_rate(summary_variable: str) -> bool:
     <https://opm-project.org/wp-content/uploads/2023/06/OPM_Flow_Reference_Manual_2023-04_Rev-0_Reduced.pdf>`
     table 11.4 for details.
     """
-    key_type = SummaryKeyType.from_variable(summary_variable)
-    if key_type in {
-        SummaryKeyType.WELL,
-        SummaryKeyType.GROUP,
-        SummaryKeyType.FIELD,
-        SummaryKeyType.REGION,
-        SummaryKeyType.COMPLETION,
-        SummaryKeyType.LOCAL_WELL,
-        SummaryKeyType.LOCAL_COMPLETION,
-        SummaryKeyType.NETWORK,
-    }:
-        if key_type in {
-            SummaryKeyType.LOCAL_WELL,
-            SummaryKeyType.LOCAL_COMPLETION,
-            SummaryKeyType.NETWORK,
-        }:
+    match SummaryKeyType.from_variable(summary_variable):
+        case (
+            SummaryKeyType.WELL
+            | SummaryKeyType.GROUP
+            | SummaryKeyType.FIELD
+            | SummaryKeyType.REGION
+            | SummaryKeyType.COMPLETION
+        ):
+            return _match_rate_root(1, _rate_roots, summary_variable)
+        case (
+            SummaryKeyType.LOCAL_WELL
+            | SummaryKeyType.LOCAL_COMPLETION
+            | SummaryKeyType.NETWORK
+        ):
             return _match_rate_root(2, _rate_roots, summary_variable)
-        return _match_rate_root(1, _rate_roots, summary_variable)
-
-    if key_type == SummaryKeyType.SEGMENT:
-        return _match_rate_root(1, _segment_rate_roots, summary_variable)
-
-    if key_type == SummaryKeyType.INTER_REGION:
-        # Region to region rates are identified by R*FR or R**FR
-        if _match_rate_root(2, ["FR"], summary_variable):
-            return True
-        return _match_rate_root(3, ["FR"], summary_variable)
+        case SummaryKeyType.SEGMENT:
+            return _match_rate_root(1, _segment_rate_roots, summary_variable)
+        case SummaryKeyType.INTER_REGION:
+            # Region to region rates are identified by R*FR or R**FR
+            return _match_rate_root(2, ["FR"], summary_variable) or _match_rate_root(
+                3, ["FR"], summary_variable
+            )
 
     return False
 
@@ -187,11 +182,11 @@ _rate_roots = [  # see opm-flow-manual 2023-04 table 11.8, 11.9 & 11.14
     "SPR",
     "TIR",
     "TPR",
-    "GOR",
-    "WCT",
-    "OGR",
-    "WGR",
-    "GLR",
+    "GOR",  # dimensionless but considered a rate, as the ratio of two rates
+    "WCT",  # dimensionless but considered a rate, as the ratio of two rates
+    "OGR",  # dimensionless but considered a rate, as the ratio of two rates
+    "WGR",  # dimensionless but considered a rate, as the ratio of two rates
+    "GLR",  # dimensionless but considered a rate, as the ratio of two rates
 ]
 
 _segment_rate_roots = [  # see opm-flow-manual 2023-04 table 11.19
@@ -202,10 +197,10 @@ _segment_rate_roots = [  # see opm-flow-manual 2023-04 table 11.19
     "SFR",
     "TFR",
     "CVPR",
-    "WCT",
-    "GOR",
-    "OGR",
-    "WGR",
+    "WCT",  # dimensionless but considered a rate, as the ratio of two rates
+    "GOR",  # dimensionless but considered a rate, as the ratio of two rates
+    "OGR",  # dimensionless but considered a rate, as the ratio of two rates
+    "WGR",  # dimensionless but considered a rate, as the ratio of two rates
 ]
 
 
