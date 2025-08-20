@@ -183,8 +183,8 @@ def _match_keyword_string(start: int, rate_string: str, keyword: str) -> bool:
     return keyword[start:].startswith(rate_string)
 
 
-def is_rate(key: str) -> bool:
-    key_type = SummaryKeyType.from_variable(key)
+def is_rate(summary_variable: str) -> bool:
+    key_type = SummaryKeyType.from_variable(summary_variable)
     if key_type in {
         SummaryKeyType.WELL,
         SummaryKeyType.GROUP,
@@ -200,16 +200,16 @@ def is_rate(key: str) -> bool:
             SummaryKeyType.LOCAL_COMPLETION,
             SummaryKeyType.NETWORK,
         }:
-            return _match_keyword_vector(2, rate_keys, key)
-        return _match_keyword_vector(1, rate_keys, key)
+            return _match_keyword_vector(2, rate_keys, summary_variable)
+        return _match_keyword_vector(1, rate_keys, summary_variable)
 
     if key_type == SummaryKeyType.SEGMENT:
-        return _match_keyword_vector(1, seg_rate_keys, key)
+        return _match_keyword_vector(1, seg_rate_keys, summary_variable)
 
     if key_type == SummaryKeyType.INTER_REGION:
         # Region to region rates are identified by R*FR or R**FR
-        if _match_keyword_string(2, "FR", key):
+        if _match_keyword_string(2, "FR", summary_variable):
             return True
-        return _match_keyword_string(3, "FR", key)
+        return _match_keyword_string(3, "FR", summary_variable)
 
     return False
