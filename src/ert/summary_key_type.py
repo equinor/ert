@@ -131,9 +131,9 @@ def is_rate(summary_variable: str) -> bool:
 
     if key_type == SummaryKeyType.INTER_REGION:
         # Region to region rates are identified by R*FR or R**FR
-        if _match_keyword_string(2, "FR", summary_variable):
+        if _match_keyword_vector(2, ["FR"], summary_variable):
             return True
-        return _match_keyword_string(3, "FR", summary_variable)
+        return _match_keyword_vector(3, ["FR"], summary_variable)
 
     return False
 
@@ -213,9 +213,3 @@ def _match_keyword_vector(start: int, rate_keys: list[str], keyword: str) -> boo
     if len(keyword) < start:
         return False
     return any(keyword[start:].startswith(key) for key in rate_keys)
-
-
-def _match_keyword_string(start: int, rate_string: str, keyword: str) -> bool:
-    if len(keyword) < start:
-        return False
-    return keyword[start:].startswith(rate_string)
