@@ -161,7 +161,7 @@ def test_that_multiple_everest_clients_can_connect_to_server(
 
     config_path = Path(path) / config_file
     config_content = yaml.safe_load(config_path.read_text(encoding="utf-8"))
-    config_content["simulator"] = {"queue_system": {"name": "local"}}
+    config_content["simulator"] = {"queue_system": {"name": "local", "max_running": 2}}
     config_path.write_text(
         yaml.dump(config_content, default_flow_style=False), encoding="utf-8"
     )

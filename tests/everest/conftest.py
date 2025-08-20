@@ -17,6 +17,7 @@ import yaml
 
 import ert
 import everest
+from ert.config.queue_config import LocalQueueOptions
 from ert.ensemble_evaluator import EvaluatorServerConfig
 from ert.run_models import StatusEvents
 from ert.run_models.event import status_event_from_json, status_event_to_json
@@ -214,6 +215,7 @@ def cached_example(pytestconfig):
 
             shutil.copytree(config_path.parent, my_tmpdir / "everest")
             config = EverestConfig.load_file(my_tmpdir / "everest" / config_file)
+            config.simulator.queue_system = LocalQueueOptions(max_running=2)
             status_queue: queue.SimpleQueue[StatusEvents] = queue.SimpleQueue()
             run_model = EverestRunModel.create(config, status_queue=status_queue)
             evaluator_server_config = EvaluatorServerConfig()

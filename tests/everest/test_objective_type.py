@@ -27,6 +27,7 @@ def test_objective_type(copy_math_func_test_data_to_tmp):
                 "--target 0.5 0.5 0.5 --out stddev"
             ),
         ],
+        "simulator": {"queue_system": {"name": "local", "max_running": 2}},
     }
     config = EverestConfig.model_validate(config_dict)
     # Act
