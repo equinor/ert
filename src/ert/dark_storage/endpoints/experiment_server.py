@@ -240,9 +240,7 @@ class ExperimentRunner:
                 lambda: run_model.start_simulations_thread(
                     EvaluatorServerConfig()
                     if run_model.queue_config.queue_system == QueueSystem.LOCAL
-                    else EvaluatorServerConfig(
-                        port_range=(49152, 51819), use_ipc_protocol=False
-                    )
+                    else EvaluatorServerConfig(use_ipc_protocol=False)
                 ),
             )
             while True:
