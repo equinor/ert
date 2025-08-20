@@ -133,6 +133,9 @@ def is_rate(summary_variable: str) -> bool:
     return False
 
 
+__all__ = ["SummaryKeyType", "is_rate"]
+
+
 _rate_roots = [  # see opm-flow-manual 2023-04 table 11.8, 11.9 & 11.14
     "OPR",
     "OIR",
