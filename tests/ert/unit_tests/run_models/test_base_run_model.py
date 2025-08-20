@@ -66,7 +66,7 @@ def test_run_model_does_not_support_rerun_failed_realizations(minimum_case):
         active_realizations=[True],
         forward_model_steps=minimum_case.forward_model_steps,
     )
-    assert not brm.supports_rerunning_failed_realizations
+    assert not brm.config.supports_rerunning_failed_realizations
 
 
 def test_status_when_rerunning_on_non_rerunnable_model(use_tmpdir):

@@ -1,8 +1,7 @@
 from __future__ import annotations
 
-from pydantic import Field
-
 from ert.run_models import EnsembleExperiment
+from ert.run_models.experiment_configs import SingleTestRunConfig
 
 SINGLE_TEST_RUN_GROUP = "Forward model evaluation"
 
@@ -15,8 +14,7 @@ class SingleTestRun(EnsembleExperiment):
     2) Only a <b>single realization</b> (realization-0) is run<br>
     """
 
-    active_realizations: list[bool] = Field(default_factory=lambda: [True])
-    minimum_required_realizations: int = 1
+    config: SingleTestRunConfig
 
     @classmethod
     def name(cls) -> str:

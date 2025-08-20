@@ -279,7 +279,7 @@ class EverestRunModel(RunModel):
         return self._exit_code
 
     def __repr__(self) -> str:
-        return f"EverestRunModel(config={self.user_config_file})"
+        return f"EverestRunModel(config={self.config.user_config_file})"
 
     def start_simulations_thread(
         self,
@@ -431,7 +431,7 @@ class EverestRunModel(RunModel):
             self.output_constraints,
             self.optimization,
             self.model,
-            self.random_seed,
+            self.config.random_seed,
             self.optimization_output_dir,
         )
         transforms = (
@@ -729,18 +729,18 @@ class EverestRunModel(RunModel):
         ensemble: Ensemble,
         sim_to_model_realization: list[int],
     ) -> list[RunArg]:
-        substitutions = self.substitutions
+        substitutions = self.config.substitutions
         self.active_realizations = [True] * len(sim_to_model_realization)
         for sim_id, model_realization in enumerate(sim_to_model_realization):
             substitutions[f"<GEO_ID_{sim_id}_{ensemble.iteration}>"] = str(
                 int(model_realization)
             )
         run_paths = Runpaths(
-            jobname_format=self.runpath_config.jobname_format_string,
-            runpath_format=self.runpath_config.runpath_format_string,
-            filename=str(self.runpath_file),
+            jobname_format=self.config.runpath_config.jobname_format_string,
+            runpath_format=self.config.runpath_config.runpath_format_string,
+            filename=str(self.config.runpath_file),
             substitutions=substitutions,
-            eclbase=self.runpath_config.eclbase_format_string,
+            eclbase=self.config.runpath_config.eclbase_format_string,
         )
         return create_run_arguments(
             run_paths,

@@ -57,6 +57,7 @@ from ert.run_models import (
     MultipleDataAssimilation,
     create_model,
 )
+from ert.run_models.experiment_configs import MultipleDataAssimilationConfig
 from ert.storage import open_storage
 
 
@@ -436,7 +437,7 @@ def multidass_strategy(_):
     return {
         "restart_run": False,
         "prior_ensemble_id": None,
-        "weights": MultipleDataAssimilation.default_weights,
+        "weights": MultipleDataAssimilationConfig.default_weights,
     }
 
 
@@ -678,8 +679,8 @@ def _create_and_verify_runmodel_snapshot(config, snapshot, cli_args, case):
     runmodel = create_model(config, cli_args, queue.SimpleQueue())
 
     # Override these to avoid user time/env-specifics in snapshots
-    runmodel.queue_config.queue_options.job_script = "fm_dispatch.py"
-    runmodel.queue_config.queue_options.activate_script = "activate"
+    runmodel.config.queue_config.queue_options.job_script = "fm_dispatch.py"
+    runmodel.config.queue_config.queue_options.activate_script = "activate"
     runmodel.substitutions["<DATE>"] = "2000-01-01"
 
     serialized = runmodel.model_dump_json(indent=2) + "\n"

@@ -199,15 +199,15 @@ def test_setup_multiple_data_assimilation(tmp_path):
         queue.SimpleQueue(),
     )
     assert isinstance(model, MultipleDataAssimilation)
-    assert model.weights == "6,4,2"
+    assert model.config.weights == "6,4,2"
     assert model._parsed_weights == MultipleDataAssimilation.parse_weights("6,4,2")
     assert (
         model.active_realizations
         == [True] * 5 + [False] * 3 + [True] * 1 + [False] * 91
     )
-    assert model.target_ensemble == "test_case_%d"
-    assert model.prior_ensemble_id == "b272fe09-83ac-4744-b667-9a0a5415420b"
-    assert model.restart_run is False
+    assert model.config.target_ensemble == "test_case_%d"
+    assert model.config.prior_ensemble_id == "b272fe09-83ac-4744-b667-9a0a5415420b"
+    assert model.config.restart_run is False
 
 
 @pytest.mark.parametrize(

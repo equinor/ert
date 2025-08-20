@@ -18,7 +18,7 @@ from collections import defaultdict
 from collections.abc import Callable, Generator, MutableSequence
 from contextlib import contextmanager
 from pathlib import Path
-from typing import Any, ClassVar, Protocol
+from typing import Any, Protocol
 
 import numpy as np
 from pydantic import BaseModel, PrivateAttr
@@ -27,14 +27,10 @@ from _ert.events import EEEvent, EESnapshot, EESnapshotUpdate
 from ert.config import (
     ConfigValidationError,
     DesignMatrix,
-    ForwardModelStep,
     GenKwConfig,
-    HookRuntime,
     ModelConfig,
     ParameterConfig,
-    QueueConfig,
     QueueSystem,
-    Workflow,
 )
 from ert.enkf_main import create_run_path
 from ert.ensemble_evaluator import Ensemble as EEEnsemble
@@ -66,6 +62,7 @@ from ert.workflow_runner import WorkflowRunner
 from ..plugins.workflow_fixtures import create_workflow_fixtures_from_hooked
 from ..run_arg import RunArg
 from .event import EndEvent, FullSnapshotEvent, SnapshotUpdateEvent, StatusEvents
+from .experiment_configs import ExperimentConfig
 
 logger = logging.getLogger(__name__)
 
@@ -141,23 +138,7 @@ class RunModelAPI:
 
 
 class RunModel(BaseModel, ABC):
-    storage_path: str
-    runpath_file: Path
-    user_config_file: Path
-    env_vars: dict[str, str]
-    env_pr_fm_step: dict[str, dict[str, Any]]
-    runpath_config: ModelConfig
-    queue_config: QueueConfig
-    forward_model_steps: list[ForwardModelStep]
-    substitutions: dict[str, str]
-    hooked_workflows: defaultdict[HookRuntime, list[Workflow]]
-    active_realizations: list[bool]
-    log_path: Path
-    random_seed: int
-    start_iteration: int = 0
-    minimum_required_realizations: int = 0
-    supports_rerunning_failed_realizations: ClassVar[bool] = False
-
+    config: ExperimentConfig
     # Private attributes initialized in model_post_init
     _start_time: int | None = PrivateAttr(None)
     _stop_time: int | None = PrivateAttr(None)
@@ -187,17 +168,19 @@ class RunModel(BaseModel, ABC):
             self._total_iterations = _total_iterations
 
     def model_post_init(self, ctx: Any) -> None:
-        self._initial_realizations_mask = self.active_realizations.copy()
-        self._completed_realizations_mask = [False] * len(self.active_realizations)
-        self._storage = open_storage(self.storage_path, mode="w")
-        self._rng = np.random.default_rng(self.random_seed)
+        self._initial_realizations_mask = self.config.active_realizations.copy()
+        self._completed_realizations_mask = [False] * len(
+            self.config.active_realizations
+        )
+        self._storage = open_storage(self.config.storage_path, mode="w")
+        self._rng = np.random.default_rng(self.config.random_seed)
         self._model_config = self.runpath_config
 
         self._run_paths = Runpaths(
             jobname_format=self._model_config.jobname_format_string,
             runpath_format=self._model_config.runpath_format_string,
-            filename=str(self.runpath_file),
-            substitutions=self.substitutions,
+            filename=str(self.config.runpath_file),
+            substitutions=self.config.substitutions,
             eclbase=self._model_config.eclbase_format_string,
         )
 
@@ -208,12 +191,12 @@ class RunModel(BaseModel, ABC):
             get_runtime=self.get_runtime,
             start_simulations_thread=self.start_simulations_thread,
             has_failed_realizations=self.has_failed_realizations,
-            supports_rerunning_failed_realizations=self.supports_rerunning_failed_realizations,
+            supports_rerunning_failed_realizations=self.config.supports_rerunning_failed_realizations,
             cancel=self.cancel,
         )
 
     def reports_dir(self, experiment_name: str) -> str:
-        return str(self.log_path / experiment_name)
+        return str(self.config.log_path / experiment_name)
 
     def log_at_startup(self) -> None:
         keys_to_drop = [
@@ -267,7 +250,7 @@ class RunModel(BaseModel, ABC):
 
     @property
     def queue_system(self) -> QueueSystem:
-        return self.queue_config.queue_system
+        return self.config.queue_config.queue_system
 
     @property
     def ensemble_size(self) -> int:
@@ -342,7 +325,7 @@ class RunModel(BaseModel, ABC):
 
                 if (
                     rerun_failed_realizations
-                    and not self.supports_rerunning_failed_realizations
+                    and not self.config.supports_rerunning_failed_realizations
                 ):
                     raise ErtRunError(
                         f"Run model {self.name()} does not support "
@@ -350,8 +333,8 @@ class RunModel(BaseModel, ABC):
                     )
 
                 if rerun_failed_realizations:
-                    self._storage = open_storage(self.storage_path, mode="w")
-                    self.active_realizations = (
+                    self._storage = open_storage(self.config.storage_path, mode="w")
+                    self.config.active_realizations = (
                         self._create_mask_from_failed_realizations()
                     )
                     logger.info(
@@ -365,12 +348,12 @@ class RunModel(BaseModel, ABC):
                 if self._completed_realizations_mask:
                     combined = np.logical_or(
                         np.array(self._completed_realizations_mask),
-                        np.array(self.active_realizations),
+                        np.array(self.config.active_realizations),
                     )
                     self._completed_realizations_mask = list(combined)
                 else:
                     self._completed_realizations_mask = copy.copy(
-                        self.active_realizations
+                        self.config.active_realizations
                     )
                 self._storage.close()
         except ErtRunError as e:
@@ -448,7 +431,7 @@ class RunModel(BaseModel, ABC):
         return dict(status)
 
     def _get_number_of_finished_realizations_from_reruns(self) -> int:
-        return self.active_realizations.count(
+        return self.config.active_realizations.count(
             False
         ) - self._initial_realizations_mask.count(False)
 
@@ -471,7 +454,7 @@ class RunModel(BaseModel, ABC):
 
     def calculate_current_progress(self) -> float:
         current_iter = max(list(self._iter_snapshot.keys()))
-        done_realizations = self.active_realizations.count(False)
+        done_realizations = self.config.active_realizations.count(False)
         all_realizations = self._iter_snapshot[current_iter].reals
         current_progress = 0.0
 
@@ -484,7 +467,7 @@ class RunModel(BaseModel, ABC):
                     done_realizations += 1
 
             realization_progress = float(done_realizations) / len(
-                self.active_realizations
+                self.config.active_realizations
             )
 
             current_it_offset = current_iter - min(list(self._iter_snapshot.keys()))
@@ -617,28 +600,29 @@ class RunModel(BaseModel, ABC):
                 Realization(
                     active=run_arg.active,
                     iens=run_arg.iens,
-                    fm_steps=self.forward_model_steps,
-                    max_runtime=self.queue_config.max_runtime,
+                    fm_steps=self.config.forward_model_steps,
+                    max_runtime=self.config.queue_config.max_runtime,
                     run_arg=run_arg,
-                    num_cpu=self.queue_config.queue_options.num_cpu,
-                    job_script=self.queue_config.queue_options.job_script,
-                    realization_memory=self.queue_config.queue_options.realization_memory,
+                    num_cpu=self.config.queue_config.queue_options.num_cpu,
+                    job_script=self.config.queue_config.queue_options.job_script,
+                    realization_memory=self.config.queue_config.queue_options.realization_memory,
                 )
             )
         return EEEnsemble(
             realizations,
             {},
-            self.queue_config,
-            self.minimum_required_realizations,
+            self.config.queue_config,
+            self.config.minimum_required_realizations,
             str(experiment_id),
         )
 
     @property
     def paths(self) -> list[str]:
         run_paths = []
-        active_realizations = np.where(self.active_realizations)[0]
+        active_realizations = np.where(self.config.active_realizations)[0]
         for iteration in range(
-            self.start_iteration, self._total_iterations + self.start_iteration
+            self.config.start_iteration,
+            self._total_iterations + self.config.start_iteration,
         ):
             run_paths.extend(self._run_paths.get_paths(active_realizations, iteration))
         return run_paths
@@ -661,11 +645,11 @@ class RunModel(BaseModel, ABC):
         return (
             self._initial_realizations_mask.count(True)
             if self._is_rerunning_failed_realizations
-            else self.active_realizations.count(True)
+            else self.config.active_realizations.count(True)
         )
 
     def get_number_of_successful_realizations(self) -> int:
-        return self.active_realizations.count(True)
+        return self.config.active_realizations.count(True)
 
     @log_duration(logger, logging.INFO)
     def rm_run_path(self) -> None:
@@ -674,7 +658,7 @@ class RunModel(BaseModel, ABC):
 
     def validate_successful_realizations_count(self) -> None:
         successful_realizations_count = self.get_number_of_successful_realizations()
-        min_realization_count = self.minimum_required_realizations
+        min_realization_count = self.config.minimum_required_realizations
 
         if successful_realizations_count < min_realization_count:
             raise TooFewRealizationsSucceeded(
@@ -686,7 +670,7 @@ class RunModel(BaseModel, ABC):
         self,
         fixtures: HookedWorkflowFixtures,
     ) -> None:
-        for workflow in self.hooked_workflows[fixtures.hook]:
+        for workflow in self.config.hooked_workflows[fixtures.hook]:
             WorkflowRunner(
                 workflow=workflow,
                 fixtures=create_workflow_fixtures_from_hooked(fixtures),
@@ -701,11 +685,11 @@ class RunModel(BaseModel, ABC):
         create_run_path(
             run_args=run_args,
             ensemble=ensemble,
-            user_config_file=str(self.user_config_file),
-            env_vars=self.env_vars,
-            env_pr_fm_step=self.env_pr_fm_step,
-            forward_model_steps=self.forward_model_steps,
-            substitutions=self.substitutions,
+            user_config_file=str(self.config.user_config_file),
+            env_vars=self.config.env_vars,
+            env_pr_fm_step=self.config.env_pr_fm_step,
+            forward_model_steps=self.config.forward_model_steps,
+            substitutions=self.config.substitutions,
             parameters_file=self._model_config.gen_kw_export_name,
             runpaths=self._run_paths,
             context_env=self._context_env,
@@ -716,7 +700,7 @@ class RunModel(BaseModel, ABC):
                 storage=self._storage,
                 ensemble=ensemble,
                 reports_dir=self.reports_dir(experiment_name=ensemble.experiment.name),
-                random_seed=self.random_seed,
+                random_seed=self.config.random_seed,
                 run_paths=self._run_paths,
             ),
         )
@@ -727,7 +711,9 @@ class RunModel(BaseModel, ABC):
                 evaluator_server_config,
             )
         except UserCancelled:
-            self.active_realizations = [False for _ in self.active_realizations]
+            self.config.active_realizations = [
+                False for _ in self.config.active_realizations
+            ]
             raise
 
         starting_realizations = [real.iens for real in run_args if real.active]
@@ -735,11 +721,13 @@ class RunModel(BaseModel, ABC):
             set(starting_realizations) - set(successful_realizations)
         )
         for iens in failed_realizations:
-            self.active_realizations[iens] = False
+            self.config.active_realizations[iens] = False
 
         num_successful_realizations = len(successful_realizations)
         self.validate_successful_realizations_count()
-        logger.info(f"Experiment ran on QUEUESYSTEM: {self.queue_config.queue_system}")
+        logger.info(
+            f"Experiment ran on QUEUESYSTEM: {self.config.queue_config.queue_system}"
+        )
         logger.info(f"Experiment ran with number of realizations: {self.ensemble_size}")
         logger.info(
             f"Experiment run ended with number of realizations succeeding: "
@@ -755,7 +743,7 @@ class RunModel(BaseModel, ABC):
                 storage=self._storage,
                 ensemble=ensemble,
                 reports_dir=self.reports_dir(experiment_name=ensemble.experiment.name),
-                random_seed=self.random_seed,
+                random_seed=self.config.random_seed,
                 run_paths=self._run_paths,
             ),
         )

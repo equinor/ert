@@ -13,10 +13,8 @@ from ert.analysis.event import (
 )
 from ert.config import (
     DesignMatrix,
-    ESSettings,
     GenKwConfig,
     HookRuntime,
-    ObservationSettings,
     ParameterConfig,
 )
 from ert.plugins.workflow_fixtures import (
@@ -32,14 +30,13 @@ from ert.run_models.event import (
     RunModelUpdateBeginEvent,
     RunModelUpdateEndEvent,
 )
+from ert.run_models.experiment_configs import ExperimentWithUpdateConfig
 from ert.run_models.run_model import ErtRunError, RunModel
 from ert.storage import Ensemble
 
 
 class UpdateRunModel(RunModel):
-    target_ensemble: str
-    analysis_settings: ESSettings
-    update_settings: ObservationSettings
+    config: ExperimentWithUpdateConfig
 
     @abstractmethod
     def update_ensemble_parameters(
@@ -84,9 +81,9 @@ class UpdateRunModel(RunModel):
         pre_first_update_fixtures = PreFirstUpdateFixtures(
             storage=self._storage,
             ensemble=prior,
-            observation_settings=self.update_settings,
-            es_settings=self.analysis_settings,
-            random_seed=self.random_seed,
+            observation_settings=self.config.update_settings,
+            es_settings=self.config.analysis_settings,
+            random_seed=self.config.random_seed,
             reports_dir=self.reports_dir(experiment_name=prior.experiment.name),
             run_paths=self._run_paths,
         )

@@ -1,52 +1,31 @@
 from abc import ABC
+from typing import Any, cast
 from typing import Annotated, cast
 
 import numpy as np
+import polars as pl
 from pydantic import Field
 
 from ert.config import (
-    DesignMatrix,
-    EverestConstraintsConfig,
-    EverestObjectivesConfig,
-    ExtParamConfig,
-    GenDataConfig,
-    GenKwConfig,
     ParameterConfig,
     ResponseConfig,
-    SummaryConfig,
-    SurfaceConfig,
 )
-from ert.config import Field as FieldConfig
 from ert.enkf_main import sample_prior, save_design_matrix_to_ensemble
 from ert.ensemble_evaluator.config import EvaluatorServerConfig
 from ert.run_arg import create_run_arguments
+from ert.run_models.experiment_configs import ExperimentWithInitialEnsembleConfig
 from ert.run_models.run_model import RunModel
 from ert.storage.local_ensemble import LocalEnsemble
-from ert.storage.local_experiment import DictEncodedObservations
 
 
 class InitialEnsembleRunModel(RunModel, ABC):
-    experiment_name: str
-    design_matrix: DesignMatrix | None
-    parameter_configuration: list[
-        Annotated[
-            (GenKwConfig | SurfaceConfig | FieldConfig | ExtParamConfig),
-            Field(discriminator="type"),
-        ]
-    ]
-    response_configuration: list[
-        Annotated[
-            (
-                GenDataConfig
-                | SummaryConfig
-                | EverestConstraintsConfig
-                | EverestObjectivesConfig
-            ),
-            Field(discriminator="type"),
-        ]
-    ]
-    ert_templates: list[tuple[str, str]]
-    observations: dict[str, DictEncodedObservations] | None
+    config: ExperimentWithInitialEnsembleConfig
+
+    def __init__(
+        self, *, observations: dict[str, pl.DataFrame] | None, **data: Any
+    ) -> None:
+        super().__init__(**data)
+        self.config._observations = observations
 
     def _sample_and_evaluate_ensemble(
         self,
@@ -58,8 +37,8 @@ class InitialEnsembleRunModel(RunModel, ABC):
     ) -> LocalEnsemble:
         parameters_config, design_matrix, design_matrix_group = (
             self._merge_parameters_from_design_matrix(
-                cast(list[ParameterConfig], self.parameter_configuration),
-                self.design_matrix,
+                cast(list[ParameterConfig], self.config.parameter_configuration),
+                self.config.design_matrix,
                 rerun_failed_realizations,
             )
         )
@@ -67,11 +46,13 @@ class InitialEnsembleRunModel(RunModel, ABC):
             experiment_storage = self._storage.create_experiment(
                 parameters=parameters_config
                 + ([design_matrix_group] if design_matrix_group else []),
-                observations=self.observations,
-                responses=cast(list[ResponseConfig], self.response_configuration),
+                observations=self.config._observations,
+                responses=cast(
+                    list[ResponseConfig], self.config.response_configuration
+                ),
                 simulation_arguments=simulation_arguments,
-                name=self.experiment_name,
-                templates=self.ert_templates,
+                name=self.config.experiment_name,
+                templates=self.config.ert_templates,
             )
 
             experiment_storage.save_experiment_config(
@@ -101,7 +82,7 @@ class InitialEnsembleRunModel(RunModel, ABC):
             ensemble_storage,
             np.where(self.active_realizations)[0],
             parameters=[param.name for param in parameters_config],
-            random_seed=self.random_seed,
+            random_seed=self.config.random_seed,
         )
 
         prior_args = create_run_arguments(

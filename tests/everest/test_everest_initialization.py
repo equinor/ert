@@ -44,4 +44,4 @@ def test_site_config_with_substitutions(monkeypatch, change_to_tmpdir):
         everest_run_model = EverestRunModel.create(config)
 
         assert ("<NUM_CPU>", "1") in everest_run_model.substitutions.items()
-        assert everest_run_model.env_vars["HOW_MANY_CPU"] == "1"
+        assert everest_run_model.config.env_vars["HOW_MANY_CPU"] == "1"
