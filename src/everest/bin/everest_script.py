@@ -84,6 +84,11 @@ def everest_entry(args: list[str] | None = None) -> None:
         ),
     )
 
+    logger.info(
+        f"server runs on {server_queue_system}, "
+        f"simulator runs on {simulator_queue_system}"
+    )
+
     if threading.current_thread() is threading.main_thread():
         signal.signal(
             signal.SIGINT,
