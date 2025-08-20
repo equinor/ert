@@ -101,6 +101,12 @@ class SummaryKeyType(Enum):
 
 
 def is_rate(summary_variable: str) -> bool:
+    """Whether the given summary variable is a rate.
+
+    See `opm flow reference manual
+    <https://opm-project.org/wp-content/uploads/2023/06/OPM_Flow_Reference_Manual_2023-04_Rev-0_Reduced.pdf>`
+    table 11.4 for details.
+    """
     key_type = SummaryKeyType.from_variable(summary_variable)
     if key_type in {
         SummaryKeyType.WELL,
