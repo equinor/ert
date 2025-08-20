@@ -121,7 +121,7 @@ def test_local_well_variables_are_recognized(keyword):
 
 
 @given(summary_variables())
-def test_that_identify_var_type_is_same_as_ecl(variable):
+def test_that_identify_var_type_is_same_as_resdata(variable):
     assert Summary.var_type(variable) == to_ecl(SummaryKeyType.from_variable(variable))
 
 
@@ -289,8 +289,6 @@ def test_is_rate_determines_rate_key_correctly(key, rate):
     assert is_rate_bool == rate
 
 
-@given(key=summary_variables())
-def test_rate_determination_is_consistent(key):
-    # Here we verify that the determination of rate keys is the same
-    # as provided by resdata api
-    assert Summary.is_rate(key) == is_rate(key)
+@given(summary_variables())
+def test_rate_determination_is_the_same_as_resdata(variable):
+    assert Summary.is_rate(variable) == is_rate(variable)
