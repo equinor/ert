@@ -92,31 +92,24 @@ class TransformFunction:
 
 class GenKwConfig(ParameterConfig):
     type: Literal["gen_kw"] = "gen_kw"
-    transform_function_definitions: list[TransformFunctionDefinition]
+    transform_function_definition: TransformFunctionDefinition
 
-    _transform_functions: list[TransformFunction] = PrivateAttr()
+    _transform_function: TransformFunction = PrivateAttr()
 
     @model_validator(mode="after")
     def validate_and_setup_transform_functions(self) -> Self:
-        transform_functions: list[TransformFunction] = []
-
         errors = []
-        for e in self.transform_function_definitions:
-            try:
-                if isinstance(e, dict):
-                    transform_functions.append(
-                        self._parse_transform_function_definition(
-                            TransformFunctionDefinition(**e)
-                        )
-                    )
-                else:
-                    transform_functions.append(
-                        self._parse_transform_function_definition(e)
-                    )
-            except ConfigValidationError as e:
-                errors.append(e)
-
-        self._transform_functions = transform_functions
+        try:
+            if isinstance(self.transform_function_definition, dict):
+                self._transform_function = self._parse_transform_function_definition(
+                    TransformFunctionDefinition(**self.transform_function_definition)
+                )
+            else:
+                self._transform_function = self._parse_transform_function_definition(
+                    self.transform_function_definition
+                )
+        except ConfigValidationError as e:
+            errors.append(e)
 
         try:
             self._validate()
@@ -128,35 +121,29 @@ class GenKwConfig(ParameterConfig):
 
         return self
 
-    def __contains__(self, item: str) -> bool:
-        return item in [v.name for v in self.transform_function_definitions]
+    # def __contains__(self, item: str) -> bool:
+    #     return item in [v.name for v in self.transform_function_definitions]
 
-    def __len__(self) -> int:
-        return len(self.transform_functions)
-
-    @property
-    def transform_functions(self) -> list[TransformFunction]:
-        return self._transform_functions
+    # def __len__(self) -> int:
+    #     return len(self.transform_functions)
 
     @property
-    def parameter_keys(self) -> list[str]:
-        keys = []
-        for tf in self.transform_functions:
-            keys.append(tf.name)
-
-        return keys
+    def transform_function(self) -> TransformFunction:
+        return self._transform_function
 
     @property
-    def metadata(self) -> list[ParameterMetadata]:
-        return [
-            ParameterMetadata(
-                key=f"{self.name}:{tf.name}",
-                transformation=tf.distribution.name.upper(),
-                dimensionality=1,
-                userdata={"data_origin": "GEN_KW"},
-            )
-            for tf in self.transform_functions
-        ]
+    def parameter_key(self) -> str:
+        return self.transform_function.name
+
+    @property
+    def metadata(self) -> ParameterMetadata:
+        tf = self.transform_function
+        return ParameterMetadata(
+            key=f"{self.name}:{tf.name}",
+            transformation=tf.distribution.name.upper(),
+            dimensionality=1,
+            userdata={"data_origin": "GEN_KW"},
+        )
 
     @classmethod
     def templates_from_config(
@@ -191,7 +178,7 @@ class GenKwConfig(ParameterConfig):
         return None
 
     @classmethod
-    def from_config_list(cls, gen_kw: list[str | dict[str, str]]) -> Self:
+    def from_config_list(cls, gen_kw: list[str | dict[str, str]]) -> list[Self]:
         gen_kw_key = cast(str, gen_kw[0])
 
         options = cast(dict[str, str], gen_kw[-1])
