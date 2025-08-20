@@ -11,7 +11,6 @@ import pytest
 from resdata.geometry import Surface
 
 from ert.config import ConfigValidationError, ErtConfig, GenKwConfig
-from ert.config.gen_kw_config import TransformFunctionDefinition
 from ert.sample_prior import sample_prior
 from ert.storage import open_storage
 from ert.storage.local_ensemble import load_parameters_and_responses_from_runpath
@@ -232,58 +231,62 @@ def test_that_first_three_parameters_sampled_snapshot(tmpdir, storage):
     [4, 5, 10],
 )
 @pytest.mark.parametrize(
-    "template, prior",
+    "template, scalars",
     [
         (
             "MY_KEYWORD <MY_KEYWORD>\nMY_SECOND_KEYWORD <MY_SECOND_KEYWORD>",
             [
-                TransformFunctionDefinition(
-                    name="MY_KEYWORD", param_name="NORMAL", values=[0, 1]
+                GenKwConfig(
+                    name="MY_KEYWORD",
+                    group="KW_NAME",
+                    distribution={"name": "normal", "mean": 0, "std": 1},
                 ),
-                TransformFunctionDefinition(
-                    name="MY_SECOND_KEYWORD", param_name="NORMAL", values=[0, 1]
+                GenKwConfig(
+                    name="MY_SECOND_KEYWORD",
+                    group="KW_NAME",
+                    distribution={"name": "normal", "mean": 0, "std": 1},
                 ),
             ],
         ),
         (
             "MY_KEYWORD <MY_KEYWORD>",
             [
-                TransformFunctionDefinition(
-                    name="MY_KEYWORD", param_name="NORMAL", values=[0, 1]
-                )
+                GenKwConfig(
+                    name="MY_KEYWORD",
+                    group="KW_NAME",
+                    distribution={"name": "normal", "mean": 0, "std": 1},
+                ),
             ],
         ),
         (
             "MY_FIRST_KEYWORD <MY_FIRST_KEYWORD>\nMY_KEYWORD <MY_KEYWORD>",
             [
-                TransformFunctionDefinition(
-                    name="MY_FIRST_KEYWORD", param_name="NORMAL", values=[0, 1]
+                GenKwConfig(
+                    name="MY_FIRST_KEYWORD",
+                    group="KW_NAME",
+                    distribution={"name": "normal", "mean": 0, "std": 1},
                 ),
-                TransformFunctionDefinition(
-                    name="MY_KEYWORD", param_name="NORMAL", values=[0, 1]
+                GenKwConfig(
+                    name="MY_KEYWORD",
+                    group="KW_NAME",
+                    distribution={"name": "normal", "mean": 0, "std": 1},
                 ),
             ],
         ),
     ],
 )
 def test_that_sampling_is_fixed_from_name(
-    tmpdir, storage, template, prior, num_realisations
+    tmpdir, storage, template, scalars, num_realisations
 ):
     """
     Testing that the order and number of parameters is not relevant for the values,
     only that name of the parameter and the global seed determine the values.
     """
     with tmpdir.as_cwd():
-        conf = GenKwConfig(
-            name="KW_NAME",
-            forward_init=False,
-            transform_function_definitions=prior,
-            update=True,
-        )
         with open("template.txt", "w", encoding="utf-8") as fh:
             fh.writelines(template)
         fs = storage.create_ensemble(
-            storage.create_experiment(parameters=[conf]),
+            storage.create_experiment(parameters=scalars),
             name="prior",
             ensemble_size=num_realisations,
         )
@@ -441,13 +444,14 @@ def test_gen_kw(storage, tmpdir, config_str, expected, extra_files, expectation)
         (
             [False, False],
             pytest.raises(
-                KeyError, match="No KW_NAME dataset in storage for ensemble default"
+                KeyError, match="No SCALAR dataset in storage for ensemble default"
             ),
         ),
         (
             [False, True],
             pytest.raises(
-                IndexError, match=r"No matching realizations \[0\] found for KW_NAME"
+                IndexError,
+                match=r"No matching realizations \[0\] found for \['MY_KEYWORD'\]",
             ),
         ),
     ],

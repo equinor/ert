@@ -13,9 +13,7 @@ import resfo
 import xtgeo
 from polars import Float32
 
-from ert.analysis import (
-    smoother_update,
-)
+from ert.analysis import smoother_update
 from ert.config import ErtConfig, ESSettings, ObservationSettings
 from ert.mode_definitions import ENSEMBLE_SMOOTHER_MODE
 from ert.storage import open_storage
@@ -460,9 +458,9 @@ def test_field_param_update_using_heat_equation_zero_var_params_and_adaptive_loc
         )
         cond["values"][:, :, :5, 0] = 1.0
         for real in range(prior.ensemble_size):
-            new_prior.save_parameters("COND", real, cond)
-            new_prior.save_parameters("INIT_TEMP_SCALE", real, init_temp_scale)
-            new_prior.save_parameters("CORR_LENGTH", real, corr_length)
+            new_prior.save_parameters(cond, "COND", real)
+            new_prior.save_parameters(init_temp_scale, "INIT_TEMP_SCALE", real)
+            new_prior.save_parameters(corr_length, "CORR_LENGTH", real)
 
         # Copy responses from existing prior to new prior.
         # Note that we ideally should generate new responses by running the

@@ -1,72 +1,72 @@
 [
   {
+    "realization": 0,
     "a": 0,
     "category": "cat1",
     "b": 1,
-    "c": 2,
-    "realization": 0
+    "c": 2
   },
   {
+    "realization": 1,
     "a": 1,
     "category": "cat1",
     "b": 1,
-    "c": 2,
-    "realization": 1
+    "c": 2
   },
   {
+    "realization": 2,
     "a": 2,
     "category": "cat1",
     "b": 1,
-    "c": 2,
-    "realization": 2
+    "c": 2
   },
   {
+    "realization": 3,
     "a": 3,
     "category": "cat1",
     "b": 1,
-    "c": 2,
-    "realization": 3
+    "c": 2
   },
   {
+    "realization": 4,
     "a": 4,
     "category": "cat1",
     "b": 1,
-    "c": 2,
-    "realization": 4
+    "c": 2
   },
   {
+    "realization": 5,
     "a": 5,
     "category": "cat2",
     "b": 1,
-    "c": 2,
-    "realization": 5
+    "c": 2
   },
   {
+    "realization": 6,
     "a": 6,
     "category": "cat2",
     "b": 1,
-    "c": 2,
-    "realization": 6
+    "c": 2
   },
   {
+    "realization": 7,
     "a": 7,
     "category": "cat2",
     "b": 1,
-    "c": 2,
-    "realization": 7
+    "c": 2
   },
   {
+    "realization": 8,
     "a": 8,
     "category": "cat2",
     "b": 1,
-    "c": 2,
-    "realization": 8
+    "c": 2
   },
   {
+    "realization": 9,
     "a": 9,
     "category": "cat2",
     "b": 1,
-    "c": 2,
-    "realization": 9
+    "c": 2
   }
 ]

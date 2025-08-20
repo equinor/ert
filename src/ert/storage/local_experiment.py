@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 import shutil
+from collections import defaultdict
 from collections.abc import Generator
 from datetime import datetime
 from functools import cached_property
@@ -24,9 +25,7 @@ from ert.config import (
     SummaryConfig,
     SurfaceConfig,
 )
-from ert.config import (
-    Field as FieldConfig,
-)
+from ert.config import Field as FieldConfig
 from ert.config.parsing.context_values import ContextBoolEncoder
 
 from .mode import BaseMode, Mode, require_write
@@ -54,11 +53,9 @@ _responses_adapter = TypeAdapter(  # type: ignore
 )
 
 _parameters_adapter = TypeAdapter(
-    list[
-        Annotated[
-            (GenKwConfig | SurfaceConfig | FieldConfig | ExtParamConfig),
-            Field(discriminator="type"),
-        ]
+    Annotated[
+        (GenKwConfig | SurfaceConfig | FieldConfig | ExtParamConfig),
+        Field(discriminator="type"),
     ]
 )
 
@@ -377,10 +374,8 @@ class LocalExperiment(BaseMode):
     @cached_property
     def parameter_configuration(self) -> dict[str, ParameterConfig]:
         return {
-            instance.name: instance
-            for instance in _parameters_adapter.validate_python(
-                self.parameter_info.values()
-            )
+            name: _parameters_adapter.validate_python(cfg)
+            for name, cfg in self.parameter_info.items()
         }
 
     @cached_property
@@ -390,6 +385,22 @@ class LocalExperiment(BaseMode):
             keys += config.parameter_keys
 
         return keys
+
+    @cached_property
+    def scalar_nodes(self) -> dict[str, ParameterConfig]:
+        return {
+            config.name: config
+            for config in self.parameter_configuration.values()
+            if isinstance(config, GenKwConfig)
+        }
+
+    @cached_property
+    def scalar_groups(self) -> dict[str, list[str]]:
+        dict_genkw: dict[str, list[str]] = defaultdict(list)
+        for p in self.parameter_configuration.values():
+            if isinstance(p, GenKwConfig):
+                dict_genkw[p.group_name].append(p.name)
+        return dict_genkw
 
     @cached_property
     def parameter_group_to_parameter_keys(self) -> dict[str, list[str]]:

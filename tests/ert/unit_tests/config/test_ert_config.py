@@ -2362,34 +2362,6 @@ def test_queue_options_are_joined_after_option_name():
     )
 
 
-def test_validation_error_on_gen_kw_with_design_matrix_group_name(tmp_path):
-    design_matrix_file = tmp_path / "my_design_matrix.xlsx"
-    _create_design_matrix(
-        design_matrix_file,
-        pl.DataFrame(
-            {
-                "REAL": [0, 1],
-                "letters": ["x", "y"],
-            }
-        ),
-        pl.DataFrame([["a", 1], ["c", 2]], orient="row"),
-    )
-    with open(tmp_path / "coeffs_priors", mode="w", encoding="utf-8") as fh:
-        fh.write("a CONST 0")
-    with pytest.raises(
-        ConfigValidationError,
-        match="Cannot have GEN_KW with group name DESIGN_MATRIX "
-        "when using DESIGN_MATRIX keyword\\.",
-    ):
-        ErtConfig.from_file_contents(
-            f"""\
-                NUM_REALIZATIONS 1
-                DESIGN_MATRIX {tmp_path}/my_design_matrix.xlsx
-                GEN_KW DESIGN_MATRIX {tmp_path}/coeffs_priors
-                """
-        )
-
-
 @pytest.mark.parametrize(
     "invalid_parameter_definition_name",
     [

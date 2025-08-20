@@ -1,7 +1,6 @@
 import pytest
 
 from ert.config import GenDataConfig, GenKwConfig
-from ert.config.gen_kw_config import TransformFunctionDefinition
 from ert.gui.ertnotifier import ErtNotifier
 from ert.gui.ertwidgets.ensembleselector import EnsembleSelector
 from ert.storage.realization_storage_state import RealizationStorageState
@@ -10,14 +9,8 @@ from ert.storage.realization_storage_state import RealizationStorageState
 @pytest.fixture
 def uniform_parameter():
     return GenKwConfig(
-        name="parameter",
-        forward_init=False,
-        transform_function_definitions=[
-            TransformFunctionDefinition(
-                name="KEY1", param_name="UNIFORM", values=[0, 1]
-            ),
-        ],
-        update=True,
+        name="KEY_1",
+        distribution={"name": "uniform", "min": 0, "max": 1},
     )
 
 

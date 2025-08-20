@@ -176,35 +176,42 @@
   "parameter_configuration": [
     {
       "type": "gen_kw",
-      "name": "COEFFS",
+      "name": "a",
       "forward_init": false,
       "update": true,
-      "transform_function_definitions": [
-        {
-          "name": "a",
-          "param_name": "UNIFORM",
-          "values": [
-            "0",
-            "1"
-          ]
-        },
-        {
-          "name": "b",
-          "param_name": "UNIFORM",
-          "values": [
-            "0",
-            "2"
-          ]
-        },
-        {
-          "name": "c",
-          "param_name": "UNIFORM",
-          "values": [
-            "0",
-            "5"
-          ]
-        }
-      ]
+      "distribution": {
+        "name": "uniform",
+        "min": 0.0,
+        "max": 1.0
+      },
+      "group": "COEFFS",
+      "input_source": "sampled"
+    },
+    {
+      "type": "gen_kw",
+      "name": "b",
+      "forward_init": false,
+      "update": true,
+      "distribution": {
+        "name": "uniform",
+        "min": 0.0,
+        "max": 2.0
+      },
+      "group": "COEFFS",
+      "input_source": "sampled"
+    },
+    {
+      "type": "gen_kw",
+      "name": "c",
+      "forward_init": false,
+      "update": true,
+      "distribution": {
+        "name": "uniform",
+        "min": 0.0,
+        "max": 5.0
+      },
+      "group": "COEFFS",
+      "input_source": "sampled"
     }
   ],
   "response_configuration": [

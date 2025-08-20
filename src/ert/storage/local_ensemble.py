@@ -257,23 +257,28 @@ class LocalEnsemble(BaseMode):
 
     @cached_property
     def _existing_scalars(self) -> dict[str, list[int]]:
-        genkw_mask: dict[str, list[int]] = {}
-        for parameter in self.experiment.parameter_configuration.values():
-            if isinstance(parameter, GenKwConfig):
-                genkw_mask[parameter.name] = []
-                group_path = (
-                    self.mount_point / f"{_escape_filename(parameter.name)}.parquet"
-                )
-                if group_path.exists():
-                    genkw_mask[parameter.name] = (
-                        pl.scan_parquet(group_path)
-                        .select("realization")
-                        .unique()
-                        .collect()  # only fetching reals, so use standard engine
-                        .get_column("realization")
-                        .to_list()
-                    )
-        return genkw_mask
+        group_path = (
+            self.mount_point / f"{_escape_filename(GenKwConfig.scalar_file())}.parquet"
+        )
+        genkw_mask: dict[str, list[int]] = {
+            param: [] for param in self.experiment.scalar_nodes
+        }
+        if not group_path.exists():
+            return genkw_mask
+        df = pl.scan_parquet(group_path)
+        cols = df.collect_schema().names()
+        real = (
+            df.select("realization")
+            .unique()
+            .collect()
+            .get_column("realization")
+            .to_list()
+        )
+        return {
+            param: real
+            for param in cols
+            if param != "realization" and param in genkw_mask
+        }
 
     def has_data(self) -> bool:
         """
@@ -545,6 +550,39 @@ class LocalEnsemble(BaseMode):
         df = pl.scan_parquet(group_path)
         return df
 
+    def _load_scalar_keys(
+        self,
+        keys: list[str],
+        realizations: int | npt.NDArray[np.int_] | None = None,
+        transformed: bool = False,
+    ) -> pl.DataFrame:
+        df_lazy = self._load_parameters_lazy(GenKwConfig.scalar_file())
+        df_lazy = df_lazy.select(["realization", *keys])
+        if realizations is not None:
+            if isinstance(realizations, int):
+                realizations = np.array([realizations])
+            df_lazy = df_lazy.filter(pl.col("realization").is_in(realizations))
+        df = df_lazy.collect(engine="streaming")
+        if df.is_empty():
+            raise IndexError(
+                f"No matching realizations {realizations} found for {keys}"
+            )
+
+        if transformed:
+            df = df.with_columns(
+                [
+                    pl.col(col)
+                    .map_elements(
+                        self.experiment.parameter_configuration[col].transform_data(),
+                        return_dtype=df[col].dtype,
+                    )
+                    .alias(col)
+                    for col in df.columns
+                    if col != "realization"
+                ]
+            )
+        return df
+
     def load_parameters(
         self,
         group: str,
@@ -557,44 +595,36 @@ class LocalEnsemble(BaseMode):
         otherwise it will return the raw values.
 
         """
-        if group not in self.experiment.parameter_configuration:
+        if group in self.experiment.scalar_groups:
+            return self._load_scalar_keys(
+                self.experiment.scalar_groups[group], realizations, transformed
+            )
+        elif group not in self.experiment.parameter_configuration:
             raise KeyError(f"{group} is not registered to the experiment.")
-        config = self.experiment.parameter_configuration[group]
-        if isinstance(config, GenKwConfig):
-            df_lazy = self._load_parameters_lazy(group)
-            if realizations is not None:
-                if isinstance(realizations, int):
-                    realizations = np.array([realizations])
-                df_lazy = df_lazy.filter(pl.col("realization").is_in(realizations))
-            df = df_lazy.collect(engine="streaming")
-            if df.is_empty():
-                raise IndexError(
-                    f"No matching realizations {realizations} found for {group}"
-                )
-            if transformed:
-                df = df.with_columns(
-                    [
-                        pl.col(col)
-                        .map_elements(
-                            config.transform_col(col), return_dtype=df[col].dtype
-                        )
-                        .alias(col)
-                        for col in df.columns
-                        if col != "realization"
-                    ]
-                )
-            return df
+        if group in self.experiment.scalar_nodes:
+            return self._load_scalar_keys([group], realizations, transformed)
         ds = self._load_dataset(
             group,
-            realizations
-            if realizations is not None
-            else np.flatnonzero(self.get_realization_mask_with_parameters()),
+            (
+                realizations
+                if realizations is not None
+                else np.flatnonzero(self.get_realization_mask_with_parameters())
+            ),
         )
         return ds
 
     def load_parameters_numpy(
         self, group: str, realizations: npt.NDArray[np.int_]
     ) -> npt.NDArray[np.float64]:
+        if group in self.experiment.scalar_groups:
+            return (
+                self._load_scalar_keys(
+                    self.experiment.scalar_groups[group], realizations
+                )
+                .drop("realization")
+                .to_numpy()
+                .T.copy()
+            )
         config = self.experiment.parameter_configuration[group]
         return config.load_parameters(self, realizations)
 
@@ -608,25 +638,26 @@ class LocalEnsemble(BaseMode):
         for real, ds in config_node.create_storage_datasets(
             parameters, iens_active_index
         ):
-            self.save_parameters(config_node.name, real, ds)
+            self.save_parameters(ds, config_node.name, real)
 
     def load_scalars(
         self, group: str | None = None, realizations: npt.NDArray[np.int_] | None = None
     ) -> pl.DataFrame:
         dataframes = []
-        gen_kws = [
-            config
-            for config in self.experiment.parameter_configuration.values()
-            if isinstance(config, GenKwConfig)
-        ]
-        if group:
-            gen_kws = [config for config in gen_kws if config.name == group]
+        gen_kws = list(self.experiment.scalar_nodes.values())
+        if group and group in self.experiment.scalar_groups:
+            gen_kws = [
+                self.experiment.parameter_configuration[key]
+                for key in self.experiment.scalar_groups[group]
+            ]
+
         for config in gen_kws:
             df = self.load_parameters(config.name, realizations, transformed=True)
             assert isinstance(df, pl.DataFrame)
+            assert isinstance(config, GenKwConfig)
             df = df.rename(
                 {
-                    col: f"{config.name}:{col}"
+                    col: f"{config.group}:{col}"
                     for col in df.columns
                     if col != "realization"
                 }
@@ -659,22 +690,18 @@ class LocalEnsemble(BaseMode):
         real_nr: int,
         random_seed: int,
     ) -> pl.DataFrame:
-        keys = parameter.parameter_keys
-        if not keys:
-            return pl.DataFrame([])
+        # we sample genkw only
+        assert isinstance(parameter, GenKwConfig)
         parameter_value = parameter.sample_value(
             str(random_seed),
             real_nr,
         )
 
-        parameter_dict = {
-            parameter_name: parameter_value[idx]
-            for idx, parameter_name in enumerate(keys)
-        }
+        parameter_dict = {parameter.name: parameter_value[0]}
         parameter_dict["realization"] = real_nr
         return pl.DataFrame(
             parameter_dict,
-            schema=dict.fromkeys(keys, pl.Float64) | {"realization": pl.Int64},
+            schema={parameter.name: pl.Float64, "realization": pl.Int64},
         )
 
     def load_responses(self, key: str, realizations: tuple[int, ...]) -> pl.DataFrame:
@@ -789,9 +816,9 @@ class LocalEnsemble(BaseMode):
     @require_write
     def save_parameters(
         self,
-        group: str,
-        realization: int | None,
         dataset: xr.Dataset | pl.DataFrame,
+        group: str | None = None,
+        realization: int | None = None,
     ) -> None:
         """
         Saves the provided dataset under a parameter group and realization index(es)
@@ -800,35 +827,33 @@ class LocalEnsemble(BaseMode):
         if isinstance(dataset, pl.DataFrame):
             try:
                 # since all realizations are saved in a single parquet file,
-                # this makes sure that we only append new realizations.
-                df = self._load_parameters_lazy(group)
-                existing_realizations = (
-                    df.select("realization")
-                    .unique()
-                    .collect()  # only fetch reals, so use standard engine
-                    .get_column("realization")
+                # this makes sure that we only add / replace new data.
+                df = self._load_parameters_lazy(GenKwConfig.scalar_file()).collect(
+                    engine="streaming"
                 )
-                new_data = dataset.filter(
-                    ~pl.col("realization").is_in(existing_realizations.implode())
+                df = df.drop(
+                    [c for c in dataset.columns if c != "realization"], strict=False
                 )
-                if new_data.height > 0:
-                    df_full = pl.concat(
-                        [df.collect(), new_data],
-                        # needs all data in memory anyway so using standard engine
-                        how="vertical",
-                    ).sort("realization")
-                else:
-                    return
+                df_full = (
+                    df.join(dataset, on="realization", how="left")
+                    .unique(subset=["realization"], keep="first")
+                    .sort("realization")
+                )
             except KeyError:
                 df_full = dataset
 
-            group_path = self.mount_point / f"{_escape_filename(group)}.parquet"
+            group_path = (
+                self.mount_point
+                / f"{_escape_filename(GenKwConfig.scalar_file())}.parquet"
+            )
             self._storage._to_parquet_transaction(group_path, df_full)
             return
 
-        assert realization is not None, (
-            "Realization must be provided for xarray Dataset"
-        )
+        assert group is not None, "Group must be provided for xarray Dataset"
+
+        assert (
+            realization is not None
+        ), "Realization must be provided for xarray Dataset"
         if "values" not in dataset.variables:
             raise ValueError(
                 f"Dataset for parameter group '{group}' "
@@ -927,9 +952,11 @@ class LocalEnsemble(BaseMode):
         response_configs = self.experiment.response_configuration
         path = self._realization_dir(realization)
         return {
-            e: RealizationStorageState.RESPONSES_LOADED
-            if (path / f"{e}.parquet").exists()
-            else RealizationStorageState.UNDEFINED
+            e: (
+                RealizationStorageState.RESPONSES_LOADED
+                if (path / f"{e}.parquet").exists()
+                else RealizationStorageState.UNDEFINED
+            )
             for e in response_configs
         }
 
@@ -1169,9 +1196,11 @@ class LocalEnsemble(BaseMode):
 
         params_wide = pl.concat(
             [
-                pdf.sort("realization").drop("realization")
-                if i > 0
-                else pdf.sort("realization")
+                (
+                    pdf.sort("realization").drop("realization")
+                    if i > 0
+                    else pdf.sort("realization")
+                )
                 for i, pdf in enumerate(param_dfs)
             ],
             how="horizontal",
@@ -1241,7 +1270,7 @@ async def _read_parameters(
                 extra={"Time": f"{(time.perf_counter() - start_time):.4f}s"},
             )
             start_time = time.perf_counter()
-            ensemble.save_parameters(config.name, realization, ds)
+            ensemble.save_parameters(ds, config.name, realization)
             await asyncio.sleep(0)
             logger.debug(
                 f"Saved {config.name} to storage",

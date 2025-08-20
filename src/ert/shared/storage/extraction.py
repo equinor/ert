@@ -25,18 +25,11 @@ def create_priors(
 ) -> Mapping[str, dict[str, str | float]]:
     priors_dict = {}
 
-    for group, priors in experiment.parameter_configuration.items():
-        if isinstance(priors, GenKwConfig):
-            for func in priors.transform_functions:
-                prior: dict[str, str | float] = {
-                    "function": _PRIOR_NAME_MAP[func.distribution.name.upper()],
-                }
-                for name, value in func.parameter_list.items():
-                    # Libres calls it steps, but normal stats uses bins
-                    if name == "STEPS":
-                        name = "bins"
-                    prior[name.lower()] = value
-
-                priors_dict[f"{group}:{func.name}"] = prior
+    for param in experiment.parameter_configuration.values():
+        if isinstance(param, GenKwConfig):
+            prior: dict[str, str | float] = {
+                "function": _PRIOR_NAME_MAP[param.distribution.name.upper()],
+            }
+            priors_dict[f"{param.group}:{param.name}"] = prior
 
     return priors_dict
