@@ -6,7 +6,7 @@ from collections.abc import Generator
 from datetime import datetime
 from functools import cached_property
 from pathlib import Path
-from typing import TYPE_CHECKING, Annotated, Any
+from typing import TYPE_CHECKING, Annotated, Any, Literal
 from uuid import UUID
 
 import polars as pl
@@ -35,6 +35,8 @@ if TYPE_CHECKING:
     from .local_ensemble import LocalEnsemble
     from .local_storage import LocalStorage
 
+from polars.datatypes import DataTypeClass
+
 
 class _Index(BaseModel):
     id: UUID
@@ -59,6 +61,39 @@ _parameters_adapter = TypeAdapter(
         ]
     ]
 )
+
+
+# https://github.com/pola-rs/polars/issues/13152#issuecomment-1864600078
+# PS: Serializing/deserializing schema is scheduled to be added to polars core,
+# ref https://github.com/pola-rs/polars/issues/20426
+# then this workaround can be omitted.
+def str_to_dtype(dtype_str: str) -> pl.DataType:
+    dtype = eval(f"pl.{dtype_str}")
+    if isinstance(dtype, DataTypeClass):
+        dtype = dtype()
+    return dtype
+
+
+class DictEncodedObservations(BaseModel):
+    type: Literal["dicts"]
+    data: list[dict[str, Any]]
+    datatypes: dict[str, str]
+
+    @classmethod
+    def from_polars(self, data: pl.DataFrame) -> DictEncodedObservations:
+        str_schema = {k: str(dtype) for k, dtype in data.schema.items()}
+        return DictEncodedObservations(
+            type="dicts", data=data.to_dicts(), datatypes=str_schema
+        )
+
+    def to_polars(self) -> pl.DataFrame:
+        return pl.from_dicts(
+            self.data,
+            schema={
+                col: str_to_dtype(dtype_str)
+                for col, dtype_str in self.datatypes.items()
+            },
+        )
 
 
 class LocalExperiment(BaseMode):
@@ -109,7 +144,7 @@ class LocalExperiment(BaseMode):
         *,
         parameters: list[ParameterConfig] | None = None,
         responses: list[ResponseConfig] | None = None,
-        observations: dict[str, pl.DataFrame] | None = None,
+        observations: dict[str, DictEncodedObservations] | None = None,
         simulation_arguments: dict[Any, Any] | None = None,
         name: str | None = None,
         templates: list[tuple[str, str]] | None = None,
@@ -129,7 +164,7 @@ class LocalExperiment(BaseMode):
             List of parameter configurations.
         responses : list of ResponseConfig, optional
             List of response configurations.
-        observations : dict of str: polars.DataFrame, optional
+        observations : dict of str to encoded observation datasets, optional
             Observations dictionary.
         simulation_arguments : SimulationArguments, optional
             Simulation arguments for the experiment.
@@ -191,7 +226,7 @@ class LocalExperiment(BaseMode):
             output_path.mkdir()
             for response_type, dataset in observations.items():
                 storage._to_parquet_transaction(
-                    output_path / f"{response_type}", dataset
+                    output_path / f"{response_type}", dataset.to_polars()
                 )
 
         simulation_data = simulation_arguments or {}
