@@ -571,7 +571,7 @@ class LocalEnsemble(BaseMode):
             raise KeyError(f"{group} is not registered to the experiment.")
         config = self.experiment.parameter_configuration[group]
         if isinstance(config, GenKwConfig):
-            df_lazy = self._load_parameters_lazy(group)
+            df_lazy = self._load_parameters_lazy(config.group_name)
             if realizations is not None:
                 if isinstance(realizations, int):
                     realizations = np.array([realizations])
