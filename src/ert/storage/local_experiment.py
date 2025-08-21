@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 import shutil
+from collections import defaultdict
 from collections.abc import Generator
 from datetime import datetime
 from functools import cached_property
@@ -24,9 +25,7 @@ from ert.config import (
     SummaryConfig,
     SurfaceConfig,
 )
-from ert.config import (
-    Field as FieldConfig,
-)
+from ert.config import Field as FieldConfig
 from ert.config.parsing.context_values import ContextBoolEncoder
 from ert.storage.mode import BaseMode, Mode, require_write
 
@@ -354,6 +353,14 @@ class LocalExperiment(BaseMode):
             keys += config.parameter_keys
 
         return keys
+
+    @cached_property
+    def scalar_group_to_nodes(self) -> dict[str, list[ParameterConfig]]:
+        genkw_dict = defaultdict(list)
+        for config in self.parameter_configuration.values():
+            if isinstance(config, GenKwConfig):
+                genkw_dict[config.group_name].append(config)
+        return genkw_dict
 
     @cached_property
     def parameter_group_to_parameter_keys(self) -> dict[str, list[str]]:

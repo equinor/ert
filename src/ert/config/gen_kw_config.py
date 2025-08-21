@@ -93,6 +93,7 @@ class TransformFunction:
 class GenKwConfig(ParameterConfig):
     type: Literal["gen_kw"] = "gen_kw"
     transform_function_definition: TransformFunctionDefinition
+    group_name: str
 
     _transform_function: TransformFunction = PrivateAttr()
 
@@ -136,14 +137,16 @@ class GenKwConfig(ParameterConfig):
         return self.transform_function.name
 
     @property
-    def metadata(self) -> ParameterMetadata:
+    def metadata(self) -> list[ParameterMetadata]:
         tf = self.transform_function
-        return ParameterMetadata(
-            key=f"{self.name}:{tf.name}",
-            transformation=tf.distribution.name.upper(),
-            dimensionality=1,
-            userdata={"data_origin": "GEN_KW"},
-        )
+        return [
+            ParameterMetadata(
+                key=f"{self.name}:{tf.name}",
+                transformation=tf.distribution.name.upper(),
+                dimensionality=1,
+                userdata={"data_origin": "GEN_KW"},
+            )
+        ]
 
     @classmethod
     def templates_from_config(
@@ -244,12 +247,16 @@ class GenKwConfig(ParameterConfig):
                 gen_kw_key,
             )
         try:
-            return cls(
-                name=gen_kw_key,
-                forward_init=False,
-                transform_function_definitions=transform_function_definitions,
-                update=update_parameter,
-            )
+            return [
+                cls(
+                    name=tf.name,
+                    group_name=gen_kw_key,
+                    transform_function_definition=tf,
+                    forward_init=False,
+                    update=update_parameter,
+                )
+                for tf in transform_function_definitions
+            ]
         except ValidationError as e:
             raise ConfigValidationError.from_pydantic(e, gen_kw) from e
 
@@ -272,7 +279,7 @@ class GenKwConfig(ParameterConfig):
     def load_parameter_graph(self) -> nx.Graph[int]:
         # Create a graph with no edges
         graph_independence: nx.Graph[int] = nx.Graph()
-        graph_independence.add_nodes_from(range(len(self.transform_functions)))
+        graph_independence.add_nodes_from(0)
         return graph_independence
 
     def read_from_runpath(
@@ -289,26 +296,24 @@ class GenKwConfig(ParameterConfig):
         real_nr: int,
         ensemble: Ensemble,
     ) -> dict[str, dict[str, float | str]]:
-        df = ensemble.load_parameters(self.name, real_nr, transformed=True).drop(
+        df = ensemble.load_parameters(self.group_name, real_nr, transformed=True).drop(
             "realization"
         )
 
         assert isinstance(df, pl.DataFrame)
-        if not df.width == len(self.transform_functions):
+        if not df.width == 1:
             raise ValueError(
-                f"The configuration of GEN_KW parameter {self.name}"
-                f" has {len(self.transform_functions)} parameters, but ensemble dataset"
-                f" for realization {real_nr} has {df.width} parameters."
+                f"GEN_KW {self.group_name}:{self.name} should be a single parameter!"
             )
 
         data = df.to_dicts()[0]
-        return {self.name: data}
+        return {self.group_name: data}
 
     def load_parameters(
         self, ensemble: Ensemble, realizations: npt.NDArray[np.int_]
     ) -> npt.NDArray[np.float64]:
         return (
-            ensemble.load_parameters(self.name, realizations)
+            ensemble.load_parameters(self.group_name, realizations)
             .drop("realization")
             .to_numpy()
             .T.copy()
