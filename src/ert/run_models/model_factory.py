@@ -6,6 +6,7 @@ from queue import SimpleQueue
 from typing import TYPE_CHECKING
 
 import numpy as np
+import polars as pl
 
 from ert.config import (
     ConfigValidationError,
@@ -24,6 +25,7 @@ from ert.mode_definitions import (
 )
 from ert.validation import ActiveRange
 
+from ..storage.local_experiment import DictEncodedObservations
 from .ensemble_experiment import EnsembleExperiment
 from .ensemble_information_filter import EnsembleInformationFilter
 from .ensemble_smoother import EnsembleSmoother
@@ -39,7 +41,16 @@ if TYPE_CHECKING:
     from ert.namespace import Namespace
     from ert.run_models.event import StatusEvents
 
+
 logger = logging.getLogger(__name__)
+
+
+def serialize_observations(
+    observations: dict[str, pl.DataFrame],
+) -> dict[str, DictEncodedObservations]:
+    return {
+        k: DictEncodedObservations.from_polars(df) for k, df in observations.items()
+    }
 
 
 def create_model(
@@ -111,7 +122,7 @@ def _setup_single_test_run(
         log_path=config.analysis_config.log_path,
         storage_path=config.ens_path,
         queue_config=config.queue_config.create_local_copy(),
-        observations=config.observations,
+        observations=serialize_observations(config.observations),
         status_queue=status_queue,
     )
 
@@ -161,7 +172,7 @@ def _setup_ensemble_experiment(
         log_path=config.analysis_config.log_path,
         storage_path=config.ens_path,
         queue_config=config.queue_config,
-        observations=config.observations,
+        observations=serialize_observations(config.observations),
         status_queue=status_queue,
     )
 
@@ -249,7 +260,7 @@ def _setup_manual_update(
         substitutions=config.substitutions,
         hooked_workflows=config.hooked_workflows,
         log_path=config.analysis_config.log_path,
-        observations=config.observations,
+        observations=serialize_observations(config.observations),
     )
 
 
@@ -290,7 +301,7 @@ def _setup_ensemble_smoother(
         substitutions=config.substitutions,
         hooked_workflows=config.hooked_workflows,
         log_path=config.analysis_config.log_path,
-        observations=config.observations,
+        observations=serialize_observations(config.observations),
     )
 
 
@@ -331,7 +342,7 @@ def _setup_ensemble_information_filter(
         substitutions=config.substitutions,
         hooked_workflows=config.hooked_workflows,
         log_path=config.analysis_config.log_path,
-        observations=config.observations,
+        observations=serialize_observations(config.observations),
     )
 
 
@@ -394,7 +405,7 @@ def _setup_multiple_data_assimilation(
         substitutions=config.substitutions,
         hooked_workflows=config.hooked_workflows,
         log_path=config.analysis_config.log_path,
-        observations=config.observations,
+        observations=serialize_observations(config.observations),
     )
 
 

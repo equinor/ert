@@ -261,6 +261,405 @@
     }
   ],
   "ert_templates": [],
+  "observations": {
+    "gen_data": {
+      "type": "dicts",
+      "data": [
+        {
+          "response_key": "MY_RESPONSE",
+          "observation_key": "MY_OBS_10",
+          "report_step": 10,
+          "index": 0,
+          "observations": 5.644282737193862e-6,
+          "std": 3.0797309591434896e-7
+        },
+        {
+          "response_key": "MY_RESPONSE",
+          "observation_key": "MY_OBS_10",
+          "report_step": 10,
+          "index": 1,
+          "observations": 0.4141034781932831,
+          "std": 0.0201948843896389
+        },
+        {
+          "response_key": "MY_RESPONSE",
+          "observation_key": "MY_OBS_10",
+          "report_step": 10,
+          "index": 2,
+          "observations": 3.6679649353027344,
+          "std": 0.1648232787847519
+        },
+        {
+          "response_key": "MY_RESPONSE",
+          "observation_key": "MY_OBS_10",
+          "report_step": 10,
+          "index": 3,
+          "observations": 16.248260498046875,
+          "std": 0.7711986899375916
+        },
+        {
+          "response_key": "MY_RESPONSE",
+          "observation_key": "MY_OBS_10",
+          "report_step": 10,
+          "index": 4,
+          "observations": 1.76359224319458,
+          "std": 0.08703349530696869
+        },
+        {
+          "response_key": "MY_RESPONSE",
+          "observation_key": "MY_OBS_10",
+          "report_step": 10,
+          "index": 5,
+          "observations": 22.16446876525879,
+          "std": 1.1721378564834595
+        },
+        {
+          "response_key": "MY_RESPONSE",
+          "observation_key": "MY_OBS_132",
+          "report_step": 132,
+          "index": 0,
+          "observations": 0.447797030210495,
+          "std": 0.02217893674969673
+        },
+        {
+          "response_key": "MY_RESPONSE",
+          "observation_key": "MY_OBS_132",
+          "report_step": 132,
+          "index": 1,
+          "observations": 3.248575448989868,
+          "std": 0.15681634843349457
+        },
+        {
+          "response_key": "MY_RESPONSE",
+          "observation_key": "MY_OBS_132",
+          "report_step": 132,
+          "index": 2,
+          "observations": 2.7605044841766357,
+          "std": 0.13250137865543365
+        },
+        {
+          "response_key": "MY_RESPONSE",
+          "observation_key": "MY_OBS_132",
+          "report_step": 132,
+          "index": 3,
+          "observations": 3.3842520713806152,
+          "std": 0.16395530104637146
+        },
+        {
+          "response_key": "MY_RESPONSE",
+          "observation_key": "MY_OBS_132",
+          "report_step": 132,
+          "index": 4,
+          "observations": 0.9695985317230225,
+          "std": 0.04802326858043671
+        },
+        {
+          "response_key": "MY_RESPONSE",
+          "observation_key": "MY_OBS_132",
+          "report_step": 132,
+          "index": 5,
+          "observations": 2.0614712238311768,
+          "std": 0.09892536699771881
+        },
+        {
+          "response_key": "MY_RESPONSE",
+          "observation_key": "MY_OBS_193",
+          "report_step": 193,
+          "index": 0,
+          "observations": 0.5958134531974792,
+          "std": 0.03025694191455841
+        },
+        {
+          "response_key": "MY_RESPONSE",
+          "observation_key": "MY_OBS_193",
+          "report_step": 193,
+          "index": 1,
+          "observations": 2.4593591690063477,
+          "std": 0.1264735758304596
+        },
+        {
+          "response_key": "MY_RESPONSE",
+          "observation_key": "MY_OBS_193",
+          "report_step": 193,
+          "index": 2,
+          "observations": 1.5710086822509766,
+          "std": 0.08528870344161987
+        },
+        {
+          "response_key": "MY_RESPONSE",
+          "observation_key": "MY_OBS_193",
+          "report_step": 193,
+          "index": 3,
+          "observations": 1.6568063497543335,
+          "std": 0.09129362553358078
+        },
+        {
+          "response_key": "MY_RESPONSE",
+          "observation_key": "MY_OBS_193",
+          "report_step": 193,
+          "index": 4,
+          "observations": 0.5932408571243286,
+          "std": 0.02907462604343891
+        },
+        {
+          "response_key": "MY_RESPONSE",
+          "observation_key": "MY_OBS_193",
+          "report_step": 193,
+          "index": 5,
+          "observations": 1.212605357170105,
+          "std": 0.054819993674755096
+        },
+        {
+          "response_key": "MY_RESPONSE",
+          "observation_key": "MY_OBS_255",
+          "report_step": 255,
+          "index": 0,
+          "observations": 0.6227307319641113,
+          "std": 0.030970707535743713
+        },
+        {
+          "response_key": "MY_RESPONSE",
+          "observation_key": "MY_OBS_255",
+          "report_step": 255,
+          "index": 1,
+          "observations": 1.9783726930618286,
+          "std": 0.09864794462919235
+        },
+        {
+          "response_key": "MY_RESPONSE",
+          "observation_key": "MY_OBS_255",
+          "report_step": 255,
+          "index": 2,
+          "observations": 1.2544246912002563,
+          "std": 0.059704411774873734
+        },
+        {
+          "response_key": "MY_RESPONSE",
+          "observation_key": "MY_OBS_255",
+          "report_step": 255,
+          "index": 3,
+          "observations": 1.187984585762024,
+          "std": 0.057891275733709335
+        },
+        {
+          "response_key": "MY_RESPONSE",
+          "observation_key": "MY_OBS_255",
+          "report_step": 255,
+          "index": 4,
+          "observations": 0.3575505018234253,
+          "std": 0.019673051312565804
+        },
+        {
+          "response_key": "MY_RESPONSE",
+          "observation_key": "MY_OBS_255",
+          "report_step": 255,
+          "index": 5,
+          "observations": 0.7009343504905701,
+          "std": 0.03513380140066147
+        },
+        {
+          "response_key": "MY_RESPONSE",
+          "observation_key": "MY_OBS_316",
+          "report_step": 316,
+          "index": 0,
+          "observations": 0.5524614453315735,
+          "std": 0.02812507562339306
+        },
+        {
+          "response_key": "MY_RESPONSE",
+          "observation_key": "MY_OBS_316",
+          "report_step": 316,
+          "index": 1,
+          "observations": 1.4124126434326172,
+          "std": 0.0771753117442131
+        },
+        {
+          "response_key": "MY_RESPONSE",
+          "observation_key": "MY_OBS_316",
+          "report_step": 316,
+          "index": 2,
+          "observations": 0.9199307560920715,
+          "std": 0.044394198805093765
+        },
+        {
+          "response_key": "MY_RESPONSE",
+          "observation_key": "MY_OBS_316",
+          "report_step": 316,
+          "index": 3,
+          "observations": 0.7604110240936279,
+          "std": 0.04024385288357735
+        },
+        {
+          "response_key": "MY_RESPONSE",
+          "observation_key": "MY_OBS_316",
+          "report_step": 316,
+          "index": 4,
+          "observations": 0.283384770154953,
+          "std": 0.014347800053656101
+        },
+        {
+          "response_key": "MY_RESPONSE",
+          "observation_key": "MY_OBS_316",
+          "report_step": 316,
+          "index": 5,
+          "observations": 0.5029466152191162,
+          "std": 0.024744370952248573
+        },
+        {
+          "response_key": "MY_RESPONSE",
+          "observation_key": "MY_OBS_377",
+          "report_step": 377,
+          "index": 0,
+          "observations": 0.5145913362503052,
+          "std": 0.024116728454828262
+        },
+        {
+          "response_key": "MY_RESPONSE",
+          "observation_key": "MY_OBS_377",
+          "report_step": 377,
+          "index": 1,
+          "observations": 1.2130120992660522,
+          "std": 0.060585588216781616
+        },
+        {
+          "response_key": "MY_RESPONSE",
+          "observation_key": "MY_OBS_377",
+          "report_step": 377,
+          "index": 2,
+          "observations": 0.6612465381622314,
+          "std": 0.03405614197254181
+        },
+        {
+          "response_key": "MY_RESPONSE",
+          "observation_key": "MY_OBS_377",
+          "report_step": 377,
+          "index": 3,
+          "observations": 0.6018131971359253,
+          "std": 0.029445994645357132
+        },
+        {
+          "response_key": "MY_RESPONSE",
+          "observation_key": "MY_OBS_377",
+          "report_step": 377,
+          "index": 4,
+          "observations": 0.23849281668663025,
+          "std": 0.010882878676056862
+        },
+        {
+          "response_key": "MY_RESPONSE",
+          "observation_key": "MY_OBS_377",
+          "report_step": 377,
+          "index": 5,
+          "observations": 0.3565286695957184,
+          "std": 0.018328942358493805
+        },
+        {
+          "response_key": "MY_RESPONSE",
+          "observation_key": "MY_OBS_438",
+          "report_step": 438,
+          "index": 0,
+          "observations": 0.39953768253326416,
+          "std": 0.020053304731845856
+        },
+        {
+          "response_key": "MY_RESPONSE",
+          "observation_key": "MY_OBS_438",
+          "report_step": 438,
+          "index": 1,
+          "observations": 0.9295898675918579,
+          "std": 0.04770972952246666
+        },
+        {
+          "response_key": "MY_RESPONSE",
+          "observation_key": "MY_OBS_438",
+          "report_step": 438,
+          "index": 2,
+          "observations": 0.5497094392776489,
+          "std": 0.026578037068247795
+        },
+        {
+          "response_key": "MY_RESPONSE",
+          "observation_key": "MY_OBS_438",
+          "report_step": 438,
+          "index": 3,
+          "observations": 0.448047935962677,
+          "std": 0.02222651243209839
+        },
+        {
+          "response_key": "MY_RESPONSE",
+          "observation_key": "MY_OBS_438",
+          "report_step": 438,
+          "index": 4,
+          "observations": 0.17204797267913818,
+          "std": 0.008437608368694782
+        },
+        {
+          "response_key": "MY_RESPONSE",
+          "observation_key": "MY_OBS_438",
+          "report_step": 438,
+          "index": 5,
+          "observations": 0.2758280634880066,
+          "std": 0.013980361633002758
+        },
+        {
+          "response_key": "MY_RESPONSE",
+          "observation_key": "MY_OBS_71",
+          "report_step": 71,
+          "index": 0,
+          "observations": 0.1297244131565094,
+          "std": 0.0064594680443406105
+        },
+        {
+          "response_key": "MY_RESPONSE",
+          "observation_key": "MY_OBS_71",
+          "report_step": 71,
+          "index": 1,
+          "observations": 3.4099514484405518,
+          "std": 0.16236735880374908
+        },
+        {
+          "response_key": "MY_RESPONSE",
+          "observation_key": "MY_OBS_71",
+          "report_step": 71,
+          "index": 2,
+          "observations": 4.751474380493164,
+          "std": 0.2356693297624588
+        },
+        {
+          "response_key": "MY_RESPONSE",
+          "observation_key": "MY_OBS_71",
+          "report_step": 71,
+          "index": 3,
+          "observations": 7.793057918548584,
+          "std": 0.3651414215564728
+        },
+        {
+          "response_key": "MY_RESPONSE",
+          "observation_key": "MY_OBS_71",
+          "report_step": 71,
+          "index": 4,
+          "observations": 2.059583902359009,
+          "std": 0.09825818985700607
+        },
+        {
+          "response_key": "MY_RESPONSE",
+          "observation_key": "MY_OBS_71",
+          "report_step": 71,
+          "index": 5,
+          "observations": 4.514816761016846,
+          "std": 0.24168886244297028
+        }
+      ],
+      "datatypes": {
+        "response_key": "String",
+        "observation_key": "String",
+        "report_step": "UInt16",
+        "index": "UInt16",
+        "observations": "Float32",
+        "std": "Float32"
+      }
+    }
+  },
   "target_ensemble": "iter-<ITER>",
   "analysis_settings": {
     "enkf_truncation": 0.98,
