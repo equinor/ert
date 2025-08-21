@@ -1213,7 +1213,9 @@ class StatefulStorageTest(RuleBasedStateMachine):
         obs: EnkfObs,
     ):
         experiment_id = self.storage.create_experiment(
-            parameters=parameters, responses=responses, observations=obs.datasets
+            parameters=parameters,
+            responses=responses,
+            observations=obs.datasets,
         ).id
         model_experiment = Experiment(experiment_id)
         model_experiment.parameters = parameters

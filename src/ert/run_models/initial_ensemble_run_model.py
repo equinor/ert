@@ -1,9 +1,8 @@
 from abc import ABC
-from typing import Annotated, Any, cast
+from typing import Annotated, cast
 
 import numpy as np
-import polars as pl
-from pydantic import Field, PrivateAttr
+from pydantic import Field
 
 from ert.config import (
     DesignMatrix,
@@ -23,6 +22,7 @@ from ert.run_arg import create_run_arguments
 from ert.run_models.run_model import RunModel
 from ert.sample_prior import sample_prior
 from ert.storage.local_ensemble import LocalEnsemble
+from ert.storage.local_experiment import DictEncodedObservations
 
 
 class InitialEnsembleRunModel(RunModel, ABC):
@@ -46,13 +46,7 @@ class InitialEnsembleRunModel(RunModel, ABC):
         ]
     ]
     ert_templates: list[tuple[str, str]]
-    _observations: dict[str, pl.DataFrame] | None = PrivateAttr()
-
-    def __init__(
-        self, *, observations: dict[str, pl.DataFrame] | None, **data: Any
-    ) -> None:
-        super().__init__(**data)
-        self._observations = observations
+    observations: dict[str, DictEncodedObservations] | None
 
     def _sample_and_evaluate_ensemble(
         self,
@@ -73,7 +67,7 @@ class InitialEnsembleRunModel(RunModel, ABC):
             experiment_storage = self._storage.create_experiment(
                 parameters=parameters_config
                 + ([design_matrix_group] if design_matrix_group else []),
-                observations=self._observations,
+                observations=self.observations,
                 responses=cast(list[ResponseConfig], self.response_configuration),
                 simulation_arguments=simulation_arguments,
                 name=self.experiment_name,
