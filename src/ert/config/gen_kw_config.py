@@ -343,34 +343,22 @@ class GenKwConfig(ParameterConfig):
         target_ensemble.save_parameters(self.name, realization=None, dataset=df)
 
     def shouldUseLogScale(self, keyword: str) -> bool:
-        for tf in self.transform_functions:
-            if tf.name == keyword:
-                return isinstance(tf.distribution, LogNormalSettings | LogUnifSettings)
-        return False
+        return isinstance(
+            self.transform_function.distribution, LogNormalSettings | LogUnifSettings
+        )
 
-    def get_priors(self) -> list[PriorDict]:
-        priors: list[PriorDict] = []
-        for tf in self.transform_functions:
-            priors.append(
-                {
-                    "key": tf.name,
-                    "function": tf.distribution.name.upper(),
-                    "parameters": {
-                        k.upper(): v
-                        for k, v in tf.parameter_list.items()
-                        if k != "name"
-                    },
-                }
-            )
-        return priors
+    def get_priors(self) -> PriorDict:
+        tf = self.transform_function
+        return {
+            "key": tf.name,
+            "function": tf.distribution.name.upper(),
+            "parameters": {
+                k.upper(): v for k, v in tf.parameter_list.items() if k != "name"
+            },
+        }
 
-    def transform_col(self, param_name: str) -> Callable[[float], float]:
-        tf: TransformFunction | None = None
-        for tf in self.transform_functions:
-            if tf.name == param_name:
-                break
-        assert tf is not None, f"Transform function {param_name} not found"
-        return tf.distribution.transform
+    def transform_col(self) -> Callable[[float], float]:
+        return self.transform_function.distribution.transform
 
     def _parse_transform_function_definition(
         self,
