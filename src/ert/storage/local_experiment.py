@@ -355,7 +355,7 @@ class LocalExperiment(BaseMode):
         return keys
 
     @cached_property
-    def scalar_group_to_nodes(self) -> dict[str, list[ParameterConfig]]:
+    def scalar_group_to_nodes(self) -> dict[str, list[GenKwConfig]]:
         genkw_dict = defaultdict(list)
         for config in self.parameter_configuration.values():
             if isinstance(config, GenKwConfig):

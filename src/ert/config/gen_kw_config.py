@@ -330,12 +330,7 @@ class GenKwConfig(ParameterConfig):
                 {
                     "realization": iens_active_index,
                 }
-            ).with_columns(
-                [
-                    pl.Series(from_data[i, :]).alias(param_name.name)
-                    for i, param_name in enumerate(self.transform_functions)
-                ]
-            ),
+            ).with_columns([pl.Series(from_data).alias(self.transform_function.name)]),
         )
 
     def copy_parameters(
