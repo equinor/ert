@@ -3,6 +3,7 @@ import fileinput
 import json
 import logging
 import os
+import platform
 import stat
 import threading
 import warnings
@@ -934,7 +935,9 @@ async def test_that_killed_ert_does_not_leave_storage_server_process():
             await asyncio.sleep(0.05)
 
     storage_process_pid = await asyncio.wait_for(
-        _find_storage_process_pid(), timeout=120
+        _find_storage_process_pid(),
+        # Increased timeout for version branch 14.4 due to flaky mac tests
+        timeout=240 if platform.mac_ver()[0] == "15.5" else 120,
     )
     # wait for storage server to have connected to ert
     await asyncio.sleep(5)
