@@ -41,7 +41,7 @@ jobs:
 
     - name: Install ERT and dependencies
       run: |
-        uv sync --extra everest --extra dev --extra types
+        uv sync --extra dev --extra types
 
     - run: echo ::add-matcher::.github/mypy-matcher.json
     - name: Run mypy
