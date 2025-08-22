@@ -590,7 +590,7 @@ async def test_that_bsub_will_retry_and_fail(
 
 
 @pytest.mark.parametrize(
-    ("exit_code, error_msg"),
+    "exit_code, error_msg",
     [
         # All these have been manually obtained on the command line by
         # perturbing the command arguments to bsub:
