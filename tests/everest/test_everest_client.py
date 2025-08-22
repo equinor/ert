@@ -149,7 +149,9 @@ def test_that_stop_errors_on_server_up_but_endpoint_down(
 @pytest.mark.integration_test
 @pytest.mark.xdist_group("math_func/config_minimal.yml")
 @pytest.mark.flaky(rerun=3)
-@pytest.mark.skipif(sys.version_info[0:2] == (3, 13), reason="Fails on Python 3.13")
+@pytest.mark.skipif(
+    sys.version_info[0:3] == (3, 13, 6), reason="Fails on Python 3.13.6"
+)
 def test_that_multiple_everest_clients_can_connect_to_server(
     cached_example, change_to_tmpdir
 ):
