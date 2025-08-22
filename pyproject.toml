@@ -32,7 +32,7 @@ dependencies = [
     "filelock",
     "httpx",
     "humanize",
-    "iterative_ensemble_smoother>=0.3.0",
+    "iterative_ensemble_smoother>=0.4.0",
     "jinja2 >= 2.10",
     "lark",
     "lxml",
@@ -65,7 +65,6 @@ dependencies = [
     "seaborn",
     "tables", # extra dependency for pandas (hdf5)
     "tabulate",
-    "threadpoolctl",
     "tqdm>=4.62.0",
     "typing_extensions>=4.5",
     "uvicorn >= 0.17.0",
