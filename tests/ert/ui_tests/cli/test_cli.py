@@ -921,7 +921,6 @@ def test_that_connection_errors_do_not_effect_final_result(
 
 
 @pytest.mark.usefixtures("copy_poly_case")
-@pytest.mark.skip_mac_ci
 async def test_that_killed_ert_does_not_leave_storage_server_process():
     ert_subprocess = Popen(["ert", "gui", "poly.ert"])
     assert ert_subprocess.is_running()
