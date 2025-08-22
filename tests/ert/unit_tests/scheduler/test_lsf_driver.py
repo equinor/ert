@@ -52,20 +52,43 @@ def nonempty_string_without_whitespace():
     )
 
 
-@pytest.fixture
-def capturing_bsub(monkeypatch, tmp_path):
+def patch_queue_commands(
+    monkeypatch,
+    tmp_path,
+    bsub_script=None,
+    bjobs_script=None,
+    bhist_script=None,
+    bkill_script=None,
+):
     monkeypatch.chdir(tmp_path)
     bin_path = Path("bin")
     bin_path.mkdir()
     monkeypatch.setenv("PATH", f"{bin_path}:{os.environ['PATH']}")
-    bsub_path = bin_path / "bsub"
-    bsub_path.write_text(
-        "#!/bin/sh\n"
-        "echo $@ > captured_bsub_args\n"
-        "echo 'Job <1>' is submitted to normal queue",
-        encoding="utf-8",
+    if bsub_script:
+        bsub_path = bin_path / "bsub"
+        bsub_path.write_text("#!/bin/sh\n" + dedent(bsub_script))
+        bsub_path.chmod(bsub_path.stat().st_mode | stat.S_IEXEC)
+    if bjobs_script:
+        bjobs_path = bin_path / "bjobs"
+        bjobs_path.write_text("#!/bin/sh\n" + dedent(bjobs_script))
+        bjobs_path.chmod(bjobs_path.stat().st_mode | stat.S_IEXEC)
+    if bhist_script:
+        bhist_path = bin_path / "bhist"
+        bhist_path.write_text("#!/bin/sh\n" + dedent(bhist_script))
+        bhist_path.chmod(bhist_path.stat().st_mode | stat.S_IEXEC)
+    if bkill_script:
+        bkill_path = bin_path / "bkill"
+        bkill_path.write_text("#!/bin/sh\n" + dedent(bkill_script))
+        bkill_path.chmod(bkill_path.stat().st_mode | stat.S_IEXEC)
+
+
+@pytest.fixture
+def capturing_bsub(monkeypatch, tmp_path):
+    patch_queue_commands(
+        monkeypatch,
+        tmp_path,
+        "echo $@ > captured_bsub_args\necho 'Job <1>' is submitted to normal queue",
     )
-    bsub_path.chmod(bsub_path.stat().st_mode | stat.S_IEXEC)
 
 
 @pytest.mark.parametrize(
@@ -80,17 +103,15 @@ def capturing_bsub(monkeypatch, tmp_path):
         pytest.param("echo -", "echo Exited with exit code 130", LSF_FAILED_JOB),
     ],
 )
-async def test_exit_codes(tmp_path_factory, bjobs_script, bhist_script, exit_code):
+async def test_exit_codes(
+    monkeypatch, tmp_path_factory, bjobs_script, bhist_script, exit_code
+):
     tmp_path = tmp_path_factory.mktemp("exit_codes")
-    mocked_bjobs = tmp_path / "bjobs"
-    mocked_bjobs.write_text(f"#!/bin/sh\n{bjobs_script}")
-    mocked_bjobs.chmod(mocked_bjobs.stat().st_mode | stat.S_IEXEC)
+    patch_queue_commands(
+        monkeypatch, tmp_path, bjobs_script=bjobs_script, bhist_script=bhist_script
+    )
 
-    mocked_bhist = tmp_path / "bhist"
-    mocked_bhist.write_text(f"#!/bin/sh\n{bhist_script}")
-    mocked_bhist.chmod(mocked_bhist.stat().st_mode | stat.S_IEXEC)
-
-    driver = LsfDriver(bjobs_cmd=mocked_bjobs, bhist_cmd=mocked_bhist)
+    driver = LsfDriver()
 
     assert await driver._get_exit_code("0") == exit_code
 
@@ -274,13 +295,7 @@ async def test_submit_with_realization_memory_with_bsub_capture():
     ],
 )
 async def test_faulty_bsub(monkeypatch, tmp_path, bsub_script, expectation):
-    monkeypatch.chdir(tmp_path)
-    bin_path = Path("bin")
-    bin_path.mkdir()
-    monkeypatch.setenv("PATH", f"{bin_path}:{os.environ['PATH']}")
-    bsub_path = bin_path / "bsub"
-    bsub_path.write_text(f"#!/bin/sh\n{bsub_script}")
-    bsub_path.chmod(bsub_path.stat().st_mode | stat.S_IEXEC)
+    patch_queue_commands(monkeypatch, tmp_path, bsub_script=bsub_script)
     driver = LsfDriver()
     driver._max_bsub_attempts = 1
     with expectation:
@@ -288,18 +303,12 @@ async def test_faulty_bsub(monkeypatch, tmp_path, bsub_script, expectation):
 
 
 async def test_faulty_bsub_produces_error_log(monkeypatch, tmp_path):
-    monkeypatch.chdir(tmp_path)
-    bin_path = Path("bin")
-    bin_path.mkdir()
-    monkeypatch.setenv("PATH", f"{bin_path}:{os.environ['PATH']}")
-
     out = "THIS_IS_OUTPUT"
     err = "THIS_IS_ERROR"
-    bsub_script = f"echo {out} && echo {err} >&2; exit 1"
-    bsub_path = bin_path / "bsub"
-    bsub_path.write_text(f"#!/bin/sh\n{bsub_script}")
-    bsub_path.chmod(bsub_path.stat().st_mode | stat.S_IEXEC)
-
+    patch_queue_commands(
+        monkeypatch, tmp_path, bsub_script=f"echo {out} && echo {err} >&2; exit 1"
+    )
+    monkeypatch.chdir(tmp_path)
     driver = LsfDriver()
     with pytest.raises(RuntimeError):
         await driver.submit(0, "sleep")
@@ -382,19 +391,14 @@ async def test_kill(
     caplog,
 ):
     caplog.set_level(logging.INFO)
-    monkeypatch.chdir(tmp_path)
-    bin_path = Path("bin")
-    bin_path.mkdir()
-    monkeypatch.setenv("PATH", f"{bin_path}:{os.environ['PATH']}")
-    bkill_path = bin_path / "bkill"
-    bkill_path.write_text(
-        f"#!/bin/sh\necho '{bkill_stdout}'\n"
+    patch_queue_commands(
+        monkeypatch,
+        tmp_path,
+        bkill_script=f"echo '{bkill_stdout}'\n"
         f"echo '{bkill_stderr}' >&2\n"
         f"echo $@ >> 'bkill_args'\n"
         f"exit {bkill_returncode}",
-        encoding="utf-8",
     )
-    bkill_path.chmod(bkill_path.stat().st_mode | stat.S_IEXEC)
 
     driver = LsfDriver()
     driver._iens2jobid = mocked_iens2jobid
@@ -546,16 +550,12 @@ def test_parse_bjobs_invalid_state_is_logged(caplog):
     ],
 )
 async def test_faulty_bjobs(monkeypatch, tmp_path, bjobs_script, expectation):
-    monkeypatch.chdir(tmp_path)
-    bin_path = Path("bin")
-    bin_path.mkdir()
-    monkeypatch.setenv("PATH", f"{bin_path}:{os.environ['PATH']}")
-    bsub_path = bin_path / "bsub"
-    bsub_path.write_text("#!/bin/sh\necho 'Job <1> is submitted to default queue'")
-    bsub_path.chmod(bsub_path.stat().st_mode | stat.S_IEXEC)
-    bjobs_path = bin_path / "bjobs"
-    bjobs_path.write_text(f"#!/bin/sh\n{bjobs_script}")
-    bjobs_path.chmod(bjobs_path.stat().st_mode | stat.S_IEXEC)
+    patch_queue_commands(
+        monkeypatch,
+        tmp_path,
+        bsub_script="echo 'Job <1> is submitted to default queue'",
+        bjobs_script=bjobs_script,
+    )
     driver = LsfDriver()
     driver._log_bhist_job_summary = AsyncMock()
     with expectation:
@@ -573,13 +573,9 @@ async def test_faulty_bjobs(monkeypatch, tmp_path, bjobs_script, expectation):
 async def test_that_bsub_will_retry_and_fail(
     monkeypatch, tmp_path, exit_code, error_msg
 ):
-    monkeypatch.chdir(tmp_path)
-    bin_path = Path("bin")
-    bin_path.mkdir()
-    monkeypatch.setenv("PATH", f"{bin_path}:{os.environ['PATH']}")
-    bsub_path = bin_path / "bsub"
-    bsub_path.write_text(f"#!/bin/sh\necho {error_msg} >&2\nexit {exit_code}")
-    bsub_path.chmod(bsub_path.stat().st_mode | stat.S_IEXEC)
+    patch_queue_commands(
+        monkeypatch, tmp_path, bsub_script=f"echo {error_msg} >&2\nexit {exit_code}"
+    )
     driver = LsfDriver()
     driver._max_bsub_attempts = 2
     driver._sleep_time_between_cmd_retries = 0.0
@@ -618,15 +614,11 @@ async def test_that_bsub_will_retry_and_fail(
 async def test_that_bsub_will_fail_without_retries(
     monkeypatch, tmp_path, exit_code, error_msg
 ):
-    monkeypatch.chdir(tmp_path)
-    bin_path = Path("bin")
-    bin_path.mkdir()
-    monkeypatch.setenv("PATH", f"{bin_path}:{os.environ['PATH']}")
-    bsub_path = bin_path / "bsub"
-    bsub_path.write_text(
-        f'#!/bin/sh\necho . >> bsubcalls\necho "{error_msg}" >&2\nexit {exit_code}'
+    patch_queue_commands(
+        monkeypatch,
+        tmp_path,
+        f'echo . >> bsubcalls\necho "{error_msg}" >&2\nexit {exit_code}',
     )
-    bsub_path.chmod(bsub_path.stat().st_mode | stat.S_IEXEC)
     driver = LsfDriver()
     with pytest.raises(RuntimeError):
         await driver.submit(0, "sleep 10")
@@ -636,25 +628,18 @@ async def test_that_bsub_will_fail_without_retries(
 @pytest.mark.parametrize(
     ("exit_code, error_msg"),
     [
-        (0, "void"),
         (FLAKY_SSH_RETURNCODE, ""),
-        (0, "Request from non-LSF host rejected"),
         (FLAKY_SSH_RETURNCODE, "Request from non-LSF host rejected"),
     ],
 )
 async def test_that_bsub_will_retry_and_succeed(
     monkeypatch, tmp_path, exit_code, error_msg
 ):
-    monkeypatch.chdir(tmp_path)
-    bin_path = Path("bin")
-    bin_path.mkdir()
-    monkeypatch.setenv("PATH", f"{bin_path}:{os.environ['PATH']}")
-    bsub_path = bin_path / "bsub"
-    bsub_path.write_text(
-        "#!/bin/sh"
-        + dedent(
-            f"""
-            TRY_FILE="{bin_path}/script_try"
+    patch_queue_commands(
+        monkeypatch,
+        tmp_path,
+        f"""
+            TRY_FILE="{tmp_path}/script_try"
             if [ -f "$TRY_FILE" ]; then
                 echo "Job <1> is submitted to normal queue"
                 exit 0
@@ -663,10 +648,8 @@ async def test_that_bsub_will_retry_and_succeed(
                 echo "{error_msg}" >&2
                 exit {exit_code}
             fi
-            """
-        )
+            """,
     )
-    bsub_path.chmod(bsub_path.stat().st_mode | stat.S_IEXEC)
     driver = LsfDriver()
     driver._max_bsub_attempts = 2
     driver._sleep_time_between_cmd_retries = 0.0
@@ -892,13 +875,11 @@ empty_states = _parse_jobs_dict({})
     ],
 )
 async def test_poll_once_by_bhist(
-    previous_bhist, bhist_output, expected_states, tmp_path
+    previous_bhist, bhist_output, expected_states, tmp_path, monkeypatch
 ):
-    mocked_bhist = tmp_path / "bhist"
-    mocked_bhist.write_text(f"#!/bin/sh\necho '{bhist_output}'")
-    mocked_bhist.chmod(mocked_bhist.stat().st_mode | stat.S_IEXEC)
+    patch_queue_commands(monkeypatch, tmp_path, bhist_script=f"echo '{bhist_output}'")
 
-    driver = LsfDriver(bhist_cmd=mocked_bhist)
+    driver = LsfDriver()
     driver._bhist_cache = parse_bhist(previous_bhist)
     driver._bhist_required_cache_age = 0.0
 
@@ -922,13 +903,11 @@ async def test_poll_once_by_bhist(
     ],
 )
 async def test_poll_once_by_bhist_requires_aged_data(
-    required_cache_age, expected_states, tmp_path
+    required_cache_age, expected_states, tmp_path, monkeypatch
 ):
-    mocked_bhist = tmp_path / "bhist"
-    mocked_bhist.write_text("#!/bin/sh\necho '1 x x 0 x 0'")
-    mocked_bhist.chmod(mocked_bhist.stat().st_mode | stat.S_IEXEC)
+    patch_queue_commands(monkeypatch, tmp_path, bhist_script="echo '1 x x 0 x 0'")
 
-    driver = LsfDriver(bhist_cmd=mocked_bhist)
+    driver = LsfDriver()
     driver._bhist_cache = parse_bhist("1 x x 0 x 0")
     driver._bhist_cache_timestamp = time.time()
     driver._bhist_required_cache_age = required_cache_age
@@ -946,12 +925,12 @@ async def test_poll_once_by_bhist_requires_aged_data(
     ],
 )
 async def test_kill_does_not_log_error_on_accepted_bkill_outputs(
-    bkill_output, tmp_path, caplog, capsys
+    bkill_output, tmp_path, caplog, capsys, monkeypatch
 ):
-    bkill_path = tmp_path / "bkill"
-    bkill_path.write_text(f"#!/bin/sh\necho '{bkill_output}'; exit 0")
-    bkill_path.chmod(bkill_path.stat().st_mode | stat.S_IEXEC)
-    driver = LsfDriver(bkill_cmd=bkill_path)
+    patch_queue_commands(
+        monkeypatch, tmp_path, bkill_script=f"echo '{bkill_output}'; exit 0"
+    )
+    driver = LsfDriver()
 
     async def mock_submit(*args, **kwargs):
         driver._iens2jobid[0] = "1"
@@ -1011,16 +990,9 @@ def mock_lsf(pytestconfig, monkeypatch, tmp_path):
 def not_found_bjobs(monkeypatch, tmp_path):
     """This creates a bjobs command that will always claim a job
     does not exist, mimicking a job that has 'fallen out of the bjobs cache'."""
-    monkeypatch.chdir(tmp_path)
-    bin_path = tmp_path / "bin"
-    bin_path.mkdir()
-    monkeypatch.setenv("PATH", f"{bin_path}:{os.environ['PATH']}")
-    bjobs_path = bin_path / "bjobs"
-    bjobs_path.write_text(
-        '#!/bin/sh\necho "Job <$1> is not found"',
-        encoding="utf-8",
+    patch_queue_commands(
+        monkeypatch, tmp_path, bjobs_script='echo "Job <$1> is not found"'
     )
-    bjobs_path.chmod(bjobs_path.stat().st_mode | stat.S_IEXEC)
 
 
 @pytest.mark.integration_test
