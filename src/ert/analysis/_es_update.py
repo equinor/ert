@@ -19,7 +19,6 @@ import polars as pl
 import psutil
 import scipy
 from iterative_ensemble_smoother.experimental import AdaptiveESMDA
-from threadpoolctl import threadpool_limits
 
 from ert.config import (
     ESSettings,
@@ -56,7 +55,14 @@ logger = logging.getLogger(__name__)
 
 T = TypeVar("T")
 
-OPTIMAL_NUM_THREADS = max(1, (psutil.cpu_count(logical=False) or 1) // 2)
+# When running adaptive localization we reserve some resources for
+# the GUI and other applications that might be running
+RESERVED_CPU_CORES = 2
+# Testing on drogon seems to indicate that this is a
+# reasonable 'default' value for the parallel config of joblib
+NUM_JOBS_ADAPTIVE_LOC = max(
+    1, ((psutil.cpu_count(logical=False) or 1) - RESERVED_CPU_CORES)
+)
 
 
 class TimedIterator(Generic[T]):
@@ -252,9 +258,6 @@ def analysis_ES(
     truncation = module.enkf_truncation
 
     if module.localization:
-        logger.info(
-            f"Will run Adaptive Localization using {OPTIMAL_NUM_THREADS} threads."
-        )
         smoother_adaptive_es = AdaptiveESMDA(
             covariance=observation_errors**2,
             observations=observation_values,
@@ -331,55 +334,51 @@ def analysis_ES(
         progress_callback(AnalysisStatusEvent(msg=log_msg))
 
         if module.localization:
-            with threadpool_limits(limits=OPTIMAL_NUM_THREADS):
-                config_node = source_ensemble.experiment.parameter_configuration[
-                    param_group
-                ]
-                num_params = param_ensemble_array.shape[0]
-                batch_size = _calculate_adaptive_batch_size(num_params, num_obs)
-                batches = _split_by_batchsize(np.arange(0, num_params), batch_size)
+            config_node = source_ensemble.experiment.parameter_configuration[
+                param_group
+            ]
+            num_params = param_ensemble_array.shape[0]
+            batch_size = _calculate_adaptive_batch_size(num_params, num_obs)
+            batches = _split_by_batchsize(np.arange(0, num_params), batch_size)
 
-                log_msg = (
-                    f"Running localization on {num_params} parameters, "
-                    f"{num_obs} responses, {ensemble_size} realizations "
-                    f"and {len(batches)} batches"
-                )
-                logger.info(log_msg)
-                progress_callback(AnalysisStatusEvent(msg=log_msg))
+            log_msg = (
+                f"Running localization on {num_params} parameters, "
+                f"{num_obs} responses, {ensemble_size} realizations "
+                f"and {len(batches)} batches"
+            )
+            logger.info(log_msg)
+            progress_callback(AnalysisStatusEvent(msg=log_msg))
 
-                start = time.time()
-                cross_correlations: list[npt.NDArray[np.float64]] = []
-                for param_batch_idx in batches:
-                    update_idx = param_batch_idx[
-                        non_zero_variance_mask[param_batch_idx]
-                    ]
-                    X_local = param_ensemble_array[update_idx, :]
-                    if isinstance(config_node, GenKwConfig):
-                        correlation_batch_callback = functools.partial(
-                            correlation_callback,
-                            cross_correlations_accumulator=cross_correlations,
-                        )
-                    else:
-                        correlation_batch_callback = None
-                    param_ensemble_array[update_idx, :] = (
-                        smoother_adaptive_es.assimilate(
-                            X=X_local,
-                            Y=S,
-                            D=D,
-                            # The user is responsible for scaling observation covariance
-                            # (ESMDA usage)
-                            alpha=1.0,
-                            correlation_threshold=module.correlation_threshold,
-                            cov_YY=cov_YY,
-                            progress_callback=adaptive_localization_progress_callback,
-                            correlation_callback=correlation_batch_callback,
-                        )
+            start = time.time()
+            cross_correlations: list[npt.NDArray[np.float64]] = []
+            for param_batch_idx in batches:
+                update_idx = param_batch_idx[non_zero_variance_mask[param_batch_idx]]
+                X_local = param_ensemble_array[update_idx, :]
+                if isinstance(config_node, GenKwConfig):
+                    correlation_batch_callback = functools.partial(
+                        correlation_callback,
+                        cross_correlations_accumulator=cross_correlations,
                     )
-
-                logger.info(
-                    f"Adaptive Localization of {param_group} completed "
-                    f"in {(time.time() - start) / 60} minutes"
+                else:
+                    correlation_batch_callback = None
+                param_ensemble_array[update_idx, :] = smoother_adaptive_es.assimilate(
+                    X=X_local,
+                    Y=S,
+                    D=D,
+                    # The user is responsible for scaling observation covariance
+                    # (ESMDA usage)
+                    alpha=1.0,
+                    correlation_threshold=module.correlation_threshold,
+                    cov_YY=cov_YY,
+                    progress_callback=adaptive_localization_progress_callback,
+                    correlation_callback=correlation_batch_callback,
+                    # number of parallel jobs for joblib
+                    n_jobs=NUM_JOBS_ADAPTIVE_LOC,
                 )
+            logger.info(
+                f"Adaptive Localization of {param_group} completed "
+                f"in {(time.time() - start) / 60} minutes"
+            )
 
         else:
             # In-place multiplication is not yet supported, therefore avoiding @=
