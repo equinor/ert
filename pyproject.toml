@@ -24,7 +24,9 @@ classifiers = [
 dynamic = ["version"]
 dependencies = [
     "aiohttp",
+    "colorama",
     "cryptography",
+    "decorator",
     "dnspython >= 2",
     "fastapi",
     "filelock",
@@ -45,6 +47,7 @@ dependencies = [
     "pandas",
     "pluggy>=1.3.0",
     "polars>=1, !=1.23, <1.28",
+    "progressbar2",
     "psutil",
     "pyarrow", # extra dependency for pandas (parquet)
     "pydantic > 2",
@@ -55,6 +58,9 @@ dependencies = [
     "pyqt6",
     "requests",
     "resfo",
+    "ropt-dakota>=0.22",
+    "ropt[pandas]>=0.22",
+    "ruamel.yaml",
     "scipy >= 1.10.1",
     "seaborn",
     "tables", # extra dependency for pandas (hdf5)
@@ -70,6 +76,7 @@ dependencies = [
     "graphite-maps",
     "surfio>=0.0.9",
     "fastexcel>=0.14.0", # extra dependency for polars (excel)
+    "websockets",
 ]
 
 [project.scripts]
@@ -135,16 +142,6 @@ types = [
     "types-psutil",
     "types-setuptools",
     "types-networkx",
-]
-everest = [
-    "websockets",
-    "progressbar2",
-    "ruamel.yaml",
-    "fastapi",
-    "decorator",
-    "colorama",
-    "ropt[pandas]>=0.22",
-    "ropt-dakota>=0.22",
 ]
 
 [tool.setuptools]

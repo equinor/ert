@@ -1,5 +1,5 @@
 version = 1
-revision = 3
+revision = 2
 requires-python = ">=3.11, <3.14"
 resolution-markers = [
     "python_full_version >= '3.12'",
@@ -764,7 +764,9 @@ name = "ert"
 source = { editable = "." }
 dependencies = [
     { name = "aiohttp" },
+    { name = "colorama" },
     { name = "cryptography" },
+    { name = "decorator" },
     { name = "dnspython" },
     { name = "fastapi" },
     { name = "fastexcel" },
@@ -788,6 +790,7 @@ dependencies = [
     { name = "pandas" },
     { name = "pluggy" },
     { name = "polars" },
+    { name = "progressbar2" },
     { name = "psutil" },
     { name = "pyarrow" },
     { name = "pydantic" },
@@ -798,6 +801,9 @@ dependencies = [
     { name = "pyzmq" },
     { name = "requests" },
     { name = "resfo" },
+    { name = "ropt", extra = ["pandas"] },
+    { name = "ropt-dakota" },
+    { name = "ruamel-yaml" },
     { name = "scipy" },
     { name = "seaborn" },
     { name = "surfio" },
@@ -845,16 +851,6 @@ dev = [
     { name = "sphinxcontrib-datatemplates" },
     { name = "xlsxwriter" },
 ]
-everest = [
-    { name = "colorama" },
-    { name = "decorator" },
-    { name = "fastapi" },
-    { name = "progressbar2" },
-    { name = "ropt", extra = ["pandas"] },
-    { name = "ropt-dakota" },
-    { name = "ruamel-yaml" },
-    { name = "websockets" },
-]
 style = [
     { name = "pre-commit" },
 ]
@@ -875,12 +871,11 @@ types = [
 [package.metadata]
 requires-dist = [
     { name = "aiohttp" },
-    { name = "colorama", marker = "extra == 'everest'" },
+    { name = "colorama" },
     { name = "cryptography" },
-    { name = "decorator", marker = "extra == 'everest'" },
+    { name = "decorator" },
     { name = "dnspython", specifier = ">=2" },
     { name = "fastapi" },
-    { name = "fastapi", marker = "extra == 'everest'" },
     { name = "fastexcel", specifier = ">=0.14.0" },
     { name = "filelock" },
     { name = "furo", marker = "extra == 'dev'" },
@@ -912,7 +907,7 @@ requires-dist = [
     { name = "pluggy", specifier = ">=1.3.0" },
     { name = "polars", specifier = ">=1,!=1.23,<1.28" },
     { name = "pre-commit", marker = "extra == 'style'" },
-    { name = "progressbar2", marker = "extra == 'everest'" },
+    { name = "progressbar2" },
     { name = "psutil" },
     { name = "pyarrow" },
     { name = "pydantic", specifier = ">2" },
@@ -938,9 +933,9 @@ requires-dist = [
     { name = "resdata", marker = "extra == 'dev'" },
     { name = "resfo" },
     { name = "resfo", marker = "extra == 'dev'" },
-    { name = "ropt", extras = ["pandas"], marker = "extra == 'everest'", specifier = ">=0.22" },
-    { name = "ropt-dakota", marker = "extra == 'everest'", specifier = ">=0.22" },
-    { name = "ruamel-yaml", marker = "extra == 'everest'" },
+    { name = "ropt", extras = ["pandas"], specifier = ">=0.22" },
+    { name = "ropt-dakota", specifier = ">=0.22" },
+    { name = "ruamel-yaml" },
     { name = "rust-just", marker = "extra == 'dev'" },
     { name = "scipy", specifier = ">=1.10.1" },
     { name = "seaborn" },
@@ -967,12 +962,11 @@ requires-dist = [
     { name = "typing-extensions", specifier = ">=4.5" },
     { name = "uvicorn", specifier = ">=0.17.0" },
     { name = "websockets" },
-    { name = "websockets", marker = "extra == 'everest'" },
     { name = "xarray" },
     { name = "xlsxwriter", marker = "extra == 'dev'", specifier = ">=3.2.3" },
     { name = "xtgeo", specifier = ">=3.3.0" },
 ]
-provides-extras = ["dev", "style", "types", "everest"]
+provides-extras = ["dev", "style", "types"]
 
 [[package]]
 name = "execnet"
@@ -3850,14 +3844,14 @@ wheels = [
 
 [[package]]
 name = "ruamel-yaml"
-version = "0.18.14"
+version = "0.18.15"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "ruamel-yaml-clib", marker = "platform_python_implementation == 'CPython'" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/39/87/6da0df742a4684263261c253f00edd5829e6aca970fff69e75028cccc547/ruamel.yaml-0.18.14.tar.gz", hash = "sha256:7227b76aaec364df15936730efbf7d72b30c0b79b1d578bbb8e3dcb2d81f52b7", size = 145511, upload-time = "2025-06-09T08:51:09.828Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/3e/db/f3950f5e5031b618aae9f423a39bf81a55c148aecd15a34527898e752cf4/ruamel.yaml-0.18.15.tar.gz", hash = "sha256:dbfca74b018c4c3fba0b9cc9ee33e53c371194a9000e694995e620490fd40700", size = 146865, upload-time = "2025-08-19T11:15:10.694Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/af/6d/6fe4805235e193aad4aaf979160dd1f3c487c57d48b810c816e6e842171b/ruamel.yaml-0.18.14-py3-none-any.whl", hash = "sha256:710ff198bb53da66718c7db27eec4fbcc9aa6ca7204e4c1df2f282b6fe5eb6b2", size = 118570, upload-time = "2025-06-09T08:51:06.348Z" },
+    { url = "https://files.pythonhosted.org/packages/d1/e5/f2a0621f1781b76a38194acae72f01e37b1941470407345b6e8653ad7640/ruamel.yaml-0.18.15-py3-none-any.whl", hash = "sha256:148f6488d698b7a5eded5ea793a025308b25eca97208181b6a026037f391f701", size = 119702, upload-time = "2025-08-19T11:15:07.696Z" },
 ]
 
 [[package]]
