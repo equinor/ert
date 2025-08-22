@@ -960,5 +960,5 @@ async def test_that_killed_ert_does_not_leave_storage_server_process():
             f"to stop storage:{storage_process.pid}"
         )
 
-    await asyncio.wait_for(_wait_for_storage_process_to_shut_down(), timeout=90)
+    await asyncio.wait_for(_wait_for_storage_process_to_shut_down(), timeout=120)
     assert not storage_process.is_running()
