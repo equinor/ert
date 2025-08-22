@@ -178,7 +178,7 @@ def test_update_multiple_param():
 
 
 @pytest.mark.usefixtures("copy_poly_case")
-def test_that_update_works_with_failed_realizations():
+def test_that_reals_with_load_failure_in_prior_become_parent_failure_in_posterior():
     with open("poly_eval.py", "w", encoding="utf-8") as f:
         f.write(
             dedent(
