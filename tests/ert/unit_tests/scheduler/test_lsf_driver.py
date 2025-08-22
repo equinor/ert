@@ -244,7 +244,7 @@ async def test_submit_sets_stderr():
 
 
 @pytest.mark.usefixtures("capturing_bsub")
-async def test_submit_with_realization_memory_with_bsub_capture():
+async def test_that_realization_memory_parameter_sets_bsub_rusage_option():
     driver = LsfDriver()
     await driver.submit(0, "sleep", realization_memory=1024**2)
     assert "-R rusage[mem=1]" in Path("captured_bsub_args").read_text(encoding="utf-8")
@@ -302,7 +302,9 @@ async def test_faulty_bsub(monkeypatch, tmp_path, bsub_script, expectation):
         await driver.submit(0, "sleep")
 
 
-async def test_faulty_bsub_produces_error_log(monkeypatch, tmp_path):
+async def test_that_when_bsub_has_exit_code_1_its_output_is_in_the_error_message(
+    monkeypatch, tmp_path
+):
     out = "THIS_IS_OUTPUT"
     err = "THIS_IS_ERROR"
     patch_queue_commands(
@@ -570,7 +572,7 @@ async def test_faulty_bjobs(monkeypatch, tmp_path, bjobs_script, expectation):
         (199, "Not recognized"),
     ],
 )
-async def test_that_bsub_will_retry_and_fail(
+async def test_that_runtime_error_is_thrown_when_bsub_does_not_eventually_succeed(
     monkeypatch, tmp_path, exit_code, error_msg
 ):
     patch_queue_commands(
@@ -611,7 +613,7 @@ async def test_that_bsub_will_retry_and_fail(
         (255, "Error in rusage section. Job not submitted."),
     ],
 )
-async def test_that_bsub_will_fail_without_retries(
+async def test_that_bsub_is_not_retried_for_unrecoverable_errors(
     monkeypatch, tmp_path, exit_code, error_msg
 ):
     patch_queue_commands(
@@ -632,7 +634,7 @@ async def test_that_bsub_will_fail_without_retries(
         (FLAKY_SSH_RETURNCODE, "Request from non-LSF host rejected"),
     ],
 )
-async def test_that_bsub_will_retry_and_succeed(
+async def test_that_when_bsub_only_fails_once_it_is_retried_and_succeeds(
     monkeypatch, tmp_path, exit_code, error_msg
 ):
     patch_queue_commands(
@@ -653,7 +655,7 @@ async def test_that_bsub_will_retry_and_succeed(
     driver = LsfDriver()
     driver._max_bsub_attempts = 2
     driver._sleep_time_between_cmd_retries = 0.0
-    await driver.submit(0, "sleep 10")
+    await driver.submit(0, "sleep 10")  # Would throw RuntimeError on failed bsub
 
 
 @pytest.mark.parametrize(
