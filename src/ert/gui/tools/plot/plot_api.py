@@ -19,6 +19,7 @@ from pandas.errors import ParserError
 
 from ert.config import ParameterMetadata, ResponseMetadata
 from ert.services import StorageService
+from ert.summary_key_type import history_key
 
 logger = logging.getLogger(__name__)
 
@@ -44,28 +45,6 @@ class PlotApiKeyDefinition(NamedTuple):
     filter_on: dict[Any, Any] | None = None
     parameter_metadata: ParameterMetadata | None = None
     response_metadata: ResponseMetadata | None = None
-
-
-def _history_key(key: str) -> str:
-    """The history summary key responding to given summary key
-
-    See :ref:`SUMMARY  <summary>` and :ref:`HISTORY_SOURCE <history_source>`
-    for in keywords.rst for details.
-
-    >>> _history_key("FOPR")
-    'FOPRH'
-    >>> _history_key("BPR:1,3,8")
-    'BPRH:1,3,8'
-    >>> _history_key("LWWIT:WNAME:LGRNAME")
-    'LWWITH:WNAME:LGRNAME'
-    """
-    if ":" in key:
-        head, tail = key.split(":", 1)
-        history_key = f"{head}H:{tail}"
-    else:
-        history_key = f"{key}H"
-
-    return history_key
 
 
 class PlotApi:
@@ -327,8 +306,8 @@ class PlotApi:
         return all_observations.T
 
     def has_history_data(self, key: str) -> bool:
-        history_key = _history_key(key)
-        return any(x for x in self.responses_api_key_defs if x.key == history_key)
+        history = history_key(key)
+        return any(x for x in self.responses_api_key_defs if x.key == history)
 
     def history_data(
         self,
@@ -343,9 +322,9 @@ class PlotApi:
             return pd.DataFrame()
 
         for ensemble_id in ensemble_ids:
-            history_key = _history_key(key)
+            history = history_key(key)
 
-            df = self.data_for_response(ensemble_id, history_key, filter_on)
+            df = self.data_for_response(ensemble_id, history, filter_on)
 
             if not df.empty:
                 df = df.T

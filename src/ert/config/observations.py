@@ -8,6 +8,7 @@ from typing import TYPE_CHECKING
 import numpy as np
 import polars as pl
 
+from ert.summary_key_type import history_key
 from ert.validation import rangestring_to_list
 
 from .gen_data_config import GenDataConfig
@@ -30,11 +31,6 @@ if TYPE_CHECKING:
     from .ensemble_config import EnsembleConfig
 
 DEFAULT_TIME_DELTA = timedelta(seconds=30)
-
-
-def history_key(key: str) -> str:
-    keyword, *rest = key.split(":")
-    return ":".join([keyword + "H", *rest])
 
 
 @dataclass
