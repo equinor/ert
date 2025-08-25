@@ -12,14 +12,14 @@ repos:
         exclude: test-data/ert/eclipse/parse/ERROR.PRT # exact format is needed for testing
 
 -   repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.12.9
+    rev: v0.12.10
     hooks:
     - id: ruff-check
       args: [ --fix ]
     - id: ruff-format
 
 -   repo: https://github.com/astral-sh/uv-pre-commit
-    rev: 0.8.11
+    rev: 0.8.13
     hooks:
       - id: uv-lock
 
