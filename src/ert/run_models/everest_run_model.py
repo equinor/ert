@@ -10,6 +10,7 @@ import shutil
 import traceback
 from collections.abc import Callable, MutableSequence
 from enum import IntEnum, auto
+from functools import cached_property
 from pathlib import Path
 from types import TracebackType
 from typing import TYPE_CHECKING, Any, Protocol
@@ -151,13 +152,9 @@ class EverestRunModel(RunModel):
     _ever_storage: EverestStorage | None = PrivateAttr(default=None)
     _opt_callback: OptimizerCallback | None = PrivateAttr(default=None)
 
-    _transforms: EverestOptModelTransforms = PrivateAttr()
-
     def __init__(self, **data: Any) -> None:
-        transforms = data.pop("transforms", None)
         opt_callback = data.pop("opt_callback", None)
         super().__init__(**data)
-        self._transforms = transforms
         self._opt_callback = opt_callback
 
     @classmethod
@@ -221,13 +218,6 @@ class EverestRunModel(RunModel):
         for key, val in config_dict.get("SETENV", []):  # type: ignore
             env_vars[key] = substituter.substitute(val)
 
-        transforms: EverestOptModelTransforms = get_optimization_domain_transforms(
-            everest_config.controls,
-            everest_config.objective_functions,
-            everest_config.output_constraints,
-            everest_config.model,
-        )
-
         delete_run_path: bool = (
             everest_config.simulator is not None
             and everest_config.simulator.delete_run_path
@@ -244,7 +234,6 @@ class EverestRunModel(RunModel):
             output_constraints=everest_config.output_constraints,
             optimization=everest_config.optimization,
             model=everest_config.model,
-            transforms=transforms,
             optimization_output_dir=everest_config.optimization_output_dir,
             log_path=everest_config.log_dir,
             random_seed=everest_config.environment.random_seed,
@@ -266,6 +255,15 @@ class EverestRunModel(RunModel):
             queue_config=queue_config,
             status_queue=status_queue,
             optimization_callback=optimization_callback,
+        )
+
+    @cached_property
+    def _transforms(self) -> EverestOptModelTransforms:
+        return get_optimization_domain_transforms(
+            self.controls,
+            self.objective_functions,
+            self.output_constraints,
+            self.model,
         )
 
     @classmethod
