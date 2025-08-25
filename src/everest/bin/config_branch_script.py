@@ -6,7 +6,7 @@ from typing import Any
 
 from ruamel.yaml import YAML
 
-from everest.bin.utils import cleanup_logging, setup_logging
+from everest.bin.utils import setup_logging
 from everest.config import EverestConfig
 from everest.config_file_loader import load_yaml
 from everest.everest_storage import EverestStorage
@@ -106,28 +106,25 @@ def _updated_initial_guess(
 def config_branch_entry(args: list[str] | None = None) -> None:
     parser = _build_args_parser()
     options = parser.parse_args(args)
-    setup_logging(options)
+    with setup_logging(options):
+        _, optimization_dir, yml_config = options.config
 
-    _, optimization_dir, yml_config = options.config
+        EverestStorage.check_for_deprecated_seba_storage(optimization_dir)
 
-    EverestStorage.check_for_deprecated_seba_storage(optimization_dir)
+        opt_controls = opt_controls_by_batch(optimization_dir, options.batch)
+        if opt_controls is None:
+            parser.error(f"Batch {options.batch} not present in optimization data")
 
-    opt_controls = opt_controls_by_batch(optimization_dir, options.batch)
-    if opt_controls is None:
-        parser.error(f"Batch {options.batch} not present in optimization data")
+        yml_config["controls"] = _updated_initial_guess(
+            conf_controls=yml_config["controls"], opt_controls=opt_controls
+        )
 
-    yml_config["controls"] = _updated_initial_guess(
-        conf_controls=yml_config["controls"], opt_controls=opt_controls
-    )
-
-    yaml = YAML()
-    yaml.indent(mapping=2, sequence=4, offset=2)
-    yaml.preserve_quotes = True
-    with open(options.output_config, "w", encoding="utf-8") as f:
-        yaml.dump(yml_config, f)
-    print(f"New config file {options.output_config} created.")
-
-    cleanup_logging()
+        yaml = YAML()
+        yaml.indent(mapping=2, sequence=4, offset=2)
+        yaml.preserve_quotes = True
+        with open(options.output_config, "w", encoding="utf-8") as f:
+            yaml.dump(yml_config, f)
+        print(f"New config file {options.output_config} created.")
 
 
 if __name__ == "__main__":
