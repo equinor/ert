@@ -4,7 +4,7 @@ import argparse
 import logging
 from functools import partial
 
-from everest.bin.utils import cleanup_logging, setup_logging
+from everest.bin.utils import setup_logging
 from everest.config import EverestConfig
 from everest.strings import EVEREST
 
@@ -14,15 +14,12 @@ logger = logging.getLogger(EVEREST)
 def everexport_entry(args: list[str] | None = None) -> None:
     parser = _build_args_parser()
     options = parser.parse_args(args)
-    setup_logging(options)
-
-    logger.info("Everexport deprecation warning seen")
-    print(
-        "Everexport is deprecated, optimization results "
-        f"already exist @ {options.config.optimization_output_dir}"
-    )
-
-    cleanup_logging()
+    with setup_logging(options):
+        logger.info("Everexport deprecation warning seen")
+        print(
+            "Everexport is deprecated, optimization results "
+            f"already exist @ {options.config.optimization_output_dir}"
+        )
 
 
 def _build_args_parser() -> argparse.ArgumentParser:

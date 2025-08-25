@@ -5,7 +5,8 @@ import os
 import sys
 import traceback
 from collections import defaultdict
-from collections.abc import Sequence
+from collections.abc import Generator, Sequence
+from contextlib import contextmanager
 from dataclasses import dataclass, field
 from itertools import groupby
 from pathlib import Path
@@ -43,7 +44,8 @@ def cleanup_logging() -> None:
     os.environ.pop("ERT_LOG_DIR", None)
 
 
-def setup_logging(options: argparse.Namespace) -> None:
+@contextmanager
+def setup_logging(options: argparse.Namespace) -> Generator[None, None, None]:
     if isinstance(options.config, EverestConfig):
         makedirs_if_needed(options.config.output_dir, roll_if_exists=False)
         log_dir = Path(options.config.output_dir) / "logs"
@@ -55,34 +57,38 @@ def setup_logging(options: argparse.Namespace) -> None:
         log_dir.mkdir(exist_ok=True)
     except PermissionError as err:
         sys.exit(str(err))
-    os.environ["ERT_LOG_DIR"] = str(log_dir)
+    try:
+        os.environ["ERT_LOG_DIR"] = str(log_dir)
 
-    with open(LOGGING_CONFIG, encoding="utf-8") as log_conf_file:
-        config_dict = yaml.safe_load(log_conf_file)
-        if config_dict:
-            for handler_name, handler_config in config_dict["handlers"].items():
-                if handler_name == "file":
-                    handler_config["filename"] = "everest-log.txt"
-                if "ert.logging.TimestampedFileHandler" in handler_config.values():
-                    handler_config["config_filename"] = ""
-                    if isinstance(options.config, EverestConfig):
-                        handler_config["config_filename"] = (
-                            options.config.config_path.name
-                        )
-                    else:
-                        # `everest branch`
-                        handler_config["config_filename"] = options.config[0]
-            logging.config.dictConfig(config_dict)
+        with open(LOGGING_CONFIG, encoding="utf-8") as log_conf_file:
+            config_dict = yaml.safe_load(log_conf_file)
+            if config_dict:
+                for handler_name, handler_config in config_dict["handlers"].items():
+                    if handler_name == "file":
+                        handler_config["filename"] = "everest-log.txt"
+                    if "ert.logging.TimestampedFileHandler" in handler_config.values():
+                        handler_config["config_filename"] = ""
+                        if isinstance(options.config, EverestConfig):
+                            handler_config["config_filename"] = (
+                                options.config.config_path.name
+                            )
+                        else:
+                            # `everest branch`
+                            handler_config["config_filename"] = options.config[0]
+                logging.config.dictConfig(config_dict)
 
-    if "debug" in options and options.debug:
-        root_logger = logging.getLogger()
-        handler = logging.StreamHandler(sys.stdout)
-        handler.setLevel(logging.DEBUG)
-        root_logger.addHandler(handler)
+        if "debug" in options and options.debug:
+            root_logger = logging.getLogger()
+            handler = logging.StreamHandler(sys.stdout)
+            handler.setLevel(logging.DEBUG)
+            root_logger.addHandler(handler)
 
-    plugin_manager = EverestPluginManager()
-    plugin_manager.add_log_handle_to_root()
-    plugin_manager.add_span_processor_to_trace_provider()
+        plugin_manager = EverestPluginManager()
+        plugin_manager.add_log_handle_to_root()
+        plugin_manager.add_span_processor_to_trace_provider()
+        yield
+    finally:
+        cleanup_logging()
 
 
 def handle_keyboard_interrupt(signum: int, _: Any, options: argparse.Namespace) -> None:
