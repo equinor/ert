@@ -146,17 +146,25 @@ def snake_oil_case_storage(copy_snake_oil_case_storage):
 
 
 @pytest.fixture()
-def heat_equation_storage_es(copy_heat_equation_storage_es):
+def symlinked_snake_oil_case_storage(symlink_snake_oil_case_storage):
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore", category=ConfigWarning)
+        # Avoiding ConfigWarning on SUMMARY key with no known forward model
+        return ErtConfig.from_file("snake_oil.ert")
+
+
+@pytest.fixture()
+def symlinked_heat_equation_storage_es(symlink_heat_equation_storage_es):
     return ErtConfig.from_file("config.ert")
 
 
 @pytest.fixture()
-def heat_equation_storage_esmda(copy_heat_equation_storage_esmda):
+def symlinked_heat_equation_storage_esmda(symlink_heat_equation_storage_esmda):
     return ErtConfig.from_file("config.ert")
 
 
 @pytest.fixture()
-def heat_equation_storage_enif(copy_heat_equation_storage_enif):
+def symlinked_heat_equation_storage_enif(symlink_heat_equation_storage_enif):
     return ErtConfig.from_file("config.ert")
 
 
@@ -293,26 +301,35 @@ def fixture_copy_snake_oil_case_storage(_shared_snake_oil_case, tmp_path, monkey
     monkeypatch.chdir("test_data")
 
 
-@pytest.fixture
-def copy_heat_equation_storage_es(_shared_heat_equation_es, tmp_path, monkeypatch):
+@pytest.fixture()
+def symlink_snake_oil_case_storage(_shared_snake_oil_case, tmp_path, monkeypatch):
     monkeypatch.chdir(tmp_path)
-    shutil.copytree(_shared_heat_equation_es, "heat_equation")
+    os.symlink(_shared_snake_oil_case, "test_data")
+    monkeypatch.chdir("test_data")
+
+
+@pytest.fixture
+def symlink_heat_equation_storage_es(_shared_heat_equation_es, tmp_path, monkeypatch):
+    monkeypatch.chdir(tmp_path)
+    os.symlink(_shared_heat_equation_es, "heat_equation")
     monkeypatch.chdir("heat_equation")
 
 
 @pytest.fixture
-def copy_heat_equation_storage_esmda(
+def symlink_heat_equation_storage_esmda(
     _shared_heat_equation_esmda, tmp_path, monkeypatch
 ):
     monkeypatch.chdir(tmp_path)
-    shutil.copytree(_shared_heat_equation_esmda, "heat_equation")
+    os.symlink(_shared_heat_equation_esmda, "heat_equation")
     monkeypatch.chdir("heat_equation")
 
 
 @pytest.fixture
-def copy_heat_equation_storage_enif(_shared_heat_equation_enif, tmp_path, monkeypatch):
+def symlink_heat_equation_storage_enif(
+    _shared_heat_equation_enif, tmp_path, monkeypatch
+):
     monkeypatch.chdir(tmp_path)
-    shutil.copytree(_shared_heat_equation_enif, "heat_equation_enif")
+    os.symlink(_shared_heat_equation_enif, "heat_equation_enif")
     monkeypatch.chdir("heat_equation_enif")
 
 
