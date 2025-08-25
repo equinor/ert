@@ -134,7 +134,12 @@ class RealizationDelegate(QStyledItemDelegate):
             painter.drawPie(adjusted_rect, 1440, -int(percentage_done * 57.6))
 
         if option.state & QStyle.StateFlag.State_Selected:
-            selected_color = selected_color.lighter(125)
+            factor: int = (
+                125
+                if selected_color.lighter(125).getRgb() != (255, 255, 255, 255)
+                else 110
+            )
+            selected_color = selected_color.lighter(factor)
 
         painter.setBrush(selected_color)
         adjusted_rect = option.rect.adjusted(7, 7, -7, -7)
