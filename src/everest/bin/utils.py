@@ -40,7 +40,7 @@ from everest.util import makedirs_if_needed
 
 
 def cleanup_logging() -> None:
-    os.environ.pop("ERT_LOG_DIR")
+    os.environ.pop("ERT_LOG_DIR", None)
 
 
 def setup_logging(options: argparse.Namespace) -> None:
