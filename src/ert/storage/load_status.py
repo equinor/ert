@@ -8,5 +8,5 @@ class LoadStatus(Enum):
 
 
 class LoadResult(NamedTuple):
-    status: LoadStatus | None
+    status: LoadStatus
     message: str
