@@ -883,4 +883,4 @@ def test_when_manifest_files_are_written_forward_model_ok_succeeds(storage, itr)
                 run_arg.runpath, run_arg.iens, run_arg.itr, run_arg.ensemble_storage
             )
         )
-        assert load_result.status == LoadStatus.LOAD_SUCCESSFUL
+        assert load_result.status == LoadStatus.SUCCESS
