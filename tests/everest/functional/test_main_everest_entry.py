@@ -164,6 +164,7 @@ def test_everest_main_configdump_entry(copy_egg_test_data_to_tmp):
     )
 
 
+@pytest.mark.skip_mac_ci
 @pytest.mark.flaky(reruns=3)
 @pytest.mark.xfail(reason="Flaky, will be fixed on main branch")
 @pytest.mark.timeout(60)

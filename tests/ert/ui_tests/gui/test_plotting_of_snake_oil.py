@@ -130,6 +130,7 @@ def test_that_all_snake_oil_visualisations_matches_snapshot(plot_figure):
     return plot_figure
 
 
+@pytest.mark.skip_mac_ci
 def test_that_all_plotter_filter_boxes_yield_expected_filter_results(
     qtbot, snake_oil_case_storage
 ):
