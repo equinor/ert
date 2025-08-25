@@ -29,7 +29,6 @@ from everest.util import (
 )
 
 from .utils import (
-    cleanup_logging,
     handle_keyboard_interrupt,
     report_on_previous_run,
     run_detached_monitor,
@@ -48,59 +47,56 @@ def everest_entry(args: list[str] | None = None) -> None:
     options = parser.parse_args(args)
 
     makedirs_if_needed(options.config.output_dir, roll_if_exists=True)
-    setup_logging(options)
-    logger.info(version_info())
+    with setup_logging(options):
+        logger.info(version_info())
 
-    client_machine_hostname = socket.gethostname()
-    server_queue_system = options.config.server.queue_system.name
-    simulator_queue_system = options.config.simulator.queue_system.name
+        client_machine_hostname = socket.gethostname()
+        server_queue_system = options.config.server.queue_system.name
+        simulator_queue_system = options.config.simulator.queue_system.name
 
-    server_info_str = "The optimization will be run by an experiment server on " + (
-        f"this machine ({client_machine_hostname}). "
-        f"Pressing Ctrl+C will stop the optimization and exit."
-        if server_queue_system == QueueSystem.LOCAL
-        else f"the {server_queue_system} queue."
-    )
-
-    simulator_info_str = (
-        "The experiment server will submit the ERT forward model to run on "
-    ) + (
-        f"this machine ({client_machine_hostname})"
-        if simulator_queue_system == QueueSystem.LOCAL
-        else f"the {simulator_queue_system} queue."
-    )
-
-    print(
-        "=======You are now running everest=======\n"
-        f"* Monitoring from this machine: {client_machine_hostname}.\n"
-        f"* {server_info_str}\n"
-        f"* {simulator_info_str}\n"
-        "=========================================\n"
-        + (
-            ""
+        server_info_str = "The optimization will be run by an experiment server on " + (
+            f"this machine ({client_machine_hostname}). "
+            f"Pressing Ctrl+C will stop the optimization and exit."
             if server_queue_system == QueueSystem.LOCAL
-            else "*Since the server is running on the queue, "
-            "pressing Ctrl+C will NOT stop the optimization, it will "
-            f"only shut down the monitoring on this "
-            f"machine ({client_machine_hostname}).\n"
-        ),
-    )
-
-    logger.info(
-        f"server runs on {server_queue_system}, "
-        f"simulator runs on {simulator_queue_system}"
-    )
-
-    if threading.current_thread() is threading.main_thread():
-        signal.signal(
-            signal.SIGINT,
-            partial(handle_keyboard_interrupt, options=options),
+            else f"the {server_queue_system} queue."
         )
 
-    try:
+        simulator_info_str = (
+            "The experiment server will submit the ERT forward model to run on "
+        ) + (
+            f"this machine ({client_machine_hostname})"
+            if simulator_queue_system == QueueSystem.LOCAL
+            else f"the {simulator_queue_system} queue."
+        )
+
+        print(
+            "=======You are now running everest=======\n"
+            f"* Monitoring from this machine: {client_machine_hostname}.\n"
+            f"* {server_info_str}\n"
+            f"* {simulator_info_str}\n"
+            "=========================================\n"
+            + (
+                ""
+                if server_queue_system == QueueSystem.LOCAL
+                else "*Since the server is running on the queue, "
+                "pressing Ctrl+C will NOT stop the optimization, it will "
+                f"only shut down the monitoring on this "
+                f"machine ({client_machine_hostname}).\n"
+            ),
+        )
+
+        logger.info(
+            f"server runs on {server_queue_system}, "
+            f"simulator runs on {simulator_queue_system}"
+        )
+
+        if threading.current_thread() is threading.main_thread():
+            signal.signal(
+                signal.SIGINT,
+                partial(handle_keyboard_interrupt, options=options),
+            )
+
         asyncio.run(run_everest(options))
-    finally:
-        cleanup_logging()
 
 
 def _build_args_parser() -> argparse.ArgumentParser:
