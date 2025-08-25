@@ -342,10 +342,10 @@ class Job:
         else:
             self._message += f"\nstatus from done callback: {status_msg}"
 
-        if callback_status == LoadStatus.LOAD_SUCCESSFUL:
+        if callback_status == LoadStatus.SUCCESS:
             await self._send(JobState.COMPLETED)
         else:
-            assert callback_status == LoadStatus.LOAD_FAILURE
+            assert callback_status == LoadStatus.FAILURE
             await self._send(JobState.FAILED)
 
     async def _handle_failure(self) -> None:

@@ -704,7 +704,7 @@ async def test_message_present_in_event_on_load_failure(
     expected_error = "foo bar error"
 
     async def mocked_forward_model_ok(*args, **kwargs):
-        return LoadResult(LoadStatus.LOAD_FAILURE, expected_error)
+        return LoadResult(LoadStatus.FAILURE, expected_error)
 
     monkeypatch.setattr(job, "forward_model_ok", mocked_forward_model_ok)
 
