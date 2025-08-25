@@ -164,6 +164,7 @@ def test_everest_main_configdump_entry(copy_egg_test_data_to_tmp):
     )
 
 
+@pytest.mark.skip_mac_ci
 @pytest.mark.flaky(reruns=3)
 @pytest.mark.timeout(60)
 @pytest.mark.integration_test

@@ -14,6 +14,7 @@ from everest.config.forward_model_config import ForwardModelStepConfig
 from everest.config.install_job_config import InstallJobConfig
 
 
+@pytest.mark.skip_mac_ci
 @pytest.mark.timeout(240)  # Simulation might not finish
 @pytest.mark.integration_test
 @pytest.mark.xdist_group(name="starts_everest")
