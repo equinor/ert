@@ -146,6 +146,7 @@ def test_that_stop_errors_on_server_up_but_endpoint_down(
     )
 
 
+@pytest.mark.skip_mac_ci
 @pytest.mark.integration_test
 @pytest.mark.xdist_group("math_func/config_minimal.yml")
 @pytest.mark.xdist_group(name="starts_everest")
