@@ -289,6 +289,7 @@ def test_that_ert_changes_to_config_directory(qtbot):
         assert gui.windowTitle().startswith("ERT - snake_oil_surface.ert")
 
 
+@pytest.mark.skip_mac_ci
 def test_that_the_plot_window_contains_the_expected_elements(
     esmda_has_run: ErtMainWindow, qtbot
 ):
@@ -618,6 +619,7 @@ def test_that_a_failing_job_shows_error_message_with_context(
     qtbot.waitUntil(lambda: run_dialog.is_simulation_done() is True, timeout=100000)
 
 
+@pytest.mark.skip_mac_ci
 @pytest.mark.usefixtures("set_site_config")
 def test_that_gui_plotter_works_when_no_data(qtbot, monkeypatch, use_tmpdir):
     monkeypatch.setattr(PlotApi, "get_all_ensembles", lambda _: [])
@@ -652,6 +654,7 @@ def test_that_gui_plotter_works_when_no_data(qtbot, monkeypatch, use_tmpdir):
         assert len(ensemble_plot_names) == 0
 
 
+@pytest.mark.skip_mac_ci
 @pytest.mark.usefixtures("use_tmpdir", "set_site_config")
 def test_right_click_plot_button_opens_external_plotter(qtbot, use_tmpdir, monkeypatch):
     monkeypatch.setattr(PlotApi, "get_all_ensembles", lambda _: [])

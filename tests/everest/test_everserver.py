@@ -171,6 +171,7 @@ def test_status_failed_job(_, change_to_tmpdir, mock_server):
     assert status["status"] == ExperimentState.failed
 
 
+@pytest.mark.skip_mac_ci
 @pytest.mark.integration_test
 @pytest.mark.xdist_group(name="starts_everest")
 @patch("sys.argv", ["name", "--output-dir", "everest_output"])
@@ -188,6 +189,7 @@ async def test_status_exception(_, change_to_tmpdir, min_config):
     assert "Optimization failed:" in status["message"]
 
 
+@pytest.mark.skip_mac_ci
 @pytest.mark.integration_test
 @pytest.mark.xdist_group(name="starts_everest")
 @pytest.mark.timeout(240)
@@ -217,6 +219,7 @@ async def test_status_max_batch_num(copy_math_func_test_data_to_tmp):
     assert {b.batch_id for b in storage.data.batches} == {0}
 
 
+@pytest.mark.skip_mac_ci
 @pytest.mark.integration_test
 @pytest.mark.xdist_group(name="starts_everest")
 @pytest.mark.timeout(240)
@@ -246,6 +249,7 @@ async def test_status_too_few_realizations_succeeded(copy_math_func_test_data_to
     assert OPT_FAILURE_REALIZATIONS in status["message"]
 
 
+@pytest.mark.skip_mac_ci
 @pytest.mark.integration_test
 @pytest.mark.xdist_group(name="starts_everest")
 @pytest.mark.timeout(240)
@@ -272,6 +276,7 @@ async def test_status_all_realizations_failed(copy_math_func_test_data_to_tmp):
     assert OPT_FAILURE_ALL_REALIZATIONS in status["message"]
 
 
+@pytest.mark.skip_mac_ci
 @pytest.mark.integration_test
 @pytest.mark.xdist_group(name="starts_everest")
 @pytest.mark.timeout(240)
