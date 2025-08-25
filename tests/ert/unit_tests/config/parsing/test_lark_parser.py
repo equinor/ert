@@ -68,7 +68,7 @@ def test_that_new_line_can_be_escaped():
     "ignore:.*Using DEFINE with substitution strings that are not of "
     "the form '<KEY>'.*:ert.config.ConfigWarning"
 )
-def test_that_redefines_are_applied_correctly_as_forward_model_args():
+def test_that_redefines_overwrite_existing_defines():
     config_dict = parse_contents(
         """
         NUM_REALIZATIONS  1
@@ -88,13 +88,18 @@ def test_that_redefines_are_applied_correctly_as_forward_model_args():
         FORWARD_MODEL MAKE_SYMLINK(<U>=<A>, <D>=B)
         DEFINE B <A>
         DEFINE C <A>
-
         """,
         file_name="config.ert",
         schema=init_user_config_schema(),
     )
 
     defines = config_dict["DEFINE"]
+    forward_model_steps = config_dict["FORWARD_MODEL"]
+
+    assert ("<U>", "2") in forward_model_steps[0][1]  # first MAKE_SYMLINK
+    assert ("<F>", "5") in forward_model_steps[0][1]  # first MAKE_SYMLINK
+    assert ("<U>", "3") in forward_model_steps[1][1]  # second MAKE_SYMLINK
+    assert ("<D>", "2") in forward_model_steps[1][1]  # second MAKE_SYMLINK
 
     assert ["<A>", "2"] not in defines
     assert ["<B>", "2"] not in defines
