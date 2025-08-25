@@ -905,7 +905,7 @@ def test_that_all_parameters_and_gen_data_consolidation_works(
                 if realization in failed_realizations:
                     ensemble.set_failure(
                         realization,
-                        RealizationStorageState.LOAD_FAILURE,
+                        RealizationStorageState.FAILURE_IN_CURRENT,
                         "Failed to load responses",
                     )
                 else:
@@ -1238,7 +1238,7 @@ class StatefulStorageTest(RuleBasedStateMachine):
         # Ensembles w/ parent failure will never have parameters written to them
         assume(
             storage_ensemble.get_ensemble_state()[self.iens_to_edit]
-            != RealizationStorageState.PARENT_FAILURE
+            != RealizationStorageState.FAILURE_IN_PARENT
         )
 
         parameters = model_ensemble.parameter_values.values()
@@ -1265,7 +1265,7 @@ class StatefulStorageTest(RuleBasedStateMachine):
         # Ensembles w/ parent failure will never have parameters written to them
         assume(
             storage_ensemble.get_ensemble_state()[self.iens_to_edit]
-            != RealizationStorageState.PARENT_FAILURE
+            != RealizationStorageState.FAILURE_IN_PARENT
         )
 
         parameters = model_ensemble.parameter_values.values()
@@ -1320,7 +1320,7 @@ class StatefulStorageTest(RuleBasedStateMachine):
 
         assume(
             storage_ensemble.get_ensemble_state()[self.iens_to_edit]
-            != RealizationStorageState.PARENT_FAILURE
+            != RealizationStorageState.FAILURE_IN_PARENT
         )
 
         # Enforce the summary data to respect the
@@ -1467,11 +1467,11 @@ class StatefulStorageTest(RuleBasedStateMachine):
         if edited_prior_state.intersection(
             {
                 RealizationStorageState.UNDEFINED,
-                RealizationStorageState.PARENT_FAILURE,
-                RealizationStorageState.LOAD_FAILURE,
+                RealizationStorageState.FAILURE_IN_PARENT,
+                RealizationStorageState.FAILURE_IN_CURRENT,
             }
         ):
-            assert RealizationStorageState.PARENT_FAILURE in edited_posterior_state
+            assert RealizationStorageState.FAILURE_IN_PARENT in edited_posterior_state
         else:
             is_expecting_responses = (
                 sum(len(config.keys) for config in model_experiment.responses) > 0
@@ -1518,7 +1518,7 @@ class StatefulStorageTest(RuleBasedStateMachine):
         )
 
         storage_ensemble.set_failure(
-            realization, RealizationStorageState.PARENT_FAILURE, message
+            realization, RealizationStorageState.FAILURE_IN_PARENT, message
         )
         model_ensemble.failure_messages[realization] = message
 
@@ -1545,7 +1545,7 @@ class StatefulStorageTest(RuleBasedStateMachine):
             pytest.raises(RuntimeError),
         ):
             storage_ensemble.set_failure(
-                realization, RealizationStorageState.PARENT_FAILURE, message
+                realization, RealizationStorageState.FAILURE_IN_PARENT, message
             )
         assert f.entered
 

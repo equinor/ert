@@ -104,7 +104,7 @@ class Job:
         self.state = JobState.ABORTED
         self.real.run_arg.ensemble_storage.set_failure(
             self.real.iens,
-            RealizationStorageState.LOAD_FAILURE,
+            RealizationStorageState.FAILURE_IN_CURRENT,
             f"Job not scheduled due to {msg}",
         )
 
@@ -366,7 +366,9 @@ class Job:
 
         with contextlib.suppress(OSError):
             self.real.run_arg.ensemble_storage.set_failure(
-                self.real.run_arg.iens, RealizationStorageState.LOAD_FAILURE, error_msg
+                self.real.run_arg.iens,
+                RealizationStorageState.FAILURE_IN_CURRENT,
+                error_msg,
             )
         logger.error(error_msg)
         log_info_from_exit_file(Path(self.real.run_arg.runpath) / ERROR_file)
@@ -374,7 +376,7 @@ class Job:
     async def _handle_aborted(self) -> None:
         self.real.run_arg.ensemble_storage.set_failure(
             self.real.run_arg.iens,
-            RealizationStorageState.LOAD_FAILURE,
+            RealizationStorageState.FAILURE_IN_CURRENT,
             "Job cancelled",
         )
         log_info_from_exit_file(Path(self.real.run_arg.runpath) / ERROR_file)

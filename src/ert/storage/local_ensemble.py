@@ -214,8 +214,8 @@ class LocalEnsemble(BaseMode):
         return np.array(
             [
                 not {
-                    RealizationStorageState.PARENT_FAILURE,
-                    RealizationStorageState.LOAD_FAILURE,
+                    RealizationStorageState.FAILURE_IN_PARENT,
+                    RealizationStorageState.FAILURE_IN_CURRENT,
                 }.intersection(e)
                 for e in self.get_ensemble_state()
             ]
@@ -1394,7 +1394,9 @@ async def forward_model_ok(
         if response_result.status != LoadStatus.SUCCESS:
             final_result = response_result
             ensemble.set_failure(
-                realization, RealizationStorageState.LOAD_FAILURE, final_result.message
+                realization,
+                RealizationStorageState.FAILURE_IN_CURRENT,
+                final_result.message,
             )
         elif ensemble.has_failure(realization):
             ensemble.unset_failure(realization)
