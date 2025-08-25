@@ -42,7 +42,6 @@ def test_that_setenv_does_not_expand_envvar():
         file_name="config.ert",
         schema=init_user_config_schema(),
     )
-    # then res config should read the SETENV as is
     assert config["SETENV"] == [["PATH", "$PATH:added"]]
 
 
