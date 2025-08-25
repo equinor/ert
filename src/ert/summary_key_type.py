@@ -133,7 +133,28 @@ def is_rate(summary_variable: str) -> bool:
     return False
 
 
-__all__ = ["SummaryKeyType", "is_rate"]
+def history_key(key: str) -> str:
+    """The history summary key responding to given summary key
+
+    See :ref:`SUMMARY  <summary>` and :ref:`HISTORY_SOURCE <history_source>`
+    for in keywords.rst for details.
+
+    >>> history_key("FOPR")
+    'FOPRH'
+    >>> history_key("BPR:1,3,8")
+    'BPRH:1,3,8'
+    >>> history_key("LWWIT:WNAME:LGRNAME")
+    'LWWITH:WNAME:LGRNAME'
+    """
+
+    # Note that this function is not idempotent and only ad-hoc.
+    # It is possible to create to make a better version by looking
+    # at opm-flow-manual 2023-04 table 11.8, 11.9, 11.14 11.9
+    keyword, *rest = key.split(":")
+    return ":".join([keyword + "H", *rest])
+
+
+__all__ = ["SummaryKeyType", "history_key", "is_rate"]
 
 
 _rate_roots = [  # see opm-flow-manual 2023-04 table 11.8, 11.9 & 11.14
