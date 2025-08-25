@@ -22,7 +22,9 @@ from ert.storage import open_storage
 from .run_cli import run_cli
 
 
-def test_field_param_update_using_heat_equation_enif(heat_equation_storage_enif):
+def test_field_param_update_using_heat_equation_enif(
+    symlinked_heat_equation_storage_enif,
+):
     config = ErtConfig.from_file("config.ert")
     with open_storage(config.ens_path, mode="w") as storage:
         experiment = storage.get_experiment_by_name("enif")
@@ -164,7 +166,7 @@ def _compare_ensemble_params(
 
 
 def test_field_param_update_using_heat_equation_enif_snapshot(
-    heat_equation_storage_enif, snapshot, request
+    symlinked_heat_equation_storage_enif, snapshot, request
 ):
     config = ErtConfig.from_file("config.ert")
     with open_storage(config.ens_path, mode="w") as storage:
@@ -205,7 +207,7 @@ def test_field_param_update_using_heat_equation_enif_snapshot(
         )
 
 
-def test_field_param_update_using_heat_equation(heat_equation_storage_es):
+def test_field_param_update_using_heat_equation(symlinked_heat_equation_storage_es):
     config = ErtConfig.from_file("config.ert")
     with open_storage(config.ens_path, mode="w") as storage:
         experiment = storage.get_experiment_by_name("es")
@@ -409,7 +411,7 @@ if __name__ == "__main__":
 
 @pytest.mark.timeout(600)
 def test_field_param_update_using_heat_equation_zero_var_params_and_adaptive_loc(
-    heat_equation_storage_es, caplog
+    symlinked_heat_equation_storage_es, caplog
 ):
     """Test field parameter updates with zero-variance regions and adaptive
     localization.
