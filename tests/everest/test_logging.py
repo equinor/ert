@@ -5,6 +5,7 @@ import pytest
 import yaml
 
 from everest.bin.main import start_everest
+from everest.bin.utils import cleanup_logging
 from everest.config import (
     EverestConfig,
     ServerConfig,
@@ -70,3 +71,10 @@ def test_logging_setup(copy_math_func_test_data_to_tmp):
         assert (
             "everserver INFO: /experiment_server/status entered from" in endpoint_logs
         )
+
+
+def test_that_cleanup_logging_is_idempotent(monkeypatch):
+    monkeypatch.setenv("ERT_LOG_DIR", ".")
+    cleanup_logging()
+    assert os.environ.get("ERT_LOG_DIR", None) is None
+    cleanup_logging()
