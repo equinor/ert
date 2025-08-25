@@ -16,7 +16,7 @@ def touch(filename):
         fh.write(" ")
 
 
-def test_that_missing_arglist_does_not_affect_subsequent_calls():
+def test_that_no_arguments_to_summary_raises_config_validation_error():
     """
     Check that the summary without arglist causes a ConfigValidationError and
     not an error from appending to None parsed from SUMMARY w/o arglist
@@ -109,7 +109,7 @@ def test_that_redefines_overwrite_existing_defines():
     assert ["C", "3"] in defines
 
 
-def test_include_non_existing_file():
+def test_that_including_a_non_existing_file_raises_config_validation_error():
     with pytest.raises(ConfigValidationError, match=r"No such file or directory"):
         parse_contents(
             """
@@ -122,7 +122,7 @@ def test_include_non_existing_file():
         )
 
 
-def test_invalid_user_config():
+def test_that_parsing_a_non_existing_file_raises_config_validation_error():
     with pytest.raises(ConfigValidationError):
         _ = parse("this/is/not/a/file", schema=init_user_config_schema())
 
@@ -139,7 +139,7 @@ def test_that_unknown_queue_option_gives_error_message():
 
 
 @pytest.mark.usefixtures("use_tmpdir")
-def test_include_cyclical_raises_error():
+def test_that_cyclical_includes_raise_config_validation_error():
     test_config_file_name = "test.ert"
 
     test_config_self_include = "NUM_REALIZATIONS  1\nINCLUDE test.ert\n"
@@ -163,7 +163,7 @@ def test_include_cyclical_raises_error():
         _ = parse(test_config_file_name, schema=init_user_config_schema())
 
 
-def test_that_giving_incorrect_queue_name_in_queue_option_fails():
+def test_that_unknown_queue_systems_in_queue_option_raises_config_validation_error():
     with pytest.raises(ConfigValidationError, match="VOCAL"):
         _ = parse_contents(
             """
@@ -176,7 +176,7 @@ def test_that_giving_incorrect_queue_name_in_queue_option_fails():
 
 
 @pytest.mark.usefixtures("use_tmpdir")
-def test_that_giving_no_keywords_fails_gracefully():
+def test_that_giving_no_keywords_raises_config_validation_error():
     with pytest.raises(ConfigValidationError, match="must be set"):
         _ = parse_contents("", file_name="config.ert", schema=init_user_config_schema())
 
@@ -188,7 +188,7 @@ def test_num_realizations_required_in_config_file():
         )
 
 
-def test_that_invalid_boolean_values_are_handled_gracefully():
+def test_that_invalid_boolean_values_raises_config_validation_error():
     with pytest.raises(ConfigValidationError, match="boolean"):
         _ = parse_contents(
             """
@@ -224,7 +224,9 @@ def test_that_invalid_boolean_values_are_handled_gracefully():
     ],
 )
 @pytest.mark.usefixtures("use_tmpdir")
-def test_that_file_without_read_access_fails_gracefully(config_file_contents):
+def test_that_file_without_read_access_raises_config_validation_error(
+    config_file_contents,
+):
     """Given a file without read permissions, we should fail gracefully"""
 
     config_file_name = "config.ert"
@@ -243,7 +245,7 @@ def test_that_file_without_read_access_fails_gracefully(config_file_contents):
 
 
 @pytest.mark.usefixtures("use_tmpdir")
-def test_not_executable_job_script_fails_gracefully():
+def test_not_executable_job_script_raises_config_validation_error():
     """Given a non executable job script, we should fail gracefully"""
 
     config_file_name = "config.ert"
@@ -262,7 +264,9 @@ def test_not_executable_job_script_fails_gracefully():
 
 
 @pytest.mark.usefixtures("use_tmpdir")
-def test_not_executable_job_script_somewhere_in_PATH_fails_gracefully(monkeypatch):
+def test_not_executable_job_script_somewhere_in_PATH_raises_config_validation_error(
+    monkeypatch,
+):
     """Given a non executable job script referred to by relative path (in this case:
     just the filename) in the config file, where the relative path is not relative to
     the location of the config file / current directory, but rather some location
@@ -292,7 +296,7 @@ def test_not_executable_job_script_somewhere_in_PATH_fails_gracefully(monkeypatc
     os.chmod(path_location, 0o775)
 
 
-def test_that_giving_non_int_values_give_config_validation_error():
+def test_that_giving_non_int_values_in_num_realization_raises_config_validation_error():
     with pytest.raises(ConfigValidationError, match="integer"):
         _ = parse_contents(
             """
@@ -303,7 +307,7 @@ def test_that_giving_non_int_values_give_config_validation_error():
         )
 
 
-def test_that_giving_non_float_values_give_config_validation_error():
+def test_that_giving_non_float_values_in_enkf_alpha_raises_config_validation_error():
     with pytest.raises(ConfigValidationError, match="number"):
         _ = parse_contents(
             """
@@ -316,7 +320,7 @@ def test_that_giving_non_float_values_give_config_validation_error():
 
 
 @pytest.mark.usefixtures("use_tmpdir")
-def test_that_giving_non_executable_gives_config_validation_error():
+def test_that_giving_non_executable_in_job_script_raises_config_validation_error():
     test_config_file_name = "test.ert"
     test_config_contents = dedent(
         """\
@@ -331,7 +335,7 @@ def test_that_giving_non_executable_gives_config_validation_error():
         _ = parse(test_config_file_name, schema=init_user_config_schema())
 
 
-def test_that_giving_too_many_arguments_gives_config_validation_error():
+def test_that_giving_too_many_arguments_to_enkf_alpha_raises_config_validation_error():
     with pytest.raises(ConfigValidationError, match="maximum 1 arguments"):
         _ = parse_contents(
             """
@@ -343,7 +347,7 @@ def test_that_giving_too_many_arguments_gives_config_validation_error():
         )
 
 
-def test_that_giving_too_few_arguments_gives_config_validation_error():
+def test_that_giving_too_few_arguments_to_enkf_alpha_raises_config_validation_error():
     with pytest.raises(ConfigValidationError, match="at least 1 arguments"):
         _ = parse_contents(
             """
