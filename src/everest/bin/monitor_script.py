@@ -10,7 +10,6 @@ from everest.detached import ExperimentState, everserver_status, server_is_runni
 from everest.everest_storage import EverestStorage
 
 from .utils import (
-    cleanup_logging,
     handle_keyboard_interrupt,
     report_on_previous_run,
     run_detached_monitor,
@@ -23,22 +22,18 @@ def monitor_entry(args: list[str] | None = None) -> None:
     parser = _build_args_parser()
     options = parser.parse_args(args)
 
-    setup_logging(options)
+    with setup_logging(options):
+        if threading.current_thread() is threading.main_thread():
+            signal.signal(
+                signal.SIGINT,
+                partial(handle_keyboard_interrupt, options=options),
+            )
 
-    if threading.current_thread() is threading.main_thread():
-        signal.signal(
-            signal.SIGINT,
-            partial(handle_keyboard_interrupt, options=options),
+        EverestStorage.check_for_deprecated_seba_storage(
+            options.config.optimization_output_dir
         )
 
-    EverestStorage.check_for_deprecated_seba_storage(
-        options.config.optimization_output_dir
-    )
-
-    try:
         monitor_everest(options)
-    finally:
-        cleanup_logging()
 
 
 def _build_args_parser() -> argparse.ArgumentParser:
