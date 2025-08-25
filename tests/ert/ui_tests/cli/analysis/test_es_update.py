@@ -231,8 +231,8 @@ def test_that_reals_with_load_failure_in_prior_become_parent_failure_in_posterio
         posterior = experiment.get_ensemble_by_name("iter-1")
 
         assert all(
-            RealizationStorageState.PARENT_FAILURE
+            RealizationStorageState.FAILURE_IN_PARENT
             in posterior.get_ensemble_state()[idx]
             for idx, v in enumerate(prior.get_ensemble_state())
-            if RealizationStorageState.LOAD_FAILURE in v
+            if RealizationStorageState.FAILURE_IN_CURRENT in v
         )
