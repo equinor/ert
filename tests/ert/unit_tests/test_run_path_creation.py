@@ -19,7 +19,6 @@ from ert.config import (
 from ert.enkf_main import create_run_path, sample_prior
 from ert.run_arg import create_run_arguments
 from ert.runpaths import Runpaths
-from ert.storage.load_status import LoadStatus
 from ert.storage.local_ensemble import RealizationStorageState, forward_model_ok
 from tests.ert.unit_tests.config.egrid_generator import simple_grid
 from tests.ert.unit_tests.config.summary_generator import simple_smspec, simple_unsmry
@@ -883,4 +882,4 @@ def test_when_manifest_files_are_written_forward_model_ok_succeeds(storage, itr)
                 run_arg.runpath, run_arg.iens, run_arg.itr, run_arg.ensemble_storage
             )
         )
-        assert load_result.status == LoadStatus.SUCCESS
+        assert load_result.successful

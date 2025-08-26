@@ -23,7 +23,7 @@ from ert.scheduler.job import (
     log_info_from_exit_file,
     log_warnings_from_forward_model,
 )
-from ert.storage.load_status import LoadStatus
+from ert.storage.load_status import LoadResult
 
 
 def create_scheduler():
@@ -106,14 +106,14 @@ async def test_submitted_job_is_cancelled(realization, mock_event):
 @pytest.mark.parametrize(
     "return_code, max_submit, forward_model_ok_result, expected_final_event",
     [
-        [0, 1, LoadStatus.SUCCESS, JobState.COMPLETED],
-        [1, 1, LoadStatus.SUCCESS, JobState.FAILED],
-        [0, 1, LoadStatus.FAILURE, JobState.FAILED],
-        [1, 1, LoadStatus.FAILURE, JobState.FAILED],
-        [0, 2, LoadStatus.SUCCESS, JobState.COMPLETED],
-        [1, 2, LoadStatus.SUCCESS, JobState.FAILED],
-        [0, 2, LoadStatus.FAILURE, JobState.FAILED],
-        [1, 2, LoadStatus.FAILURE, JobState.FAILED],
+        [0, 1, LoadResult.success(), JobState.COMPLETED],
+        [1, 1, LoadResult.success(), JobState.FAILED],
+        [0, 1, LoadResult.failure(""), JobState.FAILED],
+        [1, 1, LoadResult.failure(""), JobState.FAILED],
+        [0, 2, LoadResult.success(), JobState.COMPLETED],
+        [1, 2, LoadResult.success(), JobState.FAILED],
+        [0, 2, LoadResult.failure(""), JobState.FAILED],
+        [1, 2, LoadResult.failure(""), JobState.FAILED],
     ],
 )
 @pytest.mark.asyncio
@@ -126,7 +126,7 @@ async def test_job_run_sends_expected_events(
     monkeypatch,
 ):
     async def load_result(**_):
-        return (forward_model_ok_result, "")
+        return forward_model_ok_result
 
     monkeypatch.setattr(ert.scheduler.job, "forward_model_ok", load_result)
     scheduler = create_scheduler()

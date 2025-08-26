@@ -20,7 +20,7 @@ from ert.ensemble_evaluator import Realization
 from ert.run_arg import RunArg
 from ert.scheduler import LsfDriver, OpenPBSDriver, create_driver, job, scheduler
 from ert.scheduler.job import Job, JobState
-from ert.storage.load_status import LoadResult, LoadStatus
+from ert.storage.load_status import LoadResult
 
 
 def create_jobs_json(realization: Realization) -> None:
@@ -704,7 +704,7 @@ async def test_message_present_in_event_on_load_failure(
     expected_error = "foo bar error"
 
     async def mocked_forward_model_ok(*args, **kwargs):
-        return LoadResult(LoadStatus.FAILURE, expected_error)
+        return LoadResult.failure(expected_error)
 
     monkeypatch.setattr(job, "forward_model_ok", mocked_forward_model_ok)
 

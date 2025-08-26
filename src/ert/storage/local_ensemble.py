@@ -21,7 +21,7 @@ from typing_extensions import TypedDict
 
 from ert.config import GenKwConfig, ParameterConfig
 from ert.config.response_config import InvalidResponseFile
-from ert.storage.load_status import LoadResult, LoadStatus
+from ert.storage.load_status import LoadResult
 from ert.storage.mode import BaseMode, Mode, require_write
 
 from .realization_storage_state import RealizationStorageState
@@ -1270,7 +1270,7 @@ async def _read_parameters(
     iteration: int,
     ensemble: LocalEnsemble,
 ) -> LoadResult:
-    result = LoadResult(LoadStatus.SUCCESS, "")
+    result = LoadResult.success()
     error_msg = ""
     parameter_configuration = ensemble.experiment.parameter_configuration.values()
     for config in parameter_configuration:
@@ -1294,7 +1294,7 @@ async def _read_parameters(
             )
         except Exception as err:
             error_msg += str(err)
-            result = LoadResult(LoadStatus.FAILURE, error_msg)
+            result = LoadResult.failure(error_msg)
             logger.warning(
                 "Failed to load parameters in storage "
                 f"for realization {realization}: {err}"
@@ -1344,8 +1344,8 @@ async def _write_responses_to_storage(
             continue
 
     if errors:
-        return LoadResult(LoadStatus.FAILURE, "\n".join(errors))
-    return LoadResult(LoadStatus.SUCCESS, "")
+        return LoadResult.failure("\n".join(errors))
+    return LoadResult.success()
 
 
 async def forward_model_ok(
@@ -1354,8 +1354,8 @@ async def forward_model_ok(
     iter_: int,
     ensemble: LocalEnsemble,
 ) -> LoadResult:
-    parameters_result = LoadResult(LoadStatus.SUCCESS, "")
-    response_result = LoadResult(LoadStatus.SUCCESS, "")
+    parameters_result = LoadResult.success()
+    response_result = LoadResult.success()
     # We only read parameters after the prior, after that, ERT
     # handles parameters
     if iter_ == 0:
@@ -1366,7 +1366,7 @@ async def forward_model_ok(
             ensemble,
         )
     try:
-        if parameters_result.status == LoadStatus.SUCCESS:
+        if parameters_result.successful:
             response_result = await _write_responses_to_storage(
                 run_path,
                 realization,
@@ -1378,20 +1378,19 @@ async def forward_model_ok(
             f"failed with {err}"
         )
         logger.error(msg)
-        parameters_result = LoadResult(LoadStatus.FAILURE, msg)
+        parameters_result = LoadResult.failure(msg)
     except Exception as err:
         logger.exception(
             f"Failed to load results for realization {realization}",
             exc_info=err,
         )
-        parameters_result = LoadResult(
-            LoadStatus.FAILURE,
+        parameters_result = LoadResult.failure(
             f"Failed to load results for realization {realization}, failed with: {err}",
         )
 
     final_result = parameters_result
     try:
-        if response_result.status != LoadStatus.SUCCESS:
+        if not response_result.successful:
             final_result = response_result
             ensemble.set_failure(
                 realization,
@@ -1443,9 +1442,9 @@ def load_parameters_and_responses_from_runpath(
 
     loaded = 0
     for t in async_result:
-        ((status, message), iens) = t.get()
+        ((success, message), iens) = t.get()
 
-        if status == LoadStatus.SUCCESS:
+        if success:
             loaded += 1
         else:
             logger.error(f"Realization: {iens}, load failure: {message}")
