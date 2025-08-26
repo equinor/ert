@@ -292,16 +292,15 @@ def _generate_certificate(cert_folder: str) -> tuple[str, str, bytes]:
     )
 
     # Generate the certificate and sign it with the private key
-    cert_name = get_machine_name()
     subject = issuer = x509.Name(
         [
             x509.NameAttribute(NameOID.COUNTRY_NAME, "NO"),
             x509.NameAttribute(NameOID.STATE_OR_PROVINCE_NAME, "Bergen"),
             x509.NameAttribute(NameOID.LOCALITY_NAME, "Sandsli"),
             x509.NameAttribute(NameOID.ORGANIZATION_NAME, "Equinor"),
-            x509.NameAttribute(NameOID.COMMON_NAME, f"{cert_name}"),
         ]
     )
+    dns_name = get_machine_name()
     cert = (
         x509.CertificateBuilder()
         .subject_name(subject)
@@ -313,7 +312,7 @@ def _generate_certificate(cert_folder: str) -> tuple[str, str, bytes]:
             datetime.datetime.now(datetime.UTC) + datetime.timedelta(days=365)
         )  # 1 year
         .add_extension(
-            x509.SubjectAlternativeName([x509.DNSName(f"{cert_name}")]),
+            x509.SubjectAlternativeName([x509.DNSName(f"{dns_name}")]),
             critical=False,
         )
         .sign(key, hashes.SHA256(), default_backend())
@@ -321,10 +320,10 @@ def _generate_certificate(cert_folder: str) -> tuple[str, str, bytes]:
 
     # Write certificate and key to disk
     makedirs_if_needed(cert_folder)
-    cert_path = os.path.join(cert_folder, cert_name + ".crt")
+    cert_path = os.path.join(cert_folder, dns_name + ".crt")
     with open(cert_path, "wb") as f:
         f.write(cert.public_bytes(serialization.Encoding.PEM))
-    key_path = os.path.join(cert_folder, cert_name + ".key")
+    key_path = os.path.join(cert_folder, dns_name + ".key")
     pw = bytes(os.urandom(28))
     with open(key_path, "wb") as f:
         f.write(
