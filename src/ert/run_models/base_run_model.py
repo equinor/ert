@@ -226,16 +226,25 @@ class BaseRunModel(BaseModelWithContextSupport, ABC):
             for key, value in self.__dict__.items()
             if key not in keys_to_drop
         }
-        num_params_log = "with"
-        if hasattr(self, "parameter_configuration"):
-            num_params = sum(
+        settings_summary = {
+            "run_model": self.name(),
+            "num_realizations": self.runpath_config.num_realizations,
+            "num_active_realizations": self.active_realizations.count(True),
+            "num_parameters": sum(
                 len(param_config.parameter_keys)
                 for param_config in self.parameter_configuration
             )
-            num_params_log = f"with {num_params} parameters and"
+            if hasattr(self, "parameter_configuration")
+            else "NA",
+            "localization": getattr(
+                settings_dict.get("analysis_settings", {}), "localization", "NA"
+            ),
+        }
 
         logger.info(
-            f"Running '{self.name()}' {num_params_log} settings {settings_dict}"
+            f"Running '{self.name()}'\n\n"
+            f"Settings summary: {settings_summary}\n\n"
+            f"Settings: {settings_dict}"
         )
 
     @classmethod
