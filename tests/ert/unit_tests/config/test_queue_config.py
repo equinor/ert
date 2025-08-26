@@ -72,7 +72,7 @@ def test_project_code_is_not_overwritten_if_set_in_config(queue_system):
 
 
 @pytest.mark.parametrize("invalid_queue_system", ["VOID", "BLABLA", "GENERIC", "*"])
-def test_that_an_invalid_queue_system_provided_raises_validation_error(
+def test_that_the_first_argument_to_queue_option_must_be_a_known_queue_system(
     invalid_queue_system,
 ):
     """There is actually a "queue-system" called GENERIC, but it is
@@ -93,7 +93,7 @@ def test_that_an_invalid_queue_system_provided_raises_validation_error(
     "queue_system, invalid_option",
     [(QueueSystem.LOCAL, "BSUB_CMD"), (QueueSystem.TORQUE, "BOGUS")],
 )
-def test_that_invalid_queue_option_raises_validation_error(
+def test_that_the_second_argument_to_queue_option_must_be_a_known_option_for_the_system(
     queue_system, invalid_option
 ):
     with pytest.raises(
