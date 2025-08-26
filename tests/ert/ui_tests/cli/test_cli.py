@@ -113,41 +113,31 @@ def test_field_init_file_not_readable(monkeypatch):
             run_cli(TEST_RUN_MODE, "--disable-monitoring", config_file_name)
 
 
-@pytest.mark.usefixtures("copy_snake_oil_field")
-def test_surface_init_fails_during_forward_model_callback():
-    rng = np.random.default_rng()
-
-    Path("./surface").mkdir()
+def test_that_non_existent_forward_init_surface_file_fails_gracefully(
+    tmp_path,
+):
     nx = 5
     ny = 10
-    surf = xtgeo.RegularSurface(
-        ncol=nx, nrow=ny, xinc=1.0, yinc=1.0, values=rng.standard_normal(size=(nx, ny))
-    )
-    surf.to_file("surface/surf_init_0.irap", fformat="irap_ascii")
-
-    config_file_name = "snake_oil_surface.ert"
+    xtgeo.RegularSurface(
+        ncol=nx,
+        nrow=ny,
+        xinc=1.0,
+        yinc=1.0,
+        values=np.random.default_rng().standard_normal(size=(nx, ny)),
+    ).to_file(tmp_path / "surf_init_0.irap", fformat="irap_ascii")
     parameter_name = "TOP"
-    with open(config_file_name, mode="r+", encoding="utf-8") as config_file_handler:
-        content_lines = config_file_handler.read().splitlines()
-        index_line_with_surface_top = next(
-            index
-            for index, line in enumerate(content_lines)
-            if line.startswith(f"SURFACE {parameter_name}")
-        )
-        line_with_surface_top = content_lines[index_line_with_surface_top]
-        breaking_line_with_surface_top = line_with_surface_top
-        content_lines[index_line_with_surface_top] = (
-            breaking_line_with_surface_top.replace(
-                "FORWARD_INIT:False", "FORWARD_INIT:True"
-            )
-        )
-        config_file_handler.seek(0)
-        config_file_handler.write("\n".join(content_lines))
-
+    (config_file := tmp_path / "config.ert").write_text(f"""
+        NUM_REALIZATIONS 1
+        SURFACE {parameter_name}\
+                INIT_FILES:surf_init_<IENS>.irap\
+                OUTPUT_FILE:surf_updated.irap\
+                BASE_SURFACE:surf_init_0.irap\
+                FORWARD_INIT:True
+        """)
     with pytest.raises(
         ErtCliError, match=f"Failed to initialize parameter {parameter_name!r}"
     ):
-        run_cli(TEST_RUN_MODE, "--disable-monitoring", config_file_name)
+        run_cli(TEST_RUN_MODE, "--disable-monitoring", str(config_file))
 
 
 @pytest.mark.usefixtures("copy_snake_oil_field")
