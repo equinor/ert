@@ -36,7 +36,7 @@ def create_ert_config(path: Path):
     )
 
 
-async def test_subprocesses_live_on_after_ert_dies(tmp_path):
+async def test_that_forward_model_subprocesses_live_on_after_ert_dies(tmp_path):
     # Have ERT run a forward model that writes in PID to a file, then sleeps
     # Forcefully terminate ERT and assert that the child process is not terminated
     create_ert_config(tmp_path)

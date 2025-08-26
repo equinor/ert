@@ -141,7 +141,7 @@ def test_that_non_existent_forward_init_surface_file_fails_gracefully(
 
 
 @pytest.mark.usefixtures("copy_snake_oil_field")
-def test_unopenable_observation_config_fails_gracefully():
+def test_that_unopenable_observation_config_fails_gracefully():
     config_file_name = "snake_oil_field.ert"
     with open(config_file_name, encoding="utf-8") as config_file_handler:
         content_lines = config_file_handler.read().splitlines()
@@ -171,7 +171,7 @@ def test_unopenable_observation_config_fails_gracefully():
     ],
 )
 @pytest.mark.usefixtures("copy_poly_case")
-def test_that_the_model_raises_exception_if_successful_realizations_less_than_minimum_realizations(  # noqa: E501
+def test_that_successful_realizations_less_than_minimum_realizations_fails_gracefully(
     mode,
 ):
     with (
@@ -527,7 +527,7 @@ def fixture_mock_cli_run(monkeypatch):
 
 
 @pytest.mark.usefixtures("copy_poly_case")
-def test_es_mda(snapshot):
+def test_that_es_mda_on_poly_case_matches_snapshot(snapshot):
     with fileinput.input("poly.ert", inplace=True) as fin:
         for line_nr, line in enumerate(fin):
             if line_nr == 1:
@@ -567,7 +567,7 @@ def test_es_mda(snapshot):
 
 
 @pytest.mark.usefixtures("copy_poly_case")
-def test_enif(snapshot):
+def test_that_enif_on_poly_case_matches_snapshot(snapshot):
     with fileinput.input("poly.ert", inplace=True) as fin:
         for line_nr, line in enumerate(fin):
             if line_nr == 1:
