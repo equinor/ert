@@ -89,7 +89,7 @@ def test_model_config_jobname_and_eclbase(extra_config, expected):
         ),
     ],
 )
-def test_warning_when_full_disk(
+def test_that_when_the_runpath_disk_is_full_a_warning_is_given(
     tmp_path, recwarn, total_space, used_space, to_warn, expected_warning
 ):
     Path(tmp_path / "simulations").mkdir()
