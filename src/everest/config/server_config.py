@@ -73,6 +73,9 @@ class ServerConfig(BaseModel):
         """Load server information from the hostfile"""
         host_file_path = ServerConfig.get_hostfile_path(output_dir)
         try:
+            if os.path.getsize(host_file_path) == 0:
+                return {"host": None, "port": None, "cert": None, "auth": None}
+
             with open(host_file_path, encoding="utf-8") as f:
                 json_string = f.read()
 
