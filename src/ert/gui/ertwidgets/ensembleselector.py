@@ -126,7 +126,20 @@ class EnsembleSelector(QComboBox):
                 ens.parent for ens in self.notifier.storage.ensembles if ens.parent
             ]
             ensemble_list = [val for val in ensemble_list if val.id not in parents]
-        return sorted(ensemble_list, key=lambda x: x.started_at, reverse=True)
+        return self.sort_ensembles(ensemble_list)
+
+    def sort_ensembles(self, ensemble_list):
+        return sorted(
+            ensemble_list,
+            key=lambda e: (
+                any(
+                    RealizationStorageState.FAILURE_IN_CURRENT in s
+                    for s in e.get_ensemble_state()
+                ),
+                e.started_at,
+            ),
+            reverse=True,
+        )
 
     def _on_current_index_changed(self, index: int) -> None:
         self.notifier.set_current_ensemble_id(UUID(self.itemData(index)))
