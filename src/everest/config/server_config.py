@@ -1,5 +1,6 @@
 import json
 import os
+from pathlib import Path
 from typing import Any
 
 from pydantic import BaseModel, ConfigDict, Field, model_validator
@@ -71,22 +72,17 @@ class ServerConfig(BaseModel):
     @staticmethod
     def get_server_info(output_dir: str) -> dict[str, Any]:
         """Load server information from the hostfile"""
-        host_file_path = ServerConfig.get_hostfile_path(output_dir)
-        try:
-            if os.path.getsize(host_file_path) == 0:
-                return {"host": None, "port": None, "cert": None, "auth": None}
+        host_file_path = Path(ServerConfig.get_hostfile_path(output_dir))
 
-            with open(host_file_path, encoding="utf-8") as f:
-                json_string = f.read()
-
-            data = json.loads(json_string)
-            if not all(k in data for k in ("host", "port", "cert", "auth")):
-                raise RuntimeError("Malformed hostfile")
-        except FileNotFoundError:
-            # No host file
+        if not host_file_path.exists() or host_file_path.stat().st_size == 0:
             return {"host": None, "port": None, "cert": None, "auth": None}
-        else:
-            return data
+
+        data = json.loads(host_file_path.read_text(encoding="utf-8"))
+
+        if not all(k in data for k in ("host", "port", "cert", "auth")):
+            raise RuntimeError("Malformed hostfile")
+
+        return data
 
     @staticmethod
     def get_detached_node_dir(output_dir: str) -> str:
