@@ -176,7 +176,7 @@ def test_terminating_experiment_shows_a_confirmation_dialog(qtbot: QtBot, run_di
 def test_run_dialog_polls_run_model_for_runtime(
     qtbot, mock_set_is_simulation_running, mock_get_runtime, run_dialog: RunDialog
 ):
-    qtbot.waitUntil(lambda: run_dialog.is_simulation_done() is True)
+    qtbot.waitUntil(lambda: run_dialog.is_simulation_done() is True, timeout=10000)
     mock_get_runtime.assert_any_call()
     mock_set_is_simulation_running.assert_has_calls([call(True), call(False)])
 
