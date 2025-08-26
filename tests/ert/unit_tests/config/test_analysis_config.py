@@ -264,7 +264,7 @@ def test_std_cutoff_is_set_from_corresponding_key(value):
 
 
 @given(st.integers(min_value=1))
-def test_default_min_realization_is_all_realizations(value):
+def test_that_the_default_min_realizations_is_all_realizations(value):
     assert (
         AnalysisConfig.from_dict(
             {ConfigKeys.NUM_REALIZATIONS: value}
