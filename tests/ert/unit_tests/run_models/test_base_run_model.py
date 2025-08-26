@@ -628,7 +628,7 @@ def test_run_model_logs_number_of_parameters_in_ensemble_experiment(use_tmpdir):
     rm = create_run_model(parameter_configuration=[parameters])
 
     def mock_logging(_, log_str):
-        regex = r"Running '\w+' with (\d+) parameters"
+        regex = r"'num_parameters': (\d+)"
         match = re.search(regex, log_str)
         num_param = int(match.group(1))
 
