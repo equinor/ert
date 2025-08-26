@@ -15,14 +15,13 @@ from ert.trace import tracer
 logger = logging.getLogger(__name__)
 
 
-class EnsembleExperiment(InitialEnsembleRunModel):
+class EnsembleExperiment(InitialEnsembleRunModel, EnsembleExperimentConfig):
     """
     This workflow will create a new experiment and a new ensemble from
     the user configuration.<br>It will never overwrite existing ensembles, and
     will always sample parameters.<br>
     """
 
-    config: EnsembleExperimentConfig
     _ensemble_id: UUID | None = PrivateAttr(None)
 
     @property
@@ -39,21 +38,19 @@ class EnsembleExperiment(InitialEnsembleRunModel):
         self.log_at_startup()
         self._rerun_failed_realizations = rerun_failed_realizations
 
-        self.run_workflows(
-            fixtures=PreExperimentFixtures(random_seed=self.config.random_seed)
-        )
+        self.run_workflows(fixtures=PreExperimentFixtures(random_seed=self.random_seed))
 
         self._sample_and_evaluate_ensemble(
             evaluator_server_config,
             None,
-            self.config.target_ensemble,
+            self.target_ensemble,
             rerun_failed_realizations,
             self._ensemble if rerun_failed_realizations else None,
         )
 
         self.run_workflows(
             fixtures=PostExperimentFixtures(
-                random_seed=self.config.random_seed,
+                random_seed=self.random_seed,
                 storage=self._storage,
                 ensemble=self._ensemble,
             ),

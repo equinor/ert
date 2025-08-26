@@ -2,8 +2,7 @@ from collections import defaultdict
 from pathlib import Path
 from typing import Annotated, Any, ClassVar
 
-import polars as pl
-from pydantic import BaseModel, Field, PrivateAttr
+from pydantic import BaseModel, Field
 
 from ert.config import (
     DesignMatrix,
@@ -23,6 +22,15 @@ from ert.config import (
     Workflow,
 )
 from ert.config import Field as FieldConfig
+from ert.storage.local_experiment import DictEncodedObservations
+from everest.config import (
+    ControlConfig,
+    InputConstraintConfig,
+    ObjectiveFunctionConfig,
+    OptimizationConfig,
+    OutputConstraintConfig,
+)
+from everest.config import ModelConfig as ModelConfigEverest
 
 
 class ExperimentConfig(BaseModel):
@@ -65,7 +73,7 @@ class ExperimentWithInitialEnsembleConfig(ExperimentConfig):
         ]
     ]
     ert_templates: list[tuple[str, str]]
-    _observations: dict[str, pl.DataFrame] | None = PrivateAttr()
+    observations: dict[str, DictEncodedObservations] | None = None
 
 
 class EnsembleExperimentConfig(ExperimentWithInitialEnsembleConfig):
@@ -78,19 +86,25 @@ class SingleTestRunConfig(EnsembleExperimentConfig):
     minimum_required_realizations: int = 1
 
 
-class ExperimentWithUpdateConfig(ExperimentWithInitialEnsembleConfig):
+class ExperimentWithUpdateConfig(ExperimentConfig):
     target_ensemble: str
     analysis_settings: ESSettings
     update_settings: ObservationSettings
 
 
-class EnsembleSmootherConfig(ExperimentWithUpdateConfig): ...
+class EnsembleSmootherConfig(
+    ExperimentWithInitialEnsembleConfig, ExperimentWithUpdateConfig
+): ...
 
 
-class EnsembleInformationFilterConfig(ExperimentWithUpdateConfig): ...
+class EnsembleInformationFilterConfig(
+    ExperimentWithInitialEnsembleConfig, ExperimentWithUpdateConfig
+): ...
 
 
-class MultipleDataAssimilationConfig(ExperimentWithUpdateConfig):
+class MultipleDataAssimilationConfig(
+    ExperimentWithInitialEnsembleConfig, ExperimentWithUpdateConfig
+):
     default_weights: ClassVar[str] = "4, 2, 1"
     restart_run: bool
     prior_ensemble_id: str | None
@@ -104,3 +118,37 @@ class EvaluateEnsembleConfig(ExperimentConfig):
 
 class ManualUpdateConfig(ExperimentWithUpdateConfig):
     ensemble_id: str
+
+
+class EverestExperimentConfig(ExperimentConfig):
+    optimization_output_dir: str
+    simulation_dir: str
+
+    parameter_configuration: list[ExtParamConfig]
+    response_configuration: list[
+        Annotated[
+            (
+                GenDataConfig
+                | SummaryConfig
+                | EverestConstraintsConfig
+                | EverestObjectivesConfig
+            ),
+            Field(discriminator="type"),
+        ]
+    ]
+    ert_templates: list[tuple[str, str]]
+
+    controls: list[ControlConfig]
+
+    objective_functions: list[ObjectiveFunctionConfig]
+    objective_names: list[str]
+
+    input_constraints: list[InputConstraintConfig]
+
+    output_constraints: list[OutputConstraintConfig]
+    constraint_names: list[str]
+
+    optimization: OptimizationConfig
+
+    model: ModelConfigEverest
+    keep_run_path: bool

@@ -12,14 +12,13 @@ from ert.run_models.update_run_model import UpdateRunModel
 from ert.storage import Ensemble
 
 from ..analysis import smoother_update
+from .experiment_configs import ManualUpdateConfig
 from .run_model import ErtRunError
 
 logger = logging.getLogger(__name__)
 
 
-class ManualUpdate(UpdateRunModel):
-    ensemble_id: str
-
+class ManualUpdate(UpdateRunModel, ManualUpdateConfig):
     _prior: Ensemble = PrivateAttr()
 
     def model_post_init(self, ctx: Any) -> None:
@@ -40,9 +39,7 @@ class ManualUpdate(UpdateRunModel):
         self.log_at_startup()
         self.set_env_key("_ERT_EXPERIMENT_ID", str(self._prior.experiment.id))
         self.set_env_key("_ERT_ENSEMBLE_ID", str(self._prior.id))
-        self.update(
-            self._prior, self.config.target_ensemble % (self._prior.iteration + 1)
-        )
+        self.update(self._prior, self.target_ensemble % (self._prior.iteration + 1))
 
     def update_ensemble_parameters(
         self, prior: Ensemble, posterior: Ensemble, weight: float
@@ -50,8 +47,8 @@ class ManualUpdate(UpdateRunModel):
         smoother_update(
             prior,
             posterior,
-            update_settings=self.config.update_settings,
-            es_settings=self.config.analysis_settings,
+            update_settings=self.update_settings,
+            es_settings=self.analysis_settings,
             parameters=prior.experiment.update_parameters,
             observations=prior.experiment.observation_keys,
             global_scaling=weight,

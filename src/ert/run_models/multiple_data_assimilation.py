@@ -24,31 +24,33 @@ logger = logging.getLogger(__name__)
 MULTIPLE_DATA_ASSIMILATION_GROUP = "Parameter update"
 
 
-class MultipleDataAssimilation(UpdateRunModel, InitialEnsembleRunModel):
+class MultipleDataAssimilation(
+    UpdateRunModel, InitialEnsembleRunModel, MultipleDataAssimilationConfig
+):
     """
     Run multiple data assimilation (MDA) ensemble smoother with custom weights.
     """
 
-    config: MultipleDataAssimilationConfig
     _parsed_weights: list[float] = PrivateAttr()
     _total_iterations: int = PrivateAttr(default=2)
+    _start_iteration: int = PrivateAttr(default=0)
 
     def model_post_init(self, ctx: Any) -> None:
         super().model_post_init(ctx)
-        self._parsed_weights = self.parse_weights(self.config.weights)
+        self._parsed_weights = self.parse_weights(self.weights)
         start_iteration = 0
         total_iterations = len(self._parsed_weights) + 1
-        if self.config.restart_run:
-            if not self.config.prior_ensemble_id:
+        if self.restart_run:
+            if not self.prior_ensemble_id:
                 raise ValueError("For restart run, prior ensemble must be set")
             start_iteration = (
-                self._storage.get_ensemble(self.config.prior_ensemble_id).iteration + 1
+                self._storage.get_ensemble(self.prior_ensemble_id).iteration + 1
             )
             total_iterations -= start_iteration
-        elif not self.config.experiment_name:
+        elif not self.experiment_name:
             raise ValueError("For non-restart run, experiment name must be set")
 
-        self.start_iteration = start_iteration
+        self._start_iteration = start_iteration
         self._total_iterations = total_iterations
 
     @tracer.start_as_current_span(f"{__name__}.run_experiment")
@@ -61,8 +63,8 @@ class MultipleDataAssimilation(UpdateRunModel, InitialEnsembleRunModel):
         if rerun_failed_realizations:
             raise ErtRunError("ESMDA does not support restart")
 
-        if self.config.restart_run:
-            id_ = self.config.prior_ensemble_id
+        if self.restart_run:
+            id_ = self.prior_ensemble_id
             assert id_ is not None
             try:
                 ensemble_id = UUID(id_)
@@ -71,10 +73,10 @@ class MultipleDataAssimilation(UpdateRunModel, InitialEnsembleRunModel):
                 self.set_env_key("_ERT_EXPERIMENT_ID", str(experiment.id))
                 self.set_env_key("_ERT_ENSEMBLE_ID", str(prior.id))
                 assert isinstance(prior, Ensemble)
-                if self.start_iteration != prior.iteration + 1:
+                if self._start_iteration != prior.iteration + 1:
                     raise ValueError(
                         "Experiment misconfigured, got starting "
-                        f"iteration: {self.start_iteration},"
+                        f"iteration: {self._start_iteration},"
                         f"restart iteration = {prior.iteration + 1}"
                     )
             except (KeyError, ValueError) as err:
@@ -83,13 +85,13 @@ class MultipleDataAssimilation(UpdateRunModel, InitialEnsembleRunModel):
                 ) from err
         else:
             self.run_workflows(
-                fixtures=PreExperimentFixtures(random_seed=self.config.random_seed),
+                fixtures=PreExperimentFixtures(random_seed=self.random_seed),
             )
-            sim_args = {"weights": self.config.weights}
+            sim_args = {"weights": self.weights}
             prior = self._sample_and_evaluate_ensemble(
                 evaluator_server_config,
                 sim_args,
-                self.config.target_ensemble % 0,
+                self.target_ensemble % 0,
             )
 
         enumerated_weights: list[tuple[int, float]] = list(
@@ -100,7 +102,7 @@ class MultipleDataAssimilation(UpdateRunModel, InitialEnsembleRunModel):
         for iteration, weight in weights_to_run:
             posterior = self.update(
                 prior,
-                self.config.target_ensemble % (iteration + 1),
+                self.target_ensemble % (iteration + 1),
                 weight=weight,
             )
             posterior_args = create_run_arguments(
@@ -117,7 +119,7 @@ class MultipleDataAssimilation(UpdateRunModel, InitialEnsembleRunModel):
 
         self.run_workflows(
             fixtures=PostExperimentFixtures(
-                random_seed=self.config.random_seed,
+                random_seed=self.random_seed,
                 storage=self._storage,
                 ensemble=prior,
             ),
@@ -129,8 +131,8 @@ class MultipleDataAssimilation(UpdateRunModel, InitialEnsembleRunModel):
         smoother_update(
             prior,
             posterior,
-            update_settings=self.config.update_settings,
-            es_settings=self.config.analysis_settings,
+            update_settings=self.update_settings,
+            es_settings=self.analysis_settings,
             parameters=prior.experiment.update_parameters,
             observations=prior.experiment.observation_keys,
             global_scaling=weight,

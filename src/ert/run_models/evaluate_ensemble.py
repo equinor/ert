@@ -16,7 +16,7 @@ from .run_model import RunModel
 logger = logging.getLogger(__name__)
 
 
-class EvaluateEnsemble(RunModel):
+class EvaluateEnsemble(RunModel, EvaluateEnsembleConfig):
     """
     This workflow will evaluate ensembles which have parameters, but no simulation
     has been performed, so there are no responses. This can be used in instances
@@ -25,15 +25,13 @@ class EvaluateEnsemble(RunModel):
     ensemble, and will not reflect any changes to the user configuration on disk.
     """
 
-    config: EvaluateEnsembleConfig
-
     def model_post_init(self, ctx: Any) -> None:
         super().model_post_init(ctx)
         try:
-            ensemble = self._storage.get_ensemble(UUID(self.config.ensemble_id))
-            self.start_iteration = ensemble.iteration
+            ensemble = self._storage.get_ensemble(UUID(self.ensemble_id))
+            self._start_iteration = ensemble.iteration
         except KeyError as err:
-            raise ValueError(f"No ensemble: {self.config.ensemble_id}") from err
+            raise ValueError(f"No ensemble: {self.ensemble_id}") from err
 
     @tracer.start_as_current_span(f"{__name__}.run_experiment")
     def run_experiment(
@@ -43,7 +41,7 @@ class EvaluateEnsemble(RunModel):
     ) -> None:
         self.log_at_startup()
         self._is_rerunning_failed_realizations = rerun_failed_realizations
-        ensemble = self._storage.get_ensemble(UUID(self.config.ensemble_id))
+        ensemble = self._storage.get_ensemble(UUID(self.ensemble_id))
         self.set_env_key("_ERT_EXPERIMENT_ID", str(ensemble.experiment.id))
         self.set_env_key("_ERT_ENSEMBLE_ID", str(ensemble.id))
 

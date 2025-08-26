@@ -21,8 +21,7 @@ from .run_model import ErtRunError
 logger = logging.getLogger(__name__)
 
 
-class EnsembleSmoother(UpdateRunModel, InitialEnsembleRunModel):
-    config: EnsembleSmootherConfig
+class EnsembleSmoother(InitialEnsembleRunModel, UpdateRunModel, EnsembleSmootherConfig):
     _total_iterations: int = PrivateAttr(default=2)
 
     @tracer.start_as_current_span(f"{__name__}.run_experiment")
@@ -35,16 +34,14 @@ class EnsembleSmoother(UpdateRunModel, InitialEnsembleRunModel):
         if rerun_failed_realizations:
             raise ErtRunError("Ensemble Information Filter does not support restart")
 
-        self.run_workflows(
-            fixtures=PreExperimentFixtures(random_seed=self.config.random_seed)
-        )
+        self.run_workflows(fixtures=PreExperimentFixtures(random_seed=self.random_seed))
 
         prior = self._sample_and_evaluate_ensemble(
             evaluator_server_config,
             None,
-            self.config.target_ensemble % 0,
+            self.target_ensemble % 0,
         )
-        posterior = self.update(prior, self.config.target_ensemble % 1)
+        posterior = self.update(prior, self.target_ensemble % 1)
 
         posterior_args = create_run_arguments(
             self._run_paths,
@@ -59,7 +56,7 @@ class EnsembleSmoother(UpdateRunModel, InitialEnsembleRunModel):
         )
         self.run_workflows(
             fixtures=PostExperimentFixtures(
-                random_seed=self.config.random_seed,
+                random_seed=self.random_seed,
                 storage=self._storage,
                 ensemble=posterior,
             ),
@@ -71,8 +68,8 @@ class EnsembleSmoother(UpdateRunModel, InitialEnsembleRunModel):
         smoother_update(
             prior,
             posterior,
-            update_settings=self.config.update_settings,
-            es_settings=self.config.analysis_settings,
+            update_settings=self.update_settings,
+            es_settings=self.analysis_settings,
             parameters=prior.experiment.update_parameters,
             observations=prior.experiment.observation_keys,
             global_scaling=weight,

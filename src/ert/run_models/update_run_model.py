@@ -35,9 +35,7 @@ from ert.run_models.run_model import ErtRunError, RunModel
 from ert.storage import Ensemble
 
 
-class UpdateRunModel(RunModel):
-    config: ExperimentWithUpdateConfig
-
+class UpdateRunModel(RunModel, ExperimentWithUpdateConfig):
     @abstractmethod
     def update_ensemble_parameters(
         self, prior: Ensemble, posterior: Ensemble, weight: float
@@ -81,9 +79,9 @@ class UpdateRunModel(RunModel):
         pre_first_update_fixtures = PreFirstUpdateFixtures(
             storage=self._storage,
             ensemble=prior,
-            observation_settings=self.config.update_settings,
-            es_settings=self.config.analysis_settings,
-            random_seed=self.config.random_seed,
+            observation_settings=self.update_settings,
+            es_settings=self.analysis_settings,
+            random_seed=self.random_seed,
             reports_dir=self.reports_dir(experiment_name=prior.experiment.name),
             run_paths=self._run_paths,
         )

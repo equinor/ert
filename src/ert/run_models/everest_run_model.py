@@ -25,7 +25,7 @@ from ropt.results import FunctionResults, Results
 from ropt.transforms import OptModelTransforms
 from typing_extensions import TypedDict
 
-from ert.config import ParameterConfig, QueueConfig, ResponseConfig
+from ert.config import QueueConfig
 from ert.config.ert_config import (
     create_and_hook_workflows,
     read_templates,
@@ -35,13 +35,7 @@ from ert.config.model_config import ModelConfig as ErtModelConfig
 from ert.ensemble_evaluator import EndEvent, EvaluatorServerConfig
 from ert.runpaths import Runpaths
 from everest.config import (
-    ControlConfig,
     EverestConfig,
-    InputConstraintConfig,
-    ModelConfig,
-    ObjectiveFunctionConfig,
-    OptimizationConfig,
-    OutputConstraintConfig,
 )
 from everest.everest_storage import EverestStorage
 from everest.optimizer.everest2ropt import everest2ropt
@@ -62,6 +56,7 @@ from ..run_arg import RunArg, create_run_arguments
 from ..storage.local_ensemble import EverestRealizationInfo
 from ..substitutions import Substitutions
 from .event import EverestBatchResultEvent, EverestStatusEvent
+from .experiment_configs import EverestExperimentConfig
 from .run_model import RunModel, StatusEvents
 
 if TYPE_CHECKING:
@@ -121,30 +116,7 @@ class _EvaluationInfo:
 logger = logging.getLogger(EVEREST)
 
 
-class EverestRunModel(RunModel):
-    optimization_output_dir: str
-    simulation_dir: str
-
-    parameter_configuration: list[ParameterConfig]
-    response_configuration: list[ResponseConfig]
-    ert_templates: list[tuple[str, str]]
-
-    controls: list[ControlConfig]
-
-    objective_functions: list[ObjectiveFunctionConfig]
-    objective_names: list[str]
-
-    input_constraints: list[InputConstraintConfig]
-
-    output_constraints: list[OutputConstraintConfig]
-    constraint_names: list[str]
-
-    optimization: OptimizationConfig
-
-    model: ModelConfig
-
-    keep_run_path: bool
-
+class EverestRunModel(RunModel, EverestExperimentConfig):
     _exit_code: EverestExitCode | None = PrivateAttr(default=None)
     _experiment: Experiment | None = PrivateAttr(default=None)
     _eval_server_cfg: EvaluatorServerConfig | None = PrivateAttr(default=None)
@@ -279,7 +251,7 @@ class EverestRunModel(RunModel):
         return self._exit_code
 
     def __repr__(self) -> str:
-        return f"EverestRunModel(config={self.config.user_config_file})"
+        return f"EverestRunModel(config={self.user_config_file})"
 
     def start_simulations_thread(
         self,
@@ -431,7 +403,7 @@ class EverestRunModel(RunModel):
             self.output_constraints,
             self.optimization,
             self.model,
-            self.config.random_seed,
+            self.random_seed,
             self.optimization_output_dir,
         )
         transforms = (
@@ -729,18 +701,18 @@ class EverestRunModel(RunModel):
         ensemble: Ensemble,
         sim_to_model_realization: list[int],
     ) -> list[RunArg]:
-        substitutions = self.config.substitutions
+        substitutions = self.substitutions
         self.active_realizations = [True] * len(sim_to_model_realization)
         for sim_id, model_realization in enumerate(sim_to_model_realization):
             substitutions[f"<GEO_ID_{sim_id}_{ensemble.iteration}>"] = str(
                 int(model_realization)
             )
         run_paths = Runpaths(
-            jobname_format=self.config.runpath_config.jobname_format_string,
-            runpath_format=self.config.runpath_config.runpath_format_string,
-            filename=str(self.config.runpath_file),
+            jobname_format=self.runpath_config.jobname_format_string,
+            runpath_format=self.runpath_config.runpath_format_string,
+            filename=str(self.runpath_file),
             substitutions=substitutions,
-            eclbase=self.config.runpath_config.eclbase_format_string,
+            eclbase=self.runpath_config.eclbase_format_string,
         )
         return create_run_arguments(
             run_paths,

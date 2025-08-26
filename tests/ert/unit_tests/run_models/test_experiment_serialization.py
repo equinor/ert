@@ -367,7 +367,6 @@ def runmodel_args(draw):
         "forward_model_steps": forward_model_steps,
         "substitutions": substitutions,
         "hooked_workflows": hooked_workflows,
-        "status_queue": queue.SimpleQueue(),  # runtime only
     }
 
 
@@ -400,7 +399,7 @@ def initial_ensemble_runmodel_strategy(
             )
         ),
         "response_configuration": response_configs,
-        "observations": None,
+        "observations": {},
     }
 
 
@@ -563,7 +562,6 @@ def summary_config_strategy(draw):
 _not_yet_serializable_args = {
     # Should not be needed, will be replaced by endpoint
     "status_queue": queue.SimpleQueue(),
-    "observations": None,  # Should just be serialized
 }
 
 
@@ -581,12 +579,16 @@ def test_that_deserializing_ensemble_experiment_is_the_inverse_of_serializing(
     create_new_tmpdir()
     warnings.simplefilter("ignore", category=ConfigWarning)
     runmodel = EnsembleExperiment(
-        **(baserunmodel_args | ensemble_experiment_args | _not_yet_serializable_args)
+        **(
+            baserunmodel_args
+            | ensemble_experiment_args
+            | {"status_queue": queue.SimpleQueue()}
+        )
     )
     runmodel._storage.close()
 
     runmodel_from_serialized = EnsembleExperiment.model_validate(
-        runmodel.model_dump() | _not_yet_serializable_args
+        runmodel.model_dump() | {"status_queue": queue.SimpleQueue()}
     )
 
     assert runmodel_from_serialized.model_dump() == runmodel.model_dump()
@@ -605,12 +607,17 @@ def test_that_deserializing_ensemble_smoother_is_the_inverse_of_serializing(
 ) -> None:
     create_new_tmpdir()
     runmodel = EnsembleSmoother(
-        **(baserunmodel_args | initial_ensemble_args | update_runmodel_args)
+        **(
+            baserunmodel_args
+            | initial_ensemble_args
+            | update_runmodel_args
+            | {"status_queue": queue.SimpleQueue()}
+        ),
     )
     runmodel._storage.close()
 
     runmodel_from_serialized = EnsembleSmoother.model_validate(
-        runmodel.model_dump() | _not_yet_serializable_args
+        runmodel.model_dump() | {"status_queue": queue.SimpleQueue}
     )
 
     assert runmodel_from_serialized.model_dump() == runmodel.model_dump()
@@ -629,12 +636,17 @@ def test_that_deserializing_ensemble_information_filter_is_the_inverse_of_serial
 ) -> None:
     create_new_tmpdir()
     runmodel = EnsembleInformationFilter(
-        **(baserunmodel_args | initial_ensemble_args | update_runmodel_args)
+        **(
+            baserunmodel_args
+            | initial_ensemble_args
+            | update_runmodel_args
+            | {"status_queue": queue.SimpleQueue()}
+        ),
     )
     runmodel._storage.close()
 
     runmodel_from_serialized = EnsembleInformationFilter.model_validate(
-        runmodel.model_dump() | _not_yet_serializable_args
+        runmodel.model_dump() | {"status_queue": queue.SimpleQueue()}
     )
 
     assert runmodel_from_serialized.model_dump() == runmodel.model_dump()
@@ -664,12 +676,13 @@ def test_that_deserializing_esmda_is_the_inverse_of_serializing(
             | initial_ensemble_args
             | update_runmodel_args
             | multidass_args
-        )
+        ),
+        status_queue=queue.SimpleQueue(),
     )
     runmodel._storage.close()
 
     runmodel_from_serialized = MultipleDataAssimilation.model_validate(
-        runmodel.model_dump() | _not_yet_serializable_args
+        runmodel.model_dump() | {"status_queue": queue.SimpleQueue()}
     )
 
     assert runmodel_from_serialized.model_dump() == runmodel.model_dump()
@@ -679,8 +692,8 @@ def _create_and_verify_runmodel_snapshot(config, snapshot, cli_args, case):
     runmodel = create_model(config, cli_args, queue.SimpleQueue())
 
     # Override these to avoid user time/env-specifics in snapshots
-    runmodel.config.queue_config.queue_options.job_script = "fm_dispatch.py"
-    runmodel.config.queue_config.queue_options.activate_script = "activate"
+    runmodel.queue_config.queue_options.job_script = "fm_dispatch.py"
+    runmodel.queue_config.queue_options.activate_script = "activate"
     runmodel.substitutions["<DATE>"] = "2000-01-01"
 
     serialized = runmodel.model_dump_json(indent=2) + "\n"

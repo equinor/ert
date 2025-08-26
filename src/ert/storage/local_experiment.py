@@ -295,7 +295,7 @@ class LocalExperiment(BaseMode):
 
     @property
     def relative_weights(self) -> str:
-        return self._index["experiment"].get("weights", "")
+        return self._index.experiment.get("weights", "")
 
     @property
     def name(self) -> str:
