@@ -21,6 +21,7 @@ from ert.config import (
     GenDataConfig,
     GenKwConfig,
     ParameterConfig,
+    ParameterGroupConfig,
     ResponseConfig,
     SummaryConfig,
     SurfaceConfig,
@@ -345,6 +346,22 @@ class LocalExperiment(BaseMode):
                 self.parameter_info.values()
             )
         }
+
+    @cached_property
+    def parameter_groups(self) -> dict[str, ParameterGroupConfig]:
+        groups: dict[str, ParameterGroupConfig] = {
+            p.name: ParameterGroupConfig(parameters=[p])
+            for p in self.parameter_configuration.values()
+            if not isinstance(p, GenKwConfig)
+        }
+        genkw = [
+            p
+            for p in self.parameter_configuration.values()
+            if isinstance(p, GenKwConfig)
+        ]
+        if genkw:
+            groups["scalar"] = ParameterGroupConfig(parameters=genkw)
+        return groups
 
     @cached_property
     def parameter_keys(self) -> list[str]:
