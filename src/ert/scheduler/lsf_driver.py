@@ -369,7 +369,7 @@ class LsfDriver(Driver):
                     f"Could not understand '{process_message}' from bsub"
                 )
             job_id = match[1]
-            logger.info(f"Realization {iens} accepted by LSF, got id {job_id}")
+            logger.debug(f"Realization {iens} accepted by LSF, got id {job_id}")
 
             (Path(runpath) / LSF_INFO_JSON_FILENAME).write_text(
                 json.dumps({"job_id": job_id}), encoding="utf-8"
@@ -521,7 +521,7 @@ class LsfDriver(Driver):
                 exec_hosts=self._jobs[job_id].exec_hosts,
             )
         elif isinstance(new_state, FinishedJobSuccess):
-            logger.info(
+            logger.debug(
                 f"Realization {iens} (LSF-id: {self._iens2jobid[iens]}) succeeded"
             )
             event = FinishedEvent(
@@ -644,7 +644,7 @@ class LsfDriver(Driver):
     def update_and_log_exec_hosts(self, bjobs_exec_hosts: dict[str, str]) -> None:
         for job_id, exec_hosts in bjobs_exec_hosts.items():
             if self._jobs[job_id].exec_hosts == "-" and exec_hosts != "-":
-                logger.info(
+                logger.debug(
                     f"Realization {self._jobs[job_id].iens} "
                     f"was assigned to host: {exec_hosts}"
                 )
