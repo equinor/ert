@@ -20,7 +20,7 @@ from ert.ensemble_evaluator.config import EvaluatorServerConfig
 from ert.ensemble_evaluator.evaluator import EnsembleEvaluator
 from ert.run_arg import RunArg
 from ert.storage import Ensemble
-from ert.storage.load_status import LoadStatus
+from ert.storage.load_status import LoadResult
 from tests.ert import SnapshotBuilder
 
 from .ensemble_evaluator_utils import TestEnsemble
@@ -75,7 +75,7 @@ def make_ensemble(queue_config):
         monkeypatch, tmpdir: Path, num_reals, num_jobs, job_sleep=0
     ):
         async def load_successful(**_):
-            return (LoadStatus.SUCCESS, "")
+            return LoadResult.success()
 
         monkeypatch.setattr(ert.scheduler.job, "forward_model_ok", load_successful)
         with tmpdir.as_cwd():

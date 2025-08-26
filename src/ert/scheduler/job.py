@@ -27,7 +27,6 @@ from _ert.events import (
 )
 from ert.config import ForwardModelStep
 from ert.constant_filenames import ERROR_file
-from ert.storage.load_status import LoadStatus
 from ert.storage.local_ensemble import forward_model_ok
 from ert.storage.realization_storage_state import RealizationStorageState
 from ert.trace import trace, tracer
@@ -331,21 +330,20 @@ class Job:
         self.remaining_file_verification_time = timeout
 
     async def _handle_finished_forward_model(self) -> None:
-        callback_status, status_msg = await forward_model_ok(
+        result = await forward_model_ok(
             run_path=self.real.run_arg.runpath,
             realization=self.real.run_arg.iens,
             iter_=self.real.run_arg.itr,
             ensemble=self.real.run_arg.ensemble_storage,
         )
         if self._message:
-            self._message = status_msg
+            self._message = result.message
         else:
-            self._message += f"\nstatus from done callback: {status_msg}"
+            self._message += f"\nstatus from done callback: {result.message}"
 
-        if callback_status == LoadStatus.SUCCESS:
+        if result.successful:
             await self._send(JobState.COMPLETED)
         else:
-            assert callback_status == LoadStatus.FAILURE
             await self._send(JobState.FAILED)
 
     async def _handle_failure(self) -> None:

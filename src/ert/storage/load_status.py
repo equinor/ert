@@ -1,12 +1,14 @@
-from enum import Enum
-from typing import NamedTuple
-
-
-class LoadStatus(Enum):
-    SUCCESS = 0
-    FAILURE = 2
+from typing import NamedTuple, Self
 
 
 class LoadResult(NamedTuple):
-    status: LoadStatus
+    successful: bool
     message: str
+
+    @classmethod
+    def success(cls, message: str = "") -> Self:
+        return cls(True, message)
+
+    @classmethod
+    def failure(cls, message: str) -> Self:
+        return cls(False, message)
