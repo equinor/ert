@@ -116,6 +116,7 @@ def test_load_forward_model(snake_oil_default_storage):
         ),
     ],
 )
+@pytest.mark.filterwarnings("ignore:Config contains a SUMMARY key")
 def test_load_forward_model_summary(
     summary_configuration, storage, expected, caplog, run_paths, run_args
 ):
@@ -270,6 +271,7 @@ def test_loading_gen_data_without_restart(storage, run_paths, run_args):
 
 @pytest.mark.usefixtures("copy_snake_oil_case_storage")
 @pytest.mark.integration_test
+@pytest.mark.filterwarnings("ignore:Config contains a SUMMARY key")
 def test_that_the_states_are_set_correctly():
     """
     When creating a new ensemble and loading results manually (load_from_forward_model)

@@ -40,6 +40,7 @@ def writing_setup(setup_case):
         )
 
 
+@pytest.mark.filterwarnings("ignore:Config contains a SUMMARY key")
 def test_export_runpath_empty_range(writing_setup):
     writing_setup, run_paths = writing_setup
 
@@ -53,6 +54,7 @@ def test_export_runpath_empty_range(writing_setup):
     )
 
 
+@pytest.mark.filterwarnings("ignore:Config contains a SUMMARY key")
 def test_export_runpath_star_parameter(writing_setup):
     writing_setup, run_paths = writing_setup
 
@@ -67,6 +69,7 @@ def test_export_runpath_star_parameter(writing_setup):
     )
 
 
+@pytest.mark.filterwarnings("ignore:Config contains a SUMMARY key")
 def test_export_runpath_range_parameter(writing_setup):
     writing_setup, run_paths = writing_setup
 
@@ -81,6 +84,7 @@ def test_export_runpath_range_parameter(writing_setup):
     )
 
 
+@pytest.mark.filterwarnings("ignore:Config contains a SUMMARY key")
 def test_export_runpath_comma_parameter(writing_setup):
     writing_setup, run_paths = writing_setup
 
@@ -95,6 +99,7 @@ def test_export_runpath_comma_parameter(writing_setup):
     )
 
 
+@pytest.mark.filterwarnings("ignore:Config contains a SUMMARY key")
 def test_export_runpath_combination_parameter(writing_setup):
     writing_setup, run_paths = writing_setup
 
@@ -109,6 +114,7 @@ def test_export_runpath_combination_parameter(writing_setup):
     )
 
 
+@pytest.mark.filterwarnings("ignore:Config contains a SUMMARY key")
 def test_export_runpath_bad_arguments(writing_setup):
     writing_setup, run_paths = writing_setup
 

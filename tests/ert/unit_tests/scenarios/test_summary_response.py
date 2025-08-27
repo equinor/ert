@@ -81,6 +81,7 @@ def create_responses(prior_ensemble, response_times):
     )
 
 
+@pytest.mark.filterwarnings("ignore:Config contains a SUMMARY key")
 def test_that_reading_matching_time_is_ok(ert_config, storage, prior_ensemble):
     sample_prior(prior_ensemble, range(prior_ensemble.ensemble_size), 123)
 
@@ -107,6 +108,7 @@ def test_that_reading_matching_time_is_ok(ert_config, storage, prior_ensemble):
     )
 
 
+@pytest.mark.filterwarnings("ignore:Config contains a SUMMARY key")
 def test_that_mismatched_responses_give_error(ert_config, storage, prior_ensemble):
     sample_prior(prior_ensemble, range(prior_ensemble.ensemble_size), 123)
 
@@ -136,6 +138,7 @@ def test_that_mismatched_responses_give_error(ert_config, storage, prior_ensembl
         )
 
 
+@pytest.mark.filterwarnings("ignore:Config contains a SUMMARY key")
 def test_that_different_length_is_ok_as_long_as_observation_time_exists(
     ert_config,
     storage,
@@ -184,6 +187,7 @@ def run_sim(dates, value, fname="ECLIPSE_CASE"):
     summary.fwrite()
 
 
+@pytest.mark.filterwarnings("ignore:Config contains a SUMMARY key")
 def test_that_duplicate_summary_time_steps_does_not_fail(
     ert_config,
     storage,
@@ -218,6 +222,7 @@ def test_that_duplicate_summary_time_steps_does_not_fail(
 
 
 @pytest.mark.flaky(reruns=5)
+@pytest.mark.filterwarnings("ignore:Config contains a SUMMARY key")
 def test_that_mismatched_responses_gives_nan_measured_data(ert_config, prior_ensemble):
     sample_prior(prior_ensemble, range(prior_ensemble.ensemble_size), 123)
 
@@ -246,6 +251,7 @@ def test_that_mismatched_responses_gives_nan_measured_data(ert_config, prior_ens
     assert pd.isna(fopr_1.loc[2].iloc[0])
 
 
+@pytest.mark.filterwarnings("ignore:Config contains a SUMMARY key")
 def test_reading_past_2263_is_ok(ert_config, storage, prior_ensemble):
     sample_prior(prior_ensemble, range(prior_ensemble.ensemble_size), 123)
 

@@ -90,6 +90,7 @@ def test_getParameters(mock_ert):
     assert parameter_count == 223
 
 
+@pytest.mark.filterwarnings("ignore:Config contains a SUMMARY key")
 def test_snake_oil(snake_oil_case):
     summary = ErtSummary(snake_oil_case)
 
