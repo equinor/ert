@@ -18,7 +18,7 @@ from ert.config import (
     SurfaceConfig,
 )
 from ert.config import Field as FieldConfig
-from ert.enkf_main import sample_prior, save_design_matrix_to_ensemble
+from ert.enkf_main import sample_prior
 from ert.ensemble_evaluator.config import EvaluatorServerConfig
 from ert.run_arg import create_run_arguments
 from ert.run_models.run_model import RunModel
@@ -85,8 +85,7 @@ class InitialEnsembleRunModel(RunModel, ABC):
                 name=ensemble_name,
             )
             if design_matrix_group is not None and design_matrix is not None:
-                save_design_matrix_to_ensemble(
-                    design_matrix.design_matrix_df,
+                design_matrix.save_to_ensemble(
                     ensemble_storage,
                     np.where(self.active_realizations)[0],
                     design_matrix_group.name,

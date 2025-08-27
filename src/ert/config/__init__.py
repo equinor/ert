@@ -6,7 +6,7 @@ from .analysis_config import (
 )
 from .analysis_module import AnalysisModule, ESSettings, InversionTypeES
 from .capture_validation import capture_validation
-from .design_matrix import DESIGN_MATRIX_GROUP, DesignMatrix
+from .design_matrix import DesignMatrix
 from .ensemble_config import EnsembleConfig
 from .ert_config import ErtConfig
 from .everest_constraints_config import EverestConstraintsConfig
@@ -45,7 +45,6 @@ from .workflow import Workflow
 from .workflow_job import _WorkflowJob
 
 __all__ = [
-    "DESIGN_MATRIX_GROUP",
     "AnalysisConfig",
     "AnalysisModule",
     "ConfigValidationError",
