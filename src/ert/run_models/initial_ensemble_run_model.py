@@ -18,10 +18,10 @@ from ert.config import (
     SurfaceConfig,
 )
 from ert.config import Field as FieldConfig
-from ert.enkf_main import sample_prior
 from ert.ensemble_evaluator.config import EvaluatorServerConfig
 from ert.run_arg import create_run_arguments
 from ert.run_models.run_model import RunModel
+from ert.sample_prior import sample_prior
 from ert.storage.local_ensemble import LocalEnsemble
 
 

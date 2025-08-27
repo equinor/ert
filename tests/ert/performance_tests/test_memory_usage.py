@@ -15,8 +15,8 @@ import xtgeo
 
 from ert.analysis import enif_update, smoother_update
 from ert.config import ErtConfig, ESSettings, ObservationSettings
-from ert.enkf_main import sample_prior
 from ert.mode_definitions import ENSEMBLE_SMOOTHER_MODE
+from ert.sample_prior import sample_prior
 from ert.storage import open_storage
 from tests.ert.performance_tests.performance_utils import make_poly_example
 from tests.ert.ui_tests.cli.run_cli import run_cli

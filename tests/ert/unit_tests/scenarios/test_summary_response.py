@@ -12,7 +12,7 @@ from resdata.summary import Summary
 from ert.analysis import ErtAnalysisError, smoother_update
 from ert.config import ErtConfig, ESSettings, ObservationSettings
 from ert.data import MeasuredData
-from ert.enkf_main import sample_prior
+from ert.sample_prior import sample_prior
 from ert.storage.local_ensemble import load_parameters_and_responses_from_runpath
 
 

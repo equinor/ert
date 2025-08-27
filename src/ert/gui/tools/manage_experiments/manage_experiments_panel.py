@@ -15,13 +15,13 @@ from PyQt6.QtWidgets import (
 )
 
 from ert.config import ConfigValidationError
-from ert.enkf_main import sample_prior
 from ert.gui.ertwidgets import (
     CheckList,
     EnsembleSelector,
     SelectableListModel,
     showWaitCursorWhileWaiting,
 )
+from ert.sample_prior import sample_prior
 
 from .storage_info_widget import StorageInfoWidget
 from .storage_widget import StorageWidget

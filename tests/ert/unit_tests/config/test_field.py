@@ -9,8 +9,8 @@ import xtgeo
 from ert.config import ConfigValidationError, ConfigWarning, Field
 from ert.config.field import TRANSFORM_FUNCTIONS
 from ert.config.parsing import init_user_config_schema, parse_contents
-from ert.enkf_main import sample_prior
 from ert.field_utils import FieldFileFormat, Shape, read_field
+from ert.sample_prior import sample_prior
 
 
 def test_write_to_runpath_produces_the_transformed_field_in_storage(

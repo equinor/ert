@@ -12,7 +12,7 @@ from resdata.geometry import Surface
 
 from ert.config import ConfigValidationError, ErtConfig, GenKwConfig
 from ert.config.gen_kw_config import TransformFunctionDefinition
-from ert.enkf_main import sample_prior
+from ert.sample_prior import sample_prior
 from ert.storage import open_storage
 from ert.storage.local_ensemble import load_parameters_and_responses_from_runpath
 

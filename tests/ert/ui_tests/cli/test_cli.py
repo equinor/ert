@@ -24,7 +24,6 @@ import ert.shared
 from _ert.forward_model_runner.client import Client
 from ert.cli.main import ErtCliError
 from ert.config import ConfigValidationError, ConfigWarning, ErtConfig
-from ert.enkf_main import sample_prior
 from ert.mode_definitions import (
     ENIF_MODE,
     ENSEMBLE_EXPERIMENT_MODE,
@@ -32,6 +31,7 @@ from ert.mode_definitions import (
     ES_MDA_MODE,
     TEST_RUN_MODE,
 )
+from ert.sample_prior import sample_prior
 from ert.scheduler.driver import Driver
 from ert.scheduler.job import Job
 from ert.storage import open_storage
