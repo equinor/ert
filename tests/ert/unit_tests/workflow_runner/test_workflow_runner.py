@@ -32,6 +32,7 @@ def test_read_internal_function():
 
 
 @pytest.mark.usefixtures("use_tmpdir")
+@pytest.mark.filterwarnings("ignore:.*Deprecated keywords, SCRIPT and INTERNAL")
 def test_arguments():
     WorkflowCommon.createErtScriptsJob()
 
@@ -89,6 +90,7 @@ def test_error_handling_external_job():
 
 
 @pytest.mark.usefixtures("use_tmpdir")
+@pytest.mark.filterwarnings("ignore:.*Deprecated keywords, SCRIPT and INTERNAL")
 def test_run_internal_script():
     WorkflowCommon.createErtScriptsJob()
 
@@ -110,6 +112,7 @@ def test_run_internal_script():
         (["SCRIPT script.py", "INTERNAL TRUE"], "SCRIPT and INTERNAL"),
     ],
 )
+@pytest.mark.filterwarnings("ignore:.*Deprecated keywords, SCRIPT and INTERNAL")
 def test_deprecated_keywords(config, expected_result, monkeypatch, tmp_path):
     monkeypatch.chdir(tmp_path)
     with open("test_job", "w", encoding="utf-8") as f:
@@ -132,6 +135,7 @@ def test_deprecated_keywords(config, expected_result, monkeypatch, tmp_path):
 
 
 @pytest.mark.usefixtures("use_tmpdir")
+@pytest.mark.filterwarnings("ignore:.*Deprecated keywords, SCRIPT and INTERNAL")
 def test_stop_on_fail_is_parsed_internal():
     with open("fail_job", "w+", encoding="utf-8") as f:
         f.write("INTERNAL True\n")
@@ -193,6 +197,7 @@ def test_workflow_run():
 
 @pytest.mark.integration_test
 @pytest.mark.usefixtures("use_tmpdir")
+@pytest.mark.filterwarnings("ignore:.*Deprecated keywords, SCRIPT and INTERNAL")
 def test_workflow_thread_cancel_ert_script():
     WorkflowCommon.createWaitJob()
 
@@ -230,6 +235,7 @@ def test_workflow_thread_cancel_ert_script():
 
 @pytest.mark.integration_test
 @pytest.mark.usefixtures("use_tmpdir")
+@pytest.mark.filterwarnings("ignore:.*Deprecated keywords, SCRIPT and INTERNAL")
 def test_workflow_thread_cancel_external():
     WorkflowCommon.createWaitJob()
 
@@ -287,6 +293,7 @@ def test_workflow_failed_job():
 
 @pytest.mark.integration_test
 @pytest.mark.usefixtures("use_tmpdir")
+@pytest.mark.filterwarnings("ignore:.*Deprecated keywords, SCRIPT and INTERNAL")
 def test_workflow_success():
     WorkflowCommon.createWaitJob()
 
