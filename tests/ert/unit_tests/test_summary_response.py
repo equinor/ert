@@ -3,6 +3,7 @@ from pathlib import Path
 from textwrap import dedent
 
 import numpy as np
+import pytest
 from packaging import version
 
 from ert.config import ErtConfig
@@ -10,6 +11,7 @@ from ert.run_models._create_run_path import create_run_path
 from ert.storage.local_ensemble import load_parameters_and_responses_from_runpath
 
 
+@pytest.mark.filterwarnings("ignore:Config contains a SUMMARY key")
 def test_load_summary_response_restart_not_zero(
     tmpdir, snapshot, request, storage, run_paths, run_args
 ):

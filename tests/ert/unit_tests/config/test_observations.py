@@ -52,6 +52,7 @@ def run_simulator():
     ],
 )
 @pytest.mark.usefixtures("use_tmpdir")
+@pytest.mark.filterwarnings("ignore:Config contains a SUMMARY key")
 def test_that_correct_key_observation_is_loaded(extra_config, expected):
     run_simulator()
     observations = ErtConfig.from_dict(
@@ -75,6 +76,7 @@ def test_that_correct_key_observation_is_loaded(extra_config, expected):
     ],
 )
 @pytest.mark.usefixtures("use_tmpdir")
+@pytest.mark.filterwarnings("ignore:Config contains a SUMMARY key")
 def test_date_parsing_in_observations(datestring, errors):
     config_dict = {
         "ECLBASE": "my_case%d",
@@ -173,6 +175,7 @@ def test_that_empty_observations_file_causes_exception():
         ErtConfig.from_dict({"OBS_CONFIG": ("obs_conf", "")})
 
 
+@pytest.mark.filterwarnings("ignore:Config contains a SUMMARY key")
 def test_that_having_no_refcase_but_history_observations_causes_exception():
     with pytest.raises(
         expected_exception=ConfigValidationError,
@@ -419,6 +422,7 @@ def run_sim(start_date, keys=None, values=None, days=None):
         ),
     ],
 )
+@pytest.mark.filterwarnings("ignore:Config contains a SUMMARY key")
 def test_that_loading_summary_obs_with_days_is_within_tolerance(
     tmpdir,
     time_delta,
@@ -451,6 +455,7 @@ def test_that_loading_summary_obs_with_days_is_within_tolerance(
             )
 
 
+@pytest.mark.filterwarnings("ignore:Config contains a SUMMARY key")
 def test_that_having_observations_on_starting_date_errors(tmpdir):
     date = datetime(2014, 9, 10)
     with tmpdir.as_cwd():
@@ -516,6 +521,7 @@ def test_that_having_observations_on_starting_date_errors(tmpdir):
         ),
     ],
 )
+@pytest.mark.filterwarnings("ignore:Config contains a SUMMARY key")
 def test_that_out_of_bounds_segments_are_truncated(tmpdir, start, stop, message):
     with tmpdir.as_cwd():
         run_sim(
@@ -559,6 +565,7 @@ def test_that_out_of_bounds_segments_are_truncated(tmpdir, start, stop, message)
         [("WWIR", "SM3/DAY", "WNAME"), ("WWIRH", "SM3/DAY", "WNAME")],
     ],
 )
+@pytest.mark.filterwarnings("ignore:Config contains a SUMMARY key")
 def test_that_history_observations_are_loaded(tmpdir, keys, with_ext):
     with tmpdir.as_cwd():
         key, _, wname = keys[0]
@@ -671,6 +678,7 @@ def test_that_report_step_mismatch_warns():
         )
 
 
+@pytest.mark.filterwarnings("ignore:Config contains a SUMMARY key")
 def test_that_history_observation_errors_are_calculated_correctly(tmpdir):
     with tmpdir.as_cwd():
         run_sim(
@@ -755,6 +763,7 @@ def test_validation_of_duplicate_names(tmpdir):
             )
 
 
+@pytest.mark.filterwarnings("ignore:Config contains a SUMMARY key")
 def test_that_segment_defaults_are_applied(tmpdir):
     with tmpdir.as_cwd():
         run_sim(
@@ -797,6 +806,7 @@ def test_that_segment_defaults_are_applied(tmpdir):
             ].std == pytest.approx(0.1)
 
 
+@pytest.mark.filterwarnings("ignore:Config contains a SUMMARY key")
 def test_that_summary_default_error_min_is_applied(tmpdir):
     with tmpdir.as_cwd():
         run_sim(

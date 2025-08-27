@@ -1089,6 +1089,7 @@ def test_keyword_type_checks_missing_key(snake_oil_default_storage):
 
 
 @pytest.mark.filterwarnings("ignore:.*Use load_responses.*:DeprecationWarning")
+@pytest.mark.filterwarnings("ignore:Config contains a SUMMARY key")
 def test_data_fetching_missing_key(snake_oil_case):
     with open_storage(snake_oil_case.ens_path, mode="w") as storage:
         experiment = storage.create_experiment()

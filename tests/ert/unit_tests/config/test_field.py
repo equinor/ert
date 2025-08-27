@@ -13,6 +13,7 @@ from ert.field_utils import FieldFileFormat, Shape, read_field
 from ert.sample_prior import sample_prior
 
 
+@pytest.mark.filterwarnings("ignore:Config contains a SUMMARY key")
 def test_write_to_runpath_produces_the_transformed_field_in_storage(
     snake_oil_field_example, storage
 ):

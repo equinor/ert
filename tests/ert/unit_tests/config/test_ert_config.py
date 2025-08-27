@@ -1387,6 +1387,7 @@ def test_that_defines_in_included_files_has_immediate_effect():
 
 
 @pytest.mark.usefixtures("use_tmpdir", "set_site_config")
+@pytest.mark.filterwarnings("ignore:Config contains a SUMMARY key")
 def test_that_multiple_errors_are_shown_for_forward_model():
     with pytest.raises(ConfigValidationError) as err:
         _ = ErtConfig.from_file_contents(
@@ -1680,6 +1681,7 @@ def test_that_multiple_errors_are_shown_when_validating_observation_config():
 
 
 @pytest.mark.usefixtures("copy_snake_oil_case")
+@pytest.mark.filterwarnings("ignore:Config contains a SUMMARY key")
 def test_that_multiple_errors_are_shown_when_generating_observations():
     injected_errors = {
         7: "    RESTART = 0;",
