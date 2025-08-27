@@ -430,9 +430,12 @@ def test_update_raises_on_singular_matrix(tmp_path):
             prior_ensemble=prior,
         )
 
-        with pytest.raises(
-            ErtAnalysisError,
-            match=r"Failed while computing transition matrix.* Matrix is singular",
+        with (
+            pytest.raises(
+                ErtAnalysisError,
+                match=r"Failed while computing transition matrix.* Matrix is singular",
+            ),
+            pytest.warns(RuntimeWarning, match="divide by zero"),
         ):
             _ = smoother_update(
                 prior,
