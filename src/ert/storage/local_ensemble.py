@@ -21,16 +21,16 @@ from typing_extensions import TypedDict
 
 from ert.config import GenKwConfig, ParameterConfig
 from ert.config.response_config import InvalidResponseFile
-from ert.storage.load_status import LoadResult
-from ert.storage.mode import BaseMode, Mode, require_write
 
+from .load_status import LoadResult
+from .mode import BaseMode, Mode, require_write
 from .realization_storage_state import RealizationStorageState
 
 if TYPE_CHECKING:
     import numpy.typing as npt
 
-    from ert.storage.local_experiment import LocalExperiment
-    from ert.storage.local_storage import LocalStorage
+    from .local_experiment import LocalExperiment
+    from .local_storage import LocalStorage
 
 logger = logging.getLogger(__name__)
 
@@ -1425,27 +1425,29 @@ def load_parameters_and_responses_from_runpath(
         run_path: str,
         realization: int,
         ensemble: LocalEnsemble,
-    ) -> tuple[LoadResult, int]:
-        result = asyncio.run(forward_model_ok(run_path, realization, 0, ensemble))
-        return result, realization
+    ) -> LoadResult:
+        return asyncio.run(forward_model_ok(run_path, realization, 0, ensemble))
 
     async_result = [
-        pool.apply_async(
-            _load_realization_from_run_path,
-            (
-                run_path_format.replace("<IENS>", str(realization)).replace(
-                    "<ITER>", "0"
+        (
+            pool.apply_async(
+                _load_realization_from_run_path,
+                (
+                    run_path_format.replace("<IENS>", str(realization)).replace(
+                        "<ITER>", "0"
+                    ),
+                    realization,
+                    ensemble,
                 ),
-                realization,
-                ensemble,
             ),
+            realization,
         )
         for realization in active_realizations
     ]
 
     loaded = 0
-    for t in async_result:
-        ((success, message), iens) = t.get()
+    for t, iens in async_result:
+        (success, message) = t.get()
 
         if success:
             loaded += 1
