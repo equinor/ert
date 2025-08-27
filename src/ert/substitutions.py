@@ -55,9 +55,9 @@ class Substitutions(UserDict[str, str]):
             "<ITER>": str(iteration),
         }
 
-        geo_id_key = f"<GEO_ID_{realization}_{iteration}>"
-        if geo_id_key in self:
-            extra_data["<GEO_ID>"] = self[geo_id_key]
+        model_id_key = f"<GEO_ID_{realization}_{iteration}>"
+        if model_id_key in self:
+            extra_data["<GEO_ID>"] = self[model_id_key]
 
         return Substitutions({**self, **extra_data}).substitute(to_substitute)
 
