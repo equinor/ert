@@ -14,6 +14,7 @@ def set_ert_config(block_storage_path):
     local_storage_set_ert_config(None)
 
 
+@pytest.mark.filterwarnings("ignore:.*The SIMULATION_JOB keyword has been removed")
 def test_migrate_observations(setup_case, set_ert_config):
     ert_config = setup_case("block_storage/version-3/poly_example", "poly.ert")
     with open_storage(ert_config.ens_path, "w") as storage:
@@ -27,6 +28,7 @@ def test_migrate_observations(setup_case, set_ert_config):
         )
 
 
+@pytest.mark.filterwarnings("ignore:.*The SIMULATION_JOB keyword has been removed")
 def test_migrate_gen_kw_config(setup_case, set_ert_config):
     ert_config = setup_case("block_storage/version-3/poly_example", "poly.ert")
     with open_storage(ert_config.ens_path, "w") as storage:
