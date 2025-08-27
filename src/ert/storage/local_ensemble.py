@@ -1413,15 +1413,6 @@ async def forward_model_ok(
     return final_result
 
 
-def _load_realization_from_run_path(
-    run_path: str,
-    realization: int,
-    ensemble: LocalEnsemble,
-) -> tuple[LoadResult, int]:
-    result = asyncio.run(forward_model_ok(run_path, realization, 0, ensemble))
-    return result, realization
-
-
 def load_parameters_and_responses_from_runpath(
     run_path_format: str,
     ensemble: LocalEnsemble,
@@ -1429,6 +1420,14 @@ def load_parameters_and_responses_from_runpath(
 ) -> int:
     """Returns the number of loaded realizations"""
     pool = ThreadPool(processes=8)
+
+    def _load_realization_from_run_path(
+        run_path: str,
+        realization: int,
+        ensemble: LocalEnsemble,
+    ) -> tuple[LoadResult, int]:
+        result = asyncio.run(forward_model_ok(run_path, realization, 0, ensemble))
+        return result, realization
 
     async_result = [
         pool.apply_async(
