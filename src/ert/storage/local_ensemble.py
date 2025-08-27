@@ -1404,11 +1404,10 @@ async def load_realization_parameters_and_responses(
         elif ensemble.has_failure(realization):
             ensemble.unset_failure(realization)
     except OSError as err:
-        msg = (
+        logger.error(
             f"Failed to set realization state in storage for realization {realization},"
             f" failed with {err}"
         )
-        logger.error(msg)
 
     return final_result
 
