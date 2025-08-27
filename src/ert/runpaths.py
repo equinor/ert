@@ -1,8 +1,14 @@
+from __future__ import annotations
+
 from collections.abc import Iterable
 from functools import cached_property
 from pathlib import Path
+from typing import TYPE_CHECKING, Self
 
 from ert.substitutions import Substitutions
+
+if TYPE_CHECKING:
+    from ert.config import ErtConfig
 
 
 class Runpaths:
@@ -108,3 +114,13 @@ class Runpaths:
                         f"{realization:03d}  {runpath}  "
                         f"{job_name_or_eclbase}  {iteration:03d}\n"
                     )
+
+    @classmethod
+    def from_config(cls, ert_config: ErtConfig) -> Self:
+        return cls(
+            jobname_format=ert_config.runpath_config.jobname_format_string,
+            runpath_format=ert_config.runpath_config.runpath_format_string,
+            filename=str(ert_config.runpath_file),
+            substitutions=ert_config.substitutions,
+            eclbase=ert_config.runpath_config.eclbase_format_string,
+        )

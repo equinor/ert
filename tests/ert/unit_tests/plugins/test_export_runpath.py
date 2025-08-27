@@ -30,13 +30,7 @@ def writing_setup(setup_case):
                 write_mock,
                 ExportRunpathJob(),
             ),
-            Runpaths(
-                jobname_format=config.runpath_config.jobname_format_string,
-                runpath_format=config.runpath_config.runpath_format_string,
-                filename=str(config.runpath_file),
-                substitutions=config.substitutions,
-                eclbase=config.runpath_config.eclbase_format_string,
-            ),
+            Runpaths.from_config(config),
         )
 
 

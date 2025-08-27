@@ -10,6 +10,7 @@ from resdata.summary import Summary
 
 from ert.config import ErtConfig
 from ert.run_models._create_run_path import create_run_path
+from ert.runpaths import Runpaths
 from ert.storage import open_storage
 from ert.storage.local_ensemble import (
     RealizationStorageState,
@@ -18,7 +19,7 @@ from ert.storage.local_ensemble import (
 
 
 @pytest.fixture()
-def setup_case(storage, use_tmpdir, run_args, run_paths):
+def setup_case(storage, use_tmpdir, run_args):
     def func(config_text):
         Path("config.ert").write_text(config_text, encoding="utf-8")
 
@@ -39,7 +40,7 @@ def setup_case(storage, use_tmpdir, run_args, run_paths):
             forward_model_steps=ert_config.forward_model_steps,
             substitutions=ert_config.substitutions,
             parameters_file="parameters",
-            runpaths=run_paths(ert_config),
+            runpaths=Runpaths.from_config(ert_config),
         )
         return prior_ensemble
 
@@ -118,7 +119,7 @@ def test_load_forward_model(snake_oil_default_storage):
 )
 @pytest.mark.filterwarnings("ignore:Config contains a SUMMARY key")
 def test_load_forward_model_summary(
-    summary_configuration, storage, expected, caplog, run_paths, run_args
+    summary_configuration, storage, expected, caplog, run_args
 ):
     config_text = dedent(
         """
@@ -151,7 +152,7 @@ def test_load_forward_model_summary(
         forward_model_steps=ert_config.forward_model_steps,
         substitutions=ert_config.substitutions,
         parameters_file="parameters",
-        runpaths=run_paths(ert_config),
+        runpaths=Runpaths.from_config(ert_config),
     )
     with caplog.at_level(logging.ERROR):
         loaded = load_parameters_and_responses_from_runpath(
@@ -228,7 +229,7 @@ def test_that_all_deactivated_values_are_loaded(setup_case):
 
 
 @pytest.mark.usefixtures("use_tmpdir")
-def test_loading_gen_data_without_restart(storage, run_paths, run_args):
+def test_loading_gen_data_without_restart(storage, run_args):
     config_text = dedent(
         """
     NUM_REALIZATIONS 1
@@ -255,7 +256,7 @@ def test_loading_gen_data_without_restart(storage, run_paths, run_args):
         forward_model_steps=ert_config.forward_model_steps,
         substitutions=ert_config.substitutions,
         parameters_file="parameters",
-        runpaths=run_paths(ert_config),
+        runpaths=Runpaths.from_config(ert_config),
     )
     run_path = Path("simulations/realization-0/iter-0/")
     with open(run_path / "response.out", "w", encoding="utf-8") as fout:
@@ -302,7 +303,7 @@ def test_that_the_states_are_set_correctly():
 
 @pytest.mark.parametrize("itr", [None, 0, 1, 2, 3])
 @pytest.mark.usefixtures("use_tmpdir")
-def test_loading_from_any_available_iter(storage, run_paths, run_args, itr):
+def test_loading_from_any_available_iter(storage, run_args, itr):
     ert_config = ErtConfig.from_file_contents(
         """\
         NUM_REALIZATIONS 1
@@ -327,7 +328,7 @@ def test_loading_from_any_available_iter(storage, run_paths, run_args, itr):
         forward_model_steps=ert_config.forward_model_steps,
         substitutions=ert_config.substitutions,
         parameters_file="parameters",
-        runpaths=run_paths(ert_config),
+        runpaths=Runpaths.from_config(ert_config),
     )
     run_path = Path(f"simulations/realization-0/iter-{itr if itr is not None else 0}/")
     with open(run_path / "response.out", "w", encoding="utf-8") as fout:

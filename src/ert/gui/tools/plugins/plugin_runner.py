@@ -37,13 +37,7 @@ class PluginRunner:
         ert_config = self.ert_config
         try:
             plugin = self.__plugin
-            run_paths = Runpaths(
-                jobname_format=ert_config.runpath_config.jobname_format_string,
-                runpath_format=ert_config.runpath_config.runpath_format_string,
-                filename=str(ert_config.runpath_file),
-                substitutions=ert_config.substitutions,
-                eclbase=ert_config.runpath_config.eclbase_format_string,
-            )
+            run_paths = Runpaths.from_config(ert_config)
             arguments = plugin.getArguments(
                 fixtures={
                     "storage": self.storage,

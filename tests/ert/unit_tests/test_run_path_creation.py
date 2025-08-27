@@ -35,12 +35,12 @@ from tests.ert.unit_tests.config.summary_generator import simple_smspec, simple_
         {"JOBNAME": "name<IENS>"},
     ],
 )
-def test_create_run_args(prior_ensemble, config_dict, run_paths):
+def test_create_run_args(prior_ensemble, config_dict):
     ensemble_size = 10
     config = ErtConfig.from_dict(config_dict)
 
     run_args = create_run_arguments(
-        run_paths(config), [True] * ensemble_size, prior_ensemble
+        Runpaths.from_config(config), [True] * ensemble_size, prior_ensemble
     )
     assert [real.runpath for real in run_args] == [
         f"{Path().absolute()}/simulations/realization-{i}/iter-0"
@@ -56,11 +56,13 @@ def test_create_run_args(prior_ensemble, config_dict, run_paths):
     assert substitutions.get("<ECLBASE>") == "name<IENS>"
 
 
-def test_create_run_args_separate_base_and_name(prior_ensemble, run_paths):
+def test_create_run_args_separate_base_and_name(
+    prior_ensemble,
+):
     ensemble_size = 10
     config = ErtConfig.from_dict({"JOBNAME": "name<IENS>", "ECLBASE": "base<IENS>"})
     run_args = create_run_arguments(
-        run_paths(config), [True] * ensemble_size, prior_ensemble
+        Runpaths.from_config(config), [True] * ensemble_size, prior_ensemble
     )
 
     assert [real.runpath for real in run_args] == [
@@ -79,7 +81,7 @@ def test_create_run_args_separate_base_and_name(prior_ensemble, run_paths):
 
 @pytest.mark.integration_test
 @pytest.mark.filterwarnings("ignore:Config contains a SUMMARY key")
-def test_assert_symlink_deleted(snake_oil_field_example, storage, run_paths):
+def test_assert_symlink_deleted(snake_oil_field_example, storage):
     ert_config = snake_oil_field_example
     experiment_id = storage.create_experiment(
         parameters=ert_config.ensemble_config.parameter_configuration
@@ -91,7 +93,7 @@ def test_assert_symlink_deleted(snake_oil_field_example, storage, run_paths):
     )
 
     # create directory structure
-    runpaths = run_paths(ert_config)
+    runpaths = Runpaths.from_config(ert_config)
     run_args = create_run_arguments(
         runpaths,
         [True] * prior_ensemble.ensemble_size,
@@ -149,7 +151,7 @@ ENSPATH storage
 
 
 @pytest.fixture
-def make_run_path(run_paths, run_args, storage):
+def make_run_path(run_args, storage):
     def func(ert_config):
         experiment_id = storage.create_experiment(
             parameters=ert_config.ensemble_config.parameter_configuration,
@@ -160,7 +162,7 @@ def make_run_path(run_paths, run_args, storage):
         )
         sample_prior(prior_ensemble, [0], 123)
         runargs = run_args(ert_config, prior_ensemble, 1)
-        runpaths = run_paths(ert_config)
+        runpaths = Runpaths.from_config(ert_config)
         create_run_path(
             run_args=runargs,
             ensemble=prior_ensemble,
@@ -217,7 +219,7 @@ def test_jobs_json_is_backed_up(make_run_path):
 
 @pytest.mark.usefixtures("use_tmpdir")
 def test_that_run_template_replace_symlink_does_not_write_to_source(
-    prior_ensemble_args, run_args, run_paths
+    prior_ensemble_args, run_args
 ):
     """This test is meant to test that we can have a symlinked file in the
     run path before we do replacement on a target file with the same name,
@@ -256,7 +258,7 @@ def test_that_run_template_replace_symlink_does_not_write_to_source(
         forward_model_steps=ert_config.forward_model_steps,
         substitutions=ert_config.substitutions,
         parameters_file="parameters",
-        runpaths=run_paths(ert_config),
+        runpaths=Runpaths.from_config(ert_config),
     )
     assert (run_path / "result.txt").read_text(
         encoding="utf-8"
@@ -562,7 +564,7 @@ def test_that_deprecated_runpath_substitution_remain_valid(make_run_path):
 
 @pytest.mark.usefixtures("use_tmpdir")
 @pytest.mark.parametrize("itr", [0, 1, 2, 17])
-def test_write_runpath_file(storage, itr, run_paths):
+def test_write_runpath_file(storage, itr):
     runpath_fmt = "simulations/<GEO_ID>/realization-<IENS>/iter-<ITER>"
     runpath_list_path = "a_file_name"
     ert_config = ErtConfig.from_file_contents(
@@ -587,7 +589,7 @@ def test_write_runpath_file(storage, itr, run_paths):
     global_substitutions = ert_config.substitutions
     for i in range(num_realizations):
         global_substitutions[f"<GEO_ID_{i}_{itr}>"] = str(10 * i)
-    run_path = run_paths(ert_config)
+    run_path = Runpaths.from_config(ert_config)
     sample_prior(prior_ensemble, [i for i, active in enumerate(mask) if active], 123)
     run_args = create_run_arguments(
         run_path,
@@ -696,13 +698,7 @@ def test_that_iens_and_iter_in_runpaths_are_substituted_with_corresponding_indic
             RUNPATH simulations/realization-{iens_placeholder}/ITER-{iter_placeholder}
             """
         )
-        run_paths = Runpaths(
-            jobname_format=ert_config.runpath_config.jobname_format_string,
-            runpath_format=ert_config.runpath_config.runpath_format_string,
-            filename=".runpath_file",
-            substitutions=ert_config.substitutions,
-            eclbase=ert_config.runpath_config.eclbase_format_string,
-        )
+        run_paths = Runpaths.from_config(ert_config)
         assert run_paths.get_paths([1, 2, 3], 0) == [
             tmpdir + "/simulations/realization-1/ITER-0",
             tmpdir + "/simulations/realization-2/ITER-0",
@@ -725,13 +721,7 @@ def test_that_runpaths_with_just_iens_will_be_substituted_with_just_iens_index(
             RUNPATH simulations/realization-{iens_placeholder}
             """
         )
-        run_paths = Runpaths(
-            jobname_format=ert_config.runpath_config.jobname_format_string,
-            runpath_format=ert_config.runpath_config.runpath_format_string,
-            filename=".runpath_file",
-            substitutions=ert_config.substitutions,
-            eclbase=ert_config.runpath_config.eclbase_format_string,
-        )
+        run_paths = Runpaths.from_config(ert_config)
         assert run_paths.get_paths([1, 2, 3], 0) == [
             tmpdir + "/simulations/realization-1",
             tmpdir + "/simulations/realization-2",
@@ -924,13 +914,7 @@ def test_when_manifest_files_are_written_loading_succeeds(storage, itr):
         experiment_id, name="prior", ensemble_size=num_realizations, iteration=itr
     )
 
-    run_paths = Runpaths(
-        jobname_format=config.runpath_config.jobname_format_string,
-        runpath_format=config.runpath_config.runpath_format_string,
-        filename=str(config.runpath_file),
-        substitutions=config.substitutions,
-        eclbase=config.runpath_config.eclbase_format_string,
-    )
+    run_paths = Runpaths.from_config(config)
 
     if itr == 0:
         sample_prior(prior_ensemble, range(num_realizations), 123)

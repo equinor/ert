@@ -13,6 +13,7 @@ from ert.config.gen_kw_config import TransformFunctionDefinition
 from ert.config.parsing import ContextString
 from ert.config.parsing.file_context_token import FileContextToken
 from ert.run_models._create_run_path import create_run_path
+from ert.runpaths import Runpaths
 from ert.sample_prior import sample_prior
 
 
@@ -203,7 +204,7 @@ number_regex = r"[-+]?(?:\d*\.\d+|\d+)"
     ],
 )
 def test_gen_kw_is_log_or_not(
-    tmpdir, storage, distribution, expect_log, parameters_regex, run_args, run_paths
+    tmpdir, storage, distribution, expect_log, parameters_regex, run_args
 ):
     with tmpdir.as_cwd():
         config = dedent(
@@ -236,7 +237,7 @@ def test_gen_kw_is_log_or_not(
         create_run_path(
             run_args=run_args(ert_config, prior_ensemble),
             ensemble=prior_ensemble,
-            runpaths=run_paths(ert_config),
+            runpaths=Runpaths.from_config(ert_config),
             user_config_file=ert_config.user_config_file,
             forward_model_steps=ert_config.forward_model_steps,
             env_vars=ert_config.env_vars,
