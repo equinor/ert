@@ -996,8 +996,9 @@ class LocalEnsemble(BaseMode):
         ]
 
         if unknown_observations:
-            msg = f"Observations: {', '.join(unknown_observations)} not in experiment"
-            raise KeyError(msg)
+            raise KeyError(
+                f"Observations: {', '.join(unknown_observations)} not in experiment"
+            )
 
         observations_by_type = self.experiment.observations
 
