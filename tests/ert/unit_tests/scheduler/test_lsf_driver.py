@@ -1024,7 +1024,7 @@ def not_found_bjobs(monkeypatch, tmp_path):
 
 @pytest.mark.integration_test
 async def test_bjobs_exec_host_logs_only_once(use_tmpdir, job_name, caplog):
-    caplog.set_level(logging.INFO)
+    caplog.set_level(logging.DEBUG)
     driver = LsfDriver()
     await driver.submit(0, "sh", "-c", "sleep 1", name=job_name)
 
