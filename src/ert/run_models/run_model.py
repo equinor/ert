@@ -36,7 +36,6 @@ from ert.config import (
     QueueSystem,
     Workflow,
 )
-from ert.enkf_main import create_run_path
 from ert.ensemble_evaluator import Ensemble as EEEnsemble
 from ert.ensemble_evaluator import (
     EnsembleEvaluator,
@@ -65,6 +64,7 @@ from ert.workflow_runner import WorkflowRunner
 
 from ..plugins.workflow_fixtures import create_workflow_fixtures_from_hooked
 from ..run_arg import RunArg
+from ._create_run_path import create_run_path
 from .event import EndEvent, FullSnapshotEvent, SnapshotUpdateEvent, StatusEvents
 
 logger = logging.getLogger(__name__)

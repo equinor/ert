@@ -6,7 +6,7 @@ import numpy as np
 from packaging import version
 
 from ert.config import ErtConfig
-from ert.enkf_main import create_run_path
+from ert.run_models._create_run_path import create_run_path
 from ert.storage.local_ensemble import load_parameters_and_responses_from_runpath
 
 
