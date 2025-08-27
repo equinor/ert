@@ -11,12 +11,17 @@ from .config.config_dict_generator import config_generators
 
 
 @pytest.mark.integration_test
-@settings(max_examples=10)
+@pytest.mark.filterwarnings("ignore:MIN_REALIZATIONS")
+@pytest.mark.filterwarnings("ignore:Config contains a SUMMARY key")
+@pytest.mark.filterwarnings("ignore:Duplicate forward model step")
+@settings(max_examples=100)
 @given(config_generators(), config_generators())
 def test_different_defines_give_different_subst_lists(
     tmp_path_factory, config_generator1, config_generator2
 ):
-    with config_generator1(tmp_path_factory) as config_values1:
+    with (
+        config_generator1(tmp_path_factory) as config_values1,
+    ):
         ert_config1 = ErtConfig.from_dict(
             config_values1.to_config_dict("test.ert", os.getcwd())
         )
