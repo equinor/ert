@@ -803,7 +803,7 @@ def test_that_include_statements_with_multiple_values_raises_error():
 @pytest.mark.usefixtures("use_tmpdir")
 @given(anystring=st.text())
 def test_fm_step_config_via_plugin_ends_up_json_data(monkeypatch, anystring):
-    assume(not (anystring and anystring[0] == "<" and anystring[-1] == ">"))
+    assume(all(bracket not in anystring for bracket in "<>"))
     monkeypatch.setattr(
         ErtPluginManager,
         "get_forward_model_configuration",
