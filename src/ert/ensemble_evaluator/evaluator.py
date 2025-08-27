@@ -3,6 +3,7 @@ from __future__ import annotations
 import asyncio
 import logging
 import traceback
+from collections import defaultdict
 from collections.abc import Awaitable, Callable, Iterable, Sequence
 from enum import Enum
 from typing import Any, get_args
@@ -35,6 +36,8 @@ from _ert.forward_model_runner.client import (
     HEARTBEAT_TIMEOUT,
 )
 from ert.ensemble_evaluator import identifiers as ids
+from ert.ensemble_evaluator import state
+from ert.shared.net_utils import get_machine_name
 
 from ..config import QueueSystem
 from ._ensemble import FMStepSnapshot
@@ -436,6 +439,46 @@ class EnsembleEvaluator:
             f"Traceback: {exc_traceback}"
         )
 
+    def _log_forward_model_steps_with_missing_status_updates(self) -> None:
+        """There might be some communication issues between the nodes running
+        the forward models and the EnsembleEvaluator. In those situations,
+        we want to be aware of the failing nodes.\n
+        These communication issues does not affect the final result of the realizations,
+        but makes it impossible to see the status of the individual forward model steps.
+        """
+        hosts_with_missing_connection_to_realization_id: dict[str, list[str]] = (
+            defaultdict(list)
+        )
+        for real_id, real_data in (
+            self.ensemble.snapshot.data().get("reals", {}).items()
+        ):
+            if all(
+                fm_step_data["status"] == state.FORWARD_MODEL_STATE_INIT
+                for fm_step_data in real_data.get("fm_steps", {}).values()
+            ):
+                host_name = real_data.get("exec_hosts")
+                if host_name == "-":
+                    host_name = "localhost"
+                if (
+                    host_name
+                    and real_id
+                    not in hosts_with_missing_connection_to_realization_id.get(
+                        host_name, []
+                    )
+                ):
+                    hosts_with_missing_connection_to_realization_id[host_name].append(
+                        real_id
+                    )
+
+        if hosts_with_missing_connection_to_realization_id:
+            logger.warning(
+                "Ensemble finished, but there were missing ForwardModelStep "
+                f"status updates for some realization(s) from some host(s) "
+                f"({dict(hosts_with_missing_connection_to_realization_id)}). "
+                "There could be connectivity issues to evaluator running on port "
+                f"{self._config.router_port} on host {get_machine_name()}"
+            )
+
     async def run_and_get_successful_realizations(self) -> list[int]:
         await self._start_running()
 
@@ -455,6 +498,7 @@ class EnsembleEvaluator:
                 ):
                     logger.error(str(result))
                     raise RuntimeError(result) from result
+        self._log_forward_model_steps_with_missing_status_updates()
         logger.debug("Evaluator is done")
         return self._ensemble.get_successful_realizations()
 
