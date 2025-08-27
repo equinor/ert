@@ -15,7 +15,6 @@ from ert.substitutions import Substitutions, substitute_runpath_name
 from ert.utils import log_duration
 
 from .config import (
-    DESIGN_MATRIX_GROUP,
     ExtParamConfig,
     Field,
     ForwardModelStep,
@@ -150,24 +149,6 @@ def _manifest_to_json(ensemble: Ensemble, iens: int, iter_: int) -> dict[str, An
             )
 
     return manifest
-
-
-def save_design_matrix_to_ensemble(
-    design_matrix_df: pl.DataFrame,
-    ensemble: Ensemble,
-    active_realizations: Iterable[int],
-    design_group_name: str = DESIGN_MATRIX_GROUP,
-) -> None:
-    assert not design_matrix_df.is_empty()
-    if not set(active_realizations) <= set(design_matrix_df["realization"].to_list()):
-        raise KeyError("Active realization mask is not in design matrix!")
-    ensemble.save_parameters(
-        design_group_name,
-        realization=None,
-        dataset=design_matrix_df.filter(
-            pl.col("realization").is_in(list(active_realizations))
-        ),
-    )
 
 
 @log_duration(

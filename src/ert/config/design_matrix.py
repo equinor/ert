@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from collections import Counter
+from collections.abc import Iterable
 from dataclasses import dataclass
 from pathlib import Path
 from typing import TYPE_CHECKING, cast
@@ -14,6 +15,8 @@ from .parsing import ConfigValidationError, ErrorInfo
 
 if TYPE_CHECKING:
     from ert.config import ParameterConfig
+    from ert.storage import Ensemble
+
 
 DESIGN_MATRIX_GROUP = "DESIGN_MATRIX"
 
@@ -38,6 +41,26 @@ class DesignMatrix:
                 f" {exc}",
                 str(self.xls_filename),
             ) from exc
+
+    def save_to_ensemble(
+        self,
+        ensemble: Ensemble,
+        active_realizations: Iterable[int],
+        design_group_name: str = DESIGN_MATRIX_GROUP,
+    ) -> None:
+        design_matrix_df = self.design_matrix_df
+        assert not design_matrix_df.is_empty()
+        if not set(active_realizations) <= set(
+            design_matrix_df["realization"].to_list()
+        ):
+            raise KeyError("Active realization mask is not in design matrix!")
+        ensemble.save_parameters(
+            design_group_name,
+            realization=None,
+            dataset=design_matrix_df.filter(
+                pl.col("realization").is_in(list(active_realizations))
+            ),
+        )
 
     @classmethod
     def from_config_list(cls, config_list: list[str | dict[str, str]]) -> DesignMatrix:

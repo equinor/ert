@@ -3,11 +3,8 @@ import polars as pl
 import pytest
 from xlsxwriter import Workbook
 
-from ert.config import (
-    DESIGN_MATRIX_GROUP,
-    DesignMatrix,
-    GenKwConfig,
-)
+from ert.config import DesignMatrix, GenKwConfig
+from ert.config.design_matrix import DESIGN_MATRIX_GROUP
 from ert.config.gen_kw_config import TransformFunctionDefinition
 from tests.ert.conftest import _create_design_matrix
 

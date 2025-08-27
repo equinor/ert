@@ -23,7 +23,6 @@ from hypothesis.stateful import Bundle, RuleBasedStateMachine, initialize, rule
 from pandas import DataFrame, ExcelWriter
 
 from ert.config import (
-    DESIGN_MATRIX_GROUP,
     DesignMatrix,
     EnkfObs,
     ErtConfig,
@@ -37,10 +36,11 @@ from ert.config import (
     SummaryConfig,
     SurfaceConfig,
 )
+from ert.config.design_matrix import DESIGN_MATRIX_GROUP
 from ert.config.gen_kw_config import TransformFunctionDefinition
 from ert.config.general_observation import GenObservation
 from ert.config.observation_vector import ObsVector
-from ert.enkf_main import sample_prior, save_design_matrix_to_ensemble
+from ert.enkf_main import sample_prior
 from ert.storage import (
     ErtStorageException,
     LocalEnsemble,
@@ -989,13 +989,9 @@ def test_save_parameters_to_storage_from_design_dataframe(
         )
         if expect_error:
             with pytest.raises(KeyError):
-                save_design_matrix_to_ensemble(
-                    design_matrix.design_matrix_df, ensemble, reals
-                )
+                design_matrix.save_to_ensemble(ensemble, reals)
         else:
-            save_design_matrix_to_ensemble(
-                design_matrix.design_matrix_df, ensemble, reals
-            )
+            design_matrix.save_to_ensemble(ensemble, reals)
             params = ensemble.load_parameters(DESIGN_MATRIX_GROUP).drop("realization")
             assert isinstance(params, pl.DataFrame)
             assert params.columns == ["a", "b", "c"]

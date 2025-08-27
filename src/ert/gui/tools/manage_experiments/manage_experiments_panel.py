@@ -15,7 +15,7 @@ from PyQt6.QtWidgets import (
 )
 
 from ert.config import ConfigValidationError
-from ert.enkf_main import sample_prior, save_design_matrix_to_ensemble
+from ert.enkf_main import sample_prior
 from ert.gui.ertwidgets import (
     CheckList,
     EnsembleSelector,
@@ -151,8 +151,7 @@ class ManageExperimentsPanel(QTabWidget):
                     and design_matrix_group.name in parameters
                 ):
                     parameters.remove(design_matrix_group.name)
-                    save_design_matrix_to_ensemble(
-                        design_matrix.design_matrix_df,
+                    design_matrix.save_to_ensemble(
                         storage.get_ensemble(ensemble_selector.currentData()),
                         active_realizations,
                         design_group_name=design_matrix_group.name,
