@@ -122,19 +122,19 @@ class GenKwConfig(ParameterConfig):
 
         return self
 
-    # def __contains__(self, item: str) -> bool:
-    #     return item in [v.name for v in self.transform_function_definitions]
+    def __contains__(self, item: str) -> bool:
+        return item == self.transform_function.name
 
-    # def __len__(self) -> int:
-    #     return len(self.transform_functions)
+    def __len__(self) -> int:
+        return 1
 
     @property
     def transform_function(self) -> TransformFunction:
         return self._transform_function
 
     @property
-    def parameter_key(self) -> str:
-        return self.transform_function.name
+    def parameter_keys(self) -> list[str]:
+        return [self.transform_function.name]
 
     @property
     def metadata(self) -> list[ParameterMetadata]:
@@ -347,15 +347,17 @@ class GenKwConfig(ParameterConfig):
             self.transform_function.distribution, LogNormalSettings | LogUnifSettings
         )
 
-    def get_priors(self) -> PriorDict:
+    def get_priors(self) -> list[PriorDict]:
         tf = self.transform_function
-        return {
-            "key": tf.name,
-            "function": tf.distribution.name.upper(),
-            "parameters": {
-                k.upper(): v for k, v in tf.parameter_list.items() if k != "name"
-            },
-        }
+        return [
+            {
+                "key": tf.name,
+                "function": tf.distribution.name.upper(),
+                "parameters": {
+                    k.upper(): v for k, v in tf.parameter_list.items() if k != "name"
+                },
+            }
+        ]
 
     def transform_col(self) -> Callable[[float], float]:
         return self.transform_function.distribution.transform
