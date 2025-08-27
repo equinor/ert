@@ -2,6 +2,7 @@ import asyncio
 import logging
 import shutil
 import time
+import warnings
 from functools import partial, wraps
 from math import inf
 from pathlib import Path
@@ -24,6 +25,7 @@ from ert.scheduler.job import (
     log_warnings_from_forward_model,
 )
 from ert.storage.load_status import LoadResult
+from ert.warnings import PostSimulationWarning
 
 
 def create_scheduler():
@@ -458,8 +460,9 @@ async def test_log_warnings_from_forward_model(
             stderr_file="foo.stderr",
         )
     ]
-    await log_warnings_from_forward_model(realization, start_time - 1)
     if should_be_captured:
+        with pytest.warns(PostSimulationWarning):
+            await log_warnings_from_forward_model(realization, start_time - 1)
         assert (
             "Realization 0 step foo.0 warned "
             f"1 time(s) in stdout: {emitted_warning_str}" in caplog.text
@@ -469,6 +472,9 @@ async def test_log_warnings_from_forward_model(
             f"1 time(s) in stderr: {emitted_warning_str}" in caplog.text
         )
     else:
+        with warnings.catch_warnings():
+            warnings.simplefilter("error")
+            await log_warnings_from_forward_model(realization, start_time - 1)
         assert emitted_warning_str not in caplog.text
 
 
