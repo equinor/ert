@@ -1421,22 +1421,16 @@ def load_parameters_and_responses_from_runpath(
     """Returns the number of loaded realizations"""
     pool = ThreadPool(processes=8)
 
-    def _load_realization_from_run_path(
-        run_path: str,
-        realization: int,
-        ensemble: LocalEnsemble,
-    ) -> LoadResult:
-        return asyncio.run(forward_model_ok(run_path, realization, 0, ensemble))
-
     async_result = [
         (
             pool.apply_async(
-                _load_realization_from_run_path,
+                lambda *args: asyncio.run(forward_model_ok(*args)),
                 (
                     run_path_format.replace("<IENS>", str(realization)).replace(
                         "<ITER>", "0"
                     ),
                     realization,
+                    0,
                     ensemble,
                 ),
             ),
