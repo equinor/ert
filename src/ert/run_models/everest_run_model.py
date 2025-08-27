@@ -25,7 +25,7 @@ from ropt.results import FunctionResults, Results
 from ropt.transforms import OptModelTransforms
 from typing_extensions import TypedDict
 
-from ert.config import ParameterConfig, QueueConfig, ResponseConfig
+from ert.config import QueueConfig
 from ert.config.ert_config import (
     create_and_hook_workflows,
     read_templates,
@@ -35,13 +35,7 @@ from ert.config.model_config import ModelConfig as ErtModelConfig
 from ert.ensemble_evaluator import EndEvent, EvaluatorServerConfig
 from ert.runpaths import Runpaths
 from everest.config import (
-    ControlConfig,
     EverestConfig,
-    InputConstraintConfig,
-    ModelConfig,
-    ObjectiveFunctionConfig,
-    OptimizationConfig,
-    OutputConstraintConfig,
 )
 from everest.everest_storage import EverestStorage
 from everest.optimizer.everest2ropt import everest2ropt
@@ -62,6 +56,7 @@ from ..run_arg import RunArg, create_run_arguments
 from ..storage.local_ensemble import EverestRealizationInfo
 from ..substitutions import Substitutions
 from .event import EverestBatchResultEvent, EverestStatusEvent
+from .experiment_configs import EverestExperimentConfig
 from .run_model import RunModel, StatusEvents
 
 if TYPE_CHECKING:
@@ -121,30 +116,7 @@ class _EvaluationInfo:
 logger = logging.getLogger(EVEREST)
 
 
-class EverestRunModel(RunModel):
-    optimization_output_dir: str
-    simulation_dir: str
-
-    parameter_configuration: list[ParameterConfig]
-    response_configuration: list[ResponseConfig]
-    ert_templates: list[tuple[str, str]]
-
-    controls: list[ControlConfig]
-
-    objective_functions: list[ObjectiveFunctionConfig]
-    objective_names: list[str]
-
-    input_constraints: list[InputConstraintConfig]
-
-    output_constraints: list[OutputConstraintConfig]
-    constraint_names: list[str]
-
-    optimization: OptimizationConfig
-
-    model: ModelConfig
-
-    keep_run_path: bool
-
+class EverestRunModel(RunModel, EverestExperimentConfig):
     _exit_code: EverestExitCode | None = PrivateAttr(default=None)
     _experiment: Experiment | None = PrivateAttr(default=None)
     _eval_server_cfg: EvaluatorServerConfig | None = PrivateAttr(default=None)
@@ -360,6 +332,7 @@ class EverestRunModel(RunModel):
             parameters=self.parameter_configuration,
             responses=self.response_configuration,
         )
+        self._experiment.save_experiment_config(serialized_experiment=self.model_dump())
 
         # Initialize the ropt optimizer:
         optimizer, initial_guesses = self._create_optimizer()

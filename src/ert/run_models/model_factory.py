@@ -6,6 +6,7 @@ from queue import SimpleQueue
 from typing import TYPE_CHECKING
 
 import numpy as np
+import polars as pl
 
 from ert.config import (
     ConfigValidationError,
@@ -24,10 +25,20 @@ from ert.mode_definitions import (
 )
 from ert.validation import ActiveRange
 
+from ..storage.local_experiment import DictEncodedObservations
 from .ensemble_experiment import EnsembleExperiment
 from .ensemble_information_filter import EnsembleInformationFilter
 from .ensemble_smoother import EnsembleSmoother
 from .evaluate_ensemble import EvaluateEnsemble
+from .experiment_configs import (
+    EnsembleExperimentConfig,
+    EnsembleInformationFilterConfig,
+    EnsembleSmootherConfig,
+    EvaluateEnsembleConfig,
+    ManualUpdateConfig,
+    MultipleDataAssimilationConfig,
+    SingleTestRunConfig,
+)
 from .manual_update import ManualUpdate
 from .multiple_data_assimilation import MultipleDataAssimilation
 from .run_model import RunModel
@@ -39,7 +50,16 @@ if TYPE_CHECKING:
     from ert.namespace import Namespace
     from ert.run_models.event import StatusEvents
 
+
 logger = logging.getLogger(__name__)
+
+
+def serialize_observations(
+    observations: dict[str, pl.DataFrame],
+) -> dict[str, DictEncodedObservations]:
+    return {
+        k: DictEncodedObservations.from_polars(df) for k, df in observations.items()
+    }
 
 
 def create_model(
@@ -90,7 +110,8 @@ def _setup_single_test_run(
         raise ConfigValidationError(
             "Cannot run single test run when the first realization is inactive."
         )
-    return SingleTestRun(
+
+    config = SingleTestRunConfig(
         random_seed=config.random_seed,
         runpath_file=config.runpath_file,
         active_realizations=[True],
@@ -111,7 +132,11 @@ def _setup_single_test_run(
         log_path=config.analysis_config.log_path,
         storage_path=config.ens_path,
         queue_config=config.queue_config.create_local_copy(),
-        observations=config.observations,
+        observations=serialize_observations(config.observations),
+    )
+
+    return SingleTestRun(
+        **config.model_dump(),
         status_queue=status_queue,
     )
 
@@ -140,7 +165,7 @@ def _setup_ensemble_experiment(
     experiment_name = args.experiment_name
     assert experiment_name is not None
 
-    return EnsembleExperiment(
+    config = EnsembleExperimentConfig(
         random_seed=config.random_seed,
         runpath_file=config.runpath_file,
         active_realizations=active_realizations,
@@ -161,7 +186,11 @@ def _setup_ensemble_experiment(
         log_path=config.analysis_config.log_path,
         storage_path=config.ens_path,
         queue_config=config.queue_config,
-        observations=config.observations,
+        observations=serialize_observations(config.observations),
+    )
+
+    return EnsembleExperiment(
+        **config.model_dump(),
         status_queue=status_queue,
     )
 
@@ -173,14 +202,13 @@ def _setup_evaluate_ensemble(
 ) -> EvaluateEnsemble:
     active_realizations = _get_and_validate_active_realizations_list(args, config)
     validate_minimum_realizations(config, active_realizations)
-    return EvaluateEnsemble(
+    config = EvaluateEnsembleConfig(
         random_seed=config.random_seed,
         active_realizations=active_realizations,
         ensemble_id=args.ensemble_id,
         minimum_required_realizations=config.analysis_config.minimum_required_realizations,
         storage_path=config.ens_path,
         queue_config=config.queue_config,
-        status_queue=status_queue,
         runpath_file=config.runpath_file,
         user_config_file=Path(config.user_config_file),
         env_vars=config.env_vars,
@@ -191,6 +219,7 @@ def _setup_evaluate_ensemble(
         hooked_workflows=config.hooked_workflows,
         log_path=config.analysis_config.log_path,
     )
+    return EvaluateEnsemble(**config.model_dump(), status_queue=status_queue)
 
 
 def _get_and_validate_active_realizations_list(
@@ -229,7 +258,8 @@ def _setup_manual_update(
 ) -> ManualUpdate:
     active_realizations = _realizations(args, config.runpath_config.num_realizations)
     validate_minimum_realizations(config, active_realizations.tolist())
-    return ManualUpdate(
+
+    config = ManualUpdateConfig(
         random_seed=config.random_seed,
         active_realizations=active_realizations.tolist(),
         ensemble_id=args.ensemble_id,
@@ -239,7 +269,6 @@ def _setup_manual_update(
         queue_config=config.queue_config,
         analysis_settings=config.analysis_config.es_settings,
         update_settings=update_settings,
-        status_queue=status_queue,
         runpath_file=config.runpath_file,
         user_config_file=Path(config.user_config_file),
         env_vars=config.env_vars,
@@ -249,8 +278,9 @@ def _setup_manual_update(
         substitutions=config.substitutions,
         hooked_workflows=config.hooked_workflows,
         log_path=config.analysis_config.log_path,
-        observations=config.observations,
+        observations=serialize_observations(config.observations),
     )
+    return ManualUpdate(**config.model_dump(), status_queue=status_queue)
 
 
 def _setup_ensemble_smoother(
@@ -266,7 +296,7 @@ def _setup_ensemble_smoother(
             "Number of active realizations must be at least 2 for an update step"
         )
 
-    return EnsembleSmoother(
+    config = EnsembleSmootherConfig(
         target_ensemble=args.target_ensemble,
         experiment_name=getattr(args, "experiment_name", ""),
         active_realizations=active_realizations,
@@ -276,7 +306,6 @@ def _setup_ensemble_smoother(
         queue_config=config.queue_config,
         analysis_settings=config.analysis_config.es_settings,
         update_settings=update_settings,
-        status_queue=status_queue,
         runpath_file=config.runpath_file,
         design_matrix=config.analysis_config.design_matrix,
         parameter_configuration=config.ensemble_config.parameter_configuration,
@@ -290,8 +319,9 @@ def _setup_ensemble_smoother(
         substitutions=config.substitutions,
         hooked_workflows=config.hooked_workflows,
         log_path=config.analysis_config.log_path,
-        observations=config.observations,
+        observations=serialize_observations(config.observations),
     )
+    return EnsembleSmoother(**config.model_dump(), status_queue=status_queue)
 
 
 def _setup_ensemble_information_filter(
@@ -307,7 +337,7 @@ def _setup_ensemble_information_filter(
             "Number of active realizations must be at least 2 for an update step"
         )
 
-    return EnsembleInformationFilter(
+    config = EnsembleInformationFilterConfig(
         target_ensemble=args.target_ensemble,
         experiment_name=getattr(args, "experiment_name", ""),
         active_realizations=active_realizations,
@@ -317,7 +347,6 @@ def _setup_ensemble_information_filter(
         queue_config=config.queue_config,
         analysis_settings=config.analysis_config.es_settings,
         update_settings=update_settings,
-        status_queue=status_queue,
         runpath_file=config.runpath_file,
         design_matrix=config.analysis_config.design_matrix,
         parameter_configuration=config.ensemble_config.parameter_configuration,
@@ -331,8 +360,9 @@ def _setup_ensemble_information_filter(
         substitutions=config.substitutions,
         hooked_workflows=config.hooked_workflows,
         log_path=config.analysis_config.log_path,
-        observations=config.observations,
+        observations=serialize_observations(config.observations),
     )
+    return EnsembleInformationFilter(**config.model_dump(), status_queue=status_queue)
 
 
 def _determine_restart_info(args: Namespace) -> tuple[bool, str | None]:
@@ -367,7 +397,8 @@ def _setup_multiple_data_assimilation(
         raise ConfigValidationError(
             "Number of active realizations must be at least 2 for an update step"
         )
-    return MultipleDataAssimilation(
+
+    config = MultipleDataAssimilationConfig(
         random_seed=config.random_seed,
         active_realizations=active_realizations,
         target_ensemble=_iterative_ensemble_format(args),
@@ -378,7 +409,6 @@ def _setup_multiple_data_assimilation(
         experiment_name=args.experiment_name,
         queue_config=config.queue_config,
         update_settings=update_settings,
-        status_queue=status_queue,
         storage_path=config.ens_path,
         analysis_settings=config.analysis_config.es_settings,
         runpath_file=config.runpath_file,
@@ -394,8 +424,9 @@ def _setup_multiple_data_assimilation(
         substitutions=config.substitutions,
         hooked_workflows=config.hooked_workflows,
         log_path=config.analysis_config.log_path,
-        observations=config.observations,
+        observations=serialize_observations(config.observations),
     )
+    return MultipleDataAssimilation(**config.model_dump(), status_queue=status_queue)
 
 
 def _realizations(args: Namespace, ensemble_size: int) -> npt.NDArray[np.bool_]:

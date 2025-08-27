@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import logging
-from typing import Any, ClassVar
+from typing import Any
 from uuid import UUID
 
 import numpy as np
@@ -10,12 +10,13 @@ from ert.ensemble_evaluator import EvaluatorServerConfig
 from ert.trace import tracer
 
 from ..run_arg import create_run_arguments
+from .experiment_configs import EvaluateEnsembleConfig
 from .run_model import RunModel
 
 logger = logging.getLogger(__name__)
 
 
-class EvaluateEnsemble(RunModel):
+class EvaluateEnsemble(RunModel, EvaluateEnsembleConfig):
     """
     This workflow will evaluate ensembles which have parameters, but no simulation
     has been performed, so there are no responses. This can be used in instances
@@ -24,14 +25,11 @@ class EvaluateEnsemble(RunModel):
     ensemble, and will not reflect any changes to the user configuration on disk.
     """
 
-    ensemble_id: str
-    supports_rerunning_failed_realizations: ClassVar[bool] = True
-
     def model_post_init(self, ctx: Any) -> None:
         super().model_post_init(ctx)
         try:
             ensemble = self._storage.get_ensemble(UUID(self.ensemble_id))
-            self.start_iteration = ensemble.iteration
+            self._start_iteration = ensemble.iteration
         except KeyError as err:
             raise ValueError(f"No ensemble: {self.ensemble_id}") from err
 

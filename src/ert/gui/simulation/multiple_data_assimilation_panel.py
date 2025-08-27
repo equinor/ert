@@ -32,6 +32,7 @@ from ert.validation import (
 from ert.validation.active_range import ActiveRange
 from ert.validation.range_string_argument import RangeSubsetStringArgument
 
+from ...run_models.experiment_configs import MultipleDataAssimilationConfig
 from ._design_matrix_panel import DesignMatrixPanel
 from .experiment_config_panel import ExperimentConfigPanel
 
@@ -109,7 +110,7 @@ class MultipleDataAssimilationPanel(ExperimentConfigPanel):
         self._target_ensemble_format_field.setValidator(ProperNameFormatArgument())
         layout.addRow("Target ensemble format:", self._target_ensemble_format_field)
 
-        self.weights = MultipleDataAssimilation.default_weights
+        self.weights = MultipleDataAssimilationConfig.default_weights
         self.weights_valid = True
         self._createInputForWeights(layout)
 
@@ -193,7 +194,7 @@ class MultipleDataAssimilationPanel(ExperimentConfigPanel):
 
             self._relative_iteration_weights_box.setText(
                 self._ensemble_selector.selected_ensemble.relative_weights
-                or MultipleDataAssimilation.default_weights
+                or MultipleDataAssimilationConfig.default_weights
             )
             self._evaluate_weights_box_enabled()
 
@@ -228,9 +229,9 @@ class MultipleDataAssimilationPanel(ExperimentConfigPanel):
                 self._ensemble_selector.selected_ensemble is not None
                 and self._ensemble_selector.selected_ensemble.relative_weights
             )
-            or MultipleDataAssimilation.default_weights
+            or MultipleDataAssimilationConfig.default_weights
             if self._restart_box.isChecked()
-            else MultipleDataAssimilation.default_weights
+            else MultipleDataAssimilationConfig.default_weights
         )
         if self._restart_box.isChecked():
             self._realizations_from_fs()

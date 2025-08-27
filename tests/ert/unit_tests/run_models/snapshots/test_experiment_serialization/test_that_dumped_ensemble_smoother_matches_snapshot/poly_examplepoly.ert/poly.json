@@ -171,6 +171,20 @@
   "random_seed": 1,
   "start_iteration": 0,
   "minimum_required_realizations": 1,
+  "target_ensemble": "helloworld<ITER>",
+  "analysis_settings": {
+    "enkf_truncation": 0.98,
+    "inversion": "EXACT",
+    "localization": false,
+    "localization_correlation_threshold": null
+  },
+  "update_settings": {
+    "outlier_settings": {
+      "alpha": 3.0,
+      "std_cutoff": 1e-6
+    },
+    "auto_scale_observations": []
+  },
   "experiment_name": "dummy",
   "design_matrix": null,
   "parameter_configuration": [
@@ -224,18 +238,59 @@
     }
   ],
   "ert_templates": [],
-  "target_ensemble": "helloworld<ITER>",
-  "analysis_settings": {
-    "enkf_truncation": 0.98,
-    "inversion": "EXACT",
-    "localization": false,
-    "localization_correlation_threshold": null
-  },
-  "update_settings": {
-    "outlier_settings": {
-      "alpha": 3.0,
-      "std_cutoff": 1e-6
-    },
-    "auto_scale_observations": []
+  "observations": {
+    "gen_data": {
+      "type": "dicts",
+      "data": [
+        {
+          "response_key": "POLY_RES",
+          "observation_key": "POLY_OBS",
+          "report_step": 0,
+          "index": 0,
+          "observations": 2.145704984664917,
+          "std": 0.6000000238418579
+        },
+        {
+          "response_key": "POLY_RES",
+          "observation_key": "POLY_OBS",
+          "report_step": 0,
+          "index": 2,
+          "observations": 8.769219398498535,
+          "std": 1.399999976158142
+        },
+        {
+          "response_key": "POLY_RES",
+          "observation_key": "POLY_OBS",
+          "report_step": 0,
+          "index": 4,
+          "observations": 12.388014793395996,
+          "std": 3.0
+        },
+        {
+          "response_key": "POLY_RES",
+          "observation_key": "POLY_OBS",
+          "report_step": 0,
+          "index": 6,
+          "observations": 25.6004638671875,
+          "std": 5.400000095367432
+        },
+        {
+          "response_key": "POLY_RES",
+          "observation_key": "POLY_OBS",
+          "report_step": 0,
+          "index": 8,
+          "observations": 42.352046966552734,
+          "std": 8.600000381469727
+        }
+      ],
+      "datatypes": {
+        "response_key": "String",
+        "observation_key": "String",
+        "report_step": "UInt16",
+        "index": "UInt16",
+        "observations": "Float32",
+        "std": "Float32"
+      }
+    }
   }
 }

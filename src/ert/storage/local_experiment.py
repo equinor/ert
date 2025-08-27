@@ -6,7 +6,7 @@ from collections.abc import Generator
 from datetime import datetime
 from functools import cached_property
 from pathlib import Path
-from typing import TYPE_CHECKING, Annotated, Any
+from typing import TYPE_CHECKING, Annotated, Any, Literal
 from uuid import UUID
 
 import polars as pl
@@ -27,17 +27,19 @@ from ert.config import (
 from ert.config import (
     Field as FieldConfig,
 )
-from ert.config.parsing.context_values import ContextBoolEncoder
 from ert.storage.mode import BaseMode, Mode, require_write
 
 if TYPE_CHECKING:
     from ert.storage.local_ensemble import LocalEnsemble
     from ert.storage.local_storage import LocalStorage
 
+from polars.datatypes import DataTypeClass
+
 
 class _Index(BaseModel):
     id: UUID
     name: str
+    experiment: dict[str, Any] | None = None
 
 
 _responses_adapter = TypeAdapter(  # type: ignore
@@ -60,6 +62,40 @@ _parameters_adapter = TypeAdapter(
 )
 
 
+# https://github.com/pola-rs/polars/issues/13152#issuecomment-1864600078
+# PS: Serializing/deserializing schema is scheduled to be added to polars core,
+# ref https://github.com/pola-rs/polars/issues/20426
+# then this workaround can be omitted.
+def str_to_dtype(dtype_str: str) -> pl.DataType:
+    # the other imports here
+    dtype = eval(f"pl.{dtype_str}")
+    if isinstance(dtype, DataTypeClass):
+        dtype = dtype()
+    return dtype
+
+
+class DictEncodedObservations(BaseModel):
+    type: Literal["dicts"]
+    data: list[dict[str, Any]]
+    datatypes: dict[str, str]
+
+    @classmethod
+    def from_polars(self, data: pl.DataFrame) -> DictEncodedObservations:
+        str_schema = {k: str(dtype) for k, dtype in data.schema.items()}
+        return DictEncodedObservations(
+            type="dicts", data=data.to_dicts(), datatypes=str_schema
+        )
+
+    def to_polars(self) -> pl.DataFrame:
+        return pl.from_dicts(
+            self.data,
+            schema={
+                col: str_to_dtype(dtype_str)
+                for col, dtype_str in self.datatypes.items()
+            },
+        )
+
+
 class LocalExperiment(BaseMode):
     """
     Represents an experiment within the local storage system of ERT.
@@ -70,7 +106,6 @@ class LocalExperiment(BaseMode):
 
     _parameter_file = Path("parameter.json")
     _responses_file = Path("responses.json")
-    _metadata_file = Path("metadata.json")
     _templates_file = Path("templates.json")
 
     def __init__(
@@ -108,7 +143,7 @@ class LocalExperiment(BaseMode):
         *,
         parameters: list[ParameterConfig] | None = None,
         responses: list[ResponseConfig] | None = None,
-        observations: dict[str, pl.DataFrame] | None = None,
+        observations: dict[str, DictEncodedObservations] | None = None,
         simulation_arguments: dict[Any, Any] | None = None,
         name: str | None = None,
         templates: list[tuple[str, str]] | None = None,
@@ -128,7 +163,7 @@ class LocalExperiment(BaseMode):
             List of parameter configurations.
         responses : list of ResponseConfig, optional
             List of response configurations.
-        observations : dict of str: polars.DataFrame, optional
+        observations : dict of str to encoded observation datasets, optional
             Observations dictionary.
         simulation_arguments : SimulationArguments, optional
             Simulation arguments for the experiment.
@@ -190,14 +225,8 @@ class LocalExperiment(BaseMode):
             output_path.mkdir()
             for response_type, dataset in observations.items():
                 storage._to_parquet_transaction(
-                    output_path / f"{response_type}", dataset
+                    output_path / f"{response_type}", dataset.to_polars()
                 )
-
-        simulation_data = simulation_arguments or {}
-        storage._write_transaction(
-            path / cls._metadata_file,
-            json.dumps(simulation_data, cls=ContextBoolEncoder).encode("utf-8"),
-        )
 
         return cls(storage, path, Mode.WRITE)
 
@@ -265,16 +294,8 @@ class LocalExperiment(BaseMode):
         raise KeyError(f"Ensemble with name '{name}' not found")
 
     @property
-    def metadata(self) -> dict[str, Any]:
-        path = self.mount_point / self._metadata_file
-        if not path.exists():
-            raise ValueError(f"{self._metadata_file!s} does not exist")
-        with open(path, encoding="utf-8") as f:
-            return json.load(f)
-
-    @property
     def relative_weights(self) -> str:
-        return self.metadata.get("weights", "")
+        return self._index.experiment.get("weights", "")
 
     @property
     def name(self) -> str:
@@ -495,3 +516,7 @@ class LocalExperiment(BaseMode):
             return None
 
         return pl.concat(ensemble_dfs)
+
+    def save_experiment_config(self, serialized_experiment: dict[str, Any]) -> None:
+        self._index.experiment = serialized_experiment
+        (self._path / "index.json").write_text(self._index.model_dump_json(indent=2))

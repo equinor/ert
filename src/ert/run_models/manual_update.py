@@ -12,14 +12,13 @@ from ert.run_models.update_run_model import UpdateRunModel
 from ert.storage import Ensemble
 
 from ..analysis import smoother_update
+from .experiment_configs import ManualUpdateConfig
 from .run_model import ErtRunError
 
 logger = logging.getLogger(__name__)
 
 
-class ManualUpdate(UpdateRunModel):
-    ensemble_id: str
-
+class ManualUpdate(UpdateRunModel, ManualUpdateConfig):
     _prior: Ensemble = PrivateAttr()
 
     def model_post_init(self, ctx: Any) -> None:

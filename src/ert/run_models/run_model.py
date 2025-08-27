@@ -18,23 +18,19 @@ from collections import defaultdict
 from collections.abc import Callable, Generator, MutableSequence
 from contextlib import contextmanager
 from pathlib import Path
-from typing import Any, ClassVar, Protocol
+from typing import Any, Protocol
 
 import numpy as np
-from pydantic import BaseModel, PrivateAttr
+from pydantic import PrivateAttr
 
 from _ert.events import EEEvent, EESnapshot, EESnapshotUpdate
 from ert.config import (
     ConfigValidationError,
     DesignMatrix,
-    ForwardModelStep,
     GenKwConfig,
-    HookRuntime,
     ModelConfig,
     ParameterConfig,
-    QueueConfig,
     QueueSystem,
-    Workflow,
 )
 from ert.enkf_main import create_run_path
 from ert.ensemble_evaluator import Ensemble as EEEnsemble
@@ -66,6 +62,7 @@ from ert.workflow_runner import WorkflowRunner
 from ..plugins.workflow_fixtures import create_workflow_fixtures_from_hooked
 from ..run_arg import RunArg
 from .event import EndEvent, FullSnapshotEvent, SnapshotUpdateEvent, StatusEvents
+from .experiment_configs import ExperimentConfig
 
 logger = logging.getLogger(__name__)
 
@@ -140,24 +137,7 @@ class RunModelAPI:
     has_failed_realizations: Callable[[], bool]
 
 
-class RunModel(BaseModel, ABC):
-    storage_path: str
-    runpath_file: Path
-    user_config_file: Path
-    env_vars: dict[str, str]
-    env_pr_fm_step: dict[str, dict[str, Any]]
-    runpath_config: ModelConfig
-    queue_config: QueueConfig
-    forward_model_steps: list[ForwardModelStep]
-    substitutions: dict[str, str]
-    hooked_workflows: defaultdict[HookRuntime, list[Workflow]]
-    active_realizations: list[bool]
-    log_path: Path
-    random_seed: int
-    start_iteration: int = 0
-    minimum_required_realizations: int = 0
-    supports_rerunning_failed_realizations: ClassVar[bool] = False
-
+class RunModel(ExperimentConfig, ABC):
     # Private attributes initialized in model_post_init
     _start_time: int | None = PrivateAttr(None)
     _stop_time: int | None = PrivateAttr(None)
@@ -172,6 +152,7 @@ class RunModel(BaseModel, ABC):
     _is_rerunning_failed_realizations: bool = PrivateAttr(False)
     _run_paths: Runpaths = PrivateAttr()
     _total_iterations: int = PrivateAttr(default=1)
+    _start_iteration: int = PrivateAttr(default=0)
 
     def __init__(
         self,
@@ -191,14 +172,14 @@ class RunModel(BaseModel, ABC):
         self._completed_realizations_mask = [False] * len(self.active_realizations)
         self._storage = open_storage(self.storage_path, mode="w")
         self._rng = np.random.default_rng(self.random_seed)
-        self._model_config = self.runpath_config
+        self._start_iteration = self.start_iteration
 
         self._run_paths = Runpaths(
-            jobname_format=self._model_config.jobname_format_string,
-            runpath_format=self._model_config.runpath_format_string,
+            jobname_format=self.runpath_config.jobname_format_string,
+            runpath_format=self.runpath_config.runpath_format_string,
             filename=str(self.runpath_file),
             substitutions=self.substitutions,
-            eclbase=self._model_config.eclbase_format_string,
+            eclbase=self.runpath_config.eclbase_format_string,
         )
 
     @property
@@ -647,7 +628,8 @@ class RunModel(BaseModel, ABC):
         run_paths = []
         active_realizations = np.where(self.active_realizations)[0]
         for iteration in range(
-            self.start_iteration, self._total_iterations + self.start_iteration
+            self._start_iteration,
+            self._total_iterations + self._start_iteration,
         ):
             run_paths.extend(self._run_paths.get_paths(active_realizations, iteration))
         return run_paths
@@ -715,7 +697,7 @@ class RunModel(BaseModel, ABC):
             env_pr_fm_step=self.env_pr_fm_step,
             forward_model_steps=self.forward_model_steps,
             substitutions=self.substitutions,
-            parameters_file=self._model_config.gen_kw_export_name,
+            parameters_file=self.runpath_config.gen_kw_export_name,
             runpaths=self._run_paths,
             context_env=self._context_env,
         )
