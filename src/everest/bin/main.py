@@ -105,3 +105,7 @@ def start_everest(args: list[str] | None = None) -> None:
     """Main entry point for the everest application"""
     args = args or sys.argv
     EverestMain(args)
+
+
+if __name__ == "__main__":
+    start_everest()
