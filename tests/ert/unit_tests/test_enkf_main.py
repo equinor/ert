@@ -4,9 +4,9 @@ from pathlib import Path
 import pytest
 
 from ert.config import ErtConfig
-from ert.enkf_main import sample_prior
 from ert.run_arg import create_run_arguments
 from ert.run_models._create_run_path import create_run_path
+from ert.sample_prior import sample_prior
 
 
 @pytest.mark.parametrize(

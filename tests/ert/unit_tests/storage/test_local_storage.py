@@ -40,7 +40,7 @@ from ert.config.design_matrix import DESIGN_MATRIX_GROUP
 from ert.config.gen_kw_config import TransformFunctionDefinition
 from ert.config.general_observation import GenObservation
 from ert.config.observation_vector import ObsVector
-from ert.enkf_main import sample_prior
+from ert.sample_prior import sample_prior
 from ert.storage import (
     ErtStorageException,
     LocalEnsemble,

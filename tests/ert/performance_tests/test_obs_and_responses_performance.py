@@ -16,7 +16,7 @@ from ert.config import (
     SummaryConfig,
 )
 from ert.config.gen_kw_config import TransformFunctionDefinition
-from ert.enkf_main import sample_prior
+from ert.sample_prior import sample_prior
 from ert.storage import open_storage
 
 _rng = np.random.default_rng(0)
