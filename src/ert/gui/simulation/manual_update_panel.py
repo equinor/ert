@@ -21,8 +21,7 @@ from ert.gui.simulation.experiment_config_panel import ExperimentConfigPanel
 from ert.gui.suggestor import Suggestor
 from ert.mode_definitions import MANUAL_UPDATE_MODE
 from ert.run_models.manual_update import ManualUpdate
-from ert.storage import Ensemble
-from ert.storage.realization_storage_state import RealizationStorageState
+from ert.storage import Ensemble, RealizationStorageState
 from ert.validation import EnsembleRealizationsArgument, ProperNameFormatArgument
 
 logger = logging.getLogger(__name__)

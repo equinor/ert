@@ -41,10 +41,14 @@ from ert.config.gen_kw_config import TransformFunctionDefinition
 from ert.config.general_observation import GenObservation
 from ert.config.observation_vector import ObsVector
 from ert.enkf_main import sample_prior, save_design_matrix_to_ensemble
-from ert.storage import ErtStorageException, LocalEnsemble, open_storage
+from ert.storage import (
+    ErtStorageException,
+    LocalEnsemble,
+    RealizationStorageState,
+    open_storage,
+)
 from ert.storage.local_storage import _LOCAL_STORAGE_VERSION
 from ert.storage.mode import ModeError
-from ert.storage.realization_storage_state import RealizationStorageState
 from tests.ert.unit_tests.config.egrid_generator import egrids
 from tests.ert.unit_tests.config.summary_generator import summaries, summary_variables
 

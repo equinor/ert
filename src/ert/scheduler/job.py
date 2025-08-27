@@ -27,8 +27,10 @@ from _ert.events import (
 )
 from ert.config import ForwardModelStep
 from ert.constant_filenames import ERROR_file
-from ert.storage.local_ensemble import load_realization_parameters_and_responses
-from ert.storage.realization_storage_state import RealizationStorageState
+from ert.storage import (
+    RealizationStorageState,
+    load_realization_parameters_and_responses,
+)
 from ert.trace import trace, tracer
 from ert.warnings import PostSimulationWarning
 

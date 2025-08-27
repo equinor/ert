@@ -6,8 +6,7 @@ from .rangestring import rangestring_to_list
 from .validation_status import ValidationStatus
 
 if TYPE_CHECKING:
-    from ert.storage import Ensemble
-    from ert.storage.realization_storage_state import RealizationStorageState
+    from ert.storage import Ensemble, RealizationStorageState
 
 
 class EnsembleRealizationsArgument(RangeStringArgument):
