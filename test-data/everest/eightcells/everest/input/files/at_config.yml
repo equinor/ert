@@ -1,0 +1,11 @@
+templates:
+  -
+    file: './files/templates/wconinje.j2.tmpl'
+    keys:
+        opname: rate
+        phase: WATER
+  -
+    file: './files/templates/wconprod.j2.tmpl'
+    keys:
+        opname: rate
+        phase: OIL
