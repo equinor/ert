@@ -12,7 +12,8 @@ from ert.config import ConfigValidationError, ConfigWarning, ErtConfig, GenKwCon
 from ert.config.gen_kw_config import TransformFunctionDefinition
 from ert.config.parsing import ContextString
 from ert.config.parsing.file_context_token import FileContextToken
-from ert.enkf_main import create_run_path, sample_prior
+from ert.enkf_main import sample_prior
+from ert.run_models._create_run_path import create_run_path
 
 
 @pytest.mark.usefixtures("use_tmpdir")

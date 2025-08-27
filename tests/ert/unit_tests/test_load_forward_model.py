@@ -9,7 +9,7 @@ import pytest
 from resdata.summary import Summary
 
 from ert.config import ErtConfig
-from ert.enkf_main import create_run_path
+from ert.run_models._create_run_path import create_run_path
 from ert.storage import open_storage
 from ert.storage.local_ensemble import (
     RealizationStorageState,
