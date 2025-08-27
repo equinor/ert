@@ -12,6 +12,7 @@ from logging import Logger, getLogger
 from pathlib import Path
 from select import PIPE_BUF, select
 from subprocess import Popen, TimeoutExpired
+from tempfile import NamedTemporaryFile
 from time import sleep
 from types import FrameType
 from typing import TYPE_CHECKING, Any, Generic, Self, TypeVar
@@ -327,8 +328,10 @@ class BaseService:
             path = f"{self.service_name}_server.json"
 
         if isinstance(info, Mapping):
-            with open(path, "w", encoding="utf-8") as f:
-                json.dump(info, f, indent=4)
+            with NamedTemporaryFile(dir=f"{self._project}", delete=False) as f:
+                f.write(json.dumps(info, indent=4).encode("utf-8"))
+                f.flush()
+                os.rename(f.name, path)
 
         self._conn_info_event.set()
 
