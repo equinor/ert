@@ -77,7 +77,11 @@ def make_ensemble(queue_config):
         async def load_successful(**_):
             return LoadResult.success()
 
-        monkeypatch.setattr(ert.scheduler.job, "forward_model_ok", load_successful)
+        monkeypatch.setattr(
+            ert.scheduler.job,
+            "load_realization_parameters_and_responses",
+            load_successful,
+        )
         with tmpdir.as_cwd():
             forward_model_list = []
             for job_index in range(num_jobs):

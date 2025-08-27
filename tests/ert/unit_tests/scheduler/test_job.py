@@ -104,7 +104,7 @@ async def test_submitted_job_is_cancelled(realization, mock_event):
 
 
 @pytest.mark.parametrize(
-    "return_code, max_submit, forward_model_ok_result, expected_final_event",
+    "return_code, max_submit, load_result, expected_final_event",
     [
         [0, 1, LoadResult.success(), JobState.COMPLETED],
         [1, 1, LoadResult.success(), JobState.FAILED],
@@ -120,15 +120,17 @@ async def test_submitted_job_is_cancelled(realization, mock_event):
 async def test_job_run_sends_expected_events(
     return_code: int,
     max_submit: int,
-    forward_model_ok_result,
+    load_result,
     expected_final_event: JobState,
     realization: Realization,
     monkeypatch,
 ):
-    async def load_result(**_):
-        return forward_model_ok_result
+    async def load(**_):
+        return load_result
 
-    monkeypatch.setattr(ert.scheduler.job, "forward_model_ok", load_result)
+    monkeypatch.setattr(
+        ert.scheduler.job, "load_realization_parameters_and_responses", load
+    )
     scheduler = create_scheduler()
     monkeypatch.setattr(
         scheduler.driver,

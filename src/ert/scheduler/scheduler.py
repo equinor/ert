@@ -288,7 +288,7 @@ class Scheduler:
         sem = asyncio.BoundedSemaphore(self._max_running or len(self._jobs))
         # this lock is to assure that no more than 1 task
         # does internalization at a time
-        forward_model_ok_lock = asyncio.Lock()
+        load_lock = asyncio.Lock()
         verify_checksum_lock = asyncio.Lock()
         for iens, job in self._jobs.items():
             await asyncio.sleep(0)
@@ -296,7 +296,7 @@ class Scheduler:
                 self._job_tasks[iens] = asyncio.create_task(
                     job.run(
                         sem,
-                        forward_model_ok_lock,
+                        load_lock,
                         verify_checksum_lock,
                         self._max_submit,
                     ),

@@ -703,10 +703,10 @@ async def test_message_present_in_event_on_load_failure(
 ):
     expected_error = "foo bar error"
 
-    async def mocked_forward_model_ok(*args, **kwargs):
+    async def mocked_load(*args, **kwargs):
         return LoadResult.failure(expected_error)
 
-    monkeypatch.setattr(job, "forward_model_ok", mocked_forward_model_ok)
+    monkeypatch.setattr(job, "load_realization_parameters_and_responses", mocked_load)
 
     sch = scheduler.Scheduler(mock_driver(), [realization])
 

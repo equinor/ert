@@ -27,7 +27,7 @@ from _ert.events import (
 )
 from ert.config import ForwardModelStep
 from ert.constant_filenames import ERROR_file
-from ert.storage.local_ensemble import forward_model_ok
+from ert.storage.local_ensemble import load_realization_parameters_and_responses
 from ert.storage.realization_storage_state import RealizationStorageState
 from ert.trace import trace, tracer
 from ert.warnings import PostSimulationWarning
@@ -211,7 +211,7 @@ class Job:
     async def run(
         self,
         sem: asyncio.BoundedSemaphore,
-        forward_model_ok_lock: asyncio.Lock,
+        load_lock: asyncio.Lock,
         checksum_lock: asyncio.Lock,
         max_submit: int = 1,
     ) -> None:
@@ -231,7 +231,7 @@ class Job:
                         method_name=self._verify_checksum.__name__
                     )
 
-                async with forward_model_ok_lock:
+                async with load_lock:
                     await self._handle_finished_forward_model()
 
                 if not self._scheduler.warnings_extracted:
@@ -330,7 +330,7 @@ class Job:
         self.remaining_file_verification_time = timeout
 
     async def _handle_finished_forward_model(self) -> None:
-        result = await forward_model_ok(
+        result = await load_realization_parameters_and_responses(
             run_path=self.real.run_arg.runpath,
             realization=self.real.run_arg.iens,
             iter_=self.real.run_arg.itr,
