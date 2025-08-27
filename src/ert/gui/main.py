@@ -28,8 +28,7 @@ from ert.gui.tools.event_viewer import (
 from ert.namespace import Namespace
 from ert.plugins import ErtPluginManager
 from ert.services import StorageService
-from ert.storage import ErtStorageException, open_storage
-from ert.storage.local_storage import local_storage_set_ert_config
+from ert.storage import ErtStorageException, local_storage_set_ert_config, open_storage
 from ert.trace import trace, tracer
 
 from .suggestor import Suggestor

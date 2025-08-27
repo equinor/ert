@@ -22,10 +22,11 @@ from pydantic import BaseModel, Field
 
 from ert.config import ErtConfig, ParameterConfig, ResponseConfig
 from ert.shared import __version__
-from ert.storage.local_ensemble import LocalEnsemble
-from ert.storage.local_experiment import LocalExperiment
-from ert.storage.mode import BaseMode, Mode, require_write
-from ert.storage.realization_storage_state import RealizationStorageState
+
+from .local_ensemble import LocalEnsemble
+from .local_experiment import LocalExperiment
+from .mode import BaseMode, Mode, require_write
+from .realization_storage_state import RealizationStorageState
 
 logger = logging.getLogger(__name__)
 
@@ -457,7 +458,7 @@ class LocalStorage(BaseMode):
 
     @require_write
     def _migrate(self, version: int) -> None:
-        from ert.storage.migration import (  # noqa: PLC0415
+        from .migration import (  # noqa: PLC0415
             to2,
             to3,
             to4,

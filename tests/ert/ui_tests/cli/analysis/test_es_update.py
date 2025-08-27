@@ -13,8 +13,7 @@ from ert.analysis._update_commons import _all_parameters
 from ert.config import ErtConfig, GenKwConfig
 from ert.config.gen_kw_config import TransformFunctionDefinition
 from ert.mode_definitions import ENSEMBLE_SMOOTHER_MODE
-from ert.storage import open_storage
-from ert.storage.realization_storage_state import RealizationStorageState
+from ert.storage import RealizationStorageState, open_storage
 from tests.ert.ui_tests.cli.run_cli import run_cli
 
 

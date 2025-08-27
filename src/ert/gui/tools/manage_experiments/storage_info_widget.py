@@ -21,8 +21,7 @@ from PyQt6.QtWidgets import (
     QWidget,
 )
 
-from ert.storage import Ensemble, Experiment
-from ert.storage.realization_storage_state import RealizationStorageState
+from ert.storage import Ensemble, Experiment, RealizationStorageState
 
 
 class _WidgetType(IntEnum):

@@ -10,7 +10,7 @@ from PyQt6.QtCore import pyqtSignal as Signal
 from PyQt6.QtWidgets import QComboBox
 
 from ert.gui.ertnotifier import ErtNotifier
-from ert.storage.realization_storage_state import RealizationStorageState
+from ert.storage import RealizationStorageState
 
 from ...config import ErrorInfo
 from ..suggestor import Suggestor

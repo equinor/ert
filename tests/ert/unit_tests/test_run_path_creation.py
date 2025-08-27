@@ -19,7 +19,7 @@ from ert.config import (
 from ert.enkf_main import create_run_path, sample_prior
 from ert.run_arg import create_run_arguments
 from ert.runpaths import Runpaths
-from ert.storage.local_ensemble import (
+from ert.storage import (
     RealizationStorageState,
     load_realization_parameters_and_responses,
 )

@@ -28,11 +28,12 @@ from ert.config import (
     Field as FieldConfig,
 )
 from ert.config.parsing.context_values import ContextBoolEncoder
-from ert.storage.mode import BaseMode, Mode, require_write
+
+from .mode import BaseMode, Mode, require_write
 
 if TYPE_CHECKING:
-    from ert.storage.local_ensemble import LocalEnsemble
-    from ert.storage.local_storage import LocalStorage
+    from .local_ensemble import LocalEnsemble
+    from .local_storage import LocalStorage
 
 
 class _Index(BaseModel):

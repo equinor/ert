@@ -3,10 +3,11 @@ from __future__ import annotations
 import os
 from pathlib import Path
 
-from .local_ensemble import LocalEnsemble
+from .local_ensemble import LocalEnsemble, load_realization_parameters_and_responses
 from .local_experiment import LocalExperiment
-from .local_storage import LocalStorage
+from .local_storage import LocalStorage, local_storage_set_ert_config
 from .mode import Mode, ModeLiteral
+from .realization_storage_state import RealizationStorageState
 
 # Alias types. The Local* variants are meant to co-exist with Remote* classes
 # that connect to a remote ERT Storage Server, as well as an in-memory Memory*
@@ -46,6 +47,9 @@ __all__ = [
     "Ensemble",
     "Experiment",
     "Mode",
+    "RealizationStorageState",
     "Storage",
+    "load_realization_parameters_and_responses",
+    "local_storage_set_ert_config",
     "open_storage",
 ]
